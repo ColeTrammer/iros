@@ -15,14 +15,14 @@ LIBS?=
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -std=gnu11
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
 LDFLAFS:=$(LDFLAGS)
-LIBS:=$(LIBS) -nostdlib -lgcc # links against libk and libgcc
+LIBS:=$(LIBS) -nostdlib -lk -lgcc # links against libk and libgcc
 
 # Sets directories for install if not already set
-DESTDIR?=./
-PREFIX?=/usr/local
+DESTDIR?=
+PREFIX?=
 EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
-INCLUDEDIR?=$(PREFIX)/include
+INCLUDEDIR?=$(PREFIX)/usr/include
 
 # Include architecture specific options
 ARCHDIR=arch/$(HOSTARCH)

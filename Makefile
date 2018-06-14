@@ -1,7 +1,7 @@
 # Lists all projects
-PROJECTS=kernel
+PROJECTS=kernel libc
 # Lists all projects that need headers installed
-HEADER_PROJECTS=kernel
+HEADER_PROJECTS=kernel libc
 
 # Root defaults to cwd; must be set properly if using make -C
 ROOT?=$(CURDIR)
@@ -23,7 +23,7 @@ GRUB_BINARY_PATH?=$(ROOT)/kernel/arch/$(HOSTARCH)
 GRUB_BINARY=$(GRUB_BINARY_PATH)/$(GRUB_BINARY_NAME)
 
 # Sets CC and AR to respect host and use SYSROOT
-export CC:=$(HOST)-gcc --sysroot=$(SYSROOT)
+export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include
 export AR:=$(HOST)-ar
 
 .PHONY: all
@@ -34,7 +34,7 @@ all: os_2.iso
 # and the menu.lst, then calls genisoimage appropiately
 os_2.iso: install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
-	cp $(ROOT)/kernel/os_2.kernel $(ISODIR)/boot
+	cp $(SYSROOT)/boot/os_2.kernel $(ISODIR)/boot
 	cp $(GRUB_BINARY) $(ISODIR)/boot/grub
 	cp $(ROOT)/grub_menu.lst $(ISODIR)/boot/grub/menu.lst
 	@echo "Generating iso ..."
@@ -53,7 +53,10 @@ os_2.iso: install-headers $(PROJECTS)
 # Makes project by calling its Makefile
 .PHONY: $(PROJECTS)
 $(PROJECTS):
-	$(MAKE) -C $(ROOT)/$@
+	$(MAKE) install -C $(ROOT)/$@
+
+# Makes the kernel depend on libc
+kernel: libc
 
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean
