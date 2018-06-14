@@ -1,3 +1,9 @@
+# Project Specific
+sysroot/
+isodir/
+*.kernel
+*.iso
+
 # Prerequisites
 *.d
 
