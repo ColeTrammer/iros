@@ -37,7 +37,13 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 # Lists objects used in 'free' enviornment
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
-string/memset.o
+string/memcmp.o \
+string/memcpy.o \
+string/memmove.o \
+string/memset.o \
+string/strcpy.o \
+string/strlen.o \
+string/strncpy.o
 
 # Lists objects used in 'hosted' enviornment
 HOSTEDOBJS=\

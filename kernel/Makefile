@@ -60,10 +60,10 @@ $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o
 
 .PHONY: all
-all: os_2.kernel
+all: os_2.bin
 
 # Makes kernel from link script with objects to link
-os_2.kernel: $(OBJS) $(LINK_SCRIPT)
+os_2.bin: $(OBJS) $(LINK_SCRIPT)
 	$(CC) -T $(LINK_SCRIPT) -o $@ $(CFLAGS) $(LDFLAGS) $(LINK_LIST)
 
 # Gets gcc's ctrbegin and crtend by asking for its path and copying it to where we want
@@ -77,10 +77,10 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 %.o: %.S
 	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
-# Cleans by deleting .kernel, .o, and .d files
+# Cleans by deleting .bin, .o, and .d files
 .PHONY: clean
 clean:
-	rm -f os_2.kernel
+	rm -f os_2.bin
 	rm -f $(OBJS)
 	rm -f $(OBJS:.o=.d) 
 
@@ -94,7 +94,7 @@ install-headers:
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 # Installs kernel via cp
-install-kernel: os_2.kernel
+install-kernel: os_2.bin
 	mkdir -p $(DESTDIR)$(BOOTDIR)
 	cp --preserve=timestamps $< $(DESTDIR)$(BOOTDIR)
 
