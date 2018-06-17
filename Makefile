@@ -51,6 +51,10 @@ clean:
 	  $(MAKE) clean -C $(ROOT)/$$dir; \
 	done
 
+.PHONY: run
+run: all
+	$(ROOT)/qemu.sh
+
 # Installs headers by calling each project's install-headers
 .PHONY: install-headers
 install-headers:

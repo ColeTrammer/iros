@@ -4,6 +4,9 @@ isodir/
 *.bin
 *.iso
 
+# IDE specific
+.vscode/
+
 # Prerequisites
 *.d
 
