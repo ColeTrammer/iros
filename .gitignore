@@ -1,7 +1,7 @@
 # Project Specific
 sysroot/
 isodir/
-*.kernel
+*.bin
 *.iso
 
 # Prerequisites
