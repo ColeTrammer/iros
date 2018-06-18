@@ -19,6 +19,9 @@ void clear_screen() {
 static size_t row = 0;
 
 void kprint(const char *str) {
+    if (row >= VGA_HEIGHT) {
+        row = 0;
+    }
     for (size_t i = 0; str[i] != '\0'; i++) {
         VGA_BASE[VGA_INDEX(row, i)] = VGA_ENTRY(str[i], 7, 0);
     }

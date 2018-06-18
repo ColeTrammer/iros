@@ -46,6 +46,8 @@ kernel: libc
 clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
+	rm kernel.dis
+	rm debug.log
 	rm -f $(ROOT)/os_2.iso
 	for dir in $(PROJECTS); do \
 	  $(MAKE) clean -C $(ROOT)/$$dir; \

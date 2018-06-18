@@ -3,6 +3,8 @@ sysroot/
 isodir/
 *.bin
 *.iso
+*.dis
+*.log
 
 # IDE specific
 .vscode/

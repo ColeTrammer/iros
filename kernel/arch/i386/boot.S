@@ -31,7 +31,7 @@ stack_top:
 _start:
     # Initialize the stack
     movl $stack_top, %esp
-    
+
     # Save eax and ebx (_init modifies them)
     push %eax
     push %ebx
@@ -67,9 +67,62 @@ valid_boot_loader:
     jmp __halt
 
 long_mode_yes:
+    mov $0x01, %eax
+    cpuid
+    test $(1 << 5), %edx
+    jz msr_yes
+
+    push $msr_no_str
+    call kprint
+    jmp __halt
+
+msr_yes:
     # Output success string
     push $long_mode_yes_str
     call kprint
+    
+    # Set up paging structure
+    mov $PDP, %eax
+    or $0x03, %eax
+    mov %eax, (PML4)
+
+    mov $PD, %eax
+    or $0x03, %eax
+    mov %eax, (PDP)
+
+    mov $PT, %eax
+    or $0x03, %eax
+    mov %eax, (PD)
+
+    mov $PT, %eax
+    mov $0x03, %edx
+    mov $512, %ecx
+
+add_page_table_entry:
+    mov %edx, (%eax)
+    add 0x1000, %edx
+    add 0x08, %eax
+    loop add_page_table_entry
+
+    # Enable cr4.PAE
+    mov %cr4, %eax
+    or $(1 << 5), %eax
+    mov %eax, %cr4
+
+    # Set EFER.LME
+    mov $0xC0000080, %ecx
+    rdmsr
+    or $(1 << 8), %eax
+    wrmsr
+
+    # Set cr3
+    mov $PML4, %eax
+    mov %eax, %cr3
+
+    # Set cr0.PE
+    mov %cr0, %eax
+    or $(1 << 31), %eax
+    mov %eax, %cr0
 
     # Call C entry point
     call kernel_main
@@ -81,6 +134,25 @@ __halt:
     hlt
     jmp __halt
 
+.section .data
+.align 0x1000
+PML4:
+    .rept 512
+        .quad 0
+    .endr
+PDP:
+    .rept 512
+        .quad 0
+    .endr
+PD:
+    .rept 512
+        .quad 0
+    .endr
+PT:
+    .rept 512
+        .quad 0
+    .endr
+
 .section .rodata
 invalid_boot_loader_str:
 .asciz "Invalid boot loader."
@@ -88,3 +160,5 @@ long_mode_yes_str:
 .asciz "Long mode supported."
 long_mode_no_str:
 .asciz "Long mode unsupported."
+msr_no_str:
+.asciz "No model specific registers."

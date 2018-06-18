@@ -48,7 +48,7 @@ check_function_yes:
     # Call function to check for long mode
     mov $0x80000001, %eax
     cpuid
-    # If bit 29 is set, long mode is enabled
+    # If bit 29 is set, long mode is possible
     test $(1 << 29), %edx
     jnz longmode_yes
     
