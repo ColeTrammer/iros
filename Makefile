@@ -1,5 +1,5 @@
 # Lists all projects
-PROJECTS=kernel libc
+PROJECTS=kernel libc boot
 # Lists all projects that need headers installed
 HEADER_PROJECTS=kernel libc
 
@@ -29,7 +29,7 @@ all: os_2.iso
 # then calling grub-mkrescue appropriately
 os_2.iso: install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
-	cp $(SYSROOT)/boot/os_2.bin $(ISODIR)/boot
+	cp $(SYSROOT)/boot/boot_loader.bin $(ISODIR)/boot
 	cp $(ROOT)/grub.cfg $(ISODIR)/boot/grub
 	grub-mkrescue -o $(ROOT)/os_2.iso $(ISODIR)
 
@@ -46,8 +46,8 @@ kernel: libc
 clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
-	rm kernel.dis
-	rm debug.log
+	rm -f kernel.dis
+	rm -f debug.log
 	rm -f $(ROOT)/os_2.iso
 	for dir in $(PROJECTS); do \
 	  $(MAKE) clean -C $(ROOT)/$$dir; \
@@ -60,6 +60,6 @@ run: all
 # Installs headers by calling each project's install-headers
 .PHONY: install-headers
 install-headers:
-	for dir in $(PROJECTS); do \
+	for dir in $(HEADER_PROJECTS); do \
 	  $(MAKE) install-headers -C $(ROOT)/$$dir; \
 	done

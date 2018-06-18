@@ -28,6 +28,7 @@ supports_longmode:
     # Else print error message and halt
     push $cpuid_no_str
     call kprint
+    add $4, %esp
     jmp __halt
 
 cpuid_yes:
@@ -42,6 +43,7 @@ cpuid_yes:
     # Else print error message and halt
     push $check_function_no_str
     call kprint
+    add $4, %esp
     jmp __halt
 
 check_function_yes:

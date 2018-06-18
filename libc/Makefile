@@ -75,13 +75,13 @@ libk.a: $(LIBK_OBJS)
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 %.o: %.S
-	$(CC) -MD -c $< -o $@ $(CFLAFS) $(CPPFLAGS)
+	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)
 
 %.libk.o: %.c
 	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 %.libk.o: %.S
-	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+	$(CC) -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 # Cleans by removing all .o, .d, and .a files
 .PHONY: clean

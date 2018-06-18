@@ -3,7 +3,7 @@ ENTRY(start)
 
 SECTIONS
 {
-    /* Sets Kernel to begin at 1M (for proper loading) */
+    /* Sets Boot loader to begin at 1M (for proper loading) */
     . = 1M;
 
     /* Put multiboot .first, then .text */

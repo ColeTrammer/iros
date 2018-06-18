@@ -29,5 +29,6 @@ void kprint(const char *str) {
 }
 
 void kernel_main() {
+    kprint("Hello World!");
     while (1);
 }

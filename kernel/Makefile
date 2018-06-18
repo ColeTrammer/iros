@@ -75,7 +75,7 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
 %.o: %.S
-	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
+	$(CC) -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
 # Cleans by deleting .bin, .o, and .d files
 .PHONY: clean
