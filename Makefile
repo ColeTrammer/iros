@@ -29,7 +29,10 @@ all: os_2.iso
 # then calling grub-mkrescue appropriately
 os_2.iso: install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
-	cp $(SYSROOT)/boot/boot_loader.bin $(ISODIR)/boot
+	mkdir -p $(ISODIR)/modules
+	grub-file --is-x86-multiboot2 $(SYSROOT)/boot/boot_loader.o
+	cp $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot
+	cp $(SYSROOT)/boot/os_2.o $(ISODIR)/modules
 	cp $(ROOT)/grub.cfg $(ISODIR)/boot/grub
 	grub-mkrescue -o $(ROOT)/os_2.iso $(ISODIR)
 
@@ -46,8 +49,8 @@ kernel: libc
 clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
-	rm -f kernel.dis
-	rm -f debug.log
+	rm -f $(ROOT)/kernel.dis
+	rm -f $(ROOT)/debug.log
 	rm -f $(ROOT)/os_2.iso
 	for dir in $(PROJECTS); do \
 	  $(MAKE) clean -C $(ROOT)/$$dir; \

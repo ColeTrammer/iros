@@ -1,27 +1,63 @@
 # Multiboot Header information
-.set ALIGN,   1 << 0           # flag to align modules on page boundaries
-.set MEMINFO, 1 << 1           # flag to recieve memory map
-.set FLAGS,   ALIGN | MEMINFO  # multiboot flags
-.set MAGIC,   0x1BADB002       # magic number to verify this is a valid os
-.set CHECK,   -(MAGIC + FLAGS) # proof that this is a valid os
+.set MAGIC, 0xE85250D6
+.set ARCHITECTURE, 0
+.set HEADER_LENGTH, (MULTIBOOT_HEADER_END - MULTIBOOT_HEADER_START)
+.set CHECKSUM, -(MAGIC + ARCHITECTURE + HEADER_LENGTH)
 
 # Multiboot Header itself
 .section .multiboot
-.align 4
+.align 8
+MULTIBOOT_HEADER_START:
 .long MAGIC
-.long FLAGS
-.long CHECK
+.long ARCHITECTURE
+.long HEADER_LENGTH
+.long CHECKSUM
+HEADER_TAGS_START:
+.align 8
+INFO_REQUEST_TAG_START:
+.word 1
+.word 0
+.long INFO_REQUEST_TAG_END - INFO_REQUEST_TAG_START
+.long 4 # Request basic mem info
+.long 1 # Request boot command line
+.long 3 # Request modules
+.long 6 # Request mem map
+INFO_REQUEST_TAG_END:
+.align 8
+ADDRESS_TAG_START:
+.word 2
+.word 0
+.long ADDRESS_TAG_END - ADDRESS_TAG_START
+.long MULTIBOOT_HEADER_START
+.long _text_start
+.long _data_end
+.long _bss_end
+ADDRESS_TAG_END:
+.align 8
+ENTRY_TAG_START:
+.word 3
+.word 1
+.long ENTRY_TAG_END - ENTRY_TAG_START
+.long start
+ENTRY_TAG_END:
+.align 8
+MODULE_ALIGNMENT_TAG_START:
+.word 6
+.word 0
+.long MODULE_ALIGNMENT_TAG_END - MODULE_ALIGNMENT_TAG_START
+MODULE_ALIGNMENT_TAG_END:
+.align 8
+CLOSING_TAG_START:
+.word 0
+.word 0
+.long CLOSING_TAG_END - CLOSING_TAG_START
+CLOSING_TAG_END:
+MULTIBOOT_HEADER_END:
 
 # Declare relevant constants
-.set MAGIC_CHECK, 0x2BADB002
+.set MAGIC_CHECK, 0x36D76289
 
-# Reserve stack for initial thread
-.section .bss
-.align 16
-stack_bottom:
-.skip 16384
-stack_top:
-
+# Declare start for linker
 .global start
 .set start, _start
 
@@ -33,14 +69,13 @@ _start:
     movl $stack_top, %esp
 
     # Save eax and ebx
-    push %eax
     push %ebx
+    push %eax
 
     # Clear screen
     call clear_screen
 
-    # Restore those registers
-    pop %ebx
+    # Restore eax
     pop %eax
 
     # Check to make sure the boot loader is valid
@@ -125,8 +160,19 @@ add_page_table_entry:
     ljmp $0x8, $gdt_loaded 
 
 gdt_loaded:
-    # Call C entry point
-    # call kernel_main
+    pop %ebx
+    # TODO: Map (ebx) into memory
+    jmp kernel_module_found
+
+    push $kernel_module_not_found_str
+    call kprint
+    add $4, %esp
+    jmp __halt
+
+kernel_module_found:
+    push $kernel_module_found_str
+    call kprint
+    add $4, %esp
 
 # Loop forever if the kernel returns
 .global __halt
@@ -146,6 +192,14 @@ PD:
 PT:
     .skip 0x1000
 
+# Reserve stack for initial thread
+.section .bss
+.align 16
+stack_bottom:
+.skip 16384
+stack_top:
+
+# Data for GTD
 .section .data
 GDT:
 GDT_NULL:
@@ -160,7 +214,7 @@ GDT_CODE:
     .short 0
     .byte 0
     .byte 0b10011011
-    .byte 0b01001111
+    .byte 0b01001111 # Change to 0b00101111 to enable 64 bit mode
     .byte 0
 GDT_DATA:
     .short 0xFFFF
@@ -181,3 +235,7 @@ long_mode_yes_str:
 .asciz "Long mode supported."
 long_mode_no_str:
 .asciz "Long mode unsupported."
+kernel_module_found_str:
+.asciz "Found the kernel."
+kernel_module_not_found_str:
+.asciz "Kernel not found."

@@ -43,10 +43,10 @@ OBJS=\
 $(KERNEL_OBJS)
 
 .PHONY: all
-all: boot_loader.bin
+all: boot_loader.o
 
 # Makes kernel from link script with objects to link
-boot_loader.bin: $(OBJS) $(LINK_SCRIPT)
+boot_loader.o: $(OBJS) $(LINK_SCRIPT)
 	$(CC) -T $(LINK_SCRIPT) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJS)
 
 # Builds any .o file from its .S counterpart
@@ -57,13 +57,13 @@ boot_loader.bin: $(OBJS) $(LINK_SCRIPT)
 # Cleans by deleting .o files
 .PHONY: clean
 clean:
-	rm -f boot_loader.bin
+	rm -f boot_loader.o
 	rm -f $(OBJS)
 
 .PHONY: install install-boot-loader
 
 install: install-boot-loader
 
-install-boot-loader: boot_loader.bin
+install-boot-loader: boot_loader.o
 	mkdir -p $(DESTDIR)$(BOOTDIR)
 	cp --preserve=timestamps $< $(DESTDIR)$(BOOTDIR)
