@@ -32,7 +32,8 @@ os_2.iso: install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/modules
 	grub-file --is-x86-multiboot2 $(SYSROOT)/boot/boot_loader.o
 	cp $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot
-	cp $(SYSROOT)/boot/os_2.o $(ISODIR)/modules
+	# cp $(SYSROOT)/boot/os_2.o $(ISODIR)/modules
+	objcopy $(SYSROOT)/boot/os_2.o $(ISODIR)/modules/os_2.o -O binary
 	cp $(ROOT)/grub.cfg $(ISODIR)/boot/grub
 	grub-mkrescue -o $(ROOT)/os_2.iso $(ISODIR)
 

@@ -16,7 +16,7 @@ void clear_screen() {
     }
 }
 
-static size_t row = 0;
+static size_t row = 2;
 
 void kprint(const char *str) {
     if (row >= VGA_HEIGHT) {

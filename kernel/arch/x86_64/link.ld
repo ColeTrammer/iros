@@ -4,7 +4,7 @@ ENTRY(kernel_main)
 SECTIONS
 {
     /* Sets Boot loader to begin at 1M (for proper loading) */
-    . = 2M;
+    . = 0x10C000;
 
     /* Put multiboot .first, then .text */
     .text ALIGN (0x1000) : AT(ADDR(.text))

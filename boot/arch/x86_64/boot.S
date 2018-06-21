@@ -118,23 +118,41 @@ long_mode_yes:
     or $0x03, %eax
     mov %eax, (PDP)
 
-    # Write PT to PD
-    mov $PT, %eax
+    # Write PT0 to PD
+    mov $PT0, %eax
     or $0x03, %eax
     mov %eax, (PD)
 
+    # Write PT1 to PD
+    mov $PT1, %eax
+    or $0x03, %eax
+    mov %eax, (PD + 8)
+
     # Set up for loop
-    and $0xFFFFF000, %eax
+    mov $PT0, %eax
     mov $0x03, %edx
     mov $512, %ecx
 
-add_page_table_entry:
+add_page_table_entry_0:
     # Writes identity mapping to throughout page table
     mov %edx, (%eax)
     add $0x1000, %edx
     add $0x08, %eax
-    loop add_page_table_entry
+    loop add_page_table_entry_0
 
+    # Set up for loop
+    and $PT1, %eax
+    mov $0x200003, %edx
+    mov $512, %ecx
+
+add_page_table_entry_1:
+    # Writes identity mapping to throughout page table
+    mov %edx, (%eax)
+    add $0x1000, %edx
+    add $0x08, %eax
+    loop add_page_table_entry_1
+
+enable_paging:
     # Enable cr4.PAE
     mov %cr4, %eax
     or $(1 << 5), %eax
@@ -155,12 +173,16 @@ add_page_table_entry:
     or $(1 << 31), %eax
     mov %eax, %cr0
 
+    # Cancer
+    pop %ebx
+    mov 112(%ebx), %eax
+
     # Load GDT
     lgdtl (GDT_DESCRIPTOR)
-    ljmp $0x8, $gdt_loaded 
+suicide:
+    ljmp $0x8, $0x10C1E0 # $0x10C12D # $gdt_loaded
 
 gdt_loaded:
-    pop %ebx
     # TODO: Map (ebx) into memory
     jmp kernel_module_found
 
@@ -173,6 +195,9 @@ kernel_module_found:
     push $kernel_module_found_str
     call kprint
     add $4, %esp
+
+    # LUL
+    # jmp 0x0010c1d0
 
 # Loop forever if the kernel returns
 .global __halt
@@ -189,7 +214,9 @@ PDP:
     .skip 0x1000
 PD:
     .skip 0x1000
-PT:
+PT0:
+    .skip 0x1000
+PT1:
     .skip 0x1000
 
 # Reserve stack for initial thread
@@ -214,7 +241,7 @@ GDT_CODE:
     .short 0
     .byte 0
     .byte 0b10011011
-    .byte 0b01001111 # Change to 0b00101111 to enable 64 bit mode
+    .byte 0b00101111 # Change to 0b00101111 to enable 64 bit mode
     .byte 0
 GDT_DATA:
     .short 0xFFFF

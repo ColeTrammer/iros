@@ -6,6 +6,9 @@ isodir/
 *.dis
 *.log
 
+# GDB
+.gdbinit
+
 # IDE specific
 .vscode/
 
