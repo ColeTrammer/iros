@@ -173,33 +173,27 @@ enable_paging:
     or $(1 << 31), %eax
     mov %eax, %cr0
 
-    # Cancer
-    pop %ebx
-    mov 112(%ebx), %eax
+    # Prepares kernel and returns jump address
+    call prepare_kernel_for_jump
+    add $4, %esp
 
-    # Load GDT
+    # Save kernel entry address
+    push %eax
+
+    # Call this before jumping away
+    call _fini
+
+    # Restores kernel entry address
+    pop %eax
+
+    # Load GDT and then far return to kernel entry
     lgdtl (GDT_DESCRIPTOR)
-suicide:
-    ljmp $0x8, $0x10C1E0 # $0x10C12D # $gdt_loaded
+    push $0x08
+    push %eax
+    retf
 
-gdt_loaded:
-    # TODO: Map (ebx) into memory
-    jmp kernel_module_found
 
-    push $kernel_module_not_found_str
-    call kprint
-    add $4, %esp
-    jmp __halt
-
-kernel_module_found:
-    push $kernel_module_found_str
-    call kprint
-    add $4, %esp
-
-    # LUL
-    # jmp 0x0010c1d0
-
-# Loop forever if the kernel returns
+# Loop forever
 .global __halt
 __halt:
     cli
@@ -241,7 +235,7 @@ GDT_CODE:
     .short 0
     .byte 0
     .byte 0b10011011
-    .byte 0b00101111 # Change to 0b00101111 to enable 64 bit mode
+    .byte 0b00101111 # Change to 0b01001111 to keep 32 bit mode
     .byte 0
 GDT_DATA:
     .short 0xFFFF

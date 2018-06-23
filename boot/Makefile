@@ -8,12 +8,14 @@ HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
 # Init flags if not already set (can be overridden)
 CFLAGS?=-O2 -g
 CPPFLAGS?=
-LDFLAGS?=-nostdlib
+LDFLAGS?=
+LIBS?=
 
 # Include options that should always be set
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -std=gnu11
-CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
+CPPFLAGS:=$(CPPFLAGS) -D__is_boot_loader -Iinclude
 LDFLAFS:=$(LDFLAGS)
+LIBS:=$(LIBS) -nostdlib -lgcc # links against libgcc
 
 # Sets directories for install if not already set
 DESTDIR?=
@@ -29,27 +31,46 @@ include $(ARCHDIR)/make.config
 LINK_SCRIPT?=$(ARCHDIR)/link.ld
 
 # Updates flags
-CFLAGS:=$(CFLAGS) $(KERNEL_ARCH_CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
-LDFLAGS:=$(LDFLAGS) $(KERNEL_ARCH_LDFLAGS)
-LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
+CFLAGS:=$(CFLAGS) $(BOOT_LOADER_ARCH_CFLAGS)
+CPPFLAGS:=$(CPPFLAGS) $(BOOT_LOADER_ARCH_CPPFLAGS)
+LDFLAGS:=$(LDFLAGS) $(BOOT_LOADER_ARCH_LDFLAGS)
+LIBS:=$(LIBS) $(BOOT_LOADER_ARCH_LIBS)
 
-# Lists kernel objects
-KERNEL_OBJS=\
-$(KERNEL_ARCH_OBJS)
+# Lists objects in boot loader
+BOOT_LOADER_OBJS=\
+$(BOOT_LOADER_ARCH_OBJS) \
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\
-$(KERNEL_OBJS)
+$(ARCHDIR)/crti.o \
+$(ARCHDIR)/crtbegin.o \
+$(BOOT_LOADER_OBJS) \
+$(ARCHDIR)/crtend.o \
+$(ARCHDIR)/crtn.o
+
+# Lists all objects and libs in proper order
+LINK_LIST=\
+$(ARCHDIR)/crti.o \
+$(ARCHDIR)/crtbegin.o \
+$(BOOT_LOADER_OBJS) \
+$(LIBS) \
+$(ARCHDIR)/crtend.o \
+$(ARCHDIR)/crtn.o
 
 .PHONY: all
 all: boot_loader.o
 
 # Makes kernel from link script with objects to link
 boot_loader.o: $(OBJS) $(LINK_SCRIPT)
-	$(CC) -T $(LINK_SCRIPT) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJS)
+	$(CC) -T $(LINK_SCRIPT) -o $@ $(CFLAGS) $(LDFLAGS) $(LINK_LIST)
 
-# Builds any .o file from its .S counterpart
+# Gets gcc's ctrbegin and crtend by asking for its path and copying it to where we want
+$(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
+	cp `$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` $@
+
+# Builds any .o file from its .c or .S counterpart
+%.o: %.c
+	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
 %.o: %.S
 	$(CC) -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
@@ -59,6 +80,7 @@ boot_loader.o: $(OBJS) $(LINK_SCRIPT)
 clean:
 	rm -f boot_loader.o
 	rm -f $(OBJS)
+	rm -f $(OBJS:.o=.d)
 
 .PHONY: install install-boot-loader
 
@@ -67,3 +89,10 @@ install: install-boot-loader
 install-boot-loader: boot_loader.o
 	mkdir -p $(DESTDIR)$(BOOTDIR)
 	cp --preserve=timestamps $< $(DESTDIR)$(BOOTDIR)
+
+# Includes the .d files for each object, if it exists.
+# This will cause any object that depends on a specific header,
+# that was changed, to be recompiled, as this include will 
+# tell make its dependencies, which if altered, will cause
+# make to go back and rebuild the object.
+-include $(OBJS:.o=.d)

@@ -39,4 +39,6 @@ SECTIONS
         *(.bss)
         _bss_end = .;
     }
+
+    /DISCARD/ : { *(.comment) }
 }

@@ -17,9 +17,10 @@ HOST?=$(DEFAULT_HOST)
 # Host achitecture is given by script
 HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 
-# Sets CC and AR to respect host and use SYSROOT
+# Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
 export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) # -isystem=$(SYSROOT)/usr/include
 export AR:=$(HOST)-ar
+export OBJCOPY:=$(HOST)-objcopy
 
 .PHONY: all
 all: os_2.iso
@@ -31,9 +32,8 @@ os_2.iso: install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
 	mkdir -p $(ISODIR)/modules
 	grub-file --is-x86-multiboot2 $(SYSROOT)/boot/boot_loader.o
-	cp $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot
-	# cp $(SYSROOT)/boot/os_2.o $(ISODIR)/modules
-	objcopy $(SYSROOT)/boot/os_2.o $(ISODIR)/modules/os_2.o -O binary
+	$(OBJCOPY) -S $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot/boot_loader.o
+	$(OBJCOPY) -S $(SYSROOT)/boot/os_2.o $(ISODIR)/modules/os_2.o
 	cp $(ROOT)/grub.cfg $(ISODIR)/boot/grub
 	grub-mkrescue -o $(ROOT)/os_2.iso $(ISODIR)
 
