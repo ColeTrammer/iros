@@ -1,6 +1,6 @@
 #include <string.h>
 
-char *strncpy(char *dest, const char *src, size_t n) {
+char *strncpy(char *__restrict dest, const char *__restrict src, size_t n) {
     size_t i = 0;
     for (; i < n && src[i] != '\0'; i++) {
         dest[i] = src[i];

@@ -31,10 +31,10 @@ all: os_2.iso
 os_2.iso: install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
 	mkdir -p $(ISODIR)/modules
-	grub-file --is-x86-multiboot2 $(SYSROOT)/boot/boot_loader.o
 	$(OBJCOPY) -S $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot/boot_loader.o
 	$(OBJCOPY) -S $(SYSROOT)/boot/os_2.o $(ISODIR)/modules/os_2.o
 	cp $(ROOT)/grub.cfg $(ISODIR)/boot/grub
+	grub-file --is-x86-multiboot2 $(ISODIR)/boot/boot_loader.o
 	grub-mkrescue -o $(ROOT)/os_2.iso $(ISODIR)
 
 # Makes project by calling its Makefile
@@ -51,6 +51,7 @@ clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
 	rm -f $(ROOT)/kernel.dis
+	rm -f $(ROOT)/boot_loader.dis
 	rm -f $(ROOT)/debug.log
 	rm -f $(ROOT)/os_2.iso
 	for dir in $(PROJECTS); do \

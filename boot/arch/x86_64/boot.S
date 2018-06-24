@@ -63,17 +63,18 @@ MULTIBOOT_HEADER_END:
 
 # Kernel entry point
 .section .text
+.code32
 .global _start
 _start:
     # Initialize the stack
-    movl $stack_top, %esp
+    mov $stack_top, %esp
 
-    # Save eax and ebx
+    # Save eax
     push %ebx
     push %eax
 
     # Clear screen
-    call clear_screen
+    call clear_screen32
 
     # Restore eax
     pop %eax
@@ -84,11 +85,11 @@ _start:
 
     # Else print error message and hlt
     push $invalid_boot_loader_str
-    call kprint
+    call kprint32
     add $4, %esp
     jmp __halt
 
-valid_boot_loader:
+valid_boot_loader:    
     # See if longmode is supported
     call supports_longmode
     test %eax, %eax
@@ -96,14 +97,17 @@ valid_boot_loader:
 
     # Else print error message and halt
     push $long_mode_no_str
-    call kprint
+    call kprint32
     add $4, %esp
     jmp __halt
 
 long_mode_yes:
+    # Restore ebx
+    pop %ebx
+
     # Output success string
     push $long_mode_yes_str
-    call kprint
+    call kprint32
     add $4, %esp
     
     # Set up paging structure by identity mapping the first page table
@@ -127,6 +131,11 @@ long_mode_yes:
     mov $PT1, %eax
     or $0x03, %eax
     mov %eax, (PD + 8)
+
+    # Write PT2 to PD
+    mov $PT2, %eax
+    or $0x03, %eax
+    mov %eax, (PD + 16)
 
     # Set up for loop
     mov $PT0, %eax
@@ -152,6 +161,18 @@ add_page_table_entry_1:
     add $0x08, %eax
     loop add_page_table_entry_1
 
+    # Set up for loop
+    and $PT2, %eax
+    mov $0x400003, %edx
+    mov $512, %ecx
+
+add_page_table_entry_2:
+    # Writes identity mapping to throughout page table
+    mov %edx, (%eax)
+    add $0x1000, %edx
+    add $0x08, %eax
+    loop add_page_table_entry_2
+
 enable_paging:
     # Enable cr4.PAE
     mov %cr4, %eax
@@ -173,25 +194,8 @@ enable_paging:
     or $(1 << 31), %eax
     mov %eax, %cr0
 
-    # Prepares kernel and returns jump address
-    call prepare_kernel_for_jump
-    add $4, %esp
-
-    # Save kernel entry address
-    push %eax
-
-    # Call this before jumping away
-    call _fini
-
-    # Restores kernel entry address
-    pop %eax
-
-    # Load GDT and then far return to kernel entry
     lgdtl (GDT_DESCRIPTOR)
-    push $0x08
-    push %eax
-    retf
-
+    ljmp $0x08, $entry_64
 
 # Loop forever
 .global __halt
@@ -199,6 +203,27 @@ __halt:
     cli
     hlt
     jmp __halt
+
+.code64
+entry_64:
+    # Call _init
+    call _init
+
+    # Prepares kernel and returns jump address
+    mov %rbx, %rdi
+    call prepare_kernel_for_jump
+
+    # Save kernel entry address
+    push %rax
+
+    # Call this before jumping away
+    call _fini
+
+    # Restores kernel entry address
+    pop %rax
+
+    # Jump to kernel entry
+    jmp *%rax
 
 .section .bss
 .align 0x1000
@@ -211,6 +236,8 @@ PD:
 PT0:
     .skip 0x1000
 PT1:
+    .skip 0x1000
+PT2:
     .skip 0x1000
 
 # Reserve stack for initial thread

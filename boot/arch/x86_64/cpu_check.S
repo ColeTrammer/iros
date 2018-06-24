@@ -1,4 +1,5 @@
 .section .text
+.code32
 .global supports_longmode
 supports_longmode:
     # Push flags and put them in ecx
@@ -27,7 +28,7 @@ supports_longmode:
 
     # Else print error message and halt
     push $cpuid_no_str
-    call kprint
+    call kprint32
     add $4, %esp
     jmp __halt
 
@@ -42,7 +43,7 @@ cpuid_yes:
 
     # Else print error message and halt
     push $check_function_no_str
-    call kprint
+    call kprint32
     add $4, %esp
     jmp __halt
 
