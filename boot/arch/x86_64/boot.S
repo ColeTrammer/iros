@@ -69,7 +69,7 @@ _start:
     # Initialize the stack
     mov $stack_top, %esp
 
-    # Save eax
+    # Save ebx and eax
     push %ebx
     push %eax
 

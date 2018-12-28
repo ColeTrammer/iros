@@ -6,7 +6,7 @@ SECTIONS
     PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x200000)); 
     . = SEGMENT_START("text-segment", 0x200000) + SIZEOF_HEADERS;
 
-    /* Put multiboot .first, then .text */
+    /* Put .multiboot first, then .text */
     .init :
     {
         *(.multiboot)
