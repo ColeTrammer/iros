@@ -1,2 +1,2 @@
 #!/bin/sh
-echo x86_64-elf # for now does this, can be changed later
+echo x86_64-snfos # for now does this, can be changed later

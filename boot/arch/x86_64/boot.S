@@ -112,30 +112,53 @@ long_mode_yes:
     
     # Set up paging structure by identity mapping the first page table
     # Or all values with 0x03 to mark present and r/w permissions
-    # Write PDP to PML3
-    mov $PDP, %eax
+
+    # Kernel VMA:
+    # 0x FF FF FF F8 00 00 00 00
+    # PML4 Index -> 1023
+    # PDP Index  -> 480
+    # PD Index   -> 0
+    # PT Index   -> 0
+
+    # Write PDP0 to PML4
+    mov $PDP0, %eax
     or $0x03, %eax
     mov %eax, (PML4)
 
-    # Write PD to PDP
-    mov $PD, %eax
+    # Write PDP1 to PML4
+    mov $PDP1, %eax
     or $0x03, %eax
-    mov %eax, (PDP)
+    mov %eax, (PML4 + 511 * 8)
 
-    # Write PT0 to PD
+    # Write PD0 to PDP0
+    mov $PD0, %eax
+    or $0x03, %eax
+    mov %eax, (PDP0)
+
+    # Write PD1 to PDP1
+    mov $PD1, %eax
+    or $0x03, %eax
+    mov %eax, (PDP1 + 480 * 8)
+
+    # Write PT0 to PD0
     mov $PT0, %eax
     or $0x03, %eax
-    mov %eax, (PD)
+    mov %eax, (PD0)
 
-    # Write PT1 to PD
+    # Write PT1 to PD0
     mov $PT1, %eax
     or $0x03, %eax
-    mov %eax, (PD + 8)
+    mov %eax, (PD0 + 1 * 8)
 
-    # Write PT2 to PD
+    # Write PT2 to PD0
     mov $PT2, %eax
     or $0x03, %eax
-    mov %eax, (PD + 16)
+    mov %eax, (PD0 + 2 * 8)    
+
+    # Write PT3 to PD1
+    mov $PT3, %eax
+    or $0x03, %eax
+    mov %eax, (PD1)
 
     # Set up for loop
     mov $PT0, %eax
@@ -150,7 +173,7 @@ add_page_table_entry_0:
     loop add_page_table_entry_0
 
     # Set up for loop
-    and $PT1, %eax
+    mov $PT1, %eax
     mov $0x200003, %edx
     mov $512, %ecx
 
@@ -162,7 +185,7 @@ add_page_table_entry_1:
     loop add_page_table_entry_1
 
     # Set up for loop
-    and $PT2, %eax
+    mov $PT2, %eax
     mov $0x400003, %edx
     mov $512, %ecx
 
@@ -173,16 +196,27 @@ add_page_table_entry_2:
     add $0x08, %eax
     loop add_page_table_entry_2
 
+    # Set up for loop
+    mov $PT3, %eax
+    mov $0x400003, %edx
+    mov $512, %ecx
+add_page_table_entry_3:
+    # Writes identity mapping to throughout page table
+    mov %edx, (%eax)
+    add $0x1000, %edx
+    add $0x08, %eax
+    loop add_page_table_entry_3
+
 enable_paging:
     # Enable cr4.PAE
     mov %cr4, %eax
     or $(1 << 5), %eax
     mov %eax, %cr4
 
-    # Set EFER.LME
+    # Set EFER.LME and EFER.NXE
     mov $0xC0000080, %ecx
     rdmsr
-    or $(1 << 8), %eax
+    or $(1 << 8 | 1 << 11), %eax
     wrmsr
 
     # Set cr3
@@ -225,19 +259,28 @@ entry_64:
     # Jump to kernel entry
     jmp *%rax
 
+    # Loop forever
+    jmp __halt
+
 .section .bss
 .align 0x1000
 PML4:
     .skip 0x1000
-PDP:
+PDP0:
     .skip 0x1000
-PD:
+PDP1:
+    .skip 0x1000
+PD0:
+    .skip 0x1000
+PD1:
     .skip 0x1000
 PT0:
     .skip 0x1000
 PT1:
     .skip 0x1000
 PT2:
+    .skip 0x1000
+PT3:
     .skip 0x1000
 
 # Reserve stack for initial thread
