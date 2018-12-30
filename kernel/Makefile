@@ -41,6 +41,7 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 display/terminal.o \
+interrupts/interrupts.o \
 main/kernel.o
 
 # Lists all objects - includes extra objects needed for standard c programs

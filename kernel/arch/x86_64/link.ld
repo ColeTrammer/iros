@@ -33,7 +33,7 @@ SECTIONS
     .rodata ALIGN(0x1000) : AT(ADDR(.rodata) - KERNEL_VMA)
     {
         PROVIDE(_rod_start = .);
-        *(.rodata*)
+        *(.rodata .rodata.*)
     }
 
     .eh_frame : AT(ADDR(.eh_frame) - KERNEL_VMA)

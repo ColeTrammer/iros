@@ -7,6 +7,7 @@ _start:
 
     call _fini
 
+.global __halt
 __halt:
     cli
     hlt

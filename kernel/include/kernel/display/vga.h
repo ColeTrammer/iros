@@ -1,5 +1,5 @@
-#ifndef _DISPLAY_VGA_H
-#define _DISPLAY_VGA_H 1
+#ifndef _KERNEL_DISPLAY_VGA_H
+#define _KERNEL_DISPLAY_VGA_H 1
 
 #include <stdint.h>
 
@@ -29,4 +29,4 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
-#endif /* _DISPLAY_VGA_H */
+#endif /* _KERNEL_DISPLAY_VGA_H */
