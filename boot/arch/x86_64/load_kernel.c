@@ -58,7 +58,7 @@ void map_kernel_elf(uint64_t kernel_start) {
     uint64_t base = kernel_start + kernel_program_header->p_offset;
     uint64_t end = base + kernel_program_header->p_filesz;
     uint64_t addr = kernel_program_header->p_vaddr;
-    memcpy((void*) 0x400000, (void*) base, (size_t) (end - base)); 
+    memcpy((void*) addr, (void*) base, (size_t) (end - base)); 
 }
 
 uint64_t find_entry(uint64_t kernel_start) {

@@ -7,7 +7,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
+__attribute__((__noreturn__)) 
 void abort();
+
 int atexit(void (*)(void));
 int atoi(const char*);
 void free(void*);

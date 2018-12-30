@@ -37,6 +37,8 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 # Lists objects used in 'free' enviornment
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
+stdio/printf.o \
+stdlib/abort.o \
 string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \

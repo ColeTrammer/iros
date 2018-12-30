@@ -1,4 +1,4 @@
-.section .text
+.section .text.startup
 .global _start
 _start:
     call _init

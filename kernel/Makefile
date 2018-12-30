@@ -40,12 +40,14 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 # Lists kernel objects
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
+display/terminal.o \
 main/kernel.o
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\
 $(ARCHDIR)/crti.o \
 $(ARCHDIR)/crtbegin.o \
+$(ARCHDIR)/crt0.o \
 $(KERNEL_OBJS) \
 $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o
@@ -54,6 +56,7 @@ $(ARCHDIR)/crtn.o
 LINK_LIST=\
 $(ARCHDIR)/crti.o \
 $(ARCHDIR)/crtbegin.o \
+$(ARCHDIR)/crt0.o \
 $(KERNEL_OBJS) \
 $(LIBS) \
 $(ARCHDIR)/crtend.o \

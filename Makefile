@@ -68,3 +68,7 @@ install-headers:
 	for dir in $(HEADER_PROJECTS); do \
 	  $(MAKE) install-headers -C $(ROOT)/$$dir; \
 	done
+
+disassemble: all
+	$(HOST)-objdump -D $(SYSROOT)/boot/boot_loader.o > $(ROOT)/boot_loader.dis
+	$(HOST)-objdump -D $(SYSROOT)/boot/os_2.o > $(ROOT)/kernel.dis
