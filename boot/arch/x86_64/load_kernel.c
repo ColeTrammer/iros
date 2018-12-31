@@ -52,6 +52,14 @@ void *memcpy(void *dest, const void *src, size_t n) {
     return buffer;
 }
 
+void *memset(void *s, int c, size_t n) {
+    unsigned char *buffer = (unsigned char*) s;
+    for (size_t i = 0; i < n; i++) {
+        buffer[i] = (unsigned char) c;
+    }
+    return buffer;
+}
+
 void map_kernel_elf(uint64_t kernel_start) {
     Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr*) kernel_start;
     Elf64_Phdr *kernel_program_header = (Elf64_Phdr*) (kernel_start + kernel_elf_header->e_phoff);
@@ -66,8 +74,32 @@ uint64_t find_entry(uint64_t kernel_start) {
     return kernel_elf_header->e_entry;
 }
 
-uint64_t prepare_kernel_for_jump(uint32_t *multiboot_info) {
+uint64_t get_kernel_size(uint64_t kernel_start) {
+    Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr*) kernel_start;
+    Elf64_Shdr *section_headers = (Elf64_Shdr*) (kernel_start + kernel_elf_header->e_shoff);
+    for (size_t i = 0; i < kernel_elf_header->e_shnum; i++) {
+        if (section_headers[i].sh_addr) {
+            if (section_headers[i].sh_type == 8) {
+                memset((void*) section_headers[i].sh_addr, 0, section_headers[i].sh_size);
+                return section_headers[i].sh_addr - 0xFFFFFFF800000000 + section_headers[i].sh_size;
+            }
+        }
+    }
+    return 0;
+}
+
+struct boot_info {
+    uint64_t kernel_entry;
+    uint64_t kernel_phys_start;
+    uint64_t kernel_phys_end;
+    uint32_t *multiboot_info;
+} __attribute__((packed));
+
+static struct boot_info info;
+
+struct boot_info *prepare_kernel_for_jump(uint32_t *multiboot_info) {
     clear_screen();
+    info.multiboot_info = multiboot_info;
     if (multiboot_info[0] >= 8 && multiboot_info[1] == 0) {
         kprint("Found multiboot information structure.");
         multiboot_info += 2;
@@ -86,7 +118,10 @@ uint64_t prepare_kernel_for_jump(uint32_t *multiboot_info) {
                 while (1);
             }
             map_kernel_elf(mod_start);
-            return find_entry(mod_start);
+            info.kernel_entry = find_entry(mod_start);
+            info.kernel_phys_start = 0x400000;
+            info.kernel_phys_end = info.kernel_phys_start + get_kernel_size(mod_start);
+            return &info;
         }
     } else {
         kprint("Failed.");

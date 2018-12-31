@@ -43,8 +43,10 @@ string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \
 string/memset.o \
+string/strcmp.o \
 string/strcpy.o \
 string/strlen.o \
+string/strncmp.o \
 string/strncpy.o
 
 # Lists objects used in 'hosted' enviornment

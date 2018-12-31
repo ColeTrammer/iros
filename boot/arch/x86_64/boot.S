@@ -250,20 +250,29 @@ entry_64:
     mov %rbx, %rdi
     call prepare_kernel_for_jump
 
-    # Save kernel entry address
+    # Save kernel boot info address
     push %rax
 
     # Call this before jumping away
     call _fini
 
-    # Restores kernel entry address
+    # Restores kernel boot info address
     pop %rax
 
-    # Restores Multiboot2 Address to rdi
-    pop %rdi
+    # Writes Kernel Entry to rbx
+    mov (%rax), %rbx
+
+    # Writes Kernel Phys Start to rdi
+    mov 8(%rax), %rdi
+
+    # Writes Kernel Phys End to rsi
+    mov 16(%rax), %rsi
+
+    # Writes Multiboot2 Address to rdx
+    movq 24(%rax), %rdx
 
     # Jump to kernel entry
-    jmp *%rax
+    jmp *%rbx
 
     # Loop forever
     jmp __halt

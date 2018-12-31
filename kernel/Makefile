@@ -42,7 +42,8 @@ KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 display/terminal.o \
 interrupts/interrupts.o \
-main/kernel.o
+main/kernel.o \
+mem/page_frame_allocator.o
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\

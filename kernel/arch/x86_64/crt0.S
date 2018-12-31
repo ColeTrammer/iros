@@ -2,8 +2,12 @@
 .global _start
 _start:
     push %rdi
+    push %rsi
+    push %rdx
     call _init
     
+    pop %rdx
+    pop %rsi
     pop %rdi
     call kernel_main
 
