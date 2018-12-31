@@ -81,7 +81,7 @@ uint64_t get_kernel_size(uint64_t kernel_start) {
         if (section_headers[i].sh_addr) {
             if (section_headers[i].sh_type == 8) {
                 memset((void*) section_headers[i].sh_addr, 0, section_headers[i].sh_size);
-                return section_headers[i].sh_addr - 0xFFFFFFF800000000 + section_headers[i].sh_size;
+                return section_headers[i].sh_addr - 0xFFFFFF0000000000 + section_headers[i].sh_size;
             }
         }
     }

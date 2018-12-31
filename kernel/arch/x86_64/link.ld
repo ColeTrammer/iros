@@ -1,7 +1,7 @@
 OUTPUT_FORMAT("elf64-x86-64")
 OUTPUT_ARCH(i386:x86-64)
 
-KERNEL_VMA = 0xFFFFFFF800000000;
+KERNEL_VMA = 0xFFFFFF0000000000;
 
 /* Sets first thing to be executed to be start */
 ENTRY(_start)

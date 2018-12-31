@@ -8,9 +8,10 @@
 
 void dump_registers();
 
-void clear_terminal();
+void init_terminal();
 bool kprint(const char *str, size_t len);
 void set_foreground(enum vga_color foreground);
 void set_background(enum vga_color gackground);
+void set_vga_buffer(uint16_t *vga_buffer);
 
 #endif /* _KERNEL_DISPLAY_TERMINAL_H */

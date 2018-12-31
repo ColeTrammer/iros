@@ -128,6 +128,11 @@ long_mode_yes:
     # Write PDP1 to PML4
     mov $PDP1, %eax
     or $0x03, %eax
+    mov %eax, (PML4 + 510 * 8)
+
+    # Write recursive mapping for PML4
+    mov $PML4, %eax
+    or $0x03, %eax
     mov %eax, (PML4 + 511 * 8)
 
     # Write PD0 to PDP0
@@ -138,7 +143,7 @@ long_mode_yes:
     # Write PD1 to PDP1
     mov $PD1, %eax
     or $0x03, %eax
-    mov %eax, (PDP1 + 480 * 8)
+    mov %eax, (PDP1)
 
     # Write PT0 to PD0
     mov $PT0, %eax
