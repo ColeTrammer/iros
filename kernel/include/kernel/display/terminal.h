@@ -6,9 +6,10 @@
 
 #include <kernel/display/vga.h>
 
+void dump_registers();
+
 void clear_terminal();
 bool kprint(const char *str, size_t len);
-void dump_registers();
 void set_foreground(enum vga_color foreground);
 void set_background(enum vga_color gackground);
 

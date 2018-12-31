@@ -243,6 +243,9 @@ entry_64:
     # Call _init
     call _init
 
+    # Saves Multiboot2 Address
+    push %rbx
+
     # Prepares kernel and returns jump address
     mov %rbx, %rdi
     call prepare_kernel_for_jump
@@ -255,6 +258,9 @@ entry_64:
 
     # Restores kernel entry address
     pop %rax
+
+    # Restores Multiboot2 Address to rdi
+    pop %rdi
 
     # Jump to kernel entry
     jmp *%rax
