@@ -35,7 +35,7 @@ int extend_vm_region(struct vm_region *list, uint64_t start, size_t num_pages) {
         list = list->next;
     }
     uint64_t new_end = list->end + num_pages * PAGE_SIZE;
-    if (new_end > list->next->start) {
+    if (list->next != NULL && new_end > list->next->start) {
         return -1; // Indicate there is no room
     }
     list->end = new_end;

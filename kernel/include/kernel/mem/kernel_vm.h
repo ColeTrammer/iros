@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
-extern uint64_t KERNEL_VMA;
+extern void KERNEL_VMA();
+
+#define KERNEL_VM_START ((uint64_t) &KERNEL_VMA)
 
 #endif /* _KERNEL_MEM_KERNE_VM_H */

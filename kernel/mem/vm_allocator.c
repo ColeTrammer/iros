@@ -1,5 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
@@ -12,8 +14,8 @@ static struct vm_region kernel_heap;
 static uint64_t kernel_heap_start;
 
 void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end) {
-    kernel.start = KERNEL_VMA & ~0xFFF;
-    kernel.end = ((KERNEL_VMA + kernel_phys_end - kernel_phys_start) & ~0xFFF) + PAGE_SIZE;
+    kernel.start = KERNEL_VM_START & ~0xFFF;
+    kernel.end = ((KERNEL_VM_START + kernel_phys_end - kernel_phys_start) & ~0xFFF) + PAGE_SIZE;
     kernel.flags = VM_READ | VM_WRITE;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel);
 
@@ -24,10 +26,24 @@ void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end) {
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
 }
 
-void *alloc_pages(size_t n) {
+void *add_vm_pages(size_t n) {
     uint64_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
-    if (!extend_vm_region(kernel_vm_list, kernel_heap_start, n)) {
+    if (extend_vm_region(kernel_vm_list, kernel_heap_start, n) == -1) {
         return NULL; // indicate there is no room
     }
+    for (size_t i = 0; i < n; i++) {
+        map_page(old_end + i * PAGE_SIZE);
+    }
     return (void*) old_end;
+}
+
+void remove_vm_pages(size_t n) {
+    uint64_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
+    if (contract_vm_region(kernel_vm_list, kernel_heap_start, n) == -1) {
+        printf("%s\n", "Error: Removed to much memory");
+        abort();
+    }
+    for (size_t i = 1; i <= n; i++) {
+        unmap_page(old_end - i * PAGE_SIZE);
+    }
 }

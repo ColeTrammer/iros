@@ -5,7 +5,6 @@
 
 #include <kernel/display/terminal.h>
 #include <kernel/interrupts/interrupts.h>
-#include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 

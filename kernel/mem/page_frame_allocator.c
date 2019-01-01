@@ -30,7 +30,7 @@ static void mark_used(uint64_t phys_addr_start, uint64_t length) {
 
 uint64_t get_next_phys_page() {
     for (uint64_t i = 0; i < PAGE_BITMAP_SIZE / sizeof(uint64_t); i++) {
-        if (page_bitmap[i]) {
+        if (~page_bitmap[i]) {
             uint64_t bit_index = i * 8 * sizeof(uint64_t);
             while (get_bit(bit_index)) { bit_index++; }
             set_bit(bit_index, true);
