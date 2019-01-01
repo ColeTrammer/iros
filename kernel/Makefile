@@ -43,7 +43,9 @@ $(KERNEL_ARCH_OBJS) \
 display/terminal.o \
 interrupts/interrupts.o \
 main/kernel.o \
-mem/page_frame_allocator.o
+mem/page_frame_allocator.o \
+mem/vm_allocator.o \
+mem/vm_region.o
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\
