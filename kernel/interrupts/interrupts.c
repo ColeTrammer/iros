@@ -12,9 +12,9 @@ void handle_double_fault() {
     abort();
 }
 
-void handle_page_fault(uint64_t address) {
+void handle_page_fault(uint64_t address, uint64_t error) {
     set_foreground(VGA_COLOR_RED);
-    printf("%s\n", "Page Fault");
+    printf("%s: Error %lX\n", "Page Fault", error);
     printf("Address: %#.16lX\n", address);
     dump_registers();
     abort();

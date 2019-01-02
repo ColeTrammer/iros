@@ -4,6 +4,6 @@
 void init_interrupts();
 
 void handle_double_fault();
-void handle_page_fault(uint64_t address);
+void handle_page_fault(uint64_t address, uint64_t error);
 
 #endif /* _KERNEL_INTERRUPTS_INTERRUPTS_H */

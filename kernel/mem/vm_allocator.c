@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <kernel/display/terminal.h>
+#include <kernel/display/vga.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
@@ -11,6 +13,7 @@
 static struct vm_region *kernel_vm_list;
 static struct vm_region kernel;
 static struct vm_region kernel_heap;
+static struct vm_region vga_buffer;
 static uint64_t kernel_heap_start;
 
 void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end) {
@@ -19,11 +22,19 @@ void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end) {
     kernel.flags = VM_READ | VM_WRITE;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel);
 
-    kernel_heap_start = kernel.end;
-    kernel_heap.start = kernel_heap_start;
+    vga_buffer.start = kernel.end;
+    vga_buffer.end = kernel.end + PAGE_SIZE;
+    vga_buffer.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
+    kernel_vm_list = add_vm_region(kernel_vm_list, &vga_buffer);
+    map_phys_page(VGA_PHYS_ADDR, vga_buffer.start);
+    set_vga_buffer((void*) vga_buffer.start);
+
+    kernel_heap.start = vga_buffer.start + PAGE_SIZE;
     kernel_heap.end = kernel_heap.start;
     kernel_heap.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
+
+    clear_initial_page_mappings();
 }
 
 void *add_vm_pages(size_t n) {

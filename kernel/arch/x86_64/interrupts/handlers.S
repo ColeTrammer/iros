@@ -6,4 +6,5 @@ handle_double_fault_entry:
 .global handle_page_fault_entry
 handle_page_fault_entry:
     mov %cr2, %rdi
+    movq (%rsp), %rsi
     call handle_page_fault
