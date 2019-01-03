@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <kernel/display/terminal.h>
 #include <kernel/display/vga.h>
@@ -29,7 +30,8 @@ void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end) {
     map_phys_page(VGA_PHYS_ADDR, vga_buffer.start);
     set_vga_buffer((void*) vga_buffer.start);
 
-    kernel_heap.start = vga_buffer.start + PAGE_SIZE;
+    kernel_heap_start = vga_buffer.start + PAGE_SIZE;
+    kernel_heap.start = kernel_heap_start;
     kernel_heap.end = kernel_heap.start;
     kernel_heap.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
@@ -45,6 +47,7 @@ void *add_vm_pages(size_t n) {
     for (size_t i = 0; i < n; i++) {
         map_page(old_end + i * PAGE_SIZE);
     }
+    memset((void*) old_end, 0, n * PAGE_SIZE);
     return (void*) old_end;
 }
 

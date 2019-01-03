@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <kernel/display/terminal.h>
 #include <kernel/interrupts/interrupts.h>
