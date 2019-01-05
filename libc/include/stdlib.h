@@ -15,7 +15,7 @@ int atoi(const char*);
 void free(void*);
 char *getenv(const char*);
 void *malloc(size_t);
-void *malloc(size_t, size_t);
+void *calloc(size_t, size_t);
 void *realloc(void*, size_t);
 void free(void*);
 
