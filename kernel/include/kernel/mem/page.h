@@ -9,8 +9,8 @@
 
 void clear_initial_page_mappings();
 
-void map_page(uint64_t virt_addr);
-void map_phys_page(uint64_t phys_addr, uint64_t virt_addr);
-void unmap_page(uint64_t virt_addr);
+void map_page(uintptr_t virt_addr);
+void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr);
+void unmap_page(uintptr_t virt_addr);
 
 #endif /* _KERNEL_MEM_PAGE_H */

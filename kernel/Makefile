@@ -26,6 +26,7 @@ INCLUDEDIR?=$(PREFIX)/usr/include
 
 # Include architecture specific options
 ARCHDIR=arch/$(HOSTARCH)
+HALDIR=hal/$(HOSTARCH)
 include $(ARCHDIR)/make.config
 
 # Sets default link script location if not set by arch's make config
@@ -41,7 +42,7 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 display/terminal.o \
-interrupts/interrupts.o \
+irqs/handlers.o \
 main/kernel.o \
 mem/page_frame_allocator.o \
 mem/vm_allocator.o \

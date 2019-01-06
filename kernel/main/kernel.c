@@ -5,13 +5,16 @@
 #include <stdlib.h>
 
 #include <kernel/display/terminal.h>
-#include <kernel/interrupts/interrupts.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 
-void kernel_main(uint64_t kernel_phys_start, uint64_t kernel_phys_end, uint32_t *multiboot_info) {
+#include <hal/hal.h>
+
+void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uint32_t *multiboot_info) {
     init_terminal();
-    init_interrupts();
+    init_hal();
+    init_irq_handlers();
     init_page_frame_allocator(kernel_phys_start, kernel_phys_end, multiboot_info);
     init_vm_allocator(kernel_phys_start, kernel_phys_end);
 

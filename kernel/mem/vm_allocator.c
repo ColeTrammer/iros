@@ -15,9 +15,9 @@ static struct vm_region *kernel_vm_list;
 static struct vm_region kernel;
 static struct vm_region kernel_heap;
 static struct vm_region vga_buffer;
-static uint64_t kernel_heap_start;
+static uintptr_t kernel_heap_start;
 
-void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end) {
+void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end) {
     kernel.start = KERNEL_VM_START & ~0xFFF;
     kernel.end = ((KERNEL_VM_START + kernel_phys_end - kernel_phys_start) & ~0xFFF) + PAGE_SIZE;
     kernel.flags = VM_READ | VM_WRITE;
@@ -40,7 +40,7 @@ void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end) {
 }
 
 void *add_vm_pages(size_t n) {
-    uint64_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
+    uintptr_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
     if (extend_vm_region(kernel_vm_list, kernel_heap_start, n) == -1) {
         return NULL; // indicate there is no room
     }
@@ -52,7 +52,7 @@ void *add_vm_pages(size_t n) {
 }
 
 void remove_vm_pages(size_t n) {
-    uint64_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
+    uintptr_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
     if (contract_vm_region(kernel_vm_list, kernel_heap_start, n) == -1) {
         printf("%s\n", "Error: Removed to much memory");
         abort();

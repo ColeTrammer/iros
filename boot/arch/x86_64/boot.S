@@ -113,13 +113,6 @@ long_mode_yes:
     # Set up paging structure by identity mapping the first page table
     # Or all values with 0x03 to mark present and r/w permissions
 
-    # Kernel VMA:
-    # 0x FF FF FF F8 00 00 00 00
-    # PML4 Index -> 1023
-    # PDP Index  -> 480
-    # PD Index   -> 0
-    # PT Index   -> 0
-
     # Write PDP0 to PML4
     mov $PDP0, %eax
     or $0x03, %eax

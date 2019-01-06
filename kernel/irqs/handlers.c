@@ -3,7 +3,13 @@
 
 #include <kernel/display/vga.h>
 #include <kernel/display/terminal.h>
-#include <kernel/interrupts/interrupts.h>
+#include <kernel/irqs/handlers.h>
+#include <hal/irqs.h>
+
+void init_irq_handlers() {
+    register_irq_handler(&handle_double_fault_entry, 8);
+    register_irq_handler(&handle_page_fault_entry, 14);
+}
 
 void handle_double_fault() {
     set_foreground(VGA_COLOR_RED);
@@ -12,7 +18,7 @@ void handle_double_fault() {
     abort();
 }
 
-void handle_page_fault(uint64_t address, uint64_t error) {
+void handle_page_fault(uintptr_t address, uintptr_t error) {
     set_foreground(VGA_COLOR_RED);
     printf("%s: Error %lX\n", "Page Fault", error);
     printf("Address: %#.16lX\n", address);

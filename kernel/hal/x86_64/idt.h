@@ -1,9 +1,9 @@
-#ifndef _ARCH_X86_64_IDT_H
-#define _ARCH_X86_64_IDT_H 1
+#ifndef _HAL_X86_64_IDT_H
+#define _HAL_X86_64_IDT_H 1
 
 #include <stdint.h>
 
-#define NUM_INTERRUPTS 256
+#define NUM_IRQS 256
 
 struct idt_entry {
     uint16_t addr_low;
@@ -23,6 +23,7 @@ static inline void load_idt(struct idt_descriptor descriptor) {
     asm ( "lidtq %0" : : "m"(descriptor) );
 }
 
-void add_idt_entry(struct idt_entry *idt, void *function, int interrupt_number);
+void add_idt_entry(struct idt_entry *idt, void *handler, unsigned int irq);
+void remove_idt_entry(struct idt_entry *idt, unsigned int irq);
 
-#endif /* _ARCH_X86_64_IDT_H */
+#endif /* _HAL_X86_64_IDT_H */

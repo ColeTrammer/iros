@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void init_vm_allocator(uint64_t kernel_phys_start, uint64_t kernel_phys_end);
+void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end);
 
 void *add_vm_pages(size_t n);
 void remove_vm_pages(size_t n);

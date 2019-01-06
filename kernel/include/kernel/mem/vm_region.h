@@ -5,8 +5,8 @@
 #include <stddef.h>
 
 struct vm_region {
-    uint64_t start;
-    uint64_t end;
+    uintptr_t start;
+    uintptr_t end;
 
 #define VM_READ (1 << 0)
 #define VM_WRITE (1 << 2)
@@ -18,9 +18,9 @@ struct vm_region {
 };
 
 struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add);
-struct vm_region *free_vm_region(struct vm_region *list, uint64_t start);
-struct vm_region *get_vm_region(struct vm_region *list, uint64_t start);
-int extend_vm_region(struct vm_region *list, uint64_t start, size_t num_pages);
-int contract_vm_region(struct vm_region *list, uint64_t start, size_t num_pages);
+struct vm_region *free_vm_region(struct vm_region *list, uintptr_t start);
+struct vm_region *get_vm_region(struct vm_region *list, uintptr_t start);
+int extend_vm_region(struct vm_region *list, uintptr_t start, size_t num_pages);
+int contract_vm_region(struct vm_region *list, uintptr_t start, size_t num_pages);
 
 #endif /* _KERNEL_MEM_VM_REGION_H */

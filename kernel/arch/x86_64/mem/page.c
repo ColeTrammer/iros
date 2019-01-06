@@ -15,7 +15,7 @@ static inline void invlpg(uint64_t addr) {
     asm volatile( "invlpg (%0)" : : "b"(addr) : "memory" );
 }
 
-static uint64_t get_phys_addr(uint64_t virt_addr) {
+static uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -34,7 +34,7 @@ static bool all_empty(uint64_t *page) {
     return true;
 }
 
-static void do_unmap_page(uint64_t virt_addr, bool free_phys) {
+static void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -53,28 +53,28 @@ static void do_unmap_page(uint64_t virt_addr, bool free_phys) {
 
     if (all_empty(pt)) {
         if (free_phys) {
-            free_phys_page(get_phys_addr((uint64_t) pt));
+            free_phys_page(get_phys_addr((uintptr_t) pt));
         }
         pd[pd_offset] = 0;
     }
 
     if (all_empty(pd)) {
         if (free_phys) {
-            free_phys_page(get_phys_addr((uint64_t) pd));
+            free_phys_page(get_phys_addr((uintptr_t) pd));
         }
         pdp[pdp_offset] = 0;
     }
 
     if (all_empty(pdp)) {
         if (free_phys) {
-            free_phys_page(get_phys_addr((uint64_t) pdp));
+            free_phys_page(get_phys_addr((uintptr_t) pdp));
         }
         pml4[pml4_offset] = 0;
     }
 }
 
 void clear_initial_page_mappings() {
-    for (uint64_t i = 0; i < 0x600000; i += PAGE_SIZE) {
+    for (size_t i = 0; i < 0x600000; i += PAGE_SIZE) {
         do_unmap_page(i, false);
     }
 }
@@ -83,7 +83,7 @@ void map_page(uint64_t virt_addr) {
     map_phys_page(get_next_phys_page(), virt_addr);
 }
 
-void map_phys_page(uint64_t phys_addr, uint64_t virt_addr) {
+void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -115,6 +115,6 @@ void map_phys_page(uint64_t phys_addr, uint64_t virt_addr) {
     *pt_entry = phys_addr | 0x03;
 }
 
-void unmap_page(uint64_t virt_addr) {
+void unmap_page(uintptr_t virt_addr) {
     do_unmap_page(virt_addr, true);
 }
