@@ -8,6 +8,7 @@ ROOT?=$(CURDIR)
 # Sets directories for output based on defaults, and exports if needed
 SYSROOT=$(ROOT)/sysroot
 ISODIR?=$(ROOT)/isodir
+export BUILDDIR?=$(ROOT)/build
 export DESTDIR?=$(SYSROOT)
 
 # Default host is given by script
@@ -28,7 +29,7 @@ all: os_2.iso
 # Makes iso - headers must be installed first, then each PROJECT
 # Makes iso by creating a directory with kernel image and grub.cfg,
 # then calling grub-mkrescue appropriately
-os_2.iso: install-headers $(PROJECTS)
+os_2.iso: install-sources install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
 	mkdir -p $(ISODIR)/modules
 	$(OBJCOPY) -S $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot/boot_loader.o
@@ -50,17 +51,20 @@ kernel: libc
 clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
+	rm -rf $(BUILDDIR)
 	rm -f $(ROOT)/kernel.dis
 	rm -f $(ROOT)/boot_loader.dis
 	rm -f $(ROOT)/debug.log
 	rm -f $(ROOT)/os_2.iso
-	for dir in $(PROJECTS); do \
-	  $(MAKE) clean -C $(ROOT)/$$dir; \
-	done
 
 .PHONY: run
-run: all
+run:
 	$(ROOT)/qemu.sh
+
+.PHONY: install-sources
+install-sources:
+	mkdir -p $(BUILDDIR)
+	find . \( -path $(BUILDIR) -o -path $(SYSROOT) \) -prune -o \( -name '*.c' -o -name '*.h' -o -name '*.S' \) -exec cp --preserve=timestamps --parents \{\} $(BUILDDIR) \;
 
 # Installs headers by calling each project's install-headers
 .PHONY: install-headers

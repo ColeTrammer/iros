@@ -42,30 +42,30 @@ $(BOOT_LOADER_ARCH_OBJS) \
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
+$(BUILDDIR)/boot/$(ARCHDIR)/crti.o \
+$(BUILDDIR)/boot/$(ARCHDIR)/crtbegin.o \
 $(BOOT_LOADER_OBJS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o
+$(BUILDDIR)/boot/$(ARCHDIR)/crtend.o \
+$(BUILDDIR)/boot/$(ARCHDIR)/crtn.o
 
 # Lists all objects and libs in proper order
 LINK_LIST=\
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
+$(BUILDDIR)/boot/$(ARCHDIR)/crti.o \
+$(BUILDDIR)/boot/$(ARCHDIR)/crtbegin.o \
 $(BOOT_LOADER_OBJS) \
 $(LIBS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o
+$(BUILDDIR)/boot/$(ARCHDIR)/crtend.o \
+$(BUILDDIR)/boot/$(ARCHDIR)/crtn.o
 
 .PHONY: all
-all: boot_loader.o
+all: $(BUILDDIR)/boot/boot_loader.o
 
 # Makes kernel from link script with objects to link
-boot_loader.o: $(OBJS) $(LINK_SCRIPT)
+$(BUILDDIR)/boot/boot_loader.o: $(OBJS) $(LINK_SCRIPT)
 	$(CC) -T $(LINK_SCRIPT) -o $@ $(CFLAGS) $(LDFLAGS) $(LINK_LIST)
 
 # Gets gcc's ctrbegin and crtend by asking for its path and copying it to where we want
-$(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
+$(BUILDDIR)/boot/$(ARCHDIR)/crtbegin.o $(BUILDDIR)/boot/$(ARCHDIR)/crtend.o:
 	cp `$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` $@
 
 # Builds any .o file from its .c or .S counterpart
@@ -86,7 +86,7 @@ clean:
 
 install: install-boot-loader
 
-install-boot-loader: boot_loader.o
+install-boot-loader: $(BUILDDIR)/boot/boot_loader.o
 	mkdir -p $(DESTDIR)$(BOOTDIR)
 	cp --preserve=timestamps $< $(DESTDIR)$(BOOTDIR)
 

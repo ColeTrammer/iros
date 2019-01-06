@@ -1,6 +1,7 @@
 # Project Specific
 sysroot/
 isodir/
+build/
 *.bin
 *.iso
 *.dis

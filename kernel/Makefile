@@ -41,42 +41,42 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 # Lists kernel objects
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
-display/terminal.o \
-irqs/handlers.o \
-main/kernel.o \
-mem/page_frame_allocator.o \
-mem/vm_allocator.o \
-mem/vm_region.o
+$(BUILDDIR)/kernel/display/terminal.o \
+$(BUILDDIR)/kernel/irqs/handlers.o \
+$(BUILDDIR)/kernel/main/kernel.o \
+$(BUILDDIR)/kernel/mem/page_frame_allocator.o \
+$(BUILDDIR)/kernel/mem/vm_allocator.o \
+$(BUILDDIR)/kernel/mem/vm_region.o
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
-$(ARCHDIR)/crt0.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crti.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crtbegin.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crt0.o \
 $(KERNEL_OBJS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o
+$(BUILDDIR)/kernel/$(ARCHDIR)/crtend.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crtn.o
 
 # Lists all objects and libs in proper order
 LINK_LIST=\
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
-$(ARCHDIR)/crt0.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crti.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crtbegin.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crt0.o \
 $(KERNEL_OBJS) \
 $(LIBS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o
+$(BUILDDIR)/kernel/$(ARCHDIR)/crtend.o \
+$(BUILDDIR)/kernel/$(ARCHDIR)/crtn.o
 
 .PHONY: all
-all: os_2.o
+all: $(BUILDDIR)/kernel/os_2.o
 
 # Makes kernel from link script with objects to link
-os_2.o: $(OBJS) $(LINK_SCRIPT)
+$(BUILDDIR)/kernel/os_2.o: $(OBJS) $(LINK_SCRIPT)
 	$(CC) -T $(LINK_SCRIPT) -o $@ $(CFLAGS) $(LDFLAGS) $(LINK_LIST)
 
 # Gets gcc's ctrbegin and crtend by asking for its path and copying it to where we want
-$(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
-	cp `$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` $@
+$(BUILDDIR)/kernel/$(ARCHDIR)/crtbegin.o $(BUILDDIR)/kernel/$(ARCHDIR)/crtend.o:
+	cp --preserve=timestamps `$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` $@
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
 %.o: %.c
@@ -102,7 +102,7 @@ install-headers:
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 # Installs kernel via cp
-install-kernel: os_2.o
+install-kernel: $(BUILDDIR)/kernel/os_2.o
 	mkdir -p $(DESTDIR)$(BOOTDIR)
 	cp --preserve=timestamps $< $(DESTDIR)$(BOOTDIR)
 

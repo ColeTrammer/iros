@@ -37,18 +37,18 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 # Lists objects used in 'free' enviornment
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
-stdio/printf.o \
-stdlib/abort.o \
-stdlib/malloc.o \
-string/memcmp.o \
-string/memcpy.o \
-string/memmove.o \
-string/memset.o \
-string/strcmp.o \
-string/strcpy.o \
-string/strlen.o \
-string/strncmp.o \
-string/strncpy.o
+$(BUILDDIR)/libc/stdio/printf.o \
+$(BUILDDIR)/libc/stdlib/abort.o \
+$(BUILDDIR)/libc/stdlib/malloc.o \
+$(BUILDDIR)/libc/string/memcmp.o \
+$(BUILDDIR)/libc/string/memcpy.o \
+$(BUILDDIR)/libc/string/memmove.o \
+$(BUILDDIR)/libc/string/memset.o \
+$(BUILDDIR)/libc/string/strcmp.o \
+$(BUILDDIR)/libc/string/strcpy.o \
+$(BUILDDIR)/libc/string/strlen.o \
+$(BUILDDIR)/libc/string/strncmp.o \
+$(BUILDDIR)/libc/string/strncpy.o
 
 # Lists objects used in 'hosted' enviornment
 HOSTEDOBJS=\
@@ -63,16 +63,16 @@ $(HOSTEDOBJS)
 LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 
 # List of binaries to be created
-BINARIES=libc.a libk.a
+BINARIES=$(BUILDDIR)/libc/libc.a $(BUILDDIR)/libc/libk.a
 
 .PHONY: all
 all: $(BINARIES)
 
 # Makes library file from objs using AR
-libc.a: $(OBJS)
+$(BUILDDIR)/libc/libc.a: $(OBJS)
 	$(AR) rcs $@ $^
 
-libk.a: $(LIBK_OBJS)
+$(BUILDDIR)/libc/libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $^
 
 # Makes object file from any .c or .S file
