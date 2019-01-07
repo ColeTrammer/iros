@@ -8,12 +8,20 @@
 
 void init_irq_handlers() {
     register_irq_handler(&handle_double_fault_entry, 8);
+    register_irq_handler(&handle_general_protection_fault_entry, 13);
     register_irq_handler(&handle_page_fault_entry, 14);
 }
 
 void handle_double_fault() {
     set_foreground(VGA_COLOR_RED);
     printf("%s\n", "Double Fault");
+    dump_registers();
+    abort();
+}
+
+void handle_general_protection_fault(uintptr_t error) {
+    set_foreground(VGA_COLOR_RED);
+    printf("%s: Errpr %lX\n", "General Protection Fault", error);
     dump_registers();
     abort();
 }

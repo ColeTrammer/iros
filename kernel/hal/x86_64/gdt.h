@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define GDT_ENTRIES 3
+#define GDT_ENTRIES 4
 
 #define CS_OFFSET 1
 #define DATA_OFFSET 2

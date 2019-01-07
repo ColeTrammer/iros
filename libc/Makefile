@@ -101,7 +101,7 @@ install: install-headers install-libs install-raw-objs
 # Installs headers
 install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	cp -R --preserve=timestamps -u include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 # Installs libs
 install-libs: $(BINARIES)

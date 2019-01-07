@@ -238,6 +238,14 @@ __halt:
 
 .code64
 entry_64:
+    # Segment registers
+    mov $0x0, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+    mov %ax, %ss
+
     # Call _init
     call _init
 

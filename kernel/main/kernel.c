@@ -17,6 +17,9 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uint32_
     init_irq_handlers();
     init_page_frame_allocator(kernel_phys_start, kernel_phys_end, multiboot_info);
     init_vm_allocator(kernel_phys_start, kernel_phys_end);
+    init_drivers();
+
+    enable_interrupts();
 
     while (1);
 }

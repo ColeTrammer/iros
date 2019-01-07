@@ -6,6 +6,7 @@ build/
 *.iso
 *.dis
 *.log
+*.img
 
 # GDB
 .gdbinit

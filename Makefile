@@ -19,7 +19,7 @@ HOST?=$(DEFAULT_HOST)
 HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 
 # Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
-export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) # -isystem=$(SYSROOT)/usr/include
+export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include
 export AR:=$(HOST)-ar
 export OBJCOPY:=$(HOST)-objcopy
 
@@ -36,7 +36,7 @@ os_2.iso: install-sources install-headers $(PROJECTS)
 	$(OBJCOPY) -S $(SYSROOT)/boot/os_2.o $(ISODIR)/modules/os_2.o
 	cp $(ROOT)/grub.cfg $(ISODIR)/boot/grub
 	grub-file --is-x86-multiboot2 $(ISODIR)/boot/boot_loader.o
-	grub-mkrescue -o $(ROOT)/os_2.iso $(ISODIR)
+	grub-mkrescue -o $@ $(ISODIR)
 
 # Makes project by calling its Makefile
 .PHONY: $(PROJECTS)
@@ -64,7 +64,7 @@ run:
 .PHONY: install-sources
 install-sources:
 	mkdir -p $(BUILDDIR)
-	find . \( -path $(BUILDIR) -o -path $(SYSROOT) \) -prune -o \( -name '*.c' -o -name '*.h' -o -name '*.S' \) -exec cp --preserve=timestamps --parents \{\} $(BUILDDIR) \;
+	find . \( -path $(BUILDIR) -o -path $(SYSROOT) \) -prune -o \( -name '*.c' -o -name '*.h' -o -name '*.S' \) -exec cp --preserve=timestamps --parents -u \{\} $(BUILDDIR) \;
 
 # Installs headers by calling each project's install-headers
 .PHONY: install-headers

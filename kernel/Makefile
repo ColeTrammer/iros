@@ -99,7 +99,7 @@ install: install-headers install-kernel
 # Installs headers by copying recursively
 install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	cp -R --preserve=timestamps -u include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 # Installs kernel via cp
 install-kernel: $(BUILDDIR)/kernel/os_2.o
