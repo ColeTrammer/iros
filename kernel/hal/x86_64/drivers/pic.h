@@ -31,4 +31,6 @@ void init_pic();
 
 void pic_generic_handler_entry();
 
+void register_irq_line_handler(void (*handler)(void), unsigned int irq_line);
+
 #endif /* _HAL_X86_64_DRIVERS_PIC_H */

@@ -4,6 +4,7 @@
 #include "gdt.h"
 
 #include "drivers/pic.h"
+#include "drivers/fdc.h"
 
 void init_hal() {
     init_gdt();
@@ -12,6 +13,7 @@ void init_hal() {
 
 void init_drivers() {
     init_pic();
+    init_fdc();
 }
 
 void enable_interrupts() {

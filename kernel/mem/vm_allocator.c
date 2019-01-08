@@ -36,7 +36,7 @@ void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end) {
     kernel_heap.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
 
-    clear_initial_page_mappings();
+    // clear_initial_page_mappings();
 }
 
 void *add_vm_pages(size_t n) {

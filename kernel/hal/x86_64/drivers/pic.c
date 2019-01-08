@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <hal/irqs.h>
 
@@ -78,6 +79,16 @@ static uint16_t get_isr() {
     return get_irq_reg(PIC_READ_ISR);
 }
 
+static void (**handlers)(void);
+
+void register_irq_line_handler(void (*handler)(void), unsigned int irq_line) {
+    if (irq_line < 2 * PIC_IRQS) {
+        handlers[irq_line] = handler;
+    } else {
+        printf("Invalid IRQ Line Requested: %u\n", irq_line);
+    }
+}
+
 void pic_generic_handler() {
     unsigned int irq_line = 0;
     uint16_t isr = get_isr();
@@ -88,6 +99,9 @@ void pic_generic_handler() {
         }
     }
     printf("Recieved Interrupt on IRQ Line: %u\n", irq_line);
+    if (handlers[irq_line] != NULL) {
+        handlers[irq_line]();
+    }
     sendEOI(irq_line);
 }
 
@@ -102,4 +116,5 @@ void init_pic() {
     for (unsigned int i = PIC_IRQ_OFFSET; i < PIC_IRQ_OFFSET + 2 * PIC_IRQS; i++) {
         register_irq_handler(&pic_generic_handler_entry, i);
     }
+    handlers = calloc(2 * PIC_IRQS, sizeof(void (*)(void)));
 }
