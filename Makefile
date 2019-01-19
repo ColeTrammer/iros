@@ -64,7 +64,10 @@ run:
 .PHONY: install-sources
 install-sources:
 	mkdir -p $(BUILDDIR)
-	find . \( -path $(BUILDIR) -o -path $(SYSROOT) \) -prune -o \( -name '*.c' -o -name '*.h' -o -name '*.S' \) -exec cp --preserve=timestamps --parents -u \{\} $(BUILDDIR) \;
+	cd $(ROOT) \
+	for dir in $(PROJECTS); do \
+	  find ./$$dir \( -name '*.c' -o -name '*.h' -o -name '*.S' \) -exec cp --preserve=timestamps --parents -u \{\} $(BUILDDIR) \;; \
+	done
 
 # Installs headers by calling each project's install-headers
 .PHONY: install-headers

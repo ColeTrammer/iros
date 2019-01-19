@@ -9,7 +9,7 @@
 static volatile bool has_been_interrupted = false;
 
 #define wait_for_interrupt() \
-    has_been_interrupted = 0; \
+    has_been_interrupted = false; \
     while (!has_been_interrupted);
 
 void handle_fdc_interrupt() {
