@@ -44,9 +44,10 @@ void free_phys_page(uintptr_t phys_addr) {
     set_bit(phys_addr / PAGE_SIZE, false);
 }
 
-void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uint32_t *multiboot_info) {
+void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start, uintptr_t initrd_phys_end, uint32_t *multiboot_info) {
     mark_used(0, 0x100000); // assume none of this area is available
     mark_used(kernel_phys_start, kernel_phys_end - kernel_phys_start);
+    mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);
     uint32_t *data = multiboot_info + 2;
     while (data < multiboot_info + multiboot_info[0] / sizeof(uint32_t)) {
         if (data[0] == 6) {

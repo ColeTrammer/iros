@@ -9,8 +9,12 @@ _start:
     push %rdi
     push %rsi
     push %rdx
+    push %rcx
+    push %r8
     call _init
     
+    pop %r8
+    pop %rcx
     pop %rdx
     pop %rsi
     pop %rdi

@@ -92,6 +92,8 @@ struct boot_info {
     uint64_t kernel_entry;
     uint64_t kernel_phys_start;
     uint64_t kernel_phys_end;
+    uint64_t initrd_phys_start;
+    uint64_t initrd_phys_end;
     uint32_t *multiboot_info;
 } __attribute__((packed));
 
@@ -103,11 +105,22 @@ struct boot_info *prepare_kernel_for_jump(uint32_t *multiboot_info) {
     if (multiboot_info[0] >= 8 && multiboot_info[1] == 0) {
         kprint("Found multiboot information structure.");
         multiboot_info += 2;
+
         while (multiboot_info[0] != MODULES_TAG_TYPE || !strequals((char*) &multiboot_info[4], "kernel")) {
+            if (multiboot_info[0] == MODULES_TAG_TYPE && strequals((char*) &multiboot_info[4], "initrd")) {
+                info.initrd_phys_start = (uint64_t) multiboot_info[2];
+                info.initrd_phys_end = (uint64_t) multiboot_info[3];
+            }
+
             multiboot_info = (uint32_t*) ((uint64_t) multiboot_info + multiboot_info[1]);
             if ((uint64_t) multiboot_info % 8 != 0) {
                 multiboot_info = (uint32_t*) (((uint64_t) multiboot_info & ~0x7) + 8);
             }
+        }
+
+        if (info.initrd_phys_start == 0 || info.initrd_phys_end == 0) {
+            kprint("Failed to find initrd.");
+            while (1);
         }
 
         kprint("Found kernel.");

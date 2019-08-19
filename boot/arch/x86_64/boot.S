@@ -274,8 +274,14 @@ entry_64:
     # Writes Kernel Phys End to rsi
     mov 16(%rax), %rsi
 
-    # Writes Multiboot2 Address to rdx
-    movq 24(%rax), %rdx
+    # Writes Initrd Phys Start to rdx
+    mov 24(%rax), %rdx
+
+    # Writes Initrd Phys End to rcx
+    mov 32(%rax), %rcx
+
+    # Writes Multiboot2 Address to r8
+    movq 40(%rax), %r8
 
     # Jump to kernel entry
     jmp *%rbx

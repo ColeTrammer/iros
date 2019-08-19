@@ -6,6 +6,8 @@
 #include "vfile.h"
 #include "file_system.h"
 
+void init_fs_manager();
+
 VFILE *open_file(const char *filename);
 void close_file(VFILE *file);
 

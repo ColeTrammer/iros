@@ -7,7 +7,7 @@
 
 #define PAGE_BITMAP_SIZE (PAGE_SIZE * 32)
 
-void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uint32_t *multiboot_info);
+void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start, uintptr_t initrd_phys_end, uint32_t *multiboot_info);
 uintptr_t get_next_phys_page();
 void free_phys_page(uintptr_t phys_addr);
 

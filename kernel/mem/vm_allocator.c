@@ -15,22 +15,31 @@ static struct vm_region *kernel_vm_list;
 static struct vm_region kernel;
 static struct vm_region kernel_heap;
 static struct vm_region vga_buffer;
+static struct vm_region initrd;
 static uintptr_t kernel_heap_start;
 
-void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end) {
+void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     kernel.start = KERNEL_VM_START & ~0xFFF;
     kernel.end = ((KERNEL_VM_START + kernel_phys_end - kernel_phys_start) & ~0xFFF) + PAGE_SIZE;
     kernel.flags = VM_READ | VM_WRITE;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel);
 
     vga_buffer.start = kernel.end;
-    vga_buffer.end = kernel.end + PAGE_SIZE;
+    vga_buffer.end = vga_buffer.start + PAGE_SIZE;
     vga_buffer.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
     kernel_vm_list = add_vm_region(kernel_vm_list, &vga_buffer);
     map_phys_page(VGA_PHYS_ADDR, vga_buffer.start);
     set_vga_buffer((void*) vga_buffer.start);
 
-    kernel_heap_start = vga_buffer.start + PAGE_SIZE;
+    initrd.start = vga_buffer.end;
+    initrd.end = ((initrd.start + initrd_phys_end - initrd_phys_start) & ~0xFFF) + PAGE_SIZE;
+    initrd.flags = VM_READ | VM_NO_EXEC;
+    kernel_vm_list = add_vm_region(kernel_vm_list, &initrd);
+    for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
+        map_phys_page(initrd_phys_start + i, initrd.start + i);
+    }
+
+    kernel_heap_start = initrd.end;
     kernel_heap.start = kernel_heap_start;
     kernel_heap.end = kernel_heap.start;
     kernel_heap.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
