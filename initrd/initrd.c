@@ -27,7 +27,7 @@ int count_files(char *dir) {
     return -1;
 }
 
-int main(char argc, char **argv) {
+int main(int argc, char **argv) {
     if (argc < 3) {
         printf("Usage: %s dir outfile\n", argv[0]);
         return 1;
@@ -106,7 +106,11 @@ int main(char argc, char **argv) {
                 memset(file_name + dir_name_length + strlen(dir->d_name), '\0', MAX_FILE_NAME_LENGTH - strlen(dir->d_name));
                 
                 FILE *current_file = fopen(file_name, "r");
-                fread(buffer, 1, file_lengths[i], current_file);
+                size_t written = fread(buffer, 1, file_lengths[i], current_file);
+                if (written < file_lengths[i]) {
+                   printf("Error reading file: %s\n", file_name);
+                    return 1;
+                }
                 fwrite(buffer, 1, file_lengths[i++], initrd);
                 fclose(current_file);
 

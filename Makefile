@@ -1,5 +1,5 @@
 # Lists all projects
-PROJECTS=kernel libc boot
+PROJECTS=kernel libc boot initrd
 # Lists all projects that need headers installed
 HEADER_PROJECTS=kernel libc
 
@@ -29,12 +29,13 @@ all: os_2.iso
 # Makes iso - headers must be installed first, then each PROJECT
 # Makes iso by creating a directory with kernel image and grub.cfg,
 # then calling grub-mkrescue appropriately
-os_2.iso: install-sources install-headers $(PROJECTS) initrd.img
+os_2.iso: install-sources install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
 	mkdir -p $(ISODIR)/modules
 	$(OBJCOPY) -S $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot/boot_loader.o
 	$(OBJCOPY) -S $(SYSROOT)/boot/os_2.o $(ISODIR)/modules/os_2.o
-	cp $(ROOT)/grub.cfg $(ISODIR)/boot/grub
+	cp --preserve=timestamps $(SYSROOT)/boot/initrd.bin $(ISODIR)/modules/initrd.bin
+	cp --preserve=timestamps $(ROOT)/grub.cfg $(ISODIR)/boot/grub
 	grub-file --is-x86-multiboot2 $(ISODIR)/boot/boot_loader.o
 	grub-mkrescue -o $@ $(ISODIR)
 
@@ -45,9 +46,6 @@ $(PROJECTS):
 
 # Makes the kernel depend on libc
 kernel: libc
-
-initrd.img:
-	
 
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean

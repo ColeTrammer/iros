@@ -103,26 +103,26 @@ struct boot_info *prepare_kernel_for_jump(uint32_t *multiboot_info) {
     if (multiboot_info[0] >= 8 && multiboot_info[1] == 0) {
         kprint("Found multiboot information structure.");
         multiboot_info += 2;
-        while (multiboot_info[0] != MODULES_TAG_TYPE) {
+        while (multiboot_info[0] != MODULES_TAG_TYPE || !strequals((char*) &multiboot_info[4], "kernel")) {
             multiboot_info = (uint32_t*) ((uint64_t) multiboot_info + multiboot_info[1]);
             if ((uint64_t) multiboot_info % 8 != 0) {
                 multiboot_info = (uint32_t*) (((uint64_t) multiboot_info & ~0x7) + 8);
             }
         }
-        if (strequals((char*) &multiboot_info[4], "kernel")) {
-            kprint("Found kernel.");
-            uint64_t mod_start = (uint64_t) multiboot_info[2];
-            uint64_t mod_end = (uint64_t) multiboot_info[3];
-            if (mod_end > 0x600000) {
-                kprint("Module not mapped into memory.");
-                while (1);
-            }
-            map_kernel_elf(mod_start);
-            info.kernel_entry = find_entry(mod_start);
-            info.kernel_phys_start = 0x400000;
-            info.kernel_phys_end = info.kernel_phys_start + get_kernel_size(mod_start);
-            return &info;
+
+        kprint("Found kernel.");
+        uint64_t mod_start = (uint64_t) multiboot_info[2];
+        uint64_t mod_end = (uint64_t) multiboot_info[3];
+        if (mod_end > 0x600000) {
+            kprint("Module not mapped into memory.");
+            while (1);
         }
+        map_kernel_elf(mod_start);
+        info.kernel_entry = find_entry(mod_start);
+        info.kernel_phys_start = 0x400000;
+        info.kernel_phys_end = info.kernel_phys_start + get_kernel_size(mod_start);
+
+        return &info;
     } else {
         kprint("Failed.");
     }
