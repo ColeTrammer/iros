@@ -21,14 +21,14 @@ BOOTDIR?=$(EXEC_PREFIX)/boot
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\
-initrd.o
+$(BUILDDIR)/initrd/initrd.o
 
 .PHONY: all
-all: initrd.bin
+all: $(BUILDDIR)/initrd/initrd.bin
 
 # Builds initrd.img from generated tool
-initrd.bin: initrd.o
-	./$< files $@
+$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o
+	$< files $@
 
 # Builds any .o file from its .c, and generates its makefile dependencies with -MD
 %.o: %.c
@@ -46,7 +46,7 @@ clean:
 install: install-initrd
 
 # Installs initrd via cp
-install-initrd: initrd.bin
+install-initrd: $(BUILDDIR)/initrd/initrd.bin
 	mkdir -p $(DESTDIR)$(BOOTDIR)
 	cp --preserve=timestamps $< $(DESTDIR)$(BOOTDIR)
 
