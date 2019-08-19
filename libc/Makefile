@@ -38,6 +38,7 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
 $(BUILDDIR)/libc/stdio/printf.o \
+$(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
 $(BUILDDIR)/libc/stdlib/malloc.o \
 $(BUILDDIR)/libc/string/memcmp.o \

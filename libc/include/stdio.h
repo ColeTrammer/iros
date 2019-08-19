@@ -15,6 +15,7 @@ extern "C" {
 extern FILE* stderr;
 #define stderr stderr
 
+int puts(const char*);
 int printf(const char*, ...);
 
 int fclose(FILE*);
