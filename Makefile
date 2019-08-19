@@ -67,7 +67,7 @@ run:
 .PHONY: install-sources
 install-sources:
 	mkdir -p $(BUILDDIR)
-	cd $(ROOT) \
+	cd $(ROOT); \
 	for dir in $(PROJECTS); do \
 	  find ./$$dir \( -name '*.c' -o -name '*.h' -o -name '*.S' \) -exec cp --preserve=timestamps --parents -u \{\} $(BUILDDIR) \;; \
 	done
