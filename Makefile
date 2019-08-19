@@ -29,7 +29,7 @@ all: os_2.iso
 # Makes iso - headers must be installed first, then each PROJECT
 # Makes iso by creating a directory with kernel image and grub.cfg,
 # then calling grub-mkrescue appropriately
-os_2.iso: install-sources install-headers $(PROJECTS)
+os_2.iso: install-sources install-headers $(PROJECTS) initrd.img
 	mkdir -p $(ISODIR)/boot/grub
 	mkdir -p $(ISODIR)/modules
 	$(OBJCOPY) -S $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot/boot_loader.o
@@ -45,6 +45,9 @@ $(PROJECTS):
 
 # Makes the kernel depend on libc
 kernel: libc
+
+initrd.img:
+	
 
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean
