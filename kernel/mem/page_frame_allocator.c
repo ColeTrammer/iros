@@ -21,7 +21,7 @@ static void set_bit(uintptr_t bit_index, bool value) {
 }
 
 static void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
-    uintptr_t num_pages = length / PAGE_SIZE;
+    uintptr_t num_pages = length / PAGE_SIZE + (length % PAGE_SIZE != 0 ? 1 : 0);
     uintptr_t bit_index_base = phys_addr_start / PAGE_SIZE;
     for (uintptr_t i = 0; i < num_pages; i++) {
         set_bit(bit_index_base + i, true);
@@ -48,13 +48,14 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
     mark_used(0, 0x100000); // assume none of this area is available
     mark_used(kernel_phys_start, kernel_phys_end - kernel_phys_start);
     mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);
+
     uint32_t *data = multiboot_info + 2;
     while (data < multiboot_info + multiboot_info[0] / sizeof(uint32_t)) {
         if (data[0] == 6) {
             uintptr_t *mem = (uintptr_t*) (data + 4);
             while ((uint32_t*) mem < data + data[1] / sizeof(uint32_t)) {
                 if ((uint32_t) mem[2] == 2) {
-                    mark_used(mem[0], mem[1]);
+                    mark_used(mem[0] & ~0xFFF, mem[1]);
                 }
                 mem += data[2] / sizeof(uintptr_t);
             }

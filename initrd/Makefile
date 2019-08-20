@@ -23,11 +23,14 @@ BOOTDIR?=$(EXEC_PREFIX)/boot
 OBJS=\
 $(BUILDDIR)/initrd/initrd.o
 
+# Lists all files included in initrd
+FILES:=$(shell find files)
+
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
 
 # Builds initrd.img from generated tool
-$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o
+$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o $(FILES)
 	$< files $@
 
 # Builds any .o file from its .c, and generates its makefile dependencies with -MD

@@ -1,5 +1,5 @@
 #ifndef _KERNEL_FS_FS_MANAGER_H
-#define _KERNEL_FS_FS_MANAGER_H
+#define _KERNEL_FS_FS_MANAGER_H 1
 
 #include <stddef.h>
 

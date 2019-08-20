@@ -22,11 +22,13 @@ void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, u
     kernel.start = KERNEL_VM_START & ~0xFFF;
     kernel.end = ((KERNEL_VM_START + kernel_phys_end - kernel_phys_start) & ~0xFFF) + PAGE_SIZE;
     kernel.flags = VM_READ | VM_WRITE;
+    kernel.type = VM_KERNEL;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel);
 
     vga_buffer.start = kernel.end;
     vga_buffer.end = vga_buffer.start + PAGE_SIZE;
     vga_buffer.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
+    vga_buffer.type = VM_VGA;
     kernel_vm_list = add_vm_region(kernel_vm_list, &vga_buffer);
     map_phys_page(VGA_PHYS_ADDR, vga_buffer.start);
     set_vga_buffer((void*) vga_buffer.start);
@@ -34,6 +36,7 @@ void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, u
     initrd.start = vga_buffer.end;
     initrd.end = ((initrd.start + initrd_phys_end - initrd_phys_start) & ~0xFFF) + PAGE_SIZE;
     initrd.flags = VM_READ | VM_NO_EXEC;
+    initrd.type = VM_INITRD;
     kernel_vm_list = add_vm_region(kernel_vm_list, &initrd);
     for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
         map_phys_page(initrd_phys_start + i, initrd.start + i);
@@ -43,6 +46,7 @@ void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, u
     kernel_heap.start = kernel_heap_start;
     kernel_heap.end = kernel_heap.start;
     kernel_heap.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
+    kernel_heap.type = VM_KERNEL_HEAP;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
 
     clear_initial_page_mappings();
@@ -56,6 +60,7 @@ void *add_vm_pages(size_t n) {
     for (size_t i = 0; i < n; i++) {
         map_page(old_end + i * PAGE_SIZE);
     }
+    
     memset((void*) old_end, 0, n * PAGE_SIZE);
     return (void*) old_end;
 }
@@ -69,4 +74,8 @@ void remove_vm_pages(size_t n) {
     for (size_t i = 1; i <= n; i++) {
         unmap_page(old_end - i * PAGE_SIZE);
     }
+}
+
+struct vm_region *find_vm_region_by_type(uint64_t type) {
+    return get_vm_region_by_type(kernel_vm_list, type);
 }

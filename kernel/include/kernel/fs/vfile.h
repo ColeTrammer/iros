@@ -1,5 +1,5 @@
 #ifndef _KERNEL_FS_VFILE_H
-#define _KERNEL_FS_VFILE_H
+#define _KERNEL_FS_VFILE_H 1
 
 #include <stdint.h>
 

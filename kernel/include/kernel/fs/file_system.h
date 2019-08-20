@@ -1,5 +1,5 @@
 #ifndef _KERNEL_FS_FILE_SYSTEM_H
-#define _KERNEL_FS_FILE_SYSTEM_H
+#define _KERNEL_FS_FILE_SYSTEM_H 1
 
 #include <stddef.h>
 

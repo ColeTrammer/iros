@@ -24,7 +24,14 @@ struct vm_region *free_vm_region(struct vm_region *list, uintptr_t start) {
 }
 
 struct vm_region *get_vm_region(struct vm_region *list, uintptr_t start) {
-    while (list->start != start) {
+    while (list != NULL && list->start != start) {
+        list = list->next;
+    }
+    return list;
+}
+
+struct vm_region *get_vm_region_by_type(struct vm_region *list, uint64_t type) {
+    while (list != NULL && list->type != type) {
         list = list->next;
     }
     return list;
