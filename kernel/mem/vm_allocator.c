@@ -16,7 +16,6 @@ static struct vm_region kernel;
 static struct vm_region kernel_heap;
 static struct vm_region vga_buffer;
 static struct vm_region initrd;
-static uintptr_t kernel_heap_start;
 
 void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     kernel.start = KERNEL_VM_START & ~0xFFF;
@@ -42,8 +41,7 @@ void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, u
         map_phys_page(initrd_phys_start + i, initrd.start + i);
     }
 
-    kernel_heap_start = initrd.end;
-    kernel_heap.start = kernel_heap_start;
+    kernel_heap.start = initrd.end;
     kernel_heap.end = kernel_heap.start;
     kernel_heap.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
     kernel_heap.type = VM_KERNEL_HEAP;
@@ -53,8 +51,8 @@ void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, u
 }
 
 void *add_vm_pages(size_t n) {
-    uintptr_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
-    if (extend_vm_region(kernel_vm_list, kernel_heap_start, n) == -1) {
+    uintptr_t old_end = get_vm_region(kernel_vm_list, VM_KERNEL_HEAP)->end;
+    if (extend_vm_region(kernel_vm_list, VM_KERNEL_HEAP, n) == -1) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 0; i < n; i++) {
@@ -66,8 +64,8 @@ void *add_vm_pages(size_t n) {
 }
 
 void remove_vm_pages(size_t n) {
-    uintptr_t old_end = get_vm_region(kernel_vm_list, kernel_heap_start)->end;
-    if (contract_vm_region(kernel_vm_list, kernel_heap_start, n) == -1) {
+    uintptr_t old_end = get_vm_region(kernel_vm_list, VM_KERNEL_HEAP)->end;
+    if (contract_vm_region(kernel_vm_list, VM_KERNEL_HEAP, n) == -1) {
         printf("%s\n", "Error: Removed to much memory");
         abort();
     }
@@ -76,6 +74,6 @@ void remove_vm_pages(size_t n) {
     }
 }
 
-struct vm_region *find_vm_region_by_type(uint64_t type) {
-    return get_vm_region_by_type(kernel_vm_list, type);
+struct vm_region *find_vm_region(uint64_t type) {
+    return get_vm_region(kernel_vm_list, type);
 }

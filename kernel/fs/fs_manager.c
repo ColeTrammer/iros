@@ -7,7 +7,7 @@
 #include <kernel/mem/vm_allocator.h>
 
 void init_fs_manager() {
-    struct vm_region *initrd = find_vm_region_by_type(VM_INITRD);
+    struct vm_region *initrd = find_vm_region(VM_INITRD);
     uintptr_t start = initrd->start;
 
     int64_t num_files = *((int64_t*) start);

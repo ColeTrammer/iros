@@ -24,10 +24,9 @@ struct vm_region {
 };
 
 struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add);
-struct vm_region *free_vm_region(struct vm_region *list, uintptr_t start);
-struct vm_region *get_vm_region(struct vm_region *list, uintptr_t start);
-struct vm_region *get_vm_region_by_type(struct vm_region *list, uint64_t type);
-int extend_vm_region(struct vm_region *list, uintptr_t start, size_t num_pages);
-int contract_vm_region(struct vm_region *list, uintptr_t start, size_t num_pages);
+struct vm_region *free_vm_region(struct vm_region *list, uint64_t type);
+struct vm_region *get_vm_region(struct vm_region *list, uint64_t type);
+int extend_vm_region(struct vm_region *list, uint64_t type, size_t num_pages);
+int contract_vm_region(struct vm_region *list, uint64_t type, size_t num_pages);
 
 #endif /* _KERNEL_MEM_VM_REGION_H */

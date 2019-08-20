@@ -14,48 +14,45 @@ struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add
     return list;
 }
 
-struct vm_region *free_vm_region(struct vm_region *list, uintptr_t start) {
+struct vm_region *free_vm_region(struct vm_region *list, uint64_t type) {
     struct vm_region **link = &list;
-    while (*link != NULL && (*link)->start != start) {
+    while (*link != NULL && (*link)->type != type) {
         link = &(*link)->next;
     }
     *link = (*link)->next;
     return list;
 }
 
-struct vm_region *get_vm_region(struct vm_region *list, uintptr_t start) {
-    while (list != NULL && list->start != start) {
-        list = list->next;
-    }
-    return list;
-}
-
-struct vm_region *get_vm_region_by_type(struct vm_region *list, uint64_t type) {
+struct vm_region *get_vm_region(struct vm_region *list, uint64_t type) {
     while (list != NULL && list->type != type) {
         list = list->next;
     }
     return list;
 }
 
-int extend_vm_region(struct vm_region *list, uintptr_t start, size_t num_pages) {
-    while (list->start != start) {
-        list = list->next;
+int extend_vm_region(struct vm_region *list, uint64_t type, size_t num_pages) {
+    list = get_vm_region(list, type);
+    if (list == NULL) {
+        return -1;
     }
+
     uintptr_t new_end = list->end + num_pages * PAGE_SIZE;
     if (list->next != NULL && new_end > list->next->start) {
-        return -1; // Indicate there is no room
+        return -2; // Indicate there is no room
     }
     list->end = new_end;
     return 0;
 }
 
-int contract_vm_region(struct vm_region *list, uintptr_t start, size_t num_pages) {
-    while (list->start != start) {
-        list = list->next;
+int contract_vm_region(struct vm_region *list, uint64_t type, size_t num_pages) {
+    list = get_vm_region(list, type);
+    if (list == NULL) {
+        return -1;
     }
+
     uintptr_t new_end = list->end - num_pages * PAGE_SIZE;
     if (new_end < list->start) {
-        return -1; // Indicate took away too much
+        return -2; // Indicate took away too much
     }
     list->end = new_end;
     return 0;

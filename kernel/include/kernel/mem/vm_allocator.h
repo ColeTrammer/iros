@@ -11,6 +11,6 @@ void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, u
 void *add_vm_pages(size_t n);
 void remove_vm_pages(size_t n);
 
-struct vm_region *find_vm_region_by_type(uint64_t type);
+struct vm_region *find_vm_region(uint64_t type);
 
 #endif /* _KERNEL_MEM_VM_ALLOCATOR_H */
