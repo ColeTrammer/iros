@@ -28,6 +28,7 @@ VFILE *initrd_open(const char *file_name) {
             file->length = entry->length;
             file->flags = FS_FILE;
             file->position = entry->offset;
+            file->device = FS_INITRD_INDEX;
         }
     }
     
