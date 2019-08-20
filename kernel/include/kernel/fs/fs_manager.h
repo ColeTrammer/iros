@@ -6,6 +6,9 @@
 #include "vfile.h"
 #include "file_system.h"
 
+#define MAX_FILE_SYSTEMS 27
+#define FS_INITRD_INDEX (MAX_FILE_SYSTEMS - 1)
+
 void init_fs_manager();
 
 VFILE *open_file(const char *filename);

@@ -6,7 +6,7 @@
 #include "vfile.h"
 
 struct file_system {
-    char name[8];
+    char *name;
     
     VFILE *(*open) (const char *filename);
     void (*close) (VFILE *file);

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <kernel/fs/file_system.h>
+
 #define INITRD_MAX_FILE_NAME_LENGTH 64
 
 struct initrd_file_entry {
@@ -10,5 +12,7 @@ struct initrd_file_entry {
     uint32_t offset;
     uint32_t length;
 } __attribute__((packed));
+
+void init_initrd(struct file_system *fs);
 
 #endif /* _KERNEL_FS_INITRD_H */

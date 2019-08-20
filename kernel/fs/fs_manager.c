@@ -1,22 +1,18 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <kernel/fs/fs_manager.h>
 #include <kernel/fs/initrd.h>
+#include <kernel/fs/file_system.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
 
+static struct file_system *file_systems;
+
 void init_fs_manager() {
-    struct vm_region *initrd = find_vm_region(VM_INITRD);
-    uintptr_t start = initrd->start;
+    file_systems = calloc(MAX_FILE_SYSTEMS, sizeof(struct file_system));
 
-    int64_t num_files = *((int64_t*) start);
-    printf("Num Files: %ld\n", num_files);
-
-    struct initrd_file_entry *entry = (struct initrd_file_entry*) (start + sizeof(int64_t));
-    for (int i = 0; i < num_files; i++) {
-        printf("Name: %s | Off: %#.8X | Size: %#.8X\n", entry->name, entry->offset, entry->length);
-        printf("%s\n", start + entry->offset);
-        entry++;
-    }
+    init_initrd(file_systems + FS_INITRD_INDEX);
+    file_systems[FS_INITRD_INDEX].mount();
 }

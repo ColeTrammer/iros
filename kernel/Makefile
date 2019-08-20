@@ -43,6 +43,7 @@ KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 $(BUILDDIR)/kernel/display/terminal.o \
 $(BUILDDIR)/kernel/fs/fs_manager.o \
+$(BUILDDIR)/kernel/fs/initrd.o \
 $(BUILDDIR)/kernel/irqs/handlers.o \
 $(BUILDDIR)/kernel/main/kernel.o \
 $(BUILDDIR)/kernel/mem/page_frame_allocator.o \
