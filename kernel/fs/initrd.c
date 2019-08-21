@@ -29,6 +29,7 @@ VFILE *initrd_open(const char *file_name) {
             file->flags = FS_FILE;
             file->position = entry->offset;
             file->device = FS_INITRD_INDEX;
+            return file;
         }
     }
     
@@ -56,11 +57,14 @@ void initrd_mount() {
     file_list = (struct initrd_file_entry*) (initrd_start + sizeof(int64_t));
 }
 
-void init_initrd(struct file_system *fs) {
+void init_initrd() {
+    struct file_system *fs = malloc(sizeof(struct file_system));
     fs->name = "initrd";
     fs->open = &initrd_open;
     fs->close = &initrd_close;
     fs->read = &initrd_read;
     fs->write = &initrd_write;
     fs->mount = &initrd_mount;
+
+    load_fs(fs, FS_INITRD_INDEX);
 }

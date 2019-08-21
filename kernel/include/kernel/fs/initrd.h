@@ -13,6 +13,6 @@ struct initrd_file_entry {
     uint32_t length;
 } __attribute__((packed));
 
-void init_initrd(struct file_system *fs);
+void init_initrd();
 
 #endif /* _KERNEL_FS_INITRD_H */
