@@ -21,7 +21,7 @@ static void set_bit(uintptr_t bit_index, bool value) {
 }
 
 static void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
-    uintptr_t num_pages = length / PAGE_SIZE + (length % PAGE_SIZE != 0 ? 1 : 0);
+    uintptr_t num_pages = NUM_PAGES(phys_addr_start, phys_addr_start + length);
     uintptr_t bit_index_base = phys_addr_start / PAGE_SIZE;
     for (uintptr_t i = 0; i < num_pages; i++) {
         set_bit(bit_index_base + i, true);

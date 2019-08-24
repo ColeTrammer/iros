@@ -12,51 +12,69 @@
 #include <kernel/mem/vm_allocator.h>
 
 static struct vm_region *kernel_vm_list;
-static struct vm_region kernel;
+static struct vm_region kernel_text;
+static struct vm_region kernel_rod;
+static struct vm_region kernel_data;
 static struct vm_region kernel_heap;
 static struct vm_region vga_buffer;
 static struct vm_region initrd;
 
-void init_vm_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
-    kernel.start = KERNEL_VM_START & ~0xFFF;
-    kernel.end = ((KERNEL_VM_START + kernel_phys_end - kernel_phys_start) & ~0xFFF) + PAGE_SIZE;
-    kernel.flags = VM_READ | VM_WRITE;
-    kernel.type = VM_KERNEL;
-    kernel_vm_list = add_vm_region(kernel_vm_list, &kernel);
+void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
+    kernel_text.start = KERNEL_VM_START & ~0xFFF;
+    kernel_text.end = kernel_text.start + NUM_PAGES(KERNEL_TEXT_START, KERNEL_TEXT_END) * PAGE_SIZE;
+    kernel_text.flags = VM_GLOBAL;
+    kernel_text.type = VM_KERNEL_TEXT;
+    kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_text);
 
-    vga_buffer.start = kernel.end;
+    kernel_rod.start = kernel_text.end;
+    kernel_rod.end = kernel_rod.start + NUM_PAGES(KERNEL_ROD_START, KERNEL_ROD_END) * PAGE_SIZE;
+    kernel_rod.flags = VM_GLOBAL | VM_NO_EXEC;
+    kernel_rod.type = VM_KERNEL_ROD;
+    kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_rod);
+
+    kernel_data.start = kernel_rod.end;
+    kernel_data.end = kernel_data.start + NUM_PAGES(KERNEL_DATA_START, KERNEL_DATA_END) * PAGE_SIZE;
+    kernel_data.flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC;
+    kernel_data.type = VM_KERNEL_DATA;
+    kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_data);
+
+    vga_buffer.start = kernel_data.end;
     vga_buffer.end = vga_buffer.start + PAGE_SIZE;
-    vga_buffer.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
+    vga_buffer.flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC;
     vga_buffer.type = VM_VGA;
     kernel_vm_list = add_vm_region(kernel_vm_list, &vga_buffer);
-    map_phys_page(VGA_PHYS_ADDR, vga_buffer.start);
+    map_phys_page(VGA_PHYS_ADDR, vga_buffer.start, vga_buffer.flags);
     set_vga_buffer((void*) vga_buffer.start);
 
     initrd.start = vga_buffer.end;
     initrd.end = ((initrd.start + initrd_phys_end - initrd_phys_start) & ~0xFFF) + PAGE_SIZE;
-    initrd.flags = VM_READ | VM_NO_EXEC;
+    initrd.flags = VM_GLOBAL | VM_NO_EXEC;
     initrd.type = VM_INITRD;
     kernel_vm_list = add_vm_region(kernel_vm_list, &initrd);
     for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
-        map_phys_page(initrd_phys_start + i, initrd.start + i);
+        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags);
     }
 
     kernel_heap.start = initrd.end;
     kernel_heap.end = kernel_heap.start;
-    kernel_heap.flags = VM_READ | VM_WRITE | VM_NO_EXEC;
+    kernel_heap.flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC;
     kernel_heap.type = VM_KERNEL_HEAP;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
 
     clear_initial_page_mappings();
+
+    uintptr_t new_structure = create_paging_structure(kernel_vm_list);
+    load_paging_structure(new_structure);
 }
 
 void *add_vm_pages(size_t n) {
-    uintptr_t old_end = get_vm_region(kernel_vm_list, VM_KERNEL_HEAP)->end;
+    struct vm_region *kernel_heap = get_vm_region(kernel_vm_list, VM_KERNEL_HEAP);
+    uintptr_t old_end = kernel_heap->end;
     if (extend_vm_region(kernel_vm_list, VM_KERNEL_HEAP, n) == -1) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 0; i < n; i++) {
-        map_page(old_end + i * PAGE_SIZE);
+        map_page(old_end + i * PAGE_SIZE, kernel_heap->flags);
     }
     
     memset((void*) old_end, 0, n * PAGE_SIZE);

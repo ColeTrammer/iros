@@ -32,7 +32,7 @@ struct metadata {
 #define IS_ALLOCATED(block) ((block)->size & ALLOCATED)
 #define GET_SIZE(block) ((block)->size & ~ALLOCATED)
 
-#define NUM_PAGES(sz) (((sz) - 1) / PAGE_SIZE + 1)
+#define NUM_PAGES_IN_LENGTH(sz) (((sz) - 1) / PAGE_SIZE + 1)
 #define NEW_BLOCK_SIZE(n) (2 * sizeof(struct metadata) + (n))
 #define NEXT_BLOCK(block) ((struct metadata*) (((uintptr_t) (block)) + sizeof(struct metadata) + GET_SIZE((block))))
 #define PREV_BLOCK(block) ((struct metadata*) (((uintptr_t) (block)) - sizeof(struct metadata) - (block)->prev_size))
@@ -56,8 +56,8 @@ void *malloc(size_t n) {
         n++;
     }
     if (!start) {
-        start = sbrk(NUM_PAGES(NEW_BLOCK_SIZE(n)));
-        heap_end = ((uintptr_t) start) + NUM_PAGES(NEW_BLOCK_SIZE(n)) * PAGE_SIZE;
+        start = sbrk(NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)));
+        heap_end = ((uintptr_t) start) + NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)) * PAGE_SIZE;
     }
 
     struct metadata *block = start;
@@ -70,8 +70,8 @@ void *malloc(size_t n) {
     }
 
     if (((uintptr_t) block) + NEW_BLOCK_SIZE(n) > heap_end) {
-        sbrk(NUM_PAGES(((uintptr_t) block) + NEW_BLOCK_SIZE(n) - heap_end));
-        heap_end += NUM_PAGES(((uintptr_t) block) + NEW_BLOCK_SIZE(n) - heap_end) * PAGE_SIZE;
+        sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) block) + NEW_BLOCK_SIZE(n) - heap_end));
+        heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) block) + NEW_BLOCK_SIZE(n) - heap_end) * PAGE_SIZE;
     }
 
     block->size = n;

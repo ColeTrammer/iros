@@ -2,18 +2,31 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
+#include <kernel/mem/vm_region.h>
 
 #define PML4_BASE ((uint64_t*) 0xFFFFFFFFFFFFF000)
 #define PDP_BASE ((uint64_t*) 0xFFFFFFFFFFE00000)
 #define PD_BASE ((uint64_t*) 0xFFFFFFFFC0000000)
 #define PT_BASE ((uint64_t*) 0xFFFFFF8000000000)
 
-static inline void invlpg(uint64_t addr) {
+#define MAX_PML4_ENTRIES (PAGE_SIZE / sizeof(uint64_t))
+
+extern void _temp_page();
+#define TEMP_PAGE ((uint64_t*) &_temp_page)
+
+static inline void invlpg(uintptr_t addr) {
     asm volatile( "invlpg (%0)" : : "b"(addr) : "memory" );
 }
+
+static inline void load_cr3(uintptr_t cr3) {
+    asm( "mov %0, %%rdx\n"\
+         "mov %%rdx, %%cr3\n"
+         : : "m"(cr3) : "rdx" );
+} 
 
 static uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
@@ -79,11 +92,11 @@ void clear_initial_page_mappings() {
     }
 }
 
-void map_page(uint64_t virt_addr) {
-    map_phys_page(get_next_phys_page(), virt_addr);
+void map_page(uintptr_t virt_addr, uint64_t flags) {
+    map_phys_page(get_next_phys_page(), virt_addr, flags);
 }
 
-void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr) {
+void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -112,9 +125,30 @@ void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr) {
     if (*pt_entry & 1) {
         invlpg(virt_addr);
     }
-    *pt_entry = phys_addr | 0x03;
+    *pt_entry = phys_addr | (flags && ((1UL << 63) | 0x86)) | 0x01;
 }
 
 void unmap_page(uintptr_t virt_addr) {
     do_unmap_page(virt_addr, true);
+}
+
+uintptr_t create_paging_structure(struct vm_region *list) {
+    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+    uint64_t *pml4 = TEMP_PAGE;
+
+    for (unsigned int i = 0; i < MAX_PML4_ENTRIES; i++) {
+        pml4[i] = PML4_BASE[i];
+    }
+
+    load_cr3(get_phys_addr((uintptr_t) pml4));
+
+    while (list != NULL) {
+        list = list->next;
+    }
+
+    return (uintptr_t) PML4_BASE;
+}
+
+void load_paging_structure(uintptr_t virt_addr) {
+    load_cr3(get_phys_addr(virt_addr));
 }

@@ -67,6 +67,7 @@ SECTIONS
         PROVIDE(_bss_start = .);
         *(.bss.kernel_stack)
         PROVIDE(_kernel_stack_start = KERNEL_VM_STACK_START - KERNEL_VMA);
+        *(.bss.temp_page)
         *(COMMON)
         *(.bss .bss.*)
         PROVIDE(_bss_end = .);

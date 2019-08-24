@@ -8,16 +8,18 @@ struct vm_region {
     uintptr_t start;
     uintptr_t end;
 
-#define VM_READ (1 << 0)
-#define VM_WRITE (1 << 2)
-#define VM_USER (1 << 3)
-#define VM_NO_EXEC (1 << 4)
+#define VM_WRITE (1UL << 1)
+#define VM_USER (1UL << 2)
+#define VM_GLOBAL (1UL << 8)
+#define VM_NO_EXEC (1UL << 63)
     uint64_t flags;
 
-#define VM_KERNEL (1 << 0)
-#define VM_VGA (1 << 1)
-#define VM_INITRD (1 << 2)
-#define VM_KERNEL_HEAP (1 << 3)
+#define VM_KERNEL_TEXT (1UL << 0)
+#define VM_KERNEL_ROD (1UL << 1)
+#define VM_KERNEL_DATA (1UL << 2)
+#define VM_VGA (1UL << 3)
+#define VM_INITRD (1UL << 4)
+#define VM_KERNEL_HEAP (1UL << 5)
     uint64_t type;
 
     struct vm_region *next;

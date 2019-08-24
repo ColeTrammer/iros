@@ -25,9 +25,9 @@ VFILE *initrd_open(const char *file_name) {
         if (strcmp(file_name, entry[i].name) == 0) {
             VFILE *file = calloc(sizeof(VFILE), 1);
             strcpy(file->name, file_name);
-            file->length = entry->length;
+            file->length = entry[i].length;
             file->flags = FS_FILE;
-            file->position = entry->offset;
+            file->position = entry[i].offset;
             file->device = FS_INITRD_INDEX;
             return file;
         }
