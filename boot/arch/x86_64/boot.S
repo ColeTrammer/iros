@@ -206,9 +206,9 @@ add_page_table_entry_3:
     loop add_page_table_entry_3
 
 enable_paging:
-    # Enable cr4.PAE
+    # Enable cr4.PAE and cr4.PGE
     mov %cr4, %eax
-    or $(1 << 5), %eax
+    or $(1 << 5 | 1 << 7), %eax
     mov %eax, %cr4
 
     # Set EFER.LME and EFER.NXE

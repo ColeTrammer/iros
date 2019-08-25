@@ -33,7 +33,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_rod);
 
     kernel_data.start = kernel_rod.end;
-    kernel_data.end = kernel_data.start + NUM_PAGES(KERNEL_DATA_START, KERNEL_DATA_END) * PAGE_SIZE;
+    kernel_data.end = kernel_data.start + NUM_PAGES(KERNEL_DATA_START, KERNEL_BSS_END) * PAGE_SIZE;
     kernel_data.flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC;
     kernel_data.type = VM_KERNEL_DATA;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_data);

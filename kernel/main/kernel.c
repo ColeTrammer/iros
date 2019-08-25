@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <kernel/display/terminal.h>
 #include <kernel/fs/fs_manager.h>
