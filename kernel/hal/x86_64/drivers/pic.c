@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <hal/irqs.h>
+#include <kernel/hal/irqs.h>
 
 #include "io.h"
 #include "pic.h"

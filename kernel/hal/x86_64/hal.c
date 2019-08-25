@@ -1,5 +1,5 @@
-#include <hal/hal.h>
-#include <hal/irqs.h>
+#include <kernel/hal/hal.h>
+#include <kernel/hal/irqs.h>
 
 #include "gdt.h"
 

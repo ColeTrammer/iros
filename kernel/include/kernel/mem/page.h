@@ -5,6 +5,9 @@
 
 #include <kernel/mem/vm_region.h>
 
+#include <kernel/arch/arch.h>
+#include ARCH_SPECIFIC(mem/page.h)
+
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
 #endif

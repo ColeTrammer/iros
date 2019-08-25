@@ -1,6 +1,6 @@
 #include "idt.h"
 
-#include <hal/irqs.h>
+#include <kernel/hal/irqs.h>
 
 static struct idt_entry idt[NUM_IRQS];
 static struct idt_descriptor idt_descriptor;

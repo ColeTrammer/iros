@@ -4,7 +4,7 @@
 #include <kernel/display/vga.h>
 #include <kernel/display/terminal.h>
 #include <kernel/irqs/handlers.h>
-#include <hal/irqs.h>
+#include <kernel/hal/irqs.h>
 
 void init_irq_handlers() {
     register_irq_handler(&handle_double_fault_entry, 8);

@@ -8,17 +8,7 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_region.h>
 
-#define PML4_BASE ((uint64_t*) 0xFFFFFFFFFFFFF000)
-#define PDP_BASE ((uint64_t*) 0xFFFFFFFFFFE00000)
-#define PD_BASE ((uint64_t*) 0xFFFFFFFFC0000000)
-#define PT_BASE ((uint64_t*) 0xFFFFFF8000000000)
-
-#define MAX_PML4_ENTRIES (PAGE_SIZE / sizeof(uint64_t))
-#define MAX_PDP_ENTRIES (MAX_PML4_ENTRIES)
-#define MAX_PD_ENTRIES (MAX_PML4_ENTRIES)
-#define MAX_PT_ENTRIES (MAX_PML4_ENTRIES)
-
-#define PAGE_STRUCTURE_FLAGS (0x01UL | VM_WRITE)
+#include <kernel/arch/x86_64/mem/page.h>
 
 extern void _temp_page();
 #define TEMP_PAGE ((uint64_t*) &_temp_page)
@@ -145,7 +135,7 @@ uintptr_t create_paging_structure(struct vm_region *list) {
         pml4[i] = PML4_BASE[i];
     }
 
-    pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | PAGE_STRUCTURE_FLAGS | VM_NO_EXEC;
+    pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | 0x01 | VM_NO_EXEC;
 
     load_cr3(get_phys_addr((uintptr_t) pml4));
 
