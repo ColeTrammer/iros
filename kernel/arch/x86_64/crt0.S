@@ -33,6 +33,6 @@ __halt:
 .global KERNEL_VM_STACK_START
 KERNEL_VM_STACK_START:
 .section .bss.temp_page
-.skip 0x1000
 .global _temp_page
 _temp_page:
+.skip 0x1000

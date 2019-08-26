@@ -10,19 +10,6 @@
 
 #include <kernel/arch/x86_64/mem/page.h>
 
-extern void _temp_page();
-#define TEMP_PAGE ((uint64_t*) &_temp_page)
-
-static inline void invlpg(uintptr_t addr) {
-    asm volatile( "invlpg (%0)" : : "b"(addr) : "memory" );
-}
-
-static inline void load_cr3(uintptr_t cr3) {
-    asm( "mov %0, %%rdx\n"\
-         "mov %%rdx, %%cr3\n"
-         : : "m"(cr3) : "rdx" );
-} 
-
 static uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
@@ -135,7 +122,7 @@ uintptr_t create_paging_structure(struct vm_region *list) {
         pml4[i] = PML4_BASE[i];
     }
 
-    pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | 0x01 | VM_NO_EXEC;
+    pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | PAGE_STRUCTURE_FLAGS | VM_NO_EXEC;
 
     load_cr3(get_phys_addr((uintptr_t) pml4));
 
