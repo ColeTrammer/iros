@@ -239,7 +239,7 @@ __halt:
 .code64
 entry_64:
     # Segment registers
-    mov $0x0, %ax
+    mov $0x10, %ax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %fs
@@ -338,7 +338,7 @@ GDT_DATA:
     .short 0xFFFF
     .short 0
     .byte 0
-    .byte 0b10010000
+    .byte 0b10010010
     .byte 0b00001111
     .byte 0
 GDT_DESCRIPTOR:

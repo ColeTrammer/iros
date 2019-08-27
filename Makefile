@@ -62,6 +62,10 @@ clean:
 run:
 	$(ROOT)/qemu.sh
 
+.PHONY: debug
+debug:
+	$(ROOT)/qemu.sh --debug
+
 .PHONY: install-sources
 install-sources:
 	mkdir -p $(BUILDDIR)

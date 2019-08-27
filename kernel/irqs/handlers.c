@@ -21,7 +21,7 @@ void handle_double_fault() {
 
 void handle_general_protection_fault(uintptr_t error) {
     set_foreground(VGA_COLOR_RED);
-    printf("%s: Errpr %lX\n", "General Protection Fault", error);
+    printf("%s: Error %#lX\n", "General Protection Fault", error);
     dump_registers();
     abort();
 }

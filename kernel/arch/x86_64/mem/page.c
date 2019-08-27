@@ -79,6 +79,9 @@ void map_page(uintptr_t virt_addr, uint64_t flags) {
 }
 
 void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
+    flags &= VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC;
+    flags |= 0x01;
+
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -90,24 +93,24 @@ void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
     uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
 
     if (!(*pml4_entry & 1)) {
-        *pml4_entry = get_next_phys_page() | PAGE_STRUCTURE_FLAGS;
+        *pml4_entry = get_next_phys_page() | flags;
         memset(pdp_entry - pdp_offset, 0, PAGE_SIZE);
     }
 
     if (!(*pdp_entry & 1)) {
-        *pdp_entry = get_next_phys_page() | PAGE_STRUCTURE_FLAGS;
+        *pdp_entry = get_next_phys_page() | flags;
         memset(pd_entry - pd_offset, 0, PAGE_SIZE);
     }
 
     if (!(*pd_entry & 1)) {
-        *pd_entry = get_next_phys_page() | PAGE_STRUCTURE_FLAGS;
+        *pd_entry = get_next_phys_page() | flags;
         memset(pt_entry - pt_offset, 0, PAGE_SIZE);
     }
 
     if (*pt_entry & 1) {
         invlpg(virt_addr);
     }
-    *pt_entry = phys_addr | (flags && ((1UL << 63) | 0x86)) | 0x01;
+    *pt_entry = phys_addr | flags;
 }
 
 void unmap_page(uintptr_t virt_addr) {
@@ -135,6 +138,7 @@ uintptr_t create_paging_structure(struct vm_region *list) {
                 pdp[j] = old_pdp[j];
             }
             PML4_BASE[i] = get_phys_addr((uintptr_t) pdp) | PAGE_STRUCTURE_FLAGS;
+            invlpg((uintptr_t) old_pdp);
         }
     }
 
@@ -150,6 +154,7 @@ uintptr_t create_paging_structure(struct vm_region *list) {
                         pd[k] = old_pd[k];
                     }
                     pdp[j] = get_phys_addr((uintptr_t) pd) | PAGE_STRUCTURE_FLAGS;
+                    invlpg((uintptr_t) old_pd);
                 }
             }
         }
@@ -170,6 +175,7 @@ uintptr_t create_paging_structure(struct vm_region *list) {
                                 pt[l] = old_pt[l];
                             }
                             pd[k] = get_phys_addr((uintptr_t) pt) | PAGE_STRUCTURE_FLAGS;
+                            invlpg((uintptr_t) old_pt);
                         }
                     }
                 }
