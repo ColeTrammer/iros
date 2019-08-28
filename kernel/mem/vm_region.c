@@ -14,7 +14,7 @@ struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add
     return list;
 }
 
-struct vm_region *free_vm_region(struct vm_region *list, uint64_t type) {
+struct vm_region *remove_vm_region(struct vm_region *list, uint64_t type) {
     struct vm_region **link = &list;
     while (*link != NULL && (*link)->type != type) {
         link = &(*link)->next;

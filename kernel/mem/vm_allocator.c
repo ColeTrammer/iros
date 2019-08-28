@@ -120,3 +120,13 @@ void remove_vm_pages_start(size_t n, uint64_t type) {
 struct vm_region *find_vm_region(uint64_t type) {
     return get_vm_region(kernel_vm_list, type);
 }
+
+void add_vm(struct vm_region *region) {
+    kernel_vm_list = add_vm_region(kernel_vm_list, region);
+}
+
+struct vm_region *remove_vm(uint64_t type) {
+    struct vm_region *region = get_vm_region(kernel_vm_list, type);
+    kernel_vm_list = remove_vm_region(kernel_vm_list, region);
+    return region;
+}

@@ -26,7 +26,7 @@ struct vm_region {
 };
 
 struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add);
-struct vm_region *free_vm_region(struct vm_region *list, uint64_t type);
+struct vm_region *remove_vm_region(struct vm_region *list, uint64_t type);
 struct vm_region *get_vm_region(struct vm_region *list, uint64_t type);
 int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages);
 int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pages);
