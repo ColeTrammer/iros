@@ -1,6 +1,3 @@
-# Set compiler to host's
-CC=gcc
-
 # Init flags if not already set (can be overridden)
 CFLAGS?=-O2 -g
 CPPFLAGS?=
@@ -30,12 +27,12 @@ FILES:=$(shell find files)
 all: $(BUILDDIR)/initrd/initrd.bin
 
 # Builds initrd.img from generated tool
-$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o $(FILES)
+$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o $(FILES) $(PROGRAMS)
 	$< files $@
 
 # Builds any .o file from its .c, and generates its makefile dependencies with -MD
-%.o: %.c
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
+$(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
+	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean

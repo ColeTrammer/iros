@@ -8,14 +8,15 @@
 
 #ifdef __is_libk
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/mem/vm_region.h>
 
 void *sbrk(intptr_t increment) {
     if (increment < 0) {
-        void *res = add_vm_pages(0);
-        remove_vm_pages(-increment);
+        void *res = add_vm_pages_end(0, VM_KERNEL_HEAP);
+        remove_vm_pages_end(-increment, VM_KERNEL_HEAP);
         return res;
     }
-    return add_vm_pages(increment);
+    return add_vm_pages_end(increment, VM_KERNEL_HEAP);
 }
 #else
 extern void *sbrk(intptr_t increment);

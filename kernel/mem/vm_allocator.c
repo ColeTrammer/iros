@@ -67,28 +67,53 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     load_paging_structure(new_structure);
 }
 
-void *add_vm_pages(size_t n) {
-    struct vm_region *kernel_heap = get_vm_region(kernel_vm_list, VM_KERNEL_HEAP);
-    uintptr_t old_end = kernel_heap->end;
-    if (extend_vm_region(kernel_vm_list, VM_KERNEL_HEAP, n) == -1) {
+void *add_vm_pages_end(size_t n, uint64_t type) {
+    struct vm_region *region = get_vm_region(kernel_vm_list, type);
+    uintptr_t old_end = region->end;
+    if (extend_vm_region_end(kernel_vm_list, VM_KERNEL_HEAP, n) < 0) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 0; i < n; i++) {
-        map_page(old_end + i * PAGE_SIZE, kernel_heap->flags);
+        map_page(old_end + i * PAGE_SIZE, region->flags);
     }
     
     memset((void*) old_end, 0, n * PAGE_SIZE);
     return (void*) old_end;
 }
 
-void remove_vm_pages(size_t n) {
-    uintptr_t old_end = get_vm_region(kernel_vm_list, VM_KERNEL_HEAP)->end;
-    if (contract_vm_region(kernel_vm_list, VM_KERNEL_HEAP, n) == -1) {
+void *add_vm_pages_start(size_t n, uint64_t type) {
+    struct vm_region *region = get_vm_region(kernel_vm_list, type);
+    uintptr_t old_start = region->start;
+    if (extend_vm_region_start(kernel_vm_list, VM_KERNEL_HEAP, n) < 0) {
+        return NULL; // indicate there is no room
+    }
+    for (size_t i = 1; i <= n; i++) {
+        map_page(old_start - i * PAGE_SIZE, region->flags);
+    }
+    
+    memset((void*) (old_start - n * PAGE_SIZE), 0, n * PAGE_SIZE);
+    return (void*) old_start;
+}
+
+void remove_vm_pages_end(size_t n, uint64_t type) {
+    uintptr_t old_end = get_vm_region(kernel_vm_list, type)->end;
+    if (contract_vm_region_end(kernel_vm_list, type, n) < 0) {
         printf("%s\n", "Error: Removed to much memory");
         abort();
     }
     for (size_t i = 1; i <= n; i++) {
         unmap_page(old_end - i * PAGE_SIZE);
+    }
+}
+
+void remove_vm_pages_start(size_t n, uint64_t type) {
+    uintptr_t old_start = get_vm_region(kernel_vm_list, type)->start;
+    if (contract_vm_region_start(kernel_vm_list, type, n) < 0) {
+        printf("%s\n", "Error: Removed to much memory");
+        abort();
+    }
+    for (size_t i = 0; i < n; i++) {
+        unmap_page(old_start + i * PAGE_SIZE);
     }
 }
 

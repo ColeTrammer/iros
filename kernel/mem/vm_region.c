@@ -30,7 +30,7 @@ struct vm_region *get_vm_region(struct vm_region *list, uint64_t type) {
     return list;
 }
 
-int extend_vm_region(struct vm_region *list, uint64_t type, size_t num_pages) {
+int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages) {
     list = get_vm_region(list, type);
     if (list == NULL) {
         return -1;
@@ -44,7 +44,29 @@ int extend_vm_region(struct vm_region *list, uint64_t type, size_t num_pages) {
     return 0;
 }
 
-int contract_vm_region(struct vm_region *list, uint64_t type, size_t num_pages) {
+int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pages) {
+    struct vm_region *entry = list;
+    if (entry == NULL) { return -1; }
+    if (entry->type == type) {
+        entry->start -= num_pages * PAGE_SIZE;
+        return 0;
+    }
+
+    while (entry->next != NULL && entry->next->type != type) {
+        entry = entry->next;
+    }
+
+    if (entry->next == NULL) { return -1; }
+
+    uintptr_t new_start = list->next->start - num_pages * PAGE_SIZE;
+    if (list->end > new_start) {
+        return -2; // Indicate there is no room
+    }
+    list->next->start = new_start;
+    return 0;
+}
+
+int contract_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages) {
     list = get_vm_region(list, type);
     if (list == NULL) {
         return -1;
@@ -55,5 +77,19 @@ int contract_vm_region(struct vm_region *list, uint64_t type, size_t num_pages) 
         return -2; // Indicate took away too much
     }
     list->end = new_end;
+    return 0;
+}
+
+int contract_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pages) {
+    list = get_vm_region(list, type);
+    if (list == NULL) {
+        return -1;
+    }
+
+    uintptr_t new_start = list->start + num_pages * PAGE_SIZE;
+    if (new_start > list->end) {
+        return -2; // Indicate took away too much
+    }
+    list->start = new_start;
     return 0;
 }
