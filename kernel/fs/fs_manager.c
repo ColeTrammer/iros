@@ -43,11 +43,36 @@ void fs_close(VFILE *file) {
 }
 
 void fs_read(VFILE *file, void *buffer, size_t len) {
-    file_systems[file->device]->read(file, buffer, MIN(len, file->length));
+    file_systems[file->device]->read(file, buffer, MIN(len, file->length - (file->position - file->start)));
 }
 
 void fs_write(VFILE *file, const void *buffer, size_t len) {
     file_systems[file->device]->write(file, buffer, len);
+}
+
+int fs_seek(VFILE *file, long offset, int whence) {
+    long new_position;
+    if (whence == SEEK_SET) {
+        new_position = offset;
+    } else if (whence == SEEK_CUR) {
+        new_position = file->position + offset;
+    } else if (whence == SEEK_END) {
+        new_position = file->length + offset;
+    } else {
+        printf("Invalid arguments for fs_seek - whence: %d\n", whence);
+        abort();
+    }
+
+    if (new_position > file->length) {
+        return -1;
+    }
+
+    file->position = new_position;
+    return 0;
+}
+
+long fs_tell(VFILE *file) {
+    return file->position;
 }
 
 void load_fs(struct file_system *file_system, int device_id) {

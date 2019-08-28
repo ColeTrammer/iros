@@ -17,6 +17,9 @@ void fs_close(VFILE *file);
 void fs_read(VFILE *file, void *buffer, size_t len);
 void fs_write(VFILE *file, const void *buffer, size_t len);
 
+int fs_seek(VFILE *file, long offset, int whence);
+long fs_tell(VFILE *file);
+
 void load_fs(struct file_system *file_system, int device_id);
 void unload_fs(int device_id);
 

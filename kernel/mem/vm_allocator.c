@@ -127,6 +127,6 @@ void add_vm(struct vm_region *region) {
 
 struct vm_region *remove_vm(uint64_t type) {
     struct vm_region *region = get_vm_region(kernel_vm_list, type);
-    kernel_vm_list = remove_vm_region(kernel_vm_list, region);
+    kernel_vm_list = remove_vm_region(kernel_vm_list, type);
     return region;
 }

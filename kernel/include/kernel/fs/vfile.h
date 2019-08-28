@@ -11,6 +11,7 @@ typedef struct _VFILE {
     uint32_t length;
     uint32_t flags;
     uint32_t eof;
+    uint32_t start;
     uint32_t position;
     uint32_t cluster;
     uint32_t device;

@@ -27,7 +27,8 @@ VFILE *initrd_open(const char *file_name) {
             strcpy(file->name, file_name);
             file->length = entry[i].length;
             file->flags = FS_FILE;
-            file->position = entry[i].offset;
+            file->start = entry[i].offset;
+            file->position = 0;
             file->device = FS_INITRD_INDEX;
             return file;
         }
@@ -41,7 +42,7 @@ void initrd_close(VFILE *file) {
 }
 
 void initrd_read(VFILE *file, void *buffer, size_t len) {
-    memcpy(buffer, (void*) (initrd_start + file->position), len);
+    memcpy(buffer, (void*) (initrd_start + file->start + file->position), len);
 }
 
 void initrd_write(VFILE *file, const void *buffer, size_t len) {
