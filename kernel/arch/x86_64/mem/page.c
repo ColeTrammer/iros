@@ -196,3 +196,9 @@ uintptr_t create_paging_structure(struct vm_region *list) {
 void load_paging_structure(uintptr_t virt_addr) {
     load_cr3(get_phys_addr(virt_addr));
 }
+
+void map_vm_region(struct vm_region *region) {
+    for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
+        map_page(addr, region->flags);
+    }
+}

@@ -4,7 +4,9 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#define SEEK_SET 0
+#define SEEK_SET (0)
+#define SEEK_CUR (1)
+#define SEEK_END (2)
 
 typedef struct { int empty; } FILE;
 
@@ -24,9 +26,6 @@ FILE *fopen(const char*, const char*);
 int fprintf(FILE*, const char*, ...);
 size_t fread(void*, size_t, size_t, FILE*);
 
-#define SEEK_SET (1)
-#define SEEK_CUR (2)
-#define SEEK_END (3)
 int fseek(FILE*, long, int);
 long ftell(FILE*);
 

@@ -23,16 +23,26 @@ $(BUILDDIR)/initrd/initrd.o
 # Lists all files included in initrd
 FILES:=$(shell find files)
 
+# Lists all programs included in initrd
+PROGRAMS=\
+$(BUILDDIR)/initrd/programs/simple_test.o
+
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
 
 # Builds initrd.img from generated tool
 $(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o $(FILES) $(PROGRAMS)
+	for program in $(PROGRAMS); do \
+	  cp $$program files; \
+	done
 	$< files $@
 
 # Builds any .o file from its .c, and generates its makefile dependencies with -MD
 $(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
+
+%.o: %.S
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean

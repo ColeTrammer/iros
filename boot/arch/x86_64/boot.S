@@ -221,9 +221,9 @@ enable_paging:
     mov $PML4, %eax
     mov %eax, %cr3
 
-    # Set cr0.PE and cr0.WP
+    # Set cr0.PE (WP is 1 << 16 but is undesireable)
     mov %cr0, %eax
-    or $(1 << 31 | 1 << 16), %eax
+    or $(1 << 31), %eax
     mov %eax, %cr0
 
     lgdtl (GDT_DESCRIPTOR)

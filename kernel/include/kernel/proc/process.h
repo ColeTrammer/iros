@@ -17,4 +17,6 @@ struct process {
     struct process *next;
 };
 
+void load_process(const char *file_name);
+
 #endif /* _KERNEL_PROC_PROCESS_H */

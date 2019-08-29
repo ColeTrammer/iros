@@ -48,7 +48,9 @@ $(BUILDDIR)/kernel/irqs/handlers.o \
 $(BUILDDIR)/kernel/main/kernel.o \
 $(BUILDDIR)/kernel/mem/page_frame_allocator.o \
 $(BUILDDIR)/kernel/mem/vm_allocator.o \
-$(BUILDDIR)/kernel/mem/vm_region.o
+$(BUILDDIR)/kernel/mem/vm_region.o \
+$(BUILDDIR)/kernel/proc/elf64.o \
+$(BUILDDIR)/kernel/proc/process.o
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\

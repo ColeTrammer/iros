@@ -24,8 +24,9 @@ struct vm_region {
 #define VM_PROCESS_TEXT (1UL << 16)
 #define VM_PROCESS_ROD (1UL << 17)
 #define VM_PROCESS_DATA (1UL << 18)
-#define VM_PROCESS_HEAP (1UL << 19)
-#define VM_PROCESS_STACK (1UL << 20)
+#define VM_PROCESS_BSS (1UL << 19)
+#define VM_PROCESS_HEAP (1UL << 20)
+#define VM_PROCESS_STACK (1UL << 21)
     uint64_t type;
 
     struct vm_region *next;

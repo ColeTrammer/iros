@@ -10,6 +10,7 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/proc/process.h>
 #include <kernel/hal/hal.h>
 
 void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t inintrd_phys_start, uint64_t initrd_phys_end, uint32_t *multiboot_info) {
@@ -22,6 +23,9 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_fs_manager();
 
     enable_interrupts();
+
+    // Test Program
+    load_process("[:simple_test.o");
 
     while (1);
 }
