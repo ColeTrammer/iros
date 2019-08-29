@@ -25,7 +25,8 @@ FILES:=$(shell find files)
 
 # Lists all programs included in initrd
 PROGRAMS=\
-$(BUILDDIR)/initrd/programs/simple_test.o
+$(BUILDDIR)/initrd/programs/simple_test.o \
+$(BUILDDIR)/initrd/programs/test.o
 
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
@@ -42,6 +43,9 @@ $(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
 
 %.o: %.S
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
+
+%.o: %.c
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
 # Cleans by deleting .o, and .d files

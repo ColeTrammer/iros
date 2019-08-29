@@ -2,6 +2,10 @@
 .global _start
 .type _start, @function
 _start: 
-    jmp main
+    callq _init
+
+    callq main
+_1:
+    jmp _1
 
 .size _start, . - _start

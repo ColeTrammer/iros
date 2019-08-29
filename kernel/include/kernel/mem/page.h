@@ -18,6 +18,7 @@ void clear_initial_page_mappings();
 
 uintptr_t create_paging_structure(struct vm_region *list);
 void load_paging_structure(uintptr_t virt_addr);
+void map_vm_region_flags(struct vm_region *region);
 void map_vm_region(struct vm_region *region);
 
 void map_page(uintptr_t virt_addr, uint64_t flags);

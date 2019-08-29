@@ -66,6 +66,7 @@ typedef struct
 
 uintptr_t elf64_get_start(void *buffer);
 uintptr_t elf64_get_entry(void *buffer);
+uint64_t elf64_get_size(void *buffer);
 
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type);
 

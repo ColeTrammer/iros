@@ -18,5 +18,6 @@ struct process {
 };
 
 void load_process(const char *file_name);
+void run_process(uint64_t rip, uint64_t rsp);
 
 #endif /* _KERNEL_PROC_PROCESS_H */

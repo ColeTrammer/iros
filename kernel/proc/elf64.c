@@ -16,6 +16,19 @@ uintptr_t elf64_get_entry(void *buffer) {
     return elf_header->e_entry;
 }
 
+uint64_t elf64_get_size(void *buffer) {
+    uintptr_t start = elf64_get_start(buffer);
+    Elf64_Ehdr *elf_header = buffer;
+    Elf64_Shdr *section_headers = (Elf64_Shdr*) (((uintptr_t) buffer) + elf_header->e_shoff);
+    
+    for (size_t i = 0; i < elf_header->e_shnum; i++) {
+        if (section_headers[i].sh_addr && section_headers[i].sh_type == ELF64_NO_BITS) {
+            return section_headers[i].sh_addr + section_headers[i].sh_size - start;
+        }
+    }
+    return 0;
+}
+
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Shdr *section_headers = (Elf64_Shdr*) (((uintptr_t) buffer) + elf_header->e_shoff);
