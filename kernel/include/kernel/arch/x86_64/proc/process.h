@@ -22,11 +22,11 @@ struct cpu_state {
 } __attribute__((packed));
 
 struct stack_state {
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
+    uint64_t ss;
     uint64_t rsp;
-    uint64_t ss;    
+    uint64_t rflags;
+    uint64_t cs;
+    uint64_t rip;    
 } __attribute__((packed));
 
 struct process_state {
@@ -38,5 +38,7 @@ struct arch_process {
     struct process_state process_state;
     uint64_t cr3;
 };
+
+extern void __run_process(struct arch_process *state);
 
 #endif /* _KERNEL_ARCH_X86_64_PROC_PROCESS_H */

@@ -5,6 +5,8 @@ _start:
     callq _init
 
     callq main
+
+    callq _fini
 _1:
     jmp _1
 

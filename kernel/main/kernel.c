@@ -25,7 +25,8 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     enable_interrupts();
 
     // Test Program
-    load_process("[:test.o");
+    struct process *test = load_process("[:test.o");
+    run_process(test);
 
     while (1);
 }

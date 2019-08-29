@@ -17,7 +17,18 @@ struct process {
     struct process *next;
 };
 
-void load_process(const char *file_name);
-void run_process(uint64_t rip, uint64_t rsp);
+struct process *load_process(const char *file_name);
+void arch_load_process(struct process *process, uintptr_t entry);
+
+void run_process(struct process *process);
+void arch_run_process(struct process *process);
+
+static inline uint64_t get_rflags() {
+    uint64_t rflags;
+    asm ( "pushfq\n"\
+          "popq %%rdx\n"\
+          "mov %%rdx, %0" : "=m"(rflags) : : "rdx" );
+    return rflags;
+}
 
 #endif /* _KERNEL_PROC_PROCESS_H */

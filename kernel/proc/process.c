@@ -1,14 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <kernel/fs/fs_manager.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/elf64.h>
+#include <kernel/proc/pid.h>
 
-void load_process(const char *file_name) {
+struct process *load_process(const char *file_name) {
     VFILE *program = fs_open(file_name);
     fs_seek(program, 0, SEEK_END);
     long length = fs_tell(program);
@@ -25,11 +27,17 @@ void load_process(const char *file_name) {
     }
     memcpy((void*) start, buffer, length);
 
+    struct process *process = calloc(1, sizeof(struct process));
+    process->pid = get_next_pid();
+    process->process_memory = clone_kernel_vm();
+    process->kernel_process = false;
+    process->next = NULL;
+
     uint64_t types[] = { VM_PROCESS_TEXT, VM_PROCESS_ROD, VM_PROCESS_DATA, VM_PROCESS_BSS };
     for (size_t i = 0; i < 4; i++) {
         uint64_t type = types[i];
         struct vm_region *region = elf64_create_vm_region(buffer, type);
-        add_vm(region);
+        process->process_memory = add_vm_region(process->process_memory, region);
         map_vm_region_flags(region);
 
         if (type == VM_PROCESS_BSS) {
@@ -42,15 +50,21 @@ void load_process(const char *file_name) {
     process_heap->type = VM_PROCESS_HEAP;
     process_heap->start = ((start + size) & ~0xFFF) + PAGE_SIZE;
     process_heap->end = process_heap->start;
-    add_vm(process_heap);
+    process->process_memory = add_vm_region(process->process_memory, process_heap);
 
     struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
     process_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
     process_stack->type = VM_PROCESS_STACK;
     process_stack->start = find_vm_region(VM_KERNEL_TEXT)->start - 2 * PAGE_SIZE;
     process_stack->end = process_stack->start + PAGE_SIZE;
-    add_vm(process_stack);
+    process->process_memory = add_vm_region(process->process_memory, process_stack);
     map_vm_region(process_stack);
 
-    run_process(elf64_get_entry(buffer), process_stack->end);
+    arch_load_process(process, elf64_get_entry(buffer));
+
+    return process;
+}
+
+void run_process(struct process *process) {
+    arch_run_process(process);
 }
