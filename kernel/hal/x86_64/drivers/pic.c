@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <kernel/hal/irqs.h>
 
@@ -114,7 +115,7 @@ void init_pic() {
     disable_irq_line(0);
     disable_irq_line(1);
     for (unsigned int i = PIC_IRQ_OFFSET; i < PIC_IRQ_OFFSET + 2 * PIC_IRQS; i++) {
-        register_irq_handler(&pic_generic_handler_entry, i);
+        register_irq_handler(&pic_generic_handler_entry, i, false);
     }
     handlers = calloc(2 * PIC_IRQS, sizeof(void (*)(void)));
 }

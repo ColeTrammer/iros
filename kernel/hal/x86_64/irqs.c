@@ -1,5 +1,7 @@
 #include "idt.h"
 
+#include <stdbool.h>
+
 #include <kernel/hal/irqs.h>
 
 static struct idt_entry idt[NUM_IRQS];
@@ -11,8 +13,8 @@ void init_irqs() {
     load_idt(idt_descriptor);
 }
 
-void register_irq_handler(void *handler, unsigned int irq) {
-    add_idt_entry(idt, handler, irq);
+void register_irq_handler(void *handler, unsigned int irq, bool is_user) {
+    add_idt_entry(idt, handler, irq, is_user);
 }
 
 void unregister_irq_handler(unsigned int irq) {

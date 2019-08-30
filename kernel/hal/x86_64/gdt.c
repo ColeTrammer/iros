@@ -36,5 +36,6 @@ void init_gdt() {
 
     memset(&tss, 0, sizeof(struct tss));
     tss.rsp0 = (uintptr_t) (reserved_stack + 4 * 4096);
+    tss.io_map_base = sizeof(struct tss);
     load_tr(TSS_SELECTOR);
 }

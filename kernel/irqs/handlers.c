@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <kernel/display/vga.h>
 #include <kernel/display/terminal.h>
@@ -7,9 +8,11 @@
 #include <kernel/hal/irqs.h>
 
 void init_irq_handlers() {
-    register_irq_handler(&handle_double_fault_entry, 8);
-    register_irq_handler(&handle_general_protection_fault_entry, 13);
-    register_irq_handler(&handle_page_fault_entry, 14);
+    register_irq_handler(&handle_double_fault_entry, 8, false);
+    register_irq_handler(&handle_general_protection_fault_entry, 13, false);
+    register_irq_handler(&handle_page_fault_entry, 14, false);
+
+    register_irq_handler(&sys_call_entry, 128, true);
 }
 
 void handle_double_fault() {
@@ -32,4 +35,8 @@ void handle_page_fault(uintptr_t address, uintptr_t error) {
     printf("Address: %#.16lX\n", address);
     dump_registers();
     abort();
+}
+
+void sys_call() {
+    puts("Sys Call");
 }

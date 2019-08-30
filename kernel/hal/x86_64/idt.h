@@ -2,6 +2,7 @@
 #define _HAL_X86_64_IDT_H 1
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define NUM_IRQS 256
 
@@ -23,7 +24,7 @@ static inline void load_idt(struct idt_descriptor descriptor) {
     asm ( "lidtq %0" : : "m"(descriptor) );
 }
 
-void add_idt_entry(struct idt_entry *idt, void *handler, unsigned int irq);
+void add_idt_entry(struct idt_entry *idt, void *handler, unsigned int irq, bool is_user);
 void remove_idt_entry(struct idt_entry *idt, unsigned int irq);
 
 #endif /* _HAL_X86_64_IDT_H */

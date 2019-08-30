@@ -42,9 +42,9 @@ struct gdt_tss_entry {
     uint8_t limit_high : 4;
     uint8_t flags : 4;
     uint8_t base_high_mid;
-    uint16_t base_high;
+    uint32_t base_high;
     uint16_t zero;
-};
+} __attribute__((packed));
 
 struct tss {
     uint32_t reserved1;
@@ -52,17 +52,11 @@ struct tss {
     uint64_t rsp1;
     uint64_t rsp2;
     uint64_t reserved2;
-    uint64_t ist1;
-    uint64_t ist2;
-    uint64_t ist3;
-    uint64_t ist4;
-    uint64_t ist5;
-    uint64_t ist6;
-    uint64_t ist7;
+    uint64_t ist[7];
     uint64_t reserved3;
     uint16_t reserved4;
     uint16_t io_map_base;
-};
+} __attribute__((packed));
 
 static inline void load_gdt(struct gdt_descriptor descriptor) {
     asm ( "lgdt %0" : : "m"(descriptor) );

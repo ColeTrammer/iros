@@ -18,3 +18,8 @@ handle_page_fault_entry:
     call handle_page_fault
     add $8, %rsp
     iretq
+
+.global sys_call_entry
+sys_call_entry:
+    call sys_call
+    iretq
