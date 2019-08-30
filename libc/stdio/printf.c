@@ -15,8 +15,8 @@ bool print(const char* s, size_t n) {
 	bool ret;
 	asm( "movq $0, %%rdi\n"\
 	     "movq %1, %%rsi\n"\
-		 "movq %2, %%rdx\n"\
-		 "int $0x80\n"\
+	     "movq %2, %%rdx\n"\
+	     "int $0x80\n"\
 	     "movq %%rax, %0" : "=m"(ret) : "m"(s), "m"(n) : "rdi", "rsi", "rdx", "rax" );
 	return ret;
 }
