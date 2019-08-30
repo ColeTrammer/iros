@@ -1,10 +1,8 @@
 .section .text.startup
 .global _start
 _start:
-    mov $_kernel_stack_start, %rsp
-    mov $KERNEL_VMA_RIGHT_SHIFT_40, %rax
-    shl $40, %rax
-    add %rax, %rsp
+    movabs $KERNEL_VM_STACK_START, %rax
+    movq %rax, %rsp
 
     push %rdi
     push %rsi

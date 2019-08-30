@@ -43,10 +43,10 @@ $(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
 
 %.o: %.S
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
 
 %.o: %.c
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean

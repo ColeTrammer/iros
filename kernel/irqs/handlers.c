@@ -36,7 +36,3 @@ void handle_page_fault(uintptr_t address, uintptr_t error) {
     dump_registers();
     abort();
 }
-
-void sys_call() {
-    puts("Sys Call");
-}

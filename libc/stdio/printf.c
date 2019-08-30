@@ -11,7 +11,15 @@ bool print(const char* str, size_t len) {
     return kprint(str, len);
 }
 #else
-bool print(const char*, size_t);
+bool print(const char* s, size_t n) {
+	bool ret;
+	asm( "movq $0, %%rdi\n"\
+	     "movq %1, %%rsi\n"\
+		 "movq %2, %%rdx\n"\
+		 "int $0x80\n"\
+	     "movq %%rax, %0" : "=m"(ret) : "m"(s), "m"(n) : "rdi", "rsi", "rdx", "rax" );
+	return ret;
+}
 #endif
 
 static int parseInt(const char* num, size_t length) {

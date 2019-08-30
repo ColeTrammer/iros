@@ -53,8 +53,7 @@ clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
 	rm -rf $(BUILDDIR)
-	rm -f $(ROOT)/kernel.dis
-	rm -f $(ROOT)/boot_loader.dis
+	rm -f $(ROOT)/*.dis
 	rm -f $(ROOT)/debug.log
 	rm -f $(ROOT)/os_2.iso
 

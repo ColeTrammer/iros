@@ -2,7 +2,6 @@ OUTPUT_FORMAT("elf64-x86-64")
 OUTPUT_ARCH(i386:x86-64)
 
 PROVIDE(KERNEL_VMA = 0xFFFFFF0000000000);
-PROVIDE(KERNEL_VMA_RIGHT_SHIFT_40 = 0xFFFFFF);
 
 /* Sets first thing to be executed to be start */
 ENTRY(_start)
@@ -66,7 +65,6 @@ SECTIONS
     {
         PROVIDE(_bss_start = .);
         *(.bss.kernel_stack)
-        PROVIDE(_kernel_stack_start = KERNEL_VM_STACK_START - KERNEL_VMA);
         *(.bss.temp_page)
         *(COMMON)
         *(.bss .bss.*)

@@ -38,5 +38,8 @@ SECTIONS
         *(.bss .bss.*)
     }
 
-    /DISCARD/ : { *(.comment) }
+    /DISCARD/ : { 
+        *(.comment)
+        *(.debug*)
+    }
 }
