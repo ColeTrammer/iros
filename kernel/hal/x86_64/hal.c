@@ -1,10 +1,9 @@
 #include <kernel/hal/hal.h>
 #include <kernel/hal/irqs.h>
 
-#include "gdt.h"
-
-#include "drivers/pic.h"
-#include "drivers/fdc.h"
+#include <kernel/hal/x86_64/gdt.h>
+#include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/hal/x86_64/drivers/fdc.h>
 
 void init_hal() {
     init_gdt();

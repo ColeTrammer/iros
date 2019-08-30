@@ -17,18 +17,15 @@ struct process {
     struct process *next;
 };
 
+void init_kernel_process();
+void arch_init_kernel_process(struct process *kernel_process);
+
 struct process *load_process(const char *file_name);
 void arch_load_process(struct process *process, uintptr_t entry);
 
 void run_process(struct process *process);
 void arch_run_process(struct process *process);
 
-static inline uint64_t get_rflags() {
-    uint64_t rflags;
-    asm ( "pushfq\n"\
-          "popq %%rdx\n"\
-          "mov %%rdx, %0" : "=m"(rflags) : : "rdx" );
-    return rflags;
-}
+struct process *get_current_process();
 
 #endif /* _KERNEL_PROC_PROCESS_H */

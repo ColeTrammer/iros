@@ -18,6 +18,7 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_hal();
     init_irq_handlers();
     init_page_frame_allocator(kernel_phys_start, kernel_phys_end, inintrd_phys_start, initrd_phys_end, multiboot_info);
+    init_kernel_process();
     init_vm_allocator(inintrd_phys_start, initrd_phys_end);
     init_drivers();
     init_fs_manager();

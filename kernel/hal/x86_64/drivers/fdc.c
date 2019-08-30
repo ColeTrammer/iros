@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "pic.h"
-#include "io.h"
-#include "fdc.h"
+#include <kernel/hal/x86_64/drivers/fdc.h>
+#include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/arch/x86_64/asm_utils.h>
 
 static volatile bool has_been_interrupted = false;
 

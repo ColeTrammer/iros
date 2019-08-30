@@ -10,6 +10,19 @@
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
 
+static struct process *current_process;
+static struct process initial_kernel_process;
+
+void init_kernel_process() {
+    current_process = &initial_kernel_process;
+
+    arch_init_kernel_process(current_process);
+
+    initial_kernel_process.kernel_process = true;
+    initial_kernel_process.pid = 0;
+    initial_kernel_process.next = NULL;
+}
+
 struct process *load_process(const char *file_name) {
     VFILE *program = fs_open(file_name);
     fs_seek(program, 0, SEEK_END);
@@ -66,5 +79,10 @@ struct process *load_process(const char *file_name) {
 }
 
 void run_process(struct process *process) {
+    current_process = process;
     arch_run_process(process);
+}
+
+struct process *get_current_process() {
+    return current_process;
 }

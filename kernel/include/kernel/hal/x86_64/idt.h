@@ -1,5 +1,5 @@
-#ifndef _HAL_X86_64_IDT_H
-#define _HAL_X86_64_IDT_H 1
+#ifndef _KERNEL_HAL_X86_64_IDT_H
+#define _KERNEL_HAL_X86_64_IDT_H 1
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -27,4 +27,4 @@ static inline void load_idt(struct idt_descriptor descriptor) {
 void add_idt_entry(struct idt_entry *idt, void *handler, unsigned int irq, bool is_user);
 void remove_idt_entry(struct idt_entry *idt, unsigned int irq);
 
-#endif /* _HAL_X86_64_IDT_H */
+#endif /* _KERNEL_HAL_X86_64_IDT_H */

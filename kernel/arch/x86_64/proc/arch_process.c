@@ -1,8 +1,17 @@
+#include <stdlib.h>
+
 #include <kernel/proc/process.h>
 
-#include "../../../hal/x86_64/gdt.h"
+#include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/hal/x86_64/gdt.h>
+
+void arch_init_kernel_process(struct process *kernel_process) {
+    kernel_process->arch_process.process_state.stack_state.rip = (uint64_t) &abort;
+    kernel_process->arch_process.process_state.stack_state.cs = CS_SELECTOR; 
+}
 
 void arch_load_process(struct process *process, uintptr_t entry) {
+    process->arch_process.cr3 = get_cr3();
     process->arch_process.process_state.stack_state.rip = entry;
     process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
     process->arch_process.process_state.stack_state.rflags = get_rflags();

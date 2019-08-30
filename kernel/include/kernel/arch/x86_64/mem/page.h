@@ -20,16 +20,6 @@
 #define PAGE_STRUCTURE_FLAGS (0x01UL | VM_WRITE)
 
 extern void _temp_page();
-#define TEMP_PAGE ((uint64_t*) &_temp_page)
-
-static inline void invlpg(uintptr_t addr) {
-    asm volatile( "invlpg (%0)" : : "b"(addr) : "memory" );
-}
-
-static inline void load_cr3(uintptr_t cr3) {
-    asm( "mov %0, %%rdx\n"\
-         "mov %%rdx, %%cr3\n"
-         : : "m"(cr3) : "rdx" );
-} 
+#define TEMP_PAGE ((uint64_t*) &_temp_page) 
 
 #endif /* _KERNEL_ARCH_X86_64_MEM_PAGE_H */

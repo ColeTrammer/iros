@@ -1,8 +1,7 @@
-#include "idt.h"
-
 #include <stdbool.h>
 
 #include <kernel/hal/irqs.h>
+#include <kernel/hal/x86_64/idt.h>
 
 static struct idt_entry idt[NUM_IRQS];
 static struct idt_descriptor idt_descriptor;

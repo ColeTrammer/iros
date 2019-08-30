@@ -4,9 +4,8 @@
 #include <stdbool.h>
 
 #include <kernel/hal/irqs.h>
-
-#include "io.h"
-#include "pic.h"
+#include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/arch/x86_64/asm_utils.h>
 
 static void sendEOI(unsigned int irq_line) {
     if (irq_line >= 8) {

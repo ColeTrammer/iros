@@ -1,5 +1,5 @@
-#ifndef _HAL_X86_64_GDT_H
-#define _HAL_X86_64_GDT_H 1
+#ifndef _KERNEL_HAL_X86_64_GDT_H
+#define _KERNEL_HAL_X86_64_GDT_H 1
 
 #include <stdint.h>
 
@@ -68,4 +68,4 @@ static inline void load_tr(uint16_t selector) {
 
 void init_gdt();
 
-#endif /* _HAL_X86_64_GDT_H */
+#endif /* _KERNEL_HAL_X86_64_GDT_H */

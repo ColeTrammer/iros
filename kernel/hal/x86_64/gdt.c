@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "gdt.h"
+#include <kernel/hal/x86_64/gdt.h>
 
 static struct gdt_entry gdt[GDT_ENTRIES];
 static struct gdt_descriptor gdt_descriptor;
