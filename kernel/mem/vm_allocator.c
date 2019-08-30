@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <kernel/display/terminal.h>
 #include <kernel/display/vga.h>
@@ -64,7 +65,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 
     clear_initial_page_mappings();
 
-    uintptr_t new_structure = create_paging_structure(get_current_process()->process_memory);
+    uintptr_t new_structure = create_paging_structure(get_current_process()->process_memory, true);
     load_paging_structure(new_structure);
 }
 
@@ -128,7 +129,7 @@ struct vm_region *clone_kernel_vm() {
     struct vm_region *list = NULL;
     struct vm_region *iter = get_current_process()->process_memory;
     while (iter != NULL) {
-        if (iter->type < VM_PROCESS_TEXT) {
+        if (iter->flags & VM_GLOBAL) {
             struct vm_region *to_add = malloc(sizeof(struct vm_region));
             memcpy(to_add, iter, sizeof(struct vm_region));
             list = add_vm_region(list, to_add);

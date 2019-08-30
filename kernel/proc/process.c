@@ -32,6 +32,15 @@ struct process *load_process(const char *file_name) {
     void *buffer = malloc(length);
     fs_read(program, buffer, length);
 
+    struct process *process = calloc(1, sizeof(struct process));
+    process->pid = get_next_pid();
+    process->process_memory = clone_kernel_vm();
+    process->kernel_process = false;
+    process->next = NULL;
+
+    uintptr_t structure = create_paging_structure(process->process_memory, false);
+    load_paging_structure(structure);
+
     uint64_t start = elf64_get_start(buffer);
     uint64_t size = elf64_get_size(buffer);
     uint64_t num_pages = size / PAGE_SIZE;
@@ -39,12 +48,6 @@ struct process *load_process(const char *file_name) {
         map_page(start + i * PAGE_SIZE, VM_USER | VM_WRITE);
     }
     memcpy((void*) start, buffer, length);
-
-    struct process *process = calloc(1, sizeof(struct process));
-    process->pid = get_next_pid();
-    process->process_memory = clone_kernel_vm();
-    process->kernel_process = false;
-    process->next = NULL;
 
     uint64_t types[] = { VM_PROCESS_TEXT, VM_PROCESS_ROD, VM_PROCESS_DATA, VM_PROCESS_BSS };
     for (size_t i = 0; i < 4; i++) {

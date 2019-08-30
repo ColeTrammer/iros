@@ -1,14 +1,13 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 
 static struct gdt_entry gdt[GDT_ENTRIES];
 static struct gdt_descriptor gdt_descriptor;
 
 static struct tss tss;
-
-static uint8_t reserved_stack[4 * 4096];
 
 void init_gdt() {
     memset(&gdt, 0, GDT_ENTRIES * sizeof(struct gdt_entry));
@@ -35,7 +34,10 @@ void init_gdt() {
     load_gdt(gdt_descriptor);
 
     memset(&tss, 0, sizeof(struct tss));
-    tss.rsp0 = (uintptr_t) (reserved_stack + 4 * 4096);
     tss.io_map_base = sizeof(struct tss);
     load_tr(TSS_SELECTOR);
+}
+
+void set_tss_stack_pointer(uintptr_t rsp) {
+    tss.rsp0 = rsp;
 }

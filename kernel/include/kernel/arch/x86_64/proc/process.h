@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+#include <kernel/mem/page.h>
+#include <kernel/arch/x86_64/mem/page.h>
+
+#define KERNEL_PROC_STACK_START (((uintptr_t) PT_BASE) - PAGE_SIZE)
+
 struct cpu_state {
     uint64_t r15;
     uint64_t r14;
@@ -37,6 +42,7 @@ struct process_state {
 struct arch_process {
     struct process_state process_state;
     uint64_t cr3;
+    uint64_t kernel_stack;
 };
 
 extern void __run_process(struct arch_process *state);

@@ -67,5 +67,6 @@ static inline void load_tr(uint16_t selector) {
 }
 
 void init_gdt();
+void set_tss_stack_pointer(uintptr_t rsp);
 
 #endif /* _KERNEL_HAL_X86_64_GDT_H */
