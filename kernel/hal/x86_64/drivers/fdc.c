@@ -12,7 +12,7 @@ static volatile bool has_been_interrupted = false;
     has_been_interrupted = false; \
     while (!has_been_interrupted);
 
-void handle_fdc_interrupt() {
+static void handle_fdc_interrupt() {
     has_been_interrupted = true;
 }
 

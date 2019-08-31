@@ -98,9 +98,10 @@ void pic_generic_handler() {
             break;
         }
     }
-    printf("Recieved Interrupt on IRQ Line: %u\n", irq_line);
     if (handlers[irq_line] != NULL) {
         handlers[irq_line]();
+    } else {
+        printf("Recieved Interrupt on IRQ Line: %u\n", irq_line);
     }
     sendEOI(irq_line);
 }
@@ -112,7 +113,6 @@ void init_pic() {
         enable_irq_line(i);
     }
     disable_irq_line(0);
-    disable_irq_line(1);
     for (unsigned int i = PIC_IRQ_OFFSET; i < PIC_IRQ_OFFSET + 2 * PIC_IRQS; i++) {
         register_irq_handler(&pic_generic_handler_entry, i, false);
     }
