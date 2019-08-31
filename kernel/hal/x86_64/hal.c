@@ -5,6 +5,7 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
+#include <kernel/hal/x86_64/drivers/serial.h>
 
 void init_hal() {
     init_gdt();
@@ -15,6 +16,7 @@ void init_drivers() {
     init_pic();
     init_keyboard();
     init_fdc();
+    init_serial_ports();
 }
 
 void enable_interrupts() {

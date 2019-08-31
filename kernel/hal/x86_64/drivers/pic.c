@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 #include <kernel/hal/irqs.h>
@@ -79,7 +78,7 @@ static uint16_t get_isr() {
     return get_irq_reg(PIC_READ_ISR);
 }
 
-static void (**handlers)(void);
+static void (*handlers[2 * PIC_IRQS])(void);
 
 void register_irq_line_handler(void (*handler)(void), unsigned int irq_line) {
     if (irq_line < 2 * PIC_IRQS) {
@@ -116,5 +115,4 @@ void init_pic() {
     for (unsigned int i = PIC_IRQ_OFFSET; i < PIC_IRQ_OFFSET + 2 * PIC_IRQS; i++) {
         register_irq_handler(&pic_generic_handler_entry, i, false);
     }
-    handlers = calloc(2 * PIC_IRQS, sizeof(void (*)(void)));
 }
