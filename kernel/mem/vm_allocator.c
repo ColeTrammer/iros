@@ -6,8 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <kernel/display/terminal.h>
-#include <kernel/display/vga.h>
+#include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>

@@ -19,6 +19,7 @@ extern FILE* stderr;
 
 int puts(const char*);
 int printf(const char*, ...);
+int vprintf(const char*, va_list);
 
 int fclose(FILE*);
 int fflush(FILE*);

@@ -38,6 +38,13 @@ int printf(const char* restrict format, ...) {
 	va_list parameters;
 	va_start(parameters, format);
 
+	int written = vprintf(format, parameters);
+
+	va_end(parameters);
+	return written;
+}
+
+int vprintf(const char* restrict format, va_list parameters) {
 	int written = 0;
 
 	while (*format != '\0') {
@@ -673,6 +680,5 @@ int printf(const char* restrict format, ...) {
 		}
 	}
 
-	va_end(parameters);
 	return written;
 }

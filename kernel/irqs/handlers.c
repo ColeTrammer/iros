@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <kernel/display/vga.h>
-#include <kernel/display/terminal.h>
+#include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/hal/irqs.h>
 
@@ -16,23 +15,20 @@ void init_irq_handlers() {
 }
 
 void handle_double_fault() {
-    set_foreground(VGA_COLOR_RED);
+    dump_registers_to_screen();
     printf("%s\n", "Double Fault");
-    dump_registers();
     abort();
 }
 
 void handle_general_protection_fault(uintptr_t error) {
-    set_foreground(VGA_COLOR_RED);
+    dump_registers_to_screen();
     printf("%s: Error %#lX\n", "General Protection Fault", error);
-    dump_registers();
     abort();
 }
 
 void handle_page_fault(uintptr_t address, uintptr_t error) {
-    set_foreground(VGA_COLOR_RED);
+    dump_registers_to_screen();
     printf("%s: Error %lX\n", "Page Fault", error);
     printf("Address: %#.16lX\n", address);
-    dump_registers();
     abort();
 }
