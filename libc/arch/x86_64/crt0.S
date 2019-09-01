@@ -5,9 +5,14 @@ _start:
     callq _init
 
     callq main
+    pushq %rax
 
     callq _fini
-_1:
-    jmp _1
+
+    popq %rdi
+    callq exit
+
+__halt:
+    jmpq __halt
 
 .size _start, . - _start

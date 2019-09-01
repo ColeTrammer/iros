@@ -15,6 +15,7 @@ void arch_init_kernel_process(struct process *kernel_process) {
 void arch_load_process(struct process *process, uintptr_t entry) {
     process->arch_process.cr3 = get_cr3();
     process->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
+    process->arch_process.process_state.cpu_state.rbp = KERNEL_PROC_STACK_START;
     process->arch_process.process_state.stack_state.rip = entry;
     process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
     process->arch_process.process_state.stack_state.rflags = get_rflags();

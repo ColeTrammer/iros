@@ -50,9 +50,9 @@ sys_call_entry:
     pop %r10
     pop %r9
     pop %r8
-    pop %rsi
-    pop %rdi
     pop %rbp
+    pop %rdi
+    pop %rsi
     pop %rdx
     pop %rcx
     pop %rbx
@@ -63,3 +63,4 @@ sys_call_entry:
 .section .rodata
 sys_call_table:
     .quad arch_sys_print
+    .quad arch_sys_exit

@@ -47,12 +47,16 @@ $(PROJECTS):
 # Makes the kernel depend on libc
 kernel: libc
 
+# Makes the initrd depend on libc
+initrd: libc
+
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean
 clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
 	rm -rf $(BUILDDIR)
+	rm -f $(ROOT)/initrd/files/*.o
 	rm -f $(ROOT)/*.dis
 	rm -f $(ROOT)/debug.log
 	rm -f $(ROOT)/os_2.iso

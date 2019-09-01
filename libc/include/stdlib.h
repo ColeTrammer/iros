@@ -7,13 +7,21 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#ifndef __is_libk
+
+__attribute__((__noreturn__))
+void exit(int status);
+
+int atexit(void (*)(void));
+char *getenv(const char*);
+
+#endif
+
 __attribute__((__noreturn__)) 
 void abort();
 
-int atexit(void (*)(void));
 int atoi(const char*);
-void free(void*);
-char *getenv(const char*);
+
 void *malloc(size_t);
 void *calloc(size_t, size_t);
 void *realloc(void*, size_t);
