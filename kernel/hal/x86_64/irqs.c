@@ -1,6 +1,7 @@
 #include <stdbool.h>
 
 #include <kernel/hal/irqs.h>
+#include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/idt.h>
 
 static struct idt_entry idt[NUM_IRQS];
@@ -14,8 +15,12 @@ void init_irqs() {
 
 void register_irq_handler(void *handler, unsigned int irq, bool is_user) {
     add_idt_entry(idt, handler, irq, is_user);
+
+    debug_log("IRQ Handler Added: [ %#.2X, %s, %#.16lX ]\n", irq, is_user ? "true" : "false", handler);
 }
 
 void unregister_irq_handler(unsigned int irq) {
     remove_idt_entry(idt, irq);
+
+    debug_log("IRQ Handler Removed: [ %.3d ]\n", irq);
 }

@@ -8,6 +8,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/hal/output.h>
 
 static struct file_system **file_systems;
 
@@ -35,6 +36,7 @@ VFILE *fs_open(const char *file_name) {
         return NULL;
     }
 
+    debug_log("File Opened: [ %s ]\n", file_name);
     return file_systems[fs_index]->open(file_name + 2);
 }
 
@@ -83,6 +85,8 @@ void load_fs(struct file_system *file_system, int device_id) {
 
     file_systems[device_id] = file_system;
     file_systems[device_id]->mount();
+
+    debug_log("File System Loaded: [ %d, %#.16lX ]\n", device_id, file_system);
 }
 
 void unload_fs(int device_id) {
@@ -93,4 +97,6 @@ void unload_fs(int device_id) {
 
     free(file_systems[device_id]);
     file_systems[device_id] = NULL;
+
+    debug_log("File System Unloaded: [ %d ]\n", device_id);
 }

@@ -1,9 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include <kernel/hal/output.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
+#include <kernel/hal/x86_64/drivers/serial.h>
 
 static size_t row = 0;
 static size_t col = 0;
@@ -11,15 +13,9 @@ static size_t col = 0;
 static size_t max_height = VGA_HEIGHT;
 static size_t max_width = VGA_WIDTH;
 
-void init_output() {
-    for (size_t row = 0; row < max_height; row++) {
-        for (size_t col = 0; col < max_width; col++) {
-            write_vga_buffer(row, col, ' ');
-        }
-    }
-}
+static enum output_method method = OUTPUT_SCREEN;
 
-bool kprint(const char *str, size_t len) {
+static bool screen_print(const char *str, size_t len) {
     if (row >= max_height) {
         row = 0;
     }
@@ -46,6 +42,38 @@ bool kprint(const char *str, size_t len) {
         }
     }
     return true;
+}
+
+static bool serial_print(const char *str, size_t len) {
+    return serial_write_message(str, len);
+}
+
+void init_output() {
+    for (size_t row = 0; row < max_height; row++) {
+        for (size_t col = 0; col < max_width; col++) {
+            write_vga_buffer(row, col, ' ');
+        }
+    }
+}
+
+bool kprint(const char *str, size_t len) {
+    switch (method) {
+        case OUTPUT_SCREEN: return screen_print(str, len);
+        case OUTPUT_SERIAL: return serial_print(str, len);
+        default:            return false;
+    }
+}
+
+int debug_log(const char *format, ...) {
+    va_list parameters;
+    va_start(parameters, format);
+
+    method = OUTPUT_SERIAL;
+    int written = vprintf(format, parameters);
+    method = OUTPUT_SCREEN;
+
+    va_end(parameters);
+    return written;
 }
 
 void dump_registers_to_screen() {

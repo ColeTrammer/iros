@@ -14,7 +14,6 @@
 #include <kernel/hal/output.h>
 
 void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t inintrd_phys_start, uint64_t initrd_phys_end, uint32_t *multiboot_info) {
-    init_output();
     init_hal();
     init_irq_handlers();
     init_page_frame_allocator(kernel_phys_start, kernel_phys_end, inintrd_phys_start, initrd_phys_end, multiboot_info);
@@ -26,8 +25,8 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     enable_interrupts();
 
     // Test Program
-    // struct process *test = load_process("[:test.o");
-    // run_process(test);
+    struct process *test = load_process("[:test.o");
+    run_process(test);
 
     while (1);
 }

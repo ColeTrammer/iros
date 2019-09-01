@@ -3,8 +3,11 @@
 #include <stdbool.h>
 
 #include <kernel/hal/irqs.h>
+#include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/arch/x86_64/asm_utils.h>
+
+static void (*handlers[2 * PIC_IRQS])(void);
 
 static void sendEOI(unsigned int irq_line) {
     if (irq_line >= 8) {
@@ -78,16 +81,6 @@ static uint16_t get_isr() {
     return get_irq_reg(PIC_READ_ISR);
 }
 
-static void (*handlers[2 * PIC_IRQS])(void);
-
-void register_irq_line_handler(void (*handler)(void), unsigned int irq_line) {
-    if (irq_line < 2 * PIC_IRQS) {
-        handlers[irq_line] = handler;
-    } else {
-        printf("Invalid IRQ Line Requested: %u\n", irq_line);
-    }
-}
-
 void pic_generic_handler() {
     unsigned int irq_line = 0;
     uint16_t isr = get_isr();
@@ -100,19 +93,26 @@ void pic_generic_handler() {
     if (handlers[irq_line] != NULL) {
         handlers[irq_line]();
     } else {
-        printf("Recieved Interrupt on IRQ Line: %u\n", irq_line);
+        debug_log("Recieved Interrupt on IRQ Line: [ %u ]\n", irq_line);
     }
     sendEOI(irq_line);
+}
+
+void register_irq_line_handler(void (*handler)(void), unsigned int irq_line) {
+    if (irq_line < 2 * PIC_IRQS) {
+        handlers[irq_line] = handler;
+        register_irq_handler(&pic_generic_handler_entry, irq_line + PIC_IRQ_OFFSET, false);
+        enable_irq_line(irq_line);
+        debug_log("Registered PIC IRQ Line Handler: [ %#.1X, %#.16lX ]\n", irq_line, handler);
+    } else {
+        printf("Invalid IRQ Line Requested: %u\n", irq_line);
+    }
 }
 
 
 void init_pic() {
     remap(PIC_IRQ_OFFSET, PIC_IRQ_OFFSET + PIC_IRQS);
     for (uint8_t i = 0; i < 2 * PIC_IRQS; i++) {
-        enable_irq_line(i);
-    }
-    disable_irq_line(0);
-    for (unsigned int i = PIC_IRQ_OFFSET; i < PIC_IRQ_OFFSET + 2 * PIC_IRQS; i++) {
-        register_irq_handler(&pic_generic_handler_entry, i, false);
+        disable_irq_line(i);
     }
 }

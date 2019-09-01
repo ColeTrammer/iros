@@ -12,6 +12,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
+#include <kernel/hal/output.h>
 
 static struct vm_region kernel_text;
 static struct vm_region kernel_rod;
@@ -66,6 +67,8 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 
     uintptr_t new_structure = create_paging_structure(get_current_process()->process_memory, true);
     load_paging_structure(new_structure);
+
+    debug_log("Finished Initializing VM Allocator\n");
 }
 
 void *add_vm_pages_end(size_t n, uint64_t type) {

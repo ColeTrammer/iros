@@ -9,6 +9,7 @@
 #include <kernel/proc/process.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
+#include <kernel/hal/output.h>
 
 static struct process *current_process;
 static struct process initial_kernel_process;
@@ -78,11 +79,15 @@ struct process *load_process(const char *file_name) {
 
     arch_load_process(process, elf64_get_entry(buffer));
 
+    debug_log("Loaded Process: [ %d, %s ]\n", process->pid, file_name);
     return process;
 }
 
 void run_process(struct process *process) {
     current_process = process;
+
+    debug_log("Proceeding to Run Process: [ %d ]\n", process->pid);
+
     arch_run_process(process);
 }
 

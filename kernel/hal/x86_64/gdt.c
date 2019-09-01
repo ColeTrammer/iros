@@ -3,6 +3,7 @@
 
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
+#include <kernel/hal/output.h>
 
 static struct gdt_entry gdt[GDT_ENTRIES];
 static struct gdt_descriptor gdt_descriptor;
@@ -40,4 +41,6 @@ void init_gdt() {
 
 void set_tss_stack_pointer(uintptr_t rsp) {
     tss.rsp0 = rsp;
+
+    debug_log("Set TSS Stack Pointer: [ %#.16lX ]\n", rsp);
 }

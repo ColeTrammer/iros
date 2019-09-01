@@ -5,6 +5,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/hal/irqs.h>
+#include <kernel/hal/output.h>
 
 void init_irq_handlers() {
     register_irq_handler(&handle_double_fault_entry, 8, false);
@@ -12,6 +13,8 @@ void init_irq_handlers() {
     register_irq_handler(&handle_page_fault_entry, 14, false);
 
     register_irq_handler(&sys_call_entry, 128, true);
+
+    debug_log("Finished Initializing Handlers\n");
 }
 
 void handle_double_fault() {

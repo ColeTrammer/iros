@@ -5,6 +5,7 @@
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
+#include <kernel/hal/output.h>
 
 static uintptr_t page_bitmap[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
 
@@ -26,6 +27,8 @@ static void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
     for (uintptr_t i = 0; i < num_pages; i++) {
         set_bit(bit_index_base + i, true);
     }
+
+    debug_log("Phys Addr Marked as Used: [ %#.16lX, %#.16lX ]\n", phys_addr_start, phys_addr_start + length);
 }
 
 uintptr_t get_next_phys_page() {
@@ -34,6 +37,8 @@ uintptr_t get_next_phys_page() {
             uintptr_t bit_index = i * 8 * sizeof(uintptr_t);
             while (get_bit(bit_index)) { bit_index++; }
             set_bit(bit_index, true);
+
+            debug_log("Phys Addr Allocated: [ %#.16lX ]\n", bit_index * PAGE_SIZE);
             return bit_index * PAGE_SIZE;
         }
     }
@@ -65,4 +70,6 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
             data = (uint32_t*) (((uintptr_t) data & ~0x7) + 8);
         }
     }
+
+    debug_log("Finished Initializing Page Frame Allocator\n");
 }

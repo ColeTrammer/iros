@@ -3,6 +3,7 @@
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/hal/output.h>
 
 struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add) {
     struct vm_region **link = &list;
@@ -11,6 +12,8 @@ struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add
     }
     to_add->next = *link;
     *link = to_add;
+
+    debug_log("VM Region Added: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", to_add->type, to_add->flags, to_add->start, to_add->end, list);
     return list;
 }
 
@@ -20,6 +23,8 @@ struct vm_region *remove_vm_region(struct vm_region *list, uint64_t type) {
         link = &(*link)->next;
     }
     *link = (*link)->next;
+
+    debug_log("VM Region Removed: [ %#.16lX, %#.16lX ]\n", type, list);
     return list;
 }
 
@@ -41,6 +46,8 @@ int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages
         return -2; // Indicate there is no room
     }
     list->end = new_end;
+
+    debug_log("VM Region End Extended: [ %#d, %#.16lX, %#.16lX ]\n", num_pages, type, list);
     return 0;
 }
 
@@ -63,6 +70,8 @@ int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pag
         return -2; // Indicate there is no room
     }
     list->next->start = new_start;
+
+    debug_log("VM Region Start Extended: [ %#d, %#.16lX, %#.16lX ]\n", num_pages, type, list);
     return 0;
 }
 
@@ -77,6 +86,8 @@ int contract_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pag
         return -2; // Indicate took away too much
     }
     list->end = new_end;
+
+    debug_log("VM Region End Contracted: [ %#d, %#.16lX, %#.16lX ]\n", num_pages, type, list);
     return 0;
 }
 
@@ -91,5 +102,7 @@ int contract_vm_region_start(struct vm_region *list, uint64_t type, size_t num_p
         return -2; // Indicate took away too much
     }
     list->start = new_start;
+
+    debug_log("VM Region Start Contracted: [ %#d, %#.16lX, %#.16lX ]\n", num_pages, type, list);
     return 0;
 }

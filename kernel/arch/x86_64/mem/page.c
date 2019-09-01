@@ -7,6 +7,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/hal/output.h>
 
 #include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/arch/x86_64/asm_utils.h>
@@ -67,6 +68,8 @@ static void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
         }
         pml4[pml4_offset] = 0;
     }
+
+    debug_log("Page Unmapped: [ %#.16lX ]\n", virt_addr);
 }
 
 void clear_initial_page_mappings() {
@@ -112,6 +115,8 @@ void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
         invlpg(virt_addr);
     }
     *pt_entry = phys_addr | flags;
+
+    debug_log("Page Mapped: [ %#.16lX, %#16lX, %#.16lX ]\n", flags, virt_addr, phys_addr);
 }
 
 void unmap_page(uintptr_t virt_addr) {
@@ -194,5 +199,6 @@ void map_vm_region_flags(struct vm_region *region) {
 void map_vm_region(struct vm_region *region) {
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
         map_page(addr, region->flags);
+        debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", region->type, region->flags, region->start, region->end);
     }    
 }

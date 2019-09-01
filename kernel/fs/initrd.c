@@ -10,6 +10,7 @@
 #include <kernel/fs/fs_manager.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/hal/output.h>
 
 static int64_t num_files;
 static uintptr_t initrd_start;
@@ -56,6 +57,8 @@ void initrd_mount() {
     initrd_start = initrd->start;
     num_files = *((int64_t*) initrd_start);
     file_list = (struct initrd_file_entry*) (initrd_start + sizeof(int64_t));
+
+    debug_log("INITRD Mounted: [ %d, %#.16lX ]\n", num_files, initrd_start);
 }
 
 void init_initrd() {
