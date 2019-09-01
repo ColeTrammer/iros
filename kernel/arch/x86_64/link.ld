@@ -65,7 +65,7 @@ SECTIONS
     {
         PROVIDE(_bss_start = .);
         *(.bss.kernel_stack)
-        *(.bss.temp_page)
+        *(.bss.reserved_pages)
         *(COMMON)
         *(.bss .bss.*)
         PROVIDE(_bss_end = .);

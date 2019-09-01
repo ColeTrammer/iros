@@ -1,3 +1,5 @@
+#include <kernel/mem/page.h>
+#include <kernel/mem/vm_region.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/hal/output.h>
 
@@ -5,9 +7,10 @@ static uint16_t *vga_buffer = (uint16_t*) VGA_PHYS_ADDR;
 static enum vga_color fg = VGA_COLOR_LIGHT_GREY;
 static enum vga_color bg = VGA_COLOR_BLACK;
 
-void set_vga_buffer(uint16_t *_vga_buffer) {
-    vga_buffer = _vga_buffer;
-    debug_log("VGA Buffer Changed: [ %#.16lX ]\n", _vga_buffer);
+void update_vga_buffer() {
+    map_phys_page(VGA_PHYS_ADDR & ~0xFFF, VGA_VIRT_ADDR, VM_NO_EXEC | VM_GLOBAL | VM_WRITE);
+    vga_buffer = (uint16_t*) VGA_VIRT_ADDR;
+    debug_log("VGA Buffer Updated: [ %#.16lX ]\n", VGA_VIRT_ADDR);
 }
 
 void set_vga_foreground(enum vga_color _fg) {

@@ -11,6 +11,7 @@
 
 #include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/hal/x86_64/drivers/vga.h>
 
 static uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
@@ -68,11 +69,11 @@ static void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
         }
         pml4[pml4_offset] = 0;
     }
-
-    debug_log("Page Unmapped: [ %#.16lX ]\n", virt_addr);
 }
 
 void clear_initial_page_mappings() {
+    update_vga_buffer();
+
     for (size_t i = 0; i < 0x600000; i += PAGE_SIZE) {
         do_unmap_page(i, false);
     }
@@ -115,8 +116,6 @@ void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
         invlpg(virt_addr);
     }
     *pt_entry = phys_addr | flags;
-
-    debug_log("Page Mapped: [ %#.16lX, %#16lX, %#.16lX ]\n", flags, virt_addr, phys_addr);
 }
 
 void unmap_page(uintptr_t virt_addr) {

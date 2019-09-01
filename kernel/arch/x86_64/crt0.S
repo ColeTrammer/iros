@@ -30,7 +30,10 @@ __halt:
 .skip 0x4000
 .global KERNEL_VM_STACK_START
 KERNEL_VM_STACK_START:
-.section .bss.temp_page
+.section .bss.reserved_pages
 .global _temp_page
 _temp_page:
+.skip 0x1000
+.global _reserved_vga_buffer
+_reserved_vga_buffer:
 .skip 0x1000

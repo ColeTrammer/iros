@@ -18,7 +18,6 @@ static struct vm_region kernel_text;
 static struct vm_region kernel_rod;
 static struct vm_region kernel_data;
 static struct vm_region kernel_heap;
-static struct vm_region vga_buffer;
 static struct vm_region initrd;
 
 void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
@@ -40,15 +39,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     kernel_data.type = VM_KERNEL_DATA;
     get_current_process()->process_memory = add_vm_region(get_current_process()->process_memory, &kernel_data);
 
-    vga_buffer.start = kernel_data.end;
-    vga_buffer.end = vga_buffer.start + PAGE_SIZE;
-    vga_buffer.flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC;
-    vga_buffer.type = VM_VGA;
-    get_current_process()->process_memory = add_vm_region(get_current_process()->process_memory, &vga_buffer);
-    map_phys_page(VGA_PHYS_ADDR, vga_buffer.start, vga_buffer.flags);
-    set_vga_buffer((void*) vga_buffer.start);
-
-    initrd.start = vga_buffer.end;
+    initrd.start = kernel_data.end;
     initrd.end = ((initrd.start + initrd_phys_end - initrd_phys_start) & ~0xFFF) + PAGE_SIZE;
     initrd.flags = VM_GLOBAL | VM_NO_EXEC;
     initrd.type = VM_INITRD;
