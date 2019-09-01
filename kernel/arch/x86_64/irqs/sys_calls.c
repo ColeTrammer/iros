@@ -1,5 +1,9 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#include <kernel/proc/process.h>
+#include <kernel/proc/pid.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/arch/x86_64/proc/process.h>
@@ -12,7 +16,11 @@ void arch_sys_print(struct process_state *process_state) {
 }
 
 void arch_sys_exit(struct process_state *process_state) {
-    printf("Exited\n");
+    int status = (int) process_state->cpu_state.rsi;
+    debug_log("Sys Exit Called: [ %d ]\n", status);
+
+    struct process *process = get_current_process();
+    process->sched_state = EXITING;
 
     while (1);
     __builtin_unreachable();

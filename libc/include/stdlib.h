@@ -7,6 +7,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+
 #ifndef __is_libk
 
 __attribute__((__noreturn__))
@@ -15,7 +18,7 @@ void exit(int status);
 int atexit(void (*)(void));
 char *getenv(const char*);
 
-#endif
+#endif /* __is_libk */
 
 __attribute__((__noreturn__)) 
 void abort();

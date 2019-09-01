@@ -69,7 +69,7 @@ struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type) {
     return NULL;
 
     found_section:
-    region->start = section_headers[i].sh_addr;
+    region->start = section_headers[i].sh_addr & ~0xFF;
     region->end = ((section_headers[i].sh_addr + section_headers[i].sh_size) & ~0xFFF) + PAGE_SIZE;
     region->type = type;
     region->flags |= VM_USER;

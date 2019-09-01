@@ -12,5 +12,5 @@ pid_t get_next_pid() {
 }
 
 void free_pid(pid_t pid) {
-    printf("Free PID: %d\n", pid);
+    debug_log("Free PID: [ %d ]\n", pid);
 }

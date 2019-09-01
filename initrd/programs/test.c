@@ -1,9 +1,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int main() {
     printf("QWER\n");
 
-    return 1;
+    return EXIT_SUCCESS;
 }

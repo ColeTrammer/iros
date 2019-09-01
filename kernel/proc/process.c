@@ -33,10 +33,13 @@ struct process *load_process(const char *file_name) {
     void *buffer = malloc(length);
     fs_read(program, buffer, length);
 
+    fs_close(program);
+
     struct process *process = calloc(1, sizeof(struct process));
     process->pid = get_next_pid();
     process->process_memory = clone_kernel_vm();
     process->kernel_process = false;
+    process->sched_state = READY;
     process->next = NULL;
 
     uintptr_t structure = create_paging_structure(process->process_memory, false);
@@ -44,7 +47,7 @@ struct process *load_process(const char *file_name) {
 
     uint64_t start = elf64_get_start(buffer);
     uint64_t size = elf64_get_size(buffer);
-    uint64_t num_pages = size / PAGE_SIZE;
+    uint64_t num_pages = NUM_PAGES(start, start + size);
     for (uint64_t i = 0; i < num_pages; i++) {
         map_page(start + i * PAGE_SIZE, VM_USER | VM_WRITE);
     }
@@ -78,6 +81,7 @@ struct process *load_process(const char *file_name) {
     map_vm_region(process_stack);
 
     arch_load_process(process, elf64_get_entry(buffer));
+    free(buffer);
 
     debug_log("Loaded Process: [ %d, %s ]\n", process->pid, file_name);
     return process;
@@ -85,6 +89,7 @@ struct process *load_process(const char *file_name) {
 
 void run_process(struct process *process) {
     current_process = process;
+    current_process->sched_state = RUNNING;
 
     debug_log("Proceeding to Run Process: [ %d ]\n", process->pid);
 
@@ -93,4 +98,19 @@ void run_process(struct process *process) {
 
 struct process *get_current_process() {
     return current_process;
+}
+
+void free_process(struct process *process) {
+    remove_paging_structure(process->arch_process.cr3, process->process_memory);
+
+    free_pid(process->pid);
+
+    struct vm_region *region = process->process_memory;
+    while (region != NULL) {
+        struct vm_region *temp = region->next;
+        free(region);
+        region = temp;
+    }
+
+    free(process);
 }

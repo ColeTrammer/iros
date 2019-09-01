@@ -9,11 +9,19 @@
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(proc/process.h)
 
+enum sched_state {
+    RUNNING,
+    READY,
+    WAITING,
+    EXITING
+};
+
 struct process {
     struct arch_process arch_process;
     struct vm_region *process_memory;
     bool kernel_process;
     pid_t pid;
+    enum sched_state sched_state;
     struct process *next;
 };
 
@@ -25,6 +33,8 @@ void arch_load_process(struct process *process, uintptr_t entry);
 
 void run_process(struct process *process);
 void arch_run_process(struct process *process);
+
+void free_process(struct process *process);
 
 struct process *get_current_process();
 

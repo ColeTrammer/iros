@@ -18,7 +18,9 @@
 void clear_initial_page_mappings();
 
 uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy);
-void load_paging_structure(uintptr_t virt_addr);
+void load_paging_structure(uintptr_t phys_addr);
+void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list);
+
 void map_vm_region_flags(struct vm_region *region);
 void map_vm_region(struct vm_region *region);
 

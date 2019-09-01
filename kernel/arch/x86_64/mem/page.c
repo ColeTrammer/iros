@@ -8,6 +8,7 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/hal/output.h>
+#include <kernel/proc/process.h>
 
 #include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/arch/x86_64/asm_utils.h>
@@ -84,7 +85,7 @@ void map_page(uintptr_t virt_addr, uint64_t flags) {
 }
 
 void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
-    flags &= VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC;
+    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC);
     flags |= 0x01;
 
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
@@ -182,11 +183,26 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
         }
     }
 
-    return (uintptr_t) PML4_BASE;
+    return get_phys_addr((uintptr_t) PML4_BASE);
 }
 
-void load_paging_structure(uintptr_t virt_addr) {
-    load_cr3(get_phys_addr(virt_addr));
+void load_paging_structure(uintptr_t phys_addr) {
+    load_cr3(phys_addr);
+}
+
+void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
+    load_cr3(phys_addr);
+
+    struct vm_region *region = list;
+    while (region != NULL) {
+        for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
+            unmap_page(page);
+        }
+        region = region->next;
+    }
+
+    load_cr3(get_current_process()->arch_process.cr3);
+    free_phys_page(phys_addr);
 }
 
 void map_vm_region_flags(struct vm_region *region) {
