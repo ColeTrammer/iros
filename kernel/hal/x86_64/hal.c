@@ -4,6 +4,7 @@
 
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
@@ -23,6 +24,7 @@ void init_hal() {
 void init_drivers() {
     init_keyboard();
     init_fdc();
+    init_pit();
 
     debug_log("Finished Initializing Drivers\n");
 }
