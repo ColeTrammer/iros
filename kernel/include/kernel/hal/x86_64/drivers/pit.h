@@ -2,6 +2,7 @@
 #define _KERNEL_HAL_X86_64_DRIVERS_PIT_H 1
 
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/arch/x86_64/proc/process.h>
 
 #define PIT_IRQ_LINE 0
 
@@ -33,6 +34,6 @@
 void init_pit();
 
 void pit_set_rate(unsigned int rate);
-void pit_register_callback(void (*callback)(void));
+void pit_register_callback(void (*callback)(struct process_state*), unsigned int ms);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PIT_H */

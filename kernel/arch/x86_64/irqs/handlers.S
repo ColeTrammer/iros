@@ -21,6 +21,8 @@ handle_page_fault_entry:
 
 .global sys_call_entry
 sys_call_entry:
+    cli
+
     push %rax
     push %rbx
     push %rcx
@@ -64,4 +66,3 @@ sys_call_entry:
 sys_call_table:
     .quad arch_sys_print
     .quad arch_sys_exit
-    .quad arch_sys_yield

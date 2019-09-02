@@ -7,7 +7,7 @@ static struct process *list_start = NULL;
 static struct process *list_end = NULL;
 
 void init_process_sched() {
-    
+    arch_init_process_sched();
 }
 
 void sched_add_process(struct process *process) {

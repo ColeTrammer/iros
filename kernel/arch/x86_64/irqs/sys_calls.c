@@ -26,12 +26,3 @@ void arch_sys_exit(struct process_state *process_state) {
 
     sched_run_next();
 }
-
-void arch_sys_yield(struct process_state *process_state) {
-    debug_log("Sys Yield Called\n");
-
-    struct process *process = get_current_process();
-    memcpy(&process->arch_process.process_state, process_state, sizeof(struct process_state));
-
-    sched_run_next();
-}

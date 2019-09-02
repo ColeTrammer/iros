@@ -1,19 +1,31 @@
 #include <stdio.h>
 
+#include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/output.h>
 
-static void (*callback)(void) = NULL;
+static void (*callback)(struct process_state*) = NULL;
 
-static void handle_pit_interrupt() {
+static unsigned int count = 0;
+static unsigned int count_to = 0;
+
+static void handle_pit_interrupt(struct process_state *process_state) {
     if (callback != NULL) {
-        callback();
+        count++;
+        if (count >= count_to) {
+            sendEOI(0);
+            count = 0;
+            callback(process_state);
+        }
     }
+
+    debug_log("PIT Interrupt\n");
 }
 
-void pit_register_callback(void (*_callback)(void)) {
+void pit_register_callback(void (*_callback)(struct process_state*), unsigned int ms) {
     callback = _callback;
+    count_to = ms;
 }
 
 void pit_set_rate(unsigned int rate) {
@@ -23,7 +35,7 @@ void pit_set_rate(unsigned int rate) {
 }
 
 void init_pit() {
-    register_irq_line_handler(&handle_pit_interrupt, PIT_IRQ_LINE);
+    // register_irq_line_handler(&handle_pit_interrupt, PIT_IRQ_LINE);
 
-    pit_set_rate(1);
+    // pit_set_rate(1);
 }
