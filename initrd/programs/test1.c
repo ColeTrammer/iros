@@ -4,7 +4,9 @@
 #include <stdlib.h>
 
 int main() {
-    printf("QWER\n");
+    for (int i = 0; i < 7; i++) {
+        puts("Test 1");
+    }
 
     return EXIT_SUCCESS;
 }

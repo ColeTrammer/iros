@@ -31,6 +31,8 @@ void init_drivers() {
 
 void enable_interrupts() {
     asm ( "sti" );
+}
 
-    debug_log("Interrupts Enabled\n");
+void disable_interrupts() {
+    asm ( "cli" );
 }

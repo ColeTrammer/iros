@@ -7,7 +7,7 @@
 static pid_t counter = 1;
 
 pid_t get_next_pid() {
-    debug_log("PID Assigned: %d\n", counter + 1);
+    debug_log("PID Assigned: %d\n", counter);
     return counter++;
 }
 

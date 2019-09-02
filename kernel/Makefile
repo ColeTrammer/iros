@@ -50,7 +50,8 @@ $(BUILDDIR)/kernel/mem/vm_allocator.o \
 $(BUILDDIR)/kernel/mem/vm_region.o \
 $(BUILDDIR)/kernel/proc/elf64.o \
 $(BUILDDIR)/kernel/proc/pid.o \
-$(BUILDDIR)/kernel/proc/process.o
+$(BUILDDIR)/kernel/proc/process.o \
+$(BUILDDIR)/kernel/sched/process_sched.o
 
 # Lists all objects - includes extra objects needed for standard c programs
 OBJS=\

@@ -4,6 +4,7 @@
 
 #include <kernel/proc/process.h>
 #include <kernel/proc/pid.h>
+#include <kernel/sched/process_sched.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/arch/x86_64/proc/process.h>
@@ -22,6 +23,5 @@ void arch_sys_exit(struct process_state *process_state) {
     struct process *process = get_current_process();
     process->sched_state = EXITING;
 
-    while (1);
-    __builtin_unreachable();
+    sched_run_next();
 }

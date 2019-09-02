@@ -123,6 +123,10 @@ void unmap_page(uintptr_t virt_addr) {
     do_unmap_page(virt_addr, true);
 }
 
+uintptr_t get_current_paging_structure() {
+    return get_current_process()->arch_process.cr3;
+}
+
 uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
     map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
     uint64_t *pml4 = TEMP_PAGE;
@@ -187,6 +191,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
 }
 
 void load_paging_structure(uintptr_t phys_addr) {
+    get_current_process()->arch_process.cr3 = phys_addr;
     load_cr3(phys_addr);
 }
 

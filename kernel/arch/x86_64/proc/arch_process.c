@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/proc/process.h>
@@ -7,9 +8,23 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/gdt.h>
 
+extern void KERNEL_VM_STACK_START();
+
+#define __KERNEL_VM_STACK_START ((uint64_t) &KERNEL_VM_STACK_START)
+
+static void kernel_idle() {
+    printf("IDLING...\n");
+
+    while (1);
+    __builtin_unreachable();
+}
+
 void arch_init_kernel_process(struct process *kernel_process) {
-    kernel_process->arch_process.process_state.stack_state.rip = (uint64_t) &abort;
-    kernel_process->arch_process.process_state.stack_state.cs = CS_SELECTOR; 
+    kernel_process->arch_process.process_state.stack_state.rip = (uint64_t) &kernel_idle;
+    kernel_process->arch_process.process_state.stack_state.cs = CS_SELECTOR;
+    kernel_process->arch_process.process_state.stack_state.rflags = get_rflags() | (1 << 9);
+    kernel_process->arch_process.process_state.stack_state.ss = DATA_SELECTOR;
+    kernel_process->arch_process.process_state.stack_state.rsp = __KERNEL_VM_STACK_START;
 }
 
 void arch_load_process(struct process *process, uintptr_t entry) {

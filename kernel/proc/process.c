@@ -9,6 +9,7 @@
 #include <kernel/proc/process.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
+#include <kernel/sched/process_sched.h>
 #include <kernel/hal/output.h>
 
 static struct process *current_process;
@@ -21,7 +22,10 @@ void init_kernel_process() {
 
     initial_kernel_process.kernel_process = true;
     initial_kernel_process.pid = 0;
+    initial_kernel_process.sched_state = RUNNING;
     initial_kernel_process.next = NULL;
+
+    sched_add_process(&initial_kernel_process);
 }
 
 struct process *load_process(const char *file_name) {
@@ -42,6 +46,7 @@ struct process *load_process(const char *file_name) {
     process->sched_state = READY;
     process->next = NULL;
 
+    uintptr_t old_paging_structure = get_current_paging_structure();
     uintptr_t structure = create_paging_structure(process->process_memory, false);
     load_paging_structure(structure);
 
@@ -82,6 +87,8 @@ struct process *load_process(const char *file_name) {
 
     arch_load_process(process, elf64_get_entry(buffer));
     free(buffer);
+
+    load_paging_structure(old_paging_structure);
 
     debug_log("Loaded Process: [ %d, %s ]\n", process->pid, file_name);
     return process;

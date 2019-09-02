@@ -10,6 +10,7 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
+#include <kernel/sched/process_sched.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 
@@ -21,12 +22,16 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_vm_allocator(inintrd_phys_start, initrd_phys_end);
     init_drivers();
     init_fs_manager();
+    init_process_sched();
 
-    enable_interrupts();
+    // Test Programs
+    struct process *test1 = load_process("[:test1.o");
+    sched_add_process(test1);
 
-    // Test Program
-    struct process *test = load_process("[:test.o");
-    run_process(test);
+    struct process *test2 = load_process("[:test2.o");
+    sched_add_process(test2);
+
+    sched_run_next();
 
     while (1);
 }
