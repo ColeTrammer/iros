@@ -22,6 +22,7 @@ struct process {
     bool kernel_process;
     pid_t pid;
     enum sched_state sched_state;
+    struct process *prev;
     struct process *next;
 };
 

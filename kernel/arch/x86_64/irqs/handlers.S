@@ -64,3 +64,4 @@ sys_call_entry:
 sys_call_table:
     .quad arch_sys_print
     .quad arch_sys_exit
+    .quad arch_sys_yield

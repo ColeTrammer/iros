@@ -4,6 +4,7 @@
 
 #include <kernel/mem/page.h>
 #include <kernel/proc/process.h>
+#include <kernel/sched/process_sched.h>
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/gdt.h>
@@ -13,10 +14,11 @@ extern void KERNEL_VM_STACK_START();
 #define __KERNEL_VM_STACK_START ((uint64_t) &KERNEL_VM_STACK_START)
 
 static void kernel_idle() {
-    printf("IDLING...\n");
+    // printf("IDLING...\n");
+    sched_run_next();
 
-    while (1);
-    __builtin_unreachable();
+    // while (1);
+    // __builtin_unreachable();
 }
 
 void arch_init_kernel_process(struct process *kernel_process) {
