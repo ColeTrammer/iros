@@ -19,8 +19,6 @@ static void handle_pit_interrupt(struct process_state *process_state) {
             callback(process_state);
         }
     }
-
-    debug_log("PIT Interrupt\n");
 }
 
 void pit_register_callback(void (*_callback)(struct process_state*), unsigned int ms) {

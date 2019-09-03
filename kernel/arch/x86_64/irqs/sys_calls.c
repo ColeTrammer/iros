@@ -8,17 +8,23 @@
 #include <kernel/proc/pid.h>
 #include <kernel/sched/process_sched.h>
 
+#include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/arch/x86_64/proc/process.h>
 
 void arch_sys_print(struct process_state *process_state) {
+    disable_interrupts();
     debug_log("Sys Print Called: [ %#.16lX, %#.16lX ]\n", process_state->cpu_state.rsi, process_state->cpu_state.rdx);
 
     bool res = kprint((char*) process_state->cpu_state.rsi, process_state->cpu_state.rdx);
     process_state->cpu_state.rax = res;
+
+    enable_interrupts();
 }
 
 void arch_sys_exit(struct process_state *process_state) {
+    disable_interrupts();
+
     int status = (int) process_state->cpu_state.rsi;
     debug_log("Sys Exit Called: [ %d ]\n", status);
 
@@ -26,9 +32,13 @@ void arch_sys_exit(struct process_state *process_state) {
     process->sched_state = EXITING;
 
     sched_run_next();
+
+    enable_interrupts();
 }
 
 void arch_sys_sbrk(struct process_state *process_state) {
+    disable_interrupts();
+
     intptr_t increment = process_state->cpu_state.rsi;
     void *res;
     if (increment < 0) {
@@ -38,4 +48,6 @@ void arch_sys_sbrk(struct process_state *process_state) {
         res = add_vm_pages_end(increment, VM_PROCESS_HEAP);
     }
     process_state->cpu_state.rax = (uint64_t) res;
+
+    enable_interrupts();
 }

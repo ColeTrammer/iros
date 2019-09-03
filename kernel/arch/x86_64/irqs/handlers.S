@@ -21,8 +21,6 @@ handle_page_fault_entry:
 
 .global sys_call_entry
 sys_call_entry:
-    cli
-
     push %rax
     push %rbx
     push %rcx

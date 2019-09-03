@@ -15,8 +15,6 @@ extern void KERNEL_VM_STACK_START();
 #define __KERNEL_VM_STACK_START ((uint64_t) &KERNEL_VM_STACK_START)
 
 static void kernel_idle() {
-    sched_run_next();
-
     while (1);
     __builtin_unreachable();
 }
@@ -24,7 +22,7 @@ static void kernel_idle() {
 void arch_init_kernel_process(struct process *kernel_process) {
     kernel_process->arch_process.process_state.stack_state.rip = (uint64_t) &kernel_idle;
     kernel_process->arch_process.process_state.stack_state.cs = CS_SELECTOR;
-    kernel_process->arch_process.process_state.stack_state.rflags = get_rflags();
+    kernel_process->arch_process.process_state.stack_state.rflags = get_rflags() | (1 << 9);
     kernel_process->arch_process.process_state.stack_state.ss = DATA_SELECTOR;
     kernel_process->arch_process.process_state.stack_state.rsp = __KERNEL_VM_STACK_START;
 }

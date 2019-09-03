@@ -2,9 +2,10 @@
 
 #include <kernel/sched/process_sched.h>
 #include <kernel/hal/timer.h>
+#include <kernel/arch/x86_64/asm_utils.h>
 
 void arch_init_process_sched() {
-    register_callback(&arch_sched_run_next, 2);
+    register_callback(&arch_sched_run_next, 1);
 }
 
 void arch_sched_run_next(struct process_state *process_state) {
