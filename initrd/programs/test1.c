@@ -4,11 +4,9 @@
 #include <stdlib.h>
 
 int main() {    
-    // for (int i = 0; i < 13; i++) {
-    //     printf("%03d: Test 1\n", i);
-    // }
-
-    printf("%#X\n", 10);
+    for (int i = 0; i < 13; i++) {
+        printf("%d: Test 1\n", i);
+    }
 
     return EXIT_SUCCESS;
 }

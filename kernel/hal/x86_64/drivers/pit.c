@@ -35,7 +35,7 @@ void pit_set_rate(unsigned int rate) {
 }
 
 void init_pit() {
-    // register_irq_line_handler(&handle_pit_interrupt, PIT_IRQ_LINE);
+    register_irq_line_handler(&handle_pit_interrupt, PIT_IRQ_LINE);
 
-    // pit_set_rate(1);
+    pit_set_rate(1);
 }

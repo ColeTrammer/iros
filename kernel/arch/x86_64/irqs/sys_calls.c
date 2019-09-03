@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/pid.h>
 #include <kernel/sched/process_sched.h>
@@ -25,4 +26,16 @@ void arch_sys_exit(struct process_state *process_state) {
     process->sched_state = EXITING;
 
     sched_run_next();
+}
+
+void arch_sys_sbrk(struct process_state *process_state) {
+    intptr_t increment = process_state->cpu_state.rsi;
+    void *res;
+    if (increment < 0) {
+        res = add_vm_pages_end(0, VM_PROCESS_HEAP);
+        remove_vm_pages_end(-increment, VM_PROCESS_HEAP);
+    } else {
+        res = add_vm_pages_end(increment, VM_PROCESS_HEAP);
+    }
+    process_state->cpu_state.rax = (uint64_t) res;
 }

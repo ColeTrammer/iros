@@ -4,8 +4,8 @@
 #include <stdlib.h>
 
 int main() {
-    for (int i = 0; i < 12; i++) {
-        printf("%2d: Test 2\n", i);
+    for (int i = 0; i < 11; i++) {
+        printf("%d: Test 2\n", i);
     }
 
     return EXIT_SUCCESS;

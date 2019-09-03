@@ -10,7 +10,7 @@ _start:
     push %rcx
     push %r8
     call _init
-    
+
     pop %r8
     pop %rcx
     pop %rdx

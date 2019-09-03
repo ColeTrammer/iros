@@ -4,7 +4,7 @@
 #include <kernel/hal/timer.h>
 
 void arch_init_process_sched() {
-    // register_callback(&arch_sched_run_next, 3);
+    register_callback(&arch_sched_run_next, 2);
 }
 
 void arch_sched_run_next(struct process_state *process_state) {
