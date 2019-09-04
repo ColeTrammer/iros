@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 int main() {
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 13; i++) {
         printf("%d: Test 2\n", i);
     }
 

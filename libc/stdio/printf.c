@@ -7,6 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __is_libk
+#include <kernel/util/spinlock.h>
+
+static spinlock_t buffer_lock = SPINLOCK_INITIALIZER;
+#endif /* __is_libk */
+
 static char buffer[0x4000];
 static size_t buffer_size = 0x4000;
 static size_t buffer_index = 0;
@@ -16,9 +22,17 @@ bool write_buffer(const char *s, size_t len) {
 		return false;
 	}
 
+#ifdef __is_libk
+	spin_lock(&buffer_lock);
+#endif /* __is_libk */
+
 	for (size_t i = 0; i < len; i++) {
 		buffer[buffer_index++] = s[i];
 	}
+
+#ifdef __is_libk
+	spin_unlock(&buffer_lock);
+#endif /* __is_libk */
 
 	return true;
 }
@@ -26,9 +40,13 @@ bool write_buffer(const char *s, size_t len) {
 #ifdef __is_libk
 bool kprint(const char*, size_t);
 bool print(size_t len) {
+	spin_lock(&buffer_lock);
 	buffer_index = 0;
     
-	return kprint(buffer, len);
+	bool ret = kprint(buffer, len);
+
+	spin_unlock(&buffer_lock);
+	return ret;
 }
 #else
 bool print(size_t n) {
@@ -42,7 +60,7 @@ bool print(size_t n) {
 	               "movq %%rax, %0" : "=m"(ret) : "i"(buffer), "m"(n) : "rdi", "rsi", "rdx", "rax" );
 	return ret;
 }
-#endif
+#endif /* __is_libk */
 
 static int parseInt(const char* num, size_t length) {
 	int n = 0;

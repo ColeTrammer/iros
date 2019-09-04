@@ -3,22 +3,27 @@
 #include <stdarg.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/util/spinlock.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 
 static size_t row = 0;
 static size_t col = 0;
+static spinlock_t screen_lock = SPINLOCK_INITIALIZER;
 
 static size_t max_height = VGA_HEIGHT;
 static size_t max_width = VGA_WIDTH;
 
 static enum output_method method = OUTPUT_SCREEN;
 
-static bool screen_print(const char *str, size_t len) {
+bool screen_print(const char *str, size_t len) {
+    spin_lock(&screen_lock);
+    
     if (row >= max_height) {
         row = 0;
     }
+
     for (size_t i = 0; str[i] != '\0' && i < len; i++) {
         if (str[i] == '\n' || col >= max_width) {
             while (col < max_width) {
@@ -41,6 +46,8 @@ static bool screen_print(const char *str, size_t len) {
             write_vga_buffer(row, col++, str[i]);
         }
     }
+
+    spin_unlock(&screen_lock);
     return true;
 }
 

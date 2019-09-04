@@ -41,6 +41,4 @@ void init_gdt() {
 
 void set_tss_stack_pointer(uintptr_t rsp) {
     tss.rsp0 = rsp;
-
-    debug_log("Set TSS Stack Pointer: [ %#.16lX ]\n", rsp);
 }

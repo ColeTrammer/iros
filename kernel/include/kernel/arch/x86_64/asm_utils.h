@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define barrier() asm volatile( "" : : : "memory" )
+#define cpu_relax() asm volatile( "pause" : : : "memory" )
+
 static inline void outb(uint16_t port, uint8_t val) {
     asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
 }
@@ -40,6 +43,12 @@ static inline uint64_t get_rflags() {
           "popq %%rdx\n"\
           "mov %%rdx, %0" : "=m"(rflags) : : "rdx" );
     return rflags;
+}
+
+static inline uint32_t xchg_32(void *ptr, uint32_t x)
+{
+	asm volatile( "xchgl %0, %1" : "=r" ((uint32_t) x) : "m" (*(volatile uint32_t*) ptr), "0"(x) : "memory" );
+	return x;
 }
 
 #endif

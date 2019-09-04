@@ -30,9 +30,9 @@ void init_drivers() {
 }
 
 void enable_interrupts() {
-    asm ( "sti" );
+    asm volatile ( "sti" );
 }
 
 void disable_interrupts() {
-    asm ( "cli" );
+    asm volatile ( "cli" );
 }
