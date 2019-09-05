@@ -99,7 +99,7 @@ void run_process(struct process *process) {
     current_process = process;
     current_process->sched_state = RUNNING;
 
-    // debug_log("Proceeding to Run Process: [ %d ]\n", process->pid);
+    debug_log("Proceeding to Run Process: [ %d ]\n", process->pid);
 
     arch_run_process(process);
 }

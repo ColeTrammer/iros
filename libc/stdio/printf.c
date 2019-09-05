@@ -22,17 +22,9 @@ bool write_buffer(const char *s, size_t len) {
 		return false;
 	}
 
-#ifdef __is_libk
-	spin_lock(&buffer_lock);
-#endif /* __is_libk */
-
 	for (size_t i = 0; i < len; i++) {
 		buffer[buffer_index++] = s[i];
 	}
-
-#ifdef __is_libk
-	spin_unlock(&buffer_lock);
-#endif /* __is_libk */
 
 	return true;
 }
@@ -40,13 +32,9 @@ bool write_buffer(const char *s, size_t len) {
 #ifdef __is_libk
 bool kprint(const char*, size_t);
 bool print(size_t len) {
-	spin_lock(&buffer_lock);
 	buffer_index = 0;
     
-	bool ret = kprint(buffer, len);
-
-	spin_unlock(&buffer_lock);
-	return ret;
+	return kprint(buffer, len);
 }
 #else
 bool print(size_t n) {
@@ -85,6 +73,10 @@ int printf(const char* restrict format, ...) {
 }
 
 int vprintf(const char* restrict format, va_list parameters) {
+#ifdef __is_libk
+	spin_lock(&buffer_lock);
+#endif /* __is_libk */
+
 	int written = 0;
 
 	while (*format != '\0') {
@@ -721,5 +713,9 @@ int vprintf(const char* restrict format, va_list parameters) {
 	}
 
 	print(written);
+
+#ifdef __is_libk
+	spin_unlock(&buffer_lock);
+#endif /* __is_libk */
 	return written;
 }

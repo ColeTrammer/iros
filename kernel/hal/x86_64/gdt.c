@@ -5,6 +5,10 @@
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/output.h>
 
+extern void KERNEL_VM_STACK_START();
+
+#define __KERNEL_VM_STACK_START ((uint64_t) &KERNEL_VM_STACK_START)
+
 static struct gdt_entry gdt[GDT_ENTRIES];
 static struct gdt_descriptor gdt_descriptor;
 
@@ -35,6 +39,7 @@ void init_gdt() {
     load_gdt(gdt_descriptor);
 
     memset(&tss, 0, sizeof(struct tss));
+    tss.ist[0] = __KERNEL_VM_STACK_START;
     tss.io_map_base = sizeof(struct tss);
     load_tr(TSS_SELECTOR);
 }

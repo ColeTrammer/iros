@@ -9,7 +9,7 @@ void add_idt_entry(struct idt_entry *idt, void *_handler, unsigned int irq, bool
     idt[irq].addr_low = (uint16_t) handler;
     idt[irq].target = CS_SELECTOR;
     if (!is_user) {
-        idt[irq].flags = 0x8E00; // Present, CPL 0, Trap Handler
+        idt[irq].flags = 0x8E01; // Present, CPL 0, Trap Handler
     } else {
         idt[irq].flags = 0xEF00;
     }

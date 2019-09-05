@@ -28,11 +28,3 @@ void init_drivers() {
 
     debug_log("Finished Initializing Drivers\n");
 }
-
-void enable_interrupts() {
-    asm volatile ( "sti" );
-}
-
-void disable_interrupts() {
-    asm volatile ( "cli" );
-}

@@ -11,7 +11,7 @@ static unsigned int count = 0;
 static unsigned int count_to = 0;
 
 static void handle_pit_interrupt(struct process_state *process_state) {
-    // debug_log("PIT Interrupt\n");
+    debug_log("PIT Interrupt\n");
 
     if (callback != NULL) {
         count++;
