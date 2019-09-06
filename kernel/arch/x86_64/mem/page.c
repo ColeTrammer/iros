@@ -120,6 +120,8 @@ void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
 }
 
 void unmap_page(uintptr_t virt_addr) {
+    debug_log("Unmapping: [ %#.16lX ]\n", virt_addr);
+
     do_unmap_page(virt_addr, true);
 }
 
@@ -136,10 +138,11 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
     }
 
     pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | PAGE_STRUCTURE_FLAGS | VM_NO_EXEC;
-
-    load_cr3(get_phys_addr((uintptr_t) pml4));
+    uintptr_t pml4_addr = get_phys_addr((uintptr_t) TEMP_PAGE);
 
     if (deep_copy) {
+        load_cr3(get_phys_addr((uintptr_t) pml4));
+
         for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {
             if (PML4_BASE[i] != 0) {
                 for (uint64_t j = 0; j < MAX_PDP_ENTRIES; j++) {
@@ -187,7 +190,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
         }
     }
 
-    return get_phys_addr((uintptr_t) PML4_BASE);
+    return pml4_addr;
 }
 
 void load_paging_structure(uintptr_t phys_addr) {
@@ -196,17 +199,20 @@ void load_paging_structure(uintptr_t phys_addr) {
 }
 
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
+    uint64_t old_cr3 = get_cr3();
     load_cr3(phys_addr);
 
     struct vm_region *region = list;
     while (region != NULL) {
-        for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-            unmap_page(page);
+        if (!(region->flags & VM_GLOBAL) && !(region->type & VM_KERNEL_STACK)) {
+            for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
+                unmap_page(page);
+            }
         }
         region = region->next;
     }
 
-    load_cr3(get_current_process()->arch_process.cr3);
+    load_cr3(old_cr3);
     free_phys_page(phys_addr);
 }
 
@@ -219,6 +225,6 @@ void map_vm_region_flags(struct vm_region *region) {
 void map_vm_region(struct vm_region *region) {
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
         map_page(addr, region->flags);
-        debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", region->type, region->flags, region->start, region->end);
+        debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start, region->end);
     }    
 }

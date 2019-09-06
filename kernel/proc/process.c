@@ -95,7 +95,9 @@ struct process *load_process(const char *file_name) {
 }
 
 void run_process(struct process *process) {
-    current_process->sched_state = READY;
+    if (current_process->sched_state == RUNNING) {
+        current_process->sched_state = READY;
+    }
     current_process = process;
     current_process->sched_state = RUNNING;
 

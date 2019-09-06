@@ -23,22 +23,26 @@ void sched_add_process(struct process *process) {
     list_end->next = process;
     list_start->prev = process;
     list_end = process;
+
+    struct process *p = list_start;
+    do {
+        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, p, p->prev, p->next);
+        p = p->next;
+    } while (p != list_start);
 }
 
 void sched_run_next() {
     struct process *current = get_current_process();
-    struct process *next = current->next;
-    if (current->sched_state == EXITING) {
-        current->prev->next = current->next;
-        current->next->prev = current->prev;
-        
-        // free_process(current);
+
+    while (current->next->sched_state == EXITING) {
+        struct process *to_remove = current->next;
+
+        current->next = current->next->next;
+        current->next->prev = current;
+
+        free_process(to_remove);
     }
 
-    if (current->next == current) {
-        while (1);
-    }
-
-    run_process(next);
+    run_process(current->next);
 }
 
