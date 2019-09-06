@@ -204,7 +204,7 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
 
     struct vm_region *region = list;
     while (region != NULL) {
-        if (!(region->flags & VM_GLOBAL) && !(region->type & VM_KERNEL_STACK)) {
+        if (!(region->flags & VM_GLOBAL)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
                 unmap_page(page);
             }

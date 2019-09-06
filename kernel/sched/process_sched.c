@@ -1,5 +1,7 @@
 #include <stddef.h>
 
+#include <kernel/hal/output.h>
+
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
 

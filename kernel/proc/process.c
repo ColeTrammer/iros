@@ -47,7 +47,7 @@ struct process *load_process(const char *file_name) {
     process->next = NULL;
 
     uintptr_t old_paging_structure = get_current_paging_structure();
-    uintptr_t structure = create_paging_structure(process->process_memory, false);
+    uintptr_t structure = create_paging_structure(process->process_memory, true);
     load_paging_structure(structure);
 
     uint64_t start = elf64_get_start(buffer);

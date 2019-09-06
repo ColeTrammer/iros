@@ -10,13 +10,12 @@ static void (*callback)(struct process_state*) = NULL;
 static unsigned int count = 0;
 static unsigned int count_to = 0;
 
-static void handle_pit_interrupt(struct process_state *process_state) {
-    debug_log("PIT Interrupt\n");
-
+void handle_pit_interrupt(struct process_state *process_state) {
+    sendEOI(PIT_IRQ_LINE);
+    
     if (callback != NULL) {
         count++;
         if (count >= count_to) {
-            sendEOI(0);
             count = 0;
             callback(process_state);
         }
@@ -35,7 +34,7 @@ void pit_set_rate(unsigned int rate) {
 }
 
 void init_pit() {
-    register_irq_line_handler(&handle_pit_interrupt, PIT_IRQ_LINE);
+    register_irq_line_handler(&handle_pit_interrupt_entry, PIT_IRQ_LINE, false);
 
     pit_set_rate(1);
 }

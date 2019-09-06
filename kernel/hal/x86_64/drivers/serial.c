@@ -34,6 +34,6 @@ void init_serial_ports() {
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_FIFO_OFFSET), 0xC7);
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_INTERRUPT_OFFSET), SERIAL_INTERRUPT_DATA | SERIAL_INTERRUPT_ERROR | SERIAL_INTERRUPT_STATUS);
 
-    register_irq_line_handler(&handle_serial_interrupt, SERIAL_13_IRQ_LINE);
+    register_irq_line_handler(&handle_serial_interrupt, SERIAL_13_IRQ_LINE, true);
     debug_log("Serial Port Initialized: [ %#.3X ]\n", SERIAL_COM1_PORT);
 }

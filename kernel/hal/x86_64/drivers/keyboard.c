@@ -68,7 +68,7 @@ static void handle_keyboard_interrupt() {
 }
 
 void init_keyboard() {
-    register_irq_line_handler(&handle_keyboard_interrupt, KEYBOARD_IRQ_LINE);
+    register_irq_line_handler(&handle_keyboard_interrupt, KEYBOARD_IRQ_LINE, true);
 
     add_keyboard_task(create_keyboard_task(KEYBOARD_SET_SCAN_CODE_SET));
     add_keyboard_task(create_keyboard_task(KEYBOARD_SCAN_CODE_SET));

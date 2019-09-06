@@ -8,7 +8,7 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/arch/x86_64/proc/process.h>
 
-static void (*handlers[2 * PIC_IRQS])(struct process_state*);
+static void (*handlers[2 * PIC_IRQS])(void);
 
 void sendEOI(unsigned int irq_line) {
     if (irq_line >= 8) {
@@ -82,9 +82,10 @@ static uint16_t get_isr() {
     return get_irq_reg(PIC_READ_ISR);
 }
 
-void pic_generic_handler(struct process_state *process_state) {
+void pic_generic_handler() {
     unsigned int irq_line = 0;
     uint16_t isr = get_isr();
+
     for (unsigned int i = 0; i < 2 * PIC_IRQS; i++) {
         if (isr & (1 << i)) {
             irq_line = i;
@@ -92,17 +93,23 @@ void pic_generic_handler(struct process_state *process_state) {
         }
     }
     if (handlers[irq_line] != NULL) {
-        handlers[irq_line](process_state);
+        handlers[irq_line]();
     } else {
         debug_log("Recieved Interrupt on IRQ Line: [ %u ]\n", irq_line);
     }
+
     sendEOI(irq_line);
 }
 
-void register_irq_line_handler(void (*handler)(struct process_state*), unsigned int irq_line) {
+void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, bool use_generic_handler) {
     if (irq_line < 2 * PIC_IRQS) {
-        handlers[irq_line] = handler;
-        register_irq_handler(&pic_generic_handler_entry, irq_line + PIC_IRQ_OFFSET, false);
+        if (use_generic_handler) {
+            handlers[irq_line] = handler;
+            register_irq_handler(&pic_generic_handler_entry, irq_line + PIC_IRQ_OFFSET, false);
+        } else {
+            register_irq_handler(handler, irq_line + PIC_IRQ_OFFSET, false);
+        }
+
         enable_irq_line(irq_line);
         debug_log("Registered PIC IRQ Line Handler: [ %#.1X, %#.16lX ]\n", irq_line, handler);
     } else {

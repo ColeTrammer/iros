@@ -17,5 +17,5 @@ static void handle_fdc_interrupt() {
 }
 
 void init_fdc() {
-    register_irq_line_handler(&handle_fdc_interrupt, FDC_IRQ_LINE);
+    register_irq_line_handler(&handle_fdc_interrupt, FDC_IRQ_LINE, true);
 }

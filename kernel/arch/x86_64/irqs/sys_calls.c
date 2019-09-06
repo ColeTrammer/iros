@@ -26,7 +26,8 @@ void arch_sys_exit(struct process_state *process_state) {
     struct process *process = get_current_process();
     process->sched_state = EXITING;
 
-    debug_log("Process Exited: [ %d ]\n", process->pid);
+    int exit_code = (int) process_state->cpu_state.rsi;
+    debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 
     enable_interrupts();
 

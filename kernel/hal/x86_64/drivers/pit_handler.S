@@ -1,6 +1,6 @@
 .section .text
-.global pic_generic_handler_entry
-pic_generic_handler_entry:
+.global handle_pit_interrupt_entry
+handle_pit_interrupt_entry:
     push %rax
     push %rbx
     push %rcx
@@ -17,7 +17,9 @@ pic_generic_handler_entry:
     push %r14
     push %r15
 
-    callq pic_generic_handler
+    movq %rsp, %rdi
+
+    callq handle_pit_interrupt
 
     pop %r15
     pop %r14

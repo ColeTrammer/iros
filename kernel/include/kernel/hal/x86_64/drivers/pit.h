@@ -31,6 +31,9 @@
 #define PIT_BASE_RATE (1.193182 * 1000.0) // Hz
 #define PIT_GET_DIVISOR(ms) ((int) (((ms) * PIT_BASE_RATE) + 0.5))
 
+void handle_pit_interrupt_entry();
+void handle_pit_interrupt(struct process_state *process_state);
+
 void init_pit();
 
 void pit_set_rate(unsigned int rate);
