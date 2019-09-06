@@ -6,8 +6,10 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/hal/output.h>
+#include <kernel/util/spinlock.h>
 
 static uintptr_t page_bitmap[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
+static spinlock_t bitmap_lock = SPINLOCK_INITIALIZER;
 
 static bool get_bit(uintptr_t bit_index) {
     return page_bitmap[bit_index / (8 * sizeof(uintptr_t))] & (1 << (bit_index % (8 * sizeof(uintptr_t))));
@@ -32,21 +34,31 @@ static void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
 }
 
 uintptr_t get_next_phys_page() {
+    spin_lock(&bitmap_lock);
+
     for (uintptr_t i = 0; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
         if (~page_bitmap[i]) {
             uintptr_t bit_index = i * 8 * sizeof(uintptr_t);
             while (get_bit(bit_index)) { bit_index++; }
             set_bit(bit_index, true);
 
+            spin_unlock(&bitmap_lock);
+
             debug_log("Phys Addr Allocated: [ %#.16lX ]\n", bit_index * PAGE_SIZE);
             return bit_index * PAGE_SIZE;
         }
     }
+
+    spin_unlock(&bitmap_lock);
     return 0; // indicates there are no available physical pages
 }
 
 void free_phys_page(uintptr_t phys_addr) {
+    spin_lock(&bitmap_lock);
+
     set_bit(phys_addr / PAGE_SIZE, false);
+
+    spin_unlock(&bitmap_lock);
 
     debug_log("Phys Addr Freed: [ %#.16lX ]\n", phys_addr);
 }

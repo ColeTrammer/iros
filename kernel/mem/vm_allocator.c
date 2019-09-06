@@ -65,7 +65,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 void *add_vm_pages_end(size_t n, uint64_t type) {
     struct vm_region *region = get_vm_region(get_current_process()->process_memory, type);
     uintptr_t old_end = region->end;
-    if (extend_vm_region_end(get_current_process()->process_memory, VM_KERNEL_HEAP, n) < 0) {
+    if (extend_vm_region_end(get_current_process()->process_memory, type, n) < 0) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 0; i < n; i++) {
@@ -79,7 +79,7 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
 void *add_vm_pages_start(size_t n, uint64_t type) {
     struct vm_region *region = get_vm_region(get_current_process()->process_memory, type);
     uintptr_t old_start = region->start;
-    if (extend_vm_region_start(get_current_process()->process_memory, VM_KERNEL_HEAP, n) < 0) {
+    if (extend_vm_region_start(get_current_process()->process_memory, type, n) < 0) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 1; i <= n; i++) {

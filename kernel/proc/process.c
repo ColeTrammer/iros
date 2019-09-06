@@ -111,7 +111,7 @@ struct process *get_current_process() {
 }
 
 void free_process(struct process *process) {
-    remove_paging_structure(process->arch_process.cr3, process->process_memory);
+    arch_free_process(process);
 
     free_pid(process->pid);
 

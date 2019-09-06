@@ -16,6 +16,7 @@ static size_t max_height = VGA_HEIGHT;
 static size_t max_width = VGA_WIDTH;
 
 static enum output_method method = OUTPUT_SCREEN;
+static spinlock_t method_lock = SPINLOCK_INITIALIZER;
 
 bool screen_print(const char *str, size_t len) {
     spin_lock(&screen_lock);
@@ -75,9 +76,11 @@ int debug_log(const char *format, ...) {
     va_list parameters;
     va_start(parameters, format);
 
+    spin_lock(&method_lock);
     method = OUTPUT_SERIAL;
     int written = vprintf(format, parameters);
     method = OUTPUT_SCREEN;
+    spin_unlock(&method_lock);
 
     va_end(parameters);
     return written;

@@ -11,15 +11,32 @@
 #include <kernel/util/spinlock.h>
 
 static spinlock_t buffer_lock = SPINLOCK_INITIALIZER;
-#endif /* __is_libk */
 
-static char buffer[0x4000];
-static size_t buffer_size = 0x4000;
+static char buffer[0x1000];
+static size_t buffer_size = 0x1000;
 static size_t buffer_index = 0;
+
+#else
+
+static char *buffer = NULL;
+static size_t buffer_size = 0;
+static size_t buffer_index = 0;
+
+#endif /* __is_libk */
 
 bool write_buffer(const char *s, size_t len) {
 	if (buffer_index + len >= buffer_size) {
+#ifdef __is_libk
 		return false;
+#else
+		if (buffer_size == 0) {
+			buffer = calloc(100, 1);
+			buffer_size = 100;
+		} else {
+			buffer_size *= 2;
+			buffer = realloc(buffer, buffer_size);
+		}
+#endif /* __is_libk */
 	}
 
 	for (size_t i = 0; i < len; i++) {
@@ -45,7 +62,7 @@ bool print(size_t n) {
 	               "movq %1, %%rsi\n"\
 	               "movq %2, %%rdx\n"\
 	               "int $0x80\n"\
-	               "movq %%rax, %0" : "=m"(ret) : "i"(buffer), "m"(n) : "rdi", "rsi", "rdx", "rax" );
+	               "movq %%rax, %0" : "=m"(ret) : "m"(buffer), "m"(n) : "rdi", "rsi", "rdx", "rax" );
 	return ret;
 }
 #endif /* __is_libk */

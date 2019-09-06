@@ -13,8 +13,6 @@
 #include <kernel/arch/x86_64/proc/process.h>
 
 void arch_sys_print(struct process_state *process_state) {
-    // disable_interrupts();
-
     screen_print((char*) process_state->cpu_state.rsi, process_state->cpu_state.rdx);
 
     process_state->cpu_state.rax = true;
@@ -30,14 +28,14 @@ void arch_sys_exit(struct process_state *process_state) {
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 
     enable_interrupts();
-
     while (1);
 }
 
 void arch_sys_sbrk(struct process_state *process_state) {
-    disable_interrupts();
-
     intptr_t increment = process_state->cpu_state.rsi;
+
+    debug_log("SBRK Called: [ %#.16lX ]\n", increment);
+
     void *res;
     if (increment < 0) {
         res = add_vm_pages_end(0, VM_PROCESS_HEAP);
@@ -46,6 +44,4 @@ void arch_sys_sbrk(struct process_state *process_state) {
         res = add_vm_pages_end(increment, VM_PROCESS_HEAP);
     }
     process_state->cpu_state.rax = (uint64_t) res;
-
-    enable_interrupts();
 }

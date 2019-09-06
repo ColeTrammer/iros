@@ -52,3 +52,7 @@ void arch_run_process(struct process *process) {
     
     __run_process(&process->arch_process);
 }
+
+void arch_free_process(struct process *process) {
+    remove_paging_structure(process->arch_process.cr3, process->process_memory);
+}

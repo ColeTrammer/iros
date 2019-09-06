@@ -36,6 +36,7 @@ void run_process(struct process *process);
 void arch_run_process(struct process *process);
 
 void free_process(struct process *process);
+void arch_free_process(struct process *process);
 
 struct process *get_current_process();
 

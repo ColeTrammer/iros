@@ -47,7 +47,7 @@ int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages
     }
     list->end = new_end;
 
-    debug_log("VM Region End Extended: [ %#d, %#.16lX, %#.16lX ]\n", num_pages, type, list);
+    debug_log("VM Region End Extended: [ %#.16lX, %#d, %#.16lX, %#.16lX ]\n", list->start, num_pages, type, list);
     return 0;
 }
 
