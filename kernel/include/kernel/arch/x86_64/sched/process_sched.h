@@ -5,6 +5,8 @@
 #include <kernel/proc/process.h>
 #include <kernel/arch/x86_64/proc/process.h>
 
+#define SCHED_CALLBACK_ARG_TYPE struct process_state*
+
 void sched_run_next_entry();
 void arch_sched_run_next(struct process_state *process_state);
 

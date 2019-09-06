@@ -1,28 +1,45 @@
 #include <stdio.h>
+#include <stddef.h>
 
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/output.h>
 
-static void (*callback)(struct process_state*) = NULL;
+static void (*sched_callback)(struct process_state*) = NULL;
+static unsigned int sched_count = 0;
+static unsigned int sched_count_to = 0;
 
+static void (*callback)(void) = NULL;
 static unsigned int count = 0;
 static unsigned int count_to = 0;
 
 void handle_pit_interrupt(struct process_state *process_state) {
     sendEOI(PIT_IRQ_LINE);
     
+    if (sched_callback != NULL) {
+        sched_count++;
+        if (sched_count >= sched_count_to) {
+            sched_count = 0;
+            sched_callback(process_state);
+        }
+    }
+
     if (callback != NULL) {
         count++;
         if (count >= count_to) {
             count = 0;
-            callback(process_state);
+            callback();
         }
     }
 }
 
-void pit_register_callback(void (*_callback)(struct process_state*), unsigned int ms) {
+void pit_set_sched_callback(void (*_sched_callback)(struct process_state*), unsigned int ms) {
+    sched_callback = _sched_callback;
+    sched_count_to = ms;
+}
+
+void pit_register_callback(void (*_callback)(void), unsigned int ms) {
     callback = _callback;
     count_to = ms;
 }
