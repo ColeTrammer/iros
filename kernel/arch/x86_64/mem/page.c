@@ -141,6 +141,8 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
     uintptr_t pml4_addr = get_phys_addr((uintptr_t) TEMP_PAGE);
 
     if (deep_copy) {
+        uint64_t old_cr3 = get_cr3();
+        get_current_process()->arch_process.cr3 = (uintptr_t) pml4;
         load_cr3(get_phys_addr((uintptr_t) pml4));
 
         for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {
@@ -188,6 +190,9 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
             map_vm_region_flags(list);
             list = list->next;
         }
+
+        get_current_process()->arch_process.cr3 = old_cr3;
+        load_cr3(old_cr3);
     }
 
     return pml4_addr;
@@ -198,6 +203,7 @@ void load_paging_structure(uintptr_t phys_addr) {
     load_cr3(phys_addr);
 }
 
+/* Must be called from unpremptable context */
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     uint64_t old_cr3 = get_cr3();
     load_cr3(phys_addr);

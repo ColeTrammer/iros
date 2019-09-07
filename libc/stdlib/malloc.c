@@ -49,6 +49,12 @@ struct metadata {
 static struct metadata *start;
 static uintptr_t heap_end;
 
+#ifdef __is_libk
+#include <kernel/util/spinlock.h>
+
+static spinlock_t heap_lock = SPINLOCK_INITIALIZER;
+#endif /* __is_libk */
+
 void *calloc(size_t n, size_t sz) {
     void *p = malloc(n * sz);
     if (p == NULL) { return p; }
@@ -63,6 +69,11 @@ void *malloc(size_t n) {
     if (n & 1) {
         n++;
     }
+
+#ifdef __is_libk
+    spin_lock(&heap_lock);
+#endif /* __is_libk */
+
     if (!start) {
         start = sbrk(NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)));
         heap_end = ((uintptr_t) start) + NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)) * PAGE_SIZE;
@@ -72,6 +83,11 @@ void *malloc(size_t n) {
     while (block->size != 0) {
         if (!IS_ALLOCATED(block) && GET_SIZE(block) >= n) {
             SET_ALLOCATED(block);
+
+#ifdef __is_libk
+            spin_unlock(&heap_lock);
+#endif /* __is_libk */
+
             return block + 1;
         }
         block = NEXT_BLOCK(block);
@@ -86,7 +102,13 @@ void *malloc(size_t n) {
     SET_ALLOCATED(block);
     block = NEXT_BLOCK(block);
     block->prev_size = n;
-    return PREV_BLOCK(block) + 1;
+    struct metadata *ret = PREV_BLOCK(block) + 1;
+
+#ifdef __is_libk
+    spin_unlock(&heap_lock);
+#endif /* __is_libk */
+
+    return ret;
 }
 
 void *realloc(void *p, size_t sz) {
@@ -101,6 +123,15 @@ void free(void *p) {
     if (p == NULL) {
         return;
     }
+
+#ifdef __is_libk
+    spin_lock(&heap_lock);
+#endif /* __is_libk */
+
     struct metadata *block = GET_BLOCK(p);
     CLEAR_ALLOCATED(block);
+
+#ifdef __is_libk
+    spin_unlock(&heap_lock);
+#endif /* __is_libk */
 }

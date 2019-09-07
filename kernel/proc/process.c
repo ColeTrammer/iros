@@ -94,6 +94,7 @@ struct process *load_process(const char *file_name) {
     return process;
 }
 
+/* Must be called from unpremptable context */
 void run_process(struct process *process) {
     if (current_process->sched_state == RUNNING) {
         current_process->sched_state = READY;
@@ -110,6 +111,7 @@ struct process *get_current_process() {
     return current_process;
 }
 
+/* Must be called from unpremptable context */
 void free_process(struct process *process) {
     arch_free_process(process);
 

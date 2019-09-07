@@ -3,16 +3,13 @@
 #include <stdio.h>
 
 #include <kernel/mem/page.h>
+#include <kernel/mem/kernel_vm.h>
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/hal/hal.h>
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/gdt.h>
-
-extern void KERNEL_VM_STACK_START();
-
-#define __KERNEL_VM_STACK_START ((uint64_t) &KERNEL_VM_STACK_START)
 
 static void kernel_idle() {
     while (1);
@@ -46,6 +43,7 @@ void arch_load_process(struct process *process, uintptr_t entry) {
     map_vm_region(kernel_proc_stack);
 }
 
+/* Must be called from unpremptable context */
 void arch_run_process(struct process *process) {
     set_tss_stack_pointer(process->arch_process.kernel_stack);
     load_cr3(process->arch_process.cr3);
@@ -53,6 +51,7 @@ void arch_run_process(struct process *process) {
     __run_process(&process->arch_process);
 }
 
+/* Must be called from unpremptable context */
 void arch_free_process(struct process *process) {
     remove_paging_structure(process->arch_process.cr3, process->process_memory);
 }

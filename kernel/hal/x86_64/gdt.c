@@ -4,10 +4,7 @@
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/output.h>
-
-extern void KERNEL_VM_STACK_START();
-
-#define __KERNEL_VM_STACK_START ((uint64_t) &KERNEL_VM_STACK_START)
+#include <kernel/mem/kernel_vm.h>
 
 static struct gdt_entry gdt[GDT_ENTRIES];
 static struct gdt_descriptor gdt_descriptor;
@@ -44,6 +41,7 @@ void init_gdt() {
     load_tr(TSS_SELECTOR);
 }
 
+/* Must be called from unpremptable context */
 void set_tss_stack_pointer(uintptr_t rsp) {
     tss.rsp0 = rsp;
 }
