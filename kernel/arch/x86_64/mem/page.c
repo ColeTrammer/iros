@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
@@ -33,7 +34,7 @@ static bool all_empty(uint64_t *page) {
     return true;
 }
 
-static void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
+void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -72,19 +73,7 @@ static void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
     }
 }
 
-void clear_initial_page_mappings() {
-    update_vga_buffer();
-
-    for (size_t i = 0; i < 0x600000; i += PAGE_SIZE) {
-        do_unmap_page(i, false);
-    }
-}
-
-void map_page(uintptr_t virt_addr, uint64_t flags) {
-    map_phys_page(get_next_phys_page(), virt_addr, flags);
-}
-
-void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
+static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct virt_page_info *info) {
     flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC);
     flags |= 0x01;
 
@@ -117,6 +106,62 @@ void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
         invlpg(virt_addr);
     }
     *pt_entry = phys_addr | flags;
+
+    if (info != NULL) {
+        info->pml4_index = pml4_offset;
+        info->pdp_index = pdp_offset;
+        info->pd_index = pd_offset;
+        info->pt_index = pt_offset;
+        info->pml4_entry = *pml4_entry;
+        info->pdp_entry = *pdp_entry;
+        info->pd_entry = *pd_entry;
+        info->pt_entry = *pt_entry;
+    }
+}
+
+void map_page_info(struct virt_page_info *info) {
+    uint64_t *pml4_entry = PML4_BASE + info->pml4_index;
+    uint64_t *pdp_entry = PDP_BASE + (0x1000 * info->pml4_index) / sizeof(uint64_t) + info->pdp_index;
+    uint64_t *pd_entry = PD_BASE + (0x200000 * info->pml4_index + 0x1000 * info->pdp_index) / sizeof(uint64_t) + info->pd_index;
+    uint64_t *pt_entry = PT_BASE + (0x40000000 * info->pml4_index + 0x200000 * info->pdp_index + 0x1000 * info->pd_index) / sizeof(uint64_t) + info->pt_index;
+
+    if ((*pml4_entry & ~0xFFF) != (info->pml4_entry & ~0xFFF)) {
+        *pml4_entry = info->pml4_entry;
+    }
+
+    if ((*pdp_entry & ~0xFFF) != (info->pdp_entry & ~0xFFF)) {
+        *pdp_entry = info->pdp_entry;
+    }
+
+    if ((*pd_entry & ~0xFFF) != (info->pd_entry & ~0xFFF)) {
+        *pd_entry = info->pd_entry;
+    }
+
+    if ((*pt_entry & ~0xFFF) != (info->pt_entry & ~0xFFF)) {
+        *pt_entry = info->pt_entry;
+    }
+}
+
+void clear_initial_page_mappings() {
+    update_vga_buffer();
+
+    for (size_t i = 0; i < 0x600000; i += PAGE_SIZE) {
+        do_unmap_page(i, false);
+    }
+}
+
+void map_page(uintptr_t virt_addr, uint64_t flags) {
+    do_map_phys_page(get_next_phys_page(), virt_addr, flags, NULL);
+}
+
+void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
+    do_map_phys_page(phys_addr, virt_addr, flags, NULL);
+}
+
+struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags) {
+    struct virt_page_info *info = calloc(1, sizeof(struct virt_page_info));
+    do_map_phys_page(get_next_phys_page(), virt_addr, flags, info);
+    return info;
 }
 
 void unmap_page(uintptr_t virt_addr) {

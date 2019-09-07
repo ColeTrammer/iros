@@ -40,18 +40,25 @@ void arch_load_process(struct process *process, uintptr_t entry) {
     kernel_proc_stack->end = KERNEL_PROC_STACK_START;
     kernel_proc_stack->start = kernel_proc_stack->end - PAGE_SIZE;
     process->process_memory = add_vm_region(process->process_memory, kernel_proc_stack);
-    map_vm_region(kernel_proc_stack);
+    process->arch_process.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
+    do_unmap_page(kernel_proc_stack->start, false);
+    debug_log("Kernel Stack Info: [ %d, %#.16lX, %d, %#.16lX, %d, %#.16lX, %d, %#.16lX ]\n", process->arch_process.kernel_stack_info->pml4_index, process->arch_process.kernel_stack_info->pml4_entry, process->arch_process.kernel_stack_info->pdp_index, process->arch_process.kernel_stack_info->pdp_entry, process->arch_process.kernel_stack_info->pd_index, process->arch_process.kernel_stack_info->pd_entry, process->arch_process.kernel_stack_info->pt_index, process->arch_process.kernel_stack_info->pt_entry);
 }
 
 /* Must be called from unpremptable context */
 void arch_run_process(struct process *process) {
     set_tss_stack_pointer(process->arch_process.kernel_stack);
     load_cr3(process->arch_process.cr3);
+    if (process->arch_process.kernel_stack_info != NULL) {
+        map_page_info(process->arch_process.kernel_stack_info);
+    }
     
     __run_process(&process->arch_process);
 }
 
 /* Must be called from unpremptable context */
 void arch_free_process(struct process *process) {
+    map_page_info(process->arch_process.kernel_stack_info);
     remove_paging_structure(process->arch_process.cr3, process->process_memory);
+    free(process->arch_process.kernel_stack_info);
 }

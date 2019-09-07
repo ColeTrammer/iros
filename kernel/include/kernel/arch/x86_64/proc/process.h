@@ -43,6 +43,7 @@ struct arch_process {
     struct process_state process_state;
     uint64_t cr3;
     uint64_t kernel_stack;
+    struct virt_page_info *kernel_stack_info;
 };
 
 extern void __run_process(struct arch_process *state);

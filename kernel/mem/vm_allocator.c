@@ -13,6 +13,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 #include <kernel/hal/output.h>
+#include <kernel/util/spinlock.h>
 
 static struct vm_region *kernel_vm_list = NULL;
 static struct vm_region kernel_text;
@@ -20,6 +21,7 @@ static struct vm_region kernel_rod;
 static struct vm_region kernel_data;
 static struct vm_region kernel_heap;
 static struct vm_region initrd;
+static spinlock_t kernel_vm_lock = SPINLOCK_INITIALIZER;
 
 void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     kernel_text.start = KERNEL_VM_START & ~0xFFF;
@@ -64,7 +66,14 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 }
 
 void *add_vm_pages_end(size_t n, uint64_t type) {
-    struct vm_region *list = type > VM_KERNEL_HEAP ? get_current_process()->process_memory : kernel_vm_list;
+    struct vm_region *list;
+    if (type > VM_KERNEL_HEAP) {
+        list = get_current_process()->process_memory;
+    } else {
+        list = kernel_vm_list;
+        spin_lock(&kernel_vm_lock);
+    }
+
     struct vm_region *region = get_vm_region(list, type);
 
     uintptr_t old_end = region->end;
@@ -74,13 +83,24 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
     for (size_t i = 0; i < n; i++) {
         map_page(old_end + i * PAGE_SIZE, region->flags);
     }
+
+    if (type <= VM_KERNEL_HEAP) {
+        spin_unlock(&kernel_vm_lock);
+    }
     
     memset((void*) old_end, 0, n * PAGE_SIZE);
     return (void*) old_end;
 }
 
 void *add_vm_pages_start(size_t n, uint64_t type) {
-    struct vm_region *list = type > VM_KERNEL_HEAP ? get_current_process()->process_memory : kernel_vm_list;
+    struct vm_region *list;
+    if (type > VM_KERNEL_HEAP) {
+        list = get_current_process()->process_memory;
+    } else {
+        list = kernel_vm_list;
+        spin_lock(&kernel_vm_lock);
+    }
+
     struct vm_region *region = get_vm_region(list, type);
     uintptr_t old_start = region->start;
     if (extend_vm_region_start(list, type, n) < 0) {
@@ -89,36 +109,77 @@ void *add_vm_pages_start(size_t n, uint64_t type) {
     for (size_t i = 1; i <= n; i++) {
         map_page(old_start - i * PAGE_SIZE, region->flags);
     }
+
+    if (type <= VM_KERNEL_HEAP) {
+        spin_unlock(&kernel_vm_lock);
+    }
     
     memset((void*) (old_start - n * PAGE_SIZE), 0, n * PAGE_SIZE);
     return (void*) old_start;
 }
 
 void remove_vm_pages_end(size_t n, uint64_t type) {
-    struct vm_region *list = type > VM_KERNEL_HEAP ? get_current_process()->process_memory : kernel_vm_list;
+    struct vm_region *list;
+    if (type > VM_KERNEL_HEAP) {
+        list = get_current_process()->process_memory;
+    } else {
+        list = kernel_vm_list;
+        spin_lock(&kernel_vm_lock);
+    }
+
     uintptr_t old_end = get_vm_region(list, type)->end;
     if (contract_vm_region_end(list, type, n) < 0) {
         printf("%s\n", "Error: Removed to much memory");
         abort();
     }
+
+    if (type <= VM_KERNEL_HEAP) {
+        spin_unlock(&kernel_vm_lock);
+    }
+
     for (size_t i = 1; i <= n; i++) {
         unmap_page(old_end - i * PAGE_SIZE);
     }
 }
 
 void remove_vm_pages_start(size_t n, uint64_t type) {
-    struct vm_region *list = type > VM_KERNEL_HEAP ? get_current_process()->process_memory : kernel_vm_list;
+    struct vm_region *list;
+    if (type > VM_KERNEL_HEAP) {
+        list = get_current_process()->process_memory;
+    } else {
+        list = kernel_vm_list;
+        spin_lock(&kernel_vm_lock);
+    }
+
     uintptr_t old_start = get_vm_region(list, type)->start;
     if (contract_vm_region_start(list, type, n) < 0) {
         printf("%s\n", "Error: Removed to much memory");
         abort();
     }
+
+    if (type <= VM_KERNEL_HEAP) {
+        spin_unlock(&kernel_vm_lock);
+    }
+
     for (size_t i = 0; i < n; i++) {
         unmap_page(old_start + i * PAGE_SIZE);
     }
 }
 
 struct vm_region *find_vm_region(uint64_t type) {
-    struct vm_region *list = type > VM_KERNEL_HEAP ? get_current_process()->process_memory : kernel_vm_list;
-    return get_vm_region(list, type);
+    struct vm_region *list;
+    if (type > VM_KERNEL_HEAP) {
+        list = get_current_process()->process_memory;
+    } else {
+        list = kernel_vm_list;
+        spin_lock(&kernel_vm_lock);
+    }
+
+    struct vm_region *region = get_vm_region(list, type);
+
+    if (type <= VM_KERNEL_HEAP) {
+        spin_unlock(&kernel_vm_lock);
+    }
+
+    return region;
 }
