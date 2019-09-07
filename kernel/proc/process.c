@@ -41,7 +41,7 @@ struct process *load_process(const char *file_name) {
 
     struct process *process = calloc(1, sizeof(struct process));
     process->pid = get_next_pid();
-    process->process_memory = clone_kernel_vm();
+    process->process_memory = NULL;
     process->kernel_process = false;
     process->sched_state = READY;
     process->next = NULL;

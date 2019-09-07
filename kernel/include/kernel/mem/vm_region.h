@@ -14,19 +14,21 @@ struct vm_region {
 #define VM_NO_EXEC (1UL << 63)
     uint64_t flags;
 
-#define VM_KERNEL_TEXT (1UL << 0)
-#define VM_KERNEL_ROD (1UL << 1)
-#define VM_KERNEL_DATA (1UL << 2)
-#define VM_VGA (1UL << 3)
-#define VM_INITRD (1UL << 4)
-#define VM_KERNEL_HEAP (1UL << 5)
-#define VM_KERNEL_STACK (1UL << 6)
-#define VM_PROCESS_TEXT (1UL << 16)
-#define VM_PROCESS_ROD (1UL << 17)
-#define VM_PROCESS_DATA (1UL << 18)
-#define VM_PROCESS_BSS (1UL << 19)
-#define VM_PROCESS_HEAP (1UL << 20)
-#define VM_PROCESS_STACK (1UL << 21)
+/* Defines global vm_regions */
+#define VM_KERNEL_TEXT (0)
+#define VM_KERNEL_ROD (1)
+#define VM_KERNEL_DATA (2)
+#define VM_INITRD (4)
+#define VM_KERNEL_HEAP (5)
+
+/* Defines per process vm_regions */
+#define VM_KERNEL_STACK (6)
+#define VM_PROCESS_TEXT (16)
+#define VM_PROCESS_ROD (17)
+#define VM_PROCESS_DATA (18)
+#define VM_PROCESS_BSS (19)
+#define VM_PROCESS_HEAP (20)
+#define VM_PROCESS_STACK (21)
     uint64_t type;
 
     struct vm_region *next;
