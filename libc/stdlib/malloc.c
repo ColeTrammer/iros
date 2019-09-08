@@ -19,14 +19,7 @@ void *sbrk(intptr_t increment) {
     return add_vm_pages_end(increment, VM_KERNEL_HEAP);
 }
 #else
-void *sbrk(intptr_t increment) {
-    void *ret;
-    asm volatile( "movq $2, %%rdi\n"\
-                  "movq %1, %%rsi\n"\
-                  "int $0x80\n"\
-                  "movq %%rax, %0" : "=m"(ret) : "m"(increment) : "rdi", "rsi", "rax");
-    return ret;
-}
+#include <unistd.h>
 #endif
 
 struct metadata {

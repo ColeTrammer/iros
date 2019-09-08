@@ -2,6 +2,7 @@
 #define _KERNEL_ARCH_X86_64_PROC_PROCESS_H 1
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/arch/x86_64/mem/page.h>
@@ -44,6 +45,7 @@ struct arch_process {
     uint64_t cr3;
     uint64_t kernel_stack;
     struct virt_page_info *kernel_stack_info;
+    bool setup_kernel_stack;
 };
 
 extern void __run_process(struct arch_process *state);

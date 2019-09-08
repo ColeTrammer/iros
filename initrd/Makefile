@@ -25,9 +25,7 @@ FILES:=$(shell find files)
 
 # Lists all programs included in initrd
 PROGRAMS=\
-$(BUILDDIR)/initrd/programs/test1.o \
-$(BUILDDIR)/initrd/programs/test2.o
-
+$(BUILDDIR)/initrd/programs/test.o
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
 

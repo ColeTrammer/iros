@@ -45,3 +45,21 @@ void arch_sys_sbrk(struct process_state *process_state) {
     }
     process_state->cpu_state.rax = (uint64_t) res;
 }
+
+void arch_sys_fork(struct process_state *process_state) {
+    struct process *child = calloc(1, sizeof(struct process));
+    child->pid = get_next_pid();
+    child->sched_state = READY;
+    child->kernel_process = false;
+    child->process_memory = clone_process_vm();
+
+    memcpy(&child->arch_process.process_state, process_state, sizeof(struct process_state));
+    child->arch_process.process_state.cpu_state.rax = 0;
+    child->arch_process.cr3 = clone_process_paging_structure();
+    child->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
+    child->arch_process.setup_kernel_stack = true;
+
+    process_state->cpu_state.rax = child->pid;
+
+    sched_add_process(child);
+}

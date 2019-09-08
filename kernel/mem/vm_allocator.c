@@ -183,3 +183,18 @@ struct vm_region *find_vm_region(uint64_t type) {
 
     return region;
 }
+
+struct vm_region *clone_process_vm() {
+    struct vm_region *list = get_current_process()->process_memory;
+    struct vm_region *new_list = NULL;
+    struct vm_region *region = list;
+
+    while (region != NULL) {
+        struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
+        memcpy(to_add, region, sizeof(struct vm_region));
+        new_list = add_vm_region(new_list, to_add);
+        region = region->next;
+    }
+
+    return new_list;
+}

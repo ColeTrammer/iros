@@ -25,11 +25,8 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_process_sched();
 
     // Test Programs
-    struct process *test1 = load_process("[:test1.o");
-    sched_add_process(test1);
-
-    struct process *test2 = load_process("[:test2.o");
-    sched_add_process(test2);
+    struct process *test = load_process("[:test.o");
+    sched_add_process(test);
 
     sched_run_next();
 

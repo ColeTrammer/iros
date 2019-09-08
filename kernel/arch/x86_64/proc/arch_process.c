@@ -10,6 +10,7 @@
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/gdt.h>
+#include <kernel/hal/output.h>
 
 static void kernel_idle() {
     while (1);
@@ -22,6 +23,7 @@ void arch_init_kernel_process(struct process *kernel_process) {
     kernel_process->arch_process.process_state.stack_state.rflags = get_rflags() | (1 << 9);
     kernel_process->arch_process.process_state.stack_state.ss = DATA_SELECTOR;
     kernel_process->arch_process.process_state.stack_state.rsp = __KERNEL_VM_STACK_START;
+    kernel_process->arch_process.setup_kernel_stack = false;
 }
 
 void arch_load_process(struct process *process, uintptr_t entry) {
@@ -42,14 +44,20 @@ void arch_load_process(struct process *process, uintptr_t entry) {
     process->process_memory = add_vm_region(process->process_memory, kernel_proc_stack);
     process->arch_process.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
     do_unmap_page(kernel_proc_stack->start, false);
-    debug_log("Kernel Stack Info: [ %d, %#.16lX, %d, %#.16lX, %d, %#.16lX, %d, %#.16lX ]\n", process->arch_process.kernel_stack_info->pml4_index, process->arch_process.kernel_stack_info->pml4_entry, process->arch_process.kernel_stack_info->pdp_index, process->arch_process.kernel_stack_info->pdp_entry, process->arch_process.kernel_stack_info->pd_index, process->arch_process.kernel_stack_info->pd_entry, process->arch_process.kernel_stack_info->pt_index, process->arch_process.kernel_stack_info->pt_entry);
+    process->arch_process.setup_kernel_stack = false;
 }
 
 /* Must be called from unpremptable context */
 void arch_run_process(struct process *process) {
     set_tss_stack_pointer(process->arch_process.kernel_stack);
     load_cr3(process->arch_process.cr3);
-    if (process->arch_process.kernel_stack_info != NULL) {
+
+    if (process->arch_process.setup_kernel_stack) {
+        struct vm_region *kernel_stack = get_vm_region(process->process_memory, VM_KERNEL_STACK);
+        do_unmap_page(kernel_stack->start, false);
+        process->arch_process.kernel_stack_info = map_page_with_info(kernel_stack->start, kernel_stack->flags);
+        process->arch_process.setup_kernel_stack = false;
+    } else if (process->arch_process.kernel_stack_info != NULL) {
         map_page_info(process->arch_process.kernel_stack_info);
     }
     

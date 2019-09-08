@@ -6,6 +6,7 @@
 
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
+#include <kernel/hal/output.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 
 struct keyboard_task {
@@ -40,6 +41,7 @@ static void exec_keyboard_task() {
 
 static void handle_keyboard_interrupt() {
     uint8_t scan_code = inb(KEYBOARD_DATA_PORT);
+    debug_log("Keyboard Interrupt: [ %#.2X ]\n", scan_code);
 
     if (scan_code == KEYBOARD_ACK) {
         void *temp = first->next;

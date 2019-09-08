@@ -14,5 +14,6 @@ void remove_vm_pages_end(size_t n, uint64_t type);
 void remove_vm_pages_start(size_t n, uint64_t type);
 
 struct vm_region *find_vm_region(uint64_t type);
+struct vm_region *clone_process_vm();
 
 #endif /* _KERNEL_MEM_VM_ALLOCATOR_H */

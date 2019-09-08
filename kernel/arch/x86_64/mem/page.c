@@ -22,7 +22,7 @@ static uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
     uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
-    return *pt_entry & 0x000FFFFFFFFFF000;
+    return *pt_entry & 0x0000FFFFFFFFF000;
 }
 
 static bool all_empty(uint64_t *page) {
@@ -89,16 +89,19 @@ static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t 
 
     if (!(*pml4_entry & 1)) {
         *pml4_entry = get_next_phys_page() | VM_WRITE | (VM_USER & flags) | 0x01;
+        invlpg((uintptr_t) pdp_entry);
         memset(pdp_entry - pdp_offset, 0, PAGE_SIZE);
     }
 
     if (!(*pdp_entry & 1)) {
         *pdp_entry = get_next_phys_page() | VM_WRITE | (VM_USER & flags) | 0x01;
+        invlpg((uintptr_t) pd_entry);
         memset(pd_entry - pd_offset, 0, PAGE_SIZE);
     }
 
     if (!(*pd_entry & 1)) {
         *pd_entry = get_next_phys_page() | VM_WRITE | (VM_USER & flags) | 0x01;
+        invlpg((uintptr_t) pt_entry);
         memset(pt_entry - pt_offset, 0, PAGE_SIZE);
     }
 
@@ -174,6 +177,78 @@ uintptr_t get_current_paging_structure() {
     return get_current_process()->arch_process.cr3;
 }
 
+uintptr_t clone_process_paging_structure() {
+    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+    uint64_t *pml4 = TEMP_PAGE;
+
+    for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {
+        pml4[i] = PML4_BASE[i];
+    }
+
+    pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | PAGE_STRUCTURE_FLAGS | VM_NO_EXEC;
+    uintptr_t pml4_addr = get_phys_addr((uintptr_t) TEMP_PAGE);
+
+    uint64_t old_cr3 = get_cr3();
+    get_current_process()->arch_process.cr3 = get_phys_addr((uintptr_t) pml4);
+    load_cr3(get_phys_addr((uintptr_t) pml4));
+
+    for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 2; i++) {
+        if (PML4_BASE[i] != 0) {
+            map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+            uint64_t *temp_pdp = TEMP_PAGE;
+            uint64_t *pdp = PDP_BASE + (0x1000 * i) / sizeof(uint64_t);
+            for (uint64_t j = 0; j < MAX_PDP_ENTRIES; j++) {
+                temp_pdp[j] = pdp[j];
+            }
+            PML4_BASE[i] = get_phys_addr((uintptr_t) temp_pdp) | PAGE_STRUCTURE_FLAGS | VM_USER;
+            invlpg((uintptr_t) pdp);
+            
+            for (uint64_t j = 0; j < MAX_PDP_ENTRIES; j++) {
+                if (pdp[j] != 0) {
+                    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                    uint64_t *temp_pd = TEMP_PAGE;
+                    uint64_t *pd = PD_BASE + (0x200000 * i + 0x1000 * j) / sizeof(uint64_t);
+                    for (uint64_t k = 0; k < MAX_PD_ENTRIES; k++) {
+                        temp_pd[k] = pd[k];
+                    }
+                    pdp[j] = get_phys_addr((uintptr_t) temp_pd) | PAGE_STRUCTURE_FLAGS | VM_USER;
+                    invlpg((uintptr_t) pd);
+
+                    for (uint64_t k = 0; k < MAX_PD_ENTRIES; k++) {
+                        uint64_t *pd = PD_BASE + (0x200000 * i + 0x1000 * j) / sizeof(uint64_t);
+                        if (pd[k] != 0) {
+                            map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                            uint64_t *temp_pt = TEMP_PAGE;
+                            uint64_t *pt = PT_BASE + (0x40000000 * i + 0x200000 * j + 0x1000 * k) / sizeof(uint64_t);
+                            for (uint64_t l = 0; l < MAX_PT_ENTRIES; l++) {
+                                temp_pt[l] = pt[l];
+                            }
+                            pd[k] = get_phys_addr((uintptr_t) temp_pt) | PAGE_STRUCTURE_FLAGS | VM_USER;
+                            invlpg((uintptr_t) pt);
+                            
+                            for (uint64_t l = 0; l < MAX_PT_ENTRIES; l++) {
+                                if (pt[l] != 0) {
+                                    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                                    uint64_t *temp_page = TEMP_PAGE;
+                                    uint64_t *page = (uint64_t*) VIRT_ADDR(i, j, k, l);
+                                    memcpy(temp_page, page, PAGE_SIZE);
+                                    pt[l] = get_phys_addr((uintptr_t) temp_page) | (pt[l] & 0xFFFF000000000FFFUL);
+                                    invlpg((uintptr_t) page);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    get_current_process()->arch_process.cr3 = old_cr3;
+    load_cr3(old_cr3);
+
+    return pml4_addr;
+}
+
 uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
     map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
     uint64_t *pml4 = TEMP_PAGE;
@@ -187,7 +262,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
 
     if (deep_copy) {
         uint64_t old_cr3 = get_cr3();
-        get_current_process()->arch_process.cr3 = (uintptr_t) pml4;
+        get_current_process()->arch_process.cr3 = get_phys_addr((uintptr_t) pml4);
         load_cr3(get_phys_addr((uintptr_t) pml4));
 
         for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {

@@ -54,16 +54,12 @@ bool print(size_t len) {
 	return kprint(buffer, len);
 }
 #else
+#include <unistd.h>
+
 bool print(size_t n) {
 	buffer_index = 0;
 
-	bool ret;
-	asm volatile ( "movq $0, %%rdi\n"\
-	               "movq %1, %%rsi\n"\
-	               "movq %2, %%rdx\n"\
-	               "int $0x80\n"\
-	               "movq %%rax, %0" : "=m"(ret) : "m"(buffer), "m"(n) : "rdi", "rsi", "rdx", "rax" );
-	return ret;
+	return sys_print(buffer, n);
 }
 #endif /* __is_libk */
 

@@ -54,10 +54,6 @@ void sched_run_next() {
         free_process(to_remove);
     }
 
-    if (current == current->next) {
-        while (1);
-    }
-
     run_process(current->next);
 }
 
