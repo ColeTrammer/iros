@@ -41,7 +41,7 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 # Lists kernel objects
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
-$(BUILDDIR)/kernel/fs/fs_manager.o \
+$(BUILDDIR)/kernel/fs/vfs.o \
 $(BUILDDIR)/kernel/fs/initrd.o \
 $(BUILDDIR)/kernel/irqs/handlers.o \
 $(BUILDDIR)/kernel/main/kernel.o \

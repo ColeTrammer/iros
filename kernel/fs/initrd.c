@@ -4,33 +4,65 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <kernel/fs/vfile.h>
+#include <kernel/fs/file.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/file_system.h>
-#include <kernel/fs/fs_manager.h>
+#include <kernel/fs/vfs.h>
+#include <kernel/fs/super_block.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/hal/output.h>
 
+static struct file_system fs;
+static struct super_block super_block;
+
+/* Should be allocated in super block */
 static int64_t num_files;
 static uintptr_t initrd_start;
 static struct initrd_file_entry *file_list;
 
-VFILE *initrd_open(const char *file_name) {
-    if (strlen(file_name) > INITRD_MAX_FILE_NAME_LENGTH) {
-        return NULL;
+static struct inode_operations initrd_i_op = {
+    &initrd_lookup, &initrd_open
+};
+
+static struct file_operations initrd_f_op = {
+    &initrd_close, &initrd_read, &initrd_write
+};
+
+struct inode *initrd_lookup(struct inode *inode, const char *name) {
+    /* Assumes we were called on root inode */
+    if (inode->flags != FS_DIR) {
+        printf("Invalid INITRD Call: %s\n", name);
+        abort();
     }
 
     struct initrd_file_entry *entry = file_list;
     for (int64_t i = 0; i < num_files; i++) {
-        if (strcmp(file_name, entry[i].name) == 0) {
-            VFILE *file = calloc(sizeof(VFILE), 1);
-            strcpy(file->name, file_name);
+        if (strcmp(name, entry[i].name) == 0) {
+            struct inode *inode = calloc(1, sizeof(struct inode));
+            inode->name = name;
+            inode->flags = FS_FILE;
+            inode->size = entry[i].length;
+            inode->i_op = &initrd_i_op;
+            inode->super_block = &super_block;
+            return inode;
+        }
+    }
+
+    return NULL;
+}
+
+struct file *initrd_open(struct inode *inode) {
+    struct initrd_file_entry *entry = file_list;
+    for (int64_t i = 0; i < num_files; i++) {
+        if (strcmp(inode->name, entry[i].name) == 0) {
+            struct file *file = calloc(sizeof(struct file), 1);
+            file->name = inode->name;
             file->length = entry[i].length;
-            file->flags = FS_FILE;
             file->start = entry[i].offset;
             file->position = 0;
-            file->device = FS_INITRD_INDEX;
+            file->f_op = &initrd_f_op;
+            file->device = 0; /* Update when there is other devices... */
             return file;
         }
     }
@@ -38,37 +70,44 @@ VFILE *initrd_open(const char *file_name) {
     return NULL;
 }
 
-void initrd_close(VFILE *file) {
+void initrd_close(struct file *file) {
     free(file);
 }
 
-void initrd_read(VFILE *file, void *buffer, size_t len) {
+void initrd_read(struct file *file, void *buffer, size_t len) {
     memcpy(buffer, (void*) (initrd_start + file->start + file->position), len);
 }
 
-void initrd_write(VFILE *file, const void *buffer, size_t len) {
+void initrd_write(struct file *file, const void *buffer, size_t len) {
     initrd_close(file);
     printf("Can't write to initrd.\nBuffer: %#.16lX | Len: %u\n", buffer, len);
 }
 
-void initrd_mount() {
+struct inode *initrd_mount(struct file_system *fs) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     
     initrd_start = initrd->start;
     num_files = *((int64_t*) initrd_start);
     file_list = (struct initrd_file_entry*) (initrd_start + sizeof(int64_t));
 
+    struct inode *root = calloc(1, sizeof(struct inode));
+    // strcpy(root->name, "/");
+    root->size = initrd->end - initrd->start;
+    root->super_block = &super_block;
+    root->flags = FS_DIR;
+    root->device = 0;
+    root->i_op = &initrd_i_op;
+
+    fs->super_block = &super_block;
+    super_block.root = root;
+
     debug_log("INITRD Mounted: [ %d, %#.16lX ]\n", num_files, initrd_start);
+    return root;
 }
 
 void init_initrd() {
-    struct file_system *fs = malloc(sizeof(struct file_system));
-    fs->name = "initrd";
-    fs->open = &initrd_open;
-    fs->close = &initrd_close;
-    fs->read = &initrd_read;
-    fs->write = &initrd_write;
-    fs->mount = &initrd_mount;
+    // strcpy(fs.name, "initrd");
+    fs.mount = &initrd_mount;
 
-    load_fs(fs, FS_INITRD_INDEX);
+    load_fs(&fs);
 }

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <kernel/fs/fs_manager.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
@@ -29,7 +29,7 @@ void init_kernel_process() {
 }
 
 struct process *load_process(const char *file_name) {
-    VFILE *program = fs_open(file_name);
+    struct file *program = fs_open(file_name);
     fs_seek(program, 0, SEEK_END);
     long length = fs_tell(program);
     fs_seek(program, 0, SEEK_SET);

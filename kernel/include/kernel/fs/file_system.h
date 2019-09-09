@@ -3,18 +3,16 @@
 
 #include <stddef.h>
 
-#include "vfile.h"
+#include <kernel/fs/inode.h>
+#include <kernel/fs/super_block.h>
 
 struct file_system {
-    char *name;
-    
-    VFILE *(*open) (const char *filename);
-    void (*close) (VFILE *file);
+    char name[8];
+    unsigned int flags;
+    struct inode *(*mount) (struct file_system *);
 
-    void (*read) (VFILE *file, void *buffer, size_t len);
-    void (*write) (VFILE *file, const void *buffer, size_t len);
-
-    void (*mount) ();
+    struct super_block *super_block;
+    struct file_system *next;
 };
 
 #endif /* _KERNEL_FS_FILE_SYSTEM_H */

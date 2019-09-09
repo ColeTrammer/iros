@@ -4,8 +4,7 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdbool.h>
-
-typedef long intptr_t;
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
