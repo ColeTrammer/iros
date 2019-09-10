@@ -33,6 +33,8 @@ struct inode {
     const char *name;
 
     spinlock_t lock;
+
+    void *private_data;
 };
 
 #endif /* _KERNEL_FS_INODE_H */

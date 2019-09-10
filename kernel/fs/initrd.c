@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <string.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/initrd.h>
@@ -22,6 +23,10 @@ static int64_t num_files;
 static uintptr_t initrd_start;
 static struct initrd_file_entry *file_list;
 
+static struct file_system fs = {
+    "initrd", 0, &initrd_mount, NULL, NULL
+};
+
 static struct inode_operations initrd_i_op = {
     &initrd_lookup, &initrd_open
 };
@@ -32,10 +37,8 @@ static struct file_operations initrd_f_op = {
 
 struct inode *initrd_lookup(struct inode *inode, const char *name) {
     /* Assumes we were called on root inode */
-    if (inode->flags != FS_DIR) {
-        printf("Invalid INITRD Call: %s\n", name);
-        abort();
-    }
+    assert(strcmp(inode->name, "/") == 0);
+    assert(inode->flags & FS_DIR);
 
     struct initrd_file_entry *entry = file_list;
     for (int64_t i = 0; i < num_files; i++) {
@@ -46,6 +49,7 @@ struct inode *initrd_lookup(struct inode *inode, const char *name) {
             inode->size = entry[i].length;
             inode->i_op = &initrd_i_op;
             inode->super_block = &super_block;
+            inode->private_data = entry + i;
             return inode;
         }
     }
@@ -54,21 +58,17 @@ struct inode *initrd_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *initrd_open(struct inode *inode) {
-    struct initrd_file_entry *entry = file_list;
-    for (int64_t i = 0; i < num_files; i++) {
-        if (strcmp(inode->name, entry[i].name) == 0) {
-            struct file *file = calloc(sizeof(struct file), 1);
-            file->name = inode->name;
-            file->length = entry[i].length;
-            file->start = entry[i].offset;
-            file->position = 0;
-            file->f_op = &initrd_f_op;
-            file->device = 0; /* Update when there is other devices... */
-            return file;
-        }
-    }
-    
-    return NULL;
+    struct initrd_file_entry *entry = (struct initrd_file_entry*) inode->private_data;
+    assert(entry != NULL);
+
+    struct file *file = calloc(sizeof(struct file), 1);
+    file->name = inode->name;
+    file->length = entry->length;
+    file->start = entry->offset;
+    file->position = 0;
+    file->f_op = &initrd_f_op;
+    file->device = 0; /* Update when there is other devices... */
+    return file;
 }
 
 void initrd_close(struct file *file) {
@@ -80,19 +80,20 @@ void initrd_read(struct file *file, void *buffer, size_t len) {
 }
 
 void initrd_write(struct file *file, const void *buffer, size_t len) {
-    initrd_close(file);
     printf("Can't write to initrd.\nBuffer: %#.16lX | Len: %lu\n", (uintptr_t) buffer, len);
+    abort();
 }
 
 struct inode *initrd_mount(struct file_system *fs) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
+    assert(initrd != NULL);
     
     initrd_start = initrd->start;
     num_files = *((int64_t*) initrd_start);
     file_list = (struct initrd_file_entry*) (initrd_start + sizeof(int64_t));
 
     struct inode *root = calloc(1, sizeof(struct inode));
-    // strcpy(root->name, "/");
+    root->name = "/";
     root->size = initrd->end - initrd->start;
     root->super_block = &super_block;
     root->flags = FS_DIR;
@@ -107,8 +108,5 @@ struct inode *initrd_mount(struct file_system *fs) {
 }
 
 void init_initrd() {
-    // strcpy(fs.name, "initrd");
-    fs.mount = &initrd_mount;
-
     load_fs(&fs);
 }
