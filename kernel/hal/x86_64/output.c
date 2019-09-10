@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
@@ -84,6 +85,12 @@ int debug_log(const char *format, ...) {
 
     va_end(parameters);
     return written;
+}
+
+void debug_log_assertion(const char *msg, const char *file, int line) {
+    set_vga_foreground(VGA_COLOR_RED);
+    printf("Assertion failed: %s at %s, line %d\n", msg, file, line);
+    abort();
 }
 
 void dump_registers_to_screen() {

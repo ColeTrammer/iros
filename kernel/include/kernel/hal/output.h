@@ -16,5 +16,6 @@ bool kprint(const char *s, size_t len);
 bool screen_print(const char *s, size_t len);
 
 int debug_log(const char *f, ...) __attribute__((format (printf, 1, 2)));
+void debug_log_assertion(const char *msg, const char *file, int line);
 
 #endif /* _KERNEL_HAL_OUTPUT_H */
