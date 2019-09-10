@@ -41,15 +41,25 @@ $(BUILDDIR)/libc/stdio/printf.o \
 $(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
 $(BUILDDIR)/libc/stdlib/malloc.o \
+$(BUILDDIR)/libc/string/memchr.o \
 $(BUILDDIR)/libc/string/memcmp.o \
 $(BUILDDIR)/libc/string/memcpy.o \
 $(BUILDDIR)/libc/string/memmove.o \
 $(BUILDDIR)/libc/string/memset.o \
+$(BUILDDIR)/libc/string/strcat.o \
+$(BUILDDIR)/libc/string/strchr.o \
 $(BUILDDIR)/libc/string/strcmp.o \
 $(BUILDDIR)/libc/string/strcpy.o \
+$(BUILDDIR)/libc/string/strcspn.o \
 $(BUILDDIR)/libc/string/strlen.o \
+$(BUILDDIR)/libc/string/strcat.o \
 $(BUILDDIR)/libc/string/strncmp.o \
-$(BUILDDIR)/libc/string/strncpy.o
+$(BUILDDIR)/libc/string/strncpy.o \
+$(BUILDDIR)/libc/string/strpbrk.o \
+$(BUILDDIR)/libc/string/strrchr.o \
+$(BUILDDIR)/libc/string/strspn.o \
+$(BUILDDIR)/libc/string/strstr.o \
+$(BUILDDIR)/libc/string/strtok.o
 
 # Lists objects used in 'hosted' enviornment
 HOSTEDOBJS=\

@@ -34,7 +34,7 @@ void sched_add_process(struct process *process) {
 
     struct process *p = list_start;
     do {
-        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, p, p->prev, p->next);
+        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, (uintptr_t) p, (uintptr_t) p->prev, (uintptr_t) p->next);
         p = p->next;
     } while (p != list_start);
 

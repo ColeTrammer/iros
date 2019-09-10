@@ -15,6 +15,6 @@ void dump_registers_to_screen();
 bool kprint(const char *s, size_t len);
 bool screen_print(const char *s, size_t len);
 
-int debug_log(const char *f, ...);
+int debug_log(const char *f, ...) __attribute__((format (printf, 1, 2)));
 
 #endif /* _KERNEL_HAL_OUTPUT_H */

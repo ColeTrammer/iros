@@ -12,7 +12,7 @@ struct file_operations {
 };
 
 struct file {
-    char *name;
+    const char *name;
     int length;
     int start;
     int position;

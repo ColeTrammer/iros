@@ -80,7 +80,7 @@ void initrd_read(struct file *file, void *buffer, size_t len) {
 
 void initrd_write(struct file *file, const void *buffer, size_t len) {
     initrd_close(file);
-    printf("Can't write to initrd.\nBuffer: %#.16lX | Len: %u\n", buffer, len);
+    printf("Can't write to initrd.\nBuffer: %#.16lX | Len: %lu\n", (uintptr_t) buffer, len);
 }
 
 struct inode *initrd_mount(struct file_system *fs) {
@@ -101,7 +101,7 @@ struct inode *initrd_mount(struct file_system *fs) {
     fs->super_block = &super_block;
     super_block.root = root;
 
-    debug_log("INITRD Mounted: [ %d, %#.16lX ]\n", num_files, initrd_start);
+    debug_log("INITRD Mounted: [ %ld, %#.16lX ]\n", num_files, initrd_start);
     return root;
 }
 

@@ -111,7 +111,7 @@ void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, boo
         }
 
         enable_irq_line(irq_line);
-        debug_log("Registered PIC IRQ Line Handler: [ %#.1X, %#.16lX ]\n", irq_line, handler);
+        debug_log("Registered PIC IRQ Line Handler: [ %#.1X, %#.16lX ]\n", irq_line, (uintptr_t) handler);
     } else {
         printf("Invalid IRQ Line Requested: %u\n", irq_line);
     }

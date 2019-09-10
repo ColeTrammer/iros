@@ -18,13 +18,13 @@ extern FILE* stderr;
 #define stderr stderr
 
 int puts(const char*);
-int printf(const char*, ...);
-int vprintf(const char*, va_list);
+int printf(const char *__restrict format, ...) __attribute__((format (printf, 1, 2)));
+int vprintf(const char *__restrict format, va_list args);
 
 int fclose(FILE*);
 int fflush(FILE*);
 FILE *fopen(const char*, const char*);
-int fprintf(FILE*, const char*, ...);
+int fprintf(FILE*, const char*, ...) __attribute__((format (printf, 2, 3)));
 size_t fread(void*, size_t, size_t, FILE*);
 
 int fseek(FILE*, long, int);

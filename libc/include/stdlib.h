@@ -12,16 +12,14 @@ extern "C" {
 
 #ifndef __is_libk
 
-__attribute__((__noreturn__))
-void exit(int status);
+void exit(int status) __attribute__((__noreturn__));
 
 int atexit(void (*)(void));
 char *getenv(const char*);
 
 #endif /* __is_libk */
 
-__attribute__((__noreturn__)) 
-void abort();
+void abort() __attribute__((__noreturn__)) ;
 
 int atoi(const char*);
 

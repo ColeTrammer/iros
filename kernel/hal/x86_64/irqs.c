@@ -16,7 +16,7 @@ void init_irqs() {
 void register_irq_handler(void *handler, unsigned int irq, bool is_user) {
     add_idt_entry(idt, handler, irq, is_user);
 
-    debug_log("IRQ Handler Added: [ %#.2X, %s, %#.16lX ]\n", irq, is_user ? "true" : "false", handler);
+    debug_log("IRQ Handler Added: [ %#.2X, %s, %#.16lX ]\n", irq, is_user ? "true" : "false", (uintptr_t) handler);
 }
 
 void unregister_irq_handler(unsigned int irq) {
