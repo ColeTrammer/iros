@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <kernel/fs/inode.h>
+#include <kernel/fs/tnode.h>
 
 struct super_block_operations {
 
@@ -11,7 +11,7 @@ struct super_block_operations {
 
 struct super_block {
     dev_t device;
-    struct inode *root;
+    struct tnode *root;
     struct super_block_operations *op;
 };
 

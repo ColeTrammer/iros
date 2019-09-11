@@ -28,11 +28,11 @@ struct file *fs_open(const char *file_name) {
         return NULL;
     }
 
-    struct inode *root = file_systems->super_block->root;
-    struct inode *inode = root->i_op->lookup(root, file_name + 1);
+    struct tnode *t_root = file_systems->super_block->root;
+    struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, file_name + 1);
 
     debug_log("File Opened: [ %s ]\n", file_name);
-    return inode->i_op->open(inode);
+    return tnode->inode->i_op->open(tnode->inode);
 }
 
 void fs_close(struct file *file) {
