@@ -16,5 +16,5 @@ if echo "$1" | grep -Eq '[-][-]debug'; then
     x-terminal-emulator -e "qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors,int -no-reboot -no-shutdown -monitor stdio -s -S -serial file:debug.log" &
     x-terminal-emulator -e "gdb"
 else
-    qemu-system-$ARCH -cdrom os_2.iso -d guest_errors -serial file:debug.log
+    qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors -serial stdio
 fi
