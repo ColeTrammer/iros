@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <errno.h>
 
 void *sbrk(intptr_t increment) {
     void *ret;
@@ -10,6 +11,9 @@ void *sbrk(intptr_t increment) {
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
                   "movq %%rax, %0" : "=r"(ret) : "r"(increment) : "rdi", "rsi", "rax");
+    if (ret == (void*) -1) {
+        errno = ENOMEM;
+    }
     return ret;
 }
 
@@ -20,7 +24,10 @@ bool sys_print(void *buffer, size_t n) {
 	              "movq %2, %%rdx\n"\
 	              "int $0x80\n"\
 	              "movb %%al, %0" : "=r"(ret) : "r"(buffer), "r"(n) : "rdi", "rsi", "rdx", "al" );
-	return ret;
+	if (!ret) {
+        errno = EIO;
+    }
+    return ret;
 }
 
 int open(const char *pathname, int flags, mode_t mode) {
@@ -31,7 +38,7 @@ int open(const char *pathname, int flags, mode_t mode) {
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "rdx", "rcx", "eax" );
-    return ret;
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 ssize_t read(int fd, void *buf, size_t count) {
@@ -42,7 +49,7 @@ ssize_t read(int fd, void *buf, size_t count) {
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
                   "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax" );
-    return ret;
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 ssize_t write(int fd, const void * buf, size_t count) {
@@ -53,7 +60,7 @@ ssize_t write(int fd, const void * buf, size_t count) {
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
                   "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax" );
-    return ret;
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 int close(int fd) {
@@ -62,7 +69,7 @@ int close(int fd) {
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(fd) : "rdi", "rsi", "eax" );
-    return ret;
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 pid_t fork() {
@@ -70,5 +77,5 @@ pid_t fork() {
     asm volatile( "movq $3, %%rdi\n"\
                   "int $0x80\n"\
                   "mov %%eax, %0" : "=r"(ret) : : "rdi", "eax" );
-    return ret;
+    __SYSCALL_TO_ERRNO(ret);
 }
