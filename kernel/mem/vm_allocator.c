@@ -142,6 +142,22 @@ void remove_vm_pages_end(size_t n, uint64_t type) {
     }
 }
 
+void *map_file(off_t length, uint64_t flags) {
+    struct vm_region **list = &get_current_process()->process_memory;
+    struct vm_region *last_file = get_vm_last_region(*list, VM_PROCESS_FILE);
+
+    struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
+    to_add->type = VM_PROCESS_FILE;
+    to_add->flags = flags;
+    to_add->start = last_file->end;
+    to_add->end = ((to_add->start + length) & ~0xFFF) + PAGE_SIZE;
+    *list = add_vm_region(*list, to_add);
+
+    map_vm_region(to_add);
+
+    return (void*) to_add->start;
+}
+
 void remove_vm_pages_start(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {

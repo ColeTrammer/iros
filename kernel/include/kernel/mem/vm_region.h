@@ -29,6 +29,9 @@ struct vm_region {
 #define VM_PROCESS_BSS (19)
 #define VM_PROCESS_HEAP (20)
 #define VM_PROCESS_STACK (21)
+
+/* Defines non unique process regions */
+#define VM_PROCESS_FILE (40)
     uint64_t type;
 
     struct vm_region *next;
@@ -37,6 +40,7 @@ struct vm_region {
 struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add);
 struct vm_region *remove_vm_region(struct vm_region *list, uint64_t type);
 struct vm_region *get_vm_region(struct vm_region *list, uint64_t type);
+struct vm_region *get_vm_last_region(struct vm_region *list, uint64_t type);
 int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages);
 int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pages);
 int contract_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages);

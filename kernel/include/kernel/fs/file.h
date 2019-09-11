@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <kernel/fs/inode.h>
 
@@ -16,9 +17,10 @@ struct file_operations {
 
 struct file {
     inode_id_t inode_idenifier;
-    int length;
-    int start;
-    int position;
+    
+    off_t length;
+    uintptr_t start;
+    fpos_t position;
 
     struct file_operations *f_op;
 

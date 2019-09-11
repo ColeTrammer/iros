@@ -106,3 +106,14 @@ int contract_vm_region_start(struct vm_region *list, uint64_t type, size_t num_p
     debug_log("VM Region Start Contracted: [ %ld, %#.16lX, %#.16lX ]\n", num_pages, type, (uintptr_t) list);
     return 0;
 }
+
+struct vm_region *get_vm_last_region(struct vm_region *list, uint64_t type) {
+    struct vm_region *region = NULL;
+    while (list != NULL) {
+        if (list->type == type) {
+            region = list;
+        }
+        list = list->next;
+    }
+    return region;
+}
