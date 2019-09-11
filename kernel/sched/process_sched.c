@@ -45,13 +45,19 @@ void sched_add_process(struct process *process) {
 void sched_run_next() {
     struct process *current = get_current_process();
 
-    while (current->next->sched_state == EXITING) {
-        struct process *to_remove = current->next;
+    while (current->next->sched_state != READY) {
+        if (current->next->sched_state == EXITING) {
+            struct process *to_remove = current->next;
 
+            current->next = current->next->next;
+            current->next->prev = current;
+
+            free_process(to_remove);
+            continue;
+        }
+
+        /* Skip processes that are sleeping */
         current->next = current->next->next;
-        current->next->prev = current;
-
-        free_process(to_remove);
     }
 
     run_process(current->next);

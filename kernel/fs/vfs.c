@@ -4,6 +4,8 @@
 #include <stdlib.h>
 
 #include <kernel/fs/vfs.h>
+#include <kernel/fs/inode.h>
+#include <kernel/fs/inode_store.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/mem/vm_region.h>
@@ -32,7 +34,9 @@ struct file *fs_open(const char *file_name) {
     struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, file_name + 1);
 
     debug_log("File Opened: [ %s ]\n", file_name);
-    return tnode->inode->i_op->open(tnode->inode);
+    struct inode *inode = tnode->inode;
+    fs_inode_put(inode);
+    return inode->i_op->open(tnode->inode);
 }
 
 void fs_close(struct file *file) {

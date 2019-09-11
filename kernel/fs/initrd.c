@@ -8,7 +8,6 @@
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/vfs.h>
@@ -100,8 +99,6 @@ struct tnode *initrd_mount(struct file_system *fs) {
     root->device = 0;  /* Update when there is other devices... */
     root->i_op = &initrd_i_op;
 
-    fs_inode_put(root);
-
     struct tnode *t_root = malloc(sizeof(struct tnode));
     t_root->name = "/";
     t_root->inode = root;
@@ -119,8 +116,6 @@ struct tnode *initrd_mount(struct file_system *fs) {
         inode->device = 0;
         inode->i_op = &initrd_i_op;
         inode->private_data = entry + i;
-
-        fs_inode_put(inode);
 
         struct tnode *to_add = malloc(sizeof(struct tnode));
         to_add->name = entry[i].name;
