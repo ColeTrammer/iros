@@ -37,6 +37,7 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS) -DARCH=$(HOSTARCH)
 # Lists objects used in 'free' enviornment
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
+$(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/printf.o \
 $(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
@@ -59,7 +60,8 @@ $(BUILDDIR)/libc/string/strpbrk.o \
 $(BUILDDIR)/libc/string/strrchr.o \
 $(BUILDDIR)/libc/string/strspn.o \
 $(BUILDDIR)/libc/string/strstr.o \
-$(BUILDDIR)/libc/string/strtok.o
+$(BUILDDIR)/libc/string/strtok.o \
+$(BUILDDIR)/libc/init.o
 
 # Lists objects used in 'hosted' enviornment
 HOSTEDOBJS=\

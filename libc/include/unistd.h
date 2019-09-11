@@ -13,6 +13,11 @@ extern "C" {
 void *sbrk(intptr_t increment);
 bool sys_print(void *buffer, size_t n);
 
+int open(const char *pathname, int flags, mode_t mode);
+ssize_t read(int fd, void *buf, size_t count);
+ssize_t write(int fd, const void * buf, size_t count);
+int close(int fd);
+
 int execv(const char*, char* const[]);
 int execve(const char*, char* const[], char* const[]);
 int execvp(const char*, char* const[]);

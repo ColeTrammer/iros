@@ -1,6 +1,10 @@
 #ifndef _STDINT_H
 #define _STDINT_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef long long intmax_t;
 typedef unsigned long long uintmex_t;
 
@@ -43,5 +47,9 @@ typedef unsigned long long uint_fast64_t;
 
 typedef long intptr_t;
 typedef unsigned long uintptr_t;
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _STDINT_H */

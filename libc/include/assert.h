@@ -1,6 +1,10 @@
 #ifndef _ASSERT_H
 #define _ASSERT_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #ifdef NDEBUG
 #define assert(ignore) ((void) 0)
 #else
@@ -12,5 +16,9 @@
 #       define assert(ignore) ((void) 0)
 #   endif /* __is_libk */
 #endif /* NDEBUG */
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _ASSERT_H */
