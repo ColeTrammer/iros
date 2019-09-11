@@ -63,3 +63,19 @@ void arch_sys_fork(struct process_state *process_state) {
 
     sched_add_process(child);
 }
+
+void arch_sys_open(struct process_state *process_state) {
+    (void) process_state;
+}
+
+void arch_sys_read(struct process_state *process_state)  {
+    (void) process_state;
+}
+
+void arch_sys_write(struct process_state *process_state) {
+    (void) process_state;
+}
+
+void arch_sys_close(struct process_state *process_state) {
+    (void) process_state;
+}

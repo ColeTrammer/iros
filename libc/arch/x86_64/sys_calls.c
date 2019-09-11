@@ -26,9 +26,9 @@ bool sys_print(void *buffer, size_t n) {
 int open(const char *pathname, int flags, mode_t mode) {
     int ret;
     asm volatile( "movq $4, %%rdi\n"\
-                  "movl %1, %%esi\n"\
-                  "movq %2, %%rdx\n"\
-                  "movq %3, %%rcx\n"\
+                  "movq %1, %%rsi\n"\
+                  "movl %2, %%edx\n"\
+                  "movl %3, %%ecx\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdx", "rsi", "rdx", "rcx", "eax" );
     return ret;
@@ -41,7 +41,7 @@ ssize_t read(int fd, void *buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movl %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdx", "rsi", "rdx", "rcx", "eax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdx", "rsi", "rdx", "rcx", "eax" );
     return ret;
 }
 
@@ -52,7 +52,7 @@ ssize_t write(int fd, const void * buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movl %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdx", "rsi", "rdx", "rcx", "eax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdx", "rsi", "rdx", "rcx", "eax" );
     return ret;
 }
 

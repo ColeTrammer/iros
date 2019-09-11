@@ -6,12 +6,16 @@
 #include <sys/types.h>
 
 #include <kernel/fs/super_block.h>
-#include <kernel/fs/file.h>
 #include <kernel/util/spinlock.h>
 
 #include <kernel/fs/tnode.h>
 
 struct inode;
+
+typedef unsigned long inode_id_t;
+
+/* Has to be included here so that file.h sees struct inode & inode_id_t */
+#include <kernel/fs/file.h>
 
 struct inode_operations {
     struct tnode *(*lookup)(struct inode *, const char *name);
@@ -32,7 +36,7 @@ struct inode {
     unsigned int size;
 
     /* Unique inode identifier */
-    uint64_t index;
+    inode_id_t index;
 
     /* List of tnodes in directory (if inode is a directory) */
     struct tnode_list *tnode_list;

@@ -3,8 +3,10 @@
 
 #include <stdbool.h>
 #include <sys/types.h>
+#include <stdio.h>
 
 #include <kernel/mem/vm_region.h>
+#include <kernel/fs/inode.h>
 
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(proc/process.h)
@@ -18,10 +20,14 @@ enum sched_state {
 
 struct process {
     struct arch_process arch_process;
+
     struct vm_region *process_memory;
     bool kernel_process;
     pid_t pid;
     enum sched_state sched_state;
+    
+    inode_id_t files[FOPEN_MAX];
+
     struct process *prev;
     struct process *next;
 };

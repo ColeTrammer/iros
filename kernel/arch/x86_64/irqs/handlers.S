@@ -66,3 +66,7 @@ sys_call_table:
     .quad arch_sys_exit
     .quad arch_sys_sbrk
     .quad arch_sys_fork
+    .quad arch_sys_open
+    .quad arch_sys_read
+    .quad arch_sys_write
+    .quad arch_sys_close

@@ -42,6 +42,7 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 $(BUILDDIR)/kernel/fs/initrd.o \
+$(BUILDDIR)/kernel/fs/inode_store.o \
 $(BUILDDIR)/kernel/fs/tnode.o \
 $(BUILDDIR)/kernel/fs/vfs.o \
 $(BUILDDIR)/kernel/irqs/handlers.o \

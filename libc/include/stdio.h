@@ -28,6 +28,8 @@ typedef struct {
     mode_t mode;
 } FILE;
 
+#ifndef __libc_files_c
+
 extern FILE *stdio;
 #define stdio stdio
 
@@ -36,6 +38,8 @@ extern FILE *stdin;
 
 extern FILE* stderr;
 #define stderr stderr
+
+#endif /* __libc_files_c */
 
 int puts(const char*);
 int printf(const char *__restrict format, ...) __attribute__((format (printf, 1, 2)));

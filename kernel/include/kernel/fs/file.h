@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+#include <kernel/fs/inode.h>
+
 struct file;
 
 struct file_operations {
@@ -13,7 +15,7 @@ struct file_operations {
 };
 
 struct file {
-    uint64_t inode_idenifier;
+    inode_id_t inode_idenifier;
     int length;
     int start;
     int position;
