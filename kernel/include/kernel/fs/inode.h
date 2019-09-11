@@ -9,10 +9,12 @@
 #include <kernel/fs/file.h>
 #include <kernel/util/spinlock.h>
 
+#include <kernel/fs/tnode.h>
+
 struct inode;
 
 struct inode_operations {
-    struct inode *(*lookup)(struct inode *, const char *name);
+    struct tnode *(*lookup)(struct inode *, const char *name);
     struct file *(*open)(struct inode *);
 };
 
@@ -29,8 +31,11 @@ struct inode {
     dev_t device;
     unsigned int size;
 
-    /* Won't be stored in actual inode but is for quick development with initrd */
-    const char *name;
+    /* Unique inode identifier */
+    uint64_t index;
+
+    /* List of tnodes in directory (if inode is a directory) */
+    struct tnode_list *tnode_list;
 
     spinlock_t lock;
 

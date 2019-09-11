@@ -2,6 +2,7 @@
 #define _KERNEL_FS_FILE_H 1
 
 #include <sys/types.h>
+#include <stdint.h>
 
 struct file;
 
@@ -12,7 +13,7 @@ struct file_operations {
 };
 
 struct file {
-    const char *name;
+    uint64_t inode_idenifier;
     int length;
     int start;
     int position;

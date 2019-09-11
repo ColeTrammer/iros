@@ -3,13 +3,13 @@
 
 #include <stddef.h>
 
-#include <kernel/fs/inode.h>
+#include <kernel/fs/tnode.h>
 #include <kernel/fs/super_block.h>
 
 struct file_system {
     char name[8];
     unsigned int flags;
-    struct inode *(*mount) (struct file_system *);
+    struct tnode *(*mount) (struct file_system *);
 
     struct super_block *super_block;
     struct file_system *next;
