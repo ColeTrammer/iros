@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #include <kernel/mem/vm_region.h>
-#include <kernel/fs/inode.h>
+#include <kernel/fs/file.h>
 
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(proc/process.h)
@@ -26,7 +26,7 @@ struct process {
     pid_t pid;
     enum sched_state sched_state;
     
-    inode_id_t files[FOPEN_MAX];
+    struct file *files[FOPEN_MAX];
 
     struct process *prev;
     struct process *next;

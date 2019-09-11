@@ -2,11 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <assert.h>
 
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/pid.h>
 #include <kernel/sched/process_sched.h>
+#include <kernel/fs/vfs.h>
 
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
@@ -65,17 +68,59 @@ void arch_sys_fork(struct process_state *process_state) {
 }
 
 void arch_sys_open(struct process_state *process_state) {
-    (void) process_state;
+    const char *path = (const char*) process_state->cpu_state.rsi;
+    int flags = (int) process_state->cpu_state.rdx;
+    mode_t mode = (mode_t) process_state->cpu_state.rcx;
+    
+    (void) flags;
+    (void) mode;
+    
+    assert(path != NULL);
+
+    struct process *process = get_current_process();
+    struct file *file = fs_open(path);
+
+    /* Start at 3 because 0,1,2 are reserved for stdin, stdio, and stderr */
+    for (size_t i = 3; i < FOPEN_MAX; i++) {
+        if (process->files[i] == NULL) {
+            process->files[i] = file;
+            process_state->cpu_state.rax = i;
+            return;
+        }
+    }
+
+    /* Max files allocated, should return some ERROR */
+    assert(false);
 }
 
 void arch_sys_read(struct process_state *process_state)  {
-    (void) process_state;
+    int fd = (int) process_state->cpu_state.rsi;
+    void *buf = (void*) process_state->cpu_state.rdx;
+    size_t count = (size_t) process_state->cpu_state.rcx;
+
+    struct process *process = get_current_process();
+    struct file *file = process->files[fd];
+    assert(file != NULL);
+
+    fs_read(file, buf, count);
+
+    /* Should be checking for errors and bytes read in fs_read and returning them here */
+    process_state->cpu_state.rax = count;
 }
 
 void arch_sys_write(struct process_state *process_state) {
     (void) process_state;
+
+    assert(false);
 }
 
 void arch_sys_close(struct process_state *process_state) {
-    (void) process_state;
+    int fd = (int) process_state->cpu_state.rsi;
+
+    struct process *process = get_current_process();
+    fs_close(process->files[fd]);
+    process->files[fd] = NULL;
+
+    /* Should be returning error codes here */
+    process_state->cpu_state.rax = 0;
 }

@@ -19,7 +19,7 @@ bool sys_print(void *buffer, size_t n) {
 	              "movq %1, %%rsi\n"\
 	              "movq %2, %%rdx\n"\
 	              "int $0x80\n"\
-	              "movb %%al, %0" : "=r"(ret) : "r"(buffer), "r"(n) : "rdi", "rsi", "rdx", "rax" );
+	              "movb %%al, %0" : "=r"(ret) : "r"(buffer), "r"(n) : "rdi", "rsi", "rdx", "al" );
 	return ret;
 }
 
@@ -30,7 +30,7 @@ int open(const char *pathname, int flags, mode_t mode) {
                   "movl %2, %%edx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdx", "rsi", "rdx", "rcx", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "rdx", "rcx", "eax" );
     return ret;
 }
 
@@ -41,7 +41,7 @@ ssize_t read(int fd, void *buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdx", "rsi", "rdx", "rcx", "eax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax" );
     return ret;
 }
 
@@ -52,7 +52,7 @@ ssize_t write(int fd, const void * buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdx", "rsi", "rdx", "rcx", "eax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax" );
     return ret;
 }
 

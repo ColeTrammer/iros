@@ -43,9 +43,12 @@ struct tnode *initrd_lookup(struct inode *inode, const char *name) {
     /* Assumes we were called on root inode */
     assert(inode->flags & FS_DIR);
     assert(inode->tnode_list != NULL);
+    assert(name != NULL);
 
     struct tnode_list *list = inode->tnode_list;
     while (list != NULL) {
+        assert(list->tnode != NULL);
+        assert(list->tnode->name != NULL);
         if (strcmp(list->tnode->name, name) == 0) {
             return list->tnode;
         }

@@ -1,7 +1,9 @@
 #include <sys/param.h>
+#include <sys/types.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/inode.h>
@@ -31,11 +33,18 @@ struct file *fs_open(const char *file_name) {
     }
 
     struct tnode *t_root = file_systems->super_block->root;
+    assert(t_root != NULL);
+    assert(t_root->inode != NULL);
+    assert(t_root->inode->i_op != NULL);
+    assert(t_root->inode->i_op->lookup != NULL);
+    
     struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, file_name + 1);
+    assert(tnode != NULL);
 
     debug_log("File Opened: [ %s ]\n", file_name);
     struct inode *inode = tnode->inode;
     fs_inode_put(inode);
+    
     return inode->i_op->open(tnode->inode);
 }
 
@@ -51,8 +60,8 @@ void fs_write(struct file *file, const void *buffer, size_t len) {
     file->f_op->write(file, buffer, len);
 }
 
-int fs_seek(struct file *file, long offset, int whence) {
-    long new_position;
+int fs_seek(struct file *file, off_t offset, int whence) {
+    off_t new_position;
     if (whence == SEEK_SET) {
         new_position = offset;
     } else if (whence == SEEK_CUR) {
