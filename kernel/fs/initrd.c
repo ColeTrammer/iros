@@ -80,6 +80,7 @@ void initrd_read(struct file *file, void *buffer, size_t len) {
 }
 
 void initrd_write(struct file *file, const void *buffer, size_t len) {
+    (void) file;
     printf("Can't write to initrd.\nBuffer: %#.16lX | Len: %lu\n", (uintptr_t) buffer, len);
     abort();
 }
