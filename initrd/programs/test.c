@@ -8,16 +8,24 @@
 
 int main() {
 
-    /* Test Reading Files */
-    
-    int fd = open("/a.txt", 0, 0);
+    /* Test Reading Files Using stdio.h */
+
+    FILE *a = fopen("/a.txt", "r");
     char *buffer = malloc(0x5000);
-    if (buffer == NULL) {
-        while (1);
-    }
-    read(fd, buffer, 0x5000);
+    fread(buffer, 0x5000, 1, a);
     puts(buffer);
-    close(fd);
+    fclose(a);
+
+    /* Test Reading Files Using Sys Calls */
+    
+    // int fd = open("/a.txt", 0, 0);
+    // char *buffer = malloc(0x5000);
+    // if (buffer == NULL) {
+    //     while (1);
+    // }
+    // read(fd, buffer, 0x5000);
+    // puts(buffer);
+    // close(fd);
 
     /* Test Fork Sys Call */
 

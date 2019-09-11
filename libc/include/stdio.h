@@ -5,6 +5,12 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#define BUFSIZ 0x1000
+
+#define _IOFBF 0
+#define _IOLBF 1
+#define _IONBF 2
+
 #define SEEK_SET (0)
 #define SEEK_CUR (1)
 #define SEEK_END (2)
@@ -23,12 +29,16 @@ typedef struct {
     char *buffer;
     fpos_t pos;
     off_t length;
+    
+    int fd;
     int flags;
-    int file;
-    mode_t mode;
-} FILE;
+    int eof;
+    int error;
 
-#ifndef __libc_files_c
+    int buf_type;
+
+    /* Needs lock for threads eventually */
+} FILE;
 
 extern FILE *stdio;
 #define stdio stdio
@@ -38,8 +48,6 @@ extern FILE *stdin;
 
 extern FILE* stderr;
 #define stderr stderr
-
-#endif /* __libc_files_c */
 
 int puts(const char*);
 int printf(const char *__restrict format, ...) __attribute__((format (printf, 1, 2)));
