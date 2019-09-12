@@ -49,12 +49,6 @@ void sched_remove_process(struct process *process) {
         return;
     }
 
-    struct process *p = list_start;
-    do {
-        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, (uintptr_t) p, (uintptr_t) p->prev, (uintptr_t) p->next);
-        p = p->next;
-    } while (p != list_start);
-
     struct process *current = list_start;
 
     while (current->next != process) {
@@ -72,13 +66,28 @@ void sched_remove_process(struct process *process) {
     current->next = current->next->next;
     current->next->prev = current;
 
-    p = list_start;
+    struct process *p = list_start;
     do {
         debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, (uintptr_t) p, (uintptr_t) p->prev, (uintptr_t) p->next);
         p = p->next;
     } while (p != list_start);
 
     spin_unlock(&process_list_lock);
+}
+
+struct process *find_by_pid(pid_t pid) {
+    /* Not SMP Safe Because It Can't Lock The Process List */
+
+    struct process *p = list_start;
+    do {
+        if (p->pid == pid) {
+            return p;
+        }
+
+        p = p->next;
+    } while (p != list_start);
+
+    return NULL;
 }
 
 /* Must be called from unpremptable context */
@@ -88,6 +97,14 @@ void sched_run_next() {
     while (current->next->sched_state != READY) {
         if (current->next->sched_state == EXITING) {
             struct process *to_remove = current->next;
+
+                if (current->next == list_end) {
+                    list_end = current->next->prev;
+                }
+
+                if (current->next == list_start) {
+                    list_start = current->next->next;
+                }
 
             current->next = current->next->next;
             current->next->prev = current;

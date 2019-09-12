@@ -86,3 +86,14 @@ int execve(const char *file, char *const argv[], char *const envp[]) {
                   "movl %%eax, %0" : "=r"(ret) : "r"(file), "r"(argv), "r"(envp) : "rdi", "rsi", "rdx", "rcx", "eax" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+pid_t waitpid(pid_t pid, int *wstatus, int options) {
+    pid_t ret;
+    asm volatile( "movq $9, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movl %3, %%ecx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(wstatus), "r"(options) : "rdi", "esi", "rdx", "ecx", "eax" );
+    __SYSCALL_TO_ERRNO(ret);
+}

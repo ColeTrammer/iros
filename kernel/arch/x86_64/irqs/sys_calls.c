@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
+#include <sys/wait.h>
 
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
@@ -229,4 +230,29 @@ void arch_sys_execve(struct process_state *process_state) {
 
     enable_interrupts();
     while (1);
+}
+
+void arch_sys_waitpid(struct process_state *process_state) {
+    pid_t pid = (pid_t) process_state->cpu_state.rsi;
+    int *status = (int*) process_state->cpu_state.rdx;
+    int flags = (int) process_state->cpu_state.rcx;
+
+    assert(pid > 0);
+    assert(status != NULL);
+    assert(flags == WUNTRACED);
+
+    /* Hack To Implement Waiting: Once the process exits it can no longer be found */
+    struct process *proc;
+    for (;;) {
+        proc = find_by_pid(pid);
+        if (proc == NULL) {
+            break;
+        }
+    }
+
+    /* Indicated Process Has Exited */
+    *status = 0;
+
+    /* Indicated Success */
+    SYS_RETURN(0);
 }

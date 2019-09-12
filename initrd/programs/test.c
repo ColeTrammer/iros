@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/wait.h>
 
 int main(int argc, char **argv, char **envp) {
 
@@ -19,8 +20,18 @@ int main(int argc, char **argv, char **envp) {
     if (f == 0) {
         execvp("/test_exec.o", argv);
 
+        perror("Test");
+
         /* Should Not Execute */
         return 1;
+    } else if (f < 0) {
+        perror("Test");
+    } else {
+        int status;
+
+        do {
+             waitpid(f, &status, WUNTRACED);
+        } while (!WIFEXITED(status));
     }
 
     /* Test args */
@@ -59,13 +70,13 @@ int main(int argc, char **argv, char **envp) {
 
     pid_t ret = fork();
     if (ret == 0) {
-        for (int i = 0; i <= 100; i++) {
+        for (int i = 0; i <= 2; i++) {
             printf("%d: Child\n", i);
         }
         return 0;
     }
 
-    for (int i = 0; i <= 145; i++) {
+    for (int i = 0; i <= 3; i++) {
         printf("%d: Parent\n", i);
     }
 
