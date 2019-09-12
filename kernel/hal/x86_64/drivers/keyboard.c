@@ -75,7 +75,6 @@ static void handle_keyboard_interrupt() {
             pressed[scan_code] = true;
 
             kbd_buffer[kbd_index++] = char_map[scan_code];
-            debug_log("Pressed: [ %d, %c ]\n", kbd_index - 1, char_map[scan_code]);
         }
     } else {
         if (extended_key_code) {

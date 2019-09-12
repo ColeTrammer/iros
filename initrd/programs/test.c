@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <sys/wait.h>
 
-int main(int argc, char **argv, char **envp) {
+int main(int argc, char **argv) {
 
     /* Test execve */
 

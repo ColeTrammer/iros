@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/inode.h>
@@ -23,28 +24,35 @@ void init_vfs() {
     file_systems->mount(file_systems);
 }
 
-struct file *fs_open(const char *file_name) {
+struct file *fs_open(const char *file_name, int *error) {
     if (file_name == NULL) {
+        *error = -EINVAL;
         return NULL;
     }
 
+    /* We Don't Support Not Root Paths */
     if (file_name[0] != '/') {
+        *error = -ENOENT;
         return NULL;
     }
 
     struct tnode *t_root = file_systems->super_block->root;
-    assert(t_root != NULL);
-    assert(t_root->inode != NULL);
-    assert(t_root->inode->i_op != NULL);
-    assert(t_root->inode->i_op->lookup != NULL);
+    if (t_root == NULL) {
+        *error = -ENOENT;
+        return NULL;
+    }
     
     struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, file_name + 1);
-    assert(tnode != NULL);
+    if (tnode == NULL) {
+        *error = -ENOENT;
+        return NULL;
+    }
 
     debug_log("File Opened: [ %s ]\n", file_name);
     struct inode *inode = tnode->inode;
     fs_inode_put(inode);
     
+    *error = 0;
     return inode->i_op->open(tnode->inode);
 }
 

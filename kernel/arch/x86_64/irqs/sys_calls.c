@@ -83,8 +83,14 @@ void arch_sys_open(struct process_state *process_state) {
     
     assert(path != NULL);
 
+    int error;
+
     struct process *process = get_current_process();
-    struct file *file = fs_open(path);
+    struct file *file = fs_open(path, &error);
+
+    if (file == NULL) {
+        SYS_RETURN((uint64_t) error);
+    }
 
     /* Start at 3 because 0,1,2 are reserved for stdin, stdio, and stderr */
     for (size_t i = 3; i < FOPEN_MAX; i++) {
@@ -169,6 +175,21 @@ void arch_sys_execve(struct process_state *process_state) {
 
     debug_log("Exec Process: [ %d, %s ]\n", current->pid, file_name);
 
+    int error;
+    struct file *program = fs_open(file_name, &error);
+    if (program == NULL) {
+        SYS_RETURN((uint64_t) error);
+    }
+
+    fs_seek(program, 0, SEEK_END);
+    long length = fs_tell(program);
+    fs_seek(program, 0, SEEK_SET);
+
+    void *buffer = malloc(length);
+    fs_read(program, buffer, length);
+
+    fs_close(program);
+
     /* Memset stack to zero so that process can use old one safely */
     struct vm_region *process_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
     memset((void*) process_stack->start, 0, process_stack->end - process_stack->start);
@@ -185,18 +206,6 @@ void arch_sys_execve(struct process_state *process_state) {
     process->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
     process->arch_process.kernel_stack_info = current->arch_process.kernel_stack_info;
     process->arch_process.setup_kernel_stack = false;
-
-
-    struct file *program = fs_open(file_name);
-
-    fs_seek(program, 0, SEEK_END);
-    long length = fs_tell(program);
-    fs_seek(program, 0, SEEK_SET);
-
-    void *buffer = malloc(length);
-    fs_read(program, buffer, length);
-
-    fs_close(program);
 
     process->arch_process.process_state.cpu_state.rbp = KERNEL_PROC_STACK_START;
     process->arch_process.process_state.stack_state.rip = elf64_get_entry(buffer);

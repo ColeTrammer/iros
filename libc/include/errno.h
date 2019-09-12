@@ -4,7 +4,8 @@
 #define EIO       1
 #define ENOMEM    2
 #define EINVAL    3
-#define EMAXERRNO 4
+#define ENOENT    4
+#define EMAXERRNO 5
 
 #ifdef __cplusplus
 extern "C" {

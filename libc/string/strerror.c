@@ -6,6 +6,7 @@ const char *sys_errlist[] = {
     "IO error",
     "Ran out of memory",
     "Invalid arguments",
+    "File does not exist",
     "Errno end"
 };
 

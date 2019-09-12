@@ -53,6 +53,11 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
 
     mode_t __mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
     int fd = open(path, flags, __mode);
+    
+    /* Check If Open Failed */
+    if (fd == -1) {
+        return NULL;
+    }
 
     FILE *file = malloc(sizeof(FILE));
     file->pos = 0;

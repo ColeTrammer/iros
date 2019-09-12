@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
@@ -72,7 +73,10 @@ void init_kernel_process() {
 }
 
 struct process *load_process(const char *file_name) {
-    struct file *program = fs_open(file_name);
+    int error;
+    struct file *program = fs_open(file_name, &error);
+    assert(program != NULL && error == 0);
+
     fs_seek(program, 0, SEEK_END);
     long length = fs_tell(program);
     fs_seek(program, 0, SEEK_SET);
