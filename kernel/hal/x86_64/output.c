@@ -88,6 +88,7 @@ int debug_log(const char *format, ...) {
 }
 
 void debug_log_assertion(const char *msg, const char *file, int line, const char *func) {
+    disable_interrupts();
     set_vga_foreground(VGA_COLOR_RED);
     printf("Assertion failed: %s in %s at %s, line %d\n", msg, func, file, line);
     abort();

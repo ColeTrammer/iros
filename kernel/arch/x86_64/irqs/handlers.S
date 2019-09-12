@@ -62,7 +62,7 @@ sys_call_entry:
 
 .section .rodata
 sys_call_table:
-    .quad arch_sys_print
+    .quad 0
     .quad arch_sys_exit
     .quad arch_sys_sbrk
     .quad arch_sys_fork

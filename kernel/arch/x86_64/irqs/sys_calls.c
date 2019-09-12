@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
@@ -15,11 +16,11 @@
 #include <kernel/hal/output.h>
 #include <kernel/arch/x86_64/proc/process.h>
 
-void arch_sys_print(struct process_state *process_state) {
-    screen_print((char*) process_state->cpu_state.rsi, process_state->cpu_state.rdx);
-
-    process_state->cpu_state.rax = true;
-}
+#define SYS_RETURN(val)                       \
+    do {                                      \
+        process_state->cpu_state.rax = (val); \
+        return;                               \
+    } while (0)
 
 void arch_sys_exit(struct process_state *process_state) {
     disable_interrupts();
@@ -46,7 +47,7 @@ void arch_sys_sbrk(struct process_state *process_state) {
     } else {
         res = add_vm_pages_end(increment, VM_PROCESS_HEAP);
     }
-    process_state->cpu_state.rax = (uint64_t) res;
+    SYS_RETURN((uint64_t) res);
 }
 
 void arch_sys_fork(struct process_state *process_state) {
@@ -62,9 +63,9 @@ void arch_sys_fork(struct process_state *process_state) {
     child->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
     child->arch_process.setup_kernel_stack = true;
 
-    process_state->cpu_state.rax = child->pid;
-
     sched_add_process(child);
+
+    SYS_RETURN(child->pid);
 }
 
 void arch_sys_open(struct process_state *process_state) {
@@ -84,8 +85,7 @@ void arch_sys_open(struct process_state *process_state) {
     for (size_t i = 3; i < FOPEN_MAX; i++) {
         if (process->files[i] == NULL) {
             process->files[i] = file;
-            process_state->cpu_state.rax = i;
-            return;
+            SYS_RETURN(i);
         }
     }
 
@@ -105,11 +105,22 @@ void arch_sys_read(struct process_state *process_state)  {
     fs_read(file, buf, count);
 
     /* Should be checking for errors and bytes read in fs_read and returning them here */
-    process_state->cpu_state.rax = count;
+    SYS_RETURN(count);
 }
 
 void arch_sys_write(struct process_state *process_state) {
-    (void) process_state;
+    int fd = (int) process_state->cpu_state.rsi;
+    void *buf = (void*) process_state->cpu_state.rdx;
+    size_t count = (size_t) process_state->cpu_state.rcx;
+
+    /* STDIO */
+    if (fd == 1) {
+        if (!screen_print(buf, count)) {
+            SYS_RETURN(-EIO);
+        } else {
+            SYS_RETURN((ssize_t) count);
+        }
+    }
 
     assert(false);
 }
@@ -122,5 +133,5 @@ void arch_sys_close(struct process_state *process_state) {
     process->files[fd] = NULL;
 
     /* Should be returning error codes here */
-    process_state->cpu_state.rax = 0;
+    SYS_RETURN(0);
 }
