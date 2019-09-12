@@ -8,59 +8,21 @@
 #include <stdlib.h>
 
 #ifdef __is_libk
-#include <kernel/util/spinlock.h>
+#define stdio NULL
 
-static spinlock_t buffer_lock = SPINLOCK_INITIALIZER;
-
-static char buffer[0x1000];
-static size_t buffer_size = 0x1000;
-static size_t buffer_index = 0;
-
-#else
-
-static char *buffer = NULL;
-static size_t buffer_size = 0;
-static size_t buffer_index = 0;
-
-#endif /* __is_libk */
-
-bool write_buffer(const char *s, size_t len) {
-	if (buffer_index + len >= buffer_size) {
-#ifdef __is_libk
-		return false;
-#else
-		if (buffer_size == 0) {
-			buffer = calloc(100, 1);
-			buffer_size = 100;
-		} else {
-			buffer_size *= 2;
-			buffer = realloc(buffer, buffer_size);
-		}
-#endif /* __is_libk */
-	}
-
-	for (size_t i = 0; i < len; i++) {
-		buffer[buffer_index++] = s[i];
-	}
-
-	return true;
-}
-
-#ifdef __is_libk
 bool kprint(const char*, size_t);
-bool print(size_t len) {
-	buffer_index = 0;
-    
-	return kprint(buffer, len);
+bool print(FILE *stream, const char *s, size_t len) {
+	(void) stream;
+	return kprint(s, len);
 }
+
 #else
 #include <unistd.h>
 
-bool print(size_t n) {
-	buffer_index = 0;
-
-	return sys_print(buffer, n);
+bool print(FILE *stream, const char *s, size_t n) {
+	return n == fwrite(s, 1, n, stream);
 }
+
 #endif /* __is_libk */
 
 static int parseInt(const char* num, size_t length) {
@@ -75,7 +37,7 @@ static int parseInt(const char* num, size_t length) {
 	return n;
 }
 
-int printf(const char* restrict format, ...) {
+int printf(const char *__restrict format, ...) {
 	va_list parameters;
 	va_start(parameters, format);
 
@@ -85,11 +47,21 @@ int printf(const char* restrict format, ...) {
 	return written;
 }
 
-int vprintf(const char* restrict format, va_list parameters) {
-#ifdef __is_libk
-	spin_lock(&buffer_lock);
-#endif /* __is_libk */
+int vprintf(const char *__restrict format, va_list parameters) {
+	return vfprintf(stdio, format, parameters);
+}
 
+int fprintf(FILE *stream, const char *__restrict format, ...) {
+	va_list parameters;
+	va_start(parameters, format);
+
+	int written = vfprintf(stream, format, parameters);
+
+	va_end(parameters);
+	return written;
+}
+
+int vfprintf(FILE *stream, const char *__restrict format, va_list parameters) {
 	int written = 0;
 
 	while (*format != '\0') {
@@ -105,7 +77,7 @@ int vprintf(const char* restrict format, va_list parameters) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
 			}
-			if (!write_buffer(format, amount))
+			if (!print(stream, format, amount))
 				return -1;
 			format += amount;
 			written += amount;
@@ -202,15 +174,15 @@ int vprintf(const char* restrict format, va_list parameters) {
 			char space = ' ';
 			if (!(flags & 0b00010000)) {
 				for (int i = 0; i < width - 1; i++) {
-					if (!write_buffer(&space, 1))
+					if (!print(stream, &space, 1))
 						return -1;
 				}
 			}
-			if (!write_buffer(&c, 1))
+			if (!print(stream, &c, 1))
 				return -1;
 			if (flags & 0b00010000) {
 				for (int i = 1; i < width; i++) {
-					if (!write_buffer(&space, 1))
+					if (!print(stream, &space, 1))
 						return -1;
 				}
 			}
@@ -230,21 +202,21 @@ int vprintf(const char* restrict format, va_list parameters) {
 			if (len < (unsigned int) width) {
 				char space = ' ';
 				if (flags & 0b00010000) {
-					if (!write_buffer(str, len))
+					if (!print(stream, str, len))
 						return -1;
 					while (len++ < (unsigned int) width) {
-						if (!write_buffer(&space, 1))
+						if (!print(stream, &space, 1))
 							return -1;
 					}
 				} else {
 					for (size_t i = 0; i < width - len; i++)
-						if (!write_buffer(&space, 1))
+						if (!print(stream, &space, 1))
 							return -1;
-					if (!write_buffer(str, len))
+					if (!print(stream, str, len))
 						return -1;
 				}
 			} else {
-				if (!write_buffer(str, len))
+				if (!print(stream, str, len))
 					return -1;
 			}
 			written += width;
@@ -281,43 +253,43 @@ int vprintf(const char* restrict format, va_list parameters) {
 			char filler = ' ';
 			if (!((flags & 0b00010000) | (flags & 0b00000001))) {
 				for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
 			if (flags & 0b00001000) {
 				char plus = '+';
-				if (!write_buffer(&plus, 1))
+				if (!print(stream, &plus, 1))
 					return -1;
 			} else if (flags & 0b00000100) {
 				char space = ' ';
-				if (!write_buffer(&space, 1))
+				if (!print(stream, &space, 1))
 					return -1;
 			}
 			if (flags & 0b00000010) {
 				char zero = '0';
-				if (!write_buffer(&zero, 1))
+				if (!print(stream, &zero, 1))
 					return -1;
-				if (!write_buffer(format, 1))
+				if (!print(stream, format, 1))
 					return -1;
 			}
 			if (!(flags & 0b00010000) && (flags & 0b00000001)) {
 				filler = '0';
 				for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
 			while (len < len_prec) {
 				char zero = '0';
-				if (!write_buffer(&zero, 1))
+				if (!print(stream, &zero, 1))
 					return -1;
 				len++;
 			}
 			if (num == 0) {
 				if (precision != 0) {
 					char zero = '0';
-					if (!write_buffer(&zero, 1))
+					if (!print(stream, &zero, 1))
 						return -1;
 				}
 			} else {
@@ -326,16 +298,16 @@ int vprintf(const char* restrict format, va_list parameters) {
 					unsigned int n = num / div;
 					div /= 8;
 					digit = n % 8 + '0';
-					if (!write_buffer(&digit, 1))
+					if (!print(stream, &digit, 1))
 						return -1;
 				}
 				digit = num % 8 + '0';
-				if (!write_buffer(&digit, 1))
+				if (!print(stream, &digit, 1))
 					return -1;
 			}
 			if (flags & 0b00010000) {
 				for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
@@ -373,43 +345,43 @@ int vprintf(const char* restrict format, va_list parameters) {
                 char filler = ' ';
                 if (!((flags & 0b00010000) | (flags & 0b00000001))) {
                     for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!write_buffer(&filler, 1))
+                        if (!print(stream, &filler, 1))
                             return -1;
                     }
                 }
                 if (flags & 0b00001000) {
                     char plus = '+';
-                    if (!write_buffer(&plus, 1))
+                    if (!print(stream, &plus, 1))
                         return -1;
                 } else if (flags & 0b00000100) {
                     char space = ' ';
-                    if (!write_buffer(&space, 1))
+                    if (!print(stream, &space, 1))
                         return -1;
                 }
                 if (flags & 0b00000010) {
                     char zero = '0';
-                    if (!write_buffer(&zero, 1))
+                    if (!print(stream, &zero, 1))
                         return -1;
-                    if (!write_buffer(format, 1))
+                    if (!print(stream, format, 1))
                         return -1;
                 }
                 if (!(flags & 0b00010000) && (flags & 0b00000001)) {
                     filler = '0';
                     for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!write_buffer(&filler, 1))
+                        if (!print(stream, &filler, 1))
                             return -1;
                     }
                 }
                 while (len < len_prec) {
                     char zero = '0';
-                    if (!write_buffer(&zero, 1))
+                    if (!print(stream, &zero, 1))
                         return -1;
                     len++;
                 }
                 if (num == 0) {
                     if (precision != 0) {
                         char zero = '0';
-                        if (!write_buffer(&zero, 1))
+                        if (!print(stream, &zero, 1))
                             return -1;
                     }
                 } else {
@@ -423,7 +395,7 @@ int vprintf(const char* restrict format, va_list parameters) {
                         } else {
                             digit += *format - ('x' - 'a') - 10;
                         }
-                        if (!write_buffer(&digit, 1))
+                        if (!print(stream, &digit, 1))
                             return -1;
                     }
                     digit = num % 16;
@@ -432,12 +404,12 @@ int vprintf(const char* restrict format, va_list parameters) {
                     } else {
                         digit += *format - ('x' - 'a') - 10;
                     }
-                    if (!write_buffer(&digit, 1))
+                    if (!print(stream, &digit, 1))
                         return -1;
                 }
                 if (flags & 0b00010000) {
                     for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!write_buffer(&filler, 1))
+                        if (!print(stream, &filler, 1))
                             return -1;
                     }
                 }
@@ -475,43 +447,43 @@ int vprintf(const char* restrict format, va_list parameters) {
                 char filler = ' ';
                 if (!((flags & 0b00010000) | (flags & 0b00000001))) {
                     for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!write_buffer(&filler, 1))
+                        if (!print(stream, &filler, 1))
                             return -1;
                     }
                 }
                 if (flags & 0b00001000) {
                     char plus = '+';
-                    if (!write_buffer(&plus, 1))
+                    if (!print(stream, &plus, 1))
                         return -1;
                 } else if (flags & 0b00000100) {
                     char space = ' ';
-                    if (!write_buffer(&space, 1))
+                    if (!print(stream, &space, 1))
                         return -1;
                 }
                 if (flags & 0b00000010) {
                     char zero = '0';
-                    if (!write_buffer(&zero, 1))
+                    if (!print(stream, &zero, 1))
                         return -1;
-                    if (!write_buffer(format, 1))
+                    if (!print(stream, format, 1))
                         return -1;
                 }
                 if (!(flags & 0b00010000) && (flags & 0b00000001)) {
                     filler = '0';
                     for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!write_buffer(&filler, 1))
+                        if (!print(stream, &filler, 1))
                             return -1;
                     }
                 }
                 while (len < len_prec) {
                     char zero = '0';
-                    if (!write_buffer(&zero, 1))
+                    if (!print(stream, &zero, 1))
                         return -1;
                     len++;
                 }
                 if (num == 0) {
                     if (precision != 0) {
                         char zero = '0';
-                        if (!write_buffer(&zero, 1))
+                        if (!print(stream, &zero, 1))
                             return -1;
                     }
                 } else {
@@ -525,7 +497,7 @@ int vprintf(const char* restrict format, va_list parameters) {
                         } else {
                             digit += *format - ('x' - 'a') - 10;
                         }
-                        if (!write_buffer(&digit, 1))
+                        if (!print(stream, &digit, 1))
                             return -1;
                     }
                     digit = num % 16;
@@ -534,12 +506,12 @@ int vprintf(const char* restrict format, va_list parameters) {
                     } else {
                         digit += *format - ('x' - 'a') - 10;
                     }
-                    if (!write_buffer(&digit, 1))
+                    if (!print(stream, &digit, 1))
                         return -1;
                 }
                 if (flags & 0b00010000) {
                     for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!write_buffer(&filler, 1))
+                        if (!print(stream, &filler, 1))
                             return -1;
                     }
                 }
@@ -579,43 +551,43 @@ int vprintf(const char* restrict format, va_list parameters) {
 			char filler = ' ';
 			if (!((flags & 0b00010000) | (flags & 0b00000001))) {
 				for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
 			if (flags & 0b00001000) {
 				char plus = '+';
-				if (!write_buffer(&plus, 1))
+				if (!print(stream, &plus, 1))
 					return -1;
 			} else if (flags & 0b00000100) {
 				char space = ' ';
-				if (!write_buffer(&space, 1))
+				if (!print(stream, &space, 1))
 					return -1;
 			}
 			if (flags & 0b00000010) {
 				char zero = '0';
-				if (!write_buffer(&zero, 1))
+				if (!print(stream, &zero, 1))
 					return -1;
-				if (!write_buffer(format, 1))
+				if (!print(stream, format, 1))
 					return -1;
 			}
 			if (!(flags & 0b00010000) && (flags & 0b00000001)) {
 				filler = '0';
 				for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
 			while (len < len_prec) {
 				char zero = '0';
-				if (!write_buffer(&zero, 1))
+				if (!print(stream, &zero, 1))
 					return -1;
 				len++;
 			}
 			if (num == 0) {
 				if (precision != 0) {
 					char zero = '0';
-					if (!write_buffer(&zero, 1))
+					if (!print(stream, &zero, 1))
 						return -1;
 				}
 			} else {
@@ -624,16 +596,16 @@ int vprintf(const char* restrict format, va_list parameters) {
 					unsigned int n = num / div;
 					div /= 10;
 					digit = n % 10 + '0';
-					if (!write_buffer(&digit, 1))
+					if (!print(stream, &digit, 1))
 						return -1;
 				}
 				digit = num % 10 + '0';
-				if (!write_buffer(&digit, 1))
+				if (!print(stream, &digit, 1))
 					return -1;
 			}
 			if (flags & 0b00010000) {
 				for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
@@ -660,36 +632,36 @@ int vprintf(const char* restrict format, va_list parameters) {
 			char filler = ' ';
 			if (!((flags & 0b00010000) | (flags & 0b00000001))) {
 				for (unsigned int i = 0; i < (unsigned int) width - len; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
 			if (num >= 0) {
 				if (flags & 0b00001000) {
 					char plus = '+';
-					if (!write_buffer(&plus, 1))
+					if (!print(stream, &plus, 1))
 						return -1;
 				} else if (flags & 0b00000100) {
 					char space = ' ';
-					if (!write_buffer(&space, 1))
+					if (!print(stream, &space, 1))
 						return -1;
 				}
 			} else {
 				char minus = '-';
-				if (!write_buffer(&minus, 1))
+				if (!print(stream, &minus, 1))
 					return -1;
 			}
 			unsigned int to_write_buffer = (unsigned int) num;
 			if (!(flags & 0b00010000) && (flags & 0b00000001)) {
 				filler = '0';
 				for (unsigned int i = 0; i < (unsigned int) width - len; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
 			if (to_write_buffer == 0) {
 				char zero = '0';
-				if (!write_buffer(&zero, 1))
+				if (!print(stream, &zero, 1))
 					return -1;
 			} else {
 				char digit;
@@ -697,16 +669,16 @@ int vprintf(const char* restrict format, va_list parameters) {
 					int n = to_write_buffer / div;
 					div /= 10;
 					digit = n % 10 + '0';
-					if (!write_buffer(&digit, 1))
+					if (!print(stream, &digit, 1))
 						return -1;
 				}
 				digit = to_write_buffer % 10 + '0';
-				if (!write_buffer(&digit, 1))
+				if (!print(stream, &digit, 1))
 					return -1;
 			}
 			if (flags & 0b00010000) {
 				for (unsigned int i = 0; i < (unsigned int) width - len; i++) {
-					if (!write_buffer(&filler, 1))
+					if (!print(stream, &filler, 1))
 						return -1;
 				}
 			}
@@ -718,17 +690,12 @@ int vprintf(const char* restrict format, va_list parameters) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
 			}
-			if (!write_buffer(format, len))
+			if (!print(stream, format, len))
 				return -1;
 			written += len;
 			format += len;
 		}
 	}
 
-	print(written);
-
-#ifdef __is_libk
-	spin_unlock(&buffer_lock);
-#endif /* __is_libk */
 	return written;
 }

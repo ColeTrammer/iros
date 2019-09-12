@@ -5,6 +5,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+extern void __assert_failed(const char *exp, const char *file, int line, const char *func);
+
 #ifdef NDEBUG
 #define assert(ignore) ((void) 0)
 #else
@@ -12,8 +14,7 @@ extern "C" {
 #       include <kernel/hal/output.h>
 #       define assert(ex) (void)((ex) || (debug_log_assertion(#ex, __FILE__, __LINE__, __func__), 0))
 #   else
-        /* TODO: Implement */
-#       define assert(ignore) ((void) 0)
+#       define assert(ex) (void)((ex) || (__assert_failed(#ex, __FILE__, __LINE__, __func__), 0))
 #   endif /* __is_libk */
 #endif /* NDEBUG */
 

@@ -17,17 +17,13 @@ void *sbrk(intptr_t increment) {
     return ret;
 }
 
-bool sys_print(void *buffer, size_t n) {
-    bool ret;
-	asm volatile( "movq $0, %%rdi\n"\
-	              "movq %1, %%rsi\n"\
-	              "movq %2, %%rdx\n"\
-	              "int $0x80\n"\
-	              "movb %%al, %0" : "=r"(ret) : "r"(buffer), "r"(n) : "rdi", "rsi", "rdx", "al" );
-	if (!ret) {
-        errno = EIO;
-    }
-    return ret;
+__attribute__((__noreturn__))
+void _exit(int status) {
+    asm( "movq $1, %%rdi\n"\
+         "movq %0, %%rsi\n"\
+         "int $0x80" : : "m"(status) : "rdi", "rsi" );
+    
+    __builtin_unreachable();
 }
 
 int open(const char *pathname, int flags, mode_t mode) {

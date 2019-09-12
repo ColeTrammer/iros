@@ -10,9 +10,8 @@
 int main() {
 
     /* Test Writing To stdio */
-    const char *test_str = "Testing STDIO\n";
-    write(1, test_str, strlen(test_str));
-    write(1, test_str, strlen(test_str));
+    const char *test_str = "Testing STDIO";
+    puts(test_str);
 
     /* Test Reading Files Using stdio.h */
 

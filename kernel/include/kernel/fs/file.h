@@ -3,7 +3,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include <kernel/fs/inode.h>
 
@@ -20,7 +19,7 @@ struct file {
     
     off_t length;
     uintptr_t start;
-    fpos_t position;
+    uintptr_t position;
 
     struct file_operations *f_op;
 

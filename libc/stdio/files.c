@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -75,17 +76,72 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 }
 
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    ssize_t ret = write(stream->fd, ptr, nmemb * size);
+    char *data =  (char*) ptr;
+    
+    if (stream->buf_type == _IONBF) {
+        ssize_t ret = write(stream->fd, ptr, nmemb * size);
 
-    if (ret < 0) {
-        return 0;
+        if (ret < 0) {
+            return 0;
+        }
+
+        return (size_t) ret;
+    } else if (stream->buf_type == _IOLBF) {
+        size_t len = size * nmemb;
+        fpos_t start = stream->pos;
+        size_t i = 0;
+
+        while (i < len) {
+            while (i < len && stream->pos < stream->length && data[stream->pos - start] != '\n' && data[stream->pos - start] != '\0') {
+                stream->buffer[stream->pos++] = data[i++];
+            }
+
+            if (i >= len) {
+                return len;
+            }
+
+            stream->buffer[stream->pos++] = data[i++];
+            ssize_t check = write(stream->fd, stream->buffer, stream->pos);
+
+            if (check < 0) {
+                return i - stream->pos + start;
+            }
+
+            stream->pos = 0;
+            start = 0;
+        }
+
+        return i;
+    } else {
+        size_t len = size * nmemb;
+        fpos_t start = stream->pos;
+        size_t i = 0;
+
+        while (i < len) {
+            while (i < len && stream->pos < stream->length) {
+                stream->buffer[stream->pos++] = data[i++];
+            }
+
+            if (i >= len) {
+                return len;
+            }
+
+            ssize_t check = write(stream->fd, stream->buffer, stream->pos);
+
+            if (check < 0) {
+                return i - stream->pos + start;
+            }
+
+            stream->pos = 0;
+            start = 0;
+        }
+
+        return i;
     }
-
-    return (size_t) ret;
 }
 
 int fclose(FILE *stream) {
-    /* Should flush buffer once streams have a buffer */
+    fflush(stream);
 
     int ret = close(stream->fd);
     if (ret < 0) {
@@ -97,6 +153,74 @@ int fclose(FILE *stream) {
     }
     free(stream);
     return 0;
+}
+
+int fflush(FILE *stream) {
+    if (stream == NULL) {
+        /* Should Flush All Open Streams */
+        assert(false);
+    }
+
+    if (stream->pos != 0 && stream->buf_type != _IONBF) {
+        ssize_t check = write(stream->fd, stream->buffer, stream->pos);
+  
+        if (check < 0) {
+            return EOF;
+        }
+
+        return 0;
+    }
+
+    return 0;
+}
+
+int fgetpos(FILE *stream, fpos_t *pos) {
+    /* I doubt this is the intended behavior */
+    *pos = stream->pos;
+    return 0;
+}
+
+int fseek(FILE *stream, long offset, int whence) {
+    (void) stream;
+    (void) offset;
+    (void) whence;
+
+    assert(false);
+    return -1;
+}
+
+int fsetpos(FILE *stream, const fpos_t *pos) {
+    /* I doubt this is the intended behavior */
+    stream->pos = *pos;
+    return 0;
+}
+
+long ftell(FILE *stream) {
+    (void) stream;
+
+    assert(false);
+    return -1;
+}
+
+void rewind(FILE *stream) {
+    fseek(stream, 0L, SEEK_SET);
+}
+
+void clearerr(FILE *stream) {
+    stream->error = 0;
+    stream->eof = 0;
+}
+
+int feof(FILE *stream) {
+    return stream->eof;
+}
+
+int ferror(FILE *stream) {
+    return stream->error;
+}
+
+int fileno(FILE *stream) {
+    return stream->fd;
 }
 
 void init_files() {
