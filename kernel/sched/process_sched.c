@@ -41,6 +41,46 @@ void sched_add_process(struct process *process) {
     spin_unlock(&process_list_lock);
 }
 
+void sched_remove_process(struct process *process) {
+    spin_lock(&process_list_lock);
+
+    if (list_start == NULL) {        
+        spin_unlock(&process_list_lock);
+        return;
+    }
+
+    struct process *p = list_start;
+    do {
+        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, (uintptr_t) p, (uintptr_t) p->prev, (uintptr_t) p->next);
+        p = p->next;
+    } while (p != list_start);
+
+    struct process *current = list_start;
+
+    while (current->next != process) {
+        current = current->next;
+    }
+
+    if (process == list_end) {
+        list_end = process->prev;
+    }
+
+    if (process == list_start) {
+        list_start = process->next;
+    }
+
+    current->next = current->next->next;
+    current->next->prev = current;
+
+    p = list_start;
+    do {
+        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, (uintptr_t) p, (uintptr_t) p->prev, (uintptr_t) p->next);
+        p = p->next;
+    } while (p != list_start);
+
+    spin_unlock(&process_list_lock);
+}
+
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct process *current = get_current_process();

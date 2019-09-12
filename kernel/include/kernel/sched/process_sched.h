@@ -10,6 +10,7 @@ void init_process_sched();
 void arch_init_process_sched();
 
 void sched_add_process(struct process *process);
+void sched_remove_process(struct process *process);
 void sched_run_next();
 
 #endif /* _KERNEL_PROCESS_CSHED_H */

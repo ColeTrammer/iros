@@ -18,6 +18,8 @@ static struct process initial_kernel_process;
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
     char **argv_start = (char**) (start - sizeof(char**));
 
+    debug_log("Mapping Program Args: [ %#.16lX ]\n", (uintptr_t) start);
+
     size_t argc = 0;
     while (argv[argc++] != NULL);
 

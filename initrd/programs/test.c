@@ -10,16 +10,29 @@
 
 int main(int argc, char **argv, char **envp) {
 
-    /* Test args */
-    
-    printf("Argc: %d\n", argc);
-    for (size_t i = 0; argv[i] != NULL; i++) {
-        printf("Argv[%ld]: %s\n", i, argv[i]);
+    (void) argc;
+    (void) envp;
+
+    /* Test execve */
+
+    pid_t f = fork();
+    if (f == 0) {
+        execvp("/test_exec.o", argv);
+
+        /* Should Not Execute */
+        return 1;
     }
 
-    for (size_t i = 0; envp[i] != NULL; i++) {
-        printf("Envp[%ld]: %s\n", i, envp[i]);
-    }
+    /* Test args */
+    
+    // printf("Argc: %d\n", argc);
+    // for (size_t i = 0; argv[i] != NULL; i++) {
+    //     printf("Argv[%ld]: %s\n", i, argv[i]);
+    // }
+
+    // for (size_t i = 0; envp[i] != NULL; i++) {
+    //     printf("Envp[%ld]: %s\n", i, envp[i]);
+    // }
 
     /* Test Writing To stdio */
 
@@ -44,17 +57,17 @@ int main(int argc, char **argv, char **envp) {
 
     /* Test Fork Sys Call */
 
-    // pid_t ret = fork();
-    // if (ret == 0) {
-    //     for (int i = 0; i < 1300; i++) {
-    //         printf("%d: Child\n", i);
-    //     }
-    //     return EXIT_SUCCESS;
-    // }
+    pid_t ret = fork();
+    if (ret == 0) {
+        for (int i = 0; i <= 100; i++) {
+            printf("%d: Child\n", i);
+        }
+        return 0;
+    }
 
-    // for (int i = 0; i <= 1100; i++) {
-    //     printf("%d: Parent\n", i);
-    // }
+    for (int i = 0; i <= 145; i++) {
+        printf("%d: Parent\n", i);
+    }
 
     return 0;
 }
