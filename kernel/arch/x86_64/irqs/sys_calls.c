@@ -98,8 +98,8 @@ void arch_sys_open(struct process_state *process_state) {
     assert(false);
 }
 
-static int test = 0;
-static char *test_string = "/test.o /a.txt\n";
+static int kbd_index = 0;
+extern volatile uint8_t *kbd_buffer;
 
 void arch_sys_read(struct process_state *process_state)  {
     int fd = (int) process_state->cpu_state.rsi;
@@ -108,7 +108,12 @@ void arch_sys_read(struct process_state *process_state)  {
 
     /* Trying To Read stdin */
     if (fd == 0) {
-        *buf = test_string[test++];
+        for (;;) {
+            if (kbd_buffer[kbd_index] != '\0') {
+                *buf = kbd_buffer[kbd_index++];
+                break;
+            }
+        }
         screen_print(buf, 1);
         SYS_RETURN(1);
     }

@@ -61,7 +61,7 @@ int run_program(char **args) {
         } while (!WIFEXITED(status));
     }
 
-    return 0;
+    return 1;
 }
 
 int main() {

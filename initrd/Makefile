@@ -25,6 +25,7 @@ FILES:=$(shell find files)
 
 # Lists all programs included in initrd
 PROGRAMS=\
+$(BUILDDIR)/initrd/programs/cat.o \
 $(BUILDDIR)/initrd/programs/shell.o \
 $(BUILDDIR)/initrd/programs/test.o \
 $(BUILDDIR)/initrd/programs/test_exec.o

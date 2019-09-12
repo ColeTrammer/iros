@@ -165,6 +165,7 @@ int fflush(FILE *stream) {
 
     if (stream->pos != 0 && stream->buf_type != _IONBF) {
         ssize_t check = write(stream->fd, stream->buffer, stream->pos);
+        stream->pos = 0;
   
         if (check < 0) {
             return EOF;

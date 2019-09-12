@@ -3,11 +3,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
 #include <kernel/hal/output.h>
 #include <kernel/arch/x86_64/asm_utils.h>
+
+volatile uint8_t *kbd_buffer;
+
+static size_t kbd_index = 0;
+
+static uint8_t char_map[] = {
+    '\0',
+    '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    '-', '=', '\0', '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u',
+    'i', 'o', 'p', '[', ']', '\n', '\0', 'a', 's', 'd', 'f',
+    'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z',
+    'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '*',
+    '\0', ' ', '\0'
+};
 
 struct keyboard_task {
     uint8_t command;
@@ -58,6 +73,9 @@ static void handle_keyboard_interrupt() {
             extended_key_code = false;
         } else {
             pressed[scan_code] = true;
+
+            kbd_buffer[kbd_index++] = char_map[scan_code];
+            debug_log("Pressed: [ %d, %c ]\n", kbd_index - 1, char_map[scan_code]);
         }
     } else {
         if (extended_key_code) {
@@ -70,6 +88,8 @@ static void handle_keyboard_interrupt() {
 }
 
 void init_keyboard() {
+    kbd_buffer = calloc(1, 0x1000);
+
     register_irq_line_handler(&handle_keyboard_interrupt, KEYBOARD_IRQ_LINE, true);
 
     add_keyboard_task(create_keyboard_task(KEYBOARD_SET_SCAN_CODE_SET));
