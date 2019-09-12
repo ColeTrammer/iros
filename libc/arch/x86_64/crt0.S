@@ -4,7 +4,7 @@
 _start:
     xorq %rbp, %rbp # Zero RBP
 
-    movq (%rsp), %rdi # ENVP
+    movq (%rsp), %rdx # ENVP
     movq 8(%rsp), %rsi # ARGV
     movq 16(%rsp), %rdi # ARGC
 

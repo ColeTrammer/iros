@@ -15,6 +15,8 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 
+static spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
+
 static uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
@@ -178,6 +180,8 @@ uintptr_t get_current_paging_structure() {
 }
 
 uintptr_t clone_process_paging_structure() {
+    spin_lock(&temp_page_lock);
+
     map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
     uint64_t *pml4 = TEMP_PAGE;
 
@@ -243,6 +247,8 @@ uintptr_t clone_process_paging_structure() {
         }
     }
 
+    spin_unlock(&temp_page_lock);
+
     get_current_process()->arch_process.cr3 = old_cr3;
     load_cr3(old_cr3);
 
@@ -250,6 +256,8 @@ uintptr_t clone_process_paging_structure() {
 }
 
 uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
+    spin_lock(&temp_page_lock);
+
     map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
     uint64_t *pml4 = TEMP_PAGE;
 
@@ -315,12 +323,26 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
         load_cr3(old_cr3);
     }
 
+    spin_unlock(&temp_page_lock);
+
     return pml4_addr;
 }
 
 void load_paging_structure(uintptr_t phys_addr) {
     get_current_process()->arch_process.cr3 = phys_addr;
     load_cr3(phys_addr);
+}
+
+void soft_remove_paging_structure(struct vm_region *list) {
+    struct vm_region *region = list;
+    while (region != NULL) {
+        if (!(region->flags & VM_GLOBAL) && !(region->type == VM_KERNEL_STACK) && !(region->type == VM_PROCESS_STACK)) {
+            for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
+                unmap_page(page);
+            }
+        }
+        region = region->next;
+    }
 }
 
 /* Must be called from unpremptable context */

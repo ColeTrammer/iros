@@ -70,3 +70,4 @@ sys_call_table:
     .quad arch_sys_read
     .quad arch_sys_write
     .quad arch_sys_close
+    .quad arch_sys_execve

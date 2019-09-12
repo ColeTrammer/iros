@@ -75,3 +75,14 @@ pid_t fork() {
                   "mov %%eax, %0" : "=r"(ret) : : "rdi", "eax" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+int execve(const char *file, char *const argv[], char *const envp[]) {
+    int ret;
+    asm volatile( "movq $8, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(file), "r"(argv), "r"(envp) : "rdi", "rsi", "rdx", "rcx", "eax" );
+    __SYSCALL_TO_ERRNO(ret);
+}

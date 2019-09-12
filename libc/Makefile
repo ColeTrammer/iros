@@ -67,6 +67,7 @@ $(BUILDDIR)/libc/assert/assert.o \
 $(BUILDDIR)/libc/errno/errno.o \
 $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \
+$(BUILDDIR)/libc/unistd/exec.o \
 $(BUILDDIR)/libc/init.o
 
 # Lists all objects
