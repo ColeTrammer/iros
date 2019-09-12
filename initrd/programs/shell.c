@@ -46,6 +46,11 @@ char **split_line(char *line) {
 }
 
 int run_program(char **args) {
+    if (strcmp(args[0], "exit") == 0) {
+        /* Exit The Shell */
+        return 0;
+    }
+
     pid_t pid = fork();
     if (pid == 0) {
         if (execvp(args[0], args) == -1) {
@@ -70,6 +75,12 @@ int main() {
         fflush(stdio);
 
         char *line = read_line();
+        
+        /* Check If The Line Was Empty */
+        if (line == NULL || line[0] == '\n') {
+            continue;
+        }
+
         char **args = split_line(line);
         int status = run_program(args);
 
