@@ -98,10 +98,20 @@ void arch_sys_open(struct process_state *process_state) {
     assert(false);
 }
 
+static int test = 0;
+static char *test_string = "/test.o /a.txt\n";
+
 void arch_sys_read(struct process_state *process_state)  {
     int fd = (int) process_state->cpu_state.rsi;
-    void *buf = (void*) process_state->cpu_state.rdx;
+    char *buf = (void*) process_state->cpu_state.rdx;
     size_t count = (size_t) process_state->cpu_state.rcx;
+
+    /* Trying To Read stdin */
+    if (fd == 0) {
+        *buf = test_string[test++];
+        screen_print(buf, 1);
+        SYS_RETURN(1);
+    }
 
     struct process *process = get_current_process();
     struct file *file = process->files[fd];

@@ -176,6 +176,20 @@ int fflush(FILE *stream) {
     return 0;
 }
 
+int fgetc(FILE *stream) {
+    unsigned char c;
+    ssize_t ret = read(stream->fd, &c, 1);
+    if (ret <= 0) {
+        return EOF;
+    }
+
+    return c;
+}
+
+int getchar() {
+    return fgetc(stdin);
+}
+
 int fgetpos(FILE *stream, fpos_t *pos) {
     /* I doubt this is the intended behavior */
     *pos = stream->pos;

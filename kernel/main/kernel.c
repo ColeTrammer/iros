@@ -24,9 +24,9 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_vfs();
     init_process_sched();
 
-    // Test Programs
-    struct process *test = load_process("/test.o");
-    sched_add_process(test);
+    // Start Shell
+    struct process *shell = load_process("/shell.o");
+    sched_add_process(shell);
 
     sched_run_next();
 
