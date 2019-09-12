@@ -6,12 +6,25 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdint.h>
 
-int main() {
+int main(int argc, char **argv, char **envp) {
+
+    /* Test args */
+    
+    printf("Argc: %d\n", argc);
+    for (size_t i = 0; argv[i] != NULL; i++) {
+        printf("Argv[%ld]: %s\n", i, argv[i]);
+    }
+
+    for (size_t i = 0; envp[i] != NULL; i++) {
+        printf("Envp[%ld]: %s\n", i, envp[i]);
+    }
 
     /* Test Writing To stdio */
-    const char *test_str = "Testing STDIO";
-    puts(test_str);
+
+    // const char *test_str = "Testing STDIO";
+    // puts(test_str);
 
     /* Test Reading Files Using stdio.h */
 
@@ -43,5 +56,5 @@ int main() {
     //     printf("%d: Parent\n", i);
     // }
 
-    return EXIT_SUCCESS;
+    return 0;
 }

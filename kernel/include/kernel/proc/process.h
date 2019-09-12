@@ -46,4 +46,6 @@ void arch_free_process(struct process *process);
 
 struct process *get_current_process();
 
+uintptr_t map_program_args(uintptr_t start, char **argv, char **envp);
+
 #endif /* _KERNEL_PROC_PROCESS_H */

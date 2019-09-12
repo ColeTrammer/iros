@@ -22,12 +22,12 @@ char *getenv(const char*);
 
 void abort() __attribute__((__noreturn__));
 
-int atoi(const char*);
+int atoi(const char *s);
 
-void *malloc(size_t);
-void *calloc(size_t, size_t);
-void *realloc(void*, size_t);
-void free(void*);
+void *malloc(size_t size);
+void *calloc(size_t nmemb, size_t size);
+void *realloc(void *ptr, size_t size);
+void free(void *ptr);
 
 #ifdef __cplusplus
 }

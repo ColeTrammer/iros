@@ -15,6 +15,46 @@
 static struct process *current_process;
 static struct process initial_kernel_process;
 
+uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
+    char **argv_start = (char**) (start - sizeof(char**));
+
+    size_t argc = 0;
+    while (argv[argc++] != NULL);
+
+    size_t envc = 0;
+    while (envp[envc++] != NULL);
+
+    size_t count = argc + envc;
+
+    char *args_start = (char*) (argv_start - count);
+
+    ssize_t i;
+    for (i = 0; argv[i] != NULL; i++) {
+        args_start -= strlen(argv[i]) + 1;
+        strcpy(args_start, argv[i]);
+        argv_start[i - argc] = args_start;
+    }
+
+    argv_start[0] = NULL;
+
+    for (i = 0; envp[i] != NULL; i++) {
+        args_start -= strlen(envp[i]) + 1;
+        strcpy(args_start, envp[i]);
+        argv_start[i - count] = args_start;
+    }
+
+    argv_start[-(argc + 1)] = NULL;
+
+    args_start -= sizeof(size_t);
+    *((size_t*) args_start) = argc - 1;
+    args_start -= sizeof(char**);
+    *((char***) args_start) = argv_start - argc;
+    args_start -= sizeof(char**);
+    *((char***) args_start) = argv_start - count;
+
+    return (uintptr_t) args_start;
+}
+
 void init_kernel_process() {
     current_process = &initial_kernel_process;
 

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/types.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/kernel_vm.h>
@@ -11,6 +12,14 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/output.h>
+
+static char *test_argv[4] = {
+    "ARGV 01", "ARGV 02", "ARGV 03", NULL
+};
+
+static char *test_envp[4] = {
+    "ENVP 01", "ENVP 02", "ENVP 03", NULL
+};
 
 static void kernel_idle() {
     while (1);
@@ -33,7 +42,7 @@ void arch_load_process(struct process *process, uintptr_t entry) {
     process->arch_process.process_state.stack_state.rip = entry;
     process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
     process->arch_process.process_state.stack_state.rflags = get_rflags() | (1 << 9);
-    process->arch_process.process_state.stack_state.rsp = get_vm_region(process->process_memory, VM_PROCESS_STACK)->end;
+    process->arch_process.process_state.stack_state.rsp = map_program_args(get_vm_region(process->process_memory, VM_PROCESS_STACK)->end, test_argv, test_envp);
     process->arch_process.process_state.stack_state.ss = USER_DATA_SELECTOR;
 
     struct vm_region *kernel_proc_stack = calloc(1, sizeof(struct vm_region));
