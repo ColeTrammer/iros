@@ -33,6 +33,8 @@ char *strtok(char *__restrict str, const char *__restrict delim);
 void *memset(void *s, int c, size_t n);
 size_t strlen(const char *s);
 
+char *strerror(int errnum);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

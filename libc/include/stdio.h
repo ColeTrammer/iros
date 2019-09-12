@@ -102,6 +102,8 @@ int feof(FILE *stream);
 int ferror(FILE *stream);
 int fileno(FILE *stream);
 
+void perror(const char *s);
+
 #ifdef __libc_internal
 
 void init_files();

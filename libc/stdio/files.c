@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <string.h>
+#include <errno.h>
 
 #define STDIO_OWNED 0x800000
 
@@ -221,6 +223,13 @@ int ferror(FILE *stream) {
 
 int fileno(FILE *stream) {
     return stream->fd;
+}
+
+void perror(const char *s) {
+    assert(s != NULL);
+
+    /* Should be strerr when that gets implemented */
+    fprintf(stdio, "%s: %s\n", s, strerror(errno));
 }
 
 void init_files() {
