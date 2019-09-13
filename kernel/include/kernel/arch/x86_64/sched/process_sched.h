@@ -7,7 +7,7 @@
 
 #define SCHED_CALLBACK_ARG_TYPE struct process_state*
 
-void sched_run_next_entry();
 void arch_sched_run_next(struct process_state *process_state);
+void sys_sched_run_next(struct process_state *process_state);
 
 #endif /* _KERNEL_ARCH_X86_64_SCHED_PROCESS_SCHED_H */

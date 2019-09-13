@@ -99,32 +99,8 @@ struct process *load_process(const char *file_name) {
     uintptr_t structure = create_paging_structure(process->process_memory, false);
     load_paging_structure(structure);
 
-    uint64_t start = elf64_get_start(buffer);
-    uint64_t size = elf64_get_size(buffer);
-    uint64_t num_pages = NUM_PAGES(start, start + size);
-    for (uint64_t i = 0; i < num_pages; i++) {
-        map_page(start + i * PAGE_SIZE, VM_USER | VM_WRITE);
-    }
-    memcpy((void*) start, buffer, length);
-
-    uint64_t types[] = { VM_PROCESS_TEXT, VM_PROCESS_ROD, VM_PROCESS_DATA, VM_PROCESS_BSS };
-    for (size_t i = 0; i < 4; i++) {
-        uint64_t type = types[i];
-        struct vm_region *region = elf64_create_vm_region(buffer, type);
-        process->process_memory = add_vm_region(process->process_memory, region);
-        map_vm_region_flags(region);
-
-        if (type == VM_PROCESS_BSS) {
-            memset((void*) region->start, 0, region->end - region->start);
-        }
-    }
-
-    struct vm_region *process_heap = calloc(1, sizeof(struct vm_region));
-    process_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
-    process_heap->type = VM_PROCESS_HEAP;
-    process_heap->start = ((start + size) & ~0xFFF) + PAGE_SIZE;
-    process_heap->end = process_heap->start;
-    process->process_memory = add_vm_region(process->process_memory, process_heap);
+    elf64_load_program(buffer, length, process);
+    elf64_map_heap(buffer, process);
 
     struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
     process_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC;

@@ -6,6 +6,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/elf64.h>
+#include <kernel/proc/process.h>
 
 bool elf64_is_valid(void *buffer) {
     /* Should Probably Also Check Sections And Architecture */
@@ -36,6 +37,37 @@ uint64_t elf64_get_size(void *buffer) {
         }
     }
     return 0;
+}
+
+void elf64_load_program(void *buffer, size_t length, struct process *process) {
+    uint64_t start = elf64_get_start(buffer);
+    uint64_t size = elf64_get_size(buffer);
+    uint64_t num_pages = NUM_PAGES(start, start + size);
+    for (uint64_t i = 0; i < num_pages; i++) {
+        map_page(start + i * PAGE_SIZE, VM_USER | VM_WRITE);
+    }
+    memcpy((void*) start, buffer, length);
+
+    uint64_t types[4] = { VM_PROCESS_TEXT, VM_PROCESS_ROD, VM_PROCESS_DATA, VM_PROCESS_BSS };
+    for (size_t i = 0; i < 4; i++) {
+        uint64_t type = types[i];
+        struct vm_region *region = elf64_create_vm_region(buffer, type);
+        process->process_memory = add_vm_region(process->process_memory, region);
+        map_vm_region_flags(region);
+
+        if (type == VM_PROCESS_BSS) {
+            memset((void*) region->start, 0, region->end - region->start);
+        }
+    }
+}
+
+void elf64_map_heap(void *buffer, struct process *process) {
+    struct vm_region *process_heap = calloc(1, sizeof(struct vm_region));
+    process_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
+    process_heap->type = VM_PROCESS_HEAP;
+    process_heap->start = ((elf64_get_start(buffer) + elf64_get_size(buffer)) & ~0xFFF) + PAGE_SIZE;
+    process_heap->end = process_heap->start;
+    process->process_memory = add_vm_region(process->process_memory, process_heap);
 }
 
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type) {

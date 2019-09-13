@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/process.h>
 
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
@@ -72,6 +74,8 @@ uintptr_t elf64_get_start(void *buffer);
 uintptr_t elf64_get_entry(void *buffer);
 uint64_t elf64_get_size(void *buffer);
 
+void elf64_load_program(void *buffer, size_t length, struct process *process);
+void elf64_map_heap(void *buffer, struct process *process);
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type);
 
 #endif /* _KERNEL_PROC_ELF64_H */

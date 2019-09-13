@@ -35,9 +35,7 @@ void arch_sys_exit(struct process_state *process_state) {
     int exit_code = (int) process_state->cpu_state.rsi;
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 
-    /* Should Instead Switch Stacks And Call sched_run_next */
-    enable_interrupts();
-    while (1);
+    sys_sched_run_next(process_state);
 }
 
 void arch_sys_sbrk(struct process_state *process_state) {
@@ -241,44 +239,19 @@ void arch_sys_execve(struct process_state *process_state) {
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process_memory);
 
-    uint64_t start = elf64_get_start(buffer);
-    uint64_t size = elf64_get_size(buffer);
-    uint64_t num_pages = NUM_PAGES(start, start + size);
-    for (uint64_t i = 0; i < num_pages; i++) {
-        map_page(start + i * PAGE_SIZE, VM_USER | VM_WRITE);
-    }
-    memcpy((void*) start, buffer, length);
-
-    uint64_t types[] = { VM_PROCESS_TEXT, VM_PROCESS_ROD, VM_PROCESS_DATA, VM_PROCESS_BSS };
-    for (size_t i = 0; i < 4; i++) {
-        uint64_t type = types[i];
-        struct vm_region *region = elf64_create_vm_region(buffer, type);
-        process->process_memory = add_vm_region(process->process_memory, region);
-        map_vm_region_flags(region);
-
-        if (type == VM_PROCESS_BSS) {
-            memset((void*) region->start, 0, region->end - region->start);
-        }
-    }
+    elf64_load_program(buffer, length, process);
+    elf64_map_heap(buffer, process);
 
     free(buffer);
 
-    struct vm_region *process_heap = calloc(1, sizeof(struct vm_region));
-    process_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
-    process_heap->type = VM_PROCESS_HEAP;
-    process_heap->start = ((start + size) & ~0xFFF) + PAGE_SIZE;
-    process_heap->end = process_heap->start;
-    process->process_memory = add_vm_region(process->process_memory, process_heap);
-
-    /* Disalbe Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
+    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
     disable_interrupts();
 
     sched_remove_process(current);
     free_process(current, false, false);
     sched_add_process(process);
 
-    enable_interrupts();
-    while (1);
+    sys_sched_run_next(&process->arch_process.process_state);
 }
 
 void arch_sys_waitpid(struct process_state *process_state) {
