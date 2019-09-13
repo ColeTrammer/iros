@@ -19,7 +19,7 @@ void spin_lock(spinlock_t *lock) {
 
 void spin_unlock(spinlock_t *lock) {
     unsigned long interrupts = lock->interrupts;
-    if (interrupts & (1 << 9)) {
+    if (interrupts & INTERRUPS_ENABLED_FLAG) {
         barrier();
         lock->counter = 0;
         enable_interrupts();

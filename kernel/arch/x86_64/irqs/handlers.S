@@ -37,6 +37,7 @@ sys_call_entry:
     push %r14
     push %r15
 
+    # Should Check To See If RAX Is Invalid
     movabs $sys_call_table, %rax
     movq (%rax, %rdi, 8), %rax
     movq %rsp, %rdi

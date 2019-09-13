@@ -26,6 +26,7 @@
     } while (0)
 
 void arch_sys_exit(struct process_state *process_state) {
+    /* Disable Interrups To Prevent Premature Process Removal, Since Sched State Is Set */
     disable_interrupts();
 
     struct process *process = get_current_process();
@@ -34,6 +35,7 @@ void arch_sys_exit(struct process_state *process_state) {
     int exit_code = (int) process_state->cpu_state.rsi;
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 
+    /* Should Instead Switch Stacks And Call sched_run_next */
     enable_interrupts();
     while (1);
 }
@@ -50,6 +52,11 @@ void arch_sys_sbrk(struct process_state *process_state) {
     } else {
         res = add_vm_pages_end(increment, VM_PROCESS_HEAP);
     }
+
+    if (res == NULL) {
+        SYS_RETURN(-ENOMEM);
+    }
+
     SYS_RETURN((uint64_t) res);
 }
 
@@ -190,13 +197,26 @@ void arch_sys_execve(struct process_state *process_state) {
 
     fs_close(program);
 
-    /* Memset stack to zero so that process can use old one safely */
-    struct vm_region *process_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
+    if (!elf64_is_valid(buffer)) {
+        SYS_RETURN(-ENOEXEC);
+    }
+
+    /* Clone vm_regions so that they can be freed later */
+    struct vm_region *__process_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
+    struct vm_region *__kernel_stack = get_vm_region(current->process_memory, VM_KERNEL_STACK);
+
+    struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
+    struct vm_region *kernel_stack = calloc(1, sizeof(struct vm_region));
+
+    memcpy(process_stack, __process_stack, sizeof(struct vm_region));
+    memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
+
+    /* Memset stack to zero so that process can use old one safely. */
     memset((void*) process_stack->start, 0, process_stack->end - process_stack->start);
 
     struct process *process = calloc(1, sizeof(struct process));
     process->pid = current->pid;
-    process->process_memory = get_vm_region(current->process_memory, VM_KERNEL_STACK);
+    process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->kernel_process = false;
     process->sched_state = READY;
@@ -204,13 +224,17 @@ void arch_sys_execve(struct process_state *process_state) {
 
     process->arch_process.cr3 = get_cr3();
     process->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
-    process->arch_process.kernel_stack_info = current->arch_process.kernel_stack_info;
+
+    struct virt_page_info *info = calloc(1, sizeof(struct virt_page_info));
+    memcpy(info, current->arch_process.kernel_stack_info, sizeof(struct virt_page_info));
+
+    process->arch_process.kernel_stack_info = info;
     process->arch_process.setup_kernel_stack = false;
 
     process->arch_process.process_state.cpu_state.rbp = KERNEL_PROC_STACK_START;
     process->arch_process.process_state.stack_state.rip = elf64_get_entry(buffer);
     process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
-    process->arch_process.process_state.stack_state.rflags = get_rflags() | (1 << 9);
+    process->arch_process.process_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
     process->arch_process.process_state.stack_state.rsp = map_program_args(process_stack->end, argv, envp);
     process->arch_process.process_state.stack_state.ss = USER_DATA_SELECTOR;
 
@@ -246,10 +270,11 @@ void arch_sys_execve(struct process_state *process_state) {
     process_heap->end = process_heap->start;
     process->process_memory = add_vm_region(process->process_memory, process_heap);
 
+    /* Disalbe Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
     disable_interrupts();
 
     sched_remove_process(current);
-    // free_process(current);
+    free_process(current, false, false);
     sched_add_process(process);
 
     enable_interrupts();

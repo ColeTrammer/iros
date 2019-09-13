@@ -1,6 +1,9 @@
 .section .text
 .global __run_process
 __run_process:
+    # Simply loads process_state struct from pointer in %rdi,
+    # Making sure to load %rdi last for obvious reasons
+
     movq (%rdi), %r15
     movq 8(%rdi), %r14
     movq 16(%rdi), %r13

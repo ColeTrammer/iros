@@ -2,6 +2,7 @@
 #define _KERNEL_PROC_ELF64_H 1
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <kernel/mem/vm_region.h>
 
@@ -50,6 +51,8 @@ typedef struct
 #define ELF64_ALLOC (1 << 1)
 #define ELF64_EXEC (1 << 2)
 
+#define ELF64_MAGIC ("\x7F\x45\x4c\x46\x02\x01\x01")
+
 typedef struct
 {
     Elf64_Word sh_name;        /* Section name */
@@ -64,6 +67,7 @@ typedef struct
     Elf64_Xword sh_entsize;    /* Size of entries, if section has table */
 } __attribute__((packed)) Elf64_Shdr;
 
+bool elf64_is_valid(void *buffer);
 uintptr_t elf64_get_start(void *buffer);
 uintptr_t elf64_get_entry(void *buffer);
 uint64_t elf64_get_size(void *buffer);

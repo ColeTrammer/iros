@@ -1,9 +1,18 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/elf64.h>
+
+bool elf64_is_valid(void *buffer) {
+    /* Should Probably Also Check Sections And Architecture */
+
+    Elf64_Ehdr *elf_header = buffer;
+    return strcmp((char*) elf_header->e_ident, ELF64_MAGIC) == 0;
+}
 
 uintptr_t elf64_get_start(void *buffer) {
     Elf64_Ehdr *elf_header = buffer;

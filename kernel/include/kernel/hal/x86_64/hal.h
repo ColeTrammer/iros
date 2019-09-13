@@ -1,0 +1,6 @@
+#ifndef _KERNEL_HAL_X86_64_HAL_H
+#define _KERNEL_HAL_X86_64_HAL_H
+
+#define INTERRUPS_ENABLED_FLAG (1UL << 9UL)
+
+#endif /* _KERNEL_HAL_X86_64_HAL_H */

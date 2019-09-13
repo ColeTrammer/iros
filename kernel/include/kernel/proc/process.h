@@ -41,8 +41,8 @@ void arch_load_process(struct process *process, uintptr_t entry);
 void run_process(struct process *process);
 void arch_run_process(struct process *process);
 
-void free_process(struct process *process);
-void arch_free_process(struct process *process);
+void free_process(struct process *process, bool free_paging_structure, bool free_pid);
+void arch_free_process(struct process *process, bool free_paging_structure);
 
 struct process *get_current_process();
 

@@ -1,11 +1,13 @@
 #ifndef _ERRNO_H
 #define _ERRNO_H 1
 
-#define EIO       1
-#define ENOMEM    2
-#define EINVAL    3
-#define ENOENT    4
-#define EMAXERRNO 5
+#define ESTARTERRNO 0
+#define EIO         1
+#define ENOMEM      2
+#define EINVAL      3
+#define ENOENT      4
+#define ENOEXEC     5
+#define EMAXERRNO   6
 
 #ifdef __cplusplus
 extern "C" {

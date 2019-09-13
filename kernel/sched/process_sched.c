@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdbool.h>
 
 #include <kernel/hal/output.h>
 
@@ -109,7 +110,7 @@ void sched_run_next() {
             current->next = current->next->next;
             current->next->prev = current;
 
-            free_process(to_remove);
+            free_process(to_remove, true, true);
             continue;
         }
 

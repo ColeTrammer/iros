@@ -86,6 +86,8 @@ struct process *load_process(const char *file_name) {
 
     fs_close(program);
 
+    assert(elf64_is_valid(buffer));
+
     struct process *process = calloc(1, sizeof(struct process));
     process->pid = get_next_pid();
     process->process_memory = NULL;
@@ -157,10 +159,12 @@ struct process *get_current_process() {
 }
 
 /* Must be called from unpremptable context */
-void free_process(struct process *process) {
-    arch_free_process(process);
+void free_process(struct process *process, bool free_paging_structure, bool __free_pid) {
+    arch_free_process(process, free_paging_structure);
 
-    free_pid(process->pid);
+    if (__free_pid) {
+        free_pid(process->pid);
+    }
 
     struct vm_region *region = process->process_memory;
     while (region != NULL) {
