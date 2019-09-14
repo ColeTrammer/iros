@@ -31,8 +31,29 @@ static struct inode *iname(const char *path, int *error) {
     assert(t_root->inode != NULL);
     assert(t_root->inode->i_op != NULL);
     
+    /* Means we are on root */
+    if (path[1] == '\0') {
+        return t_root->inode;
+    }
+
     struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, path + 1);
     if (tnode == NULL) {
+        struct mount *mount = t_root->inode->mounts;
+        while (mount != NULL) {
+            assert(mount->name);
+            assert(mount->super_block);
+            assert(mount->super_block->root);
+            assert(mount->super_block->root->inode);
+
+            if (strcmp(mount->name, path + 1) == 0) {
+                /* Should instead begin recursive search */
+                return mount->super_block->root->inode;
+            }
+
+            mount = mount->next;
+        }
+
+        /* Couldn't find anything */
         *error = -ENOENT;
         return NULL;
     }
@@ -68,6 +89,12 @@ struct file *fs_open(const char *file_name, int *error) {
 
     struct inode *inode = iname(file_name, error);
     if (*error < 0) {
+        return NULL;
+    }
+
+    /* Can't open directories (at least not yet...) */
+    if (inode->flags & FS_DIR) {
+        *error = -EISDIR;
         return NULL;
     }
     
@@ -157,7 +184,7 @@ int fs_mount(const char *type, const char *path, dev_t device) {
                 mount_on = iname(path, &error);
             }
             
-            if (mount_on == NULL) {
+            if (mount_on == NULL || !(mount_on->flags & FS_DIR)) {
                 free(path_copy);
                 return error;
             }

@@ -15,6 +15,8 @@ typedef struct {
 void spin_lock(spinlock_t *lock);
 void spin_unlock(spinlock_t *lock);
 
-#define SPINLOCK_INITIALIZER { .counter=0, .interrupts=0 }
+#define SPINLOCK_INITIALIZER { .counter=0, .interrupts=0UL }
+
+void init_spinlock(spinlock_t *lock);
 
 #endif /* _KERNEL_UTIL_SPINLOCK_H */

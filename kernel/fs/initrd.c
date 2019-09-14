@@ -14,6 +14,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/hal/output.h>
+#include <kernel/util/spinlock.h>
 
 static struct file_system fs;
 static struct super_block super_block;
@@ -97,6 +98,7 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
     root->flags = FS_DIR;
     root->device = 0;  /* Update when there is other devices... */
     root->i_op = &initrd_i_op;
+    init_spinlock(&root->lock);
 
     struct tnode *t_root = malloc(sizeof(struct tnode));
     t_root->name = "/";
@@ -115,6 +117,7 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
         inode->device = 0;
         inode->i_op = &initrd_i_op;
         inode->private_data = entry + i;
+        init_spinlock(&inode->lock);
 
         struct tnode *to_add = malloc(sizeof(struct tnode));
         to_add->name = entry[i].name;

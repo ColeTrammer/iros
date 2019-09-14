@@ -29,8 +29,6 @@ static void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
     for (uintptr_t i = 0; i < num_pages; i++) {
         set_bit(bit_index_base + i, true);
     }
-
-    debug_log("Phys Addr Marked as Used: [ %#.16lX, %#.16lX ]\n", phys_addr_start, phys_addr_start + length);
 }
 
 uintptr_t get_next_phys_page() {
@@ -44,7 +42,6 @@ uintptr_t get_next_phys_page() {
 
             spin_unlock(&bitmap_lock);
 
-            debug_log("Phys Addr Allocated: [ %#.16lX ]\n", bit_index * PAGE_SIZE);
             return bit_index * PAGE_SIZE;
         }
     }
@@ -59,8 +56,6 @@ void free_phys_page(uintptr_t phys_addr) {
     set_bit(phys_addr / PAGE_SIZE, false);
 
     spin_unlock(&bitmap_lock);
-
-    debug_log("Phys Addr Freed: [ %#.16lX ]\n", phys_addr);
 }
 
 void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start, uintptr_t initrd_phys_end, uint32_t *multiboot_info) {

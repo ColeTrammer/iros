@@ -4,6 +4,11 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/hal.h>
 
+void init_spinlock(spinlock_t *lock) {
+    lock->counter = 0;
+    lock->interrupts = 0;
+}
+
 void spin_lock(spinlock_t *lock) {
     while (1) {
         unsigned long interrupts = disable_interrupts_save();

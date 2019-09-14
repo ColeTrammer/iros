@@ -8,6 +8,7 @@ const char *sys_errlist[] = {
     "Invalid arguments",
     "File does not exist",
     "File cannot be executed",
+    "Path is a directory",
     "Errno end"
 };
 
