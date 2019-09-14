@@ -23,8 +23,8 @@ static char *test_envp[4] = {
 };
 
 static void kernel_idle() {
-    while (1);
-    __builtin_unreachable();
+    disable_interrupts();
+    sched_run_next();
 }
 
 void arch_init_kernel_process(struct process *kernel_process) {
