@@ -209,9 +209,6 @@ void arch_sys_execve(struct process_state *process_state) {
     memcpy(process_stack, __process_stack, sizeof(struct vm_region));
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
-    /* Memset stack to zero so that process can use old one safely. */
-    memset((void*) process_stack->start, 0, process_stack->end - process_stack->start);
-
     struct process *process = calloc(1, sizeof(struct process));
     process->pid = current->pid;
     process->process_memory = kernel_stack;
@@ -235,6 +232,9 @@ void arch_sys_execve(struct process_state *process_state) {
     process->arch_process.process_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
     process->arch_process.process_state.stack_state.rsp = map_program_args(process_stack->end, argv, envp);
     process->arch_process.process_state.stack_state.ss = USER_DATA_SELECTOR;
+
+    /* Memset stack to zero so that process can use old one safely (only go until rsp because args are after it). */
+    memset((void*) process_stack->start, 0, process->arch_process.process_state.stack_state.rsp - process_stack->start);
 
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process_memory);

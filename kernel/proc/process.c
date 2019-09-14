@@ -16,38 +16,76 @@
 static struct process *current_process;
 static struct process initial_kernel_process;
 
-/* Needs Fix: Can Only Map Args and Envp If They Do Not Overlap, Which They Do When Passing Defualt ENVP */
+/* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
-    char **argv_start = (char**) (start - sizeof(char**));
-
     debug_log("Mapping Program Args: [ %#.16lX ]\n", (uintptr_t) start);
 
     size_t argc = 0;
-    while (argv[argc++] != NULL);
+    size_t args_str_length = 0;
+    while (argv[argc++] != NULL) {
+        args_str_length += strlen(argv[argc - 1]) + 1;
+    }
 
     size_t envc = 0;
-    while (envp[envc++] != NULL);
+    size_t env_str_length = 0;
+    while (envp[envc++] != NULL) {
+        env_str_length += strlen(envp[envc - 1]) + 1;
+    }
+
+    char **args_copy = calloc(argc, sizeof(char**));
+    char **envp_copy = calloc(envc, sizeof(char**));
+
+    char *args_buffer = malloc(args_str_length);
+    char *env_buffer = malloc(env_str_length);
+
+    ssize_t j = 0;
+    ssize_t i = 0;
+    while (argv[i] != NULL) {
+        ssize_t last = j;
+        while (argv[i][j - last] != '\0') {
+            args_buffer[j] = argv[i][j - last];
+            j++;
+        }
+        args_buffer[j++] = '\0';
+        args_copy[i++] = args_buffer + last;
+    }
+    args_copy[i] = NULL;
+
+    j = 0;
+    i = 0;
+    while (envp[i] != NULL) {
+        ssize_t last = j;
+        while (envp[i][j - last] != '\0') {
+            env_buffer[j] = envp[i][j - last];
+            j++;
+        }
+        env_buffer[j++] = '\0';
+        envp_copy[i++] = env_buffer + last;
+    }
+    envp_copy[i] = NULL;
+
+    char **argv_start = (char**) (start - sizeof(char**));
 
     size_t count = argc + envc;
-
     char *args_start = (char*) (argv_start - count);
 
-    ssize_t i;
-    for (i = 0; argv[i] != NULL; i++) {
-        args_start -= strlen(argv[i]) + 1;
-        strcpy(args_start, argv[i]);
+    for (i = 0; args_copy[i] != NULL; i++) {
+        args_start -= strlen(args_copy[i]) + 1;
+        strcpy(args_start, args_copy[i]);
         argv_start[i - argc] = args_start;
     }
 
     argv_start[0] = NULL;
 
-    for (i = 0; envp[i] != NULL; i++) {
-        args_start -= strlen(envp[i]) + 1;
-        strcpy(args_start, envp[i]);
+    for (i = 0; envp_copy[i] != NULL; i++) {
+        args_start -= strlen(envp_copy[i]) + 1;
+        strcpy(args_start, envp_copy[i]);
         argv_start[i - count] = args_start;
     }
 
     argv_start[-(argc + 1)] = NULL;
+
+    args_start = (char*) ((((uintptr_t) args_start) & ~0x7) - 0x08);
 
     args_start -= sizeof(size_t);
     *((size_t*) args_start) = argc - 1;
@@ -55,6 +93,11 @@ uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
     *((char***) args_start) = argv_start - argc;
     args_start -= sizeof(char**);
     *((char***) args_start) = argv_start - count;
+
+    free(args_copy);
+    free(envp_copy);
+    free(args_buffer);
+    free(env_buffer);
 
     return (uintptr_t) args_start;
 }
