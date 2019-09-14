@@ -88,7 +88,7 @@ void arch_sys_open(struct process_state *process_state) {
     
     assert(path != NULL);
 
-    int error;
+    int error = 0;
 
     struct process *process = get_current_process();
     struct file *file = fs_open(path, &error);

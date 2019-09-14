@@ -116,7 +116,7 @@ void init_kernel_process() {
 }
 
 struct process *load_process(const char *file_name) {
-    int error;
+    int error = 0;
     struct file *program = fs_open(file_name, &error);
     assert(program != NULL && error == 0);
 

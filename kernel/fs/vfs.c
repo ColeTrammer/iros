@@ -5,8 +5,10 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <string.h>
 
 #include <kernel/fs/vfs.h>
+#include <kernel/fs/dev.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/initrd.h>
@@ -16,11 +18,40 @@
 static struct file_system *file_systems;
 static struct mount *root;
 
+static struct inode *iname(const char *path, int *error) {
+    assert(root != NULL);
+    assert(root->super_block != NULL);
+
+    struct tnode *t_root = root->super_block->root;
+    if (t_root == NULL) {
+        *error = -ENOENT;
+        return NULL;
+    }
+
+    assert(t_root->inode != NULL);
+    assert(t_root->inode->i_op != NULL);
+    
+    struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, path + 1);
+    if (tnode == NULL) {
+        *error = -ENOENT;
+        return NULL;
+    }
+
+    struct inode *inode = tnode->inode;
+    return inode;
+}
+
 void init_vfs() {
     init_initrd();
+    init_dev();
 
     /* Mount INITRD as root */
-    fs_mount("initrd", "/", 0);
+    int error = fs_mount("initrd", "/", 0);
+    assert(error == 0);
+
+    /* Mount dev at /dev */
+    error = fs_mount("dev", "/dev", 0);
+    assert(error == 0);
 }
 
 struct file *fs_open(const char *file_name, int *error) {
@@ -35,30 +66,17 @@ struct file *fs_open(const char *file_name, int *error) {
         return NULL;
     }
 
-    assert(root != NULL);
-    assert(root->super_block != NULL);
-
-    struct tnode *t_root = root->super_block->root;
-    if (t_root == NULL) {
-        *error = -ENOENT;
+    struct inode *inode = iname(file_name, error);
+    if (*error < 0) {
         return NULL;
     }
-
-    assert(t_root->inode != NULL);
-    assert(t_root->inode->i_op != NULL);
     
-    struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, file_name + 1);
-    if (tnode == NULL) {
-        *error = -ENOENT;
-        return NULL;
+    if (!fs_inode_get(inode->index)) {
+        fs_inode_put(inode);
     }
 
-    debug_log("File Opened: [ %s ]\n", file_name);
-    struct inode *inode = tnode->inode;
-    fs_inode_put(inode);
-    
     *error = 0;
-    return inode->i_op->open(tnode->inode);
+    return inode->i_op->open(inode);
 }
 
 void fs_close(struct file *file) {
@@ -103,7 +121,7 @@ void load_fs(struct file_system *fs) {
     file_systems = fs;
 }
 
-void fs_mount(const char *type, const char *path, dev_t device) {
+int fs_mount(const char *type, const char *path, dev_t device) {
     struct file_system *file_system = file_systems;
     while (file_system != NULL) {
         if (strcmp(file_system->name, type) == 0) {
@@ -115,11 +133,52 @@ void fs_mount(const char *type, const char *path, dev_t device) {
                 file_system->mount(file_system);
                 mount->super_block = file_system->super_block;
                 root = mount;
-                return;
+                return 0;
             }
 
-            /* Should handle non root mounts */
-            assert(false);
+            char *path_copy = malloc(strlen(path) + 1);
+            strcpy(path_copy, path);
+
+            /* Needs to find parent of the path, so we can mount the fs on it */
+            if (path_copy[strlen(path_copy) - 1] == '/') {
+                path_copy[strlen(path_copy) - 1] = '\0';
+            }
+
+            char *parent_end = strrchr(path_copy, '/');
+            *parent_end = '\0';
+
+            int error = 0;
+            struct inode *mount_on;
+            
+            /* Means we are mounting to root */
+            if (parent_end == path_copy) {
+                mount_on = root->super_block->root->inode;
+            } else {
+                mount_on = iname(path, &error);
+            }
+            
+            if (mount_on == NULL) {
+                free(path_copy);
+                return error;
+            }
+
+            struct mount **list = &mount_on->mounts;
+            while (*list != NULL) {
+                list = &(*list)->next;
+            }
+            *list = mount;
+
+            char *name = malloc(strlen(parent_end + 1) + 1);
+            strcpy(name, parent_end + 1);
+
+            mount->name = name;
+            mount->device = device;
+            mount->next = NULL;
+            file_system->mount(file_system);
+            mount->super_block = file_systems->super_block;
+
+            free(path_copy);
+            return 0;
         }
 
         file_system = file_system->next;
@@ -127,4 +186,5 @@ void fs_mount(const char *type, const char *path, dev_t device) {
 
     /* Should instead error because fs type is not found */
     assert(false);
+    return -1;
 }

@@ -17,4 +17,6 @@ void fs_inode_set(struct inode *inode);
 void fs_inode_del(inode_id_t id);
 void fs_inode_free_hash_table();
 
+inode_id_t fs_get_next_inode_id();
+
 #endif /* _KERNEL_FS_INODE_STORE_H */

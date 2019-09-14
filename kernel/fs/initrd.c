@@ -6,6 +6,7 @@
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
+#include <kernel/fs/inode_store.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/vfs.h>
@@ -16,9 +17,6 @@
 
 static struct file_system fs;
 static struct super_block super_block;
-
-/* Should be atomic and global for a files, not just initrd */
-static inode_id_t inode_count;
 
 /* Should be allocated in super block */
 static uint64_t num_files;
@@ -93,7 +91,7 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
     file_list = (struct initrd_file_entry*) (initrd_start + sizeof(int64_t));
 
     struct inode *root = calloc(1, sizeof(struct inode));
-    root->index = inode_count++;
+    root->index = fs_get_next_inode_id();
     root->size = initrd->end - initrd->start;
     root->super_block = &super_block;
     root->flags = FS_DIR;
@@ -110,7 +108,7 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
     struct initrd_file_entry *entry = file_list;
     for (size_t i = 0; i < num_files; i++) {
         struct inode *inode = calloc(1, sizeof(struct inode));
-        inode->index = inode_count++;
+        inode->index = fs_get_next_inode_id();
         inode->size = entry[i].length;
         inode->super_block = &super_block;
         inode->flags = FS_FILE;
