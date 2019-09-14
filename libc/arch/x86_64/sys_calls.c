@@ -1,8 +1,6 @@
 #include <sys/types.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
 #include <errno.h>
 
 void *sbrk(intptr_t increment) {
@@ -48,14 +46,14 @@ ssize_t read(int fd, void *buf, size_t count) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
-ssize_t write(int fd, const void * buf, size_t count) {
+ssize_t write(int fd, const void *buf, size_t count) {
     ssize_t ret;
     asm volatile( "movq $6, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -94,6 +92,6 @@ pid_t waitpid(pid_t pid, int *wstatus, int options) {
                   "movq %2, %%rdx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(wstatus), "r"(options) : "rdi", "esi", "rdx", "ecx", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(wstatus), "r"(options) : "rdi", "esi", "rdx", "ecx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }

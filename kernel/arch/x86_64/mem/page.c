@@ -373,6 +373,6 @@ void map_vm_region_flags(struct vm_region *region) {
 void map_vm_region(struct vm_region *region) {
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
         map_page(addr, region->flags);
-        debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start, region->end);
+        debug_log("Mapped VM Region: [ %#.16llX, %#.16llX, %#.16llX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start, region->end);
     }    
 }

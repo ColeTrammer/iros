@@ -415,7 +415,7 @@ int vfprintf(FILE *stream, const char *__restrict format, va_list parameters) {
                 }
                 written += width;
                 format++;
-            } else if (length_modifier == 3) {
+            } else if (length_modifier == 3 || length_modifier == 6) {
                 unsigned long num = va_arg(parameters, unsigned long);
                 size_t len = 1;
                 size_t len_prec;

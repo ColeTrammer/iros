@@ -7,7 +7,7 @@
 
 #include <kernel/fs/super_block.h>
 #include <kernel/util/spinlock.h>
-
+#include <kernel/fs/mount.h>
 #include <kernel/fs/tnode.h>
 
 struct inode;
@@ -25,8 +25,8 @@ struct inode_operations {
 struct inode {
     mode_t mode;
 
-#define FS_FILE 1
-#define FS_DIR 2
+#define FS_FILE 1U
+#define FS_DIR 2U
     unsigned int flags;
 
     struct inode_operations *i_op;
@@ -40,6 +40,9 @@ struct inode {
 
     /* List of tnodes in directory (if inode is a directory) */
     struct tnode_list *tnode_list;
+
+    /* Listens file systems mounted directly below this inode */
+    struct mount *mounts;
 
     spinlock_t lock;
 

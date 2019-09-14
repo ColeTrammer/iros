@@ -1,10 +1,8 @@
 #include <stdio.h>
-#include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <string.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
@@ -86,7 +84,7 @@ void initrd_write(struct file *file, const void *buffer, size_t len) {
     abort();
 }
 
-struct tnode *initrd_mount(struct file_system *fs) {
+struct tnode *initrd_mount(struct file_system *current_fs) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
     
@@ -106,7 +104,7 @@ struct tnode *initrd_mount(struct file_system *fs) {
     t_root->name = "/";
     t_root->inode = root;
 
-    fs->super_block = &super_block;
+    current_fs->super_block = &super_block;
     super_block.root = t_root;
 
     struct initrd_file_entry *entry = file_list;
@@ -127,7 +125,7 @@ struct tnode *initrd_mount(struct file_system *fs) {
         root->tnode_list = add_tnode(root->tnode_list, to_add);
     }
 
-    debug_log("INITRD Mounted: [ %ld, %#.16lX ]\n", num_files, initrd_start);
+    debug_log("INITRD Mounted: [ %llu, %#.16lX ]\n", num_files, initrd_start);
     return t_root;
 }
 
