@@ -18,7 +18,7 @@
 static struct file_system *file_systems;
 static struct mount *root;
 
-static struct inode *iname(const char *path, int *error) {
+static struct inode *iname(const char *_path, int *error) {
     assert(root != NULL);
     assert(root->super_block != NULL);
 
@@ -32,13 +32,25 @@ static struct inode *iname(const char *path, int *error) {
     assert(t_root->inode->i_op != NULL);
     
     /* Means we are on root */
-    if (path[1] == '\0') {
+    if (_path[1] == '\0') {
         return t_root->inode;
     }
 
-    struct tnode *tnode = t_root->inode->i_op->lookup(t_root->inode, path + 1);
-    if (tnode == NULL) {
-        struct mount *mount = t_root->inode->mounts;
+    char *path = malloc(strlen(_path) + 1);
+    strcpy(path, _path);
+
+    struct tnode *parent = t_root;
+    
+    /* Main VFS Loop */
+    char *last_slash = strpbrk(path + 1, "/");
+    while (parent != NULL && path != NULL && path[1] != '\0') {
+        /* Ensures passed name will be corrent */
+        if (last_slash != NULL) {
+            *last_slash = '\0';
+        }
+
+        /* Checks mounts first so that we don't do uneccessary disk IO */
+        struct mount *mount = parent->inode->mounts;
         while (mount != NULL) {
             assert(mount->name);
             assert(mount->super_block);
@@ -46,19 +58,45 @@ static struct inode *iname(const char *path, int *error) {
             assert(mount->super_block->root->inode);
 
             if (strcmp(mount->name, path + 1) == 0) {
-                /* Should instead begin recursive search */
-                return mount->super_block->root->inode;
+                parent = mount->super_block->root;
+                goto vfs_loop_end;
             }
 
             mount = mount->next;
         }
 
-        /* Couldn't find anything */
+        /* Check using lookup */
+        assert(parent->inode);
+        assert(parent->inode->i_op);
+        assert(parent->inode->i_op->lookup);
+        
+        parent = parent->inode->i_op->lookup(parent->inode, path + 1);
+
+    vfs_loop_end:
+        path = last_slash;
+        if (path != NULL) {
+            path[0] = '/';
+            last_slash = strchr(path + 1, '/');
+        }
+    }
+    
+    if (parent == NULL) {
+        /* Couldn't find what we were looking for */
         *error = -ENOENT;
+        free(path);
         return NULL;
     }
 
-    struct inode *inode = tnode->inode;
+    struct inode *inode = parent->inode;
+    
+    /* Shouldn't let you at a / at the end of a file name */
+    if ((path != NULL && path[0] == '/') && inode->flags & FS_FILE) {
+        *error = -ENOENT;
+        free(path);
+        return NULL;
+    }
+
+    free(path);
     return inode;
 }
 
