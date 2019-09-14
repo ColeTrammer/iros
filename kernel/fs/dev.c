@@ -32,11 +32,31 @@ static struct file_operations dev_f_op = {
 };
 
 struct tnode *dev_lookup(struct inode *inode, const char *name) {
+    assert(inode->tnode_list != NULL);
+    assert(name != NULL);
 
+    struct tnode_list *list = inode->tnode_list;
+    while (list != NULL) {
+        assert(list->tnode != NULL);
+        assert(list->tnode->name != NULL);
+        if (strcmp(list->tnode->name, name) == 0) {
+            return list->tnode;
+        }
+        list = list->next;
+    }
+
+    return NULL;
 }
 
 struct file *dev_open(struct inode *inode) {
-
+    struct file *file = calloc(sizeof(struct file), 1);
+    file->inode_idenifier = inode->index;
+    file->length = inode->size;
+    file->start = 0;
+    file->position = 0;
+    file->f_op = &dev_f_op;
+    file->device = inode->device;
+    return file;
 }
 
 void dev_close(struct file *file) {
@@ -44,11 +64,15 @@ void dev_close(struct file *file) {
 }
 
 void dev_read(struct file *file, void *buffer, size_t len) {
-
+    (void) file;
+    memset(buffer, 'a', len - 1);
+    ((char*) buffer)[len - 1] = '\0';
 }
 
 void dev_write(struct file *file, const void *buffer, size_t len) {
-
+    (void) file;
+    (void) buffer;
+    (void) len;
 }
 
 struct tnode *dev_mount(struct file_system *current_fs) {
@@ -77,6 +101,25 @@ struct tnode *dev_mount(struct file_system *current_fs) {
     super_block.root = t_root;
 
     current_fs->super_block = &super_block;
+
+    struct tnode *tnode = calloc(1, sizeof(struct tnode));
+    struct inode *device = calloc(1, sizeof(struct inode));
+    tnode->name = "aaa";
+    tnode->inode = device;
+
+    device->device = 0;
+    device->flags = FS_FILE;
+    device->i_op = &dev_i_op;
+    device->index = fs_get_next_inode_id();
+    init_spinlock(&device->lock);
+    device->mode = 0;
+    device->mounts = NULL;
+    device->private_data = NULL;
+    device->size = 3;
+    device->super_block = &super_block;
+    device->tnode_list = NULL;
+
+    root->tnode_list = add_tnode(root->tnode_list, tnode);
 
     return t_root;
 }

@@ -37,6 +37,7 @@ static struct inode *iname(const char *_path, int *error) {
     }
 
     char *path = malloc(strlen(_path) + 1);
+    char *save_path = path;
     strcpy(path, _path);
 
     struct tnode *parent = t_root;
@@ -44,6 +45,13 @@ static struct inode *iname(const char *_path, int *error) {
     /* Main VFS Loop */
     char *last_slash = strpbrk(path + 1, "/");
     while (parent != NULL && path != NULL && path[1] != '\0') {
+        /* Exit if we're trying to lookup past a file */
+        if (!(parent->inode->flags & FS_DIR)) {
+            free(save_path);
+            *error = -ENOENT;
+            return NULL;
+        }
+
         /* Ensures passed name will be corrent */
         if (last_slash != NULL) {
             *last_slash = '\0';
@@ -83,7 +91,7 @@ static struct inode *iname(const char *_path, int *error) {
     if (parent == NULL) {
         /* Couldn't find what we were looking for */
         *error = -ENOENT;
-        free(path);
+        free(save_path);
         return NULL;
     }
 
@@ -92,11 +100,11 @@ static struct inode *iname(const char *_path, int *error) {
     /* Shouldn't let you at a / at the end of a file name */
     if ((path != NULL && path[0] == '/') && inode->flags & FS_FILE) {
         *error = -ENOENT;
-        free(path);
+        free(save_path);
         return NULL;
     }
 
-    free(path);
+    free(save_path);
     return inode;
 }
 
