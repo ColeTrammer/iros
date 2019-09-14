@@ -27,6 +27,6 @@ _start:
     callq exit
 
 __halt:
-    jmpq __halt
+    jmp __halt
 
 .size _start, . - _start

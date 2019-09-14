@@ -21,7 +21,10 @@ static uint8_t char_map[] = {
     'i', 'o', 'p', '[', ']', '\n', '\0', 'a', 's', 'd', 'f',
     'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z',
     'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '*',
-    '\0', ' ', '\0'
+    '\0', ' ', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+    '\0', '\0', '\0', '\0', '7', '8', '9', '-', '4', '5', '6',
+    '+', '1', '2', '3', '0', '.', '\0', '\0', '\0', '\0', '\0',
+    '\0', '\0', '\0'
 };
 
 struct keyboard_task {
@@ -74,7 +77,9 @@ static void handle_keyboard_interrupt() {
         } else {
             pressed[scan_code] = true;
 
-            kbd_buffer[kbd_index++] = char_map[scan_code];
+            if (char_map[scan_code] != '\0') {
+                kbd_buffer[kbd_index++] = char_map[scan_code];
+            }
         }
     } else {
         if (extended_key_code) {
