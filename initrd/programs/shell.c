@@ -19,6 +19,7 @@ char *read_line() {
 
         if (c == EOF || c == '\n') {
             buffer[pos] = '\n';
+            buffer[pos + 1] = '\0';
             return buffer;
         }
 
