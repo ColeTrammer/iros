@@ -14,7 +14,11 @@ int main(int argc, char **argv) {
     }
 
     char *buffer = malloc(0x5000);
-    fread(buffer, 1, 0x5000, file);
+    int read = fread(buffer, 1, 0x5000, file);
+    if (read == 0) {
+        perror("cat");
+        return 1;
+    }
     puts(buffer);
     fclose(file);
 

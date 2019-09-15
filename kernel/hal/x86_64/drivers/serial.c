@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
+#include <errno.h>
+#include <stddef.h>
+#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
 
+#include <kernel/fs/dev.h>
 #include <kernel/hal/output.h>
 
 #include <kernel/hal/x86_64/drivers/pic.h>
@@ -36,4 +43,30 @@ void init_serial_ports() {
 
     register_irq_line_handler(&handle_serial_interrupt, SERIAL_13_IRQ_LINE, true);
     debug_log("Serial Port Initialized: [ %#.3X ]\n", SERIAL_COM1_PORT);
+}
+
+static ssize_t serial_write(struct device *device, const void *buffer, size_t len) {
+    (void) device;
+
+    if (!serial_write_message(buffer, len)) {
+        return -EIO;
+    }
+    return (ssize_t) len;
+}
+
+struct device_ops serial_ops = {
+    NULL, NULL, &serial_write, NULL, NULL, NULL
+};
+
+void init_serial_port_device(dev_t dev) {
+    /* Could be anything */
+    assert(dev == SERIAL_COM1_PORT);
+
+    struct device *device = malloc(sizeof(struct device));
+    device->device_number = dev;
+    strcpy(device->name, "serial");
+    device->ops = &serial_ops;
+    device->private = NULL;
+
+    dev_add(device, device->name);
 }

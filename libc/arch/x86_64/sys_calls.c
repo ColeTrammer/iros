@@ -31,7 +31,7 @@ int open(const char *pathname, int flags, mode_t mode) {
                   "movl %2, %%edx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "rdx", "rcx", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "edx", "ecx", "eax" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -42,7 +42,7 @@ ssize_t read(int fd, void *buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "esi", "rdx", "rcx", "rax" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -53,7 +53,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "esi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -62,7 +62,7 @@ int close(int fd) {
     asm volatile( "movq $7, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(fd) : "rdi", "rsi", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd) : "rdi", "esi", "eax" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -94,4 +94,12 @@ pid_t waitpid(pid_t pid, int *wstatus, int options) {
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(wstatus), "r"(options) : "rdi", "esi", "rdx", "ecx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
+}
+
+pid_t getpid() {
+    pid_t ret;
+    asm volatile( "movq $10, %%rdi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : : "rdi", "eax" );
+    return ret;
 }

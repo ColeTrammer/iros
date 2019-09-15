@@ -2,6 +2,7 @@
 #define _KERNEL_HAL_X86_64_DRIVERS_SERIAL_H 1
 
 #include <stdbool.h>
+#include <sys/types.h>
 
 #define SERIAL_13_IRQ_LINE 4
 #define SERIAL_24_IRQ_LINE 3
@@ -57,6 +58,7 @@
 #define SERIAL_IMPENDING_ERROR (1 << 7)
 
 void init_serial_ports();
+void init_serial_port_device(dev_t dev);
 
 bool serial_write_message(const char *s, size_t n);
 

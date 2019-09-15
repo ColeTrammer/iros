@@ -73,3 +73,4 @@ sys_call_table:
     .quad arch_sys_close
     .quad arch_sys_execve
     .quad arch_sys_waitpid
+    .quad arch_sys_getpid

@@ -283,3 +283,7 @@ void arch_sys_waitpid(struct process_state *process_state) {
     /* Indicated Success */
     SYS_RETURN(0);
 }
+
+void arch_sys_getpid(struct process_state *process_state) {
+    SYS_RETURN(get_current_process()->pid);
+}
