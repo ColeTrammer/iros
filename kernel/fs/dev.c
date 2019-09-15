@@ -32,8 +32,11 @@ static struct file_operations dev_f_op = {
 };
 
 struct tnode *dev_lookup(struct inode *inode, const char *name) {
-    assert(inode->tnode_list != NULL);
     assert(name != NULL);
+
+    if (inode->tnode_list == NULL) {
+        return NULL;
+    }
 
     struct tnode_list *list = inode->tnode_list;
     while (list != NULL) {
@@ -56,23 +59,41 @@ struct file *dev_open(struct inode *inode) {
     file->position = 0;
     file->f_op = &dev_f_op;
     file->device = inode->device;
+
+    if (((struct device*) inode->private_data)->ops->open) {
+        ((struct device*) inode->private_data)->ops->open(inode->private_data);
+    }
+
     return file;
 }
 
 void dev_close(struct file *file) {
+    struct inode *inode = fs_inode_get(file->inode_idenifier);
+    if (((struct device*) inode->private_data)->ops->close) {
+        ((struct device*) inode->private_data)->ops->close(inode->private_data);
+    }
+
     free(file);
 }
 
 void dev_read(struct file *file, void *buffer, size_t len) {
-    (void) file;
-    memset(buffer, 'a', len - 1);
-    ((char*) buffer)[len - 1] = '\0';
+    struct inode *inode = fs_inode_get(file->inode_idenifier);
+    if (((struct device*) inode->private_data)->ops->read) {
+        ((struct device*) inode->private_data)->ops->read(inode->private_data, buffer, len);
+        return;
+    }
+
+    /* Should set some kind of error */
 }
 
 void dev_write(struct file *file, const void *buffer, size_t len) {
-    (void) file;
-    (void) buffer;
-    (void) len;
+    struct inode *inode = fs_inode_get(file->inode_idenifier);
+    if (((struct device*) inode->private_data)->ops->write) {
+        ((struct device*) inode->private_data)->ops->write(inode->private_data, buffer, len);
+        return;
+    }
+
+    /* Should set some kind of error */
 }
 
 struct tnode *dev_mount(struct file_system *current_fs) {
@@ -102,26 +123,87 @@ struct tnode *dev_mount(struct file_system *current_fs) {
 
     current_fs->super_block = &super_block;
 
-    struct tnode *tnode = calloc(1, sizeof(struct tnode));
-    struct inode *device = calloc(1, sizeof(struct inode));
-    tnode->name = "aaa";
-    tnode->inode = device;
-
-    device->device = 0;
-    device->flags = FS_FILE;
-    device->i_op = &dev_i_op;
-    device->index = fs_get_next_inode_id();
-    init_spinlock(&device->lock);
-    device->mode = 0;
-    device->mounts = NULL;
-    device->private_data = NULL;
-    device->size = 3;
-    device->super_block = &super_block;
-    device->tnode_list = NULL;
-
-    root->tnode_list = add_tnode(root->tnode_list, tnode);
-
     return t_root;
+}
+
+static char *to_dev_path(const char *path) {
+    char *new_path = malloc(strlen(path) + 6);
+    strcpy(new_path, "/dev/");
+    strcat(new_path, path);
+    return new_path;
+}
+
+void dev_add(struct device *device, const char *_path) {
+    char *path = to_dev_path(_path);
+    char *_name = strrchr(path, '/');
+    *_name = '\0';
+    _name++;
+
+    int error = 0;
+    struct inode *parent = iname(path, &error);
+    if (error != 0) {
+        /* Probably should add the directory that is missing */
+        free(path);
+        return;
+    }
+
+    /* Adds the device */
+    if (device->ops->add) {
+        device->ops->add(device);
+    }
+
+    struct inode *to_add = calloc(1, sizeof(struct inode));
+    to_add->device = device->device_number;
+    to_add->flags = FS_FILE;
+    to_add->i_op = &dev_i_op;
+    to_add->index = fs_get_next_inode_id();
+    init_spinlock(&to_add->lock);
+    to_add->mode = 0;
+    to_add->mounts = NULL;
+    to_add->parent = parent;
+    to_add->private_data = device;
+    to_add->size = 0;
+    to_add->super_block = &super_block;
+    to_add->tnode_list = NULL;
+
+    struct tnode *tnode = malloc(sizeof(struct tnode));
+    
+    char *name = malloc(strlen(_name) + 1);
+    strcpy(name, _name);
+    tnode->name = name;
+    tnode->inode = to_add;
+
+    parent->tnode_list = add_tnode(parent->tnode_list, tnode);
+
+    free(path);
+}
+
+void dev_remove(const char *_path) {
+    char *path = to_dev_path(_path);
+    char *name = strrchr(path, '/') + 1;
+
+    int error = 0;
+    struct inode *inode = iname(path, &error);
+    if (error != 0) {
+        /* This probably shouldn't happen */
+        free(path);
+        return;
+    }
+
+    /* Frees the device */
+    if (((struct device*) inode->private_data)->ops->remove) {
+        ((struct device*) inode->private_data)->ops->remove(inode->private_data);
+    }
+    free(inode->private_data);
+
+    /* Removes tnode */
+    struct tnode *tnode = find_tnode(inode->parent->tnode_list, name);
+    inode->parent->tnode_list = remove_tnode(inode->parent->tnode_list, tnode);
+    free(tnode->name);
+    free(tnode);
+
+    free(inode);
+    free(path);
 }
 
 void init_dev() {

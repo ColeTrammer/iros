@@ -4,8 +4,11 @@
 #include <sys/types.h>
 
 #include <kernel/fs/file_system.h>
+#include <kernel/fs/inode.h>
 
 void init_vfs();
+
+struct inode *iname(const char *path, int *error);
 
 struct file *fs_open(const char *file_name, int *error);
 void fs_close(struct file *file);

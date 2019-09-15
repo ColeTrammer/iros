@@ -188,6 +188,11 @@ void arch_sys_execve(struct process_state *process_state) {
 
     fs_seek(program, 0, SEEK_END);
     long length = fs_tell(program);
+    
+    if (length == 0) {
+        SYS_RETURN(-ENOEXEC);
+    }
+
     fs_seek(program, 0, SEEK_SET);
 
     void *buffer = malloc(length);

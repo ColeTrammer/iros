@@ -9,6 +9,27 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/tnode.h>
 
+struct device;
+
+struct device_ops {
+    int (*open)(struct device *device);
+    ssize_t (*read)(struct device *device, void *buffer, size_t len);
+    ssize_t (*write)(struct device *device, const void *buffer, size_t len); 
+    int (*close)(struct device *device);
+    void (*add)(struct device *device);
+    void (*remove)(struct device *device);
+};
+
+struct device {
+    dev_t device_number;
+    char name[16];
+    struct device_ops *ops;
+    void *private;
+};
+
+void dev_add(struct device *device, const char *path);
+void dev_remove(const char *path);
+
 void init_dev();
 
 struct tnode *dev_lookup(struct inode *inode, const char *name);
@@ -17,5 +38,7 @@ void dev_close(struct file *file);
 void dev_read(struct file *file, void *buffer, size_t len);
 void dev_write(struct file *file, const void *buffer, size_t len);
 struct tnode *dev_mount(struct file_system *fs);
+
+void init_test_device();
 
 #endif /* _KERNEL_FS_DEV_H */

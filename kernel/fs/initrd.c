@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/param.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
@@ -74,7 +75,7 @@ void initrd_close(struct file *file) {
 }
 
 void initrd_read(struct file *file, void *buffer, size_t len) {
-    memcpy(buffer, (void*) (initrd_start + file->start + file->position), len);
+    memcpy(buffer, (void*) (initrd_start + file->start + file->position), MIN(len, file->length - (file->position - file->start)));
 }
 
 void initrd_write(struct file *file, const void *buffer, size_t len) {
@@ -117,6 +118,7 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
         inode->device = 0;
         inode->i_op = &initrd_i_op;
         inode->private_data = entry + i;
+        inode->parent = root;
         init_spinlock(&inode->lock);
 
         struct tnode *to_add = malloc(sizeof(struct tnode));

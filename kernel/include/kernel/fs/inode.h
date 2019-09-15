@@ -44,6 +44,9 @@ struct inode {
     /* Listens file systems mounted directly below this inode */
     struct mount *mounts;
 
+    /* Parent of inode (could be tnode instead?) */
+    struct inode *parent;
+
     spinlock_t lock;
 
     void *private_data;

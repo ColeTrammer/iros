@@ -1,4 +1,3 @@
-#include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +17,7 @@
 static struct file_system *file_systems;
 static struct mount *root;
 
-static struct inode *iname(const char *_path, int *error) {
+struct inode *iname(const char *_path, int *error) {
     assert(root != NULL);
     assert(root->super_block != NULL);
 
@@ -108,19 +107,6 @@ static struct inode *iname(const char *_path, int *error) {
     return inode;
 }
 
-void init_vfs() {
-    init_initrd();
-    init_dev();
-
-    /* Mount INITRD as root */
-    int error = fs_mount("initrd", "/", 0);
-    assert(error == 0);
-
-    /* Mount dev at /dev */
-    error = fs_mount("dev", "/dev", 0);
-    assert(error == 0);
-}
-
 struct file *fs_open(const char *file_name, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
@@ -157,7 +143,7 @@ void fs_close(struct file *file) {
 }
 
 void fs_read(struct file *file, void *buffer, size_t len) {
-    file->f_op->read(file, buffer, MIN(len, file->length - (file->position - file->start)));
+    file->f_op->read(file, buffer, len);
 }
 
 void fs_write(struct file *file, const void *buffer, size_t len) {
@@ -205,6 +191,7 @@ int fs_mount(const char *type, const char *path, dev_t device) {
                 mount->device = device;
                 file_system->mount(file_system);
                 mount->super_block = file_system->super_block;
+                mount->super_block->root->inode->parent = mount->super_block->root->inode;
                 root = mount;
                 return 0;
             }
@@ -249,6 +236,7 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             mount->next = NULL;
             file_system->mount(file_system);
             mount->super_block = file_systems->super_block;
+            mount->super_block->root->inode->parent = mount_on;
 
             free(path_copy);
             return 0;
@@ -260,4 +248,17 @@ int fs_mount(const char *type, const char *path, dev_t device) {
     /* Should instead error because fs type is not found */
     assert(false);
     return -1;
+}
+
+void init_vfs() {
+    init_initrd();
+    init_dev();
+
+    /* Mount INITRD as root */
+    int error = fs_mount("initrd", "/", 0);
+    assert(error == 0);
+
+    /* Mount dev at /dev */
+    error = fs_mount("dev", "/dev", 0);
+    assert(error == 0);
 }
