@@ -17,13 +17,12 @@
 static struct file_system *file_systems;
 static struct mount *root;
 
-struct inode *iname(const char *_path, int *error) {
+struct inode *iname(const char *_path) {
     assert(root != NULL);
     assert(root->super_block != NULL);
 
     struct tnode *t_root = root->super_block->root;
     if (t_root == NULL) {
-        *error = -ENOENT;
         return NULL;
     }
 
@@ -47,7 +46,6 @@ struct inode *iname(const char *_path, int *error) {
         /* Exit if we're trying to lookup past a file */
         if (!(parent->inode->flags & FS_DIR)) {
             free(save_path);
-            *error = -ENOENT;
             return NULL;
         }
 
@@ -89,7 +87,6 @@ struct inode *iname(const char *_path, int *error) {
     
     if (parent == NULL) {
         /* Couldn't find what we were looking for */
-        *error = -ENOENT;
         free(save_path);
         return NULL;
     }
@@ -98,7 +95,6 @@ struct inode *iname(const char *_path, int *error) {
     
     /* Shouldn't let you at a / at the end of a file name */
     if ((path != NULL && path[0] == '/') && inode->flags & FS_FILE) {
-        *error = -ENOENT;
         free(save_path);
         return NULL;
     }
@@ -119,8 +115,9 @@ struct file *fs_open(const char *file_name, int *error) {
         return NULL;
     }
 
-    struct inode *inode = iname(file_name, error);
-    if (*error < 0) {
+    struct inode *inode = iname(file_name);
+    if (inode == NULL) {
+        *error = -ENOENT;
         return NULL;
     }
 
@@ -134,20 +131,19 @@ struct file *fs_open(const char *file_name, int *error) {
         fs_inode_put(inode);
     }
 
-    *error = 0;
-    return inode->i_op->open(inode);
+    return inode->i_op->open(inode, error);
 }
 
-void fs_close(struct file *file) {
-    file->f_op->close(file);
+int fs_close(struct file *file) {
+    return file->f_op->close(file);
 }
 
-void fs_read(struct file *file, void *buffer, size_t len) {
-    file->f_op->read(file, buffer, len);
+ssize_t fs_read(struct file *file, void *buffer, size_t len) {
+    return file->f_op->read(file, buffer, len);
 }
 
-void fs_write(struct file *file, const void *buffer, size_t len) {
-    file->f_op->write(file, buffer, len);
+ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
+    return file->f_op->write(file, buffer, len);
 }
 
 int fs_seek(struct file *file, off_t offset, int whence) {
@@ -207,19 +203,18 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             char *parent_end = strrchr(path_copy, '/');
             *parent_end = '\0';
 
-            int error = 0;
             struct inode *mount_on;
             
             /* Means we are mounting to root */
             if (parent_end == path_copy) {
                 mount_on = root->super_block->root->inode;
             } else {
-                mount_on = iname(path, &error);
+                mount_on = iname(path);
             }
             
             if (mount_on == NULL || !(mount_on->flags & FS_DIR)) {
                 free(path_copy);
-                return error;
+                return -1;
             }
 
             struct mount **list = &mount_on->mounts;

@@ -18,8 +18,8 @@ typedef unsigned long inode_id_t;
 #include <kernel/fs/file.h>
 
 struct inode_operations {
-    struct tnode *(*lookup)(struct inode *, const char *name);
-    struct file *(*open)(struct inode *);
+    struct tnode *(*lookup)(struct inode *inode, const char *name);
+    struct file *(*open)(struct inode *inode, int *error);
 };
 
 struct inode {

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/param.h>
+#include <errno.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
@@ -56,9 +57,12 @@ struct tnode *initrd_lookup(struct inode *inode, const char *name) {
     return NULL;
 }
 
-struct file *initrd_open(struct inode *inode) {
+struct file *initrd_open(struct inode *inode, int *error) {
     struct initrd_file_entry *entry = (struct initrd_file_entry*) inode->private_data;
-    assert(entry != NULL);
+    if (!entry) {
+        *error = -ENOENT;
+        return NULL;
+    }
 
     struct file *file = calloc(sizeof(struct file), 1);
     file->inode_idenifier = inode->index;
@@ -70,18 +74,22 @@ struct file *initrd_open(struct inode *inode) {
     return file;
 }
 
-void initrd_close(struct file *file) {
+int initrd_close(struct file *file) {
     free(file);
+    return 0;
 }
 
-void initrd_read(struct file *file, void *buffer, size_t len) {
-    memcpy(buffer, (void*) (initrd_start + file->start + file->position), MIN(len, file->length - (file->position - file->start)));
+ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
+    size_t len = MIN(_len, file->length - (file->position - file->start));
+    memcpy(buffer, (void*) (initrd_start + file->start + file->position), len);
+    return (ssize_t) len;
 }
 
-void initrd_write(struct file *file, const void *buffer, size_t len) {
+ssize_t initrd_write(struct file *file, const void *buffer, size_t len) {
     (void) file;
-    printf("Can't write to initrd.\nBuffer: %#.16lX | Len: %lu\n", (uintptr_t) buffer, len);
-    abort();
+    (void) buffer;
+    (void) len;
+    return -EINVAL;
 }
 
 struct tnode *initrd_mount(struct file_system *current_fs) {

@@ -9,9 +9,9 @@
 struct file;
 
 struct file_operations {
-    void (*close)(struct file *);
-    void (*read)(struct file *, void *, size_t);
-    void (*write)(struct file *, const void *, size_t);
+    int (*close)(struct file *file);
+    ssize_t (*read)(struct file *file, void *buffer, size_t len);
+    ssize_t (*write)(struct file *file, const void *buffer, size_t len);
 };
 
 struct file {

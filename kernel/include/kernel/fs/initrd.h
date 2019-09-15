@@ -17,10 +17,10 @@ struct initrd_file_entry {
 void init_initrd();
 
 struct tnode *initrd_lookup(struct inode *inode, const char *name);
-struct file *initrd_open(struct inode *inode);
-void initrd_close(struct file *file);
-void initrd_read(struct file *file, void *buffer, size_t len);
-void initrd_write(struct file *file, const void *buffer, size_t len);
+struct file *initrd_open(struct inode *inode, int *error);
+int initrd_close(struct file *file);
+ssize_t initrd_read(struct file *file, void *buffer, size_t len);
+ssize_t initrd_write(struct file *file, const void *buffer, size_t len);
 struct tnode *initrd_mount(struct file_system *fs);
 
 #endif /* _KERNEL_FS_INITRD_H */

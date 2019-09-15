@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
@@ -51,7 +52,7 @@ struct tnode *dev_lookup(struct inode *inode, const char *name) {
     return NULL;
 }
 
-struct file *dev_open(struct inode *inode) {
+struct file *dev_open(struct inode *inode, int *error) {
     struct file *file = calloc(sizeof(struct file), 1);
     file->inode_idenifier = inode->index;
     file->length = inode->size;
@@ -61,39 +62,39 @@ struct file *dev_open(struct inode *inode) {
     file->device = inode->device;
 
     if (((struct device*) inode->private_data)->ops->open) {
-        ((struct device*) inode->private_data)->ops->open(inode->private_data);
+        *error = ((struct device*) inode->private_data)->ops->open(inode->private_data);
     }
 
     return file;
 }
 
-void dev_close(struct file *file) {
+int dev_close(struct file *file) {
     struct inode *inode = fs_inode_get(file->inode_idenifier);
+    int error = 0;
     if (((struct device*) inode->private_data)->ops->close) {
-        ((struct device*) inode->private_data)->ops->close(inode->private_data);
+        error = ((struct device*) inode->private_data)->ops->close(inode->private_data);
     }
 
     free(file);
+    return error;
 }
 
-void dev_read(struct file *file, void *buffer, size_t len) {
+ssize_t dev_read(struct file *file, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->inode_idenifier);
     if (((struct device*) inode->private_data)->ops->read) {
-        ((struct device*) inode->private_data)->ops->read(inode->private_data, buffer, len);
-        return;
+        return ((struct device*) inode->private_data)->ops->read(inode->private_data, buffer, len);
     }
 
-    /* Should set some kind of error */
+    return -EINVAL;
 }
 
-void dev_write(struct file *file, const void *buffer, size_t len) {
+ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->inode_idenifier);
     if (((struct device*) inode->private_data)->ops->write) {
-        ((struct device*) inode->private_data)->ops->write(inode->private_data, buffer, len);
-        return;
+        return ((struct device*) inode->private_data)->ops->write(inode->private_data, buffer, len);
     }
 
-    /* Should set some kind of error */
+    return -EINVAL;
 }
 
 struct tnode *dev_mount(struct file_system *current_fs) {
@@ -139,9 +140,8 @@ void dev_add(struct device *device, const char *_path) {
     *_name = '\0';
     _name++;
 
-    int error = 0;
-    struct inode *parent = iname(path, &error);
-    if (error != 0) {
+    struct inode *parent = iname(path);
+    if (parent == NULL) {
         /* Probably should add the directory that is missing */
         free(path);
         return;
@@ -182,9 +182,8 @@ void dev_remove(const char *_path) {
     char *path = to_dev_path(_path);
     char *name = strrchr(path, '/') + 1;
 
-    int error = 0;
-    struct inode *inode = iname(path, &error);
-    if (error != 0) {
+    struct inode *inode = iname(path);
+    if (inode == NULL) {
         /* This probably shouldn't happen */
         free(path);
         return;

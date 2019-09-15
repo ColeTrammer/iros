@@ -133,10 +133,7 @@ void arch_sys_read(struct process_state *process_state)  {
     struct file *file = process->files[fd];
     assert(file != NULL);
 
-    fs_read(file, buf, count);
-
-    /* Should be checking for errors and bytes read in fs_read and returning them here */
-    SYS_RETURN(count);
+    SYS_RETURN((uint64_t) fs_read(file, buf, count));
 }
 
 void arch_sys_write(struct process_state *process_state) {
@@ -153,18 +150,21 @@ void arch_sys_write(struct process_state *process_state) {
         }
     }
 
-    assert(false);
+    struct process *process = get_current_process();
+    struct file *file = process->files[fd];
+    assert(file != NULL);
+
+    SYS_RETURN((uint64_t) fs_write(file, buf, count));
 }
 
 void arch_sys_close(struct process_state *process_state) {
     int fd = (int) process_state->cpu_state.rsi;
 
     struct process *process = get_current_process();
-    fs_close(process->files[fd]);
+    int error = fs_close(process->files[fd]);
     process->files[fd] = NULL;
 
-    /* Should be returning error codes here */
-    SYS_RETURN(0);
+    SYS_RETURN(error);
 }
 
 void arch_sys_execve(struct process_state *process_state) {
@@ -180,7 +180,7 @@ void arch_sys_execve(struct process_state *process_state) {
 
     debug_log("Exec Process: [ %d, %s ]\n", current->pid, file_name);
 
-    int error;
+    int error = 0;
     struct file *program = fs_open(file_name, &error);
     if (program == NULL) {
         SYS_RETURN((uint64_t) error);
