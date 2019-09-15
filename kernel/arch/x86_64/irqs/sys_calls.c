@@ -59,19 +59,26 @@ void arch_sys_sbrk(struct process_state *process_state) {
 }
 
 void arch_sys_fork(struct process_state *process_state) {
+    struct process *parent = get_current_process();
     struct process *child = calloc(1, sizeof(struct process));
     child->pid = get_next_pid();
     child->sched_state = READY;
     child->kernel_process = false;
     child->process_memory = clone_process_vm();
 
-    debug_log("Forking Process: [ %d ]\n", get_current_process()->pid);
+    debug_log("Forking Process: [ %d ]\n", parent->pid);
 
     memcpy(&child->arch_process.process_state, process_state, sizeof(struct process_state));
     child->arch_process.process_state.cpu_state.rax = 0;
     child->arch_process.cr3 = clone_process_paging_structure();
     child->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
     child->arch_process.setup_kernel_stack = true;
+
+    for (size_t i = 0; i < FOPEN_MAX; i++) {
+        if (parent->files[i]) {
+            child->files[i] = fs_clone(parent->files[i]);
+        }
+    }
 
     sched_add_process(child);
 
@@ -109,25 +116,10 @@ void arch_sys_open(struct process_state *process_state) {
     assert(false);
 }
 
-static int kbd_index = 0;
-extern volatile uint8_t *kbd_buffer;
-
 void arch_sys_read(struct process_state *process_state)  {
     int fd = (int) process_state->cpu_state.rsi;
     char *buf = (void*) process_state->cpu_state.rdx;
     size_t count = (size_t) process_state->cpu_state.rcx;
-
-    /* Trying To Read stdin */
-    if (fd == 0) {
-        for (;;) {
-            if (kbd_buffer[kbd_index] != '\0') {
-                *buf = kbd_buffer[kbd_index++];
-                break;
-            }
-        }
-        screen_print(buf, 1);
-        SYS_RETURN(1);
-    }
 
     struct process *process = get_current_process();
     struct file *file = process->files[fd];
@@ -140,15 +132,6 @@ void arch_sys_write(struct process_state *process_state) {
     int fd = (int) process_state->cpu_state.rsi;
     void *buf = (void*) process_state->cpu_state.rdx;
     size_t count = (size_t) process_state->cpu_state.rcx;
-
-    /* STDIO */
-    if (fd == 1) {
-        if (!screen_print(buf, count)) {
-            SYS_RETURN(-EIO);
-        } else {
-            SYS_RETURN((ssize_t) count);
-        }
-    }
 
     struct process *process = get_current_process();
     struct file *file = process->files[fd];
@@ -201,7 +184,24 @@ void arch_sys_execve(struct process_state *process_state) {
     fs_close(program);
 
     if (!elf64_is_valid(buffer)) {
+        free(buffer);
         SYS_RETURN(-ENOEXEC);
+    }
+
+    struct process *process = calloc(1, sizeof(struct process));
+
+    /* Allocate stdio files */
+    int error0 = 0;
+    int error1 = 0;
+    int error2 = 0;
+    process->files[0] = fs_open("/dev/tty", &error0);
+    process->files[1] = fs_open("/dev/tty", &error1);
+    process->files[2] = fs_open("/dev/tty", &error2);
+
+    if (error0 != 0 || error1 != 0 || error2 != 0) {
+        free(buffer);
+        free(process);
+        SYS_RETURN(-EIO);
     }
 
     /* Clone vm_regions so that they can be freed later */
@@ -214,7 +214,6 @@ void arch_sys_execve(struct process_state *process_state) {
     memcpy(process_stack, __process_stack, sizeof(struct vm_region));
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
-    struct process *process = calloc(1, sizeof(struct process));
     process->pid = current->pid;
     process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);

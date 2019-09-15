@@ -10,7 +10,7 @@
 
 #define STDIO_OWNED 0x800000
 
-FILE *stdio;
+FILE *stdout;
 FILE *stdin;
 FILE *stderr;
 
@@ -248,8 +248,7 @@ int fileno(FILE *stream) {
 void perror(const char *s) {
     assert(s != NULL);
 
-    /* Should be strerr when that gets implemented */
-    fprintf(stdio, "%s: %s\n", s, strerror(errno));
+    fprintf(stderr, "%s: %s\n", s, strerror(errno));
 }
 
 void init_files() {
@@ -264,7 +263,7 @@ void init_files() {
     files[0].flags = O_RDWR | STDIO_OWNED;
     stdin = files + 0;
 
-    /* stdio */
+    /* stdout */
     files[1].fd = 1;
     files[1].buf_type = _IOLBF;
     files[1].buffer = malloc(BUFSIZ);
@@ -273,16 +272,16 @@ void init_files() {
     files[1].error = 0;
     files[1].flags = O_RDWR | STDIO_OWNED;
     files[1].pos = 0;
-    stdio = files + 1;
+    stdout = files + 1;
 
     /* stderr */ 
     files[2].fd = 2;
     files[2].pos = 0;
-    files[2].buf_type = _IONBF | STDIO_OWNED;
+    files[2].buf_type = _IONBF;
     files[2].buffer = NULL;
     files[2].length = 0;
     files[2].eof = 0;
     files[2].error = 0;
-    files[2].flags = O_RDWR;
+    files[2].flags = O_RDWR | STDIO_OWNED;
     stderr = files + 2;
 }

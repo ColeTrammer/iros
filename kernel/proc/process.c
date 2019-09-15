@@ -158,6 +158,18 @@ struct process *load_process(const char *file_name) {
 
     load_paging_structure(old_paging_structure);
 
+    int error0 = 0;
+    int error1 = 0;
+    int error2 = 0;
+
+    process->files[0] = fs_open("/dev/tty", &error0);
+    process->files[1] = fs_open("/dev/tty", &error1);
+    process->files[2] = fs_open("/dev/tty", &error2);
+
+    assert(error0 == 0);
+    assert(error1 == 0);
+    assert(error2 == 0);
+
     debug_log("Loaded Process: [ %d, %s ]\n", process->pid, file_name);
     return process;
 }
@@ -190,6 +202,12 @@ void free_process(struct process *process, bool free_paging_structure, bool __fr
         struct vm_region *temp = region->next;
         free(region);
         region = temp;
+    }
+
+    for (size_t i = 0; i < FOPEN_MAX; i++) {
+        if (process->files[i] != NULL) {
+            fs_close(process->files[i]);
+        }
     }
 
     free(process);

@@ -73,7 +73,7 @@ int run_program(char **args) {
 int main() {
     for (;;) {
         printf("> ");
-        fflush(stdio);
+        fflush(stdout);
 
         char *line = read_line();
         

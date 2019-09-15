@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #ifdef __is_libk
-#define stdio NULL
+#define stdout NULL
 
 bool kprint(const char*, size_t);
 bool print(FILE *stream, const char *s, size_t len) {
@@ -48,7 +48,7 @@ int printf(const char *__restrict format, ...) {
 }
 
 int vprintf(const char *__restrict format, va_list parameters) {
-	return vfprintf(stdio, format, parameters);
+	return vfprintf(stdout, format, parameters);
 }
 
 int fprintf(FILE *stream, const char *__restrict format, ...) {

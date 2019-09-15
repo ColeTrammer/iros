@@ -42,8 +42,8 @@ typedef struct {
 
 #ifndef __is_libk
 
-extern FILE *stdio;
-#define stdio stdio
+extern FILE *stdout;
+#define stdout stdout
 
 extern FILE *stdin;
 #define stdin stdin

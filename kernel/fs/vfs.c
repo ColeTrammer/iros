@@ -245,6 +245,12 @@ int fs_mount(const char *type, const char *path, dev_t device) {
     return -1;
 }
 
+struct file *fs_clone(struct file *file) {
+    struct file *new_file = malloc(sizeof(struct file));
+    memcpy(new_file, file, sizeof(struct file));
+    return new_file;
+}
+
 void init_vfs() {
     init_initrd();
     init_dev();

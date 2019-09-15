@@ -14,7 +14,7 @@ void exit(int status) {
     /* Should Call atexit Functions */
 
     fflush(stdin);
-    fflush(stdio);
+    fflush(stdout);
     fflush(stderr);
 
     _Exit(status);
