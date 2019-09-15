@@ -74,7 +74,7 @@ void arch_run_process(struct process *process) {
     } else if (process->arch_process.kernel_stack_info != NULL) {
         map_page_info(process->arch_process.kernel_stack_info);
     }
-    
+
     __run_process(&process->arch_process);
 }
 

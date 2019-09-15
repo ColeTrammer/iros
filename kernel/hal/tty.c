@@ -8,6 +8,7 @@
 
 #include <kernel/hal/tty.h>
 #include <kernel/fs/dev.h>
+#include <kernel/sched/process_sched.h>
 
 static int kbd_index = 0;
 extern volatile uint8_t *kbd_buffer;
@@ -59,6 +60,8 @@ static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
             *buf = kbd_buffer[kbd_index++];
             break;
         }
+
+        yield();
     }
 
     tty_write(tty, buf, 1);
