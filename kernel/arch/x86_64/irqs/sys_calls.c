@@ -295,13 +295,15 @@ void arch_sys_waitpid(struct process_state *process_state) {
     assert(status != NULL);
     assert(flags == WUNTRACED);
 
-    /* Hack To Implement Waiting: Once the process exits it can no longer be found */
+    /* Hack To Implement Waiting: Poll the process list until the process is removed, yielding until that happens */
     struct process *proc;
     for (;;) {
         proc = find_by_pid(pid);
         if (proc == NULL) {
             break;
         }
+
+        yield();
     }
 
     /* Indicated Process Has Exited */
