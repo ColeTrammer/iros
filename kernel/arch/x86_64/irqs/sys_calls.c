@@ -73,6 +73,8 @@ void arch_sys_fork(struct process_state *process_state) {
     child->arch_process.cr3 = clone_process_paging_structure();
     child->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
     child->arch_process.setup_kernel_stack = true;
+    child->cwd = malloc(strlen(parent->cwd) + 1);
+    strcpy(child->cwd, parent->cwd);
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (parent->files[i]) {
@@ -86,21 +88,31 @@ void arch_sys_fork(struct process_state *process_state) {
 }
 
 void arch_sys_open(struct process_state *process_state) {
-    const char *path = (const char*) process_state->cpu_state.rsi;
+    const char *_path = (const char*) process_state->cpu_state.rsi;
     int flags = (int) process_state->cpu_state.rdx;
     mode_t mode = (mode_t) process_state->cpu_state.rcx;
     
     (void) flags;
     (void) mode;
     
-    assert(path != NULL);
+    assert(_path != NULL);
 
     int error = 0;
 
     struct process *process = get_current_process();
+    char *path;
+    if (_path[0] != '/') {
+        path = get_full_path(process->cwd, _path);
+        debug_log("PATH: [ %s ]\n", path);
+    } else {
+        path = malloc(strlen(_path) + 1);
+        strcpy(path, _path);
+    }
+
     struct file *file = fs_open(path, &error);
 
     if (file == NULL) {
+        free(path);
         SYS_RETURN((uint64_t) error);
     }
 
@@ -108,11 +120,13 @@ void arch_sys_open(struct process_state *process_state) {
     for (size_t i = 3; i < FOPEN_MAX; i++) {
         if (process->files[i] == NULL) {
             process->files[i] = file;
+            free(path);
             SYS_RETURN(i);
         }
     }
 
     /* Max files allocated, should return some ERROR */
+    free(path);
     assert(false);
 }
 
@@ -160,12 +174,20 @@ void arch_sys_execve(struct process_state *process_state) {
     assert(envp != NULL);
 
     struct process *current = get_current_process();
+    char *path;
+    if (file_name[0] != '/') {
+        path = get_full_path(current->cwd, file_name);
+    } else {
+        path = malloc(strlen(file_name) + 1);
+        strcpy(path, file_name);
+    }
 
-    debug_log("Exec Process: [ %d, %s ]\n", current->pid, file_name);
+    debug_log("Exec Process: [ %d, %s ]\n", current->pid, path);
 
     int error = 0;
-    struct file *program = fs_open(file_name, &error);
+    struct file *program = fs_open(path, &error);
     if (program == NULL) {
+        free(path);
         SYS_RETURN((uint64_t) error);
     }
 
@@ -173,6 +195,7 @@ void arch_sys_execve(struct process_state *process_state) {
     long length = fs_tell(program);
     
     if (length == 0) {
+        free(path);
         SYS_RETURN(-ENOEXEC);
     }
 
@@ -184,6 +207,7 @@ void arch_sys_execve(struct process_state *process_state) {
     fs_close(program);
 
     if (!elf64_is_valid(buffer)) {
+        free(path);
         free(buffer);
         SYS_RETURN(-ENOEXEC);
     }
@@ -200,6 +224,7 @@ void arch_sys_execve(struct process_state *process_state) {
 
     if (error0 != 0 || error1 != 0 || error2 != 0) {
         free(buffer);
+        free(path);
         free(process);
         SYS_RETURN(-EIO);
     }
@@ -219,6 +244,8 @@ void arch_sys_execve(struct process_state *process_state) {
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->kernel_process = false;
     process->sched_state = READY;
+    process->cwd = malloc(strlen(current->cwd) + 1);
+    strcpy(process->cwd, current->cwd);
     process->next = NULL;
 
     process->arch_process.cr3 = get_cr3();
@@ -246,6 +273,7 @@ void arch_sys_execve(struct process_state *process_state) {
     elf64_load_program(buffer, length, process);
     elf64_map_heap(buffer, process);
 
+    free(path);
     free(buffer);
 
     /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */

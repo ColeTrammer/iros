@@ -27,7 +27,7 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     /* At some point should switch over from initrd to a block device */
 
     // Start Shell
-    struct process *shell = load_process("/shell.o");
+    struct process *shell = load_process("/shell");
     sched_add_process(shell);
 
     sched_run_next();

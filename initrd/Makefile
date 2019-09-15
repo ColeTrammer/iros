@@ -25,11 +25,11 @@ FILES:=$(shell find files)
 
 # Lists all programs included in initrd
 PROGRAMS=\
-$(BUILDDIR)/initrd/programs/cat.o \
-$(BUILDDIR)/initrd/programs/serial.o \
-$(BUILDDIR)/initrd/programs/shell.o \
-$(BUILDDIR)/initrd/programs/test.o \
-$(BUILDDIR)/initrd/programs/test_exec.o
+$(BUILDDIR)/initrd/programs/cat \
+$(BUILDDIR)/initrd/programs/serial \
+$(BUILDDIR)/initrd/programs/shell \
+$(BUILDDIR)/initrd/programs/test \
+$(BUILDDIR)/initrd/programs/test_exec
 
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
@@ -45,10 +45,10 @@ $(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o $(FILES) $(PROGRAMS)
 $(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
 
-%.o: %.S
+%: %.S
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
 
-%.o: %.c
+%: %.c
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
 
 # Cleans by deleting .o, and .d files

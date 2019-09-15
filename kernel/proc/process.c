@@ -136,6 +136,8 @@ struct process *load_process(const char *file_name) {
     process->process_memory = NULL;
     process->kernel_process = false;
     process->sched_state = READY;
+    process->cwd = malloc(2);
+    strcpy(process->cwd, "/");
     process->next = NULL;
 
     uintptr_t old_paging_structure = get_current_paging_structure();
@@ -196,6 +198,8 @@ void free_process(struct process *process, bool free_paging_structure, bool __fr
     if (__free_pid) {
         free_pid(process->pid);
     }
+
+    free(process->cwd);
 
     struct vm_region *region = process->process_memory;
     while (region != NULL) {

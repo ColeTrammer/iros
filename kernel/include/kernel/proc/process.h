@@ -26,6 +26,7 @@ struct process {
     pid_t pid;
     enum sched_state sched_state;
     
+    char *cwd;
     struct file *files[FOPEN_MAX];
 
     struct process *prev;

@@ -8,7 +8,8 @@
 #define ENOENT      4
 #define ENOEXEC     5
 #define EISDIR      6
-#define EMAXERRNO   7
+#define ERANGE      7
+#define EMAXERRNO   8
 
 #ifdef __cplusplus
 extern "C" {

@@ -263,3 +263,11 @@ void init_vfs() {
     error = fs_mount("dev", "/dev", 0);
     assert(error == 0);
 }
+
+char *get_full_path(char *cwd, const char *relative_path) {
+    size_t len = strlen(cwd) + strlen(relative_path) + 1;
+    char *path = malloc(len);
+    strcpy(path, cwd);
+    strcat(path, relative_path);
+    return path;
+}
