@@ -62,10 +62,13 @@ static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
             }
 
             if (data->key_buffer.key == KEY_BACKSPACE) {
-                data->x--;
-                tty_write(tty, " ", 1);
-                data->x--;
-                i--;
+                if (i > 0) {
+                    data->x--;
+                    tty_write(tty, " ", 1);
+                    data->x--;
+                    i--;
+                }
+                continue;
             }
 
             if (data->key_buffer.ascii == '\0') {
