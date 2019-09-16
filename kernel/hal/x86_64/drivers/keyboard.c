@@ -23,37 +23,34 @@ static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
 static ssize_t kbd_read(struct device *device, void *buffer, size_t len) {
     (void) device;
 
-    ssize_t read = 0;
+    size_t read = 0;
     
-    while (len >= sizeof(struct key_event)) {
-        do {
-            while (start == NULL) {
-                barrier();
-            }
-        } while (start == NULL);
+    while (read <= len - sizeof(struct key_event)) {
+        while (start == NULL) {
+            yield();
+            barrier();
+        }
 
-        while (len >= sizeof(struct key_event) && start != NULL) {
-            assert(start);
-            assert(&start->entry);
-            assert(buffer);
+        while (read <= len - sizeof(struct key_event) && start != NULL) {
             memcpy(((uint8_t*) buffer) + read, &start->entry, sizeof(struct key_event));
 
-            len -= sizeof(struct key_event);
             read += sizeof(struct key_event);
 
             if (start->next == NULL) {
                 end = NULL;
             }
 
-            struct keyboard_event_queue *save = start->next;
-            // free(start);
-            start = save;
-        }
+            spin_lock(&queue_lock);
 
-        spin_unlock(&queue_lock);
+            struct keyboard_event_queue *save = start->next;
+            free(start);
+            start = save;
+
+            spin_unlock(&queue_lock);
+        }
     }
 
-    return read;
+    return (ssize_t) read;
 }
 
 static struct device_ops kbd_ops = {
@@ -62,16 +59,14 @@ static struct device_ops kbd_ops = {
 
 static void add_keyboard_event(struct key_event *event) {
     struct keyboard_event_queue *e = malloc(sizeof(struct keyboard_event_queue));
-    assert(e);
-    assert(event);
-    assert(&e->entry);
     memcpy(&e->entry, event, sizeof(struct key_event));
+    e->next = NULL;
 
     spin_lock(&queue_lock);
 
     if (start == NULL) {
-        start = end = e;
-        e->next = NULL;
+        start = e;
+        end = e;
     } else {
         end->next = e;
         end = e;
