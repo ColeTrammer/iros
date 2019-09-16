@@ -8,10 +8,9 @@
 
 #include <kernel/hal/tty.h>
 #include <kernel/fs/dev.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/fs/vfs.h>
 
-static int kbd_index = 0;
-extern volatile uint8_t *kbd_buffer;
+#include <kernel/sched/process_sched.h>
 
 static ssize_t tty_write(struct device *tty, const void *buffer, size_t len) {
     struct tty_data *data = (struct tty_data*) tty->private;
@@ -51,25 +50,32 @@ static ssize_t tty_write(struct device *tty, const void *buffer, size_t len) {
 }
 
 static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
-    assert(len == 1);
+    struct tty_data *data = (struct tty_data*) tty->private;
 
     uint8_t *buf = (uint8_t*) buffer;
 
-    for (;;) {
-        if (kbd_buffer[kbd_index] != '\0') {
-            *buf = kbd_buffer[kbd_index++];
-            break;
+    for (size_t i = 0; i < len - 1;) {
+        fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
+
+        if (data->key_buffer.flags & KEY_UP) {
+            continue;
         }
 
-        yield();
+        if (data->key_buffer.ascii == '\0') {
+            continue;
+        }
+
+        buf[i++] = data->key_buffer.ascii;
+        tty_write(tty, &data->key_buffer.ascii, 1);
     }
 
-    tty_write(tty, buf, 1);
-    return 1;
+    buf[len - 1] = '\0';
+    return (ssize_t) len;
 }
 
 static void tty_remove(struct device *tty) {
     struct tty_data *data = (struct tty_data*) tty->private;
+    fs_close(data->keyboard);
     free(data->buffer);
     free(data);
 }
@@ -84,7 +90,10 @@ void init_tty_device(dev_t dev) {
     strcpy(device->name, "tty");
     device->ops = &tty_ops;
 
+    int error = 0;
     struct tty_data *data = malloc(sizeof(struct tty_data));
+    data->keyboard = fs_open("/dev/keyboard", &error);
+    assert(error == 0);
     data->x = 0;
     data->y = 0;
     data->x_max = DEFAULT_TTY_WIDTH;

@@ -183,13 +183,13 @@ int fflush(FILE *stream) {
 }
 
 int fgetc(FILE *stream) {
-    unsigned char c;
-    ssize_t ret = read(stream->fd, &c, 1);
+    unsigned char s[2];
+    ssize_t ret = read(stream->fd, s, 2);
     if (ret <= 0) {
         return EOF;
     }
 
-    return c;
+    return (int) s[0];
 }
 
 int getchar() {

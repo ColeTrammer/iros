@@ -170,8 +170,6 @@ struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags) {
 }
 
 void unmap_page(uintptr_t virt_addr) {
-    debug_log("Unmapping: [ %#.16lX ]\n", virt_addr);
-
     do_unmap_page(virt_addr, true);
 }
 

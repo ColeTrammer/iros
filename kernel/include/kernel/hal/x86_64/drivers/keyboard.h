@@ -1,6 +1,8 @@
 #ifndef _KERNEL_HAL_X86_64_DRIVERS_KEYBOARD_H
 #define _KERNEL_HAL_X86_64_DRIVERS_KEYBOARD_H 1
 
+#include <kernel/hal/input.h>
+
 #define KEYBOARD_IRQ_LINE 1
 
 #define KEYBOARD_DATA_PORT 0x60
@@ -22,6 +24,16 @@
 #define KEYBOARD_EXTENDED 0xE0
 #define KEYBOARD_RELEASED_OFFSET 0x80
 #define KEYBOARD_NUM_KEYCODES (2 * KEYBOARD_RELEASED_OFFSET)
+
+struct key_code_entry {
+    enum key key;
+    char ascii;
+};
+
+struct keyboard_event_queue {
+    struct key_code_entry entry;
+    struct keyboard_event_queue *next;
+};
 
 void init_keyboard();
 

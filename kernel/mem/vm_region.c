@@ -13,7 +13,6 @@ struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add
     to_add->next = *link;
     *link = to_add;
 
-    debug_log("VM Region Added: [ %#.16llX, %#.16llX, %#.16lX, %#.16lX, %#.16lX ]\n", to_add->type, to_add->flags, to_add->start, to_add->end, (uintptr_t) list);
     return list;
 }
 
@@ -47,7 +46,6 @@ int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages
     }
     list->end = new_end;
 
-    debug_log("VM Region End Extended: [ %#.16lX, %ld, %#.16llX, %#.16lX ]\n", list->start, num_pages, type, (uintptr_t) list);
     return 0;
 }
 
