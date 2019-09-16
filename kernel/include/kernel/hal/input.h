@@ -106,6 +106,7 @@ enum key {
     KEY_PAGE_UP,
     KEY_CURSOR_LEFT,
     KEY_CURSOR_RIGHT,
+    KEY_END,
     KEY_CURSOR_DOWN,
     KEY_PAGE_DOWN,
     KEY_INSERT,
