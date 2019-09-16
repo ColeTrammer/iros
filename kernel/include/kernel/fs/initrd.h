@@ -23,4 +23,6 @@ ssize_t initrd_read(struct file *file, void *buffer, size_t len);
 ssize_t initrd_write(struct file *file, const void *buffer, size_t len);
 struct tnode *initrd_mount(struct file_system *fs);
 
+ssize_t initrd_read_dir(struct file *file, void *buffer, size_t len);
+
 #endif /* _KERNEL_FS_INITRD_H */

@@ -47,3 +47,19 @@ struct tnode *find_tnode(struct tnode_list *list, const char *name) {
 
     return NULL;
 }
+
+struct tnode *find_tnode_index(struct tnode_list *list, size_t index) {
+    assert(list != NULL);
+
+    struct tnode_list *start = list;
+    size_t i = 0;
+    while (start != NULL) {
+        if (i++ == index) {
+            return start->tnode; 
+        }
+
+        start = start->next;
+    }
+
+    return NULL;
+}

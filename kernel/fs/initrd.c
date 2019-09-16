@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <sys/param.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
@@ -34,8 +35,16 @@ static struct inode_operations initrd_i_op = {
     &initrd_lookup, &initrd_open
 };
 
+static struct inode_operations initrd_dir_i_op = {
+    &initrd_lookup, &initrd_open
+};
+
 static struct file_operations initrd_f_op = {
     &initrd_close, &initrd_read, &initrd_write
+};
+
+static struct file_operations initrd_dir_f_op = {
+    &initrd_close, &initrd_read_dir, &initrd_write
 };
 
 struct tnode *initrd_lookup(struct inode *inode, const char *name) {
@@ -72,7 +81,7 @@ struct file *initrd_open(struct inode *inode, int *error) {
         file->length = 0;
         file->start = 0;
         file->position = 0;
-        file->f_op = &initrd_f_op;
+        file->f_op = &initrd_dir_f_op;
         file->device = inode->device;
         file->flags = inode->flags;
         return file;
@@ -104,6 +113,23 @@ ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
     return (ssize_t) len;
 }
 
+ssize_t initrd_read_dir(struct file *file, void *buffer, size_t len) {
+    if (len != sizeof(struct dirent)) {
+        return -EINVAL;
+    }
+
+    struct dirent *entry = (struct dirent*) buffer;
+    struct tnode *tnode = find_tnode_index(fs_inode_get(file->inode_idenifier)->tnode_list, file->position++);
+    if (!tnode) {
+        /* Should sent an error that indicates there's no more to read (like EOF) */
+        return -EINVAL;
+    }
+
+    entry->d_ino = tnode->inode->index;
+    strcpy(entry->d_name, tnode->name);
+    return (ssize_t) len;
+}
+
 ssize_t initrd_write(struct file *file, const void *buffer, size_t len) {
     (void) file;
     (void) buffer;
@@ -125,7 +151,7 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
     root->super_block = &super_block;
     root->flags = FS_DIR;
     root->device = 0;  /* Update when there is other devices... */
-    root->i_op = &initrd_i_op;
+    root->i_op = &initrd_dir_i_op;
     init_spinlock(&root->lock);
 
     struct tnode *t_root = malloc(sizeof(struct tnode));

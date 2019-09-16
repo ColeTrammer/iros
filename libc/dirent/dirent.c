@@ -32,10 +32,11 @@ DIR *opendir(const char *path) {
     return fdopendir(fd);
 }
 
-struct dirent *readdir(DIR *d) {
-    /* Should do some sys call */
+struct dirent *readdir(DIR *dir) {
+    ssize_t ret = read(dir->fd, &dir->entry, sizeof(struct dirent));
+    if (ret < 0) {
+        return NULL;
+    }
 
-    (void) d;
-
-    return NULL;
+    return &dir->entry;
 }

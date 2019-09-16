@@ -53,6 +53,11 @@ struct tnode *dev_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *dev_open(struct inode *inode, int *error) {
+    if (inode->flags & FS_DIR) {
+        *error = -EISDIR;
+        return NULL;
+    }
+
     struct file *file = calloc(sizeof(struct file), 1);
     file->inode_idenifier = inode->index;
     file->length = inode->size;
