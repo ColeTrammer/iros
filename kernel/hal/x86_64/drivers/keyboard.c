@@ -511,9 +511,7 @@ static void handle_keyboard_interrupt() {
         extended_key_code = true;
     } else if (scan_code < KEYBOARD_RELEASED_OFFSET) {
         struct key_code_entry entry;
-        if (extended_key_code) {
-            debug_log("KBD Scancode: [ %#.2X ]\n", scan_code);
-            
+        if (extended_key_code) {           
             extended_key_code = false;
             entry = map[scan_code + KEYBOARD_RELEASED_OFFSET];
         } else {

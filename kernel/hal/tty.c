@@ -45,6 +45,8 @@ static ssize_t tty_write(struct device *tty, const void *buffer, size_t len) {
         }
     }
 
+    set_vga_cursor(data->y, data->x);
+
     spin_unlock(&data->lock);
     return (ssize_t) len;
 }
@@ -66,6 +68,7 @@ static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
                     data->x--;
                     tty_write(tty, " ", 1);
                     data->x--;
+                    set_vga_cursor(data->y, data->x);
                     i--;
                 }
                 continue;
