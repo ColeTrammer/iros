@@ -18,6 +18,9 @@ struct tty_data {
     unsigned char *buffer;
     struct file *keyboard;
     struct key_event key_buffer;
+    char *input_buffer;
+    int input_buffer_length;
+    int input_buffer_offset;
     spinlock_t lock;
 };
 

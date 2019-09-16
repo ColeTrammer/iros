@@ -275,7 +275,7 @@ static struct keyboard_task *first = NULL;
 static struct keyboard_task *last = NULL;
 
 static bool extended_key_code = false;
-static int flags = 0;
+static unsigned int flags = 0;
 
 static struct key_event event;
 
@@ -331,7 +331,7 @@ static void handle_keyboard_interrupt() {
         }
 
         flags |= KEY_DOWN;
-        flags &= KEY_UP;
+        flags &= ~KEY_UP;
 
         event.ascii = entry.ascii;
         event.flags = flags;
@@ -348,18 +348,18 @@ static void handle_keyboard_interrupt() {
         }
 
         if (entry.key == KEY_LEFT_CONTROL || entry.key == KEY_RIGHT_CONTROL) {
-            flags |= KEY_CONTROL_ON;
+            flags &= ~KEY_CONTROL_ON;
         }
 
         if (entry.key == KEY_LEFT_ALT || entry.key == KEY_RIGHT_ALT) {
-            flags |= KEY_ALT_ON;
+            flags &= ~KEY_ALT_ON;
         }
 
         if (entry.key == KEY_LEFT_SHIFT || entry.key == KEY_RIGHT_SHIFT) {
-            flags |= KEY_SHIFT_ON;
+            flags &= ~KEY_SHIFT_ON;
         }
 
-        flags &= KEY_DOWN;
+        flags &= ~KEY_DOWN;
         flags |= KEY_UP;
 
         event.ascii = '\0';

@@ -8,7 +8,7 @@
 #include <assert.h>
 
 char *read_line() {
-    int sz = 1024;
+    int sz = 300;
     int pos = 0;
     char *buffer = malloc(sz);
 

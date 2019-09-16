@@ -31,7 +31,7 @@ struct key_code_entry {
 };
 
 struct keyboard_event_queue {
-    struct key_code_entry entry;
+    struct key_event entry;
     struct keyboard_event_queue *next;
 };
 

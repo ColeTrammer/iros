@@ -52,30 +52,63 @@ static ssize_t tty_write(struct device *tty, const void *buffer, size_t len) {
 static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
     struct tty_data *data = (struct tty_data*) tty->private;
 
-    uint8_t *buf = (uint8_t*) buffer;
+    if (data->input_buffer_offset == -1) {
+        int i = 0;
+        do {
+            fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
 
-    for (size_t i = 0; i < len - 1;) {
-        fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
+            if (data->key_buffer.flags & KEY_UP) {
+                continue;
+            }
 
-        if (data->key_buffer.flags & KEY_UP) {
-            continue;
-        }
+            if (data->key_buffer.key == KEY_BACKSPACE) {
+                data->x--;
+                tty_write(tty, " ", 1);
+                data->x--;
+                i--;
+            }
 
-        if (data->key_buffer.ascii == '\0') {
-            continue;
-        }
+            if (data->key_buffer.ascii == '\0') {
+                continue;
+            }
 
-        buf[i++] = data->key_buffer.ascii;
-        tty_write(tty, &data->key_buffer.ascii, 1);
+            tty_write(tty, &data->key_buffer.ascii, 1);
+            data->input_buffer[i++] = data->key_buffer.ascii;
+
+            if (i >= data->input_buffer_length - 1) {
+                data->input_buffer_length *= 2;
+                data->input_buffer = realloc(data->input_buffer, data->input_buffer_length);
+            }
+        } while (data->key_buffer.ascii != '\n');
+
+        data->input_buffer[i] = '\0';
+        data->input_buffer_offset = 0;
     }
 
-    buf[len - 1] = '\0';
-    return (ssize_t) len;
+    char *buf = (char*) buffer;
+
+    int i;
+    for (i = 0; data->input_buffer_offset < data->input_buffer_length - 1 && i < (int) len - 1; i++) {
+        buf[i] = data->input_buffer[data->input_buffer_offset++];
+
+        if (buf[i] == '\n') {
+            /* Could instead get more input */
+            data->input_buffer_offset = -1;
+            break;
+        }
+    }
+
+    buf[i] = '\0';
+
+    return (ssize_t) i;
 }
 
 static void tty_remove(struct device *tty) {
     struct tty_data *data = (struct tty_data*) tty->private;
+    
     fs_close(data->keyboard);
+    
+    free(data->input_buffer);
     free(data->buffer);
     free(data);
 }
@@ -94,6 +127,9 @@ void init_tty_device(dev_t dev) {
     struct tty_data *data = malloc(sizeof(struct tty_data));
     data->keyboard = fs_open("/dev/keyboard", &error);
     assert(error == 0);
+    data->input_buffer_length = 0x1000;
+    data->input_buffer_offset = -1;
+    data->input_buffer = malloc(data->input_buffer_length);
     data->x = 0;
     data->y = 0;
     data->x_max = DEFAULT_TTY_WIDTH;

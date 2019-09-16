@@ -132,12 +132,12 @@ struct key_event {
 
     enum key key;
 
-#define KEY_UP (1 << 1)
-#define KEY_DOWN (1 << 2)
-#define KEY_CONTROL_ON (1 << 3)
-#define KEY_SHIFT_ON (1 << 4)
-#define KEY_ALT_ON (1 << 5)
-    int flags;
+#define KEY_UP (1U << 1U)
+#define KEY_DOWN (1U << 2U)
+#define KEY_CONTROL_ON (1U << 3U)
+#define KEY_SHIFT_ON (1U << 4U)
+#define KEY_ALT_ON (1U << 5U)
+    unsigned int flags;
 };
 
 #endif /* _KERNEL_HAL_INPUT_H */
