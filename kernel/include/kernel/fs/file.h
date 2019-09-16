@@ -22,6 +22,7 @@ struct file {
     uintptr_t position;
 
     struct file_operations *f_op;
+    unsigned int flags;
 
     dev_t device;
 };

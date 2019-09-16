@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
         perror("cat");
         return 1;
     }
-    puts(buffer);
+    printf("%s", buffer);
     fclose(file);
 
     return 0;

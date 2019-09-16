@@ -9,14 +9,15 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef struct {
-    int fd;
-} DIR;
-
 struct dirent {
     ino_t d_ino;
     char d_name[NAME_MAX];
 };
+
+typedef struct {
+    int fd;
+    struct dirent entry;
+} DIR;
 
 int dirfd(DIR *dir);
 

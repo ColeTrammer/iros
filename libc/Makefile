@@ -64,6 +64,7 @@ $(BUILDDIR)/libc/string/strtok.o
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libc/assert/assert.o \
+$(BUILDDIR)/libc/dirent/dirent.o \
 $(BUILDDIR)/libc/errno/errno.o \
 $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \

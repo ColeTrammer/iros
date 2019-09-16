@@ -60,6 +60,7 @@ struct file *dev_open(struct inode *inode, int *error) {
     file->position = 0;
     file->f_op = &dev_f_op;
     file->device = inode->device;
+    file->flags = inode->flags;
 
     if (((struct device*) inode->private_data)->ops->open) {
         *error = ((struct device*) inode->private_data)->ops->open(inode->private_data);
@@ -80,6 +81,10 @@ int dev_close(struct file *file) {
 }
 
 ssize_t dev_read(struct file *file, void *buffer, size_t len) {
+    if (file->flags & FS_DIR) {
+        return -EISDIR;
+    }
+
     struct inode *inode = fs_inode_get(file->inode_idenifier);
     if (((struct device*) inode->private_data)->ops->read) {
         return ((struct device*) inode->private_data)->ops->read(inode->private_data, buffer, len);

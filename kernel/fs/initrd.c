@@ -59,18 +59,33 @@ struct tnode *initrd_lookup(struct inode *inode, const char *name) {
 
 struct file *initrd_open(struct inode *inode, int *error) {
     struct initrd_file_entry *entry = (struct initrd_file_entry*) inode->private_data;
-    if (!entry) {
-        *error = -ENOENT;
+    
+    if (!inode) {
+        *error = -EINVAL;
         return NULL;
     }
 
-    struct file *file = calloc(sizeof(struct file), 1);
+    /* Means we are on root */
+    if (!entry) {
+        struct file *file = calloc(1, sizeof(struct file));
+        file->inode_idenifier = inode->index;
+        file->length = 0;
+        file->start = 0;
+        file->position = 0;
+        file->f_op = &initrd_f_op;
+        file->device = inode->device;
+        file->flags = inode->flags;
+        return file;
+    }
+
+    struct file *file = calloc(1, sizeof(struct file));
     file->inode_idenifier = inode->index;
     file->length = entry->length;
     file->start = entry->offset;
     file->position = 0;
     file->f_op = &initrd_f_op;
     file->device = inode->device;
+    file->flags = inode->flags;
     return file;
 }
 
@@ -80,6 +95,10 @@ int initrd_close(struct file *file) {
 }
 
 ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
+    if (file->flags & FS_DIR) {
+        return -EISDIR;
+    }
+
     size_t len = MIN(_len, file->length - (file->position - file->start));
     memcpy(buffer, (void*) (initrd_start + file->start + file->position), len);
     return (ssize_t) len;

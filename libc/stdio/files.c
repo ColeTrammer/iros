@@ -196,6 +196,15 @@ int getchar() {
     return fgetc(stdin);
 }
 
+int putchar(int c) {
+    int ret = printf("%c", (char) c);
+    if (ret < 0) {
+        return EOF;
+    }
+
+    return (unsigned char) c;
+}
+
 int fgetpos(FILE *stream, fpos_t *pos) {
     /* I doubt this is the intended behavior */
     *pos = stream->pos;

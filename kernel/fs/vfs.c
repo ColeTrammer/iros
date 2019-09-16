@@ -111,19 +111,15 @@ struct file *fs_open(const char *file_name, int *error) {
 
     /* We Don't Support Not Root Paths */
     if (file_name[0] != '/') {
+        debug_log("Invalid path\n");
         *error = -ENOENT;
         return NULL;
     }
 
     struct inode *inode = iname(file_name);
     if (inode == NULL) {
+        debug_log("Inode not found\n");
         *error = -ENOENT;
-        return NULL;
-    }
-
-    /* Can't open directories (at least not yet...) */
-    if (inode->flags & FS_DIR) {
-        *error = -EISDIR;
         return NULL;
     }
     
@@ -265,9 +261,10 @@ void init_vfs() {
 }
 
 char *get_full_path(char *cwd, const char *relative_path) {
-    size_t len = strlen(cwd) + strlen(relative_path) + 1;
+    size_t offset = relative_path[0] == '.' ? 1 : 0;
+    size_t len = strlen(cwd) + strlen(relative_path + offset) + 1;
     char *path = malloc(len);
     strcpy(path, cwd);
-    strcat(path, relative_path);
+    strcat(path, relative_path + offset);
     return path;
 }

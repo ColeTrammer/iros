@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
@@ -92,7 +93,6 @@ void arch_sys_open(struct process_state *process_state) {
     int flags = (int) process_state->cpu_state.rdx;
     mode_t mode = (mode_t) process_state->cpu_state.rcx;
     
-    (void) flags;
     (void) mode;
     
     assert(_path != NULL);
@@ -112,8 +112,15 @@ void arch_sys_open(struct process_state *process_state) {
     struct file *file = fs_open(path, &error);
 
     if (file == NULL) {
+        debug_log("File Not Found\n");
         free(path);
         SYS_RETURN((uint64_t) error);
+    }
+
+    /* Should probably be some other error instead */
+    if (!(file->flags & FS_DIR) && (flags & O_DIRECTORY)) {
+        free(path);
+        SYS_RETURN(-EINVAL);
     }
 
     /* Start at 3 because 0,1,2 are reserved for stdin, stdio, and stderr */
