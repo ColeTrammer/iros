@@ -102,8 +102,8 @@ struct tnode *iname(const char *_path) {
 
     struct inode *inode = parent->inode;
     
-    /* Shouldn't let you at a / at the end of a file name */
-    if ((path != NULL && path[0] == '/') && inode->flags & FS_FILE) {
+    /* Shouldn't let you at a / at the end of a file name or root */
+    if ((path != NULL && path[0] == '/') && ((inode->flags & FS_FILE) || (inode == inode->parent->inode))) {
         free(save_path);
         return NULL;
     }
@@ -157,11 +157,31 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
     }
 
     struct dirent *entry = (struct dirent*) buffer;
-    struct tnode *tnode = find_tnode_index(fs_inode_get(file->inode_idenifier)->tnode_list, file->position++);
+    struct inode *inode = fs_inode_get(file->inode_idenifier);
+    struct tnode *tnode = find_tnode_index(inode->tnode_list, file->position);
     if (!tnode) {
+        /* Traverse mount points as well */
+        size_t len = get_tnode_list_length(inode->tnode_list);
+        size_t mount_index = file->position - len;
+        size_t i = 0;
+        struct mount *mount = inode->mounts;
+        while (mount != NULL) {
+            if (i++ == mount_index) {
+                file->position++;
+
+                entry->d_ino = mount->super_block->root->inode->index;
+                strcpy(entry->d_name, mount->name);
+                return (ssize_t) len;
+            }
+
+            mount = mount->next;
+        }
+
         /* Should sent an error that indicates there's no more to read (like EOF) */
         return -EINVAL;
     }
+
+    file->position++;
 
     entry->d_ino = tnode->inode->index;
     strcpy(entry->d_name, tnode->name);

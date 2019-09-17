@@ -67,7 +67,9 @@ struct tnode *find_tnode_inode(struct tnode_list *list, struct inode *inode) {
 }
 
 struct tnode *find_tnode_index(struct tnode_list *list, size_t index) {
-    assert(list != NULL);
+    if (list == NULL) {
+        return NULL;
+    }
 
     struct tnode_list *start = list;
     size_t i = 0;
@@ -80,4 +82,19 @@ struct tnode *find_tnode_index(struct tnode_list *list, size_t index) {
     }
 
     return NULL;
+}
+
+size_t get_tnode_list_length(struct tnode_list *list) {
+    if (list == NULL) {
+        return 0;
+    }
+
+    struct tnode_list *start = list;
+    size_t i = 0;
+    while (start != NULL) {
+        i++;
+        start = start->next;
+    }
+
+    return i;
 }
