@@ -28,8 +28,16 @@ static struct inode_operations dev_i_op = {
     &dev_lookup, &dev_open
 };
 
+static struct inode_operations dev_dir_i_op = {
+    &dev_lookup, &dev_open
+};
+
 static struct file_operations dev_f_op = {
     &dev_close, &dev_read, &dev_write
+};
+
+static struct file_operations dev_dir_f_op = {
+    NULL, NULL, NULL
 };
 
 struct tnode *dev_lookup(struct inode *inode, const char *name) {
@@ -53,21 +61,16 @@ struct tnode *dev_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *dev_open(struct inode *inode, int *error) {
-    if (inode->flags & FS_DIR) {
-        *error = -EISDIR;
-        return NULL;
-    }
-
     struct file *file = calloc(sizeof(struct file), 1);
     file->inode_idenifier = inode->index;
     file->length = inode->size;
     file->start = 0;
     file->position = 0;
-    file->f_op = &dev_f_op;
+    file->f_op = inode->flags & FS_FILE ? &dev_f_op : &dev_dir_f_op;
     file->device = inode->device;
     file->flags = inode->flags;
 
-    if (((struct device*) inode->private_data)->ops->open) {
+    if (inode->private_data && ((struct device*) inode->private_data)->ops->open) {
         *error = ((struct device*) inode->private_data)->ops->open(inode->private_data);
     }
 
@@ -81,7 +84,6 @@ int dev_close(struct file *file) {
         error = ((struct device*) inode->private_data)->ops->close(inode->private_data);
     }
 
-    free(file);
     return error;
 }
 
@@ -118,7 +120,7 @@ struct tnode *dev_mount(struct file_system *current_fs) {
 
     root->device = 0;
     root->flags = FS_DIR;
-    root->i_op = &dev_i_op;
+    root->i_op = &dev_dir_i_op;
     root->index = fs_get_next_inode_id();
     init_spinlock(&root->lock);
     root->mode = 0;

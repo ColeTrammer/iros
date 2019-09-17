@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/dev.h>
@@ -131,15 +132,53 @@ struct file *fs_open(const char *file_name, int *error) {
 }
 
 int fs_close(struct file *file) {
-    return file->f_op->close(file);
+    int error = 0;
+    if (file->f_op->close) {
+        error = file->f_op->close(file);
+    }
+
+    free(file);
+    return error;
+}
+
+/* Default dir read: works for file systems completely cached in memory */
+static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
+    if (len != sizeof(struct dirent)) {
+        return -EINVAL;
+    }
+
+    debug_log("Default dir read\n");
+
+    struct dirent *entry = (struct dirent*) buffer;
+    struct tnode *tnode = find_tnode_index(fs_inode_get(file->inode_idenifier)->tnode_list, file->position++);
+    if (!tnode) {
+        /* Should sent an error that indicates there's no more to read (like EOF) */
+        return -EINVAL;
+    }
+
+    entry->d_ino = tnode->inode->index;
+    strcpy(entry->d_name, tnode->name);
+    return (ssize_t) len;
 }
 
 ssize_t fs_read(struct file *file, void *buffer, size_t len) {
-    return file->f_op->read(file, buffer, len);
+    if (file->f_op->read) {
+        return file->f_op->read(file, buffer, len);
+    }
+
+    if (file->flags & FS_DIR) {
+        return default_dir_read(file, buffer, len);
+    }
+
+    return -EINVAL;
 }
 
 ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
-    return file->f_op->write(file, buffer, len);
+    if (file->f_op->write) {
+        return file->f_op->write(file, buffer, len);
+    }
+
+    return -EINVAL;
 }
 
 int fs_seek(struct file *file, off_t offset, int whence) {
