@@ -42,8 +42,6 @@ void arch_sys_exit(struct process_state *process_state) {
 void arch_sys_sbrk(struct process_state *process_state) {
     intptr_t increment = process_state->cpu_state.rsi;
 
-    debug_log("SBRK Called: [ %#.16lX ]\n", increment);
-
     void *res;
     if (increment < 0) {
         res = add_vm_pages_end(0, VM_PROCESS_HEAP);
