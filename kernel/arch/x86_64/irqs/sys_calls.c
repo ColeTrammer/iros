@@ -100,14 +100,7 @@ void arch_sys_open(struct process_state *process_state) {
     int error = 0;
 
     struct process *process = get_current_process();
-    char *path;
-    if (_path[0] != '/') {
-        path = get_full_path(process->cwd, _path);
-        debug_log("PATH: [ %s ]\n", path);
-    } else {
-        path = malloc(strlen(_path) + 1);
-        strcpy(path, _path);
-    }
+    char *path = get_full_path(process->cwd, _path);
 
     struct file *file = fs_open(path, &error);
 
@@ -181,13 +174,8 @@ void arch_sys_execve(struct process_state *process_state) {
     assert(envp != NULL);
 
     struct process *current = get_current_process();
-    char *path;
-    if (file_name[0] != '/') {
-        path = get_full_path(current->cwd, file_name);
-    } else {
-        path = malloc(strlen(file_name) + 1);
-        strcpy(path, file_name);
-    }
+
+    char *path = get_full_path(current->cwd, file_name);
 
     debug_log("Exec Process: [ %d, %s ]\n", current->pid, path);
 
@@ -339,6 +327,11 @@ void arch_sys_getcwd(struct process_state *process_state) {
 
 void arch_sys_chdir(struct process_state *process_state) {
     const char *_path = (const char*) process_state->cpu_state.rsi;
+
+    /* Should probably not do this */
+    if (_path[strlen(_path) - 1] == '/') {
+        ((char*) _path)[strlen(_path) - 1] = '\0';
+    }
 
     debug_log("Chdir: [ %s ]\n", _path);
 

@@ -33,12 +33,6 @@ void sched_add_process(struct process *process) {
     list_start->prev = process;
     list_end = process;
 
-    struct process *p = list_start;
-    do {
-        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, (uintptr_t) p, (uintptr_t) p->prev, (uintptr_t) p->next);
-        p = p->next;
-    } while (p != list_start);
-
     spin_unlock(&process_list_lock);
 }
 
@@ -66,12 +60,6 @@ void sched_remove_process(struct process *process) {
 
     current->next = current->next->next;
     current->next->prev = current;
-
-    struct process *p = list_start;
-    do {
-        debug_log("Process: [ %d, %#.16lX, %#.16lX, %#.16lX ]\n", p->pid, (uintptr_t) p, (uintptr_t) p->prev, (uintptr_t) p->next);
-        p = p->next;
-    } while (p != list_start);
 
     spin_unlock(&process_list_lock);
 }

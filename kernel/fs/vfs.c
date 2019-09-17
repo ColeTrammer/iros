@@ -155,8 +155,6 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         return -EINVAL;
     }
 
-    debug_log("Default dir read\n");
-
     struct dirent *entry = (struct dirent*) buffer;
     struct tnode *tnode = find_tnode_index(fs_inode_get(file->inode_idenifier)->tnode_list, file->position++);
     if (!tnode) {
@@ -308,9 +306,25 @@ void init_vfs() {
 }
 
 char *get_full_path(char *cwd, const char *relative_path) {
-    size_t len = strlen(cwd) + strlen(relative_path) + 1;
+    if (relative_path[0] == '/') {
+        char *path = malloc(strlen(relative_path) + 1);
+        strcpy(path, relative_path);
+        return path;
+    }
+
+    if (cwd[0] == '/' && cwd[1] == '\0') {
+        size_t len = strlen(relative_path) + 2;
+        char *path = malloc(len);
+        path[0] = '/';
+        strcpy(path + 1, relative_path);
+        return path;
+    }
+
+    size_t len = strlen(cwd) + strlen(relative_path) + 2;
     char *path = malloc(len);
     strcpy(path, cwd);
+    strcat(path, "/");
     strcat(path, relative_path);
+
     return path;
 }
