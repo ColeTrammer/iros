@@ -152,7 +152,7 @@ void dev_add(struct device *device, const char *_path) {
     *_name = '\0';
     _name++;
 
-    struct inode *parent = iname(path);
+    struct tnode *parent = iname(path);
     if (parent == NULL) {
         /* Probably should add the directory that is missing */
         free(path);
@@ -185,35 +185,33 @@ void dev_add(struct device *device, const char *_path) {
     tnode->name = name;
     tnode->inode = to_add;
 
-    parent->tnode_list = add_tnode(parent->tnode_list, tnode);
+    parent->inode->tnode_list = add_tnode(parent->inode->tnode_list, tnode);
 
     free(path);
 }
 
 void dev_remove(const char *_path) {
     char *path = to_dev_path(_path);
-    char *name = strrchr(path, '/') + 1;
 
-    struct inode *inode = iname(path);
-    if (inode == NULL) {
+    struct tnode *tnode = iname(path);
+    if (tnode == NULL) {
         /* This probably shouldn't happen */
         free(path);
         return;
     }
 
     /* Frees the device */
-    if (((struct device*) inode->private_data)->ops->remove) {
-        ((struct device*) inode->private_data)->ops->remove(inode->private_data);
+    if (((struct device*) tnode->inode->private_data)->ops->remove) {
+        ((struct device*) tnode->inode->private_data)->ops->remove(tnode->inode->private_data);
     }
-    free(inode->private_data);
+    free(tnode->inode->private_data);
 
     /* Removes tnode */
-    struct tnode *tnode = find_tnode(inode->parent->tnode_list, name);
-    inode->parent->tnode_list = remove_tnode(inode->parent->tnode_list, tnode);
+    tnode->inode->parent->inode->tnode_list = remove_tnode(tnode->inode->parent->inode->tnode_list, tnode);
+    free(tnode->inode);
     free(tnode->name);
     free(tnode);
 
-    free(inode);
     free(path);
 }
 

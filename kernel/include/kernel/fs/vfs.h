@@ -8,7 +8,7 @@
 
 void init_vfs();
 
-struct inode *iname(const char *path);
+struct tnode *iname(const char *path);
 
 struct file *fs_open(const char *file_name, int *error);
 int fs_close(struct file *file);

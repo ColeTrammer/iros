@@ -18,7 +18,7 @@
 static struct file_system *file_systems;
 static struct mount *root;
 
-struct inode *iname(const char *_path) {
+struct tnode *iname(const char *_path) {
     assert(root != NULL);
     assert(root->super_block != NULL);
 
@@ -29,11 +29,6 @@ struct inode *iname(const char *_path) {
 
     assert(t_root->inode != NULL);
     assert(t_root->inode->i_op != NULL);
-    
-    /* Means we are on root */
-    if (_path[1] == '\0') {
-        return t_root->inode;
-    }
 
     char *path = malloc(strlen(_path) + 1);
     char *save_path = path;
@@ -42,7 +37,7 @@ struct inode *iname(const char *_path) {
     struct tnode *parent = t_root;
     
     /* Main VFS Loop */
-    char *last_slash = strpbrk(path + 1, "/");
+    char *last_slash = strchr(path + 1, '/');
     while (parent != NULL && path != NULL && path[1] != '\0') {
         /* Exit if we're trying to lookup past a file */
         if (!(parent->inode->flags & FS_DIR)) {
@@ -50,7 +45,19 @@ struct inode *iname(const char *_path) {
             return NULL;
         }
 
-        /* Ensures passed name will be corrent */
+        /* Check for . and .. */
+        if (path[1] == '.' && (path[2] == '/' || path[2] == '\0')) {
+            /* Dot means current directory so just skip processing */
+            goto vfs_loop_end;
+        }
+
+        if (path[1] == '.' && path[2] == '.' && (path[3] == '/' || path[3] == '\0')) {
+            /* Simply go to parent */
+            parent = parent->inode->parent;
+            goto vfs_loop_end;
+        }
+
+        /* Ensures passed name will be correct */
         if (last_slash != NULL) {
             *last_slash = '\0';
         }
@@ -101,7 +108,7 @@ struct inode *iname(const char *_path) {
     }
 
     free(save_path);
-    return inode;
+    return parent;
 }
 
 struct file *fs_open(const char *file_name, int *error) {
@@ -117,20 +124,21 @@ struct file *fs_open(const char *file_name, int *error) {
         return NULL;
     }
 
-    struct inode *inode = iname(file_name);
-    if (inode == NULL) {
-        debug_log("Inode not found\n");
+    struct tnode *tnode = iname(file_name);
+    if (tnode == NULL) {
+        debug_log("Tnode not found\n");
         *error = -ENOENT;
         return NULL;
     }
     
-    if (!fs_inode_get(inode->index)) {
-        fs_inode_put(inode);
+    if (!fs_inode_get(tnode->inode->index)) {
+        fs_inode_put(tnode->inode);
     }
 
-    return inode->i_op->open(inode, error);
+    return tnode->inode->i_op->open(tnode->inode, error);
 }
 
+/* Should potentially remove inode from inode_store */
 int fs_close(struct file *file) {
     int error = 0;
     if (file->f_op->close) {
@@ -222,7 +230,7 @@ int fs_mount(const char *type, const char *path, dev_t device) {
                 mount->device = device;
                 file_system->mount(file_system);
                 mount->super_block = file_system->super_block;
-                mount->super_block->root->inode->parent = mount->super_block->root->inode;
+                mount->super_block->root->inode->parent = mount->super_block->root;
                 root = mount;
                 return 0;
             }
@@ -238,21 +246,21 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             char *parent_end = strrchr(path_copy, '/');
             *parent_end = '\0';
 
-            struct inode *mount_on;
+            struct tnode *mount_on;
             
             /* Means we are mounting to root */
             if (parent_end == path_copy) {
-                mount_on = root->super_block->root->inode;
+                mount_on = root->super_block->root;
             } else {
                 mount_on = iname(path);
             }
             
-            if (mount_on == NULL || !(mount_on->flags & FS_DIR)) {
+            if (mount_on == NULL || !(mount_on->inode->flags & FS_DIR)) {
                 free(path_copy);
                 return -1;
             }
 
-            struct mount **list = &mount_on->mounts;
+            struct mount **list = &mount_on->inode->mounts;
             while (*list != NULL) {
                 list = &(*list)->next;
             }
@@ -300,10 +308,9 @@ void init_vfs() {
 }
 
 char *get_full_path(char *cwd, const char *relative_path) {
-    size_t offset = relative_path[0] == '.' ? 1 : 0;
-    size_t len = strlen(cwd) + strlen(relative_path + offset) + 1;
+    size_t len = strlen(cwd) + strlen(relative_path) + 1;
     char *path = malloc(len);
     strcpy(path, cwd);
-    strcat(path, relative_path + offset);
+    strcat(path, relative_path);
     return path;
 }

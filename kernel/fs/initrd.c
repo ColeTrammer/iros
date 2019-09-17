@@ -142,7 +142,7 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
         inode->device = 0;
         inode->i_op = &initrd_i_op;
         inode->private_data = entry + i;
-        inode->parent = root;
+        inode->parent = t_root;
         init_spinlock(&inode->lock);
 
         struct tnode *to_add = malloc(sizeof(struct tnode));
