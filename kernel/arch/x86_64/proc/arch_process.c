@@ -14,12 +14,12 @@
 #include <kernel/hal/output.h>
 
 /* Default Args And Envp Passed to First Program */
-static char *test_argv[4] = {
-    "ARGV 01", "ARGV 02", "ARGV 03", NULL
+static char *test_argv[2] = {
+    "shell", NULL
 };
 
-static char *test_envp[4] = {
-    "ENVP 01", "ENVP 02", "ENVP 03", NULL
+static char *test_envp[2] = {
+    "OS=os_2", NULL
 };
 
 static void kernel_idle() {

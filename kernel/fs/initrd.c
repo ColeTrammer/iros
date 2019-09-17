@@ -103,8 +103,14 @@ ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
         return -EISDIR;
     }
 
-    size_t len = MIN(_len, file->length - (file->position - file->start));
-    memcpy(buffer, (void*) (initrd_start + file->start + file->position), len);
+    size_t len = MIN(_len, file->length - file->position + 1);
+    if (len <= 1) {
+        return 0;
+    }
+
+    memcpy(buffer, (void*) (initrd_start + file->start + file->position), len - 1);
+    ((char*) buffer)[len - 1] = '\0';
+    file->position += len - 1;
     return (ssize_t) len;
 }
 

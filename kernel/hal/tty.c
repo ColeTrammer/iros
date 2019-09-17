@@ -100,6 +100,7 @@ static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
         if (buf[i] == '\n') {
             /* Could instead get more input */
             data->input_buffer_offset = -1;
+            i++;
             break;
         }
     }

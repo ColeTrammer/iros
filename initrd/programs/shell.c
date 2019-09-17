@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-char *read_line() {
+char *read_line(FILE *input) {
     int sz = 300;
     int pos = 0;
     char *buffer = malloc(sz);
@@ -15,7 +15,11 @@ char *read_line() {
     for (;;) {
         assert(pos < sz);
 
-        int c = getchar();
+        int c = fgetc(input);
+
+        if (c == EOF && pos == 0) {
+            return NULL;
+        }
 
         if (c == EOF || c == '\n') {
             buffer[pos] = '\n';
@@ -125,21 +129,49 @@ static char *__getcwd() {
     return cwd;
 }
 
-int main() {
+int main(int argc, char **argv) {
+    FILE *input = stdin;
+    if (argc == 2) {
+        input = fopen(argv[1], "r");
+        if (input == NULL) {
+            perror("Shell");
+            return EXIT_FAILURE;
+        }
+    } else if (argc > 2) {
+        printf("Usage: %s [script]\n", argv[0]);
+        return EXIT_SUCCESS;
+    }
+
     for (;;) {
-        char *cwd = __getcwd();
-        printf("%s$ ", cwd);
-        free(cwd);
+        if (input == stdin) {
+            char *cwd = __getcwd();
+            printf("%s$ ", cwd);
+            free(cwd);
+        }
         fflush(stdout);
 
-        char *line = read_line();
-        
+        char *line = read_line(input);
+
+        /* Check if we reached EOF */
+        if (line == NULL) {
+            free(line);
+            break;
+        }
+
         /* Check If The Line Was Empty */
-        if (line == NULL || line[0] == '\n') {
+        if (line[0] == '\n') {
+            free(line);
             continue;
         }
 
         char **args = split_line(line);
+
+        if (args[0] == NULL) {
+            free(line);
+            free(args);
+            continue;
+        }
+
         int status = run_program(args);
 
         free(line);
@@ -148,6 +180,10 @@ int main() {
         if (status == SHELL_EXIT) {
             break;
         }
+    }
+
+    if (input != stdin) {
+        fclose(input);
     }
 
     return EXIT_SUCCESS;
