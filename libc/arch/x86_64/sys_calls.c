@@ -103,3 +103,27 @@ pid_t getpid() {
                   "movl %%eax, %0" : "=r"(ret) : : "rdi", "eax" );
     return ret;
 }
+
+char *getcwd(char *buf, size_t size) {
+    char *ret;
+    asm volatile( "movq $11, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movq %2, %%rdx\n"\
+                  "int $0x80\n"\
+                  "movq %%rax, %0" : "=r"(ret) : "r"(buf), "r"(size) : "rdi", "rsi", "rdx", "rax" );
+
+    if (ret == NULL) {
+        errno = ERANGE;
+    }
+
+    return ret;
+}
+
+int chdir(const char *path) {
+    int ret;
+    asm volatile( "movq $12, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path) : "rdi", "rsi", "eax" );
+    __SYSCALL_TO_ERRNO(ret);
+}

@@ -323,3 +323,38 @@ void arch_sys_waitpid(struct process_state *process_state) {
 void arch_sys_getpid(struct process_state *process_state) {
     SYS_RETURN(get_current_process()->pid);
 }
+
+void arch_sys_getcwd(struct process_state *process_state) {
+    char *buffer = (char*) process_state->cpu_state.rsi;
+    size_t size = (size_t) process_state->cpu_state.rdx;
+
+    struct process *current = get_current_process();
+    if (strlen(current->cwd) >= size) {
+        SYS_RETURN((uint64_t) NULL);
+    }
+
+    strcpy(buffer, current->cwd);
+    SYS_RETURN((uint64_t) buffer);
+}
+
+void arch_sys_chdir(struct process_state *process_state) {
+    const char *_path = (const char*) process_state->cpu_state.rsi;
+
+    debug_log("Chdir: [ %s ]\n", _path);
+
+    struct process *current = get_current_process();
+    if (_path[0] != '/') {
+        char *temp = get_full_path(current->cwd, _path);
+        free(current->cwd);
+        current->cwd = malloc(strlen(temp) + 1);
+        strcpy(current->cwd, temp);
+        free(temp);
+    } else {
+        free(current->cwd);
+        current->cwd = malloc(strlen(_path) + 1);
+        strcpy(current->cwd, _path);
+    }
+
+    /* Should error if the directory is nonsense */
+    SYS_RETURN(0);
+}

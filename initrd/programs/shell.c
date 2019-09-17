@@ -46,10 +46,50 @@ char **split_line(char *line) {
     return tokens;
 }
 
+#define SHELL_EXIT 1
+#define SHELL_CONTINUE 0
+
+static int op_exit(char **args) {
+    if (args[1] != NULL) {
+        printf("Usage: %s\n", args[0]);
+        return SHELL_CONTINUE;
+    }
+
+    /* Exit */
+    return SHELL_EXIT;
+}
+
+static int op_cd(char **args) {
+    if (!args[1] || args[2]) {
+        printf("Usage: %s <dir>\n", args[0]);
+        return SHELL_CONTINUE;
+    }
+
+    int ret = chdir(args[1]);
+    if (ret != 0) {
+        perror("Shell");
+    }
+
+    return SHELL_CONTINUE;
+}
+
+struct builtin_op {
+    char name[16];
+    int (*op)(char **args);
+};
+
+#define NUM_BUILTINS 2
+
+static struct builtin_op builtin_ops[NUM_BUILTINS] = {
+    { "exit", op_exit },
+    { "cd", op_cd }
+};
+
 int run_program(char **args) {
-    if (strcmp(args[0], "exit") == 0) {
-        /* Exit The Shell */
-        return 0;
+    for (size_t i = 0; i < NUM_BUILTINS; i++) {
+        if (strcmp(args[0], builtin_ops[i].name) == 0) {
+            return builtin_ops[i].op(args);
+        }
     }
 
     pid_t pid = fork();
@@ -67,12 +107,29 @@ int run_program(char **args) {
         } while (!WIFEXITED(status));
     }
 
-    return 1;
+    return SHELL_CONTINUE;
+}
+
+static char *__getcwd() {
+    size_t size = 50;
+    char *buffer = malloc(size);
+    char *cwd = getcwd(buffer, size);
+    
+    while (cwd == NULL) {
+        free(buffer);
+        size *= 2;
+        buffer = malloc(size);
+        cwd = getcwd(buffer, size);
+    }
+
+    return cwd;
 }
 
 int main() {
     for (;;) {
-        printf("> ");
+        char *cwd = __getcwd();
+        printf("%s$ ", cwd);
+        free(cwd);
         fflush(stdout);
 
         char *line = read_line();
@@ -88,7 +145,7 @@ int main() {
         free(line);
         free(args);
 
-        if (status != 1) {
+        if (status == SHELL_EXIT) {
             break;
         }
     }

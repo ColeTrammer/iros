@@ -74,3 +74,5 @@ sys_call_table:
     .quad arch_sys_execve
     .quad arch_sys_waitpid
     .quad arch_sys_getpid
+    .quad arch_sys_getcwd
+    .quad arch_sys_chdir
