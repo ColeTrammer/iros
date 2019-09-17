@@ -102,8 +102,8 @@ struct tnode *iname(const char *_path) {
 
     struct inode *inode = parent->inode;
     
-    /* Shouldn't let you at a / at the end of a file name or root */
-    if ((path != NULL && path[0] == '/') && ((inode->flags & FS_FILE) || (inode == inode->parent->inode))) {
+    /* Shouldn't let you at a / at the end of a file name or root (but only if the path is // and not /./) */
+    if ((path != NULL && path[0] == '/') && ((inode->flags & FS_FILE) || (inode == inode->parent->inode && strlen(_path) == 2))) {
         free(save_path);
         return NULL;
     }
