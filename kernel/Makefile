@@ -12,7 +12,7 @@ LDFLAGS?=
 LIBS?=
 
 # Include options that should always be set
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -std=gnu11
+CFLAGS:=$(CFLAGS) -ffreestanding -Werror -Wall -Wextra -std=gnu11
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
 LDFLAFS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc # links against libk and libgcc

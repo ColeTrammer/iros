@@ -5,7 +5,7 @@ LDFLAGS?=
 LIBS?=
 
 # Include options that should always be set
-CFLAGS:=$(CFLAGS) -Wall -Wextra -std=gnu11
+CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra -std=gnu11
 CPPFLAGS:=$(CPPFLAGS)
 LDFLAFS:=$(LDFLAGS)
 LIBS:=$(LIBS)
