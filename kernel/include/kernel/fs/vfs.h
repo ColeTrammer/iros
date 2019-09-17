@@ -22,5 +22,6 @@ struct file *fs_clone(struct file *file);
 void load_fs(struct file_system *fs);
 
 char *get_full_path(char *cwd, const char *relative_path);
+char *get_tnode_path(struct tnode *tnode);
 
 #endif /* _KERNEL_FS_VFS_H */

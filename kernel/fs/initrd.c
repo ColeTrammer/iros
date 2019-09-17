@@ -126,7 +126,6 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
     init_spinlock(&root->lock);
 
     struct tnode *t_root = malloc(sizeof(struct tnode));
-    t_root->name = "/";
     t_root->inode = root;
 
     current_fs->super_block = &super_block;

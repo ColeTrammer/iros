@@ -29,6 +29,7 @@ struct tnode *iname(const char *_path) {
 
     assert(t_root->inode != NULL);
     assert(t_root->inode->i_op != NULL);
+    assert(_path[0] == '/');
 
     char *path = malloc(strlen(_path) + 1);
     char *save_path = path;
@@ -228,6 +229,7 @@ int fs_mount(const char *type, const char *path, dev_t device) {
                 mount->device = device;
                 file_system->mount(file_system);
                 mount->super_block = file_system->super_block;
+                mount->super_block->root->name = "/";
                 mount->super_block->root->inode->parent = mount->super_block->root;
                 root = mount;
                 return 0;
@@ -272,6 +274,7 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             mount->next = NULL;
             file_system->mount(file_system);
             mount->super_block = file_systems->super_block;
+            mount->super_block->root->name = name;
             mount->super_block->root->inode->parent = mount_on;
 
             free(path_copy);
@@ -327,4 +330,39 @@ char *get_full_path(char *cwd, const char *relative_path) {
     strcat(path, relative_path);
 
     return path;
+}
+
+char *get_tnode_path(struct tnode *tnode) {
+    /* Check if root */
+    if (tnode == tnode->inode->parent) {
+        char *ret = malloc(2);
+        strcpy(ret, "/");
+        return ret;
+    }
+
+    ssize_t size = 15;
+    char **name_buffer = malloc(size * sizeof(char**));
+
+    ssize_t len = 1;
+    ssize_t i;
+    for (i = 0; tnode->inode->parent != tnode; i++) {
+        name_buffer[i] = tnode->name;
+        len += strlen(tnode->name) + 1;
+        tnode = tnode->inode->parent;
+
+        if (i >= size) {
+            size *= 2;
+            name_buffer = realloc(name_buffer, size);
+        }
+    }
+
+    char *ret = malloc(len);
+    ret[0] = '\0';
+    for (i--; i>= 0; i--) {
+        strcat(ret, "/");
+        strcat(ret, name_buffer[i]);
+    }
+
+    free(name_buffer);
+    return ret;
 }

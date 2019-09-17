@@ -333,21 +333,18 @@ void arch_sys_chdir(struct process_state *process_state) {
         ((char*) _path)[strlen(_path) - 1] = '\0';
     }
 
-    debug_log("Chdir: [ %s ]\n", _path);
+    struct process *process = get_current_process();
+    char *path = get_full_path(process->cwd, _path);
 
-    struct process *current = get_current_process();
-    if (_path[0] != '/') {
-        char *temp = get_full_path(current->cwd, _path);
-        free(current->cwd);
-        current->cwd = malloc(strlen(temp) + 1);
-        strcpy(current->cwd, temp);
-        free(temp);
-    } else {
-        free(current->cwd);
-        current->cwd = malloc(strlen(_path) + 1);
-        strcpy(current->cwd, _path);
+    struct tnode *tnode = iname(path);
+    if (!tnode) {
+        free(path);
+        SYS_RETURN(-ENOENT);
     }
 
-    /* Should error if the directory is nonsense */
+    process->cwd = get_tnode_path(tnode);
+    debug_log("Chdir: [ %s ]\n", process->cwd);
+
+    free(path);
     SYS_RETURN(0);
 }

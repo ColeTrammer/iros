@@ -115,7 +115,6 @@ struct tnode *dev_mount(struct file_system *current_fs) {
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
 
-    t_root->name = "/";
     t_root->inode = root;
 
     root->device = 0;
