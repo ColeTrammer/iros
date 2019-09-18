@@ -37,13 +37,14 @@ char **split_line(char *line) {
     char **tokens = malloc(sz * sizeof(char*));
     char *token;
 
-    token = strtok(line, " \t\r\n\a");
+    char *separators = " \t\r\n\a";
+    token = strtok(line, separators);
 
     while (token != NULL) {
         assert(pos < sz);
 
         tokens[pos++] = token;
-        token = strtok(NULL, " \t\r\n\a");
+        token = strtok(NULL, separators);
     }
 
     tokens[pos] = NULL;
@@ -77,16 +78,27 @@ static int op_cd(char **args) {
     return SHELL_CONTINUE;
 }
 
+static int op_echo(char **args) {
+    if (!args[1] || args[2]) {
+        printf("Usage: %s <string>\n", args[0]);
+        return SHELL_CONTINUE;
+    }
+
+    puts(args[1]);
+    return SHELL_CONTINUE;
+}
+
 struct builtin_op {
     char name[16];
     int (*op)(char **args);
 };
 
-#define NUM_BUILTINS 2
+#define NUM_BUILTINS 3
 
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit },
-    { "cd", op_cd }
+    { "cd", op_cd },
+    { "echo", op_echo }
 };
 
 int run_program(char **args) {
