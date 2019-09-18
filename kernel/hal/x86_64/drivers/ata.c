@@ -61,6 +61,10 @@ static uint16_t ata_read_word(struct ata_port_info *info) {
     return inw(info->io_base + ATA_DATA_OFFSET);
 }
 
+static void ata_write_word(struct ata_port_info *info, uint16_t val) {
+    outw(info->io_base + ATA_DATA_OFFSET, val);
+}
+
 static bool ata_indentify(struct ata_port_info *info, uint16_t *buf) {
     ata_select_device(info);
 
@@ -133,8 +137,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, void *buffer, size
         }
 
         for (size_t i = 0; i < data->sector_size / sizeof(uint16_t); i++) {
-            *buf = ata_read_word(data->port_info);
-            buf++;
+            buf[j * data->sector_size + i] = ata_read_word(data->port_info);
         }
     }
 
@@ -145,7 +148,6 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, void *buffer, size
     return n * data->sector_size;
 }
 
-__attribute__((used))
 static ssize_t ata_write_sectors(struct ata_device_data *data, const void *buffer, size_t n) {
     if (n == 0) {
         return 0;
@@ -165,9 +167,9 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, const void *buffe
     ata_set_lda_offset_and_device(data->port_info, 0);
 
     ata_wait_ready(data->port_info);
-    ata_set_command(data->port_info, ATA_COMMAND_READ);
+    ata_set_command(data->port_info, ATA_COMMAND_WRITE);
 
-    uint16_t *buf = (uint16_t*) buffer;
+    const uint16_t *buf = (const uint16_t*) buffer;
 
     for (size_t j = 0; j < n; j++) {
         ata_wait(data->port_info);
@@ -178,13 +180,27 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, const void *buffe
                 enable_interrupts();
             }
 
+            /* Might have to also reset the drive */
             return -EIO;
         }
 
         for (size_t i = 0; i < data->sector_size / sizeof(uint16_t); i++) {
-            *buf = ata_read_word(data->port_info);
-            buf++;
+            ata_write_word(data->port_info, buf[j * data->sector_size + i]);
         }
+    }
+
+    /* Clear cache after writing */
+    ata_wait_not_busy(data->port_info);
+    ata_set_command(data->port_info, ATA_COMMAND_CACHE_FLUSH);
+    ata_wait_not_busy(data->port_info);
+
+    if (ata_get_error(data->port_info)) {
+        if (flags & INTERRUPS_ENABLED_FLAG) {
+            enable_interrupts();
+        }
+
+        /* Might have to also reset the drive */
+        return -EIO;
     }
 
     if (flags & INTERRUPS_ENABLED_FLAG) {
@@ -226,13 +242,21 @@ static ssize_t ata_read(struct device *device, void *buffer, size_t n) {
     return -EINVAL;
 }
 
+static ssize_t ata_write(struct device *device, const void *buffer, size_t n) {
+    if (n % ((struct ata_device_data*) device->private)->sector_size == 0) {
+        return ata_write_sectors(device->private, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
+    }
+
+    return -EINVAL;
+}
+
 static struct device_ops ata_ops = {
-    NULL, ata_read, NULL, NULL, NULL, NULL
+    NULL, ata_read, ata_write, NULL, NULL, NULL
 };
 
 static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {
     struct device *device = malloc(sizeof(struct device));
-    device->device_number = info->io_base;
+    device->device_number = info->io_base + info->is_slave;
     
     char num[2];
     num[0] = (char) (i + '0');

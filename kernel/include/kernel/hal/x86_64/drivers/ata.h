@@ -49,6 +49,8 @@
 #define ATA_STATUS_BSY (1 << 7)
 
 #define ATA_COMMAND_READ 0x20
+#define ATA_COMMAND_WRITE 0x30
+#define ATA_COMMAND_CACHE_FLUSH 0xE7
 #define ATA_COMMAND_INDENTIFY 0xEC
 
 struct ata_port_info {
