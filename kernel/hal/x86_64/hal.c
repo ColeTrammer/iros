@@ -4,6 +4,7 @@
 #include <sys/types.h>
 
 #include <kernel/hal/x86_64/gdt.h>
+#include <kernel/hal/x86_64/drivers/ata_pio.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
@@ -26,6 +27,7 @@ void init_hal() {
 void init_drivers() {
     init_keyboard();
     init_fdc();
+    init_ata_pio();
     init_pit();
     init_serial_port_device(SERIAL_COM1_PORT);
 
