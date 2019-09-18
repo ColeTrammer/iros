@@ -218,12 +218,12 @@ int fs_seek(struct file *file, off_t offset, int whence) {
     } else if (whence == SEEK_END) {
         new_position = file->length + offset;
     } else {
-        printf("Invalid arguments for fs_seek - whence: %d\n", whence);
-        abort();
+        debug_log("Invalid arguments for fs_seek - whence: %d\n", whence);
+        return -EINVAL;
     }
 
     if (new_position > file->length) {
-        return -1;
+        return -EINVAL;
     }
 
     file->position = new_position;
@@ -235,15 +235,15 @@ long fs_tell(struct file *file) {
 }
 
 void load_fs(struct file_system *fs) {
-    struct file_system **link = &file_systems;
-    while (*link != NULL) {
-        link = &(*link)->next;
-    }
+    assert(fs);
 
-    *link = fs;
+    fs->next = file_systems;
+    file_systems = fs;
 }
 
 int fs_mount(const char *type, const char *path, dev_t device) {
+    debug_log("Mounting FS: [ %s, %s ]\n", type, path);
+
     struct file_system *file_system = file_systems;
     while (file_system != NULL) {
         if (strcmp(file_system->name, type) == 0) {
@@ -274,10 +274,10 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             struct tnode *mount_on;
             
             /* Means we are mounting to root */
-            if (parent_end == path_copy) {
+            if (strlen(path_copy) == 0) {
                 mount_on = root->super_block->root;
             } else {
-                mount_on = iname(path);
+                mount_on = iname(path_copy);
             }
             
             if (mount_on == NULL || !(mount_on->inode->flags & FS_DIR)) {
@@ -298,7 +298,7 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             mount->device = device;
             mount->next = NULL;
             file_system->mount(file_system);
-            mount->super_block = file_systems->super_block;
+            mount->super_block = file_system->super_block;
             mount->super_block->root->name = name;
             mount->super_block->root->inode->parent = mount_on;
 
