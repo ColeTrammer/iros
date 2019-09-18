@@ -13,6 +13,8 @@
 #define ATA4_IO_BASE 0x168
 #define ATA4_CONTROL_BASE 0x366
 
+#define ATA_SECTOR_SIZE 512
+
 #define ATA_DATA_OFFSET 0
 #define ATA_ERROR_OFFSET 1
 #define ATA_FEATURES_OFFSET 1
@@ -58,6 +60,7 @@ struct ata_port_info {
 struct ata_device_data {
     struct ata_port_info *port_info;
     size_t sector_size;
+    size_t num_sectors;
 };
 
 void init_ata();
