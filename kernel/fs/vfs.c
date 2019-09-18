@@ -9,6 +9,7 @@
 
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/dev.h>
+#include <kernel/fs/ext2.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/initrd.h>
@@ -234,8 +235,12 @@ long fs_tell(struct file *file) {
 }
 
 void load_fs(struct file_system *fs) {
-    fs->next = file_systems;
-    file_systems = fs;
+    struct file_system **link = &file_systems;
+    while (*link != NULL) {
+        link = &(*link)->next;
+    }
+
+    *link = fs;
 }
 
 int fs_mount(const char *type, const char *path, dev_t device) {
@@ -318,6 +323,7 @@ struct file *fs_clone(struct file *file) {
 void init_vfs() {
     init_initrd();
     init_dev();
+    init_ext2();
 
     /* Mount INITRD as root */
     int error = fs_mount("initrd", "/", 0);
@@ -325,6 +331,10 @@ void init_vfs() {
 
     /* Mount dev at /dev */
     error = fs_mount("dev", "/dev", 0);
+    assert(error == 0);
+
+    /* Mount hdd0 at /mnt */
+    error = fs_mount("ext2", "/mnt", 0x1F0);
     assert(error == 0);
 }
 
