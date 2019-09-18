@@ -52,6 +52,6 @@
 #define ATA_COMMAND_READ 0x20
 #define ATA_COMMAND_INDENTIFY 0xEC
 
-void init_ata_pio();
+void init_ata();
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_ATA_PIO_H */

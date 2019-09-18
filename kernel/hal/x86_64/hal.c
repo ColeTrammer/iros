@@ -27,7 +27,7 @@ void init_hal() {
 void init_drivers() {
     init_keyboard();
     init_fdc();
-    init_ata_pio();
+    init_ata();
     init_pit();
     init_serial_port_device(SERIAL_COM1_PORT);
 

@@ -1,10 +1,10 @@
 #include <stdint.h>
 
 #include <kernel/hal/output.h>
-#include <kernel/hal/x86_64/drivers/ata_pio.h>
+#include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 
-void init_ata_pio() {
+void init_ata() {
     uint8_t init_status = inb(ATA1_IO_BASE + ATA_STATUS_OFFSET);
     debug_log("Ata initial status: [ %#.2X ]\n", init_status);
 
