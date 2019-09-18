@@ -12,9 +12,9 @@
 struct device;
 
 struct device_ops {
-    int (*open)(struct device *device);
-    ssize_t (*read)(struct device *device, void *buffer, size_t len);
-    ssize_t (*write)(struct device *device, const void *buffer, size_t len); 
+    int (*open)(struct device *device, struct file *file);
+    ssize_t (*read)(struct device *device, struct file *file, void *buffer, size_t len);
+    ssize_t (*write)(struct device *device, struct file *file, const void *buffer, size_t len); 
     int (*close)(struct device *device);
     void (*add)(struct device *device);
     void (*remove)(struct device *device);

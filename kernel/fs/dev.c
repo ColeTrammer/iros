@@ -71,7 +71,7 @@ struct file *dev_open(struct inode *inode, int *error) {
     file->flags = inode->flags;
 
     if (inode->private_data && ((struct device*) inode->private_data)->ops->open) {
-        *error = ((struct device*) inode->private_data)->ops->open(inode->private_data);
+        *error = ((struct device*) inode->private_data)->ops->open(inode->private_data, file);
     }
 
     return file;
@@ -94,7 +94,7 @@ ssize_t dev_read(struct file *file, void *buffer, size_t len) {
 
     struct inode *inode = fs_inode_get(file->inode_idenifier);
     if (((struct device*) inode->private_data)->ops->read) {
-        return ((struct device*) inode->private_data)->ops->read(inode->private_data, buffer, len);
+        return ((struct device*) inode->private_data)->ops->read(inode->private_data, file, buffer, len);
     }
 
     return -EINVAL;
@@ -103,7 +103,7 @@ ssize_t dev_read(struct file *file, void *buffer, size_t len) {
 ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->inode_idenifier);
     if (((struct device*) inode->private_data)->ops->write) {
-        return ((struct device*) inode->private_data)->ops->write(inode->private_data, buffer, len);
+        return ((struct device*) inode->private_data)->ops->write(inode->private_data, file, buffer, len);
     }
 
     return -EINVAL;

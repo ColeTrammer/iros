@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <kernel/hal/arch.h>
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
@@ -12,9 +13,13 @@
 
 #include <kernel/sched/process_sched.h>
 
-static ssize_t tty_write(struct device *tty, const void *buffer, size_t len) {
+static ssize_t tty_write(struct device *tty, struct file *file, const void *buffer, size_t len) {
     struct tty_data *data = (struct tty_data*) tty->private;
     const char *str = (const char*) buffer;
+
+    if (file->position != 0) {
+        return -EINVAL;
+    }
 
     spin_lock(&data->lock);
 
@@ -51,8 +56,12 @@ static ssize_t tty_write(struct device *tty, const void *buffer, size_t len) {
     return (ssize_t) len;
 }
 
-static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
+static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, size_t len) {
     struct tty_data *data = (struct tty_data*) tty->private;
+
+    if (file->position != 0) {
+        return -EINVAL;
+    }
 
     if (data->input_buffer_offset == -1) {
         int i = 0;
@@ -66,7 +75,7 @@ static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
             if (data->key_buffer.key == KEY_BACKSPACE) {
                 if (i > 0) {
                     data->x--;
-                    tty_write(tty, " ", 1);
+                    tty_write(tty, file, " ", 1);
                     data->x--;
                     set_vga_cursor(data->y, data->x);
                     i--;
@@ -78,7 +87,7 @@ static ssize_t tty_read(struct device *tty, void *buffer, size_t len) {
                 continue;
             }
 
-            tty_write(tty, &data->key_buffer.ascii, 1);
+            tty_write(tty, file, &data->key_buffer.ascii, 1);
             data->input_buffer[i++] = data->key_buffer.ascii;
 
             if (i >= data->input_buffer_length - 1) {

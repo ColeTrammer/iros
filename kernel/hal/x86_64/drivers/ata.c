@@ -10,6 +10,7 @@
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
+#include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 
 static void ata_wait(struct ata_port_info *info) {
@@ -101,7 +102,7 @@ static bool ata_indentify(struct ata_port_info *info, uint16_t *buf) {
     return true;
 }
 
-static ssize_t ata_read_sectors(struct ata_device_data *data, void *buffer, size_t n) {
+static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {
     if (n == 0) {
         return 0;
     } else if (n > 255) {
@@ -116,8 +117,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, void *buffer, size
 
     ata_set_sector_count(data->port_info, (uint8_t) n);
 
-    /* Should also have a offset parameter that is used here (instead of 0) */
-    ata_set_lda_offset_and_device(data->port_info, 0);
+    ata_set_lda_offset_and_device(data->port_info, offset);
 
     ata_wait_ready(data->port_info);
     ata_set_command(data->port_info, ATA_COMMAND_READ);
@@ -148,7 +148,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, void *buffer, size
     return n * data->sector_size;
 }
 
-static ssize_t ata_write_sectors(struct ata_device_data *data, const void *buffer, size_t n) {
+static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, const void *buffer, size_t n) {
     if (n == 0) {
         return 0;
     } else if (n > 255) {
@@ -163,8 +163,7 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, const void *buffe
 
     ata_set_sector_count(data->port_info, (uint8_t) n);
 
-    /* Should also have a offset parameter that is used here (instead of 0) */
-    ata_set_lda_offset_and_device(data->port_info, 0);
+    ata_set_lda_offset_and_device(data->port_info, offset);
 
     ata_wait_ready(data->port_info);
     ata_set_command(data->port_info, ATA_COMMAND_WRITE);
@@ -234,17 +233,17 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
     return true;
 }
 
-static ssize_t ata_read(struct device *device, void *buffer, size_t n) {
-    if (n % ((struct ata_device_data*) device->private)->sector_size == 0) {
-        return ata_read_sectors(device->private, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
+static ssize_t ata_read(struct device *device, struct file *file, void *buffer, size_t n) {
+    if (n % ((struct ata_device_data*) device->private)->sector_size == 0 && file->position % ((struct ata_device_data*) device->private)->sector_size == 0) {
+        return ata_read_sectors(device->private, file->position, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
     }
 
     return -EINVAL;
 }
 
-static ssize_t ata_write(struct device *device, const void *buffer, size_t n) {
-    if (n % ((struct ata_device_data*) device->private)->sector_size == 0) {
-        return ata_write_sectors(device->private, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
+static ssize_t ata_write(struct device *device, struct file *file, const void *buffer, size_t n) {
+    if (n % ((struct ata_device_data*) device->private)->sector_size == 0 && file->position % ((struct ata_device_data*) device->private)->sector_size == 0) {
+        return ata_write_sectors(device->private, file->position, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
     }
 
     return -EINVAL;
