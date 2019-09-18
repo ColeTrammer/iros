@@ -4,7 +4,7 @@
 #include <sys/types.h>
 
 #include <kernel/hal/x86_64/gdt.h>
-#include <kernel/hal/x86_64/drivers/ata_pio.h>
+#include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>

@@ -13,9 +13,6 @@
 #define ATA4_IO_BASE 0x168
 #define ATA4_CONTROL_BASE 0x366
 
-#define ATA_MASTER 0xE0
-#define ATA_SLAVE 0xF0
-
 #define ATA_DATA_OFFSET 0
 #define ATA_ERROR_OFFSET 1
 #define ATA_FEATURES_OFFSET 1
@@ -51,6 +48,17 @@
 
 #define ATA_COMMAND_READ 0x20
 #define ATA_COMMAND_INDENTIFY 0xEC
+
+struct ata_port_info {
+    uint16_t io_base;
+    uint16_t control_base;
+    bool is_slave;
+};
+
+struct ata_device_data {
+    struct ata_port_info *port_info;
+    size_t sector_size;
+};
 
 void init_ata();
 

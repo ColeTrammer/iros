@@ -13,8 +13,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    char *buffer = malloc(0x5000);
-    int read = fread(buffer, 1, 0x5000, file);
+    char *buffer = malloc(512);
+    int read = fread(buffer, 1, 512, file);
     if (read == 0) {
         perror("cat");
         return 1;
