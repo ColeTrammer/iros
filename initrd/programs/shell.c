@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
     for (;;) {
         if (input == stdin) {
             char *cwd = __getcwd();
-            printf("%s$ ", cwd);
+            printf("\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
             free(cwd);
         }
         fflush(stdout);

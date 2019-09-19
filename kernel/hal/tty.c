@@ -76,6 +76,69 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                 }
             }
 
+            /* Set Attribute Mode */
+            if (str[i] == 'm') {
+                for (size_t i = 0; i < 3; i++) {
+                    switch (nums[i]) {
+                        case 0:
+                        /* Reset attributes */
+                            set_vga_foreground(VGA_COLOR_LIGHT_GREY);
+                            set_vga_background(VGA_COLOR_BLACK);
+                            break;
+                        case 30:
+                            set_vga_foreground(VGA_COLOR_BLACK);
+                            break;
+                        case 31:
+                            set_vga_foreground(VGA_COLOR_RED);
+                            break;
+                        case 32:
+                            set_vga_foreground(VGA_COLOR_GREEN);
+                            break;
+                        case 33:
+                            set_vga_foreground(VGA_COLOR_YELLOW);
+                            break;
+                        case 34:
+                            set_vga_foreground(VGA_COLOR_BLUE);
+                            break;
+                        case 35:
+                            set_vga_foreground(VGA_COLOR_MAGENTA);
+                            break;
+                        case 36:
+                            set_vga_foreground(VGA_COLOR_CYAN);
+                            break;
+                        case 37:
+                            set_vga_foreground(VGA_COLOR_LIGHT_GREY);
+                            break;
+                        case 40:
+                            set_vga_background(VGA_COLOR_BLACK);
+                            break;
+                        case 41:
+                            set_vga_background(VGA_COLOR_RED);
+                            break;
+                        case 42:
+                            set_vga_background(VGA_COLOR_GREEN);
+                            break;
+                        case 43:
+                            set_vga_background(VGA_COLOR_YELLOW);
+                            break;
+                        case 44:
+                            set_vga_background(VGA_COLOR_BLUE);
+                            break;
+                        case 45:
+                            set_vga_background(VGA_COLOR_MAGENTA);
+                            break;
+                        case 46:
+                            set_vga_background(VGA_COLOR_CYAN);
+                            break;
+                        case 47:
+                            set_vga_foreground(VGA_COLOR_LIGHT_GREY);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
         } else if (str[i] == '\n' || data->x >= data->x_max) {
             while (data->x < data->x_max) {
                 write_vga_buffer(data->y, data->x++, ' ');
