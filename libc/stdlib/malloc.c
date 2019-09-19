@@ -51,7 +51,7 @@ static spinlock_t heap_lock = SPINLOCK_INITIALIZER;
 void *calloc(size_t n, size_t sz) {
     void *p = malloc(n * sz);
     if (p == NULL) { return p; }
-    memset(p, 0, sz);
+    memset(p, 0, n * sz);
     return p;
 }
 
