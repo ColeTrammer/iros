@@ -189,7 +189,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
             size_t start_pos = data->x - start_x;
 
             if (data->key_buffer.key == KEY_BACKSPACE) {
-                if (i > 0) {
+                if (start_pos > 0) {
                     if (i == start_pos) {
                         data->x--;
                         tty_write(tty, file, " ", 1);
@@ -197,10 +197,26 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                     } else {
                         memmove(data->input_buffer + start_pos - 1, data->input_buffer + start_pos, i - start_pos);
                         data->input_buffer[i - 1] = ' ';
+
                         size_t saved_x = --data->x;
                         tty_write(tty, file, data->input_buffer + start_pos - 1, i - start_pos + 1);
                         data->x = saved_x;
                     }
+
+                    set_vga_cursor(data->y, data->x);
+                    i--;
+                }
+                continue;
+            }
+
+            if (data->key_buffer.key == KEY_DELETE) {
+                if (start_pos < i) {
+                    memmove(data->input_buffer + start_pos, data->input_buffer + start_pos + 1, i - start_pos - 1);
+                    data->input_buffer[i - 1] = ' ';
+
+                    size_t saved_x = data->x;
+                    tty_write(tty, file, data->input_buffer + start_pos, i - start_pos);
+                    data->x = saved_x;
 
                     set_vga_cursor(data->y, data->x);
                     i--;
