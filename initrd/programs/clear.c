@@ -8,7 +8,8 @@ int main(int argc, char **argv) {
 
     /* Clear using terminal escaped strings */
 
-    printf("%s%s", "\x1B[0;0H", "\x1B[2J");
+    printf("%s%s", "\033[0;0H", "\033[2J");
+    fflush(stdout);
 
     return 0;
 }

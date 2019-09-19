@@ -174,9 +174,12 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
         return -EINVAL;
     }
 
-    if (data->input_buffer_offset == -1) {
-        int i = 0;
-        do {
+    if (data->input_buffer == NULL) {
+        data->input_buffer = calloc(data->input_buffer_length, sizeof(char));
+
+        size_t i = 0;
+        size_t start_x = data->x;
+        while(1) {
             fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
 
             if (data->key_buffer.flags & KEY_UP) {
@@ -194,18 +197,59 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 continue;
             }
 
+            if (data->key_buffer.key == KEY_CURSOR_LEFT) {
+                if (data->x > start_x) {
+                    data->x--;
+                    set_vga_cursor(data->y, data->x);
+                }
+                continue;
+            }
+
+            if (data->key_buffer.key == KEY_CURSOR_RIGHT) {
+                if (data->x < start_x + i) {
+                    data->x++;
+                    set_vga_cursor(data->y, data->x);
+                }
+                continue;
+            }
+
+            if (data->key_buffer.ascii == '\n') {
+                data->input_buffer[i++] = '\n';
+                data->x = start_x + i;
+                tty_write(tty, file, &data->key_buffer.ascii, 1);
+                break;
+            }
+
             if (data->key_buffer.ascii == '\0') {
                 continue;
             }
 
-            tty_write(tty, file, &data->key_buffer.ascii, 1);
-            data->input_buffer[i++] = data->key_buffer.ascii;
+            size_t start_pos = data->x - start_x;
+
+            if (start_pos == i) {
+                data->input_buffer[start_pos] = data->key_buffer.ascii;
+                tty_write(tty, file, &data->key_buffer.ascii, 1);
+            } else {
+                char *copy = calloc(i - start_pos + 1, sizeof(char));
+                memcpy(copy, data->input_buffer + start_pos, i - start_pos);
+                data->input_buffer[start_pos] = data->key_buffer.ascii;
+                data->input_buffer[start_pos + 1] = '\0';
+                strcat(data->input_buffer, copy);
+                free(copy);
+
+                size_t saved_x = data->x;
+                tty_write(tty, file, data->input_buffer + start_pos, strlen(data->input_buffer + start_pos));
+                data->x = saved_x + 1;
+                set_vga_cursor(data->y, data->x);
+            }
+
+            i++;
 
             if (i >= data->input_buffer_length - 1) {
                 data->input_buffer_length *= 2;
                 data->input_buffer = realloc(data->input_buffer, data->input_buffer_length);
             }
-        } while (data->key_buffer.ascii != '\n');
+        }
 
         data->input_buffer[i] = '\0';
         data->input_buffer_offset = 0;
@@ -219,7 +263,8 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
         if (buf[i] == '\n') {
             /* Could instead get more input */
-            data->input_buffer_offset = -1;
+            free(data->input_buffer);
+            data->input_buffer = NULL;
             i++;
             break;
         }
@@ -256,7 +301,7 @@ void init_tty_device(dev_t dev) {
     assert(error == 0);
     data->input_buffer_length = 0x1000;
     data->input_buffer_offset = -1;
-    data->input_buffer = malloc(data->input_buffer_length);
+    data->input_buffer = NULL;
     data->x = 0;
     data->y = 0;
     data->x_max = DEFAULT_TTY_WIDTH;
