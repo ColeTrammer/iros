@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <ctype.h>
 
 #include <kernel/hal/arch.h>
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
@@ -28,7 +30,53 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
     }
 
     for (size_t i = 0; str[i] != '\0' && i < len; i++) {
-        if (str[i] == '\n' || data->x >= data->x_max) {
+        if (str[i] == '\x1B') {
+            i++;
+            if (str[i] != '[') {
+                while (!isalpha(str[i])) { i++; }
+                continue;
+            }
+
+            i++;
+
+            int nums[3] = { -1, -1, -1 };
+            nums[0] = atoi(str + i);
+            while (isdigit(str[i])) { i++; }
+
+            if (str[i] == ';') {
+                i++;
+                nums[1] = atoi(str + i);
+
+                while (isdigit(str[i])) { i++; }
+
+                if (str[i] == ';') {
+                    i++;
+                    nums[2] = atoi(str + i);
+
+                    while (isdigit(str[i])) { i++; }
+                }
+            }
+
+            /* Set Cursor Command */
+            if (str[i] == 'H') {
+                data->y = nums[0];
+                data->x = nums[1];
+                set_vga_cursor(data->y, data->x);
+            }
+
+            /* Clear Screen Command */
+            if (str[i] == 'J') {
+                /* Clear entire screen */
+                if (nums[0] == 2) {
+                    for (size_t r = 0; r < data->y_max; r++) {
+                        for (size_t c = 0; c < data->x_max; c++) {
+                            write_vga_buffer(r, c, ' ');
+                        }
+                    }
+                }
+            }
+
+        } else if (str[i] == '\n' || data->x >= data->x_max) {
             while (data->x < data->x_max) {
                 write_vga_buffer(data->y, data->x++, ' ');
             }

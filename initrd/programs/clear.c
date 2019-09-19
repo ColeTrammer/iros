@@ -6,10 +6,9 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    /* Clear hack (should send something directly to tty) (also doesn't even work since it sets cursor to bottom) */
-    for (size_t i = 0; i < 25; i++) {
-        puts(" ");
-    }
+    /* Clear using terminal escaped strings */
+
+    printf("%s%s", "\x1B[0;0H", "\x1B[2J");
 
     return 0;
 }
