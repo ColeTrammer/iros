@@ -37,8 +37,10 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS) -DARCH=$(HOSTARCH)
 # Lists objects used in 'free' enviornment
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
+$(BUILDDIR)/libc/ctype/ctype.o \
 $(BUILDDIR)/libc/stdio/printf.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
+$(BUILDDIR)/libc/stdlib/conversions.o \
 $(BUILDDIR)/libc/stdlib/malloc.o \
 $(BUILDDIR)/libc/string/memchr.o \
 $(BUILDDIR)/libc/string/memcmp.o \
