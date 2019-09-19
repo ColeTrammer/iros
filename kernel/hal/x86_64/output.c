@@ -5,6 +5,7 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
+#include <kernel/proc/process.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
@@ -73,13 +74,20 @@ bool kprint(const char *str, size_t len) {
     }
 }
 
-int debug_log(const char *format, ...) {
+int debug_log_internal(const char *func, const char *format, ...) {
     va_list parameters;
     va_start(parameters, format);
 
     spin_lock(&method_lock);
     method = OUTPUT_SERIAL;
-    int written = vprintf(format, parameters);
+    int written = 0;
+    if (get_current_process() == NULL || get_current_process()->pid == 0) {
+        written += printf("\033[35mKernel  \033[37m(\033[34m %d \033[37m): ", 0);
+    } else {
+        printf("\033[32m%s \033[37m(\033[34m %d \033[37m): ", "Process", get_current_process()->pid);
+    }
+    written = printf("\033[36m%s\033[37m: ", func);
+    written += vprintf(format, parameters);
     method = OUTPUT_SCREEN;
     spin_unlock(&method_lock);
 

@@ -9,7 +9,7 @@ static pid_t counter = 1;
 static spinlock_t pid_lock = SPINLOCK_INITIALIZER;
 
 pid_t get_next_pid() {
-    debug_log("PID Assigned: %d\n", counter);
+    debug_log("PID Assigned: [ %d ]\n", counter);
     
     spin_lock(&pid_lock);
 

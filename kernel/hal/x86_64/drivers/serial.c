@@ -26,7 +26,13 @@ static void serial_write_character(char c) {
 
 bool serial_write_message(const char *s, size_t n) {
     for (size_t i = 0; i < n; i++) {
+        if ((i == 0 || s[i - 1] != '\033') && s[i] == '[') {
+            serial_write_message("\033[33m", 5);
+        }
         serial_write_character(s[i]);
+        if (s[i] == ']') {
+            serial_write_message("\033[37m", 5);
+        }
     }
 
     return true;

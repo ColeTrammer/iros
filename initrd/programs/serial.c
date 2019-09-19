@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
         perror("serial");
     }
 
-    fprintf(serial, "Process %d: [ %s ]\n", getpid(), argv[1]);
+    fprintf(serial, "\033[32mProcess \033[37m(\033[34m %d \033[37m): \033[36mserial\033[37m: [ %s ]\n", getpid(), argv[1]);
     fclose(serial);
 
     return 0;
