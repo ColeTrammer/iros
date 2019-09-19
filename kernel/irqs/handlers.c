@@ -19,19 +19,19 @@ void init_irq_handlers() {
 
 void handle_double_fault() {
     dump_registers_to_screen();
-    printf("%s\n", "Double Fault");
+    printf("\n\033[31m%s\033[0m\n", "Double Fault");
     abort();
 }
 
 void handle_general_protection_fault(uintptr_t error) {
     dump_registers_to_screen();
-    printf("%s: Error %#lX\n", "General Protection Fault", error);
+    printf("\n\033[31m%s: Error %#lX\033[0m\n", "General Protection Fault", error);
     abort();
 }
 
 void handle_page_fault(uintptr_t address, uintptr_t error) {
     dump_registers_to_screen();
-    printf("%s: Error %lX\n", "Page Fault", error);
-    printf("Address: %#.16lX\n", address);
+    printf("\n\033[31m%s: Error %lX\n", "Page Fault", error);
+    printf("Address: %#.16lX\033[0m\n", address);
     abort();
 }

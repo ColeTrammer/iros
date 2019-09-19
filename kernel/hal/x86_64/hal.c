@@ -17,7 +17,6 @@ void init_hal() {
     
     init_pic();
     init_serial_ports();
-    init_output();
 
     init_gdt();
 

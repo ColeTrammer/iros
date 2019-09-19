@@ -300,6 +300,18 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
     return (ssize_t) i;
 }
 
+static void tty_add(struct device *tty) {
+    struct tty_data *data = (struct tty_data*) tty->private;
+
+    for (size_t r = 0; r < data->y_max; r++) {
+        for (size_t c = 0; c < data->x_max; c++) {
+            write_vga_buffer(r, c, ' ');
+        }
+    }
+
+    set_vga_cursor(data->y, data->x);
+}
+
 static void tty_remove(struct device *tty) {
     struct tty_data *data = (struct tty_data*) tty->private;
     
@@ -311,7 +323,7 @@ static void tty_remove(struct device *tty) {
 }
 
 struct device_ops tty_ops = {
-    NULL, tty_read, tty_write, NULL, NULL, tty_remove
+    NULL, tty_read, tty_write, NULL, tty_add, tty_remove
 };
 
 void init_tty_device(dev_t dev) {

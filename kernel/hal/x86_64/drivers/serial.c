@@ -31,7 +31,7 @@ bool serial_write_message(const char *s, size_t n) {
         }
         serial_write_character(s[i]);
         if (s[i] == ']') {
-            serial_write_message("\033[37m", 5);
+            serial_write_message("\033[0m", 5);
         }
     }
 

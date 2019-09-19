@@ -10,76 +10,18 @@
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 
-static size_t row = 0;
-static size_t col = 0;
-static spinlock_t screen_lock = SPINLOCK_INITIALIZER;
-
-static size_t max_height = VGA_HEIGHT;
-static size_t max_width = VGA_WIDTH;
-
-static enum output_method method = OUTPUT_SCREEN;
-static spinlock_t method_lock = SPINLOCK_INITIALIZER;
-
-bool screen_print(const char *str, size_t len) {
-    spin_lock(&screen_lock);
-    
-    if (row >= max_height) {
-        row = 0;
-    }
-
-    for (size_t i = 0; str[i] != '\0' && i < len; i++) {
-        if (str[i] == '\n' || col >= max_width) {
-            while (col < max_width) {
-                write_vga_buffer(row, col++, ' ');
-            }
-            row++;
-            col = 0;
-            if (row >= max_height) {
-                for (size_t r = 0; r < max_height - 1; r++) {
-                    for (size_t c = 0; c < max_width; c++) {
-                        write_vga_buffer(r, c, get_vga_buffer(r + 1, c));
-                    }
-                }
-                for (size_t i = 0; i < max_width; i++) {
-                    write_vga_buffer(max_height - 1, i, ' ');
-                }
-                row--;
-            }
-        } else {
-            write_vga_buffer(row, col++, str[i]);
-        }
-    }
-
-    spin_unlock(&screen_lock);
-    return true;
-}
-
-static bool serial_print(const char *str, size_t len) {
-    return serial_write_message(str, len);
-}
-
-void init_output() {
-    for (size_t row = 0; row < max_height; row++) {
-        for (size_t col = 0; col < max_width; col++) {
-            write_vga_buffer(row, col, ' ');
-        }
-    }
-}
+static spinlock_t debug_lock = SPINLOCK_INITIALIZER;
 
 bool kprint(const char *str, size_t len) {
-    switch (method) {
-        case OUTPUT_SCREEN: return screen_print(str, len);
-        case OUTPUT_SERIAL: return serial_print(str, len);
-        default:            return false;
-    }
+    return serial_write_message(str, len);
 }
 
 int debug_log_internal(const char *func, const char *format, ...) {
     va_list parameters;
     va_start(parameters, format);
 
-    spin_lock(&method_lock);
-    method = OUTPUT_SERIAL;
+    spin_lock(&debug_lock);
+
     int written = 0;
     if (get_current_process() == NULL || get_current_process()->pid == 0) {
         written += printf("\033[35mKernel  \033[37m(\033[34m %d \033[37m): ", 0);
@@ -88,8 +30,8 @@ int debug_log_internal(const char *func, const char *format, ...) {
     }
     written = printf("\033[36m%s\033[37m: ", func);
     written += vprintf(format, parameters);
-    method = OUTPUT_SCREEN;
-    spin_unlock(&method_lock);
+    
+    spin_unlock(&debug_lock);
 
     va_end(parameters);
     return written;
@@ -97,8 +39,7 @@ int debug_log_internal(const char *func, const char *format, ...) {
 
 void debug_log_assertion(const char *msg, const char *file, int line, const char *func) {
     disable_interrupts();
-    set_vga_foreground(VGA_COLOR_RED);
-    printf("Assertion failed: %s in %s at %s, line %d\n", msg, func, file, line);
+    printf("\n\033[31mAssertion failed: %s in %s at %s, line %d\033[0m\n", msg, func, file, line);
     abort();
 }
 
@@ -123,8 +64,7 @@ void dump_registers_to_screen() {
     asm( "mov %%cr3, %%rdx\n"\
          "mov %%rdx, %0" : "=m"(cr3) : : "rdx" );
     
-    set_vga_foreground(VGA_COLOR_RED);
-
+    printf("\n\33[31m");
     printf("RAX=%#.16llX RBX=%#.16llX\n", rax, rbx);
     printf("RCX=%#.16llX RDX=%#.16llX\n", rcx, rdx);
     printf("RBP=%#.16llX RSP=%#.16llX\n", rbp, rsp);
@@ -133,5 +73,5 @@ void dump_registers_to_screen() {
     printf("R10=%#.16llX R11=%#.16llX\n", r10, r11);
     printf("R12=%#.16llX R13=%#.16llX\n", r12, r13);
     printf("R14=%#.16llX R15=%#.16llX\n", r14, r15);
-    printf("CR3=%#.16llX\n", cr3);
+    printf("CR3=%#.16llX\033[0m\n", cr3);
 }
