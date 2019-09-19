@@ -37,6 +37,6 @@ struct file *dev_open(struct inode *inode, int *error);
 int dev_close(struct file *file);
 ssize_t dev_read(struct file *file, void *buffer, size_t len);
 ssize_t dev_write(struct file *file, const void *buffer, size_t len);
-struct tnode *dev_mount(struct file_system *fs);
+struct tnode *dev_mount(struct file_system *fs, char *device_path);
 
 #endif /* _KERNEL_FS_DEV_H */

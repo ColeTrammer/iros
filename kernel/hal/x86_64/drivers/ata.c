@@ -95,14 +95,13 @@ static bool ata_indentify(struct ata_port_info *info, uint16_t *buf) {
 
     /* Read result into buffer */
     for (size_t i = 0; i < 256; i++) {
-        *buf = ata_read_word(info);
-        buf++;
+        buf[i] = ata_read_word(info);
     }
 
     return true;
 }
 
-static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {
+static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {  
     if (n == 0) {
         return 0;
     } else if (n > 255) {
@@ -235,7 +234,7 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
 
 static ssize_t ata_read(struct device *device, struct file *file, void *buffer, size_t n) {
     if (n % ((struct ata_device_data*) device->private)->sector_size == 0 && file->position % ((struct ata_device_data*) device->private)->sector_size == 0) {
-        return ata_read_sectors(device->private, file->position, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
+        return ata_read_sectors(device->private, file->position / ((struct ata_device_data*) device->private)->sector_size, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
     }
 
     return -EINVAL;
@@ -243,7 +242,7 @@ static ssize_t ata_read(struct device *device, struct file *file, void *buffer, 
 
 static ssize_t ata_write(struct device *device, struct file *file, const void *buffer, size_t n) {
     if (n % ((struct ata_device_data*) device->private)->sector_size == 0 && file->position % ((struct ata_device_data*) device->private)->sector_size == 0) {
-        return ata_write_sectors(device->private, file->position, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
+        return ata_write_sectors(device->private, file->position / ((struct ata_device_data*) device->private)->sector_size, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
     }
 
     return -EINVAL;

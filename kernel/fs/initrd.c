@@ -114,10 +114,11 @@ ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
     return (ssize_t) len;
 }
 
-struct tnode *initrd_mount(struct file_system *current_fs) {
+struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
-    
+    assert(strlen(device_path) == 0);
+
     initrd_start = initrd->start;
     num_files = *((int64_t*) initrd_start);
     file_list = (struct initrd_file_entry*) (initrd_start + sizeof(int64_t));
@@ -157,7 +158,6 @@ struct tnode *initrd_mount(struct file_system *current_fs) {
         root->tnode_list = add_tnode(root->tnode_list, to_add);
     }
 
-    debug_log("INITRD Mounted: [ %llu, %#.16lX ]\n", num_files, initrd_start);
     return t_root;
 }
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/irqs/handlers.h>
@@ -25,6 +26,10 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_process_sched();
 
     /* At some point should switch over from initrd to a block device */
+    /* Mount hdd0 at /mnt */
+    int error = 0;
+    error = fs_mount("/dev/hdd0", "/mnt", "ext2");
+    assert(error == 0);
 
     // Start Shell
     struct process *shell = load_process("/shell");

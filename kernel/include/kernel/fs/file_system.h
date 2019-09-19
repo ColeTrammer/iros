@@ -9,7 +9,7 @@
 struct file_system {
     char name[8];
     unsigned int flags;
-    struct tnode *(*mount) (struct file_system *);
+    struct tnode *(*mount) (struct file_system *file_system, char *device_path);
 
     struct super_block *super_block;
     struct file_system *next;

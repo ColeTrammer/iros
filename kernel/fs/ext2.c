@@ -81,10 +81,29 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
     return -EINVAL;
 }
 
-struct tnode *ext2_mount(struct file_system *current_fs) {
+struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
+    int error = 0;
+    struct file *file = fs_open(device_path, &error);
+    if (file == NULL) {
+        return NULL;
+    }
+
+    /* Set to read starting from byte 1024 */
+    file->position = 1024;
+
+    uint32_t *buffer = malloc(1024);
+    if (!fs_read(file, buffer, 1024)) {
+        debug_log("Read Error\n");
+    }
+
+    debug_log("Num Inodes: [ %u ]\n", buffer[0]);
+    free(buffer);
+ 
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
+
+    assert(strlen(device_path) != 0);
 
     t_root->inode = root;
 

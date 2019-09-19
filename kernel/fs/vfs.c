@@ -241,7 +241,7 @@ void load_fs(struct file_system *fs) {
     file_systems = fs;
 }
 
-int fs_mount(const char *type, const char *path, dev_t device) {
+int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 
     struct file_system *file_system = file_systems;
@@ -251,8 +251,10 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             if (strcmp(path, "/") == 0) {
                 mount->name = "/";
                 mount->next = NULL;
-                mount->device = device;
-                file_system->mount(file_system);
+                char *dev_path = malloc(strlen(src) + 1);
+                strcpy(dev_path, src);
+                mount->device_path = dev_path;
+                file_system->mount(file_system, mount->device_path);
                 mount->super_block = file_system->super_block;
                 mount->super_block->root->name = "/";
                 mount->super_block->root->inode->parent = mount->super_block->root;
@@ -295,9 +297,11 @@ int fs_mount(const char *type, const char *path, dev_t device) {
             strcpy(name, parent_end + 1);
 
             mount->name = name;
-            mount->device = device;
+            char *dev_path = malloc(strlen(src) + 1);
+            strcpy(dev_path, src);
+            mount->device_path = dev_path;            
             mount->next = NULL;
-            file_system->mount(file_system);
+            file_system->mount(file_system, mount->device_path);
             mount->super_block = file_system->super_block;
             mount->super_block->root->name = name;
             mount->super_block->root->inode->parent = mount_on;
@@ -326,15 +330,11 @@ void init_vfs() {
     init_ext2();
 
     /* Mount INITRD as root */
-    int error = fs_mount("initrd", "/", 0);
+    int error = fs_mount("", "/", "initrd");
     assert(error == 0);
 
     /* Mount dev at /dev */
-    error = fs_mount("dev", "/dev", 0);
-    assert(error == 0);
-
-    /* Mount hdd0 at /mnt */
-    error = fs_mount("ext2", "/mnt", 0x1F0);
+    error = fs_mount("", "/dev", "dev");
     assert(error == 0);
 }
 

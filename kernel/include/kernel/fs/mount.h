@@ -6,7 +6,7 @@
 #include <kernel/fs/super_block.h>
 
 struct mount {
-    dev_t device;
+    char *device_path;
     const char *name;
     struct super_block *super_block;
     struct mount *next;

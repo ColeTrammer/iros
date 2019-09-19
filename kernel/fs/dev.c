@@ -109,8 +109,9 @@ ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
     return -EINVAL;
 }
 
-struct tnode *dev_mount(struct file_system *current_fs) {
+struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
+    assert(strlen(device_path) == 0);
 
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));

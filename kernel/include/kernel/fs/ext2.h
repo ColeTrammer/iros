@@ -12,7 +12,7 @@ struct file *ext2_open(struct inode *inode, int *error);
 int ext2_close(struct file *file);
 ssize_t ext2_read(struct file *file, void *buffer, size_t len);
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len);
-struct tnode *ext2_mount(struct file_system *fs);
+struct tnode *ext2_mount(struct file_system *fs, char *device_path);
 
 void init_ext2();
 
