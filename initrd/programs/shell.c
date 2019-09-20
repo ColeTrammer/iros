@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,14 +52,38 @@ char **split_line(char *line) {
     int sz = 1024;
     int pos = 0;
     char **tokens = malloc(sz * sizeof(char*));
-    char *token;
 
-    char *separators = " \t\r\n\a";
-    token = strtok(line, separators);
+    bool in_quotes = false;
+    char *token_start = line;
+    size_t i = 0;
+    while (line[i] != '\0') {
+        if (!in_quotes && isspace(line[i])) {
+            goto add_token;
+        }
 
-    while (token != NULL) {
-        tokens[pos++] = token;
-        token = strtok(NULL, separators);
+        /* Assumes quote is at beginning of token */
+        else if (!in_quotes && line[i] == '"') {
+            in_quotes = true;
+            token_start++;
+            i++;
+            continue;
+        }
+
+        else if (in_quotes && line[i] == '"') {
+            in_quotes = false;
+            goto add_token;
+        }
+
+        else {
+            i++;
+            continue;
+        }
+
+    add_token:
+        line[i++] = '\0';
+        tokens[pos++] = token_start;
+        while (isspace(line[i])) { i++; }
+        token_start = line + i;
 
         if (pos + 1 >= sz) {
             sz *= 2;
