@@ -91,6 +91,11 @@ char **split_line(char *line) {
         }
     }
 
+    if (in_quotes) {
+        pos = 0;
+        fprintf(stderr, "Shell: %s\n", "Invalid string format");
+    }
+
     tokens[pos] = NULL;
     return tokens;
 }

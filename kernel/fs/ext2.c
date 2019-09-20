@@ -89,14 +89,28 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     }
 
     /* Set to read starting from byte 1024 */
-    file->position = 1024;
+    file->position = EXT2_SUPER_BLOCK_OFFSET;
 
-    uint32_t *buffer = malloc(1024);
-    if (!fs_read(file, buffer, 1024)) {
+    struct ext2_raw_super_block *buffer = malloc(EXT2_SUPER_BLOCK_SIZE);
+    if (!fs_read(file, buffer, EXT2_SUPER_BLOCK_SIZE)) {
         debug_log("Read Error\n");
     }
 
-    debug_log("Num Inodes: [ %u ]\n", buffer[0]);
+    debug_log("Num Inodes: [ %u ]\n", buffer->num_inodes);
+    debug_log("Num blocks: [ %u ]\n", buffer->num_blocks);
+    debug_log("Num reserved: [ %u ]\n", buffer->num_reserved_blocks);
+    debug_log("Num unallocated blocks: [ %u ]\n", buffer->num_unallocated_blocks);
+    debug_log("Num unallocated inodes: [ %u ]\n", buffer->num_unallocated_inodes);
+    debug_log("Block size: [ %u ]\n", 1024 << buffer->shifted_blck_size);
+    debug_log("Fragment size: [ %u ]\n", 1024 << buffer->shifted_fragment_size);
+    debug_log("Num blocks in group: [ %u ]\n", buffer->num_blocks_in_block_group);
+    debug_log("Num fragments in group: [ %u ]\n", buffer->num_fragments_in_block_group);
+    debug_log("Num inodes in group: [ %u ]\n", buffer->num_inodes_in_block_group);
+    debug_log("Ext2 signature: [ %#.4X ]\n", buffer->ext2_sig);
+    debug_log("Major version: [ %u ]\n", buffer->version_major);
+    debug_log("Inode size: [ %u ]\n", buffer->inode_size);
+    debug_log("Path of last mount: [ %s ]\n", buffer->path_of_last_mount);
+    
     free(buffer);
  
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
