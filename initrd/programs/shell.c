@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <stdint.h>
 #include <assert.h>
+#include <ctype.h>
 
 char *read_line(FILE *input) {
     int sz = 300;
@@ -16,6 +17,18 @@ char *read_line(FILE *input) {
         assert(pos < sz);
 
         int c = fgetc(input);
+
+        /* In a comment */
+        if (c == '#' && (pos == 0 || isspace(buffer[pos - 1]))) {
+            c = getc(input);
+            while (c != EOF && c != '\n') {
+                c = fgetc(input);
+            }
+
+            buffer[pos] = '\n';
+            buffer[pos + 1] = '\0';
+            return buffer;
+        }
 
         if (c == EOF && pos == 0) {
             return NULL;
