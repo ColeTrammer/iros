@@ -9,13 +9,11 @@
 #include <ctype.h>
 
 char *read_line(FILE *input) {
-    int sz = 300;
+    int sz = 1024;
     int pos = 0;
     char *buffer = malloc(sz);
 
     for (;;) {
-        assert(pos < sz);
-
         int c = fgetc(input);
 
         /* In a comment */
@@ -41,6 +39,11 @@ char *read_line(FILE *input) {
         }
 
         buffer[pos++] = c;
+
+        if (pos + 1 >= sz) {
+            sz *= 2;
+            buffer = realloc(buffer, sz);
+        }
     }
 }
 
@@ -54,10 +57,13 @@ char **split_line(char *line) {
     token = strtok(line, separators);
 
     while (token != NULL) {
-        assert(pos < sz);
-
         tokens[pos++] = token;
         token = strtok(NULL, separators);
+
+        if (pos + 1 >= sz) {
+            sz *= 2;
+            tokens = realloc(tokens, sz * sizeof(char*));
+        }
     }
 
     tokens[pos] = NULL;
