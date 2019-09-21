@@ -241,6 +241,20 @@ void load_fs(struct file_system *fs) {
     file_systems = fs;
 }
 
+int fs_stat(const char *path, struct stat *stat_struct) {
+    struct tnode *tnode = iname(path);
+    if (tnode == NULL) {
+        return -ENOENT;
+    }
+
+    struct inode *inode = tnode->inode; 
+    if (!inode->i_op->stat) {
+        return -EINVAL;
+    }
+
+    return inode->i_op->stat(inode, stat_struct);
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

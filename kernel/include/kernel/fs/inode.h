@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <kernel/fs/super_block.h>
 #include <kernel/util/spinlock.h>
@@ -20,6 +21,7 @@ typedef unsigned long inode_id_t;
 struct inode_operations {
     struct tnode *(*lookup)(struct inode *inode, const char *name);
     struct file *(*open)(struct inode *inode, int *error);
+    int (*stat)(struct inode *inode, struct stat *stat_struct);
 };
 
 struct inode {
@@ -32,10 +34,13 @@ struct inode {
     struct inode_operations *i_op;
     struct super_block *super_block;
 
+    /* Device id of filesystem */
     dev_t device;
-    unsigned int size;
 
-    /* Unique inode identifier */
+    /* File system size */
+    off_t size;
+
+    /* Unique inode identifier (for the filesystem) */
     inode_id_t index;
 
     /* List of tnodes in directory (if inode is a directory) */

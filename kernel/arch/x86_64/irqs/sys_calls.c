@@ -348,5 +348,14 @@ void arch_sys_chdir(struct process_state *process_state) {
 }
 
 void arch_sys_stat(struct process_state *process_state) {
-    SYS_RETURN(0);
+    const char *_path = (const char*) process_state->cpu_state.rsi;
+    void *stat_struct = (void*) process_state->cpu_state.rdx;
+    
+    struct process *current = get_current_process();
+    char *path = get_full_path(current->cwd, _path);
+
+    int ret = fs_stat(path, stat_struct);
+    free(path);
+
+    SYS_RETURN(ret);
 }
