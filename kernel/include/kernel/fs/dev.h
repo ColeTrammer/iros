@@ -23,6 +23,7 @@ struct device_ops {
 
 struct device {
     dev_t device_number;
+    mode_t type;
     char name[16];
     struct device_ops *ops;
     void *private;

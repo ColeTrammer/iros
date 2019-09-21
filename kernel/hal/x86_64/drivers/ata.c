@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -263,7 +264,8 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     strcat(device->name, num);
 
     device->ops = &ata_ops;
-    
+    device->type = S_IFCHR;
+
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));
     data->port_info = info;
     data->sector_size = ATA_SECTOR_SIZE;

@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -73,6 +74,7 @@ void init_serial_port_device(dev_t dev) {
     device->device_number = dev;
     strcpy(device->name, "serial");
     device->ops = &serial_ops;
+    device->type = S_IFCHR;
     device->private = NULL;
 
     dev_add(device, device->name);

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <assert.h>
 
 #include <kernel/hal/x86_64/drivers/pic.h>

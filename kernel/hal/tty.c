@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <sys/stat.h>
 
 #include <kernel/hal/arch.h>
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
@@ -331,6 +332,7 @@ void init_tty_device(dev_t dev) {
     device->device_number = dev;
     strcpy(device->name, "tty");
     device->ops = &tty_ops;
+    device->type = S_IFCHR;
 
     int error = 0;
     struct tty_data *data = malloc(sizeof(struct tty_data));

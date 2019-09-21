@@ -25,11 +25,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations dev_i_op = {
-    &dev_lookup, &dev_open, NULL
+    &dev_lookup, &dev_open, &dev_stat
 };
 
 static struct inode_operations dev_dir_i_op = {
-    &dev_lookup, &dev_open, NULL
+    &dev_lookup, &dev_open, &dev_stat
 };
 
 static struct file_operations dev_f_op = {
@@ -109,6 +109,17 @@ ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
     return -EINVAL;
 }
 
+int dev_stat(struct inode *inode, struct stat *stat_struct) {
+    stat_struct->st_size = inode->size;
+    stat_struct->st_blocks = 0;
+    stat_struct->st_blksize = stat_struct->st_size;
+    stat_struct->st_ino = inode->index;
+    stat_struct->st_dev = inode->device;
+    stat_struct->st_mode = inode->mode;
+    stat_struct->st_rdev = ((struct device*) inode->private_data)->device_number;
+    return 0;
+}
+
 struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
@@ -118,7 +129,7 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
 
     t_root->inode = root;
 
-    root->device = 0;
+    root->device = 2;
     root->flags = FS_DIR;
     root->i_op = &dev_dir_i_op;
     root->index = fs_get_next_inode_id();
@@ -130,7 +141,7 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->super_block = &super_block;
     root->tnode_list = NULL;
 
-    super_block.device = 0;
+    super_block.device = root->device;
     super_block.op = NULL;
     super_block.root = t_root;
 
@@ -165,12 +176,12 @@ void dev_add(struct device *device, const char *_path) {
     }
 
     struct inode *to_add = calloc(1, sizeof(struct inode));
-    to_add->device = device->device_number;
+    to_add->device = super_block.device;
     to_add->flags = FS_FILE;
     to_add->i_op = &dev_i_op;
     to_add->index = fs_get_next_inode_id();
     init_spinlock(&to_add->lock);
-    to_add->mode = 0;
+    to_add->mode = device->type | 0777;
     to_add->mounts = NULL;
     to_add->parent = parent;
     to_add->private_data = device;
