@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <errno.h>
@@ -125,5 +126,15 @@ int chdir(const char *path) {
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(path) : "rdi", "rsi", "eax" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int stat(const char *restrict path, struct stat *restrict stat_struct) {
+    int ret;
+    asm volatile( "movq $13, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movq %2, %%rdx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(stat_struct) : "rdi", "rsi", "rdx", "eax" );
     __SYSCALL_TO_ERRNO(ret);
 }

@@ -346,3 +346,7 @@ void arch_sys_chdir(struct process_state *process_state) {
     free(path);
     SYS_RETURN(0);
 }
+
+void arch_sys_stat(struct process_state *process_state) {
+    SYS_RETURN(0);
+}

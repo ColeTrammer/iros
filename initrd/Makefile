@@ -30,6 +30,7 @@ $(BUILDDIR)/initrd/programs/clear \
 $(BUILDDIR)/initrd/programs/ls \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/shell \
+$(BUILDDIR)/initrd/programs/stat \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/test_exec
 
