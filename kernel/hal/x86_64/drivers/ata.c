@@ -137,7 +137,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
         }
 
         for (size_t i = 0; i < data->sector_size / sizeof(uint16_t); i++) {
-            buf[j * data->sector_size + i] = ata_read_word(data->port_info);
+            buf[j * data->sector_size / sizeof(uint16_t) + i] = ata_read_word(data->port_info);
         }
     }
 
