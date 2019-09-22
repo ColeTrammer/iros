@@ -10,7 +10,7 @@ extern void __assert_failed(const char *exp, const char *file, int line, const c
 #ifdef NDEBUG
 #define assert(ignore) ((void) 0)
 #else
-#   ifdef __is_kernel
+#   if defined(__is_kernel) || defined(__is_libk)
 #       include <kernel/hal/output.h>
 #       define assert(ex) (void)((ex) || (debug_log_assertion(#ex, __FILE__, __LINE__, __func__), 0))
 #   else

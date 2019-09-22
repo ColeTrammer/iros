@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #include <kernel/mem/page.h>
+
+#define __MALLOC_MAGIG_CHECK 0x41BFA759UL
 
 #ifdef __is_libk
 #include <kernel/mem/vm_allocator.h>
@@ -25,6 +28,7 @@ void *sbrk(intptr_t increment) {
 struct metadata {
     size_t prev_size;
     size_t size;
+    size_t magic;
 };
 
 #define ALLOCATED (1)
@@ -84,6 +88,7 @@ void *malloc(size_t n) {
             return block + 1;
         }
         block = NEXT_BLOCK(block);
+        assert(block->magic == __MALLOC_MAGIG_CHECK);
     }
 
     if (((uintptr_t) block) + NEW_BLOCK_SIZE(n) > heap_end) {
@@ -95,6 +100,7 @@ void *malloc(size_t n) {
     SET_ALLOCATED(block);
     block = NEXT_BLOCK(block);
     block->prev_size = n;
+    block->magic = __MALLOC_MAGIG_CHECK;
     struct metadata *ret = PREV_BLOCK(block) + 1;
 
 #ifdef __is_libk
@@ -122,6 +128,7 @@ void free(void *p) {
 #endif /* __is_libk */
 
     struct metadata *block = GET_BLOCK(p);
+    assert(block->magic == __MALLOC_MAGIG_CHECK);
     CLEAR_ALLOCATED(block);
 
 #ifdef __is_libk
