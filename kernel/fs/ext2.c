@@ -115,15 +115,15 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
 
     free(raw_super_block);
 
-    // file->position = 1024 * 2;
-    // uint32_t *raw_block_group_descriptor = malloc(1024);
-    // if (!fs_read(file, raw_block_group_descriptor, 1024)) {
-    //     debug_log("Read Error\n");
-    // }
+    file->position = 1024 * 2;
+    uint32_t *raw_block_group_descriptor = malloc(1024);
+    if (!fs_read(file, raw_block_group_descriptor, 1024)) {
+        debug_log("Read Error\n");
+    }
 
-    // debug_log("Block Address: [ %u ]\n", *raw_block_group_descriptor);
+    debug_log("Block Address: [ %u ]\n", *raw_block_group_descriptor);
 
-    // free(raw_block_group_descriptor);
+    free(raw_block_group_descriptor);
  
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
