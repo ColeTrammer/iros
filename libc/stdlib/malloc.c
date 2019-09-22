@@ -59,8 +59,8 @@ void *malloc(size_t n) {
     if (n == 0) {
         return NULL;
     }
-    if (n & 1) {
-        n++;
+    if (n % sizeof(8) != 0) {
+        n = n - (n % 8) + 8;
     }
 
 #ifdef __is_libk

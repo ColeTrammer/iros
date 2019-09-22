@@ -315,7 +315,7 @@ int fs_mount(const char *src, const char *path, const char *type) {
             strcpy(dev_path, src);
             mount->device_path = dev_path;            
             mount->next = NULL;
-            file_system->mount(file_system, mount->device_path);
+            assert(file_system->mount(file_system, mount->device_path));
             mount->super_block = file_system->super_block;
             mount->super_block->root->name = name;
             mount->super_block->root->inode->parent = mount_on;

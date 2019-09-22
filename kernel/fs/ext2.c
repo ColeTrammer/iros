@@ -19,8 +19,6 @@
 #include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
 
-static struct file_system fs;
-
 static struct file_system fs = {
     "ext2", 0, &ext2_mount, NULL, NULL
 };
@@ -82,6 +80,8 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
 }
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
+    debug_log("Device path: [ %s ]\n", device_path);
+
     int error = 0;
     struct file *file = fs_open(device_path, &error);
     if (file == NULL) {
@@ -91,27 +91,39 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     /* Set to read starting from byte 1024 */
     file->position = EXT2_SUPER_BLOCK_OFFSET;
 
-    struct ext2_raw_super_block *buffer = malloc(EXT2_SUPER_BLOCK_SIZE);
-    if (!fs_read(file, buffer, EXT2_SUPER_BLOCK_SIZE)) {
+    struct ext2_raw_super_block *raw_super_block = malloc(EXT2_SUPER_BLOCK_SIZE);
+    if (!fs_read(file, raw_super_block, EXT2_SUPER_BLOCK_SIZE)) {
         debug_log("Read Error\n");
     }
 
-    debug_log("Num Inodes: [ %u ]\n", buffer->num_inodes);
-    debug_log("Num blocks: [ %u ]\n", buffer->num_blocks);
-    debug_log("Num reserved: [ %u ]\n", buffer->num_reserved_blocks);
-    debug_log("Num unallocated blocks: [ %u ]\n", buffer->num_unallocated_blocks);
-    debug_log("Num unallocated inodes: [ %u ]\n", buffer->num_unallocated_inodes);
-    debug_log("Block size: [ %u ]\n", 1024 << buffer->shifted_blck_size);
-    debug_log("Fragment size: [ %u ]\n", 1024 << buffer->shifted_fragment_size);
-    debug_log("Num blocks in group: [ %u ]\n", buffer->num_blocks_in_block_group);
-    debug_log("Num fragments in group: [ %u ]\n", buffer->num_fragments_in_block_group);
-    debug_log("Num inodes in group: [ %u ]\n", buffer->num_inodes_in_block_group);
-    debug_log("Ext2 signature: [ %#.4X ]\n", buffer->ext2_sig);
-    debug_log("Major version: [ %u ]\n", buffer->version_major);
-    debug_log("Inode size: [ %u ]\n", buffer->inode_size);
-    debug_log("Path of last mount: [ %s ]\n", buffer->path_of_last_mount);
+    debug_log("Num Inodes: [ %u ]\n", raw_super_block->num_inodes);
+    debug_log("Num blocks: [ %u ]\n", raw_super_block->num_blocks);
+    debug_log("Num reserved: [ %u ]\n", raw_super_block->num_reserved_blocks);
+    debug_log("Num unallocated blocks: [ %u ]\n", raw_super_block->num_unallocated_blocks);
+    debug_log("Num unallocated inodes: [ %u ]\n", raw_super_block->num_unallocated_inodes);
+    debug_log("Block size: [ %u ]\n", 1024 << raw_super_block->shifted_blck_size);
+    debug_log("Fragment size: [ %u ]\n", 1024 << raw_super_block->shifted_fragment_size);
+    debug_log("Num blocks in group: [ %u ]\n", raw_super_block->num_blocks_in_block_group);
+    debug_log("Num fragments in group: [ %u ]\n", raw_super_block->num_fragments_in_block_group);
+    debug_log("Num inodes in group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
+    debug_log("Ext2 signature: [ %#.4X ]\n", raw_super_block->ext2_sig);
+    debug_log("Major version: [ %u ]\n", raw_super_block->version_major);
+    debug_log("Inode size: [ %u ]\n", raw_super_block->inode_size);
+    debug_log("Path of last mount: [ %s ]\n", raw_super_block->path_of_last_mount);
     
-    free(buffer);
+    assert(1024 << raw_super_block->shifted_blck_size == 1024);
+
+    free(raw_super_block);
+
+    // file->position = 1024 * 2;
+    // uint32_t *raw_block_group_descriptor = malloc(1024);
+    // if (!fs_read(file, raw_block_group_descriptor, 1024)) {
+    //     debug_log("Read Error\n");
+    // }
+
+    // debug_log("Block Address: [ %u ]\n", *raw_block_group_descriptor);
+
+    // free(raw_block_group_descriptor);
  
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
@@ -126,7 +138,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->i_op = &ext2_dir_i_op;
     root->index = fs_get_next_inode_id();
     init_spinlock(&root->lock);
-    root->mode = 0;
+    root->mode = S_IFDIR | 0777;
     root->mounts = NULL;
     root->private_data = NULL;
     root->size = 0;

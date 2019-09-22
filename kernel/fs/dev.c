@@ -115,8 +115,8 @@ int dev_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_blksize = stat_struct->st_size;
     stat_struct->st_ino = inode->index;
     stat_struct->st_dev = inode->device;
-    stat_struct->st_mode = inode->mode;
-    stat_struct->st_rdev = ((struct device*) inode->private_data)->device_number;
+    stat_struct->st_mode = inode->mode; 
+    stat_struct->st_rdev = (inode->flags & FS_FILE) ? ((struct device*) inode->private_data)->device_number : 0;
     return 0;
 }
 
@@ -134,7 +134,7 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->i_op = &dev_dir_i_op;
     root->index = fs_get_next_inode_id();
     init_spinlock(&root->lock);
-    root->mode = 0;
+    root->mode = S_IFDIR | 0777;
     root->mounts = NULL;
     root->private_data = NULL;
     root->size = 0;

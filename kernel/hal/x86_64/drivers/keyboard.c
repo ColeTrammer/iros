@@ -587,6 +587,7 @@ void init_keyboard() {
     strcpy(device->name, "keyboard");
     device->ops = &kbd_ops;
     device->private = NULL;
+    device->type = S_IFCHR;
     dev_add(device, device->name);
 
     exec_keyboard_task();

@@ -264,7 +264,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     strcat(device->name, num);
 
     device->ops = &ata_ops;
-    device->type = S_IFCHR;
+    device->type = S_IFBLK;
 
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));
     data->port_info = info;

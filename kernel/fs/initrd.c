@@ -120,7 +120,7 @@ int initrd_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_blksize = stat_struct->st_size;
     stat_struct->st_ino = inode->index;
     stat_struct->st_dev = inode->device;
-    stat_struct->st_mode = (inode->flags & FS_FILE ? S_IFREG : S_IFDIR) | 0777;
+    stat_struct->st_mode = inode->mode;
     stat_struct->st_rdev = 0;
     return 0;
 }
@@ -141,6 +141,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->flags = FS_DIR;
     root->device = 0;  /* Update when there is other devices... */
     root->i_op = &initrd_dir_i_op;
+    root->mode = S_IFDIR | 0777;
     init_spinlock(&root->lock);
 
     struct tnode *t_root = malloc(sizeof(struct tnode));
@@ -157,6 +158,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->super_block = &super_block;
         inode->flags = FS_FILE;
         inode->device = 0;
+        inode->mode = S_IFREG | 0777;
         inode->i_op = &initrd_i_op;
         inode->private_data = entry + i;
         inode->parent = t_root;
