@@ -80,6 +80,16 @@ struct ext2_raw_super_block {
     uint8_t unused1[786];
 } __attribute__((packed));
 
+struct raw_block_group_descriptor {
+    uint32_t block_usage_bitmap_block_address;
+    uint32_t inode_usage_bitmap_block_address;
+    uint32_t inode_table_block_address;
+    uint16_t num_unallocated_blocks;
+    uint16_t num_unallocated_inodes;
+    uint16_t num_directories;
+    uint8_t unused[24];
+} __attribute__((packed));
+
 struct tnode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int *error);
 int ext2_close(struct file *file);
