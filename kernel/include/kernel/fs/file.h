@@ -15,7 +15,7 @@ struct file_operations {
 };
 
 struct file {
-    inode_id_t inode_idenifier;
+    ino_t inode_idenifier;
     
     off_t length;
     uintptr_t start;

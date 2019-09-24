@@ -6,9 +6,9 @@
 #include <stddef.h>
 
 #include <kernel/fs/file_system.h>
-#include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/tnode.h>
+#include <kernel/fs/file.h>
 
 struct device;
 

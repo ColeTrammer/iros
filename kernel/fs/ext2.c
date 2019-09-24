@@ -39,6 +39,27 @@ static struct inode_operations ext2_dir_i_op = {
 //     NULL, NULL, NULL
 // };
 
+/* Allocate space to read blocks (eventually should probably not use malloc and instead another mechanism) */
+static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
+    return malloc(num_blocks * sb->block_size);
+}
+
+/* Reads blocks at a given offset into the buffer */
+static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+    spin_lock(&sb->super_block_lock);
+
+    sb->dev_file->position = sb->block_size * block_offset;
+    ssize_t ret = fs_read(sb->dev_file, buffer, sb->block_size * num_blocks);
+
+    spin_unlock(&sb->super_block_lock);
+    return ret < 0 ? ret : ret / sb->block_size;
+}
+
+/* May need more complicated actions later */
+static void ext2_free_blocks(void *buffer) {
+    free(buffer);
+}
+
 struct tnode *ext2_lookup(struct inode *inode, const char *name) {
     assert(inode->flags & FS_DIR);
     assert(name != NULL);
@@ -80,54 +101,44 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
 }
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
-    debug_log("Device path: [ %s ]\n", device_path);
-
     int error = 0;
-    struct file *file = fs_open(device_path, &error);
-    if (file == NULL) {
+    struct file *dev_file = fs_open(device_path, &error);
+    if (dev_file == NULL) {
         return NULL;
     }
 
-    /* Set to read starting from byte 1024 */
-    file->position = EXT2_SUPER_BLOCK_OFFSET;
-
-    struct ext2_raw_super_block *raw_super_block = malloc(EXT2_SUPER_BLOCK_SIZE);
-    if (!fs_read(file, raw_super_block, EXT2_SUPER_BLOCK_SIZE)) {
-        debug_log("Read Error\n");
-    }
-
-    debug_log("Num Inodes: [ %u ]\n", raw_super_block->num_inodes);
-    debug_log("Num blocks: [ %u ]\n", raw_super_block->num_blocks);
-    debug_log("Num reserved: [ %u ]\n", raw_super_block->num_reserved_blocks);
-    debug_log("Num unallocated blocks: [ %u ]\n", raw_super_block->num_unallocated_blocks);
-    debug_log("Num unallocated inodes: [ %u ]\n", raw_super_block->num_unallocated_inodes);
-    debug_log("Block size: [ %u ]\n", 1024 << raw_super_block->shifted_blck_size);
-    debug_log("Fragment size: [ %u ]\n", 1024 << raw_super_block->shifted_fragment_size);
-    debug_log("Num blocks in group: [ %u ]\n", raw_super_block->num_blocks_in_block_group);
-    debug_log("Num fragments in group: [ %u ]\n", raw_super_block->num_fragments_in_block_group);
-    debug_log("Num inodes in group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
-    debug_log("Ext2 signature: [ %#.4X ]\n", raw_super_block->ext2_sig);
-    debug_log("Major version: [ %u ]\n", raw_super_block->version_major);
-    debug_log("Inode size: [ %u ]\n", raw_super_block->inode_size);
-    debug_log("Path of last mount: [ %s ]\n", raw_super_block->path_of_last_mount);
-    
-    assert(1024 << raw_super_block->shifted_blck_size == 1024);
-
-    free(raw_super_block);
-
-    file->position = 1024 * 2;
-    uint32_t *raw_block_group_descriptor = malloc(1024);
-    if (!fs_read(file, raw_block_group_descriptor, 1024)) {
-        debug_log("Read Error\n");
-    }
-
-    debug_log("Block Address: [ %u ]\n", *raw_block_group_descriptor);
-
-    free(raw_block_group_descriptor);
- 
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
+
+    super_block->device = 0;
+    super_block->op = NULL;
+    super_block->root = t_root;
+    init_spinlock(&super_block->super_block_lock);
+    super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
+    super_block->dev_file = dev_file;
+
+    struct ext2_raw_super_block *raw_super_block = ext2_allocate_blocks(super_block, 1);
+    if (ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1) != 1) {
+        debug_log("Ext2 Read Error: [ Super Block ]\n");
+        ext2_free_blocks(raw_super_block);
+        return NULL;
+    }
+
+    super_block->block_size = 1024 << raw_super_block->shifted_blck_size;
+    ext2_free_blocks(raw_super_block);
+
+    /* Other sizes are not supported */
+    assert(super_block->block_size == 1024);
+
+    struct raw_block_group_descriptor *raw_block_group_descriptor_table = ext2_allocate_blocks(super_block, 1);
+    if (ext2_read_blocks(super_block, raw_block_group_descriptor_table, 2, 1) != 1) {
+        debug_log("Ext2 Read Error: [ Block Group Descriptor Table ]\n");
+        ext2_free_blocks(raw_block_group_descriptor_table);
+        return NULL;
+    }
+
+    ext2_free_blocks(raw_block_group_descriptor_table);
 
     assert(strlen(device_path) != 0);
 
@@ -144,10 +155,6 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->size = 0;
     root->super_block = super_block;
     root->tnode_list = NULL;
-
-    super_block->device = 0;
-    super_block->op = NULL;
-    super_block->root = t_root;
 
     current_fs->super_block = super_block;
 

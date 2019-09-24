@@ -13,9 +13,7 @@
 
 struct inode;
 
-typedef unsigned long inode_id_t;
-
-/* Has to be included here so that file.h sees struct inode & inode_id_t */
+/* Has to be included here so that file.h sees struct inode & ino_t */
 #include <kernel/fs/file.h>
 
 struct inode_operations {
@@ -41,7 +39,7 @@ struct inode {
     off_t size;
 
     /* Unique inode identifier (for the filesystem) */
-    inode_id_t index;
+    ino_t index;
 
     /* List of tnodes in directory (if inode is a directory) */
     struct tnode_list *tnode_list;

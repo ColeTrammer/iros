@@ -87,7 +87,8 @@ struct raw_block_group_descriptor {
     uint16_t num_unallocated_blocks;
     uint16_t num_unallocated_inodes;
     uint16_t num_directories;
-    uint8_t unused[24];
+    uint16_t padding;
+    uint8_t unused[12];
 } __attribute__((packed));
 
 struct tnode *ext2_lookup(struct inode *inode, const char *name);

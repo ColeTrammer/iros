@@ -6,17 +6,17 @@
 #define INODE_STORE_HASH_SIZE 100
 
 struct hash_entry {
-	inode_id_t id;
+	ino_t id;
 	struct hash_entry *next;
 	struct inode *inode;
 };
 
-struct inode *fs_inode_get(inode_id_t id);
+struct inode *fs_inode_get(ino_t id);
 void fs_inode_put(struct inode *inode);
 void fs_inode_set(struct inode *inode);
-void fs_inode_del(inode_id_t id);
+void fs_inode_del(ino_t id);
 void fs_inode_free_hash_table();
 
-inode_id_t fs_get_next_inode_id();
+ino_t fs_get_next_inode_id();
 
 #endif /* _KERNEL_FS_INODE_STORE_H */

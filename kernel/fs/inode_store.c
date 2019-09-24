@@ -10,15 +10,15 @@ static spinlock_t hash_lock = SPINLOCK_INITIALIZER;
 static spinlock_t inode_count_lock = SPINLOCK_INITIALIZER;
 
 /* Should be atomic instead of being locked */
-static inode_id_t inode_count = 0;
+static ino_t inode_count = 0;
 
-static size_t hash(inode_id_t i) {
+static size_t hash(ino_t i) {
 	return i % INODE_STORE_HASH_SIZE;
 }
 
 static struct hash_entry *hash_table[INODE_STORE_HASH_SIZE];
 
-struct inode *fs_inode_get(inode_id_t id) {
+struct inode *fs_inode_get(ino_t id) {
 	size_t i = hash(id);
 
 	struct hash_entry *entry = hash_table[i];
@@ -41,7 +41,7 @@ void fs_inode_put(struct inode *inode) {
 	struct hash_entry **entry = hash_table + i;
 	while (*entry != NULL) {
 		if ((*entry)->id == inode->index) {
-			debug_log("Inode Store put on existing entry: %ld\n", inode->index);
+			debug_log("Inode Store put on existing entry: %lld\n", inode->index);
 			(*entry)->inode = inode;
 
 			spin_unlock(&hash_lock);
@@ -78,10 +78,10 @@ void fs_inode_set(struct inode *inode) {
 
 	spin_unlock(&hash_lock);
 
-	debug_log("Inode Store tried to set non existent entry: %ld\n", inode->index);
+	debug_log("Inode Store tried to set non existent entry: %lld\n", inode->index);
 }
 
-void fs_inode_del(inode_id_t id) {
+void fs_inode_del(ino_t id) {
 	size_t i = hash(id);
 
 	spin_lock(&hash_lock);
@@ -100,7 +100,7 @@ void fs_inode_del(inode_id_t id) {
 
 	spin_unlock(&hash_lock);
 
-	debug_log("Inode Store tried to delete non existent entry: %ld\n", id);
+	debug_log("Inode Store tried to delete non existent entry: %lld\n", id);
 }
 
 void fs_inode_free_hash_table() {
@@ -118,9 +118,9 @@ void fs_inode_free_hash_table() {
 	spin_unlock(&hash_lock);
 }
 
-inode_id_t fs_get_next_inode_id() {
+ino_t fs_get_next_inode_id() {
 	spin_lock(&inode_count_lock);
-	inode_id_t id = inode_count++;
+	ino_t id = inode_count++;
 	spin_unlock(&inode_count_lock);
 	return id;
 }
