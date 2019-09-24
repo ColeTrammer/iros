@@ -4,14 +4,14 @@
 #include <sys/types.h>
 #include <time.h>
 
-#define S_IFMT (~07777U)
-#define S_IFBLK 010000
-#define S_IFCHR 020000
-#define S_IFIFO 030000
-#define S_IFREG 040000
-#define S_IFDIR 050000
-#define S_IFLNK 060000
-#define S_IFSOCK 070000
+#define S_IFMT (~0xFFFU)
+#define S_IFBLK 0x6000
+#define S_IFCHR 0x2000
+#define S_IFIFO 0x1000
+#define S_IFREG 0x8000
+#define S_IFDIR 0x4000
+#define S_IFLNK 0xA000
+#define S_IFSOCK 0xC000
 
 #define S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
 #define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
