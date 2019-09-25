@@ -111,9 +111,6 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
         n = 0;
     }
 
-    assert(data->sector_size == 512);
-    debug_log("Ata read sectors: [ %#.16lX, %#.16lX ]\n", offset, n);
-
     uint64_t flags = disable_interrupts_save();
 
     ata_wait_not_busy(data->port_info);
@@ -237,8 +234,6 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
 }
 
 static ssize_t ata_read(struct device *device, struct file *file, void *buffer, size_t n) {
-    debug_log("Ata read: [ %#.16lX, %#.16lX ]\n", file->position, n);
-
     if (n % ((struct ata_device_data*) device->private)->sector_size == 0 && file->position % ((struct ata_device_data*) device->private)->sector_size == 0) {
         return ata_read_sectors(device->private, file->position / ((struct ata_device_data*) device->private)->sector_size, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
     }

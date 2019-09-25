@@ -91,6 +91,27 @@ struct raw_block_group_descriptor {
     uint8_t unused[12];
 } __attribute__((packed));
 
+struct raw_inode {
+    uint16_t mode;
+    uint16_t uid;
+    uint32_t size;
+    uint32_t atime;
+    uint32_t ctime;
+    uint32_t mtime;
+    uint32_t dtime;
+    uint16_t gid;
+    uint16_t link_count;
+    uint32_t sectors;
+    uint32_t flags;
+    uint32_t os_specific_1;
+    uint32_t block[15];
+    uint32_t generation;
+    uint32_t file_acl;
+    uint32_t dir_acl;
+    uint32_t faddr;
+    uint8_t os_specific_2[12];
+} __attribute__((packed));
+
 struct tnode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int *error);
 int ext2_close(struct file *file);

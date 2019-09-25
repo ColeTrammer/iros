@@ -18,6 +18,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
+#include <kernel/hal/x86_64/drivers/serial.h>
 
 static struct file_system fs = {
     "ext2", 0, &ext2_mount, NULL, NULL
@@ -41,7 +42,9 @@ static struct inode_operations ext2_dir_i_op = {
 
 /* Allocate space to read blocks (eventually should probably not use malloc and instead another mechanism) */
 static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
-    return malloc(num_blocks * sb->block_size);
+    void * ret = malloc(num_blocks * sb->block_size);
+    assert(ret);
+    return ret;
 }
 
 /* Reads blocks at a given offset into the buffer */
@@ -49,6 +52,7 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
     spin_lock(&sb->super_block_lock);
 
     sb->dev_file->position = sb->block_size * block_offset;
+    debug_log("Ext2 dev file position: [ %#.16lX ]\n", sb->dev_file->position);
     ssize_t ret = fs_read(sb->dev_file, buffer, sb->block_size * num_blocks);
 
     spin_unlock(&sb->super_block_lock);
@@ -126,7 +130,6 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     }
 
     super_block->block_size = 1024 << raw_super_block->shifted_blck_size;
-    ext2_free_blocks(raw_super_block);
 
     /* Other sizes are not supported */
     assert(super_block->block_size == 1024);
@@ -134,11 +137,31 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     struct raw_block_group_descriptor *raw_block_group_descriptor_table = ext2_allocate_blocks(super_block, 1);
     if (ext2_read_blocks(super_block, raw_block_group_descriptor_table, 2, 1) != 1) {
         debug_log("Ext2 Read Error: [ Block Group Descriptor Table ]\n");
+        ext2_free_blocks(raw_super_block);
         ext2_free_blocks(raw_block_group_descriptor_table);
         return NULL;
     }
 
+    debug_log("Inode Table Block Address: [ %u ]\n", raw_block_group_descriptor_table[2].inode_table_block_address);
+    debug_log("Block Size: [ %lu ]\n", super_block->block_size);
+    debug_log("LBA Address: [ %#.16lX ]\n", raw_block_group_descriptor_table[2].inode_table_block_address * super_block->block_size / 512);
+
+    struct raw_inode *raw_inode_table = ext2_allocate_blocks(super_block, 1);
+    if (ext2_read_blocks(super_block, raw_inode_table, raw_block_group_descriptor_table[2].inode_table_block_address, 1) != 1) {
+        debug_log("Ext2 Read Error: [ Inode Table ]\n");
+        ext2_free_blocks(raw_super_block);
+        ext2_free_blocks(raw_block_group_descriptor_table);
+        ext2_free_blocks(raw_inode_table);
+        return NULL;
+    }
+
+    debug_log("Super Block First Non-Reserved Inode Location: [ %u ]\n", raw_super_block->first_non_reserved_inode);
+    debug_log("Ext2 Inode Mode: [ %u ]\n", raw_inode_table[0].mode);
+    debug_log("Ext2 Inode Location: [ %u ]\n", raw_inode_table[0].block[0]);
+
+    ext2_free_blocks(raw_inode_table);
     ext2_free_blocks(raw_block_group_descriptor_table);
+    ext2_free_blocks(raw_super_block);
 
     assert(strlen(device_path) != 0);
 
