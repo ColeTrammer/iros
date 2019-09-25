@@ -22,6 +22,7 @@ int debug_log_internal(const char *func, const char *format, ...) {
 
     spin_lock(&debug_lock);
 
+#ifndef KERNEL_NO_DEBUG_COLORS
     int written = 0;
     if (get_current_process() == NULL || get_current_process()->pid == 0) {
         written += printf("\033[35mKernel  \033[37m(\033[34m %d \033[37m): ", 0);
@@ -30,7 +31,17 @@ int debug_log_internal(const char *func, const char *format, ...) {
     }
     written = printf("\033[36m%s\033[37m: ", func);
     written += vprintf(format, parameters);
-    
+#else
+    int written = 0;
+    if (get_current_process() == NULL || get_current_process()->pid == 0) {
+        written += printf("Kernel  ( %d ): ", 0);
+    } else {
+        printf("%s ( %d ): ", "Process", get_current_process()->pid);
+    }
+    written = printf("%s: ", func);
+    written += vprintf(format, parameters);
+#endif /* KERNEL_NO_DEBUG_COLORS */
+
     spin_unlock(&debug_lock);
 
     va_end(parameters);
@@ -39,7 +50,17 @@ int debug_log_internal(const char *func, const char *format, ...) {
 
 void debug_log_assertion(const char *msg, const char *file, int line, const char *func) {
     disable_interrupts();
-    printf("\n\033[31mAssertion failed: %s in %s at %s, line %d\033[0m\n", msg, func, file, line);
+
+#ifndef KERNEL_NO_DEBUG_COLORS
+    printf("\n\033[31m");
+#endif /* KERNEL_NO_DEBUG_COLORS */
+
+    printf("Assertion failed: %s in %s at %s, line %d", msg, func, file, line);
+    
+#ifndef KERNEL_NO_DEBUG_COLORS
+    printf("\033[0m\n");
+#endif /* KERNEL_NO_DEBUG_COLORS */
+    
     abort();
 }
 
@@ -63,8 +84,11 @@ void dump_registers_to_screen() {
     asm( "mov %%r15, %0" : "=m"(r15) );
     asm( "mov %%cr3, %%rdx\n"\
          "mov %%rdx, %0" : "=m"(cr3) : : "rdx" );
-    
+
+#ifndef KERNEL_NO_DEBUG_COLORS
     printf("\n\33[31m");
+#endif /* KERNEL_NO_DEBUG_COLORS */
+
     printf("RAX=%#.16llX RBX=%#.16llX\n", rax, rbx);
     printf("RCX=%#.16llX RDX=%#.16llX\n", rcx, rdx);
     printf("RBP=%#.16llX RSP=%#.16llX\n", rbp, rsp);
@@ -73,5 +97,8 @@ void dump_registers_to_screen() {
     printf("R10=%#.16llX R11=%#.16llX\n", r10, r11);
     printf("R12=%#.16llX R13=%#.16llX\n", r12, r13);
     printf("R14=%#.16llX R15=%#.16llX\n", r14, r15);
+
+#ifndef KERNEL_NO_DEBUG_COLORS
     printf("CR3=%#.16llX\033[0m\n", cr3);
+#endif /* KERNEL_NO_DEBUG_COLORS */
 }

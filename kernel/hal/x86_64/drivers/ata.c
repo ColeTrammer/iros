@@ -102,7 +102,7 @@ static bool ata_indentify(struct ata_port_info *info, uint16_t *buf) {
     return true;
 }
 
-static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {  
+static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {
     if (n == 0) {
         return 0;
     } else if (n > 255) {
@@ -110,6 +110,9 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
     } else if (n == 255) {
         n = 0;
     }
+
+    assert(data->sector_size == 512);
+    debug_log("Ata read sectors: [ %#.16lX, %#.16lX ]\n", offset, n);
 
     uint64_t flags = disable_interrupts_save();
 
@@ -128,7 +131,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
         ata_wait(data->port_info);
         ata_wait_not_busy(data->port_info);
 
-        if (ata_get_error(data->port_info)) {
+        if (ata_read_status(data->port_info) & ATA_STATUS_ERR || !(ata_read_status(data->port_info) & ATA_STATUS_DRQ)) {
             if (flags & INTERRUPS_ENABLED_FLAG) {
                 enable_interrupts();
             }
@@ -234,6 +237,8 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
 }
 
 static ssize_t ata_read(struct device *device, struct file *file, void *buffer, size_t n) {
+    debug_log("Ata read: [ %#.16lX, %#.16lX ]\n", file->position, n);
+
     if (n % ((struct ata_device_data*) device->private)->sector_size == 0 && file->position % ((struct ata_device_data*) device->private)->sector_size == 0) {
         return ata_read_sectors(device->private, file->position / ((struct ata_device_data*) device->private)->sector_size, buffer, n / ((struct ata_device_data*) device->private)->sector_size);
     }

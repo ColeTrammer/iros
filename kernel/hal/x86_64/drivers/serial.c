@@ -27,13 +27,19 @@ static void serial_write_character(char c) {
 
 bool serial_write_message(const char *s, size_t n) {
     for (size_t i = 0; i < n; i++) {
+#ifndef KERNEL_NO_DEBUG_COLORS
         if ((i == 0 || s[i - 1] != '\033') && s[i] == '[') {
             serial_write_message("\033[33m", 5);
         }
+#endif /* KERNEL_NO_DEBUG_COLORS */
+
         serial_write_character(s[i]);
+
+#ifndef KERNEL_NO_DEBUG_COLORS
         if (s[i] == ']') {
             serial_write_message("\033[0m", 5);
         }
+#endif /* KERNEL_NO_DEBUG_COLORS */
     }
 
     return true;
