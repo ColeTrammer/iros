@@ -11,6 +11,10 @@
 #define EXT2_SUPER_BLOCK_OFFSET 1024
 #define EXT2_SUPER_BLOCK_SIZE 1024
 
+#define EXT2_ROOT_INODE 2
+
+#define EXT2_MAX_FILE_NAME_LENGTH 255
+
 struct ext2_raw_super_block {
     uint32_t num_inodes;
     uint32_t num_blocks;
@@ -111,6 +115,25 @@ struct raw_inode {
     uint32_t faddr;
     uint8_t os_specific_2[12];
 } __attribute__((packed));
+
+struct raw_dirent {
+    uint32_t ino;
+    uint16_t size;
+    uint8_t name_length;
+
+#define EXT_DIRENT_TYPE_UNKNOWN 0
+#define EXT_DIRENT_TYPE_REGULAR 1
+#define EXT_DIRENT_TYPE_DIRECTORY 2
+#define EXT_DIRENT_TYPE_CHARACTER_DEVICE 3
+#define EXT_DIRENT_TYPE_BLOCK 4
+#define EXT_DIRENT_TYPE_FIFO 5
+#define EXT_DIRENT_TYPE_SOCKET 7
+#define EXT_DIRENT_TYPE_SYMBOLIC_LINK 7
+    uint8_t type;
+    char name[];
+} __attribute__((packed));
+
+#define EXT2_NEXT_DIRENT(dirent) ((struct raw_dirent*) (((uintptr_t) (dirent)) + (dirent)->size))
 
 struct tnode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int *error);
