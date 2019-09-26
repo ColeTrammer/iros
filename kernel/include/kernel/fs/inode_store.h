@@ -3,14 +3,7 @@
 
 #include <kernel/fs/inode.h>
 
-#define INODE_STORE_HASH_SIZE 100
-
-struct hash_entry {
-	ino_t id;
-	struct hash_entry *next;
-	struct inode *inode;
-};
-
+void init_fs_inode_store();
 struct inode *fs_inode_get(ino_t id);
 void fs_inode_put(struct inode *inode);
 void fs_inode_set(struct inode *inode);

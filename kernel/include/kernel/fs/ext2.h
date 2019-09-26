@@ -135,6 +135,11 @@ struct raw_dirent {
 
 #define EXT2_NEXT_DIRENT(dirent) ((struct raw_dirent*) (((uintptr_t) (dirent)) + (dirent)->size))
 
+struct ext2_sb_data {
+    struct ext2_raw_super_block *sb;
+    struct raw_block_group_descriptor *blk_desc_table;
+};
+
 struct tnode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int *error);
 int ext2_close(struct file *file);

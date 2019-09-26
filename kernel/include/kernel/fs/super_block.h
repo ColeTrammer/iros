@@ -20,6 +20,8 @@ struct super_block {
 
     struct file *dev_file;
     spinlock_t super_block_lock;
+
+    void *private_data;
 };
 
 #endif /* _KERNEL_FS_SUPER_BLOCK_H */

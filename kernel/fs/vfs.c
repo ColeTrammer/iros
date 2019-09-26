@@ -133,9 +133,7 @@ struct file *fs_open(const char *file_name, int *error) {
         return NULL;
     }
     
-    if (!fs_inode_get(tnode->inode->index)) {
-        fs_inode_put(tnode->inode);
-    }
+    fs_inode_put(tnode->inode);
 
     return tnode->inode->i_op->open(tnode->inode, error);
 }
@@ -339,6 +337,8 @@ struct file *fs_clone(struct file *file) {
 }
 
 void init_vfs() {
+    init_fs_inode_store();
+
     init_initrd();
     init_dev();
     init_ext2();

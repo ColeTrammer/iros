@@ -29,7 +29,7 @@ static struct file_system fs = {
 // };
 
 static struct inode_operations ext2_dir_i_op = {
-    &ext2_lookup, &ext2_open, NULL
+    &ext2_lookup, &ext2_open, &ext2_stat
 };
 
 // static struct file_operations ext2_f_op = {
@@ -66,7 +66,49 @@ static void ext2_free_blocks(void *buffer) {
 
 struct tnode *ext2_lookup(struct inode *inode, const char *name) {
     assert(inode->flags & FS_DIR);
-    assert(name != NULL);
+
+    if (inode->tnode_list == NULL) {
+        /* Needs to read ext2 dir entries, will live in memory afterward */
+        // struct raw_inode *raw_inode_table = ext2_allocate_blocks(super_block, 1);
+        // if (ext2_read_blocks(super_block, raw_inode_table, raw_block_group_descriptor_table[0].inode_table_block_address, 1) != 1) {
+        //     debug_log("Ext2 Read Error: [ Inode Table ]\n");
+        //     ext2_free_blocks(raw_super_block);
+        //     ext2_free_blocks(raw_block_group_descriptor_table);
+        //     ext2_free_blocks(raw_inode_table);
+        //     return NULL;
+        // }
+
+        // debug_log("Super Block First Non-Reserved Inode Location: [ %u ]\n", raw_super_block->first_non_reserved_inode);
+        // debug_log("Ext2 Inode Mode: [ %u ]\n", raw_inode_table[1].mode);
+        // debug_log("Ext2 Inode Location: [ %u ]\n", raw_inode_table[1].block[0]);
+
+        // struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(super_block, 1);
+        // if (!ext2_read_blocks(super_block, raw_dirent_table, raw_inode_table[1].block[0], 1)) {
+        //     debug_log("Ext2 Read Error: [ Root Inode ]\n");
+        //     ext2_free_blocks(raw_dirent_table);
+        //     ext2_free_blocks(raw_inode_table);
+        //     ext2_free_blocks(raw_block_group_descriptor_table);
+        //     ext2_free_blocks(raw_super_block);
+        //     return NULL;
+        // }
+
+        // struct raw_dirent *dirent = raw_dirent_table;
+        // for (size_t i = 0;; i++) {
+        //     debug_log("Dirent %lu Name: [ %s ]\n", i, dirent->name);
+        //     debug_log("Dirent %lu Inode: [ %u ]\n", i, dirent->ino);
+        //     debug_log("Dirent %lu Size: [ %u ]\n", i, dirent->size);
+
+        //     if (dirent->type == EXT_DIRENT_TYPE_UNKNOWN) {
+        //         break;
+        //     }
+
+        //     dirent = EXT2_NEXT_DIRENT(dirent);
+        // }
+    }
+
+    if (name == NULL) {
+        return NULL;
+    }
 
     struct tnode_list *list = inode->tnode_list;
     while (list != NULL) {
@@ -104,6 +146,17 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
     return -EINVAL;
 }
 
+int ext2_stat(struct inode *inode, struct stat *stat_struct) {
+    stat_struct->st_size = inode->size;
+    stat_struct->st_blocks = (inode->size / inode->super_block->block_size - 1) + 1;
+    stat_struct->st_blksize = inode->super_block->block_size;
+    stat_struct->st_ino = inode->index;
+    stat_struct->st_dev = inode->device;
+    stat_struct->st_mode = inode->mode;
+    stat_struct->st_rdev = 0;
+    return 0;
+}
+
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     int error = 0;
     struct file *dev_file = fs_open(device_path, &error);
@@ -114,6 +167,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
+    struct ext2_sb_data *data = calloc(1, sizeof(struct ext2_sb_data));
 
     super_block->device = 0;
     super_block->op = NULL;
@@ -121,6 +175,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     init_spinlock(&super_block->super_block_lock);
     super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
     super_block->dev_file = dev_file;
+    super_block->private_data = data;
 
     struct ext2_raw_super_block *raw_super_block = ext2_allocate_blocks(super_block, 1);
     if (ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1) != 1) {
@@ -129,6 +184,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
         return NULL;
     }
 
+    data->sb = raw_super_block;
     super_block->block_size = 1024 << raw_super_block->shifted_blck_size;
 
     /* Other sizes are not supported */
@@ -142,51 +198,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
         return NULL;
     }
 
-    debug_log("Inode Table Block Address: [ %u ]\n", raw_block_group_descriptor_table[0].inode_table_block_address);
-    debug_log("Block Size: [ %lu ]\n", super_block->block_size);
-    debug_log("LBA Address: [ %#.16lX ]\n", raw_block_group_descriptor_table[0].inode_table_block_address * super_block->block_size / 512);
-
-    struct raw_inode *raw_inode_table = ext2_allocate_blocks(super_block, 1);
-    if (ext2_read_blocks(super_block, raw_inode_table, raw_block_group_descriptor_table[0].inode_table_block_address, 1) != 1) {
-        debug_log("Ext2 Read Error: [ Inode Table ]\n");
-        ext2_free_blocks(raw_super_block);
-        ext2_free_blocks(raw_block_group_descriptor_table);
-        ext2_free_blocks(raw_inode_table);
-        return NULL;
-    }
-
-    debug_log("Super Block First Non-Reserved Inode Location: [ %u ]\n", raw_super_block->first_non_reserved_inode);
-    debug_log("Ext2 Inode Mode: [ %u ]\n", raw_inode_table[1].mode);
-    debug_log("Ext2 Inode Location: [ %u ]\n", raw_inode_table[1].block[0]);
-
-    struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(super_block, 1);
-    if (!ext2_read_blocks(super_block, raw_dirent_table, raw_inode_table[1].block[0], 1)) {
-        debug_log("Ext2 Read Error: [ Root Inode ]\n");
-        ext2_free_blocks(raw_dirent_table);
-        ext2_free_blocks(raw_inode_table);
-        ext2_free_blocks(raw_block_group_descriptor_table);
-        ext2_free_blocks(raw_super_block);
-        return NULL;
-    }
-
-    struct raw_dirent *dirent = raw_dirent_table;
-    for (size_t i = 0;; i++) {
-        debug_log("Dirent %lu Name: [ %s ]\n", i, dirent->name);
-        debug_log("Dirent %lu Inode: [ %u ]\n", i, dirent->ino);
-        debug_log("Dirent %lu Size: [ %u ]\n", i, dirent->size);
-
-        if (dirent->size > EXT2_MAX_FILE_NAME_LENGTH + sizeof(struct raw_dirent)) {
-            break;
-        }
-
-        dirent = EXT2_NEXT_DIRENT(dirent);
-    }
-
-    ext2_free_blocks(raw_dirent_table);
-    ext2_free_blocks(raw_inode_table);
-    ext2_free_blocks(raw_block_group_descriptor_table);
-    ext2_free_blocks(raw_super_block);
-
+    data->blk_desc_table = raw_block_group_descriptor_table;
     assert(strlen(device_path) != 0);
 
     t_root->inode = root;

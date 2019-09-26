@@ -5,7 +5,7 @@
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
-struct hash_map *hash_create_hash_map(int (*hash)(void *ptr), int (*equals)(void *ptr, void *id), void *(*key)(void *ptr)) {
+struct hash_map *hash_create_hash_map(int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id), void *(*key)(void *ptr)) {
     struct hash_map *map = calloc(1, sizeof(struct hash_map));
     map->hash = hash;
     map->equals = equals;
@@ -15,7 +15,7 @@ struct hash_map *hash_create_hash_map(int (*hash)(void *ptr), int (*equals)(void
 }
 
 void *hash_get(struct hash_map *map, void *key) {
-	size_t i = map->hash(map->key(key));
+	size_t i = map->hash(key, HASH_DEFAULT_NUM_BUCKETS);
 
 	struct hash_entry *entry = map->entries[i];
 	while (entry != NULL) {
@@ -30,14 +30,13 @@ void *hash_get(struct hash_map *map, void *key) {
 }
 
 void hash_put(struct hash_map *map, void *data) {
-	size_t i = map->hash(map->key(data));
+	size_t i = map->hash(map->key(data), HASH_DEFAULT_NUM_BUCKETS);
 
 	spin_lock(&map->lock);
 
 	struct hash_entry **entry = &map->entries[i];
 	while (*entry != NULL) {
 		if (map->equals((*entry)->key, map->key(data))) {
-			debug_log("Hash Map put on existing entry\n");
 			(*entry)->data = data;
 
 			spin_unlock(&map->lock);
@@ -56,7 +55,7 @@ void hash_put(struct hash_map *map, void *data) {
 }
 
 void hash_set(struct hash_map *map, void *data) {
-	size_t i = map->hash(map->key(data));
+	size_t i = map->hash(map->key(data), HASH_DEFAULT_NUM_BUCKETS);
 
 	spin_lock(&map->lock);
 
@@ -78,7 +77,7 @@ void hash_set(struct hash_map *map, void *data) {
 }
 
 void hash_del(struct hash_map *map, void *key) {
-	size_t i = map->hash(key);
+	size_t i = map->hash(key, HASH_DEFAULT_NUM_BUCKETS);
 
 	spin_lock(&map->lock);
 
