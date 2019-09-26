@@ -79,9 +79,11 @@ void fs_inode_del(dev_t dev, ino_t id) {
 	hash_del(store->map, &id);
 }
 
-/* Method should work for each different device */
-void fs_inode_free_hash_table() {
-	hash_free_hash_map(dev_map);
+void fs_inode_free_store(dev_t dev) {
+	struct inode_store *store = hash_get(dev_map, &dev);
+
+	hash_free_hash_map(store->map);
+	free(store);
 }
 
 ino_t fs_get_next_inode_id() {
