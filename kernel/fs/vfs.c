@@ -157,7 +157,15 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 
     struct dirent *entry = (struct dirent*) buffer;
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    if (!inode->tnode_list) {
+        inode->i_op->lookup(inode, NULL);
+        if (inode->tnode_list) {
+            return -EINVAL;
+        }
+    }
+
     struct tnode *tnode = find_tnode_index(inode->tnode_list, file->position);
+    
     if (!tnode) {
         /* Traverse mount points as well */
         size_t len = get_tnode_list_length(inode->tnode_list);

@@ -7,6 +7,7 @@
 
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/tnode.h>
+#include <kernel/util/hash_map.h>
 
 #define EXT2_SUPER_BLOCK_OFFSET 1024
 #define EXT2_SUPER_BLOCK_SIZE 1024
@@ -121,14 +122,14 @@ struct raw_dirent {
     uint16_t size;
     uint8_t name_length;
 
-#define EXT_DIRENT_TYPE_UNKNOWN 0
-#define EXT_DIRENT_TYPE_REGULAR 1
-#define EXT_DIRENT_TYPE_DIRECTORY 2
-#define EXT_DIRENT_TYPE_CHARACTER_DEVICE 3
-#define EXT_DIRENT_TYPE_BLOCK 4
-#define EXT_DIRENT_TYPE_FIFO 5
-#define EXT_DIRENT_TYPE_SOCKET 7
-#define EXT_DIRENT_TYPE_SYMBOLIC_LINK 7
+#define EXT2_DIRENT_TYPE_UNKNOWN 0
+#define EXT2_DIRENT_TYPE_REGULAR 1
+#define EXT2_DIRENT_TYPE_DIRECTORY 2
+#define EXT2_DIRENT_TYPE_CHARACTER_DEVICE 3
+#define EXT2_DIRENT_TYPE_BLOCK 4
+#define EXT2_DIRENT_TYPE_FIFO 5
+#define EXT2_DIRENT_TYPE_SOCKET 7
+#define EXT2_DIRENT_TYPE_SYMBOLIC_LINK 7
     uint8_t type;
     char name[];
 } __attribute__((packed));
@@ -138,6 +139,13 @@ struct raw_dirent {
 struct ext2_sb_data {
     struct ext2_raw_super_block *sb;
     struct raw_block_group_descriptor *blk_desc_table;
+    struct hash_map *inode_table_map;
+    size_t num_block_groups;
+};
+
+struct ext2_inode_table {
+    size_t index;
+    struct raw_inode *inode_table_start;
 };
 
 struct tnode *ext2_lookup(struct inode *inode, const char *name);
