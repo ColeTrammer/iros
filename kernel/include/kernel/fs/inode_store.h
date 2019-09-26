@@ -4,10 +4,10 @@
 #include <kernel/fs/inode.h>
 
 void init_fs_inode_store();
-struct inode *fs_inode_get(ino_t id);
+struct inode *fs_inode_get(dev_t dev, ino_t id);
 void fs_inode_put(struct inode *inode);
 void fs_inode_set(struct inode *inode);
-void fs_inode_del(ino_t id);
+void fs_inode_del(dev_t dev, ino_t id);
 void fs_inode_free_hash_table();
 
 ino_t fs_get_next_inode_id();

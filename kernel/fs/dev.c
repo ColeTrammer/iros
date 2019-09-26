@@ -78,7 +78,7 @@ struct file *dev_open(struct inode *inode, int *error) {
 }
 
 int dev_close(struct file *file) {
-    struct inode *inode = fs_inode_get(file->inode_idenifier);
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
     int error = 0;
@@ -94,7 +94,7 @@ ssize_t dev_read(struct file *file, void *buffer, size_t len) {
         return -EISDIR;
     }
 
-    struct inode *inode = fs_inode_get(file->inode_idenifier);
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
     if (((struct device*) inode->private_data)->ops->read) {
@@ -105,7 +105,7 @@ ssize_t dev_read(struct file *file, void *buffer, size_t len) {
 }
 
 ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
-    struct inode *inode = fs_inode_get(file->inode_idenifier);
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
     if (((struct device*) inode->private_data)->ops->write) {
@@ -230,6 +230,13 @@ void dev_remove(const char *_path) {
     free(tnode);
 
     free(path);
+}
+
+dev_t dev_get_device_number(struct file *file) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    return ((struct device*) inode->private_data)->device_number;
 }
 
 void init_dev() {

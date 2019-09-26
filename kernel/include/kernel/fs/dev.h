@@ -42,4 +42,6 @@ ssize_t dev_write(struct file *file, const void *buffer, size_t len);
 int dev_stat(struct inode *inode, struct stat *stat_struct);
 struct tnode *dev_mount(struct file_system *fs, char *device_path);
 
+dev_t dev_get_device_number(struct file *file);
+
 #endif /* _KERNEL_FS_DEV_H */

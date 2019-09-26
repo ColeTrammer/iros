@@ -30,7 +30,9 @@ void init_fs_inode_store() {
 	dev_map = hash_create_hash_map(gen_hash, gen_equals, gen_key);
 }
 
-struct inode *fs_inode_get(ino_t id) {
+struct inode *fs_inode_get(dev_t dev, ino_t id) {
+	(void) dev;
+
 	return hash_get(dev_map, &id);
 }
 
@@ -42,7 +44,9 @@ void fs_inode_set(struct inode *inode) {
 	hash_set(dev_map, inode);
 }
 
-void fs_inode_del(ino_t id) {
+void fs_inode_del(dev_t dev, ino_t id) {
+	(void) dev;
+
 	hash_del(dev_map, &id);
 }
 

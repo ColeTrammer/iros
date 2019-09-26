@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <dirent.h>
 
+#include <kernel/fs/dev.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
@@ -14,11 +15,8 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/super_block.h>
-#include <kernel/mem/vm_region.h>
-#include <kernel/mem/vm_allocator.h>
 #include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
-#include <kernel/hal/x86_64/drivers/serial.h>
 
 static struct file_system fs = {
     "ext2", 0, &ext2_mount, NULL, NULL
@@ -169,7 +167,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
     struct ext2_sb_data *data = calloc(1, sizeof(struct ext2_sb_data));
 
-    super_block->device = 0;
+    super_block->device = dev_get_device_number(dev_file);
     super_block->op = NULL;
     super_block->root = t_root;
     init_spinlock(&super_block->super_block_lock);
@@ -203,7 +201,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
 
     t_root->inode = root;
 
-    root->device = 0;
+    root->device = super_block->device;
     root->flags = FS_DIR;
     root->i_op = &ext2_dir_i_op;
     root->index = fs_get_next_inode_id();

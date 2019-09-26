@@ -139,7 +139,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->size = initrd->end - initrd->start;
     root->super_block = &super_block;
     root->flags = FS_DIR;
-    root->device = 0;  /* Update when there is other devices... */
+    root->device = 1;
     root->i_op = &initrd_dir_i_op;
     root->mode = S_IFDIR | 0777;
     init_spinlock(&root->lock);
@@ -149,6 +149,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
 
     current_fs->super_block = &super_block;
     super_block.root = t_root;
+    super_block.device = root->device;
 
     struct initrd_file_entry *entry = file_list;
     for (size_t i = 0; i < num_files; i++) {
@@ -157,7 +158,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->size = entry[i].length;
         inode->super_block = &super_block;
         inode->flags = FS_FILE;
-        inode->device = 0;
+        inode->device = root->device;
         inode->mode = S_IFREG | 0777;
         inode->i_op = &initrd_i_op;
         inode->private_data = entry + i;
