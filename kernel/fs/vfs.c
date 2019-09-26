@@ -271,6 +271,8 @@ int fs_mount(const char *src, const char *path, const char *type) {
                 mount->super_block->root->name = "/";
                 mount->super_block->root->inode->parent = mount->super_block->root;
                 root = mount;
+
+                fs_inode_create_store(file_system->super_block->device);
                 return 0;
             }
 
@@ -318,6 +320,7 @@ int fs_mount(const char *src, const char *path, const char *type) {
             mount->super_block->root->name = name;
             mount->super_block->root->inode->parent = mount_on;
 
+            fs_inode_create_store(file_system->super_block->device);
             free(path_copy);
             return 0;
         }

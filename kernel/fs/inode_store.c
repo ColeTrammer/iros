@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/inode.h>
@@ -26,30 +27,59 @@ static void *gen_key(void *inode) {
 	return &((struct inode*) inode)->index;
 }
 
+static int dev_hash(void *dev_num, int hash_size) {
+	return *((dev_t*) dev_num) % hash_size;
+}
+
+static int dev_equals(void *dev1, void *dev2) {
+	return *((dev_t*) dev1) == *((dev_t*) dev2);
+}
+
+static void *dev_key(void *store) {
+	return &((struct inode_store*) store)->device;
+}
+
 void init_fs_inode_store() {
-	dev_map = hash_create_hash_map(gen_hash, gen_equals, gen_key);
+	dev_map = hash_create_hash_map(dev_hash, dev_equals, dev_key);
+}
+
+void fs_inode_create_store(dev_t dev) {
+	struct inode_store *store = malloc(sizeof(struct inode_store));
+	store->device = dev;
+	store->map = hash_create_hash_map(gen_hash, gen_equals, gen_key);
+
+	hash_put(dev_map, store);
 }
 
 struct inode *fs_inode_get(dev_t dev, ino_t id) {
-	(void) dev;
+	struct inode_store *store = hash_get(dev_map, &dev);
+	assert(store);
 
-	return hash_get(dev_map, &id);
+	return hash_get(store->map, &id);
 }
 
 void fs_inode_put(struct inode *inode) {
-	hash_put(dev_map, inode);
+	struct inode_store *store = hash_get(dev_map, &inode->device);
+	assert(store);
+
+	hash_put(store->map, inode);
 }
 
 void fs_inode_set(struct inode *inode) {
-	hash_set(dev_map, inode);
+	struct inode_store *store = hash_get(dev_map, &inode->device);
+	assert(store);
+
+	hash_set(store->map, inode);
 }
 
 void fs_inode_del(dev_t dev, ino_t id) {
-	(void) dev;
+	struct inode_store *store = hash_get(dev_map, &dev);
+	assert(store);
 
-	hash_del(dev_map, &id);
+	hash_del(store->map, &id);
 }
 
+/* Method should work for each different device */
 void fs_inode_free_hash_table() {
 	hash_free_hash_map(dev_map);
 }
