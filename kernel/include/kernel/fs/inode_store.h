@@ -17,6 +17,5 @@ void fs_inode_del(dev_t dev, ino_t id);
 void fs_inode_free_store(dev_t dev);
 
 void fs_inode_create_store(dev_t dev);
-ino_t fs_get_next_inode_id();
 
 #endif /* _KERNEL_FS_INODE_STORE_H */

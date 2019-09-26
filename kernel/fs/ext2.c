@@ -204,7 +204,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->device = super_block->device;
     root->flags = FS_DIR;
     root->i_op = &ext2_dir_i_op;
-    root->index = fs_get_next_inode_id();
+    root->index = EXT2_ROOT_INODE;
     init_spinlock(&root->lock);
     root->mode = S_IFDIR | 0777;
     root->mounts = NULL;

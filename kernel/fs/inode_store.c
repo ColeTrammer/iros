@@ -8,11 +8,6 @@
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
-static spinlock_t inode_count_lock = SPINLOCK_INITIALIZER;
-
-/* Should be atomic instead of being locked */
-static ino_t inode_count = 0;
-
 static struct hash_map *dev_map;
 
 static int gen_hash(void *inode_id, int hash_size) {
@@ -84,11 +79,4 @@ void fs_inode_free_store(dev_t dev) {
 
 	hash_free_hash_map(store->map);
 	free(store);
-}
-
-ino_t fs_get_next_inode_id() {
-	spin_lock(&inode_count_lock);
-	ino_t id = inode_count++;
-	spin_unlock(&inode_count_lock);
-	return id;
 }

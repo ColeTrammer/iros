@@ -27,6 +27,8 @@ static uint64_t num_files;
 static uintptr_t initrd_start;
 static struct initrd_file_entry *file_list;
 
+static ino_t inode_count = 1;
+
 static struct file_system fs = {
     "initrd", 0, &initrd_mount, NULL, NULL
 };
@@ -135,7 +137,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     file_list = (struct initrd_file_entry*) (initrd_start + sizeof(int64_t));
 
     struct inode *root = calloc(1, sizeof(struct inode));
-    root->index = fs_get_next_inode_id();
+    root->index = inode_count++;
     root->size = initrd->end - initrd->start;
     root->super_block = &super_block;
     root->flags = FS_DIR;
@@ -154,7 +156,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     struct initrd_file_entry *entry = file_list;
     for (size_t i = 0; i < num_files; i++) {
         struct inode *inode = calloc(1, sizeof(struct inode));
-        inode->index = fs_get_next_inode_id();
+        inode->index = inode_count++;
         inode->size = entry[i].length;
         inode->super_block = &super_block;
         inode->flags = FS_FILE;

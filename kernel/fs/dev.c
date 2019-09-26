@@ -20,6 +20,9 @@
 static struct file_system fs;
 static struct super_block super_block;
 
+static spinlock_t inode_counter_lock = SPINLOCK_INITIALIZER;
+static ino_t inode_counter = 1;
+
 static struct file_system fs = {
     "dev", 0, &dev_mount, NULL, NULL
 };
@@ -138,7 +141,7 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->device = 2;
     root->flags = FS_DIR;
     root->i_op = &dev_dir_i_op;
-    root->index = fs_get_next_inode_id();
+    root->index = inode_counter++;
     init_spinlock(&root->lock);
     root->mode = S_IFDIR | 0777;
     root->mounts = NULL;
@@ -185,7 +188,11 @@ void dev_add(struct device *device, const char *_path) {
     to_add->device = super_block.device;
     to_add->flags = FS_FILE;
     to_add->i_op = &dev_i_op;
-    to_add->index = fs_get_next_inode_id();
+
+    spin_lock(&inode_counter_lock);
+    to_add->index = inode_counter++;
+    spin_unlock(&inode_counter_lock);
+
     init_spinlock(&to_add->lock);
     to_add->mode = device->type | 0777;
     to_add->mounts = NULL;
