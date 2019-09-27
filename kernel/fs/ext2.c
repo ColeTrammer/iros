@@ -61,12 +61,18 @@ static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
 static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
     spin_lock(&sb->super_block_lock);
 
-    sb->dev_file->position = sb->block_size * block_offset;
-    debug_log("Ext2 read blocks: [ %u, %lu ]\n", block_offset, num_blocks);
-    ssize_t ret = fs_read(sb->dev_file, buffer, sb->block_size * num_blocks);
+    debug_log("Ext2 read blocks: [ %#.8X, %lu ]\n", block_offset, num_blocks);
+
+    for (blkcnt_t i = 0; i < num_blocks; i++) {
+        sb->dev_file->position = sb->block_size * (block_offset + i);
+        if (fs_read(sb->dev_file, (void*) (((uintptr_t) buffer) + sb->block_size * i), sb->block_size) != sb->block_size) {
+            spin_unlock(&sb->super_block_lock);
+            return -EIO;
+        }
+    }
 
     spin_unlock(&sb->super_block_lock);
-    return ret < 0 ? ret : ret / sb->block_size;
+    return num_blocks;
 }
 
 /* May need more complicated actions later */
@@ -94,7 +100,7 @@ static struct raw_inode *ext2_get_inode_table(struct super_block *sb, size_t ind
     struct ext2_inode_table *group = hash_get(data->inode_table_map, &index);
     if (!group) {
         struct raw_block_group_descriptor block_group = data->blk_desc_table[index]; 
-        ssize_t num_blocks = 4; // data->sb->num_inodes_in_block_group * sizeof(struct raw_inode) / sb->block_size;
+        ssize_t num_blocks = data->sb->num_inodes_in_block_group * sizeof(struct raw_inode) / sb->block_size;
         struct raw_inode *inode_table_start = ext2_allocate_blocks(sb, num_blocks);
         if (ext2_read_blocks(sb, inode_table_start, block_group.inode_table_block_address, num_blocks) != num_blocks) {
             debug_log("Ext2 Read Inode Table Failed: [ %lu ]\n", index);
@@ -118,26 +124,10 @@ struct raw_inode *ext2_get_raw_inode(struct super_block *sb, uint32_t index) {
     return inode_table + ext2_get_inode_table_index(sb, index);
 }
 
-/* Reads raw inode info into memory and updates inode */
-static void ext2_update_inode(struct inode *inode) {
-    debug_log("Updating inode: [ %llu ]\n", inode->index);
-
-    assert(inode->private_data == NULL);
-    struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
-    assert(raw_inode);
-    inode->private_data = raw_inode;
-
-    inode->mode = raw_inode->mode;
-    inode->size = raw_inode->size;
-}
-
 /* Reads dirent entries of an inode */
 static void ext2_update_tnode_list(struct inode *inode) {
     debug_log("Updating tnode list: [ %llu ]\n", inode->index);
-
-    if (!inode->private_data) {
-        ext2_update_inode(inode);
-    }
+    assert(inode->private_data);
 
     struct raw_inode *raw_inode = inode->private_data;
     assert(raw_inode);
@@ -149,8 +139,8 @@ static void ext2_update_tnode_list(struct inode *inode) {
     }
 
     struct raw_dirent *dirent = raw_dirent_table;
-    for (size_t i = 0;; i++) {
-        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
+    for (size_t i = 2;; i++) {
+        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN || dirent->type == EXT2_DIRENT_TYPE_REGULAR) {
             break;
         }
 
@@ -165,7 +155,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
         inode_to_add->device = inode->device;
         inode_to_add->parent = inode == inode->super_block->root->inode ? inode->super_block->root : find_tnode_inode(inode->parent->inode->tnode_list, inode);
         assert(inode_to_add->parent->inode == inode);
-        inode_to_add->index = 2; // dirent->ino;
+        inode_to_add->index = 2;
         inode_to_add->i_op = &ext2_i_op;
         inode_to_add->super_block = inode->super_block;
         inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? FS_DIR : FS_FILE;
@@ -173,6 +163,23 @@ static void ext2_update_tnode_list(struct inode *inode) {
 
         dirent = EXT2_NEXT_DIRENT(dirent);
     }
+}
+
+/* Reads raw inode info into memory and updates inode */
+static void ext2_update_inode(struct inode *inode) {
+    debug_log("Updating inode: [ %llu ]\n", inode->index);
+
+    assert(inode->private_data == NULL);
+    struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
+    assert(raw_inode);
+    inode->private_data = raw_inode;
+
+    if (inode->flags & FS_DIR && inode->tnode_list == NULL) {
+        ext2_update_tnode_list(inode);
+    }
+
+    inode->mode = raw_inode->mode;
+    inode->size = raw_inode->size;
 }
 
 struct tnode *ext2_lookup(struct inode *inode, const char *name) {
@@ -202,10 +209,6 @@ struct tnode *ext2_lookup(struct inode *inode, const char *name) {
 struct file *ext2_open(struct inode *inode, int *error) {
     if (!inode->private_data) {
         ext2_update_inode(inode);
-
-        if (inode->flags & FS_DIR && inode->tnode_list == NULL) {
-            ext2_update_tnode_list(inode);
-        }
     }
 
     struct raw_inode *raw_inode = inode->private_data;
@@ -282,6 +285,8 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
         ext2_free_blocks(raw_super_block);
         return NULL;
     }
+
+    debug_log("Ext2 Num Inodes in Block Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
 
     data->sb = raw_super_block;
     data->num_block_groups = (raw_super_block->num_blocks + raw_super_block->num_blocks_in_block_group - 1) / raw_super_block->num_blocks_in_block_group;
