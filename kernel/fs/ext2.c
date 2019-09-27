@@ -139,8 +139,8 @@ static void ext2_update_tnode_list(struct inode *inode) {
     }
 
     struct raw_dirent *dirent = raw_dirent_table;
-    for (size_t i = 2;; i++) {
-        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN || dirent->type == EXT2_DIRENT_TYPE_REGULAR) {
+    for (size_t i = 0;; i++) {
+        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
             break;
         }
 
@@ -155,7 +155,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
         inode_to_add->device = inode->device;
         inode_to_add->parent = inode == inode->super_block->root->inode ? inode->super_block->root : find_tnode_inode(inode->parent->inode->tnode_list, inode);
         assert(inode_to_add->parent->inode == inode);
-        inode_to_add->index = 2;
+        inode_to_add->index = dirent->ino;
         inode_to_add->i_op = &ext2_i_op;
         inode_to_add->super_block = inode->super_block;
         inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? FS_DIR : FS_FILE;
@@ -167,7 +167,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
 
 /* Reads raw inode info into memory and updates inode */
 static void ext2_update_inode(struct inode *inode) {
-    debug_log("Updating inode: [ %llu ]\n", inode->index);
+    debug_log("Updating inode: [ %#.8llX ]\n", inode->index);
 
     assert(inode->private_data == NULL);
     struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
@@ -287,6 +287,8 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     }
 
     debug_log("Ext2 Num Inodes in Block Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
+    debug_log("Ext2 Num Blocks: [ %#.8X ]\n", raw_super_block->num_blocks);
+    debug_log("Ext2 Num Inodes: [ %#.8X ]\n", raw_super_block->num_inodes);
 
     data->sb = raw_super_block;
     data->num_block_groups = (raw_super_block->num_blocks + raw_super_block->num_blocks_in_block_group - 1) / raw_super_block->num_blocks_in_block_group;
@@ -295,8 +297,9 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     /* Other sizes are not supported */
     assert(super_block->block_size == 1024);
 
-    struct raw_block_group_descriptor *raw_block_group_descriptor_table = ext2_allocate_blocks(super_block, 1);
-    if (ext2_read_blocks(super_block, raw_block_group_descriptor_table, 2, 1) != 1) {
+    blkcnt_t num_blocks = (data->num_block_groups * sizeof(struct raw_block_group_descriptor) + super_block->block_size - 1) / super_block->block_size;
+    struct raw_block_group_descriptor *raw_block_group_descriptor_table = ext2_allocate_blocks(super_block, num_blocks);
+    if (ext2_read_blocks(super_block, raw_block_group_descriptor_table, 2, num_blocks) != num_blocks) {
         debug_log("Ext2 Read Error: [ Block Group Descriptor Table ]\n");
         ext2_free_blocks(raw_super_block);
         ext2_free_blocks(raw_block_group_descriptor_table);
