@@ -147,7 +147,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
     size_t block_no = 0;
     struct raw_dirent *dirent = raw_dirent_table;
     for (;;) {
-        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN || strcmp(dirent->name, "kernel.map") == 0) {
+        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
             break;
         }
 
@@ -169,7 +169,6 @@ static void ext2_update_tnode_list(struct inode *inode) {
         init_spinlock(&inode_to_add->lock);
 
         dirent = EXT2_NEXT_DIRENT(dirent);
-        free(NULL);
         if ((uintptr_t) dirent >= ((uintptr_t) raw_dirent_table) + inode->super_block->block_size) {
             ext2_free_blocks(raw_dirent_table);
             block_no++;

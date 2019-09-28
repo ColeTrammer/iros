@@ -159,7 +159,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     if (!inode->tnode_list) {
         inode->i_op->lookup(inode, NULL);
-        if (inode->tnode_list) {
+        if (!inode->tnode_list) {
             return -EINVAL;
         }
     }
