@@ -7,7 +7,7 @@
 
 #include <kernel/mem/page.h>
 
-#define __MALLOC_MAGIG_CHECK 0x41BFA759UL
+#define __MALLOC_MAGIG_CHECK 0x2A8F30B241BFA759UL
 
 #ifdef __is_libk
 #include <kernel/mem/vm_allocator.h>
@@ -26,10 +26,10 @@ void *sbrk(intptr_t increment) {
 #endif
 
 struct metadata {
+    size_t magic;
     size_t prev_size;
     size_t size;
-    size_t magic;
-};
+} __attribute__((packed));
 
 #define ALLOCATED (1)
 #define SET_ALLOCATED(block) ((block)->size |= ALLOCATED)
