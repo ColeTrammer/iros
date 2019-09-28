@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
 
@@ -54,7 +55,7 @@ void update_vga_buffer();
 void set_vga_foreground(enum vga_color fs);
 void set_vga_background(enum vga_color bg);
 
-void write_vga_buffer(size_t row, size_t col, char c);
+void write_vga_buffer(size_t row, size_t col, uint16_t c, bool raw_copy);
 uint16_t get_vga_buffer(size_t row, size_t col);
 
 void set_vga_cursor(size_t row, size_t col);

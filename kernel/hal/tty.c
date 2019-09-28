@@ -71,7 +71,7 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                 if (nums[0] == 2) {
                     for (size_t r = 0; r < data->y_max; r++) {
                         for (size_t c = 0; c < data->x_max; c++) {
-                            write_vga_buffer(r, c, ' ');
+                            write_vga_buffer(r, c, ' ', false);
                         }
                     }
                 }
@@ -142,23 +142,23 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
 
         } else if (str[i] == '\n' || data->x >= data->x_max) {
             while (data->x < data->x_max) {
-                write_vga_buffer(data->y, data->x++, ' ');
+                write_vga_buffer(data->y, data->x++, ' ', false);
             }
             data->y++;
             data->x = 0;
             if (data->y >= data->y_max) {
                 for (size_t r = 0; r < data->y_max - 1; r++) {
                     for (size_t c = 0; c < data->x_max; c++) {
-                        write_vga_buffer(r, c, get_vga_buffer(r + 1, c));
+                        write_vga_buffer(r, c, get_vga_buffer(r + 1, c), true);
                     }
                 }
                 for (size_t i = 0; i < data->x_max; i++) {
-                    write_vga_buffer(data->y_max - 1, i, ' ');
+                    write_vga_buffer(data->y_max - 1, i, ' ', false);
                 }
                 data->y--;
             }
         } else {
-            write_vga_buffer(data->y, data->x++, str[i]);
+            write_vga_buffer(data->y, data->x++, str[i], false);
         }
     }
 
@@ -306,7 +306,7 @@ static void tty_add(struct device *tty) {
 
     for (size_t r = 0; r < data->y_max; r++) {
         for (size_t c = 0; c < data->x_max; c++) {
-            write_vga_buffer(r, c, ' ');
+            write_vga_buffer(r, c, ' ', false);
         }
     }
 

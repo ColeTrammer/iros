@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
@@ -33,8 +35,8 @@ void set_vga_background(enum vga_color _bg) {
     bg = _bg;
 }
 
-void write_vga_buffer(size_t row, size_t col, char c) {
-    vga_buffer[VGA_INDEX(row, col)] = VGA_ENTRY(c, fg, bg);
+void write_vga_buffer(size_t row, size_t col, uint16_t c, bool raw_copy) {
+    vga_buffer[VGA_INDEX(row, col)] = raw_copy ? c : VGA_ENTRY(c & 0xFF, fg, bg);
 }
 
 uint16_t get_vga_buffer(size_t row, size_t col) {
