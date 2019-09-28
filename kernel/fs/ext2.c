@@ -6,6 +6,7 @@
 #include <sys/param.h>
 #include <errno.h>
 #include <dirent.h>
+#include <stdbool.h>
 
 #include <kernel/fs/dev.h>
 #include <kernel/fs/file.h>
@@ -60,8 +61,6 @@ static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
 /* Reads blocks at a given offset into the buffer */
 static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
     spin_lock(&sb->super_block_lock);
-
-    debug_log("Ext2 read blocks: [ %#.8X, %lu ]\n", block_offset, num_blocks);
 
     for (blkcnt_t i = 0; i < num_blocks; i++) {
         sb->dev_file->position = sb->block_size * (block_offset + i);
@@ -124,10 +123,15 @@ struct raw_inode *ext2_get_raw_inode(struct super_block *sb, uint32_t index) {
     return inode_table + ext2_get_inode_table_index(sb, index);
 }
 
+static void ext2_update_inode(struct inode *inode, bool update_tnodes);
+
 /* Reads dirent entries of an inode */
 static void ext2_update_tnode_list(struct inode *inode) {
-    debug_log("Updating tnode list: [ %llu ]\n", inode->index);
-    assert(inode->private_data);
+    debug_log("Updating Tnode List: [ %llu ]\n", inode->index);
+
+    if (!inode->private_data) {
+        ext2_update_inode(inode, false);
+    }
 
     struct raw_inode *raw_inode = inode->private_data;
     assert(raw_inode);
@@ -138,17 +142,20 @@ static void ext2_update_tnode_list(struct inode *inode) {
         return;
     }
 
+    spin_lock(&inode->lock);
+
+    size_t block_no = 0;
     struct raw_dirent *dirent = raw_dirent_table;
-    for (size_t i = 0;; i++) {
-        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
+    for (;;) {
+        if (dirent->type == EXT2_DIRENT_TYPE_UNKNOWN || strcmp(dirent->name, "kernel.map") == 0) {
             break;
         }
 
         struct tnode *tnode = malloc(sizeof(struct tnode));
         struct inode *inode_to_add = calloc(1, sizeof(struct inode));
 
-        tnode->name = malloc(strlen(dirent->name) + 1);
-        strcpy(tnode->name, dirent->name);
+        tnode->name = calloc(dirent->name_length + 1, sizeof(char));
+        memcpy(tnode->name, dirent->name, dirent->name_length);
         tnode->inode = inode_to_add;
         inode->tnode_list = add_tnode(inode->tnode_list, tnode);
 
@@ -162,19 +169,40 @@ static void ext2_update_tnode_list(struct inode *inode) {
         init_spinlock(&inode_to_add->lock);
 
         dirent = EXT2_NEXT_DIRENT(dirent);
+        free(NULL);
+        if ((uintptr_t) dirent >= ((uintptr_t) raw_dirent_table) + inode->super_block->block_size) {
+            ext2_free_blocks(raw_dirent_table);
+            block_no++;
+
+            /* Can't read the indirect blocks */
+            if (block_no >= 12) {
+                break;
+            }
+
+            raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
+            if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[block_no], 1) != 1) {
+                ext2_free_blocks(raw_dirent_table);
+                break;
+            }
+
+            dirent = raw_dirent_table;
+        }
     }
+
+    spin_unlock(&inode->lock);
+
+    ext2_free_blocks(raw_dirent_table);
 }
 
 /* Reads raw inode info into memory and updates inode */
-static void ext2_update_inode(struct inode *inode) {
-    debug_log("Updating inode: [ %#.8llX ]\n", inode->index);
-
+static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
     assert(inode->private_data == NULL);
+
     struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
     assert(raw_inode);
     inode->private_data = raw_inode;
 
-    if (inode->flags & FS_DIR && inode->tnode_list == NULL) {
+    if (update_tnodes && inode->flags & FS_DIR && inode->tnode_list == NULL) {
         ext2_update_tnode_list(inode);
     }
 
@@ -208,7 +236,7 @@ struct tnode *ext2_lookup(struct inode *inode, const char *name) {
 
 struct file *ext2_open(struct inode *inode, int *error) {
     if (!inode->private_data) {
-        ext2_update_inode(inode);
+        ext2_update_inode(inode, true);
     }
 
     struct raw_inode *raw_inode = inode->private_data;
@@ -226,12 +254,51 @@ struct file *ext2_open(struct inode *inode, int *error) {
     return file;
 }
 
+/* Should provide some sort of mechanism for caching these blocks */
 ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
-    (void) file;
-    (void) buffer;
-    (void) len;
+    assert(file->flags & FS_FILE);
+    assert(len > 1);
 
-    return -EINVAL;
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+    assert(inode->private_data);
+
+    size_t max_can_read = inode->size - file->position + 1;
+    len = MIN(len, max_can_read) - 1;
+
+    size_t file_block_no = file->position / inode->super_block->block_size;
+    size_t file_block_no_end = (file->position + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
+    
+    debug_log("Reading Inode: [ %llu, %lu, %lu, %lu ]\n", inode->index, len, file_block_no, file_block_no_end);
+
+    while (file_block_no < file_block_no_end) {
+        void *block = ext2_allocate_blocks(inode->super_block, 1);
+
+        /* Not supporting the indirect blocks yet */
+        if (file_block_no >= 12) {
+            ext2_free_blocks(block);
+            return -EINVAL;
+        }
+
+        ssize_t ret = ext2_read_blocks(inode->super_block, block, ((struct raw_inode*) inode->private_data)->block[file_block_no], 1);
+        if (ret != 1) {
+            return ret;
+        }
+
+        size_t buffer_offset = file->position % inode->super_block->block_size;
+        size_t to_read = MIN(inode->super_block->block_size - buffer_offset, len);
+
+        memcpy(buffer, (void*) (((uintptr_t) block) + buffer_offset), to_read);
+        file->position += buffer_offset;
+        len -= buffer_offset;
+
+        ext2_free_blocks(block);
+        file_block_no++;
+        buffer = (void*) (((uintptr_t) buffer) + inode->super_block->block_size);
+    }
+
+    ((char*) buffer)[len] = '\0';
+    return len + 1;
 }
 
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
@@ -244,7 +311,7 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
 
 int ext2_stat(struct inode *inode, struct stat *stat_struct) {
     if (!inode->private_data) {
-        ext2_update_inode(inode);
+        ext2_update_inode(inode, false);
     }
 
     stat_struct->st_size = inode->size;
