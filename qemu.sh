@@ -23,5 +23,5 @@ else
 
     set +e
 
-    qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors -serial stdio -hda ext2_test.img -boot d
+    qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors,int -serial stdio -hda ext2_test.img -boot d -no-reboot -no-shutdown
 fi
