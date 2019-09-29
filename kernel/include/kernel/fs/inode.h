@@ -17,6 +17,7 @@ struct inode;
 #include <kernel/fs/file.h>
 
 struct inode_operations {
+    struct inode *(*create)(struct inode *inode, const char *name, mode_t mode, int *error);
     struct tnode *(*lookup)(struct inode *inode, const char *name);
     struct file *(*open)(struct inode *inode, int *error);
     int (*stat)(struct inode *inode, struct stat *stat_struct);

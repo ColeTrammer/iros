@@ -148,6 +148,7 @@ struct ext2_inode_table {
     struct raw_inode *inode_table_start;
 };
 
+struct inode *ext2_create(struct inode *parent, const char *name, mode_t mode, int *error);
 struct tnode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int *error);
 int ext2_close(struct file *file);

@@ -91,8 +91,6 @@ void arch_sys_open(struct process_state *process_state) {
     int flags = (int) process_state->cpu_state.rdx;
     mode_t mode = (mode_t) process_state->cpu_state.rcx;
     
-    (void) mode;
-    
     assert(_path != NULL);
 
     int error = 0;
@@ -103,9 +101,25 @@ void arch_sys_open(struct process_state *process_state) {
     struct file *file = fs_open(path, &error);
 
     if (file == NULL) {
-        debug_log("File Not Found\n");
-        free(path);
-        SYS_RETURN((uint64_t) error);
+        if (flags & O_CREAT) {
+            debug_log("Creating file: [ %s ]\n", path);
+
+            error = fs_create(path, mode);
+            if (error) {
+                free(path);
+                SYS_RETURN((uint64_t) error);
+            }
+
+            file = fs_open(path, &error);
+            if (file == NULL) {
+                free(path);
+                SYS_RETURN((uint64_t) error);
+            }
+        } else {
+            debug_log("File Not Found\n");
+            free(path);
+            SYS_RETURN((uint64_t) error);
+        }
     }
 
     /* Should probably be some other error instead */

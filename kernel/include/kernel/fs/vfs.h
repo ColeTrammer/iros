@@ -11,6 +11,7 @@ void init_vfs();
 
 struct tnode *iname(const char *path);
 
+int fs_create(const char *path, mode_t mode);
 struct file *fs_open(const char *file_name, int *error);
 int fs_close(struct file *file);
 ssize_t fs_read(struct file *file, void *buffer, size_t len);

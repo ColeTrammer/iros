@@ -113,6 +113,41 @@ struct tnode *iname(const char *_path) {
     return parent;
 }
 
+int fs_create(const char *file_name, mode_t mode) {
+    char *path = malloc(strlen(file_name) + 1);
+    strcpy(path, file_name);
+
+    char *last_slash = strrchr(path, '/');
+    *last_slash = '\0';
+
+    struct tnode *tparent = iname(path);
+    if (tparent == NULL) {
+        free(path);
+        return -ENOENT;
+    }
+
+    if (!tparent->inode->i_op->create) {
+        free(path);
+        return -EINVAL;
+    }
+
+    int error = 0;
+    struct inode *inode = tparent->inode->i_op->create(tparent->inode, last_slash + 1, mode, &error);
+    if (inode == NULL) {
+        free(path);
+        return error;
+    }
+
+    struct tnode *tnode = malloc(sizeof(struct tnode));
+    tnode->inode = inode;
+    tnode->name = malloc(strlen(last_slash + 1) + 1);
+    strcpy(tnode->name, last_slash + 1);
+    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+
+    free(path);
+    return 0;
+}
+
 struct file *fs_open(const char *file_name, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
@@ -196,6 +231,9 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 }
 
 ssize_t fs_read(struct file *file, void *buffer, size_t len) {
+    if (len == 0) { return 0; }
+    if (len == 1) { ((char*) buffer)[0] = '\0'; return 1; }
+
     if (file->f_op->read) {
         return file->f_op->read(file, buffer, len);
     }

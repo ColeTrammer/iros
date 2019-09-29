@@ -24,11 +24,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations ext2_i_op = {
-    &ext2_lookup, &ext2_open, &ext2_stat
+    NULL, &ext2_lookup, &ext2_open, &ext2_stat
 };
 
 static struct inode_operations ext2_dir_i_op = {
-    &ext2_lookup, &ext2_open, &ext2_stat
+    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat
 };
 
 static struct file_operations ext2_f_op = {
@@ -65,6 +65,22 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
     for (blkcnt_t i = 0; i < num_blocks; i++) {
         sb->dev_file->position = sb->block_size * (block_offset + i);
         if (fs_read(sb->dev_file, (void*) (((uintptr_t) buffer) + sb->block_size * i), sb->block_size) != sb->block_size) {
+            spin_unlock(&sb->super_block_lock);
+            return -EIO;
+        }
+    }
+
+    spin_unlock(&sb->super_block_lock);
+    return num_blocks;
+}
+
+/* Writes to blocks at a given offset from buffer */
+static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+    spin_lock(&sb->super_block_lock);
+
+    for (blkcnt_t i = 0; i < num_blocks; i++) {
+        sb->dev_file->position = sb->block_size * (block_offset + i);
+        if (fs_write(sb->dev_file, (const void*) (((uintptr_t) buffer) + sb->block_size * i), sb->block_size) != sb->block_size) {
             spin_unlock(&sb->super_block_lock);
             return -EIO;
         }
@@ -209,6 +225,15 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
     inode->size = raw_inode->size;
 }
 
+struct inode *ext2_create(struct inode *parent, const char *name, mode_t mode, int *error) {
+    (void) parent;
+    (void) name;
+    (void) mode;
+
+    *error = -EINVAL;
+    return NULL;
+}
+
 struct tnode *ext2_lookup(struct inode *inode, const char *name) {
     assert(inode->flags & FS_DIR);
 
@@ -301,11 +326,22 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
 }
 
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
-    (void) file;
-    (void) buffer;
-    (void) len;
+    assert(file->flags & FS_FILE);
+    assert(file->position == 0);
+    assert(len < 1024);
 
-    return -EINVAL;
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+
+    char *buf = ext2_allocate_blocks(inode->super_block, 1);
+    memcpy(buf, buffer, len);
+    memset(buf + len, 0, inode->super_block->block_size - len);
+    ssize_t ret = ext2_write_blocks(inode->super_block, buf, ((struct raw_inode*) inode->private_data)->block[0], 1) != 1;
+    if (ret != 1) {
+        return -EIO;
+    }
+
+    ext2_free_blocks(buf);
+    return (ssize_t) len;
 }
 
 int ext2_stat(struct inode *inode, struct stat *stat_struct) {
