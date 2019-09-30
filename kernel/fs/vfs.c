@@ -120,7 +120,14 @@ int fs_create(const char *file_name, mode_t mode) {
     char *last_slash = strrchr(path, '/');
     *last_slash = '\0';
 
-    struct tnode *tparent = iname(path);
+    struct tnode *tparent;
+    /* Root is a special case */
+    if (last_slash == path) {
+        tparent = iname("/");
+    } else {
+        tparent = iname(path);
+    }
+
     if (tparent == NULL) {
         free(path);
         return -ENOENT;
