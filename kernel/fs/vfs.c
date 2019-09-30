@@ -132,7 +132,7 @@ int fs_create(const char *file_name, mode_t mode) {
     }
 
     int error = 0;
-    struct inode *inode = tparent->inode->i_op->create(tparent->inode, last_slash + 1, mode, &error);
+    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, &error);
     if (inode == NULL) {
         free(path);
         return error;

@@ -12,14 +12,14 @@ static uintptr_t page_bitmap[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
 static spinlock_t bitmap_lock = SPINLOCK_INITIALIZER;
 
 static bool get_bit(uintptr_t bit_index) {
-    return page_bitmap[bit_index / (8 * sizeof(uintptr_t))] & (1 << (bit_index % (8 * sizeof(uintptr_t))));
+    return page_bitmap[bit_index / (8 * sizeof(uintptr_t))] & (1UL << (bit_index % (8 * sizeof(uintptr_t))));
 }
 
 static void set_bit(uintptr_t bit_index, bool value) {
     if (value) {
-        page_bitmap[bit_index / (8 * sizeof(uintptr_t))] |= (1 << (bit_index % (8 * sizeof(uintptr_t))));
+        page_bitmap[bit_index / (8 * sizeof(uintptr_t))] |= (1UL << (bit_index % (8 * sizeof(uintptr_t))));
     } else {
-        page_bitmap[bit_index / (8 * sizeof(uintptr_t))] &= ~(1 << (bit_index % (8 * sizeof(uintptr_t))));
+        page_bitmap[bit_index / (8 * sizeof(uintptr_t))] &= ~(1UL << (bit_index % (8 * sizeof(uintptr_t))));
     }
 }
 

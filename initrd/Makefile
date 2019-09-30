@@ -33,7 +33,8 @@ $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/shell \
 $(BUILDDIR)/initrd/programs/stat \
 $(BUILDDIR)/initrd/programs/test \
-$(BUILDDIR)/initrd/programs/test_exec
+$(BUILDDIR)/initrd/programs/test_exec \
+$(BUILDDIR)/initrd/programs/touch
 
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin

@@ -10,6 +10,7 @@ const char *sys_errlist[] = {
     "File cannot be executed",
     "Path is a directory",
     "Range",
+    "No space left on device",
     "Errno end"
 };
 

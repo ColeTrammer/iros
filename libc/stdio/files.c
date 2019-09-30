@@ -148,7 +148,9 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
 }
 
 int fclose(FILE *stream) {
-    fflush(stream);
+    if (fflush(stream) == EOF) {
+        return EOF;
+    }
 
     int ret = close(stream->fd);
     if (ret < 0) {
