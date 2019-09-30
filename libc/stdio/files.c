@@ -184,6 +184,10 @@ int fflush(FILE *stream) {
     return 0;
 }
 
+int fputs(const char *s, FILE *f) {
+    return fprintf(f, "%s\n", s);
+}
+
 int fgetc(FILE *stream) {
     unsigned char s[2];
     ssize_t ret = read(stream->fd, s, 2);

@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     }
 
     size_t len = strlen(argv[2]) + 1;
-    if (fwrite(argv[2], sizeof(char), len, f) != len) {
+    if (fputs(argv[2], f) < (int) len) {
         perror("fwrite");
         return 1;
     }

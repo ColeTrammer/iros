@@ -419,12 +419,21 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
 /* Syncs raw_inode to disk */
 int ext2_sync_inode(struct inode *inode) {
     size_t block_off = ext2_get_inode_table_index(inode->super_block, inode->index) * sizeof(struct raw_inode) / inode->super_block->block_size;
+    size_t block_group = ext2_get_block_group_from_inode(inode->super_block, inode->index);
+    size_t inode_table_index = ext2_get_inode_table_index(inode->super_block, inode->index);
+    struct raw_inode *raw_inode_table = ext2_get_inode_table(inode->super_block, block_group);
+
+    raw_inode_table[inode_table_index].size = inode->size;
+    raw_inode_table[inode_table_index].mode = inode->mode;
+    /* Sector size should be retrieved from block device */
+    raw_inode_table[inode_table_index].sectors = (inode->size + 511) / 512;
+
     ssize_t ret = ext2_write_blocks(inode->super_block,
-                                    ext2_get_inode_table(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index)) + block_off * inode->super_block->block_size / sizeof(struct raw_inode),
-                                    ((struct ext2_sb_data*) inode->super_block->private_data)->blk_desc_table[ext2_get_block_group_from_inode(inode->super_block, inode->index)].inode_table_block_address + block_off,
+                                    raw_inode_table + block_off * inode->super_block->block_size / sizeof(struct raw_inode),
+                                    ((struct ext2_sb_data*) inode->super_block->private_data)->blk_desc_table[block_group].inode_table_block_address + block_off,
                                     1);
 
-    if (ret < 0) {
+    if (ret != 1) {
         return (int) ret;
     }
 
@@ -435,6 +444,7 @@ int ext2_sync_inode(struct inode *inode) {
 int ext2_write_inode(struct inode *inode) {
     assert(inode->private_data == NULL);
 
+    struct ext2_sb_data *data = inode->super_block->private_data;
     struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
     assert(raw_inode);
     inode->private_data = raw_inode;
@@ -451,8 +461,19 @@ int ext2_write_inode(struct inode *inode) {
     raw_inode->sectors = 0;
     raw_inode->flags = 0;
     raw_inode->os_specific_1 = 0;
-    /* Should reserve some blocks (as specificed by sb) */
-    memset(raw_inode->block, 0, 15 * sizeof(uint32_t));
+    assert(data->sb->num_blocks_to_preallocate_for_files < 12);
+    void *zeroes = ext2_allocate_blocks(inode->super_block, 1);
+    memset(zeroes, 0, inode->super_block->block_size);
+    for (size_t i = 0; i < data->sb->num_blocks_to_preallocate_for_files; i++) {
+        raw_inode->block[i] = ext2_find_open_block(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
+        ext2_set_block_allocated(inode->super_block, raw_inode->block[i]);
+        ssize_t ret = ext2_write_blocks(inode->super_block, zeroes, raw_inode->block[i], 1);
+        if (ret != 1) {
+            return (int) ret;
+        }
+    }
+    ext2_free_blocks(zeroes);
+    memset(raw_inode->block + data->sb->num_blocks_to_preallocate_for_files, 0, (15 - data->sb->num_blocks_to_preallocate_for_files) * sizeof(uint32_t));
     raw_inode->generation = 0;
     raw_inode->file_acl = 0;
     raw_inode->dir_acl = 0;
@@ -529,6 +550,7 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
 
                 size_t block_index = ext2_find_open_block(inode->super_block, ext2_get_block_group_from_inode(parent->super_block, parent->index));
                 parent_raw_inode->block[block_no] = block_index;
+                parent->size += parent->super_block->block_size;
                 ext2_set_block_allocated(parent->super_block, block_index);
                 ext2_sync_inode(parent);
             }
@@ -677,11 +699,13 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
     assert(len < 1024);
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    inode->size = len;
+    ext2_sync_inode(inode);
 
     char *buf = ext2_allocate_blocks(inode->super_block, 1);
     memcpy(buf, buffer, len);
     memset(buf + len, 0, inode->super_block->block_size - len);
-    ssize_t ret = ext2_write_blocks(inode->super_block, buf, ((struct raw_inode*) inode->private_data)->block[0], 1) != 1;
+    ssize_t ret = ext2_write_blocks(inode->super_block, buf, ((struct raw_inode*) inode->private_data)->block[0], 1);
     if (ret != 1) {
         return -EIO;
     }
