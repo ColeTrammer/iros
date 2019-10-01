@@ -138,3 +138,14 @@ int stat(const char *restrict path, struct stat *restrict stat_struct) {
                   "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(stat_struct) : "rdi", "rsi", "rdx", "eax" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+off_t lseek(int fd, off_t offset, int whence) {
+    off_t ret;
+    asm volatile( "movq $14, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movl %3, %%edx\n"\
+                  "int $0x80\n"\
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(offset), "r"(whence) : "rdi", "esi", "rdx", "ecx", "rax" );
+    __SYSCALL_TO_ERRNO(ret);
+}

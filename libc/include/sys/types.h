@@ -8,7 +8,7 @@ extern "C" {
 typedef int pid_t;
 typedef unsigned int mode_t;
 typedef unsigned long dev_t;
-typedef unsigned long off_t;
+typedef long off_t;
 typedef unsigned long long ino_t;
 typedef unsigned short uid_t;
 typedef unsigned short gid_t;

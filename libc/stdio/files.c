@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #define STDIO_OWNED 0x800000
 
@@ -218,12 +219,15 @@ int fgetpos(FILE *stream, fpos_t *pos) {
 }
 
 int fseek(FILE *stream, long offset, int whence) {
-    (void) stream;
-    (void) offset;
-    (void) whence;
+    off_t ret = lseek(stream->fd, offset, whence);
+    assert (ret <= INT_MAX);
 
-    assert(false);
-    return -1;
+    if (ret < 0) {
+        return -1;
+    }
+
+    stream->eof = 0;
+    return (int) ret;
 }
 
 int fsetpos(FILE *stream, const fpos_t *pos) {
@@ -233,14 +237,12 @@ int fsetpos(FILE *stream, const fpos_t *pos) {
 }
 
 long ftell(FILE *stream) {
-    (void) stream;
-
-    assert(false);
-    return -1;
+    return lseek(stream->fd, 0, SEEK_CUR);
 }
 
 void rewind(FILE *stream) {
     fseek(stream, 0L, SEEK_SET);
+    clearerr(stream);
 }
 
 void clearerr(FILE *stream) {

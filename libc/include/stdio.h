@@ -23,7 +23,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef unsigned long fpos_t;
+typedef long fpos_t;
 
 typedef struct { 
     char *buffer;

@@ -37,7 +37,7 @@ struct inode {
     dev_t device;
 
     /* File system size */
-    off_t size;
+    size_t size;
 
     /* Unique inode identifier (for the filesystem) */
     ino_t index;
