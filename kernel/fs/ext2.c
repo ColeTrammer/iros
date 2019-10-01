@@ -161,6 +161,37 @@ static int64_t ext2_find_open_block_in_bitmap(struct ext2_block_bitmap *bitmap) 
     return -1;
 }
 
+static int ext2_sync_block_group(struct super_block *sb, uint32_t blk_grp_index) {
+    struct ext2_sb_data *data = sb->private_data;
+    size_t block_off =  blk_grp_index * sizeof(struct raw_block_group_descriptor) / sb->block_size;
+    size_t raw_off = block_off * sb->block_size;
+
+    ssize_t ret = ext2_write_blocks(sb,
+                                    (void*) (((uintptr_t) (data->blk_desc_table)) + raw_off),
+                                    2 + block_off,
+                                    1
+
+    );
+
+    if (ret != 1) {
+        return (int) ret;
+    }
+
+    return 0;
+}
+
+static int ext2_sync_super_block(struct super_block *sb) {
+    struct ext2_sb_data *data = sb->private_data;
+
+    ssize_t ret = ext2_write_blocks(sb, data->sb, 1, 1);
+
+    if (ret < 1) {
+        return (int) ret;
+    }
+
+    return 0;
+}
+
 /* Sets a block index as allocated */
 static int ext2_set_block_allocated(struct super_block *super_block, uint32_t index) {
     struct ext2_sb_data *data = super_block->private_data;
@@ -175,18 +206,20 @@ static int ext2_set_block_allocated(struct super_block *super_block, uint32_t in
                                     bitmap->bitmap + (block_off * super_block->block_size / sizeof(uint64_t)),
                                     ((struct ext2_sb_data*) super_block->private_data)->blk_desc_table[index / data->sb->num_blocks_in_block_group].block_usage_bitmap_block_address + block_off,
                                     1);
-    if (ret < 0) {
+    if (ret != 1) {
         return (int) ret;
     }
 
     struct ext2_block_group *block_group = ext2_get_block_group(super_block, index / data->sb->num_blocks_in_block_group);
     block_group->blk_desc->num_unallocated_blocks--;
-    /* TODO: Sync this to disk */
+    ret = ext2_sync_block_group(super_block, index / data->sb->num_blocks_in_block_group);
+
+    if (ret != 0) {
+        return (int) ret;
+    }
 
     data->sb->num_unallocated_blocks--;
-    /* TODO: Sync this to disk */
-
-    return 0;
+    return ext2_sync_super_block(super_block);
 }
 
 /* Find an open block (using usage bitmap), starting with the one specified by blk_grp_index */
@@ -268,19 +301,21 @@ static int ext2_set_inode_allocated(struct super_block *super_block, uint32_t in
                                     bitmap->bitmap + (block_off * super_block->block_size / sizeof(uint64_t)),
                                     ((struct ext2_sb_data*) super_block->private_data)->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)].inode_usage_bitmap_block_address + block_off,
                                     1);
-    if (ret < 0) {
+    if (ret != 1) {
         return (int) ret;
     }
 
     struct ext2_block_group *block_group = ext2_get_block_group(super_block, ext2_get_block_group_from_inode(super_block, index));
     block_group->blk_desc->num_unallocated_inodes--;
-    /* TODO: Sync this to disk */
+    ret = ext2_sync_block_group(super_block, ext2_get_block_group_from_inode(super_block, index));
+
+    if (ret != 0) {
+        return (int) ret;
+    }
 
     struct ext2_sb_data *sb_data = super_block->private_data;
     sb_data->sb->num_unallocated_inodes--;
-    /* TODO: Sync this to disk */
-
-    return 0;
+    return ext2_sync_super_block(super_block);
 }
 
 /* Find an open inode (using usage bitmap), starting with the one specified by blk_grp_index */
