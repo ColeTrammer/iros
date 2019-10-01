@@ -260,7 +260,7 @@ ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
     return -EINVAL;
 }
 
-int fs_seek(struct file *file, off_t offset, int whence) {
+off_t fs_seek(struct file *file, off_t offset, int whence) {
     off_t new_position;
     if (whence == SEEK_SET) {
         new_position = offset;
@@ -278,7 +278,7 @@ int fs_seek(struct file *file, off_t offset, int whence) {
     }
 
     file->position = new_position;
-    return 0;
+    return new_position;
 }
 
 long fs_tell(struct file *file) {

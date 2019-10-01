@@ -373,3 +373,15 @@ void arch_sys_stat(struct process_state *process_state) {
 
     SYS_RETURN(ret);
 }
+
+void arch_sys_lseek(struct process_state *process_state) {
+    int fd = (int) process_state->cpu_state.rsi;
+    off_t offset = (off_t) process_state->cpu_state.rdx;
+    int whence = (int) process_state->cpu_state.rcx;
+
+    struct process *process = get_current_process();
+    struct file *file = process->files[fd];
+    assert(file);
+
+    SYS_RETURN((uint64_t) fs_seek(file, offset, whence));
+}

@@ -77,3 +77,4 @@ sys_call_table:
     .quad arch_sys_getcwd
     .quad arch_sys_chdir
     .quad arch_sys_stat
+    .quad arch_sys_lseek
