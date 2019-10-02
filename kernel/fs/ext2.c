@@ -699,14 +699,14 @@ struct file *ext2_open(struct inode *inode, int *error) {
 /* Should provide some sort of mechanism for caching these blocks */
 ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
     assert(file->flags & FS_FILE);
-    assert(len > 1);
+    assert(len >= 1);
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
     assert(inode->private_data);
 
-    size_t max_can_read = inode->size - file->position + 1;
-    len = MIN(len, max_can_read) - 1;
+    size_t max_can_read = inode->size - file->position;
+    len = MIN(len, max_can_read);
 
     size_t file_block_no = file->position / inode->super_block->block_size;
     size_t file_block_no_end = (file->position + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
@@ -739,8 +739,7 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
         buffer = (void*) (((uintptr_t) buffer) + inode->super_block->block_size);
     }
 
-    ((char*) buffer)[len] = '\0';
-    return len + 1;
+    return len;
 }
 
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {

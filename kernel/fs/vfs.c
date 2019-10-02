@@ -239,7 +239,6 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 
 ssize_t fs_read(struct file *file, void *buffer, size_t len) {
     if (len == 0) { return 0; }
-    if (len == 1) { ((char*) buffer)[0] = '\0'; return 1; }
 
     if (file->f_op->read) {
         return file->f_op->read(file, buffer, len);

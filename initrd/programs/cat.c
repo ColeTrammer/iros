@@ -32,11 +32,12 @@ int main(int argc, char **argv) {
     }
 
     char *buffer = malloc(size + 1);
-    int read = fread(buffer, 1, size + 1, file);
+    int read = fread(buffer, 1, size, file);
     if (read == 0) {
         perror("cat");
         return 1;
     }
+    buffer[size] = '\0';
     printf("%s", buffer);
     fclose(file);
 

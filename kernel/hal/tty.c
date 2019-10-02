@@ -284,7 +284,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
     char *buf = (char*) buffer;
 
     int i;
-    for (i = 0; data->input_buffer_offset < data->input_buffer_length - 1 && i < (int) len - 1; i++) {
+    for (i = 0; data->input_buffer_offset < data->input_buffer_length - 1 && i < (int) len; i++) {
         buf[i] = data->input_buffer[data->input_buffer_offset++];
 
         if (buf[i] == '\n') {
@@ -295,8 +295,6 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
             break;
         }
     }
-
-    buf[i] = '\0';
 
     return (ssize_t) i;
 }

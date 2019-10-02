@@ -190,13 +190,13 @@ int fputs(const char *s, FILE *f) {
 }
 
 int fgetc(FILE *stream) {
-    unsigned char s[2];
-    ssize_t ret = read(stream->fd, s, 2);
+    char c;
+    ssize_t ret = read(stream->fd, &c, 1);
     if (ret <= 0) {
         return EOF;
     }
 
-    return (int) s[0];
+    return (int) c;
 }
 
 int getchar() {
