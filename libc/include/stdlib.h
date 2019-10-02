@@ -18,6 +18,8 @@ void _Exit(int status) __attribute__((__noreturn__));
 int atexit(void (*)(void));
 char *getenv(const char*);
 
+int atexit(void (*f)(void));
+
 #endif /* __is_libk */
 
 void abort() __attribute__((__noreturn__));
@@ -51,6 +53,10 @@ void free(void *ptr, int line, const char *func);
 #else
 void free(void *ptr);
 #endif /* (__is_kernel || __is_libk) && KERNEL_MALLOC_DEBUG */
+
+#ifdef __libc_internal
+void __on_exit();
+#endif /* __libc_internal */
 
 #ifdef __cplusplus
 }
