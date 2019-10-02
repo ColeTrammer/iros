@@ -11,6 +11,7 @@ const char *sys_errlist[] = {
     "Path is a directory",
     "Range",
     "No space left on device",
+    "Invalid command for device",
     "Errno end"
 };
 

@@ -70,7 +70,9 @@ $(BUILDDIR)/libc/dirent/dirent.o \
 $(BUILDDIR)/libc/errno/errno.o \
 $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \
+$(BUILDDIR)/libc/stdlib/atexit.o \
 $(BUILDDIR)/libc/string/strerror.o \
+$(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/unistd/exec.o \
 $(BUILDDIR)/libc/init.o
 

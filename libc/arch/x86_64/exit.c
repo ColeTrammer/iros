@@ -1,3 +1,5 @@
+#define __libc_internal
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -11,7 +13,7 @@ void _Exit(int status) {
 
 __attribute__((__noreturn__))
 void exit(int status) {
-    /* Should Call atexit Functions */
+    __on_exit();
 
     fflush(stdin);
     fflush(stdout);

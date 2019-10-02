@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <errno.h>
 
 void *sbrk(intptr_t increment) {
@@ -9,7 +10,7 @@ void *sbrk(intptr_t increment) {
     asm volatile( "movq $2, %%rdi\n"\
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(increment) : "rdi", "rsi", "rax");
+                  "movq %%rax, %0" : "=r"(ret) : "r"(increment) : "rdi", "rsi", "rax", "memory" );
     if (ret == (void*) -1) {
         errno = ENOMEM;
     }
@@ -20,7 +21,7 @@ __attribute__((__noreturn__))
 void _exit(int status) {
     asm( "movq $1, %%rdi\n"\
          "movq %0, %%rsi\n"\
-         "int $0x80" : : "m"(status) : "rdi", "rsi" );
+         "int $0x80" : : "m"(status) : "rdi", "rsi", "memory" );
     
     __builtin_unreachable();
 }
@@ -32,7 +33,7 @@ int open(const char *pathname, int flags, mode_t mode) {
                   "movl %2, %%edx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "edx", "ecx", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "edx", "ecx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -43,7 +44,7 @@ ssize_t read(int fd, void *buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "esi", "rdx", "rcx", "rax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "esi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -63,7 +64,7 @@ int close(int fd) {
     asm volatile( "movq $7, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(fd) : "rdi", "esi", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd) : "rdi", "esi", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -71,7 +72,7 @@ pid_t fork() {
     pid_t ret;
     asm volatile( "movq $3, %%rdi\n"\
                   "int $0x80\n"\
-                  "mov %%eax, %0" : "=r"(ret) : : "rdi", "eax" );
+                  "mov %%eax, %0" : "=r"(ret) : : "rdi", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -82,7 +83,7 @@ int execve(const char *file, char *const argv[], char *const envp[]) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(file), "r"(argv), "r"(envp) : "rdi", "rsi", "rdx", "rcx", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(file), "r"(argv), "r"(envp) : "rdi", "rsi", "rdx", "rcx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -111,7 +112,7 @@ char *getcwd(char *buf, size_t size) {
                   "movq %1, %%rsi\n"\
                   "movq %2, %%rdx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(buf), "r"(size) : "rdi", "rsi", "rdx", "rax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(buf), "r"(size) : "rdi", "rsi", "rdx", "rax", "memory" );
 
     if (ret == NULL) {
         errno = ERANGE;
@@ -125,7 +126,7 @@ int chdir(const char *path) {
     asm volatile( "movq $12, %%rdi\n"\
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(path) : "rdi", "rsi", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path) : "rdi", "rsi", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -135,7 +136,7 @@ int stat(const char *restrict path, struct stat *restrict stat_struct) {
                   "movq %1, %%rsi\n"\
                   "movq %2, %%rdx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(stat_struct) : "rdi", "rsi", "rdx", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(stat_struct) : "rdi", "rsi", "rdx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -146,6 +147,23 @@ off_t lseek(int fd, off_t offset, int whence) {
                   "movq %2, %%rdx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(offset), "r"(whence) : "rdi", "esi", "rdx", "ecx", "rax" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(offset), "r"(whence) : "rdi", "esi", "rdx", "ecx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int ioctl(int fd, unsigned long request, ...) {
+    va_list parameters;
+    va_start(parameters, request); 
+    void *argp = va_arg(parameters, void*);
+
+    int ret;
+    asm volatile( "movq $9, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(request), "r"(argp) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
+    
+    va_end(parameters);
     __SYSCALL_TO_ERRNO(ret);
 }
