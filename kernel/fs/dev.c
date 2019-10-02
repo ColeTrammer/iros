@@ -28,11 +28,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations dev_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat
+    NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl
 };
 
 static struct inode_operations dev_dir_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat
+    NULL, &dev_lookup, &dev_open, &dev_stat, NULL
 };
 
 static struct file_operations dev_f_op = {
@@ -127,6 +127,16 @@ int dev_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_mode = inode->mode; 
     stat_struct->st_rdev = (inode->flags & FS_FILE) ? ((struct device*) inode->private_data)->device_number : 0;
     return 0;
+}
+
+int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
+    struct device *device = inode->private_data;
+
+    if (device->ops->ioctl) {
+        return device->ops->ioctl(device, request, argp);
+    }
+
+    return -ENOTTY;
 }
 
 struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {

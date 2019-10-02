@@ -34,11 +34,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations initrd_i_op = {
-    NULL, &initrd_lookup, &initrd_open, &initrd_stat
+    NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL
 };
 
 static struct inode_operations initrd_dir_i_op = {
-    NULL, &initrd_lookup, &initrd_open, &initrd_stat
+    NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL
 };
 
 static struct file_operations initrd_f_op = {

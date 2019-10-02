@@ -19,6 +19,7 @@ ssize_t fs_write(struct file *file, const void *buffer, size_t len);
 off_t fs_seek(struct file *file, off_t offset, int whence);
 long fs_tell(struct file *file);
 int fs_stat(const char *file_name, struct stat *stat_struct);
+int fs_ioctl(struct file *file, unsigned long request, void *argp);
 int fs_mount(const char *src, const char *path, const char *type);
 struct file *fs_clone(struct file *file);
 

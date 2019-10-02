@@ -322,7 +322,7 @@ static void tty_remove(struct device *tty) {
 }
 
 struct device_ops tty_ops = {
-    NULL, tty_read, tty_write, NULL, tty_add, tty_remove
+    NULL, tty_read, tty_write, NULL, tty_add, tty_remove, NULL
 };
 
 void init_tty_device(dev_t dev) {

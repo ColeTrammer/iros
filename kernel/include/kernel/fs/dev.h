@@ -19,6 +19,7 @@ struct device_ops {
     int (*close)(struct device *device);
     void (*add)(struct device *device);
     void (*remove)(struct device *device);
+    int (*ioctl)(struct device *device, unsigned long request, void *argp);
 };
 
 struct device {
@@ -40,6 +41,7 @@ int dev_close(struct file *file);
 ssize_t dev_read(struct file *file, void *buffer, size_t len);
 ssize_t dev_write(struct file *file, const void *buffer, size_t len);
 int dev_stat(struct inode *inode, struct stat *stat_struct);
+int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
 struct tnode *dev_mount(struct file_system *fs, char *device_path);
 
 dev_t dev_get_device_number(struct file *file);

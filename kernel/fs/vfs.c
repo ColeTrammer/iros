@@ -305,6 +305,16 @@ int fs_stat(const char *path, struct stat *stat_struct) {
     return inode->i_op->stat(inode, stat_struct);
 }
 
+int fs_ioctl(struct file *file, unsigned long request, void *argp) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+
+    if (inode->i_op->ioctl) {
+        return inode->i_op->ioctl(inode, request, argp);
+    }
+
+    return -ENOTTY;
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

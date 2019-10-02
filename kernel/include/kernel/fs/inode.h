@@ -21,6 +21,7 @@ struct inode_operations {
     struct tnode *(*lookup)(struct inode *inode, const char *name);
     struct file *(*open)(struct inode *inode, int *error);
     int (*stat)(struct inode *inode, struct stat *stat_struct);
+    int (*ioctl)(struct inode *inode, unsigned long request, void *argp);
 };
 
 struct inode {

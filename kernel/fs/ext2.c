@@ -24,11 +24,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations ext2_i_op = {
-    NULL, &ext2_lookup, &ext2_open, &ext2_stat
+    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL
 };
 
 static struct inode_operations ext2_dir_i_op = {
-    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat
+    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL
 };
 
 static struct file_operations ext2_f_op = {
