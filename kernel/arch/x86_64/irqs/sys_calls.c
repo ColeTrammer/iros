@@ -385,3 +385,15 @@ void arch_sys_lseek(struct process_state *process_state) {
 
     SYS_RETURN((uint64_t) fs_seek(file, offset, whence));
 }
+
+void arch_sys_ioctl(struct process_state *process_state) {
+    int fd = (int) process_state->cpu_state.rsi;
+    unsigned long request = (unsigned long) process_state->cpu_state.rdx;
+    void *argp = (void*) process_state->cpu_state.rcx;
+
+    struct process *process = get_current_process();
+    struct file *file = process->files[fd];
+    assert(file);
+
+    SYS_RETURN((uint64_t) fs_ioctl(file, request, argp));
+}

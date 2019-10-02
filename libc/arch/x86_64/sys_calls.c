@@ -157,7 +157,7 @@ int ioctl(int fd, unsigned long request, ...) {
     void *argp = va_arg(parameters, void*);
 
     int ret;
-    asm volatile( "movq $9, %%rdi\n"\
+    asm volatile( "movq $15, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
