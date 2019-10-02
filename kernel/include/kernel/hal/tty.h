@@ -2,6 +2,7 @@
 #define _KERNEL_HAL_TTY_H 1
 
 #include <sys/types.h>
+#include <termios.h>
 
 #include <kernel/hal/input.h>
 #include <kernel/fs/file.h>
@@ -21,6 +22,7 @@ struct tty_data {
     char *input_buffer;
     size_t input_buffer_length;
     size_t input_buffer_offset;
+    struct termios config;
     spinlock_t lock;
 };
 

@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 
 #include <kernel/hal/arch.h>
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
@@ -192,20 +194,26 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
             if (data->key_buffer.key == KEY_BACKSPACE) {
                 if (start_pos > 0) {
                     if (i == start_pos) {
-                        data->x--;
-                        tty_write(tty, file, " ", 1);
+                        if (data->config.c_lflag & ECHO) {
+                            data->x--;
+                            tty_write(tty, file, " ", 1);
+                        }
                         data->x--;
                     } else {
                         memmove(data->input_buffer + start_pos - 1, data->input_buffer + start_pos, i - start_pos);
                         data->input_buffer[i - 1] = ' ';
 
-                        size_t saved_x = --data->x;
-                        tty_write(tty, file, data->input_buffer + start_pos - 1, i - start_pos + 1);
-                        data->x = saved_x;
+                        if (data->config.c_lflag & ECHO) {
+                            size_t saved_x = --data->x;
+                            tty_write(tty, file, data->input_buffer + start_pos - 1, i - start_pos + 1);
+                            data->x = saved_x;
+                        }
                     }
 
-                    set_vga_cursor(data->y, data->x);
-                    i--;
+                    if (data->config.c_lflag & ECHO) {
+                        set_vga_cursor(data->y, data->x);
+                        i--;
+                    }
                 }
                 continue;
             }
@@ -215,25 +223,27 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                     memmove(data->input_buffer + start_pos, data->input_buffer + start_pos + 1, i - start_pos - 1);
                     data->input_buffer[i - 1] = ' ';
 
-                    size_t saved_x = data->x;
-                    tty_write(tty, file, data->input_buffer + start_pos, i - start_pos);
-                    data->x = saved_x;
+                    if (data->config.c_lflag & ECHO) {
+                        size_t saved_x = data->x;
+                        tty_write(tty, file, data->input_buffer + start_pos, i - start_pos);
+                        data->x = saved_x;
 
-                    set_vga_cursor(data->y, data->x);
-                    i--;
+                        set_vga_cursor(data->y, data->x);
+                        i--;
+                    }
                 }
                 continue;
             }
 
             if (data->key_buffer.key == KEY_CURSOR_LEFT) {
-                if (data->x > start_x) {
+                if (data->x > start_x && data->config.c_lflag & ECHO) {
                     data->x--;
                     set_vga_cursor(data->y, data->x);
                 }
                 continue;
             }
 
-            if (data->key_buffer.key == KEY_CURSOR_RIGHT) {
+            if (data->key_buffer.key == KEY_CURSOR_RIGHT && data->config.c_lflag & ECHO) {
                 if (data->x < start_x + i) {
                     data->x++;
                     set_vga_cursor(data->y, data->x);
@@ -243,8 +253,12 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
             if (data->key_buffer.ascii == '\n') {
                 data->input_buffer[i++] = '\n';
-                data->x = start_x + i;
-                tty_write(tty, file, &data->key_buffer.ascii, 1);
+                
+                if (data->config.c_lflag & ECHO) {
+                    data->x = start_x + i;
+                    tty_write(tty, file, &data->key_buffer.ascii, 1);
+                }
+                
                 break;
             }
 
@@ -254,7 +268,10 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
             if (start_pos == i) {
                 data->input_buffer[start_pos] = data->key_buffer.ascii;
-                tty_write(tty, file, &data->key_buffer.ascii, 1);
+
+                if (data->config.c_lflag & ECHO) {
+                    tty_write(tty, file, &data->key_buffer.ascii, 1);
+                }
             } else {
                 char *copy = calloc(i - start_pos + 1, sizeof(char));
                 memcpy(copy, data->input_buffer + start_pos, i - start_pos);
@@ -263,10 +280,12 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 strcat(data->input_buffer, copy);
                 free(copy);
 
-                size_t saved_x = data->x;
-                tty_write(tty, file, data->input_buffer + start_pos, strlen(data->input_buffer + start_pos));
-                data->x = saved_x + 1;
-                set_vga_cursor(data->y, data->x);
+                if (data->config.c_lflag & ECHO) {
+                    size_t saved_x = data->x;
+                    tty_write(tty, file, data->input_buffer + start_pos, strlen(data->input_buffer + start_pos));
+                    data->x = saved_x + 1;
+                    set_vga_cursor(data->y, data->x);
+                }
             }
 
             i++;
@@ -321,8 +340,53 @@ static void tty_remove(struct device *tty) {
     free(data);
 }
 
-struct device_ops tty_ops = {
-    NULL, tty_read, tty_write, NULL, tty_add, tty_remove, NULL
+static int tty_ioctl_termios_get(struct device *tty, struct termios *termios_p) {
+    struct tty_data *data = tty->private;
+    
+    spin_lock(&data->lock);
+    memcpy(termios_p, &data->config, sizeof(struct termios));
+    spin_unlock(&data->lock);
+
+    return 0;
+}
+
+static int tty_ioctl_termios_set(struct device *tty, struct termios *termios_p) {
+    struct tty_data *data = tty->private;
+    
+    spin_lock(&data->lock);
+    memcpy(&data->config, termios_p, sizeof(struct termios));
+    spin_unlock(&data->lock);
+
+    return 0;
+}
+
+static int tty_ioctl(struct device *tty, unsigned long request, void *argp) {
+    struct tty_data *data = tty->private;
+
+    switch (request) {
+        case TCGETS:
+            return tty_ioctl_termios_get(tty, argp);
+        case TCSETSF:
+            /* Flushes input */
+            free(data->input_buffer);
+            data->input_buffer = NULL;
+            // Fall through
+        case TCSETSW:
+            /* Would flush output but there is not buffering yet */
+            // Fall through
+        case TCSETS:
+            return tty_ioctl_termios_set(tty, argp);
+        default:
+            return -ENOTTY;
+    }
+}
+
+static struct device_ops tty_ops = {
+    NULL, tty_read, tty_write, NULL, tty_add, tty_remove, tty_ioctl
+};
+
+static cc_t tty_default_control_characters[NCCS] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 void init_tty_device(dev_t dev) {
@@ -345,6 +409,11 @@ void init_tty_device(dev_t dev) {
     data->y_max = DEFUALT_TTY_HEIGHT;
     data->buffer = malloc(DEFAULT_TTY_WIDTH * DEFUALT_TTY_HEIGHT);
     init_spinlock(&data->lock);
+    data->config.c_iflag = 0;
+    data->config.c_oflag = 0;
+    data->config.c_cflag = 0;
+    data->config.c_lflag = ECHO;
+    memcpy(data->config.c_cc, tty_default_control_characters, NCCS * sizeof(cc_t));
     device->private = data;
 
     dev_add(device, device->name);
