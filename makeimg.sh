@@ -1,6 +1,6 @@
 #!/bin/sh
 
-dd if=/dev/zero of=ext2_test.img bs=516096c count=1000
+dd if=/dev/zero of=ext2_test.img bs=516096c count=100
 
 losetup -o0 /dev/loop100 ext2_test.img
 mke2fs -b1024 /dev/loop100

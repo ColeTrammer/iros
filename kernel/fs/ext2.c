@@ -130,16 +130,13 @@ static struct ext2_block_bitmap *ext2_get_block_usage_bitmap(struct super_block 
 
     if (!group->block_bitmap.bitmap) {
         ssize_t num_blocks = (data->sb->num_blocks_in_block_group + sb->block_size - 1) / sb->block_size;
-        struct ext2_block_bitmap block_bitmap = group->block_bitmap;
-        block_bitmap.num_bits = data->sb->num_blocks_in_block_group;
-        block_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
-        if (ext2_read_blocks(sb, block_bitmap.bitmap, group->blk_desc[index].block_usage_bitmap_block_address, num_blocks) != num_blocks) {
+        group->block_bitmap.num_bits = data->sb->num_blocks_in_block_group;
+        group->block_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
+        if (ext2_read_blocks(sb, group->block_bitmap.bitmap, group->blk_desc[index].block_usage_bitmap_block_address, num_blocks) != num_blocks) {
             debug_log("Ext2 Read block usage bitmap failed: [ %lu ]\n", index);
-            ext2_free_blocks(block_bitmap.bitmap);
+            ext2_free_blocks(group->block_bitmap.bitmap);
             return NULL;
         }
-
-        group->block_bitmap = block_bitmap;
     }
 
     return &group->block_bitmap;
@@ -257,16 +254,13 @@ static struct ext2_inode_bitmap *ext2_get_inode_usage_bitmap(struct super_block 
 
     if (!group->inode_bitmap.bitmap) {
         ssize_t num_blocks = (data->sb->num_inodes_in_block_group + sb->block_size - 1) / sb->block_size;
-        struct ext2_inode_bitmap inode_bitmap = group->inode_bitmap;
-        inode_bitmap.num_bits = data->sb->num_inodes_in_block_group;
-        inode_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
-        if (ext2_read_blocks(sb, inode_bitmap.bitmap, group->blk_desc[index].inode_usage_bitmap_block_address, num_blocks) != num_blocks) {
+        group->inode_bitmap.num_bits = data->sb->num_inodes_in_block_group;
+        group->inode_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
+        if (ext2_read_blocks(sb, group->inode_bitmap.bitmap, group->blk_desc[index].inode_usage_bitmap_block_address, num_blocks) != num_blocks) {
             debug_log("Ext2 Read block usage bitmap failed: [ %lu ]\n", index);
-            ext2_free_blocks(inode_bitmap.bitmap);
+            ext2_free_blocks(group->inode_bitmap.bitmap);
             return NULL;
         }
-
-        group->inode_bitmap = inode_bitmap;
     }
 
     return &group->inode_bitmap;
@@ -469,11 +463,13 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
 /* Syncs raw_inode to disk */
 int ext2_sync_inode(struct inode *inode) {
     size_t inode_table_index = ext2_get_inode_table_index(inode->super_block, inode->index);
-    size_t block_off = inode_table_index * sizeof(struct raw_inode) / inode->super_block->block_size;
+    size_t block_off = ((inode_table_index) * sizeof(struct raw_inode)) / inode->super_block->block_size;
     size_t block_group = ext2_get_block_group_from_inode(inode->super_block, inode->index);
     size_t raw_offset = block_off * inode->super_block->block_size;
     struct raw_inode *raw_inode_table = ext2_get_inode_table(inode->super_block, block_group);
 
+    assert(((struct ext2_sb_data*) inode->super_block->private_data)->sb->inode_size == sizeof(struct raw_inode));
+    assert(inode->private_data == raw_inode_table + inode_table_index);
     raw_inode_table[inode_table_index].size = inode->size;
     raw_inode_table[inode_table_index].mode = inode->mode;
     /* Sector size should be retrieved from block device */

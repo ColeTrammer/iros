@@ -184,7 +184,7 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
         }
 
         for (size_t i = 0; i < data->sector_size / sizeof(uint16_t); i++) {
-            ata_write_word(data->port_info, buf[j * data->sector_size + i]);
+            ata_write_word(data->port_info, buf[j * data->sector_size / sizeof(uint16_t) + i]);
         }
     }
 
