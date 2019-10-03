@@ -64,7 +64,6 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
             if (str[i] == 'H') {
                 data->y = --nums[0];
                 data->x = --nums[1];
-                debug_log("Set VGA Cursor: [ %d, %d ]\n", nums[0], nums[1]);
                 set_vga_cursor(data->y, data->x);
             }
 
@@ -228,6 +227,36 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 if (data->key_buffer.key == KEY_CURSOR_LEFT) {
                     data->input_in_escape = true;
                     data->input_escape = "\x1B[D";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_DELETE) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[3~";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_PAGE_UP) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[5~";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_PAGE_DOWN) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[6~";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_HOME) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[7~";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_END) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[8~";
                     data->input_buffer_offset = 0;
                 }
 
