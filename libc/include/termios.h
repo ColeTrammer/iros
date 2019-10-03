@@ -15,7 +15,20 @@
 #define VSUSP 9
 #define VTIME 10
 
-#define ECHO 0000010
+#define BRKINT 0000002
+#define INPCK  0000020
+#define ISTRIP 0000040
+#define ICRNL  0000400
+#define IXON   0002000
+
+#define OPOST  0000001
+
+#define CS8    0xFF
+
+#define ISIG   0000001
+#define ICANON 0000002
+#define ECHO   0000010
+#define IEXTEN 0100000
 
 #define TCSANOW 1
 #define TCSADRAIN 2

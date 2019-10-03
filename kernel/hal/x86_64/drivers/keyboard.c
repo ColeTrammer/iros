@@ -79,7 +79,7 @@ static void add_keyboard_event(struct key_event *event) {
 
 static struct key_code_entry map[KEYBOARD_NUM_KEYCODES] = {
     { KEY_NULL, '\0' },
-    { KEY_ESC, '\0' },
+    { KEY_ESC, '\033' },
     { KEY_1, '1' },
     { KEY_2, '2' },
     { KEY_3, '3' },
@@ -92,7 +92,7 @@ static struct key_code_entry map[KEYBOARD_NUM_KEYCODES] = {
     { KEY_0, '0' },
     { KEY_MINUS, '-' },
     { KEY_EQUALS, '=' },
-    { KEY_BACKSPACE, '\0' },
+    { KEY_BACKSPACE, 127 },
     { KEY_TAB, '\t' },
     { KEY_Q, 'q' },
     { KEY_W, 'w' },
@@ -339,7 +339,7 @@ static struct key_code_entry map[KEYBOARD_NUM_KEYCODES] = {
 
 static struct key_code_entry shift_map[KEYBOARD_RELEASED_OFFSET] = {
     { KEY_NULL, '\0' },
-    { KEY_ESC, '\0' },
+    { KEY_ESC, '\033' },
     { KEY_1, '!' },
     { KEY_2, '@' },
     { KEY_3, '#' },
@@ -352,7 +352,7 @@ static struct key_code_entry shift_map[KEYBOARD_RELEASED_OFFSET] = {
     { KEY_0, ')' },
     { KEY_MINUS, '_' },
     { KEY_EQUALS, '+' },
-    { KEY_BACKSPACE, '\0' },
+    { KEY_BACKSPACE, 127 },
     { KEY_TAB, '\t' },
     { KEY_Q, 'Q' },
     { KEY_W, 'W' },

@@ -142,12 +142,13 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                 }
             }
 
+        } else if (str[i] == '\r') {
+            data->x = 0;
         } else if (str[i] == '\n' || data->x >= data->x_max) {
-            while (data->x < data->x_max) {
-                write_vga_buffer(data->y, data->x++, ' ', false);
+            if (data->config.c_oflag & OPOST) {
+                data->x = 0;
             }
             data->y++;
-            data->x = 0;
             if (data->y >= data->y_max) {
                 for (size_t r = 0; r < data->y_max - 1; r++) {
                     for (size_t c = 0; c < data->x_max; c++) {
@@ -175,6 +176,24 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
     if (file->position != 0) {
         return -EINVAL;
+    }
+
+    char *buf = (char*) buffer;
+    if (!(data->config.c_lflag & ICANON)) {
+        for (size_t i = 0; i < len;) {
+            fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
+            if (data->key_buffer.flags & KEY_DOWN) {
+                if ((data->key_buffer.flags & KEY_CONTROL_ON) && (('a' <= data->key_buffer.ascii && data->key_buffer.ascii <= 'z') || ('A' <= data->key_buffer.ascii && data->key_buffer.ascii <= 'Z'))) {
+                    buf[i++] = data->key_buffer.ascii & 0x1F;
+                    continue;
+                }
+                
+                if (data->key_buffer.ascii != '\0') {
+                    buf[i++] = data->key_buffer.ascii;
+                }
+            }
+        }
+        return len;
     }
 
     if (data->input_buffer == NULL) {
@@ -251,7 +270,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 continue;
             }
 
-            if (data->key_buffer.ascii == '\n') {
+            if (data->key_buffer.ascii == '\n' || data->key_buffer.ascii == '\r') {
                 data->input_buffer[i++] = '\n';
                 
                 if (data->config.c_lflag & ECHO) {
@@ -262,7 +281,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 break;
             }
 
-            if (data->key_buffer.ascii == '\0') {
+            if (iscntrl(data->key_buffer.ascii)) {
                 continue;
             }
 
@@ -299,8 +318,6 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
         data->input_buffer[i] = '\0';
         data->input_buffer_offset = 0;
     }
-
-    char *buf = (char*) buffer;
 
     int i;
     for (i = 0; data->input_buffer_offset < data->input_buffer_length - 1 && i < (int) len; i++) {
@@ -409,10 +426,10 @@ void init_tty_device(dev_t dev) {
     data->y_max = DEFUALT_TTY_HEIGHT;
     data->buffer = malloc(DEFAULT_TTY_WIDTH * DEFUALT_TTY_HEIGHT);
     init_spinlock(&data->lock);
-    data->config.c_iflag = 0;
-    data->config.c_oflag = 0;
-    data->config.c_cflag = 0;
-    data->config.c_lflag = ECHO;
+    data->config.c_iflag = ICRNL | IXON;
+    data->config.c_oflag = OPOST;
+    data->config.c_cflag = CS8;
+    data->config.c_lflag = ECHO | ICANON | IEXTEN | ISIG;
     memcpy(data->config.c_cc, tty_default_control_characters, NCCS * sizeof(cc_t));
     device->private = data;
 
