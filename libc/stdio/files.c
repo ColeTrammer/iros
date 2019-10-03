@@ -278,22 +278,23 @@ ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restri
         errno = 0;
         int c = fgetc(stream);
 
-        if (c == EOF && errno) {
+        /* Indicate IO error or out of lines */
+        if (c == EOF && (errno || pos == 0)) {
             return -1;
         }
 
         if (c == EOF) {
-            *line_ptr[pos++] = '\0';
+            (*line_ptr)[pos++] = '\0';
             break;
         }
 
         if (c == '\n') {
-            *line_ptr[pos++] = '\n';
-            *line_ptr[pos++] = '\0';
+            (*line_ptr)[pos++] = '\n';
+            (*line_ptr)[pos++] = '\0';
             break;
         }
 
-        *line_ptr[pos++] = c;
+        (*line_ptr)[pos++] = c;
 
         if (pos + 1 >= *n) {
             *n *= 2;

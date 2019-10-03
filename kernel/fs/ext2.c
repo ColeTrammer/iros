@@ -705,13 +705,19 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
     assert(inode);
     assert(inode->private_data);
 
+    /* Indicate done reading */
+    if (file->position == inode->size) {
+        return 0;
+    }
+
     size_t max_can_read = inode->size - file->position;
     len = MIN(len, max_can_read);
+    ssize_t len_save = (ssize_t) len;
 
     size_t file_block_no = file->position / inode->super_block->block_size;
     size_t file_block_no_end = (file->position + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
     
-    debug_log("Reading Inode: [ %llu, %lu, %lu, %lu ]\n", inode->index, len, file_block_no, file_block_no_end);
+    debug_log("Reading Inode: [ %llu, %lu, %lu, %lu, %lu ]\n", inode->index, len, file_block_no, file_block_no_end, file->position);
 
     while (file_block_no < file_block_no_end) {
         void *block = ext2_allocate_blocks(inode->super_block, 1);
@@ -731,15 +737,15 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
         size_t to_read = MIN(inode->super_block->block_size - buffer_offset, len);
 
         memcpy(buffer, (void*) (((uintptr_t) block) + buffer_offset), to_read);
-        file->position += buffer_offset;
-        len -= buffer_offset;
+        file->position += to_read;
+        len -= to_read;
 
         ext2_free_blocks(block);
         file_block_no++;
         buffer = (void*) (((uintptr_t) buffer) + inode->super_block->block_size);
     }
 
-    return len;
+    return len_save;
 }
 
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {

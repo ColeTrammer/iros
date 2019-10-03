@@ -62,9 +62,19 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
 
             /* Set Cursor Command */
             if (str[i] == 'H') {
-                data->y = nums[0];
-                data->x = nums[1];
+                data->y = --nums[0];
+                data->x = --nums[1];
+                debug_log("Set VGA Cursor: [ %d, %d ]\n", nums[0], nums[1]);
                 set_vga_cursor(data->y, data->x);
+            }
+
+            /* Clear Line Command */
+            if (str[i] == 'K') {
+                if (nums[0] == 0) {
+                    for (size_t c = data->x; c < data->x_max; c++) {
+                        write_vga_buffer(data->y, c, ' ', false);
+                    }
+                }
             }
 
             /* Clear Screen Command */

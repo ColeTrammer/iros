@@ -75,6 +75,7 @@ void *realloc(void *p, size_t sz, int line, const char *func) {
 void *realloc(void *p, size_t sz) {
 #endif /* __is_libk && KERNEL_MALLOC_DEBUG */
     void *new_p = malloc(sz);
+    if (p == NULL) { return new_p; }
     if (new_p == NULL) { return new_p; }
     memcpy(new_p, p, sz);
     free(p);
