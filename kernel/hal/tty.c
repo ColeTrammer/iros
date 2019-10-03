@@ -32,7 +32,12 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
         data->y = 0;
     }
 
-    for (size_t i = 0; str[i] != '\0' && i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
+        if (str[i] == '\0') {
+            debug_log("tty null: [ %lu ]\n", i);
+            continue;
+        }
+
         if (str[i] == '\x1B') {
             i++;
             if (str[i] != '[') {
@@ -62,8 +67,20 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
 
             /* Set Cursor Command */
             if (str[i] == 'H') {
-                data->y = --nums[0];
-                data->x = --nums[1];
+                if (--nums[0] < 0) {
+                    nums[0] = 0;
+                } else if (nums[0] >= (int) data->y_max) {
+                    nums[0] = data->y_max - 1;
+                }
+
+                if (--nums[1] < 0) {
+                    nums[1] = 0;
+                } else if (nums[1] >= (int) data->x_max) {
+                    nums[1] = data->x_max - 1;
+                }
+
+                data->y = nums[0];
+                data->x = nums[1];
                 set_vga_cursor(data->y, data->x);
             }
 

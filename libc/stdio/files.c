@@ -284,13 +284,13 @@ ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restri
         }
 
         if (c == EOF) {
-            (*line_ptr)[pos++] = '\0';
+            (*line_ptr)[pos] = '\0';
             break;
         }
 
-        if (c == '\n') {
-            (*line_ptr)[pos++] = '\n';
-            (*line_ptr)[pos++] = '\0';
+        if (c == '\n' || c == '\r') {
+            (*line_ptr)[pos++] = c;
+            (*line_ptr)[pos] = '\0';
             break;
         }
 

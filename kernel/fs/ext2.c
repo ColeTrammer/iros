@@ -716,8 +716,6 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
 
     size_t file_block_no = file->position / inode->super_block->block_size;
     size_t file_block_no_end = (file->position + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
-    
-    debug_log("Reading Inode: [ %llu, %lu, %lu, %lu, %lu ]\n", inode->index, len, file_block_no, file_block_no_end, file->position);
 
     while (file_block_no < file_block_no_end) {
         void *block = ext2_allocate_blocks(inode->super_block, 1);

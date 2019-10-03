@@ -106,7 +106,7 @@ ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
     }
 
     size_t len = MIN(_len, file->length - file->position);
-    if (len == 0) { return 0; }
+    if (len == 0 || *((char*) (initrd_start + file->start + file->position)) == '\0') { return 0; }
 
     memcpy(buffer, (void*) (initrd_start + file->start + file->position), len);
     file->position += len;
