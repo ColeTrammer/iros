@@ -22,6 +22,8 @@ struct tty_data {
     char *input_buffer;
     size_t input_buffer_length;
     size_t input_buffer_offset;
+    bool input_in_escape;
+    char *input_escape;
     struct termios config;
     spinlock_t lock;
 };

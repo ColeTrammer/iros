@@ -191,8 +191,46 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
     char *buf = (char*) buffer;
     if (!(data->config.c_lflag & ICANON)) {
         for (size_t i = 0; i < len;) {
+            if (data->input_in_escape) {
+                assert(data->input_escape);
+                char c = data->input_escape[data->input_buffer_offset];
+                if (c == '\0') {
+                    data->input_in_escape = false;
+                    data->input_escape = NULL;
+                    data->input_buffer_offset = 0;
+                    continue;
+                }
+
+                buf[i++] = data->input_escape[data->input_buffer_offset++];
+                continue;
+            }
+
             fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
             if (data->key_buffer.flags & KEY_DOWN) {
+                if (data->key_buffer.key == KEY_CURSOR_UP) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[A";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_CURSOR_DOWN) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[B";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_CURSOR_RIGHT) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[C";
+                    data->input_buffer_offset = 0;
+                }
+
+                if (data->key_buffer.key == KEY_CURSOR_LEFT) {
+                    data->input_in_escape = true;
+                    data->input_escape = "\x1B[D";
+                    data->input_buffer_offset = 0;
+                }
+
                 if ((data->key_buffer.flags & KEY_CONTROL_ON) && (('a' <= data->key_buffer.ascii && data->key_buffer.ascii <= 'z') || ('A' <= data->key_buffer.ascii && data->key_buffer.ascii <= 'Z'))) {
                     buf[i++] = data->key_buffer.ascii & 0x1F;
                     continue;
