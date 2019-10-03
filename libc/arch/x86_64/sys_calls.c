@@ -167,3 +167,13 @@ int ioctl(int fd, unsigned long request, ...) {
     va_end(parameters);
     __SYSCALL_TO_ERRNO(ret);
 }
+
+int ftruncate(int fd, off_t length) {
+    int ret;
+    asm volatile( "movq $16, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(length) : "rdi", "esi", "rdx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}

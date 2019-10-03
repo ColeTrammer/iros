@@ -52,6 +52,7 @@ $(BUILDDIR)/libc/string/strchr.o \
 $(BUILDDIR)/libc/string/strcmp.o \
 $(BUILDDIR)/libc/string/strcpy.o \
 $(BUILDDIR)/libc/string/strcspn.o \
+$(BUILDDIR)/libc/string/strdup.o \
 $(BUILDDIR)/libc/string/strlen.o \
 $(BUILDDIR)/libc/string/strcat.o \
 $(BUILDDIR)/libc/string/strncmp.o \
@@ -74,6 +75,7 @@ $(BUILDDIR)/libc/stdlib/atexit.o \
 $(BUILDDIR)/libc/string/strerror.o \
 $(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/unistd/exec.o \
+$(BUILDDIR)/libc/unistd/isatty.o \
 $(BUILDDIR)/libc/init.o
 
 # Lists all objects

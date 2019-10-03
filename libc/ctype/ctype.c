@@ -19,3 +19,7 @@ int isdigit(int c) {
 int iscntrl(int c) {
     return ((0 <= c && c < 32) || c == 127) ? 1 : 0;
 }
+
+int isprint(int c) {
+    return (32 <= c && c < 127) ? 1 : 0;
+}

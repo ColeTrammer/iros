@@ -357,6 +357,15 @@ static void tty_remove(struct device *tty) {
     free(data);
 }
 
+static int tty_ioctl_termios_get_winsize(struct device *tty, struct winsize *ws) {
+    struct tty_data *data = tty->private;
+
+    ws->ws_row = data->y_max;
+    ws->ws_col = data->x_max;
+
+    return 0;
+}
+
 static int tty_ioctl_termios_get(struct device *tty, struct termios *termios_p) {
     struct tty_data *data = tty->private;
     
@@ -381,6 +390,8 @@ static int tty_ioctl(struct device *tty, unsigned long request, void *argp) {
     struct tty_data *data = tty->private;
 
     switch (request) {
+        case TIOCGWINSZ:
+            return tty_ioctl_termios_get_winsize(tty, argp);
         case TCGETS:
             return tty_ioctl_termios_get(tty, argp);
         case TCSETSF:

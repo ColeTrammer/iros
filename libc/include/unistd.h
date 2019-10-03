@@ -33,6 +33,9 @@ int execvp(const char *file, char *const argv[]);
 int execvpe(const char *file, char *const argv[], char *const envp[]);
 pid_t fork();
 
+int isatty(int fd);
+int ftruncate(int fd, off_t length);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

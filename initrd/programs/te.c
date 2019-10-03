@@ -4,6 +4,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+#define CTRL_KEY(k) ((k) & 0x1f)
+
 static struct termios orig_termios;
 
 static void disable_raw_mode() {
@@ -36,7 +38,7 @@ int main() {
         } else {
             printf("%d ('%c')\r\n", c, c);
         }
-        if (c == 'q') break;
+        if (c == CRTL_KEY('q')) break;
     }
 
     return 0;

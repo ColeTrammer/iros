@@ -262,6 +262,48 @@ int fileno(FILE *stream) {
     return stream->fd;
 }
 
+#define DEFAULT_LINE_BUFFER_SIZE 100
+
+ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restrict stream) {
+    if (*line_ptr == NULL) {
+        if (*n == 0) {
+            *n = DEFAULT_LINE_BUFFER_SIZE;
+        }
+
+        *line_ptr = malloc(*n);
+    }
+
+    size_t pos = 0;
+    for (;;) {
+        errno = 0;
+        int c = fgetc(stream);
+
+        if (c == EOF && errno) {
+            return -1;
+        }
+
+        if (c == EOF) {
+            *line_ptr[pos++] = '\0';
+            break;
+        }
+
+        if (c == '\n') {
+            *line_ptr[pos++] = '\n';
+            *line_ptr[pos++] = '\0';
+            break;
+        }
+
+        *line_ptr[pos++] = c;
+
+        if (pos + 1 >= *n) {
+            *n *= 2;
+            *line_ptr = realloc(*line_ptr, *n);
+        }
+    }
+
+    return (ssize_t) pos;
+}
+
 void perror(const char *s) {
     assert(s != NULL);
 

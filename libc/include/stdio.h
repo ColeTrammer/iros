@@ -102,6 +102,8 @@ int feof(FILE *stream);
 int ferror(FILE *stream);
 int fileno(FILE *stream);
 
+ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restrict stream);
+
 void perror(const char *s);
 
 #ifdef __libc_internal
