@@ -132,7 +132,7 @@ static struct ext2_block_bitmap *ext2_get_block_usage_bitmap(struct super_block 
         ssize_t num_blocks = (data->sb->num_blocks_in_block_group + sb->block_size - 1) / sb->block_size;
         group->block_bitmap.num_bits = data->sb->num_blocks_in_block_group;
         group->block_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
-        if (ext2_read_blocks(sb, group->block_bitmap.bitmap, group->blk_desc[index].block_usage_bitmap_block_address, num_blocks) != num_blocks) {
+        if (ext2_read_blocks(sb, group->block_bitmap.bitmap, group->blk_desc->block_usage_bitmap_block_address, num_blocks) != num_blocks) {
             debug_log("Ext2 Read block usage bitmap failed: [ %lu ]\n", index);
             ext2_free_blocks(group->block_bitmap.bitmap);
             return NULL;
@@ -256,13 +256,12 @@ static struct ext2_inode_bitmap *ext2_get_inode_usage_bitmap(struct super_block 
         ssize_t num_blocks = (data->sb->num_inodes_in_block_group + sb->block_size - 1) / sb->block_size;
         group->inode_bitmap.num_bits = data->sb->num_inodes_in_block_group;
         group->inode_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
-        if (ext2_read_blocks(sb, group->inode_bitmap.bitmap, group->blk_desc[index].inode_usage_bitmap_block_address, num_blocks) != num_blocks) {
+        if (ext2_read_blocks(sb, group->inode_bitmap.bitmap, group->blk_desc->inode_usage_bitmap_block_address, num_blocks) != num_blocks) {
             debug_log("Ext2 Read block usage bitmap failed: [ %lu ]\n", index);
             ext2_free_blocks(group->inode_bitmap.bitmap);
             return NULL;
         }
     }
-
     return &group->inode_bitmap;
 }
 
@@ -410,7 +409,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
         inode_to_add->parent = inode == inode->super_block->root->inode ? inode->super_block->root : find_tnode_inode(inode->parent->inode->tnode_list, inode);
         assert(inode_to_add->parent->inode == inode);
         inode_to_add->index = dirent->ino;
-        inode_to_add->i_op = &ext2_i_op;
+        inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
         inode_to_add->super_block = inode->super_block;
         inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? FS_DIR : FS_FILE;
         init_spinlock(&inode_to_add->lock);
@@ -560,8 +559,8 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
 
     ext2_write_inode(inode);
 
-    if (parent->tnode_list == NULL) {
-        ext2_update_tnode_list(parent);
+    if (parent->private_data == NULL) {
+        ext2_update_inode(parent, true);
     }
 
     struct raw_inode *parent_raw_inode = parent->private_data;
@@ -829,6 +828,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     debug_log("Ext2 Num Inodes in Block Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
     debug_log("Ext2 Num Blocks: [ %#.8X ]\n", raw_super_block->num_blocks);
     debug_log("Ext2 Num Inodes: [ %#.8X ]\n", raw_super_block->num_inodes);
+    debug_log("Ext2 Num Inodes in Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
 
     data->sb = raw_super_block;
     data->num_block_groups = (raw_super_block->num_blocks + raw_super_block->num_blocks_in_block_group - 1) / raw_super_block->num_blocks_in_block_group;

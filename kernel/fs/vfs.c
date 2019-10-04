@@ -138,6 +138,8 @@ int fs_create(const char *file_name, mode_t mode) {
         return -EINVAL;
     }
 
+    debug_log("Adding to: [ %s ]\n", tparent->name);
+
     int error = 0;
     struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, &error);
     if (inode == NULL) {
