@@ -400,7 +400,14 @@ void arch_sys_ioctl(struct process_state *process_state) {
 }
 
 void arch_sys_ftruncate(struct process_state *process_state) {
-    SYS_RETURN((uint64_t) -EINVAL);
+    int fd = (int) process_state->cpu_state.rsi;
+    off_t length = (off_t) process_state->cpu_state.rdx;
+
+    struct process *process = get_current_process();
+    struct file *file = process->files[fd];
+    assert(file);
+
+    SYS_RETURN((uint64_t) fs_truncate(file, length));
 }
 
 void arch_sys_time(struct process_state *process_state) {

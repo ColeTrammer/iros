@@ -315,6 +315,29 @@ int fs_ioctl(struct file *file, unsigned long request, void *argp) {
     return -ENOTTY;
 }
 
+int fs_truncate(struct file *file, off_t length) {
+    char *file_contents = malloc(length);
+    ssize_t read = fs_read(file, file_contents, length);
+    if (read < 0) {
+        return (int) read;
+    }
+
+    /* Makes rest of file null bytes */
+    if (read < length) {
+        memset(file_contents + read, 0, length - read);
+    }
+
+    file->position = 0;
+    ssize_t ret = fs_write(file, file_contents, length);
+    file->position = 0;
+
+    if (ret < 0) {
+        return (int) ret;
+    }
+
+    return 0;
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

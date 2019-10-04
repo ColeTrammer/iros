@@ -814,7 +814,7 @@ int editorSave(void) {
 
     /* Use truncate + a single write(2) call in order to make saving
      * a bit safer, under the limits of what we can do in a small editor. */
-    // if (ftruncate(fd,len) == -1) goto writeerr;
+    if (ftruncate(fd,len) == -1) goto writeerr;
     if (write(fd,buf,len) != len) goto writeerr;
 
     close(fd);
