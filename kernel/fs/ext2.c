@@ -62,12 +62,10 @@ static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
 static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
     spin_lock(&sb->super_block_lock);
 
-    for (blkcnt_t i = 0; i < num_blocks; i++) {
-        sb->dev_file->position = sb->block_size * (block_offset + i);
-        if (fs_read(sb->dev_file, (void*) (((uintptr_t) buffer) + sb->block_size * i), sb->block_size) != sb->block_size) {
-            spin_unlock(&sb->super_block_lock);
-            return -EIO;
-        }
+    sb->dev_file->position = sb->block_size * block_offset;
+    if (fs_read(sb->dev_file, (void*) buffer, num_blocks * sb->block_size) != num_blocks * sb->block_size) {
+        spin_unlock(&sb->super_block_lock);
+        return -EIO;
     }
 
     spin_unlock(&sb->super_block_lock);
@@ -78,12 +76,10 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
 static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
     spin_lock(&sb->super_block_lock);
 
-    for (blkcnt_t i = 0; i < num_blocks; i++) {
-        sb->dev_file->position = sb->block_size * (block_offset + i);
-        if (fs_write(sb->dev_file, (const void*) (((uintptr_t) buffer) + sb->block_size * i), sb->block_size) != sb->block_size) {
-            spin_unlock(&sb->super_block_lock);
-            return -EIO;
-        }
+    sb->dev_file->position = sb->block_size * block_offset;
+    if (fs_write(sb->dev_file, buffer, num_blocks * sb->block_size) != num_blocks * sb->block_size) {
+        spin_unlock(&sb->super_block_lock);
+        return -EIO;
     }
 
     spin_unlock(&sb->super_block_lock);
@@ -396,8 +392,6 @@ static void ext2_update_tnode_list(struct inode *inode) {
             dirent = EXT2_NEXT_DIRENT(dirent);
             continue;
         }
-
-        debug_log("Dirent: [ %s ]\n", dirent->name);
 
         struct tnode *tnode = malloc(sizeof(struct tnode));
         struct inode *inode_to_add = calloc(1, sizeof(struct inode));
@@ -740,6 +734,13 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
                 }
             }
             size_t real_block_offset = file_block_no - 12;
+
+            if (real_block_offset * sizeof(uint32_t) >= (size_t) inode->super_block->block_size) {
+                /* Should instead start reading from the doubly indirect block */
+                ext2_free_blocks(block);
+                break;
+            }
+
             block_no = indirect_block[real_block_offset];
         }
 
