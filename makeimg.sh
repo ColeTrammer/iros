@@ -16,6 +16,8 @@ echo "ccccc" > test/sub/c.txt
 echo "bbbbb" > test/b.txt
 echo "aaaaa" > a.txt
 
+cp ../initrd/programs/kilo.c kilo.c
+
 sync
 
 cd ..

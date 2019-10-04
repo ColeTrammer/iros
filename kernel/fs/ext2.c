@@ -391,11 +391,13 @@ static void ext2_update_tnode_list(struct inode *inode) {
     size_t block_no = 0;
     struct raw_dirent *dirent = raw_dirent_table;
 
-    for (; (uintptr_t) dirent - (uintptr_t) raw_dirent_table < inode->size ;) {
+    for (; block_no * inode->super_block->block_size < inode->size ;) {
         if (dirent->ino == 0 || dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
             dirent = EXT2_NEXT_DIRENT(dirent);
             continue;
         }
+
+        debug_log("Dirent: [ %s ]\n", dirent->name);
 
         struct tnode *tnode = malloc(sizeof(struct tnode));
         struct inode *inode_to_add = calloc(1, sizeof(struct inode));
@@ -415,7 +417,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
         init_spinlock(&inode_to_add->lock);
 
         dirent = EXT2_NEXT_DIRENT(dirent);
-        if (dirent->ino != 0 && (uintptr_t) dirent >= ((uintptr_t) raw_dirent_table) + inode->super_block->block_size) {
+        if ((uintptr_t) dirent >= ((uintptr_t) raw_dirent_table) + inode->super_block->block_size) {
             if ((uintptr_t) dirent - (uintptr_t) raw_dirent_table >= inode->size) {
                 break;
             }
@@ -439,6 +441,8 @@ static void ext2_update_tnode_list(struct inode *inode) {
     }
 
     spin_unlock(&inode->lock);
+
+    debug_log("Finished updating tnode list: [ %llu ]\n", inode->index);
 
     ext2_free_blocks(raw_dirent_table);
 }
@@ -705,7 +709,7 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
     assert(inode->private_data);
 
     /* Indicate done reading */
-    if (file->position == inode->size) {
+    if (file->position >= inode->size) {
         return 0;
     }
 
@@ -716,16 +720,30 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
     size_t file_block_no = file->position / inode->super_block->block_size;
     size_t file_block_no_end = (file->position + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
 
+    uint32_t *indirect_block = NULL;
+
     while (file_block_no < file_block_no_end) {
         void *block = ext2_allocate_blocks(inode->super_block, 1);
+        size_t block_no;
 
-        /* Not supporting the indirect blocks yet */
-        if (file_block_no >= 12) {
-            ext2_free_blocks(block);
-            return -EINVAL;
+        if (file_block_no < 12) {
+            block_no = ((struct raw_inode*) inode->private_data)->block[file_block_no];
+        } else {
+            /* Handle single indirect block */
+            if (indirect_block == NULL) {
+                indirect_block = ext2_allocate_blocks(inode->super_block, 1);
+                ssize_t _ret;
+                if ((_ret = ext2_read_blocks(inode->super_block, indirect_block, ((struct raw_inode*) inode->private_data)->block[12], 1)) != 1) {
+                    ext2_free_blocks(indirect_block);
+                    ext2_free_blocks(block);
+                    return _ret;
+                }
+            }
+            size_t real_block_offset = file_block_no - 12;
+            block_no = indirect_block[real_block_offset];
         }
 
-        ssize_t ret = ext2_read_blocks(inode->super_block, block, ((struct raw_inode*) inode->private_data)->block[file_block_no], 1);
+        ssize_t ret = ext2_read_blocks(inode->super_block, block, block_no, 1);
         if (ret != 1) {
             return ret;
         }
@@ -740,6 +758,10 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
         ext2_free_blocks(block);
         file_block_no++;
         buffer = (void*) (((uintptr_t) buffer) + inode->super_block->block_size);
+    }
+
+    if (indirect_block) {
+        ext2_free_blocks(indirect_block);
     }
 
     return len_save;
