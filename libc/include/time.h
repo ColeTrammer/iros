@@ -12,6 +12,8 @@ struct timespec {
     long tv_nsec;
 };
 
+time_t time(time_t *tloc);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -39,6 +39,7 @@ FREEOBJS=\
 $(ARCH_FREEOBJS) \
 $(BUILDDIR)/libc/ctype/ctype.o \
 $(BUILDDIR)/libc/stdio/printf.o \
+$(BUILDDIR)/libc/stdio/scanf.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
 $(BUILDDIR)/libc/stdlib/conversions.o \
 $(BUILDDIR)/libc/stdlib/malloc.o \
@@ -74,6 +75,7 @@ $(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/atexit.o \
 $(BUILDDIR)/libc/string/strerror.o \
 $(BUILDDIR)/libc/termios/termios.o \
+$(BUILDDIR)/libc/time/time.o \
 $(BUILDDIR)/libc/unistd/exec.o \
 $(BUILDDIR)/libc/unistd/isatty.o \
 $(BUILDDIR)/libc/init.o

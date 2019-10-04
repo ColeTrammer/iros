@@ -47,6 +47,12 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
 
             i++;
 
+            bool starts_with_q = false;
+            if (str[i] == '?') {
+                starts_with_q = true;
+                i++;
+            }
+
             int nums[3] = { -1, -1, -1 };
             nums[0] = atoi(str + i);
             while (isdigit(str[i])) { i++; }
@@ -62,6 +68,21 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                     nums[2] = atoi(str + i);
 
                     while (isdigit(str[i])) { i++; }
+                }
+            }
+
+            /* Question commands */
+            if (starts_with_q) {
+                if (nums[0] == 25) {
+                    /* Hide cursor command */
+                    if (str[i] == 'l') {
+                        vga_disable_cursor();
+                    }
+
+                    /* Show cursor command */
+                    if (str[i] == 'h') {
+                        vga_enable_cursor();
+                    }
                 }
             }
 
@@ -114,6 +135,10 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                             set_vga_foreground(VGA_COLOR_LIGHT_GREY);
                             set_vga_background(VGA_COLOR_BLACK);
                             break;
+                        case 7:
+                        /* Invert colors */
+                            swap_vga_colors();
+                            break;
                         case 30:
                             set_vga_foreground(VGA_COLOR_BLACK);
                             break;
@@ -136,9 +161,11 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                             set_vga_foreground(VGA_COLOR_CYAN);
                             break;
                         case 37:
+                        case 39:
                             set_vga_foreground(VGA_COLOR_LIGHT_GREY);
                             break;
                         case 40:
+                        case 49:
                             set_vga_background(VGA_COLOR_BLACK);
                             break;
                         case 41:
@@ -281,6 +308,10 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                     buf[i++] = data->key_buffer.ascii & 0x1F;
                     continue;
                 }
+
+                if (data->key_buffer.ascii == '\r' && data->config.c_iflag & ICRNL) {
+                    data->key_buffer.ascii = '\n';
+                }
                 
                 if (data->key_buffer.ascii != '\0') {
                     buf[i++] = data->key_buffer.ascii;
@@ -365,7 +396,11 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
             }
 
             if (data->key_buffer.ascii == '\n' || data->key_buffer.ascii == '\r') {
-                data->input_buffer[i++] = '\n';
+                if (data->config.c_iflag & ICRNL) {
+                    data->input_buffer[i++] = '\n';
+                } else {
+                    data->input_buffer[i++] = data->key_buffer.ascii;
+                }
                 
                 if (data->config.c_lflag & ECHO) {
                     data->x = start_x + i;

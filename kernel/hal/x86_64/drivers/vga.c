@@ -10,12 +10,12 @@ static uint16_t *vga_buffer = (uint16_t*) VGA_PHYS_ADDR;
 static enum vga_color fg = VGA_COLOR_LIGHT_GREY;
 static enum vga_color bg = VGA_COLOR_BLACK;
 
-static void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
-	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, (inb(VGA_DATA) & 0xC0) | cursor_start);
-	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_END, (inb(VGA_DATA) & 0xE0) | cursor_end);
+void vga_enable_cursor() {
+	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, (inb(VGA_DATA) & 0xC0) | VGA_CURSOR_Y_START);
+	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_END, (inb(VGA_DATA) & 0xE0) | VGA_CURSOR_Y_END);
 }
 
-static void disable_cursor() {
+void vga_disable_cursor() {
 	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, VGA_CURSOR_DISABLE);
 }
 
@@ -24,7 +24,7 @@ void update_vga_buffer() {
     vga_buffer = (uint16_t*) VGA_VIRT_ADDR;
     debug_log("VGA Buffer Updated: [ %#.16lX ]\n", VGA_VIRT_ADDR);
 
-    enable_cursor(VGA_CURSOR_Y_START, VGA_CURSOR_Y_END);
+    vga_enable_cursor();
 }
 
 void set_vga_foreground(enum vga_color _fg) {
@@ -33,6 +33,12 @@ void set_vga_foreground(enum vga_color _fg) {
 
 void set_vga_background(enum vga_color _bg) {
     bg = _bg;
+}
+
+void swap_vga_colors() {
+    enum vga_color temp = fg;
+    fg = bg;
+    bg = temp;
 }
 
 void write_vga_buffer(size_t row, size_t col, uint16_t c, bool raw_copy) {
@@ -47,7 +53,7 @@ void set_vga_cursor(size_t row, size_t col) {
     uint16_t pos = (uint16_t) VGA_INDEX(row, col);
 
     if (pos >= VGA_WIDTH * VGA_HEIGHT) {
-        disable_cursor();
+        vga_disable_cursor();
         return;
     }
 

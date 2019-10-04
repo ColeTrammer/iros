@@ -54,10 +54,13 @@ enum vga_color {
 void update_vga_buffer();
 void set_vga_foreground(enum vga_color fs);
 void set_vga_background(enum vga_color bg);
+void swap_vga_colors();
 
 void write_vga_buffer(size_t row, size_t col, uint16_t c, bool raw_copy);
 uint16_t get_vga_buffer(size_t row, size_t col);
 
+void vga_enable_cursor();
+void vga_disable_cursor();
 void set_vga_cursor(size_t row, size_t col);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_VGA_H */
