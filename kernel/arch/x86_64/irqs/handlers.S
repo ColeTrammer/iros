@@ -80,3 +80,4 @@ sys_call_table:
     .quad arch_sys_lseek
     .quad arch_sys_ioctl
     .quad arch_sys_ftruncate
+    .quad arch_sys_time

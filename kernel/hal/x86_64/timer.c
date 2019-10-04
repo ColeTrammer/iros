@@ -9,3 +9,7 @@ void register_callback(void (*callback)(), unsigned int ms) {
 void set_sched_callback(void (*callback)(struct process_state*), unsigned int ms) {
     pit_set_sched_callback(callback, ms);
 }
+
+time_t get_time() {
+    return pit_get_time();
+}

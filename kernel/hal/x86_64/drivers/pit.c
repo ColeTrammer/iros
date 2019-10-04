@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
@@ -14,8 +15,19 @@ static void (*callback)(void) = NULL;
 static unsigned int count = 0;
 static unsigned int count_to = 0;
 
+static int ms = 0;
+/* Should somehow be initialized by CMOS */
+static time_t seconds = 0;
+
 void handle_pit_interrupt(struct process_state *process_state) {
     sendEOI(PIT_IRQ_LINE);
+
+    /* Increment time count */
+    ms++;
+    if (ms == 1000) {
+        ms = 0;
+        seconds++;
+    }
     
     if (sched_callback != NULL) {
         sched_count++;
@@ -32,6 +44,10 @@ void handle_pit_interrupt(struct process_state *process_state) {
             callback();
         }
     }
+}
+
+time_t pit_get_time() {
+    return seconds;
 }
 
 void pit_set_sched_callback(void (*_sched_callback)(struct process_state*), unsigned int ms) {

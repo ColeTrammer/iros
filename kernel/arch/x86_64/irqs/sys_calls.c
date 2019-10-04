@@ -17,6 +17,7 @@
 
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/timer.h>
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 
@@ -400,4 +401,8 @@ void arch_sys_ioctl(struct process_state *process_state) {
 
 void arch_sys_ftruncate(struct process_state *process_state) {
     SYS_RETURN((uint64_t) -EINVAL);
+}
+
+void arch_sys_time(struct process_state *process_state) {
+    SYS_RETURN((uint64_t) get_time());
 }

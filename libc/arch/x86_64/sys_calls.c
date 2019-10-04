@@ -177,3 +177,11 @@ int ftruncate(int fd, off_t length) {
                   "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(length) : "rdi", "esi", "rdx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+time_t get_time() {
+    time_t ret;
+    asm volatile( "movq $17, %%rdi\n"\
+                  "int $0x80\n"\
+                  "movq %%rax, %0" : "=r"(ret) : : "rdi", "rax", "memory" );
+    return ret;
+}

@@ -1,11 +1,10 @@
 #include <time.h>
 #include <stddef.h>
 
-static time_t t = 1;
+#include <sys/time.h>
 
-/* Time implementation (extremely inaccurate) */
 time_t time(time_t *t_loc) {
-    t++;
+    time_t t = get_time();
     if (t_loc != NULL) {
         *t_loc = t;
     }
