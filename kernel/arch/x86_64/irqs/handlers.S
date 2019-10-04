@@ -79,3 +79,4 @@ sys_call_table:
     .quad arch_sys_stat
     .quad arch_sys_lseek
     .quad arch_sys_ioctl
+    .quad arch_sys_ftruncate

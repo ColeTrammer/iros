@@ -397,3 +397,7 @@ void arch_sys_ioctl(struct process_state *process_state) {
 
     SYS_RETURN((uint64_t) fs_ioctl(file, request, argp));
 }
+
+void arch_sys_ftruncate(struct process_state *process_state) {
+    SYS_RETURN((uint64_t) -EINVAL);
+}

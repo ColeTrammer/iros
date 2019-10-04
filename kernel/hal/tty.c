@@ -34,7 +34,6 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
 
     for (size_t i = 0; i < len; i++) {
         if (str[i] == '\0') {
-            debug_log("tty null: [ %lu ]\n", i);
             continue;
         }
 
@@ -305,8 +304,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 }
 
                 if ((data->key_buffer.flags & KEY_CONTROL_ON) && (('a' <= data->key_buffer.ascii && data->key_buffer.ascii <= 'z') || ('A' <= data->key_buffer.ascii && data->key_buffer.ascii <= 'Z'))) {
-                    buf[i++] = data->key_buffer.ascii & 0x1F;
-                    continue;
+                    data->key_buffer.ascii &= 0x1F;
                 }
 
                 if (data->key_buffer.ascii == '\r' && data->config.c_iflag & ICRNL) {
@@ -397,10 +395,10 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
             if (data->key_buffer.ascii == '\n' || data->key_buffer.ascii == '\r') {
                 if (data->config.c_iflag & ICRNL) {
-                    data->input_buffer[i++] = '\n';
-                } else {
-                    data->input_buffer[i++] = data->key_buffer.ascii;
+                    data->key_buffer.ascii = '\n';
                 }
+
+                data->input_buffer[i++] = data->key_buffer.ascii;
                 
                 if (data->config.c_lflag & ECHO) {
                     data->x = start_x + i;
