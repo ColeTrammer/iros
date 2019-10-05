@@ -24,11 +24,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations ext2_i_op = {
-    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL
+    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL
 };
 
 static struct inode_operations ext2_dir_i_op = {
-    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL
+    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL, &ext2_mkdir
 };
 
 static struct file_operations ext2_f_op = {
@@ -691,6 +691,7 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
 }
 
 struct tnode *ext2_lookup(struct inode *inode, const char *name) {
+    assert(inode);
     assert(inode->flags & FS_DIR);
 
     if (inode->tnode_list == NULL) {
@@ -921,6 +922,15 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_nlink = raw_inode->link_count;
 
     return 0;
+}
+
+struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
+    (void) tparent;
+    (void) name;
+    (void) mode;
+
+    *error = -EINVAL;
+    return NULL;
 }
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {

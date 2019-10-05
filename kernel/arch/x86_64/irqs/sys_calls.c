@@ -427,3 +427,16 @@ void arch_sys_ftruncate(struct process_state *process_state) {
 void arch_sys_time(struct process_state *process_state) {
     SYS_RETURN((uint64_t) get_time());
 }
+
+void arch_sys_mkdir(struct process_state *process_state) {
+    const char *pathname = (const char*) process_state->cpu_state.rsi;
+    mode_t mode = (mode_t) process_state->cpu_state.rdx;
+
+    struct process *current = get_current_process();
+    char *path = get_full_path(current->cwd, pathname);
+
+    int ret = fs_mkdir(path, mode);
+
+    free(path);
+    SYS_RETURN((uint64_t) ret);
+}

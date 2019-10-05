@@ -22,6 +22,7 @@ struct inode_operations {
     struct file *(*open)(struct inode *inode, int *error);
     int (*stat)(struct inode *inode, struct stat *stat_struct);
     int (*ioctl)(struct inode *inode, unsigned long request, void *argp);
+    struct inode *(*mkdir)(struct tnode *tnode, const char *name, mode_t mode, int *error);
 };
 
 struct inode {

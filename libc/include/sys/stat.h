@@ -58,7 +58,8 @@ struct stat {
     blkcnt_t st_blocks;
 };
 
-int stat(const char *restrict path, struct stat *restrict stat_struct);
+int stat(const char *__restrict path, struct stat *__restrict stat_struct);
+int mkdir(const char *path, mode_t mode);
 
 #ifdef __cplusplus
 }

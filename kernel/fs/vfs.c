@@ -340,6 +340,71 @@ int fs_truncate(struct file *file, off_t length) {
     return 0;
 }
 
+int fs_mkdir(const char *_path, mode_t mode) {
+    char *path = malloc(strlen(_path) + 1);
+    strcpy(path, _path);
+
+    char *last_slash = strrchr(path, '/');
+    *last_slash = '\0';
+
+    struct tnode *tparent;
+    /* Root is a special case */
+    if (last_slash == path) {
+        tparent = iname("/");
+    } else {
+        tparent = iname(path);
+    }
+
+    if (tparent == NULL) {
+        free(path);
+        return -ENOENT;
+    }
+
+    if (tparent->inode->flags & FS_FILE) {
+        free(path);
+        return -EINVAL;
+    }
+
+    struct mount *mount = tparent->inode->mounts;
+    while (mount != NULL) {
+        if (strcmp(mount->name, last_slash + 1) == 0) {
+            free(path);
+            return -EEXIST;
+        }
+
+        mount = mount->next;
+    }
+
+    tparent->inode->i_op->lookup(tparent->inode, NULL);
+    if (find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+        free(path);
+        return -EEXIST;
+    }
+
+    if (!tparent->inode->i_op->mkdir) {
+        free(path);
+        return -EINVAL;
+    }
+
+    debug_log("Adding dir to: [ %s ]\n", tparent->name);
+
+    int error = 0;
+    struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode, &error);
+    if (inode == NULL) {
+        free(path);
+        return error;
+    }
+
+    struct tnode *tnode = malloc(sizeof(struct tnode));
+    tnode->inode = inode;
+    tnode->name = malloc(strlen(last_slash + 1) + 1);
+    strcpy(tnode->name, last_slash + 1);
+    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+
+    free(path);
+    return 0;
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

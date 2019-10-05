@@ -12,6 +12,7 @@ const char *sys_errlist[] = {
     "Range",
     "No space left on device",
     "Invalid command for device",
+    "File exists",
     "Errno end"
 };
 

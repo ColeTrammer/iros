@@ -11,7 +11,8 @@
 #define ERANGE      7
 #define ENOSPC      8
 #define ENOTTY      9
-#define EMAXERRNO   10
+#define EEXIST      10
+#define EMAXERRNO   11
 
 #ifdef __cplusplus
 extern "C" {

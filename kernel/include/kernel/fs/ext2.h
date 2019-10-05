@@ -171,6 +171,7 @@ int ext2_close(struct file *file);
 ssize_t ext2_read(struct file *file, void *buffer, size_t len);
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len);
 int ext2_stat(struct inode *inode, struct stat *stat_struct);
+struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error);
 struct tnode *ext2_mount(struct file_system *fs, char *device_path);
 
 void init_ext2();

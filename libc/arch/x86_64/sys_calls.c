@@ -183,5 +183,15 @@ time_t get_time() {
     asm volatile( "movq $17, %%rdi\n"\
                   "int $0x80\n"\
                   "movq %%rax, %0" : "=r"(ret) : : "rdi", "rax", "memory" );
-    return ret;
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int mkdir(const char *path, mode_t mode) {
+    int ret;
+    asm volatile( "movq $18, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movl %2, %%edx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
 }
