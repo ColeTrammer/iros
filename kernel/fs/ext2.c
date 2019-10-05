@@ -891,6 +891,7 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
         file_block_no++;
         len -= to_write;
         buffer_offset += to_write;
+        file->position += to_write;
     }
 
     if (indirect_block) {

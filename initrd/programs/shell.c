@@ -207,6 +207,8 @@ int run_program(struct command *command) {
             if (dup2(fd, STDOUT_FILENO) == -1) {
                 goto abort_command;
             }
+
+            close(fd);
         }
 
         if (command->_stdin != NULL) {
@@ -217,6 +219,8 @@ int run_program(struct command *command) {
             if (dup2(fd, STDIN_FILENO) == -1) {
                 goto abort_command;
             }
+
+            close(fd);
         }
 
         execvp(args[0], args);

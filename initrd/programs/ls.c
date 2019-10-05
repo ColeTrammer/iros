@@ -3,8 +3,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 void print_entry(char *_path, struct dirent *dirent) {
+    /* Don't print colors if we're being redirected (also we could turn off colors some other way later) */
+    if (!isatty(STDOUT_FILENO)) {
+        puts(dirent->d_name);
+        return;
+    }
+
     char *path = malloc(strlen(_path) + strlen(dirent->d_name) + 2);
     strcpy(path, _path);
     strcat(path, "/");
@@ -30,7 +37,7 @@ void print_entry(char *_path, struct dirent *dirent) {
         color_s = "\033[31m";
     }
 
-    printf("%s%s\033[0m", color_s, dirent->d_name);
+    printf("%s%s\033[0m ", color_s, dirent->d_name);
     free(path);
 }
 
@@ -54,9 +61,11 @@ int main(int argc, char **argv) {
     struct dirent *entry;
     while ((entry = readdir(d)) != NULL) {
         print_entry(path, entry);
-        printf("%c", ' ');
     }
-    printf("%c", '\n');
+
+    if (isatty(STDOUT_FILENO)) {
+        printf("%c", '\n');
+    }
 
     closedir(d);
 
