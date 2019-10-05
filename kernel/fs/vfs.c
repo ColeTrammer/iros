@@ -453,7 +453,11 @@ int fs_mount(const char *src, const char *path, const char *type) {
                     strcpy(name, root->name);
                     root->super_block->root->name = name;
 
-                    root->super_block->root->inode->parent = mount->super_block->root;
+                    struct mount *mount_iter = mount->super_block->root->inode->mounts;
+                    while (mount_iter != NULL) {
+                        mount_iter->super_block->root->inode->parent = mount->super_block->root;
+                        mount_iter = mount_iter->next;
+                    }
                 }
 
                 root = mount;
