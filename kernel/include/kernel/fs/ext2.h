@@ -109,6 +109,9 @@ struct raw_inode {
     uint32_t sectors;
     uint32_t flags;
     uint32_t os_specific_1;
+#define EXT2_SINGLY_INDIRECT_BLOCK_INDEX 12
+#define EXT2_DOUBLY_INDIRECT_BLOCK_INDEX 13
+#define EXT2_TRIPLY_INDRIECT_BLOCK_INDEX 14
     uint32_t block[15];
     uint32_t generation;
     uint32_t file_acl;
