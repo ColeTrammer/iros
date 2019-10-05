@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -133,6 +134,22 @@ int fs_create(const char *file_name, mode_t mode) {
         return -ENOENT;
     }
 
+    struct mount *mount = tparent->inode->mounts;
+    while (mount != NULL) {
+        if (strcmp(mount->name, last_slash + 1) == 0) {
+            free(path);
+            return -EEXIST;
+        }
+
+        mount = mount->next;
+    }
+
+    tparent->inode->i_op->lookup(tparent->inode, NULL);
+    if (!tparent->inode->tnode_list || find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+        free(path);
+        return -EEXIST;
+    }
+
     if (!tparent->inode->i_op->create) {
         free(path);
         return -EINVAL;
@@ -141,7 +158,7 @@ int fs_create(const char *file_name, mode_t mode) {
     debug_log("Adding to: [ %s ]\n", tparent->name);
 
     int error = 0;
-    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, &error);
+    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode | S_IFREG, &error);
     if (inode == NULL) {
         free(path);
         return error;
@@ -172,7 +189,6 @@ struct file *fs_open(const char *file_name, int *error) {
 
     struct tnode *tnode = iname(file_name);
     if (tnode == NULL) {
-        debug_log("Tnode not found\n");
         *error = -ENOENT;
         return NULL;
     }
@@ -376,7 +392,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
-    if (find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+    if (!tparent->inode->tnode_list || find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
         free(path);
         return -EEXIST;
     }
@@ -389,7 +405,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
     debug_log("Adding dir to: [ %s ]\n", tparent->name);
 
     int error = 0;
-    struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode, &error);
+    struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode | S_IFDIR, &error);
     if (inode == NULL) {
         free(path);
         return error;

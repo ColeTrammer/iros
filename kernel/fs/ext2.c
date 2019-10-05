@@ -154,6 +154,7 @@ static int64_t ext2_find_open_block_in_bitmap(struct ext2_block_bitmap *bitmap) 
     return -1;
 }
 
+/* Syncs block group specified by blk_grp_index */
 static int ext2_sync_block_group(struct super_block *sb, uint32_t blk_grp_index) {
     struct ext2_sb_data *data = sb->private_data;
     size_t block_off =  blk_grp_index * sizeof(struct raw_block_group_descriptor) / sb->block_size;
@@ -173,6 +174,7 @@ static int ext2_sync_block_group(struct super_block *sb, uint32_t blk_grp_index)
     return 0;
 }
 
+/* Syncs super_block to diks */
 static int ext2_sync_super_block(struct super_block *sb) {
     struct ext2_sb_data *data = sb->private_data;
 
@@ -484,50 +486,6 @@ int ext2_sync_inode(struct inode *inode) {
     return 0;
 }
 
-/* Creates a raw_inode and syncs to disk */
-int ext2_write_inode(struct inode *inode) {
-    assert(inode->private_data == NULL);
-    assert(inode->mode != 0);
-
-    struct ext2_sb_data *data = inode->super_block->private_data;
-    struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
-    assert(raw_inode);
-    inode->private_data = raw_inode;
-
-    raw_inode->mode = inode->mode;
-    raw_inode->uid = 0;
-    raw_inode->size = 0;
-    raw_inode->atime = 0;
-    raw_inode->ctime = 0;
-    raw_inode->mtime = 0;
-    raw_inode->dtime = 0;
-    raw_inode->gid = 0;
-    raw_inode->link_count = 1;
-    raw_inode->sectors = 0;
-    raw_inode->flags = 0;
-    raw_inode->os_specific_1 = 0;
-    assert(data->sb->num_blocks_to_preallocate_for_files <= EXT2_SINGLY_INDIRECT_BLOCK_INDEX);
-    void *zeroes = ext2_allocate_blocks(inode->super_block, 1);
-    memset(zeroes, 0, inode->super_block->block_size);
-    for (size_t i = 0; i < data->sb->num_blocks_to_preallocate_for_files; i++) {
-        raw_inode->block[i] = ext2_find_open_block(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
-        ext2_set_block_allocated(inode->super_block, raw_inode->block[i]);
-        ssize_t ret = ext2_write_blocks(inode->super_block, zeroes, raw_inode->block[i], 1);
-        if (ret != 1) {
-            return (int) ret;
-        }
-    }
-    ext2_free_blocks(zeroes);
-    memset(raw_inode->block + data->sb->num_blocks_to_preallocate_for_files, 0, (15 - data->sb->num_blocks_to_preallocate_for_files) * sizeof(uint32_t));
-    raw_inode->generation = 0;
-    raw_inode->file_acl = 0;
-    raw_inode->dir_acl = 0;
-    raw_inode->faddr = 0;
-    memset(raw_inode->os_specific_2, 0, 12 * sizeof(uint8_t));
-
-    return ext2_sync_inode(inode);
-}
-
 /* Handles the allocation of a block for an inode */
 static int ext2_allocate_block_for_inode(struct super_block *sb, struct inode *inode, size_t block_no) {
     struct raw_inode *raw_inode = inode->private_data;
@@ -569,6 +527,48 @@ static int ext2_allocate_block_for_inode(struct super_block *sb, struct inode *i
     return ret;
 }
 
+/* Creates a raw_inode and syncs to disk */
+int ext2_write_inode(struct inode *inode) {
+    assert(inode->private_data == NULL);
+    assert(inode->mode != 0);
+
+    struct ext2_sb_data *data = inode->super_block->private_data;
+    struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
+    assert(raw_inode);
+    inode->private_data = raw_inode;
+
+    raw_inode->mode = inode->mode;
+    raw_inode->uid = 0;
+    raw_inode->size = 0;
+    raw_inode->atime = 0;
+    raw_inode->ctime = 0;
+    raw_inode->mtime = 0;
+    raw_inode->dtime = 0;
+    raw_inode->gid = 0;
+    raw_inode->link_count = S_ISDIR(inode->mode) ? 2 : 1;
+    raw_inode->sectors = 0;
+    raw_inode->flags = 0;
+    raw_inode->os_specific_1 = 0;
+    ssize_t to_preallocate = S_ISREG(inode->mode) ? data->sb->num_blocks_to_preallocate_for_files : data->sb->num_blocks_to_preallocate_for_directories;
+    void *zeroes = ext2_allocate_blocks(inode->super_block, 1);
+    memset(zeroes, 0, inode->super_block->block_size);
+    for (ssize_t i = 0; i < to_preallocate; i++) {
+        int ret = ext2_allocate_block_for_inode(inode->super_block, inode, i);
+        if (ret != 0) {
+            return ret;
+        }
+    }
+    ext2_free_blocks(zeroes);
+    memset(raw_inode->block + MIN(EXT2_SINGLY_INDIRECT_BLOCK_INDEX, to_preallocate), 0, (MAX(15 - to_preallocate, 2)) * sizeof(uint32_t));
+    raw_inode->generation = 0;
+    raw_inode->file_acl = 0;
+    raw_inode->dir_acl = 0;
+    raw_inode->faddr = 0;
+    memset(raw_inode->os_specific_2, 0, 12 * sizeof(uint8_t));
+
+    return ext2_sync_inode(inode);
+}
+
 struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error) {
     struct inode *parent = tparent->inode;
     uint32_t index = ext2_find_open_inode(parent->super_block, ext2_get_block_group_from_inode(parent->super_block, parent->index));
@@ -584,11 +584,11 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
 
     struct inode *inode = malloc(sizeof(struct inode));
     inode->device = parent->device;
-    inode->flags = FS_FILE;
-    inode->i_op = &ext2_i_op;
+    inode->flags = S_ISREG(mode) ? FS_FILE : FS_DIR;
+    inode->i_op = S_ISREG(mode) ? &ext2_i_op : &ext2_dir_i_op;
     inode->index = index;
     init_spinlock(&inode->lock);
-    inode->mode = mode | S_IFREG;
+    inode->mode = mode;
     inode->mounts = NULL;
     inode->parent = tparent;
     inode->private_data = NULL;
@@ -673,7 +673,7 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
     memcpy(dirent->name, name, strlen(name));
     dirent->name_length = strlen(name);
     dirent->size = inode->super_block->block_size - ((uintptr_t) dirent - (uintptr_t) raw_dirent_table);
-    dirent->type = EXT2_DIRENT_TYPE_REGULAR;
+    dirent->type = S_ISREG(mode) ? EXT2_DIRENT_TYPE_REGULAR : EXT2_DIRENT_TYPE_DIRECTORY;
     memset((void*) (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length), 0, inode->super_block->block_size - (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length - (uintptr_t) raw_dirent_table));
 
     ret = ext2_write_blocks(inode->super_block, raw_dirent_table, parent_raw_inode->block[block_no], 1);
@@ -925,12 +925,71 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
 }
 
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
-    (void) tparent;
-    (void) name;
-    (void) mode;
+    struct inode *inode = ext2_create(tparent, name, mode, error);
+    if (inode == NULL) {
+        return NULL;
+    }
 
-    *error = -EINVAL;
-    return NULL;
+    struct ext2_block_group *group = ext2_get_block_group(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
+    group->blk_desc->num_directories++;
+    *error = ext2_sync_block_group(inode->super_block, group->index);
+    if (*error != 0) {
+        free(inode);
+        return NULL;
+    }
+
+    struct raw_inode *parent_raw_inode = tparent->inode->private_data;
+    parent_raw_inode->link_count++;
+    *error = ext2_sync_inode(tparent->inode);
+    if (*error != 0) {
+        free(inode);
+        return NULL;
+    }
+
+    struct raw_inode *raw_inode = inode->private_data;
+    struct raw_dirent *dirents_start = ext2_allocate_blocks(inode->super_block, 1);
+    struct raw_dirent *dirent = dirents_start;
+
+    dirent->ino = (uint32_t) inode->index;
+    strcpy(dirent->name, ".");
+    dirent->name_length = 1;
+    dirent->size = sizeof(struct raw_dirent) + 4;
+    dirent->type = EXT2_DIRENT_TYPE_DIRECTORY;
+
+    dirent = EXT2_NEXT_DIRENT(dirent);
+    dirent->ino = (uint32_t) tparent->inode->index;
+    strcpy(dirent->name, "..");
+    dirent->name_length = 2;
+    dirent->size = inode->super_block->block_size - (sizeof(struct raw_dirent) + 4);
+    dirent->type = EXT2_DIRENT_TYPE_DIRECTORY;
+
+    if (raw_inode->block[0] == 0) {
+        *error = ext2_allocate_block_for_inode(inode->super_block, inode, 0);
+        if (*error != 0) {
+            ext2_free_blocks(dirents_start);
+            free(inode);
+            return NULL;
+        }
+
+        inode->size = inode->super_block->block_size;
+        *error = ext2_sync_inode(inode);
+        if (*error != 0) {
+            ext2_free_blocks(dirents_start);
+            free(inode);
+            return NULL;
+        }
+    }
+
+    ssize_t ret = ext2_write_blocks(inode->super_block, dirents_start, raw_inode->block[0], 1);
+    if (ret != 1) {
+        ext2_free_blocks(dirents_start);
+        free(inode);
+        *error = (int) ret;
+        return NULL;
+    }
+
+    ext2_free_blocks(dirents_start);
+    return inode;
 }
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
