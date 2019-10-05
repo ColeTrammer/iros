@@ -200,8 +200,17 @@ void arch_sys_execve(struct process_state *process_state) {
     int error = 0;
     struct file *program = fs_open(path, &error);
     if (program == NULL) {
+        /* Should look at $PATH variable, instead is currently hardcoded */
         free(path);
-        SYS_RETURN((uint64_t) error);
+        path = get_full_path("/initrd", file_name);
+
+        error = 0;
+        program = fs_open(path, &error);
+
+        if (program == NULL) {
+            free(path);
+            SYS_RETURN((uint64_t) error);
+        }
     }
 
     fs_seek(program, 0, SEEK_END);

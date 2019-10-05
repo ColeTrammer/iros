@@ -25,14 +25,13 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_drivers();
     init_process_sched();
 
-    /* At some point should switch over from initrd to a block device */
-    /* Mount hdd0 at /mnt */
+    /* Mount hdd0 at / */
     int error = 0;
-    error = fs_mount("/dev/hdd0", "/mnt", "ext2");
+    error = fs_mount("/dev/hdd0", "/", "ext2");
     assert(error == 0);
 
     // Start Shell
-    struct process *shell = load_process("/shell");
+    struct process *shell = load_process("/initrd/shell");
     sched_add_process(shell);
 
     sched_run_next();

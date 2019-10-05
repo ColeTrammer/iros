@@ -353,10 +353,28 @@ int fs_mount(const char *src, const char *path, const char *type) {
                 char *dev_path = malloc(strlen(src) + 1);
                 strcpy(dev_path, src);
                 mount->device_path = dev_path;
+                mount->fs = file_system;
                 file_system->mount(file_system, mount->device_path);
                 mount->super_block = file_system->super_block;
                 mount->super_block->root->name = "/";
                 mount->super_block->root->inode->parent = mount->super_block->root;
+
+                /* For now, when mounting as / when there is already something mounted,
+                   we will just move things around instead of unmounting what was
+                   already there */
+                if (root != NULL) {
+                    mount->super_block->root->inode->mounts = root;
+                    root->next = root->super_block->root->inode->mounts;
+                    root->super_block->root->inode->mounts = NULL;
+
+                    root->name = root->fs->name;
+                    char *name = malloc(strlen(root->name) + 1);
+                    strcpy(name, root->name);
+                    root->super_block->root->name = name;
+
+                    root->super_block->root->inode->parent = mount->super_block->root;
+                }
+
                 root = mount;
 
                 fs_inode_create_store(file_system->super_block->device);
@@ -401,6 +419,7 @@ int fs_mount(const char *src, const char *path, const char *type) {
             char *dev_path = malloc(strlen(src) + 1);
             strcpy(dev_path, src);
             mount->device_path = dev_path;            
+            mount->fs = file_system;
             mount->next = NULL;
             assert(file_system->mount(file_system, mount->device_path));
             mount->super_block = file_system->super_block;
