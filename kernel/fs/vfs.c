@@ -336,8 +336,9 @@ int fs_ioctl(struct file *file, unsigned long request, void *argp) {
 int fs_truncate(struct file *file, off_t length) {
     char *file_contents = malloc(length);
     ssize_t read = fs_read(file, file_contents, length);
+    /* Ignore error since it's probably trying to read form a device */
     if (read < 0) {
-        return (int) read;
+        read = 0;
     }
 
     /* Makes rest of file null bytes */
