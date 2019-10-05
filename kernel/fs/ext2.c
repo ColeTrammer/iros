@@ -770,13 +770,15 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
 
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
     assert(file->flags & FS_FILE);
-    assert(file->position == 0);
-    assert(len < 1024);
+    assert(file->position < 1024);
+    assert(file->position + len < 1024);
+
+    debug_log("Writing file: [ %lu, %lu ]\n", file->position, len);
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     struct raw_inode *raw_inode = inode->private_data;
     ssize_t ret = 0;
-    inode->size = len;
+    inode->size = file->position + len;
     if (raw_inode->block[0] == 0) {
         raw_inode->block[0] = ext2_find_open_block(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
         int ret = ext2_set_block_allocated(inode->super_block, raw_inode->block[0]);
@@ -790,8 +792,15 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
     }
 
     char *buf = ext2_allocate_blocks(inode->super_block, 1);
-    memcpy(buf, buffer, len);
-    memset(buf + len, 0, inode->super_block->block_size - len);
+    if (file->position != 0) {
+        ret = ext2_read_blocks(inode->super_block, buf, ((struct raw_inode*) inode->private_data)->block[0], 1);
+        if (ret != 1) {
+            return (int) ret;
+        }
+    }
+
+    memcpy(buf + file->position, buffer, len);
+    memset(buf + file->position + len, 0, inode->super_block->block_size - (file->position + len));
     ret = ext2_write_blocks(inode->super_block, buf, ((struct raw_inode*) inode->private_data)->block[0], 1);
     if (ret != 1) {
         return -EIO;

@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    FILE *f = fopen(argv[1], "w");
+    FILE *f = fopen(argv[1], "a");
     if (!f) {
         perror("fwrite");
         return 1;

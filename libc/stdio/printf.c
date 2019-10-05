@@ -733,9 +733,11 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
 		}
 	}
 
-	char zero = '\0';
-	if (!print(obj, &zero, 1))
-		return -1;
+	if (print == sprint) {
+		char zero = '\0';
+		if (!print(obj, &zero, 1))
+			return -1;
+	}
 
 	return written;
 }
