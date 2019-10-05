@@ -15,6 +15,7 @@ struct command {
     char *_stdin;
     char *_stdout;
     char *_stderr;
+    int (*build_in_func)(char **args);
 };
 
 char *read_line(FILE *input) {
@@ -66,6 +67,7 @@ struct command *split_line(char *line) {
     command->_stderr = NULL;
     command->_stdout = NULL;
     command->_stdin = NULL;
+    command->build_in_func = NULL;
 
     int sz = 1024;
     int pos = 0;
@@ -179,21 +181,26 @@ static int op_echo(char **args) {
 struct builtin_op {
     char name[16];
     int (*op)(char **args);
+    bool run_immediately;
 };
 
 #define NUM_BUILTINS 3
 
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
-    { "exit", op_exit },
-    { "cd", op_cd },
-    { "echo", op_echo }
+    { "exit", op_exit, true },
+    { "cd", op_cd, true },
+    { "echo", op_echo, false }
 };
 
 int run_program(struct command *command) {
     char **args = command->args;
     for (size_t i = 0; i < NUM_BUILTINS; i++) {
         if (strcmp(args[0], builtin_ops[i].name) == 0) {
-            return builtin_ops[i].op(args);
+            if (builtin_ops[i].run_immediately) {
+                return builtin_ops[i].op(args);
+            }
+
+            command->build_in_func = builtin_ops[i].op;
         }
     }
 
@@ -207,8 +214,6 @@ int run_program(struct command *command) {
             if (dup2(fd, STDOUT_FILENO) == -1) {
                 goto abort_command;
             }
-
-            close(fd);
         }
 
         if (command->_stdin != NULL) {
@@ -219,8 +224,10 @@ int run_program(struct command *command) {
             if (dup2(fd, STDIN_FILENO) == -1) {
                 goto abort_command;
             }
+        }
 
-            close(fd);
+        if (command->build_in_func != NULL) {
+            exit(command->build_in_func(args));
         }
 
         execvp(args[0], args);
