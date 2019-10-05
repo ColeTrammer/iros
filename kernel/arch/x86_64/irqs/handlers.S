@@ -82,3 +82,4 @@ sys_call_table:
     .quad arch_sys_ftruncate
     .quad arch_sys_time
     .quad arch_sys_mkdir
+    .quad arch_sys_dup2

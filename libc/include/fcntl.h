@@ -51,7 +51,7 @@
 extern "C" { 
 #endif /* __cplusplus */
 
-int open(const char *pathname, int flags, mode_t mode);
+int open(const char *pathname, int flags, ...);
 
 #ifdef __cplusplus
 }

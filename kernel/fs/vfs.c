@@ -526,6 +526,8 @@ int fs_mount(const char *src, const char *path, const char *type) {
 }
 
 struct file *fs_clone(struct file *file) {
+    if (file == NULL) { return NULL; }
+
     struct file *new_file = malloc(sizeof(struct file));
     memcpy(new_file, file, sizeof(struct file));
     return new_file;

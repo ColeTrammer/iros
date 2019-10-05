@@ -13,6 +13,7 @@ const char *sys_errlist[] = {
     "No space left on device",
     "Invalid command for device",
     "File exists",
+    "Bad file descriptor",
     "Errno end"
 };
 

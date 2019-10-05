@@ -236,19 +236,9 @@ void arch_sys_execve(struct process_state *process_state) {
 
     struct process *process = calloc(1, sizeof(struct process));
 
-    /* Allocate stdio files */
-    int error0 = 0;
-    int error1 = 0;
-    int error2 = 0;
-    process->files[0] = fs_open("/dev/tty", &error0);
-    process->files[1] = fs_open("/dev/tty", &error1);
-    process->files[2] = fs_open("/dev/tty", &error2);
-
-    if (error0 != 0 || error1 != 0 || error2 != 0) {
-        free(buffer);
-        free(path);
-        free(process);
-        SYS_RETURN(-EIO);
+    /* Clone open file descriptors (should close dirs and things marked with FD_CLOEXEC, but doesn't) */
+    for (size_t i = 0; i < FOPEN_MAX; i++) {
+        process->files[i] = fs_clone(current->files[i]);
     }
 
     /* Clone vm_regions so that they can be freed later */
@@ -439,4 +429,26 @@ void arch_sys_mkdir(struct process_state *process_state) {
 
     free(path);
     SYS_RETURN((uint64_t) ret);
+}
+
+void arch_sys_dup2(struct process_state *process_state) {
+    int oldfd = (int) process_state->cpu_state.rsi;
+    int newfd = (int) process_state->cpu_state.rdx;
+
+    debug_log("Dup: [ %d, %d ]\n", oldfd, newfd);
+
+    if (oldfd < 0 || oldfd >= FOPEN_MAX || newfd < 0 || newfd >= FOPEN_MAX) {
+        SYS_RETURN((uint64_t) -EBADFD);
+    }
+
+    struct process *process = get_current_process();
+    if (process->files[newfd] != NULL) {
+        int ret = fs_close(process->files[newfd]);
+        if (ret != 0) {
+            SYS_RETURN((uint64_t) ret);
+        }
+    }
+
+    process->files[newfd] = fs_clone(process->files[oldfd]);
+    SYS_RETURN(0);
 }

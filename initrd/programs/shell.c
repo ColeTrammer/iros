@@ -8,6 +8,14 @@
 #include <stdint.h>
 #include <assert.h>
 #include <ctype.h>
+#include <fcntl.h>
+
+struct command {
+    char **args;
+    char *_stdin;
+    char *_stdout;
+    char *_stderr;
+};
 
 char *read_line(FILE *input) {
     int sz = 1024;
@@ -48,7 +56,17 @@ char *read_line(FILE *input) {
     }
 }
 
-char **split_line(char *line) {
+void free_command(struct command *command) {
+    free(command->args);
+    free(command);
+}
+
+struct command *split_line(char *line) {
+    struct command *command = malloc(sizeof(struct command));
+    command->_stderr = NULL;
+    command->_stdout = NULL;
+    command->_stdin = NULL;
+
     int sz = 1024;
     int pos = 0;
     char **tokens = malloc(sz * sizeof(char*));
@@ -57,8 +75,28 @@ char **split_line(char *line) {
     char *token_start = line;
     size_t i = 0;
     while (line[i] != '\0') {
-        if (!in_quotes && isspace(line[i])) {
+        if (!in_quotes && (isspace(line[i]))) {
             goto add_token;
+        }
+
+        /* Handle output redirection */
+        else if (!in_quotes && line[i] == '>') {
+            while (isspace(line[++i]));
+            command->_stdout = line + i;
+            while (!isspace(line[i])) { i++; }
+            line[i++] = '\0';
+            token_start = line + i;
+            continue;
+        }
+
+        /* Handles input redirection */
+        else if (!in_quotes && line[i] == '<') {
+            while (isspace(line[++i]));
+            command->_stdin = line + i;
+            while (!isspace(line[i])) { i++; }
+            line[i++] = '\0';
+            token_start = line + i;
+            continue;
         }
 
         /* Assumes quote is at beginning of token */
@@ -97,7 +135,8 @@ char **split_line(char *line) {
     }
 
     tokens[pos] = NULL;
-    return tokens;
+    command->args = tokens;
+    return command;
 }
 
 #define SHELL_EXIT 1
@@ -150,7 +189,8 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "echo", op_echo }
 };
 
-int run_program(char **args) {
+int run_program(struct command *command) {
+    char **args = command->args;
     for (size_t i = 0; i < NUM_BUILTINS; i++) {
         if (strcmp(args[0], builtin_ops[i].name) == 0) {
             return builtin_ops[i].op(args);
@@ -159,9 +199,30 @@ int run_program(char **args) {
 
     pid_t pid = fork();
     if (pid == 0) {
-        if (execvp(args[0], args) == -1) {
-            perror("Shell");
+        if (command->_stdout != NULL) {
+            int fd = open(command->_stdout, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+            if (fd == -1) {
+                goto abort_command;
+            }
+            if (dup2(fd, STDOUT_FILENO) == -1) {
+                goto abort_command;
+            }
         }
+
+        if (command->_stdin != NULL) {
+            int fd = open(command->_stdin, O_RDONLY);
+            if (fd == -1) {
+                goto abort_command;
+            }
+            if (dup2(fd, STDIN_FILENO) == -1) {
+                goto abort_command;
+            }
+        }
+
+        execvp(args[0], args);
+
+    abort_command:
+        perror("Shell");
         exit(EXIT_FAILURE);
     } else if (pid < 0) {
         perror("Shell");
@@ -204,7 +265,7 @@ int main(int argc, char **argv) {
     }
 
     for (;;) {
-        if (input == stdin) {
+        if (input == stdin && isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)) {
             char *cwd = __getcwd();
             printf("\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
             free(cwd);
@@ -225,18 +286,18 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        char **args = split_line(line);
+        struct command *command = split_line(line);
 
-        if (args[0] == NULL) {
+        if (command->args[0] == NULL) {
             free(line);
-            free(args);
+            free_command(command);
             continue;
         }
 
-        int status = run_program(args);
+        int status = run_program(command);
 
         free(line);
-        free(args);
+        free_command(command);
 
         if (status == SHELL_EXIT) {
             break;

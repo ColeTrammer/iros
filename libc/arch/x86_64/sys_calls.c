@@ -26,7 +26,10 @@ void _exit(int status) {
     __builtin_unreachable();
 }
 
-int open(const char *pathname, int flags, mode_t mode) {
+int open(const char *pathname, int flags, ...) {
+    va_list parameters;
+    va_start(parameters, flags); 
+    mode_t mode = va_arg(parameters, mode_t);
     int ret;
     asm volatile( "movq $4, %%rdi\n"\
                   "movq %1, %%rsi\n"\
@@ -193,5 +196,15 @@ int mkdir(const char *path, mode_t mode) {
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int dup2(int oldfd, int newfd) {
+    int ret;
+    asm volatile( "movq $19, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r" (oldfd), "r"(newfd) : "rdi", "esi", "edx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
