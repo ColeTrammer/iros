@@ -217,3 +217,21 @@ int pipe(int pipefd[2]) {
                   "movl %%eax, %0" : "=r"(ret) : "r"(pipefd) : "rdi", "rsi", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+int unlink(const char *pathname) {
+    int ret;
+    asm volatile( "movq $21, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname) : "rdi", "rsi", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int rmdir(const char *pathname) {
+    int ret;
+    asm volatile( "movq $22, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname) : "rdi", "rsi", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}

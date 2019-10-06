@@ -478,3 +478,17 @@ void arch_sys_pipe(struct process_state *process_state) {
 
     SYS_RETURN(0);
 }
+
+void arch_sys_unlink(struct process_state *process_state) {
+    const char *path = (const char*) process_state->cpu_state.rsi;
+
+    (void) path;
+    SYS_RETURN(-EINVAL);
+}
+
+void arch_sys_rmdir(struct process_state *process_state) {
+    const char* path = (const char*) process_state->cpu_state.rsi;
+
+    (void) path;
+    SYS_RETURN(-EINVAL);
+}
