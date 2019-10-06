@@ -15,7 +15,7 @@ struct command {
     char *_stdin;
     char *_stdout;
     char *_stderr;
-    int (*build_in_func)(char **args);
+    int (*built_in_func)(char **args);
 };
 
 char *read_line(FILE *input) {
@@ -77,7 +77,7 @@ size_t get_num_commands(struct command **commands) {
         command = commands[i++];
     }
 
-    return i;
+    return i - 1;
 }
 
 struct command **split_line(char *line) {
@@ -98,7 +98,7 @@ struct command **split_line(char *line) {
         command->_stderr = NULL;
         command->_stdout = NULL;
         command->_stdin = NULL;
-        command->build_in_func = NULL;
+        command->built_in_func = NULL;
 
         if (j >= max_commands - 1) {
             max_commands *= 2;
@@ -234,17 +234,27 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
 };
 
 int run_commands(struct command **commands) {
+    size_t num_commands = get_num_commands(commands);
+
+    int *pipes = num_commands > 1 ? calloc(num_commands - 1, 2 * sizeof(int)) : NULL;
+    for (size_t j = 0; j < num_commands - 1; j++) {
+        if (pipe(pipes + j * 2) == -1) {
+            perror("Shell");
+            return SHELL_CONTINUE;
+        }
+    }
+
     size_t i = 0;
-    struct command *command = commands[i++];
+    struct command *command = commands[i];
     while (command != NULL) {
         char **args = command->args;
-        for (size_t i = 0; i < NUM_BUILTINS; i++) {
-            if (strcmp(args[0], builtin_ops[i].name) == 0) {
-                if (builtin_ops[i].run_immediately) {
-                    return builtin_ops[i].op(args);
+        for (size_t j = 0; j < NUM_BUILTINS; j++) {
+            if (strcmp(args[0], builtin_ops[j].name) == 0) {
+                if (builtin_ops[j].run_immediately) {
+                    return builtin_ops[j].op(args);
                 }
 
-                command->build_in_func = builtin_ops[i].op;
+                command->built_in_func = builtin_ops[j].op;
             }
         }
 
@@ -252,7 +262,7 @@ int run_commands(struct command **commands) {
 
         /* Child */
         if (pid == 0) {
-            if (command->_stdout != NULL) {
+            if (command->_stdout != NULL && i == num_commands - 1) {
                 int fd = open(command->_stdout, O_CREAT | O_WRONLY | O_TRUNC, 0644);
                 if (fd == -1) {
                     goto abort_command;
@@ -262,7 +272,7 @@ int run_commands(struct command **commands) {
                 }
             }
 
-            if (command->_stdin != NULL) {
+            if (command->_stdin != NULL && i == 0) {
                 int fd = open(command->_stdin, O_RDONLY);
                 if (fd == -1) {
                     goto abort_command;
@@ -272,8 +282,33 @@ int run_commands(struct command **commands) {
                 }
             }
 
-            if (command->build_in_func != NULL) {
-                exit(command->build_in_func(args));
+            /* First program in chain */
+            if (num_commands > 1 && i == 0) {
+                if (dup2(pipes[i + 1], STDOUT_FILENO) == -1) {
+                    goto abort_command;
+                }
+            }
+
+            /* Last program in chain */
+            else if (num_commands > 1 && i == num_commands - 1) {
+                if (dup2(pipes[(i - 1) * 2], STDIN_FILENO) == -1) {
+                    goto abort_command;
+                }
+            }
+
+            /* Any other program in chain */
+            else if (num_commands > 1) {
+                if (dup2(pipes[i * 2 + 1], STDOUT_FILENO) == -1) {
+                    goto abort_command;
+                }
+
+                if (dup2(pipes[(i - 1) * 2], STDIN_FILENO) == -1) {
+                    goto abort_command;
+                }
+            }
+
+            if (command->built_in_func != NULL) {
+                exit(command->built_in_func(args));
             }
 
             execvp(args[0], args);
@@ -283,19 +318,34 @@ int run_commands(struct command **commands) {
             exit(EXIT_FAILURE);
         } else if (pid < 0) {
             perror("Shell");
-        } 
-        
+        }
+
         /* Parent */
         else {
+            /* Close write pipe for the last process */
+            if (num_commands > 1 && i == 0) {
+                close(pipes[i * 2 + 1]);
+            }
+
+            else if (num_commands > 1 && i == num_commands - 1) {
+                close(pipes[(i - 1) * 2]);
+            }
+
+            else if (num_commands > 1) {
+                close(pipes[i * 2 + 1]);
+                close(pipes[(i - 1) * 2]);
+            }
+
             int status;
             do {
                 waitpid(pid, &status, WUNTRACED);
             } while (!WIFEXITED(status));
         }
 
-        command = commands[i++];
+        command = commands[++i];
     }
 
+    free(pipes);
     return SHELL_CONTINUE;
 }
 

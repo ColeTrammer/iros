@@ -201,6 +201,7 @@ struct file *fs_open(const char *file_name, int *error) {
 
 /* Should potentially remove inode from inode_store */
 int fs_close(struct file *file) {
+    assert(file);
     int error = 0;
     if (file->f_op->close) {
         error = file->f_op->close(file);

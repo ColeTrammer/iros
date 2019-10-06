@@ -15,7 +15,7 @@
 #define SEEK_CUR (1)
 #define SEEK_END (2)
 
-#define FOPEN_MAX 8
+#define FOPEN_MAX 16
 
 #define EOF (-1)
 

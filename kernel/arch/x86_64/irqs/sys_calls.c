@@ -176,6 +176,7 @@ void arch_sys_close(struct process_state *process_state) {
     int fd = (int) process_state->cpu_state.rsi;
 
     struct process *process = get_current_process();
+    assert(process->files[fd]);
     int error = fs_close(process->files[fd]);
     process->files[fd] = NULL;
 
