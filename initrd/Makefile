@@ -32,6 +32,8 @@ $(BUILDDIR)/initrd/programs/kilo \
 $(BUILDDIR)/initrd/programs/ls \
 $(BUILDDIR)/initrd/programs/mkdir \
 $(BUILDDIR)/initrd/programs/pipe_test \
+$(BUILDDIR)/initrd/programs/rm \
+$(BUILDDIR)/initrd/programs/rmdir \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/shell \
 $(BUILDDIR)/initrd/programs/stat \

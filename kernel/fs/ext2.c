@@ -24,11 +24,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations ext2_i_op = {
-    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL
+    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL, &ext2_unlink, NULL
 };
 
 static struct inode_operations ext2_dir_i_op = {
-    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL, &ext2_mkdir
+    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL, &ext2_mkdir, NULL, &ext2_rmdir
 };
 
 static struct file_operations ext2_f_op = {
@@ -396,21 +396,28 @@ static void ext2_update_tnode_list(struct inode *inode) {
         }
 
         struct tnode *tnode = malloc(sizeof(struct tnode));
-        struct inode *inode_to_add = calloc(1, sizeof(struct inode));
+        struct inode *inode_to_add;
+        if (strcmp(dirent->name, ".") == 0) {
+            inode_to_add = inode;
+        } else if (strcmp(dirent->name, "..")) {
+            inode_to_add = inode->parent->inode;
+        } else {
+            inode_to_add = calloc(1, sizeof(struct inode));
+            inode_to_add->device = inode->device;
+            inode_to_add->parent = inode == inode->super_block->root->inode ? inode->super_block->root : find_tnode_inode(inode->parent->inode->tnode_list, inode);
+            assert(inode_to_add->parent->inode == inode);
+            inode_to_add->index = dirent->ino;
+            inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
+            inode_to_add->super_block = inode->super_block;
+            inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? FS_DIR : FS_FILE;
+            inode_to_add->ref_count = 1;
+            init_spinlock(&inode_to_add->lock);
+        }
 
         tnode->name = calloc(dirent->name_length + 1, sizeof(char));
         memcpy(tnode->name, dirent->name, dirent->name_length);
         tnode->inode = inode_to_add;
         inode->tnode_list = add_tnode(inode->tnode_list, tnode);
-
-        inode_to_add->device = inode->device;
-        inode_to_add->parent = inode == inode->super_block->root->inode ? inode->super_block->root : find_tnode_inode(inode->parent->inode->tnode_list, inode);
-        assert(inode_to_add->parent->inode == inode);
-        inode_to_add->index = dirent->ino;
-        inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
-        inode_to_add->super_block = inode->super_block;
-        inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? FS_DIR : FS_FILE;
-        init_spinlock(&inode_to_add->lock);
 
         dirent = EXT2_NEXT_DIRENT(dirent);
         if ((uintptr_t) dirent >= ((uintptr_t) raw_dirent_table) + inode->super_block->block_size) {
@@ -592,6 +599,7 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
     inode->mounts = NULL;
     inode->parent = tparent;
     inode->private_data = NULL;
+    inode->ref_count = 1;
     inode->size = 0;
     inode->super_block = parent->super_block;
     inode->tnode_list = NULL;
@@ -993,6 +1001,16 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
     return inode;
 }
 
+int ext2_unlink(struct tnode *tnode) {
+    (void) tnode;
+    return -EINVAL;
+}
+
+int ext2_rmdir(struct tnode *tnode) {
+    (void) tnode;
+    return -EINVAL;
+}
+
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     int error = 0;
     struct file *dev_file = fs_open(device_path, &error);
@@ -1055,6 +1073,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->mode = S_IFDIR | 0777;
     root->mounts = NULL;
     root->private_data = NULL;
+    root->ref_count = 1;
     root->size = 0;
     root->super_block = super_block;
     root->tnode_list = NULL;

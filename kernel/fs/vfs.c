@@ -442,6 +442,75 @@ int fs_create_pipe(struct file *pipe_files[2]) {
     return 0;
 }
 
+int fs_unlink(const char *path) {
+    assert(path);
+
+    struct tnode *tnode = iname(path);
+    if (tnode == NULL) {
+        return -ENOENT;
+    }
+
+    if (!(tnode->inode->flags & FS_FILE)) {
+        return -EINVAL;
+    }
+
+    if (tnode->inode->i_op->unlink == NULL) {
+        return -EINVAL;
+    }
+
+    spin_lock(&tnode->inode->lock);
+
+    int ret = tnode->inode->i_op->unlink(tnode);
+    if (ret != 0) {
+        return ret;
+    }
+
+    tnode->inode->parent->inode->tnode_list = remove_tnode(tnode->inode->parent->inode->tnode_list, tnode);
+    struct inode *inode = tnode->inode;
+    free(tnode);
+
+    /* Only delete inode if it's refcount is zero */
+    inode->ref_count--;
+    if (inode->ref_count <= 0) {
+        spin_unlock(&inode->lock);
+
+        /* Should call a inode specific free function (but is uneccessary right now) */
+        free(inode);
+        return 0;
+    }
+
+    spin_unlock(&inode->lock);
+    return 0;
+}
+
+static bool dir_empty(struct inode *inode) {
+    (void) inode;
+    return false;
+}
+
+int fs_rmdir(const char *path) {
+    assert(path);
+
+    struct tnode *tnode = iname(path);
+    if (tnode == NULL) {
+        return -ENOENT;
+    }
+
+    if (!(tnode->inode->flags & FS_DIR)) {
+        return -ENOTDIR;
+    }
+
+    if (!dir_empty(tnode->inode)) {
+        return -ENOTEMPTY;
+    }
+
+    if (tnode->inode->i_op->rmdir == NULL) {
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

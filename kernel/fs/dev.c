@@ -28,11 +28,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations dev_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL
+    NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL, NULL, NULL
 };
 
 static struct inode_operations dev_dir_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat, NULL, NULL
+    NULL, &dev_lookup, &dev_open, &dev_stat, NULL, NULL, NULL, NULL
 };
 
 static struct file_operations dev_f_op = {
@@ -208,6 +208,7 @@ void dev_add(struct device *device, const char *_path) {
     to_add->mounts = NULL;
     to_add->parent = parent;
     to_add->private_data = device;
+    to_add->ref_count = 1;
     to_add->size = 0;
     to_add->super_block = &super_block;
     to_add->tnode_list = NULL;

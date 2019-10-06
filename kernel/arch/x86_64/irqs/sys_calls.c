@@ -480,15 +480,25 @@ void arch_sys_pipe(struct process_state *process_state) {
 }
 
 void arch_sys_unlink(struct process_state *process_state) {
-    const char *path = (const char*) process_state->cpu_state.rsi;
+    const char *_path = (const char*) process_state->cpu_state.rsi;
 
-    (void) path;
-    SYS_RETURN(-EINVAL);
+    struct process *current = get_current_process();
+    char *path = get_full_path(current->cwd, _path);
+
+    int ret = fs_unlink(path);
+    free(path);
+
+    SYS_RETURN(ret);
 }
 
 void arch_sys_rmdir(struct process_state *process_state) {
-    const char* path = (const char*) process_state->cpu_state.rsi;
+    const char *_path = (const char*) process_state->cpu_state.rsi;
 
-    (void) path;
-    SYS_RETURN(-EINVAL);
+    struct process *current = get_current_process();
+    char *path = get_full_path(current->cwd, _path);
+
+    int ret = fs_rmdir(path);
+    free(path);
+
+    SYS_RETURN(ret);
 }

@@ -34,11 +34,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations initrd_i_op = {
-    NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL
+    NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL, NULL
 };
 
 static struct inode_operations initrd_dir_i_op = {
-    NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL
+    NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL, NULL
 };
 
 static struct file_operations initrd_f_op = {
@@ -141,6 +141,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->device = 1;
     root->i_op = &initrd_dir_i_op;
     root->mode = S_IFDIR | 0777;
+    root->ref_count = 1;
     init_spinlock(&root->lock);
 
     struct tnode *t_root = malloc(sizeof(struct tnode));
@@ -160,6 +161,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->device = root->device;
         inode->mode = S_IFREG | 0777;
         inode->i_op = &initrd_i_op;
+        inode->ref_count = 1;
         inode->private_data = entry + i;
         inode->parent = t_root;
         init_spinlock(&inode->lock);

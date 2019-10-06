@@ -23,6 +23,8 @@ struct inode_operations {
     int (*stat)(struct inode *inode, struct stat *stat_struct);
     int (*ioctl)(struct inode *inode, unsigned long request, void *argp);
     struct inode *(*mkdir)(struct tnode *tnode, const char *name, mode_t mode, int *error);
+    int (*unlink)(struct tnode *tnode);
+    int (*rmdir)(struct tnode *tnode);
 };
 
 struct inode {

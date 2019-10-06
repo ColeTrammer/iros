@@ -14,6 +14,8 @@ const char *sys_errlist[] = {
     "Invalid command for device",
     "File exists",
     "Bad file descriptor",
+    "Directory is not empty",
+    "Not a directory",
     "Errno end"
 };
 
