@@ -36,6 +36,7 @@ pid_t fork();
 int isatty(int fd);
 int ftruncate(int fd, off_t length);
 int dup2(int oldfd, int newfd);
+int pipe(int pipefd[2]);
 
 #ifdef __cplusplus
 }

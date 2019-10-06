@@ -22,6 +22,7 @@ int fs_stat(const char *file_name, struct stat *stat_struct);
 int fs_ioctl(struct file *file, unsigned long request, void *argp);
 int fs_truncate(struct file *file, off_t length);
 int fs_mkdir(const char *path, mode_t mode);
+int fs_create_pipe(struct file *pipe_files[2]);
 int fs_mount(const char *src, const char *path, const char *type);
 struct file *fs_clone(struct file *file);
 

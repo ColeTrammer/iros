@@ -208,3 +208,12 @@ int dup2(int oldfd, int newfd) {
                   "movl %%eax, %0" : "=r"(ret) : "r" (oldfd), "r"(newfd) : "rdi", "esi", "edx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+int pipe(int pipefd[2]) {
+    int ret;
+    asm volatile( "movq $20, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pipefd) : "rdi", "rsi", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}

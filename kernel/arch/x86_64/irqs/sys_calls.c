@@ -452,3 +452,28 @@ void arch_sys_dup2(struct process_state *process_state) {
     process->files[newfd] = fs_clone(process->files[oldfd]);
     SYS_RETURN(0);
 }
+
+void arch_sys_pipe(struct process_state *process_state) {
+    int *pipefd = (int*) process_state->cpu_state.rsi;
+
+    struct file *pipe_files[2];
+    int ret = fs_create_pipe(pipe_files);
+    if (ret != 0) {
+        SYS_RETURN(ret);
+    }
+
+    struct process *process = get_current_process();
+    int j = 0;
+    for (int i = 0; j < 2 && i < FOPEN_MAX; i++) {
+        if (process->files[i] == NULL) {
+            debug_log("Allocating pipe to: [ %d, %d ]\n", i, j);
+            process->files[i] = pipe_files[j];
+            pipefd[j] = i;
+            j++;
+        }
+    }
+
+    assert(j == 2);
+
+    SYS_RETURN(0);
+}

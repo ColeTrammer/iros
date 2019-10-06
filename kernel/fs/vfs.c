@@ -11,6 +11,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/ext2.h>
+#include <kernel/fs/pipe.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/initrd.h>
@@ -422,6 +423,24 @@ int fs_mkdir(const char *_path, mode_t mode) {
     return 0;
 }
 
+int fs_create_pipe(struct file *pipe_files[2]) {
+    struct inode *pipe_inode = pipe_new_inode();
+    fs_inode_put(pipe_inode);
+    int error = 0;
+    pipe_files[0] = pipe_inode->i_op->open(pipe_inode, &error);
+    if (error != 0) {
+        return error;
+    }
+
+    pipe_files[1] = pipe_inode->i_op->open(pipe_inode, &error);
+    if (error != 0) {
+        fs_close(pipe_files[0]);
+        return error;
+    }
+
+    return 0;
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 
@@ -530,6 +549,14 @@ struct file *fs_clone(struct file *file) {
 
     struct file *new_file = malloc(sizeof(struct file));
     memcpy(new_file, file, sizeof(struct file));
+
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    spin_lock(&inode->lock);
+    inode->ref_count++;
+    spin_unlock(&inode->lock);
+
     return new_file;
 }
 
@@ -539,6 +566,7 @@ void init_vfs() {
     init_initrd();
     init_dev();
     init_ext2();
+    init_pipe();
 
     /* Mount INITRD as root */
     int error = fs_mount("", "/", "initrd");
