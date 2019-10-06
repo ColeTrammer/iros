@@ -196,12 +196,24 @@ struct file *fs_open(const char *file_name, int *error) {
     
     fs_inode_put(tnode->inode);
 
+    spin_lock(&tnode->inode->lock);
+    tnode->inode->ref_count++;
+    spin_unlock(&tnode->inode->lock);
+
     return tnode->inode->i_op->open(tnode->inode, error);
 }
 
 /* Should potentially remove inode from inode_store */
 int fs_close(struct file *file) {
     assert(file);
+
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    spin_lock(&inode->lock);
+    inode->ref_count--;
+    spin_unlock(&inode->lock);
+
     int error = 0;
     if (file->f_op->close) {
         error = file->f_op->close(file);
@@ -451,7 +463,8 @@ int fs_unlink(const char *path) {
     }
 
     if (!(tnode->inode->flags & FS_FILE)) {
-        return -EINVAL;
+        debug_log("Name: [ %s, %u ]\n", tnode->name, tnode->inode->flags);
+        return -EISDIR;
     }
 
     if (tnode->inode->i_op->unlink == NULL) {
@@ -475,6 +488,7 @@ int fs_unlink(const char *path) {
         spin_unlock(&inode->lock);
 
         /* Should call a inode specific free function (but is uneccessary right now) */
+        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
         free(inode);
         return 0;
     }

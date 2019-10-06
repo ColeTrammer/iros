@@ -116,7 +116,6 @@ int pipe_close(struct file *file) {
     assert(inode);
 
     spin_lock(&inode->lock);
-    inode->ref_count--;
     if (inode->ref_count == 0) {
         debug_log("Destroying pipe: [ %llu ]\n", inode->index);
 
