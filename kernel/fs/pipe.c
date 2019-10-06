@@ -42,7 +42,7 @@ struct inode *pipe_new_inode() {
     pipe_data->buffer = malloc(PIPE_DEFAULT_BUFFER_SIZE);
     pipe_data->len = PIPE_DEFAULT_BUFFER_SIZE;
     inode->private_data = pipe_data;
-    
+
     inode->ref_count = 0;
     inode->size = 0;
     inode->super_block = NULL;
@@ -81,7 +81,7 @@ ssize_t pipe_read(struct file *file, void *buffer, size_t len) {
 
     spin_lock(&inode->lock);
     memcpy(buffer, data->buffer + file->position, len);
-    spin_unlock(&inode->lock);    
+    spin_unlock(&inode->lock);
 
     file->position += len;
     return len;
