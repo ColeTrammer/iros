@@ -57,88 +57,129 @@ char *read_line(FILE *input) {
     }
 }
 
-void free_command(struct command *command) {
-    free(command->args);
-    free(command);
+void free_commands(struct command **commands) {
+    size_t i = 0;
+    struct command *command = commands[i++];
+    while (command != NULL) {
+        free(command->args);
+        free(command);
+
+        command = commands[i++];
+    }
+
+    free(commands);
 }
 
-struct command *split_line(char *line) {
-    struct command *command = malloc(sizeof(struct command));
-    command->_stderr = NULL;
-    command->_stdout = NULL;
-    command->_stdin = NULL;
-    command->build_in_func = NULL;
+size_t get_num_commands(struct command **commands) {
+    size_t i = 0;
+    struct command *command = commands[i++];
+    while (command != NULL) {
+        command = commands[i++];
+    }
 
-    int sz = 1024;
-    int pos = 0;
-    char **tokens = malloc(sz * sizeof(char*));
+    return i;
+}
+
+struct command **split_line(char *line) {
+    size_t max_commands = 10;
+    struct command **commands = calloc(max_commands, sizeof(struct command*));
+    struct command *command;
 
     bool in_quotes = false;
     char *token_start = line;
     size_t i = 0;
+    size_t j = 0;
     while (line[i] != '\0') {
-        if (!in_quotes && (isspace(line[i]))) {
-            goto add_token;
+        int sz = 1024;
+        int pos = 0;
+        char **tokens = malloc(sz * sizeof(char*));
+
+        command = malloc(sizeof(struct command));
+        command->_stderr = NULL;
+        command->_stdout = NULL;
+        command->_stdin = NULL;
+        command->build_in_func = NULL;
+
+        if (j >= max_commands - 1) {
+            max_commands *= 2;
+            commands = realloc(commands, max_commands * sizeof(struct command*));
         }
 
-        /* Handle output redirection */
-        else if (!in_quotes && line[i] == '>') {
-            while (isspace(line[++i]));
-            command->_stdout = line + i;
-            while (!isspace(line[i])) { i++; }
+        commands[j++] = command;
+
+        while (line[i] != '\0') {
+            if (!in_quotes && (isspace(line[i]))) {
+                goto add_token;
+            }
+
+            /* Handle pipes */
+            else if (!in_quotes && line[i] == '|') {
+                while (isspace(line[++i]));
+                token_start = line + i;
+                break;
+            }
+
+            /* Handle output redirection */
+            else if (!in_quotes && line[i] == '>') {
+                while (isspace(line[++i]));
+                command->_stdout = line + i;
+                while (!isspace(line[i])) { i++; }
+                line[i++] = '\0';
+                token_start = line + i;
+                continue;
+            }
+
+            /* Handles input redirection */
+            else if (!in_quotes && line[i] == '<') {
+                while (isspace(line[++i]));
+                command->_stdin = line + i;
+                while (!isspace(line[i])) { i++; }
+                line[i++] = '\0';
+                token_start = line + i;
+                continue;
+            }
+
+            /* Assumes quote is at beginning of token */
+            else if (!in_quotes && line[i] == '"') {
+                in_quotes = true;
+                token_start++;
+                i++;
+                continue;
+            }
+
+            else if (in_quotes && line[i] == '"') {
+                in_quotes = false;
+                goto add_token;
+            }
+
+            else {
+                i++;
+                continue;
+            }
+
+        add_token:
             line[i++] = '\0';
+            tokens[pos++] = token_start;
+            while (isspace(line[i])) { i++; }
             token_start = line + i;
-            continue;
+
+            if (pos + 1 >= sz) {
+                sz *= 2;
+                tokens = realloc(tokens, sz * sizeof(char*));
+            }
         }
 
-        /* Handles input redirection */
-        else if (!in_quotes && line[i] == '<') {
-            while (isspace(line[++i]));
-            command->_stdin = line + i;
-            while (!isspace(line[i])) { i++; }
-            line[i++] = '\0';
-            token_start = line + i;
-            continue;
+        if (in_quotes) {
+            pos = 0;
+            fprintf(stderr, "Shell: %s\n", "Invalid string format");
         }
 
-        /* Assumes quote is at beginning of token */
-        else if (!in_quotes && line[i] == '"') {
-            in_quotes = true;
-            token_start++;
-            i++;
-            continue;
-        }
-
-        else if (in_quotes && line[i] == '"') {
-            in_quotes = false;
-            goto add_token;
-        }
-
-        else {
-            i++;
-            continue;
-        }
-
-    add_token:
-        line[i++] = '\0';
-        tokens[pos++] = token_start;
-        while (isspace(line[i])) { i++; }
-        token_start = line + i;
-
-        if (pos + 1 >= sz) {
-            sz *= 2;
-            tokens = realloc(tokens, sz * sizeof(char*));
-        }
+        tokens[pos] = NULL;
+        command->args = tokens;
     }
 
-    if (in_quotes) {
-        pos = 0;
-        fprintf(stderr, "Shell: %s\n", "Invalid string format");
-    }
-
-    tokens[pos] = NULL;
-    command->args = tokens;
-    return command;
+    commands[j] = NULL;
+    return commands;
 }
 
 #define SHELL_EXIT 1
@@ -192,56 +233,67 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "echo", op_echo, false }
 };
 
-int run_program(struct command *command) {
-    char **args = command->args;
-    for (size_t i = 0; i < NUM_BUILTINS; i++) {
-        if (strcmp(args[0], builtin_ops[i].name) == 0) {
-            if (builtin_ops[i].run_immediately) {
-                return builtin_ops[i].op(args);
-            }
+int run_commands(struct command **commands) {
+    size_t i = 0;
+    struct command *command = commands[i++];
+    while (command != NULL) {
+        char **args = command->args;
+        for (size_t i = 0; i < NUM_BUILTINS; i++) {
+            if (strcmp(args[0], builtin_ops[i].name) == 0) {
+                if (builtin_ops[i].run_immediately) {
+                    return builtin_ops[i].op(args);
+                }
 
-            command->build_in_func = builtin_ops[i].op;
-        }
-    }
-
-    pid_t pid = fork();
-    if (pid == 0) {
-        if (command->_stdout != NULL) {
-            int fd = open(command->_stdout, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-            if (fd == -1) {
-                goto abort_command;
-            }
-            if (dup2(fd, STDOUT_FILENO) == -1) {
-                goto abort_command;
+                command->build_in_func = builtin_ops[i].op;
             }
         }
 
-        if (command->_stdin != NULL) {
-            int fd = open(command->_stdin, O_RDONLY);
-            if (fd == -1) {
-                goto abort_command;
+        pid_t pid = fork();
+
+        /* Child */
+        if (pid == 0) {
+            if (command->_stdout != NULL) {
+                int fd = open(command->_stdout, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+                if (fd == -1) {
+                    goto abort_command;
+                }
+                if (dup2(fd, STDOUT_FILENO) == -1) {
+                    goto abort_command;
+                }
             }
-            if (dup2(fd, STDIN_FILENO) == -1) {
-                goto abort_command;
+
+            if (command->_stdin != NULL) {
+                int fd = open(command->_stdin, O_RDONLY);
+                if (fd == -1) {
+                    goto abort_command;
+                }
+                if (dup2(fd, STDIN_FILENO) == -1) {
+                    goto abort_command;
+                }
             }
+
+            if (command->build_in_func != NULL) {
+                exit(command->build_in_func(args));
+            }
+
+            execvp(args[0], args);
+
+        abort_command:
+            perror("Shell");
+            exit(EXIT_FAILURE);
+        } else if (pid < 0) {
+            perror("Shell");
+        } 
+        
+        /* Parent */
+        else {
+            int status;
+            do {
+                waitpid(pid, &status, WUNTRACED);
+            } while (!WIFEXITED(status));
         }
 
-        if (command->build_in_func != NULL) {
-            exit(command->build_in_func(args));
-        }
-
-        execvp(args[0], args);
-
-    abort_command:
-        perror("Shell");
-        exit(EXIT_FAILURE);
-    } else if (pid < 0) {
-        perror("Shell");
-    } else {
-        int status;
-        do {
-            waitpid(pid, &status, WUNTRACED);
-        } while (!WIFEXITED(status));
+        command = commands[i++];
     }
 
     return SHELL_CONTINUE;
@@ -297,18 +349,18 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        struct command *command = split_line(line);
+        struct command **commands = split_line(line);
 
-        if (command->args[0] == NULL) {
+        if (commands == NULL || commands[0] == NULL || commands[0]->args[0] == NULL) {
             free(line);
-            free_command(command);
+            free_commands(commands);
             continue;
         }
 
-        int status = run_program(command);
+        int status = run_commands(commands);
 
         free(line);
-        free_command(command);
+        free_commands(commands);
 
         if (status == SHELL_EXIT) {
             break;
