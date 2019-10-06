@@ -18,6 +18,9 @@
 
 #include <kernel/sched/process_sched.h>
 
+#define CONTROL_MASK 0x1F
+#define CONTROL_KEY(c) ((c) & CONTROL_MASK)
+
 static ssize_t tty_write(struct device *tty, struct file *file, const void *buffer, size_t len) {
     struct tty_data *data = (struct tty_data*) tty->private;
     const char *str = (const char*) buffer;
@@ -406,6 +409,19 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 }
                 
                 break;
+            }
+
+            if (data->key_buffer.flags & KEY_CONTROL_ON) {
+                data->key_buffer.ascii &= CONTROL_MASK;
+            }
+
+            /* Send EOF by returning 0 for read */
+            if (data->key_buffer.ascii == CONTROL_KEY('d')) {
+                if (i == 0) {
+                    free(data->input_buffer);
+                    data->input_buffer = NULL;
+                    return 0;
+                }
             }
 
             if (iscntrl(data->key_buffer.ascii)) {
