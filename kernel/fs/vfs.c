@@ -500,6 +500,11 @@ int fs_unlink(const char *path) {
 static bool dir_empty(struct inode *inode) {
     assert(inode);
     assert(inode->flags & FS_DIR);
+    if (inode->mounts != NULL) {
+        /* Should send EBUSY not ENOTEMPTY */
+        return false;
+    }
+
     if (inode->tnode_list == NULL) {
         inode->i_op->lookup(inode, NULL);
         /* There is no dir entries */
@@ -549,6 +554,7 @@ int fs_rmdir(const char *path) {
     }
 
     struct inode *inode = tnode->inode;
+    inode->parent->inode->tnode_list = remove_tnode(inode->parent->inode->tnode_list, tnode);
     free(tnode);
 
     inode->ref_count--;

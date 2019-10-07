@@ -485,9 +485,9 @@ static void ext2_update_tnode_list(struct inode *inode) {
             inode_to_add->parent = inode == inode->super_block->root->inode ? inode->super_block->root : find_tnode_inode(inode->parent->inode->tnode_list, inode);
             assert(inode_to_add->parent->inode == inode);
             inode_to_add->index = dirent->ino;
-            inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
+            inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_REGULAR ?  &ext2_i_op : &ext2_dir_i_op;
             inode_to_add->super_block = inode->super_block;
-            inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? FS_DIR : FS_FILE;
+            inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR ? FS_FILE : FS_DIR;
             inode_to_add->ref_count = 1;
             init_spinlock(&inode_to_add->lock);
         }
@@ -1082,7 +1082,6 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
 
 int ext2_unlink(struct tnode *tnode) {
     struct inode *inode = tnode->inode;
-    assert(inode->flags & FS_FILE);
 
     if (inode->private_data == NULL) {
         ext2_update_inode(inode, false);
@@ -1214,6 +1213,9 @@ int ext2_unlink(struct tnode *tnode) {
         struct ext2_block_group *group = ext2_get_block_group(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
         group->blk_desc->num_unallocated_blocks += num_blocks;
         group->blk_desc->num_unallocated_inodes++;
+        if (inode->flags & FS_DIR) {
+            group->blk_desc->num_directories--;
+        }
         int ret = ext2_sync_block_group(inode->super_block, group->index);
         if (ret != 0) {
             return ret;
@@ -1230,14 +1232,42 @@ int ext2_unlink(struct tnode *tnode) {
 
         /* Drop our reference to virtual inode so vfs deletes it once it has no open files */
         inode->ref_count--;
+        return 0;
     }
 
-    return 0;
+    /* Sync new link_count to disk */
+    return ext2_sync_inode(inode);
 }
 
 int ext2_rmdir(struct tnode *tnode) {
-    (void) tnode;
-    return -EINVAL;
+    assert(get_tnode_list_length(tnode->inode->tnode_list) == 2);
+    assert(find_tnode(tnode->inode->tnode_list, "."));
+    assert(find_tnode(tnode->inode->tnode_list, ".."));
+
+    /* Can't delete reserved inodes */
+    if (tnode->inode->index <= ((struct ext2_sb_data*) tnode->inode->super_block->private_data)->sb->first_non_reserved_inode) {
+        return -EINVAL;
+    }
+
+    struct raw_inode *raw_inode = tnode->inode->private_data;
+    struct inode *parent = tnode->inode->parent->inode;
+    struct raw_inode *parent_raw_inode = parent->private_data;
+
+    /* Drop .. reference */
+    spin_lock(&parent->lock);
+    parent_raw_inode->link_count--;
+    assert(parent_raw_inode->link_count > 0);
+
+    int ret = ext2_sync_inode(parent);
+    if (ret != 0) {
+        spin_unlock(&parent->lock);
+        return ret;
+    }
+    spin_unlock(&parent->lock);
+
+    /* Drop . reference */
+    raw_inode->link_count--;
+    return ext2_unlink(tnode);
 }
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {

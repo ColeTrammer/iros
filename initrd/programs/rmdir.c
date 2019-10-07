@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (rmdir(argv[1]) != 1) {
+    if (rmdir(argv[1]) != 0) {
         perror("rmdir");
         return 1;
     }
