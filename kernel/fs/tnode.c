@@ -98,3 +98,21 @@ size_t get_tnode_list_length(struct tnode_list *list) {
 
     return i;
 }
+
+/*  Called to clean up empty dirs with . and .. entries
+    Don't need to drop references since these entries are
+    ignored anyway.
+ */
+void free_tnode_list_and_tnodes(struct tnode_list *list) {
+    if (list == NULL) {
+        return;
+    }
+
+    struct tnode_list *start = list;
+    while (start != NULL) {
+        struct tnode_list *next = start->next;
+        free(start->tnode);
+        free(start);
+        start = next;
+    }
+}

@@ -498,7 +498,26 @@ int fs_unlink(const char *path) {
 }
 
 static bool dir_empty(struct inode *inode) {
-    (void) inode;
+    assert(inode);
+    assert(inode->flags & FS_DIR);
+    if (inode->tnode_list == NULL) {
+        inode->i_op->lookup(inode, NULL);
+        /* There is no dir entries */
+        if (inode->tnode_list == NULL) {
+            return true;
+        }
+    }
+
+    size_t tnode_list_length = get_tnode_list_length(inode->tnode_list);
+    if (tnode_list_length == 0) {
+        return true;
+    }
+
+    /* Handle . and .. */
+    if (tnode_list_length == 2) {
+        return find_tnode(inode->tnode_list, ".") != NULL && find_tnode(inode->tnode_list, "..") != NULL;
+    }
+
     return false;
 }
 
@@ -522,6 +541,28 @@ int fs_rmdir(const char *path) {
         return -EINVAL;
     }
 
+    spin_lock(&tnode->inode->lock);
+
+    int ret = tnode->inode->i_op->rmdir(tnode);
+    if (ret != 0) {
+        return ret;
+    }
+
+    struct inode *inode = tnode->inode;
+    free(tnode);
+
+    inode->ref_count--;
+    if (inode->ref_count <= 0) {
+        spin_unlock(&inode->lock);
+
+        /* Should call a inode specific free function (but is uneccessary right now) */
+        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+        free_tnode_list_and_tnodes(inode->tnode_list);
+        free(inode);
+        return 0;
+    }
+
+    spin_unlock(&inode->lock);
     return 0;
 }
 

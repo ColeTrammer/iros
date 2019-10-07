@@ -509,12 +509,12 @@ static void ext2_update_tnode_list(struct inode *inode) {
 
             /* Can't read the indirect blocks */
             if (block_no >= EXT2_SINGLY_INDIRECT_BLOCK_INDEX) {
+                raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
                 break;
             }
 
             raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
             if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[block_no], 1) != 1) {
-                ext2_free_blocks(raw_dirent_table);
                 break;
             }
 
