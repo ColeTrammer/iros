@@ -78,6 +78,7 @@ $(BUILDDIR)/libc/string/strerror.o \
 $(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/time/time.o \
 $(BUILDDIR)/libc/unistd/exec.o \
+$(BUILDDIR)/libc/unistd/getopt.o \
 $(BUILDDIR)/libc/unistd/isatty.o \
 $(BUILDDIR)/libc/init.o
 

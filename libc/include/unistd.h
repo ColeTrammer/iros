@@ -40,6 +40,11 @@ int pipe(int pipefd[2]);
 int unlink(const char *pathname);
 int rmdir(const char *pathname);
 
+int getopt(int argc, char *const argv[], const char *optstring);
+
+extern char *optarg;
+extern int optind, opterr, optopt;
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

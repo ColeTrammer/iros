@@ -262,6 +262,10 @@ int fileno(FILE *stream) {
     return stream->fd;
 }
 
+FILE *tmpfile(void) {
+    return NULL;
+}
+
 #define DEFAULT_LINE_BUFFER_SIZE 100
 
 ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restrict stream) {
