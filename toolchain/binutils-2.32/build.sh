@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Download tar.gz
-curl https://mirrors.syringanetworks.net/gnu/binutils/binutils-2.32.tar.gz --output binutils-os_2-2.32.tar.gz
+curl https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.gz --output binutils-os_2-2.32.tar.gz
 
 # Extract contents
 tar -xzvf binutils-os_2-2.32.tar.gz

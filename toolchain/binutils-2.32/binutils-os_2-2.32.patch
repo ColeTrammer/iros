@@ -1,11 +1,11 @@
 diff --git a/bfd/config.bfd b/bfd/config.bfd
-index 0e1ddb65..961648c6 100644
+index 0e1ddb65..f37dbca4 100644
 --- a/bfd/config.bfd
 +++ b/bfd/config.bfd
-@@ -290,6 +290,18 @@ case "${targ}" in
-     targ_selvecs=alpha_ecoff_le_vec
+@@ -577,6 +577,17 @@ case "${targ}" in
      want64=true
      ;;
+ #endif
 +  i[3-7]86-*-os_2*)
 +    targ_defvec=i386_elf32_vec
 +    targ_selvecs=
@@ -17,10 +17,9 @@ index 0e1ddb65..961648c6 100644
 +    targ_selvecs=i386_elf32_vec
 +    want64=true
 +    ;;
-+#endif
-   alpha*-*-*vms*)
-     targ_defvec=alpha_vms_vec
-     targ_selvecs=alpha_vms_lib_txt_vec
+   i[3-7]86-*-kaos*)
+     targ_defvec=i386_elf32_vec
+     targ_selvecs=i386_elf32_vec
 diff --git a/config.sub b/config.sub
 index 75bb6a31..d6ec76ce 100755
 --- a/config.sub
@@ -34,69 +33,66 @@ index 75bb6a31..d6ec76ce 100755
  	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
  	     | aos* | aros* | cloudabi* | sortix* \
 diff --git a/gas/configure.tgt b/gas/configure.tgt
-index 616d2113..fbd4be3b 100644
+index 616d2113..24ccdffd 100644
 --- a/gas/configure.tgt
 +++ b/gas/configure.tgt
-@@ -134,6 +134,8 @@ case ${generic_target} in
-   alpha-*-linux-*)			fmt=elf em=linux ;;
-   alpha-*-netbsd* | alpha-*-openbsd*)	fmt=elf em=nbsd ;;
+@@ -260,6 +260,7 @@ case ${generic_target} in
+   i386-*-chaos)				fmt=elf ;;
+   i386-*-rdos*)				fmt=elf ;;
+   i386-*-darwin*)			fmt=macho ;;
++  i386-*-os_2*)       fmt=elf em=gnu ;;
  
-+  i386-*-os_2*)    fmt=elf em=gnu ;;
-+
-   arc-*-elf*)				fmt=elf ;;
-   arc*-*-linux*)			fmt=elf bfd_gas=yes ;;
+   ia16-*-elf*)				fmt=elf ;;
  
 diff --git a/ld/Makefile.am b/ld/Makefile.am
-index c2c798b4..265c288f 100644
+index c2c798b4..4182647d 100644
 --- a/ld/Makefile.am
 +++ b/ld/Makefile.am
-@@ -153,6 +153,7 @@ BFDLIB = ../bfd/libbfd.la
- LIBIBERTY = ../libiberty/libiberty.a
- 
- ALL_EMULATION_SOURCES = \
+@@ -289,6 +289,7 @@ ALL_EMULATION_SOURCES = \
+ 	eelf_i386_ldso.c \
+ 	eelf_i386_nacl.c \
+ 	eelf_i386_sol2.c \
 +	eelf_i386_os_2.c \
- 	eaix5ppc.c \
- 	eaix5rs6.c \
- 	eaixppc.c \
-@@ -386,6 +387,7 @@ ALL_EMULATION_SOURCES = \
- ALL_EMULATIONS = $(ALL_EMULATION_SOURCES:.c=.@OBJEXT@)
- 
- ALL_64_EMULATION_SOURCES = \
+ 	eelf_i386_vxworks.c \
+ 	eelf_iamcu.c \
+ 	eelf_s390.c \
+@@ -458,6 +459,7 @@ ALL_64_EMULATION_SOURCES = \
+ 	eelf_x86_64_fbsd.c \
+ 	eelf_x86_64_nacl.c \
+ 	eelf_x86_64_sol2.c \
 +	eelf_x86_64_os_2.c \
- 	eaarch64elf.c \
- 	eaarch64elf32.c \
- 	eaarch64elfb.c \
-@@ -1289,6 +1291,11 @@ eelf32xtensa.c: $(srcdir)/emulparams/elf32xtensa.sh $(ELF_DEPS) \
- eelf_i386.c: $(srcdir)/emulparams/elf_i386.sh \
+ 	ehppa64linux.c \
+ 	ei386pep.c \
+ 	emmo.c
+@@ -1312,6 +1314,10 @@ eelf_i386_sol2.c: $(srcdir)/emulparams/elf_i386_sol2.sh \
+   $(srcdir)/emultempl/solaris2.em \
    $(ELF_X86_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  
-+# Add this after eelf_i386.c:
 +eelf_i386_os_2.c: $(srcdir)/emulparams/elf_i386_os_2.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 +	${GENSCRIPTS} elf_i386_os_2 "$(tdir_elf_i386_os_2)"
 +
- eelf_i386_be.c: $(srcdir)/emulparams/elf_i386_be.sh \
+ eelf_i386_vxworks.c: $(srcdir)/emulparams/elf_i386_vxworks.sh \
+   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emultempl/vxworks.em \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
- 
-@@ -1849,6 +1856,11 @@ eelf_k1om_fbsd.c: $(srcdir)/emulparams/elf_k1om_fbsd.sh \
- eelf_x86_64.c: $(srcdir)/emulparams/elf_x86_64.sh \
+@@ -1868,6 +1874,10 @@ eelf_x86_64_sol2.c: $(srcdir)/emulparams/elf_x86_64_sol2.sh \
+   $(srcdir)/emultempl/solaris2.em \
    $(ELF_X86_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  
-+# Add this after eelf_x86_64.c:
 +eelf_x86_64_os_2.c: $(srcdir)/emulparams/elf_x86_64_os_2.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 +	${GENSCRIPTS} elf_x86_64_os_2 "$(tdir_elf_x86_64_os_2)"
 +
- eelf_x86_64_cloudabi.c: $(srcdir)/emulparams/elf_x86_64_cloudabi.sh \
-   $(srcdir)/emulparams/elf_x86_64.sh \
-   $(ELF_X86_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ ehppa64linux.c: $(srcdir)/emulparams/hppa64linux.sh \
+   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 
 diff --git a/ld/configure.tgt b/ld/configure.tgt
-index beba17ef..33c610b8 100644
+index beba17ef..8414116b 100644
 --- a/ld/configure.tgt
 +++ b/ld/configure.tgt
-@@ -84,6 +84,15 @@ alpha*-*-netbsd*)	targ_emul=elf64alpha_nbsd ;;
- alpha*-*-openbsd*)	targ_emul=elf64alpha ;;
- alpha*-*-*vms*)		targ_emul=alphavms
+@@ -281,6 +281,15 @@ i[3-7]86-*-solaris*)	targ_emul=elf_i386_ldso
+ 			targ_extra_emuls="elf_i386"
+ 			targ_extra_libpath=$targ_extra_emuls
  			;;
 +i[3-7]86-*-os_2*)
 +			targ_emul=elf_i386_os_2
@@ -107,18 +103,16 @@ index beba17ef..33c610b8 100644
 +			targ_emul=elf_x86_64_os_2
 +			targ_extra_emuls="elf_i386_os_2 elf_x86_64 elf_i386"
 +			;;
- arc*-*-elf*)		targ_emul=arcelf
- 			targ_extra_emuls="arcelf_prof arclinux arclinux_nps arclinux_prof arcv2elf arcv2elfx"
- 			;;
+ i[3-7]86-*-netbsdelf* | \
+ i[3-7]86-*-netbsd*-gnu* | \
+ i[3-7]86-*-knetbsd*-gnu)
 diff --git a/ld/emulparams/elf_i386_os_2.sh b/ld/emulparams/elf_i386_os_2.sh
 new file mode 100644
-index 00000000..dc33fdc1
+index 00000000..83285cb8
 --- /dev/null
 +++ b/ld/emulparams/elf_i386_os_2.sh
-@@ -0,0 +1,3 @@
+@@ -0,0 +1 @@
 +. ${srcdir}/emulparams/elf_i386.sh
-+GENERATE_SHLIB_SCRIPT=yes
-+GENERATE_PIE_SCRIPT=yes
 \ No newline at end of file
 diff --git a/ld/emulparams/elf_x86_64_os_2.sh b/ld/emulparams/elf_x86_64_os_2.sh
 new file mode 100644

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Download tar.gz
-curl https://bigsearcher.com/mirrors/gcc/releases/gcc-8.3.0/gcc-8.3.0.tar.gz --output gcc-os_2-8.3.0.tar.gz
+curl http://ftp.gnu.org/gnu/gcc/gcc-8.3.0/gcc-8.3.0.tar.gz --output gcc-os_2-8.3.0.tar.gz
 
 # Extract contents
 tar -xzvf gcc-os_2-8.3.0.tar.gz
