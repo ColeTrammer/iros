@@ -1,0 +1,126 @@
+diff --git a/config.sub b/config.sub
+index f2632cd8a..52e8fc221 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1393,6 +1393,7 @@ case $os in
+ 	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
+ 	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
++		  | -os_2* \
+ 	      | -sym* | -kopensolaris* | -plan9* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+ 	      | -aos* | -aros* | -cloudabi* | -sortix* \
+diff --git a/fixincludes/mkfixinc.sh b/fixincludes/mkfixinc.sh
+index 0f9648608..152e9b242 100755
+--- a/fixincludes/mkfixinc.sh
++++ b/fixincludes/mkfixinc.sh
+@@ -19,6 +19,7 @@ case $machine in
+     powerpc-*-rtems*   | \
+     powerpcle-*-eabisim* | \
+     powerpcle-*-eabi* | \
++    *-os_2* | \
+     *-musl* )
+ 	#  IF there is no include fixing,
+ 	#  THEN create a no-op fixer and exit
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index 7af8e0281..9cb144833 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -696,6 +696,11 @@ case ${target} in
+   default_use_cxa_atexit=yes
+   use_gcc_stdint=wrap
+   ;;
++*-*-os_2*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  ;;
+ *-*-freebsd*)
+   # This is the generic ELF configuration of FreeBSD.  Later
+   # machine-specific sections may refine and add to this
+@@ -1036,6 +1041,12 @@ alpha*-dec-*vms*)
+ 	tm_file="${tm_file} vms/vms.h alpha/vms.h"
+ 	tmake_file="${tmake_file} alpha/t-vms alpha/t-alpha"
+ 	;;
++i[34567]86-*-os_2*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h os_2.h"
++    ;;
++x86_64-*-os_2*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h os_2.h"
++    ;;
+ arc*-*-elf*)
+ 	tm_file="arc/arc-arch.h dbxelf.h elfos.h newlib-stdint.h arc/elf.h ${tm_file}"
+ 	tmake_file="arc/t-multilib arc/t-arc"
+diff --git a/gcc/config/os_2.h b/gcc/config/os_2.h
+new file mode 100644
+index 000000000..2d379ff23
+--- /dev/null
++++ b/gcc/config/os_2.h
+@@ -0,0 +1,31 @@
++/* Useful if you wish to make target-specific GCC changes. */
++#undef TARGET_OS_2
++#define TARGET_OS_2 1
++ 
++/* Default arguments you want when running your
++   i686-myos-gcc/x86_64-myos-gcc toolchain */
++#undef LIB_SPEC
++#define LIB_SPEC "-lc" /* link against C standard library */
++ 
++/* Files that are linked before user code.
++   The %s tells GCC to look for these files in the library directory. */
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
++ 
++/* Files that are linked after user code. */
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++ 
++#undef  NO_IMPLICIT_EXTERN_C
++#define NO_IMPLICIT_ExTERN_C 1
++
++/* Additional predefined macros. */
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()      \
++  do {                                \
++    builtin_define ("__os_2__");      \
++    builtin_define ("__unix__");      \
++    builtin_assert ("system=os_2");   \
++    builtin_assert ("system=unix");   \
++    builtin_assert ("system=posix");   \
++  } while(0);
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 11b4acaff..3cc5065f0 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -371,6 +371,14 @@ alpha*-*-netbsd*)
+ alpha*-*-openbsd*)
+ 	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee"
+ 	;;
++i[34567]86-*-os_2*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
++x86_64-*-os_2*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
+ alpha64-dec-*vms*)
+ 	tmake_file="$tmake_file alpha/t-alpha alpha/t-ieee alpha/t-vms t-slibgcc-vms"
+ 	extra_parts="$extra_parts vms-dwarf2.o vms-dwarf2eh.o"
+diff --git a/libstdc++-v3/crossconfig.m4 b/libstdc++-v3/crossconfig.m4
+index cb6e3afff..9948470a6 100644
+--- a/libstdc++-v3/crossconfig.m4
++++ b/libstdc++-v3/crossconfig.m4
+@@ -136,6 +136,12 @@ case "${host}" in
+     AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
+     ;;
+ 
++  *-os_2*)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES
++    GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
+   *-fuchsia*)
+     SECTION_FLAGS='-ffunction-sections -fdata-sections'
+     AC_SUBST(SECTION_FLAGS)

@@ -3,6 +3,7 @@ sysroot/
 isodir/
 build/
 mnt/
+toolchain/
 initrd/files
 *.bin
 *.iso
