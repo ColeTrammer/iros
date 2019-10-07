@@ -73,6 +73,7 @@ $(BUILDDIR)/libc/errno/errno.o \
 $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/atexit.o \
+$(BUILDDIR)/libc/stdlib/env.o \
 $(BUILDDIR)/libc/string/strerror.o \
 $(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/time/time.o \

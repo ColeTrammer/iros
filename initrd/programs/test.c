@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <sys/wait.h>
 
-int main(int argc, char **argv, char **envp) {
+int main(int argc, char **argv) {
 
     /* Test execve */
 
@@ -38,9 +38,7 @@ int main(int argc, char **argv, char **envp) {
         printf("Argv[%ld]: %s\n", i, argv[i]);
     }
 
-    for (size_t i = 0; envp[i] != NULL; i++) {
-        printf("Envp[%ld]: %s\n", i, envp[i]);
-    }
+    printf("OS: %s\n", getenv("OS"));
 
     /* Test Writing To stdio */
 
