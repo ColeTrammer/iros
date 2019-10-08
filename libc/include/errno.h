@@ -33,11 +33,11 @@ extern "C" {
         return (val);           \
     } while (0)
 
+#endif /* __is_kernel */
+
 extern int errno;
 
 #define errno errno
-
-#endif /* __is_kernel */
 
 #ifdef __libc_internal
 void init_errno();

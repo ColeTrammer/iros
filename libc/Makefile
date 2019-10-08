@@ -38,6 +38,7 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS) -DARCH=$(HOSTARCH)
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
 $(BUILDDIR)/libc/ctype/ctype.o \
+$(BUILDDIR)/libc/errno/errno.o \
 $(BUILDDIR)/libc/stdio/printf.o \
 $(BUILDDIR)/libc/stdio/scanf.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
@@ -69,7 +70,6 @@ HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libc/assert/assert.o \
 $(BUILDDIR)/libc/dirent/dirent.o \
-$(BUILDDIR)/libc/errno/errno.o \
 $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/atexit.o \
