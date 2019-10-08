@@ -67,6 +67,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 return num_read;
             }
             c = (char) ret;
+            format_off++;
         } else if (c == '\0') {
             int ret = get_character(state);
             if (ret == EOF) {
@@ -148,6 +149,27 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
         specifier.specifier = format + format_off;
 
         switch(*specifier.specifier) {
+            case 'c': {
+                if (specifier.width == INT_MAX) { specifier.width = 1; }
+                int i = 0;
+                int ret = 0;
+                char *buf = va_arg(parameters, char*);
+                buf[i++] = c;
+
+                while (i < specifier.width && (ret = get_character(state))) {
+                    /* Should probably fail if we can't read in exactly the right amount */
+                    if (ret == EOF) {
+                        goto finish;
+                    }
+                    buf[i++] = c;
+                }
+
+                num_read++;
+                format_off++;
+                c = '\0';
+                break;
+            }
+
             /* Signed integers */
             case 'd':
             case 'i': {
@@ -165,6 +187,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 char buffer[SCANF_NUMBER_BUFFER_MAX];
                 int buffer_index = 0;
                 buffer[buffer_index++] = c;
+
                 /* Copy str character by character into buffer */
                 while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && isdigit(ret = get_character(state))) {
                     if (ret == EOF) {
@@ -173,8 +196,10 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     }
                     buffer[buffer_index++] = (char) ret;
                 }
-                if (ret != EOF) {
+                if (ret != EOF && buffer_index < specifier.width) {
                     c = (char) ret;
+                } else {
+                    c = '\0';
                 }
                 buffer[buffer_index] = '\0';
 
@@ -187,7 +212,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     break;
                 }
 
-                /* Should look at length field */
+                /* Concert to right length */
                 switch (specifier.length) {
                     case SCANF_LENGTH_CHAR: {
                         char *place_here = va_arg(parameters, char*);
@@ -251,8 +276,9 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     c = (char) ret;
                 }
 
-                /* Should be maximum number of chars ULONG_MAX can be */
                 int base = determine_base(*specifier.specifier);
+
+                /* Should be maximum number of chars ULONG_MAX can be */
                 char buffer[SCANF_NUMBER_BUFFER_MAX];
                 int buffer_index = 0;
                 buffer[buffer_index++] = c;
@@ -265,8 +291,10 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     }
                     buffer[buffer_index++] = (char) ret;
                 }
-                if (ret != EOF) {
+                if (ret != EOF && buffer_index < specifier.width) {
                     c = (char) ret;
+                } else {
+                    c = '\0';
                 }
                 buffer[buffer_index] = '\0';
 
@@ -279,7 +307,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     break;
                 }
 
-                /* Should look at length field */
+                /* Concert to right length */
                 switch (specifier.length) {
                     case SCANF_LENGTH_CHAR: {
                         unsigned char *place_here = va_arg(parameters, unsigned char*);
