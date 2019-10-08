@@ -686,6 +686,7 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
 				char minus = '-';
 				if (!print(obj, &minus, 1))
 					return -1;
+				num = -num;
 			}
 			unsigned int to_write_buffer = (unsigned int) num;
 			if (!(flags & 0b00010000) && (flags & 0b00000001)) {
