@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <limits.h>
 
 #ifdef __is_libk
@@ -28,12 +29,14 @@ struct scanf_specifier_state {
     const char *specifier;
 };
 
+#define SCANF_NUMBER_BUFFER_MAX 30
+
 int scanf_internal(int (*get_character)(void *state), void *__restrict state, const char *__restrict format, va_list parameters) {
     size_t format_off = 0;
-    size_t num_read = 0;
+    int num_read = 0;
     bool done = false;
     char c = '\0';
-    while (!done || format[format_off] != '\0') {
+    while (!done && format[format_off] != '\0') {
         if (isspace(format[format_off])) {
             int ret;
             while (isspace(ret = get_character(state)));
@@ -65,89 +68,145 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
         /* Guanteed to be the beginning of a format specifier */
         format_off++;
 
-        struct scanf_specifier_state specifer = { false, INT_MAX, SCANF_LENGTH_DEFAULT, NULL };
+        struct scanf_specifier_state specifier = { false, INT_MAX, SCANF_LENGTH_DEFAULT, NULL };
         if (format[format_off] == '*') {
-            specifer.star = true;
+            specifier.star = true;
             format_off++;
         }
 
         if (isdigit(format[format_off])) {
-            specifer.width = atoi(format + format_off);
+            specifier.width = atoi(format + format_off);
             while (isdigit(format[format_off])) { format_off++; }
         }
 
         switch(format[format_off]) {
             case 'h': {
                 if (format[format_off + 1] == 'h') {
-                    specifer.length = SCANF_LENGTH_CHAR;
+                    specifier.length = SCANF_LENGTH_CHAR;
                     format_off += 2;
                     break;
                 } else {
-                    specifer.length = SCANF_LENGTH_SHORT;
+                    specifier.length = SCANF_LENGTH_SHORT;
                     format_off++;
                     break;
                 }
             }
             case 'l': {
                 if (format[format_off + 1] == 'l') {
-                    specifer.length = SCANF_LENGTH_LONG_LONG;
+                    specifier.length = SCANF_LENGTH_LONG_LONG;
                     format_off += 2;
                     break;
                 } else {
-                    specifer.length = SCANF_LENGTH_LONG;
+                    specifier.length = SCANF_LENGTH_LONG;
                     format_off++;
                     break;
                 }
             }
             case 'j':
-                specifer.length = SCANF_LENGTH_INTMAX;
+                specifier.length = SCANF_LENGTH_INTMAX;
                 format_off++;
                 break;
             case 'z':
-                specifer.length = SCANF_LENGTH_SIZE_T;
+                specifier.length = SCANF_LENGTH_SIZE_T;
                 format_off++;
                 break;
             case 't':
-                specifer.length = SCANF_LENGTH_PTRDIFF;
+                specifier.length = SCANF_LENGTH_PTRDIFF;
                 format_off++;
                 break;
             case 'L':
-                specifer.length = SCANF_LENGTH_LONG_DOUBLE;
+                specifier.length = SCANF_LENGTH_LONG_DOUBLE;
                 format_off++;
                 break;
             default:
                 break;
         }
 
-        specifer.specifier = format + format_off;
+        specifier.specifier = format + format_off;
 
-        switch(*specifer.specifier) {
+        switch(*specifier.specifier) {
+            case 'd':
             case 'i': {
+                int ret = 0;
+                /* Ignore initial whitespace */
+                while (isspace(c)) {
+                    ret = get_character(state);
+                    if (ret == EOF) {
+                        goto finish;
+                    }
+                    c = (char) ret;
+                }
+
                 /* Should be maximum number of chars ULONG_MAX can be */
-                char buffer[30];
-                size_t buffer_index = 0;
+                char buffer[SCANF_NUMBER_BUFFER_MAX];
+                int buffer_index = 0;
                 buffer[buffer_index++] = c;
-                int ret;
-                while (buffer_index < 30 && isdigit(ret = get_character(state))) {
+                /* Copy str character by character into buffer */
+                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && isdigit(ret = get_character(state))) {
                     if (ret == EOF) {
                         done = true;
                         break;
                     }
                     buffer[buffer_index++] = (char) ret;
                 }
-                if (ret == EOF) {
-                    done = true;
-                } else {
+                if (ret != EOF) {
                     c = (char) ret;
                 }
                 buffer[buffer_index] = '\0';
 
-                /* Should instead be using atleast atol, maybe even atoll */
-                int value = atoi(buffer);
+                /* Read in the largest value and cast it down later since we don't care about overflows in this function */
+                long long value = strtoll(buffer, NULL, *specifier.specifier == 'd' ? 10 : 0);
+
+                /* Don't save it if there is was a `*` */
+                if (specifier.star) {
+                    format_off++;
+                    break;
+                }
 
                 /* Should look at length field */
-                int *place_here = va_arg(parameters, int*);
-                *place_here = value;
+                switch (specifier.length) {
+                    case SCANF_LENGTH_CHAR: {
+                        char *place_here = va_arg(parameters, char*);
+                        *place_here = (char) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_SHORT: {
+                        short *place_here = va_arg(parameters, short*);
+                        *place_here = (short) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_LONG: {
+                        long *place_here = va_arg(parameters, long*);
+                        *place_here = (long) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_LONG_LONG: {
+                        long long *place_here = va_arg(parameters, long long*);
+                        *place_here = (long long) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_INTMAX: {
+                        intmax_t *place_here = va_arg(parameters, intmax_t*);
+                        *place_here = (intmax_t) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_SIZE_T: {
+                        size_t *place_here = va_arg(parameters, size_t*);
+                        *place_here = (size_t) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_PTRDIFF: {
+                        ptrdiff_t *place_here = va_arg(parameters, ptrdiff_t*);
+                        *place_here = (ptrdiff_t) value;
+                        break;
+                    }
+                    default: {
+                        int *place_here = va_arg(parameters, int*);
+                        *place_here = (int) value;
+                        break;
+                    }
+                }
+
                 num_read++;
                 format_off++;
                 break;
@@ -156,15 +215,16 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
             /* Currently %f, %e, %g, %a will go here because supporting floats is hard */
             default:
 #ifdef __is_libk
-                debug_log("Unsupported specifier: %s\n", specifer.specifier);
+                debug_log("Unsupported specifier: %s\n", specifier.specifier);
 #else
-                fprintf(stderr, "Unsupported specifier: %s\n", specifer.specifier);
+                fprintf(stderr, "Unsupported specifier: %s\n", specifier.specifier);
 #endif /* __is_libk */
                 return num_read;
         }
     }
 
-    return num_read;
+finish:
+    return num_read == 0 ? EOF : num_read;
 }
 
 struct string_scanf_state {
