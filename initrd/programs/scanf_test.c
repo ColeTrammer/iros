@@ -7,6 +7,6 @@ int main() {
     int t;
     int ret = sscanf(test_str, "ABC%i:%iAC%i", &r, &s, &t);
     printf("Number: %d, %d, %d, %d\n", ret, r, s, t);
-    (void) r;
+
     return 0;
 }
