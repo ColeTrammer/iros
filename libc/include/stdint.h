@@ -6,7 +6,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef long long intmax_t;
-typedef unsigned long long uintmex_t;
+typedef unsigned long long uintmax_t;
 
 typedef char int8_t;
 typedef unsigned char uint8_t;

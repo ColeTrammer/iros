@@ -31,6 +31,29 @@ struct scanf_specifier_state {
 
 #define SCANF_NUMBER_BUFFER_MAX 30
 
+static int determine_base(int c) {
+    switch (c) {
+        case 'i': return 0;
+        case 'd':
+        case 'u': return 10;
+        case 'o': return 8;
+        case 'X':
+        case 'x': return 16;
+        default : return 10; 
+    }
+}
+
+/* Determines the validity of any character for the given base (goes from digits to letters) (max base is 36) */
+static bool is_valid_char_for_base(char c, int base) {
+    if (isdigit(c)) {
+        return (c - '0') < base;
+    } else if (isalpha(c)) {
+        return (tolower(c) - 'a') < (base - 10);
+    }
+
+    return false;
+}
+
 int scanf_internal(int (*get_character)(void *state), void *__restrict state, const char *__restrict format, va_list parameters) {
     size_t format_off = 0;
     int num_read = 0;
@@ -125,6 +148,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
         specifier.specifier = format + format_off;
 
         switch(*specifier.specifier) {
+            /* Signed integers */
             case 'd':
             case 'i': {
                 int ret = 0;
@@ -155,7 +179,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 buffer[buffer_index] = '\0';
 
                 /* Read in the largest value and cast it down later since we don't care about overflows in this function */
-                long long value = strtoll(buffer, NULL, *specifier.specifier == 'd' ? 10 : 0);
+                long long value = strtoll(buffer, NULL, determine_base(*specifier.specifier));
 
                 /* Don't save it if there is was a `*` */
                 if (specifier.star) {
@@ -203,6 +227,98 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     default: {
                         int *place_here = va_arg(parameters, int*);
                         *place_here = (int) value;
+                        break;
+                    }
+                }
+
+                num_read++;
+                format_off++;
+                break;
+            }
+
+            /* Unsigned integers */
+            case 'u':
+            case 'o':
+            case 'x': {
+                int ret = 0;
+
+                /* Ignore initial whitespace */
+                while (isspace(c)) {
+                    ret = get_character(state);
+                    if (ret == EOF) {
+                        goto finish;
+                    }
+                    c = (char) ret;
+                }
+
+                /* Should be maximum number of chars ULONG_MAX can be */
+                int base = determine_base(*specifier.specifier);
+                char buffer[SCANF_NUMBER_BUFFER_MAX];
+                int buffer_index = 0;
+                buffer[buffer_index++] = c;
+
+                /* Copy str character by character into buffer */
+                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && (is_valid_char_for_base(ret = get_character(state), base) || (base == 16 && buffer_index == 1 && (ret == 'x' || ret == 'X')))) {
+                    if (ret == EOF) {
+                        done = true;
+                        break;
+                    }
+                    buffer[buffer_index++] = (char) ret;
+                }
+                if (ret != EOF) {
+                    c = (char) ret;
+                }
+                buffer[buffer_index] = '\0';
+
+                /* Read in the largest value and cast it down later since we don't care about overflows in this function */
+                unsigned long long value = strtoull(buffer, NULL, base);
+
+                /* Don't save it if there is was a `*` */
+                if (specifier.star) {
+                    format_off++;
+                    break;
+                }
+
+                /* Should look at length field */
+                switch (specifier.length) {
+                    case SCANF_LENGTH_CHAR: {
+                        unsigned char *place_here = va_arg(parameters, unsigned char*);
+                        *place_here = (unsigned char) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_SHORT: {
+                        unsigned short *place_here = va_arg(parameters, unsigned short*);
+                        *place_here = (unsigned short) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_LONG: {
+                        unsigned long *place_here = va_arg(parameters, unsigned long*);
+                        *place_here = (unsigned long) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_LONG_LONG: {
+                        unsigned long long *place_here = va_arg(parameters, unsigned long long*);
+                        *place_here = (unsigned long long) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_INTMAX: {
+                        uintmax_t *place_here = va_arg(parameters, uintmax_t*);
+                        *place_here = (uintmax_t) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_SIZE_T: {
+                        size_t *place_here = va_arg(parameters, size_t*);
+                        *place_here = (size_t) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_PTRDIFF: {
+                        ptrdiff_t *place_here = va_arg(parameters, ptrdiff_t*);
+                        *place_here = (ptrdiff_t) value;
+                        break;
+                    }
+                    default: {
+                        unsigned int *place_here = va_arg(parameters, unsigned int*);
+                        *place_here = (unsigned int) value;
                         break;
                     }
                 }

@@ -28,6 +28,8 @@ int atoi(const char *s);
 
 long strtol(const char *__restrict str, char **__restrict endptr, int base);
 long long strtoll(const char *__restrict str, char **__restrict endptr, int base);
+unsigned long strtoul(const char *__restrict str, char **__restrict endptr, int base);
+unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base);
 
 #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
 void *malloc(size_t size, int line, const char *func);

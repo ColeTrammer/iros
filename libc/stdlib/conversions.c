@@ -30,6 +30,11 @@ long strtol(const char *__restrict str, char **__restrict endptr, int base) {
     return (long) strtoll(str, endptr, base);
 }
 
+unsigned long strtoul(const char *__restrict str, char **__restrict endptr, int base) {
+    /* Should be different on non x86 platforms */
+    return (unsigned long) strtoull(str, endptr, base);
+}
+
 /* Determines the validity of any character for the given base (goes from digits to letters) (max base is 36) */
 static bool is_valid_char_for_base(char c, int base) {
     if (isdigit(c)) {
@@ -119,4 +124,62 @@ finish:
         *endptr = (char*) (str + str_off);
     }
     return ret;
+}
+
+unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base) {
+    if (str == NULL) { return 0; }
+
+    size_t str_off = 0;
+
+    /* Skip initial whitespace */
+    while (isspace(str[str_off])) { str_off++; }
+
+    /* Look at radix prefixes */
+    switch (base) {
+        case 0: {
+            if (str[str_off] == '0' && (str[str_off + 1] == 'x' || str[str_off + 1] == 'X')) {
+                base = 16;
+                str_off += 2;
+            } else if (str[str_off] == '0') {
+                base = 8;
+                str_off++;
+            } else {
+                base = 10;
+            }
+            break;
+        }
+        case 8:
+            if (str[str_off] == '0') { str_off++; }
+            break;
+        case 16:
+            if (str[str_off] == '0' && (str[str_off + 1] == 'x' || str[str_off + 1] == 'X')) { str_off += 2; }
+            break;
+        default:
+            break;
+    }
+
+    unsigned long long value = 0;
+    for (; is_valid_char_for_base(str[str_off], base); str_off++) {
+        /* Computer value of the digit */
+        unsigned long long digit_value = get_value_from_char(str[str_off]);
+
+        /* Detect overflow */
+        if (value > (ULLONG_MAX - digit_value) / base) {
+            /* Read the rest of the characters but ignore them */
+            while (is_valid_char_for_base(str[++str_off], base));
+
+            value = ULLONG_MAX;
+            errno = ERANGE;
+            break;
+        }
+
+        /* Compute the value by adding the value and muliplying by radix */
+        value *= base;
+        value += get_value_from_char(str[str_off]);
+    }
+
+    if (endptr != NULL) {
+        *endptr = (char*) (str + str_off);
+    }
+    return value;
 }
