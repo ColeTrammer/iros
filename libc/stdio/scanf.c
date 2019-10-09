@@ -14,6 +14,7 @@
 
 struct scanf_specifier_state {
     bool star;
+    bool memory;
     int width;
 
 #define SCANF_LENGTH_DEFAULT 0
@@ -92,9 +93,14 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
         /* Guanteed to be the beginning of a format specifier */
         format_off++;
 
-        struct scanf_specifier_state specifier = { false, INT_MAX, SCANF_LENGTH_DEFAULT, NULL };
+        struct scanf_specifier_state specifier = { false, false, INT_MAX, SCANF_LENGTH_DEFAULT, NULL };
         if (format[format_off] == '*') {
             specifier.star = true;
+            format_off++;
+        }
+
+        if (format[format_off] == 'm') {
+            specifier.memory = true;
             format_off++;
         }
 
@@ -156,8 +162,9 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 char *buf = va_arg(parameters, char*);
                 buf[i++] = c;
 
-                while (i < specifier.width && (ret = get_character(state))) {
+                while (i < specifier.width) {
                     /* Should probably fail if we can't read in exactly the right amount */
+                    ret = get_character(state);
                     if (ret == EOF) {
                         goto finish;
                     }
@@ -167,6 +174,39 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 num_read++;
                 format_off++;
                 c = '\0';
+                break;
+            }
+
+            case 's': {
+                int ret = 0;
+                /* Ignore initial whitespace */
+                while (isspace(c)) {
+                    ret = get_character(state);
+                    if (ret == EOF) {
+                        goto finish;
+                    }
+                    c = (char) ret;
+                }
+
+                int i = 0;
+                char *buf = va_arg(parameters, char*);
+                buf[i++] = c;
+
+                while (i < specifier.width && (!isspace(ret = get_character(state)) && ret != EOF)) {
+                    buf[i++] = (char) ret;
+                }
+                buf[i] = '\0';
+
+                if (ret != EOF && i < specifier.width) {
+                    c = (int) ret;
+                } else if (ret == EOF) {
+                    done = true;
+                } else {
+                    c = '\0';
+                }
+
+                num_read++;
+                format_off++;
                 break;
             }
 
@@ -189,15 +229,13 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 buffer[buffer_index++] = c;
 
                 /* Copy str character by character into buffer */
-                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && isdigit(ret = get_character(state))) {
-                    if (ret == EOF) {
-                        done = true;
-                        break;
-                    }
+                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && (isdigit(ret = get_character(state)))) {
                     buffer[buffer_index++] = (char) ret;
                 }
                 if (ret != EOF && buffer_index < specifier.width) {
                     c = (char) ret;
+                } else if (ret == EOF) {
+                    done = true;
                 } else {
                     c = '\0';
                 }
