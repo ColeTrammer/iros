@@ -69,6 +69,7 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
     file->buf_type = _IOFBF;
     file->eof = 0;
     file->error = 0;
+    file->pushed_back_char = '\0';
 
     return file;
 }
@@ -190,6 +191,12 @@ int fputs(const char *s, FILE *f) {
 }
 
 int fgetc(FILE *stream) {
+    if (stream->pushed_back_char != '\0') {
+        int ret = (int) stream->pushed_back_char;
+        stream->pushed_back_char = '\0';
+        return ret;
+    }
+
     char c;
     ssize_t ret = read(stream->fd, &c, 1);
     if (ret <= 0) {
@@ -197,6 +204,11 @@ int fgetc(FILE *stream) {
     }
 
     return (int) c;
+}
+
+int ungetc(int c, FILE *stream) {
+    stream->pushed_back_char = (unsigned char) c;
+    return c;
 }
 
 int getchar() {
@@ -210,6 +222,30 @@ int putchar(int c) {
     }
 
     return (unsigned char) c;
+}
+
+char *fgets(char *__restrict buf, int size, FILE *__restrict stream) {
+    int i = 0;
+    while (i < size - 1) {
+        errno = 0;
+        int c = fgetc(stream);
+        if (c == EOF) {
+            if (errno || i == 0) {
+                return NULL;
+            }
+            break;
+        }
+
+        if (c == '\n') {
+            buf[i++] = (char) c;
+            break;
+        }
+
+        buf[i++] = (char) c;
+    }
+
+    buf[i] = '\0';
+    return buf;
 }
 
 int fgetpos(FILE *stream, fpos_t *pos) {
@@ -325,6 +361,7 @@ void init_files() {
     files[0].eof = 0;
     files[0].error = 0;
     files[0].flags = O_RDWR | STDIO_OWNED;
+    files[0].pushed_back_char = '\0';
     stdin = files + 0;
 
     /* stdout */
@@ -336,6 +373,7 @@ void init_files() {
     files[1].error = 0;
     files[1].flags = O_RDWR | STDIO_OWNED;
     files[1].pos = 0;
+    files[1].pushed_back_char = '\0';
     stdout = files + 1;
 
     /* stderr */ 
@@ -347,5 +385,6 @@ void init_files() {
     files[2].eof = 0;
     files[2].error = 0;
     files[2].flags = O_RDWR | STDIO_OWNED;
+    files[2].pushed_back_char = '\0';
     stderr = files + 2;
 }

@@ -36,6 +36,7 @@ typedef struct {
     int error;
 
     int buf_type;
+    unsigned char pushed_back_char;
 
     /* Needs lock for threads eventually */
 } FILE;
@@ -77,7 +78,7 @@ int vsprintf(char *__restrict str, const char *__restrict format, va_list args) 
 int vsscanf(const char *__restrict src, const char *__restrict format, va_list args) __attribute__((format (scanf, 2, 0)));
 
 int fgetc(FILE *stream);
-char *fgets(char *s, int size, FILE *stream);
+char *fgets(char *__restrict s, int size, FILE *__restrict stream);
 int fputc(int c, FILE *stream);
 int fputs(const char *s, FILE *stream);
 #define getc(stream) fgetc(stream)

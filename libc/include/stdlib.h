@@ -1,6 +1,7 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H 1
 
+#include <alloca.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
