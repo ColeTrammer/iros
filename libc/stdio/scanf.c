@@ -159,8 +159,14 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 if (specifier.width == INT_MAX) { specifier.width = 1; }
                 int i = 0;
                 int ret = 0;
-                char *buf = va_arg(parameters, char*);
-                buf[i++] = c;
+
+                char *buf = NULL;
+                if (!specifier.star) {
+                    buf = va_arg(parameters, char*);
+                    buf[i] = c;
+                }
+
+                i++;
 
                 while (i < specifier.width) {
                     /* Should probably fail if we can't read in exactly the right amount */
@@ -168,10 +174,17 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     if (ret == EOF) {
                         goto finish;
                     }
-                    buf[i++] = c;
+
+                    if (!specifier.star) {
+                        buf[i] = c;
+                    }
+
+                    i++;
                 }
 
-                num_read++;
+                if (!specifier.star) {
+                    num_read++;
+                }
                 format_off++;
                 c = '\0';
                 break;
@@ -189,13 +202,25 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 }
 
                 int i = 0;
-                char *buf = va_arg(parameters, char*);
-                buf[i++] = c;
+                char *buf = NULL;
+                if (!specifier.star) {
+                    buf = va_arg(parameters, char*);
+                    buf[i] = c;
+                }
+
+                i++;
 
                 while (i < specifier.width && (!isspace(ret = get_character(state)) && ret != EOF)) {
-                    buf[i++] = (char) ret;
+                    if (!specifier.star) {
+                        buf[i] = (char) ret;
+                    }
+
+                    i++;
                 }
-                buf[i] = '\0';
+
+                if (!specifier.star) {
+                    buf[i] = '\0';
+                }
 
                 if (ret != EOF && i < specifier.width) {
                     c = (int) ret;
@@ -205,7 +230,10 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                     c = '\0';
                 }
 
-                num_read++;
+                if (!specifier.star) {
+                    num_read++;
+                }
+
                 format_off++;
                 break;
             }
