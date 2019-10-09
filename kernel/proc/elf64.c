@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/param.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
@@ -46,7 +47,9 @@ void elf64_load_program(void *buffer, size_t length, struct process *process) {
     for (uint64_t i = 0; i < num_pages; i++) {
         map_page(start + i * PAGE_SIZE, VM_USER | VM_WRITE);
     }
-    memcpy((void*) start, buffer, length);
+
+    /* Should do things correctly by section headers */
+    memcpy((void*) start, buffer, MIN(size, length));
 
     uint64_t types[4] = { VM_PROCESS_TEXT, VM_PROCESS_ROD, VM_PROCESS_DATA, VM_PROCESS_BSS };
     for (size_t i = 0; i < 4; i++) {
