@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
                 printf("filename: %s\n", optarg);  
                 break;  
             case ':':  
-                printf("option needs a value\n");  
+                printf("option needs a value: %c\n", optopt);  
                 break;  
             case '?':  
                 printf("unknown option: %c\n", optopt); 
