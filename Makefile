@@ -53,7 +53,6 @@ initrd: libc
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean
 clean:
-	rm -rf $(DESTDIR)
 	rm -rf $(ISODIR)
 	rm -rf $(BUILDDIR)
 	rm -f $(ROOT)/initrd/files/*.o

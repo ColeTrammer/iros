@@ -19,9 +19,9 @@ automake-1.15
 cd ../..
 
 # Install headers for correct build
-# cd ../..
-# make clean install-headers
-# cd toolchain/binutils-2.32
+cd ../..
+make clean install-headers
+cd toolchain/binutils-2.32
 
 # Build
 mkdir -p build-binutils

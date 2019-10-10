@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 dd if=/dev/zero of=ext2_test.img bs=516096c count=200
 
@@ -8,13 +8,9 @@ mke2fs -b1024 /dev/loop100
 mkdir -p mnt
 mount -text2 /dev/loop100 mnt
 
+cp -r sysroot/* mnt
+
 cd mnt
-
-mkdir -p "test/sub"
-
-echo "ccccc" > test/sub/c.txt
-echo "bbbbb" > test/b.txt
-echo "aaaaa" > a.txt
 
 cp ../initrd/programs/kilo.c kilo.c
 

@@ -2,6 +2,7 @@
 sysroot/
 isodir/
 build/
+ports/
 mnt/
 toolchain/
 initrd/files
