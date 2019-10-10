@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export ROOT="$PWD/../.."
+
 # Download tar.gz
 curl ftp://ftp.figlet.org/pub/figlet/program/unix/figlet-2.2.5.tar.gz --output figlet.tar.gz
 
