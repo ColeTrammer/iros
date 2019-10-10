@@ -51,6 +51,18 @@ static void *block_group_key(void *block_group) {
     return &((struct ext2_block_group*) block_group)->index;
 }
 
+static int block_hash(void *index, int num_buckets) {
+    return *((uint32_t*) index) % num_buckets;
+}
+
+static int block_equals(void *i1, void *i2) {
+    return *((uint32_t*) i1) == *((uint32_t*) i2);
+}
+
+static void *block_key(void *block_obj) {
+    return &((struct ext2_block*) block_obj)->index;
+}
+
 /* Allocate space to read blocks (eventually should probably not use malloc and instead another mechanism) */
 static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
     void * ret = malloc(num_blocks * sb->block_size);
@@ -58,14 +70,32 @@ static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
     return ret;
 }
 
+#define MAX_BLOCKS_TO_CACHE 1000
+
 /* Reads blocks at a given offset into the buffer */
 static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+    struct ext2_sb_data *data = sb->private_data;
     spin_lock(&sb->super_block_lock);
+
+    struct ext2_block *block = NULL;
+    if (num_blocks == 1 && (block = hash_get(data->block_map, &block_offset))) {
+        memcpy(buffer, block->block, sb->block_size);
+        spin_unlock(&sb->super_block_lock);
+        return num_blocks;
+    }
 
     sb->dev_file->position = sb->block_size * block_offset;
     if (fs_read(sb->dev_file, (void*) buffer, num_blocks * sb->block_size) != num_blocks * sb->block_size) {
         spin_unlock(&sb->super_block_lock);
         return -EIO;
+    }
+
+    if (num_blocks == 1 && data->num_blocks_cached < MAX_BLOCKS_TO_CACHE) {
+        block = malloc(sizeof(struct ext2_block));
+        block->index = block_offset;
+        block->block = ext2_allocate_blocks(sb, 1);
+        memcpy(block->block, buffer, sb->block_size);
+        hash_put(data->block_map, block);
     }
 
     spin_unlock(&sb->super_block_lock);
@@ -74,12 +104,20 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
 
 /* Writes to blocks at a given offset from buffer */
 static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+    struct ext2_sb_data *data = sb->private_data;
     spin_lock(&sb->super_block_lock);
 
     sb->dev_file->position = sb->block_size * block_offset;
     if (fs_write(sb->dev_file, buffer, num_blocks * sb->block_size) != num_blocks * sb->block_size) {
         spin_unlock(&sb->super_block_lock);
         return -EIO;
+    }
+
+    if (num_blocks == 1) {
+        struct ext2_block *block = hash_get(data->block_map, &block_offset);
+        if (block != NULL) {
+            memcpy(block->block, buffer, sb->block_size);
+        }
     }
 
     spin_unlock(&sb->super_block_lock);
@@ -1290,6 +1328,8 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     super_block->dev_file = dev_file;
     super_block->private_data = data;
     data->block_group_map = hash_create_hash_map(block_group_hash, block_group_equals, block_group_key);
+    data->block_map = hash_create_hash_map(block_hash, block_equals, block_key);
+    data->num_blocks_cached = 0;
 
     struct ext2_raw_super_block *raw_super_block = ext2_allocate_blocks(super_block, 1);
     if (ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1) != 1) {

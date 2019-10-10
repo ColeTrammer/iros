@@ -143,6 +143,8 @@ struct ext2_sb_data {
     struct ext2_raw_super_block *sb;
     struct raw_block_group_descriptor *blk_desc_table;
     struct hash_map *block_group_map;
+    struct hash_map *block_map;
+    size_t num_blocks_cached;
     size_t num_block_groups;
 };
 
@@ -162,6 +164,11 @@ struct ext2_block_group {
     struct ext2_block_bitmap block_bitmap;
     struct ext2_inode_bitmap inode_bitmap;
     struct raw_inode *inode_table_start;
+};
+
+struct ext2_block {
+    uint32_t index;
+    char *block;
 };
 
 struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error);
