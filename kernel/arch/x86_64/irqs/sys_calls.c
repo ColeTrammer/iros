@@ -202,11 +202,20 @@ void arch_sys_execve(struct process_state *process_state) {
     struct file *program = fs_open(path, &error);
     if (program == NULL) {
         /* Should look at $PATH variable, instead is currently hardcoded */
-        free(path);
-        path = get_full_path("/initrd", file_name);
+        char *path_list[] = { "/initrd", "/bin", "/usr/bin", NULL };
 
-        error = 0;
-        program = fs_open(path, &error);
+        size_t i = 0;
+        for (char *prefix = path_list[i]; prefix != NULL; prefix = path_list[++i]) {
+            free(path);
+            path = get_full_path(prefix, file_name);
+
+            error = 0;
+            program = fs_open(path, &error);
+
+            if (program != NULL) {
+                break;
+            }
+        }
 
         if (program == NULL) {
             free(path);
