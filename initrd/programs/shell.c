@@ -23,6 +23,8 @@ char *read_line(FILE *input) {
     int pos = 0;
     char *buffer = malloc(sz);
 
+    bool prev_was_backslash = false;
+
     for (;;) {
         int c = fgetc(input);
 
@@ -40,6 +42,22 @@ char *read_line(FILE *input) {
 
         if (c == EOF && pos == 0) {
             return NULL;
+        }
+
+        if (c == '\n' && prev_was_backslash) {
+            buffer[--pos] = '\0';
+            prev_was_backslash = false;
+
+            if (input == stdin && isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)) {
+                printf("> ");
+                fflush(stdout);
+            }
+
+            continue;
+        }
+
+        if (c == '\\') {
+            prev_was_backslash = true;
         }
 
         if (c == EOF || c == '\n') {
