@@ -869,6 +869,10 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
     assert(inode);
     assert(inode->private_data);
 
+    if (!(inode->mode & S_IRUSR)) {
+        return -EPERM;
+    }
+
     /* Indicate done reading */
     if (file->position >= inode->size) {
         return 0;
@@ -945,6 +949,10 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
     struct raw_inode *raw_inode = inode->private_data;
     ssize_t ret = 0;
     inode->size = file->position + len;
+
+    if (!(raw_inode->mode & S_IWUSR)) {
+        return -EPERM;
+    }
 
     size_t len_save = len;
     size_t file_block_no = file->position / inode->super_block->block_size;
@@ -1051,6 +1059,11 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
 }
 
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
+    if (!(tparent->inode->mode & S_IWUSR)) {
+        *error = -EPERM;
+        return NULL;
+    }
+
     struct inode *inode = ext2_create(tparent, name, mode, error);
     if (inode == NULL) {
         return NULL;
@@ -1127,6 +1140,10 @@ int ext2_unlink(struct tnode *tnode) {
 
     struct raw_inode *raw_inode = inode->private_data;
     assert(raw_inode);
+
+    if ((raw_inode->mode & S_IWUSR)) {
+        return -EPERM;
+    }
 
     struct inode *parent = inode->parent->inode;
     struct raw_inode *parent_raw_inode = parent->private_data;
