@@ -228,12 +228,23 @@ static int op_cd(char **args) {
 }
 
 static int op_echo(char **args) {
-    if (!args[1] || args[2]) {
-        printf("Usage: %s <string>\n", args[0]);
+    if (!args[1]) {
+        printf("%c", '\n');
         return SHELL_CONTINUE;
     }
 
-    puts(args[1]);
+    size_t i = 1;
+    for (;;) {
+        printf("%s", args[i]);
+        if (args[i + 1] != NULL) {
+            printf("%c", ' ');
+            i++;
+        } else {
+            break;
+        }
+    }
+
+    printf("%c", '\n');
     return SHELL_CONTINUE;
 }
 
