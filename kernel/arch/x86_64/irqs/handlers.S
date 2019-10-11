@@ -86,3 +86,4 @@ sys_call_table:
     .quad arch_sys_pipe
     .quad arch_sys_unlink
     .quad arch_sys_rmdir
+    .quad arch_sys_chmod

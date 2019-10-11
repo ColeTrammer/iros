@@ -511,3 +511,7 @@ void arch_sys_rmdir(struct process_state *process_state) {
 
     SYS_RETURN(ret);
 }
+
+void arch_sys_chmod(struct process_state *process_state) {
+    SYS_RETURN(-EPERM);
+}

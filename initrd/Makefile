@@ -27,6 +27,7 @@ FILES:=$(shell find files)
 PROGRAMS=\
 $(BUILDDIR)/initrd/programs/cat \
 $(BUILDDIR)/initrd/programs/clear \
+$(BUILDDIR)/initrd/programs/chmod \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/kilo \

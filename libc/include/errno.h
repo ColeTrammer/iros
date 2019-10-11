@@ -15,7 +15,8 @@
 #define EBADFD      11
 #define ENOTEMPTY   12
 #define ENOTDIR     13
-#define EMAXERRNO   14
+#define EPERM       14
+#define EMAXERRNO   15
 
 #ifdef __cplusplus
 extern "C" {

@@ -16,6 +16,7 @@ const char *sys_errlist[] = {
     "Bad file descriptor",
     "Directory is not empty",
     "Not a directory",
+    "Permission denied",
     "Errno end"
 };
 
