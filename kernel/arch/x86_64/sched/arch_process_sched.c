@@ -5,7 +5,7 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 
 void arch_init_process_sched() {
-    set_sched_callback(&arch_sched_run_next, 1);
+    set_sched_callback(&arch_sched_run_next, 5);
 }
 
 /* Must be called from unpremptable context */

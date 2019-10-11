@@ -45,6 +45,7 @@ struct metadata {
 
 static struct metadata *start;
 static uintptr_t heap_end;
+static struct metadata *last_allocated;
 
 #ifdef __is_libk
 #include <kernel/util/spinlock.h>
@@ -109,6 +110,7 @@ void free(void *p) {
     assert(block->magic == __MALLOC_MAGIG_CHECK);
     assert(IS_ALLOCATED(block));
     CLEAR_ALLOCATED(block);
+    last_allocated = NULL;
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
     debug_log("Malloc block freed: [ %#.16lX ]\n", (uintptr_t) block);
@@ -166,14 +168,16 @@ void *malloc(size_t n) {
         debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) start, __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
+        last_allocated = start;
         return start + 1;
     }
 
-    struct metadata *block = start;
+    struct metadata *block = last_allocated ? last_allocated : start;
     while (block->size != 0) {
         assert(block->magic == __MALLOC_MAGIG_CHECK);
         if (!IS_ALLOCATED(block) && GET_SIZE(block) >= n) {
             SET_ALLOCATED(block);
+            last_allocated = block;
 
 #ifdef __is_libk
             spin_unlock(&heap_lock);
@@ -195,6 +199,7 @@ void *malloc(size_t n) {
 
     block->size = n;
     SET_ALLOCATED(block);
+    last_allocated = block;
     block = NEXT_BLOCK(block);
     block->prev_size = n;
     block->magic = __MALLOC_MAGIG_CHECK;
