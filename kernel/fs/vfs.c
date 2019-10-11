@@ -572,6 +572,28 @@ int fs_rmdir(const char *path) {
     return 0;
 }
 
+int fs_chmod(const char *path, mode_t mode) {
+    assert(path);
+
+    struct tnode *tnode = iname(path);
+
+    if (tnode == NULL) {
+        return -ENOENT;
+    }
+
+    if (!tnode->inode->i_op->chmod) {
+        return -EPERM;
+    }
+
+    // Don't yet support SETUID and SETGID
+    mode &= 0777;
+
+    // Retain type information
+    mode |= tnode->inode->mode & ~07777;
+
+    return tnode->inode->i_op->chmod(tnode->inode, mode);
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

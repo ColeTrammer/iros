@@ -513,5 +513,14 @@ void arch_sys_rmdir(struct process_state *process_state) {
 }
 
 void arch_sys_chmod(struct process_state *process_state) {
-    SYS_RETURN(-EPERM);
+    const char *_path = (const char*) process_state->cpu_state.rsi;
+    mode_t mode = (mode_t) process_state->cpu_state.rdx;
+
+    struct process *process = get_current_process();
+    char *path = get_full_path(process->cwd, _path);
+
+    int ret = fs_chmod(path, mode);
+
+    free(path);
+    SYS_RETURN(ret);
 }

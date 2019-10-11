@@ -182,6 +182,7 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
 int ext2_unlink(struct tnode *tnode);
 int ext2_rmdir(struct tnode *tnode);
 struct tnode *ext2_mount(struct file_system *fs, char *device_path);
+int ext2_chmod(struct inode *inode, mode_t mode);
 
 void init_ext2();
 

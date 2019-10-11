@@ -24,11 +24,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations ext2_i_op = {
-    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL, &ext2_unlink, NULL
+    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL, &ext2_unlink, NULL, &ext2_chmod
 };
 
 static struct inode_operations ext2_dir_i_op = {
-    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL, &ext2_mkdir, NULL, &ext2_rmdir
+    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL, &ext2_mkdir, NULL, &ext2_rmdir, &ext2_chmod
 };
 
 static struct file_operations ext2_f_op = {
@@ -1306,6 +1306,15 @@ int ext2_rmdir(struct tnode *tnode) {
     /* Drop . reference */
     raw_inode->link_count--;
     return ext2_unlink(tnode);
+}
+
+int ext2_chmod(struct inode *inode, mode_t mode) {
+    if (!inode->private_data) {
+        ext2_update_inode(inode, true);
+    }
+
+    inode->mode = mode;
+    return ext2_sync_inode(inode);
 }
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {

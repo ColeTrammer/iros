@@ -25,6 +25,7 @@ int fs_mkdir(const char *path, mode_t mode);
 int fs_create_pipe(struct file *pipe_files[2]);
 int fs_unlink(const char *path);
 int fs_rmdir(const char *path);
+int fs_chmod(const char *path, mode_t mode);
 int fs_mount(const char *src, const char *path, const char *type);
 struct file *fs_clone(struct file *file);
 

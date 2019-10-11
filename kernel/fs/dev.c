@@ -28,11 +28,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations dev_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL, NULL, NULL
+    NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL, NULL, NULL, NULL
 };
 
 static struct inode_operations dev_dir_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat, NULL, NULL, NULL, NULL
+    NULL, &dev_lookup, &dev_open, &dev_stat, NULL, NULL, NULL, NULL, NULL
 };
 
 static struct file_operations dev_f_op = {

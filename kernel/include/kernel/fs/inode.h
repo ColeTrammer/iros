@@ -25,6 +25,7 @@ struct inode_operations {
     struct inode *(*mkdir)(struct tnode *tnode, const char *name, mode_t mode, int *error);
     int (*unlink)(struct tnode *tnode);
     int (*rmdir)(struct tnode *tnode);
+    int (*chmod)(struct inode *inode, mode_t mode);
 };
 
 struct inode {
