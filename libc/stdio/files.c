@@ -366,7 +366,7 @@ void init_files() {
 
     /* stdout */
     files[1].fd = 1;
-    files[1].buf_type = _IOLBF;
+    files[1].buf_type = isatty(STDOUT_FILENO) ? _IOLBF : _IOFBF;
     files[1].buffer = malloc(BUFSIZ);
     files[1].length = BUFSIZ;
     files[1].eof = 0;
@@ -379,7 +379,7 @@ void init_files() {
     /* stderr */ 
     files[2].fd = 2;
     files[2].pos = 0;
-    files[2].buf_type = _IONBF;
+    files[2].buf_type = isatty(STDERR_FILENO) ? _IONBF : _IOFBF;
     files[2].buffer = NULL;
     files[2].length = 0;
     files[2].eof = 0;
