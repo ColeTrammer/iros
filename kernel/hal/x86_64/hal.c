@@ -10,6 +10,7 @@
 #include <kernel/hal/x86_64/drivers/keyboard.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
+#include <kernel/hal/devices.h>
 #include <kernel/hal/tty.h>
 
 void init_hal() {
@@ -29,6 +30,7 @@ void init_drivers() {
     init_ata();
     init_pit();
     init_serial_port_device(SERIAL_COM1_PORT);
+    init_virtual_devices();
 
     /* No idea what this should be... */
     init_tty_device(0x50);

@@ -48,6 +48,7 @@ $(BUILDDIR)/kernel/fs/inode_store.o \
 $(BUILDDIR)/kernel/fs/pipe.o \
 $(BUILDDIR)/kernel/fs/tnode.o \
 $(BUILDDIR)/kernel/fs/vfs.o \
+$(BUILDDIR)/kernel/hal/devices.o \
 $(BUILDDIR)/kernel/hal/tty.o \
 $(BUILDDIR)/kernel/irqs/handlers.o \
 $(BUILDDIR)/kernel/main/kernel.o \
