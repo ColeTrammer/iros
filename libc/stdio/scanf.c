@@ -254,6 +254,11 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 /* Should be maximum number of chars ULONG_MAX can be */
                 char buffer[SCANF_NUMBER_BUFFER_MAX];
                 int buffer_index = 0;
+
+                if (!isdigit(c)) {
+                    goto finish;
+                }
+
                 buffer[buffer_index++] = c;
 
                 /* Copy str character by character into buffer */
@@ -347,6 +352,11 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 /* Should be maximum number of chars ULONG_MAX can be */
                 char buffer[SCANF_NUMBER_BUFFER_MAX];
                 int buffer_index = 0;
+
+                if (!is_valid_char_for_base(c, base)) {
+                    goto finish;
+                }
+
                 buffer[buffer_index++] = c;
 
                 /* Copy str character by character into buffer */
