@@ -206,9 +206,9 @@ add_page_table_entry_3:
     loop add_page_table_entry_3
 
 enable_paging:
-    # Enable cr4.PAE and cr4.PGE
+    # Enable cr4.PAE and cr4.PGE and cr4.OSFXSR and cr4.OSXMMEEXCPT
     mov %cr4, %eax
-    or $(1 << 5 | 1 << 7), %eax
+    or $(1 << 5 | 1 << 7 | 1 << 9 | 1 << 10), %eax
     mov %eax, %cr4
 
     # Set EFER.LME and EFER.NXE
@@ -221,9 +221,10 @@ enable_paging:
     mov $PML4, %eax
     mov %eax, %cr3
 
-    # Set cr0.PE and cr0.WP
+    # Set cr0.PE and cr0.WP and cr0.MP and cr0.NE and cr0.TS; Clear cr0.EM
     mov %cr0, %eax
-    or $(1 << 31 | 1 << 16), %eax
+    or $(1 << 31 | 1 << 16 | 1 << 5 | 1 << 3 | 1 << 1), %eax
+    and $(~(1 << 2)), %eax
     mov %eax, %cr0
 
     lgdtl (GDT_DESCRIPTOR)

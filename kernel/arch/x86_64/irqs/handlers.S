@@ -4,6 +4,21 @@ handle_double_fault_entry:
     call handle_double_fault
     iretq
 
+.global handle_invalid_opcode_entry
+handle_invalid_opcode_entry:
+    call handle_invalid_opcode
+    iretq
+
+.global handle_fpu_exception_entry
+handle_fpu_exception_entry:
+    call handle_fpu_exception
+    iretq
+
+.global handle_device_not_available_entry
+handle_device_not_available_entry:
+    call handle_device_not_available
+    iretq
+
 .global handle_general_protection_fault_entry
 handle_general_protection_fault_entry:
     movq (%rsp), %rdi
