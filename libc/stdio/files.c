@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <sys/param.h>
 
 #define STDIO_OWNED 0x800000
 
@@ -64,7 +65,7 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
     file->pos = 0;
     file->buffer = malloc(BUFSIZ);
     file->fd = fd;
-    file->length = BUFSIZ;
+    file->length = mode[0] == 'r' ? 0 : BUFSIZ;
     file->flags = flags | STDIO_OWNED;
     file->buf_type = _IOFBF;
     file->eof = 0;
@@ -75,13 +76,50 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
 }
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    ssize_t ret = read(stream->fd, ptr, nmemb * size);
+    if (stream->buf_type == _IONBF) {
+        ssize_t ret = read(stream->fd, ptr, nmemb * size);
 
-    if (ret < 0) {
-        return 0;
+        if (ret < 0) {
+            return 0;
+        }
+
+        return (size_t) ret;
     }
 
-    return (size_t) ret;
+    size_t to_read = size * nmemb;
+    if (stream->length - stream->pos > 0) {
+        size_t can_copy = MIN(to_read, (size_t) (stream->length - stream->pos));
+        memcpy(ptr, stream->buffer + stream->pos, can_copy);
+        stream->pos += can_copy;
+        to_read -= can_copy;
+        if (to_read == 0) {
+            return can_copy;
+        }
+    }
+
+    if (to_read > BUFSIZ) {
+        ssize_t ret = read(stream->fd, ptr, to_read);
+
+        if (ret < 0) {
+            return 0;
+        }
+
+        return (size_t) ret;
+    }
+
+    stream->pos = 0;
+    stream->length = read(stream->fd, stream->buffer, BUFSIZ);
+
+    // Read failed
+    if (stream->length <= 0) {
+        stream->error = stream->length < 0 ? 1 : 0;
+        stream->eof = stream->length < 0 ? 0 : 1;
+        return size * nmemb - to_read;
+    }
+
+    memcpy(ptr, stream->buffer, to_read);
+    stream->pos += to_read;
+    return nmemb * size;
 }
 
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
@@ -198,7 +236,7 @@ int fgetc(FILE *stream) {
     }
 
     char c;
-    ssize_t ret = read(stream->fd, &c, 1);
+    ssize_t ret = fread(&c, sizeof(char), 1, stream);
     if (ret <= 0) {
         return EOF;
     }
@@ -355,9 +393,9 @@ void init_files() {
     /* stdin */
     files[0].fd = 0;
     files[0].pos = 0;
-    files[0].buf_type = _IOLBF;
+    files[0].buf_type = isatty(STDIN_FILENO) ? _IONBF : _IOFBF;
     files[0].buffer = malloc(BUFSIZ);
-    files[0].length = BUFSIZ;
+    files[0].length = 0;
     files[0].eof = 0;
     files[0].error = 0;
     files[0].flags = O_RDWR | STDIO_OWNED;
