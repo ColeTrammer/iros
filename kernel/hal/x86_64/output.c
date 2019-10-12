@@ -89,16 +89,16 @@ void dump_registers_to_screen() {
     printf("\n\33[31m");
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
-    printf("RAX=%#.16llX RBX=%#.16llX\n", rax, rbx);
-    printf("RCX=%#.16llX RDX=%#.16llX\n", rcx, rdx);
-    printf("RBP=%#.16llX RSP=%#.16llX\n", rbp, rsp);
-    printf("RSI=%#.16llX RDI=%#.16llX\n", rsi, rdi);
-    printf("R8 =%#.16llX R9 =%#.16llX\n", r8 , r9 );
-    printf("R10=%#.16llX R11=%#.16llX\n", r10, r11);
-    printf("R12=%#.16llX R13=%#.16llX\n", r12, r13);
-    printf("R14=%#.16llX R15=%#.16llX\n", r14, r15);
+    printf("RAX=%#.16lX RBX=%#.16lX\n", rax, rbx);
+    printf("RCX=%#.16lX RDX=%#.16lX\n", rcx, rdx);
+    printf("RBP=%#.16lX RSP=%#.16lX\n", rbp, rsp);
+    printf("RSI=%#.16lX RDI=%#.16lX\n", rsi, rdi);
+    printf("R8 =%#.16lX R9 =%#.16lX\n", r8 , r9 );
+    printf("R10=%#.16lX R11=%#.16lX\n", r10, r11);
+    printf("R12=%#.16lX R13=%#.16lX\n", r12, r13);
+    printf("R14=%#.16lX R15=%#.16lX\n", r14, r15);
 
 #ifndef KERNEL_NO_DEBUG_COLORS
-    printf("CR3=%#.16llX\033[0m\n", cr3);
+    printf("CR3=%#.16lX\033[0m\n", cr3);
 #endif /* KERNEL_NO_DEBUG_COLORS */
 }

@@ -322,7 +322,7 @@ static uint32_t ext2_find_open_block(struct super_block *sb, size_t blk_grp_inde
     }
 
     ret += data->sb->num_inodes_in_block_group * blk_grp_index + 1;
-    debug_log("Allocated block index: [ %lld ]\n", ret);
+    debug_log("Allocated block index: [ %ld ]\n", ret);
     return (uint32_t) ret;
 }
 
@@ -448,7 +448,7 @@ static uint32_t ext2_find_open_inode(struct super_block *sb, size_t blk_grp_inde
     }
 
     ret += data->sb->num_inodes_in_block_group * blk_grp_index + 1;
-    debug_log("Allocated inode index: [ %lld ]\n", ret);
+    debug_log("Allocated inode index: [ %ld ]\n", ret);
     return (uint32_t) ret;
 }
 
