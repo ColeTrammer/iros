@@ -15,7 +15,7 @@ cd ..
 # Run autoconf
 cd gcc-8.3.0
 cd libstdc++-v3
-autoconf
+autoconf2.64
 cd ../..
 
 # Install headers for correct build
@@ -29,10 +29,11 @@ cd build-gcc
 ../gcc-8.3.0/configure --target=x86_64-os_2 --prefix=/home/eloc/Workspace/os/os_2/toolchain/cross --disable-nls --with-sysroot=/home/eloc/Workspace/os/os_2/sysroot --enable-languages=c,c++
 make all-gcc -j5
 make all-target-libgcc CFLAGS_FOR_TARGET='-g -O2 -mcmodel=large -mno-red-zone' -j5
+make all-target-libstdc++-v3 -j5
 
 # Install
 mkdir -p ../../cross
-make install-gcc install-target-libgcc
+make install-gcc install-target-libgcc install-target-libstdc++-v3
 cd ..
 
 # Clean Up
