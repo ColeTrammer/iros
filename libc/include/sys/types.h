@@ -1,11 +1,15 @@
 #ifndef _SYS_TYPES_H
 #define _SYS_TYPES_H 1
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
 typedef int pid_t;
+typedef unsigned long clock_t;
 typedef unsigned int mode_t;
 typedef unsigned long dev_t;
 typedef long off_t;

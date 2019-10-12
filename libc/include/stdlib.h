@@ -4,12 +4,12 @@
 #include <alloca.h>
 #include <stddef.h>
 
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE 1
 
 #ifndef __is_libk
 
@@ -23,14 +23,42 @@ int atexit(void (*f)(void));
 
 #endif /* __is_libk */
 
-void abort() __attribute__((__noreturn__));
+typedef struct div_t {
+    int quot;
+    int rem;
+} div_t;
+
+typedef struct ldiv_t {
+    long quot;
+    long rem;
+} ldiv_t;
+
+void abort(void) __attribute__((__noreturn__));
+
+void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *k1, const void *k2));
+void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *k1, const void *k2));
+
+int rand(void);
+void srand(unsigned int seed);
+
+int system(const char *command);
+
+int abs(int n);
+long labs(long n);
+
+div_t div(int num, int den);
+ldiv_t ldiv(long num, long den);
 
 int atoi(const char *s);
+long atol(const char *s);
+long long atoll(const char *s);
+double atof(const char *s);
 
 long strtol(const char *__restrict str, char **__restrict endptr, int base);
 long long strtoll(const char *__restrict str, char **__restrict endptr, int base);
 unsigned long strtoul(const char *__restrict str, char **__restrict endptr, int base);
 unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base);
+double strtod(const char *__restrict str, char **__restrict endptr);
 
 #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
 void *malloc(size_t size, int line, const char *func);

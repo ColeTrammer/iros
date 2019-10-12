@@ -44,6 +44,7 @@ $(BUILDDIR)/libc/stdio/scanf.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
 $(BUILDDIR)/libc/stdlib/conversions.o \
 $(BUILDDIR)/libc/stdlib/malloc.o \
+$(BUILDDIR)/libc/stdlib/stdlib.o \
 $(BUILDDIR)/libc/string/memchr.o \
 $(BUILDDIR)/libc/string/memcmp.o \
 $(BUILDDIR)/libc/string/memcpy.o \
@@ -74,7 +75,9 @@ $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/atexit.o \
 $(BUILDDIR)/libc/stdlib/env.o \
+$(BUILDDIR)/libc/string/strcoll.o \
 $(BUILDDIR)/libc/string/strerror.o \
+$(BUILDDIR)/libc/string/strxfrm.o \
 $(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/time/time.o \
 $(BUILDDIR)/libc/unistd/exec.o \
@@ -90,8 +93,12 @@ $(HOSTEDOBJS)
 # Lists objects used by libk
 LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 
+# List objects used by libm
+LIBM_OBJS=\
+$(BUILDDIR)/libc/math/math.o
+
 # List of binaries to be created
-BINARIES=$(BUILDDIR)/libc/libc.a $(BUILDDIR)/libc/libk.a
+BINARIES=$(BUILDDIR)/libc/libc.a $(BUILDDIR)/libc/libk.a $(BUILDDIR)/libc/libm.a
 
 .PHONY: all
 all: $(BINARIES)
@@ -101,6 +108,9 @@ $(BUILDDIR)/libc/libc.a: $(OBJS)
 	$(AR) rcs $@ $^
 
 $(BUILDDIR)/libc/libk.a: $(LIBK_OBJS)
+	$(AR) rcs $@ $^
+
+$(BUILDDIR)/libc/libm.a: $(LIBM_OBJS)
 	$(AR) rcs $@ $^
 
 # Makes object file from any .c or .S file
@@ -120,8 +130,8 @@ $(BUILDDIR)/libc/libk.a: $(LIBK_OBJS)
 .PHONY: clean
 clean:
 	rm -f $(BINARIES)
-	rm -f $(OBJS) $(LIBK_OBJS) $(ARCH_RAW_OBJS)
-	rm -f $(OBJS:.o=.d) $(LIBK_OBJS:.o=.d) $(ARCH_RAW_OBJS:.o=.d)
+	rm -f $(OBJS) $(LIBK_OBJS) $(ARCH_RAW_OBJS) $(LIBM_OBJS)
+	rm -f $(OBJS:.o=.d) $(LIBK_OBJS:.o=.d) $(ARCH_RAW_OBJS:.o=.d) $(LIBM_OBJS:.o=.d)
 
 .PHONY: install install-headers install-libs install-raw-objs
 install: install-headers install-libs install-raw-objs
@@ -148,3 +158,4 @@ install-raw-objs: $(ARCH_RAW_OBJS)
 # make to go back and rebuild the object.
 -include $(OBJS:.o:.d)
 -include $(LIBK_OBJS:.o:.d)
+-include $(LIBM_OBJS:.o:.d)

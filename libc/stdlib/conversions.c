@@ -3,11 +3,20 @@
 #include <limits.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 int atoi(const char *s) {
-	int n = 0;
+	return (int) atol(s);
+}
+
+long atol(const char *s) {
+    return (long) atoll(s);
+}
+
+long long atoll(const char *s) {
+    long long n = 0;
     size_t i = 0;
-    int sign = 1;
+    long long sign = 1;
 
     while (isspace(s[i])) { i++; }
 
@@ -17,7 +26,7 @@ int atoi(const char *s) {
     }
 
 	for (; s[i] != '\0' && isdigit(s[i]); i++) {
-		int digit = s[i] - '0';
+		long long digit = s[i] - '0';
 		n *= 10;
 		n += digit;
 	}
@@ -183,3 +192,15 @@ unsigned long long strtoull(const char *__restrict str, char **__restrict endptr
     }
     return value;
 }
+
+// double atof(const char *s) {
+//     return strtod(s, NULL);
+// }
+
+// double strtod(const char *__restrict str, char **__restrict endptr) {
+//     (void) str;
+//     (void) endptr;
+
+//     fprintf(stderr, "strtod: unimplemented");
+//     return 0.0;
+// }

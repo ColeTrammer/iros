@@ -228,6 +228,10 @@ int fputs(const char *s, FILE *f) {
     return fprintf(f, "%s\n", s);
 }
 
+int getc(FILE *stream) {
+    return fgetc(stream);
+}
+
 int fgetc(FILE *stream) {
     if (stream->pushed_back_char != '\0') {
         int ret = (int) stream->pushed_back_char;
@@ -253,13 +257,21 @@ int getchar() {
     return fgetc(stdin);
 }
 
-int putchar(int c) {
-    int ret = printf("%c", (char) c);
+int putc(int c, FILE *stream) {
+    return fputc(c, stream);
+}
+
+int fputc(int c, FILE *stream) {
+    int ret = fprintf(stream, "%c", (char) c);
     if (ret < 0) {
         return EOF;
     }
 
     return (unsigned char) c;
+}
+
+int putchar(int c) {
+    return fputc(c, stdout);
 }
 
 char *fgets(char *__restrict buf, int size, FILE *__restrict stream) {

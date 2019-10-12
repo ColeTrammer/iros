@@ -57,6 +57,7 @@ extern FILE* stderr;
 int fclose(FILE *stream);
 int fflush(FILE *stream);
 FILE *fopen(const char *__restrict path, const char *__restrict mode);
+FILE *fdopen(int fd, const char *mode);
 FILE* freopen(const char *path, const char *mode, FILE *stream);
 void setbuf(FILE *stream, char *buf);
 int setvbuf(FILE *stream, char *buf, int mode, size_t size);
@@ -81,10 +82,10 @@ int fgetc(FILE *stream);
 char *fgets(char *__restrict s, int size, FILE *__restrict stream);
 int fputc(int c, FILE *stream);
 int fputs(const char *s, FILE *stream);
-#define getc(stream) fgetc(stream)
+int getc(FILE *stream);
 int getchar();
 char *gets(char *s) __attribute__((deprecated));
-#define putc(c, stream) fputc(c, stream)
+int putc(int c, FILE *stream);
 int putchar(int c);
 int puts(const char *s);
 int ungetc(int c, FILE *stream);
@@ -102,6 +103,9 @@ void clearerr(FILE *stream);
 int feof(FILE *stream);
 int ferror(FILE *stream);
 int fileno(FILE *stream);
+
+int remove(const char *path);
+int rename(const char *old_path, const char *new_path);
 
 ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restrict stream);
 
