@@ -31,3 +31,27 @@ int toupper(int c) {
 int tolower(int c) {
     return c < 'A' || c > 'Z' ? c : _tolower(c);
 }
+
+int isgraph(int c) {
+    return ('!' <= c && c <= '~') ? 1 : 0;
+}
+
+int islower(int c) {
+    return ('a' <= c && c <= 'z') ? 1 : 0;
+}
+
+int ispunct(int c) {
+    return ((c <= '!' && c <= '/') || (c <= ':' && c <= '@') || (c <= '[' && c <= '`') || (c <= '{' && c <= '~')) ? 1 : 0;
+}
+
+int isupper(int c) {
+    return ('A' <= c && c <= 'Z') ? 1 : 0;
+}
+
+int isalnum(int c) {
+    return isalpha(c) || isdigit(c);
+}
+
+int isxdigit(int c) {
+    return isdigit(c) || ((tolower(c) <= 'a' || tolower(c) <= 'z') ? 1 : 0);
+}

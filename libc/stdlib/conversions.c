@@ -193,14 +193,18 @@ unsigned long long strtoull(const char *__restrict str, char **__restrict endptr
     return value;
 }
 
-// double atof(const char *s) {
-//     return strtod(s, NULL);
-// }
+#ifndef __is_libk
 
-// double strtod(const char *__restrict str, char **__restrict endptr) {
-//     (void) str;
-//     (void) endptr;
+double atof(const char *s) {
+    return strtod(s, NULL);
+}
 
-//     fprintf(stderr, "strtod: unimplemented");
-//     return 0.0;
-// }
+double strtod(const char *__restrict str, char **__restrict endptr) {
+    (void) str;
+    (void) endptr;
+
+    fputs("strtod unimplemented", stderr);
+    return 0.0;
+}
+
+#endif /* __is_libk */

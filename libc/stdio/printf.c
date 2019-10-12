@@ -54,6 +54,21 @@ static int parseInt(const char* num, size_t length) {
 	return n;
 }
 
+int sprintf(char *__restrict s, const char *__restrict format, ...) {
+	va_list parameters;
+	va_start(parameters, format);
+
+	int written = vsprintf(s, format, parameters);
+
+	va_end(parameters);
+	return written;
+}
+
+int vsprintf(char *__restrict s, const char *__restrict format, va_list parameters) {
+	struct snprintf_info info = { s, INT_MAX, 0 };
+	return printf_internal(sprint, &info, format, parameters);
+}
+
 int snprintf(char *__restrict s, size_t len, const char *__restrict format, ...) {
 	va_list parameters;
 	va_start(parameters, format);

@@ -75,6 +75,55 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
     return file;
 }
 
+FILE *fdopen(int fd, const char *__restrict mode) {
+    int flags = 0;
+    switch(mode[0]) {
+        case 'r': 
+            switch(mode[1]) {
+                case '+':
+                    flags = O_RDWR;
+                    break;
+                default:
+                    flags = O_RDONLY;
+                    break;
+            }
+            break;
+        case 'w':
+            switch(mode[1]) {
+                case '+':
+                    flags = O_RDWR | O_CREAT | O_TRUNC;
+                    break;
+                default:
+                    flags = O_WRONLY | O_CREAT | O_TRUNC;
+                    break;
+            }
+            break;
+        case 'a':
+            switch(mode[1]) {
+                case '+':
+                    flags = O_RDWR | O_CREAT | O_APPEND;
+                    break;
+                default:
+                    flags = O_WRONLY | O_CREAT | O_APPEND;
+                    break;
+            }
+            break;
+    }
+
+    FILE *file = malloc(sizeof(FILE));
+    file->pos = 0;
+    file->buffer = malloc(BUFSIZ);
+    file->fd = fd;
+    file->length = mode[0] == 'r' ? 0 : BUFSIZ;
+    file->flags = flags | STDIO_OWNED;
+    file->buf_type = _IOFBF;
+    file->eof = 0;
+    file->error = 0;
+    file->pushed_back_char = '\0';
+
+    return file;
+}
+
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     if (stream->buf_type == _IONBF) {
         ssize_t ret = read(stream->fd, ptr, nmemb * size);
@@ -346,6 +395,15 @@ int ferror(FILE *stream) {
 
 int fileno(FILE *stream) {
     return stream->fd;
+}
+
+int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    free(stream->buffer);
+    stream->buffer = buf;
+    stream->buf_type = mode;
+    stream->length = size;
+    stream->flags &= STDIO_OWNED;
+    return 0;
 }
 
 FILE *tmpfile(void) {

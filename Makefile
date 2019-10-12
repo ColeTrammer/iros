@@ -20,6 +20,7 @@ HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 
 # Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
 export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export CXX:=$(ROOT)/toolchain/cross/bin/$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
 export AR:=$(HOST)-ar
 export OBJCOPY:=$(HOST)-objcopy
 
@@ -73,7 +74,7 @@ install-sources:
 	mkdir -p $(BUILDDIR)
 	cd $(ROOT); \
 	for dir in $(PROJECTS); do \
-	  find ./$$dir \( -name '*.c' -o -name '*.h' -o -name '*.S' \) -exec cp --preserve=timestamps --parents -u \{\} $(BUILDDIR) \;; \
+	  find ./$$dir \( -name '*.c' -o -name '*.h' -o -name '*.S' -o -name '*.cpp' \) -exec cp --preserve=timestamps --parents -u \{\} $(BUILDDIR) \;; \
 	done
 
 # Installs headers by calling each project's install-headers

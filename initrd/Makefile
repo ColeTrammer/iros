@@ -42,6 +42,7 @@ $(BUILDDIR)/initrd/programs/shell \
 $(BUILDDIR)/initrd/programs/stat \
 $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test \
+$(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/touch
 
@@ -64,6 +65,9 @@ $(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
 
 %: %.c
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
+
+%: %.cpp
+	$(CXX) -MD -o $@ $< $(CLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean
