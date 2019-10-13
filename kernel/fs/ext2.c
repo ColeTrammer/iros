@@ -1140,7 +1140,7 @@ int ext2_unlink(struct tnode *tnode) {
     struct raw_inode *raw_inode = inode->private_data;
     assert(raw_inode);
 
-    if ((raw_inode->mode & S_IWUSR)) {
+    if (!(raw_inode->mode & S_IWUSR)) {
         return -EPERM;
     }
 
