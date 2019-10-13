@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Variables
+export ROOT="$PWD/../.."
+export TARGET=`$ROOT/default-host.sh`
+
 # Download tar.gz
 curl https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.gz --output binutils-os_2-2.32.tar.gz
 
@@ -26,15 +30,10 @@ cd toolchain/binutils-2.32
 # Build
 mkdir -p build-binutils
 cd build-binutils
-../binutils-2.32/configure --target=x86_64-os_2 --prefix=/home/eloc/Workspace/os/os_2/toolchain/cross --disable-nls --with-sysroot=/home/eloc/Workspace/os/os_2/sysroot --disable-werror
-make
+../binutils-2.32/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --with-sysroot=$ROOT/sysroot --disable-werror
+make -j5
 
 # Install
-mkdir -p ../../cross
+mkdir -p $ROOT/toolchain/cross
 make install
 cd ..
-
-# Clean Up
-rm -rf build-binutils
-rm -rf binutils-2.32
-rm binutils-os_2-2.32.tar.gz

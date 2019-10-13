@@ -42,7 +42,6 @@ $(BUILDDIR)/initrd/programs/shell \
 $(BUILDDIR)/initrd/programs/stat \
 $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test \
-$(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/touch
 

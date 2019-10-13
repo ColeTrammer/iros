@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Variables
+export ROOT="$PWD/../.."
+export TARGET=`$ROOT/default-host.sh`
+
 # Download tar.gz
 curl http://ftp.gnu.org/gnu/gcc/gcc-8.3.0/gcc-8.3.0.tar.gz --output gcc-os_2-8.3.0.tar.gz
 
@@ -26,7 +30,7 @@ cd toolchain/gcc-8.3.0
 # Build
 mkdir -p build-gcc
 cd build-gcc
-../gcc-8.3.0/configure --target=x86_64-os_2 --prefix=/home/eloc/Workspace/os/os_2/toolchain/cross --disable-nls --disable-lto --with-sysroot=/home/eloc/Workspace/os/os_2/sysroot --enable-languages=c,c++
+../gcc-8.3.0/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --disable-lto --with-sysroot=$ROOT/sysroot --enable-languages=c,c++ --with-build-time-tools=$ROOT/toolchain/cross/bin
 make all-gcc -j5
 make all-target-libgcc CFLAGS_FOR_TARGET='-g -O2 -mcmodel=large -mno-red-zone' -j5
 make all-target-libstdc++-v3 -j5
@@ -35,8 +39,3 @@ make all-target-libstdc++-v3 -j5
 mkdir -p ../../cross
 make install-gcc install-target-libgcc install-target-libstdc++-v3
 cd ..
-
-# Clean Up
-rm -rf build-gcc
-rm -rf gcc-8.3.0
-rm gcc-os_2-8.3.0.tar.gz
