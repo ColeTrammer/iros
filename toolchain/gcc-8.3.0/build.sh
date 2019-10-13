@@ -26,7 +26,7 @@ cd toolchain/gcc-8.3.0
 # Build
 mkdir -p build-gcc
 cd build-gcc
-../gcc-8.3.0/configure --target=x86_64-os_2 --prefix=/home/eloc/Workspace/os/os_2/toolchain/cross --disable-nls --with-sysroot=/home/eloc/Workspace/os/os_2/sysroot --enable-languages=c,c++
+../gcc-8.3.0/configure --target=x86_64-os_2 --prefix=/home/eloc/Workspace/os/os_2/toolchain/cross --disable-nls --disable-lto --with-sysroot=/home/eloc/Workspace/os/os_2/sysroot --enable-languages=c,c++
 make all-gcc -j5
 make all-target-libgcc CFLAGS_FOR_TARGET='-g -O2 -mcmodel=large -mno-red-zone' -j5
 make all-target-libstdc++-v3 -j5
