@@ -48,6 +48,17 @@ struct arch_process {
     bool setup_kernel_stack;
 };
 
+// Can be longer if more extensions are enabled,
+// so this basically needs to be variable length
+struct raw_fpu_state {
+    uint8_t image[512];
+} __attribute__((packed));
+
+struct arch_fpu_state {
+    bool saved;
+    struct raw_fpu_state raw_fpu_state;
+};
+
 extern void __run_process(struct arch_process *state);
 
 #endif /* _KERNEL_ARCH_X86_64_PROC_PROCESS_H */

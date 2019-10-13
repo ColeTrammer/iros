@@ -221,9 +221,9 @@ enable_paging:
     mov $PML4, %eax
     mov %eax, %cr3
 
-    # Set cr0.PE and cr0.WP and cr0.MP and cr0.NE and cr0.TS; Clear cr0.EM
+    # Set cr0.PE and cr0.WP and cr0.MP and cr0.NE; Clear cr0.EM
     mov %cr0, %eax
-    or $(1 << 31 | 1 << 16 | 1 << 5 | 1 << 3 | 1 << 1), %eax
+    or $(1 << 31 | 1 << 16 | 1 << 5 | 1 << 1), %eax
     and $(~(1 << 2)), %eax
     mov %eax, %cr0
 

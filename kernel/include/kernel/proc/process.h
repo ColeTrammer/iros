@@ -31,6 +31,8 @@ struct process {
 
     struct process *prev;
     struct process *next;
+
+    struct arch_fpu_state fpu;
 };
 
 void init_kernel_process();

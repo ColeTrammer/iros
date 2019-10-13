@@ -61,13 +61,13 @@ $(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
 
 %: %.S
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
 %: %.c
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
 %: %.cpp
-	$(CXX) -MD -o $@ $< $(CLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx
+	$(CXX) -MD -o $@ $< $(CLAGS) $(CPPFLAGS) -T programs/link.ld
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean

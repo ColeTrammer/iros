@@ -9,7 +9,7 @@ int main(/* int argc, char **argv, char **envp */) {
     char *line = NULL;
     ssize_t line_len;
 
-    FILE *f = fopen("a.txt", "r");
+    FILE *f = fopen("/initrd/a.txt", "r");
     while ((line_len = getline(&line, &n, f)) != -1) {
         while (line[line_len - 1] == '\n' || line[line_len - 1] == '\r') {
             line[--line_len] = '\0';

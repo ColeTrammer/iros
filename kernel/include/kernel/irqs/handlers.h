@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+struct process;
+
 void init_irq_handlers();
 
 void handle_invalid_opcode_entry();
@@ -20,5 +22,7 @@ void handle_page_fault(uintptr_t address, uintptr_t error);
 void handle_invalid_opcode();
 void handle_fpu_exception();
 void handle_device_not_available();
+
+void invalidate_last_saved(struct process *process);
 
 #endif /* _KERNEL_INTERRUPTS_INTERRUPTS_H */

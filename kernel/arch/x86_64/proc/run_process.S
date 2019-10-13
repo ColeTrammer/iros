@@ -4,6 +4,11 @@ __run_process:
     # Simply loads process_state struct from pointer in %rdi,
     # Making sure to load %rdi last for obvious reasons
 
+    # Before switching tasks, make sure cr0.TS is set so that sse and fpu work
+    movq %cr0, %rax
+    or $(1 << 3), %rax
+    movq %rax, %cr0
+
     movq (%rdi), %r15
     movq 8(%rdi), %r14
     movq 16(%rdi), %r13

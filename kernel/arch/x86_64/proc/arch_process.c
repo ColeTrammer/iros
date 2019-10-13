@@ -35,6 +35,7 @@ void arch_init_kernel_process(struct process *kernel_process) {
     kernel_process->arch_process.process_state.stack_state.ss = DATA_SELECTOR;
     kernel_process->arch_process.process_state.stack_state.rsp = __KERNEL_VM_STACK_START;
     kernel_process->arch_process.setup_kernel_stack = false;
+    kernel_process->fpu.saved = false;
 }
 
 void arch_load_process(struct process *process, uintptr_t entry) {
@@ -58,6 +59,7 @@ void arch_load_process(struct process *process, uintptr_t entry) {
     process->arch_process.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
     do_unmap_page(kernel_proc_stack->start, false);
     process->arch_process.setup_kernel_stack = false;
+    process->fpu.saved = false;
 }
 
 /* Must be called from unpremptable context */

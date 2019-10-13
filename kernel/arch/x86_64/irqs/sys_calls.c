@@ -15,6 +15,7 @@
 #include <kernel/sched/process_sched.h>
 #include <kernel/fs/vfs.h>
 
+#include <kernel/irqs/handlers.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
@@ -33,6 +34,8 @@ void arch_sys_exit(struct process_state *process_state) {
 
     struct process *process = get_current_process();
     process->sched_state = EXITING;
+
+    invalidate_last_saved(process);
 
     int exit_code = (int) process_state->cpu_state.rsi;
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
@@ -75,6 +78,12 @@ void arch_sys_fork(struct process_state *process_state) {
     child->arch_process.setup_kernel_stack = true;
     child->cwd = malloc(strlen(parent->cwd) + 1);
     strcpy(child->cwd, parent->cwd);
+
+    // Clone fpu if necessary
+    if (parent->fpu.saved) {
+        child->fpu.saved = true;
+        memcpy(&child->fpu.raw_fpu_state, &parent->fpu.raw_fpu_state, sizeof(struct raw_fpu_state));
+    }
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (parent->files[i]) {
@@ -200,6 +209,7 @@ void arch_sys_execve(struct process_state *process_state) {
 
     int error = 0;
     struct file *program = fs_open(path, &error);
+
     if (program == NULL) {
         /* Should look at $PATH variable, instead is currently hardcoded */
         char *path_list[] = { "/initrd", "/bin", "/usr/bin", NULL };
@@ -243,6 +253,8 @@ void arch_sys_execve(struct process_state *process_state) {
         free(buffer);
         SYS_RETURN(-ENOEXEC);
     }
+
+    debug_log("Creating new process\n");
 
     struct process *process = calloc(1, sizeof(struct process));
 
@@ -302,6 +314,7 @@ void arch_sys_execve(struct process_state *process_state) {
     disable_interrupts();
 
     sched_remove_process(current);
+    invalidate_last_saved(current);
     free_process(current, false, false);
     sched_add_process(process);
 

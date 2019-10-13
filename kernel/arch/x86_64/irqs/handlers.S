@@ -16,7 +16,43 @@ handle_fpu_exception_entry:
 
 .global handle_device_not_available_entry
 handle_device_not_available_entry:
+    push %rax
+    push %rbx
+    push %rcx
+    push %rdx
+    push %rsi
+    push %rdi
+    push %rbp
+    push %r8
+    push %r9
+    push %r10
+    push %r11
+    push %r12
+    push %r13
+    push %r14
+    push %r15
+
+    # Manually clear cr0.TS so that we can mess with fpu state
+    clts
+
     call handle_device_not_available
+
+    pop %r15
+    pop %r14
+    pop %r13
+    pop %r12
+    pop %r11
+    pop %r10
+    pop %r9
+    pop %r8
+    pop %rbp
+    pop %rdi
+    pop %rsi
+    pop %rdx
+    pop %rcx
+    pop %rbx
+    pop %rax
+
     iretq
 
 .global handle_general_protection_fault_entry
