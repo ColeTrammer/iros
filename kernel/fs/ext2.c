@@ -908,7 +908,6 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
 
             if (real_block_offset * sizeof(uint32_t) >= (size_t) inode->super_block->block_size) {
                 /* Should instead start reading from the doubly indirect block */
-                ext2_free_blocks(indirect_block);
                 ext2_free_blocks(block);
                 break;
             }

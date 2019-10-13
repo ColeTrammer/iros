@@ -1,11 +1,12 @@
 diff --git a/bfd/config.bfd b/bfd/config.bfd
-index 0e1ddb65..f37dbca4 100644
+index 0e1ddb65..bdf1f7cd 100644
 --- a/bfd/config.bfd
 +++ b/bfd/config.bfd
-@@ -577,6 +577,17 @@ case "${targ}" in
+@@ -576,6 +576,18 @@ case "${targ}" in
+     targ_selvecs="x86_64_elf64_sol2_vec l1om_elf64_vec k1om_elf64_vec iamcu_elf32_vec i386_coff_vec i386_pei_vec x86_64_pei_vec"
      want64=true
      ;;
- #endif
++#endif
 +  i[3-7]86-*-os_2*)
 +    targ_defvec=i386_elf32_vec
 +    targ_selvecs=
@@ -17,9 +18,9 @@ index 0e1ddb65..f37dbca4 100644
 +    targ_selvecs=i386_elf32_vec
 +    want64=true
 +    ;;
+ #endif
    i[3-7]86-*-kaos*)
      targ_defvec=i386_elf32_vec
-     targ_selvecs=i386_elf32_vec
 diff --git a/config.sub b/config.sub
 index 75bb6a31..d6ec76ce 100755
 --- a/config.sub
@@ -45,7 +46,7 @@ index 616d2113..24ccdffd 100644
    ia16-*-elf*)				fmt=elf ;;
  
 diff --git a/ld/Makefile.am b/ld/Makefile.am
-index c2c798b4..4182647d 100644
+index c2c798b4..29875aa5 100644
 --- a/ld/Makefile.am
 +++ b/ld/Makefile.am
 @@ -289,6 +289,7 @@ ALL_EMULATION_SOURCES = \
@@ -64,24 +65,22 @@ index c2c798b4..4182647d 100644
  	ehppa64linux.c \
  	ei386pep.c \
  	emmo.c
-@@ -1312,6 +1314,10 @@ eelf_i386_sol2.c: $(srcdir)/emulparams/elf_i386_sol2.sh \
+@@ -1312,6 +1314,9 @@ eelf_i386_sol2.c: $(srcdir)/emulparams/elf_i386_sol2.sh \
    $(srcdir)/emultempl/solaris2.em \
    $(ELF_X86_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  
 +eelf_i386_os_2.c: $(srcdir)/emulparams/elf_i386_os_2.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} elf_i386_os_2 "$(tdir_elf_i386_os_2)"
 +
  eelf_i386_vxworks.c: $(srcdir)/emulparams/elf_i386_vxworks.sh \
    $(srcdir)/emulparams/vxworks.sh $(srcdir)/emultempl/vxworks.em \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-@@ -1868,6 +1874,10 @@ eelf_x86_64_sol2.c: $(srcdir)/emulparams/elf_x86_64_sol2.sh \
+@@ -1868,6 +1873,9 @@ eelf_x86_64_sol2.c: $(srcdir)/emulparams/elf_x86_64_sol2.sh \
    $(srcdir)/emultempl/solaris2.em \
    $(ELF_X86_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
  
 +eelf_x86_64_os_2.c: $(srcdir)/emulparams/elf_x86_64_os_2.sh \
 +  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-+	${GENSCRIPTS} elf_x86_64_os_2 "$(tdir_elf_x86_64_os_2)"
 +
  ehppa64linux.c: $(srcdir)/emulparams/hppa64linux.sh \
    $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -108,17 +107,19 @@ index beba17ef..8414116b 100644
  i[3-7]86-*-knetbsd*-gnu)
 diff --git a/ld/emulparams/elf_i386_os_2.sh b/ld/emulparams/elf_i386_os_2.sh
 new file mode 100644
-index 00000000..83285cb8
+index 00000000..60a1cf55
 --- /dev/null
 +++ b/ld/emulparams/elf_i386_os_2.sh
-@@ -0,0 +1 @@
+@@ -0,0 +1,4 @@
 +. ${srcdir}/emulparams/elf_i386.sh
-\ No newline at end of file
++GENERATE_SHLIB_SCRIPT=yes
++GENERATE_PIE_SCRIPT=yes
++TEXT_START_ADDR=0x400000
 diff --git a/ld/emulparams/elf_x86_64_os_2.sh b/ld/emulparams/elf_x86_64_os_2.sh
 new file mode 100644
-index 00000000..f4f4496f
+index 00000000..e123792d
 --- /dev/null
 +++ b/ld/emulparams/elf_x86_64_os_2.sh
-@@ -0,0 +1 @@
+@@ -0,0 +1,2 @@
 +. ${srcdir}/emulparams/elf_x86_64.sh
-\ No newline at end of file
++TEXT_START_ADDR=0x400000

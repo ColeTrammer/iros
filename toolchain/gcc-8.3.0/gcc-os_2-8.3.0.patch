@@ -53,10 +53,10 @@ index 7af8e0281..9cb144833 100644
  	tmake_file="arc/t-multilib arc/t-arc"
 diff --git a/gcc/config/os_2.h b/gcc/config/os_2.h
 new file mode 100644
-index 000000000..2d379ff23
+index 000000000..47c0f1e54
 --- /dev/null
 +++ b/gcc/config/os_2.h
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,34 @@
 +/* Useful if you wish to make target-specific GCC changes. */
 +#undef TARGET_OS_2
 +#define TARGET_OS_2 1
@@ -77,6 +77,9 @@ index 000000000..2d379ff23
 + 
 +#undef  NO_IMPLICIT_EXTERN_C
 +#define NO_IMPLICIT_ExTERN_C 1
++
++#undef LINK_SPEC
++#define LINK_SPEC "-z max-page-size=4096"
 +
 +/* Additional predefined macros. */
 +#undef TARGET_OS_CPP_BUILTINS

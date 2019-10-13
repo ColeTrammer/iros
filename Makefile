@@ -19,9 +19,9 @@ HOST?=$(DEFAULT_HOST)
 HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 
 # Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
-export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export CC:=$(ROOT)/toolchain/cross/bin/$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
 export CXX:=$(ROOT)/toolchain/cross/bin/$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
-export AR:=$(HOST)-ar
+export AR:=$(ROOT)/toolchain/cross/bin/$(HOST)-ar
 export OBJCOPY:=$(HOST)-objcopy
 
 .PHONY: all
