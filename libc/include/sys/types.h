@@ -21,6 +21,9 @@ typedef long blksize_t;
 typedef long blkcnt_t;
 typedef long time_t;
 
+typedef int pthread_attr_t;
+typedef int pthread_t;
+
 typedef long ssize_t;
 
 #ifdef __cplusplus

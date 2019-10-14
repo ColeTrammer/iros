@@ -16,7 +16,6 @@ static unsigned int count = 0;
 static unsigned int count_to = 0;
 
 static int ms = 0;
-/* Should somehow be initialized by CMOS */
 static time_t seconds = 0;
 
 void pit_set_time(time_t time) {
