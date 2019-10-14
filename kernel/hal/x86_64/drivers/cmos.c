@@ -70,4 +70,12 @@ void init_cmos() {
     debug_log("CMOS Month: [ %u ]\n", time.month);
     debug_log("CMOS Year: [ %u ]\n", time.year + time.century * 100);
     debug_log("CMOS Century: [ %u ]\n", time.century);
+
+    uint64_t seconds_since_epoch = time.second + 
+                                   60UL * time.minute + 
+                                   3600UL * time.hour +
+                                   86400UL * (time.day - 1UL) +
+                                   2629743UL * (time.month - 1UL) +
+                                   31556926UL * (time.year + time.century * 100UL - 1970UL);
+    debug_log("UNIX Time: [ %lu ]\n", seconds_since_epoch);
 }
