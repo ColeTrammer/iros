@@ -245,3 +245,13 @@ int chmod(const char *pathname, mode_t mode) {
                   "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+int kill(pid_t pid, int sig) {
+    int ret;
+    asm volatile( "movq $24, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(sig) : "rdi", "esi", "edx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+} 

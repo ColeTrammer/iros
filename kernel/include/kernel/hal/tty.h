@@ -25,6 +25,7 @@ struct tty_data {
     bool input_in_escape;
     char *input_escape;
     struct termios config;
+    pid_t pgid;
     spinlock_t lock;
 };
 

@@ -6,6 +6,8 @@
 #define TCSETSW    3
 #define TCSETSF    4
 #define TIOCGWINSZ 5
+#define TIOCSPGRP  6
+#define TIOCGPGRP  7
 
 #ifdef __cplusplus
 extern "C" {
