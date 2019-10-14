@@ -1,6 +1,8 @@
 #include <string.h>
+#include <sys/types.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 
 static inline uint8_t convert_from_bcd(uint8_t x) {
@@ -68,14 +70,15 @@ void init_cmos() {
     debug_log("CMOS Hours: [ %u ]\n", time.hour);
     debug_log("CMOS Day of Month: [ %u ]\n", time.day);
     debug_log("CMOS Month: [ %u ]\n", time.month);
-    debug_log("CMOS Year: [ %u ]\n", time.year + time.century * 100);
+    debug_log("CMOS Year: [ %u ]\n", time.year + time.century * 100U);
     debug_log("CMOS Century: [ %u ]\n", time.century);
 
-    uint64_t seconds_since_epoch = time.second + 
-                                   60UL * time.minute + 
-                                   3600UL * time.hour +
-                                   86400UL * (time.day - 1UL) +
-                                   2629743UL * (time.month - 1UL) +
-                                   31556926UL * (time.year + time.century * 100UL - 1970UL);
-    debug_log("UNIX Time: [ %lu ]\n", seconds_since_epoch);
+    time_t seconds_since_epoch = time.second + 
+                                 60L * time.minute + 
+                                 3600L * time.hour +
+                                 86400L * (time.day - 1L) +
+                                 2629743L * (time.month - 1L) +
+                                 31556926L * (time.year + time.century * 100L - 1970L);
+
+    pit_set_time(seconds_since_epoch);
 }

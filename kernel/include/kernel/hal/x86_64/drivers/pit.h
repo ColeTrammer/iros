@@ -42,5 +42,6 @@ void pit_set_rate(unsigned int rate);
 void pit_set_sched_callback(void (*callback)(struct process_state*), unsigned int ms);
 void pit_register_callback(void (*callback)(), unsigned int ms);
 time_t pit_get_time();
+void pit_set_time(time_t time);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PIT_H */

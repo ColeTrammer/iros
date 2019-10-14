@@ -19,6 +19,10 @@ static int ms = 0;
 /* Should somehow be initialized by CMOS */
 static time_t seconds = 0;
 
+void pit_set_time(time_t time) {
+    seconds = time;
+}
+
 void handle_pit_interrupt(struct process_state *process_state) {
     sendEOI(PIT_IRQ_LINE);
 
