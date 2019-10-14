@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <signal.h>
 
 struct command {
     char **args;
@@ -273,6 +274,7 @@ int run_commands(struct command **commands) {
         }
     }
 
+    pid_t save_pgid = getpid();
     size_t i = 0;
     struct command *command = commands[i];
     while (command != NULL) {
@@ -291,6 +293,11 @@ int run_commands(struct command **commands) {
 
         /* Child */
         if (pid == 0) {
+            if (isatty(STDOUT_FILENO)) {
+                setpgid(0, 0);
+                tcsetpgrp(STDOUT_FILENO, getpid());
+            }
+
             if (command->_stdout != NULL && i == num_commands - 1) {
                 int fd = open(command->_stdout, O_CREAT | O_WRONLY | O_TRUNC, 0644);
                 if (fd == -1) {
@@ -339,7 +346,6 @@ int run_commands(struct command **commands) {
             if (command->built_in_func != NULL) {
                 exit(command->built_in_func(args));
             }
-
             execvp(args[0], args);
 
         abort_command:
@@ -351,6 +357,11 @@ int run_commands(struct command **commands) {
 
         /* Parent */
         else {
+            if (isatty(STDOUT_FILENO)) {
+                setpgid(pid, pid);
+                tcsetpgrp(STDOUT_FILENO, pid);
+            }
+
             /* Close write pipe for the last process */
             if (num_commands > 1 && i == 0) {
                 close(pipes[i * 2 + 1]);
@@ -368,10 +379,14 @@ int run_commands(struct command **commands) {
             int status;
             do {
                 waitpid(pid, &status, WUNTRACED);
-            } while (!WIFEXITED(status));
+            } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
         }
 
         command = commands[++i];
+    }
+
+    if (isatty(STDOUT_FILENO)) {
+        tcsetpgrp(STDOUT_FILENO, save_pgid);
     }
 
     free(pipes);
@@ -404,6 +419,10 @@ int main(int argc, char **argv) {
     } else if (argc > 2) {
         printf("Usage: %s [script]\n", argv[0]);
         return EXIT_SUCCESS;
+    }
+
+    if (isatty(STDOUT_FILENO)) {
+        signal(SIGTTOU, SIG_IGN);
     }
 
     for (;;) {

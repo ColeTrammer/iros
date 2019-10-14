@@ -536,7 +536,9 @@ static int tty_ioctl(struct device *tty, unsigned long request, void *argp) {
         case TIOCGWINSZ:
             return tty_ioctl_termios_get_winsize(tty, argp);
         case TIOCSPGRP:
+            spin_lock(&data->lock);
             data->pgid = *((pid_t*) argp);
+            spin_unlock(&data->lock);
             return 0;
         case TIOCGPGRP:
             return data->pgid;
