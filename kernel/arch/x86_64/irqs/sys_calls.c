@@ -541,3 +541,7 @@ void arch_sys_chmod(struct process_state *process_state) {
 void arch_sys_kill(struct process_state *process_state) {
     SYS_RETURN(-EINVAL);
 }
+
+void arch_sys_setpgid(struct process_state *process_state) {
+    SYS_RETURN(-EINVAL);
+}

@@ -72,6 +72,7 @@ $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libc/assert/assert.o \
 $(BUILDDIR)/libc/dirent/dirent.o \
 $(BUILDDIR)/libc/locale/locale.o \
+$(BUILDDIR)/libc/signal/signal.o \
 $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \
 $(BUILDDIR)/libc/stdlib/atexit.o \

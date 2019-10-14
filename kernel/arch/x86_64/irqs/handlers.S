@@ -139,3 +139,4 @@ sys_call_table:
     .quad arch_sys_rmdir
     .quad arch_sys_chmod
     .quad arch_sys_kill
+    .quad arch_sys_setpgid

@@ -20,6 +20,7 @@ void *sbrk(intptr_t increment);
 void _exit(int status) __attribute__((__noreturn__));
 int execve(const char *file, char *const argv[], char *const envp[]);
 pid_t getpid();
+int setpgid(pid_t pid, pid_t pgid);
 char *getcwd(char *buf, size_t size);
 int chdir(const char *path);
 off_t lseek(int fd, off_t offset, int whence);

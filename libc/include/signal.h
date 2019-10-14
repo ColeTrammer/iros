@@ -4,6 +4,22 @@
 #include <sys/types.h>
 #include <time.h>
 
+#define SIGHUP 1
+#define SIGINT 2
+#define SIGQUIT 3
+
+#define SIGTRAP 5
+#define SIGABRT 6
+
+
+#define SIGKILL 9
+#define SIGTTIN 10
+#define SIGTTOU 11
+
+
+#define SIGALRM 14
+#define SIGTERM 15
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -24,7 +40,7 @@ union sigval {
 struct sigevent {
     int sigev_notify;
     int sigev_signo;
-    union sigval;
+    union sigval sigev_value;
     void (*sigev_notify_function)(union sigval);
     pthread_attr_t *sigev_notify_attributes;
 };
