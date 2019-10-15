@@ -338,6 +338,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
     }
 
     if (data->input_buffer == NULL) {
+    restart:
         data->input_buffer = calloc(data->input_buffer_length, sizeof(char));
 
         size_t i = 0;
@@ -440,7 +441,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
                 // Signal foreground process group
                 signal_process_group(data->pgid, SIGINT);
-                return -EINTR;
+                goto restart;
             }
 
             /* Send EOF by returning 0 for read */
@@ -561,7 +562,7 @@ static int tty_ioctl(struct device *tty, unsigned long request, void *argp) {
     struct tty_data *data = tty->private;
 
     struct process *current = get_current_process();
-    // Gen TTIN signal
+    // Gen TTOU signal
     if (data->pgid != current->pgid) {
         signal_process_group(current->pgid, SIGTTOU);
     }

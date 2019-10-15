@@ -79,6 +79,8 @@ void arch_sys_fork(struct process_state *process_state) {
     child->arch_process.setup_kernel_stack = true;
     child->cwd = malloc(strlen(parent->cwd) + 1);
     child->pgid = parent->pgid;
+    child->sig_pending = 0;
+    memcpy(&child->sig_state, &parent->sig_state, sizeof(struct sigaction) * NUM_SIGNALS);
     strcpy(child->cwd, parent->cwd);
 
     // Clone fpu if necessary
@@ -284,6 +286,13 @@ void arch_sys_execve(struct process_state *process_state) {
     process->cwd = malloc(strlen(current->cwd) + 1);
     strcpy(process->cwd, current->cwd);
     process->next = NULL;
+
+    // Clone only signal dispositions that don't have a handler
+    for (int i = 0; i < NUM_SIGNALS; i++) {
+        if ((uintptr_t) current->sig_state[i].sa_handler <= (uintptr_t) SIG_IGN) {
+            memcpy(&process->sig_state[i], &current->sig_state[i], sizeof(struct sigaction));
+        }
+    }
 
     process->arch_process.cr3 = get_cr3();
     process->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
@@ -581,8 +590,6 @@ void arch_sys_sigaction(struct process_state *process_state) {
     if (signum <= 0 || signum > NUM_SIGNALS) {
         SYS_RETURN(-EINVAL);
     }
-
-    debug_log("Sigaction: [ %d, %d ]\n", get_current_process()->pid, signum);
 
     struct process *current = get_current_process();
     if (old_act != NULL) {
