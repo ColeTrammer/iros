@@ -436,6 +436,7 @@ int main(int argc, char **argv) {
         to_set.sa_handler = SIG_IGN;
         to_set.sa_flags = 0;
         sigaction(SIGINT, &to_set, NULL);
+        sigaction(SIGTTOU, &to_set, NULL);
     }
 
     for (;;) {
