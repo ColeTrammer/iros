@@ -31,6 +31,7 @@ char *read_line(FILE *input) {
         errno = 0;
         int c = fgetc(input);
 
+        // Means user pressed ^C, so we should go to the next line
         if (c == EOF && errno == EINTR) {
             buffer[0] = '\n';
             buffer[1] = '\0';

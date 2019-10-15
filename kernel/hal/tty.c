@@ -16,7 +16,7 @@
 #include <kernel/hal/tty.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/vfs.h>
-
+#include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
 
 #define CONTROL_MASK 0x1F
@@ -25,6 +25,13 @@
 static ssize_t tty_write(struct device *tty, struct file *file, const void *buffer, size_t len) {
     struct tty_data *data = (struct tty_data*) tty->private;
     const char *str = (const char*) buffer;
+
+    struct process *current = get_current_process();
+    // Gen TTOU signal
+    if (data->pgid != current->pgid) {
+        signal_process_group(current->pgid, SIGTTOU);
+        return -EIO; // Potentially should keep going instead...
+    }
 
     if (file->position != 0) {
         return -EINVAL;
@@ -232,6 +239,13 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
     if (file->position != 0) {
         return -EINVAL;
+    }
+
+    struct process *current = get_current_process();
+    // Gen TTIN signal
+    if (data->pgid != current->pgid) {
+        signal_process_group(current->pgid, SIGTTIN);
+        return -EIO; // Potentially should keep going instead... (EIO only if TTIN is being blocked)
     }
 
     char *buf = (char*) buffer;
@@ -545,6 +559,12 @@ static int tty_ioctl_termios_set(struct device *tty, struct termios *termios_p) 
 
 static int tty_ioctl(struct device *tty, unsigned long request, void *argp) {
     struct tty_data *data = tty->private;
+
+    struct process *current = get_current_process();
+    // Gen TTIN signal
+    if (data->pgid != current->pgid) {
+        signal_process_group(current->pgid, SIGTTOU);
+    }
 
     switch (request) {
         case TIOCGWINSZ:
