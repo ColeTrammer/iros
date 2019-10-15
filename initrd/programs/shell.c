@@ -306,6 +306,10 @@ int run_commands(struct command **commands) {
             if (isatty(STDOUT_FILENO)) {
                 setpgid(0, 0);
                 tcsetpgrp(STDOUT_FILENO, getpid());
+                struct sigaction to_set;
+                to_set.sa_handler = SIG_DFL;
+                to_set.sa_flags = 0;
+                sigaction(SIGINT, &to_set, NULL); 
             }
 
             if (command->_stdout != NULL && i == num_commands - 1) {
