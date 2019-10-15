@@ -592,6 +592,7 @@ void init_tty_device(dev_t dev) {
     data->config.c_cflag = CS8;
     data->config.c_lflag = ECHO | ICANON | IEXTEN | ISIG;
     memcpy(data->config.c_cc, tty_default_control_characters, NCCS * sizeof(cc_t));
+    data->pgid = 2; // Hard code value of shell (should be something else)
     device->private = data;
 
     dev_add(device, device->name);

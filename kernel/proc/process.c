@@ -108,9 +108,10 @@ void init_kernel_process() {
     arch_init_kernel_process(current_process);
 
     initial_kernel_process.kernel_process = true;
-    initial_kernel_process.pid = 0;
+    initial_kernel_process.pid = 1;
     initial_kernel_process.sched_state = RUNNING;
     initial_kernel_process.next = NULL;
+    initial_kernel_process.pgid = 1;
 
     sched_add_process(&initial_kernel_process);
 }
@@ -133,6 +134,7 @@ struct process *load_process(const char *file_name) {
 
     struct process *process = calloc(1, sizeof(struct process));
     process->pid = get_next_pid();
+    process->pgid = process->pid;
     process->process_memory = NULL;
     process->kernel_process = false;
     process->sched_state = READY;

@@ -24,6 +24,7 @@ struct process {
     struct vm_region *process_memory;
     bool kernel_process;
     pid_t pid;
+    pid_t pgid;
     enum sched_state sched_state;
     
     char *cwd;

@@ -77,6 +77,7 @@ void arch_sys_fork(struct process_state *process_state) {
     child->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
     child->arch_process.setup_kernel_stack = true;
     child->cwd = malloc(strlen(parent->cwd) + 1);
+    child->pgid = parent->pgid;
     strcpy(child->cwd, parent->cwd);
 
     // Clone fpu if necessary
@@ -274,6 +275,7 @@ void arch_sys_execve(struct process_state *process_state) {
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
     process->pid = current->pid;
+    process->pgid = current->pgid;
     process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->kernel_process = false;
@@ -543,5 +545,27 @@ void arch_sys_kill(struct process_state *process_state) {
 }
 
 void arch_sys_setpgid(struct process_state *process_state) {
-    SYS_RETURN(-EINVAL);
+    pid_t pid = (pid_t) process_state->cpu_state.rsi;
+    pid_t pgid = (pid_t) process_state->cpu_state.rdx;
+
+    if (pgid < 0) {
+        SYS_RETURN(-EINVAL);
+    }
+
+    if (pid == 0) {
+        pid = get_current_process()->pid;
+    }
+
+    if (pgid == 0) {
+        pid = get_current_process()->pgid;
+    }
+
+    // FIXME: process needs a lock to prevent races
+    struct process *process = find_by_pid(pid);
+    if (process == NULL) {
+        SYS_RETURN(-ESRCH);
+    }
+
+    process->pgid = pgid;
+    SYS_RETURN(0);
 }

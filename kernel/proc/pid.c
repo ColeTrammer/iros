@@ -5,7 +5,8 @@
 #include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
 
-static pid_t counter = 1;
+// Initial kernel proc gets 1
+static pid_t counter = 2;
 static spinlock_t pid_lock = SPINLOCK_INITIALIZER;
 
 pid_t get_next_pid() {
