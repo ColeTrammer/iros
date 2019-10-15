@@ -24,8 +24,8 @@ int debug_log_internal(const char *func, const char *format, ...) {
 
 #ifndef KERNEL_NO_DEBUG_COLORS
     int written = 0;
-    if (get_current_process() == NULL || get_current_process()->pid == 0) {
-        written += printf("\033[35mKernel  \033[37m(\033[34m %d \033[37m): ", 0);
+    if (get_current_process() == NULL || get_current_process()->pid == 1) {
+        written += printf("\033[35mKernel  \033[37m(\033[34m %d \033[37m): ", 1);
     } else {
         printf("\033[32m%s \033[37m(\033[34m %d \033[37m): ", "Process", get_current_process()->pid);
     }

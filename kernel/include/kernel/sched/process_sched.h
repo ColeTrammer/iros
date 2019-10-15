@@ -15,4 +15,6 @@ struct process *find_by_pid(pid_t pid);
 void sched_run_next();
 void yield();
 
+void signal_process_group(pid_t pgid, int signum);
+
 #endif /* _KERNEL_PROCESS_CSHED_H */

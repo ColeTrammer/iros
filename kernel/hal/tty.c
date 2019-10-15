@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <termios.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 
 #include <kernel/hal/arch.h>
@@ -413,6 +414,18 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
             if (data->key_buffer.flags & KEY_CONTROL_ON) {
                 data->key_buffer.ascii &= CONTROL_MASK;
+            }
+
+            // Send interrupts on ^C
+            if (data->key_buffer.ascii == CONTROL_KEY('c') && data->config.c_lflag & ISIG) {
+                // Discard input buffer
+                free(data->input_buffer);
+                data->input_buffer = NULL;
+
+                tty_write(tty, file, "^C", 2);
+
+                // Signal foreground process group
+                signal_process_group(data->pgid, SIGINT);
             }
 
             /* Send EOF by returning 0 for read */

@@ -557,7 +557,7 @@ void arch_sys_setpgid(struct process_state *process_state) {
     }
 
     if (pgid == 0) {
-        pid = get_current_process()->pgid;
+        pgid = get_current_process()->pid;
     }
 
     // FIXME: process needs a lock to prevent races
@@ -565,6 +565,8 @@ void arch_sys_setpgid(struct process_state *process_state) {
     if (process == NULL) {
         SYS_RETURN(-ESRCH);
     }
+
+    debug_log("Setting pgid: [ %d, %d ]\n", pid, pgid);
 
     process->pgid = pgid;
     SYS_RETURN(0);

@@ -55,8 +55,8 @@ struct raw_fpu_state {
 } __attribute__((packed));
 
 struct arch_fpu_state {
-    bool saved;
     struct raw_fpu_state raw_fpu_state;
+    bool saved;
 };
 
 extern void __run_process(struct arch_process *state);

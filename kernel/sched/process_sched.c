@@ -1,8 +1,9 @@
 #include <stddef.h>
 #include <stdbool.h>
+#include <signal.h>
 
 #include <kernel/hal/output.h>
-
+#include <kernel/irqs/handlers.h>
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/util/spinlock.h>
@@ -109,3 +110,29 @@ void sched_run_next() {
     run_process(current->next);
 }
 
+void signal_process_group(pid_t pgid, int signum) {
+    spin_lock(&process_list_lock);
+
+    debug_log("Signaling pgid: [ %d, %d ]\n", pgid, signum);
+
+    bool signalled_self = false;
+    struct process *process = list_start;
+    do {
+        if (process->pgid == pgid && signum == SIGINT) {
+            debug_log("Signaling: [ %d, %d ]\n", process->pid, signum);
+            process->sched_state = EXITING;
+
+            invalidate_last_saved(process);
+
+            if (process == get_current_process()) {
+                signalled_self = true;
+            }
+        } 
+    } while ((process = process->next) != list_start);
+
+    spin_unlock(&process_list_lock);
+
+    if (signalled_self) {
+        yield();
+    }
+}
