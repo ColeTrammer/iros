@@ -426,6 +426,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
 
                 // Signal foreground process group
                 signal_process_group(data->pgid, SIGINT);
+                return -EINTR;
             }
 
             /* Send EOF by returning 0 for read */

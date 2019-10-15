@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <signal.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
@@ -10,6 +11,7 @@
 #include <kernel/proc/process.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/hal/output.h>
 
@@ -217,4 +219,101 @@ void free_process(struct process *process, bool free_paging_structure, bool __fr
     }
 
     free(process);
+}
+
+void proc_set_sig_pending(struct process *process, int signum) {
+    process->sig_pending |= (1U << signum);
+}
+
+void proc_unset_sig_pending(struct process *process, int signum) {
+    process->sig_pending &= ~(1U << signum);
+}
+
+int proc_get_next_sig(struct process *process) {
+    if (!process->sig_pending) {
+        return -1; // Indicates we did nothing
+    }
+
+    for (size_t i = 0; i < NUM_SIGNALS; i++) {
+        if ((process->sig_pending & (1U << i)) && !(process->sig_state[i].flags & PROC_SIG_BLOCK)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+enum sig_default_behavior {
+    TERMINATE,
+    TERMINATE_AND_DUMP,
+    IGNORE,
+    STOP,
+    CONTINUE,
+    INVAL
+};
+
+static enum sig_default_behavior sig_defaults[NUM_SIGNALS] = {
+    INVAL,              // INVAL
+    TERMINATE,          // SIGHUP
+    TERMINATE,          // SIGINT
+    TERMINATE_AND_DUMP, // SIGQUIT
+    INVAL,              // INVAL
+    TERMINATE_AND_DUMP, // SIGTRAP
+    TERMINATE_AND_DUMP, // SIGABRT
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    TERMINATE,          // SIGKILL
+    STOP,               // SIGTTIN
+    STOP,               // SIGTTOU
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    TERMINATE,          // SIGALRM
+    TERMINATE,          // SIGTERM
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL,              // INVAL
+    INVAL               // INVAL
+};
+
+void proc_do_sig(struct process *process, int signum) {
+    assert(process->sig_pending & (1U << signum));
+    assert(!(process->sig_state[signum].flags & PROC_SIG_HANDLER));
+
+    proc_unset_sig_pending(process, signum);
+
+    if (process->sig_state[signum].flags & PROC_SIG_BLOCK) {
+        return;
+    }
+
+    assert(sig_defaults[signum] != INVAL);
+    switch (sig_defaults[signum]) {
+        case TERMINATE_AND_DUMP:
+            debug_log("Should dump core: [ %d ]\n", process->pid);
+            // Fall through
+        case TERMINATE:
+            process->sched_state = EXITING;
+            invalidate_last_saved(process);
+            break;
+        case STOP:
+            process->sched_state = WAITING;
+            break;
+        case CONTINUE:
+            process->sched_state = READY;
+            break; 
+        default:
+            assert(false);
+            break;
+    }
 }

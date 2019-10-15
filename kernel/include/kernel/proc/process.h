@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <signal.h>
 
 #include <kernel/mem/vm_region.h>
 #include <kernel/fs/file.h>
@@ -16,6 +17,15 @@ enum sched_state {
     READY,
     WAITING,
     EXITING
+};
+
+#define PROC_SIG_DEFAULT 1
+#define PROC_SIG_BLOCK 2
+#define PROC_SIG_HANDLER 4
+
+struct proc_sig_desc {
+    void *handler;
+    int flags;
 };
 
 struct process {
@@ -32,6 +42,9 @@ struct process {
 
     struct process *prev;
     struct process *next;
+
+    struct proc_sig_desc sig_state[NUM_SIGNALS];
+    unsigned int sig_pending;
 
     struct arch_fpu_state fpu;
 };
@@ -51,5 +64,10 @@ void arch_free_process(struct process *process, bool free_paging_structure);
 struct process *get_current_process();
 
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp);
+
+void proc_set_sig_pending(struct process *process, int signum);
+void proc_unset_sig_pending(struct process *process, int signum);
+int proc_get_next_sig(struct process *process);
+void proc_do_sig(struct process *process, int signum);
 
 #endif /* _KERNEL_PROC_PROCESS_H */

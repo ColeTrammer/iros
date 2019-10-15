@@ -84,6 +84,15 @@ struct process *find_by_pid(pid_t pid) {
 void sched_run_next() {
     struct process *current = get_current_process();
 
+    // Process signals
+    struct process *process = list_start;
+    do {
+        int sig;
+        while ((sig = proc_get_next_sig(process)) != -1) {
+            proc_do_sig(process, sig);
+        }
+    } while ((process = process->next) != list_start);
+
     while (current->next->sched_state != READY) {
         if (current->next->sched_state == EXITING) {
             struct process *to_remove = current->next;
@@ -113,16 +122,12 @@ void sched_run_next() {
 void signal_process_group(pid_t pgid, int signum) {
     spin_lock(&process_list_lock);
 
-    debug_log("Signaling pgid: [ %d, %d ]\n", pgid, signum);
-
     bool signalled_self = false;
     struct process *process = list_start;
     do {
-        if (process->pgid == pgid && signum == SIGINT) {
+        if (process->pgid == pgid) {
             debug_log("Signaling: [ %d, %d ]\n", process->pid, signum);
-            process->sched_state = EXITING;
-
-            invalidate_last_saved(process);
+            proc_set_sig_pending(process, signum);
 
             if (process == get_current_process()) {
                 signalled_self = true;
