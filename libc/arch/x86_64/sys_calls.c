@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <signal.h>
 
 void *sbrk(intptr_t increment) {
     void *ret;
@@ -263,5 +264,16 @@ pid_t setpgid(pid_t pid, pid_t pgid) {
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(pgid) : "rdi", "esi", "edx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int sigaction(int signum, const struct sigaction *act, struct sigaction *old_act) {
+    int ret;
+    asm volatile( "movq $26, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(signum), "r"(act), "r"(old_act) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }

@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <errno.h>
 
 struct command {
     char **args;
@@ -27,7 +28,15 @@ char *read_line(FILE *input) {
     bool prev_was_backslash = false;
 
     for (;;) {
+        errno = 0;
         int c = fgetc(input);
+
+        if (c == EOF && errno == EINTR) {
+            buffer[0] = '\n';
+            buffer[1] = '\0';
+            printf("%c", '\n');
+            return buffer;
+        }
 
         /* In a comment */
         if (c == '#' && (pos == 0 || isspace(buffer[pos - 1]))) {
@@ -422,7 +431,10 @@ int main(int argc, char **argv) {
     }
 
     if (isatty(STDOUT_FILENO)) {
-        signal(SIGTTOU, SIG_IGN);
+        struct sigaction to_set;
+        to_set.sa_handler = SIG_IGN;
+        to_set.sa_flags = 0;
+        sigaction(SIGINT, &to_set, NULL);
     }
 
     for (;;) {

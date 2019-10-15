@@ -235,7 +235,7 @@ int proc_get_next_sig(struct process *process) {
     }
 
     for (size_t i = 0; i < NUM_SIGNALS; i++) {
-        if ((process->sig_pending & (1U << i)) && !(process->sig_state[i].flags & PROC_SIG_BLOCK)) {
+        if ((process->sig_pending & (1U << i)) && (process->sig_state[i].sa_handler != SIG_IGN)) {
             return i;
         }
     }
@@ -289,11 +289,15 @@ static enum sig_default_behavior sig_defaults[NUM_SIGNALS] = {
 
 void proc_do_sig(struct process *process, int signum) {
     assert(process->sig_pending & (1U << signum));
-    assert(!(process->sig_state[signum].flags & PROC_SIG_HANDLER));
+    assert(process->sig_state[signum].sa_handler != SIG_IGN);
+
+    debug_log("Doing signal: [ %d, %d ]\n", process->pid, signum);
 
     proc_unset_sig_pending(process, signum);
 
-    if (process->sig_state[signum].flags & PROC_SIG_BLOCK) {
+    if (process->sig_state[signum].sa_handler != SIG_DFL) {
+        debug_log("Proc registered a handler: [ %d, %d ]\n", process->pid, signum);
+        assert(false);
         return;
     }
 
@@ -311,6 +315,8 @@ void proc_do_sig(struct process *process, int signum) {
             break;
         case CONTINUE:
             process->sched_state = READY;
+            break;
+        case IGNORE:
             break; 
         default:
             assert(false);

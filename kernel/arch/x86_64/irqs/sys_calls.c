@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
@@ -569,5 +570,28 @@ void arch_sys_setpgid(struct process_state *process_state) {
     debug_log("Setting pgid: [ %d, %d ]\n", pid, pgid);
 
     process->pgid = pgid;
+    SYS_RETURN(0);
+}
+
+void arch_sys_sigaction(struct process_state *process_state) {
+    int signum = (int) process_state->cpu_state.rsi;
+    const struct sigaction *act = (const struct sigaction*) process_state->cpu_state.rdx;
+    struct sigaction *old_act = (struct sigaction*) process_state->cpu_state.rcx;
+
+    if (signum <= 0 || signum > NUM_SIGNALS) {
+        SYS_RETURN(-EINVAL);
+    }
+
+    debug_log("Sigaction: [ %d, %d ]\n", get_current_process()->pid, signum);
+
+    struct process *current = get_current_process();
+    if (old_act != NULL) {
+        memcpy(old_act, &current->sig_state[signum], sizeof(struct sigaction));
+    }
+
+    if (act != NULL) {
+        memcpy(&current->sig_state[signum], act, sizeof(struct sigaction));
+    }
+
     SYS_RETURN(0);
 }

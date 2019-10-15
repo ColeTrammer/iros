@@ -19,15 +19,6 @@ enum sched_state {
     EXITING
 };
 
-#define PROC_SIG_DEFAULT 1
-#define PROC_SIG_BLOCK 2
-#define PROC_SIG_HANDLER 4
-
-struct proc_sig_desc {
-    void *handler;
-    int flags;
-};
-
 struct process {
     struct arch_process arch_process;
 
@@ -43,7 +34,7 @@ struct process {
     struct process *prev;
     struct process *next;
 
-    struct proc_sig_desc sig_state[NUM_SIGNALS];
+    struct sigaction sig_state[NUM_SIGNALS];
     unsigned int sig_pending;
 
     struct arch_fpu_state fpu;
