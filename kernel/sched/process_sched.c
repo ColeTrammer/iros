@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>
@@ -119,15 +120,17 @@ void sched_run_next() {
     run_process(current->next);
 }
 
-void signal_process_group(pid_t pgid, int signum) {
+int signal_process_group(pid_t pgid, int signum) {
     spin_lock(&process_list_lock);
 
     bool signalled_self = false;
+    bool signalled_anything = false;
     struct process *process = list_start;
     do {
         if (process->pgid == pgid) {
             debug_log("Signaling: [ %d, %d ]\n", process->pid, signum);
             proc_set_sig_pending(process, signum);
+            signalled_anything = true;
 
             if (process == get_current_process()) {
                 signalled_self = true;
@@ -140,4 +143,34 @@ void signal_process_group(pid_t pgid, int signum) {
     if (signalled_self) {
         yield();
     }
+
+    return signalled_anything ? 0 : -ESRCH;
+}
+
+int signal_process(pid_t pid, int signum) {
+    spin_lock(&process_list_lock);
+
+    bool signalled_self = false;
+    bool signalled_anything = false;
+    struct process *process = list_start;
+    do {
+        // Maybe should only do it once instead of in a loop
+        if (process->pid == pid) {
+            debug_log("Signaling: [ %d, %d ]\n", process->pid, signum);
+            proc_set_sig_pending(process, signum);
+            signalled_anything = true;
+
+            if (process == get_current_process()) {
+                signalled_self = true;
+            }
+        } 
+    } while ((process = process->next) != list_start);
+
+    spin_unlock(&process_list_lock);
+
+    if (signalled_self) {
+        yield();
+    }
+
+    return signalled_anything ? 0 : -ESRCH;
 }

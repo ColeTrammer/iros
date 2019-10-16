@@ -31,6 +31,7 @@ struct process {
     char *cwd;
     struct file *files[FOPEN_MAX];
     bool in_kernel;
+    bool can_send_self_signals;
 
     struct process *prev;
     struct process *next;

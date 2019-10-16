@@ -130,7 +130,12 @@ void proc_do_sig_handler(struct process *process, int signum) {
 
     memcpy(save_state, to_copy, sizeof(struct process_state));
     if (proc_in_kernel(process)) {
-        save_state->cpu_state.rax = -EINTR;
+        if (process->can_send_self_signals) {
+            save_state->cpu_state.rax = 0;
+            process->can_send_self_signals = false;
+        } else {
+            save_state->cpu_state.rax = -EINTR;
+        }
     }
 
     process->arch_process.process_state.stack_state.rip = (uintptr_t) act.sa_handler;

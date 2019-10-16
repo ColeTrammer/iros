@@ -23,19 +23,28 @@
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 
-#define SYS_BEGIN(process_state)                                                                                         \
-    do {                                                                                                                 \
+#define SYS_BEGIN(process_state)                                                                                        \
+    do {                                                                                                                \
         memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
-        get_current_process()->in_kernel = true;                                                                         \
-        enable_interrupts();                                                                                             \
+        get_current_process()->in_kernel = true;                                                                        \
+        enable_interrupts();                                                                                            \
     } while (0)
 
-#define SYS_RETURN(val)                           \
-    do {                                          \
-        process_state->cpu_state.rax = (val);     \
-        disable_interrupts();                     \
-        get_current_process()->in_kernel = false; \
-        return;                                   \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(process_state)                                                                  \
+    do {                                                                                                                \
+        memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
+        get_current_process()->in_kernel = true;                                                                        \
+        get_current_process()->can_send_self_signals = true;                                                            \
+        enable_interrupts();                                                                                            \
+    } while (0)
+
+#define SYS_RETURN(val)                                       \
+    do {                                                      \
+        process_state->cpu_state.rax = (val);                 \
+        disable_interrupts();                                 \
+        get_current_process()->in_kernel = false;             \
+        get_current_process()->can_send_self_signals = false; \
+        return;                                               \
     } while (0)
 
 void arch_sys_exit(struct process_state *process_state) {
@@ -606,9 +615,27 @@ void arch_sys_chmod(struct process_state *process_state) {
 }
 
 void arch_sys_kill(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+    SYS_BEGIN_CAN_SEND_SELF_SIGNALS(process_state);
 
-    SYS_RETURN(-EINVAL);
+    pid_t pid = (pid_t) process_state->cpu_state.rsi;
+    int signum = (int) process_state->cpu_state.rdx;
+
+    struct process *current = get_current_process();
+
+    // pid -1 is not yet implemented
+    if (signum < 1 || signum > _NSIG || pid == -1) {
+        SYS_RETURN(-EINVAL);
+    }
+
+    if (pid == 0) {
+        pid = -current->pgid;
+    }
+
+    if (pid < 0) {
+        SYS_RETURN(signal_process_group(-pid, signum));
+    } else {
+        SYS_RETURN(signal_process(pid, signum));
+    }
 }
 
 void arch_sys_setpgid(struct process_state *process_state) {

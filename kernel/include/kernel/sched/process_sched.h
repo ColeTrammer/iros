@@ -16,6 +16,7 @@ void sched_run_next();
 void yield_signal();
 void yield();
 
-void signal_process_group(pid_t pgid, int signum);
+int signal_process_group(pid_t pgid, int signum);
+int signal_process(pid_t pid, int signum);
 
 #endif /* _KERNEL_PROCESS_CSHED_H */

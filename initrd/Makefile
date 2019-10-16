@@ -30,6 +30,7 @@ $(BUILDDIR)/initrd/programs/clear \
 $(BUILDDIR)/initrd/programs/chmod \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
+$(BUILDDIR)/initrd/programs/kill \
 $(BUILDDIR)/initrd/programs/kilo \
 $(BUILDDIR)/initrd/programs/ls \
 $(BUILDDIR)/initrd/programs/mkdir \
