@@ -9,8 +9,9 @@ void on_int(int sig) {
     assert(sig == SIGINT);
 
     write(1, "INTERRUPT\n", 10);
-    asm volatile("movq $0x27, %%rdi\n"\
-                 "int $0x80" : : : "rdi" );
+    asm volatile("add $8, %%rsp\n"\
+                 "movq $27, %%rdi\n"\
+                 "int $0x80" : : : "rdi", "memory" );
 
     __builtin_unreachable();
 }

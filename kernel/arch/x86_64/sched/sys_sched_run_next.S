@@ -9,6 +9,14 @@ sys_sched_run_next:
     # Should Not Be Reached
     jmp __halt
 
+.global yield_signal
+yield_signal:
+    movabsq $KERNEL_VM_STACK_START, %rsp
+    callq sched_run_next
+
+    # Should Not Be Reached
+    jmp __halt
+
 .global yield
 yield:
     # Switches stack and then builds process_state struct on that stack

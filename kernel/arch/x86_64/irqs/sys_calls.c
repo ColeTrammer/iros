@@ -32,9 +32,9 @@
 
 #define SYS_RETURN(val)                           \
     do {                                          \
+        process_state->cpu_state.rax = (val);     \
         disable_interrupts();                     \
         get_current_process()->in_kernel = false; \
-        process_state->cpu_state.rax = (val);     \
         return;                                   \
     } while (0)
 
@@ -663,14 +663,14 @@ void arch_sys_sigaction(struct process_state *process_state) {
 }
 
 void arch_sys_sigreturn(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
-
-    disable_interrupts();
-
-    debug_log("Sigreturn\n");
-
     struct process *process = get_current_process();
     struct process_state *saved_state = (struct process_state*) process_state->stack_state.rsp;
+
+    debug_log("Returned state: [ %#.16lX ]\n", (uintptr_t) saved_state);
+
     memcpy(&process->arch_process.process_state, saved_state, sizeof(struct process_state));
-    run_process(process);
+
+    debug_log("RIP, RSP: [ %#.16lX, %#.16lX ]\n", process->arch_process.process_state.stack_state.rip, process->arch_process.process_state.stack_state.rsp);
+
+    yield_signal();
 }

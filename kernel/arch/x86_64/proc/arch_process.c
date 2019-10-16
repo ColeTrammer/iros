@@ -79,6 +79,8 @@ void arch_run_process(struct process *process) {
         map_page_info(process->arch_process.kernel_stack_info);
     }
 
+    debug_log("Running process: [ %d ]\n", process->pid);
+    debug_log("RIP, RSP: [ %#.16lX, %#.16lX ]\n", process->arch_process.process_state.stack_state.rip, process->arch_process.process_state.stack_state.rsp);
     __run_process(&process->arch_process);
 }
 
@@ -117,13 +119,13 @@ void proc_do_sig_handler(struct process *process, int signum) {
     uint64_t save_rsp = proc_in_kernel(process) ? 
                         process->arch_process.process_state.cpu_state.user_rsp : 
                         process->arch_process.process_state.stack_state.rsp;
-    debug_log("Save RSP: [ %#.16lX ]\n", save_rsp);
-    debug_log("In Kernel: [ %d ]\n", proc_in_kernel(process));
-    debug_log("RSP: [ %#.16lX, %#.16lX ]\n", process->arch_process.process_state.cpu_state.user_rsp, process->arch_process.process_state.stack_state.rsp);
 
     assert(save_rsp != 0);
     struct process_state *save_state = ((struct process_state*) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
     memcpy(save_state, &process->arch_process.process_state, sizeof(struct process_state));
+
+    debug_log("Saved State: [ %#.16lX ]\n", (uintptr_t) save_state);
+    debug_log("RIP, RSP: [ %#.16lX, %#.16lX ]\n", save_state->stack_state.rip, save_state->stack_state.rsp);
 
     struct sigaction act = process->sig_state[signum];
     process->arch_process.process_state.stack_state.rip = (uintptr_t) act.sa_handler;
@@ -131,5 +133,6 @@ void proc_do_sig_handler(struct process *process, int signum) {
     process->arch_process.process_state.stack_state.rsp = (uintptr_t) save_state;
     process->arch_process.process_state.stack_state.ss = USER_DATA_SELECTOR;
     process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
+
     run_process(process);
 }

@@ -12,7 +12,6 @@ void arch_init_process_sched() {
 /* Must be called from unpremptable context */
 void arch_sched_run_next(struct process_state *process_state) {
     struct process *current_process = get_current_process();
-    debug_log("Saving state: [ %d, %#.16lX ]\n", proc_in_kernel(current_process), process_state->stack_state.rsp);
     uint64_t user_save = proc_in_kernel(current_process) ?
                          current_process->arch_process.process_state.cpu_state.user_rsp :
                          process_state->stack_state.rsp;
