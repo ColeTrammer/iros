@@ -16,7 +16,6 @@ handle_fpu_exception_entry:
 
 .global handle_device_not_available_entry
 handle_device_not_available_entry:
-    pushq $0
     push %rax
     push %rbx
     push %rcx
@@ -53,7 +52,6 @@ handle_device_not_available_entry:
     pop %rcx
     pop %rbx
     pop %rax
-    add $8, %rsp
 
     iretq
 
@@ -74,7 +72,6 @@ handle_page_fault_entry:
 
 .global sys_call_entry
 sys_call_entry:
-    pushq $0
     push %rax
     push %rbx
     push %rcx
@@ -112,7 +109,6 @@ sys_call_entry:
     pop %rcx
     pop %rbx
     pop %rax
-    add $8, %rsp
 
     iretq
 

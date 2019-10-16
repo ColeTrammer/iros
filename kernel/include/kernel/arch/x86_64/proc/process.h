@@ -25,7 +25,6 @@ struct cpu_state {
     uint64_t rcx;
     uint64_t rbx;
     uint64_t rax;
-    uint64_t user_rsp;
 } __attribute__((packed));
 
 struct stack_state {
@@ -43,6 +42,7 @@ struct process_state {
 
 struct arch_process {
     struct process_state process_state;
+    struct process_state user_process_state;
     uint64_t cr3;
     uint64_t kernel_stack;
     struct virt_page_info *kernel_stack_info;

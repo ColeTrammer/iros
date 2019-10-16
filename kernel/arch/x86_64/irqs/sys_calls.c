@@ -23,11 +23,11 @@
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 
-#define SYS_BEGIN(process_state)                                                                                 \
-    do {                                                                                                         \
-        get_current_process()->arch_process.process_state.cpu_state.user_rsp = (process_state)->stack_state.rsp; \
-        get_current_process()->in_kernel = true;                                                                 \
-        enable_interrupts();                                                                                     \
+#define SYS_BEGIN(process_state)                                                                                         \
+    do {                                                                                                                 \
+        memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
+        get_current_process()->in_kernel = true;                                                                         \
+        enable_interrupts();                                                                                             \
     } while (0)
 
 #define SYS_RETURN(val)                           \

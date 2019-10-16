@@ -1,7 +1,6 @@
 .section .text
 .global handle_pit_interrupt_entry
 handle_pit_interrupt_entry:
-    pushq $0
     push %rax
     push %rbx
     push %rcx
@@ -37,6 +36,5 @@ handle_pit_interrupt_entry:
     pop %rcx
     pop %rbx
     pop %rax
-    add $8, %rsp
 
     iretq

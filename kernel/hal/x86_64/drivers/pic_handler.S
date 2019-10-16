@@ -1,7 +1,6 @@
 .section .text
 .global pic_generic_handler_entry
 pic_generic_handler_entry:
-    pushq $0
     push %rax
     push %rbx
     push %rcx
@@ -35,6 +34,5 @@ pic_generic_handler_entry:
     pop %rcx
     pop %rbx
     pop %rax
-    add $8, %rsp
 
     iretq

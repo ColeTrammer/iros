@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
+#include <errno.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/kernel_vm.h>
@@ -79,8 +80,6 @@ void arch_run_process(struct process *process) {
         map_page_info(process->arch_process.kernel_stack_info);
     }
 
-    debug_log("Running process: [ %d ]\n", process->pid);
-    debug_log("RIP, RSP: [ %#.16lX, %#.16lX ]\n", process->arch_process.process_state.stack_state.rip, process->arch_process.process_state.stack_state.rsp);
     __run_process(&process->arch_process);
 }
 
@@ -102,6 +101,8 @@ void proc_do_sig_handler(struct process *process, int signum) {
     assert(process->sig_state[signum].sa_handler != SIG_IGN);
     assert(process->sig_state[signum].sa_handler != SIG_DFL);
 
+    struct sigaction act = process->sig_state[signum];
+
     set_tss_stack_pointer(process->arch_process.kernel_stack);
     load_cr3(process->arch_process.cr3);
 
@@ -117,17 +118,18 @@ void proc_do_sig_handler(struct process *process, int signum) {
 
     // FIXME: Currently doesn't save fpu information
     uint64_t save_rsp = proc_in_kernel(process) ? 
-                        process->arch_process.process_state.cpu_state.user_rsp : 
+                        process->arch_process.user_process_state.stack_state.rsp : 
                         process->arch_process.process_state.stack_state.rsp;
 
     assert(save_rsp != 0);
     struct process_state *save_state = ((struct process_state*) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
-    memcpy(save_state, &process->arch_process.process_state, sizeof(struct process_state));
+    struct process_state *to_copy = proc_in_kernel(process) ? &process->arch_process.user_process_state : &process->arch_process.process_state;
 
-    debug_log("Saved State: [ %#.16lX ]\n", (uintptr_t) save_state);
-    debug_log("RIP, RSP: [ %#.16lX, %#.16lX ]\n", save_state->stack_state.rip, save_state->stack_state.rsp);
+    memcpy(save_state, to_copy, sizeof(struct process_state));
+    if (proc_in_kernel(process)) {
+        save_state->cpu_state.rax = -EINTR;
+    }
 
-    struct sigaction act = process->sig_state[signum];
     process->arch_process.process_state.stack_state.rip = (uintptr_t) act.sa_handler;
     process->arch_process.process_state.cpu_state.rdi = signum;
     process->arch_process.process_state.stack_state.rsp = (uintptr_t) save_state;
