@@ -255,7 +255,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 char buffer[SCANF_NUMBER_BUFFER_MAX];
                 int buffer_index = 0;
 
-                if (!isdigit(c)) {
+                if (!isdigit(c) && c != '+' && c != '-') {
                     goto finish;
                 }
 
@@ -353,7 +353,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 char buffer[SCANF_NUMBER_BUFFER_MAX];
                 int buffer_index = 0;
 
-                if (!is_valid_char_for_base(c, base)) {
+                if (!is_valid_char_for_base(c, base) && c != '-' && c != '+') {
                     goto finish;
                 }
 
