@@ -125,6 +125,7 @@ void proc_do_sig_handler(struct process *process, int signum) {
     struct process_state *save_state = ((struct process_state*) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
     struct process_state *to_copy = proc_in_kernel(process) ? &process->arch_process.user_process_state : &process->arch_process.process_state;
     uint64_t *stack_frame = ((uint64_t*) save_state) - 1;
+    *stack_frame-- = (uint64_t) signum;
     *stack_frame = (uintptr_t) act.sa_restorer;
 
     memcpy(save_state, to_copy, sizeof(struct process_state));
@@ -138,5 +139,6 @@ void proc_do_sig_handler(struct process *process, int signum) {
     process->arch_process.process_state.stack_state.ss = USER_DATA_SELECTOR;
     process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
 
+    process->sig_mask |= (1U << (signum - 1));
     run_process(process);
 }

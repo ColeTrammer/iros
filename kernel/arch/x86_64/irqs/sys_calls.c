@@ -666,9 +666,13 @@ void arch_sys_sigaction(struct process_state *process_state) {
 
 void arch_sys_sigreturn(struct process_state *process_state) {
     struct process *process = get_current_process();
-    struct process_state *saved_state = (struct process_state*) process_state->stack_state.rsp;
+    uint64_t *signum_ptr = (uint64_t*) process_state->stack_state.rsp;
+    struct process_state *saved_state = (struct process_state*) (signum_ptr + 1);
 
     memcpy(&process->arch_process.process_state, saved_state, sizeof(struct process_state));
+
+    // Unblock signum
+    process->sig_mask &= ~(1U << (*signum_ptr + 1));
 
     yield_signal();
 }
