@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#include <setjmp.h>
 
 struct command {
     char **args;
@@ -422,8 +423,22 @@ static char *__getcwd() {
     return cwd;
 }
 
+static char *line = NULL;
+static struct command **commands = NULL;
+static sigjmp_buf env;
+static volatile sig_atomic_t jump_active = 0;
+static FILE *input;
+
+static void on_int(int signo) {
+    assert(signo == SIGINT);
+    if (!jump_active) {
+        return;
+    }
+
+    siglongjmp(env, 1);
+}
+
 int main(int argc, char **argv) {
-    FILE *input = stdin;
     if (argc == 2) {
         input = fopen(argv[1], "r");
         if (input == NULL) {
@@ -433,17 +448,27 @@ int main(int argc, char **argv) {
     } else if (argc > 2) {
         printf("Usage: %s [script]\n", argv[0]);
         return EXIT_SUCCESS;
+    } else {
+        input = stdin;
     }
 
     if (isatty(STDOUT_FILENO)) {
         struct sigaction to_set;
-        to_set.sa_handler = SIG_IGN;
+        to_set.sa_handler = &on_int;
         to_set.sa_flags = 0;
         sigaction(SIGINT, &to_set, NULL);
+        to_set.sa_handler = SIG_IGN;
         sigaction(SIGTTOU, &to_set, NULL);
     }
 
     for (;;) {
+        if (sigsetjmp(env, 1) == 1) {
+            if (line) { free(line); }
+            if (commands) { free_commands(commands); }
+            printf("%c", '\n');
+        }
+        jump_active = 1;
+
         if (input == stdin && isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)) {
             char *cwd = __getcwd();
             printf("\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
@@ -451,7 +476,7 @@ int main(int argc, char **argv) {
         }
         fflush(stdout);
 
-        char *line = read_line(input);
+        line = read_line(input);
 
         /* Check if we reached EOF */
         if (line == NULL) {
