@@ -9,7 +9,7 @@ extern "C" {
 
 struct __jmp_buf {
     uint64_t registers[8]; // 7 Saved for SYS V ABI and 1 for RIP
-} __attribute__((packed));
+};
 
 typedef struct __jmp_buf jmp_buf[1];
 

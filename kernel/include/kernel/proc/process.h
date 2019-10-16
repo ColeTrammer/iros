@@ -35,8 +35,9 @@ struct process {
     struct process *prev;
     struct process *next;
 
-    struct sigaction sig_state[NUM_SIGNALS];
-    unsigned int sig_pending;
+    struct sigaction sig_state[_NSIG];
+    sigset_t sig_mask;
+    sigset_t sig_pending;
 
     struct arch_fpu_state fpu;
 };
@@ -62,6 +63,7 @@ void proc_unset_sig_pending(struct process *process, int signum);
 int proc_get_next_sig(struct process *process);
 void proc_do_sig(struct process *process, int signum);
 void proc_do_sig_handler(struct process *process, int signum);
+bool proc_is_sig_blocked(struct process *process, int signum);
 
 bool proc_in_kernel(struct process *process);
 

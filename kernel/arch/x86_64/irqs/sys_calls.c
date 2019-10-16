@@ -95,7 +95,8 @@ void arch_sys_fork(struct process_state *process_state) {
     child->cwd = malloc(strlen(parent->cwd) + 1);
     child->pgid = parent->pgid;
     child->sig_pending = 0;
-    memcpy(&child->sig_state, &parent->sig_state, sizeof(struct sigaction) * NUM_SIGNALS);
+    child->sig_mask = parent->sig_mask;
+    memcpy(&child->sig_state, &parent->sig_state, sizeof(struct sigaction) * _NSIG);
     strcpy(child->cwd, parent->cwd);
 
     // Clone fpu if necessary
@@ -311,9 +312,10 @@ void arch_sys_execve(struct process_state *process_state) {
     process->cwd = malloc(strlen(current->cwd) + 1);
     strcpy(process->cwd, current->cwd);
     process->next = NULL;
+    process->sig_mask = current->sig_mask;
 
     // Clone only signal dispositions that don't have a handler
-    for (int i = 0; i < NUM_SIGNALS; i++) {
+    for (int i = 0; i < _NSIG; i++) {
         if ((uintptr_t) current->sig_state[i].sa_handler <= (uintptr_t) SIG_IGN) {
             memcpy(&process->sig_state[i], &current->sig_state[i], sizeof(struct sigaction));
         }
@@ -646,7 +648,7 @@ void arch_sys_sigaction(struct process_state *process_state) {
     const struct sigaction *act = (const struct sigaction*) process_state->cpu_state.rdx;
     struct sigaction *old_act = (struct sigaction*) process_state->cpu_state.rcx;
 
-    if (signum <= 0 || signum > NUM_SIGNALS) {
+    if (signum <= 0 || signum > _NSIG) {
         SYS_RETURN(-EINVAL);
     }
 
@@ -666,11 +668,39 @@ void arch_sys_sigreturn(struct process_state *process_state) {
     struct process *process = get_current_process();
     struct process_state *saved_state = (struct process_state*) process_state->stack_state.rsp;
 
-    debug_log("Returned state: [ %#.16lX ]\n", (uintptr_t) saved_state);
-
     memcpy(&process->arch_process.process_state, saved_state, sizeof(struct process_state));
 
-    debug_log("RIP, RSP: [ %#.16lX, %#.16lX ]\n", process->arch_process.process_state.stack_state.rip, process->arch_process.process_state.stack_state.rsp);
-
     yield_signal();
+}
+
+void arch_sys_sigprocmask(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int how = (int) process_state->cpu_state.rsi;
+    const sigset_t *set = (const sigset_t*) process_state->cpu_state.rdx;
+    sigset_t *old = (sigset_t*) process_state->cpu_state.rcx;
+
+    struct process *current = get_current_process();
+
+    if (old) {
+        *old = current->sig_mask;
+    }
+
+    if (set) {
+        switch (how) {
+            case SIG_SETMASK:
+                current->sig_mask = *set;
+                break;
+            case SIG_BLOCK:
+                current->sig_mask |= *set;
+                break;
+            case SIG_UNBLOCK:
+                current->sig_mask &= ~*set;
+                break;
+            default: 
+                SYS_RETURN(-EINVAL);
+        }
+    }
+
+    SYS_RETURN(0);
 }

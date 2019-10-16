@@ -287,3 +287,14 @@ void sigreturn() {
                   "int $0x80" : : : "rdi", "memory" );
     __builtin_unreachable();
 }
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *old) {
+    int ret;
+    asm volatile( "movq $28, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(how), "r"(set), "r"(old) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}

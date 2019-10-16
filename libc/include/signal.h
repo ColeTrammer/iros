@@ -19,7 +19,7 @@
 
 #define SIGALRM 14
 #define SIGTERM 15
-#define NUM_SIGNALS 32
+#define _NSIG 32
 
 #ifdef __cplusplus
 extern "C" {

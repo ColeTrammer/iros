@@ -234,8 +234,8 @@ int proc_get_next_sig(struct process *process) {
         return -1; // Indicates we did nothing
     }
 
-    for (size_t i = 0; i < NUM_SIGNALS; i++) {
-        if ((process->sig_pending & (1U << i)) && (process->sig_state[i].sa_handler != SIG_IGN)) {
+    for (size_t i = 1; i < _NSIG; i++) {
+        if ((process->sig_pending & (1U << i)) && !proc_is_sig_blocked(process, i)) {
             return i;
         }
     }
@@ -252,7 +252,7 @@ enum sig_default_behavior {
     INVAL
 };
 
-static enum sig_default_behavior sig_defaults[NUM_SIGNALS] = {
+static enum sig_default_behavior sig_defaults[_NSIG] = {
     INVAL,              // INVAL
     TERMINATE,          // SIGHUP
     TERMINATE,          // SIGINT
@@ -289,11 +289,15 @@ static enum sig_default_behavior sig_defaults[NUM_SIGNALS] = {
 
 void proc_do_sig(struct process *process, int signum) {
     assert(process->sig_pending & (1U << signum));
-    assert(process->sig_state[signum].sa_handler != SIG_IGN);
+    assert(!proc_is_sig_blocked(process, signum));
 
     debug_log("Doing signal: [ %d, %d ]\n", process->pid, signum);
 
     proc_unset_sig_pending(process, signum);
+
+    if (process->sig_state[signum].sa_handler == SIG_IGN) {
+        return;
+    }
 
     if (process->sig_state[signum].sa_handler != SIG_DFL) {
         proc_do_sig_handler(process, signum);
@@ -320,4 +324,9 @@ void proc_do_sig(struct process *process, int signum) {
             assert(false);
             break;
     }
+}
+
+bool proc_is_sig_blocked(struct process *process, int signum) {
+    assert(signum >= 1 && signum < _NSIG);
+    return process->sig_mask & (1U << (signum - 1));
 }
