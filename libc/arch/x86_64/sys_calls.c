@@ -1,3 +1,5 @@
+#define __libc_internal
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdint.h>
@@ -269,6 +271,7 @@ pid_t setpgid(pid_t pid, pid_t pgid) {
 
 int sigaction(int signum, const struct sigaction *act, struct sigaction *old_act) {
     int ret;
+    ((struct sigaction*) act)->sa_restorer = &sigreturn;
     asm volatile( "movq $26, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "movq %2, %%rdx\n"\
@@ -276,4 +279,11 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *old_act
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(signum), "r"(act), "r"(old_act) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
+}
+
+__attribute__((noreturn))
+void sigreturn() {
+    asm volatile( "movq $27, %%rdi\n"\
+                  "int $0x80" : : : "rdi", "memory" );
+    __builtin_unreachable();
 }

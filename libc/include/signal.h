@@ -69,6 +69,7 @@ struct sigaction {
     sigset_t sa_mask;
     int sa_flags;
     void (*sa_sigaction)(int, siginfo_t*, void*);
+    void (*sa_restorer)(void);
 };
 
 int kill(pid_t pid, int num);
@@ -100,6 +101,11 @@ int sigsuspend(const sigset_t *set);
 int sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict tm);
 int sigwait(const sigset_t *__restrict set, int *__restrict sig);
 int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
+
+#ifdef __libc_internal
+__attribute__((noreturn))
+void sigreturn(void);
+#endif /* __libc_internal */
 
 #ifdef __cplusplus
 }
