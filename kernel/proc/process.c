@@ -296,9 +296,7 @@ void proc_do_sig(struct process *process, int signum) {
     proc_unset_sig_pending(process, signum);
 
     if (process->sig_state[signum].sa_handler != SIG_DFL) {
-        debug_log("Proc registered a handler: [ %d, %d ]\n", process->pid, signum);
-        assert(false);
-        return;
+        proc_do_sig_handler(process, signum);
     }
 
     assert(sig_defaults[signum] != INVAL);

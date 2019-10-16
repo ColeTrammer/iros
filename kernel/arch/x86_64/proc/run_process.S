@@ -25,11 +25,11 @@ __run_process:
     movq 104(%rdi), %rbx
     movq 112(%rdi), %rax
 
+    pushq 160(%rdi)
     pushq 152(%rdi)
     pushq 144(%rdi)
     pushq 136(%rdi)
     pushq 128(%rdi)
-    pushq 120(%rdi)
 
     movq 72(%rdi), %rdi
 

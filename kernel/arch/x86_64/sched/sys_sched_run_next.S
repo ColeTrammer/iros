@@ -23,6 +23,7 @@ yield:
     pushq $0x08
     pushq %rax
 
+    pushq $0
     push %rax
     push %rbx
     push %rcx

@@ -40,7 +40,8 @@ void handle_general_protection_fault(uintptr_t error) {
 void handle_page_fault(uintptr_t address, uintptr_t error) {
     dump_registers_to_screen();
     printf("\n\033[31m%s: Error %lX\n", "Page Fault", error);
-    printf("Address: %#.16lX\033[0m\n", address);
+    printf("Address: %#.16lX\n", address);
+    printf("Process: %d\033[0m\n", get_current_process()->pid);
     abort();
 }
 

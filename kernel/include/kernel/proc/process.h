@@ -30,6 +30,7 @@ struct process {
     
     char *cwd;
     struct file *files[FOPEN_MAX];
+    bool in_kernel;
 
     struct process *prev;
     struct process *next;
@@ -60,5 +61,8 @@ void proc_set_sig_pending(struct process *process, int signum);
 void proc_unset_sig_pending(struct process *process, int signum);
 int proc_get_next_sig(struct process *process);
 void proc_do_sig(struct process *process, int signum);
+void proc_do_sig_handler(struct process *process, int signum);
+
+bool proc_in_kernel(struct process *process);
 
 #endif /* _KERNEL_PROC_PROCESS_H */

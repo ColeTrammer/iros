@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <assert.h>
+#include <string.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/kernel_vm.h>
@@ -88,4 +90,46 @@ void arch_free_process(struct process *process, bool free_paging_structure) {
     }
 
     free(process->arch_process.kernel_stack_info);
+}
+
+bool proc_in_kernel(struct process *process) {
+    return process->in_kernel;
+}
+
+void proc_do_sig_handler(struct process *process, int signum) {
+    assert(process->sig_state[signum].sa_handler != SIG_IGN);
+    assert(process->sig_state[signum].sa_handler != SIG_DFL);
+
+    set_tss_stack_pointer(process->arch_process.kernel_stack);
+    load_cr3(process->arch_process.cr3);
+
+    /* Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In Currently */
+    if (process->arch_process.setup_kernel_stack) {
+        struct vm_region *kernel_stack = get_vm_region(process->process_memory, VM_KERNEL_STACK);
+        do_unmap_page(kernel_stack->start, false);
+        process->arch_process.kernel_stack_info = map_page_with_info(kernel_stack->start, kernel_stack->flags);
+        process->arch_process.setup_kernel_stack = false;
+    } else if (process->arch_process.kernel_stack_info != NULL) {
+        map_page_info(process->arch_process.kernel_stack_info);
+    }
+
+    // FIXME: Currently doesn't save fpu information
+    uint64_t save_rsp = proc_in_kernel(process) ? 
+                        process->arch_process.process_state.cpu_state.user_rsp : 
+                        process->arch_process.process_state.stack_state.rsp;
+    debug_log("Save RSP: [ %#.16lX ]\n", save_rsp);
+    debug_log("In Kernel: [ %d ]\n", proc_in_kernel(process));
+    debug_log("RSP: [ %#.16lX, %#.16lX ]\n", process->arch_process.process_state.cpu_state.user_rsp, process->arch_process.process_state.stack_state.rsp);
+
+    assert(save_rsp != 0);
+    struct process_state *save_state = ((struct process_state*) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
+    memcpy(save_state, &process->arch_process.process_state, sizeof(struct process_state));
+
+    struct sigaction act = process->sig_state[signum];
+    process->arch_process.process_state.stack_state.rip = (uintptr_t) act.sa_handler;
+    process->arch_process.process_state.cpu_state.rdi = signum;
+    process->arch_process.process_state.stack_state.rsp = (uintptr_t) save_state;
+    process->arch_process.process_state.stack_state.ss = USER_DATA_SELECTOR;
+    process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
+    run_process(process);
 }

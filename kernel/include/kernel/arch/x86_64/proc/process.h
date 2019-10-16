@@ -25,6 +25,7 @@ struct cpu_state {
     uint64_t rcx;
     uint64_t rbx;
     uint64_t rax;
+    uint64_t user_rsp;
 } __attribute__((packed));
 
 struct stack_state {

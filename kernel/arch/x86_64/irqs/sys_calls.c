@@ -23,13 +23,24 @@
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 
-#define SYS_RETURN(val)                       \
-    do {                                      \
-        process_state->cpu_state.rax = (val); \
-        return;                               \
+#define SYS_BEGIN(process_state)                                                                                 \
+    do {                                                                                                         \
+        get_current_process()->arch_process.process_state.cpu_state.user_rsp = (process_state)->stack_state.rsp; \
+        get_current_process()->in_kernel = true;                                                                 \
+        enable_interrupts();                                                                                     \
+    } while (0)
+
+#define SYS_RETURN(val)                           \
+    do {                                          \
+        disable_interrupts();                     \
+        get_current_process()->in_kernel = false; \
+        process_state->cpu_state.rax = (val);     \
+        return;                                   \
     } while (0)
 
 void arch_sys_exit(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     /* Disable Interrups To Prevent Premature Process Removal, Since Sched State Is Set */
     disable_interrupts();
 
@@ -45,6 +56,8 @@ void arch_sys_exit(struct process_state *process_state) {
 }
 
 void arch_sys_sbrk(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     intptr_t increment = process_state->cpu_state.rsi;
 
     void *res;
@@ -63,6 +76,8 @@ void arch_sys_sbrk(struct process_state *process_state) {
 }
 
 void arch_sys_fork(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     struct process *parent = get_current_process();
     struct process *child = calloc(1, sizeof(struct process));
     child->pid = get_next_pid();
@@ -101,6 +116,8 @@ void arch_sys_fork(struct process_state *process_state) {
 }
 
 void arch_sys_open(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *_path = (const char*) process_state->cpu_state.rsi;
     int flags = (int) process_state->cpu_state.rdx;
     mode_t mode = (mode_t) process_state->cpu_state.rcx;
@@ -162,6 +179,8 @@ void arch_sys_open(struct process_state *process_state) {
 }
 
 void arch_sys_read(struct process_state *process_state)  {
+    SYS_BEGIN(process_state);
+
     int fd = (int) process_state->cpu_state.rsi;
     char *buf = (void*) process_state->cpu_state.rdx;
     size_t count = (size_t) process_state->cpu_state.rcx;
@@ -174,6 +193,8 @@ void arch_sys_read(struct process_state *process_state)  {
 }
 
 void arch_sys_write(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int fd = (int) process_state->cpu_state.rsi;
     void *buf = (void*) process_state->cpu_state.rdx;
     size_t count = (size_t) process_state->cpu_state.rcx;
@@ -186,6 +207,8 @@ void arch_sys_write(struct process_state *process_state) {
 }
 
 void arch_sys_close(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int fd = (int) process_state->cpu_state.rsi;
 
     struct process *process = get_current_process();
@@ -197,6 +220,8 @@ void arch_sys_close(struct process_state *process_state) {
 }
 
 void arch_sys_execve(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *file_name = (const char*) process_state->cpu_state.rsi;
     char **argv = (char**) process_state->cpu_state.rdx;
     char **envp = (char**) process_state->cpu_state.rcx;
@@ -360,11 +385,15 @@ void arch_sys_waitpid(struct process_state *process_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_getpid(struct process_state *process_state) {
+void arch_sys_getpid(struct process_state *process_state) {    
+    SYS_BEGIN(process_state);
+
     SYS_RETURN(get_current_process()->pid);
 }
 
 void arch_sys_getcwd(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     char *buffer = (char*) process_state->cpu_state.rsi;
     size_t size = (size_t) process_state->cpu_state.rdx;
 
@@ -378,6 +407,8 @@ void arch_sys_getcwd(struct process_state *process_state) {
 }
 
 void arch_sys_chdir(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *_path = (const char*) process_state->cpu_state.rsi;
 
     /* Should probably not do this */
@@ -402,6 +433,8 @@ void arch_sys_chdir(struct process_state *process_state) {
 }
 
 void arch_sys_stat(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *_path = (const char*) process_state->cpu_state.rsi;
     void *stat_struct = (void*) process_state->cpu_state.rdx;
 
@@ -415,6 +448,8 @@ void arch_sys_stat(struct process_state *process_state) {
 }
 
 void arch_sys_lseek(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int fd = (int) process_state->cpu_state.rsi;
     off_t offset = (off_t) process_state->cpu_state.rdx;
     int whence = (int) process_state->cpu_state.rcx;
@@ -427,6 +462,8 @@ void arch_sys_lseek(struct process_state *process_state) {
 }
 
 void arch_sys_ioctl(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int fd = (int) process_state->cpu_state.rsi;
     unsigned long request = (unsigned long) process_state->cpu_state.rdx;
     void *argp = (void*) process_state->cpu_state.rcx;
@@ -439,6 +476,8 @@ void arch_sys_ioctl(struct process_state *process_state) {
 }
 
 void arch_sys_ftruncate(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int fd = (int) process_state->cpu_state.rsi;
     off_t length = (off_t) process_state->cpu_state.rdx;
 
@@ -450,10 +489,14 @@ void arch_sys_ftruncate(struct process_state *process_state) {
 }
 
 void arch_sys_time(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     SYS_RETURN((uint64_t) get_time());
 }
 
 void arch_sys_mkdir(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *pathname = (const char*) process_state->cpu_state.rsi;
     mode_t mode = (mode_t) process_state->cpu_state.rdx;
 
@@ -467,6 +510,8 @@ void arch_sys_mkdir(struct process_state *process_state) {
 }
 
 void arch_sys_dup2(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int oldfd = (int) process_state->cpu_state.rsi;
     int newfd = (int) process_state->cpu_state.rdx;
 
@@ -489,6 +534,8 @@ void arch_sys_dup2(struct process_state *process_state) {
 }
 
 void arch_sys_pipe(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int *pipefd = (int*) process_state->cpu_state.rsi;
 
     struct file *pipe_files[2];
@@ -514,6 +561,8 @@ void arch_sys_pipe(struct process_state *process_state) {
 }
 
 void arch_sys_unlink(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *_path = (const char*) process_state->cpu_state.rsi;
 
     struct process *current = get_current_process();
@@ -526,6 +575,8 @@ void arch_sys_unlink(struct process_state *process_state) {
 }
 
 void arch_sys_rmdir(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *_path = (const char*) process_state->cpu_state.rsi;
 
     struct process *current = get_current_process();
@@ -538,6 +589,8 @@ void arch_sys_rmdir(struct process_state *process_state) {
 }
 
 void arch_sys_chmod(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     const char *_path = (const char*) process_state->cpu_state.rsi;
     mode_t mode = (mode_t) process_state->cpu_state.rdx;
 
@@ -551,10 +604,14 @@ void arch_sys_chmod(struct process_state *process_state) {
 }
 
 void arch_sys_kill(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     SYS_RETURN(-EINVAL);
 }
 
 void arch_sys_setpgid(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     pid_t pid = (pid_t) process_state->cpu_state.rsi;
     pid_t pgid = (pid_t) process_state->cpu_state.rdx;
 
@@ -583,6 +640,8 @@ void arch_sys_setpgid(struct process_state *process_state) {
 }
 
 void arch_sys_sigaction(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     int signum = (int) process_state->cpu_state.rsi;
     const struct sigaction *act = (const struct sigaction*) process_state->cpu_state.rdx;
     struct sigaction *old_act = (struct sigaction*) process_state->cpu_state.rcx;
@@ -601,4 +660,17 @@ void arch_sys_sigaction(struct process_state *process_state) {
     }
 
     SYS_RETURN(0);
+}
+
+void arch_sys_sigreturn(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    disable_interrupts();
+
+    debug_log("Sigreturn\n");
+
+    struct process *process = get_current_process();
+    struct process_state *saved_state = (struct process_state*) process_state->stack_state.rsp;
+    memcpy(&process->arch_process.process_state, saved_state, sizeof(struct process_state));
+    run_process(process);
 }
