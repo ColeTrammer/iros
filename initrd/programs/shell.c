@@ -399,6 +399,14 @@ int run_commands(struct command **commands) {
             do {
                 waitpid(pid, &status, WUNTRACED);
             } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
+
+            if (WIFEXITED(status)) {
+                printf("%d exited with status: %d\n", pid, WEXITSTATUS(status));
+            } else if (WIFSTOPPED(status)) {
+                printf("%d was stopped by signal %d\n", pid, WSTOPSIG(status));
+            } else if (WIFSIGNALED(status)) {
+                printf("%d was killed by signal %d\n", pid, WTERMSIG(status));
+            }
         }
 
         command = commands[++i];

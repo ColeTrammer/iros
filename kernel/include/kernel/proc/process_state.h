@@ -11,7 +11,6 @@ struct proc_state_message {
 #define STATE_INTERRUPTED 1
 #define STATE_STOPPED     2
     int type;
-    int flags;
     int data;
 
     struct proc_state_message *next;
@@ -24,7 +23,7 @@ struct proc_state_message_queue {
     pid_t pid;
 };
 
-struct proc_state_message *proc_create_message(int type, int flags, int data);
+struct proc_state_message *proc_create_message(int type, int data);
 void proc_add_message(pid_t pid, struct proc_state_message *m);
 bool proc_consume_message(pid_t pid, struct proc_state_message *m);
 

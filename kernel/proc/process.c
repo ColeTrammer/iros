@@ -308,11 +308,11 @@ void proc_do_sig(struct process *process, int signum) {
         case TERMINATE:
             process->sched_state = EXITING;
             invalidate_last_saved(process);
-            proc_add_message(process->pid, proc_create_message(STATE_INTERRUPTED, 0, signum));
+            proc_add_message(process->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;
         case STOP:
             process->sched_state = WAITING;
-            proc_add_message(process->pid, proc_create_message(STATE_STOPPED, 0, 0));
+            proc_add_message(process->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
             process->sched_state = READY;

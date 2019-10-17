@@ -47,12 +47,11 @@ static void __free_queue(struct proc_state_message_queue *queue) {
     free_pid(pid);
 }
 
-struct proc_state_message *proc_create_message(int type, int flags, int data) {
+struct proc_state_message *proc_create_message(int type, int data) {
     assert(type == STATE_EXITED || type == STATE_INTERRUPTED || type == STATE_STOPPED);
 
     struct proc_state_message *m = malloc(sizeof(struct proc_state_message));
     m->type = type;
-    m->flags = flags;
     m->data = data;
     m->next = NULL;
     return m;

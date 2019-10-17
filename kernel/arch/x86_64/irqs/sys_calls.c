@@ -59,7 +59,7 @@ void arch_sys_exit(struct process_state *process_state) {
     invalidate_last_saved(process);
 
     int exit_code = (int) process_state->cpu_state.rsi;
-    proc_add_message(process->pid, proc_create_message(STATE_EXITED, 0, exit_code));
+    proc_add_message(process->pid, proc_create_message(STATE_EXITED, exit_code));
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 
     sys_sched_run_next(process_state);
@@ -397,11 +397,11 @@ void arch_sys_waitpid(struct process_state *process_state) {
 
     // We should process the message here but instead we just assume it exited
     if (m.type == STATE_EXITED) {
-        *status = 0;
+        *status = (m.data & 0xFF) << 8;
     } else if (m.type == STATE_STOPPED) {
-        *status = 0x80;
+        *status = 0x81 | ((m.data & 0xFF) << 8);
     } else if (m.type == STATE_INTERRUPTED) {
-        *status = 1;
+        *status = m.data;
     }
 
     /* Indicated Success */
