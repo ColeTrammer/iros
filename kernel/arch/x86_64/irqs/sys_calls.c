@@ -59,6 +59,7 @@ void arch_sys_exit(struct process_state *process_state) {
     invalidate_last_saved(process);
 
     int exit_code = (int) process_state->cpu_state.rsi;
+    proc_add_message(process->pid, proc_create_message(STATE_EXITED, 0, exit_code));
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 
     sys_sched_run_next(process_state);
@@ -374,11 +375,12 @@ void arch_sys_waitpid(struct process_state *process_state) {
     int *status = (int*) process_state->cpu_state.rdx;
     int flags = (int) process_state->cpu_state.rcx;
 
-    assert(pid > 0);
-    assert(status != NULL);
-    assert(flags == WUNTRACED);
+    if (!status) {
+        SYS_RETURN(-EINVAL);
+    }
 
-    debug_log("Waiting on pid: [ %d ]\n", pid);
+    assert(pid > 0);
+    assert(flags == WUNTRACED);
 
     struct proc_state_message m;
     for (;;) {
@@ -391,12 +393,16 @@ void arch_sys_waitpid(struct process_state *process_state) {
         }
     }
 
+    debug_log("Waited out pid: [ %d, %d ]\n", pid, m.type);
+
     // We should process the message here but instead we just assume it exited
-
-    debug_log("Waited out pid: [ %d ]\n", pid);
-
-    /* Indicated Process Has Exited */
-    *status = 0;
+    if (m.type == STATE_EXITED) {
+        *status = 0;
+    } else if (m.type == STATE_STOPPED) {
+        *status = 0x80;
+    } else if (m.type == STATE_INTERRUPTED) {
+        *status = 1;
+    }
 
     /* Indicated Success */
     SYS_RETURN(0);

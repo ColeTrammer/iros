@@ -115,8 +115,6 @@ void sched_run_next() {
             prev_save->next = to_remove->next;
             prev_save->next->prev = prev_save;
 
-            proc_add_message(to_remove->pid, proc_create_message(STATE_EXITED, 0, 0));
-
             free_process(to_remove, true);
         }
 
