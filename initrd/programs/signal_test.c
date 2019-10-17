@@ -11,10 +11,7 @@ void on_int(int sig) {
 }
 
 int main() {
-    struct sigaction to_set;
-    to_set.sa_flags = 0;
-    to_set.sa_handler = &on_int;
-    sigaction(SIGINT, &to_set, NULL);
+    signal(SIGINT, &on_int);
     char c;
     while (1) { read(0, &c, 1); };
 }

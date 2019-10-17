@@ -15,6 +15,7 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/output.h>
+#include <kernel/irqs/handlers.h>
 
 /* Default Args And Envp Passed to First Program */
 static char *test_argv[2] = {
@@ -133,6 +134,9 @@ void proc_do_sig_handler(struct process *process, int signum) {
         if (process->can_send_self_signals) {
             save_state->cpu_state.rax = 0;
             process->can_send_self_signals = false;
+        } else if (!(act.sa_flags & SA_RESTART)) {
+            save_state->stack_state.rip = (uintptr_t) &sys_call_entry;
+            save_state->stack_state.rflags &= ~INTERRUPS_ENABLED_FLAG;
         } else {
             save_state->cpu_state.rax = -EINTR;
         }

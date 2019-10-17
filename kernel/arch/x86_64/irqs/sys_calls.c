@@ -35,7 +35,6 @@
         memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
         get_current_process()->in_kernel = true;                                                                        \
         get_current_process()->can_send_self_signals = true;                                                            \
-        enable_interrupts();                                                                                            \
     } while (0)
 
 #define SYS_RETURN(val)                                       \
@@ -700,10 +699,12 @@ void arch_sys_sigreturn(struct process_state *process_state) {
     uint64_t *signum_ptr = (uint64_t*) process_state->stack_state.rsp;
     struct process_state *saved_state = (struct process_state*) (signum_ptr + 1);
 
+    debug_log("Sig Return: [ %lu ]\n", *signum_ptr);
+
     memcpy(&process->arch_process.process_state, saved_state, sizeof(struct process_state));
 
     // Unblock signum
-    process->sig_mask &= ~(1U << (*signum_ptr + 1));
+    process->sig_mask &= ~(1U << (*signum_ptr - 1));
 
     yield_signal();
 }
