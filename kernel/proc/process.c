@@ -257,30 +257,30 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
     TERMINATE,          // SIGHUP
     TERMINATE,          // SIGINT
     TERMINATE_AND_DUMP, // SIGQUIT
-    INVAL,              // INVAL
+    TERMINATE_AND_DUMP, // SIGBUS
     TERMINATE_AND_DUMP, // SIGTRAP
     TERMINATE_AND_DUMP, // SIGABRT
-    INVAL,              // INVAL
-    INVAL,              // INVAL
+    CONTINUE,           // SIGCONT
+    TERMINATE_AND_DUMP, // SIGFPE
     TERMINATE,          // SIGKILL
     STOP,               // SIGTTIN
     STOP,               // SIGTTOU
-    INVAL,              // INVAL
-    INVAL,              // INVAL
+    TERMINATE,          // SIGILL
+    TERMINATE,          // SIGPIPE
     TERMINATE,          // SIGALRM
     TERMINATE,          // SIGTERM
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL,              // INVAL
+    TERMINATE_AND_DUMP, // SIGSEGV
+    STOP,               // SIGSTOP
+    STOP,               // SIGTSTP
+    TERMINATE,          // SIGUSR1
+    TERMINATE,          // SIGUSR2
+    TERMINATE,          // SIGPOLL
+    TERMINATE,          // SIGPROF
+    TERMINATE_AND_DUMP, // SIGSYS
+    IGNORE,             // SIGURG
+    TERMINATE,          // SIGVTALRM
+    TERMINATE_AND_DUMP, // SIGXCPU
+    TERMINATE_AND_DUMP, // SIGXFSZ
     INVAL,              // INVAL
     INVAL,              // INVAL
     INVAL,              // INVAL

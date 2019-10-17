@@ -444,6 +444,19 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 goto restart;
             }
 
+            // Send interrupts on ^Z
+            if (data->key_buffer.ascii == CONTROL_KEY('z') && data->config.c_lflag & ISIG) {
+                // Discard input buffer
+                free(data->input_buffer);
+                data->input_buffer = NULL;
+
+                tty_write(tty, file, "^C", 2);
+
+                // Signal foreground process group
+                signal_process_group(data->pgid, SIGTSTP);
+                goto restart;
+            }
+
             /* Send EOF by returning 0 for read */
             if (data->key_buffer.ascii == CONTROL_KEY('d')) {
                 if (i == 0) {

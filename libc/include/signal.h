@@ -4,22 +4,34 @@
 #include <sys/types.h>
 #include <time.h>
 
-#define SIGHUP 1
-#define SIGINT 2
-#define SIGQUIT 3
-
-#define SIGTRAP 5
-#define SIGABRT 6
-
-
-#define SIGKILL 9
-#define SIGTTIN 10
-#define SIGTTOU 11
-
-
-#define SIGALRM 14
-#define SIGTERM 15
-#define _NSIG 32
+#define SIGHUP    1
+#define SIGINT    2
+#define SIGQUIT   3
+#define SIGBUS    4
+#define SIGTRAP   5
+#define SIGABRT   6
+#define SIGCONT   7
+#define SIGFPE    8
+#define SIGKILL   9
+#define SIGTTIN   10
+#define SIGTTOU   11
+#define SIGILL    12
+#define SIGPIPE   13
+#define SIGALRM   14
+#define SIGTERM   15
+#define SIGSEGV   16
+#define SIGSTOP   17
+#define SIGTSTP   18
+#define SIGUSR1   19
+#define SIGUSR2   20
+#define SIGPOLL   21
+#define SIGPROF   22
+#define SIGSYS    23
+#define SIGURG    24
+#define SIGVTALRM 25
+#define SIGXCPU   26
+#define SIGXFSZ   27
+#define _NSIG     32
 
 #ifdef __cplusplus
 extern "C" {
