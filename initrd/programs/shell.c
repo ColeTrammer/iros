@@ -311,6 +311,10 @@ int run_commands(struct command **commands) {
                 to_set.sa_handler = SIG_DFL;
                 to_set.sa_flags = 0;
                 sigaction(SIGINT, &to_set, NULL); 
+
+                sigset_t mask_restore;
+                sigemptyset(&mask_restore);
+                sigprocmask(SIG_SETMASK, &mask_restore, NULL);
             }
 
             if (command->_stdout != NULL && i == num_commands - 1) {
@@ -459,6 +463,11 @@ int main(int argc, char **argv) {
         sigaction(SIGINT, &to_set, NULL);
         to_set.sa_handler = SIG_IGN;
         sigaction(SIGTTOU, &to_set, NULL);
+
+        sigset_t sigset;
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGTSTP);
+        sigprocmask(SIG_SETMASK, &sigset, NULL);
     }
 
     for (;;) {
