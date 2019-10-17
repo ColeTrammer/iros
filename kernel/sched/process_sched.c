@@ -6,6 +6,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/proc/process.h>
+#include <kernel/proc/process_state.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -14,6 +15,9 @@ static struct process *list_end = NULL;
 static spinlock_t process_list_lock = SPINLOCK_INITIALIZER;
 
 void init_process_sched() {
+    // This only becomes needed after scheduling is enabled
+    init_proc_state();
+
     arch_init_process_sched();
 }
 
@@ -111,7 +115,9 @@ void sched_run_next() {
             prev_save->next = to_remove->next;
             prev_save->next->prev = prev_save;
 
-            free_process(to_remove, true, true);
+            proc_add_message(to_remove->pid, proc_create_message(STATE_EXITED, 0, 0));
+
+            free_process(to_remove, true);
         }
 
         // Skip processes that are sleeping

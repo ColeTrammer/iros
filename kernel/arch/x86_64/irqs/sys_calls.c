@@ -15,6 +15,7 @@
 #include <kernel/proc/elf64.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/proc/process_state.h>
 
 #include <kernel/irqs/handlers.h>
 #include <kernel/hal/hal.h>
@@ -362,7 +363,7 @@ void arch_sys_execve(struct process_state *process_state) {
 
     sched_remove_process(current);
     invalidate_last_saved(current);
-    free_process(current, false, false);
+    free_process(current, false);
     sched_add_process(process);
 
     sys_sched_run_next(&process->arch_process.process_state);
@@ -379,16 +380,18 @@ void arch_sys_waitpid(struct process_state *process_state) {
 
     debug_log("Waiting on pid: [ %d ]\n", pid);
 
-    /* Hack To Implement Waiting: Poll the process list until the process is removed, yielding until that happens */
-    struct process *proc;
+    struct proc_state_message m;
     for (;;) {
-        proc = find_by_pid(pid);
-        if (proc == NULL) {
+        bool is_message = proc_consume_message(pid, &m);
+
+        if (!is_message) {
+            yield();
+        } else {
             break;
         }
-
-        yield();
     }
+
+    // We should process the message here but instead we just assume it exited
 
     debug_log("Waited out pid: [ %d ]\n", pid);
 

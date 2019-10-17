@@ -14,6 +14,7 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/hal/output.h>
+#include <kernel/proc/process_state.h>
 
 static struct process *current_process;
 static struct process initial_kernel_process;
@@ -196,12 +197,8 @@ struct process *get_current_process() {
 }
 
 /* Must be called from unpremptable context */
-void free_process(struct process *process, bool free_paging_structure, bool __free_pid) {
+void free_process(struct process *process, bool free_paging_structure) {
     arch_free_process(process, free_paging_structure);
-
-    if (__free_pid) {
-        free_pid(process->pid);
-    }
 
     free(process->cwd);
 
