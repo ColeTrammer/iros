@@ -94,30 +94,31 @@ void sched_run_next() {
         }
     } while ((process = process->next) != list_start);
 
-    while (current->next->sched_state != READY) {
-        if (current->next->sched_state == EXITING) {
-            struct process *to_remove = current->next;
+    struct process *to_run = current->next;
+    while (to_run->sched_state != READY) {
+        if (to_run->sched_state == EXITING) {
+            struct process *to_remove = to_run;
 
-                if (current->next == list_end) {
-                    list_end = current->next->prev;
-                }
+            if (to_remove == list_end) {
+                list_end = to_remove->prev;
+            }
 
-                if (current->next == list_start) {
-                    list_start = current->next->next;
-                }
+            if (to_remove == list_start) {
+                list_start = to_remove->next;
+            }
 
-            current->next = current->next->next;
-            current->next->prev = current;
+            struct process *prev_save = to_remove->prev;
+            prev_save->next = to_remove->next;
+            prev_save->next->prev = prev_save;
 
             free_process(to_remove, true, true);
-            continue;
         }
 
-        /* Skip processes that are sleeping */
-        current->next = current->next->next;
+        // Skip processes that are sleeping
+        to_run = to_run->next;
     }
 
-    run_process(current->next);
+    run_process(to_run);
 }
 
 int signal_process_group(pid_t pgid, int signum) {

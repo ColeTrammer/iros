@@ -378,6 +378,8 @@ void arch_sys_waitpid(struct process_state *process_state) {
     assert(status != NULL);
     assert(flags == WUNTRACED);
 
+    debug_log("Waiting on pid: [ %d ]\n", pid);
+
     /* Hack To Implement Waiting: Poll the process list until the process is removed, yielding until that happens */
     struct process *proc;
     for (;;) {
@@ -388,6 +390,8 @@ void arch_sys_waitpid(struct process_state *process_state) {
 
         yield();
     }
+
+    debug_log("Waited out pid: [ %d ]\n", pid);
 
     /* Indicated Process Has Exited */
     *status = 0;
