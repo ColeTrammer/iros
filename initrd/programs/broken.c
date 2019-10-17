@@ -1,6 +1,11 @@
 #include <stddef.h>
+#include <unistd.h>
 
 int main() {
-    *((int*) NULL) = 0;
-    return 1;
+    for (;;) {
+        char c;
+        read(0, &c, 1);
+        write(1, "MESSAGE\n", 8);
+    }
+    return 0;
 }
