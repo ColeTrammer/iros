@@ -131,4 +131,12 @@ void sigreturn(void);
 #define SIG_UNBLOCK 1
 #define SIG_SETMASK 2
 
+#define SA_NOCLDSTOP 1
+#define SA_ONSTACK 2
+#define SA_RESETHAND 4
+#define SA_RESTART 8
+#define SA_SIGINFO 16
+#define SA_NOCLDWAIT 32
+#define SA_NODEFER 64
+
 #endif /* _SIGNAL_H */

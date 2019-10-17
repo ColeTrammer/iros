@@ -1,13 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <stddef.h>
 
 __attribute__((__noreturn__))
 void abort() {
 #ifdef __is_libk
     while (1);
+    __builtin_unreachable();
 #else
-    // Should raise SIGABRT instead
-    _Exit(1);
+    // Unblock SIGABRT, and block everything else
+    sigset_t set;
+    sigfillset(&set);
+    sigdelset(&set, SIGABRT);
+    sigprocmask(SIG_SETMASK, &set, NULL);
+
+    raise(SIGABRT);
+
+    // If this didn't abort the process, we need to reset signal handling and try again
+    struct sigaction act;
+    act.sa_flags = 0;
+    act.sa_handler = SIG_DFL;
+    sigaction(SIGABRT, &act, NULL);
+
+    raise(SIGABRT);
+
+    // If this still didn't work, loop forever
+    while (1);
+    __builtin_unreachable();
 #endif /* __is_libk */
 }
