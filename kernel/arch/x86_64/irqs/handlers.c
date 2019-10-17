@@ -7,6 +7,7 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
+#include <kernel/sched/process_sched.h>
 #include <kernel/proc/process.h>
 
 #include <kernel/arch/arch.h>
@@ -32,12 +33,24 @@ void handle_double_fault() {
 }
 
 void handle_general_protection_fault(uintptr_t error) {
+    // FIXME: need to save process state here in case a signal handler is called and returned
+
+    struct process *current = get_current_process();
+    signal_process(current->pid, SIGSEGV);
+
+    // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
-    printf("\n\033[31m%s: Error %#lX\033[0m\n", "General Protection Fault", error);
+    printf("\n\033[31m%s: Error: %lX\033[0m\n", "General Protection Fault", error);
     abort();
 }
 
 void handle_page_fault(uintptr_t address, uintptr_t error) {
+    // FIXME: need to save process state here in case a signal handler is called and returned
+
+    struct process *current = get_current_process();
+    signal_process(current->pid, SIGSEGV);
+
+    // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
     printf("\n\033[31m%s: Error %lX\n", "Page Fault", error);
     printf("Address: %#.16lX\n", address);

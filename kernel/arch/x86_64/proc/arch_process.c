@@ -31,6 +31,21 @@ static void kernel_idle() {
     sched_run_next();
 }
 
+static void load_proc_into_memory(struct process *process) {
+    set_tss_stack_pointer(process->arch_process.kernel_stack);
+    load_cr3(process->arch_process.cr3);
+
+    // Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In Currently
+    if (process->arch_process.setup_kernel_stack) {
+        struct vm_region *kernel_stack = get_vm_region(process->process_memory, VM_KERNEL_STACK);
+        do_unmap_page(kernel_stack->start, false);
+        process->arch_process.kernel_stack_info = map_page_with_info(kernel_stack->start, kernel_stack->flags);
+        process->arch_process.setup_kernel_stack = false;
+    } else if (process->arch_process.kernel_stack_info != NULL) {
+        map_page_info(process->arch_process.kernel_stack_info);
+    }
+}
+
 void arch_init_kernel_process(struct process *kernel_process) {
     /* Sets Up Kernel Process To Idle */
     kernel_process->arch_process.process_state.stack_state.rip = (uint64_t) &kernel_idle;
@@ -68,19 +83,7 @@ void arch_load_process(struct process *process, uintptr_t entry) {
 
 /* Must be called from unpremptable context */
 void arch_run_process(struct process *process) {
-    set_tss_stack_pointer(process->arch_process.kernel_stack);
-    load_cr3(process->arch_process.cr3);
-
-    /* Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In Currently */
-    if (process->arch_process.setup_kernel_stack) {
-        struct vm_region *kernel_stack = get_vm_region(process->process_memory, VM_KERNEL_STACK);
-        do_unmap_page(kernel_stack->start, false);
-        process->arch_process.kernel_stack_info = map_page_with_info(kernel_stack->start, kernel_stack->flags);
-        process->arch_process.setup_kernel_stack = false;
-    } else if (process->arch_process.kernel_stack_info != NULL) {
-        map_page_info(process->arch_process.kernel_stack_info);
-    }
-
+    load_proc_into_memory(process);
     __run_process(&process->arch_process);
 }
 
@@ -104,18 +107,7 @@ void proc_do_sig_handler(struct process *process, int signum) {
 
     struct sigaction act = process->sig_state[signum];
 
-    set_tss_stack_pointer(process->arch_process.kernel_stack);
-    load_cr3(process->arch_process.cr3);
-
-    /* Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In Currently */
-    if (process->arch_process.setup_kernel_stack) {
-        struct vm_region *kernel_stack = get_vm_region(process->process_memory, VM_KERNEL_STACK);
-        do_unmap_page(kernel_stack->start, false);
-        process->arch_process.kernel_stack_info = map_page_with_info(kernel_stack->start, kernel_stack->flags);
-        process->arch_process.setup_kernel_stack = false;
-    } else if (process->arch_process.kernel_stack_info != NULL) {
-        map_page_info(process->arch_process.kernel_stack_info);
-    }
+    load_proc_into_memory(process);
 
     // FIXME: Currently doesn't save fpu information
     uint64_t save_rsp = proc_in_kernel(process) ? 

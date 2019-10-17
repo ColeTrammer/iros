@@ -440,13 +440,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 tty_write(tty, file, "^C", 2);
 
                 // Signal foreground process group
-                int ret = signal_process_group(data->pgid, SIGINT);
-
-                // Erase output if we didn't signal anyone
-                if (ret != 0) {
-                    data->x -= 2;
-                    tty_write(tty, file, "  ", 2);
-                }
+                signal_process_group(data->pgid, SIGINT);
                 goto restart;
             }
 
@@ -459,13 +453,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 tty_write(tty, file, "^Z", 2);
 
                 // Signal foreground process group
-                int ret = signal_process_group(data->pgid, SIGTSTP);
-
-                // Erase output if we didn't signal anyone
-                if (ret != 0) {
-                    data->x -= 2;
-                    tty_write(tty, file, "  ", 2);
-                }
+                signal_process_group(data->pgid, SIGTSTP);
                 goto restart;
             }
 

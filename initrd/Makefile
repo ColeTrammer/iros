@@ -25,6 +25,7 @@ FILES:=$(shell find files)
 
 # Lists all programs included in initrd
 PROGRAMS=\
+$(BUILDDIR)/initrd/programs/broken \
 $(BUILDDIR)/initrd/programs/cat \
 $(BUILDDIR)/initrd/programs/clear \
 $(BUILDDIR)/initrd/programs/chmod \
