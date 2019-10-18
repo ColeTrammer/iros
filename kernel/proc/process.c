@@ -325,6 +325,7 @@ void proc_do_sig(struct process *process, int signum) {
             break;
         case CONTINUE:
             process->sched_state = READY;
+            proc_add_message(process->pid, proc_create_message(STATE_CONTINUED, signum));
             break;
         case IGNORE:
             break; 

@@ -125,6 +125,12 @@ FILE *fdopen(int fd, const char *__restrict mode) {
 }
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    // Actually should be doing this when we try to read from any _IOLBF stream,
+    // and it should flush all other _IOLBF streams, not just stdout
+    if (stream->fd == STDIN_FILENO) {
+        fflush(stdout);
+    }
+
     if (stream->buf_type == _IONBF) {
         ssize_t ret = read(stream->fd, ptr, nmemb * size);
 

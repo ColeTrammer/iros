@@ -10,6 +10,7 @@ struct proc_state_message {
 #define STATE_EXITED      0
 #define STATE_INTERRUPTED 1
 #define STATE_STOPPED     2
+#define STATE_CONTINUED   3
     int type;
     int data;
 

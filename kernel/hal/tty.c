@@ -145,6 +145,9 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                             set_vga_foreground(VGA_COLOR_LIGHT_GREY);
                             set_vga_background(VGA_COLOR_BLACK);
                             break;
+                        case 1:
+                            // Bold is not currently supported
+                            break;
                         case 7:
                         /* Invert colors */
                             swap_vga_colors();

@@ -384,15 +384,21 @@ void arch_sys_waitpid(struct process_state *process_state) {
     }
 
     assert(pid > 0);
-    assert(flags == WUNTRACED);
 
     struct proc_state_message m;
     for (;;) {
         bool is_message = proc_consume_message(pid, &m);
 
         if (!is_message) {
-            yield();
+            if (flags & WNOHANG) {
+                SYS_RETURN(0);
+            } else {
+                yield();
+            }
         } else {
+            if ((m.type == STATE_STOPPED && !(flags & WUNTRACED)) || (m.type == STATE_CONTINUED && !(flags & WCONTINUED))) {
+                continue;
+            }
             break;
         }
     }
@@ -406,10 +412,14 @@ void arch_sys_waitpid(struct process_state *process_state) {
         *status = 0x81 | ((m.data & 0xFF) << 8);
     } else if (m.type == STATE_INTERRUPTED) {
         *status = m.data;
+    } else if (m.type == STATE_CONTINUED) {
+        *status = 0xFFFF;
+    } else {
+        assert(false);
     }
 
-    /* Indicated Success */
-    SYS_RETURN(0);
+    // Indicated Success
+    SYS_RETURN(pid);
 }
 
 void arch_sys_getpid(struct process_state *process_state) {    
