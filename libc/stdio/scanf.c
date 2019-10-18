@@ -59,13 +59,15 @@ static bool is_valid_char_for_base(char c, int base) {
 static bool is_valid_char_for_set(char c, const char *set, int set_end, bool invert) {
     for (int i = 0; i < set_end; i++) {
         // Handle `-` ranges
-        if (i != 0 && set[i] == '-') {
+        if (i != 0 && i != set_end - 1 && set[i] == '-') {
             char range_start = set[i - 1];
             char range_end = set[i + 1];
 
-            // Could throw error instead...
+            // Switch ranges so they work correctly if specified backwards
             if (range_start > range_end) {
-                continue;
+                char t = range_end;
+                range_end = range_start;
+                range_start = t;
             }
 
             // Don't need to check edges b/c they are checked automatically
@@ -292,7 +294,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
 
                 i++;
 
-                while (i < specifier.width - 1 && (is_valid_char_for_set(ret = get_character(state), format + format_off, set_end - set_start, invert) && ret != EOF)) {
+                while (i < specifier.width && (is_valid_char_for_set(ret = get_character(state), format + format_off, set_end - set_start, invert) && ret != EOF)) {
                     if (!specifier.star) {
                         buf[i] = (char) ret;
                     }
