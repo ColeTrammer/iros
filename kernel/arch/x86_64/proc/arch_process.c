@@ -17,6 +17,8 @@
 #include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>
 
+#define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
+
 /* Default Args And Envp Passed to First Program */
 static char *test_argv[2] = {
     "shell", NULL
@@ -127,8 +129,10 @@ void proc_do_sig_handler(struct process *process, int signum) {
             save_state->cpu_state.rax = 0;
             process->can_send_self_signals = false;
         } else if (act.sa_flags & SA_RESTART) {
-            save_state->stack_state.rip = (uintptr_t) &sys_call_entry;
-            save_state->stack_state.rflags &= ~INTERRUPS_ENABLED_FLAG;
+            // Decrement %rip by the sizeof of the iretq instruction so that
+            // the program will automatically execute int $0x80, restarting
+            // the sys call in the easy way possible
+            save_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
         } else {
             save_state->cpu_state.rax = -EINTR;
         }

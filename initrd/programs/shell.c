@@ -476,9 +476,8 @@ int main(int argc, char **argv) {
         to_set.sa_flags = 0;
         sigaction(SIGINT, &to_set, NULL);
 
-        to_set.sa_flags = 0;
+        to_set.sa_flags = SA_RESTART;
         to_set.sa_handler = &on_child;
-        sigfillset(&to_set.sa_mask);
         sigaction(SIGCHLD, &to_set, NULL);
 
         to_set.sa_flags = 0;
