@@ -55,6 +55,31 @@ static bool is_valid_char_for_base(char c, int base) {
     return false;
 }
 
+// Determines whether a character is in a given set
+static bool is_valid_char_for_set(char c, const char *set, int set_end, bool invert) {
+    for (int i = 0; i < set_end; i++) {
+        // Handle `-` ranges
+        if (i != 0 && set[i] == '-') {
+            char range_start = set[i - 1];
+            char range_end = set[i + 1];
+
+            // Could throw error instead...
+            if (range_start > range_end) {
+                continue;
+            }
+
+            // Don't need to check edges b/c they are checked automatically
+            for (char r = range_start + 1; r < range_end; r++) {
+                if (r == c) { return !invert; }
+            }
+        }
+
+        if (set[i] == c) { return !invert; }
+    }
+
+    return invert;
+}
+
 int scanf_internal(int (*get_character)(void *state), void *__restrict state, const char *__restrict format, va_list parameters) {
     size_t format_off = 0;
     int num_read = 0;
@@ -101,6 +126,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
 
         if (format[format_off] == 'm') {
             specifier.memory = true;
+            assert(false);
             format_off++;
         }
 
@@ -235,6 +261,62 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 }
 
                 format_off++;
+                break;
+            }
+
+            case '[': {
+                format_off++;
+
+                bool invert = false;
+                if (format[format_off] == '^') {
+                    invert = true;
+                    format_off++;
+                }
+
+                // Always assume at least 1 character in set (there has to be and this allows for inclusion of `]`)
+                int set_start = format_off;
+                int set_end = set_start + 1;
+                while (format[set_end] != ']') { set_end++; }
+
+                if (!is_valid_char_for_set(c, format + format_off, set_end - set_start, invert)) {
+                    goto finish;
+                }
+
+                int ret = 0;
+                int i = 0;
+                char *buf = NULL;
+                if (!specifier.star) {
+                    buf = va_arg(parameters, char*);
+                    buf[i] = c;
+                }
+
+                i++;
+
+                while (i < specifier.width - 1 && (is_valid_char_for_set(ret = get_character(state), format + format_off, set_end - set_start, invert) && ret != EOF)) {
+                    if (!specifier.star) {
+                        buf[i] = (char) ret;
+                    }
+
+                    i++;
+                }
+
+                if (!specifier.star) {
+                    buf[i] = '\0';
+                }
+
+                if (ret != EOF && i < specifier.width) {
+                    c = (int) ret;
+                } else if (ret == EOF) {
+                    done = true;
+                } else {
+                    c = '\0';
+                }
+
+                if (!specifier.star) {
+                    num_read++;
+                }
+
+                format_off = set_end + 1;
                 break;
             }
 
