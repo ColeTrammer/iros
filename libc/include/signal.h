@@ -37,10 +37,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
-// Not sure what this is...
-typedef int sig_atomic_t;
+extern const char *const sys_siglist[];
 
-// Again IDK
+typedef int sig_atomic_t;
 typedef unsigned int sigset_t;
 
 typedef void (*sighandler_t)(int);

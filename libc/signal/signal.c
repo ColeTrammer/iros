@@ -4,6 +4,23 @@
 #include <stddef.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdio.h>
+
+char *strsignal(int sig) {
+    if (sig < 0 || sig > _NSIG) {
+        sig = 0;
+    }
+
+    return (char*) sys_siglist[sig];
+}
+
+void psignal(int sig, const char *s) {
+    if (s && s[0] != '\0') {
+        fprintf(stderr, "%s: ", s);
+    }
+
+    fputs(strsignal(sig), stderr);
+}
 
 int raise(int signum) {
     // Should do something else for multithreaded programs
@@ -54,7 +71,7 @@ int sigdelset(sigset_t *set, int signum) {
 }
 
 int sigismember(const sigset_t *set, int signum) {
-    if (signum < 1 || signum > _NSIG) {
+    if (signum < 1 || signum >= _NSIG) {
         errno = EINVAL;
         return -1;
     }
@@ -80,3 +97,38 @@ void siglongjmp(sigjmp_buf env, int val) {
 
     longjmp(env, val);
 }
+
+const char *const sys_siglist[_NSIG] = {
+    "Invalid signal number",
+    "TTY hang up",
+    "Interrupted",
+    "Quit",
+    "Bus",
+    "Trap",
+    "Aborted",
+    "Continued",
+    "Floating point exeception",
+    "Killed",
+    "Read from tty",
+    "Write to tty",
+    "Illegal instruction",
+    "Pipe error",
+    "Alarm",
+    "Terminated",
+    "Segmentation fault",
+    "Stopped",
+    "Stopped by tty",
+    "User 1",
+    "User 2",
+    "Poll",
+    "Profile",
+    "Invalid system call",
+    "Urge",
+    "Virtual alarm",
+    "CPU exceeded time limit",
+    "File size limit exceeded",
+    "Invalid signal number",
+    "Invalid signal number",
+    "Invalid signal number",
+    "Invalid signal number",
+};
