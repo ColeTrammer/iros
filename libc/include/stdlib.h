@@ -18,6 +18,9 @@ void _Exit(int status) __attribute__((__noreturn__));
 
 int atexit(void (*)(void));
 char *getenv(const char*);
+int setenv(const char *__restrict name, const char *__restrict value, int overwrite);
+int unsetenv(const char *name);
+int putenv(char *string);
 
 int atexit(void (*f)(void));
 

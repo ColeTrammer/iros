@@ -72,6 +72,8 @@ $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libc/assert/assert.o \
 $(BUILDDIR)/libc/dirent/dirent.o \
 $(BUILDDIR)/libc/locale/locale.o \
+$(BUILDDIR)/libc/glob/glob.o \
+$(BUILDDIR)/libc/pwd/pwd.o \
 $(BUILDDIR)/libc/signal/signal.o \
 $(BUILDDIR)/libc/stdio/files.o \
 $(BUILDDIR)/libc/stdio/puts.o \
@@ -83,6 +85,7 @@ $(BUILDDIR)/libc/string/strxfrm.o \
 $(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/time/time.o \
 $(BUILDDIR)/libc/unistd/exec.o \
+$(BUILDDIR)/libc/unistd/getlogin.o \
 $(BUILDDIR)/libc/unistd/getopt.o \
 $(BUILDDIR)/libc/unistd/isatty.o \
 $(BUILDDIR)/libc/init.o

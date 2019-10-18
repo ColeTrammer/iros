@@ -298,3 +298,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *old) {
                   "movl %%eax, %0" : "=r"(ret) : "r"(how), "r"(set), "r"(old) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+int getuid(void) {
+    return 0;
+}

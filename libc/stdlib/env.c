@@ -19,3 +19,20 @@ char *getenv(const char *key) {
     /* There is no match */
     return NULL;
 }
+
+int putenv(char *string) {
+    (void) string;
+    return -1;
+}
+
+int setenv(const char *__restrict name, const char *__restrict value, int overwrite) {
+    (void) name;
+    (void) value;
+    (void) overwrite;
+    return -1;
+}
+
+int unsetenv(const char *name) {
+    (void) name;
+    return -1;
+}
