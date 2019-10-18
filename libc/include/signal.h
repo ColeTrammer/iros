@@ -31,6 +31,8 @@
 #define SIGVTALRM 25
 #define SIGXCPU   26
 #define SIGXFSZ   27
+#define SIGCHLD   28
+#define SIGCLD    SIGCHLD
 #define _NSIG     32
 
 #ifdef __cplusplus

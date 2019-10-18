@@ -33,8 +33,8 @@ int debug_log_internal(const char *func, const char *format, ...) {
     written += vprintf(format, parameters);
 #else
     int written = 0;
-    if (get_current_process() == NULL || get_current_process()->pid == 0) {
-        written += printf("Kernel  ( %d ): ", 0);
+    if (get_current_process() == NULL || get_current_process()->pid == 1) {
+        written += printf("Kernel  ( %d ): ", 1);
     } else {
         printf("%s ( %d ): ", "Process", get_current_process()->pid);
     }

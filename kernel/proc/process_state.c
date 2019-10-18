@@ -4,7 +4,9 @@
 #include <string.h>
 
 #include <kernel/proc/pid.h>
+#include <kernel/proc/process.h>
 #include <kernel/proc/process_state.h>
+#include <kernel/sched/process_sched.h>
 #include <kernel/util/hash_map.h>
 
 static struct hash_map *queue_map;
@@ -70,6 +72,9 @@ void proc_add_message(pid_t pid, struct proc_state_message *m) {
     }
 
     spin_unlock(&queue->lock);
+
+    // Also gen SIGCHLD for the parent process
+    proc_notify_parent(pid);
 }
 
 bool proc_consume_message(pid_t pid, struct proc_state_message *m) {

@@ -115,6 +115,7 @@ void init_kernel_process() {
     initial_kernel_process.sched_state = RUNNING;
     initial_kernel_process.next = NULL;
     initial_kernel_process.pgid = 1;
+    initial_kernel_process.ppid = 1;
 
     sched_add_process(&initial_kernel_process);
 }
@@ -138,6 +139,7 @@ struct process *load_process(const char *file_name) {
     struct process *process = calloc(1, sizeof(struct process));
     process->pid = get_next_pid();
     process->pgid = process->pid;
+    process->ppid = initial_kernel_process.pid;
     process->process_memory = NULL;
     process->kernel_process = false;
     process->sched_state = READY;
@@ -240,6 +242,13 @@ int proc_get_next_sig(struct process *process) {
     return -1;
 }
 
+void proc_notify_parent(pid_t child_pid) {
+    struct process *child = find_by_pid(child_pid);
+    struct process *parent = find_by_pid(child->ppid);
+
+    proc_set_sig_pending(parent, SIGCHLD);
+}
+
 enum sig_default_behavior {
     TERMINATE,
     TERMINATE_AND_DUMP,
@@ -278,7 +287,7 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
     TERMINATE,          // SIGVTALRM
     TERMINATE_AND_DUMP, // SIGXCPU
     TERMINATE_AND_DUMP, // SIGXFSZ
-    INVAL,              // INVAL
+    IGNORE,             // SIGCHLD
     INVAL,              // INVAL
     INVAL,              // INVAL
     INVAL               // INVAL

@@ -126,7 +126,7 @@ void proc_do_sig_handler(struct process *process, int signum) {
         if (process->can_send_self_signals) {
             save_state->cpu_state.rax = 0;
             process->can_send_self_signals = false;
-        } else if (!(act.sa_flags & SA_RESTART)) {
+        } else if (act.sa_flags & SA_RESTART) {
             save_state->stack_state.rip = (uintptr_t) &sys_call_entry;
             save_state->stack_state.rflags &= ~INTERRUPS_ENABLED_FLAG;
         } else {

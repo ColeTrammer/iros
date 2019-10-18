@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 201900
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -401,7 +403,7 @@ int run_commands(struct command **commands) {
             } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
 
             if (WIFEXITED(status)) {
-                printf("%d exited with status: %d\n", pid, WEXITSTATUS(status));
+                printf("%d exited with status: %d\n", pid, status);
             } else if (WIFSTOPPED(status)) {
                 printf("%d was stopped by signal %d\n", pid, WSTOPSIG(status));
             } else if (WIFSIGNALED(status)) {
@@ -450,6 +452,10 @@ static void on_int(int signo) {
     siglongjmp(env, 1);
 }
 
+static void on_child(int signo) {
+    assert(signo == SIGCHLD);
+}
+
 int main(int argc, char **argv) {
     if (argc == 2) {
         input = fopen(argv[1], "r");
@@ -469,6 +475,13 @@ int main(int argc, char **argv) {
         to_set.sa_handler = &on_int;
         to_set.sa_flags = 0;
         sigaction(SIGINT, &to_set, NULL);
+
+        to_set.sa_flags = 0;
+        to_set.sa_handler = &on_child;
+        sigfillset(&to_set.sa_mask);
+        sigaction(SIGCHLD, &to_set, NULL);
+
+        to_set.sa_flags = 0;
         to_set.sa_handler = SIG_IGN;
         sigaction(SIGTTOU, &to_set, NULL);
 

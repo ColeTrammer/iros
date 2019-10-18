@@ -127,7 +127,7 @@ const char *const sys_siglist[_NSIG] = {
     "Virtual alarm",
     "CPU exceeded time limit",
     "File size limit exceeded",
-    "Invalid signal number",
+    "Child state change",
     "Invalid signal number",
     "Invalid signal number",
     "Invalid signal number",

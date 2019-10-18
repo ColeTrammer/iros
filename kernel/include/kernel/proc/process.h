@@ -24,8 +24,11 @@ struct process {
 
     struct vm_region *process_memory;
     bool kernel_process;
+
     pid_t pid;
     pid_t pgid;
+    pid_t ppid;
+
     enum sched_state sched_state;
     
     char *cwd;
@@ -65,6 +68,7 @@ int proc_get_next_sig(struct process *process);
 void proc_do_sig(struct process *process, int signum);
 void proc_do_sig_handler(struct process *process, int signum);
 bool proc_is_sig_blocked(struct process *process, int signum);
+void proc_notify_parent(pid_t child_pid);
 
 bool proc_in_kernel(struct process *process);
 

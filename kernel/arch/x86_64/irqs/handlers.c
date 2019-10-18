@@ -48,6 +48,7 @@ void handle_page_fault(uintptr_t address, uintptr_t error) {
     // FIXME: need to save process state here in case a signal handler is called and returned
 
     struct process *current = get_current_process();
+    debug_log("%d page faulted: [ %#.16lX, %lu ]\n", current->pid, address, error);
     signal_process(current->pid, SIGSEGV);
 
     // We shouldn't get here unless SIGSEGV is blocked???

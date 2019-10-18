@@ -104,6 +104,7 @@ void arch_sys_fork(struct process_state *process_state) {
     child->arch_process.setup_kernel_stack = true;
     child->cwd = malloc(strlen(parent->cwd) + 1);
     child->pgid = parent->pgid;
+    child->ppid = parent->pid;
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
     memcpy(&child->sig_state, &parent->sig_state, sizeof(struct sigaction) * _NSIG);
@@ -315,6 +316,7 @@ void arch_sys_execve(struct process_state *process_state) {
 
     process->pid = current->pid;
     process->pgid = current->pgid;
+    process->ppid = current->ppid;
     process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->kernel_process = false;
@@ -371,6 +373,8 @@ void arch_sys_execve(struct process_state *process_state) {
 }
 
 void arch_sys_waitpid(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
     pid_t pid = (pid_t) process_state->cpu_state.rsi;
     int *status = (int*) process_state->cpu_state.rdx;
     int flags = (int) process_state->cpu_state.rcx;
