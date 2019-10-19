@@ -32,10 +32,11 @@ void handle_double_fault() {
     abort();
 }
 
-void handle_general_protection_fault(uintptr_t error) {
+void handle_general_protection_fault(struct stack_state *stack, uintptr_t error) {
     // FIXME: need to save process state here in case a signal handler is called and returned
 
     struct process *current = get_current_process();
+    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->pid, stack->rip, error);
     signal_process(current->pid, SIGSEGV);
 
     // We shouldn't get here unless SIGSEGV is blocked???
@@ -44,11 +45,11 @@ void handle_general_protection_fault(uintptr_t error) {
     abort();
 }
 
-void handle_page_fault(uintptr_t address, uintptr_t error) {
+void handle_page_fault(struct stack_state *stack, uintptr_t address, uintptr_t error) {
     // FIXME: need to save process state here in case a signal handler is called and returned
 
     struct process *current = get_current_process();
-    debug_log("%d page faulted: [ %#.16lX, %lu ]\n", current->pid, address, error);
+    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, stack->rip, address, error);
     signal_process(current->pid, SIGSEGV);
 
     // We shouldn't get here unless SIGSEGV is blocked???

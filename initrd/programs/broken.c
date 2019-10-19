@@ -2,10 +2,6 @@
 #include <unistd.h>
 
 int main() {
-    for (;;) {
-        char c;
-        read(0, &c, 1);
-        write(1, "MESSAGE\n", 8);
-    }
+    *((int*) NULL) = 0;
     return 0;
 }

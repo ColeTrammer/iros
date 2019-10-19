@@ -57,15 +57,17 @@ handle_device_not_available_entry:
 
 .global handle_general_protection_fault_entry
 handle_general_protection_fault_entry:
-    movq (%rsp), %rdi
+    lea -8(%rsp), %rdi
+    mov (%rsp), %rsi
     call handle_general_protection_fault
     add $8, %rsp
     iretq
 
 .global handle_page_fault_entry
 handle_page_fault_entry:
-    mov %cr2, %rdi
-    movq (%rsp), %rsi
+    lea -8(%rsp), %rdi
+    mov %cr2, %rsi
+    movq (%rsp), %rdx
     call handle_page_fault
     add $8, %rsp
     iretq
