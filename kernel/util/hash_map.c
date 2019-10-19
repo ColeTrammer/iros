@@ -61,7 +61,7 @@ void hash_set(struct hash_map *map, void *data) {
 
 	struct hash_entry *entry = map->entries[i];
 	while (entry != NULL) {
-		if (entry->key == map->key(data)) {
+		if (map->equals(entry->key, map->key(data))) {
 			entry->data = data;
 
 			spin_unlock(&map->lock);

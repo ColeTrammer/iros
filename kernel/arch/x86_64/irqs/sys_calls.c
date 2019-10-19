@@ -383,13 +383,24 @@ void arch_sys_waitpid(struct process_state *process_state) {
         SYS_RETURN(-EINVAL);
     }
 
-    assert(pid > 0);
+    struct process *current = get_current_process();
+
+    if (pid == 0) {
+        pid = -current->pgid;
+    }
 
     struct proc_state_message m;
+    pid_t found_pid;
     for (;;) {
-        bool is_message = proc_consume_message(pid, &m);
+        if (pid < -1) {
+            found_pid = proc_consume_message_by_pg(-pid, &m);
+        } else if (pid == -1) {
+            found_pid = proc_consume_message_by_parent(current->pid, &m);
+        } else {
+            found_pid = proc_consume_message(pid, &m);
+        }
 
-        if (!is_message) {
+        if (found_pid == 0) {
             if (flags & WNOHANG) {
                 SYS_RETURN(0);
             } else {
@@ -403,7 +414,7 @@ void arch_sys_waitpid(struct process_state *process_state) {
         }
     }
 
-    debug_log("Waited out pid: [ %d, %d ]\n", pid, m.type);
+    debug_log("Waited out pid: [ %d, %d ]\n", found_pid, m.type);
 
     // We should process the message here but instead we just assume it exited
     if (m.type == STATE_EXITED) {
@@ -419,7 +430,7 @@ void arch_sys_waitpid(struct process_state *process_state) {
     }
 
     // Indicated Success
-    SYS_RETURN(pid);
+    SYS_RETURN(found_pid);
 }
 
 void arch_sys_getpid(struct process_state *process_state) {    

@@ -22,11 +22,18 @@ struct proc_state_message_queue {
     struct proc_state_message *start;
     struct proc_state_message *end;
     pid_t pid;
+    pid_t pgid;
+    pid_t ppid;
+
+    struct proc_state_message_queue *pg_next;
+    struct proc_state_message_queue *parent_next;
 };
 
 struct proc_state_message *proc_create_message(int type, int data);
 void proc_add_message(pid_t pid, struct proc_state_message *m);
-bool proc_consume_message(pid_t pid, struct proc_state_message *m);
+pid_t proc_consume_message(pid_t pid, struct proc_state_message *m);
+pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m);
+pid_t proc_consume_message_by_parent(pid_t ppid, struct proc_state_message *m);
 
 void init_proc_state();
 
