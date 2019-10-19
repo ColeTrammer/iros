@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdatomic.h>
+#include <assert.h>
 
 #define barrier() asm volatile( "" : : : "memory" )
 #define cpu_relax() asm volatile( "pause" : : : "memory" )
@@ -87,12 +88,14 @@ static inline void enable_interrupts() {
     asm volatile ( "sti"  : : : "memory" );
 }
 
-static inline void fxsave(uintptr_t state) {
-    asm volatile( "fxsave64 %0" : : "m"(state) : "memory" );
+static inline void fxsave(uint8_t *state) {
+    assert((uintptr_t) state % 16 == 0);
+    asm volatile( "fxsave64 %0" : : "m"(*state) : "memory" );
 }
 
-static inline void fxrstor(uintptr_t state) {
-    asm volatile( "fxrstor64 %0" : : "m"(state) : "memory" );
+static inline void fxrstor(uint8_t *state) {
+    assert((uintptr_t) state % 16 == 0);
+    asm volatile( "fxrstor64 %0" : : "m"(*state) : "memory" );
 }
 
 static inline void fninit(void) {

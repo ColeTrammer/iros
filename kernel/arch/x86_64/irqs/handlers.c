@@ -93,7 +93,7 @@ void handle_device_not_available() {
         fninit();
         return;
     } else {
-        fxsave((uintptr_t) &last_saved->fpu.raw_fpu_state);
+        fxsave(last_saved->fpu.raw_fpu_state.image);
     }
 
     if (!last_saved->fpu.saved) {
@@ -101,7 +101,7 @@ void handle_device_not_available() {
     }
 
     if (current->fpu.saved) {
-        fxrstor((uintptr_t) &last_saved->fpu.raw_fpu_state);
+        fxrstor(last_saved->fpu.raw_fpu_state.image);
     } else {
         fninit();
     }
