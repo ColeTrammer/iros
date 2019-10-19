@@ -12,7 +12,7 @@ cd ..
 
 # Build
 cd mysh
-make
+make clean all
 cd ..
 
 # Copy into image

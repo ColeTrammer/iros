@@ -16,7 +16,7 @@ cd ..
 
 # Build and install
 cd figlet-2.2.5
-make install
+make clean install
 cd ..
 
 # Copy into image
