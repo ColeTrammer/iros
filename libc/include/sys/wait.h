@@ -11,8 +11,8 @@
 #define WTERMSIG(status) ((status) & 0x7F)
 
 #define WIFCONTINUED(status) (status == 0xFFFF)
-#define WIFEXITED(status) (WTERMSIG(status) == 0 && !WIFSTOPPED(status) && !WIFCONTINUED(status))
-#define WIFSIGNALED(status) (WTERMSIG(status) != 0 && !WIFCONTINUED(status))
+#define WIFEXITED(status) (WTERMSIG(status) == 0 && !WIFSTOPPED(status) && !WIFCONTINUED(status) && !WIFSTOPPED(status))
+#define WIFSIGNALED(status) (WTERMSIG(status) != 0 && !WIFCONTINUED(status) && !WIFSTOPPED(status))
 #define WIFSTOPPED(status) ((status) & 0x80 && !WIFCONTINUED(status))
 #define WSTOPSIG(status) (WEXITSTATUS(status))
 

@@ -133,7 +133,6 @@ int signal_process_group(pid_t pgid, int signum) {
     struct process *process = list_start;
     do {
         if (process->pgid == pgid) {
-            debug_log("Signaling: [ %d, %d ]\n", process->pid, signum);
             proc_set_sig_pending(process, signum);
             signalled_anything = true;
 

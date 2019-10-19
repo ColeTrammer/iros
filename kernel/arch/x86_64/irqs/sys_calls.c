@@ -420,7 +420,7 @@ void arch_sys_waitpid(struct process_state *process_state) {
     if (m.type == STATE_EXITED) {
         *status = (m.data & 0xFF) << 8;
     } else if (m.type == STATE_STOPPED) {
-        *status = 0x81 | ((m.data & 0xFF) << 8);
+        *status = 0x80 | ((m.data & 0xFF) << 8);
     } else if (m.type == STATE_INTERRUPTED) {
         *status = m.data;
     } else if (m.type == STATE_CONTINUED) {
@@ -698,8 +698,6 @@ void arch_sys_setpgid(struct process_state *process_state) {
     if (process == NULL) {
         SYS_RETURN(-ESRCH);
     }
-
-    debug_log("Setting pgid: [ %d, %d ]\n", pid, pgid);
 
     process->pgid = pgid;
     SYS_RETURN(0);

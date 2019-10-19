@@ -27,10 +27,9 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
     const char *str = (const char*) buffer;
 
     struct process *current = get_current_process();
-    // Gen TTOU signal
-    if (data->pgid != current->pgid) {
+    // Gen TTOU signal if TOSTOP is set
+    if (data->pgid != current->pgid && (data->config.c_lflag & TOSTOP)) {
         signal_process_group(current->pgid, SIGTTOU);
-        return -EIO; // Potentially should keep going instead...
     }
 
     if (file->position != 0) {
@@ -248,7 +247,6 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
     // Gen TTIN signal
     if (data->pgid != current->pgid) {
         signal_process_group(current->pgid, SIGTTIN);
-        return -EIO; // Potentially should keep going instead... (EIO only if TTIN is being blocked)
     }
 
     char *buf = (char*) buffer;

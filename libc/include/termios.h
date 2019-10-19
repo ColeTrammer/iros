@@ -28,6 +28,7 @@
 #define ISIG   0000001
 #define ICANON 0000002
 #define ECHO   0000010
+#define TOSTOP 0000400
 #define IEXTEN 0100000
 
 #define TCSANOW 1

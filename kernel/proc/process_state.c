@@ -118,7 +118,7 @@ static void __free_queue(struct proc_state_message_queue *queue) {
 }
 
 struct proc_state_message *proc_create_message(int type, int data) {
-    assert(type == STATE_EXITED || type == STATE_INTERRUPTED || type == STATE_STOPPED);
+    assert(type == STATE_EXITED || type == STATE_INTERRUPTED || type == STATE_STOPPED || type == STATE_CONTINUED);
 
     struct proc_state_message *m = malloc(sizeof(struct proc_state_message));
     m->type = type;
@@ -191,7 +191,7 @@ pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m) {
 }
 
 pid_t proc_consume_message_by_parent(pid_t ppid, struct proc_state_message *m) {
-    struct proc_state_message_queue *queue = hash_get(pg_queue_map, &ppid);
+    struct proc_state_message_queue *queue = hash_get(parent_queue_map, &ppid);
 
     if (queue == NULL) {
         return 0;
