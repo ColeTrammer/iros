@@ -241,7 +241,7 @@ int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *e
 
     if (flags & GLOB_DOOFFS) {
         pglob->gl_pathc = pglob->gl_offs;
-        pglob->gl_pathv = calloc((pglob->gl_offs + GLOB_BUF_INCREMENT - 1) / GLOB_BUF_INCREMENT, sizeof(char*));
+        pglob->gl_pathv = calloc(GLOB_BUF_INCREMENT * ((pglob->gl_offs + GLOB_BUF_INCREMENT - 1) / GLOB_BUF_INCREMENT), sizeof(char*));
     }
 
     if (pattern[0] == '/') {
