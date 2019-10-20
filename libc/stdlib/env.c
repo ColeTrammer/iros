@@ -30,6 +30,7 @@ static void set_allocated(size_t env_index) {
     if (env_index >= num_bits) {
         num_bits += ENV_NUM_BITS_BASE;
         bitmap = realloc(bitmap, num_bits / 8);
+        memset(bitmap + (num_bits - ENV_NUM_BITS_BASE) / 64, 0, ENV_NUM_BITS_BASE / 8);
     }
 
     bitmap[uint_off] |= (1ULL << bit_off);
