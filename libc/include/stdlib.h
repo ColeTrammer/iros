@@ -7,6 +7,8 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
+#define RAND_MAX 32767
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -23,6 +25,10 @@ int unsetenv(const char *name);
 int putenv(char *string);
 
 int atexit(void (*f)(void));
+
+void srand(unsigned int seed);
+int rand(void);
+int rand_r(unsigned int *seedp);
 
 #endif /* __is_libk */
 

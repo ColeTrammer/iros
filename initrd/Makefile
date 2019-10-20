@@ -32,6 +32,7 @@ $(BUILDDIR)/initrd/programs/chmod \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
+$(BUILDDIR)/initrd/programs/guess \
 $(BUILDDIR)/initrd/programs/kill \
 $(BUILDDIR)/initrd/programs/kilo \
 $(BUILDDIR)/initrd/programs/ls \
