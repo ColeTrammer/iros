@@ -72,6 +72,8 @@ char *read_line(FILE *input) {
 
         if (c == '\\') {
             prev_was_backslash = true;
+        } else {
+            prev_was_backslash = false;
         }
 
         if (c == EOF || c == '\n') {
