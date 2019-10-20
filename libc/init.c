@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 char **environ = NULL;
 
@@ -15,4 +16,5 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
 
     init_errno();
     init_files();
+    init_env();
 }

@@ -15,24 +15,24 @@ int main(int argc, char **argv) {
 
     /* Test execve */
 
-    pid_t f = fork();
-    if (f == 0) {
-        execvp("ls", argv);
+    // pid_t f = fork();
+    // if (f == 0) {
+    //     execvp("ls", argv);
 
-        perror("Test");
+    //     perror("Test");
 
-        /* Should Not Execute */
-        return 1;
-    } else if (f < 0) {
-        perror("Test");
-        return 1;
-    } else {
-        int status;
+    //     /* Should Not Execute */
+    //     return 1;
+    // } else if (f < 0) {
+    //     perror("Test");
+    //     return 1;
+    // } else {
+    //     int status;
 
-        do {
-             waitpid(f, &status, WUNTRACED);
-        } while (!WIFEXITED(status));
-    }
+    //     do {
+    //          waitpid(f, &status, WUNTRACED);
+    //     } while (!WIFEXITED(status));
+    // }
 
     /* Test args */
     
@@ -41,7 +41,11 @@ int main(int argc, char **argv) {
     //     printf("Argv[%ld]: %s\n", i, argv[i]);
     // }
 
-    // printf("OS: %s\n", getenv("OS"));
+    char **e = environ;
+    while (*e != NULL) {
+        puts(*e);
+        e++;
+    }
 
     /* Test Writing To stdio */
 
@@ -66,17 +70,17 @@ int main(int argc, char **argv) {
 
     /* Test Fork Sys Call */
 
-    pid_t ret = fork();
-    if (ret == 0) {
-        for (int i = 0; i <= 2; i++) {
-            printf("%d: Child\n", i);
-        }
-        return 0;
-    }
+    // pid_t ret = fork();
+    // if (ret == 0) {
+    //     for (int i = 0; i <= 2; i++) {
+    //         printf("%d: Child\n", i);
+    //     }
+    //     return 0;
+    // }
 
-    for (int i = 0; i <= 3; i++) {
-        printf("%d: Parent\n", i);
-    }
+    // for (int i = 0; i <= 3; i++) {
+    //     printf("%d: Parent\n", i);
+    // }
 
     return 0;
 }

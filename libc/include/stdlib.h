@@ -93,6 +93,7 @@ void free(void *ptr);
 
 #ifdef __libc_internal
 void __on_exit();
+void init_env();
 #endif /* __libc_internal */
 
 #ifdef __cplusplus
