@@ -264,18 +264,59 @@ static int op_echo(char **args) {
     return SHELL_CONTINUE;
 }
 
+static int op_export(char **argv) {
+    if (!argv[1]) {
+        printf("Usage: %s <key=value>\n", argv[0]);
+        return SHELL_CONTINUE;
+    }
+
+    for (size_t i = 1; argv[i] != NULL; i++) {
+        char *equals = strchr(argv[i], '=');
+        if (equals == NULL) {
+            fprintf(stderr, "Invalid environment string: %s\n", argv[i]);
+            continue;
+        }
+        *equals = '\0';
+
+        if (setenv(argv[i], equals + 1, 1)) {
+            perror("shell");
+            return SHELL_CONTINUE;
+        }
+    }
+
+    return SHELL_CONTINUE;
+}
+
+static int op_unset(char **argv) {
+    if (!argv[1]) {
+        printf("Usage: %s <key>\n", argv[0]);
+        return SHELL_CONTINUE;
+    }
+
+    for (size_t i = 1; argv[i] != NULL; i++) {
+        if (unsetenv(argv[i])) {
+            perror("shell");
+            return SHELL_CONTINUE;
+        }
+    }
+
+    return SHELL_CONTINUE;
+}
+
 struct builtin_op {
     char name[16];
     int (*op)(char **args);
     bool run_immediately;
 };
 
-#define NUM_BUILTINS 3
+#define NUM_BUILTINS 5
 
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },
     { "cd", op_cd, true },
-    { "echo", op_echo, false }
+    { "echo", op_echo, false },
+    { "export", op_export, true },
+    { "unset", op_unset, true }
 };
 
 int run_commands(struct command **commands) {
