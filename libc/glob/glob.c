@@ -10,6 +10,33 @@
 
 #define GLOB_BUF_INCREMENT 10
 
+// Determines whether a character is in a given set
+static bool glob_is_valid_char_for_set(char c, const char *set, int set_end, bool invert) {
+    for (int i = 0; i < set_end; i++) {
+        // Handle `-` ranges
+        if (i != 0 && i != set_end - 1 && set[i] == '-') {
+            char range_start = set[i - 1];
+            char range_end = set[i + 1];
+
+            // Switch ranges so they work correctly if specified backwards
+            if (range_start > range_end) {
+                char t = range_end;
+                range_end = range_start;
+                range_start = t;
+            }
+
+            // Don't need to check edges b/c they are checked automatically
+            for (char r = range_start + 1; r < range_end; r++) {
+                if (r == c) { return !invert; }
+            }
+        }
+
+        if (set[i] == c) { return !invert; }
+    }
+
+    return invert;
+}
+
 static bool glob_matches(char *s, const char *pattern) {
     size_t si = 0;
     size_t pi = 0;
@@ -40,7 +67,25 @@ static bool glob_matches(char *s, const char *pattern) {
             si++;
             pi++;
         } else if (pattern[pi] == '[') {
-            assert(false);
+            pi++;
+            bool invert = false;
+            if (pattern[pi] == '!') {
+                invert = true;
+                pi++;
+            }
+            // Sets cannot be empty
+            pi++;
+            const char *set_start = pattern + pi;
+            while (pattern[pi] != ']') { pi++; }
+            if (!glob_is_valid_char_for_set(s[si++], set_start, pi++, invert)) {
+                // Try again if we were trying to match a `*`
+                if (next_si != 0) {
+                    si = next_si;
+                    pi = next_pi;
+                } else {
+                    return false;
+                }
+            }
         } else {
             if (s[si++] != pattern[pi++]) {
                 // Try again if we were trying to match a `*`
@@ -77,10 +122,6 @@ static bool glob_append(glob_t *pglob, char *p, char *s) {
     strcpy(pglob->gl_pathv[pglob->gl_pathc], p);
     strcat(pglob->gl_pathv[pglob->gl_pathc++], s);
     return true;
-}
-
-static bool glob_empty(glob_t *pglob) {
-    return pglob->gl_pathc == 0;
 }
 
 static bool glob_is_dir(char *path, int flags, int (*errfunc)(const char *epath, int eerno), bool *is_dir) {
@@ -134,9 +175,11 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
     }
 
     struct dirent *ent;
+    bool found_anything = false;
     while ((ent = readdir(d)) != NULL) {
         if (glob_matches(ent->d_name, pattern)) {
             if (first_slash == NULL) {
+                found_anything = true;
                 if (!glob_append(pglob, to_prepend, ent->d_name)) {
                     closedir(d);
                     return GLOB_NOSPACE;
@@ -168,10 +211,13 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
                 int ret = glob_helper(new_path, new_to_prepend, first_slash + 1, flags, errfunc, pglob);
                 free(new_path);
                 free(new_to_prepend);
-                if ((ret != 0 && ret != GLOB_NOMATCH) || flags & GLOB_ERR) {
+                if ((ret != 0 && ret != GLOB_NOMATCH) && (flags & GLOB_ERR)) {
                     *first_slash = '/';
                     closedir(d);
-                    return GLOB_ABORTED;
+                    return ret;
+                }
+                if (ret != GLOB_NOMATCH) {
+                    found_anything = true;
                 }
             }
         }
@@ -181,15 +227,21 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
     if (first_slash) {
         *first_slash  = '/';
     }
-    return glob_empty(pglob) ? GLOB_NOMATCH : 0;
+    return found_anything ? 0 : GLOB_NOMATCH;
 }
 
 int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
     assert(!(flags & GLOB_MARK));
-    assert(!(flags & GLOB_DOOFFS));
 
     if (!(flags & GLOB_APPEND)) {
+        size_t offs_save = pglob->gl_offs;
         memset(pglob, 0, sizeof(glob_t));
+        pglob->gl_offs = (flags & GLOB_DOOFFS) ? offs_save : 0;
+    }
+
+    if (flags & GLOB_DOOFFS) {
+        pglob->gl_pathc = pglob->gl_offs;
+        pglob->gl_pathv = calloc((pglob->gl_offs + GLOB_BUF_INCREMENT - 1) / GLOB_BUF_INCREMENT, sizeof(char*));
     }
 
     if (pattern[0] == '/') {
