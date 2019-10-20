@@ -128,6 +128,7 @@ int putenv(char *string) {
             if (is_allocated(i)) {
                 free(*e);
             }
+            unset_allocated(i);
             *e = string;
             return 0;
         }
