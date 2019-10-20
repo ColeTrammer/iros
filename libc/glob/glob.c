@@ -138,6 +138,7 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
         if (glob_matches(ent->d_name, pattern)) {
             if (first_slash == NULL) {
                 if (!glob_append(pglob, to_prepend, ent->d_name)) {
+                    closedir(d);
                     return GLOB_NOSPACE;
                 }
             } else {
@@ -151,12 +152,12 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
                 strcat(new_to_prepend, ent->d_name);
                 strcat(new_to_prepend, "/");
 
-
                 bool is_dir;
                 if (!glob_is_dir(new_path, flags, errfunc, &is_dir)) {
                     *first_slash = '/';
                     free(new_path);
                     free(new_to_prepend);
+                    closedir(d);
                     return GLOB_ABORTED;
                 }
 
@@ -167,14 +168,16 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
                 int ret = glob_helper(new_path, new_to_prepend, first_slash + 1, flags, errfunc, pglob);
                 free(new_path);
                 free(new_to_prepend);
-                if (ret != 0 || flags & GLOB_ERR) {
+                if ((ret != 0 && ret != GLOB_NOMATCH) || flags & GLOB_ERR) {
                     *first_slash = '/';
+                    closedir(d);
                     return GLOB_ABORTED;
                 }
             }
         }
     }
 
+    closedir(d);
     if (first_slash) {
         *first_slash  = '/';
     }
