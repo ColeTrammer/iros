@@ -36,6 +36,7 @@ $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/signal_test \
+$(BUILDDIR)/initrd/programs/strtoken_test \
 $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/test_exec
