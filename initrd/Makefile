@@ -30,7 +30,6 @@ $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
 $(BUILDDIR)/initrd/programs/guess \
-$(BUILDDIR)/initrd/programs/kilo \
 $(BUILDDIR)/initrd/programs/pipe_test \
 $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \

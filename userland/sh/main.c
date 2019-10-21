@@ -13,12 +13,14 @@
 #include <errno.h>
 #include <setjmp.h>
 
+#include "builtin.h"
+
 struct command {
     char **args;
     char *_stdin;
     char *_stdout;
     char *_stderr;
-    int (*built_in_func)(char **args);
+    struct builtin_op *builtin_op;
 };
 
 char *read_line(FILE *input) {
@@ -130,7 +132,7 @@ struct command **split_line(char *line) {
         command->_stderr = NULL;
         command->_stdout = NULL;
         command->_stdin = NULL;
-        command->built_in_func = NULL;
+        command->builtin_op = NULL;
 
         if (j >= max_commands - 1) {
             max_commands *= 2;
@@ -214,109 +216,6 @@ struct command **split_line(char *line) {
     return commands;
 }
 
-#define SHELL_EXIT 1
-#define SHELL_CONTINUE 0
-
-static int op_exit(char **args) {
-    if (args[1] != NULL) {
-        printf("Usage: %s\n", args[0]);
-        return SHELL_CONTINUE;
-    }
-
-    /* Exit */
-    return SHELL_EXIT;
-}
-
-static int op_cd(char **args) {
-    if (!args[1] || args[2]) {
-        printf("Usage: %s <dir>\n", args[0]);
-        return SHELL_CONTINUE;
-    }
-
-    int ret = chdir(args[1]);
-    if (ret != 0) {
-        perror("Shell");
-    }
-
-    return SHELL_CONTINUE;
-}
-
-static int op_echo(char **args) {
-    if (!args[1]) {
-        printf("%c", '\n');
-        return SHELL_CONTINUE;
-    }
-
-    size_t i = 1;
-    for (;;) {
-        printf("%s", args[i]);
-        if (args[i + 1] != NULL) {
-            printf("%c", ' ');
-            i++;
-        } else {
-            break;
-        }
-    }
-
-    printf("%c", '\n');
-    return SHELL_CONTINUE;
-}
-
-static int op_export(char **argv) {
-    if (!argv[1]) {
-        printf("Usage: %s <key=value>\n", argv[0]);
-        return SHELL_CONTINUE;
-    }
-
-    for (size_t i = 1; argv[i] != NULL; i++) {
-        char *equals = strchr(argv[i], '=');
-        if (equals == NULL) {
-            fprintf(stderr, "Invalid environment string: %s\n", argv[i]);
-            continue;
-        }
-        *equals = '\0';
-
-        if (setenv(argv[i], equals + 1, 1)) {
-            perror("shell");
-            return SHELL_CONTINUE;
-        }
-    }
-
-    return SHELL_CONTINUE;
-}
-
-static int op_unset(char **argv) {
-    if (!argv[1]) {
-        printf("Usage: %s <key>\n", argv[0]);
-        return SHELL_CONTINUE;
-    }
-
-    for (size_t i = 1; argv[i] != NULL; i++) {
-        if (unsetenv(argv[i])) {
-            perror("shell");
-            return SHELL_CONTINUE;
-        }
-    }
-
-    return SHELL_CONTINUE;
-}
-
-struct builtin_op {
-    char name[16];
-    int (*op)(char **args);
-    bool run_immediately;
-};
-
-#define NUM_BUILTINS 5
-
-static struct builtin_op builtin_ops[NUM_BUILTINS] = {
-    { "exit", op_exit, true },
-    { "cd", op_cd, true },
-    { "echo", op_echo, false },
-    { "export", op_export, true },
-    { "unset", op_unset, true }
-};
-
 int run_commands(struct command **commands) {
     size_t num_commands = get_num_commands(commands);
 
@@ -333,14 +232,12 @@ int run_commands(struct command **commands) {
     struct command *command = commands[i];
     while (command != NULL) {
         char **args = command->args;
-        for (size_t j = 0; j < NUM_BUILTINS; j++) {
-            if (strcmp(args[0], builtin_ops[j].name) == 0) {
-                if (builtin_ops[j].run_immediately) {
-                    return builtin_ops[j].op(args);
-                }
 
-                command->built_in_func = builtin_ops[j].op;
-            }
+        struct builtin_op *op = builtin_find_op(args[0]);
+        if (builtin_should_run_immediately(op)) {
+            return builtin_do_op(op, args);
+        } else if (op) {
+            command->builtin_op = op;
         }
 
         pid_t pid = fork();
@@ -405,8 +302,8 @@ int run_commands(struct command **commands) {
                 }
             }
 
-            if (command->built_in_func != NULL) {
-                exit(command->built_in_func(args));
+            if (command->builtin_op != NULL) {
+                exit(builtin_do_op(op, args));
             }
             execvp(args[0], args);
 

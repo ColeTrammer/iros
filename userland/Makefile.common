@@ -2,7 +2,7 @@
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJS)
-	$(CC) -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+	$(CC) -o $@ $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
 %.o: %.c
