@@ -387,7 +387,19 @@ static void on_child(int signo) {
 }
 
 int main(int argc, char **argv) {
-    if (argc == 2) {
+    // Respect -c
+    if (argc == 3 && strcmp(argv[1], "-c") == 0) {
+        // Use pipes as a hack to get -c to work
+        int fds[2];
+        if (pipe(fds)) {
+            perror("Shell");
+            return EXIT_FAILURE;
+        }
+
+        write(fds[1], argv[2], strlen(argv[2]));
+        close(fds[1]);
+        input = fdopen(fds[0], "r");
+    } else if (argc == 2) {
         input = fopen(argv[1], "r");
         if (input == NULL) {
             perror("Shell");

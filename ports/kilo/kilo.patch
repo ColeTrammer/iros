@@ -11,7 +11,7 @@ index 13620cc..c7da1ab 100644
  	$(CC) -o kilo kilo.c -Wall -W -pedantic -std=c99
  
 diff --git a/kilo.c b/kilo.c
-index 9490a77..d2b3085 100644
+index 9490a77..62d368e 100644
 --- a/kilo.c
 +++ b/kilo.c
 @@ -46,7 +46,7 @@
@@ -23,6 +23,23 @@ index 9490a77..d2b3085 100644
  #include <unistd.h>
  #include <stdarg.h>
  #include <fcntl.h>
+@@ -159,7 +159,7 @@ void editorSetStatusMessage(const char *fmt, ...);
+  * There is no support to highlight patterns currently. */
+ 
+ /* C / C++ */
+-char *C_HL_extensions[] = {".c",".cpp",NULL};
++char *C_HL_extensions[] = {".c",".cpp",".h",NULL};
+ char *C_HL_keywords[] = {
+         /* A few C / C++ keywords */
+         "switch","if","while","for","break","continue","return","else",
+@@ -191,6 +191,7 @@ void disableRawMode(int fd) {
+     /* Don't even check the return value as it's too late. */
+     if (E.rawmode) {
+         tcsetattr(fd,TCSAFLUSH,&orig_termios);
++        system("clear");
+         E.rawmode = 0;
+     }
+ }
 diff --git a/link.ld b/link.ld
 new file mode 100644
 index 0000000..a9bfc41

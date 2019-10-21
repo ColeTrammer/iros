@@ -30,6 +30,8 @@ void srand(unsigned int seed);
 int rand(void);
 int rand_r(unsigned int *seedp);
 
+int system(const char *cmd);
+
 #endif /* __is_libk */
 
 typedef struct div_t {
