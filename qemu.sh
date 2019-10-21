@@ -13,7 +13,7 @@ if echo "$1" | grep -Eq '[-][-]debug'; then
 
     set +e
 
-    x-terminal-emulator -e "qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors,int -no-reboot -no-shutdown -monitor stdio -s -S -serial file:debug.log" &
+    x-terminal-emulator -e "qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors,int -hda os_2.img -no-reboot -no-shutdown -monitor stdio -s -S -serial file:debug.log" &
     x-terminal-emulator -e "gdb"
 else
     export DEFINES=""
@@ -23,5 +23,5 @@ else
 
     set +e
 
-    qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors -serial stdio -hda ext2_test.img -boot d -no-reboot -no-shutdown
+    qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors -serial stdio -hda os_2.img -boot d -no-reboot -no-shutdown
 fi

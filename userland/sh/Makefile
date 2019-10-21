@@ -1,0 +1,6 @@
+OBJS=\
+$(BUILDDIR)/userland/sh/main.o
+
+EXECUTABLE=$(BUILDDIR)/userland/sh/sh
+
+include $(ROOT)/userland/Makefile.common

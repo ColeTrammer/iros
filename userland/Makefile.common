@@ -1,0 +1,23 @@
+.PHONY: all
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJS)
+	$(CC) -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+
+# Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
+%.o: %.c
+	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+
+%.o: %.S
+	$(CC) -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+
+.PHONY: install
+install: all
+	cp --preserve=timestamps $(EXECUTABLE) $(SYSROOT)/bin
+
+# Includes the .d files for each object, if it exists.
+# This will cause any object that depends on a specific header,
+# that was changed, to be recompiled, as this include will 
+# tell make its dependencies, which if altered, will cause
+# make to go back and rebuild the object.
+-include $(OBJS:.o=.d)

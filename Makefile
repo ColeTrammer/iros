@@ -1,13 +1,13 @@
 # Lists all projects
-PROJECTS=kernel libc boot initrd
+PROJECTS=kernel libc boot initrd userland
 # Lists all projects that need headers installed
 HEADER_PROJECTS=kernel libc
 
 # Root defaults to cwd; must be set properly if using make -C
-ROOT?=$(CURDIR)
+export ROOT?=$(CURDIR)
 # Sets directories for output based on defaults, and exports if needed
-SYSROOT=$(ROOT)/sysroot
-ISODIR?=$(ROOT)/isodir
+export SYSROOT=$(ROOT)/sysroot
+export ISODIR?=$(ROOT)/isodir
 export BUILDDIR?=$(ROOT)/build
 export DESTDIR?=$(SYSROOT)
 
@@ -25,7 +25,7 @@ export AR:=$(HOST)-ar
 export OBJCOPY:=$(HOST)-objcopy
 
 .PHONY: all
-all: os_2.iso
+all: os_2.iso os_2.img
 
 # Makes iso - headers must be installed first, then each PROJECT
 # Makes iso by creating a directory with kernel image and grub.cfg,
@@ -40,6 +40,9 @@ os_2.iso: install-sources install-headers $(PROJECTS)
 	grub-file --is-x86-multiboot2 $(ISODIR)/boot/boot_loader.o
 	grub-mkrescue -o $@ $(ISODIR)
 
+os_2.img: $(PROJECTS)
+	sudo $(ROOT)/makeimg.sh
+
 # Makes project by calling its Makefile
 .PHONY: $(PROJECTS)
 $(PROJECTS):
@@ -50,6 +53,9 @@ kernel: libc
 
 # Makes the initrd depend on libc
 initrd: libc
+
+# Makes the userland depend on libc
+userland: libc
 
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean

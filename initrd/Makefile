@@ -43,7 +43,6 @@ $(BUILDDIR)/initrd/programs/rmdir \
 $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
-$(BUILDDIR)/initrd/programs/shell \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/stat \
 $(BUILDDIR)/initrd/programs/te \

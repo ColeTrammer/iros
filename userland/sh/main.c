@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 201900
-
 #include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
