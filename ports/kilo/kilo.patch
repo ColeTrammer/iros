@@ -1,0 +1,77 @@
+diff --git a/Makefile b/Makefile
+index 13620cc..c7da1ab 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,7 @@
+ all: kilo
+ 
++CC=x86_64-os_2-gcc -T link.ld
++
+ kilo: kilo.c
+ 	$(CC) -o kilo kilo.c -Wall -W -pedantic -std=c99
+ 
+diff --git a/kilo.c b/kilo.c
+index 9490a77..d2b3085 100644
+--- a/kilo.c
++++ b/kilo.c
+@@ -46,7 +46,7 @@
+ #include <ctype.h>
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
+-#include <sys/time.h>
++#include <time.h>
+ #include <unistd.h>
+ #include <stdarg.h>
+ #include <fcntl.h>
+diff --git a/link.ld b/link.ld
+new file mode 100644
+index 0000000..a9bfc41
+--- /dev/null
++++ b/link.ld
+@@ -0,0 +1,45 @@
++OUTPUT_FORMAT("elf64-x86-64")
++OUTPUT_ARCH(i386:x86-64)
++
++/* Sets first thing to be executed to be start */
++ENTRY(_start)
++
++SECTIONS
++{
++    . = 0x400000 + SIZEOF_HEADERS;
++
++    .text :
++    {
++        KEEP(*(SORT_NONE(.init)))
++        *(.text.startup)
++        *(.text .text.*)
++        KEEP(*(SORT_NONE(.fini)))
++    }
++
++    /* Put read only data */
++    .rodata ALIGN(0x1000) :
++    {
++        *(.rodata .rodata.*)
++        *(.eh_frame)
++    }
++
++    /* Put data */
++    .data ALIGN(0x1000) :
++    {
++        *(.data)
++        *(.ctors)
++        *(.dtors)
++    }
++
++    /* Put uninitialized data */
++    .bss ALIGN(0x1000) :
++    {
++        *(COMMON)
++        *(.bss .bss.*)
++    }
++
++    /DISCARD/ : { 
++        *(.comment)
++        *(.debug*)
++    }
++}
+\ No newline at end of file
