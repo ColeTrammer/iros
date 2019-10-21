@@ -302,3 +302,12 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *old) {
 int getuid(void) {
     return 0;
 }
+
+int dup(int oldfd) {
+    int ret;
+    asm volatile( "movq $29, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "int $0x80\n"\
+                  "movl %0, %%eax" : "=r"(ret) : "r"(oldfd) : "rdi", "esi", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}

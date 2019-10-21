@@ -10,6 +10,7 @@
 #define GLOB_NOCHECK  16
 #define GLOB_NOESCAPE 32
 #define GLOB_NOSORT   64
+#define GLOB_TILDE    128
 
 #define GLOB_ABORTED -1
 #define GLOB_NOMATCH -2

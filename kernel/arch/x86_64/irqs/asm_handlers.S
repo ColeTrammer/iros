@@ -145,3 +145,4 @@ sys_call_table:
     .quad arch_sys_sigaction
     .quad arch_sys_sigreturn
     .quad arch_sys_sigprocmask
+    .quad arch_sys_dup

@@ -379,10 +379,6 @@ void arch_sys_waitpid(struct process_state *process_state) {
     int *status = (int*) process_state->cpu_state.rdx;
     int flags = (int) process_state->cpu_state.rcx;
 
-    if (!status) {
-        SYS_RETURN(-EINVAL);
-    }
-
     struct process *current = get_current_process();
 
     if (pid == 0) {
@@ -415,6 +411,10 @@ void arch_sys_waitpid(struct process_state *process_state) {
     }
 
     debug_log("Waited out pid: [ %d, %d ]\n", found_pid, m.type);
+
+    if (!status) {
+        SYS_RETURN(found_pid);
+    }
 
     // We should process the message here but instead we just assume it exited
     if (m.type == STATE_EXITED) {
@@ -728,15 +728,15 @@ void arch_sys_sigaction(struct process_state *process_state) {
 
 void arch_sys_sigreturn(struct process_state *process_state) {
     struct process *process = get_current_process();
-    uint64_t *signum_ptr = (uint64_t*) process_state->stack_state.rsp;
-    struct process_state *saved_state = (struct process_state*) (signum_ptr + 1);
+    uint64_t *mask_ptr = (uint64_t*) process_state->stack_state.rsp;
+    struct process_state *saved_state = (struct process_state*) (mask_ptr + 1);
 
-    debug_log("Sig Return: [ %lu ]\n", *signum_ptr);
+    debug_log("Sig return\n");
 
     memcpy(&process->arch_process.process_state, saved_state, sizeof(struct process_state));
 
-    // Unblock signum
-    process->sig_mask &= ~(1U << (*signum_ptr - 1));
+    // Restore mask
+    process->sig_mask = *mask_ptr;
 
     yield_signal();
 }
@@ -771,4 +771,24 @@ void arch_sys_sigprocmask(struct process_state *process_state) {
     }
 
     SYS_RETURN(0);
+}
+
+void arch_sys_dup(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int oldfd = (int) process_state->cpu_state.rsi;
+
+    struct process *current = get_current_process();
+    if (current->files[oldfd] == NULL) {
+        SYS_RETURN(-EBADF);
+    }
+
+    // Should lock process to prevent races
+    for (size_t i = 0; i < FOPEN_MAX; i++) {
+        if (current->files[i] != NULL) {
+            current->files[i] = fs_clone(current->files[oldfd]);
+        }
+    }
+
+    SYS_RETURN(-EMFILE);
 }

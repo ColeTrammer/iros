@@ -134,6 +134,12 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     if (stream->buf_type == _IONBF) {
         ssize_t ret = read(stream->fd, ptr, nmemb * size);
 
+        if (ret == 0) {
+            stream->eof = 1;
+        } else if (ret < 0) {
+            stream->error = 1;
+        }
+
         if (ret < 0) {
             return 0;
         }

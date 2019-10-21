@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <signal.h>
 
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
@@ -38,6 +39,7 @@ pid_t fork();
 int isatty(int fd);
 int tcsetpgrp(int fd, pid_t pgid);
 int ftruncate(int fd, off_t length);
+int dup(int oldfd);
 int dup2(int oldfd, int newfd);
 int pipe(int pipefd[2]);
 int unlink(const char *pathname);
