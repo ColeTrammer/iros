@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include <fcntl.h>
 
 #include <kernel/fs/dev.h>
 #include <kernel/fs/file.h>
@@ -32,11 +33,11 @@ static struct inode_operations ext2_dir_i_op = {
 };
 
 static struct file_operations ext2_f_op = {
-    NULL, &ext2_read, &ext2_write
+    NULL, &ext2_read, &ext2_write, NULL
 };
 
 static struct file_operations ext2_dir_f_op = {
-    NULL, NULL, NULL
+    NULL, NULL, NULL, NULL
 };
 
 static int block_group_hash(void *index, int num_buckets) {
@@ -840,7 +841,9 @@ struct tnode *ext2_lookup(struct inode *inode, const char *name) {
     return NULL;
 }
 
-struct file *ext2_open(struct inode *inode, int *error) {
+struct file *ext2_open(struct inode *inode, int flags, int *error) {
+    (void) flags;
+
     if (!inode->private_data) {
         ext2_update_inode(inode, true);
     }
@@ -1335,7 +1338,7 @@ int ext2_chmod(struct inode *inode, mode_t mode) {
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     int error = 0;
-    struct file *dev_file = fs_open(device_path, &error);
+    struct file *dev_file = fs_open(device_path, O_RDWR, &error);
     if (dev_file == NULL) {
         return NULL;
     }

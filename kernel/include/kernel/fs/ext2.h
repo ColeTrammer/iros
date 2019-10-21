@@ -173,7 +173,7 @@ struct ext2_block {
 
 struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error);
 struct tnode *ext2_lookup(struct inode *inode, const char *name);
-struct file *ext2_open(struct inode *inode, int *error);
+struct file *ext2_open(struct inode *inode, int flags, int *error);
 int ext2_close(struct file *file);
 ssize_t ext2_read(struct file *file, void *buffer, size_t len);
 ssize_t ext2_write(struct file *file, const void *buffer, size_t len);

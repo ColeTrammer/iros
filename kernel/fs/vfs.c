@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/dev.h>
@@ -175,7 +176,7 @@ int fs_create(const char *file_name, mode_t mode) {
     return 0;
 }
 
-struct file *fs_open(const char *file_name, int *error) {
+struct file *fs_open(const char *file_name, int flags, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
         return NULL;
@@ -200,7 +201,21 @@ struct file *fs_open(const char *file_name, int *error) {
     tnode->inode->ref_count++;
     spin_unlock(&tnode->inode->lock);
 
-    return tnode->inode->i_op->open(tnode->inode, error);
+    struct file *file = tnode->inode->i_op->open(tnode->inode, flags, error);
+    if (file == NULL) {
+        return file;
+    }
+
+    file->abilities = 0;
+    if (flags & O_RDWR) {
+        file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
+    } else if (flags & O_RDONLY) {
+        file->abilities |= FS_FILE_CAN_READ;
+    } else if (flags & O_WRONLY) {
+        file->abilities |= FS_FILE_CAN_WRITE;
+    }
+
+    return file;
 }
 
 /* Should potentially remove inode from inode_store */
@@ -440,12 +455,14 @@ int fs_create_pipe(struct file *pipe_files[2]) {
     struct inode *pipe_inode = pipe_new_inode();
     fs_inode_put(pipe_inode);
     int error = 0;
-    pipe_files[0] = pipe_inode->i_op->open(pipe_inode, &error);
+    pipe_files[0] = pipe_inode->i_op->open(pipe_inode, O_RDONLY, &error);
+    pipe_files[0]->abilities |= FS_FILE_CAN_READ;
     if (error != 0) {
         return error;
     }
 
-    pipe_files[1] = pipe_inode->i_op->open(pipe_inode, &error);
+    pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY, &error);
+    pipe_files[1]->abilities |= FS_FILE_CAN_WRITE;
     if (error != 0) {
         fs_close(pipe_files[0]);
         return error;
@@ -702,6 +719,10 @@ struct file *fs_clone(struct file *file) {
 
     struct file *new_file = malloc(sizeof(struct file));
     memcpy(new_file, file, sizeof(struct file));
+
+    if (new_file->f_op->clone) {
+        new_file->f_op->clone(new_file);
+    }
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);

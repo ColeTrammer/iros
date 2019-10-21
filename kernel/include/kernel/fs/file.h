@@ -12,6 +12,7 @@ struct file_operations {
     int (*close)(struct file *file);
     ssize_t (*read)(struct file *file, void *buffer, size_t len);
     ssize_t (*write)(struct file *file, const void *buffer, size_t len);
+    void (*clone)(struct file *file);
 };
 
 struct file {
@@ -23,6 +24,10 @@ struct file {
 
     struct file_operations *f_op;
     unsigned int flags;
+
+#define FS_FILE_CAN_READ 1
+#define FS_FILE_CAN_WRITE 2
+    int abilities;
 
     dev_t device;
 };

@@ -36,11 +36,11 @@ static struct inode_operations dev_dir_i_op = {
 };
 
 static struct file_operations dev_f_op = {
-    &dev_close, &dev_read, &dev_write
+    &dev_close, &dev_read, &dev_write, NULL
 };
 
 static struct file_operations dev_dir_f_op = {
-    NULL, NULL, NULL
+    NULL, NULL, NULL, NULL
 };
 
 struct tnode *dev_lookup(struct inode *inode, const char *name) {
@@ -63,7 +63,9 @@ struct tnode *dev_lookup(struct inode *inode, const char *name) {
     return NULL;
 }
 
-struct file *dev_open(struct inode *inode, int *error) {
+struct file *dev_open(struct inode *inode, int flags, int *error) {
+    (void) flags;
+
     struct file *file = calloc(sizeof(struct file), 1);
     file->inode_idenifier = inode->index;
     file->length = inode->size;

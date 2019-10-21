@@ -19,7 +19,7 @@ struct inode;
 struct inode_operations {
     struct inode *(*create)(struct tnode *tnode, const char *name, mode_t mode, int *error);
     struct tnode *(*lookup)(struct inode *inode, const char *name);
-    struct file *(*open)(struct inode *inode, int *error);
+    struct file *(*open)(struct inode *inode, int flags, int *error);
     int (*stat)(struct inode *inode, struct stat *stat_struct);
     int (*ioctl)(struct inode *inode, unsigned long request, void *argp);
     struct inode *(*mkdir)(struct tnode *tnode, const char *name, mode_t mode, int *error);

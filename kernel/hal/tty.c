@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
 
 #include <kernel/hal/arch.h>
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
@@ -625,7 +626,7 @@ void init_tty_device(dev_t dev) {
 
     int error = 0;
     struct tty_data *data = malloc(sizeof(struct tty_data));
-    data->keyboard = fs_open("/dev/keyboard", &error);
+    data->keyboard = fs_open("/dev/keyboard", O_RDONLY, &error);
     assert(error == 0);
     data->input_buffer_length = 0x1000;
     data->input_buffer_offset = -1;

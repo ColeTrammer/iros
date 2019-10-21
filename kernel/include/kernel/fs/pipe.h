@@ -11,14 +11,18 @@
 struct pipe_data {
     char *buffer;
     size_t len;
+
+    // We only care about open write ends for now
+    int write_count;
 };
 
 struct inode *pipe_new_inode();
 
-struct file *pipe_open(struct inode *inode, int *error);
+struct file *pipe_open(struct inode *inode, int flags, int *error);
 ssize_t pipe_read(struct file *file, void *buffer, size_t len);
 ssize_t pipe_write(struct file *file, const void *buffer, size_t len);
 int pipe_close(struct file *file);
+void pipe_clone(struct file *file);
 
 void init_pipe();
 

@@ -141,7 +141,7 @@ void arch_sys_open(struct process_state *process_state) {
     struct process *process = get_current_process();
     char *path = get_full_path(process->cwd, _path);
 
-    struct file *file = fs_open(path, &error);
+    struct file *file = fs_open(path, flags, &error);
 
     if (file == NULL) {
         if (flags & O_CREAT) {
@@ -153,7 +153,7 @@ void arch_sys_open(struct process_state *process_state) {
                 SYS_RETURN((uint64_t) error);
             }
 
-            file = fs_open(path, &error);
+            file = fs_open(path, flags, &error);
             if (file == NULL) {
                 free(path);
                 SYS_RETURN((uint64_t) error);
@@ -249,7 +249,7 @@ void arch_sys_execve(struct process_state *process_state) {
     debug_log("Exec Process: [ %d, %s ]\n", current->pid, path);
 
     int error = 0;
-    struct file *program = fs_open(path, &error);
+    struct file *program = fs_open(path, O_RDONLY, &error);
 
     if (program == NULL) {
         /* Should look at $PATH variable, instead is currently hardcoded */
@@ -261,7 +261,7 @@ void arch_sys_execve(struct process_state *process_state) {
             path = get_full_path(prefix, file_name);
 
             error = 0;
-            program = fs_open(path, &error);
+            program = fs_open(path, O_RDONLY, &error);
 
             if (program != NULL) {
                 break;

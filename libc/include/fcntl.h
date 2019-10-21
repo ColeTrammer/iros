@@ -22,8 +22,6 @@
 #define F_UNLCK         1
 #define F_WRLCK         2
 
-/* Seek Constants */
-
 #define O_CLOEXEC       1
 #define O_CREAT         2
 #define O_DIRECTORY     4
@@ -41,11 +39,11 @@
 
 #define O_ACCMODE       3
 
-#define O_EXEC          4
-#define O_RDONLY        0
-#define O_RDWR          1
-#define O_SEARCH        2
-#define O_WRONLY        3
+#define O_EXEC          4096
+#define O_RDONLY        8192
+#define O_RDWR          16384
+#define O_SEARCH        32768
+#define O_WRONLY        65536
 
 #ifdef __cplusplus
 extern "C" { 

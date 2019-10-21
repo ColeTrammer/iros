@@ -42,11 +42,11 @@ static struct inode_operations initrd_dir_i_op = {
 };
 
 static struct file_operations initrd_f_op = {
-    NULL, &initrd_read, NULL
+    NULL, &initrd_read, NULL, NULL
 };
 
 static struct file_operations initrd_dir_f_op = {
-    NULL, NULL, NULL
+    NULL, NULL, NULL, NULL
 };
 
 struct tnode *initrd_lookup(struct inode *inode, const char *name) {
@@ -68,7 +68,9 @@ struct tnode *initrd_lookup(struct inode *inode, const char *name) {
     return NULL;
 }
 
-struct file *initrd_open(struct inode *inode, int *error) {
+struct file *initrd_open(struct inode *inode, int flags, int *error) {
+    (void) flags;
+
     struct initrd_file_entry *entry = (struct initrd_file_entry*) inode->private_data;
     
     if (!inode) {

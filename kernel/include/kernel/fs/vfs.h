@@ -12,7 +12,7 @@ void init_vfs();
 struct tnode *iname(const char *path);
 
 int fs_create(const char *path, mode_t mode);
-struct file *fs_open(const char *file_name, int *error);
+struct file *fs_open(const char *file_name, int flags, int *error);
 int fs_close(struct file *file);
 ssize_t fs_read(struct file *file, void *buffer, size_t len);
 ssize_t fs_write(struct file *file, const void *buffer, size_t len);

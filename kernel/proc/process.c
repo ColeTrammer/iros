@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
@@ -122,7 +123,7 @@ void init_kernel_process() {
 
 struct process *load_process(const char *file_name) {
     int error = 0;
-    struct file *program = fs_open(file_name, &error);
+    struct file *program = fs_open(file_name, O_RDONLY, &error);
     assert(program != NULL && error == 0);
 
     fs_seek(program, 0, SEEK_END);
@@ -171,9 +172,9 @@ struct process *load_process(const char *file_name) {
     int error1 = 0;
     int error2 = 0;
 
-    process->files[0] = fs_open("/dev/tty", &error0);
-    process->files[1] = fs_open("/dev/tty", &error1);
-    process->files[2] = fs_open("/dev/tty", &error2);
+    process->files[0] = fs_open("/dev/tty", O_RDWR, &error0);
+    process->files[1] = fs_open("/dev/tty", O_RDWR, &error1);
+    process->files[2] = fs_open("/dev/tty", O_RDWR, &error2);
 
     assert(error0 == 0);
     assert(error1 == 0);
