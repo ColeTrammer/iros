@@ -20,6 +20,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
+pid_t wait(int *wstatus);
 pid_t waitpid(pid_t pid, int *wstatus, int options);
 
 #ifdef __cplusplus

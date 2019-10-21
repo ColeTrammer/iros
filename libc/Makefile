@@ -57,7 +57,7 @@ $(BUILDDIR)/libc/string/strcpy.o \
 $(BUILDDIR)/libc/string/strcspn.o \
 $(BUILDDIR)/libc/string/strdup.o \
 $(BUILDDIR)/libc/string/strlen.o \
-$(BUILDDIR)/libc/string/strcat.o \
+$(BUILDDIR)/libc/string/strncat.o \
 $(BUILDDIR)/libc/string/strncmp.o \
 $(BUILDDIR)/libc/string/strncpy.o \
 $(BUILDDIR)/libc/string/strpbrk.o \
@@ -82,6 +82,7 @@ $(BUILDDIR)/libc/stdlib/env.o \
 $(BUILDDIR)/libc/string/strcoll.o \
 $(BUILDDIR)/libc/string/strerror.o \
 $(BUILDDIR)/libc/string/strxfrm.o \
+$(BUILDDIR)/libc/sys/wait/wait.o \
 $(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/time/time.o \
 $(BUILDDIR)/libc/unistd/exec.o \

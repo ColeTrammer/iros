@@ -11,6 +11,11 @@
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
+#define F_OK 0
+#define W_OK 1
+#define R_OK 2
+#define X_OK 4
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* cplusplus */
@@ -44,6 +49,7 @@ int dup2(int oldfd, int newfd);
 int pipe(int pipefd[2]);
 int unlink(const char *pathname);
 int rmdir(const char *pathname);
+int access(const char *pathname, int mode);
 
 char *getlogin(void);
 int getlogin_r(char *buf, size_t bufsize);

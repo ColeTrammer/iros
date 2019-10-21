@@ -311,3 +311,10 @@ int dup(int oldfd) {
                   "movl %0, %%eax" : "=r"(ret) : "r"(oldfd) : "rdi", "esi", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
+
+int access(const char *path, int mode) {
+    (void) path;
+    (void) mode;
+
+    return 0;
+}
