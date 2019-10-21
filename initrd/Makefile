@@ -26,29 +26,19 @@ FILES:=$(shell find files)
 # Lists all programs included in initrd
 PROGRAMS=\
 $(BUILDDIR)/initrd/programs/broken \
-$(BUILDDIR)/initrd/programs/cat \
-$(BUILDDIR)/initrd/programs/clear \
-$(BUILDDIR)/initrd/programs/chmod \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
 $(BUILDDIR)/initrd/programs/guess \
-$(BUILDDIR)/initrd/programs/kill \
 $(BUILDDIR)/initrd/programs/kilo \
-$(BUILDDIR)/initrd/programs/ls \
-$(BUILDDIR)/initrd/programs/mkdir \
 $(BUILDDIR)/initrd/programs/pipe_test \
-$(BUILDDIR)/initrd/programs/rm \
-$(BUILDDIR)/initrd/programs/rmdir \
 $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/signal_test \
-$(BUILDDIR)/initrd/programs/stat \
 $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test \
-$(BUILDDIR)/initrd/programs/test_exec \
-$(BUILDDIR)/initrd/programs/touch
+$(BUILDDIR)/initrd/programs/test_exec
 
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
