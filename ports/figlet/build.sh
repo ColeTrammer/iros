@@ -20,5 +20,5 @@ make clean install
 cd ..
 
 # Copy into image
-cp -r figlet/bin $ROOT/sysroot
+cp -r figlet/bin $ROOT/sysroot/usr
 cp -r figlet/share $ROOT/sysroot

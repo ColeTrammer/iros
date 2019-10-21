@@ -16,4 +16,4 @@ make clean all
 cd ..
 
 # Copy into image
-cp mysh/mysh $ROOT/sysroot/bin
+cp mysh/mysh $ROOT/sysroot/usr/bin

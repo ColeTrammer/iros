@@ -86,6 +86,7 @@ install-sources:
 # Installs headers by calling each project's install-headers
 .PHONY: install-headers
 install-headers:
+	mkdir -p $(SYSROOT)/bin
 	for dir in $(HEADER_PROJECTS); do \
 	  $(MAKE) install-headers -C $(ROOT)/$$dir; \
 	done

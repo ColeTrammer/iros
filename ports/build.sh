@@ -1,5 +1,9 @@
 #!/bin/sh
 
+cd ..
+make libc
+cd ports
+
 cd figlet
 ./build.sh
 cd ..

@@ -10,14 +10,6 @@ mount -text2 /dev/loop100 mnt
 
 cp -r sysroot/* mnt
 
-cd mnt
-
-cp ../initrd/programs/kilo.c kilo.c
-
-sync
-
-cd ..
-
 umount /dev/loop100
 losetup -d /dev/loop100
 
