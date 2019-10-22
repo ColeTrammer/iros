@@ -14,6 +14,7 @@
 #include <setjmp.h>
 
 #include "builtin.h"
+#include "input.h"
 
 struct command {
     char **args;
@@ -22,74 +23,6 @@ struct command {
     char *_stderr;
     struct builtin_op *builtin_op;
 };
-
-char *read_line(FILE *input) {
-    int sz = 1024;
-    int pos = 0;
-    char *buffer = malloc(sz);
-
-    bool prev_was_backslash = false;
-
-    for (;;) {
-        errno = 0;
-        int c = fgetc(input);
-
-        // Means user pressed ^C, so we should go to the next line
-        if (c == EOF && errno == EINTR) {
-            buffer[0] = '\n';
-            buffer[1] = '\0';
-            printf("%c", '\n');
-            return buffer;
-        }
-
-        /* In a comment */
-        if (c == '#' && (pos == 0 || isspace(buffer[pos - 1]))) {
-            c = getc(input);
-            while (c != EOF && c != '\n') {
-                c = fgetc(input);
-            }
-
-            buffer[pos] = '\n';
-            buffer[pos + 1] = '\0';
-            return buffer;
-        }
-
-        if (c == EOF && pos == 0) {
-            return NULL;
-        }
-
-        if (c == '\n' && prev_was_backslash) {
-            buffer[--pos] = '\0';
-            prev_was_backslash = false;
-
-            if (input == stdin && isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)) {
-                printf("> ");
-                fflush(stdout);
-            }
-
-            continue;
-        }
-
-        if (c == '\\') {
-            prev_was_backslash = true;
-        } else {
-            prev_was_backslash = false;
-        }
-
-        if (c == EOF || c == '\n') {
-            buffer[pos] = '\n';
-            buffer[pos + 1] = '\0';
-            return buffer;
-        }
-
-        buffer[pos++] = c;
-
-        if (pos + 1 >= sz) {
-            sz *= 2;
-            buffer = realloc(buffer, sz);
-        }
-    }
-}
 
 void free_commands(struct command **commands) {
     size_t i = 0;
@@ -371,7 +304,6 @@ static char *line = NULL;
 static struct command **commands = NULL;
 static sigjmp_buf env;
 static volatile sig_atomic_t jump_active = 0;
-static FILE *input;
 
 static void on_int(int signo) {
     assert(signo == SIGINT);
@@ -387,29 +319,25 @@ static void on_child(int signo) {
 }
 
 int main(int argc, char **argv) {
+    struct input_source input_source;
+
     // Respect -c
     if (argc == 3 && strcmp(argv[1], "-c") == 0) {
-        // Use pipes as a hack to get -c to work
-        int fds[2];
-        if (pipe(fds)) {
-            perror("Shell");
-            return EXIT_FAILURE;
-        }
-
-        write(fds[1], argv[2], strlen(argv[2]));
-        close(fds[1]);
-        input = fdopen(fds[0], "r");
+        input_source.mode = INPUT_STRING;
+        input_source.source.string_input_source = input_create_string_input_source(argv[2]);
     } else if (argc == 2) {
-        input = fopen(argv[1], "r");
-        if (input == NULL) {
+        input_source.mode = INPUT_FILE;
+        input_source.source.file = fopen(argv[1], "r");
+        if (input_source.source.file == NULL) {
             perror("Shell");
             return EXIT_FAILURE;
         }
     } else if (argc > 2) {
-        printf("Usage: %s [script]\n", argv[0]);
+        printf("Usage: %s [-c] [script]\n", argv[0]);
         return EXIT_SUCCESS;
     } else {
-        input = stdin;
+        input_source.mode = INPUT_TTY;
+        input_source.source.tty = stdin;
     }
 
     if (isatty(STDOUT_FILENO)) {
@@ -440,14 +368,14 @@ int main(int argc, char **argv) {
         }
         jump_active = 1;
 
-        if (input == stdin && isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)) {
+        if (input_source.mode == INPUT_TTY) {
             char *cwd = __getcwd();
             printf("\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
             free(cwd);
         }
         fflush(stdout);
 
-        line = read_line(input);
+        line = input_get_line(&input_source);
 
         /* Check if we reached EOF */
         if (line == NULL) {
@@ -479,9 +407,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (input != stdin) {
-        fclose(input);
-    }
+    input_cleanup(&input_source);
 
     return EXIT_SUCCESS;
 }
