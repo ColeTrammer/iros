@@ -21,10 +21,9 @@ static char *get_tty_input(FILE *tty) {
 
         // Means user pressed ^C, so we should go to the next line
         if (c == EOF && errno == EINTR) {
-            buffer[0] = '\n';
-            buffer[1] = '\0';
             printf("%c", '\n');
-            return buffer;
+            pos = 0;
+            break;
         }
 
         /* In a comment */
@@ -34,12 +33,11 @@ static char *get_tty_input(FILE *tty) {
                 c = fgetc(tty);
             }
 
-            buffer[pos] = '\n';
-            buffer[pos + 1] = '\0';
-            return buffer;
+            break;
         }
 
         if (c == EOF && pos == 0) {
+            free(buffer);
             return NULL;
         }
 
@@ -60,9 +58,7 @@ static char *get_tty_input(FILE *tty) {
         }
 
         if (c == EOF || c == '\n') {
-            buffer[pos] = '\n';
-            buffer[pos + 1] = '\0';
-            return buffer;
+            break;
         }
 
         buffer[pos++] = c;
@@ -72,6 +68,10 @@ static char *get_tty_input(FILE *tty) {
             buffer = realloc(buffer, sz);
         }
     }
+
+    buffer[pos] = '\n';
+    buffer[pos + 1] = '\0';
+    return buffer;
 }
 
 static char *get_file_input(FILE *file) {
@@ -82,7 +82,6 @@ static char *get_file_input(FILE *file) {
     bool prev_was_backslash = false;
 
     for (;;) {
-        errno = 0;
         int c = fgetc(file);
 
         /* In a comment */
@@ -92,12 +91,11 @@ static char *get_file_input(FILE *file) {
                 c = fgetc(file);
             }
 
-            buffer[pos] = '\n';
-            buffer[pos + 1] = '\0';
-            return buffer;
+            break;
         }
 
         if (c == EOF && pos == 0) {
+            free(buffer);
             return NULL;
         }
 
@@ -114,9 +112,7 @@ static char *get_file_input(FILE *file) {
         }
 
         if (c == EOF || c == '\n') {
-            buffer[pos] = '\n';
-            buffer[pos + 1] = '\0';
-            return buffer;
+            break;
         }
 
         buffer[pos++] = c;
@@ -126,6 +122,10 @@ static char *get_file_input(FILE *file) {
             buffer = realloc(buffer, sz);
         }
     }
+
+    buffer[pos] = '\n';
+    buffer[pos + 1] = '\0';
+    return buffer;
 }
 
 static char *get_string_input(struct string_input_source *source) {
