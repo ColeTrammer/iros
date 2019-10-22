@@ -4,84 +4,44 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+#include "command.h"
 #include "parser.h"
 
-void free_commands(struct command **commands) {
-    size_t i = 0;
-    struct command *command = commands[i++];
-    while (command != NULL) {
-        free(command->args);
-        free(command);
+struct command *parse_line(char *line, int *error) {
+    // We currently blindly split lines w/o care
+    *error = 0;
 
-        command = commands[i++];
-    }
-
-    free(commands);
-}
-
-size_t get_num_commands(struct command **commands) {
-    size_t i = 0;
-    struct command *command = commands[i++];
-    while (command != NULL) {
-        command = commands[i++];
-    }
-
-    return i - 1;
-}
-
-struct command **split_line(char *line) {
-    size_t max_commands = 10;
-    struct command **commands = calloc(max_commands, sizeof(struct command*));
-    struct command *command;
+    struct command *command = malloc(sizeof(struct command));
+    command->type = COMMAND_SIMPLE;
+    command_init(command);
 
     bool in_quotes = false;
     char *token_start = line;
     size_t i = 0;
-    size_t j = 0;
     while (line[i] != '\0') {
         int sz = 1024;
         int pos = 0;
         char **tokens = malloc(sz * sizeof(char*));
-
-        command = malloc(sizeof(struct command));
-        command->_stderr = NULL;
-        command->_stdout = NULL;
-        command->_stdin = NULL;
-        command->builtin_op = NULL;
-
-        if (j >= max_commands - 1) {
-            max_commands *= 2;
-            commands = realloc(commands, max_commands * sizeof(struct command*));
-        }
-
-        commands[j++] = command;
 
         while (line[i] != '\0') {
             if (!in_quotes && (isspace(line[i]))) {
                 goto add_token;
             }
 
-            /* Handle pipes */
-            else if (!in_quotes && line[i] == '|') {
-                while (isspace(line[++i]));
-                token_start = line + i;
-                break;
-            }
-
-            /* Handle output redirection */
+            // Handle output redirection
             else if (!in_quotes && line[i] == '>') {
                 while (isspace(line[++i]));
-                command->_stdout = line + i;
+                command->command.simple_command.redirection_info._stdout = line + i;
                 while (!isspace(line[i])) { i++; }
                 line[i++] = '\0';
                 token_start = line + i;
                 continue;
             }
 
-            /* Handles input redirection */
+            // Handles input redirection
             else if (!in_quotes && line[i] == '<') {
                 while (isspace(line[++i]));
-                command->_stdin = line + i;
+                command->command.simple_command.redirection_info._stdin = line + i;
                 while (!isspace(line[i])) { i++; }
                 line[i++] = '\0';
                 token_start = line + i;
@@ -124,9 +84,8 @@ struct command **split_line(char *line) {
         }
 
         tokens[pos] = NULL;
-        command->args = tokens;
+        command->command.simple_command.args = tokens;
     }
 
-    commands[j] = NULL;
-    return commands;
+    return command;
 }

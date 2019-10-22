@@ -14,144 +14,9 @@
 #include <setjmp.h>
 
 #include "builtin.h"
+#include "command.h"
 #include "input.h"
 #include "parser.h"
-
-int run_commands(struct command **commands) {
-    size_t num_commands = get_num_commands(commands);
-
-    int *pipes = num_commands > 1 ? calloc(num_commands - 1, 2 * sizeof(int)) : NULL;
-    for (size_t j = 0; j < num_commands - 1; j++) {
-        if (pipe(pipes + j * 2) == -1) {
-            perror("Shell");
-            return SHELL_CONTINUE;
-        }
-    }
-
-    pid_t save_pgid = getpid();
-    size_t i = 0;
-    struct command *command = commands[i];
-    while (command != NULL) {
-        char **args = command->args;
-
-        struct builtin_op *op = builtin_find_op(args[0]);
-        if (builtin_should_run_immediately(op)) {
-            return builtin_do_op(op, args);
-        } else if (op) {
-            command->builtin_op = op;
-        }
-
-        pid_t pid = fork();
-
-        /* Child */
-        if (pid == 0) {
-            if (isatty(STDOUT_FILENO)) {
-                setpgid(0, 0);
-                tcsetpgrp(STDOUT_FILENO, getpid());
-                struct sigaction to_set;
-                to_set.sa_handler = SIG_DFL;
-                to_set.sa_flags = 0;
-                sigaction(SIGINT, &to_set, NULL); 
-
-                sigset_t mask_restore;
-                sigemptyset(&mask_restore);
-                sigprocmask(SIG_SETMASK, &mask_restore, NULL);
-            }
-
-            if (command->_stdout != NULL && i == num_commands - 1) {
-                int fd = open(command->_stdout, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-                if (fd == -1) {
-                    goto abort_command;
-                }
-                if (dup2(fd, STDOUT_FILENO) == -1) {
-                    goto abort_command;
-                }
-            }
-
-            if (command->_stdin != NULL && i == 0) {
-                int fd = open(command->_stdin, O_RDONLY);
-                if (fd == -1) {
-                    goto abort_command;
-                }
-                if (dup2(fd, STDIN_FILENO) == -1) {
-                    goto abort_command;
-                }
-            }
-
-            /* First program in chain */
-            if (num_commands > 1 && i == 0) {
-                if (dup2(pipes[i + 1], STDOUT_FILENO) == -1) {
-                    goto abort_command;
-                }
-            }
-
-            /* Last program in chain */
-            else if (num_commands > 1 && i == num_commands - 1) {
-                if (dup2(pipes[(i - 1) * 2], STDIN_FILENO) == -1) {
-                    goto abort_command;
-                }
-            }
-
-            /* Any other program in chain */
-            else if (num_commands > 1) {
-                if (dup2(pipes[i * 2 + 1], STDOUT_FILENO) == -1) {
-                    goto abort_command;
-                }
-
-                if (dup2(pipes[(i - 1) * 2], STDIN_FILENO) == -1) {
-                    goto abort_command;
-                }
-            }
-
-            if (command->builtin_op != NULL) {
-                exit(builtin_do_op(op, args));
-            }
-            execvp(args[0], args);
-
-        abort_command:
-            perror("Shell");
-            exit(EXIT_FAILURE);
-        } else if (pid < 0) {
-            perror("Shell");
-        }
-
-        /* Parent */
-        else {
-            if (isatty(STDOUT_FILENO)) {
-                setpgid(pid, pid);
-                tcsetpgrp(STDOUT_FILENO, pid);
-            }
-
-            /* Close write pipe for the last process */
-            if (num_commands > 1 && i == 0) {
-                close(pipes[i * 2 + 1]);
-            }
-
-            else if (num_commands > 1 && i == num_commands - 1) {
-                close(pipes[(i - 1) * 2]);
-            }
-
-            else if (num_commands > 1) {
-                close(pipes[i * 2 + 1]);
-                close(pipes[(i - 1) * 2]);
-            }
-
-            int status;
-            do {
-                waitpid(pid, &status, WUNTRACED);
-            } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
-        }
-
-        command = commands[++i];
-    }
-
-    if (isatty(STDOUT_FILENO)) {
-        tcsetpgrp(STDOUT_FILENO, save_pgid);
-    }
-
-    free(pipes);
-    return SHELL_CONTINUE;
-}
 
 static char *__getcwd() {
     size_t size = 50;
@@ -169,7 +34,7 @@ static char *__getcwd() {
 }
 
 static char *line = NULL;
-static struct command **commands = NULL;
+static struct command *command = NULL;
 static sigjmp_buf env;
 static volatile sig_atomic_t jump_active = 0;
 
@@ -231,7 +96,7 @@ int main(int argc, char **argv) {
     for (;;) {
         if (sigsetjmp(env, 1) == 1) {
             if (line) { free(line); }
-            if (commands) { free_commands(commands); }
+            if (command) { command_cleanup(command); }
             printf("%c", '\n');
         }
         jump_active = 1;
@@ -247,7 +112,6 @@ int main(int argc, char **argv) {
 
         /* Check if we reached EOF */
         if (line == NULL) {
-            free(line);
             break;
         }
 
@@ -257,18 +121,19 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        struct command **commands = split_line(line);
+        int error = 0;
+        struct command *command = parse_line(line, &error);
 
-        if (commands == NULL || commands[0] == NULL || commands[0]->args[0] == NULL) {
+        if (command == NULL) {
             free(line);
-            free_commands(commands);
+            fprintf(stderr, "Shell parsing error: %d\n", error);
             continue;
         }
 
-        int status = run_commands(commands);
+        int status = command_run(command);
 
         free(line);
-        free_commands(commands);
+        command_cleanup(command);
 
         if (status == SHELL_EXIT) {
             break;
