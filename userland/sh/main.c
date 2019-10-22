@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
         }
 
         /* Check If The Line Was Empty */
-        if (line[0] == '\n') {
+        if (line[0] == '\0') {
             free(line);
             continue;
         }
@@ -124,8 +124,9 @@ int main(int argc, char **argv) {
         int error = 0;
         struct command *command = parse_line(line, &error);
 
-        if (command == NULL) {
+        if (error) {
             free(line);
+            command_cleanup(command);
             fprintf(stderr, "Shell parsing error: %d\n", error);
             continue;
         }

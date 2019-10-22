@@ -15,8 +15,9 @@ static void init_simple_command(struct command_simple *simple_command) {
     memset(simple_command, 0, sizeof(struct command_simple));
 }
 
-void command_init(struct command *command) {
-    switch (command->type) {
+void command_init(struct command *command, enum command_type type) {
+    command->type = type;
+    switch (type) {
         case COMMAND_SIMPLE:
             init_simple_command(&command->command.simple_command);
             break;

@@ -63,14 +63,13 @@ static char *get_tty_input(FILE *tty) {
 
         buffer[pos++] = c;
 
-        if (pos + 1 >= sz) {
+        if (pos >= sz) {
             sz *= 2;
             buffer = realloc(buffer, sz);
         }
     }
 
-    buffer[pos] = '\n';
-    buffer[pos + 1] = '\0';
+    buffer[pos] = '\0';
     return buffer;
 }
 
@@ -117,14 +116,13 @@ static char *get_file_input(FILE *file) {
 
         buffer[pos++] = c;
 
-        if (pos + 1 >= sz) {
+        if (pos >= sz) {
             sz *= 2;
             buffer = realloc(buffer, sz);
         }
     }
 
-    buffer[pos] = '\n';
-    buffer[pos + 1] = '\0';
+    buffer[pos] = '\0';
     return buffer;
 }
 
@@ -134,9 +132,7 @@ static char *get_string_input(struct string_input_source *source) {
     }
 
     // Copy the string and add a \n character so the shell parses it as a line
-    char *fixed_command = malloc(strlen(source->string) + 2);
-    strcpy(fixed_command, source->string);
-    strcat(fixed_command, "\n");
+    char *fixed_command = strdup(source->string);
 
     // May need to split the command if the string has new lines characters
     source->offset = strlen(source->string);

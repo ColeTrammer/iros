@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     char *line = NULL;
     size_t line_max = 0;
 
-    for (size_t i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         FILE *f = fopen(argv[i], "r");
         if (f == NULL) {
             perror("cat");

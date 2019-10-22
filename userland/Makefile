@@ -6,7 +6,7 @@ SYSROOT?=$(ROOT)/sysroot
 
 # Init flags if not already set (can be overridden)
 export CFLAGS?=-O2 -g -Werror -Wall -Wextra
-export CPPFLAGS?=
+export CPPFLAGS?=-mno-sse -mno-sse2 -mno-mmx
 export LDFLAGS+=-T $(ROOT)/userland/link.ld
 export LIBS?=
 

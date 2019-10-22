@@ -49,7 +49,7 @@ struct command {
     } command;
 };
 
-void command_init(struct command *command);
+void command_init(struct command *command, enum command_type type);
 int command_run(struct command *command);
 void command_cleanup(struct command *command);
 
