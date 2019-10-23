@@ -71,6 +71,7 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     file->length = inode->size;
     file->position = 0;
     file->start = 0;
+    file->abilities = 0;
 
     struct pipe_data *data = inode->private_data;
 
