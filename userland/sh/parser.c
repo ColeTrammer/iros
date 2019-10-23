@@ -31,8 +31,12 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         // Handle output redirection
         else if (!in_quotes && line[i] == '>') {
             while (isspace(line[++i]));
-            simple_command->redirection_info._stdout = line + i;
-            while (!isspace(line[i])) { i++; }
+            init_redirection(&simple_command->redirection_info._stdout, REDIRECT_FILE, line + i);
+            while (line[i] != '\0' && !isspace(line[i])) { i++; }
+            if (line[i] == '\0') {
+                break;
+            }
+
             line[i++] = '\0';
             token_start = line + i;
             continue;
@@ -41,7 +45,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         // Handles input redirection
         else if (!in_quotes && line[i] == '<') {
             while (isspace(line[++i]));
-            simple_command->redirection_info._stdin = line + i;
+            init_redirection(&simple_command->redirection_info._stdin, REDIRECT_FILE, line + i);
             while (!isspace(line[i])) { i++; }
             line[i++] = '\0';
             token_start = line + i;
@@ -67,12 +71,16 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         }
 
     add_token:
-        line[i] = '\0';
         tokens[pos++] = token_start;
+        if (line[i] == '\0') {
+            break;
+        }
+
+        line[i++] = '\0';
         while (isspace(line[i])) { i++; }
         token_start = line + i;
 
-        if (line[i++] == '\0') {
+        if (line[i] == '\0') {
             break;
         }
 

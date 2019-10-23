@@ -12,6 +12,27 @@
 #include "builtin.h"
 #include "command.h"
 
+void init_redirection(struct redirection_desc *desc, enum redirection_method method, ...) {
+    va_list args;
+    va_start(args, method);
+
+    desc->method = method;
+    switch (method) {
+        case REDIRECT_APPEND_FILE:
+        case REDIRECT_FILE:
+            desc->desc.file = va_arg(args, char*);
+            break;
+        case REDIRECT_PIPE:
+            desc->desc.fd = va_arg(args, int);
+            break;
+        case REDIRECT_NONE:
+        default:
+            break;
+    }
+
+    va_end(args);
+}
+
 static void init_simple_command(struct command_simple *simple_command) {
     memset(simple_command, 0, sizeof(struct command_simple));
 }
@@ -77,8 +98,8 @@ static int do_simple_command(struct command_simple *command) {
             sigprocmask(SIG_SETMASK, &mask_restore, NULL);
         }
 
-        if (command->redirection_info._stdout != NULL) {
-            int fd = open(command->redirection_info._stdout, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+        if (command->redirection_info._stdout.method == REDIRECT_FILE) {
+            int fd = open(command->redirection_info._stdout.desc.file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
             if (fd == -1) {
                 goto abort_command;
             }
@@ -87,8 +108,8 @@ static int do_simple_command(struct command_simple *command) {
             }
         }
 
-        if (command->redirection_info._stdin != NULL) {
-            int fd = open(command->redirection_info._stdin, O_RDONLY);
+        if (command->redirection_info._stdin.method == REDIRECT_FILE) {
+            int fd = open(command->redirection_info._stdin.desc.file, O_RDONLY);
             if (fd == -1) {
                 goto abort_command;
             }
@@ -128,6 +149,14 @@ static int do_simple_command(struct command_simple *command) {
 }
 
 static int do_pipeline(struct command_pipeline *pipeline) {
+    // int fds[(pipeline->num_commands - 1) * 2];
+    // for (size_t i = 0; i < pipeline->num_commands - 1; i++) {
+    //     if (pipe(fds + (i * 2))) {
+    //         perror("sh");
+    //         return SHELL_CONTINUE;
+    //     }
+    // }
+
     int ret = SHELL_CONTINUE;
     for (size_t i = 0; i < pipeline->num_commands; i++) {
         struct command_simple simple_command = pipeline->commands[i];

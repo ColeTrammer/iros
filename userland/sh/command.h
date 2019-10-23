@@ -3,18 +3,33 @@
 
 struct builtin_op;
 
+enum redirection_method {
+    REDIRECT_NONE = 0,
+    REDIRECT_FILE,
+    REDIRECT_APPEND_FILE,
+    REDIRECT_PIPE
+};
+
+struct redirection_desc {
+    enum redirection_method method;
+    union {
+        char *file;
+        int fd;
+    } desc;
+};
+
+struct redirection_info {
+    struct redirection_desc _stdin;
+    struct redirection_desc _stdout;
+    struct redirection_desc _stderr;
+};
+
 enum command_type {
     COMMAND_SIMPLE,
     COMMAND_PIPELINE,
     COMMAND_LIST,
     COMMAND_COMPOUND,
     COMMAND_FUNCTION_DECLARATION
-};
-
-struct redirection_info {
-    char *_stdin;
-    char *_stdout;
-    char *_stderr;
 };
 
 struct command_simple {
@@ -47,6 +62,8 @@ struct command {
         struct command_function_declaration function_declaration;
     } command;
 };
+
+void init_redirection(struct redirection_desc *desc, enum redirection_method method, ...);
 
 struct command *command_construct(enum command_type type, ...);
 int command_run(struct command *command);
