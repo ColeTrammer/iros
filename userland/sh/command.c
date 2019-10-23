@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdarg.h>
 #include <sys/wait.h>
 
 #include "builtin.h"
@@ -15,13 +16,27 @@ static void init_simple_command(struct command_simple *simple_command) {
     memset(simple_command, 0, sizeof(struct command_simple));
 }
 
-void command_init(struct command *command, enum command_type type) {
+static void init_pipeline(struct command_pipeline *pipeline, size_t num) {
+    pipeline->commands = calloc(num, sizeof(struct command_simple));
+    pipeline->num_commands = num;
+}
+
+struct command *command_construct(enum command_type type, ...) {
+    va_list args;
+    va_start(args, type);
+
+    struct command *command = malloc(sizeof(struct command));
     command->type = type;
     switch (type) {
-        case COMMAND_SIMPLE:
+        case COMMAND_SIMPLE: {
             init_simple_command(&command->command.simple_command);
             break;
-        case COMMAND_PIPELINE:
+        }
+        case COMMAND_PIPELINE: {
+            size_t num = va_arg(args, size_t);
+            init_pipeline(&command->command.pipeline, num);
+            break;
+        }
         case COMMAND_LIST:
         case COMMAND_COMPOUND:
         case COMMAND_FUNCTION_DECLARATION:
@@ -29,6 +44,9 @@ void command_init(struct command *command, enum command_type type) {
             assert(false);
             break;
     }
+
+    va_end(args);
+    return command;
 }
 
 static int do_simple_command(struct command_simple *command) {
@@ -109,11 +127,25 @@ static int do_simple_command(struct command_simple *command) {
     return SHELL_CONTINUE;
 }
 
+static int do_pipeline(struct command_pipeline *pipeline) {
+    int ret = SHELL_CONTINUE;
+    for (size_t i = 0; i < pipeline->num_commands; i++) {
+        struct command_simple simple_command = pipeline->commands[i];
+        ret = do_simple_command(&simple_command);
+        if (ret != SHELL_CONTINUE) {
+            break;
+        }
+    }
+
+    return ret;
+}
+
 int command_run(struct command *command) {
     switch (command->type) {
         case COMMAND_SIMPLE:
             return do_simple_command(&command->command.simple_command);
         case COMMAND_PIPELINE:
+            return do_pipeline(&command->command.pipeline);
         case COMMAND_LIST:
         case COMMAND_COMPOUND:
         case COMMAND_FUNCTION_DECLARATION:

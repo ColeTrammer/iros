@@ -26,7 +26,6 @@ struct command_simple {
 struct command_pipeline {
     struct command_simple *commands;
     size_t num_commands;
-    size_t max_commands;
 };
 
 struct command_list {
@@ -49,7 +48,7 @@ struct command {
     } command;
 };
 
-void command_init(struct command *command, enum command_type type);
+struct command *command_construct(enum command_type type, ...);
 int command_run(struct command *command);
 void command_cleanup(struct command *command);
 
