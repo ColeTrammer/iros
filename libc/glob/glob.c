@@ -230,6 +230,10 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
     return found_anything ? 0 : GLOB_NOMATCH;
 }
 
+static int glob_compare(const void *s1, const void *s2) {
+    return strcmp(*(char *const*) s1, *(char *const*) s2);
+}
+
 int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
     assert(!(flags & GLOB_MARK));
 
@@ -244,11 +248,22 @@ int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *e
         pglob->gl_pathv = calloc(GLOB_BUF_INCREMENT * ((pglob->gl_offs + GLOB_BUF_INCREMENT - 1) / GLOB_BUF_INCREMENT), sizeof(char*));
     }
 
+    int ret;
     if (pattern[0] == '/') {
-        return glob_helper("/.", "", pattern + 1, flags, errfunc, pglob);
+        ret = glob_helper("/.", "", pattern + 1, flags, errfunc, pglob);
     } else {
-        return glob_helper(".", "", pattern, flags, errfunc, pglob);
+        ret = glob_helper(".", "", pattern, flags, errfunc, pglob);
     }
+
+    if (ret != 0) {
+        return ret;
+    }
+
+    if (!(flags & GLOB_NOSORT)) {
+        qsort(pglob->gl_pathv + pglob->gl_offs, pglob->gl_pathc - pglob->gl_offs, sizeof(char*), glob_compare);
+    }
+
+    return ret;
 }
 
 void globfree(glob_t *pglob) {

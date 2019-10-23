@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <string.h>
 #include <stdbool.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -47,6 +49,43 @@ div_t div(int a, int b) {
 
 ldiv_t ldiv(long a, long b) {
     return (ldiv_t) { a / b, a % b };
+}
+
+#define QSORT_AT(p, in, size) ((void*) (((uintptr_t) (p)) + (in) * (size)))
+
+// Use selection sort for simplicity
+void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, const void *b)) {
+    if (base == NULL || size <= 0 || compar == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < nmemb - 1; i++) {
+        void *to_replace = QSORT_AT(base, i, size);
+        void *min = to_replace;
+
+        for (size_t j = i + 1; j < nmemb; j++) {
+            void *curr = QSORT_AT(base, j, size);
+            if (compar(curr, min) < 0) {
+                min = curr;
+            }
+        }
+
+        // Do swap
+        void *temp;
+        if (size > 0x200) {
+            temp = malloc(size);
+        } else {
+            temp = alloca(size);
+        }
+
+        memcpy(temp, to_replace, size);
+        memcpy(to_replace, min, size);
+        memcpy(min, temp, size);
+
+        if (size > 0x200) {
+            free(temp);
+        }
+    }
 }
 
 int system(const char *cmd) {
