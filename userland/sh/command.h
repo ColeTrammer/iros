@@ -12,6 +12,7 @@ enum redirection_method {
 
 struct redirection_desc {
     enum redirection_method method;
+    int target_fd;
     union {
         char *file;
         int fd;
@@ -63,7 +64,7 @@ struct command {
     } command;
 };
 
-void init_redirection(struct redirection_desc *desc, enum redirection_method method, ...);
+void init_redirection(struct redirection_desc *desc, enum redirection_method method, int target_fd, ...);
 
 struct command *command_construct(enum command_type type, ...);
 int command_run(struct command *command);

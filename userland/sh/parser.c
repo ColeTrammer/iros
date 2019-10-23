@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "command.h"
 #include "parser.h"
@@ -31,7 +32,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         // Handle output redirection
         else if (!in_quotes && line[i] == '>') {
             while (isspace(line[++i]));
-            init_redirection(&simple_command->redirection_info._stdout, REDIRECT_FILE, line + i);
+            init_redirection(&simple_command->redirection_info._stdout, REDIRECT_FILE, STDOUT_FILENO, line + i);
             while (line[i] != '\0' && !isspace(line[i])) { i++; }
             if (line[i] == '\0') {
                 break;
@@ -45,7 +46,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         // Handles input redirection
         else if (!in_quotes && line[i] == '<') {
             while (isspace(line[++i]));
-            init_redirection(&simple_command->redirection_info._stdin, REDIRECT_FILE, line + i);
+            init_redirection(&simple_command->redirection_info._stdin, REDIRECT_FILE, STDIN_FILENO, line + i);
             while (!isspace(line[i])) { i++; }
             line[i++] = '\0';
             token_start = line + i;

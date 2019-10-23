@@ -12,10 +12,11 @@
 #include "builtin.h"
 #include "command.h"
 
-void init_redirection(struct redirection_desc *desc, enum redirection_method method, ...) {
+void init_redirection(struct redirection_desc *desc, enum redirection_method method, int target_fd, ...) {
     va_list args;
-    va_start(args, method);
+    va_start(args, target_fd);
 
+    desc->target_fd = target_fd;
     desc->method = method;
     switch (method) {
         case REDIRECT_APPEND_FILE:
@@ -70,6 +71,36 @@ struct command *command_construct(enum command_type type, ...) {
     return command;
 }
 
+static bool handle_redirection(struct redirection_desc *desc) {
+    switch (desc->method) {
+        case REDIRECT_APPEND_FILE:
+        case REDIRECT_FILE: {
+            int fd = open(desc->desc.file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+            if (fd == -1) {
+                return false;
+            }
+            if (dup2(fd, desc->target_fd) == -1) {
+                return false;
+            }
+            break;
+        }
+        case REDIRECT_PIPE: {
+            if (dup2(desc->desc.fd, desc->target_fd) == -1) {
+                return false;
+            }
+            if (close(desc->desc.fd) == -1) {
+                return false;
+            }
+            break;
+        }
+        case REDIRECT_NONE:
+        default:
+            break;
+    }
+
+    return true;
+}
+
 static int do_simple_command(struct command_simple *command) {
     pid_t save_pgid = getpid();
     char **args = command->args;
@@ -98,24 +129,9 @@ static int do_simple_command(struct command_simple *command) {
             sigprocmask(SIG_SETMASK, &mask_restore, NULL);
         }
 
-        if (command->redirection_info._stdout.method == REDIRECT_FILE) {
-            int fd = open(command->redirection_info._stdout.desc.file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-            if (fd == -1) {
-                goto abort_command;
-            }
-            if (dup2(fd, STDOUT_FILENO) == -1) {
-                goto abort_command;
-            }
-        }
-
-        if (command->redirection_info._stdin.method == REDIRECT_FILE) {
-            int fd = open(command->redirection_info._stdin.desc.file, O_RDONLY);
-            if (fd == -1) {
-                goto abort_command;
-            }
-            if (dup2(fd, STDIN_FILENO) == -1) {
-                goto abort_command;
-            }
+        if (!handle_redirection(&command->redirection_info._stdout) ||
+            !handle_redirection(&command->redirection_info._stdin)) {
+            goto abort_command;
         }
 
         if (command->builtin_op != NULL) {
@@ -149,20 +165,37 @@ static int do_simple_command(struct command_simple *command) {
 }
 
 static int do_pipeline(struct command_pipeline *pipeline) {
-    // int fds[(pipeline->num_commands - 1) * 2];
-    // for (size_t i = 0; i < pipeline->num_commands - 1; i++) {
-    //     if (pipe(fds + (i * 2))) {
-    //         perror("sh");
-    //         return SHELL_CONTINUE;
-    //     }
-    // }
+    int fds[(pipeline->num_commands - 1) * 2];
+    for (size_t i = 0; i < pipeline->num_commands - 1; i++) {
+        if (pipe(fds + (i * 2))) {
+            perror("sh");
+            return SHELL_CONTINUE;
+        }
+    }
 
     int ret = SHELL_CONTINUE;
     for (size_t i = 0; i < pipeline->num_commands; i++) {
         struct command_simple simple_command = pipeline->commands[i];
+
+        if (i != pipeline->num_commands - 1) {
+            init_redirection(&simple_command.redirection_info._stdout, REDIRECT_PIPE, STDOUT_FILENO, fds[i * 2 + 1]);
+        }
+
+        if (i != 0) {
+            init_redirection(&simple_command.redirection_info._stdin, REDIRECT_PIPE, STDIN_FILENO, fds[(i - 1) * 2]);
+        }
+
         ret = do_simple_command(&simple_command);
         if (ret != SHELL_CONTINUE) {
             break;
+        }
+
+        if (i != pipeline->num_commands - 1) {
+            close(fds[i * 2 + 1]);
+        }
+
+        if (i != 0) {
+            close(fds[(i - 1) * 2]);
         }
     }
 
