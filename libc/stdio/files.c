@@ -576,7 +576,7 @@ void init_files() {
     /* stderr */ 
     files[2].fd = 2;
     files[2].pos = 0;
-    files[2].buf_type = isatty(STDERR_FILENO) ? _IONBF : _IOFBF;
+    files[2].buf_type = _IONBF;
     files[2].buffer = NULL;
     files[2].length = 0;
     files[2].eof = 0;

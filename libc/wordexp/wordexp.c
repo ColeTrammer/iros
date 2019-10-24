@@ -91,11 +91,11 @@ static int we_expand(const char *s, int flags, char **expanded) {
                 break;
             }
             case '\'': {
-                in_s_quotes = prev_was_backslash ? in_s_quotes : !in_s_quotes;
+                in_s_quotes = (prev_was_backslash || in_d_quotes) ? in_s_quotes : !in_s_quotes;
                 break;
             }
             case '"': {
-                in_d_quotes = prev_was_backslash ? in_d_quotes : !in_d_quotes;
+                in_d_quotes = (prev_was_backslash || in_s_quotes) ? in_d_quotes : !in_d_quotes;
                 break;
             }
             case '$': {
@@ -223,10 +223,10 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
                 prev_was_blackslash = true;
                 continue;
             case '\'':
-                in_s_quotes = prev_was_blackslash ? in_s_quotes : !in_s_quotes;
+                in_s_quotes = (prev_was_blackslash || in_d_quotes) ? in_s_quotes : !in_s_quotes;
                 break;
             case '"':
-                in_d_quotes = prev_was_blackslash ? in_d_quotes : !in_d_quotes;
+                in_d_quotes = (prev_was_blackslash || in_s_quotes) ? in_d_quotes : !in_d_quotes;
                 break;
             default:
                 break;

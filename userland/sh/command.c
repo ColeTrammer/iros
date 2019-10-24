@@ -141,7 +141,7 @@ static int do_simple_command(struct command_simple *command) {
 
     abort_command:
         perror("Shell");
-        exit(EXIT_FAILURE);
+        _exit(127);
     } else if (pid < 0) {
         perror("Shell");
     }
