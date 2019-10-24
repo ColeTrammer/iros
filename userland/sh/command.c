@@ -101,9 +101,6 @@ static bool handle_redirection(struct redirection_desc *desc) {
             if (dup2(desc->desc.fd, desc->target_fd) == -1) {
                 return false;
             }
-            if (close(desc->desc.fd) == -1) {
-                return false;
-            }
             break;
         }
         case REDIRECT_NONE:

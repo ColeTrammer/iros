@@ -44,7 +44,29 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                     break;
                 }
 
-                size_t r_start = i++;
+                int target_fd = c == '>' ? STDOUT_FILENO : STDIN_FILENO;
+                if (prev_was_digit) {
+                    target_fd = line[i - 1] - '0';
+                    fixed_line[--fixed_i] = '\0'; // Delete digit from fixed_line
+                }
+
+                i++;
+
+                int mode = REDIRECT_FILE;
+                if (line[i] == '&') {
+                    if (!isdigit(line[i + 1])) {
+                        return WRDE_SYNTAX;
+                    }
+
+                    init_redirection(&simple_command->redirection_info, target_fd, REDIRECT_FD, line[i + 1] - '0');
+
+                    i += 2;
+                    break;
+                } else if (line[i] == '>') {
+                    mode = REDIRECT_APPEND_FILE;
+                    i++;
+                }
+
                 i += strspn(line + i, " \t\n");
                 size_t stop = strcspn(line + i, " \t\n");
                 if (stop == 0) {
@@ -52,13 +74,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                 }
                 line[i + stop] = '\0';
 
-                int target_fd = c == '>' ? STDOUT_FILENO : STDIN_FILENO;
-                if (prev_was_digit) {
-                    target_fd = line[r_start - 1] - '0';
-                    fixed_line[--fixed_i] = '\0'; // Delete digit from fixed_line
-                }
-
-                init_redirection(&simple_command->redirection_info, target_fd, REDIRECT_FILE, line + i);
+                init_redirection(&simple_command->redirection_info, target_fd, mode, line + i);
                 i += stop;
                 break;
             }
