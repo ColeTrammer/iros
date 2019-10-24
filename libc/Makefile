@@ -89,6 +89,7 @@ $(BUILDDIR)/libc/unistd/exec.o \
 $(BUILDDIR)/libc/unistd/getlogin.o \
 $(BUILDDIR)/libc/unistd/getopt.o \
 $(BUILDDIR)/libc/unistd/isatty.o \
+$(BUILDDIR)/libc/wordexp/wordexp.o \
 $(BUILDDIR)/libc/init.o
 
 # Lists all objects
