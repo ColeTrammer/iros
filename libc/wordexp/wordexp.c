@@ -116,7 +116,9 @@ static int we_expand(const char *s, int flags, char **expanded) {
                 // Handle redirecting error
                 if (!(flags & WRDE_SHOWERR)) {
                     save_stderr = dup(STDERR_FILENO);
-                    dup2(open("/dev/null", O_RDWR), STDERR_FILENO);
+                    int fd = open("/dev/null", O_RDWR);
+                    dup2(fd, STDERR_FILENO);
+                    close(fd);
                 }
                 FILE *_pipe = popen(s + i + 1, "r");
                 if (_pipe == NULL) {
@@ -138,6 +140,7 @@ static int we_expand(const char *s, int flags, char **expanded) {
             bquote_end:
                 if (!(flags & WRDE_SHOWERR)) {
                     dup2(save_stderr, STDERR_FILENO);
+                    close(save_stderr);
                 }
 
                 *end = save;

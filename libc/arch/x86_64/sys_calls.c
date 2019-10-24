@@ -308,7 +308,7 @@ int dup(int oldfd) {
     asm volatile( "movq $29, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
-                  "movl %0, %%eax" : "=r"(ret) : "r"(oldfd) : "rdi", "esi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(oldfd) : "rdi", "esi", "eax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
