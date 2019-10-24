@@ -13,11 +13,11 @@ size_t strspn(const char *s, const char *accept) {
         }
 
         if (!found) {
-            return i;
+            break;
         }
 
         i++;
     }
 
-    return i - 1;
+    return i;
 }
