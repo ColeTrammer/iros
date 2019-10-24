@@ -51,8 +51,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                 }
                 line[i + stop] = '\0';
 
-                init_redirection(c == '>' ? &simple_command->redirection_info._stdout : &simple_command->redirection_info._stdin, 
-                                 REDIRECT_FILE, c == '>' ? STDOUT_FILENO : STDIN_FILENO, line + i);
+                init_redirection(&simple_command->redirection_info, REDIRECT_FILE, c == '>' ? STDOUT_FILENO : STDIN_FILENO, line + i);
                 i += stop;
                 break;
             }

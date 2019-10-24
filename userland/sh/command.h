@@ -5,11 +5,13 @@
 
 struct builtin_op;
 
+#define MAX_REDIRECTIONS 10
+
 enum redirection_method {
     REDIRECT_NONE = 0,
     REDIRECT_FILE,
     REDIRECT_APPEND_FILE,
-    REDIRECT_PIPE
+    REDIRECT_FD
 };
 
 struct redirection_desc {
@@ -22,9 +24,7 @@ struct redirection_desc {
 };
 
 struct redirection_info {
-    struct redirection_desc _stdin;
-    struct redirection_desc _stdout;
-    struct redirection_desc _stderr;
+    struct redirection_desc redirection_descs[MAX_REDIRECTIONS];
 };
 
 enum command_type {
@@ -66,7 +66,7 @@ struct command {
     } command;
 };
 
-void init_redirection(struct redirection_desc *desc, enum redirection_method method, int target_fd, ...);
+void init_redirection(struct redirection_info *info,  int target_fd, enum redirection_method method, ...);
 
 struct command *command_construct(enum command_type type, ...);
 int command_run(struct command *command);

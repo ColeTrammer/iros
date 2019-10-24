@@ -12,9 +12,11 @@
 #include "builtin.h"
 #include "command.h"
 
-void init_redirection(struct redirection_desc *desc, enum redirection_method method, int target_fd, ...) {
+void init_redirection(struct redirection_info *info,  int target_fd, enum redirection_method method, ...) {
     va_list args;
-    va_start(args, target_fd);
+    va_start(args, method);
+
+    struct redirection_desc *desc = &info->redirection_descs[target_fd];
 
     desc->target_fd = target_fd;
     desc->method = method;
@@ -23,7 +25,7 @@ void init_redirection(struct redirection_desc *desc, enum redirection_method met
         case REDIRECT_FILE:
             desc->desc.file = va_arg(args, char*);
             break;
-        case REDIRECT_PIPE:
+        case REDIRECT_FD:
             desc->desc.fd = va_arg(args, int);
             break;
         case REDIRECT_NONE:
@@ -72,10 +74,15 @@ struct command *command_construct(enum command_type type, ...) {
 }
 
 static bool handle_redirection(struct redirection_desc *desc) {
+    int flags = 0;
     switch (desc->method) {
-        case REDIRECT_APPEND_FILE:
+        case REDIRECT_APPEND_FILE: {
+            flags |= O_APPEND;
+        }
+        // Fall through
         case REDIRECT_FILE: {
-            int fd = open(desc->desc.file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+            flags |= O_CREAT | O_WRONLY | O_TRUNC | O_APPEND;
+            int fd = open(desc->desc.file, flags, 0644);
             if (fd == -1) {
                 return false;
             }
@@ -84,7 +91,7 @@ static bool handle_redirection(struct redirection_desc *desc) {
             }
             break;
         }
-        case REDIRECT_PIPE: {
+        case REDIRECT_FD: {
             if (dup2(desc->desc.fd, desc->target_fd) == -1) {
                 return false;
             }
@@ -129,9 +136,10 @@ static int do_simple_command(struct command_simple *command) {
             sigprocmask(SIG_SETMASK, &mask_restore, NULL);
         }
 
-        if (!handle_redirection(&command->redirection_info._stdout) ||
-            !handle_redirection(&command->redirection_info._stdin)) {
-            goto abort_command;
+        for (size_t i = 0; i < MAX_REDIRECTIONS; i++) {
+            if (!handle_redirection(&command->redirection_info.redirection_descs[i])) {
+                goto abort_command;
+            }
         }
 
         if (command->builtin_op != NULL) {
@@ -178,11 +186,11 @@ static int do_pipeline(struct command_pipeline *pipeline) {
         struct command_simple simple_command = pipeline->commands[i];
 
         if (i != pipeline->num_commands - 1) {
-            init_redirection(&simple_command.redirection_info._stdout, REDIRECT_PIPE, STDOUT_FILENO, fds[i * 2 + 1]);
+            init_redirection(&simple_command.redirection_info, STDOUT_FILENO, REDIRECT_FD, fds[i * 2 + 1]);
         }
 
         if (i != 0) {
-            init_redirection(&simple_command.redirection_info._stdin, REDIRECT_PIPE, STDIN_FILENO, fds[(i - 1) * 2]);
+            init_redirection(&simple_command.redirection_info, STDIN_FILENO, REDIRECT_FD, fds[(i - 1) * 2]);
         }
 
         ret = do_simple_command(&simple_command);
