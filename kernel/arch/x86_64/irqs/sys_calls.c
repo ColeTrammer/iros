@@ -787,6 +787,7 @@ void arch_sys_dup(struct process_state *process_state) {
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (current->files[i] != NULL) {
             current->files[i] = fs_clone(current->files[oldfd]);
+            SYS_RETURN(i);
         }
     }
 
