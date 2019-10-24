@@ -47,6 +47,13 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
     uint64_t *pd = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t);
     uint64_t *pt = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t);
 
+    if (!(pml4[pml4_offset] & 1) ||
+        !(pdp[pdp_offset] & 1) ||
+        !(pd[pd_offset] & 1) ||
+        !(pt[pt_offset] & 1)) {
+        return; // Page is already unmapped
+    }
+
     if (free_phys) {
         free_phys_page(get_phys_addr(virt_addr));
     }
