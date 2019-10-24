@@ -72,4 +72,6 @@ struct command *command_construct(enum command_type type, ...);
 int command_run(struct command *command);
 void command_cleanup(struct command *command);
 
+void command_init_special_vars();
+
 #endif /* _COMMAND_H */

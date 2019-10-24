@@ -12,6 +12,18 @@
 #include "builtin.h"
 #include "command.h"
 
+static word_special_t special_vars = { {
+    "", "", "0", NULL, "", NULL, NULL, "/bin/sh"
+} };
+
+static void set_exit_status(int n) {
+    assert(n >= 0 && n < 128);
+
+    free(special_vars.vals[WRDE_SPECIAL_QUEST]);
+    special_vars.vals[WRDE_SPECIAL_QUEST] = malloc(4);
+    sprintf(special_vars.vals[WRDE_SPECIAL_QUEST], "%d", n);
+}
+
 // FIXME: redirection actually needs to be a queue, not an array, since the order of specified redirections
 //        should cause different behavior, and currently the order is based on the target fd not the order
 //        the redirection command is inputted.
@@ -41,6 +53,7 @@ void init_redirection(struct redirection_info *info,  int target_fd, enum redire
 
 static void init_simple_command(struct command_simple *simple_command) {
     memset(simple_command, 0, sizeof(struct command_simple));
+    simple_command->we.we_special_vars = &special_vars;
 }
 
 static void init_pipeline(struct command_pipeline *pipeline, size_t num) {
@@ -168,6 +181,8 @@ static int do_simple_command(struct command_simple *command) {
         waitpid(pid, &status, WUNTRACED);
     } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
 
+    set_exit_status(WEXITSTATUS(status));
+
     if (isatty(STDOUT_FILENO)) {
         tcsetpgrp(STDOUT_FILENO, save_pgid);
     }
@@ -255,4 +270,11 @@ void command_cleanup(struct command *command) {
     }
 
     free(command);
+}
+
+void command_init_special_vars() {
+    special_vars.vals[WRDE_SPECIAL_QUEST] = strdup("0");
+    special_vars.vals[WRDE_SPECIAL_DOLLAR] = malloc(10);
+    sprintf(special_vars.vals[WRDE_SPECIAL_DOLLAR], "%d", getpid());
+    special_vars.vals[WRDE_SPECIAL_EXCLAM] = strdup("");
 }

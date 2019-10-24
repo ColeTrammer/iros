@@ -85,6 +85,8 @@ int main(int argc, char **argv) {
         sigprocmask(SIG_SETMASK, &sigset, NULL);
     }
 
+    command_init_special_vars();
+
     for (;;) {
         if (sigsetjmp(env, 1) == 1) {
             if (line) { free(line); }

@@ -94,7 +94,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         prev_was_blackslash = false;
     }
 
-    int ret = wordexp(fixed_line, &simple_command->we, 0);
+    int ret = wordexp(fixed_line, &simple_command->we, WRDE_SPECIAL);
 
     free(fixed_line);
     return ret;
