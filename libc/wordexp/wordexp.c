@@ -25,6 +25,103 @@ static bool we_add(char *s, wordexp_t *we) {
     return true;
 }
 
+#define WE_STR_BUF_INCREMENT 0x200
+
+static bool we_append(char **s, const char *r, size_t len, size_t *max) {
+    size_t new_len = strlen(*s) + len + 1;
+    if (new_len > *max) {
+        *max += WE_STR_BUF_INCREMENT;
+        *s = realloc(*s, *max);
+        if (!*s) {
+            return false;
+        }
+    }
+
+    strncat(*s, r, len);
+    return true;    
+}
+
+static int we_expand(const char *s, int flags, char **expanded) {
+    size_t len = WE_STR_BUF_INCREMENT;
+    *expanded = calloc(len, sizeof(char));
+
+    bool prev_was_backslash = false;
+    bool in_s_quotes = false;
+    bool in_d_quotes = false;
+    for (size_t i = 0; s[i] != '\0'; i++) {
+        switch (s[i]) {
+            case '\\': {
+                if (!prev_was_backslash) {
+                    prev_was_backslash = true;
+                    continue;
+                }
+                break;
+            }
+            case '\'': {
+                in_s_quotes = prev_was_backslash ? in_s_quotes : !in_s_quotes;
+                break;
+            }
+            case '"': {
+                in_d_quotes = prev_was_backslash ? in_d_quotes : !in_d_quotes;
+                break;
+            }
+            case '$': {
+                // Maybe other characters are valid but this is the standard form
+                int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+                // NOTE: Still does expansion if in_d_quotes
+                if (prev_was_backslash || in_s_quotes || to_read <= 0) {
+                    break;
+                }
+
+                i++;
+                char save = s[i + to_read];
+                ((char*) s)[i + to_read] = '\0';
+
+                char *var = getenv(s + i);
+                if (var != NULL) {
+                    we_append(expanded, var, strlen(var), &len);
+                } else if (flags & WRDE_UNDEF) {
+                    ((char*) s)[i + to_read] = save;
+                    free(*expanded);
+                    return WRDE_BADVAL;
+                }
+
+                ((char*) s)[i + to_read] = save;
+                i += to_read;
+                i--; // Since loop does i++
+
+                prev_was_backslash = false;
+                continue;
+            }
+            case '~': {
+                char *home = getenv("HOME");
+                if (prev_was_backslash || in_s_quotes || in_d_quotes || home == NULL) {
+                    break;
+                }
+
+                if (!we_append(expanded, home, strlen(home), &len)) {
+                    return WRDE_NOSPACE;
+                }
+
+                prev_was_backslash = false;
+                continue;
+            }
+            default: {
+                break;
+            }
+        }
+
+        if (!we_append(expanded, s + i, 1, &len)) {
+            return WRDE_NOSPACE;
+        }
+
+        prev_was_backslash = false;
+    }
+
+    return 0;
+}
+
 static int we_split(char *s, char *split_on, wordexp_t *we) {
     bool prev_was_blackslash = false;
     bool in_s_quotes = false;
@@ -125,13 +222,19 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
 
     memset(p, 0, sizeof(wordexp_t));
 
+    char *str = NULL;
+    int ret = we_expand(s, flags, &str);
+    if (ret != 0) {
+        return ret;
+    }
+
     char *split_on = getenv("IFS");
     if (!split_on) {
         split_on = " \t\n";
     }
 
-    char *str = strdup(s);
-    int ret = we_split(str, split_on, p);
+    assert(str);
+    ret = we_split(str, split_on, p);
     free(str);
 
     if (ret != 0) {
