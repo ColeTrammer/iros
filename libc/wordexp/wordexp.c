@@ -1,3 +1,5 @@
+#define _OS_2_SOURCE
+
 #include <wordexp.h>
 #include <stdlib.h>
 #include <glob.h>
@@ -74,7 +76,7 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     return true;    
 }
 
-static int we_expand(const char *s, int flags, char **expanded) {
+static int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
     size_t len = WE_STR_BUF_INCREMENT;
     *expanded = calloc(len, sizeof(char));
 
@@ -99,6 +101,48 @@ static int we_expand(const char *s, int flags, char **expanded) {
                 break;
             }
             case '$': {
+                if (!(flags & WRDE_SPECIAL) || special == NULL) {
+                    goto normal_var;
+                }
+
+                char *to_add;
+                switch (s[i + 1]) {
+                    case '@':
+                        to_add = special->vals[WRDE_SPECIAL_AT];
+                        break;
+                    case '*':
+                        to_add = special->vals[WRDE_SPECIAL_STAR];
+                        break;
+                    case '#':
+                        to_add = special->vals[WRDE_SPECIAL_POUND];
+                        break;
+                    case '?':
+                        to_add = special->vals[WRDE_SPECIAL_QUEST];
+                        break;
+                    case '-':
+                        to_add = special->vals[WRDE_SPECIAL_MINUS];
+                        break;
+                    case '$':
+                        to_add = special->vals[WRDE_SPECIAL_DOLLAR];
+                        break;
+                    case '!':
+                        to_add = special->vals[WRDE_SPECIAL_EXCLAM];
+                        break;
+                    case '0':
+                        to_add = special->vals[WRDE_SPECIAL_ZERO];
+                        break;
+                    default:
+                        goto normal_var;
+                }
+
+                if (!we_append(expanded, to_add, strlen(to_add), &len)) {
+                    return WRDE_NOSPACE;
+                }
+                i += 2;
+                i--;
+                prev_was_backslash = false;
+                continue;
+            normal_var: {
                 // Maybe other characters are valid but this is the standard form
                 int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
@@ -126,6 +170,7 @@ static int we_expand(const char *s, int flags, char **expanded) {
 
                 prev_was_backslash = false;
                 continue;
+            }
             }
             case '`': {
                 if (prev_was_backslash || in_s_quotes || in_d_quotes) {
@@ -379,10 +424,11 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     assert(!(flags & WRDE_APPEND));
     assert(!(flags & WRDE_DOOFFS));
 
-    memset(p, 0, sizeof(wordexp_t));
+    p->we_offs = p->we_wordc = 0;
+    p->we_wordv = NULL;
 
     char *str = NULL;
-    int ret = we_expand(s, flags, &str);
+    int ret = we_expand(s, flags, &str, p->we_special_vars);
     if (ret != 0) {
         return ret;
     }

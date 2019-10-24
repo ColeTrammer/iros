@@ -20,10 +20,33 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#ifdef _OS_2_SOURCE
+
+#define WRDE_SPECIAL 64
+
+#define WRDE_SPECIAL_AT     0
+#define WRDE_SPECIAL_STAR   1
+#define WRDE_SPECIAL_POUND  2
+#define WRDE_SPECIAL_QUEST  3
+#define WRDE_SPECIAL_MINUS  4
+#define WRDE_SPECIAL_DOLLAR 5
+#define WRDE_SPECIAL_EXCLAM 6
+#define WRDE_SPECIAL_ZERO   7
+#define WRDE_NUM_SPECIAL    8
+
+typedef struct {
+    char *vals[WRDE_NUM_SPECIAL];
+} word_special_t;
+
+#endif /* _OS_2_SOURCE */
+
 typedef struct {
     size_t we_wordc;
     char **we_wordv;
     size_t we_offs;
+#ifdef _OS_2_SOURCE
+    word_special_t *we_special_vars;
+#endif /* _OS_2_SOURCE */
 } wordexp_t;
 
 int wordexp(const char *s ,wordexp_t *p, int flags);
