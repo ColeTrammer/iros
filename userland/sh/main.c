@@ -47,10 +47,6 @@ static void on_int(int signo) {
     siglongjmp(env, 1);
 }
 
-static void on_child(int signo) {
-    assert(signo == SIGCHLD);
-}
-
 int main(int argc, char **argv) {
     struct input_source input_source;
 
@@ -78,10 +74,6 @@ int main(int argc, char **argv) {
         to_set.sa_handler = &on_int;
         to_set.sa_flags = 0;
         sigaction(SIGINT, &to_set, NULL);
-
-        to_set.sa_flags = SA_RESTART;
-        to_set.sa_handler = &on_child;
-        sigaction(SIGCHLD, &to_set, NULL);
 
         to_set.sa_flags = 0;
         to_set.sa_handler = SIG_IGN;
