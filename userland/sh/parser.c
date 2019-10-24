@@ -6,101 +6,19 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #include "command.h"
 #include "parser.h"
 
 static int parse_simple_command(char *line, struct command_simple *simple_command) {
-    bool in_quotes = false;
-    int err = 0;
-    char *token_start = line;
-    size_t i = 0;
+    wordexp_t we;
+    int ret = wordexp(line, &we, 0);
 
-    int sz = 100;
-    int pos = 0;
-    char **tokens = malloc(sz * sizeof(char*));
+    simple_command->args = calloc(we.we_wordc + 1, sizeof(char*));
+    memcpy(simple_command->args, we.we_wordv, we.we_wordc * sizeof(char*));
 
-    for (;;) {
-        if ((!in_quotes && isspace(line[i])) || line[i] == '\0') {
-            goto add_token;
-        }
-
-        if (line[i] == '\0') {
-            break;
-        }
-
-        // Handle output redirection
-        else if (!in_quotes && line[i] == '>') {
-            while (isspace(line[++i]));
-            init_redirection(&simple_command->redirection_info._stdout, REDIRECT_FILE, STDOUT_FILENO, line + i);
-            while (line[i] != '\0' && !isspace(line[i])) { i++; }
-            if (line[i] == '\0') {
-                break;
-            }
-
-            line[i++] = '\0';
-            token_start = line + i;
-            continue;
-        }
-
-        // Handles input redirection
-        else if (!in_quotes && line[i] == '<') {
-            while (isspace(line[++i]));
-            init_redirection(&simple_command->redirection_info._stdin, REDIRECT_FILE, STDIN_FILENO, line + i);
-            while (!isspace(line[i])) { i++; }
-            line[i++] = '\0';
-            token_start = line + i;
-            continue;
-        }
-
-        // Assumes quote is at beginning of token
-        else if (!in_quotes && line[i] == '"') {
-            in_quotes = true;
-            token_start++;
-            i++;
-            continue;
-        }
-
-        else if (in_quotes && line[i] == '"') {
-            in_quotes = false;
-            goto add_token;
-        }
-
-        else {
-            i++;
-            continue;
-        }
-
-    add_token:
-        tokens[pos++] = token_start;
-        if (line[i] == '\0') {
-            break;
-        }
-
-        line[i++] = '\0';
-        while (isspace(line[i])) { i++; }
-        token_start = line + i;
-
-        if (line[i] == '\0') {
-            break;
-        }
-
-        if (pos + 1 >= sz) {
-            sz *= 2;
-            tokens = realloc(tokens, sz * sizeof(char*));
-        }
-    }
-
-    if (in_quotes) {
-        pos = 0;
-        err = 1;
-        fprintf(stderr, "Shell: %s\n", "Invalid string format");
-    }
-
-    tokens[pos] = NULL;
-    simple_command->args = tokens;
-
-    return err;
+    return ret;
 }
 
 #define SPLIT_BUF_INC 10
