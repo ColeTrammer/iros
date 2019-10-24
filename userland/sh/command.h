@@ -1,6 +1,8 @@
 #ifndef _COMMAND_H
 #define _COMMAND_H 1
 
+#include <wordexp.h>
+
 struct builtin_op;
 
 enum redirection_method {
@@ -34,7 +36,7 @@ enum command_type {
 };
 
 struct command_simple {
-    char **args;
+    wordexp_t we;
     struct redirection_info redirection_info;
     struct builtin_op *builtin_op;
 };

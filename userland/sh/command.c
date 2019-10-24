@@ -103,7 +103,7 @@ static bool handle_redirection(struct redirection_desc *desc) {
 
 static int do_simple_command(struct command_simple *command) {
     pid_t save_pgid = getpid();
-    char **args = command->args;
+    char **args = command->we.we_wordv;
 
     struct builtin_op *op = builtin_find_op(args[0]);
     if (builtin_should_run_immediately(op)) {
@@ -218,7 +218,7 @@ int command_run(struct command *command) {
 }
 
 static void cleanup_simple_command(struct command_simple *simple_command) {
-    free(simple_command->args);
+    wordfree(&simple_command->we);
 }
 
 void command_cleanup(struct command *command) {

@@ -12,12 +12,37 @@
 #include "parser.h"
 
 static int parse_simple_command(char *line, struct command_simple *simple_command) {
-    wordexp_t we;
-    int ret = wordexp(line, &we, 0);
+    char *fixed_line = calloc(strlen(line) + 1, sizeof(char));
+    for (size_t i = 0, fixed_i = 0; line[i] != '\0'; i++) {
+        char c = line[i];
+        switch (c) {
+            case '>':
+            case '<': {
+                i++;
+                i += strspn(line + i, " \t\n");
+                size_t stop = strcspn(line + i, " \t\n");
+                if (stop == 0) {
+                    return WRDE_SYNTAX;
+                }
+                line[i + stop] = '\0';
 
-    simple_command->args = calloc(we.we_wordc + 1, sizeof(char*));
-    memcpy(simple_command->args, we.we_wordv, we.we_wordc * sizeof(char*));
+                printf("%s\n", line + i);
+                init_redirection(c == '>' ? &simple_command->redirection_info._stdout : &simple_command->redirection_info._stdin, 
+                                 REDIRECT_FILE, c == '>' ? STDOUT_FILENO : STDIN_FILENO, line + i);
+                i += stop;
+                break;
+            }
+            default: {
+                fixed_line[fixed_i++] = line[i];
+                break;
+            }
+        }
+    }
 
+    printf("parsing |%s|\n", fixed_line);
+    int ret = wordexp(fixed_line, &simple_command->we, 0);
+
+    free(fixed_line);
     return ret;
 }
 
@@ -53,19 +78,12 @@ static char **split_on_pipe(char *line, size_t *num_split) {
                         split = realloc(split, max * sizeof(char*));
                     }
 
-                    for (int j = i - 1; j >= 0 && isspace(line[j]); j--) {
-                        line[j] = '\0';
-                    }
-
                     split[split_index++] = last;
                     if (i >= line_len) { 
                         goto finish;
                     }
 
                     line[i++] = '\0';
-                    for (; i < line_len && isspace(line[i]); i++) {
-                        line[i] = '\0';
-                    }
 
                     if (i >= line_len) {
                         goto finish;
