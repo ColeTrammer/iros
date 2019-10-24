@@ -276,6 +276,8 @@ static int we_unescape(wordexp_t *p) {
             return WRDE_NOSPACE;
         }
 
+        bool in_s_quotes = false;
+        bool in_d_quotes = false;
         for (size_t j = 0, k = 0; p->we_wordv[i][j] != '\0'; j++, k++) {
         again:
             switch (p->we_wordv[i][j]) {
@@ -283,9 +285,19 @@ static int we_unescape(wordexp_t *p) {
                     j++;
                     break;
                 case '\'':
+                    if (!in_d_quotes) {
+                        j++;
+                        in_s_quotes = in_d_quotes ? in_s_quotes : !in_s_quotes;
+                        goto again;
+                    }
+                    break;
                 case '"':
-                    j++;
-                    goto again;
+                    if (!in_s_quotes) {
+                        j++;
+                        in_d_quotes = in_s_quotes ? in_d_quotes : !in_d_quotes;
+                        goto again;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -317,11 +329,11 @@ static int we_glob(wordexp_t *we) {
                     break;
                 }
                 case '\'': {
-                    in_s_qutoes = prev_was_bachslash ? in_s_qutoes : !in_s_qutoes;
+                    in_s_qutoes = (prev_was_bachslash || in_d_quotes) ? in_s_qutoes : !in_s_qutoes;
                     break;
                 }
                 case '"': {
-                    in_d_quotes = prev_was_bachslash ? in_d_quotes : !in_d_quotes;
+                    in_d_quotes = (prev_was_bachslash || in_s_qutoes) ? in_d_quotes : !in_d_quotes;
                     break;
                 }
                 case '*':

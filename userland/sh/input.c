@@ -64,11 +64,11 @@ static char *get_tty_input(FILE *tty) {
         }
 
         if (c == '\'') {
-            in_s_quotes = prev_was_backslash ? in_s_quotes : !in_s_quotes;
+            in_s_quotes = (prev_was_backslash || in_d_quotes || in_b_quotes) ? in_s_quotes : !in_s_quotes;
         } else if (c == '"') {
-            in_d_quotes = prev_was_backslash ? in_d_quotes : !in_d_quotes;
+            in_d_quotes = (prev_was_backslash || in_s_quotes || in_b_quotes) ? in_d_quotes : !in_d_quotes;
         } else if (c == '`') {
-            in_b_quotes = prev_was_backslash ? in_b_quotes : !in_b_quotes;
+            in_b_quotes = (prev_was_backslash || in_s_quotes || in_d_quotes) ? in_b_quotes : !in_b_quotes;
         }
 
         if (c == '\\') {

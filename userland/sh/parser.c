@@ -29,13 +29,13 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                 }
                 break;
             case '\'':
-                in_s_quote = prev_was_blackslash ? in_s_quote : !in_s_quote;
+                in_s_quote = (prev_was_blackslash || in_d_quote || in_b_quote) ? in_s_quote : !in_s_quote;
                 break;
             case '"':
-                in_d_quote = prev_was_blackslash ? in_d_quote : !in_d_quote;
+                in_d_quote = (prev_was_blackslash || in_s_quote || in_b_quote) ? in_d_quote : !in_d_quote;
                 break;
             case '`':
-                in_b_quote = prev_was_blackslash ? in_b_quote : !in_b_quote;
+                in_b_quote = (prev_was_blackslash || in_s_quote || in_d_quote) ? in_b_quote : !in_b_quote;
                 break;
             case '>':
             case '<': {
@@ -83,6 +83,7 @@ static char **split_on_pipe(char *line, size_t *num_split) {
     bool prev_was_backslash = false;
     bool in_d_quotes = false;
     bool in_s_quotes = false;
+    bool in_b_quotes = false;
 
     for (size_t i = 0;; i++) {
         switch (line[i]) {
@@ -90,14 +91,17 @@ static char **split_on_pipe(char *line, size_t *num_split) {
                 prev_was_backslash = !prev_was_backslash;
                 continue;
             case '\'':
-                in_s_quotes = !in_s_quotes;
+                in_s_quotes = (prev_was_backslash || in_d_quotes || in_b_quotes) ? in_s_quotes : !in_s_quotes;
                 break;
             case '"':
-                in_d_quotes = !in_d_quotes;
+                in_d_quotes = (prev_was_backslash || in_s_quotes || in_b_quotes) ? in_d_quotes : !in_d_quotes;
+                break;
+            case '`':
+                in_b_quotes = (prev_was_backslash || in_s_quotes || in_d_quotes) ? in_b_quotes : !in_b_quotes;
                 break;
             case '\0':
             case '|':
-                if (line[i] == '\0' || (!prev_was_backslash && !in_d_quotes && !in_s_quotes)) {
+                if (line[i] == '\0' || (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes)) {
                     if (split_index >= max) {
                         max += SPLIT_BUF_INC;
                         split = realloc(split, max * sizeof(char*));
