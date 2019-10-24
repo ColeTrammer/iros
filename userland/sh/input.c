@@ -14,10 +14,18 @@ static char *get_tty_input(FILE *tty) {
     char *buffer = malloc(sz);
 
     bool prev_was_backslash = false;
+    bool in_s_quotes = false;
+    bool in_d_quotes = false;
+    bool in_b_quotes = false;
 
     for (;;) {
         errno = 0;
         int c = fgetc(tty);
+
+        if (pos >= sz) {
+            sz *= 2;
+            buffer = realloc(buffer, sz);
+        }
 
         // Means user pressed ^C, so we should go to the next line
         if (c == EOF && errno == EINTR) {
@@ -41,9 +49,13 @@ static char *get_tty_input(FILE *tty) {
             return NULL;
         }
 
-        if (c == '\n' && prev_was_backslash) {
-            buffer[--pos] = '\0';
-            prev_was_backslash = false;
+        if (c == '\n' && (prev_was_backslash || in_s_quotes || in_d_quotes || in_b_quotes)) {
+            if (prev_was_backslash) {
+                buffer[--pos] = '\0';
+                prev_was_backslash = false;
+            } else {
+                buffer[pos++] = '\n';
+            }
 
             printf("> ");
             fflush(stdout);
@@ -51,8 +63,16 @@ static char *get_tty_input(FILE *tty) {
             continue;
         }
 
+        if (c == '\'') {
+            in_s_quotes = prev_was_backslash ? in_s_quotes : !in_s_quotes;
+        } else if (c == '"') {
+            in_d_quotes = prev_was_backslash ? in_d_quotes : !in_d_quotes;
+        } else if (c == '`') {
+            in_b_quotes = prev_was_backslash ? in_b_quotes : !in_b_quotes;
+        }
+
         if (c == '\\') {
-            prev_was_backslash = true;
+            prev_was_backslash = !prev_was_backslash;
         } else {
             prev_was_backslash = false;
         }
@@ -62,11 +82,6 @@ static char *get_tty_input(FILE *tty) {
         }
 
         buffer[pos++] = c;
-
-        if (pos >= sz) {
-            sz *= 2;
-            buffer = realloc(buffer, sz);
-        }
     }
 
     buffer[pos] = '\0';

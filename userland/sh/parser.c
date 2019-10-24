@@ -13,11 +13,36 @@
 
 static int parse_simple_command(char *line, struct command_simple *simple_command) {
     char *fixed_line = calloc(strlen(line) + 1, sizeof(char));
+
+    bool prev_was_blackslash = false;
+    bool in_s_quote = false;
+    bool in_d_quote = false;
+    bool in_b_quote = false;
     for (size_t i = 0, fixed_i = 0; line[i] != '\0'; i++) {
         char c = line[i];
         switch (c) {
+            case '\\':
+                if (!prev_was_blackslash) {
+                    prev_was_blackslash = true;
+                    fixed_line[fixed_i++] = line[i];
+                    continue;
+                }
+                break;
+            case '\'':
+                in_s_quote = prev_was_blackslash ? in_s_quote : !in_s_quote;
+                break;
+            case '"':
+                in_d_quote = prev_was_blackslash ? in_d_quote : !in_d_quote;
+                break;
+            case '`':
+                in_b_quote = prev_was_blackslash ? in_b_quote : !in_b_quote;
+                break;
             case '>':
             case '<': {
+                if (prev_was_blackslash || in_s_quote || in_d_quote || in_b_quote) {
+                    break;
+                }
+
                 i++;
                 i += strspn(line + i, " \t\n");
                 size_t stop = strcspn(line + i, " \t\n");
@@ -32,10 +57,12 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                 break;
             }
             default: {
-                fixed_line[fixed_i++] = line[i];
                 break;
             }
         }
+
+        fixed_line[fixed_i++] = line[i];
+        prev_was_blackslash = false;
     }
 
     int ret = wordexp(fixed_line, &simple_command->we, 0);
