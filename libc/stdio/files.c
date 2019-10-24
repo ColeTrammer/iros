@@ -465,6 +465,18 @@ ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restri
     return (ssize_t) pos;
 }
 
+FILE *popen(const char *command, const char *mode) {
+    (void) command;
+    (void) mode;
+
+    return NULL;
+}
+
+int pclose(FILE *stream) {
+    (void) stream;
+    return 0;
+}
+
 void perror(const char *s) {
     assert(s != NULL);
 

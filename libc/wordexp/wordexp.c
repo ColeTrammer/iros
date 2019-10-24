@@ -3,9 +3,11 @@
 #include <glob.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #define WE_BUF_INCREMENT 20
 
@@ -91,6 +93,55 @@ static int we_expand(const char *s, int flags, char **expanded) {
                 i += to_read;
                 i--; // Since loop does i++
 
+                prev_was_backslash = false;
+                continue;
+            }
+            case '`': {
+                if (prev_was_backslash || in_s_quotes || in_d_quotes) {
+                    break;
+                }
+
+                // Doesn't handle escaped '`' but whatever
+                char *end = strchr(s + i + 1, '`');
+                if (end == NULL) {
+                    free(*expanded);
+                    return WRDE_SYNTAX;
+                }
+
+                char save = *end;
+                *end = '\0';
+
+                int save_stderr = 0;
+
+                // Handle redirecting error
+                if (!(flags & WRDE_SHOWERR)) {
+                    save_stderr = dup(STDERR_FILENO);
+                    dup2(open("/dev/null", O_RDWR), STDERR_FILENO);
+                }
+                FILE *_pipe = popen(s + i + 1, "r");
+                if (_pipe == NULL) {
+                    goto bquote_end;
+                }
+
+                char *line = NULL;
+                size_t line_len = 0;
+                while (getline(&line, &line_len, _pipe) != -1) {
+                    if (!we_append(expanded, line, strlen(line), &len)) {
+                        assert(false);
+                        return WRDE_NOSPACE;
+                    }
+                }
+
+                free(line);
+                pclose(_pipe);
+
+            bquote_end:
+                if (!(flags & WRDE_SHOWERR)) {
+                    dup2(save_stderr, STDERR_FILENO);
+                }
+
+                *end = save;
+                i = end - s;
                 prev_was_backslash = false;
                 continue;
             }

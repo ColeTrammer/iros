@@ -111,6 +111,9 @@ ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restri
 
 FILE *tmpfile(void);
 
+FILE *popen(const char *command, const char *mode);
+int pclose(FILE *stream);
+
 void perror(const char *s);
 
 #ifdef __libc_internal
