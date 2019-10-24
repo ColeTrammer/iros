@@ -7,9 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <unistd.h>
 
-#define WE_BUF_INCREMENT 20
+#define WE_BUF_INCREMENT 10
 
 static bool we_add(char *s, wordexp_t *we) {
     if (we->we_wordc == 0) {
@@ -24,6 +25,36 @@ static bool we_add(char *s, wordexp_t *we) {
     }
 
     we->we_wordv[we->we_wordc++] = s;
+    we->we_wordv[we->we_wordc] = NULL;
+    return true;
+}
+
+// Overwrite entry at pos, move over everything else
+static bool we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
+    assert(arr_size != 0);
+    size_t new_size = we->we_wordc - 1 + arr_size;
+    if (we->we_wordc / WE_BUF_INCREMENT != new_size / WE_BUF_INCREMENT) {
+        size_t new_max_length = WE_BUF_INCREMENT * ((new_size + WE_BUF_INCREMENT - 1) / WE_BUF_INCREMENT);
+        we->we_wordv = realloc(we->we_wordv, new_max_length * sizeof(char*));
+    }
+
+    if (we->we_wordv == NULL) {
+        return false;
+    }
+
+    for (size_t i = we->we_wordc - 1; i > pos; i--) {
+        we->we_wordv[new_size - (we->we_wordc - i)] = we->we_wordv[i];
+    }
+
+    for (size_t i = pos; i < pos + arr_size; i++) {
+        we->we_wordv[i] = strdup(arr[i - pos]);
+        if (we->we_wordv[i] == NULL) {
+            return false;
+        }
+    }
+
+    we->we_wordc = new_size;
+    we->we_wordv[we->we_wordc] = NULL;
     return true;
 }
 
@@ -269,6 +300,68 @@ static int we_unescape(wordexp_t *p) {
     return 0;
 }
 
+static int we_glob(wordexp_t *we) {
+    for (size_t i = 0; i < we->we_wordc; i++) {
+        char *token = we->we_wordv[i];
+
+        bool prev_was_bachslash = false;
+        bool in_s_qutoes = false;
+        bool in_d_quotes = false;
+        for (size_t j = 0; token[j] != '\0'; j++) {
+            switch (token[j]) {
+                case '\\': {
+                    if (!prev_was_bachslash) {
+                        prev_was_bachslash = true;
+                        continue;
+                    }
+                    break;
+                }
+                case '\'': {
+                    in_s_qutoes = prev_was_bachslash ? in_s_qutoes : !in_s_qutoes;
+                    break;
+                }
+                case '"': {
+                    in_d_quotes = prev_was_bachslash ? in_d_quotes : !in_d_quotes;
+                    break;
+                }
+                case '*':
+                case '?':
+                case '[': {
+                    if (prev_was_bachslash || in_d_quotes || in_s_qutoes) {
+                        break;
+                    }
+                    // For now, assume entire token is the pattern (not necessarily the case)
+                    glob_t gl;
+                    int err = 0;
+                    if ((err = glob(token, 0, NULL, &gl))) {
+                        if (err == GLOB_NOSPACE) {
+                            return WRDE_NOSPACE;
+                        }
+                        break;
+                    }
+
+                    free(token);
+                    if (!we_insert(gl.gl_pathv, gl.gl_pathc, i, we)) {
+                        globfree(&gl);
+                        return WRDE_NOSPACE;
+                    }
+                    globfree(&gl);
+                    i += gl.gl_pathc;
+                    i--; // since loop does i++
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+
+            prev_was_bachslash = false;
+        }
+    }
+
+    return 0;
+}
+
 int wordexp(const char *s, wordexp_t *p, int flags) {
     assert(!(flags & WRDE_REUSE));
     assert(!(flags & WRDE_APPEND));
@@ -292,6 +385,14 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     free(str);
 
     if (ret != 0) {
+        return ret;
+    }
+
+    assert(p->we_wordv);
+    ret = we_glob(p);
+
+    if (ret != 0) {
+        wordfree(p);
         return ret;
     }
 
