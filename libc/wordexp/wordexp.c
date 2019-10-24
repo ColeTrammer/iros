@@ -66,7 +66,7 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
         size_t stopping_point = i;
         char *to_add = malloc(stopping_point - prev + 1);
         memcpy(to_add, s + prev, stopping_point - prev);
-        to_add[stopping_point] = '\0';
+        to_add[stopping_point - prev] = '\0';
 
         if (!we_add(to_add, we)) {
             return WRDE_NOSPACE;
