@@ -18,6 +18,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
     bool in_s_quote = false;
     bool in_d_quote = false;
     bool in_b_quote = false;
+    bool prev_was_digit = false;
     for (size_t i = 0, fixed_i = 0; line[i] != '\0'; i++) {
         char c = line[i];
         switch (c) {
@@ -43,7 +44,7 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                     break;
                 }
 
-                i++;
+                size_t r_start = i++;
                 i += strspn(line + i, " \t\n");
                 size_t stop = strcspn(line + i, " \t\n");
                 if (stop == 0) {
@@ -51,7 +52,13 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                 }
                 line[i + stop] = '\0';
 
-                init_redirection(&simple_command->redirection_info, REDIRECT_FILE, c == '>' ? STDOUT_FILENO : STDIN_FILENO, line + i);
+                int target_fd = c == '>' ? STDOUT_FILENO : STDIN_FILENO;
+                if (prev_was_digit) {
+                    target_fd = line[r_start - 1] - '0';
+                    fixed_line[--fixed_i] = '\0'; // Delete digit from fixed_line
+                }
+
+                init_redirection(&simple_command->redirection_info, target_fd, REDIRECT_FILE, line + i);
                 i += stop;
                 break;
             }
@@ -61,6 +68,13 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         }
 
         fixed_line[fixed_i++] = line[i];
+
+        if (!prev_was_blackslash && !in_s_quote && !in_d_quote && !in_b_quote && isdigit(line[i])) {
+            prev_was_digit = true;
+        } else {
+            prev_was_digit = false;
+        }
+
         prev_was_blackslash = false;
     }
 

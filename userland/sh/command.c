@@ -12,6 +12,9 @@
 #include "builtin.h"
 #include "command.h"
 
+// FIXME: redirection actually needs to be a queue, not an array, since the order of specified redirections
+//        should cause different behavior, and currently the order is based on the target fd not the order
+//        the redirection command is inputted.
 void init_redirection(struct redirection_info *info,  int target_fd, enum redirection_method method, ...) {
     va_list args;
     va_start(args, method);
@@ -81,12 +84,15 @@ static bool handle_redirection(struct redirection_desc *desc) {
         }
         // Fall through
         case REDIRECT_FILE: {
-            flags |= O_CREAT | O_WRONLY | O_TRUNC | O_APPEND;
+            flags |= O_CREAT | O_WRONLY | O_TRUNC;
             int fd = open(desc->desc.file, flags, 0644);
             if (fd == -1) {
                 return false;
             }
             if (dup2(fd, desc->target_fd) == -1) {
+                return false;
+            }
+            if (close(fd)) {
                 return false;
             }
             break;
