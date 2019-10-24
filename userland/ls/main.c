@@ -21,7 +21,15 @@ static size_t num_dirents_max = LS_STARTING_DIRENTS;
 static int widest_num_links = 0;
 static int widest_size = 0;
 
+static int ls_dirent_compare(const void *a, const void *b) {
+    return strcmp(((const struct ls_dirent*) a)->name, ((const struct ls_dirent*) b)->name);
+}
+
 void fill_dirent(char *_path, const char *name) {
+    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+        return;
+    }
+
     struct ls_dirent d;
     d.name = malloc(strlen(name) + 1);
     strcpy(d.name, name);
@@ -145,6 +153,8 @@ int main(int argc, char **argv) {
         }
         printf("total %lu\n", num_blocks);
     }
+
+    qsort(dirents, num_dirents, sizeof(struct ls_dirent), ls_dirent_compare);
 
     for (size_t i = 0; i < num_dirents; i++) {
         print_entry(dirents + i, extra_info);
