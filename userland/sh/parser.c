@@ -26,7 +26,6 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
                 }
                 line[i + stop] = '\0';
 
-                printf("%s\n", line + i);
                 init_redirection(c == '>' ? &simple_command->redirection_info._stdout : &simple_command->redirection_info._stdin, 
                                  REDIRECT_FILE, c == '>' ? STDOUT_FILENO : STDIN_FILENO, line + i);
                 i += stop;
@@ -39,7 +38,6 @@ static int parse_simple_command(char *line, struct command_simple *simple_comman
         }
     }
 
-    printf("parsing |%s|\n", fixed_line);
     int ret = wordexp(fixed_line, &simple_command->we, 0);
 
     free(fixed_line);

@@ -87,6 +87,37 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
     return 0;
 }
 
+static int we_unescape(wordexp_t *p) {
+    for (size_t i = 0; i < p->we_wordc; i++) {
+        char *unescaped_string = calloc(strlen(p->we_wordv[i]) + 1, sizeof(char));
+        if (unescaped_string == NULL) {
+            return WRDE_NOSPACE;
+        }
+
+        for (size_t j = 0, k = 0; p->we_wordv[i][j] != '\0'; j++, k++) {
+        again:
+            switch (p->we_wordv[i][j]) {
+                case '\\':
+                    j++;
+                    break;
+                case '\'':
+                case '"':
+                    j++;
+                    goto again;
+                default:
+                    break;
+            }
+
+            unescaped_string[k] = p->we_wordv[i][j];
+        }
+
+        free(p->we_wordv[i]);
+        p->we_wordv[i] = unescaped_string;
+    }
+
+    return 0;
+}
+
 int wordexp(const char *s, wordexp_t *p, int flags) {
     assert(!(flags & WRDE_REUSE));
     assert(!(flags & WRDE_APPEND));
@@ -103,7 +134,11 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     int ret = we_split(str, split_on, p);
     free(str);
 
-    return ret;
+    if (ret != 0) {
+        return ret;
+    }
+
+    return we_unescape(p);
 }
 
 void wordfree(wordexp_t *p) {
