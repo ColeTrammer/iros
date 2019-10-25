@@ -3,9 +3,6 @@
 
 #include <stdbool.h>
 
-#define SHELL_EXIT 1
-#define SHELL_CONTINUE 0
-
 #define NUM_BUILTINS 5
 
 typedef int(*op_function_t)(char **args);

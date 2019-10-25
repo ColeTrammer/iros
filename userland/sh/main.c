@@ -125,14 +125,10 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        int status = command_run(command);
+        command_run(command);
 
         free(line);
         command_cleanup(command);
-
-        if (status == SHELL_EXIT) {
-            break;
-        }
     }
 
     input_cleanup(&input_source);

@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 
 #include "builtin.h"
 #include "command.h"
@@ -16,12 +17,16 @@ static word_special_t special_vars = { {
     "", "", "0", NULL, "", NULL, NULL, "/bin/sh"
 } };
 
-static void set_exit_status(int n) {
-    assert(n >= 0 && n < 128);
-
+static void __set_exit_status(int n) {
     free(special_vars.vals[WRDE_SPECIAL_QUEST]);
     special_vars.vals[WRDE_SPECIAL_QUEST] = malloc(4);
     sprintf(special_vars.vals[WRDE_SPECIAL_QUEST], "%d", n);
+}
+
+static void set_exit_status(int n) {
+    assert(WIFEXITED(n) || WIFSIGNALED(n));
+
+    __set_exit_status(WIFEXITED(n) ? WEXITSTATUS(n) : (127 + WTERMSIG(n)));
 }
 
 // FIXME: redirection actually needs to be a queue, not an array, since the order of specified redirections
@@ -124,12 +129,13 @@ static bool handle_redirection(struct redirection_desc *desc) {
     return true;
 }
 
-static int do_simple_command(struct command_simple *command) {
-    pid_t save_pgid = getpid();
+// Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
+static pid_t __do_simple_command(struct command_simple *command, bool *was_builtin, pid_t to_set_pgid) {
     char **args = command->we.we_wordv;
 
     struct builtin_op *op = builtin_find_op(args[0]);
     if (builtin_should_run_immediately(op)) {
+        *was_builtin = true;
         return builtin_do_op(op, args);
     } else if (op) {
         command->builtin_op = op;
@@ -140,8 +146,9 @@ static int do_simple_command(struct command_simple *command) {
     // Child
     if (pid == 0) {
         if (isatty(STDOUT_FILENO)) {
-            setpgid(0, 0);
-            tcsetpgrp(STDOUT_FILENO, getpid());
+            setpgid(to_set_pgid, to_set_pgid);
+            tcsetpgrp(STDOUT_FILENO, to_set_pgid == 0 ? getpid() : to_set_pgid);
+
             struct sigaction to_set;
             to_set.sa_handler = SIG_DFL;
             to_set.sa_flags = 0;
@@ -168,12 +175,30 @@ static int do_simple_command(struct command_simple *command) {
         _exit(127);
     } else if (pid < 0) {
         perror("Shell");
+        return -1;
     }
 
-    // Parent
+    return pid;
+}
+
+static int do_simple_command(struct command_simple *simple_command) {
+    pid_t save_pgid = getpid();
+
+    bool was_builtin = false;
+    pid_t pid = __do_simple_command(simple_command, &was_builtin, 0);
+
+    if (was_builtin) {
+        __set_exit_status(pid);
+        return 0;
+    }
+
     if (isatty(STDOUT_FILENO)) {
         setpgid(pid, pid);
         tcsetpgrp(STDOUT_FILENO, pid);
+    }
+
+    if (pid == -1) {
+        return -1;
     }
 
     int status;
@@ -181,13 +206,13 @@ static int do_simple_command(struct command_simple *command) {
         waitpid(pid, &status, WUNTRACED);
     } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
 
-    set_exit_status(WEXITSTATUS(status));
+    set_exit_status(status);
 
     if (isatty(STDOUT_FILENO)) {
         tcsetpgrp(STDOUT_FILENO, save_pgid);
     }
 
-    return SHELL_CONTINUE;
+    return 0;
 }
 
 static int do_pipeline(struct command_pipeline *pipeline) {
@@ -195,12 +220,18 @@ static int do_pipeline(struct command_pipeline *pipeline) {
     for (size_t i = 0; i < pipeline->num_commands - 1; i++) {
         if (pipe(fds + (i * 2))) {
             perror("sh");
-            return SHELL_CONTINUE;
+            return 0;
         }
     }
 
-    int ret = SHELL_CONTINUE;
-    for (size_t i = 0; i < pipeline->num_commands; i++) {
+    pid_t save_pgid = getpid();
+    pid_t pgid = 0;
+    pid_t last = 0;
+
+    size_t num_to_wait_on = 0;
+
+    size_t i;
+    for (i = 0; i < pipeline->num_commands; i++) {
         struct command_simple simple_command = pipeline->commands[i];
 
         if (i != pipeline->num_commands - 1) {
@@ -211,10 +242,8 @@ static int do_pipeline(struct command_pipeline *pipeline) {
             init_redirection(&simple_command.redirection_info, STDIN_FILENO, REDIRECT_FD, fds[(i - 1) * 2]);
         }
 
-        ret = do_simple_command(&simple_command);
-        if (ret != SHELL_CONTINUE) {
-            break;
-        }
+        bool is_builtin = false;
+        pid_t pid = __do_simple_command(&simple_command, &is_builtin, pgid);
 
         if (i != pipeline->num_commands - 1) {
             close(fds[i * 2 + 1]);
@@ -223,9 +252,61 @@ static int do_pipeline(struct command_pipeline *pipeline) {
         if (i != 0) {
             close(fds[(i - 1) * 2]);
         }
+
+        if (is_builtin) {
+            continue;
+        }
+
+        if (pid == -1) {
+            break;
+        }
+
+        if (pgid == 0) {
+            pgid = pid;
+            if (isatty(STDOUT_FILENO)) {
+                tcsetpgrp(STDOUT_FILENO, pgid);
+            }
+        }
+
+        if (isatty(STDOUT_FILENO)) {
+            setpgid(pid, pgid);
+        }
+
+        num_to_wait_on++;
+        last = pid;
     }
 
-    return ret;
+    for (size_t j = (i - 1) * 2; j < (pipeline->num_commands - 1) * 2; j += 2) {
+        if (close(fds[j]) ||
+            close(fds[j + 1])) {
+            return -1;
+        }
+    }
+
+    if (num_to_wait_on > 0) {
+        int wstatus;
+        for (size_t num_waited = 0; num_waited < num_to_wait_on; num_waited++) {
+            int ret;
+            do {
+                ret = waitpid(-pgid, &wstatus, WUNTRACED);
+            } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+
+            if (ret == -1) {
+                return -1;
+            }
+
+            if (ret == last) {
+                set_exit_status(wstatus);
+            }
+        }
+    }
+
+    if (isatty(STDOUT_FILENO)) {
+        setpgid(0, save_pgid);
+        tcsetpgrp(STDOUT_FILENO, save_pgid);
+    }
+
+    return i == pipeline->num_commands ? 0 : -1;
 }
 
 int command_run(struct command *command) {
@@ -239,7 +320,7 @@ int command_run(struct command *command) {
         case COMMAND_FUNCTION_DECLARATION:
         default:
             assert(false);
-            return SHELL_EXIT;
+            return -1;
     }
 }
 

@@ -9,17 +9,16 @@
 static int op_exit(char **args) {
     if (args[1] != NULL) {
         printf("Usage: %s\n", args[0]);
-        return SHELL_CONTINUE;
+        return 0;
     }
 
-    /* Exit */
-    return SHELL_EXIT;
+    exit(0);
 }
 
 static int op_cd(char **args) {
     if (!args[1] || args[2]) {
         printf("Usage: %s <dir>\n", args[0]);
-        return SHELL_CONTINUE;
+        return 0;
     }
 
     int ret = chdir(args[1]);
@@ -27,13 +26,13 @@ static int op_cd(char **args) {
         perror("Shell");
     }
 
-    return SHELL_CONTINUE;
+    return 0;
 }
 
 static int op_echo(char **args) {
     if (!args[1]) {
         printf("%c", '\n');
-        return SHELL_CONTINUE;
+        return 0;
     }
 
     size_t i = 1;
@@ -48,13 +47,13 @@ static int op_echo(char **args) {
     }
 
     printf("%c", '\n');
-    return SHELL_CONTINUE;
+    return 0;
 }
 
 static int op_export(char **argv) {
     if (!argv[1]) {
         printf("Usage: %s <key=value>\n", argv[0]);
-        return SHELL_CONTINUE;
+        return 0;
     }
 
     for (size_t i = 1; argv[i] != NULL; i++) {
@@ -67,27 +66,27 @@ static int op_export(char **argv) {
 
         if (setenv(argv[i], equals + 1, 1)) {
             perror("shell");
-            return SHELL_CONTINUE;
+            return 0;
         }
     }
 
-    return SHELL_CONTINUE;
+    return 0;
 }
 
 static int op_unset(char **argv) {
     if (!argv[1]) {
         printf("Usage: %s <key>\n", argv[0]);
-        return SHELL_CONTINUE;
+        return 0;
     }
 
     for (size_t i = 1; argv[i] != NULL; i++) {
         if (unsetenv(argv[i])) {
             perror("shell");
-            return SHELL_CONTINUE;
+            return 0;
         }
     }
 
-    return SHELL_CONTINUE;
+    return 0;
 }
 
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
