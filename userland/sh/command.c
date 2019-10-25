@@ -145,8 +145,8 @@ static pid_t __do_simple_command(struct command_simple *command, bool *was_built
 
     // Child
     if (pid == 0) {
+        setpgid(to_set_pgid, to_set_pgid);
         if (isatty(STDOUT_FILENO)) {
-            setpgid(to_set_pgid, to_set_pgid);
             tcsetpgrp(STDOUT_FILENO, to_set_pgid == 0 ? getpid() : to_set_pgid);
 
             struct sigaction to_set;
@@ -192,8 +192,8 @@ static int do_simple_command(struct command_simple *simple_command) {
         return 0;
     }
 
+    setpgid(pid, pid);
     if (isatty(STDOUT_FILENO)) {
-        setpgid(pid, pid);
         tcsetpgrp(STDOUT_FILENO, pid);
     }
 
@@ -268,9 +268,7 @@ static int do_pipeline(struct command_pipeline *pipeline) {
             }
         }
 
-        if (isatty(STDOUT_FILENO)) {
-            setpgid(pid, pgid);
-        }
+        setpgid(pid, pgid);
 
         num_to_wait_on++;
         last = pid;
@@ -301,8 +299,9 @@ static int do_pipeline(struct command_pipeline *pipeline) {
         }
     }
 
+    setpgid(0, save_pgid);
+
     if (isatty(STDOUT_FILENO)) {
-        setpgid(0, save_pgid);
         tcsetpgrp(STDOUT_FILENO, save_pgid);
     }
 
