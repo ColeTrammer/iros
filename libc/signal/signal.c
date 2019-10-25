@@ -6,6 +6,10 @@
 #include <unistd.h>
 #include <stdio.h>
 
+int killpg(int pgid, int sig) {
+    return kill(-pgid, sig);
+}
+
 char *strsignal(int sig) {
     if (sig < 0 || sig > _NSIG) {
         sig = 0;
