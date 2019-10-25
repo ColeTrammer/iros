@@ -385,6 +385,8 @@ void arch_sys_waitpid(struct process_state *process_state) {
         pid = -current->pgid;
     }
 
+    debug_log("Waiting on pid: [ %d ]\n", pid);
+
     struct proc_state_message m;
     pid_t found_pid;
     for (;;) {

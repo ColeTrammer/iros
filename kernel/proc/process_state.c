@@ -118,10 +118,13 @@ static void __free_queue(struct proc_state_message_queue *queue) {
 }
 
 void proc_update_pgid(pid_t pid, pid_t pgid) {
-    struct proc_state_message_queue *queue = ensure_queue(pid);
-    if (queue->start) {
-        debug_log("Switching pgid: [ %d, %d ]\n", pid, pgid);
+    struct proc_state_message_queue *queue = hash_get(queue_map, &pid);
+    if (queue == NULL) {
+        return;
+    }
 
+    debug_log("Switching pgid: [ %d, %d ]\n", pid, pgid);
+    if (queue->start) {
         // Removes it from old pg_list
         struct proc_state_message_queue *pg_list = hash_get(pg_queue_map, &queue->pgid);
         if (pg_list->pg_next == NULL) {
