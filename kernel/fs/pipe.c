@@ -129,6 +129,12 @@ ssize_t pipe_write(struct file *file, const void *buffer, size_t len) {
     spin_unlock(&inode->lock);
 
     file->position += len;
+
+    // FIXME: Why does this stop 'cat | cat' from crashing...
+    for (int i = 0; i < 5; i++) {
+        yield();
+    }
+
     return len;
 }
 
