@@ -173,7 +173,7 @@ static int we_expand(const char *s, int flags, char **expanded, word_special_t *
             }
             }
             case '`': {
-                if (prev_was_backslash || in_s_quotes || in_d_quotes) {
+                if (prev_was_backslash || in_s_quotes) {
                     break;
                 }
 
