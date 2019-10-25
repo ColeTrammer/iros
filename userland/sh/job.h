@@ -15,6 +15,8 @@ enum job_state {
 struct job {
     enum job_state state;
     int pgid;
+    int num_processes;
+    int num_consumed;
 };
 
 enum job_id_type {
@@ -35,7 +37,7 @@ pid_t get_jid_from_pgid(pid_t pgid);
 void print_job(pid_t jid);
 
 void job_print_all();
-void job_add(pid_t pgid, enum job_state state);
+void job_add(pid_t pgid, int num_processes, enum job_state state);
 
 struct job_id job_id(enum job_id_type type, pid_t id);
 int job_run(struct job_id id);

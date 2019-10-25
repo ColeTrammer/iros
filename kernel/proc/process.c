@@ -316,15 +316,24 @@ void proc_do_sig(struct process *process, int signum) {
             debug_log("Should dump core: [ %d ]\n", process->pid);
             // Fall through
         case TERMINATE:
+            if (process->sched_state == EXITING) { 
+                break; 
+            }
             process->sched_state = EXITING;
             invalidate_last_saved(process);
             proc_add_message(process->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;
         case STOP:
+            if (process->sched_state == WAITING) { 
+                break; 
+            }
             process->sched_state = WAITING;
             proc_add_message(process->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
+            if (process->sched_state == READY) { 
+                break; 
+            }
             process->sched_state = READY;
             proc_add_message(process->pid, proc_create_message(STATE_CONTINUED, signum));
             break;

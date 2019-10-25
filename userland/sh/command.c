@@ -209,7 +209,7 @@ static int do_simple_command(struct command_simple *simple_command) {
     } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
 
     if (WIFSTOPPED(status)) {
-        job_add(pid, STOPPED);
+        job_add(pid, 1, STOPPED);
         print_job(get_jid_from_pgid(pid));
     }
 
@@ -294,10 +294,17 @@ static int do_pipeline(struct command_pipeline *pipeline) {
             int ret;
             do {
                 ret = waitpid(-pgid, &wstatus, WUNTRACED);
-            } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+            } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) &&!WIFSTOPPED(wstatus));
 
             if (ret == -1) {
                 return -1;
+            }
+
+            if (WIFSTOPPED(wstatus)) {
+                killpg(pgid, SIGSTOP);
+                job_add(pgid, num_to_wait_on - num_waited, STOPPED);
+                print_job(get_jid_from_pgid(pgid));
+                break; // Not sure what to set the exit status to...
             }
 
             if (ret == last) {

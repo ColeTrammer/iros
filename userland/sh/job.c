@@ -43,11 +43,13 @@ void job_print_all() {
     }
 }
 
-void job_add(pid_t pgid, enum job_state state) {
+void job_add(pid_t pgid, int num_prcessed, enum job_state state) {
     for (size_t i = 0; i < MAX_JOBS; i++) {
         if (jobs[i].state == DNE) {
             jobs[i].pgid = pgid;
             jobs[i].state = state;
+            jobs[i].num_processes = num_prcessed;
+            jobs[i].num_consumed = 1;
             return;
         }
     }
