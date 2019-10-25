@@ -74,4 +74,6 @@ void command_cleanup(struct command *command);
 
 void command_init_special_vars();
 
+void set_exit_status(int n);
+
 #endif /* _COMMAND_H */

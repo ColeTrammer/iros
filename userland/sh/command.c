@@ -12,6 +12,7 @@
 
 #include "builtin.h"
 #include "command.h"
+#include "job.h"
 
 static word_special_t special_vars = { {
     "", "", "0", NULL, "", NULL, NULL, "/bin/sh"
@@ -23,10 +24,11 @@ static void __set_exit_status(int n) {
     sprintf(special_vars.vals[WRDE_SPECIAL_QUEST], "%d", n);
 }
 
-static void set_exit_status(int n) {
-    assert(WIFEXITED(n) || WIFSIGNALED(n));
+void set_exit_status(int n) {
+    assert(WIFEXITED(n) || WIFSIGNALED(n) || WIFSTOPPED(n));
 
-    __set_exit_status(WIFEXITED(n) ? WEXITSTATUS(n) : (127 + WTERMSIG(n)));
+    __set_exit_status(WIFEXITED(n) ? WEXITSTATUS(n) : 
+                      WIFSTOPPED(n) ? 0 : (127 + WTERMSIG(n)));
 }
 
 // FIXME: redirection actually needs to be a queue, not an array, since the order of specified redirections
@@ -205,6 +207,11 @@ static int do_simple_command(struct command_simple *simple_command) {
     do {
         waitpid(pid, &status, WUNTRACED);
     } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
+
+    if (WIFSTOPPED(status)) {
+        job_add(pid, STOPPED);
+        print_job(get_jid_from_pgid(pid));
+    }
 
     set_exit_status(status);
 
