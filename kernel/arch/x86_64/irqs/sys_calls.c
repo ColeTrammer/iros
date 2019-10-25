@@ -700,6 +700,8 @@ void arch_sys_setpgid(struct process_state *process_state) {
     }
 
     process->pgid = pgid;
+
+    proc_update_pgid(pid, pgid);
     SYS_RETURN(0);
 }
 

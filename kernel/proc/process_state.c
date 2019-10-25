@@ -117,6 +117,38 @@ static void __free_queue(struct proc_state_message_queue *queue) {
     free_pid(pid);
 }
 
+void proc_update_pgid(pid_t pid, pid_t pgid) {
+    struct proc_state_message_queue *queue = ensure_queue(pid);
+    if (queue->start) {
+        debug_log("Switching pgid: [ %d, %d ]\n", pid, pgid);
+
+        // Removes it from old pg_list
+        struct proc_state_message_queue *pg_list = hash_get(pg_queue_map, &queue->pgid);
+        if (pg_list->pg_next == NULL) {
+            assert(pg_list == queue);
+            hash_del(pg_queue_map, &queue->pgid);
+        } else if (pg_list == queue) {
+            hash_set(pg_queue_map, queue->pg_next);
+        } else {
+            while (pg_list->pg_next != queue) {
+                pg_list = pg_list->pg_next;
+            }
+
+            pg_list->pg_next = queue->pg_next;
+        }
+
+        // Add it to correct list
+        queue->pgid = pgid;
+        pg_list = hash_get(pg_queue_map, &queue->pgid);
+        if (pg_list == NULL) {
+            hash_put(pg_queue_map, queue);
+        } else {
+            queue->pg_next = pg_list;
+            hash_set(pg_queue_map, queue);
+        }
+    }
+}
+
 struct proc_state_message *proc_create_message(int type, int data) {
     assert(type == STATE_EXITED || type == STATE_INTERRUPTED || type == STATE_STOPPED || type == STATE_CONTINUED);
 

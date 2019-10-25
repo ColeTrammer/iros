@@ -35,6 +35,8 @@ pid_t proc_consume_message(pid_t pid, struct proc_state_message *m);
 pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m);
 pid_t proc_consume_message_by_parent(pid_t ppid, struct proc_state_message *m);
 
+void proc_update_pgid(pid_t pid, pid_t pgid);
+
 void init_proc_state();
 
 #endif /* _KERNEL_PROC_PROCESS_STATE_H */
