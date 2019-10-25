@@ -210,6 +210,7 @@ static int do_simple_command(struct command_simple *simple_command) {
 
     if (WIFSTOPPED(status)) {
         job_add(pid, 1, STOPPED);
+        printf("%c", '\n');
         print_job(get_jid_from_pgid(pid));
     }
 
@@ -303,6 +304,7 @@ static int do_pipeline(struct command_pipeline *pipeline) {
             if (WIFSTOPPED(wstatus)) {
                 killpg(pgid, SIGSTOP);
                 job_add(pgid, num_to_wait_on - num_waited, STOPPED);
+                printf("%c", '\n');
                 print_job(get_jid_from_pgid(pgid));
                 break; // Not sure what to set the exit status to...
             }
