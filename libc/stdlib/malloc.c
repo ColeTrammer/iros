@@ -129,7 +129,6 @@ void *malloc(size_t n, int line, const char *func) {
 
     struct metadata *_block = start;
     while (_block != NULL && _block->size != 0) {
-        debug_log("Malloc block: [ %#.16lX ]\n", (uintptr_t) _block);
         assert(_block->magic == __MALLOC_MAGIG_CHECK);
         _block = NEXT_BLOCK(_block);
     }
