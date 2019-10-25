@@ -102,9 +102,9 @@ ssize_t pipe_read(struct file *file, void *buffer, size_t _len) {
 
     spin_lock(&inode->lock);
     memcpy(buffer, data->buffer + file->position, len);
-    spin_unlock(&inode->lock);
-
     file->position += len;
+
+    spin_unlock(&inode->lock);
     return len;
 }
 
@@ -126,9 +126,9 @@ ssize_t pipe_write(struct file *file, const void *buffer, size_t len) {
     memcpy(data->buffer + file->position, buffer, len);
 
     inode->size += len;
-    spin_unlock(&inode->lock);
-
     file->position += len;
+
+    spin_unlock(&inode->lock);
 
     // FIXME: Why does this stop 'cat | cat' from crashing...
     for (int i = 0; i < 5; i++) {

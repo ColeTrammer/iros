@@ -118,7 +118,7 @@ void arch_sys_fork(struct process_state *process_state) {
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (parent->files[i]) {
-            child->files[i] = fs_clone(parent->files[i]);
+            child->files[i] = fs_dup(parent->files[i]);
         }
     }
 
@@ -299,9 +299,9 @@ void arch_sys_execve(struct process_state *process_state) {
 
     struct process *process = calloc(1, sizeof(struct process));
 
-    /* Clone open file descriptors (should close dirs and things marked with FD_CLOEXEC, but doesn't) */
+    /* Dup open file descriptors (should close dirs and things marked with FD_CLOEXEC, but doesn't) */
     for (size_t i = 0; i < FOPEN_MAX; i++) {
-        process->files[i] = fs_clone(current->files[i]);
+        process->files[i] = fs_dup(current->files[i]);
     }
 
     /* Clone vm_regions so that they can be freed later */
@@ -579,7 +579,7 @@ void arch_sys_dup2(struct process_state *process_state) {
         }
     }
 
-    process->files[newfd] = fs_clone(process->files[oldfd]);
+    process->files[newfd] = fs_dup(process->files[oldfd]);
     SYS_RETURN(0);
 }
 
@@ -790,7 +790,7 @@ void arch_sys_dup(struct process_state *process_state) {
     // Should lock process to prevent races
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (current->files[i] == NULL) {
-            current->files[i] = fs_clone(current->files[oldfd]);
+            current->files[i] = fs_dup(current->files[oldfd]);
             debug_log("Dup: [ %d, %lu ]\n", oldfd, i);
             SYS_RETURN(i);
         }

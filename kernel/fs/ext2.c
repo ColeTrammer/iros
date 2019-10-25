@@ -864,7 +864,7 @@ struct file *ext2_open(struct inode *inode, int flags, int *error) {
 }
 
 /* Should provide some sort of mechanism for caching these blocks */
-ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
+static ssize_t __ext2_read(struct file *file, void *buffer, size_t len) {
     assert(file->flags & FS_FILE);
     assert(len >= 1);
 
@@ -942,7 +942,7 @@ ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
     return len_save;
 }
 
-ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
+static ssize_t __ext2_write(struct file *file, const void *buffer, size_t len) {
     assert(file->flags & FS_FILE);
 
     debug_log("Writing file: [ %lu, %lu ]\n", file->position, len);
@@ -1039,6 +1039,26 @@ ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
     }
 
     return (ssize_t) len_save;
+}
+
+ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    spin_lock(&inode->lock);
+
+    ssize_t ret = __ext2_read(file, buffer, len);
+
+    spin_unlock(&inode->lock);
+    return ret;
+}
+
+ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    spin_lock(&inode->lock);
+
+    ssize_t ret = __ext2_write(file, buffer, len);
+
+    spin_unlock(&inode->lock);
+    return ret;
 }
 
 int ext2_stat(struct inode *inode, struct stat *stat_struct) {

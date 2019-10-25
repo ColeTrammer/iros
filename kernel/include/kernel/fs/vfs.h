@@ -28,6 +28,7 @@ int fs_rmdir(const char *path);
 int fs_chmod(const char *path, mode_t mode);
 int fs_mount(const char *src, const char *path, const char *type);
 struct file *fs_clone(struct file *file);
+struct file *fs_dup(struct file *file);
 
 void load_fs(struct file_system *fs);
 

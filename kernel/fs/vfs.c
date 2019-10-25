@@ -206,6 +206,8 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
         return file;
     }
 
+    init_spinlock(&file->lock);
+    file->ref_count = 1;
     file->abilities = 0;
     if (flags & O_RDWR) {
         file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
@@ -229,13 +231,22 @@ int fs_close(struct file *file) {
     inode->ref_count--;
     spin_unlock(&inode->lock);
 
-    int error = 0;
-    if (file->f_op->close) {
-        error = file->f_op->close(file);
+    spin_lock(&file->lock);
+    file->ref_count--;
+    if (file->ref_count <= 0) {
+        spin_unlock(&file->lock);
+
+        int error = 0;
+        if (file->f_op->close) {
+            error = file->f_op->close(file);
+        }
+
+        free(file);
+        return error;
     }
 
-    free(file);
-    return error;
+    spin_unlock(&file->lock);
+    return 0;
 }
 
 /* Default dir read: works for file systems completely cached in memory */
@@ -457,12 +468,16 @@ int fs_create_pipe(struct file *pipe_files[2]) {
     int error = 0;
     pipe_files[0] = pipe_inode->i_op->open(pipe_inode, O_RDONLY, &error);
     pipe_files[0]->abilities |= FS_FILE_CAN_READ;
+    init_spinlock(&pipe_files[0]->lock);
+    pipe_files[0]->ref_count = 1;
     if (error != 0) {
         return error;
     }
 
     pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY, &error);
     pipe_files[1]->abilities |= FS_FILE_CAN_WRITE;
+    init_spinlock(&pipe_files[1]->lock);
+    pipe_files[1]->ref_count = 1;
     if (error != 0) {
         fs_close(pipe_files[0]);
         return error;
@@ -732,6 +747,16 @@ struct file *fs_clone(struct file *file) {
     spin_unlock(&inode->lock);
 
     return new_file;
+}
+
+struct file *fs_dup(struct file *file) {
+    if (file == NULL) { return NULL; }
+
+    spin_lock(&file->lock);
+    assert(file->ref_count > 0);
+    file->ref_count++;
+    spin_unlock(&file->lock);
+    return file;
 }
 
 void init_vfs() {

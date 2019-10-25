@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include <kernel/fs/inode.h>
+#include <kernel/util/spinlock.h>
 
 struct file;
 
@@ -28,6 +29,9 @@ struct file {
 #define FS_FILE_CAN_READ 1
 #define FS_FILE_CAN_WRITE 2
     int abilities;
+
+    int ref_count;
+    spinlock_t lock;
 
     dev_t device;
 };
