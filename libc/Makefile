@@ -72,6 +72,7 @@ HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libc/assert/assert.o \
 $(BUILDDIR)/libc/dirent/dirent.o \
+$(BUILDDIR)/libc/ftw/ftw.o \
 $(BUILDDIR)/libc/locale/locale.o \
 $(BUILDDIR)/libc/glob/glob.o \
 $(BUILDDIR)/libc/pwd/pwd.o \
