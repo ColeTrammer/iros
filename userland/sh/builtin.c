@@ -115,6 +115,23 @@ static int op_fg(char **argv) {
     return job_run(id);
 }
 
+static int op_bg(char **argv) {
+    if (!argv[1] || argv[2]) {
+        printf("Usage: %s <job>", argv[0]);
+    }
+
+    job_check_updates(true);
+
+    struct job_id id;
+    if (argv[1][0] == '%') {
+        id = job_id(JOB_ID, atoi(argv[1] + 1));
+    } else {
+        id = job_id(JOB_PGID, atoi(argv[1]));
+    }
+
+    return job_run_background(id);
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },
     { "cd", op_cd, true },
@@ -122,7 +139,8 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "export", op_export, true },
     { "unset", op_unset, true },
     { "jobs", op_jobs, true },
-    { "fg", op_fg, true }
+    { "fg", op_fg, true },
+    { "bg", op_bg, true }
 };
 
 struct builtin_op *builtin_find_op(char *name) {

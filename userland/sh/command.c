@@ -211,7 +211,7 @@ static int do_simple_command(struct command_simple *simple_command, enum command
         } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
 
         if (WIFSTOPPED(status)) {
-            job_add(pid, 1, STOPPED);
+            job_add(pid, (pid_t[]) { pid }, 1, STOPPED);
             printf("%c", '\n');
             print_job(get_jid_from_pgid(pid));
         }
@@ -222,7 +222,7 @@ static int do_simple_command(struct command_simple *simple_command, enum command
             tcsetpgrp(STDOUT_FILENO, save_pgid);
         }
     } else {
-        job_add(pid, 1, RUNNING);
+        job_add(pid, (pid_t[]) { pid }, 1, RUNNING);
         print_job(get_jid_from_pgid(pid));
     }
 
@@ -243,6 +243,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
     pid_t last = 0;
 
     size_t num_to_wait_on = 0;
+    pid_t pids[JOB_MAX_PIDS];
 
     size_t i;
     for (i = 0; i < pipeline->num_commands; i++) {
@@ -284,7 +285,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
 
         setpgid(pid, pgid);
 
-        num_to_wait_on++;
+        pids[num_to_wait_on++] = pid;
         last = pid;
     }
 
@@ -311,7 +312,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
 
                 if (WIFSTOPPED(wstatus)) {
                     killpg(pgid, SIGSTOP);
-                    job_add(pgid, num_to_wait_on - num_waited, STOPPED);
+                    job_add(pgid, pids, num_to_wait_on - num_waited, STOPPED);
                     printf("%c", '\n');
                     print_job(get_jid_from_pgid(pgid));
                     break; // Not sure what to set the exit status to...
@@ -327,7 +328,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
             tcsetpgrp(STDOUT_FILENO, save_pgid);
         }
     } else {
-        job_add(pgid, i, RUNNING);
+        job_add(pgid, pids, i, RUNNING);
         print_job(get_jid_from_pgid(pgid));
     }
 
