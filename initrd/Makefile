@@ -31,6 +31,7 @@ $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
 $(BUILDDIR)/initrd/programs/guess \
 $(BUILDDIR)/initrd/programs/pipe_test \
+$(BUILDDIR)/initrd/programs/queue_test \
 $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \

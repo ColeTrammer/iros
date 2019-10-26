@@ -39,6 +39,7 @@ FREEOBJS=\
 $(ARCH_FREEOBJS) \
 $(BUILDDIR)/libc/ctype/ctype.o \
 $(BUILDDIR)/libc/errno/errno.o \
+$(BUILDDIR)/libc/search/queue.o \
 $(BUILDDIR)/libc/stdio/printf.o \
 $(BUILDDIR)/libc/stdio/scanf.o \
 $(BUILDDIR)/libc/stdlib/abort.o \
