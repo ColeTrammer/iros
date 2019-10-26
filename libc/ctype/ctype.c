@@ -49,9 +49,9 @@ int isupper(int c) {
 }
 
 int isalnum(int c) {
-    return isalpha(c) || isdigit(c);
+    return (isalpha(c) || isdigit(c)) ? 1 : 0;
 }
 
 int isxdigit(int c) {
-    return isdigit(c) || ((tolower(c) <= 'a' || tolower(c) <= 'z') ? 1 : 0);
+    return (isdigit(c) || (tolower(c) <= 'a' || tolower(c) <= 'z') ? 1 : 0);
 }

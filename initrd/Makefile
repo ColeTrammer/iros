@@ -5,10 +5,10 @@ LDFLAGS?=
 LIBS?=
 
 # Include options that should always be set
-CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra -std=gnu11
+CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS)
 LDFLAFS:=$(LDFLAGS)
-LIBS:=$(LIBS)
+LIBS:=$(LIBS) -lc
 
 # Sets directories for install if not already set
 DESTDIR?=
@@ -37,6 +37,7 @@ $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/strtoken_test \
 $(BUILDDIR)/initrd/programs/te \
+$(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/we_test
@@ -62,7 +63,7 @@ $(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
 %: %.cpp
-	$(CXX) -MD -o $@ $< $(CLAGS) $(CPPFLAGS) -T programs/link.ld
+	$(CXX) -MD -o $@ $< $(CPPFLAGS) -T programs/link.ld
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean

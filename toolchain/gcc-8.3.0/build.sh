@@ -24,7 +24,7 @@ cd ../..
 
 # Install headers for correct build
 cd ../..
-make clean install-headers
+make install-headers
 cd toolchain/gcc-8.3.0
 
 # Build
