@@ -93,6 +93,7 @@ static int op_unset(char **argv) {
 static int op_jobs(char **argv) {
     (void) argv;
 
+    job_check_updates(false);
     job_print_all();
     return 0;
 }
@@ -101,6 +102,8 @@ static int op_fg(char **argv) {
     if (!argv[1] || argv[2]) {
         printf("Usage: %s <job>", argv[0]);
     }
+
+    job_check_updates(true);
 
     struct job_id id;
     if (argv[1][0] == '%') {

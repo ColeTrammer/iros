@@ -798,3 +798,19 @@ void arch_sys_dup(struct process_state *process_state) {
 
     SYS_RETURN(-EMFILE);
 }
+
+void arch_sys_getpgid(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    pid_t pid = (pid_t) process_state->cpu_state.rsi;
+    if (pid == 0) {
+        pid = get_current_process()->pid;
+    }
+
+    struct process *process = find_by_pid(pid);
+    if (process == NULL) {
+        SYS_RETURN(-ESRCH);
+    }
+
+    SYS_RETURN(process->pgid);
+}

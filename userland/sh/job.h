@@ -42,4 +42,6 @@ void job_add(pid_t pgid, int num_processes, enum job_state state);
 struct job_id job_id(enum job_id_type type, pid_t id);
 int job_run(struct job_id id);
 
+void job_check_updates(bool print_updates);
+
 #endif /* _JOB_H */

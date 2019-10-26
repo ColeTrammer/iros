@@ -28,6 +28,7 @@ int execve(const char *file, char *const argv[], char *const envp[]);
 pid_t getpid();
 uid_t getuid();
 int setpgid(pid_t pid, pid_t pgid);
+pid_t getpgid(pid_t pid);
 char *getcwd(char *buf, size_t size);
 int chdir(const char *path);
 off_t lseek(int fd, off_t offset, int whence);

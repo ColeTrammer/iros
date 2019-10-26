@@ -16,6 +16,7 @@
 #include "builtin.h"
 #include "command.h"
 #include "input.h"
+#include "job.h"
 #include "parser.h"
 
 static char *__getcwd() {
@@ -94,6 +95,8 @@ int main(int argc, char **argv) {
             printf("%c", '\n');
         }
         jump_active = 1;
+
+        job_check_updates(true);
 
         if (input_source.mode == INPUT_TTY) {
             char *cwd = __getcwd();

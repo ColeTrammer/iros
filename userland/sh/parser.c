@@ -11,6 +11,35 @@
 #include "command.h"
 #include "parser.h"
 
+static enum command_mode find_mode(char *line) {
+    size_t line_len = strlen(line);
+    for (ssize_t i = (ssize_t) line_len - 1; i >= 0; i--) {
+        if (isspace(line[i])) {
+            continue;
+        }
+
+        if (line[i] == '&') {
+            size_t num_backslashes = 0;
+            for (ssize_t j = i - 1; j >= 0; j--) {
+                if (line[j] == '\\') {
+                    num_backslashes++;
+                } else {
+                    break;
+                }
+            }
+
+            if (num_backslashes % 2 == 0) {
+                line[i] = '\0'; // Delete & from the line
+                return COMMAND_BACKGROUND;
+            }
+
+            break;
+        }
+    }
+
+    return COMMAND_FOREGROUND;
+}
+
 static int parse_simple_command(char *line, struct command_simple *simple_command) {
     char *fixed_line = calloc(strlen(line) + 1, sizeof(char));
 
@@ -163,16 +192,18 @@ finish:
 }
 
 struct command *parse_line(char *line, int *error) {
+    enum command_mode mode = find_mode(line);
+
     size_t num_split = 0;
     char **split = split_on_pipe(line, &num_split);
     assert(num_split != 0);
 
     struct command *command = NULL;
     if (num_split == 1) {
-        command = command_construct(COMMAND_SIMPLE);
+        command = command_construct(COMMAND_SIMPLE, mode);
         *error = parse_simple_command(split[0], &command->command.simple_command);
     } else {
-        command = command_construct(COMMAND_PIPELINE, num_split);
+        command = command_construct(COMMAND_PIPELINE, mode, num_split);
         struct command_pipeline pipeline = command->command.pipeline;
         for (size_t i = 0; i < num_split; i++) {
             *error = parse_simple_command(split[i], pipeline.commands + i);

@@ -102,7 +102,7 @@ int job_run(struct job_id id) {
             assert(false);
         }
 
-        if (WIFEXITED(status)) {
+        if (WIFEXITED(status) || WIFSIGNALED(status)) {
             job->num_processes--;
             job->num_consumed--;
         } else if (WIFSTOPPED(status)) {
@@ -123,4 +123,44 @@ int job_run(struct job_id id) {
     }
 
     return WEXITSTATUS(status);
+}
+
+void job_check_updates(bool print_updates) {
+    pid_t pid;
+    int status;
+    while ((pid = waitpid(-1, &status, WNOHANG | WCONTINUED | WUNTRACED))) {
+        if (pid == -1) {
+            perror("sh");
+            assert(false);
+        }
+
+        pid_t jid = get_jid_from_pgid(getpgid(pid));
+        if (jid == -1) {
+            continue;
+        }
+
+        struct job *job = &jobs[jid - 1];
+        if (WIFEXITED(status)) {
+            job->state = TERMINATED;
+            if (print_updates) print_job(jid);
+            job->state = DNE;
+        } else if (WIFSTOPPED(status)) {
+            if (job->state != STOPPED) {
+                job->state = STOPPED;
+                job->num_consumed = 1;
+                if (print_updates) print_job(jid);
+            }
+        } else if (WIFSIGNALED(status)) {
+            job->state = TERMINATED;
+            if (print_updates) print_job(jid);
+            job->state = DNE;
+        } else if (WIFCONTINUED(status)) {
+            if (job->state != STOPPED) {
+                job->state = RUNNING;
+                if (print_updates) print_job(jid);
+            }
+        } else {
+            assert(false);
+        }
+    }
 }

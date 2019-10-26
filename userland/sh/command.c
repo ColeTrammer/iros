@@ -68,12 +68,13 @@ static void init_pipeline(struct command_pipeline *pipeline, size_t num) {
     pipeline->num_commands = num;
 }
 
-struct command *command_construct(enum command_type type, ...) {
+struct command *command_construct(enum command_type type, enum command_mode mode, ...) {
     va_list args;
-    va_start(args, type);
+    va_start(args, mode);
 
     struct command *command = malloc(sizeof(struct command));
     command->type = type;
+    command->mode = mode;
     switch (type) {
         case COMMAND_SIMPLE: {
             init_simple_command(&command->command.simple_command);
@@ -132,7 +133,7 @@ static bool handle_redirection(struct redirection_desc *desc) {
 }
 
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
-static pid_t __do_simple_command(struct command_simple *command, bool *was_builtin, pid_t to_set_pgid) {
+static pid_t __do_simple_command(struct command_simple *command, enum command_mode mode, bool *was_builtin, pid_t to_set_pgid) {
     char **args = command->we.we_wordv;
 
     struct builtin_op *op = builtin_find_op(args[0]);
@@ -148,18 +149,18 @@ static pid_t __do_simple_command(struct command_simple *command, bool *was_built
     // Child
     if (pid == 0) {
         setpgid(to_set_pgid, to_set_pgid);
-        if (isatty(STDOUT_FILENO)) {
+        if (isatty(STDOUT_FILENO) && mode == COMMAND_FOREGROUND) {
             tcsetpgrp(STDOUT_FILENO, to_set_pgid == 0 ? getpid() : to_set_pgid);
-
-            struct sigaction to_set;
-            to_set.sa_handler = SIG_DFL;
-            to_set.sa_flags = 0;
-            sigaction(SIGINT, &to_set, NULL); 
-
-            sigset_t mask_restore;
-            sigemptyset(&mask_restore);
-            sigprocmask(SIG_SETMASK, &mask_restore, NULL);
         }
+
+        struct sigaction to_set;
+        to_set.sa_handler = SIG_DFL;
+        to_set.sa_flags = 0;
+        sigaction(SIGINT, &to_set, NULL); 
+
+        sigset_t mask_restore;
+        sigemptyset(&mask_restore);
+        sigprocmask(SIG_SETMASK, &mask_restore, NULL);
 
         for (size_t i = 0; i < MAX_REDIRECTIONS; i++) {
             if (!handle_redirection(&command->redirection_info.redirection_descs[i])) {
@@ -183,47 +184,52 @@ static pid_t __do_simple_command(struct command_simple *command, bool *was_built
     return pid;
 }
 
-static int do_simple_command(struct command_simple *simple_command) {
+static int do_simple_command(struct command_simple *simple_command, enum command_mode mode) {
     pid_t save_pgid = getpid();
 
     bool was_builtin = false;
-    pid_t pid = __do_simple_command(simple_command, &was_builtin, 0);
+    pid_t pid = __do_simple_command(simple_command, mode, &was_builtin, 0);
 
     if (was_builtin) {
         __set_exit_status(pid);
         return 0;
     }
 
-    setpgid(pid, pid);
-    if (isatty(STDOUT_FILENO)) {
-        tcsetpgrp(STDOUT_FILENO, pid);
-    }
-
     if (pid == -1) {
         return -1;
     }
 
-    int status;
-    do {
-        waitpid(pid, &status, WUNTRACED);
-    } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
-
-    if (WIFSTOPPED(status)) {
-        job_add(pid, 1, STOPPED);
-        printf("%c", '\n');
-        print_job(get_jid_from_pgid(pid));
+    setpgid(pid, pid);
+    if (isatty(STDOUT_FILENO) && mode == COMMAND_FOREGROUND) {
+        tcsetpgrp(STDOUT_FILENO, pid);
     }
 
-    set_exit_status(status);
+    if (mode == COMMAND_FOREGROUND) {
+        int status;
+        do {
+            waitpid(pid, &status, WUNTRACED);
+        } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
 
-    if (isatty(STDOUT_FILENO)) {
-        tcsetpgrp(STDOUT_FILENO, save_pgid);
+        if (WIFSTOPPED(status)) {
+            job_add(pid, 1, STOPPED);
+            printf("%c", '\n');
+            print_job(get_jid_from_pgid(pid));
+        }
+
+        set_exit_status(status);
+
+        if (isatty(STDOUT_FILENO)) {
+            tcsetpgrp(STDOUT_FILENO, save_pgid);
+        }
+    } else {
+        job_add(pid, 1, RUNNING);
+        print_job(get_jid_from_pgid(pid));
     }
 
     return 0;
 }
 
-static int do_pipeline(struct command_pipeline *pipeline) {
+static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode) {
     int fds[(pipeline->num_commands - 1) * 2];
     for (size_t i = 0; i < pipeline->num_commands - 1; i++) {
         if (pipe(fds + (i * 2))) {
@@ -251,7 +257,7 @@ static int do_pipeline(struct command_pipeline *pipeline) {
         }
 
         bool is_builtin = false;
-        pid_t pid = __do_simple_command(&simple_command, &is_builtin, pgid);
+        pid_t pid = __do_simple_command(&simple_command, mode, &is_builtin, pgid);
 
         if (i != pipeline->num_commands - 1) {
             close(fds[i * 2 + 1]);
@@ -271,7 +277,7 @@ static int do_pipeline(struct command_pipeline *pipeline) {
 
         if (pgid == 0) {
             pgid = pid;
-            if (isatty(STDOUT_FILENO)) {
+            if (isatty(STDOUT_FILENO) && mode == COMMAND_FOREGROUND) {
                 tcsetpgrp(STDOUT_FILENO, pgid);
             }
         }
@@ -289,36 +295,40 @@ static int do_pipeline(struct command_pipeline *pipeline) {
         }
     }
 
-    if (num_to_wait_on > 0) {
-        int wstatus;
-        for (size_t num_waited = 0; num_waited < num_to_wait_on; num_waited++) {
-            int ret;
-            do {
-                ret = waitpid(-pgid, &wstatus, WUNTRACED);
-            } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) &&!WIFSTOPPED(wstatus));
 
-            if (ret == -1) {
-                return -1;
-            }
+    if (mode == COMMAND_FOREGROUND) {
+        if (num_to_wait_on > 0) {
+            int wstatus;
+            for (size_t num_waited = 0; num_waited < num_to_wait_on; num_waited++) {
+                int ret;
+                do {
+                    ret = waitpid(-pgid, &wstatus, WUNTRACED);
+                } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) &&!WIFSTOPPED(wstatus));
 
-            if (WIFSTOPPED(wstatus)) {
-                killpg(pgid, SIGSTOP);
-                job_add(pgid, num_to_wait_on - num_waited, STOPPED);
-                printf("%c", '\n');
-                print_job(get_jid_from_pgid(pgid));
-                break; // Not sure what to set the exit status to...
-            }
+                if (ret == -1) {
+                    return -1;
+                }
 
-            if (ret == last) {
-                set_exit_status(wstatus);
+                if (WIFSTOPPED(wstatus)) {
+                    killpg(pgid, SIGSTOP);
+                    job_add(pgid, num_to_wait_on - num_waited, STOPPED);
+                    printf("%c", '\n');
+                    print_job(get_jid_from_pgid(pgid));
+                    break; // Not sure what to set the exit status to...
+                }
+
+                if (ret == last) {
+                    set_exit_status(wstatus);
+                }
             }
         }
-    }
 
-    setpgid(0, save_pgid);
-
-    if (isatty(STDOUT_FILENO)) {
-        tcsetpgrp(STDOUT_FILENO, save_pgid);
+        if (isatty(STDOUT_FILENO)) {
+            tcsetpgrp(STDOUT_FILENO, save_pgid);
+        }
+    } else {
+        job_add(pgid, i, RUNNING);
+        print_job(get_jid_from_pgid(pgid));
     }
 
     return i == pipeline->num_commands ? 0 : -1;
@@ -327,9 +337,9 @@ static int do_pipeline(struct command_pipeline *pipeline) {
 int command_run(struct command *command) {
     switch (command->type) {
         case COMMAND_SIMPLE:
-            return do_simple_command(&command->command.simple_command);
+            return do_simple_command(&command->command.simple_command, command->mode);
         case COMMAND_PIPELINE:
-            return do_pipeline(&command->command.pipeline);
+            return do_pipeline(&command->command.pipeline, command->mode);
         case COMMAND_LIST:
         case COMMAND_COMPOUND:
         case COMMAND_FUNCTION_DECLARATION:

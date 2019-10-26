@@ -35,6 +35,11 @@ enum command_type {
     COMMAND_FUNCTION_DECLARATION
 };
 
+enum command_mode {
+    COMMAND_FOREGROUND = 0,
+    COMMAND_BACKGROUND
+};
+
 struct command_simple {
     wordexp_t we;
     struct redirection_info redirection_info;
@@ -57,6 +62,7 @@ struct command_function_declaration {
 
 struct command {
     enum command_type type;
+    enum command_mode mode;
     union {
         struct command_simple simple_command;
         struct command_pipeline pipeline;
@@ -68,7 +74,7 @@ struct command {
 
 void init_redirection(struct redirection_info *info,  int target_fd, enum redirection_method method, ...);
 
-struct command *command_construct(enum command_type type, ...);
+struct command *command_construct(enum command_type type, enum command_mode mode, ...);
 int command_run(struct command *command);
 void command_cleanup(struct command *command);
 

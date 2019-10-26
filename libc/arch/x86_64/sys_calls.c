@@ -312,6 +312,15 @@ int dup(int oldfd) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
+pid_t getpgid(pid_t pid) {
+    pid_t ret;
+    asm volatile( "movq $30, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid) : "rdi", "esi", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
 int access(const char *path, int mode) {
     (void) path;
     (void) mode;
