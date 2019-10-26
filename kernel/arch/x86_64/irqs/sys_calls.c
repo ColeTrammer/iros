@@ -171,6 +171,11 @@ void arch_sys_open(struct process_state *process_state) {
         SYS_RETURN(-EINVAL);
     }
 
+    if (file->flags & FS_DIR && !(flags & O_DIRECTORY)) {
+        free(path);
+        SYS_RETURN(-EISDIR);
+    }
+
     /* Handle append mode */
     if (flags & O_APPEND) {
         fs_seek(file, 0, SEEK_END);
