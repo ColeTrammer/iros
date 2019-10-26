@@ -37,6 +37,7 @@ struct job_id {
 
 pid_t get_pgid_from_jid(pid_t jid);
 pid_t get_pgid_from_pid(pid_t pid);
+pid_t get_pgid_from_id(struct job_id id);
 pid_t get_jid_from_pgid(pid_t pgid);
 void print_job(pid_t jid);
 

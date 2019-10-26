@@ -1,8 +1,9 @@
-#include <string.h>
+#include <assert.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <assert.h>
 
 #include "builtin.h"
 #include "job.h"
@@ -100,7 +101,8 @@ static int op_jobs(char **argv) {
 
 static int op_fg(char **argv) {
     if (!argv[1] || argv[2]) {
-        printf("Usage: %s <job>", argv[0]);
+        printf("Usage: %s <job>\n", argv[0]);
+        return 0;
     }
 
     job_check_updates(true);
@@ -117,7 +119,8 @@ static int op_fg(char **argv) {
 
 static int op_bg(char **argv) {
     if (!argv[1] || argv[2]) {
-        printf("Usage: %s <job>", argv[0]);
+        printf("Usage: %s <job>\n", argv[0]);
+        return 0;
     }
 
     job_check_updates(true);
@@ -132,6 +135,26 @@ static int op_bg(char **argv) {
     return job_run_background(id);
 }
 
+static int op_kill(char **argv) {
+    if (!argv[1] || argv[2]) {
+        printf("Usage: %s <job>\n", argv[0]);
+        return 0;
+    }
+
+
+    struct job_id id;
+    if (argv[1][0] == '%') {
+        id = job_id(JOB_ID, atoi(argv[1] + 1));
+    } else {
+        id = job_id(JOB_PGID, atoi(argv[1]));
+    }
+
+    int ret = killpg(get_pgid_from_id(id), SIGTERM);
+    
+    job_check_updates(true);
+    return ret;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },
     { "cd", op_cd, true },
@@ -140,7 +163,8 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "unset", op_unset, true },
     { "jobs", op_jobs, true },
     { "fg", op_fg, true },
-    { "bg", op_bg, true }
+    { "bg", op_bg, true },
+    { "kill", op_kill, true }
 };
 
 struct builtin_op *builtin_find_op(char *name) {

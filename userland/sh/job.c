@@ -39,6 +39,14 @@ pid_t get_pgid_from_pid(pid_t pid) {
     return -1;
 }
 
+pid_t get_pgid_from_id(struct job_id id) {
+    if (id.type == JOB_ID) {
+        return get_pgid_from_jid(id.id.jid);
+    } else {
+        return get_pgid_from_pid(id.id.pgid);
+    }
+}
+
 pid_t get_jid_from_pgid(pid_t pgid) {
     for (pid_t i = 0; i < MAX_JOBS; i++) {
         if (jobs[i].state != DNE && jobs[i].pgid == pgid) {
@@ -193,20 +201,23 @@ void job_check_updates(bool print_updates) {
         }
 
         struct job *job = &jobs[jid - 1];
-        if (WIFEXITED(status)) {
-            job->state = TERMINATED;
-            if (print_updates) print_job(jid);
-            job->state = DNE;
+        if (WIFEXITED(status) || WTERMSIG(status)) {
+            job->num_processes--;
+            job->num_consumed--;
+            remove_pid(job, pid);
+
+            if (job->num_processes <= 0) {
+                job->state = TERMINATED;
+                if (print_updates) print_job(jid);
+                job->state = DNE;
+            }
         } else if (WIFSTOPPED(status)) {
-            if (job->state != STOPPED) {
+            job->num_consumed++;
+            if (job->num_consumed > job->num_processes) {
                 job->state = STOPPED;
                 job->num_consumed = 1;
                 if (print_updates) print_job(jid);
             }
-        } else if (WIFSIGNALED(status)) {
-            job->state = TERMINATED;
-            if (print_updates) print_job(jid);
-            job->state = DNE;
         } else if (WIFCONTINUED(status)) {
             if (job->state != RUNNING) {
                 job->state = RUNNING;
