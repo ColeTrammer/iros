@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
+#include <errno.h>
 #include <string.h>
 
 #include <kernel/proc/pid.h>
@@ -248,4 +249,18 @@ void init_proc_state() {
     queue_map = hash_create_hash_map(&proc_hash, &proc_equals, &pid_key);
     pg_queue_map = hash_create_hash_map(&proc_hash, &proc_equals, &pg_key);
     parent_queue_map = hash_create_hash_map(&proc_hash, &proc_equals, &parent_key);
+}
+
+pid_t proc_get_pgid(pid_t pid) {
+    struct process *process = find_by_pid(pid);
+    if (process != NULL) {
+        return process->pgid;
+    }
+
+    struct proc_state_message_queue *queue = hash_get(queue_map, &pid);
+    if (queue != NULL) {
+        return queue->pgid;
+    }
+
+    return -ESRCH;
 }

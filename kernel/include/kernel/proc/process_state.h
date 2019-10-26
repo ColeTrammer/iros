@@ -36,6 +36,7 @@ pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m);
 pid_t proc_consume_message_by_parent(pid_t ppid, struct proc_state_message *m);
 
 void proc_update_pgid(pid_t pid, pid_t pgid);
+pid_t proc_get_pgid(pid_t pid);
 
 void init_proc_state();
 

@@ -136,6 +136,7 @@ void job_check_updates(bool print_updates) {
 
         pid_t jid = get_jid_from_pgid(getpgid(pid));
         if (jid == -1) {
+            printf("JID not found: %d\n", pid);
             continue;
         }
 
@@ -155,7 +156,7 @@ void job_check_updates(bool print_updates) {
             if (print_updates) print_job(jid);
             job->state = DNE;
         } else if (WIFCONTINUED(status)) {
-            if (job->state != STOPPED) {
+            if (job->state != RUNNING) {
                 job->state = RUNNING;
                 if (print_updates) print_job(jid);
             }

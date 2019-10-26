@@ -418,7 +418,6 @@ void arch_sys_waitpid(struct process_state *process_state) {
         SYS_RETURN(found_pid);
     }
 
-    // We should process the message here but instead we just assume it exited
     if (m.type == STATE_EXITED) {
         *status = (m.data & 0xFF) << 8;
     } else if (m.type == STATE_STOPPED) {
@@ -807,10 +806,5 @@ void arch_sys_getpgid(struct process_state *process_state) {
         pid = get_current_process()->pid;
     }
 
-    struct process *process = find_by_pid(pid);
-    if (process == NULL) {
-        SYS_RETURN(-ESRCH);
-    }
-
-    SYS_RETURN(process->pgid);
+    SYS_RETURN(proc_get_pgid(pid));
 }
