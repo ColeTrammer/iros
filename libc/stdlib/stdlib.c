@@ -59,6 +59,13 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, c
         return;
     }
 
+    void *temp;
+    if (size > 0x200) {
+        temp = malloc(size);
+    } else {
+        temp = alloca(size);
+    }
+
     for (size_t i = 0; i < nmemb - 1; i++) {
         void *to_replace = QSORT_AT(base, i, size);
         void *min = to_replace;
@@ -71,20 +78,13 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, c
         }
 
         // Do swap
-        void *temp;
-        if (size > 0x200) {
-            temp = malloc(size);
-        } else {
-            temp = alloca(size);
-        }
-
         memcpy(temp, to_replace, size);
         memcpy(to_replace, min, size);
         memcpy(min, temp, size);
+    }
 
-        if (size > 0x200) {
-            free(temp);
-        }
+    if (size > 0x200) {
+        free(temp);
     }
 }
 
