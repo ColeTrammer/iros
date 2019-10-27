@@ -72,9 +72,9 @@ void init_pipeline(struct command_pipeline *pipeline, size_t num) {
     pipeline->num_commands = num;
 }
 
-void init_list(struct command_list *list, size_t len) {
+void init_list(struct command_list *list, enum command_list_connector *connectors, size_t len) {
     list->commands = calloc(len, sizeof(struct command_pipeline));
-    list->connectors = calloc(len, sizeof(enum command_list_connector));
+    list->connectors = connectors;
     list->num_commands = len;
 }
 
@@ -96,8 +96,9 @@ struct command *command_construct(enum command_type type, enum command_mode mode
             break;
         }
         case COMMAND_LIST: {
+            enum command_list_connector *connectors = va_arg(args, enum command_list_connector*);
             size_t len = va_arg(args, size_t);
-            init_list(&command->command.list, len);
+            init_list(&command->command.list, connectors, len);
             break;
         }
         case COMMAND_COMPOUND:
@@ -369,6 +370,7 @@ void command_cleanup(struct command *command) {
                 cleanup_pipeline(&list.commands[i]);
             }
             free(list.commands);
+            free(list.connectors);
             break;
         }
         case COMMAND_COMPOUND:

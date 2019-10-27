@@ -18,7 +18,8 @@ static enum command_mode find_mode(char *line) {
             continue;
         }
 
-        if (line[i] == '&') {
+        // Should check to see if the remaining characters are spaces too
+        if (line[i] == '&' && i == (ssize_t) line_len - 1) {
             size_t num_backslashes = 0;
             for (ssize_t j = i - 1; j >= 0; j--) {
                 if (line[j] == '\\') {
@@ -191,24 +192,94 @@ finish:
     return split;
 }
 
-static char **split_into_list(char *line, size_t *num_split) {
-    *num_split = 1;
-    char **ret = malloc(sizeof(char*));
-    *ret = line;
-    return ret;
+static char **split_into_list(char *line, size_t *num_split, enum command_list_connector **connectors) {
+    size_t line_len = strlen(line);
+    size_t max = SPLIT_BUF_INC;
+    size_t split_index = 0;
+    char **split = malloc(max * sizeof(char*));
+    *connectors = malloc(max * sizeof(enum command_list_connector));
+    char *last = line;
+
+    bool prev_was_backslash = false;
+    bool in_d_quotes = false;
+    bool in_s_quotes = false;
+    bool in_b_quotes = false;
+
+    for (size_t i = 0;; i++) {
+        char c = line[i];
+        switch (c) {
+            case '\\':
+                prev_was_backslash = !prev_was_backslash;
+                continue;
+            case '\'':
+                in_s_quotes = (prev_was_backslash || in_d_quotes || in_b_quotes) ? in_s_quotes : !in_s_quotes;
+                break;
+            case '"':
+                in_d_quotes = (prev_was_backslash || in_s_quotes || in_b_quotes) ? in_d_quotes : !in_d_quotes;
+                break;
+            case '`':
+                in_b_quotes = (prev_was_backslash || in_s_quotes || in_d_quotes) ? in_b_quotes : !in_b_quotes;
+                break;
+            case '\0':
+            case ';':
+            case '&':
+            case '|':
+                if (line[i] == '\0' || (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes &&
+                    ((line[i] == '&' && line[i + 1] == '&') || (line[i] == '|' && line[i + 1] == '|') || line[i] == ';'))) {
+                    if (split_index >= max) {
+                        max += SPLIT_BUF_INC;
+                        split = realloc(split, max * sizeof(char*));
+                        *connectors = realloc(*connectors, max * sizeof(enum command_list_connector));
+                    }
+
+                    (*connectors)[split_index] = c == ';' ? COMMAND_SEQUENTIAL :
+                                                 c == '&' ? COMMAND_AND :
+                                                 c == '|' ? COMMAND_OR :
+                                                 COMMAND_END_LIST;
+                    split[split_index++] = last;
+                    if (i >= line_len) { 
+                        goto finish;
+                    }
+
+
+                    line[i++] = '\0';
+                    if (c == '&' || c == '|') {
+                        line[i++] = '\0';
+                    }
+
+                    while (i < line_len && isspace(i)) { i++; } // Skip whitespace
+                    if (i >= line_len) {
+                        goto finish;
+                    }
+                    last = line + i;
+                }
+                break;
+            default:
+                break;
+        }
+
+        prev_was_backslash = false;
+    }
+
+finish:
+    assert(split_index > 0);
+    *num_split = split_index;
+    (*connectors)[*num_split - 1] = COMMAND_END_LIST;
+    return split;
 }
 
 struct command *parse_line(char *line, int *error) {
     enum command_mode mode = find_mode(line);
 
     size_t list_len = 0;
-    char **split_lists = split_into_list(line, &list_len);
+    enum command_list_connector *connectors;
+    char **split_lists = split_into_list(line, &list_len, &connectors);
     assert(list_len != 0);
 
-    struct command *command = command_construct(COMMAND_LIST, mode, list_len);
+    struct command *command = command_construct(COMMAND_LIST, mode, connectors, list_len);
     for (size_t j = 0; j < list_len; j++) {
         size_t num_split = 0;
-        char **split = split_on_pipe(line, &num_split);
+        char **split = split_on_pipe(split_lists[j], &num_split);
         assert(num_split != 0);
 
         struct command_pipeline *pipeline = &command->command.list.commands[j];
