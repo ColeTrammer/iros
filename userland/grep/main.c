@@ -1,10 +1,17 @@
+#include <ftw.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
-static int process_file(FILE *file, char *pattern, size_t pattern_len, char *path, bool print_path) {
+static char *pattern = NULL;
+static size_t pattern_len = 0;
+static bool print_path = false;
+static int status = 0;
+
+static int process_file(FILE *file, char *pattern, size_t pattern_len, const char *path, bool print_path) {
     char *line = NULL;
     size_t line_max = 0;
 
@@ -42,6 +49,40 @@ static int process_file(FILE *file, char *pattern, size_t pattern_len, char *pat
     return 0;
 }
 
+static int process_and_read_file(const char *path, char *pattern, size_t pattern_len, bool print_path) {
+    FILE *file = fopen(path, "r");
+    if (!file) {
+        perror("grep");
+        return 1;
+    }
+
+    int ret = process_file(file, pattern, pattern_len, path, print_path);
+    if (ret != 0) {
+        return ret;
+    }
+
+    if (fclose(file)) {
+        perror("grep");
+        ret = 1;
+    }
+
+    return ret;
+}
+
+static int per_path(const char *path, const struct stat *stat_struct, int type, struct FTW *ftwbuf) {
+    (void) stat_struct;
+    (void) ftwbuf;
+
+    if (type == FTW_F) {
+        int ret = process_and_read_file(path, pattern, pattern_len, print_path);
+        if (ret != 0) {
+            status = ret;
+        }
+    }
+
+    return 0; // Continue
+}
+
 void print_usage(char **argv) {
     printf("Usage: %s [-r] <pattern> <files ...>\n", argv[0]);
 }
@@ -59,7 +100,7 @@ int main(int argc, char **argv) {
     opterr = 0;
     while ((opt = getopt(argc, argv, ":r")) != -1) {
         switch (opt) {
-            case 'l':
+            case 'r':
                 recursive = true;
                 break;
             case '?':
@@ -75,41 +116,37 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    char *pattern = argv[optind++];
-    size_t pattern_len = strlen(pattern);
-
-    bool print_path = argc - optind >= 2;
+    pattern = argv[optind++];
+    pattern_len = strlen(pattern);
+    print_path = argc - optind >= 2 || recursive;
 
     if (optind >= argc) {
-        return process_file(stdin, pattern, pattern_len, "(standard input)", print_path);
+        if (!recursive) {
+            return process_file(stdin, pattern, pattern_len, "(standard input)", print_path);
+        } else {
+            if (nftw(".", per_path, FOPEN_MAX - 4, 0)) {
+                perror("grep");
+                return 1;
+            }
+            return status;
+        }
     }
 
-    int status = 0;
     while (optind < argc) {
         char *path = argv[optind++];
         int ret = 0;
         if (strcmp(path, "-") == 0) {
             ret = process_file(stdin, pattern, pattern_len, "(standard input)", print_path);
+        } else if (!recursive) {
+            ret = process_and_read_file(path, pattern, pattern_len, print_path);
         } else {
-            FILE *file = fopen(path, "r");
-            if (!file) {
+            if (nftw(path, per_path, FOPEN_MAX - 4, 0)) {
                 perror("grep");
-                ret = 1;
-                goto next;
+                status = 1;
             }
-
-            ret = process_file(file, pattern, pattern_len, path, print_path);
-            if (ret != 0) {
-                goto next;
-            }
-
-            if (fclose(file)) {
-                perror("grep");
-                ret = 1;
-            }
+            continue;
         }
 
-    next:
         if (ret != 0) {
             status = ret;
         }
