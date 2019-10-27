@@ -31,6 +31,10 @@ void set_exit_status(int n) {
                       WIFSTOPPED(n) ? 0 : (127 + WTERMSIG(n)));
 }
 
+int get_last_exit_status() {
+    return atoi(special_vars.vals[WRDE_SPECIAL_QUEST]);
+}
+
 // FIXME: redirection actually needs to be a queue, not an array, since the order of specified redirections
 //        should cause different behavior, and currently the order is based on the target fd not the order
 //        the redirection command is inputted.
@@ -184,51 +188,6 @@ static pid_t __do_simple_command(struct command_simple *command, enum command_mo
     return pid;
 }
 
-static int do_simple_command(struct command_simple *simple_command, enum command_mode mode) {
-    pid_t save_pgid = getpid();
-
-    bool was_builtin = false;
-    pid_t pid = __do_simple_command(simple_command, mode, &was_builtin, 0);
-
-    if (was_builtin) {
-        __set_exit_status(pid);
-        return 0;
-    }
-
-    if (pid == -1) {
-        return -1;
-    }
-
-    setpgid(pid, pid);
-    if (isatty(STDOUT_FILENO) && mode == COMMAND_FOREGROUND) {
-        tcsetpgrp(STDOUT_FILENO, pid);
-    }
-
-    if (mode == COMMAND_FOREGROUND) {
-        int status;
-        do {
-            waitpid(pid, &status, WUNTRACED);
-        } while (!WIFEXITED(status) && !WIFSTOPPED(status) && !WIFSIGNALED(status));
-
-        if (WIFSTOPPED(status)) {
-            job_add(pid, (pid_t[]) { pid }, 1, STOPPED);
-            printf("%c", '\n');
-            print_job(get_jid_from_pgid(pid));
-        }
-
-        set_exit_status(status);
-
-        if (isatty(STDOUT_FILENO)) {
-            tcsetpgrp(STDOUT_FILENO, save_pgid);
-        }
-    } else {
-        job_add(pid, (pid_t[]) { pid }, 1, RUNNING);
-        print_job(get_jid_from_pgid(pid));
-    }
-
-    return 0;
-}
-
 static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode) {
     int fds[(pipeline->num_commands - 1) * 2];
     for (size_t i = 0; i < pipeline->num_commands - 1; i++) {
@@ -335,6 +294,24 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
     return i == pipeline->num_commands ? 0 : -1;
 }
 
+static int do_command_list(struct command_list *list, enum command_mode mode) {
+    assert(mode != COMMAND_BACKGROUND);
+    for (size_t i = 0; i < list->num_commands; i++) {
+        int ret = do_pipeline(&list->commands[i], mode);
+        if (ret != 0) {
+            return ret;
+        }
+
+        int status = get_last_exit_status();
+        if ((list->connectors[i] == COMMAND_AND && status != 0) || (list->connectors[i] == COMMAND_OR && status == 0)) {
+            // Advance until next sequential command
+            while (i < list->num_commands - 1 && list->connectors[i++] != COMMAND_SEQUENTIAL);
+        }
+    }
+
+    return 0;
+}
+
 int command_run(struct command *command) {
     switch (command->type) {
         case COMMAND_SIMPLE:
@@ -342,6 +319,7 @@ int command_run(struct command *command) {
         case COMMAND_PIPELINE:
             return do_pipeline(&command->command.pipeline, command->mode);
         case COMMAND_LIST:
+            return do_command_list(&command->command.list, command->mode);
         case COMMAND_COMPOUND:
         case COMMAND_FUNCTION_DECLARATION:
         default:
@@ -354,6 +332,13 @@ static void cleanup_simple_command(struct command_simple *simple_command) {
     wordfree(&simple_command->we);
 }
 
+static void cleanup_pipeline(struct command_pipeline *pipeline) {
+    for (size_t i = 0; i < pipeline->num_commands; i++) {
+        cleanup_simple_command(&pipeline->commands[i]);
+    }
+    free(pipeline->commands);
+}
+
 void command_cleanup(struct command *command) {
     switch (command->type) {
         case COMMAND_SIMPLE: {
@@ -361,14 +346,17 @@ void command_cleanup(struct command *command) {
             break;
         }
         case COMMAND_PIPELINE: {
-            struct command_pipeline pipeline = command->command.pipeline;
-            for (size_t i = 0; i < pipeline.num_commands; i++) {
-                cleanup_simple_command(&pipeline.commands[i]);
-            }
-            free(pipeline.commands);
+            cleanup_pipeline(&command->command.pipeline);
             break;
         }
-        case COMMAND_LIST:
+        case COMMAND_LIST: {
+            struct command_list list = command->command.list;
+            for (size_t i = 0; i < list.num_commands; i++) {
+                cleanup_pipeline(&list.commands[i]);
+            }
+            free(list.commands);
+            break;
+        }
         case COMMAND_COMPOUND:
         case COMMAND_FUNCTION_DECLARATION:
         default:

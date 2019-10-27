@@ -51,7 +51,16 @@ struct command_pipeline {
     size_t num_commands;
 };
 
+enum command_list_connector {
+    COMMAND_AND,
+    COMMAND_OR,
+    COMMAND_SEQUENTIAL
+};
+
 struct command_list {
+    struct command_pipeline *commands;
+    enum command_list_connector *connectors;
+    size_t num_commands;
 };
 
 struct command_compound {
@@ -81,5 +90,6 @@ void command_cleanup(struct command *command);
 void command_init_special_vars();
 
 void set_exit_status(int n);
+int get_last_exit_status();
 
 #endif /* _COMMAND_H */

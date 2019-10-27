@@ -198,18 +198,12 @@ struct command *parse_line(char *line, int *error) {
     char **split = split_on_pipe(line, &num_split);
     assert(num_split != 0);
 
-    struct command *command = NULL;
-    if (num_split == 1) {
-        command = command_construct(COMMAND_SIMPLE, mode);
-        *error = parse_simple_command(split[0], &command->command.simple_command);
-    } else {
-        command = command_construct(COMMAND_PIPELINE, mode, num_split);
-        struct command_pipeline pipeline = command->command.pipeline;
-        for (size_t i = 0; i < num_split; i++) {
-            *error = parse_simple_command(split[i], pipeline.commands + i);
-            if (*error) {
-                break;
-            }
+    struct command *command = command_construct(COMMAND_PIPELINE, mode, num_split);
+    struct command_pipeline pipeline = command->command.pipeline;
+    for (size_t i = 0; i < num_split; i++) {
+        *error = parse_simple_command(split[i], pipeline.commands + i);
+        if (*error) {
+            break;
         }
     }
 
