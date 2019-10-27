@@ -52,6 +52,7 @@ struct command_pipeline {
 };
 
 enum command_list_connector {
+    COMMAND_END_LIST = 0,
     COMMAND_AND,
     COMMAND_OR,
     COMMAND_SEQUENTIAL
@@ -82,6 +83,7 @@ struct command {
 };
 
 void init_redirection(struct redirection_info *info,  int target_fd, enum redirection_method method, ...);
+void init_pipeline(struct command_pipeline *pipeline, size_t num);
 
 struct command *command_construct(enum command_type type, enum command_mode mode, ...);
 int command_run(struct command *command);

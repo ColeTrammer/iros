@@ -191,22 +191,40 @@ finish:
     return split;
 }
 
+static char **split_into_list(char *line, size_t *num_split) {
+    *num_split = 1;
+    char **ret = malloc(sizeof(char*));
+    *ret = line;
+    return ret;
+}
+
 struct command *parse_line(char *line, int *error) {
     enum command_mode mode = find_mode(line);
 
-    size_t num_split = 0;
-    char **split = split_on_pipe(line, &num_split);
-    assert(num_split != 0);
+    size_t list_len = 0;
+    char **split_lists = split_into_list(line, &list_len);
+    assert(list_len != 0);
 
-    struct command *command = command_construct(COMMAND_PIPELINE, mode, num_split);
-    struct command_pipeline pipeline = command->command.pipeline;
-    for (size_t i = 0; i < num_split; i++) {
-        *error = parse_simple_command(split[i], pipeline.commands + i);
-        if (*error) {
-            break;
+    struct command *command = command_construct(COMMAND_LIST, mode, list_len);
+    for (size_t j = 0; j < list_len; j++) {
+        size_t num_split = 0;
+        char **split = split_on_pipe(line, &num_split);
+        assert(num_split != 0);
+
+        struct command_pipeline *pipeline = &command->command.list.commands[j];
+        init_pipeline(pipeline, num_split);
+        for (size_t i = 0; i < num_split; i++) {
+            *error = parse_simple_command(split[i], pipeline->commands + i);
+            if (*error) {
+                free(split);
+                free(split_lists);
+                return NULL;
+            }
         }
+
+        free(split);
     }
 
-    free(split);
+    free(split_lists);
     return command;
 }

@@ -62,14 +62,20 @@ void init_redirection(struct redirection_info *info,  int target_fd, enum redire
     va_end(args);
 }
 
-static void init_simple_command(struct command_simple *simple_command) {
+void init_simple_command(struct command_simple *simple_command) {
     memset(simple_command, 0, sizeof(struct command_simple));
     simple_command->we.we_special_vars = &special_vars;
 }
 
-static void init_pipeline(struct command_pipeline *pipeline, size_t num) {
+void init_pipeline(struct command_pipeline *pipeline, size_t num) {
     pipeline->commands = calloc(num, sizeof(struct command_simple));
     pipeline->num_commands = num;
+}
+
+void init_list(struct command_list *list, size_t len) {
+    list->commands = calloc(len, sizeof(struct command_pipeline));
+    list->connectors = calloc(len, sizeof(enum command_list_connector));
+    list->num_commands = len;
 }
 
 struct command *command_construct(enum command_type type, enum command_mode mode, ...) {
@@ -89,7 +95,11 @@ struct command *command_construct(enum command_type type, enum command_mode mode
             init_pipeline(&command->command.pipeline, num);
             break;
         }
-        case COMMAND_LIST:
+        case COMMAND_LIST: {
+            size_t len = va_arg(args, size_t);
+            init_list(&command->command.list, len);
+            break;
+        }
         case COMMAND_COMPOUND:
         case COMMAND_FUNCTION_DECLARATION:
         default:
@@ -315,9 +325,13 @@ static int do_command_list(struct command_list *list, enum command_mode mode) {
 int command_run(struct command *command) {
     switch (command->type) {
         case COMMAND_SIMPLE:
-            return do_simple_command(&command->command.simple_command, command->mode);
+            // Should be parsed into list of length 1
+            assert(false);
+            return -1;
         case COMMAND_PIPELINE:
-            return do_pipeline(&command->command.pipeline, command->mode);
+            // Should be parsed into a list of length 1
+            assert(false);
+            return -1;
         case COMMAND_LIST:
             return do_command_list(&command->command.list, command->mode);
         case COMMAND_COMPOUND:
