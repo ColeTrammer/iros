@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -190,6 +191,10 @@ void job_check_updates(bool print_updates) {
     int status;
     while ((pid = waitpid(-1, &status, WNOHANG | WCONTINUED | WUNTRACED))) {
         if (pid == -1) {
+            // We have no children
+            if (errno == ECHILD) {
+                return;
+            }
             perror("sh");
             assert(false);
         }

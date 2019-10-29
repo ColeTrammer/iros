@@ -14,6 +14,8 @@
 #include "command.h"
 #include "job.h"
 
+#ifndef USERLAND_NATIVE
+
 static word_special_t special_vars = { {
     "", "", "0", NULL, "", NULL, NULL, "/bin/sh"
 } };
@@ -24,6 +26,16 @@ static void __set_exit_status(int n) {
     sprintf(special_vars.vals[WRDE_SPECIAL_QUEST], "%d", n);
 }
 
+#else
+
+static int last_exit_status;
+
+static void __set_exit_status(int n) {
+    last_exit_status = n;
+}
+
+#endif /* USERLAND_NATIVE */
+
 void set_exit_status(int n) {
     assert(WIFEXITED(n) || WIFSIGNALED(n) || WIFSTOPPED(n));
 
@@ -31,9 +43,19 @@ void set_exit_status(int n) {
                       WIFSTOPPED(n) ? 0 : (127 + WTERMSIG(n)));
 }
 
+#ifndef USERLAND_NATIVE
+
 int get_last_exit_status() {
     return atoi(special_vars.vals[WRDE_SPECIAL_QUEST]);
 }
+
+#else
+
+int get_last_exit_status() {
+    return last_exit_status;
+}
+
+#endif /* USERLAND_NATIVE */
 
 // FIXME: redirection actually needs to be a queue, not an array, since the order of specified redirections
 //        should cause different behavior, and currently the order is based on the target fd not the order
@@ -64,7 +86,9 @@ void init_redirection(struct redirection_info *info,  int target_fd, enum redire
 
 void init_simple_command(struct command_simple *simple_command) {
     memset(simple_command, 0, sizeof(struct command_simple));
+#ifndef USERLAND_NATIVE
     simple_command->we.we_special_vars = &special_vars;
+#endif /* USERLAND_NATIVE */
 }
 
 void init_pipeline(struct command_pipeline *pipeline, size_t num) {
@@ -384,8 +408,10 @@ void command_cleanup(struct command *command) {
 }
 
 void command_init_special_vars() {
+#ifndef USERLAND_NATIVE
     special_vars.vals[WRDE_SPECIAL_QUEST] = strdup("0");
     special_vars.vals[WRDE_SPECIAL_DOLLAR] = malloc(10);
     sprintf(special_vars.vals[WRDE_SPECIAL_DOLLAR], "%d", getpid());
     special_vars.vals[WRDE_SPECIAL_EXCLAM] = strdup("");
+#endif /* USERLAND_NATIVE */
 }

@@ -11,6 +11,10 @@
 #include "command.h"
 #include "parser.h"
 
+#ifndef WRDE_SPECIAL
+#define WRDE_SPECIAL 0
+#endif /* WRDE_SPECIAL */
+
 static enum command_mode find_mode(char *line) {
     size_t line_len = strlen(line);
     for (ssize_t i = (ssize_t) line_len - 1; i >= 0; i--) {

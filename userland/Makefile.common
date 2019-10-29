@@ -1,8 +1,19 @@
+CFLAGS+=-std=c99
+
 .PHONY: all
 all: $(EXECUTABLE)
 
+.PHONY: native
+native: $(EXECUTABLE).native
+
 $(EXECUTABLE): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+
+$(EXECUTABLE).native: $(OBJS:.o=.native.o)
+	gcc -o $@ $(OBJS:.o=.native.o)
+
+%.native.o: %.c
+	gcc -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE -DUSERLAND_NATIVE -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
 %.o: %.c
@@ -21,3 +32,4 @@ install: all
 # tell make its dependencies, which if altered, will cause
 # make to go back and rebuild the object.
 -include $(OBJS:.o=.d)
+-include $(OBJS:.o=.native.d)
