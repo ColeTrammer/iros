@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 void print_usage(char **argv) {
-    printf("Usage: %s [-n num_lines] [file]", argv[0]);
+    printf("Usage: %s [-n num_lines] [file]\n", argv[0]);
 }
 
 int main(int argc, char **argv) {
