@@ -1,5 +1,5 @@
 # Lists all projects
-PROJECTS=cat chmod clear echo grep kill ls mkdir rm rmdir sh stat touch
+PROJECTS=cat chmod clear echo grep head kill ls mkdir rm rmdir sh stat touch
 
 ROOT?=$(CURDIR)/..
 SYSROOT?=$(ROOT)/sysroot
