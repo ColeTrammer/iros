@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -263,6 +264,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
         }
 
         if (is_builtin) {
+            __set_exit_status(pid);
             continue;
         }
 
@@ -330,7 +332,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
 }
 
 static int do_command_list(struct command_list *list, enum command_mode mode) {
-    assert(mode != COMMAND_BACKGROUND);
+    assert(mode != COMMAND_BACKGROUND || list->num_commands <= 1);
     for (size_t i = 0; i < list->num_commands; i++) {
         int ret = do_pipeline(&list->commands[i], mode);
         if (ret != 0) {

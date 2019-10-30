@@ -251,7 +251,7 @@ static char **split_into_list(char *line, size_t *num_split, enum command_list_c
                         line[i++] = '\0';
                     }
 
-                    while (i < line_len && isspace(i)) { i++; } // Skip whitespace
+                    while (i < line_len && isspace(line[i])) { i++; } // Skip whitespace
                     if (i >= line_len) {
                         goto finish;
                     }
