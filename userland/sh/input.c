@@ -1,90 +1,163 @@
 #include "input.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
 #include <string.h>
+#include <termios.h>
+#include <unistd.h>
 
-static char *get_tty_input(FILE *tty) {
-    int sz = 1024;
-    int pos = 0;
-    char *buffer = malloc(sz);
+static struct termios saved_termios = { 0 };
 
+void enable_raw_mode() {
+    tcgetattr(STDIN_FILENO, &saved_termios);
+
+    struct termios to_set = saved_termios;
+
+    to_set.c_cflag |= (CS8);
+    to_set.c_lflag &= ~(ECHO | ICANON | IEXTEN);
+
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &to_set);
+}
+
+// FIXME: this needs to be called when the user presses ^C, or termios must be set before
+//        the code ever has a chance to set it
+void disable_raw_mode() {
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_termios);
+}
+
+enum line_status {
+    DONE,
+    UNFINISHED_QUOTE,
+    ESCAPED_NEWLINE
+};
+
+// Checks whether there are any open quotes or not in the line
+static enum line_status get_line_status(char *line, size_t len) {
     bool prev_was_backslash = false;
     bool in_s_quotes = false;
     bool in_d_quotes = false;
     bool in_b_quotes = false;
 
+    for (size_t i = 0; i < len; i++) {
+        switch (line[i]) {
+            case '\\':
+                prev_was_backslash = !prev_was_backslash;
+                continue;
+            case '\'':
+                in_s_quotes = (prev_was_backslash || in_d_quotes || in_b_quotes) ? in_s_quotes : !in_s_quotes;
+                break;
+            case '"':
+                in_d_quotes = (prev_was_backslash || in_s_quotes || in_b_quotes) ? in_d_quotes : !in_d_quotes;
+                break;
+            case '`':
+                in_b_quotes = (prev_was_backslash || in_s_quotes || in_d_quotes) ? in_b_quotes : !in_b_quotes;
+                break;
+            default:
+                break;
+        }
+
+        prev_was_backslash = false;
+    }
+
+    if (prev_was_backslash) {
+        return ESCAPED_NEWLINE;
+    }
+
+    if (in_s_quotes || in_d_quotes || in_b_quotes) {
+        return UNFINISHED_QUOTE;
+    }
+
+    return DONE;
+}
+
+static char *get_tty_input(FILE *tty) {
+    size_t buffer_max = 1024;
+    size_t buffer_index = 0;
+    size_t buffer_length = 0;
+    size_t buffer_min_index = 0;
+    char *buffer = malloc(buffer_max);
+
     for (;;) {
+        if (buffer_length + 1 >= buffer_max) {
+            buffer_max += 1024;
+            buffer = realloc(buffer, buffer_max);
+        }
+
+        char c;
         errno = 0;
-        int c = fgetc(tty);
+        int ret = read(fileno(tty), &c, 1);
 
-        if (pos >= sz) {
-            sz *= 2;
-            buffer = realloc(buffer, sz);
-        }
-
-        // Means user pressed ^C, so we should go to the next line
-        if (c == EOF && errno == EINTR) {
-            printf("%c", '\n');
-            pos = 0;
-            break;
-        }
-
-        /* In a comment */
-        if (c == '#' && (pos == 0 || isspace(buffer[pos - 1]))) {
-            c = getc(tty);
-            while (c != EOF && c != '\n') {
-                c = fgetc(tty);
+        if (ret == -1) {
+            // We were interrupted
+            if (errno = EINTR) {
+                buffer_length = 0;
+                break;
+            } else {
+                free(buffer);
+                return NULL;
             }
-
-            break;
         }
 
-        if (c == EOF && pos == 0) {
+        // User pressed ^D
+        if (ret == 0) {
             free(buffer);
             return NULL;
         }
 
-        if (c == '\n' && (prev_was_backslash || in_s_quotes || in_d_quotes || in_b_quotes)) {
-            if (prev_was_backslash) {
-                buffer[--pos] = '\0';
-                prev_was_backslash = false;
-            } else {
-                buffer[pos++] = '\n';
-            }
+        // Pressed back space
+        if (c  == 127) {
+            if (buffer_index > buffer_min_index) {
+                buffer_index--;
+                buffer_length--;
+                buffer[buffer_index] = '\0';
 
-            printf("> ");
-            fflush(stdout);
+                // Shift over the cursor
+                write(fileno(tty), "\033[1D \033[1D", 9);
+            }
 
             continue;
         }
 
-        if (c == '\'') {
-            in_s_quotes = (prev_was_backslash || in_d_quotes || in_b_quotes) ? in_s_quotes : !in_s_quotes;
-        } else if (c == '"') {
-            in_d_quotes = (prev_was_backslash || in_s_quotes || in_b_quotes) ? in_d_quotes : !in_d_quotes;
-        } else if (c == '`') {
-            in_b_quotes = (prev_was_backslash || in_s_quotes || in_d_quotes) ? in_b_quotes : !in_b_quotes;
+        // Stop once we get to a new line
+        if (c == '\n') {
+            switch (get_line_status(buffer, buffer_length)) {
+                case UNFINISHED_QUOTE:
+                    break;
+                case ESCAPED_NEWLINE:
+                    if (buffer_index == buffer_length) {
+                        buffer_index--;
+                    }
+                    buffer_length--;
+                    buffer[buffer_index] = '\0';
+                    break;
+                case DONE:
+                    write(fileno(tty), "\n", 1);
+                    goto tty_input_done;
+                default:
+                    assert(false);
+                    break;
+            }
+
+            // The line was not finished
+            buffer_min_index = buffer_index;
+            write(fileno(tty), "\n> ", 3);
+            continue;
         }
 
-        if (c == '\\') {
-            prev_was_backslash = !prev_was_backslash;
-        } else {
-            prev_was_backslash = false;
+        if (isprint(c)) {
+            buffer[buffer_index++] = c;
+            buffer_length++;
+            write(fileno(tty), &c, 1);   
         }
-
-        if (c == EOF || c == '\n') {
-            break;
-        }
-
-        buffer[pos++] = c;
     }
 
-    buffer[pos] = '\0';
+tty_input_done:
+    buffer[buffer_length] = '\0';
     return buffer;
 }
 
@@ -164,7 +237,10 @@ struct string_input_source *input_create_string_input_source(char *s) {
 char *input_get_line(struct input_source *source) {
     switch (source->mode) {
         case INPUT_TTY:
-            return get_tty_input(source->source.tty);
+            enable_raw_mode();
+            char * res = get_tty_input(source->source.tty);
+            disable_raw_mode();
+            return res;
         case INPUT_FILE:
             return get_file_input(source->source.file);
         case INPUT_STRING:
