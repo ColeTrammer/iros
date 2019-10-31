@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <setjmp.h>
+#include <termios.h>
 
 #include "builtin.h"
 #include "command.h"
@@ -38,6 +39,13 @@ static char *line = NULL;
 static struct command *command = NULL;
 static sigjmp_buf env;
 static volatile sig_atomic_t jump_active = 0;
+static struct termios saved_termios = { 0 };
+
+static void restore_termios() {
+    if (isatty(STDIN_FILENO)) {
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_termios);
+    }
+}
 
 static void on_int(int signo) {
     assert(signo == SIGINT);
@@ -84,6 +92,9 @@ int main(int argc, char **argv) {
         sigemptyset(&sigset);
         sigaddset(&sigset, SIGTSTP);
         sigprocmask(SIG_SETMASK, &sigset, NULL);
+
+        tcgetattr(STDOUT_FILENO, &saved_termios);
+        atexit(restore_termios);
     }
 
     command_init_special_vars();

@@ -24,8 +24,6 @@ void enable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &to_set);
 }
 
-// FIXME: this needs to be called when the user presses ^C, or termios must be set before
-//        the code ever has a chance to set it
 void disable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_termios);
 }
