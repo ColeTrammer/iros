@@ -109,15 +109,54 @@ static char *get_tty_input(FILE *tty) {
             return NULL;
         }
 
+        // Terminal escape sequences
+        if (c == '\033') {
+            read(fileno(tty), &c, 1);
+            if (c != '[') {
+                continue;
+            }
+
+            read(fileno(tty), &c, 1);
+            switch (c) {
+                case 'A':
+                    // Up arrow
+                    continue;
+                case 'B':
+                    // Down arrow
+                    continue;
+                case 'C':
+                    // Right arrow
+                    if (buffer_index < buffer_length) {
+                        buffer_index++;
+                        write(fileno(tty), "\033[1C", 4);
+                    }
+                    break;
+                case 'D':
+                    // Left arrow
+                    if (buffer_index > buffer_min_index) {
+                        buffer_index--;
+                        write(fileno(tty), "\033[1D", 4);
+                    }
+                    break;
+                default:
+                    continue;
+            }
+
+            continue;
+        }
+
+
         // Pressed back space
         if (c  == 127) {
             if (buffer_index > buffer_min_index) {
-                buffer_index--;
-                buffer_length--;
-                buffer[buffer_index] = '\0';
+                memmove(buffer + buffer_index - 1, buffer + buffer_index, buffer_length - buffer_index);
+                buffer[buffer_length - 1] = ' ';
 
-                // Shift over the cursor
-                write(fileno(tty), "\033[1D \033[1D", 9);
+                buffer_index--;
+                write(fileno(tty), "\033[1D\033[s", 7);
+                write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
+                write(fileno(tty), "\033[u", 3);
+                buffer[buffer_length--] = '\0';
             }
 
             continue;
@@ -150,9 +189,17 @@ static char *get_tty_input(FILE *tty) {
         }
 
         if (isprint(c)) {
-            buffer[buffer_index++] = c;
+            if (buffer_index != buffer_length) {
+                memmove(buffer + buffer_index + 1, buffer + buffer_index, buffer_length - buffer_index);
+            }
+            buffer[buffer_index] = c;
             buffer_length++;
-            write(fileno(tty), &c, 1);   
+
+            // Make sure to save and restore the cursor position
+            write(fileno(tty), "\033[s", 3);
+            write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
+            write(fileno(tty), "\033[u\033[1C", 7);
+            buffer_index++;
         }
     }
 
