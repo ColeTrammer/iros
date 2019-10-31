@@ -117,6 +117,32 @@ static char *get_tty_input(FILE *tty) {
             }
 
             read(fileno(tty), &c, 1);
+            if (isdigit(c)) {
+                char last;
+                read(fileno(tty), &last, 1);
+                if (c == '~') {
+                    continue;
+                }
+
+                switch (c) {
+                    case '3':
+                        // Delete key
+                        if (buffer_index < buffer_length) {
+                            memmove(buffer + buffer_index, buffer + buffer_index + 1, buffer_length - buffer_index);
+                            buffer[buffer_length - 1] = ' ';
+
+                            write(fileno(tty), "\033[s", 3);
+                            write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
+                            write(fileno(tty), "\033[u", 3);
+
+                            buffer[buffer_length--] = '\0';
+                        }
+                        break;
+                    default:
+                        continue;
+                }
+            }
+
             switch (c) {
                 case 'A':
                     // Up arrow
