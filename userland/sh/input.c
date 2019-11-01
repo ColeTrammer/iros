@@ -13,6 +13,12 @@
 #include <termios.h>
 #include <unistd.h>
 
+enum line_status {
+    DONE,
+    UNFINISHED_QUOTE,
+    ESCAPED_NEWLINE
+};
+
 struct suggestion {
     size_t length;
     size_t index;
@@ -40,11 +46,26 @@ void disable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_termios);
 }
 
-enum line_status {
-    DONE,
-    UNFINISHED_QUOTE,
-    ESCAPED_NEWLINE
-};
+static char *__getcwd() {
+    size_t size = 50;
+    char *buffer = malloc(size);
+    char *cwd = getcwd(buffer, size);
+    
+    while (cwd == NULL) {
+        free(buffer);
+        size *= 2;
+        buffer = malloc(size);
+        cwd = getcwd(buffer, size);
+    }
+
+    return cwd;
+}
+
+static void print_ps1_prompt() {
+	char *cwd = __getcwd();
+	fprintf(stderr, "\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
+	free(cwd);
+}
 
 static char *scandir_match_string = NULL;
 
@@ -134,6 +155,17 @@ static void free_suggestions(struct suggestion *suggestions, size_t num_suggesti
     free(suggestions);
 }
 
+// NOTE: since the suggestions are already sorted alphabetically (using alphasort) on dirents, this method
+//       only needs to check the first and last strings
+static size_t longest_common_starting_substring_length(struct suggestion *suggestions, size_t num_suggestions) {
+    struct suggestion *last = &suggestions[num_suggestions - 1];
+    size_t length = 0;
+    while (suggestions->suggestion[length] == last->suggestion[length]) {
+        length++;
+    }
+    return length;
+}
+
 // Checks whether there are any open quotes or not in the line
 static enum line_status get_line_status(char *line, size_t len) {
     bool prev_was_backslash = false;
@@ -190,6 +222,8 @@ static void history_add(char *item) {
 }
 
 static char *get_tty_input(FILE *tty) {
+	print_ps1_prompt();
+
     size_t buffer_max = 1024;
     size_t buffer_index = 0;
     size_t buffer_length = 0;
@@ -198,6 +232,8 @@ static char *get_tty_input(FILE *tty) {
 
     char *line_save = NULL;
     size_t hist_index = history_length;
+
+    int consecutive_tab_presses = 0;
 
     for (;;) {
         if (buffer_length + 1 >= buffer_max) {
@@ -238,26 +274,55 @@ static char *get_tty_input(FILE *tty) {
             buffer[buffer_length] = '\0'; // Ensure buffer is null terminated
             struct suggestion *suggestions = get_suggestions(buffer, buffer_length, &num_suggestions);
             
-            if (num_suggestions == 1) {
-                if (buffer_length + suggestions->length >= buffer_max - 1) {
-                    buffer_max += 1024;
-                    buffer = realloc(buffer, buffer_max);
+            if (num_suggestions == 0) {
+                consecutive_tab_presses = 0;
+                continue;
+            } else if (num_suggestions > 1) {
+                suggestions->length = longest_common_starting_substring_length(suggestions, num_suggestions);
+                if (suggestions->length == 0 || memcmp(suggestions->suggestion, buffer + suggestions->index, suggestions->length) == 0) {
+                    consecutive_tab_presses++;
                 }
 
-                memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
+                if (consecutive_tab_presses > 1) {
+                    fprintf(stderr, "%c", '\n');
 
-                char f_buf[20];
-                snprintf(f_buf, 20, "\033[%dD", buffer_index - suggestions->index);
-                write(fileno(tty), f_buf, strlen(f_buf));
+                    for (size_t i = 0; i < num_suggestions; i++) {
+                        fprintf(stderr, "%s ", suggestions[i].suggestion);
+                    }
 
-                write(fileno(tty), suggestions->suggestion, suggestions->length);
-                buffer_index = buffer_length = suggestions->index + suggestions->length;
-            } else if (num_suggestions > 1) {
-                // Should show suggestions
+                    fprintf(stderr, "%c", '\n');
+					print_ps1_prompt();
+					fprintf(stderr, "%s", buffer);
+                    goto cleanup_suggestions;
+                }
+            } else {
+                consecutive_tab_presses = 0;
             }
+
+            if (buffer_length + suggestions->length >= buffer_max - 1) {
+                buffer_max += 1024;
+                buffer = realloc(buffer, buffer_max);
+            }
+
+            if (suggestions->length == 0) {
+                goto cleanup_suggestions;
+            }
+
+            memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
+
+            char f_buf[20];
+            snprintf(f_buf, 20, "\033[%dD", buffer_index - suggestions->index);
+            write(fileno(tty), f_buf, strlen(f_buf));
+
+            write(fileno(tty), suggestions->suggestion, suggestions->length);
+            buffer_index = buffer_length = suggestions->index + suggestions->length;              
+
+        cleanup_suggestions:
             free_suggestions(suggestions, num_suggestions);
             continue;
         }
+
+        consecutive_tab_presses = 0;
 
         // Terminal escape sequences
         if (c == '\033') {

@@ -20,21 +20,6 @@
 #include "job.h"
 #include "parser.h"
 
-static char *__getcwd() {
-    size_t size = 50;
-    char *buffer = malloc(size);
-    char *cwd = getcwd(buffer, size);
-    
-    while (cwd == NULL) {
-        free(buffer);
-        size *= 2;
-        buffer = malloc(size);
-        cwd = getcwd(buffer, size);
-    }
-
-    return cwd;
-}
-
 static char *line = NULL;
 static struct command *command = NULL;
 static sigjmp_buf env;
@@ -119,18 +104,11 @@ int main(int argc, char **argv) {
         if (sigsetjmp(env, 1) == 1) {
             if (line) { free(line); }
             if (command) { command_cleanup(command); }
-            printf("%c", '\n');
+            fprintf(stderr, "%c", '\n');
         }
         jump_active = 1;
 
         job_check_updates(true);
-
-        if (input_source.mode == INPUT_TTY) {
-            char *cwd = __getcwd();
-            printf("\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
-            free(cwd);
-        }
-        fflush(stdout);
 
         line = input_get_line(&input_source);
 
