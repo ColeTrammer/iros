@@ -375,9 +375,11 @@ static char *get_tty_input(FILE *tty) {
 
                         memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
 
-                        char f_buf[20];
-                        snprintf(f_buf, 20, "\033[%luD", buffer_index - 1 - buffer_min_index);
-                        write(fileno(tty), f_buf, strlen(f_buf));
+                        if (buffer_length > 0) {
+                            char f_buf[20];
+                            snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
+                            write(fileno(tty), f_buf, strlen(f_buf));
+                        }
 
                         write(fileno(tty), "\033[s", 3);
                         write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
@@ -385,7 +387,7 @@ static char *get_tty_input(FILE *tty) {
 
                         strncpy(buffer, history[hist_index], buffer_max);
                         write(fileno(tty), buffer, strlen(buffer));
-                        buffer_index = buffer_length = strlen(buffer) + 1;
+                        buffer_index = buffer_length = strlen(buffer);
                         buffer_min_index = 0;
                     }
                     continue;
@@ -396,9 +398,11 @@ static char *get_tty_input(FILE *tty) {
 
                         memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
 
-                        char f_buf[20];
-                        snprintf(f_buf, 20, "\033[%luD", buffer_index - 1 - buffer_min_index);
-                        write(fileno(tty), f_buf, strlen(f_buf));
+                        if (buffer_length > 0) {
+                            char f_buf[20];
+                            snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
+                            write(fileno(tty), f_buf, strlen(f_buf));
+                        }
 
                         write(fileno(tty), "\033[s", 3);
                         write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
@@ -416,7 +420,7 @@ static char *get_tty_input(FILE *tty) {
                         }
 
                         write(fileno(tty), buffer, strlen(buffer));
-                        buffer_index = buffer_length = strlen(buffer) + 1;
+                        buffer_index = buffer_length = strlen(buffer);
                         buffer_min_index = 0;
                     }
                     continue;
