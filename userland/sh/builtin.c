@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "builtin.h"
+#include "input.h"
 #include "job.h"
 
 static int op_exit(char **args) {
@@ -155,6 +156,16 @@ static int op_kill(char **argv) {
     return ret;
 }
 
+static int op_history(char **argv) {
+    if (argv[1]) {
+        printf("Usage: %s\n", argv[0]);
+        return 0;
+    }
+
+    print_history();
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },
     { "cd", op_cd, true },
@@ -164,7 +175,8 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "jobs", op_jobs, true },
     { "fg", op_fg, true },
     { "bg", op_bg, true },
-    { "kill", op_kill, true }
+    { "kill", op_kill, true },
+    { "history", op_history, true }
 };
 
 struct builtin_op *builtin_find_op(char *name) {

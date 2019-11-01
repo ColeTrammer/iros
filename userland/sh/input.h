@@ -29,6 +29,7 @@ char *input_get_line(struct input_source *source);
 void input_cleanup(struct input_source *source);
 
 void init_history();
+void print_history();
 void write_history();
 
 #endif /* _INPUT_H */

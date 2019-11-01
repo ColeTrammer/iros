@@ -453,6 +453,12 @@ void init_history() {
     fclose(file);
 }
 
+void print_history() {
+    for (size_t i = 0; i < history_length; i++) {
+        printf("%4lu  %s\n", i, history[i]);
+    }
+}
+
 void write_history() {
     char *hist_file = getenv("HISTFILE");
     if (!hist_file) {
