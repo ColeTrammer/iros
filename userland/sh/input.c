@@ -70,9 +70,13 @@ static void print_ps1_prompt() {
 
 static char *scandir_match_string = NULL;
 
-int scandir_filter(const struct dirent *d) {
+static int scandir_filter(const struct dirent *d) {
     assert(scandir_match_string);
     return strstr(d->d_name, scandir_match_string) == d->d_name;
+}
+
+static int suggestion_compar(const void *a, const void *b) {
+    return strcmp(((const struct suggestion*) a)->suggestion, ((const struct suggestion*) b)->suggestion);
 }
 
 static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestions) {
@@ -127,6 +131,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
     }
 
     free(path_copy);
+    qsort(suggestions, *num_suggestions, sizeof(struct suggestion), suggestion_compar);
     return suggestions;
 }
 
