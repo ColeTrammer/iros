@@ -179,6 +179,10 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "history", op_history, true }
 };
 
+struct builtin_op *get_builtins() {
+    return builtin_ops;
+}
+
 struct builtin_op *builtin_find_op(char *name) {
     for (size_t i = 0; i < NUM_BUILTINS; i++) {
         if (strcmp(builtin_ops[i].name, name) == 0) {

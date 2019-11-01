@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "input.h"
 
 #include <assert.h>
@@ -74,11 +75,66 @@ int scandir_filter(const struct dirent *d) {
     return strstr(d->d_name, scandir_match_string) == d->d_name;
 }
 
+static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestions) {
+    char *path_var = getenv("PATH");
+    if (path_var == NULL) {
+        return NULL;
+    }
+
+    char *path_copy = strdup(path_var);
+    char *search_path = strtok(path_copy, ":");
+    struct suggestion *suggestions = NULL;
+    while (search_path != NULL) {
+        scandir_match_string = line;
+        struct dirent **list;
+        int num_found = scandir(search_path, &list, scandir_filter, alphasort);
+        
+        if (num_found > 0) { 
+            suggestions = realloc(suggestions, ((*num_suggestions) + num_found) * sizeof(struct suggestion));
+
+            for (int i = 0; i < num_found; i++) {
+                suggestions[(*num_suggestions) + i].length = strlen(list[i]->d_name) + 1;
+                suggestions[(*num_suggestions) + i].index = 0;
+                suggestions[(*num_suggestions) + i].suggestion = malloc(suggestions[(*num_suggestions) + i].length + 1);
+                strcpy(suggestions[(*num_suggestions) + i].suggestion, list[i]->d_name);
+                strcat(suggestions[(*num_suggestions) + i].suggestion, " ");
+
+                free(list[i]);
+            }
+
+            (*num_suggestions) += num_found;
+            free(list);
+        }
+
+        search_path = strtok(NULL, ":");
+    }
+
+    // Check builtins
+    struct builtin_op *builtins = get_builtins();
+    for (size_t i = 0; i < NUM_BUILTINS; i++) {
+        if (strstr(builtins[i].name, line) == builtins[i].name) {
+            suggestions = realloc(suggestions, ((*num_suggestions) + 1) * sizeof(struct suggestion));
+            
+            suggestions[*num_suggestions].length = strlen(builtins[i].name) + 1;
+            suggestions[*num_suggestions].index = 0;
+            suggestions[*num_suggestions].suggestion = malloc(suggestions[*num_suggestions].length + 1);
+            
+            strcpy(suggestions[*num_suggestions].suggestion, builtins[i].name);
+            strcat(suggestions[*num_suggestions].suggestion, " ");
+
+            (*num_suggestions)++;
+        }
+    }
+
+    free(path_copy);
+    return suggestions;
+}
+
 static struct suggestion *get_suggestions(char *line, size_t len, size_t *num_suggestions) {
     char *last_space = strrchr(line, ' ');
     *num_suggestions = 0;
-    if (last_space == NULL) {   
-        return NULL;
+    if (last_space == NULL) {
+        last_space = line - 1;
     }
 
     char *to_match_start = last_space + 1;
@@ -89,6 +145,11 @@ static struct suggestion *get_suggestions(char *line, size_t len, size_t *num_su
     char *dirname;
     char *currname;
     if (last_slash == NULL) {
+        if (strrchr(line, ' ') == NULL) {
+            free(to_match);
+            return get_path_suggestions(line, num_suggestions);
+        }
+
         dirname = ".";
         currname = to_match;
     } else {
@@ -160,7 +221,7 @@ static void free_suggestions(struct suggestion *suggestions, size_t num_suggesti
 static size_t longest_common_starting_substring_length(struct suggestion *suggestions, size_t num_suggestions) {
     struct suggestion *last = &suggestions[num_suggestions - 1];
     size_t length = 0;
-    while (suggestions->suggestion[length] == last->suggestion[length]) {
+    while (suggestions->suggestion[length] != '\0' && suggestions->suggestion[length] != '\0' && suggestions->suggestion[length] == last->suggestion[length]) {
         length++;
     }
     return length;
@@ -308,7 +369,7 @@ static char *get_tty_input(FILE *tty) {
                 goto cleanup_suggestions;
             }
 
-            memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
+            memmove(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
 
             char f_buf[20];
             snprintf(f_buf, 20, "\033[%dD", buffer_index - suggestions->index);
