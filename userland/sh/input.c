@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <dirent.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -10,6 +11,12 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+
+struct suggestion {
+    size_t length;
+    size_t index;
+    char *suggestion;
+};
 
 static char **history;
 static int history_length;
@@ -37,6 +44,43 @@ enum line_status {
     UNFINISHED_QUOTE,
     ESCAPED_NEWLINE
 };
+
+static struct suggestion *get_suggestions(char *line, size_t len, size_t *num_suggestions) {
+    char *last_space = strrchr(line, ' ');
+    *num_suggestions = 0;
+    if (last_space == NULL) {   
+        return NULL;
+    }
+
+    char *to_match_start = last_space + 1;
+    size_t to_match_length = len - (to_match_start - line);
+    if (to_match_length == 0) {
+        return 0;
+    }
+
+    struct suggestion *suggestions = calloc(10, sizeof(struct suggestion)); 
+
+    if (to_match_start[0] == 'a') {
+        (*num_suggestions)++;
+        suggestions[0].index = to_match_start - line;
+        suggestions[0].length = 4;
+        suggestions[0].suggestion = strdup("abc ");
+    }
+
+    return suggestions;
+}
+
+static void free_suggestions(struct suggestion *suggestions, size_t num_suggestions) {
+    if (num_suggestions == 0 || suggestions == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < num_suggestions; i++) {
+        free(suggestions[i].suggestion);
+    }
+
+    free(suggestions);
+}
 
 // Checks whether there are any open quotes or not in the line
 static enum line_status get_line_status(char *line, size_t len) {
@@ -130,6 +174,36 @@ static char *get_tty_input(FILE *tty) {
             free(line_save);
             free(buffer);
             return NULL;
+        }
+
+        // tab autocompletion
+        if (c == '\t') {
+            if (buffer_index != buffer_length) {
+                continue;
+            }
+
+            size_t num_suggestions = 0;
+            struct suggestion *suggestions = get_suggestions(buffer, buffer_length, &num_suggestions);
+            
+            if (num_suggestions == 1) {
+                if (buffer_length + suggestions->length >= buffer_max - 1) {
+                    buffer_max += 1024;
+                    buffer = realloc(buffer, buffer_max);
+                }
+
+                memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
+
+                char f_buf[20];
+                snprintf(f_buf, 20, "\033[%dD", buffer_index - 1 - suggestions->index);
+                write(fileno(tty), f_buf, strlen(f_buf));
+
+                write(fileno(tty), suggestions->suggestion, suggestions->length);
+                buffer_index = buffer_length = suggestions->index + suggestions->length;
+            } else if (num_suggestions > 1) {
+                // Should show suggestions
+            }
+            free_suggestions(suggestions, num_suggestions);
+            continue;
         }
 
         // Terminal escape sequences
