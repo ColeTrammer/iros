@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -45,6 +46,13 @@ enum line_status {
     ESCAPED_NEWLINE
 };
 
+static char *scandir_match_string = NULL;
+
+int scandir_filter(const struct dirent *d) {
+    assert(scandir_match_string);
+    return strstr(d->d_name, scandir_match_string) == d->d_name;
+}
+
 static struct suggestion *get_suggestions(char *line, size_t len, size_t *num_suggestions) {
     char *last_space = strrchr(line, ' ');
     *num_suggestions = 0;
@@ -53,20 +61,64 @@ static struct suggestion *get_suggestions(char *line, size_t len, size_t *num_su
     }
 
     char *to_match_start = last_space + 1;
+    char *to_match = strdup(to_match_start);
     size_t to_match_length = len - (to_match_start - line);
-    if (to_match_length == 0) {
-        return 0;
+
+    char *last_slash = strrchr(to_match, '/');
+    char *dirname;
+    char *currname;
+    if (last_slash == NULL) {
+        dirname = ".";
+        currname = to_match;
+    } else {
+        *last_slash = '\0';
+        dirname = to_match;
+        currname = last_slash + 1;
     }
 
-    struct suggestion *suggestions = calloc(10, sizeof(struct suggestion)); 
-
-    if (to_match_start[0] == 'a') {
-        (*num_suggestions)++;
-        suggestions[0].index = to_match_start - line;
-        suggestions[0].length = 4;
-        suggestions[0].suggestion = strdup("abc ");
+    scandir_match_string = currname;
+    struct dirent **list;    
+    *num_suggestions = scandir(dirname, &list, scandir_filter, alphasort);
+    if (*num_suggestions <= 0) {
+        free(to_match);
+        return NULL;
     }
 
+    struct suggestion *suggestions = malloc(*num_suggestions * sizeof(struct suggestion));
+
+    for (size_t i = 0; i < *num_suggestions; i++) {
+        suggestions[i].length = strlen(list[i]->d_name) + 1;
+        suggestions[i].suggestion = malloc(suggestions[i].length + 1);
+        strcpy(suggestions[i].suggestion, list[i]->d_name);
+        
+        struct stat stat_struct;
+        char *path = malloc(strlen(dirname) + strlen(list[i]->d_name) + 2);
+        strcpy(path, dirname);
+        strcat(path, "/");
+        strcat(path, list[i]->d_name);
+        if (stat(path, &stat_struct)) {
+            free(path);
+            (*num_suggestions)--;
+            i--;
+            continue;
+        }
+        free(path);
+
+        if (S_ISDIR(stat_struct.st_mode)) {
+            strcat(suggestions[i].suggestion, "/");
+        } else {
+            strcat(suggestions[i].suggestion, " ");
+        }
+        if (strcmp(dirname, ".") == 0) {
+            suggestions[i].index = to_match_start - line;
+        } else {
+            suggestions[i].index = to_match_start - line + (currname - dirname);
+        }
+        free(list[i]);
+    }
+
+    free(list);
+    free(to_match);
     return suggestions;
 }
 
@@ -183,6 +235,7 @@ static char *get_tty_input(FILE *tty) {
             }
 
             size_t num_suggestions = 0;
+            buffer[buffer_length] = '\0'; // Ensure buffer is null terminated
             struct suggestion *suggestions = get_suggestions(buffer, buffer_length, &num_suggestions);
             
             if (num_suggestions == 1) {
@@ -194,7 +247,7 @@ static char *get_tty_input(FILE *tty) {
                 memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
 
                 char f_buf[20];
-                snprintf(f_buf, 20, "\033[%dD", buffer_index - 1 - suggestions->index);
+                snprintf(f_buf, 20, "\033[%dD", buffer_index - suggestions->index);
                 write(fileno(tty), f_buf, strlen(f_buf));
 
                 write(fileno(tty), suggestions->suggestion, suggestions->length);
