@@ -78,6 +78,10 @@ static enum line_status get_line_status(char *line, size_t len) {
 }
 
 static void history_add(char *item) {
+    if (strcmp(item, history[history_length - 1]) == 0) {
+        return;
+    }
+
     if (history_length == history_max) {
         free(history[0]);
         memmove(history, history + 1, (history_max - 1) * sizeof(char*));
