@@ -28,4 +28,7 @@ struct string_input_source *input_create_string_input_source(char *s);
 char *input_get_line(struct input_source *source);
 void input_cleanup(struct input_source *source);
 
+void init_history();
+void write_history();
+
 #endif /* _INPUT_H */

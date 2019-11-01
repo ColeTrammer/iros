@@ -95,6 +95,22 @@ int main(int argc, char **argv) {
 
         tcgetattr(STDOUT_FILENO, &saved_termios);
         atexit(restore_termios);
+
+        char *base = getenv("HOME");
+        char *hist_file_name = ".sh_hist";
+        char *hist_file = malloc(strlen(base) + strlen(hist_file_name) + 2);
+        strcpy(hist_file, base);
+        strcat(hist_file, "/");
+        strcat(hist_file, hist_file_name);
+
+        setenv("HISTFILE", hist_file, 0);
+        setenv("HISTSIZE", "100", 0);
+
+        // setenv makes a copy
+        free(hist_file);
+
+        init_history();
+        atexit(write_history);
     }
 
     command_init_special_vars();

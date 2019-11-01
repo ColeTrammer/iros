@@ -11,6 +11,10 @@
 #include <termios.h>
 #include <unistd.h>
 
+static char **history;
+static int history_length;
+static int history_max;
+
 static struct termios saved_termios = { 0 };
 
 void enable_raw_mode() {
@@ -73,12 +77,27 @@ static enum line_status get_line_status(char *line, size_t len) {
     return DONE;
 }
 
+static void history_add(char *item) {
+    if (history_length == history_max) {
+        free(history[0]);
+        memmove(history, history + 1, (history_max - 1) * sizeof(char*));
+    }
+
+    history[history_length] = strdup(item);
+    if (history_length < history_max) {
+        history_length++;
+    }
+}
+
 static char *get_tty_input(FILE *tty) {
     size_t buffer_max = 1024;
     size_t buffer_index = 0;
     size_t buffer_length = 0;
     size_t buffer_min_index = 0;
     char *buffer = malloc(buffer_max);
+
+    char *line_save = NULL;
+    size_t hist_index = history_length;
 
     for (;;) {
         if (buffer_length + 1 >= buffer_max) {
@@ -96,6 +115,7 @@ static char *get_tty_input(FILE *tty) {
                 buffer_length = 0;
                 break;
             } else {
+                free(line_save);
                 free(buffer);
                 return NULL;
             }
@@ -103,6 +123,7 @@ static char *get_tty_input(FILE *tty) {
 
         // User pressed ^D
         if (ret == 0) {
+            free(line_save);
             free(buffer);
             return NULL;
         }
@@ -144,9 +165,64 @@ static char *get_tty_input(FILE *tty) {
             switch (c) {
                 case 'A':
                     // Up arrow
+                    if (hist_index > 0) {
+                        if (hist_index >= history_length) {
+                            buffer[buffer_length] = '\0';
+                            if (buffer_length > 0) {
+                                line_save = strdup(buffer);
+                            } else {
+                                line_save = NULL;
+                            }
+                        }
+
+                        hist_index--;
+
+                        memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
+
+                        char f_buf[20];
+                        snprintf(f_buf, 20, "\033[%luD", buffer_index - 1 - buffer_min_index);
+                        write(fileno(tty), f_buf, strlen(f_buf));
+
+                        write(fileno(tty), "\033[s", 3);
+                        write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
+                        write(fileno(tty), "\033[u", 3);
+
+                        strncpy(buffer, history[hist_index], buffer_max);
+                        write(fileno(tty), buffer, strlen(buffer));
+                        buffer_index = buffer_length = strlen(buffer) + 1;
+                        buffer_min_index = 0;
+                    }
                     continue;
                 case 'B':
                     // Down arrow
+                    if (hist_index < history_length) {
+                        hist_index++;
+
+                        memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
+
+                        char f_buf[20];
+                        snprintf(f_buf, 20, "\033[%luD", buffer_index - 1 - buffer_min_index);
+                        write(fileno(tty), f_buf, strlen(f_buf));
+
+                        write(fileno(tty), "\033[s", 3);
+                        write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
+                        write(fileno(tty), "\033[u", 3);
+
+                        if (hist_index >= history_length) {
+                            if (!line_save) {
+                                buffer_index = buffer_min_index = buffer_length = 0;
+                                continue;
+                            } else {
+                                strncpy(buffer, line_save, buffer_max);
+                            }
+                        } else {
+                            strncpy(buffer, history[hist_index], buffer_max);
+                        }
+
+                        write(fileno(tty), buffer, strlen(buffer));
+                        buffer_index = buffer_length = strlen(buffer) + 1;
+                        buffer_min_index = 0;
+                    }
                     continue;
                 case 'C':
                     // Right arrow
@@ -228,7 +304,11 @@ static char *get_tty_input(FILE *tty) {
     }
 
 tty_input_done:
+    free(line_save);
     buffer[buffer_length] = '\0';
+    if (buffer_length > 0) {
+        history_add(buffer);
+    }
     return buffer;
 }
 
@@ -332,4 +412,57 @@ void input_cleanup(struct input_source *source) {
     } else if (source->mode == INPUT_STRING) {
         free(source->source.string_input_source);
     }
+}
+
+void init_history() {
+    char *hist_size = getenv("HISTSIZE");
+    if (sscanf(hist_size, "%d", &history_max) != 1) {
+        history_length = 100;
+        setenv("HISTSIZE", "100", 0);
+    }
+
+    history = calloc(history_max, sizeof(char*));
+
+    char *hist_file = getenv("HISTFILE");
+    if (!hist_file) {
+        return;
+    }
+
+    FILE *file = fopen(hist_file, "r");
+    if (!file) {
+        return;
+    }
+
+    char *line = NULL;
+    size_t line_max = 0;
+    while ((getline(&line, &line_max, file)) != -1) {
+        line[strlen(line) - 1] = '\0'; // Remove trailing \n
+        if (strlen(line) == 0) {
+            continue;
+        }
+
+        history[history_length] = strdup(line);
+        history_length++;
+    }
+
+    free(line);
+    fclose(file);
+}
+
+void write_history() {
+    char *hist_file = getenv("HISTFILE");
+    if (!hist_file) {
+        return;
+    }
+
+    FILE *file = fopen(hist_file, "w");
+    if (!file) {
+        return;
+    }
+
+    for (size_t i = 0; i < history_length; i++) {
+        fprintf(file, "%s\n", history[i]);
+    }
+
+    fclose(file);
 }
