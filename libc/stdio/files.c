@@ -287,7 +287,7 @@ int fflush(FILE *stream) {
 }
 
 int fputs(const char *s, FILE *f) {
-    return fprintf(f, "%s\n", s);
+    return fprintf(f, "%s", s);
 }
 
 int getc(FILE *stream) {
