@@ -27,8 +27,8 @@ struct suggestion {
 };
 
 static char **history;
-static int history_length;
-static int history_max;
+static size_t history_length;
+static size_t history_max;
 
 static struct termios saved_termios = { 0 };
 
@@ -135,7 +135,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
     return suggestions;
 }
 
-static struct suggestion *get_suggestions(char *line, size_t len, size_t *num_suggestions) {
+static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
     char *last_space = strrchr(line, ' ');
     *num_suggestions = 0;
     if (last_space == NULL) {
@@ -144,7 +144,6 @@ static struct suggestion *get_suggestions(char *line, size_t len, size_t *num_su
 
     char *to_match_start = last_space + 1;
     char *to_match = strdup(to_match_start);
-    size_t to_match_length = len - (to_match_start - line);
 
     char *last_slash = strrchr(to_match, '/');
     char *dirname;
@@ -272,7 +271,7 @@ static enum line_status get_line_status(char *line, size_t len) {
 }
 
 static void history_add(char *item) {
-    if (strcmp(item, history[history_length - 1]) == 0) {
+    if (history_length > 0 && strcmp(item, history[history_length - 1]) == 0) {
         return;
     }
 
@@ -338,7 +337,7 @@ static char *get_tty_input(FILE *tty) {
 
             size_t num_suggestions = 0;
             buffer[buffer_length] = '\0'; // Ensure buffer is null terminated
-            struct suggestion *suggestions = get_suggestions(buffer, buffer_length, &num_suggestions);
+            struct suggestion *suggestions = get_suggestions(buffer, &num_suggestions);
             
             if (num_suggestions == 0) {
                 consecutive_tab_presses = 0;
@@ -374,10 +373,10 @@ static char *get_tty_input(FILE *tty) {
                 goto cleanup_suggestions;
             }
 
-            memmove(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
+            memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
 
             char f_buf[20];
-            snprintf(f_buf, 20, "\033[%dD", buffer_index - suggestions->index);
+            snprintf(f_buf, 20, "\033[%luD", buffer_index - suggestions->index);
             write(fileno(tty), f_buf, strlen(f_buf));
 
             write(fileno(tty), suggestions->suggestion, suggestions->length);
@@ -682,7 +681,7 @@ void input_cleanup(struct input_source *source) {
 
 void init_history() {
     char *hist_size = getenv("HISTSIZE");
-    if (sscanf(hist_size, "%d", &history_max) != 1) {
+    if (sscanf(hist_size, "%lu", &history_max) != 1) {
         history_length = 100;
         setenv("HISTSIZE", "100", 0);
     }

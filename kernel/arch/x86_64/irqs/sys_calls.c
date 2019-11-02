@@ -405,7 +405,8 @@ void arch_sys_waitpid(struct process_state *process_state) {
 
         if (found_pid == 0) {
             if (flags & WNOHANG) {
-                SYS_RETURN(0);
+                debug_log("Wait found nothing: [ %d ]\n", pid);
+                SYS_RETURN(-ECHILD);
             } else {
                 yield();
             }

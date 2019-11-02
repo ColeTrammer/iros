@@ -9,6 +9,7 @@ mkdir -p mnt
 mount -text2 /dev/loop100 mnt
 
 cp -r sysroot/* mnt
+mkdir -p mnt/home/eloc
 
 umount /dev/loop100
 losetup -d /dev/loop100

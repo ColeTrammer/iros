@@ -14,6 +14,8 @@
 struct tty_data {
     size_t x;
     size_t y;
+    size_t saved_x;
+    size_t saved_y;
     size_t x_max;
     size_t y_max;
     unsigned char *buffer;

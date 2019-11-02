@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <termios.h>
 #include <signal.h>
 #include <sys/ioctl.h>
@@ -94,6 +95,46 @@ static ssize_t tty_write(struct device *tty, struct file *file, const void *buff
                         vga_enable_cursor();
                     }
                 }
+            }
+
+            // Move cursor commands
+            if (str[i] == 'A') {
+                if (nums[0] <= 0) {
+                    nums[0] = 1;
+                }
+                data->y = MAX(0, data->y - nums[0]);
+            }
+
+            if (str[i] == 'B') {
+                if (nums[0] <= 0) {
+                    nums[0] = 1;
+                }
+                data->y = MIN(data->y_max - 1, data->y + nums[0]);
+            }
+
+            if (str[i] == 'C') {
+                if (nums[0] <= 0) {
+                    nums[0] = 1;
+                }
+                data->x = MIN(data->x_max - 1, data->x + nums[0]);
+            }
+
+            if (str[i] == 'D') {
+                if (nums[0] <= 0) {
+                    nums[0] = 1;
+                }
+                data->x = MAX(0, data->x - nums[0]);
+            }
+
+            // Save and restore curso
+            if (str[i] == 's') {
+                data->saved_x = data->x;
+                data->saved_y = data->y;
+            }
+
+            if (str[i] == 'u') {
+                data->x = data->saved_x;
+                data->y = data->saved_y;
             }
 
             /* Set Cursor Command */
@@ -633,6 +674,8 @@ void init_tty_device(dev_t dev) {
     data->input_buffer = NULL;
     data->x = 0;
     data->y = 0;
+    data->saved_x = 0;
+    data->saved_y = 0;
     data->x_max = DEFAULT_TTY_WIDTH;
     data->y_max = DEFUALT_TTY_HEIGHT;
     data->buffer = malloc(DEFAULT_TTY_WIDTH * DEFUALT_TTY_HEIGHT);
