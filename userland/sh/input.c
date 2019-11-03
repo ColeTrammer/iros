@@ -189,7 +189,7 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
         free(path);
         init_suggestion(suggestions, (size_t) i, 0, list[i]->d_name, S_ISDIR(stat_struct.st_mode) ? "/" : " ");
 
-        if (strcmp(dirname, ".") == 0) {
+        if (last_slash == NULL) {
             suggestions[i].index = to_match_start - line;
         } else {
             suggestions[i].index = to_match_start - line + (currname - dirname);
