@@ -334,5 +334,5 @@ int access(const char *path, int mode) {
     (void) path;
     (void) mode;
 
-    return 0;
+    return -1;
 }

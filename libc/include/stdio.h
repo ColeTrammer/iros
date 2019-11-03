@@ -17,6 +17,10 @@
 
 #define FOPEN_MAX 16
 
+#define L_tmpnam 16
+#define P_tmpdir "/tmp"
+#define TMP_MAX 25
+
 #define EOF (-1)
 
 #ifdef __cplusplus
@@ -109,6 +113,7 @@ int rename(const char *old_path, const char *new_path);
 
 ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restrict stream);
 
+char *tmpnam(char *s);
 FILE *tmpfile(void);
 
 FILE *popen(const char *command, const char *mode);
