@@ -79,6 +79,14 @@ static int suggestion_compar(const void *a, const void *b) {
     return strcmp(((const struct suggestion*) a)->suggestion, ((const struct suggestion*) b)->suggestion);
 }
 
+static void init_suggestion(struct suggestion *suggestions, size_t at, size_t suggestion_index, const char *name, const char *post) {
+    suggestions[at].length = strlen(name) + strlen(post);
+    suggestions[at].index = suggestion_index;
+    suggestions[at].suggestion = malloc(suggestions[at].length + 1);
+    strcpy(suggestions[at].suggestion, name);
+    strcat(suggestions[at].suggestion, post);
+}
+
 static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestions) {
     char *path_var = getenv("PATH");
     if (path_var == NULL) {
@@ -97,12 +105,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
             suggestions = realloc(suggestions, ((*num_suggestions) + num_found) * sizeof(struct suggestion));
 
             for (int i = 0; i < num_found; i++) {
-                suggestions[(*num_suggestions) + i].length = strlen(list[i]->d_name) + 1;
-                suggestions[(*num_suggestions) + i].index = 0;
-                suggestions[(*num_suggestions) + i].suggestion = malloc(suggestions[(*num_suggestions) + i].length + 1);
-                strcpy(suggestions[(*num_suggestions) + i].suggestion, list[i]->d_name);
-                strcat(suggestions[(*num_suggestions) + i].suggestion, " ");
-
+                init_suggestion(suggestions, (*num_suggestions) + i, 0, list[i]->d_name, " ");
                 free(list[i]);
             }
 
@@ -118,13 +121,8 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
     for (size_t i = 0; i < NUM_BUILTINS; i++) {
         if (strstr(builtins[i].name, line) == builtins[i].name) {
             suggestions = realloc(suggestions, ((*num_suggestions) + 1) * sizeof(struct suggestion));
-            
-            suggestions[*num_suggestions].length = strlen(builtins[i].name) + 1;
-            suggestions[*num_suggestions].index = 0;
-            suggestions[*num_suggestions].suggestion = malloc(suggestions[*num_suggestions].length + 1);
-            
-            strcpy(suggestions[*num_suggestions].suggestion, builtins[i].name);
-            strcat(suggestions[*num_suggestions].suggestion, " ");
+
+            init_suggestion(suggestions, *num_suggestions, 0, builtins[i].name, " ");
 
             (*num_suggestions)++;
         }
@@ -136,9 +134,11 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
 }
 
 static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
-    char *last_space = strrchr(line, ' ');
     *num_suggestions = 0;
-    if (last_space == NULL) {
+
+    char *last_space = strrchr(line, ' ');
+    bool is_first_word = last_space == NULL;
+    if (is_first_word) {
         last_space = line - 1;
     }
 
@@ -149,7 +149,7 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
     char *dirname;
     char *currname;
     if (last_slash == NULL) {
-        if (strrchr(line, ' ') == NULL) {
+        if (is_first_word) {
             free(to_match);
             return get_path_suggestions(line, num_suggestions);
         }
@@ -172,35 +172,37 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
 
     struct suggestion *suggestions = malloc(*num_suggestions * sizeof(struct suggestion));
 
-    for (size_t i = 0; i < *num_suggestions; i++) {
-        suggestions[i].length = strlen(list[i]->d_name) + 1;
-        suggestions[i].suggestion = malloc(suggestions[i].length + 1);
-        strcpy(suggestions[i].suggestion, list[i]->d_name);
-        
+    for (ssize_t i = 0; i < (ssize_t) *num_suggestions; i++) {
         struct stat stat_struct;
         char *path = malloc(strlen(dirname) + strlen(list[i]->d_name) + 2);
         strcpy(path, dirname);
         strcat(path, "/");
         strcat(path, list[i]->d_name);
         if (stat(path, &stat_struct)) {
-            free(path);
-            (*num_suggestions)--;
-            i--;
-            continue;
+            goto suggestions_skip_entry;
         }
-        free(path);
 
-        if (S_ISDIR(stat_struct.st_mode)) {
-            strcat(suggestions[i].suggestion, "/");
-        } else {
-            strcat(suggestions[i].suggestion, " ");
+        if (is_first_word && (!(stat_struct.st_mode & S_IXUSR) || !(S_ISREG(stat_struct.st_mode)))) {
+            goto suggestions_skip_entry;
         }
+
+        free(path);
+        init_suggestion(suggestions, (size_t) i, 0, list[i]->d_name, S_ISDIR(stat_struct.st_mode) ? "/" : " ");
+
         if (strcmp(dirname, ".") == 0) {
             suggestions[i].index = to_match_start - line;
         } else {
             suggestions[i].index = to_match_start - line + (currname - dirname);
         }
         free(list[i]);
+        continue;
+    
+    suggestions_skip_entry:
+        free(path);
+        (*num_suggestions)--;
+        memmove(list + i, list + i + 1, ((*num_suggestions) - i) * sizeof(struct dirent*));
+        i--;
+        continue;
     }
 
     free(list);
