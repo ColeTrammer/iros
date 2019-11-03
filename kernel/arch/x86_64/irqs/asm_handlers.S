@@ -148,3 +148,4 @@ sys_call_table:
     .quad arch_sys_dup
     .quad arch_sys_getpgid
     .quad arch_sys_sleep
+    .quad arch_sys_access

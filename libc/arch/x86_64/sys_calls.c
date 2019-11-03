@@ -331,8 +331,11 @@ unsigned int sleep(unsigned int seconds) {
 }
 
 int access(const char *path, int mode) {
-    (void) path;
-    (void) mode;
-
-    return -1;
+    int ret;
+    asm volatile( "movq $32, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movl %2, %%edx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
 }

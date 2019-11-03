@@ -819,3 +819,18 @@ void arch_sys_sleep(struct process_state *process_state) {
     current->sleeping = false;
     SYS_RETURN(seconds);
 }
+
+void arch_sys_access(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    const char *_path = (const char*) process_state->cpu_state.rsi;
+    int mode = (int) process_state->cpu_state.rdx;
+
+    struct process *current = get_current_process();
+    char *path = get_full_path(current->cwd, _path);
+
+    int ret = fs_access(path, mode);
+    free(path);
+
+    SYS_RETURN(ret);
+}

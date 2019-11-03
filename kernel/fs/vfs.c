@@ -750,6 +750,34 @@ struct file *fs_clone(struct file *file) {
     return new_file;
 }
 
+int fs_access(const char *path, int mode) {
+    assert(path);
+
+    struct tnode *tnode = iname(path);
+    if (!tnode) {
+        return -ENOENT;
+    }
+
+    if (mode == F_OK) {
+        return 0;
+    }
+
+    struct inode *inode = tnode->inode;
+    if (mode &= R_OK && !(inode->mode & S_IRUSR)) {
+        return EPERM;
+    }
+
+    if (mode &= W_OK && !(inode->mode & S_IWUSR)) {
+        return EPERM;
+    }
+
+    if (mode &= X_OK && !(inode->mode & S_IXUSR)) {
+        return EPERM;
+    }
+
+    return 0;
+}
+
 struct file *fs_dup(struct file *file) {
     if (file == NULL) { return NULL; }
 
