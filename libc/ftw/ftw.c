@@ -189,9 +189,14 @@ int nftw(const char *path, fn_t fn, int fd_limit, int flags) {
 
     assert(!(flags & FTW_CHDIR));
     assert(!(flags & FTW_PHYS));
-    assert(strrchr(path, '/') != path + strlen(path) - 1); // Shoud be fixed
 
-    int ret = add_dirent(strdup(path), 0);
+    char *last_slash = strrchr(path, '/');
+    char *path_copy = strdup(path);
+    if (last_slash == path + strlen(path) - 1) {
+        path_copy[strlen(path) - 1] = '\0';
+    }
+
+    int ret = add_dirent(path_copy, 0);
     if (ret != 0) {
         goto cleanup;
     }
