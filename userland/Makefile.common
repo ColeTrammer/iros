@@ -12,14 +12,14 @@ $(EXECUTABLE): $(OBJS)
 $(EXECUTABLE).native: $(OBJS:.o=.native.o)
 	gcc -o $@ $(OBJS:.o=.native.o)
 
-%.native.o: %.c
+$(BUILDDIR)/%.native.o: $(ROOT)/%.c
 	gcc -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
-%.o: %.c
+$(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
-%.o: %.S
+$(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 .PHONY: install

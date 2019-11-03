@@ -123,16 +123,16 @@ $(BUILDDIR)/libc/libm.a: $(LIBM_OBJS)
 	$(AR) rcs $@ $^
 
 # Makes object file from any .c or .S file
-%.o: %.c
+$(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
-%.o: %.S
+$(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)
 
-%.libk.o: %.c
+$(BUILDDIR)/%.libk.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
-%.libk.o: %.S
+$(BUILDDIR)/%.libk.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 # Cleans by removing all .o, .d, and .a files

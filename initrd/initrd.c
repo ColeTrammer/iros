@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
                 }
                 printf("File: %s\n", dir->d_name);
 
-                strcpy(entry.name, dir->d_name);
+                strncpy(entry.name, dir->d_name, sizeof(entry.name));
                 memset(entry.name + strlen(dir->d_name), '\0', MAX_FILE_NAME_LENGTH - strlen(dir->d_name));
 
                 strncpy(file_name + dir_name_length, dir->d_name, MAX_FILE_NAME_LENGTH);

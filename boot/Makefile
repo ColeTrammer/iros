@@ -69,10 +69,10 @@ $(BUILDDIR)/boot/$(ARCHDIR)/crtbegin.o $(BUILDDIR)/boot/$(ARCHDIR)/crtend.o:
 	cp `$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` $@
 
 # Builds any .o file from its .c or .S counterpart
-%.o: %.c
+$(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
-%.o: %.S
+$(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
 # Cleans by deleting .o files

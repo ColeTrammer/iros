@@ -30,7 +30,7 @@ all: os_2.iso os_2.img
 # Makes iso - headers must be installed first, then each PROJECT
 # Makes iso by creating a directory with kernel image and grub.cfg,
 # then calling grub-mkrescue appropriately
-os_2.iso: install-sources install-headers $(PROJECTS)
+os_2.iso: prepare-build install-headers $(PROJECTS)
 	mkdir -p $(ISODIR)/boot/grub
 	mkdir -p $(ISODIR)/modules
 	$(OBJCOPY) -S $(SYSROOT)/boot/boot_loader.o $(ISODIR)/boot/boot_loader.o
@@ -75,13 +75,13 @@ run:
 debug:
 	$(ROOT)/qemu.sh --debug
 
-.PHONY: install-sources
-install-sources:
-	mkdir -p $(BUILDDIR)
-	cd $(ROOT); \
-	for dir in $(PROJECTS); do \
-	  find ./$$dir \( -name '*.c' -o -name '*.h' -o -name '*.S' -o -name '*.cpp' \) -exec cp --preserve=timestamps --parents -u \{\} $(BUILDDIR) \;; \
-	done
+SOURCES:=$(shell find $(ROOT) -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+OBJECTS:=$(patsubst $(ROOT)/%.c, $(BUILDDIR)/%.o, $(SOURCES))
+OBJDIRS:=$(dir $(OBJECTS))
+
+.PHONY: prepare-build
+prepare-build:
+	mkdir --parents $(OBJDIRS)
 
 # Installs headers by calling each project's install-headers
 .PHONY: install-headers

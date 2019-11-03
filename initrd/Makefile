@@ -54,16 +54,16 @@ $(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o $(FILES) $(PROGRAMS)
 	$< files $@
 
 # Builds any .o file from its .c, and generates its makefile dependencies with -MD
-$(BUILDDIR)/initrd/initrd.o: $(BUILDDIR)/initrd/initrd.c
-	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
+$(BUILDDIR)/initrd/initrd.o: $(ROOT)/initrd/initrd.c
+	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -Wno-stringop-truncation
 
-%: %.S
+$(BUILDDIR)/%: $(ROOT)/%.S
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
-%: %.c
+$(BUILDDIR)/%: $(ROOT)/%.c
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
-%: %.cpp
+$(BUILDDIR)/%: $(ROOT)/%.cpp
 	$(CXX) -MD -o $@ $< $(CPPFLAGS) -T programs/link.ld
 
 # Cleans by deleting .o, and .d files

@@ -93,10 +93,10 @@ $(BUILDDIR)/kernel/$(ARCHDIR)/crtbegin.o $(BUILDDIR)/kernel/$(ARCHDIR)/crtend.o:
 	cp --preserve=timestamps `$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` $@
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
-%.o: %.c
+$(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
-%.o: %.S
+$(BUILDDIR)%.o: $(ROOT)/%.S
 	$(CC) -o $@ -c $< $(CFLAGS) $(CPPFLAGS)
 
 # Cleans by deleting .o, and .d files
