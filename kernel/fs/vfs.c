@@ -13,6 +13,7 @@
 #include <kernel/fs/dev.h>
 #include <kernel/fs/ext2.h>
 #include <kernel/fs/pipe.h>
+#include <kernel/fs/tmp.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/initrd.h>
@@ -766,6 +767,7 @@ void init_vfs() {
     init_dev();
     init_ext2();
     init_pipe();
+    init_tmpfs();
 
     /* Mount INITRD as root */
     int error = fs_mount("", "/", "initrd");
@@ -774,6 +776,10 @@ void init_vfs() {
     /* Mount dev at /dev */
     error = fs_mount("", "/dev", "dev");
     assert(error == 0);
+
+    // Mount tmpfs at /tmp
+    // error = fs_mount("", "/tmp", "tmpfs");
+    // assert(error == 0);
 }
 
 char *get_full_path(char *cwd, const char *relative_path) {
