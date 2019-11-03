@@ -1,6 +1,7 @@
 #ifndef _SYS_TIME_H
 #define _SYS_TIME_H 1
 
+#include <sys/select.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus
