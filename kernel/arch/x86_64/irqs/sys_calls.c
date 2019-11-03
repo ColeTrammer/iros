@@ -480,6 +480,11 @@ void arch_sys_chdir(struct process_state *process_state) {
         SYS_RETURN(-ENOENT);
     }
 
+    if (!(tnode->inode->flags & FS_DIR)) {
+        free(path);
+        SYS_RETURN(-ENOTDIR);
+    }
+
     process->cwd = get_tnode_path(tnode);
     debug_log("Chdir: [ %s ]\n", process->cwd);
 
