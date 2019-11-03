@@ -23,5 +23,15 @@ else
 
     set +e
 
-    qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors -serial stdio -hda os_2.img -boot d -no-reboot -no-shutdown
+    qemu-system-$ARCH \
+        -cdrom os_2.iso \
+        -d cpu_reset,guest_errors \
+        -serial stdio \
+        -hda os_2.img \
+        -boot d \
+        -no-reboot \
+        -no-shutdown \
+        -object filter-dump,id=hue,netdev=breh,file=e1000.pcap \
+        -netdev user,id=breh,hostfwd=tcp:127.0.0.1:8888-10.0.2.15:8888,hostfwd=tcp:127.0.0.1:8823-10.0.2.15:23 \
+        -device e1000,netdev=breh
 fi

@@ -11,6 +11,7 @@ initrd/files
 *.dis
 *.log
 *.img
+*.pcap
 
 # GDB
 .gdbinit

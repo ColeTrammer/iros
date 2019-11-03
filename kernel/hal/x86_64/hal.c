@@ -6,6 +6,7 @@
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
+#include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
@@ -33,6 +34,7 @@ void init_drivers() {
     init_cmos();
     init_serial_port_device(SERIAL_COM1_PORT);
     init_virtual_devices();
+    init_pci();
 
     /* No idea what this should be... */
     init_tty_device(0x50);
