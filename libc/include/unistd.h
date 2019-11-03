@@ -24,7 +24,7 @@ extern char **environ;
 
 void *sbrk(intptr_t increment);
 void _exit(int status) __attribute__((__noreturn__));
-int execve(const char *file, char *const argv[], char *const envp[]);
+pid_t fork();
 pid_t getpid();
 uid_t getuid();
 int setpgid(pid_t pid, pid_t pgid);
@@ -37,10 +37,13 @@ ssize_t read(int fd, void *buf, size_t count);
 ssize_t write(int fd, const void * buf, size_t count);
 int close(int fd);
 
-int execv(const char *path, char *const[]);
+int execl(const char *path, const char *arg, ...);
+int execle(const char *path, const char *arg, ...);
+int execlp(const char *name, const char *arg, ...);
+int execv(const char *path, char *const args[]);
+int execve(const char *path, char *const argv[], char *const envp[]);
 int execvp(const char *file, char *const argv[]);
 int execvpe(const char *file, char *const argv[], char *const envp[]);
-pid_t fork();
 
 int isatty(int fd);
 int tcsetpgrp(int fd, pid_t pgid);
