@@ -147,3 +147,4 @@ sys_call_table:
     .quad arch_sys_sigprocmask
     .quad arch_sys_dup
     .quad arch_sys_getpgid
+    .quad arch_sys_sleep

@@ -7,6 +7,7 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/process_state.h>
+#include <kernel/hal/timer.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -116,6 +117,10 @@ void sched_run_next() {
             prev_save->next->prev = prev_save;
 
             free_process(to_remove, true);
+        } else if (to_run->sleeping && to_run->sched_state == WAITING) {
+            if (get_time() >= to_run->sleep_end) {
+                break;
+            }
         }
 
         // Skip processes that are sleeping

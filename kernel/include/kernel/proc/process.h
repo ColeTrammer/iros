@@ -43,6 +43,9 @@ struct process {
     sigset_t sig_mask;
     sigset_t sig_pending;
 
+    bool sleeping;
+    time_t sleep_end;
+
     struct arch_fpu_state fpu;
 };
 

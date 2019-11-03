@@ -321,6 +321,15 @@ pid_t getpgid(pid_t pid) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
+unsigned int sleep(unsigned int seconds) {
+    unsigned int ret;
+    asm volatile( "movq $31, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(seconds) : "rdi", "esi", "eax", "memory" );
+    return ret;
+}
+
 int access(const char *path, int mode) {
     (void) path;
     (void) mode;

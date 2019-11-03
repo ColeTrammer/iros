@@ -800,3 +800,22 @@ void arch_sys_getpgid(struct process_state *process_state) {
 
     SYS_RETURN(proc_get_pgid(pid));
 }
+
+void arch_sys_sleep(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    unsigned int seconds = (unsigned int) process_state->cpu_state.rsi;
+
+    debug_log("Sleeping: [ %u ]\n", seconds);
+
+    struct process *current = get_current_process();
+
+    disable_interrupts();
+    current->sleeping = true;
+    current->sleep_end = get_time() + seconds;
+    current->sched_state = WAITING;
+    yield();
+
+    current->sleeping = false;
+    SYS_RETURN(seconds);
+}
