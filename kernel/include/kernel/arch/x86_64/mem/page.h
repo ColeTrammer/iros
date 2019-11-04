@@ -40,4 +40,6 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys);
 void map_page_info(struct virt_page_info *info);
 struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags);
 
+void create_phys_id_map();
+
 #endif /* _KERNEL_ARCH_X86_64_MEM_PAGE_H */

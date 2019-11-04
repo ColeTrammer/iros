@@ -8,6 +8,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/mem/kernel_vm.h>
 #include <kernel/hal/output.h>
 #include <kernel/proc/process.h>
 
@@ -319,12 +320,6 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
             }
         }
 
-        // Map entries at PML4_MAX - 3 to a replica of phys memory
-        debug_log("Mapping physical address identity map: [ %#lX ]\n", get_total_phys_memory());
-        for (uintptr_t i = 0; i < 0x1000000; i += PAGE_SIZE) {
-            map_phys_page(i, VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0) + i, VM_WRITE | VM_GLOBAL | VM_NO_EXEC);
-        }
-
         while (list != NULL) {
             if (list->type != VM_KERNEL_PHYS_ID) {
                 map_vm_region_flags(list);
@@ -339,6 +334,14 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
     spin_unlock(&temp_page_lock);
 
     return pml4_addr;
+}
+
+void create_phys_id_map() {
+    // Map entries at PML4_MAX - 3 to a replica of phys memory
+    debug_log("Mapping physical address identity map: [ %#lX ]\n", get_total_phys_memory());
+    for (uintptr_t i = 0; i < get_total_phys_memory(); i += PAGE_SIZE) {
+        map_phys_page(i, VIRT_ADDR(MAX_PML4_ENTRIES - 3UL, 0, 0, 0) + i, VM_WRITE | VM_GLOBAL | VM_NO_EXEC);
+    }
 }
 
 void load_paging_structure(uintptr_t phys_addr) {

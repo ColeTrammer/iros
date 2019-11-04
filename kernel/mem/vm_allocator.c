@@ -75,6 +75,10 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     uintptr_t new_structure = create_paging_structure(kernel_vm_list, true);
     load_paging_structure(new_structure);
 
+#if ARCH==X86_64
+    create_phys_id_map();
+#endif /* ARCH==X86_64 */
+
     debug_log("Finished Initializing VM Allocator\n");
 }
 
