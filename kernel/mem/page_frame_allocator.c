@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/param.h>
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
@@ -58,6 +59,12 @@ void free_phys_page(uintptr_t phys_addr) {
     spin_unlock(&bitmap_lock);
 }
 
+static unsigned long phys_memory_max = 0;
+
+unsigned long get_total_phys_memory() {
+    return phys_memory_max;
+}
+
 void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start, uintptr_t initrd_phys_end, uint32_t *multiboot_info) {
     mark_used(0, 0x100000); // assume none of this area is available
     mark_used(kernel_phys_start, kernel_phys_end - kernel_phys_start);
@@ -70,6 +77,7 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
             while ((uint32_t*) mem < data + data[1] / sizeof(uint32_t)) {
                 if ((uint32_t) mem[2] == 2) {
                     mark_used(mem[0] & ~0xFFF, mem[1]);
+                    phys_memory_max = MAX((mem[0] & ~0xFFF) + mem[1], phys_memory_max);
                 }
                 mem += data[2] / sizeof(uintptr_t);
             }
@@ -81,4 +89,5 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
     }
 
     debug_log("Finished Initializing Page Frame Allocator\n");
+    debug_log("Max phys memory: [ %#lX ]\n", phys_memory_max);
 }

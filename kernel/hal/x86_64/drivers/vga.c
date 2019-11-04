@@ -2,6 +2,7 @@
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/output.h>
@@ -20,9 +21,8 @@ void vga_disable_cursor() {
 }
 
 void update_vga_buffer() {
-    map_phys_page(VGA_PHYS_ADDR & ~0xFFF, VGA_VIRT_ADDR, VM_NO_EXEC | VM_GLOBAL | VM_WRITE);
-    vga_buffer = (uint16_t*) VGA_VIRT_ADDR;
-    debug_log("VGA Buffer Updated: [ %#.16lX ]\n", VGA_VIRT_ADDR);
+    vga_buffer = create_phys_addr_mapping(VGA_PHYS_ADDR);
+    debug_log("VGA Buffer Updated: [ %#.16lX ]\n", (uintptr_t) vga_buffer);
 
     vga_enable_cursor();
 }

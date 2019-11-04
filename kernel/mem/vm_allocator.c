@@ -9,6 +9,7 @@
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
@@ -16,6 +17,9 @@
 #include <kernel/util/spinlock.h>
 
 static struct vm_region *kernel_vm_list = NULL;
+#if ARCH==X86_64
+static struct vm_region kernel_phys_id;
+#endif /* ARCH==X86_64 */
 static struct vm_region kernel_text;
 static struct vm_region kernel_rod;
 static struct vm_region kernel_data;
@@ -24,11 +28,20 @@ static struct vm_region initrd;
 static spinlock_t kernel_vm_lock = SPINLOCK_INITIALIZER;
 
 void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
+#if ARCH==X86_64
+    kernel_phys_id.start = VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0);
+    kernel_phys_id.end = kernel_phys_id.start + get_total_phys_memory();
+    kernel_phys_id.flags = VM_NO_EXEC | VM_GLOBAL | VM_WRITE;
+    kernel_phys_id.type = VM_KERNEL_PHYS_ID;
+    kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_phys_id);
+    assert(kernel_vm_list == &kernel_phys_id);
+#endif /* ARCH==X86_64 */
+
     kernel_text.start = KERNEL_VM_START & ~0xFFF;
     kernel_text.end = kernel_text.start + NUM_PAGES(KERNEL_TEXT_START, KERNEL_TEXT_END) * PAGE_SIZE;
     kernel_text.flags = VM_GLOBAL;
     kernel_text.type = VM_KERNEL_TEXT;
-    kernel_vm_list = &kernel_text;
+    kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_text);
 
     kernel_rod.start = kernel_text.end;
     kernel_rod.end = kernel_rod.start + NUM_PAGES(KERNEL_ROD_START, KERNEL_ROD_END) * PAGE_SIZE;
@@ -180,6 +193,20 @@ void remove_vm_pages_start(size_t n, uint64_t type) {
     for (size_t i = 0; i < n; i++) {
         unmap_page(old_start + i * PAGE_SIZE);
     }
+}
+
+struct vm_region *find_first_kernel_vm_region() {
+    struct vm_region *list = kernel_vm_list;
+    struct vm_region *first = list;
+    while (list != NULL) {
+        if (list->start < first->start) {
+            first = list;
+        }
+
+        list = list->next;
+    }
+
+    return first;
 }
 
 struct vm_region *find_vm_region(uint64_t type) {

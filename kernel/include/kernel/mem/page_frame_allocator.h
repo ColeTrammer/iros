@@ -11,4 +11,6 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
 uintptr_t get_next_phys_page();
 void free_phys_page(uintptr_t phys_addr);
 
+unsigned long get_total_phys_memory();
+
 #endif /* _KERNEL_MEM_PAGE_FRAME_ALLOCATOR_H */

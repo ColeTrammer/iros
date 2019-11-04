@@ -15,9 +15,10 @@ struct vm_region {
     uint64_t flags;
 
 /* Defines global vm_regions */
-#define VM_KERNEL_TEXT (0)
-#define VM_KERNEL_ROD (1)
-#define VM_KERNEL_DATA (2)
+#define VM_KERNEL_PHYS_ID (0)
+#define VM_KERNEL_TEXT (1)
+#define VM_KERNEL_ROD (2)
+#define VM_KERNEL_DATA (3)
 #define VM_INITRD (4)
 #define VM_KERNEL_HEAP (5)
 

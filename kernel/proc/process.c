@@ -158,7 +158,7 @@ struct process *load_process(const char *file_name) {
     struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
     process_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
     process_stack->type = VM_PROCESS_STACK;
-    process_stack->start = find_vm_region(VM_KERNEL_TEXT)->start - 2 * PAGE_SIZE;
+    process_stack->start = find_first_kernel_vm_region()->start - 2 * PAGE_SIZE;
     process_stack->end = process_stack->start + PAGE_SIZE;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     map_vm_region(process_stack);

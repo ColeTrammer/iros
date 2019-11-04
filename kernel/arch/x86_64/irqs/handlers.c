@@ -50,7 +50,9 @@ void handle_page_fault(struct stack_state *stack, uintptr_t address, uintptr_t e
 
     struct process *current = get_current_process();
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, stack->rip, address, error);
-    signal_process(current->pid, SIGSEGV);
+    if (current->pid != 1) {
+        signal_process(current->pid, SIGSEGV);
+    }
 
     // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();

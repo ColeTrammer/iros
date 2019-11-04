@@ -49,6 +49,10 @@ struct pci_configuration {
     uint8_t interrupt_pin;
     uint8_t min_grant;
     uint8_t max_latency;
+
+    uint8_t bus;
+    uint8_t slot;
+    uint8_t func;
 } __attribute__((packed));
 
 static inline uint32_t pci_make_config_address(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
@@ -66,6 +70,24 @@ static inline uint16_t pci_read_config_word(uint8_t bus, uint8_t slot, uint8_t f
     return (uint16_t) ((value >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
+static inline void pci_write_config_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint16_t value) {
+    // Tell controller which address to read/write from
+    outl(PCI_CONFIG_ADDRESS, pci_make_config_address(bus, slot, func, offset));
+
+    // Read that value
+    uint32_t to_write = inl(PCI_CONFIG_DATA);
+
+    // Set the correct half of the word to be value
+    if (offset & 2) {
+        to_write = (to_write & 0x0000FFFF) | (value >> 16);
+    } else {
+        to_write = (to_write & 0xFFFF0000) | value;
+    }
+
+    // Output new value
+    outl(PCI_CONFIG_DATA, to_write);
+}
+
 static inline uint16_t pci_get_vendor(uint8_t bus, uint8_t slot) {
     return pci_read_config_word(bus, slot, 0, 0);
 }
@@ -75,6 +97,16 @@ static inline void pci_read_configuation(uint8_t bus, uint8_t slot, uint8_t func
     for (uint16_t offset = 0; offset < sizeof(struct pci_configuration); offset += sizeof(uint16_t)) {
         buffer[offset / sizeof(uint16_t)] = pci_read_config_word(bus, slot, func, offset);
     }
+
+    config->bus = bus;
+    config->slot = slot;
+    config->func = func;
+}
+
+static inline void pci_enable_bus_mastering(struct pci_configuration *config) {
+    config->command |= (1 << 2) | (1 << 0); // Enable the pci device to respond to pic and io accesses
+
+    pci_write_config_word(config->bus, config->slot, config->func, ((uintptr_t) &config->command) - ((uintptr_t) config), config->command);
 }
 
 void init_pci();

@@ -201,7 +201,7 @@ uintptr_t clone_process_paging_structure() {
     get_current_process()->arch_process.cr3 = get_phys_addr((uintptr_t) pml4);
     load_cr3(get_phys_addr((uintptr_t) pml4));
 
-    for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 2; i++) {
+    for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 3; i++) {
         if (PML4_BASE[i] != 0) {
             map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
             uint64_t *temp_pdp = TEMP_PAGE;
@@ -319,8 +319,16 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
             }
         }
 
+        // Map entries at PML4_MAX - 3 to a replica of phys memory
+        debug_log("Mapping physical address identity map: [ %#lX ]\n", get_total_phys_memory());
+        for (uintptr_t i = 0; i < 0x1000000; i += PAGE_SIZE) {
+            map_phys_page(i, VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0) + i, VM_WRITE | VM_GLOBAL | VM_NO_EXEC);
+        }
+
         while (list != NULL) {
-            map_vm_region_flags(list);
+            if (list->type != VM_KERNEL_PHYS_ID) {
+                map_vm_region_flags(list);
+            }
             list = list->next;
         }
 
