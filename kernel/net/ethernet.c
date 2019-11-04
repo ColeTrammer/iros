@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -9,7 +10,7 @@ struct ethernet_packet *net_create_ethernet_packet(struct mac_address dest, stru
 
     packet->mac_destination = dest;
     packet->mac_source = source;
-    packet->ether_type = type;
+    packet->ether_type = htons(type);
 
     return packet;
 }

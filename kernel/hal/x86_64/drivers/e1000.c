@@ -40,7 +40,7 @@ static void init_recieve_descriptors(struct e1000_data *data) {
 
     for (int i = 0; i < E1000_NUM_RECIEVE_DESCS; i++) {
         data->rx_virt_addrs[i] = malloc(8192 + 16);
-        data->rx_descs[i].addr = get_phys_addr((uintptr_t) data->rx_virt_addrs);
+        data->rx_descs[i].addr = get_phys_addr((uintptr_t) data->rx_virt_addrs[i]);
         data->rx_descs[i].status = 0;
     }
 
@@ -61,7 +61,7 @@ static void init_transmit_descriptors(struct e1000_data *data) {
 
     for (int i = 0; i < E1000_NUM_TRANSMIT_DESCS; i++) {
         data->tx_virt_addrs[i] = malloc(8192 + 16);
-        data->tx_descs[i].addr = get_phys_addr((uintptr_t) data->tx_virt_addrs);
+        data->tx_descs[i].addr = get_phys_addr((uintptr_t) data->tx_virt_addrs[i]);
         data->tx_descs[i].cmd = 0;
         data->tx_descs[i].status = E1000_TSTA_DD;
     }
@@ -186,10 +186,14 @@ void init_intel_e1000(struct pci_configuration *config) {
 
     net_init_arp_packet((struct arp_packet*) raw_packet->payload, ARP_OPERATION_REQUEST, 
         mac,
-        (struct ip_v4_address) { { 192, 168, 0, 29 } },
+        (struct ip_v4_address) { { 10, 0, 2, 15 } },
         MAC_BROADCAST,
-        (struct ip_v4_address) { { 192, 168, 0, 1 } }
+        (struct ip_v4_address) { { 10, 0, 2, 2 } }
     );
+
+    for (size_t i = 0; i < sizeof(struct ethernet_packet) + sizeof(struct arp_packet); i++) {
+        debug_log("Packet byte: [ %lu, %#X ]\n", i, ((uint8_t *) raw_packet)[i]);
+    }
 
     transmit(raw_packet, sizeof(struct ethernet_packet) + sizeof(struct arp_packet));
 
