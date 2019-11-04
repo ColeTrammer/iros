@@ -26,6 +26,8 @@
 #define ICW4_BUF_MASTER	0x0C		/* Buffered mode/master */
 #define ICW4_SFNM	    0x10		/* Special fully nested (not) */
 
+#define PIC_SLAVE_IRQ 2
+
 #define PIC_IRQS 8
 #define PIC_IRQ_OFFSET 0x20
 

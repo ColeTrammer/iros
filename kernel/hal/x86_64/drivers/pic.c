@@ -8,7 +8,7 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/arch/x86_64/proc/process.h>
 
-static void (*handlers[2 * PIC_IRQS])(void);
+static void (*handlers[2 * PIC_IRQS])(void) = { 0 };
 
 void sendEOI(unsigned int irq_line) {
     if (irq_line >= 8) {
@@ -87,7 +87,7 @@ void pic_generic_handler() {
     uint16_t isr = get_isr();
 
     for (unsigned int i = 0; i < 2 * PIC_IRQS; i++) {
-        if (isr & (1 << i)) {
+        if (isr & (1 << i) && i != PIC_SLAVE_IRQ) {
             irq_line = i;
             break;
         }
@@ -121,6 +121,8 @@ void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, boo
 void init_pic() {
     remap(PIC_IRQ_OFFSET, PIC_IRQ_OFFSET + PIC_IRQS);
     for (uint8_t i = 0; i < 2 * PIC_IRQS; i++) {
-        disable_irq_line(i);
+        if (i != PIC_SLAVE_IRQ) {
+            disable_irq_line(i);
+        }
     }
 }

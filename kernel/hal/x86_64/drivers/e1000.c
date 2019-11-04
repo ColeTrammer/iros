@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -88,10 +89,26 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
 
 static void recieve() {
     while (data->rx_descs[data->current_rx].status & 0x1) {
-        // uint8_t *buf = data->rx_virt_addrs[data->current_rx];
+        uint8_t *buf = data->rx_virt_addrs[data->current_rx];
         // uint16_t len = data->rx_descs[data->current_rx].length;
 
         debug_log("Recieving packet...\n");
+
+        struct ethernet_packet *raw_packet = (struct ethernet_packet*) buf;
+        struct arp_packet *arp_packet = (struct arp_packet*) raw_packet->payload;
+
+        assert(arp_packet->operation == htons(ARP_OPERATION_REPLY));
+        debug_log("Router MAC Address: [ %02x:%02x:%02x:%02x:%02x:%02x ]\n", 
+            arp_packet->mac_sender.addr[0], arp_packet->mac_sender.addr[1], arp_packet->mac_sender.addr[2],
+            arp_packet->mac_sender.addr[3], arp_packet->mac_sender.addr[4], arp_packet->mac_sender.addr[5]);
+
+        debug_log("Router IP Address: [ %u.%u.%u.%u ]\n",
+            arp_packet->ip_sender.addr[0], arp_packet->ip_sender.addr[1],
+            arp_packet->ip_sender.addr[2], arp_packet->ip_sender.addr[3]);
+
+        debug_log("Our IP Address: [ %u.%u.%u.%u ]\n",
+            arp_packet->ip_target.addr[0], arp_packet->ip_target.addr[1],
+            arp_packet->ip_target.addr[2], arp_packet->ip_target.addr[3]);
 
         data->rx_descs[data->current_rx].status = 0;
 
@@ -175,8 +192,6 @@ void init_intel_e1000(struct pci_configuration *config) {
 
     register_irq_line_handler(handle_interrupt, config->interrupt_line, true);
 
-    enable_interrupts();
-
     struct ethernet_packet *raw_packet = net_create_ethernet_packet(
         MAC_BROADCAST,
         mac,
@@ -191,26 +206,7 @@ void init_intel_e1000(struct pci_configuration *config) {
         (struct ip_v4_address) { { 10, 0, 2, 2 } }
     );
 
-    for (size_t i = 0; i < sizeof(struct ethernet_packet) + sizeof(struct arp_packet); i++) {
-        debug_log("Packet byte: [ %lu, %#X ]\n", i, ((uint8_t *) raw_packet)[i]);
-    }
-
     transmit(raw_packet, sizeof(struct ethernet_packet) + sizeof(struct arp_packet));
 
-    for (;;) {
-        uint32_t status = read_command(data, 0xc0);
-        if (status & 0x04) {
-            write_command(data, E1000_CTRL_REG, read_command(data, E1000_CTRL_REG) | E1000_ECTRL_SLU);
-        } else if (status & 0x10) {
-            // Threshold ??
-        } else if (status & 0x80) {
-            recieve();
-        }
-
-        barrier();
-    }
-
     free(raw_packet);
-
-    while (1);
 }

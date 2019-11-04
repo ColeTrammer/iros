@@ -113,8 +113,8 @@ struct e1000_data {
     struct e1000_recieve_desc *rx_descs;
     struct e1000_transmit_desc *tx_descs;
 
-    struct uint8_t *rx_virt_addrs[E1000_NUM_RECIEVE_DESCS];
-    struct uint8_t *tx_virt_addrs[E1000_NUM_TRANSMIT_DESCS];
+    uint8_t *rx_virt_addrs[E1000_NUM_RECIEVE_DESCS];
+    uint8_t *tx_virt_addrs[E1000_NUM_TRANSMIT_DESCS];
 
     int current_rx;
     int current_tx;
