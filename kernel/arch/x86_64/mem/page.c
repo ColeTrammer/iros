@@ -25,7 +25,7 @@ uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
     uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
-    return *pt_entry & 0x0000FFFFFFFFF000;
+    return (*pt_entry & 0x0000FFFFFFFFF000ULL) + (virt_addr & 0xFFF);
 }
 
 static bool all_empty(uint64_t *page) {

@@ -36,7 +36,7 @@ static bool has_eeprom(struct e1000_data *data) {
 static void init_recieve_descriptors(struct e1000_data *data) {
     data->rx_descs_unaligned = calloc(E1000_NUM_RECIEVE_DESCS, sizeof(struct e1000_recieve_desc) + E1000_DESC_MIN_ALIGN);
     data->rx_descs = (struct e1000_recieve_desc*) (data->rx_descs_unaligned + E1000_DESC_MIN_ALIGN - (((uintptr_t) data->rx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
-    assert(((uintptr_t) data->rx_descs) % 16 == 0);
+    assert(((uintptr_t) data->rx_descs) % E1000_DESC_MIN_ALIGN == 0);
 
     for (int i = 0; i < E1000_NUM_RECIEVE_DESCS; i++) {
         data->rx_virt_addrs[i] = malloc(8192 + 16);
@@ -44,8 +44,8 @@ static void init_recieve_descriptors(struct e1000_data *data) {
         data->rx_descs[i].status = 0;
     }
 
-    write_command(data, E1000_RX_DESC_LO, (uint32_t) (((uint64_t) data->rx_descs) & 0xFFFFFFFF));
-    write_command(data, E1000_RX_DESC_HI, (uint32_t) (((uint64_t) data->rx_descs) >> 32));
+    write_command(data, E1000_RX_DESC_HI, (uint32_t) (get_phys_addr((uintptr_t) data->rx_descs) >> 32));
+    write_command(data, E1000_RX_DESC_LO, (uint32_t) (get_phys_addr((uintptr_t) data->rx_descs) & 0xFFFFFFFF));
 
     write_command(data, E1000_RX_DESC_LEN, E1000_NUM_RECIEVE_DESCS * sizeof(struct e1000_recieve_desc));
     write_command(data, E1000_RX_DESC_HEAD, 0);
@@ -57,7 +57,7 @@ static void init_recieve_descriptors(struct e1000_data *data) {
 static void init_transmit_descriptors(struct e1000_data *data) {
     data->tx_descs_unaligned = calloc(E1000_NUM_TRANSMIT_DESCS, sizeof(struct e1000_transmit_desc) + E1000_DESC_MIN_ALIGN);
     data->tx_descs = (struct e1000_transmit_desc*) (data->tx_descs_unaligned + E1000_DESC_MIN_ALIGN - (((uintptr_t) data->tx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
-    assert(((uintptr_t) data->tx_descs) % 16 == 0);
+    assert(((uintptr_t) data->tx_descs) % E1000_DESC_MIN_ALIGN == 0);
 
     for (int i = 0; i < E1000_NUM_TRANSMIT_DESCS; i++) {
         data->tx_virt_addrs[i] = malloc(8192 + 16);
@@ -66,15 +66,15 @@ static void init_transmit_descriptors(struct e1000_data *data) {
         data->tx_descs[i].status = E1000_TSTA_DD;
     }
 
-    write_command(data, E1000_TX_DESC_LO, (uint32_t) (((uint64_t) data->tx_descs) & 0xFFFFFFFF));
-    write_command(data, E1000_TX_DESC_HI, (uint32_t) (((uint64_t) data->tx_descs) >> 32));
+    write_command(data, E1000_TX_DESC_HI, (uint32_t) (get_phys_addr((uintptr_t) data->tx_descs) >> 32));
+    write_command(data, E1000_TX_DESC_LO, (uint32_t) (get_phys_addr((uintptr_t) data->tx_descs) & 0xFFFFFFFF));
 
     write_command(data, E1000_TX_DESC_LEN, E1000_NUM_RECIEVE_DESCS * sizeof(struct e1000_transmit_desc));
     write_command(data, E1000_TX_DESC_HEAD, 0);
     write_command(data, E1000_TX_DESC_TAIL, 0);
 
-    write_command(data, E1000_TCTRL, read_command(data, E1000_TCTRL) | E1000_TCTL_PSP | E1000_TCTL_PSP);
-    write_command(data, E1000_TIPG_REG, 0x0060200A);
+    write_command(data, E1000_TCTRL, 0b0110000000000111111000011111010U);
+    write_command(data, E1000_TIPG_REG, 0x0060200AU);
 }
 
 static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
@@ -128,11 +128,11 @@ static void transmit(const void *raw, uint16_t len) {
 
     write_command(data, E1000_TX_DESC_TAIL, data->current_tx);
 
-    debug_log("Starting transmission...\n");
+    debug_log("Starting transmission...: [ %d ]\n", save_current_tx);
 
-    while (!(data->tx_descs[save_current_tx].status & 0xFF));
+    while (!data->tx_descs[save_current_tx].status);
 
-    debug_log("Finished transmitting...\n");
+    debug_log("Finished transmitting...: [ %d ]\n", save_current_tx);
 }
 
 void init_intel_e1000(struct pci_configuration *config) {
@@ -169,32 +169,43 @@ void init_intel_e1000(struct pci_configuration *config) {
     init_recieve_descriptors(data);
     init_transmit_descriptors(data);
 
-    write_command(data, E1000_CTRL_IMASK, 0x1f6dc);
-    write_command(data, E1000_CTRL_IMASK, 0xff & ~4);
-    read_command(data, 0xc0);
+    write_command(data, E1000_CTRL_IMASK, 0x1F6DC);
+    write_command(data, E1000_CTRL_IMASK, 0xFF & ~4);
+    read_command(data, 0xC0);
 
     register_irq_line_handler(handle_interrupt, config->interrupt_line, true);
 
     enable_interrupts();
 
-    struct arp_packet *arp_packet = net_create_arp_packet(ARP_OPERATION_REQUEST, 
-        (struct mac_address) { 0 },
-        (struct ip_v4_address) { 0 },
-        (struct mac_address) { 0 },
-        (struct ip_v4_address) { { 127, 0, 0, 1 } }
-    );
-
     struct ethernet_packet *raw_packet = net_create_ethernet_packet(
         MAC_BROADCAST,
-        arp_packet->mac_sender,
+        mac,
         ETHERNET_TYPE_ARP,
-        arp_packet,
         sizeof(struct arp_packet)
+    );
+
+    net_init_arp_packet((struct arp_packet*) raw_packet->payload, ARP_OPERATION_REQUEST, 
+        mac,
+        (struct ip_v4_address) { { 192, 168, 0, 29 } },
+        MAC_BROADCAST,
+        (struct ip_v4_address) { { 192, 168, 0, 1 } }
     );
 
     transmit(raw_packet, sizeof(struct ethernet_packet) + sizeof(struct arp_packet));
 
-    free(arp_packet);
+    for (;;) {
+        uint32_t status = read_command(data, 0xc0);
+        if (status & 0x04) {
+            write_command(data, E1000_CTRL_REG, read_command(data, E1000_CTRL_REG) | E1000_ECTRL_SLU);
+        } else if (status & 0x10) {
+            // Threshold ??
+        } else if (status & 0x80) {
+            recieve();
+        }
+
+        barrier();
+    }
+
     free(raw_packet);
 
     while (1);
