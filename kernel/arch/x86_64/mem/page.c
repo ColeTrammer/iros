@@ -18,7 +18,7 @@
 
 static spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
 
-static uintptr_t get_phys_addr(uintptr_t virt_addr) {
+uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;

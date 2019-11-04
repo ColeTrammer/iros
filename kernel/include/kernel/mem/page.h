@@ -31,4 +31,6 @@ void map_page(uintptr_t virt_addr, uint64_t flags);
 void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags);
 void unmap_page(uintptr_t virt_addr);
 
+uintptr_t get_phys_addr(uintptr_t virt_addr);
+
 #endif /* _KERNEL_MEM_PAGE_H */
