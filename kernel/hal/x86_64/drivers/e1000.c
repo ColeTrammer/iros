@@ -9,12 +9,9 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/net/arp.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/icmp.h>
-#include <kernel/net/ip.h>
+#include <kernel/net/interface.h>
 
-static struct e1000_data *data;
+static struct network_interface *interface = NULL;
 
 static uint32_t read_command(struct e1000_data *data, uint16_t offset) {
     return *((volatile uint32_t*) (data->mem_io_phys_base + offset));
@@ -89,10 +86,9 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
     return (uint16_t) ((val >> 16) & 0xFFFF);
 }
 
-static void transmit(const void *raw, uint16_t len) {
-    for (size_t i = 0; i < len; i++) {
-        debug_log("TX Packet byte: [ %lu, %#2X ]\n", i, ((uint8_t*) raw)[i]);
-    }
+static ssize_t send(struct network_interface *this, const void *raw, size_t len) {
+    struct e1000_data *data = this->private_data;
+    assert(len < 8192);
 
     memcpy(data->tx_virt_addrs[data->current_tx], raw, len);
 
@@ -110,67 +106,19 @@ static void transmit(const void *raw, uint16_t len) {
     while (!data->tx_descs[save_current_tx].status);
 
     debug_log("Finished transmitting...: [ %d ]\n", save_current_tx);
-}
-
-static struct mac_address our_mac = { 0 };
-static struct mac_address router_mac = { 0 };
-static struct ip_v4_address our_ip = { { 10, 0, 2, 15 } };
-
-#define TEST_PING_DATA_SIZE 6
-
-static void send_ping() {
-    size_t total_size = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + sizeof(struct icmp_packet) + TEST_PING_DATA_SIZE;
-    struct ethernet_packet *raw_packet = net_create_ethernet_packet(router_mac, our_mac, ETHERNET_TYPE_IPV4, 
-        sizeof(struct ip_v4_packet) + sizeof(struct icmp_packet) + TEST_PING_DATA_SIZE);
-    
-    net_init_ip_v4_packet((struct ip_v4_packet*) raw_packet->payload, 1, IP_V4_PROTOCOL_ICMP, our_ip, 
-        (struct ip_v4_address) { { 172, 217, 11, 174 } }, sizeof(struct icmp_packet) + TEST_PING_DATA_SIZE);
-
-    net_init_icmp_packet((struct icmp_packet*) ((struct ip_v4_packet*) raw_packet->payload)->payload, ICMP_TYPE_ECHO_REQUEST,
-        1, 1, "Hello", TEST_PING_DATA_SIZE);
-
-    transmit(raw_packet, total_size);
-
-    free(raw_packet);
+    return len;
 }
 
 static void recieve() {
-    bool test = false;
+    struct e1000_data *data = interface->private_data;
+
     while (data->rx_descs[data->current_rx].status & 0x1) {
         uint8_t *buf = data->rx_virt_addrs[data->current_rx];
-        // uint16_t len = data->rx_descs[data->current_rx].length;
+        uint16_t len = data->rx_descs[data->current_rx].length;
 
         debug_log("Recieving packet...\n");
 
-        struct ethernet_packet *raw_packet = (struct ethernet_packet*) buf;
-        if (raw_packet->ether_type == ntohs(ETHERNET_TYPE_ARP)) {
-            struct arp_packet *arp_packet = (struct arp_packet*) raw_packet->payload;
-            assert(arp_packet->operation == ntohs(ARP_OPERATION_REPLY));
-            debug_log("Router MAC Address: [ %02x:%02x:%02x:%02x:%02x:%02x ]\n", 
-                arp_packet->mac_sender.addr[0], arp_packet->mac_sender.addr[1], arp_packet->mac_sender.addr[2],
-                arp_packet->mac_sender.addr[3], arp_packet->mac_sender.addr[4], arp_packet->mac_sender.addr[5]);
-
-            debug_log("Router IP Address: [ %u.%u.%u.%u ]\n",
-                arp_packet->ip_sender.addr[0], arp_packet->ip_sender.addr[1],
-                arp_packet->ip_sender.addr[2], arp_packet->ip_sender.addr[3]);
-
-            debug_log("Our IP Address: [ %u.%u.%u.%u ]\n",
-                arp_packet->ip_target.addr[0], arp_packet->ip_target.addr[1],
-                arp_packet->ip_target.addr[2], arp_packet->ip_target.addr[3]);
-
-            router_mac = arp_packet->mac_sender;
-            test = true;
-        } else if (raw_packet->ether_type == ntohs(ETHERNET_TYPE_IPV4)) {
-            struct ip_v4_packet *packet = (struct ip_v4_packet*) raw_packet->payload;
-            if (packet->protocol == IP_V4_PROTOCOL_ICMP) {
-                struct icmp_packet *icmp_packet = (struct icmp_packet*) packet->payload;
-                assert(icmp_packet->type == ICMP_TYPE_ECHO_REPLY);
-
-                debug_log("Recieved a echo reply: [ %u, %u ]\n", ntohs(icmp_packet->identifier), ntohs(icmp_packet->sequence_number));
-
-                debug_log("Message: [ %s ]\n", icmp_packet->payload);
-            }
-        }
+        interface->ops->recieve(interface, buf, len);
 
         data->rx_descs[data->current_rx].status = 0;
 
@@ -178,13 +126,11 @@ static void recieve() {
         data->current_rx = (data->current_rx + 1) % E1000_NUM_RECIEVE_DESCS;
         write_command(data, E1000_RX_DESC_TAIL, save_current_rx);
     }
-
-    if (test) {
-        send_ping();
-    }
 }
 
 static void handle_interrupt() {
+    struct e1000_data *data = interface->private_data;
+
     debug_log("Recived a interrupt for E1000\n");
 
     write_command(data, E1000_CTRL_IMASK, 1);
@@ -198,10 +144,28 @@ static void handle_interrupt() {
         // Threshold ??
     } else if (status & 0x80) {
         recieve();
-    } else {
-        debug_log("Unknown status\n");
     }
 }
+
+static struct mac_address get_mac_address(struct network_interface *this) {
+    struct mac_address addr;
+
+    uint32_t val = read_eeprom(this->private_data, 0);
+    addr.addr[0] = val & 0xFF;
+    addr.addr[1] = val >> 8;
+    val = read_eeprom(this->private_data, 1);
+    addr.addr[2] = val & 0xFF;
+    addr.addr[3] = val >> 8;
+    val =read_eeprom(this->private_data, 2);
+    addr.addr[4] = val & 0xFF;
+    addr.addr[5] = val >> 8;
+
+    return addr;
+}
+
+static struct network_interface_ops e1000_ops = {
+    &send, NULL, &get_mac_address
+};
 
 void init_intel_e1000(struct pci_configuration *config) {
     debug_log("Found intel e1000 netword card: [ %u ]\n", config->interrupt_line);
@@ -210,7 +174,7 @@ void init_intel_e1000(struct pci_configuration *config) {
     assert(!(config->bar[0] & 1)); // Mem base
     assert(config->bar[1] & 1);    // Port base
 
-    data = calloc(1, sizeof(struct e1000_data));
+    struct e1000_data *data = calloc(1, sizeof(struct e1000_data));
     data->mem_io_phys_base = (uintptr_t) create_phys_addr_mapping(config->bar[0]);
     data->io_port_base = config->bar[1] & ~1;
 
@@ -218,18 +182,6 @@ void init_intel_e1000(struct pci_configuration *config) {
 
     assert(has_eeprom(data));
     debug_log("Has EEPROM: [ %s ]\n", "true");
-
-    uint32_t res = read_eeprom(data, 0);
-    our_mac.addr[0] = res & 0xFF;
-    our_mac.addr[1] = res >> 8;
-    res = read_eeprom(data, 1);
-    our_mac.addr[2] = res & 0xFF;
-    our_mac.addr[3] = res >> 8;
-    res = read_eeprom(data, 2);
-    our_mac.addr[4] = res & 0xFF;
-    our_mac.addr[5] = res >> 8;
-
-    debug_log("MAC Address: [ %02x:%02x:%02x:%02x:%02x:%02x ]\n", our_mac.addr[0], our_mac.addr[1], our_mac.addr[2], our_mac.addr[3], our_mac.addr[4], our_mac.addr[5]);
 
     write_command(data, E1000_CTRL_REG, read_command(data, E1000_CTRL_REG) | E1000_ECTRL_SLU);
 
@@ -242,21 +194,5 @@ void init_intel_e1000(struct pci_configuration *config) {
 
     register_irq_line_handler(handle_interrupt, config->interrupt_line, true);
 
-    struct ethernet_packet *raw_packet = net_create_ethernet_packet(
-        MAC_BROADCAST,
-        our_mac,
-        ETHERNET_TYPE_ARP,
-        sizeof(struct arp_packet)
-    );
-
-    net_init_arp_packet((struct arp_packet*) raw_packet->payload, ARP_OPERATION_REQUEST, 
-        our_mac,
-        our_ip,
-        MAC_BROADCAST,
-        (struct ip_v4_address) { { 10, 0, 2, 2 } }
-    );
-
-    transmit(raw_packet, sizeof(struct ethernet_packet) + sizeof(struct arp_packet));
-
-    free(raw_packet);
+    interface = net_create_network_interface("e1000", NETWORK_INTERFACE_ETHERNET, &e1000_ops, data);
 }

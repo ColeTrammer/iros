@@ -14,6 +14,7 @@
 #include <kernel/sched/process_sched.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
+#include <kernel/net/net.h>
 
 void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t inintrd_phys_start, uint64_t initrd_phys_end, uint32_t *multiboot_info) {
     init_hal();
@@ -24,6 +25,7 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_vfs();
     init_drivers();
     init_process_sched();
+    init_net();
 
     /* Mount hdd0 at / */
     int error = 0;
