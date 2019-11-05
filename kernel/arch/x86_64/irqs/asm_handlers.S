@@ -149,3 +149,15 @@ sys_call_table:
     .quad arch_sys_getpgid
     .quad arch_sys_sleep
     .quad arch_sys_access
+    .quad arch_sys_accept
+    .quad arch_sys_bind
+    .quad arch_sys_connect
+    .quad arch_sys_listen
+    .quad arch_sys_socket
+    .quad arch_sys_shutdown
+    .quad arch_sys_getsockopt
+    .quad arch_sys_setsockopt
+    .quad arch_sys_getpeername
+    .quad arch_sys_getsockname
+    .quad arch_sys_sendto
+    .quad arch_sys_recvfrom

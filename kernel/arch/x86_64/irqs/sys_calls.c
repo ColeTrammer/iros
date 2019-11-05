@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -833,4 +834,188 @@ void arch_sys_access(struct process_state *process_state) {
     free(path);
 
     SYS_RETURN(ret);
+}
+
+void arch_sys_accept(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
+
+    (void) fd;
+    (void) addr;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_bind(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    const struct sockaddr *addr = (const struct sockaddr*) process_state->cpu_state.rdx;
+    socklen_t addrlen = (socklen_t) process_state->cpu_state.rcx;
+
+    (void) fd;
+    (void) addr;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_connect(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
+    socklen_t addrlen = (socklen_t) process_state->cpu_state.rcx;
+
+    (void) fd;
+    (void) addr;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_listen(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    int backlog = (int) process_state->cpu_state.rdx;
+
+    (void) fd;
+    (void) backlog;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_socket(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int domain = (int) process_state->cpu_state.rsi;
+    int type = (int) process_state->cpu_state.rdx;
+    int protocol = (int) process_state->cpu_state.rcx;
+
+    (void) domain;
+    (void) type;
+    (void) protocol;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_shutdown(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    int how = (int) process_state->cpu_state.rdx;
+
+    (void) fd;
+    (void) how;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_getsockopt(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    int level = (int) process_state->cpu_state.rdx;
+    int optname = (int) process_state->cpu_state.rcx;
+    const void *optval = (const void*) process_state->cpu_state.r8;
+    socklen_t *optlen = (socklen_t*) process_state->cpu_state.r9;
+
+    (void) fd;
+    (void) level;
+    (void) optname;
+    (void) optval;
+    (void) optlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_setsockopt(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    int level = (int) process_state->cpu_state.rdx;
+    int optname = (int) process_state->cpu_state.rcx;
+    const void *optval = (const void*) process_state->cpu_state.r8;
+    socklen_t optlen = (socklen_t) process_state->cpu_state.r9;
+
+    (void) fd;
+    (void) level;
+    (void) optname;
+    (void) optval;
+    (void) optlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_getpeername(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
+
+    (void) fd;
+    (void) addr;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_getsockname(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
+
+    (void) fd;
+    (void) addr;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_sendto(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    const void *buf = (const void*) process_state->cpu_state.rdx;
+    size_t len = (size_t) process_state->cpu_state.rcx;
+    int flags = (int) process_state->cpu_state.r8;
+    const struct sockaddr *dest = (const struct sockaddr*) process_state->cpu_state.r9;
+    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.r10;
+
+    (void) fd;
+    (void) buf;
+    (void) len;
+    (void) flags;
+    (void) dest;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_recvfrom(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    const void *buf = (const void*) process_state->cpu_state.rdx;
+    size_t len = (size_t) process_state->cpu_state.rcx;
+    int flags = (int) process_state->cpu_state.r8;
+    const struct sockaddr *dest = (const struct sockaddr*) process_state->cpu_state.r9;
+    socklen_t addrlen = (socklen_t) process_state->cpu_state.r10;
+
+    (void) fd;
+    (void) buf;
+    (void) len;
+    (void) flags;
+    (void) dest;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
 }
