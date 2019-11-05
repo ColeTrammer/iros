@@ -2,6 +2,7 @@
 #define _STDDEF_H 1
 
 #define NULL ((void*) 0)
+#define offsetof __builtin_offsetof
 
 #ifdef __cplusplus
 extern "C" {

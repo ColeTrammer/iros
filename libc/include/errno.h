@@ -55,19 +55,19 @@
 #define EINPROGRESS     51
 #define EOPNOTSUPP      52
 #define EWOULDBLOCK     53
+#define EAGAIN          EWOULDBLOCK
 #define EACCES          54
 #define EPROTONOSUPPORT 55
 #define EROFS           56
 #define EDEADLK         57
-#define EAGAIN          58
-#define ETIMEDOUT       59
-#define ENFILE          60
-#define EMFILE          61
-#define EMLINK          62
-#define ELOOP           63
-#define EPROTOTYPE      64
-#define EILSEQ          65
-#define EMAXERRNO       66
+#define ETIMEDOUT       58
+#define ENFILE          59
+#define EMFILE          60
+#define EMLINK          61
+#define ELOOP           62
+#define EPROTOTYPE      63
+#define EILSEQ          64
+#define EMAXERRNO       65
 
 #ifdef __cplusplus
 extern "C" {

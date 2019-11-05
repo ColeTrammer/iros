@@ -30,6 +30,8 @@ $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
 $(BUILDDIR)/initrd/programs/guess \
+$(BUILDDIR)/initrd/programs/local_socket_client_test \
+$(BUILDDIR)/initrd/programs/local_socket_server_test \
 $(BUILDDIR)/initrd/programs/nftw_test \
 $(BUILDDIR)/initrd/programs/pipe_test \
 $(BUILDDIR)/initrd/programs/queue_test \
