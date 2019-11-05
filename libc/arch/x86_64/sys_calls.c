@@ -40,7 +40,7 @@ int open(const char *pathname, int flags, ...) {
                   "movl %2, %%edx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "edx", "ecx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(flags), "r"(mode) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -51,7 +51,7 @@ ssize_t read(int fd, void *buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "esi", "rdx", "rcx", "rax", "memory" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -62,7 +62,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "esi", "rdx", "rcx", "rax", "memory" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(count) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -71,7 +71,7 @@ int close(int fd) {
     asm volatile( "movq $7, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(fd) : "rdi", "esi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -79,7 +79,7 @@ pid_t fork() {
     pid_t ret;
     asm volatile( "movq $3, %%rdi\n"\
                   "int $0x80\n"\
-                  "mov %%eax, %0" : "=r"(ret) : : "rdi", "eax", "memory" );
+                  "mov %%eax, %0" : "=r"(ret) : : "rdi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -90,7 +90,7 @@ int execve(const char *file, char *const argv[], char *const envp[]) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(file), "r"(argv), "r"(envp) : "rdi", "rsi", "rdx", "rcx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(file), "r"(argv), "r"(envp) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -101,7 +101,7 @@ pid_t waitpid(pid_t pid, int *wstatus, int options) {
                   "movq %2, %%rdx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(wstatus), "r"(options) : "rdi", "esi", "rdx", "ecx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(wstatus), "r"(options) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -109,7 +109,7 @@ pid_t getpid() {
     pid_t ret;
     asm volatile( "movq $10, %%rdi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : : "rdi", "eax" );
+                  "movl %%eax, %0" : "=r"(ret) : : "rdi", "rax" );
     return ret;
 }
 
@@ -133,7 +133,7 @@ int chdir(const char *path) {
     asm volatile( "movq $12, %%rdi\n"\
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(path) : "rdi", "rsi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -143,7 +143,7 @@ int stat(const char *restrict path, struct stat *restrict stat_struct) {
                   "movq %1, %%rsi\n"\
                   "movq %2, %%rdx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(stat_struct) : "rdi", "rsi", "rdx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(stat_struct) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -154,7 +154,7 @@ off_t lseek(int fd, off_t offset, int whence) {
                   "movq %2, %%rdx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(offset), "r"(whence) : "rdi", "esi", "rdx", "ecx", "rax", "memory" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(offset), "r"(whence) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -169,7 +169,7 @@ int ioctl(int fd, unsigned long request, ...) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(request), "r"(argp) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(request), "r"(argp) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     
     va_end(parameters);
     __SYSCALL_TO_ERRNO(ret);
@@ -181,7 +181,7 @@ int ftruncate(int fd, off_t length) {
                   "movl %1, %%esi\n"\
                   "movq %2, %%rdx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(length) : "rdi", "esi", "rdx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(length) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -199,7 +199,7 @@ int mkdir(const char *path, mode_t mode) {
                   "movq %1, %%rsi\n"\
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -209,7 +209,7 @@ int dup2(int oldfd, int newfd) {
                   "movl %1, %%esi\n"\
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r" (oldfd), "r"(newfd) : "rdi", "esi", "edx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r" (oldfd), "r"(newfd) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -218,7 +218,7 @@ int pipe(int pipefd[2]) {
     asm volatile( "movq $20, %%rdi\n"\
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pipefd) : "rdi", "rsi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pipefd) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -227,7 +227,7 @@ int unlink(const char *pathname) {
     asm volatile( "movq $21, %%rdi\n"\
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname) : "rdi", "rsi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -236,7 +236,7 @@ int rmdir(const char *pathname) {
     asm volatile( "movq $22, %%rdi\n"\
                   "movq %1, %%rsi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname) : "rdi", "rsi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -246,7 +246,7 @@ int chmod(const char *pathname, mode_t mode) {
                   "movq %1, %%rsi\n"\
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pathname), "r"(mode) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -256,7 +256,7 @@ int kill(pid_t pid, int sig) {
                   "movl %1, %%esi\n"\
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(sig) : "rdi", "esi", "edx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(sig) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -266,7 +266,7 @@ pid_t setpgid(pid_t pid, pid_t pgid) {
                   "movl %1, %%esi\n"\
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(pgid) : "rdi", "esi", "edx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid), "r"(pgid) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -278,7 +278,7 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *old_act
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(signum), "r"(act), "r"(old_act) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(signum), "r"(act), "r"(old_act) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -296,7 +296,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *old) {
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(how), "r"(set), "r"(old) : "rdi", "esi", "rdx", "rcx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(how), "r"(set), "r"(old) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -309,7 +309,7 @@ int dup(int oldfd) {
     asm volatile( "movq $29, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(oldfd) : "rdi", "esi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(oldfd) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -318,7 +318,7 @@ pid_t getpgid(pid_t pid) {
     asm volatile( "movq $30, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(pid) : "rdi", "esi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(pid) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -327,7 +327,7 @@ unsigned int sleep(unsigned int seconds) {
     asm volatile( "movq $31, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(seconds) : "rdi", "esi", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(seconds) : "rdi", "rsi", "rax", "memory" );
     return ret;
 }
 
@@ -337,24 +337,125 @@ int access(const char *path, int mode) {
                   "movq %1, %%rsi\n"\
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "rdx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int accept(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen) {
+    int ret;
+    asm volatile( "movq $33, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(addr), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int bind(int fd, const struct sockaddr *addr, socklen_t addrlen) {
+    int ret;
+    asm volatile( "movq $34, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movl %3, %%ecx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(addr), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int connect(int fd, const struct sockaddr *addr, socklen_t addrlen) {
+    int ret;
+    asm volatile( "movq $35, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movl %3, %%ecx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(addr), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int listen(int fd, int backlog) {
+    int ret;
+    asm volatile( "movq $36, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(backlog) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
 int socket(int domain, int type, int protocol) {
     int ret;
-    asm volatile( "movq $33, %%rdi\n"\
+    asm volatile( "movq $37, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "movl %2, %%edx\n"\
                   "movl %3, %%ecx\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(domain), "r"(type), "r"(protocol) : "rdi", "esi", "edx", "ecx", "eax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(domain), "r"(type), "r"(protocol) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int shutdown(int fd, int how) {
+    int ret;
+    asm volatile( "movq $38, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(how) : "rdi", "rsi", "rdx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int getsockopt(int fd, int level, int optname, void *__restrict optval, socklen_t *__restrict optlen) {
+    int ret;
+    asm volatile( "movq $39, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "movl %3, %%ecx\n"\
+                  "movq %4, %%r8\n"\
+                  "movq %5, %%r9\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(level), "r"(optname), "r"(optval), "r"(optlen) : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen) {
+    int ret;
+    asm volatile( "movq $40, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "movl %3, %%ecx\n"\
+                  "movq %4, %%r8\n"\
+                  "movl %5, %%r9d\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(level), "r"(optname), "r"(optval), "r"(optlen) : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int getpeername(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen) {
+    int ret;
+    asm volatile( "movq $41, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(addr), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int getsockname(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen) {
+    int ret;
+    asm volatile( "movq $42, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(addr), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
 ssize_t sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
     ssize_t ret;
-    asm volatile( "movq $34, %%rdi\n"\
+    asm volatile( "movq $43, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
@@ -362,13 +463,13 @@ ssize_t sendto(int fd, const void *buf, size_t len, int flags, const struct sock
                   "movq %5, %%r9\n"\
                   "movl %6, %%r10d\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(len), "r"(flags), "r"(dest), "r"(addrlen) : "rdi", "esi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(len), "r"(flags), "r"(dest), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
-ssize_t recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
+ssize_t recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *__restrict source, socklen_t *__restrict addrlen) {
     ssize_t ret;
-    asm volatile( "movq $35, %%rdi\n"\
+    asm volatile( "movq $44, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
@@ -376,6 +477,6 @@ ssize_t recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *sour
                   "movq %5, %%r9\n"\
                   "movq %6, %%r10\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(len), "r"(flags), "r"(source), "r"(addrlen) : "rdi", "esi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(len), "r"(flags), "r"(source), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }

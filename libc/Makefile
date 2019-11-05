@@ -85,6 +85,7 @@ $(BUILDDIR)/libc/stdlib/env.o \
 $(BUILDDIR)/libc/string/strcoll.o \
 $(BUILDDIR)/libc/string/strerror.o \
 $(BUILDDIR)/libc/string/strxfrm.o \
+$(BUILDDIR)/libc/sys/socket/socket.o \
 $(BUILDDIR)/libc/sys/wait/wait.o \
 $(BUILDDIR)/libc/termios/termios.o \
 $(BUILDDIR)/libc/time/time.o \
