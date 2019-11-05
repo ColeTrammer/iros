@@ -57,6 +57,8 @@ $(BUILDDIR)/kernel/mem/vm_allocator.o \
 $(BUILDDIR)/kernel/mem/vm_region.o \
 $(BUILDDIR)/kernel/net/arp.o \
 $(BUILDDIR)/kernel/net/ethernet.o \
+$(BUILDDIR)/kernel/net/icmp.o \
+$(BUILDDIR)/kernel/net/ip.o \
 $(BUILDDIR)/kernel/proc/elf64.o \
 $(BUILDDIR)/kernel/proc/pid.o \
 $(BUILDDIR)/kernel/proc/process_state.o \
