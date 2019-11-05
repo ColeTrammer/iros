@@ -1,6 +1,7 @@
 #define __libc_internal
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -337,5 +338,44 @@ int access(const char *path, int mode) {
                   "movl %2, %%edx\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(path), "r"(mode) : "rdi", "rsi", "edx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int socket(int domain, int type, int protocol) {
+    int ret;
+    asm volatile( "movq $33, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "movl %3, %%ecx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(domain), "r"(type), "r"(protocol) : "rdi", "esi", "edx", "ecx", "eax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+ssize_t sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
+    ssize_t ret;
+    asm volatile( "movq $34, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "movl %4, %%r8d\n"\
+                  "movq %5, %%r9\n"\
+                  "movl %6, %%r10d\n"\
+                  "int $0x80\n"\
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(len), "r"(flags), "r"(dest), "r"(addrlen) : "rdi", "esi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+ssize_t recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
+    ssize_t ret;
+    asm volatile( "movq $35, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movq %3, %%rcx\n"\
+                  "movl %4, %%r8d\n"\
+                  "movq %5, %%r9\n"\
+                  "movq %6, %%r10\n"\
+                  "int $0x80\n"\
+                  "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(len), "r"(flags), "r"(source), "r"(addrlen) : "rdi", "esi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
