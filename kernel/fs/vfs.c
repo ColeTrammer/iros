@@ -226,11 +226,12 @@ int fs_close(struct file *file) {
     assert(file);
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
-    assert(inode);
 
-    spin_lock(&inode->lock);
-    inode->ref_count--;
-    spin_unlock(&inode->lock);
+    if (inode) {
+        spin_lock(&inode->lock);
+        inode->ref_count--;
+        spin_unlock(&inode->lock);
+    }
 
     spin_lock(&file->lock);
     file->ref_count--;

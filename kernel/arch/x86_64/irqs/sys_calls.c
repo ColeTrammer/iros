@@ -17,6 +17,7 @@
 #include <kernel/sched/process_sched.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/process_state.h>
+#include <kernel/net/socket.h>
 
 #include <kernel/irqs/handlers.h>
 #include <kernel/hal/hal.h>
@@ -897,11 +898,7 @@ void arch_sys_socket(struct process_state *process_state) {
     int type = (int) process_state->cpu_state.rdx;
     int protocol = (int) process_state->cpu_state.rcx;
 
-    (void) domain;
-    (void) type;
-    (void) protocol;
-
-    SYS_RETURN(-ENOSYS);
+    SYS_RETURN(net_socket(domain, type, protocol));
 }
 
 void arch_sys_shutdown(struct process_state *process_state) {

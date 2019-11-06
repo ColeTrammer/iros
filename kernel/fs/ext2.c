@@ -709,8 +709,8 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
 
     struct inode *inode = malloc(sizeof(struct inode));
     inode->device = parent->device;
-    inode->flags = S_ISREG(mode) ? FS_FILE : FS_DIR;
-    inode->i_op = S_ISREG(mode) ? &ext2_i_op : &ext2_dir_i_op;
+    inode->flags = fs_mode_to_flags(mode);
+    inode->i_op = S_ISDIR(mode) ? &ext2_dir_i_op : &ext2_i_op;
     inode->index = index;
     init_spinlock(&inode->lock);
     inode->mode = mode;
@@ -799,7 +799,7 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
     memcpy(dirent->name, name, strlen(name));
     dirent->name_length = strlen(name);
     dirent->size = inode->super_block->block_size - ((uintptr_t) dirent - (uintptr_t) raw_dirent_table);
-    dirent->type = S_ISREG(mode) ? EXT2_DIRENT_TYPE_REGULAR : EXT2_DIRENT_TYPE_DIRECTORY;
+    dirent->type = S_ISREG(mode) ? EXT2_DIRENT_TYPE_REGULAR : S_ISDIR(mode) ? EXT2_DIRENT_TYPE_DIRECTORY : EXT2_DIRENT_TYPE_SOCKET;
     memset((void*) (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length), 0, inode->super_block->block_size - (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length - (uintptr_t) raw_dirent_table));
 
     ret = ext2_write_blocks(inode->super_block, raw_dirent_table, parent_raw_inode->block[block_no], 1);

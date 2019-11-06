@@ -34,6 +34,7 @@ struct file {
     spinlock_t lock;
 
     dev_t device;
+    void *private_data;
 };
 
 #endif /* _KERNEL_FS_FILE_H */

@@ -3,6 +3,7 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/mac.h>
 #include <kernel/net/net.h>
+#include <kernel/net/socket.h>
 
 static void init_ip_v4_mappings(struct network_interface *interface) {
     debug_log("Initializing interface: [ %s ]\n", interface->name);
@@ -14,6 +15,7 @@ static void init_ip_v4_mappings(struct network_interface *interface) {
 }
 
 void init_net() {
+    init_net_sockets();
     init_mac();
 
     net_for_each_interface(init_ip_v4_mappings);

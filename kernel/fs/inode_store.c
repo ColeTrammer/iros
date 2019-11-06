@@ -48,7 +48,9 @@ void fs_inode_create_store(dev_t dev) {
 
 struct inode *fs_inode_get(dev_t dev, ino_t id) {
 	struct inode_store *store = hash_get(dev_map, &dev);
-	assert(store);
+	if (store == NULL) { 
+		return NULL; 
+	}
 
 	return hash_get(store->map, &id);
 }

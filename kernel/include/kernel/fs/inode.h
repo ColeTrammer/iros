@@ -31,9 +31,10 @@ struct inode_operations {
 struct inode {
     mode_t mode;
 
-#define FS_FILE 1U
-#define FS_DIR 2U
-#define FS_FIFO 3U
+#define FS_FILE   1U
+#define FS_DIR    2U
+#define FS_FIFO   4U
+#define FS_SOCKET 8U
     unsigned int flags;
 
     struct inode_operations *i_op;
@@ -57,9 +58,8 @@ struct inode {
     /* Parent of inode */
     struct tnode *parent;
 
-    /* Delete inode when count is 0 (only applies to pipes right now) 
-       Should be atomic 
-     */
+    // Delete inode when count is 0 (only applies to pipes right now) 
+    // Should be atomic 
     int ref_count;
 
     spinlock_t lock;

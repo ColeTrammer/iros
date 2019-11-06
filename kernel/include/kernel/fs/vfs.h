@@ -7,8 +7,6 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 
-void init_vfs();
-
 struct tnode *iname(const char *path);
 
 int fs_create(const char *path, mode_t mode);
@@ -28,6 +26,7 @@ int fs_rmdir(const char *path);
 int fs_chmod(const char *path, mode_t mode);
 int fs_access(const char *path, int mode);
 int fs_mount(const char *src, const char *path, const char *type);
+
 struct file *fs_clone(struct file *file);
 struct file *fs_dup(struct file *file);
 
@@ -35,5 +34,21 @@ void load_fs(struct file_system *fs);
 
 char *get_full_path(char *cwd, const char *relative_path);
 char *get_tnode_path(struct tnode *tnode);
+
+void init_vfs();
+
+static inline int fs_mode_to_flags(mode_t mode) {
+    if (S_ISREG(mode)) {
+        return FS_FILE;
+    } else if (S_ISDIR(mode)) {
+        return FS_DIR;
+    } else if (S_ISFIFO(mode)) {
+        return FS_FIFO;
+    } else if (S_ISOCK(mode)) {
+        return FS_SOCKET;
+    } else {
+        return 0;
+    }
+}
 
 #endif /* _KERNEL_FS_VFS_H */
