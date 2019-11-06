@@ -844,11 +844,20 @@ void arch_sys_accept(struct process_state *process_state) {
     struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
     socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
 
-    (void) fd;
-    (void) addr;
-    (void) addrlen;
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
 
-    SYS_RETURN(-ENOSYS);
+    struct file *file = get_current_process()->files[fd];
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        SYS_RETURN(-ENOTSOCK);
+    }
+
+    SYS_RETURN(net_accept(file, addr, addrlen));
 }
 
 void arch_sys_bind(struct process_state *process_state) {
@@ -881,11 +890,20 @@ void arch_sys_connect(struct process_state *process_state) {
     struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
     socklen_t addrlen = (socklen_t) process_state->cpu_state.rcx;
 
-    (void) fd;
-    (void) addr;
-    (void) addrlen;
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
 
-    SYS_RETURN(-ENOSYS);
+    struct file *file = get_current_process()->files[fd];
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        SYS_RETURN(-ENOTSOCK);
+    }
+
+    SYS_RETURN(net_connect(file, addr, addrlen));
 }
 
 void arch_sys_listen(struct process_state *process_state) {
@@ -894,10 +912,20 @@ void arch_sys_listen(struct process_state *process_state) {
     int fd = (int) process_state->cpu_state.rsi;
     int backlog = (int) process_state->cpu_state.rdx;
 
-    (void) fd;
-    (void) backlog;
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
 
-    SYS_RETURN(-ENOSYS);
+    struct file *file = get_current_process()->files[fd];
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        SYS_RETURN(-ENOTSOCK);
+    }
+
+    SYS_RETURN(net_listen(file, backlog));
 }
 
 void arch_sys_socket(struct process_state *process_state) {

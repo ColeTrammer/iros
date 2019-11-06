@@ -45,11 +45,21 @@ static int socket_file_close(struct file *file) {
     assert(socket);
 
     debug_log("Destroying socket: [ %lu ]\n", socket->id);
+
+    int ret = 0;
+    switch (socket->domain) {
+        case AF_UNIX:
+            ret = net_unix_close(socket);
+            break;
+        default:
+            break;
+    }
+
     hash_del(map, &socket->id);
     free(socket);
     free(file_data);
 
-    return 0;
+    return ret;
 }
 
 struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
@@ -68,11 +78,12 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
             file_data->socket_id = socket_id_next++;
             spin_unlock(&id_lock);
 
-            struct socket *socket = malloc(sizeof(struct socket));
+            struct socket *socket = calloc(1, sizeof(struct socket));
             socket->domain = domain;
             socket->type = type;
             socket->protocol = protocol;
             socket->id = file_data->socket_id;
+            init_spinlock(&socket->lock);
 
             hash_put(map, socket);
 
@@ -83,6 +94,30 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
 
     *fd = -EMFILE;
     return NULL;
+}
+
+int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    if (socket->state != LISTENING) {
+        return -EINVAL;
+    }
+
+    if (socket->type != SOCK_STREAM) {
+        return -EOPNOTSUPP;
+    }
+
+    switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_accept(socket, (struct sockaddr_un*) addr, addrlen);
+        default:
+            return -EAFNOSUPPORT;
+    }
 }
 
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
@@ -101,6 +136,48 @@ int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) 
     }
 }
 
+int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_connect(socket, (const struct sockaddr_un*) addr, addrlen);
+        default:
+            return -EAFNOSUPPORT;
+    }
+}
+
+int net_listen(struct file *file, int backlog) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    if (backlog <= 0) {
+        return -EINVAL;
+    }
+
+    switch (socket->domain) {
+        case AF_UNIX:
+            break;
+        default:
+            return -EAFNOSUPPORT;
+    }
+
+    socket->pending = calloc(backlog, sizeof(struct socket_connection*));
+    socket->pending_length = backlog;
+
+    socket->state = LISTENING;
+    return 0;
+}
+
 int net_socket(int domain, int type, int protocol) {
     switch (domain) {
         case AF_UNIX:
@@ -108,6 +185,10 @@ int net_socket(int domain, int type, int protocol) {
         default:
             return -EAFNOSUPPORT;
     }
+}
+
+struct socket *net_get_socket_by_id(unsigned long id) {
+    return hash_get(map, &id);
 }
 
 void init_net_sockets() {

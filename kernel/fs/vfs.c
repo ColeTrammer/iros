@@ -496,7 +496,12 @@ int fs_unlink(const char *path) {
         return -ENOENT;
     }
 
-    if (!(tnode->inode->flags & FS_FILE)) {
+    // Can't remove a unix socket that is being currently being used
+    if (tnode->inode->socket_id != 0) {
+        return -EBUSY;
+    }
+
+    if (tnode->inode->flags & FS_DIR) {
         debug_log("Name: [ %s, %u ]\n", tnode->name, tnode->inode->flags);
         return -EISDIR;
     }
