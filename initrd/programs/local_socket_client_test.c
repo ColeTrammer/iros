@@ -31,6 +31,11 @@ int main() {
             break;
         }
 
+        if (write(fd, "Recieved", 9) != 9) {
+            perror("write");
+            return 1;
+        }
+
         fprintf(stderr, "%s\n", message_buf);
     }
 

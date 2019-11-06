@@ -20,22 +20,9 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
     assert(addrlen);
 
     struct socket_connection connection;
-    for (;;) {
-        spin_lock(&socket->lock);
-        if (socket->pending[0] != NULL) {
-            memcpy(&connection, socket->pending[0], sizeof(struct socket_connection));
-
-            free(socket->pending[0]);
-            memmove(socket->pending, socket->pending + 1, (socket->pending_length - 1) * sizeof(struct socket_connection*));
-            socket->pending[--socket->num_pending] = NULL;
-
-            spin_unlock(&socket->lock);
-            break;
-        }
-
-        spin_unlock(&socket->lock);
-        yield();
-        barrier();
+    int ret = net_get_next_connection(socket, &connection);
+    if (ret == -1) {
+        return ret;
     }
 
     debug_log("Creating connection: [ %lu, %lu ]\n", socket->id, connection.connect_to_id);
@@ -185,7 +172,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
 }
 
 int net_unix_socket(int domain, int type, int protocol) {
-    if (type != SOCK_STREAM || protocol != 0) {
+    if ((type & SOCK_TYPE_MASK) != SOCK_STREAM || protocol != 0) {
         return -EPROTONOSUPPORT;
     }
 
@@ -200,46 +187,7 @@ ssize_t net_unix_recv(struct socket *socket, void *buf, size_t len) {
     assert(socket->domain == AF_UNIX);
     assert(buf);
 
-    if (socket->state != CONNECTED) {
-        return -ENOTCONN;
-    }
-
-    struct socket_data *data;
-
-    for (;;) {
-        spin_lock(&socket->lock);
-        data = socket->data_head;
-
-        if (data != NULL) {
-            break;
-        }
-
-        spin_unlock(&socket->lock);
-
-        struct unix_socket_data *d = socket->private_data;
-        if (!net_get_socket_by_id(d->connected_id)) {
-            debug_log("Connection terminated: [ %lu ]\n", socket->id);
-            return 0;
-        }
-
-        yield();
-    }
-
-    socket->data_head = data->next;
-    remque(data);
-    if (socket->data_head == NULL) {
-        socket->data_tail = NULL;
-    }
-
-    spin_unlock(&socket->lock);
-
-    size_t to_copy = MIN(len, data->len);
-    memcpy(buf, data->data, to_copy);
-
-    debug_log("Received message: [ %lu, %lu ]\n", socket->id, to_copy);
-
-    free(data);
-    return (ssize_t) to_copy;
+    return net_generic_recieve(socket, buf, len);
 }
 
 ssize_t net_unix_send(struct socket *socket, const void *buf, size_t len) {
@@ -265,16 +213,5 @@ ssize_t net_unix_send(struct socket *socket, const void *buf, size_t len) {
         return -ECONNABORTED;
     }
 
-    spin_lock(&to_send->lock);
-    insque(socket_data, to_send->data_tail);
-    if (!to_send->data_head) {
-        to_send->data_head = to_send->data_tail = socket_data;
-    } else {
-        to_send->data_tail = socket_data;
-    }
-
-    debug_log("Sent message to: [ %lu, %lu ]\n", socket->id, to_send->id);
-
-    spin_unlock(&to_send->lock);
-    return (ssize_t) len;
+    return net_send_to_socket(to_send, socket_data);
 }

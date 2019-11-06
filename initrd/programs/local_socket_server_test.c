@@ -43,6 +43,14 @@ int main() {
             return 1;
         }
 
+        char message_buf[50];
+        if (read(cfd, message_buf, 50) == -1) {
+            perror("read");
+            return 1;
+        }
+
+        fprintf(stderr, "Recieved: %s\n", message_buf);
+
         if (close(cfd) == -1) {
             perror("close");
             return 1;

@@ -3,10 +3,12 @@
 
 #include <sys/types.h>
 
+#define SOCK_TYPE_MASK 0xFF
 #define SOCK_DGRAM     1
 #define SOCK_RAW       2
 #define SOCK_SEQPACKET 3
 #define SOCK_STREAM    4
+#define SOCK_NONBLOCK  0x100
 
 #define AF_UNSPEC 0
 #define AF_INET   1

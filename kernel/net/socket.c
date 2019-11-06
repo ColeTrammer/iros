@@ -1,14 +1,19 @@
+#include <assert.h>
 #include <errno.h>
+#include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/hal/output.h>
-#include <kernel/proc/process.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/unix_socket.h>
+#include <kernel/proc/process.h>
+#include <kernel/sched/process_sched.h>
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
@@ -46,6 +51,8 @@ static int socket_file_close(struct file *file) {
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
+    spin_lock(&socket->lock);
+
     debug_log("Destroying socket: [ %lu ]\n", socket->id);
 
     int ret = 0;
@@ -57,7 +64,17 @@ static int socket_file_close(struct file *file) {
             break;
     }
 
+    struct socket_data *to_remove = socket->data_head;    
+    while (to_remove != NULL) {
+        struct socket_data *next = to_remove->next;
+        free(to_remove);
+        to_remove = next;
+    }
+
     hash_del(map, &socket->id);
+
+    spin_unlock(&socket->lock);
+
     free(socket);
     free(file_data);
 
@@ -128,6 +145,87 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
 
     *fd = -EMFILE;
     return NULL;
+}
+
+ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len) {
+    if (socket->state != CONNECTED) {
+        return -ENOTCONN;
+    }
+
+    struct socket_data *data;
+
+    for (;;) {
+        spin_lock(&socket->lock);
+        data = socket->data_head;
+
+        if (data != NULL) {
+            break;
+        }
+
+        spin_unlock(&socket->lock);
+
+        struct unix_socket_data *d = socket->private_data;
+        if (!net_get_socket_by_id(d->connected_id)) {
+            debug_log("Connection terminated: [ %lu ]\n", socket->id);
+            return 0;
+        }
+
+        yield();
+    }
+
+    socket->data_head = data->next;
+    remque(data);
+    if (socket->data_head == NULL) {
+        socket->data_tail = NULL;
+    }
+
+    spin_unlock(&socket->lock);
+
+    size_t to_copy = MIN(len, data->len);
+    memcpy(buf, data->data, to_copy);
+
+    debug_log("Received message: [ %lu, %lu ]\n", socket->id, to_copy);
+
+    free(data);
+    return (ssize_t) to_copy;
+}
+
+int net_get_next_connection(struct socket *socket, struct socket_connection *connection) {
+    for (;;) {
+        spin_lock(&socket->lock);
+        if (socket->pending[0] != NULL) {
+            memcpy(connection, socket->pending[0], sizeof(struct socket_connection));
+
+            free(socket->pending[0]);
+            memmove(socket->pending, socket->pending + 1, (socket->pending_length - 1) * sizeof(struct socket_connection*));
+            socket->pending[--socket->num_pending] = NULL;
+
+            spin_unlock(&socket->lock);
+            break;
+        }
+
+        spin_unlock(&socket->lock);
+
+        yield();
+        barrier();
+    }
+
+    return 0;
+}
+
+ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data) {
+    spin_lock(&to_send->lock);
+    insque(socket_data, to_send->data_tail);
+    if (!to_send->data_head) {
+        to_send->data_head = to_send->data_tail = socket_data;
+    } else {
+        to_send->data_tail = socket_data;
+    }
+
+    debug_log("Sent message to: [ %lu ]\n", to_send->id);
+
+    spin_unlock(&to_send->lock);
+    return (ssize_t) socket_data->len;
 }
 
 int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
@@ -213,6 +311,10 @@ int net_listen(struct file *file, int backlog) {
 }
 
 int net_socket(int domain, int type, int protocol) {
+    if (type & SOCK_NONBLOCK) {
+        return -EINVAL;
+    }
+
     switch (domain) {
         case AF_UNIX:
             return net_unix_socket(domain, type, protocol);

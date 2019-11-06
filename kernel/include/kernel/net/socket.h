@@ -58,6 +58,9 @@ struct socket_file_data {
 };
 
 struct socket *net_create_socket(int domain, int type, int protocol, int *fd);
+ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len);
+int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
+ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data);
 
 int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen);
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
