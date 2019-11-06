@@ -165,9 +165,9 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
 
     connect_to->pending[connect_to->num_pending++] = connection;
 
+    spin_lock(&socket->lock);
     spin_unlock(&connect_to->lock);
 
-    spin_lock(&socket->lock);
     socket->private_data = calloc(1, sizeof(struct unix_socket_data));
     assert(socket->private_data);
     spin_unlock(&socket->lock);
