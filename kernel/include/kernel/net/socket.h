@@ -21,7 +21,7 @@ struct socket_connection {
         struct sockaddr_in in;
     } addr;
     socklen_t addrlen;
-    int connect_to_id;
+    unsigned long connect_to_id;
 };
 
 struct socket_data {

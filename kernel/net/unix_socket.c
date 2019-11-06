@@ -38,13 +38,13 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
         barrier();
     }
 
+    debug_log("Creating connection: [ %lu, %lu ]\n", socket->id, connection.connect_to_id);
+
     int fd = 0;
     struct socket *new_socket = net_create_socket(socket->domain, socket->type, socket->protocol, &fd);
     if (new_socket == NULL) {
         return fd;
     }
-
-    debug_log("Created a new socket with fd: [ %d ]\n", fd);
 
     memcpy(addr, &connection.addr, *addrlen);
     *addrlen = connection.addrlen;
@@ -155,7 +155,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
         return -ECONNREFUSED;
     }
 
-    debug_log("Connectiing to socket: [ %lu ]\n", connect_to->id);
+    debug_log("Connecting to socket: [ %lu ]\n", connect_to->id);
 
     struct socket_connection *connection = calloc(1, sizeof(struct socket_connection));
     connection->addr.un.sun_family = AF_UNIX;
@@ -218,6 +218,7 @@ ssize_t net_unix_recv(struct socket *socket, void *buf, size_t len) {
 
         struct unix_socket_data *d = socket->private_data;
         if (!net_get_socket_by_id(d->connected_id)) {
+            debug_log("Connection terminated: [ %lu ]\n", socket->id);
             return 0;
         }
 
@@ -225,12 +226,17 @@ ssize_t net_unix_recv(struct socket *socket, void *buf, size_t len) {
     }
 
     socket->data_head = data->next;
+    remque(data);
     if (socket->data_head == NULL) {
         socket->data_tail = NULL;
     }
 
+    spin_unlock(&socket->lock);
+
     size_t to_copy = MIN(len, data->len);
     memcpy(buf, data->data, to_copy);
+
+    debug_log("Received message: [ %lu, %lu ]\n", socket->id, to_copy);
 
     free(data);
     return (ssize_t) to_copy;
@@ -266,6 +272,8 @@ ssize_t net_unix_send(struct socket *socket, const void *buf, size_t len) {
     } else {
         to_send->data_tail = socket_data;
     }
+
+    debug_log("Sent message to: [ %lu, %lu ]\n", socket->id, to_send->id);
 
     spin_unlock(&to_send->lock);
     return (ssize_t) len;

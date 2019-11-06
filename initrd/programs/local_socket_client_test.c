@@ -21,13 +21,18 @@ int main() {
         return 1;
     }
 
-    char message_buf[50];
-    if (read(fd, message_buf, 50) == -1) {
-        perror("read");
-        return 1;
-    }
+    for (int i = 0; i < 3; i++) {
+        char message_buf[50];
+        int ret = read(fd, message_buf, 50);
+        if (ret == -1) {
+            perror("read");
+            return 1;
+        } else if (ret == 0) {
+            break;
+        }
 
-    fprintf(stderr, "%s\n", message_buf);
+        fprintf(stderr, "%s\n", message_buf);
+    }
 
     if (close(fd) == -1) {
         perror("close");
