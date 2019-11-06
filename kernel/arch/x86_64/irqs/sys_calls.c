@@ -149,7 +149,7 @@ void arch_sys_open(struct process_state *process_state) {
         if (flags & O_CREAT) {
             debug_log("Creating file: [ %s ]\n", path);
 
-            error = fs_create(path, mode);
+            error = fs_create(path, mode | S_IFREG);
             if (error) {
                 free(path);
                 SYS_RETURN((uint64_t) error);
@@ -858,11 +858,20 @@ void arch_sys_bind(struct process_state *process_state) {
     const struct sockaddr *addr = (const struct sockaddr*) process_state->cpu_state.rdx;
     socklen_t addrlen = (socklen_t) process_state->cpu_state.rcx;
 
-    (void) fd;
-    (void) addr;
-    (void) addrlen;
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
 
-    SYS_RETURN(-ENOSYS);
+    struct file *file = get_current_process()->files[fd];
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        SYS_RETURN(-ENOTSOCK);
+    }
+
+    SYS_RETURN(net_bind(file, addr, addrlen));
 }
 
 void arch_sys_connect(struct process_state *process_state) {

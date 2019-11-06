@@ -161,7 +161,7 @@ int fs_create(const char *file_name, mode_t mode) {
     debug_log("Adding to: [ %s ]\n", tparent->name);
 
     int error = 0;
-    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode | S_IFREG, &error);
+    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, &error);
     if (inode == NULL) {
         free(path);
         return error;
@@ -775,6 +775,16 @@ int fs_access(const char *path, int mode) {
     if (mode &= X_OK && !(inode->mode & S_IXUSR)) {
         return EPERM;
     }
+
+    return 0;
+}
+
+// NOTE: we don't have to write out to disk, because we only loose info
+//       stored on the inode after rebooting, and at that point, the binding
+//       process will no longer exist.
+int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id) {
+    assert(inode->flags & FS_SOCKET && S_ISOCK(inode->mode));
+    inode->socket_id = socket_id;
 
     return 0;
 }

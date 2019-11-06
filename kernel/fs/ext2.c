@@ -707,7 +707,7 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
         return NULL;
     }
 
-    struct inode *inode = malloc(sizeof(struct inode));
+    struct inode *inode = calloc(1, sizeof(struct inode));
     inode->device = parent->device;
     inode->flags = fs_mode_to_flags(mode);
     inode->i_op = S_ISDIR(mode) ? &ext2_dir_i_op : &ext2_i_op;

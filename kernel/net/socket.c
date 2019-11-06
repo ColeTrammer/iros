@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/hal/output.h>
@@ -43,7 +44,8 @@ static int socket_file_close(struct file *file) {
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    debug_log("Destroying socket: [ %lu ]\n", file_data->socket_id);
+    debug_log("Destroying socket: [ %lu ]\n", socket->id);
+    hash_del(map, &socket->id);
     free(socket);
     free(file_data);
 
@@ -83,6 +85,21 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
     return NULL;
 }
 
+int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_bind(socket, (const struct sockaddr_un*) addr, addrlen);
+        default:
+            return -EAFNOSUPPORT;
+    }
+}
 
 int net_socket(int domain, int type, int protocol) {
     switch (domain) {

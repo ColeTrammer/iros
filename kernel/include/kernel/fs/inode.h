@@ -40,6 +40,9 @@ struct inode {
     struct inode_operations *i_op;
     struct super_block *super_block;
 
+    // Id of the socket this socket is bound to (will be 0 if unboud)
+    unsigned long socket_id;
+
     /* Device id of filesystem */
     dev_t device;
 

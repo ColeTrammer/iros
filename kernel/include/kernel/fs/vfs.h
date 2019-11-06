@@ -30,6 +30,8 @@ int fs_mount(const char *src, const char *path, const char *type);
 struct file *fs_clone(struct file *file);
 struct file *fs_dup(struct file *file);
 
+int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id);
+
 void load_fs(struct file_system *fs);
 
 char *get_full_path(char *cwd, const char *relative_path);
