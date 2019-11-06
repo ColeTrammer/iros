@@ -16,9 +16,11 @@ static unsigned long socket_id_next = 1;
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 
 static int socket_file_close(struct file *file);
+static ssize_t net_read(struct file *file, void *buf, size_t len);
+static ssize_t net_write(struct file *file, const void *buf, size_t len);
 
 static struct file_operations socket_file_ops = { 
-    socket_file_close, NULL, NULL, NULL
+    socket_file_close, net_read, net_write, NULL
 };
 
 static struct hash_map *map;
@@ -62,11 +64,43 @@ static int socket_file_close(struct file *file) {
     return ret;
 }
 
+static ssize_t net_read(struct file *file, void *buf, size_t len) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_recv(socket, buf, len);
+        default:
+            return -EAFNOSUPPORT;
+    }
+}
+
+static ssize_t net_write(struct file *file, const void *buf, size_t len) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_send(socket, buf, len);
+        default:
+            return -EAFNOSUPPORT;
+    }
+}
+
 struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
     struct process *current = get_current_process();
 
     for (int i = 0; i < FOPEN_MAX; i++) {
-        if (current->files[i] != NULL) {
+        if (current->files[i] == NULL) {
             current->files[i] = calloc(1, sizeof(struct file));
             current->files[i]->flags = FS_SOCKET;
             current->files[i]->f_op = &socket_file_ops;

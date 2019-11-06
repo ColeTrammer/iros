@@ -21,6 +21,15 @@ struct socket_connection {
         struct sockaddr_in in;
     } addr;
     socklen_t addrlen;
+    int connect_to_id;
+};
+
+struct socket_data {
+    struct socket_data *next;
+    struct socket_data *prev;
+
+    size_t len;
+    uint8_t data[0];
 };
 
 struct socket {
@@ -37,6 +46,9 @@ struct socket {
     int num_pending;
 
     spinlock_t lock;
+
+    struct socket_data *data_head;
+    struct socket_data *data_tail;
 
     void *private_data;
 };

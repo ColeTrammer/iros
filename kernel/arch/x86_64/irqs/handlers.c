@@ -50,7 +50,7 @@ void handle_page_fault(struct stack_state *stack, uintptr_t address, uintptr_t e
 
     struct process *current = get_current_process();
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, stack->rip, address, error);
-    if (current->pid != 1) {
+    if (current->pid != 1 && !current->in_kernel) {
         signal_process(current->pid, SIGSEGV);
     }
 
