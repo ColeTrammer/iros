@@ -1022,34 +1022,46 @@ void arch_sys_sendto(struct process_state *process_state) {
     size_t len = (size_t) process_state->cpu_state.rcx;
     int flags = (int) process_state->cpu_state.r8;
     const struct sockaddr *dest = (const struct sockaddr*) process_state->cpu_state.r9;
-    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.r10;
+    socklen_t addrlen = (socklen_t) process_state->cpu_state.r10;
 
-    (void) fd;
-    (void) buf;
-    (void) len;
-    (void) flags;
-    (void) dest;
-    (void) addrlen;
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
 
-    SYS_RETURN(-ENOSYS);
+    struct file *file = get_current_process()->files[fd];
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        SYS_RETURN(-ENOTSOCK);
+    }
+
+    SYS_RETURN(net_sendto(file, buf, len, flags, dest, addrlen));
 }
 
 void arch_sys_recvfrom(struct process_state *process_state) {
     SYS_BEGIN(process_state);
 
     int fd = (int) process_state->cpu_state.rsi;
-    const void *buf = (const void*) process_state->cpu_state.rdx;
+    void *buf = (void*) process_state->cpu_state.rdx;
     size_t len = (size_t) process_state->cpu_state.rcx;
     int flags = (int) process_state->cpu_state.r8;
-    const struct sockaddr *dest = (const struct sockaddr*) process_state->cpu_state.r9;
-    socklen_t addrlen = (socklen_t) process_state->cpu_state.r10;
+    struct sockaddr *source = (struct sockaddr*) process_state->cpu_state.r9;
+    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.r10;
 
-    (void) fd;
-    (void) buf;
-    (void) len;
-    (void) flags;
-    (void) dest;
-    (void) addrlen;
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
 
-    SYS_RETURN(-ENOSYS);
+    struct file *file = get_current_process()->files[fd];
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        SYS_RETURN(-ENOTSOCK);
+    }
+
+    SYS_RETURN(net_recvfrom(file, buf, len, flags, source, addrlen));
 }

@@ -10,6 +10,7 @@
 
 #include <kernel/fs/file.h>
 #include <kernel/hal/output.h>
+#include <kernel/net/inet_socket.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/unix_socket.h>
 #include <kernel/proc/process.h>
@@ -148,7 +149,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
 }
 
 ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len) {
-    if (socket->state != CONNECTED) {
+    if (socket->state != CONNECTED && socket->type == SOCK_STREAM) {
         return -ENOTCONN;
     }
 
@@ -164,10 +165,17 @@ ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len) {
 
         spin_unlock(&socket->lock);
 
-        struct unix_socket_data *d = socket->private_data;
-        if (!net_get_socket_by_id(d->connected_id)) {
-            debug_log("Connection terminated: [ %lu ]\n", socket->id);
-            return 0;
+        switch (socket->domain) {
+            case AF_UNIX: {
+                struct unix_socket_data *d = socket->private_data;
+                if (!net_get_socket_by_id(d->connected_id)) {
+                    debug_log("Connection terminated: [ %lu ]\n", socket->id);
+                    return 0;
+                }
+            }
+            default: {
+                break;
+            }
         }
 
         yield();
@@ -211,6 +219,14 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
     }
 
     return 0;
+}
+
+struct socket *net_get_socket_by_id(unsigned long id) {
+    return hash_get(map, &id);
+}
+
+void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data) {
+    hash_for_each(map, (void (*)(void*, void*)) f, data);
 }
 
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data) {
@@ -318,13 +334,43 @@ int net_socket(int domain, int type, int protocol) {
     switch (domain) {
         case AF_UNIX:
             return net_unix_socket(domain, type, protocol);
+        case AF_INET:
+            return net_inet_socket(domain, type, protocol);
         default:
             return -EAFNOSUPPORT;
     }
 }
 
-struct socket *net_get_socket_by_id(unsigned long id) {
-    return hash_get(map, &id);
+ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    switch (socket->domain) {
+        case AF_INET:
+            return net_inet_sendto(socket, buf, len, flags, (const struct sockaddr_in*) dest, addrlen);
+        default:
+            return -EAFNOSUPPORT;
+    }
+}
+
+ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    switch (socket->domain) {
+        case AF_INET:
+            return net_inet_recvfrom(socket, buf, len, flags, (struct sockaddr_in*) source, addrlen);
+        default:
+            return -EAFNOSUPPORT;
+    }
 }
 
 void init_net_sockets() {

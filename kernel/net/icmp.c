@@ -15,5 +15,5 @@ void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t ide
     memcpy(packet->payload, payload, payload_size);
 
     packet->checksum = 0;
-    packet->checksum = htons(net_ip_v4_compute_checksum(packet, sizeof(struct icmp_packet) + payload_size));
+    packet->checksum = htons(in_compute_checksum(packet, sizeof(struct icmp_packet) + payload_size));
 }

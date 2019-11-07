@@ -1,29 +1,36 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include <kernel/hal/output.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/socket.h>
 
-uint16_t net_ip_v4_compute_checksum(void *packet, size_t num_bytes) {
-    uint16_t *raw_data = (uint16_t*) packet;
-    uint32_t sum = 0;
+void icmp_for_each(struct socket *socket, void *_packet) {
+    struct ip_v4_packet *packet = _packet;
+    if (socket->protocol == IPPROTO_ICMP) {
+        size_t data_len = packet->length - sizeof(struct ip_v4_packet);
+        struct socket_data *data = calloc(1, sizeof(struct socket_data) + data_len);
+        data->len = data_len;
+        memcpy(data->data, packet->payload, data_len);
+        net_send_to_socket(socket, data);
+    }
+}
 
-    // Sum everything 16 bits at a time
-    for (size_t i = 0; i < num_bytes / sizeof(uint16_t); i++) {
-        // Prevent overflow
-        if (sum & 0x80000000) {
-            sum = (sum & 0xFFFF) + (sum >> 16);
+void net_ip_v4_recieve(struct ip_v4_packet *packet) {
+    switch (packet->protocol) {
+        case IP_V4_PROTOCOL_ICMP: {
+            net_for_each_socket(icmp_for_each, packet);
+            return;
         }
-        sum += ntohs(raw_data[i]);
+        default: {
+            break;
+        }
     }
 
-    // 1's complement the carry
-    while (sum & ~0xFFFF) {
-        sum = (sum & 0xFFFF) + (sum >> 16);
-    }
-
-    // Invert the sum for storage
-    return (uint16_t) (~sum & 0xFFFF);
+    debug_log("Ignored packet\n");
 }
 
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest, uint16_t payload_length) {
@@ -39,5 +46,5 @@ void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t 
     packet->source = source;
     packet->destination = dest;
     packet->checksum = 0;
-    packet->checksum = htons(net_ip_v4_compute_checksum(packet, sizeof(struct ip_v4_packet)));
+    packet->checksum = htons(in_compute_checksum(packet, sizeof(struct ip_v4_packet)));
 }

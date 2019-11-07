@@ -40,6 +40,7 @@ $(ARCH_FREEOBJS) \
 $(BUILDDIR)/libc/arpa/inet/inet.o \
 $(BUILDDIR)/libc/ctype/ctype.o \
 $(BUILDDIR)/libc/errno/errno.o \
+$(BUILDDIR)/libc/netinet/in.o \
 $(BUILDDIR)/libc/search/queue.o \
 $(BUILDDIR)/libc/stdio/printf.o \
 $(BUILDDIR)/libc/stdio/scanf.o \

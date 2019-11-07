@@ -8,6 +8,7 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/ip.h>
 
 static struct network_interface *interfaces = NULL;
 
@@ -26,9 +27,18 @@ static void generic_recieve(struct network_interface *interface, void *data, siz
             assert(len >= sizeof(struct ethernet_packet) + sizeof(struct arp_packet));
             net_arp_recieve((struct arp_packet*) packet->payload);
             break;
+        case ETHERNET_TYPE_IPV4:
+            assert(len >= sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet));
+            net_ip_v4_recieve((struct ip_v4_packet*) packet->payload);
+            break;
         default:
             debug_log("Recived unknown packet: [ %s, %#4X ]\n", interface->name, ntohs(packet->ether_type));
     }
+}
+
+struct network_interface *net_get_interface_for_ip(struct ip_v4_address address) {
+    (void) address;
+    return interfaces;
 }
 
 void net_for_each_interface(void (*func)(struct network_interface *interface)) {

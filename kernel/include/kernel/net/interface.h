@@ -34,6 +34,7 @@ struct network_interface {
 };
 
 void net_for_each_interface(void (*func)(struct network_interface *interface));
+struct network_interface *net_get_interface_for_ip(struct ip_v4_address address);
 struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data);
 
 #endif /* _KERNEL_NET_INTERFACE_H */

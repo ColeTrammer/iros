@@ -13,7 +13,7 @@ LIBS?=
 
 # Include options that should always be set
 CFLAGS:=$(CFLAGS) -ffreestanding -Werror -Wall -Wextra -std=gnu11
-CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
+CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -D_OS_2_SOURCE -Iinclude
 LDFLAFS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc # links against libk and libgcc
 
@@ -58,6 +58,7 @@ $(BUILDDIR)/kernel/mem/vm_region.o \
 $(BUILDDIR)/kernel/net/arp.o \
 $(BUILDDIR)/kernel/net/ethernet.o \
 $(BUILDDIR)/kernel/net/icmp.o \
+$(BUILDDIR)/kernel/net/inet_socket.o \
 $(BUILDDIR)/kernel/net/interface.o \
 $(BUILDDIR)/kernel/net/ip.o \
 $(BUILDDIR)/kernel/net/mac.o \

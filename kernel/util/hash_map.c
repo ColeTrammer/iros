@@ -112,3 +112,17 @@ void hash_free_hash_map(struct hash_map *map) {
 
 	spin_unlock(&map->lock);
 }
+
+void hash_for_each(struct hash_map *map, void (*f)(void *o, void *d), void *d) {
+	spin_lock(&map->lock);
+
+	for (size_t i = 0; i < HASH_DEFAULT_NUM_BUCKETS; i++) {
+		struct hash_entry *entry = map->entries[i];
+		while (entry != NULL) {
+			f(entry->data, d);
+			entry = entry->next;
+		}
+	}
+
+	spin_unlock(&map->lock);
+}

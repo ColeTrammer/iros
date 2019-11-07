@@ -28,6 +28,10 @@ struct sockaddr_in {
     char sin_zero[8];
 };
 
+#ifdef _OS_2_SOURCE
+uint16_t in_compute_checksum(void *data, size_t bytes);
+#endif /* _OS_2_SOURCE */
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

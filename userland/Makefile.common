@@ -17,7 +17,7 @@ $(BUILDDIR)/%.native.o: $(ROOT)/%.c
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
 $(BUILDDIR)/%.o: $(ROOT)/%.c
-	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+	$(CC) -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -D_OS_2_SOURCE
 
 $(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)

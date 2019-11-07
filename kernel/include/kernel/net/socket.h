@@ -60,6 +60,8 @@ struct socket_file_data {
 struct socket *net_create_socket(int domain, int type, int protocol, int *fd);
 ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
+struct socket *net_get_socket_by_id(unsigned long id);
+void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data);
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data);
 
 int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen);
@@ -68,7 +70,8 @@ int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrle
 int net_listen(struct file *file, int backlog);
 int net_socket(int domain, int type, int protocol);
 
-struct socket *net_get_socket_by_id(unsigned long id);
+ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
+ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
 
 void init_net_sockets();
 
