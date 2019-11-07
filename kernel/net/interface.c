@@ -9,6 +9,7 @@
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/network_process.h>
 
 static struct network_interface *interfaces = NULL;
 
@@ -21,19 +22,9 @@ static void add_interface(struct network_interface *interface) {
 }
 
 static void generic_recieve(struct network_interface *interface, void *data, size_t len) {
-    struct ethernet_packet *packet = data;
-    switch (ntohs(packet->ether_type)) {
-        case ETHERNET_TYPE_ARP:
-            assert(len >= sizeof(struct ethernet_packet) + sizeof(struct arp_packet));
-            net_arp_recieve((struct arp_packet*) packet->payload);
-            break;
-        case ETHERNET_TYPE_IPV4:
-            assert(len >= sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet));
-            net_ip_v4_recieve((struct ip_v4_packet*) packet->payload);
-            break;
-        default:
-            debug_log("Recived unknown packet: [ %s, %#4X ]\n", interface->name, ntohs(packet->ether_type));
-    }
+    (void) interface;
+
+    net_on_incoming_packet(data, len);
 }
 
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address) {

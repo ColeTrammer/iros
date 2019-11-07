@@ -3,7 +3,10 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/mac.h>
 #include <kernel/net/net.h>
+#include <kernel/net/network_process.h>
 #include <kernel/net/socket.h>
+#include <kernel/proc/process.h>
+#include <kernel/sched/process_sched.h>
 
 static void init_ip_v4_mappings(struct network_interface *interface) {
     debug_log("Initializing interface: [ %s ]\n", interface->name);
@@ -17,6 +20,11 @@ static void init_ip_v4_mappings(struct network_interface *interface) {
 void init_net() {
     init_net_sockets();
     init_mac();
+
+    struct process *network_process = load_kernel_process((uintptr_t) net_network_process_start);
+    assert(network_process);
+
+    sched_add_process(network_process);
 
     net_for_each_interface(init_ip_v4_mappings);
 }

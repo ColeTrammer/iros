@@ -34,7 +34,7 @@ struct ip_v4_packet {
     uint8_t payload[0];
 } __attribute__((packed));
 
-void net_ip_v4_recieve(struct ip_v4_packet *packet);
+void net_ip_v4_recieve(struct ip_v4_packet *packet, size_t len);
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest, uint16_t payload_length);
 
 #endif /* _KERNEL_NET_IP_H */

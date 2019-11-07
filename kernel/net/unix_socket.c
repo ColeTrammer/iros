@@ -183,17 +183,27 @@ int net_unix_socket(int domain, int type, int protocol) {
     return fd;
 }
 
-ssize_t net_unix_recv(struct socket *socket, void *buf, size_t len) {
+ssize_t net_unix_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr_un *source, socklen_t *addrlen) {
     assert(socket->domain == AF_UNIX);
     assert(buf);
+
+    (void) flags;
+    (void) source;
+    (void) addrlen;
 
     return net_generic_recieve(socket, buf, len);
 }
 
-ssize_t net_unix_send(struct socket *socket, const void *buf, size_t len) {
+ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr_un *dest, socklen_t addrlen) {
     assert(socket);
     assert(socket->domain == AF_UNIX);
     assert(buf);
+
+    (void) flags;
+
+    if (dest) {
+        net_unix_connect(socket, dest, addrlen);
+    }
 
     if (socket->state != CONNECTED) {
         return -ENOTCONN;

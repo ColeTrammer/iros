@@ -52,6 +52,9 @@ struct process {
 void init_kernel_process();
 void arch_init_kernel_process(struct process *kernel_process);
 
+struct process *load_kernel_process(uintptr_t entry);
+void arch_load_kernel_process(struct process *process, uintptr_t entry);
+
 struct process *load_process(const char *file_name);
 void arch_load_process(struct process *process, uintptr_t entry);
 

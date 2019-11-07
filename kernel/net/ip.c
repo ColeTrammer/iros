@@ -5,24 +5,19 @@
 #include <string.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/net/icmp.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/socket.h>
 
-void icmp_for_each(struct socket *socket, void *_packet) {
-    struct ip_v4_packet *packet = _packet;
-    if (socket->protocol == IPPROTO_ICMP) {
-        size_t data_len = packet->length - sizeof(struct ip_v4_packet);
-        struct socket_data *data = calloc(1, sizeof(struct socket_data) + data_len);
-        data->len = data_len;
-        memcpy(data->data, packet->payload, data_len);
-        net_send_to_socket(socket, data);
+void net_ip_v4_recieve(struct ip_v4_packet *packet, size_t len) {
+    if (len < sizeof(struct ip_v4_packet)) {
+        debug_log("IP V4 packet too small\n");
+        return;
     }
-}
 
-void net_ip_v4_recieve(struct ip_v4_packet *packet) {
     switch (packet->protocol) {
         case IP_V4_PROTOCOL_ICMP: {
-            net_for_each_socket(icmp_for_each, packet);
+            net_icmp_recieve((struct icmp_packet*) packet->payload, len);
             return;
         }
         default: {

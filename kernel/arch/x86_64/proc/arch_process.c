@@ -59,6 +59,31 @@ void arch_init_kernel_process(struct process *kernel_process) {
     kernel_process->fpu.saved = false;
 }
 
+void arch_load_kernel_process(struct process *process, uintptr_t entry) {
+    process->arch_process.cr3 = find_by_pid(1)->arch_process.cr3;
+    process->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
+    process->arch_process.process_state.cpu_state.rbp = KERNEL_PROC_STACK_START;
+    process->arch_process.process_state.stack_state.rip = entry;
+    process->arch_process.process_state.stack_state.cs = CS_SELECTOR;
+    process->arch_process.process_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
+    process->arch_process.process_state.stack_state.rsp = KERNEL_PROC_STACK_START;
+    process->arch_process.process_state.stack_state.ss = DATA_SELECTOR;
+
+    struct vm_region *kernel_proc_stack = calloc(1, sizeof(struct vm_region));
+    kernel_proc_stack->flags = VM_WRITE | VM_NO_EXEC;
+    kernel_proc_stack->type = VM_KERNEL_STACK;
+    kernel_proc_stack->end = KERNEL_PROC_STACK_START;
+    kernel_proc_stack->start = kernel_proc_stack->end - PAGE_SIZE;
+    process->process_memory = add_vm_region(process->process_memory, kernel_proc_stack);
+
+    /* Map Process Stack To Reserve Pages For It, But Then Unmap It So That Other Processes Can Do The Same (Each Process Loads Its Own Stack Before Execution) */
+    process->arch_process.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
+    do_unmap_page(kernel_proc_stack->start, false);
+    process->arch_process.setup_kernel_stack = false;
+    process->fpu.saved = false;
+    process->in_kernel = true;
+}
+
 void arch_load_process(struct process *process, uintptr_t entry) {
     process->arch_process.cr3 = get_cr3();
     process->arch_process.kernel_stack = KERNEL_PROC_STACK_START;

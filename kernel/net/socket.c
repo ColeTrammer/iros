@@ -83,35 +83,11 @@ static int socket_file_close(struct file *file) {
 }
 
 static ssize_t net_read(struct file *file, void *buf, size_t len) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    switch (socket->domain) {
-        case AF_UNIX:
-            return net_unix_recv(socket, buf, len);
-        default:
-            return -EAFNOSUPPORT;
-    }
+    return net_recvfrom(file, buf, len, 0, NULL, NULL);
 }
 
 static ssize_t net_write(struct file *file, const void *buf, size_t len) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    switch (socket->domain) {
-        case AF_UNIX:
-            return net_unix_send(socket, buf, len);
-        default:
-            return -EAFNOSUPPORT;
-    }
+    return net_sendto(file, buf, len, 0, NULL, 0);
 }
 
 struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
@@ -350,6 +326,8 @@ ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, co
     assert(socket);
 
     switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_sendto(socket, buf, len, flags, (const struct sockaddr_un*) dest, addrlen);
         case AF_INET:
             return net_inet_sendto(socket, buf, len, flags, (const struct sockaddr_in*) dest, addrlen);
         default:
@@ -366,6 +344,8 @@ ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct
     assert(socket);
 
     switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_recvfrom(socket, buf, len, flags, (struct sockaddr_un*) source, addrlen);
         case AF_INET:
             return net_inet_recvfrom(socket, buf, len, flags, (struct sockaddr_in*) source, addrlen);
         default:

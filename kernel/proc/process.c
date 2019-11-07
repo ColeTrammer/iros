@@ -121,6 +121,24 @@ void init_kernel_process() {
     sched_add_process(&initial_kernel_process);
 }
 
+struct process *load_kernel_process(uintptr_t entry) {
+    struct process *process = calloc(1, sizeof(struct process));
+    process->pid = get_next_pid();
+    process->pgid = process->pid;
+    process->ppid = initial_kernel_process.pid;
+    process->process_memory = NULL;
+    process->kernel_process = true;
+    process->sched_state = READY;
+    process->cwd = malloc(2);
+    strcpy(process->cwd, "/");
+    process->next = NULL;
+
+    arch_load_kernel_process(process, entry);
+
+    debug_log("Loaded Kernel Process: [ %d ]\n", process->pid);
+    return process;
+}
+
 struct process *load_process(const char *file_name) {
     int error = 0;
     struct file *program = fs_open(file_name, O_RDONLY, &error);
