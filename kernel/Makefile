@@ -64,6 +64,7 @@ $(BUILDDIR)/kernel/net/ip.o \
 $(BUILDDIR)/kernel/net/mac.o \
 $(BUILDDIR)/kernel/net/net.o \
 $(BUILDDIR)/kernel/net/network_process.o \
+$(BUILDDIR)/kernel/net/port.o \
 $(BUILDDIR)/kernel/net/socket.o \
 $(BUILDDIR)/kernel/net/udp.o \
 $(BUILDDIR)/kernel/net/unix_socket.o \

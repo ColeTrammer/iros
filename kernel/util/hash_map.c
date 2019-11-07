@@ -76,7 +76,7 @@ void hash_set(struct hash_map *map, void *data) {
 	debug_log("Hash Map tried to set non existent entry\n");
 }
 
-void hash_del(struct hash_map *map, void *key) {
+void *hash_del(struct hash_map *map, void *key) {
 	size_t i = map->hash(key, HASH_DEFAULT_NUM_BUCKETS);
 
 	spin_lock(&map->lock);
@@ -84,10 +84,11 @@ void hash_del(struct hash_map *map, void *key) {
 	struct hash_entry **entry = &map->entries[i];
 	while (*entry != NULL) {
 		if (map->equals((*entry)->key, key)) {
+			void *data_removed = (*entry)->data;
 			*entry = (*entry)->next;
 			
 			spin_unlock(&map->lock);
-			return;
+			return data_removed;
 		}
 
 		entry = &(*entry)->next;
@@ -96,6 +97,7 @@ void hash_del(struct hash_map *map, void *key) {
 	spin_unlock(&map->lock);
 
 	debug_log("Hash Map tried to delete non existent entry\n");
+	return NULL;
 }
 
 void hash_free_hash_map(struct hash_map *map) {

@@ -90,6 +90,12 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
     struct e1000_data *data = this->private_data;
     assert(len < 8192);
 
+#ifdef KERNEL_E1000_DEBUG
+    for (size_t i = 0; i < len; i++) {
+        debug_log("TX Byte: [ %lu, %#2X ]\n", i, ((uint8_t*) raw)[i]);
+    }
+#endif /* KERNEL_E1000_DEBUG */
+
     memcpy(data->tx_virt_addrs[data->current_tx], raw, len);
 
     data->tx_descs[data->current_tx].length = len;

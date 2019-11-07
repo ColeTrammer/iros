@@ -58,6 +58,9 @@ static int socket_file_close(struct file *file) {
 
     int ret = 0;
     switch (socket->domain) {
+        case AF_INET:
+            ret = net_inet_close(socket);
+            break;
         case AF_UNIX:
             ret = net_unix_close(socket);
             break;
@@ -253,6 +256,8 @@ int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) 
     assert(socket);
 
     switch (socket->domain) {
+        case AF_INET:
+            return net_inet_bind(socket, (const struct sockaddr_in*) addr, addrlen);
         case AF_UNIX:
             return net_unix_bind(socket, (const struct sockaddr_un*) addr, addrlen);
         default:

@@ -10,7 +10,8 @@ struct port_to_socket_id {
 
 struct socket *net_get_socket_from_port(uint16_t port);
 
-int net_bind_to_ephemeral_port(unsigned long socket_id);
+int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p);
+void net_unbind_port(uint16_t port);
 
 void init_ports();
 

@@ -8,6 +8,7 @@
 #include <kernel/net/icmp.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/udp.h>
 
 void net_ip_v4_recieve(struct ip_v4_packet *packet, size_t len) {
     if (len < sizeof(struct ip_v4_packet)) {
@@ -18,6 +19,10 @@ void net_ip_v4_recieve(struct ip_v4_packet *packet, size_t len) {
     switch (packet->protocol) {
         case IP_V4_PROTOCOL_ICMP: {
             net_icmp_recieve((struct icmp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
+            return;
+        }
+        case IP_V4_PROTOCOL_UDP: {
+            net_udp_recieve((struct udp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
             return;
         }
         default: {

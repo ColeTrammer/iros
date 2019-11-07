@@ -23,7 +23,7 @@ struct hash_map *hash_create_hash_map(int (*hash)(void *ptr, int hash_size), int
 void *hash_get(struct hash_map *map, void *key);
 void hash_put(struct hash_map *map, void *ptr);
 void hash_set(struct hash_map *map, void *ptr);
-void hash_del(struct hash_map *map, void *key);
+void *hash_del(struct hash_map *map, void *key);
 void hash_free_hash_map(struct hash_map *map);
 
 void hash_for_each(struct hash_map *map, void (*f)(void *o, void *d), void *d);
