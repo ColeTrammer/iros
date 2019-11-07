@@ -4,6 +4,7 @@
 #include <kernel/net/mac.h>
 #include <kernel/net/net.h>
 #include <kernel/net/network_process.h>
+#include <kernel/net/port.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
@@ -20,6 +21,7 @@ static void init_ip_v4_mappings(struct network_interface *interface) {
 void init_net() {
     init_net_sockets();
     init_mac();
+    init_ports();
 
     struct process *network_process = load_kernel_process((uintptr_t) net_network_process_start);
     assert(network_process);

@@ -44,6 +44,7 @@ $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/tmpnam_test \
+$(BUILDDIR)/initrd/programs/udp_test \
 $(BUILDDIR)/initrd/programs/we_test
 
 .PHONY: all
