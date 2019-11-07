@@ -21,14 +21,6 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    uint8_t a, b, c, d;
-    if (sscanf(argv[1], "%hhu.%hhu.%hhu.%hhu", &a, &b, &c, &d) != 4) {
-        print_usage(argv);
-        return 1;
-    }
-
-    printf("ip: %u, %u, %u, %u\n", a, b, c, d);
-
     int fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (fd < 0) {
         perror("socket");
@@ -38,7 +30,14 @@ int main(int argc, char **argv) {
     struct sockaddr_in addr = { 0 };
     addr.sin_family = AF_INET;
     addr.sin_port = 0;
-    addr.sin_addr.s_addr = a | b << 8 | c << 16 | d << 24;
+    addr.sin_addr.s_addr = inet_addr(argv[1]);
+
+    if (addr.sin_addr.s_addr == INADDR_NONE) {
+        print_usage(argv);
+        return 1;
+    }
+
+    fprintf(stderr, "IP: %s\n", inet_ntoa(addr.sin_addr));
 
     char *message = "Ping message";
 

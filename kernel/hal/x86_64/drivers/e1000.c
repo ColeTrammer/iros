@@ -86,7 +86,7 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
     return (uint16_t) ((val >> 16) & 0xFFFF);
 }
 
-static ssize_t send(struct network_interface *this, const void *raw, size_t len) {
+static ssize_t e1000_send(struct network_interface *this, const void *raw, size_t len) {
     struct e1000_data *data = this->private_data;
     assert(len < 8192);
 
@@ -109,7 +109,7 @@ static ssize_t send(struct network_interface *this, const void *raw, size_t len)
     return len;
 }
 
-static void recieve() {
+static void e1000_recieve() {
     struct e1000_data *data = interface->private_data;
 
     while (data->rx_descs[data->current_rx].status & 0x1) {
@@ -143,7 +143,7 @@ static void handle_interrupt() {
         debug_log("Threshold ??\n");
         // Threshold ??
     } else if (status & 0x80) {
-        recieve();
+        e1000_recieve();
     }
 }
 
@@ -164,7 +164,7 @@ static struct mac_address get_mac_address(struct network_interface *this) {
 }
 
 static struct network_interface_ops e1000_ops = {
-    &send, NULL, &get_mac_address
+    &e1000_send, NULL, &get_mac_address
 };
 
 void init_intel_e1000(struct pci_configuration *config) {

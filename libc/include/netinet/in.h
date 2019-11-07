@@ -36,4 +36,6 @@ uint16_t in_compute_checksum(void *data, size_t bytes);
 }
 #endif /* __cplusplus */
 
+#define INADDR_NONE  ((in_addr_t) -1)
+
 #endif /* _NETINET_IN_H */
