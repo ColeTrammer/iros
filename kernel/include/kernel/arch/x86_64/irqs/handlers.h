@@ -16,7 +16,7 @@ void sys_call_entry();
 
 void handle_double_fault();
 void handle_general_protection_fault(struct stack_state *stack, uintptr_t error);
-void handle_page_fault(struct stack_state *stack, uintptr_t address, uintptr_t error);
+void handle_page_fault(struct process_state *process_state, uintptr_t address, uintptr_t error);
 void handle_invalid_opcode();
 void handle_fpu_exception();
 void handle_device_not_available();

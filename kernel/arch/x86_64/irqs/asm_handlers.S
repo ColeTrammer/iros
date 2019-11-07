@@ -65,10 +65,43 @@ handle_general_protection_fault_entry:
 
 .global handle_page_fault_entry
 handle_page_fault_entry:
-    lea -8(%rsp), %rdi
+    push %rax
+    push %rbx
+    push %rcx
+    push %rdx
+    push %rsi
+    push %rdi
+    push %rbp
+    push %r8
+    push %r9
+    push %r10
+    push %r11
+    push %r12
+    push %r13
+    push %r14
+    push %r15
+
+    mov %rsp, %rdi
     mov %cr2, %rsi
-    movq (%rsp), %rdx
+    movq 120(%rsp), %rdx
     call handle_page_fault
+
+    pop %r15
+    pop %r14
+    pop %r13
+    pop %r12
+    pop %r11
+    pop %r10
+    pop %r9
+    pop %r8
+    pop %rbp
+    pop %rdi
+    pop %rsi
+    pop %rdx
+    pop %rcx
+    pop %rbx
+    pop %rax
+
     add $8, %rsp
     iretq
 

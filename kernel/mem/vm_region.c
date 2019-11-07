@@ -63,11 +63,11 @@ int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pag
 
     if (entry->next == NULL) { return -1; }
 
-    uintptr_t new_start = list->next->start - num_pages * PAGE_SIZE;
-    if (list->end > new_start) {
+    uintptr_t new_start = entry->next->start - num_pages * PAGE_SIZE;
+    if (entry->end > new_start) {
         return -2; // Indicate there is no room
     }
-    list->next->start = new_start;
+    entry->next->start = new_start;
 
     debug_log("VM Region Start Extended: [ %ld, %#.16lX, %#.16lX ]\n", num_pages, type, (uintptr_t) list);
     return 0;

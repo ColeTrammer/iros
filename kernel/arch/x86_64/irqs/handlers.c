@@ -9,6 +9,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/proc/process.h>
+#include <kernel/mem/vm_allocator.h>
 
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(asm_utils.h)
@@ -45,11 +46,25 @@ void handle_general_protection_fault(struct stack_state *stack, uintptr_t error)
     abort();
 }
 
-void handle_page_fault(struct stack_state *stack, uintptr_t address, uintptr_t error) {
+void handle_page_fault(struct process_state *process_state, uintptr_t address, uintptr_t error) {
+    // FIXME: the error code pushed to the stack ruins the process_state struct
     // FIXME: need to save process state here in case a signal handler is called and returned
-
     struct process *current = get_current_process();
-    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, stack->rip, address, error);
+    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, address, error);
+
+    // In this case we just extend the stack
+    struct vm_region *vm_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
+    if (address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {
+        size_t num_pages = NUM_PAGES(address, vm_stack->start);
+        assert(num_pages > 0);
+        assert(extend_vm_region_start(current->process_memory, VM_PROCESS_STACK, num_pages) == 0);
+        assert(vm_stack->start <= address);
+        for (size_t i = 0; i < num_pages; i++) {
+            map_page(vm_stack->start + i * PAGE_SIZE, VM_NO_EXEC | VM_WRITE | VM_USER);
+        }
+        return;
+    }
+
     if (current->pid != 1 && !current->in_kernel) {
         signal_process(current->pid, SIGSEGV);
     }

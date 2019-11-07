@@ -25,7 +25,7 @@ void net_icmp_recieve(struct icmp_packet *packet, size_t len) {
         return;
     }
 
-    net_for_each_socket(icmp_for_each, packet);
+    net_for_each_socket(icmp_for_each, ((struct ip_v4_packet*) packet) - 1);
 }
 
 void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload, uint16_t payload_size) {
