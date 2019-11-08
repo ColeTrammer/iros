@@ -28,6 +28,8 @@ struct socket_data {
     struct socket_data *next;
     struct socket_data *prev;
 
+    struct socket_connection from;
+
     size_t len;
     uint8_t data[0];
 };
@@ -58,7 +60,7 @@ struct socket_file_data {
 };
 
 struct socket *net_create_socket(int domain, int type, int protocol, int *fd);
-ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len);
+ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
 struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data);

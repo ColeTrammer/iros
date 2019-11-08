@@ -127,7 +127,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
     return NULL;
 }
 
-ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len) {
+ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen) {
     if (socket->state != CONNECTED && socket->type == SOCK_STREAM) {
         return -ENOTCONN;
     }
@@ -170,6 +170,12 @@ ssize_t net_generic_recieve(struct socket *socket, void *buf, size_t len) {
 
     size_t to_copy = MIN(len, data->len);
     memcpy(buf, data->data, to_copy);
+
+    if (addr && addrlen) {
+        size_t len = MIN(data->from.addrlen, *addrlen);
+        memcpy(addr, &data->from.addr, len);
+        *addrlen = len;
+    }
 
     debug_log("Received message: [ %lu, %lu ]\n", socket->id, to_copy);
 

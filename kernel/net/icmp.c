@@ -6,6 +6,7 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/net/icmp.h>
+#include <kernel/net/inet_socket.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/socket.h>
 
@@ -13,9 +14,7 @@ static void icmp_for_each(struct socket *socket, void *_packet) {
     struct ip_v4_packet *packet = _packet;
     if (socket->protocol == IPPROTO_ICMP) {
         size_t data_len = packet->length - sizeof(struct ip_v4_packet);
-        struct socket_data *data = calloc(1, sizeof(struct socket_data) + data_len);
-        data->len = data_len;
-        memcpy(data->data, packet->payload, data_len);
+        struct socket_data *data = net_inet_create_socket_data(packet, 0, (void*) packet->payload, data_len);
         net_send_to_socket(socket, data);
     }
 }

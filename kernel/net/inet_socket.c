@@ -11,6 +11,20 @@
 #include <kernel/net/socket.h>
 #include <kernel/net/udp.h>
 
+struct socket_data *net_inet_create_socket_data(const struct ip_v4_packet *packet, uint16_t port_network_ordered, const void *buf, size_t len) {
+    struct socket_data *data = calloc(1, sizeof(struct socket_data) + len);
+    assert(data);
+
+    data->len = len;
+    memcpy(data->data, buf, len);
+    data->from.addrlen = sizeof(struct sockaddr_in);
+    data->from.addr.in.sin_family = AF_INET;
+    data->from.addr.in.sin_port = port_network_ordered;
+    data->from.addr.in.sin_addr.s_addr = ip_v4_to_uint(packet->source);
+
+    return data;
+}
+
 int net_inet_bind(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen) {
     assert(socket);
 
@@ -98,8 +112,6 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
 
 ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr_in *source, socklen_t *addrlen) {
     (void) flags;
-    (void) source;
-    (void) addrlen;
 
-    return net_generic_recieve(socket, buf, len);
+    return net_generic_recieve_from(socket, buf, len, (struct sockaddr*) source, addrlen);
 }

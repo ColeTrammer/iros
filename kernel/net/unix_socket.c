@@ -188,10 +188,8 @@ ssize_t net_unix_recvfrom(struct socket *socket, void *buf, size_t len, int flag
     assert(buf);
 
     (void) flags;
-    (void) source;
-    (void) addrlen;
 
-    return net_generic_recieve(socket, buf, len);
+    return net_generic_recieve_from(socket, buf, len, (struct sockaddr*) source, addrlen);
 }
 
 ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr_un *dest, socklen_t addrlen) {
@@ -222,6 +220,10 @@ ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int 
         free(socket_data);
         return -ECONNABORTED;
     }
+
+    socket_data->from.addrlen = offsetof(struct sockaddr_un, sun_path) + strlen(data->bound_path) + 1;
+    memcpy(&socket_data->from.addr, data->bound_path, socket_data->from.addrlen - offsetof(struct sockaddr_un, sun_path));
+    socket_data->from.addr.un.sun_family = AF_UNIX;
 
     return net_send_to_socket(to_send, socket_data);
 }

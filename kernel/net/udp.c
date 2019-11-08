@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <kernel/net/ethernet.h>
+#include <kernel/net/inet_socket.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/port.h>
@@ -44,9 +45,8 @@ void net_udp_recieve(const struct udp_packet *packet, size_t len) {
         return;
     }
 
-    struct socket_data *data = calloc(1, sizeof(struct socket_data) + len);
-    data->len = len;
-    memcpy(data->data, packet->payload, len);
+    const struct ip_v4_packet *ip_packet = ((const struct ip_v4_packet*) packet) - 1;
+    struct socket_data *data = net_inet_create_socket_data(ip_packet, packet->source_port, (void*) packet->payload, len - sizeof(struct udp_packet));
     net_send_to_socket(socket, data);
 }
 
