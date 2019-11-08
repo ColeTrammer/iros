@@ -21,7 +21,7 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
     free(packet);
 }
 
-void net_arp_recieve(struct arp_packet *packet, size_t len) {
+void net_arp_recieve(const struct arp_packet *packet, size_t len) {
     assert(ntohs(packet->operation) == ARP_OPERATION_REPLY);
 
     if (len < sizeof(struct arp_packet)) {

@@ -25,13 +25,13 @@ ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address d
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
-    int ret = interface->ops->send(interface, packet, total_length);
+    ssize_t ret = interface->ops->send(interface, packet, total_length);
 
     free(packet);
-    return (ssize_t) ret;
+    return ret < 0 ? ret : ret - (ssize_t) sizeof(struct ethernet_packet) - (ssize_t) sizeof(struct ip_v4_packet);
 }
 
-void net_udp_recieve(struct udp_packet *packet, size_t len) {
+void net_udp_recieve(const struct udp_packet *packet, size_t len) {
     if (len < sizeof(struct udp_packet)) {
         debug_log("UDP Packet to small\n");
         return;

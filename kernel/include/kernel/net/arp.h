@@ -29,7 +29,7 @@ struct arp_packet {
 
 void net_send_arp_request(struct network_interface *interface, struct ip_v4_address ip_address);
 
-void net_arp_recieve(struct arp_packet *packet, size_t len);
+void net_arp_recieve(const struct arp_packet *packet, size_t len);
 
 void net_init_arp_packet(struct arp_packet *buf, uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip, struct mac_address t_mac, struct ip_v4_address t_ip);
 

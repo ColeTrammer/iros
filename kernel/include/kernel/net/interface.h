@@ -10,7 +10,8 @@ struct network_interface;
 
 struct network_interface_ops {
     ssize_t (*send)(struct network_interface *interface, const void *data, size_t len);
-    void (*recieve)(struct network_interface *interface, void *data, size_t len);
+    void (*recieve)(struct network_interface *interface, const void *data, size_t len);
+    void (*recieve_sync)(struct network_interface *interface, const void *data, size_t len);
     struct mac_address (*get_mac_address)(struct network_interface *interface);
 };
 

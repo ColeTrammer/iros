@@ -35,7 +35,7 @@ static struct network_data *consume() {
     return data;
 }
 
-void net_on_incoming_packet(void *buf, size_t len) {
+void net_on_incoming_packet(const void *buf, size_t len) {
     struct network_data *new_data = malloc(sizeof(struct network_data));
     assert(new_data);
     new_data->buf = buf;
@@ -53,6 +53,20 @@ void net_on_incoming_packet(void *buf, size_t len) {
     spin_unlock(&lock);
 }
 
+void net_on_incoming_packet_sync(const void *buf, size_t len) {
+    const struct ethernet_packet *packet = buf;
+    switch (ntohs(packet->ether_type)) {
+        case ETHERNET_TYPE_ARP:
+            net_arp_recieve((const struct arp_packet*) packet->payload, len - sizeof(struct ethernet_packet));
+            break;
+        case ETHERNET_TYPE_IPV4:
+            net_ip_v4_recieve((const struct ip_v4_packet*) packet->payload, len - sizeof(struct ethernet_packet));
+            break;
+        default:
+            debug_log("Recived unknown packet: [ %#4X ]\n", ntohs(packet->ether_type));
+    }
+}
+
 void net_network_process_start() {
     for (;;) {
         struct network_data *data = consume();
@@ -68,18 +82,7 @@ void net_network_process_start() {
             continue;
         }
 
-        struct ethernet_packet *packet = data->buf;
-        switch (ntohs(packet->ether_type)) {
-            case ETHERNET_TYPE_ARP:
-                net_arp_recieve((struct arp_packet*) packet->payload, data->len - sizeof(struct ethernet_packet));
-                break;
-            case ETHERNET_TYPE_IPV4:
-                net_ip_v4_recieve((struct ip_v4_packet*) packet->payload, data->len - sizeof(struct ethernet_packet));
-                break;
-            default:
-                debug_log("Recived unknown packet: [ %#4X ]\n", ntohs(packet->ether_type));
-        }
-
+        net_on_incoming_packet_sync(data->buf, data->len);
         free(data);
     }
 }

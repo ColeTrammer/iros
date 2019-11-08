@@ -5,12 +5,37 @@
 #include <string.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/net/ethernet.h>
 #include <kernel/net/icmp.h>
+#include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/udp.h>
 
-void net_ip_v4_recieve(struct ip_v4_packet *packet, size_t len) {
+ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len) {
+    size_t total_size = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + len;
+
+    struct ethernet_packet *packet = net_create_ethernet_packet(
+        net_get_mac_from_ip_v4(interface->broadcast)->mac,
+        interface->ops->get_mac_address(interface),
+        ETHERNET_TYPE_IPV4,
+        total_size - sizeof(struct ethernet_packet)
+    );
+
+    struct ip_v4_address d = dest;
+    debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
+
+    struct ip_v4_packet *ip_packet = (struct ip_v4_packet*) packet->payload; 
+    net_init_ip_v4_packet(ip_packet, 1, protocol, interface->address, dest, len);
+    memcpy(ip_packet->payload, buf, len);
+
+    ssize_t ret = interface->ops->send(interface, packet, total_size);
+
+    free(packet);
+    return ret <= 0 ? ret : ret - (ssize_t) sizeof(struct ethernet_packet) - (ssize_t) sizeof(struct ip_v4_packet);
+}
+
+void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
     if (len < sizeof(struct ip_v4_packet)) {
         debug_log("IP V4 packet too small\n");
         return;
@@ -18,11 +43,11 @@ void net_ip_v4_recieve(struct ip_v4_packet *packet, size_t len) {
 
     switch (packet->protocol) {
         case IP_V4_PROTOCOL_ICMP: {
-            net_icmp_recieve((struct icmp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
+            net_icmp_recieve((const struct icmp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
             return;
         }
         case IP_V4_PROTOCOL_UDP: {
-            net_udp_recieve((struct udp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
+            net_udp_recieve((const struct udp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
             return;
         }
         default: {

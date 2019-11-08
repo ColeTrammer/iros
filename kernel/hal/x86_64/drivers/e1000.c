@@ -170,7 +170,7 @@ static struct mac_address get_mac_address(struct network_interface *this) {
 }
 
 static struct network_interface_ops e1000_ops = {
-    &e1000_send, NULL, &get_mac_address
+    &e1000_send, NULL, NULL, &get_mac_address
 };
 
 void init_intel_e1000(struct pci_configuration *config) {

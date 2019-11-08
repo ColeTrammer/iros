@@ -21,15 +21,31 @@ static void add_interface(struct network_interface *interface) {
     }
 }
 
-static void generic_recieve(struct network_interface *interface, void *data, size_t len) {
+static void generic_recieve(struct network_interface *interface, const void *data, size_t len) {
     (void) interface;
 
     net_on_incoming_packet(data, len);
 }
 
+static void generic_recieve_sync(struct network_interface *interface, const void *data, size_t len) {
+    (void) interface;
+
+    net_on_incoming_packet_sync(data, len);
+}
+
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address) {
-    (void) address;
-    return interfaces;
+    struct ip_v4_address loopback = IP_V4_LOOPBACK;
+    struct network_interface *interface = interfaces;
+    bool use_loopback = memcmp(&address, &loopback, sizeof(struct ip_v4_address)) == 0;
+
+    while (use_loopback ? interface->type != NETWORK_INTERFACE_LOOPBACK : interface->type != NETWORK_INTERFACE_ETHERNET) {
+        interface = interface->next;
+    }
+
+    assert(interface);
+
+    debug_log("Got interface: [ %s, %u.%u.%u.%u ]\n", interface->name, address.addr[0], address.addr[1], address.addr[2], address.addr[3]);
+    return interface;
 }
 
 void net_for_each_interface(void (*func)(struct network_interface *interface)) {
@@ -50,13 +66,21 @@ struct network_interface *net_create_network_interface(const char *name, int typ
     assert(type == NETWORK_INTERFACE_ETHERNET || type == NETWORK_INTERFACE_LOOPBACK);
     interface->type = type;
 
-    interface->address = (struct ip_v4_address) { { 10, 0, 2, 15 } };
-    interface->mask = (struct ip_v4_address) { { 255, 255, 255, 0 } };
-    interface->broadcast = (struct ip_v4_address) { { 10, 0, 2, 2 } };
+    if (type == NETWORK_INTERFACE_ETHERNET) {
+        interface->address = (struct ip_v4_address) { { 10, 0, 2, 15 } };
+        interface->mask = (struct ip_v4_address) { { 255, 255, 255, 0 } };
+        interface->broadcast = (struct ip_v4_address) { { 10, 0, 2, 2 } };
+    } else {
+        interface->address = IP_V4_LOOPBACK;
+        interface->mask = (struct ip_v4_address) { { 255, 255, 255, 255 } };
+        interface->broadcast = IP_V4_LOOPBACK;
+    }
 
     assert(ops);
     assert(!ops->recieve);
+    assert(!ops->recieve_sync);
     ops->recieve = generic_recieve;
+    ops->recieve_sync = generic_recieve_sync;
 
     interface->ops = ops;
     interface->private_data = data;

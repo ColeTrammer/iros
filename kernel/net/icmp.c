@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <assert.h>
+#include <netinet/ip_icmp.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,13 +20,27 @@ static void icmp_for_each(struct socket *socket, void *_packet) {
     }
 }
 
-void net_icmp_recieve(struct icmp_packet *packet, size_t len) {
+void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
     if (len < sizeof(struct icmp_packet)) {
         debug_log("ICMP packet too small\n");
         return;
     }
 
-    net_for_each_socket(icmp_for_each, ((struct ip_v4_packet*) packet) - 1);
+    if (packet->type == ICMP_TYPE_ECHO_REPLY) {
+        net_for_each_socket(icmp_for_each, ((struct ip_v4_packet*) packet) - 1);
+        return;
+    }
+
+    assert(packet->type == ICMP_TYPE_ECHO_REQUEST);
+
+    const struct ip_v4_packet *ip_packet = ((const struct ip_v4_packet*) packet) - 1;
+    size_t to_send_length = ip_packet->length - sizeof(struct ip_v4_packet);
+
+    struct icmp_packet *to_send = malloc(to_send_length);
+    net_init_icmp_packet(to_send, ICMP_TYPE_ECHO_REPLY, ntohs(packet->identifier), ntohs(packet->sequence_number), (void*) packet->payload, to_send_length - sizeof(struct icmp_packet));
+
+    net_send_ip_v4(net_get_interface_for_ip(ip_packet->source), IP_V4_PROTOCOL_ICMP, ip_packet->source, to_send, to_send_length);
+    free(to_send);
 }
 
 void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload, uint16_t payload_size) {

@@ -5,6 +5,7 @@
 
 #include <kernel/net/ip_address.h>
 
+#define MAC_ZEROES ((struct mac_address) { 0 })
 #define MAC_BROADCAST ((struct mac_address) { { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } })
 
 struct mac_address {

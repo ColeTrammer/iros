@@ -75,26 +75,7 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     assert(interface);
 
     if ((socket->type & SOCK_TYPE_MASK) == SOCK_RAW) {
-        size_t total_size = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + len;
-
-        struct ethernet_packet *packet = net_create_ethernet_packet(
-            net_get_mac_from_ip_v4(interface->broadcast)->mac,
-            interface->ops->get_mac_address(interface),
-            ETHERNET_TYPE_IPV4,
-            total_size - sizeof(struct ethernet_packet)
-        );
-
-        struct ip_v4_address d = ip_v4_from_uint(dest->sin_addr.s_addr);
-        debug_log("Sending to: [ %lu, %u.%u.%u.%u ]\n", socket->id, d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
-
-        struct ip_v4_packet *ip_packet = (struct ip_v4_packet*) packet->payload; 
-        net_init_ip_v4_packet(ip_packet, socket->id, socket->protocol, interface->address, ip_v4_from_uint(dest->sin_addr.s_addr), len);
-        memcpy(ip_packet->payload, buf, len);
-
-        ssize_t ret = interface->ops->send(interface, packet, total_size);
-
-        free(packet);
-        return ret <= 0 ? ret : ret - (ssize_t) sizeof(struct ethernet_packet) - (ssize_t) sizeof(struct ip_v4_packet);
+        return net_send_ip_v4(interface, socket->protocol, ip_v4_from_uint(dest->sin_addr.s_addr), buf, len);
     }
 
     assert(socket->type == SOCK_DGRAM && socket->protocol == IPPROTO_UDP);

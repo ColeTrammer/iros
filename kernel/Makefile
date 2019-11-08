@@ -61,6 +61,7 @@ $(BUILDDIR)/kernel/net/icmp.o \
 $(BUILDDIR)/kernel/net/inet_socket.o \
 $(BUILDDIR)/kernel/net/interface.o \
 $(BUILDDIR)/kernel/net/ip.o \
+$(BUILDDIR)/kernel/net/loopback.o \
 $(BUILDDIR)/kernel/net/mac.o \
 $(BUILDDIR)/kernel/net/net.o \
 $(BUILDDIR)/kernel/net/network_process.o \

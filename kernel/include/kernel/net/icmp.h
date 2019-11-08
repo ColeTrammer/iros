@@ -16,7 +16,7 @@ struct icmp_packet {
     uint8_t payload[0];
 } __attribute__((packed));
 
-void net_icmp_recieve(struct icmp_packet *packet, size_t len);
+void net_icmp_recieve(const struct icmp_packet *packet, size_t len);
 
 void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload, uint16_t payload_size);
 
