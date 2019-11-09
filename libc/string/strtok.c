@@ -38,6 +38,6 @@ skip_inc_i:
     }
 
 end:
-    save = i == 0 ? NULL : start + i + 1;
+    save = i == 0 || start[i] == '\0' ? NULL : start + i + 1;
     return start;
 }

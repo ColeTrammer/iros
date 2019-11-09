@@ -13,6 +13,7 @@ mkdir -p mnt/home/eloc
 mkdir -p mnt/tmp
 mkdir -p mnt/etc
 touch mnt/etc/resolv.conf
+echo "localhost 127.0.0.1" >> mnt/etc/hosts
 
 umount /dev/loop100
 losetup -d /dev/loop100
