@@ -69,7 +69,7 @@ static void init_transmit_descriptors(struct e1000_data *data) {
     write_command(data, E1000_TX_DESC_HI, (uint32_t) (get_phys_addr((uintptr_t) data->tx_descs) >> 32));
     write_command(data, E1000_TX_DESC_LO, (uint32_t) (get_phys_addr((uintptr_t) data->tx_descs) & 0xFFFFFFFF));
 
-    write_command(data, E1000_TX_DESC_LEN, E1000_NUM_RECIEVE_DESCS * sizeof(struct e1000_transmit_desc));
+    write_command(data, E1000_TX_DESC_LEN, E1000_NUM_TRANSMIT_DESCS * sizeof(struct e1000_transmit_desc));
     write_command(data, E1000_TX_DESC_HEAD, 0);
     write_command(data, E1000_TX_DESC_TAIL, 0);
 
@@ -96,6 +96,8 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
     }
 #endif /* KERNEL_E1000_DEBUG */
 
+    debug_log("Sending over: %d\n", data->current_tx);
+
     memcpy(data->tx_virt_addrs[data->current_tx], raw, len);
 
     data->tx_descs[data->current_tx].length = len;
@@ -107,11 +109,11 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
 
     write_command(data, E1000_TX_DESC_TAIL, data->current_tx);
 
-    debug_log("Starting transmission...: [ %d ]\n", save_current_tx);
+    debug_log("Starting transmission: [ %d, %d ]\n", save_current_tx, read_command(data, E1000_TX_DESC_HEAD));
 
     while (!data->tx_descs[save_current_tx].status);
 
-    debug_log("Finished transmitting...: [ %d ]\n", save_current_tx);
+    debug_log("Finished transmitting: [ %d ]\n", save_current_tx);
     return len;
 }
 
@@ -122,7 +124,7 @@ static void e1000_recieve() {
         uint8_t *buf = data->rx_virt_addrs[data->current_rx];
         uint16_t len = data->rx_descs[data->current_rx].length;
 
-        debug_log("Recieving packet...\n");
+        debug_log("Recieving packet\n");
 
         interface->ops->recieve(interface, buf, len);
 
