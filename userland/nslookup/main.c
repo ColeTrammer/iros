@@ -193,8 +193,6 @@ int main(int argc, char **argv) {
 
     fprintf(stderr, "Recieved response: %u, %u, %u, %u, %u\n", ntohs(response_header->id), ntohs(response_header->num_questions), ntohs(response_header->num_answers), ntohs(response_header->num_records), ntohs(response_header->num_records_extra));
 
-    puts((char*) (response_header + 1));
-
     struct dns_record *record = (struct dns_record*) (buf + new_len);
     fprintf(stderr, "Received record: %u, %u, %u, %u\n", ntohs(record->type), ntohs(record->class), ntohl(record->ttl), ntohs(record->rd_length));
 

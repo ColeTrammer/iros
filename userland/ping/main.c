@@ -1,9 +1,14 @@
 #include <arpa/inet.h>
+#include <assert.h>
 #include <netinet/in.h>
 #include <netinet/ip_icmp.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <termios.h>
 #include <unistd.h>
 
 struct ping_message {
@@ -15,15 +20,46 @@ void print_usage(char **argv) {
     fprintf(stderr, "Usage: %s <ip>\n", argv[0]);
 }
 
+static struct termios old;
+
+static void fix_terminal() {
+    tcsetattr(STDOUT_FILENO, TCSAFLUSH, &old);
+} 
+
+static void on_int(int signum) {
+    assert(signum == SIGINT);
+
+    fix_terminal();
+    _exit(127 + signum);
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         print_usage(argv);
         return 0;
     }
 
+    tcgetattr(STDOUT_FILENO, &old);
+
+    struct termios new_termios = old;
+    new_termios.c_lflag &= ~(ICANON);
+    new_termios.c_cc[VTIME] = 10;
+
+    tcsetattr(STDOUT_FILENO, TCSAFLUSH, &new_termios);
+
+    atexit(&fix_terminal);
+
+    signal(SIGINT, &on_int);
+
     int fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (fd < 0) {
         perror("socket");
+        return 1;
+    }
+
+    struct timeval tv = { 1, 0 };
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) == -1) {
+        perror("setsockopt");
         return 1;
     }
 
@@ -37,7 +73,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    fprintf(stderr, "IP: %s\n", inet_ntoa(addr.sin_addr));
+    fprintf(stderr, "PING: %s\n", inet_ntoa(addr.sin_addr));
 
     char *message = "Ping message";
 
@@ -45,18 +81,20 @@ int main(int argc, char **argv) {
     ping_message.header.type = ICMP_ECHO;
     ping_message.header.code = 0;
     ping_message.header.un.echo.id = htons(getpid() & 0xFFFF);
-    ping_message.header.un.echo.sequence = htons(1);
+
+    int sequence = 1;
 
     strcpy(ping_message.message, message);
 
-    ping_message.header.checksum = htons(in_compute_checksum(&ping_message, sizeof(struct ping_message)));
-
-    if (sendto(fd, &ping_message, sizeof(struct ping_message), 0, (const struct sockaddr*) &addr, sizeof(struct sockaddr_in)) == -1) {
-        perror("sendto");
-        return 1;
-    }
-
     for (;;) {
+        ping_message.header.checksum = 0;
+        ping_message.header.un.echo.sequence = htons(sequence++);
+        ping_message.header.checksum = htons(in_compute_checksum(&ping_message, sizeof(struct ping_message)));
+        if (sendto(fd, &ping_message, sizeof(struct ping_message), 0, (const struct sockaddr*) &addr, sizeof(struct sockaddr_in)) == -1) {
+            perror("sendto");
+            return 1;
+        }
+
         socklen_t addr_size = sizeof(struct sockaddr_in);
         struct ping_message recieved_message = { 0 };
         ssize_t ret = recvfrom(fd, &recieved_message, sizeof(struct ping_message), 0, (struct sockaddr*) &addr, &addr_size);
@@ -66,16 +104,12 @@ int main(int argc, char **argv) {
         } else if (ret < (ssize_t) sizeof(struct icmphdr)) {
             fprintf(stderr, "Invalid response");
             return 1;
-        } else {
-            fprintf(stderr, "Len: %ld\n", ret);
-            fprintf(stderr, "PID: %u\n", getpid() & 0xFFFF);
         }
 
-        printf("Recived response: %u %u %u %s\n", 
-            ntohs(recieved_message.header.type), ntohs(recieved_message.header.un.echo.id), 
-            ntohs(recieved_message.header.un.echo.sequence), recieved_message.message);
+        printf("response from: %s: seq %d\n", inet_ntoa(addr.sin_addr), ntohs(recieved_message.header.un.echo.sequence));
 
-        break;
+        char c;
+        read(STDOUT_FILENO, &c, 1);
     }
 
     return 0;
