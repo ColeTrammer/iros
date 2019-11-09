@@ -10,7 +10,7 @@ struct ip_v4_address {
 #define IP_V4_LOOPBACK ((struct ip_v4_address) { { 127, 0, 0, 1 } })
 
 static inline uint32_t ip_v4_to_uint(struct ip_v4_address addr) {
-    return addr.addr[0] | addr.addr[1] >> 8 | addr.addr[2] >> 16 | addr.addr[3] >> 24;
+    return addr.addr[0] | addr.addr[1] << 8 | addr.addr[2] << 16 | addr.addr[3] << 24;
 }
 
 static inline struct ip_v4_address ip_v4_from_uint(uint32_t uint) {

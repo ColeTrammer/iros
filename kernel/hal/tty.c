@@ -15,6 +15,7 @@
 #include <kernel/hal/arch.h>
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
 
+#include <kernel/hal/timer.h>
 #include <kernel/hal/tty.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/vfs.h>
@@ -292,6 +293,7 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
     }
 
     char *buf = (char*) buffer;
+restart_raw:
     if (!(data->config.c_lflag & ICANON)) {
         for (size_t i = 0; i < len;) {
             if (data->input_in_escape) {
@@ -308,7 +310,22 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                 continue;
             }
 
-            fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
+            time_t start_time = get_time();
+
+            while (fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event)) == 0) {
+                if (data->config.c_cc[VTIME] > 0) {
+                    time_t now = get_time();
+                    
+                    // VTIME is in decaseconds
+                    if (now - start_time >= data->config.c_cc[VTIME] * 100) {
+                        return 0;
+                    }
+                }
+
+                yield();
+                barrier();
+            }
+
             if (data->key_buffer.flags & KEY_DOWN) {
                 if (data->key_buffer.key == KEY_CURSOR_UP) {
                     data->input_in_escape = true;
@@ -368,6 +385,32 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
                     data->key_buffer.ascii &= 0x1F;
                 }
 
+                // Send interrupts on ^C
+                if (data->key_buffer.ascii == CONTROL_KEY('c') && data->config.c_lflag & ISIG) {
+                    // Discard input buffer
+                    free(data->input_buffer);
+                    data->input_buffer = NULL;
+
+                    tty_write(tty, file, "^C", 2);
+
+                    // Signal foreground process group
+                    signal_process_group(data->pgid, SIGINT);
+                    goto restart_raw;
+                }
+
+                // Send interrupts on ^Z
+                if (data->key_buffer.ascii == CONTROL_KEY('z') && data->config.c_lflag & ISIG) {
+                    // Discard input buffer
+                    free(data->input_buffer);
+                    data->input_buffer = NULL;
+
+                    tty_write(tty, file, "^Z", 2);
+
+                    // Signal foreground process group
+                    signal_process_group(data->pgid, SIGTSTP);
+                    goto restart_raw;
+                }
+
                 if (data->key_buffer.ascii == '\r' && data->config.c_iflag & ICRNL) {
                     data->key_buffer.ascii = '\n';
                 }
@@ -387,7 +430,10 @@ static ssize_t tty_read(struct device *tty, struct file *file, void *buffer, siz
         size_t i = 0;
         size_t start_x = data->x;
         while(1) {
-            fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event));
+            while (fs_read(data->keyboard, &data->key_buffer, sizeof(struct key_event)) == 0) {
+                yield();
+                barrier();
+            }
 
             if (data->key_buffer.flags & KEY_UP) {
                 continue;

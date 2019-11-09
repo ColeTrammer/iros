@@ -28,11 +28,11 @@ static ssize_t kbd_read(struct device *device, struct file *file, void *buffer, 
     size_t read = 0;
     
     while (read <= len - sizeof(struct key_event)) {
-        while (start == NULL) {
-            yield();
-            barrier();
+        if (start == NULL) {
+            return read;
         }
 
+        assert(start);
         while (read <= len - sizeof(struct key_event) && start != NULL) {
             memcpy(((uint8_t*) buffer) + read, &start->entry, sizeof(struct key_event));
 
