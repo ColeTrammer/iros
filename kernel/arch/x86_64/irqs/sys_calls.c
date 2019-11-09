@@ -534,7 +534,7 @@ void arch_sys_ftruncate(struct process_state *process_state) {
 void arch_sys_time(struct process_state *process_state) {
     SYS_BEGIN(process_state);
 
-    SYS_RETURN((uint64_t) get_time());
+    SYS_RETURN((uint64_t) (get_time() / 1000));
 }
 
 void arch_sys_mkdir(struct process_state *process_state) {
@@ -814,7 +814,7 @@ void arch_sys_sleep(struct process_state *process_state) {
 
     disable_interrupts();
     current->sleeping = true;
-    current->sleep_end = get_time() + seconds;
+    current->sleep_end = get_time() + seconds * 1000;
     current->sched_state = WAITING;
     yield();
 
@@ -977,13 +977,20 @@ void arch_sys_setsockopt(struct process_state *process_state) {
     const void *optval = (const void*) process_state->cpu_state.r8;
     socklen_t optlen = (socklen_t) process_state->cpu_state.r9;
 
-    (void) fd;
-    (void) level;
-    (void) optname;
-    (void) optval;
-    (void) optlen;
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
 
-    SYS_RETURN(-ENOSYS);
+    struct file *file = get_current_process()->files[fd];
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        SYS_RETURN(-ENOTSOCK);
+    }
+
+    SYS_RETURN(net_setsockopt(file, level, optname, optval, optlen));
 }
 
 void arch_sys_getpeername(struct process_state *process_state) {

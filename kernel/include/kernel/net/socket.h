@@ -3,6 +3,7 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
@@ -43,6 +44,8 @@ struct socket {
 
     unsigned long id;
 
+    struct timeval timeout;
+
     struct socket_connection **pending;
     int pending_length;
     int num_pending;
@@ -70,6 +73,7 @@ int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen);
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
 int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
 int net_listen(struct file *file, int backlog);
+int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen);
 int net_socket(int domain, int type, int protocol);
 
 ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);

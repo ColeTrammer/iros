@@ -9,6 +9,7 @@
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
+#include <kernel/hal/timer.h>
 #include <kernel/hal/output.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/socket.h>
@@ -134,6 +135,8 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
 
     struct socket_data *data;
 
+    time_t start_time = get_time();
+
     for (;;) {
         spin_lock(&socket->lock);
         data = socket->data_head;
@@ -143,6 +146,16 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         }
 
         spin_unlock(&socket->lock);
+
+        if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
+            time_t now = get_time();
+            time_t ms_seconds_to_wait = socket->timeout.tv_sec * 1000 + socket->timeout.tv_usec / 1000;
+            
+            // We timed out
+            if (now >= start_time + ms_seconds_to_wait) {
+                return -EINTR;
+            }
+        }
 
         switch (socket->domain) {
             case AF_UNIX: {
@@ -310,6 +323,31 @@ int net_listen(struct file *file, int backlog) {
     socket->pending_length = backlog;
 
     socket->state = LISTENING;
+    return 0;
+}
+
+int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    if (level != SOL_SOCKET) {
+        return -ENOPROTOOPT;
+    }
+
+    if (optname != SO_RCVTIMEO) {
+        return -ENOPROTOOPT;
+    }
+
+    if (optlen != sizeof(struct timeval)) {
+        return -EINVAL;
+    }
+
+    socket->timeout = *((const struct timeval*) optval);
+
     return 0;
 }
 

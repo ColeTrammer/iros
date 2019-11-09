@@ -8,7 +8,16 @@
 extern "C" {
 #endif /* __cplusplus */
 
+struct timeval {
+    time_t tv_sec;
+    suseconds_t tv_usec;
+};
+
+#ifndef __is_libk
+
 time_t get_time();
+
+#endif /* __is_libk */
 
 #ifdef __cplusplus
 }

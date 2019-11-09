@@ -20,6 +20,10 @@
 #define SHUT_RDWR 2
 #define SHUT_WR   3
 
+#define SOL_SOCKET 0
+
+#define SO_RCVTIMEO 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

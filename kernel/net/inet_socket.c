@@ -64,6 +64,10 @@ int net_inet_close(struct socket *socket) {
 int net_inet_socket(int domain, int type, int protocol) {
     assert(domain == AF_INET);
 
+    if (protocol == 0 && type == SOCK_DGRAM) {
+        protocol = IPPROTO_UDP;
+    }
+
     if (type == SOCK_STREAM || (protocol != IPPROTO_ICMP && protocol != IPPROTO_UDP)) {
         return -EPROTONOSUPPORT;
     }

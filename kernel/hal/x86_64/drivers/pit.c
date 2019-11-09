@@ -15,11 +15,10 @@ static void (*callback)(void) = NULL;
 static unsigned int count = 0;
 static unsigned int count_to = 0;
 
-static int ms = 0;
-static time_t seconds = 0;
+static time_t ms = 0;
 
 void pit_set_time(time_t time) {
-    seconds = time;
+    ms = time * 1000;
 }
 
 void handle_pit_interrupt(struct process_state *process_state) {
@@ -27,10 +26,6 @@ void handle_pit_interrupt(struct process_state *process_state) {
 
     /* Increment time count */
     ms++;
-    if (ms == 1000) {
-        ms = 0;
-        seconds++;
-    }
     
     if (sched_callback != NULL) {
         sched_count++;
@@ -50,7 +45,7 @@ void handle_pit_interrupt(struct process_state *process_state) {
 }
 
 time_t pit_get_time() {
-    return seconds;
+    return ms;
 }
 
 void pit_set_sched_callback(void (*_sched_callback)(struct process_state*), unsigned int ms) {

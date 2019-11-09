@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 struct dns_header {
@@ -158,6 +159,12 @@ int main(int argc, char **argv) {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (fd == -1) {
         perror("socket");
+        return 1;
+    }
+
+    struct timeval tv = { 1, 0 };
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) == -1) {
+        perror("setsockopt");
         return 1;
     }
 

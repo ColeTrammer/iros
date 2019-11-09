@@ -20,6 +20,7 @@ typedef unsigned short nlink_t;
 typedef long blksize_t;
 typedef long blkcnt_t;
 typedef long time_t;
+typedef long suseconds_t;
 
 #define __socklen_t_defined
 #define __socklen_t uint32_t
