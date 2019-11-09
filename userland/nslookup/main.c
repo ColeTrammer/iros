@@ -37,6 +37,14 @@ int main(int argc, char **argv) {
     char *host = argv[optind];
     fprintf(stderr, "Looking up %s\n", host);
 
+    // try and see if the url is an ip address
+    struct in_addr a;
+    a.s_addr = inet_addr(host);
+    if (a.s_addr != INADDR_NONE) {
+        printf("%s\n", host);
+        return 0;
+    }
+
     struct host_mapping *known_hosts = get_known_hosts();
     struct host_mapping *m = known_hosts;
     do {

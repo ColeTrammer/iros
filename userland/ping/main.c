@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/ip_icmp.h>
 #include <signal.h>
@@ -64,10 +65,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    struct sockaddr_in addr = { 0 };
-    addr.sin_family = AF_INET;
-    addr.sin_port = 0;
-    addr.sin_addr.s_addr = inet_addr(argv[1]);
+    struct addrinfo *info = NULL;
+    {
+        int ret;
+        if ((ret = getaddrinfo(argv[1], NULL, NULL, &info)) != 0) {
+            fprintf(stderr, "failed to resolve host: %s (%d)\n", argv[1], ret);
+            return 1;
+        }
+    }
+
+    struct sockaddr_in addr;
+    memcpy(&addr, info->ai_addr, sizeof(struct sockaddr_in));
 
     if (addr.sin_addr.s_addr == INADDR_NONE) {
         print_usage(argv);

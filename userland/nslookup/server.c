@@ -52,6 +52,8 @@ int start_server() {
             continue;
         }
 
+        fprintf(stderr, "Looking up: %s\n", buf);
+
         struct host_mapping *mapping = NULL;
 
         bool was_known = false;
@@ -63,18 +65,30 @@ int start_server() {
             }
         } while ((m = m->next) != known_hosts);
 
+        // try and see if the url is an ip address
+        struct in_addr a;
+        a.s_addr = inet_addr(buf);
+        if (a.s_addr != INADDR_NONE) {
+            mapping = calloc(1, sizeof(struct host_mapping));
+            mapping->name = strdup(buf);
+            mapping->ip.s_addr = inet_addr(buf);
+        }
+
         if (mapping == NULL) {
             mapping = lookup_host(buf);
         }
 
         if (mapping == NULL) {
             write(client_fd, "FAILED", 7);
+            fprintf(stderr, "Mapping failed\n");
         } else {
             char *ip = inet_ntoa(mapping->ip);
             write(client_fd, ip, strlen(ip) + 1);
+            fprintf(stderr, "Mapping succeeded: %s\n", ip);
         }
 
         if (!was_known) {
+            free(mapping->name);
             free(mapping);
         }
         close(client_fd);
