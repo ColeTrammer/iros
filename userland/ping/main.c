@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <netinet/ip_icmp.h>
 #include <signal.h>
@@ -99,6 +100,10 @@ int main(int argc, char **argv) {
         struct ping_message recieved_message = { 0 };
         ssize_t ret = recvfrom(fd, &recieved_message, sizeof(struct ping_message), 0, (struct sockaddr*) &addr, &addr_size);
         if (ret < 0) {
+            if (errno = EINTR) {
+                printf("Timed out: seq %d\n", sequence - 1);
+                goto try_again;
+            }
             perror("recvfrom");
             return 1;
         } else if (ret < (ssize_t) sizeof(struct icmphdr)) {
@@ -108,8 +113,10 @@ int main(int argc, char **argv) {
 
         printf("response from: %s: seq %d\n", inet_ntoa(addr.sin_addr), ntohs(recieved_message.header.un.echo.sequence));
 
+    try_again: {
         char c;
         read(STDOUT_FILENO, &c, 1);
+    }
     }
 
     return 0;
