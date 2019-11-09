@@ -40,6 +40,7 @@ $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/strtoken_test \
+$(BUILDDIR)/initrd/programs/tcp_test \
 $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \

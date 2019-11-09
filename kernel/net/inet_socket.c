@@ -9,6 +9,7 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
 
 struct socket_data *net_inet_create_socket_data(const struct ip_v4_packet *packet, uint16_t port_network_ordered, const void *buf, size_t len) {
@@ -61,6 +62,30 @@ int net_inet_close(struct socket *socket) {
     return 0;
 }
 
+int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen) {
+    assert(socket);
+
+    if (addr->sin_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
+        return -EINVAL;
+    }
+
+    if (socket->state != BOUND) {
+        struct sockaddr_in to_bind = { AF_INET, 0, { 0 }, { 0 } };
+        int ret = net_inet_bind(socket, &to_bind, sizeof(struct sockaddr_in));
+        if (ret < 0) {
+            return ret;
+        }
+    }
+
+    struct inet_socket_data *data = socket->private_data;
+    struct ip_v4_address dest_ip = ip_v4_from_uint(addr->sin_addr.s_addr);
+    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
+
+    net_send_tcp(interface, dest_ip, data->source_port, ntohs(addr->sin_port), (union tcp_flags) { .raw_flags=TCP_FLAGS_SYN }, 0, NULL);
+
+    return -ENETDOWN;
+}
+
 int net_inet_socket(int domain, int type, int protocol) {
     assert(domain == AF_INET);
 
@@ -68,7 +93,11 @@ int net_inet_socket(int domain, int type, int protocol) {
         protocol = IPPROTO_UDP;
     }
 
-    if (type == SOCK_STREAM || (protocol != IPPROTO_ICMP && protocol != IPPROTO_UDP)) {
+    if (protocol == 0 && type == SOCK_STREAM) {
+        protocol = IPPROTO_TCP;
+    }
+
+    if (protocol != IPPROTO_ICMP && protocol != IPPROTO_UDP && protocol != IPPROTO_TCP) {
         return -EPROTONOSUPPORT;
     }
 

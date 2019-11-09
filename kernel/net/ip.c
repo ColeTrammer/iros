@@ -10,6 +10,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
 
 ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len) {
@@ -48,6 +49,10 @@ void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
         }
         case IP_V4_PROTOCOL_UDP: {
             net_udp_recieve((const struct udp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
+            return;
+        }
+        case IP_V4_PROTOCOL_TCP: {
+            net_tcp_recieve((const struct tcp_packet*) packet->payload, len - sizeof(struct ip_v4_packet));
             return;
         }
         default: {

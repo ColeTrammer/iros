@@ -293,6 +293,8 @@ int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrle
     assert(socket);
 
     switch (socket->domain) {
+        case AF_INET:
+            return net_inet_connect(socket, (const struct sockaddr_in*) addr, addrlen);
         case AF_UNIX:
             return net_unix_connect(socket, (const struct sockaddr_un*) addr, addrlen);
         default:

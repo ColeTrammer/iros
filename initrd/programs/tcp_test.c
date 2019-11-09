@@ -1,0 +1,24 @@
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <sys/socket.h>
+
+int main() {
+    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (fd == -1) {
+        perror("socket");
+        return 1;
+    }
+
+    struct sockaddr_in conn = { 0 };
+    conn.sin_family = AF_INET;
+    conn.sin_port = htons(80);
+    conn.sin_addr.s_addr = inet_addr("50.87.248.178");
+
+    if (connect(fd, (const struct sockaddr*) &conn, sizeof(struct sockaddr_in)) == -1) {
+        perror("connect");
+        return 1;
+    }
+
+    return 0;
+}

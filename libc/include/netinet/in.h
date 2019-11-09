@@ -29,6 +29,7 @@ struct sockaddr_in {
 };
 
 #ifdef _OS_2_SOURCE
+uint16_t in_compute_checksum_with_start(void *packet, size_t num_bytes, uint16_t start);
 uint16_t in_compute_checksum(void *data, size_t bytes);
 #endif /* _OS_2_SOURCE */
 

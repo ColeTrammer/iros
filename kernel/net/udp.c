@@ -24,6 +24,13 @@ ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address d
     struct udp_packet *udp_packet = (struct udp_packet*) ip_packet->payload;
     net_init_udp_packet(udp_packet, source_port, dest_port, len, buf);
 
+    struct ip_v4_pseudo_header header = {
+        interface->address, dest, 0, IP_V4_PROTOCOL_UDP, htons(len + sizeof(struct udp_packet))
+    };
+
+    udp_packet->checksum = ntohs(in_compute_checksum_with_start(udp_packet, sizeof(struct udp_packet) + len, 
+        in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
+
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
     ssize_t ret = interface->ops->send(interface, packet, total_length);

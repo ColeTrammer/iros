@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <kernel/net/interface.h>
+#include <kernel/net/ip_address.h>
 
 struct udp_packet {
     uint16_t source_port;

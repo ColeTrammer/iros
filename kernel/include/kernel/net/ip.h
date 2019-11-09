@@ -35,6 +35,14 @@ struct ip_v4_packet {
     uint8_t payload[0];
 } __attribute__((packed));
 
+struct ip_v4_pseudo_header {
+    struct ip_v4_address source;
+    struct ip_v4_address dest;
+    uint8_t zero;
+    uint8_t protocol;
+    uint16_t length;
+} __attribute__((packed));
+
 ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len);
 void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len);
 
