@@ -32,12 +32,12 @@ skip_inc_i:
         i++;
     }
 
-    if (start[0] == '\0') {
+    if (start[i] == '\0') {
         save = NULL;
-        return NULL;
+        return start;
     }
 
 end:
-    save = i == 0 || start[i] == '\0' ? NULL : start + i + 1;
+    save = i == 0 ? NULL : start + i + 1;
     return start;
 }

@@ -156,6 +156,13 @@ void ngethostbyname(unsigned char *host , int query_type)
     qinfo->qtype = htons( query_type ); //type of the query , A , MX , CNAME , NS etc
     qinfo->qclass = htons(1); //its internet (lol)
  
+    FILE *ss = fopen("/dev/serial", "w");
+    for (size_t i = 0; i < sizeof(struct DNS_HEADER) + (strlen((const char*)qname)+1) + sizeof(struct QUESTION); i++) {
+        fprintf(ss, "Byte %lu: %#2X\n", i, ((char*) buf)[i]);
+    }
+    fclose(ss);
+
+
     printf("\nSending Packet...");
     if( sendto(s,(char*)buf,sizeof(struct DNS_HEADER) + (strlen((const char*)qname)+1) + sizeof(struct QUESTION),0,(struct sockaddr*)&dest,sizeof(dest)) < 0)
     {

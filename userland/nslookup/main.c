@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct udp_header {
+struct dns_header {
     uint16_t id;
 
     uint8_t recursion_desired : 1;
@@ -21,6 +21,19 @@ struct udp_header {
     uint8_t response_code : 4;
     uint8_t zero : 3;
     uint8_t recursion_available : 1;
+
+    uint16_t num_questions;
+    uint16_t num_answers;
+    uint16_t num_records;
+    uint16_t num_records_extra;
+} __attribute__((packed));
+
+struct dns_record {
+    uint16_t name;
+    uint16_t type;
+    uint16_t class;
+    uint32_t ttl;
+    uint16_t rd_length;
 } __attribute__((packed));
 
 struct host_mapping {
@@ -66,10 +79,10 @@ static struct host_mapping *get_known_hosts() {
     }
 
     free(line);
+    fclose(file);
     return known_hosts;
 }
 
-static int num_digits(size_t s);
 static void print_usage(char **argv);
 
 int main(int argc, char **argv) {
@@ -103,44 +116,90 @@ int main(int argc, char **argv) {
     } while ((m = m->next) != known_hosts);
 
     size_t old_len = strlen(host);
-    size_t new_len = 0;
+    size_t new_len = sizeof(struct dns_header) + 5;
 
     char *part = strtok(host, ".");
     while (part != NULL) {
-        size_t part_len = strlen(part);
-        new_len += part_len + num_digits(part_len);
-
+        new_len += strlen(part) + 1;
         part = strtok(NULL, ".");
     }
 
-    char *name = malloc(new_len);
+    uint8_t *message = calloc(new_len, sizeof(char));
+    struct dns_header *header = (struct dns_header*) message;
+    header->id = ntohs(getpid());
+    header->qr = 0;
+    header->op_code = 0;
+    header->autoratative = 0;
+    header->truncated = 0;
+    header->recursion_desired = 1;
+    header->recursion_available = 0;
+    header->zero = 0;
+    header->response_code = 0;
+    header->num_questions = ntohs(1);
+    header->num_answers = 0;
+    header->num_records = 0;
+    header->num_records_extra = 0;
+
     size_t name_offset = 0;
     for (size_t i = 0; i < old_len; i++) {
         char *part = host + i;
         size_t part_len = strlen(part);
-        name_offset += sprintf(name + name_offset, "%lu%s", part_len, part);
+        message[sizeof(struct dns_header) + name_offset++] = (uint8_t) part_len;
+        name_offset += sprintf((char*) (message + name_offset + sizeof(struct dns_header)), "%s", part);
         i += part_len;
     }
 
-    puts(name);
+    message[new_len - 5] = '\0';
+
+    uint16_t *req = (uint16_t*) (message + new_len - 4);
+    req[0] = htons(1);
+    req[1] = htons(1);
+
+    int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (fd == -1) {
+        perror("socket");
+        return 1;
+    }
+
+    struct sockaddr_in dest = { 0 };
+    dest.sin_family = AF_INET;
+    dest.sin_port = htons(53);
+    dest.sin_addr.s_addr = inet_addr("8.8.8.8");
+
+    if (sendto(fd, message, new_len, 0, (const struct sockaddr*) &dest, sizeof(struct sockaddr_in)) == -1) {
+        perror("sendto");
+        return 1;
+    }
+
+    struct sockaddr_in source = { 0 };
+    socklen_t source_len = sizeof(struct sockaddr_in);
+
+    char buf[1024];
+    ssize_t read;
+    if ((read = recvfrom(fd, buf, 1024, 0, (struct sockaddr*) &source, &source_len)) == -1) {
+        perror("recvfrom");
+        return 1;
+    }
+
+    struct dns_header *response_header = (struct dns_header*) buf;
+    assert(response_header->qr == 1);
+
+    fprintf(stderr, "Recieved response: %u, %u, %u, %u, %u\n", ntohs(response_header->id), ntohs(response_header->num_questions), ntohs(response_header->num_answers), ntohs(response_header->num_records), ntohs(response_header->num_records_extra));
+
+    puts((char*) (response_header + 1));
+
+    struct dns_record *record = (struct dns_record*) (buf + new_len);
+    fprintf(stderr, "Received record: %u, %u, %u, %u\n", ntohs(record->type), ntohs(record->class), ntohl(record->ttl), ntohs(record->rd_length));
+
+    struct in_addr res = { 0 };
+    res.s_addr = *((uint32_t*) (record + 1));
+    printf("%s\n", inet_ntoa(res));
+
+    close(fd);
 
     return 1;
 }
 
-int num_digits(size_t s) {
-    if (s == 0) {
-        return 1;
-    }
-
-    int digits = 0;
-    while (s > 0) {
-        digits++;
-        s /= 10;
-    }
-
-    return digits;
-}
-
 void print_usage(char **argv) {
-    fprintf(stderr, "Usage: %s [-s] <host>", argv[0]);
+    fprintf(stderr, "Usage: %s [-s] <host>\n", argv[0]);
 }
