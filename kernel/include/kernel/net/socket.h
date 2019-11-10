@@ -13,7 +13,9 @@ enum socket_state {
     UNBOUND = 0,
     BOUND,
     LISTENING,
-    CONNECTED
+    CONNECTED,
+    CLOSING,
+    CLOSED
 };
 
 struct socket_connection {

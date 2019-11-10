@@ -7,7 +7,7 @@
 #include <kernel/net/socket.h>
 #include <kernel/util/hash_map.h>
 
-#define EPHEMERAL_PORT_START 49152U
+#define EPHEMERAL_PORT_START 38111U // 49152U
 #define PORT_MAX 65535U
 
 static struct hash_map *map;

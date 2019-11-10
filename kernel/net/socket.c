@@ -13,6 +13,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/tcp.h>
 #include <kernel/net/unix_socket.h>
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
@@ -180,6 +181,22 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
     }
 
     spin_unlock(&socket->lock);
+
+    if (socket->protocol == IPPROTO_TCP) {
+        struct inet_socket_data *data = socket->private_data;
+        assert(data);
+        if (data->tcb->should_send_ack) {
+            struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
+
+            net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port,
+                data->tcb->current_sequence_num, data->tcb->current_ack_num, (union tcp_flags) { .bits.ack=1, .bits.fin=socket->state == CLOSING }, 0, NULL);
+            data->tcb->should_send_ack = false;
+
+            if (socket->state == CLOSING) {
+                socket->state = CLOSED;
+            }
+        }
+    }
 
     size_t to_copy = MIN(len, data->len);
     memcpy(buf, data->data, to_copy);
@@ -406,4 +423,5 @@ ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct
 
 void init_net_sockets() {
     map = hash_create_hash_map(socket_hash, socket_equals, socket_key);
+    init_inet_sockets();
 }

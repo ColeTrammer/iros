@@ -54,7 +54,7 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
 
     // In this case we just extend the stack
     struct vm_region *vm_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
-    if (current->pid != 1 && address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {
+    if (vm_stack && current->pid != 1 && address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {
         size_t num_pages = NUM_PAGES(address, vm_stack->start);
         assert(num_pages > 0);
         assert(extend_vm_region_start(current->process_memory, VM_PROCESS_STACK, num_pages) == 0);
@@ -65,7 +65,7 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
         return;
     }
 
-    if (current->pid != 1 && !current->in_kernel) {
+    if (vm_stack && current->pid != 1 && !current->in_kernel) {
         signal_process(current->pid, SIGSEGV);
     }
 

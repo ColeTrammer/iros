@@ -77,6 +77,8 @@ int main(int argc, char **argv) {
     struct sockaddr_in addr;
     memcpy(&addr, info->ai_addr, sizeof(struct sockaddr_in));
 
+    freeaddrinfo(info);
+
     if (addr.sin_addr.s_addr == INADDR_NONE) {
         print_usage(argv);
         return 1;

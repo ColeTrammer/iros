@@ -36,12 +36,14 @@ static struct network_data *consume() {
 }
 
 void net_on_incoming_packet(const void *buf, size_t len) {
-    struct network_data *new_data = malloc(sizeof(struct network_data));
+    struct network_data *new_data = calloc(1, sizeof(struct network_data));
     assert(new_data);
     new_data->buf = buf;
     new_data->len = len;
 
     spin_lock(&lock);
+
+    debug_log("Adding packet to queue: [ %#.16lX, %#.16lX ]\n", (uintptr_t) head, (uintptr_t) tail);
 
     insque(new_data, tail);
     if (head == NULL) {
@@ -72,6 +74,7 @@ void net_network_process_start() {
         struct network_data *data = consume();
         if (data == NULL) {
             yield();
+            barrier();
             continue;
         }
 
