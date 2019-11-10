@@ -116,6 +116,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
             socket->type = type;
             socket->protocol = protocol;
             socket->id = file_data->socket_id;
+            socket->timeout = (struct timeval) { 10, 0 };
             init_spinlock(&socket->lock);
 
             hash_put(map, socket);

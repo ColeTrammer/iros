@@ -108,7 +108,7 @@ int net_inet_close(struct socket *socket) {
             assert(data->tcb);
             assert(data->tcb->sent_packets);
 
-            if (socket->state == CLOSING) {
+            if (socket->state != CLOSED) {
                 struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
                 net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port,
                     data->tcb->current_sequence_num, data->tcb->current_ack_num, 

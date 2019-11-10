@@ -16,8 +16,8 @@ int main() {
     struct sockaddr_in conn = { 0 };
     conn.sin_family = AF_INET;
     conn.sin_port = htons(80);
-    // conn.sin_addr.s_addr = inet_addr("50.87.248.178");
-    conn.sin_addr.s_addr = inet_addr("172.105.70.201");
+    conn.sin_addr.s_addr = inet_addr("50.87.248.178");
+    // conn.sin_addr.s_addr = inet_addr("172.105.70.201");
     // conn.sin_addr.s_addr = INADDR_LOOBACK;
 
     if (connect(fd, (const struct sockaddr*) &conn, sizeof(struct sockaddr_in)) == -1) {
@@ -25,8 +25,8 @@ int main() {
         return 1;
     }
 
-    char *http_request = "GET / HTTP/1.0\r\nHost: www.serenityos.org\r\n\r\n";
-    ssize_t len = strlen(http_request);
+    char *http_request = "GET /index.html HTTP/1.1\r\nHost: www.coletrammer.com\r\n\r\n";
+    ssize_t len = strlen(http_request) + 1;
 
     if (write(fd, http_request, len) != len) {
         perror("write");

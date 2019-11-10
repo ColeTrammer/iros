@@ -52,6 +52,13 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
     if (socket == NULL) {
         debug_log("No socket listening for port and ip: [ %u, %u.%u.%u.%u ]\n", ntohs(packet->source_port),
             ip_packet->source.addr[0], ip_packet->source.addr[1], ip_packet->source.addr[2], ip_packet->source.addr[3]);
+
+        // Tell the destination we recieved there fin (we already sent ours and removed ourselves from the list of sockets)
+        if (packet->flags.bits.fin) {
+            struct network_interface *interface = net_get_interface_for_ip(ip_packet->source);
+            net_send_tcp(interface, ip_packet->destination, ntohs(packet->dest_port), ntohs(packet->source_port),
+                ntohl(packet->ack_number), ntohl(packet->sequence_number) + 1, (union tcp_flags) { .bits.ack=1 }, 0, NULL);
+        }
         return;
     }
 
@@ -69,6 +76,9 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
             debug_log("Setting ack num to: [ %u ]\n", ntohl(packet->sequence_number) + 1);
             data->tcb->current_ack_num = ntohl(packet->sequence_number) + 1;
             data->tcb->should_send_ack = true;
+            // struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
+            // net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port,
+            //     data->tcb->current_sequence_num, data->tcb->current_ack_num, (union tcp_flags) { .bits.ack=1 }, 0, NULL);
 
             debug_log("Setting socket state to connected\n");
             socket->state = CONNECTED;
