@@ -31,16 +31,20 @@ void fill_dirent(char *_path, const char *name) {
     }
 
     struct ls_dirent d;
-    d.name = malloc(strlen(name) + 1);
-    strcpy(d.name, name);
+    if (_path[0] == '.' && _path[1] == '\0') {
+        d.name = strdup(name);
+    } else if (strrchr(_path, '/') != _path + strlen(_path) - 1) {
+        d.name = malloc(strlen(_path) + strlen(name) + 2);
+        strcpy(d.name, _path);
+        strcat(d.name, "/");
+        strcat(d.name, name);
+    } else {
+        d.name = malloc(strlen(_path) + strlen(name) + 1);
+        strcpy(d.name, _path);
+        strcat(d.name, name);
+    }
 
-    char *path = malloc(strlen(_path) + strlen(name) + 2);
-    strcpy(path, _path);
-    strcat(path, "/");
-    strcat(path, name);
-
-    if (stat(path, &d.stat_struct) != 0) {
-        free(path);
+    if (stat(d.name, &d.stat_struct) != 0) {
         perror("ls stat");
         exit(1);
     }
@@ -84,13 +88,19 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
     struct stat *stat_struct = &dirent->stat_struct;
     if (isatty(STDOUT_FILENO)) {
         if (S_ISREG(stat_struct->st_mode)) {
-            color_s = "\033[0m";
+            if (S_IXUSR & stat_struct->st_mode) {
+                color_s = "\033[32m";
+            } else {
+                color_s = "\033[0m";
+            }
         } else if (S_ISDIR(stat_struct->st_mode)) {
             color_s = "\033[36m";
         } else if (S_ISCHR(stat_struct->st_mode)) {
             color_s = "\033[35m";
         } else if (S_ISBLK(stat_struct->st_mode)) {
-            color_s = "\033[32m";
+            color_s = "\033[33m";
+        } else if (S_ISOCK(stat_struct->st_mode)) {
+            color_s = "\033[34m";
         } else {
             color_s = "\033[31m";
         }
@@ -122,19 +132,39 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (optind < argc) {
-        path = argv[optind];
+    if (optind == argc) {
+        argv[argc++] = ".";
     }
 
-    DIR *d = opendir(path);
-    if (d == NULL) {
-        perror("ls");
-        return 1;
-    }
+    while (optind < argc) {
+        path = argv[optind++];
 
-    struct dirent *entry;
-    while ((entry = readdir(d)) != NULL) {
-        fill_dirent(path, entry->d_name);
+        DIR *d = opendir(path);
+        if (d == NULL) {
+            struct ls_dirent d = { 0 };
+            d.name = strdup(path);
+            if (stat(d.name, &d.stat_struct) == -1) {
+                perror("ls");
+                return 1;
+            }
+
+            if (dirents == NULL) {
+                dirents = calloc(num_dirents_max, sizeof(struct ls_dirent));
+            }
+
+            if (num_dirents >= num_dirents_max) {
+                num_dirents_max += LS_STARTING_DIRENTS;
+                dirents = realloc(dirents, num_dirents_max * sizeof(struct ls_dirent));
+            }
+
+            dirents[num_dirents++] = d;
+        } else {
+            struct dirent *entry;
+            while ((entry = readdir(d)) != NULL) {
+                fill_dirent(path, entry->d_name);
+            }
+            closedir(d);
+        }
     }
 
     if (extra_info) {
@@ -163,8 +193,6 @@ int main(int argc, char **argv) {
     if (!extra_info && isatty(STDOUT_FILENO)) {
         printf("%c", '\n');
     }
-
-    closedir(d);
 
     return 0;
 }
