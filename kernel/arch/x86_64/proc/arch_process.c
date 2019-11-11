@@ -48,6 +48,12 @@ static void load_proc_into_memory(struct process *process) {
     }
 }
 
+void proc_align_fpu(struct process *process) {
+    uintptr_t unaligned_fpu = (uintptr_t) &process->fpu.raw_fpu_state;
+    process->fpu.aligned_state = (uint8_t*) ((unaligned_fpu & ~0xFULL) + 16ULL);
+    assert(((uintptr_t) process->fpu.aligned_state) % 16 == 0);
+}
+
 void arch_init_kernel_process(struct process *kernel_process) {
     /* Sets Up Kernel Process To Idle */
     kernel_process->arch_process.process_state.stack_state.rip = (uint64_t) &kernel_idle;
@@ -106,6 +112,8 @@ void arch_load_process(struct process *process, uintptr_t entry) {
     do_unmap_page(kernel_proc_stack->start, false);
     process->arch_process.setup_kernel_stack = false;
     process->fpu.saved = false;
+
+    proc_align_fpu(process);
 }
 
 /* Must be called from unpremptable context */

@@ -5,8 +5,8 @@ ROOT?=$(CURDIR)/..
 SYSROOT?=$(ROOT)/sysroot
 
 # Init flags if not already set (can be overridden)
-export CFLAGS?=-O2 -g -Werror -Wall -Wextra
-export CPPFLAGS?=-mno-sse -mno-sse2 -mno-mmx
+export CFLAGS?=
+export CPPFLAGS?=-O2 -g -Werror -Wall -Wextra
 export LDFLAGS+=-T $(ROOT)/userland/link.ld
 export LIBS?=
 

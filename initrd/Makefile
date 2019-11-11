@@ -42,6 +42,7 @@ $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/strtoken_test \
 $(BUILDDIR)/initrd/programs/tcp_test \
 $(BUILDDIR)/initrd/programs/te \
+$(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/tmpnam_test \
@@ -63,13 +64,13 @@ $(BUILDDIR)/initrd/initrd.o: $(ROOT)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -Wno-stringop-truncation
 
 $(BUILDDIR)/%: $(ROOT)/%.S
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
 $(BUILDDIR)/%: $(ROOT)/%.c
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T programs/link.ld
 
 $(BUILDDIR)/%: $(ROOT)/%.cpp
-	$(CXX) -MD -o $@ $< $(CPPFLAGS) -T programs/link.ld -mno-mmx -mno-sse -mno-sse2
+	$(CXX) -MD -o $@ $< $(CPPFLAGS) -T programs/link.ld
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean

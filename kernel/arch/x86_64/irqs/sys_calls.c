@@ -112,10 +112,12 @@ void arch_sys_fork(struct process_state *process_state) {
     memcpy(&child->sig_state, &parent->sig_state, sizeof(struct sigaction) * _NSIG);
     strcpy(child->cwd, parent->cwd);
 
+    proc_align_fpu(child);
+
     // Clone fpu if necessary
     if (parent->fpu.saved) {
         child->fpu.saved = true;
-        memcpy(&child->fpu.raw_fpu_state, &parent->fpu.raw_fpu_state, sizeof(struct raw_fpu_state));
+        memcpy(child->fpu.aligned_state, parent->fpu.aligned_state, sizeof(child->fpu.raw_fpu_state.image));
     }
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
@@ -329,6 +331,8 @@ void arch_sys_execve(struct process_state *process_state) {
 
     process->arch_process.kernel_stack_info = info;
     process->arch_process.setup_kernel_stack = false;
+
+    proc_align_fpu(process);
 
     process->arch_process.process_state.cpu_state.rbp = KERNEL_PROC_STACK_START;
     process->arch_process.process_state.stack_state.rip = elf64_get_entry(buffer);

@@ -1,6 +1,10 @@
 #ifndef _MATH_H
 #define _MATH_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 double acos(double x);
 double asin(double x);
 double atan(double x);
@@ -23,5 +27,9 @@ double sinh(double x);
 double sqrt(double x);
 double tan(double x);
 double tanh(double x);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _MATH_H */

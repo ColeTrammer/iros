@@ -19,8 +19,9 @@ HOST?=$(DEFAULT_HOST)
 HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 
 # Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
-export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export CC:=$(ROOT)/toolchain/cross/bin/$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
 export CXX:=$(ROOT)/toolchain/cross/bin/$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export LD:=$(CC)
 export AR:=$(HOST)-ar
 export OBJCOPY:=$(HOST)-objcopy
 
@@ -75,8 +76,14 @@ run:
 debug:
 	$(ROOT)/qemu.sh --debug
 
-SOURCES:=$(shell find $(ROOT) -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
-OBJECTS:=$(patsubst $(ROOT)/%.c, $(BUILDDIR)/%.o, $(SOURCES))
+SOURCES+=$(shell find $(ROOT)/boot -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+SOURCES+=$(shell find $(ROOT)/initrd -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+SOURCES+=$(shell find $(ROOT)/kernel -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+SOURCES+=$(shell find $(ROOT)/libc -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+SOURCES+=$(shell find $(ROOT)/userland -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+OBJECTS+=$(patsubst $(ROOT)/%.c, $(BUILDDIR)/%.o, $(SOURCES))
+OBJECTS+=$(patsubst $(ROOT)/%.S, $(BUILDDIR)/%.o, $(SOURCES))
+OBJECTS+=$(patsubst $(ROOT)/%.cpp, $(BUILDDIR)/%.o, $(SOURCES))
 OBJDIRS:=$(dir $(OBJECTS))
 
 .PHONY: prepare-build

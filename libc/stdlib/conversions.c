@@ -203,7 +203,6 @@ double strtod(const char *__restrict str, char **__restrict endptr) {
     (void) str;
     (void) endptr;
 
-    fputs("strtod unimplemented", stderr);
     return 0.0;
 }
 

@@ -347,6 +347,8 @@ long fs_tell(struct file *file) {
 void load_fs(struct file_system *fs) {
     assert(fs);
 
+    debug_log("Loading fs: [ %s ]\n", fs->name);
+
     fs->next = file_systems;
     file_systems = fs;
 }
