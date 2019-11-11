@@ -533,6 +533,8 @@ static char *get_tty_input(FILE *tty) {
         if (c == '\n') {
             switch (get_line_status(buffer, buffer_length)) {
                 case UNFINISHED_QUOTE:
+                    buffer[buffer_index++] = c;
+                    buffer_length++;
                     break;
                 case ESCAPED_NEWLINE:
                     if (buffer_index == buffer_length) {
