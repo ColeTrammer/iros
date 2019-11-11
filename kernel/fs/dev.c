@@ -64,7 +64,9 @@ struct tnode *dev_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *dev_open(struct inode *inode, int flags, int *error) {
-    (void) flags;
+    if (inode->private_data && ((struct device*) inode->private_data)->ops->open) {
+        return ((struct device*) inode->private_data)->ops->open(inode->private_data, flags, error);
+    }
 
     struct file *file = calloc(sizeof(struct file), 1);
     file->inode_idenifier = inode->index;
@@ -74,10 +76,6 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
     file->f_op = inode->flags & FS_FILE ? &dev_f_op : &dev_dir_f_op;
     file->device = inode->device;
     file->flags = inode->flags;
-
-    if (inode->private_data && ((struct device*) inode->private_data)->ops->open) {
-        *error = ((struct device*) inode->private_data)->ops->open(inode->private_data, file);
-    }
 
     return file;
 }

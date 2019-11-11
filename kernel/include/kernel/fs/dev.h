@@ -13,7 +13,7 @@
 struct device;
 
 struct device_ops {
-    int (*open)(struct device *device, struct file *file);
+    struct file *(*open)(struct device *device, int flags, int *error);
     ssize_t (*read)(struct device *device, struct file *file, void *buffer, size_t len);
     ssize_t (*write)(struct device *device, struct file *file, const void *buffer, size_t len); 
     int (*close)(struct device *device);
