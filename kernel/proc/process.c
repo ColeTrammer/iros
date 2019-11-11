@@ -265,6 +265,10 @@ void proc_notify_parent(pid_t child_pid) {
     struct process *child = find_by_pid(child_pid);
     struct process *parent = find_by_pid(child->ppid);
 
+    if (parent == NULL) {
+        parent = &initial_kernel_process;
+    }
+
     proc_set_sig_pending(parent, SIGCHLD);
 }
 

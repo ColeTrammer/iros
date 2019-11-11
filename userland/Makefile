@@ -1,5 +1,5 @@
 # Lists all projects
-PROJECTS=cat chmod clear echo false grep head kill ls mkdir nslookup ping pwd rm rmdir sh sleep stat touch true
+PROJECTS=cat chmod clear echo false grep head kill ls mkdir nslookup ping pwd rm rmdir sh sleep start stat touch true
 
 ROOT?=$(CURDIR)/..
 SYSROOT?=$(ROOT)/sysroot

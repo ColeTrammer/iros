@@ -3,14 +3,7 @@
 #include <sys/types.h>
 
 int isatty(int fd) {
-    struct termios t;
-    int ret = tcgetattr(fd, &t);
-
-    if (ret < 0) {
-        return 0;
-    }
-
-    return 1;
+    return ioctl(fd, TISATTY) == 0;
 }
 
 int tcsetpgrp(int fd, pid_t pgid) {

@@ -8,6 +8,7 @@
 #define TIOCGWINSZ 5
 #define TIOCSPGRP  6
 #define TIOCGPGRP  7
+#define TISATTY    8
 
 #ifdef __cplusplus
 extern "C" {

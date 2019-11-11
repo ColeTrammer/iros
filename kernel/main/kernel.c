@@ -33,7 +33,7 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     assert(error == 0);
 
     // Start Shell
-    struct process *shell = load_process("/bin/sh");
+    struct process *shell = load_process("/bin/start");
     sched_add_process(shell);
 
     sched_run_next();

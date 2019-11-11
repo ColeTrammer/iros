@@ -21,7 +21,7 @@
 
 /* Default Args And Envp Passed to First Program */
 static char *test_argv[2] = {
-    "shell", NULL
+    "start", NULL
 };
 
 static char *test_envp[6] = {

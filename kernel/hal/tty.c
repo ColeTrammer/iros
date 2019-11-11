@@ -663,6 +663,10 @@ static int tty_ioctl_termios_set(struct device *tty, struct termios *termios_p) 
 static int tty_ioctl(struct device *tty, unsigned long request, void *argp) {
     struct tty_data *data = tty->private;
 
+    if (request == TISATTY) {
+        return 0;
+    }
+
     struct process *current = get_current_process();
     // Gen TTOU signal
     if (data->pgid != current->pgid) {
