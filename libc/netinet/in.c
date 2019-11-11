@@ -16,7 +16,7 @@ uint16_t in_compute_checksum_with_start(void *packet, size_t num_bytes, uint16_t
 
     // Handle trailing byte
     if (num_bytes % 2 == 1) {
-        sum += ((uint8_t*) packet)[num_bytes - 1];
+        sum += ((uint16_t) ((uint8_t*) packet)[num_bytes - 1]) << 8;
     }
 
     // 1's complement the carry

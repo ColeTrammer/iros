@@ -25,8 +25,8 @@ int main() {
         return 1;
     }
 
-    char *http_request = "GET /index.html HTTP/1.1\r\nHost: www.coletrammer.com\r\n\r\n";
-    ssize_t len = strlen(http_request) + 1;
+    char *http_request = "GET / HTTP/1.0\r\nHost: coletrammer.com\r\n\r\n";
+    ssize_t len = strlen(http_request);
 
     if (write(fd, http_request, len) != len) {
         perror("write");
