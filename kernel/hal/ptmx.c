@@ -103,8 +103,6 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
         signal_process_group(get_current_process()->pgid, SIGTTOU);
     }
 
-    debug_log("Writing to slave: [ %d, %lu ]\n", data->index, len);
-
     struct master_data *mdata = masters[data->index]->private;
     spin_lock(&mdata->lock);
 
@@ -173,17 +171,22 @@ static void slave_remove(struct device *device) {
 
     spin_unlock(&data->lock);
 
-    debug_log("Removing slave tty: [ %d ]\n", data->index);
 
     slaves[data->index] = NULL;
 
     free(data->input_buffer);
+
+    debug_log("Removing slave tty 1: [ %d ]\n", data->index);
+
     while (data->messages) {
-        struct tty_buffer_message *m = data->messages->next;
+        struct tty_buffer_message *m = data->messages->next == data->messages ? NULL : data->messages->next;
+        remque(data->messages);
         free(data->messages->buf);
         free(data->messages);
         data->messages = m;
     }
+
+    debug_log("Removing slave tty 2: [ %d ]\n", data->index);
 
     free(data);
 }
@@ -250,7 +253,8 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             spin_lock(&mdata->lock);
             while (mdata->messages != NULL) {
                 free(mdata->messages->buf);
-                struct tty_buffer_message *next = mdata->messages->next;
+                struct tty_buffer_message *next = mdata->messages->next == data->messages ? NULL : data->messages->next;
+                remque(mdata->messages);
                 free(mdata->messages);
                 mdata->messages = next;
             }
@@ -265,7 +269,8 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             spin_lock(&data->lock);
             while (data->messages != NULL) {
                 free(data->messages->buf);
-                struct tty_buffer_message *next = data->messages->next;
+                struct tty_buffer_message *next = data->messages->next == data->messages ? NULL : data->messages->next;
+                remque(data->messages);
                 free(data->messages);
                 data->messages = next;
             }
@@ -303,14 +308,14 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
 
     spin_lock(&data->lock);
     if (data->output_buffer == NULL) {
-        while (data->messages == NULL) {
+        if (data->messages == NULL) {
             spin_unlock(&data->lock);
-            yield();
-            spin_lock(&data->lock);
+            return 0;
         }
 
         struct tty_buffer_message *message = data->messages;
         data->messages = message == message->next ? NULL : message->next;
+        remque(message);
 
         data->output_buffer = malloc(message->len);
         data->output_buffer_length = data->output_buffer_max = message->len;
@@ -334,6 +339,24 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
     return (ssize_t) to_read;
 }
 
+static bool tty_do_signals(struct slave_data *sdata, char c) {
+    if (!(sdata->config.c_lflag & ISIG)) {
+        return false;
+    }
+
+    if (c == sdata->config.c_cc[VINTR]) {
+        signal_process_group(sdata->pgid, SIGINT);
+    } else if (c == sdata->config.c_cc[VSUSP]) {
+        signal_process_group(sdata->pgid, SIGTSTP);
+    } else if (c == sdata->config.c_cc[VQUIT]) {
+        signal_process_group(sdata->pgid, SIGQUIT);
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
 static ssize_t master_write(struct device *device, struct file *file, const void *buf, size_t len) {
     (void) file;
 
@@ -350,10 +373,22 @@ static ssize_t master_write(struct device *device, struct file *file, const void
 
         char c = ((const char*) buf)[i];
 
+        if (c == '\r' && sdata->config.c_iflag & ICRNL) {
+            c = '\n';
+        }
+
         if (sdata->config.c_lflag & ECHO) {
             spin_unlock(&data->lock);
             slave_write(slaves[data->index], NULL, &c, 1);
             spin_lock(&data->lock);
+        }
+
+        if (tty_do_signals(sdata, c)) {
+            free(data->input_buffer);
+            data->input_buffer = NULL;
+            data->input_buffer_length = data->input_buffer_max = 0;
+            i = 0;
+            continue;
         }
         
         if (c == sdata->config.c_cc[VEOL]) {
@@ -372,7 +407,12 @@ static ssize_t master_write(struct device *device, struct file *file, const void
                 insque(message, sdata->messages->prev);
             }
 
+            free(data->input_buffer);
+            data->input_buffer = NULL;
+            data->input_buffer_length = data->input_buffer_max = 0;
+
             spin_unlock(&sdata->lock);
+            continue;
         }
 
         data->input_buffer[data->input_buffer_length++] = c;
@@ -411,12 +451,15 @@ static void master_remove(struct device *device) {
 
     free(data->input_buffer);
     free(data->output_buffer);
+
     while (data->messages) {
-        struct tty_buffer_message *m = data->messages->next;
+        struct tty_buffer_message *m = data->messages->next == data->messages ? NULL : data->messages->next;
+        remque(data->messages);
         free(data->messages->buf);
         free(data->messages);
         data->messages = m;
     }
+
     free(data);
 }
 

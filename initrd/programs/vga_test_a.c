@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
+#include <kernel/hal/input.h>
 
 int main() {
     int fb = open("/dev/fb0", O_RDWR);
@@ -37,27 +38,37 @@ int main() {
         int sfd = open(ptsname(mfd), O_RDWR);
         assert(sfd != -1);
 
-        for (;;) {
-            write(sfd, "A", 1);
 
-            char c;
-            read(sfd, &c, 1);
-            write(dfd, &c, 1);
+        for (;;) {
+            char buf[50] = { 0 };
+            read(sfd, buf, 50);
+
+            write(dfd, buf, strlen(buf));
+
             sleep(1);
         }
     }
 
-
+    int kfd = open("/dev/keyboard", O_RDONLY);
+    struct key_event event;
+    
+    int x = 0;
+    int y = 0;
     for (;;) {
-        char cs[50] = { 0 };
-        write(mfd, "BBB\n", 4);
-        if (read(mfd, &cs, 50) == 0) {
-            break;
+        char c;
+        while (read(mfd, &c, 1) == 1) {
+            vga_buffer[VGA_INDEX(y, x)] = VGA_ENTRY(c, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+            x++;
         }
 
-        write(dfd, &cs, strlen(cs));
-
-        sleep(5);
+        if (read(kfd, &event, sizeof(struct key_event)) != 0) {
+            if (event.ascii != '\0' && event.flags & KEY_DOWN) {
+                if (event.flags & KEY_CONTROL_ON) {
+                    event.ascii &= 0x1F;
+                }
+                write(mfd, &event.ascii, 1);
+            }
+        }
     }
 
     return 0;
