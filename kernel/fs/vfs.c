@@ -635,6 +635,21 @@ int fs_chmod(const char *path, mode_t mode) {
     return tnode->inode->i_op->chmod(tnode->inode, mode);
 }
 
+intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset) {
+    if (file == NULL) {
+        return -EINVAL;
+    }
+
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    if (inode->i_op->mmap) {
+        return inode->i_op->mmap(addr, len, prot, flags, inode, offset);
+    }
+
+    return -ENODEV;
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

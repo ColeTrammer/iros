@@ -1,8 +1,9 @@
 #define __libc_internal
 
-#include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
@@ -478,5 +479,34 @@ ssize_t recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *__re
                   "movq %6, %%r10\n"\
                   "int $0x80\n"\
                   "movq %%rax, %0" : "=r"(ret) : "r"(fd), "r"(buf), "r"(len), "r"(flags), "r"(source), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
+    void *ret;
+    asm volatile( "movq $45, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movq %2, %%rdx\n"\
+                  "movl %3, %%ecx\n"\
+                  "movl %4, %%r8d\n"\
+                  "movl %5, %%r9d\n"\
+                  "movq %6, %%r10\n"\
+                  "int $0x80\n"\
+                  "movq %%rax, %0" : "=r"(ret) : "r"(addr), "r"(length), "r"(prot), "r"(flags), "r"(fd), "r"(offset) : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory" );
+    if ((long) ret < 0) {
+        errno = -((long) ret);
+        return MAP_FAILED;
+    }
+
+    return ret;
+}
+
+int munmap(void *addr, size_t length) {
+    int ret;
+    asm volatile( "movq $46, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movq %2, %%rdx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(addr), "r"(length) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }

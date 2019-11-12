@@ -31,19 +31,19 @@ static ssize_t dev_ignore_write(struct device *device, struct file *file, const 
 }
 
 static struct device_ops dev_null_ops = {
-    NULL, &dev_null_read, &dev_ignore_write, NULL, NULL, NULL, NULL
+    NULL, &dev_null_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 static struct device dev_null = {
-    0x31, S_IFCHR, "null", &dev_null_ops, NULL
+    0x31, S_IFCHR, "null", false, &dev_null_ops, NULL
 };
 
 static struct device_ops dev_zero_ops = {
-    NULL, &dev_zero_read, &dev_ignore_write, NULL, NULL, NULL, NULL
+    NULL, &dev_zero_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 static struct device dev_zero = {
-    0x32, S_IFCHR, "zero", &dev_zero_ops, NULL
+    0x32, S_IFCHR, "zero", false, &dev_zero_ops, NULL
 };
 
 void init_virtual_devices() {

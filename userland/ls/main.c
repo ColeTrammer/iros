@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +30,9 @@ void fill_dirent(char *_path, const char *name) {
     if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
         return;
     }
+
+    assert(_path);
+    assert(name);
 
     struct ls_dirent d;
     if (_path[0] == '.' && _path[1] == '\0') {

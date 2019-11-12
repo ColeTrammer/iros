@@ -69,7 +69,7 @@ static ssize_t serial_write(struct device *device, struct file *file, const void
 }
 
 struct device_ops serial_ops = {
-    NULL, NULL, &serial_write, NULL, NULL, NULL, NULL
+    NULL, NULL, &serial_write, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 void init_serial_port_device(dev_t dev) {

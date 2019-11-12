@@ -15,17 +15,102 @@
 
 #define PTMX_MAX 16
 
+static struct device *slaves[PTMX_MAX] = { 0 };
+static struct device *masters[PTMX_MAX] = { 0 };
+static spinlock_t lock = SPINLOCK_INITIALIZER;
+
+static void slave_on_open(struct device *device) {
+    struct slave_data *data = device->private;
+    assert(data);
+
+    spin_lock(&data->lock);
+    data->ref_count++;
+    spin_unlock(&data->lock);
+}
+
+static int slave_close(struct device *device) {
+    struct slave_data *data = device->private;
+    assert(data);
+
+    spin_lock(&data->lock);
+    data->ref_count--;
+    if (data->ref_count <= 0) {
+        // data->lock will be unlocked in remove callback
+        dev_remove(device->name);
+        return 0;
+    }
+
+    spin_unlock(&data->lock);
+    return 0;
+}
+
+static void slave_add(struct device *device) {
+    struct slave_data *data = calloc(1, sizeof(struct slave_data));
+    init_spinlock(&data->lock);
+    data->ref_count = 1; // For the master
+
+    for (int i = 0; i < PTMX_MAX; i++) {
+        if (device == slaves[i]) {
+            data->index = i;
+            break;
+        }
+    }
+
+    device->private = data;
+}
+
+static void slave_remove(struct device *device) {
+    struct slave_data *data = device->private;
+    assert(data);
+
+    spin_unlock(&data->lock);
+
+    debug_log("Removing slave tty: [ %d ]\n", data->index);
+
+    slaves[data->index] = NULL;
+    free(data);
+}
+
 static struct device_ops slave_ops = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, slave_close, slave_add, slave_remove, NULL, slave_on_open, NULL
 };
+
+static void master_on_open(struct device *device) {
+    device->cannot_open = true;
+}
+
+static int master_close(struct device *device) {
+    dev_remove(device->name);
+    return 0;
+}
+
+static void master_add(struct device *device) {
+    struct master_data *data = calloc(1, sizeof(struct master_data));
+    for (int i = 0; i < PTMX_MAX; i++) {
+        if (device == masters[i]) {
+            data->index = i;
+            break;
+        }
+    }
+
+    device->private = data;
+}
+
+static void master_remove(struct device *device) {
+    struct master_data *data = device->private;
+    assert(data);
+
+    debug_log("Removing master tty: [ %d ]\n", data->index);
+
+    slave_close(slaves[data->index]);
+
+    masters[data->index] = NULL;
+    free(data);
+}
 
 static struct device_ops master_ops = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, master_close, master_add, master_remove, NULL, master_on_open, NULL
 };
-
-static struct device *slaves[16] = { 0 };
-static struct device *masters[16] = { 0 };
-static spinlock_t lock = SPINLOCK_INITIALIZER;
 
 static struct file *ptmx_open(struct device *device, int flags, int *error) {
     (void) device;
@@ -34,7 +119,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
 
     spin_lock(&lock);
     for (int i = 0; i < PTMX_MAX; i++) {
-        if (slaves[i] == NULL) {
+        if (slaves[i] == NULL && masters[i] == NULL) {
             slaves[i] = calloc(1, sizeof(struct device));
             spin_unlock(&lock);
 
@@ -53,7 +138,6 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
             masters[i] = master;
 
             dev_add(masters[i], masters[i]->name);
-
             dev_add(slaves[i], slaves[i]->name);
 
             char path[16] = { 0 };
@@ -69,7 +153,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
 }
 
 struct device_ops ptmx_ops = {
-    ptmx_open, NULL, NULL, NULL, NULL, NULL, NULL
+    ptmx_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 void init_ptmx() {

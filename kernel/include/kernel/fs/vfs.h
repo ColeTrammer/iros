@@ -25,6 +25,7 @@ int fs_unlink(const char *path);
 int fs_rmdir(const char *path);
 int fs_chmod(const char *path, mode_t mode);
 int fs_access(const char *path, int mode);
+intptr_t fs_mmap(void *addr, size_t length, int prot, int flags, struct file *file, off_t offset);
 int fs_mount(const char *src, const char *path, const char *type);
 
 struct file *fs_clone(struct file *file);

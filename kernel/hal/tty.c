@@ -701,7 +701,7 @@ static int tty_ioctl(struct device *tty, unsigned long request, void *argp) {
 }
 
 static struct device_ops tty_ops = {
-    NULL, tty_read, tty_write, NULL, tty_add, tty_remove, tty_ioctl
+    NULL, tty_read, tty_write, NULL, tty_add, tty_remove, tty_ioctl, NULL, NULL
 };
 
 static cc_t tty_default_control_characters[NCCS] = {

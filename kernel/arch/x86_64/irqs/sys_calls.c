@@ -1076,3 +1076,34 @@ void arch_sys_recvfrom(struct process_state *process_state) {
 
     SYS_RETURN(net_recvfrom(file, buf, len, flags, source, addrlen));
 }
+
+void arch_sys_mmap(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    void *addr = (void*) process_state->cpu_state.rsi;
+    size_t length = (size_t) process_state->cpu_state.rdx;
+    int prot = (int) process_state->cpu_state.rcx;
+    int flags = (int) process_state->cpu_state.r8;
+    int fd = (int) process_state->cpu_state.r9;
+    off_t offset = (off_t) process_state->cpu_state.r10;
+
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EINVAL);
+    }
+
+    struct file *file = get_current_process()->files[fd];
+
+    SYS_RETURN(fs_mmap(addr, length, prot, flags, file, offset));
+}
+
+void arch_sys_munmap(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    void *addr = (void*) process_state->cpu_state.rsi;
+    size_t length = (size_t) process_state->cpu_state.rdx;
+
+    (void) addr;
+    (void) length;
+
+    SYS_RETURN(-ENOSYS);
+}

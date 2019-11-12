@@ -48,6 +48,8 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
+#ifdef __is_kernel
+
 void update_vga_buffer();
 void set_vga_foreground(enum vga_color fs);
 void set_vga_background(enum vga_color bg);
@@ -59,5 +61,9 @@ uint16_t get_vga_buffer(size_t row, size_t col);
 void vga_enable_cursor();
 void vga_disable_cursor();
 void set_vga_cursor(size_t row, size_t col);
+
+void init_vga_device();
+
+#endif /* __is_kernel */
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_VGA_H */

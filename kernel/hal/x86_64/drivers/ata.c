@@ -293,7 +293,7 @@ static ssize_t ata_write(struct device *device, struct file *file, const void *b
 }
 
 static struct device_ops ata_ops = {
-    NULL, ata_read, ata_write, NULL, NULL, NULL, NULL
+    NULL, ata_read, ata_write, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {

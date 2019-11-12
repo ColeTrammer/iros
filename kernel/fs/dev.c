@@ -28,11 +28,11 @@ static struct file_system fs = {
 };
 
 static struct inode_operations dev_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL, NULL, NULL, NULL
+    NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL, NULL, NULL, NULL, &dev_mmap
 };
 
 static struct inode_operations dev_dir_i_op = {
-    NULL, &dev_lookup, &dev_open, &dev_stat, NULL, NULL, NULL, NULL, NULL
+    NULL, &dev_lookup, &dev_open, &dev_stat, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 static struct file_operations dev_f_op = {
@@ -64,6 +64,11 @@ struct tnode *dev_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *dev_open(struct inode *inode, int flags, int *error) {
+    if (inode->private_data && ((struct device*) inode->private_data)->cannot_open) {
+        *error = -EPERM;
+        return NULL;
+    }
+
     if (inode->private_data && ((struct device*) inode->private_data)->ops->open) {
         return ((struct device*) inode->private_data)->ops->open(inode->private_data, flags, error);
     }
@@ -76,6 +81,10 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
     file->f_op = inode->flags & FS_FILE ? &dev_f_op : &dev_dir_f_op;
     file->device = inode->device;
     file->flags = inode->flags;
+
+    if (inode->private_data && ((struct device*) inode->private_data)->ops->on_open) {
+        ((struct device*) inode->private_data)->ops->on_open(inode->private_data);
+    }
 
     return file;
 }
@@ -139,6 +148,16 @@ int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
     return -ENOTTY;
 }
 
+intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
+    struct device *device = inode->private_data;
+
+    if (device->ops->mmap) {
+        return device->ops->mmap(device, addr, len, prot, flags, offset);
+    }
+
+    return -ENODEV;
+}
+
 struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
@@ -190,6 +209,7 @@ void dev_add(struct device *device, const char *_path) {
     }
 
     /* Adds the device */
+    device->cannot_open = false;
     if (device->ops->add) {
         device->ops->add(device);
     }
@@ -239,6 +259,7 @@ void dev_remove(const char *_path) {
     if (((struct device*) tnode->inode->private_data)->ops->remove) {
         ((struct device*) tnode->inode->private_data)->ops->remove(tnode->inode->private_data);
     }
+
     free(tnode->inode->private_data);
 
     /* Removes tnode */

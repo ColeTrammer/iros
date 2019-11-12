@@ -36,6 +36,7 @@ void init_drivers() {
     init_serial_port_device(SERIAL_COM1_PORT);
     init_virtual_devices();
     init_pci();
+    init_vga_device();
     init_ptmx();
 
     /* No idea what this should be... */

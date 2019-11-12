@@ -34,7 +34,7 @@ static struct file_system fs = {
 // };
 
 static struct inode_operations tmp_dir_i_op = {
-    NULL, &tmp_lookup, NULL, &tmp_stat, NULL, NULL, NULL, NULL, NULL
+    NULL, &tmp_lookup, NULL, &tmp_stat, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 // static struct file_operations tmp_f_op = {

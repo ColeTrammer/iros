@@ -10,6 +10,9 @@
 #define TIOCGPGRP  7
 #define TISATTY    8
 
+#define SGWIDTH    0x1000
+#define SGHEIGHT   0x1001
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

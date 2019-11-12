@@ -194,3 +194,5 @@ sys_call_table:
     .quad arch_sys_getsockname
     .quad arch_sys_sendto
     .quad arch_sys_recvfrom
+    .quad arch_sys_mmap
+    .quad arch_sys_munmap

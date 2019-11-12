@@ -56,7 +56,7 @@ static ssize_t kbd_read(struct device *device, struct file *file, void *buffer, 
 }
 
 static struct device_ops kbd_ops = {
-    NULL, kbd_read, NULL, NULL, NULL, NULL, NULL
+    NULL, kbd_read, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 static void add_keyboard_event(struct key_event *event) {

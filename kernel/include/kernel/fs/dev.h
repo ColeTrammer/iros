@@ -1,9 +1,10 @@
 #ifndef _KERNEL_FS_DEV_H
 #define _KERNEL_FS_DEV_H 1
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
@@ -20,12 +21,15 @@ struct device_ops {
     void (*add)(struct device *device);
     void (*remove)(struct device *device);
     int (*ioctl)(struct device *device, unsigned long request, void *argp);
+    void (*on_open)(struct device *device);
+    intptr_t (*mmap)(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset);
 };
 
 struct device {
     dev_t device_number;
     mode_t type;
     char name[16];
+    bool cannot_open;
     struct device_ops *ops;
     void *private;
 };
@@ -42,6 +46,7 @@ ssize_t dev_read(struct file *file, void *buffer, size_t len);
 ssize_t dev_write(struct file *file, const void *buffer, size_t len);
 int dev_stat(struct inode *inode, struct stat *stat_struct);
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
+intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 struct tnode *dev_mount(struct file_system *fs, char *device_path);
 
 dev_t dev_get_device_number(struct file *file);
