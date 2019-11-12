@@ -370,7 +370,11 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     while (region != NULL) {
         if (!(region->flags & VM_GLOBAL)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-                unmap_page(page);
+                if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+                    do_unmap_page(page, false);
+                } else {
+                    unmap_page(page);
+                }
             }
         }
         region = region->next;
