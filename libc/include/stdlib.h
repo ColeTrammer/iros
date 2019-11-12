@@ -54,6 +54,10 @@ void srand(unsigned int seed);
 
 int system(const char *command);
 
+int posix_openpt(int flags);
+char *ptsname(int fd);
+int ptsname_r(int fd, char *buf, size_t buflen);
+
 int abs(int n);
 long labs(long n);
 

@@ -9,6 +9,8 @@
 #define TIOCSPGRP  6
 #define TIOCGPGRP  7
 #define TISATTY    8
+#define TIOCSWINSZ 9
+#define TGETNUM    10
 
 #define SGWIDTH    0x1000
 #define SGHEIGHT   0x1001

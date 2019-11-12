@@ -143,3 +143,35 @@ int system(const char *cmd) {
     sigprocmask(SIG_SETMASK, &block_save, NULL);
     return status;
 }
+
+#ifndef __is_libk
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+
+int posix_openpt(int flags) {
+    return open("/dev/ptmx", flags);
+}
+
+static char pts_name_buf[24];
+
+char *ptsname(int fd) {
+    if (ptsname_r(fd, pts_name_buf, 24) == 0) {
+        return pts_name_buf;
+    }
+
+    return NULL;
+}
+
+int ptsname_r(int fd, char *buf, size_t buflen) {
+    int pts_num;
+    int ret = ioctl(fd, TGETNUM, &pts_num);
+    if (ret != 0) {
+        return ret;
+    }
+
+    bool worked = snprintf(buf, buflen, "/dev/tty%d", pts_num) < (int) buflen;
+    return worked ? 0 : -1;
+}
+
+#endif /* __is_libk */
