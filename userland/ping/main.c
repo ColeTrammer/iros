@@ -22,16 +22,11 @@ void print_usage(char **argv) {
     fprintf(stderr, "Usage: %s <ip>\n", argv[0]);
 }
 
-static struct termios old;
-
-static void fix_terminal() {
-    tcsetattr(STDOUT_FILENO, TCSAFLUSH, &old);
-} 
-
 static void on_int(int signum) {
     assert(signum == SIGINT);
 
-    fix_terminal();
+    fprintf(stderr, "Done.\n");
+
     _exit(127 + signum);
 }
 
@@ -40,16 +35,6 @@ int main(int argc, char **argv) {
         print_usage(argv);
         return 0;
     }
-
-    tcgetattr(STDOUT_FILENO, &old);
-
-    struct termios new_termios = old;
-    new_termios.c_lflag &= ~(ICANON);
-    new_termios.c_cc[VTIME] = 10;
-
-    tcsetattr(STDOUT_FILENO, TCSAFLUSH, &new_termios);
-
-    atexit(&fix_terminal);
 
     signal(SIGINT, &on_int);
 
@@ -112,7 +97,7 @@ int main(int argc, char **argv) {
         if (ret < 0) {
             if (errno = EINTR) {
                 printf("Timed out: seq %d\n", sequence - 1);
-                goto try_again;
+                continue;
             }
             perror("recvfrom");
             return 1;
@@ -123,10 +108,7 @@ int main(int argc, char **argv) {
 
         printf("response from: %s: seq %d\n", inet_ntoa(addr.sin_addr), ntohs(recieved_message.header.un.echo.sequence));
 
-    try_again: {
-        char c;
-        read(STDOUT_FILENO, &c, 1);
-    }
+        sleep(1);
     }
 
     return 0;

@@ -15,7 +15,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/ptmx.h>
-#include <kernel/hal/tty.h>
+#include <kernel/hal/timer.h>
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/util/spinlock.h>
@@ -34,7 +34,7 @@ static struct termios default_termios = {
     ECHO | ICANON | IEXTEN | ISIG,
     { 
         CONTROL_KEY('d'), '\n', '#', CONTROL_KEY('c'), 
-        '@', 0, CONTROL_KEY('\\'), CONTROL_KEY('q'), 
+        '@', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'), 
         CONTROL_KEY('s'), CONTROL_KEY('z'), 0
     }
 };
@@ -62,8 +62,16 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
 
     spin_lock(&data->lock);
     if (data->input_buffer == NULL) {
+        time_t start = get_time();
         while (data->messages == NULL) {
             spin_unlock(&data->lock);
+
+            if (!(data->config.c_lflag & ICANON)) {
+                if (data->config.c_cc[VTIME] != 0 && get_time() - start >= data->config.c_cc[VTIME] * 100) {
+                    return 0;
+                }
+            }
+
             yield();
             spin_lock(&data->lock);
         }
