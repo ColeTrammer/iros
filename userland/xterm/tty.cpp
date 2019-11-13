@@ -21,12 +21,8 @@ void TTY::draw(char c)
         m_col = 0;
     }
 
-    // FIXME: do scrolling
-    if (m_row >= m_buffer.height()) {
-        m_row = 0;
-    }
-
     m_buffer.draw(m_row, m_col++, c);
+
     update_cursor();
 }
 
@@ -248,6 +244,10 @@ void TTY::on_char(char c)
         break;
     case '\n':
         m_row++;
+        if (m_row >= m_buffer.height()) {
+            m_buffer.scroll();
+            m_row--;
+        }
         break;
     default:
         draw(c);

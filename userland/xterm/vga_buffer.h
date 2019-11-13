@@ -43,6 +43,9 @@ public:
     void clear();
 
     void draw(int row, int col, char c);
+    void draw(int row, int col, uint16_t val);
+
+    void scroll();
 
     void show_cursor();
     void hide_cursor();

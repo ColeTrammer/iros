@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
@@ -31,7 +32,12 @@ VgaBuffer::~VgaBuffer()
 
 void VgaBuffer::draw(int row, int col, char c)
 {
-    m_buffer[VGA_INDEX(row, col)] = VGA_ENTRY(c, fg(), bg());
+    draw(row, col, (uint16_t) VGA_ENTRY(c, fg(), bg()));
+}
+
+void VgaBuffer::draw(int row, int col, uint16_t val)
+{
+    m_buffer[row * m_width + col] = val;
 }
 
 void VgaBuffer::hide_cursor()
@@ -54,6 +60,16 @@ void VgaBuffer::clear_row_to_end(int row, int col)
 void VgaBuffer::clear_row(int row)
 {
     clear_row_to_end(row, 0);
+}
+
+void VgaBuffer::scroll()
+{
+    for (int r = 0; r < m_height - 1; r++) {
+        for (int c = 0; c < m_width; c++) {
+            draw(r, c, m_buffer[(r + 1) * m_width + c]);
+        }
+    }
+    clear_row(m_height - 1);
 }
 
 void VgaBuffer::clear()
