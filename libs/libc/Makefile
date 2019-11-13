@@ -1,9 +1,9 @@
 # Default host is given by script
-DEFAULT_HOST!=../default-host.sh
+DEFAULT_HOST!=../../default-host.sh
 # If it's not already defined, HOST = DEFAULT_HOST
 HOST?=$(DEFAULT_HOST)
 # Host achitecture is given by script
-HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
+HOSTARCH!=../../target-triplet-to-arch.sh $(HOST)
 
 # Init flags if not already set (can be overridden)
 CFLAGS?=-O2 -g
@@ -16,13 +16,6 @@ CFLAGS:=$(CFLAGS) -ffreestanding -Werror -Wall -Wextra -std=gnu11
 CPPFLAGS:=$(CPPFLAGS) -D__is_libc -Iinclude
 LIBK_CFLAGS:=$(CFLAGS)
 LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
-
-# Sets directories for install if not already set
-DESTDIR?=
-PREFIX?=/usr
-EXEC_PREFIX?=$(PREFIX)
-INCLUDEDIR?=$(PREFIX)/include
-LIBDIR?=$(EXEC_PREFIX)/lib
 
 # Include architecture specific options
 ARCHDIR=arch/$(HOSTARCH)
@@ -37,66 +30,66 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS) -DARCH=$(HOSTARCH)
 # Lists objects used in 'free' enviornment
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
-$(BUILDDIR)/libc/arpa/inet/inet.o \
-$(BUILDDIR)/libc/ctype/ctype.o \
-$(BUILDDIR)/libc/errno/errno.o \
-$(BUILDDIR)/libc/netinet/in.o \
-$(BUILDDIR)/libc/search/queue.o \
-$(BUILDDIR)/libc/stdio/printf.o \
-$(BUILDDIR)/libc/stdio/scanf.o \
-$(BUILDDIR)/libc/stdlib/abort.o \
-$(BUILDDIR)/libc/stdlib/conversions.o \
-$(BUILDDIR)/libc/stdlib/malloc.o \
-$(BUILDDIR)/libc/stdlib/stdlib.o \
-$(BUILDDIR)/libc/string/memchr.o \
-$(BUILDDIR)/libc/string/memcmp.o \
-$(BUILDDIR)/libc/string/memcpy.o \
-$(BUILDDIR)/libc/string/memmove.o \
-$(BUILDDIR)/libc/string/memset.o \
-$(BUILDDIR)/libc/string/strcat.o \
-$(BUILDDIR)/libc/string/strchr.o \
-$(BUILDDIR)/libc/string/strcmp.o \
-$(BUILDDIR)/libc/string/strcpy.o \
-$(BUILDDIR)/libc/string/strcspn.o \
-$(BUILDDIR)/libc/string/strdup.o \
-$(BUILDDIR)/libc/string/strlen.o \
-$(BUILDDIR)/libc/string/strncat.o \
-$(BUILDDIR)/libc/string/strncmp.o \
-$(BUILDDIR)/libc/string/strncpy.o \
-$(BUILDDIR)/libc/string/strpbrk.o \
-$(BUILDDIR)/libc/string/strrchr.o \
-$(BUILDDIR)/libc/string/strspn.o \
-$(BUILDDIR)/libc/string/strstr.o \
-$(BUILDDIR)/libc/string/strtok.o
+$(BUILDDIR)/libs/libc/arpa/inet/inet.o \
+$(BUILDDIR)/libs/libc/ctype/ctype.o \
+$(BUILDDIR)/libs/libc/errno/errno.o \
+$(BUILDDIR)/libs/libc/netinet/in.o \
+$(BUILDDIR)/libs/libc/search/queue.o \
+$(BUILDDIR)/libs/libc/stdio/printf.o \
+$(BUILDDIR)/libs/libc/stdio/scanf.o \
+$(BUILDDIR)/libs/libc/stdlib/abort.o \
+$(BUILDDIR)/libs/libc/stdlib/conversions.o \
+$(BUILDDIR)/libs/libc/stdlib/malloc.o \
+$(BUILDDIR)/libs/libc/stdlib/stdlib.o \
+$(BUILDDIR)/libs/libc/string/memchr.o \
+$(BUILDDIR)/libs/libc/string/memcmp.o \
+$(BUILDDIR)/libs/libc/string/memcpy.o \
+$(BUILDDIR)/libs/libc/string/memmove.o \
+$(BUILDDIR)/libs/libc/string/memset.o \
+$(BUILDDIR)/libs/libc/string/strcat.o \
+$(BUILDDIR)/libs/libc/string/strchr.o \
+$(BUILDDIR)/libs/libc/string/strcmp.o \
+$(BUILDDIR)/libs/libc/string/strcpy.o \
+$(BUILDDIR)/libs/libc/string/strcspn.o \
+$(BUILDDIR)/libs/libc/string/strdup.o \
+$(BUILDDIR)/libs/libc/string/strlen.o \
+$(BUILDDIR)/libs/libc/string/strncat.o \
+$(BUILDDIR)/libs/libc/string/strncmp.o \
+$(BUILDDIR)/libs/libc/string/strncpy.o \
+$(BUILDDIR)/libs/libc/string/strpbrk.o \
+$(BUILDDIR)/libs/libc/string/strrchr.o \
+$(BUILDDIR)/libs/libc/string/strspn.o \
+$(BUILDDIR)/libs/libc/string/strstr.o \
+$(BUILDDIR)/libs/libc/string/strtok.o
 
 # Lists objects used in 'hosted' enviornment
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
-$(BUILDDIR)/libc/assert/assert.o \
-$(BUILDDIR)/libc/dirent/dirent.o \
-$(BUILDDIR)/libc/ftw/ftw.o \
-$(BUILDDIR)/libc/locale/locale.o \
-$(BUILDDIR)/libc/glob/glob.o \
-$(BUILDDIR)/libc/netdb/netdb.o \
-$(BUILDDIR)/libc/pwd/pwd.o \
-$(BUILDDIR)/libc/signal/signal.o \
-$(BUILDDIR)/libc/stdio/files.o \
-$(BUILDDIR)/libc/stdio/puts.o \
-$(BUILDDIR)/libc/stdlib/atexit.o \
-$(BUILDDIR)/libc/stdlib/env.o \
-$(BUILDDIR)/libc/string/strcoll.o \
-$(BUILDDIR)/libc/string/strerror.o \
-$(BUILDDIR)/libc/string/strxfrm.o \
-$(BUILDDIR)/libc/sys/socket/socket.o \
-$(BUILDDIR)/libc/sys/wait/wait.o \
-$(BUILDDIR)/libc/termios/termios.o \
-$(BUILDDIR)/libc/time/time.o \
-$(BUILDDIR)/libc/unistd/exec.o \
-$(BUILDDIR)/libc/unistd/getlogin.o \
-$(BUILDDIR)/libc/unistd/getopt.o \
-$(BUILDDIR)/libc/unistd/isatty.o \
-$(BUILDDIR)/libc/wordexp/wordexp.o \
-$(BUILDDIR)/libc/init.o
+$(BUILDDIR)/libs/libc/assert/assert.o \
+$(BUILDDIR)/libs/libc/dirent/dirent.o \
+$(BUILDDIR)/libs/libc/ftw/ftw.o \
+$(BUILDDIR)/libs/libc/locale/locale.o \
+$(BUILDDIR)/libs/libc/glob/glob.o \
+$(BUILDDIR)/libs/libc/netdb/netdb.o \
+$(BUILDDIR)/libs/libc/pwd/pwd.o \
+$(BUILDDIR)/libs/libc/signal/signal.o \
+$(BUILDDIR)/libs/libc/stdio/files.o \
+$(BUILDDIR)/libs/libc/stdio/puts.o \
+$(BUILDDIR)/libs/libc/stdlib/atexit.o \
+$(BUILDDIR)/libs/libc/stdlib/env.o \
+$(BUILDDIR)/libs/libc/string/strcoll.o \
+$(BUILDDIR)/libs/libc/string/strerror.o \
+$(BUILDDIR)/libs/libc/string/strxfrm.o \
+$(BUILDDIR)/libs/libc/sys/socket/socket.o \
+$(BUILDDIR)/libs/libc/sys/wait/wait.o \
+$(BUILDDIR)/libs/libc/termios/termios.o \
+$(BUILDDIR)/libs/libc/time/time.o \
+$(BUILDDIR)/libs/libc/unistd/exec.o \
+$(BUILDDIR)/libs/libc/unistd/getlogin.o \
+$(BUILDDIR)/libs/libc/unistd/getopt.o \
+$(BUILDDIR)/libs/libc/unistd/isatty.o \
+$(BUILDDIR)/libs/libc/wordexp/wordexp.o \
+$(BUILDDIR)/libs/libc/init.o
 
 # Lists all objects
 OBJS=\
@@ -106,24 +99,17 @@ $(HOSTEDOBJS)
 # Lists objects used by libk
 LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 
-# List objects used by libm
-LIBM_OBJS=\
-$(BUILDDIR)/libc/math/math.o
-
 # List of binaries to be created
-BINARIES=$(BUILDDIR)/libc/libc.a $(BUILDDIR)/libc/libk.a $(BUILDDIR)/libc/libm.a
+BINARIES=$(BUILDDIR)/libs/libc/libc.a $(BUILDDIR)/libs/libc/libk.a
 
 .PHONY: all
 all: $(BINARIES)
 
 # Makes library file from objs using AR
-$(BUILDDIR)/libc/libc.a: $(OBJS)
+$(BUILDDIR)/libs/libc/libc.a: $(OBJS)
 	$(AR) rcs $@ $^
 
-$(BUILDDIR)/libc/libk.a: $(LIBK_OBJS)
-	$(AR) rcs $@ $^
-
-$(BUILDDIR)/libc/libm.a: $(LIBM_OBJS)
+$(BUILDDIR)/libs/libc/libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $^
 
 # Makes object file from any .c or .S file
@@ -171,4 +157,3 @@ install-raw-objs: $(ARCH_RAW_OBJS)
 # make to go back and rebuild the object.
 -include $(OBJS:.o:.d)
 -include $(LIBK_OBJS:.o:.d)
--include $(LIBM_OBJS:.o:.d)

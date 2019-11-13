@@ -1,0 +1,26 @@
+.PHONY: all
+all: $(LIBRARY)
+
+$(LIBRARY): $(OBJS)
+	$(AR) rcs $@ $^
+
+$(BUILDDIR)/%.o: $(ROOT)/%.cpp
+	$(CXX) -MD -c $< -o $@ $(CPPFLAGS)
+
+$(BUILDDIR)/%.o: $(ROOT)/%.c
+	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+
+$(BUILDDIR)/%.o: $(ROOT)/%.S
+	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)
+
+.PHONY: install
+install: install-headers install-library
+
+install-headers:
+	mkdir -p $(DESTDIR)$(INCLUDEDIR)
+	cp -R --preserve=timestamps -u include/. $(DESTDIR)$(INCLUDEDIR)/.
+
+install-library: all
+	cp --preserve=timestamps $(LIBRARY) $(SYSROOT)/usr/lib
+
+-include $(OBJS:.o:.d)

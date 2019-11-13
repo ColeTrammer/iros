@@ -1,7 +1,7 @@
 # Lists all projects
-PROJECTS=kernel libc boot initrd userland
+PROJECTS=kernel libs boot initrd userland
 # Lists all projects that need headers installed
-HEADER_PROJECTS=kernel libc
+HEADER_PROJECTS=kernel libs
 
 # Root defaults to cwd; must be set properly if using make -C
 export ROOT?=$(CURDIR)
@@ -49,14 +49,14 @@ os_2.img: $(PROJECTS)
 $(PROJECTS):
 	$(MAKE) install -C $(ROOT)/$@
 
-# Makes the kernel depend on libc
-kernel: libc
+# Makes the kernel depend on libs
+kernel: libs
 
-# Makes the initrd depend on libc
-initrd: libc
+# Makes the initrd depend on libs
+initrd: libs
 
-# Makes the userland depend on libc
-userland: libc
+# Makes the userland depend on libs
+userland: libs
 
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean
@@ -79,7 +79,7 @@ debug:
 SOURCES+=$(shell find $(ROOT)/boot -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
 SOURCES+=$(shell find $(ROOT)/initrd -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
 SOURCES+=$(shell find $(ROOT)/kernel -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
-SOURCES+=$(shell find $(ROOT)/libc -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+SOURCES+=$(shell find $(ROOT)/libs -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
 SOURCES+=$(shell find $(ROOT)/userland -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
 OBJECTS+=$(patsubst $(ROOT)/%.c, $(BUILDDIR)/%.o, $(SOURCES))
 OBJECTS+=$(patsubst $(ROOT)/%.S, $(BUILDDIR)/%.o, $(SOURCES))
