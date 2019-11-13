@@ -473,42 +473,16 @@ struct keyboard_task {
     struct keyboard_task *next;
 };
 
-static struct keyboard_task *first = NULL;
-static struct keyboard_task *last = NULL;
-
 static bool extended_key_code = false;
 static unsigned int flags = 0;
 
 static struct key_event event;
 
-static struct keyboard_task *create_keyboard_task(uint8_t command) {
-    struct keyboard_task *task = malloc(sizeof(struct keyboard_task));
-    task->command = command;
-    return task;
-}
-
-static void add_keyboard_task(struct keyboard_task *task) {
-    if (first == NULL) {
-        first = last = task;
-    }
-    last->next = task;
-    last = task;
-}
-
-static void exec_keyboard_task() {
-    outb(KEYBOARD_DATA_PORT, first->command);
-}
-
 static void handle_keyboard_interrupt() {
     uint8_t scan_code = inb(KEYBOARD_DATA_PORT);
 
     if (scan_code == KEYBOARD_ACK) {
-        void *temp = first->next;
-        free(first);
-        first = temp;
-        if (first != NULL) {
-            exec_keyboard_task();
-        }
+
     } else if (scan_code == KEYBOARD_EXTENDED) {
         extended_key_code = true;
     } else if (scan_code < KEYBOARD_RELEASED_OFFSET) {
@@ -579,8 +553,9 @@ static void handle_keyboard_interrupt() {
 void init_keyboard() {
     register_irq_line_handler(&handle_keyboard_interrupt, KEYBOARD_IRQ_LINE, true);
 
-    add_keyboard_task(create_keyboard_task(KEYBOARD_SET_SCAN_CODE_SET));
-    add_keyboard_task(create_keyboard_task(KEYBOARD_SCAN_CODE_SET));
+    while (inb(0x60) & 0x1) {
+        inb(KEYBOARD_DATA_PORT);    
+    }
 
     struct device *device = malloc(sizeof(struct device));
     device->device_number = 0x20;
@@ -589,6 +564,4 @@ void init_keyboard() {
     device->private = NULL;
     device->type = S_IFCHR;
     dev_add(device, device->name);
-
-    exec_keyboard_task();
 }

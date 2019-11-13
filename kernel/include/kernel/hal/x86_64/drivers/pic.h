@@ -35,6 +35,9 @@ void init_pic();
 
 void pic_generic_handler_entry();
 
+void enable_irq_line(uint8_t irq_line);
+void disable_irq_line(uint8_t irq_line);
+
 void sendEOI(unsigned int irq_line);
 void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, bool use_generic_handler);
 

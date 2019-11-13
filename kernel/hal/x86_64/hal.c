@@ -3,17 +3,19 @@
 #include <kernel/hal/output.h>
 #include <sys/types.h>
 
+#include <kernel/hal/devices.h>
+#include <kernel/hal/ptmx.h>
+
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
+#include <kernel/hal/x86_64/drivers/fdc.h>
+#include <kernel/hal/x86_64/drivers/keyboard.h>
+#include <kernel/hal/x86_64/drivers/mouse.h>
 #include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
-#include <kernel/hal/x86_64/drivers/keyboard.h>
-#include <kernel/hal/x86_64/drivers/fdc.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
-#include <kernel/hal/devices.h>
-#include <kernel/hal/ptmx.h>
 
 void init_hal() {
     init_irqs();
@@ -28,6 +30,7 @@ void init_hal() {
 
 void init_drivers() {
     init_keyboard();
+    init_mouse();
     init_fdc();
     init_ata();
     init_pit();

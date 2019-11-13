@@ -44,7 +44,7 @@ static void remap(int offset1, int offset2) {
     outb(PIC2_DATA, a2);
 }
 
-static void enable_irq_line(uint8_t irq_line) {
+void enable_irq_line(uint8_t irq_line) {
     uint16_t port;
     uint8_t val;
 
@@ -58,7 +58,7 @@ static void enable_irq_line(uint8_t irq_line) {
     outb(port, val);
 }
 
-static void disable_irq_line(uint8_t irq_line) {
+void disable_irq_line(uint8_t irq_line) {
     uint16_t port;
     uint8_t val;
 
