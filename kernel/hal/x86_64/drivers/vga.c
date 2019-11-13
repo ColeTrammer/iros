@@ -32,6 +32,19 @@ static int vga_ioctl(struct device *device, unsigned long request, void *argp) {
             *hp = VGA_HEIGHT;
             return 0;
         }
+        case SSCURSOR: {
+            struct cursor_pos *cp = argp;
+            set_vga_cursor(cp->cp_row, cp->cp_col);
+            return 0;
+        }
+        case SECURSOR: {
+            vga_enable_cursor();
+            return 0;
+        }
+        case SDCURSOR: {
+            vga_disable_cursor();
+            return 0;
+        }
         default:
             return -ENOTTY;
     }

@@ -402,7 +402,7 @@ static char *get_tty_input(FILE *tty) {
             if (isdigit(c)) {
                 char last;
                 read(fileno(tty), &last, 1);
-                if (c == '~') {
+                if (last != '~') {
                     continue;
                 }
 

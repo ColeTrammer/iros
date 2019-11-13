@@ -5,29 +5,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <kernel/arch/x86_64/asm_utils.h>
-
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 #define VGA_PHYS_ADDR 0xB8000
 #define VGA_INDEX(row, col) ((row) * VGA_WIDTH + (col))
 #define VGA_ENTRY(c, fg, bg) (((uint16_t) (c) & 0x00FF) | ((uint16_t) (fg) << 8 & 0x0F00) | ((uint16_t) (bg) << 12 & 0xF000))
 
-#define VGA_CURSOR_Y_START 14
-#define VGA_CURSOR_Y_END 15
-
-#define VGA_COMMAND 0x3D4
-#define VGA_DATA 0x3D5
-#define VGA_SET_CURSOR_LOW 0x0F
-#define VGA_SET_CURSOR_HIGH 0x0E
-#define VGA_ENABLE_CURSOR_START 0x0A
-#define VGA_ENABLE_CURSOR_END 0x0B
-#define VGA_CURSOR_DISABLE 0x20
-#define VGA_RUN_COMMAND(p1, p2)  \
-	do {                         \
-		outb(VGA_COMMAND, (p1)); \
-		outb(VGA_DATA, (p2));    \
-	} while (0);
+#ifdef __cplusplus
+extern "C" {
+#endif /* cplusplus */
 
 enum vga_color {
 	VGA_COLOR_BLACK = 0,
@@ -48,7 +34,29 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
+#ifdef __cplusplus
+}
+#endif /* cplusplus */
+
 #ifdef __is_kernel
+
+#include <kernel/arch/x86_64/asm_utils.h>
+
+#define VGA_CURSOR_Y_START 14
+#define VGA_CURSOR_Y_END 15
+
+#define VGA_COMMAND 0x3D4
+#define VGA_DATA 0x3D5
+#define VGA_SET_CURSOR_LOW 0x0F
+#define VGA_SET_CURSOR_HIGH 0x0E
+#define VGA_ENABLE_CURSOR_START 0x0A
+#define VGA_ENABLE_CURSOR_END 0x0B
+#define VGA_CURSOR_DISABLE 0x20
+#define VGA_RUN_COMMAND(p1, p2)  \
+	do {                         \
+		outb(VGA_COMMAND, (p1)); \
+		outb(VGA_DATA, (p2));    \
+	} while (0);
 
 void update_vga_buffer();
 void set_vga_foreground(enum vga_color fs);

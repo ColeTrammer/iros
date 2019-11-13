@@ -1,6 +1,10 @@
 #ifndef _KERNEL_HAL_INPUT_H
 #define _KERNEL_HAL_INPUT_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 enum key {
     KEY_NULL,
     KEY_ESC,
@@ -140,5 +144,9 @@ struct key_event {
 #define KEY_ALT_ON (1U << 5U)
     unsigned int flags;
 };
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _KERNEL_HAL_INPUT_H */

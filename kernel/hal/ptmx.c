@@ -103,6 +103,15 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
         signal_process_group(get_current_process()->pgid, SIGTTOU);
     }
 
+    if (data->config.c_oflag & OPOST) {
+        size_t save_len = len;
+        for (size_t i = 0; i < save_len; i++) {
+            if (((const char*) buf)[i] == '\n') {
+                len++;
+            }
+        }
+    }
+
     struct master_data *mdata = masters[data->index]->private;
     spin_lock(&mdata->lock);
 
@@ -110,8 +119,7 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
     if (message == NULL) {
         message = calloc(1, sizeof(struct tty_buffer_message));
         message->buf = malloc(MAX(TTY_BUF_MAX_START, len));
-        message->len = len;
-        memcpy(message->buf, buf, len);
+        message->len = 0;
         message->prev = message->next = message;
         mdata->messages = message;
     } else {
@@ -119,10 +127,17 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
             message->max = MAX(message->max + TTY_BUF_MAX_START, message->len + len);
             message->buf = realloc(message->buf, message->max); 
         }
-
-        memcpy(message->buf + message->len, buf, len);
-        message->len += len;
     }
+
+    size_t buf_index = 0;
+    for (size_t i = message->len; i < message->len + len; i++, buf_index++) {
+        if ((data->config.c_oflag & OPOST) && ((const char*) buf)[buf_index] == '\n') {
+            message->buf[i++] = '\r';
+        }
+        message->buf[i] = ((const char*) buf)[buf_index];
+    }
+
+    message->len += len;
 
     spin_unlock(&mdata->lock);
     return (ssize_t) len;
@@ -240,41 +255,9 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             mdata->input_buffer_length = 0;
             mdata->input_buffer_max = 0;
             spin_unlock(&mdata->lock);
-
-            spin_lock(&data->lock);
-            free(data->input_buffer);
-            data->input_buffer_index = 0;
-            data->input_buffer = NULL;
-            data->input_buffer_length = 0;
-            data->input_buffer_max = 0;
-            spin_unlock(&data->lock);
         } // Fall through
         case TCSETSW: {
-            spin_lock(&mdata->lock);
-            while (mdata->messages != NULL) {
-                free(mdata->messages->buf);
-                struct tty_buffer_message *next = mdata->messages->next == data->messages ? NULL : data->messages->next;
-                remque(mdata->messages);
-                free(mdata->messages);
-                mdata->messages = next;
-            }
-
-            free(mdata->output_buffer);
-            mdata->output_buffer_index = 0;
-            mdata->output_buffer = NULL;
-            mdata->output_buffer_length = 0;
-            mdata->output_buffer_max = 0;
-            spin_unlock(&mdata->lock);
-
-            spin_lock(&data->lock);
-            while (data->messages != NULL) {
-                free(data->messages->buf);
-                struct tty_buffer_message *next = data->messages->next == data->messages ? NULL : data->messages->next;
-                remque(data->messages);
-                free(data->messages);
-                data->messages = next;
-            }
-            spin_unlock(&data->lock);
+            // Should flush output
         } // Fall through
         case TCSETS: {
             spin_lock(&data->lock);
@@ -339,6 +322,14 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
     return (ssize_t) to_read;
 }
 
+static void tty_do_echo(struct master_data *data, struct slave_data *sdata, char c) {
+    if (sdata->config.c_lflag & ECHO) {
+        spin_unlock(&data->lock);
+        slave_write(slaves[data->index], NULL, &c, 1);
+        spin_lock(&data->lock);
+    }
+}
+
 static bool tty_do_signals(struct slave_data *sdata, char c) {
     if (!(sdata->config.c_lflag & ISIG)) {
         return false;
@@ -366,7 +357,7 @@ static ssize_t master_write(struct device *device, struct file *file, const void
     spin_lock(&data->lock);
 
     for (size_t i = 0; i < len; i++) {
-        if (data->input_buffer_length >= data->input_buffer_max) {
+        if ((sdata->config.c_lflag & ICANON) && data->input_buffer_length >= data->input_buffer_max) {
             data->input_buffer_max += TTY_BUF_MAX_START;
             data->input_buffer = realloc(data->input_buffer, data->input_buffer_max);
         }
@@ -377,11 +368,7 @@ static ssize_t master_write(struct device *device, struct file *file, const void
             c = '\n';
         }
 
-        if (sdata->config.c_lflag & ECHO) {
-            spin_unlock(&data->lock);
-            slave_write(slaves[data->index], NULL, &c, 1);
-            spin_lock(&data->lock);
-        }
+        tty_do_echo(data, sdata, c);
 
         if (tty_do_signals(sdata, c)) {
             free(data->input_buffer);
@@ -390,7 +377,35 @@ static ssize_t master_write(struct device *device, struct file *file, const void
             i = 0;
             continue;
         }
-        
+
+        if (!(sdata->config.c_lflag & ICANON)) {
+            spin_lock(&sdata->lock);
+
+            if (sdata->messages == NULL) {
+                sdata->messages = calloc(1, sizeof(struct tty_buffer_message));
+                sdata->messages->buf = malloc(TTY_BUF_MAX_START);
+                sdata->messages->len = 1;
+                sdata->messages->max = TTY_BUF_MAX_START;
+                sdata->messages->buf[0] = c;
+                sdata->messages->prev = sdata->messages->next = sdata->messages;
+            } else {
+                struct tty_buffer_message *m = sdata->messages;
+                while (m->next) {
+                    m = m->next;
+                }
+
+                if (m->len >= m->max) {
+                    m->max += TTY_BUF_MAX_START;
+                    m->buf = realloc(m->buf, m->max);
+                }
+
+                m->buf[m->len++] = c;
+            }
+
+            spin_unlock(&sdata->lock);
+            continue;
+        }
+
         if (c == sdata->config.c_cc[VEOL]) {
             data->input_buffer[data->input_buffer_length++] = c;
 

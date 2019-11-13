@@ -14,6 +14,9 @@
 
 #define SGWIDTH    0x1000
 #define SGHEIGHT   0x1001
+#define SSCURSOR   0x1002
+#define SECURSOR   0x1003
+#define SDCURSOR   0x1004
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,6 +25,11 @@ extern "C" {
 struct winsize {
     unsigned short ws_row;
     unsigned short ws_col;
+};
+
+struct cursor_pos {
+    unsigned short cp_row;
+    unsigned short cp_col;
 };
 
 int ioctl(int fd, unsigned long request, ...);

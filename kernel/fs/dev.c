@@ -15,6 +15,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/hal/output.h>
+#include <kernel/proc/process.h>
 #include <kernel/util/spinlock.h>
 
 static struct file_system fs;
