@@ -9,6 +9,9 @@
 
 // #define XTERM_TTY_DEBUG
 
+#define CTRL_KEY(c) ((c) & 0x1F)
+#define IS_CTRL(c) (!((c) & ~0x1F))
+
 TTY::TTY(VgaBuffer& buffer)
     : m_buffer(buffer)
 {
@@ -16,14 +19,18 @@ TTY::TTY(VgaBuffer& buffer)
 
 void TTY::draw(char c)
 {
+    if (IS_CTRL(c)) {
+        draw('^');
+        draw(c | 0x40);
+        return;
+    }
+
     if (m_col >= m_buffer.width()) {
         m_row++;
         m_col = 0;
     }
 
     m_buffer.draw(m_row, m_col++, c);
-
-    update_cursor();
 }
 
 void TTY::update_cursor()
@@ -236,6 +243,8 @@ void TTY::on_char(char c)
     }
 
     switch (c) {
+    case CTRL_KEY('d'):
+        break;
     case '\033':
         m_in_escape = true;
         break;
@@ -253,4 +262,6 @@ void TTY::on_char(char c)
         draw(c);
         break;
     }
+
+    update_cursor();
 }
