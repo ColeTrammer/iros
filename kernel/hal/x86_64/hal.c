@@ -14,7 +14,6 @@
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/hal/devices.h>
 #include <kernel/hal/ptmx.h>
-#include <kernel/hal/tty.h>
 
 void init_hal() {
     init_irqs();
@@ -38,9 +37,6 @@ void init_drivers() {
     init_pci();
     init_vga_device();
     init_ptmx();
-
-    /* No idea what this should be... */
-    init_tty_device(0x50);
 
     debug_log("Finished Initializing Drivers\n");
 }

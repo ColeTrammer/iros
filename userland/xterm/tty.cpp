@@ -141,7 +141,7 @@ void TTY::handle_escape_sequence()
                 m_buffer.set_fg(VGA_COLOR_RED);
                 break;
             case 32:
-                m_buffer.set_fg(VGA_COLOR_RED);
+                m_buffer.set_fg(VGA_COLOR_GREEN);
                 break;
             case 33:
                 m_buffer.set_fg(VGA_COLOR_YELLOW);

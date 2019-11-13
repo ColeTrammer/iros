@@ -270,6 +270,14 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             *i = data->index;
             return 0;
         }
+        case TIOSCTTY: {
+            get_current_process()->tty = data->index;
+            return 0;
+        }
+        case TIOCNOTTY: {
+            get_current_process()->tty = -1;
+            return 0;
+        }
         default: {
             return -ENOTTY;
         }
@@ -534,6 +542,25 @@ struct device_ops ptmx_ops = {
     ptmx_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
+static struct file *tty_open(struct device *device, int flags, int *error) {
+    (void) device;
+
+    int tty_num = get_current_process()->tty;
+    if (tty_num == -1) {
+        *error = -ENOENT;
+        return NULL;
+    }
+
+    char path[20] = { 0 };
+    snprintf(path, 19, "/dev/tty%d", tty_num);
+    debug_log("Redirecting /dev/tty to [ %s ]\n", path);
+    return fs_open(path, flags, error);
+}
+
+struct device_ops tty_ops = {
+    tty_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+};
+
 void init_ptmx() {
     struct device *ptmx_device = calloc(1, sizeof(struct device));
     ptmx_device->device_number = 0x7500;
@@ -543,4 +570,13 @@ void init_ptmx() {
     ptmx_device->type = S_IFCHR;
 
     dev_add(ptmx_device, ptmx_device->name);
+
+    struct device *tty_device = calloc(1, sizeof(struct device));
+    tty_device->device_number = 0x2000;
+    strcpy(tty_device->name, "tty");
+    tty_device->ops = &tty_ops;
+    tty_device->private = NULL;
+    tty_device->type = S_IFCHR;
+
+    dev_add(tty_device, tty_device->name);
 }

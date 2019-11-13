@@ -35,6 +35,7 @@ int main()
         setpgid(0, 0);
         signal(SIGTTOU, SIG_IGN);
         tcsetpgrp(mfd, getpid());
+        ioctl(mfd, TIOSCTTY);
         signal(SIGTTOU, SIG_DFL);
 
         dup2(sfd, STDIN_FILENO);
@@ -66,9 +67,6 @@ int main()
 
     int kfd = open("/dev/keyboard", O_RDONLY);
     assert(kfd != -1);
-
-    FILE *serial = fopen("/dev/serial", "w");
-    setvbuf(serial, nullptr, _IONBF, 0);
 
     for (;;) {
         key_event event;

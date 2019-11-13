@@ -117,6 +117,7 @@ void init_kernel_process() {
     initial_kernel_process.next = NULL;
     initial_kernel_process.pgid = 1;
     initial_kernel_process.ppid = 1;
+    initial_kernel_process.tty = -1;
 
     sched_add_process(&initial_kernel_process);
 }
@@ -130,6 +131,7 @@ struct process *load_kernel_process(uintptr_t entry) {
     process->kernel_process = true;
     process->sched_state = READY;
     process->cwd = malloc(2);
+    process->tty = -1;
     strcpy(process->cwd, "/");
     process->next = NULL;
 
@@ -163,6 +165,7 @@ struct process *load_process(const char *file_name) {
     process->kernel_process = false;
     process->sched_state = READY;
     process->cwd = malloc(2);
+    process->tty = -1;
     strcpy(process->cwd, "/");
     process->next = NULL;
 
@@ -185,18 +188,6 @@ struct process *load_process(const char *file_name) {
     free(buffer);
 
     load_paging_structure(old_paging_structure);
-
-    int error0 = 0;
-    int error1 = 0;
-    int error2 = 0;
-
-    process->files[0] = fs_open("/dev/tty", O_RDWR, &error0);
-    process->files[1] = fs_open("/dev/tty", O_RDWR, &error1);
-    process->files[2] = fs_open("/dev/tty", O_RDWR, &error2);
-
-    assert(error0 == 0);
-    assert(error1 == 0);
-    assert(error2 == 0);
 
     debug_log("Loaded Process: [ %d, %s ]\n", process->pid, file_name);
     return process;

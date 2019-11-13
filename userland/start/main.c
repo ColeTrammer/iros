@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -17,14 +18,6 @@ void spawn_process(char **argv, bool redirect) {
             dup2(dev_null, 1);
             dup2(dev_null, 2);
             close(dev_null);
-        } else {
-            signal(SIGTTOU, SIG_IGN);
-            signal(SIGTTIN, SIG_IGN);
-
-            tcsetpgrp(STDOUT_FILENO, getpgid(0));
-
-            signal(SIGTTOU, SIG_DFL);
-            signal(SIGTTIN, SIG_DFL);
         }
         _exit(execvp(argv[0], argv));
     } else if (pid == -1) {
@@ -37,18 +30,19 @@ void spawn_process(char **argv, bool redirect) {
 
 int main() {
     char *nslookup_args[] = {
-        "nslookup", "-s", NULL
+        "/bin/nslookup", "-s", NULL
     };
 
-    char *sh_args[] = {
-        "sh", NULL
+    char *xterm_args[] = {
+        "/bin/xterm", NULL
     };
 
     spawn_process(nslookup_args, true);
-    spawn_process(sh_args, false);
+    spawn_process(xterm_args, false);
 
     for (;;) {
         sleep(100);
+        waitpid(-1, NULL, WNOHANG);
     }
 
     assert(false);

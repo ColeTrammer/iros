@@ -96,6 +96,7 @@ void arch_sys_fork(struct process_state *process_state) {
     child->sched_state = READY;
     child->kernel_process = false;
     child->process_memory = clone_process_vm();
+    child->tty = parent->tty;
 
     debug_log("Forking Process: [ %d ]\n", parent->pid);
 
@@ -232,8 +233,14 @@ void arch_sys_close(struct process_state *process_state) {
 
     int fd = (int) process_state->cpu_state.rsi;
 
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
+
     struct process *process = get_current_process();
-    assert(process->files[fd]);
+    if (process->files[fd] == NULL) {
+        SYS_RETURN(-EBADF);
+    }
     int error = fs_close(process->files[fd]);
     process->files[fd] = NULL;
 
@@ -311,6 +318,7 @@ void arch_sys_execve(struct process_state *process_state) {
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->kernel_process = false;
     process->sched_state = READY;
+    process->tty = current->tty;
     process->cwd = malloc(strlen(current->cwd) + 1);
     strcpy(process->cwd, current->cwd);
     process->next = NULL;
@@ -515,9 +523,16 @@ void arch_sys_ioctl(struct process_state *process_state) {
     unsigned long request = (unsigned long) process_state->cpu_state.rdx;
     void *argp = (void*) process_state->cpu_state.rcx;
 
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
+
     struct process *process = get_current_process();
     struct file *file = process->files[fd];
-    assert(file);
+
+    if (file == NULL) {
+        SYS_RETURN(-EBADF);
+    }
 
     SYS_RETURN((uint64_t) fs_ioctl(file, request, argp));
 }

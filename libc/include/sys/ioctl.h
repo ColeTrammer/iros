@@ -11,6 +11,8 @@
 #define TISATTY    8
 #define TIOCSWINSZ 9
 #define TGETNUM    10
+#define TIOCNOTTY  11
+#define TIOSCTTY   12
 
 #define SGWIDTH    0x1000
 #define SGHEIGHT   0x1001
