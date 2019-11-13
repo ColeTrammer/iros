@@ -411,8 +411,10 @@ static ssize_t master_write(struct device *device, struct file *file, const void
             continue;
         }
 
-        if (c == sdata->config.c_cc[VEOL]) {
-            data->input_buffer[data->input_buffer_length++] = c;
+        if (c == sdata->config.c_cc[VEOL] || c == sdata->config.c_cc[VEOF]) {
+            if (c == sdata->config.c_cc[VEOL]) {
+                data->input_buffer[data->input_buffer_length++] = c;
+            }
 
             spin_lock(&sdata->lock);
 

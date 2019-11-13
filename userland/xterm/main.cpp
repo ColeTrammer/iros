@@ -68,7 +68,14 @@ int main()
     int kfd = open("/dev/keyboard", O_RDONLY);
     assert(kfd != -1);
 
+    int mouse_fd = open("/dev/mouse", O_RDONLY);
+    assert(mouse_fd != -1);
+
     for (;;) {
+        mouse_event mouse_event;
+        while (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
+        }
+
         key_event event;
         while (read(kfd, &event, sizeof(key_event)) == sizeof(key_event)) {
             if (event.flags & KEY_DOWN) {
