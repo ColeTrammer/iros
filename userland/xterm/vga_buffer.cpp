@@ -9,8 +9,8 @@
 #include "vga_buffer.h"
 
 VgaBuffer::VgaBuffer(const char* path)
+    : m_fb(open(path, O_RDWR))
 {
-    m_fb = open(path, O_RDWR);
     assert(m_fb != -1);
 
     assert(ioctl(m_fb, SGWIDTH, &m_width) == 0);
@@ -44,11 +44,16 @@ void VgaBuffer::show_cursor()
     ioctl(m_fb, SECURSOR);
 }
 
-void VgaBuffer::clear_row(int row)
+void VgaBuffer::clear_row_to_end(int row, int col)
 {
-    for (int c = 0; c < m_width; c++) {
+    for (int c = col; c < m_width; c++) {
         draw(row, c, ' ');
     }
+}
+
+void VgaBuffer::clear_row(int row)
+{
+    clear_row_to_end(row, 0);
 }
 
 void VgaBuffer::clear()

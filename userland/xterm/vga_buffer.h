@@ -36,9 +36,10 @@ public:
     }
 
     void reset_fg() { m_fg = VGA_COLOR_LIGHT_GREY; }
-    void reset_bg() { m_fb = VGA_COLOR_BLACK; }
+    void reset_bg() { m_bg = VGA_COLOR_BLACK; }
 
-    void clear_row(int);
+    void clear_row_to_end(int row, int col);
+    void clear_row(int row);
     void clear();
 
     void draw(int row, int col, char c);
@@ -50,7 +51,7 @@ public:
 private:
     int m_width;
     int m_height;
-    int m_fb;
+    const int m_fb;
     enum vga_color m_bg { VGA_COLOR_BLACK };
     enum vga_color m_fg { VGA_COLOR_LIGHT_GREY };
     uint16_t *m_buffer;

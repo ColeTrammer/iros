@@ -7,6 +7,8 @@
 #include "tty.h"
 #include "vga_buffer.h"
 
+// #define XTERM_TTY_DEBUG
+
 TTY::TTY(VgaBuffer& buffer)
     : m_buffer(buffer)
 {
@@ -51,7 +53,7 @@ void TTY::clamp_cursor()
 
 void TTY::handle_escape_sequence()
 {
-    int args[20];
+    int args[20] { 0 };
     bool starts_with_q = m_escape_buffer[1] == '?';
 
     int num_args = 0;
@@ -65,11 +67,20 @@ void TTY::handle_escape_sequence()
 
         args[num_args++] = static_cast<int>(res);
         if (next[0] == ';') {
-            i = next - m_escape_buffer;
+            i = next - m_escape_buffer + 1;
         } else {
             break;
         }
     }
+
+#ifdef XTERM_TTY_DEBUG
+    FILE* s = fopen("/dev/serial", "w");
+    fprintf(s, "%s %d\n", m_escape_buffer, num_args);
+    for (int i = 0; i < num_args; i++) {
+        fprintf(s, "[%d]: [%d]\n", i, args[i]);
+    }
+    fclose(s);
+#endif /* XTERM_TTY_DEBUG */
 
     switch (m_escape_buffer[m_escape_index - 1]) {
     case 'l':
@@ -105,6 +116,9 @@ void TTY::handle_escape_sequence()
         break;
     case 'K':
         if (args[0] == 0) {
+            m_buffer.clear_row_to_end(m_row, m_col);
+        }
+        if (args[0] == 2) {
             m_buffer.clear_row(m_row);
         }
         break;

@@ -389,10 +389,7 @@ static ssize_t master_write(struct device *device, struct file *file, const void
                 sdata->messages->buf[0] = c;
                 sdata->messages->prev = sdata->messages->next = sdata->messages;
             } else {
-                struct tty_buffer_message *m = sdata->messages;
-                while (m->next) {
-                    m = m->next;
-                }
+                struct tty_buffer_message *m = sdata->messages->prev;
 
                 if (m->len >= m->max) {
                     m->max += TTY_BUF_MAX_START;
