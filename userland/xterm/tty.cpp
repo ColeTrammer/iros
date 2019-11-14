@@ -54,6 +54,10 @@ void TTY::draw(char c)
 
     if (m_col >= m_buffer.width()) {
         m_row++;
+        if (m_row >= m_buffer.height()) {
+            m_above_rows.add(m_buffer.scroll_up());
+            m_row--;
+        }
         m_col = 0;
     }
 
@@ -278,6 +282,10 @@ void TTY::on_next_escape_char(char c)
 
 void TTY::on_char(char c)
 {
+    while (m_below_rows.size() > 0) {
+        scroll_down();
+    }
+
     if (m_in_escape) {
         on_next_escape_char(c);
         return;

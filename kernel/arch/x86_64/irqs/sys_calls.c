@@ -36,7 +36,6 @@
 #define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(process_state)                                                                  \
     do {                                                                                                                \
         memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
-        get_current_process()->in_kernel = true;                                                                        \
         get_current_process()->can_send_self_signals = true;                                                            \
     } while (0)
 
