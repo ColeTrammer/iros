@@ -41,8 +41,9 @@
 
 #define SYS_RETURN(val)                                       \
     do {                                                      \
-        process_state->cpu_state.rax = (val);                 \
+        uint64_t _val = (uint64_t) val;                       \
         disable_interrupts();                                 \
+        process_state->cpu_state.rax = (_val);                \
         get_current_process()->in_kernel = false;             \
         get_current_process()->can_send_self_signals = false; \
         return;                                               \

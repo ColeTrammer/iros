@@ -22,7 +22,7 @@
 
 #define PTMX_MAX 16
 
-#define TTY_BUF_START 256
+#define TTY_BUF_START 4096
 
 #define CONTROL_MASK 0x1F
 #define CONTROL_KEY(c) ((c) & CONTROL_MASK)
@@ -105,7 +105,6 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
 static ssize_t slave_write(struct device *device, struct file *file, const void *buf, size_t len) {
     (void) file;
 
-
     struct slave_data *data = device->private;
     if (get_current_process()->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
         signal_process_group(get_current_process()->pgid, SIGTTOU);
@@ -124,16 +123,24 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
     spin_lock(&mdata->lock);
 
     struct tty_buffer_message *message = mdata->messages;
+slave_write_again:
     if (message == NULL) {
         message = calloc(1, sizeof(struct tty_buffer_message));
-        message->buf = malloc(MAX(TTY_BUF_MAX_START, len));
+        message->max = MAX(TTY_BUF_MAX_START, len);
+        message->buf = malloc(message->max);
         message->len = 0;
         message->prev = message->next = message;
         mdata->messages = message;
     } else {
         if (message->max < message->len + len) {
-            message->max = MAX(message->max + TTY_BUF_MAX_START, message->len + len);
-            message->buf = realloc(message->buf, message->max); 
+            while (mdata->messages != NULL) {
+                spin_unlock(&mdata->lock);
+                yield();
+                spin_lock(&mdata->lock);
+            }
+
+            message = mdata->messages;
+            goto slave_write_again;
         }
     }
 
@@ -313,10 +320,14 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
         }
 
         struct tty_buffer_message *message = data->messages;
+        assert(message);
+        assert(message->buf);
+        
         data->messages = message == message->next ? NULL : message->next;
         remque(message);
 
         data->output_buffer = malloc(message->len);
+        assert(data->output_buffer);
         data->output_buffer_length = data->output_buffer_max = message->len;
         memcpy(data->output_buffer, message->buf, data->output_buffer_length);
 
@@ -335,6 +346,7 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
     }
 
     spin_unlock(&data->lock);
+
     return (ssize_t) to_read;
 }
 

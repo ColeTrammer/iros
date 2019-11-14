@@ -67,18 +67,23 @@ void *calloc(size_t n, size_t sz) {
     return p;
 }
 
-#if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
+#if defined(__is_libk) && (defined(KERNEL_MALLOC_DEBUG) || defined(KERNEL_MEMCPY_DEBUG))
 #include <kernel/hal/output.h>
 #undef realloc
 void *realloc(void *p, size_t sz, int line, const char *func) {
     debug_log("Realloc: [ %s, %d ]\n", func, line);
 #else
 void *realloc(void *p, size_t sz) {
-#endif /* __is_libk && KERNEL_MALLOC_DEBUG */
+#endif /* defined(__is_libk) && (defined(KERNEL_MALLOC_DEBUG) || defined(KERNEL_MEMCPY_DEBUG)) */
     void *new_p = malloc(sz);
     if (p == NULL) { return new_p; }
     if (new_p == NULL) { return new_p; }
-    memcpy(new_p, p, sz);
+#if defined(__is_libk) && defined(KERNEL_MEMCPY_DEBUG)
+#undef memmove
+    memmove(new_p, p, sz, line, func);
+#else
+    memmove(new_p, p, sz);
+#endif /* defined(__is_libk) && defined(KERNEL_MEMCPY_DEBUG) */
     free(p);
     return new_p;
 }

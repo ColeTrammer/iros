@@ -9,8 +9,18 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MEMCPY_DEBUG)
+void *memcpy(void *__restrict dest, const void *__restrict src, size_t n, int line, const char *func);
+#define memcpy(d, s, n) memcpy(d, s, n, __LINE__, __func__)
+#else
 void *memcpy(void *__restrict dest, const void *__restrict src, size_t n);
+#endif /* (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MEMCPY_DEBUG) */
+#if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MEMCPY_DEBUG)
+void *memmove(void *dest, const void *src, size_t n, int line, const char *func);
+#define memmove(d, s, n) memmove(d, s, n, __LINE__, __func__)
+#else
 void *memmove(void *dest, const void *src, size_t n);
+#endif /* #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MEMCPY_DEBUG) */
 char *strcpy(char *__restrict dest, const char *__restrict src);
 char *strncpy(char *__restrict dest, const char *__restrict src, size_t n);
 

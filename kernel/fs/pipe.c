@@ -32,7 +32,7 @@ static bool is_pipe_write_end_open(struct inode *inode) {
 }
 
 struct inode *pipe_new_inode() {
-    struct inode *inode = malloc(sizeof(struct inode));
+    struct inode *inode = calloc(1, sizeof(struct inode));
     inode->device = PIPE_DEVICE;
     inode->flags = FS_FIFO;
     inode->i_op = &pipe_i_op;

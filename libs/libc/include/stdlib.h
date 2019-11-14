@@ -89,12 +89,12 @@ void *calloc(size_t nmemb, size_t size, int line, const char *func);
 void *calloc(size_t nmemb, size_t size);
 #endif /* (__is_kernel || __is_libk) && KERNEL_MALLOC_DEBUG */
 
-#if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
+#if (defined(__is_libk) || defined(__is_kernel)) && (defined(KERNEL_MALLOC_DEBUG) || defined(KERNEL_MEMCPY_DEBUG))
 void *realloc(void *ptr, size_t size, int line, const char *func);
 #define realloc(ptr, sz) realloc(ptr, sz, __LINE__, __func__)
 #else
 void *realloc(void *ptr, size_t size);
-#endif /* (__is_kernel || __is_libk) && KERNEL_MALLOC_DEBUG */
+#endif /* (defined(__is_libk) || defined(__is_kernel)) && (defined(KERNEL_MALLOC_DEBUG) || defined(KERNEL_MEMCPY_DEBUG)) */
 
 #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
 void free(void *ptr, int line, const char *func);

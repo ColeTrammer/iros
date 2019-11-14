@@ -266,6 +266,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         }
     }
 
+    spin_lock(&inode->lock);
     struct tnode *tnode = find_tnode_index(inode->tnode_list, file->position);
     
     if (!tnode) {
@@ -280,6 +281,8 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 
                 entry->d_ino = mount->super_block->root->inode->index;
                 strcpy(entry->d_name, mount->name);
+                
+                spin_unlock(&inode->lock);
                 return (ssize_t) len;
             }
 
@@ -287,6 +290,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         }
 
         /* Should sent an error that indicates there's no more to read (like EOF) */
+        spin_unlock(&inode->lock);
         return -EINVAL;
     }
 
@@ -294,6 +298,9 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 
     entry->d_ino = tnode->inode->index;
     strcpy(entry->d_name, tnode->name);
+
+    spin_unlock(&inode->lock);
+
     return (ssize_t) len;
 }
 

@@ -159,9 +159,16 @@ int main()
             }
         }
 
-        char c;
-        while (read(mfd, &c, 1) == 1) {
-            tty.on_char(c);
+        char buf[4096];
+        ssize_t bytes;
+        while ((bytes = read(mfd, buf, 4096)) > 0) {
+            for (int i = 0; i < bytes; i++) {
+                tty.on_char(buf[i]);
+            }
+        }
+
+        if (bytes == -1) {
+            break;
         }
     }
 
