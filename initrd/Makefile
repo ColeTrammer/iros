@@ -47,6 +47,7 @@ $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/tmpnam_test \
 $(BUILDDIR)/initrd/programs/udp_test \
+$(BUILDDIR)/initrd/programs/vector_test \
 $(BUILDDIR)/initrd/programs/vga_test_a \
 $(BUILDDIR)/initrd/programs/we_test
 

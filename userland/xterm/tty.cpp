@@ -1,8 +1,9 @@
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <vector.h>
 
 #include "tty.h"
 #include "vga_buffer.h"
@@ -56,11 +57,10 @@ void TTY::clamp_cursor()
 
 void TTY::handle_escape_sequence()
 {
-    int args[20] { 0 };
+    LIIM::Vector<int> args;
     bool starts_with_q = m_escape_buffer[1] == '?';
 
-    int num_args = 0;
-    for (int i = starts_with_q ? 2 : 1; i < m_escape_index - 1 && num_args < 20;) {
+    for (int i = starts_with_q ? 2 : 1; i < m_escape_index - 1;) {
         char *next = nullptr;
         errno = 0;
         long res = strtol(m_escape_buffer + i, &next, 10);
@@ -68,7 +68,7 @@ void TTY::handle_escape_sequence()
             return;
         }
 
-        args[num_args++] = static_cast<int>(res);
+        args.add(static_cast<int>(res));
         if (next[0] == ';') {
             i = next - m_escape_buffer + 1;
         } else {
@@ -78,8 +78,8 @@ void TTY::handle_escape_sequence()
 
 #ifdef XTERM_TTY_DEBUG
     FILE* s = fopen("/dev/serial", "w");
-    fprintf(s, "%s %d\n", m_escape_buffer, num_args);
-    for (int i = 0; i < num_args; i++) {
+    fprintf(s, "%s %d\n", m_escape_buffer, args.size());
+    for (int i = 0; i < args.size(); i++) {
         fprintf(s, "[%d]: [%d]\n", i, args[i]);
     }
     fclose(s);
@@ -97,36 +97,36 @@ void TTY::handle_escape_sequence()
         }
         break;
     case 'A':
-        m_row -= args[0];
+        m_row -= args.get_or(0, 1);
         break;
     case 'B':
-        m_row += args[0];
+        m_row += args.get_or(0, 1);
         break;
     case 'C':
-        m_col += args[0];
+        m_col += args.get_or(0, 1);
         break;
     case 'D':
-        m_col -= args[0];
+        m_col -= args.get_or(0, 1);
         break;
     case 'H':
-        m_row = args[0] - 1;
-        m_col = args[1] - 1;
+        m_row = args.get_or(0, 1) - 1;
+        m_col = args.get_or(1, 1) - 1;
         break;
     case 'J':
-        if (args[0] == 2) {
+        if (args.get_or(0, 0) == 2) {
             m_buffer.clear();
         }
         break;
     case 'K':
-        if (args[0] == 0) {
+        if (args.get_or(0, 0) == 0) {
             m_buffer.clear_row_to_end(m_row, m_col);
         }
-        if (args[0] == 2) {
+        if (args.get_or(0, 0) == 2) {
             m_buffer.clear_row(m_row);
         }
         break;
     case 'm':
-        for (int i = 0; i < num_args; i++) {
+        for (int i = 0; i < args.size(); i++) {
             switch (args[i]) {
             case 0:
                 m_buffer.reset_colors();

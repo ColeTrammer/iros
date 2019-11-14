@@ -1,4 +1,5 @@
 LIBS=libc libm
+HEADER_LIBS=$(LIBS) libliim
 
 export ROOT?=$(CURDIR)/..
 export SYSROOT?=$(ROOT)/sysroot
@@ -23,8 +24,8 @@ install: all
 
 .PHONY: install-headers
 install-headers:
-	for lib in $(LIBS); do \
-	    $(MAKE) install -C $(ROOT)/libs/$$lib; \
+	for lib in $(HEADER_LIBS); do \
+	    $(MAKE) install-headers -C $(ROOT)/libs/$$lib; \
 	done
 
 # Makes project by calling its Makefile
