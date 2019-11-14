@@ -84,6 +84,15 @@ int main()
         key_event event;
         while (read(kfd, &event, sizeof(key_event)) == sizeof(key_event)) {
             if (event.flags & KEY_DOWN) {
+                if (event.flags & KEY_SHIFT_ON && !(event.flags & KEY_ALT_ON) && !(event.flags & KEY_CONTROL_ON)) {
+                    if (event.key == KEY_HOME) {
+                        tty.scroll_to_top();
+                        continue;
+                    } else if (event.key == KEY_END) {
+                        tty.scroll_to_bottom();
+                        continue;
+                    }
+                }
                 if (event.flags & KEY_CONTROL_ON) {
                     event.ascii &= 0x1F;
                     switch (event.key) {

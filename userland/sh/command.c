@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <string.h>
@@ -94,6 +95,11 @@ void init_simple_command(struct command_simple *simple_command) {
 
 void init_pipeline(struct command_pipeline *pipeline, size_t num) {
     pipeline->commands = calloc(num, sizeof(struct command_simple));
+#ifndef USERLAND_NATIVE
+    for (size_t i = 0; i < num; i++) {
+        pipeline->commands[i].we.we_special_vars = &special_vars;
+    }
+#endif /* USERLAND_NATIVE */
     pipeline->num_commands = num;
 }
 
@@ -315,8 +321,10 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
                 }
 
                 if (WIFSIGNALED(wstatus) && num_waited == num_to_wait_on - 1) {
-                    if (isatty(STDERR_FILENO)) {
+                    if (isatty(STDERR_FILENO) && WTERMSIG(wstatus) == SIGINT) {
                         fprintf(stderr, "%c", '\n');
+                    } else if (isatty(STDERR_FILENO)) {
+                        fprintf(stderr, "%s\n", strsignal(WTERMSIG(wstatus)));
                     }
                 }
 

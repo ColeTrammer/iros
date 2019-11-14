@@ -46,6 +46,7 @@ size_t strlen(const char *s);
 char *strdup(const char *s);
 
 char *strerror(int errnum);
+char *strsignal(int sig);
 
 int strcoll(const char *s1, const char *s2);
 size_t strxfrm(char *__restrict s1, const char *__restrict s2, size_t n);

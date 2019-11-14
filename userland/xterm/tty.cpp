@@ -44,6 +44,20 @@ void TTY::scroll_down()
     update_cursor();
 }
 
+void TTY::scroll_to_bottom()
+{
+    while (m_below_rows.size() > 0) {
+        scroll_down();
+    }
+}
+
+void TTY::scroll_to_top()
+{
+    while (m_above_rows.size() > 0) {
+        scroll_up();
+    }
+}
+
 void TTY::draw(char c)
 {
     if (IS_CTRL(c)) {
@@ -66,7 +80,7 @@ void TTY::draw(char c)
 
 void TTY::update_cursor()
 {
-    if (m_below_rows.size() == 0) {
+    if (m_below_rows.size() == 0 && !m_cursor_hidden) {
         m_buffer.show_cursor();
     } else {
         m_buffer.hide_cursor();
@@ -123,33 +137,48 @@ void TTY::handle_escape_sequence()
     switch (m_escape_buffer[m_escape_index - 1]) {
     case 'l':
         if (starts_with_q) {
+            m_cursor_hidden = true;
             m_buffer.hide_cursor();
         }
-        break;
+        return;
     case 'h':
         if (starts_with_q) {
+            m_cursor_hidden = false;
             m_buffer.show_cursor();
         }
-        break;
+        return;
     case 'A':
-        m_row -= args.get_or(0, 1);
-        break;
+        if (args.size() != 1) {
+            break;
+        }
+        m_row -= args.get(0);
+        return;
     case 'B':
-        m_row += args.get_or(0, 1);
-        break;
+        if (args.size() != 1) {
+            break;
+        }
+        m_row += args.get(0);
+        return;
     case 'C':
-        m_col += args.get_or(0, 1);
-        break;
+        if (args.size() != 1) {
+            break;
+        }
+        m_col += args.get(0);
+        return;
     case 'D':
-        m_col -= args.get_or(0, 1);
-        break;
+        if (args.size() != 1) {
+            break;
+        }
+        m_col -= args.get(0);
+        return;
     case 'H':
         m_row = args.get_or(0, 1) - 1;
         m_col = args.get_or(1, 1) - 1;
-        break;
+        return;
     case 'J':
         if (args.get_or(0, 0) == 2) {
             m_buffer.clear();
+            return;
         } else if (args.get_or(0, 0) == 3) {
             while (m_above_rows.size() > 0) {
                 delete[] m_above_rows.last();
@@ -160,14 +189,17 @@ void TTY::handle_escape_sequence()
                 m_below_rows.remove_last();
             }
             m_buffer.clear();
+            return;
         }
         break;
     case 'K':
         if (args.get_or(0, 0) == 0) {
             m_buffer.clear_row_to_end(m_row, m_col);
+            return;
         }
         if (args.get_or(0, 0) == 2) {
             m_buffer.clear_row(m_row);
+            return;
         }
         break;
     case 'm':
@@ -175,67 +207,67 @@ void TTY::handle_escape_sequence()
             switch (args[i]) {
             case 0:
                 m_buffer.reset_colors();
-                break;
+                return;
             case 1:
                 // Bold is not supported.
                 break;
             case 7:
                 m_buffer.swap_colors();
-                break;
+                return;
             case 30:
                 m_buffer.set_fg(VGA_COLOR_BLACK);
-                break;
+                return;
             case 31:
                 m_buffer.set_fg(VGA_COLOR_RED);
-                break;
+                return;
             case 32:
                 m_buffer.set_fg(VGA_COLOR_GREEN);
-                break;
+                return;
             case 33:
                 m_buffer.set_fg(VGA_COLOR_YELLOW);
-                break;
+                return;
             case 34:
                 m_buffer.set_fg(VGA_COLOR_BLUE);
-                break;
+                return;
             case 35:
                 m_buffer.set_fg(VGA_COLOR_MAGENTA);
-                break;
+                return;
             case 36:
                 m_buffer.set_fg(VGA_COLOR_CYAN);
-                break;
+                return;
             case 37:
                 m_buffer.set_fg(VGA_COLOR_LIGHT_GREY);
-                break;
+                return;
             case 39:
                 m_buffer.reset_fg();
-                break;
+                return;
             case 40:
                 m_buffer.set_bg(VGA_COLOR_BLACK);
-                break;
+                return;
             case 41:
                 m_buffer.set_bg(VGA_COLOR_RED);
-                break;
+                return;
             case 42:
                 m_buffer.set_bg(VGA_COLOR_GREEN);
-                break;
+                return;
             case 43:
                 m_buffer.set_bg(VGA_COLOR_YELLOW);
-                break;
+                return;
             case 44:
                 m_buffer.set_bg(VGA_COLOR_BLUE);
-                break;
+                return;
             case 45:
                 m_buffer.set_bg(VGA_COLOR_MAGENTA);
-                break;
+                return;
             case 46:
                 m_buffer.set_bg(VGA_COLOR_CYAN);
-                break;
+                return;
             case 47:
                 m_buffer.set_bg(VGA_COLOR_LIGHT_GREY);
-                break;
+                return;
             case 49:
                 m_buffer.reset_bg();
-                break;
+                return;
             default:
                 break;
             }
@@ -243,15 +275,22 @@ void TTY::handle_escape_sequence()
         break;
     case 's':
         save_pos();
-        break;
+        return;
     case 'u':
         restore_pos();
-        break;
+        return;
     default:
         break;
     }
 
-    clamp_cursor();
+    m_in_escape = false;
+    int save_length = m_escape_index;
+    m_escape_index = 0;
+    draw('^');
+    draw('[');
+    for (int i = 0; i < save_length; i++) {
+        on_char(m_escape_buffer[i]);
+    }
 }
 
 void TTY::on_next_escape_char(char c)
@@ -282,12 +321,12 @@ void TTY::on_next_escape_char(char c)
 
 void TTY::on_char(char c)
 {
-    while (m_below_rows.size() > 0) {
-        scroll_down();
-    }
+    scroll_to_bottom();
 
     if (m_in_escape) {
         on_next_escape_char(c);
+        clamp_cursor();
+        update_cursor();
         return;
     }
 
@@ -306,6 +345,11 @@ void TTY::on_char(char c)
             m_above_rows.add(m_buffer.scroll_up());
             m_row--;
         }
+        break;
+    case 127:
+        m_col--;
+        draw(' ');
+        m_col--;
         break;
     default:
         draw(c);

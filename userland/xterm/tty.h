@@ -14,6 +14,9 @@ public:
     void scroll_up();
     void scroll_down();
 
+    void scroll_to_bottom();
+    void scroll_to_top();
+
     void on_char(char);
 
 private:
@@ -34,6 +37,7 @@ private:
     int m_saved_row { 0 };
     int m_saved_col { 0 };
 
+    bool m_cursor_hidden { false };
     bool m_in_escape { false };
     int m_escape_index { 0 };
     char m_escape_buffer[50] { 0 };

@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
         if (sigsetjmp(env, 1) == 1) {
             if (line) { free(line); }
             if (command) { command_cleanup(command); }
-            fprintf(stderr, "%c", '\n');
+            fprintf(stderr, "^C%c", '\n');
         }
         jump_active = 1;
 

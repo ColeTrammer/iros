@@ -8,6 +8,4 @@ $(BUILDDIR)/userland/sh/parser.o
 
 EXECUTABLE=$(BUILDDIR)/userland/sh/sh
 
-CFLAGS+=-D_OS_2_SOURCE
-
 include $(ROOT)/userland/Makefile.common

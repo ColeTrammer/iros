@@ -396,6 +396,16 @@ static ssize_t master_write(struct device *device, struct file *file, const void
             c = '\n';
         }
 
+        if (c == 127 && (sdata->config.c_lflag & ICANON)) {
+            if (data->input_buffer_length == 0) {
+                continue;
+            }
+
+            tty_do_echo(data, sdata, c);
+            data->input_buffer[--data->input_buffer_length] = '\0';
+            continue;
+        }
+
         tty_do_echo(data, sdata, c);
 
         if (tty_do_signals(sdata, c)) {

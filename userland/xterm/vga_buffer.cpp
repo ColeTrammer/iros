@@ -52,10 +52,6 @@ void VgaBuffer::hide_cursor()
 
 void VgaBuffer::show_cursor()
 {
-    if (m_is_cursor_enabled) {
-        return;
-    }
-
     ioctl(m_fb, SECURSOR);
     m_is_cursor_enabled = true;
 }
