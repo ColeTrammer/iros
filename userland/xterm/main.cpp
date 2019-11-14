@@ -74,6 +74,11 @@ int main()
     for (;;) {
         mouse_event mouse_event;
         while (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
+            if (mouse_event.scroll_state == SCROLL_UP) {
+                tty.scroll_up();
+            } else if (mouse_event.scroll_state == SCROLL_DOWN) {
+                tty.scroll_down();
+            }
         }
 
         key_event event;

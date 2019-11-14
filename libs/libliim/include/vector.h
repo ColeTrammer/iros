@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace LIIM {
 
@@ -16,6 +17,9 @@ public:
 
     ~Vector()
     {
+        for (int i = 0; i < m_size; i++) {
+            get(i).~T();
+        }
         delete[] m_vector;
     }
 
@@ -32,6 +36,13 @@ public:
         m_vector[m_size++] = t;
     }
 
+    void remove_last()
+    {
+        assert(m_size > 0);
+        get(m_size - 1).~T();
+        m_size--;
+    }
+
     T& get(int i)
     {
         assert(i >= 0 && i < m_size);
@@ -40,11 +51,36 @@ public:
 
     const T& get(int i) const
     {
-        return const_cast<Vector<T>>(this).get(i);
+        assert(i >= 0 && i < m_size);
+        return m_vector[i];
+    }
+
+    T& get_or(int i, T& val)
+    {
+        if (i < 0 || i >= m_size) {
+            return val;
+        }
+
+        return get(i);
+    }
+
+    const T& get_or(int i, const T& val) const
+    {
+        if (i < 0 || i >= m_size) {
+            return val;
+        }
+
+        return get(i);
     }
 
     T& operator[](int i) { return get(i); }
-    const T& at(int i) const { return get(i); }
+    const T& operator[](int i) const { return get(i); }
+
+    T& first() { return get(0); }
+    const T& first() const { return get(0); }
+
+    T& last() { return get(m_size - 1); }
+    const T& last() const { return get(m_size - 1); }
 
 private:
     void increase_capacity()
@@ -54,7 +90,18 @@ private:
 
     void allocate_vector()
     {
-        m_vector = static_cast<T*>(realloc(m_vector, m_capacity * sizeof(T)));
+        T* replacement = static_cast<T*>(::operator new(m_capacity * sizeof(T)));
+        if (!m_vector) {
+            m_vector = replacement;
+            return;
+        }
+
+        for (int i = 0; i < m_size; i++) {
+            replacement[i] = get(i);
+            get(i).~T();
+        }
+
+        m_vector = replacement;
     }
 
     int m_capacity;

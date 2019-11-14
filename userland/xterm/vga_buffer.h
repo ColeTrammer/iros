@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <vector.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 
@@ -11,6 +12,7 @@ public:
     ~VgaBuffer();
 
     size_t size() const { return m_width * m_height; }
+    size_t row_size_in_bytes() const { return m_width * sizeof(uint16_t); }
     size_t size_in_bytes() const { return size() * sizeof(uint16_t); }
 
     int width() const { return m_width; }
@@ -45,13 +47,15 @@ public:
     void draw(int row, int col, char c);
     void draw(int row, int col, uint16_t val);
 
-    void scroll();
+    uint16_t* scroll_up(const uint16_t* first_row = nullptr);
+    uint16_t* scroll_down(const uint16_t* last_row = nullptr);
 
     void show_cursor();
     void hide_cursor();
     void set_cursor(int row, int col);
 
 private:
+    bool m_is_cursor_enabled { true };
     int m_width;
     int m_height;
     const int m_fb;

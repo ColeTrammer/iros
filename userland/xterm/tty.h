@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector.h>
+
 class VgaBuffer;
 
 class TTY {
@@ -8,6 +10,9 @@ public:
     ~TTY()
     {
     }
+
+    void scroll_up();
+    void scroll_down();
 
     void on_char(char);
 
@@ -34,4 +39,6 @@ private:
     char m_escape_buffer[50] { 0 };
 
     VgaBuffer& m_buffer;
+    LIIM::Vector<uint16_t*> m_above_rows;
+    LIIM::Vector<uint16_t*> m_below_rows;
 };

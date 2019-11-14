@@ -42,12 +42,22 @@ void VgaBuffer::draw(int row, int col, uint16_t val)
 
 void VgaBuffer::hide_cursor()
 {
+    if (!m_is_cursor_enabled) {
+        return;
+    }
+
     ioctl(m_fb, SDCURSOR);
+    m_is_cursor_enabled = false;
 }
 
 void VgaBuffer::show_cursor()
 {
+    if (m_is_cursor_enabled) {
+        return;
+    }
+
     ioctl(m_fb, SECURSOR);
+    m_is_cursor_enabled = true;
 }
 
 void VgaBuffer::clear_row_to_end(int row, int col)
@@ -62,15 +72,39 @@ void VgaBuffer::clear_row(int row)
     clear_row_to_end(row, 0);
 }
 
-void VgaBuffer::scroll()
+uint16_t* VgaBuffer::scroll_up(const uint16_t* replacement)
 {
+    uint16_t* first_row = new uint16_t[m_width];
+    memcpy(first_row, m_buffer, row_size_in_bytes());
+
     for (int r = 0; r < m_height - 1; r++) {
         for (int c = 0; c < m_width; c++) {
             draw(r, c, m_buffer[(r + 1) * m_width + c]);
         }
     }
-    clear_row(m_height - 1);
+
+    if (!replacement) {
+        clear_row(m_height - 1);
+    } else {
+        memcpy(m_buffer + (m_height - 1) * m_width, replacement, row_size_in_bytes());
+    }
+    return first_row;
 }
+
+uint16_t* VgaBuffer::scroll_down(const uint16_t* replacement)
+{
+    uint16_t* last_row = new uint16_t[m_width];
+    memcpy(last_row, m_buffer + (m_height - 1) * m_width, row_size_in_bytes());
+
+    for (int r = m_height - 1; r > 0; r--) {
+        for (int c = 0; c < m_width; c++) {
+            draw(r, c, m_buffer[(r - 1) * m_width + c]);
+        }
+    }
+    memcpy(m_buffer, replacement, row_size_in_bytes());
+    return last_row;
+}
+
 
 void VgaBuffer::clear()
 {

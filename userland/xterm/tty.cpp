@@ -18,6 +18,32 @@ TTY::TTY(VgaBuffer& buffer)
 {
 }
 
+void TTY::scroll_up()
+{
+    if (m_above_rows.size() == 0) {
+        return;
+    }
+
+    m_below_rows.add(m_buffer.scroll_down(m_above_rows.last()));
+    delete[] m_above_rows.last();
+    m_above_rows.remove_last();
+
+    update_cursor();
+}
+
+void TTY::scroll_down()
+{
+    if (m_below_rows.size() == 0) {
+        return;
+    }
+
+    m_above_rows.add(m_buffer.scroll_up(m_below_rows.last()));
+    delete[] m_below_rows.last();
+    m_below_rows.remove_last();
+
+    update_cursor();
+}
+
 void TTY::draw(char c)
 {
     if (IS_CTRL(c)) {
@@ -36,6 +62,11 @@ void TTY::draw(char c)
 
 void TTY::update_cursor()
 {
+    if (m_below_rows.size() == 0) {
+        m_buffer.show_cursor();
+    } else {
+        m_buffer.hide_cursor();
+    }
     m_buffer.set_cursor(m_row, m_col);
 }
 
@@ -114,6 +145,16 @@ void TTY::handle_escape_sequence()
         break;
     case 'J':
         if (args.get_or(0, 0) == 2) {
+            m_buffer.clear();
+        } else if (args.get_or(0, 0) == 3) {
+            while (m_above_rows.size() > 0) {
+                delete[] m_above_rows.last();
+                m_above_rows.remove_last();
+            }
+            while (m_below_rows.size() > 0) {
+                delete[] m_below_rows.last();
+                m_below_rows.remove_last();
+            }
             m_buffer.clear();
         }
         break;
@@ -254,7 +295,7 @@ void TTY::on_char(char c)
     case '\n':
         m_row++;
         if (m_row >= m_buffer.height()) {
-            m_buffer.scroll();
+            m_above_rows.add(m_buffer.scroll_up());
             m_row--;
         }
         break;
