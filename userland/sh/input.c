@@ -324,12 +324,8 @@ static char *get_tty_input(FILE *tty) {
             }
         }
 
-        // User pressed ^D
-        if (ret == 0) {
-            free(line_save);
-            free(buffer);
-            return NULL;
-        }
+        // We will never get 0 back from read, since we block for input
+        assert(ret == 1);
 
         // tab autocompletion
         if (c == '\t') {
@@ -390,6 +386,17 @@ static char *get_tty_input(FILE *tty) {
         }
 
         consecutive_tab_presses = 0;
+
+        // Control D
+        if (c == ('D' & 0x1F)) {
+            if (buffer_length == 0) {
+                free(line_save);
+                free(buffer);
+                return NULL;
+            }
+
+            continue;
+        }
 
         // Terminal escape sequences
         if (c == '\033') {

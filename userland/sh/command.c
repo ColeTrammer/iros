@@ -314,6 +314,12 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
                     break; // Not sure what to set the exit status to...
                 }
 
+                if (WIFSIGNALED(wstatus) && num_waited == num_to_wait_on - 1) {
+                    if (isatty(STDERR_FILENO)) {
+                        fprintf(stderr, "%c", '\n');
+                    }
+                }
+
                 if (ret == last) {
                     set_exit_status(wstatus);
                 }
