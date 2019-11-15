@@ -2,6 +2,7 @@
 #define _KERNEL_NET_SOCKET_H 1
 
 #include <netinet/in.h>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/un.h>
@@ -25,6 +26,7 @@ struct socket_connection {
     } addr;
     socklen_t addrlen;
     unsigned long connect_to_id;
+    uint32_t ack_num;
 };
 
 struct socket_data {

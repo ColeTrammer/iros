@@ -277,6 +277,8 @@ int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
     }
 
     switch (socket->domain) {
+        case AF_INET:
+            return net_inet_accept(socket, (struct sockaddr_in*) addr, addrlen);
         case AF_UNIX:
             return net_unix_accept(socket, (struct sockaddr_un*) addr, addrlen);
         default:
@@ -328,11 +330,18 @@ int net_listen(struct file *file, int backlog) {
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    if (backlog <= 0) {
+    if (backlog <= 0 || socket->state != BOUND) {
         return -EINVAL;
     }
 
     switch (socket->domain) {
+        case AF_INET: {
+            int ret = net_inet_listen(socket);
+            if (ret < 0) {
+                return ret;
+            }
+            break;
+        }
         case AF_UNIX:
             break;
         default:
@@ -341,6 +350,9 @@ int net_listen(struct file *file, int backlog) {
 
     socket->pending = calloc(backlog, sizeof(struct socket_connection*));
     socket->pending_length = backlog;
+    socket->num_pending = 0;
+
+    debug_log("Set socket to listening: [ %lu, %d ]\n", socket->id, socket->pending_length);
 
     socket->state = LISTENING;
     return 0;

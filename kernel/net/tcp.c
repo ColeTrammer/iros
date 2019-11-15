@@ -29,8 +29,10 @@ ssize_t net_send_tcp(struct network_interface *interface, struct ip_v4_address d
     tcp_packet->check_sum = ntohs(in_compute_checksum_with_start(tcp_packet, sizeof(struct tcp_packet) + len,
         in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
 
-    debug_log("Sending TCP packet\n");
-    net_tcp_log(tcp_packet);
+    if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
+        debug_log("Sending TCP packet\n");
+        net_tcp_log(tcp_packet);
+    }
 
     ssize_t ret = interface->ops->send(interface, packet, total_length);
 
@@ -58,6 +60,38 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
             struct network_interface *interface = net_get_interface_for_ip(ip_packet->source);
             net_send_tcp(interface, ip_packet->destination, ntohs(packet->dest_port), ntohs(packet->source_port),
                 ntohl(packet->ack_number), ntohl(packet->sequence_number) + 1, (union tcp_flags) { .bits.ack=1 }, 0, NULL);
+            return;
+        }
+
+        // Client is trying to initiate a connection
+        if (packet->flags.bits.syn && !packet->flags.bits.ack) {
+            socket = net_get_tcp_socket_server_by_ip_v4_and_port((struct ip_v4_and_port) { ntohs(packet->dest_port), ip_packet->destination });
+            if (socket == NULL) {
+                debug_log("No socket waiting for a connection for port and ip: [ %u, %u.%u.%u.%u ]\n", ntohs(packet->dest_port),
+                    ip_packet->destination.addr[0], ip_packet->destination.addr[1], ip_packet->destination.addr[2], ip_packet->destination.addr[3]);
+                return;
+            }
+
+            struct socket_connection *connection = calloc(1, sizeof(struct socket_connection));
+            connection->ack_num = htonl(packet->sequence_number);
+            connection->addrlen = sizeof(struct sockaddr_in);
+            connection->addr.in.sin_family = AF_INET;
+            connection->addr.in.sin_port = packet->source_port;
+            connection->addr.in.sin_addr.s_addr = ip_v4_to_uint(ip_packet->source);
+
+            spin_lock(&socket->lock);
+            if (socket->num_pending >= socket->pending_length) {
+                debug_log("Socket has too many connections already: [ %lu, %d, %d ]\n", socket->id, socket->num_pending, socket->pending_length);
+                spin_unlock(&socket->lock);
+                free(connection);
+                return;
+            }
+
+            socket->pending[socket->num_pending++] = connection;
+            spin_unlock(&socket->lock);
+
+            debug_log("Recived a connection request to socket: [ %lu ]\n", socket->id);
+            return;
         }
         return;
     }

@@ -58,6 +58,25 @@ int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p) {
     return -EADDRINUSE;
 }
 
+int net_bind_to_port(unsigned long socket_id, uint16_t port) {
+    struct port_to_socket_id *p = malloc(sizeof(struct port_to_socket_id));
+    p->socket_id = socket_id;
+    p->port = port;
+
+    spin_lock(&port_search_lock);
+
+    if (!hash_get(map, &port)) {
+        hash_put(map, p);
+
+        spin_unlock(&port_search_lock);
+        return 0;
+    }
+
+    spin_unlock(&port_search_lock);
+    free(p);
+    return -EADDRINUSE;
+}
+
 void net_unbind_port(uint16_t port) {
     struct port_to_socket_id *p = hash_del(map, &port);
     free(p);

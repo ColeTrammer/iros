@@ -117,23 +117,19 @@ ssize_t pipe_write(struct file *file, const void *buffer, size_t len) {
     struct pipe_data *data = inode->private_data;
     assert(data);
 
+    spin_lock(&inode->lock);
+
     if (data->len < file->position + len) {
         data->len = MAX(data->len * 2, file->position + len);
         data->buffer = realloc(data->buffer, data->len);
     }
 
-    spin_lock(&inode->lock);
     memcpy(data->buffer + file->position, buffer, len);
 
     inode->size += len;
     file->position += len;
 
     spin_unlock(&inode->lock);
-
-    // FIXME: Why does this stop 'cat | cat' from crashing...
-    for (int i = 0; i < 5; i++) {
-        yield();
-    }
 
     return len;
 }
