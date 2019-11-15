@@ -156,3 +156,6 @@ private:
 };
 
 }
+
+using LIIM::UniquePtr;
+using LIIM::SharedPtr;

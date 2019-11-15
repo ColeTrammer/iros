@@ -1,4 +1,7 @@
 #include <fcntl.h>
+#include <graphics/pixel_buffer.h>
+#include <graphics/renderer.h>
+#include <pointers.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -109,65 +112,67 @@ int main()
         return 1;
     }
 
-    uint32_t *pixels = static_cast<uint32_t*>(mmap(NULL, sz.x * sz.y * sizeof(uint32_t), PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0));
-    if (pixels == MAP_FAILED) {
+    uint32_t *raw_pixels = static_cast<uint32_t*>(mmap(NULL, sz.x * sz.y * sizeof(uint32_t), PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0));
+    if (raw_pixels == MAP_FAILED) {
         perror("mmap");
         return 1;
     }
 
-    memset(pixels, 0, sz.y * sz.x * sizeof(uint32_t));
+    memset(raw_pixels, 0, sz.y * sz.x * sizeof(uint32_t));
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 200 + j] = a[i][j] | a[i][j] << 8 | a[i][j] << 16;
-        }
-    }
+    auto pixels = PixelBuffer::wrap(raw_pixels, sz.x, sz.y);
+    auto renderer = Renderer(pixels);
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 208 + j] = b[i][j] | b[i][j] << 8 | b[i][j] << 16;
-        }
-    }
+    renderer.set_color(Color(255, 0, 0));
+    renderer.fill_rect(200, 200, 50, 50);
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 216 + j] = c[i][j] | c[i][j] << 8 | c[i][j] << 16;
-        }
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 200 + j] = a[i][j] | a[i][j] << 8 | a[i][j] << 16;
+    //     }
+    // }
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 224 + j] = d[i][j] | d[i][j] << 8 | d[i][j] << 16;
-        }
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 208 + j] = b[i][j] | b[i][j] << 8 | b[i][j] << 16;
+    //     }
+    // }
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 232 + j] = e[i][j] | e[i][j] << 8 | e[i][j] << 16;
-        }
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 216 + j] = c[i][j] | c[i][j] << 8 | c[i][j] << 16;
+    //     }
+    // }
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 240 + j] = f[i][j] | f[i][j] << 8 | f[i][j] << 16;
-        }
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 224 + j] = d[i][j] | d[i][j] << 8 | d[i][j] << 16;
+    //     }
+    // }
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 248 + j] = g[i][j] | g[i][j] << 8 | g[i][j] << 16;
-        }
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 232 + j] = e[i][j] | e[i][j] << 8 | e[i][j] << 16;
+    //     }
+    // }
 
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; j++) {
-            pixels[(200 + i) * sz.x + 256 + j] = h[i][j] | h[i][j] << 8 | h[i][j] << 16;
-        }
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 240 + j] = f[i][j] | f[i][j] << 8 | f[i][j] << 16;
+    //     }
+    // }
 
-    for (;;) {
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 248 + j] = g[i][j] | g[i][j] << 8 | g[i][j] << 16;
+    //     }
+    // }
 
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         pixels[(200 + i) * sz.x + 256 + j] = h[i][j] | h[i][j] << 8 | h[i][j] << 16;
+    //     }
+    // }
 
     return 0;
 }

@@ -1,7 +1,7 @@
 .PHONY: all
 all: $(LIBRARY)
 
-$(LIBRARY): $(OBJS)
+$(LIBRARY): $(OBJS) $(MAKEFILE)
 	$(AR) rcs $@ $^
 
 $(BUILDDIR)/%.o: $(ROOT)/%.cpp
