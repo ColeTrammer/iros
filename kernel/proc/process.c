@@ -189,6 +189,10 @@ struct process *load_process(const char *file_name) {
 
     load_paging_structure(old_paging_structure);
 
+    process->files[0] = fs_open("/dev/serial", O_RDWR, NULL);
+    process->files[1] = fs_open("/dev/serial", O_RDWR, NULL);
+    process->files[2] = fs_open("/dev/serial", O_RDWR, NULL);
+
     debug_log("Loaded Process: [ %d, %s ]\n", process->pid, file_name);
     return process;
 }

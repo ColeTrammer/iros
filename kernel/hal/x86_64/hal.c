@@ -38,7 +38,9 @@ void init_drivers() {
     init_serial_port_device(SERIAL_COM1_PORT);
     init_virtual_devices();
     init_pci();
+#ifdef KERNEL_NO_GRAPHICS
     init_vga_device();
+#endif /* KERNEL_NO_GRAPHICS */
     init_ptmx();
 
     debug_log("Finished Initializing Drivers\n");

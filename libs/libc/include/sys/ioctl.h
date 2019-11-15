@@ -19,6 +19,7 @@
 #define SSCURSOR   0x1002
 #define SECURSOR   0x1003
 #define SDCURSOR   0x1004
+#define SSRES      0x1005
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +33,11 @@ struct winsize {
 struct cursor_pos {
     unsigned short cp_row;
     unsigned short cp_col;
+};
+
+struct screen_res {
+    unsigned short x;
+    unsigned short y;
 };
 
 int ioctl(int fd, unsigned long request, ...);

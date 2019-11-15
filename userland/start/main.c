@@ -33,12 +33,20 @@ int main() {
         "/bin/nslookup", "-s", NULL
     };
 
+    spawn_process(nslookup_args, true);
+#ifdef KERNEL_NO_GRAPHICS
     char *xterm_args[] = {
         "/bin/xterm", NULL
     };
 
-    spawn_process(nslookup_args, true);
     spawn_process(xterm_args, false);
+#else
+    char *window_server_args[] = {
+        "/bin/window_server", NULL
+    };
+
+    spawn_process(window_server_args, false);
+#endif /* KERNEL_NO_GRAPHICS */
 
     for (;;) {
         sleep(100);

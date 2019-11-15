@@ -15,7 +15,37 @@ struct Traits {
 };
 
 template<>
+struct Traits<bool> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
+struct Traits<uint8_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
 struct Traits<uint16_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
+struct Traits<uint32_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
+struct Traits<uint64_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
+struct Traits<int8_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
+struct Traits<int16_t> {
     static constexpr bool is_simple() { return true; }
 };
 
@@ -25,7 +55,12 @@ struct Traits<int32_t> {
 };
 
 template<>
-struct Traits<uint16_t*> {
+struct Traits<int64_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<typename U>
+struct Traits<U*> {
     static constexpr bool is_simple() { return true; }
 };
 

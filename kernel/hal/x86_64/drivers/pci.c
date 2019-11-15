@@ -1,6 +1,7 @@
 #include <stdbool.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/x86_64/drivers/bga.h>
 #include <kernel/hal/x86_64/drivers/e1000.h>
 #include <kernel/hal/x86_64/drivers/pci.h>
 
@@ -21,6 +22,12 @@ void init_pci() {
                 if (config.vendor_id == PCI_VENDOR_INTEL && config.device_id == PCI_DEVICE_INTEL_E1000) {
                     init_intel_e1000(&config);
                 }
+
+#ifndef KERNEL_NO_GRAPHICS
+                if (config.vendor_id == PCI_VENDOR_BOCHS && config.device_id == PCI_DEVICE_BOCHS_VGA) {
+                    init_bga(&config);
+                }
+#endif /* KERNEL_NO_GRAPHICS */
             }
         }
     }

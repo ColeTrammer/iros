@@ -16,6 +16,7 @@ if echo "$1" | grep -Eq '[-][-]debug'; then
     x-terminal-emulator -e "qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors,int -hda os_2.img -no-reboot -no-shutdown -monitor stdio -s -S -serial file:debug.log" &
     x-terminal-emulator -e "gdb"
 else
+    # export DEFINES="-DKERNEL_NO_GRAPHICS"
     export DEFINES=""
 
     # Calls make to build iso
@@ -27,6 +28,7 @@ else
         -cdrom os_2.iso \
         -d cpu_reset,guest_errors \
         -serial stdio \
+        -device VGA,vgamem_mb=64 \
         -hda os_2.img \
         -boot d \
         -no-reboot \

@@ -11,8 +11,11 @@
 #define PCI_BUS_MAX 256
 #define PCI_SLOT_MAX 32
 
-#define PCI_VENDOR_INTEL 0x8086
+#define PCI_VENDOR_INTEL       0x8086
 #define PCI_DEVICE_INTEL_E1000 0x100E
+
+#define PCI_VENDOR_BOCHS     0x1234
+#define PCI_DEVICE_BOCHS_VGA 0x1111
 
 struct pci_configuration {
     uint16_t vendor_id;

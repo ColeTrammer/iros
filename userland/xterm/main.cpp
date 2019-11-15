@@ -17,10 +17,6 @@
 
 int main() 
 {
-    close(0);
-    close(1);
-    close(2);
-
     VgaBuffer vga_buffer("/dev/fb0");
     TTY tty(vga_buffer);
 
