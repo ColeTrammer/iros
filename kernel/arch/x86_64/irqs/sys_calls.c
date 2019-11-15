@@ -207,9 +207,15 @@ void arch_sys_read(struct process_state *process_state)  {
     char *buf = (void*) process_state->cpu_state.rdx;
     size_t count = (size_t) process_state->cpu_state.rcx;
 
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EINVAL);
+    }
+
     struct process *process = get_current_process();
     struct file *file = process->files[fd];
-    assert(file != NULL);
+    if (file == NULL) {
+        SYS_RETURN(-EINVAL);
+    }
 
     SYS_RETURN((uint64_t) fs_read(file, buf, count));
 }
@@ -221,9 +227,15 @@ void arch_sys_write(struct process_state *process_state) {
     void *buf = (void*) process_state->cpu_state.rdx;
     size_t count = (size_t) process_state->cpu_state.rcx;
 
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EINVAL);
+    }
+
     struct process *process = get_current_process();
     struct file *file = process->files[fd];
-    assert(file != NULL);
+    if (file == NULL) {
+        SYS_RETURN(-EINVAL);
+    }
 
     SYS_RETURN((uint64_t) fs_write(file, buf, count));
 }

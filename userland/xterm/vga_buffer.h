@@ -47,8 +47,8 @@ public:
     void draw(int row, int col, char c);
     void draw(int row, int col, uint16_t val);
 
-    uint16_t* scroll_up(const uint16_t* first_row = nullptr);
-    uint16_t* scroll_down(const uint16_t* last_row = nullptr);
+    LIIM::Vector<uint16_t> scroll_up(const LIIM::Vector<uint16_t> *first_row = nullptr);
+    LIIM::Vector<uint16_t> scroll_down(const LIIM::Vector<uint16_t> *last_row = nullptr);
 
     void show_cursor();
     void hide_cursor();

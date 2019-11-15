@@ -24,8 +24,7 @@ void TTY::scroll_up()
         return;
     }
 
-    m_below_rows.add(m_buffer.scroll_down(m_above_rows.last()));
-    delete[] m_above_rows.last();
+    m_below_rows.add(m_buffer.scroll_down(&m_above_rows.last()));
     m_above_rows.remove_last();
 
     update_cursor();
@@ -37,8 +36,7 @@ void TTY::scroll_down()
         return;
     }
 
-    m_above_rows.add(m_buffer.scroll_up(m_below_rows.last()));
-    delete[] m_below_rows.last();
+    m_above_rows.add(m_buffer.scroll_up(&m_below_rows.last()));
     m_below_rows.remove_last();
 
     update_cursor();
@@ -181,11 +179,9 @@ void TTY::handle_escape_sequence()
             return;
         } else if (args.get_or(0, 0) == 3) {
             while (m_above_rows.size() > 0) {
-                delete[] m_above_rows.last();
                 m_above_rows.remove_last();
             }
             while (m_below_rows.size() > 0) {
-                delete[] m_below_rows.last();
                 m_below_rows.remove_last();
             }
             m_buffer.clear();

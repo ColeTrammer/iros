@@ -1,18 +1,73 @@
 #pragma once
 
 #include <assert.h>
+#include <new>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 namespace LIIM {
 
-template <typename T>
+template<typename T>
+struct Traits {
+    static constexpr bool is_simple() { return false; }
+};
+
+template<>
+struct Traits<uint16_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
+struct Traits<int32_t> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<>
+struct Traits<uint16_t*> {
+    static constexpr bool is_simple() { return true; }
+};
+
+template<typename T>
 class Vector {
 public:
-    Vector(int capacity = 20)
+    explicit Vector(int capacity = 20)
         : m_capacity(capacity)
     {
         allocate_vector();
+    }
+
+    Vector(const Vector& to_copy)
+        : m_capacity(to_copy.capacity())
+    {
+        allocate_vector();
+        m_size = to_copy.size();
+        if (m_size == 0) {
+            return;
+        }
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector, to_copy.m_vector, sizeof(T) * m_size);
+        } else {
+            for (int i = 0; i < m_size; i++) {
+                new (&m_vector[i]) T(to_copy.m_vector[i]);
+            }
+        }
+    }
+
+    Vector(const T* buffer, int num_elements)
+        : m_capacity(num_elements)
+        , m_size(num_elements)
+    {
+        assert(buffer);
+        allocate_vector();
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector, buffer, sizeof(T) * num_elements);
+        } else {
+            for (int i = 0; i < m_size; i++) {
+                new (&m_vector[i]) T(buffer[i]);
+            }
+        }
     }
 
     ~Vector()
@@ -20,20 +75,24 @@ public:
         for (int i = 0; i < m_size; i++) {
             get(i).~T();
         }
-        delete[] m_vector;
+        m_size = 0;
+        if (m_vector) {
+            free(m_vector);
+        }
+        m_vector = nullptr;
     }
 
     int size() const { return m_size; }
     int capacity() const { return m_capacity; }
 
-    void add(T t)
+    void add(const T& t)
     {
         if (m_size >= m_capacity) {
             increase_capacity();
             allocate_vector();
         }
 
-        m_vector[m_size++] = t;
+        new (&m_vector[m_size++]) T(t);
     }
 
     void remove_last()
@@ -82,6 +141,9 @@ public:
     T& last() { return get(m_size - 1); }
     const T& last() const { return get(m_size - 1); }
 
+    T* vector() { return m_vector; }
+    const T* vector() const { return m_vector; }
+
 private:
     void increase_capacity()
     {
@@ -90,15 +152,19 @@ private:
 
     void allocate_vector()
     {
-        T* replacement = static_cast<T*>(::operator new(m_capacity * sizeof(T)));
+        T* replacement = static_cast<T*>(malloc(m_capacity * sizeof(T)));
         if (!m_vector) {
             m_vector = replacement;
             return;
         }
 
-        for (int i = 0; i < m_size; i++) {
-            replacement[i] = get(i);
-            get(i).~T();
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(replacement, m_vector, sizeof(T) * m_size);
+        } else {
+            for (int i = 0; i < m_size; i++) {
+                new (&replacement[i]) T(m_vector[i]);
+                get(i).~T();
+            }
         }
 
         m_vector = replacement;

@@ -68,10 +68,9 @@ void VgaBuffer::clear_row(int row)
     clear_row_to_end(row, 0);
 }
 
-uint16_t* VgaBuffer::scroll_up(const uint16_t* replacement)
+LIIM::Vector<uint16_t> VgaBuffer::scroll_up(const LIIM::Vector<uint16_t>* replacement)
 {
-    uint16_t* first_row = new uint16_t[m_width];
-    memcpy(first_row, m_buffer, row_size_in_bytes());
+    LIIM::Vector<uint16_t> first_row(m_buffer, m_width);
 
     for (int r = 0; r < m_height - 1; r++) {
         for (int c = 0; c < m_width; c++) {
@@ -82,22 +81,25 @@ uint16_t* VgaBuffer::scroll_up(const uint16_t* replacement)
     if (!replacement) {
         clear_row(m_height - 1);
     } else {
-        memcpy(m_buffer + (m_height - 1) * m_width, replacement, row_size_in_bytes());
+        memcpy(m_buffer + (m_height - 1) * m_width, replacement->vector(), row_size_in_bytes());
     }
     return first_row;
 }
 
-uint16_t* VgaBuffer::scroll_down(const uint16_t* replacement)
+LIIM::Vector<uint16_t> VgaBuffer::scroll_down(const LIIM::Vector<uint16_t>* replacement)
 {
-    uint16_t* last_row = new uint16_t[m_width];
-    memcpy(last_row, m_buffer + (m_height - 1) * m_width, row_size_in_bytes());
+    LIIM::Vector<uint16_t> last_row(m_buffer + (m_height - 1) * m_width, m_width);
 
     for (int r = m_height - 1; r > 0; r--) {
         for (int c = 0; c < m_width; c++) {
             draw(r, c, m_buffer[(r - 1) * m_width + c]);
         }
     }
-    memcpy(m_buffer, replacement, row_size_in_bytes());
+    if (!replacement) {
+        clear_row(0);
+    } else {
+        memcpy(m_buffer, replacement->vector(), row_size_in_bytes());
+    }
     return last_row;
 }
 

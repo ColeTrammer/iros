@@ -39,6 +39,7 @@ $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/signal_test \
+$(BUILDDIR)/initrd/programs/smart_pointer_test \
 $(BUILDDIR)/initrd/programs/strtoken_test \
 $(BUILDDIR)/initrd/programs/tcp_server_test_a \
 $(BUILDDIR)/initrd/programs/tcp_test \

@@ -43,6 +43,6 @@ private:
     char m_escape_buffer[50] { 0 };
 
     VgaBuffer& m_buffer;
-    LIIM::Vector<uint16_t*> m_above_rows;
-    LIIM::Vector<uint16_t*> m_below_rows;
+    LIIM::Vector<LIIM::Vector<uint16_t>> m_above_rows;
+    LIIM::Vector<LIIM::Vector<uint16_t>> m_below_rows;
 };
