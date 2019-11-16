@@ -30,6 +30,8 @@ $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
 $(BUILDDIR)/initrd/programs/guess \
+$(BUILDDIR)/initrd/programs/hash_map_test \
+$(BUILDDIR)/initrd/programs/linked_list_test_a \
 $(BUILDDIR)/initrd/programs/local_socket_client_test \
 $(BUILDDIR)/initrd/programs/local_socket_server_test \
 $(BUILDDIR)/initrd/programs/nftw_test \
@@ -40,6 +42,7 @@ $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/smart_pointer_test \
+$(BUILDDIR)/initrd/programs/string_test \
 $(BUILDDIR)/initrd/programs/strtoken_test \
 $(BUILDDIR)/initrd/programs/tcp_server_test_a \
 $(BUILDDIR)/initrd/programs/tcp_test \

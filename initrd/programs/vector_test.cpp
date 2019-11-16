@@ -1,6 +1,5 @@
-#include <new>
+#include <liim/vector.h>
 #include <stdio.h>
-#include <vector.h>
 
 using namespace LIIM;
 

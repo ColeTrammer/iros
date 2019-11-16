@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <liim/vector.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <vector.h>
 
 #include "tty.h"
 #include "vga_buffer.h"

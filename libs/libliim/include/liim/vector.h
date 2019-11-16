@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/traits.h>
 #include <new>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,61 +9,6 @@
 #include <string.h>
 
 namespace LIIM {
-
-template<typename T>
-struct Traits {
-    static constexpr bool is_simple() { return false; }
-};
-
-template<>
-struct Traits<bool> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<uint8_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<uint16_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<uint32_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<uint64_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<int8_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<int16_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<int32_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<int64_t> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<typename U>
-struct Traits<U*> {
-    static constexpr bool is_simple() { return true; }
-};
 
 template<typename T>
 class Vector {
@@ -179,6 +125,13 @@ public:
     T* vector() { return m_vector; }
     const T* vector() const { return m_vector; }
 
+    template<typename C>
+    void for_each(C callback) {
+        for (int i = 0; i < size(); i++) {
+            callback(get(i));
+        }
+    }
+
 private:
     void increase_capacity()
     {
@@ -211,3 +164,5 @@ private:
 };
 
 }
+
+using LIIM::Vector;

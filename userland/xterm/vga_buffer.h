@@ -1,8 +1,8 @@
 #pragma once
 
+#include <liim/vector.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <vector.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 
