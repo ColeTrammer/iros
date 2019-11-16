@@ -40,6 +40,12 @@ struct Traits<uint64_t> {
 };
 
 template<>
+struct Traits<char> {
+    static constexpr bool is_simple() { return true; }
+    static unsigned int hash(const int8_t& obj) { return static_cast<unsigned int>(obj); };
+};
+
+template<>
 struct Traits<int8_t> {
     static constexpr bool is_simple() { return true; }
     static unsigned int hash(const int8_t& obj) { return static_cast<unsigned int>(obj); };

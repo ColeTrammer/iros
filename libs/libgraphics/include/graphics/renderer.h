@@ -1,9 +1,11 @@
 #pragma once
 
 #include <assert.h>
-#include <pointers.h>
+#include <liim/pointers.h>
+#include <liim/string.h>
 
 #include <graphics/color.h>
+#include <graphics/font.h>
 #include <graphics/pixel_buffer.h>
 
 class Color;
@@ -21,7 +23,16 @@ public:
 
     void fill_rect(int x, int y, int width, int height);
 
+    void render_text(int x, int y, const String& text);
+
+    SharedPtr<PixelBuffer> pixels() { return m_pixels; }
+    const SharedPtr<PixelBuffer> pixels() const { return m_pixels; }
+
+    Font& font() { return m_font; }
+    const Font& font() const { return m_font; }
+
 private:
     Color m_color;
     SharedPtr<PixelBuffer> m_pixels;
+    Font m_font;
 };

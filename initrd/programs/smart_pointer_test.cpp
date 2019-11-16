@@ -1,4 +1,4 @@
-#include <pointers.h>
+#include <liim/pointers.h>
 #include <stdio.h>
 
 using namespace LIIM;

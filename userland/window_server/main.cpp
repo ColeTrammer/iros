@@ -1,7 +1,8 @@
 #include <fcntl.h>
+#include <graphics/font.h>
 #include <graphics/pixel_buffer.h>
 #include <graphics/renderer.h>
-#include <pointers.h>
+#include <liim/pointers.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -122,57 +123,21 @@ int main()
 
     auto pixels = PixelBuffer::wrap(raw_pixels, sz.x, sz.y);
     auto renderer = Renderer(pixels);
+    Font font;
 
     renderer.set_color(Color(255, 0, 0));
     renderer.fill_rect(200, 200, 50, 50);
 
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 200 + j] = a[i][j] | a[i][j] << 8 | a[i][j] << 16;
-    //     }
-    // }
+    renderer.set_color(Color(255, 255, 255));
+    char a[128];
+    memset(a, 0, 128);
+    for (int i = 0; i < 128; i++) {
+        a[i] = i + 1;
+    }
 
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 208 + j] = b[i][j] | b[i][j] << 8 | b[i][j] << 16;
-    //     }
-    // }
+    renderer.render_text(50, 50, a);
 
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 216 + j] = c[i][j] | c[i][j] << 8 | c[i][j] << 16;
-    //     }
-    // }
-
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 224 + j] = d[i][j] | d[i][j] << 8 | d[i][j] << 16;
-    //     }
-    // }
-
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 232 + j] = e[i][j] | e[i][j] << 8 | e[i][j] << 16;
-    //     }
-    // }
-
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 240 + j] = f[i][j] | f[i][j] << 8 | f[i][j] << 16;
-    //     }
-    // }
-
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 248 + j] = g[i][j] | g[i][j] << 8 | g[i][j] << 16;
-    //     }
-    // }
-
-    // for (int i = 0; i < 7; i++) {
-    //     for (int j = 0; j < 5; j++) {
-    //         pixels[(200 + i) * sz.x + 256 + j] = h[i][j] | h[i][j] << 8 | h[i][j] << 16;
-    //     }
-    // }
+    renderer.render_text(150, 150, "Hello World!");
 
     return 0;
 }

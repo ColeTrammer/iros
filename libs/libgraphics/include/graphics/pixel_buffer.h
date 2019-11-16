@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pointers.h>
+#include <liim/pointers.h>
 #include <stdint.h>
 
 class Color;

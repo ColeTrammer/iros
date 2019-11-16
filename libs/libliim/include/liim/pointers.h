@@ -80,7 +80,8 @@ public:
         m_ref_count--;
     }
 
-    T* ptr() const { return m_ptr; }
+    T* ptr() { return m_ptr; }
+    const T* ptr() const { return m_ptr; }
 
 private:
     int m_ref_count;

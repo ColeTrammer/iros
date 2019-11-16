@@ -75,6 +75,24 @@ public:
         return val;
     }
 
+    V& get_or(const K& key, V& val) {
+        V* res = get(key);
+        if (res) {
+            return *res;
+        } else {
+            return val;
+        }
+    }
+
+    const V& get_or(const K& key, const V& val) const {
+        V* res = get(key);
+        if (res) {
+            return *res;
+        } else {
+            return val;
+        }
+    }
+
     void remove(const K& key)
     {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
