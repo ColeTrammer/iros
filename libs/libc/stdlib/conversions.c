@@ -200,10 +200,51 @@ double atof(const char *s) {
 }
 
 double strtod(const char *__restrict str, char **__restrict endptr) {
-    (void) str;
-    (void) endptr;
+    if (str == NULL) { return 0; }
 
-    return 0.0;
+    size_t str_off = 0;
+
+    /* Skip initial whitespace */
+    while (isspace(str[str_off])) { str_off++; }
+
+    /* Look at optional sign character */
+    double sign = 1.0;
+    if (str[str_off] == '-' || str[str_off] == '+') {
+        if (str[str_off] == '-') {
+            sign = -1.0;
+        }
+        str_off++;
+    }
+
+    double value = 0.0;
+    double decimal_offset = 10.0;
+    double ret = 0.0;
+    bool encountered_decimal = false;
+    for (; isdigit(str[str_off]) || (!encountered_decimal && str[str_off] == '.'); str_off++) {
+        if (str[str_off] == '.') {
+            encountered_decimal = true;
+            continue;
+        }
+
+        /* Computer value of the digit */
+        int digit_value = str[str_off] - '0';
+
+        /* Compute the value by adding the value and muliplying by radix */
+        if (!encountered_decimal) {
+            value *= 10.0;
+            value += digit_value;
+        } else {
+            value += ((double) digit_value) / decimal_offset;
+            decimal_offset *= 10.0;
+        }
+    }
+
+    ret = sign * value;
+
+    if (endptr != NULL) {
+        *endptr = (char*) (str + str_off);
+    }
+    return ret;
 }
 
 #endif /* __is_libk */

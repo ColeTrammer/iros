@@ -743,6 +743,14 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
 			format++;
 			double num = va_arg(parameters, double);
 
+			if (num < 0) {
+				num *= -1.0;
+				char minus = '-';
+				if (!print(obj, &minus, 1)) 
+					return -1;
+				written++;
+			}
+
 			size_t len = 1;
 			double div = 1.0;
 			while (num / div >= 10.0) {
