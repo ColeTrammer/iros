@@ -36,6 +36,16 @@ SECTIONS
         *(.rodata .rodata.*)
     }
 
+    .ctors : AT(ADDR(.ctors) - KERNEL_VMA)
+    {
+        *(.ctors)
+    }
+
+    .dtors : AT(ADDR(.dtors) - KERNEL_VMA)
+    {
+        *(.dtors)
+    }
+
     .eh_frame : AT(ADDR(.eh_frame) - KERNEL_VMA)
     {
         *(.eh_frame)
@@ -47,16 +57,6 @@ SECTIONS
     {
         PROVIDE(_data_start = .);
         *(.data)
-    }
-
-    .ctors : AT(ADDR(.ctors) - KERNEL_VMA)
-    {
-        *(.ctors)
-    }
-
-    .dtors : AT(ADDR(.dtors) - KERNEL_VMA)
-    {
-        *(.dtors)
         PROVIDE(_data_end = .);
     }
 
