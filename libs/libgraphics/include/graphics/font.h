@@ -35,6 +35,9 @@ public:
         int font_file = open("/usr/share/font.psf", O_RDONLY);
         assert(font_file != -1);
 
+        uint8_t z[4];
+        assert(read(font_file, z, 4) == 4);
+
         uint8_t b[16];
         int i = 0;
         while (read(font_file, b, 16) == 16) {

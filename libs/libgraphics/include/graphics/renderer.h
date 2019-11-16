@@ -22,8 +22,12 @@ public:
     void set_color(Color c) { m_color = c; }
 
     void fill_rect(int x, int y, int width, int height);
+    void draw_rect(int x, int y, int width, int height);
 
     void render_text(int x, int y, const String& text);
+
+    void fill_circle(int x, int y, int r);
+    void draw_circle(int x, int y, int r);
 
     SharedPtr<PixelBuffer> pixels() { return m_pixels; }
     const SharedPtr<PixelBuffer> pixels() const { return m_pixels; }

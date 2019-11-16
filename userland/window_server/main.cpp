@@ -127,17 +127,20 @@ int main()
 
     renderer.set_color(Color(255, 0, 0));
     renderer.fill_rect(200, 200, 50, 50);
+    renderer.draw_rect(500, 100, 100, 100);
 
     renderer.set_color(Color(255, 255, 255));
     char a[128];
     memset(a, 0, 128);
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < 75; i++) {
         a[i] = i + 1;
     }
 
-    renderer.render_text(50, 50, a);
-
+    renderer.render_text(0, 0, a);
     renderer.render_text(150, 150, "Hello World!");
+
+    renderer.draw_circle(500, 500, 25);
+    renderer.fill_circle(700, 100, 20);
 
     return 0;
 }
