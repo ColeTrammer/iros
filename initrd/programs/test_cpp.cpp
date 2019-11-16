@@ -1,13 +1,9 @@
-#include <iostream>
+#include <stdio.h>
 
-using namespace std;
-
-int main() {
-    double x;
-    cout << "Enter a double: ";
-    cin >> x;
-
-    cout << "You entered: " << x << endl;
+int main() 
+{
+    double x = 1.123;
+    printf("%.2g\n", x);
 
     return 0;
 }

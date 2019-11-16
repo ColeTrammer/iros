@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -6,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/param.h>
 
 int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *obj, const char *__restrict format, va_list parameters);
 
@@ -735,7 +737,41 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
 				}
 			}
 			written += width;
-		} else {
+		}
+#ifndef __is_libk
+		else if (*format == 'g' || *format == 'f' || *format == 'G' || *format == 'F') {
+			format++;
+			double num = va_arg(parameters, double);
+
+			size_t len = 1;
+			double div = 1.0;
+			while (num / div >= 10.0) {
+				div *= 10.0;
+				len++;
+			}
+
+			size_t total_len = len;
+			total_len += MAX(0, precision + 1);
+
+			for (size_t i = 0; i < total_len; i++) {
+				if (i == len) {
+					char d = '.';
+					if (!print(obj, &d, 1))
+						return -1;
+					i++;
+				}
+				double current = num / div;
+				int digit = ((int) current) % 10;
+				char c = digit + '0';
+				if (!print(obj, &c, 1))
+					return -1;
+				div /= 10;
+			}
+
+			written += total_len;
+		}
+#endif /* __is_libk */ 
+		else {
 			format = format_begun_at;
 			size_t len = strlen(format);
 			if (maxrem < len) {
