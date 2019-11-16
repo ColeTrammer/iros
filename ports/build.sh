@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cd ..
-make libc
+make libs
 cd ports
 
 cd figlet

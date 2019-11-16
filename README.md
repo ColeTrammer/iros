@@ -39,6 +39,4 @@ My second attempt to create an OS
   issues when be enabled.
 * Neither GCC not Bin Utils want to build anymore, something must be wrong with the supplied
   patches.
-* Ports cannot be built all at once: the script doesn't work because it needs to set the CWD
-  correctly, so each port must be built individually.
 * make run always rebuilds the disk image, so we can never save info in between sessions.
