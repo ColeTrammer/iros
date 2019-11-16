@@ -886,11 +886,11 @@ static ssize_t __ext2_read(struct file *file, void *buffer, size_t len) {
     ssize_t len_save = (ssize_t) len;
 
     size_t file_block_no = file->position / inode->super_block->block_size;
-    size_t file_block_no_end = (file->position + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
+    size_t file_block_no_end = (file->position + len) / inode->super_block->block_size;
 
     uint32_t *indirect_block = NULL;
 
-    while (file_block_no < file_block_no_end) {
+    while (file_block_no <= file_block_no_end) {
         void *block = ext2_allocate_blocks(inode->super_block, 1);
         size_t block_no;
 
@@ -932,7 +932,7 @@ static ssize_t __ext2_read(struct file *file, void *buffer, size_t len) {
 
         ext2_free_blocks(block);
         file_block_no++;
-        buffer = (void*) (((uintptr_t) buffer) + inode->super_block->block_size);
+        buffer = (void*) (((uintptr_t) buffer) + to_read);
     }
 
     if (indirect_block) {
