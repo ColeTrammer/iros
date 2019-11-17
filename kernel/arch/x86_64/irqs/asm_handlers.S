@@ -196,3 +196,4 @@ sys_call_table:
     .quad arch_sys_recvfrom
     .quad arch_sys_mmap
     .quad arch_sys_munmap
+    .quad arch_sys_rename

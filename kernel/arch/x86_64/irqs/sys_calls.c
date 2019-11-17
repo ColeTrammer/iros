@@ -1135,3 +1135,25 @@ void arch_sys_munmap(struct process_state *process_state) {
 
     SYS_RETURN(-ENOSYS);
 }
+
+void arch_sys_rename(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    const char *_old_path = (const char*) process_state->cpu_state.rsi;
+    const char *_new_path = (const char*) process_state->cpu_state.rdx;
+
+    if (_old_path == NULL || _new_path == NULL) {
+        SYS_RETURN(-EINVAL);
+    }
+
+    struct process *current = get_current_process();
+    char *old_path = get_full_path(current->cwd, _old_path);
+    char *new_path = get_full_path(current->cwd, _new_path);
+
+    int ret = fs_rename(old_path, new_path);
+
+    free(old_path);
+    free(new_path);
+
+    SYS_RETURN(ret);
+}

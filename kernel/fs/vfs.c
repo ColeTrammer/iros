@@ -657,6 +657,104 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
     return -ENODEV;
 }
 
+int fs_rename(char *old_path, char *new_path) {
+    assert(old_path);
+    assert(new_path);
+
+    debug_log("Rename: [ %s, %s ]\n", old_path, new_path);
+
+    struct tnode *old = iname(old_path);
+    if (old == NULL) {
+        return -ENOENT;
+    }
+
+    char *new_path_last_slash = strrchr(new_path, '/');
+    assert(new_path_last_slash);
+
+    struct tnode *new_parent;
+    if (new_path_last_slash == new_path) {
+        new_parent = root->super_block->root;
+    } else {
+        *new_path_last_slash = '\0';
+        new_parent = iname(new_path);
+        *new_path_last_slash = '/';
+    }
+
+    if (new_parent == NULL) {
+        return -ENOENT;
+    }
+
+    if (old->inode->super_block != new_parent->inode->super_block) {
+        return -EXDEV;
+    }
+
+    struct tnode *existing_tnode = iname(new_path);
+    if (existing_tnode && (existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) {
+        return -ENOTDIR;
+    }
+
+    if (existing_tnode && (existing_tnode->inode->flags & FS_DIR) && !dir_empty(existing_tnode->inode)) {
+        return -ENOTEMPTY;
+    }
+
+    if (!old->inode->super_block->op || !old->inode->super_block->op->rename) {
+        return -EINVAL;
+    }
+
+    // Destroy the existing tnode if necessary
+    if (existing_tnode) {
+        if (existing_tnode->inode == old->inode) {
+            return 0;
+        }
+
+        if (((existing_tnode->inode->flags & FS_DIR) && !existing_tnode->inode->i_op->rmdir) || !existing_tnode->inode->i_op->unlink) {
+            return -EINVAL;
+        }
+
+        spin_lock(&existing_tnode->inode->lock);
+
+        int ret;
+        if (existing_tnode->inode->flags & FS_DIR) {
+            ret = existing_tnode->inode->i_op->rmdir(existing_tnode);
+        } else {
+            ret = existing_tnode->inode->i_op->unlink(existing_tnode);
+        }
+
+        if (ret != 0) {
+            return ret;
+        }
+
+        existing_tnode->inode->parent->inode->tnode_list = remove_tnode(existing_tnode->inode->parent->inode->tnode_list, existing_tnode);
+        struct inode *inode = existing_tnode->inode;
+        free(existing_tnode);
+
+        /* Only delete inode if it's refcount is zero */
+        inode->ref_count--;
+        if (inode->ref_count <= 0) {
+            /* Should call a inode specific free function (but is uneccessary right now) */
+            debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+            free(inode);
+        }
+
+        spin_unlock(&inode->lock);
+    }
+
+    int ret = old->inode->super_block->op->rename(old, new_parent, new_path_last_slash + 1);
+    if (ret != 0) {
+        return ret;
+    }
+
+    struct tnode *old_parent = old->inode->parent;
+    assert(old_parent);
+
+    free(old->name);
+    old->name = strdup(new_path_last_slash + 1);
+    old->inode->parent = new_parent;
+    new_parent->inode->tnode_list = add_tnode(new_parent->inode->tnode_list, old);
+    old_parent->inode->tnode_list = remove_tnode(old_parent->inode->tnode_list, old);
+    return 0;
+}
+
 int fs_mount(const char *src, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 

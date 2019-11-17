@@ -30,7 +30,7 @@ const char *sys_errlist[] = {
     "Already",
     "Connection refused",
     "Connection reset",
-    "EXDEV",
+    "Cannot move file accross two different devices",
     "Destination addr request",
     "Busy",
     "EFBIG",

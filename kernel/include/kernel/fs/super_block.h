@@ -5,11 +5,12 @@
 #include <sys/types.h>
 
 #include <kernel/fs/file.h>
-#include <kernel/fs/tnode.h>
 #include <kernel/util/spinlock.h>
 
-struct super_block_operations {
+struct tnode;
 
+struct super_block_operations {
+    int (*rename)(struct tnode *tnode, struct tnode *new_parent, const char *new_name);
 };
 
 struct super_block {

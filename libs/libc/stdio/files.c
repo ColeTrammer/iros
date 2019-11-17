@@ -589,6 +589,15 @@ void perror(const char *s) {
     fprintf(stderr, "%s: %s\n", s, strerror(errno));
 }
 
+int remove(const char *path) {
+    int ret = unlink(path);
+    if (ret == -1 && errno == EISDIR) {
+        return rmdir(path);
+    }
+
+    return ret;
+}
+
 void init_files() {
     /* stdin */
     files[0].fd = 0;
