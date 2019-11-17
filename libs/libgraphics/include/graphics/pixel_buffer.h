@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/pointers.h>
+#include <graphics/rect.h>
 #include <stdint.h>
 
 class Color;
@@ -11,6 +12,11 @@ public:
         : PixelBuffer(new uint32_t[width * height], width, height)
     {
         m_should_deallocate = true;
+    }
+
+    PixelBuffer(const Rect& rect)
+        : PixelBuffer(rect.width(), rect.height())
+    {
     }
 
     ~PixelBuffer()
@@ -30,8 +36,18 @@ public:
     int height() const { return m_height; }
     int size_in_bytes() const { return m_width * m_height * sizeof(uint32_t); }
 
+    uint32_t* pixels() { return m_pixels; }
+    const uint32_t* pixels() const { return m_pixels; }
+
+    void clear();
+
     void put_pixel(int x, int y, uint32_t p);
     void put_pixel(int x, int y, Color color);
+
+    uint32_t get_pixel(int x, int y) const
+    {
+        return m_pixels[y * m_width + x];
+    }
 
 private:
     PixelBuffer(uint32_t* pixels, int width, int height)

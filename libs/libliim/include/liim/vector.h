@@ -126,9 +126,39 @@ public:
     const T* vector() const { return m_vector; }
 
     template<typename C>
-    void for_each(C callback) {
+    void for_each(C callback) 
+    {
         for (int i = 0; i < size(); i++) {
             callback(get(i));
+        }
+    }
+
+    template<typename C>
+    void for_each_reverse(C callback)
+    {
+        for (int i = size() - 1; i >= 0; i--) {
+            callback(get(i));
+        }
+    }
+
+    void remove_element(const T& val)
+    {
+        for (int i = size() - 1; i >= 0; i--) {
+            if (get(i) == val) {
+                get(i).~T();
+                if (i != size() - 1) {
+                    if constexpr (Traits<T>::is_simple()) {
+                        memmove(m_vector + i, m_vector + i + 1, sizeof(T) * (size() - i - 1));
+                    } else {
+                        for (int j = i; j < size() - 1; j++) {
+                            new (m_vector + j) T(get(j + 1));
+                            get(j + 1).~T();
+                        }
+                    }
+                }
+
+                m_size--;
+            }
         }
     }
 

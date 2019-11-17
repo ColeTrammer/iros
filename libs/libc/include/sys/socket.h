@@ -36,6 +36,7 @@ struct sockaddr {
 };
 
 int accept(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen);
+int accept4(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen, int flags);
 int bind(int fd, const struct sockaddr *addr, socklen_t addrlen);
 int connect(int fd, const struct sockaddr *addr, socklen_t addrlen);
 int listen(int fd, int backlog);

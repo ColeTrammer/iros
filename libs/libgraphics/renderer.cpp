@@ -2,8 +2,8 @@
 
 void Renderer::fill_rect(int x, int y, int width, int height)
 {
-    for (int i = x; i <= x + width; i++) {
-        for (int j = y; j <= y + height; j++) {
+    for (int i = x; i < x + width; i++) {
+        for (int j = y; j < y + height; j++) {
             m_pixels->put_pixel(i, j, color());
         }
     }
@@ -11,7 +11,7 @@ void Renderer::fill_rect(int x, int y, int width, int height)
 
 void Renderer::draw_rect(int x, int y, int width, int height)
 {
-    for (int r = x; r <= x + width; r++) {
+    for (int r = x; r < x + width; r++) {
         m_pixels->put_pixel(r, y, color());
         m_pixels->put_pixel(r, y + height, color());
     }
@@ -25,7 +25,7 @@ void Renderer::draw_rect(int x, int y, int width, int height)
 void Renderer::fill_circle(int x, int y, int r)
 {
     int r2 = r * r;
-    for (int a = x - r; a <= x + r; a++) {
+    for (int a = x - r; a < x + r; a++) {
         for (int b = y - r; b <= y + r; b++) {
             int da = a - x;
             int db = b - y;
@@ -40,8 +40,8 @@ void Renderer::fill_circle(int x, int y, int r)
 void Renderer::draw_circle(int x, int y, int r)
 {
     int r2 = r * r;
-    for (int a = x - r; a <= x + r; a++) {
-        for (int b = y - r; b <= y + r; b++) {
+    for (int a = x - r; a < x + r; a++) {
+        for (int b = y - r; b < y + r; b++) {
             int da = a - x;
             int db = b - y;
             int dd = da * da + db * db;

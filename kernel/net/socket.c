@@ -149,16 +149,6 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
 
         spin_unlock(&socket->lock);
 
-        if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
-            time_t now = get_time();
-            time_t ms_seconds_to_wait = socket->timeout.tv_sec * 1000 + socket->timeout.tv_usec / 1000;
-            
-            // We timed out
-            if (now >= start_time + ms_seconds_to_wait) {
-                return -EINTR;
-            }
-        }
-
         switch (socket->domain) {
             case AF_UNIX: {
                 struct unix_socket_data *d = socket->private_data;
@@ -169,6 +159,20 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             }
             default: {
                 break;
+            }
+        }
+
+        if (socket->type & SOCK_NONBLOCK) {
+            return -EAGAIN;
+        }
+
+        if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
+            time_t now = get_time();
+            time_t ms_seconds_to_wait = socket->timeout.tv_sec * 1000 + socket->timeout.tv_usec / 1000;
+            
+            // We timed out
+            if (now >= start_time + ms_seconds_to_wait) {
+                return -EAGAIN;
             }
         }
 
@@ -230,6 +234,10 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
 
         spin_unlock(&socket->lock);
 
+        if (socket->type & SOCK_NONBLOCK) {
+            return -EAGAIN;
+        }
+
         yield();
         barrier();
     }
@@ -260,7 +268,7 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
     return (ssize_t) socket_data->len;
 }
 
-int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
+int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags) {
     assert(file);
     assert(file->private_data);
 
@@ -272,15 +280,15 @@ int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
         return -EINVAL;
     }
 
-    if (socket->type != SOCK_STREAM) {
+    if ((socket->type & SOCK_TYPE_MASK) != SOCK_STREAM) {
         return -EOPNOTSUPP;
     }
 
     switch (socket->domain) {
         case AF_INET:
-            return net_inet_accept(socket, (struct sockaddr_in*) addr, addrlen);
+            return net_inet_accept(socket, (struct sockaddr_in*) addr, addrlen, flags);
         case AF_UNIX:
-            return net_unix_accept(socket, (struct sockaddr_un*) addr, addrlen);
+            return net_unix_accept(socket, (struct sockaddr_un*) addr, addrlen, flags);
         default:
             return -EAFNOSUPPORT;
     }
@@ -384,10 +392,6 @@ int net_setsockopt(struct file *file, int level, int optname, const void *optval
 }
 
 int net_socket(int domain, int type, int protocol) {
-    if (type & SOCK_NONBLOCK) {
-        return -EINVAL;
-    }
-
     switch (domain) {
         case AF_UNIX:
             return net_unix_socket(domain, type, protocol);

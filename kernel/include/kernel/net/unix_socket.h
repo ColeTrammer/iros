@@ -8,7 +8,7 @@ struct unix_socket_data {
     int connected_id;
 };
 
-int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen);
+int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen, int flags);
 int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen_t addrlen);
 int net_unix_close(struct socket *socket);
 int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, socklen_t addrlen);

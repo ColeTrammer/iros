@@ -1,7 +1,7 @@
 # Lists all projects
 PROJECTS=kernel libs boot initrd userland
 # Lists all projects that need headers installed
-HEADER_PROJECTS=kernel libs
+HEADER_PROJECTS=kernel libs userland
 
 # Root defaults to cwd; must be set properly if using make -C
 export ROOT?=$(CURDIR)

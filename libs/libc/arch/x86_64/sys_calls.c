@@ -342,14 +342,15 @@ int access(const char *path, int mode) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
-int accept(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen) {
+int accept4(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen, int flags) {
     int ret;
     asm volatile( "movq $33, %%rdi\n"\
                   "movl %1, %%esi\n"\
                   "movq %2, %%rdx\n"\
                   "movq %3, %%rcx\n"\
+                  "movl %4, %%r8d\n"\
                   "int $0x80\n"\
-                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(addr), "r"(addrlen) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(addr), "r"(addrlen), "r"(flags) : "rdi", "rsi", "rdx", "rcx", "r8", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 

@@ -73,7 +73,7 @@ struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data);
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data);
 
-int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen);
+int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags);
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
 int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
 int net_listen(struct file *file, int backlog);

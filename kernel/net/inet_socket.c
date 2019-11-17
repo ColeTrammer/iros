@@ -82,7 +82,7 @@ struct socket_data *net_inet_create_socket_data(const struct ip_v4_packet *packe
     return data;
 }
 
-int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen) {
+int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen, int flags) {
     assert(socket);
     assert(socket->state == LISTENING);
     assert(socket->private_data);
@@ -95,7 +95,7 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
 
     struct socket_connection connection;
     int ret = net_get_next_connection(socket, &connection);
-    if (ret == -1) {
+    if (ret != 0) {
         return ret;
     }
 
@@ -105,7 +105,7 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
     debug_log("Creating connection: [ %lu ]\n", socket->id);
 
     int fd;
-    struct socket *new_socket = net_create_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP, &fd);
+    struct socket *new_socket = net_create_socket(AF_INET, (SOCK_STREAM & SOCK_TYPE_MASK) | flags, IPPROTO_TCP, &fd);
     if (new_socket == NULL) {
         return fd;
     }

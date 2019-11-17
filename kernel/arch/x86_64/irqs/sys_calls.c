@@ -874,6 +874,7 @@ void arch_sys_accept(struct process_state *process_state) {
     int fd = (int) process_state->cpu_state.rsi;
     struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
     socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
+    int flags = (int) process_state->cpu_state.r8;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
@@ -888,7 +889,7 @@ void arch_sys_accept(struct process_state *process_state) {
         SYS_RETURN(-ENOTSOCK);
     }
 
-    SYS_RETURN(net_accept(file, addr, addrlen));
+    SYS_RETURN(net_accept(file, addr, addrlen, flags));
 }
 
 void arch_sys_bind(struct process_state *process_state) {

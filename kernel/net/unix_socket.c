@@ -12,7 +12,7 @@
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
 
-int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen) {
+int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen, int flags) {
     assert(socket->domain == AF_UNIX);
     assert(socket->state == LISTENING);
     assert(socket->private_data);
@@ -21,14 +21,14 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
 
     struct socket_connection connection;
     int ret = net_get_next_connection(socket, &connection);
-    if (ret == -1) {
+    if (ret != 0) {
         return ret;
     }
 
     debug_log("Creating connection: [ %lu, %lu ]\n", socket->id, connection.connect_to_id);
 
     int fd = 0;
-    struct socket *new_socket = net_create_socket(socket->domain, socket->type, socket->protocol, &fd);
+    struct socket *new_socket = net_create_socket(socket->domain, (socket->type & SOCK_TYPE_MASK) | flags, socket->protocol, &fd);
     if (new_socket == NULL) {
         return fd;
     }

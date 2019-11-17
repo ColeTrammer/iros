@@ -1,8 +1,9 @@
 # Lists all projects
 PROJECTS=cat chmod clear echo false grep head kill ls mkdir nslookup ping pwd rm rmdir sh sleep start stat touch true window_server xterm
+HEADER_PROJECTS=window_server
 
-ROOT?=$(CURDIR)/..
-SYSROOT?=$(ROOT)/sysroot
+export ROOT?=$(CURDIR)/..
+export SYSROOT?=$(ROOT)/sysroot
 
 # Init flags if not already set (can be overridden)
 export CFLAGS?=
@@ -20,3 +21,9 @@ install: all
 .PHONY: $(PROJECTS)
 $(PROJECTS):
 	$(MAKE) install -C $(ROOT)/userland/$@
+
+.PHONY: install-headers
+install-headers:
+	for proj in $(HEADER_PROJECTS); do \
+	  $(MAKE) install-headers -C $(ROOT)/userland/$$proj; \
+	done
