@@ -1,32 +1,33 @@
 #pragma once
 
 #include <liim/string.h>
+#include <stdint.h>
 
 struct WindowServerMessage {
     enum class Type {
         Invalid,
-        Begin
+        Begin,
+        CreateWindow
     };
 
     Type type() const { return m_type; }
+    void set_type(Type type) { m_type = type; }
 
-    const char* message() const { return m_message; }
-    char* message() { return m_message; }
+    int data_len() const { return m_data_len; }
+    void set_data_len(int data_len) { m_data_len = data_len; }
 
-    Type m_type { Type::Invalid };
-    char m_message[256] { 0 };
+    const uint8_t* data() const { return m_data; }
+    uint8_t* data() { return m_data; }
 
     WindowServerMessage()
-    {   
-    }
-
-    WindowServerMessage(Type type, const String& message)
-        : m_type(type)
     {
-        strcpy(m_message, message.string());
     }
 
     ~WindowServerMessage()
     {
     }
+
+    Type m_type { Type::Invalid };
+    int m_data_len;
+    uint8_t m_data[0];
 };

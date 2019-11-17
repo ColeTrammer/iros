@@ -17,10 +17,13 @@ int main()
 
     assert(connect(fd, (sockaddr*) &addr, sizeof(sockaddr_un)) == 0);
 
-    WindowServerMessage message;
-    assert(read(fd, &message, sizeof(WindowServerMessage)) != -1);
+    uint8_t message_buffer[4096];
+    memset(message_buffer, 1, 4096);
+    assert(read(fd, &message_buffer, 4096) != -1);
 
-    fprintf(stderr, "%s\n", message.message());
+    auto* message = reinterpret_cast<WindowServerMessage*>(message_buffer);
+
+    fprintf(stderr, "%*s\n", message->data_len(), message->data());
 
     for (;;) {
         sleep(1);

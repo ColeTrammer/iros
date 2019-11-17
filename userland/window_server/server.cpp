@@ -51,9 +51,6 @@ void Server::start()
         }
 
         m_clients.add(client_fd);
-        WindowServerMessage message(WindowServerMessage::Type::Begin, "Hello\n");
-        fprintf(stderr, "%s\n", message.message());
-        write(client_fd, &message, sizeof(WindowServerMessage));
     }
 }
 
