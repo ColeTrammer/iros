@@ -15,6 +15,14 @@ My second attempt to create an OS
 * Shell that supports job control and pipes and lists and globbing
 * Start of posix standard utilities
 
+# To build
+* You need to install various dependencies for gcc (look on osdev)
+* Install qemu-system-x86_64 to run the os, also grub-mkrescue
+* Add the output of ./path.sh when inside the toolchain directory to your path
+* Run ./build.sh from within the toolchain directory
+* Run ./build.sh from within the ports directory (if you want ports)
+* Run `make run` within the top level directory
+
 # TODO
 * Shell supporting if, for, etc
 * Networking

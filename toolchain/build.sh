@@ -1,6 +1,8 @@
 #!/bin/sh
 
-cd binutils-2.32
+set -e
+
+cd binutils-2.31.1
 ./build.sh
 cd ..
 

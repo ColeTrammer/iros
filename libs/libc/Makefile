@@ -5,6 +5,20 @@ HOST?=$(DEFAULT_HOST)
 # Host achitecture is given by script
 HOSTARCH!=../../target-triplet-to-arch.sh $(HOST)
 
+export ROOT?=$(CURDIR)/../..
+export SYSROOT?=$(ROOT)/sysroot
+export BUILDDIR?=$(ROOT)/build
+
+export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export AR?=$(HOST)-ar
+
+# Sets directories for install if not already set
+export DESTDIR?=$(SYSROOT)
+export PREFIX?=/usr
+export EXEC_PREFIX?=$(PREFIX)
+export INCLUDEDIR?=$(PREFIX)/include
+export LIBDIR?=$(EXEC_PREFIX)/lib
+
 # Init flags if not already set (can be overridden)
 CFLAGS?=-O2 -g
 CPPFLAGS?=
