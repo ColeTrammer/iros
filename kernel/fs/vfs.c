@@ -689,7 +689,8 @@ int fs_rename(char *old_path, char *new_path) {
     }
 
     struct tnode *existing_tnode = iname(new_path);
-    if (existing_tnode && (existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) {
+    if (existing_tnode && (((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
+                          (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
         return -ENOTDIR;
     }
 
@@ -713,7 +714,7 @@ int fs_rename(char *old_path, char *new_path) {
 
         spin_lock(&existing_tnode->inode->lock);
 
-        int ret;
+        int ret = 0;
         if (existing_tnode->inode->flags & FS_DIR) {
             ret = existing_tnode->inode->i_op->rmdir(existing_tnode);
         } else {

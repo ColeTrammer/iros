@@ -1209,7 +1209,7 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
     return inode;
 }
 
-int ext2_unlink(struct tnode *tnode) {
+int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
     struct inode *inode = tnode->inode;
 
     if (inode->private_data == NULL) {
@@ -1286,90 +1286,98 @@ int ext2_unlink(struct tnode *tnode) {
 
     ext2_free_blocks(raw_dirent_table);
 
-    raw_inode->link_count--;
-    if (raw_inode->link_count <= 0) {
-        debug_log("Destroying raw ext2 inode: [ %llu ]\n", inode->index);
+    if (drop_reference) {
+        raw_inode->link_count--;
+        if (raw_inode->link_count <= 0) {
+            debug_log("Destroying raw ext2 inode: [ %llu ]\n", inode->index);
 
-        /* Actually free inode from disk */
-        ext2_free_inode(inode->super_block, inode->index, false);
+            /* Actually free inode from disk */
+            ext2_free_inode(inode->super_block, inode->index, false);
 
-        /* Free all of the blocks the inode used */
-        size_t num_blocks = 0;
-        uint32_t *indirect_block = NULL;
-        for (;;) {
-            size_t block_no;
+            /* Free all of the blocks the inode used */
+            size_t num_blocks = 0;
+            uint32_t *indirect_block = NULL;
+            for (;;) {
+                size_t block_no;
 
-            if (num_blocks < EXT2_SINGLY_INDIRECT_BLOCK_INDEX) {
-                block_no = ((struct raw_inode*) inode->private_data)->block[num_blocks];
-            } else {
-                /* Handle single indirect block */
-                if (indirect_block == NULL) {
-                    indirect_block = ext2_allocate_blocks(inode->super_block, 1);
-                    ssize_t _ret;
-                    debug_log("Indirect block: [ %u ]\n", ((struct raw_inode*) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX]);
-                    if ((_ret = ext2_read_blocks(inode->super_block, indirect_block, ((struct raw_inode*) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX], 1)) != 1) {
-                        ext2_free_blocks(indirect_block);
-                        return _ret;
+                if (num_blocks < EXT2_SINGLY_INDIRECT_BLOCK_INDEX) {
+                    block_no = ((struct raw_inode*) inode->private_data)->block[num_blocks];
+                } else {
+                    /* Handle single indirect block */
+                    if (indirect_block == NULL) {
+                        indirect_block = ext2_allocate_blocks(inode->super_block, 1);
+                        ssize_t _ret;
+                        debug_log("Indirect block: [ %u ]\n", ((struct raw_inode*) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX]);
+                        if ((_ret = ext2_read_blocks(inode->super_block, indirect_block, ((struct raw_inode*) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX], 1)) != 1) {
+                            ext2_free_blocks(indirect_block);
+                            return _ret;
+                        }
+
+                        block_no = ((struct raw_inode*) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX];
+                    } else  {
+                        size_t real_block_offset = num_blocks - EXT2_SINGLY_INDIRECT_BLOCK_INDEX - 1;
+
+                        if (real_block_offset * sizeof(uint32_t) >= (size_t) inode->super_block->block_size) {
+                            /* Should instead start reading from the doubly indirect block */
+                            break;
+                        }
+
+                        block_no = indirect_block[real_block_offset];
                     }
-
-                    block_no = ((struct raw_inode*) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX];
-                } else  {
-                    size_t real_block_offset = num_blocks - EXT2_SINGLY_INDIRECT_BLOCK_INDEX - 1;
-
-                    if (real_block_offset * sizeof(uint32_t) >= (size_t) inode->super_block->block_size) {
-                        /* Should instead start reading from the doubly indirect block */
-                        break;
-                    }
-
-                    block_no = indirect_block[real_block_offset];
                 }
+
+                if (block_no == 0) {
+                    break;
+                }
+
+                debug_log("Freeing block: [ %lu ]\n", block_no);
+                int ret = ext2_free_block(inode->super_block, block_no, false);
+                if (ret != 0) {
+                    return ret;
+                }
+
+                num_blocks++;
             }
 
-            if (block_no == 0) {
-                break;
+            if (indirect_block != NULL) {
+                ext2_free_blocks(indirect_block);
             }
 
-            debug_log("Freeing block: [ %lu ]\n", block_no);
-            int ret = ext2_free_block(inode->super_block, block_no, false);
+            /* Update bookkepping fields */
+            struct ext2_block_group *group = ext2_get_block_group(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
+            group->blk_desc->num_unallocated_blocks += num_blocks;
+            group->blk_desc->num_unallocated_inodes++;
+            if (inode->flags & FS_DIR) {
+                group->blk_desc->num_directories--;
+            }
+            int ret = ext2_sync_block_group(inode->super_block, group->index);
             if (ret != 0) {
                 return ret;
             }
 
-            num_blocks++;
+            struct ext2_sb_data *sb_data = inode->super_block->private_data;
+            sb_data->sb->num_unallocated_blocks += num_blocks;
+            sb_data->sb->num_unallocated_inodes++;
+
+            ret = ext2_sync_super_block(inode->super_block);
+            if (ret != 0) {
+                return ret;
+            }
+
+            /* Drop our reference to virtual inode so vfs deletes it once it has no open files */
+            inode->ref_count--;
+            return 0;
         }
 
-        if (indirect_block != NULL) {
-            ext2_free_blocks(indirect_block);
-        }
-
-        /* Update bookkepping fields */
-        struct ext2_block_group *group = ext2_get_block_group(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
-        group->blk_desc->num_unallocated_blocks += num_blocks;
-        group->blk_desc->num_unallocated_inodes++;
-        if (inode->flags & FS_DIR) {
-            group->blk_desc->num_directories--;
-        }
-        int ret = ext2_sync_block_group(inode->super_block, group->index);
-        if (ret != 0) {
-            return ret;
-        }
-
-        struct ext2_sb_data *sb_data = inode->super_block->private_data;
-        sb_data->sb->num_unallocated_blocks += num_blocks;
-        sb_data->sb->num_unallocated_inodes++;
-
-        ret = ext2_sync_super_block(inode->super_block);
-        if (ret != 0) {
-            return ret;
-        }
-
-        /* Drop our reference to virtual inode so vfs deletes it once it has no open files */
-        inode->ref_count--;
-        return 0;
+        /* Sync new link_count to disk */
+        return ext2_sync_inode(inode);
     }
 
-    /* Sync new link_count to disk */
-    return ext2_sync_inode(inode);
+    return 0;
+}
+
+int ext2_unlink(struct tnode *tnode) {
+    return __ext2_unlink(tnode, true);
 }
 
 int ext2_rmdir(struct tnode *tnode) {
@@ -1420,10 +1428,23 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
     }
 
     if (tnode->inode->flags & FS_DIR) {
-        return ext2_rmdir(tnode);
-    } else {
-        return ext2_unlink(tnode);
+        struct inode *parent = tnode->inode->parent->inode;
+        struct raw_inode *parent_raw_inode = parent->private_data;
+        
+        /* Drop .. reference */
+        spin_lock(&tnode->inode->parent->inode->lock);
+        parent_raw_inode->link_count--;
+        assert(parent_raw_inode->link_count > 0);
+
+        int ret = ext2_sync_inode(parent);
+        if (ret != 0) {
+            spin_unlock(&parent->lock);
+            return ret;
+        }
+        spin_unlock(&parent->lock);
     }
+
+    return __ext2_unlink(tnode, false);    
 }
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
