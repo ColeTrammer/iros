@@ -364,8 +364,13 @@ void arch_sys_execve(struct process_state *process_state) {
     /* Memset stack to zero so that process can use old one safely (only go until rsp because args are after it). */
     memset((void*) process_stack->start, 0, process->arch_process.process_state.stack_state.rsp - process_stack->start);
 
+    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
+    disable_interrupts();
+
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process_memory);
+
+    debug_log("Loading: [ %s ]\n", path);
 
     elf64_load_program(buffer, length, process);
     elf64_map_heap(buffer, process);
@@ -373,8 +378,6 @@ void arch_sys_execve(struct process_state *process_state) {
     free(path);
     free(buffer);
 
-    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
-    disable_interrupts();
 
     sched_remove_process(current);
     invalidate_last_saved(current);

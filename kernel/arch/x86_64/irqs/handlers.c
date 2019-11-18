@@ -59,6 +59,7 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
         assert(num_pages > 0);
         assert(extend_vm_region_start(current->process_memory, VM_PROCESS_STACK, num_pages) == 0);
         assert(vm_stack->start <= address);
+        debug_log("Vm region extended\n");
         for (size_t i = 0; i < num_pages; i++) {
             map_page(vm_stack->start + i * PAGE_SIZE, VM_NO_EXEC | VM_WRITE | VM_USER);
         }

@@ -72,13 +72,13 @@ $(BUILDDIR)/initrd/initrd.o: $(ROOT)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -Wno-stringop-truncation
 
 $(BUILDDIR)/%: $(ROOT)/%.S
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T $(ROOT)/initrd/programs/link.ld
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
 
 $(BUILDDIR)/%: $(ROOT)/%.c
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -T $(ROOT)/initrd/programs/link.ld
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
 
 $(BUILDDIR)/%: $(ROOT)/%.cpp
-	$(CXX) -MD -o $@ $< $(CPPFLAGS) -T $(ROOT)/initrd/programs/link.ld
+	$(CXX) -MD -o $@ $< $(CPPFLAGS)
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean
