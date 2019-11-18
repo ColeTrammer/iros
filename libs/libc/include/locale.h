@@ -1,7 +1,8 @@
 #ifndef _LOCALE_H
 #define _LOCALE_H 1
 
-#include <stddef.h>
+#include <bits/locale_t.h>
+#include <bits/null.h>
 
 #define LC_ALL 1
 #define LC_COLLATE 2

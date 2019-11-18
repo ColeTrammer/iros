@@ -1,8 +1,8 @@
 #ifndef _STRINGS_H
 #define _STRINGS_H 1
 
-#include <locale.h>
-#include <sys/types.h>
+#include <bits/locale_t.h>
+#include <bits/size_t.h>
 
 #ifdef __cplusplus
 extern "C" {

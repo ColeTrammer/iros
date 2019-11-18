@@ -1,7 +1,9 @@
 #ifndef _SYS_WAIT_H
 #define _SYS_WAIT_H 1
 
-#include <sys/types.h>
+#include <bits/id_t.h>
+#include <bits/pid_t.h>
+#include <signal.h>
 
 #define WCONTINUED 1
 #define WNOHANG 2

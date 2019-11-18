@@ -1,8 +1,9 @@
 #ifndef _SYS_TIME_H
 #define _SYS_TIME_H 1
 
+#include <bits/suseconds_t.h>
+#include <bits/time_t.h>
 #include <sys/select.h>
-#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,7 +1,7 @@
 #ifndef _GLOB_H
 #define _GLOB_H 1
 
-#include <sys/types.h>
+#include <bits/size_t.h>
 
 #define GLOB_APPEND   1
 #define GLOB_DOOFFS   2

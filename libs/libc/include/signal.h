@@ -1,7 +1,10 @@
 #ifndef _SIGNAL_H
 #define _SIGNAL_H 1
 
-#include <sys/types.h>
+#include <bits/pthread_attr_t.h>
+#include <bits/pthread_t.h>
+#include <bits/size_t.h>
+#include <bits/uid_t.h>
 #include <time.h>
 
 #define SIGHUP    1

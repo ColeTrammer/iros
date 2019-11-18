@@ -1,7 +1,9 @@
 #ifndef _SYS_MMAN_H
 #define _SYS_MMAN_H 1
 
-#include <sys/types.h>
+#include <bits/mode_t.h>
+#include <bits/off_t.h>
+#include <bits/size_t.h>
 
 #define PROT_NONE  0
 #define PROT_EXEC  1

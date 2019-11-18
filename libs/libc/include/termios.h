@@ -1,6 +1,8 @@
 #ifndef _TERMIOS_H
 #define _TERMIOS_H 1
 
+#include <bits/pid_t.h>
+
 #define NCCS 11
 
 #define VEOF 0

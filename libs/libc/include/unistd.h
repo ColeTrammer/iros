@@ -1,11 +1,16 @@
 #ifndef _UNISTD_H
 #define _UNISTD_H 1
 
-#include <sys/types.h>
+#include <bits/gid_t.h>
+#include <bits/null.h>
+#include <bits/off_t.h>
+#include <bits/pid_t.h>
+#include <bits/size_t.h>
+#include <bits/ssize_t.h>
+#include <bits/uid_t.h>
 #include <stddef.h>
-#include <stdbool.h>
 #include <stdint.h>
-#include <signal.h>
+#include <stdio.h>
 
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1

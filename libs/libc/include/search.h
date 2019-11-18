@@ -1,7 +1,7 @@
 #ifndef _SEARCH_H
 #define _SEARCH_H 1
 
-#include <sys/types.h>
+#include <bits/size_t.h>
 
 #ifdef __cplusplus
 extern "C" {

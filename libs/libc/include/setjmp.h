@@ -1,17 +1,14 @@
 #ifndef _SETJMP_H
 #define _SETJMP_H 1
 
-#include <stdint.h>
-#include <signal.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
 struct __jmp_buf {
-    uint64_t registers[8]; // 7 Saved for SYS V ABI and 1 for RIP
+    unsigned long registers[8]; // 7 Saved for SYS V ABI and 1 for RIP
     int is_mask_saved;
-    sigset_t mask;
+    unsigned int mask;
 };
 
 typedef struct __jmp_buf jmp_buf[1];

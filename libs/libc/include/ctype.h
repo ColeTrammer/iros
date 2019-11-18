@@ -1,6 +1,8 @@
 #ifndef _CTYPE_H
 #define _CTYPE_H 1
 
+#include <bits/locale_t.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

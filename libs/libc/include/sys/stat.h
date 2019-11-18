@@ -1,7 +1,15 @@
 #ifndef _SYS_STAT_H
 #define _SYS_STAT_H 1
 
-#include <sys/types.h>
+#include <bits/blkcnt_t.h>
+#include <bits/blksize_t.h>
+#include <bits/dev_t.h>
+#include <bits/gid_t.h>
+#include <bits/ino_t.h>
+#include <bits/mode_t.h>
+#include <bits/nlink_t.h>
+#include <bits/off_t.h>
+#include <bits/uid_t.h>
 #include <time.h>
 
 #define S_IFMT (~0xFFFU)

@@ -1,19 +1,17 @@
 #ifndef _STDIO_H
 #define _STDIO_H 1
 
-#include <stdarg.h>
+#include <bits/off_t.h>
+#include <bits/seek_constants.h>
+#include <bits/ssize_t.h>
+#include <bits/va_list.h>
 #include <stddef.h>
-#include <sys/types.h>
 
 #define BUFSIZ 0x1000
 
 #define _IOFBF 0
 #define _IOLBF 1
 #define _IONBF 2
-
-#define SEEK_SET (0)
-#define SEEK_CUR (1)
-#define SEEK_END (2)
 
 #define FOPEN_MAX 16
 

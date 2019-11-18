@@ -1,7 +1,7 @@
 #ifndef _NETDB_H
 #define _NETDB_H 1
 
-#include <sys/socket.h>
+#include <netinet/in.h>
 
 #define EAI_NONAME -1
 #define EAI_FAMILY -2

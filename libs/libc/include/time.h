@@ -1,11 +1,19 @@
 #ifndef _TIME_H
 #define _TIME_H 1
 
-#include <sys/types.h>
+#include <bits/clock_t.h>
+#include <bits/clockid_t.h>
+#include <bits/locale_t.h>
+#include <bits/pid_t.h>
+#include <bits/size_t.h>
+#include <bits/time_t.h>
+#include <bits/timer_t.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+
+struct sigevent;
 
 struct tm {
     int tm_sec;

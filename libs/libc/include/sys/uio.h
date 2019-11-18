@@ -1,7 +1,8 @@
 #ifndef _SYS_UIO_H
 #define _SYS_UIO_H 1
 
-#include <sys/types.h>
+#include <bits/size_t.h>
+#include <bits/ssize_t.h>
 
 #ifdef __cplusplus
 extern "C" {

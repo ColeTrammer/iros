@@ -1,7 +1,7 @@
 #ifndef _DIRENT_H
 #define _DIRENT_H 1
 
-#include <sys/types.h>
+#include <bits/ino_t.h>
 
 #define NAME_MAX 255
 

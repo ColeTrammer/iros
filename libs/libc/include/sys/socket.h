@@ -1,7 +1,10 @@
 #ifndef _SYS_SOCKET_H
 #define _SYS_SOCKET_H 1
 
-#include <sys/types.h>
+#include <bits/sa_family_t.h>
+#include <bits/size_t.h>
+#include <bits/ssize_t.h>
+#include <sys/uio.h>
 
 #define SOCK_TYPE_MASK 0xFF
 #define SOCK_DGRAM     1
@@ -28,7 +31,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef unsigned short sa_family_t;
+#define __socklen_t_defined
+#define __socklen_t unsigned int
+typedef __socklen_t socklen_t;
 
 struct sockaddr {
     sa_family_t sa_family;

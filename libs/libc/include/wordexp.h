@@ -1,7 +1,7 @@
 #ifndef _WORDEXP_H
 #define _WORDEXP_H 1
 
-#include <stddef.h>
+#include <bits/size_t.h>
 
 #define WRDE_APPEND  1
 #define WRDE_DOOFFS  2

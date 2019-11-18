@@ -1,7 +1,9 @@
 #ifndef _PWD_H
 #define _PWD_H 1
 
-#include <sys/types.h>
+#include <bits/gid_t.h>
+#include <bits/size_t.h>
+#include <bits/uid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

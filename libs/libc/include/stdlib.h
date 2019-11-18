@@ -2,7 +2,11 @@
 #define _STDLIB_H 1
 
 #include <alloca.h>
+#include <bits/locale_t.h>
+#include <limits.h>
+#include <math.h>
 #include <stddef.h>
+#include <sys/wait.h>
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
