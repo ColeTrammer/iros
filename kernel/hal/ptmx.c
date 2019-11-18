@@ -110,8 +110,8 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
         signal_process_group(get_current_process()->pgid, SIGTTOU);
     }
 
+    size_t save_len = len;
     if (data->config.c_oflag & OPOST) {
-        size_t save_len = len;
         for (size_t i = 0; i < save_len; i++) {
             if (((const char*) buf)[i] == '\n') {
                 len++;
@@ -155,7 +155,7 @@ slave_write_again:
     message->len += len;
 
     spin_unlock(&mdata->lock);
-    return (ssize_t) len;
+    return (ssize_t) save_len;
 }
 
 static int slave_close(struct device *device) {
