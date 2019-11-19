@@ -263,7 +263,10 @@ int fclose(FILE *stream) {
     if (stream->buffer != NULL && stream->flags & STDIO_OWNED) {
         free(stream->buffer);
     }
-    free(stream);
+
+    if (stream != stdin && stream != stdout && stream != stderr) {
+        free(stream);
+    }
     return 0;
 }
 

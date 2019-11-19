@@ -36,7 +36,7 @@ DIR *opendir(const char *path) {
 
 struct dirent *readdir(DIR *dir) {
     ssize_t ret = read(dir->fd, &dir->entry, sizeof(struct dirent));
-    if (ret < 0) {
+    if (ret <= 0) {
         return NULL;
     }
 

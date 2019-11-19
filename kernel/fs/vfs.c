@@ -292,9 +292,8 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
             mount = mount->next;
         }
 
-        /* Should sent an error that indicates there's no more to read (like EOF) */
         spin_unlock(&inode->lock);
-        return -EINVAL;
+        return 0;
     }
 
     file->position++;
@@ -956,7 +955,7 @@ int fs_fcntl(struct file *file, int command, int arg) {
         case F_GETFL:
             return file->open_flags;
         case F_SETFL:
-            debug_log("fcntl: f_setfl\n");
+            debug_log("fcntl: f_setfl: [ %#.8X ]\n", (unsigned int) arg);
             // FIXME: this should do validity checks and update the files capabilites
             file->open_flags = arg;
             return 0;

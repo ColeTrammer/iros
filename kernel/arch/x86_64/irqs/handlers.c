@@ -50,7 +50,7 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
     // FIXME: the error code pushed to the stack ruins the process_state struct
     // FIXME: need to save process state here in case a signal handler is called and returned
     struct process *current = get_current_process();
-    // debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, address, error);
+    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, address, error);
 
     (void) process_state;
     (void) address;
