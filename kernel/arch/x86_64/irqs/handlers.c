@@ -50,7 +50,11 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
     // FIXME: the error code pushed to the stack ruins the process_state struct
     // FIXME: need to save process state here in case a signal handler is called and returned
     struct process *current = get_current_process();
-    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, address, error);
+    // debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, address, error);
+
+    (void) process_state;
+    (void) address;
+    (void) error;
 
     // In this case we just extend the stack
     struct vm_region *vm_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
@@ -59,22 +63,21 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
         assert(num_pages > 0);
         assert(extend_vm_region_start(current->process_memory, VM_PROCESS_STACK, num_pages) == 0);
         assert(vm_stack->start <= address);
-        debug_log("Vm region extended\n");
         for (size_t i = 0; i < num_pages; i++) {
             map_page(vm_stack->start + i * PAGE_SIZE, VM_NO_EXEC | VM_WRITE | VM_USER);
         }
         return;
     }
 
-    if (vm_stack && !current->kernel_process && !current->in_kernel) {
-        signal_process(current->pid, SIGSEGV);
-    }
+    // if (vm_stack && !current->kernel_process && !current->in_kernel) {
+    //     signal_process(current->pid, SIGSEGV);
+    // }
 
     // We shouldn't get here unless SIGSEGV is blocked???
-    dump_registers_to_screen();
-    printf("\n\033[31m%s: Error %lX\n", "Page Fault", error);
-    printf("Address: %#.16lX\n", address);
-    printf("Process: %d\033[0m\n", get_current_process()->pid);
+    // dump_registers_to_screen();
+    // printf("\n\033[31m%s: Error %lX\n", "Page Fault", error);
+    // printf("Address: %#.16lX\n", address);
+    // printf("Process: %d\033[0m\n", get_current_process()->pid);
     abort();
 }
 

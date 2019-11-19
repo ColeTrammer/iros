@@ -29,11 +29,11 @@ static struct super_block_operations s_op = {
 };
 
 static struct inode_operations ext2_i_op = {
-    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL, &ext2_unlink, NULL, &ext2_chmod, NULL
+    NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL, &ext2_unlink, NULL, &ext2_chmod, NULL, NULL
 };
 
 static struct inode_operations ext2_dir_i_op = {
-    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL, &ext2_mkdir, NULL, &ext2_rmdir, &ext2_chmod, NULL
+    &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat, NULL, &ext2_mkdir, NULL, &ext2_rmdir, &ext2_chmod, NULL, NULL
 };
 
 static struct file_operations ext2_f_op = {
@@ -966,6 +966,7 @@ static ssize_t __ext2_read(struct file *file, void *buffer, size_t len) {
             if (double_indirect_block_offset == -1) {
                 block_no = indirect_block[real_block_offset];
             } else {
+                assert((size_t) double_indirect_block_offset < inode->super_block->block_size / sizeof(uint32_t));
                 block_no = indirect_block[real_block_offset - (double_indirect_block_offset + 1) * ((size_t) inode->super_block->block_size) / sizeof(uint32_t)];
             }
         }

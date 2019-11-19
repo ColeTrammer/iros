@@ -31,7 +31,7 @@ uint64_t elf64_get_size(void *buffer) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr*) (((uintptr_t) buffer) + elf_header->e_phoff);
     
-    assert(elf_header->e_phnum == 2);
+    assert(elf_header->e_phnum >= 2);
     return program_headers[1].p_memsz - program_headers[0].p_vaddr;
 }
 
@@ -41,12 +41,14 @@ void elf64_load_program(void *buffer, size_t length, struct process *process) {
 
     for (int i = 0; i < elf_header->e_phnum; i++) {
         uintptr_t program_section_start = program_headers[i].p_vaddr;
+        if (program_section_start == 0) {
+            continue;
+        }
+
         assert(program_section_start < ((uintptr_t) buffer) + length);
 
         uintptr_t program_section_end = program_section_start + program_headers[i].p_memsz;
         uint64_t program_flags = program_headers[i].p_flags == 0x5 ? (VM_USER) : (VM_NO_EXEC | VM_WRITE | VM_USER);
-
-        debug_log("Program header: [ %#.16lX, %#.16lX, %#.16lX ]\n", program_headers[i].p_vaddr, program_headers[i].p_filesz, program_headers[i].p_memsz);
 
         struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
         to_add->start = program_section_start & ~0xFFFULL;

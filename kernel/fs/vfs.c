@@ -148,7 +148,7 @@ int fs_create(const char *file_name, mode_t mode) {
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
-    if (!tparent->inode->tnode_list || find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+    if (tparent->inode->tnode_list && find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
         free(path);
         return -EEXIST;
     }
@@ -533,10 +533,15 @@ int fs_unlink(const char *path) {
     /* Only delete inode if it's refcount is zero */
     inode->ref_count--;
     if (inode->ref_count <= 0) {
+        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+        if (inode->i_op->on_inode_destruction) {
+            inode->i_op->on_inode_destruction(inode);
+        }
+
+        fs_inode_del(inode->device, inode->index);
+
         spin_unlock(&inode->lock);
 
-        /* Should call a inode specific free function (but is uneccessary right now) */
-        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
         free(inode);
         return 0;
     }
@@ -607,10 +612,14 @@ int fs_rmdir(const char *path) {
 
     inode->ref_count--;
     if (inode->ref_count <= 0) {
+        if (inode->i_op->on_inode_destruction) {
+            inode->i_op->on_inode_destruction(inode);
+        }
+        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+
+        fs_inode_del(inode->device, inode->index);
         spin_unlock(&inode->lock);
 
-        /* Should call a inode specific free function (but is uneccessary right now) */
-        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
         free_tnode_list_and_tnodes(inode->tnode_list);
         free(inode);
         return 0;
@@ -732,8 +741,11 @@ int fs_rename(char *old_path, char *new_path) {
         /* Only delete inode if it's refcount is zero */
         inode->ref_count--;
         if (inode->ref_count <= 0) {
-            /* Should call a inode specific free function (but is uneccessary right now) */
             debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+            if (inode->i_op->on_inode_destruction) {
+                inode->i_op->on_inode_destruction(inode);
+            }
+            fs_inode_del(inode->device, inode->index);
             free(inode);
         }
 
@@ -945,8 +957,12 @@ void init_vfs() {
     assert(error == 0);
 
     // Mount tmpfs at /tmp
-    // error = fs_mount("", "/tmp", "tmpfs");
-    // assert(error == 0);
+    error = fs_mount("", "/tmp", "tmpfs");
+    assert(error == 0);
+
+    // Mount tmpfs at /dev/shm
+    error = fs_mount("", "/dev/shm", "tmpfs");
+    assert(error == 0);
 }
 
 char *get_full_path(char *cwd, const char *relative_path) {

@@ -79,7 +79,7 @@ int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen
     }
 
     int ret = fs_create(data->bound_path, S_IFSOCK | 0666);
-    if (ret == -1) {
+    if (ret < 0) {
         free(data);
         return ret;
     }
