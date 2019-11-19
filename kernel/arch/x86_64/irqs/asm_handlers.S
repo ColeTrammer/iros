@@ -197,3 +197,7 @@ sys_call_table:
     .quad arch_sys_mmap
     .quad arch_sys_munmap
     .quad arch_sys_rename
+    .quad arch_sys_fcntl
+    .quad arch_sys_fstat
+    .quad arch_sys_alarm
+    .quad arch_sys_fchmod

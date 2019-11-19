@@ -19,6 +19,7 @@
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/hal/output.h>
+#include <kernel/proc/process.h>
 
 static struct file_system *file_systems;
 static struct mount *root;
@@ -210,6 +211,8 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
     init_spinlock(&file->lock);
     file->ref_count = 1;
     file->abilities = 0;
+    file->fd_flags = 0;
+    file->open_flags = flags;
     if (flags & O_RDWR) {
         file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
     } else if (flags & O_RDONLY) {
@@ -917,6 +920,71 @@ int fs_access(const char *path, int mode) {
     }
 
     return 0;
+}
+
+int fs_fcntl(struct file *file, int command, int arg) {
+    assert(file);
+
+    switch (command) {
+        case F_DUPFD_CLOEXEC:
+            file->fd_flags |= FD_CLOEXEC;
+            // Fall through
+        case F_DUPFD: {
+            struct process *current = get_current_process();
+            if (arg < 0 || arg > FOPEN_MAX) {
+                return -EINVAL;
+            }
+
+            for (int i = arg; i < FOPEN_MAX; i++) {
+                if (current->files[i] == NULL) {
+                    current->files[i] = fs_dup(file);
+                    return i;
+                }
+            }
+
+            return -EMFILE;
+        }
+        case F_GETFD:
+            return file->fd_flags;
+        case F_SETFD:
+            if (arg == 0 || arg == FD_CLOEXEC) {
+                file->fd_flags = arg;
+                return 0;
+            }
+
+            return -EINVAL;
+        case F_GETFL:
+            return file->open_flags;
+        case F_SETFL:
+            debug_log("fcntl: f_setfl\n");
+            // FIXME: this should do validity checks and update the files capabilites
+            file->open_flags = arg;
+            return 0;
+        default:
+            return -EINVAL;
+    }
+}
+
+int fs_fstat(struct file *file, struct stat *stat_struct) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    if (inode->i_op->stat) {
+        return inode->i_op->stat(inode, stat_struct);
+    }
+
+    return -EPERM;
+}
+
+int fs_fchmod(struct file *file, mode_t mode) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    if (inode->i_op->chmod) {
+        return inode->i_op->chmod(inode, mode);
+    }
+
+    return -EPERM;
 }
 
 // NOTE: we don't have to write out to disk, because we only loose info

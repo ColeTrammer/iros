@@ -69,15 +69,15 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
         return;
     }
 
-    // if (vm_stack && !current->kernel_process && !current->in_kernel) {
-    //     signal_process(current->pid, SIGSEGV);
-    // }
+    if (vm_stack && !current->kernel_process && !current->in_kernel) {
+        signal_process(current->pid, SIGSEGV);
+    }
 
     // We shouldn't get here unless SIGSEGV is blocked???
-    // dump_registers_to_screen();
-    // printf("\n\033[31m%s: Error %lX\n", "Page Fault", error);
-    // printf("Address: %#.16lX\n", address);
-    // printf("Process: %d\033[0m\n", get_current_process()->pid);
+    dump_registers_to_screen();
+    printf("\n\033[31m%s: Error %lX\n", "Page Fault", error);
+    printf("Address: %#.16lX\n", address);
+    printf("Process: %d\033[0m\n", get_current_process()->pid);
     abort();
 }
 

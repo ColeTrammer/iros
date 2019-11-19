@@ -15,6 +15,7 @@
 #include <kernel/proc/pid.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/sched/process_sched.h>
+#include <kernel/fs/file.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/process_state.h>
 #include <kernel/net/socket.h>
@@ -308,8 +309,13 @@ void arch_sys_execve(struct process_state *process_state) {
 
     struct process *process = calloc(1, sizeof(struct process));
 
-    /* Dup open file descriptors (should close dirs and things marked with FD_CLOEXEC, but doesn't) */
+    // Dup open file descriptors
     for (size_t i = 0; i < FOPEN_MAX; i++) {
+        if (!current->files[i] || ((current->files[i]->fd_flags & FD_CLOEXEC) || (current->files[i]->flags & FS_DIR))) {
+            // NOTE: the files will be closed by the `free_process` function
+            continue;
+        }
+
         process->files[i] = fs_dup(current->files[i]);
     }
 
@@ -364,9 +370,6 @@ void arch_sys_execve(struct process_state *process_state) {
     /* Memset stack to zero so that process can use old one safely (only go until rsp because args are after it). */
     memset((void*) process_stack->start, 0, process->arch_process.process_state.stack_state.rsp - process_stack->start);
 
-    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
-    disable_interrupts();
-
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process_memory);
 
@@ -378,6 +381,8 @@ void arch_sys_execve(struct process_state *process_state) {
     free(path);
     free(buffer);
 
+    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
+    disable_interrupts();
 
     sched_remove_process(current);
     invalidate_last_saved(current);
@@ -1159,4 +1164,86 @@ void arch_sys_rename(struct process_state *process_state) {
     free(new_path);
 
     SYS_RETURN(ret);
+}
+
+void arch_sys_fcntl(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    int command = (int) process_state->cpu_state.rdx;
+    int arg = (int) process_state->cpu_state.rcx;
+
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
+
+    struct process *current = get_current_process();
+    struct file *file = current->files[fd];
+    if (file == NULL) {
+        SYS_RETURN(-EBADF);
+    }
+
+    SYS_RETURN(fs_fcntl(file, command, arg));
+}
+
+void arch_sys_fstat(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    struct stat *stat_struct = (struct stat*) process_state->cpu_state.rdx;
+
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
+
+    struct process *current = get_current_process();
+    struct file *file = current->files[fd];
+    if (file == NULL) {
+        SYS_RETURN(-EBADF);
+    }
+
+    SYS_RETURN(fs_fstat(file, stat_struct));
+}
+
+void arch_sys_alarm(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    unsigned int seconds = (unsigned int) process_state->cpu_state.rsi;
+
+
+    debug_log("Sleeping: [ %u ]\n", seconds);
+
+    struct process *current = get_current_process();
+
+    disable_interrupts();
+    current->sleeping = true;
+    current->sleep_end = get_time() + seconds * 1000;
+    current->sched_state = WAITING;
+    yield();
+
+    current->sleeping = false;
+
+    disable_interrupts();
+    current->can_send_self_signals = true;
+    signal_process(current->pid, SIGALRM);
+    SYS_RETURN(0);
+}
+
+void arch_sys_fchmod(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    int fd = (int) process_state->cpu_state.rsi;
+    mode_t mode = (mode_t) process_state->cpu_state.rdx;
+
+    if (fd < 0 || fd > FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
+
+    struct process *current = get_current_process();
+    struct file *file = current->files[fd];
+    if (file == NULL) {
+        SYS_RETURN(-EBADF);
+    }
+
+    SYS_RETURN(fs_fchmod(file, mode));
 }

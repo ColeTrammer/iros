@@ -22,4 +22,17 @@
 #include <bits/timer_t.h>
 #include <bits/uid_t.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __plusplus */
+
+typedef unsigned char u_char;
+typedef unsigned short u_short;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
 #endif /* _SYS_TYPES_H */

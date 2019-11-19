@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
 
@@ -34,7 +35,7 @@ void _exit(int status) {
 int open(const char *pathname, int flags, ...) {
     va_list parameters;
     va_start(parameters, flags); 
-    mode_t mode = va_arg(parameters, mode_t);
+    mode_t mode = flags & O_CREAT ? va_arg(parameters, mode_t) : 0;
     int ret;
     asm volatile( "movq $4, %%rdi\n"\
                   "movq %1, %%rsi\n"\
@@ -301,7 +302,29 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *old) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
-int getuid(void) {
+uid_t getuid(void) {
+    return 0;
+}
+
+uid_t geteuid(void) {
+    return 0;
+}
+
+gid_t getgid(void) {
+    return 0;
+}
+
+gid_t getegid(void) {
+    return 0;
+}
+
+int setuid(uid_t uid) {
+    (void) uid;
+    return 0;
+}
+
+int setgid(gid_t gid) {
+    (void) gid;
     return 0;
 }
 
@@ -519,5 +542,49 @@ int rename(const char *old, const char *new_path) {
                   "movq %2, %%rdx\n"\
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(old), "r"(new_path) : "rdi", "rsi", "rdx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int fcntl(int fd, int command, ...) {
+    int ret;
+    va_list args;
+    va_start(args, command);
+    int arg = command == F_GETFD || command == F_GETFL ? 0 : va_arg(args, int);
+    asm volatile( "movq $48, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "movl %3, %%ecx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(command), "r"(arg) : "rdi", "rsi", "rdx", "rcx", "rax", "memory" );
+    va_end(args);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int fstat(int fd, struct stat *stat_struct) {
+    int ret;
+    asm volatile( "movq $49, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movq %2, %%rdx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(stat_struct) : "rdi", "rsi", "rdx", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+unsigned int alarm(unsigned int seconds) {
+    unsigned int ret;
+    asm volatile( "movq $50, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(seconds) : "rdi", "rsi", "rax", "memory" );
+    return ret;
+}
+
+int fchmod(int fd, mode_t mode) {
+    int ret;
+    asm volatile( "movq $51, %%rdi\n"\
+                  "movl %1, %%esi\n"\
+                  "movl %2, %%edx\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(mode) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
