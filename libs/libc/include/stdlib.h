@@ -13,6 +13,8 @@
 
 #define RAND_MAX 32767
 
+#define MB_CUR_MAX 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -61,6 +63,9 @@ int system(const char *command);
 int posix_openpt(int flags);
 char *ptsname(int fd);
 int ptsname_r(int fd, char *buf, size_t buflen);
+
+int mblen(const char *s, size_t n);
+char *mktemp(char *t);
 
 int abs(int n);
 long labs(long n);

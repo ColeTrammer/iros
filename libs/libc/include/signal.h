@@ -118,6 +118,10 @@ int sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, con
 int sigwait(const sigset_t *__restrict set, int *__restrict sig);
 int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
 
+int sigblock(int mask);
+int sigsetmask(int mask);
+int siggetmask(void);
+
 #ifdef __libc_internal
 __attribute__((noreturn))
 void sigreturn(void);

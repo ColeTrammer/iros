@@ -62,13 +62,20 @@ struct stat {
     struct timespec st_atim;
     struct timespec st_mtim;
     struct timespec st_ctim;
+# define st_atime st_atim.tv_sec
+# define st_mtime st_mtim.tv_sec
+# define st_ctime st_ctim.tv_sec
     blksize_t st_blksize;
     blkcnt_t st_blocks;
 };
 
 int stat(const char *__restrict path, struct stat *__restrict stat_struct);
+int fstat(int fd, struct stat *stat_struct);
 int mkdir(const char *path, mode_t mode);
 int chmod(const char *pathname, mode_t mode);
+int fchmod(int fd, mode_t mode);
+mode_t umask(mode_t mask);
+int mknod(const char *pathname, mode_t mode, dev_t dev);
 
 #ifdef __cplusplus
 }

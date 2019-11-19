@@ -49,7 +49,16 @@
 extern "C" { 
 #endif /* __cplusplus */
 
+struct flock {
+    short l_type;
+    short l_whence;
+    off_t l_start;
+    off_t l_len;
+    pid_t l_pid;
+};
+
 int open(const char *pathname, int flags, ...);
+int fcntl(int fd, int cmd, ...);
 
 #ifdef __cplusplus
 }

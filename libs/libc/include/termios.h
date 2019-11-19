@@ -22,6 +22,7 @@
 #define ISTRIP 0000040
 #define ICRNL  0000400
 #define IXON   0002000
+#define INLCR  0004000
 
 #define OPOST  0000001
 
@@ -30,8 +31,12 @@
 #define ISIG   0000001
 #define ICANON 0000002
 #define ECHO   0000010
+#define ECHOK  0000020
+#define ECHONL 0000040
 #define TOSTOP 0000400
 #define IEXTEN 0100000
+
+#define PARENB 0
 
 #define TCSANOW 1
 #define TCSADRAIN 2

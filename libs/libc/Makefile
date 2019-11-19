@@ -74,7 +74,8 @@ $(BUILDDIR)/libs/libc/string/strpbrk.o \
 $(BUILDDIR)/libs/libc/string/strrchr.o \
 $(BUILDDIR)/libs/libc/string/strspn.o \
 $(BUILDDIR)/libs/libc/string/strstr.o \
-$(BUILDDIR)/libs/libc/string/strtok.o
+$(BUILDDIR)/libs/libc/string/strtok.o \
+$(BUILDDIR)/libs/libc/strings/strings.o
 
 # Lists objects used in 'hosted' enviornment
 HOSTEDOBJS=\

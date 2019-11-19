@@ -3,9 +3,10 @@
 
 #include <netinet/in.h>
 
-#define EAI_NONAME -1
-#define EAI_FAMILY -2
-#define EAI_SYSTEM -3
+#define EAI_NONAME  -1
+#define EAI_FAMILY  -2
+#define EAI_SYSTEM  -3
+#define EAI_SERVICE -4
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,6 +27,8 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service, con
 void freeaddrinfo(struct addrinfo *res);
 
 int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addrlen, char *__restrict host, socklen_t hostlen, char *__restrict serv, socklen_t servlen, int flags);
+
+const char *gai_strerror(int err);
 
 #ifdef __cplusplus
 }

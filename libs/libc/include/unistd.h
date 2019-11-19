@@ -32,6 +32,12 @@ void _exit(int status) __attribute__((__noreturn__));
 pid_t fork();
 pid_t getpid();
 uid_t getuid();
+gid_t getgid();
+uid_t geteuid();
+gid_t getegid();
+pid_t getppid();
+int setuid(uid_t uid);
+int setgid(gid_t gid);
 int setpgid(pid_t pid, pid_t pgid);
 pid_t getpgid(pid_t pid);
 char *getcwd(char *buf, size_t size);
@@ -60,6 +66,10 @@ int pipe(int pipefd[2]);
 int unlink(const char *pathname);
 int rmdir(const char *pathname);
 int access(const char *pathname, int mode);
+
+unsigned int alarm(unsigned int seconds);
+char *ttyname(int fd);
+int ttyname_r(int fd, char *buf, size_t buflen);
 
 char *getlogin(void);
 int getlogin_r(char *buf, size_t bufsize);

@@ -19,6 +19,10 @@
 #define AF_UNIX   3
 #define AF_LOCAL  AF_UNIX
 
+#define PF_UNSPEC AF_UNSPEC
+#define PF_UNIX   AF_UNIX
+#define PF_LOCAL  PF_UNIX
+
 #define SHUT_RD   1
 #define SHUT_RDWR 2
 #define SHUT_WR   3
