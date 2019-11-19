@@ -202,7 +202,7 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
         size_t i = 0;
 
         while (i < len) {
-            while (i < len && stream->pos < stream->length && data[stream->pos - start] != '\n' && data[stream->pos - start] != '\0') {
+            while (i < len && stream->pos < stream->length && data[i] != '\n') {
                 stream->buffer[stream->pos++] = data[i++];
             }
 
@@ -415,7 +415,13 @@ int fileno(FILE *stream) {
 }
 
 int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
-    free(stream->buffer);
+    if (stream->flags & STDIO_OWNED) {
+        free(stream->buffer);
+    }
+
+    if (buf == NULL) {
+        buf = malloc(size);
+    }
     stream->buffer = buf;
     stream->buf_type = mode;
     stream->length = size;
