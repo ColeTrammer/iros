@@ -1247,3 +1247,9 @@ void arch_sys_fchmod(struct process_state *process_state) {
 
     SYS_RETURN(fs_fchmod(file, mode));
 }
+
+void arch_sys_getppid(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    SYS_RETURN(get_current_process()->ppid);
+}

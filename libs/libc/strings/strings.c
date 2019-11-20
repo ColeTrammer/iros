@@ -39,3 +39,7 @@ int strncasecmp(const char *s1, const char *s2, size_t n) {
     }
     return i == n ? 0 : tolower(s1[i]) - tolower(s2[i]);
 }
+
+void bcopy(const void *src, void *dest, size_t n) {
+    memmove(dest, src, n);
+}

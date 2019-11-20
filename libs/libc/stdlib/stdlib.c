@@ -174,4 +174,36 @@ int ptsname_r(int fd, char *buf, size_t buflen) {
     return worked ? 0 : -1;
 }
 
+// We don't support anything other than plain ascii
+int mblen(const char *s, size_t n) {
+    (void) s;
+    (void) n;
+
+    return 1;
+}
+
+char *mktemp(char *s) {
+    size_t len = strlen(s);
+    if (len < 6) {
+        errno = EINVAL;
+        return s;
+    }
+
+    size_t start = len - 6;
+    bool first_attempt = false;
+    unsigned int seed = time(NULL);
+
+    for (; start < len; start++) {
+        if (first_attempt && s[start] != 'X') {
+            errno = EINVAL;
+            return s;
+        }
+
+        const char *possible_values = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        s[start] = possible_values[rand_r(&seed) % 52];
+    }
+
+    return s;
+}
+
 #endif /* __is_libk */

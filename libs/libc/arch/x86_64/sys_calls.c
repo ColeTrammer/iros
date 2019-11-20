@@ -1,11 +1,16 @@
 #define __libc_internal
 
+#include <assert.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/times.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -116,6 +121,13 @@ pid_t getpid() {
 }
 
 char *getcwd(char *buf, size_t size) {
+    if (buf == NULL) {
+        if (size == 0) {
+            size = 4096;
+        }
+        buf = malloc(size);
+    }
+
     char *ret;
     asm volatile( "movq $11, %%rdi\n"\
                   "movq %1, %%rsi\n"\
@@ -324,6 +336,16 @@ int setuid(uid_t uid) {
 }
 
 int setgid(gid_t gid) {
+    (void) gid;
+    return 0;
+}
+
+int seteuid(uid_t uid) {
+    (void) uid;
+    return 0;
+}
+
+int setegid(gid_t gid) {
     (void) gid;
     return 0;
 }
@@ -587,4 +609,45 @@ int fchmod(int fd, mode_t mode) {
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(fd), "r"(mode) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
+}
+
+pid_t getppid(void) {
+    pid_t ret;
+    asm volatile( "movq $52, %%rdi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : : "rdi", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+clock_t times(struct tms *buf) {
+    (void) buf;
+
+    fprintf(stderr, "times not supported\n");
+    assert(false);
+    return 0;
+}
+
+int gettimeofday(struct timeval *tv, void *tz) {
+    (void) tv;
+    (void) tz;
+
+    fprintf(stderr, "gettimeofday not supported\n");
+    return 0;
+}
+
+mode_t umask(mode_t mask) {
+    (void) mask;
+
+    fprintf(stderr, "umask not supported\n");
+    return 0;
+}
+
+int mknod(const char *path, mode_t mode, dev_t dev) {
+    (void) path;
+    (void) mode;
+    (void) dev;
+
+    fprintf(stderr, "mknod not supported\n");
+    assert(false);
+    return 0;
 }

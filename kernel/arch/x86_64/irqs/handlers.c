@@ -52,10 +52,6 @@ void handle_page_fault(struct process_state *process_state, uintptr_t address, u
     struct process *current = get_current_process();
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, address, error);
 
-    (void) process_state;
-    (void) address;
-    (void) error;
-
     // In this case we just extend the stack
     struct vm_region *vm_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
     if (vm_stack && !current->kernel_process && address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {

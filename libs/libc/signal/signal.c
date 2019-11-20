@@ -82,6 +82,24 @@ int sigismember(const sigset_t *set, int signum) {
     return *set & (1U << (signum - 1)) ? 1 : 0;
 }
 
+int siginterrupt(int sig, int flag) {
+    struct sigaction act;
+
+    if (sig <= 0 || sig >= _NSIG) {
+        errno = -EINVAL;
+        return -1;
+    }
+
+    sigaction(sig, NULL, &act);
+    if (flag == 0) {
+        act.sa_flags |= SA_RESTART;
+    } else {
+        act.sa_flags &= ~SA_RESTART;
+    }
+
+    return sigaction(sig, &act, NULL);
+}
+
 // Called from sigsetjmp assembly function after registers are set
 int __sigsetjmp(sigjmp_buf env, int val) {
     if (val) {

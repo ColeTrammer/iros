@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <pwd.h>
 
-void endpwend(void) {
+void endpwent(void) {
 
 }
 

@@ -100,3 +100,18 @@ int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addrlen, char 
 
     return EAI_NONAME;
 }
+
+const char *gai_strerror(int err) {
+    switch (err) {
+        case EAI_NONAME:
+            return "No name";
+        case EAI_FAMILY:
+            return "Bad address family";
+        case EAI_SYSTEM:
+            return "System error";
+        case EAI_SERVICE:
+            return "Service error";
+        default:
+            return "Invalid error";
+    }
+}

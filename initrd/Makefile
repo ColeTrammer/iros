@@ -7,7 +7,7 @@ LIBS?=
 # Include options that should always be set
 CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS)
-LDFLAFS:=$(LDFLAGS)
+LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
 LIBS:=$(LIBS) -lc
 
 # Sets directories for install if not already set

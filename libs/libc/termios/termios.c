@@ -1,3 +1,6 @@
+#include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <errno.h>
@@ -17,4 +20,14 @@ int tcsetattr(int fd, int optional_actions, const struct termios *termios_p) {
 
     errno = EINVAL;
     return -1;
+}
+
+int tcflow(int fd, int action) {
+    (void) fd;
+    (void) action;
+
+    fprintf(stderr, "tcflow not supported\n");
+
+    assert(false);
+    return 0;
 }

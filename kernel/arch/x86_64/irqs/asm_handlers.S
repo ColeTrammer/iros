@@ -201,3 +201,4 @@ sys_call_table:
     .quad arch_sys_fstat
     .quad arch_sys_alarm
     .quad arch_sys_fchmod
+    .quad arch_sys_getppid

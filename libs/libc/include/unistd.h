@@ -12,6 +12,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define _POSIX_VERSION 200809L
+#define _XOPEN_VERSION 700
+
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -38,6 +41,8 @@ gid_t getegid();
 pid_t getppid();
 int setuid(uid_t uid);
 int setgid(gid_t gid);
+int seteuid(uid_t uid);
+int setegid(gid_t gid);
 int setpgid(pid_t pid, pid_t pgid);
 pid_t getpgid(pid_t pid);
 char *getcwd(char *buf, size_t size);
