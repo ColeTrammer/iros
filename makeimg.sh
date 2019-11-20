@@ -10,7 +10,6 @@ mount -text2 /dev/loop100 mnt
 
 cp -r sysroot/* mnt
 mkdir -p mnt/home/eloc
-mkdir -p mnt/tmp
 mkdir -p mnt/etc
 touch mnt/etc/resolv.conf
 echo "localhost 127.0.0.1" >> mnt/etc/hosts

@@ -153,15 +153,20 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
 
     spin_lock(&inode->lock);
     if (data->contents == NULL) {
-        data->max = MAX(1024, len);
-        data->contents = malloc(1024);
+        data->max = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(data->contents);
+        assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
     }
 
     // FIXME: using realloc is very suspicous...
     if (file->position + len > inode->size) {
-        data->max = MAX(data->max + 1024, data->max + file->position + len);
-        data->contents = realloc(data->contents, data->max);
+        data->max = ((file->position + len - inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        char *save = data->contents;
+        data->contents = aligned_alloc(PAGE_SIZE, data->max);
+        assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
+        memcpy(data->contents, save, inode->size);
+        free(save);
     }
 
     memcpy(data->contents + file->position, buffer, len);

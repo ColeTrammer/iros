@@ -12,6 +12,7 @@
 #define __MALLOC_MAGIG_CHECK 0x2A8F30B241BFA759UL
 
 #ifdef __is_libk
+#include <kernel/hal/output.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 
@@ -56,7 +57,6 @@ static spinlock_t heap_lock = SPINLOCK_INITIALIZER;
 #endif /* __is_libk */
 
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
-#include <kernel/hal/output.h>
 #undef calloc
 void *calloc(size_t n, size_t sz, int line, const char *func) {
     debug_log("Calloc: [ %s, %d ]\n", func, line);
@@ -174,7 +174,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     while (block->size != 0) {
         assert(block->magic == __MALLOC_MAGIG_CHECK);
         if (IS_ALLOCATED(block)) {
-            if (((uintptr_t) (block + 1)) % alignment) {
+            if (((uintptr_t) (block + 1)) % alignment == 0) {
                 if (block->size >= n) {
                     SET_ALLOCATED(block);
                     last_allocated = block;
@@ -190,13 +190,14 @@ void *aligned_alloc(size_t alignment, size_t n) {
                     return block + 1;
                 }
 
-                continue;
+                goto aligned_alloc_next;
             }
 
             // FIXME: attempt to split a large block into smaller ones with alignment
-            continue;
+            goto aligned_alloc_next;
         }
 
+    aligned_alloc_next:
         block = NEXT_BLOCK(block);
     }
 
@@ -208,10 +209,11 @@ void *aligned_alloc(size_t alignment, size_t n) {
         heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) block) + size_needed - heap_end) * PAGE_SIZE;
     }
 
-    struct metadata *new_block = (struct metadata*) (((uintptr_t) block) + size_needed - n);
+    struct metadata *new_block = (struct metadata*) ((((uintptr_t) (block + 1)) + alignment - (((uintptr_t) (block + 1)) % alignment)) - sizeof(struct metadata));
     assert(((uintptr_t) (new_block + 1)) % alignment == 0);
 
-    PREV_BLOCK(block)->size = NEW_BLOCK_SIZE(((uintptr_t) (new_block + 1)) - ((uintptr_t) PREV_BLOCK(block)));
+    PREV_BLOCK(block)->size = ((uintptr_t) new_block) - ((uintptr_t) PREV_BLOCK(block)) - sizeof(struct metadata);
+    assert(NEXT_BLOCK(PREV_BLOCK(block)) == new_block);
     new_block->prev_size = PREV_BLOCK(block)->size;
     new_block->magic = __MALLOC_MAGIG_CHECK;
 
