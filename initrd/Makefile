@@ -41,6 +41,7 @@ $(BUILDDIR)/initrd/programs/queue_test \
 $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
+$(BUILDDIR)/initrd/programs/shared_memory_test \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/smart_pointer_test \
 $(BUILDDIR)/initrd/programs/string_test \
@@ -73,10 +74,10 @@ $(BUILDDIR)/initrd/initrd.o: $(ROOT)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -Wno-stringop-truncation
 
 $(BUILDDIR)/%: $(ROOT)/%.S
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAFS)
 
 $(BUILDDIR)/%: $(ROOT)/%.c
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS)
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAFS)
 
 $(BUILDDIR)/%: $(ROOT)/%.cpp
 	$(CXX) -MD -o $@ $< $(CPPFLAGS)
