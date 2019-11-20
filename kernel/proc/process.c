@@ -215,6 +215,8 @@ struct process *get_current_process() {
 
 /* Must be called from unpremptable context */
 void free_process(struct process *process, bool free_paging_structure) {
+    struct process *current_save = current_process;
+    current_process = process;
     arch_free_process(process, free_paging_structure);
 
     free(process->cwd);
@@ -231,10 +233,6 @@ void free_process(struct process *process, bool free_paging_structure) {
     region = process->process_memory;
     while (region != NULL) {
         struct vm_region *temp = region->next;
-        if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-            fs_munmap((void*) region->start, region->end);
-        }
-
         free(region);
         region = temp;
     }
@@ -246,6 +244,7 @@ void free_process(struct process *process, bool free_paging_structure) {
     }
 
     free(process);
+    current_process = current_save;
 }
 
 void proc_set_sig_pending(struct process *process, int signum) {

@@ -36,7 +36,7 @@ int shm_unlink(const char *name) {
     }
 
     char *path = shm_full_path(name);
-    int ret = unlink(name);
+    int ret = unlink(path);
 
     free(path);
     return ret;

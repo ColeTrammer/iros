@@ -156,6 +156,7 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
     if (data->contents == NULL) {
         data->max = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
+        debug_log("data->contents: [ %#.16lX ]\n", (uintptr_t) data->contents);
         assert(data->contents);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
     }
@@ -233,8 +234,6 @@ int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_na
 static uintptr_t joke_allocator = 0x10000000000ULL;
 
 intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
-    debug_log("tmp mmap called\n");
-
     if (offset != 0 || !(flags & MAP_SHARED) || len > inode->size || len == 0) {
         return -EINVAL;
     }
@@ -259,34 +258,14 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     region->backing_inode = inode;
 
     struct process *current = get_current_process();
-
-{
-    struct vm_region *_region = current->process_memory;
-    while (_region) {
-        debug_log("Region __: [ %#.16lX, %#.16lX ]\n", _region->start, _region->end);
-        _region = _region->next;
-    }
-}
-
     current->process_memory = add_vm_region(current->process_memory, region);
-
-{
-    struct vm_region *_region = current->process_memory;
-    while (_region) {
-        debug_log("__ Region: [ %#.16lX, %#.16lX ]\n", _region->start, _region->end);
-        _region = _region->next;
-    }
-}
 
     debug_log("region: [ %#.16lX, %#.16lX ]\n", region->start, region->end);
 
     struct tmp_data *data = inode->private_data;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
-        debug_log("MAP: [ %#.16lX ]\n", i);
         map_phys_page(get_phys_addr((uintptr_t) data->contents) + i - region->start, i, region->flags);
     }
-
-    debug_log("Finished\n");
 
     return (intptr_t) addr;
 }
@@ -294,6 +273,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 void tmp_on_inode_destruction(struct inode *inode) {
     struct tmp_data *data = inode->private_data;
     if (data) {
+        debug_log("Freeing tmp data: [ %#.16lX ]\n", (uintptr_t) data->contents);
         free(data->contents);
         free(data);
     }

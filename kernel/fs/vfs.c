@@ -202,6 +202,7 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
 
     spin_lock(&tnode->inode->lock);
     tnode->inode->ref_count++;
+    debug_log("Ref count: [ %d ]\n", tnode->inode->ref_count);
     spin_unlock(&tnode->inode->lock);
 
     struct file *file = tnode->inode->i_op->open(tnode->inode, flags, error);
@@ -234,6 +235,7 @@ int fs_close(struct file *file) {
     if (inode) {
         spin_lock(&inode->lock);
         inode->ref_count--;
+        debug_log("Ref count: [ %d ]\n", inode->ref_count);
         spin_unlock(&inode->lock);
     }
 
@@ -503,6 +505,8 @@ int fs_create_pipe(struct file *pipe_files[2]) {
 int fs_unlink(const char *path) {
     assert(path);
 
+    debug_log("Unlinking: [ %s ]\n", path);
+
     struct tnode *tnode = iname(path);
     if (tnode == NULL) {
         return -ENOENT;
@@ -535,6 +539,7 @@ int fs_unlink(const char *path) {
 
     /* Only delete inode if it's refcount is zero */
     inode->ref_count--;
+    debug_log("Ref count: [ %d ]\n", inode->ref_count);
     if (inode->ref_count <= 0) {
         debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
         if (inode->i_op->on_inode_destruction) {
@@ -614,6 +619,7 @@ int fs_rmdir(const char *path) {
     free(tnode);
 
     inode->ref_count--;
+    debug_log("ref count: [ %d ]\n", inode->ref_count);
     if (inode->ref_count <= 0) {
         if (inode->i_op->on_inode_destruction) {
             inode->i_op->on_inode_destruction(inode);
@@ -665,6 +671,7 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
     if (inode->i_op->mmap) {
         spin_lock(&inode->lock);
         inode->ref_count++;
+        debug_log("ref count: [ %d ]\n", inode->ref_count);
         spin_unlock(&inode->lock);
         return inode->i_op->mmap(addr, len, prot, flags, inode, offset);
     }
@@ -683,8 +690,6 @@ int fs_munmap(void *addr, size_t len) {
         return -EINVAL;
     }
 
-    debug_log("Found region with bound inode: [ %#.16lX ]\n", (uintptr_t) region->backing_inode);
-
     struct inode *inode = region->backing_inode;
     assert(inode);
 
@@ -692,6 +697,7 @@ int fs_munmap(void *addr, size_t len) {
 
     /* Only delete inode if it's refcount is zero */
     inode->ref_count--;
+    debug_log("Ref count: [ %d ]\n", inode->ref_count);
     if (inode->ref_count <= 0) {
         debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
         if (inode->i_op->on_inode_destruction) {
@@ -781,6 +787,7 @@ int fs_rename(char *old_path, char *new_path) {
 
         /* Only delete inode if it's refcount is zero */
         inode->ref_count--;
+        debug_log("ref count: [ %d ]\n", inode->ref_count);
         if (inode->ref_count <= 0) {
             debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
             if (inode->i_op->on_inode_destruction) {
@@ -927,6 +934,7 @@ struct file *fs_clone(struct file *file) {
 
     spin_lock(&inode->lock);
     inode->ref_count++;
+    debug_log("Ref count: [ %d ]\n", inode->ref_count);
     spin_unlock(&inode->lock);
 
     return new_file;

@@ -161,7 +161,6 @@ void *aligned_alloc(size_t alignment, size_t n) {
         heap_end = ((uintptr_t) start) + NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)) * PAGE_SIZE;
         start->prev_size = 0;
         start->size = n;
-        SET_ALLOCATED(start);
         start->magic = __MALLOC_MAGIG_CHECK;
 
         start = NEXT_BLOCK(start);

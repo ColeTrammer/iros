@@ -235,7 +235,6 @@ struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
     struct vm_region *region = get_current_process()->process_memory;
 
     while (region) {
-        debug_log("Region: [ %#.16lX, %#.16lX, %#.16lX ]\n", region->start, region->end, addr);
         if (region->start <= addr && addr <= region->end) {
             return region;
         }
@@ -261,6 +260,14 @@ struct vm_region *clone_process_vm() {
     while (region != NULL) {
         struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
         memcpy(to_add, region, sizeof(struct vm_region));
+
+        if (to_add->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+            struct inode *inode = to_add->backing_inode;
+            spin_lock(&inode->lock);
+            inode->ref_count++;
+            spin_unlock(&inode->lock);
+        }
+
         new_list = add_vm_region(new_list, to_add);
         region = region->next;
     }

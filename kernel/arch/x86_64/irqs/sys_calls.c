@@ -149,6 +149,12 @@ void arch_sys_open(struct process_state *process_state) {
 
     struct file *file = fs_open(path, flags, &error);
 
+    if (file && (flags & O_EXCL)) {
+        free(path);
+        fs_close(file);
+        SYS_RETURN(-EEXIST);
+    }
+
     if (file == NULL) {
         if (flags & O_CREAT) {
             debug_log("Creating file: [ %s ]\n", path);
