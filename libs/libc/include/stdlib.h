@@ -92,6 +92,13 @@ void *malloc(size_t size);
 #endif /* (__is_kernel || __is_libk) && KERNEL_MALLOC_DEBUG */
 
 #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
+void *aligned_alloc(size_t alignment, size_t size, int line, const char *func);
+#define aligned_alloc(al, sz) aligned_alloc(al, sz, __LINE__, __func__)
+#else
+void *aligned_alloc(size_t alignment, size_t size);
+#endif /* (__is_kernel || __is_libk) && KERNEL_MALLOC_DEBUG */
+
+#if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
 void *calloc(size_t nmemb, size_t size, int line, const char *func);
 #define calloc(n, sz) calloc(n, sz, __LINE__, __func__)
 #else

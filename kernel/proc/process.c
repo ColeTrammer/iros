@@ -8,6 +8,7 @@
 
 #include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/elf64.h>

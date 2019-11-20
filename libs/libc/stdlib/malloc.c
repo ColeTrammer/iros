@@ -1,9 +1,11 @@
+#include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/param.h>
 
 #include <kernel/mem/page.h>
 
@@ -125,6 +127,114 @@ void free(void *p) {
     spin_unlock(&heap_lock);
 #endif /* __is_libk */
 }
+
+#if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
+#undef aligned_alloc
+void *aligned_alloc(size_t alignment, size_t size, int line, const char *func) {
+    debug_log("Aligned alloc: [ %s, %d ]\n", func, line);
+
+    struct metadata *_block = start;
+    while (_block != NULL && _block->size != 0) {
+        assert(_block->magic == __MALLOC_MAGIG_CHECK);
+        _block = NEXT_BLOCK(_block);
+    }
+}
+#else
+void *aligned_alloc(size_t alignment, size_t n) {
+    if (n == 0) {
+        return NULL;
+    }
+
+    if ((alignment & (alignment - 1)) || (alignment % sizeof(void*) != 0)) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    n = MAX(n, 16);
+
+#ifdef __is_libk
+    spin_lock(&heap_lock);
+#endif /* __is_libk */
+
+    if (!start) {
+        start = sbrk(NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)));
+        heap_end = ((uintptr_t) start) + NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)) * PAGE_SIZE;
+        start->prev_size = 0;
+        start->size = n;
+        SET_ALLOCATED(start);
+        start->magic = __MALLOC_MAGIG_CHECK;
+
+        start = NEXT_BLOCK(start);
+        start->prev_size = n;
+        start->magic = __MALLOC_MAGIG_CHECK;
+        start = PREV_BLOCK(start);
+    }
+
+    struct metadata *block = start;
+    while (block->size != 0) {
+        assert(block->magic == __MALLOC_MAGIG_CHECK);
+        if (IS_ALLOCATED(block)) {
+            if (((uintptr_t) (block + 1)) % alignment) {
+                if (block->size >= n) {
+                    SET_ALLOCATED(block);
+                    last_allocated = block;
+
+#ifdef __is_libk
+                    spin_unlock(&heap_lock);
+#endif /* __is_libk */
+
+#if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
+                    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) block, __LINE__);
+#endif /* KERNEL_MALLOC_DEBUG && __is_libk */
+
+                    return block + 1;
+                }
+
+                continue;
+            }
+
+            // FIXME: attempt to split a large block into smaller ones with alignment
+            continue;
+        }
+
+        block = NEXT_BLOCK(block);
+    }
+
+    size_t size_needed = (((uintptr_t) (block + 1)) % alignment) + n;
+    assert(block != start);
+
+    if (heap_end <= ((uintptr_t) block) + size_needed + sizeof(struct metadata)) {
+        sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) block) + size_needed - heap_end));
+        heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) block) + size_needed - heap_end) * PAGE_SIZE;
+    }
+
+    struct metadata *new_block = (struct metadata*) (((uintptr_t) block) + size_needed - n);
+    assert(((uintptr_t) (new_block + 1)) % alignment == 0);
+
+    PREV_BLOCK(block)->size = NEW_BLOCK_SIZE(((uintptr_t) (new_block + 1)) - ((uintptr_t) PREV_BLOCK(block)));
+    new_block->prev_size = PREV_BLOCK(block)->size;
+    new_block->magic = __MALLOC_MAGIG_CHECK;
+
+    new_block->size = n;
+    SET_ALLOCATED(new_block);
+    last_allocated = new_block;
+
+    struct metadata *tail = NEXT_BLOCK(new_block);
+    tail->prev_size = new_block->size;
+    tail->size = 0;
+    tail->magic = __MALLOC_MAGIG_CHECK;
+
+#if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
+    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) new_block, __LINE__);
+#endif /* KERNEL_MALLOC_DEBUG && __is_libk */
+
+#ifdef __is_libk
+    spin_unlock(&heap_lock);
+#endif /* __is_libk */
+
+    return new_block + 1;
+}
+#endif /* __is_libk && KERNEL_MALLOC_DEBUG */
 
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
 #include <kernel/hal/output.h>

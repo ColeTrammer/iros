@@ -26,6 +26,7 @@ FILES:=$(shell find files)
 # Lists all programs included in initrd
 PROGRAMS=\
 $(BUILDDIR)/initrd/programs/alarm_test \
+$(BUILDDIR)/initrd/programs/aligned_alloc_test \
 $(BUILDDIR)/initrd/programs/broken \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
