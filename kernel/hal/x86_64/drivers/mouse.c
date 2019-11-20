@@ -70,7 +70,7 @@ static struct mouse_data data = {
 };
 
 static struct device mouse = {
-    0x500, S_IFCHR, "mouse", false, &mouse_ops, &data
+    0x500, S_IFCHR, "mouse", false, &mouse_ops, NULL, &data
 };
 
 static void add_mouse_event(struct mouse_event *event) {

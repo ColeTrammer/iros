@@ -35,7 +35,7 @@ static struct device_ops dev_null_ops = {
 };
 
 static struct device dev_null = {
-    0x31, S_IFCHR, "null", false, &dev_null_ops, NULL
+    0x31, S_IFCHR, "null", false, &dev_null_ops, NULL, NULL
 };
 
 static struct device_ops dev_zero_ops = {
@@ -43,7 +43,7 @@ static struct device_ops dev_zero_ops = {
 };
 
 static struct device dev_zero = {
-    0x32, S_IFCHR, "zero", false, &dev_zero_ops, NULL
+    0x32, S_IFCHR, "zero", false, &dev_zero_ops, NULL, NULL
 };
 
 void init_virtual_devices() {

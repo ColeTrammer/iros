@@ -19,6 +19,7 @@
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 
 static struct file_system *file_systems;
@@ -662,10 +663,48 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
     assert(inode);
 
     if (inode->i_op->mmap) {
+        spin_lock(&inode->lock);
+        inode->ref_count++;
+        spin_unlock(&inode->lock);
         return inode->i_op->mmap(addr, len, prot, flags, inode, offset);
     }
 
     return -ENODEV;
+}
+
+int fs_munmap(void *addr, size_t len) {
+    (void) len;
+
+    debug_log("Doing fs_munmap: [ %#.16lX ]\n", (uintptr_t) addr);
+
+    struct vm_region *region = find_vm_region_by_addr((uintptr_t) addr);
+    if (region == NULL) {
+        debug_log("Didn't find a corresponding region\n");
+        return -EINVAL;
+    }
+
+    debug_log("Found region with bound inode: [ %#.16lX ]\n", (uintptr_t) region->backing_inode);
+
+    struct inode *inode = region->backing_inode;
+    assert(inode);
+
+    spin_lock(&inode->lock);
+
+    /* Only delete inode if it's refcount is zero */
+    inode->ref_count--;
+    if (inode->ref_count <= 0) {
+        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+        if (inode->i_op->on_inode_destruction) {
+            inode->i_op->on_inode_destruction(inode);
+        }
+        fs_inode_del(inode->device, inode->index);
+        free(inode);
+
+        return 0;
+    }
+
+    spin_unlock(&inode->lock);
+    return 0;
 }
 
 int fs_rename(char *old_path, char *new_path) {

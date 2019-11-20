@@ -1,11 +1,12 @@
-#include <stdio.h>
+#include <assert.h>
+#include <dirent.h>
+#include <errno.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <sys/mman.h>
 #include <sys/param.h>
-#include <errno.h>
-#include <dirent.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
@@ -36,7 +37,7 @@ static struct super_block_operations s_op = {
 };
 
 static struct inode_operations tmp_i_op = {
-    NULL, &tmp_lookup, &tmp_open, &tmp_stat, NULL, NULL, &tmp_unlink, NULL, &tmp_chmod, NULL, &tmp_on_inode_destruction
+    NULL, &tmp_lookup, &tmp_open, &tmp_stat, NULL, NULL, &tmp_unlink, NULL, &tmp_chmod, &tmp_mmap, &tmp_on_inode_destruction
 };
 
 static struct inode_operations tmp_dir_i_op = {
@@ -227,6 +228,67 @@ int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_na
     (void) new_name;
 
     return 0;
+}
+
+static uintptr_t joke_allocator = 0x10000000000ULL;
+
+intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
+    debug_log("tmp mmap called\n");
+
+    if (offset != 0 || !(flags & MAP_SHARED) || len > inode->size || len == 0) {
+        return -EINVAL;
+    }
+
+    if (!addr) {
+        addr = (void*) joke_allocator;
+        joke_allocator += 0x500000000ULL;
+    }
+
+    struct vm_region *region = calloc(1, sizeof(struct vm_region));
+    assert(region);
+
+    region->start = (uintptr_t) addr;
+    region->end = ((region->start + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    region->flags = VM_USER | VM_NO_EXEC;
+    if (prot & PROT_EXEC) {
+        region->flags &= ~VM_NO_EXEC;
+    } else if (prot & PROT_WRITE) {
+        region->flags |= VM_WRITE;
+    }
+    region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
+    region->backing_inode = inode;
+
+    struct process *current = get_current_process();
+
+{
+    struct vm_region *_region = current->process_memory;
+    while (_region) {
+        debug_log("Region __: [ %#.16lX, %#.16lX ]\n", _region->start, _region->end);
+        _region = _region->next;
+    }
+}
+
+    current->process_memory = add_vm_region(current->process_memory, region);
+
+{
+    struct vm_region *_region = current->process_memory;
+    while (_region) {
+        debug_log("__ Region: [ %#.16lX, %#.16lX ]\n", _region->start, _region->end);
+        _region = _region->next;
+    }
+}
+
+    debug_log("region: [ %#.16lX, %#.16lX ]\n", region->start, region->end);
+
+    struct tmp_data *data = inode->private_data;
+    for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
+        debug_log("MAP: [ %#.16lX ]\n", i);
+        map_phys_page(get_phys_addr((uintptr_t) data->contents) + i - region->start, i, region->flags);
+    }
+
+    debug_log("Finished\n");
+
+    return (intptr_t) addr;
 }
 
 void tmp_on_inode_destruction(struct inode *inode) {

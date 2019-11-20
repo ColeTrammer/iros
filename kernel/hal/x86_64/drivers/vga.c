@@ -59,6 +59,7 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
 
     struct process *process = get_current_process();
     struct vm_region *region = calloc(1, sizeof(struct vm_region));
+    region->backing_inode = device->inode;
     region->start = addr ? (uintptr_t) addr : 0x100000000LL;
     region->end = region->start + PAGE_SIZE;
     region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
@@ -73,7 +74,7 @@ static struct device_ops vga_ops = {
 };
 
 static struct device vga_device = {
-    0x1234, S_IFCHR, "fb0", false, &vga_ops, NULL
+    0x1234, S_IFCHR, "fb0", false, &vga_ops, NULL, NULL
 };
 
 void vga_enable_cursor() {

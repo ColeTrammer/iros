@@ -19,6 +19,7 @@ void *map_file(off_t length, uint64_t flags);
 
 struct vm_region *find_first_kernel_vm_region();
 struct vm_region *find_vm_region(uint64_t type);
+struct vm_region *find_vm_region_by_addr(uintptr_t addr);
 struct vm_region *clone_process_vm();
 
 void *create_phys_addr_mapping(uintptr_t phys_addr);

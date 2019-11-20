@@ -28,7 +28,7 @@ struct device_ops bga_ops = {
 };
 
 struct device bga_device = {
-    0x4200, S_IFCHR, "fb0", false, &bga_ops, &data
+    0x4200, S_IFCHR, "fb0", false, &bga_ops, NULL, &data
 };
 
 static int bga_ioctl(struct device *device, unsigned long request, void *argp) {

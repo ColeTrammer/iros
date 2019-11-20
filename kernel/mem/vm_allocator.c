@@ -231,6 +231,28 @@ struct vm_region *find_vm_region(uint64_t type) {
     return region;
 }
 
+struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
+    struct vm_region *region = get_current_process()->process_memory;
+
+    while (region) {
+        debug_log("Region: [ %#.16lX, %#.16lX, %#.16lX ]\n", region->start, region->end, addr);
+        if (region->start <= addr && addr <= region->end) {
+            return region;
+        }
+        region = region->next;
+    }
+
+    region = kernel_vm_list;
+    while (region) {
+        if (region->start <= addr && addr <= region->end) {
+            return region;
+        }
+        region = region->next;
+    }
+
+    return NULL;
+}
+
 struct vm_region *clone_process_vm() {
     struct vm_region *list = get_current_process()->process_memory;
     struct vm_region *new_list = NULL;

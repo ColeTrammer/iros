@@ -31,6 +31,7 @@ struct device {
     char name[16];
     bool cannot_open;
     struct device_ops *ops;
+    struct inode *inode;
     void *private;
 };
 

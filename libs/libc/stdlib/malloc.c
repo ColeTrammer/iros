@@ -201,16 +201,14 @@ void *aligned_alloc(size_t alignment, size_t n) {
         block = NEXT_BLOCK(block);
     }
 
-    size_t size_needed = (((uintptr_t) (block + 1)) % alignment) + n;
-    assert(block != start);
-
-    if (heap_end <= ((uintptr_t) block) + size_needed + sizeof(struct metadata)) {
-        sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) block) + size_needed - heap_end));
-        heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) block) + size_needed - heap_end) * PAGE_SIZE;
-    }
 
     struct metadata *new_block = (struct metadata*) ((((uintptr_t) (block + 1)) + alignment - (((uintptr_t) (block + 1)) % alignment)) - sizeof(struct metadata));
     assert(((uintptr_t) (new_block + 1)) % alignment == 0);
+
+    if (heap_end <= ((uintptr_t) new_block) + n + sizeof(struct metadata)) {
+        sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end) + sizeof(struct metadata));
+        heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end + sizeof(struct metadata)) * PAGE_SIZE;
+    }
 
     PREV_BLOCK(block)->size = ((uintptr_t) new_block) - ((uintptr_t) PREV_BLOCK(block)) - sizeof(struct metadata);
     assert(NEXT_BLOCK(PREV_BLOCK(block)) == new_block);

@@ -221,7 +221,20 @@ void free_process(struct process *process, bool free_paging_structure) {
 
     struct vm_region *region = process->process_memory;
     while (region != NULL) {
+        if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+            fs_munmap((void*) region->start, region->end);
+        }
+
+        region = region->next;
+    }
+
+    region = process->process_memory;
+    while (region != NULL) {
         struct vm_region *temp = region->next;
+        if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+            fs_munmap((void*) region->start, region->end);
+        }
+
         free(region);
         region = temp;
     }

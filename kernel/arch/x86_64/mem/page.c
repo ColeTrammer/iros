@@ -24,7 +24,17 @@ uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
-    uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
+    uint64_t *pml4 = PML4_BASE;
+    uint64_t *pdp = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t);
+    uint64_t *pd = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t);
+    uint64_t *pt = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t);
+
+    assert(pml4[pml4_offset] & 1);
+    assert(pdp[pdp_offset] & 1);
+    assert(pd[pd_offset] & 1);
+    assert(pt[pt_offset] & 1);
+
+    uint64_t *pt_entry = pt + pt_offset;
     return (*pt_entry & 0x0000FFFFFFFFF000ULL) + (virt_addr & 0xFFF);
 }
 

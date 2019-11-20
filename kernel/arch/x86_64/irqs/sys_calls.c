@@ -1138,10 +1138,7 @@ void arch_sys_munmap(struct process_state *process_state) {
     void *addr = (void*) process_state->cpu_state.rsi;
     size_t length = (size_t) process_state->cpu_state.rdx;
 
-    (void) addr;
-    (void) length;
-
-    SYS_RETURN(-ENOSYS);
+    SYS_RETURN(fs_munmap(addr, length));
 }
 
 void arch_sys_rename(struct process_state *process_state) {

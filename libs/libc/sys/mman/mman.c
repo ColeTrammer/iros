@@ -23,7 +23,7 @@ int shm_open(const char *name, int oflag, mode_t mode) {
     }
 
     char *path = shm_full_path(name);
-    int fd = open(name, oflag, mode);
+    int fd = open(path, oflag, mode);
 
     free(path);
     return fd;

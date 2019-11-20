@@ -23,6 +23,7 @@ int tmp_stat(struct inode *inode, struct stat *stat_struct);
 struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error);
 int tmp_unlink(struct tnode *tnode);
 int tmp_rmdir(struct tnode *tnode);
+intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 struct tnode *tmp_mount(struct file_system *fs, char *device_path);
 int tmp_chmod(struct inode *inode, mode_t mode);
 int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name);

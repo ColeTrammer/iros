@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+struct inode;
+
 struct vm_region {
     uintptr_t start;
     uintptr_t end;
@@ -35,6 +37,8 @@ struct vm_region {
 #define VM_PROCESS_FILE (40)
 #define VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES (41)
     uint64_t type;
+
+    struct inode *backing_inode;
 
     struct vm_region *next;
 };

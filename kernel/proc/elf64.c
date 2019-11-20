@@ -32,7 +32,7 @@ uint64_t elf64_get_size(void *buffer) {
     Elf64_Phdr *program_headers = (Elf64_Phdr*) (((uintptr_t) buffer) + elf_header->e_phoff);
     
     assert(elf_header->e_phnum >= 2);
-    return program_headers[1].p_memsz - program_headers[0].p_vaddr;
+    return program_headers[1].p_memsz + program_headers[0].p_filesz;
 }
 
 void elf64_load_program(void *buffer, size_t length, struct process *process) {
@@ -72,7 +72,8 @@ void elf64_map_heap(void *buffer, struct process *process) {
     struct vm_region *process_heap = calloc(1, sizeof(struct vm_region));
     process_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
     process_heap->type = VM_PROCESS_HEAP;
-    process_heap->start = ((elf64_get_start(buffer) + elf64_get_size(buffer)) & ~0xFFF) + PAGE_SIZE;
+    process_heap->start = ((elf64_get_start(buffer) + elf64_get_size(buffer)) & ~0xFFF) + 100 * PAGE_SIZE;
+    debug_log("Heap start: [ %#.16lX ]\n", process_heap->start);
     process_heap->end = process_heap->start;
     process->process_memory = add_vm_region(process->process_memory, process_heap);
 }
