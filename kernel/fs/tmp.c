@@ -154,7 +154,6 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
     if (data->contents == NULL) {
         data->max = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
-        debug_log("data->contents: [ %#.16lX ]\n", (uintptr_t) data->contents);
         assert(data->contents);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
     }
@@ -165,8 +164,6 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
         memcpy(data->contents, save, inode->size);
-        debug_log("Freeing data->contents: [ %#.16lX ]\n", (uintptr_t) save);
-        debug_log("data->contents: [ %#.16lX ]\n", (uintptr_t) data->contents);
         free(save);
     }
 
@@ -259,8 +256,6 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     struct process *current = get_current_process();
     current->process_memory = add_vm_region(current->process_memory, region);
 
-    debug_log("region: [ %#.16lX, %#.16lX ]\n", region->start, region->end);
-
     struct tmp_data *data = inode->private_data;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         map_phys_page(get_phys_addr((uintptr_t) data->contents) + i - region->start, i, region->flags);
@@ -272,7 +267,6 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 void tmp_on_inode_destruction(struct inode *inode) {
     struct tmp_data *data = inode->private_data;
     if (data) {
-        debug_log("Freeing data->contents: [ %#.16lX ]\n", (uintptr_t) data->contents);
         free(data->contents);
         free(data);
     }
