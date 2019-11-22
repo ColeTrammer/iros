@@ -215,9 +215,11 @@ pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m) {
     }
 
     while (queue != NULL) {
-        pid_t ret = proc_consume_message(queue->pid, m);
-        if (ret != 0) {
-            return ret;
+        if (queue->ppid == get_current_process()->pid) {
+            pid_t ret = proc_consume_message(queue->pid, m);
+            if (ret != 0) {
+                return ret;
+            }
         }
 
         queue = queue->pg_next;
