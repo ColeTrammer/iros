@@ -8,6 +8,7 @@
 
 #include <kernel/mem/page.h>
 #include <kernel/mem/kernel_vm.h>
+#include <kernel/proc/elf64.h>
 #include <kernel/proc/process.h>
 #include <kernel/sched/process_sched.h>
 #include <kernel/hal/hal.h>
@@ -141,6 +142,11 @@ extern struct process *current_process;
 void proc_do_sig_handler(struct process *process, int signum) {
     assert(process->sig_state[signum].sa_handler != SIG_IGN);
     assert(process->sig_state[signum].sa_handler != SIG_DFL);
+
+    // For debugging purposes (bash will catch SIGSEGV and try to cleanup)
+    if (signum == SIGSEGV) {
+        elf64_stack_trace(process);
+    }
 
     struct sigaction act = process->sig_state[signum];
 

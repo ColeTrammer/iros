@@ -491,8 +491,6 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes);
 
 /* Reads dirent entries of an inode */
 static void ext2_update_tnode_list(struct inode *inode) {
-    debug_log("Updating Tnode List: [ %llu ]\n", inode->index);
-
     if (!inode->private_data) {
         ext2_update_inode(inode, false);
     }
@@ -566,8 +564,6 @@ static void ext2_update_tnode_list(struct inode *inode) {
     }
 
     spin_unlock(&inode->lock);
-
-    debug_log("Finished updating tnode list: [ %llu ]\n", inode->index);
 
     ext2_free_blocks(raw_dirent_table);
 }

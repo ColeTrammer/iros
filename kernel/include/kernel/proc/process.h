@@ -46,6 +46,9 @@ struct process {
     bool sleeping;
     time_t sleep_end;
 
+    ino_t inode_id;
+    dev_t inode_dev;
+
     int tty;
 
     struct arch_fpu_state fpu;

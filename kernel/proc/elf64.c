@@ -1,10 +1,14 @@
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/fs/inode_store.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/process.h>
@@ -80,4 +84,73 @@ void elf64_map_heap(void *buffer, struct process *process) {
 #endif /* ELF64_DEBUG */
     process_heap->end = process_heap->start;
     process->process_memory = add_vm_region(process->process_memory, process_heap);
+}
+
+// NOTE: this must be called from within a process's address space
+void elf64_stack_trace(struct process *process) {
+    struct inode *inode = fs_inode_get(process->inode_dev, process->inode_id);
+    if (!inode) {
+        debug_log("The process has no inode: [ %d, %lu, %llu ]\n", process->pid, process->inode_dev, process->inode_id);
+        return;
+    }
+
+    int error = 0;
+    struct file *file = inode->i_op->open(inode, O_RDONLY, &error);
+    if (!file || error != 0) {
+        return;
+    }
+
+    void *buffer = malloc(inode->size);
+    fs_read(file, buffer, inode->size);
+    free(file);
+
+    if (!elf64_is_valid(buffer)) {
+        debug_log("The process is not elf64: [ %d ]\n", process->pid);
+        return;
+    }
+
+    Elf64_Ehdr *elf_header = (Elf64_Ehdr*) buffer;
+    Elf64_Shdr *section_headers = (Elf64_Shdr*) (((uintptr_t) buffer) + elf_header->e_shoff);
+
+    Elf64_Sym *symbols = NULL;
+    uintptr_t symbols_size = 0;
+    char *section_string_table = (char*) (((uintptr_t) buffer) + section_headers[elf_header->e_shstrndx].sh_offset);
+    char *string_table = NULL;
+    for (int i = 0; i < elf_header->e_shnum; i++) {
+        // Symbol table
+        if (section_headers[i].sh_type == 2) {
+            symbols = (Elf64_Sym*) (((uintptr_t) buffer) + section_headers[i].sh_offset);
+            symbols_size = section_headers[i].sh_size;
+        } else if (section_headers[i].sh_type == 3 && strcmp(".strtab", section_string_table + section_headers[i].sh_name) == 0) {
+            string_table = (char*) (((uintptr_t) buffer) + section_headers[i].sh_offset);
+        }
+    }
+
+    assert(symbols);
+    assert(string_table);
+
+    uintptr_t rsp = process->in_kernel ? process->arch_process.user_process_state.stack_state.rsp : process->arch_process.process_state.stack_state.rsp;
+    uintptr_t rip = process->in_kernel ? process->arch_process.user_process_state.stack_state.rip : process->arch_process.process_state.stack_state.rip;
+
+    debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+
+    for (int i = 0; (uintptr_t) (symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
+        if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
+            if (rip >= symbols[i].st_value && rip < symbols[i].st_value + symbols[i].st_size) {
+                debug_log("[ %s ]\n", string_table + symbols[i].st_name);
+            }
+        }
+    }
+
+    for (rsp &= ~0xF; rsp < find_first_kernel_vm_region()->start - PAGE_SIZE; rsp += sizeof(uintptr_t)) {
+        for (int i = 0; (uintptr_t) (symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
+            if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
+                if (*((uint64_t*) rsp) >= symbols[i].st_value && *((uint64_t*) rsp) <= symbols[i].st_value + symbols[i].st_size) {
+                    debug_log("[ %s ]\n", string_table + symbols[i].st_name);
+                }
+            }
+        }
+    }
+
+    free(buffer);
 }

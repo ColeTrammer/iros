@@ -27,6 +27,7 @@
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 
+// #define DUP_DEBUG
 // #define SET_PGID_DEBUG
 // #define SIGACTION_DEBUG
 // #define WAIT_PID_DEBUG
@@ -115,6 +116,8 @@ void arch_sys_fork(struct process_state *process_state) {
     child->ppid = parent->pid;
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
+    child->inode_dev = parent->inode_dev;
+    child->inode_id = parent->inode_id;
     memcpy(&child->sig_state, &parent->sig_state, sizeof(struct sigaction) * _NSIG);
     strcpy(child->cwd, parent->cwd);
 
@@ -205,9 +208,8 @@ void arch_sys_open(struct process_state *process_state) {
         }
     }
 
-    /* Max files allocated, should return some ERROR */
     free(path);
-    assert(false);
+    SYS_RETURN(-EMFILE);
 }
 
 void arch_sys_read(struct process_state *process_state)  {
@@ -306,6 +308,10 @@ void arch_sys_execve(struct process_state *process_state) {
     void *buffer = malloc(length);
     fs_read(program, buffer, length);
 
+    struct process *process = calloc(1, sizeof(struct process));
+    process->inode_dev = program->device;
+    process->inode_id = program->inode_idenifier;
+
     fs_close(program);
 
     if (!elf64_is_valid(buffer)) {
@@ -313,8 +319,6 @@ void arch_sys_execve(struct process_state *process_state) {
         free(buffer);
         SYS_RETURN(-ENOEXEC);
     }
-
-    struct process *process = calloc(1, sizeof(struct process));
 
     // Dup open file descriptors
     for (size_t i = 0; i < FOPEN_MAX; i++) {
@@ -622,7 +626,9 @@ void arch_sys_dup2(struct process_state *process_state) {
     int oldfd = (int) process_state->cpu_state.rsi;
     int newfd = (int) process_state->cpu_state.rdx;
 
+#ifdef DUP_DEBUG
     debug_log("Dup: [ %d, %d ]\n", oldfd, newfd);
+#endif /* DUP_DEBUG */
 
     if (oldfd < 0 || oldfd >= FOPEN_MAX || newfd < 0 || newfd >= FOPEN_MAX) {
         SYS_RETURN((uint64_t) -EBADFD);
@@ -855,7 +861,9 @@ void arch_sys_dup(struct process_state *process_state) {
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (current->files[i] == NULL) {
             current->files[i] = fs_dup(current->files[oldfd]);
+#ifdef DUP_DEBUG
             debug_log("Dup: [ %d, %lu ]\n", oldfd, i);
+#endif /* DUP_DEBUG */
             SYS_RETURN(i);
         }
     }

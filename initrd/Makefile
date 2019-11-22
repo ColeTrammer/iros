@@ -45,6 +45,7 @@ $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/shared_memory_test \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/smart_pointer_test \
+$(BUILDDIR)/initrd/programs/stack_trace_test \
 $(BUILDDIR)/initrd/programs/strcasecmp_test \
 $(BUILDDIR)/initrd/programs/string_test \
 $(BUILDDIR)/initrd/programs/strtoken_test \

@@ -154,11 +154,14 @@ struct process *load_process(const char *file_name) {
     void *buffer = malloc(length);
     fs_read(program, buffer, length);
 
+    struct process *process = calloc(1, sizeof(struct process));
+    process->inode_dev = program->device;
+    process->inode_id = program->inode_idenifier;
+
     fs_close(program);
 
     assert(elf64_is_valid(buffer));
 
-    struct process *process = calloc(1, sizeof(struct process));
     process->pid = get_next_pid();
     process->pgid = process->pid;
     process->ppid = initial_kernel_process.pid;
@@ -342,7 +345,7 @@ void proc_do_sig(struct process *process, int signum) {
     assert(sig_defaults[signum] != INVAL);
     switch (sig_defaults[signum]) {
         case TERMINATE_AND_DUMP:
-            debug_log("Should dump core: [ %d ]\n", process->pid);
+            elf64_stack_trace(process);
             // Fall through
         case TERMINATE:
             if (process->sched_state == EXITING) { 

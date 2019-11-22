@@ -77,6 +77,10 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, c
             }
         }
 
+        if (min == to_replace) {
+            continue;
+        }
+
         // Do swap
         memcpy(temp, to_replace, size);
         memcpy(to_replace, min, size);

@@ -69,6 +69,16 @@ typedef struct
     Elf64_Xword sh_entsize;    /* Size of entries, if section has table */
 } __attribute__((packed)) Elf64_Shdr;
 
+typedef struct
+{
+    Elf64_Word st_name;
+    unsigned char st_info;
+    unsigned char st_other;
+    Elf64_Half st_shndx;
+    Elf64_Addr st_value;
+    Elf64_Xword st_size;
+} __attribute__((packed)) Elf64_Sym;
+
 bool elf64_is_valid(void *buffer);
 uintptr_t elf64_get_start(void *buffer);
 uintptr_t elf64_get_entry(void *buffer);
@@ -77,5 +87,6 @@ uint64_t elf64_get_size(void *buffer);
 void elf64_load_program(void *buffer, size_t length, struct process *process);
 void elf64_map_heap(void *buffer, struct process *process);
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type);
+void elf64_stack_trace(struct process *process);
 
 #endif /* _KERNEL_PROC_ELF64_H */

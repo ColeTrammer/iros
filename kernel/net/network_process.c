@@ -43,8 +43,6 @@ void net_on_incoming_packet(const void *buf, size_t len) {
 
     spin_lock(&lock);
 
-    debug_log("Adding packet to queue: [ %#.16lX, %#.16lX ]\n", (uintptr_t) head, (uintptr_t) tail);
-
     insque(new_data, tail);
     if (head == NULL) {
         head = tail = new_data;
@@ -77,8 +75,6 @@ void net_network_process_start() {
             barrier();
             continue;
         }
-
-        debug_log("Responding to packet\n");
 
         if (data->len <= sizeof(struct ethernet_packet)) {
             debug_log("Packet was to small\n");
