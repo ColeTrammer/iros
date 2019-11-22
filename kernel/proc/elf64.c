@@ -129,8 +129,8 @@ void elf64_stack_trace(struct process *process) {
     assert(symbols);
     assert(string_table);
 
-    uintptr_t rsp = process->in_kernel ? process->arch_process.user_process_state.stack_state.rsp : process->arch_process.process_state.stack_state.rsp;
-    uintptr_t rip = process->in_kernel ? process->arch_process.user_process_state.stack_state.rip : process->arch_process.process_state.stack_state.rip;
+    uintptr_t rsp = (process->in_kernel || process->can_send_self_signals) ? process->arch_process.user_process_state.stack_state.rsp : process->arch_process.process_state.stack_state.rsp;
+    uintptr_t rip = (process->in_kernel || process->can_send_self_signals) ? process->arch_process.user_process_state.stack_state.rip : process->arch_process.process_state.stack_state.rip;
 
     debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
 

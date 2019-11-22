@@ -55,7 +55,7 @@ ldiv_t ldiv(long a, long b) {
 
 // Use selection sort for simplicity
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, const void *b)) {
-    if (base == NULL || size <= 0 || compar == NULL) {
+    if (base == NULL || nmemb == 0 || size == 0 || compar == NULL) {
         return;
     }
 
@@ -77,7 +77,7 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, c
             }
         }
 
-        if (min == to_replace) {
+        if (to_replace == min) {
             continue;
         }
 
