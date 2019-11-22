@@ -197,8 +197,7 @@ void arch_sys_open(struct process_state *process_state) {
         fs_seek(file, 0, SEEK_END);
     }
 
-    /* Start at 3 because 0,1,2 are reserved for stdin, stdio, and stderr */
-    for (size_t i = 3; i < FOPEN_MAX; i++) {
+    for (int i = 0; i < FOPEN_MAX; i++) {
         if (process->files[i] == NULL) {
             process->files[i] = file;
             free(path);
