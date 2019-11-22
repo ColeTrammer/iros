@@ -531,7 +531,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
             inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_REGULAR ?  &ext2_i_op : &ext2_dir_i_op;
             inode_to_add->super_block = inode->super_block;
             inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR ? FS_FILE : FS_DIR;
-            inode_to_add->ref_count = 1;
+            inode_to_add->ref_count = 2; // One for the vfs and one for us
             init_spinlock(&inode_to_add->lock);
         }
 
@@ -730,7 +730,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->mounts = NULL;
         inode->parent = tparent;
         inode->private_data = NULL;
-        inode->ref_count = 1;
+        inode->ref_count = 2; // One for the vfs and one for us
         inode->size = 0;
         inode->super_block = parent->super_block;
         inode->tnode_list = NULL;
@@ -1345,7 +1345,6 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
             }
 
             /* Update bookkepping fields */
-            debug_log("Updating book keeping field\n");
             struct ext2_block_group *group = ext2_get_block_group(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
             group->blk_desc->num_unallocated_blocks += num_blocks;
             group->blk_desc->num_unallocated_inodes++;
@@ -1357,7 +1356,6 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
                 return ret;
             }
 
-            debug_log("Updating super block\n");
             struct ext2_sb_data *sb_data = inode->super_block->private_data;
             sb_data->sb->num_unallocated_blocks += num_blocks;
             sb_data->sb->num_unallocated_inodes++;
@@ -1367,7 +1365,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
                 return ret;
             }
 
-            drop_inode_reference(inode);
+            drop_inode_reference_unlocked(inode);
             return 0;
         }
 
@@ -1514,7 +1512,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->mode = S_IFDIR | 0777;
     root->mounts = NULL;
     root->private_data = NULL;
-    root->ref_count = 1;
+    root->ref_count = 2;
     root->size = 0;
     root->super_block = super_block;
     root->tnode_list = NULL;

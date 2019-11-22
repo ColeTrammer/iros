@@ -7,6 +7,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 
+void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 struct tnode *iname(const char *path);
 

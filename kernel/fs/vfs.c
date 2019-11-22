@@ -22,7 +22,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 
-// #define INODE_REF_COUNT_DEBUG
+#define INODE_REF_COUNT_DEBUG
 
 static struct file_system *file_systems;
 static struct mount *root;
@@ -39,9 +39,7 @@ static void bump_inode_reference(struct inode *inode) {
     spin_unlock(&inode->lock);
 }
 
-void drop_inode_reference(struct inode *inode) {
-    spin_lock(&inode->lock);
-
+void drop_inode_reference_unlocked(struct inode *inode) {
 #ifdef INODE_REF_COUNT_DEBUG
     debug_log("Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count - 1);
 #endif /* INODE_REF_COUNT_DEBUG */
@@ -64,6 +62,11 @@ void drop_inode_reference(struct inode *inode) {
     }
 
     spin_unlock(&inode->lock);
+}
+
+void drop_inode_reference(struct inode *inode) {
+    spin_lock(&inode->lock);
+    drop_inode_reference_unlocked(inode);
 }
 
 struct tnode *iname(const char *_path) {
@@ -574,8 +577,7 @@ int fs_unlink(const char *path) {
     struct inode *inode = tnode->inode;
     free(tnode);
 
-    spin_unlock(&inode->lock);
-    drop_inode_reference(inode);
+    drop_inode_reference_unlocked(inode);
     return 0;
 }
 
