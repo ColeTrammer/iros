@@ -105,9 +105,9 @@ void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, boo
     if (irq_line < 2 * PIC_IRQS) {
         if (use_generic_handler) {
             handlers[irq_line] = handler;
-            register_irq_handler(&pic_generic_handler_entry, irq_line + PIC_IRQ_OFFSET, false);
+            register_irq_handler(&pic_generic_handler_entry, irq_line + PIC_IRQ_OFFSET, false, true);
         } else {
-            register_irq_handler(handler, irq_line + PIC_IRQ_OFFSET, false);
+            register_irq_handler(handler, irq_line + PIC_IRQ_OFFSET, false, true);
         }
 
         enable_irq_line(irq_line);

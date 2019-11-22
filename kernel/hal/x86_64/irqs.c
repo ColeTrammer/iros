@@ -13,8 +13,8 @@ void init_irqs() {
     load_idt(idt_descriptor);
 }
 
-void register_irq_handler(void *handler, unsigned int irq, bool is_user) {
-    add_idt_entry(idt, handler, irq, is_user);
+void register_irq_handler(void *handler, unsigned int irq, bool is_user, bool needs_separate_stack) {
+    add_idt_entry(idt, handler, irq, is_user, needs_separate_stack);
 
     debug_log("IRQ Handler Added: [ %#.2X, %s, %#.16lX ]\n", irq, is_user ? "true" : "false", (uintptr_t) handler);
 }

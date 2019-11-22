@@ -20,7 +20,7 @@
 
 // #define PROC_SIGNAL_DEBUG
 
-static struct process *current_process;
+struct process *current_process;
 static struct process initial_kernel_process;
 
 /* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
@@ -325,9 +325,6 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
 };
 
 void proc_do_sig(struct process *process, int signum) {
-    assert(process->sig_pending & (1U << signum));
-    assert(!proc_is_sig_blocked(process, signum));
-
 #ifdef PROC_SIGNAL_DEBUG
     debug_log("Doing signal: [ %d, %d ]\n", process->pid, signum);
 #endif /* PROC_SIGNAL_DEBUG */

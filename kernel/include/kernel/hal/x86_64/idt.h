@@ -24,7 +24,7 @@ static inline void load_idt(struct idt_descriptor descriptor) {
     asm ( "lidtq %0" : : "m"(descriptor) );
 }
 
-void add_idt_entry(struct idt_entry *idt, void *handler, unsigned int irq, bool is_user);
+void add_idt_entry(struct idt_entry *idt, void *handler, unsigned int irq, bool is_user, bool use_idt);
 void remove_idt_entry(struct idt_entry *idt, unsigned int irq);
 
 #endif /* _KERNEL_HAL_X86_64_IDT_H */

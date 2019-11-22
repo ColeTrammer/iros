@@ -136,6 +136,8 @@ bool proc_in_kernel(struct process *process) {
     return process->in_kernel;
 }
 
+extern struct process *current_process;
+
 void proc_do_sig_handler(struct process *process, int signum) {
     assert(process->sig_state[signum].sa_handler != SIG_IGN);
     assert(process->sig_state[signum].sa_handler != SIG_DFL);
@@ -179,5 +181,15 @@ void proc_do_sig_handler(struct process *process, int signum) {
 
     process->sig_mask = act.sa_mask;
     process->sig_mask |= (1U << (signum - 1));
-    run_process(process);
+
+    debug_log("Running pid: [ %d ]\n", process->pid);
+    
+    if (get_current_process()->sched_state == RUNNING) {
+        get_current_process()->sched_state = READY;
+    }
+
+    current_process = process;
+    current_process->sched_state = RUNNING;
+
+    __run_process(&current_process->arch_process);
 }
