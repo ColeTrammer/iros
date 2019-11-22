@@ -329,6 +329,12 @@ void TTY::on_char(char c)
         return;
     }
 
+#ifdef XTERM_TTY_DEBUG
+    FILE* s = fopen("/dev/serial", "w");
+    fprintf(s, "%c, (%d)\n", c, c);
+    fclose(s);
+#endif /**/
+
     switch (c) {
     case CTRL_KEY('d'):
         break;
@@ -345,10 +351,18 @@ void TTY::on_char(char c)
             m_row--;
         }
         break;
+    // Ascii BS (NOTE: not the backspace key)
+    case 8:
+        m_col--;
+        break;
+    // Ascii DEL (NOTE: not the delete key)
     case 127:
         m_col--;
         draw(' ');
         m_col--;
+        break;
+    case '\a':
+        // Ignore alarm character for now
         break;
     default:
         draw(c);

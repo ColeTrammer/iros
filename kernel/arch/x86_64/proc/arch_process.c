@@ -24,8 +24,8 @@ static char *test_argv[2] = {
     "start", NULL
 };
 
-static char *test_envp[6] = {
-    "OS=os_2", "PATH=/bin:/usr/bin:/initrd", "HOME=/home/eloc", "IFS= \t\n", "USER=eloc", NULL
+static char *test_envp[7] = {
+    "PATH=/bin:/usr/bin:/initrd", "HOME=/home/eloc", "IFS= \t\n", "USER=eloc", "TERM=xterm", "SHELL=/bin/sh", NULL
 };
 
 static void kernel_idle() {
