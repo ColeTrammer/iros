@@ -1,16 +1,17 @@
-#include <stdlib.h>
 #include <assert.h>
 #include <fcntl.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stddef.h>
-#include <string.h>
 #include <stdarg.h>
-#include <sys/wait.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
+#include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "builtin.h"
 #include "command.h"
@@ -347,6 +348,12 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
 
 static int do_command_list(struct command_list *list, enum command_mode mode) {
     assert(mode != COMMAND_BACKGROUND || list->num_commands <= 1);
+
+    struct termios save;
+    if (isatty(STDOUT_FILENO)) {
+        tcgetattr(STDOUT_FILENO, &save);
+    }
+
     for (size_t i = 0; i < list->num_commands; i++) {
         int ret = do_pipeline(&list->commands[i], mode);
         if (ret != 0) {
@@ -358,6 +365,10 @@ static int do_command_list(struct command_list *list, enum command_mode mode) {
             // Advance until next sequential command
             while (i < list->num_commands - 1 && list->connectors[i++] != COMMAND_SEQUENTIAL);
         }
+    }
+
+    if (isatty(STDOUT_FILENO)) {
+        tcsetattr(STDOUT_FILENO, TCSAFLUSH, &save);
     }
 
     return 0;
