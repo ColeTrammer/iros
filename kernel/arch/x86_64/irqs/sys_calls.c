@@ -175,7 +175,7 @@ void arch_sys_open(struct process_state *process_state) {
                 SYS_RETURN((uint64_t) error);
             }
         } else {
-            debug_log("File Not Found\n");
+            debug_log("File Not Found: [ %s ]\n", path);
             free(path);
             SYS_RETURN((uint64_t) error);
         }
@@ -582,10 +582,24 @@ void arch_sys_ftruncate(struct process_state *process_state) {
     SYS_RETURN((uint64_t) fs_truncate(file, length));
 }
 
-void arch_sys_time(struct process_state *process_state) {
+void arch_sys_gettimeofday(struct process_state *process_state) {
     SYS_BEGIN(process_state);
 
-    SYS_RETURN((uint64_t) (get_time() / 1000));
+    struct timeval *tv = (struct timeval*) process_state->cpu_state.rsi;
+    struct timezone *tz = (struct timezone*) process_state->cpu_state.rdx;
+
+    time_t micro_seconds = get_time();
+    if (tv) {
+        tv->tv_sec = micro_seconds / 1000;
+        tv->tv_usec = (micro_seconds % 1000) * 1000;
+    }
+
+    if (tz) {
+        tz->tz_minuteswest = 0;
+        tz->tz_minuteswest = 0;
+    }
+
+    SYS_RETURN(0);
 }
 
 void arch_sys_mkdir(struct process_state *process_state) {

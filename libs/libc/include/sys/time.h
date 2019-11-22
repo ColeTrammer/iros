@@ -14,15 +14,12 @@ struct timeval {
     suseconds_t tv_usec;
 };
 
-#ifndef __is_libk
+struct timezone {
+    int tz_minuteswest;
+    int tz_dsttime;
+};
 
 int gettimeofday(struct timeval *__restrict tv, void *__restrict tz);
-
-#ifdef _OS_2_SOURCE
-time_t get_time();
-#endif /* _OS_2_SOURCE */
-
-#endif /* __is_libk */
 
 #ifdef __cplusplus
 }

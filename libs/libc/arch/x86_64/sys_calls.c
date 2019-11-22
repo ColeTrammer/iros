@@ -199,11 +199,13 @@ int ftruncate(int fd, off_t length) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
-time_t get_time() {
-    time_t ret;
+int gettimeofday(struct timeval *__restrict tv, void *__restrict tz) {
+    int ret;
     asm volatile( "movq $17, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "movq %2, %%rdx\n"\
                   "int $0x80\n"\
-                  "movq %%rax, %0" : "=r"(ret) : : "rdi", "rax", "memory" );
+                  "movl %%eax, %0" : "=r"(ret) : "r"(tv), "r"(tz) : "rdi", "rsi", "rdx", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -624,14 +626,6 @@ clock_t times(struct tms *buf) {
 
     fprintf(stderr, "times not supported\n");
     assert(false);
-    return 0;
-}
-
-int gettimeofday(struct timeval *tv, void *tz) {
-    (void) tv;
-    (void) tz;
-
-    fprintf(stderr, "gettimeofday not supported\n");
     return 0;
 }
 

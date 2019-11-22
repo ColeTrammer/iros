@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/hal/timer.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/interface.h>

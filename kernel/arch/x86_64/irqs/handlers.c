@@ -50,7 +50,6 @@ void handle_general_protection_fault(struct stack_state *stack, uintptr_t error)
 void handle_page_fault(struct process_interrupt_state *process_state, uintptr_t address) {
     struct process *current = get_current_process();
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, address, process_state->error_code);
-    debug_log("rsp: [ %#.16lX ]\n", process_state->stack_state.rsp);
 
     // In this case we just extend the stack
     struct vm_region *vm_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);

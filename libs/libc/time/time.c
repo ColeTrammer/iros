@@ -1,17 +1,18 @@
-#include <time.h>
 #include <stddef.h>
 #include <stdio.h>
-
-#define _OS_2_SOURCE
 #include <sys/time.h>
+#include <time.h>
+
 
 time_t time(time_t *t_loc) {
-    time_t t = get_time();
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
     if (t_loc != NULL) {
-        *t_loc = t;
+        *t_loc = tv.tv_sec;
     }
 
-    return t;
+    return tv.tv_sec;
 }
 
 size_t strftime(char *__restrict s, size_t n, const char *__restrict format, const struct tm *__restrict tm) {
