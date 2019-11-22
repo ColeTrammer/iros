@@ -1345,6 +1345,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
             }
 
             /* Update bookkepping fields */
+            debug_log("Updating book keeping field\n");
             struct ext2_block_group *group = ext2_get_block_group(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
             group->blk_desc->num_unallocated_blocks += num_blocks;
             group->blk_desc->num_unallocated_inodes++;
@@ -1356,6 +1357,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
                 return ret;
             }
 
+            debug_log("Updating super block\n");
             struct ext2_sb_data *sb_data = inode->super_block->private_data;
             sb_data->sb->num_unallocated_blocks += num_blocks;
             sb_data->sb->num_unallocated_inodes++;
@@ -1365,8 +1367,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
                 return ret;
             }
 
-            /* Drop our reference to virtual inode so vfs deletes it once it has no open files */
-            inode->ref_count--;
+            drop_inode_reference(inode);
             return 0;
         }
 

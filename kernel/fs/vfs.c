@@ -22,8 +22,49 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 
+// #define INODE_REF_COUNT_DEBUG
+
 static struct file_system *file_systems;
 static struct mount *root;
+
+static void bump_inode_reference(struct inode *inode) {
+    spin_lock(&inode->lock);
+
+#ifdef INODE_REF_COUNT_DEBUG
+    debug_log("Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count + 1);
+#endif /* INODE_REF_COUNT_DEBUG */
+
+    assert(inode->ref_count > 0);
+    inode->ref_count++;
+    spin_unlock(&inode->lock);
+}
+
+void drop_inode_reference(struct inode *inode) {
+    spin_lock(&inode->lock);
+
+#ifdef INODE_REF_COUNT_DEBUG
+    debug_log("Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count - 1);
+#endif /* INODE_REF_COUNT_DEBUG */
+
+    // Only delete inode if it's refcount is zero
+    assert(inode->ref_count > 0);
+    inode->ref_count--;
+    if (inode->ref_count <= 0) {
+        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+        if (inode->i_op->on_inode_destruction) {
+            inode->i_op->on_inode_destruction(inode);
+        }
+
+        fs_inode_del(inode->device, inode->index);
+
+        spin_unlock(&inode->lock);
+
+        free(inode);
+        return;
+    }
+
+    spin_unlock(&inode->lock);
+}
 
 struct tnode *iname(const char *_path) {
     assert(root != NULL);
@@ -200,10 +241,7 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
     
     fs_inode_put(tnode->inode);
 
-    spin_lock(&tnode->inode->lock);
-    tnode->inode->ref_count++;
-    debug_log("Ref count: [ %d ]\n", tnode->inode->ref_count);
-    spin_unlock(&tnode->inode->lock);
+    bump_inode_reference(tnode->inode);
 
     struct file *file = tnode->inode->i_op->open(tnode->inode, flags, error);
     if (file == NULL) {
@@ -232,17 +270,15 @@ int fs_close(struct file *file) {
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
 
-    if (inode) {
-        spin_lock(&inode->lock);
-        inode->ref_count--;
-        debug_log("Ref count: [ %d ]\n", inode->ref_count);
-        spin_unlock(&inode->lock);
-    }
-
     spin_lock(&file->lock);
+    assert(file->ref_count > 0);
     file->ref_count--;
     if (file->ref_count <= 0) {
         spin_unlock(&file->lock);
+
+        if (inode) {
+            drop_inode_reference(inode);
+        }
 
         int error = 0;
         if (file->f_op->close) {
@@ -254,6 +290,7 @@ int fs_close(struct file *file) {
     }
 
     spin_unlock(&file->lock);
+
     return 0;
 }
 
@@ -537,24 +574,8 @@ int fs_unlink(const char *path) {
     struct inode *inode = tnode->inode;
     free(tnode);
 
-    /* Only delete inode if it's refcount is zero */
-    inode->ref_count--;
-    debug_log("Ref count: [ %d ]\n", inode->ref_count);
-    if (inode->ref_count <= 0) {
-        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
-        if (inode->i_op->on_inode_destruction) {
-            inode->i_op->on_inode_destruction(inode);
-        }
-
-        fs_inode_del(inode->device, inode->index);
-
-        spin_unlock(&inode->lock);
-
-        free(inode);
-        return 0;
-    }
-
     spin_unlock(&inode->lock);
+    drop_inode_reference(inode);
     return 0;
 }
 
@@ -618,23 +639,7 @@ int fs_rmdir(const char *path) {
     inode->parent->inode->tnode_list = remove_tnode(inode->parent->inode->tnode_list, tnode);
     free(tnode);
 
-    inode->ref_count--;
-    debug_log("ref count: [ %d ]\n", inode->ref_count);
-    if (inode->ref_count <= 0) {
-        if (inode->i_op->on_inode_destruction) {
-            inode->i_op->on_inode_destruction(inode);
-        }
-        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
-
-        fs_inode_del(inode->device, inode->index);
-        spin_unlock(&inode->lock);
-
-        free_tnode_list_and_tnodes(inode->tnode_list);
-        free(inode);
-        return 0;
-    }
-
-    spin_unlock(&inode->lock);
+    drop_inode_reference(inode);
     return 0;
 }
 
@@ -669,10 +674,7 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
     assert(inode);
 
     if (inode->i_op->mmap) {
-        spin_lock(&inode->lock);
-        inode->ref_count++;
-        debug_log("ref count: [ %d ]\n", inode->ref_count);
-        spin_unlock(&inode->lock);
+        bump_inode_reference(inode);
         return inode->i_op->mmap(addr, len, prot, flags, inode, offset);
     }
 
@@ -693,23 +695,7 @@ int fs_munmap(void *addr, size_t len) {
     struct inode *inode = region->backing_inode;
     assert(inode);
 
-    spin_lock(&inode->lock);
-
-    /* Only delete inode if it's refcount is zero */
-    inode->ref_count--;
-    debug_log("Ref count: [ %d ]\n", inode->ref_count);
-    if (inode->ref_count <= 0) {
-        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
-        if (inode->i_op->on_inode_destruction) {
-            inode->i_op->on_inode_destruction(inode);
-        }
-        fs_inode_del(inode->device, inode->index);
-        free(inode);
-
-        return 0;
-    }
-
-    spin_unlock(&inode->lock);
+    drop_inode_reference(inode);
     return 0;
 }
 
@@ -785,19 +771,7 @@ int fs_rename(char *old_path, char *new_path) {
         struct inode *inode = existing_tnode->inode;
         free(existing_tnode);
 
-        /* Only delete inode if it's refcount is zero */
-        inode->ref_count--;
-        debug_log("ref count: [ %d ]\n", inode->ref_count);
-        if (inode->ref_count <= 0) {
-            debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
-            if (inode->i_op->on_inode_destruction) {
-                inode->i_op->on_inode_destruction(inode);
-            }
-            fs_inode_del(inode->device, inode->index);
-            free(inode);
-        }
-
-        spin_unlock(&inode->lock);
+        drop_inode_reference(inode);
     }
 
     int ret = old->inode->super_block->op->rename(old, new_parent, new_path_last_slash + 1);
@@ -932,11 +906,7 @@ struct file *fs_clone(struct file *file) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
-    spin_lock(&inode->lock);
-    inode->ref_count++;
-    debug_log("Ref count: [ %d ]\n", inode->ref_count);
-    spin_unlock(&inode->lock);
-
+    bump_inode_reference(inode);
     return new_file;
 }
 

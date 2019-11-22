@@ -20,6 +20,8 @@
 #include <kernel/sched/process_sched.h>
 #include <kernel/util/spinlock.h>
 
+// #define PTMX_SIGNAL_DEBUG
+
 #define PTMX_MAX 16
 
 #define TTY_BUF_START 4096
@@ -57,6 +59,9 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
 
     struct slave_data *data = device->private;
     if (get_current_process()->pgid != data->pgid) {
+#ifdef PTMX_SIGNAL_DEBUG
+        debug_log("Sending SIGTTIN: [ %d, %d, %d ]\n", data->pgid, get_current_process()->pgid, get_current_process()->pid);
+#endif /* PTMX_SIGNAL_DEBUG */
         signal_process_group(get_current_process()->pgid, SIGTTIN);
     }
 
@@ -107,6 +112,9 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
 
     struct slave_data *data = device->private;
     if (get_current_process()->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
+#ifdef PTMX_SIGNAL_DEBUG
+        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->pgid, get_current_process()->pgid, get_current_process()->pid);
+#endif /* PTMX_SIGNAL_DEBUG */
         signal_process_group(get_current_process()->pgid, SIGTTOU);
     }
 
@@ -229,6 +237,9 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
     struct slave_data *data = device->private;
 
     if (get_current_process()->pgid != data->pgid) {
+#ifdef PTMX_SIGNAL_DEBUG
+        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->pgid, get_current_process()->pgid, get_current_process()->pid);
+#endif /* PTMX_SIGNAL_DEBUG */
         signal_process_group(get_current_process()->pgid, SIGTTOU);
     }
 

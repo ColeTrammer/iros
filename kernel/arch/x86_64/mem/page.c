@@ -16,6 +16,8 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 
+// #define MAP_VM_REGION_DEBUG
+
 static spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
 
 uintptr_t get_phys_addr(uintptr_t virt_addr) {
@@ -401,7 +403,9 @@ void map_vm_region_flags(struct vm_region *region) {
 }
 
 void map_vm_region(struct vm_region *region) {
+#ifdef MAP_VM_REGION_DEBUG
     debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start, region->end);
+#endif /* MAP_VM_REGION_DEBUG */
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
         map_page(addr, region->flags);
     }    

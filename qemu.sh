@@ -16,6 +16,7 @@ if echo "$1" | grep -Eq '[-][-]debug'; then
     x-terminal-emulator -e "qemu-system-$ARCH -cdrom os_2.iso -d cpu_reset,guest_errors,int -hda os_2.img -no-reboot -no-shutdown -monitor stdio -s -S -serial file:debug.log" &
     x-terminal-emulator -e "gdb"
 else
+    # export DEFINES="-DKERNEL_NO_GRAPHICS -DKERNEL_NO_DEBUG_COLORS -DKERNEL_MALLOC_DEBUG"
     export DEFINES="-DKERNEL_NO_GRAPHICS"
     # export DEFINES=""
 

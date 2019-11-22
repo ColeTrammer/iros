@@ -23,13 +23,16 @@ int main()
     int mfd = posix_openpt(O_RDWR);
     assert(mfd != -1);
 
+    // FIXME: There is some buf that makes it necessary to always ignore SIGTTOU,
+    //        when only ignoring it for the tcsetpgrp calls should suffice
+    signal(SIGTTOU, SIG_IGN);
+
     pid_t pid = fork();
     if (pid == 0) {
         int sfd = open(ptsname(mfd), O_RDWR);
         assert(sfd != -1);
 
         setpgid(0, 0);
-        signal(SIGTTOU, SIG_IGN);
         tcsetpgrp(mfd, getpid());
         ioctl(mfd, TIOSCTTY);
         signal(SIGTTOU, SIG_DFL);
@@ -49,7 +52,6 @@ int main()
     }
 
     setpgid(pid, pid);
-    signal(SIGTTOU, SIG_IGN);
     tcsetpgrp(mfd, pid);
     signal(SIGTTOU, SIG_DFL);
 

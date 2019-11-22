@@ -5,6 +5,8 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/hal/output.h>
 
+// #define VM_REGION_DEBUG
+
 struct vm_region *add_vm_region(struct vm_region *list, struct vm_region *to_add) {
     struct vm_region **link = &list;
     while (*link != NULL && (*link)->start < to_add->end) {
@@ -23,7 +25,9 @@ struct vm_region *remove_vm_region(struct vm_region *list, uint64_t type) {
     }
     *link = (*link)->next;
 
+#ifdef VM_REGION_DEBUG
     debug_log("VM Region Removed: [ %#.16lX, %#.16lX ]\n", type, (uintptr_t) list);
+#endif /* VM_REGION_DEBUG */
     return list;
 }
 
@@ -69,7 +73,9 @@ int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pag
     }
     entry->next->start = new_start;
 
+#ifdef VM_REGION_DEBUG
     debug_log("VM Region Start Extended: [ %ld, %#.16lX, %#.16lX ]\n", num_pages, type, (uintptr_t) list);
+#endif /* VM_REGION_DEBUG */
     return 0;
 }
 
@@ -85,7 +91,9 @@ int contract_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pag
     }
     list->end = new_end;
 
+#ifdef VM_REGION_DEBUG
     debug_log("VM Region End Contracted: [ %ld, %#.16lX, %#.16lX ]\n", num_pages, type, (uintptr_t) list);
+#endif /* VM_REGION_DEBUG */
     return 0;
 }
 
@@ -101,7 +109,9 @@ int contract_vm_region_start(struct vm_region *list, uint64_t type, size_t num_p
     }
     list->start = new_start;
 
+#ifdef VM_REGION_DEBUG
     debug_log("VM Region Start Contracted: [ %ld, %#.16lX, %#.16lX ]\n", num_pages, type, (uintptr_t) list);
+#endif /* VM_REGION_DEBUG */
     return 0;
 }
 

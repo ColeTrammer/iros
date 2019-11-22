@@ -18,13 +18,13 @@
 #include <kernel/hal/output.h>
 #include <kernel/proc/process_state.h>
 
+// #define PROC_SIGNAL_DEBUG
+
 static struct process *current_process;
 static struct process initial_kernel_process;
 
 /* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
-    debug_log("Mapping Program Args: [ %#.16lX ]\n", (uintptr_t) start);
-
     size_t argc = 0;
     size_t args_str_length = 0;
     while (argv[argc++] != NULL) {
@@ -328,7 +328,9 @@ void proc_do_sig(struct process *process, int signum) {
     assert(process->sig_pending & (1U << signum));
     assert(!proc_is_sig_blocked(process, signum));
 
+#ifdef PROC_SIGNAL_DEBUG
     debug_log("Doing signal: [ %d, %d ]\n", process->pid, signum);
+#endif /* PROC_SIGNAL_DEBUG */
 
     proc_unset_sig_pending(process, signum);
 

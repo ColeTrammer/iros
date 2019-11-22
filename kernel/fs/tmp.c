@@ -147,8 +147,6 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
-    debug_log("TEMP WRITE\n");
-
     struct tmp_data *data = inode->private_data;
     assert(data);
 
@@ -161,13 +159,14 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
     }
 
-    // FIXME: using realloc is very suspicous...
-    if (file->position + len > inode->size) {
-        data->max = ((file->position + len - inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    if (file->position + len > data->max) {
+        data->max = ((file->position + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         char *save = data->contents;
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
         memcpy(data->contents, save, inode->size);
+        debug_log("Freeing data->contents: [ %#.16lX ]\n", (uintptr_t) save);
+        debug_log("data->contents: [ %#.16lX ]\n", (uintptr_t) data->contents);
         free(save);
     }
 
@@ -273,7 +272,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 void tmp_on_inode_destruction(struct inode *inode) {
     struct tmp_data *data = inode->private_data;
     if (data) {
-        debug_log("Freeing tmp data: [ %#.16lX ]\n", (uintptr_t) data->contents);
+        debug_log("Freeing data->contents: [ %#.16lX ]\n", (uintptr_t) data->contents);
         free(data->contents);
         free(data);
     }
@@ -309,6 +308,7 @@ struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
     root->size = 0;
     root->super_block = sb;
     root->tnode_list = NULL;
+    root->ref_count++;
 
     sb->root = t_root;
 

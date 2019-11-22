@@ -9,6 +9,8 @@
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/process.h>
 
+// #define ELF64_DEBUG
+
 bool elf64_is_valid(void *buffer) {
     /* Should Probably Also Check Sections And Architecture */
 
@@ -73,7 +75,9 @@ void elf64_map_heap(void *buffer, struct process *process) {
     process_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
     process_heap->type = VM_PROCESS_HEAP;
     process_heap->start = ((elf64_get_start(buffer) + elf64_get_size(buffer)) & ~0xFFF) + 100 * PAGE_SIZE;
+#ifdef ELF64_DEBUG
     debug_log("Heap start: [ %#.16lX ]\n", process_heap->start);
+#endif /* ELF64_DEBUG */
     process_heap->end = process_heap->start;
     process->process_memory = add_vm_region(process->process_memory, process_heap);
 }

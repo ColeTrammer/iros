@@ -27,6 +27,10 @@
 #include <kernel/arch/x86_64/proc/process.h>
 #include <kernel/hal/x86_64/gdt.h>
 
+// #define SET_PGID_DEBUG
+// #define SIGACTION_DEBUG
+// #define WAIT_PID_DEBUG
+
 #define SYS_BEGIN(process_state)                                                                                        \
     do {                                                                                                                \
         memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
@@ -128,8 +132,8 @@ void arch_sys_fork(struct process_state *process_state) {
         }
     }
 
+    disable_interrupts();
     sched_add_process(child);
-
     SYS_RETURN(child->pid);
 }
 
@@ -311,8 +315,6 @@ void arch_sys_execve(struct process_state *process_state) {
         SYS_RETURN(-ENOEXEC);
     }
 
-    debug_log("Creating new process\n");
-
     struct process *process = calloc(1, sizeof(struct process));
 
     // Dup open file descriptors
@@ -379,8 +381,6 @@ void arch_sys_execve(struct process_state *process_state) {
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process_memory);
 
-    debug_log("Loading: [ %s ]\n", path);
-
     elf64_load_program(buffer, length, process);
     elf64_map_heap(buffer, process);
 
@@ -411,7 +411,9 @@ void arch_sys_waitpid(struct process_state *process_state) {
         pid = -current->pgid;
     }
 
+#ifdef WAIT_PID_DEBUG
     debug_log("Waiting on pid: [ %d ]\n", pid);
+#endif /* WAIT_PID_DEBUG */
 
     struct proc_state_message m;
     pid_t found_pid;
@@ -426,7 +428,9 @@ void arch_sys_waitpid(struct process_state *process_state) {
 
         if (found_pid == 0) {
             if (flags & WNOHANG) {
+#ifdef WAIT_PID_DEBUG
                 debug_log("Wait found nothing: [ %d ]\n", pid);
+#endif /* WAIT_PID_DEBUG */
                 SYS_RETURN(-ECHILD);
             } else {
                 yield();
@@ -439,7 +443,9 @@ void arch_sys_waitpid(struct process_state *process_state) {
         }
     }
 
+#ifdef WAIT_PID_DEBUG
     debug_log("Waited out pid: [ %d, %d ]\n", found_pid, m.type);
+#endif /* WAIT_PID_DEBUG */
 
     if (!status) {
         SYS_RETURN(found_pid);
@@ -733,6 +739,10 @@ void arch_sys_setpgid(struct process_state *process_state) {
         pgid = get_current_process()->pid;
     }
 
+#ifdef SET_PGID_DEBUG
+    debug_log("Setting pgid: [ %d, %d, %d ]\n", pid, get_current_process()->pgid, pgid);
+#endif /* SET_PGID_DEBUG */
+
     // FIXME: process needs a lock to prevent races
     struct process *process = find_by_pid(pid);
     if (process == NULL) {
@@ -762,6 +772,9 @@ void arch_sys_sigaction(struct process_state *process_state) {
     }
 
     if (act != NULL) {
+#ifdef SIGACTION_DEBUG
+        debug_log("Changing signal state: [ %d, %#.16lX ]\n", signum, (uintptr_t) act->sa_handler);
+#endif /* SIGACTION_DEBUG */
         memcpy(&current->sig_state[signum], act, sizeof(struct sigaction));
     }
 

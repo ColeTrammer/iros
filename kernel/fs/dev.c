@@ -179,6 +179,7 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->size = 0;
     root->super_block = &super_block;
     root->tnode_list = NULL;
+    root->ref_count = 1;
 
     super_block.device = root->device;
     super_block.op = NULL;
