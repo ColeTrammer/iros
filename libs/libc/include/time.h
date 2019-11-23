@@ -9,6 +9,8 @@
 #include <bits/time_t.h>
 #include <bits/timer_t.h>
 
+#define CLOCKS_PER_SEC 1000000
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

@@ -34,6 +34,14 @@ static struct tm static_tm_buffer = {
     0, 0, 0, 1, 0, 119, 0, 0, 0
 };
 
+struct tm *gmtime(const time_t *timep) {
+    (void) timep;
+
+    fprintf(stderr, "gmtime unsupported\n");
+
+    return &static_tm_buffer; 
+}
+
 struct tm *localtime(const time_t *timep) {
     (void) timep;
 

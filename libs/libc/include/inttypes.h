@@ -4,4 +4,8 @@
 #include <bits/wchar_t.h>
 #include <stdint.h>
 
+#define PRId64 "ld"
+#define PRIx64 "lx"
+#define PRIu64 "lu"
+
 #endif /* _INTTYPES_H */

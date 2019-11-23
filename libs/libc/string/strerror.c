@@ -67,6 +67,7 @@ const char *sys_errlist[] = {
     "Symbolic link loop",
     "Prototype",
     "EILSEQ",
+    "Not supported",
     "Errno end"
 };
 

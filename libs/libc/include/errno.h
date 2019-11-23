@@ -67,7 +67,8 @@
 #define ELOOP           62
 #define EPROTOTYPE      63
 #define EILSEQ          64
-#define EMAXERRNO       65
+#define ENOTSUP         65
+#define EMAXERRNO       66
 
 #ifdef __cplusplus
 extern "C" {

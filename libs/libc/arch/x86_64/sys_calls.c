@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <utime.h>
 
 void *sbrk(intptr_t increment) {
     void *ret;
@@ -643,5 +644,29 @@ int mknod(const char *path, mode_t mode, dev_t dev) {
 
     fprintf(stderr, "mknod not supported\n");
     assert(false);
+    return 0;
+}
+
+clock_t clock(void) {
+    fprintf(stderr, "clock not supported\n");
+
+    assert(false);
+    return 0;
+}
+
+int chown(const char *pathname, uid_t owner, gid_t group) {
+    (void) pathname;
+    (void) owner;
+    (void) group;
+
+    fprintf(stderr, "chown not supported\n");
+    return 0;
+}
+
+int utime(const char *filename, const struct utimbuf *times) {
+    (void) filename;
+    (void) times;
+
+    fprintf(stderr, "utime not supported\n");
     return 0;
 }
