@@ -20,7 +20,7 @@ FILE *stderr;
 
 static FILE files[3];
 
-FILE *fopen(const char *__restrict path, const char *__restrict mode) {
+static int parse_flags(const char *mode) {
     int flags = 0;
     switch(mode[0]) {
         case 'r': 
@@ -54,6 +54,24 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
             }
             break;
     }
+
+    return flags;
+}
+
+static void update_file(FILE *file, int fd, int flags) {
+    file->pos = 0;
+    file->buffer = malloc(BUFSIZ);
+    file->fd = fd;
+    file->length = (flags & O_RDONLY) ? 0 : BUFSIZ;
+    file->flags = flags | STDIO_OWNED;
+    file->buf_type = _IOFBF;
+    file->eof = 0;
+    file->error = 0;
+    file->pushed_back_char = '\0';
+}
+
+FILE *fopen(const char *__restrict path, const char *__restrict mode) {
+    int flags = parse_flags(mode);
 
     mode_t __mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
     int fd = open(path, flags, __mode);
@@ -64,64 +82,49 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
     }
 
     FILE *file = malloc(sizeof(FILE));
-    file->pos = 0;
-    file->buffer = malloc(BUFSIZ);
-    file->fd = fd;
-    file->length = mode[0] == 'r' ? 0 : BUFSIZ;
-    file->flags = flags | STDIO_OWNED;
-    file->buf_type = _IOFBF;
-    file->eof = 0;
-    file->error = 0;
-    file->pushed_back_char = '\0';
+    update_file(file, fd, flags);
 
     return file;
 }
 
-FILE *fdopen(int fd, const char *__restrict mode) {
-    int flags = 0;
-    switch(mode[0]) {
-        case 'r': 
-            switch(mode[1]) {
-                case '+':
-                    flags = O_RDWR;
-                    break;
-                default:
-                    flags = O_RDONLY;
-                    break;
-            }
-            break;
-        case 'w':
-            switch(mode[1]) {
-                case '+':
-                    flags = O_RDWR | O_CREAT | O_TRUNC;
-                    break;
-                default:
-                    flags = O_WRONLY | O_CREAT | O_TRUNC;
-                    break;
-            }
-            break;
-        case 'a':
-            switch(mode[1]) {
-                case '+':
-                    flags = O_RDWR | O_CREAT | O_APPEND;
-                    break;
-                default:
-                    flags = O_WRONLY | O_CREAT | O_APPEND;
-                    break;
-            }
-            break;
+FILE *freopen(const char *pathname, const char *mode, FILE *stream) {
+    if (!mode) {
+        errno = EINVAL;
+        return NULL;
     }
 
+    int flags = parse_flags(mode);
+
+    if (!stream) {
+        return fopen(pathname, mode);
+    }
+
+    if (!pathname) {
+        fcntl(stream->fd, F_SETFL, flags);
+        stream->flags = flags;
+        return stream;
+    }
+
+    if (close(stream->fd) != 0) {
+        return NULL;
+    }
+
+    fflush(stream);
+    free(stream->buffer);
+    int fd = open(pathname, flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+    if (fd == -1) {
+        return NULL;
+    }
+
+    update_file(stream, fd, flags);
+    return stream;
+}
+
+FILE *fdopen(int fd, const char *__restrict mode) {
+    int flags = parse_flags(mode);
+
     FILE *file = malloc(sizeof(FILE));
-    file->pos = 0;
-    file->buffer = malloc(BUFSIZ);
-    file->fd = fd;
-    file->length = mode[0] == 'r' ? 0 : BUFSIZ;
-    file->flags = flags | STDIO_OWNED;
-    file->buf_type = _IOFBF;
-    file->eof = 0;
-    file->error = 0;
-    file->pushed_back_char = '\0';
+    update_file(file, fd, flags);
 
     return file;
 }

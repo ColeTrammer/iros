@@ -31,3 +31,18 @@ int tcflow(int fd, int action) {
     assert(false);
     return 0;
 }
+
+speed_t cfgetospeed(const struct termios *termios_p) {
+    (void) termios_p;
+    return B38400;
+}
+
+int tcflush(int fd, int how) {
+    (void) fd;
+    (void) how;
+
+    fprintf(stderr, "tcflush not supported\n");
+
+    assert(false);
+    return 0;
+}

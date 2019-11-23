@@ -45,6 +45,7 @@ int seteuid(uid_t uid);
 int setegid(gid_t gid);
 int setpgid(pid_t pid, pid_t pgid);
 pid_t getpgid(pid_t pid);
+pid_t getpgrp(void);
 char *getcwd(char *buf, size_t size);
 int chdir(const char *path);
 off_t lseek(int fd, off_t offset, int whence);

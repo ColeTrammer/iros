@@ -104,6 +104,7 @@ $(BUILDDIR)/libs/libc/unistd/exec.o \
 $(BUILDDIR)/libs/libc/unistd/getlogin.o \
 $(BUILDDIR)/libs/libc/unistd/getopt.o \
 $(BUILDDIR)/libs/libc/unistd/isatty.o \
+$(BUILDDIR)/libs/libc/unistd/unistd.o \
 $(BUILDDIR)/libs/libc/wordexp/wordexp.o \
 $(BUILDDIR)/libs/libc/init.o
 
