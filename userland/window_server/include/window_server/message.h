@@ -7,7 +7,19 @@ struct WindowServerMessage {
     enum class Type {
         Invalid,
         Begin,
-        CreateWindow
+        CreateWindow,
+        CreatedWindow
+    };
+
+    struct CreateWindowData {
+        int x;
+        int y;
+        int width;
+        int height;
+    };
+
+    struct CreatedWindowData {
+        char shared_buffer_path[0];
     };
 
     Type type() const { return m_type; }

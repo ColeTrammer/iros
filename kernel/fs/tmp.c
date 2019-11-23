@@ -64,6 +64,8 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     assert(tparent->inode->flags & FS_DIR);
     assert(name);
 
+    debug_log("Tmp create: [ %s ]\n", name);
+
     struct inode *inode = calloc(1, sizeof(struct inode));
     if (inode == NULL) {
         *error = ENOMEM;
@@ -261,6 +263,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         map_phys_page(get_phys_addr((uintptr_t) data->contents) + i - region->start, i, region->flags);
     }
 
+    debug_log("tmp mmap\n");
     return (intptr_t) addr;
 }
 

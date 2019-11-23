@@ -8,6 +8,10 @@ class Color;
 
 class PixelBuffer {
 public:
+    PixelBuffer()
+    {
+    }
+
     PixelBuffer(int width, int height)
         : PixelBuffer(new uint32_t[width * height], width, height)
     {

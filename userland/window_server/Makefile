@@ -1,6 +1,7 @@
 OBJS=\
 $(BUILDDIR)/userland/window_server/main.o \
 $(BUILDDIR)/userland/window_server/server.o \
+$(BUILDDIR)/userland/window_server/window_manager.o \
 $(BUILDDIR)/userland/window_server/window.o
 
 EXECUTABLE=$(BUILDDIR)/userland/window_server/window_server

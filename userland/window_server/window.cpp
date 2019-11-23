@@ -1,13 +1,39 @@
+#include <assert.h>
+#include <fcntl.h>
 #include <graphics/pixel_buffer.h>
+#include <stdio.h>
+#include <sys/mman.h>
 
 #include "window.h"
 
-Window::Window(const Rect& rect) 
-    : m_rect(rect)
-    , m_buffer(new PixelBuffer(rect))
+Window::Window(const String& shm_path, const Rect& rect) 
+    : m_shm_path(shm_path)
+    , m_rect(rect)
+{
+    int fd = shm_open(shm_path.string(), O_RDWR | O_CREAT | O_TRUNC | O_EXCL, 0666);
+
+    assert(fd != -1);
+
+    size_t len = rect.width() * rect.height() * sizeof(uint16_t); 
+    ftruncate(fd, len);
+
+    void* memory = mmap(nullptr, len, PROT_READ, MAP_SHARED, fd, 0);
+
+    m_buffer = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(memory), rect.width(), rect.height());
+
+    close(fd);
+}
+
+Window::Window(const Window &other) 
+    : m_rect(other.rect())
+    , m_buffer(other.buffer())
 {
 }
 
 Window::~Window()
 {
+    if (m_buffer) {
+        munmap(m_buffer->pixels(), m_buffer->size_in_bytes());
+        shm_unlink(m_shm_path.string());
+    }
 }

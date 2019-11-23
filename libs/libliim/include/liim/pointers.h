@@ -96,6 +96,10 @@ public:
     {
     }
 
+    SharedPtr()
+    {
+    }
+
     ~SharedPtr()
     {
         assert(m_control_block);
