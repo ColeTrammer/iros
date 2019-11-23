@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define PRId64 "ld"
+#define PRIi64 "li"
 #define PRIx64 "lx"
 #define PRIu64 "lu"
 

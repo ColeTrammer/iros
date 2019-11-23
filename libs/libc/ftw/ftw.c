@@ -214,3 +214,15 @@ cleanup:
 
     return ret;
 }
+
+static int (*ftw_current_fn)(const char *path, const struct stat *stat_struct, int type);
+
+int ftw_fn_wrapper(const char *path, const struct stat *stat_struct, int type, struct FTW* ftw) {
+    (void) ftw;
+    return ftw_current_fn(path, stat_struct, type);
+}
+
+int ftw(const char *path, int (*fn)(const char *path, const struct stat *stat_struct, int type), int fd_limit) {
+    ftw_current_fn = fn;
+    return nftw(path, &ftw_fn_wrapper, fd_limit, 0);
+}

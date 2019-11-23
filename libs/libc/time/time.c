@@ -30,6 +30,11 @@ char *ctime(const time_t *timep) {
     return "ctime unsupported";
 }
 
+char *asctime(const struct tm *tm) {
+    (void) tm;
+    return "asctime unsupported";
+}
+
 static struct tm static_tm_buffer = {
     0, 0, 0, 1, 0, 119, 0, 0, 0
 };

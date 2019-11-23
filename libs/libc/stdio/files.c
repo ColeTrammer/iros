@@ -417,6 +417,10 @@ int fileno(FILE *stream) {
     return stream->fd;
 }
 
+void setbuf(FILE *stream, char *buf) {
+    setvbuf(stream, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
+}
+
 int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
     if (stream->flags & STDIO_OWNED) {
         free(stream->buffer);
