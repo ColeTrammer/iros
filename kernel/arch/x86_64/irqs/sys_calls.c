@@ -45,6 +45,13 @@
         get_current_process()->can_send_self_signals = true;                                                            \
     } while (0)
 
+#define SYS_BEGIN_SIGSUSPEND(process_state)                                                                             \
+    do {                                                                                                                \
+        memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
+        get_current_process()->in_sigsuspend = true;                                                                    \
+        get_current_process()->in_kernel = true;                                                                        \
+    } while (0)
+
 #define SYS_RETURN(val)                                       \
     do {                                                      \
         uint64_t _val = (uint64_t) val;                       \
@@ -177,6 +184,8 @@ void arch_sys_open(struct process_state *process_state) {
                 free(path);
                 SYS_RETURN((uint64_t) error);
             }
+
+            debug_log("Open successful\n");
         } else {
             debug_log("File Not Found: [ %s ]\n", path);
             free(path);
@@ -578,9 +587,15 @@ void arch_sys_ftruncate(struct process_state *process_state) {
     int fd = (int) process_state->cpu_state.rsi;
     off_t length = (off_t) process_state->cpu_state.rdx;
 
+    if (fd < 0 || fd >= FOPEN_MAX) {
+        SYS_RETURN(-EBADF);
+    }
+
     struct process *process = get_current_process();
     struct file *file = process->files[fd];
-    assert(file);
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
 
     SYS_RETURN((uint64_t) fs_truncate(file, length));
 }
@@ -1289,4 +1304,21 @@ void arch_sys_getppid(struct process_state *process_state) {
     SYS_BEGIN(process_state);
 
     SYS_RETURN(get_current_process()->ppid);
+}
+
+void arch_sys_sigsuspend(struct process_state *process_state) {
+    SYS_BEGIN_SIGSUSPEND(process_state);
+
+    struct process *current = get_current_process();
+    const sigset_t *mask = (const sigset_t*) process_state->cpu_state.rsi;
+    if (mask == NULL) {
+        current->in_sigsuspend = false;
+        SYS_RETURN(-EFAULT);
+    }
+
+    memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
+    memcpy(&current->sig_mask, mask, sizeof(sigset_t));
+
+    current->sched_state = WAITING;
+    sched_run_next();
 }

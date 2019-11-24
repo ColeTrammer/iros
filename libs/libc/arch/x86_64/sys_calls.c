@@ -670,3 +670,12 @@ int utime(const char *filename, const struct utimbuf *times) {
     fprintf(stderr, "utime not supported\n");
     return 0;
 }
+
+int sigsuspend(const sigset_t *set) {
+    int ret;
+    asm volatile( "movq $53, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "int $0x80\n"\
+                  "movl %%eax, %0" : "=r"(ret) : "r"(set) : "rdi", "rsi", "rax", "memory" );
+    __SYSCALL_TO_ERRNO(ret);
+}

@@ -120,7 +120,7 @@ struct file *tmp_open(struct inode *inode, int flags, int *error) {
         return NULL;
     }
 
-    file->f_op = inode->flags & FS_DIR ? &tmp_dir_f_op : &tmp_f_op;
+    file->f_op = (inode->flags & FS_DIR) ? &tmp_dir_f_op : &tmp_f_op;
     file->flags = inode->flags;
     init_spinlock(&file->lock);
     file->device = inode->device;
@@ -137,6 +137,12 @@ ssize_t tmp_read(struct file *file, void *buffer, size_t len) {
 
     spin_lock(&inode->lock);
     size_t to_read = MIN(len, inode->size - file->position);
+
+
+    if (to_read == 0) {
+        spin_unlock(&inode->lock);
+        return 0;
+    }
 
     memcpy(buffer, data->contents + file->position, to_read);
     file->position += to_read;
@@ -229,7 +235,7 @@ int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_na
     return 0;
 }
 
-static uintptr_t joke_allocator = 0x10000000000ULL;
+static uintptr_t joke_allocator = 0x500000000000ULL;
 
 intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
     if (offset != 0 || !(flags & MAP_SHARED) || len > inode->size || len == 0) {
@@ -263,7 +269,6 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         map_phys_page(get_phys_addr((uintptr_t) data->contents) + i - region->start, i, region->flags);
     }
 
-    debug_log("tmp mmap\n");
     return (intptr_t) addr;
 }
 

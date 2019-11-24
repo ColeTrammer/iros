@@ -10,16 +10,16 @@ Window::Window(const String& shm_path, const Rect& rect)
     : m_shm_path(shm_path)
     , m_rect(rect)
 {
-    int fd = shm_open(shm_path.string(), O_RDWR | O_CREAT | O_TRUNC | O_EXCL, 0666);
-
-    assert(fd != -1);
+    int fd = shm_open(shm_path.string(), O_RDWR | O_CREAT | O_EXCL, 0666);
 
     size_t len = rect.width() * rect.height() * sizeof(uint16_t); 
     ftruncate(fd, len);
 
-    void* memory = mmap(nullptr, len, PROT_READ, MAP_SHARED, fd, 0);
+    void* memory = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
+    fprintf(stderr, "attempting to wrap: [ %#.16lX ]\n", (uintptr_t) memory);
     m_buffer = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(memory), rect.width(), rect.height());
+    fprintf(stderr, "created m_buffer\n");
 
     close(fd);
 }

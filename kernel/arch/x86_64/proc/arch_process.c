@@ -161,7 +161,7 @@ void proc_do_sig_handler(struct process *process, int signum) {
     struct process_state *save_state = ((struct process_state*) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
     struct process_state *to_copy = proc_in_kernel(process) ? &process->arch_process.user_process_state : &process->arch_process.process_state;
     uint64_t *stack_frame = ((uint64_t*) save_state) - 1;
-    *stack_frame-- = (uint64_t) process->sig_mask;
+    *stack_frame-- = (uint64_t) (process->in_sigsuspend ? process->saved_sig_mask : process->sig_mask);
     *stack_frame = (uintptr_t) act.sa_restorer;
 
     memcpy(save_state, to_copy, sizeof(struct process_state));
@@ -169,7 +169,7 @@ void proc_do_sig_handler(struct process *process, int signum) {
         if (process->can_send_self_signals) {
             save_state->cpu_state.rax = 0;
             process->can_send_self_signals = false;
-        } else if (act.sa_flags & SA_RESTART) {
+        } else if ((act.sa_flags & SA_RESTART) && !process->in_sigsuspend) {
             // Decrement %rip by the sizeof of the iretq instruction so that
             // the program will automatically execute int $0x80, restarting
             // the sys call in the easy way possible

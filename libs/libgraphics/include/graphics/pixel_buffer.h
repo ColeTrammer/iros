@@ -10,6 +10,7 @@ class PixelBuffer {
 public:
     PixelBuffer()
     {
+        m_should_deallocate = false;
     }
 
     PixelBuffer(int width, int height)
@@ -25,10 +26,10 @@ public:
 
     ~PixelBuffer()
     {
-        if (m_should_deallocate) {
+        if (m_should_deallocate && m_pixels) {
             delete[] m_pixels;
+            m_pixels = nullptr;
         }
-        m_pixels = nullptr;
     }
 
     static SharedPtr<PixelBuffer> wrap(uint32_t* pixels, int width, int height)

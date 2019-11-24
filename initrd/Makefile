@@ -44,6 +44,7 @@ $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/shared_memory_test \
 $(BUILDDIR)/initrd/programs/signal_test \
+$(BUILDDIR)/initrd/programs/sigsuspend_test_a \
 $(BUILDDIR)/initrd/programs/smart_pointer_test \
 $(BUILDDIR)/initrd/programs/stack_trace_test \
 $(BUILDDIR)/initrd/programs/strcasecmp_test \
@@ -65,8 +66,12 @@ $(BUILDDIR)/initrd/programs/window_server_test
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
 
+.PHONY: make-output-dir
+make-output-dir:
+	mkdir -p $(ROOT)/initrd/files
+
 # Builds initrd.img from generated tool
-$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o $(FILES) $(PROGRAMS)
+$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o make-output-dir $(FILES) $(PROGRAMS)
 	for program in $(PROGRAMS); do \
 	  cp $$program files; \
 	done

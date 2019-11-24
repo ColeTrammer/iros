@@ -34,6 +34,7 @@ struct process {
     char *cwd;
     struct file *files[FOPEN_MAX];
     bool in_kernel;
+    bool in_sigsuspend;
     bool can_send_self_signals;
 
     struct process *prev;
@@ -41,6 +42,7 @@ struct process {
 
     struct sigaction sig_state[_NSIG];
     sigset_t sig_mask;
+    sigset_t saved_sig_mask;
     sigset_t sig_pending;
 
     bool sleeping;

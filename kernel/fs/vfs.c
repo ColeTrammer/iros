@@ -355,6 +355,8 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 ssize_t fs_read(struct file *file, void *buffer, size_t len) {
     if (len == 0) { return 0; }
 
+    assert(file);
+    assert(file->f_op);
     if (file->f_op->read) {
         return file->f_op->read(file, buffer, len);
     }
@@ -433,11 +435,14 @@ int fs_ioctl(struct file *file, unsigned long request, void *argp) {
 }
 
 int fs_truncate(struct file *file, off_t length) {
+    assert(file);
+
     char *file_contents = malloc(length);
+    assert(file_contents);
+
     ssize_t read = fs_read(file, file_contents, length);
-    /* Ignore error since it's probably trying to read form a device */
     if (read < 0) {
-        read = 0;
+        return read;
     }
 
     /* Makes rest of file null bytes */

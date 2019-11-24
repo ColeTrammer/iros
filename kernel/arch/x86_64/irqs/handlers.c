@@ -34,16 +34,22 @@ void handle_double_fault() {
     abort();
 }
 
-void handle_general_protection_fault(struct stack_state *stack, uintptr_t error) {
-    // FIXME: need to save process state here in case a signal handler is called and returned
-
+void handle_general_protection_fault(struct process_interrupt_state *process_state) {
     struct process *current = get_current_process();
-    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->pid, stack->rip, error);
-    signal_process(current->pid, SIGSEGV);
+    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, process_state->error_code);
+
+    if (!current->in_kernel) {
+        memcpy(&current->arch_process.process_state.cpu_state, &process_state->cpu_state, sizeof(struct cpu_state));
+        memcpy(&current->arch_process.process_state.stack_state, &process_state->stack_state, sizeof(struct stack_state));
+        proc_do_sig(current, SIGSEGV); // You can't block this so we don't check
+    
+        // If we get here, the process that faulted was just send a terminating signal
+        sched_run_next();
+    }
 
     // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
-    printf("\n\033[31m%s: Error: %lX\033[0m\n", "General Protection Fault", error);
+    printf("\n\033[31m%s: Error: %lX\033[0m\n", "General Protection Fault", process_state->error_code);
     abort();
 }
 

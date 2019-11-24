@@ -21,7 +21,7 @@ void handle_page_fault_entry();
 void sys_call_entry();
 
 void handle_double_fault();
-void handle_general_protection_fault(struct stack_state *stack, uintptr_t error);
+void handle_general_protection_fault(struct process_interrupt_state *process_state);
 void handle_page_fault(struct process_interrupt_state *process_state, uintptr_t address);
 void handle_invalid_opcode();
 void handle_fpu_exception();
