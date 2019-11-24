@@ -146,7 +146,7 @@ void elf64_stack_trace(struct process *process) {
         for (int i = 0; (uintptr_t) (symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
             if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
                 if (*((uint64_t*) rsp) >= symbols[i].st_value && *((uint64_t*) rsp) <= symbols[i].st_value + symbols[i].st_size) {
-                    debug_log("[ %s ]\n", string_table + symbols[i].st_name);
+                    debug_log("[ %#.16lX, %s ]\n", symbols[i].st_value, string_table + symbols[i].st_name);
                 }
             }
         }

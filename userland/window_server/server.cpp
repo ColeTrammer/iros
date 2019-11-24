@@ -43,6 +43,7 @@ void Server::start()
             }
         };
 
+        assert(m_manager);
         if (m_manager->windows().size() > 0) {
             m_manager->for_each_window(render_window);
         }
@@ -69,11 +70,12 @@ void Server::start()
                 break;
             case WindowServerMessage::Type::CreateWindow: {
                 fprintf(stderr, "Creating window\n");
-                char s[50] = { 0 };
+                char s[50];
+                s[49] = '\0';
                 snprintf(s, 49, "/window_server_%d", client_fd);
 
                 WindowServerMessage::CreateWindowData* data = reinterpret_cast<WindowServerMessage::CreateWindowData*>(message->data());
-                auto window = SharedPtr(new Window(s, Rect(data->x, data->y, data->width, data->height)));
+                auto window = Window::from_shm_and_rect(s, Rect(data->x, data->y, data->width, data->height));
                 m_manager->add_window(window);
 
                 uint8_t send_buffer[4096];
@@ -83,7 +85,6 @@ void Server::start()
                 strcpy(reinterpret_cast<char*>(to_send->data()), s);
 
                 assert(write(client_fd, to_send, sizeof(WindowServerMessage) + to_send->data_len()) != -1);
-
                 break;
             }
             case WindowServerMessage::Type::Invalid:

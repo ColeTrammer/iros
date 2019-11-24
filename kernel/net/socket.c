@@ -103,6 +103,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
             current->files[i] = calloc(1, sizeof(struct file));
             current->files[i]->flags = FS_SOCKET;
             current->files[i]->f_op = &socket_file_ops;
+            current->files[i]->ref_count = 1;
 
             struct socket_file_data *file_data = malloc(sizeof(struct socket_file_data));
             current->files[i]->private_data = file_data;

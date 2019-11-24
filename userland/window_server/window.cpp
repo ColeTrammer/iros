@@ -17,9 +17,7 @@ Window::Window(const String& shm_path, const Rect& rect)
 
     void* memory = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-    fprintf(stderr, "attempting to wrap: [ %#.16lX ]\n", (uintptr_t) memory);
-    m_buffer = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(memory), rect.width(), rect.height());
-    fprintf(stderr, "created m_buffer\n");
+    m_buffer = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(memory), m_rect.width(), m_rect.height());
 
     close(fd);
 }
@@ -32,7 +30,7 @@ Window::Window(const Window &other)
 
 Window::~Window()
 {
-    if (m_buffer) {
+    if (m_buffer && m_shm_path) {
         munmap(m_buffer->pixels(), m_buffer->size_in_bytes());
         shm_unlink(m_shm_path.string());
     }

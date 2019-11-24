@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <stdio.h>
 
 namespace LIIM {
 
@@ -105,6 +106,7 @@ public:
         assert(m_control_block);
         m_control_block->deref();
         if (m_control_block->ref_count() == 0) {
+            fprintf(stderr, "destroying shared ptr\n");
             delete m_control_block;
         }
         m_control_block = nullptr;
@@ -126,8 +128,19 @@ public:
         }
     }
 
-    T* ptr() { return m_control_block->ptr(); }
-    const T* ptr() const { return m_control_block->ptr(); }
+    T* ptr() {
+        if (!m_control_block) {
+            return nullptr;
+        }
+        return m_control_block->ptr(); 
+    }
+
+    const T* ptr() const {
+        if (!m_control_block) {
+            return nullptr;
+        }
+        return m_control_block->ptr();
+    }
 
     T& operator *()
     {
@@ -157,7 +170,7 @@ public:
     operator bool() { return !!ptr(); }
 
 private:
-    SharedPtrControlBlock<T>* m_control_block;
+    SharedPtrControlBlock<T>* m_control_block { nullptr };
 };
 
 }

@@ -12,6 +12,14 @@ public:
     {
     }
 
+    Rect(const Rect& other)
+        : m_x(other.x())
+        , m_y(other.y())
+        , m_width(other.width())
+        , m_height(other.height())
+    {
+    }
+
     int x() const { return m_x; }
     int y() const { return m_y; }
     int width() const { return m_width; }

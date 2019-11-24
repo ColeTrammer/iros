@@ -3,6 +3,7 @@
 #include <liim/pointers.h>
 #include <graphics/rect.h>
 #include <stdint.h>
+#include <stdio.h>
 
 class Color;
 
@@ -34,7 +35,9 @@ public:
 
     static SharedPtr<PixelBuffer> wrap(uint32_t* pixels, int width, int height)
     {
-        return SharedPtr<PixelBuffer>(new PixelBuffer(pixels, width, height));
+        auto* buf = new PixelBuffer(pixels, width, height);
+        auto ret = SharedPtr<PixelBuffer>(buf);
+        return ret;
     }
 
     int width() const { return m_width; }

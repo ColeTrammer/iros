@@ -9,6 +9,12 @@
 
 #include <kernel/mem/page.h>
 
+// FIXME: investigate why this breaks the kernel
+#ifndef __is_libk
+#define MALLOC_SCRUB_FREE
+#define MALLOC_SCRUB_ALLOC
+#endif /* __is_libk */
+
 #define __MALLOC_MAGIG_CHECK 0x2A8F30B241BFA759UL
 
 #ifdef __is_libk
@@ -118,6 +124,10 @@ void free(void *p) {
     CLEAR_ALLOCATED(block);
     last_allocated = NULL;
 
+#ifdef MALLOC_SCRUB_FREE
+    memset(block + 1, 0xAB, GET_SIZE(block));
+#endif /* MALLOC_SCRUB_FREE */
+
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
     debug_log("Malloc block freed: [ %#.16lX ]\n", (uintptr_t) block);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
@@ -184,6 +194,10 @@ void *aligned_alloc(size_t alignment, size_t n) {
                     debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
+#ifdef MALLOC_SCRUB_ALLOC
+                    memset(block + 1, 0xCD, GET_SIZE(block));
+#endif /* MALLOC_SCRUB_ALLOC */
+
                     return block + 1;
                 }
 
@@ -214,6 +228,10 @@ void *aligned_alloc(size_t alignment, size_t n) {
 
     new_block->size = n;
     SET_ALLOCATED(new_block);
+
+#ifdef MALLOC_SCRUB_ALLOC
+    memset(new_block + 1, 0xCD, GET_SIZE(new_block));
+#endif /* MALLOC_SCRUB_ALLOC */
 
     struct metadata *tail = NEXT_BLOCK(new_block);
     tail->prev_size = new_block->size;
@@ -277,6 +295,10 @@ void *malloc(size_t n) {
         debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) start, __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
+#ifdef MALLOC_SCRUB_ALLOC
+        memset(start + 1, 0xCD, GET_SIZE(start));
+#endif /* MALLOC_SCRUB_ALLOC */
+
         last_allocated = start;
         return start + 1;
     }
@@ -296,6 +318,11 @@ void *malloc(size_t n) {
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
         debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
+
+#ifdef MALLOC_SCRUB_ALLOC
+            memset(block + 1, 0xCD, GET_SIZE(block));
+#endif /* MALLOC_SCRUB_ALLOC */
+
             return block + 1;
         }
         block = NEXT_BLOCK(block);
@@ -321,6 +348,10 @@ void *malloc(size_t n) {
 #ifdef __is_libk
     spin_unlock(&heap_lock);
 #endif /* __is_libk */
+
+#ifdef MALLOC_SCRUB_ALLOC
+    memset(ret, 0xCD, GET_SIZE(ret - 1));
+#endif /* MALLOC_SCRUB_ALLOC */
 
     return ret;
 }
