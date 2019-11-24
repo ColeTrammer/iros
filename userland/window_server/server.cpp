@@ -12,11 +12,9 @@
 #include "window.h"
 #include "window_manager.h"
 
-extern SharedPtr<PixelBuffer> g_pixels;
-
-Server::Server(SharedPtr<PixelBuffer> pixels)
+Server::Server(std::shared_ptr<PixelBuffer> pixels)
     : m_pixels(pixels)
-    , m_manager(new WindowManager)
+    , m_manager(std::make_unique<WindowManager>())
 {
     m_socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     assert(m_socket_fd != -1);
@@ -35,7 +33,7 @@ void Server::start()
     socklen_t client_addr_len = sizeof(sockaddr_un);
 
     for (;;) {
-        auto render_window = [&](SharedPtr<Window>& window) {
+        auto render_window = [&](std::shared_ptr<Window>& window) {
             for (int x = window->rect().x(); x < window->rect().x() + window->rect().width(); x++) {
                 for (int y = window->rect().y(); y < window->rect().y() + window->rect().height(); y++) {
                     m_pixels->put_pixel(x, y, window->buffer()->get_pixel(x - window->rect().x(), y - window->rect().y()));
@@ -80,9 +78,10 @@ void Server::start()
 
                 uint8_t send_buffer[4096];
                 WindowServerMessage* to_send = reinterpret_cast<WindowServerMessage*>(send_buffer);
-                to_send->set_data_len(strlen(s));
+                to_send->set_data_len(sizeof(WindowServerMessage::CreatedWindowData) + strlen(s));
                 to_send->set_type(WindowServerMessage::Type::CreatedWindow);
-                strcpy(reinterpret_cast<char*>(to_send->data()), s);
+                reinterpret_cast<WindowServerMessage::CreatedWindowData*>(to_send->data())->shared_buffer_size = data->width * data->height * sizeof(uint32_t);
+                strcpy(reinterpret_cast<WindowServerMessage::CreatedWindowData*>(to_send->data())->shared_buffer_path, s);
 
                 assert(write(client_fd, to_send, sizeof(WindowServerMessage) + to_send->data_len()) != -1);
                 break;

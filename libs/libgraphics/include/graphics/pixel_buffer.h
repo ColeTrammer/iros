@@ -1,7 +1,8 @@
 #pragma once
 
-#include <liim/pointers.h>
+#include <assert.h>
 #include <graphics/rect.h>
+#include <memory>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -33,11 +34,9 @@ public:
         }
     }
 
-    static SharedPtr<PixelBuffer> wrap(uint32_t* pixels, int width, int height)
+    static std::shared_ptr<PixelBuffer> wrap(uint32_t* pixels, int width, int height)
     {
-        auto* buf = new PixelBuffer(pixels, width, height);
-        auto ret = SharedPtr<PixelBuffer>(buf);
-        return ret;
+        return std::make_shared<PixelBuffer>(pixels, width, height);
     }
 
     int width() const { return m_width; }
@@ -54,16 +53,17 @@ public:
 
     uint32_t get_pixel(int x, int y) const
     {
+        assert(m_pixels);
         return m_pixels[y * m_width + x];
     }
 
-private:
     PixelBuffer(uint32_t* pixels, int width, int height)
         : m_width(width)
         , m_height(height)
         , m_pixels(pixels)
     {
     }
+private:
 
     bool m_should_deallocate { false };
     int m_width { 0 };

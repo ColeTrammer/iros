@@ -1,21 +1,21 @@
 #pragma once
 
 #include <liim/vector.h>
-#include <liim/pointers.h>
+#include <memory>
 
 class PixelBuffer;
 class WindowManager;
 
 class Server {
 public:
-    Server(SharedPtr<PixelBuffer> pixels);
+    Server(std::shared_ptr<PixelBuffer> pixels);
     ~Server();
 
     void start();
 
 private:
-    SharedPtr<PixelBuffer> m_pixels;
-    UniquePtr<WindowManager> m_manager;
+    std::shared_ptr<PixelBuffer> m_pixels;
+    std::unique_ptr<WindowManager> m_manager;
     int m_socket_fd;
     Vector<int> m_clients;
 };

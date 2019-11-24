@@ -19,6 +19,7 @@ struct WindowServerMessage {
     };
 
     struct CreatedWindowData {
+        size_t shared_buffer_size;
         char shared_buffer_path[0];
     };
 

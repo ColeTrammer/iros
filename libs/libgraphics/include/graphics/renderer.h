@@ -1,8 +1,8 @@
 #pragma once
 
 #include <assert.h>
-#include <liim/pointers.h>
 #include <liim/string.h>
+#include <memory>
 
 #include <graphics/color.h>
 #include <graphics/font.h>
@@ -12,7 +12,7 @@ class Color;
 
 class Renderer {
 public:
-    Renderer(SharedPtr<PixelBuffer> buffer)
+    Renderer(std::shared_ptr<PixelBuffer> buffer)
         : m_pixels(buffer)
     {
         assert(m_pixels);
@@ -29,14 +29,14 @@ public:
     void fill_circle(int x, int y, int r);
     void draw_circle(int x, int y, int r);
 
-    SharedPtr<PixelBuffer> pixels() { return m_pixels; }
-    const SharedPtr<PixelBuffer> pixels() const { return m_pixels; }
+    std::shared_ptr<PixelBuffer> pixels() { return m_pixels; }
+    const std::shared_ptr<PixelBuffer> pixels() const { return m_pixels; }
 
     Font& font() { return m_font; }
     const Font& font() const { return m_font; }
 
 private:
     Color m_color;
-    SharedPtr<PixelBuffer> m_pixels;
+    std::shared_ptr<PixelBuffer> m_pixels;
     Font m_font;
 };

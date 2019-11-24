@@ -8,7 +8,7 @@ LIBS?=
 CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS)
 LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
-LIBS:=$(LIBS) -lc
+LIBS:=$(LIBS) -lc -lgraphics
 
 # Sets directories for install if not already set
 DESTDIR?=
@@ -88,7 +88,7 @@ $(BUILDDIR)/%: $(ROOT)/%.c
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAFS)
 
 $(BUILDDIR)/%: $(ROOT)/%.cpp
-	$(CXX) -MD -o $@ $< $(CPPFLAGS)
+	$(CXX) -MD -o $@ $< $(CPPFLAGS) $(LDFLAGS) $(LIBS)
 
 # Cleans by deleting .o, and .d files
 .PHONY: clean

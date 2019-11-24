@@ -1,6 +1,10 @@
 #include <assert.h>
+#include <fcntl.h>
+#include <graphics/pixel_buffer.h>
+#include <graphics/renderer.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -35,7 +39,16 @@ int main()
     assert(message->type() == WindowServerMessage::Type::CreatedWindow);
 
     WindowServerMessage::CreatedWindowData* created_data = reinterpret_cast<WindowServerMessage::CreatedWindowData*>(message->data());
-    fprintf(stderr, "%s\n", created_data->shared_buffer_path);
+    int shm = shm_open(created_data->shared_buffer_path, O_RDWR, 0);
+
+    void* raw_memory = mmap(nullptr, created_data->shared_buffer_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm, 0);
+    fprintf(stderr, "addr: [ %#.16lX ]\n", (uintptr_t) raw_memory);
+    fprintf(stderr, "size: [ %#.16lX ]\n", created_data->shared_buffer_size);
+    close(shm);
+
+    auto pixels = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(raw_memory), 200, 200);
+    Renderer renderer(pixels);
+    renderer.fill_rect(50, 50, 50, 50);
 
     close(fd);
     return 0;

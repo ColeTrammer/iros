@@ -1,7 +1,7 @@
 #pragma once
 
-#include <liim/pointers.h>
 #include <limits.h>
+#include <memory>
 #include <string.h>
 
 namespace LIIM {
@@ -15,9 +15,9 @@ public:
     }
 
     template<typename U>
-    static SharedPtr<Bitmap<U>> wrap(U* bits, int num_bits)
+    static std::shared_ptr<Bitmap<U>> wrap(U* bits, int num_bits)
     {
-        auto bitmap = SharedPtr<Bitmap>(new Bitmap<U>);
+        auto bitmap = make_shared<Bitmap<U>>();
         bitmap->m_should_deallocate = false;
         bitmap->m_bits = bits;
         return bitmap;

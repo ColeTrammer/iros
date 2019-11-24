@@ -1,8 +1,8 @@
 #pragma once
 
-#include <liim/pointers.h>
 #include <liim/string.h>
 #include <graphics/rect.h>
+#include <memory>
 
 class PixelBuffer;
 
@@ -12,18 +12,18 @@ public:
     Window(const Window &other);
     ~Window();
 
-    static SharedPtr<Window> from_shm_and_rect(const String& shm_path, const Rect& rect)
+    static std::shared_ptr<Window> from_shm_and_rect(const String& shm_path, const Rect& rect)
     {
-        return SharedPtr<Window>(new Window(shm_path, rect));
+        return std::make_shared<Window>(shm_path, rect);
     }
 
     Rect rect() const { return m_rect; }
 
-    SharedPtr<PixelBuffer> buffer() { return m_buffer; }
-    const SharedPtr<PixelBuffer> buffer() const { return m_buffer; }
+    std::shared_ptr<PixelBuffer> buffer() { return m_buffer; }
+    const std::shared_ptr<PixelBuffer> buffer() const { return m_buffer; }
 
 private:
     String m_shm_path;
     Rect m_rect;
-    SharedPtr<PixelBuffer> m_buffer;
+    std::shared_ptr<PixelBuffer> m_buffer;
 };

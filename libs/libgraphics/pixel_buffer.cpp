@@ -1,5 +1,6 @@
 #include <graphics/color.h>
 #include <graphics/pixel_buffer.h>
+#include <stdio.h>
 #include <string.h>
 
 void PixelBuffer::put_pixel(int x, int y, uint32_t p)

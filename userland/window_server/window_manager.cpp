@@ -8,7 +8,7 @@ WindowManager::~WindowManager()
 {
 }
 
-void WindowManager::add_window(SharedPtr<Window> window)
+void WindowManager::add_window(std::shared_ptr<Window> window)
 {
-    windows().add(window);
+    windows().push_back(window);
 }

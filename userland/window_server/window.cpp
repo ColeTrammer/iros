@@ -12,12 +12,13 @@ Window::Window(const String& shm_path, const Rect& rect)
 {
     int fd = shm_open(shm_path.string(), O_RDWR | O_CREAT | O_EXCL, 0666);
 
-    size_t len = rect.width() * rect.height() * sizeof(uint16_t); 
+    size_t len = rect.width() * rect.height() * sizeof(uint32_t); 
     ftruncate(fd, len);
 
     void* memory = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
     m_buffer = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(memory), m_rect.width(), m_rect.height());
+    m_buffer->clear();
 
     close(fd);
 }

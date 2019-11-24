@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <liim/bitmap.h>
 #include <liim/hash_map.h>
-#include <liim/pointers.h>
+#include <memory>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
@@ -41,7 +41,7 @@ public:
         uint8_t b[16];
         int i = 0;
         while (read(font_file, b, 16) == 16) {
-            auto bitmap = SharedPtr<Bitmap<uint8_t>>(new Bitmap<uint8_t>(16 * CHAR_BIT));
+            auto bitmap = std::make_shared<Bitmap<uint8_t>>(16 * CHAR_BIT);
             memcpy(bitmap->bitmap(), b, 16);
             m_font_map.put(i++, bitmap);
         }
@@ -53,12 +53,12 @@ public:
     {
     }
 
-    SharedPtr<Bitmap<uint8_t>> get_for_character(int c)
+    std::shared_ptr<Bitmap<uint8_t>> get_for_character(int c)
     {
         return m_font_map.get_or(c, m_unknown);
     }
 
 private:
-    SharedPtr<Bitmap<uint8_t>> m_unknown;
-    HashMap<int, SharedPtr<Bitmap<uint8_t>>> m_font_map;
+    std::shared_ptr<Bitmap<uint8_t>> m_unknown;
+    HashMap<int, std::shared_ptr<Bitmap<uint8_t>>> m_font_map;
 };
