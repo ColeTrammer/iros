@@ -175,6 +175,9 @@ void proc_do_sig_handler(struct process *process, int signum) {
             // the sys call in the easy way possible
             save_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
         } else {
+            if (process->in_sigsuspend) {
+                process->in_sigsuspend = false;
+            }
             save_state->cpu_state.rax = -EINTR;
         }
     }

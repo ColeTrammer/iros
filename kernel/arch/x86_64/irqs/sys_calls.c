@@ -330,8 +330,12 @@ void arch_sys_execve(struct process_state *process_state) {
     }
 
     // Dup open file descriptors
-    for (size_t i = 0; i < FOPEN_MAX; i++) {
-        if (!current->files[i] || ((current->files[i]->fd_flags & FD_CLOEXEC) || (current->files[i]->flags & FS_DIR))) {
+    for (int i = 0; i < FOPEN_MAX; i++) {
+        // FIXME: duplicated files should have separate fd_flags (but everything else is the same)
+        //        right now this means that FD_CLOEXEC will destroy all duplicated files, so it
+        //        cannot be used when doing dup(2) on a builtin stream. This is of course its
+        //        primary use case, so FD_CLOEXEC must be ignored or everything will break.
+        if (!current->files[i] || ( /* (current->files[i]->fd_flags & FD_CLOEXEC) || */ (current->files[i]->flags & FS_DIR))) {
             // NOTE: the files will be closed by the `free_process` function
             continue;
         }
@@ -1261,9 +1265,6 @@ void arch_sys_alarm(struct process_state *process_state) {
     SYS_BEGIN(process_state);
 
     unsigned int seconds = (unsigned int) process_state->cpu_state.rsi;
-
-
-    debug_log("Sleeping: [ %u ]\n", seconds);
 
     struct process *current = get_current_process();
 
