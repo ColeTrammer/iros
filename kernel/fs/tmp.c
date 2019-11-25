@@ -269,7 +269,6 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         map_phys_page(get_phys_addr((uintptr_t) data->contents) + i - region->start, i, region->flags);
     }
 
-    debug_log("Region: [ %#.16lX, %#.16lX, %#.16lX ]\n", region->start, region->end, inode->size);
     return (intptr_t) addr;
 }
 

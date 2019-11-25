@@ -47,8 +47,8 @@ public:
         return strcmp(string(), other.string()) == 0;
     }
 
-    bool operator !() { return !m_string; }
-    operator bool() { return !!m_string; }
+    bool operator !() const { return !m_string; }
+    operator bool() const { return !!m_string; }
 
     bool is_empty() const { return size() == 0; }
 

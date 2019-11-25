@@ -162,6 +162,16 @@ public:
         }
     }
 
+    template<typename C>
+    void remove_if(C callback)
+    {
+        for_each_reverse([&](auto& elem) {
+            if (callback(elem)) {
+                remove_element(elem);
+            }
+        });
+    }
+
 private:
     void increase_capacity()
     {

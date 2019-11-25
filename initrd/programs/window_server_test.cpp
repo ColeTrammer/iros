@@ -21,34 +21,27 @@ int main()
 
     assert(connect(fd, (sockaddr*) &addr, sizeof(sockaddr_un)) == 0);
 
-    uint8_t message_buffer[2048];
-    WindowServerMessage* message = reinterpret_cast<WindowServerMessage*>(message_buffer);
+    {
+        auto message = WindowServer::Message::CreateWindowRequest::create(100, 100, 200, 200);
+        assert(write(fd, message.get(), message->total_size()) != -1);
+    }
 
-    message->set_type(WindowServerMessage::Type::CreateWindow);
-    message->set_data_len(sizeof(WindowServerMessage::CreateWindowData));
-
-    WindowServerMessage::CreateWindowData* data = reinterpret_cast<WindowServerMessage::CreateWindowData*>(message->data());
-    data->x = 100;
-    data->y = 100;
-    data->width = 200;
-    data->height = 200;
-
-    assert(write(fd, message, sizeof(WindowServerMessage) + message->data_len()) != -1);
-
+    uint8_t message_buffer[4096];
+    auto* message = reinterpret_cast<WindowServer::Message*>(message_buffer);
     read(fd, message_buffer, 4096);
-    assert(message->type() == WindowServerMessage::Type::CreatedWindow);
+    assert(message->type == WindowServer::Message::Type::CreateWindowResponse);
 
-    WindowServerMessage::CreatedWindowData* created_data = reinterpret_cast<WindowServerMessage::CreatedWindowData*>(message->data());
-    int shm = shm_open(created_data->shared_buffer_path, O_RDWR, 0);
+    WindowServer::Message::CreateWindowResponse& created_data = message->data.create_window_response;
+    int shm = shm_open(created_data.shared_buffer_path, O_RDWR, 0);
 
-    void* raw_memory = mmap(nullptr, created_data->shared_buffer_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm, 0);
-    fprintf(stderr, "addr: [ %#.16lX ]\n", (uintptr_t) raw_memory);
-    fprintf(stderr, "size: [ %#.16lX ]\n", created_data->shared_buffer_size);
+    void* raw_memory = mmap(nullptr, created_data.shared_buffer_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm, 0);
     close(shm);
 
     auto pixels = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(raw_memory), 200, 200);
     Renderer renderer(pixels);
     renderer.fill_rect(50, 50, 50, 50);
+
+    sleep(5);
 
     close(fd);
     return 0;

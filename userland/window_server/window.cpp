@@ -6,9 +6,17 @@
 
 #include "window.h"
 
-Window::Window(const String& shm_path, const Rect& rect) 
+static wid_t get_next_id()
+{
+    static wid_t next_wid = 1;
+    return next_wid++;
+}
+
+Window::Window(const String& shm_path, const Rect& rect, int client_id) 
     : m_shm_path(shm_path)
     , m_rect(rect)
+    , m_id(get_next_id())
+    , m_client_id(client_id)
 {
     int fd = shm_open(shm_path.string(), O_RDWR | O_CREAT | O_EXCL, 0666);
 
@@ -21,12 +29,6 @@ Window::Window(const String& shm_path, const Rect& rect)
     m_buffer->clear();
 
     close(fd);
-}
-
-Window::Window(const Window &other) 
-    : m_rect(other.rect())
-    , m_buffer(other.buffer())
-{
 }
 
 Window::~Window()

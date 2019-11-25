@@ -13,8 +13,7 @@
 #include "window_manager.h"
 
 Server::Server(std::shared_ptr<PixelBuffer> pixels)
-    : m_pixels(pixels)
-    , m_manager(std::make_unique<WindowManager>())
+    : m_manager(std::make_unique<WindowManager>(pixels))
 {
     m_socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     assert(m_socket_fd != -1);
@@ -25,6 +24,40 @@ Server::Server(std::shared_ptr<PixelBuffer> pixels)
     assert(bind(m_socket_fd, (const sockaddr*) &addr, sizeof(sockaddr_un)) == 0);
 }
 
+void Server::kill_client(int client_id)
+{
+    close(client_id);
+    m_clients.remove_element(client_id);
+    m_manager->windows().remove_if([&](auto& window) {
+        return window->client_id() == client_id;
+    });
+}
+
+void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd)
+{
+    char s[50];
+    s[49] = '\0';
+    snprintf(s, 49, "/window_server_%d", client_fd);
+
+    const WindowServer::Message::CreateWindowRequest& data = request.data.create_window_request;
+    auto window = std::make_shared<Window>(s, Rect(data.x, data.y, data.width, data.height), client_fd);
+    m_manager->add_window(window);
+
+    auto to_send = WindowServer::Message::CreateWindowResponse::create(window->id(), window->buffer()->size_in_bytes(), s);
+    assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
+}
+
+void Server::handle_remove_window_request(const WindowServer::Message& request, int client_fd)
+{
+    wid_t wid = request.data.remove_window_request.wid;
+    m_manager->windows().remove_if([&](auto& window) {
+        return window->id() == wid;
+    });
+
+    auto to_send = WindowServer::Message::RemoveWindowResponse::create(true);
+    assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
+}
+
 void Server::start()
 {
     assert(listen(m_socket_fd, 10) == 0);
@@ -33,64 +66,32 @@ void Server::start()
     socklen_t client_addr_len = sizeof(sockaddr_un);
 
     for (;;) {
-        auto render_window = [&](std::shared_ptr<Window>& window) {
-            for (int x = window->rect().x(); x < window->rect().x() + window->rect().width(); x++) {
-                for (int y = window->rect().y(); y < window->rect().y() + window->rect().height(); y++) {
-                    m_pixels->put_pixel(x, y, window->buffer()->get_pixel(x - window->rect().x(), y - window->rect().y()));
-                }
-            }
-        };
-
-        assert(m_manager);
-        if (m_manager->windows().size() > 0) {
-            m_manager->for_each_window(render_window);
-        }
+        m_manager->draw();
 
         uint8_t buffer[4096];
         m_clients.for_each_reverse([&](int client_fd) {
             ssize_t data_len = read(client_fd, buffer, 4096);
             if ((data_len == -1 && errno != EAGAIN) || data_len == 0) {
-                fprintf(stderr, "Closing connection\n");
-                close(client_fd);
-                m_clients.remove_element(client_fd);
+                kill_client(client_fd);
                 return;
             } else if (data_len == -1) {
                 return;
             }
 
-            WindowServerMessage* message = reinterpret_cast<WindowServerMessage*>(buffer);
-            switch (message->type()) {
-            case WindowServerMessage::Type::Begin:
-                fprintf(stderr, "Connection began\n");
-                break;
-            case WindowServerMessage::Type::CreatedWindow:
-                fprintf(stderr, "Client is trying to tell us they created a window\n");
-                break;
-            case WindowServerMessage::Type::CreateWindow: {
-                fprintf(stderr, "Creating window\n");
-                char s[50];
-                s[49] = '\0';
-                snprintf(s, 49, "/window_server_%d", client_fd);
-
-                WindowServerMessage::CreateWindowData* data = reinterpret_cast<WindowServerMessage::CreateWindowData*>(message->data());
-                auto window = Window::from_shm_and_rect(s, Rect(data->x, data->y, data->width, data->height));
-                m_manager->add_window(window);
-
-                uint8_t send_buffer[4096];
-                WindowServerMessage* to_send = reinterpret_cast<WindowServerMessage*>(send_buffer);
-                to_send->set_data_len(sizeof(WindowServerMessage::CreatedWindowData) + strlen(s));
-                to_send->set_type(WindowServerMessage::Type::CreatedWindow);
-                reinterpret_cast<WindowServerMessage::CreatedWindowData*>(to_send->data())->shared_buffer_size = data->width * data->height * sizeof(uint32_t);
-                strcpy(reinterpret_cast<WindowServerMessage::CreatedWindowData*>(to_send->data())->shared_buffer_path, s);
-
-                assert(write(client_fd, to_send, sizeof(WindowServerMessage) + to_send->data_len()) != -1);
+            WindowServer::Message& message = *reinterpret_cast<WindowServer::Message*>(buffer);
+            switch (message.type) {
+            case WindowServer::Message::Type::CreateWindowRequest: {
+                handle_create_window_request(message, client_fd);
                 break;
             }
-            case WindowServerMessage::Type::Invalid:
-                fprintf(stderr, "Recieved invalid window server message\n");
+            case WindowServer::Message::Type::RemoveWindowRequest: {
+                handle_remove_window_request(message, client_fd);
                 break;
+            }
+            case WindowServer::Message::Type::Invalid:
             default:
-                fprintf(stderr, "This shouldn't even be possible\n");
+                fprintf(stderr, "Recieved invalid window server message\n");
+                kill_client(client_fd);
                 break;
             }
         });
@@ -103,7 +104,6 @@ void Server::start()
             continue;
         }
 
-        fprintf(stderr, "Adding client: [ %d ]\n", client_fd);
         m_clients.add(client_fd);
     }
 }
