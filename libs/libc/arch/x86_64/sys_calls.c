@@ -622,14 +622,6 @@ pid_t getppid(void) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
-clock_t times(struct tms *buf) {
-    (void) buf;
-
-    fprintf(stderr, "times not supported\n");
-    assert(false);
-    return 0;
-}
-
 mode_t umask(mode_t mask) {
     (void) mask;
 
@@ -678,4 +670,19 @@ int sigsuspend(const sigset_t *set) {
                   "int $0x80\n"\
                   "movl %%eax, %0" : "=r"(ret) : "r"(set) : "rdi", "rsi", "rax", "memory" );
     __SYSCALL_TO_ERRNO(ret);
+}
+
+clock_t times(struct tms *buf) {
+    clock_t ret;
+    asm volatile( "movq $54, %%rdi\n"\
+                  "movq %1, %%rsi\n"\
+                  "int $0x80\n"\
+                  "movq %%rax, %0" : "=r"(ret) : "r"(buf) : "rdi", "rsi", "rax", "memory" );
+
+    // times is special since the clock_t can overflow to a negative number
+    if (ret == (clock_t) -EFAULT) {
+        errno = EFAULT;
+        return -1;
+    }
+    return ret;
 }

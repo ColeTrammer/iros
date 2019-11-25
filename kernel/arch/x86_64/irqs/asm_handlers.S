@@ -235,3 +235,4 @@ sys_call_table:
     .quad arch_sys_fchmod
     .quad arch_sys_getppid
     .quad arch_sys_sigsuspend
+    .quad arch_sys_times

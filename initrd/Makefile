@@ -56,6 +56,7 @@ $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \
+$(BUILDDIR)/initrd/programs/times_test \
 $(BUILDDIR)/initrd/programs/tmpnam_test \
 $(BUILDDIR)/initrd/programs/udp_test \
 $(BUILDDIR)/initrd/programs/vector_test \

@@ -108,6 +108,12 @@ static struct proc_state_message_queue *ensure_queue(pid_t pid) {
 // queue must be locked before calling this method
 static void __free_queue(struct proc_state_message_queue *queue) {
     pid_t pid = queue->pid;
+    pid_t ppid = queue->ppid;
+    struct process *parent = find_by_pid(ppid);
+    if (parent) {
+        parent->times.tms_cutime = queue->times.tms_utime + queue->times.tms_cutime;
+        parent->times.tms_cstime = queue->times.tms_stime + queue->times.tms_cstime;
+    }
 
     hash_del(queue_map, &queue->pid);
     remove_from_queue_lists(queue);
@@ -175,6 +181,13 @@ void proc_add_message(pid_t pid, struct proc_state_message *m) {
         queue->end = m;
     }
 
+    struct process *process = find_by_pid(pid);
+    assert(process);
+
+    if (m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) {
+        memcpy(&queue->times, &process->times, sizeof(struct tms));
+    }
+
     spin_unlock(&queue->lock);
 
     // Also gen SIGCHLD for the parent process
@@ -196,7 +209,7 @@ pid_t proc_consume_message(pid_t pid, struct proc_state_message *m) {
         queue->start = next;
 
         // Clean up entire queue since there won't be any more messages
-        if (m->type == STATE_EXITED) {
+        if (m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) {
             assert(queue->start == NULL);
             __free_queue(queue);
             return pid;

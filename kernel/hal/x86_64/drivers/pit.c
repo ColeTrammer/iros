@@ -6,6 +6,7 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/output.h>
+#include <kernel/proc/process.h>
 
 static void (*sched_callback)(struct process_state*) = NULL;
 static unsigned int sched_count = 0;
@@ -26,7 +27,14 @@ void handle_pit_interrupt(struct process_state *process_state) {
 
     /* Increment time count */
     ms++;
-    
+
+    struct process *current = get_current_process();
+    if (current->in_kernel) {
+        current->times.tms_stime++;
+    } else {
+        current->times.tms_utime++;
+    }
+
     if (sched_callback != NULL) {
         sched_count++;
         if (sched_count >= sched_count_to) {

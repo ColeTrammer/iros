@@ -1,8 +1,9 @@
 #ifndef _KERNEL_PROC_PROCESS_STATE_H
 #define _KERNEL_PROC_PROCESS_STATE_H 1
 
-#include <sys/types.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/times.h>
 
 #include <kernel/util/spinlock.h>
 
@@ -25,6 +26,7 @@ struct proc_state_message_queue {
     pid_t pgid;
     pid_t ppid;
 
+    struct tms times;
     struct proc_state_message_queue *pg_next;
     struct proc_state_message_queue *parent_next;
 };

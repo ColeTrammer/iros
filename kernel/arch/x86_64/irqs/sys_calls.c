@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <sys/times.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -365,6 +366,7 @@ void arch_sys_execve(struct process_state *process_state) {
     strcpy(process->cwd, current->cwd);
     process->next = NULL;
     process->sig_mask = current->sig_mask;
+    memcpy(&process->times, &current->times, sizeof(struct tms));
 
     // Clone only signal dispositions that don't have a handler
     for (int i = 0; i < _NSIG; i++) {
@@ -1322,4 +1324,23 @@ void arch_sys_sigsuspend(struct process_state *process_state) {
 
     current->sched_state = WAITING;
     sched_run_next();
+}
+
+void arch_sys_times(struct process_state *process_state) {
+    SYS_BEGIN(process_state);
+
+    struct tms *tms = (struct tms*) process_state->cpu_state.rsi;
+    if (tms == NULL) {
+        SYS_RETURN(-EFAULT);
+    }
+
+    struct process *current = get_current_process();
+
+    // Divide by 10 b/c things are measured in (1 / 100) seconds, not (1 / 1000)
+    tms->tms_utime = current->times.tms_utime / 10;
+    tms->tms_stime = current->times.tms_stime / 10;
+    tms->tms_cutime = current->times.tms_cutime / 10;
+    tms->tms_cstime = current->times.tms_cstime / 10;
+
+    SYS_RETURN(get_time() / 10);
 }

@@ -1,13 +1,14 @@
 #ifndef _KERNEL_PROC_PROCESS_H
 #define _KERNEL_PROC_PROCESS_H 1
 
-#include <stdbool.h>
-#include <sys/types.h>
-#include <stdio.h>
 #include <signal.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <sys/times.h>
+#include <sys/types.h>
 
-#include <kernel/mem/vm_region.h>
 #include <kernel/fs/file.h>
+#include <kernel/mem/vm_region.h>
 
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(proc/process.h)
@@ -52,6 +53,8 @@ struct process {
     dev_t inode_dev;
 
     int tty;
+
+    struct tms times;
 
     struct arch_fpu_state fpu;
 };
