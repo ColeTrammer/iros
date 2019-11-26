@@ -9,7 +9,7 @@ class WindowManager;
 
 class Server {
 public:
-    Server(std::shared_ptr<PixelBuffer> pixels);
+    Server(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_ptr<PixelBuffer> back_buffer);
     ~Server();
 
     void start();

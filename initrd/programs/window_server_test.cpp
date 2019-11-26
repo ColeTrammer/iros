@@ -41,7 +41,13 @@ int main()
     Renderer renderer(pixels);
     renderer.fill_rect(50, 50, 50, 50);
 
-    sleep(5);
+    for (int i = 0; i < 100; i++) {
+        pixels->clear();
+        renderer.fill_rect(50 + i, 50 + i, 50, 50);
+        for (int i = 0; i < 100000; i++) {
+            getpid();
+        }
+    }
 
     close(fd);
     return 0;

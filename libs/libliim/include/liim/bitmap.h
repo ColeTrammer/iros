@@ -17,7 +17,7 @@ public:
     template<typename U>
     static std::shared_ptr<Bitmap<U>> wrap(U* bits, int num_bits)
     {
-        auto bitmap = make_shared<Bitmap<U>>();
+        auto bitmap = std::make_shared<Bitmap<U>>();
         bitmap->m_should_deallocate = false;
         bitmap->m_bits = bits;
         return bitmap;
@@ -61,8 +61,8 @@ public:
     T* bitmap() { return m_bits; }
     const T* bitmap() const { return m_bits; }
 
-private:
     Bitmap() {}
+private:
 
     bool m_should_deallocate { true };
     T* m_bits { nullptr };

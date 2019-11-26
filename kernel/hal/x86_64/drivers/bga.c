@@ -41,7 +41,7 @@ static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
             bga_write(BGA_INDEX_X_RES, res->x);
             bga_write(BGA_INDEX_Y_RES, res->y);
             bga_write(BGA_INDEX_VIRT_WIDTH, res->x);
-            bga_write(BGA_INDEX_VIRT_HEIGHT, res->y);
+            bga_write(BGA_INDEX_VIRT_HEIGHT, res->y * 2);
             bga_write(BGA_INDEX_X_OFFSET, 0);
             bga_write(BGA_INDEX_Y_OFFSET, 0);
             bga_write(BGA_INDEX_BPP, BGA_BPP_32);
@@ -51,19 +51,24 @@ static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
             data.y_res = res->y;
             return 0;
         }
+        case SSWAPBUF: {
+            uintptr_t new_buffer = (uintptr_t) argp;
+            bga_write(BGA_INDEX_Y_OFFSET, (new_buffer - find_vm_region_by_addr(new_buffer)->start) / data.x_res / sizeof(uint32_t));
+            return 0;
+        }
         default:
             return -ENOTTY;
     }
 }
 
 static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset) {
-    if (offset != 0 || len != sizeof(uint32_t) * data.x_res * data.y_res || !(flags & MAP_SHARED)) {
+    if (offset != 0 || len != sizeof(uint32_t) * data.x_res * data.y_res * 2 || !(flags & MAP_SHARED)) {
         return -ENODEV;
     }
 
     (void) device;
 
-    size_t total_size = sizeof(uint32_t) * (size_t) data.x_res * (size_t) data.y_res;
+    size_t total_size = sizeof(uint32_t) * (size_t) data.x_res * (size_t) data.y_res * (size_t) 2;
     debug_log("Framebuffer total size: [ %lu ]\n", total_size);
 
     struct process *process = get_current_process();

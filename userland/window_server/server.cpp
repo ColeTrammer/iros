@@ -12,8 +12,8 @@
 #include "window.h"
 #include "window_manager.h"
 
-Server::Server(std::shared_ptr<PixelBuffer> pixels)
-    : m_manager(std::make_unique<WindowManager>(pixels))
+Server::Server(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_ptr<PixelBuffer> back_buffer)
+    : m_manager(std::make_unique<WindowManager>(fb, front_buffer, back_buffer))
 {
     m_socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     assert(m_socket_fd != -1);

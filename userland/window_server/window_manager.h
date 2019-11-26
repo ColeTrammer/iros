@@ -7,7 +7,7 @@
 
 class WindowManager {
 public:
-    WindowManager(std::shared_ptr<PixelBuffer> pixels);
+    WindowManager(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_ptr<PixelBuffer> back_buffer);
     ~WindowManager();
 
     Vector<std::shared_ptr<Window>>& windows() { return m_windows; }
@@ -24,6 +24,10 @@ public:
     void draw();
 
 private:
-    std::shared_ptr<PixelBuffer> m_pixels;
+    void swap_buffers();
+
+    int m_fb;
+    std::shared_ptr<PixelBuffer> m_front_buffer;
+    std::shared_ptr<PixelBuffer> m_back_buffer;
     Vector<std::shared_ptr<Window>> m_windows;
 };

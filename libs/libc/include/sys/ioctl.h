@@ -20,6 +20,7 @@
 #define SECURSOR   0x1003
 #define SDCURSOR   0x1004
 #define SSRES      0x1005
+#define SSWAPBUF   0x1006
 
 #ifdef __cplusplus
 extern "C" {
