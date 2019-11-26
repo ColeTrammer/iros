@@ -58,11 +58,11 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
     (void) file;
 
     struct slave_data *data = device->private;
-    if (get_current_task()->pgid != data->pgid) {
+    if (get_current_task()->process->pgid != data->pgid) {
 #ifdef PTMX_SIGNAL_DEBUG
-        debug_log("Sending SIGTTIN: [ %d, %d, %d ]\n", data->pgid, get_current_task()->pgid, get_current_task()->pid);
+        debug_log("Sending SIGTTIN: [ %d, %d, %d ]\n", data->pgid, get_current_task()->process->pgid, get_current_task()->process->pid);
 #endif /* PTMX_SIGNAL_DEBUG */
-        signal_process_group(get_current_task()->pgid, SIGTTIN);
+        signal_process_group(get_current_task()->process->pgid, SIGTTIN);
     }
 
     spin_lock(&data->lock);
@@ -111,11 +111,11 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
     (void) file;
 
     struct slave_data *data = device->private;
-    if (get_current_task()->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
+    if (get_current_task()->process->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
 #ifdef PTMX_SIGNAL_DEBUG
-        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->pgid, get_current_task()->pgid, get_current_task()->pid);
+        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->process->pgid, get_current_task()->process->pgid, get_current_task()->process->pid);
 #endif /* PTMX_SIGNAL_DEBUG */
-        signal_process_group(get_current_task()->pgid, SIGTTOU);
+        signal_process_group(get_current_task()->process->pgid, SIGTTOU);
     }
 
     size_t save_len = len;
@@ -189,7 +189,7 @@ static void slave_add(struct device *device) {
 
     data->cols = VGA_WIDTH;
     data->rows = VGA_HEIGHT;
-    data->pgid = get_current_task()->pgid;
+    data->pgid = get_current_task()->process->pgid;
     data->input_enabled = data->output_enabled = true;
 
     memcpy(&data->config, &default_termios, sizeof(struct termios));
@@ -237,11 +237,11 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
 
     struct slave_data *data = device->private;
 
-    if (get_current_task()->pgid != data->pgid) {
+    if (get_current_task()->process->pgid != data->pgid) {
 #ifdef PTMX_SIGNAL_DEBUG
         debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->pgid, get_current_task()->pgid, get_current_task()->pid);
 #endif /* PTMX_SIGNAL_DEBUG */
-        signal_process_group(get_current_task()->pgid, SIGTTOU);
+        signal_process_group(get_current_task()->process->pgid, SIGTTOU);
     }
 
     struct device *master = masters[data->index];
@@ -298,11 +298,11 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             return 0;
         }
         case TIOSCTTY: {
-            get_current_task()->tty = data->index;
+            get_current_task()->process->tty = data->index;
             return 0;
         }
         case TIOCNOTTY: {
-            get_current_task()->tty = -1;
+            get_current_task()->process->tty = -1;
             return 0;
         }
         case TCIOFFI: {
@@ -613,7 +613,7 @@ struct device_ops ptmx_ops = {
 static struct file *tty_open(struct device *device, int flags, int *error) {
     (void) device;
 
-    int tty_num = get_current_task()->tty;
+    int tty_num = get_current_task()->process->tty;
     if (tty_num == -1) {
         *error = -ENOENT;
         return NULL;

@@ -9,6 +9,7 @@
 
 #include <kernel/fs/file.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/process.h>
 
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(proc/task.h)
@@ -23,38 +24,24 @@ enum sched_state {
 struct task {
     struct arch_task arch_task;
 
-    struct vm_region *task_memory;
-    bool kernel_task;
-
-    pid_t pid;
-    pid_t pgid;
-    pid_t ppid;
+    struct task *next;
+    struct task *prev;
 
     enum sched_state sched_state;
-    
-    char *cwd;
-    struct file *files[FOPEN_MAX];
-    bool in_kernel;
-    bool in_sigsuspend;
-    bool can_send_self_signals;
 
-    struct task *prev;
-    struct task *next;
-
-    struct sigaction sig_state[_NSIG];
     sigset_t sig_mask;
     sigset_t saved_sig_mask;
     sigset_t sig_pending;
 
-    bool sleeping;
+    bool kernel_task : 1;
+    bool in_kernel : 1;
+    bool in_sigsuspend : 1;
+    bool can_send_self_signals : 1;
+    bool sleeping : 1;
+
     time_t sleep_end;
 
-    ino_t inode_id;
-    dev_t inode_dev;
-
-    int tty;
-
-    struct tms times;
+    struct process *process;
 
     struct arch_fpu_state fpu;
 };

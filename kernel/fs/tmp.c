@@ -73,7 +73,7 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     }
 
     struct tmp_data *data = calloc(1, sizeof(struct tmp_data));
-    data->owner = get_current_task()->pid;
+    data->owner = get_current_task()->process->pid;
 
     inode->i_op = &tmp_i_op;
     inode->index = get_next_tmp_index();
@@ -262,7 +262,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     region->backing_inode = inode;
 
     struct task *current = get_current_task();
-    current->task_memory = add_vm_region(current->task_memory, region);
+    current->process->process_memory = add_vm_region(current->process->process_memory, region);
 
     struct tmp_data *data = inode->private_data;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {

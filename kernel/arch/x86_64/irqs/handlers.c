@@ -36,7 +36,7 @@ void handle_double_fault() {
 
 void handle_general_protection_fault(struct task_interrupt_state *task_state) {
     struct task *current = get_current_task();
-    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->pid, task_state->stack_state.rip, task_state->error_code);
+    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rip, task_state->error_code);
 
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
@@ -55,15 +55,15 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
 
 void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t address) {
     struct task *current = get_current_task();
-    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n", current->pid, 
+    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n", current->process->pid, 
         task_state->stack_state.rsp, task_state->stack_state.rip, address, task_state->error_code);
 
     // In this case we just extend the stack
-    struct vm_region *vm_stack = get_vm_region(current->task_memory, VM_TASK_STACK);
+    struct vm_region *vm_stack = get_vm_region(current->process->process_memory, VM_TASK_STACK);
     if (vm_stack && !current->kernel_task && address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {
         size_t num_pages = NUM_PAGES(address, vm_stack->start);
         assert(num_pages > 0);
-        assert(extend_vm_region_start(current->task_memory, VM_TASK_STACK, num_pages) == 0);
+        assert(extend_vm_region_start(current->process->process_memory, VM_TASK_STACK, num_pages) == 0);
         assert(vm_stack->start <= address);
         for (size_t i = 0; i < num_pages; i++) {
             map_page(vm_stack->start + i * PAGE_SIZE, VM_NO_EXEC | VM_WRITE | VM_USER);
@@ -84,7 +84,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     dump_registers_to_screen();
     printf("\n\033[31m%s: Error %lX\n", "Page Fault", task_state->error_code);
     printf("Address: %#.16lX\n", address);
-    printf("task: %d\033[0m\n", get_current_task()->pid);
+    printf("task: %d\033[0m\n", get_current_task()->process->pid);
     abort();
 }
 

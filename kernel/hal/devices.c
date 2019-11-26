@@ -61,7 +61,7 @@ static struct file *stdin_open(struct device *device, int flags, int *error) {
     (void) device;
 
     struct task *task = get_current_task();
-    struct file *file = task->files[STDIN_FILENO];
+    struct file *file = task->process->files[STDIN_FILENO];
 
     debug_log("redirecting: [ %s ]\n", "/dev/stdin");
     return fake_symlink(file, flags, error);
@@ -71,7 +71,7 @@ static struct file *stdout_open(struct device *device, int flags, int *error) {
     (void) device;
 
     struct task *task = get_current_task();
-    struct file *file = task->files[STDOUT_FILENO];
+    struct file *file = task->process->files[STDOUT_FILENO];
 
     debug_log("redirecting: [ %s ]\n", "/dev/stdout");
     return fake_symlink(file, flags, error);
@@ -81,7 +81,7 @@ static struct file *stderr_open(struct device *device, int flags, int *error) {
     (void) device;
 
     struct task *task = get_current_task();
-    struct file *file = task->files[STDERR_FILENO];
+    struct file *file = task->process->files[STDERR_FILENO];
 
     debug_log("redirecting: [ %s ]\n", "/dev/stderr");
     return fake_symlink(file, flags, error);

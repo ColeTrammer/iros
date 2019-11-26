@@ -62,7 +62,7 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
         to_add->flags = VM_WRITE | VM_USER;
         to_add->type = program_flags & VM_NO_EXEC ? VM_PROCESS_DATA : VM_PROCESS_TEXT;
         
-        task->task_memory = add_vm_region(task->task_memory, to_add);
+        task->process->process_memory = add_vm_region(task->process->process_memory, to_add);
 
         map_vm_region(to_add);
 
@@ -83,14 +83,14 @@ void elf64_map_heap(void *buffer, struct task *task) {
     debug_log("Heap start: [ %#.16lX ]\n", task_heap->start);
 #endif /* ELF64_DEBUG */
     task_heap->end = task_heap->start;
-    task->task_memory = add_vm_region(task->task_memory, task_heap);
+    task->process->process_memory = add_vm_region(task->process->process_memory, task_heap);
 }
 
 // NOTE: this must be called from within a task's address space
 void elf64_stack_trace(struct task *task) {
-    struct inode *inode = fs_inode_get(task->inode_dev, task->inode_id);
+    struct inode *inode = fs_inode_get(task->process->inode_dev, task->process->inode_id);
     if (!inode) {
-        debug_log("The task has no inode: [ %d, %lu, %llu ]\n", task->pid, task->inode_dev, task->inode_id);
+        debug_log("The task has no inode: [ %d, %lu, %llu ]\n", task->process->pid, task->process->inode_dev, task->process->inode_id);
         return;
     }
 
@@ -105,7 +105,7 @@ void elf64_stack_trace(struct task *task) {
     free(file);
 
     if (!elf64_is_valid(buffer)) {
-        debug_log("The task is not elf64: [ %d ]\n", task->pid);
+        debug_log("The task is not elf64: [ %d ]\n", task->process->pid);
         return;
     }
 

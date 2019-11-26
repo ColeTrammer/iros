@@ -85,7 +85,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 void *add_vm_pages_end(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {
-        list = get_current_task()->task_memory;
+        list = get_current_task()->process->process_memory;
     } else {
         list = kernel_vm_list;
         spin_lock(&kernel_vm_lock);
@@ -112,7 +112,7 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
 void *add_vm_pages_start(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {
-        list = get_current_task()->task_memory;
+        list = get_current_task()->process->process_memory;
     } else {
         list = kernel_vm_list;
         spin_lock(&kernel_vm_lock);
@@ -138,7 +138,7 @@ void *add_vm_pages_start(size_t n, uint64_t type) {
 void remove_vm_pages_end(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {
-        list = get_current_task()->task_memory;
+        list = get_current_task()->process->process_memory;
     } else {
         list = kernel_vm_list;
         spin_lock(&kernel_vm_lock);
@@ -160,7 +160,7 @@ void remove_vm_pages_end(size_t n, uint64_t type) {
 }
 
 void *map_file(off_t length, uint64_t flags) {
-    struct vm_region **list = &get_current_task()->task_memory;
+    struct vm_region **list = &get_current_task()->process->process_memory;
     struct vm_region *last_file = get_vm_last_region(*list, VM_PROCESS_FILE);
 
     struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
@@ -178,7 +178,7 @@ void *map_file(off_t length, uint64_t flags) {
 void remove_vm_pages_start(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {
-        list = get_current_task()->task_memory;
+        list = get_current_task()->process->process_memory;
     } else {
         list = kernel_vm_list;
         spin_lock(&kernel_vm_lock);
@@ -216,7 +216,7 @@ struct vm_region *find_first_kernel_vm_region() {
 struct vm_region *find_vm_region(uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {
-        list = get_current_task()->task_memory;
+        list = get_current_task()->process->process_memory;
     } else {
         list = kernel_vm_list;
         spin_lock(&kernel_vm_lock);
@@ -232,7 +232,7 @@ struct vm_region *find_vm_region(uint64_t type) {
 }
 
 struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
-    struct vm_region *region = get_current_task()->task_memory;
+    struct vm_region *region = get_current_task()->process->process_memory;
 
     while (region) {
         if (region->start <= addr && addr <= region->end) {
@@ -252,8 +252,8 @@ struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
     return NULL;
 }
 
-struct vm_region *clone_task_vm() {
-    struct vm_region *list = get_current_task()->task_memory;
+struct vm_region *clone_process_vm() {
+    struct vm_region *list = get_current_task()->process->process_memory;
     struct vm_region *new_list = NULL;
     struct vm_region *region = list;
 

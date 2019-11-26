@@ -962,8 +962,8 @@ int fs_fcntl(struct file *file, int command, int arg) {
             }
 
             for (int i = arg; i < FOPEN_MAX; i++) {
-                if (current->files[i] == NULL) {
-                    current->files[i] = fs_dup(file);
+                if (current->process->files[i] == NULL) {
+                    current->process->files[i] = fs_dup(file);
                     return i;
                 }
             }

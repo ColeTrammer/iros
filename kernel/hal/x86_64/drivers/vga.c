@@ -64,7 +64,7 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
     region->end = region->start + PAGE_SIZE;
     region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
     region->flags = (prot & PROT_WRITE ? VM_WRITE : 0) | VM_USER;
-    task->task_memory = add_vm_region(task->task_memory, region);
+    task->process->process_memory = add_vm_region(task->process->process_memory, region);
     map_phys_page(get_phys_addr((uintptr_t) vga_buffer), region->start, region->flags);
     return (intptr_t) region->start;
 }

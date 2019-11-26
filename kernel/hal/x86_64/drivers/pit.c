@@ -30,9 +30,9 @@ void handle_pit_interrupt(struct task_state *task_state) {
 
     struct task *current = get_current_task();
     if (current->in_kernel) {
-        current->times.tms_stime++;
+        current->process->times.tms_stime++;
     } else {
-        current->times.tms_utime++;
+        current->process->times.tms_utime++;
     }
 
     if (sched_callback != NULL) {

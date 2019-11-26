@@ -24,10 +24,10 @@ int debug_log_internal(const char *func, const char *format, ...) {
 
 #ifndef KERNEL_NO_DEBUG_COLORS
     int written = 0;
-    if (get_current_task() == NULL || get_current_task()->pid == 1) {
+    if (get_current_task() == NULL || get_current_task()->process->pid == 1) {
         written += printf("\033[35mKernel  \033[37m(\033[34m %d \033[37m): ", 1);
     } else {
-        printf("\033[32m%s \033[37m(\033[34m %d \033[37m): ", "Task", get_current_task()->pid);
+        printf("\033[32m%s \033[37m(\033[34m %d \033[37m): ", "Task", get_current_task()->process->pid);
     }
     written = printf("\033[36m%s\033[37m: ", func);
     written += vprintf(format, parameters);
@@ -55,7 +55,7 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
     printf("\n\033[31m");
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
-    printf("( %d ): Assertion failed: %s in %s at %s, line %d", get_current_task()->pid, msg, func, file, line);
+    printf("( %d ): Assertion failed: %s in %s at %s, line %d", get_current_task()->process->pid, msg, func, file, line);
     
 #ifndef KERNEL_NO_DEBUG_COLORS
     printf("\033[0m\n");

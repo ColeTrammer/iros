@@ -76,7 +76,7 @@ struct task *find_by_pid(pid_t pid) {
 
     struct task *p = list_start;
     do {
-        if (p->pid == pid) {
+        if (p->process->pid == pid) {
             return p;
         }
 
@@ -137,7 +137,7 @@ int signal_process_group(pid_t pgid, int signum) {
     bool signalled_anything = false;
     struct task *task = list_start;
     do {
-        if (task->pgid == pgid) {
+        if (task->process->pgid == pgid) {
             task_set_sig_pending(task, signum);
             signalled_anything = true;
 
@@ -164,8 +164,8 @@ int signal_process(pid_t pid, int signum) {
     struct task *task = list_start;
     do {
         // Maybe should only do it once instead of in a loop
-        if (task->pid == pid) {
-            debug_log("Signaling: [ %d, %d ]\n", task->pid, signum);
+        if (task->process->pid == pid) {
+            debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
             task_set_sig_pending(task, signum);
             signalled_anything = true;
 

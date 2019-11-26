@@ -22,6 +22,7 @@
 
 struct task *current_task;
 static struct task initial_kernel_task;
+static struct process initial_kernel_process;
 
 /* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
@@ -110,35 +111,39 @@ uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
 void init_kernel_task() {
     current_task = &initial_kernel_task;
 
+    current_task->process = &initial_kernel_process;
     arch_init_kernel_task(current_task);
 
     initial_kernel_task.kernel_task = true;
-    initial_kernel_task.pid = 1;
+    initial_kernel_task.process->pid = 1;
     initial_kernel_task.sched_state = RUNNING;
     initial_kernel_task.next = NULL;
-    initial_kernel_task.pgid = 1;
-    initial_kernel_task.ppid = 1;
-    initial_kernel_task.tty = -1;
+    initial_kernel_task.process->pgid = 1;
+    initial_kernel_task.process->ppid = 1;
+    initial_kernel_task.process->tty = -1;
 
     sched_add_task(&initial_kernel_task);
 }
 
 struct task *load_kernel_task(uintptr_t entry) {
     struct task *task = calloc(1, sizeof(struct task));
-    task->pid = get_next_pid();
-    task->pgid = task->pid;
-    task->ppid = initial_kernel_task.pid;
-    task->task_memory = NULL;
+    struct process *process = calloc(1, sizeof(struct process));
+    task->process = process;
+
+    task->process->pid = get_next_pid();
+    task->process->pgid = task->process->pid;
+    task->process->ppid = initial_kernel_task.process->pid;
+    task->process->process_memory = NULL;
     task->kernel_task = true;
     task->sched_state = READY;
-    task->cwd = malloc(2);
-    task->tty = -1;
-    strcpy(task->cwd, "/");
+    task->process->cwd = malloc(2);
+    task->process->tty = -1;
+    strcpy(task->process->cwd, "/");
     task->next = NULL;
 
     arch_load_kernel_task(task, entry);
 
-    debug_log("Loaded Kernel Task: [ %d ]\n", task->pid);
+    debug_log("Loaded Kernel Task: [ %d ]\n", task->process->pid);
     return task;
 }
 
@@ -155,26 +160,29 @@ struct task *load_task(const char *file_name) {
     fs_read(program, buffer, length);
 
     struct task *task = calloc(1, sizeof(struct task));
-    task->inode_dev = program->device;
-    task->inode_id = program->inode_idenifier;
+    struct process *process = calloc(1, sizeof(struct process));
+    task->process = process;
+
+    task->process->inode_dev = program->device;
+    task->process->inode_id = program->inode_idenifier;
 
     fs_close(program);
 
     assert(elf64_is_valid(buffer));
 
-    task->pid = get_next_pid();
-    task->pgid = task->pid;
-    task->ppid = initial_kernel_task.pid;
-    task->task_memory = NULL;
+    task->process->pid = get_next_pid();
+    task->process->pgid = task->process->pid;
+    task->process->ppid = initial_kernel_task.process->pid;
+    task->process->process_memory = NULL;
     task->kernel_task = false;
     task->sched_state = READY;
-    task->cwd = malloc(2);
-    task->tty = -1;
-    strcpy(task->cwd, "/");
+    task->process->cwd = malloc(2);
+    task->process->tty = -1;
+    strcpy(task->process->cwd, "/");
     task->next = NULL;
 
     uintptr_t old_paging_structure = get_current_paging_structure();
-    uintptr_t structure = create_paging_structure(task->task_memory, false);
+    uintptr_t structure = create_paging_structure(task->process->process_memory, false);
     load_paging_structure(structure);
 
     elf64_load_program(buffer, length, task);
@@ -185,7 +193,7 @@ struct task *load_task(const char *file_name) {
     task_stack->type = VM_TASK_STACK;
     task_stack->start = find_first_kernel_vm_region()->start - 2 * PAGE_SIZE;
     task_stack->end = task_stack->start + PAGE_SIZE;
-    task->task_memory = add_vm_region(task->task_memory, task_stack);
+    task->process->process_memory = add_vm_region(task->process->process_memory, task_stack);
     map_vm_region(task_stack);
 
     arch_load_task(task, elf64_get_entry(buffer));
@@ -193,11 +201,11 @@ struct task *load_task(const char *file_name) {
 
     load_paging_structure(old_paging_structure);
 
-    task->files[0] = fs_open("/dev/serial", O_RDWR, NULL);
-    task->files[1] = fs_open("/dev/serial", O_RDWR, NULL);
-    task->files[2] = fs_open("/dev/serial", O_RDWR, NULL);
+    task->process->files[0] = fs_open("/dev/serial", O_RDWR, NULL);
+    task->process->files[1] = fs_open("/dev/serial", O_RDWR, NULL);
+    task->process->files[2] = fs_open("/dev/serial", O_RDWR, NULL);
 
-    debug_log("Loaded Task: [ %d, %s ]\n", task->pid, file_name);
+    debug_log("Loaded Task: [ %d, %s ]\n", task->process->pid, file_name);
     return task;
 }
 
@@ -222,9 +230,9 @@ void free_task(struct task *task, bool free_paging_structure) {
     current_task = task;
     arch_free_task(task, free_paging_structure);
 
-    free(task->cwd);
+    free(task->process->cwd);
 
-    struct vm_region *region = task->task_memory;
+    struct vm_region *region = task->process->process_memory;
     while (region != NULL) {
         if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
             fs_munmap((void*) region->start, region->end);
@@ -233,7 +241,7 @@ void free_task(struct task *task, bool free_paging_structure) {
         region = region->next;
     }
 
-    region = task->task_memory;
+    region = task->process->process_memory;
     while (region != NULL) {
         struct vm_region *temp = region->next;
         free(region);
@@ -241,11 +249,12 @@ void free_task(struct task *task, bool free_paging_structure) {
     }
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
-        if (task->files[i] != NULL) {
-            fs_close(task->files[i]);
+        if (task->process->files[i] != NULL) {
+            fs_close(task->process->files[i]);
         }
     }
 
+    free(task->process);
     free(task);
     current_task = current_save;
 }
@@ -274,7 +283,7 @@ int task_get_next_sig(struct task *task) {
 
 void proc_notify_parent(pid_t child_pid) {
     struct task *child = find_by_pid(child_pid);
-    struct task *parent = find_by_pid(child->ppid);
+    struct task *parent = find_by_pid(child->process->ppid);
 
     if (parent == NULL) {
         parent = &initial_kernel_task;
@@ -334,11 +343,11 @@ void task_do_sig(struct task *task, int signum) {
 
     task_unset_sig_pending(task, signum);
 
-    if (task->sig_state[signum].sa_handler == SIG_IGN) {
+    if (task->process->sig_state[signum].sa_handler == SIG_IGN) {
         return;
     }
 
-    if (task->sig_state[signum].sa_handler != SIG_DFL) {
+    if (task->process->sig_state[signum].sa_handler != SIG_DFL) {
         task_do_sig_handler(task, signum);
     }
 
@@ -353,21 +362,21 @@ void task_do_sig(struct task *task, int signum) {
             }
             task->sched_state = EXITING;
             invalidate_last_saved(task);
-            proc_add_message(task->pid, proc_create_message(STATE_INTERRUPTED, signum));
+            proc_add_message(task->process->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;
         case STOP:
             if (task->sched_state == WAITING) { 
                 break; 
             }
             task->sched_state = WAITING;
-            proc_add_message(task->pid, proc_create_message(STATE_STOPPED, signum));
+            proc_add_message(task->process->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
             if (task->sched_state == READY) { 
                 break; 
             }
             task->sched_state = READY;
-            proc_add_message(task->pid, proc_create_message(STATE_CONTINUED, signum));
+            proc_add_message(task->process->pid, proc_create_message(STATE_CONTINUED, signum));
             break;
         case IGNORE:
             break; 

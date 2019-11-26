@@ -79,7 +79,7 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
     region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
     region->flags = (prot & PROT_WRITE ? VM_WRITE : 0) | VM_USER;
     region->backing_inode = device->inode;
-    task->task_memory = add_vm_region(task->task_memory, region);
+    task->process->process_memory = add_vm_region(task->process->process_memory, region);
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         mark_used(data.frame_buffer + (i - region->start), PAGE_SIZE);
         map_phys_page(data.frame_buffer + (i - region->start), i, region->flags);
