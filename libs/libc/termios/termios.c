@@ -23,13 +23,21 @@ int tcsetattr(int fd, int optional_actions, const struct termios *termios_p) {
 }
 
 int tcflow(int fd, int action) {
-    (void) fd;
-    (void) action;
+    switch (action) {
+        case TCIOFF:
+            return ioctl(fd, TCIOFFI);
+        case TCOOFF:
+            return ioctl(fd, TCOOFFI);
+        case TCION:
+            return ioctl(fd, TCIONI);
+        case TCOON:
+            return ioctl(fd, TCOONI);
+        default:
+            break;
+    }
 
-    fprintf(stderr, "tcflow not supported\n");
-
-    assert(false);
-    return 0;
+    errno = EINVAL;
+    return -1;
 }
 
 speed_t cfgetospeed(const struct termios *termios_p) {

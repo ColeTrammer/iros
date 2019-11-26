@@ -43,3 +43,25 @@ int strncasecmp(const char *s1, const char *s2, size_t n) {
 void bcopy(const void *src, void *dest, size_t n) {
     memmove(dest, src, n);
 }
+
+int bcmp(const void *s1, const void *s2, size_t n) {
+    return memcmp(s1, s2, n);
+}
+
+void bzero(void *p, size_t n) {
+    memset(p, 0, n);
+}
+
+char *index(const char *s, int c) {
+    // strchr ignores this \0 byte
+    if (c == '\0') { return (char*) s + strlen(s); }
+
+    return strchr(s, c);
+}
+
+char *rindex(const char *s, int c) {
+    // strchr ignores this \0 byte
+    if (c == '\0') { return (char*) s + strlen(s); }
+
+    return strrchr(s, c);
+}

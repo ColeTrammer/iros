@@ -28,6 +28,10 @@ struct slave_data {
     unsigned short rows;
     unsigned short cols;
 
+    // FIXME: we should respect these fields
+    bool output_enabled : 1;
+    bool input_enabled : 1;
+
     pid_t pgid;
 
     char *input_buffer;

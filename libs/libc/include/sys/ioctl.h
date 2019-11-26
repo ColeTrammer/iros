@@ -13,6 +13,10 @@
 #define TGETNUM    10
 #define TIOCNOTTY  11
 #define TIOSCTTY   12
+#define TCIOFFI    13
+#define TCOOFFI    14
+#define TCIONI     15
+#define TCOONI     16
 
 #define SGWIDTH    0x1000
 #define SGHEIGHT   0x1001

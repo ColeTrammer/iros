@@ -190,6 +190,7 @@ static void slave_add(struct device *device) {
     data->cols = VGA_WIDTH;
     data->rows = VGA_HEIGHT;
     data->pgid = get_current_task()->pgid;
+    data->input_enabled = data->output_enabled = true;
 
     memcpy(&data->config, &default_termios, sizeof(struct termios));
 
@@ -302,6 +303,30 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
         }
         case TIOCNOTTY: {
             get_current_task()->tty = -1;
+            return 0;
+        }
+        case TCIOFFI: {
+            spin_lock(&data->lock);
+            data->input_enabled = false;
+            spin_unlock(&data->lock);
+            return 0;
+        }
+        case TCOOFFI: {
+            spin_lock(&data->lock);
+            data->output_enabled = false;
+            spin_unlock(&data->lock);
+            return 0;
+        }
+        case TCIONI: {
+            spin_lock(&data->lock);
+            data->input_enabled = true;
+            spin_unlock(&data->lock);
+            return 0;
+        }
+        case TCOONI: {
+            spin_lock(&data->lock);
+            data->output_enabled = true;
+            spin_unlock(&data->lock);
             return 0;
         }
         default: {
