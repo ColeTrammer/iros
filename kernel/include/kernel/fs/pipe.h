@@ -23,6 +23,7 @@ ssize_t pipe_read(struct file *file, void *buffer, size_t len);
 ssize_t pipe_write(struct file *file, const void *buffer, size_t len);
 int pipe_close(struct file *file);
 void pipe_clone(struct file *file);
+void pipe_on_inode_destruction(struct inode *inode);
 
 void init_pipe();
 

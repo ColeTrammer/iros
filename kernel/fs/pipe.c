@@ -19,7 +19,7 @@ static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
 static struct inode_operations pipe_i_op = {
-    NULL, NULL, &pipe_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, &pipe_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &pipe_on_inode_destruction
 };
 
 static struct file_operations pipe_f_op = {
@@ -63,7 +63,7 @@ struct inode *pipe_new_inode() {
 struct file *pipe_open(struct inode *inode, int flags, int *error) {
     assert(!(flags & O_RDWR));
 
-    struct file *file = malloc(sizeof(struct file));
+    struct file *file = calloc(1, sizeof(struct file));
     file->device = inode->device;
     file->f_op = &pipe_f_op;
     file->flags = inode->flags;
@@ -72,6 +72,7 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     file->position = 0;
     file->start = 0;
     file->abilities = 0;
+    file->ref_count = 0;
 
     struct pipe_data *data = inode->private_data;
 
@@ -136,7 +137,13 @@ ssize_t pipe_write(struct file *file, const void *buffer, size_t len) {
 
 int pipe_close(struct file *file) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
-    assert(inode);
+    // This means we already killed the inode and called on_inode_destruction
+    // We still needs this method to detect when there are no more writers
+    // to the pipe, but obviously if no one is using the pipe it no longer
+    // matters
+    if (!inode) {
+        return 0;
+    }
 
     struct pipe_data *data = inode->private_data;
 
@@ -145,19 +152,18 @@ int pipe_close(struct file *file) {
         data->write_count--;        
     }
 
-    if (inode->ref_count == 0) {
-        debug_log("Destroying pipe: [ %llu ]\n", inode->index);
-
-        free(data->buffer);
-        free(data);
-        spin_unlock(&inode->lock);
-        fs_inode_del(inode->device, inode->index);
-        free(inode);
-        return 0;
-    }
-
     spin_unlock(&inode->lock);
     return 0;
+}
+
+void pipe_on_inode_destruction(struct inode *inode) {
+    debug_log("Destroying pipe: [ %llu ]\n", inode->index);
+    
+    struct pipe_data *data = inode->private_data;
+    if (data) {
+        free(data->buffer);
+        free(data);
+    }
 }
 
 void pipe_clone(struct file *file) {
