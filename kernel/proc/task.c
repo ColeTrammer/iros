@@ -7,21 +7,21 @@
 #include <fcntl.h>
 
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/output.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/process.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
-#include <kernel/irqs/handlers.h>
-#include <kernel/sched/process_sched.h>
-#include <kernel/hal/output.h>
 #include <kernel/proc/process_state.h>
+#include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 
-// #define PROC_SIGNAL_DEBUG
+// #define TASK_SIGNAL_DEBUG
 
-struct process *current_process;
-static struct process initial_kernel_process;
+struct task *current_task;
+static struct task initial_kernel_task;
 
 /* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
@@ -107,42 +107,42 @@ uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
     return (uintptr_t) args_start;
 }
 
-void init_kernel_process() {
-    current_process = &initial_kernel_process;
+void init_kernel_task() {
+    current_task = &initial_kernel_task;
 
-    arch_init_kernel_process(current_process);
+    arch_init_kernel_task(current_task);
 
-    initial_kernel_process.kernel_process = true;
-    initial_kernel_process.pid = 1;
-    initial_kernel_process.sched_state = RUNNING;
-    initial_kernel_process.next = NULL;
-    initial_kernel_process.pgid = 1;
-    initial_kernel_process.ppid = 1;
-    initial_kernel_process.tty = -1;
+    initial_kernel_task.kernel_task = true;
+    initial_kernel_task.pid = 1;
+    initial_kernel_task.sched_state = RUNNING;
+    initial_kernel_task.next = NULL;
+    initial_kernel_task.pgid = 1;
+    initial_kernel_task.ppid = 1;
+    initial_kernel_task.tty = -1;
 
-    sched_add_process(&initial_kernel_process);
+    sched_add_task(&initial_kernel_task);
 }
 
-struct process *load_kernel_process(uintptr_t entry) {
-    struct process *process = calloc(1, sizeof(struct process));
-    process->pid = get_next_pid();
-    process->pgid = process->pid;
-    process->ppid = initial_kernel_process.pid;
-    process->process_memory = NULL;
-    process->kernel_process = true;
-    process->sched_state = READY;
-    process->cwd = malloc(2);
-    process->tty = -1;
-    strcpy(process->cwd, "/");
-    process->next = NULL;
+struct task *load_kernel_task(uintptr_t entry) {
+    struct task *task = calloc(1, sizeof(struct task));
+    task->pid = get_next_pid();
+    task->pgid = task->pid;
+    task->ppid = initial_kernel_task.pid;
+    task->task_memory = NULL;
+    task->kernel_task = true;
+    task->sched_state = READY;
+    task->cwd = malloc(2);
+    task->tty = -1;
+    strcpy(task->cwd, "/");
+    task->next = NULL;
 
-    arch_load_kernel_process(process, entry);
+    arch_load_kernel_task(task, entry);
 
-    debug_log("Loaded Kernel Process: [ %d ]\n", process->pid);
-    return process;
+    debug_log("Loaded Kernel Task: [ %d ]\n", task->pid);
+    return task;
 }
 
-struct process *load_process(const char *file_name) {
+struct task *load_task(const char *file_name) {
     int error = 0;
     struct file *program = fs_open(file_name, O_RDONLY, &error);
     assert(program != NULL && error == 0);
@@ -154,77 +154,77 @@ struct process *load_process(const char *file_name) {
     void *buffer = malloc(length);
     fs_read(program, buffer, length);
 
-    struct process *process = calloc(1, sizeof(struct process));
-    process->inode_dev = program->device;
-    process->inode_id = program->inode_idenifier;
+    struct task *task = calloc(1, sizeof(struct task));
+    task->inode_dev = program->device;
+    task->inode_id = program->inode_idenifier;
 
     fs_close(program);
 
     assert(elf64_is_valid(buffer));
 
-    process->pid = get_next_pid();
-    process->pgid = process->pid;
-    process->ppid = initial_kernel_process.pid;
-    process->process_memory = NULL;
-    process->kernel_process = false;
-    process->sched_state = READY;
-    process->cwd = malloc(2);
-    process->tty = -1;
-    strcpy(process->cwd, "/");
-    process->next = NULL;
+    task->pid = get_next_pid();
+    task->pgid = task->pid;
+    task->ppid = initial_kernel_task.pid;
+    task->task_memory = NULL;
+    task->kernel_task = false;
+    task->sched_state = READY;
+    task->cwd = malloc(2);
+    task->tty = -1;
+    strcpy(task->cwd, "/");
+    task->next = NULL;
 
     uintptr_t old_paging_structure = get_current_paging_structure();
-    uintptr_t structure = create_paging_structure(process->process_memory, false);
+    uintptr_t structure = create_paging_structure(task->task_memory, false);
     load_paging_structure(structure);
 
-    elf64_load_program(buffer, length, process);
-    elf64_map_heap(buffer, process);
+    elf64_load_program(buffer, length, task);
+    elf64_map_heap(buffer, task);
 
-    struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
-    process_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
-    process_stack->type = VM_PROCESS_STACK;
-    process_stack->start = find_first_kernel_vm_region()->start - 2 * PAGE_SIZE;
-    process_stack->end = process_stack->start + PAGE_SIZE;
-    process->process_memory = add_vm_region(process->process_memory, process_stack);
-    map_vm_region(process_stack);
+    struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
+    task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
+    task_stack->type = VM_TASK_STACK;
+    task_stack->start = find_first_kernel_vm_region()->start - 2 * PAGE_SIZE;
+    task_stack->end = task_stack->start + PAGE_SIZE;
+    task->task_memory = add_vm_region(task->task_memory, task_stack);
+    map_vm_region(task_stack);
 
-    arch_load_process(process, elf64_get_entry(buffer));
+    arch_load_task(task, elf64_get_entry(buffer));
     free(buffer);
 
     load_paging_structure(old_paging_structure);
 
-    process->files[0] = fs_open("/dev/serial", O_RDWR, NULL);
-    process->files[1] = fs_open("/dev/serial", O_RDWR, NULL);
-    process->files[2] = fs_open("/dev/serial", O_RDWR, NULL);
+    task->files[0] = fs_open("/dev/serial", O_RDWR, NULL);
+    task->files[1] = fs_open("/dev/serial", O_RDWR, NULL);
+    task->files[2] = fs_open("/dev/serial", O_RDWR, NULL);
 
-    debug_log("Loaded Process: [ %d, %s ]\n", process->pid, file_name);
-    return process;
+    debug_log("Loaded Task: [ %d, %s ]\n", task->pid, file_name);
+    return task;
 }
 
 /* Must be called from unpremptable context */
-void run_process(struct process *process) {
-    if (current_process->sched_state == RUNNING) {
-        current_process->sched_state = READY;
+void run_task(struct task *task) {
+    if (current_task->sched_state == RUNNING) {
+        current_task->sched_state = READY;
     }
-    current_process = process;
-    current_process->sched_state = RUNNING;
+    current_task = task;
+    current_task->sched_state = RUNNING;
 
-    arch_run_process(process);
+    arch_run_task(task);
 }
 
-struct process *get_current_process() {
-    return current_process;
+struct task *get_current_task() {
+    return current_task;
 }
 
 /* Must be called from unpremptable context */
-void free_process(struct process *process, bool free_paging_structure) {
-    struct process *current_save = current_process;
-    current_process = process;
-    arch_free_process(process, free_paging_structure);
+void free_task(struct task *task, bool free_paging_structure) {
+    struct task *current_save = current_task;
+    current_task = task;
+    arch_free_task(task, free_paging_structure);
 
-    free(process->cwd);
+    free(task->cwd);
 
-    struct vm_region *region = process->process_memory;
+    struct vm_region *region = task->task_memory;
     while (region != NULL) {
         if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
             fs_munmap((void*) region->start, region->end);
@@ -233,7 +233,7 @@ void free_process(struct process *process, bool free_paging_structure) {
         region = region->next;
     }
 
-    region = process->process_memory;
+    region = task->task_memory;
     while (region != NULL) {
         struct vm_region *temp = region->next;
         free(region);
@@ -241,30 +241,30 @@ void free_process(struct process *process, bool free_paging_structure) {
     }
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
-        if (process->files[i] != NULL) {
-            fs_close(process->files[i]);
+        if (task->files[i] != NULL) {
+            fs_close(task->files[i]);
         }
     }
 
-    free(process);
-    current_process = current_save;
+    free(task);
+    current_task = current_save;
 }
 
-void proc_set_sig_pending(struct process *process, int signum) {
-    process->sig_pending |= (1U << signum);
+void task_set_sig_pending(struct task *task, int signum) {
+    task->sig_pending |= (1U << signum);
 }
 
-void proc_unset_sig_pending(struct process *process, int signum) {
-    process->sig_pending &= ~(1U << signum);
+void task_unset_sig_pending(struct task *task, int signum) {
+    task->sig_pending &= ~(1U << signum);
 }
 
-int proc_get_next_sig(struct process *process) {
-    if (!process->sig_pending) {
+int task_get_next_sig(struct task *task) {
+    if (!task->sig_pending) {
         return -1; // Indicates we did nothing
     }
 
     for (size_t i = 1; i < _NSIG; i++) {
-        if ((process->sig_pending & (1U << i)) && !proc_is_sig_blocked(process, i)) {
+        if ((task->sig_pending & (1U << i)) && !task_is_sig_blocked(task, i)) {
             return i;
         }
     }
@@ -273,14 +273,14 @@ int proc_get_next_sig(struct process *process) {
 }
 
 void proc_notify_parent(pid_t child_pid) {
-    struct process *child = find_by_pid(child_pid);
-    struct process *parent = find_by_pid(child->ppid);
+    struct task *child = find_by_pid(child_pid);
+    struct task *parent = find_by_pid(child->ppid);
 
     if (parent == NULL) {
-        parent = &initial_kernel_process;
+        parent = &initial_kernel_task;
     }
 
-    proc_set_sig_pending(parent, SIGCHLD);
+    task_set_sig_pending(parent, SIGCHLD);
 }
 
 enum sig_default_behavior {
@@ -327,47 +327,47 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
     INVAL               // INVAL
 };
 
-void proc_do_sig(struct process *process, int signum) {
-#ifdef PROC_SIGNAL_DEBUG
-    debug_log("Doing signal: [ %d, %d ]\n", process->pid, signum);
-#endif /* PROC_SIGNAL_DEBUG */
+void task_do_sig(struct task *task, int signum) {
+#ifdef TASK_SIGNAL_DEBUG
+    debug_log("Doing signal: [ %d, %d ]\n", task->pid, signum);
+#endif /* TASK_SIGNAL_DEBUG */
 
-    proc_unset_sig_pending(process, signum);
+    task_unset_sig_pending(task, signum);
 
-    if (process->sig_state[signum].sa_handler == SIG_IGN) {
+    if (task->sig_state[signum].sa_handler == SIG_IGN) {
         return;
     }
 
-    if (process->sig_state[signum].sa_handler != SIG_DFL) {
-        proc_do_sig_handler(process, signum);
+    if (task->sig_state[signum].sa_handler != SIG_DFL) {
+        task_do_sig_handler(task, signum);
     }
 
     assert(sig_defaults[signum] != INVAL);
     switch (sig_defaults[signum]) {
         case TERMINATE_AND_DUMP:
-            elf64_stack_trace(process);
+            elf64_stack_trace(task);
             // Fall through
         case TERMINATE:
-            if (process->sched_state == EXITING) { 
+            if (task->sched_state == EXITING) { 
                 break; 
             }
-            process->sched_state = EXITING;
-            invalidate_last_saved(process);
-            proc_add_message(process->pid, proc_create_message(STATE_INTERRUPTED, signum));
+            task->sched_state = EXITING;
+            invalidate_last_saved(task);
+            proc_add_message(task->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;
         case STOP:
-            if (process->sched_state == WAITING) { 
+            if (task->sched_state == WAITING) { 
                 break; 
             }
-            process->sched_state = WAITING;
-            proc_add_message(process->pid, proc_create_message(STATE_STOPPED, signum));
+            task->sched_state = WAITING;
+            proc_add_message(task->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
-            if (process->sched_state == READY) { 
+            if (task->sched_state == READY) { 
                 break; 
             }
-            process->sched_state = READY;
-            proc_add_message(process->pid, proc_create_message(STATE_CONTINUED, signum));
+            task->sched_state = READY;
+            proc_add_message(task->pid, proc_create_message(STATE_CONTINUED, signum));
             break;
         case IGNORE:
             break; 
@@ -377,7 +377,7 @@ void proc_do_sig(struct process *process, int signum) {
     }
 }
 
-bool proc_is_sig_blocked(struct process *process, int signum) {
+bool task_is_sig_blocked(struct task *task, int signum) {
     assert(signum >= 1 && signum < _NSIG);
-    return process->sig_mask & (1U << (signum - 1));
+    return task->sig_mask & (1U << (signum - 1));
 }

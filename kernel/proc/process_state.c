@@ -5,9 +5,9 @@
 #include <string.h>
 
 #include <kernel/proc/pid.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 #include <kernel/proc/process_state.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/hash_map.h>
 
 static struct hash_map *queue_map;
@@ -109,7 +109,7 @@ static struct proc_state_message_queue *ensure_queue(pid_t pid) {
 static void __free_queue(struct proc_state_message_queue *queue) {
     pid_t pid = queue->pid;
     pid_t ppid = queue->ppid;
-    struct process *parent = find_by_pid(ppid);
+    struct task *parent = find_by_pid(ppid);
     if (parent) {
         parent->times.tms_cutime = queue->times.tms_utime + queue->times.tms_cutime;
         parent->times.tms_cstime = queue->times.tms_stime + queue->times.tms_cstime;
@@ -181,11 +181,11 @@ void proc_add_message(pid_t pid, struct proc_state_message *m) {
         queue->end = m;
     }
 
-    struct process *process = find_by_pid(pid);
-    assert(process);
+    struct task *task = find_by_pid(pid);
+    assert(task);
 
     if (m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) {
-        memcpy(&queue->times, &process->times, sizeof(struct tms));
+        memcpy(&queue->times, &task->times, sizeof(struct tms));
     }
 
     spin_unlock(&queue->lock);
@@ -228,7 +228,7 @@ pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m) {
     }
 
     while (queue != NULL) {
-        if (queue->ppid == get_current_process()->pid) {
+        if (queue->ppid == get_current_task()->pid) {
             pid_t ret = proc_consume_message(queue->pid, m);
             if (ret != 0) {
                 return ret;
@@ -267,9 +267,9 @@ void init_proc_state() {
 }
 
 pid_t proc_get_pgid(pid_t pid) {
-    struct process *process = find_by_pid(pid);
-    if (process != NULL) {
-        return process->pgid;
+    struct task *task = find_by_pid(pid);
+    if (task != NULL) {
+        return task->pgid;
     }
 
     struct proc_state_message_queue *queue = hash_get(queue_map, &pid);

@@ -13,7 +13,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/input.h>
 #include <kernel/fs/dev.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 

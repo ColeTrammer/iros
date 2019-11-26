@@ -8,8 +8,8 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/ip.h>
-#include <kernel/net/network_process.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/net/network_task.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
 static struct network_data *head = NULL;
@@ -67,7 +67,7 @@ void net_on_incoming_packet_sync(const void *buf, size_t len) {
     }
 }
 
-void net_network_process_start() {
+void net_network_task_start() {
     for (;;) {
         struct network_data *data = consume();
         if (data == NULL) {

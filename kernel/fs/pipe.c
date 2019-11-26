@@ -12,7 +12,7 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/file.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;

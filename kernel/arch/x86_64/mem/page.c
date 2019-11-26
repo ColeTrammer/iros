@@ -10,7 +10,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/hal/output.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 
 #include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/arch/x86_64/asm_utils.h>
@@ -194,7 +194,7 @@ void unmap_page(uintptr_t virt_addr) {
 }
 
 uintptr_t get_current_paging_structure() {
-    return get_current_process()->arch_process.cr3;
+    return get_current_task()->arch_task.cr3;
 }
 
 uintptr_t clone_process_paging_structure() {
@@ -211,7 +211,7 @@ uintptr_t clone_process_paging_structure() {
     uintptr_t pml4_addr = get_phys_addr((uintptr_t) TEMP_PAGE);
 
     uint64_t old_cr3 = get_cr3();
-    get_current_process()->arch_process.cr3 = get_phys_addr((uintptr_t) pml4);
+    get_current_task()->arch_task.cr3 = get_phys_addr((uintptr_t) pml4);
     load_cr3(get_phys_addr((uintptr_t) pml4));
 
     for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 3; i++) {
@@ -267,7 +267,7 @@ uintptr_t clone_process_paging_structure() {
 
     spin_unlock(&temp_page_lock);
 
-    get_current_process()->arch_process.cr3 = old_cr3;
+    get_current_task()->arch_task.cr3 = old_cr3;
     load_cr3(old_cr3);
 
     return pml4_addr;
@@ -288,7 +288,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
 
     if (deep_copy) {
         uint64_t old_cr3 = get_cr3();
-        get_current_process()->arch_process.cr3 = get_phys_addr((uintptr_t) pml4);
+        get_current_task()->arch_task.cr3 = get_phys_addr((uintptr_t) pml4);
         load_cr3(get_phys_addr((uintptr_t) pml4));
 
         for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {
@@ -339,7 +339,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
             list = list->next;
         }
 
-        get_current_process()->arch_process.cr3 = old_cr3;
+        get_current_task()->arch_task.cr3 = old_cr3;
         load_cr3(old_cr3);
     }
 
@@ -357,14 +357,14 @@ void create_phys_id_map() {
 }
 
 void load_paging_structure(uintptr_t phys_addr) {
-    get_current_process()->arch_process.cr3 = phys_addr;
+    get_current_task()->arch_task.cr3 = phys_addr;
     load_cr3(phys_addr);
 }
 
 void soft_remove_paging_structure(struct vm_region *list) {
     struct vm_region *region = list;
     while (region != NULL) {
-        if (!(region->flags & VM_GLOBAL) && !(region->type == VM_KERNEL_STACK) && !(region->type == VM_PROCESS_STACK)) {
+        if (!(region->flags & VM_GLOBAL) && !(region->type == VM_KERNEL_STACK) && !(region->type == VM_TASK_STACK)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
                 unmap_page(page);
             }

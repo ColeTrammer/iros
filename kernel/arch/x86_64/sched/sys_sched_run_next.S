@@ -19,7 +19,7 @@ yield_signal:
 
 .global yield
 yield:
-    # Switches stack and then builds process_state struct on that stack
+    # Switches stack and then builds task_state struct on that stack
 
     # Save old rsp and provide rip for reentry
     movabsq $continue, %rax

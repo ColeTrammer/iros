@@ -4,7 +4,7 @@
 #include <sys/time.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/arch/x86_64/proc/process.h>
+#include <kernel/arch/x86_64/proc/task.h>
 
 #define PIT_IRQ_LINE 0
 
@@ -34,12 +34,12 @@
 #define PIT_GET_DIVISOR(ms) ((int) (((ms) * PIT_BASE_RATE) + 0.5))
 
 void handle_pit_interrupt_entry();
-void handle_pit_interrupt(struct process_state *process_state);
+void handle_pit_interrupt(struct task_state *task_state);
 
 void init_pit();
 
 void pit_set_rate(unsigned int rate);
-void pit_set_sched_callback(void (*callback)(struct process_state*), unsigned int ms);
+void pit_set_sched_callback(void (*callback)(struct task_state*), unsigned int ms);
 void pit_register_callback(void (*callback)(), unsigned int ms);
 time_t pit_get_time();
 void pit_set_time(time_t time);

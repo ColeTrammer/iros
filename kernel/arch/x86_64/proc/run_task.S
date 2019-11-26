@@ -1,7 +1,7 @@
 .section .text
-.global __run_process
-__run_process:
-    # Simply loads process_state struct from pointer in %rdi,
+.global __run_task
+__run_task:
+    # Simply loads task_state struct from pointer in %rdi,
     # Making sure to load %rdi last for obvious reasons
 
     # Before switching tasks, make sure cr0.TS is set so that sse and fpu work

@@ -1,5 +1,5 @@
-#ifndef _KERNEL_NET_NETWORK_PROCESS_H
-#define _KERNEL_NET_NETWORK_PROCESS_H 1
+#ifndef _KERNEL_NET_NETWORK_TASK_H
+#define _KERNEL_NET_NETWORK_TASK_H 1
 
 #include <stdint.h>
 
@@ -13,6 +13,6 @@ struct network_data {
 void net_on_incoming_packet(const void *buf, size_t len);
 void net_on_incoming_packet_sync(const void *buf, size_t len);
 
-void net_network_process_start();
+void net_network_task_start();
 
-#endif /* _KERNEL_NET_NETWORK_PROCESS_H */
+#endif /* _KERNEL_NET_NETWORK_TASK_H */

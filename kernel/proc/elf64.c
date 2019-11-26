@@ -11,7 +11,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/elf64.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 
 // #define ELF64_DEBUG
 
@@ -41,7 +41,7 @@ uint64_t elf64_get_size(void *buffer) {
     return program_headers[1].p_memsz + program_headers[0].p_filesz;
 }
 
-void elf64_load_program(void *buffer, size_t length, struct process *process) {
+void elf64_load_program(void *buffer, size_t length, struct task *task) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr*) (((uintptr_t) buffer) + elf_header->e_phoff);
 
@@ -62,7 +62,7 @@ void elf64_load_program(void *buffer, size_t length, struct process *process) {
         to_add->flags = VM_WRITE | VM_USER;
         to_add->type = program_flags & VM_NO_EXEC ? VM_PROCESS_DATA : VM_PROCESS_TEXT;
         
-        process->process_memory = add_vm_region(process->process_memory, to_add);
+        task->task_memory = add_vm_region(task->task_memory, to_add);
 
         map_vm_region(to_add);
 
@@ -74,23 +74,23 @@ void elf64_load_program(void *buffer, size_t length, struct process *process) {
     }
 }
 
-void elf64_map_heap(void *buffer, struct process *process) {
-    struct vm_region *process_heap = calloc(1, sizeof(struct vm_region));
-    process_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
-    process_heap->type = VM_PROCESS_HEAP;
-    process_heap->start = ((elf64_get_start(buffer) + elf64_get_size(buffer)) & ~0xFFF) + 100 * PAGE_SIZE;
+void elf64_map_heap(void *buffer, struct task *task) {
+    struct vm_region *task_heap = calloc(1, sizeof(struct vm_region));
+    task_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
+    task_heap->type = VM_PROCESS_HEAP;
+    task_heap->start = ((elf64_get_start(buffer) + elf64_get_size(buffer)) & ~0xFFF) + 100 * PAGE_SIZE;
 #ifdef ELF64_DEBUG
-    debug_log("Heap start: [ %#.16lX ]\n", process_heap->start);
+    debug_log("Heap start: [ %#.16lX ]\n", task_heap->start);
 #endif /* ELF64_DEBUG */
-    process_heap->end = process_heap->start;
-    process->process_memory = add_vm_region(process->process_memory, process_heap);
+    task_heap->end = task_heap->start;
+    task->task_memory = add_vm_region(task->task_memory, task_heap);
 }
 
-// NOTE: this must be called from within a process's address space
-void elf64_stack_trace(struct process *process) {
-    struct inode *inode = fs_inode_get(process->inode_dev, process->inode_id);
+// NOTE: this must be called from within a task's address space
+void elf64_stack_trace(struct task *task) {
+    struct inode *inode = fs_inode_get(task->inode_dev, task->inode_id);
     if (!inode) {
-        debug_log("The process has no inode: [ %d, %lu, %llu ]\n", process->pid, process->inode_dev, process->inode_id);
+        debug_log("The task has no inode: [ %d, %lu, %llu ]\n", task->pid, task->inode_dev, task->inode_id);
         return;
     }
 
@@ -105,7 +105,7 @@ void elf64_stack_trace(struct process *process) {
     free(file);
 
     if (!elf64_is_valid(buffer)) {
-        debug_log("The process is not elf64: [ %d ]\n", process->pid);
+        debug_log("The task is not elf64: [ %d ]\n", task->pid);
         return;
     }
 
@@ -129,8 +129,8 @@ void elf64_stack_trace(struct process *process) {
     assert(symbols);
     assert(string_table);
 
-    uintptr_t rsp = (process->in_kernel || process->can_send_self_signals) ? process->arch_process.user_process_state.stack_state.rsp : process->arch_process.process_state.stack_state.rsp;
-    uintptr_t rip = (process->in_kernel || process->can_send_self_signals) ? process->arch_process.user_process_state.stack_state.rip : process->arch_process.process_state.stack_state.rip;
+    uintptr_t rsp = (task->in_kernel || task->can_send_self_signals) ? task->arch_task.user_task_state.stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
+    uintptr_t rip = (task->in_kernel || task->can_send_self_signals) ? task->arch_task.user_task_state.stack_state.rip : task->arch_task.task_state.stack_state.rip;
 
     debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
 

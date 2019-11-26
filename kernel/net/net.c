@@ -4,11 +4,11 @@
 #include <kernel/net/loopback.h>
 #include <kernel/net/mac.h>
 #include <kernel/net/net.h>
-#include <kernel/net/network_process.h>
+#include <kernel/net/network_task.h>
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
-#include <kernel/proc/process.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 
 static void init_ip_v4_mappings(struct network_interface *interface) {
     debug_log("Initializing interface: [ %s ]\n", interface->name);
@@ -28,10 +28,10 @@ void init_net() {
     init_mac();
     init_ports();
 
-    struct process *network_process = load_kernel_process((uintptr_t) net_network_process_start);
-    assert(network_process);
+    struct task *network_task = load_kernel_task((uintptr_t) net_network_task_start);
+    assert(network_task);
 
-    sched_add_process(network_process);
+    sched_add_task(network_task);
 
     net_for_each_interface(init_ip_v4_mappings);
 }

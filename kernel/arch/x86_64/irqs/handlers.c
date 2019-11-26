@@ -8,8 +8,8 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
-#include <kernel/sched/process_sched.h>
-#include <kernel/proc/process.h>
+#include <kernel/sched/task_sched.h>
+#include <kernel/proc/task.h>
 #include <kernel/mem/vm_allocator.h>
 
 #include <kernel/arch/arch.h>
@@ -34,36 +34,36 @@ void handle_double_fault() {
     abort();
 }
 
-void handle_general_protection_fault(struct process_interrupt_state *process_state) {
-    struct process *current = get_current_process();
-    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->pid, process_state->stack_state.rip, process_state->error_code);
+void handle_general_protection_fault(struct task_interrupt_state *task_state) {
+    struct task *current = get_current_task();
+    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->pid, task_state->stack_state.rip, task_state->error_code);
 
     if (!current->in_kernel) {
-        memcpy(&current->arch_process.process_state.cpu_state, &process_state->cpu_state, sizeof(struct cpu_state));
-        memcpy(&current->arch_process.process_state.stack_state, &process_state->stack_state, sizeof(struct stack_state));
-        proc_do_sig(current, SIGSEGV); // You can't block this so we don't check
+        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
+        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        task_do_sig(current, SIGSEGV); // You can't block this so we don't check
     
-        // If we get here, the process that faulted was just send a terminating signal
+        // If we get here, the task that faulted was just send a terminating signal
         sched_run_next();
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
-    printf("\n\033[31m%s: Error: %lX\033[0m\n", "General Protection Fault", process_state->error_code);
+    printf("\n\033[31m%s: Error: %lX\033[0m\n", "General Protection Fault", task_state->error_code);
     abort();
 }
 
-void handle_page_fault(struct process_interrupt_state *process_state, uintptr_t address) {
-    struct process *current = get_current_process();
+void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t address) {
+    struct task *current = get_current_task();
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n", current->pid, 
-        process_state->stack_state.rsp, process_state->stack_state.rip, address, process_state->error_code);
+        task_state->stack_state.rsp, task_state->stack_state.rip, address, task_state->error_code);
 
     // In this case we just extend the stack
-    struct vm_region *vm_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
-    if (vm_stack && !current->kernel_process && address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {
+    struct vm_region *vm_stack = get_vm_region(current->task_memory, VM_TASK_STACK);
+    if (vm_stack && !current->kernel_task && address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {
         size_t num_pages = NUM_PAGES(address, vm_stack->start);
         assert(num_pages > 0);
-        assert(extend_vm_region_start(current->process_memory, VM_PROCESS_STACK, num_pages) == 0);
+        assert(extend_vm_region_start(current->task_memory, VM_TASK_STACK, num_pages) == 0);
         assert(vm_stack->start <= address);
         for (size_t i = 0; i < num_pages; i++) {
             map_page(vm_stack->start + i * PAGE_SIZE, VM_NO_EXEC | VM_WRITE | VM_USER);
@@ -71,20 +71,20 @@ void handle_page_fault(struct process_interrupt_state *process_state, uintptr_t 
         return;
     }
 
-    if (vm_stack && !current->kernel_process && !current->in_kernel) {
-        memcpy(&current->arch_process.process_state.cpu_state, &process_state->cpu_state, sizeof(struct cpu_state));
-        memcpy(&current->arch_process.process_state.stack_state, &process_state->stack_state, sizeof(struct stack_state));
-        proc_do_sig(current, SIGSEGV); // You can't block this so we don't check
+    if (vm_stack && !current->kernel_task && !current->in_kernel) {
+        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
+        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        task_do_sig(current, SIGSEGV); // You can't block this so we don't check
         
-        // If we get here, the process that faulted was just send a terminating signal
+        // If we get here, the task that faulted was just send a terminating signal
         sched_run_next();
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
-    printf("\n\033[31m%s: Error %lX\n", "Page Fault", process_state->error_code);
+    printf("\n\033[31m%s: Error %lX\n", "Page Fault", task_state->error_code);
     printf("Address: %#.16lX\n", address);
-    printf("Process: %d\033[0m\n", get_current_process()->pid);
+    printf("task: %d\033[0m\n", get_current_task()->pid);
     abort();
 }
 
@@ -100,16 +100,16 @@ void handle_fpu_exception() {
     abort();
 }
 
-static struct process *last_saved = NULL;
+static struct task *last_saved = NULL;
 
-void invalidate_last_saved(struct process *process) {
-    if (last_saved == process) {
+void invalidate_last_saved(struct task *task) {
+    if (last_saved == task) {
         last_saved = NULL;
     }
 }
 
 void handle_device_not_available() {
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     assert(current);
 
     if (last_saved == current) {

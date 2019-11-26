@@ -10,7 +10,7 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 
 struct bga_data {
     uintptr_t frame_buffer;
@@ -71,7 +71,7 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
     size_t total_size = sizeof(uint32_t) * (size_t) data.x_res * (size_t) data.y_res * (size_t) 2;
     debug_log("Framebuffer total size: [ %lu ]\n", total_size);
 
-    struct process *process = get_current_process();
+    struct task *task = get_current_task();
     struct vm_region *region = calloc(1, sizeof(struct vm_region));
     region->start = addr ? (uintptr_t) addr : 0x100000000LL;
     region->end = region->start + NUM_PAGES(region->start, region->start + total_size) * PAGE_SIZE;
@@ -79,7 +79,7 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
     region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
     region->flags = (prot & PROT_WRITE ? VM_WRITE : 0) | VM_USER;
     region->backing_inode = device->inode;
-    process->process_memory = add_vm_region(process->process_memory, region);
+    task->task_memory = add_vm_region(task->task_memory, region);
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         mark_used(data.frame_buffer + (i - region->start), PAGE_SIZE);
         map_phys_page(data.frame_buffer + (i - region->start), i, region->flags);

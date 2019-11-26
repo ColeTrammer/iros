@@ -64,7 +64,7 @@ $(BUILDDIR)/kernel/net/ip.o \
 $(BUILDDIR)/kernel/net/loopback.o \
 $(BUILDDIR)/kernel/net/mac.o \
 $(BUILDDIR)/kernel/net/net.o \
-$(BUILDDIR)/kernel/net/network_process.o \
+$(BUILDDIR)/kernel/net/network_task.o \
 $(BUILDDIR)/kernel/net/port.o \
 $(BUILDDIR)/kernel/net/socket.o \
 $(BUILDDIR)/kernel/net/tcp.o \
@@ -73,8 +73,8 @@ $(BUILDDIR)/kernel/net/unix_socket.o \
 $(BUILDDIR)/kernel/proc/elf64.o \
 $(BUILDDIR)/kernel/proc/pid.o \
 $(BUILDDIR)/kernel/proc/process_state.o \
-$(BUILDDIR)/kernel/proc/process.o \
-$(BUILDDIR)/kernel/sched/process_sched.o \
+$(BUILDDIR)/kernel/proc/task.o \
+$(BUILDDIR)/kernel/sched/task_sched.o \
 $(BUILDDIR)/kernel/util/spinlock.o \
 $(BUILDDIR)/kernel/util/hash_map.o
 

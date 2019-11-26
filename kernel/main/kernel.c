@@ -10,8 +10,8 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/process.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/net/net.h>
@@ -20,11 +20,11 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_hal();
     init_irq_handlers();
     init_page_frame_allocator(kernel_phys_start, kernel_phys_end, inintrd_phys_start, initrd_phys_end, multiboot_info);
-    init_kernel_process();
+    init_kernel_task();
     init_vm_allocator(inintrd_phys_start, initrd_phys_end);
     init_vfs();
     init_drivers();
-    init_process_sched();
+    init_task_sched();
     init_net();
 
     /* Mount hdd0 at / */
@@ -33,8 +33,8 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     assert(error == 0);
 
     // Start Shell
-    struct process *shell = load_process("/bin/start");
-    sched_add_process(shell);
+    struct task *shell = load_task("/bin/start");
+    sched_add_task(shell);
 
     sched_run_next();
 

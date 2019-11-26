@@ -31,7 +31,7 @@ struct vm_region {
 #define VM_PROCESS_DATA (18)
 #define VM_PROCESS_BSS (19)
 #define VM_PROCESS_HEAP (20)
-#define VM_PROCESS_STACK (21)
+#define VM_TASK_STACK (21)
 
 /* Defines non unique process regions */
 #define VM_PROCESS_FILE (40)

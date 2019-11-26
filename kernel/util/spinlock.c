@@ -1,6 +1,6 @@
 #include <kernel/util/spinlock.h>
 
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/hal.h>
 

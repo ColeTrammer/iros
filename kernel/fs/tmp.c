@@ -19,7 +19,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/hal/output.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
 static struct file_system fs;
@@ -73,7 +73,7 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     }
 
     struct tmp_data *data = calloc(1, sizeof(struct tmp_data));
-    data->owner = get_current_process()->pid;
+    data->owner = get_current_task()->pid;
 
     inode->i_op = &tmp_i_op;
     inode->index = get_next_tmp_index();
@@ -261,8 +261,8 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
     region->backing_inode = inode;
 
-    struct process *current = get_current_process();
-    current->process_memory = add_vm_region(current->process_memory, region);
+    struct task *current = get_current_task();
+    current->task_memory = add_vm_region(current->task_memory, region);
 
     struct tmp_data *data = inode->private_data;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {

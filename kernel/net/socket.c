@@ -15,8 +15,8 @@
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/unix_socket.h>
-#include <kernel/proc/process.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
@@ -96,7 +96,7 @@ static ssize_t net_write(struct file *file, const void *buf, size_t len) {
 }
 
 struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     for (int i = 0; i < FOPEN_MAX; i++) {
         if (current->files[i] == NULL) {

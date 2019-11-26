@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
  
-struct process_interrupt_state {
+struct task_interrupt_state {
     struct cpu_state cpu_state;
     uint64_t error_code;
     struct stack_state stack_state;
@@ -21,8 +21,8 @@ void handle_page_fault_entry();
 void sys_call_entry();
 
 void handle_double_fault();
-void handle_general_protection_fault(struct process_interrupt_state *process_state);
-void handle_page_fault(struct process_interrupt_state *process_state, uintptr_t address);
+void handle_general_protection_fault(struct task_interrupt_state *task_state);
+void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t address);
 void handle_invalid_opcode();
 void handle_fpu_exception();
 void handle_device_not_available();

@@ -13,7 +13,7 @@
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/hash_map.h>
 
 static struct hash_map *map;

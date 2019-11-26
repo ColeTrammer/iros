@@ -2,13 +2,13 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include <kernel/arch/x86_64/proc/process.h>
+#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/output.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 
-static void (*sched_callback)(struct process_state*) = NULL;
+static void (*sched_callback)(struct task_state*) = NULL;
 static unsigned int sched_count = 0;
 static unsigned int sched_count_to = 0;
 
@@ -22,13 +22,13 @@ void pit_set_time(time_t time) {
     ms = time * 1000;
 }
 
-void handle_pit_interrupt(struct process_state *process_state) {
+void handle_pit_interrupt(struct task_state *task_state) {
     sendEOI(PIT_IRQ_LINE);
 
     /* Increment time count */
     ms++;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     if (current->in_kernel) {
         current->times.tms_stime++;
     } else {
@@ -39,7 +39,7 @@ void handle_pit_interrupt(struct process_state *process_state) {
         sched_count++;
         if (sched_count >= sched_count_to) {
             sched_count = 0;
-            sched_callback(process_state);
+            sched_callback(task_state);
         }
     }
 
@@ -56,7 +56,7 @@ time_t pit_get_time() {
     return ms;
 }
 
-void pit_set_sched_callback(void (*_sched_callback)(struct process_state*), unsigned int ms) {
+void pit_set_sched_callback(void (*_sched_callback)(struct task_state*), unsigned int ms) {
     sched_callback = _sched_callback;
     sched_count_to = ms;
 }

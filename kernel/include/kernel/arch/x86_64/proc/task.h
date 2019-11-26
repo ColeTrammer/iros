@@ -1,5 +1,5 @@
-#ifndef _KERNEL_ARCH_X86_64_PROC_PROCESS_H
-#define _KERNEL_ARCH_X86_64_PROC_PROCESS_H 1
+#ifndef _KERNEL_ARCH_X86_64_PROC_TASK_H
+#define _KERNEL_ARCH_X86_64_PROC_TASK_H 1
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -7,7 +7,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/arch/x86_64/mem/page.h>
 
-#define KERNEL_PROC_STACK_START (((uintptr_t) PT_BASE) - PAGE_SIZE)
+#define KERNEL_TASK_STACK_START (((uintptr_t) PT_BASE) - PAGE_SIZE)
 
 struct cpu_state {
     uint64_t r15;
@@ -35,14 +35,14 @@ struct stack_state {
     uint64_t ss;    
 } __attribute__((packed));
 
-struct process_state {
+struct task_state {
     struct cpu_state cpu_state;
     struct stack_state stack_state;
 } __attribute__((packed));
 
-struct arch_process {
-    struct process_state process_state;
-    struct process_state user_process_state;
+struct arch_task {
+    struct task_state task_state;
+    struct task_state user_task_state;
     uint64_t cr3;
     uint64_t kernel_stack;
     struct virt_page_info *kernel_stack_info;
@@ -62,10 +62,10 @@ struct arch_fpu_state {
     bool saved;
 };
 
-struct process;
+struct task;
 
-void proc_align_fpu(struct process *process);
+void task_align_fpu(struct task *task);
 
-extern void __run_process(struct arch_process *state);
+extern void __run_task(struct arch_task *state);
 
-#endif /* _KERNEL_ARCH_X86_64_PROC_PROCESS_H */
+#endif /* _KERNEL_ARCH_X86_64_PROC_TASK_H */

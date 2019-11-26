@@ -20,7 +20,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 
 // #define INODE_REF_COUNT_DEBUG
 
@@ -99,7 +99,7 @@ struct tnode *iname(const char *_path) {
 
         /* Check for . and .. */
         if (path[1] == '.' && (path[2] == '/' || path[2] == '\0')) {
-            /* Dot means current directory so just skip processing */
+            /* Dot means current directory so just skip tasking */
             goto vfs_loop_end;
         }
 
@@ -956,7 +956,7 @@ int fs_fcntl(struct file *file, int command, int arg) {
             file->fd_flags |= FD_CLOEXEC;
             // Fall through
         case F_DUPFD: {
-            struct process *current = get_current_process();
+            struct task *current = get_current_task();
             if (arg < 0 || arg > FOPEN_MAX) {
                 return -EINVAL;
             }
@@ -1015,7 +1015,7 @@ int fs_fchmod(struct file *file, mode_t mode) {
 
 // NOTE: we don't have to write out to disk, because we only loose info
 //       stored on the inode after rebooting, and at that point, the binding
-//       process will no longer exist.
+//       task will no longer exist.
 int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id) {
     assert(inode->flags & FS_SOCKET && S_ISOCK(inode->mode));
     inode->socket_id = socket_id;

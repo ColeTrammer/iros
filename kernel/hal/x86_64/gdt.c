@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <kernel/arch/x86_64/proc/process.h>
+#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/kernel_vm.h>

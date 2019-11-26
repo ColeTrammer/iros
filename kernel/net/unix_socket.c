@@ -9,8 +9,8 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/unix_socket.h>
-#include <kernel/proc/process.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 
 int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen, int flags) {
     assert(socket->domain == AF_UNIX);

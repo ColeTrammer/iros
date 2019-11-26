@@ -6,7 +6,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/arch/x86_64/proc/process.h>
+#include <kernel/arch/x86_64/proc/task.h>
 
 static void (*handlers[2 * PIC_IRQS])(void) = { 0 };
 

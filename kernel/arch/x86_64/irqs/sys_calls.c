@@ -12,10 +12,10 @@
 #include <signal.h>
 
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
 #include <kernel/proc/pid.h>
 #include <kernel/proc/elf64.h>
-#include <kernel/sched/process_sched.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/process_state.h>
@@ -25,7 +25,7 @@
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
-#include <kernel/arch/x86_64/proc/process.h>
+#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/x86_64/gdt.h>
 
 // #define DUP_DEBUG
@@ -33,58 +33,58 @@
 // #define SIGACTION_DEBUG
 // #define WAIT_PID_DEBUG
 
-#define SYS_BEGIN(process_state)                                                                                        \
-    do {                                                                                                                \
-        memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
-        get_current_process()->in_kernel = true;                                                                        \
-        enable_interrupts();                                                                                            \
+#define SYS_BEGIN(task_state)                                                                               \
+    do {                                                                                                    \
+        memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
+        get_current_task()->in_kernel = true;                                                               \
+        enable_interrupts();                                                                                \
     } while (0)
 
-#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(process_state)                                                                  \
-    do {                                                                                                                \
-        memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
-        get_current_process()->can_send_self_signals = true;                                                            \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                                                         \
+    do {                                                                                                    \
+        memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
+        get_current_task()->can_send_self_signals = true;                                                   \
     } while (0)
 
-#define SYS_BEGIN_SIGSUSPEND(process_state)                                                                             \
-    do {                                                                                                                \
-        memcpy(&get_current_process()->arch_process.user_process_state, (process_state), sizeof(struct process_state)); \
-        get_current_process()->in_sigsuspend = true;                                                                    \
-        get_current_process()->in_kernel = true;                                                                        \
+#define SYS_BEGIN_SIGSUSPEND(task_state)                                                                    \
+    do {                                                                                                    \
+        memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
+        get_current_task()->in_sigsuspend = true;                                                           \
+        get_current_task()->in_kernel = true;                                                               \
     } while (0)
 
-#define SYS_RETURN(val)                                       \
-    do {                                                      \
-        uint64_t _val = (uint64_t) val;                       \
-        disable_interrupts();                                 \
-        process_state->cpu_state.rax = (_val);                \
-        get_current_process()->in_kernel = false;             \
-        get_current_process()->can_send_self_signals = false; \
-        return;                                               \
+#define SYS_RETURN(val)                                    \
+    do {                                                   \
+        uint64_t _val = (uint64_t) val;                    \
+        disable_interrupts();                              \
+        task_state->cpu_state.rax = (_val);                \
+        get_current_task()->in_kernel = false;             \
+        get_current_task()->can_send_self_signals = false; \
+        return;                                            \
     } while (0)
 
-void arch_sys_exit(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_exit(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    /* Disable Interrups To Prevent Premature Process Removal, Since Sched State Is Set */
+    /* Disable Interrups To Prevent Premature Task Removal, Since Sched State Is Set */
     disable_interrupts();
 
-    struct process *process = get_current_process();
-    process->sched_state = EXITING;
+    struct task *task = get_current_task();
+    task->sched_state = EXITING;
 
-    invalidate_last_saved(process);
+    invalidate_last_saved(task);
 
-    int exit_code = (int) process_state->cpu_state.rsi;
-    proc_add_message(process->pid, proc_create_message(STATE_EXITED, exit_code));
-    debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
+    int exit_code = (int) task_state->cpu_state.rsi;
+    proc_add_message(task->pid, proc_create_message(STATE_EXITED, exit_code));
+    debug_log("Task Exited: [ %d, %d ]\n", task->pid, exit_code);
 
-    sys_sched_run_next(process_state);
+    sys_sched_run_next(task_state);
 }
 
-void arch_sys_sbrk(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_sbrk(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    intptr_t increment = process_state->cpu_state.rsi;
+    intptr_t increment = task_state->cpu_state.rsi;
 
     void *res;
     if (increment < 0) {
@@ -101,24 +101,24 @@ void arch_sys_sbrk(struct process_state *process_state) {
     SYS_RETURN((uint64_t) res);
 }
 
-void arch_sys_fork(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_fork(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    struct process *parent = get_current_process();
-    struct process *child = calloc(1, sizeof(struct process));
+    struct task *parent = get_current_task();
+    struct task *child = calloc(1, sizeof(struct task));
     child->pid = get_next_pid();
     child->sched_state = READY;
-    child->kernel_process = false;
-    child->process_memory = clone_process_vm();
+    child->kernel_task = false;
+    child->task_memory = clone_task_vm();
     child->tty = parent->tty;
 
-    debug_log("Forking Process: [ %d ]\n", parent->pid);
+    debug_log("Forking Task: [ %d ]\n", parent->pid);
 
-    memcpy(&child->arch_process.process_state, process_state, sizeof(struct process_state));
-    child->arch_process.process_state.cpu_state.rax = 0;
-    child->arch_process.cr3 = clone_process_paging_structure();
-    child->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
-    child->arch_process.setup_kernel_stack = true;
+    memcpy(&child->arch_task.task_state, task_state, sizeof(struct task_state));
+    child->arch_task.task_state.cpu_state.rax = 0;
+    child->arch_task.cr3 = clone_process_paging_structure();
+    child->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
+    child->arch_task.setup_kernel_stack = true;
     child->cwd = malloc(strlen(parent->cwd) + 1);
     child->pgid = parent->pgid;
     child->ppid = parent->pid;
@@ -129,7 +129,7 @@ void arch_sys_fork(struct process_state *process_state) {
     memcpy(&child->sig_state, &parent->sig_state, sizeof(struct sigaction) * _NSIG);
     strcpy(child->cwd, parent->cwd);
 
-    proc_align_fpu(child);
+    task_align_fpu(child);
 
     // Clone fpu if necessary
     if (parent->fpu.saved) {
@@ -144,23 +144,23 @@ void arch_sys_fork(struct process_state *process_state) {
     }
 
     disable_interrupts();
-    sched_add_process(child);
+    sched_add_task(child);
     SYS_RETURN(child->pid);
 }
 
-void arch_sys_open(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_open(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) process_state->cpu_state.rsi;
-    int flags = (int) process_state->cpu_state.rdx;
-    mode_t mode = (mode_t) process_state->cpu_state.rcx;
+    const char *_path = (const char*) task_state->cpu_state.rsi;
+    int flags = (int) task_state->cpu_state.rdx;
+    mode_t mode = (mode_t) task_state->cpu_state.rcx;
     
     assert(_path != NULL);
 
     int error = 0;
 
-    struct process *process = get_current_process();
-    char *path = get_full_path(process->cwd, _path);
+    struct task *task = get_current_task();
+    char *path = get_full_path(task->cwd, _path);
 
     struct file *file = fs_open(path, flags, &error);
 
@@ -211,8 +211,8 @@ void arch_sys_open(struct process_state *process_state) {
     }
 
     for (int i = 0; i < FOPEN_MAX; i++) {
-        if (process->files[i] == NULL) {
-            process->files[i] = file;
+        if (task->files[i] == NULL) {
+            task->files[i] = file;
             free(path);
             SYS_RETURN(i);
         }
@@ -222,19 +222,19 @@ void arch_sys_open(struct process_state *process_state) {
     SYS_RETURN(-EMFILE);
 }
 
-void arch_sys_read(struct process_state *process_state)  {
-    SYS_BEGIN(process_state);
+void arch_sys_read(struct task_state *task_state)  {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    char *buf = (void*) process_state->cpu_state.rdx;
-    size_t count = (size_t) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    char *buf = (void*) task_state->cpu_state.rdx;
+    size_t count = (size_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct process *process = get_current_process();
-    struct file *file = process->files[fd];
+    struct task *task = get_current_task();
+    struct file *file = task->files[fd];
     if (file == NULL) {
         SYS_RETURN(-EINVAL);
     }
@@ -242,19 +242,19 @@ void arch_sys_read(struct process_state *process_state)  {
     SYS_RETURN((uint64_t) fs_read(file, buf, count));
 }
 
-void arch_sys_write(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_write(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    void *buf = (void*) process_state->cpu_state.rdx;
-    size_t count = (size_t) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    void *buf = (void*) task_state->cpu_state.rdx;
+    size_t count = (size_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct process *process = get_current_process();
-    struct file *file = process->files[fd];
+    struct task *task = get_current_task();
+    struct file *file = task->files[fd];
     if (file == NULL) {
         SYS_RETURN(-EINVAL);
     }
@@ -262,41 +262,41 @@ void arch_sys_write(struct process_state *process_state) {
     SYS_RETURN((uint64_t) fs_write(file, buf, count));
 }
 
-void arch_sys_close(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_close(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
+    int fd = (int) task_state->cpu_state.rsi;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct process *process = get_current_process();
-    if (process->files[fd] == NULL) {
+    struct task *task = get_current_task();
+    if (task->files[fd] == NULL) {
         SYS_RETURN(-EBADF);
     }
-    int error = fs_close(process->files[fd]);
-    process->files[fd] = NULL;
+    int error = fs_close(task->files[fd]);
+    task->files[fd] = NULL;
 
     SYS_RETURN(error);
 }
 
-void arch_sys_execve(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_execve(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *file_name = (const char*) process_state->cpu_state.rsi;
-    char **argv = (char**) process_state->cpu_state.rdx;
-    char **envp = (char**) process_state->cpu_state.rcx;
+    const char *file_name = (const char*) task_state->cpu_state.rsi;
+    char **argv = (char**) task_state->cpu_state.rdx;
+    char **envp = (char**) task_state->cpu_state.rcx;
 
     assert(file_name != NULL);
     assert(argv != NULL);
     assert(envp != NULL);
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     char *path = get_full_path(current->cwd, file_name);
 
-    debug_log("Exec Process: [ %d, %s ]\n", current->pid, path);
+    debug_log("Exec Task: [ %d, %s ]\n", current->pid, path);
 
     int error = 0;
     struct file *program = fs_open(path, O_RDONLY, &error);
@@ -318,9 +318,9 @@ void arch_sys_execve(struct process_state *process_state) {
     void *buffer = malloc(length);
     fs_read(program, buffer, length);
 
-    struct process *process = calloc(1, sizeof(struct process));
-    process->inode_dev = program->device;
-    process->inode_id = program->inode_idenifier;
+    struct task *task = calloc(1, sizeof(struct task));
+    task->inode_dev = program->device;
+    task->inode_id = program->inode_idenifier;
 
     fs_close(program);
 
@@ -337,70 +337,70 @@ void arch_sys_execve(struct process_state *process_state) {
         //        cannot be used when doing dup(2) on a builtin stream. This is of course its
         //        primary use case, so FD_CLOEXEC must be ignored or everything will break.
         if (!current->files[i] || ( /* (current->files[i]->fd_flags & FD_CLOEXEC) || */ (current->files[i]->flags & FS_DIR))) {
-            // NOTE: the files will be closed by the `free_process` function
+            // NOTE: the files will be closed by the `free_task` function
             continue;
         }
 
-        process->files[i] = fs_dup(current->files[i]);
+        task->files[i] = fs_dup(current->files[i]);
     }
 
     /* Clone vm_regions so that they can be freed later */
-    struct vm_region *__process_stack = get_vm_region(current->process_memory, VM_PROCESS_STACK);
-    struct vm_region *__kernel_stack = get_vm_region(current->process_memory, VM_KERNEL_STACK);
+    struct vm_region *__task_stack = get_vm_region(current->task_memory, VM_TASK_STACK);
+    struct vm_region *__kernel_stack = get_vm_region(current->task_memory, VM_KERNEL_STACK);
 
-    struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
+    struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
     struct vm_region *kernel_stack = calloc(1, sizeof(struct vm_region));
 
-    memcpy(process_stack, __process_stack, sizeof(struct vm_region));
+    memcpy(task_stack, __task_stack, sizeof(struct vm_region));
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
-    process->pid = current->pid;
-    process->pgid = current->pgid;
-    process->ppid = current->ppid;
-    process->process_memory = kernel_stack;
-    process->process_memory = add_vm_region(process->process_memory, process_stack);
-    process->kernel_process = false;
-    process->sched_state = READY;
-    process->tty = current->tty;
-    process->cwd = malloc(strlen(current->cwd) + 1);
-    strcpy(process->cwd, current->cwd);
-    process->next = NULL;
-    process->sig_mask = current->sig_mask;
-    memcpy(&process->times, &current->times, sizeof(struct tms));
+    task->pid = current->pid;
+    task->pgid = current->pgid;
+    task->ppid = current->ppid;
+    task->task_memory = kernel_stack;
+    task->task_memory = add_vm_region(task->task_memory, task_stack);
+    task->kernel_task = false;
+    task->sched_state = READY;
+    task->tty = current->tty;
+    task->cwd = malloc(strlen(current->cwd) + 1);
+    strcpy(task->cwd, current->cwd);
+    task->next = NULL;
+    task->sig_mask = current->sig_mask;
+    memcpy(&task->times, &current->times, sizeof(struct tms));
 
     // Clone only signal dispositions that don't have a handler
     for (int i = 0; i < _NSIG; i++) {
         if ((uintptr_t) current->sig_state[i].sa_handler <= (uintptr_t) SIG_IGN) {
-            memcpy(&process->sig_state[i], &current->sig_state[i], sizeof(struct sigaction));
+            memcpy(&task->sig_state[i], &current->sig_state[i], sizeof(struct sigaction));
         }
     }
 
-    process->arch_process.cr3 = get_cr3();
-    process->arch_process.kernel_stack = KERNEL_PROC_STACK_START;
+    task->arch_task.cr3 = get_cr3();
+    task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
 
     struct virt_page_info *info = calloc(1, sizeof(struct virt_page_info));
-    memcpy(info, current->arch_process.kernel_stack_info, sizeof(struct virt_page_info));
+    memcpy(info, current->arch_task.kernel_stack_info, sizeof(struct virt_page_info));
 
-    process->arch_process.kernel_stack_info = info;
-    process->arch_process.setup_kernel_stack = false;
+    task->arch_task.kernel_stack_info = info;
+    task->arch_task.setup_kernel_stack = false;
 
-    proc_align_fpu(process);
+    task_align_fpu(task);
 
-    process->arch_process.process_state.cpu_state.rbp = KERNEL_PROC_STACK_START;
-    process->arch_process.process_state.stack_state.rip = elf64_get_entry(buffer);
-    process->arch_process.process_state.stack_state.cs = USER_CODE_SELECTOR;
-    process->arch_process.process_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
-    process->arch_process.process_state.stack_state.rsp = map_program_args(process_stack->end, argv, envp);
-    process->arch_process.process_state.stack_state.ss = USER_DATA_SELECTOR;
+    task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
+    task->arch_task.task_state.stack_state.rip = elf64_get_entry(buffer);
+    task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
+    task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
+    task->arch_task.task_state.stack_state.rsp = map_program_args(task_stack->end, argv, envp);
+    task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
-    /* Memset stack to zero so that process can use old one safely (only go until rsp because args are after it). */
-    memset((void*) process_stack->start, 0, process->arch_process.process_state.stack_state.rsp - process_stack->start);
+    /* Memset stack to zero so that task can use old one safely (only go until rsp because args are after it). */
+    memset((void*) task_stack->start, 0, task->arch_task.task_state.stack_state.rsp - task_stack->start);
 
     /* Ensure File Name And Args Are Still Mapped */
-    soft_remove_paging_structure(current->process_memory);
+    soft_remove_paging_structure(current->task_memory);
 
-    elf64_load_program(buffer, length, process);
-    elf64_map_heap(buffer, process);
+    elf64_load_program(buffer, length, task);
+    elf64_map_heap(buffer, task);
 
     free(path);
     free(buffer);
@@ -408,22 +408,22 @@ void arch_sys_execve(struct process_state *process_state) {
     /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
     disable_interrupts();
 
-    sched_remove_process(current);
+    sched_remove_task(current);
     invalidate_last_saved(current);
-    free_process(current, false);
-    sched_add_process(process);
+    free_task(current, false);
+    sched_add_task(task);
 
-    sys_sched_run_next(&process->arch_process.process_state);
+    sys_sched_run_next(&task->arch_task.task_state);
 }
 
-void arch_sys_waitpid(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_waitpid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    pid_t pid = (pid_t) process_state->cpu_state.rsi;
-    int *status = (int*) process_state->cpu_state.rdx;
-    int flags = (int) process_state->cpu_state.rcx;
+    pid_t pid = (pid_t) task_state->cpu_state.rsi;
+    int *status = (int*) task_state->cpu_state.rdx;
+    int flags = (int) task_state->cpu_state.rcx;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     if (pid == 0) {
         pid = -current->pgid;
@@ -485,19 +485,19 @@ void arch_sys_waitpid(struct process_state *process_state) {
     SYS_RETURN(found_pid);
 }
 
-void arch_sys_getpid(struct process_state *process_state) {    
-    SYS_BEGIN(process_state);
+void arch_sys_getpid(struct task_state *task_state) {    
+    SYS_BEGIN(task_state);
 
-    SYS_RETURN(get_current_process()->pid);
+    SYS_RETURN(get_current_task()->pid);
 }
 
-void arch_sys_getcwd(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_getcwd(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    char *buffer = (char*) process_state->cpu_state.rsi;
-    size_t size = (size_t) process_state->cpu_state.rdx;
+    char *buffer = (char*) task_state->cpu_state.rsi;
+    size_t size = (size_t) task_state->cpu_state.rdx;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     if (strlen(current->cwd) >= size) {
         SYS_RETURN((uint64_t) NULL);
     }
@@ -506,18 +506,18 @@ void arch_sys_getcwd(struct process_state *process_state) {
     SYS_RETURN((uint64_t) buffer);
 }
 
-void arch_sys_chdir(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_chdir(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) process_state->cpu_state.rsi;
+    const char *_path = (const char*) task_state->cpu_state.rsi;
 
     /* Should probably not do this */
     if (_path[strlen(_path) - 1] == '/') {
         ((char*) _path)[strlen(_path) - 1] = '\0';
     }
 
-    struct process *process = get_current_process();
-    char *path = get_full_path(process->cwd, _path);
+    struct task *task = get_current_task();
+    char *path = get_full_path(task->cwd, _path);
 
     struct tnode *tnode = iname(path);
     if (!tnode) {
@@ -530,20 +530,20 @@ void arch_sys_chdir(struct process_state *process_state) {
         SYS_RETURN(-ENOTDIR);
     }
 
-    process->cwd = get_tnode_path(tnode);
-    debug_log("Chdir: [ %s ]\n", process->cwd);
+    task->cwd = get_tnode_path(tnode);
+    debug_log("Chdir: [ %s ]\n", task->cwd);
 
     free(path);
     SYS_RETURN(0);
 }
 
-void arch_sys_stat(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_stat(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) process_state->cpu_state.rsi;
-    void *stat_struct = (void*) process_state->cpu_state.rdx;
+    const char *_path = (const char*) task_state->cpu_state.rsi;
+    void *stat_struct = (void*) task_state->cpu_state.rdx;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     char *path = get_full_path(current->cwd, _path);
 
     int ret = fs_stat(path, stat_struct);
@@ -552,33 +552,33 @@ void arch_sys_stat(struct process_state *process_state) {
     SYS_RETURN(ret);
 }
 
-void arch_sys_lseek(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_lseek(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    off_t offset = (off_t) process_state->cpu_state.rdx;
-    int whence = (int) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    off_t offset = (off_t) task_state->cpu_state.rdx;
+    int whence = (int) task_state->cpu_state.rcx;
 
-    struct process *process = get_current_process();
-    struct file *file = process->files[fd];
+    struct task *task = get_current_task();
+    struct file *file = task->files[fd];
     assert(file);
 
     SYS_RETURN((uint64_t) fs_seek(file, offset, whence));
 }
 
-void arch_sys_ioctl(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_ioctl(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    unsigned long request = (unsigned long) process_state->cpu_state.rdx;
-    void *argp = (void*) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    unsigned long request = (unsigned long) task_state->cpu_state.rdx;
+    void *argp = (void*) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct process *process = get_current_process();
-    struct file *file = process->files[fd];
+    struct task *task = get_current_task();
+    struct file *file = task->files[fd];
 
     if (file == NULL) {
         SYS_RETURN(-EBADF);
@@ -587,18 +587,18 @@ void arch_sys_ioctl(struct process_state *process_state) {
     SYS_RETURN((uint64_t) fs_ioctl(file, request, argp));
 }
 
-void arch_sys_ftruncate(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_ftruncate(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    off_t length = (off_t) process_state->cpu_state.rdx;
+    int fd = (int) task_state->cpu_state.rsi;
+    off_t length = (off_t) task_state->cpu_state.rdx;
 
     if (fd < 0 || fd >= FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct process *process = get_current_process();
-    struct file *file = process->files[fd];
+    struct task *task = get_current_task();
+    struct file *file = task->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -606,11 +606,11 @@ void arch_sys_ftruncate(struct process_state *process_state) {
     SYS_RETURN((uint64_t) fs_truncate(file, length));
 }
 
-void arch_sys_gettimeofday(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_gettimeofday(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    struct timeval *tv = (struct timeval*) process_state->cpu_state.rsi;
-    struct timezone *tz = (struct timezone*) process_state->cpu_state.rdx;
+    struct timeval *tv = (struct timeval*) task_state->cpu_state.rsi;
+    struct timezone *tz = (struct timezone*) task_state->cpu_state.rdx;
 
     time_t micro_seconds = get_time();
     if (tv) {
@@ -626,13 +626,13 @@ void arch_sys_gettimeofday(struct process_state *process_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_mkdir(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_mkdir(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *pathname = (const char*) process_state->cpu_state.rsi;
-    mode_t mode = (mode_t) process_state->cpu_state.rdx;
+    const char *pathname = (const char*) task_state->cpu_state.rsi;
+    mode_t mode = (mode_t) task_state->cpu_state.rdx;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     char *path = get_full_path(current->cwd, pathname);
 
     int ret = fs_mkdir(path, mode);
@@ -641,11 +641,11 @@ void arch_sys_mkdir(struct process_state *process_state) {
     SYS_RETURN((uint64_t) ret);
 }
 
-void arch_sys_dup2(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_dup2(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int oldfd = (int) process_state->cpu_state.rsi;
-    int newfd = (int) process_state->cpu_state.rdx;
+    int oldfd = (int) task_state->cpu_state.rsi;
+    int newfd = (int) task_state->cpu_state.rdx;
 
 #ifdef DUP_DEBUG
     debug_log("Dup: [ %d, %d ]\n", oldfd, newfd);
@@ -655,22 +655,22 @@ void arch_sys_dup2(struct process_state *process_state) {
         SYS_RETURN((uint64_t) -EBADFD);
     }
 
-    struct process *process = get_current_process();
-    if (process->files[newfd] != NULL) {
-        int ret = fs_close(process->files[newfd]);
+    struct task *task = get_current_task();
+    if (task->files[newfd] != NULL) {
+        int ret = fs_close(task->files[newfd]);
         if (ret != 0) {
             SYS_RETURN((uint64_t) ret);
         }
     }
 
-    process->files[newfd] = fs_dup(process->files[oldfd]);
+    task->files[newfd] = fs_dup(task->files[oldfd]);
     SYS_RETURN(0);
 }
 
-void arch_sys_pipe(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_pipe(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int *pipefd = (int*) process_state->cpu_state.rsi;
+    int *pipefd = (int*) task_state->cpu_state.rsi;
 
     struct file *pipe_files[2];
     int ret = fs_create_pipe(pipe_files);
@@ -678,12 +678,12 @@ void arch_sys_pipe(struct process_state *process_state) {
         SYS_RETURN(ret);
     }
 
-    struct process *process = get_current_process();
+    struct task *task = get_current_task();
     int j = 0;
     for (int i = 0; j < 2 && i < FOPEN_MAX; i++) {
-        if (process->files[i] == NULL) {
+        if (task->files[i] == NULL) {
             debug_log("Allocating pipe to: [ %d, %d ]\n", i, j);
-            process->files[i] = pipe_files[j];
+            task->files[i] = pipe_files[j];
             pipefd[j] = i;
             j++;
         }
@@ -694,12 +694,12 @@ void arch_sys_pipe(struct process_state *process_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_unlink(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_unlink(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) process_state->cpu_state.rsi;
+    const char *_path = (const char*) task_state->cpu_state.rsi;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     char *path = get_full_path(current->cwd, _path);
 
     int ret = fs_unlink(path);
@@ -708,12 +708,12 @@ void arch_sys_unlink(struct process_state *process_state) {
     SYS_RETURN(ret);
 }
 
-void arch_sys_rmdir(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_rmdir(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) process_state->cpu_state.rsi;
+    const char *_path = (const char*) task_state->cpu_state.rsi;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     char *path = get_full_path(current->cwd, _path);
 
     int ret = fs_rmdir(path);
@@ -722,14 +722,14 @@ void arch_sys_rmdir(struct process_state *process_state) {
     SYS_RETURN(ret);
 }
 
-void arch_sys_chmod(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_chmod(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) process_state->cpu_state.rsi;
-    mode_t mode = (mode_t) process_state->cpu_state.rdx;
+    const char *_path = (const char*) task_state->cpu_state.rsi;
+    mode_t mode = (mode_t) task_state->cpu_state.rdx;
 
-    struct process *process = get_current_process();
-    char *path = get_full_path(process->cwd, _path);
+    struct task *task = get_current_task();
+    char *path = get_full_path(task->cwd, _path);
 
     int ret = fs_chmod(path, mode);
 
@@ -737,13 +737,13 @@ void arch_sys_chmod(struct process_state *process_state) {
     SYS_RETURN(ret);
 }
 
-void arch_sys_kill(struct process_state *process_state) {
-    SYS_BEGIN_CAN_SEND_SELF_SIGNALS(process_state);
+void arch_sys_kill(struct task_state *task_state) {
+    SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state);
 
-    pid_t pid = (pid_t) process_state->cpu_state.rsi;
-    int signum = (int) process_state->cpu_state.rdx;
+    pid_t pid = (pid_t) task_state->cpu_state.rsi;
+    int signum = (int) task_state->cpu_state.rdx;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     // pid -1 is not yet implemented
     if (signum < 1 || signum > _NSIG || pid == -1) {
@@ -761,52 +761,52 @@ void arch_sys_kill(struct process_state *process_state) {
     }
 }
 
-void arch_sys_setpgid(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_setpgid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    pid_t pid = (pid_t) process_state->cpu_state.rsi;
-    pid_t pgid = (pid_t) process_state->cpu_state.rdx;
+    pid_t pid = (pid_t) task_state->cpu_state.rsi;
+    pid_t pgid = (pid_t) task_state->cpu_state.rdx;
 
     if (pgid < 0) {
         SYS_RETURN(-EINVAL);
     }
 
     if (pid == 0) {
-        pid = get_current_process()->pid;
+        pid = get_current_task()->pid;
     }
 
     if (pgid == 0) {
-        pgid = get_current_process()->pid;
+        pgid = get_current_task()->pid;
     }
 
 #ifdef SET_PGID_DEBUG
-    debug_log("Setting pgid: [ %d, %d, %d ]\n", pid, get_current_process()->pgid, pgid);
+    debug_log("Setting pgid: [ %d, %d, %d ]\n", pid, get_current_task()->pgid, pgid);
 #endif /* SET_PGID_DEBUG */
 
-    // FIXME: process needs a lock to prevent races
-    struct process *process = find_by_pid(pid);
-    if (process == NULL) {
+    // FIXME: task needs a lock to prevent races
+    struct task *task = find_by_pid(pid);
+    if (task == NULL) {
         SYS_RETURN(-ESRCH);
     }
 
-    process->pgid = pgid;
+    task->pgid = pgid;
 
     proc_update_pgid(pid, pgid);
     SYS_RETURN(0);
 }
 
-void arch_sys_sigaction(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_sigaction(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int signum = (int) process_state->cpu_state.rsi;
-    const struct sigaction *act = (const struct sigaction*) process_state->cpu_state.rdx;
-    struct sigaction *old_act = (struct sigaction*) process_state->cpu_state.rcx;
+    int signum = (int) task_state->cpu_state.rsi;
+    const struct sigaction *act = (const struct sigaction*) task_state->cpu_state.rdx;
+    struct sigaction *old_act = (struct sigaction*) task_state->cpu_state.rcx;
 
     if (signum <= 0 || signum > _NSIG) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     if (old_act != NULL) {
         memcpy(old_act, &current->sig_state[signum], sizeof(struct sigaction));
     }
@@ -821,29 +821,29 @@ void arch_sys_sigaction(struct process_state *process_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_sigreturn(struct process_state *process_state) {
-    struct process *process = get_current_process();
-    uint64_t *mask_ptr = (uint64_t*) process_state->stack_state.rsp;
-    struct process_state *saved_state = (struct process_state*) (mask_ptr + 1);
+void arch_sys_sigreturn(struct task_state *task_state) {
+    struct task *task = get_current_task();
+    uint64_t *mask_ptr = (uint64_t*) task_state->stack_state.rsp;
+    struct task_state *saved_state = (struct task_state*) (mask_ptr + 1);
 
     debug_log("Sig return\n");
 
-    memcpy(&process->arch_process.process_state, saved_state, sizeof(struct process_state));
+    memcpy(&task->arch_task.task_state, saved_state, sizeof(struct task_state));
 
     // Restore mask
-    process->sig_mask = *mask_ptr;
+    task->sig_mask = *mask_ptr;
 
     yield_signal();
 }
 
-void arch_sys_sigprocmask(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_sigprocmask(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int how = (int) process_state->cpu_state.rsi;
-    const sigset_t *set = (const sigset_t*) process_state->cpu_state.rdx;
-    sigset_t *old = (sigset_t*) process_state->cpu_state.rcx;
+    int how = (int) task_state->cpu_state.rsi;
+    const sigset_t *set = (const sigset_t*) task_state->cpu_state.rdx;
+    sigset_t *old = (sigset_t*) task_state->cpu_state.rcx;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     if (old) {
         *old = current->sig_mask;
@@ -868,17 +868,17 @@ void arch_sys_sigprocmask(struct process_state *process_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_dup(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_dup(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int oldfd = (int) process_state->cpu_state.rsi;
+    int oldfd = (int) task_state->cpu_state.rsi;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     if (current->files[oldfd] == NULL) {
         SYS_RETURN(-EBADF);
     }
 
-    // Should lock process to prevent races
+    // Should lock task to prevent races
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (current->files[i] == NULL) {
             current->files[i] = fs_dup(current->files[oldfd]);
@@ -892,25 +892,25 @@ void arch_sys_dup(struct process_state *process_state) {
     SYS_RETURN(-EMFILE);
 }
 
-void arch_sys_getpgid(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_getpgid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    pid_t pid = (pid_t) process_state->cpu_state.rsi;
+    pid_t pid = (pid_t) task_state->cpu_state.rsi;
     if (pid == 0) {
-        pid = get_current_process()->pid;
+        pid = get_current_task()->pid;
     }
 
     SYS_RETURN(proc_get_pgid(pid));
 }
 
-void arch_sys_sleep(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_sleep(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    unsigned int seconds = (unsigned int) process_state->cpu_state.rsi;
+    unsigned int seconds = (unsigned int) task_state->cpu_state.rsi;
 
     debug_log("Sleeping: [ %u ]\n", seconds);
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     disable_interrupts();
     current->sleeping = true;
@@ -922,13 +922,13 @@ void arch_sys_sleep(struct process_state *process_state) {
     SYS_RETURN(seconds);
 }
 
-void arch_sys_access(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_access(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) process_state->cpu_state.rsi;
-    int mode = (int) process_state->cpu_state.rdx;
+    const char *_path = (const char*) task_state->cpu_state.rsi;
+    int mode = (int) task_state->cpu_state.rdx;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     char *path = get_full_path(current->cwd, _path);
 
     int ret = fs_access(path, mode);
@@ -937,19 +937,19 @@ void arch_sys_access(struct process_state *process_state) {
     SYS_RETURN(ret);
 }
 
-void arch_sys_accept(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_accept(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
-    int flags = (int) process_state->cpu_state.r8;
+    int fd = (int) task_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.rcx;
+    int flags = (int) task_state->cpu_state.r8;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -961,18 +961,18 @@ void arch_sys_accept(struct process_state *process_state) {
     SYS_RETURN(net_accept(file, addr, addrlen, flags));
 }
 
-void arch_sys_bind(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_bind(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    const struct sockaddr *addr = (const struct sockaddr*) process_state->cpu_state.rdx;
-    socklen_t addrlen = (socklen_t) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    const struct sockaddr *addr = (const struct sockaddr*) task_state->cpu_state.rdx;
+    socklen_t addrlen = (socklen_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -984,18 +984,18 @@ void arch_sys_bind(struct process_state *process_state) {
     SYS_RETURN(net_bind(file, addr, addrlen));
 }
 
-void arch_sys_connect(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_connect(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
-    socklen_t addrlen = (socklen_t) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
+    socklen_t addrlen = (socklen_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1007,17 +1007,17 @@ void arch_sys_connect(struct process_state *process_state) {
     SYS_RETURN(net_connect(file, addr, addrlen));
 }
 
-void arch_sys_listen(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_listen(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    int backlog = (int) process_state->cpu_state.rdx;
+    int fd = (int) task_state->cpu_state.rsi;
+    int backlog = (int) task_state->cpu_state.rdx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1029,21 +1029,21 @@ void arch_sys_listen(struct process_state *process_state) {
     SYS_RETURN(net_listen(file, backlog));
 }
 
-void arch_sys_socket(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_socket(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int domain = (int) process_state->cpu_state.rsi;
-    int type = (int) process_state->cpu_state.rdx;
-    int protocol = (int) process_state->cpu_state.rcx;
+    int domain = (int) task_state->cpu_state.rsi;
+    int type = (int) task_state->cpu_state.rdx;
+    int protocol = (int) task_state->cpu_state.rcx;
 
     SYS_RETURN(net_socket(domain, type, protocol));
 }
 
-void arch_sys_shutdown(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_shutdown(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    int how = (int) process_state->cpu_state.rdx;
+    int fd = (int) task_state->cpu_state.rsi;
+    int how = (int) task_state->cpu_state.rdx;
 
     (void) fd;
     (void) how;
@@ -1051,14 +1051,14 @@ void arch_sys_shutdown(struct process_state *process_state) {
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_sys_getsockopt(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_getsockopt(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    int level = (int) process_state->cpu_state.rdx;
-    int optname = (int) process_state->cpu_state.rcx;
-    const void *optval = (const void*) process_state->cpu_state.r8;
-    socklen_t *optlen = (socklen_t*) process_state->cpu_state.r9;
+    int fd = (int) task_state->cpu_state.rsi;
+    int level = (int) task_state->cpu_state.rdx;
+    int optname = (int) task_state->cpu_state.rcx;
+    const void *optval = (const void*) task_state->cpu_state.r8;
+    socklen_t *optlen = (socklen_t*) task_state->cpu_state.r9;
 
     (void) fd;
     (void) level;
@@ -1069,20 +1069,20 @@ void arch_sys_getsockopt(struct process_state *process_state) {
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_sys_setsockopt(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_setsockopt(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    int level = (int) process_state->cpu_state.rdx;
-    int optname = (int) process_state->cpu_state.rcx;
-    const void *optval = (const void*) process_state->cpu_state.r8;
-    socklen_t optlen = (socklen_t) process_state->cpu_state.r9;
+    int fd = (int) task_state->cpu_state.rsi;
+    int level = (int) task_state->cpu_state.rdx;
+    int optname = (int) task_state->cpu_state.rcx;
+    const void *optval = (const void*) task_state->cpu_state.r8;
+    socklen_t optlen = (socklen_t) task_state->cpu_state.r9;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1094,26 +1094,12 @@ void arch_sys_setsockopt(struct process_state *process_state) {
     SYS_RETURN(net_setsockopt(file, level, optname, optval, optlen));
 }
 
-void arch_sys_getpeername(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_getpeername(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
-
-    (void) fd;
-    (void) addr;
-    (void) addrlen;
-
-    SYS_RETURN(-ENOSYS);
-}
-
-void arch_sys_getsockname(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
-
-    int fd = (int) process_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) process_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.rcx;
 
     (void) fd;
     (void) addr;
@@ -1122,21 +1108,35 @@ void arch_sys_getsockname(struct process_state *process_state) {
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_sys_sendto(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_getsockname(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    const void *buf = (const void*) process_state->cpu_state.rdx;
-    size_t len = (size_t) process_state->cpu_state.rcx;
-    int flags = (int) process_state->cpu_state.r8;
-    const struct sockaddr *dest = (const struct sockaddr*) process_state->cpu_state.r9;
-    socklen_t addrlen = (socklen_t) process_state->cpu_state.r10;
+    int fd = (int) task_state->cpu_state.rsi;
+    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.rcx;
+
+    (void) fd;
+    (void) addr;
+    (void) addrlen;
+
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_sys_sendto(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    int fd = (int) task_state->cpu_state.rsi;
+    const void *buf = (const void*) task_state->cpu_state.rdx;
+    size_t len = (size_t) task_state->cpu_state.rcx;
+    int flags = (int) task_state->cpu_state.r8;
+    const struct sockaddr *dest = (const struct sockaddr*) task_state->cpu_state.r9;
+    socklen_t addrlen = (socklen_t) task_state->cpu_state.r10;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1148,21 +1148,21 @@ void arch_sys_sendto(struct process_state *process_state) {
     SYS_RETURN(net_sendto(file, buf, len, flags, dest, addrlen));
 }
 
-void arch_sys_recvfrom(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_recvfrom(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    void *buf = (void*) process_state->cpu_state.rdx;
-    size_t len = (size_t) process_state->cpu_state.rcx;
-    int flags = (int) process_state->cpu_state.r8;
-    struct sockaddr *source = (struct sockaddr*) process_state->cpu_state.r9;
-    socklen_t *addrlen = (socklen_t*) process_state->cpu_state.r10;
+    int fd = (int) task_state->cpu_state.rsi;
+    void *buf = (void*) task_state->cpu_state.rdx;
+    size_t len = (size_t) task_state->cpu_state.rcx;
+    int flags = (int) task_state->cpu_state.r8;
+    struct sockaddr *source = (struct sockaddr*) task_state->cpu_state.r9;
+    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.r10;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1174,45 +1174,45 @@ void arch_sys_recvfrom(struct process_state *process_state) {
     SYS_RETURN(net_recvfrom(file, buf, len, flags, source, addrlen));
 }
 
-void arch_sys_mmap(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_mmap(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    void *addr = (void*) process_state->cpu_state.rsi;
-    size_t length = (size_t) process_state->cpu_state.rdx;
-    int prot = (int) process_state->cpu_state.rcx;
-    int flags = (int) process_state->cpu_state.r8;
-    int fd = (int) process_state->cpu_state.r9;
-    off_t offset = (off_t) process_state->cpu_state.r10;
+    void *addr = (void*) task_state->cpu_state.rsi;
+    size_t length = (size_t) task_state->cpu_state.rdx;
+    int prot = (int) task_state->cpu_state.rcx;
+    int flags = (int) task_state->cpu_state.r8;
+    int fd = (int) task_state->cpu_state.r9;
+    off_t offset = (off_t) task_state->cpu_state.r10;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct file *file = get_current_process()->files[fd];
+    struct file *file = get_current_task()->files[fd];
 
     SYS_RETURN(fs_mmap(addr, length, prot, flags, file, offset));
 }
 
-void arch_sys_munmap(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_munmap(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    void *addr = (void*) process_state->cpu_state.rsi;
-    size_t length = (size_t) process_state->cpu_state.rdx;
+    void *addr = (void*) task_state->cpu_state.rsi;
+    size_t length = (size_t) task_state->cpu_state.rdx;
 
     SYS_RETURN(fs_munmap(addr, length));
 }
 
-void arch_sys_rename(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_rename(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    const char *_old_path = (const char*) process_state->cpu_state.rsi;
-    const char *_new_path = (const char*) process_state->cpu_state.rdx;
+    const char *_old_path = (const char*) task_state->cpu_state.rsi;
+    const char *_new_path = (const char*) task_state->cpu_state.rdx;
 
     if (_old_path == NULL || _new_path == NULL) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     char *old_path = get_full_path(current->cwd, _old_path);
     char *new_path = get_full_path(current->cwd, _new_path);
 
@@ -1224,18 +1224,18 @@ void arch_sys_rename(struct process_state *process_state) {
     SYS_RETURN(ret);
 }
 
-void arch_sys_fcntl(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_fcntl(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    int command = (int) process_state->cpu_state.rdx;
-    int arg = (int) process_state->cpu_state.rcx;
+    int fd = (int) task_state->cpu_state.rsi;
+    int command = (int) task_state->cpu_state.rdx;
+    int arg = (int) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     struct file *file = current->files[fd];
     if (file == NULL) {
         SYS_RETURN(-EBADF);
@@ -1244,17 +1244,17 @@ void arch_sys_fcntl(struct process_state *process_state) {
     SYS_RETURN(fs_fcntl(file, command, arg));
 }
 
-void arch_sys_fstat(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_fstat(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    struct stat *stat_struct = (struct stat*) process_state->cpu_state.rdx;
+    int fd = (int) task_state->cpu_state.rsi;
+    struct stat *stat_struct = (struct stat*) task_state->cpu_state.rdx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     struct file *file = current->files[fd];
     if (file == NULL) {
         SYS_RETURN(-EBADF);
@@ -1263,12 +1263,12 @@ void arch_sys_fstat(struct process_state *process_state) {
     SYS_RETURN(fs_fstat(file, stat_struct));
 }
 
-void arch_sys_alarm(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_alarm(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    unsigned int seconds = (unsigned int) process_state->cpu_state.rsi;
+    unsigned int seconds = (unsigned int) task_state->cpu_state.rsi;
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     disable_interrupts();
     current->sleeping = true;
@@ -1284,17 +1284,17 @@ void arch_sys_alarm(struct process_state *process_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_fchmod(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_fchmod(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    int fd = (int) process_state->cpu_state.rsi;
-    mode_t mode = (mode_t) process_state->cpu_state.rdx;
+    int fd = (int) task_state->cpu_state.rsi;
+    mode_t mode = (mode_t) task_state->cpu_state.rdx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
     }
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
     struct file *file = current->files[fd];
     if (file == NULL) {
         SYS_RETURN(-EBADF);
@@ -1303,17 +1303,17 @@ void arch_sys_fchmod(struct process_state *process_state) {
     SYS_RETURN(fs_fchmod(file, mode));
 }
 
-void arch_sys_getppid(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_getppid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    SYS_RETURN(get_current_process()->ppid);
+    SYS_RETURN(get_current_task()->ppid);
 }
 
-void arch_sys_sigsuspend(struct process_state *process_state) {
-    SYS_BEGIN_SIGSUSPEND(process_state);
+void arch_sys_sigsuspend(struct task_state *task_state) {
+    SYS_BEGIN_SIGSUSPEND(task_state);
 
-    struct process *current = get_current_process();
-    const sigset_t *mask = (const sigset_t*) process_state->cpu_state.rsi;
+    struct task *current = get_current_task();
+    const sigset_t *mask = (const sigset_t*) task_state->cpu_state.rsi;
     if (mask == NULL) {
         current->in_sigsuspend = false;
         SYS_RETURN(-EFAULT);
@@ -1326,15 +1326,15 @@ void arch_sys_sigsuspend(struct process_state *process_state) {
     sched_run_next();
 }
 
-void arch_sys_times(struct process_state *process_state) {
-    SYS_BEGIN(process_state);
+void arch_sys_times(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
 
-    struct tms *tms = (struct tms*) process_state->cpu_state.rsi;
+    struct tms *tms = (struct tms*) task_state->cpu_state.rsi;
     if (tms == NULL) {
         SYS_RETURN(-EFAULT);
     }
 
-    struct process *current = get_current_process();
+    struct task *current = get_current_task();
 
     // Divide by 10 b/c things are measured in (1 / 100) seconds, not (1 / 1000)
     tms->tms_utime = current->times.tms_utime / 10;
