@@ -21,8 +21,8 @@
 // #define TASK_SIGNAL_DEBUG
 
 struct task *current_task;
-static struct task initial_kernel_task;
-static struct process initial_kernel_process;
+struct task initial_kernel_task;
+struct process initial_kernel_process;
 
 /* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
@@ -116,6 +116,7 @@ void init_kernel_task() {
 
     initial_kernel_task.kernel_task = true;
     initial_kernel_task.process->pid = 1;
+    init_spinlock(&initial_kernel_process.lock);
     initial_kernel_task.sched_state = RUNNING;
     initial_kernel_task.next = NULL;
     initial_kernel_task.process->pgid = 1;
@@ -131,6 +132,8 @@ struct task *load_kernel_task(uintptr_t entry) {
     task->process = process;
 
     task->process->pid = get_next_pid();
+    init_spinlock(&process->lock);
+    proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->ppid = initial_kernel_task.process->pid;
     task->process->process_memory = NULL;
@@ -171,6 +174,8 @@ struct task *load_task(const char *file_name) {
     assert(elf64_is_valid(buffer));
 
     task->process->pid = get_next_pid();
+    init_spinlock(&process->lock);
+    proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->ppid = initial_kernel_task.process->pid;
     task->process->process_memory = NULL;
@@ -230,31 +235,7 @@ void free_task(struct task *task, bool free_paging_structure) {
     current_task = task;
     arch_free_task(task, free_paging_structure);
 
-    free(task->process->cwd);
-
-    struct vm_region *region = task->process->process_memory;
-    while (region != NULL) {
-        if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-            fs_munmap((void*) region->start, region->end);
-        }
-
-        region = region->next;
-    }
-
-    region = task->process->process_memory;
-    while (region != NULL) {
-        struct vm_region *temp = region->next;
-        free(region);
-        region = temp;
-    }
-
-    for (size_t i = 0; i < FOPEN_MAX; i++) {
-        if (task->process->files[i] != NULL) {
-            fs_close(task->process->files[i]);
-        }
-    }
-
-    free(task->process);
+    proc_drop_process(task->process);
     free(task);
     current_task = current_save;
 }
@@ -282,14 +263,14 @@ int task_get_next_sig(struct task *task) {
 }
 
 void proc_notify_parent(pid_t child_pid) {
-    struct task *child = find_by_pid(child_pid);
-    struct task *parent = find_by_pid(child->process->ppid);
+    struct process *child = find_by_pid(child_pid);
+    struct process *parent = find_by_pid(child->ppid);
 
     if (parent == NULL) {
-        parent = &initial_kernel_task;
+        parent = &initial_kernel_process;
     }
 
-    task_set_sig_pending(parent, SIGCHLD);
+    proc_set_sig_pending(parent, SIGCHLD);
 }
 
 enum sig_default_behavior {

@@ -91,8 +91,8 @@ static struct proc_state_message_queue *ensure_queue(pid_t pid) {
     if (!(queue = hash_get(queue_map, &pid))) {
         queue = malloc(sizeof(struct proc_state_message_queue));
         queue->pid = pid;
-        queue->pgid = find_by_pid(pid)->process->pgid;
-        queue->ppid = find_by_pid(pid)->process->ppid;
+        queue->pgid = find_by_pid(pid)->pgid;
+        queue->ppid = find_by_pid(pid)->ppid;
         queue->start = NULL;
         queue->end = NULL;
         queue->pg_next = NULL;
@@ -109,10 +109,10 @@ static struct proc_state_message_queue *ensure_queue(pid_t pid) {
 static void __free_queue(struct proc_state_message_queue *queue) {
     pid_t pid = queue->pid;
     pid_t ppid = queue->ppid;
-    struct task *parent = find_by_pid(ppid);
+    struct process *parent = find_by_pid(ppid);
     if (parent) {
-        parent->process->times.tms_cutime = queue->times.tms_utime + queue->times.tms_cutime;
-        parent->process->times.tms_cstime = queue->times.tms_stime + queue->times.tms_cstime;
+        parent->times.tms_cutime = queue->times.tms_utime + queue->times.tms_cutime;
+        parent->times.tms_cstime = queue->times.tms_stime + queue->times.tms_cstime;
     }
 
     hash_del(queue_map, &queue->pid);
@@ -181,11 +181,11 @@ void proc_add_message(pid_t pid, struct proc_state_message *m) {
         queue->end = m;
     }
 
-    struct task *task = find_by_pid(pid);
-    assert(task);
+    struct process *process = find_by_pid(pid);
+    assert(process);
 
     if (m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) {
-        memcpy(&queue->times, &task->process->times, sizeof(struct tms));
+        memcpy(&queue->times, &process->times, sizeof(struct tms));
     }
 
     spin_unlock(&queue->lock);
@@ -267,9 +267,9 @@ void init_proc_state() {
 }
 
 pid_t proc_get_pgid(pid_t pid) {
-    struct task *task = find_by_pid(pid);
-    if (task != NULL) {
-        return task->process->pgid;
+    struct process *process = find_by_pid(pid);
+    if (process != NULL) {
+        return process->pgid;
     }
 
     struct proc_state_message_queue *queue = hash_get(queue_map, &pid);

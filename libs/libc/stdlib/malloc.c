@@ -9,11 +9,11 @@
 
 #include <kernel/mem/page.h>
 
-// FIXME: investigate why this breaks the kernel
-#ifndef __is_libk
 #define MALLOC_SCRUB_FREE
 #define MALLOC_SCRUB_ALLOC
-#endif /* __is_libk */
+
+#define MALLOC_SCRUB_BITS 0xC0
+#define FREE_SCRUB_BITS   0xA0
 
 #define __MALLOC_MAGIG_CHECK 0x2A8F30B241BFA759UL
 
@@ -125,7 +125,7 @@ void free(void *p) {
     last_allocated = NULL;
 
 #ifdef MALLOC_SCRUB_FREE
-    memset(block + 1, 0xAB, GET_SIZE(block));
+    memset(block + 1, FREE_SCRUB_BITS, GET_SIZE(block));
 #endif /* MALLOC_SCRUB_FREE */
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
@@ -195,7 +195,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
-                    memset(block + 1, 0xCD, GET_SIZE(block));
+                    memset(block + 1, MALLOC_SCRUB_BITS, GET_SIZE(block));
 #endif /* MALLOC_SCRUB_ALLOC */
 
                     return block + 1;
@@ -230,7 +230,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     SET_ALLOCATED(new_block);
 
 #ifdef MALLOC_SCRUB_ALLOC
-    memset(new_block + 1, 0xCD, GET_SIZE(new_block));
+    memset(new_block + 1, MALLOC_SCRUB_BITS, GET_SIZE(new_block));
 #endif /* MALLOC_SCRUB_ALLOC */
 
     struct metadata *tail = NEXT_BLOCK(new_block);
@@ -296,7 +296,7 @@ void *malloc(size_t n) {
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
-        memset(start + 1, 0xCD, GET_SIZE(start));
+        memset(start + 1, MALLOC_SCRUB_BITS, GET_SIZE(start));
 #endif /* MALLOC_SCRUB_ALLOC */
 
         last_allocated = start;
@@ -320,7 +320,7 @@ void *malloc(size_t n) {
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
-            memset(block + 1, 0xCD, GET_SIZE(block));
+            memset(block + 1, MALLOC_SCRUB_BITS, GET_SIZE(block));
 #endif /* MALLOC_SCRUB_ALLOC */
 
             return block + 1;
@@ -350,7 +350,7 @@ void *malloc(size_t n) {
 #endif /* __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
-    memset(ret, 0xCD, GET_SIZE(ret - 1));
+    memset(ret, MALLOC_SCRUB_BITS, GET_SIZE(ret - 1));
 #endif /* MALLOC_SCRUB_ALLOC */
 
     return ret;

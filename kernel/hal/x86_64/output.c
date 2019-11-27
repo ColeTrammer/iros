@@ -27,16 +27,16 @@ int debug_log_internal(const char *func, const char *format, ...) {
     if (get_current_task() == NULL || get_current_task()->process->pid == 1) {
         written += printf("\033[35mKernel  \033[37m(\033[34m %d \033[37m): ", 1);
     } else {
-        printf("\033[32m%s \033[37m(\033[34m %d \033[37m): ", "Task", get_current_task()->process->pid);
+        printf("\033[32m%s \033[37m(\033[34m %d \033[37m): ", "Process", get_current_task()->process->pid);
     }
     written = printf("\033[36m%s\033[37m: ", func);
     written += vprintf(format, parameters);
 #else
     int written = 0;
-    if (get_current_task() == NULL || get_current_task()->pid == 1) {
+    if (get_current_task() == NULL || get_current_task()->process->pid == 1) {
         written += printf("Kernel  ( %d ): ", 1);
     } else {
-        printf("%s ( %d ): ", "Task", get_current_task()->pid);
+        printf("%s ( %d ): ", "Process", get_current_task()->process->pid);
     }
     written = printf("%s: ", func);
     written += vprintf(format, parameters);

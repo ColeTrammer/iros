@@ -17,15 +17,21 @@ struct hash_map *hash_create_hash_map(int (*hash)(void *ptr, int hash_size), int
 void *hash_get(struct hash_map *map, void *key) {
 	size_t i = map->hash(key, HASH_DEFAULT_NUM_BUCKETS);
 
+	spin_lock(&map->lock);
+
 	struct hash_entry *entry = map->entries[i];
 	while (entry != NULL) {
+		assert(entry);
+		assert(entry->key);
 		if (map->equals(entry->key, key)) {
+			spin_unlock(&map->lock);
 			return entry->data;
 		}
 
 		entry = entry->next;
 	}
-	
+
+	spin_unlock(&map->lock);
 	return NULL;
 }
 
@@ -45,9 +51,10 @@ void hash_put(struct hash_map *map, void *data) {
 		
 		entry = &(*entry)->next; 
 	}
-	
-	*entry = malloc(sizeof(struct hash_entry));
+
+	*entry = calloc(1, sizeof(struct hash_entry));
 	(*entry)->key = map->key(data);
+	assert((*entry)->key);
 	(*entry)->next = NULL;
 	(*entry)->data = data;
 
@@ -85,8 +92,10 @@ void *hash_del(struct hash_map *map, void *key) {
 	while (*entry != NULL) {
 		if (map->equals((*entry)->key, key)) {
 			void *data_removed = (*entry)->data;
-			*entry = (*entry)->next;
-			
+			struct hash_entry *next = (*entry)->next;
+			free(*entry);
+			*entry = next;
+
 			spin_unlock(&map->lock);
 			return data_removed;
 		}

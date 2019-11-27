@@ -63,6 +63,8 @@
         return;                                            \
     } while (0)
 
+extern struct task *current_task;
+
 void arch_sys_exit(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
@@ -110,6 +112,8 @@ void arch_sys_fork(struct task_state *task_state) {
     child->process = child_process;
 
     child_process->pid = get_next_pid();
+    init_spinlock(&child_process->lock);
+    proc_add_process(child_process);
     child->sched_state = READY;
     child->kernel_task = false;
     child_process->process_memory = clone_process_vm();
@@ -361,6 +365,7 @@ void arch_sys_execve(struct task_state *task_state) {
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
     process->pid = current->process->pid;
+    init_spinlock(&process->lock);
     process->pgid = current->process->pgid;
     process->ppid = current->process->ppid;
     process->process_memory = kernel_stack;
@@ -414,10 +419,16 @@ void arch_sys_execve(struct task_state *task_state) {
     /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
     disable_interrupts();
 
+    // NOTE: this is necessary b/c current_task must always be valid. Otherwise, we will save state
+    //       automatically on a pointer to a freed address, corrupting memory.
+    current_task = task;
+
     sched_remove_task(current);
     invalidate_last_saved(current);
     free_task(current, false);
+    assert(get_current_task() == task);
     sched_add_task(task);
+    proc_add_process(process);
 
     sys_sched_run_next(&task->arch_task.task_state);
 }
@@ -789,15 +800,16 @@ void arch_sys_setpgid(struct task_state *task_state) {
     debug_log("Setting pgid: [ %d, %d, %d ]\n", pid, get_current_task()->pgid, pgid);
 #endif /* SET_PGID_DEBUG */
 
-    // FIXME: task needs a lock to prevent races
-    struct task *task = find_by_pid(pid);
-    if (task == NULL) {
+    struct process *process = find_by_pid(pid);
+    if (process == NULL) {
         SYS_RETURN(-ESRCH);
     }
 
-    task->process->pgid = pgid;
-
+    spin_lock(&process->lock);
+    process->pgid = pgid;
     proc_update_pgid(pid, pgid);
+    spin_unlock(&process->lock);
+
     SYS_RETURN(0);
 }
 

@@ -20,6 +20,8 @@
 
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
+extern struct task initial_kernel_task;
+
 /* Default Args And Envp Passed to First Program */
 static char *test_argv[2] = {
     "start", NULL
@@ -67,7 +69,7 @@ void arch_init_kernel_task(struct task *kernel_task) {
 }
 
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
-    task->arch_task.cr3 = find_by_pid(1)->arch_task.cr3;
+    task->arch_task.cr3 = initial_kernel_task.arch_task.cr3;
     task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.stack_state.rip = entry;

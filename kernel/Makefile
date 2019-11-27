@@ -73,6 +73,7 @@ $(BUILDDIR)/kernel/net/unix_socket.o \
 $(BUILDDIR)/kernel/proc/elf64.o \
 $(BUILDDIR)/kernel/proc/pid.o \
 $(BUILDDIR)/kernel/proc/process_state.o \
+$(BUILDDIR)/kernel/proc/process.o \
 $(BUILDDIR)/kernel/proc/task.o \
 $(BUILDDIR)/kernel/sched/task_sched.o \
 $(BUILDDIR)/kernel/util/spinlock.o \

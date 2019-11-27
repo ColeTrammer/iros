@@ -18,6 +18,7 @@ static spinlock_t task_list_lock = SPINLOCK_INITIALIZER;
 void init_task_sched() {
     // This only becomes needed after scheduling is enabled
     init_proc_state();
+    init_processes();
 
     arch_init_task_sched();
 }
@@ -71,21 +72,6 @@ void sched_remove_task(struct task *task) {
     spin_unlock(&task_list_lock);
 }
 
-struct task *find_by_pid(pid_t pid) {
-    /* Not SMP Safe Because It Can't Lock The Task List */
-
-    struct task *p = list_start;
-    do {
-        if (p->process->pid == pid) {
-            return p;
-        }
-
-        p = p->next;
-    } while (p != list_start);
-
-    return NULL;
-}
-
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct task *current = get_current_task();
@@ -101,6 +87,7 @@ void sched_run_next() {
 
     struct task *to_run = current->next;
     while (to_run->sched_state != READY) {
+        struct task *next = to_run->next;
         if (to_run->sched_state == EXITING) {
             struct task *to_remove = to_run;
 
@@ -124,10 +111,26 @@ void sched_run_next() {
         }
 
         // Skip taskes that are sleeping
-        to_run = to_run->next;
+        to_run = next;
     }
 
     run_task(to_run);
+}
+
+struct task *find_task_for_process(pid_t pid) {
+    spin_lock(&task_list_lock);
+    struct task *found = NULL;
+    struct task *task = list_start;
+
+    do {
+        if (task->process->pid == pid) {
+            found = task;
+            break;
+        }
+    } while ((task = task->next) != list_start);
+
+    spin_unlock(&task_list_lock);
+    return found;
 }
 
 int signal_process_group(pid_t pgid, int signum) {

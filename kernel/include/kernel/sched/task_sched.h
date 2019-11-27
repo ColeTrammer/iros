@@ -11,8 +11,8 @@ void arch_init_task_sched();
 
 void sched_add_task(struct task *task);
 void sched_remove_task(struct task *task);
-struct task *find_by_pid(pid_t pid);
 void sched_run_next();
+struct task *find_task_for_process(pid_t pid);
 void yield_signal();
 void yield();
 
