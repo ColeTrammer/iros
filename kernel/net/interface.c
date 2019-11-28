@@ -9,7 +9,7 @@
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
-#include <kernel/net/network_process.h>
+#include <kernel/net/network_task.h>
 
 static struct network_interface *interfaces = NULL;
 

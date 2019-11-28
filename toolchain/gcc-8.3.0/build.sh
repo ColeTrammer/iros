@@ -36,6 +36,10 @@ cd build-gcc
 make all-gcc -j5
 make all-target-libgcc CFLAGS_FOR_TARGET='-g -O2 -mcmodel=large -mno-red-zone' -j5
 
+# Install
+mkdir -p ../../cross
+make install-gcc install-target-libgcc 
+
 # Build libc for libstdc++-v3
 cd ../../../
 make prepare-build install-headers
@@ -44,8 +48,6 @@ make install
 cd ../../toolchain/gcc-8.3.0/build-gcc
 
 make all-target-libstdc++-v3 -j5
+make install-target-libstdc++-v3
 
-# Install
-mkdir -p ../../cross
-make install-gcc install-target-libgcc install-target-libstdc++-v3
 cd ..
