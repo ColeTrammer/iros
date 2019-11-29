@@ -38,7 +38,7 @@ static void kernel_idle() {
 
 static void load_task_into_memory(struct task *task) {
     set_tss_stack_pointer(task->arch_task.kernel_stack);
-    load_cr3(task->arch_task.cr3);
+    load_cr3(task->process->arch_process.cr3);
 
     // Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In Currently
     if (task->arch_task.setup_kernel_stack) {
@@ -69,7 +69,7 @@ void arch_init_kernel_task(struct task *kernel_task) {
 }
 
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
-    task->arch_task.cr3 = initial_kernel_task.arch_task.cr3;
+    task->process->arch_process.cr3 = initial_kernel_task.process->arch_process.cr3;
     task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.stack_state.rip = entry;
@@ -94,7 +94,7 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
 }
 
 void arch_load_task(struct task *task, uintptr_t entry) {
-    task->arch_task.cr3 = get_cr3();
+    task->process->arch_process.cr3 = get_cr3();
     task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.stack_state.rip = entry;
@@ -129,7 +129,11 @@ void arch_run_task(struct task *task) {
 void arch_free_task(struct task *task, bool free_paging_structure) {
     if (free_paging_structure) {
         map_page_info(task->arch_task.kernel_stack_info);
-        remove_paging_structure(task->arch_task.cr3, task->process->process_memory);
+
+        struct vm_region *kernel_stack = get_vm_region(task->process->process_memory, VM_KERNEL_STACK);
+        for (uintptr_t i = kernel_stack->start; i < kernel_stack->end; i += PAGE_SIZE) {
+            unmap_page(i);
+        }
     }
 
     free(task->arch_task.kernel_stack_info);

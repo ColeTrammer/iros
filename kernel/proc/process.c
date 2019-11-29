@@ -32,7 +32,7 @@ static void *key(void *p) {
     return &((struct process*) p)->pid;
 }
 
-void proc_drop_process_unlocked(struct process *process) {
+void proc_drop_process_unlocked(struct process *process, bool free_paging_structure) {
 #ifdef PROC_REF_COUNT_DEBUG
     debug_log("Process ref count: [ %d, %d ]\n", process->pid, process->ref_count - 1);
 #endif /* PROC_REF_COUNT_DEBUG */
@@ -45,6 +45,8 @@ void proc_drop_process_unlocked(struct process *process) {
 #endif /* PROCESSES_DEBUG */
         hash_del(map, &process->pid);
         spin_unlock(&process->lock);
+
+        proc_kill_arch_process(process, free_paging_structure);
 
         struct vm_region *region = process->process_memory;
         while (region != NULL) {
@@ -76,9 +78,9 @@ void proc_drop_process_unlocked(struct process *process) {
     spin_unlock(&process->lock);
 }
 
-void proc_drop_process(struct process *process) {
+void proc_drop_process(struct process *process, bool free_paging_structure) {
     spin_lock(&process->lock);
-    proc_drop_process_unlocked(process);
+    proc_drop_process_unlocked(process, free_paging_structure);
 }
 
 void proc_add_process(struct process *process) {

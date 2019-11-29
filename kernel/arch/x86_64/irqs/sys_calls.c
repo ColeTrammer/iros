@@ -123,7 +123,7 @@ void arch_sys_fork(struct task_state *task_state) {
 
     memcpy(&child->arch_task.task_state, task_state, sizeof(struct task_state));
     child->arch_task.task_state.cpu_state.rax = 0;
-    child->arch_task.cr3 = clone_process_paging_structure();
+    child_process->arch_process.cr3 = clone_process_paging_structure();
     child->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     child->arch_task.setup_kernel_stack = true;
     child_process->cwd = malloc(strlen(parent->process->cwd) + 1);
@@ -386,7 +386,7 @@ void arch_sys_execve(struct task_state *task_state) {
         }
     }
 
-    task->arch_task.cr3 = get_cr3();
+    process->arch_process.cr3 = get_cr3();
     task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
 
     struct virt_page_info *info = calloc(1, sizeof(struct virt_page_info));

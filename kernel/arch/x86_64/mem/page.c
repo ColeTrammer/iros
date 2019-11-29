@@ -194,7 +194,7 @@ void unmap_page(uintptr_t virt_addr) {
 }
 
 uintptr_t get_current_paging_structure() {
-    return get_current_task()->arch_task.cr3;
+    return get_current_task()->process->arch_process.cr3;
 }
 
 uintptr_t clone_process_paging_structure() {
@@ -211,7 +211,7 @@ uintptr_t clone_process_paging_structure() {
     uintptr_t pml4_addr = get_phys_addr((uintptr_t) TEMP_PAGE);
 
     uint64_t old_cr3 = get_cr3();
-    get_current_task()->arch_task.cr3 = get_phys_addr((uintptr_t) pml4);
+    get_current_task()->process->arch_process.cr3 = get_phys_addr((uintptr_t) pml4);
     load_cr3(get_phys_addr((uintptr_t) pml4));
 
     for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 3; i++) {
@@ -267,7 +267,7 @@ uintptr_t clone_process_paging_structure() {
 
     spin_unlock(&temp_page_lock);
 
-    get_current_task()->arch_task.cr3 = old_cr3;
+    get_current_task()->process->arch_process.cr3 = old_cr3;
     load_cr3(old_cr3);
 
     return pml4_addr;
@@ -288,7 +288,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
 
     if (deep_copy) {
         uint64_t old_cr3 = get_cr3();
-        get_current_task()->arch_task.cr3 = get_phys_addr((uintptr_t) pml4);
+        get_current_task()->process->arch_process.cr3 = get_phys_addr((uintptr_t) pml4);
         load_cr3(get_phys_addr((uintptr_t) pml4));
 
         for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {
@@ -339,7 +339,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
             list = list->next;
         }
 
-        get_current_task()->arch_task.cr3 = old_cr3;
+        get_current_task()->process->arch_process.cr3 = old_cr3;
         load_cr3(old_cr3);
     }
 
@@ -357,7 +357,7 @@ void create_phys_id_map() {
 }
 
 void load_paging_structure(uintptr_t phys_addr) {
-    get_current_task()->arch_task.cr3 = phys_addr;
+    get_current_task()->process->arch_process.cr3 = phys_addr;
     load_cr3(phys_addr);
 }
 
@@ -382,7 +382,15 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     while (region != NULL) {
         if (!(region->flags & VM_GLOBAL)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-                if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+                if (region->type == VM_KERNEL_STACK) {
+                    // NOTE: This section should be removed separately, when an individual task
+                    //       ends. This is because each and every task gets its own kernel stack,
+                    //       but they share the rest of the memory. Since this method should only
+                    //       be called when all tasks are gone, unmapping the pages in the region
+                    //       would either do nothing or cause a page fault, and thus should be
+                    //       avoided.
+                    continue;
+                } else if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
                     do_unmap_page(page, false);
                 } else {
                     unmap_page(page);

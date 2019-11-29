@@ -43,7 +43,6 @@ struct task_state {
 struct arch_task {
     struct task_state task_state;
     struct task_state user_task_state;
-    uint64_t cr3;
     uint64_t kernel_stack;
     struct virt_page_info *kernel_stack_info;
     bool setup_kernel_stack;

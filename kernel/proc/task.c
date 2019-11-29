@@ -235,7 +235,7 @@ void free_task(struct task *task, bool free_paging_structure) {
     current_task = task;
     arch_free_task(task, free_paging_structure);
 
-    proc_drop_process(task->process);
+    proc_drop_process(task->process, free_paging_structure);
     free(task);
     current_task = current_save;
 }
