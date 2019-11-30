@@ -86,6 +86,21 @@ This object has the operations that can currently be done on a super_block
 parent. Note that the actually renaming of the tnode is done by the vfs and
 this function should only modify disk to reflect that.
 
+## mount
+This object represents a mount point in the vfs.
+
+### struct mount
+
+*device_path* - path of backing device
+
+*name* - name of the mount point (like "proc" for the proc file system)
+
+*fs* - pointer to the file system object of this mount point
+
+*super_block* - pointer to the `super_block` of this mount
+
+*next* - linked list storage field
+
 ## file
 This object represents an open file in the kernel. Should be obtained via `fs_open`.
 
@@ -177,3 +192,94 @@ Get length of tnode list
 ### free_tnode_list_and_tnodes
 Destroy a given tnode list and all the the tnodes it contains.
 
+## inode_store
+Stores inode by index and device for lookup by files. This is implemented as
+a hash map of hash maps.
+
+### struct inode_store
+
+*device* - deivce of particular store
+
+*map* - map of inodes within a particular `device`
+
+### fs_inode_get
+Takes in a dev_t and ino_t, gives an inode back. This is how files get their backing
+inode.
+
+### fs_inode_put
+Add inode to be remembered.
+
+### fs_inode_set
+Set an inode to a new one.
+
+### fs_inode_del
+Remove an inode from the maps.
+
+### fs_inode_free_store
+Remove a store object (presumably the file system was unmounted)
+
+### fs_inode_create_store
+Create a store object (presumably the file system was mounted)
+
+## inode
+Object that represents a 'file system object' to the vfs.
+
+### struct inode
+
+*mode* - mode of an inode (stores the permissions and type)
+
+*flags* - vfs readable type of the inode (could be completely removed)
+
+*i_op* - operations to be done on an inode
+
+*super_block* - pointer to the `super_block` an inode resides in
+
+*socket_id* - 0 if the inode is not bound to a socket, otherwise the
+socket id of a AF_UNIX bound socket.
+
+*device* - device id of file system
+
+*size* - size of inode
+
+*index* - unique identifier within the file system
+
+*tnode_list* - lists of tnodes if this is a directory
+
+*mounts* - lists of mounts points under this inode, if it is a directory
+
+*parent* - parent tnode of this inode, points to its own tnode if root (this
+will be adjusted automatically on root inodes not mounted as the root).
+
+*ref_count* - inode reference count
+
+*lock* - inode lock (for everything)
+
+*private_data* - used to store arbitrary data
+
+### struct inode_operations
+
+*create* - make an inode at a parent tnode with given name and mode
+
+*lookup* - used by the vfs to find a given name within a directory. If
+called with the argument NULL (for name), then the file system is supposed
+to fill in the inode's `tnode_list`.
+
+*open* - open an inode
+
+*stat* - stat an inode
+
+*ioctl* - do an ioctl on this inode
+
+*mkdir* - make a directory for a given tnode with a given name and mode
+
+*unlink* - unlink an inode from the file system
+
+*rmdir* - remove a directory from a file system
+
+*chmod* - change modifiers for an inode
+
+*mmap* - mmap in a given inode
+
+*on_inode_destruction* - callback for when an inode's ref count reaches zero.
+This usually means that it was unlinked (but not necessarily). 
+All open files pointing to it have been closed at this point.

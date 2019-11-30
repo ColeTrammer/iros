@@ -15,7 +15,6 @@ void fs_inode_put(struct inode *inode);
 void fs_inode_set(struct inode *inode);
 void fs_inode_del(dev_t dev, ino_t id);
 void fs_inode_free_store(dev_t dev);
-
 void fs_inode_create_store(dev_t dev);
 
 #endif /* _KERNEL_FS_INODE_STORE_H */
