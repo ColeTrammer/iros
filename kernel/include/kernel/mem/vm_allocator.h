@@ -16,10 +16,12 @@ void remove_vm_pages_end(size_t n, uint64_t type);
 void remove_vm_pages_start(size_t n, uint64_t type);
 
 void *map_file(off_t length, uint64_t flags);
+struct vm_region *map_region(void *addr, size_t len, int prot);
 
 struct vm_region *find_first_kernel_vm_region();
 struct vm_region *find_vm_region(uint64_t type);
 struct vm_region *find_vm_region_by_addr(uintptr_t addr);
+struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end);
 struct vm_region *clone_process_vm();
 
 void *create_phys_addr_mapping(uintptr_t phys_addr);

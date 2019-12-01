@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/mman.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/mem/kernel_vm.h>
@@ -175,6 +176,40 @@ void *map_file(off_t length, uint64_t flags) {
     return (void*) to_add->start;
 }
 
+struct vm_region *map_region(void *addr, size_t len, int prot) {
+    len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    if (addr != NULL) {
+        // Do not overwrite an already existing region
+        if (find_vm_region_in_range((uintptr_t) addr, (uintptr_t) addr + len)) {
+            addr = NULL;
+        }
+    }
+
+    if (addr == NULL) {
+        uintptr_t to_search = find_vm_region(VM_PROCESS_HEAP)->end + 0x10000000;
+        struct vm_region *r;
+        while ((r = find_vm_region_in_range(to_search, to_search + len))) {
+            to_search = r->end + 5 * PAGE_SIZE;
+        }
+        addr = (void*) to_search;
+    }
+
+    struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
+    to_add->start = (uintptr_t) addr;
+    to_add->end = to_add->start + len;
+    to_add->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
+    to_add->flags = (prot & PROT_WRITE ? VM_WRITE : 0) |
+                    (prot & PROT_EXEC ? 0 : VM_NO_EXEC);
+
+    struct process *process = get_current_task()->process;
+    spin_lock(&process->lock);
+    process->process_memory = add_vm_region(process->process_memory, to_add);
+    spin_unlock(&process->lock);
+    return to_add;
+}
+
+
 void remove_vm_pages_start(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {
@@ -251,6 +286,34 @@ struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
 
     return NULL;
 }
+
+struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
+    struct vm_region *region = get_current_task()->process->process_memory;
+
+    while (region) {
+        if (((start <= region->start) && (region->end <= end))   || // start-end contain the region
+            ((start >= region->start) && (start <= region->end)) || // region contains start
+            ((end   >= region->end)   && (end   <= region->end))    // region contains end
+        ) {
+            return region;
+        }
+        region = region->next;
+    }
+
+    region = kernel_vm_list;
+    while (region) {
+        if (((start <= region->start) && (region->end <= end))   || // start-end contain the region
+            ((start >= region->start) && (start <= region->end)) || // region contains start
+            ((end   >= region->end)   && (end   <= region->end))    // region contains end
+        ) {
+            return region;
+        }
+        region = region->next;
+    }
+
+    return NULL;
+}
+
 
 struct vm_region *clone_process_vm() {
     struct vm_region *list = get_current_task()->process->process_memory;
