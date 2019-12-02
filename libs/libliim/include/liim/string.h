@@ -12,14 +12,10 @@ public:
     String() {
     }
 
-    String(const char* chars)
-        : m_size(strlen(chars))
-        , m_string(strdup(chars)) {
+    String(const char* chars) : m_size(strlen(chars)), m_string(strdup(chars)) {
     }
 
-    String(const String& other)
-        : m_size(other.size())
-        , m_string(strdup(other.string())) {
+    String(const String& other) : m_size(other.size()), m_string(strdup(other.string())) {
     }
 
     ~String() {

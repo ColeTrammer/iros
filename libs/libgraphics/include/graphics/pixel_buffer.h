@@ -14,13 +14,11 @@ public:
         m_should_deallocate = false;
     }
 
-    PixelBuffer(int width, int height)
-        : PixelBuffer(new uint32_t[width * height], width, height) {
+    PixelBuffer(int width, int height) : PixelBuffer(new uint32_t[width * height], width, height) {
         m_should_deallocate = true;
     }
 
-    PixelBuffer(const Rect& rect)
-        : PixelBuffer(rect.width(), rect.height()) {
+    PixelBuffer(const Rect& rect) : PixelBuffer(rect.width(), rect.height()) {
     }
 
     ~PixelBuffer() {
@@ -61,10 +59,7 @@ public:
         return m_pixels[y * m_width + x];
     }
 
-    PixelBuffer(uint32_t* pixels, int width, int height)
-        : m_width(width)
-        , m_height(height)
-        , m_pixels(pixels) {
+    PixelBuffer(uint32_t* pixels, int width, int height) : m_width(width), m_height(height), m_pixels(pixels) {
     }
 
 private:

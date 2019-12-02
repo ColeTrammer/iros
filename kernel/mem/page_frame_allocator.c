@@ -68,7 +68,7 @@ unsigned long get_total_phys_memory() {
 }
 
 void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start,
-    uintptr_t initrd_phys_end, uint32_t *multiboot_info) {
+                               uintptr_t initrd_phys_end, uint32_t *multiboot_info) {
     mark_used(0, 0x100000); // assume none of this area is available
     mark_used(kernel_phys_start, kernel_phys_end - kernel_phys_start);
     mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);

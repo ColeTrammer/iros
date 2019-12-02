@@ -218,8 +218,8 @@ void *aligned_alloc(size_t alignment, size_t n) {
         block = NEXT_BLOCK(block);
     }
 
-    struct metadata *new_block
-        = (struct metadata *) ((((uintptr_t)(block + 1)) + alignment - (((uintptr_t)(block + 1)) % alignment)) - sizeof(struct metadata));
+    struct metadata *new_block =
+        (struct metadata *) ((((uintptr_t)(block + 1)) + alignment - (((uintptr_t)(block + 1)) % alignment)) - sizeof(struct metadata));
     assert(((uintptr_t)(new_block + 1)) % alignment == 0);
 
     if (heap_end <= ((uintptr_t) new_block) + n + sizeof(struct metadata)) {
@@ -227,8 +227,8 @@ void *aligned_alloc(size_t alignment, size_t n) {
         heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end + sizeof(struct metadata)) * PAGE_SIZE;
     }
 
-    PREV_BLOCK(block)->size
-        = (((uintptr_t) new_block) - ((uintptr_t) PREV_BLOCK(block)) - sizeof(struct metadata)) | (PREV_BLOCK(block)->size & ALLOCATED);
+    PREV_BLOCK(block)->size =
+        (((uintptr_t) new_block) - ((uintptr_t) PREV_BLOCK(block)) - sizeof(struct metadata)) | (PREV_BLOCK(block)->size & ALLOCATED);
     assert(NEXT_BLOCK(PREV_BLOCK(block)) == new_block);
     new_block->prev_size = PREV_BLOCK(block)->size & ~ALLOCATED;
     new_block->magic = __MALLOC_MAGIG_CHECK;

@@ -29,8 +29,12 @@
 #define CONTROL_MASK   0x1F
 #define CONTROL_KEY(c) ((c) &CONTROL_MASK)
 
-static struct termios default_termios = { ICRNL | IXON, OPOST, CS8, ECHO | ICANON | IEXTEN | ISIG,
-    { CONTROL_KEY('d'), '\n', '#', CONTROL_KEY('c'), '@', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'), CONTROL_KEY('s'), CONTROL_KEY('z'), 0 } };
+static struct termios default_termios = { ICRNL | IXON,
+                                          OPOST,
+                                          CS8,
+                                          ECHO | ICANON | IEXTEN | ISIG,
+                                          { CONTROL_KEY('d'), '\n', '#', CONTROL_KEY('c'), '@', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'),
+                                            CONTROL_KEY('s'), CONTROL_KEY('z'), 0 } };
 
 static struct device *slaves[PTMX_MAX] = { 0 };
 static struct device *masters[PTMX_MAX] = { 0 };
@@ -104,8 +108,8 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
     struct slave_data *data = device->private;
     if (get_current_task()->process->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
 #ifdef PTMX_SIGNAL_DEBUG
-        debug_log(
-            "Sending SIGTTOU: [ %d, %d, %d ]\n", data->process->pgid, get_current_task()->process->pgid, get_current_task()->process->pid);
+        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->process->pgid, get_current_task()->process->pgid,
+                  get_current_task()->process->pid);
 #endif /* PTMX_SIGNAL_DEBUG */
         signal_process_group(get_current_task()->process->pgid, SIGTTOU);
     }
@@ -326,8 +330,9 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
     }
 }
 
-static struct device_ops slave_ops
-    = { NULL, slave_read, slave_write, slave_close, slave_add, slave_remove, slave_ioctl, slave_on_open, NULL };
+static struct device_ops slave_ops = {
+    NULL, slave_read, slave_write, slave_close, slave_add, slave_remove, slave_ioctl, slave_on_open, NULL
+};
 
 static void master_on_open(struct device *device) {
     device->cannot_open = true;
@@ -552,8 +557,8 @@ static int master_ioctl(struct device *device, unsigned long request, void *argp
     return slave_ioctl(slave, request, argp);
 }
 
-static struct device_ops master_ops
-    = { NULL, master_read, master_write, master_close, master_add, master_remove, master_ioctl, master_on_open, NULL };
+static struct device_ops master_ops = { NULL,          master_read,  master_write,   master_close, master_add,
+                                        master_remove, master_ioctl, master_on_open, NULL };
 
 static struct file *ptmx_open(struct device *device, int flags, int *error) {
     (void) device;

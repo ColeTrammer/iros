@@ -16,8 +16,9 @@
 ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len) {
     size_t total_size = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + len;
 
-    struct ethernet_packet *packet = net_create_ethernet_packet(net_get_mac_from_ip_v4(interface->broadcast)->mac,
-        interface->ops->get_mac_address(interface), ETHERNET_TYPE_IPV4, total_size - sizeof(struct ethernet_packet));
+    struct ethernet_packet *packet =
+        net_create_ethernet_packet(net_get_mac_from_ip_v4(interface->broadcast)->mac, interface->ops->get_mac_address(interface),
+                                   ETHERNET_TYPE_IPV4, total_size - sizeof(struct ethernet_packet));
 
     struct ip_v4_address d = dest;
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
@@ -60,7 +61,7 @@ void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
 }
 
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
-    struct ip_v4_address dest, uint16_t payload_length) {
+                           struct ip_v4_address dest, uint16_t payload_length) {
     assert(packet);
 
     packet->version_and_ihl = (IP_V4_VERSION << 4) | IP_V4_BYTES_TO_WORDS(sizeof(struct ip_v4_packet));

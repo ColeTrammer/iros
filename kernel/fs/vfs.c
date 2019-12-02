@@ -742,9 +742,8 @@ int fs_rename(char *old_path, char *new_path) {
     }
 
     struct tnode *existing_tnode = iname(new_path);
-    if (existing_tnode
-        && (((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR))
-            || (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
+    if (existing_tnode && (((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
+                           (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
         return -ENOTDIR;
     }
 

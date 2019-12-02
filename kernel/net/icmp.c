@@ -37,14 +37,14 @@ void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
 
     struct icmp_packet *to_send = malloc(to_send_length);
     net_init_icmp_packet(to_send, ICMP_TYPE_ECHO_REPLY, ntohs(packet->identifier), ntohs(packet->sequence_number), (void *) packet->payload,
-        to_send_length - sizeof(struct icmp_packet));
+                         to_send_length - sizeof(struct icmp_packet));
 
     net_send_ip_v4(net_get_interface_for_ip(ip_packet->source), IP_V4_PROTOCOL_ICMP, ip_packet->source, to_send, to_send_length);
     free(to_send);
 }
 
-void net_init_icmp_packet(
-    struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload, uint16_t payload_size) {
+void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload,
+                          uint16_t payload_size) {
     assert(packet);
 
     packet->type = type;

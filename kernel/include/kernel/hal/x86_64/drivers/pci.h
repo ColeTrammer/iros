@@ -59,8 +59,8 @@ struct pci_configuration {
 } __attribute__((packed));
 
 static inline uint32_t pci_make_config_address(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
-    return (uint32_t)(
-        0x80000000U | (((uint32_t) bus) << 16U) | (((uint32_t) slot) << 11U) | (((uint32_t) func) << 8U) | (((uint32_t) offset) & 0xFC));
+    return (uint32_t)(0x80000000U | (((uint32_t) bus) << 16U) | (((uint32_t) slot) << 11U) | (((uint32_t) func) << 8U) |
+                      (((uint32_t) offset) & 0xFC));
 }
 
 static inline uint16_t pci_read_config_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {

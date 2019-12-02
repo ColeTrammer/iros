@@ -95,11 +95,11 @@ struct host_mapping *lookup_host(char *host) {
     assert(response_header->qr == 1);
 
     fprintf(stderr, "Recieved response: %u, %u, %u, %u, %u\n", ntohs(response_header->id), ntohs(response_header->num_questions),
-        ntohs(response_header->num_answers), ntohs(response_header->num_records), ntohs(response_header->num_records_extra));
+            ntohs(response_header->num_answers), ntohs(response_header->num_records), ntohs(response_header->num_records_extra));
 
     struct dns_record *record = (struct dns_record *) (buf + new_len);
     fprintf(stderr, "Received record: %u, %u, %u, %u\n", ntohs(record->type), ntohs(record->class), ntohl(record->ttl),
-        ntohs(record->rd_length));
+            ntohs(record->rd_length));
 
     struct in_addr res = { 0 };
     res.s_addr = *((uint32_t *) (record + 1));

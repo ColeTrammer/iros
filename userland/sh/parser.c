@@ -228,17 +228,17 @@ static char **split_into_list(char *line, size_t *num_split, enum command_list_c
             case ';':
             case '&':
             case '|':
-                if (line[i] == '\0'
-                    || (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes
-                        && ((line[i] == '&' && line[i + 1] == '&') || (line[i] == '|' && line[i + 1] == '|') || line[i] == ';'))) {
+                if (line[i] == '\0' ||
+                    (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes &&
+                     ((line[i] == '&' && line[i + 1] == '&') || (line[i] == '|' && line[i + 1] == '|') || line[i] == ';'))) {
                     if (split_index >= max) {
                         max += SPLIT_BUF_INC;
                         split = realloc(split, max * sizeof(char *));
                         *connectors = realloc(*connectors, max * sizeof(enum command_list_connector));
                     }
 
-                    (*connectors)[split_index]
-                        = c == ';' ? COMMAND_SEQUENTIAL : c == '&' ? COMMAND_AND : c == '|' ? COMMAND_OR : COMMAND_END_LIST;
+                    (*connectors)[split_index] =
+                        c == ';' ? COMMAND_SEQUENTIAL : c == '&' ? COMMAND_AND : c == '|' ? COMMAND_OR : COMMAND_END_LIST;
                     split[split_index++] = last;
                     if (i >= line_len) {
                         goto finish;

@@ -169,7 +169,7 @@ static bool glob_opendir(char *path, int flags, int (*errfunc)(const char *epath
 }
 
 static int glob_helper(char *__restrict path, char *__restrict to_prepend, const char *__restrict pattern, int flags,
-    int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
+                       int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
     char *first_slash = strchr(pattern, '/');
 
     if (first_slash) {

@@ -6,8 +6,7 @@
 namespace LIIM {
 
 template<typename T> struct LinkedListObj {
-    LinkedListObj(const T& val)
-        : m_val(val) {
+    LinkedListObj(const T& val) : m_val(val) {
     }
 
     T m_val;
@@ -19,9 +18,7 @@ public:
     LinkedList() {
     }
 
-    explicit LinkedList(const T& first)
-        : m_head(new LinkedListObj(first))
-        , m_size(1) {
+    explicit LinkedList(const T& first) : m_head(new LinkedListObj(first)), m_size(1) {
     }
 
     ~LinkedList() {

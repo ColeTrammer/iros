@@ -193,7 +193,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
 
             net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num,
-                data->tcb->current_ack_num, (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
+                         data->tcb->current_ack_num, (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
             data->tcb->should_send_ack = false;
 
             if (socket->state == CLOSING) {

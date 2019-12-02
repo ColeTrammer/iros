@@ -7,8 +7,7 @@ namespace LIIM {
 
 template<typename T> class UniquePtr {
 public:
-    explicit UniquePtr(T* ptr = nullptr)
-        : m_ptr(ptr) {
+    explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {
     }
 
     UniquePtr(const UniquePtr& other) = delete;
@@ -52,9 +51,7 @@ private:
 
 template<typename T> class SharedPtrControlBlock {
 public:
-    explicit SharedPtrControlBlock(T* ptr)
-        : m_ptr(ptr)
-        , m_ref_count(1) {
+    explicit SharedPtrControlBlock(T* ptr) : m_ptr(ptr), m_ref_count(1) {
         assert(m_ptr);
     }
 
@@ -89,8 +86,7 @@ private:
 
 template<typename T> class SharedPtr {
 public:
-    explicit SharedPtr(T* ptr)
-        : m_control_block(new SharedPtrControlBlock(ptr)) {
+    explicit SharedPtr(T* ptr) : m_control_block(new SharedPtrControlBlock(ptr)) {
     }
 
     SharedPtr() {

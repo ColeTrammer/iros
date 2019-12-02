@@ -5,9 +5,7 @@ public:
     Point() {
     }
 
-    Point(int x, int y)
-        : m_x(x)
-        , m_y(y) {
+    Point(int x, int y) : m_x(x), m_y(y) {
     }
 
     ~Point() {

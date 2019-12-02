@@ -347,8 +347,8 @@ void arch_sys_execve(struct task_state *task_state) {
         //        right now this means that FD_CLOEXEC will destroy all duplicated files, so it
         //        cannot be used when doing dup(2) on a builtin stream. This is of course its
         //        primary use case, so FD_CLOEXEC must be ignored or everything will break.
-        if (!current->process->files[i]
-            || (/* (current->files[i]->fd_flags & FD_CLOEXEC) || */ (current->process->files[i]->flags & FS_DIR))) {
+        if (!current->process->files[i] ||
+            (/* (current->files[i]->fd_flags & FD_CLOEXEC) || */ (current->process->files[i]->flags & FS_DIR))) {
             // NOTE: the files will be closed by the `free_task` function
             continue;
         }

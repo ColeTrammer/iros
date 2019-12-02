@@ -222,8 +222,8 @@ static void free_suggestions(struct suggestion *suggestions, size_t num_suggesti
 static size_t longest_common_starting_substring_length(struct suggestion *suggestions, size_t num_suggestions) {
     struct suggestion *last = &suggestions[num_suggestions - 1];
     size_t length = 0;
-    while (suggestions->suggestion[length] != '\0' && suggestions->suggestion[length] != '\0'
-        && suggestions->suggestion[length] == last->suggestion[length]) {
+    while (suggestions->suggestion[length] != '\0' && suggestions->suggestion[length] != '\0' &&
+           suggestions->suggestion[length] == last->suggestion[length]) {
         length++;
     }
     return length;

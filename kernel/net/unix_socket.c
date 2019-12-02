@@ -48,8 +48,8 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
 
     assert(connect_to->private_data);
     struct unix_socket_data *connect_to_data = connect_to->private_data;
-    memcpy(
-        connect_to_data->bound_path, ((struct unix_socket_data *) socket->private_data)->bound_path, sizeof(connect_to_data->bound_path));
+    memcpy(connect_to_data->bound_path, ((struct unix_socket_data *) socket->private_data)->bound_path,
+           sizeof(connect_to_data->bound_path));
     connect_to_data->connected_id = new_socket->id;
 
     connect_to->state = CONNECTED;

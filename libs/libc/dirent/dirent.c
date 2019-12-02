@@ -52,7 +52,7 @@ static size_t dirent_min_len(struct dirent *d) {
 }
 
 int scandir(const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *d),
-    int (*compar)(const struct dirent **a, const struct dirent **b)) {
+            int (*compar)(const struct dirent **a, const struct dirent **b)) {
     DIR *d = opendir(dirp);
     if (d == NULL) {
         return -1;

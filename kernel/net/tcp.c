@@ -11,23 +11,24 @@
 #include <kernel/net/tcp.h>
 
 ssize_t net_send_tcp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port,
-    uint32_t sequence_number, uint32_t ack_num, union tcp_flags flags, uint16_t len, const void *payload) {
+                     uint32_t sequence_number, uint32_t ack_num, union tcp_flags flags, uint16_t len, const void *payload) {
     size_t total_length = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + sizeof(struct tcp_packet) + len;
 
-    struct ethernet_packet *packet = net_create_ethernet_packet(net_get_mac_from_ip_v4(interface->broadcast)->mac,
-        interface->ops->get_mac_address(interface), ETHERNET_TYPE_IPV4, total_length - sizeof(struct ethernet_packet));
+    struct ethernet_packet *packet =
+        net_create_ethernet_packet(net_get_mac_from_ip_v4(interface->broadcast)->mac, interface->ops->get_mac_address(interface),
+                                   ETHERNET_TYPE_IPV4, total_length - sizeof(struct ethernet_packet));
 
     struct ip_v4_packet *ip_packet = (struct ip_v4_packet *) packet->payload;
     net_init_ip_v4_packet(ip_packet, 1, IP_V4_PROTOCOL_TCP, interface->address, dest,
-        total_length - sizeof(struct ethernet_packet) - sizeof(struct ip_v4_packet));
+                          total_length - sizeof(struct ethernet_packet) - sizeof(struct ip_v4_packet));
 
     struct tcp_packet *tcp_packet = (struct tcp_packet *) ip_packet->payload;
     net_init_tcp_packet(tcp_packet, source_port, dest_port, sequence_number, ack_num, flags, 8192, len, payload);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_TCP, htons(len + sizeof(struct tcp_packet)) };
 
-    tcp_packet->check_sum = ntohs(in_compute_checksum_with_start(
-        tcp_packet, sizeof(struct tcp_packet) + len, in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
+    tcp_packet->check_sum = ntohs(in_compute_checksum_with_start(tcp_packet, sizeof(struct tcp_packet) + len,
+                                                                 in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
 
     if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
         debug_log("Sending TCP packet\n");
@@ -53,24 +54,24 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
     struct socket *socket = net_get_tcp_socket_by_ip_v4_and_port((struct ip_v4_and_port) { ntohs(packet->source_port), ip_packet->source });
     if (socket == NULL) {
         debug_log("No socket listening for port and ip: [ %u, %u.%u.%u.%u ]\n", ntohs(packet->source_port), ip_packet->source.addr[0],
-            ip_packet->source.addr[1], ip_packet->source.addr[2], ip_packet->source.addr[3]);
+                  ip_packet->source.addr[1], ip_packet->source.addr[2], ip_packet->source.addr[3]);
 
         // Tell the destination we recieved there fin (we already sent ours and removed ourselves from the list of sockets)
         if (packet->flags.bits.fin) {
             struct network_interface *interface = net_get_interface_for_ip(ip_packet->source);
             net_send_tcp(interface, ip_packet->destination, ntohs(packet->dest_port), ntohs(packet->source_port), ntohl(packet->ack_number),
-                ntohl(packet->sequence_number) + 1, (union tcp_flags) { .bits.ack = 1 }, 0, NULL);
+                         ntohl(packet->sequence_number) + 1, (union tcp_flags) { .bits.ack = 1 }, 0, NULL);
             return;
         }
 
         // Client is trying to initiate a connection
         if (packet->flags.bits.syn && !packet->flags.bits.ack) {
-            socket
-                = net_get_tcp_socket_server_by_ip_v4_and_port((struct ip_v4_and_port) { ntohs(packet->dest_port), ip_packet->destination });
+            socket =
+                net_get_tcp_socket_server_by_ip_v4_and_port((struct ip_v4_and_port) { ntohs(packet->dest_port), ip_packet->destination });
             if (socket == NULL) {
                 debug_log("No socket waiting for a connection for port and ip: [ %u, %u.%u.%u.%u ]\n", ntohs(packet->dest_port),
-                    ip_packet->destination.addr[0], ip_packet->destination.addr[1], ip_packet->destination.addr[2],
-                    ip_packet->destination.addr[3]);
+                          ip_packet->destination.addr[0], ip_packet->destination.addr[1], ip_packet->destination.addr[2],
+                          ip_packet->destination.addr[3]);
                 return;
             }
 
@@ -83,8 +84,8 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
 
             spin_lock(&socket->lock);
             if (socket->num_pending >= socket->pending_length) {
-                debug_log(
-                    "Socket has too many connections already: [ %lu, %d, %d ]\n", socket->id, socket->num_pending, socket->pending_length);
+                debug_log("Socket has too many connections already: [ %lu, %d, %d ]\n", socket->id, socket->num_pending,
+                          socket->pending_length);
                 spin_unlock(&socket->lock);
                 free(connection);
                 return;
@@ -148,7 +149,7 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
 }
 
 void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16_t dest_port, uint32_t sequence, uint32_t ack_num,
-    union tcp_flags flags, uint16_t win_size, uint16_t payload_length, const void *payload) {
+                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, const void *payload) {
     packet->source_port = htons(source_port);
     packet->dest_port = htons(dest_port);
     packet->sequence_number = htonl(sequence);
@@ -177,14 +178,14 @@ void net_tcp_log(const struct tcp_packet *packet) {
               "               Data Len     [ %15lu ]   Data off  [ %15u ]\n"
               "               Flags        [ FIN=%u SYN=%u RST=%u PSH=%u ACK=%u URG=%u ECE=%u CWR=%u ]\n"
               "               Data         [\n%s\n]\n",
-        ntohs(packet->source_port), ntohs(packet->dest_port), ntohl(packet->sequence_number), ntohl(packet->ack_number),
-        ntohs(packet->window_size), ntohs(packet->urg_pointer), ip_packet->source.addr[0], ip_packet->source.addr[1],
-        ip_packet->source.addr[2], ip_packet->source.addr[3], ip_packet->destination.addr[0], ip_packet->destination.addr[1],
-        ip_packet->destination.addr[2], ip_packet->destination.addr[3],
-        ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset, packet->data_offset,
-        packet->flags.bits.fin, packet->flags.bits.syn, packet->flags.bits.rst, packet->flags.bits.psh, packet->flags.bits.ack,
-        packet->flags.bits.urg, packet->flags.bits.ece, packet->flags.bits.cwr,
-        ntohs(ip_packet->length) > sizeof(uint32_t) * packet->data_offset + sizeof(struct ip_v4_packet)
-            ? ((char *) packet) + sizeof(uint32_t) * packet->data_offset
-            : "None");
+              ntohs(packet->source_port), ntohs(packet->dest_port), ntohl(packet->sequence_number), ntohl(packet->ack_number),
+              ntohs(packet->window_size), ntohs(packet->urg_pointer), ip_packet->source.addr[0], ip_packet->source.addr[1],
+              ip_packet->source.addr[2], ip_packet->source.addr[3], ip_packet->destination.addr[0], ip_packet->destination.addr[1],
+              ip_packet->destination.addr[2], ip_packet->destination.addr[3],
+              ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset, packet->data_offset,
+              packet->flags.bits.fin, packet->flags.bits.syn, packet->flags.bits.rst, packet->flags.bits.psh, packet->flags.bits.ack,
+              packet->flags.bits.urg, packet->flags.bits.ece, packet->flags.bits.cwr,
+              ntohs(ip_packet->length) > sizeof(uint32_t) * packet->data_offset + sizeof(struct ip_v4_packet)
+                  ? ((char *) packet) + sizeof(uint32_t) * packet->data_offset
+                  : "None");
 }

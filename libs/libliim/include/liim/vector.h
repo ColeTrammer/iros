@@ -12,13 +12,11 @@ namespace LIIM {
 
 template<typename T> class Vector {
 public:
-    explicit Vector(int capacity = 20)
-        : m_capacity(capacity) {
+    explicit Vector(int capacity = 20) : m_capacity(capacity) {
         allocate_vector();
     }
 
-    Vector(const Vector& to_copy)
-        : m_capacity(to_copy.capacity()) {
+    Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()) {
         allocate_vector();
         m_size = to_copy.size();
         if (m_size == 0) {
@@ -33,9 +31,7 @@ public:
         }
     }
 
-    Vector(const T* buffer, int num_elements)
-        : m_capacity(num_elements)
-        , m_size(num_elements) {
+    Vector(const T* buffer, int num_elements) : m_capacity(num_elements), m_size(num_elements) {
         assert(buffer);
         allocate_vector();
         if constexpr (Traits<T>::is_simple()) {

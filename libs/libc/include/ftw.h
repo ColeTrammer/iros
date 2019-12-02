@@ -26,8 +26,8 @@ struct FTW {
 };
 
 int ftw(const char *path, int (*fn)(const char *path, const struct stat *stat_struct, int type), int fd_limit);
-int nftw(
-    const char *path, int (*fn)(const char *path, const struct stat *stat_struct, int type, struct FTW *info), int fd_limit, int flags);
+int nftw(const char *path, int (*fn)(const char *path, const struct stat *stat_struct, int type, struct FTW *info), int fd_limit,
+         int flags);
 
 #ifdef __cplusplus
 }

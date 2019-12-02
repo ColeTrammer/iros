@@ -25,8 +25,8 @@ int main() {
         return 1;
     }
 
-    uint32_t *raw_pixels
-        = static_cast<uint32_t *>(mmap(NULL, sz.x * sz.y * sizeof(uint32_t) * 2, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0));
+    uint32_t *raw_pixels =
+        static_cast<uint32_t *>(mmap(NULL, sz.x * sz.y * sizeof(uint32_t) * 2, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0));
     if (raw_pixels == MAP_FAILED) {
         perror("mmap");
         return 1;

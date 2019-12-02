@@ -157,8 +157,7 @@ void ngethostbyname(unsigned char *host, int query_type) {
 
     printf("\nSending Packet...");
     if (sendto(s, (char *) buf, sizeof(struct DNS_HEADER) + (strlen((const char *) qname) + 1) + sizeof(struct QUESTION), 0,
-            (struct sockaddr *) &dest, sizeof(dest))
-        < 0) {
+               (struct sockaddr *) &dest, sizeof(dest)) < 0) {
         perror("sendto failed");
     }
     printf("Done");

@@ -145,8 +145,9 @@ void map_page_info(struct virt_page_info *info) {
     uint64_t *pml4_entry = PML4_BASE + info->pml4_index;
     uint64_t *pdp_entry = PDP_BASE + (0x1000 * info->pml4_index) / sizeof(uint64_t) + info->pdp_index;
     uint64_t *pd_entry = PD_BASE + (0x200000 * info->pml4_index + 0x1000 * info->pdp_index) / sizeof(uint64_t) + info->pd_index;
-    uint64_t *pt_entry = PT_BASE + (0x40000000 * info->pml4_index + 0x200000 * info->pdp_index + 0x1000 * info->pd_index) / sizeof(uint64_t)
-        + info->pt_index;
+    uint64_t *pt_entry = PT_BASE +
+                         (0x40000000 * info->pml4_index + 0x200000 * info->pdp_index + 0x1000 * info->pd_index) / sizeof(uint64_t) +
+                         info->pt_index;
 
     if ((*pml4_entry & ~0xFFF) != (info->pml4_entry & ~0xFFF)) {
         *pml4_entry = info->pml4_entry;
@@ -411,7 +412,7 @@ void map_vm_region_flags(struct vm_region *region) {
 void map_vm_region(struct vm_region *region) {
 #ifdef MAP_VM_REGION_DEBUG
     debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start,
-        region->end);
+              region->end);
 #endif /* MAP_VM_REGION_DEBUG */
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
         map_page(addr, region->flags);

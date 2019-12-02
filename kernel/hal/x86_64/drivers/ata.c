@@ -245,8 +245,8 @@ static ssize_t ata_read(struct device *device, struct file *file, void *buffer, 
         ssize_t read = 0;
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
-            ssize_t ret = ata_read_sectors(
-                data, (file->position / data->sector_size), (void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
+            ssize_t ret = ata_read_sectors(data, (file->position / data->sector_size),
+                                           (void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
             if (ret != (ssize_t)(num_sectors * data->sector_size)) {
                 if (ret < 0) {
                     return ret;
@@ -275,8 +275,8 @@ static ssize_t ata_write(struct device *device, struct file *file, const void *b
         ssize_t written = 0;
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
-            ssize_t ret = ata_write_sectors(
-                data, (file->position / data->sector_size), (const void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
+            ssize_t ret = ata_write_sectors(data, (file->position / data->sector_size),
+                                            (const void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
             if (ret != (ssize_t)(num_sectors * data->sector_size)) {
                 if (ret < 0) {
                     return ret;
@@ -323,14 +323,9 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
 #define NUM_POSSIBLE_ATA_DEVICES 8
 
 static struct ata_port_info possible_ata_devices[NUM_POSSIBLE_ATA_DEVICES] = {
-    { ATA1_IO_BASE, ATA1_CONTROL_BASE, false },
-    { ATA1_IO_BASE, ATA1_CONTROL_BASE, true },
-    { ATA2_IO_BASE, ATA2_CONTROL_BASE, false },
-    { ATA2_IO_BASE, ATA2_CONTROL_BASE, true },
-    { ATA3_IO_BASE, ATA3_CONTROL_BASE, false },
-    { ATA3_IO_BASE, ATA3_CONTROL_BASE, true },
-    { ATA4_IO_BASE, ATA4_CONTROL_BASE, false },
-    { ATA4_IO_BASE, ATA4_CONTROL_BASE, true },
+    { ATA1_IO_BASE, ATA1_CONTROL_BASE, false }, { ATA1_IO_BASE, ATA1_CONTROL_BASE, true },  { ATA2_IO_BASE, ATA2_CONTROL_BASE, false },
+    { ATA2_IO_BASE, ATA2_CONTROL_BASE, true },  { ATA3_IO_BASE, ATA3_CONTROL_BASE, false }, { ATA3_IO_BASE, ATA3_CONTROL_BASE, true },
+    { ATA4_IO_BASE, ATA4_CONTROL_BASE, false }, { ATA4_IO_BASE, ATA4_CONTROL_BASE, true },
 };
 
 void init_ata() {
@@ -338,7 +333,7 @@ void init_ata() {
         uint16_t buf[ATA_SECTOR_SIZE / sizeof(uint16_t)];
         if (ata_device_exists(&possible_ata_devices[i], buf)) {
             debug_log("Initializing ata device: [ %#.4X, %#.4X, %s ]\n", possible_ata_devices[i].io_base,
-                possible_ata_devices[i].control_base, possible_ata_devices[i].is_slave ? "true" : "false");
+                      possible_ata_devices[i].control_base, possible_ata_devices[i].is_slave ? "true" : "false");
 
             ata_init_device(&possible_ata_devices[i], buf, i);
         }

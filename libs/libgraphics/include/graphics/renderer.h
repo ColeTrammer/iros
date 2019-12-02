@@ -12,8 +12,7 @@ class Color;
 
 class Renderer {
 public:
-    Renderer(std::shared_ptr<PixelBuffer> buffer)
-        : m_pixels(buffer) {
+    Renderer(std::shared_ptr<PixelBuffer> buffer) : m_pixels(buffer) {
         assert(m_pixels);
     }
 

@@ -17,7 +17,7 @@
 #include <kernel/sched/task_sched.h>
 
 void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t inintrd_phys_start, uint64_t initrd_phys_end,
-    uint32_t *multiboot_info) {
+                 uint32_t *multiboot_info) {
     init_hal();
     init_irq_handlers();
     init_page_frame_allocator(kernel_phys_start, kernel_phys_end, inintrd_phys_start, initrd_phys_end, multiboot_info);

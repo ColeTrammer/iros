@@ -312,9 +312,9 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
 
                 i++;
 
-                while (i < specifier.width
-                    && (is_valid_char_for_set(ret = get_character(state), format + format_off, set_end - set_start, invert)
-                        && ret != EOF)) {
+                while (
+                    i < specifier.width &&
+                    (is_valid_char_for_set(ret = get_character(state), format + format_off, set_end - set_start, invert) && ret != EOF)) {
                     if (!specifier.star) {
                         buf[i] = (char) ret;
                     }
@@ -366,8 +366,8 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 buffer[buffer_index++] = c;
 
                 /* Copy str character by character into buffer */
-                while (
-                    buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && (isdigit(ret = get_character(state)))) {
+                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 &&
+                       (isdigit(ret = get_character(state)))) {
                     buffer[buffer_index++] = (char) ret;
                 }
                 if (ret != EOF && buffer_index < specifier.width) {
@@ -465,9 +465,9 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 buffer[buffer_index++] = c;
 
                 /* Copy str character by character into buffer */
-                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1
-                    && (is_valid_char_for_base(ret = get_character(state), base)
-                        || (base == 16 && buffer_index == 1 && (ret == 'x' || ret == 'X')))) {
+                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 &&
+                       (is_valid_char_for_base(ret = get_character(state), base) ||
+                        (base == 16 && buffer_index == 1 && (ret == 'x' || ret == 'X')))) {
                     if (ret == EOF) {
                         done = true;
                         break;

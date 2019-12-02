@@ -35,10 +35,10 @@ int main(int argc, char **argv) {
         ret = glob(argv[i], flags, globerr, &results);
         if (ret != 0) {
             fprintf(stderr, "%s: problem with %s (%s), stopping early\n", myname, argv[i],
-                /* ugly: */
-                (ret == GLOB_ABORTED
-                        ? "filesystem problem"
-                        : ret == GLOB_NOMATCH ? "no match of pattern" : ret == GLOB_NOSPACE ? "no dynamic memory" : "unknown problem"));
+                    /* ugly: */
+                    (ret == GLOB_ABORTED
+                         ? "filesystem problem"
+                         : ret == GLOB_NOMATCH ? "no match of pattern" : ret == GLOB_NOSPACE ? "no dynamic memory" : "unknown problem"));
             break;
         }
     }

@@ -13,8 +13,8 @@ static inline struct rtc_time read_rtc_time() {
     while (cmos_get(CMOS_STATUS_A) & CMOS_UPDATE_IN_PROGRESS)
         ;
 
-    struct rtc_time current = { cmos_get(CMOS_SECONDS), cmos_get(CMOS_MINUTES), cmos_get(CMOS_HOURS), cmos_get(CMOS_DAY_OF_MONTH),
-        cmos_get(CMOS_MONTH), cmos_get(CMOS_YEAR), cmos_get(CMOS_CENTURY) };
+    struct rtc_time current = { cmos_get(CMOS_SECONDS), cmos_get(CMOS_MINUTES), cmos_get(CMOS_HOURS),  cmos_get(CMOS_DAY_OF_MONTH),
+                                cmos_get(CMOS_MONTH),   cmos_get(CMOS_YEAR),    cmos_get(CMOS_CENTURY) };
 
     // Check for consistency if it really matters
 #ifdef NDEBUG
@@ -22,8 +22,8 @@ static inline struct rtc_time read_rtc_time() {
     do {
         memcpy(&last, &current, sizeof(struct rtc_time));
 
-        current = (struct rtc_time) { cmos_get(CMOS_SECONDS), cmos_get(CMOS_MINUTES), cmos_get(CMOS_HOURS), cmos_get(CMOS_DAY_OF_MONTH),
-            cmos_get(CMOS_MONTH), cmos_get(CMOS_YEAR), cmos_get(CMOS_CENTURY) };
+        current = (struct rtc_time) { cmos_get(CMOS_SECONDS), cmos_get(CMOS_MINUTES), cmos_get(CMOS_HOURS),  cmos_get(CMOS_DAY_OF_MONTH),
+                                      cmos_get(CMOS_MONTH),   cmos_get(CMOS_YEAR),    cmos_get(CMOS_CENTURY) };
     } while (!memcmp(&current, &last, sizeof(struct rtc_time)));
 #endif /* NDEBUG */
 
@@ -60,8 +60,8 @@ void init_cmos() {
     debug_log("CMOS Year: [ %u ]\n", time.year + time.century * 100U);
     debug_log("CMOS Century: [ %u ]\n", time.century);
 
-    time_t seconds_since_epoch = time.second + 60L * time.minute + 3600L * time.hour + 86400L * (time.day - 1L)
-        + 2629743L * (time.month - 1L) + 31556926L * (time.year + time.century * 100L - 1970L);
+    time_t seconds_since_epoch = time.second + 60L * time.minute + 3600L * time.hour + 86400L * (time.day - 1L) +
+                                 2629743L * (time.month - 1L) + 31556926L * (time.year + time.century * 100L - 1970L);
 
     pit_set_time(seconds_since_epoch);
 }

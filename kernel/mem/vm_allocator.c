@@ -314,7 +314,8 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
     to_add->start = (uintptr_t) addr;
     to_add->end = to_add->start + len;
     to_add->type = type;
-    to_add->flags = (prot & PROT_WRITE ? VM_WRITE : 0) | (prot & PROT_EXEC ? 0 : VM_NO_EXEC) | VM_USER;
+    to_add->flags =
+        (prot & PROT_WRITE ? VM_WRITE : 0) | (prot & PROT_EXEC ? 0 : VM_NO_EXEC) | (type == VM_TASK_STACK ? VM_STACK : 0) | VM_USER;
 
     struct process *process = get_current_task()->process;
     spin_lock(&process->lock);

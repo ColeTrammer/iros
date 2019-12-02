@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 int getaddrinfo(const char *__restrict node, const char *__restrict service, const struct addrinfo *__restrict hints,
-    struct addrinfo **__restrict res) {
+                struct addrinfo **__restrict res) {
     (void) service;
     (void) hints;
 
@@ -84,7 +84,7 @@ void freeaddrinfo(struct addrinfo *res) {
 }
 
 int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addrlen, char *__restrict host, socklen_t hostlen, char *__restrict serv,
-    socklen_t servlen, int flags) {
+                socklen_t servlen, int flags) {
     (void) flags;
     (void) host;
     (void) hostlen;

@@ -56,7 +56,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
 
 #ifdef PAGE_FAULT_DEBUG
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rsp,
-        task_state->stack_state.rip, address, task_state->error_code);
+              task_state->stack_state.rip, address, task_state->error_code);
 #endif /* PAGE_FAULT_DEBUG */
 
     // In this case we just need to map in a region that's allocation was put off by the kernel

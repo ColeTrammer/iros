@@ -6,12 +6,15 @@
 
 static int display_info(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf) {
     printf("%-3s %2d ",
-        (tflag == FTW_D) ? "d"
-                         : (tflag == FTW_DNR) ? "dnr"
-                                              : (tflag == FTW_DP)
-                    ? "dp"
-                    : (tflag == FTW_F) ? "f" : (tflag == FTW_NS) ? "ns" : (tflag == FTW_SL) ? "sl" : (tflag == FTW_SLN) ? "sln" : "???",
-        ftwbuf->level);
+           (tflag == FTW_D)
+               ? "d"
+               : (tflag == FTW_DNR)
+                     ? "dnr"
+                     : (tflag == FTW_DP)
+                           ? "dp"
+                           : (tflag == FTW_F) ? "f"
+                                              : (tflag == FTW_NS) ? "ns" : (tflag == FTW_SL) ? "sl" : (tflag == FTW_SLN) ? "sln" : "???",
+           ftwbuf->level);
 
     if (tflag == FTW_NS)
         printf("-------");

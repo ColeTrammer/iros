@@ -8,16 +8,13 @@
 namespace LIIM {
 
 template<typename K, typename V> struct HashMapObj {
-    HashMapObj(const K& key, const V& val)
-        : m_key(key)
-        , m_value(val) {
+    HashMapObj(const K& key, const V& val) : m_key(key), m_value(val) {
     }
 
     ~HashMapObj() {
     }
 
-    HashMapObj(const HashMapObj& other)
-        : HashMapObj(other.m_key, other.m_value) {
+    HashMapObj(const HashMapObj& other) : HashMapObj(other.m_key, other.m_value) {
     }
 
     K m_key;
@@ -26,8 +23,7 @@ template<typename K, typename V> struct HashMapObj {
 
 template<typename K, typename V> class HashMap {
 public:
-    explicit HashMap(int num_buckets = 20)
-        : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets)) {
+    explicit HashMap(int num_buckets = 20) : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets)) {
         for (int i = 0; i < num_buckets; i++) {
             m_buckets.add(LinkedList<HashMapObj<K, V>>());
         }

@@ -46,10 +46,10 @@ struct tcp_packet {
 } __attribute__((packed));
 
 ssize_t net_send_tcp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port,
-    uint32_t sequence_number, uint32_t ack_num, union tcp_flags flags, uint16_t len, const void *payload);
+                     uint32_t sequence_number, uint32_t ack_num, union tcp_flags flags, uint16_t len, const void *payload);
 void net_tcp_recieve(const struct tcp_packet *packet, size_t len);
 void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16_t dest_port, uint32_t sequence, uint32_t ack_num,
-    union tcp_flags flags, uint16_t win_size, uint16_t payload_length, const void *payload);
+                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, const void *payload);
 
 void net_tcp_log(const struct tcp_packet *packet);
 

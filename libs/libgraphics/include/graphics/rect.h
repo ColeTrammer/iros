@@ -4,18 +4,10 @@
 
 class Rect {
 public:
-    Rect(int x, int y, int width, int height)
-        : m_x(x)
-        , m_y(y)
-        , m_width(width)
-        , m_height(height) {
+    Rect(int x, int y, int width, int height) : m_x(x), m_y(y), m_width(width), m_height(height) {
     }
 
-    Rect(const Rect& other)
-        : m_x(other.x())
-        , m_y(other.y())
-        , m_width(other.width())
-        , m_height(other.height()) {
+    Rect(const Rect& other) : m_x(other.x()), m_y(other.y()), m_width(other.width()), m_height(other.height()) {
     }
 
     int x() const {
