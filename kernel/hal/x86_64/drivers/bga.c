@@ -71,7 +71,7 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
     size_t total_size = sizeof(uint32_t) * (size_t) data.x_res * (size_t) data.y_res * (size_t) 2;
     debug_log("Framebuffer total size: [ %lu ]\n", total_size);
 
-    struct vm_region *region = map_region(addr, len, prot);
+    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     region->backing_inode = device->inode;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         mark_used(data.frame_buffer + (i - region->start), PAGE_SIZE);

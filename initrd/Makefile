@@ -36,6 +36,7 @@ $(BUILDDIR)/initrd/programs/hash_map_test \
 $(BUILDDIR)/initrd/programs/linked_list_test_a \
 $(BUILDDIR)/initrd/programs/local_socket_client_test \
 $(BUILDDIR)/initrd/programs/local_socket_server_test \
+$(BUILDDIR)/initrd/programs/mmap_test \
 $(BUILDDIR)/initrd/programs/nftw_test \
 $(BUILDDIR)/initrd/programs/pipe_test \
 $(BUILDDIR)/initrd/programs/queue_test \

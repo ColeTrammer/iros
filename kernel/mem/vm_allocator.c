@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -7,6 +8,7 @@
 #include <stdbool.h>
 #include <sys/mman.h>
 
+#include <kernel/fs/vfs.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
@@ -16,6 +18,8 @@
 #include <kernel/proc/task.h>
 #include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
+
+#define MMAP_DEBUG
 
 static struct vm_region *kernel_vm_list = NULL;
 #if ARCH==X86_64
@@ -176,7 +180,118 @@ void *map_file(off_t length, uint64_t flags) {
     return (void*) to_add->start;
 }
 
-struct vm_region *map_region(void *addr, size_t len, int prot) {
+int unmap_range(uintptr_t addr, size_t length) {
+    if (addr % PAGE_SIZE != 0) {
+        return -EINVAL;
+    }
+
+    if (length == 0) {
+        return 0;
+    }
+
+    length = ((length + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    struct process *process = get_current_task()->process;
+    spin_lock(&process->lock);
+
+    struct vm_region *r;
+    while ((r = find_vm_region_in_range(addr, addr + length))) {
+        if (r->start < addr && r->end > addr + length) {
+#ifdef MMAP_DEBUG
+            debug_log("Removing region (split): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+            if (r->type != VM_PROCESS_ANON_MAPPING) {
+                break;
+            }
+
+            for (uintptr_t i = addr; i < addr + length; i += PAGE_SIZE) {
+                unmap_page(i);
+            }
+
+            struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
+            to_add->start = addr + length;
+            to_add->end = r->end;
+            to_add->flags = r->flags;
+            to_add->type = r->type;
+            process->process_memory = add_vm_region(process->process_memory, to_add);
+
+            r->end = addr;
+            break;
+        }
+
+        if (r->start < addr) {
+#ifdef MMAP_DEBUG
+            debug_log("Removing region (start): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+            assert(r->end >= addr);
+            // We can't do partial unmaps for non anonymous mappings yet
+            if (r->type != VM_PROCESS_ANON_MAPPING) {
+                goto unmap_range_start_finish;
+            }
+
+            while (r->end != addr) {
+                r->end -= PAGE_SIZE;
+                unmap_page(r->end);
+            }
+        
+        unmap_range_start_finish:
+            length -= (r->end - addr);
+            addr = r->end;
+            continue;
+        }
+
+        if (r->end > addr + length) {
+#ifdef MMAP_DEBUG
+            debug_log("Removing region (end): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+            assert(r->start <= addr + length);
+            if (r->type != VM_PROCESS_ANON_MAPPING) {
+                break;
+            }
+
+            while (r->start != addr + length) {
+                unmap_page(r->start);
+                r->start += PAGE_SIZE;
+            }
+
+            // We are definately at the end
+            break;
+        }
+
+#ifdef MMAP_DEBUG
+        debug_log("Removing region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+        if (r->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+            fs_munmap((void*) r->start, r->start + r->end);
+        } else {
+            for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
+                unmap_page(i);
+            }
+        }
+
+        if (r == process->process_memory) {
+            process->process_memory = r->next;
+        } else {
+            struct vm_region *prev = process->process_memory;
+            while (prev->next != r) {
+                prev = prev->next;
+            }
+
+            prev->next = r->next;
+        }
+
+        free(r);
+    }
+
+    spin_unlock(&process->lock);
+    return 0;
+}
+
+struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
     len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
 
     if (addr != NULL) {
@@ -198,7 +313,7 @@ struct vm_region *map_region(void *addr, size_t len, int prot) {
     struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
     to_add->start = (uintptr_t) addr;
     to_add->end = to_add->start + len;
-    to_add->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
+    to_add->type = type;
     to_add->flags = (prot & PROT_WRITE ? VM_WRITE : 0) |
                     (prot & PROT_EXEC ? 0 : VM_NO_EXEC) |
                     VM_USER;
@@ -207,6 +322,10 @@ struct vm_region *map_region(void *addr, size_t len, int prot) {
     spin_lock(&process->lock);
     process->process_memory = add_vm_region(process->process_memory, to_add);
     spin_unlock(&process->lock);
+
+#ifdef MMAP_DEBUG
+    debug_log("Mapping region: [ %#.16lX, %#.16lX ]\n", to_add->start, to_add->end);
+#endif /* MMAP_DEBUG */
     return to_add;
 }
 
@@ -294,7 +413,7 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
     while (region) {
         if (((start <= region->start) && (region->end <= end))   || // start-end contain the region
             ((start >= region->start) && (start <= region->end)) || // region contains start
-            ((end   >= region->end)   && (end   <= region->end))    // region contains end
+            ((end   >= region->start) && (end   <= region->end))    // region contains end
         ) {
             return region;
         }
@@ -305,7 +424,7 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
     while (region) {
         if (((start <= region->start) && (region->end <= end))   || // start-end contain the region
             ((start >= region->start) && (start <= region->end)) || // region contains start
-            ((end   >= region->end)   && (end   <= region->end))    // region contains end
+            ((end   >= region->start) && (end   <= region->end))    // region contains end
         ) {
             return region;
         }

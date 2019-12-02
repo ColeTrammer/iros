@@ -57,7 +57,7 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
 
     (void) device;
 
-    struct vm_region *region = map_region(addr, len, prot);
+    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     region->backing_inode = device->inode;
     map_phys_page(get_phys_addr((uintptr_t) vga_buffer), region->start, region->flags);
     return (intptr_t) region->start;

@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 #include <sys/times.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -1202,6 +1203,29 @@ void arch_sys_mmap(struct task_state *task_state) {
     int fd = (int) task_state->cpu_state.r9;
     off_t offset = (off_t) task_state->cpu_state.r10;
 
+    if (length == 0) {
+        SYS_RETURN(-EINVAL);
+    }
+
+    if (flags & MAP_ANONYMOUS) {
+        if (!(flags & MAP_PRIVATE)) {
+            SYS_RETURN(-EINVAL);
+        }
+
+        struct vm_region *region = map_region(addr, length, prot, VM_PROCESS_ANON_MAPPING);
+        if (region == NULL) {
+            SYS_RETURN(-ENOMEM);
+        }
+
+        for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
+            map_page(i, region->flags);
+        }
+
+        // Not sure if this is required
+        memset((void*) region->start, 0, region->end - region->start);
+        SYS_RETURN(region->start);
+    }
+
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EINVAL);
     }
@@ -1217,7 +1241,7 @@ void arch_sys_munmap(struct task_state *task_state) {
     void *addr = (void*) task_state->cpu_state.rsi;
     size_t length = (size_t) task_state->cpu_state.rdx;
 
-    SYS_RETURN(fs_munmap(addr, length));
+    SYS_RETURN(unmap_range((uintptr_t) addr, length));
 }
 
 void arch_sys_rename(struct task_state *task_state) {
