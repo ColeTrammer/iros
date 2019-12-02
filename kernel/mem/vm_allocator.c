@@ -200,7 +200,8 @@ struct vm_region *map_region(void *addr, size_t len, int prot) {
     to_add->end = to_add->start + len;
     to_add->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
     to_add->flags = (prot & PROT_WRITE ? VM_WRITE : 0) |
-                    (prot & PROT_EXEC ? 0 : VM_NO_EXEC);
+                    (prot & PROT_EXEC ? 0 : VM_NO_EXEC) |
+                    VM_USER;
 
     struct process *process = get_current_task()->process;
     spin_lock(&process->lock);
