@@ -6,9 +6,9 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 
 #define PCI_CONFIG_ADDRESS 0xCF8
-#define PCI_CONFIG_DATA 0xCFC
+#define PCI_CONFIG_DATA    0xCFC
 
-#define PCI_BUS_MAX 256
+#define PCI_BUS_MAX  256
 #define PCI_SLOT_MAX 32
 
 #define PCI_VENDOR_INTEL       0x8086
@@ -38,7 +38,7 @@ struct pci_configuration {
 
     uint32_t cis_pointer;
 
-    uint16_t subsystem_vender_id; 
+    uint16_t subsystem_vender_id;
     uint16_t subsystem_id;
 
     uint32_t expansion_rom_address;
@@ -59,7 +59,8 @@ struct pci_configuration {
 } __attribute__((packed));
 
 static inline uint32_t pci_make_config_address(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
-    return (uint32_t) (0x80000000U | (((uint32_t) bus) << 16U) | (((uint32_t) slot) << 11U) | (((uint32_t) func) << 8U) | (((uint32_t) offset) & 0xFC));
+    return (uint32_t)(
+        0x80000000U | (((uint32_t) bus) << 16U) | (((uint32_t) slot) << 11U) | (((uint32_t) func) << 8U) | (((uint32_t) offset) & 0xFC));
 }
 
 static inline uint16_t pci_read_config_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
@@ -70,7 +71,7 @@ static inline uint16_t pci_read_config_word(uint8_t bus, uint8_t slot, uint8_t f
     uint32_t value = inl(PCI_CONFIG_DATA);
 
     // If the offset is not aligned, shift it over 16 bits.
-    return (uint16_t) ((value >> ((offset & 2) * 8)) & 0xFFFF);
+    return (uint16_t)((value >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
 static inline void pci_write_config_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint16_t value) {
@@ -96,7 +97,7 @@ static inline uint16_t pci_get_vendor(uint8_t bus, uint8_t slot) {
 }
 
 static inline void pci_read_configuation(uint8_t bus, uint8_t slot, uint8_t func, struct pci_configuration *config) {
-    uint16_t *buffer = (uint16_t*) config;
+    uint16_t *buffer = (uint16_t *) config;
     for (uint16_t offset = 0; offset < sizeof(struct pci_configuration); offset += sizeof(uint16_t)) {
         buffer[offset / sizeof(uint16_t)] = pci_read_config_word(bus, slot, func, offset);
     }

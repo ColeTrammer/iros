@@ -1,8 +1,8 @@
 #ifndef _KERNEL_FS_FILE_H
 #define _KERNEL_FS_FILE_H 1
 
-#include <sys/types.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #include <kernel/fs/inode.h>
 #include <kernel/util/spinlock.h>
@@ -18,7 +18,7 @@ struct file_operations {
 
 struct file {
     ino_t inode_idenifier;
-    
+
     off_t length;
     uintptr_t start;
     uintptr_t position;
@@ -29,7 +29,7 @@ struct file {
     int fd_flags;
     int open_flags;
 
-#define FS_FILE_CAN_READ 1
+#define FS_FILE_CAN_READ  1
 #define FS_FILE_CAN_WRITE 2
     int abilities;
 

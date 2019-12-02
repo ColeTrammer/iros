@@ -1,8 +1,8 @@
 #ifndef _KERNEL_FS_VFS_H
 #define _KERNEL_FS_VFS_H 1
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>

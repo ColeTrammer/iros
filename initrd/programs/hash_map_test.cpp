@@ -1,8 +1,7 @@
 #include <liim/hash_map.h>
 #include <stdio.h>
 
-int main()
-{
+int main() {
     HashMap<int, const char*> map;
 
     map.put(0, "First");

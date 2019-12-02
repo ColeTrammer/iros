@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 
 char *strrchr(const char *s, int c) {
     char val = (char) c;
@@ -13,5 +13,5 @@ char *strrchr(const char *s, int c) {
         }
     }
 
-    return found ? (char*) s + last_occurence : NULL;
+    return found ? (char *) s + last_occurence : NULL;
 }

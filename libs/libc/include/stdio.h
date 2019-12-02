@@ -17,7 +17,7 @@
 
 #define L_tmpnam 16
 #define P_tmpdir "/tmp"
-#define TMP_MAX 25
+#define TMP_MAX  25
 
 #define EOF (-1)
 
@@ -27,11 +27,11 @@ extern "C" {
 
 typedef long fpos_t;
 
-typedef struct { 
+typedef struct {
     char *buffer;
     fpos_t pos;
     off_t length;
-    
+
     int fd;
     int flags;
     int eof;
@@ -51,7 +51,7 @@ extern FILE *stdout;
 extern FILE *stdin;
 #define stdin stdin
 
-extern FILE* stderr;
+extern FILE *stderr;
 #define stderr stderr
 
 #endif /* __is_libk */
@@ -60,25 +60,25 @@ int fclose(FILE *stream);
 int fflush(FILE *stream);
 FILE *fopen(const char *__restrict path, const char *__restrict mode);
 FILE *fdopen(int fd, const char *mode);
-FILE* freopen(const char *path, const char *mode, FILE *stream);
+FILE *freopen(const char *path, const char *mode, FILE *stream);
 void setbuf(FILE *stream, char *buf);
 int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 
-int fprintf(FILE *stream, const char *__restrict format, ...) __attribute__((format (printf, 2, 3)));
-int fscanf(FILE* stream, const char *__restrict format, ...) __attribute__((format (scanf, 2, 3)));
-int printf(const char *__restrict format, ...) __attribute__((format (printf, 1, 2)));
-int scanf(const char *__restrict format, ...) __attribute__((format (scanf, 1, 2)));
-int snprintf(char *__restrict str, size_t size, const char *__restrict format, ...) __attribute__((format (printf, 3, 4)));
-int sprintf(char *__restrict str, const char *__restrict format, ...) __attribute__((format (printf, 2, 3)));
-int sscanf(const char *__restrict src, const char *__restrict format, ...) __attribute__((format (scanf, 2, 3)));
+int fprintf(FILE *stream, const char *__restrict format, ...) __attribute__((format(printf, 2, 3)));
+int fscanf(FILE *stream, const char *__restrict format, ...) __attribute__((format(scanf, 2, 3)));
+int printf(const char *__restrict format, ...) __attribute__((format(printf, 1, 2)));
+int scanf(const char *__restrict format, ...) __attribute__((format(scanf, 1, 2)));
+int snprintf(char *__restrict str, size_t size, const char *__restrict format, ...) __attribute__((format(printf, 3, 4)));
+int sprintf(char *__restrict str, const char *__restrict format, ...) __attribute__((format(printf, 2, 3)));
+int sscanf(const char *__restrict src, const char *__restrict format, ...) __attribute__((format(scanf, 2, 3)));
 
-int vfprintf(FILE *stream, const char *__restrict format, va_list args) __attribute__((format (printf, 2, 0)));
-int vfscanf(FILE* stream, const char *__restrict format, va_list args) __attribute__((format (scanf, 2, 0)));
-int vprintf(const char *__restrict format, va_list args) __attribute__((format (printf, 1, 0)));
-int vscanf(const char *__restrict format, va_list args) __attribute__((format (scanf, 1, 0)));
-int vsnprintf(char *__restrict str, size_t size, const char *__restrict format, va_list args) __attribute__((format (printf, 3, 0)));
-int vsprintf(char *__restrict str, const char *__restrict format, va_list args) __attribute__((format (printf, 2, 0)));
-int vsscanf(const char *__restrict src, const char *__restrict format, va_list args) __attribute__((format (scanf, 2, 0)));
+int vfprintf(FILE *stream, const char *__restrict format, va_list args) __attribute__((format(printf, 2, 0)));
+int vfscanf(FILE *stream, const char *__restrict format, va_list args) __attribute__((format(scanf, 2, 0)));
+int vprintf(const char *__restrict format, va_list args) __attribute__((format(printf, 1, 0)));
+int vscanf(const char *__restrict format, va_list args) __attribute__((format(scanf, 1, 0)));
+int vsnprintf(char *__restrict str, size_t size, const char *__restrict format, va_list args) __attribute__((format(printf, 3, 0)));
+int vsprintf(char *__restrict str, const char *__restrict format, va_list args) __attribute__((format(printf, 2, 0)));
+int vsscanf(const char *__restrict src, const char *__restrict format, va_list args) __attribute__((format(scanf, 2, 0)));
 
 int fgetc(FILE *stream);
 char *fgets(char *__restrict s, int size, FILE *__restrict stream);

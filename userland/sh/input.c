@@ -1,24 +1,19 @@
-#include "builtin.h"
 #include "input.h"
+#include "builtin.h"
 
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <errno.h>
-#include <ctype.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
 
-enum line_status {
-    DONE,
-    UNFINISHED_QUOTE,
-    ESCAPED_NEWLINE
-};
+enum line_status { DONE, UNFINISHED_QUOTE, ESCAPED_NEWLINE };
 
 struct suggestion {
     size_t length;
@@ -51,7 +46,7 @@ static char *__getcwd() {
     size_t size = 50;
     char *buffer = malloc(size);
     char *cwd = getcwd(buffer, size);
-    
+
     while (cwd == NULL) {
         free(buffer);
         size *= 2;
@@ -63,9 +58,9 @@ static char *__getcwd() {
 }
 
 static void print_ps1_prompt() {
-	char *cwd = __getcwd();
-	fprintf(stderr, "\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
-	free(cwd);
+    char *cwd = __getcwd();
+    fprintf(stderr, "\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
+    free(cwd);
 }
 
 static char *scandir_match_string = NULL;
@@ -76,7 +71,7 @@ static int scandir_filter(const struct dirent *d) {
 }
 
 static int suggestion_compar(const void *a, const void *b) {
-    return strcmp(((const struct suggestion*) a)->suggestion, ((const struct suggestion*) b)->suggestion);
+    return strcmp(((const struct suggestion *) a)->suggestion, ((const struct suggestion *) b)->suggestion);
 }
 
 static void init_suggestion(struct suggestion *suggestions, size_t at, size_t suggestion_index, const char *name, const char *post) {
@@ -100,8 +95,8 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
         scandir_match_string = line;
         struct dirent **list;
         int num_found = scandir(search_path, &list, scandir_filter, alphasort);
-        
-        if (num_found > 0) { 
+
+        if (num_found > 0) {
             suggestions = realloc(suggestions, ((*num_suggestions) + num_found) * sizeof(struct suggestion));
 
             for (int i = 0; i < num_found; i++) {
@@ -163,7 +158,7 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
     }
 
     scandir_match_string = currname;
-    struct dirent **list;    
+    struct dirent **list;
     *num_suggestions = scandir(dirname, &list, scandir_filter, alphasort);
     if (*num_suggestions <= 0) {
         free(to_match);
@@ -196,11 +191,11 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
         }
         free(list[i]);
         continue;
-    
+
     suggestions_skip_entry:
         free(path);
         (*num_suggestions)--;
-        memmove(list + i, list + i + 1, ((*num_suggestions) - i) * sizeof(struct dirent*));
+        memmove(list + i, list + i + 1, ((*num_suggestions) - i) * sizeof(struct dirent *));
         i--;
         continue;
     }
@@ -227,7 +222,8 @@ static void free_suggestions(struct suggestion *suggestions, size_t num_suggesti
 static size_t longest_common_starting_substring_length(struct suggestion *suggestions, size_t num_suggestions) {
     struct suggestion *last = &suggestions[num_suggestions - 1];
     size_t length = 0;
-    while (suggestions->suggestion[length] != '\0' && suggestions->suggestion[length] != '\0' && suggestions->suggestion[length] == last->suggestion[length]) {
+    while (suggestions->suggestion[length] != '\0' && suggestions->suggestion[length] != '\0'
+        && suggestions->suggestion[length] == last->suggestion[length]) {
         length++;
     }
     return length;
@@ -279,7 +275,7 @@ static void history_add(char *item) {
 
     if (history_length == history_max) {
         free(history[0]);
-        memmove(history, history + 1, (history_max - 1) * sizeof(char*));
+        memmove(history, history + 1, (history_max - 1) * sizeof(char *));
     }
 
     history[history_length] = strdup(item);
@@ -289,7 +285,7 @@ static void history_add(char *item) {
 }
 
 static char *get_tty_input(FILE *tty) {
-	print_ps1_prompt();
+    print_ps1_prompt();
 
     size_t buffer_max = 1024;
     size_t buffer_index = 0;
@@ -336,7 +332,7 @@ static char *get_tty_input(FILE *tty) {
             size_t num_suggestions = 0;
             buffer[buffer_length] = '\0'; // Ensure buffer is null terminated
             struct suggestion *suggestions = get_suggestions(buffer, &num_suggestions);
-            
+
             if (num_suggestions == 0) {
                 consecutive_tab_presses = 0;
                 continue;
@@ -354,8 +350,8 @@ static char *get_tty_input(FILE *tty) {
                     }
 
                     fprintf(stderr, "%c", '\n');
-					print_ps1_prompt();
-					fprintf(stderr, "%s", buffer);
+                    print_ps1_prompt();
+                    fprintf(stderr, "%s", buffer);
                     goto cleanup_suggestions;
                 }
             } else {
@@ -378,7 +374,7 @@ static char *get_tty_input(FILE *tty) {
             write(fileno(tty), f_buf, strlen(f_buf));
 
             write(fileno(tty), suggestions->suggestion, suggestions->length);
-            buffer_index = buffer_length = suggestions->index + suggestions->length;              
+            buffer_index = buffer_length = suggestions->index + suggestions->length;
 
         cleanup_suggestions:
             free_suggestions(suggestions, num_suggestions);
@@ -441,8 +437,10 @@ static char *get_tty_input(FILE *tty) {
                     case 'C': {
                         // Control right arrow
                         size_t index = buffer_index;
-                        while (index < buffer_length && !isalpha(buffer[++index]));
-                        while (index < buffer_length && isalpha(buffer[++index]));
+                        while (index < buffer_length && !isalpha(buffer[++index]))
+                            ;
+                        while (index < buffer_length && isalpha(buffer[++index]))
+                            ;
                         size_t delta = index - buffer_index;
                         if (delta != 0) {
                             buffer_index = index;
@@ -456,8 +454,11 @@ static char *get_tty_input(FILE *tty) {
                     case 'D': {
                         // Control left arrow
                         size_t index = buffer_index;
-                        while (index > buffer_min_index && !isalpha(buffer[--index]));
-                        while (index > buffer_min_index && isalpha(buffer[index - 1])) { index--; }
+                        while (index > buffer_min_index && !isalpha(buffer[--index]))
+                            ;
+                        while (index > buffer_min_index && isalpha(buffer[index - 1])) {
+                            index--;
+                        }
                         size_t delta = buffer_index - index;
                         if (delta != 0) {
                             buffer_index = index;
@@ -581,9 +582,8 @@ static char *get_tty_input(FILE *tty) {
             continue;
         }
 
-
         // Pressed back space
-        if (c  == 127) {
+        if (c == 127) {
             if (buffer_index > buffer_min_index) {
                 memmove(buffer + buffer_index - 1, buffer + buffer_index, buffer_length - buffer_index);
                 buffer[buffer_length - 1] = ' ';
@@ -727,7 +727,7 @@ char *input_get_line(struct input_source *source) {
     switch (source->mode) {
         case INPUT_TTY:
             enable_raw_mode();
-            char * res = get_tty_input(source->source.tty);
+            char *res = get_tty_input(source->source.tty);
             disable_raw_mode();
             return res;
         case INPUT_FILE:
@@ -759,7 +759,7 @@ void init_history() {
         setenv("HISTSIZE", "100", 0);
     }
 
-    history = calloc(history_max, sizeof(char*));
+    history = calloc(history_max, sizeof(char *));
 
     char *hist_file = getenv("HISTFILE");
     if (!hist_file) {

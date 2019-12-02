@@ -4,9 +4,9 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
+#include <kernel/fs/dev.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/bga.h>
-#include <kernel/fs/dev.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
@@ -23,13 +23,9 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
 
 static struct bga_data data = { 0 };
 
-struct device_ops bga_ops = {
-    NULL, NULL, NULL, NULL, NULL, NULL, bga_ioctl, NULL, bga_mmap
-};
+struct device_ops bga_ops = { NULL, NULL, NULL, NULL, NULL, NULL, bga_ioctl, NULL, bga_mmap };
 
-struct device bga_device = {
-    0x4200, S_IFCHR, "fb0", false, &bga_ops, NULL, &data
-};
+struct device bga_device = { 0x4200, S_IFCHR, "fb0", false, &bga_ops, NULL, &data };
 
 static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
     assert(device);

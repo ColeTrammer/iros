@@ -13,7 +13,7 @@ int isspace(int c) {
 }
 
 int isdigit(int c) {
-    return ('0'<= c && c <= '9') ? 1 : 0;
+    return ('0' <= c && c <= '9') ? 1 : 0;
 }
 
 int iscntrl(int c) {

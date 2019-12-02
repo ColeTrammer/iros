@@ -3,11 +3,8 @@
 #include <signal.h>
 #include <unistd.h>
 
-int main()
-{
-    signal(SIGINT, [](int) {
-        write(2, "\n", 1);
-    });
+int main() {
+    signal(SIGINT, [](int) { write(2, "\n", 1); });
 
     sigset_t mask;
     sigfillset(&mask);

@@ -15,12 +15,10 @@ typedef struct __jmp_buf jmp_buf[1];
 typedef struct __jmp_buf sigjmp_buf[1];
 
 int setjmp(jmp_buf buf);
-__attribute__((noreturn))
-void longjmp(jmp_buf buf, int val);
+__attribute__((noreturn)) void longjmp(jmp_buf buf, int val);
 
 int sigsetjmp(sigjmp_buf env, int val);
-__attribute__((noreturn))
-void siglongjmp(sigjmp_buf env, int val);
+__attribute__((noreturn)) void siglongjmp(sigjmp_buf env, int val);
 
 #ifdef __cplusplus
 }

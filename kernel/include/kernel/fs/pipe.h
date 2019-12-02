@@ -6,7 +6,7 @@
 #include <kernel/fs/inode.h>
 
 #define PIPE_DEFAULT_BUFFER_SIZE 0x1000
-#define PIPE_DEVICE 3
+#define PIPE_DEVICE              3
 
 struct pipe_data {
     char *buffer;

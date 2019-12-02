@@ -137,25 +137,17 @@ struct key_event {
 
     enum key key;
 
-#define KEY_UP (1U << 1U)
-#define KEY_DOWN (1U << 2U)
+#define KEY_UP         (1U << 1U)
+#define KEY_DOWN       (1U << 2U)
 #define KEY_CONTROL_ON (1U << 3U)
-#define KEY_SHIFT_ON (1U << 4U)
-#define KEY_ALT_ON (1U << 5U)
+#define KEY_SHIFT_ON   (1U << 4U)
+#define KEY_ALT_ON     (1U << 5U)
     unsigned int flags;
 };
 
-enum scroll_state {
-    SCROLL_NONE,
-    SCROLL_UP,
-    SCROLL_DOWN
-};
+enum scroll_state { SCROLL_NONE, SCROLL_UP, SCROLL_DOWN };
 
-enum mouse_button_state {
-    MOUSE_NO_CHANGE,
-    MOUSE_DOWN,
-    MOUSE_UP
-};
+enum mouse_button_state { MOUSE_NO_CHANGE, MOUSE_DOWN, MOUSE_UP };
 
 struct mouse_event {
     enum scroll_state scroll_state;

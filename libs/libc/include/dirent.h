@@ -28,7 +28,8 @@ DIR *opendir(const char *path);
 struct dirent *readdir(DIR *d);
 
 int alphasort(const struct dirent **a, const struct dirent **b);
-int scandir(const char *dirp, struct dirent ***list, int (*filter)(const struct dirent *d), int (*conpar)(const struct dirent **a, const struct dirent **b));
+int scandir(const char *dirp, struct dirent ***list, int (*filter)(const struct dirent *d),
+    int (*conpar)(const struct dirent **a, const struct dirent **b));
 
 #ifdef __cplusplus
 }

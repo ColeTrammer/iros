@@ -1,16 +1,16 @@
 #ifndef _KERNEL_FS_EXT2_H
 #define _KERNEL_FS_EXT2_H 1
 
-#include <sys/types.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/tnode.h>
 #include <kernel/util/hash_map.h>
 
 #define EXT2_SUPER_BLOCK_OFFSET 1024
-#define EXT2_SUPER_BLOCK_SIZE 1024
+#define EXT2_SUPER_BLOCK_SIZE   1024
 
 #define EXT2_ROOT_INODE 2
 
@@ -36,17 +36,17 @@ struct ext2_raw_super_block {
 #define EXT2_FS_STATE_CLEAN 1
 #define EXT2_FS_STATE_ERROR 2
     uint16_t fs_state;
-#define EXT2_FS_IGNORE_ERROR 1
+#define EXT2_FS_IGNORE_ERROR         1
 #define EXT2_FS_REMOUNT_AS_READ_ONLY 2
-#define EXT2_FS_KERNEL_PANIC 3
+#define EXT2_FS_KERNEL_PANIC         3
     uint16_t what_to_do_if_error;
     uint16_t version_minor;
     uint32_t fsck_time;
     uint32_t fsck_interval;
-#define EXT2_CREATOR_LINUX 0
-#define EXT2_CREATOR_GNU_HURD 1
-#define EXT2_CREATOR_MASIX 2
-#define EXT2_CREATOR_FREEBSD 3
+#define EXT2_CREATOR_LINUX     0
+#define EXT2_CREATOR_GNU_HURD  1
+#define EXT2_CREATOR_MASIX     2
+#define EXT2_CREATOR_FREEBSD   3
 #define EXT2_CREATOR_BSD_LITES 4
     uint32_t os_id;
     uint32_t version_major;
@@ -56,20 +56,20 @@ struct ext2_raw_super_block {
     uint16_t inode_size;
     uint16_t block_group_of_this_super_block;
 #define EXT2_PREALLOCATE_BLOCKS_FOR_DIRECTORIES 1
-#define EXT2_AFS_SERVER_INODES 2
-#define EXT2_FS_JOURNAL 4
-#define EXT2_EXTENDED_INODES 8
-#define EXT2_FS_CAN_RESIZE 16
-#define EXT2_DIRECTORIES_USE_HASH_INDEX 32
+#define EXT2_AFS_SERVER_INODES                  2
+#define EXT2_FS_JOURNAL                         4
+#define EXT2_EXTENDED_INODES                    8
+#define EXT2_FS_CAN_RESIZE                      16
+#define EXT2_DIRECTORIES_USE_HASH_INDEX         32
     uint32_t optional_features_present;
-#define EXT2_COMPRESSION 1
+#define EXT2_COMPRESSION           1
 #define EXT2_DIRECTORIES_HAVE_TYPE 2
-#define EXT2_NEEDS_JOURNAL_REPLAY 4
-#define EXT2_USES_JOURNAL_DEVICE 8
+#define EXT2_NEEDS_JOURNAL_REPLAY  4
+#define EXT2_USES_JOURNAL_DEVICE   8
     uint32_t required_features_present;
 #define EXT2_SPARSE_SUPERBLOCKS_AND_GROUP_DESCRIPTORS 1
-#define EXT2_64_BIT_FILE_SIZE 2
-#define EXT2_BINARY_TREE_DIRECTORIES 4
+#define EXT2_64_BIT_FILE_SIZE                         2
+#define EXT2_BINARY_TREE_DIRECTORIES                  4
     uint32_t required_features_for_write;
     uint8_t fs_id[16];
     uint8_t volumne_name[16];
@@ -125,19 +125,19 @@ struct raw_dirent {
     uint16_t size;
     uint8_t name_length;
 
-#define EXT2_DIRENT_TYPE_UNKNOWN 0
-#define EXT2_DIRENT_TYPE_REGULAR 1
-#define EXT2_DIRENT_TYPE_DIRECTORY 2
+#define EXT2_DIRENT_TYPE_UNKNOWN          0
+#define EXT2_DIRENT_TYPE_REGULAR          1
+#define EXT2_DIRENT_TYPE_DIRECTORY        2
 #define EXT2_DIRENT_TYPE_CHARACTER_DEVICE 3
-#define EXT2_DIRENT_TYPE_BLOCK 4
-#define EXT2_DIRENT_TYPE_FIFO 5
-#define EXT2_DIRENT_TYPE_SOCKET 7
-#define EXT2_DIRENT_TYPE_SYMBOLIC_LINK 7
+#define EXT2_DIRENT_TYPE_BLOCK            4
+#define EXT2_DIRENT_TYPE_FIFO             5
+#define EXT2_DIRENT_TYPE_SOCKET           7
+#define EXT2_DIRENT_TYPE_SYMBOLIC_LINK    7
     uint8_t type;
     char name[];
 } __attribute__((packed));
 
-#define EXT2_NEXT_DIRENT(dirent) ((struct raw_dirent*) (((uintptr_t) (dirent)) + (dirent)->size))
+#define EXT2_NEXT_DIRENT(dirent) ((struct raw_dirent *) (((uintptr_t)(dirent)) + (dirent)->size))
 
 struct ext2_sb_data {
     struct ext2_raw_super_block *sb;

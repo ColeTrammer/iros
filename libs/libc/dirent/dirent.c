@@ -1,8 +1,8 @@
 #include <dirent.h>
-#include <string.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
 
 int dirfd(DIR *dir) {
@@ -43,7 +43,7 @@ struct dirent *readdir(DIR *dir) {
     return &dir->entry;
 }
 
-int alphasort(const struct dirent**a, const struct dirent **b) {
+int alphasort(const struct dirent **a, const struct dirent **b) {
     return strcoll((*a)->d_name, (*b)->d_name);
 }
 
@@ -51,7 +51,8 @@ static size_t dirent_min_len(struct dirent *d) {
     return sizeof(ino_t) + strlen(d->d_name) + 1;
 }
 
-int scandir(const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *d), int (*compar)(const struct dirent **a, const struct dirent **b)) {
+int scandir(const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *d),
+    int (*compar)(const struct dirent **a, const struct dirent **b)) {
     DIR *d = opendir(dirp);
     if (d == NULL) {
         return -1;
@@ -65,7 +66,7 @@ int scandir(const char *dirp, struct dirent ***namelist, int (*filter)(const str
         if (!filter || filter(ent)) {
             if (count >= list_max) {
                 list_max += 20;
-                *namelist = realloc(*namelist, list_max * sizeof(struct dirent*));
+                *namelist = realloc(*namelist, list_max * sizeof(struct dirent *));
             }
 
             size_t dirent_len = dirent_min_len(ent);
@@ -77,7 +78,7 @@ int scandir(const char *dirp, struct dirent ***namelist, int (*filter)(const str
 
     closedir(d);
     if (compar) {
-        qsort(*namelist, count, sizeof(struct dirent*), (int (*)(const void*, const void*)) compar);
+        qsort(*namelist, count, sizeof(struct dirent *), (int (*)(const void *, const void *)) compar);
     }
     return count;
 }

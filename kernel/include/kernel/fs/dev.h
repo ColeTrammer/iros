@@ -6,17 +6,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/tnode.h>
-#include <kernel/fs/file.h>
 
 struct device;
 
 struct device_ops {
     struct file *(*open)(struct device *device, int flags, int *error);
     ssize_t (*read)(struct device *device, struct file *file, void *buffer, size_t len);
-    ssize_t (*write)(struct device *device, struct file *file, const void *buffer, size_t len); 
+    ssize_t (*write)(struct device *device, struct file *file, const void *buffer, size_t len);
     int (*close)(struct device *device);
     void (*add)(struct device *device);
     void (*remove)(struct device *device);

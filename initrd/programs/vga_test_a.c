@@ -7,8 +7,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/hal/input.h>
+#include <kernel/hal/x86_64/drivers/vga.h>
 
 int main() {
     int fb = open("/dev/fb0", O_RDWR);
@@ -38,7 +38,6 @@ int main() {
         int sfd = open(ptsname(mfd), O_RDWR);
         assert(sfd != -1);
 
-
         for (;;) {
             char buf[50] = { 0 };
             read(sfd, buf, 50);
@@ -51,7 +50,7 @@ int main() {
 
     int kfd = open("/dev/keyboard", O_RDONLY);
     struct key_event event;
-    
+
     int x = 0;
     int y = 0;
     for (;;) {

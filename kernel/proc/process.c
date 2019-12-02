@@ -18,18 +18,18 @@ static struct hash_map *map;
 
 static int hash(void *pid, int num_buckets) {
     assert(pid);
-    return *((pid_t*) pid) % num_buckets;
+    return *((pid_t *) pid) % num_buckets;
 }
 
 static int equals(void *p1, void *p2) {
     assert(p1);
     assert(p2);
-    return *((pid_t*) p1) == *((pid_t*) p2);
+    return *((pid_t *) p1) == *((pid_t *) p2);
 }
 
 static void *key(void *p) {
     assert(p);
-    return &((struct process*) p)->pid;
+    return &((struct process *) p)->pid;
 }
 
 void proc_drop_process_unlocked(struct process *process, bool free_paging_structure) {
@@ -51,7 +51,7 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
         struct vm_region *region = process->process_memory;
         while (region != NULL) {
             if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-                fs_munmap((void*) region->start, region->end);
+                fs_munmap((void *) region->start, region->end);
             }
 
             region = region->next;

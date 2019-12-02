@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <search.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -48,7 +48,8 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
 
     assert(connect_to->private_data);
     struct unix_socket_data *connect_to_data = connect_to->private_data;
-    memcpy(connect_to_data->bound_path, ((struct unix_socket_data*) socket->private_data)->bound_path, sizeof(connect_to_data->bound_path));
+    memcpy(
+        connect_to_data->bound_path, ((struct unix_socket_data *) socket->private_data)->bound_path, sizeof(connect_to_data->bound_path));
     connect_to_data->connected_id = new_socket->id;
 
     connect_to->state = CONNECTED;
@@ -189,7 +190,7 @@ ssize_t net_unix_recvfrom(struct socket *socket, void *buf, size_t len, int flag
 
     (void) flags;
 
-    return net_generic_recieve_from(socket, buf, len, (struct sockaddr*) source, addrlen);
+    return net_generic_recieve_from(socket, buf, len, (struct sockaddr *) source, addrlen);
 }
 
 ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr_un *dest, socklen_t addrlen) {

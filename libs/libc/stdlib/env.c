@@ -1,14 +1,14 @@
-#include <stdlib.h>
 #include <assert.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define ENV_NUM_BITS_BASE (10 * 64)
-#define ENV_BUF_INC 20
+#define ENV_BUF_INC       20
 
 static uint64_t *bitmap = NULL;
 static size_t num_bits = ENV_NUM_BITS_BASE;
@@ -49,18 +49,18 @@ static int env_add(char *s, bool should_set_allocated) {
     if (!is_environ_malloced) {
         max_env_vars = num_env_vars + ENV_BUF_INC;
         // Calloc ensures everything will be null terminated
-        char **new_env = calloc(max_env_vars, sizeof(char*));
+        char **new_env = calloc(max_env_vars, sizeof(char *));
         if (new_env == NULL) {
             errno = ENOMEM;
             return -1;
         }
 
-        memcpy(new_env, environ, num_env_vars * sizeof(char*));
+        memcpy(new_env, environ, num_env_vars * sizeof(char *));
         environ = new_env;
         is_environ_malloced = true;
     } else if (num_env_vars >= max_env_vars - 1) { // Subtract 1 b/c it has to be NULL terminated
         max_env_vars += ENV_BUF_INC;
-        environ = realloc(environ, max_env_vars * sizeof(char*));
+        environ = realloc(environ, max_env_vars * sizeof(char *));
         if (environ == NULL) {
             errno = ENOMEM;
             return -1;

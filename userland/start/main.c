@@ -29,29 +29,21 @@ void spawn_process(char **argv, bool redirect) {
 }
 
 int main() {
-    char *nslookup_args[] = {
-        "/bin/nslookup", "-s", NULL
-    };
+    char *nslookup_args[] = { "/bin/nslookup", "-s", NULL };
 
     spawn_process(nslookup_args, false);
 #ifdef KERNEL_NO_GRAPHICS
-    char *xterm_args[] = {
-        "/bin/xterm", NULL
-    };
+    char *xterm_args[] = { "/bin/xterm", NULL };
 
     spawn_process(xterm_args, false);
 #else
-    char *window_server_args[] = {
-        "/bin/window_server", NULL
-    };
+    char *window_server_args[] = { "/bin/window_server", NULL };
 
     spawn_process(window_server_args, false);
 
     sleep(1);
 
-    char *window_server_test_args[] = {
-        "/initrd/window_server_test", NULL
-    };
+    char *window_server_test_args[] = { "/initrd/window_server_test", NULL };
 
     spawn_process(window_server_test_args, false);
 #endif /* KERNEL_NO_GRAPHICS */

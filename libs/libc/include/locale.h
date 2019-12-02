@@ -4,13 +4,13 @@
 #include <bits/locale_t.h>
 #include <bits/null.h>
 
-#define LC_ALL 1
-#define LC_COLLATE 2
-#define LC_CTYPE 3
+#define LC_ALL      1
+#define LC_COLLATE  2
+#define LC_CTYPE    3
 #define LC_MESSAGES 4
 #define LC_MONETARY 5
-#define LC_NUMERIC 6
-#define LC_TIME 7
+#define LC_NUMERIC  6
+#define LC_TIME     7
 
 #ifdef __cplusplus
 extern "C" {

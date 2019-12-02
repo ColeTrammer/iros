@@ -1,18 +1,18 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <stdint.h>
 #include <assert.h>
 #include <ctype.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <setjmp.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
 #include <termios.h>
+#include <unistd.h>
 
 #include "builtin.h"
 #include "command.h"
@@ -102,8 +102,12 @@ int main(int argc, char **argv) {
 
     for (;;) {
         if (sigsetjmp(env, 1) == 1) {
-            if (line) { free(line); }
-            if (command) { command_cleanup(command); }
+            if (line) {
+                free(line);
+            }
+            if (command) {
+                command_cleanup(command);
+            }
             fprintf(stderr, "^C%c", '\n');
         }
         jump_active = 1;

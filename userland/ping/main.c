@@ -86,14 +86,14 @@ int main(int argc, char **argv) {
         ping_message.header.checksum = 0;
         ping_message.header.un.echo.sequence = htons(sequence++);
         ping_message.header.checksum = htons(in_compute_checksum(&ping_message, sizeof(struct ping_message)));
-        if (sendto(fd, &ping_message, sizeof(struct ping_message), 0, (const struct sockaddr*) &addr, sizeof(struct sockaddr_in)) == -1) {
+        if (sendto(fd, &ping_message, sizeof(struct ping_message), 0, (const struct sockaddr *) &addr, sizeof(struct sockaddr_in)) == -1) {
             perror("sendto");
             return 1;
         }
 
         socklen_t addr_size = sizeof(struct sockaddr_in);
         struct ping_message recieved_message = { 0 };
-        ssize_t ret = recvfrom(fd, &recieved_message, sizeof(struct ping_message), 0, (struct sockaddr*) &addr, &addr_size);
+        ssize_t ret = recvfrom(fd, &recieved_message, sizeof(struct ping_message), 0, (struct sockaddr *) &addr, &addr_size);
         if (ret < 0) {
             if (errno = EINTR) {
                 printf("Timed out: seq %d\n", sequence - 1);

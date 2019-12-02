@@ -13,8 +13,7 @@
 #include "window_manager.h"
 
 Server::Server(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_ptr<PixelBuffer> back_buffer)
-    : m_manager(std::make_unique<WindowManager>(fb, front_buffer, back_buffer))
-{
+    : m_manager(std::make_unique<WindowManager>(fb, front_buffer, back_buffer)) {
     m_socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     assert(m_socket_fd != -1);
 
@@ -24,17 +23,13 @@ Server::Server(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_pt
     assert(bind(m_socket_fd, (const sockaddr*) &addr, sizeof(sockaddr_un)) == 0);
 }
 
-void Server::kill_client(int client_id)
-{
+void Server::kill_client(int client_id) {
     close(client_id);
     m_clients.remove_element(client_id);
-    m_manager->windows().remove_if([&](auto& window) {
-        return window->client_id() == client_id;
-    });
+    m_manager->windows().remove_if([&](auto& window) { return window->client_id() == client_id; });
 }
 
-void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd)
-{
+void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd) {
     char s[50];
     s[49] = '\0';
     snprintf(s, 49, "/window_server_%d", client_fd);
@@ -47,19 +42,15 @@ void Server::handle_create_window_request(const WindowServer::Message& request, 
     assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
 }
 
-void Server::handle_remove_window_request(const WindowServer::Message& request, int client_fd)
-{
+void Server::handle_remove_window_request(const WindowServer::Message& request, int client_fd) {
     wid_t wid = request.data.remove_window_request.wid;
-    m_manager->windows().remove_if([&](auto& window) {
-        return window->id() == wid;
-    });
+    m_manager->windows().remove_if([&](auto& window) { return window->id() == wid; });
 
     auto to_send = WindowServer::Message::RemoveWindowResponse::create(true);
     assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
 }
 
-void Server::start()
-{
+void Server::start() {
     assert(listen(m_socket_fd, 10) == 0);
 
     sockaddr_un client_addr;
@@ -80,19 +71,19 @@ void Server::start()
 
             WindowServer::Message& message = *reinterpret_cast<WindowServer::Message*>(buffer);
             switch (message.type) {
-            case WindowServer::Message::Type::CreateWindowRequest: {
-                handle_create_window_request(message, client_fd);
-                break;
-            }
-            case WindowServer::Message::Type::RemoveWindowRequest: {
-                handle_remove_window_request(message, client_fd);
-                break;
-            }
-            case WindowServer::Message::Type::Invalid:
-            default:
-                fprintf(stderr, "Recieved invalid window server message\n");
-                kill_client(client_fd);
-                break;
+                case WindowServer::Message::Type::CreateWindowRequest: {
+                    handle_create_window_request(message, client_fd);
+                    break;
+                }
+                case WindowServer::Message::Type::RemoveWindowRequest: {
+                    handle_remove_window_request(message, client_fd);
+                    break;
+                }
+                case WindowServer::Message::Type::Invalid:
+                default:
+                    fprintf(stderr, "Recieved invalid window server message\n");
+                    kill_client(client_fd);
+                    break;
             }
         });
 
@@ -108,7 +99,6 @@ void Server::start()
     }
 }
 
-Server::~Server()
-{
+Server::~Server() {
     close(m_socket_fd);
 }

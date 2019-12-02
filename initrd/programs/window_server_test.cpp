@@ -10,8 +10,7 @@
 #include <unistd.h>
 #include <window_server/message.h>
 
-int main()
-{
+int main() {
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
     assert(fd != -1);
 

@@ -1,7 +1,7 @@
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
-#include <errno.h>
 
 int main() {
     char *test_str = "ABC   12345: 234AC 1556MM 0xABCDCAFEBABE1234]55555? ARBITRARYSTR -asdsaf8adqwer@";

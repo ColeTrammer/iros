@@ -14,7 +14,8 @@ struct udp_packet {
     uint8_t payload[0];
 } __attribute__((packed));
 
-ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len, const void *buf);
+ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
+    const void *buf);
 void net_udp_recieve(const struct udp_packet *packet, size_t len);
 void net_init_udp_packet(struct udp_packet *packet, uint16_t source_port, uint16_t dest_port, uint16_t len, const void *buf);
 

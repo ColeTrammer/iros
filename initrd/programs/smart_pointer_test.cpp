@@ -5,20 +5,18 @@ using namespace LIIM;
 
 class Test {
 public:
-    Test() {}
-    ~Test()
-    {
+    Test() {
+    }
+    ~Test() {
         fprintf(stderr, "Deconstructing\n");
     }
 
-    void test()
-    {
+    void test() {
         fprintf(stderr, "Test method\n");
     }
 };
 
-int main()
-{
+int main() {
     auto test = UniquePtr<Test>(new Test());
     test->test();
 

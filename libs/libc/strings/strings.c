@@ -1,6 +1,6 @@
 #include <ctype.h>
-#include <string.h>
 #include <limits.h>
+#include <string.h>
 
 int ffs(int i) {
     if (!i) {
@@ -54,14 +54,18 @@ void bzero(void *p, size_t n) {
 
 char *index(const char *s, int c) {
     // strchr ignores this \0 byte
-    if (c == '\0') { return (char*) s + strlen(s); }
+    if (c == '\0') {
+        return (char *) s + strlen(s);
+    }
 
     return strchr(s, c);
 }
 
 char *rindex(const char *s, int c) {
     // strchr ignores this \0 byte
-    if (c == '\0') { return (char*) s + strlen(s); }
+    if (c == '\0') {
+        return (char *) s + strlen(s);
+    }
 
     return strrchr(s, c);
 }

@@ -8,8 +8,10 @@
 
 #include <kernel/util/spinlock.h>
 
+// clang-format off
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(proc/process.h)
+// clang-format on
 
 struct process {
     char *cwd;

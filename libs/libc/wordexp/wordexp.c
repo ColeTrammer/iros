@@ -1,24 +1,24 @@
 #define _OS_2_SOURCE
 
-#include <wordexp.h>
-#include <stdlib.h>
-#include <glob.h>
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
+#include <glob.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #define WE_BUF_INCREMENT 10
 
 static bool we_add(char *s, wordexp_t *we) {
     if (we->we_wordc == 0) {
-        we->we_wordv = calloc(WE_BUF_INCREMENT, sizeof(char*));
+        we->we_wordv = calloc(WE_BUF_INCREMENT, sizeof(char *));
     } else if (we->we_wordc % WE_BUF_INCREMENT == 0) {
-        we->we_wordv = realloc(we->we_wordv, (we->we_wordc + WE_BUF_INCREMENT) * sizeof(char*));
+        we->we_wordv = realloc(we->we_wordv, (we->we_wordc + WE_BUF_INCREMENT) * sizeof(char *));
     }
 
     // Memory allocation error
@@ -37,7 +37,7 @@ static bool we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
     size_t new_size = we->we_wordc - 1 + arr_size;
     if (we->we_wordc / WE_BUF_INCREMENT != new_size / WE_BUF_INCREMENT) {
         size_t new_max_length = WE_BUF_INCREMENT * ((new_size + WE_BUF_INCREMENT - 1) / WE_BUF_INCREMENT);
-        we->we_wordv = realloc(we->we_wordv, new_max_length * sizeof(char*));
+        we->we_wordv = realloc(we->we_wordv, new_max_length * sizeof(char *));
     }
 
     if (we->we_wordv == NULL) {
@@ -73,7 +73,7 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     }
 
     strncat(*s, r, len);
-    return true;    
+    return true;
 }
 
 static int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
@@ -142,7 +142,7 @@ static int we_expand(const char *s, int flags, char **expanded, word_special_t *
                 i--;
                 prev_was_backslash = false;
                 continue;
-            normal_var: {
+            normal_var : {
                 // Maybe other characters are valid but this is the standard form
                 int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
@@ -153,18 +153,18 @@ static int we_expand(const char *s, int flags, char **expanded, word_special_t *
 
                 i++;
                 char save = s[i + to_read];
-                ((char*) s)[i + to_read] = '\0';
+                ((char *) s)[i + to_read] = '\0';
 
                 char *var = getenv(s + i);
                 if (var != NULL) {
                     we_append(expanded, var, strlen(var), &len);
                 } else if (flags & WRDE_UNDEF) {
-                    ((char*) s)[i + to_read] = save;
+                    ((char *) s)[i + to_read] = save;
                     free(*expanded);
                     return WRDE_BADVAL;
                 }
 
-                ((char*) s)[i + to_read] = save;
+                ((char *) s)[i + to_read] = save;
                 i += to_read;
                 i--; // Since loop does i++
 

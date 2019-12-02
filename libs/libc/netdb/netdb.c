@@ -7,7 +7,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-int getaddrinfo(const char *__restrict node, const char *__restrict service, const struct addrinfo *__restrict hints, struct addrinfo **__restrict res) {
+int getaddrinfo(const char *__restrict node, const char *__restrict service, const struct addrinfo *__restrict hints,
+    struct addrinfo **__restrict res) {
     (void) service;
     (void) hints;
 
@@ -17,7 +18,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service, con
     struct sockaddr_in *found = calloc(1, sizeof(struct sockaddr_in));
     found->sin_family = AF_INET;
     found->sin_port = 0;
-    result->ai_addr = (struct sockaddr*) found;
+    result->ai_addr = (struct sockaddr *) found;
     result->ai_addrlen = sizeof(struct sockaddr_in);
 
     if (node == NULL) {
@@ -36,7 +37,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service, con
     conn.sun_family = AF_UNIX;
     strcpy(conn.sun_path, "/tmp/.nslookup.socket");
 
-    if (connect(fd, (const struct sockaddr*) &conn, sizeof(struct sockaddr_un)) == -1) {
+    if (connect(fd, (const struct sockaddr *) &conn, sizeof(struct sockaddr_un)) == -1) {
         free(result);
         free(found);
         close(fd);
@@ -58,7 +59,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service, con
         close(fd);
         return EAI_SYSTEM;
     }
-    struct in_addr in_addr; 
+    struct in_addr in_addr;
     in_addr.s_addr = inet_addr(buf);
     if (in_addr.s_addr == INADDR_NONE) {
         free(result);
@@ -82,7 +83,8 @@ void freeaddrinfo(struct addrinfo *res) {
     }
 }
 
-int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addrlen, char *__restrict host, socklen_t hostlen, char *__restrict serv, socklen_t servlen, int flags) {
+int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addrlen, char *__restrict host, socklen_t hostlen, char *__restrict serv,
+    socklen_t servlen, int flags) {
     (void) flags;
     (void) host;
     (void) hostlen;

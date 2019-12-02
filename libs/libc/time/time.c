@@ -3,7 +3,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-
 time_t time(time_t *t_loc) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -35,16 +34,14 @@ char *asctime(const struct tm *tm) {
     return "asctime unsupported";
 }
 
-static struct tm static_tm_buffer = {
-    0, 0, 0, 1, 0, 119, 0, 0, 0
-};
+static struct tm static_tm_buffer = { 0, 0, 0, 1, 0, 119, 0, 0, 0 };
 
 struct tm *gmtime(const time_t *timep) {
     (void) timep;
 
     fprintf(stderr, "gmtime unsupported\n");
 
-    return &static_tm_buffer; 
+    return &static_tm_buffer;
 }
 
 struct tm *localtime(const time_t *timep) {

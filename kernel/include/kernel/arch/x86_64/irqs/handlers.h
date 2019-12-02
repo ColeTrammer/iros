@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include <kernel/proc/task.h>
- 
+
 struct task_interrupt_state {
     struct cpu_state cpu_state;
     uint64_t error_code;

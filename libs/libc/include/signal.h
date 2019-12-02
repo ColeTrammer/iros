@@ -84,7 +84,7 @@ struct sigaction {
     void (*sa_handler)(int);
     sigset_t sa_mask;
     int sa_flags;
-    void (*sa_sigaction)(int, siginfo_t*, void*);
+    void (*sa_sigaction)(int, siginfo_t *, void *);
     void (*sa_restorer)(void);
 };
 
@@ -119,8 +119,7 @@ int sigwait(const sigset_t *__restrict set, int *__restrict sig);
 int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
 
 #ifdef __libc_internal
-__attribute__((noreturn))
-void sigreturn(void);
+__attribute__((noreturn)) void sigreturn(void);
 #endif /* __libc_internal */
 
 #ifdef __cplusplus
@@ -131,16 +130,16 @@ void sigreturn(void);
 #define SIG_ERR ((sighandler_t) -1)
 #define SIG_IGN ((sighandler_t) 1)
 
-#define SIG_BLOCK 0
+#define SIG_BLOCK   0
 #define SIG_UNBLOCK 1
 #define SIG_SETMASK 2
 
 #define SA_NOCLDSTOP 1
-#define SA_ONSTACK 2
+#define SA_ONSTACK   2
 #define SA_RESETHAND 4
-#define SA_RESTART 8
-#define SA_SIGINFO 16
+#define SA_RESTART   8
+#define SA_SIGINFO   16
 #define SA_NOCLDWAIT 32
-#define SA_NODEFER 64
+#define SA_NODEFER   64
 
 #endif /* _SIGNAL_H */

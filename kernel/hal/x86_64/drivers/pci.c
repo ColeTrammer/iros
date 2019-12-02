@@ -9,7 +9,7 @@ static bool pci_device_exists(uint8_t bus, uint8_t slot) {
     return pci_get_vendor(bus, slot) != 0xFFFF;
 }
 
-void init_pci() { 
+void init_pci() {
     for (uint16_t bus = 0; bus < PCI_BUS_MAX; bus++) {
         for (uint8_t slot = 0; slot < PCI_SLOT_MAX; slot++) {
             if (pci_device_exists(bus, slot)) {

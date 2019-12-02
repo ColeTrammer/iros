@@ -9,16 +9,16 @@
 #include <sys/param.h>
 
 #include <kernel/fs/file.h>
+#include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
-#include <kernel/fs/tmp.h>
-#include <kernel/fs/file_system.h>
-#include <kernel/fs/vfs.h>
 #include <kernel/fs/super_block.h>
-#include <kernel/mem/page.h>
-#include <kernel/mem/vm_region.h>
-#include <kernel/mem/vm_allocator.h>
+#include <kernel/fs/tmp.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/page.h>
+#include <kernel/mem/vm_allocator.h>
+#include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
@@ -28,29 +28,19 @@ static spinlock_t inode_count_lock = SPINLOCK_INITIALIZER;
 static ino_t inode_counter = 1;
 static dev_t tmp_fs_id = 0x210;
 
-static struct file_system fs = {
-    "tmpfs", 0, &tmp_mount, NULL, NULL
-};
+static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
-static struct super_block_operations s_op = {
-    &tmp_rename
-};
+static struct super_block_operations s_op = { &tmp_rename };
 
-static struct inode_operations tmp_i_op = {
-    NULL, &tmp_lookup, &tmp_open, &tmp_stat, NULL, NULL, &tmp_unlink, NULL, &tmp_chmod, &tmp_mmap, &tmp_on_inode_destruction
-};
+static struct inode_operations tmp_i_op
+    = { NULL, &tmp_lookup, &tmp_open, &tmp_stat, NULL, NULL, &tmp_unlink, NULL, &tmp_chmod, &tmp_mmap, &tmp_on_inode_destruction };
 
-static struct inode_operations tmp_dir_i_op = {
-    &tmp_create, &tmp_lookup, &tmp_open, &tmp_stat, NULL, &tmp_mkdir, NULL, &tmp_rmdir, &tmp_chmod, NULL, NULL
-};
+static struct inode_operations tmp_dir_i_op
+    = { &tmp_create, &tmp_lookup, &tmp_open, &tmp_stat, NULL, &tmp_mkdir, NULL, &tmp_rmdir, &tmp_chmod, NULL, NULL };
 
-static struct file_operations tmp_f_op = {
-    NULL, &tmp_read, &tmp_write, NULL
-};
+static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
 
-static struct file_operations tmp_dir_f_op = {
-    NULL, NULL, NULL, NULL
-};
+static struct file_operations tmp_dir_f_op = { NULL, NULL, NULL, NULL };
 
 static ino_t get_next_tmp_index() {
     spin_lock(&inode_count_lock);
@@ -85,8 +75,7 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     inode->private_data = data;
     inode->ref_count = 1;
     inode->super_block = tparent->inode->super_block;
-    inode->flags = S_ISREG(mode) ? FS_FILE :
-                   S_ISOCK(mode) ? FS_SOCKET : 0;
+    inode->flags = S_ISREG(mode) ? FS_FILE : S_ISOCK(mode) ? FS_SOCKET : 0;
 
     return inode;
 }
@@ -137,7 +126,6 @@ ssize_t tmp_read(struct file *file, void *buffer, size_t len) {
 
     spin_lock(&inode->lock);
     size_t to_read = MIN(len, inode->size - file->position);
-
 
     if (to_read == 0) {
         spin_unlock(&inode->lock);
@@ -243,7 +231,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     }
 
     if (!addr) {
-        addr = (void*) joke_allocator;
+        addr = (void *) joke_allocator;
         joke_allocator += 0x500000000ULL;
     }
 

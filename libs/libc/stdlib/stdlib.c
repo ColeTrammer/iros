@@ -1,11 +1,11 @@
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdbool.h>
 #include <errno.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #ifndef __is_libk
 
@@ -28,8 +28,8 @@ int rand_r(unsigned int *seedp) {
 #endif /* __is_libk */
 
 int abs(int n) {
-    if (n < 0) { 
-        return -n; 
+    if (n < 0) {
+        return -n;
     }
 
     return n;
@@ -51,7 +51,7 @@ ldiv_t ldiv(long a, long b) {
     return (ldiv_t) { a / b, a % b };
 }
 
-#define QSORT_AT(p, in, size) ((void*) (((uintptr_t) (p)) + (in) * (size)))
+#define QSORT_AT(p, in, size) ((void *) (((uintptr_t)(p)) + (in) * (size)))
 
 // Use selection sort for simplicity
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, const void *b)) {
@@ -119,9 +119,7 @@ int system(const char *cmd) {
         sigprocmask(SIG_SETMASK, &block_save, NULL);
 
         // Could use execl instead
-        char *const args[] = {
-            "sh", "-c", (char*) cmd, NULL
-        };
+        char *const args[] = { "sh", "-c", (char *) cmd, NULL };
 
         execve("/bin/sh", args, environ);
 

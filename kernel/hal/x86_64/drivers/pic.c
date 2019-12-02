@@ -1,12 +1,12 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h>
 
+#include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
-#include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/arch/x86_64/proc/task.h>
 
 static void (*handlers[2 * PIC_IRQS])(void) = { 0 };
 
@@ -116,7 +116,6 @@ void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, boo
         printf("Invalid IRQ Line Requested: %u\n", irq_line);
     }
 }
-
 
 void init_pic() {
     remap(PIC_IRQ_OFFSET, PIC_IRQ_OFFSET + PIC_IRQS);

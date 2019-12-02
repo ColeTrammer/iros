@@ -24,11 +24,13 @@
 #define MOUSE_IRQ_LINE_NUM 12
 
 static inline void mouse_wait_for_output() {
-    while (inb(PS2_CONTROL_REGISTER) & 0x2);
+    while (inb(PS2_CONTROL_REGISTER) & 0x2)
+        ;
 }
 
 static inline void mouse_wait_for_input() {
-    while (!(inb(PS2_CONTROL_REGISTER) & 0x1));
+    while (!(inb(PS2_CONTROL_REGISTER) & 0x1))
+        ;
 }
 
 static inline void mouse_send_command(uint8_t byte) {

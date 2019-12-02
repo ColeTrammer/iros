@@ -7,50 +7,41 @@
 
 namespace LIIM {
 
-template<typename K, typename V>
-struct HashMapObj {
+template<typename K, typename V> struct HashMapObj {
     HashMapObj(const K& key, const V& val)
         : m_key(key)
-        , m_value(val)
-    {
+        , m_value(val) {
     }
 
-    ~HashMapObj()
-    {
+    ~HashMapObj() {
     }
 
     HashMapObj(const HashMapObj& other)
-        : HashMapObj(other.m_key, other.m_value)
-    {
+        : HashMapObj(other.m_key, other.m_value) {
     }
 
     K m_key;
     V m_value;
 };
 
-template<typename K, typename V>
-class HashMap {
+template<typename K, typename V> class HashMap {
 public:
     explicit HashMap(int num_buckets = 20)
-        : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets))
-    {
+        : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets)) {
         for (int i = 0; i < num_buckets; i++) {
             m_buckets.add(LinkedList<HashMapObj<K, V>>());
         }
     }
 
-    ~HashMap()
-    {
+    ~HashMap() {
     }
 
-    void put(const K& key, const V& val)
-    {
+    void put(const K& key, const V& val) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
         m_buckets[bucket].prepend(HashMapObj(key, val));
     }
 
-    V* get(const K& key)
-    {
+    V* get(const K& key) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
         V* val = nullptr;
         m_buckets[bucket].for_each([&](auto& obj) {
@@ -62,8 +53,7 @@ public:
         return val;
     }
 
-    const V* get(const K& key) const
-    {
+    const V* get(const K& key) const {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
         V* val = nullptr;
         m_buckets[bucket].for_each([&](auto& obj) {
@@ -93,12 +83,9 @@ public:
         }
     }
 
-    void remove(const K& key)
-    {
+    void remove(const K& key) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
-        m_buckets[bucket].remove_if([&](const auto& obj) -> bool {
-            return obj.m_key == key;
-        });
+        m_buckets[bucket].remove_if([&](const auto& obj) -> bool { return obj.m_key == key; });
     }
 
 private:

@@ -1,6 +1,6 @@
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <string.h>
 
 #include <kernel/fs/tnode.h>
@@ -15,7 +15,7 @@ struct tnode_list *add_tnode(struct tnode_list *list, struct tnode *tnode) {
 struct tnode_list *remove_tnode(struct tnode_list *list, struct tnode *tnode) {
     assert(list != NULL);
     assert(tnode);
-    
+
     struct tnode_list **link = &list;
     while (*link != NULL) {
         if ((*link)->tnode == tnode) {
@@ -75,7 +75,7 @@ struct tnode *find_tnode_index(struct tnode_list *list, size_t index) {
     size_t i = 0;
     while (start != NULL) {
         if (i++ == index) {
-            return start->tnode; 
+            return start->tnode;
         }
 
         start = start->next;

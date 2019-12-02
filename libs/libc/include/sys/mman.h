@@ -14,11 +14,11 @@
 #define MAP_SHARED  1
 #define MAP_PRIVATE 2
 
-#define MAP_FIXED   4
+#define MAP_FIXED     4
 #define MAP_ANONYMOUS 8
 #define MAP_ANON      MAP_ANONYMOUS
 
-#define MAP_FAILED ((void*) -1)
+#define MAP_FAILED ((void *) -1)
 
 #ifdef __cplusplus
 extern "C" {

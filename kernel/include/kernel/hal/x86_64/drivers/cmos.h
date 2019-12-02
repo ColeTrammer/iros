@@ -6,23 +6,23 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 
 #define CMOS_REGISTER_SELECT 0x70
-#define CMOS_DATA 0x71
+#define CMOS_DATA            0x71
 
-#define CMOS_SECONDS 0x00
-#define CMOS_MINUTES 0x02
-#define CMOS_HOURS 0x04
-#define CMOS_WEEKDAY 0x06
+#define CMOS_SECONDS      0x00
+#define CMOS_MINUTES      0x02
+#define CMOS_HOURS        0x04
+#define CMOS_WEEKDAY      0x06
 #define CMOS_DAY_OF_MONTH 0x07
-#define CMOS_MONTH 0x08
-#define CMOS_YEAR 0x09
-#define CMOS_CENTURY 0x32
+#define CMOS_MONTH        0x08
+#define CMOS_YEAR         0x09
+#define CMOS_CENTURY      0x32
 
 #define CMOS_STATUS_A 0x0A
 #define CMOS_STATUS_B 0x0B
 
 #define CMOS_UPDATE_IN_PROGRESS 0x80
 
-#define CMOS_NOT_BCD 0x04
+#define CMOS_NOT_BCD     0x04
 #define CMOS_NOT_12_HOUR 0x02
 
 #define CMOS_DISABLE_NMI 0

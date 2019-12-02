@@ -15,7 +15,7 @@ static ssize_t dev_null_read(struct device *device, struct file *file, void *buf
     (void) device;
     (void) file;
     (void) buffer;
-    (void) len;    
+    (void) len;
 
     return 0;
 }
@@ -94,7 +94,7 @@ static ssize_t full_read(struct device *device, struct file *file, void *buf, si
     (void) n;
 
     return -ENOSPC;
-} 
+}
 
 static ssize_t full_write(struct device *device, struct file *file, const void *buf, size_t n) {
     (void) device;
@@ -103,56 +103,31 @@ static ssize_t full_write(struct device *device, struct file *file, const void *
     (void) n;
 
     return -ENOSPC;
-} 
+}
 
+static struct device_ops dev_null_ops = { NULL, &dev_null_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device_ops dev_null_ops = {
-    NULL, &dev_null_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL
-};
+static struct device dev_null = { 0x31, S_IFCHR, "null", false, &dev_null_ops, NULL, NULL };
 
-static struct device dev_null = {
-    0x31, S_IFCHR, "null", false, &dev_null_ops, NULL, NULL
-};
+static struct device_ops dev_zero_ops = { NULL, &dev_zero_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device_ops dev_zero_ops = {
-    NULL, &dev_zero_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL
-};
+static struct device dev_zero = { 0x32, S_IFCHR, "zero", false, &dev_zero_ops, NULL, NULL };
 
-static struct device dev_zero = {
-    0x32, S_IFCHR, "zero", false, &dev_zero_ops, NULL, NULL
-};
+static struct device_ops dev_stdin_ops = { &stdin_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device_ops dev_stdin_ops = {
-    &stdin_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+static struct device_ops dev_stdout_ops = { &stdout_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device_ops dev_stdout_ops = {
-    &stdout_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+static struct device_ops dev_stderr_ops = { &stderr_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device_ops dev_stderr_ops = {
-    &stderr_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+static struct device dev_stdin = { 0x33, S_IFCHR, "stdin", false, &dev_stdin_ops, NULL, NULL };
 
-static struct device dev_stdin = {
-    0x33, S_IFCHR, "stdin", false, &dev_stdin_ops, NULL, NULL
-};
+static struct device dev_stdout = { 0x34, S_IFCHR, "stdout", false, &dev_stdout_ops, NULL, NULL };
 
-static struct device dev_stdout = {
-    0x34, S_IFCHR, "stdout", false, &dev_stdout_ops, NULL, NULL
-};
+static struct device dev_stderr = { 0x35, S_IFCHR, "stderr", false, &dev_stderr_ops, NULL, NULL };
 
-static struct device dev_stderr = {
-    0x35, S_IFCHR, "stderr", false, &dev_stderr_ops, NULL, NULL
-};
+static struct device_ops dev_full_ops = { NULL, &full_read, &full_write, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device_ops dev_full_ops = {
-    NULL, &full_read, &full_write, NULL, NULL, NULL, NULL, NULL, NULL
-};
-
-static struct device dev_full = {
-    0x36, S_IFCHR, "full", false, &dev_full_ops, NULL, NULL
-};
+static struct device dev_full = { 0x36, S_IFCHR, "full", false, &dev_full_ops, NULL, NULL };
 
 void init_virtual_devices() {
     dev_add(&dev_null, "null");

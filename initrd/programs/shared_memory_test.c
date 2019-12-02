@@ -4,8 +4,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-int main()
-{
+int main() {
     int fd = shm_open("/shm_test", O_RDWR | O_CREAT | O_EXCL, 0666);
     assert(ftruncate(fd, sizeof(uint32_t)) == 0);
 

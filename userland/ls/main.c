@@ -1,12 +1,12 @@
 #include <assert.h>
 #include <dirent.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/param.h>
-#include <unistd.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define LS_STARTING_DIRENTS 100
 
@@ -23,7 +23,7 @@ static int widest_num_links = 0;
 static int widest_size = 0;
 
 static int ls_dirent_compare(const void *a, const void *b) {
-    return strcmp(((const struct ls_dirent*) a)->name, ((const struct ls_dirent*) b)->name);
+    return strcmp(((const struct ls_dirent *) a)->name, ((const struct ls_dirent *) b)->name);
 }
 
 void fill_dirent(char *_path, const char *name) {
@@ -69,7 +69,7 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
     if (extra_info) {
         char buffer[50];
         snprintf(buffer, 50, "%%s %%%dd root root %%%dd ", widest_num_links, widest_size);
-        
+
         char perm_string[11];
         perm_string[0] = S_ISDIR(dirent->stat_struct.st_mode) ? 'd' : '-';
         perm_string[1] = dirent->stat_struct.st_mode & S_IRUSR ? 'r' : '-';
@@ -125,14 +125,14 @@ int main(int argc, char **argv) {
     opterr = 0;
     while ((opt = getopt(argc, argv, "l")) != -1) {
         switch (opt) {
-        case 'l':
-            extra_info = true;
-            break;
-        case '?':
-            printf("Usage: %s [path]\n", argv[0]);
-            return 0;
-        default:
-            abort();
+            case 'l':
+                extra_info = true;
+                break;
+            case '?':
+                printf("Usage: %s [path]\n", argv[0]);
+                return 0;
+            default:
+                abort();
         }
     }
 

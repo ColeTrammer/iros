@@ -1,7 +1,7 @@
+#include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <search.h>
 
 struct element {
     struct element *forward;
@@ -9,9 +9,7 @@ struct element {
     char *name;
 };
 
-static struct element *
-new_element(void)
-{
+static struct element *new_element(void) {
     struct element *e;
 
     e = malloc(sizeof(struct element));
@@ -23,9 +21,7 @@ new_element(void)
     return e;
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     struct element *first, *elem, *prev;
     int circular, opt, errfnd;
 
@@ -36,17 +32,17 @@ main(int argc, char *argv[])
     circular = 0;
     while ((opt = getopt(argc, argv, "c")) != -1) {
         switch (opt) {
-        case 'c':
-            circular = 1;
-            break;
-        default:
-            errfnd = 1;
-            break;
+            case 'c':
+                circular = 1;
+                break;
+            default:
+                errfnd = 1;
+                break;
         }
     }
 
     if (errfnd || optind >= argc) {
-        fprintf(stderr,  "Usage: %s [-c] string...\n", argv[0]);
+        fprintf(stderr, "Usage: %s [-c] string...\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 

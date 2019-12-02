@@ -17,9 +17,7 @@ static struct mac_address get_mac(struct network_interface *interface) {
     return MAC_ZEROES;
 }
 
-static struct network_interface_ops ops = {
-    loop_send, NULL, NULL, get_mac
-};
+static struct network_interface_ops ops = { loop_send, NULL, NULL, get_mac };
 
 void init_loopback() {
     net_create_network_interface("lo", NETWORK_INTERFACE_LOOPBACK, &ops, NULL);

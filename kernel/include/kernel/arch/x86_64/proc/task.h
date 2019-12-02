@@ -1,11 +1,11 @@
 #ifndef _KERNEL_ARCH_X86_64_PROC_TASK_H
 #define _KERNEL_ARCH_X86_64_PROC_TASK_H 1
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-#include <kernel/mem/page.h>
 #include <kernel/arch/x86_64/mem/page.h>
+#include <kernel/mem/page.h>
 
 #define KERNEL_TASK_STACK_START (((uintptr_t) PT_BASE) - PAGE_SIZE)
 
@@ -32,7 +32,7 @@ struct stack_state {
     uint64_t cs;
     uint64_t rflags;
     uint64_t rsp;
-    uint64_t ss;    
+    uint64_t ss;
 } __attribute__((packed));
 
 struct task_state {

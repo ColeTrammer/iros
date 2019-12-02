@@ -1,28 +1,28 @@
 #include <errno.h>
-#include <sys/types.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <sys/mman.h>
+#include <sys/types.h>
 
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
-#include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
-#include <kernel/hal/output.h>
 #include <kernel/util/spinlock.h>
 
 #define MMAP_DEBUG
 
 static struct vm_region *kernel_vm_list = NULL;
-#if ARCH==X86_64
+#if ARCH == X86_64
 static struct vm_region kernel_phys_id;
 #endif /* ARCH==X86_64 */
 static struct vm_region kernel_text;
@@ -33,7 +33,7 @@ static struct vm_region initrd;
 static spinlock_t kernel_vm_lock = SPINLOCK_INITIALIZER;
 
 void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
-#if ARCH==X86_64
+#if ARCH == X86_64
     kernel_phys_id.start = VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0);
     kernel_phys_id.end = kernel_phys_id.start + get_total_phys_memory();
     kernel_phys_id.flags = VM_NO_EXEC | VM_GLOBAL | VM_WRITE;
@@ -80,7 +80,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     uintptr_t new_structure = create_paging_structure(kernel_vm_list, true);
     load_paging_structure(new_structure);
 
-#if ARCH==X86_64
+#if ARCH == X86_64
     create_phys_id_map();
 #endif /* ARCH==X86_64 */
 
@@ -109,9 +109,9 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
     if (type <= VM_KERNEL_HEAP) {
         spin_unlock(&kernel_vm_lock);
     }
-    
-    memset((void*) old_end, 0, n * PAGE_SIZE);
-    return (void*) old_end;
+
+    memset((void *) old_end, 0, n * PAGE_SIZE);
+    return (void *) old_end;
 }
 
 void *add_vm_pages_start(size_t n, uint64_t type) {
@@ -135,9 +135,9 @@ void *add_vm_pages_start(size_t n, uint64_t type) {
     if (type <= VM_KERNEL_HEAP) {
         spin_unlock(&kernel_vm_lock);
     }
-    
-    memset((void*) (old_start - n * PAGE_SIZE), 0, n * PAGE_SIZE);
-    return (void*) old_start;
+
+    memset((void *) (old_start - n * PAGE_SIZE), 0, n * PAGE_SIZE);
+    return (void *) old_start;
 }
 
 void remove_vm_pages_end(size_t n, uint64_t type) {
@@ -177,7 +177,7 @@ void *map_file(off_t length, uint64_t flags) {
 
     map_vm_region(to_add);
 
-    return (void*) to_add->start;
+    return (void *) to_add->start;
 }
 
 int unmap_range(uintptr_t addr, size_t length) {
@@ -235,7 +235,7 @@ int unmap_range(uintptr_t addr, size_t length) {
                 r->end -= PAGE_SIZE;
                 unmap_page(r->end);
             }
-        
+
         unmap_range_start_finish:
             length -= (r->end - addr);
             addr = r->end;
@@ -266,7 +266,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 #endif /* MMAP_DEBUG */
 
         if (r->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-            fs_munmap((void*) r->start, r->start + r->end);
+            fs_munmap((void *) r->start, r->start + r->end);
         } else {
             for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
                 unmap_page(i);
@@ -307,16 +307,14 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
         while ((r = find_vm_region_in_range(to_search, to_search + len))) {
             to_search = r->end + 5 * PAGE_SIZE;
         }
-        addr = (void*) to_search;
+        addr = (void *) to_search;
     }
 
     struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
     to_add->start = (uintptr_t) addr;
     to_add->end = to_add->start + len;
     to_add->type = type;
-    to_add->flags = (prot & PROT_WRITE ? VM_WRITE : 0) |
-                    (prot & PROT_EXEC ? 0 : VM_NO_EXEC) |
-                    VM_USER;
+    to_add->flags = (prot & PROT_WRITE ? VM_WRITE : 0) | (prot & PROT_EXEC ? 0 : VM_NO_EXEC) | VM_USER;
 
     struct process *process = get_current_task()->process;
     spin_lock(&process->lock);
@@ -328,7 +326,6 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
 #endif /* MMAP_DEBUG */
     return to_add;
 }
-
 
 void remove_vm_pages_start(size_t n, uint64_t type) {
     struct vm_region *list;
@@ -411,9 +408,9 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
     struct vm_region *region = get_current_task()->process->process_memory;
 
     while (region) {
-        if (((start <= region->start) && (region->end <= end))   || // start-end contain the region
+        if (((start <= region->start) && (region->end <= end)) ||   // start-end contain the region
             ((start >= region->start) && (start <= region->end)) || // region contains start
-            ((end   >= region->start) && (end   <= region->end))    // region contains end
+            ((end >= region->start) && (end <= region->end))        // region contains end
         ) {
             return region;
         }
@@ -422,9 +419,9 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
 
     region = kernel_vm_list;
     while (region) {
-        if (((start <= region->start) && (region->end <= end))   || // start-end contain the region
+        if (((start <= region->start) && (region->end <= end)) ||   // start-end contain the region
             ((start >= region->start) && (start <= region->end)) || // region contains start
-            ((end   >= region->start) && (end   <= region->end))    // region contains end
+            ((end >= region->start) && (end <= region->end))        // region contains end
         ) {
             return region;
         }
@@ -433,7 +430,6 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
 
     return NULL;
 }
-
 
 struct vm_region *clone_process_vm() {
     struct vm_region *list = get_current_task()->process->process_memory;

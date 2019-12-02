@@ -3,25 +3,22 @@
 #include <assert.h>
 #include <liim/traits.h>
 #include <new>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
 namespace LIIM {
 
-template<typename T>
-class Vector {
+template<typename T> class Vector {
 public:
     explicit Vector(int capacity = 20)
-        : m_capacity(capacity)
-    {
+        : m_capacity(capacity) {
         allocate_vector();
     }
 
     Vector(const Vector& to_copy)
-        : m_capacity(to_copy.capacity())
-    {
+        : m_capacity(to_copy.capacity()) {
         allocate_vector();
         m_size = to_copy.size();
         if (m_size == 0) {
@@ -38,8 +35,7 @@ public:
 
     Vector(const T* buffer, int num_elements)
         : m_capacity(num_elements)
-        , m_size(num_elements)
-    {
+        , m_size(num_elements) {
         assert(buffer);
         allocate_vector();
         if constexpr (Traits<T>::is_simple()) {
@@ -51,8 +47,7 @@ public:
         }
     }
 
-    ~Vector()
-    {
+    ~Vector() {
         for (int i = 0; i < m_size; i++) {
             get(i).~T();
         }
@@ -63,11 +58,14 @@ public:
         m_vector = nullptr;
     }
 
-    int size() const { return m_size; }
-    int capacity() const { return m_capacity; }
+    int size() const {
+        return m_size;
+    }
+    int capacity() const {
+        return m_capacity;
+    }
 
-    void add(const T& t)
-    {
+    void add(const T& t) {
         if (m_size >= m_capacity) {
             increase_capacity();
             allocate_vector();
@@ -76,27 +74,23 @@ public:
         new (&m_vector[m_size++]) T(t);
     }
 
-    void remove_last()
-    {
+    void remove_last() {
         assert(m_size > 0);
         get(m_size - 1).~T();
         m_size--;
     }
 
-    T& get(int i)
-    {
+    T& get(int i) {
         assert(i >= 0 && i < m_size);
         return m_vector[i];
     }
 
-    const T& get(int i) const
-    {
+    const T& get(int i) const {
         assert(i >= 0 && i < m_size);
         return m_vector[i];
     }
 
-    T& get_or(int i, T& val)
-    {
+    T& get_or(int i, T& val) {
         if (i < 0 || i >= m_size) {
             return val;
         }
@@ -104,8 +98,7 @@ public:
         return get(i);
     }
 
-    const T& get_or(int i, const T& val) const
-    {
+    const T& get_or(int i, const T& val) const {
         if (i < 0 || i >= m_size) {
             return val;
         }
@@ -113,36 +106,47 @@ public:
         return get(i);
     }
 
-    T& operator[](int i) { return get(i); }
-    const T& operator[](int i) const { return get(i); }
+    T& operator[](int i) {
+        return get(i);
+    }
+    const T& operator[](int i) const {
+        return get(i);
+    }
 
-    T& first() { return get(0); }
-    const T& first() const { return get(0); }
+    T& first() {
+        return get(0);
+    }
+    const T& first() const {
+        return get(0);
+    }
 
-    T& last() { return get(m_size - 1); }
-    const T& last() const { return get(m_size - 1); }
+    T& last() {
+        return get(m_size - 1);
+    }
+    const T& last() const {
+        return get(m_size - 1);
+    }
 
-    T* vector() { return m_vector; }
-    const T* vector() const { return m_vector; }
+    T* vector() {
+        return m_vector;
+    }
+    const T* vector() const {
+        return m_vector;
+    }
 
-    template<typename C>
-    void for_each(C callback) 
-    {
+    template<typename C> void for_each(C callback) {
         for (int i = 0; i < size(); i++) {
             callback(get(i));
         }
     }
 
-    template<typename C>
-    void for_each_reverse(C callback)
-    {
+    template<typename C> void for_each_reverse(C callback) {
         for (int i = size() - 1; i >= 0; i--) {
             callback(get(i));
         }
     }
 
-    void remove_element(const T& val)
-    {
+    void remove_element(const T& val) {
         for (int i = size() - 1; i >= 0; i--) {
             if (get(i) == val) {
                 get(i).~T();
@@ -162,9 +166,7 @@ public:
         }
     }
 
-    template<typename C>
-    void remove_if(C callback)
-    {
+    template<typename C> void remove_if(C callback) {
         for_each_reverse([&](auto& elem) {
             if (callback(elem)) {
                 remove_element(elem);
@@ -173,13 +175,11 @@ public:
     }
 
 private:
-    void increase_capacity()
-    {
+    void increase_capacity() {
         m_capacity *= 2;
     }
 
-    void allocate_vector()
-    {
+    void allocate_vector() {
         T* replacement = static_cast<T*>(malloc(m_capacity * sizeof(T)));
         if (!m_vector) {
             m_vector = replacement;

@@ -9,8 +9,8 @@
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
-#include <kernel/hal/timer.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/timer.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
@@ -27,22 +27,20 @@ static int socket_file_close(struct file *file);
 static ssize_t net_read(struct file *file, void *buf, size_t len);
 static ssize_t net_write(struct file *file, const void *buf, size_t len);
 
-static struct file_operations socket_file_ops = { 
-    socket_file_close, net_read, net_write, NULL
-};
+static struct file_operations socket_file_ops = { socket_file_close, net_read, net_write, NULL };
 
 static struct hash_map *map;
 
 static int socket_hash(void *i, int num_buckets) {
-    return *((unsigned long*) i) % num_buckets;
+    return *((unsigned long *) i) % num_buckets;
 }
 
 static int socket_equals(void *i1, void *i2) {
-    return *((unsigned long*) i1) == *((unsigned long*) i2);
+    return *((unsigned long *) i1) == *((unsigned long *) i2);
 }
 
 static void *socket_key(void *socket) {
-    return &((struct socket*) socket)->id;
+    return &((struct socket *) socket)->id;
 }
 
 static int socket_file_close(struct file *file) {
@@ -70,7 +68,7 @@ static int socket_file_close(struct file *file) {
             break;
     }
 
-    struct socket_data *to_remove = socket->data_head;    
+    struct socket_data *to_remove = socket->data_head;
     while (to_remove != NULL) {
         struct socket_data *next = to_remove->next;
         free(to_remove);
@@ -170,7 +168,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
             time_t now = get_time();
             time_t ms_seconds_to_wait = socket->timeout.tv_sec * 1000 + socket->timeout.tv_usec / 1000;
-            
+
             // We timed out
             if (now >= start_time + ms_seconds_to_wait) {
                 return -EAGAIN;
@@ -194,8 +192,8 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         if (data->tcb->should_send_ack) {
             struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
 
-            net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port,
-                data->tcb->current_sequence_num, data->tcb->current_ack_num, (union tcp_flags) { .bits.ack=1, .bits.fin=socket->state == CLOSING }, 0, NULL);
+            net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num,
+                data->tcb->current_ack_num, (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
             data->tcb->should_send_ack = false;
 
             if (socket->state == CLOSING) {
@@ -226,7 +224,7 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             memcpy(connection, socket->pending[0], sizeof(struct socket_connection));
 
             free(socket->pending[0]);
-            memmove(socket->pending, socket->pending + 1, (socket->pending_length - 1) * sizeof(struct socket_connection*));
+            memmove(socket->pending, socket->pending + 1, (socket->pending_length - 1) * sizeof(struct socket_connection *));
             socket->pending[--socket->num_pending] = NULL;
 
             spin_unlock(&socket->lock);
@@ -251,7 +249,7 @@ struct socket *net_get_socket_by_id(unsigned long id) {
 }
 
 void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data) {
-    hash_for_each(map, (void (*)(void*, void*)) f, data);
+    hash_for_each(map, (void (*)(void *, void *)) f, data);
 }
 
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data) {
@@ -287,9 +285,9 @@ int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int
 
     switch (socket->domain) {
         case AF_INET:
-            return net_inet_accept(socket, (struct sockaddr_in*) addr, addrlen, flags);
+            return net_inet_accept(socket, (struct sockaddr_in *) addr, addrlen, flags);
         case AF_UNIX:
-            return net_unix_accept(socket, (struct sockaddr_un*) addr, addrlen, flags);
+            return net_unix_accept(socket, (struct sockaddr_un *) addr, addrlen, flags);
         default:
             return -EAFNOSUPPORT;
     }
@@ -305,9 +303,9 @@ int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) 
 
     switch (socket->domain) {
         case AF_INET:
-            return net_inet_bind(socket, (const struct sockaddr_in*) addr, addrlen);
+            return net_inet_bind(socket, (const struct sockaddr_in *) addr, addrlen);
         case AF_UNIX:
-            return net_unix_bind(socket, (const struct sockaddr_un*) addr, addrlen);
+            return net_unix_bind(socket, (const struct sockaddr_un *) addr, addrlen);
         default:
             return -EAFNOSUPPORT;
     }
@@ -323,9 +321,9 @@ int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrle
 
     switch (socket->domain) {
         case AF_INET:
-            return net_inet_connect(socket, (const struct sockaddr_in*) addr, addrlen);
+            return net_inet_connect(socket, (const struct sockaddr_in *) addr, addrlen);
         case AF_UNIX:
-            return net_unix_connect(socket, (const struct sockaddr_un*) addr, addrlen);
+            return net_unix_connect(socket, (const struct sockaddr_un *) addr, addrlen);
         default:
             return -EAFNOSUPPORT;
     }
@@ -357,7 +355,7 @@ int net_listen(struct file *file, int backlog) {
             return -EAFNOSUPPORT;
     }
 
-    socket->pending = calloc(backlog, sizeof(struct socket_connection*));
+    socket->pending = calloc(backlog, sizeof(struct socket_connection *));
     socket->pending_length = backlog;
     socket->num_pending = 0;
 
@@ -387,7 +385,7 @@ int net_setsockopt(struct file *file, int level, int optname, const void *optval
         return -EINVAL;
     }
 
-    socket->timeout = *((const struct timeval*) optval);
+    socket->timeout = *((const struct timeval *) optval);
 
     return 0;
 }
@@ -413,9 +411,9 @@ ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, co
 
     switch (socket->domain) {
         case AF_UNIX:
-            return net_unix_sendto(socket, buf, len, flags, (const struct sockaddr_un*) dest, addrlen);
+            return net_unix_sendto(socket, buf, len, flags, (const struct sockaddr_un *) dest, addrlen);
         case AF_INET:
-            return net_inet_sendto(socket, buf, len, flags, (const struct sockaddr_in*) dest, addrlen);
+            return net_inet_sendto(socket, buf, len, flags, (const struct sockaddr_in *) dest, addrlen);
         default:
             return -EAFNOSUPPORT;
     }
@@ -431,9 +429,9 @@ ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct
 
     switch (socket->domain) {
         case AF_UNIX:
-            return net_unix_recvfrom(socket, buf, len, flags, (struct sockaddr_un*) source, addrlen);
+            return net_unix_recvfrom(socket, buf, len, flags, (struct sockaddr_un *) source, addrlen);
         case AF_INET:
-            return net_inet_recvfrom(socket, buf, len, flags, (struct sockaddr_in*) source, addrlen);
+            return net_inet_recvfrom(socket, buf, len, flags, (struct sockaddr_in *) source, addrlen);
         default:
             return -EAFNOSUPPORT;
     }

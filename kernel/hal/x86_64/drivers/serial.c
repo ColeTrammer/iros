@@ -1,26 +1,27 @@
-#include <stdio.h>
-#include <stdbool.h>
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <kernel/fs/dev.h>
 #include <kernel/hal/output.h>
 
+#include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
-#include <kernel/arch/x86_64/asm_utils.h>
 
 static void handle_serial_interrupt() {
     debug_log("Recieved Serial Port Interrupt: Status [ %#.2X ]\n", inb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_STATUS_OFFSET)));
 }
 
 static void serial_write_character(char c) {
-    while ((inb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_STATUS_OFFSET)) & SERIAL_TRANSMITTER_EMPTY_BUFFER) == 0);
+    while ((inb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_STATUS_OFFSET)) & SERIAL_TRANSMITTER_EMPTY_BUFFER) == 0)
+        ;
 
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_DATA_OFFSET), c);
 }
@@ -68,9 +69,7 @@ static ssize_t serial_write(struct device *device, struct file *file, const void
     return (ssize_t) len;
 }
 
-struct device_ops serial_ops = {
-    NULL, NULL, &serial_write, NULL, NULL, NULL, NULL, NULL, NULL
-};
+struct device_ops serial_ops = { NULL, NULL, &serial_write, NULL, NULL, NULL, NULL, NULL, NULL };
 
 void init_serial_port_device(dev_t dev) {
     /* Could be anything */

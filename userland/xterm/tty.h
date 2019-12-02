@@ -7,8 +7,7 @@ class VgaBuffer;
 class TTY {
 public:
     TTY(VgaBuffer&);
-    ~TTY()
-    {
+    ~TTY() {
     }
 
     void scroll_up();
@@ -20,8 +19,14 @@ public:
     void on_char(char);
 
 private:
-    void save_pos() { m_saved_row = m_row; m_saved_col = m_col; }
-    void restore_pos() { m_row = m_saved_row; m_col = m_saved_col; }
+    void save_pos() {
+        m_saved_row = m_row;
+        m_saved_col = m_col;
+    }
+    void restore_pos() {
+        m_row = m_saved_row;
+        m_col = m_saved_col;
+    }
 
     void draw(char);
     void update_cursor();

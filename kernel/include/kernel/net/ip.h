@@ -46,6 +46,7 @@ struct ip_v4_pseudo_header {
 ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len);
 void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len);
 
-void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest, uint16_t payload_length);
+void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
+    struct ip_v4_address dest, uint16_t payload_length);
 
 #endif /* _KERNEL_NET_IP_H */

@@ -9,8 +9,8 @@ void *memmove(void *dest, const void *src, size_t n, int line, const char *func)
 #else
 void *memmove(void *dest, const void *src, size_t n) {
 #endif /* #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MEMCPY_DEBUG) */
-    unsigned char *buffer = (unsigned char*) dest;
-    const unsigned char *source = (const unsigned char*) src;
+    unsigned char *buffer = (unsigned char *) dest;
+    const unsigned char *source = (const unsigned char *) src;
     if (source < buffer) {
         for (size_t i = n; i > 0; i--) {
             buffer[i - 1] = source[i - 1];

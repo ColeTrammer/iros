@@ -5,17 +5,17 @@
 
 #define GDT_ENTRIES 7
 
-#define CS_OFFSET 1
-#define DATA_OFFSET 2
+#define CS_OFFSET        1
+#define DATA_OFFSET      2
 #define USER_CODE_OFFSET 3
 #define USER_DATA_OFFSET 4
-#define TSS_OFFSET 5
+#define TSS_OFFSET       5
 
-#define CS_SELECTOR (CS_OFFSET * 8)
-#define DATA_SELECTOR (DATA_OFFSET * 8)
+#define CS_SELECTOR        (CS_OFFSET * 8)
+#define DATA_SELECTOR      (DATA_OFFSET * 8)
 #define USER_CODE_SELECTOR ((USER_CODE_OFFSET * 8) | 0b11)
 #define USER_DATA_SELECTOR ((USER_DATA_OFFSET * 8) | 0b11)
-#define TSS_SELECTOR (TSS_OFFSET * 8)
+#define TSS_SELECTOR       (TSS_OFFSET * 8)
 
 #define TSS_TYPE 0b10001001;
 
@@ -59,11 +59,11 @@ struct tss {
 } __attribute__((packed));
 
 static inline void load_gdt(struct gdt_descriptor descriptor) {
-    asm ( "lgdt %0" : : "m"(descriptor) );
+    asm("lgdt %0" : : "m"(descriptor));
 }
 
 static inline void load_tr(uint16_t selector) {
-    asm ( "ltr %0" : : "m"(selector) );
+    asm("ltr %0" : : "m"(selector));
 }
 
 void init_gdt();

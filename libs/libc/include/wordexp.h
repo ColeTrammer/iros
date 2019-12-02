@@ -11,10 +11,10 @@
 #define WRDE_UNDEF   32
 
 #define WRDE_BADCHAR -1
-#define WRDE_BADVAL -2
-#define WRDE_CMDSUB -3
+#define WRDE_BADVAL  -2
+#define WRDE_CMDSUB  -3
 #define WRDE_NOSPACE -4
-#define WRDE_SYNTAX -5
+#define WRDE_SYNTAX  -5
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +49,7 @@ typedef struct {
 #endif /* _OS_2_SOURCE */
 } wordexp_t;
 
-int wordexp(const char *s ,wordexp_t *p, int flags);
+int wordexp(const char *s, wordexp_t *p, int flags);
 void wordfree(wordexp_t *p);
 
 #ifdef __cplusplus

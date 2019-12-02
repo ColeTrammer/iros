@@ -1,8 +1,8 @@
 #include <kernel/util/spinlock.h>
 
-#include <kernel/proc/task.h>
-#include <kernel/hal/output.h>
 #include <kernel/hal/hal.h>
+#include <kernel/hal/output.h>
+#include <kernel/proc/task.h>
 
 void init_spinlock(spinlock_t *lock) {
     lock->counter = 0;
@@ -17,8 +17,9 @@ void spin_lock(spinlock_t *lock) {
             return;
         }
         enable_interrupts();
-        
-        while (lock->counter) cpu_relax();
+
+        while (lock->counter)
+            cpu_relax();
     }
 }
 

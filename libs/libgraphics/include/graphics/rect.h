@@ -8,35 +8,47 @@ public:
         : m_x(x)
         , m_y(y)
         , m_width(width)
-        , m_height(height)
-    {
+        , m_height(height) {
     }
 
     Rect(const Rect& other)
         : m_x(other.x())
         , m_y(other.y())
         , m_width(other.width())
-        , m_height(other.height())
-    {
+        , m_height(other.height()) {
     }
 
-    int x() const { return m_x; }
-    int y() const { return m_y; }
-    int width() const { return m_width; }
-    int height() const { return m_height; }
+    int x() const {
+        return m_x;
+    }
+    int y() const {
+        return m_y;
+    }
+    int width() const {
+        return m_width;
+    }
+    int height() const {
+        return m_height;
+    }
 
-    void set_x(int x) { m_x = x; }
-    void set_y(int y) { m_y = y; }
-    void set_width(int width) { m_width = width; }
-    void set_height(int height) { m_height = height; }
+    void set_x(int x) {
+        m_x = x;
+    }
+    void set_y(int y) {
+        m_y = y;
+    }
+    void set_width(int width) {
+        m_width = width;
+    }
+    void set_height(int height) {
+        m_height = height;
+    }
 
-    Point center() const
-    {
+    Point center() const {
         return Point(x() + width() / 2, y() + height() / 2);
     }
 
-    ~Rect()
-    {
+    ~Rect() {
     }
 
 private:

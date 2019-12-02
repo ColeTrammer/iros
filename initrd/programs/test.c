@@ -1,13 +1,12 @@
-#include <string.h>
+#include <fcntl.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <fcntl.h>
 #include <string.h>
-#include <stdint.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 int main(int argc, char **argv) {
     (void) argc;
@@ -35,7 +34,7 @@ int main(int argc, char **argv) {
     // }
 
     /* Test args */
-    
+
     // printf("Argc: %d\n", argc);
     // for (size_t i = 0; argv[i] != NULL; i++) {
     //     printf("Argv[%ld]: %s\n", i, argv[i]);
@@ -61,7 +60,7 @@ int main(int argc, char **argv) {
     // fclose(a);
 
     /* Test Reading Files Using Sys Calls */
-    
+
     // int fd = open("/a.txt", 0, 0);
     // char *buffer = malloc(0x5000);
     // read(fd, buffer, 0x5000);

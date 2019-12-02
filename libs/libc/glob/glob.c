@@ -1,11 +1,11 @@
-#include <glob.h>
-#include <stdio.h>
-#include <string.h>
+#include <assert.h>
 #include <dirent.h>
 #include <errno.h>
+#include <glob.h>
 #include <stdbool.h>
-#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #define GLOB_BUF_INCREMENT 10
@@ -27,11 +27,15 @@ static bool glob_is_valid_char_for_set(char c, const char *set, int set_end, boo
 
             // Don't need to check edges b/c they are checked automatically
             for (char r = range_start + 1; r < range_end; r++) {
-                if (r == c) { return !invert; }
+                if (r == c) {
+                    return !invert;
+                }
             }
         }
 
-        if (set[i] == c) { return !invert; }
+        if (set[i] == c) {
+            return !invert;
+        }
     }
 
     return invert;
@@ -76,7 +80,9 @@ static bool glob_matches(char *s, const char *pattern) {
             // Sets cannot be empty
             pi++;
             const char *set_start = pattern + pi;
-            while (pattern[pi] != ']') { pi++; }
+            while (pattern[pi] != ']') {
+                pi++;
+            }
             if (!glob_is_valid_char_for_set(s[si++], set_start, pi++, invert)) {
                 // Try again if we were trying to match a `*`
                 if (next_si != 0) {
@@ -104,9 +110,9 @@ static bool glob_matches(char *s, const char *pattern) {
 
 static bool glob_append(glob_t *pglob, char *p, char *s) {
     if (pglob->gl_pathc == 0) {
-        pglob->gl_pathv = calloc(10, sizeof(char*));
+        pglob->gl_pathv = calloc(10, sizeof(char *));
     } else if (pglob->gl_pathc % GLOB_BUF_INCREMENT == 0) {
-        pglob->gl_pathv = realloc(pglob->gl_pathv, (pglob->gl_pathc + GLOB_BUF_INCREMENT) * sizeof(char*));
+        pglob->gl_pathv = realloc(pglob->gl_pathv, (pglob->gl_pathc + GLOB_BUF_INCREMENT) * sizeof(char *));
     }
 
     // Memory allocation error
@@ -136,7 +142,7 @@ static bool glob_is_dir(char *path, int flags, int (*errfunc)(const char *epath,
         }
         if (ret) {
             return false;
-        } 
+        }
     }
     *is_dir = S_ISDIR(stat_struct.st_mode);
     return true;
@@ -162,7 +168,8 @@ static bool glob_opendir(char *path, int flags, int (*errfunc)(const char *epath
     return true;
 }
 
-static int glob_helper(char *__restrict path, char *__restrict to_prepend, const char *__restrict pattern, int flags, int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
+static int glob_helper(char *__restrict path, char *__restrict to_prepend, const char *__restrict pattern, int flags,
+    int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
     char *first_slash = strchr(pattern, '/');
 
     if (first_slash) {
@@ -225,13 +232,13 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
 
     closedir(d);
     if (first_slash) {
-        *first_slash  = '/';
+        *first_slash = '/';
     }
     return found_anything ? 0 : GLOB_NOMATCH;
 }
 
 static int glob_compare(const void *s1, const void *s2) {
-    return strcmp(*(char *const*) s1, *(char *const*) s2);
+    return strcmp(*(char *const *) s1, *(char *const *) s2);
 }
 
 int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
@@ -245,7 +252,7 @@ int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *e
 
     if (flags & GLOB_DOOFFS) {
         pglob->gl_pathc = pglob->gl_offs;
-        pglob->gl_pathv = calloc(GLOB_BUF_INCREMENT * ((pglob->gl_offs + GLOB_BUF_INCREMENT - 1) / GLOB_BUF_INCREMENT), sizeof(char*));
+        pglob->gl_pathv = calloc(GLOB_BUF_INCREMENT * ((pglob->gl_offs + GLOB_BUF_INCREMENT - 1) / GLOB_BUF_INCREMENT), sizeof(char *));
     }
 
     int ret;
@@ -260,7 +267,7 @@ int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *e
     }
 
     if (!(flags & GLOB_NOSORT)) {
-        qsort(pglob->gl_pathv + pglob->gl_offs, pglob->gl_pathc - pglob->gl_offs, sizeof(char*), glob_compare);
+        qsort(pglob->gl_pathv + pglob->gl_offs, pglob->gl_pathc - pglob->gl_offs, sizeof(char *), glob_compare);
     }
 
     return ret;

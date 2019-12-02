@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main() 
-{
+int main() {
     double x = 1.123;
     printf("%g\n", x);
 

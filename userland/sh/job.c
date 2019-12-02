@@ -60,12 +60,9 @@ pid_t get_jid_from_pgid(pid_t pgid) {
 
 void print_job(pid_t jid) {
     assert(jid > 0 && jid < MAX_JOBS);
-    struct job job  = jobs[jid - 1];
+    struct job job = jobs[jid - 1];
     assert(job.state != DNE);
-    printf("[%d]+ %5d %s\n", jid, job.pgid,
-        job.state == RUNNING ? "Running" : 
-        job.state == STOPPED ? "Stopped" :
-        "Terminated");
+    printf("[%d]+ %5d %s\n", jid, job.pgid, job.state == RUNNING ? "Running" : job.state == STOPPED ? "Stopped" : "Terminated");
 }
 
 void job_print_all() {
@@ -131,7 +128,8 @@ int job_run(struct job_id id) {
         }
 
         pid_t ret;
-        while (!(ret = waitpid(-job->pgid, &status, WUNTRACED)));
+        while (!(ret = waitpid(-job->pgid, &status, WUNTRACED)))
+            ;
 
         if (ret == -1) {
             assert(false);
@@ -185,7 +183,6 @@ int job_run_background(struct job_id id) {
     return 0;
 }
 
-
 void job_check_updates(bool print_updates) {
     pid_t pid;
     int status;
@@ -213,7 +210,8 @@ void job_check_updates(bool print_updates) {
 
             if (job->num_processes <= 0) {
                 job->state = TERMINATED;
-                if (print_updates) print_job(jid);
+                if (print_updates)
+                    print_job(jid);
                 job->state = DNE;
             }
         } else if (WIFSTOPPED(status)) {
@@ -221,12 +219,14 @@ void job_check_updates(bool print_updates) {
             if (job->num_consumed > job->num_processes) {
                 job->state = STOPPED;
                 job->num_consumed = 1;
-                if (print_updates) print_job(jid);
+                if (print_updates)
+                    print_job(jid);
             }
         } else if (WIFCONTINUED(status)) {
             if (job->state != RUNNING) {
                 job->state = RUNNING;
-                if (print_updates) print_job(jid);
+                if (print_updates)
+                    print_job(jid);
             }
         } else {
             assert(false);

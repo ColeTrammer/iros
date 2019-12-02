@@ -24,7 +24,7 @@ int start_server() {
     strcpy(addr.sun_path, "/tmp/.nslookup.socket");
 
     unlink(addr.sun_path);
-    if (bind(fd, (const struct sockaddr*) &addr, sizeof(struct sockaddr_un)) == -1) {
+    if (bind(fd, (const struct sockaddr *) &addr, sizeof(struct sockaddr_un)) == -1) {
         perror("bind");
         return 1;
     }
@@ -37,7 +37,7 @@ int start_server() {
     for (;;) {
         struct sockaddr_un addr = { 0 };
         socklen_t addrlen = sizeof(struct sockaddr_un);
-        int client_fd = accept(fd, (struct sockaddr*) &addr, &addrlen);
+        int client_fd = accept(fd, (struct sockaddr *) &addr, &addrlen);
         if (client_fd == -1) {
             perror("accept");
             return 1;

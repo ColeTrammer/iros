@@ -1,6 +1,6 @@
 #include <kernel/hal/output.h>
-#include <kernel/net/interface.h>
 #include <kernel/net/arp.h>
+#include <kernel/net/interface.h>
 #include <kernel/net/loopback.h>
 #include <kernel/net/mac.h>
 #include <kernel/net/net.h>
@@ -12,7 +12,6 @@
 
 static void init_ip_v4_mappings(struct network_interface *interface) {
     debug_log("Initializing interface: [ %s ]\n", interface->name);
-
 
     net_create_ip_v4_to_mac_mapping(interface->address, interface->ops->get_mac_address(interface));
     if (interface->type != NETWORK_INTERFACE_LOOPBACK) {

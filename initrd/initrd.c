@@ -1,7 +1,7 @@
-#include <stdio.h>
+#include <dirent.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <dirent.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
                 entry.length = ftell(current_file);
                 file_lengths[i++] = entry.length;
                 entry.length = (entry.length & ~7) + 8;
-                offset += entry.length ;
+                offset += entry.length;
                 fclose(current_file);
 
                 fwrite(&entry, sizeof(struct initrd_file_entry), 1, initrd);
@@ -108,11 +108,11 @@ int main(int argc, char **argv) {
 
                 strncpy(file_name + dir_name_length, dir->d_name, MAX_FILE_NAME_LENGTH);
                 memset(file_name + dir_name_length + strlen(dir->d_name), '\0', MAX_FILE_NAME_LENGTH - strlen(dir->d_name));
-                
+
                 FILE *current_file = fopen(file_name, "r");
                 size_t read = fread(buffer, 1, file_lengths[i], current_file);
                 if (read < file_lengths[i++]) {
-                   printf("Error reading file: %s\n", file_name);
+                    printf("Error reading file: %s\n", file_name);
                     return 1;
                 }
                 fwrite(buffer, 1, buffer_length, initrd);

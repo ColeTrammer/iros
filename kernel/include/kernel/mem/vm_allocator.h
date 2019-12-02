@@ -1,9 +1,9 @@
 #ifndef _KERNEL_MEM_VM_ALLOCATOR_H
 #define _KERNEL_MEM_VM_ALLOCATOR_H 1
 
-#include <sys/types.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/mem/vm_region.h>

@@ -1,35 +1,32 @@
-#include <stdlib.h>
+#include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <sys/types.h>
 
-#include <kernel/mem/page.h>
+#include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/arch/x86_64/proc/task.h>
+#include <kernel/hal/hal.h>
+#include <kernel/hal/output.h>
+#include <kernel/hal/x86_64/gdt.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/mem/kernel_vm.h>
+#include <kernel/mem/page.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
-#include <kernel/hal/hal.h>
-#include <kernel/arch/x86_64/proc/task.h>
-#include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/hal/x86_64/gdt.h>
-#include <kernel/hal/output.h>
-#include <kernel/irqs/handlers.h>
 
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
 extern struct task initial_kernel_task;
 
 /* Default Args And Envp Passed to First Program */
-static char *test_argv[2] = {
-    "start", NULL
-};
+static char *test_argv[2] = { "start", NULL };
 
-static char *test_envp[7] = {
-    "PATH=/bin:/usr/bin:/initrd", "HOME=/home/eloc", "IFS= \t\n", "USER=eloc", "TERM=xterm", "SHELL=/bin/sh", NULL
-};
+static char *test_envp[7]
+    = { "PATH=/bin:/usr/bin:/initrd", "HOME=/home/eloc", "IFS= \t\n", "USER=eloc", "TERM=xterm", "SHELL=/bin/sh", NULL };
 
 static void kernel_idle() {
     disable_interrupts();
@@ -40,7 +37,8 @@ static void load_task_into_memory(struct task *task) {
     set_tss_stack_pointer(task->arch_task.kernel_stack);
     load_cr3(task->process->arch_process.cr3);
 
-    // Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In Currently
+    // Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In
+    // Currently
     if (task->arch_task.setup_kernel_stack) {
         struct vm_region *kernel_stack = get_vm_region(task->process->process_memory, VM_KERNEL_STACK);
         do_unmap_page(kernel_stack->start, false);
@@ -53,7 +51,7 @@ static void load_task_into_memory(struct task *task) {
 
 void task_align_fpu(struct task *task) {
     uintptr_t unaligned_fpu = (uintptr_t) &task->fpu.raw_fpu_state;
-    task->fpu.aligned_state = (uint8_t*) ((unaligned_fpu & ~0xFULL) + 16ULL);
+    task->fpu.aligned_state = (uint8_t *) ((unaligned_fpu & ~0xFULL) + 16ULL);
     assert(((uintptr_t) task->fpu.aligned_state) % 16 == 0);
 }
 
@@ -85,7 +83,8 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     kernel_proc_stack->start = kernel_proc_stack->end - PAGE_SIZE;
     task->process->process_memory = add_vm_region(task->process->process_memory, kernel_proc_stack);
 
-    /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before Execution) */
+    /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before
+     * Execution) */
     task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
     do_unmap_page(kernel_proc_stack->start, false);
     task->arch_task.setup_kernel_stack = false;
@@ -100,7 +99,8 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     task->arch_task.task_state.stack_state.rip = entry;
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
-    task->arch_task.task_state.stack_state.rsp = map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, test_argv, test_envp);
+    task->arch_task.task_state.stack_state.rsp
+        = map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, test_argv, test_envp);
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
     struct vm_region *kernel_proc_stack = calloc(1, sizeof(struct vm_region));
@@ -110,7 +110,8 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     kernel_proc_stack->start = kernel_proc_stack->end - PAGE_SIZE;
     task->process->process_memory = add_vm_region(task->process->process_memory, kernel_proc_stack);
 
-    /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before Execution) */
+    /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before
+     * Execution) */
     task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
     do_unmap_page(kernel_proc_stack->start, false);
     task->arch_task.setup_kernel_stack = false;
@@ -159,15 +160,13 @@ void task_do_sig_handler(struct task *task, int signum) {
     load_task_into_memory(task);
 
     // FIXME: Currently doesn't save fpu information
-    uint64_t save_rsp = proc_in_kernel(task) ? 
-                        task->arch_task.user_task_state.stack_state.rsp : 
-                        task->arch_task.task_state.stack_state.rsp;
+    uint64_t save_rsp = proc_in_kernel(task) ? task->arch_task.user_task_state.stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
 
     assert(save_rsp != 0);
-    struct task_state *save_state = ((struct task_state*) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
+    struct task_state *save_state = ((struct task_state *) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
     struct task_state *to_copy = proc_in_kernel(task) ? &task->arch_task.user_task_state : &task->arch_task.task_state;
-    uint64_t *stack_frame = ((uint64_t*) save_state) - 1;
-    *stack_frame-- = (uint64_t) (task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
+    uint64_t *stack_frame = ((uint64_t *) save_state) - 1;
+    *stack_frame-- = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
     *stack_frame = (uintptr_t) act.sa_restorer;
 
     memcpy(save_state, to_copy, sizeof(struct task_state));
@@ -198,7 +197,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     task->sig_mask |= (1U << (signum - 1));
 
     debug_log("Running pid: [ %d ]\n", task->process->pid);
-    
+
     if (get_current_task()->sched_state == RUNNING) {
         get_current_task()->sched_state = READY;
     }

@@ -2,8 +2,8 @@
 #define _KERNEL_PROC_PROCESS_STATE_H 1
 
 #include <stdbool.h>
-#include <sys/types.h>
 #include <sys/times.h>
+#include <sys/types.h>
 
 #include <kernel/util/spinlock.h>
 

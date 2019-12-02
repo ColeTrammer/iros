@@ -18,13 +18,13 @@
 #define TCIONI     15
 #define TCOONI     16
 
-#define SGWIDTH    0x1000
-#define SGHEIGHT   0x1001
-#define SSCURSOR   0x1002
-#define SECURSOR   0x1003
-#define SDCURSOR   0x1004
-#define SSRES      0x1005
-#define SSWAPBUF   0x1006
+#define SGWIDTH  0x1000
+#define SGHEIGHT 0x1001
+#define SSCURSOR 0x1002
+#define SECURSOR 0x1003
+#define SDCURSOR 0x1004
+#define SSRES    0x1005
+#define SSWAPBUF 0x1006
 
 #ifdef __cplusplus
 extern "C" {

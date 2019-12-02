@@ -20,7 +20,7 @@ int main() {
     // conn.sin_addr.s_addr = inet_addr("172.105.70.201");
     conn.sin_addr.s_addr = INADDR_LOOBACK;
 
-    if (connect(fd, (const struct sockaddr*) &conn, sizeof(struct sockaddr_in)) == -1) {
+    if (connect(fd, (const struct sockaddr *) &conn, sizeof(struct sockaddr_in)) == -1) {
         perror("connect");
         return 1;
     }

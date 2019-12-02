@@ -1,57 +1,57 @@
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <assert.h>
-#include <errno.h>
-#include <sys/socket.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <sys/times.h>
+#include <sys/types.h>
 #include <sys/wait.h>
-#include <fcntl.h>
-#include <signal.h>
 
-#include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/task.h>
-#include <kernel/proc/pid.h>
-#include <kernel/proc/elf64.h>
-#include <kernel/sched/task_sched.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/vfs.h>
-#include <kernel/proc/process_state.h>
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
+#include <kernel/proc/elf64.h>
+#include <kernel/proc/pid.h>
+#include <kernel/proc/process_state.h>
+#include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 
-#include <kernel/irqs/handlers.h>
+#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
-#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/x86_64/gdt.h>
+#include <kernel/irqs/handlers.h>
 
 // #define DUP_DEBUG
 // #define SET_PGID_DEBUG
 // #define SIGACTION_DEBUG
 // #define WAIT_PID_DEBUG
 
-#define SYS_BEGIN(task_state)                                                                               \
-    do {                                                                                                    \
+#define SYS_BEGIN(task_state)                                                                            \
+    do {                                                                                                 \
         memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
-        get_current_task()->in_kernel = true;                                                               \
-        enable_interrupts();                                                                                \
+        get_current_task()->in_kernel = true;                                                            \
+        enable_interrupts();                                                                             \
     } while (0)
 
-#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                                                         \
-    do {                                                                                                    \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                                                      \
+    do {                                                                                                 \
         memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
-        get_current_task()->can_send_self_signals = true;                                                   \
+        get_current_task()->can_send_self_signals = true;                                                \
     } while (0)
 
-#define SYS_BEGIN_SIGSUSPEND(task_state)                                                                    \
-    do {                                                                                                    \
+#define SYS_BEGIN_SIGSUSPEND(task_state)                                                                 \
+    do {                                                                                                 \
         memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
-        get_current_task()->in_sigsuspend = true;                                                           \
-        get_current_task()->in_kernel = true;                                                               \
+        get_current_task()->in_sigsuspend = true;                                                        \
+        get_current_task()->in_kernel = true;                                                            \
     } while (0)
 
 #define SYS_RETURN(val)                                    \
@@ -159,10 +159,10 @@ void arch_sys_fork(struct task_state *task_state) {
 void arch_sys_open(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) task_state->cpu_state.rsi;
+    const char *_path = (const char *) task_state->cpu_state.rsi;
     int flags = (int) task_state->cpu_state.rdx;
     mode_t mode = (mode_t) task_state->cpu_state.rcx;
-    
+
     assert(_path != NULL);
 
     int error = 0;
@@ -230,11 +230,11 @@ void arch_sys_open(struct task_state *task_state) {
     SYS_RETURN(-EMFILE);
 }
 
-void arch_sys_read(struct task_state *task_state)  {
+void arch_sys_read(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    char *buf = (void*) task_state->cpu_state.rdx;
+    char *buf = (void *) task_state->cpu_state.rdx;
     size_t count = (size_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
@@ -254,7 +254,7 @@ void arch_sys_write(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    void *buf = (void*) task_state->cpu_state.rdx;
+    void *buf = (void *) task_state->cpu_state.rdx;
     size_t count = (size_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
@@ -292,9 +292,9 @@ void arch_sys_close(struct task_state *task_state) {
 void arch_sys_execve(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *file_name = (const char*) task_state->cpu_state.rsi;
-    char **argv = (char**) task_state->cpu_state.rdx;
-    char **envp = (char**) task_state->cpu_state.rcx;
+    const char *file_name = (const char *) task_state->cpu_state.rsi;
+    char **argv = (char **) task_state->cpu_state.rdx;
+    char **envp = (char **) task_state->cpu_state.rcx;
 
     assert(file_name != NULL);
     assert(argv != NULL);
@@ -315,7 +315,7 @@ void arch_sys_execve(struct task_state *task_state) {
 
     fs_seek(program, 0, SEEK_END);
     long length = fs_tell(program);
-    
+
     if (length == 0) {
         free(path);
         SYS_RETURN(-ENOEXEC);
@@ -347,7 +347,8 @@ void arch_sys_execve(struct task_state *task_state) {
         //        right now this means that FD_CLOEXEC will destroy all duplicated files, so it
         //        cannot be used when doing dup(2) on a builtin stream. This is of course its
         //        primary use case, so FD_CLOEXEC must be ignored or everything will break.
-        if (!current->process->files[i] || ( /* (current->files[i]->fd_flags & FD_CLOEXEC) || */ (current->process->files[i]->flags & FS_DIR))) {
+        if (!current->process->files[i]
+            || (/* (current->files[i]->fd_flags & FD_CLOEXEC) || */ (current->process->files[i]->flags & FS_DIR))) {
             // NOTE: the files will be closed by the `free_task` function
             continue;
         }
@@ -406,7 +407,7 @@ void arch_sys_execve(struct task_state *task_state) {
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
     /* Memset stack to zero so that task can use old one safely (only go until rsp because args are after it). */
-    memset((void*) process_stack->start, 0, task->arch_task.task_state.stack_state.rsp - process_stack->start);
+    memset((void *) process_stack->start, 0, task->arch_task.task_state.stack_state.rsp - process_stack->start);
 
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process->process_memory);
@@ -417,7 +418,8 @@ void arch_sys_execve(struct task_state *task_state) {
     free(path);
     free(buffer);
 
-    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be Interrupted) */
+    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be
+     * Interrupted) */
     disable_interrupts();
 
     // NOTE: this is necessary b/c current_task must always be valid. Otherwise, we will save state
@@ -438,7 +440,7 @@ void arch_sys_waitpid(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     pid_t pid = (pid_t) task_state->cpu_state.rsi;
-    int *status = (int*) task_state->cpu_state.rdx;
+    int *status = (int *) task_state->cpu_state.rdx;
     int flags = (int) task_state->cpu_state.rcx;
 
     struct task *current = get_current_task();
@@ -503,7 +505,7 @@ void arch_sys_waitpid(struct task_state *task_state) {
     SYS_RETURN(found_pid);
 }
 
-void arch_sys_getpid(struct task_state *task_state) {    
+void arch_sys_getpid(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     SYS_RETURN(get_current_task()->process->pid);
@@ -512,7 +514,7 @@ void arch_sys_getpid(struct task_state *task_state) {
 void arch_sys_getcwd(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    char *buffer = (char*) task_state->cpu_state.rsi;
+    char *buffer = (char *) task_state->cpu_state.rsi;
     size_t size = (size_t) task_state->cpu_state.rdx;
 
     struct task *current = get_current_task();
@@ -527,11 +529,11 @@ void arch_sys_getcwd(struct task_state *task_state) {
 void arch_sys_chdir(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) task_state->cpu_state.rsi;
+    const char *_path = (const char *) task_state->cpu_state.rsi;
 
     /* Should probably not do this */
     if (_path[strlen(_path) - 1] == '/') {
-        ((char*) _path)[strlen(_path) - 1] = '\0';
+        ((char *) _path)[strlen(_path) - 1] = '\0';
     }
 
     struct task *task = get_current_task();
@@ -558,8 +560,8 @@ void arch_sys_chdir(struct task_state *task_state) {
 void arch_sys_stat(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) task_state->cpu_state.rsi;
-    void *stat_struct = (void*) task_state->cpu_state.rdx;
+    const char *_path = (const char *) task_state->cpu_state.rsi;
+    void *stat_struct = (void *) task_state->cpu_state.rdx;
 
     struct task *current = get_current_task();
     char *path = get_full_path(current->process->cwd, _path);
@@ -589,7 +591,7 @@ void arch_sys_ioctl(struct task_state *task_state) {
 
     int fd = (int) task_state->cpu_state.rsi;
     unsigned long request = (unsigned long) task_state->cpu_state.rdx;
-    void *argp = (void*) task_state->cpu_state.rcx;
+    void *argp = (void *) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
@@ -627,8 +629,8 @@ void arch_sys_ftruncate(struct task_state *task_state) {
 void arch_sys_gettimeofday(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    struct timeval *tv = (struct timeval*) task_state->cpu_state.rsi;
-    struct timezone *tz = (struct timezone*) task_state->cpu_state.rdx;
+    struct timeval *tv = (struct timeval *) task_state->cpu_state.rsi;
+    struct timezone *tz = (struct timezone *) task_state->cpu_state.rdx;
 
     time_t micro_seconds = get_time();
     if (tv) {
@@ -647,7 +649,7 @@ void arch_sys_gettimeofday(struct task_state *task_state) {
 void arch_sys_mkdir(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *pathname = (const char*) task_state->cpu_state.rsi;
+    const char *pathname = (const char *) task_state->cpu_state.rsi;
     mode_t mode = (mode_t) task_state->cpu_state.rdx;
 
     struct task *current = get_current_task();
@@ -688,7 +690,7 @@ void arch_sys_dup2(struct task_state *task_state) {
 void arch_sys_pipe(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    int *pipefd = (int*) task_state->cpu_state.rsi;
+    int *pipefd = (int *) task_state->cpu_state.rsi;
 
     struct file *pipe_files[2];
     int ret = fs_create_pipe(pipe_files);
@@ -715,7 +717,7 @@ void arch_sys_pipe(struct task_state *task_state) {
 void arch_sys_unlink(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) task_state->cpu_state.rsi;
+    const char *_path = (const char *) task_state->cpu_state.rsi;
 
     struct task *current = get_current_task();
     char *path = get_full_path(current->process->cwd, _path);
@@ -729,7 +731,7 @@ void arch_sys_unlink(struct task_state *task_state) {
 void arch_sys_rmdir(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) task_state->cpu_state.rsi;
+    const char *_path = (const char *) task_state->cpu_state.rsi;
 
     struct task *current = get_current_task();
     char *path = get_full_path(current->process->cwd, _path);
@@ -743,7 +745,7 @@ void arch_sys_rmdir(struct task_state *task_state) {
 void arch_sys_chmod(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) task_state->cpu_state.rsi;
+    const char *_path = (const char *) task_state->cpu_state.rsi;
     mode_t mode = (mode_t) task_state->cpu_state.rdx;
 
     struct task *task = get_current_task();
@@ -818,8 +820,8 @@ void arch_sys_sigaction(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int signum = (int) task_state->cpu_state.rsi;
-    const struct sigaction *act = (const struct sigaction*) task_state->cpu_state.rdx;
-    struct sigaction *old_act = (struct sigaction*) task_state->cpu_state.rcx;
+    const struct sigaction *act = (const struct sigaction *) task_state->cpu_state.rdx;
+    struct sigaction *old_act = (struct sigaction *) task_state->cpu_state.rcx;
 
     if (signum <= 0 || signum > _NSIG) {
         SYS_RETURN(-EINVAL);
@@ -842,8 +844,8 @@ void arch_sys_sigaction(struct task_state *task_state) {
 
 void arch_sys_sigreturn(struct task_state *task_state) {
     struct task *task = get_current_task();
-    uint64_t *mask_ptr = (uint64_t*) task_state->stack_state.rsp;
-    struct task_state *saved_state = (struct task_state*) (mask_ptr + 1);
+    uint64_t *mask_ptr = (uint64_t *) task_state->stack_state.rsp;
+    struct task_state *saved_state = (struct task_state *) (mask_ptr + 1);
 
     debug_log("Sig return\n");
 
@@ -859,8 +861,8 @@ void arch_sys_sigprocmask(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int how = (int) task_state->cpu_state.rsi;
-    const sigset_t *set = (const sigset_t*) task_state->cpu_state.rdx;
-    sigset_t *old = (sigset_t*) task_state->cpu_state.rcx;
+    const sigset_t *set = (const sigset_t *) task_state->cpu_state.rdx;
+    sigset_t *old = (sigset_t *) task_state->cpu_state.rcx;
 
     struct task *current = get_current_task();
 
@@ -879,7 +881,7 @@ void arch_sys_sigprocmask(struct task_state *task_state) {
             case SIG_UNBLOCK:
                 current->sig_mask &= ~*set;
                 break;
-            default: 
+            default:
                 SYS_RETURN(-EINVAL);
         }
     }
@@ -944,7 +946,7 @@ void arch_sys_sleep(struct task_state *task_state) {
 void arch_sys_access(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char*) task_state->cpu_state.rsi;
+    const char *_path = (const char *) task_state->cpu_state.rsi;
     int mode = (int) task_state->cpu_state.rdx;
 
     struct task *current = get_current_task();
@@ -960,8 +962,8 @@ void arch_sys_accept(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.rcx;
+    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.rcx;
     int flags = (int) task_state->cpu_state.r8;
 
     if (fd < 0 || fd > FOPEN_MAX) {
@@ -984,7 +986,7 @@ void arch_sys_bind(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    const struct sockaddr *addr = (const struct sockaddr*) task_state->cpu_state.rdx;
+    const struct sockaddr *addr = (const struct sockaddr *) task_state->cpu_state.rdx;
     socklen_t addrlen = (socklen_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
@@ -1007,7 +1009,7 @@ void arch_sys_connect(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
+    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
     socklen_t addrlen = (socklen_t) task_state->cpu_state.rcx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
@@ -1076,8 +1078,8 @@ void arch_sys_getsockopt(struct task_state *task_state) {
     int fd = (int) task_state->cpu_state.rsi;
     int level = (int) task_state->cpu_state.rdx;
     int optname = (int) task_state->cpu_state.rcx;
-    const void *optval = (const void*) task_state->cpu_state.r8;
-    socklen_t *optlen = (socklen_t*) task_state->cpu_state.r9;
+    const void *optval = (const void *) task_state->cpu_state.r8;
+    socklen_t *optlen = (socklen_t *) task_state->cpu_state.r9;
 
     (void) fd;
     (void) level;
@@ -1094,7 +1096,7 @@ void arch_sys_setsockopt(struct task_state *task_state) {
     int fd = (int) task_state->cpu_state.rsi;
     int level = (int) task_state->cpu_state.rdx;
     int optname = (int) task_state->cpu_state.rcx;
-    const void *optval = (const void*) task_state->cpu_state.r8;
+    const void *optval = (const void *) task_state->cpu_state.r8;
     socklen_t optlen = (socklen_t) task_state->cpu_state.r9;
 
     if (fd < 0 || fd > FOPEN_MAX) {
@@ -1117,8 +1119,8 @@ void arch_sys_getpeername(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.rcx;
+    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.rcx;
 
     (void) fd;
     (void) addr;
@@ -1131,8 +1133,8 @@ void arch_sys_getsockname(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr*) task_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.rcx;
+    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
+    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.rcx;
 
     (void) fd;
     (void) addr;
@@ -1145,10 +1147,10 @@ void arch_sys_sendto(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    const void *buf = (const void*) task_state->cpu_state.rdx;
+    const void *buf = (const void *) task_state->cpu_state.rdx;
     size_t len = (size_t) task_state->cpu_state.rcx;
     int flags = (int) task_state->cpu_state.r8;
-    const struct sockaddr *dest = (const struct sockaddr*) task_state->cpu_state.r9;
+    const struct sockaddr *dest = (const struct sockaddr *) task_state->cpu_state.r9;
     socklen_t addrlen = (socklen_t) task_state->cpu_state.r10;
 
     if (fd < 0 || fd > FOPEN_MAX) {
@@ -1171,11 +1173,11 @@ void arch_sys_recvfrom(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    void *buf = (void*) task_state->cpu_state.rdx;
+    void *buf = (void *) task_state->cpu_state.rdx;
     size_t len = (size_t) task_state->cpu_state.rcx;
     int flags = (int) task_state->cpu_state.r8;
-    struct sockaddr *source = (struct sockaddr*) task_state->cpu_state.r9;
-    socklen_t *addrlen = (socklen_t*) task_state->cpu_state.r10;
+    struct sockaddr *source = (struct sockaddr *) task_state->cpu_state.r9;
+    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.r10;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
@@ -1196,7 +1198,7 @@ void arch_sys_recvfrom(struct task_state *task_state) {
 void arch_sys_mmap(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    void *addr = (void*) task_state->cpu_state.rsi;
+    void *addr = (void *) task_state->cpu_state.rsi;
     size_t length = (size_t) task_state->cpu_state.rdx;
     int prot = (int) task_state->cpu_state.rcx;
     int flags = (int) task_state->cpu_state.r8;
@@ -1222,7 +1224,7 @@ void arch_sys_mmap(struct task_state *task_state) {
         }
 
         // Not sure if this is required
-        memset((void*) region->start, 0, region->end - region->start);
+        memset((void *) region->start, 0, region->end - region->start);
         SYS_RETURN(region->start);
     }
 
@@ -1238,7 +1240,7 @@ void arch_sys_mmap(struct task_state *task_state) {
 void arch_sys_munmap(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    void *addr = (void*) task_state->cpu_state.rsi;
+    void *addr = (void *) task_state->cpu_state.rsi;
     size_t length = (size_t) task_state->cpu_state.rdx;
 
     SYS_RETURN(unmap_range((uintptr_t) addr, length));
@@ -1247,8 +1249,8 @@ void arch_sys_munmap(struct task_state *task_state) {
 void arch_sys_rename(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_old_path = (const char*) task_state->cpu_state.rsi;
-    const char *_new_path = (const char*) task_state->cpu_state.rdx;
+    const char *_old_path = (const char *) task_state->cpu_state.rsi;
+    const char *_new_path = (const char *) task_state->cpu_state.rdx;
 
     if (_old_path == NULL || _new_path == NULL) {
         SYS_RETURN(-EINVAL);
@@ -1290,7 +1292,7 @@ void arch_sys_fstat(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
-    struct stat *stat_struct = (struct stat*) task_state->cpu_state.rdx;
+    struct stat *stat_struct = (struct stat *) task_state->cpu_state.rdx;
 
     if (fd < 0 || fd > FOPEN_MAX) {
         SYS_RETURN(-EBADF);
@@ -1355,7 +1357,7 @@ void arch_sys_sigsuspend(struct task_state *task_state) {
     SYS_BEGIN_SIGSUSPEND(task_state);
 
     struct task *current = get_current_task();
-    const sigset_t *mask = (const sigset_t*) task_state->cpu_state.rsi;
+    const sigset_t *mask = (const sigset_t *) task_state->cpu_state.rsi;
     if (mask == NULL) {
         current->in_sigsuspend = false;
         SYS_RETURN(-EFAULT);
@@ -1371,7 +1373,7 @@ void arch_sys_sigsuspend(struct task_state *task_state) {
 void arch_sys_times(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    struct tms *tms = (struct tms*) task_state->cpu_state.rsi;
+    struct tms *tms = (struct tms *) task_state->cpu_state.rsi;
     if (tms == NULL) {
         SYS_RETURN(-EFAULT);
     }

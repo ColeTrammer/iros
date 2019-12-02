@@ -8,20 +8,20 @@
 #include <kernel/util/hash_map.h>
 
 #define EPHEMERAL_PORT_START 49152U
-#define PORT_MAX 65535U
+#define PORT_MAX             65535U
 
 static struct hash_map *map;
 
 static int hash(void *i, int num_buckets) {
-    return *((uint16_t*) i) % num_buckets;
+    return *((uint16_t *) i) % num_buckets;
 }
 
 static int equals(void *i1, void *i2) {
-    return *((uint16_t*) i1) == *((uint16_t*) i2);
+    return *((uint16_t *) i1) == *((uint16_t *) i2);
 }
 
 static void *key(void *p) {
-    return &((struct port_to_socket_id*) p)->port;
+    return &((struct port_to_socket_id *) p)->port;
 }
 
 struct socket *net_get_socket_from_port(uint16_t port) {

@@ -1,14 +1,14 @@
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <sys/types.h>
 
 #include <kernel/arch/x86_64/proc/task.h>
+#include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
-#include <kernel/hal/output.h>
 #include <kernel/proc/task.h>
 
-static void (*sched_callback)(struct task_state*) = NULL;
+static void (*sched_callback)(struct task_state *) = NULL;
 static unsigned int sched_count = 0;
 static unsigned int sched_count_to = 0;
 
@@ -56,7 +56,7 @@ time_t pit_get_time() {
     return ms;
 }
 
-void pit_set_sched_callback(void (*_sched_callback)(struct task_state*), unsigned int ms) {
+void pit_set_sched_callback(void (*_sched_callback)(struct task_state *), unsigned int ms) {
     sched_callback = _sched_callback;
     sched_count_to = ms;
 }

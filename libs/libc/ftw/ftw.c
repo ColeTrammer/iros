@@ -143,7 +143,7 @@ static int ftw_traverse_bf(fn_t fn) {
             }
 
             int ret = ftw_call(fn, d->path, &stat_struct, depth);
-    
+
             free_dirent(d);
 
             if (ret) {
@@ -217,7 +217,7 @@ cleanup:
 
 static int (*ftw_current_fn)(const char *path, const struct stat *stat_struct, int type);
 
-int ftw_fn_wrapper(const char *path, const struct stat *stat_struct, int type, struct FTW* ftw) {
+int ftw_fn_wrapper(const char *path, const struct stat *stat_struct, int type, struct FTW *ftw) {
     (void) ftw;
     return ftw_current_fn(path, stat_struct, type);
 }

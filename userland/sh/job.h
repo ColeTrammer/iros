@@ -5,12 +5,7 @@
 
 #define MAX_JOBS 20
 
-enum job_state {
-    DNE = 0,
-    RUNNING,
-    STOPPED,
-    TERMINATED
-};
+enum job_state { DNE = 0, RUNNING, STOPPED, TERMINATED };
 
 #define JOB_MAX_PIDS 10
 
@@ -22,10 +17,7 @@ struct job {
     pid_t pids[10];
 };
 
-enum job_id_type {
-    JOB_PGID,
-    JOB_ID
-};
+enum job_id_type { JOB_PGID, JOB_ID };
 
 struct job_id {
     enum job_id_type type;

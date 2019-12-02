@@ -1,5 +1,5 @@
-#include <signal.h>
 #include <assert.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -13,5 +13,7 @@ void on_int(int sig) {
 int main() {
     signal(SIGINT, &on_int);
     char c;
-    while (1) { read(0, &c, 1); };
+    while (1) {
+        read(0, &c, 1);
+    };
 }

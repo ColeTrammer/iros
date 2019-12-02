@@ -18,6 +18,7 @@ struct icmp_packet {
 
 void net_icmp_recieve(const struct icmp_packet *packet, size_t len);
 
-void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload, uint16_t payload_size);
+void net_init_icmp_packet(
+    struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload, uint16_t payload_size);
 
 #endif /* _KERNEL_NET_ICMP_H */

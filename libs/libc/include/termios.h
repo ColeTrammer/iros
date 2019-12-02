@@ -5,17 +5,17 @@
 
 #define NCCS 11
 
-#define VEOF 0
-#define VEOL 1
+#define VEOF   0
+#define VEOL   1
 #define VERASE 2
-#define VINTR 3
-#define VKILL 4
-#define VMIN 5
-#define VQUIT 6
+#define VINTR  3
+#define VKILL  4
+#define VMIN   5
+#define VQUIT  6
 #define VSTART 7
-#define VSTOP 8
-#define VSUSP 9
-#define VTIME 10
+#define VSTOP  8
+#define VSUSP  9
+#define VTIME  10
 
 #define BRKINT 0000002
 #define ICRNL  0000400
@@ -38,15 +38,15 @@
 #define OFDEL  0000040
 #define OFILL  0000100
 
-#define NLDLY  0000100
-#define NL0    0000000
-#define NL1    0000100
+#define NLDLY 0000100
+#define NL0   0000000
+#define NL1   0000100
 
-#define CRDLY  0000600
-#define CR0    0000000
-#define CR1    0000200
-#define CR2    0000300
-#define CR3    0000400
+#define CRDLY 0000600
+#define CR0   0000000
+#define CR1   0000200
+#define CR2   0000300
+#define CR3   0000400
 
 #define TABDLY 0003000
 #define TAB0   0000000
@@ -54,17 +54,17 @@
 #define TAB2   0002000
 #define TAB3   0003000
 
-#define BSDLY  0004000
-#define BS0    0000000
-#define BS1    0004000
+#define BSDLY 0004000
+#define BS0   0000000
+#define BS1   0004000
 
-#define VTDLY  0010000
-#define VT0    0000000
-#define VT1    0010000
+#define VTDLY 0010000
+#define VT0   0000000
+#define VT1   0010000
 
-#define FFDLY  0020000
-#define FF0    0000000
-#define FF1    0020000
+#define FFDLY 0020000
+#define FF0   0000000
+#define FF1   0020000
 
 #define B0     0000000
 #define B50    0000001
@@ -83,11 +83,11 @@
 #define B19200 0000016
 #define B38400 0000017
 
-#define CSIZE  0xFF
-#define CS5    0x1F
-#define CS6    0x3F
-#define CS7    0x7F
-#define CS8    0xFF
+#define CSIZE 0xFF
+#define CS5   0x1F
+#define CS6   0x3F
+#define CS7   0x7F
+#define CS8   0xFF
 
 #define CSTOPB 0x0100
 #define CREAD  0x0200

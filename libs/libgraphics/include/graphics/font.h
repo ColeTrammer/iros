@@ -8,30 +8,13 @@
 #include <string.h>
 #include <unistd.h>
 
-static uint8_t font_unknown[16] = {
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b11111110,
-    0b10000010,
-    0b10000010,
-    0b10000010,
-    0b10000010,
-    0b10000010,
-    0b10000010,
-    0b10000010,
-    0b10000010,
-    0b11111110,
-    0b00000000,
-    0b00000000,
-    0b00000000
-};
+static uint8_t font_unknown[16] = { 0b00000000, 0b00000000, 0b00000000, 0b11111110, 0b10000010, 0b10000010, 0b10000010, 0b10000010,
+    0b10000010, 0b10000010, 0b10000010, 0b10000010, 0b11111110, 0b00000000, 0b00000000, 0b00000000 };
 
 class Font {
 public:
     Font()
-        : m_unknown(Bitmap<uint8_t>::wrap(font_unknown, 16 * 8))
-    {
+        : m_unknown(Bitmap<uint8_t>::wrap(font_unknown, 16 * 8)) {
         int font_file = open("/usr/share/font.psf", O_RDONLY);
         assert(font_file != -1);
 
@@ -49,12 +32,10 @@ public:
         close(font_file);
     }
 
-    ~Font()
-    {
+    ~Font() {
     }
 
-    std::shared_ptr<Bitmap<uint8_t>> get_for_character(int c)
-    {
+    std::shared_ptr<Bitmap<uint8_t>> get_for_character(int c) {
         return m_font_map.get_or(c, m_unknown);
     }
 

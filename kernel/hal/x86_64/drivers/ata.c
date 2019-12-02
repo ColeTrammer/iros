@@ -1,19 +1,19 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/param.h>
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
+#include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/fs/dev.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
-#include <kernel/arch/x86_64/asm_utils.h>
 
 static void ata_wait(struct ata_port_info *info) {
     for (size_t i = 0; i < 4; i++) {
@@ -22,11 +22,13 @@ static void ata_wait(struct ata_port_info *info) {
 }
 
 static void ata_wait_not_busy(struct ata_port_info *info) {
-    while (inb(info->io_base + ATA_STATUS_OFFSET) & ATA_STATUS_BSY);
+    while (inb(info->io_base + ATA_STATUS_OFFSET) & ATA_STATUS_BSY)
+        ;
 }
 
 static void ata_wait_ready(struct ata_port_info *info) {
-    while (!(inb(info->io_base + ATA_STATUS_OFFSET) & ATA_STATUS_RDY));
+    while (!(inb(info->io_base + ATA_STATUS_OFFSET) & ATA_STATUS_RDY))
+        ;
 }
 
 static uint8_t ata_read_status(struct ata_port_info *info) {
@@ -123,7 +125,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
     ata_wait_ready(data->port_info);
     ata_set_command(data->port_info, ATA_COMMAND_READ);
 
-    uint16_t *buf = (uint16_t*) buffer;
+    uint16_t *buf = (uint16_t *) buffer;
 
     for (size_t j = 0; j < n; j++) {
         ata_wait(data->port_info);
@@ -169,7 +171,7 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
     ata_wait_ready(data->port_info);
     ata_set_command(data->port_info, ATA_COMMAND_WRITE);
 
-    const uint16_t *buf = (const uint16_t*) buffer;
+    const uint16_t *buf = (const uint16_t *) buffer;
 
     for (size_t j = 0; j < n; j++) {
         ata_wait(data->port_info);
@@ -243,8 +245,9 @@ static ssize_t ata_read(struct device *device, struct file *file, void *buffer, 
         ssize_t read = 0;
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
-            ssize_t ret = ata_read_sectors(data, (file->position / data->sector_size), (void*) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
-            if (ret != (ssize_t) (num_sectors * data->sector_size)) {
+            ssize_t ret = ata_read_sectors(
+                data, (file->position / data->sector_size), (void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
+            if (ret != (ssize_t)(num_sectors * data->sector_size)) {
                 if (ret < 0) {
                     return ret;
                 }
@@ -272,8 +275,9 @@ static ssize_t ata_write(struct device *device, struct file *file, const void *b
         ssize_t written = 0;
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
-            ssize_t ret = ata_write_sectors(data, (file->position / data->sector_size), (const void*) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
-            if (ret != (ssize_t) (num_sectors * data->sector_size)) {
+            ssize_t ret = ata_write_sectors(
+                data, (file->position / data->sector_size), (const void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
+            if (ret != (ssize_t)(num_sectors * data->sector_size)) {
                 if (ret < 0) {
                     return ret;
                 }
@@ -292,14 +296,12 @@ static ssize_t ata_write(struct device *device, struct file *file, const void *b
     return -EINVAL;
 }
 
-static struct device_ops ata_ops = {
-    NULL, ata_read, ata_write, NULL, NULL, NULL, NULL, NULL, NULL
-};
+static struct device_ops ata_ops = { NULL, ata_read, ata_write, NULL, NULL, NULL, NULL, NULL, NULL };
 
 static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {
     struct device *device = malloc(sizeof(struct device));
     device->device_number = info->io_base + info->is_slave;
-    
+
     char num[2];
     num[0] = (char) (i + '0');
     num[1] = '\0';
@@ -335,7 +337,8 @@ void init_ata() {
     for (size_t i = 0; i < NUM_POSSIBLE_ATA_DEVICES; i++) {
         uint16_t buf[ATA_SECTOR_SIZE / sizeof(uint16_t)];
         if (ata_device_exists(&possible_ata_devices[i], buf)) {
-            debug_log("Initializing ata device: [ %#.4X, %#.4X, %s ]\n", possible_ata_devices[i].io_base, possible_ata_devices[i].control_base, possible_ata_devices[i].is_slave ? "true" : "false");
+            debug_log("Initializing ata device: [ %#.4X, %#.4X, %s ]\n", possible_ata_devices[i].io_base,
+                possible_ata_devices[i].control_base, possible_ata_devices[i].is_slave ? "true" : "false");
 
             ata_init_device(&possible_ata_devices[i], buf, i);
         }

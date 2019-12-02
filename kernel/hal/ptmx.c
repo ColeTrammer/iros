@@ -26,20 +26,11 @@
 
 #define TTY_BUF_START 4096
 
-#define CONTROL_MASK 0x1F
-#define CONTROL_KEY(c) ((c) & CONTROL_MASK)
+#define CONTROL_MASK   0x1F
+#define CONTROL_KEY(c) ((c) &CONTROL_MASK)
 
-static struct termios default_termios = {
-    ICRNL | IXON,
-    OPOST,
-    CS8,
-    ECHO | ICANON | IEXTEN | ISIG,
-    { 
-        CONTROL_KEY('d'), '\n', '#', CONTROL_KEY('c'), 
-        '@', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'), 
-        CONTROL_KEY('s'), CONTROL_KEY('z'), 0
-    }
-};
+static struct termios default_termios = { ICRNL | IXON, OPOST, CS8, ECHO | ICANON | IEXTEN | ISIG,
+    { CONTROL_KEY('d'), '\n', '#', CONTROL_KEY('c'), '@', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'), CONTROL_KEY('s'), CONTROL_KEY('z'), 0 } };
 
 static struct device *slaves[PTMX_MAX] = { 0 };
 static struct device *masters[PTMX_MAX] = { 0 };
@@ -113,7 +104,8 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
     struct slave_data *data = device->private;
     if (get_current_task()->process->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
 #ifdef PTMX_SIGNAL_DEBUG
-        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->process->pgid, get_current_task()->process->pgid, get_current_task()->process->pid);
+        debug_log(
+            "Sending SIGTTOU: [ %d, %d, %d ]\n", data->process->pgid, get_current_task()->process->pgid, get_current_task()->process->pid);
 #endif /* PTMX_SIGNAL_DEBUG */
         signal_process_group(get_current_task()->process->pgid, SIGTTOU);
     }
@@ -121,7 +113,7 @@ static ssize_t slave_write(struct device *device, struct file *file, const void 
     size_t save_len = len;
     if (data->config.c_oflag & OPOST) {
         for (size_t i = 0; i < save_len; i++) {
-            if (((const char*) buf)[i] == '\n') {
+            if (((const char *) buf)[i] == '\n') {
                 len++;
             }
         }
@@ -154,10 +146,10 @@ slave_write_again:
 
     size_t buf_index = 0;
     for (size_t i = message->len; i < message->len + len; i++, buf_index++) {
-        if ((data->config.c_oflag & OPOST) && ((const char*) buf)[buf_index] == '\n') {
+        if ((data->config.c_oflag & OPOST) && ((const char *) buf)[buf_index] == '\n') {
             message->buf[i++] = '\r';
         }
-        message->buf[i] = ((const char*) buf)[buf_index];
+        message->buf[i] = ((const char *) buf)[buf_index];
     }
 
     message->len += len;
@@ -209,7 +201,6 @@ static void slave_remove(struct device *device) {
     assert(data);
 
     spin_unlock(&data->lock);
-
 
     slaves[data->index] = NULL;
 
@@ -267,7 +258,7 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
         }
         case TIOCSPGRP: {
             spin_lock(&data->lock);
-            data->pgid = *((pid_t*) argp);
+            data->pgid = *((pid_t *) argp);
             spin_unlock(&data->lock);
             return 0;
         }
@@ -335,9 +326,8 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
     }
 }
 
-static struct device_ops slave_ops = {
-    NULL, slave_read, slave_write, slave_close, slave_add, slave_remove, slave_ioctl, slave_on_open, NULL
-};
+static struct device_ops slave_ops
+    = { NULL, slave_read, slave_write, slave_close, slave_add, slave_remove, slave_ioctl, slave_on_open, NULL };
 
 static void master_on_open(struct device *device) {
     device->cannot_open = true;
@@ -358,7 +348,7 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
         struct tty_buffer_message *message = data->messages;
         assert(message);
         assert(message->buf);
-        
+
         data->messages = message == message->next ? NULL : message->next;
         remque(message);
 
@@ -426,7 +416,7 @@ static ssize_t master_write(struct device *device, struct file *file, const void
             data->input_buffer = realloc(data->input_buffer, data->input_buffer_max);
         }
 
-        char c = ((const char*) buf)[i];
+        char c = ((const char *) buf)[i];
 
         if (c == '\r' && sdata->config.c_iflag & ICRNL) {
             c = '\n';
@@ -562,9 +552,8 @@ static int master_ioctl(struct device *device, unsigned long request, void *argp
     return slave_ioctl(slave, request, argp);
 }
 
-static struct device_ops master_ops = {
-    NULL, master_read, master_write, master_close, master_add, master_remove, master_ioctl, master_on_open, NULL
-};
+static struct device_ops master_ops
+    = { NULL, master_read, master_write, master_close, master_add, master_remove, master_ioctl, master_on_open, NULL };
 
 static struct file *ptmx_open(struct device *device, int flags, int *error) {
     (void) device;
@@ -585,7 +574,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
 
             struct device *master = calloc(1, sizeof(struct device));
             master->device_number = 0x10000 + i;
-            snprintf(master->name, 7, "mtty%d",i);
+            snprintf(master->name, 7, "mtty%d", i);
             master->ops = &master_ops;
             master->type = S_IFCHR;
             master->private = NULL;
@@ -606,9 +595,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
     return NULL;
 }
 
-struct device_ops ptmx_ops = {
-    ptmx_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+struct device_ops ptmx_ops = { ptmx_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 static struct file *tty_open(struct device *device, int flags, int *error) {
     (void) device;
@@ -625,9 +612,7 @@ static struct file *tty_open(struct device *device, int flags, int *error) {
     return fs_open(path, flags, error);
 }
 
-struct device_ops tty_ops = {
-    tty_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+struct device_ops tty_ops = { tty_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 void init_ptmx() {
     struct device *ptmx_device = calloc(1, sizeof(struct device));

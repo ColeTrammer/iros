@@ -1,10 +1,9 @@
+#include <errno.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stddef.h>
-#include <setjmp.h>
-#include <stddef.h>
-#include <errno.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int killpg(int pgid, int sig) {
     return kill(-pgid, sig);
@@ -15,7 +14,7 @@ char *strsignal(int sig) {
         sig = 0;
     }
 
-    return (char*) sys_siglist[sig];
+    return (char *) sys_siglist[sig];
 }
 
 void psignal(int sig, const char *s) {
@@ -106,13 +105,12 @@ int __sigsetjmp(sigjmp_buf env, int val) {
         env->is_mask_saved = 1;
         sigprocmask(0, NULL, &env->mask);
     } else {
-         env->is_mask_saved = 0;
+        env->is_mask_saved = 0;
     }
     return 0;
 }
 
-__attribute__((noreturn))
-void siglongjmp(sigjmp_buf env, int val) {
+__attribute__((noreturn)) void siglongjmp(sigjmp_buf env, int val) {
     if (env->is_mask_saved) {
         sigprocmask(SIG_SETMASK, &env->mask, NULL);
     }

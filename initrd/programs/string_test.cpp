@@ -2,8 +2,7 @@
 #include <liim/string.h>
 #include <stdio.h>
 
-int main()
-{
+int main() {
     String s("asfd");
     puts(s.string());
 

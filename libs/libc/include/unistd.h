@@ -15,7 +15,7 @@
 #define _POSIX_VERSION 200809L
 #define _XOPEN_VERSION 700
 
-#define STDIN_FILENO 0
+#define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
@@ -53,7 +53,7 @@ unsigned int sleep(unsigned int seconds);
 int chown(const char *pathname, uid_t owner, gid_t group);
 
 ssize_t read(int fd, void *buf, size_t count);
-ssize_t write(int fd, const void * buf, size_t count);
+ssize_t write(int fd, const void *buf, size_t count);
 int close(int fd);
 
 int execl(const char *path, const char *arg, ...);

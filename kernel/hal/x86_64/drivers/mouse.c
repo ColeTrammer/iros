@@ -31,7 +31,7 @@ static ssize_t mouse_f_read(struct device *device, struct file *file, void *buff
     (void) file;
 
     size_t read = 0;
-    
+
     while (read <= len - sizeof(struct mouse_event)) {
         if (start == NULL) {
             return read;
@@ -39,7 +39,7 @@ static ssize_t mouse_f_read(struct device *device, struct file *file, void *buff
 
         assert(start);
         while (read <= len - sizeof(struct mouse_event) && start != NULL) {
-            memcpy(((uint8_t*) buffer) + read, &start->entry, sizeof(struct mouse_event));
+            memcpy(((uint8_t *) buffer) + read, &start->entry, sizeof(struct mouse_event));
 
             read += sizeof(struct mouse_event);
 
@@ -60,18 +60,11 @@ static ssize_t mouse_f_read(struct device *device, struct file *file, void *buff
     return (ssize_t) read;
 }
 
+static struct device_ops mouse_ops = { NULL, mouse_f_read, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device_ops mouse_ops = {
-    NULL, mouse_f_read, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+static struct mouse_data data = { false, 0, { 0 } };
 
-static struct mouse_data data = {
-    false, 0, { 0 }
-};
-
-static struct device mouse = {
-    0x500, S_IFCHR, "mouse", false, &mouse_ops, NULL, &data
-};
+static struct device mouse = { 0x500, S_IFCHR, "mouse", false, &mouse_ops, NULL, &data };
 
 static void add_mouse_event(struct mouse_event *event) {
     struct mouse_event_queue *e = malloc(sizeof(struct mouse_event_queue));

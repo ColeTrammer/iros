@@ -1,7 +1,7 @@
 #pragma once
 
-#include <liim/string.h>
 #include <graphics/rect.h>
+#include <liim/string.h>
 #include <memory>
 
 class PixelBuffer;
@@ -15,13 +15,23 @@ public:
 
     Window(const Window& other) = delete;
 
-    Rect rect() const { return m_rect; }
+    Rect rect() const {
+        return m_rect;
+    }
 
-    wid_t id() const { return m_id; }
-    int client_id() const { return m_client_id; }
+    wid_t id() const {
+        return m_id;
+    }
+    int client_id() const {
+        return m_client_id;
+    }
 
-    std::shared_ptr<PixelBuffer> buffer() { return m_buffer; }
-    const std::shared_ptr<PixelBuffer> buffer() const { return m_buffer; }
+    std::shared_ptr<PixelBuffer> buffer() {
+        return m_buffer;
+    }
+    const std::shared_ptr<PixelBuffer> buffer() const {
+        return m_buffer;
+    }
 
 private:
     const String m_shm_path;

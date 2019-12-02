@@ -1,8 +1,8 @@
-#include <unistd.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 char *optarg = NULL;
 int optind = 1, opterr = 1, optopt = '\0';
@@ -111,10 +111,10 @@ int getopt(int argc, char *const argv[], const char *optstring) {
 
         char *temp = argv[optind];
         for (int i = optind; i < argc - 1; i++) {
-            ((char**) argv)[i] = argv[i + 1];
+            ((char **) argv)[i] = argv[i + 1];
         }
 
-        ((char**) argv)[argc - 1] = temp;
+        ((char **) argv)[argc - 1] = temp;
     }
 
     return -1;

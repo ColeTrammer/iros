@@ -1,13 +1,13 @@
+#include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
-#include <stddef.h>
 
-__attribute__((__noreturn__))
-void abort() {
+__attribute__((__noreturn__)) void abort() {
 #ifdef __is_libk
-    while (1);
+    while (1)
+        ;
     __builtin_unreachable();
 #else
     // Unblock SIGABRT, and block everything else
@@ -27,7 +27,8 @@ void abort() {
     raise(SIGABRT);
 
     // If this still didn't work, loop forever
-    while (1);
+    while (1)
+        ;
     __builtin_unreachable();
 #endif /* __is_libk */
 }

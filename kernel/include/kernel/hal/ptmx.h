@@ -7,8 +7,10 @@
 
 #include <kernel/util/spinlock.h>
 
+// clang-format off
 #include <kernel/hal/arch.h>
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
+// clang-format on
 
 #define TTY_BUF_MAX_START 256
 
@@ -17,7 +19,7 @@ struct tty_buffer_message {
     struct tty_buffer_message *prev;
     size_t len;
     size_t max;
-    char* buf;
+    char *buf;
 };
 
 struct slave_data {

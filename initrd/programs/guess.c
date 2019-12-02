@@ -1,7 +1,7 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <stddef.h>
 
 #define MAX_NUM 100
 

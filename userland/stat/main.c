@@ -1,8 +1,8 @@
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 const char *type_to_string(mode_t mode) {
     if (S_ISBLK(mode)) {
@@ -35,7 +35,8 @@ int main(int argc, char **argv) {
     }
 
     printf("%6s: %s\n", "File", argv[1]);
-    printf("%6s: %-14ld %s: %-9ld %s: %-6ld %s\n", "Size", stat_s.st_size, "Blocks", stat_s.st_blocks, "IO Block", stat_s.st_blksize, type_to_string(stat_s.st_mode));
+    printf("%6s: %-14ld %s: %-9ld %s: %-6ld %s\n", "Size", stat_s.st_size, "Blocks", stat_s.st_blocks, "IO Block", stat_s.st_blksize,
+        type_to_string(stat_s.st_mode));
     printf("%6s: %luh/%lud %s: %-7lld %s: %d\n", "Device", stat_s.st_dev, stat_s.st_rdev, "Inode", stat_s.st_ino, "Links", stat_s.st_nlink);
 
     return EXIT_SUCCESS;

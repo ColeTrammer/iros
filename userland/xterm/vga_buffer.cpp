@@ -9,9 +9,7 @@
 
 #include "vga_buffer.h"
 
-VgaBuffer::VgaBuffer(const char* path)
-    : m_fb(open(path, O_RDWR))
-{
+VgaBuffer::VgaBuffer(const char* path) : m_fb(open(path, O_RDWR)) {
     assert(m_fb != -1);
 
     assert(ioctl(m_fb, SGWIDTH, &m_width) == 0);
@@ -24,24 +22,20 @@ VgaBuffer::VgaBuffer(const char* path)
     set_cursor(0, 0);
 }
 
-VgaBuffer::~VgaBuffer()
-{
+VgaBuffer::~VgaBuffer() {
     munmap(m_buffer, size_in_bytes());
     close(m_fb);
 }
 
-void VgaBuffer::draw(int row, int col, char c)
-{
+void VgaBuffer::draw(int row, int col, char c) {
     draw(row, col, (uint16_t) VGA_ENTRY(c, fg(), bg()));
 }
 
-void VgaBuffer::draw(int row, int col, uint16_t val)
-{
+void VgaBuffer::draw(int row, int col, uint16_t val) {
     m_buffer[row * m_width + col] = val;
 }
 
-void VgaBuffer::hide_cursor()
-{
+void VgaBuffer::hide_cursor() {
     if (!m_is_cursor_enabled) {
         return;
     }
@@ -50,26 +44,22 @@ void VgaBuffer::hide_cursor()
     m_is_cursor_enabled = false;
 }
 
-void VgaBuffer::show_cursor()
-{
+void VgaBuffer::show_cursor() {
     ioctl(m_fb, SECURSOR);
     m_is_cursor_enabled = true;
 }
 
-void VgaBuffer::clear_row_to_end(int row, int col)
-{
+void VgaBuffer::clear_row_to_end(int row, int col) {
     for (int c = col; c < m_width; c++) {
         draw(row, c, ' ');
     }
 }
 
-void VgaBuffer::clear_row(int row)
-{
+void VgaBuffer::clear_row(int row) {
     clear_row_to_end(row, 0);
 }
 
-LIIM::Vector<uint16_t> VgaBuffer::scroll_up(const LIIM::Vector<uint16_t>* replacement)
-{
+LIIM::Vector<uint16_t> VgaBuffer::scroll_up(const LIIM::Vector<uint16_t>* replacement) {
     LIIM::Vector<uint16_t> first_row(m_buffer, m_width);
 
     for (int r = 0; r < m_height - 1; r++) {
@@ -86,8 +76,7 @@ LIIM::Vector<uint16_t> VgaBuffer::scroll_up(const LIIM::Vector<uint16_t>* replac
     return first_row;
 }
 
-LIIM::Vector<uint16_t> VgaBuffer::scroll_down(const LIIM::Vector<uint16_t>* replacement)
-{
+LIIM::Vector<uint16_t> VgaBuffer::scroll_down(const LIIM::Vector<uint16_t>* replacement) {
     LIIM::Vector<uint16_t> last_row(m_buffer + (m_height - 1) * m_width, m_width);
 
     for (int r = m_height - 1; r > 0; r--) {
@@ -103,16 +92,13 @@ LIIM::Vector<uint16_t> VgaBuffer::scroll_down(const LIIM::Vector<uint16_t>* repl
     return last_row;
 }
 
-
-void VgaBuffer::clear()
-{
+void VgaBuffer::clear() {
     for (int r = 0; r < m_height; r++) {
         clear_row(r);
     }
 }
 
-void VgaBuffer::set_cursor(int row, int col)
-{
+void VgaBuffer::set_cursor(int row, int col) {
     cursor_pos pos = { static_cast<unsigned short>(row), static_cast<unsigned short>(col) };
     ioctl(m_fb, SSCURSOR, &pos);
 }

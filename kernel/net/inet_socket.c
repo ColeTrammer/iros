@@ -29,19 +29,19 @@ static int ip_v4_and_port_equals(void *i1, void *i2) {
 }
 
 static void *ip_v4_and_port_key(void *m) {
-    return &((struct tcp_socket_mapping*) m)->key;
+    return &((struct tcp_socket_mapping *) m)->key;
 }
 
 static int tcp_data_hash(void *k, int num_buckets) {
-    return *((uint32_t*) k) % num_buckets;
+    return *((uint32_t *) k) % num_buckets;
 }
 
 static int tcp_data_equals(void *i1, void *i2) {
-    return *((uint32_t*) i1) == *((uint32_t*) i2);
+    return *((uint32_t *) i1) == *((uint32_t *) i2);
 }
 
 static void *tcp_data_key(void *tcp_data) {
-    return &((struct tcp_packet_data*) tcp_data)->sequence_number;
+    return &((struct tcp_packet_data *) tcp_data)->sequence_number;
 }
 
 static void create_tcp_socket_mapping(struct socket *socket) {
@@ -63,13 +63,14 @@ static void create_tcp_socket_mapping_for_source(struct socket *socket) {
     mapping->key = (struct ip_v4_and_port) { data->source_port, data->source_ip };
     mapping->socket_id = socket->id;
 
-    debug_log("Created a tcp mapping: [ %u, %u.%u.%u.%u ]\n", data->source_port, 
-        data->source_ip.addr[0], data->source_ip.addr[1], data->source_ip.addr[2], data->source_ip.addr[3]);
+    debug_log("Created a tcp mapping: [ %u, %u.%u.%u.%u ]\n", data->source_port, data->source_ip.addr[0], data->source_ip.addr[1],
+        data->source_ip.addr[2], data->source_ip.addr[3]);
 
     hash_put(server_map, mapping);
 }
 
-struct socket_data *net_inet_create_socket_data(const struct ip_v4_packet *packet, uint16_t port_network_ordered, const void *buf, size_t len) {
+struct socket_data *net_inet_create_socket_data(
+    const struct ip_v4_packet *packet, uint16_t port_network_ordered, const void *buf, size_t len) {
     struct socket_data *data = calloc(1, sizeof(struct socket_data) + len);
     assert(data);
 
@@ -92,7 +93,7 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
 
     if (socket->protocol != IPPROTO_TCP) {
         return -EPROTONOSUPPORT;
-    }    
+    }
 
     struct socket_connection connection;
     int ret = net_get_next_connection(socket, &connection);
@@ -132,8 +133,8 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
     create_tcp_socket_mapping(new_socket);
 
     struct network_interface *interface = net_get_interface_for_ip(new_data->dest_ip);
-    net_send_tcp(interface, new_data->dest_ip, new_data->source_port, new_data->dest_port,
-        tcb->current_sequence_num, tcb->current_ack_num, (union tcp_flags) { .bits.syn=1, .bits.ack=1 }, 0, NULL);
+    net_send_tcp(interface, new_data->dest_ip, new_data->source_port, new_data->dest_port, tcb->current_sequence_num, tcb->current_ack_num,
+        (union tcp_flags) { .bits.syn = 1, .bits.ack = 1 }, 0, NULL);
 
     // FIXME: we should wait for an ack
     new_socket->state = CONNECTED;
@@ -170,8 +171,8 @@ int net_inet_bind(struct socket *socket, const struct sockaddr_in *addr, socklen
     return 0;
 }
 
-static void __kill_tcp_data(void *a, void *i) { 
-    (void) i; 
+static void __kill_tcp_data(void *a, void *i) {
+    (void) i;
     free(a);
 }
 
@@ -190,19 +191,17 @@ int net_inet_close(struct socket *socket) {
                 free(hash_del(server_map, &key));
             }
 
-            if (data->tcb) { 
+            if (data->tcb) {
                 assert(data->tcb->sent_packets);
                 if (socket->state != CLOSED) {
                     struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
-                    net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port,
-                        data->tcb->current_sequence_num, data->tcb->current_ack_num, 
-                        (union tcp_flags) { .bits.fin=1, .bits.ack=data->tcb->should_send_ack }, 0, NULL);
+                    net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num,
+                        data->tcb->current_ack_num, (union tcp_flags) { .bits.fin = 1, .bits.ack = data->tcb->should_send_ack }, 0, NULL);
                 }
 
                 hash_for_each(data->tcb->sent_packets, __kill_tcp_data, NULL);
                 hash_free_hash_map(data->tcb->sent_packets);
                 free(data->tcb);
-
             }
         }
 
@@ -250,7 +249,8 @@ int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, sock
     data->tcb->sent_packets = hash_create_hash_map(tcp_data_hash, tcp_data_equals, tcp_data_key);
     assert(data->tcb->sent_packets);
 
-    net_send_tcp(interface, dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num++, data->tcb->current_ack_num, (union tcp_flags) { .raw_flags=TCP_FLAGS_SYN }, 0, NULL);
+    net_send_tcp(interface, dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num++, data->tcb->current_ack_num,
+        (union tcp_flags) { .raw_flags = TCP_FLAGS_SYN }, 0, NULL);
 
     time_t start = get_time();
     for (;;) {
@@ -308,7 +308,8 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     (void) flags;
 
     assert(socket);
-    assert((socket->type & SOCK_TYPE_MASK) == SOCK_RAW || (socket->type & SOCK_TYPE_MASK) == SOCK_DGRAM || (socket->type & SOCK_TYPE_MASK) == SOCK_STREAM);
+    assert((socket->type & SOCK_TYPE_MASK) == SOCK_RAW || (socket->type & SOCK_TYPE_MASK) == SOCK_DGRAM
+        || (socket->type & SOCK_TYPE_MASK) == SOCK_STREAM);
 
     if (socket->protocol == IPPROTO_TCP) {
         if (dest) {
@@ -321,8 +322,9 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
         struct inet_socket_data *data = socket->private_data;
         struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
 
-        net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port,
-            data->tcb->current_sequence_num, data->tcb->current_ack_num, (union tcp_flags) { .bits.ack=data->tcb->should_send_ack, .bits.fin=socket->state == CLOSING }, len, buf);
+        net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num,
+            data->tcb->current_ack_num, (union tcp_flags) { .bits.ack = data->tcb->should_send_ack, .bits.fin = socket->state == CLOSING },
+            len, buf);
 
         data->tcb->should_send_ack = false;
         return (ssize_t) len;
@@ -361,7 +363,7 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
 ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr_in *source, socklen_t *addrlen) {
     (void) flags;
 
-    return net_generic_recieve_from(socket, buf, len, (struct sockaddr*) source, addrlen);
+    return net_generic_recieve_from(socket, buf, len, (struct sockaddr *) source, addrlen);
 }
 
 struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple) {

@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/x86_64/idt.h>
@@ -13,8 +13,8 @@ void add_idt_entry(struct idt_entry *idt, void *_handler, unsigned int irq, bool
     } else {
         idt[irq].flags = 0xEE00;
     }
-    idt[irq].addr_mid = (uint16_t) (handler >> 16);
-    idt[irq].addr_high = (uint32_t) (handler >> 32);
+    idt[irq].addr_mid = (uint16_t)(handler >> 16);
+    idt[irq].addr_high = (uint32_t)(handler >> 32);
     idt[irq].reserved = 0;
 }
 

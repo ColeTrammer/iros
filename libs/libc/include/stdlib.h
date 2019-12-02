@@ -24,8 +24,8 @@ extern "C" {
 void exit(int status) __attribute__((__noreturn__));
 void _Exit(int status) __attribute__((__noreturn__));
 
-int atexit(void (*)(void));
-char *getenv(const char*);
+int atexit(void (*f)(void));
+char *getenv(const char *key);
 int setenv(const char *__restrict name, const char *__restrict value, int overwrite);
 int unsetenv(const char *name);
 int putenv(char *string);
@@ -110,7 +110,8 @@ void *realloc(void *ptr, size_t size, int line, const char *func);
 #define realloc(ptr, sz) realloc(ptr, sz, __LINE__, __func__)
 #else
 void *realloc(void *ptr, size_t size);
-#endif /* (defined(__is_libk) || defined(__is_kernel)) && (defined(KERNEL_MALLOC_DEBUG) || defined(KERNEL_MEMCPY_DEBUG)) */
+#endif /* (defined(__is_libk) || defined(__is_kernel)) && (defined(KERNEL_MALLOC_DEBUG) || \
+          defined(KERNEL_MEMCPY_DEBUG)) */
 
 #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
 void free(void *ptr, int line, const char *func);

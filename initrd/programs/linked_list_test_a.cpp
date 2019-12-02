@@ -1,8 +1,7 @@
 #include <liim/linked_list.h>
 #include <stdio.h>
 
-int main()
-{
+int main() {
     LinkedList<int> l;
 
     for (int i = 0; i < 15; i++) {
@@ -13,9 +12,7 @@ int main()
         }
     }
 
-    l.for_each([](auto& elem) {
-        printf("%d\n", elem);
-    });
+    l.for_each([](auto& elem) { printf("%d\n", elem); });
 
     return 0;
 }

@@ -1,6 +1,6 @@
+#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/timer.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
-#include <kernel/arch/x86_64/proc/task.h>
 
 void register_callback(void (*callback)(), unsigned int ms) {
     pit_register_callback(callback, ms);

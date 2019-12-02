@@ -3,8 +3,8 @@
 
 #include <netinet/in.h>
 
-#include <kernel/net/ip_address.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/ip_address.h>
 #include <kernel/net/socket.h>
 #include <kernel/util/hash_map.h>
 
@@ -39,7 +39,8 @@ struct inet_socket_data {
     struct tcp_control_block *tcb;
 };
 
-struct socket_data *net_inet_create_socket_data(const struct ip_v4_packet *packet, uint16_t port_network_ordered, const void *buf, size_t len);
+struct socket_data *net_inet_create_socket_data(
+    const struct ip_v4_packet *packet, uint16_t port_network_ordered, const void *buf, size_t len);
 
 int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen, int flags);
 int net_inet_bind(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen);

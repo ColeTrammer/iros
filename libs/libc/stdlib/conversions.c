@@ -1,12 +1,12 @@
-#include <stdlib.h>
 #include <ctype.h>
-#include <limits.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int atoi(const char *s) {
-	return (int) atol(s);
+    return (int) atol(s);
 }
 
 long atol(const char *s) {
@@ -18,20 +18,22 @@ long long atoll(const char *s) {
     size_t i = 0;
     long long sign = 1;
 
-    while (isspace(s[i])) { i++; }
+    while (isspace(s[i])) {
+        i++;
+    }
 
     if (s[i] == '+' || s[i] == '-') {
         sign = s[i] == '-' ? -1 : 1;
         i++;
     }
 
-	for (; s[i] != '\0' && isdigit(s[i]); i++) {
-		long long digit = s[i] - '0';
-		n *= 10;
-		n += digit;
-	}
+    for (; s[i] != '\0' && isdigit(s[i]); i++) {
+        long long digit = s[i] - '0';
+        n *= 10;
+        n += digit;
+    }
 
-	return sign * n;
+    return sign * n;
 }
 
 long strtol(const char *__restrict str, char **__restrict endptr, int base) {
@@ -65,12 +67,16 @@ static unsigned long long get_value_from_char(char c) {
 }
 
 long long strtoll(const char *__restrict str, char **__restrict endptr, int base) {
-    if (str == NULL) { return 0; }
+    if (str == NULL) {
+        return 0;
+    }
 
     size_t str_off = 0;
 
     /* Skip initial whitespace */
-    while (isspace(str[str_off])) { str_off++; }
+    while (isspace(str[str_off])) {
+        str_off++;
+    }
 
     /* Look at optional sign character */
     long long sign = 1LL;
@@ -96,10 +102,14 @@ long long strtoll(const char *__restrict str, char **__restrict endptr, int base
             break;
         }
         case 8:
-            if (str[str_off] == '0') { str_off++; }
+            if (str[str_off] == '0') {
+                str_off++;
+            }
             break;
         case 16:
-            if (str[str_off] == '0' && (str[str_off + 1] == 'x' || str[str_off + 1] == 'X')) { str_off += 2; }
+            if (str[str_off] == '0' && (str[str_off + 1] == 'x' || str[str_off + 1] == 'X')) {
+                str_off += 2;
+            }
             break;
         default:
             break;
@@ -114,7 +124,8 @@ long long strtoll(const char *__restrict str, char **__restrict endptr, int base
         /* Detect overflow */
         if (value > ((sign == 1LL ? ((unsigned long long) LLONG_MAX) : (unsigned long long) -LLONG_MIN) - digit_value) / base) {
             /* Read the rest of the characters but ignore them */
-            while (is_valid_char_for_base(str[++str_off], base));
+            while (is_valid_char_for_base(str[++str_off], base))
+                ;
 
             ret = sign == 1LL ? LLONG_MAX : LLONG_MIN;
             errno = ERANGE;
@@ -130,18 +141,22 @@ long long strtoll(const char *__restrict str, char **__restrict endptr, int base
 
 finish:
     if (endptr != NULL) {
-        *endptr = (char*) (str + str_off);
+        *endptr = (char *) (str + str_off);
     }
     return ret;
 }
 
 unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base) {
-    if (str == NULL) { return 0; }
+    if (str == NULL) {
+        return 0;
+    }
 
     size_t str_off = 0;
 
     /* Skip initial whitespace */
-    while (isspace(str[str_off])) { str_off++; }
+    while (isspace(str[str_off])) {
+        str_off++;
+    }
 
     /* Look at radix prefixes */
     switch (base) {
@@ -158,10 +173,14 @@ unsigned long long strtoull(const char *__restrict str, char **__restrict endptr
             break;
         }
         case 8:
-            if (str[str_off] == '0') { str_off++; }
+            if (str[str_off] == '0') {
+                str_off++;
+            }
             break;
         case 16:
-            if (str[str_off] == '0' && (str[str_off + 1] == 'x' || str[str_off + 1] == 'X')) { str_off += 2; }
+            if (str[str_off] == '0' && (str[str_off + 1] == 'x' || str[str_off + 1] == 'X')) {
+                str_off += 2;
+            }
             break;
         default:
             break;
@@ -175,7 +194,8 @@ unsigned long long strtoull(const char *__restrict str, char **__restrict endptr
         /* Detect overflow */
         if (value > (ULLONG_MAX - digit_value) / base) {
             /* Read the rest of the characters but ignore them */
-            while (is_valid_char_for_base(str[++str_off], base));
+            while (is_valid_char_for_base(str[++str_off], base))
+                ;
 
             value = ULLONG_MAX;
             errno = ERANGE;
@@ -188,7 +208,7 @@ unsigned long long strtoull(const char *__restrict str, char **__restrict endptr
     }
 
     if (endptr != NULL) {
-        *endptr = (char*) (str + str_off);
+        *endptr = (char *) (str + str_off);
     }
     return value;
 }
@@ -200,12 +220,16 @@ double atof(const char *s) {
 }
 
 double strtod(const char *__restrict str, char **__restrict endptr) {
-    if (str == NULL) { return 0; }
+    if (str == NULL) {
+        return 0;
+    }
 
     size_t str_off = 0;
 
     /* Skip initial whitespace */
-    while (isspace(str[str_off])) { str_off++; }
+    while (isspace(str[str_off])) {
+        str_off++;
+    }
 
     /* Look at optional sign character */
     double sign = 1.0;
@@ -242,7 +266,7 @@ double strtod(const char *__restrict str, char **__restrict endptr) {
     ret = sign * value;
 
     if (endptr != NULL) {
-        *endptr = (char*) (str + str_off);
+        *endptr = (char *) (str + str_off);
     }
     return ret;
 }

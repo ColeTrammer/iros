@@ -1,30 +1,26 @@
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stddef.h>
-#include <sys/param.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <fcntl.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include <kernel/fs/pipe.h>
+#include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
-#include <kernel/fs/file.h>
+#include <kernel/fs/pipe.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
-static struct inode_operations pipe_i_op = {
-    NULL, NULL, &pipe_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &pipe_on_inode_destruction
-};
+static struct inode_operations pipe_i_op = { NULL, NULL, &pipe_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &pipe_on_inode_destruction };
 
-static struct file_operations pipe_f_op = {
-    &pipe_close, &pipe_read, &pipe_write, &pipe_clone
-};
+static struct file_operations pipe_f_op = { &pipe_close, &pipe_read, &pipe_write, &pipe_clone };
 
 static bool is_pipe_write_end_open(struct inode *inode) {
     struct pipe_data *data = inode->private_data;
@@ -99,7 +95,7 @@ ssize_t pipe_read(struct file *file, void *buffer, size_t _len) {
     while (len == 0 && is_pipe_write_end_open(inode)) {
         yield();
         len = MIN(_len, inode->size - file->position);
-    }    
+    }
 
     spin_lock(&inode->lock);
     memcpy(buffer, data->buffer + file->position, len);
@@ -149,7 +145,7 @@ int pipe_close(struct file *file) {
 
     spin_lock(&inode->lock);
     if (file->abilities & FS_FILE_CAN_WRITE) {
-        data->write_count--;        
+        data->write_count--;
     }
 
     spin_unlock(&inode->lock);
@@ -158,7 +154,7 @@ int pipe_close(struct file *file) {
 
 void pipe_on_inode_destruction(struct inode *inode) {
     debug_log("Destroying pipe: [ %llu ]\n", inode->index);
-    
+
     struct pipe_data *data = inode->private_data;
     if (data) {
         free(data->buffer);

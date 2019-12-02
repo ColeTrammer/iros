@@ -1,13 +1,13 @@
-#include <stddef.h>
-#include <stdbool.h>
-#include <signal.h>
 #include <errno.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include <kernel/hal/output.h>
-#include <kernel/irqs/handlers.h>
-#include <kernel/proc/task.h>
-#include <kernel/proc/process_state.h>
 #include <kernel/hal/timer.h>
+#include <kernel/irqs/handlers.h>
+#include <kernel/proc/process_state.h>
+#include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -29,7 +29,7 @@ void sched_add_task(struct task *task) {
     if (list_start == NULL) {
         list_start = list_end = task;
         task->prev = task->next = task;
-        
+
         spin_unlock(&task_list_lock);
         return;
     }
@@ -47,7 +47,7 @@ void sched_add_task(struct task *task) {
 void sched_remove_task(struct task *task) {
     spin_lock(&task_list_lock);
 
-    if (list_start == NULL) {        
+    if (list_start == NULL) {
         spin_unlock(&task_list_lock);
         return;
     }
@@ -147,7 +147,7 @@ int signal_process_group(pid_t pgid, int signum) {
             if (task == get_current_task()) {
                 signalled_self = true;
             }
-        } 
+        }
     } while ((task = task->next) != list_start);
 
     spin_unlock(&task_list_lock);
@@ -175,7 +175,7 @@ int signal_process(pid_t pid, int signum) {
             if (task == get_current_task()) {
                 signalled_self = true;
             }
-        } 
+        }
     } while ((task = task->next) != list_start);
 
     spin_unlock(&task_list_lock);

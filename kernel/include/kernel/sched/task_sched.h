@@ -3,8 +3,10 @@
 
 #include <kernel/proc/task.h>
 
+// clang-format off
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(sched/task_sched.h)
+// clang-format on
 
 void init_task_sched();
 void arch_init_task_sched();

@@ -10,8 +10,8 @@ void *memcpy(void *__restrict dest, const void *__restrict src, size_t n, int li
 #else
 void *memcpy(void *__restrict dest, const void *__restrict src, size_t n) {
 #endif /* (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MEMCPY_DEBUG) */
-    unsigned char *buffer = (unsigned char*) dest;
-    const unsigned char *source = (const unsigned char*) src;
+    unsigned char *buffer = (unsigned char *) dest;
+    const unsigned char *source = (const unsigned char *) src;
     for (size_t i = 0; i < n; i++) {
         buffer[i] = source[i];
     }

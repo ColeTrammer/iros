@@ -1,12 +1,12 @@
-#include <stdlib.h>
-#include <stddef.h>
 #include <assert.h>
 #include <errno.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <kernel/proc/pid.h>
-#include <kernel/proc/task.h>
 #include <kernel/proc/process_state.h>
+#include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/hash_map.h>
 
@@ -15,23 +15,23 @@ static struct hash_map *pg_queue_map;
 static struct hash_map *parent_queue_map;
 
 static int proc_hash(void *index, int num_buckets) {
-    return *((pid_t*) index) % num_buckets;
+    return *((pid_t *) index) % num_buckets;
 }
 
 static int proc_equals(void *i1, void *i2) {
-    return *((pid_t*) i1) == *((pid_t*) i2);
+    return *((pid_t *) i1) == *((pid_t *) i2);
 }
 
 static void *pid_key(void *queue) {
-    return &((struct proc_state_message_queue*) queue)->pid;
+    return &((struct proc_state_message_queue *) queue)->pid;
 }
 
 static void *pg_key(void *queue) {
-    return &((struct proc_state_message_queue*) queue)->pgid;
+    return &((struct proc_state_message_queue *) queue)->pgid;
 }
 
 static void *parent_key(void *queue) {
-    return &((struct proc_state_message_queue*) queue)->ppid;
+    return &((struct proc_state_message_queue *) queue)->ppid;
 }
 
 static void setup_queue_lists(struct proc_state_message_queue *queue) {

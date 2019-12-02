@@ -14,11 +14,11 @@
 static struct network_interface *interface = NULL;
 
 static uint32_t read_command(struct e1000_data *data, uint16_t offset) {
-    return *((volatile uint32_t*) (data->mem_io_phys_base + offset));
+    return *((volatile uint32_t *) (data->mem_io_phys_base + offset));
 }
 
 static void write_command(struct e1000_data *data, uint16_t offset, uint32_t value) {
-    *((volatile uint32_t*) (data->mem_io_phys_base + offset)) = value;
+    *((volatile uint32_t *) (data->mem_io_phys_base + offset)) = value;
 }
 
 static bool has_eeprom(struct e1000_data *data) {
@@ -35,7 +35,8 @@ static bool has_eeprom(struct e1000_data *data) {
 
 static void init_recieve_descriptors(struct e1000_data *data) {
     data->rx_descs_unaligned = calloc(E1000_NUM_RECIEVE_DESCS, sizeof(struct e1000_recieve_desc) + E1000_DESC_MIN_ALIGN);
-    data->rx_descs = (struct e1000_recieve_desc*) (data->rx_descs_unaligned + E1000_DESC_MIN_ALIGN - (((uintptr_t) data->rx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
+    data->rx_descs = (struct e1000_recieve_desc *) (data->rx_descs_unaligned + E1000_DESC_MIN_ALIGN
+        - (((uintptr_t) data->rx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
     assert(((uintptr_t) data->rx_descs) % E1000_DESC_MIN_ALIGN == 0);
 
     for (int i = 0; i < E1000_NUM_RECIEVE_DESCS; i++) {
@@ -44,19 +45,22 @@ static void init_recieve_descriptors(struct e1000_data *data) {
         data->rx_descs[i].status = 0;
     }
 
-    write_command(data, E1000_RX_DESC_HI, (uint32_t) (get_phys_addr((uintptr_t) data->rx_descs) >> 32));
-    write_command(data, E1000_RX_DESC_LO, (uint32_t) (get_phys_addr((uintptr_t) data->rx_descs) & 0xFFFFFFFF));
+    write_command(data, E1000_RX_DESC_HI, (uint32_t)(get_phys_addr((uintptr_t) data->rx_descs) >> 32));
+    write_command(data, E1000_RX_DESC_LO, (uint32_t)(get_phys_addr((uintptr_t) data->rx_descs) & 0xFFFFFFFF));
 
     write_command(data, E1000_RX_DESC_LEN, E1000_NUM_RECIEVE_DESCS * sizeof(struct e1000_recieve_desc));
     write_command(data, E1000_RX_DESC_HEAD, 0);
     write_command(data, E1000_RX_DESC_TAIL, E1000_NUM_RECIEVE_DESCS - 1);
 
-    write_command(data, E1000_RCTRL, E1000_RCTL_EN | E1000_RCTL_SBP | E1000_RCTL_UPE | E1000_RCTL_MPE | E1000_RCTL_LBM_NONE | E1000_RTCL_RDMTS_HALF | E1000_RCTL_BAM | E1000_RCTL_SECRC | E1000_RCTL_BSIZE_8192);
+    write_command(data, E1000_RCTRL,
+        E1000_RCTL_EN | E1000_RCTL_SBP | E1000_RCTL_UPE | E1000_RCTL_MPE | E1000_RCTL_LBM_NONE | E1000_RTCL_RDMTS_HALF | E1000_RCTL_BAM
+            | E1000_RCTL_SECRC | E1000_RCTL_BSIZE_8192);
 }
 
 static void init_transmit_descriptors(struct e1000_data *data) {
     data->tx_descs_unaligned = calloc(E1000_NUM_TRANSMIT_DESCS, sizeof(struct e1000_transmit_desc) + E1000_DESC_MIN_ALIGN);
-    data->tx_descs = (struct e1000_transmit_desc*) (data->tx_descs_unaligned + E1000_DESC_MIN_ALIGN - (((uintptr_t) data->tx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
+    data->tx_descs = (struct e1000_transmit_desc *) (data->tx_descs_unaligned + E1000_DESC_MIN_ALIGN
+        - (((uintptr_t) data->tx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
     assert(((uintptr_t) data->tx_descs) % E1000_DESC_MIN_ALIGN == 0);
 
     for (int i = 0; i < E1000_NUM_TRANSMIT_DESCS; i++) {
@@ -66,8 +70,8 @@ static void init_transmit_descriptors(struct e1000_data *data) {
         data->tx_descs[i].status = E1000_TSTA_DD;
     }
 
-    write_command(data, E1000_TX_DESC_HI, (uint32_t) (get_phys_addr((uintptr_t) data->tx_descs) >> 32));
-    write_command(data, E1000_TX_DESC_LO, (uint32_t) (get_phys_addr((uintptr_t) data->tx_descs) & 0xFFFFFFFF));
+    write_command(data, E1000_TX_DESC_HI, (uint32_t)(get_phys_addr((uintptr_t) data->tx_descs) >> 32));
+    write_command(data, E1000_TX_DESC_LO, (uint32_t)(get_phys_addr((uintptr_t) data->tx_descs) & 0xFFFFFFFF));
 
     write_command(data, E1000_TX_DESC_LEN, E1000_NUM_TRANSMIT_DESCS * sizeof(struct e1000_transmit_desc));
     write_command(data, E1000_TX_DESC_HEAD, 0);
@@ -81,9 +85,10 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
     write_command(data, E1000_EEPROM_REG, 1U | (((uint32_t) addr) << 8U));
 
     uint32_t val;
-    while (!((val = read_command(data, E1000_EEPROM_REG)) & (1U << 4U)));
+    while (!((val = read_command(data, E1000_EEPROM_REG)) & (1U << 4U)))
+        ;
 
-    return (uint16_t) ((val >> 16) & 0xFFFF);
+    return (uint16_t)((val >> 16) & 0xFFFF);
 }
 
 static ssize_t e1000_send(struct network_interface *this, const void *raw, size_t len) {
@@ -92,7 +97,7 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
 
 #ifdef KERNEL_E1000_DEBUG
     for (size_t i = 0; i < len; i++) {
-        debug_log("TX Byte: [ %lu, %#2X ]\n", i, ((uint8_t*) raw)[i]);
+        debug_log("TX Byte: [ %lu, %#2X ]\n", i, ((uint8_t *) raw)[i]);
     }
 #endif /* KERNEL_E1000_DEBUG */
 
@@ -111,7 +116,8 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
 
     debug_log("Starting transmission: [ %d, %d ]\n", save_current_tx, read_command(data, E1000_TX_DESC_HEAD));
 
-    while (!data->tx_descs[save_current_tx].status);
+    while (!data->tx_descs[save_current_tx].status)
+        ;
 
     debug_log("Finished transmitting: [ %d ]\n", save_current_tx);
     return len;
@@ -142,7 +148,7 @@ static void handle_interrupt() {
     debug_log("Recived a interrupt for E1000\n");
 
     write_command(data, E1000_CTRL_IMASK, 1);
- 
+
     uint32_t status = read_command(data, 0xc0);
     if (status & 0x04) {
         write_command(data, E1000_CTRL_REG, read_command(data, E1000_CTRL_REG) | E1000_ECTRL_SLU);
@@ -164,16 +170,14 @@ static struct mac_address get_mac_address(struct network_interface *this) {
     val = read_eeprom(this->private_data, 1);
     addr.addr[2] = val & 0xFF;
     addr.addr[3] = val >> 8;
-    val =read_eeprom(this->private_data, 2);
+    val = read_eeprom(this->private_data, 2);
     addr.addr[4] = val & 0xFF;
     addr.addr[5] = val >> 8;
 
     return addr;
 }
 
-static struct network_interface_ops e1000_ops = {
-    &e1000_send, NULL, NULL, &get_mac_address
-};
+static struct network_interface_ops e1000_ops = { &e1000_send, NULL, NULL, &get_mac_address };
 
 void init_intel_e1000(struct pci_configuration *config) {
     debug_log("Found intel e1000 netword card: [ %u ]\n", config->interrupt_line);

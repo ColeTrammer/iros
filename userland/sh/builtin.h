@@ -5,7 +5,7 @@
 
 #define NUM_BUILTINS 10
 
-typedef int(*op_function_t)(char **args);
+typedef int (*op_function_t)(char **args);
 
 struct builtin_op {
     char name[16];

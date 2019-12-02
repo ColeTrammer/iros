@@ -1,17 +1,16 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "elf64.h"
 
 #define MODULES_TAG_TYPE 3
 
-#define VGA_WIDTH 80
-#define VGA_HEIGHT 25
-#define VGA_BASE ((uint16_t*) 0xB8000)
-#define VGA_INDEX(row, col) ((row) * VGA_WIDTH + (col))
-#define VGA_ENTRY(c, fg, bg) \
-    (((uint16_t) (c) & 0x00FF) | ((uint16_t) (fg) << 8 & 0x0F00) | ((uint16_t) (bg) << 12 & 0xF000))
+#define VGA_WIDTH            80
+#define VGA_HEIGHT           25
+#define VGA_BASE             ((uint16_t *) 0xB8000)
+#define VGA_INDEX(row, col)  ((row) *VGA_WIDTH + (col))
+#define VGA_ENTRY(c, fg, bg) (((uint16_t)(c) &0x00FF) | ((uint16_t)(fg) << 8 & 0x0F00) | ((uint16_t)(bg) << 12 & 0xF000))
 
 void clear_screen() {
     for (size_t row = 0; row < VGA_HEIGHT; row++) {
@@ -44,8 +43,8 @@ bool strequals(const char *s1, const char *s2) {
 }
 
 void *memcpy(void *dest, const void *src, size_t n) {
-    unsigned char *buffer = (unsigned char*) dest;
-    const unsigned char *source = (const unsigned char*) src;
+    unsigned char *buffer = (unsigned char *) dest;
+    const unsigned char *source = (const unsigned char *) src;
     for (size_t i = 0; i < n; i++) {
         buffer[i] = source[i];
     }
@@ -53,7 +52,7 @@ void *memcpy(void *dest, const void *src, size_t n) {
 }
 
 void *memset(void *s, int c, size_t n) {
-    unsigned char *buffer = (unsigned char*) s;
+    unsigned char *buffer = (unsigned char *) s;
     for (size_t i = 0; i < n; i++) {
         buffer[i] = (unsigned char) c;
     }
@@ -61,26 +60,26 @@ void *memset(void *s, int c, size_t n) {
 }
 
 void map_kernel_elf(uint64_t kernel_start) {
-    Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr*) kernel_start;
-    Elf64_Phdr *kernel_program_header = (Elf64_Phdr*) (kernel_start + kernel_elf_header->e_phoff);
+    Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr *) kernel_start;
+    Elf64_Phdr *kernel_program_header = (Elf64_Phdr *) (kernel_start + kernel_elf_header->e_phoff);
     uint64_t base = kernel_start + kernel_program_header->p_offset;
     uint64_t end = base + kernel_program_header->p_filesz;
     uint64_t addr = kernel_program_header->p_vaddr;
-    memcpy((void*) addr, (void*) base, (size_t) (end - base)); 
+    memcpy((void *) addr, (void *) base, (size_t)(end - base));
 }
 
 uint64_t find_entry(uint64_t kernel_start) {
-    Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr*) kernel_start;
+    Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr *) kernel_start;
     return kernel_elf_header->e_entry;
 }
 
 uint64_t get_kernel_size(uint64_t kernel_start) {
-    Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr*) kernel_start;
-    Elf64_Shdr *section_headers = (Elf64_Shdr*) (kernel_start + kernel_elf_header->e_shoff);
+    Elf64_Ehdr *kernel_elf_header = (Elf64_Ehdr *) kernel_start;
+    Elf64_Shdr *section_headers = (Elf64_Shdr *) (kernel_start + kernel_elf_header->e_shoff);
     for (size_t i = 0; i < kernel_elf_header->e_shnum; i++) {
         if (section_headers[i].sh_addr) {
             if (section_headers[i].sh_type == 8) {
-                memset((void*) section_headers[i].sh_addr, 0, section_headers[i].sh_size);
+                memset((void *) section_headers[i].sh_addr, 0, section_headers[i].sh_size);
                 return section_headers[i].sh_addr - 0xFFFFFF0000000000 + section_headers[i].sh_size;
             }
         }
@@ -106,21 +105,22 @@ struct boot_info *prepare_kernel_for_jump(uint32_t *multiboot_info) {
         kprint("Found multiboot information structure.");
         multiboot_info += 2;
 
-        while (multiboot_info[0] != MODULES_TAG_TYPE || !strequals((char*) &multiboot_info[4], "kernel")) {
-            if (multiboot_info[0] == MODULES_TAG_TYPE && strequals((char*) &multiboot_info[4], "initrd")) {
+        while (multiboot_info[0] != MODULES_TAG_TYPE || !strequals((char *) &multiboot_info[4], "kernel")) {
+            if (multiboot_info[0] == MODULES_TAG_TYPE && strequals((char *) &multiboot_info[4], "initrd")) {
                 info.initrd_phys_start = (uint64_t) multiboot_info[2];
                 info.initrd_phys_end = (uint64_t) multiboot_info[3];
             }
 
-            multiboot_info = (uint32_t*) ((uint64_t) multiboot_info + multiboot_info[1]);
+            multiboot_info = (uint32_t *) ((uint64_t) multiboot_info + multiboot_info[1]);
             if ((uint64_t) multiboot_info % 8 != 0) {
-                multiboot_info = (uint32_t*) (((uint64_t) multiboot_info & ~0x7) + 8);
+                multiboot_info = (uint32_t *) (((uint64_t) multiboot_info & ~0x7) + 8);
             }
         }
 
         if (info.initrd_phys_start == 0 || info.initrd_phys_end == 0) {
             kprint("Failed to find initrd.");
-            while (1);
+            while (1)
+                ;
         }
 
         kprint("Found kernel.");
@@ -128,7 +128,8 @@ struct boot_info *prepare_kernel_for_jump(uint32_t *multiboot_info) {
         uint64_t mod_end = (uint64_t) multiboot_info[3];
         if (mod_end > 0x600000) {
             kprint("Module not mapped into memory.");
-            while (1);
+            while (1)
+                ;
         }
         map_kernel_elf(mod_start);
         info.kernel_entry = find_entry(mod_start);
@@ -139,5 +140,6 @@ struct boot_info *prepare_kernel_for_jump(uint32_t *multiboot_info) {
     } else {
         kprint("Failed.");
     }
-    while (1);
+    while (1)
+        ;
 }

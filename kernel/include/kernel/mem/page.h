@@ -1,13 +1,15 @@
 #ifndef _KERNEL_MEM_PAGE_H
 #define _KERNEL_MEM_PAGE_H 1
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <kernel/mem/vm_region.h>
 
+// clang-format off
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(mem/page.h)
+// clang-format on
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 4096

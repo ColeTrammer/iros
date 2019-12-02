@@ -3,11 +3,7 @@
 
 #include <stdio.h>
 
-enum input_mode {
-    INPUT_TTY,
-    INPUT_FILE,
-    INPUT_STRING
-};
+enum input_mode { INPUT_TTY, INPUT_FILE, INPUT_STRING };
 
 struct string_input_source {
     char *string;

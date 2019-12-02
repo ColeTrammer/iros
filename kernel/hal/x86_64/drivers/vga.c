@@ -7,14 +7,14 @@
 #include <kernel/fs/dev.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
-#include <kernel/mem/vm_region.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 
-static uint16_t *vga_buffer = (uint16_t*) VGA_PHYS_ADDR;
+static uint16_t *vga_buffer = (uint16_t *) VGA_PHYS_ADDR;
 static enum vga_color fg = VGA_COLOR_LIGHT_GREY;
 static enum vga_color bg = VGA_COLOR_BLACK;
 
@@ -63,21 +63,17 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
     return (intptr_t) region->start;
 }
 
-static struct device_ops vga_ops = {
-    NULL, NULL, NULL, NULL, NULL, NULL, vga_ioctl, NULL, vga_mmap
-};
+static struct device_ops vga_ops = { NULL, NULL, NULL, NULL, NULL, NULL, vga_ioctl, NULL, vga_mmap };
 
-static struct device vga_device = {
-    0x1234, S_IFCHR, "fb0", false, &vga_ops, NULL, NULL
-};
+static struct device vga_device = { 0x1234, S_IFCHR, "fb0", false, &vga_ops, NULL, NULL };
 
 void vga_enable_cursor() {
-	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, (inb(VGA_DATA) & 0xC0) | VGA_CURSOR_Y_START);
-	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_END, (inb(VGA_DATA) & 0xE0) | VGA_CURSOR_Y_END);
+    VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, (inb(VGA_DATA) & 0xC0) | VGA_CURSOR_Y_START);
+    VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_END, (inb(VGA_DATA) & 0xE0) | VGA_CURSOR_Y_END);
 }
 
 void vga_disable_cursor() {
-	VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, VGA_CURSOR_DISABLE);
+    VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, VGA_CURSOR_DISABLE);
 }
 
 void update_vga_buffer() {
@@ -117,8 +113,8 @@ void set_vga_cursor(size_t row, size_t col) {
         return;
     }
 
-    VGA_RUN_COMMAND(VGA_SET_CURSOR_LOW, (uint8_t) (pos & 0xFF));
-    VGA_RUN_COMMAND(VGA_SET_CURSOR_HIGH, (uint8_t) ((pos >> 8) & 0xFF));
+    VGA_RUN_COMMAND(VGA_SET_CURSOR_LOW, (uint8_t)(pos & 0xFF));
+    VGA_RUN_COMMAND(VGA_SET_CURSOR_HIGH, (uint8_t)((pos >> 8) & 0xFF));
 }
 
 void init_vga_device() {

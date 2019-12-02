@@ -1,10 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <ctype.h>
-#include <string.h>
 #include <assert.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <wordexp.h>
 
@@ -140,7 +140,7 @@ static char **split_on_pipe(char *line, size_t *num_split) {
     size_t line_len = strlen(line);
     size_t max = SPLIT_BUF_INC;
     size_t split_index = 0;
-    char **split = malloc(max * sizeof(char*));
+    char **split = malloc(max * sizeof(char *));
     char *last = line;
 
     bool prev_was_backslash = false;
@@ -167,11 +167,11 @@ static char **split_on_pipe(char *line, size_t *num_split) {
                 if (line[i] == '\0' || (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes)) {
                     if (split_index >= max) {
                         max += SPLIT_BUF_INC;
-                        split = realloc(split, max * sizeof(char*));
+                        split = realloc(split, max * sizeof(char *));
                     }
 
                     split[split_index++] = last;
-                    if (i >= line_len) { 
+                    if (i >= line_len) {
                         goto finish;
                     }
 
@@ -200,7 +200,7 @@ static char **split_into_list(char *line, size_t *num_split, enum command_list_c
     size_t line_len = strlen(line);
     size_t max = SPLIT_BUF_INC;
     size_t split_index = 0;
-    char **split = malloc(max * sizeof(char*));
+    char **split = malloc(max * sizeof(char *));
     *connectors = malloc(max * sizeof(enum command_list_connector));
     char *last = line;
 
@@ -228,30 +228,30 @@ static char **split_into_list(char *line, size_t *num_split, enum command_list_c
             case ';':
             case '&':
             case '|':
-                if (line[i] == '\0' || (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes &&
-                    ((line[i] == '&' && line[i + 1] == '&') || (line[i] == '|' && line[i + 1] == '|') || line[i] == ';'))) {
+                if (line[i] == '\0'
+                    || (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes
+                        && ((line[i] == '&' && line[i + 1] == '&') || (line[i] == '|' && line[i + 1] == '|') || line[i] == ';'))) {
                     if (split_index >= max) {
                         max += SPLIT_BUF_INC;
-                        split = realloc(split, max * sizeof(char*));
+                        split = realloc(split, max * sizeof(char *));
                         *connectors = realloc(*connectors, max * sizeof(enum command_list_connector));
                     }
 
-                    (*connectors)[split_index] = c == ';' ? COMMAND_SEQUENTIAL :
-                                                 c == '&' ? COMMAND_AND :
-                                                 c == '|' ? COMMAND_OR :
-                                                 COMMAND_END_LIST;
+                    (*connectors)[split_index]
+                        = c == ';' ? COMMAND_SEQUENTIAL : c == '&' ? COMMAND_AND : c == '|' ? COMMAND_OR : COMMAND_END_LIST;
                     split[split_index++] = last;
-                    if (i >= line_len) { 
+                    if (i >= line_len) {
                         goto finish;
                     }
-
 
                     line[i++] = '\0';
                     if (c == '&' || c == '|') {
                         line[i++] = '\0';
                     }
 
-                    while (i < line_len && isspace(line[i])) { i++; } // Skip whitespace
+                    while (i < line_len && isspace(line[i])) {
+                        i++;
+                    } // Skip whitespace
                     if (i >= line_len) {
                         goto finish;
                     }

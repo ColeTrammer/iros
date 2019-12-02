@@ -11,22 +11,13 @@ typedef uint64_t wid_t;
 namespace WindowServer {
 
 struct Message {
-    enum class Type {
-        Invalid,
-        CreateWindowRequest,
-        CreateWindowResponse,
-        RemoveWindowRequest,
-        RemoveWindowResponse
-    };
+    enum class Type { Invalid, CreateWindowRequest, CreateWindowResponse, RemoveWindowRequest, RemoveWindowResponse };
 
     struct CreateWindowRequest {
-        CreateWindowRequest(int xx, int yy, int wwidth, int hheight)
-            : x(xx), y(yy), width(wwidth), height(hheight)
-        {
+        CreateWindowRequest(int xx, int yy, int wwidth, int hheight) : x(xx), y(yy), width(wwidth), height(hheight) {
         }
 
-        static std::shared_ptr<Message> create(int x, int y, int width, int height)
-        {
+        static std::shared_ptr<Message> create(int x, int y, int width, int height) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(CreateWindowRequest));
             message->type = Message::Type::CreateWindowRequest;
             message->data_len = sizeof(CreateWindowRequest);
@@ -41,8 +32,7 @@ struct Message {
     };
 
     struct CreateWindowResponse {
-        static std::shared_ptr<Message> create(wid_t id, size_t size, const char* path)
-        {
+        static std::shared_ptr<Message> create(wid_t id, size_t size, const char* path) {
             size_t path_len = strlen(path);
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(CreateWindowResponse) + path_len + 1);
             message->type = Message::Type::CreateWindowResponse;
@@ -60,8 +50,7 @@ struct Message {
     };
 
     struct RemoveWindowRequest {
-        static std::shared_ptr<Message> create(wid_t id)
-        {
+        static std::shared_ptr<Message> create(wid_t id) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(RemoveWindowRequest));
             message->type = Message::Type::RemoveWindowRequest;
             message->data_len = sizeof(RemoveWindowRequest);
@@ -74,8 +63,7 @@ struct Message {
     };
 
     struct RemoveWindowResponse {
-        static std::shared_ptr<Message> create(bool success)
-        {
+        static std::shared_ptr<Message> create(bool success) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(RemoveWindowResponse));
             message->type = Message::Type::RemoveWindowResponse;
             message->data_len = sizeof(RemoveWindowResponse);
@@ -87,7 +75,9 @@ struct Message {
         bool success;
     };
 
-    size_t total_size() const { return sizeof(Message) + data_len; };
+    size_t total_size() const {
+        return sizeof(Message) + data_len;
+    };
 
     Type type { Type::Invalid };
     int data_len { 0 };

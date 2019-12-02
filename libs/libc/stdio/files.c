@@ -22,9 +22,9 @@ static FILE files[3];
 
 static int parse_flags(const char *mode) {
     int flags = 0;
-    switch(mode[0]) {
-        case 'r': 
-            switch(mode[1]) {
+    switch (mode[0]) {
+        case 'r':
+            switch (mode[1]) {
                 case '+':
                     flags = O_RDWR;
                     break;
@@ -34,7 +34,7 @@ static int parse_flags(const char *mode) {
             }
             break;
         case 'w':
-            switch(mode[1]) {
+            switch (mode[1]) {
                 case '+':
                     flags = O_RDWR | O_CREAT | O_TRUNC;
                     break;
@@ -44,7 +44,7 @@ static int parse_flags(const char *mode) {
             }
             break;
         case 'a':
-            switch(mode[1]) {
+            switch (mode[1]) {
                 case '+':
                     flags = O_RDWR | O_CREAT | O_APPEND;
                     break;
@@ -75,7 +75,7 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
 
     mode_t __mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
     int fd = open(path, flags, __mode);
-    
+
     /* Check If Open Failed */
     if (fd == -1) {
         return NULL;
@@ -154,7 +154,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 
     size_t to_read = size * nmemb;
     if (stream->length - stream->pos > 0) {
-        size_t can_copy = MIN(to_read, (size_t) (stream->length - stream->pos));
+        size_t can_copy = MIN(to_read, (size_t)(stream->length - stream->pos));
         memcpy(ptr, stream->buffer + stream->pos, can_copy);
         stream->pos += can_copy;
         to_read -= can_copy;
@@ -189,8 +189,8 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 }
 
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    char *data =  (char*) ptr;
-    
+    char *data = (char *) ptr;
+
     if (stream->buf_type == _IONBF) {
         ssize_t ret = write(stream->fd, ptr, nmemb * size);
 
@@ -282,7 +282,7 @@ int fflush(FILE *stream) {
     if (stream->pos != 0 && stream->buf_type != _IONBF) {
         ssize_t check = write(stream->fd, stream->buffer, stream->pos);
         stream->pos = 0;
-  
+
         if (check < 0) {
             return EOF;
         }
@@ -375,7 +375,7 @@ int fgetpos(FILE *stream, fpos_t *pos) {
 
 int fseek(FILE *stream, long offset, int whence) {
     off_t ret = lseek(stream->fd, offset, whence);
-    assert (ret <= INT_MAX);
+    assert(ret <= INT_MAX);
 
     if (ret < 0) {
         return -1;
@@ -442,7 +442,7 @@ static bool is_tmp_name_buffer_initialzied = false;
 char *tmpnam(char *s) {
     if (!is_tmp_name_buffer_initialzied) {
         pid_t pid = getpid();
-        
+
         strcpy(tmp_name_buffer, P_tmpdir);
         strcat(tmp_name_buffer, "/");
         for (size_t i = strlen(P_tmpdir) + 1; i < strlen(P_tmpdir) + 1 + 10; i++) {
@@ -562,9 +562,7 @@ FILE *popen(const char *command, const char *mode) {
             close(fds[0]);
         }
 
-        char *const args [] = {
-            "sh", "-c", (char*) command, NULL
-        };
+        char *const args[] = { "sh", "-c", (char *) command, NULL };
 
         execve("/bin/sh", args, environ);
         _exit(127);
@@ -590,7 +588,8 @@ int pclose(FILE *stream) {
     }
 
     int wstatus;
-    while (!waitpid(p_child_pid, &wstatus, 0));
+    while (!waitpid(p_child_pid, &wstatus, 0))
+        ;
     p_child_pid = 0;
 
     if (fclose(stream) || wstatus == -1) {
@@ -640,7 +639,7 @@ void init_files() {
     files[1].pushed_back_char = '\0';
     stdout = files + 1;
 
-    /* stderr */ 
+    /* stderr */
     files[2].fd = 2;
     files[2].pos = 0;
     files[2].buf_type = _IONBF;

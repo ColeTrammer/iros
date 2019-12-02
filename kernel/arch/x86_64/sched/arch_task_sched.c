@@ -1,9 +1,9 @@
 #include <string.h>
 
-#include <kernel/sched/task_sched.h>
-#include <kernel/hal/timer.h>
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/timer.h>
+#include <kernel/sched/task_sched.h>
 
 void arch_init_task_sched() {
     set_sched_callback(&arch_sched_run_next, 5);

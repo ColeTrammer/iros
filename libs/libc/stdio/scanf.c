@@ -1,12 +1,12 @@
-#include <stdio.h>
 #include <assert.h>
-#include <stdbool.h>
-#include <stdarg.h>
 #include <ctype.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stddef.h>
 #include <limits.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifdef __is_libk
 #include <kernel/hal/output.h>
@@ -17,14 +17,14 @@ struct scanf_specifier_state {
     bool memory;
     int width;
 
-#define SCANF_LENGTH_DEFAULT 0
-#define SCANF_LENGTH_CHAR 1
-#define SCANF_LENGTH_SHORT 2
-#define SCANF_LENGTH_LONG 3
-#define SCANF_LENGTH_LONG_LONG 4
-#define SCANF_LENGTH_INTMAX 5
-#define SCANF_LENGTH_SIZE_T 6
-#define SCANF_LENGTH_PTRDIFF 7
+#define SCANF_LENGTH_DEFAULT     0
+#define SCANF_LENGTH_CHAR        1
+#define SCANF_LENGTH_SHORT       2
+#define SCANF_LENGTH_LONG        3
+#define SCANF_LENGTH_LONG_LONG   4
+#define SCANF_LENGTH_INTMAX      5
+#define SCANF_LENGTH_SIZE_T      6
+#define SCANF_LENGTH_PTRDIFF     7
 #define SCANF_LENGTH_LONG_DOUBLE 8
     int length;
     const char *specifier;
@@ -34,13 +34,18 @@ struct scanf_specifier_state {
 
 static int determine_base(int c) {
     switch (c) {
-        case 'i': return 0;
+        case 'i':
+            return 0;
         case 'd':
-        case 'u': return 10;
-        case 'o': return 8;
+        case 'u':
+            return 10;
+        case 'o':
+            return 8;
         case 'X':
-        case 'x': return 16;
-        default : return 10; 
+        case 'x':
+            return 16;
+        default:
+            return 10;
     }
 }
 
@@ -72,11 +77,15 @@ static bool is_valid_char_for_set(char c, const char *set, int set_end, bool inv
 
             // Don't need to check edges b/c they are checked automatically
             for (char r = range_start + 1; r < range_end; r++) {
-                if (r == c) { return !invert; }
+                if (r == c) {
+                    return !invert;
+                }
             }
         }
 
-        if (set[i] == c) { return !invert; }
+        if (set[i] == c) {
+            return !invert;
+        }
     }
 
     return invert;
@@ -90,7 +99,8 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
     while (!done && format[format_off] != '\0') {
         if (isspace(format[format_off])) {
             int ret;
-            while (isspace(ret = get_character(state)));
+            while (isspace(ret = get_character(state)))
+                ;
             if (ret == EOF) {
                 return num_read;
             }
@@ -100,12 +110,14 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
             int ret = get_character(state);
             if (ret == EOF) {
                 return num_read;
-            } 
+            }
             c = (char) ret;
         }
 
         if (format[format_off] != '%' || (format[format_off] == '%' && format[format_off + 1] == '%')) {
-            if (format[format_off] == '%') { format_off++; }
+            if (format[format_off] == '%') {
+                format_off++;
+            }
 
             if (c != format[format_off]) {
                 return num_read;
@@ -134,10 +146,12 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
 
         if (isdigit(format[format_off])) {
             specifier.width = atoi(format + format_off);
-            while (isdigit(format[format_off])) { format_off++; }
+            while (isdigit(format[format_off])) {
+                format_off++;
+            }
         }
 
-        switch(format[format_off]) {
+        switch (format[format_off]) {
             case 'h': {
                 if (format[format_off + 1] == 'h') {
                     specifier.length = SCANF_LENGTH_CHAR;
@@ -182,15 +196,17 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
 
         specifier.specifier = format + format_off;
 
-        switch(*specifier.specifier) {
+        switch (*specifier.specifier) {
             case 'c': {
-                if (specifier.width == INT_MAX) { specifier.width = 1; }
+                if (specifier.width == INT_MAX) {
+                    specifier.width = 1;
+                }
                 int i = 0;
                 int ret = 0;
 
                 char *buf = NULL;
                 if (!specifier.star) {
-                    buf = va_arg(parameters, char*);
+                    buf = va_arg(parameters, char *);
                     buf[i] = c;
                 }
 
@@ -232,7 +248,7 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 int i = 0;
                 char *buf = NULL;
                 if (!specifier.star) {
-                    buf = va_arg(parameters, char*);
+                    buf = va_arg(parameters, char *);
                     buf[i] = c;
                 }
 
@@ -278,7 +294,9 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 // Always assume at least 1 character in set (there has to be and this allows for inclusion of `]`)
                 int set_start = format_off;
                 int set_end = set_start + 1;
-                while (format[set_end] != ']') { set_end++; }
+                while (format[set_end] != ']') {
+                    set_end++;
+                }
 
                 if (!is_valid_char_for_set(c, format + format_off, set_end - set_start, invert)) {
                     goto finish;
@@ -288,13 +306,15 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 int i = 0;
                 char *buf = NULL;
                 if (!specifier.star) {
-                    buf = va_arg(parameters, char*);
+                    buf = va_arg(parameters, char *);
                     buf[i] = c;
                 }
 
                 i++;
 
-                while (i < specifier.width && (is_valid_char_for_set(ret = get_character(state), format + format_off, set_end - set_start, invert) && ret != EOF)) {
+                while (i < specifier.width
+                    && (is_valid_char_for_set(ret = get_character(state), format + format_off, set_end - set_start, invert)
+                        && ret != EOF)) {
                     if (!specifier.star) {
                         buf[i] = (char) ret;
                     }
@@ -346,7 +366,8 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 buffer[buffer_index++] = c;
 
                 /* Copy str character by character into buffer */
-                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && (isdigit(ret = get_character(state)))) {
+                while (
+                    buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && (isdigit(ret = get_character(state)))) {
                     buffer[buffer_index++] = (char) ret;
                 }
                 if (ret != EOF && buffer_index < specifier.width) {
@@ -370,42 +391,42 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 /* Concert to right length */
                 switch (specifier.length) {
                     case SCANF_LENGTH_CHAR: {
-                        char *place_here = va_arg(parameters, char*);
+                        char *place_here = va_arg(parameters, char *);
                         *place_here = (char) value;
                         break;
                     }
                     case SCANF_LENGTH_SHORT: {
-                        short *place_here = va_arg(parameters, short*);
+                        short *place_here = va_arg(parameters, short *);
                         *place_here = (short) value;
                         break;
                     }
                     case SCANF_LENGTH_LONG: {
-                        long *place_here = va_arg(parameters, long*);
+                        long *place_here = va_arg(parameters, long *);
                         *place_here = (long) value;
                         break;
                     }
                     case SCANF_LENGTH_LONG_LONG: {
-                        long long *place_here = va_arg(parameters, long long*);
+                        long long *place_here = va_arg(parameters, long long *);
                         *place_here = (long long) value;
                         break;
                     }
                     case SCANF_LENGTH_INTMAX: {
-                        intmax_t *place_here = va_arg(parameters, intmax_t*);
+                        intmax_t *place_here = va_arg(parameters, intmax_t *);
                         *place_here = (intmax_t) value;
                         break;
                     }
                     case SCANF_LENGTH_SIZE_T: {
-                        size_t *place_here = va_arg(parameters, size_t*);
+                        size_t *place_here = va_arg(parameters, size_t *);
                         *place_here = (size_t) value;
                         break;
                     }
                     case SCANF_LENGTH_PTRDIFF: {
-                        ptrdiff_t *place_here = va_arg(parameters, ptrdiff_t*);
+                        ptrdiff_t *place_here = va_arg(parameters, ptrdiff_t *);
                         *place_here = (ptrdiff_t) value;
                         break;
                     }
                     default: {
-                        int *place_here = va_arg(parameters, int*);
+                        int *place_here = va_arg(parameters, int *);
                         *place_here = (int) value;
                         break;
                     }
@@ -444,7 +465,9 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 buffer[buffer_index++] = c;
 
                 /* Copy str character by character into buffer */
-                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 && (is_valid_char_for_base(ret = get_character(state), base) || (base == 16 && buffer_index == 1 && (ret == 'x' || ret == 'X')))) {
+                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1
+                    && (is_valid_char_for_base(ret = get_character(state), base)
+                        || (base == 16 && buffer_index == 1 && (ret == 'x' || ret == 'X')))) {
                     if (ret == EOF) {
                         done = true;
                         break;
@@ -470,42 +493,42 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 /* Concert to right length */
                 switch (specifier.length) {
                     case SCANF_LENGTH_CHAR: {
-                        unsigned char *place_here = va_arg(parameters, unsigned char*);
+                        unsigned char *place_here = va_arg(parameters, unsigned char *);
                         *place_here = (unsigned char) value;
                         break;
                     }
                     case SCANF_LENGTH_SHORT: {
-                        unsigned short *place_here = va_arg(parameters, unsigned short*);
+                        unsigned short *place_here = va_arg(parameters, unsigned short *);
                         *place_here = (unsigned short) value;
                         break;
                     }
                     case SCANF_LENGTH_LONG: {
-                        unsigned long *place_here = va_arg(parameters, unsigned long*);
+                        unsigned long *place_here = va_arg(parameters, unsigned long *);
                         *place_here = (unsigned long) value;
                         break;
                     }
                     case SCANF_LENGTH_LONG_LONG: {
-                        unsigned long long *place_here = va_arg(parameters, unsigned long long*);
+                        unsigned long long *place_here = va_arg(parameters, unsigned long long *);
                         *place_here = (unsigned long long) value;
                         break;
                     }
                     case SCANF_LENGTH_INTMAX: {
-                        uintmax_t *place_here = va_arg(parameters, uintmax_t*);
+                        uintmax_t *place_here = va_arg(parameters, uintmax_t *);
                         *place_here = (uintmax_t) value;
                         break;
                     }
                     case SCANF_LENGTH_SIZE_T: {
-                        size_t *place_here = va_arg(parameters, size_t*);
+                        size_t *place_here = va_arg(parameters, size_t *);
                         *place_here = (size_t) value;
                         break;
                     }
                     case SCANF_LENGTH_PTRDIFF: {
-                        ptrdiff_t *place_here = va_arg(parameters, ptrdiff_t*);
+                        ptrdiff_t *place_here = va_arg(parameters, ptrdiff_t *);
                         *place_here = (ptrdiff_t) value;
                         break;
                     }
                     default: {
-                        unsigned int *place_here = va_arg(parameters, unsigned int*);
+                        unsigned int *place_here = va_arg(parameters, unsigned int *);
                         *place_here = (unsigned int) value;
                         break;
                     }
@@ -558,34 +581,34 @@ static int string_get_character(void *_state) {
 
 int scanf(const char *__restrict format, ...) {
     va_list parameters;
-	va_start(parameters, format);
+    va_start(parameters, format);
 
-	int ret = vfscanf(stdin, format, parameters);
+    int ret = vfscanf(stdin, format, parameters);
 
-	va_end(parameters);
-	return ret;
+    va_end(parameters);
+    return ret;
 }
 
 int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
     va_list parameters;
-	va_start(parameters, format);
+    va_start(parameters, format);
 
-	int ret = vfscanf(stream, format, parameters);
+    int ret = vfscanf(stream, format, parameters);
 
-	va_end(parameters);
-	return ret;
+    va_end(parameters);
+    return ret;
 }
 
 #endif /* __is_libk */
 
 int sscanf(const char *__restrict str, const char *__restrict format, ...) {
     va_list parameters;
-	va_start(parameters, format);
+    va_start(parameters, format);
 
-	int ret = vsscanf(str, format, parameters);
+    int ret = vsscanf(str, format, parameters);
 
-	va_end(parameters);
-	return ret;
+    va_end(parameters);
+    return ret;
 }
 
 #ifndef __is_libk

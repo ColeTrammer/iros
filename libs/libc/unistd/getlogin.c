@@ -1,5 +1,5 @@
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #define GETLOGIN_BUF_SZ 64
 

@@ -1,8 +1,7 @@
-#include <stddef.h>
 #include <pwd.h>
+#include <stddef.h>
 
 void endpwent(void) {
-
 }
 
 struct passwd *getpwent(void) {
@@ -23,9 +22,7 @@ int getpwnam_r(const char *name, struct passwd *pwd, char *buf, size_t buflen, s
     return -1;
 }
 
-static struct passwd pwd = {
-    "root", 0, 0, "/", "/bin/sh"
-};
+static struct passwd pwd = { "root", 0, 0, "/", "/bin/sh" };
 
 struct passwd *getpwuid(uid_t uid) {
     (void) uid;
@@ -42,5 +39,4 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buf, size_t buflen, struct p
 }
 
 void setpwent(void) {
-
 }

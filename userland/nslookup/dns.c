@@ -25,7 +25,7 @@ struct host_mapping *lookup_host(char *host) {
     }
 
     uint8_t *message = calloc(new_len, sizeof(char));
-    struct dns_header *header = (struct dns_header*) message;
+    struct dns_header *header = (struct dns_header *) message;
     header->id = ntohs(getpid());
     header->qr = 0;
     header->op_code = 0;
@@ -45,13 +45,13 @@ struct host_mapping *lookup_host(char *host) {
         char *part = host + i;
         size_t part_len = strlen(part);
         message[sizeof(struct dns_header) + name_offset++] = (uint8_t) part_len;
-        name_offset += sprintf((char*) (message + name_offset + sizeof(struct dns_header)), "%s", part);
+        name_offset += sprintf((char *) (message + name_offset + sizeof(struct dns_header)), "%s", part);
         i += part_len;
     }
 
     message[new_len - sizeof(struct dns_question) - 1] = '\0';
 
-    struct dns_question *question = (struct dns_question*) (message + new_len - sizeof(struct dns_question));
+    struct dns_question *question = (struct dns_question *) (message + new_len - sizeof(struct dns_question));
     question->type = htons(DNS_TYPE_A);
     question->class = htons(DNS_CLASS_INET);
 
@@ -72,7 +72,7 @@ struct host_mapping *lookup_host(char *host) {
     dest.sin_port = htons(DNS_PORT);
     dest.sin_addr.s_addr = inet_addr(DNS_IP);
 
-    if (sendto(fd, message, new_len, 0, (const struct sockaddr*) &dest, sizeof(struct sockaddr_in)) == -1) {
+    if (sendto(fd, message, new_len, 0, (const struct sockaddr *) &dest, sizeof(struct sockaddr_in)) == -1) {
         perror("sendto");
         return NULL;
     }
@@ -84,28 +84,30 @@ struct host_mapping *lookup_host(char *host) {
     ssize_t read = -1;
 
     for (int i = 0; read == -1 && i < 3; i++) {
-        read = recvfrom(fd, buf, 1024, 0, (struct sockaddr*) &source, &source_len);
+        read = recvfrom(fd, buf, 1024, 0, (struct sockaddr *) &source, &source_len);
     }
 
     if (read < (ssize_t) sizeof(struct dns_header)) {
         return NULL;
     }
 
-    struct dns_header *response_header = (struct dns_header*) buf;
+    struct dns_header *response_header = (struct dns_header *) buf;
     assert(response_header->qr == 1);
 
-    fprintf(stderr, "Recieved response: %u, %u, %u, %u, %u\n", ntohs(response_header->id), ntohs(response_header->num_questions), ntohs(response_header->num_answers), ntohs(response_header->num_records), ntohs(response_header->num_records_extra));
+    fprintf(stderr, "Recieved response: %u, %u, %u, %u, %u\n", ntohs(response_header->id), ntohs(response_header->num_questions),
+        ntohs(response_header->num_answers), ntohs(response_header->num_records), ntohs(response_header->num_records_extra));
 
-    struct dns_record *record = (struct dns_record*) (buf + new_len);
-    fprintf(stderr, "Received record: %u, %u, %u, %u\n", ntohs(record->type), ntohs(record->class), ntohl(record->ttl), ntohs(record->rd_length));
+    struct dns_record *record = (struct dns_record *) (buf + new_len);
+    fprintf(stderr, "Received record: %u, %u, %u, %u\n", ntohs(record->type), ntohs(record->class), ntohl(record->ttl),
+        ntohs(record->rd_length));
 
     struct in_addr res = { 0 };
-    res.s_addr = *((uint32_t*) (record + 1));
+    res.s_addr = *((uint32_t *) (record + 1));
 
     struct host_mapping *mapping = calloc(1, sizeof(struct host_mapping));
     mapping->ip = res;
     mapping->name = host_save;
-    
+
     close(fd);
     return mapping;
 }

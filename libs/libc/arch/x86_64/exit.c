@@ -1,20 +1,19 @@
 #define __libc_internal
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 
-void __cxa_atexit() {}
+void __cxa_atexit() {
+}
 
-__attribute__((__noreturn__))
-void _Exit(int status) {
+__attribute__((__noreturn__)) void _Exit(int status) {
     _exit(status);
 
     __builtin_unreachable();
 }
 
-__attribute__((__noreturn__))
-void exit(int status) {
+__attribute__((__noreturn__)) void exit(int status) {
     __on_exit();
 
     fflush(stdin);

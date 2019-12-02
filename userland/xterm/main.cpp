@@ -15,8 +15,7 @@
 #include "tty.h"
 #include "vga_buffer.h"
 
-int main() 
-{
+int main() {
     VgaBuffer vga_buffer("/dev/fb0");
     TTY tty(vga_buffer);
 
@@ -94,73 +93,73 @@ int main()
                 if (event.flags & KEY_CONTROL_ON) {
                     event.ascii &= 0x1F;
                     switch (event.key) {
-                    case KEY_DELETE:
-                        write(mfd, "\033[3~", 4);
-                        break;
-                    case KEY_PAGE_UP:
-                        write(mfd, "\033[5~", 4);
-                        break;
-                    case KEY_PAGE_DOWN:
-                        write(mfd, "\033[6~", 4);
-                        break;
-                    case KEY_CURSOR_UP:
-                        write(mfd, "\033[1;5A", 6);
-                        break;
-                    case KEY_CURSOR_DOWN:
-                        write(mfd, "\033[1;5B", 6);
-                        break;
-                    case KEY_CURSOR_RIGHT:
-                        write(mfd, "\033[1;5C", 6);
-                        break;
-                    case KEY_CURSOR_LEFT:
-                        write(mfd, "\033[1;5D", 6);
-                        break;
-                    case KEY_HOME:
-                        write(mfd, "\033[1;5H", 6);
-                        break;
-                    case KEY_END:
-                        write(mfd, "\033[1;5F", 6);
-                        break;
-                    default:
-                        if (event.ascii != '\0') {
-                            write(mfd, &event.ascii, 1);
-                        }
-                        break;
+                        case KEY_DELETE:
+                            write(mfd, "\033[3~", 4);
+                            break;
+                        case KEY_PAGE_UP:
+                            write(mfd, "\033[5~", 4);
+                            break;
+                        case KEY_PAGE_DOWN:
+                            write(mfd, "\033[6~", 4);
+                            break;
+                        case KEY_CURSOR_UP:
+                            write(mfd, "\033[1;5A", 6);
+                            break;
+                        case KEY_CURSOR_DOWN:
+                            write(mfd, "\033[1;5B", 6);
+                            break;
+                        case KEY_CURSOR_RIGHT:
+                            write(mfd, "\033[1;5C", 6);
+                            break;
+                        case KEY_CURSOR_LEFT:
+                            write(mfd, "\033[1;5D", 6);
+                            break;
+                        case KEY_HOME:
+                            write(mfd, "\033[1;5H", 6);
+                            break;
+                        case KEY_END:
+                            write(mfd, "\033[1;5F", 6);
+                            break;
+                        default:
+                            if (event.ascii != '\0') {
+                                write(mfd, &event.ascii, 1);
+                            }
+                            break;
                     }
                 } else {
                     switch (event.key) {
-                    case KEY_DELETE:
-                        write(mfd, "\033[3~", 4);
-                        break;
-                    case KEY_PAGE_UP:
-                        write(mfd, "\033[5~", 4);
-                        break;
-                    case KEY_PAGE_DOWN:
-                        write(mfd, "\033[6~", 4);
-                        break;
-                    case KEY_CURSOR_UP:
-                        write(mfd, "\033[A", 3);
-                        break;
-                    case KEY_CURSOR_DOWN:
-                        write(mfd, "\033[B", 3);
-                        break;
-                    case KEY_CURSOR_RIGHT:
-                        write(mfd, "\033[C", 3);
-                        break;
-                    case KEY_CURSOR_LEFT:
-                        write(mfd, "\033[D", 3);
-                        break;
-                    case KEY_HOME:
-                        write(mfd, "\033[H", 3);
-                        break;
-                    case KEY_END:
-                        write(mfd, "\033[F", 3);
-                        break;
-                    default:
-                        if (event.ascii != '\0') {
-                            write(mfd, &event.ascii, 1);
-                        }
-                        break;
+                        case KEY_DELETE:
+                            write(mfd, "\033[3~", 4);
+                            break;
+                        case KEY_PAGE_UP:
+                            write(mfd, "\033[5~", 4);
+                            break;
+                        case KEY_PAGE_DOWN:
+                            write(mfd, "\033[6~", 4);
+                            break;
+                        case KEY_CURSOR_UP:
+                            write(mfd, "\033[A", 3);
+                            break;
+                        case KEY_CURSOR_DOWN:
+                            write(mfd, "\033[B", 3);
+                            break;
+                        case KEY_CURSOR_RIGHT:
+                            write(mfd, "\033[C", 3);
+                            break;
+                        case KEY_CURSOR_LEFT:
+                            write(mfd, "\033[D", 3);
+                            break;
+                        case KEY_HOME:
+                            write(mfd, "\033[H", 3);
+                            break;
+                        case KEY_END:
+                            write(mfd, "\033[F", 3);
+                            break;
+                        default:
+                            if (event.ascii != '\0') {
+                                write(mfd, &event.ascii, 1);
+                            }
+                            break;
                     }
                 }
             }

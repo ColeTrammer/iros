@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
+// clang-format off
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(irqs/handlers.h)
+// clang-format on
 
 struct task;
 

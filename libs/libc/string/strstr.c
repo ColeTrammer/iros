@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 
 /* Uses naive approach for simplicity, but should be changed later */
 char *strstr(const char *s, const char *sub) {
@@ -15,7 +15,7 @@ char *strstr(const char *s, const char *sub) {
         }
 
         if (matches) {
-            return (char*) s + i;
+            return (char *) s + i;
         }
     }
 

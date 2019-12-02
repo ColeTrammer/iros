@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
-#include <kernel/hal/output.h>
 
 // #define VM_REGION_DEBUG
 
@@ -55,7 +55,9 @@ int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages
 
 int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pages) {
     struct vm_region *entry = list;
-    if (entry == NULL) { return -1; }
+    if (entry == NULL) {
+        return -1;
+    }
     if (entry->type == type) {
         entry->start -= num_pages * PAGE_SIZE;
         return 0;
@@ -65,7 +67,9 @@ int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pag
         entry = entry->next;
     }
 
-    if (entry->next == NULL) { return -1; }
+    if (entry->next == NULL) {
+        return -1;
+    }
 
     uintptr_t new_start = entry->next->start - num_pages * PAGE_SIZE;
     if (entry->end > new_start) {

@@ -1,12 +1,11 @@
 #include <assert.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
-#include <string.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -19,9 +18,7 @@
 
 #ifndef USERLAND_NATIVE
 
-static word_special_t special_vars = { {
-    "", "", "0", NULL, "", NULL, NULL, "/bin/sh"
-} };
+static word_special_t special_vars = { { "", "", "0", NULL, "", NULL, NULL, "/bin/sh" } };
 
 static void __set_exit_status(int n) {
     free(special_vars.vals[WRDE_SPECIAL_QUEST]);
@@ -42,8 +39,7 @@ static void __set_exit_status(int n) {
 void set_exit_status(int n) {
     assert(WIFEXITED(n) || WIFSIGNALED(n) || WIFSTOPPED(n));
 
-    __set_exit_status(WIFEXITED(n) ? WEXITSTATUS(n) : 
-                      WIFSTOPPED(n) ? 0 : (127 + WTERMSIG(n)));
+    __set_exit_status(WIFEXITED(n) ? WEXITSTATUS(n) : WIFSTOPPED(n) ? 0 : (127 + WTERMSIG(n)));
 }
 
 #ifndef USERLAND_NATIVE
@@ -63,7 +59,7 @@ int get_last_exit_status() {
 // FIXME: redirection actually needs to be a queue, not an array, since the order of specified redirections
 //        should cause different behavior, and currently the order is based on the target fd not the order
 //        the redirection command is inputted.
-void init_redirection(struct redirection_info *info,  int target_fd, enum redirection_method method, ...) {
+void init_redirection(struct redirection_info *info, int target_fd, enum redirection_method method, ...) {
     va_list args;
     va_start(args, method);
 
@@ -74,7 +70,7 @@ void init_redirection(struct redirection_info *info,  int target_fd, enum redire
     switch (method) {
         case REDIRECT_APPEND_FILE:
         case REDIRECT_FILE:
-            desc->desc.file = va_arg(args, char*);
+            desc->desc.file = va_arg(args, char *);
             break;
         case REDIRECT_FD:
             desc->desc.fd = va_arg(args, int);
@@ -128,7 +124,7 @@ struct command *command_construct(enum command_type type, enum command_mode mode
             break;
         }
         case COMMAND_LIST: {
-            enum command_list_connector *connectors = va_arg(args, enum command_list_connector*);
+            enum command_list_connector *connectors = va_arg(args, enum command_list_connector *);
             size_t len = va_arg(args, size_t);
             init_list(&command->command.list, connectors, len);
             break;
@@ -203,7 +199,7 @@ static pid_t __do_simple_command(struct command_simple *command, enum command_mo
         struct sigaction to_set;
         to_set.sa_handler = SIG_DFL;
         to_set.sa_flags = 0;
-        sigaction(SIGINT, &to_set, NULL); 
+        sigaction(SIGINT, &to_set, NULL);
 
         sigset_t mask_restore;
         sigemptyset(&mask_restore);
@@ -293,12 +289,10 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
     }
 
     for (size_t j = (i - 1) * 2; j < (pipeline->num_commands - 1) * 2; j += 2) {
-        if (close(fds[j]) ||
-            close(fds[j + 1])) {
+        if (close(fds[j]) || close(fds[j + 1])) {
             return -1;
         }
     }
-
 
     if (mode == COMMAND_FOREGROUND) {
         if (num_to_wait_on > 0) {
@@ -307,7 +301,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
                 int ret;
                 do {
                     ret = waitpid(-pgid, &wstatus, WUNTRACED);
-                } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) &&!WIFSTOPPED(wstatus));
+                } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) && !WIFSTOPPED(wstatus));
 
                 if (ret == -1) {
                     return -1;
@@ -363,7 +357,8 @@ static int do_command_list(struct command_list *list, enum command_mode mode) {
         int status = get_last_exit_status();
         if ((list->connectors[i] == COMMAND_AND && status != 0) || (list->connectors[i] == COMMAND_OR && status == 0)) {
             // Advance until next sequential command
-            while (i < list->num_commands - 1 && list->connectors[i++] != COMMAND_SEQUENTIAL);
+            while (i < list->num_commands - 1 && list->connectors[i++] != COMMAND_SEQUENTIAL)
+                ;
         }
     }
 

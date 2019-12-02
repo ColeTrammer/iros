@@ -11,15 +11,12 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/process.h>
 
+// clang-format off
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(proc/task.h)
+// clang-format on
 
-enum sched_state {
-    RUNNING,
-    READY,
-    WAITING,
-    EXITING
-};
+enum sched_state { RUNNING, READY, WAITING, EXITING };
 
 struct task {
     struct arch_task arch_task;

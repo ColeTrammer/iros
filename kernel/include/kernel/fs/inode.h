@@ -3,13 +3,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
-#include <kernel/fs/super_block.h>
-#include <kernel/util/spinlock.h>
 #include <kernel/fs/mount.h>
+#include <kernel/fs/super_block.h>
 #include <kernel/fs/tnode.h>
+#include <kernel/util/spinlock.h>
 
 struct inode;
 
@@ -63,8 +63,8 @@ struct inode {
     /* Parent of inode */
     struct tnode *parent;
 
-    // Delete inode when count is 0 (only applies to pipes right now) 
-    // Should be atomic 
+    // Delete inode when count is 0 (only applies to pipes right now)
+    // Should be atomic
     int ref_count;
 
     spinlock_t lock;

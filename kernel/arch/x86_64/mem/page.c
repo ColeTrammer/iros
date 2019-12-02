@@ -1,19 +1,19 @@
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <kernel/hal/output.h>
+#include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_region.h>
-#include <kernel/mem/kernel_vm.h>
-#include <kernel/hal/output.h>
 #include <kernel/proc/task.h>
 
-#include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 
 // #define MAP_VM_REGION_DEBUG
@@ -60,10 +60,7 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
     uint64_t *pd = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t);
     uint64_t *pt = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t);
 
-    if (!(pml4[pml4_offset] & 1) ||
-        !(pdp[pdp_offset] & 1) ||
-        !(pd[pd_offset] & 1) ||
-        !(pt[pt_offset] & 1)) {
+    if (!(pml4[pml4_offset] & 1) || !(pdp[pdp_offset] & 1) || !(pd[pd_offset] & 1) || !(pt[pt_offset] & 1)) {
         return; // Page is already unmapped
     }
 
@@ -148,7 +145,8 @@ void map_page_info(struct virt_page_info *info) {
     uint64_t *pml4_entry = PML4_BASE + info->pml4_index;
     uint64_t *pdp_entry = PDP_BASE + (0x1000 * info->pml4_index) / sizeof(uint64_t) + info->pdp_index;
     uint64_t *pd_entry = PD_BASE + (0x200000 * info->pml4_index + 0x1000 * info->pdp_index) / sizeof(uint64_t) + info->pd_index;
-    uint64_t *pt_entry = PT_BASE + (0x40000000 * info->pml4_index + 0x200000 * info->pdp_index + 0x1000 * info->pd_index) / sizeof(uint64_t) + info->pt_index;
+    uint64_t *pt_entry = PT_BASE + (0x40000000 * info->pml4_index + 0x200000 * info->pdp_index + 0x1000 * info->pd_index) / sizeof(uint64_t)
+        + info->pt_index;
 
     if ((*pml4_entry & ~0xFFF) != (info->pml4_entry & ~0xFFF)) {
         *pml4_entry = info->pml4_entry;
@@ -224,7 +222,7 @@ uintptr_t clone_process_paging_structure() {
             }
             PML4_BASE[i] = get_phys_addr((uintptr_t) temp_pdp) | PAGE_STRUCTURE_FLAGS | VM_USER;
             invlpg((uintptr_t) pdp);
-            
+
             for (uint64_t j = 0; j < MAX_PDP_ENTRIES; j++) {
                 if (pdp[j] != 0) {
                     map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
@@ -247,12 +245,12 @@ uintptr_t clone_process_paging_structure() {
                             }
                             pd[k] = get_phys_addr((uintptr_t) temp_pt) | PAGE_STRUCTURE_FLAGS | VM_USER;
                             invlpg((uintptr_t) pt);
-                            
+
                             for (uint64_t l = 0; l < MAX_PT_ENTRIES; l++) {
                                 if (pt[l] != 0) {
                                     map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
                                     uint64_t *temp_page = TEMP_PAGE;
-                                    uint64_t *page = (uint64_t*) VIRT_ADDR(i, j, k, l);
+                                    uint64_t *page = (uint64_t *) VIRT_ADDR(i, j, k, l);
                                     memcpy(temp_page, page, PAGE_SIZE);
                                     pt[l] = get_phys_addr((uintptr_t) temp_page) | (pt[l] & 0xFFFF000000000FFFUL);
                                     invlpg((uintptr_t) page);
@@ -412,9 +410,10 @@ void map_vm_region_flags(struct vm_region *region) {
 
 void map_vm_region(struct vm_region *region) {
 #ifdef MAP_VM_REGION_DEBUG
-    debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start, region->end);
+    debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start,
+        region->end);
 #endif /* MAP_VM_REGION_DEBUG */
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
         map_page(addr, region->flags);
-    }    
+    }
 }

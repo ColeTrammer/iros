@@ -23,7 +23,7 @@ static int equals(void *i1, void *i2) {
 }
 
 static void *key(void *mapping) {
-    return &((struct ip_v4_to_mac_mapping*) mapping)->ip;
+    return &((struct ip_v4_to_mac_mapping *) mapping)->ip;
 }
 
 struct ip_v4_to_mac_mapping *net_get_mac_from_ip_v4(struct ip_v4_address address) {

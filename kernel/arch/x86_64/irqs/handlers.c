@@ -4,16 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <kernel/hal/output.h>
-#include <kernel/irqs/handlers.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
-#include <kernel/sched/task_sched.h>
-#include <kernel/proc/task.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/mem/vm_allocator.h>
-
-#include <kernel/arch/arch.h>
-#include ARCH_SPECIFIC(asm_utils.h)
+#include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 
 void init_irq_handlers() {
     register_irq_handler(&handle_invalid_opcode_entry, 6, false, false);
@@ -42,7 +38,7 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
         memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
         memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
-    
+
         // If we get here, the task that faulted was just send a terminating signal
         sched_run_next();
     }
@@ -55,8 +51,8 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
 
 void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t address) {
     struct task *current = get_current_task();
-    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n", current->process->pid, 
-        task_state->stack_state.rsp, task_state->stack_state.rip, address, task_state->error_code);
+    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rsp,
+        task_state->stack_state.rip, address, task_state->error_code);
 
     // In this case we just extend the stack
     struct vm_region *vm_stack = get_vm_region(current->process->process_memory, VM_TASK_STACK);
@@ -75,7 +71,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
         memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
         memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
-        
+
         // If we get here, the task that faulted was just send a terminating signal
         sched_run_next();
     }

@@ -1,10 +1,10 @@
+#include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <assert.h>
 #include <sys/param.h>
 
 #include <kernel/mem/page.h>
@@ -40,17 +40,17 @@ struct metadata {
     size_t size;
 } __attribute__((packed));
 
-#define ALLOCATED (1)
-#define SET_ALLOCATED(block) ((block)->size |= ALLOCATED)
+#define ALLOCATED              (1)
+#define SET_ALLOCATED(block)   ((block)->size |= ALLOCATED)
 #define CLEAR_ALLOCATED(block) ((block)->size &= ~ALLOCATED)
-#define IS_ALLOCATED(block) ((block)->size & ALLOCATED)
-#define GET_SIZE(block) ((block)->size & ~ALLOCATED)
+#define IS_ALLOCATED(block)    ((block)->size & ALLOCATED)
+#define GET_SIZE(block)        ((block)->size & ~ALLOCATED)
 
-#define NUM_PAGES_IN_LENGTH(sz) (((sz) - 1) / PAGE_SIZE + 1)
-#define NEW_BLOCK_SIZE(n) (2 * sizeof(struct metadata) + (n))
-#define NEXT_BLOCK(block) ((struct metadata*) (((uintptr_t) (block)) + sizeof(struct metadata) + GET_SIZE((block))))
-#define PREV_BLOCK(block) ((struct metadata*) (((uintptr_t) (block)) - sizeof(struct metadata) - (block)->prev_size))
-#define GET_BLOCK(p) ((struct metadata*) (((uintptr_t) (p)) - sizeof(struct metadata)))
+#define NUM_PAGES_IN_LENGTH(sz) (((sz) -1) / PAGE_SIZE + 1)
+#define NEW_BLOCK_SIZE(n)       (2 * sizeof(struct metadata) + (n))
+#define NEXT_BLOCK(block)       ((struct metadata *) (((uintptr_t)(block)) + sizeof(struct metadata) + GET_SIZE((block))))
+#define PREV_BLOCK(block)       ((struct metadata *) (((uintptr_t)(block)) - sizeof(struct metadata) - (block)->prev_size))
+#define GET_BLOCK(p)            ((struct metadata *) (((uintptr_t)(p)) - sizeof(struct metadata)))
 
 static struct metadata *start;
 static uintptr_t heap_end;
@@ -70,7 +70,9 @@ void *calloc(size_t n, size_t sz, int line, const char *func) {
 void *calloc(size_t n, size_t sz) {
 #endif /* __is_libk && KERNEL_MALLOC_DEBUG */
     void *p = malloc(n * sz);
-    if (p == NULL) { return p; }
+    if (p == NULL) {
+        return p;
+    }
     memset(p, 0, n * sz);
     return p;
 }
@@ -84,8 +86,12 @@ void *realloc(void *p, size_t sz, int line, const char *func) {
 void *realloc(void *p, size_t sz) {
 #endif /* defined(__is_libk) && (defined(KERNEL_MALLOC_DEBUG) || defined(KERNEL_MEMCPY_DEBUG)) */
     void *new_p = malloc(sz);
-    if (p == NULL) { return new_p; }
-    if (new_p == NULL) { return new_p; }
+    if (p == NULL) {
+        return new_p;
+    }
+    if (new_p == NULL) {
+        return new_p;
+    }
 #if defined(__is_libk) && defined(KERNEL_MEMCPY_DEBUG)
 #undef memmove
     memmove(new_p, p, sz, line, func);
@@ -154,7 +160,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
         return NULL;
     }
 
-    if ((alignment & (alignment - 1)) || (alignment % sizeof(void*) != 0)) {
+    if ((alignment & (alignment - 1)) || (alignment % sizeof(void *) != 0)) {
         errno = EINVAL;
         return NULL;
     }
@@ -182,7 +188,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     while (block->size != 0) {
         assert(block->magic == __MALLOC_MAGIG_CHECK);
         if (!IS_ALLOCATED(block)) {
-            if (((uintptr_t) (block + 1)) % alignment == 0) {
+            if (((uintptr_t)(block + 1)) % alignment == 0) {
                 if (GET_SIZE(block) >= n) {
                     SET_ALLOCATED(block);
 
@@ -191,7 +197,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
 #endif /* __is_libk */
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-                    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
+                    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
@@ -212,16 +218,17 @@ void *aligned_alloc(size_t alignment, size_t n) {
         block = NEXT_BLOCK(block);
     }
 
-
-    struct metadata *new_block = (struct metadata*) ((((uintptr_t) (block + 1)) + alignment - (((uintptr_t) (block + 1)) % alignment)) - sizeof(struct metadata));
-    assert(((uintptr_t) (new_block + 1)) % alignment == 0);
+    struct metadata *new_block
+        = (struct metadata *) ((((uintptr_t)(block + 1)) + alignment - (((uintptr_t)(block + 1)) % alignment)) - sizeof(struct metadata));
+    assert(((uintptr_t)(new_block + 1)) % alignment == 0);
 
     if (heap_end <= ((uintptr_t) new_block) + n + sizeof(struct metadata)) {
         sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end) + sizeof(struct metadata));
         heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end + sizeof(struct metadata)) * PAGE_SIZE;
     }
 
-    PREV_BLOCK(block)->size = (((uintptr_t) new_block) - ((uintptr_t) PREV_BLOCK(block)) - sizeof(struct metadata)) | (PREV_BLOCK(block)->size & ALLOCATED);
+    PREV_BLOCK(block)->size
+        = (((uintptr_t) new_block) - ((uintptr_t) PREV_BLOCK(block)) - sizeof(struct metadata)) | (PREV_BLOCK(block)->size & ALLOCATED);
     assert(NEXT_BLOCK(PREV_BLOCK(block)) == new_block);
     new_block->prev_size = PREV_BLOCK(block)->size & ~ALLOCATED;
     new_block->magic = __MALLOC_MAGIG_CHECK;
@@ -239,7 +246,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     tail->magic = __MALLOC_MAGIG_CHECK;
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (new_block + 1), __LINE__);
+    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(new_block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef __is_libk
@@ -314,9 +321,8 @@ void *malloc(size_t n) {
             spin_unlock(&heap_lock);
 #endif /* __is_libk */
 
-
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-        debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
+            debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
@@ -342,7 +348,7 @@ void *malloc(size_t n) {
     struct metadata *ret = PREV_BLOCK(block) + 1;
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
+    debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef __is_libk

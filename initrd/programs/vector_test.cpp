@@ -3,8 +3,7 @@
 
 using namespace LIIM;
 
-int main()
-{
+int main() {
     Vector<Vector<int>> ll;
     fprintf(stderr, "Constructor succeeded\n");
     for (int i = 0; i < 25; i++) {

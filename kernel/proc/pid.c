@@ -1,8 +1,8 @@
-#include <sys/types.h>
 #include <stdio.h>
+#include <sys/types.h>
 
-#include <kernel/proc/pid.h>
 #include <kernel/hal/output.h>
+#include <kernel/proc/pid.h>
 #include <kernel/util/spinlock.h>
 
 // Initial kernel proc gets 1
@@ -11,7 +11,7 @@ static spinlock_t pid_lock = SPINLOCK_INITIALIZER;
 
 pid_t get_next_pid() {
     debug_log("PID Assigned: [ %d ]\n", counter);
-    
+
     spin_lock(&pid_lock);
 
     pid_t ret = counter++;

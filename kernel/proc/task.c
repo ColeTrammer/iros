@@ -1,10 +1,10 @@
+#include <assert.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <assert.h>
-#include <signal.h>
-#include <fcntl.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
@@ -38,8 +38,8 @@ uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
         env_str_length += strlen(envp[envc - 1]) + 1;
     }
 
-    char **args_copy = calloc(argc, sizeof(char**));
-    char **envp_copy = calloc(envc, sizeof(char**));
+    char **args_copy = calloc(argc, sizeof(char **));
+    char **envp_copy = calloc(envc, sizeof(char **));
 
     char *args_buffer = malloc(args_str_length);
     char *env_buffer = malloc(env_str_length);
@@ -70,10 +70,10 @@ uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
     }
     envp_copy[i] = NULL;
 
-    char **argv_start = (char**) (start - sizeof(char**));
+    char **argv_start = (char **) (start - sizeof(char **));
 
     size_t count = argc + envc;
-    char *args_start = (char*) (argv_start - count);
+    char *args_start = (char *) (argv_start - count);
 
     for (i = 0; args_copy[i] != NULL; i++) {
         args_start -= strlen(args_copy[i]) + 1;
@@ -91,14 +91,14 @@ uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
 
     argv_start[-(argc + 1)] = NULL;
 
-    args_start = (char*) ((((uintptr_t) args_start) & ~0x7) - 0x08);
+    args_start = (char *) ((((uintptr_t) args_start) & ~0x7) - 0x08);
 
     args_start -= sizeof(size_t);
-    *((size_t*) args_start) = argc - 1;
-    args_start -= sizeof(char**);
-    *((char***) args_start) = argv_start - argc;
-    args_start -= sizeof(char**);
-    *((char***) args_start) = argv_start - count;
+    *((size_t *) args_start) = argc - 1;
+    args_start -= sizeof(char **);
+    *((char ***) args_start) = argv_start - argc;
+    args_start -= sizeof(char **);
+    *((char ***) args_start) = argv_start - count;
 
     free(args_copy);
     free(envp_copy);
@@ -273,14 +273,7 @@ void proc_notify_parent(pid_t child_pid) {
     proc_set_sig_pending(parent, SIGCHLD);
 }
 
-enum sig_default_behavior {
-    TERMINATE,
-    TERMINATE_AND_DUMP,
-    IGNORE,
-    STOP,
-    CONTINUE,
-    INVAL
-};
+enum sig_default_behavior { TERMINATE, TERMINATE_AND_DUMP, IGNORE, STOP, CONTINUE, INVAL };
 
 static enum sig_default_behavior sig_defaults[_NSIG] = {
     INVAL,              // INVAL
@@ -338,29 +331,29 @@ void task_do_sig(struct task *task, int signum) {
             elf64_stack_trace(task);
             // Fall through
         case TERMINATE:
-            if (task->sched_state == EXITING) { 
-                break; 
+            if (task->sched_state == EXITING) {
+                break;
             }
             task->sched_state = EXITING;
             invalidate_last_saved(task);
             proc_add_message(task->process->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;
         case STOP:
-            if (task->sched_state == WAITING) { 
-                break; 
+            if (task->sched_state == WAITING) {
+                break;
             }
             task->sched_state = WAITING;
             proc_add_message(task->process->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
-            if (task->sched_state == READY) { 
-                break; 
+            if (task->sched_state == READY) {
+                break;
             }
             task->sched_state = READY;
             proc_add_message(task->process->pid, proc_create_message(STATE_CONTINUED, signum));
             break;
         case IGNORE:
-            break; 
+            break;
         default:
             assert(false);
             break;
