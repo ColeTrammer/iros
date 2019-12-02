@@ -11,6 +11,8 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
+// #define PAGE_FAULT_DEBUG
+
 void init_irq_handlers() {
     register_irq_handler(&handle_invalid_opcode_entry, 6, false, false);
     register_irq_handler(&handle_device_not_available_entry, 7, false, false);
@@ -51,23 +53,24 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
 
 void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t address) {
     struct task *current = get_current_task();
+
+#ifdef PAGE_FAULT_DEBUG
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rsp,
         task_state->stack_state.rip, address, task_state->error_code);
+#endif /* PAGE_FAULT_DEBUG */
 
-    // In this case we just extend the stack
-    struct vm_region *vm_stack = get_vm_region(current->process->process_memory, VM_TASK_STACK);
-    if (vm_stack && !current->kernel_task && address >= vm_stack->end - 32 * PAGE_SIZE && address <= vm_stack->start) {
-        size_t num_pages = NUM_PAGES(address, vm_stack->start);
-        assert(num_pages > 0);
-        assert(extend_vm_region_start(current->process->process_memory, VM_TASK_STACK, num_pages) == 0);
-        assert(vm_stack->start <= address);
-        for (size_t i = 0; i < num_pages; i++) {
-            map_page(vm_stack->start + i * PAGE_SIZE, VM_NO_EXEC | VM_WRITE | VM_USER);
+    // In this case we just need to map in a region that's allocation was put off by the kernel
+    struct vm_region *vm_region = find_vm_region_by_addr(address);
+    if (vm_region && !current->kernel_task && !(task_state->error_code & 1) && address != vm_region->end) {
+        map_page(address & ~0xFFF, vm_region->flags);
+
+        if (vm_region->type == VM_PROCESS_ANON_MAPPING) {
+            memset((void *) (address & ~0xFFF), 0, PAGE_SIZE);
         }
         return;
     }
 
-    if (vm_stack && !current->kernel_task && !current->in_kernel) {
+    if (!current->kernel_task && !current->in_kernel) {
         memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
         memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check

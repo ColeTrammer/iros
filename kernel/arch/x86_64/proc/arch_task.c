@@ -18,6 +18,8 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
+// #define STACK_TRACE_ON_ANY_SIGSEGV
+
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
 extern struct task initial_kernel_task;
@@ -151,9 +153,11 @@ void task_do_sig_handler(struct task *task, int signum) {
     assert(task->process->sig_state[signum].sa_handler != SIG_DFL);
 
     // For debugging purposes (bash will catch SIGSEGV and try to cleanup)
+#ifdef STACK_TRACE_ON_ANY_SIGSEGV
     if (signum == SIGSEGV) {
         elf64_stack_trace(task);
     }
+#endif /* STACK_TRACE_ON_ANY_SIGSEGV */
 
     struct sigaction act = task->process->sig_state[signum];
 

@@ -357,7 +357,9 @@ void arch_sys_execve(struct task_state *task_state) {
     }
 
     /* Clone vm_regions so that they can be freed later */
-    struct vm_region *__process_stack = get_vm_region(current->process->process_memory, VM_TASK_STACK);
+    struct vm_region *__process_stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
+    assert(__process_stack);
+
     struct vm_region *__kernel_stack = get_vm_region(current->process->process_memory, VM_KERNEL_STACK);
 
     struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
@@ -1219,12 +1221,6 @@ void arch_sys_mmap(struct task_state *task_state) {
             SYS_RETURN(-ENOMEM);
         }
 
-        for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
-            map_page(i, region->flags);
-        }
-
-        // Not sure if this is required
-        memset((void *) region->start, 0, region->end - region->start);
         SYS_RETURN(region->start);
     }
 

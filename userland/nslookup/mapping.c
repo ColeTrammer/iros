@@ -16,9 +16,9 @@ struct host_mapping *get_known_hosts() {
     struct host_mapping *known_hosts = NULL;
     char *line = NULL;
     size_t line_max = 0;
+    char name_buf[2048];
+    char ip_buf[16];
     while (getline(&line, &line_max, file) != -1) {
-        char name_buf[2048];
-        char ip_buf[16];
 
         if (sscanf(line, "%2048s %16s", name_buf, ip_buf) != 2) {
             fprintf(stderr, "Invalid line in /etc/hosts: %s", line);

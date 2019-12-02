@@ -34,6 +34,7 @@ int start_server() {
         return 1;
     }
 
+    char buf[2048] = { 0 };
     for (;;) {
         struct sockaddr_un addr = { 0 };
         socklen_t addrlen = sizeof(struct sockaddr_un);
@@ -43,7 +44,6 @@ int start_server() {
             return 1;
         }
 
-        char buf[2048] = { 0 };
         ssize_t ret = read(client_fd, &buf, 2048);
         if (ret == -1) {
             perror("read");

@@ -194,12 +194,12 @@ struct task *load_task(const char *file_name) {
     elf64_map_heap(buffer, task);
 
     struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
-    task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
+    task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC | VM_STACK;
     task_stack->type = VM_TASK_STACK;
-    task_stack->start = find_first_kernel_vm_region()->start - 2 * PAGE_SIZE;
-    task_stack->end = task_stack->start + PAGE_SIZE;
+    task_stack->start = find_first_kernel_vm_region()->start - 33 * PAGE_SIZE;
+    task_stack->end = task_stack->start + 32 * PAGE_SIZE;
     task->process->process_memory = add_vm_region(task->process->process_memory, task_stack);
-    map_vm_region(task_stack);
+    map_page(task_stack->end - PAGE_SIZE, task_stack->flags);
 
     arch_load_task(task, elf64_get_entry(buffer));
     free(buffer);

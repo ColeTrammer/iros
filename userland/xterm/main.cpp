@@ -68,6 +68,7 @@ int main() {
     int mouse_fd = open("/dev/mouse", O_RDONLY);
     assert(mouse_fd != -1);
 
+    char buf[4096];
     for (;;) {
         mouse_event mouse_event;
         while (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
@@ -165,7 +166,6 @@ int main() {
             }
         }
 
-        char buf[4096];
         ssize_t bytes;
         while ((bytes = read(mfd, buf, 4096)) > 0) {
             for (int i = 0; i < bytes; i++) {

@@ -13,6 +13,7 @@ struct vm_region {
 #define VM_WRITE   (1UL << 1)
 #define VM_USER    (1UL << 2)
 #define VM_GLOBAL  (1UL << 8)
+#define VM_STACK   (1UL << 62)
 #define VM_NO_EXEC (1UL << 63)
     uint64_t flags;
 
