@@ -5,7 +5,7 @@ LDFLAGS?=
 LIBS?=
 
 # Include options that should always be set
-CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra
+CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra -D_OS_2_SOURCE
 CPPFLAGS:=$(CPPFLAGS)
 LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
 LIBS:=$(LIBS) -lc -lgraphics

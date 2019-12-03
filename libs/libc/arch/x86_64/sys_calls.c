@@ -846,3 +846,16 @@ clock_t times(struct tms *buf) {
     }
     return ret;
 }
+
+int create_task(uintptr_t rip, uintptr_t rsp) {
+    int ret;
+    asm volatile("movq $55, %%rdi\n"
+                 "movq %1, %%rsi\n"
+                 "movq %2, %%rdx\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0\n"
+                 : "=r"(ret)
+                 : "r"(rip), "r"(rsp)
+                 : "rdi", "rsi", "rdx", "rax", "memory");
+    __SYSCALL_TO_ERRNO(ret);
+}

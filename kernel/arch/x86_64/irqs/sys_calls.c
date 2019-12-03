@@ -73,7 +73,7 @@ void arch_sys_exit(struct task_state *task_state) {
     disable_interrupts();
 
     struct task *task = get_current_task();
-    task->sched_state = EXITING;
+    exit_process(task->process);
 
     invalidate_last_saved(task);
 
@@ -1383,4 +1383,37 @@ void arch_sys_times(struct task_state *task_state) {
     tms->tms_cstime = current->process->times.tms_cstime / 10;
 
     SYS_RETURN(get_time() / 10);
+}
+
+void arch_sys_create_task(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    uintptr_t rip = (uintptr_t) task_state->cpu_state.rsi;
+    uintptr_t rsp = (uintptr_t) task_state->cpu_state.rdx;
+
+    debug_log("Creating task: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+
+    struct task *current = get_current_task();
+    proc_bump_process(current->process);
+
+    struct task *task = calloc(1, sizeof(struct task));
+    task->process = current->process;
+    task->sig_mask = current->sig_mask;
+    task->sig_pending = 0;
+    task->sched_state = READY;
+
+    task_align_fpu(task);
+
+    task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
+    task->arch_task.setup_kernel_stack = true;
+
+    task->arch_task.task_state.stack_state.cs = current->arch_task.task_state.stack_state.cs;
+    task->arch_task.task_state.stack_state.rip = rip;
+    task->arch_task.task_state.stack_state.rflags = current->arch_task.task_state.stack_state.rflags;
+    task->arch_task.task_state.stack_state.rsp = rsp;
+    task->arch_task.task_state.stack_state.ss = current->arch_task.task_state.stack_state.ss;
+
+    sched_add_task(task);
+
+    SYS_RETURN(0);
 }

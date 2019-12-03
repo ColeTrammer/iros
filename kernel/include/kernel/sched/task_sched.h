@@ -21,4 +21,6 @@ void yield();
 int signal_process_group(pid_t pgid, int signum);
 int signal_process(pid_t pid, int signum);
 
+void exit_process(struct process *process);
+
 #endif /* _KERNEL_task_SCHED_H */

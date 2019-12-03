@@ -94,6 +94,16 @@ void proc_add_process(struct process *process) {
     hash_put(map, process);
 }
 
+void proc_bump_process(struct process *process) {
+    spin_lock(&process->lock);
+#ifdef PROC_REF_COUNT_DEBUG
+    debug_log("Process ref count: [ %d, %d ]\n", process->pid, process->ref_count + 1);
+#endif /* PROC_REF_COUNT_DEBUG */
+    assert(process->ref_count > 0);
+    process->ref_count++;
+    spin_unlock(&process->lock);
+}
+
 struct process *find_by_pid(pid_t pid) {
     return hash_get(map, &pid);
 }

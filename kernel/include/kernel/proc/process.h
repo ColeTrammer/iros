@@ -40,6 +40,7 @@ struct process {
 void proc_drop_process_unlocked(struct process *process, bool free_paging_structure);
 void proc_drop_process(struct process *process, bool free_paging_structure);
 void proc_add_process(struct process *process);
+void proc_bump_process(struct process *process);
 struct process *find_by_pid(pid_t pid);
 void proc_set_sig_pending(struct process *process, int n);
 void init_processes();

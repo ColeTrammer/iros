@@ -186,3 +186,12 @@ int signal_process(pid_t pid, int signum) {
 
     return signalled_anything ? 0 : -ESRCH;
 }
+
+void exit_process(struct process *process) {
+    struct task *task = list_start;
+    do {
+        if (task->process == process) {
+            task->sched_state = EXITING;
+        }
+    } while ((task = task->next) != list_start);
+}
