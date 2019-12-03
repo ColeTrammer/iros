@@ -32,6 +32,7 @@ extern char **environ;
 
 #ifdef _OS_2_SOURCE
 int create_task(uintptr_t rip, uintptr_t rsp);
+void exit_task(void) __attribute__((__noreturn__));
 #endif /* _OS_2_SOURCE */
 
 void *sbrk(intptr_t increment);

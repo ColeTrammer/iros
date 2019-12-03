@@ -859,3 +859,12 @@ int create_task(uintptr_t rip, uintptr_t rsp) {
                  : "rdi", "rsi", "rdx", "rax", "memory");
     __SYSCALL_TO_ERRNO(ret);
 }
+
+__attribute__((__noreturn__)) void exit_task(void) {
+    asm volatile("movq $56, %%rdi\n"
+                 "int $0x80"
+                 :
+                 :
+                 : "rdi", "memory");
+    __builtin_unreachable();
+}

@@ -1,4 +1,4 @@
-LIBS=libc libgraphics libm
+LIBS=libc libgraphics libm libpthread
 HEADER_LIBS=$(LIBS) libliim
 
 export ROOT?=$(CURDIR)/..
@@ -12,7 +12,7 @@ export INCLUDEDIR?=$(PREFIX)/include
 export LIBDIR?=$(EXEC_PREFIX)/lib
 
 # Init flags if not already set (can be overridden)
-export CFLAGS?=-std=gnu11
+export CFLAGS?=-std=gnu11 -D_OS_2_SOURCE
 export CPPFLAGS?=-O2 -g -Werror -Wall -Wextra
 export LDFLAGS+=-T $(ROOT)/userland/link.ld
 

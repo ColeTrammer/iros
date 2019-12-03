@@ -237,3 +237,4 @@ sys_call_table:
     .quad arch_sys_sigsuspend
     .quad arch_sys_times
     .quad arch_sys_create_task
+    .quad arch_sys_exit_task

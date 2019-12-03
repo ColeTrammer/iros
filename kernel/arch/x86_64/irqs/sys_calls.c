@@ -79,7 +79,7 @@ void arch_sys_exit(struct task_state *task_state) {
 
     int exit_code = (int) task_state->cpu_state.rsi;
     proc_add_message(task->process->pid, proc_create_message(STATE_EXITED, exit_code));
-    debug_log("Task Exited: [ %d, %d ]\n", task->process->pid, exit_code);
+    debug_log("Process Exited: [ %d, %d ]\n", task->process->pid, exit_code);
 
     sys_sched_run_next(task_state);
 }
@@ -1416,4 +1416,19 @@ void arch_sys_create_task(struct task_state *task_state) {
     sched_add_task(task);
 
     SYS_RETURN(0);
+}
+
+void arch_sys_exit_task(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    /* Disable Interrups To Prevent Premature Task Removal, Since Sched State Is Set */
+    disable_interrupts();
+
+    struct task *task = get_current_task();
+    task->sched_state = EXITING;
+
+    invalidate_last_saved(task);
+
+    debug_log("Task Exited: [ %d ]\n", task->process->pid);
+    sys_sched_run_next(task_state);
 }
