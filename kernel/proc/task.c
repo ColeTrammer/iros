@@ -108,12 +108,25 @@ uintptr_t map_program_args(uintptr_t start, char **argv, char **envp) {
     return (uintptr_t) args_start;
 }
 
+static spinlock_t tid_lock;
+static int tid_counter = 1;
+
+int get_next_tid() {
+    spin_lock(&tid_lock);
+
+    int tid = tid_counter++;
+
+    spin_unlock(&tid_lock);
+    return tid;
+}
+
 void init_kernel_task() {
     current_task = &initial_kernel_task;
 
     current_task->process = &initial_kernel_process;
     arch_init_kernel_task(current_task);
 
+    initial_kernel_task.tid = get_next_tid();
     initial_kernel_task.kernel_task = true;
     initial_kernel_task.process->pid = 1;
     init_spinlock(&initial_kernel_process.lock);
@@ -141,6 +154,7 @@ struct task *load_kernel_task(uintptr_t entry) {
     task->sched_state = READY;
     task->process->cwd = malloc(2);
     task->process->tty = -1;
+    task->tid = get_next_tid();
     strcpy(task->process->cwd, "/");
     task->next = NULL;
 
@@ -173,6 +187,7 @@ struct task *load_task(const char *file_name) {
 
     assert(elf64_is_valid(buffer));
 
+    task->tid = get_next_tid();
     task->process->pid = get_next_pid();
     init_spinlock(&process->lock);
     proc_add_process(process);

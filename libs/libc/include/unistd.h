@@ -31,7 +31,7 @@ extern "C" {
 extern char **environ;
 
 #ifdef _OS_2_SOURCE
-int create_task(uintptr_t rip, uintptr_t rsp);
+int create_task(uintptr_t rip, uintptr_t rsp, void *arg, uintptr_t push_onto_stack);
 void exit_task(void) __attribute__((__noreturn__));
 #endif /* _OS_2_SOURCE */
 

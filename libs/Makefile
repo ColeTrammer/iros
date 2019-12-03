@@ -22,6 +22,8 @@ all: $(LIBS)
 .PHONY: install
 install: all
 
+libc: libpthread
+
 .PHONY: install-headers
 install-headers:
 	for lib in $(HEADER_LIBS); do \

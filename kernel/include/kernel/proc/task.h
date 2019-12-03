@@ -30,6 +30,8 @@ struct task {
     sigset_t saved_sig_mask;
     sigset_t sig_pending;
 
+    int tid;
+
     bool kernel_task : 1;
     bool in_kernel : 1;
     bool in_sigsuspend : 1;
@@ -61,6 +63,8 @@ void arch_free_task(struct task *task, bool free_paging_structure);
 struct task *get_current_task();
 
 uintptr_t map_program_args(uintptr_t start, char **argv, char **envp);
+
+int get_next_tid();
 
 void task_set_sig_pending(struct task *task, int signum);
 void task_unset_sig_pending(struct task *task, int signum);

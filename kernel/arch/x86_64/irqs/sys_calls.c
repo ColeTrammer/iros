@@ -112,6 +112,7 @@ void arch_sys_fork(struct task_state *task_state) {
     struct process *child_process = calloc(1, sizeof(struct process));
     child->process = child_process;
 
+    child->tid = get_next_tid();
     child_process->pid = get_next_pid();
     init_spinlock(&child_process->lock);
     proc_add_process(child_process);
@@ -368,6 +369,7 @@ void arch_sys_execve(struct task_state *task_state) {
     memcpy(process_stack, __process_stack, sizeof(struct vm_region));
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
+    task->tid = current->tid;
     process->pid = current->process->pid;
     init_spinlock(&process->lock);
     process->pgid = current->process->pgid;
@@ -1390,6 +1392,8 @@ void arch_sys_create_task(struct task_state *task_state) {
 
     uintptr_t rip = (uintptr_t) task_state->cpu_state.rsi;
     uintptr_t rsp = (uintptr_t) task_state->cpu_state.rdx;
+    void *arg = (void *) task_state->cpu_state.rcx;
+    uintptr_t push_onto_stack = (uintptr_t) task_state->cpu_state.r8;
 
     debug_log("Creating task: [ %#.16lX, %#.16lX ]\n", rip, rsp);
 
@@ -1401,6 +1405,7 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->sig_mask = current->sig_mask;
     task->sig_pending = 0;
     task->sched_state = READY;
+    task->tid = get_next_tid();
 
     task_align_fpu(task);
 
@@ -1410,12 +1415,14 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->arch_task.task_state.stack_state.cs = current->arch_task.task_state.stack_state.cs;
     task->arch_task.task_state.stack_state.rip = rip;
     task->arch_task.task_state.stack_state.rflags = current->arch_task.task_state.stack_state.rflags;
-    task->arch_task.task_state.stack_state.rsp = rsp;
+    task->arch_task.task_state.stack_state.rsp = rsp - sizeof(uintptr_t);
+    *((uintptr_t *) task->arch_task.task_state.stack_state.rsp) = push_onto_stack;
     task->arch_task.task_state.stack_state.ss = current->arch_task.task_state.stack_state.ss;
+    task->arch_task.task_state.cpu_state.rdi = (uint64_t) arg;
 
     sched_add_task(task);
 
-    SYS_RETURN(0);
+    SYS_RETURN(task->tid);
 }
 
 void arch_sys_exit_task(struct task_state *task_state) {
