@@ -675,7 +675,7 @@ void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
                  : "=r"(ret)
                  : "r"(addr), "r"(length), "r"(prot), "r"(flags), "r"(fd), "r"(offset)
                  : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory");
-    if ((long) ret < 0) {
+    if ((long) ret < 0 && (long) ret > -EMAXERRNO) {
         errno = -((long) ret);
         return MAP_FAILED;
     }

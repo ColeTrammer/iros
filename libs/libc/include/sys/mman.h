@@ -17,6 +17,7 @@
 #define MAP_FIXED     4
 #define MAP_ANONYMOUS 8
 #define MAP_ANON      MAP_ANONYMOUS
+#define MAP_STACK     16
 
 #define MAP_FAILED ((void *) -1)
 

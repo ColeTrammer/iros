@@ -1216,7 +1216,7 @@ void arch_sys_mmap(struct task_state *task_state) {
             SYS_RETURN(-EINVAL);
         }
 
-        struct vm_region *region = map_region(addr, length, prot, VM_PROCESS_ANON_MAPPING);
+        struct vm_region *region = map_region(addr, length, prot, flags & MAP_STACK ? VM_TASK_STACK : VM_PROCESS_ANON_MAPPING);
         if (region == NULL) {
             SYS_RETURN(-ENOMEM);
         }

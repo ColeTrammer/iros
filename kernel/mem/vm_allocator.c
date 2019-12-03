@@ -302,12 +302,21 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
     }
 
     if (addr == NULL) {
-        uintptr_t to_search = find_vm_region(VM_PROCESS_HEAP)->end + 0x10000000;
-        struct vm_region *r;
-        while ((r = find_vm_region_in_range(to_search, to_search + len))) {
-            to_search = r->end + 5 * PAGE_SIZE;
+        if (type == VM_TASK_STACK) {
+            uintptr_t to_search = find_vm_region(VM_TASK_STACK)->start - 0x5000;
+            struct vm_region *r;
+            while ((r = find_vm_region_in_range(to_search, to_search - len))) {
+                to_search = r->start - 5 * PAGE_SIZE;
+            }
+            addr = (void *) (to_search - len);
+        } else {
+            uintptr_t to_search = find_vm_region(VM_PROCESS_HEAP)->end + 0x10000000;
+            struct vm_region *r;
+            while ((r = find_vm_region_in_range(to_search, to_search + len))) {
+                to_search = r->end + 5 * PAGE_SIZE;
+            }
+            addr = (void *) to_search;
         }
-        addr = (void *) to_search;
     }
 
     struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
