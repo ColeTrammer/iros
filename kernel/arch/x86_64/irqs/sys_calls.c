@@ -1394,6 +1394,7 @@ void arch_sys_create_task(struct task_state *task_state) {
     uintptr_t rsp = (uintptr_t) task_state->cpu_state.rdx;
     void *arg = (void *) task_state->cpu_state.rcx;
     uintptr_t push_onto_stack = (uintptr_t) task_state->cpu_state.r8;
+    int *tid_ptr = (int *) task_state->cpu_state.r9;
 
     debug_log("Creating task: [ %#.16lX, %#.16lX ]\n", rip, rsp);
 
@@ -1406,6 +1407,8 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->sig_pending = 0;
     task->sched_state = READY;
     task->tid = get_next_tid();
+
+    debug_log("TID: [ %d ]\n", task->tid);
 
     task_align_fpu(task);
 
@@ -1420,9 +1423,10 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->arch_task.task_state.stack_state.ss = current->arch_task.task_state.stack_state.ss;
     task->arch_task.task_state.cpu_state.rdi = (uint64_t) arg;
 
+    *tid_ptr = task->tid;
     sched_add_task(task);
 
-    SYS_RETURN(task->tid);
+    SYS_RETURN(0);
 }
 
 void arch_sys_exit_task(struct task_state *task_state) {
@@ -1436,6 +1440,14 @@ void arch_sys_exit_task(struct task_state *task_state) {
 
     invalidate_last_saved(task);
 
-    debug_log("Task Exited: [ %d ]\n", task->process->pid);
+    debug_log("Task Exited: [ %d, %d ]\n", task->process->pid, task->tid);
     sys_sched_run_next(task_state);
+}
+
+void arch_sys_gettid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    debug_log("gettid: [ %d ]\n", get_current_task()->tid);
+
+    SYS_RETURN(get_current_task()->tid);
 }

@@ -144,7 +144,7 @@ void elf64_stack_trace(struct task *task) {
         }
     }
 
-    for (rsp &= ~0xF; rsp < find_first_kernel_vm_region()->start - PAGE_SIZE; rsp += sizeof(uintptr_t)) {
+    for (rsp &= ~0xF; rsp < find_vm_region_by_addr(rsp)->end; rsp += sizeof(uintptr_t)) {
         for (int i = 0; (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
             if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
                 if (*((uint64_t *) rsp) >= symbols[i].st_value && *((uint64_t *) rsp) <= symbols[i].st_value + symbols[i].st_size) {

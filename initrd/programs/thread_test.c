@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -19,7 +20,9 @@ int main() {
     pthread_t thread;
     assert(pthread_create(&thread, NULL, &do_stuff, NULL) == 0);
 
-    pthread_join(thread, NULL);
+    int ret = pthread_join(thread, NULL);
+    assert(ret == 0);
+
     printf("Hello from the main thread!\n");
 
     _exit(0);

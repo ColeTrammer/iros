@@ -349,7 +349,7 @@ void task_do_sig(struct task *task, int signum) {
             if (task->sched_state == EXITING) {
                 break;
             }
-            task->sched_state = EXITING;
+            exit_process(task->process);
             invalidate_last_saved(task);
             proc_add_message(task->process->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;

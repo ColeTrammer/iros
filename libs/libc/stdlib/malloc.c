@@ -69,12 +69,12 @@ static struct metadata *last_allocated;
 
 #define CPU_RELAX() asm volatile("pause" : : :);
 
-int pthread_spin_destroy(pthread_spinlock_t *lock) {
+int __pthread_spin_destroy(pthread_spinlock_t *lock) {
     lock->lock = -1;
     return 0;
 }
 
-int pthread_spin_init(pthread_spinlock_t *lock, int pshared) {
+int __pthread_spin_init(pthread_spinlock_t *lock, int pshared) {
     // FIXME: do something with pshared
     (void) pshared;
 
@@ -82,7 +82,7 @@ int pthread_spin_init(pthread_spinlock_t *lock, int pshared) {
     return 0;
 }
 
-int pthread_spin_lock(pthread_spinlock_t *lock) {
+int __pthread_spin_lock(pthread_spinlock_t *lock) {
     for (;;) {
         int expected = 0;
         if (!atomic_compare_exchange_strong(&lock->lock, &expected, 1)) {
@@ -96,7 +96,7 @@ int pthread_spin_lock(pthread_spinlock_t *lock) {
     return 0;
 }
 
-int pthread_spin_trylock(pthread_spinlock_t *lock) {
+int __pthread_spin_trylock(pthread_spinlock_t *lock) {
     int expected = 0;
     if (!atomic_compare_exchange_strong(&lock->lock, &expected, 1)) {
         // Failed to aquire the lock
@@ -106,10 +106,14 @@ int pthread_spin_trylock(pthread_spinlock_t *lock) {
     return 0;
 }
 
-int pthread_spin_unlock(pthread_spinlock_t *lock) {
+int __pthread_spin_unlock(pthread_spinlock_t *lock) {
     lock->lock = 0;
     return 0;
 }
+
+#define pthread_spin_lock   __pthread_spin_lock
+#define pthread_spin_unlock __pthread_spin_unlock
+
 // FIXME: this should be a mutex...
 #define SPINLOCK_INITIALIZER \
     { 0 }

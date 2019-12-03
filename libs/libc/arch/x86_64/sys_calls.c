@@ -847,18 +847,19 @@ clock_t times(struct tms *buf) {
     return ret;
 }
 
-int create_task(uintptr_t rip, uintptr_t rsp, void *arg, uintptr_t push_onto_stack) {
+int create_task(uintptr_t rip, uintptr_t rsp, void *arg, uintptr_t push_onto_stack, int *tid_ptr) {
     int ret;
     asm volatile("movq $55, %%rdi\n"
                  "movq %1, %%rsi\n"
                  "movq %2, %%rdx\n"
                  "movq %3, %%rcx\n"
                  "movq %4, %%r8\n"
+                 "movq %5, %%r9\n"
                  "int $0x80\n"
                  "movl %%eax, %0\n"
                  : "=r"(ret)
-                 : "r"(rip), "r"(rsp), "r"(arg), "r"(push_onto_stack)
-                 : "rdi", "rsi", "rdx", "rcx", "r8", "rax", "memory");
+                 : "r"(rip), "r"(rsp), "r"(arg), "r"(push_onto_stack), "r"(tid_ptr)
+                 : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "memory");
     __SYSCALL_TO_ERRNO(ret);
 }
 
@@ -869,4 +870,15 @@ __attribute__((__noreturn__)) void exit_task(void) {
                  :
                  : "rdi", "memory");
     __builtin_unreachable();
+}
+
+int gettid(void) {
+    int ret;
+    asm volatile("movq $57, %%rdi\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0"
+                 : "=r"(ret)
+                 :
+                 : "rdi", "rax", "memory");
+    return ret;
 }
