@@ -30,12 +30,6 @@ extern "C" {
 
 extern char **environ;
 
-#ifdef _OS_2_SOURCE
-int create_task(uintptr_t rip, uintptr_t rsp, void *arg, uintptr_t push_onto_stack, int *tid_ptr);
-void exit_task(void) __attribute__((__noreturn__));
-int gettid(void);
-#endif /* _OS_2_SOURCE */
-
 void *sbrk(intptr_t increment);
 void _exit(int status) __attribute__((__noreturn__));
 pid_t fork();

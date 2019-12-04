@@ -2,11 +2,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/os_2.h>
 #include <sys/socket.h>
 #include <sys/times.h>
 #include <sys/types.h>
@@ -32,6 +34,7 @@
 // #define DUP_DEBUG
 // #define SET_PGID_DEBUG
 // #define SIGACTION_DEBUG
+#define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
 #define SYS_BEGIN(task_state)                                                                            \
@@ -1450,4 +1453,50 @@ void arch_sys_gettid(struct task_state *task_state) {
     debug_log("gettid: [ %d ]\n", get_current_task()->tid);
 
     SYS_RETURN(get_current_task()->tid);
+}
+
+void arch_sys_os_mutex(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    struct task *current = get_current_task();
+
+    int *__protected = (int *) task_state->cpu_state.rsi;
+    int operation = (int) task_state->cpu_state.rdx;
+    int expected = (int) task_state->cpu_state.rcx;
+    int to_place = (int) task_state->cpu_state.r8;
+
+    switch (operation) {
+        case MUTEX_AQUIRE: {
+            struct user_mutex *um = get_user_mutex_locked(__protected);
+            if (*__protected != expected) {
+                // Case where MUTEX_RELEASE occurs before we lock/create the mutex
+                *__protected = to_place;
+                unlock_user_mutex(um);
+                SYS_RETURN(0);
+            }
+
+            add_to_user_mutex_queue(um, current);
+            current->sched_state = WAITING;
+            unlock_user_mutex(um);
+            yield();
+            SYS_RETURN(0);
+        }
+        case MUTEX_RELEASE: {
+            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
+            if (um == NULL) {
+                // There was no one waiting
+#ifdef USER_MUTEX_DEBUG
+                debug_log("no one waiting\n");
+#endif /* USER_MUTEX_DEBUG */
+                SYS_RETURN(0);
+            }
+
+            wake_first_user_mutex(um);
+            unlock_user_mutex(um);
+            SYS_RETURN(0);
+        }
+        default: {
+            SYS_RETURN(EINVAL);
+        }
+    }
 }

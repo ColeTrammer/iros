@@ -6,6 +6,7 @@
 #include <sys/times.h>
 #include <sys/types.h>
 
+#include <kernel/proc/user_mutex.h>
 #include <kernel/util/spinlock.h>
 
 // clang-format off
@@ -18,6 +19,8 @@ struct process {
     struct file *files[FOPEN_MAX];
 
     struct vm_region *process_memory;
+
+    struct user_mutex *used_user_mutexes;
 
     pid_t pid;
     pid_t pgid;

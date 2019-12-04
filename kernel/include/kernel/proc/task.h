@@ -24,6 +24,9 @@ struct task {
     struct task *next;
     struct task *prev;
 
+    // This is inline so that excessive malloc allocations can be avoided
+    struct task *user_mutex_waiting_queue_next;
+
     enum sched_state sched_state;
 
     sigset_t sig_mask;
@@ -37,6 +40,7 @@ struct task {
     bool in_sigsuspend : 1;
     bool can_send_self_signals : 1;
     bool sleeping : 1;
+    bool should_wake_up_from_mutex_sleep : 1;
 
     time_t sleep_end;
 

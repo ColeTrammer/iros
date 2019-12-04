@@ -15,6 +15,10 @@ struct hash_map *hash_create_hash_map(int (*hash)(void *ptr, int hash_size), int
 }
 
 void *hash_get(struct hash_map *map, void *key) {
+    return hash_get_or_else_do(map, key, NULL, NULL);
+}
+
+void *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *), void *arg) {
     size_t i = map->hash(key, HASH_DEFAULT_NUM_BUCKETS);
 
     spin_lock(&map->lock);
@@ -31,8 +35,36 @@ void *hash_get(struct hash_map *map, void *key) {
         entry = entry->next;
     }
 
+    if (f != NULL) {
+        f(arg);
+    }
+
     spin_unlock(&map->lock);
     return NULL;
+}
+
+void *hash_put_if_not_present(struct hash_map *map, void *key, void *(*make_data)(void *key)) {
+    size_t i = map->hash(key, HASH_DEFAULT_NUM_BUCKETS);
+
+    spin_lock(&map->lock);
+
+    struct hash_entry **entry = &map->entries[i];
+    while (*entry != NULL) {
+        if (map->equals((*entry)->key, key)) {
+            spin_unlock(&map->lock);
+            return (*entry)->data;
+        }
+
+        entry = &(*entry)->next;
+    }
+
+    *entry = calloc(1, sizeof(struct hash_entry));
+    (*entry)->next = NULL;
+    (*entry)->data = make_data(key);
+    (*entry)->key = map->key((*entry)->data);
+
+    spin_unlock(&map->lock);
+    return (*entry)->data;
 }
 
 void hash_put(struct hash_map *map, void *data) {

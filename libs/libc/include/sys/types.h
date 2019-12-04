@@ -14,6 +14,8 @@
 #include <bits/off_t.h>
 #include <bits/pid_t.h>
 #include <bits/pthread_attr_t.h>
+#include <bits/pthread_mutex_t.h>
+#include <bits/pthread_mutexattr_t.h>
 #include <bits/pthread_spinlock_t.h>
 #include <bits/pthread_t.h>
 #include <bits/size_t.h>

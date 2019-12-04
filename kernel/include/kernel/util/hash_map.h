@@ -21,6 +21,8 @@ struct hash_map {
 
 struct hash_map *hash_create_hash_map(int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id), void *(*key)(void *ptr));
 void *hash_get(struct hash_map *map, void *key);
+void *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *), void *arg);
+void *hash_put_if_not_present(struct hash_map *map, void *key, void *(*make_data)(void *key));
 void hash_put(struct hash_map *map, void *ptr);
 void hash_set(struct hash_map *map, void *ptr);
 void *hash_del(struct hash_map *map, void *key);

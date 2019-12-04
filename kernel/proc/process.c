@@ -70,6 +70,13 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
             }
         }
 
+        struct user_mutex *user_mutex = process->used_user_mutexes;
+        while (user_mutex != NULL) {
+            struct user_mutex *next = user_mutex->next;
+            free(user_mutex);
+            user_mutex = next;
+        }
+
         free(process->cwd);
         free(process);
         return;

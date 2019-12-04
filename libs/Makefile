@@ -11,9 +11,8 @@ export EXEC_PREFIX?=$(PREFIX)
 export INCLUDEDIR?=$(PREFIX)/include
 export LIBDIR?=$(EXEC_PREFIX)/lib
 
-# Init flags if not already set (can be overridden)
-export CFLAGS?=-std=gnu11 -D_OS_2_SOURCE
-export CPPFLAGS?=-O2 -g -Werror -Wall -Wextra
+export CFLAGS+=-std=gnu11
+export CPPFLAGS+=-O2 -g -Werror -Wall -Wextra -DARCH=$(HOSTARCH) -D_OS_2_SOURCE
 export LDFLAGS+=-T $(ROOT)/userland/link.ld
 
 .PHONY: all

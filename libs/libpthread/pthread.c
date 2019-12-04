@@ -4,6 +4,7 @@
 #include <search.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/os_2.h>
 #include <unistd.h>
 
 struct thread_control_block {

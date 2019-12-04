@@ -8,6 +8,7 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
+#include <kernel/proc/user_mutex.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -19,6 +20,7 @@ void init_task_sched() {
     // This only becomes needed after scheduling is enabled
     init_proc_state();
     init_processes();
+    init_user_mutexes();
 
     arch_init_task_sched();
 }
@@ -108,6 +110,9 @@ void sched_run_next() {
             if (get_time() >= to_run->sleep_end) {
                 break;
             }
+        } else if (to_run->should_wake_up_from_mutex_sleep && to_run->sched_state == WAITING) {
+            to_run->should_wake_up_from_mutex_sleep = false;
+            break;
         }
 
         // Skip taskes that are sleeping

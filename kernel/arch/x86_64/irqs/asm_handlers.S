@@ -239,3 +239,4 @@ sys_call_table:
     .quad arch_sys_create_task
     .quad arch_sys_exit_task
     .quad arch_sys_gettid
+    .quad arch_sys_os_mutex

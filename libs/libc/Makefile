@@ -20,7 +20,7 @@ export INCLUDEDIR?=$(PREFIX)/include
 export LIBDIR?=$(EXEC_PREFIX)/lib
 
 # Init flags if not already set (can be overridden)
-CFLAGS?=-O2 -g
+CFLAGS?=-O2 -g -DARCH=$(HOSTARCH)
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=

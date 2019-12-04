@@ -14,9 +14,9 @@ export DESTDIR?=$(SYSROOT)
 # Default host is given by script
 DEFAULT_HOST!=./default-host.sh
 # If it's not already defined, HOST = DEFAULT_HOST
-HOST?=$(DEFAULT_HOST)
+export HOST?=$(DEFAULT_HOST)
 # Host achitecture is given by script
-HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
+export HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 
 # Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
 export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
