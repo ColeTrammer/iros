@@ -21,11 +21,6 @@ struct thread_control_block {
 static struct thread_control_block *threads;
 static pthread_spinlock_t threads_lock = { 0 };
 
-__attribute__((constructor)) __attribute__((used)) static void init_pthreads() {
-    threads = calloc(1, sizeof(struct thread_control_block));
-    threads->id = pthread_self();
-}
-
 pthread_t pthread_self(void) {
     return gettid();
 }
@@ -84,7 +79,15 @@ int pthread_join(pthread_t id, void **value_ptr) {
         thread = thread->next;
     }
 
-    assert(self);
+    // We need to initialize the main thread (there is probably a better solution)
+    if (!self) {
+        self = calloc(1, sizeof(struct thread_control_block));
+        self->id = pthread_self();
+
+        self->next = threads;
+        threads = self;
+    }
+
     if (target) {
         if (target->joining_thread != 0) {
             ret = EINVAL;

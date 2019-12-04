@@ -18,6 +18,7 @@ struct task *find_task_for_process(pid_t pid);
 void yield_signal();
 void yield();
 
+int signal_task(int tgid, int tid, int signum);
 int signal_process_group(pid_t pgid, int signum);
 int signal_process(pid_t pid, int signum);
 

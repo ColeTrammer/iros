@@ -1500,3 +1500,13 @@ void arch_sys_os_mutex(struct task_state *task_state) {
         }
     }
 }
+
+void arch_sys_tgkill(struct task_state *task_state) {
+    SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state);
+
+    int tgid = (int) task_state->cpu_state.rsi;
+    int tid = (int) task_state->cpu_state.rdx;
+    int signum = (int) task_state->cpu_state.rcx;
+
+    SYS_RETURN(signal_task(tgid, tid, signum));
+}

@@ -164,6 +164,34 @@ int signal_process_group(pid_t pgid, int signum) {
     return signalled_anything ? 0 : -ESRCH;
 }
 
+int signal_task(int tgid, int tid, int signum) {
+    spin_lock(&task_list_lock);
+
+    bool signalled_self = false;
+    bool signalled_anything = false;
+    struct task *task = list_start;
+    do {
+        if (task->process->pid == tgid && task->tid == tid) {
+            debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
+            task_set_sig_pending(task, signum);
+            signalled_anything = true;
+
+            if (task == get_current_task()) {
+                signalled_self = true;
+            }
+            break;
+        }
+    } while ((task = task->next) != list_start);
+
+    spin_unlock(&task_list_lock);
+
+    if (signalled_self) {
+        yield();
+    }
+
+    return signalled_anything ? 0 : -ESRCH;
+}
+
 int signal_process(pid_t pid, int signum) {
     spin_lock(&task_list_lock);
 

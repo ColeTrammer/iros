@@ -846,3 +846,68 @@ clock_t times(struct tms *buf) {
     }
     return ret;
 }
+
+int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long push_onto_stack, int *tid_ptr) {
+    int ret;
+    asm volatile("movq $55, %%rdi\n"
+                 "movq %1, %%rsi\n"
+                 "movq %2, %%rdx\n"
+                 "movq %3, %%rcx\n"
+                 "movq %4, %%r8\n"
+                 "movq %5, %%r9\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0\n"
+                 : "=r"(ret)
+                 : "r"(rip), "r"(rsp), "r"(arg), "r"(push_onto_stack), "r"(tid_ptr)
+                 : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "memory");
+    return ret;
+}
+
+__attribute__((__noreturn__)) void exit_task(void) {
+    asm volatile("movq $56, %%rdi\n"
+                 "int $0x80"
+                 :
+                 :
+                 : "rdi", "memory");
+    __builtin_unreachable();
+}
+
+int gettid(void) {
+    int ret;
+    asm volatile("movq $57, %%rdi\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0"
+                 : "=r"(ret)
+                 :
+                 : "rdi", "rax", "memory");
+    return ret;
+}
+
+int os_mutex(int *__protected, int operation, int expected, int to_place) {
+    int ret;
+    asm volatile("movq $58, %%rdi\n"
+                 "movq %1, %%rsi\n"
+                 "movl %2, %%edx\n"
+                 "movl %3, %%ecx\n"
+                 "movl %4, %%r8d\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0"
+                 : "=r"(ret)
+                 : "r"(__protected), "r"(operation), "r"(expected), "r"(to_place)
+                 : "rdi", "rsi", "rdx", "rcx", "rax", "memory");
+    return ret;
+}
+
+int tgkill(int tgid, int tid, int sig) {
+    int ret;
+    asm volatile("movq $59, %%rdi\n"
+                 "movl %1, %%esi\n"
+                 "movl %2, %%edx\n"
+                 "movl %3, %%ecx\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0"
+                 : "=r"(ret)
+                 : "r"(tgid), "r"(tid), "r"(sig)
+                 : "rdi", "rsi", "rdx", "rcx", "rax", "memory");
+    return ret;
+}

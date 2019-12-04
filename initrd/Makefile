@@ -6,10 +6,10 @@ LIBS?=
 
 # Include options that should always be set
 CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra -D_OS_2_SOURCE
-CPPFLAGS:=$(CPPFLAGS)
+CPPFLAGS:=$(CPPFLAGS) -DARCH=$(HOSTARCH)
 LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
-CXX_LIBS:=$(CXX_LIBS) -lc -lgraphics
-C_LIBS:=$(C_LIBC) -lpthread
+CXX_LIBS:=$(CXX_LIBS) -lc -lgraphics -lpthread
+C_LIBS:=$(C_LIBS) -lpthread
 
 # Sets directories for install if not already set
 DESTDIR?=
@@ -59,6 +59,7 @@ $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \
+$(BUILDDIR)/initrd/programs/tgkill_test \
 $(BUILDDIR)/initrd/programs/thread_test \
 $(BUILDDIR)/initrd/programs/times_test \
 $(BUILDDIR)/initrd/programs/tmpnam_test \
