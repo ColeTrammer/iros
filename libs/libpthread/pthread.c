@@ -121,6 +121,10 @@ int pthread_join(pthread_t id, void **value_ptr) {
     return ret;
 }
 
+int pthread_kill(pthread_t thread, int sig) {
+    return tgkill(getpid(), thread, sig);
+}
+
 __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
     pthread_t self = pthread_self();
 

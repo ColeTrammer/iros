@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <pthread.h>
 #include <signal.h>
-#include <sys/os_2.h>
 #include <unistd.h>
 
 static pthread_t child;
@@ -22,7 +21,7 @@ int main() {
                },
                NULL) == 0);
 
-    tgkill(getpid(), child, SIGUSR1);
+    pthread_kill(child, SIGUSR1);
     assert(pthread_join(child, NULL) == 0);
     _exit(0);
 }

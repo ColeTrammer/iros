@@ -19,6 +19,7 @@ pthread_t pthread_self(void);
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
                    void *__restrict arg);
 int pthread_join(pthread_t thread, void **value_ptr);
+int pthread_kill(pthread_t thread, int sig);
 void pthread_exit(void *value_ptr) __attribute__((__noreturn__));
 
 int pthread_spin_destroy(pthread_spinlock_t *lock);
