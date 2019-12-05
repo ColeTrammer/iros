@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <sys/os_2.h>
 #include <unistd.h>
 
 int killpg(int pgid, int sig) {
@@ -26,8 +27,8 @@ void psignal(int sig, const char *s) {
 }
 
 int raise(int signum) {
-    // Should do something else for multithreaded programs
-    return kill(getpid(), signum);
+    // Make sure to signal the current thread, not just a random one in the process
+    return tgkill(0, 0, signum);
 }
 
 sighandler_t signal(int signum, sighandler_t handler) {

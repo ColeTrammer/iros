@@ -1508,5 +1508,15 @@ void arch_sys_tgkill(struct task_state *task_state) {
     int tid = (int) task_state->cpu_state.rdx;
     int signum = (int) task_state->cpu_state.rcx;
 
+    struct task *current = get_current_task();
+
+    if (tgid == 0) {
+        tgid = current->process->pid;
+    }
+
+    if (tid == 0) {
+        tid = current->tid;
+    }
+
     SYS_RETURN(signal_task(tgid, tid, signum));
 }
