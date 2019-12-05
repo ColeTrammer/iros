@@ -62,6 +62,7 @@ $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/tgkill_test \
 $(BUILDDIR)/initrd/programs/thread_test \
 $(BUILDDIR)/initrd/programs/times_test \
+$(BUILDDIR)/initrd/programs/tls_test \
 $(BUILDDIR)/initrd/programs/tmpnam_test \
 $(BUILDDIR)/initrd/programs/udp_test \
 $(BUILDDIR)/initrd/programs/vector_test \
