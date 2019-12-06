@@ -277,7 +277,7 @@ sys_call_table:
     .quad arch_sys_times
     .quad arch_sys_create_task
     .quad arch_sys_exit_task
-    .quad arch_sys_gettid
+    .quad 0
     .quad arch_sys_os_mutex
     .quad arch_sys_tgkill
     .quad arch_sys_get_initial_process_info

@@ -1451,14 +1451,6 @@ void arch_sys_exit_task(struct task_state *task_state) {
     sys_sched_run_next(task_state);
 }
 
-void arch_sys_gettid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
-
-    debug_log("gettid: [ %d ]\n", get_current_task()->tid);
-
-    SYS_RETURN(get_current_task()->tid);
-}
-
 void arch_sys_os_mutex(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 

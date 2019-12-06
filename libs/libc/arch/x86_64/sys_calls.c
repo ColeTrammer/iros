@@ -874,17 +874,6 @@ __attribute__((__noreturn__)) void exit_task(void) {
     __builtin_unreachable();
 }
 
-int gettid(void) {
-    int ret;
-    asm volatile("movq $57, %%rdi\n"
-                 "int $0x80\n"
-                 "movl %%eax, %0"
-                 : "=r"(ret)
-                 :
-                 : "rdi", "rax", "memory");
-    return ret;
-}
-
 int os_mutex(int *__protected, int operation, int expected, int to_place) {
     int ret;
     asm volatile("movq $58, %%rdi\n"
