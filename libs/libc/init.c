@@ -16,6 +16,7 @@
 #define ALIGN_UP(size, align) ((size_t) ((align) == 0 ? (size) : ((((size) + (align) - 1) / (align)) * (align))))
 // clang-format on
 
+__thread int errno = 0;
 char **environ = NULL;
 
 struct initial_process_info __initial_process_info;

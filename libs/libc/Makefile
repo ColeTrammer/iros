@@ -46,7 +46,6 @@ FREEOBJS=\
 $(ARCH_FREEOBJS) \
 $(BUILDDIR)/libs/libc/arpa/inet/inet.o \
 $(BUILDDIR)/libs/libc/ctype/ctype.o \
-$(BUILDDIR)/libs/libc/errno/errno.o \
 $(BUILDDIR)/libs/libc/netinet/in.o \
 $(BUILDDIR)/libs/libc/search/queue.o \
 $(BUILDDIR)/libs/libc/stdio/printf.o \

@@ -131,6 +131,10 @@ void arch_sys_fork(struct task_state *task_state) {
     child_process->arch_process.cr3 = clone_process_paging_structure();
     child->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     child->arch_task.setup_kernel_stack = true;
+    child->arch_task.user_thread_pointer = parent->arch_task.user_thread_pointer;
+    child->process->tls_master_copy_start = parent->process->tls_master_copy_start;
+    child->process->tls_master_copy_size = parent->process->tls_master_copy_size;
+    child->process->tls_master_copy_alignment = parent->process->tls_master_copy_alignment;
     child_process->cwd = malloc(strlen(parent->process->cwd) + 1);
     strcpy(child_process->cwd, parent->process->cwd);
     child_process->pgid = parent->process->pgid;

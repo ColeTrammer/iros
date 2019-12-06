@@ -22,6 +22,8 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 
+int errno = 0;
+
 void *sbrk(intptr_t increment) {
     if (increment < 0) {
         void *res = add_vm_pages_end(0, VM_KERNEL_HEAP);

@@ -74,7 +74,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#ifndef __is_kernel
+#if !defined(__is_kernel) && !defined(__is_libk)
 
 #define __SYSCALL_TO_ERRNO(val) \
     do {                        \
@@ -86,11 +86,15 @@ extern "C" {
         return (val);           \
     } while (0)
 
-#endif /* __is_kernel */
+extern __thread int errno;
+#define errno errno
+
+#else
 
 extern int errno;
-
 #define errno errno
+
+#endif /* !defined(__is_kernel) && !defined(__is_libk) */
 
 #ifdef __cplusplus
 }

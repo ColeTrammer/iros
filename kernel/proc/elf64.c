@@ -56,8 +56,6 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
             task->process->tls_master_copy_start = (void *) program_section_start;
             task->process->tls_master_copy_size = program_headers[i].p_memsz;
             task->process->tls_master_copy_alignment = program_headers[i].p_align;
-
-            debug_log("Found tls\n");
         }
 
         assert(program_section_start < ((uintptr_t) buffer) + length);
