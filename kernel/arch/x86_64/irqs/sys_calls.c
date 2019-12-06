@@ -856,10 +856,11 @@ void arch_sys_sigaction(struct task_state *task_state) {
 void arch_sys_sigreturn(struct task_state *task_state) {
     struct task *task = get_current_task();
     uint64_t *mask_ptr = (uint64_t *) task_state->stack_state.rsp;
-    struct task_state *saved_state = (struct task_state *) (mask_ptr + 1);
-
+    uint8_t *saved_fpu_state = (uint8_t *) (mask_ptr + 1);
+    struct task_state *saved_state = (struct task_state *) (saved_fpu_state + FPU_IMAGE_SIZE);
     debug_log("Sig return\n");
 
+    memcpy(task->fpu.aligned_state, saved_fpu_state, FPU_IMAGE_SIZE);
     memcpy(&task->arch_task.task_state, saved_state, sizeof(struct task_state));
 
     // Restore mask

@@ -60,6 +60,8 @@ void task_align_fpu(struct task *task) {
     uintptr_t unaligned_fpu = (uintptr_t) &task->fpu.raw_fpu_state;
     task->fpu.aligned_state = (uint8_t *) ((unaligned_fpu & ~0xFULL) + 16ULL);
     assert(((uintptr_t) task->fpu.aligned_state) % 16 == 0);
+    assert((uintptr_t) task->fpu.aligned_state >= unaligned_fpu &&
+           (uintptr_t) task->fpu.aligned_state <= (uintptr_t) task->fpu.raw_fpu_state.image);
 }
 
 void arch_init_kernel_task(struct task *kernel_task) {
@@ -168,17 +170,20 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     load_task_into_memory(task);
 
-    // FIXME: Currently doesn't save fpu information
     uint64_t save_rsp = proc_in_kernel(task) ? task->arch_task.user_task_state.stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
 
     assert(save_rsp != 0);
     struct task_state *save_state = ((struct task_state *) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
+    uint8_t *fpu_save_state = ((uint8_t *) save_state) - FPU_IMAGE_SIZE;
+
     struct task_state *to_copy = proc_in_kernel(task) ? &task->arch_task.user_task_state : &task->arch_task.task_state;
-    uint64_t *stack_frame = ((uint64_t *) save_state) - 1;
+
+    uint64_t *stack_frame = ((uint64_t *) fpu_save_state) - 1;
     *stack_frame-- = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
     *stack_frame = (uintptr_t) act.sa_restorer;
 
     memcpy(save_state, to_copy, sizeof(struct task_state));
+    memcpy(fpu_save_state, task->fpu.aligned_state, FPU_IMAGE_SIZE);
     if (proc_in_kernel(task)) {
         if (task->can_send_self_signals) {
             save_state->cpu_state.rax = 0;

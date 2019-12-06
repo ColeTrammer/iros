@@ -49,11 +49,13 @@ struct arch_task {
     bool setup_kernel_stack;
 };
 
+#define FPU_IMAGE_SIZE 512
+
 // Can be longer if more extensions are enabled,
 // so this basically needs to be variable length
 struct raw_fpu_state {
     uint8_t padding[16];
-    uint8_t image[512];
+    uint8_t image[FPU_IMAGE_SIZE];
 } __attribute__((packed));
 
 struct arch_fpu_state {
