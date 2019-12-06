@@ -45,6 +45,10 @@ struct arch_task {
     struct task_state user_task_state;
     uint64_t kernel_stack;
     struct virt_page_info *kernel_stack_info;
+    void *user_thread_pointer;
+    void *tls_master_copy_start;
+    size_t tls_master_copy_size;
+    size_t tls_master_copy_alignment;
     bool setup_kernel_stack;
 };
 

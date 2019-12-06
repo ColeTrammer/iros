@@ -241,3 +241,5 @@ sys_call_table:
     .quad arch_sys_gettid
     .quad arch_sys_os_mutex
     .quad arch_sys_tgkill
+    .quad arch_sys_get_initial_process_info
+    .quad arch_sys_set_thread_self_pointer

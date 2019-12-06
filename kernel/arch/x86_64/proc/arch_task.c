@@ -50,6 +50,10 @@ static void load_task_into_memory(struct task *task) {
     } else if (task->arch_task.kernel_stack_info != NULL) {
         map_page_info(task->arch_task.kernel_stack_info);
     }
+
+    if (!task->kernel_task) {
+        set_msr(MSR_FS_BASE, (uint64_t) task->arch_task.user_thread_pointer);
+    }
 }
 
 void task_align_fpu(struct task *task) {

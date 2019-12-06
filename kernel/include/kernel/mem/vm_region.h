@@ -26,15 +26,16 @@ struct vm_region {
 #define VM_KERNEL_HEAP    (5)
 
 /* Defines per process vm_regions */
-#define VM_KERNEL_STACK (6)
-#define VM_PROCESS_TEXT (16)
-#define VM_PROCESS_ROD  (17)
-#define VM_PROCESS_DATA (18)
-#define VM_PROCESS_BSS  (19)
-#define VM_PROCESS_HEAP (20)
-#define VM_TASK_STACK   (21)
+#define VM_KERNEL_STACK            (6)
+#define VM_PROCESS_TEXT            (16)
+#define VM_PROCESS_ROD             (17)
+#define VM_PROCESS_DATA            (18)
+#define VM_PROCESS_BSS             (19)
+#define VM_PROCESS_HEAP            (20)
+#define VM_PROCESS_TLS_MASTER_COPY (21)
 
 /* Defines non unique process regions */
+#define VM_TASK_STACK                             (22)
 #define VM_PROCESS_FILE                           (40)
 #define VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES (41)
 #define VM_PROCESS_ANON_MAPPING                   (42)

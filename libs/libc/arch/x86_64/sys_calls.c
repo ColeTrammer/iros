@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/os_2.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -909,5 +910,29 @@ int tgkill(int tgid, int tid, int sig) {
                  : "=r"(ret)
                  : "r"(tgid), "r"(tid), "r"(sig)
                  : "rdi", "rsi", "rdx", "rcx", "rax", "memory");
+    return ret;
+}
+
+int get_initial_process_info(struct initial_process_info *info) {
+    int ret;
+    asm volatile("movq $60, %%rdi\n"
+                 "movq %1, %%rsi\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0"
+                 : "=r"(ret)
+                 : "r"(info)
+                 : "rdi", "rsi", "rax", "memory");
+    return ret;
+}
+
+int set_thread_self_pointer(void *p) {
+    int ret;
+    asm volatile("movq $61, %%rdi\n"
+                 "movq %1, %%rsi\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0"
+                 : "=r"(ret)
+                 : "r"(p)
+                 : "rdi", "rsi", "rax", "memory");
     return ret;
 }

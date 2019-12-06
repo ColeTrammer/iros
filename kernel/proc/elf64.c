@@ -51,6 +51,15 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
             continue;
         }
 
+        if (program_headers[i].p_type == 7) {
+            program_section_start = (elf64_get_start(buffer) - program_headers[i].p_memsz) & ~0xFFFULL;
+#if ARCH == X86_64
+            task->arch_task.tls_master_copy_start = (void *) program_section_start;
+            task->arch_task.tls_master_copy_size = program_headers[i].p_memsz;
+            task->arch_task.tls_master_copy_alignment = program_headers[i].p_align;
+#endif /* ARCH == X86_64 */
+        }
+
         assert(program_section_start < ((uintptr_t) buffer) + length);
 
         uintptr_t program_section_end = program_section_start + program_headers[i].p_memsz;
@@ -60,7 +69,8 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
         to_add->start = program_section_start & ~0xFFFULL;
         to_add->end = ((program_section_end + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         to_add->flags = VM_WRITE | VM_USER;
-        to_add->type = program_flags & VM_NO_EXEC ? VM_PROCESS_DATA : VM_PROCESS_TEXT;
+        to_add->type =
+            program_headers[i].p_type == 7 ? VM_PROCESS_TLS_MASTER_COPY : program_flags & VM_NO_EXEC ? VM_PROCESS_DATA : VM_PROCESS_TEXT;
 
         task->process->process_memory = add_vm_region(task->process->process_memory, to_add);
 

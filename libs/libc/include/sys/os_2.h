@@ -8,11 +8,21 @@
 extern "C" {
 #endif /* __cplusplus */
 
+struct initial_process_info {
+    void *tls_start;
+    unsigned long tls_size;
+    unsigned long tls_alignment;
+    void *stack_start;
+    size_t stack_size;
+};
+
 int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long push_onto_stack, int *tid_ptr);
 void exit_task(void) __attribute__((__noreturn__));
 int gettid(void);
 int os_mutex(int *__protected, int operation, int expected, int to_place);
 int tgkill(int tgid, int tid, int sig);
+int get_initial_process_info(struct initial_process_info *info);
+int set_thread_self_pointer(void *p);
 
 #ifdef __cplusplus
 }

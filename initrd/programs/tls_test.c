@@ -17,6 +17,8 @@ static void *do_stuff(void *ignore) {
 }
 
 int main() {
+    printf("Starting...\n");
+
     pthread_t id;
     pthread_create(&id, NULL, do_stuff, NULL);
 

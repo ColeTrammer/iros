@@ -1520,3 +1520,29 @@ void arch_sys_tgkill(struct task_state *task_state) {
 
     SYS_RETURN(signal_task(tgid, tid, signum));
 }
+
+void arch_sys_get_initial_process_info(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    struct initial_process_info *info = (struct initial_process_info *) task_state->cpu_state.rsi;
+    struct task *current = get_current_task();
+
+    info->tls_start = current->arch_task.tls_master_copy_start;
+    info->tls_size = current->arch_task.tls_master_copy_size;
+    info->tls_alignment = current->arch_task.tls_master_copy_alignment;
+
+    struct vm_region *stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
+    info->stack_start = (void *) stack->start;
+    info->stack_size = stack->end - stack->start;
+
+    SYS_RETURN(0);
+}
+
+void arch_sys_set_thread_self_pointer(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    void *thread_self_pointer = (void *) task_state->cpu_state.rsi;
+    get_current_task()->arch_task.user_thread_pointer = thread_self_pointer;
+
+    SYS_RETURN(0);
+}
