@@ -211,10 +211,17 @@ struct task *load_task(const char *file_name) {
     struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
     task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC | VM_STACK;
     task_stack->type = VM_TASK_STACK;
-    task_stack->start = find_first_kernel_vm_region()->start - 33 * PAGE_SIZE;
-    task_stack->end = task_stack->start + 32 * PAGE_SIZE;
+    task_stack->start = find_first_kernel_vm_region()->start - PAGE_SIZE - 2 * 1024 * 1024;
+    task_stack->end = task_stack->start + 2 * 1024 * 1024;
     task->process->process_memory = add_vm_region(task->process->process_memory, task_stack);
     map_page(task_stack->end - PAGE_SIZE, task_stack->flags);
+
+    struct vm_region *guard_page = calloc(1, sizeof(struct vm_region));
+    guard_page->flags = VM_PROT_NONE;
+    guard_page->type = VM_TASK_STACK_GUARD;
+    guard_page->start = task_stack->end;
+    guard_page->end = task_stack->start;
+    task->process->process_memory = add_vm_region(task->process->process_memory, guard_page);
 
     arch_load_task(task, elf64_get_entry(buffer));
     free(buffer);

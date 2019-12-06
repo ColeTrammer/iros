@@ -366,14 +366,18 @@ void arch_sys_execve(struct task_state *task_state) {
 
     /* Clone vm_regions so that they can be freed later */
     struct vm_region *__process_stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
+    struct vm_region *__process_guard = get_vm_last_region(current->process->process_memory, VM_TASK_STACK_GUARD);
     assert(__process_stack);
+    assert(__process_guard);
 
     struct vm_region *__kernel_stack = get_vm_region(current->process->process_memory, VM_KERNEL_STACK);
 
     struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
+    struct vm_region *process_guard = calloc(1, sizeof(struct vm_region));
     struct vm_region *kernel_stack = calloc(1, sizeof(struct vm_region));
 
     memcpy(process_stack, __process_stack, sizeof(struct vm_region));
+    memcpy(process_guard, __process_guard, sizeof(struct vm_region));
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
     task->tid = current->tid;
@@ -383,6 +387,7 @@ void arch_sys_execve(struct task_state *task_state) {
     process->ppid = current->process->ppid;
     process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
+    process->process_memory = add_vm_region(process->process_memory, process_guard);
     task->kernel_task = false;
     task->sched_state = READY;
     process->tty = current->process->tty;
@@ -1531,6 +1536,7 @@ void arch_sys_get_initial_process_info(struct task_state *task_state) {
     struct vm_region *stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
     info->stack_start = (void *) stack->start;
     info->stack_size = stack->end - stack->start;
+    info->guard_size = PAGE_SIZE;
 
     info->main_tid = current->tid;
 
@@ -1546,4 +1552,14 @@ void arch_sys_set_thread_self_pointer(struct task_state *task_state) {
     set_msr(MSR_FS_BASE, (uint64_t) thread_self_pointer);
 
     SYS_RETURN(0);
+}
+
+void arch_sys_mprotect(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    void *addr = (void *) task_state->cpu_state.rsi;
+    size_t length = (size_t) task_state->cpu_state.rdx;
+    int prot = (int) task_state->cpu_state.rcx;
+
+    SYS_RETURN(map_range_protections((uintptr_t) addr, length, prot));
 }

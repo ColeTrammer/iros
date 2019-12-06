@@ -141,6 +141,28 @@ static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t 
     }
 }
 
+void map_page_flags(uintptr_t virt_addr, uint64_t flags) {
+    uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
+    uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
+    uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
+    uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
+
+    uint64_t *pml4_entry = PML4_BASE + pml4_offset;
+    uint64_t *pdp_entry = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
+    uint64_t *pd_entry = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
+    uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
+
+    if (!(*pml4_entry & 1) || !(*pdp_entry & 1) || !(*pd_entry & 1) || !(*pt_entry & 1)) {
+        return; // Page is isn't mapped, so will be mapped later on page fault and we can ignore it for now
+    }
+
+    // FIXME: if VM_PROT_NONE is set, we need to store this on the page so that the physical address can be freed later
+    flags |= (flags & VM_PROT_NONE ? 0x01 : 0);
+    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC);
+    *pt_entry |= flags;
+    invlpg(virt_addr);
+}
+
 void map_page_info(struct virt_page_info *info) {
     uint64_t *pml4_entry = PML4_BASE + info->pml4_index;
     uint64_t *pdp_entry = PDP_BASE + (0x1000 * info->pml4_index) / sizeof(uint64_t) + info->pdp_index;

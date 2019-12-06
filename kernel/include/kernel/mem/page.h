@@ -30,6 +30,7 @@ void map_vm_region_flags(struct vm_region *region);
 void map_vm_region(struct vm_region *region);
 
 void map_page(uintptr_t virt_addr, uint64_t flags);
+void map_page_flags(uintptr_t virt_addr, uint64_t flags);
 void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags);
 void unmap_page(uintptr_t virt_addr);
 

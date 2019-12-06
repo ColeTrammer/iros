@@ -322,3 +322,4 @@ sys_call_table:
     .quad arch_sys_tgkill
     .quad arch_sys_get_initial_process_info
     .quad arch_sys_set_thread_self_pointer
+    .quad arch_sys_mprotect

@@ -303,10 +303,10 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
 
     if (addr == NULL) {
         if (type == VM_TASK_STACK) {
-            uintptr_t to_search = find_vm_region(VM_TASK_STACK)->start - 0x5000;
+            uintptr_t to_search = find_vm_region(VM_TASK_STACK)->start;
             struct vm_region *r;
-            while ((r = find_vm_region_in_range(to_search, to_search - len))) {
-                to_search = r->start - 5 * PAGE_SIZE;
+            while ((r = find_vm_region_in_range(to_search - len, len))) {
+                to_search = r->start;
             }
             addr = (void *) (to_search - len);
         } else {
@@ -335,6 +335,129 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
     debug_log("Mapping region: [ %#.16lX, %#.16lX ]\n", to_add->start, to_add->end);
 #endif /* MMAP_DEBUG */
     return to_add;
+}
+
+int map_range_protections(uintptr_t addr, size_t length, int prot) {
+    if (addr % PAGE_SIZE != 0) {
+        return -EINVAL;
+    }
+
+    if (length == 0) {
+        return 0;
+    }
+
+    length = ((length + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    int flags = prot == PROT_NONE ? VM_PROT_NONE : ((prot & PROT_WRITE ? VM_WRITE : 0) | VM_USER | (!(prot & PROT_EXEC) ? VM_NO_EXEC : 0));
+
+    struct process *process = get_current_task()->process;
+    spin_lock(&process->lock);
+
+    struct vm_region *r;
+    while ((r = find_vm_region_in_range(addr, addr + length))) {
+        if (r->start < addr && r->end > addr + length) {
+#ifdef MMAP_DEBUG
+            debug_log("Protecting region (split): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+            if (r->type != VM_PROCESS_ANON_MAPPING) {
+                break;
+            }
+
+            struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
+            to_add->start = addr;
+            to_add->end = addr + length;
+            to_add->flags = (r->flags & VM_STACK) | flags;
+            to_add->type = r->type;
+            process->process_memory = add_vm_region(process->process_memory, to_add);
+
+            for (uintptr_t i = addr; i < addr + length; i += PAGE_SIZE) {
+                map_page_flags(i, to_add->flags);
+            }
+
+            struct vm_region *to_add_last = calloc(1, sizeof(struct vm_region));
+            to_add_last->start = addr + length;
+            to_add_last->end = r->end;
+            to_add_last->flags = r->flags;
+            to_add_last->type = r->type;
+            process->process_memory = add_vm_region(process->process_memory, to_add_last);
+
+            r->end = addr;
+            break;
+        }
+
+        if (r->start < addr) {
+#ifdef MMAP_DEBUG
+            debug_log("Protecting region (start): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+            assert(r->end >= addr);
+            // We can't do partial unmaps for non anonymous mappings yet
+            if (r->type != VM_PROCESS_ANON_MAPPING) {
+                goto map_range_protections_start_finish;
+            }
+
+            struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
+            to_add->start = addr;
+            to_add->end = r->end;
+            to_add->flags = (r->flags & VM_STACK) | flags;
+            to_add->type = r->type;
+            process->process_memory = add_vm_region(process->process_memory, to_add);
+
+            while (r->end != addr) {
+                r->end -= PAGE_SIZE;
+                map_page_flags(r->end, to_add->flags);
+            }
+
+        map_range_protections_start_finish:
+            length -= (r->end - addr);
+            addr = r->end;
+            continue;
+        }
+
+        if (r->end > addr + length) {
+#ifdef MMAP_DEBUG
+            debug_log("Protecting region (end): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+            assert(r->start <= addr + length);
+            if (r->type != VM_PROCESS_ANON_MAPPING) {
+                break;
+            }
+
+            struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
+            to_add->start = r->start;
+            to_add->end = addr + length;
+            to_add->flags = (r->flags & VM_STACK) | flags;
+            to_add->type = r->type;
+            process->process_memory = add_vm_region(process->process_memory, to_add);
+
+            while (r->start != addr + length) {
+                map_page_flags(r->start, to_add->flags);
+                r->start += PAGE_SIZE;
+            }
+
+            // We are definately at the end
+            break;
+        }
+
+#ifdef MMAP_DEBUG
+        debug_log("Protecting region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
+#endif /* MMAP_DEBUG */
+
+        if (r->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+            fs_munmap((void *) r->start, r->start + r->end);
+        } else {
+            r->flags = (r->flags & VM_STACK) | flags;
+
+            for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
+                map_page_flags(i, r->flags);
+            }
+        }
+    }
+
+    spin_unlock(&process->lock);
+    return 0;
 }
 
 void remove_vm_pages_start(size_t n, uint64_t type) {
@@ -415,6 +538,10 @@ struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
 }
 
 struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
+    if (start == end) {
+        return NULL;
+    }
+
     struct vm_region *region = get_current_task()->process->process_memory;
 
     while (region) {
