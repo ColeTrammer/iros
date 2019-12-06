@@ -14,6 +14,7 @@
 // #define PAGE_FAULT_DEBUG
 
 void init_irq_handlers() {
+    register_irq_handler(&handle_divide_by_zero, 0, false, false);
     register_irq_handler(&handle_invalid_opcode_entry, 6, false, false);
     register_irq_handler(&handle_device_not_available_entry, 7, false, false);
     register_irq_handler(&handle_double_fault_entry, 8, false, true);
@@ -32,6 +33,24 @@ void handle_double_fault() {
     abort();
 }
 
+void handle_divide_by_zero(struct task_state *task_state) {
+    struct task *current = get_current_task();
+    debug_log("%d #DE: [ %#.16lX ]\n", current->process->pid, task_state->stack_state.rip);
+
+    if (!current->in_kernel) {
+        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
+        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        task_do_sig(current, SIGFPE); // You can't block this so we don't check
+
+        // If we get here, the task that faulted was just sent a terminating signal
+        sched_run_next();
+    }
+
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Divide by Zero Error");
+    abort();
+}
+
 void handle_general_protection_fault(struct task_interrupt_state *task_state) {
     struct task *current = get_current_task();
     debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rip, task_state->error_code);
@@ -41,7 +60,7 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
         memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
-        // If we get here, the task that faulted was just send a terminating signal
+        // If we get here, the task that faulted was just sent a terminating signal
         sched_run_next();
     }
 
@@ -75,7 +94,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
         memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
-        // If we get here, the task that faulted was just send a terminating signal
+        // If we get here, the task that faulted was just sent a terminating signal
         sched_run_next();
     }
 
