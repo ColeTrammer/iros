@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/os_2.h>
 #include <unistd.h>
@@ -64,8 +65,6 @@ pthread_t pthread_self(void) {
 
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
                    void *__restrict arg) {
-    (void) attr;
-
     if (thread == NULL) {
         return EINVAL;
     }
@@ -75,9 +74,19 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
         return EAGAIN;
     }
 
+    if (attr && *attr == -1) {
+        return EINVAL;
+    }
+
     struct thread_control_block *to_add = __allocate_thread_control_block();
     to_add->stack_start = stack;
     to_add->stack_len = 32 * 0x1000;
+
+    if (attr) {
+        memcpy(&to_add->attributes, attr, sizeof(pthread_attr_t));
+    } else {
+        pthread_attr_init(&to_add->attributes);
+    }
 
     pthread_spin_lock(&threads_lock);
     __add_thread(to_add, __threads);
@@ -94,6 +103,10 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
 
     *thread = to_add->id;
     return 0;
+}
+
+int pthread_equal(pthread_t t1, pthread_t t2) {
+    return t1 == t2;
 }
 
 int pthread_join(pthread_t id, void **value_ptr) {
@@ -115,7 +128,7 @@ int pthread_join(pthread_t id, void **value_ptr) {
     }
 
     if (target) {
-        if (target->joining_thread != 0) {
+        if (target->joining_thread != 0 || !(target->attributes == PTHREAD_CREATE_JOINABLE)) {
             ret = EINVAL;
         } else {
             target->joining_thread = self_id;
@@ -153,8 +166,38 @@ int pthread_kill(pthread_t thread, int sig) {
 
 __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
     struct thread_control_block *thread = get_self();
+    if (thread->attributes & PTHREAD_CREATE_DETACHED) {
+        pthread_spin_lock(&threads_lock);
+
+        if (thread == __threads) {
+            __threads = thread->next;
+        }
+
+        __remove_thread(thread);
+        pthread_spin_unlock(&threads_lock);
+
+        void *stack_start = thread->stack_start;
+        size_t stack_len = thread->stack_len;
+
+        __free_thread_control_block(thread);
+#if ARCH == X86_64
+        // Call munmap and task_exit
+        asm volatile("movq $46, %%rdi\n"
+                     "movq %0, %%rsi\n"
+                     "movq %1, %%rdx\n"
+                     "int $0x80\n"
+                     "movq $56, %%rdi\n"
+                     "int $0x80"
+                     :
+                     : "r"(stack_start), "r"(stack_len)
+                     : "rdi", "rsi", "rdx", "rax", "memory");
+#endif /* ARCH == X86_64 */
+        __builtin_unreachable();
+    }
+
     thread->exit_value = value_ptr;
     thread->has_exited = 1;
 
     exit_task();
+    __builtin_unreachable();
 }

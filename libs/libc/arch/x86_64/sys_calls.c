@@ -870,7 +870,7 @@ __attribute__((__noreturn__)) void exit_task(void) {
                  "int $0x80"
                  :
                  :
-                 : "rdi", "memory");
+                 : "rdi", "rsi", "rdx", "memory");
     __builtin_unreachable();
 }
 

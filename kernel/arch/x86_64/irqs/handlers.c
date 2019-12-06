@@ -18,8 +18,9 @@ void init_irq_handlers() {
     register_irq_handler(&handle_invalid_opcode_entry, 6, false, false);
     register_irq_handler(&handle_device_not_available_entry, 7, false, false);
     register_irq_handler(&handle_double_fault_entry, 8, false, true);
+    register_irq_handler(&handle_stack_fault, 12, false, true);
     register_irq_handler(&handle_general_protection_fault_entry, 13, false, false);
-    register_irq_handler(&handle_page_fault_entry, 14, false, false);
+    register_irq_handler(&handle_page_fault_entry, 14, false, true);
     register_irq_handler(&handle_fpu_exception_entry, 16, false, false);
 
     register_irq_handler(&sys_call_entry, 128, true, false);
@@ -48,6 +49,25 @@ void handle_divide_by_zero(struct task_state *task_state) {
 
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Divide by Zero Error");
+    abort();
+}
+
+void handle_stack_fault(struct task_interrupt_state *task_state) {
+    struct task *current = get_current_task();
+    debug_log("%d #SF: [ %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rip, task_state->error_code);
+
+    if (!current->in_kernel) {
+        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
+        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        task_do_sig(current, SIGSEGV); // You can't block this so we don't check
+
+        // If we get here, the task that faulted was just sent a terminating signal
+        sched_run_next();
+    }
+
+    // We shouldn't get here unless SIGSEGV is blocked???
+    dump_registers_to_screen();
+    printf("\n\033[31m%s: Error: %lX\033[0m\n", "Stack Fault", task_state->error_code);
     abort();
 }
 

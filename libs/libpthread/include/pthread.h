@@ -8,6 +8,9 @@
 #include <bits/pthread_t.h>
 #include <sched.h>
 
+#define PTHREAD_CREATE_DETACHED 1
+#define PTHREAD_CREATE_JOINABLE 0
+
 #define PTHREAD_MUTEX_INITIALIZER \
     { 0 }
 
@@ -18,6 +21,7 @@ extern "C" {
 pthread_t pthread_self(void);
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
                    void *__restrict arg);
+int pthread_equal(pthread_t t1, pthread_t t2);
 int pthread_join(pthread_t thread, void **value_ptr);
 int pthread_kill(pthread_t thread, int sig);
 void pthread_exit(void *value_ptr) __attribute__((__noreturn__));
@@ -34,6 +38,11 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex);
 int pthread_mutex_unlock(pthread_mutex_t *mutex);
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
+int pthread_attr_destroy(pthread_attr_t *attr);
+int pthread_attr_init(pthread_attr_t *attr);
+int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate);
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+
 #ifdef __libc_internal
 
 struct thread_control_block {
@@ -46,6 +55,7 @@ struct thread_control_block {
     pthread_t joining_thread;
     int has_exited;
     void *exit_value;
+    pthread_attr_t attributes;
 };
 
 extern struct initial_process_info __initial_process_info;

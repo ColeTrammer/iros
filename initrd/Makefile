@@ -5,8 +5,8 @@ LDFLAGS?=
 LIBS?=
 
 # Include options that should always be set
-CFLAGS:=$(CFLAGS) -Werror -Wall -Wextra -D_OS_2_SOURCE
-CPPFLAGS:=$(CPPFLAGS) -DARCH=$(HOSTARCH)
+CFLAGS:=$(CFLAGS)
+CPPFLAGS:=$(CPPFLAGS) -DARCH=$(HOSTARCH) -Werror -Wall -Wextra -D_OS_2_SOURCE
 LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
 CXX_LIBS:=$(CXX_LIBS) -lc -lgraphics -lpthread
 C_LIBS:=$(C_LIBS) -lpthread
@@ -29,6 +29,7 @@ PROGRAMS=\
 $(BUILDDIR)/initrd/programs/alarm_test \
 $(BUILDDIR)/initrd/programs/aligned_alloc_test \
 $(BUILDDIR)/initrd/programs/broken \
+$(BUILDDIR)/initrd/programs/detached_thread_test \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
