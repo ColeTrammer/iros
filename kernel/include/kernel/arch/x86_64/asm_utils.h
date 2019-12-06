@@ -128,4 +128,29 @@ static inline void fninit(void) {
     asm volatile("fninit" : : : "memory");
 }
 
+#define MSR_FS_BASE 0xC0000100U
+
+static inline uint64_t get_msr(uint32_t msr) {
+    uint32_t low;
+    uint32_t high;
+    asm volatile("movl %2, %%ecx\n"
+                 "rdmsr\n"
+                 "movl %%eax, %0\n"
+                 "movl %%edx, %1\n"
+                 : "=r"(low), "=r"(high)
+                 : "r"(msr)
+                 : "rax", "rcx", "rdx", "memory");
+    return ((uint64_t) low) | ((uint64_t) high) << 32ULL;
+}
+
+static inline void set_msr(uint32_t msr, uint64_t value) {
+    asm volatile("movl %0, %%ecx\n"
+                 "movl %1, %%eax\n"
+                 "movl %2, %%edx\n"
+                 "wrmsr"
+                 :
+                 : "r"(msr), "r"((uint32_t)(value & 0xFFFFFFFFU)), "r"((uint32_t)(value >> 32))
+                 : "rax", "rcx", "rdx", "memory");
+}
+
 #endif
