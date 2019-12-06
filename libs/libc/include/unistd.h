@@ -65,6 +65,7 @@ int execvp(const char *file, char *const argv[]);
 int execvpe(const char *file, char *const argv[], char *const envp[]);
 
 int isatty(int fd);
+int tcgetpgrp(int fd);
 int tcsetpgrp(int fd, pid_t pgid);
 int ftruncate(int fd, off_t length);
 int dup(int oldfd);

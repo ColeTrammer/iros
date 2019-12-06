@@ -6,6 +6,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef int wchar_t;
+#define wchar_t wchar_t
 
 #ifdef __cplusplus
 }
