@@ -210,6 +210,11 @@ void *aligned_alloc(size_t alignment, size_t n, int line, const char *func) {
 #else
 void *aligned_alloc(size_t alignment, size_t n) {
 #endif /* defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG) */
+    // Maybe this should error instead...
+    if (alignment == 0) {
+        return malloc(n);
+    }
+
     if (n == 0) {
         return NULL;
     }

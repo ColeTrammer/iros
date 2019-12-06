@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 static __thread int a;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -30,5 +31,7 @@ int main() {
     pthread_mutex_unlock(&mutex);
 
     pthread_join(id, NULL);
+
+    printf("T1 a=%d\n", a);
     return 0;
 }

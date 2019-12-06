@@ -34,6 +34,28 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex);
 int pthread_mutex_unlock(pthread_mutex_t *mutex);
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
+#ifdef __libc_internal
+
+struct thread_control_block {
+    struct thread_control_block *self;
+    struct thread_control_block *next;
+    struct thread_control_block *prev;
+    void *stack_start;
+    size_t stack_len;
+    pthread_t id;
+    pthread_t joining_thread;
+    int has_exited;
+    void *exit_value;
+};
+
+extern struct initial_process_info __initial_process_info;
+extern struct thread_control_block *__threads;
+
+struct thread_control_block *__allocate_thread_control_block();
+void __free_thread_control_block(struct thread_control_block *block);
+
+#endif /* __libc_internal */
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

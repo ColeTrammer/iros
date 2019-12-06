@@ -848,7 +848,7 @@ clock_t times(struct tms *buf) {
     return ret;
 }
 
-int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long push_onto_stack, int *tid_ptr) {
+int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long push_onto_stack, int *tid_ptr, void *thread_self_pointer) {
     int ret;
     asm volatile("movq $55, %%rdi\n"
                  "movq %1, %%rsi\n"
@@ -856,10 +856,11 @@ int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long p
                  "movq %3, %%rcx\n"
                  "movq %4, %%r8\n"
                  "movq %5, %%r9\n"
+                 "movq %6, %%r10\n"
                  "int $0x80\n"
                  "movl %%eax, %0\n"
                  : "=r"(ret)
-                 : "r"(rip), "r"(rsp), "r"(arg), "r"(push_onto_stack), "r"(tid_ptr)
+                 : "r"(rip), "r"(rsp), "r"(arg), "r"(push_onto_stack), "r"(tid_ptr), "r"(thread_self_pointer)
                  : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "memory");
     return ret;
 }

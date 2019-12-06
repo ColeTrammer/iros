@@ -14,9 +14,10 @@ struct initial_process_info {
     unsigned long tls_alignment;
     void *stack_start;
     size_t stack_size;
+    int main_tid;
 };
 
-int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long push_onto_stack, int *tid_ptr);
+int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long push_onto_stack, int *tid_ptr, void *thread_self_pointer);
 void exit_task(void) __attribute__((__noreturn__));
 int gettid(void);
 int os_mutex(int *__protected, int operation, int expected, int to_place);

@@ -1398,8 +1398,9 @@ void arch_sys_create_task(struct task_state *task_state) {
     void *arg = (void *) task_state->cpu_state.rcx;
     uintptr_t push_onto_stack = (uintptr_t) task_state->cpu_state.r8;
     int *tid_ptr = (int *) task_state->cpu_state.r9;
+    void *thread_self_pointer = (void *) task_state->cpu_state.r10;
 
-    debug_log("Creating task: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+    debug_log("Creating task: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", rip, rsp, (uintptr_t) tid_ptr, (uintptr_t) thread_self_pointer);
 
     struct task *current = get_current_task();
     proc_bump_process(current->process);
@@ -1411,13 +1412,11 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->sched_state = READY;
     task->tid = get_next_tid();
 
-    debug_log("TID: [ %d ]\n", task->tid);
-
     task_align_fpu(task);
 
     task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     task->arch_task.setup_kernel_stack = true;
-    task->arch_task.user_thread_pointer = current->arch_task.user_thread_pointer;
+    task->arch_task.user_thread_pointer = thread_self_pointer;
 
     task->arch_task.task_state.stack_state.cs = current->arch_task.task_state.stack_state.cs;
     task->arch_task.task_state.stack_state.rip = rip;

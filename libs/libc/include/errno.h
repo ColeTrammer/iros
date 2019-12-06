@@ -92,10 +92,6 @@ extern int errno;
 
 #define errno errno
 
-#ifdef __libc_internal
-void init_errno();
-#endif
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

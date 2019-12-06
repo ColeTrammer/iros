@@ -36,6 +36,11 @@ struct process {
 
     struct tms times;
 
+    // TLS info
+    void *tls_master_copy_start;
+    size_t tls_master_copy_size;
+    size_t tls_master_copy_alignment;
+
     struct sigaction sig_state[_NSIG];
     spinlock_t lock;
 };
