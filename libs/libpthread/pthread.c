@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,23 +70,31 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
         return EINVAL;
     }
 
-    void *stack = mmap(NULL, 32 * 0x1000, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_STACK, 0, 0);
-    if (stack == MAP_FAILED) {
-        return EAGAIN;
-    }
-
-    if (attr && *attr == -1) {
+    if (attr != NULL && attr->__flags == -1) {
         return EINVAL;
     }
 
     struct thread_control_block *to_add = __allocate_thread_control_block();
-    to_add->stack_start = stack;
-    to_add->stack_len = 32 * 0x1000;
 
-    if (attr) {
+    if (attr != NULL) {
         memcpy(&to_add->attributes, attr, sizeof(pthread_attr_t));
     } else {
         pthread_attr_init(&to_add->attributes);
+    }
+
+    // Round everything up to PAGE_SIZE intervals
+    to_add->attributes.__stack_len = ((to_add->attributes.__stack_len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    to_add->attributes.__guard_size = ((to_add->attributes.__guard_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    uint8_t *stack = to_add->attributes.__stack_start != NULL ? to_add->attributes.__stack_start
+                                                              : mmap(NULL, to_add->attributes.__stack_len + to_add->attributes.__guard_size,
+                                                                     PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_STACK, 0, 0);
+    if (stack == MAP_FAILED) {
+        return EAGAIN;
+    }
+
+    if (to_add->attributes.__guard_size != 0 && to_add->attributes.__stack_start == NULL) {
+        mprotect(stack + to_add->attributes.__stack_len, to_add->attributes.__guard_size, PROT_NONE);
     }
 
     pthread_spin_lock(&threads_lock);
@@ -94,7 +103,8 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
         __threads = to_add;
     }
 
-    int ret = create_task((uintptr_t) start_routine, (uintptr_t) stack + 32 * 0x1000, arg, (uintptr_t) &pthread_exit, &to_add->id, to_add);
+    int ret = create_task((uintptr_t) start_routine, (uintptr_t) stack + to_add->attributes.__stack_len, arg, (uintptr_t) &pthread_exit,
+                          &to_add->id, to_add);
     if (ret < 0) {
         return EAGAIN;
     }
@@ -128,7 +138,7 @@ int pthread_join(pthread_t id, void **value_ptr) {
     }
 
     if (target) {
-        if (target->joining_thread != 0 || !(target->attributes == PTHREAD_CREATE_JOINABLE)) {
+        if (target->joining_thread != 0 || (target->attributes.__flags & PTHREAD_CREATE_DETACHED)) {
             ret = EINVAL;
         } else {
             target->joining_thread = self_id;
@@ -145,7 +155,7 @@ int pthread_join(pthread_t id, void **value_ptr) {
             }
 
             __remove_thread(target);
-            munmap(target->stack_start, target->stack_len);
+            munmap(target->attributes.__stack_start, target->attributes.__stack_len + target->attributes.__guard_size);
             __free_thread_control_block(target);
 
             if (value_ptr) {
@@ -166,7 +176,7 @@ int pthread_kill(pthread_t thread, int sig) {
 
 __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
     struct thread_control_block *thread = get_self();
-    if (thread->attributes & PTHREAD_CREATE_DETACHED) {
+    if (thread->attributes.__flags & PTHREAD_CREATE_DETACHED) {
         pthread_spin_lock(&threads_lock);
 
         if (thread == __threads) {
@@ -176,8 +186,16 @@ __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
         __remove_thread(thread);
         pthread_spin_unlock(&threads_lock);
 
-        void *stack_start = thread->stack_start;
-        size_t stack_len = thread->stack_len;
+        // Possibly we are supposed to deallocate this stack, although it is unclear
+        // whether to do so is required, and if munmap(2) or free(3) should be used
+        if (thread->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK) {
+            exit_task();
+            __builtin_unreachable();
+        }
+
+        void *stack_start = thread->attributes.__stack_start;
+        size_t stack_len = thread->attributes.__stack_len;
+        size_t guard_len = thread->attributes.__guard_size;
 
         __free_thread_control_block(thread);
 #if ARCH == X86_64
@@ -189,7 +207,7 @@ __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
                      "movq $56, %%rdi\n"
                      "int $0x80"
                      :
-                     : "r"(stack_start), "r"(stack_len)
+                     : "r"(stack_start), "r"(stack_len + guard_len)
                      : "rdi", "rsi", "rdx", "rax", "memory");
 #endif /* ARCH == X86_64 */
         __builtin_unreachable();

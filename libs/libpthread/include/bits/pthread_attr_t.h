@@ -5,7 +5,12 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef int pthread_attr_t;
+typedef struct {
+    int __flags;
+    void *__stack_start;
+    unsigned long __stack_len;
+    unsigned long __guard_size;
+} pthread_attr_t;
 
 #ifdef __cplusplus
 }

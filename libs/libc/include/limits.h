@@ -14,4 +14,13 @@
 
 #define ULLONG_MAX 18446744073709551615ULL
 
+#ifndef __is_kernel
+
+#define PAGESIZE  0x1000
+#define PAGE_SIZE PAGESIZE
+
+#define PTHREAD_STACK_MIN (PAGE_SIZE * 4)
+
+#endif /* __is_kernel */
+
 #endif /* _LIMITS_H */

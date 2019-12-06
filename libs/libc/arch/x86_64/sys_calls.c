@@ -926,3 +926,17 @@ int set_thread_self_pointer(void *p) {
                  : "rdi", "rsi", "rax", "memory");
     return ret;
 }
+
+int mprotect(void *addr, size_t length, int prot) {
+    int ret;
+    asm volatile("movq $62, %%rdi\n"
+                 "movq %1, %%rsi\n"
+                 "movq %2, %%rdx\n"
+                 "movl %3, %%ecx\n"
+                 "int $0x80\n"
+                 "movl %%eax, %0"
+                 : "=r"(ret)
+                 : "r"(addr), "r"(length), "r"(prot)
+                 : "rdi", "rsi", "rdx", "rcx", "rax", "memory");
+    __SYSCALL_TO_ERRNO(ret);
+}

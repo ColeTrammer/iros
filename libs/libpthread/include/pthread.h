@@ -8,8 +8,14 @@
 #include <bits/pthread_t.h>
 #include <sched.h>
 
+#define PTHREAD_SCOPE_PROCESS 0
+#define PTHREAD_SCOPE_SYSTEM  0
+
 #define PTHREAD_CREATE_DETACHED 1
 #define PTHREAD_CREATE_JOINABLE 0
+
+#define PTHREAD_EXPLICIT_SCHED 2
+#define PTHREAD_INHERIT_SCHED  0
 
 #define PTHREAD_MUTEX_INITIALIZER \
     { 0 }
@@ -40,20 +46,33 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
 int pthread_attr_destroy(pthread_attr_t *attr);
 int pthread_attr_init(pthread_attr_t *attr);
-int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate);
+int pthread_attr_getdetachstate(const pthread_attr_t *__restrict attr, int *__restrict detachstate);
+int pthread_attr_getguardsize(const pthread_attr_t *__restrict attr, size_t *__restrict guardsize);
+int pthread_attr_getinheritsched(const pthread_attr_t *__restrict attr, int *__restrict inheritsched);
+int pthread_attr_getscope(pthread_attr_t *__restrict attr, int *__restrict scope);
+int pthread_attr_getstack(const pthread_attr_t *__restrict attr, void **__restrict stackaddr, size_t *__restrict stacksize);
+int pthread_attr_getstackaddr(const pthread_attr_t *__restrict attr, void **__restrict stackaddr);
+int pthread_attr_getstacksize(const pthread_attr_t *__restrict attr, size_t *__restrict stacksize);
 int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize);
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched);
+int pthread_attr_setscope(const pthread_attr_t *attr, int scope);
+int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr, size_t stacksize);
+int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr);
+int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize);
 
 #ifdef __libc_internal
+
+#define __PTHREAD_MAUALLY_ALLOCATED_STACK 2
 
 struct thread_control_block {
     struct thread_control_block *self;
     struct thread_control_block *next;
     struct thread_control_block *prev;
-    void *stack_start;
-    size_t stack_len;
     pthread_t id;
     pthread_t joining_thread;
     int has_exited;
+    int concurrency;
     void *exit_value;
     pthread_attr_t attributes;
 };

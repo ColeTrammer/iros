@@ -13,7 +13,8 @@ struct initial_process_info {
     unsigned long tls_size;
     unsigned long tls_alignment;
     void *stack_start;
-    size_t stack_size;
+    unsigned long stack_size;
+    unsigned long guard_size;
     int main_tid;
 };
 

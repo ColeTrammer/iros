@@ -38,6 +38,7 @@ struct thread_control_block *__allocate_thread_control_block() {
     block->prev = NULL;
     block->exit_value = NULL;
     block->has_exited = false;
+    block->concurrency = 0;
     block->joining_thread = 0;
     return block;
 }
@@ -61,8 +62,10 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     //        which could set errno if it fails.
     //        This should be avoided as tls isn't enabled yet
     __threads = __allocate_thread_control_block();
-    __threads->stack_start = __initial_process_info.stack_start;
-    __threads->stack_len = __initial_process_info.stack_size;
+    __threads->attributes.__stack_start = __initial_process_info.stack_start;
+    __threads->attributes.__stack_len = __initial_process_info.stack_size;
+    __threads->attributes.__guard_size = __initial_process_info.guard_size;
+    __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED;
     __threads->id = __initial_process_info.main_tid;
 
     set_thread_self_pointer(__threads);
