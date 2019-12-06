@@ -8,9 +8,7 @@ namespace LIIM {
 
 template<typename T> class Bitmap {
 public:
-    Bitmap(int num_bits) {
-        m_bits = new T[(num_bits + sizeof(T) * CHAR_BIT - 1) / (sizeof(T) * CHAR_BIT)];
-    }
+    Bitmap(int num_bits) { m_bits = new T[(num_bits + sizeof(T) * CHAR_BIT - 1) / (sizeof(T) * CHAR_BIT)]; }
 
     template<typename U> static std::shared_ptr<Bitmap<U>> wrap(U* bits, int num_bits) {
         auto bitmap = std::make_shared<Bitmap<U>>();
@@ -49,15 +47,10 @@ public:
         m_bits[long_index] ^= (1UL << bit_index);
     }
 
-    T* bitmap() {
-        return m_bits;
-    }
-    const T* bitmap() const {
-        return m_bits;
-    }
+    T* bitmap() { return m_bits; }
+    const T* bitmap() const { return m_bits; }
 
-    Bitmap() {
-    }
+    Bitmap() {}
 
 private:
     bool m_should_deallocate { true };

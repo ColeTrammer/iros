@@ -8,14 +8,11 @@
 namespace LIIM {
 
 template<typename K, typename V> struct HashMapObj {
-    HashMapObj(const K& key, const V& val) : m_key(key), m_value(val) {
-    }
+    HashMapObj(const K& key, const V& val) : m_key(key), m_value(val) {}
 
-    ~HashMapObj() {
-    }
+    ~HashMapObj() {}
 
-    HashMapObj(const HashMapObj& other) : HashMapObj(other.m_key, other.m_value) {
-    }
+    HashMapObj(const HashMapObj& other) : HashMapObj(other.m_key, other.m_value) {}
 
     K m_key;
     V m_value;
@@ -29,8 +26,7 @@ public:
         }
     }
 
-    ~HashMap() {
-    }
+    ~HashMap() {}
 
     void put(const K& key, const V& val) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
@@ -81,7 +77,9 @@ public:
 
     void remove(const K& key) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
-        m_buckets[bucket].remove_if([&](const auto& obj) -> bool { return obj.m_key == key; });
+        m_buckets[bucket].remove_if([&](const auto& obj) -> bool {
+            return obj.m_key == key;
+        });
     }
 
 private:

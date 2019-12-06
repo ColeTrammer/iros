@@ -14,8 +14,7 @@ struct Message {
     enum class Type { Invalid, CreateWindowRequest, CreateWindowResponse, RemoveWindowRequest, RemoveWindowResponse };
 
     struct CreateWindowRequest {
-        CreateWindowRequest(int xx, int yy, int wwidth, int hheight) : x(xx), y(yy), width(wwidth), height(hheight) {
-        }
+        CreateWindowRequest(int xx, int yy, int wwidth, int hheight) : x(xx), y(yy), width(wwidth), height(hheight) {}
 
         static std::shared_ptr<Message> create(int x, int y, int width, int height) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(CreateWindowRequest));
@@ -75,9 +74,7 @@ struct Message {
         bool success;
     };
 
-    size_t total_size() const {
-        return sizeof(Message) + data_len;
-    };
+    size_t total_size() const { return sizeof(Message) + data_len; };
 
     Type type { Type::Invalid };
     int data_len { 0 };

@@ -13,8 +13,7 @@
 #define CTRL_KEY(c) ((c) & (0x1F))
 #define IS_CTRL(c)  (!((c) & ~0x1F))
 
-TTY::TTY(VgaBuffer& buffer) : m_buffer(buffer) {
-}
+TTY::TTY(VgaBuffer& buffer) : m_buffer(buffer) {}
 
 void TTY::scroll_up() {
     if (m_above_rows.size() == 0) {

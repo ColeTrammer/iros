@@ -31,12 +31,9 @@ public:
         close(font_file);
     }
 
-    ~Font() {
-    }
+    ~Font() {}
 
-    std::shared_ptr<Bitmap<uint8_t>> get_for_character(int c) {
-        return m_font_map.get_or(c, m_unknown);
-    }
+    std::shared_ptr<Bitmap<uint8_t>> get_for_character(int c) { return m_font_map.get_or(c, m_unknown); }
 
 private:
     std::shared_ptr<Bitmap<uint8_t>> m_unknown;

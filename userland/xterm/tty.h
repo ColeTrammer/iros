@@ -7,8 +7,7 @@ class VgaBuffer;
 class TTY {
 public:
     TTY(VgaBuffer&);
-    ~TTY() {
-    }
+    ~TTY() {}
 
     void scroll_up();
     void scroll_down();

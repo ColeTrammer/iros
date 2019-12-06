@@ -7,14 +7,11 @@ namespace LIIM {
 
 template<typename T> class UniquePtr {
 public:
-    explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {
-    }
+    explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {}
 
     UniquePtr(const UniquePtr& other) = delete;
 
-    ~UniquePtr() {
-        delete m_ptr;
-    }
+    ~UniquePtr() { delete m_ptr; }
 
     T& operator=(const UniquePtr& other) = delete;
 
@@ -38,12 +35,8 @@ public:
         return m_ptr;
     }
 
-    bool operator!() {
-        return !m_ptr;
-    }
-    operator bool() {
-        return !!m_ptr;
-    }
+    bool operator!() { return !m_ptr; }
+    operator bool() { return !!m_ptr; }
 
 private:
     T* m_ptr;
@@ -51,33 +44,21 @@ private:
 
 template<typename T> class SharedPtrControlBlock {
 public:
-    explicit SharedPtrControlBlock(T* ptr) : m_ptr(ptr), m_ref_count(1) {
-        assert(m_ptr);
-    }
+    explicit SharedPtrControlBlock(T* ptr) : m_ptr(ptr), m_ref_count(1) { assert(m_ptr); }
 
     ~SharedPtrControlBlock() {
         assert(m_ref_count == 0);
         delete m_ptr;
     }
 
-    int ref_count() const {
-        return m_ref_count;
-    }
+    int ref_count() const { return m_ref_count; }
 
-    void ref() {
-        m_ref_count++;
-    }
+    void ref() { m_ref_count++; }
 
-    void deref() {
-        m_ref_count--;
-    }
+    void deref() { m_ref_count--; }
 
-    T* ptr() {
-        return m_ptr;
-    }
-    const T* ptr() const {
-        return m_ptr;
-    }
+    T* ptr() { return m_ptr; }
+    const T* ptr() const { return m_ptr; }
 
 private:
     int m_ref_count;
@@ -86,11 +67,9 @@ private:
 
 template<typename T> class SharedPtr {
 public:
-    explicit SharedPtr(T* ptr) : m_control_block(new SharedPtrControlBlock(ptr)) {
-    }
+    explicit SharedPtr(T* ptr) : m_control_block(new SharedPtrControlBlock(ptr)) {}
 
-    SharedPtr() {
-    }
+    SharedPtr() {}
 
     ~SharedPtr() {
         assert(m_control_block);
@@ -150,12 +129,8 @@ public:
         return ptr();
     }
 
-    bool operator!() {
-        return !ptr();
-    }
-    operator bool() {
-        return !!ptr();
-    }
+    bool operator!() { return !ptr(); }
+    operator bool() { return !!ptr(); }
 
 private:
     SharedPtrControlBlock<T>* m_control_block { nullptr };

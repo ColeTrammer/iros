@@ -10,16 +10,11 @@ class Color;
 
 class PixelBuffer {
 public:
-    PixelBuffer() {
-        m_should_deallocate = false;
-    }
+    PixelBuffer() { m_should_deallocate = false; }
 
-    PixelBuffer(int width, int height) : PixelBuffer(new uint32_t[width * height], width, height) {
-        m_should_deallocate = true;
-    }
+    PixelBuffer(int width, int height) : PixelBuffer(new uint32_t[width * height], width, height) { m_should_deallocate = true; }
 
-    PixelBuffer(const Rect& rect) : PixelBuffer(rect.width(), rect.height()) {
-    }
+    PixelBuffer(const Rect& rect) : PixelBuffer(rect.width(), rect.height()) {}
 
     ~PixelBuffer() {
         if (m_should_deallocate && m_pixels) {
@@ -32,22 +27,12 @@ public:
         return std::make_shared<PixelBuffer>(pixels, width, height);
     }
 
-    int width() const {
-        return m_width;
-    }
-    int height() const {
-        return m_height;
-    }
-    int size_in_bytes() const {
-        return m_width * m_height * sizeof(uint32_t);
-    }
+    int width() const { return m_width; }
+    int height() const { return m_height; }
+    int size_in_bytes() const { return m_width * m_height * sizeof(uint32_t); }
 
-    uint32_t* pixels() {
-        return m_pixels;
-    }
-    const uint32_t* pixels() const {
-        return m_pixels;
-    }
+    uint32_t* pixels() { return m_pixels; }
+    const uint32_t* pixels() const { return m_pixels; }
 
     void clear();
 
@@ -59,8 +44,7 @@ public:
         return m_pixels[y * m_width + x];
     }
 
-    PixelBuffer(uint32_t* pixels, int width, int height) : m_width(width), m_height(height), m_pixels(pixels) {
-    }
+    PixelBuffer(uint32_t* pixels, int width, int height) : m_width(width), m_height(height), m_pixels(pixels) {}
 
 private:
     bool m_should_deallocate { false };

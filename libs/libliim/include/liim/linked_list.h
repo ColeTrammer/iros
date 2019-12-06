@@ -6,8 +6,7 @@
 namespace LIIM {
 
 template<typename T> struct LinkedListObj {
-    LinkedListObj(const T& val) : m_val(val) {
-    }
+    LinkedListObj(const T& val) : m_val(val) {}
 
     T m_val;
     LinkedListObj<T>* m_next { nullptr };
@@ -15,19 +14,13 @@ template<typename T> struct LinkedListObj {
 
 template<typename T> class LinkedList {
 public:
-    LinkedList() {
-    }
+    LinkedList() {}
 
-    explicit LinkedList(const T& first) : m_head(new LinkedListObj(first)), m_size(1) {
-    }
+    explicit LinkedList(const T& first) : m_head(new LinkedListObj(first)), m_size(1) {}
 
-    ~LinkedList() {
-        clear();
-    }
+    ~LinkedList() { clear(); }
 
-    int size() const {
-        return m_size;
-    }
+    int size() const { return m_size; }
 
     void prepend(const T& to_add) {
         auto* next = new LinkedListObj<T>(to_add);
@@ -74,9 +67,7 @@ public:
         m_head = nullptr;
     }
 
-    bool is_empty() {
-        return m_size == 0;
-    }
+    bool is_empty() { return m_size == 0; }
 
     template<typename C> void for_each(C callback) {
         auto* iter = m_head;

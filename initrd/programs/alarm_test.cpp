@@ -2,7 +2,9 @@
 #include <unistd.h>
 
 int main() {
-    signal(SIGALRM, [](int) { write(STDOUT_FILENO, "Hello from alarm\n", 17); });
+    signal(SIGALRM, [](int) {
+        write(STDOUT_FILENO, "Hello from alarm\n", 17);
+    });
 
     alarm(2);
 

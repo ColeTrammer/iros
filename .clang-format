@@ -29,8 +29,9 @@ DerivePointerAlignment: true
 IndentCaseLabels: true
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: true
-AllowShortFunctionsOnASingleLine: false
 BreakBeforeBinaryOperators: None
 AlignOperands: true
 AlignAfterOpenBracket: true
 AllowAllArgumentsOnNextLine: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: Empty

@@ -12,7 +12,9 @@ int main() {
         }
     }
 
-    l.for_each([](auto& elem) { printf("%d\n", elem); });
+    l.for_each([](auto& elem) {
+        printf("%d\n", elem);
+    });
 
     return 0;
 }

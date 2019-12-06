@@ -1,8 +1,7 @@
 #include <pwd.h>
 #include <stddef.h>
 
-void endpwent(void) {
-}
+void endpwent(void) {}
 
 struct passwd *getpwent(void) {
     return NULL;
@@ -38,5 +37,4 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buf, size_t buflen, struct p
     return -1;
 }
 
-void setpwent(void) {
-}
+void setpwent(void) {}

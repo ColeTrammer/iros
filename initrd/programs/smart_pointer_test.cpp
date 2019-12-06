@@ -5,15 +5,10 @@ using namespace LIIM;
 
 class Test {
 public:
-    Test() {
-    }
-    ~Test() {
-        fprintf(stderr, "Deconstructing\n");
-    }
+    Test() {}
+    ~Test() { fprintf(stderr, "Deconstructing\n"); }
 
-    void test() {
-        fprintf(stderr, "Test method\n");
-    }
+    void test() { fprintf(stderr, "Test method\n"); }
 };
 
 int main() {

@@ -12,9 +12,7 @@ namespace LIIM {
 
 template<typename T> class Vector {
 public:
-    explicit Vector(int capacity = 20) : m_capacity(capacity) {
-        allocate_vector();
-    }
+    explicit Vector(int capacity = 20) : m_capacity(capacity) { allocate_vector(); }
 
     Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()) {
         allocate_vector();
@@ -54,12 +52,8 @@ public:
         m_vector = nullptr;
     }
 
-    int size() const {
-        return m_size;
-    }
-    int capacity() const {
-        return m_capacity;
-    }
+    int size() const { return m_size; }
+    int capacity() const { return m_capacity; }
 
     void add(const T& t) {
         if (m_size >= m_capacity) {
@@ -102,33 +96,17 @@ public:
         return get(i);
     }
 
-    T& operator[](int i) {
-        return get(i);
-    }
-    const T& operator[](int i) const {
-        return get(i);
-    }
+    T& operator[](int i) { return get(i); }
+    const T& operator[](int i) const { return get(i); }
 
-    T& first() {
-        return get(0);
-    }
-    const T& first() const {
-        return get(0);
-    }
+    T& first() { return get(0); }
+    const T& first() const { return get(0); }
 
-    T& last() {
-        return get(m_size - 1);
-    }
-    const T& last() const {
-        return get(m_size - 1);
-    }
+    T& last() { return get(m_size - 1); }
+    const T& last() const { return get(m_size - 1); }
 
-    T* vector() {
-        return m_vector;
-    }
-    const T* vector() const {
-        return m_vector;
-    }
+    T* vector() { return m_vector; }
+    const T* vector() const { return m_vector; }
 
     template<typename C> void for_each(C callback) {
         for (int i = 0; i < size(); i++) {
@@ -171,9 +149,7 @@ public:
     }
 
 private:
-    void increase_capacity() {
-        m_capacity *= 2;
-    }
+    void increase_capacity() { m_capacity *= 2; }
 
     void allocate_vector() {
         T* replacement = static_cast<T*>(malloc(m_capacity * sizeof(T)));
