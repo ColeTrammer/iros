@@ -1,24 +1,26 @@
 #ifndef _SCHED_H
 #define _SCHED_H 1
 
+#include <bits/__sched_param.h>
 #include <time.h>
 
-#define SCHED_FIFO     1
-#define SCHED_RR       2
-#define SCHED_SPORADIC 3
-#define SCHED_OTHER    4
+// aligned this way for the pthread_attr_t structure
+#define SCHED_FIFO     4
+#define SCHED_RR       5
+#define SCHED_SPORADIC 6
+#define SCHED_OTHER    0
+#define __SCHED_MASK   12
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-struct sched_param {
-    int sched_priority;
-    int sched_ss_low_priority;
-    int sched_ss_max_repl;
-    struct timespec sched_ss_repl_period;
-    struct timespec sched_ss_init_budget;
-};
+#ifndef __sched_param_defined
+#define __sched_param_defined 1
+
+#define sched_param __sched_param
+
+#endif /* __sched_param_defined */
 
 #ifdef __cplusplus
 }

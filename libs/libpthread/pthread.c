@@ -219,3 +219,79 @@ __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
     exit_task();
     __builtin_unreachable();
 }
+
+int pthread_getconcurrency(void) {
+    return get_self()->concurrency;
+}
+
+int pthread_getschedparam(pthread_t thread, int *__restrict policy, struct sched_param *__restrict param) {
+    if (policy == NULL || param == NULL) {
+        return EINVAL;
+    }
+
+    struct thread_control_block *block = NULL;
+    if (thread == pthread_self()) {
+        block = get_self();
+    }
+
+    pthread_spin_lock(&threads_lock);
+    struct thread_control_block *to_search = block ? block : __threads;
+    while (to_search != NULL) {
+        if (to_search->id == thread) {
+            block = to_search;
+            break;
+        }
+
+        to_search = to_search->next;
+    }
+
+    if (to_search == NULL) {
+        pthread_spin_unlock(&threads_lock);
+        return ESRCH;
+    }
+
+    *policy = block->attributes.__flags & __SCHED_MASK;
+    memcpy(param, &block->attributes.__sched_param, sizeof(struct sched_param));
+
+    pthread_spin_unlock(&threads_lock);
+    return 0;
+}
+
+int pthread_setconcurrency(int new_level) {
+    get_self()->concurrency = new_level;
+    return 0;
+}
+
+int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param) {
+    if (param == NULL || (policy != SCHED_FIFO && policy != SCHED_RR && policy != SCHED_OTHER && policy != SCHED_SPORADIC)) {
+        return EINVAL;
+    }
+
+    struct thread_control_block *block = NULL;
+    if (thread == pthread_self()) {
+        block = get_self();
+    }
+
+    pthread_spin_lock(&threads_lock);
+    struct thread_control_block *to_search = block ? block : __threads;
+    while (to_search != NULL) {
+        if (to_search->id == thread) {
+            block = to_search;
+            break;
+        }
+
+        to_search = to_search->next;
+    }
+
+    if (to_search == NULL) {
+        pthread_spin_unlock(&threads_lock);
+        return ESRCH;
+    }
+
+    // FIXME: this should do a system call that actually updates these values
+    block->attributes.__flags |= policy;
+    memcpy(&block->attributes.__sched_param, param, sizeof(struct sched_param));
+
+    pthread_spin_unlock(&threads_lock);
+    return 0;
+}

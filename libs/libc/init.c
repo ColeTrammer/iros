@@ -64,8 +64,9 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     __threads = __allocate_thread_control_block();
     __threads->attributes.__stack_start = __initial_process_info.stack_start;
     __threads->attributes.__stack_len = __initial_process_info.stack_size;
+    __threads->attributes.__sched_param.sched_priority = 0;
     __threads->attributes.__guard_size = __initial_process_info.guard_size;
-    __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED;
+    __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER;
     __threads->id = __initial_process_info.main_tid;
 
     set_thread_self_pointer(__threads);

@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <stddef.h>
+#include <string.h>
 
 int pthread_attr_destroy(pthread_attr_t *attr) {
     attr->__flags = -1;
@@ -11,8 +12,9 @@ int pthread_attr_destroy(pthread_attr_t *attr) {
 }
 
 int pthread_attr_init(pthread_attr_t *attr) {
-    attr->__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED;
+    attr->__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER;
     attr->__guard_size = PAGE_SIZE;
+    attr->__sched_param.sched_priority = 0;
     attr->__stack_start = NULL;
     attr->__stack_len = 2 * 1024 * 1024;
     return 0;
@@ -45,7 +47,25 @@ int pthread_attr_getinheritsched(const pthread_attr_t *__restrict attr, int *__r
     return 0;
 }
 
-int pthread_attr_getscope(pthread_attr_t *__restrict attr, int *__restrict scope) {
+int pthread_attr_getschedparam(const pthread_attr_t *__restrict attr, struct sched_param *__restrict param) {
+    if (attr == NULL || attr->__flags == -1 || param == NULL) {
+        return EINVAL;
+    }
+
+    memcpy(param, &attr->__sched_param, sizeof(struct sched_param));
+    return 0;
+}
+
+int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict attr, int *__restrict policy) {
+    if (attr == NULL || attr->__flags == -1 || policy == NULL) {
+        return EINVAL;
+    }
+
+    *policy = attr->__flags & __SCHED_MASK;
+    return 0;
+}
+
+int pthread_attr_getscope(const pthread_attr_t *__restrict attr, int *__restrict scope) {
     if (attr == NULL || attr->__flags == -1 || scope == NULL) {
         return EINVAL;
     }
@@ -106,6 +126,25 @@ int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched) {
     }
 
     attr->__flags |= inheritsched;
+    return 0;
+}
+
+int pthread_attr_setschedparam(pthread_attr_t *__restrict attr, const struct sched_param *__restrict param) {
+    if (attr == NULL || attr->__flags == -1 || param == NULL) {
+        return EINVAL;
+    }
+
+    memcpy(&attr->__sched_param, param, sizeof(struct sched_param));
+    return 0;
+}
+
+int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
+    if (attr == NULL || attr->__flags == -1 ||
+        (policy != SCHED_RR && policy != SCHED_FIFO && policy != SCHED_OTHER && policy != SCHED_SPORADIC)) {
+        return EINVAL;
+    }
+
+    attr->__flags |= policy;
     return 0;
 }
 

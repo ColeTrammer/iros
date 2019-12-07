@@ -42,6 +42,7 @@ $(BUILDDIR)/initrd/programs/mmap_test \
 $(BUILDDIR)/initrd/programs/mutex_test \
 $(BUILDDIR)/initrd/programs/nftw_test \
 $(BUILDDIR)/initrd/programs/pipe_test \
+$(BUILDDIR)/initrd/programs/pthread_attr_test \
 $(BUILDDIR)/initrd/programs/queue_test \
 $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
