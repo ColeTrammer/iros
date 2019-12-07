@@ -1378,7 +1378,8 @@ void arch_sys_sigsuspend(struct task_state *task_state) {
     memcpy(&current->sig_mask, mask, sizeof(sigset_t));
 
     current->sched_state = WAITING;
-    sched_run_next();
+
+    sys_sched_run_next(task_state);
 }
 
 void arch_sys_times(struct task_state *task_state) {
