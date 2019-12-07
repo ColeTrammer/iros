@@ -4,6 +4,7 @@
 #include <bits/pthread_attr_t.h>
 #include <bits/pthread_mutex_t.h>
 #include <bits/pthread_mutexattr_t.h>
+#include <bits/pthread_once_t.h>
 #include <bits/pthread_spinlock_t.h>
 #include <bits/pthread_t.h>
 #include <sched.h>
@@ -16,6 +17,8 @@
 
 #define PTHREAD_EXPLICIT_SCHED 2
 #define PTHREAD_INHERIT_SCHED  0
+
+#define PTHREAD_ONCE_INIT 0
 
 #define PTHREAD_MUTEX_INITIALIZER \
     { 0 }
@@ -38,6 +41,8 @@ int pthread_getschedparam(pthread_t thread, int *__restrict policy, struct sched
 int pthread_setconcurrency(int new_level);
 int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param);
 int pthread_setschedprio(pthread_t thread, int prio);
+
+int pthread_once(pthread_once_t *once_control, void (*init_function)(void));
 
 int pthread_spin_destroy(pthread_spinlock_t *lock);
 int pthread_spin_init(pthread_spinlock_t *lock, int pshared);
@@ -98,6 +103,9 @@ extern __thread struct __pthread_cleanup_handler *__cleanup_handlers;
 // clang-format on
 
 #ifdef __libc_internal
+
+#define __PTHREAD_ONCE_IN_PROGRESS 1
+#define __PTHREAD_ONCE_FINISHED    2
 
 #define __PTHREAD_MAUALLY_ALLOCATED_STACK 01000
 

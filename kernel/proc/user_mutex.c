@@ -122,15 +122,21 @@ void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
 #endif /* USER_MUTEX_DEBUG */
 }
 
-void wake_first_user_mutex(struct user_mutex *m) {
-    struct task *to_wake = m->next_to_wake_up;
-    m->next_to_wake_up = to_wake->user_mutex_waiting_queue_next;
+void wake_user_mutex(struct user_mutex *m, int to_wake) {
+    for (int i = 0; i < to_wake; i++) {
+        struct task *to_wake = m->next_to_wake_up;
+        if (to_wake == NULL) {
+            break;
+        }
+
+        m->next_to_wake_up = to_wake->user_mutex_waiting_queue_next;
 
 #ifdef USER_MUTEX_DEBUG
-    debug_log("Waking up: [ %d:%d ]\n", to_wake->process->pid, to_wake->tid);
+        debug_log("Waking up: [ %d:%d ]\n", to_wake->process->pid, to_wake->tid);
 #endif /* USER_MUTEX_DEBUG */
 
-    to_wake->should_wake_up_from_mutex_sleep = true;
+        to_wake->should_wake_up_from_mutex_sleep = true;
+    }
 }
 
 void init_user_mutexes() {

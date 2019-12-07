@@ -17,7 +17,7 @@ struct user_mutex *get_user_mutex_locked(int *addr);
 struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(int *addr, int value);
 void unlock_user_mutex(struct user_mutex *um);
 void add_to_user_mutex_queue(struct user_mutex *m, struct task *task);
-void wake_first_user_mutex(struct user_mutex *m);
+void wake_user_mutex(struct user_mutex *m, int to_wake);
 
 void init_user_mutexes();
 

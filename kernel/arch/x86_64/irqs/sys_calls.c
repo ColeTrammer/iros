@@ -1469,6 +1469,7 @@ void arch_sys_os_mutex(struct task_state *task_state) {
     int operation = (int) task_state->cpu_state.rdx;
     int expected = (int) task_state->cpu_state.rcx;
     int to_place = (int) task_state->cpu_state.r8;
+    int to_wake = (int) task_state->cpu_state.r9;
 
     switch (operation) {
         case MUTEX_AQUIRE: {
@@ -1496,7 +1497,18 @@ void arch_sys_os_mutex(struct task_state *task_state) {
                 SYS_RETURN(0);
             }
 
-            wake_first_user_mutex(um);
+            wake_user_mutex(um, to_wake);
+            unlock_user_mutex(um);
+            SYS_RETURN(0);
+        }
+        case MUTEX_WAKE_AND_SET: {
+            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
+            if (um == NULL) {
+                SYS_RETURN(0);
+            }
+
+            *__protected = to_place;
+            wake_user_mutex(um, to_wake);
             unlock_user_mutex(um);
             SYS_RETURN(0);
         }
