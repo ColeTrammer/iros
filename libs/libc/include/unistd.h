@@ -24,6 +24,9 @@
 #define R_OK 2
 #define X_OK 4
 
+#define _SC_PAGESIZE  1
+#define _SC_PAGE_SIZE _SC_PAGESIZE
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* cplusplus */
@@ -52,6 +55,7 @@ off_t lseek(int fd, off_t offset, int whence);
 unsigned int sleep(unsigned int seconds);
 int chown(const char *pathname, uid_t owner, gid_t group);
 int pause(void);
+int sysconf(int name);
 
 ssize_t read(int fd, void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count);

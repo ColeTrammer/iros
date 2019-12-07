@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 
         stack_size = strtoul(argv[1], NULL, 0);
 
-        s = posix_memalign(&sp, PAGESIZE, stack_size);
+        s = posix_memalign(&sp, sysconf(_SC_PAGESIZE), stack_size);
         if (s != 0)
             handle_error_en(s, "posix_memalign");
 

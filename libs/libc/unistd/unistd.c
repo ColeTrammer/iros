@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -20,4 +21,14 @@ int pause(void) {
     sigset_t set;
     sigprocmask(SIG_SETMASK, NULL, &set);
     return sigsuspend(&set);
+}
+
+int sysconf(int name) {
+    switch (name) {
+        case _SC_PAGE_SIZE:
+            return PAGE_SIZE;
+        default:
+            errno = EINVAL;
+            return 0;
+    }
 }
