@@ -217,4 +217,15 @@ size_t mbstowcs(wchar_t *dest, const char *src, size_t n) {
     return i;
 }
 
+int posix_memalign(void **memptr, size_t alignment, size_t size) {
+    void *ptr = aligned_alloc(alignment, size);
+    if (ptr == NULL) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    *memptr = ptr;
+    return 0;
+}
+
 #endif /* __is_libk */

@@ -84,6 +84,8 @@ unsigned long strtoul(const char *__restrict str, char **__restrict endptr, int 
 unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base);
 double strtod(const char *__restrict str, char **__restrict endptr);
 
+int posix_memalign(void **memptr, size_t alignment, size_t size);
+
 #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MALLOC_DEBUG)
 void *malloc(size_t size, int line, const char *func);
 #define malloc(sz) malloc(sz, __LINE__, __func__)
