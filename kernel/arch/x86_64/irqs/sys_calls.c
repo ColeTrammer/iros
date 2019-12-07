@@ -1470,19 +1470,27 @@ void arch_sys_os_mutex(struct task_state *task_state) {
     int expected = (int) task_state->cpu_state.rcx;
     int to_place = (int) task_state->cpu_state.r8;
     int to_wake = (int) task_state->cpu_state.r9;
+    int *to_wait = (int *) task_state->cpu_state.r10;
+
+    int *to_aquire = __protected;
+    struct user_mutex *to_unlock = NULL;
 
     switch (operation) {
-        case MUTEX_AQUIRE: {
-            struct user_mutex *um = get_user_mutex_locked(__protected);
-            if (*__protected != expected) {
+        case MUTEX_AQUIRE:
+        do_mutex_aquire : {
+            struct user_mutex *um = get_user_mutex_locked(to_aquire);
+            if (*to_aquire != expected) {
                 // Case where MUTEX_RELEASE occurs before we lock/create the mutex
-                *__protected = to_place;
+                *to_aquire = to_place;
                 unlock_user_mutex(um);
                 SYS_RETURN(0);
             }
 
             add_to_user_mutex_queue(um, current);
             current->sched_state = WAITING;
+            if (to_unlock) {
+                unlock_user_mutex(to_unlock);
+            }
             unlock_user_mutex(um);
             yield();
             SYS_RETURN(0);
@@ -1511,6 +1519,17 @@ void arch_sys_os_mutex(struct task_state *task_state) {
             wake_user_mutex(um, to_wake);
             unlock_user_mutex(um);
             SYS_RETURN(0);
+        }
+        case MUTEX_RELEASE_AND_WAIT: {
+            to_aquire = to_wait;
+            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
+            if (um == NULL) {
+                goto do_mutex_aquire;
+            }
+
+            wake_user_mutex(um, to_wake);
+            to_unlock = um;
+            goto do_mutex_aquire;
         }
         default: {
             SYS_RETURN(EINVAL);

@@ -1,9 +1,10 @@
 #ifndef _SYS_OS_2_H
 #define _SYS_OS_2_H 1
 
-#define MUTEX_AQUIRE       1
-#define MUTEX_RELEASE      2
-#define MUTEX_WAKE_AND_SET 3
+#define MUTEX_AQUIRE           1
+#define MUTEX_RELEASE          2
+#define MUTEX_WAKE_AND_SET     3
+#define MUTEX_RELEASE_AND_WAIT 4
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,7 +22,7 @@ struct initial_process_info {
 
 int create_task(unsigned long rip, unsigned long rsp, void *arg, unsigned long push_onto_stack, int *tid_ptr, void *thread_self_pointer);
 void exit_task() __attribute__((__noreturn__));
-int os_mutex(int *__protected, int operation, int expected, int to_place, int to_wake);
+int os_mutex(int *__protected, int operation, int expected, int to_place, int to_wake, int *__to_wait_on);
 int tgkill(int tgid, int tid, int sig);
 int get_initial_process_info(struct initial_process_info *info);
 int set_thread_self_pointer(void *p);

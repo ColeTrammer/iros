@@ -2,6 +2,8 @@
 #define _PTHREAD_H 1
 
 #include <bits/pthread_attr_t.h>
+#include <bits/pthread_cond_t.h>
+#include <bits/pthread_condattr_t.h>
 #include <bits/pthread_mutex_t.h>
 #include <bits/pthread_mutexattr_t.h>
 #include <bits/pthread_once_t.h>
@@ -19,6 +21,9 @@
 #define PTHREAD_INHERIT_SCHED  0
 
 #define PTHREAD_ONCE_INIT 0
+
+#define PTHREAD_COND_INITIALIZER \
+    { 0 }
 
 #define PTHREAD_MUTEX_INITIALIZER \
     { 0 }
@@ -43,6 +48,12 @@ int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param
 int pthread_setschedprio(pthread_t thread, int prio);
 
 int pthread_once(pthread_once_t *once_control, void (*init_function)(void));
+
+int pthread_cond_broadcast(pthread_cond_t *cond);
+int pthread_cond_destroy(pthread_cond_t *cond);
+int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict attr);
+int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex);
 
 int pthread_spin_destroy(pthread_spinlock_t *lock);
 int pthread_spin_init(pthread_spinlock_t *lock, int pshared);

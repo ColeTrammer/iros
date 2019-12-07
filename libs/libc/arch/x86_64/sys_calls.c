@@ -874,7 +874,7 @@ __attribute__((__noreturn__)) void exit_task(void) {
     __builtin_unreachable();
 }
 
-int os_mutex(int *__protected, int operation, int expected, int to_place, int to_wake) {
+int os_mutex(int *__protected, int operation, int expected, int to_place, int to_wake, int *__to_wait_on) {
     int ret;
     asm volatile("movq $58, %%rdi\n"
                  "movq %1, %%rsi\n"
@@ -882,11 +882,12 @@ int os_mutex(int *__protected, int operation, int expected, int to_place, int to
                  "movl %3, %%ecx\n"
                  "movl %4, %%r8d\n"
                  "movl %5, %%r9d\n"
+                 "movq %6, %%r10\n"
                  "int $0x80\n"
                  "movl %%eax, %0"
                  : "=r"(ret)
-                 : "r"(__protected), "r"(operation), "r"(expected), "r"(to_place), "r"(to_wake)
-                 : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "memory");
+                 : "r"(__protected), "r"(operation), "r"(expected), "r"(to_place), "r"(to_wake), "r"(__to_wait_on)
+                 : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "rax", "memory");
     return ret;
 }
 
