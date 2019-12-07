@@ -1254,6 +1254,8 @@ void arch_sys_munmap(struct task_state *task_state) {
     void *addr = (void *) task_state->cpu_state.rsi;
     size_t length = (size_t) task_state->cpu_state.rdx;
 
+    debug_log("munmap: [ %p, %#.16lX, %#.16lX ]\n", addr, length, (uintptr_t) addr + length);
+
     SYS_RETURN(unmap_range((uintptr_t) addr, length));
 }
 
@@ -1537,7 +1539,9 @@ void arch_sys_get_initial_process_info(struct task_state *task_state) {
     struct vm_region *stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
     info->stack_start = (void *) stack->start;
     info->stack_size = stack->end - stack->start;
-    info->guard_size = PAGE_SIZE;
+
+    struct vm_region *guard = get_vm_last_region(current->process->process_memory, VM_TASK_STACK_GUARD);
+    info->guard_size = guard->end - guard->start;
 
     info->main_tid = current->tid;
 

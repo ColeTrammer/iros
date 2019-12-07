@@ -220,7 +220,7 @@ struct task *load_task(const char *file_name) {
     guard_page->flags = VM_PROT_NONE;
     guard_page->type = VM_TASK_STACK_GUARD;
     guard_page->start = task_stack->end;
-    guard_page->end = task_stack->start;
+    guard_page->end = guard_page->start + PAGE_SIZE;
     task->process->process_memory = add_vm_region(task->process->process_memory, guard_page);
 
     arch_load_task(task, elf64_get_entry(buffer));

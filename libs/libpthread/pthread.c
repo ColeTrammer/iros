@@ -95,7 +95,7 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
         return EAGAIN;
     }
 
-    if (to_add->attributes.__guard_size != 0 && to_add->attributes.__stack_start == NULL) {
+    if (to_add->attributes.__guard_size != 0 && !(to_add->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK)) {
         mprotect(stack + to_add->attributes.__stack_len, to_add->attributes.__guard_size, PROT_NONE);
     }
 

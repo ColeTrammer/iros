@@ -201,7 +201,7 @@ int unmap_range(uintptr_t addr, size_t length) {
             debug_log("Removing region (split): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
 #endif /* MMAP_DEBUG */
 
-            if (r->type != VM_PROCESS_ANON_MAPPING) {
+            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
                 break;
             }
 
@@ -226,8 +226,10 @@ int unmap_range(uintptr_t addr, size_t length) {
 #endif /* MMAP_DEBUG */
 
             assert(r->end >= addr);
+            size_t end_save = r->end;
+
             // We can't do partial unmaps for non anonymous mappings yet
-            if (r->type != VM_PROCESS_ANON_MAPPING) {
+            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
                 goto unmap_range_start_finish;
             }
 
@@ -237,8 +239,8 @@ int unmap_range(uintptr_t addr, size_t length) {
             }
 
         unmap_range_start_finish:
-            length -= (r->end - addr);
-            addr = r->end;
+            length -= (end_save - addr);
+            addr = end_save;
             continue;
         }
 
@@ -248,7 +250,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 #endif /* MMAP_DEBUG */
 
             assert(r->start <= addr + length);
-            if (r->type != VM_PROCESS_ANON_MAPPING) {
+            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
                 break;
             }
 
@@ -360,7 +362,7 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             debug_log("Protecting region (split): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
 #endif /* MMAP_DEBUG */
 
-            if (r->type != VM_PROCESS_ANON_MAPPING) {
+            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
                 break;
             }
 
@@ -392,8 +394,10 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
 #endif /* MMAP_DEBUG */
 
             assert(r->end >= addr);
+            size_t end_save = r->end;
+
             // We can't do partial unmaps for non anonymous mappings yet
-            if (r->type != VM_PROCESS_ANON_MAPPING) {
+            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
                 goto map_range_protections_start_finish;
             }
 
@@ -410,8 +414,8 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             }
 
         map_range_protections_start_finish:
-            length -= (r->end - addr);
-            addr = r->end;
+            length -= (end_save - addr);
+            addr = end_save;
             continue;
         }
 
@@ -421,7 +425,7 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
 #endif /* MMAP_DEBUG */
 
             assert(r->start <= addr + length);
-            if (r->type != VM_PROCESS_ANON_MAPPING) {
+            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
                 break;
             }
 
@@ -545,9 +549,9 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
     struct vm_region *region = get_current_task()->process->process_memory;
 
     while (region) {
-        if (((start <= region->start) && (region->end <= end)) ||   // start-end contain the region
-            ((start >= region->start) && (start <= region->end)) || // region contains start
-            ((end >= region->start) && (end <= region->end))        // region contains end
+        if (((start <= region->start) && (region->end <= end)) ||  // start-end contain the region
+            ((start >= region->start) && (start < region->end)) || // region contains start
+            ((end > region->start) && (end <= region->end))        // region contains end
         ) {
             return region;
         }
@@ -556,9 +560,9 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
 
     region = kernel_vm_list;
     while (region) {
-        if (((start <= region->start) && (region->end <= end)) ||   // start-end contain the region
-            ((start >= region->start) && (start <= region->end)) || // region contains start
-            ((end >= region->start) && (end <= region->end))        // region contains end
+        if (((start <= region->start) && (region->end <= end)) ||  // start-end contain the region
+            ((start >= region->start) && (start < region->end)) || // region contains start
+            ((end >= region->start) && (end <= region->end))       // region contains end
         ) {
             return region;
         }
