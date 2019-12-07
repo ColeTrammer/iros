@@ -368,8 +368,8 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
                 }
             }
             written += width;
-        } else if (*format == 'x' || *format == 'X') {
-            if (length_modifier == 0) {
+        } else if (*format == 'x' || *format == 'X' || *format == 'p') {
+            if (length_modifier == 0 && *format != 'p') {
                 unsigned int num = va_arg(parameters, unsigned int);
                 size_t len = 1;
                 size_t len_prec;
@@ -471,11 +471,26 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
                 }
                 written += width;
                 format++;
-            } else if (length_modifier == 3 || length_modifier == 6) {
+            } else if (length_modifier == 3 || length_modifier == 6 || length_modifier == 5 || *format == 'p') {
                 unsigned long num = va_arg(parameters, unsigned long);
+                if (num == 0 && *format == 'p') {
+                    if (!print(obj, "(null)", 6)) {
+                        return -1;
+                    }
+
+                    written += 6;
+                    format++;
+                    continue;
+                }
+
                 size_t len = 1;
                 size_t len_prec;
                 size_t len_width;
+                char base_char = *format == 'p' ? 'X' : *format;
+                if (*format == 'p') {
+                    precision = 16;
+                    flags |= 0b10;
+                }
                 unsigned long div = 1;
                 while (num / div > 15) {
                     div *= 16;
@@ -520,7 +535,7 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
                     char zero = '0';
                     if (!print(obj, &zero, 1))
                         return -1;
-                    if (!print(obj, format, 1))
+                    if (!print(obj, &base_char, 1))
                         return -1;
                 }
                 if (!(flags & 0b00010000) && (flags & 0b00000001)) {
@@ -551,7 +566,7 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
                         if (digit < 10) {
                             digit += '0';
                         } else {
-                            digit += *format - ('x' - 'a') - 10;
+                            digit += base_char - ('x' - 'a') - 10;
                         }
                         if (!print(obj, &digit, 1))
                             return -1;
@@ -560,7 +575,7 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
                     if (digit < 10) {
                         digit += '0';
                     } else {
-                        digit += *format - ('x' - 'a') - 10;
+                        digit += base_char - ('x' - 'a') - 10;
                     }
                     if (!print(obj, &digit, 1))
                         return -1;
