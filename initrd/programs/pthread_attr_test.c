@@ -115,5 +115,6 @@ int main(int argc, char *argv[]) {
     if (s != 0)
         handle_error_en(s, "pthread_create");
 
-    pause(); /* Terminates when other thread calls exit() */
+    pthread_detach(pthread_self());
+    pthread_exit(NULL);
 }

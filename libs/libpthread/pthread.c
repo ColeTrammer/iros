@@ -89,7 +89,9 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
     uint8_t *stack = to_add->attributes.__stack_start != NULL ? to_add->attributes.__stack_start
                                                               : mmap(NULL, to_add->attributes.__stack_len + to_add->attributes.__guard_size,
                                                                      PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_STACK, 0, 0);
+    to_add->attributes.__stack_start = stack;
     if (stack == MAP_FAILED) {
+        __free_thread_control_block(to_add);
         return EAGAIN;
     }
 
@@ -112,6 +114,53 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
     pthread_spin_unlock(&threads_lock);
 
     *thread = to_add->id;
+    return 0;
+}
+
+int pthread_detach(pthread_t thread) {
+    pthread_spin_lock(&threads_lock);
+
+    if (thread == pthread_self()) {
+        struct thread_control_block *block = get_self();
+        if (block->joining_thread != 0 || block->attributes.__flags & PTHREAD_CREATE_DETACHED) {
+            // Can't call on non joinable thread
+            pthread_spin_unlock(&threads_lock);
+            return EINVAL;
+        }
+
+        block->attributes.__flags |= PTHREAD_CREATE_DETACHED;
+    } else {
+        struct thread_control_block *block = __threads;
+        while (block != NULL && block->id != thread) {
+            block = block->next;
+        }
+
+        if (block == NULL) {
+            pthread_spin_unlock(&threads_lock);
+            return ESRCH;
+        }
+
+        if (block->joining_thread) {
+            pthread_spin_unlock(&threads_lock);
+            return EINVAL;
+        }
+
+        if (block->has_exited) {
+            if (block == __threads) {
+                __threads = block->next;
+            }
+
+            __remove_thread(block);
+            if (!(block->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK)) {
+                munmap(block->attributes.__stack_start, block->attributes.__stack_len + block->attributes.__guard_size);
+            }
+            __free_thread_control_block(block);
+        } else {
+            block->attributes.__flags |= PTHREAD_CREATE_DETACHED;
+        }
+    }
+
+    pthread_spin_unlock(&threads_lock);
     return 0;
 }
 
@@ -155,7 +204,9 @@ int pthread_join(pthread_t id, void **value_ptr) {
             }
 
             __remove_thread(target);
-            munmap(target->attributes.__stack_start, target->attributes.__stack_len + target->attributes.__guard_size);
+            if (!(target->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK)) {
+                munmap(target->attributes.__stack_start, target->attributes.__stack_len + target->attributes.__guard_size);
+            }
             __free_thread_control_block(target);
 
             if (value_ptr) {
@@ -186,8 +237,14 @@ __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
         __remove_thread(thread);
         pthread_spin_unlock(&threads_lock);
 
-        // Possibly we are supposed to deallocate this stack, although it is unclear
-        // whether to do so is required, and if munmap(2) or free(3) should be used
+        // This means there all threads are dead, just exit and let the kernel
+        // clean everything up. This is safe to check after the lock is released
+        // since at this point, only this thread is alive anyway.
+        if (__threads == NULL) {
+            exit(0);
+        }
+
+        // Only deallocate stacks we created ourselves
         if (thread->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK) {
             exit_task();
             __builtin_unreachable();
