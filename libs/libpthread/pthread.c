@@ -12,6 +12,10 @@
 
 static pthread_spinlock_t threads_lock = { 0 };
 
+__thread struct __pthread_cleanup_handler *__cleanup_handlers = NULL;
+
+static void pthread_exit_after_cleanup(void *value_ptr) __attribute__((__noreturn__));
+
 #if ARCH == X86_64
 
 static struct thread_control_block *get_self() {
@@ -105,8 +109,8 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
         __threads = to_add;
     }
 
-    int ret = create_task((uintptr_t) start_routine, (uintptr_t) stack + to_add->attributes.__stack_len, arg, (uintptr_t) &pthread_exit,
-                          &to_add->id, to_add);
+    int ret = create_task((uintptr_t) start_routine, (uintptr_t) stack + to_add->attributes.__stack_len, arg,
+                          (uintptr_t) &pthread_exit_after_cleanup, &to_add->id, to_add);
     if (ret < 0) {
         return EAGAIN;
     }
@@ -226,6 +230,15 @@ int pthread_kill(pthread_t thread, int sig) {
 }
 
 __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
+    while (__cleanup_handlers != NULL) {
+        (__cleanup_handlers->__func)(__cleanup_handlers->__arg);
+        __cleanup_handlers = __cleanup_handlers->__next;
+    }
+
+    pthread_exit_after_cleanup(value_ptr);
+}
+
+__attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value_ptr) {
     struct thread_control_block *thread = get_self();
     if (thread->attributes.__flags & PTHREAD_CREATE_DETACHED) {
         pthread_spin_lock(&threads_lock);
@@ -268,6 +281,15 @@ __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
                      : "rdi", "rsi", "rdx", "rax", "memory");
 #endif /* ARCH == X86_64 */
         __builtin_unreachable();
+    }
+
+    // This means there all threads are dead, just exit and let the kernel
+    // clean everything up. This is safe to check without the lock
+    // since at this point, only this thread is alive anyway. If another
+    // thread did exist and was modifying this list, it would make this
+    // condition impossible.
+    if (thread->next == NULL && __threads == thread) {
+        exit(0);
     }
 
     thread->exit_value = value_ptr;
@@ -348,6 +370,35 @@ int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param
     // FIXME: this should do a system call that actually updates these values
     block->attributes.__flags |= policy;
     memcpy(&block->attributes.__sched_param, param, sizeof(struct sched_param));
+
+    pthread_spin_unlock(&threads_lock);
+    return 0;
+}
+
+int pthread_setschedprio(pthread_t thread, int prio) {
+    struct thread_control_block *block = NULL;
+    if (thread == pthread_self()) {
+        block = get_self();
+    }
+
+    pthread_spin_lock(&threads_lock);
+    struct thread_control_block *to_search = block ? block : __threads;
+    while (to_search != NULL) {
+        if (to_search->id == thread) {
+            block = to_search;
+            break;
+        }
+
+        to_search = to_search->next;
+    }
+
+    if (to_search == NULL) {
+        pthread_spin_unlock(&threads_lock);
+        return ESRCH;
+    }
+
+    // FIXME: this should do a system call that actually updates these values
+    block->attributes.__sched_param.sched_priority = prio;
 
     pthread_spin_unlock(&threads_lock);
     return 0;

@@ -27,6 +27,7 @@ extern "C" {
 pthread_t pthread_self(void);
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
                    void *__restrict arg);
+int pthread_detach(pthread_t thread);
 int pthread_equal(pthread_t t1, pthread_t t2);
 void pthread_exit(void *value_ptr) __attribute__((__noreturn__));
 int pthread_join(pthread_t thread, void **value_ptr);
@@ -36,6 +37,7 @@ int pthread_getconcurrency(void);
 int pthread_getschedparam(pthread_t thread, int *__restrict policy, struct sched_param *__restrict param);
 int pthread_setconcurrency(int new_level);
 int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param);
+int pthread_setschedprio(pthread_t thread, int prio);
 
 int pthread_spin_destroy(pthread_spinlock_t *lock);
 int pthread_spin_init(pthread_spinlock_t *lock, int pshared);
@@ -69,6 +71,31 @@ int pthread_attr_setscope(const pthread_attr_t *attr, int scope);
 int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr, size_t stacksize);
 int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr);
 int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize);
+
+struct __pthread_cleanup_handler {
+    struct __pthread_cleanup_handler *__next;
+    void (*__func)(void *arg);
+    void *__arg;
+};
+
+extern __thread struct __pthread_cleanup_handler *__cleanup_handlers;
+
+#define pthread_cleanup_push(rtn, arg)                      \
+    {                                                       \
+        struct __pthread_cleanup_handler __cleanup_handler; \
+        __cleanup_handler.__func = rtn;                     \
+        __cleanup_handler.__arg = arg;                      \
+        __cleanup_handler.__next = __cleanup_handlers;      \
+        __cleanup_handlers = &__cleanup_handler;
+
+// clang-format off
+#define pthread_cleanup_pop(ex)                                   \
+        __cleanup_handlers = __cleanup_handler.__next;            \
+        if (ex) {                                                 \
+            (*__cleanup_handler.__func)(__cleanup_handler.__arg); \
+        }                                                         \
+    }
+// clang-format on
 
 #ifdef __libc_internal
 
