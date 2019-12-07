@@ -278,6 +278,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     struct metadata *new_block =
         (struct metadata *) ((((uintptr_t)(block + 1)) + alignment - (((uintptr_t)(block + 1)) % alignment)) - sizeof(struct metadata));
     assert(((uintptr_t)(new_block + 1)) % alignment == 0);
+    assert(new_block + 1 >= block + 1);
 
     if (heap_end <= ((uintptr_t) new_block) + n + sizeof(struct metadata)) {
         sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end) + sizeof(struct metadata));
@@ -298,7 +299,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
 #endif /* MALLOC_SCRUB_ALLOC */
 
     struct metadata *tail = NEXT_BLOCK(new_block);
-    tail->prev_size = new_block->size;
+    tail->prev_size = GET_SIZE(new_block);
     tail->size = 0;
     tail->magic = __MALLOC_MAGIG_CHECK;
 
