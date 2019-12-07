@@ -229,6 +229,10 @@ int pthread_kill(pthread_t thread, int sig) {
     return tgkill(0, thread, sig);
 }
 
+int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict old) {
+    return sigprocmask(how, set, old);
+}
+
 __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
     while (__cleanup_handlers != NULL) {
         (__cleanup_handlers->__func)(__cleanup_handlers->__arg);
