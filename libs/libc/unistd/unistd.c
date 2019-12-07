@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -13,4 +14,10 @@ int creat(const char *pathname, mode_t mode) {
 
 int lstat(const char *__restrict path, struct stat *__restrict stat_struct) {
     return stat(path, stat_struct);
+}
+
+int pause(void) {
+    sigset_t set;
+    sigprocmask(SIG_SETMASK, NULL, &set);
+    return sigsuspend(&set);
 }
