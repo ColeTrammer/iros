@@ -25,19 +25,20 @@ My second attempt to create an OS
 
 # TODO
 * Shell supporting if, for, etc
-* Networking
-* Graphics
-* mmap in kernel
+* Networking (TCP resending)
+* Graphics (windowing support)
+* mmap in kernel (now just need support for files)
 * configuration/startup files
 * SMP
-* pthreads like library
+* pthreads like library (conditions, barriers, cancellation, rdwrlock, scheduling)
 * try to write in C++ instead of C
 
 # Current Issues
 * When a signal handler interrupts a sys call, the sys call will leak
   memory if it ever called malloc, since the signal discards the entire
   state of the sys call. A possibly solution is to allocate things to the
-  stack instead.
+  stack instead. We should only deliver signals when we block, and the kernel
+  should be controlling when the signal is delivered to prevent leaks.
 * Unix permission support is extremely limited, nothing has uids or gids, and the
   execute but is never respected.
 * Created files can only be read by this OS, not any others. This is probably an issue
