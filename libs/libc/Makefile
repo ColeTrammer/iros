@@ -81,9 +81,10 @@ HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libs/libc/assert/assert.o \
 $(BUILDDIR)/libs/libc/dirent/dirent.o \
+$(BUILDDIR)/libs/libc/fcntl/fcntl.o \
 $(BUILDDIR)/libs/libc/ftw/ftw.o \
-$(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/glob/glob.o \
+$(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \
 $(BUILDDIR)/libs/libc/signal/signal.o \
@@ -94,9 +95,13 @@ $(BUILDDIR)/libs/libc/stdlib/env.o \
 $(BUILDDIR)/libs/libc/string/strcoll.o \
 $(BUILDDIR)/libs/libc/string/strerror.o \
 $(BUILDDIR)/libs/libc/string/strxfrm.o \
+$(BUILDDIR)/libs/libc/sys/ioctl/ioctl.o \
 $(BUILDDIR)/libs/libc/sys/mman/mman.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
+$(BUILDDIR)/libs/libc/sys/stat/stat.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall.o \
+$(BUILDDIR)/libs/libc/sys/time/time.o \
+$(BUILDDIR)/libs/libc/sys/times/times.o \
 $(BUILDDIR)/libs/libc/sys/wait/wait.o \
 $(BUILDDIR)/libs/libc/termios/termios.o \
 $(BUILDDIR)/libs/libc/time/time.o \
@@ -105,6 +110,7 @@ $(BUILDDIR)/libs/libc/unistd/getlogin.o \
 $(BUILDDIR)/libs/libc/unistd/getopt.o \
 $(BUILDDIR)/libs/libc/unistd/isatty.o \
 $(BUILDDIR)/libs/libc/unistd/unistd.o \
+$(BUILDDIR)/libs/libc/utime/utime.o \
 $(BUILDDIR)/libs/libc/wordexp/wordexp.o \
 $(BUILDDIR)/libs/libc/init.o
 

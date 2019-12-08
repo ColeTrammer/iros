@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/os_2.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 static pthread_spinlock_t threads_lock = { 0 };
@@ -109,8 +110,8 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
         __threads = to_add;
     }
 
-    int ret = create_task((uintptr_t) start_routine, (uintptr_t) stack + to_add->attributes.__stack_len, arg,
-                          (uintptr_t) &pthread_exit_after_cleanup, &to_add->id, to_add);
+    int ret = syscall(SC_CREATE_TASK, (uintptr_t) start_routine, (uintptr_t) stack + to_add->attributes.__stack_len, arg,
+                      (uintptr_t) &pthread_exit_after_cleanup, &to_add->id, to_add);
     if (ret < 0) {
         return EAGAIN;
     }
@@ -226,7 +227,7 @@ int pthread_join(pthread_t id, void **value_ptr) {
 }
 
 int pthread_kill(pthread_t thread, int sig) {
-    return tgkill(0, thread, sig);
+    return syscall(SC_TGKILL, 0, thread, sig);
 }
 
 int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict old) {
@@ -263,7 +264,7 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
 
         // Only deallocate stacks we created ourselves
         if (thread->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK) {
-            exit_task();
+            syscall(SC_EXIT_TASK);
             __builtin_unreachable();
         }
 
@@ -299,7 +300,7 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
     thread->exit_value = value_ptr;
     thread->has_exited = 1;
 
-    exit_task();
+    syscall(SC_EXIT_TASK);
     __builtin_unreachable();
 }
 

@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -12,6 +14,13 @@ time_t time(time_t *t_loc) {
     }
 
     return tv.tv_sec;
+}
+
+clock_t clock(void) {
+    fprintf(stderr, "clock not supported\n");
+
+    assert(false);
+    return 0;
 }
 
 size_t strftime(char *__restrict s, size_t n, const char *__restrict format, const struct tm *__restrict tm) {

@@ -3,9 +3,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 #define SHM_PREFIX "/dev/shm"
+
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
+    void *ret = (void *) syscall(SC_MMAP, addr, length, prot, flags, fd, offset);
+    if ((long) ret < 0 && (long) ret > -EMAXERRNO) {
+        errno = -((long) ret);
+        return MAP_FAILED;
+    }
+
+    return ret;
+}
+
+int munmap(void *addr, size_t length) {
+    int ret = (int) syscall(SC_MUNMAP, addr, length);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int mprotect(void *addr, size_t length, int prot) {
+    int ret = (int) syscall(SC_MPROTECT, addr, length, prot);
+    __SYSCALL_TO_ERRNO(ret);
+}
 
 static char *shm_full_path(const char *name) {
     char *path = malloc(strlen(name) + strlen(SHM_PREFIX) + 1);

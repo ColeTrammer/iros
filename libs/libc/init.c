@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/os_2.h>
 #include <sys/param.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 // clang-format off
@@ -56,7 +57,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     (void) argc;
     (void) argv;
 
-    get_initial_process_info(&__initial_process_info);
+    syscall(SC_GET_INITIAL_PROCESS_INFO, &__initial_process_info);
 
     // FIXME: __allocate_thread_control_block will call malloc which calls sbrk,
     //        which could set errno if it fails.
@@ -69,7 +70,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER;
     __threads->id = __initial_process_info.main_tid;
 
-    set_thread_self_pointer(__threads);
+    syscall(SC_SET_THREAD_SELF_POINTER, __threads);
 
     environ = envp;
 

@@ -24,6 +24,7 @@
     __ENUMERATE_SYSCALL(PIPE, 1)                     \
     __ENUMERATE_SYSCALL(UNLINK, 1)                   \
     __ENUMERATE_SYSCALL(RMDIR, 1)                    \
+    __ENUMERATE_SYSCALL(CHMOD, 1)                    \
     __ENUMERATE_SYSCALL(KILL, 2)                     \
     __ENUMERATE_SYSCALL(SETPGID, 2)                  \
     __ENUMERATE_SYSCALL(SIGACTION, 3)                \

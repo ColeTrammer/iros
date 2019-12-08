@@ -1,6 +1,6 @@
+#include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <sys/syscall.h>
 
 static long syscall0(int sc, va_list args) {
@@ -54,10 +54,9 @@ static long syscall6(int sc, va_list args) {
 }
 
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(s, a)                                          \
-    case SC_##s:                                                           \
-        fprintf(stderr, "Doing syscall: %s\n", syscall_to_string(SC_##s)); \
-        ret = syscall##a(SC_##s, args);                                    \
+#define __ENUMERATE_SYSCALL(s, a)       \
+    case SC_##s:                        \
+        ret = syscall##a(SC_##s, args); \
         break;
 
 long syscall(enum sc_number sc, ...) {

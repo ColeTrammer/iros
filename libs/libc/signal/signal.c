@@ -4,7 +4,13 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/os_2.h>
+#include <sys/syscall.h>
 #include <unistd.h>
+
+int kill(pid_t pid, int sig) {
+    int ret = (int) syscall(SC_KILL, pid, sig);
+    __SYSCALL_TO_ERRNO(ret);
+}
 
 int killpg(int pgid, int sig) {
     return kill(-pgid, sig);
@@ -28,7 +34,18 @@ void psignal(int sig, const char *s) {
 
 int raise(int signum) {
     // Make sure to signal the current thread, not just a random one in the process
-    return tgkill(0, 0, signum);
+    return syscall(SC_TGKILL, 0, 0, signum);
+}
+
+static __attribute__((__noreturn__)) void sigreturn(void) {
+    __do_syscall(SC_SIGRETURN, 0, 0, 0, 0, 0, 0);
+    __builtin_unreachable();
+}
+
+int sigaction(int signum, const struct sigaction *act, struct sigaction *old_act) {
+    ((struct sigaction *) act)->sa_restorer = &sigreturn;
+    int ret = (int) syscall(SC_SIGACTION, signum, act, old_act);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 sighandler_t signal(int signum, sighandler_t handler) {
@@ -44,6 +61,16 @@ sighandler_t signal(int signum, sighandler_t handler) {
     }
 
     return old.sa_handler;
+}
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *old) {
+    int ret = (int) syscall(SC_SIGPROCMASK, how, set, old);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+int sigsuspend(const sigset_t *set) {
+    int ret = (int) syscall(SC_SIGSUSPEND, set);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 int sigemptyset(sigset_t *set) {
