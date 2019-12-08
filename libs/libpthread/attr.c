@@ -148,7 +148,7 @@ int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
     return 0;
 }
 
-int pthread_attr_setscope(const pthread_attr_t *attr, int scope) {
+int pthread_attr_setscope(pthread_attr_t *attr, int scope) {
     if (attr == NULL || attr->__flags == -1 || scope != PTHREAD_SCOPE_SYSTEM) {
         return EINVAL;
     }

@@ -83,7 +83,7 @@ int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize);
 int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched);
 int pthread_attr_setschedparam(pthread_attr_t *__restrict attr, const struct sched_param *__restrict param);
 int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy);
-int pthread_attr_setscope(const pthread_attr_t *attr, int scope);
+int pthread_attr_setscope(pthread_attr_t *attr, int scope);
 int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr, size_t stacksize);
 int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr);
 int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize);

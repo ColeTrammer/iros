@@ -96,6 +96,7 @@ $(BUILDDIR)/libs/libc/string/strerror.o \
 $(BUILDDIR)/libs/libc/string/strxfrm.o \
 $(BUILDDIR)/libs/libc/sys/mman/mman.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
+$(BUILDDIR)/libs/libc/sys/syscall/syscall.o \
 $(BUILDDIR)/libs/libc/sys/wait/wait.o \
 $(BUILDDIR)/libs/libc/termios/termios.o \
 $(BUILDDIR)/libs/libc/time/time.o \

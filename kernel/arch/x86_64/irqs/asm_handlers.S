@@ -235,6 +235,8 @@ sys_call_entry:
     push %r15
 
     # Should Check To See If RAX Is Invalid
+    movq $0xFFFFFFFF, %rax
+    andq %rdi, %rax
     movabs $sys_call_table, %rax
     movq (%rax, %rdi, 8), %rax
     movq %rsp, %rdi
