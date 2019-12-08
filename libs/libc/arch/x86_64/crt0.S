@@ -26,6 +26,7 @@ _start:
     popq %rdi
     callq exit
 
+.global __halt
 __halt:
     jmp __halt
 

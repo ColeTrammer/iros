@@ -65,14 +65,21 @@
     __ENUMERATE_SYSCALL(SET_THREAD_SELF_POINTER, 1)  \
     __ENUMERATE_SYSCALL(MPROTECT, 3)
 
+#ifdef __ASSEMBLER__
+#define SC_SIGRETURN 27
+#else
+
 enum sc_number {
 #define __ENUMERATE_SYSCALL(x, v) SC_##x,
     SC_START,
     ENUMERATE_SYSCALLS SC_NUM
 };
 
+__attribute__((__noreturn__)) void __sigreturn(void);
 long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5, unsigned long a6);
 long syscall(enum sc_number sc, ...);
 char *syscall_to_string(enum sc_number sc);
+
+#endif /*__ASSEMBLER */
 
 #endif /* _SYS_SYSCALL_H */
