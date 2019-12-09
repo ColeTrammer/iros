@@ -5,7 +5,10 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef int pthread_condattr_t;
+typedef struct {
+    int __flags;
+    clockid_t __clockid;
+} pthread_condattr_t;
 
 #ifdef __cplusplus
 }

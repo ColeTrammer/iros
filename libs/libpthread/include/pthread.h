@@ -1,16 +1,16 @@
 #ifndef _PTHREAD_H
 #define _PTHREAD_H 1
 
+// sched.h comes first for clockid_t (needed by pthread_condattr_t)
+#include <sched.h>
+
 #include <bits/pthread_attr_t.h>
 #include <bits/pthread_cond_t.h>
-#include <bits/pthread_condattr_t.h>
 #include <bits/pthread_key_t.h>
 #include <bits/pthread_mutex_t.h>
-#include <bits/pthread_mutexattr_t.h>
 #include <bits/pthread_once_t.h>
 #include <bits/pthread_spinlock_t.h>
 #include <bits/pthread_t.h>
-#include <sched.h>
 
 #define PTHREAD_CANCEL_ASYNCHRONOUS 4
 #define PTHREAD_CANCEL_DEFERRED     0
@@ -29,13 +29,20 @@
 #define PTHREAD_EXPLICIT_SCHED 2
 #define PTHREAD_INHERIT_SCHED  0
 
+#define PTHREAD_PROCESS_SHARED  0
+#define PTHREAD_PROCESS_PRIVATE 1
+
 #define PTHREAD_ONCE_INIT 0
 
 #define PTHREAD_COND_INITIALIZER \
-    { 0 }
+    {                            \
+        0, { 0, 0 }              \
+    }
 
 #define PTHREAD_MUTEX_INITIALIZER \
-    { 0 }
+    {                             \
+        0, { 0 }                  \
+    }
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +65,13 @@ int pthread_setschedprio(pthread_t thread, int prio);
 
 int pthread_once(pthread_once_t *once_control, void (*init_function)(void));
 
+int pthread_condattr_init(pthread_condattr_t *condattr);
+int pthread_condattr_destroy(pthread_condattr_t *condattr);
+int pthread_condattr_getclock(pthread_condattr_t *__restrict condattr, clockid_t *__restrict clock);
+int pthread_condattr_getpshared(pthread_condattr_t *__restrict condattr, int *__restrict pshared);
+int pthread_condattr_setclock(pthread_condattr_t *condattr, clockid_t clock);
+int pthread_condattr_setpshared(pthread_condattr_t *__restrict condattr, int pshared);
+
 int pthread_cond_broadcast(pthread_cond_t *cond);
 int pthread_cond_destroy(pthread_cond_t *cond);
 int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict attr);
@@ -69,6 +83,11 @@ int pthread_spin_init(pthread_spinlock_t *lock, int pshared);
 int pthread_spin_lock(pthread_spinlock_t *lock);
 int pthread_spin_trylock(pthread_spinlock_t *lock);
 int pthread_spin_unlock(pthread_spinlock_t *lock);
+
+int pthread_mutexattr_init(pthread_mutexattr_t *mutexattr);
+int pthread_mutexattr_destroy(pthread_mutexattr_t *mutexattr);
+int pthread_mutexattr_getpshared(pthread_mutexattr_t *__restrict mutexattr, int *__restrict pshared);
+int pthread_mutexattr_setpshared(pthread_mutexattr_t *mutexattr, int pshared);
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex, const pthread_mutexattr_t *__restrict mutexattr);

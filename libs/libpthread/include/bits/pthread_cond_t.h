@@ -5,8 +5,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include <bits/pthread_condattr_t.h>
+
 typedef struct {
     int __lock;
+    pthread_condattr_t __attr;
 } pthread_cond_t;
 
 #ifdef __cplusplus

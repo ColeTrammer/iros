@@ -5,8 +5,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include <bits/pthread_mutexattr_t.h>
+
 typedef struct {
     int __lock;
+    pthread_mutexattr_t __attr;
 } pthread_mutex_t;
 
 #ifdef __cplusplus

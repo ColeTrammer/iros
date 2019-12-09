@@ -1,6 +1,8 @@
+#include <errno.h>
 #include <limits.h>
 #include <pthread.h>
 #include <stddef.h>
+#include <string.h>
 #include <sys/os_2.h>
 #include <sys/syscall.h>
 
@@ -9,13 +11,26 @@ int pthread_cond_broadcast(pthread_cond_t *cond) {
 }
 
 int pthread_cond_destroy(pthread_cond_t *cond) {
+    if (cond == NULL || cond->__lock == -1) {
+        return EINVAL;
+    }
+
     cond->__lock = -1;
     return 0;
 }
 
 int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict attr) {
-    (void) attr;
+    if (cond == NULL) {
+        return EINVAL;
+    }
+
     cond->__lock = 0;
+    if (attr != NULL) {
+        memcpy(&cond->__attr, attr, sizeof(pthread_condattr_t));
+    } else {
+        pthread_condattr_init(&cond->__attr);
+    }
+
     return 0;
 }
 

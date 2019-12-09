@@ -5,7 +5,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef int pthread_mutexattr_t;
+typedef struct {
+    int __flags;
+} pthread_mutexattr_t;
 
 #ifdef __cplusplus
 }

@@ -5,7 +5,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef unsigned long clockid_t;
+typedef int clockid_t;
 
 #ifdef __cplusplus
 }

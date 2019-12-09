@@ -2,13 +2,21 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stddef.h>
+#include <string.h>
 #include <sys/os_2.h>
 #include <sys/syscall.h>
 
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex, const pthread_mutexattr_t *__restrict mutexattr) {
-    (void) mutexattr;
+    if (mutex == NULL) {
+        return EINVAL;
+    }
 
     mutex->__lock = 0;
+    if (mutexattr != NULL) {
+        memcpy(&mutex->__attr, mutexattr, sizeof(pthread_mutexattr_t));
+    } else {
+        pthread_mutexattr_init(&mutex->__attr);
+    }
     return 0;
 }
 
@@ -37,6 +45,10 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 }
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex) {
+    if (mutex == NULL || mutex->__lock == -1) {
+        return EINVAL;
+    }
+
     mutex->__lock = -1;
     return 0;
 }
