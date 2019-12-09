@@ -43,6 +43,7 @@
         get_current_task()->arch_task.user_task_state = (task_state);          \
         get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
         get_current_task()->in_kernel = true;                                  \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;             \
         enable_interrupts();                                                   \
     } while (0)
 
@@ -50,6 +51,7 @@
     do {                                                                  \
         get_current_task()->arch_task.user_task_state = (task_state);     \
         get_current_task()->in_kernel = true;                             \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;        \
         get_current_task()->arch_task.user_task_state->cpu_state.rax = 0; \
     } while (0)
 
@@ -57,6 +59,7 @@
     do {                                                                       \
         get_current_task()->arch_task.user_task_state = (task_state);          \
         get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;             \
         get_current_task()->in_kernel = true;                                  \
         get_current_task()->in_sigsuspend = true;                              \
     } while (0)
@@ -123,7 +126,7 @@ void arch_sys_fork(struct task_state *task_state) {
     child_process->pid = get_next_pid();
     init_spinlock(&child_process->lock);
     proc_add_process(child_process);
-    child->sched_state = READY;
+    child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;
     child_process->process_memory = clone_process_vm();
     child_process->tty = parent->process->tty;
@@ -393,7 +396,7 @@ void arch_sys_execve(struct task_state *task_state) {
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->process_memory = add_vm_region(process->process_memory, process_guard);
     task->kernel_task = false;
-    task->sched_state = READY;
+    task->sched_state = RUNNING_INTERRUPTIBLE;
     process->tty = current->process->tty;
     process->cwd = malloc(strlen(current->process->cwd) + 1);
     strcpy(process->cwd, current->process->cwd);
@@ -491,7 +494,7 @@ void arch_sys_waitpid(struct task_state *task_state) {
 #endif /* WAIT_PID_DEBUG */
                 SYS_RETURN(-ECHILD);
             } else {
-                yield();
+                kernel_yield();
             }
         } else {
             if ((m.type == STATE_STOPPED && !(flags & WUNTRACED)) || (m.type == STATE_CONTINUED && !(flags & WCONTINUED))) {
@@ -964,7 +967,7 @@ void arch_sys_sleep(struct task_state *task_state) {
     current->sleeping = true;
     current->sleep_end = get_time() + seconds * 1000;
     current->sched_state = WAITING;
-    yield();
+    __kernel_yield();
 
     current->sleeping = false;
     SYS_RETURN(seconds);
@@ -1341,13 +1344,15 @@ void arch_sys_alarm(struct task_state *task_state) {
     current->sleeping = true;
     current->sleep_end = get_time() + seconds * 1000;
     current->sched_state = WAITING;
-    yield();
+    __kernel_yield();
 
     current->sleeping = false;
 
     disable_interrupts();
+    // Tell signal handling code we were interruped (as would be implied by this saying -EINTR)
+    task_state->cpu_state.rax = 0;
     signal_process(current->process->pid, SIGALRM);
-    SYS_RETURN(0);
+    assert(false);
 }
 
 void arch_sys_fchmod(struct task_state *task_state) {
@@ -1431,7 +1436,7 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->process = current->process;
     task->sig_mask = current->sig_mask;
     task->sig_pending = 0;
-    task->sched_state = READY;
+    task->sched_state = RUNNING_INTERRUPTIBLE;
     task->tid = get_next_tid();
 
     task_align_fpu(task);
@@ -1501,7 +1506,7 @@ void arch_sys_os_mutex(struct task_state *task_state) {
                 unlock_user_mutex(to_unlock);
             }
             unlock_user_mutex(um);
-            yield();
+            kernel_yield();
             SYS_RETURN(0);
         }
         case MUTEX_RELEASE: {

@@ -165,7 +165,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
             break;
         }
 
-        yield();
+        kernel_yield();
         barrier();
     }
 

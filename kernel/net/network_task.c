@@ -71,7 +71,7 @@ void net_network_task_start() {
     for (;;) {
         struct network_data *data = consume();
         if (data == NULL) {
-            yield();
+            kernel_yield();
             barrier();
             continue;
         }

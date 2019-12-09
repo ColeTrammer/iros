@@ -93,7 +93,7 @@ ssize_t pipe_read(struct file *file, void *buffer, size_t _len) {
 
     size_t len = MIN(_len, inode->size - file->position);
     while (len == 0 && is_pipe_write_end_open(inode)) {
-        yield();
+        kernel_yield();
         len = MIN(_len, inode->size - file->position);
     }
 

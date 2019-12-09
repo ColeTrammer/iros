@@ -16,7 +16,8 @@ void sched_remove_task(struct task *task);
 void sched_run_next();
 struct task *find_task_for_process(pid_t pid);
 void yield_signal();
-void yield();
+void __kernel_yield();
+void kernel_yield();
 
 int signal_task(int tgid, int tid, int signum);
 int signal_process_group(pid_t pgid, int signum);

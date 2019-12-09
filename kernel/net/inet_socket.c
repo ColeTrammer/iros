@@ -265,7 +265,7 @@ int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, sock
             break;
         }
 
-        yield();
+        kernel_yield();
         barrier();
     }
 

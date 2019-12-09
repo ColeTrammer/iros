@@ -72,7 +72,7 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
                 }
             }
 
-            yield();
+            kernel_yield();
             spin_lock(&data->lock);
         }
 
@@ -139,7 +139,7 @@ slave_write_again:
         if (message->max < message->len + len) {
             while (mdata->messages != NULL) {
                 spin_unlock(&mdata->lock);
-                yield();
+                kernel_yield();
                 spin_lock(&mdata->lock);
             }
 

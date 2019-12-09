@@ -16,7 +16,7 @@
 #include ARCH_SPECIFIC(proc/task.h)
 // clang-format on
 
-enum sched_state { RUNNING, READY, WAITING, EXITING };
+enum sched_state { RUNNING_INTERRUPTIBLE, RUNNING_UNINTERRUPTIBLE, WAITING, EXITING };
 
 struct task {
     struct arch_task arch_task;

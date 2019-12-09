@@ -175,7 +175,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             }
         }
 
-        yield();
+        kernel_yield();
     }
 
     socket->data_head = data->next;
@@ -237,7 +237,7 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             return -EAGAIN;
         }
 
-        yield();
+        kernel_yield();
         barrier();
     }
 

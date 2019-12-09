@@ -130,7 +130,7 @@ void init_kernel_task() {
     initial_kernel_task.kernel_task = true;
     initial_kernel_task.process->pid = 1;
     init_spinlock(&initial_kernel_process.lock);
-    initial_kernel_task.sched_state = RUNNING;
+    initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
     initial_kernel_task.next = NULL;
     initial_kernel_task.process->pgid = 1;
     initial_kernel_task.process->ppid = 1;
@@ -151,7 +151,7 @@ struct task *load_kernel_task(uintptr_t entry) {
     task->process->ppid = initial_kernel_task.process->pid;
     task->process->process_memory = NULL;
     task->kernel_task = true;
-    task->sched_state = READY;
+    task->sched_state = RUNNING_UNINTERRUPTIBLE;
     task->process->cwd = malloc(2);
     task->process->tty = -1;
     task->tid = get_next_tid();
@@ -195,7 +195,7 @@ struct task *load_task(const char *file_name) {
     task->process->ppid = initial_kernel_task.process->pid;
     task->process->process_memory = NULL;
     task->kernel_task = false;
-    task->sched_state = READY;
+    task->sched_state = RUNNING_INTERRUPTIBLE;
     task->process->cwd = malloc(2);
     task->process->tty = -1;
     strcpy(task->process->cwd, "/");
@@ -238,12 +238,7 @@ struct task *load_task(const char *file_name) {
 
 /* Must be called from unpremptable context */
 void run_task(struct task *task) {
-    if (current_task->sched_state == RUNNING) {
-        current_task->sched_state = READY;
-    }
     current_task = task;
-    current_task->sched_state = RUNNING;
-
     arch_run_task(task);
 }
 
@@ -368,10 +363,10 @@ void task_do_sig(struct task *task, int signum) {
             proc_add_message(task->process->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
-            if (task->sched_state == READY) {
+            if (task->sched_state == RUNNING_INTERRUPTIBLE || task->sched_state == RUNNING_UNINTERRUPTIBLE) {
                 break;
             }
-            task->sched_state = READY;
+            task->sched_state = RUNNING_INTERRUPTIBLE;
             proc_add_message(task->process->pid, proc_create_message(STATE_CONTINUED, signum));
             break;
         case IGNORE:

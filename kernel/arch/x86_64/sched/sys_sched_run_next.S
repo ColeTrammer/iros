@@ -17,8 +17,8 @@ yield_signal:
     # Should Not Be Reached
     jmp __halt
 
-.global yield
-yield:
+.global __kernel_yield
+__kernel_yield:
     # Switches stack and then builds task_state struct on that stack
 
     # Save old rsp and provide rip for reentry

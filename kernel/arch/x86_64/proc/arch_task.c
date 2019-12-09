@@ -207,12 +207,6 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     debug_log("Running pid: [ %d, %p ]\n", task->process->pid, save_state);
 
-    if (get_current_task()->sched_state == RUNNING) {
-        get_current_task()->sched_state = READY;
-    }
-
     current_task = task;
-    current_task->sched_state = RUNNING;
-
     __run_task(&current_task->arch_task);
 }
