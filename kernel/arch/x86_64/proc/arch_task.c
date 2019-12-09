@@ -170,13 +170,14 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     load_task_into_memory(task);
 
-    uint64_t save_rsp = proc_in_kernel(task) ? task->arch_task.user_task_state.stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
+    uint64_t save_rsp =
+        proc_in_kernel(task) ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
 
     assert(save_rsp != 0);
     struct task_state *save_state = ((struct task_state *) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
     uint8_t *fpu_save_state = ((uint8_t *) save_state) - FPU_IMAGE_SIZE;
 
-    struct task_state *to_copy = proc_in_kernel(task) ? &task->arch_task.user_task_state : &task->arch_task.task_state;
+    struct task_state *to_copy = proc_in_kernel(task) ? task->arch_task.user_task_state : &task->arch_task.task_state;
 
     uint64_t *stack_frame = ((uint64_t *) fpu_save_state) - 1;
     *stack_frame-- = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
@@ -210,7 +211,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     task->sig_mask = act.sa_mask;
     task->sig_mask |= (1U << (signum - 1));
 
-    debug_log("Running pid: [ %d ]\n", task->process->pid);
+    debug_log("Running pid: [ %d, %p ]\n", task->process->pid, save_state);
 
     if (get_current_task()->sched_state == RUNNING) {
         get_current_task()->sched_state = READY;

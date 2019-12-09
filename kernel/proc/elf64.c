@@ -137,9 +137,9 @@ void elf64_stack_trace(struct task *task) {
     assert(symbols);
     assert(string_table);
 
-    uintptr_t rsp = (task->in_kernel || task->can_send_self_signals) ? task->arch_task.user_task_state.stack_state.rsp
+    uintptr_t rsp = (task->in_kernel || task->can_send_self_signals) ? task->arch_task.user_task_state->stack_state.rsp
                                                                      : task->arch_task.task_state.stack_state.rsp;
-    uintptr_t rip = (task->in_kernel || task->can_send_self_signals) ? task->arch_task.user_task_state.stack_state.rip
+    uintptr_t rip = (task->in_kernel || task->can_send_self_signals) ? task->arch_task.user_task_state->stack_state.rip
                                                                      : task->arch_task.task_state.stack_state.rip;
 
     debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);

@@ -34,37 +34,39 @@
 // #define DUP_DEBUG
 // #define SET_PGID_DEBUG
 // #define SIGACTION_DEBUG
+// #define SIGRETURN_DEBUG
 #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
-#define SYS_BEGIN(task_state)                                                                            \
-    do {                                                                                                 \
-        memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
-        get_current_task()->in_kernel = true;                                                            \
-        enable_interrupts();                                                                             \
+#define SYS_BEGIN(task_state)                                         \
+    do {                                                              \
+        get_current_task()->arch_task.user_task_state = (task_state); \
+        get_current_task()->in_kernel = true;                         \
+        enable_interrupts();                                          \
     } while (0)
 
-#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                                                      \
-    do {                                                                                                 \
-        memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
-        get_current_task()->can_send_self_signals = true;                                                \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                   \
+    do {                                                              \
+        get_current_task()->arch_task.user_task_state = (task_state); \
+        get_current_task()->can_send_self_signals = true;             \
     } while (0)
 
-#define SYS_BEGIN_SIGSUSPEND(task_state)                                                                 \
-    do {                                                                                                 \
-        memcpy(&get_current_task()->arch_task.user_task_state, (task_state), sizeof(struct task_state)); \
-        get_current_task()->in_sigsuspend = true;                                                        \
-        get_current_task()->in_kernel = true;                                                            \
+#define SYS_BEGIN_SIGSUSPEND(task_state)                              \
+    do {                                                              \
+        get_current_task()->arch_task.user_task_state = (task_state); \
+        get_current_task()->in_sigsuspend = true;                     \
+        get_current_task()->in_kernel = true;                         \
     } while (0)
 
-#define SYS_RETURN(val)                                    \
-    do {                                                   \
-        uint64_t _val = (uint64_t) val;                    \
-        disable_interrupts();                              \
-        task_state->cpu_state.rax = (_val);                \
-        get_current_task()->in_kernel = false;             \
-        get_current_task()->can_send_self_signals = false; \
-        return;                                            \
+#define SYS_RETURN(val)                                       \
+    do {                                                      \
+        uint64_t _val = (uint64_t) val;                       \
+        disable_interrupts();                                 \
+        task_state->cpu_state.rax = (_val);                   \
+        get_current_task()->in_kernel = false;                \
+        get_current_task()->can_send_self_signals = false;    \
+        get_current_task()->arch_task.user_task_state = NULL; \
+        return;                                               \
     } while (0)
 
 extern struct task *current_task;
@@ -863,13 +865,19 @@ void arch_sys_sigreturn(struct task_state *task_state) {
     uint64_t *mask_ptr = (uint64_t *) task_state->stack_state.rsp;
     uint8_t *saved_fpu_state = (uint8_t *) (mask_ptr + 1);
     struct task_state *saved_state = (struct task_state *) (saved_fpu_state + FPU_IMAGE_SIZE);
-    debug_log("Sig return\n");
+    debug_log("Sig return: [ %p ]\n", saved_state);
 
     memcpy(task->fpu.aligned_state, saved_fpu_state, FPU_IMAGE_SIZE);
     memcpy(&task->arch_task.task_state, saved_state, sizeof(struct task_state));
 
     // Restore mask
     task->sig_mask = *mask_ptr;
+
+#ifdef SIGRETURN_DEBUG
+    debug_log("State: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", task->arch_task.task_state.stack_state.cs,
+              task->arch_task.task_state.stack_state.rip, task->arch_task.task_state.stack_state.rflags,
+              task->arch_task.task_state.stack_state.rsp, task->arch_task.task_state.stack_state.ss);
+#endif /* SIGRETURN_DEBUG */
 
     yield_signal();
 }
