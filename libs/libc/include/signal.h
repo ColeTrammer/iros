@@ -36,6 +36,7 @@
 #define SIGXFSZ   27
 #define SIGCHLD   28
 #define SIGCLD    SIGCHLD
+#define SIGWINCH  29
 #define _NSIG     32
 
 #ifdef __cplusplus
@@ -81,10 +82,14 @@ typedef struct {
 } siginfo_t;
 
 struct sigaction {
-    void (*sa_handler)(int);
+    union {
+        void (*sa_handler)(int);
+        void (*sa_sigaction)(int, siginfo_t *, void *);
+    } __sigaction_handler;
+#define sa_handler   __sigaction_handler.sa_handler
+#define sa_sigaction __sigaction_handler.sa_sigaction
     sigset_t sa_mask;
     int sa_flags;
-    void (*sa_sigaction)(int, siginfo_t *, void *);
     void (*sa_restorer)(void);
 };
 

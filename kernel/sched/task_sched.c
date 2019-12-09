@@ -145,6 +145,7 @@ int signal_process_group(pid_t pgid, int signum) {
     bool signalled_anything = false;
     struct task *task = list_start;
     do {
+        // FIXME: only signal 1 task per process
         if (task->process->pgid == pgid) {
             task_set_sig_pending(task, signum);
             signalled_anything = true;

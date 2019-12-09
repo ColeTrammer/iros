@@ -38,7 +38,6 @@ struct task {
     bool kernel_task : 1;
     bool in_kernel : 1;
     bool in_sigsuspend : 1;
-    bool can_send_self_signals : 1;
     bool sleeping : 1;
     bool should_wake_up_from_mutex_sleep : 1;
 

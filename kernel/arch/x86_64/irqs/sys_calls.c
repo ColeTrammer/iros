@@ -38,33 +38,35 @@
 #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
-#define SYS_BEGIN(task_state)                                         \
-    do {                                                              \
-        get_current_task()->arch_task.user_task_state = (task_state); \
-        get_current_task()->in_kernel = true;                         \
-        enable_interrupts();                                          \
+#define SYS_BEGIN(task_state)                                                  \
+    do {                                                                       \
+        get_current_task()->arch_task.user_task_state = (task_state);          \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
+        get_current_task()->in_kernel = true;                                  \
+        enable_interrupts();                                                   \
     } while (0)
 
-#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                   \
-    do {                                                              \
-        get_current_task()->arch_task.user_task_state = (task_state); \
-        get_current_task()->can_send_self_signals = true;             \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                       \
+    do {                                                                  \
+        get_current_task()->arch_task.user_task_state = (task_state);     \
+        get_current_task()->in_kernel = true;                             \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = 0; \
     } while (0)
 
-#define SYS_BEGIN_SIGSUSPEND(task_state)                              \
-    do {                                                              \
-        get_current_task()->arch_task.user_task_state = (task_state); \
-        get_current_task()->in_sigsuspend = true;                     \
-        get_current_task()->in_kernel = true;                         \
+#define SYS_BEGIN_SIGSUSPEND(task_state)                                       \
+    do {                                                                       \
+        get_current_task()->arch_task.user_task_state = (task_state);          \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
+        get_current_task()->in_kernel = true;                                  \
+        get_current_task()->in_sigsuspend = true;                              \
     } while (0)
 
 #define SYS_RETURN(val)                                       \
     do {                                                      \
-        uint64_t _val = (uint64_t) val;                       \
+        uint64_t _val = (uint64_t)(val);                      \
         disable_interrupts();                                 \
         task_state->cpu_state.rax = (_val);                   \
         get_current_task()->in_kernel = false;                \
-        get_current_task()->can_send_self_signals = false;    \
         get_current_task()->arch_task.user_task_state = NULL; \
         return;                                               \
     } while (0)
@@ -1344,7 +1346,6 @@ void arch_sys_alarm(struct task_state *task_state) {
     current->sleeping = false;
 
     disable_interrupts();
-    current->can_send_self_signals = true;
     signal_process(current->process->pid, SIGALRM);
     SYS_RETURN(0);
 }

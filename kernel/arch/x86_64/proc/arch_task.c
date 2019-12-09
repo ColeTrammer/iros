@@ -186,19 +186,13 @@ void task_do_sig_handler(struct task *task, int signum) {
     memcpy(save_state, to_copy, sizeof(struct task_state));
     memcpy(fpu_save_state, task->fpu.aligned_state, FPU_IMAGE_SIZE);
     if (proc_in_kernel(task)) {
-        if (task->can_send_self_signals) {
-            save_state->cpu_state.rax = 0;
-            task->can_send_self_signals = false;
-        } else if ((act.sa_flags & SA_RESTART) && !task->in_sigsuspend) {
+        if (task->in_sigsuspend) {
+            task->in_sigsuspend = false;
+        } else if ((act.sa_flags & SA_RESTART) && (task->arch_task.user_task_state->cpu_state.rax == (uint64_t) -EINTR)) {
             // Decrement %rip by the sizeof of the iretq instruction so that
             // the program will automatically execute int $0x80, restarting
             // the sys call in the easy way possible
             save_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
-        } else {
-            if (task->in_sigsuspend) {
-                task->in_sigsuspend = false;
-            }
-            save_state->cpu_state.rax = -EINTR;
         }
     }
 
