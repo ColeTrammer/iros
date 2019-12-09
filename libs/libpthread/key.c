@@ -15,12 +15,16 @@ static pthread_mutex_t allocated_key_mutex = PTHREAD_MUTEX_INITIALIZER;
 void pthread_specific_run_destructors(struct thread_control_block *thread) {
     for (int i = 0; i < PTHREAD_DESTRUCTOR_ITERATIONS; i++) {
         bool did_something = false;
-        for (int j = 0; j < PTHREAD_KEYS_MAX; j++) {
-            if (destructors[j] != NULL && thread->pthread_specific_data[j] != NULL) {
-                void *value = thread->pthread_specific_data[j];
-                thread->pthread_specific_data[j] = NULL;
-                destructors[j](value);
-                did_something = true;
+        for (size_t j = 0; j < PTHREAD_KEYS_MAX / CHAR_BIT / sizeof(unsigned long); j++) {
+            unsigned long bits = allocated_keys_bitmap[j];
+            for (size_t k = 0; ~bits && k < CHAR_BIT * sizeof(unsigned long); k++) {
+                int index = j * sizeof(unsigned long) + k;
+                if (destructors[index] != NULL && thread->pthread_specific_data[index] != NULL) {
+                    void *value = thread->pthread_specific_data[index];
+                    thread->pthread_specific_data[index] = NULL;
+                    destructors[index](value);
+                    did_something = true;
+                }
             }
         }
 
