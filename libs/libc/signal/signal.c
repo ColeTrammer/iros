@@ -63,6 +63,11 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *old) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
+int sigpending(sigset_t *set) {
+    int ret = (int) syscall(SC_SIGPENDING, set);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
 int sigsuspend(const sigset_t *set) {
     int ret = (int) syscall(SC_SIGSUSPEND, set);
     __SYSCALL_TO_ERRNO(ret);

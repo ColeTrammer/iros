@@ -1614,3 +1614,15 @@ void arch_sys_mprotect(struct task_state *task_state) {
 
     SYS_RETURN(map_range_protections((uintptr_t) addr, length, prot));
 }
+
+void arch_sys_sigpending(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    sigset_t *set = (sigset_t *) task_state->cpu_state.rsi;
+    if (set == NULL) {
+        SYS_RETURN(-EFAULT);
+    }
+
+    memcpy(set, get_current_task()->sig_pending, sizeof(sigset_t));
+    SYS_RETURN(0);
+}
