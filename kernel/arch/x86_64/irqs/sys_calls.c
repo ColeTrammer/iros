@@ -1623,6 +1623,6 @@ void arch_sys_sigpending(struct task_state *task_state) {
         SYS_RETURN(-EFAULT);
     }
 
-    memcpy(set, get_current_task()->sig_pending, sizeof(sigset_t));
+    memcpy(set, &get_current_task()->sig_pending, sizeof(sigset_t));
     SYS_RETURN(0);
 }

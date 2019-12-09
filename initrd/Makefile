@@ -29,6 +29,7 @@ PROGRAMS=\
 $(BUILDDIR)/initrd/programs/alarm_test \
 $(BUILDDIR)/initrd/programs/aligned_alloc_test \
 $(BUILDDIR)/initrd/programs/broken \
+$(BUILDDIR)/initrd/programs/cancel_test \
 $(BUILDDIR)/initrd/programs/cond_test \
 $(BUILDDIR)/initrd/programs/cleanup_handler_test \
 $(BUILDDIR)/initrd/programs/detached_thread_test \

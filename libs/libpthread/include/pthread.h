@@ -12,6 +12,14 @@
 #include <bits/pthread_t.h>
 #include <sched.h>
 
+#define PTHREAD_CANCEL_ASYNCHRONOUS 4
+#define PTHREAD_CANCEL_DEFERRED     0
+
+#define PTHREAD_CANCEL_ENABLE  0
+#define PTHREAD_CANCEL_DISABLE 8
+
+#define PTHREAD_CANCELED ((void *) -1)
+
 #define PTHREAD_SCOPE_PROCESS 0
 #define PTHREAD_SCOPE_SYSTEM  0
 
@@ -73,6 +81,11 @@ int pthread_key_destroy(pthread_key_t *key);
 void *pthread_getspecific(pthread_key_t key);
 int pthread_setspecific(pthread_key_t key, const void *value);
 
+int pthread_cancel(pthread_t thread);
+int pthread_setcancelstate(int state, int *oldstate);
+int pthread_setcanceltype(int type, int *oldtype);
+void pthread_testcancel(void);
+
 int pthread_attr_destroy(pthread_attr_t *attr);
 int pthread_attr_init(pthread_attr_t *attr);
 int pthread_attr_getdetachstate(const pthread_attr_t *__restrict attr, int *__restrict detachstate);
@@ -123,6 +136,8 @@ extern __thread struct __pthread_cleanup_handler *__cleanup_handlers;
 
 #define __PTHREAD_ONCE_IN_PROGRESS 1
 #define __PTHREAD_ONCE_FINISHED    2
+
+#define __PTHREAD_CANCEL_SIGNAL 31
 
 #define __PTHREAD_MAUALLY_ALLOCATED_STACK 01000
 

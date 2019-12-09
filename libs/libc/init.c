@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdalign.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -72,6 +73,11 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     __threads->id = __initial_process_info.main_tid;
 
     syscall(SC_SET_THREAD_SELF_POINTER, __threads);
+
+    // Don't use wrappers so that signal.o won't be linked in
+    sigset_t set = { 0 };
+    set |= __PTHREAD_CANCEL_SIGNAL;
+    syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
 
     environ = envp;
 

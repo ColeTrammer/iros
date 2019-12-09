@@ -328,9 +328,9 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
     TERMINATE_AND_DUMP, // SIGXCPU
     TERMINATE_AND_DUMP, // SIGXFSZ
     IGNORE,             // SIGCHLD
-    INVAL,              // INVAL
-    INVAL,              // INVAL
-    INVAL               // INVAL
+    TERMINATE,          // INVAL
+    TERMINATE,          // INVAL
+    TERMINATE           // __PTHREAD_CANCEL_SIGNAL
 };
 
 void task_do_sig(struct task *task, int signum) {
