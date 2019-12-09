@@ -23,6 +23,7 @@
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
 extern struct task initial_kernel_task;
+extern struct task *current_task;
 
 /* Default Args And Envp Passed to First Program */
 static char *test_argv[2] = { "start", NULL };
@@ -37,6 +38,10 @@ static void kernel_idle() {
 }
 
 static void load_task_into_memory(struct task *task) {
+    if (get_current_task() == task) {
+        return;
+    }
+
     set_tss_stack_pointer(task->arch_task.kernel_stack);
     load_cr3(task->process->arch_process.cr3);
 
@@ -132,6 +137,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
 /* Must be called from unpremptable context */
 void arch_run_task(struct task *task) {
     load_task_into_memory(task);
+    current_task = task;
     __run_task(&task->arch_task);
 }
 

@@ -238,7 +238,6 @@ struct task *load_task(const char *file_name) {
 
 /* Must be called from unpremptable context */
 void run_task(struct task *task) {
-    current_task = task;
     arch_run_task(task);
 }
 
@@ -288,6 +287,13 @@ void proc_notify_parent(pid_t child_pid) {
     }
 
     proc_set_sig_pending(parent, SIGCHLD);
+}
+
+void task_do_sigs_if_needed(struct task *task) {
+    int sig = task_get_next_sig(task);
+    if (sig != -1) {
+        task_do_sig(task, sig);
+    }
 }
 
 enum sig_default_behavior { TERMINATE, TERMINATE_AND_DUMP, IGNORE, STOP, CONTINUE, INVAL };

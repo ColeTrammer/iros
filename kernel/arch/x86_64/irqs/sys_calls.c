@@ -70,6 +70,7 @@
         disable_interrupts();                                 \
         task_state->cpu_state.rax = (_val);                   \
         get_current_task()->in_kernel = false;                \
+        task_do_sigs_if_needed(get_current_task());           \
         get_current_task()->arch_task.user_task_state = NULL; \
         return;                                               \
     } while (0)

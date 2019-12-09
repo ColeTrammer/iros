@@ -77,6 +77,8 @@ void task_do_sig_handler(struct task *task, int signum);
 bool task_is_sig_blocked(struct task *task, int signum);
 void proc_notify_parent(pid_t child_pid);
 
+void task_do_sigs_if_needed(struct task *task);
+
 bool task_in_kernel(struct task *task);
 
 #endif /* _KERNEL_PROC_TASK_H */
