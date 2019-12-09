@@ -16,6 +16,7 @@
 #include <bits/pthread_attr_t.h>
 #include <bits/pthread_cond_t.h>
 #include <bits/pthread_condattr_t.h>
+#include <bits/pthread_key_t.h>
 #include <bits/pthread_mutex_t.h>
 #include <bits/pthread_mutexattr_t.h>
 #include <bits/pthread_once_t.h>

@@ -53,12 +53,12 @@
 #define _POSIX_TTY_NAME_MAX                 9
 #define _POSIX_TZNAME_MAX                   6
 
-#define PAGESIZE                     0x1000
-#define PAGE_SIZE                    PAGESIZE
-#define THREAD_DESTRUCTOR_ITERATIONS 255
-#define PTHREAD_KEYS_MAX             _POSIX_THREAD_KEYS_MAX
-#define PTHREAD_STACK_MIN            (PAGE_SIZE * 4)
-#define PTHREAD_THREADS_MAX          _POSIX_THREAD_THREADS_MAX
+#define PAGESIZE                      0x1000
+#define PAGE_SIZE                     PAGESIZE
+#define PTHREAD_DESTRUCTOR_ITERATIONS 255
+#define PTHREAD_KEYS_MAX              _POSIX_THREAD_KEYS_MAX
+#define PTHREAD_STACK_MIN             (PAGE_SIZE * 4)
+#define PTHREAD_THREADS_MAX           _POSIX_THREAD_THREADS_MAX
 
 #endif /* __is_kernel */
 

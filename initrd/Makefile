@@ -65,6 +65,7 @@ $(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/tgkill_test \
+$(BUILDDIR)/initrd/programs/thread_specific_data_test \
 $(BUILDDIR)/initrd/programs/thread_test \
 $(BUILDDIR)/initrd/programs/times_test \
 $(BUILDDIR)/initrd/programs/tls_test \

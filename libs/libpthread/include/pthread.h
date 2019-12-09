@@ -4,6 +4,7 @@
 #include <bits/pthread_attr_t.h>
 #include <bits/pthread_cond_t.h>
 #include <bits/pthread_condattr_t.h>
+#include <bits/pthread_key_t.h>
 #include <bits/pthread_mutex_t.h>
 #include <bits/pthread_mutexattr_t.h>
 #include <bits/pthread_once_t.h>
@@ -67,6 +68,11 @@ int pthread_mutex_lock(pthread_mutex_t *mutex);
 int pthread_mutex_trylock(pthread_mutex_t *mutex);
 int pthread_mutex_unlock(pthread_mutex_t *mutex);
 
+int pthread_key_create(pthread_key_t *key, void (*destructor)(void *k));
+int pthread_key_destroy(pthread_key_t *key);
+void *pthread_getspecific(pthread_key_t key);
+int pthread_setspecific(pthread_key_t key, const void *value);
+
 int pthread_attr_destroy(pthread_attr_t *attr);
 int pthread_attr_init(pthread_attr_t *attr);
 int pthread_attr_getdetachstate(const pthread_attr_t *__restrict attr, int *__restrict detachstate);
@@ -129,6 +135,7 @@ struct thread_control_block {
     int has_exited;
     int concurrency;
     void *exit_value;
+    void **pthread_specific_data;
     pthread_attr_t attributes;
 };
 
@@ -137,6 +144,10 @@ extern struct thread_control_block *__threads;
 
 struct thread_control_block *__allocate_thread_control_block();
 void __free_thread_control_block(struct thread_control_block *block);
+
+struct thread_control_block *get_self();
+
+void pthread_specific_run_destructors(struct thread_control_block *thread);
 
 #endif /* __libc_internal */
 

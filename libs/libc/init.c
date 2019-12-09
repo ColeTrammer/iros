@@ -41,6 +41,7 @@ struct thread_control_block *__allocate_thread_control_block() {
     block->has_exited = false;
     block->concurrency = 0;
     block->joining_thread = 0;
+    block->pthread_specific_data = calloc(PTHREAD_KEYS_MAX, sizeof(void *));
     return block;
 }
 

@@ -17,15 +17,13 @@ __thread struct __pthread_cleanup_handler *__cleanup_handlers = NULL;
 
 static void pthread_exit_after_cleanup(void *value_ptr) __attribute__((__noreturn__));
 
+struct thread_control_block *get_self() {
 #if ARCH == X86_64
-
-static struct thread_control_block *get_self() {
     struct thread_control_block *ret;
     asm("movq %%fs:0, %0" : "=r"(ret)::);
     return ret;
-}
-
 #endif /* ARCH == X86_64 */
+}
 
 static void __add_thread(struct thread_control_block *elem, struct thread_control_block *prev) {
     struct thread_control_block *to_add = elem;
@@ -245,6 +243,9 @@ __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
 
 __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value_ptr) {
     struct thread_control_block *thread = get_self();
+
+    pthread_specific_run_destructors(thread);
+
     if (thread->attributes.__flags & PTHREAD_CREATE_DETACHED) {
         pthread_spin_lock(&threads_lock);
 
