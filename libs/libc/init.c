@@ -47,6 +47,7 @@ struct thread_control_block *__allocate_thread_control_block() {
 }
 
 void __free_thread_control_block(struct thread_control_block *block) {
+    free(block->pthread_specific_data);
     uint8_t *block_start = (uint8_t *) block;
 
     block_start -=
