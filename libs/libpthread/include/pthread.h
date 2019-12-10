@@ -175,6 +175,7 @@ struct thread_control_block {
 
 extern struct initial_process_info __initial_process_info;
 extern struct thread_control_block *__threads;
+extern int __cancelation_setup;
 
 struct thread_control_block *__allocate_thread_control_block();
 void __free_thread_control_block(struct thread_control_block *block);
@@ -182,6 +183,8 @@ void __free_thread_control_block(struct thread_control_block *block);
 struct thread_control_block *get_self();
 
 void pthread_specific_run_destructors(struct thread_control_block *thread);
+
+void setup_cancelation_handler(void);
 
 #endif /* __libc_internal */
 

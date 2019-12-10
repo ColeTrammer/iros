@@ -13,6 +13,7 @@ int main() {
                 },
                 nullptr);
             while (1) {
+                write(1, "CD\n", 3);
                 pthread_testcancel();
                 asm volatile("" ::: "memory");
             }
@@ -20,6 +21,8 @@ int main() {
             pthread_cleanup_pop(0);
         },
         nullptr);
+
+    sleep(1);
 
     assert(pthread_cancel(id) == 0);
 

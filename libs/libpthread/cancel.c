@@ -8,7 +8,31 @@
 #include <stddef.h>
 #include <sys/syscall.h>
 
+static void on_cancelation_request(int signum) {
+    assert(signum == __PTHREAD_CANCEL_SIGNAL);
+
+    // FIXME: this should only exit immediately if the
+    //        signal was delivered before a system call
+    //        was made, not after
+    pthread_exit(PTHREAD_CANCELED);
+}
+
+void setup_cancelation_handler() {
+    __cancelation_setup = 1;
+
+    struct sigaction act;
+    act.sa_handler = &on_cancelation_request;
+    act.sa_flags = SA_RESTART;
+    sigaction(__PTHREAD_CANCEL_SIGNAL, &act, NULL);
+}
+
 int pthread_cancel(pthread_t thread) {
+    if (!__cancelation_setup) {
+        // This is necessary if a single threaded program
+        // attempts to cancel itself
+        setup_cancelation_handler();
+    }
+
     return syscall(SC_TGKILL, 0, thread, __PTHREAD_CANCEL_SIGNAL);
 }
 

@@ -14,6 +14,7 @@
 static pthread_spinlock_t threads_lock = { 0 };
 
 __thread struct __pthread_cleanup_handler *__cleanup_handlers = NULL;
+int __cancelation_setup = 0;
 
 static void pthread_exit_after_cleanup(void *value_ptr) __attribute__((__noreturn__));
 
@@ -75,6 +76,10 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
 
     if (attr != NULL && attr->__flags == -1) {
         return EINVAL;
+    }
+
+    if (!__cancelation_setup) {
+        setup_cancelation_handler();
     }
 
     struct thread_control_block *to_add = __allocate_thread_control_block();
@@ -207,16 +212,18 @@ int pthread_join(pthread_t id, void **value_ptr) {
             }
 
             __remove_thread(target);
+            pthread_spin_unlock(&threads_lock);
+
             if (!(target->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK)) {
                 munmap(target->attributes.__stack_start, target->attributes.__stack_len + target->attributes.__guard_size);
             }
-            __free_thread_control_block(target);
 
             if (value_ptr) {
                 *value_ptr = target->exit_value;
             }
 
-            ret = 0;
+            __free_thread_control_block(target);
+            return 0;
         }
     }
 
