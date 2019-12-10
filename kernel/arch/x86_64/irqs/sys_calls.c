@@ -34,8 +34,9 @@
 // #define DUP_DEBUG
 // #define SET_PGID_DEBUG
 // #define SIGACTION_DEBUG
+// #define SIGPROCMASK_DEBUG
 // #define SIGRETURN_DEBUG
-#define USER_MUTEX_DEBUG
+// #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
 #define SYS_BEGIN(task_state)                                                  \
@@ -885,7 +886,7 @@ void arch_sys_sigreturn(struct task_state *task_state) {
               task->arch_task.task_state.stack_state.rsp, task->arch_task.task_state.stack_state.ss);
 #endif /* SIGRETURN_DEBUG */
 
-    yield_signal();
+    __run_task(&task->arch_task);
 }
 
 void arch_sys_sigprocmask(struct task_state *task_state) {
@@ -902,6 +903,10 @@ void arch_sys_sigprocmask(struct task_state *task_state) {
     }
 
     if (set) {
+#ifdef SIGPROCMASK_DEBUG
+        debug_log("Setting sigprocmask: [ %d, %u ]\n", how, *set);
+#endif /* SIGPROCMASK_DEBUG */
+
         switch (how) {
             case SIG_SETMASK:
                 current->sig_mask = *set;
@@ -915,6 +920,10 @@ void arch_sys_sigprocmask(struct task_state *task_state) {
             default:
                 SYS_RETURN(-EINVAL);
         }
+
+#ifdef SIGPROCMASK_DEBUG
+        debug_log("New mask: [ %u ]\n", current->sig_mask);
+#endif /* SIGPROCMASK_DEBUG */
     }
 
     SYS_RETURN(0);
@@ -1396,7 +1405,7 @@ void arch_sys_sigsuspend(struct task_state *task_state) {
 
     current->sched_state = WAITING;
 
-    sys_sched_run_next(task_state);
+    __kernel_yield(task_state);
 }
 
 void arch_sys_times(struct task_state *task_state) {

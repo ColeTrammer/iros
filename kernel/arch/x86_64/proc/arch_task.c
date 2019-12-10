@@ -172,7 +172,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     }
 #endif /* STACK_TRACE_ON_ANY_SIGSEGV */
 
-    struct sigaction act = task->process->sig_state[signum];
+    struct sigaction *act = &task->process->sig_state[signum];
 
     load_task_into_memory(task);
 
@@ -187,14 +187,15 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     uint64_t *stack_frame = ((uint64_t *) fpu_save_state) - 1;
     *stack_frame-- = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
-    *stack_frame = (uintptr_t) act.sa_restorer;
+    *stack_frame = (uintptr_t) act->sa_restorer;
 
     memcpy(save_state, to_copy, sizeof(struct task_state));
     memcpy(fpu_save_state, task->fpu.aligned_state, FPU_IMAGE_SIZE);
     if (proc_in_kernel(task)) {
         if (task->in_sigsuspend) {
             task->in_sigsuspend = false;
-        } else if ((act.sa_flags & SA_RESTART) && (task->arch_task.user_task_state->cpu_state.rax == (uint64_t) -EINTR)) {
+            task->in_kernel = false;
+        } else if ((act->sa_flags & SA_RESTART) && (task->arch_task.user_task_state->cpu_state.rax == (uint64_t) -EINTR)) {
             // Decrement %rip by the sizeof of the iretq instruction so that
             // the program will automatically execute int $0x80, restarting
             // the sys call in the easy way possible
@@ -202,17 +203,18 @@ void task_do_sig_handler(struct task *task, int signum) {
         }
     }
 
-    task->arch_task.task_state.stack_state.rip = (uintptr_t) act.sa_handler;
+    task->arch_task.task_state.stack_state.rip = (uintptr_t) act->sa_handler;
     task->arch_task.task_state.cpu_state.rdi = signum;
     task->arch_task.task_state.stack_state.rsp = (uintptr_t) stack_frame;
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
 
-    task->sig_mask = act.sa_mask;
+    task->sig_mask = act->sa_mask;
     task->sig_mask |= (1U << (signum - 1));
 
-    debug_log("Running pid: [ %d, %p ]\n", task->process->pid, save_state);
+    debug_log("Running pid: [ %d, %p, %#.16lX ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip);
 
     current_task = task;
+    current_task->sched_state = RUNNING_INTERRUPTIBLE;
     __run_task(&current_task->arch_task);
 }

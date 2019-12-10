@@ -77,7 +77,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
 
     // Don't use wrappers so that signal.o won't be linked in
     sigset_t set = { 0 };
-    set |= __PTHREAD_CANCEL_SIGNAL;
+    set |= (1 << __PTHREAD_CANCEL_SIGNAL);
     syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
 
     environ = envp;

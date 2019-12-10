@@ -128,8 +128,8 @@ typedef struct {
 
 #endif /* __x86_64__ */
 
-typedef struct {
-    ucontext_t *uc_link;
+typedef struct __ucontext {
+    struct __ucontext *uc_link;
     sigset_t uc_sigmask;
     stack_t uc_stack;
     mcontext_t uc_mcontext;
