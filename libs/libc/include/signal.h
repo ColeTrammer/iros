@@ -93,6 +93,48 @@ struct sigaction {
     void (*sa_restorer)(void);
 };
 
+#ifdef __x86_64__
+
+typedef struct {
+    unsigned long r15;
+    unsigned long r14;
+    unsigned long r13;
+    unsigned long r12;
+    unsigned long r11;
+    unsigned long r10;
+    unsigned long r9;
+    unsigned long r8;
+    unsigned long rbp;
+    unsigned long rdi;
+    unsigned long rsi;
+    unsigned long rdx;
+    unsigned long rcx;
+    unsigned long rbx;
+    unsigned long rax;
+} __attribute__((packed)) __cpu_state_t;
+
+typedef struct {
+    unsigned long rip;
+    unsigned long cs;
+    unsigned long rflags;
+    unsigned long rsp;
+    unsigned long ss;
+} __attribute__((packed)) __stack_state_t;
+
+typedef struct {
+    __cpu_state_t __cpu_state;
+    __stack_state_t __stack_state;
+} __attribute__((packed)) mcontext_t;
+
+#endif /* __x86_64__ */
+
+typedef struct {
+    ucontext_t *uc_link;
+    sigset_t uc_sigmask;
+    stack_t uc_stack;
+    mcontext_t uc_mcontext;
+} ucontext_t;
+
 int kill(pid_t pid, int num);
 int killpg(pid_t pid, int num);
 void psiginfo(const siginfo_t *info, const char *s);
