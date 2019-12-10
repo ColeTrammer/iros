@@ -179,6 +179,12 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     uint64_t save_rsp =
         proc_in_kernel(task) ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
+    if ((act->sa_flags & SA_ONSTACK) && (task->process->alt_stack.ss_flags & __SS_ENABLED)) {
+        if (!(save_rsp >= (uintptr_t) task->process->alt_stack.ss_sp &&
+              save_rsp <= (uintptr_t) task->process->alt_stack.ss_sp + task->process->alt_stack.ss_size)) {
+            save_rsp = (((uintptr_t) task->process->alt_stack.ss_sp + task->process->alt_stack.ss_size)) & ~0xF;
+        }
+    }
 
     assert(save_rsp != 0);
     uint8_t *fpu_save_state = (uint8_t *) ((save_rsp - 128) & ~0xF) - FPU_IMAGE_SIZE; // Sub 128 to enforce red-zone
@@ -194,9 +200,16 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     save_state->uc_link = save_state;
     save_state->uc_sigmask = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
-    save_state->uc_stack.ss_flags = 0;
-    save_state->uc_stack.ss_size = 0;
-    save_state->uc_stack.ss_sp = stack_frame;
+
+    if ((act->sa_flags & SA_ONSTACK) && (task->process->alt_stack.ss_flags & __SS_ENABLED)) {
+        save_state->uc_stack.ss_flags = SS_ONSTACK;
+        save_state->uc_stack.ss_size = task->process->alt_stack.ss_size;
+        save_state->uc_stack.ss_sp = task->process->alt_stack.ss_sp;
+    } else {
+        save_state->uc_stack.ss_flags = SS_DISABLE;
+        save_state->uc_stack.ss_size = 0;
+        save_state->uc_stack.ss_sp = 0;
+    }
 
     memcpy(&save_state->uc_mcontext, to_copy, sizeof(struct task_state));
     memcpy(fpu_save_state, task->fpu.aligned_state, FPU_IMAGE_SIZE);
@@ -231,7 +244,7 @@ void task_do_sig_handler(struct task *task, int signum) {
         act->sa_handler = SIG_DFL;
     }
 
-    debug_log("Running pid: [ %d, %p, %#.16lX, %p ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip);
+    debug_log("Running pid: [ %d, %p, %#.16lX ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip);
 
     current_task = task;
     current_task->sched_state = RUNNING_INTERRUPTIBLE;

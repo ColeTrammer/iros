@@ -326,3 +326,4 @@ sys_call_table:
     .quad arch_sys_set_thread_self_pointer
     .quad arch_sys_mprotect
     .quad arch_sys_sigpending
+    .quad arch_sys_sigaltstack

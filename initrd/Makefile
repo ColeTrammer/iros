@@ -52,6 +52,7 @@ $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/shared_memory_test \
+$(BUILDDIR)/initrd/programs/sigaltstack_test \
 $(BUILDDIR)/initrd/programs/siginfo_test \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/sigsuspend_test_a \

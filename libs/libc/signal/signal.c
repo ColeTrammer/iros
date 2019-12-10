@@ -73,6 +73,11 @@ int sigsuspend(const sigset_t *set) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
+int sigaltstack(const stack_t *ss, stack_t *old_ss) {
+    int ret = (int) syscall(SC_SIGALTSTACK, ss, old_ss);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
 int sigemptyset(sigset_t *set) {
     *set = 0;
     return 0;

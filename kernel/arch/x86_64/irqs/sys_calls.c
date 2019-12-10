@@ -872,7 +872,7 @@ void arch_sys_sigreturn(struct task_state *task_state) {
     siginfo_t *info = (siginfo_t *) (((uint64_t *) task_state->stack_state.rsp) + 1);
     ucontext_t *context = (ucontext_t *) (info + 1);
     uint8_t *saved_fpu_state = (uint8_t *) (context + 1);
-    debug_log("Sig return: [ %p, %p ]\n", context);
+    debug_log("Sig return: [ %p ]\n", context);
 
     memcpy(task->fpu.aligned_state, saved_fpu_state, FPU_IMAGE_SIZE);
     memcpy(&task->arch_task.task_state, &context->uc_mcontext, sizeof(struct task_state));
@@ -1633,5 +1633,38 @@ void arch_sys_sigpending(struct task_state *task_state) {
     }
 
     memcpy(set, &get_current_task()->sig_pending, sizeof(sigset_t));
+    SYS_RETURN(0);
+}
+
+void arch_sys_sigaltstack(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    const stack_t *stack = (const stack_t *) task_state->cpu_state.rsi;
+    stack_t *old_stack = (stack_t *) task_state->cpu_state.rdx;
+
+    struct process *current_process = get_current_task()->process;
+
+    if (old_stack) {
+        memcpy(old_stack, &current_process->alt_stack, sizeof(stack_t));
+        if (!(old_stack->ss_flags & __SS_ENABLED)) {
+            old_stack->ss_flags |= SS_DISABLE;
+        } else {
+            old_stack->ss_flags &= ~__SS_ENABLED;
+        }
+    }
+
+    if (stack) {
+        if (stack->ss_size < MINSIGSTKSZ) {
+            SYS_RETURN(-ENOMEM);
+        }
+
+        memcpy(&current_process->alt_stack, stack, sizeof(stack_t));
+        if (!(stack->ss_flags & SS_DISABLE)) {
+            current_process->alt_stack.ss_flags |= __SS_ENABLED;
+        } else {
+            current_process->alt_stack.ss_flags &= ~__SS_ENABLED;
+        }
+    }
+
     SYS_RETURN(0);
 }

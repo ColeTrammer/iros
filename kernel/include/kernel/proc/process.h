@@ -42,6 +42,7 @@ struct process {
     size_t tls_master_copy_alignment;
 
     struct sigaction sig_state[_NSIG];
+    stack_t alt_stack;
     spinlock_t lock;
 };
 

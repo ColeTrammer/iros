@@ -189,4 +189,14 @@ __attribute__((noreturn)) void sigreturn(void);
 #define SA_NOCLDWAIT 32
 #define SA_NODEFER   64
 
+#define SS_ONSTACK 1
+#define SS_DISABLE 2
+
+#define MINSIGSTKSZ 4096
+#define SIGSTKSZ    (4096 * 4)
+
+#ifdef __is_kernel
+#define __SS_ENABLED 4
+#endif /* __is_kernel */
+
 #endif /* _SIGNAL_H */
