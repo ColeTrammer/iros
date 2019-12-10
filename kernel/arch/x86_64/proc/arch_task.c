@@ -223,7 +223,13 @@ void task_do_sig_handler(struct task *task, int signum) {
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
 
     task->sig_mask = act->sa_mask;
-    task->sig_mask |= (1U << (signum - 1));
+    if (!(act->sa_flags & SA_NODEFER)) {
+        task->sig_mask |= (1U << (signum - 1));
+    }
+
+    if (act->sa_flags & SA_RESETHAND) {
+        act->sa_handler = SIG_DFL;
+    }
 
     debug_log("Running pid: [ %d, %p, %#.16lX, %p ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip);
 
