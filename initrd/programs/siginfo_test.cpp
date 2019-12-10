@@ -4,23 +4,21 @@
 #include <unistd.h>
 
 int main() {
-    auto on_int = [](int sig) {
+    auto on_int = [](int sig, siginfo_t* info, void* _context) {
         assert(sig == SIGINT);
-        // ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
+        ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
 
-        // fprintf(stderr, "rax: %#.16lX\n", context->uc_mcontext.__cpu_state.rax);
+        fprintf(stderr, "rax: %#.16lX\n", context->uc_mcontext.__cpu_state.rax);
+        fprintf(stderr, "val: %d\n", info->si_value.sival_int);
     };
 
     struct sigaction act;
     act.sa_flags = SA_RESTART;
     sigemptyset(&act.sa_mask);
-    act.sa_handler = on_int;
+    act.sa_sigaction = on_int;
     sigaction(SIGINT, &act, nullptr);
 
-    sigset_t set;
-    sigfillset(&set);
-    sigdelset(&set, SIGINT);
-    sigsuspend(&set);
+    pause();
 
     write(2, "returned\n", 9);
     return 0;

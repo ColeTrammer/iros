@@ -869,16 +869,16 @@ void arch_sys_sigaction(struct task_state *task_state) {
 
 void arch_sys_sigreturn(struct task_state *task_state) {
     struct task *task = get_current_task();
-    uint64_t *mask_ptr = (uint64_t *) task_state->stack_state.rsp;
-    uint8_t *saved_fpu_state = (uint8_t *) (mask_ptr + 1);
-    struct task_state *saved_state = (struct task_state *) (saved_fpu_state + FPU_IMAGE_SIZE);
-    debug_log("Sig return: [ %p ]\n", saved_state);
+    siginfo_t *info = (siginfo_t *) (((uint64_t *) task_state->stack_state.rsp) + 1);
+    ucontext_t *context = (ucontext_t *) (info + 1);
+    uint8_t *saved_fpu_state = (uint8_t *) (context + 1);
+    debug_log("Sig return: [ %p, %p ]\n", context);
 
     memcpy(task->fpu.aligned_state, saved_fpu_state, FPU_IMAGE_SIZE);
-    memcpy(&task->arch_task.task_state, saved_state, sizeof(struct task_state));
+    memcpy(&task->arch_task.task_state, &context->uc_mcontext, sizeof(struct task_state));
 
     // Restore mask
-    task->sig_mask = *mask_ptr;
+    task->sig_mask = context->uc_sigmask;
 
 #ifdef SIGRETURN_DEBUG
     debug_log("State: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", task->arch_task.task_state.stack_state.cs,

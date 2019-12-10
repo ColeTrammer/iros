@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -180,16 +181,24 @@ void task_do_sig_handler(struct task *task, int signum) {
         proc_in_kernel(task) ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
 
     assert(save_rsp != 0);
-    struct task_state *save_state = ((struct task_state *) ((save_rsp - 128) & ~0xF)) - 1; // Sub 128 to enforce red-zone
-    uint8_t *fpu_save_state = ((uint8_t *) save_state) - FPU_IMAGE_SIZE;
+    uint8_t *fpu_save_state = (uint8_t *) ((save_rsp - 128) & ~0xF) - FPU_IMAGE_SIZE; // Sub 128 to enforce red-zone
+    ucontext_t *save_state = ((ucontext_t *) fpu_save_state) - 1;
+    siginfo_t *info = ((siginfo_t *) save_state) - 1;
+    info->si_value.sival_int = 42;
 
     struct task_state *to_copy = proc_in_kernel(task) ? task->arch_task.user_task_state : &task->arch_task.task_state;
 
-    uint64_t *stack_frame = ((uint64_t *) fpu_save_state) - 1;
-    *stack_frame-- = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
+    uint64_t *stack_frame = ((uint64_t *) info) - 2;
     *stack_frame = (uintptr_t) act->sa_restorer;
+    assert((uintptr_t) stack_frame % 16 == 0);
 
-    memcpy(save_state, to_copy, sizeof(struct task_state));
+    save_state->uc_link = save_state;
+    save_state->uc_sigmask = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
+    save_state->uc_stack.ss_flags = 0;
+    save_state->uc_stack.ss_size = 0;
+    save_state->uc_stack.ss_sp = stack_frame;
+
+    memcpy(&save_state->uc_mcontext, to_copy, sizeof(struct task_state));
     memcpy(fpu_save_state, task->fpu.aligned_state, FPU_IMAGE_SIZE);
     if (proc_in_kernel(task)) {
         if (task->in_sigsuspend) {
@@ -199,12 +208,16 @@ void task_do_sig_handler(struct task *task, int signum) {
             // Decrement %rip by the sizeof of the iretq instruction so that
             // the program will automatically execute int $0x80, restarting
             // the sys call in the easy way possible
-            save_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
+            save_state->uc_mcontext.__stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
         }
     }
 
-    task->arch_task.task_state.stack_state.rip = (uintptr_t) act->sa_handler;
     task->arch_task.task_state.cpu_state.rdi = signum;
+    task->arch_task.task_state.cpu_state.rsi = (uintptr_t) info;
+    task->arch_task.task_state.cpu_state.rdx = (uintptr_t) save_state;
+
+    task->arch_task.task_state.stack_state.rip =
+        ((act->sa_flags & SA_SIGINFO) ? (uintptr_t) act->sa_sigaction : (uintptr_t) act->sa_handler);
     task->arch_task.task_state.stack_state.rsp = (uintptr_t) stack_frame;
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
@@ -212,7 +225,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     task->sig_mask = act->sa_mask;
     task->sig_mask |= (1U << (signum - 1));
 
-    debug_log("Running pid: [ %d, %p, %#.16lX ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip);
+    debug_log("Running pid: [ %d, %p, %#.16lX, %p ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip);
 
     current_task = task;
     current_task->sched_state = RUNNING_INTERRUPTIBLE;
