@@ -54,7 +54,7 @@ static long syscall6(int sc, va_list args) {
 }
 
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(s, a)       \
+#define __ENUMERATE_SYSCALL(s, y, a)    \
     case SC_##s:                        \
         ret = syscall##a(SC_##s, args); \
         break;
@@ -75,9 +75,9 @@ long syscall(enum sc_number sc, ...) {
 }
 
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(s, a) \
-    case SC_##s:                  \
-        return #s ": " #a " args";
+#define __ENUMERATE_SYSCALL(s, y, a) \
+    case SC_##s:                     \
+        return #y ": " #a " args";
 
 char *syscall_to_string(enum sc_number sc) {
     switch (sc) {

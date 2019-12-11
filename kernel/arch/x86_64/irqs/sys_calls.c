@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 #include <sys/os_2.h>
 #include <sys/socket.h>
+#include <sys/syscall.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -36,6 +37,7 @@
 // #define SIGACTION_DEBUG
 // #define SIGPROCMASK_DEBUG
 // #define SIGRETURN_DEBUG
+// #define SYSCALL_DEBUG
 // #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
@@ -998,7 +1000,7 @@ void arch_sys_access(struct task_state *task_state) {
     SYS_RETURN(ret);
 }
 
-void arch_sys_accept(struct task_state *task_state) {
+void arch_sys_accept4(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     int fd = (int) task_state->cpu_state.rsi;
@@ -1667,4 +1669,40 @@ void arch_sys_sigaltstack(struct task_state *task_state) {
     }
 
     SYS_RETURN(0);
+}
+
+void arch_sys_invalid_system_call(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+    SYS_RETURN(-ENOSYS);
+}
+
+void arch_system_call_entry(struct task_state *task_state) {
+#ifdef SYSCALL_DEBUG
+#undef __ENUMERATE_SYSCALL
+#define __ENUMERATE_SYSCALL(x, y, a)    \
+    case SC_##x:                        \
+        debug_log("syscall: %s\n", #y); \
+        break;
+    switch ((enum sc_number) task_state->cpu_state.rdi) {
+        ENUMERATE_SYSCALLS
+        default:
+            debug_log("unknown syscall: [ %d ]\n", (enum sc_number) task_state->cpu_state.rdi);
+            break;
+    }
+#endif /* SYSCALL_DEBUG */
+
+#undef __ENUMERATE_SYSCALL
+#define __ENUMERATE_SYSCALL(x, y, a) \
+    case SC_##x:                     \
+        arch_sys_##y(task_state);    \
+        break;
+
+    switch ((enum sc_number) task_state->cpu_state.rdi) {
+        ENUMERATE_SYSCALLS
+        default:
+            arch_sys_invalid_system_call(task_state);
+            break;
+    }
+
+    return;
 }

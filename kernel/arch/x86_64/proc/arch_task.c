@@ -244,7 +244,7 @@ void task_do_sig_handler(struct task *task, int signum) {
         act->sa_handler = SIG_DFL;
     }
 
-    debug_log("Running pid: [ %d, %p, %#.16lX ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip);
+    debug_log("Running pid: [ %d, %p, %#.16lX, %d ]\n", task->process->pid, save_state, task->arch_task.task_state.stack_state.rip, signum);
 
     current_task = task;
     current_task->sched_state = RUNNING_INTERRUPTIBLE;

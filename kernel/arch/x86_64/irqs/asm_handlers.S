@@ -234,13 +234,8 @@ sys_call_entry:
     push %r14
     push %r15
 
-    # Should Check To See If RAX Is Invalid
-    movq $0xFFFFFFFF, %rax
-    andq %rdi, %rax
-    movabs $sys_call_table, %rax
-    movq (%rax, %rdi, 8), %rax
-    movq %rsp, %rdi
-    callq *%rax
+    mov %rsp, %rdi
+    callq arch_system_call_entry
     
     pop %r15
     pop %r14
@@ -259,71 +254,3 @@ sys_call_entry:
     pop %rax
 
     iretq
-
-.section .rodata
-sys_call_table:
-    .quad 0
-    .quad arch_sys_exit
-    .quad arch_sys_sbrk
-    .quad arch_sys_fork
-    .quad arch_sys_open
-    .quad arch_sys_read
-    .quad arch_sys_write
-    .quad arch_sys_close
-    .quad arch_sys_execve
-    .quad arch_sys_waitpid
-    .quad arch_sys_getpid
-    .quad arch_sys_getcwd
-    .quad arch_sys_chdir
-    .quad arch_sys_stat
-    .quad arch_sys_lseek
-    .quad arch_sys_ioctl
-    .quad arch_sys_ftruncate
-    .quad arch_sys_gettimeofday
-    .quad arch_sys_mkdir
-    .quad arch_sys_dup2
-    .quad arch_sys_pipe
-    .quad arch_sys_unlink
-    .quad arch_sys_rmdir
-    .quad arch_sys_chmod
-    .quad arch_sys_kill
-    .quad arch_sys_setpgid
-    .quad arch_sys_sigaction
-    .quad arch_sys_sigreturn
-    .quad arch_sys_sigprocmask
-    .quad arch_sys_dup
-    .quad arch_sys_getpgid
-    .quad arch_sys_sleep
-    .quad arch_sys_access
-    .quad arch_sys_accept
-    .quad arch_sys_bind
-    .quad arch_sys_connect
-    .quad arch_sys_listen
-    .quad arch_sys_socket
-    .quad arch_sys_shutdown
-    .quad arch_sys_getsockopt
-    .quad arch_sys_setsockopt
-    .quad arch_sys_getpeername
-    .quad arch_sys_getsockname
-    .quad arch_sys_sendto
-    .quad arch_sys_recvfrom
-    .quad arch_sys_mmap
-    .quad arch_sys_munmap
-    .quad arch_sys_rename
-    .quad arch_sys_fcntl
-    .quad arch_sys_fstat
-    .quad arch_sys_alarm
-    .quad arch_sys_fchmod
-    .quad arch_sys_getppid
-    .quad arch_sys_sigsuspend
-    .quad arch_sys_times
-    .quad arch_sys_create_task
-    .quad arch_sys_exit_task
-    .quad 0
-    .quad arch_sys_os_mutex
-    .quad arch_sys_tgkill
-    .quad arch_sys_get_initial_process_info
-    .quad arch_sys_set_thread_self_pointer
-    .quad arch_sys_mprotect
-    .quad arch_sys_sigpending
-    .quad arch_sys_sigaltstack
