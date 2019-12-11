@@ -1,5 +1,5 @@
-#include "input.h"
 #include "builtin.h"
+#include "input.h"
 
 #include <assert.h>
 #include <ctype.h>
