@@ -67,12 +67,30 @@
         get_current_task()->in_sigsuspend = true;                              \
     } while (0)
 
+#define SYS_BEGIN_PSELECT(task_state)                                         \
+    do {                                                                      \
+        get_current_task()->arch_task.user_task_state = (task_state);         \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = EINTR; \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;            \
+        get_current_task()->in_kernel = true;                                 \
+    } while (0)
+
 #define SYS_RETURN(val)                                       \
     do {                                                      \
         uint64_t _val = (uint64_t)(val);                      \
         disable_interrupts();                                 \
         task_state->cpu_state.rax = (_val);                   \
         task_do_sigs_if_needed(get_current_task());           \
+        get_current_task()->in_kernel = false;                \
+        get_current_task()->arch_task.user_task_state = NULL; \
+        return;                                               \
+    } while (0)
+
+#define SYS_RETURN_DONT_CHECK_SIGNALS(val)                    \
+    do {                                                      \
+        uint64_t _val = (uint64_t)(val);                      \
+        disable_interrupts();                                 \
+        task_state->cpu_state.rax = (_val);                   \
         get_current_task()->in_kernel = false;                \
         get_current_task()->arch_task.user_task_state = NULL; \
         return;                                               \
@@ -1666,6 +1684,39 @@ void arch_sys_sigaltstack(struct task_state *task_state) {
         } else {
             current_process->alt_stack.ss_flags &= ~__SS_ENABLED;
         }
+    }
+
+    SYS_RETURN(0);
+}
+
+void arch_sys_pselect(struct task_state *task_state) {
+    SYS_BEGIN_PSELECT(task_state);
+
+    int nfds = (int) task_state->cpu_state.rsi;
+    fd_set *readfds = (fd_set *) task_state->cpu_state.rdx;
+    fd_set *writefds = (fd_set *) task_state->cpu_state.rcx;
+    fd_set *execeptfds = (fd_set *) task_state->cpu_state.r8;
+    const struct timespec *timeout = (const struct timespec *) task_state->cpu_state.r9;
+    const sigset_t *sigmask = (const sigset_t *) task_state->cpu_state.r10;
+
+    struct task *current = get_current_task();
+
+    if (sigmask) {
+        memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
+        memcpy(&current->sig_mask, sigmask, sizeof(sigset_t));
+        current->in_sigsuspend = true;
+    }
+
+    (void) nfds;
+    (void) readfds;
+    (void) writefds;
+    (void) execeptfds;
+    (void) timeout;
+
+    if (current->in_sigsuspend) {
+        memcpy(&current->sig_mask, &current->saved_sig_mask, sizeof(sigset_t));
+        current->in_sigsuspend = false;
+        SYS_RETURN_DONT_CHECK_SIGNALS(-ENOSYS);
     }
 
     SYS_RETURN(0);
