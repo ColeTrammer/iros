@@ -9,6 +9,7 @@
 
 #include <kernel/fs/file.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/blockers.h>
 #include <kernel/proc/process.h>
 
 // clang-format off
@@ -38,10 +39,10 @@ struct task {
     bool kernel_task : 1;
     bool in_kernel : 1;
     bool in_sigsuspend : 1;
-    bool sleeping : 1;
+    bool blocking : 1;
     bool should_wake_up_from_mutex_sleep : 1;
 
-    time_t sleep_end;
+    struct block_info block_info;
 
     struct process *process;
 

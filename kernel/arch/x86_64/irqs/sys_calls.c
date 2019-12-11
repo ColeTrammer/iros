@@ -1005,14 +1005,12 @@ void arch_sys_sleep(struct task_state *task_state) {
 
     struct task *current = get_current_task();
 
-    disable_interrupts();
-    current->sleeping = true;
-    current->sleep_end = get_time() + seconds * 1000;
-    current->sched_state = WAITING;
-    __kernel_yield();
+    time_t end_time = get_time() + seconds * 1000;
 
-    current->sleeping = false;
-    SYS_RETURN(seconds);
+    proc_block_sleep_milliseconds(current, end_time);
+
+    time_t now = get_time();
+    SYS_RETURN(now < end_time ? end_time - now : 0);
 }
 
 void arch_sys_access(struct task_state *task_state) {
@@ -1382,18 +1380,15 @@ void arch_sys_alarm(struct task_state *task_state) {
 
     struct task *current = get_current_task();
 
-    disable_interrupts();
-    current->sleeping = true;
-    current->sleep_end = get_time() + seconds * 1000;
-    current->sched_state = WAITING;
-    __kernel_yield();
-
-    current->sleeping = false;
+    proc_block_sleep_milliseconds(current, get_time() + seconds * 1000);
 
     disable_interrupts();
-    // Tell signal handling code we were interruped (as would be implied by this saying -EINTR)
+    // Tell signal handling code we were not interruped (as would be implied by this saying -EINTR)
     task_state->cpu_state.rax = 0;
-    signal_process(current->process->pid, SIGALRM);
+
+    // Potentially the process should be signaled, but sending it to the thread that made the call
+    // to alarm makes more sense anyway.
+    signal_task(current->process->pid, current->tid, SIGALRM);
     assert(false);
 }
 
@@ -1729,7 +1724,7 @@ void arch_sys_pselect(struct task_state *task_state) {
         SYS_RETURN_RESTORE_SIGMASK(-ENOSYS);
     }
 
-    SYS_RETURN(0);
+    SYS_RETURN(-ENOSYS);
 }
 
 void arch_sys_invalid_system_call(struct task_state *task_state) {

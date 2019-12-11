@@ -111,8 +111,9 @@ void sched_run_next() {
             prev_save->next->prev = prev_save;
 
             free_task(to_remove, true);
-        } else if (to_run->sleeping && to_run->sched_state == WAITING) {
-            if (get_time() >= to_run->sleep_end) {
+        } else if (to_run->blocking && to_run->sched_state == WAITING) {
+            if (to_run->block_info.should_unblock(&to_run->block_info)) {
+                to_run->blocking = false;
                 break;
             }
         } else if (to_run->should_wake_up_from_mutex_sleep && to_run->sched_state == WAITING) {

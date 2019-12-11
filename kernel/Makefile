@@ -70,6 +70,7 @@ $(BUILDDIR)/kernel/net/socket.o \
 $(BUILDDIR)/kernel/net/tcp.o \
 $(BUILDDIR)/kernel/net/udp.o \
 $(BUILDDIR)/kernel/net/unix_socket.o \
+$(BUILDDIR)/kernel/proc/blockers.o \
 $(BUILDDIR)/kernel/proc/elf64.o \
 $(BUILDDIR)/kernel/proc/pid.o \
 $(BUILDDIR)/kernel/proc/process_state.o \
