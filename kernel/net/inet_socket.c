@@ -253,20 +253,13 @@ int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, sock
     net_send_tcp(interface, dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num++, data->tcb->current_ack_num,
                  (union tcp_flags) { .raw_flags = TCP_FLAGS_SYN }, 0, NULL);
 
-    time_t start = get_time();
     for (;;) {
         if (socket->state == CONNECTED) {
             debug_log("Successfully connected socket: [ %lu ]\n", socket->id);
             return 0;
         }
 
-        // It took too long to get the SYN ACK back
-        if (get_time() - start >= 5000) {
-            break;
-        }
-
-        kernel_yield();
-        barrier();
+        proc_block_until_socket_is_connected(get_current_task(), socket);
     }
 
     return -ETIMEDOUT;

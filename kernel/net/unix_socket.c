@@ -165,8 +165,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
             break;
         }
 
-        kernel_yield();
-        barrier();
+        proc_block_until_socket_is_connected(get_current_task(), socket);
     }
 
     return 0;
