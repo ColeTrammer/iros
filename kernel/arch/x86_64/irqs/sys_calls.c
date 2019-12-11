@@ -96,6 +96,18 @@
         return;                                               \
     } while (0)
 
+#define SYS_RETURN_RESTORE_SIGMASK(val)                                         \
+    do {                                                                        \
+        uint64_t _val = (uint64_t)(val);                                        \
+        disable_interrupts();                                                   \
+        task_state->cpu_state.rax = (_val);                                     \
+        task_do_sigs_if_needed(get_current_task());                             \
+        memcpy(&current->sig_mask, &current->saved_sig_mask, sizeof(sigset_t)); \
+        get_current_task()->in_kernel = false;                                  \
+        get_current_task()->in_sigsuspend = false;                              \
+        return;                                                                 \
+    } while (0)
+
 extern struct task *current_task;
 
 void arch_sys_exit(struct task_state *task_state) {
@@ -1714,9 +1726,7 @@ void arch_sys_pselect(struct task_state *task_state) {
     (void) timeout;
 
     if (current->in_sigsuspend) {
-        memcpy(&current->sig_mask, &current->saved_sig_mask, sizeof(sigset_t));
-        current->in_sigsuspend = false;
-        SYS_RETURN_DONT_CHECK_SIGNALS(-ENOSYS);
+        SYS_RETURN_RESTORE_SIGMASK(-ENOSYS);
     }
 
     SYS_RETURN(0);
