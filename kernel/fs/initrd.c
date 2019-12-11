@@ -137,6 +137,8 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->i_op = &initrd_dir_i_op;
     root->mode = S_IFDIR | 0777;
     root->ref_count = 1;
+    root->readable = true;
+    root->writeable = false;
     init_spinlock(&root->lock);
 
     struct tnode *t_root = malloc(sizeof(struct tnode));
@@ -159,6 +161,8 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->ref_count = 1;
         inode->private_data = entry + i;
         inode->parent = t_root;
+        inode->readable = true;
+        inode->writeable = true;
         init_spinlock(&inode->lock);
 
         struct tnode *to_add = malloc(sizeof(struct tnode));

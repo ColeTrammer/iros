@@ -63,6 +63,11 @@ struct inode {
     /* Parent of inode */
     struct tnode *parent;
 
+    // flags for things like pselect and blocking
+    bool readable : 1;
+    bool writeable : 1;
+    bool excetional_activity : 1;
+
     // Delete inode when count is 0 (only applies to pipes right now)
     // Should be atomic
     int ref_count;

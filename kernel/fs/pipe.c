@@ -22,7 +22,7 @@ static struct inode_operations pipe_i_op = { NULL, NULL, &pipe_open, NULL, NULL,
 
 static struct file_operations pipe_f_op = { &pipe_close, &pipe_read, &pipe_write, &pipe_clone };
 
-static bool is_pipe_write_end_open(struct inode *inode) {
+bool is_pipe_write_end_open(struct inode *inode) {
     struct pipe_data *data = inode->private_data;
     return data->write_count > 0;
 }
@@ -39,6 +39,8 @@ struct inode *pipe_new_inode() {
     inode->mode = 0777 | S_IFIFO;
     inode->mounts = NULL;
     inode->parent = NULL;
+    inode->writeable = true;
+    inode->readable = false;
 
     debug_log("Creating pipe: [ %llu ]\n", inode->index);
 
@@ -92,14 +94,18 @@ ssize_t pipe_read(struct file *file, void *buffer, size_t _len) {
     assert(data);
 
     size_t len = MIN(_len, inode->size - file->position);
-    while (len == 0 && is_pipe_write_end_open(inode)) {
-        kernel_yield();
+    if (len == 0 && is_pipe_write_end_open(inode)) {
+        proc_block_until_pipe_is_readable(get_current_task(), inode);
         len = MIN(_len, inode->size - file->position);
     }
 
     spin_lock(&inode->lock);
     memcpy(buffer, data->buffer + file->position, len);
     file->position += len;
+
+    if (file->position == inode->size) {
+        inode->readable = false;
+    }
 
     spin_unlock(&inode->lock);
     return len;
@@ -120,6 +126,9 @@ ssize_t pipe_write(struct file *file, const void *buffer, size_t len) {
         data->len = MAX(data->len * 2, file->position + len);
         data->buffer = realloc(data->buffer, data->len);
     }
+
+    // Now there is something to read from
+    inode->readable = true;
 
     memcpy(data->buffer + file->position, buffer, len);
 

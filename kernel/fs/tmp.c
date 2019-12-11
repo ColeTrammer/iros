@@ -77,6 +77,8 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     inode->ref_count = 1;
     inode->super_block = tparent->inode->super_block;
     inode->flags = S_ISREG(mode) ? FS_FILE : S_ISOCK(mode) ? FS_SOCKET : 0;
+    inode->writeable = true;
+    inode->readable = true;
 
     return inode;
 }
@@ -185,6 +187,8 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
     inode->super_block = tparent->inode->super_block;
     inode->flags = FS_DIR;
     inode->device = tparent->inode->device;
+    inode->writeable = true;
+    inode->readable = true;
 
     *error = 0;
     return inode;
@@ -300,6 +304,8 @@ struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
     root->super_block = sb;
     root->tnode_list = NULL;
     root->ref_count++;
+    root->readable = true;
+    root->writeable = true;
 
     sb->root = t_root;
 

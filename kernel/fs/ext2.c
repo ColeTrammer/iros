@@ -530,6 +530,8 @@ static void ext2_update_tnode_list(struct inode *inode) {
             inode_to_add->super_block = inode->super_block;
             inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR ? FS_FILE : FS_DIR;
             inode_to_add->ref_count = 2; // One for the vfs and one for us
+            inode_to_add->readable = true;
+            inode_to_add->writeable = true;
             init_spinlock(&inode_to_add->lock);
         }
 
@@ -730,6 +732,8 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->size = 0;
         inode->super_block = parent->super_block;
         inode->tnode_list = NULL;
+        inode->readable = true;
+        inode->writeable = true;
 
         *error = ext2_write_inode(inode);
         if (errno != 0) {
@@ -1536,6 +1540,8 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->size = 0;
     root->super_block = super_block;
     root->tnode_list = NULL;
+    root->readable = true;
+    root->writeable = true;
 
     current_fs->super_block = super_block;
 

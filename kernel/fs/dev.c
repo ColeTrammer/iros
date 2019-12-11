@@ -170,6 +170,8 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->super_block = &super_block;
     root->tnode_list = NULL;
     root->ref_count = 1;
+    root->readable = true;
+    root->writeable = true;
 
     super_block.device = root->device;
     super_block.op = NULL;
@@ -225,6 +227,8 @@ void dev_add(struct device *device, const char *_path) {
     to_add->size = 0;
     to_add->super_block = &super_block;
     to_add->tnode_list = NULL;
+    to_add->readable = true;
+    to_add->writeable = true;
 
     struct tnode *tnode = malloc(sizeof(struct tnode));
 

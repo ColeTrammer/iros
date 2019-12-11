@@ -16,6 +16,8 @@ struct pipe_data {
     int write_count;
 };
 
+bool is_pipe_write_end_open(struct inode *inode);
+
 struct inode *pipe_new_inode();
 
 struct file *pipe_open(struct inode *inode, int flags, int *error);
