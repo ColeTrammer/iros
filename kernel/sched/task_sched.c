@@ -14,6 +14,7 @@
 
 static struct task *list_start = NULL;
 static struct task *list_end = NULL;
+extern struct task initial_kernel_task;
 static spinlock_t task_list_lock = SPINLOCK_INITIALIZER;
 
 void init_task_sched() {
@@ -77,6 +78,9 @@ void sched_remove_task(struct task *task) {
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct task *current = get_current_task();
+    if (current == &initial_kernel_task) {
+        current = list_start;
+    }
 
     // Task signals
     struct task *task = list_start;
@@ -93,6 +97,7 @@ void sched_run_next() {
     } while ((task = task->next) != list_start);
 
     struct task *to_run = current->next;
+    struct task *start = to_run;
     while (to_run->sched_state != RUNNING_INTERRUPTIBLE && to_run->sched_state != RUNNING_UNINTERRUPTIBLE) {
         struct task *next = to_run->next;
         if (to_run->sched_state == EXITING) {
@@ -123,6 +128,16 @@ void sched_run_next() {
 
         // Skip taskes that are sleeping
         to_run = next;
+
+        // There were no other tasks to run
+        if (to_run == start) {
+            // This means we need to run the idle task
+            if (to_run->sched_state != RUNNING_UNINTERRUPTIBLE && to_run->sched_state != RUNNING_INTERRUPTIBLE) {
+                to_run = &initial_kernel_task;
+            }
+
+            break;
+        }
     }
 
     run_task(to_run);
