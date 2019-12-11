@@ -106,3 +106,21 @@ void proc_block_until_inode_is_writable(struct task *current, struct inode *inod
     current->sched_state = WAITING;
     __kernel_yield();
 }
+
+static bool custom_blocker(struct block_info *info) {
+    assert(info->type == CUSTOM);
+
+    // The custom blocker is designed so that an irq
+    // will manually change the caller's sched_state to
+    // RUNNING_UNINTERRUPTIBLE
+    return true;
+}
+
+void proc_block_custom(struct task *current) {
+    disable_interrupts();
+    current->block_info.type = CUSTOM;
+    current->block_info.should_unblock = &custom_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}

@@ -10,6 +10,8 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
+struct task *network_task;
+
 static void init_ip_v4_mappings(struct network_interface *interface) {
     debug_log("Initializing interface: [ %s ]\n", interface->name);
 
@@ -27,7 +29,7 @@ void init_net() {
     init_mac();
     init_ports();
 
-    struct task *network_task = load_kernel_task((uintptr_t) net_network_task_start);
+    network_task = load_kernel_task((uintptr_t) net_network_task_start);
     assert(network_task);
 
     sched_add_task(network_task);

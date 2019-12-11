@@ -12,6 +12,8 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
+extern struct task *network_task;
+
 static struct network_data *head = NULL;
 static struct network_data *tail = NULL;
 static spinlock_t lock = SPINLOCK_INITIALIZER;
@@ -50,6 +52,8 @@ void net_on_incoming_packet(const void *buf, size_t len) {
         tail = new_data;
     }
 
+    // Unblock ourselves once we have data
+    network_task->sched_state = RUNNING_UNINTERRUPTIBLE;
     spin_unlock(&lock);
 }
 
@@ -71,8 +75,7 @@ void net_network_task_start() {
     for (;;) {
         struct network_data *data = consume();
         if (data == NULL) {
-            kernel_yield();
-            barrier();
+            proc_block_custom(get_current_task());
             continue;
         }
 

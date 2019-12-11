@@ -14,7 +14,8 @@ enum block_type {
     UNTIL_PIPE_IS_READABLE,
     UNTIL_SOCKET_IS_CONNECTED,
     UNTIL_INODE_IS_READABLE_OR_TIMEOUT,
-    UNTIL_INODE_IS_WRITABLE
+    UNTIL_INODE_IS_WRITABLE,
+    CUSTOM
 };
 
 struct block_info {
@@ -55,5 +56,6 @@ void proc_block_until_pipe_is_readable(struct task *current, struct inode *inode
 void proc_block_until_socket_is_connected(struct task *current, struct socket *socket);
 void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, time_t end_time);
 void proc_block_until_inode_is_writable(struct task *current, struct inode *inode);
+void proc_block_custom(struct task *current);
 
 #endif /* _KERNEL_PROC_BLOCKERS_H */
