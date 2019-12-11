@@ -62,17 +62,27 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
 
     spin_lock(&data->lock);
     if (data->input_buffer == NULL) {
-        time_t start = get_time();
         while (data->messages == NULL) {
             spin_unlock(&data->lock);
 
-            if (!(data->config.c_lflag & ICANON)) {
-                if (data->config.c_cc[VTIME] != 0 && get_time() - start >= data->config.c_cc[VTIME] * 100) {
+            if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
+                time_t end_time = data->config.c_cc[VTIME] * 100;
+                proc_block_until_inode_is_readable_or_timeout(get_current_task(), device->inode, end_time);
+                if (get_time() >= end_time) {
                     return 0;
                 }
-            }
 
-            kernel_yield();
+                spin_lock(&data->lock);
+                // This is because multiple processes could be waiting for ptmx input, meaning
+                // a different one could have consumed the message, and since there is a timeout
+                // we don't want to block again.
+                if (data->messages == NULL) {
+                    spin_unlock(&data->lock);
+                }
+                break;
+            } else {
+                proc_block_until_inode_is_readable(get_current_task(), device->inode);
+            }
             spin_lock(&data->lock);
         }
 
@@ -96,9 +106,16 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
         free(data->input_buffer);
         data->input_buffer = NULL;
         data->input_buffer_index = data->input_buffer_length = data->input_buffer_max = 0;
+
+        // Clear the readable flag once we've consumed to input_buffer
+        // and there is no messages
+        if (data->messages == NULL) {
+            device->inode->readable = false;
+        }
     }
 
     spin_unlock(&data->lock);
+
     return (ssize_t) to_copy;
 }
 
@@ -198,6 +215,7 @@ static void slave_add(struct device *device) {
     }
 
     device->private = data;
+    data->device = device;
 }
 
 static void slave_remove(struct device *device) {
@@ -410,6 +428,10 @@ static bool tty_do_signals(struct slave_data *sdata, char c) {
 static ssize_t master_write(struct device *device, struct file *file, const void *buf, size_t len) {
     (void) file;
 
+    if (len == 0) {
+        return 0;
+    }
+
     struct master_data *data = device->private;
     struct slave_data *sdata = slaves[data->index]->private;
 
@@ -500,6 +522,9 @@ static ssize_t master_write(struct device *device, struct file *file, const void
 
         data->input_buffer[data->input_buffer_length++] = c;
     }
+
+    // The slave is readable now that we wrote to it.
+    sdata->device->inode->readable = true;
 
     spin_unlock(&data->lock);
     return (ssize_t) len;

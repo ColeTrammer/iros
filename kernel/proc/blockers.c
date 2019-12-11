@@ -73,3 +73,21 @@ void proc_block_until_socket_is_connected(struct task *current, struct socket *s
     current->sched_state = WAITING;
     __kernel_yield();
 }
+
+static bool until_inode_is_readable_or_timeout_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_INODE_IS_READABLE_OR_TIMEOUT);
+
+    return get_time() >= info->until_inode_is_readable_or_timeout_info.end_time ||
+           info->until_inode_is_readable_or_timeout_info.inode->readable;
+}
+
+void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, time_t end_time) {
+    disable_interrupts();
+    current->block_info.until_inode_is_readable_or_timeout_info.inode = inode;
+    current->block_info.until_inode_is_readable_or_timeout_info.end_time = end_time;
+    current->block_info.type = UNTIL_INODE_IS_READABLE_OR_TIMEOUT;
+    current->block_info.should_unblock = &until_inode_is_readable_or_timeout_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}

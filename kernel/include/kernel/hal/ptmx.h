@@ -42,6 +42,7 @@ struct slave_data {
     size_t input_buffer_max;
 
     struct termios config;
+    struct device *device;
     struct tty_buffer_message *messages;
 };
 
