@@ -59,6 +59,7 @@ struct master_data {
     size_t input_buffer_length;
     size_t input_buffer_max;
 
+    struct device *device;
     struct tty_buffer_message *messages;
 };
 

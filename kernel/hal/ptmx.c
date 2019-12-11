@@ -122,6 +122,10 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
 static ssize_t slave_write(struct device *device, struct file *file, const void *buf, size_t len) {
     (void) file;
 
+    if (len == 0) {
+        return 0;
+    }
+
     struct slave_data *data = device->private;
     if (get_current_task()->process->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
 #ifdef PTMX_SIGNAL_DEBUG
@@ -154,9 +158,10 @@ slave_write_again:
         mdata->messages = message;
     } else {
         if (message->max < message->len + len) {
+            mdata->device->inode->writeable = false;
             while (mdata->messages != NULL) {
                 spin_unlock(&mdata->lock);
-                kernel_yield();
+                proc_block_until_inode_is_writable(get_current_task(), mdata->device->inode);
                 spin_lock(&mdata->lock);
             }
 
@@ -174,6 +179,9 @@ slave_write_again:
     }
 
     message->len += len;
+
+    // This is now readable since we wrote to id
+    mdata->device->inode->readable = true;
 
     spin_unlock(&mdata->lock);
     return (ssize_t) save_len;
@@ -392,6 +400,12 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
         free(data->output_buffer);
         data->output_buffer = NULL;
         data->output_buffer_index = data->output_buffer_length = data->output_buffer_max = 0;
+
+        // Reset readable/writable flags since we consumed to buffer
+        if (data->messages != NULL) {
+            device->inode->writeable = true;
+            device->inode->readable = false;
+        }
     }
 
     spin_unlock(&data->lock);
@@ -490,6 +504,9 @@ static ssize_t master_write(struct device *device, struct file *file, const void
                 m->buf[m->len++] = c;
             }
 
+            // The slave is readable now that we wrote to it.
+            sdata->device->inode->readable = true;
+
             spin_unlock(&sdata->lock);
             continue;
         }
@@ -516,15 +533,15 @@ static ssize_t master_write(struct device *device, struct file *file, const void
             data->input_buffer = NULL;
             data->input_buffer_length = data->input_buffer_max = 0;
 
+            // The slave is readable now that we wrote to it.
+            sdata->device->inode->readable = true;
+
             spin_unlock(&sdata->lock);
             continue;
         }
 
         data->input_buffer[data->input_buffer_length++] = c;
     }
-
-    // The slave is readable now that we wrote to it.
-    sdata->device->inode->readable = true;
 
     spin_unlock(&data->lock);
     return (ssize_t) len;
@@ -545,6 +562,7 @@ static void master_add(struct device *device) {
     }
 
     device->private = data;
+    data->device = device;
 }
 
 static void master_remove(struct device *device) {

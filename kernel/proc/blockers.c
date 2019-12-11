@@ -91,3 +91,18 @@ void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct 
     current->sched_state = WAITING;
     __kernel_yield();
 }
+
+static bool until_inode_is_writable_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_INODE_IS_READABLE);
+    return info->until_inode_is_writable_info.inode->writeable;
+}
+
+void proc_block_until_inode_is_writable(struct task *current, struct inode *inode) {
+    disable_interrupts();
+    current->block_info.until_inode_is_writable_info.inode = inode;
+    current->block_info.type = UNTIL_INODE_IS_WRITABLE;
+    current->block_info.should_unblock = &until_inode_is_writable_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}

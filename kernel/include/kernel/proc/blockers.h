@@ -13,7 +13,8 @@ enum block_type {
     UNTIL_INODE_IS_READABLE,
     UNTIL_PIPE_IS_READABLE,
     UNTIL_SOCKET_IS_CONNECTED,
-    UNTIL_INODE_IS_READABLE_OR_TIMEOUT
+    UNTIL_INODE_IS_READABLE_OR_TIMEOUT,
+    UNTIL_INODE_IS_WRITABLE
 };
 
 struct block_info {
@@ -36,12 +37,16 @@ struct block_info {
             time_t end_time;
             struct inode *inode;
         } until_inode_is_readable_or_timeout_info;
+        struct {
+            struct inode *inode;
+        } until_inode_is_writable_info;
     } __info;
 #define sleep_milliseconds_info                 __info.sleep_milliseconds_info
 #define until_inode_is_readable_info            __info.until_inode_is_readable_info
 #define until_pipe_is_readable_info             __info.until_pipe_is_readable_info
 #define until_socket_is_connected_info          __info.until_socket_is_connected_info
 #define until_inode_is_readable_or_timeout_info __info.until_inode_is_readable_or_timeout_info
+#define until_inode_is_writable_info            __info.until_inode_is_writable_info
 };
 
 void proc_block_sleep_milliseconds(struct task *current, time_t end_time);
@@ -49,5 +54,6 @@ void proc_block_until_inode_is_readable(struct task *current, struct inode *inod
 void proc_block_until_pipe_is_readable(struct task *current, struct inode *inode);
 void proc_block_until_socket_is_connected(struct task *current, struct socket *socket);
 void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, time_t end_time);
+void proc_block_until_inode_is_writable(struct task *current, struct inode *inode);
 
 #endif /* _KERNEL_PROC_BLOCKERS_H */
