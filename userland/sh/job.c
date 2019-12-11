@@ -128,7 +128,7 @@ int job_run(struct job_id id) {
         }
 
         pid_t ret;
-        while (!(ret = waitpid(-job->pgid, &status, WUNTRACED)))
+        while (!(ret = waitpid(-job->pgid, &status, WUNTRACED)) && errno != EINTR)
             ;
 
         if (ret == -1) {
@@ -188,6 +188,10 @@ void job_check_updates(bool print_updates) {
     int status;
     while ((pid = waitpid(-1, &status, WNOHANG | WCONTINUED | WUNTRACED))) {
         if (pid == -1) {
+            if (errno == EINTR) {
+                continue;
+            }
+
             // We have no children
             if (errno == ECHILD) {
                 return;

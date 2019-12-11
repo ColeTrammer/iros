@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -301,7 +302,7 @@ static int do_pipeline(struct command_pipeline *pipeline, enum command_mode mode
                 int ret;
                 do {
                     ret = waitpid(-pgid, &wstatus, WUNTRACED);
-                } while (ret != -1 && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) && !WIFSTOPPED(wstatus));
+                } while ((errno != EINTR && ret != -1) && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) && !WIFSTOPPED(wstatus));
 
                 if (ret == -1) {
                     return -1;
