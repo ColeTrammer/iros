@@ -172,6 +172,33 @@ struct proc_state_message *proc_create_message(int type, int data) {
 void proc_add_message(pid_t pid, struct proc_state_message *m) {
     struct proc_state_message_queue *queue = ensure_queue(pid);
 
+    struct process *process = find_by_pid(pid);
+    assert(process);
+
+    struct process *parent = find_by_pid(queue->ppid);
+
+    // Ignore the message if requested
+    if ((m->type == STATE_STOPPED || m->type == STATE_CONTINUED) &&
+        (parent == NULL || parent->sig_state[SIGCHLD].sa_flags & (SA_NOCLDWAIT | SA_NOCLDSTOP))) {
+        return;
+    }
+
+    if (m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) {
+        memcpy(&queue->times, &process->times, sizeof(struct tms));
+    }
+
+    if ((m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) &&
+        (parent == NULL || (parent->sig_state[SIGCHLD].sa_flags & SA_NOCLDWAIT))) {
+        while (queue->start) {
+            struct proc_state_message *next = queue->start->next;
+            free(queue->start);
+            queue->start = next;
+        }
+
+        __free_queue(queue);
+        return;
+    }
+
     spin_lock(&queue->lock);
 
     if (queue->start == NULL) {
@@ -179,13 +206,6 @@ void proc_add_message(pid_t pid, struct proc_state_message *m) {
     } else {
         queue->end->next = m;
         queue->end = m;
-    }
-
-    struct process *process = find_by_pid(pid);
-    assert(process);
-
-    if (m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) {
-        memcpy(&queue->times, &process->times, sizeof(struct tms));
     }
 
     spin_unlock(&queue->lock);

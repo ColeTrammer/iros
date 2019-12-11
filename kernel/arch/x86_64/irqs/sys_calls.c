@@ -894,6 +894,9 @@ void arch_sys_sigaction(struct task_state *task_state) {
         debug_log("Changing signal state: [ %d, %#.16lX ]\n", signum, (uintptr_t) act->sa_handler);
 #endif /* SIGACTION_DEBUG */
         memcpy(&current->process->sig_state[signum], act, sizeof(struct sigaction));
+        if (signum == SIGCHLD && act->sa_handler == SIG_DFL) {
+            current->process->sig_state[signum].sa_flags |= SA_NOCLDWAIT;
+        }
     }
 
     SYS_RETURN(0);
