@@ -26,6 +26,19 @@ static struct mouse_event_queue *start;
 static struct mouse_event_queue *end;
 static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
 
+static ssize_t mouse_f_read(struct device *device, struct file *file, void *buffer, size_t len);
+
+static void mouse_f_add(struct device *device) {
+    device->inode->readable = false;
+    device->inode->writeable = false;
+}
+
+static struct device_ops mouse_ops = { NULL, mouse_f_read, NULL, NULL, mouse_f_add, NULL, NULL, NULL, NULL };
+
+static struct mouse_data data = { false, 0, { 0 } };
+
+static struct device mouse = { 0x500, S_IFCHR, "mouse", false, &mouse_ops, NULL, &data };
+
 static ssize_t mouse_f_read(struct device *device, struct file *file, void *buffer, size_t len) {
     (void) device;
     (void) file;
@@ -53,18 +66,16 @@ static ssize_t mouse_f_read(struct device *device, struct file *file, void *buff
             free(start);
             start = save;
 
+            if (start == NULL) {
+                mouse.inode->readable = false;
+            }
+
             spin_unlock(&queue_lock);
         }
     }
 
     return (ssize_t) read;
 }
-
-static struct device_ops mouse_ops = { NULL, mouse_f_read, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-
-static struct mouse_data data = { false, 0, { 0 } };
-
-static struct device mouse = { 0x500, S_IFCHR, "mouse", false, &mouse_ops, NULL, &data };
 
 static void add_mouse_event(struct mouse_event *event) {
     struct mouse_event_queue *e = malloc(sizeof(struct mouse_event_queue));
@@ -80,6 +91,8 @@ static void add_mouse_event(struct mouse_event *event) {
         end->next = e;
         end = e;
     }
+
+    mouse.inode->readable = true;
 
     spin_unlock(&queue_lock);
 }

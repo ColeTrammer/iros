@@ -20,6 +20,7 @@
 static struct keyboard_event_queue *start;
 static struct keyboard_event_queue *end;
 static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
+static struct device *device;
 
 static ssize_t kbd_read(struct device *device, struct file *file, void *buffer, size_t len) {
     (void) device;
@@ -48,6 +49,10 @@ static ssize_t kbd_read(struct device *device, struct file *file, void *buffer, 
             free(start);
             start = save;
 
+            if (start == NULL) {
+                device->inode->readable = false;
+            }
+
             spin_unlock(&queue_lock);
         }
     }
@@ -55,7 +60,12 @@ static ssize_t kbd_read(struct device *device, struct file *file, void *buffer, 
     return (ssize_t) read;
 }
 
-static struct device_ops kbd_ops = { NULL, kbd_read, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static void kbd_add(struct device *device) {
+    device->inode->readable = false;
+    device->inode->writeable = false;
+}
+
+static struct device_ops kbd_ops = { NULL, kbd_read, NULL, NULL, kbd_add, NULL, NULL, NULL, NULL };
 
 static void add_keyboard_event(struct key_event *event) {
     struct keyboard_event_queue *e = malloc(sizeof(struct keyboard_event_queue));
@@ -72,6 +82,7 @@ static void add_keyboard_event(struct key_event *event) {
         end = e;
     }
 
+    device->inode->readable = true;
     spin_unlock(&queue_lock);
 }
 
@@ -553,7 +564,7 @@ void init_keyboard() {
         inb(KEYBOARD_DATA_PORT);
     }
 
-    struct device *device = malloc(sizeof(struct device));
+    device = malloc(sizeof(struct device));
     device->device_number = 0x20;
     strcpy(device->name, "keyboard");
     device->ops = &kbd_ops;

@@ -202,14 +202,15 @@ void dev_add(struct device *device, const char *_path) {
         return;
     }
 
+    struct inode *to_add = calloc(1, sizeof(struct inode));
+    device->inode = to_add;
+
     /* Adds the device */
     device->cannot_open = false;
     if (device->ops->add) {
         device->ops->add(device);
     }
 
-    struct inode *to_add = calloc(1, sizeof(struct inode));
-    device->inode = to_add;
     to_add->device = super_block.device;
     to_add->flags = FS_FILE;
     to_add->i_op = &dev_i_op;
