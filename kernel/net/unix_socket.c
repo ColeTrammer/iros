@@ -108,6 +108,14 @@ int net_unix_close(struct socket *socket) {
         tnode->inode->socket_id = 0;
     }
 
+    if (socket->state == CONNECTED) {
+        struct socket *connected_to = net_get_socket_by_id(data->connected_id);
+        if (connected_to) {
+            // We terminated the connection
+            connected_to->exceptional = true;
+        }
+    }
+
     free(data);
     return 0;
 }

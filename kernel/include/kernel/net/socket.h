@@ -2,6 +2,7 @@
 #define _KERNEL_NET_SOCKET_H 1
 
 #include <netinet/in.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -46,6 +47,10 @@ struct socket {
     struct socket_connection **pending;
     int pending_length;
     int num_pending;
+
+    bool readable : 1;
+    bool writable : 1;
+    bool exceptional : 1;
 
     spinlock_t lock;
 

@@ -116,6 +116,9 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
             socket->protocol = protocol;
             socket->id = file_data->socket_id;
             socket->timeout = (struct timeval) { 10, 0 };
+            socket->writable = true;
+            socket->readable = false;
+            socket->exceptional = false;
             init_spinlock(&socket->lock);
 
             hash_put(map, socket);
@@ -166,22 +169,24 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         }
 
         if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
-            time_t now = get_time();
-            time_t ms_seconds_to_wait = socket->timeout.tv_sec * 1000 + socket->timeout.tv_usec / 1000;
+            time_t ms_seconds_to_wait = socket->timeout.tv_sec * 1000 + socket->timeout.tv_usec / 1000 - (start_time - get_time());
+
+            proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, ms_seconds_to_wait);
 
             // We timed out
-            if (now >= start_time + ms_seconds_to_wait) {
+            if (start_time >= start_time + ms_seconds_to_wait) {
                 return -EAGAIN;
             }
         }
 
-        kernel_yield();
+        proc_block_until_socket_is_readable(get_current_task(), socket);
     }
 
     socket->data_head = data->next;
     remque(data);
     if (socket->data_head == NULL) {
         socket->data_tail = NULL;
+        socket->readable = false;
     }
 
     spin_unlock(&socket->lock);
@@ -259,6 +264,8 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
     } else {
         to_send->data_tail = socket_data;
     }
+
+    to_send->readable = true;
 
     debug_log("Sent message to: [ %lu ]\n", to_send->id);
 

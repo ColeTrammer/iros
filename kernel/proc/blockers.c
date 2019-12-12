@@ -141,3 +141,37 @@ void proc_block_until_socket_has_connection(struct task *current, struct socket 
     current->sched_state = WAITING;
     __kernel_yield();
 }
+
+static bool until_socket_is_readable_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_SOCKET_IS_READABLE);
+
+    return info->until_socket_is_readable_info.socket->readable || info->until_socket_is_readable_info.socket->exceptional;
+}
+
+void proc_block_until_socket_is_readable(struct task *current, struct socket *socket) {
+    disable_interrupts();
+    current->block_info.until_socket_is_readable_info.socket = socket;
+    current->block_info.type = UNTIL_SOCKET_IS_READABLE;
+    current->block_info.should_unblock = &until_socket_is_readable_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}
+
+static bool until_socket_is_readable_with_timeout_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT);
+
+    return get_time() >= info->until_socket_is_readable_with_timeout_info.end_time ||
+           info->until_socket_is_readable_with_timeout_info.socket->readable || info->until_socket_is_readable_info.socket->exceptional;
+}
+
+void proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, time_t end_time) {
+    disable_interrupts();
+    current->block_info.until_socket_is_readable_with_timeout_info.socket = socket;
+    current->block_info.until_socket_is_readable_with_timeout_info.end_time = end_time;
+    current->block_info.type = UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT;
+    current->block_info.should_unblock = &until_socket_is_readable_with_timeout_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}
