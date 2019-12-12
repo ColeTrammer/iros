@@ -94,7 +94,7 @@ int main() {
         }
 
         if (FD_ISSET(mouse_fd, &set)) {
-            while (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
+            if (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
                 if (mouse_event.scroll_state == SCROLL_UP) {
                     tty.scroll_up();
                 } else if (mouse_event.scroll_state == SCROLL_DOWN) {
@@ -104,7 +104,7 @@ int main() {
         }
 
         if (FD_ISSET(kfd, &set)) {
-            while (read(kfd, &event, sizeof(key_event)) == sizeof(key_event)) {
+            if (read(kfd, &event, sizeof(key_event)) == sizeof(key_event)) {
                 if (event.flags & KEY_DOWN) {
                     if (event.flags & KEY_SHIFT_ON && !(event.flags & KEY_ALT_ON) && !(event.flags & KEY_CONTROL_ON)) {
                         if (event.key == KEY_HOME) {
@@ -193,7 +193,7 @@ int main() {
 
         if (FD_ISSET(mfd, &set)) {
             ssize_t bytes;
-            while ((bytes = read(mfd, buf, 4096)) > 0) {
+            if ((bytes = read(mfd, buf, 4096)) > 0) {
                 for (int i = 0; i < bytes; i++) {
                     tty.on_char(buf[i]);
                 }

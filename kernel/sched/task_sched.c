@@ -12,6 +12,8 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
+// #define SCHED_DEBUG
+
 static struct task *list_start = NULL;
 static struct task *list_end = NULL;
 extern struct task initial_kernel_task;
@@ -123,6 +125,7 @@ void sched_run_next() {
             if (to_run->block_info.should_unblock(&to_run->block_info)) {
                 to_run->blocking = false;
                 current_task = current_save;
+                to_run->sched_state = RUNNING_UNINTERRUPTIBLE;
                 break;
             }
             current_task = current_save;
@@ -142,6 +145,13 @@ void sched_run_next() {
         }
     }
 
+#ifdef SCHED_DEBUG
+    if (to_run != &initial_kernel_task) {
+        debug_log("Running task: [ %d:%d ]\n", to_run->tid, to_run->process->pid);
+    }
+#endif /* SCHED_DEBUG */
+
+    assert(to_run->sched_state != WAITING);
     run_task(to_run);
 }
 

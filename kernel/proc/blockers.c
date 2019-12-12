@@ -116,7 +116,7 @@ static bool custom_blocker(struct block_info *info) {
     // The custom blocker is designed so that an irq
     // will manually change the caller's sched_state to
     // RUNNING_UNINTERRUPTIBLE
-    return true;
+    return false;
 }
 
 void proc_block_custom(struct task *current) {

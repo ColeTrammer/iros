@@ -205,6 +205,9 @@ void dev_add(struct device *device, const char *_path) {
     struct inode *to_add = calloc(1, sizeof(struct inode));
     device->inode = to_add;
 
+    to_add->readable = true;
+    to_add->writeable = true;
+
     /* Adds the device */
     device->cannot_open = false;
     if (device->ops->add) {
@@ -228,8 +231,6 @@ void dev_add(struct device *device, const char *_path) {
     to_add->size = 0;
     to_add->super_block = &super_block;
     to_add->tnode_list = NULL;
-    to_add->readable = true;
-    to_add->writeable = true;
 
     struct tnode *tnode = malloc(sizeof(struct tnode));
 

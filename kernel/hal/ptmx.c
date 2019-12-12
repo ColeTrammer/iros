@@ -222,6 +222,8 @@ static void slave_add(struct device *device) {
         }
     }
 
+    device->inode->readable = false;
+
     device->private = data;
     data->device = device;
 }
@@ -560,6 +562,8 @@ static void master_add(struct device *device) {
             break;
         }
     }
+
+    device->inode->readable = false;
 
     device->private = data;
     data->device = device;
