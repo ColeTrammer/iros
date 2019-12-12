@@ -49,6 +49,7 @@ $(BUILDDIR)/initrd/programs/pipe_test \
 $(BUILDDIR)/initrd/programs/pthread_attr_test \
 $(BUILDDIR)/initrd/programs/queue_test \
 $(BUILDDIR)/initrd/programs/scanf_test \
+$(BUILDDIR)/initrd/programs/select_test \
 $(BUILDDIR)/initrd/programs/serial \
 $(BUILDDIR)/initrd/programs/set_jump_test \
 $(BUILDDIR)/initrd/programs/shared_memory_test \

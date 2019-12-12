@@ -27,5 +27,6 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end);
 struct vm_region *clone_process_vm();
 
 void *create_phys_addr_mapping(uintptr_t phys_addr);
+void *create_phys_addr_mapping_from_virt_addr(void *virt_addr);
 
 #endif /* _KERNEL_MEM_VM_ALLOCATOR_H */

@@ -98,6 +98,7 @@ $(BUILDDIR)/libs/libc/string/strxfrm.o \
 $(BUILDDIR)/libs/libc/sys/ioctl/ioctl.o \
 $(BUILDDIR)/libs/libc/sys/mman/mman.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
+$(BUILDDIR)/libs/libc/sys/select/select.o \
 $(BUILDDIR)/libs/libc/sys/stat/stat.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall.o \
 $(BUILDDIR)/libs/libc/sys/time/time.o \

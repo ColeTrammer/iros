@@ -1703,9 +1703,9 @@ void arch_sys_pselect(struct task_state *task_state) {
     SYS_BEGIN_PSELECT(task_state);
 
     int nfds = (int) task_state->cpu_state.rsi;
-    fd_set *readfds = (fd_set *) task_state->cpu_state.rdx;
-    fd_set *writefds = (fd_set *) task_state->cpu_state.rcx;
-    fd_set *execeptfds = (fd_set *) task_state->cpu_state.r8;
+    uint8_t *readfds = (uint8_t *) task_state->cpu_state.rdx;
+    uint8_t *writefds = (uint8_t *) task_state->cpu_state.rcx;
+    uint8_t *exceptfds = (uint8_t *) task_state->cpu_state.r8;
     const struct timespec *timeout = (const struct timespec *) task_state->cpu_state.r9;
     const sigset_t *sigmask = (const sigset_t *) task_state->cpu_state.r10;
 
@@ -1717,17 +1717,128 @@ void arch_sys_pselect(struct task_state *task_state) {
         current->in_sigsuspend = true;
     }
 
-    (void) nfds;
-    (void) readfds;
-    (void) writefds;
-    (void) execeptfds;
-    (void) timeout;
+    int count = 0;
 
-    if (current->in_sigsuspend) {
-        SYS_RETURN_RESTORE_SIGMASK(-ENOSYS);
+    if (nfds > FOPEN_MAX) {
+        count = -EINVAL;
+        goto pselect_return;
     }
 
-    SYS_RETURN(-ENOSYS);
+    time_t start = get_time();
+
+    size_t fd_set_size = ((nfds + sizeof(uint8_t) * CHAR_BIT - 1) / sizeof(uint8_t) / CHAR_BIT) * sizeof(uint8_t);
+
+    uint8_t *read_fds_found = NULL;
+    if (readfds) {
+        read_fds_found = alloca(fd_set_size);
+        memcpy(read_fds_found, readfds, fd_set_size);
+    }
+
+    uint8_t *write_fds_found = NULL;
+    if (writefds) {
+        write_fds_found = alloca(fd_set_size);
+        memcpy(write_fds_found, writefds, fd_set_size);
+    }
+
+    uint8_t *except_fds_found = NULL;
+    if (exceptfds) {
+        except_fds_found = alloca(fd_set_size);
+        memcpy(except_fds_found, exceptfds, fd_set_size);
+    }
+
+    // NOTE: don't need to take process lock since its undefined behavior to close
+    //       a file while another thread is selecting on it
+    for (;;) {
+        if (read_fds_found) {
+            for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
+                if (read_fds_found[i]) {
+                    for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                        if (read_fds_found[i] & (1U << j)) {
+                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                            if (fs_is_readable(to_check)) {
+                                read_fds_found[i] ^= (1U << j);
+                                count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (write_fds_found) {
+            for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
+                if (write_fds_found[i]) {
+                    for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                        if (write_fds_found[i] & (1U << j)) {
+                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                            if (fs_is_writable(to_check)) {
+                                write_fds_found[i] ^= (1U << j);
+                                count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (except_fds_found) {
+            for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
+                if (except_fds_found[i]) {
+                    for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                        if (except_fds_found[i] & (1U << j)) {
+                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                            if (fs_is_exceptional(to_check)) {
+                                except_fds_found[i] ^= (1U << j);
+                                count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (count > 0) {
+            break;
+        }
+
+        if (timeout) {
+            time_t now = get_time();
+            time_t end_time = timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000 - (start - now);
+
+            proc_block_select_timeout(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
+                                      create_phys_addr_mapping_from_virt_addr(write_fds_found),
+                                      create_phys_addr_mapping_from_virt_addr(except_fds_found), end_time);
+
+            if (get_time() >= end_time) {
+                goto pselect_return;
+            }
+
+            continue;
+        }
+
+        proc_block_select(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
+                          create_phys_addr_mapping_from_virt_addr(write_fds_found),
+                          create_phys_addr_mapping_from_virt_addr(except_fds_found));
+    }
+
+    for (size_t i = 0; i < fd_set_size; i++) {
+        if (readfds) {
+            readfds[i] ^= read_fds_found[i];
+        }
+        if (writefds) {
+            writefds[i] ^= write_fds_found[i];
+        }
+        if (exceptfds) {
+            exceptfds[i] ^= except_fds_found[i];
+        }
+    }
+
+pselect_return:
+    if (current->in_sigsuspend) {
+        SYS_RETURN_RESTORE_SIGMASK(count);
+    }
+
+    SYS_RETURN(count);
 }
 
 void arch_sys_invalid_system_call(struct task_state *task_state) {

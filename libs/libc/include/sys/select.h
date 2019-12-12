@@ -7,17 +7,12 @@
 
 #define FD_SETSIZE 16
 
-#define FD_CLR(fd, set)   (void)
-#define FD_ISSET(fd, set) (void)
-#define FD_SET(fd, set)   (void)
-#define FD_ZERO(set)      (void)
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
 typedef struct {
-    unsigned short fds;
+    unsigned char fds[FD_SETSIZE / sizeof(unsigned char) / __CHAR_BIT__];
 } fd_set;
 
 int pselect(int numfds, fd_set *__restrict readfds, fd_set *__restrict writefds, fd_set *__restrict exceptfds,
@@ -28,5 +23,18 @@ int select(int numfds, fd_set *__restrict readfds, fd_set *__restrict writefds, 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#define FD_CLR(fd, set) (set)->fds[fd / sizeof(unsigned char)] &= ~(1U << (fd % sizeof(unsigned char)))
+
+#define FD_SET(fd, set) (set)->fds[fd / sizeof(unsigned char)] |= (1U << (fd % sizeof(unsigned char)))
+
+#define FD_ISSET(fd, set) ((set)->fds[fd / sizeof(unsigned char)] & (1U << (fd % sizeof(unsigned char))))
+
+#define FD_ZERO(set)                                                   \
+    do {                                                               \
+        for (int i = 0; i < FD_SETSIZE / sizeof(unsigned char); i++) { \
+            (set)->fds[i] = 0;                                         \
+        }                                                              \
+    } while (0)
 
 #endif /* _SYS_SELECT_H */

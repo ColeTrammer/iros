@@ -1,7 +1,9 @@
 #include <assert.h>
+#include <limits.h>
 
 #include <kernel/fs/inode.h>
 #include <kernel/fs/pipe.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/hal/timer.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/blockers.h>
@@ -171,6 +173,103 @@ void proc_block_until_socket_is_readable_with_timeout(struct task *current, stru
     current->block_info.until_socket_is_readable_with_timeout_info.end_time = end_time;
     current->block_info.type = UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT;
     current->block_info.should_unblock = &until_socket_is_readable_with_timeout_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}
+
+static bool select_blocker_helper(int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds) {
+    struct task *current = get_current_task();
+    size_t fd_set_size = ((nfds + sizeof(uint8_t) * CHAR_BIT - 1) / sizeof(uint8_t) / CHAR_BIT) * sizeof(uint8_t);
+
+    if (readfds) {
+        for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
+            if (readfds[i]) {
+                for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                    if (readfds[i] & (1U << j)) {
+                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                        if (fs_is_readable(to_check)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (writefds) {
+        for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
+            if (writefds[i]) {
+                for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                    if (writefds[i] & (1U << j)) {
+                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                        if (fs_is_writable(to_check)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (exceptfds) {
+        for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
+            if (exceptfds[i]) {
+                for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                    if (exceptfds[i] & (1U << j)) {
+                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                        if (fs_is_exceptional(to_check)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+static bool select_blocker(struct block_info *info) {
+    assert(info->type == SELECT);
+
+    return select_blocker_helper(info->select_info.nfds, info->select_info.readfds, info->select_info.writefds,
+                                 info->select_info.exceptfds);
+}
+
+void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds) {
+    disable_interrupts();
+    current->block_info.select_info.nfds = nfds;
+    current->block_info.select_info.readfds = readfds;
+    current->block_info.select_info.writefds = writefds;
+    current->block_info.select_info.exceptfds = exceptfds;
+    current->block_info.type = SELECT;
+    current->block_info.should_unblock = &select_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}
+
+static bool select_timeout_blocker(struct block_info *info) {
+    assert(info->type == SELECT_TIMEOUT);
+
+    if (get_time() >= info->select_timeout_info.end_time) {
+        return true;
+    }
+
+    return select_blocker_helper(info->select_timeout_info.nfds, info->select_timeout_info.readfds, info->select_timeout_info.writefds,
+                                 info->select_timeout_info.exceptfds);
+}
+
+void proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds, time_t end_time) {
+    disable_interrupts();
+    current->block_info.select_timeout_info.nfds = nfds;
+    current->block_info.select_timeout_info.readfds = readfds;
+    current->block_info.select_timeout_info.writefds = writefds;
+    current->block_info.select_timeout_info.exceptfds = exceptfds;
+    current->block_info.select_timeout_info.end_time = end_time;
+    current->block_info.type = SELECT_TIMEOUT;
+    current->block_info.should_unblock = &select_timeout_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
     __kernel_yield();

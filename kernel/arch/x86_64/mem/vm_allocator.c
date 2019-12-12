@@ -4,3 +4,11 @@
 void *create_phys_addr_mapping(uintptr_t phys_addr) {
     return (void *) (phys_addr + VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0));
 }
+
+void *create_phys_addr_mapping_from_virt_addr(void *virt_addr) {
+    if (virt_addr == NULL) {
+        return NULL;
+    }
+
+    return create_phys_addr_mapping(get_phys_addr((uintptr_t) virt_addr));
+}

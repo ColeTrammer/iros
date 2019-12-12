@@ -1,6 +1,7 @@
 #ifndef _KERNEL_FS_VFS_H
 #define _KERNEL_FS_VFS_H 1
 
+#include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -39,6 +40,10 @@ struct file *fs_clone(struct file *file);
 struct file *fs_dup(struct file *file);
 
 int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id);
+
+bool fs_is_readable(struct file *file);
+bool fs_is_writable(struct file *file);
+bool fs_is_exceptional(struct file *file);
 
 void load_fs(struct file_system *fs);
 

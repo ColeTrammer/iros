@@ -19,6 +19,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
 
 // #define INODE_REF_COUNT_DEBUG
@@ -1121,4 +1122,49 @@ char *get_tnode_path(struct tnode *tnode) {
 
     free(name_buffer);
     return ret;
+}
+
+bool fs_is_readable(struct file *file) {
+    if (file->flags & FS_SOCKET) {
+        struct socket_file_data *file_data = file->private_data;
+        struct socket *socket = net_get_socket_by_id(file_data->socket_id);
+        assert(socket);
+
+        return socket->readable;
+    }
+
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    return inode->readable;
+}
+
+bool fs_is_writable(struct file *file) {
+    if (file->flags & FS_SOCKET) {
+        struct socket_file_data *file_data = file->private_data;
+        struct socket *socket = net_get_socket_by_id(file_data->socket_id);
+        assert(socket);
+
+        return socket->writable;
+    }
+
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    return inode->writeable;
+}
+
+bool fs_is_exceptional(struct file *file) {
+    if (file->flags & FS_SOCKET) {
+        struct socket_file_data *file_data = file->private_data;
+        struct socket *socket = net_get_socket_by_id(file_data->socket_id);
+        assert(socket);
+
+        return socket->exceptional;
+    }
+
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    return inode->excetional_activity;
 }
