@@ -24,17 +24,17 @@ int select(int numfds, fd_set *__restrict readfds, fd_set *__restrict writefds, 
 }
 #endif /* __cplusplus */
 
-#define FD_CLR(fd, set) (set)->fds[fd / sizeof(unsigned char)] &= ~(1U << (fd % sizeof(unsigned char)))
+#define FD_CLR(fd, set) (set)->fds[fd / sizeof(unsigned char) / __CHAR_BIT__] &= ~(1U << (fd % (sizeof(unsigned char) * __CHAR_BIT__)))
 
-#define FD_SET(fd, set) (set)->fds[fd / sizeof(unsigned char)] |= (1U << (fd % sizeof(unsigned char)))
+#define FD_SET(fd, set) (set)->fds[fd / sizeof(unsigned char) / __CHAR_BIT__] |= (1U << (fd % (sizeof(unsigned char) * __CHAR_BIT__)))
 
-#define FD_ISSET(fd, set) ((set)->fds[fd / sizeof(unsigned char)] & (1U << (fd % sizeof(unsigned char))))
+#define FD_ISSET(fd, set) ((set)->fds[fd / sizeof(unsigned char) / __CHAR_BIT__] & (1U << (fd % (sizeof(unsigned char) * __CHAR_BIT__))))
 
-#define FD_ZERO(set)                                                   \
-    do {                                                               \
-        for (int i = 0; i < FD_SETSIZE / sizeof(unsigned char); i++) { \
-            (set)->fds[i] = 0;                                         \
-        }                                                              \
+#define FD_ZERO(set)                                                                  \
+    do {                                                                              \
+        for (int i = 0; i < FD_SETSIZE / sizeof(unsigned char) / __CHAR_BIT__; i++) { \
+            (set)->fds[i] = 0;                                                        \
+        }                                                                             \
     } while (0)
 
 #endif /* _SYS_SELECT_H */

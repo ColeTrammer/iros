@@ -1724,7 +1724,7 @@ void arch_sys_pselect(struct task_state *task_state) {
 
     time_t start = get_time();
 
-    size_t fd_set_size = ((nfds + sizeof(uint8_t) * CHAR_BIT - 1) / sizeof(uint8_t) / CHAR_BIT) * sizeof(uint8_t);
+    size_t fd_set_size = ((nfds + sizeof(uint8_t) * CHAR_BIT - 1) / sizeof(uint8_t) / CHAR_BIT);
 
     uint8_t *read_fds_found = NULL;
     if (readfds) {
@@ -1750,7 +1750,8 @@ void arch_sys_pselect(struct task_state *task_state) {
         if (read_fds_found) {
             for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
                 if (read_fds_found[i]) {
-                    for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                    for (size_t j = 0;
+                         read_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (read_fds_found[i] & (1U << j)) {
                             struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
                             if (fs_is_readable(to_check)) {
@@ -1766,7 +1767,8 @@ void arch_sys_pselect(struct task_state *task_state) {
         if (write_fds_found) {
             for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
                 if (write_fds_found[i]) {
-                    for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                    for (size_t j = 0;
+                         write_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (write_fds_found[i] & (1U << j)) {
                             struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
                             if (fs_is_writable(to_check)) {
@@ -1782,7 +1784,8 @@ void arch_sys_pselect(struct task_state *task_state) {
         if (except_fds_found) {
             for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
                 if (except_fds_found[i]) {
-                    for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
+                    for (size_t j = 0;
+                         except_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (except_fds_found[i] & (1U << j)) {
                             struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
                             if (fs_is_exceptional(to_check)) {
