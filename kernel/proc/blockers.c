@@ -124,3 +124,20 @@ void proc_block_custom(struct task *current) {
     current->sched_state = WAITING;
     __kernel_yield();
 }
+
+static bool until_socket_has_connection_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_SOCKET_HAS_CONNECTION);
+
+    return info->until_socket_has_connection_info.socket->pending[0] != NULL;
+}
+
+void proc_block_until_socket_has_connection(struct task *current, struct socket *socket) {
+    assert(socket->state == LISTENING);
+    disable_interrupts();
+    current->block_info.until_socket_has_connection_info.socket = socket;
+    current->block_info.type = UNTIL_SOCKET_HAS_CONNECTION;
+    current->block_info.should_unblock = &until_socket_has_connection_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}

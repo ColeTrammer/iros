@@ -237,8 +237,7 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             return -EAGAIN;
         }
 
-        kernel_yield();
-        barrier();
+        proc_block_until_socket_has_connection(get_current_task(), socket);
     }
 
     return 0;
