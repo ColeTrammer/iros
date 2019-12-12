@@ -402,7 +402,7 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
         data->output_buffer_index = data->output_buffer_length = data->output_buffer_max = 0;
 
         // Reset readable/writable flags since we consumed to buffer
-        if (data->messages != NULL) {
+        if (data->messages == NULL) {
             device->inode->writeable = true;
             device->inode->readable = false;
         }
