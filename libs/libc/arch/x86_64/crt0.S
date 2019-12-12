@@ -2,19 +2,23 @@
 .global _start
 .type _start, @function
 _start:
-    xorq %rbp, %rbp # Zero RBP
+	# Set up end of the stack frame linked list.
+	xor %rbp, %rbp
+	pushq %rbp
+	pushq %rbp
+	movq %rsp, %rbp
 
-    movq (%rsp), %rdx # ENVP
-    movq 8(%rsp), %rsi # ARGV
-    movq 16(%rsp), %rdi # ARGC
+    movq 16(%rsp), %rdx # ENVP
+    movq 24(%rsp), %rsi # ARGV
+    movq 32(%rsp), %rdi # ARGC
 
     callq initialize_standard_library
 
     callq _init
 
-    popq %rdx
-    popq %rsi
-    popq %rdi
+    movq 16(%rsp), %rdx # ENVP
+    movq 24(%rsp), %rsi # ARGV
+    movq 32(%rsp), %rdi # ARGC
 
     xorq %rax, %rax # Zero RAX
 

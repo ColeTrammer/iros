@@ -94,6 +94,11 @@ void elf64_map_heap(void *buffer, struct task *task) {
     task->process->process_memory = add_vm_region(task->process->process_memory, task_heap);
 }
 
+struct stack_frame {
+    struct stack_frame *next;
+    uintptr_t rip;
+};
+
 // NOTE: this must be called from within a task's address space
 void elf64_stack_trace(struct task *task) {
     struct inode *inode = fs_inode_get(task->process->inode_dev, task->process->inode_id);
@@ -138,6 +143,7 @@ void elf64_stack_trace(struct task *task) {
     assert(string_table);
 
     uintptr_t rsp = task->in_kernel ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
+    uintptr_t rbp = task->in_kernel ? task->arch_task.user_task_state->cpu_state.rbp : task->arch_task.task_state.cpu_state.rbp;
     uintptr_t rip = task->in_kernel ? task->arch_task.user_task_state->stack_state.rip : task->arch_task.task_state.stack_state.rip;
 
     debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
@@ -145,19 +151,23 @@ void elf64_stack_trace(struct task *task) {
     for (int i = 0; (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
         if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
             if (rip >= symbols[i].st_value && rip < symbols[i].st_value + symbols[i].st_size) {
-                debug_log("[ %s ]\n", string_table + symbols[i].st_name);
+                debug_log("[ %#.16lX, %s ]\n", symbols[i].st_value, string_table + symbols[i].st_name);
             }
         }
     }
 
-    for (rsp &= ~0xF; rsp < find_vm_region_by_addr(rsp)->end; rsp += sizeof(uintptr_t)) {
+    struct stack_frame *frame = (struct stack_frame *) rbp;
+
+    while (frame && frame->next != NULL) {
         for (int i = 0; (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
-            if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
-                if (*((uint64_t *) rsp) >= symbols[i].st_value && *((uint64_t *) rsp) <= symbols[i].st_value + symbols[i].st_size) {
+            if (symbols[i].st_name != 0) {
+                if (frame->rip >= symbols[i].st_value && frame->rip <= symbols[i].st_value + symbols[i].st_size) {
                     debug_log("[ %#.16lX, %s ]\n", symbols[i].st_value, string_table + symbols[i].st_name);
                 }
             }
         }
+
+        frame = frame->next;
     }
 
     free(buffer);
