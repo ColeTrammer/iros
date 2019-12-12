@@ -135,7 +135,7 @@ void wake_user_mutex(struct user_mutex *m, int to_wake) {
         debug_log("Waking up: [ %d:%d ]\n", to_wake->process->pid, to_wake->tid);
 #endif /* USER_MUTEX_DEBUG */
 
-        to_wake->should_wake_up_from_mutex_sleep = true;
+        to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
     }
 }
 

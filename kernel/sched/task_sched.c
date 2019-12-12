@@ -121,9 +121,6 @@ void sched_run_next() {
                 to_run->blocking = false;
                 break;
             }
-        } else if (to_run->should_wake_up_from_mutex_sleep && to_run->sched_state == WAITING) {
-            to_run->should_wake_up_from_mutex_sleep = false;
-            break;
         }
 
         // Skip taskes that are sleeping

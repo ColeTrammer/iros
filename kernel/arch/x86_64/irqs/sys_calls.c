@@ -1546,7 +1546,7 @@ void arch_sys_os_mutex(struct task_state *task_state) {
                 unlock_user_mutex(to_unlock);
             }
             unlock_user_mutex(um);
-            kernel_yield();
+            proc_block_custom(current);
             SYS_RETURN(0);
         }
         case MUTEX_RELEASE: {

@@ -40,7 +40,6 @@ struct task {
     bool in_kernel : 1;
     bool in_sigsuspend : 1;
     bool blocking : 1;
-    bool should_wake_up_from_mutex_sleep : 1;
 
     struct block_info block_info;
 
