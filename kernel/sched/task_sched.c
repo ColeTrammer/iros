@@ -15,6 +15,7 @@
 static struct task *list_start = NULL;
 static struct task *list_end = NULL;
 extern struct task initial_kernel_task;
+extern struct task *current_task;
 static spinlock_t task_list_lock = SPINLOCK_INITIALIZER;
 
 void init_task_sched() {
@@ -117,10 +118,14 @@ void sched_run_next() {
 
             free_task(to_remove, true);
         } else if (to_run->blocking && to_run->sched_state == WAITING) {
+            struct task *current_save = current_task;
+            current_task = to_run;
             if (to_run->block_info.should_unblock(&to_run->block_info)) {
                 to_run->blocking = false;
+                current_task = current_save;
                 break;
             }
+            current_task = current_save;
         }
 
         // Skip taskes that are sleeping
@@ -177,7 +182,7 @@ int signal_process_group(pid_t pgid, int signum) {
     spin_unlock(&task_list_lock);
 
     if (signalled_self) {
-        kernel_yield();
+        proc_block_custom(get_current_task());
     }
 
     return signalled_anything ? 0 : -ESRCH;
@@ -205,7 +210,7 @@ int signal_task(int tgid, int tid, int signum) {
     spin_unlock(&task_list_lock);
 
     if (signalled_self) {
-        kernel_yield();
+        proc_block_custom(get_current_task());
     }
 
     return signalled_anything ? 0 : -ESRCH;
@@ -233,7 +238,7 @@ int signal_process(pid_t pid, int signum) {
     spin_unlock(&task_list_lock);
 
     if (signalled_self) {
-        kernel_yield();
+        proc_block_custom(get_current_task());
     }
 
     return signalled_anything ? 0 : -ESRCH;
@@ -246,11 +251,4 @@ void exit_process(struct process *process) {
             task->sched_state = EXITING;
         }
     } while ((task = task->next) != list_start);
-}
-
-void kernel_yield() {
-    struct task *current = get_current_task();
-    current->sched_state = RUNNING_INTERRUPTIBLE;
-    __kernel_yield();
-    current->sched_state = RUNNING_UNINTERRUPTIBLE;
 }

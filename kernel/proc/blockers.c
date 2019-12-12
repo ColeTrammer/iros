@@ -7,6 +7,7 @@
 #include <kernel/hal/timer.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/blockers.h>
+#include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
@@ -95,7 +96,7 @@ void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct 
 }
 
 static bool until_inode_is_writable_blocker(struct block_info *info) {
-    assert(info->type == UNTIL_INODE_IS_READABLE);
+    assert(info->type == UNTIL_INODE_IS_WRITABLE);
     return info->until_inode_is_writable_info.inode->writeable;
 }
 
@@ -270,6 +271,30 @@ void proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds,
     current->block_info.select_timeout_info.end_time = end_time;
     current->block_info.type = SELECT_TIMEOUT;
     current->block_info.should_unblock = &select_timeout_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    __kernel_yield();
+}
+
+static bool waitpid_blocker(struct block_info *info) {
+    assert(info->type == WAITPID);
+
+    pid_t pid = info->waitpid_info.pid;
+
+    if (pid < -1) {
+        return proc_num_messages_by_pg(-pid) != 0;
+    } else if (pid == -1) {
+        return proc_num_messages_by_parent(get_current_task()->process->pid) != 0;
+    } else {
+        return proc_num_messages(pid) != 0;
+    }
+}
+
+void proc_block_waitpid(struct task *current, pid_t pid) {
+    disable_interrupts();
+    current->block_info.waitpid_info.pid = pid;
+    current->block_info.type = WAITPID;
+    current->block_info.should_unblock = &waitpid_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
     __kernel_yield();

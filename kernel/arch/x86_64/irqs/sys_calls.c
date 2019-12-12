@@ -528,7 +528,7 @@ void arch_sys_waitpid(struct task_state *task_state) {
 #endif /* WAIT_PID_DEBUG */
                 SYS_RETURN(-ECHILD);
             } else {
-                kernel_yield();
+                proc_block_waitpid(current, pid);
             }
         } else {
             if ((m.type == STATE_STOPPED && !(flags & WUNTRACED)) || (m.type == STATE_CONTINUED && !(flags & WCONTINUED))) {
@@ -1433,9 +1433,7 @@ void arch_sys_sigsuspend(struct task_state *task_state) {
     memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
     memcpy(&current->sig_mask, mask, sizeof(sigset_t));
 
-    current->sched_state = WAITING;
-
-    __kernel_yield(task_state);
+    proc_block_custom(current);
 }
 
 void arch_sys_times(struct task_state *task_state) {

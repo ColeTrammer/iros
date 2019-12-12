@@ -214,6 +214,27 @@ void proc_add_message(pid_t pid, struct proc_state_message *m) {
     proc_notify_parent(pid);
 }
 
+int proc_num_messages(pid_t pid) {
+    struct proc_state_message_queue *queue = hash_get(queue_map, &pid);
+    if (queue == NULL) {
+        return 0;
+    }
+
+    int count = 0;
+
+    spin_lock(&queue->lock);
+
+    struct proc_state_message *m = queue->start;
+    while (m) {
+        count++;
+        m = m->next;
+    }
+
+    spin_unlock(&queue->lock);
+
+    return count;
+}
+
 pid_t proc_consume_message(pid_t pid, struct proc_state_message *m) {
     struct proc_state_message_queue *queue = ensure_queue(pid);
     bool empty = true;
@@ -240,6 +261,22 @@ pid_t proc_consume_message(pid_t pid, struct proc_state_message *m) {
     return empty ? 0 : pid;
 }
 
+int proc_num_messages_by_pg(pid_t pgid) {
+    struct proc_state_message_queue *queue = hash_get(pg_queue_map, &pgid);
+
+    if (queue == NULL) {
+        return 0;
+    }
+
+    int count = 0;
+    while (queue != NULL) {
+        count += proc_num_messages(queue->pid);
+        queue = queue->pg_next;
+    }
+
+    return count;
+}
+
 pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m) {
     struct proc_state_message_queue *queue = hash_get(pg_queue_map, &pgid);
 
@@ -259,6 +296,22 @@ pid_t proc_consume_message_by_pg(pid_t pgid, struct proc_state_message *m) {
     }
 
     return 0;
+}
+
+int proc_num_messages_by_parent(pid_t ppid) {
+    struct proc_state_message_queue *queue = hash_get(parent_queue_map, &ppid);
+
+    if (queue == NULL) {
+        return 0;
+    }
+
+    int count = 0;
+    while (queue != NULL) {
+        count += proc_num_messages(queue->pid);
+        queue = queue->parent_next;
+    }
+
+    return count;
 }
 
 pid_t proc_consume_message_by_parent(pid_t ppid, struct proc_state_message *m) {
