@@ -1844,6 +1844,13 @@ pselect_return:
     SYS_RETURN(count);
 }
 
+void arch_sys_yield(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    __kernel_yield();
+    SYS_RETURN(0);
+}
+
 void arch_sys_invalid_system_call(struct task_state *task_state) {
     SYS_BEGIN(task_state);
     SYS_RETURN(-ENOSYS);

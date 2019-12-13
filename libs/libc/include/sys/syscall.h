@@ -65,7 +65,8 @@
     __ENUMERATE_SYSCALL(MPROTECT, mprotect, 3)                                 \
     __ENUMERATE_SYSCALL(SIGPENDING, sigpending, 1)                             \
     __ENUMERATE_SYSCALL(SIGALTSTACK, sigaltstack, 2)                           \
-    __ENUMERATE_SYSCALL(PSELECT, pselect, 6)
+    __ENUMERATE_SYSCALL(PSELECT, pselect, 6)                                   \
+    __ENUMERATE_SYSCALL(YIELD, yield, 0)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

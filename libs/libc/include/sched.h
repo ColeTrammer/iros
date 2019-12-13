@@ -22,6 +22,8 @@ extern "C" {
 
 #endif /* __sched_param_defined */
 
+int sched_yield(void);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
