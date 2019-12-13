@@ -6,7 +6,7 @@ HOST?=$(DEFAULT_HOST)
 HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
 
 # Init flags if not already set (can be overridden)
-CFLAGS?=-O2 -g
+CFLAGS=-O2 -g
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=

@@ -192,7 +192,13 @@ int signal_process_group(pid_t pgid, int signum) {
     spin_unlock(&task_list_lock);
 
     if (signalled_self) {
-        proc_block_custom(get_current_task());
+        unsigned long save = disable_interrupts_save();
+        struct task *current = get_current_task();
+        task_do_sig(current, signum);
+        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+            yield_signal();
+        }
+        interrupts_restore(save);
     }
 
     return signalled_anything ? 0 : -ESRCH;
@@ -220,7 +226,13 @@ int signal_task(int tgid, int tid, int signum) {
     spin_unlock(&task_list_lock);
 
     if (signalled_self) {
-        proc_block_custom(get_current_task());
+        unsigned long save = disable_interrupts_save();
+        struct task *current = get_current_task();
+        task_do_sig(current, signum);
+        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+            yield_signal();
+        }
+        interrupts_restore(save);
     }
 
     return signalled_anything ? 0 : -ESRCH;
@@ -248,7 +260,13 @@ int signal_process(pid_t pid, int signum) {
     spin_unlock(&task_list_lock);
 
     if (signalled_self) {
-        proc_block_custom(get_current_task());
+        unsigned long save = disable_interrupts_save();
+        struct task *current = get_current_task();
+        task_do_sig(current, signum);
+        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+            yield_signal();
+        }
+        interrupts_restore(save);
     }
 
     return signalled_anything ? 0 : -ESRCH;

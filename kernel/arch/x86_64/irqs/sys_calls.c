@@ -200,6 +200,8 @@ void arch_sys_fork(struct task_state *task_state) {
         }
     }
 
+    debug_log("Finishing fork: [ %d:%d ]\n", child->process->pid, child->tid);
+
     disable_interrupts();
     sched_add_task(child);
     SYS_RETURN(child_process->pid);

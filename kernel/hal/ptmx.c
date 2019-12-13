@@ -20,6 +20,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
+// #define PTMX_BLOCKING_DEBUG
 // #define PTMX_SIGNAL_DEBUG
 
 #define PTMX_MAX 16
@@ -64,6 +65,10 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
     if (data->input_buffer == NULL) {
         while (data->messages == NULL) {
             spin_unlock(&data->lock);
+
+#ifdef PTMX_BLOCKING_DEBUG
+            debug_log("Blocking on slave read: [ %d ]\n", data->index);
+#endif /* PTMX_BLOCKING_DEBUG */
 
             if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
                 time_t end_time = data->config.c_cc[VTIME] * 100;
@@ -110,6 +115,9 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
         // Clear the readable flag once we've consumed to input_buffer
         // and there is no messages
         if (data->messages == NULL) {
+#ifdef PTMX_BLOCKING_DEBUG
+            debug_log("Setting readable flag on slave to false: [ %d ]\n", data->index);
+#endif /* PTMX_BLOCKING_DEBUG */
             device->inode->readable = false;
         }
     }
@@ -161,6 +169,9 @@ slave_write_again:
             mdata->device->inode->writeable = false;
             while (mdata->messages != NULL) {
                 spin_unlock(&mdata->lock);
+#ifdef PTMX_BLOCKING_DEBUG
+                debug_log("Blocking until master is writable: [ %d ]\n", mdata->index);
+#endif /* PTMX_BLOCKING_DEBUG */
                 proc_block_until_inode_is_writable(get_current_task(), mdata->device->inode);
                 spin_lock(&mdata->lock);
             }
@@ -181,6 +192,9 @@ slave_write_again:
     message->len += len;
 
     // This is now readable since we wrote to id
+#ifdef PTMX_BLOCKING_DEBUG
+    debug_log("Setting master to readable: [ %d ]\n", mdata->index);
+#endif /* PTMX_BLOCKING_DEBUG */
     mdata->device->inode->readable = true;
 
     spin_unlock(&mdata->lock);
@@ -405,6 +419,9 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
 
         // Reset readable/writable flags since we consumed to buffer
         if (data->messages == NULL) {
+#ifdef PTMX_BLOCKING_DEBUG
+            debug_log("Resetting master flags: [ %d ]\n", data->index);
+#endif /* PTMX_BLOCKING_DEBUG */
             device->inode->writeable = true;
             device->inode->readable = false;
         }
@@ -506,6 +523,10 @@ static ssize_t master_write(struct device *device, struct file *file, const void
                 m->buf[m->len++] = c;
             }
 
+#ifdef PTMX_BLOCKING_DEBUG
+            debug_log("Making slave readable: [ %d ]\n", sdata->index);
+#endif /* PTMX_BLOCKING_DEBUG */
+
             // The slave is readable now that we wrote to it.
             sdata->device->inode->readable = true;
 
@@ -534,6 +555,10 @@ static ssize_t master_write(struct device *device, struct file *file, const void
             free(data->input_buffer);
             data->input_buffer = NULL;
             data->input_buffer_length = data->input_buffer_max = 0;
+
+#ifdef PTMX_BLOCKING_DEBUG
+            debug_log("Making slave readable: [ %d ]\n", sdata->index);
+#endif /* PTMX_BLOCKING_DEBUG */
 
             // The slave is readable now that we wrote to it.
             sdata->device->inode->readable = true;
