@@ -1,5 +1,5 @@
 # Lists all projects
-PROJECTS=kernel libs boot initrd userland
+PROJECTS=kernel libs boot gen initrd userland
 # Lists all projects that need headers installed
 HEADER_PROJECTS=kernel libs userland
 
@@ -78,6 +78,7 @@ debug:
 	$(ROOT)/qemu.sh --debug
 
 SOURCES+=$(shell find $(ROOT)/boot -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
+SOURCES+=$(shell find $(ROOT)/gen -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
 SOURCES+=$(shell find $(ROOT)/initrd -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
 SOURCES+=$(shell find $(ROOT)/kernel -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))
 SOURCES+=$(shell find $(ROOT)/libs -type f \( -name '*.c' -o -name '*.S' -o -name '*.cpp' \))

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/string_view.h>
 #include <liim/traits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +15,12 @@ public:
     String(const char* chars) : m_size(strlen(chars)), m_string(strdup(chars)) {}
 
     String(const String& other) : m_size(other.size()), m_string(strdup(other.string())) {}
+
+    String(const StringView& view) : m_size(view.size()) {
+        m_string = reinterpret_cast<char*>(malloc(size() + 1));
+        memcpy(string(), view.start(), size());
+        string()[size()] = '\0';
+    }
 
     ~String() { free(m_string); }
 
