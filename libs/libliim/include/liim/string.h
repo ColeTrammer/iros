@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ctype.h>
 #include <liim/string_view.h>
 #include <liim/traits.h>
 #include <stdio.h>
@@ -34,6 +35,51 @@ public:
     const char& operator[](int index) const { return string()[index]; }
 
     bool operator==(const String& other) { return strcmp(string(), other.string()) == 0; }
+
+    String& operator+=(const String& other) {
+        m_size += other.size();
+        m_string = reinterpret_cast<char*>(realloc(m_string, size() + 1));
+        strcat(string(), other.string());
+        return *this;
+    }
+
+    String& to_upper_case() {
+        for (int i = 0; i < size(); i++) {
+            if (islower(m_string[i])) {
+                m_string[i] = _toupper(m_string[i]);
+            }
+        }
+
+        return *this;
+    }
+
+    String& to_lower_case() {
+        for (int i = 0; i < size(); i++) {
+            if (isupper(m_string[i])) {
+                m_string[i] = _tolower(m_string[i]);
+            }
+        }
+
+        return *this;
+    }
+
+    String& to_title_case() {
+        for (int i = 0; i < size(); i++) {
+            if (i == 0) {
+                m_string[i] = toupper(m_string[i]);
+                continue;
+            }
+
+            if (m_string[i] == '_') {
+                m_string[i + 1] = toupper(m_string[i + 1]);
+                memmove(m_string + i, m_string + i + 1, size() - i - 1);
+            } else {
+                m_string[i] = tolower(m_string[i]);
+            }
+        }
+
+        return *this;
+    }
 
     bool operator!() const { return !m_string; }
     operator bool() const { return !!m_string; }

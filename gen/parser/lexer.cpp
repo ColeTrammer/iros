@@ -10,7 +10,7 @@ void Lexer::consume() {
     m_pos++;
 }
 
-void Lexer::commit_token(Token::Type type) {
+void Lexer::commit_token(TokenType type) {
     m_vector.add({ type, { m_token_start, m_buffer + m_pos - 1 } });
     m_token_start = nullptr;
 }
@@ -19,7 +19,7 @@ void Lexer::begin_token() {
     m_token_start = m_buffer + m_pos;
 }
 
-Vector<Token> Lexer::lex() {
+Vector<Token<TokenType>> Lexer::lex() {
     bool in_percent = false;
     bool in_token_decl = false;
 
@@ -28,7 +28,7 @@ Vector<Token> Lexer::lex() {
             case '%':
                 if (in_percent) {
                     consume();
-                    commit_token(Token::Type::TokenPercentPercent);
+                    commit_token(TokenType::TokenPercentPercent);
                     in_percent = false;
                 } else {
                     in_percent = true;
@@ -50,8 +50,8 @@ Vector<Token> Lexer::lex() {
             case '\r':
             case '\n':
                 if (m_token_start) {
-                    commit_token(in_percent ? (in_token_decl ? Token::Type::TokenTokenMarker : Token::Type::TokenStartMarker)
-                                            : Token::Type::TokenWord);
+                    commit_token(in_percent ? (in_token_decl ? TokenType::TokenTokenMarker : TokenType::TokenStartMarker)
+                                            : TokenType::TokenWord);
                     in_percent = false;
                     in_token_decl = false;
                 }
@@ -63,32 +63,32 @@ Vector<Token> Lexer::lex() {
                 while (m_buffer[m_pos] != '\'') {
                     consume();
                 }
-                commit_token(Token::Type::TokenLiteral);
+                commit_token(TokenType::TokenLiteral);
                 consume();
                 break;
             case '|':
                 if (m_token_start) {
-                    commit_token(Token::Type::TokenWord);
+                    commit_token(TokenType::TokenWord);
                 }
                 begin_token();
                 consume();
-                commit_token(Token::Type::TokenPipe);
+                commit_token(TokenType::TokenPipe);
                 break;
             case ':':
                 if (m_token_start) {
-                    commit_token(Token::Type::TokenWord);
+                    commit_token(TokenType::TokenWord);
                 }
                 begin_token();
                 consume();
-                commit_token(Token::Type::TokenColon);
+                commit_token(TokenType::TokenColon);
                 break;
             case ';':
                 if (m_token_start) {
-                    commit_token(Token::Type::TokenWord);
+                    commit_token(TokenType::TokenWord);
                 }
                 begin_token();
                 consume();
-                commit_token(Token::Type::TokenSemicolon);
+                commit_token(TokenType::TokenSemicolon);
                 break;
             default:
                 if (in_percent) {
