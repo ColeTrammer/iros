@@ -60,7 +60,8 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
     uint64_t *pd = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t);
     uint64_t *pt = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t);
 
-    if (!(pml4[pml4_offset] & 1) || !(pdp[pdp_offset] & 1) || !(pd[pd_offset] & 1) || !(pt[pt_offset] & 1)) {
+    if (!(pml4[pml4_offset] & 1) || !(pdp[pdp_offset] & 1) || !(pd[pd_offset] & 1) ||
+        (!(pt[pt_offset] & 1) && !(pt[pt_offset] & VM_PROT_NONE))) {
         return; // Page is already unmapped
     }
 
@@ -93,7 +94,7 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
 }
 
 static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct virt_page_info *info) {
-    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC);
+    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_PROT_NONE);
     flags |= 0x01;
 
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
@@ -156,9 +157,8 @@ void map_page_flags(uintptr_t virt_addr, uint64_t flags) {
         return; // Page is isn't mapped, so will be mapped later on page fault and we can ignore it for now
     }
 
-    // FIXME: if VM_PROT_NONE is set, we need to store this on the page so that the physical address can be freed later
     flags |= (flags & VM_PROT_NONE ? 0x01 : 0);
-    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC);
+    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_PROT_NONE);
     *pt_entry |= flags;
     invlpg(virt_addr);
 }

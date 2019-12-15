@@ -101,7 +101,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     // In this case we just need to map in a region that's allocation was put off by the kernel
     struct vm_region *vm_region = find_vm_region_by_addr(address);
     if (vm_region && !current->kernel_task && !(task_state->error_code & 1) && address != vm_region->end &&
-        !(vm_region->flags & VM_PROT_NONE)) {
+        !(vm_region->flags & VM_PROT_NONE) && !(vm_region->flags & VM_COW)) {
         map_page(address & ~0xFFF, vm_region->flags);
 
         if (vm_region->type == VM_PROCESS_ANON_MAPPING) {

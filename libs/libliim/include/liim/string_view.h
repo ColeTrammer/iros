@@ -1,5 +1,8 @@
 #pragma once
 
+#include <liim/traits.h>
+#include <string.h>
+
 namespace LIIM {
 
 class StringView {

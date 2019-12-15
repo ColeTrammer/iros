@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <stdint.h>
 
 namespace LIIM {
@@ -57,13 +56,6 @@ template<> struct Traits<int32_t> {
 template<> struct Traits<int64_t> {
     static constexpr bool is_simple() { return true; }
     static unsigned int hash(const int64_t& obj) { return static_cast<unsigned int>(obj) + static_cast<unsigned int>(obj >> 32); };
-};
-
-template<typename U> struct Traits<std::shared_ptr<U>> {
-    static constexpr bool is_simple() { return false; }
-    static unsigned int hash(const std::shared_ptr<U>& obj) {
-        return static_cast<unsigned int>((uintptr_t) obj.get()) + static_cast<unsigned int>((uintptr_t) obj.get() >> 32);
-    }
 };
 
 template<typename U> struct Traits<U*> {

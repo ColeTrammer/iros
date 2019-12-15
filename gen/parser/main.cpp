@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     fprintf(token_type_header, "#pragma once\n\n");
     fprintf(token_type_header, "#define ENUMERATE_%s_TOKEN_TYPES \\\n", output_name.to_upper_case().string());
 
-    StringView* start_name;
+    StringView* start_name = nullptr;
 
     Vector<StringView> token_types;
 
@@ -132,7 +132,7 @@ done:
         }
     }
 
-    Rule* start_rule;
+    Rule* start_rule = nullptr;
     rules.for_each([&](auto& rule) {
         if (rule.name() == *start_name) {
             start_rule = &rule;

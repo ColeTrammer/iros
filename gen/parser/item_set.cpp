@@ -49,13 +49,22 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
     while (to_process.size() != 0) {
         for (int size_save = to_process.size() - 1; size_save >= 0; size_save--) {
             auto& item_set_to_process = to_process.get(size_save);
-            token_types.for_each([&](auto& token) {
+
+            auto process_identifier = [&](const auto& identifier) {
                 item_set_to_process->set().for_each_key([&](auto& rule) {
-                    if (rule.components().size() && rule.components().get(0) == token) {
+                    if (rule.components().size() && rule.components().get(0) == identifier) {
                         auto new_set = ItemSet::create_from_rule_and_position(rule, 1, rules, token_types);
                         add_item_set(new_set);
                     }
                 });
+            };
+
+            token_types.for_each([&](auto& token) {
+                process_identifier(token);
+            });
+
+            rules.for_each([&](auto& rule) {
+                process_identifier(rule.name());
             });
 
             to_process.remove_element(item_set_to_process);
