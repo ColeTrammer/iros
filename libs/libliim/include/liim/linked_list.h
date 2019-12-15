@@ -77,6 +77,14 @@ public:
         }
     }
 
+    template<typename C> void for_each(C callback) const {
+        auto* iter = m_head;
+        while (iter) {
+            callback(iter->m_val);
+            iter = iter->m_next;
+        }
+    }
+
     template<typename C> void remove_if(C test) {
         auto** iter = &m_head;
         while (*iter) {

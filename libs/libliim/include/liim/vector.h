@@ -52,6 +52,13 @@ public:
         m_vector = nullptr;
     }
 
+    void clear() {
+        for (int i = 0; i < m_size; i++) {
+            get(i).~T();
+        }
+        m_size = 0;
+    }
+
     int size() const { return m_size; }
     int capacity() const { return m_capacity; }
 
@@ -109,6 +116,12 @@ public:
     const T* vector() const { return m_vector; }
 
     template<typename C> void for_each(C callback) {
+        for (int i = 0; i < size(); i++) {
+            callback(get(i));
+        }
+    }
+
+    template<typename C> void for_each(C callback) const {
         for (int i = 0; i < size(); i++) {
             callback(get(i));
         }

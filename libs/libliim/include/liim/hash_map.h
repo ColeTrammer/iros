@@ -26,6 +26,12 @@ public:
         }
     }
 
+    HashMap(const HashMap<K, V>& other) {
+        other.for_each_key([&](auto& key) {
+            this->put(key, *other.get(key));
+        });
+    }
+
     ~HashMap() {}
 
     void put(const K& key, const V& val) {
@@ -80,6 +86,45 @@ public:
         m_buckets[bucket].remove_if([&](const auto& obj) -> bool {
             return obj.m_key == key;
         });
+    }
+
+    template<typename C> void for_each(C callback) const {
+        m_buckets.for_each([&](auto& list) {
+            list.for_each([&](auto& obj) {
+                callback(obj.m_value);
+            });
+        });
+    }
+
+    template<typename C> void for_each_key(C callback) const {
+        m_buckets.for_each([&](const auto& list) {
+            list.for_each([&](const auto& obj) {
+                callback(obj.m_key);
+            });
+        });
+    }
+
+    int size() const {
+        int count = 0;
+        for_each([&](auto&) {
+            count++;
+        });
+
+        return count;
+    }
+
+    bool operator==(const HashMap<K, V>& other) const {
+        if (this->size() != other.size()) {
+            return false;
+        }
+
+        bool equal = true;
+        this->for_each_key([&](auto& key) {
+            if (!other.get(key) || *this->get(key) != *other.get(key)) {
+                equal = false;
+            }
+        });
+        return equal;
     }
 
 private:
