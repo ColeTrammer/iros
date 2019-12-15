@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <fcntl.h>
+#include <liim/hash_map.h>
 #include <liim/string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +8,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "item_set.h"
 #include "lexer.h"
+#include "rule.h"
 
 void print_usage_and_exit(char** argv) {
     fprintf(stderr, "Usage: %s <grammar>\n", argv[0]);
@@ -58,14 +61,20 @@ int main(int argc, char** argv) {
     fprintf(token_type_header, "#pragma once\n\n");
     fprintf(token_type_header, "#define ENUMERATE_%s_TOKEN_TYPES \\\n", output_name.to_upper_case().string());
 
+    StringView* start_name;
+
+    Vector<StringView> token_types;
+
     for (int i = 0; i < tokens.size(); i++) {
         auto& token = tokens[i];
-        switch (token.type) {
+        switch (token.type()) {
             case TokenType::TokenWord:
-                fprintf(token_type_header, "__ENUMERATE_%s_TOKEN_TYPES(%s) \\\n", output_name.string(), String(token.text).string());
+                fprintf(token_type_header, "__ENUMERATE_%s_TOKEN_TYPES(%s) \\\n", output_name.string(), String(token.text()).string());
+                token_types.add(token.text());
             case TokenType::TokenTokenMarker:
                 continue;
             case TokenType::TokenStartMarker:
+                start_name = &tokens[i + 1].text();
                 goto done;
             default:
                 assert(false);
@@ -77,10 +86,63 @@ done:
     fprintf(token_type_header, "#define _(s) s\n");
     fprintf(token_type_header, "#undef __ENUMERATE_%s_TOKEN_TYPES\n", output_name.to_upper_case().string());
     fprintf(token_type_header, "#define __ENUMERATE_%s_TOKEN_TYPES(t) _(##t),\n", output_name.to_upper_case().string());
-    fprintf(token_type_header, "ENUMERATE_%s_TOKEN_TYPES Invalid\n", output_name.to_upper_case().string());
+    fprintf(token_type_header, "ENUMERATE_%s_TOKEN_TYPES End\n", output_name.to_upper_case().string());
     fprintf(token_type_header, "#undef _\n");
     fprintf(token_type_header, "#undef __ENUMERATE_%s_TOKEN_TYPES\n", output_name.to_upper_case().string());
     fprintf(token_type_header, "};\n");
+
+    Vector<Rule> rules;
+
+    bool start = false;
+    StringView* rule_name = nullptr;
+    Rule rule;
+    int num = 0;
+
+    for (int i = 0; i < tokens.size(); i++) {
+        auto& token = tokens.get(i);
+        if (token.type() == TokenType::TokenPercentPercent) {
+            start = true;
+            continue;
+        }
+
+        if (start) {
+            switch (token.type()) {
+                case TokenType::TokenWord:
+                    if (rule_name) {
+                        rule.components().add(token.text());
+                    } else {
+                        rule_name = &token.text();
+                    }
+                    break;
+                case TokenType::TokenColon:
+                    assert(rule_name);
+                    rule.name() = *rule_name;
+                    break;
+                case TokenType::TokenSemicolon:
+                    rule_name = nullptr;
+                    // Fall through
+                case TokenType::TokenPipe:
+                    rule.set_number(num++);
+                    rules.add(rule);
+                    rule.components().clear();
+                    break;
+                default:
+                    assert(false);
+            }
+        }
+    }
+
+    Rule* start_rule;
+    rules.for_each([&](auto& rule) {
+        if (rule.name() == *start_name) {
+            start_rule = &rule;
+        }
+    });
+
+    auto sets = ItemSet::create_item_sets(*start_rule, rules, token_types);
+    sets.for_each([&](auto& set) {
+        fprintf(stderr, "%s\n", set->stringify().string());
+    });
 
     if (fclose(token_type_header) != 0) {
         perror("fclose");
