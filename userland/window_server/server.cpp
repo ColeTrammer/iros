@@ -54,6 +54,17 @@ void Server::handle_remove_window_request(const WindowServer::Message& request, 
     assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
 }
 
+void Server::handle_swap_buffer_request(const WindowServer::Message& request, int client_id) {
+    (void) client_id;
+
+    const WindowServer::Message::SwapBufferRequest& data = request.data.swap_buffer_request;
+    m_manager->windows().for_each([&](auto& window) {
+        if (window->id() == data.wid) {
+            window->swap();
+        }
+    });
+}
+
 void Server::start() {
     assert(listen(m_socket_fd, 10) == 0);
 
@@ -81,6 +92,10 @@ void Server::start() {
                 }
                 case WindowServer::Message::Type::RemoveWindowRequest: {
                     handle_remove_window_request(message, client_fd);
+                    break;
+                }
+                case WindowServer::Message::Type::SwapBufferRequest: {
+                    handle_swap_buffer_request(message, client_fd);
                     break;
                 }
                 case WindowServer::Message::Type::Invalid:

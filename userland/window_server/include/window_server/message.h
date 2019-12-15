@@ -11,7 +11,7 @@ typedef uint64_t wid_t;
 namespace WindowServer {
 
 struct Message {
-    enum class Type { Invalid, CreateWindowRequest, CreateWindowResponse, RemoveWindowRequest, RemoveWindowResponse };
+    enum class Type { Invalid, CreateWindowRequest, CreateWindowResponse, RemoveWindowRequest, RemoveWindowResponse, SwapBufferRequest };
 
     struct CreateWindowRequest {
         CreateWindowRequest(int xx, int yy, int wwidth, int hheight) : x(xx), y(yy), width(wwidth), height(hheight) {}
@@ -74,6 +74,19 @@ struct Message {
         bool success;
     };
 
+    struct SwapBufferRequest {
+        static std::shared_ptr<Message> create(wid_t wid) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(SwapBufferRequest));
+            message->type = Message::Type::SwapBufferRequest;
+            message->data_len = sizeof(SwapBufferRequest);
+            auto& request = message->data.swap_buffer_request;
+            request.wid = wid;
+            return std::shared_ptr<Message>(message);
+        }
+
+        wid_t wid;
+    };
+
     size_t total_size() const { return sizeof(Message) + data_len; };
 
     Type type { Type::Invalid };
@@ -83,6 +96,7 @@ struct Message {
         CreateWindowResponse create_window_response;
         RemoveWindowRequest remove_window_request;
         RemoveWindowResponse remove_window_response;
+        SwapBufferRequest swap_buffer_request;
     } data;
 };
 

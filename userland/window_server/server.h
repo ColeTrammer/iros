@@ -19,6 +19,7 @@ private:
 
     void handle_create_window_request(const WindowServer::Message&, int client_id);
     void handle_remove_window_request(const WindowServer::Message&, int client_id);
+    void handle_swap_buffer_request(const WindowServer::Message&, int client_id);
 
     std::unique_ptr<WindowManager> m_manager;
     int m_socket_fd;

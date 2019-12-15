@@ -31,18 +31,30 @@ int main() {
     assert(message->type == WindowServer::Message::Type::CreateWindowResponse);
 
     WindowServer::Message::CreateWindowResponse& created_data = message->data.create_window_response;
-    int shm = shm_open(created_data.shared_buffer_path, O_RDWR, 0);
+    int shm_front = shm_open(created_data.shared_buffer_path, O_RDWR, 0);
+    created_data.shared_buffer_path[strlen(created_data.shared_buffer_path) - 1]++;
+    int shm_back = shm_open(created_data.shared_buffer_path, O_RDWR, 0);
 
-    void* raw_memory = mmap(nullptr, created_data.shared_buffer_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm, 0);
-    close(shm);
+    void* front_raw_memory = mmap(nullptr, created_data.shared_buffer_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm_front, 0);
+    void* back_raw_memory = mmap(nullptr, created_data.shared_buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_back, 0);
+    close(shm_front);
+    close(shm_back);
 
-    auto pixels = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(raw_memory), 200, 200);
-    Renderer renderer(pixels);
-    renderer.fill_rect(50, 50, 50, 50);
+    auto front_pixels = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(front_raw_memory), 200, 200);
+    auto back_pixels = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(back_raw_memory), 200, 200);
 
     for (int i = 0; i < 100; i++) {
-        pixels->clear();
+        back_pixels->clear();
+        Renderer renderer(back_pixels);
         renderer.fill_rect(50 + i, 50 + i, 50, 50);
+
+        auto swap_buffer_request = WindowServer::Message::SwapBufferRequest::create(created_data.window_id);
+        assert(write(fd, swap_buffer_request.get(), swap_buffer_request->total_size()) != -1);
+
+        auto temp = back_pixels;
+        back_pixels = front_pixels;
+        front_pixels = temp;
+
         for (int i = 0; i < 100000; i++) {
             getpid();
         }
