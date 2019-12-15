@@ -9,7 +9,7 @@ class Rule {
 public:
     Rule() : m_name("null") {}
     Rule(StringView name, const Vector<StringView>& components) : m_name(name), m_components(components) {}
-    Rule(const Rule& other) : m_name(other.name()), m_components(other.components()) {}
+    Rule(const Rule& other) : m_name(other.name()), m_components(other.components()), m_number(other.number()) {}
     ~Rule() {}
 
     StringView& name() { return m_name; }
@@ -23,6 +23,9 @@ public:
 
     String stringify() const {
         String ret = "";
+        char buf[50];
+        snprintf(buf, 50, "[%d] ", number());
+        ret += buf;
         ret += m_name;
         ret += " -> ";
         m_components.for_each([&](const StringView& part) {
@@ -38,7 +41,7 @@ public:
 private:
     StringView m_name;
     Vector<StringView> m_components;
-    int m_number;
+    int m_number { 0 };
 };
 
 namespace LIIM {
