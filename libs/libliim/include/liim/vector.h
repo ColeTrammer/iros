@@ -161,6 +161,16 @@ public:
         });
     }
 
+    bool includes(const T& value) const {
+        for (int i = 0; i < size(); i++) {
+            if (value == get(i)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 private:
     void increase_capacity() { m_capacity *= 2; }
 
