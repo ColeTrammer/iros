@@ -45,7 +45,6 @@ public:
             ret += info.stringify();
             ret += " ";
         });
-        ret += "\n";
         return ret;
     };
 
@@ -56,7 +55,7 @@ private:
 
 class ExtendedGrammar {
 public:
-    ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets);
+    ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, const Vector<StringView>& token_types);
     ~ExtendedGrammar();
 
     const Vector<ExtendedRule>& rules() const { return m_rules; }
@@ -66,11 +65,21 @@ public:
         int i = 0;
         m_rules.for_each([&](auto& rule) {
             ret += rule.stringify(i++);
+            ret += " {";
+            m_first_sets.get(rule.lhs().name)->for_each_key([&](auto& st) {
+                ret += " ";
+                ret += st;
+            });
+            ret += " }\n";
         });
         return ret;
     }
 
+    void compute_first_sets();
+
 private:
     const Vector<std::shared_ptr<ItemSet>>& m_sets;
+    const Vector<StringView>& m_token_types;
     Vector<ExtendedRule> m_rules;
+    HashMap<StringView, HashMap<StringView, bool>> m_first_sets;
 };

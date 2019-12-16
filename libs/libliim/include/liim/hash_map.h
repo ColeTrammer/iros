@@ -77,7 +77,7 @@ public:
     }
 
     const V& get_or(const K& key, const V& val) const {
-        V* res = get(key);
+        const V* res = get(key);
         if (res) {
             return *res;
         } else {

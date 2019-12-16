@@ -7,7 +7,7 @@ namespace LIIM {
 
 class StringView {
 public:
-    StringView(const char* str) : m_start(str), m_end(str + strlen(str)) {}
+    StringView(const char* str) : m_start(str), m_end(str + strlen(str) - 1) {}
     StringView(const char* start, const char* end) : m_start(start), m_end(end) {}
     StringView(const StringView& other) : m_start(other.start()), m_end(other.end()) {}
 

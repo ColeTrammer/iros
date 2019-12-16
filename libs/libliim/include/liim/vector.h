@@ -59,6 +59,8 @@ public:
         m_size = 0;
     }
 
+    bool empty() const { return size() == 0; }
+
     int size() const { return m_size; }
     int capacity() const { return m_capacity; }
 
@@ -169,7 +171,6 @@ public:
                 }
 
                 m_size--;
-                break;
             }
         }
     }

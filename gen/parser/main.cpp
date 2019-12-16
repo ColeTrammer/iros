@@ -174,7 +174,7 @@ done:
         fprintf(stderr, "\n");
     });
 
-    ExtendedGrammar extended_grammar(sets);
+    ExtendedGrammar extended_grammar(sets, token_types);
     fprintf(stderr, "\n%s\n", extended_grammar.stringify().string());
 
     if (fclose(token_type_header) != 0) {
