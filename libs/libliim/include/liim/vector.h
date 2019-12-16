@@ -133,6 +133,16 @@ public:
         }
     }
 
+    template<typename C> bool any_match(C callback) const {
+        for (int i = 0; i < size(); i++) {
+            if (callback(get(i))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void remove_element(const T& val) {
         for (int i = size() - 1; i >= 0; i--) {
             if (get(i) == val) {
@@ -149,6 +159,7 @@ public:
                 }
 
                 m_size--;
+                break;
             }
         }
     }

@@ -20,21 +20,26 @@ public:
     HashMap<StringView, bool>& expanded() { return m_expanded; }
     const HashMap<StringView, bool>& expanded() const { return m_expanded; }
 
-    bool operator==(const ItemSet& other) const { return this->set() == other.set(); }
+    bool operator==(const ItemSet& other) const { return this->rules() == other.rules() && this->position() == other.position(); }
 
     String stringify() const;
 
-    const Rule& rule() const { return m_rule; }
+    HashMap<Rule, bool>& rules() { return m_rules; }
+    const HashMap<Rule, bool>& rules() const { return m_rules; }
 
-    ItemSet(const Rule& rule) : m_rule(rule) {};
-    ItemSet(const ItemSet& other) : m_expanded(other.m_expanded), m_set(other.m_set), m_rule(other.rule()), m_number(other.number()) {};
+    int position() const { return m_position; }
+
+    ItemSet(const HashMap<Rule, bool> rules, int position) : m_rules(rules), m_position(position) {};
+    ItemSet(const ItemSet& other)
+        : m_expanded(other.m_expanded)
+        , m_set(other.m_set)
+        , m_rules(other.rules())
+        , m_number(other.number())
+        , m_position(other.position()) {};
 
     ~ItemSet() {}
 
 private:
-    static std::shared_ptr<ItemSet> create_from_rule_and_position(const Rule& rule, int position, const Vector<Rule>& rules,
-                                                                  const Vector<StringView>& token_types);
-
     void set_number(int n) { m_number = n; }
 
     void add_rule_name(const Vector<Rule>& rules, const StringView& name, Vector<Rule>& to_expand);
@@ -42,6 +47,7 @@ private:
 
     HashMap<StringView, bool> m_expanded;
     HashMap<Rule, bool> m_set;
-    const Rule& m_rule;
+    HashMap<Rule, bool> m_rules;
     int m_number { 0 };
+    int m_position { 0 };
 };

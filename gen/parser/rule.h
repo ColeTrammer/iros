@@ -21,17 +21,26 @@ public:
     Vector<StringView>& components() { return m_components; }
     const Vector<StringView>& components() const { return m_components; }
 
-    String stringify() const {
+    String stringify(int position = -1) const {
         String ret = "";
         char buf[50];
         snprintf(buf, 50, "[%d] ", number());
         ret += buf;
         ret += m_name;
         ret += " -> ";
+
+        int i = 0;
         m_components.for_each([&](const StringView& part) {
+            if (i++ == position) {
+                ret += ". ";
+            }
             ret += part;
             ret += " ";
         });
+
+        if (i == position) {
+            ret += ". ";
+        }
 
         return ret;
     }

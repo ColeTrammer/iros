@@ -26,7 +26,11 @@ public:
         }
     }
 
-    HashMap(const HashMap<K, V>& other) {
+    HashMap(const HashMap<K, V>& other) : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(other.m_buckets.size())) {
+        for (int i = 0; i < other.m_buckets.size(); i++) {
+            m_buckets.add(LinkedList<HashMapObj<K, V>>());
+        }
+
         other.for_each_key([&](auto& key) {
             this->put(key, *other.get(key));
         });
@@ -112,6 +116,8 @@ public:
 
         return count;
     }
+
+    bool empty() const { return size() == 0; };
 
     bool operator==(const HashMap<K, V>& other) const {
         if (this->size() != other.size()) {

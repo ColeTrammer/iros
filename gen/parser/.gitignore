@@ -2,4 +2,4 @@ parser
 parser.native
 *.y
 sh_*
-test_*
+test*
