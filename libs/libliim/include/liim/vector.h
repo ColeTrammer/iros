@@ -127,7 +127,7 @@ public:
         }
     }
 
-    template<typename C> void for_each_reverse(C callback) {
+    template<typename C> void for_each_reverse(C callback) const {
         for (int i = size() - 1; i >= 0; i--) {
             callback(get(i));
         }

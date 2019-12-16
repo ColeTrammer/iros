@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "extended_grammar.h"
 #include "item_set.h"
 #include "lexer.h"
 #include "rule.h"
@@ -132,12 +133,17 @@ done:
         }
     }
 
+    fprintf(stderr, "\n");
+
     Rule* start_rule = nullptr;
     rules.for_each([&](auto& rule) {
         if (rule.name() == *start_name) {
             start_rule = &rule;
         }
+        fprintf(stderr, "%s\n", rule.stringify().string());
     });
+
+    fprintf(stderr, "\n");
 
     auto sets = ItemSet::create_item_sets(*start_rule, rules, token_types);
     sets.for_each([&](auto& set) {
@@ -167,6 +173,9 @@ done:
         });
         fprintf(stderr, "\n");
     });
+
+    ExtendedGrammar extended_grammar(sets);
+    fprintf(stderr, "\n%s\n", extended_grammar.stringify().string());
 
     if (fclose(token_type_header) != 0) {
         perror("fclose");
