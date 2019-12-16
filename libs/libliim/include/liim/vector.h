@@ -143,6 +143,16 @@ public:
         return false;
     }
 
+    template<typename C> const T* first_match(C callback) const {
+        for (int i = 0; i < size(); i++) {
+            if (callback(get(i))) {
+                return &get(i);
+            }
+        }
+
+        return nullptr;
+    }
+
     void remove_element(const T& val) {
         for (int i = size() - 1; i >= 0; i--) {
             if (get(i) == val) {

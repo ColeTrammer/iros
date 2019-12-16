@@ -144,6 +144,30 @@ done:
         fprintf(stderr, "%s\n", set->stringify().string());
     });
 
+    fprintf(stderr, "%-5s ", "#");
+    Vector<StringView> identifiers(token_types);
+    rules.for_each([&](auto& rule) {
+        if (!identifiers.includes(rule.name())) {
+            identifiers.add(rule.name());
+        }
+    });
+    identifiers.for_each([&](auto& id) {
+        fprintf(stderr, "%-5s ", String(id).string());
+    });
+    fprintf(stderr, "\n");
+    sets.for_each([&](auto& set) {
+        fprintf(stderr, "%-5d ", set->number());
+        identifiers.for_each([&](auto& id) {
+            int* set_num = set->table().get(id);
+            if (!set_num) {
+                fprintf(stderr, "      ");
+            } else {
+                fprintf(stderr, "%-5d ", *set_num);
+            }
+        });
+        fprintf(stderr, "\n");
+    });
+
     if (fclose(token_type_header) != 0) {
         perror("fclose");
         return 1;

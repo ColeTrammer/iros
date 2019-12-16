@@ -27,6 +27,9 @@ public:
     HashMap<Rule, bool>& rules() { return m_rules; }
     const HashMap<Rule, bool>& rules() const { return m_rules; }
 
+    HashMap<StringView, int>& table() { return m_table; }
+    const HashMap<StringView, int>& table() const { return m_table; }
+
     int position() const { return m_position; }
 
     ItemSet(const HashMap<Rule, bool> rules, int position) : m_rules(rules), m_position(position) {};
@@ -50,4 +53,5 @@ private:
     HashMap<Rule, bool> m_rules;
     int m_number { 0 };
     int m_position { 0 };
+    HashMap<StringView, int> m_table;
 };

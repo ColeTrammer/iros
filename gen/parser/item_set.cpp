@@ -38,9 +38,11 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
     };
 
     auto add_item_set = [&](auto& item_set) {
-        if (!item_sets.any_match([&](auto& other) {
-                return *item_set == *other;
-            })) {
+        auto* first_match = item_sets.first_match([&](auto& other) {
+            return *item_set == *other;
+        });
+
+        if (!first_match) {
 
             item_set->set_number(item_set_number++);
             item_sets.add(item_set);
@@ -55,6 +57,8 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
             if (should_process) {
                 to_process.add(item_set);
             }
+        } else {
+            item_set->set_number((*first_match)->number());
         }
     };
 
@@ -92,6 +96,7 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
 
                 auto new_set = create_from_rule_set_and_position(rule_set, (sub_rule_used ? 0 : position) + 1);
                 add_item_set(new_set);
+                item_set_to_process->table().put(identifier, new_set->number());
             };
 
             token_types.for_each([&](auto& token) {
