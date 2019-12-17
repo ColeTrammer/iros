@@ -43,13 +43,15 @@ template<> struct Traits<ExtendedInfo> {
 
 class ExtendedRule {
 public:
-    explicit ExtendedRule(const ExtendedInfo& info) : m_lhs(info) {}
+    explicit ExtendedRule(const ExtendedInfo& info, int original_number) : m_lhs(info), m_original_number(original_number) {}
 
     ExtendedInfo& lhs() { return m_lhs; }
     const ExtendedInfo& lhs() const { return m_lhs; }
 
     Vector<ExtendedInfo>& components() { return m_components; }
     const Vector<ExtendedInfo>& components() const { return m_components; }
+
+    int original_number() const { return m_original_number; }
 
     String stringify(int i = -1) const {
         String ret = "";
@@ -71,6 +73,7 @@ public:
 private:
     ExtendedInfo m_lhs;
     Vector<ExtendedInfo> m_components;
+    int m_original_number;
 };
 
 class ExtendedGrammar {
@@ -84,7 +87,7 @@ public:
         String ret = "";
         int i = 0;
         m_rules.for_each([&](auto& rule) {
-            ret += rule.stringify(i++);
+            ret += String::format("%-40s", rule.stringify(i++).string());
             ret += " {";
             (*m_first_sets.get(rule.lhs()))->for_each_key([&](auto& st) {
                 ret += " ";
@@ -99,6 +102,9 @@ public:
         });
         return ret;
     }
+
+    const HashMap<ExtendedInfo, std::shared_ptr<HashMap<StringView, bool>>>& follow_sets() const { return m_follow_sets; }
+    const Vector<std::shared_ptr<ItemSet>>& sets() const { return m_sets; }
 
 private:
     void compute_first_sets();

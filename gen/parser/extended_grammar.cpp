@@ -6,7 +6,7 @@ ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, c
     : m_sets(sets), m_token_types(token_types) {
     auto first_set = m_sets.get(0);
     first_set->rules().for_each_key([&](const Rule& rule) {
-        ExtendedRule e({ rule.name(), { 0, END_SET } });
+        ExtendedRule e({ rule.name(), { 0, END_SET } }, rule.number());
 
         auto& name_to_follow = rule.components().get(0);
         e.components().add({ name_to_follow, { 0, *first_set->table().get(name_to_follow) } });
@@ -16,7 +16,7 @@ ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, c
 
     sets.for_each([&](const std::shared_ptr<ItemSet>& set) {
         set->set().for_each_key([&](const Rule& rule) {
-            ExtendedRule e({ rule.name(), { set->number(), *set->table().get(rule.name()) } });
+            ExtendedRule e({ rule.name(), { set->number(), *set->table().get(rule.name()) } }, rule.number());
 
             int start_set = set->number();
             rule.components().for_each([&](const StringView& part) {
@@ -164,7 +164,6 @@ void ExtendedGrammar::compute_follow_sets() {
 
     assert(is_done(first_rule));
 
-#if 0
     bool all_done = false;
     while (!all_done) {
         all_done = true;
@@ -230,7 +229,6 @@ void ExtendedGrammar::compute_follow_sets() {
             });
         });
     }
-#endif
 }
 
 ExtendedGrammar::~ExtendedGrammar() {}

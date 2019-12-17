@@ -152,36 +152,22 @@ done:
     });
 
     fprintf(stderr, "%-5s ", "#");
-    Vector<StringView> identifiers(token_types);
+    Vector<StringView> identifiers;
+    identifiers.add("$");
+    token_types.for_each([&](auto& s) {
+        identifiers.add(s);
+    });
     rules.for_each([&](auto& rule) {
         if (!identifiers.includes(rule.name())) {
             identifiers.add(rule.name());
         }
     });
-    identifiers.for_each([&](auto& id) {
-        fprintf(stderr, "%-5s ", String(id).string());
-    });
-    fprintf(stderr, "\n");
-    sets.for_each([&](auto& set) {
-        fprintf(stderr, "%-5d ", set->number());
-        identifiers.for_each([&](auto& id) {
-            int* set_num = set->table().get(id);
-            if (!set_num) {
-                fprintf(stderr, "      ");
-            } else {
-                fprintf(stderr, "%-5d ", *set_num);
-            }
-        });
-        fprintf(stderr, "\n");
-    });
 
     ExtendedGrammar extended_grammar(sets, token_types);
     fprintf(stderr, "\n%s\n", extended_grammar.stringify().string());
 
-#if 0
-    StateTable state_table(extended_grammar);
+    StateTable state_table(extended_grammar, identifiers, token_types);
     fprintf(stderr, "%s\n", state_table.stringify().string());
-#endif
 
     if (fclose(token_type_header) != 0) {
         perror("fclose");
