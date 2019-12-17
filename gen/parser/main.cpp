@@ -178,8 +178,10 @@ done:
     ExtendedGrammar extended_grammar(sets, token_types);
     fprintf(stderr, "\n%s\n", extended_grammar.stringify().string());
 
+#if 0
     StateTable state_table(extended_grammar);
     fprintf(stderr, "%s\n", state_table.stringify().string());
+#endif
 
     if (fclose(token_type_header) != 0) {
         perror("fclose");
@@ -191,5 +193,6 @@ done:
         return 1;
     }
 
+    exit(0);
     return 0;
 }

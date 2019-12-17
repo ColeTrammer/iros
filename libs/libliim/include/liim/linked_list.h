@@ -2,11 +2,13 @@
 
 #include <assert.h>
 #include <new>
+#include <stdio.h>
 
 namespace LIIM {
 
 template<typename T> struct LinkedListObj {
     LinkedListObj(const T& val) : m_val(val) {}
+    ~LinkedListObj() {}
 
     T m_val;
     LinkedListObj<T>* m_next { nullptr };

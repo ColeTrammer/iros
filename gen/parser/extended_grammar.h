@@ -43,7 +43,7 @@ template<> struct Traits<ExtendedInfo> {
 
 class ExtendedRule {
 public:
-    ExtendedRule(const ExtendedInfo& info) : m_lhs(info) {}
+    explicit ExtendedRule(const ExtendedInfo& info) : m_lhs(info) {}
 
     ExtendedInfo& lhs() { return m_lhs; }
     const ExtendedInfo& lhs() const { return m_lhs; }
@@ -68,17 +68,9 @@ public:
 
     bool operator==(const ExtendedRule& other) const { return this->lhs() == other.lhs() && this->components() == other.components(); }
 
-    HashMap<StringView, bool>& first_set() { return m_first_set; }
-    const HashMap<StringView, bool>& first_set() const { return m_first_set; }
-
-    HashMap<StringView, bool> follow_set() { return m_follow_set; }
-    const HashMap<StringView, bool> follow_set() const { return m_follow_set; }
-
 private:
     ExtendedInfo m_lhs;
     Vector<ExtendedInfo> m_components;
-    HashMap<StringView, bool> m_first_set;
-    HashMap<StringView, bool> m_follow_set;
 };
 
 class ExtendedGrammar {
@@ -94,17 +86,15 @@ public:
         m_rules.for_each([&](auto& rule) {
             ret += rule.stringify(i++);
             ret += " {";
-            m_first_sets.get(rule.lhs())->for_each_key([&](auto& st) {
+            (*m_first_sets.get(rule.lhs()))->for_each_key([&](auto& st) {
                 ret += " ";
                 ret += st;
             });
-#if 0
             ret += " } {";
-            rule.follow_set().for_each_key([&](auto& st) {
+            (*m_follow_sets.get(rule.lhs()))->for_each_key([&](auto& st) {
                 ret += " ";
                 ret += st;
             });
-#endif
             ret += " }\n";
         });
         return ret;
@@ -117,6 +107,6 @@ private:
     const Vector<std::shared_ptr<ItemSet>>& m_sets;
     const Vector<StringView>& m_token_types;
     Vector<ExtendedRule> m_rules;
-    HashMap<ExtendedInfo, HashMap<StringView, bool>> m_first_sets;
-    HashMap<ExtendedInfo, HashMap<StringView, bool>> m_follow_sets;
+    HashMap<ExtendedInfo, std::shared_ptr<HashMap<StringView, bool>>> m_first_sets;
+    HashMap<ExtendedInfo, std::shared_ptr<HashMap<StringView, bool>>> m_follow_sets;
 };

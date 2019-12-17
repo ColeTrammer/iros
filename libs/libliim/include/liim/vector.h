@@ -185,12 +185,16 @@ public:
         }
     }
 
-    template<typename C> void remove_if(C callback) {
+    template<typename C> bool remove_if(C callback) {
+        bool removed = false;
         for_each_reverse([&](auto& elem) {
             if (callback(elem)) {
                 remove_element(elem);
+                removed = true;
             }
         });
+
+        return removed;
     }
 
     bool includes(const T& value) const {
