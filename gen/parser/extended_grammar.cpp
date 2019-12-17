@@ -31,53 +31,55 @@ ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, c
     });
 
     compute_first_sets();
+    compute_follow_sets();
+}
+
+static void make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2) {
+    if (s1.empty()) {
+        s1 = s2;
+    } else if (s2.empty()) {
+        return;
+    }
+
+    s2.for_each_key([&](const auto& key) {
+        if (!s1.get(key)) {
+            s1.put(key, true);
+        }
+    });
 }
 
 void ExtendedGrammar::compute_first_sets() {
-    auto make_union = [](HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2) {
-        if (s1.empty()) {
-            s1 = s2;
-        } else if (s2.empty()) {
-            return;
-        }
-
-        s2.for_each_key([&](const auto& key) {
-            if (!s1.get(key)) {
-                s1.put(key, true);
-            }
-        });
-    };
-
-    HashMap<StringView, int> done;
-    HashMap<StringView, int> rule_count;
-
-    m_token_types.for_each([&](const StringView& token) {
-        HashMap<StringView, bool> set1;
-        set1.put(token, true);
-        m_first_sets.put(token, set1);
-        done.put(token, 1);
-        rule_count.put(token, 1);
-        assert(!m_first_sets.get(token)->empty());
-    });
+    HashMap<ExtendedInfo, int> done;
+    HashMap<ExtendedInfo, int> rule_count;
 
     m_rules.for_each([&](const auto& rule) {
-        int* count = rule_count.get(rule.lhs().name);
+        int* count = rule_count.get(rule.lhs());
         if (!count) {
-            rule_count.put(rule.lhs().name, 1);
+            rule_count.put(rule.lhs(), 1);
         } else {
             (*count)++;
         }
+
+        rule.components().for_each([&](const ExtendedInfo& info) {
+            if (m_token_types.includes(info.name)) {
+                HashMap<StringView, bool> set1;
+                set1.put(info.name, true);
+                m_first_sets.put(info, set1);
+                done.put(info, 1);
+                rule_count.put(info, 1);
+            }
+        });
     });
 
-    auto is_done = [&](const StringView& name) -> bool {
-        return done.get_or(name, 0) == rule_count.get_or(name, -1);
+    auto is_done = [&](const ExtendedInfo& info) -> bool {
+        return done.get_or(info, 0) == rule_count.get_or(info, -1);
     };
 
     bool all_done = false;
     while (!all_done) {
         all_done = true;
         m_rules.for_each([&](ExtendedRule& rule) {
-            const auto& name = rule.lhs().name;
+            const auto& name = rule.lhs();
             if (is_done(name)) {
                 return;
             }
@@ -85,7 +87,7 @@ void ExtendedGrammar::compute_first_sets() {
             bool could_compute = true;
             HashMap<StringView, bool> set;
             for (int i = 0; i < rule.components().size(); i++) {
-                const auto& rule_name = rule.components().get(i).name;
+                const auto& rule_name = rule.components().get(i);
                 if (!is_done(rule_name)) {
                     could_compute = false;
                     break;
@@ -116,6 +118,15 @@ void ExtendedGrammar::compute_first_sets() {
             }
         });
     }
+}
+
+void ExtendedGrammar::compute_follow_sets() {
+#if 0
+    auto& first_rule = m_rules.get(0).lhs().name;
+    HashMap<StringView, bool> first_follow_set;
+    first_follow_set.put("$", true);
+    m_follow_sets.put(first_rule, first_follow_set);
+#endif
 }
 
 ExtendedGrammar::~ExtendedGrammar() {}

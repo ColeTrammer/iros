@@ -155,6 +155,16 @@ public:
         return nullptr;
     }
 
+    int index_of(const T& val) const {
+        for (int i = 0; i < size(); i++) {
+            if (get(i) == val) {
+                return i;
+            }
+        }
+
+        return -1;
+    };
+
     void remove_element(const T& val) {
         for (int i = size() - 1; i >= 0; i--) {
             if (get(i) == val) {
@@ -191,6 +201,20 @@ public:
         }
 
         return false;
+    }
+
+    bool operator==(const Vector<T>& other) const {
+        if (this->size() != other.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < size(); i++) {
+            if (this->get(i) != other.get(i)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 private:

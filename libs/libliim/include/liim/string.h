@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <liim/string_view.h>
 #include <liim/traits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,6 +86,15 @@ public:
     operator bool() const { return !!m_string; }
 
     bool is_empty() const { return size() == 0; }
+
+    static __attribute__((format(printf, 1, 2))) String format(const char* format, ...) {
+        char buffer[2048];
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buffer, 2047, format, args);
+        va_end(args);
+        return String(buffer);
+    }
 
 private:
     int m_size { 0 };

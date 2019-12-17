@@ -12,6 +12,7 @@
 #include "item_set.h"
 #include "lexer.h"
 #include "rule.h"
+#include "state_table.h"
 
 void print_usage_and_exit(char** argv) {
     fprintf(stderr, "Usage: %s <grammar>\n", argv[0]);
@@ -176,6 +177,9 @@ done:
 
     ExtendedGrammar extended_grammar(sets, token_types);
     fprintf(stderr, "\n%s\n", extended_grammar.stringify().string());
+
+    StateTable state_table(extended_grammar);
+    fprintf(stderr, "%s\n", state_table.stringify().string());
 
     if (fclose(token_type_header) != 0) {
         perror("fclose");
