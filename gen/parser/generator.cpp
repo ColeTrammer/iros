@@ -187,9 +187,10 @@ void Generator::generate_generic_parser(const String& path) {
                     .string());
     });
 
-    fprintf(file,
-            "\nvirtual void on_error(%sTokenType type) { fprintf(stderr, \"Unexpected token: %%s\\n\", %s_token_type_to_string(type)); }\n",
-            m_output_name.to_title_case().string(), String(m_output_name.to_lower_case()).string());
+    fprintf(
+        file,
+        "\n    virtual void on_error(%sTokenType type) { fprintf(stderr, \"Unexpected token: %%s\\n\", %s_token_type_to_string(type)); }\n",
+        m_output_name.to_title_case().string(), String(m_output_name.to_lower_case()).string());
 
     fprintf(file, "};\n");
     if (fclose(file) != 0) {
