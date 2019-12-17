@@ -181,10 +181,12 @@ void Generator::generate_generic_parser(const String& path) {
 
         String return_string = info.arg_count == 0 ? "Value()" : "v";
 
-        fprintf(file, "%s",
-                String::format("    virtual Value %s%s { return %s; }\n", info.function_name.string(), arg_list.string(),
-                               return_string.string())
-                    .string());
+        fprintf(file, "    virtual Value %s%s {\n", info.function_name.string(), arg_list.string());
+        fprintf(file, "#ifdef GENERIC_%s_PARSER_DEBUG\n", String(m_output_name).to_upper_case().string());
+        fprintf(file, "            fprintf(stderr, \"%%s called.\\n\", __FUNCTION__);\n");
+        fprintf(file, "#endif /* GENERIC_%s_PARSER_DEBUG */\n", String(m_output_name).to_upper_case().string());
+        fprintf(file, "        return %s;\n", return_string.string());
+        fprintf(file, "    }\n");
     });
 
     fprintf(
