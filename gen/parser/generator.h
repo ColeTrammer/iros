@@ -9,6 +9,7 @@ public:
     ~Generator();
 
     void generate_token_type_header(const String& path);
+    void generate_generic_parser(const String& path);
 
 private:
     const StateTable& m_table;

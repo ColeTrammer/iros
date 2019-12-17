@@ -145,11 +145,17 @@ int main(int argc, char** argv) {
 
     *strrchr(argv[1], '.') = '\0';
     String output_name = argv[1];
+
     String output_header = output_name;
     output_header += "_token_type.h";
 
+    String output_parser = "generic_";
+    output_parser += output_name;
+    output_parser += "_parser.h";
+
     Generator generator(state_table, identifiers, token_types, output_name);
     generator.generate_token_type_header(output_header);
+    generator.generate_generic_parser(output_parser);
 
     if (munmap(contents, info.st_size) != 0) {
         perror("munmap");

@@ -37,6 +37,8 @@ public:
         return ret;
     }
 
+    bool operator==(const FinalRule& other) const { return this->number() == other.number(); }
+
 private:
     StringView m_lhs;
     Vector<StringView> m_components;
@@ -72,6 +74,8 @@ public:
     ~StateTable();
 
     const ExtendedGrammar& grammar() const { return m_grammar; }
+    const HashMap<int, FinalRule> rules() const { return m_rules; }
+    const Vector<HashMap<StringView, Action>>& table() const { return m_table; }
 
     String stringify();
 
