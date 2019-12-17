@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "extended_grammar.h"
+#include "generator.h"
 #include "item_set.h"
 #include "lexer.h"
 #include "rule.h"
@@ -45,53 +46,26 @@ int main(int argc, char** argv) {
     Lexer lexer(contents, info.st_size);
     auto tokens = lexer.lex();
 
-    *strrchr(argv[1], '.') = '\0';
-
-    String output_name = argv[1];
-    String output_header = output_name;
-    output_header += "_token_type.h";
-
-    fprintf(stderr, "Writing token types to %s.\n", output_header.string());
-
-    int ofd = open(output_header.string(), O_CREAT | O_WRONLY | O_TRUNC, 0664);
-    if (ofd == -1) {
-        perror("opening output header");
-        return 1;
-    }
-
-    FILE* token_type_header = fdopen(ofd, "w");
-    fprintf(token_type_header, "#pragma once\n\n");
-    fprintf(token_type_header, "#define ENUMERATE_%s_TOKEN_TYPES \\\n", output_name.to_upper_case().string());
-
     StringView* start_name = nullptr;
 
     Vector<StringView> token_types;
 
-    for (int i = 0; i < tokens.size(); i++) {
+    bool done = false;
+    for (int i = 0; !done && i < tokens.size(); i++) {
         auto& token = tokens[i];
         switch (token.type()) {
             case TokenType::TokenWord:
-                fprintf(token_type_header, "__ENUMERATE_%s_TOKEN_TYPES(%s) \\\n", output_name.string(), String(token.text()).string());
                 token_types.add(token.text());
             case TokenType::TokenTokenMarker:
                 continue;
             case TokenType::TokenStartMarker:
                 start_name = &tokens[i + 1].text();
-                goto done;
+                done = true;
+                break;
             default:
                 assert(false);
         }
     }
-
-done:
-    fprintf(token_type_header, "\nenum class %sTokenType {\n", output_name.to_title_case().string());
-    fprintf(token_type_header, "#define _(s) s\n");
-    fprintf(token_type_header, "#undef __ENUMERATE_%s_TOKEN_TYPES\n", output_name.to_upper_case().string());
-    fprintf(token_type_header, "#define __ENUMERATE_%s_TOKEN_TYPES(t) _(##t),\n", output_name.to_upper_case().string());
-    fprintf(token_type_header, "ENUMERATE_%s_TOKEN_TYPES End\n", output_name.to_upper_case().string());
-    fprintf(token_type_header, "#undef _\n");
-    fprintf(token_type_header, "#undef __ENUMERATE_%s_TOKEN_TYPES\n", output_name.to_upper_case().string());
-    fprintf(token_type_header, "};\n");
 
     Vector<Rule> rules;
 
@@ -151,12 +125,12 @@ done:
         fprintf(stderr, "%s\n", set->stringify().string());
     });
 
-    fprintf(stderr, "%-5s ", "#");
     Vector<StringView> identifiers;
-    identifiers.add("$");
+    identifiers.add("End");
     token_types.for_each([&](auto& s) {
         identifiers.add(s);
     });
+
     rules.for_each([&](auto& rule) {
         if (!identifiers.includes(rule.name())) {
             identifiers.add(rule.name());
@@ -169,10 +143,13 @@ done:
     StateTable state_table(extended_grammar, identifiers, token_types);
     fprintf(stderr, "%s\n", state_table.stringify().string());
 
-    if (fclose(token_type_header) != 0) {
-        perror("fclose");
-        return 1;
-    }
+    *strrchr(argv[1], '.') = '\0';
+    String output_name = argv[1];
+    String output_header = output_name;
+    output_header += "_token_type.h";
+
+    Generator generator(state_table, identifiers, token_types, output_name);
+    generator.generate_token_type_header(output_header);
 
     if (munmap(contents, info.st_size) != 0) {
         perror("munmap");

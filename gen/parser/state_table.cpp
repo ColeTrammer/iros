@@ -60,10 +60,10 @@ StateTable::StateTable(const ExtendedGrammar& grammar, const Vector<StringView>&
 StateTable::~StateTable() {}
 
 String StateTable::stringify() {
-    String ret = String::format("State table\n%-6s", "#");
+    String ret = String::format("State table\n%-12s", "#");
 
     m_identifiers.for_each([&](const auto& id) {
-        ret += String::format(" %-6s", String(id).string());
+        ret += String::format(" %-12s", String(id).string());
     });
     ret += "\n";
 
@@ -74,10 +74,10 @@ String StateTable::stringify() {
 #endif
 
     for (int i = 0; i < m_table.size(); i++) {
-        ret += String::format("%-6d", i);
+        ret += String::format("%-12d", i);
         m_identifiers.for_each([&](const auto& id) {
             Action* action = m_table.get(i).get(id);
-            ret += String::format(" %-6s", action ? action->stringify().string() : " ");
+            ret += String::format(" %-12s", action ? action->stringify().string() : " ");
         });
         ret += "\n";
     }

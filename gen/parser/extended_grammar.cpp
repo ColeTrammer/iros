@@ -127,7 +127,7 @@ void ExtendedGrammar::compute_follow_sets() {
 
     auto& first_rule = m_rules.get(0).lhs();
     m_follow_sets.put(first_rule, std::make_shared<HashMap<StringView, bool>>());
-    (*m_follow_sets.get(first_rule))->put("$", true);
+    (*m_follow_sets.get(first_rule))->put("End", true);
     rule_count.put(first_rule, 0);
 
     Vector<int> last_processed;
@@ -148,7 +148,6 @@ void ExtendedGrammar::compute_follow_sets() {
             } else {
                 (*count)++;
             }
-            fprintf(stderr, "Adding %s [%d]\n", info.stringify().string(), *rule_count.get(info));
         });
         last_processed.add(0);
 
