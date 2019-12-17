@@ -26,10 +26,25 @@ void Generator::generate_token_type_header(const String& path) {
     fprintf(token_type_header, "enum class %sTokenType {\n", m_output_name.to_title_case().string());
     m_identifiers.for_each([&](const auto& id) {
         String name = String(id);
-        fprintf(token_type_header, "%s, ", name.string());
+        fprintf(token_type_header, "    %s,\n", name.string());
     });
-    fprintf(token_type_header, "};\n");
+    fprintf(token_type_header, "};\n\n");
 
+    fprintf(token_type_header, "constexpr const char* %s_token_type_to_string(%sTokenType type) {\n",
+            m_output_name.to_lower_case().string(), String(m_output_name.to_title_case().string()).string());
+
+    fprintf(token_type_header, "    switch (type) {\n");
+
+    m_identifiers.for_each([&](const auto& id) {
+        fprintf(token_type_header, "        case %sTokenType::%s:\n", m_output_name.to_title_case().string(), String(id).string());
+        fprintf(token_type_header, "            return \"%s\";\n", String(id).string());
+    });
+
+    fprintf(token_type_header, "        default:\n");
+    fprintf(token_type_header, "            return \"Invalid token\";\n");
+    fprintf(token_type_header, "    }\n");
+
+    fprintf(token_type_header, "}\n");
     if (fclose(token_type_header) != 0) {
         perror("fclose");
         exit(1);
@@ -137,6 +152,7 @@ void Generator::generate_generic_parser(const String& path) {
         });
 
         fprintf(file, "                        default:\n");
+        fprintf(file, "                            on_error(this->peek_token_type());\n");
         fprintf(file, "                            return false;\n");
         fprintf(file, "                    }\n");
     }
@@ -170,6 +186,10 @@ void Generator::generate_generic_parser(const String& path) {
                                return_string.string())
                     .string());
     });
+
+    fprintf(file,
+            "\nvirtual void on_error(%sTokenType type) { fprintf(stderr, \"Unexpected token: %%s\\n\", %s_token_type_to_string(type)); }\n",
+            m_output_name.to_title_case().string(), String(m_output_name.to_lower_case()).string());
 
     fprintf(file, "};\n");
     if (fclose(file) != 0) {
