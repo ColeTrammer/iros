@@ -120,11 +120,6 @@ int main(int argc, char** argv) {
 
     fprintf(stderr, "\n");
 
-    auto sets = ItemSet::create_item_sets(*start_rule, rules, token_types);
-    sets.for_each([&](auto& set) {
-        fprintf(stderr, "%s\n", set->stringify().string());
-    });
-
     Vector<StringView> identifiers;
     identifiers.add("End");
     token_types.for_each([&](auto& s) {
@@ -135,6 +130,28 @@ int main(int argc, char** argv) {
         if (!identifiers.includes(rule.name())) {
             identifiers.add(rule.name());
         }
+    });
+
+    fprintf(stderr, "Start: %s\n", start_rule->stringify().string());
+
+    Rule dummy_start;
+    dummy_start.name() = "__start";
+    dummy_start.components().add(start_rule->name());
+    dummy_start.set_number(0);
+
+    rules.for_each([&](auto& rule) {
+        rule.set_number(rule.number() + 1);
+    });
+
+    rules.add(dummy_start);
+    start_rule = &rules.last();
+
+    identifiers.add("__start");
+    fprintf(stderr, "Added __start rule: %s\n", dummy_start.stringify().string());
+
+    auto sets = ItemSet::create_item_sets(*start_rule, rules, token_types);
+    sets.for_each([&](auto& set) {
+        fprintf(stderr, "%s\n", set->stringify().string());
     });
 
     ExtendedGrammar extended_grammar(sets, token_types);
