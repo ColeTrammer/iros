@@ -110,10 +110,17 @@ void Generator::generate_generic_parser(const String& path) {
         fprintf(file, "%s", String::format("                case %d:\n", i).string());
         fprintf(file, "                    switch (this->peek_token_type()) {\n");
 
+        bool default_used = false;
         row.for_each_key([&](const StringView& name) {
-            fprintf(file, "                        case %sTokenType::%s: {\n", m_output_name.string(), String(name).string());
-
             const Action& action = *row.get(name);
+
+            if (name == "End" && action.type == Action::Type::Reduce) {
+                fprintf(file, "                        default: {\n");
+                default_used = true;
+            } else {
+                fprintf(file, "                        case %sTokenType::%s: {\n", m_output_name.string(), String(name).string());
+            }
+
             switch (action.type) {
                 case Action::Type::Accept:
                     fprintf(file, "                            return true;\n");
@@ -151,9 +158,12 @@ void Generator::generate_generic_parser(const String& path) {
             fprintf(file, "                        }\n");
         });
 
-        fprintf(file, "                        default:\n");
-        fprintf(file, "                            on_error(this->peek_token_type());\n");
-        fprintf(file, "                            return false;\n");
+        if (!default_used) {
+            fprintf(file, "                        default:\n");
+            fprintf(file, "                            on_error(this->peek_token_type());\n");
+            fprintf(file, "                            return false;\n");
+        }
+
         fprintf(file, "                    }\n");
     }
 
@@ -197,10 +207,10 @@ void Generator::generate_generic_parser(const String& path) {
         already_declared.put(info.function_name, true);
     });
 
-    fprintf(
-        file,
-        "\n    virtual void on_error(%sTokenType type) { fprintf(stderr, \"Unexpected token: %%s\\n\", %s_token_type_to_string(type)); }\n",
-        m_output_name.to_title_case().string(), String(m_output_name.to_lower_case()).string());
+    fprintf(file,
+            "\n    virtual void on_error(%sTokenType type) { fprintf(stderr, \"Unexpected token: %%s (state %%d)\\n\", "
+            "%s_token_type_to_string(type), this->current_state()); }\n",
+            m_output_name.to_title_case().string(), String(m_output_name.to_lower_case()).string());
 
     fprintf(file, "};\n");
     if (fclose(file) != 0) {

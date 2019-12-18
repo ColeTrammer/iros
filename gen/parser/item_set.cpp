@@ -9,20 +9,20 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
     Vector<std::shared_ptr<ItemSet>> item_sets;
     Vector<std::shared_ptr<ItemSet>> to_process;
 
-    auto create_from_rule_set_and_position = [&](const HashMap<Rule, bool>& rule_set, int position) -> std::shared_ptr<ItemSet> {
+    auto create_from_rule_set = [&](const HashMap<Rule, bool>& rule_set) -> std::shared_ptr<ItemSet> {
         Vector<Rule> to_expand;
 
         rule_set.for_each_key([&](auto& rule) {
             to_expand.add(rule);
         });
 
-        auto set = std::make_shared<ItemSet>(rule_set, position);
+        auto set = std::make_shared<ItemSet>(rule_set);
 
         while (to_expand.size() != 0) {
             for (int size_save = to_expand.size() - 1; size_save >= 0; size_save--) {
                 auto& rule_to_expand = to_expand.get(size_save);
-                if (position < rule_to_expand.components().size()) {
-                    auto expand_name = rule_to_expand.components().get(position);
+                if (rule_to_expand.position() < rule_to_expand.components().size()) {
+                    auto expand_name = rule_to_expand.components().get(rule_to_expand.position());
                     if (!token_types.includes(expand_name) && !set->expanded().get(expand_name)) {
                         set->add_rule_name(rules, expand_name, to_expand);
                     }
@@ -30,8 +30,6 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
 
                 to_expand.remove_element(rule_to_expand);
             }
-
-            position = 0;
         }
 
         return set;
@@ -49,7 +47,7 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
 
             bool should_process = false;
             item_set->rules().for_each_key([&](auto& rule) {
-                if (rule.components().size() > item_set->position()) {
+                if (rule.components().size() > rule.position()) {
                     should_process = true;
                 }
             });
@@ -64,29 +62,29 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
 
     HashMap<Rule, bool> first_set;
     first_set.put(start, true);
-    auto first = create_from_rule_set_and_position(first_set, 0);
+    auto first = create_from_rule_set(first_set);
     add_item_set(first);
 
     while (to_process.size() != 0) {
         for (int size_save = to_process.size() - 1; size_save >= 0; size_save--) {
             auto& item_set_to_process = to_process.get(size_save);
-            int position = item_set_to_process->position();
 
             auto process_identifier = [&](const StringView& identifier) {
                 HashMap<Rule, bool> rule_set;
 
                 item_set_to_process->rules().for_each_key([&](auto& rule) {
-                    if (position < rule.components().size() && rule.components().get(position) == identifier) {
-                        rule_set.put(rule, true);
+                    if (rule.position() < rule.components().size() && rule.components().get(rule.position()) == identifier) {
+                        Rule to_add(rule);
+                        to_add.increment_position();
+                        rule_set.put(to_add, true);
                     }
                 });
 
-                bool sub_rule_used = false;
-
                 item_set_to_process->set().for_each_key([&](auto& rule) {
                     if (0 < rule.components().size() && rule.components().get(0) == identifier) {
-                        rule_set.put(rule, true);
-                        sub_rule_used = true;
+                        Rule to_add(rule);
+                        to_add.increment_position();
+                        rule_set.put(to_add, true);
                     }
                 });
 
@@ -94,7 +92,7 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
                     return;
                 }
 
-                auto new_set = create_from_rule_set_and_position(rule_set, (sub_rule_used ? 0 : position) + 1);
+                auto new_set = create_from_rule_set(rule_set);
                 add_item_set(new_set);
                 item_set_to_process->table().put(identifier, new_set->number());
             };
@@ -121,12 +119,12 @@ String ItemSet::stringify() const {
     s += buf;
     rules().for_each_key([&](auto& rule) {
         s += "  ";
-        s += rule.stringify(position());
+        s += rule.stringify();
         s += "\n";
     });
     m_set.for_each_key([&](auto& rule) {
         s += "  + ";
-        s += rule.stringify(0);
+        s += rule.stringify();
         s += "\n";
     });
 

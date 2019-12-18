@@ -20,7 +20,7 @@ public:
     HashMap<StringView, bool>& expanded() { return m_expanded; }
     const HashMap<StringView, bool>& expanded() const { return m_expanded; }
 
-    bool operator==(const ItemSet& other) const { return this->rules() == other.rules() && this->position() == other.position(); }
+    bool operator==(const ItemSet& other) const { return this->rules() == other.rules(); }
 
     String stringify() const;
 
@@ -30,15 +30,8 @@ public:
     HashMap<StringView, int>& table() { return m_table; }
     const HashMap<StringView, int>& table() const { return m_table; }
 
-    int position() const { return m_position; }
-
-    ItemSet(const HashMap<Rule, bool> rules, int position) : m_rules(rules), m_position(position) {};
-    ItemSet(const ItemSet& other)
-        : m_expanded(other.m_expanded)
-        , m_set(other.m_set)
-        , m_rules(other.rules())
-        , m_number(other.number())
-        , m_position(other.position()) {};
+    ItemSet(const HashMap<Rule, bool> rules) : m_rules(rules) {};
+    ItemSet(const ItemSet& other) : m_expanded(other.m_expanded), m_set(other.m_set), m_rules(other.rules()), m_number(other.number()) {};
 
     ~ItemSet() {}
 
@@ -52,6 +45,5 @@ private:
     HashMap<Rule, bool> m_set;
     HashMap<Rule, bool> m_rules;
     int m_number { 0 };
-    int m_position { 0 };
     HashMap<StringView, int> m_table;
 };
