@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "generator.h"
+#include "literal.h"
 
 Generator::Generator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
                      const String& output_name)
@@ -28,23 +29,7 @@ void Generator::generate_token_type_header(const String& path) {
         String name = String(id);
         fprintf(token_type_header, "    %s,\n", name.string());
     });
-    fprintf(token_type_header, "};\n\n");
-
-    fprintf(token_type_header, "constexpr const char* %s_token_type_to_string(%sTokenType type) {\n",
-            m_output_name.to_lower_case().string(), String(m_output_name.to_title_case().string()).string());
-
-    fprintf(token_type_header, "    switch (type) {\n");
-
-    m_identifiers.for_each([&](const auto& id) {
-        fprintf(token_type_header, "        case %sTokenType::%s:\n", m_output_name.to_title_case().string(), String(id).string());
-        fprintf(token_type_header, "            return \"%s\";\n", String(id).string());
-    });
-
-    fprintf(token_type_header, "        default:\n");
-    fprintf(token_type_header, "            return \"Invalid token\";\n");
-    fprintf(token_type_header, "    }\n");
-
-    fprintf(token_type_header, "}\n");
+    fprintf(token_type_header, "};\n");
     if (fclose(token_type_header) != 0) {
         perror("fclose");
         exit(1);
@@ -100,7 +85,38 @@ void Generator::generate_generic_parser(const String& path) {
             String::format("    Generic%sParser(const Vector<Token>& tokens) : GenericParser<%sTokenType, Value>(tokens) {}\n",
                            m_output_name.string(), m_output_name.string())
                 .string());
-    fprintf(file, "%s", String::format("    ~Generic%sParser() override {}\n\n", m_output_name.string()).string());
+    fprintf(file, "%s", String::format("    virtual ~Generic%sParser() override {}\n\n", m_output_name.string()).string());
+
+    fprintf(file, "    static const char* token_type_to_string(%sTokenType type) {\n",
+            String(m_output_name.to_title_case().string()).string());
+
+    fprintf(file, "        switch (type) {\n");
+
+    m_identifiers.for_each([&](const auto& id) {
+        fprintf(file, "            case %sTokenType::%s:\n", String(m_output_name).to_title_case().string(), String(id).string());
+        fprintf(file, "                return \"%s\";\n", String(token_to_literal(id)).string());
+    });
+
+    fprintf(file, "            default:\n");
+    fprintf(file, "                return \"Invalid token\";\n");
+    fprintf(file, "        }\n");
+    fprintf(file, "    }\n\n");
+
+    fprintf(file, "    static %sTokenType character_to_token_type(char c) {\n", String(m_output_name).to_title_case().string());
+    fprintf(file, "        switch (c) {\n");
+
+    m_token_types.for_each([&](const auto& t) {
+        if (token_to_literal(t) != t) {
+            fprintf(file, "            case '%s':\n", String(token_to_literal(t)).string());
+            fprintf(file, "                return %sTokenType::%s;\n", String(m_output_name).to_title_case().string(), String(t).string());
+        }
+    });
+
+    fprintf(file, "            default:\n");
+    fprintf(file, "                return %sTokenType::End;\n", String(m_output_name).to_title_case().string());
+    fprintf(file, "        }\n");
+    fprintf(file, "    }\n\n");
+
     fprintf(file, "    virtual bool parse() override {\n");
     fprintf(file, "        for (;;) {\n");
     fprintf(file, "            switch (this->current_state()) {\n");
@@ -114,7 +130,10 @@ void Generator::generate_generic_parser(const String& path) {
         row.for_each_key([&](const StringView& name) {
             const Action& action = *row.get(name);
 
-            if (name == "End" && action.type == Action::Type::Reduce) {
+            if (/*name == "End" && */ action.type == Action::Type::Reduce) {
+                if (default_used) {
+                    return;
+                }
                 fprintf(file, "                        default: {\n");
                 default_used = true;
             } else {
@@ -209,8 +228,8 @@ void Generator::generate_generic_parser(const String& path) {
 
     fprintf(file,
             "\n    virtual void on_error(%sTokenType type) { fprintf(stderr, \"Unexpected token: %%s (state %%d)\\n\", "
-            "%s_token_type_to_string(type), this->current_state()); }\n",
-            m_output_name.to_title_case().string(), String(m_output_name.to_lower_case()).string());
+            "token_type_to_string(type), this->current_state()); }\n",
+            m_output_name.string());
 
     fprintf(file, "};\n");
     if (fclose(file) != 0) {

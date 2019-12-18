@@ -12,6 +12,7 @@
 #include "generator.h"
 #include "item_set.h"
 #include "lexer.h"
+#include "literal.h"
 #include "rule.h"
 #include "state_table.h"
 
@@ -50,20 +51,31 @@ int main(int argc, char** argv) {
 
     Vector<StringView> token_types;
 
-    bool done = false;
-    for (int i = 0; !done && i < tokens.size(); i++) {
+    bool out_of_declarations = false;
+    for (int i = 0; i < tokens.size(); i++) {
         auto& token = tokens[i];
         switch (token.type()) {
             case TokenType::TokenWord:
-                token_types.add(token.text());
+                if (!out_of_declarations) {
+                    token_types.add(token.text());
+                }
+                break;
             case TokenType::TokenTokenMarker:
                 continue;
             case TokenType::TokenStartMarker:
-                start_name = &tokens[i + 1].text();
-                done = true;
+                start_name = &tokens[++i].text();
+                break;
+            case TokenType::TokenLiteral: {
+                StringView real_name = literal_to_token(token.text());
+                if (!token_types.includes(real_name))
+                    token_types.add(real_name);
+                break;
+            }
+            case TokenType::TokenPercentPercent:
+                out_of_declarations = true;
                 break;
             default:
-                assert(false);
+                continue;
         }
     }
 
@@ -102,6 +114,15 @@ int main(int argc, char** argv) {
                     rules.add(rule);
                     rule.components().clear();
                     break;
+                case TokenType::TokenLiteral: {
+                    if (rule_name) {
+                        rule.components().add(literal_to_token(token.text()));
+                    } else {
+                        fprintf(stderr, "Literal cannot be left hand size of rule\n");
+                        exit(1);
+                    }
+                    break;
+                }
                 default:
                     assert(false);
             }
