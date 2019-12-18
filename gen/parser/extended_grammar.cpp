@@ -2,6 +2,8 @@
 
 #include "extended_grammar.h"
 
+// #define FOLLOW_SET_DEBUG
+
 ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, const Vector<StringView>& token_types)
     : m_sets(sets), m_token_types(token_types) {
     auto first_set = m_sets.get(0);
@@ -52,7 +54,11 @@ void ExtendedGrammar::compute_first_sets() {
     HashMap<ExtendedInfo, int> done;
     HashMap<ExtendedInfo, int> rule_count;
 
+    Vector<int> start_indexes;
+
     m_rules.for_each([&](const auto& rule) {
+        start_indexes.add(0);
+
         int* count = rule_count.get(rule.lhs());
         if (!count) {
             rule_count.put(rule.lhs(), 1);
@@ -72,13 +78,18 @@ void ExtendedGrammar::compute_first_sets() {
     });
 
     auto is_done = [&](const ExtendedInfo& info) -> bool {
+        assert(rule_count.get(info));
         return done.get_or(info, 0) == rule_count.get_or(info, -1);
     };
 
     bool all_done = false;
+    bool made_progress_last_round = true;
     while (!all_done) {
         all_done = true;
+        int current_index = -1;
+        bool made_progress = false;
         m_rules.for_each([&](ExtendedRule& rule) {
+            current_index++;
             const auto& name = rule.lhs();
             if (is_done(name)) {
                 return;
@@ -86,25 +97,48 @@ void ExtendedGrammar::compute_first_sets() {
 
             bool could_compute = true;
             auto set = std::make_shared<HashMap<StringView, bool>>();
-            for (int i = 0; i < rule.components().size(); i++) {
+            int& i = start_indexes.get(current_index);
+            if (i == -1) {
+                return;
+            }
+            for (; i < rule.components().size(); i++) {
                 const auto& rule_name = rule.components().get(i);
+                if (rule_name == name && !made_progress_last_round && m_first_sets.get(name)) {
+                    if ((*m_first_sets.get(name))->get("__Empty")) {
+                        continue;
+                    }
+                    set = *m_first_sets.get(name);
+                    break;
+                }
+
                 if (!is_done(rule_name)) {
                     could_compute = false;
                     break;
                 }
 
+                assert(m_first_sets.get(rule_name));
                 HashMap<StringView, bool>& other_set = **m_first_sets.get(rule_name);
-                if (other_set.empty()) {
-                    continue;
-                }
+                assert(!other_set.empty());
 
                 other_set.for_each_key([&](auto& key) {
-                    set->put(key, true);
+                    if (key != "__Empty" || i == rule.components().size() - 1) {
+                        set->put(key, true);
+                    }
                 });
+
+                if (other_set.get("__Empty")) {
+                    continue;
+                }
                 break;
             }
 
             if (could_compute) {
+                i = -1;
+                made_progress = true;
+                if (set->empty()) {
+                    set->put("__Empty", true);
+                }
+
                 int* done_count = done.get(name);
                 if (!done_count) {
                     done.put(name, 1);
@@ -117,6 +151,8 @@ void ExtendedGrammar::compute_first_sets() {
                 all_done = false;
             }
         });
+
+        made_progress_last_round = made_progress;
     }
 }
 
@@ -175,6 +211,7 @@ void ExtendedGrammar::compute_follow_sets() {
                 }
 
                 if (last_processed[i] == m_rules[i].components().size() - 1) {
+                add_self:
                     if (is_done(self)) {
                         make_union(**m_follow_sets.get(info), **m_follow_sets.get(self));
 #ifdef FOLLOW_SET_DEBUG
@@ -188,18 +225,32 @@ void ExtendedGrammar::compute_follow_sets() {
                         fprintf(stderr, "%s [%d of %d] needs %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
                                 self.stringify().string());
 #endif /* FOLLOW_SET_DEBUG */
-                        needed.get(info)->add(self);
+                        if (!needed.get(info)->includes(self)) {
+                            needed.get(info)->add(self);
+                        }
                         break;
                     }
                 }
 
-                const auto& next = m_rules[i].components()[last_processed[i] + 1];
-                make_union(**m_follow_sets.get(info), **m_first_sets.get(next));
-                (*done.get(info))++;
+                for (int j = last_processed[i] + 1; j <= m_rules[i].components().size(); j++) {
+                    if (j == m_rules[i].components().size()) {
+                        goto add_self;
+                    }
+
+                    const auto& next = m_rules[i].components()[j];
+                    bool contains_empty = !!(*m_first_sets.get(next))->get("__Empty");
+                    make_union(**m_follow_sets.get(info), **m_first_sets.get(next));
+                    if (contains_empty) {
+                        (*m_follow_sets.get(info))->remove("__Empty");
+                        continue;
+                    }
+                    (*done.get(info))++;
 #ifdef FOLLOW_SET_DEBUG
-                fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
-                        next.stringify().string());
+                    fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
+                            next.stringify().string());
 #endif /* FOLLOW_SET_DEBUG */
+                    break;
+                }
             }
 
             if (last_processed[i] < m_rules[i].components().size()) {

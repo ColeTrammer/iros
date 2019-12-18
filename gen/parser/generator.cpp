@@ -130,15 +130,17 @@ void Generator::generate_generic_parser(const String& path) {
         row.for_each_key([&](const StringView& name) {
             const Action& action = *row.get(name);
 
+#if 0
             if (/*name == "End" && */ action.type == Action::Type::Reduce) {
                 if (default_used) {
                     return;
                 }
                 fprintf(file, "                        default: {\n");
                 default_used = true;
-            } else {
-                fprintf(file, "                        case %sTokenType::%s: {\n", m_output_name.string(), String(name).string());
-            }
+            } 
+            else
+#endif
+            fprintf(file, "                        case %sTokenType::%s: {\n", m_output_name.string(), String(name).string());
 
             switch (action.type) {
                 case Action::Type::Accept:
