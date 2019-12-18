@@ -18,10 +18,20 @@ StateTable::StateTable(const ExtendedGrammar& grammar, const Vector<StringView>&
     : m_grammar(grammar), m_identifiers(identifiers) {
     m_grammar.rules().for_each([&](auto& rule) {
         FinalRule new_rule(rule, **m_grammar.follow_sets().get(rule.lhs()));
-        if (m_rules.get(new_rule.number())) {
-            make_union(m_rules.get(new_rule.number())->follow_set(), new_rule.follow_set());
+        auto* rules = m_rules.get(new_rule.number());
+        if (rules) {
+            auto* to_merge = rules->first_match([&](const auto& t) {
+                return t == new_rule;
+            });
+            if (to_merge) {
+                make_union(to_merge->follow_set(), new_rule.follow_set());
+            } else {
+                rules->add(new_rule);
+            }
         } else {
-            m_rules.put(new_rule.number(), new_rule);
+            Vector<FinalRule> to_add;
+            to_add.add(new_rule);
+            m_rules.put(new_rule.number(), to_add);
         }
     });
 
@@ -37,22 +47,25 @@ StateTable::StateTable(const ExtendedGrammar& grammar, const Vector<StringView>&
                 return;
             }
 
-            const FinalRule* reduce_table = m_rules.get(set->number());
+            const Vector<FinalRule>* reduce_table = m_rules.get(set->number());
             if (!reduce_table) {
                 return;
             }
 
-            const bool* present = reduce_table->follow_set().get(id);
-            if (!present || !*present) {
+            const FinalRule* match = reduce_table->first_match([&](const FinalRule& rule) {
+                return !!rule.follow_set().get(id);
+            });
+
+            if (!match) {
                 return;
             }
 
-            if (reduce_table->original_number() == 0) {
+            if (match->original_number() == 0) {
                 row.put(id, { Action::Type::Accept, END_SET });
                 return;
             }
 
-            row.put(id, { Action::Type::Reduce, reduce_table->original_number() });
+            row.put(id, { Action::Type::Reduce, match->original_number() });
         });
     });
 }
@@ -67,10 +80,12 @@ String StateTable::stringify() {
     });
     ret += "\n";
 
-#if 0
+#if 1
     ret += "------------------------------------------\n";
-    m_rules.for_each([&](const auto& rule) {
-        ret += rule.stringify();
+    m_rules.for_each([&](const auto& rules) {
+        rules.for_each([&](const auto& rule) {
+            ret += rule.stringify();
+        });
     });
     ret += "------------------------------------------\n";
 #endif

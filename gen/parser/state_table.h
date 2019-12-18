@@ -40,7 +40,7 @@ public:
         return ret;
     }
 
-    bool operator==(const FinalRule& other) const { return this->number() == other.number(); }
+    bool operator==(const FinalRule& other) const { return this->number() == other.number() && this->lhs() == other.lhs(); }
 
 private:
     StringView m_lhs;
@@ -77,14 +77,14 @@ public:
     ~StateTable();
 
     const ExtendedGrammar& grammar() const { return m_grammar; }
-    const HashMap<int, FinalRule> rules() const { return m_rules; }
+    const HashMap<int, Vector<FinalRule>> rules() const { return m_rules; }
     const Vector<HashMap<StringView, Action>>& table() const { return m_table; }
 
     String stringify();
 
 private:
     const ExtendedGrammar& m_grammar;
-    HashMap<int, FinalRule> m_rules;
+    HashMap<int, Vector<FinalRule>> m_rules;
     Vector<HashMap<StringView, Action>> m_table;
     const Vector<StringView>& m_identifiers;
 };

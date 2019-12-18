@@ -40,22 +40,29 @@ void Generator::generate_generic_parser(const String& path) {
     struct ReductionInfo {
         String function_name;
         int arg_count;
+        int number;
         StringView name;
     };
 
-    HashMap<int, ReductionInfo> reduce_info;
-    m_table.rules().for_each([&](const FinalRule& rule) {
-        if (rule.original_number() == 0) {
-            return;
-        }
+    HashMap<int, Vector<ReductionInfo>> reduce_info;
+    m_table.rules().for_each([&](const Vector<FinalRule>& rules) {
+        rules.for_each([&](const FinalRule& rule) {
+            if (rule.original_number() == 0) {
+                return;
+            }
 
-        ReductionInfo info { "reduce_", rule.components().size(), rule.lhs() };
-        info.function_name += String(rule.lhs()).to_lower_case();
-        rule.components().for_each([&](const auto& v) {
-            info.function_name += String::format("_%s", String(v).to_lower_case().string());
+            ReductionInfo info { "reduce_", rule.components().size(), rule.original_number(), rule.lhs() };
+            info.function_name += String(rule.lhs()).to_lower_case();
+            rule.components().for_each([&](const auto& v) {
+                info.function_name += String::format("_%s", String(v).to_lower_case().string());
+            });
+
+            if (!reduce_info.get(rule.original_number())) {
+                reduce_info.put(rule.original_number(), Vector<ReductionInfo>());
+            }
+
+            reduce_info.get(rule.original_number())->add(info);
         });
-
-        reduce_info.put(rule.original_number(), info);
     });
 
     fprintf(stderr, "Writing generic parser to %s.\n", path.string());
@@ -156,20 +163,23 @@ void Generator::generate_generic_parser(const String& path) {
                     fprintf(file, "                            continue;\n");
                     break;
                 case Action::Type::Reduce: {
-                    const ReductionInfo& info = *reduce_info.get(action.number);
+                    const ReductionInfo* info = reduce_info.get(action.number)->first_match([&](const ReductionInfo& t) {
+                        return t.number == action.number;
+                    });
+                    assert(info);
                     String args = "";
-                    for (int i = 0; i < info.arg_count; i++) {
+                    for (int i = 0; i < info->arg_count; i++) {
                         fprintf(file, "                            int v%d = this->pop_stack_state();\n", i);
                         args += String::format("v%d", i);
-                        if (i != info.arg_count - 1) {
+                        if (i != info->arg_count - 1) {
                             args += ", ";
                         }
                     }
-                    fprintf(file, "                            this->push_value_stack(%s(%s));\n", info.function_name.string(),
+                    fprintf(file, "                            this->push_value_stack(%s(%s));\n", info->function_name.string(),
                             args.string());
 
                     fprintf(file, "                            this->reduce(%sTokenType::%s);\n", m_output_name.string(),
-                            String(info.name).string());
+                            String(info->name).string());
 
                     fprintf(file, "                            continue;\n");
                     break;
@@ -197,35 +207,37 @@ void Generator::generate_generic_parser(const String& path) {
 
     HashMap<String, bool> already_declared;
 
-    reduce_info.for_each([&](const ReductionInfo& info) {
-        if (already_declared.get(info.function_name)) {
-            return;
-        }
-
-        String arg_list = "(";
-        for (int i = 0; i < info.arg_count; i++) {
-            if (i == 0) {
-                arg_list += "Value v";
-            } else {
-                arg_list += "Value";
+    reduce_info.for_each([&](const Vector<ReductionInfo>& infos) {
+        infos.for_each([&](const ReductionInfo& info) {
+            if (already_declared.get(info.function_name)) {
+                return;
             }
 
-            if (i != info.arg_count - 1) {
-                arg_list += ", ";
+            String arg_list = "(";
+            for (int i = 0; i < info.arg_count; i++) {
+                if (i == 0) {
+                    arg_list += "Value v";
+                } else {
+                    arg_list += "Value";
+                }
+
+                if (i != info.arg_count - 1) {
+                    arg_list += ", ";
+                }
             }
-        }
-        arg_list += ")";
+            arg_list += ")";
 
-        String return_string = info.arg_count == 0 ? "Value()" : "v";
+            String return_string = info.arg_count == 0 ? "Value()" : "v";
 
-        fprintf(file, "    virtual Value %s%s {\n", info.function_name.string(), arg_list.string());
-        fprintf(file, "#ifdef GENERIC_%s_PARSER_DEBUG\n", String(m_output_name).to_upper_case().string());
-        fprintf(file, "        fprintf(stderr, \"%%s called.\\n\", __FUNCTION__);\n");
-        fprintf(file, "#endif /* GENERIC_%s_PARSER_DEBUG */\n", String(m_output_name).to_upper_case().string());
-        fprintf(file, "        return %s;\n", return_string.string());
-        fprintf(file, "    }\n");
+            fprintf(file, "    virtual Value %s%s {\n", info.function_name.string(), arg_list.string());
+            fprintf(file, "#ifdef GENERIC_%s_PARSER_DEBUG\n", String(m_output_name).to_upper_case().string());
+            fprintf(file, "        fprintf(stderr, \"%%s called.\\n\", __FUNCTION__);\n");
+            fprintf(file, "#endif /* GENERIC_%s_PARSER_DEBUG */\n", String(m_output_name).to_upper_case().string());
+            fprintf(file, "        return %s;\n", return_string.string());
+            fprintf(file, "    }\n");
 
-        already_declared.put(info.function_name, true);
+            already_declared.put(info.function_name, true);
+        });
     });
 
     fprintf(file,

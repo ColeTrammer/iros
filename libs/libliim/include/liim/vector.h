@@ -155,6 +155,16 @@ public:
         return nullptr;
     }
 
+    template<typename C> T* first_match(C callback) {
+        for (int i = 0; i < size(); i++) {
+            if (callback(get(i))) {
+                return &get(i);
+            }
+        }
+
+        return nullptr;
+    }
+
     int index_of(const T& val) const {
         for (int i = 0; i < size(); i++) {
             if (get(i) == val) {
