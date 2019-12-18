@@ -29,6 +29,8 @@ public:
         return memcmp(other.start(), this->start(), this->size()) == 0;
     }
 
+    bool operator!=(const StringView& other) const { return !(*this == other); }
+
 private:
     const char* m_start;
     const char* m_end;
