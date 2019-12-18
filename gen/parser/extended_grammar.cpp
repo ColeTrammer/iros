@@ -2,6 +2,7 @@
 
 #include "extended_grammar.h"
 
+// #define START_SET_DEBUG
 // #define FOLLOW_SET_DEBUG
 
 ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, const Vector<StringView>& token_types)
@@ -142,10 +143,33 @@ void ExtendedGrammar::compute_first_sets() {
                 int* done_count = done.get(name);
                 if (!done_count) {
                     done.put(name, 1);
+#ifdef START_SET_DEBUG
+                    fprintf(stderr, "Bump done count: %s [%d/%d]\n", name.stringify().string(), 1, rule_count.get_or(name, -1));
+                    fprintf(stderr, "    Set: {");
+                    set->for_each_key([&](const auto& st) {
+                        fprintf(stderr, " %s", String(st).string());
+                    });
+                    fprintf(stderr, " }\n");
+#endif /* START_SET_DEBUG */
                     m_first_sets.put(name, set);
                 } else {
                     (*done_count)++;
+#ifdef START_SET_DEBUG
+                    fprintf(stderr, "Bump done count: %s [%d/%d]\n", name.stringify().string(), *done_count, rule_count.get_or(name, -1));
+                    fprintf(stderr, "    Set: {");
+                    set->for_each_key([&](const auto& st) {
+                        fprintf(stderr, " %s", String(st).string());
+                    });
+                    fprintf(stderr, " }\n");
+#endif /* START_SET_DEBUG */
                     make_union(**m_first_sets.get(name), *set);
+#ifdef START_SET_DEBUG
+                    fprintf(stderr, "New set: {");
+                    (*m_first_sets.get(name))->for_each_key([](const auto& st) {
+                        fprintf(stderr, " %s", String(st).string());
+                    });
+                    fprintf(stderr, " }\n");
+#endif /* START_SET_DEBUG */
                 }
             } else {
                 all_done = false;
@@ -241,7 +265,7 @@ void ExtendedGrammar::compute_follow_sets() {
                     bool contains_empty = !!(*m_first_sets.get(next))->get("__Empty");
                     make_union(**m_follow_sets.get(info), **m_first_sets.get(next));
                     if (contains_empty) {
-                        (*m_follow_sets.get(info))->remove("__Empty");
+                        // (*m_follow_sets.get(info))->remove("__Empty");
                         continue;
                     }
                     (*done.get(info))++;

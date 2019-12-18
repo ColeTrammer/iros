@@ -1,5 +1,7 @@
 #include "state_table.h"
 
+#define START_SET_DEBUG
+
 static void make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2) {
     if (s1.empty()) {
         s1 = s2;
@@ -80,7 +82,7 @@ String StateTable::stringify() {
     });
     ret += "\n";
 
-#if 1
+#ifdef REDUCE_RULES_DEBUG
     ret += "------------------------------------------\n";
     m_rules.for_each([&](const auto& rules) {
         rules.for_each([&](const auto& rule) {
@@ -88,7 +90,7 @@ String StateTable::stringify() {
         });
     });
     ret += "------------------------------------------\n";
-#endif
+#endif /* START_SET_DEBUG */
 
     for (int i = 0; i < m_table.size(); i++) {
         ret += String::format("%-12d", i);

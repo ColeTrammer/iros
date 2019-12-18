@@ -4,3 +4,4 @@ parser.native
 sh_*
 test*
 *test*
+generic_sh_parser.h
