@@ -68,9 +68,11 @@ String StateTable::stringify() {
     ret += "\n";
 
 #if 0
+    ret += "------------------------------------------\n";
     m_rules.for_each([&](const auto& rule) {
         ret += rule.stringify();
     });
+    ret += "------------------------------------------\n";
 #endif
 
     for (int i = 0; i < m_table.size(); i++) {

@@ -132,8 +132,6 @@ int main(int argc, char** argv) {
         }
     });
 
-    fprintf(stderr, "Start: %s\n", start_rule->stringify().string());
-
     Rule dummy_start;
     dummy_start.name() = "__start";
     dummy_start.components().add(start_rule->name());

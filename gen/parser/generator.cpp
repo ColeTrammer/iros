@@ -164,7 +164,13 @@ void Generator::generate_generic_parser(const String& path) {
     fprintf(file, "    }\n\n");
     fprintf(file, "protected:\n");
 
+    HashMap<String, bool> already_declared;
+
     reduce_info.for_each([&](const ReductionInfo& info) {
+        if (already_declared.get(info.function_name)) {
+            return;
+        }
+
         String arg_list = "(";
         for (int i = 0; i < info.arg_count; i++) {
             if (i == 0) {
@@ -183,10 +189,12 @@ void Generator::generate_generic_parser(const String& path) {
 
         fprintf(file, "    virtual Value %s%s {\n", info.function_name.string(), arg_list.string());
         fprintf(file, "#ifdef GENERIC_%s_PARSER_DEBUG\n", String(m_output_name).to_upper_case().string());
-        fprintf(file, "            fprintf(stderr, \"%%s called.\\n\", __FUNCTION__);\n");
+        fprintf(file, "        fprintf(stderr, \"%%s called.\\n\", __FUNCTION__);\n");
         fprintf(file, "#endif /* GENERIC_%s_PARSER_DEBUG */\n", String(m_output_name).to_upper_case().string());
         fprintf(file, "        return %s;\n", return_string.string());
         fprintf(file, "    }\n");
+
+        already_declared.put(info.function_name, true);
     });
 
     fprintf(

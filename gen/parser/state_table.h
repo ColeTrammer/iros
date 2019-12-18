@@ -5,7 +5,10 @@
 class FinalRule {
 public:
     FinalRule(const ExtendedRule& rule, const HashMap<StringView, bool> follow_set)
-        : m_lhs(rule.lhs().name), m_number(rule.lhs().transition.end), m_original_number(rule.original_number()), m_follow_set(follow_set) {
+        : m_lhs(rule.lhs().name)
+        , m_number(rule.lhs().transition.start)
+        , m_original_number(rule.original_number())
+        , m_follow_set(follow_set) {
         rule.components().for_each([&](auto& part) {
             m_components.add(part.name);
             m_number = part.transition.end;
