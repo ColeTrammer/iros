@@ -1,7 +1,9 @@
 # Lists all projects
 PROJECTS=kernel libs boot gen initrd userland
 # Lists all projects that need headers installed
-HEADER_PROJECTS=kernel libs userland
+HEADER_PROJECTS=gen kernel libs userland
+# Lists all projects that need to be built on host
+NATIVE_PROJECTS=gen
 
 # Root defaults to cwd; must be set properly if using make -C
 export ROOT?=$(CURDIR)
@@ -21,6 +23,7 @@ export HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 # Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
 export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
 export CXX:=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=c++17
+export PARSER:=$(BUILDDIR)/gen/parser/parser.native
 export CFLAGS:=-fno-omit-frame-pointer -fno-inline -g -O2
 export LD:=$(CC)
 export AR:=$(HOST)-ar
@@ -50,6 +53,8 @@ os_2.img: $(PROJECTS)
 $(PROJECTS):
 	$(MAKE) install -C $(ROOT)/$@
 
+$(PROJECTS): native
+
 # Makes the kernel depend on libs
 kernel: libs
 
@@ -58,6 +63,12 @@ initrd: libs
 
 # Makes the userland depend on libs
 userland: libs
+
+.PHONY: native
+native:
+	for dir in $(NATIVE_PROJECTS); do \
+	  $(MAKE) native -C $(ROOT)/$$dir; \
+	done
 
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean

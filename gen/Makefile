@@ -1,5 +1,7 @@
 # Lists all projects
 PROJECTS=parser
+HEADER_PROJECTS=parser
+NATIVE_PROJECTS=parser
 
 export ROOT?=$(CURDIR)/..
 export SYSROOT?=$(ROOT)/sysroot
@@ -15,6 +17,18 @@ all: $(PROJECTS)
 
 .PHONY: install
 install: all
+
+.PHONY: native
+native:
+	for proj in $(NATIVE_PROJECTS); do \
+	  $(MAKE) native -C $(ROOT)/gen/$$proj; \
+	done
+
+.PHONY: install-headers
+install-headers:
+	for proj in $(HEADER_PROJECTS); do \
+	  $(MAKE) install-headers -C $(ROOT)/gen/$$proj; \
+	done
 
 # Makes project by calling its Makefile
 .PHONY: $(PROJECTS)

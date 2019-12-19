@@ -1,5 +1,6 @@
 export ROOT?=../../
 export BUILDDIR?=$(ROOT)/build
+export PROJECT_NAME=parser
 
 OBJS=\
 $(BUILDDIR)/gen/parser/extended_grammar.o \

@@ -27,6 +27,7 @@ public:
     ~String() { free(m_string); }
 
     int size() const { return m_size; }
+    void set_size(int size) { m_size = size; }
 
     char* string() { return m_string; }
     const char* string() const { return m_string; }

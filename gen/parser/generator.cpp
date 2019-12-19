@@ -78,8 +78,8 @@ void Generator::generate_generic_parser(String path) {
 
     fprintf(file, "#include <assert.h>\n");
     fprintf(file, "#include <stdio.h>\n\n");
-    fprintf(file, "#include \"generic_parser.h\"\n");
-    fprintf(file, "#include \"generic_token.h\"\n");
+    fprintf(file, "#include <parser/generic_parser.h>\n");
+    fprintf(file, "#include <parser/generic_token.h>\n");
     fprintf(file, "%s", String::format("#include \"%s_token_type.h\"\n\n", m_output_name.to_lower_case().string()).string());
 
     fprintf(file, "%s",
@@ -127,19 +127,20 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "    virtual bool parse() override;\n");
     {
         path[path.size() - 1] = '\0';
-        path += "cpp";
+        path[path.size() - 2] = '\0';
+        path.set_size(path.size() - 2);
+        path += "_impl.cpp";
         FILE* file = fopen(path.string(), "w");
         fprintf(file, "#include \"generic_%s_parser.h\"\n\n", String(m_output_name).to_lower_case().string());
 
-        fprintf(file, "    template<typename Value> bool Generic%sParser<Value>::parse() {\n",
-                String(m_output_name).to_title_case().string());
-        fprintf(file, "        for (;;) {\n");
-        fprintf(file, "            switch (this->current_state()) {\n");
+        fprintf(file, "template<typename Value> bool Generic%sParser<Value>::parse() {\n", String(m_output_name).to_title_case().string());
+        fprintf(file, "    for (;;) {\n");
+        fprintf(file, "        switch (this->current_state()) {\n");
 
         for (int i = 0; i < m_table.table().size(); i++) {
             const HashMap<StringView, Action>& row = m_table.table()[i];
-            fprintf(file, "%s", String::format("                case %d:\n", i).string());
-            fprintf(file, "                    switch (this->peek_token_type()) {\n");
+            fprintf(file, "%s", String::format("            case %d:\n", i).string());
+            fprintf(file, "                switch (this->peek_token_type()) {\n");
 
             bool default_used = false;
             row.for_each_key([&](const StringView& name) {
@@ -150,25 +151,25 @@ void Generator::generate_generic_parser(String path) {
                 if (default_used) {
                     return;
                 }
-                fprintf(file, "                        default: {\n");
+                fprintf(file, "                    default: {\n");
                 default_used = true;
             } 
             else
 #endif
-                fprintf(file, "                        case %sTokenType::%s: {\n", m_output_name.string(), String(name).string());
+                fprintf(file, "                    case %sTokenType::%s: {\n", m_output_name.string(), String(name).string());
 
                 switch (action.type) {
                     case Action::Type::Accept:
-                        fprintf(file, "                            return true;\n");
+                        fprintf(file, "                        return true;\n");
                         break;
                     case Action::Type::Jump:
-                        fprintf(file, "                            this->jump_to(%d);\n", action.number);
-                        fprintf(file, "                            continue;\n");
+                        fprintf(file, "                        this->jump_to(%d);\n", action.number);
+                        fprintf(file, "                        continue;\n");
                         break;
                     case Action::Type::Shift:
-                        fprintf(file, "                            this->consume_token();\n");
-                        fprintf(file, "                            this->push_state_stack(%d);\n", action.number);
-                        fprintf(file, "                            continue;\n");
+                        fprintf(file, "                        this->consume_token();\n");
+                        fprintf(file, "                        this->push_state_stack(%d);\n", action.number);
+                        fprintf(file, "                        continue;\n");
                         break;
                     case Action::Type::Reduce: {
                         const ReductionInfo* info = reduce_info.get(action.number)->first_match([&](const ReductionInfo& t) {
@@ -177,40 +178,40 @@ void Generator::generate_generic_parser(String path) {
                         assert(info);
                         String args = "";
                         for (int i = 0; i < info->arg_count; i++) {
-                            fprintf(file, "                            int v%d = this->pop_stack_state();\n", i);
+                            fprintf(file, "                        int v%d = this->pop_stack_state();\n", i);
                             args += String::format("v%d", i);
                             if (i != info->arg_count - 1) {
                                 args += ", ";
                             }
                         }
-                        fprintf(file, "                            this->push_value_stack(%s(%s));\n", info->function_name.string(),
+                        fprintf(file, "                        this->push_value_stack(%s(%s));\n", info->function_name.string(),
                                 args.string());
 
-                        fprintf(file, "                            this->reduce(%sTokenType::%s);\n", m_output_name.string(),
+                        fprintf(file, "                        this->reduce(%sTokenType::%s);\n", m_output_name.string(),
                                 String(info->name).string());
 
-                        fprintf(file, "                            continue;\n");
+                        fprintf(file, "                        continue;\n");
                         break;
                     }
                 }
 
-                fprintf(file, "                        }\n");
+                fprintf(file, "                    }\n");
             });
 
             if (!default_used) {
-                fprintf(file, "                        default:\n");
-                fprintf(file, "                            on_error(this->peek_token_type());\n");
-                fprintf(file, "                            return false;\n");
+                fprintf(file, "                    default:\n");
+                fprintf(file, "                        on_error(this->peek_token_type());\n");
+                fprintf(file, "                        return false;\n");
             }
 
-            fprintf(file, "                    }\n");
+            fprintf(file, "                }\n");
         }
 
-        fprintf(file, "            }\n");
-        fprintf(file, "        }\n\n");
-        fprintf(file, "        assert(false);\n");
-        fprintf(file, "        return false;\n");
+        fprintf(file, "        }\n");
         fprintf(file, "    }\n\n");
+        fprintf(file, "    assert(false);\n");
+        fprintf(file, "    return false;\n");
+        fprintf(file, "}\n\n");
     }
 
     fprintf(file, "protected:\n");

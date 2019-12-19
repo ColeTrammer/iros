@@ -29,6 +29,10 @@ $(BUILDDIR)/%.o: $(ROOT)/%.cpp
 install: all
 	cp --preserve=timestamps $(EXECUTABLE) $(SYSROOT)/bin
 
+.PHONY: install-headers
+install-headers:
+	cp -R --preserve=timestamps -u $(ROOT)/gen/$(PROJECT_NAME)/include/. $(SYSROOT)/usr/include
+
 # Includes the .d files for each object, if it exists.
 # This will cause any object that depends on a specific header,
 # that was changed, to be recompiled, as this include will 

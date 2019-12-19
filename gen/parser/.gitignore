@@ -1,4 +1,3 @@
-parser
 parser.native
 *.y
 sh_*
