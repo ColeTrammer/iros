@@ -20,6 +20,16 @@ public:
 
     explicit LinkedList(const T& first) : m_head(new LinkedListObj(first)), m_size(1) {}
 
+    LinkedList(const LinkedList<T>& other) {
+        if (!other.size()) {
+            return;
+        }
+
+        other.for_each([&](const T& val) {
+            add(val);
+        });
+    }
+
     ~LinkedList() { clear(); }
 
     int size() const { return m_size; }
