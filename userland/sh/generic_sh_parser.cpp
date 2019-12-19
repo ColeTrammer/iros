@@ -1,3 +1,5 @@
 #include "generic_sh_parser_impl.cpp"
 
-template bool GenericShParser<int>::parse();
+#include "sh_token.h"
+
+template bool GenericShParser<ShValue>::parse();
