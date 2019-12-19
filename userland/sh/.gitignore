@@ -1,3 +1,4 @@
 sh_token_type.h
 generic_sh_parser.h
 generic_sh_parser_impl.cpp
+test_sh.cpp
