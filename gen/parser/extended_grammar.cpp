@@ -265,7 +265,7 @@ void ExtendedGrammar::compute_follow_sets() {
                     bool contains_empty = !!(*m_first_sets.get(next))->get("__Empty");
                     make_union(**m_follow_sets.get(info), **m_first_sets.get(next));
                     if (contains_empty) {
-                        // (*m_follow_sets.get(info))->remove("__Empty");
+                        (*m_follow_sets.get(info))->remove("__Empty");
                         continue;
                     }
                     (*done.get(info))++;

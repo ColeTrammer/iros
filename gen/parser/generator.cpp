@@ -53,9 +53,10 @@ void Generator::generate_generic_parser(String path) {
 
             ReductionInfo info { "reduce_", rule.components().size(), rule.original_number(), rule.lhs() };
             info.function_name += String(rule.lhs()).to_lower_case();
-            rule.components().for_each([&](const auto& v) {
-                info.function_name += String::format("_%s", String(v).to_lower_case().string());
-            });
+            for (int i = 0; i < rule.components().size(); i++) {
+                auto& v = rule.components().get(i);
+                info.function_name += String::format("%c%s", i == 0 ? '$' : '_', String(v).to_lower_case().string());
+            }
 
             if (!reduce_info.get(rule.original_number())) {
                 reduce_info.put(rule.original_number(), Vector<ReductionInfo>());
@@ -178,7 +179,7 @@ void Generator::generate_generic_parser(String path) {
                         assert(info);
                         String args = "";
                         for (int i = 0; i < info->arg_count; i++) {
-                            fprintf(file, "                        int v%d = this->pop_stack_state();\n", i);
+                            fprintf(file, "                        Value v%d = this->pop_stack_state();\n", i);
                             args += String::format("v%d", i);
                             if (i != info->arg_count - 1) {
                                 args += ", ";
@@ -227,9 +228,9 @@ void Generator::generate_generic_parser(String path) {
             String arg_list = "(";
             for (int i = 0; i < info.arg_count; i++) {
                 if (i == 0) {
-                    arg_list += "Value v";
+                    arg_list += "Value& v";
                 } else {
-                    arg_list += "Value";
+                    arg_list += "Value&";
                 }
 
                 if (i != info.arg_count - 1) {

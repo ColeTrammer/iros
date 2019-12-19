@@ -6,6 +6,7 @@ public:
     ~GenericToken() {}
 
     TokenType type() const { return m_type; }
+    void set_type(TokenType type) { m_type = type; }
 
     Value& value() { return m_value; }
     const Value& value() const { return m_value; }

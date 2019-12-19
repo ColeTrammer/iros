@@ -17,18 +17,39 @@ public:
 protected:
     const Value& peek_value_stack() const { return m_value_stack.peek(); };
 
-    void push_value_stack(const Value& value) { m_value_stack.push(value); }
+    void push_value_stack(const Value& value) {
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Pushing value stack\n");
+#endif /* GENERIC_PARSER_DEBUG */
+        m_value_stack.push(value);
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Done pushing value stack\n");
+#endif /* GENERIC_PARSER_DEBUG */
+    }
 
     void consume_token() {
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Pushing value b/c consume token\n");
+#endif /* GENERIC_PARSER_DEBUG */
         m_value_stack.push(m_tokens[m_position].value());
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Done pushing value b/c consume token\n");
+#endif /* GENERIC_PARSER_DEBUG */
         m_position++;
     }
 
     int current_state() const { return m_state_stack.peek(); }
     void push_state_stack(int state) { m_state_stack.push(state); }
-    Value& pop_stack_state() {
+    Value pop_stack_state() {
         m_state_stack.pop();
-        return m_value_stack.pop();
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Popping value stack\n");
+#endif /* GENERIC_PARSER_DEBUG */
+        Value v = m_value_stack.pop();
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Done popping value stack\n");
+#endif /* GENERIC_PARSER_DEBUG */
+        return v;
     }
 
     void jump_to(int state) {
