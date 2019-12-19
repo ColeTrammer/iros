@@ -38,6 +38,19 @@ public:
 
     ~HashMap() {}
 
+    HashMap<K, V>& operator=(const HashMap<K, V>& other) {
+        m_buckets.clear();
+        for (int i = 0; i < other.m_buckets.size(); i++) {
+            m_buckets.add(LinkedList<HashMapObj<K, V>>());
+        }
+
+        other.for_each_key([&](auto& key) {
+            this->put(key, *other.get(key));
+        });
+
+        return *this;
+    }
+
     void put(const K& key, const V& val) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
         m_buckets[bucket].prepend(HashMapObj(key, val));

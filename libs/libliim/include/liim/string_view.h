@@ -21,6 +21,16 @@ public:
     const char* start() const { return m_start; }
     const char* end() const { return m_end; }
 
+    int index_of(char c) const {
+        for (int i = 0; i < size(); i++) {
+            if (start()[i] == c) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     bool operator==(const StringView& other) const {
         if (other.size() != this->size()) {
             return false;
