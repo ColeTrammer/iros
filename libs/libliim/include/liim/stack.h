@@ -18,10 +18,10 @@ public:
     }
     const T& peek() const { return const_cast<Stack<T>&>(*this).peek(); }
 
-    T& pop() {
+    T pop() {
         assert(!empty());
 
-        T& val = m_vector.last();
+        T val = m_vector.last();
         m_vector.remove_last();
 
         return val;
