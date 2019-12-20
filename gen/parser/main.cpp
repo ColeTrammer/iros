@@ -174,14 +174,10 @@ int main(int argc, char** argv) {
     });
 
     ExtendedGrammar extended_grammar(sets, token_types);
-#if 0
     fprintf(stderr, "\n%s\n", extended_grammar.stringify().string());
-#endif
 
     StateTable state_table(extended_grammar, identifiers, token_types);
-#if 0
     fprintf(stderr, "%s\n", state_table.stringify().string());
-#endif
 
     *strrchr(argv[1], '.') = '\0';
     String output_name = argv[1];
