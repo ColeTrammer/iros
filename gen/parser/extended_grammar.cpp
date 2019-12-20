@@ -37,18 +37,20 @@ ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, c
     compute_follow_sets();
 }
 
-static void make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2) {
-    if (s1.empty()) {
-        s1 = s2;
-    } else if (s2.empty()) {
-        return;
+static bool make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2, bool log = false) {
+    if (s2.empty()) {
+        return false;
     }
 
+    bool did_something = false;
     s2.for_each_key([&](const auto& key) {
         if (!s1.get(key)) {
             s1.put(key, true);
+            did_something = true;
         }
     });
+
+    return did_something;
 }
 
 void ExtendedGrammar::compute_first_sets() {
@@ -181,14 +183,11 @@ void ExtendedGrammar::compute_first_sets() {
 }
 
 void ExtendedGrammar::compute_follow_sets() {
-    HashMap<ExtendedInfo, int> done;
-    HashMap<ExtendedInfo, int> rule_count;
-    HashMap<ExtendedInfo, Vector<ExtendedInfo>> needed;
+    HashMap<ExtendedInfo, Vector<ExtendedInfo>> to_add;
 
     auto& first_rule = m_rules.get(0).lhs();
     m_follow_sets.put(first_rule, std::make_shared<HashMap<StringView, bool>>());
     (*m_follow_sets.get(first_rule))->put("End", true);
-    rule_count.put(first_rule, 0);
 
     Vector<int> last_processed;
     for (int i = 0; i < m_rules.size(); i++) {
@@ -196,112 +195,68 @@ void ExtendedGrammar::compute_follow_sets() {
         if (!m_follow_sets.get(rule)) {
             m_follow_sets.put(rule, std::make_shared<HashMap<StringView, bool>>());
         }
-        done.put(rule, 0);
-        m_rules[i].components().for_each([&](const ExtendedInfo& info) {
-            if (m_token_types.includes(info.name)) {
-                return;
-            }
 
-            int* count = rule_count.get(info);
-            if (!count) {
-                rule_count.put(info, 1);
-            } else {
-                (*count)++;
-            }
-        });
         last_processed.add(0);
-
         Vector<ExtendedInfo> v;
-        needed.put(rule, v);
+        to_add.put(rule, v);
     }
 
-    auto is_done = [&](const auto& info) {
-        assert(done.get(info));
-        assert(rule_count.get(info));
-        return *done.get(info) >= *rule_count.get(info);
-    };
+    for (int i = 0; i < m_rules.size(); i++) {
+        const auto& self = m_rules[i].lhs();
+        for (; last_processed[i] < m_rules[i].components().size(); last_processed[i]++) {
+            const auto& info = m_rules[i].components()[last_processed[i]];
+            if (m_token_types.includes(info.name)) {
+                continue;
+            }
 
-    assert(is_done(first_rule));
+            if (last_processed[i] == m_rules[i].components().size() - 1) {
+            add_self:
+#ifdef FOLLOW_SET_DEBUG
+                fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
+                        self.stringify().string());
+#endif /* FOLLOW_SET_DEBUG */
+                if (!to_add.get(info)->includes(self) && info != self) {
+                    to_add.get(info)->add(self);
+                }
+                continue;
+            }
 
-    bool all_done = false;
-    while (!all_done) {
-        all_done = true;
-        for (int i = 0; i < m_rules.size(); i++) {
-            const auto& self = m_rules[i].lhs();
-            for (; last_processed[i] < m_rules[i].components().size(); last_processed[i]++) {
-                const auto& info = m_rules[i].components()[last_processed[i]];
-                if (m_token_types.includes(info.name)) {
+            for (int j = last_processed[i] + 1; j <= m_rules[i].components().size(); j++) {
+                if (j == m_rules[i].components().size()) {
+                    goto add_self;
+                }
+
+                const auto& next = m_rules[i].components()[j];
+                bool contains_empty = !!(*m_first_sets.get(next))->get("__Empty");
+                make_union(**m_follow_sets.get(info), **m_first_sets.get(next));
+                if (contains_empty) {
+                    (*m_follow_sets.get(info))->remove("__Empty");
                     continue;
                 }
-
-                if (last_processed[i] == m_rules[i].components().size() - 1) {
-                add_self:
-                    if (is_done(self)) {
-                        make_union(**m_follow_sets.get(info), **m_follow_sets.get(self));
 #ifdef FOLLOW_SET_DEBUG
-                        fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info),
-                                *rule_count.get(info), self.stringify().string());
+                fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
+                        next.stringify().string());
 #endif /* FOLLOW_SET_DEBUG */
-                        (*done.get(info))++;
-                        continue;
-                    } else {
-#ifdef FOLLOW_SET_DEBUG
-                        fprintf(stderr, "%s [%d of %d] needs %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
-                                self.stringify().string());
-#endif /* FOLLOW_SET_DEBUG */
-                        if (!needed.get(info)->includes(self)) {
-                            needed.get(info)->add(self);
-                        }
-                        break;
-                    }
-                }
-
-                for (int j = last_processed[i] + 1; j <= m_rules[i].components().size(); j++) {
-                    if (j == m_rules[i].components().size()) {
-                        goto add_self;
-                    }
-
-                    const auto& next = m_rules[i].components()[j];
-                    bool contains_empty = !!(*m_first_sets.get(next))->get("__Empty");
-                    make_union(**m_follow_sets.get(info), **m_first_sets.get(next));
-                    if (contains_empty) {
-                        (*m_follow_sets.get(info))->remove("__Empty");
-                        continue;
-                    }
-                    (*done.get(info))++;
-#ifdef FOLLOW_SET_DEBUG
-                    fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
-                            next.stringify().string());
-#endif /* FOLLOW_SET_DEBUG */
-                    break;
-                }
-            }
-
-            if (last_processed[i] < m_rules[i].components().size()) {
-                all_done = false;
+                break;
             }
         }
+    }
 
-        m_rules.for_each([&](auto& rule) {
-            needed.get(rule.lhs())->remove_if([&](auto& other) -> bool {
-                // Detect circular dependency
-                return needed.get(other)->remove_if([&](auto& part) -> bool {
-                    if (rule.lhs() == part) {
-#ifdef FOLLOW_SET_DEBUG
-                        fprintf(stderr, "Removing circular dependency: %s on %s\n", rule.lhs().stringify().string(),
-                                other.stringify().string());
-#endif /* FOLLOW_SET_DEBUG */
-                        make_union(**m_follow_sets.get(rule.lhs()), **m_follow_sets.get(other));
-                        make_union(**m_follow_sets.get(other), **m_follow_sets.get(rule.lhs()));
-                        (*done.get(other))++;
-                        (*done.get(rule.lhs()))++;
-                        return true;
-                    }
-
-                    return false;
-                });
+    for (;;) {
+        bool did_anything = false;
+        to_add.for_each_key([&](const ExtendedInfo& info) {
+            const Vector<ExtendedInfo>& need_to_add = *to_add.get(info);
+            need_to_add.for_each([&](const ExtendedInfo& add) {
+                bool did_something = make_union(**m_follow_sets.get(info), **m_follow_sets.get(add));
+                if (did_something) {
+                    did_anything = true;
+                }
             });
         });
+
+        if (!did_anything) {
+            break;
+        }
     }
 }
 
