@@ -6,3 +6,6 @@ test*
 generic_sh_parser.*
 y.*
 parser
+c_token_type*
+generic_sh*
+generic*

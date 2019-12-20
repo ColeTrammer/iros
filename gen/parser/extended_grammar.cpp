@@ -242,14 +242,24 @@ void ExtendedGrammar::compute_follow_sets() {
         }
     }
 
+    HashMap<ExtendedInfo, bool> was_updated;
+    to_add.for_each_key([&](const auto& rule) {
+        was_updated.put(rule, true);
+    });
+
     for (;;) {
         bool did_anything = false;
+        HashMap<ExtendedInfo, bool> was_updated_this_round;
         to_add.for_each_key([&](const ExtendedInfo& info) {
             const Vector<ExtendedInfo>& need_to_add = *to_add.get(info);
             need_to_add.for_each([&](const ExtendedInfo& add) {
-                bool did_something = make_union(**m_follow_sets.get(info), **m_follow_sets.get(add));
-                if (did_something) {
-                    did_anything = true;
+                bool* did_something_last_round = was_updated.get(add);
+                if (did_something_last_round && *did_something_last_round) {
+                    bool did_something = make_union(**m_follow_sets.get(info), **m_follow_sets.get(add));
+                    if (did_something) {
+                        was_updated_this_round.put(info, true);
+                        did_anything = true;
+                    }
                 }
             });
         });
@@ -257,6 +267,8 @@ void ExtendedGrammar::compute_follow_sets() {
         if (!did_anything) {
             break;
         }
+
+        was_updated = was_updated_this_round;
     }
 }
 
