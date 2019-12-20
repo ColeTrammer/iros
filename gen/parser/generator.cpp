@@ -143,21 +143,21 @@ void Generator::generate_generic_parser(String path) {
             fprintf(file, "%s", String::format("            case %d:\n", i).string());
             fprintf(file, "                switch (this->peek_token_type()) {\n");
 
-            bool default_used = false;
+            HashMap<Action, Vector<StringView>> actions;
             row.for_each_key([&](const StringView& name) {
                 const Action& action = *row.get(name);
-
-#if 0
-            if (/*name == "End" && */ action.type == Action::Type::Reduce) {
-                if (default_used) {
-                    return;
+                if (!actions.get(action)) {
+                    actions.put(action, Vector<StringView>());
                 }
-                fprintf(file, "                    default: {\n");
-                default_used = true;
-            } 
-            else
-#endif
-                fprintf(file, "                    case %sTokenType::%s: {\n", m_output_name.string(), String(name).string());
+                actions.get(action)->add(name);
+            });
+
+            actions.for_each_key([&](const Action& action) {
+                const auto& names = *actions.get(action);
+                for (int i = 0; i < names.size(); i++) {
+                    fprintf(file, "                    case %sTokenType::%s: %s\n", m_output_name.string(), String(names[i]).string(),
+                            i == names.size() - 1 ? "{" : "");
+                }
 
                 switch (action.type) {
                     case Action::Type::Accept:
@@ -199,11 +199,9 @@ void Generator::generate_generic_parser(String path) {
                 fprintf(file, "                    }\n");
             });
 
-            if (!default_used) {
-                fprintf(file, "                    default:\n");
-                fprintf(file, "                        on_error(this->peek_token_type());\n");
-                fprintf(file, "                        return false;\n");
-            }
+            fprintf(file, "                    default:\n");
+            fprintf(file, "                        on_error(this->peek_token_type());\n");
+            fprintf(file, "                        return false;\n");
 
             fprintf(file, "                }\n");
         }

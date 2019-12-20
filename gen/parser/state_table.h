@@ -55,6 +55,8 @@ struct Action {
     Type type;
     int number;
 
+    bool operator==(const Action& other) const { return this->type == other.type && this->number == other.number; }
+
     String stringify() const {
         switch (type) {
             case Type::Accept:
@@ -70,6 +72,19 @@ struct Action {
         return "?????";
     }
 };
+
+namespace LIIM {
+
+template<> struct Traits<Action> {
+    static constexpr bool is_simple() { return false; }
+    static unsigned int hash(const Action& action) {
+        unsigned int v = (unsigned int) action.type;
+        v += Traits<int>::hash(action.number);
+        return v;
+    }
+};
+
+}
 
 class StateTable {
 public:
