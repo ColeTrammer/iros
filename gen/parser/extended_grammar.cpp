@@ -2,7 +2,7 @@
 
 #include "extended_grammar.h"
 
-#define START_SET_DEBUG
+// #define START_SET_DEBUG
 // #define FOLLOW_SET_DEBUG
 
 ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, const Vector<StringView>& token_types)
@@ -37,7 +37,7 @@ ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, c
     compute_follow_sets();
 }
 
-static bool make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2, bool log = false) {
+static bool make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2) {
     if (s2.empty()) {
         return false;
     }
@@ -54,10 +54,8 @@ static bool make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, 
 }
 
 void ExtendedGrammar::compute_first_sets() {
-    HashMap<ExtendedInfo, int> done;
-    HashMap<ExtendedInfo, int> rule_count;
     HashMap<ExtendedInfo, Vector<ExtendedInfo>> to_add;
-
+    HashMap<ExtendedInfo, Vector<int>> start_dependencies;
     Vector<int> start_indexes;
 
     m_rules.for_each([&](const auto& rule) {
@@ -67,15 +65,12 @@ void ExtendedGrammar::compute_first_sets() {
             m_first_sets.put(rule.lhs(), std::make_shared<HashMap<StringView, bool>>());
         }
 
-        if (!to_add.get(rule.lhs())) {
-            to_add.put(rule.lhs(), Vector<ExtendedInfo>());
+        if (!start_dependencies.get(rule.lhs())) {
+            start_dependencies.put(rule.lhs(), Vector<int>());
         }
 
-        int* count = rule_count.get(rule.lhs());
-        if (!count) {
-            rule_count.put(rule.lhs(), 1);
-        } else {
-            (*count)++;
+        if (!to_add.get(rule.lhs())) {
+            to_add.put(rule.lhs(), Vector<ExtendedInfo>());
         }
 
         rule.components().for_each([&](const ExtendedInfo& info) {
@@ -83,16 +78,10 @@ void ExtendedGrammar::compute_first_sets() {
                 auto set1 = std::make_shared<HashMap<StringView, bool>>();
                 set1->put(info.name, true);
                 m_first_sets.put(info, set1);
-                done.put(info, 1);
-                rule_count.put(info, 1);
+                start_dependencies.put(info, Vector<int>());
             }
         });
     });
-
-    auto is_done = [&](const ExtendedInfo& info) -> bool {
-        assert(rule_count.get(info));
-        return done.get_or(info, 0) == rule_count.get_or(info, -1);
-    };
 
     bool all_done = false;
     while (!all_done) {
@@ -101,11 +90,10 @@ void ExtendedGrammar::compute_first_sets() {
         m_rules.for_each([&](ExtendedRule& rule) {
             current_index++;
             const auto& name = rule.lhs();
-            if (is_done(name)) {
+            if ((*m_first_sets.get(name))->get("__Start")) {
                 return;
             }
 
-            bool could_compute = true;
             auto& set = *m_first_sets.get(name);
             int& ended = start_indexes.get(current_index);
             if (ended == -1) {
@@ -120,51 +108,26 @@ void ExtendedGrammar::compute_first_sets() {
                     break;
                 }
 
-                if (!is_done(rule_name)) {
-                    could_compute = false;
-                    break;
-                }
-
                 assert(m_first_sets.get(rule_name));
                 HashMap<StringView, bool>& other_set = **m_first_sets.get(rule_name);
 
+                if (!start_dependencies.get(rule_name)->includes(current_index)) {
+                    start_dependencies.get(rule_name)->add(current_index);
+                }
+
                 if (!other_set.get("__Empty")) {
                     every_contain_empty = false;
-                    break;
                 }
                 continue;
             }
 
-            if (could_compute) {
-                ended = -1;
-                if (rule.components().size() == 0 || every_contain_empty) {
-                    set->put("__Empty", true);
-                }
-
-                int* done_count = done.get(name);
-                if (!done_count) {
-                    done.put(name, 1);
-#ifdef START_SET_DEBUG
-                    fprintf(stderr, "Bump done count: %s [%d/%d]\n", name.stringify().string(), 1, rule_count.get_or(name, -1));
-                    fprintf(stderr, "    Set: {");
-                    set->for_each_key([&](const auto& st) {
-                        fprintf(stderr, " %s", String(st).string());
-                    });
-                    fprintf(stderr, " }\n");
-#endif /* START_SET_DEBUG */
-                } else {
-                    (*done_count)++;
-#ifdef START_SET_DEBUG
-                    fprintf(stderr, "Bump done count: %s [%d/%d]\n", name.stringify().string(), *done_count, rule_count.get_or(name, -1));
-                    fprintf(stderr, "    Set: {");
-                    set->for_each_key([&](const auto& st) {
-                        fprintf(stderr, " %s", String(st).string());
-                    });
-                    fprintf(stderr, " }\n");
-#endif /* START_SET_DEBUG */
-                }
-            } else {
+            ended = -1;
+            if (rule.components().size() == 0 || every_contain_empty) {
+                set->put("__Empty", true);
                 all_done = false;
+                start_dependencies.get(name)->for_each([&](int& i) {
+                    start_indexes[i] = 0;
+                });
             }
         });
     }
@@ -193,7 +156,7 @@ void ExtendedGrammar::compute_first_sets() {
             const Vector<ExtendedInfo>& need_to_add = *to_add.get(info);
             need_to_add.for_each([&](const ExtendedInfo& add) {
                 bool* did_something_last_round = was_updated.get(add);
-                if (first_round || did_something_last_round && *did_something_last_round) {
+                if (first_round || (did_something_last_round && *did_something_last_round)) {
                     bool did_something = make_union(**m_first_sets.get(info), **m_first_sets.get(add));
                     if (did_something) {
                         was_updated_this_round.put(info, true);
@@ -281,7 +244,7 @@ void ExtendedGrammar::compute_follow_sets() {
             const Vector<ExtendedInfo>& need_to_add = *to_add.get(info);
             need_to_add.for_each([&](const ExtendedInfo& add) {
                 bool* did_something_last_round = was_updated.get(add);
-                if (first_round || did_something_last_round && *did_something_last_round) {
+                if (first_round || (did_something_last_round && *did_something_last_round)) {
                     bool did_something = make_union(**m_follow_sets.get(info), **m_follow_sets.get(add));
                     if (did_something) {
                         was_updated_this_round.put(info, true);
