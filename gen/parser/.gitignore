@@ -4,3 +4,5 @@ sh_*
 test*
 *test*
 generic_sh_parser.*
+y.*
+parser

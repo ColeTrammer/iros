@@ -46,6 +46,7 @@ Vector<Token<TokenType>> Lexer::lex() {
                     consume();
                 }
                 break;
+            case '\t':
             case ' ':
             case '\r':
             case '\n':
