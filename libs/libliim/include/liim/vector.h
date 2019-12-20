@@ -195,6 +195,31 @@ public:
         }
     }
 
+    void insert(const T& val, int position) {
+        assert(position >= 0 && position <= size());
+        if (position == size()) {
+            add(val);
+            return;
+        }
+
+        if (m_size >= m_capacity) {
+            increase_capacity();
+            allocate_vector();
+        }
+        m_size++;
+
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector + position + 1, m_vector + position, sizeof(T) * (size() - position - 1));
+        } else {
+            for (int j = size() - 1; j > position; j--) {
+                new (m_vector + j) T(get(j - 1));
+                get(j - 1).~T();
+            }
+        }
+
+        new (m_vector + position) T(val);
+    }
+
     template<typename C> bool remove_if(C callback) {
         bool removed = false;
         for_each_reverse([&](auto& elem) {

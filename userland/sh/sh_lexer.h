@@ -160,7 +160,7 @@ private:
                 prev_was_backslash = false;
             }
 
-            if (found_equal && !(m_tokens.last().type() != ShTokenType::WORD && text.start()[0] == '=')) {
+            if (found_equal && !((m_tokens.size() == 0 || m_tokens.last().type() != ShTokenType::WORD) && text.start()[0] == '=')) {
                 type = ShTokenType::ASSIGNMENT_WORD;
             }
         }

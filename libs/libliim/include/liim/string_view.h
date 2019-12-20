@@ -47,7 +47,7 @@ private:
 };
 
 template<> struct Traits<StringView> {
-    static constexpr bool is_simple() { return false; }
+    static constexpr bool is_simple() { return true; }
     static unsigned int hash(const StringView& s) {
         unsigned int v = 0;
         for (int i = 0; i < s.size(); i++) {

@@ -179,7 +179,7 @@ void Generator::generate_generic_parser(String path) {
                         assert(info);
                         String args = "";
                         for (int i = 0; i < info->arg_count; i++) {
-                            fprintf(file, "                        Value v%d = this->pop_stack_state();\n", i);
+                            fprintf(file, "                        Value v%d = this->pop_stack_state();\n", info->arg_count - i - 1);
                             args += String::format("v%d", i);
                             if (i != info->arg_count - 1) {
                                 args += ", ";

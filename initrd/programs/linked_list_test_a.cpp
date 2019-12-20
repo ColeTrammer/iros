@@ -1,3 +1,4 @@
+#include <liim/inline_queue.h>
 #include <liim/linked_list.h>
 #include <stdio.h>
 
@@ -15,6 +16,25 @@ int main() {
     l.for_each([](auto& elem) {
         printf("%d\n", elem);
     });
+
+    struct ListItem : public InlineLinkedListNode<ListItem> {
+        ListItem(int _value) { value = _value; }
+
+        int value;
+    };
+
+    InlineQueue<ListItem> items;
+    items.add({ 0 });
+    items.add({ 1 });
+    items.add({ 2 });
+    assert(items.size() == 3);
+
+    printf("Head: %p\n", items.head());
+
+    while (!items.empty()) {
+        int value = items.take_one().value;
+        printf("Value: %d\n", value);
+    }
 
     return 0;
 }
