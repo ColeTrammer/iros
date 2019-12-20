@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
     StringView* start_name = nullptr;
 
     Vector<StringView> token_types;
+    LinkedList<String> literals;
 
     bool out_of_declarations = false;
     for (int i = 0; i < tokens.size(); i++) {
@@ -66,9 +67,11 @@ int main(int argc, char** argv) {
                 start_name = &tokens[++i].text();
                 break;
             case TokenType::TokenLiteral: {
-                StringView real_name = literal_to_token(token.text());
-                if (!token_types.includes(real_name))
-                    token_types.add(real_name);
+                String real_name = literal_to_token(token.text());
+                literals.add(real_name);
+                StringView view = StringView(&literals.tail()[0], &literals.tail()[literals.tail().size() - 1]);
+                if (!token_types.includes(view))
+                    token_types.add(view);
                 break;
             }
             case TokenType::TokenPercentPercent:
@@ -116,7 +119,14 @@ int main(int argc, char** argv) {
                     break;
                 case TokenType::TokenLiteral: {
                     if (rule_name) {
-                        rule.components().add(literal_to_token(token.text()));
+                        const String* lit = nullptr;
+                        literals.for_each([&](const auto& s) {
+                            if (s == literal_to_token(token.text())) {
+                                lit = &s;
+                            }
+                        });
+                        assert(lit);
+                        rule.components().add(StringView(&(*lit)[0], &(*lit)[lit->size() - 1]));
                     } else {
                         fprintf(stderr, "Literal cannot be left hand size of rule\n");
                         exit(1);
@@ -189,7 +199,7 @@ int main(int argc, char** argv) {
     output_parser += output_name;
     output_parser += "_parser.h";
 
-    Generator generator(state_table, identifiers, token_types, output_name);
+    Generator generator(state_table, identifiers, token_types, literals, output_name);
     generator.generate_token_type_header(output_header);
     generator.generate_generic_parser(output_parser);
 

@@ -9,3 +9,4 @@ parser
 c_token_type*
 generic_sh*
 generic*
+_*

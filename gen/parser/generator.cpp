@@ -7,8 +7,8 @@
 #include "literal.h"
 
 Generator::Generator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
-                     const String& output_name)
-    : m_table(table), m_identifiers(identifiers), m_token_types(token_types), m_output_name(output_name) {}
+                     const LinkedList<String>& literals, const String& output_name)
+    : m_table(table), m_identifiers(identifiers), m_token_types(token_types), m_literals(literals), m_output_name(output_name) {}
 
 Generator::~Generator() {}
 
@@ -101,8 +101,9 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "        switch (type) {\n");
 
     m_identifiers.for_each([&](const auto& id) {
+        String name = m_literals.includes(String(id)) ? String(token_to_literal(id)).string() : String(id);
         fprintf(file, "            case %sTokenType::%s:\n", String(m_output_name).to_title_case().string(), String(id).string());
-        fprintf(file, "                return \"%s\";\n", String(token_to_literal(id)).string());
+        fprintf(file, "                return \"%s\";\n", name.string());
     });
 
     fprintf(file, "            default:\n");
@@ -110,19 +111,16 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "        }\n");
     fprintf(file, "    }\n\n");
 
-    fprintf(file, "    static %sTokenType character_to_token_type(char c) {\n", String(m_output_name).to_title_case().string());
-    fprintf(file, "        switch (c) {\n");
+    fprintf(file, "    static %sTokenType text_to_token_type(const StringView& text) {\n", String(m_output_name).to_title_case().string());
 
     m_token_types.for_each([&](const auto& t) {
-        if (token_to_literal(t) != t) {
-            fprintf(file, "            case '%s':\n", String(token_to_literal(t)).string());
-            fprintf(file, "                return %sTokenType::%s;\n", String(m_output_name).to_title_case().string(), String(t).string());
+        if (m_literals.includes(String(t))) {
+            fprintf(file, "        if (text == \"%s\")\n", String(token_to_literal(t)).string());
+            fprintf(file, "            return %sTokenType::%s;\n", String(m_output_name).to_title_case().string(), String(t).string());
         }
     });
 
-    fprintf(file, "            default:\n");
-    fprintf(file, "                return %sTokenType::End;\n", String(m_output_name).to_title_case().string());
-    fprintf(file, "        }\n");
+    fprintf(file, "        return %sTokenType::End;\n", String(m_output_name).to_title_case().string());
     fprintf(file, "    }\n\n");
 
     fprintf(file, "    virtual bool parse() override;\n");
@@ -155,8 +153,8 @@ void Generator::generate_generic_parser(String path) {
             actions.for_each_key([&](const Action& action) {
                 const auto& names = *actions.get(action);
                 for (int i = 0; i < names.size(); i++) {
-                    fprintf(file, "                    case %sTokenType::%s: %s\n", m_output_name.string(), String(names[i]).string(),
-                            i == names.size() - 1 ? "{" : "");
+                    fprintf(file, "                    case %sTokenType::%s:%s\n", m_output_name.string(), String(names[i]).string(),
+                            i == names.size() - 1 ? " {" : "");
                 }
 
                 switch (action.type) {

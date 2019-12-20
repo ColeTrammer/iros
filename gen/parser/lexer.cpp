@@ -24,7 +24,8 @@ Vector<Token<TokenType>> Lexer::lex() {
     bool in_token_decl = false;
 
     while (m_pos < m_size) {
-        switch (m_buffer[m_pos]) {
+        char start = m_buffer[m_pos];
+        switch (start) {
             case '%':
                 if (in_percent) {
                     consume();
@@ -58,10 +59,11 @@ Vector<Token<TokenType>> Lexer::lex() {
                 }
                 consume();
                 break;
+            case '"':
             case '\'':
                 consume();
                 begin_token();
-                while (m_buffer[m_pos] != '\'') {
+                while (m_buffer[m_pos] != start) {
                     consume();
                 }
                 commit_token(TokenType::TokenLiteral);
