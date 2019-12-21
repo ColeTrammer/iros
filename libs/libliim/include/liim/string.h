@@ -29,7 +29,11 @@ public:
         string()[size()] = '\0';
     }
 
-    ~String() { free(m_string); }
+    ~String() {
+        free(m_string);
+        m_string = nullptr;
+        m_size = 0;
+    }
 
     int size() const { return m_size; }
     void set_size(int size) { m_size = size; }
@@ -40,6 +44,15 @@ public:
     char& operator[](int index) { return string()[index]; }
 
     const char& operator[](int index) const { return string()[index]; }
+
+    String& operator=(const String& other) {
+        free(m_string);
+
+        this->m_string = strdup(other.string());
+        assert(this->m_string);
+        this->m_size = other.m_size;
+        return *this;
+    }
 
     bool operator==(const String& other) const { return strcmp(string(), other.string()) == 0; }
     bool operator!=(const String& other) const { return !(*this == other); }

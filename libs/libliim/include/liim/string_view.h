@@ -16,6 +16,12 @@ public:
         m_end = nullptr;
     }
 
+    StringView& operator=(const StringView& other) {
+        this->m_start = other.start();
+        this->m_end = other.end();
+        return *this;
+    }
+
     int size() const { return m_end - m_start + 1; }
 
     const char* start() const { return m_start; }

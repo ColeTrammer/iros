@@ -21,6 +21,94 @@ void print_usage_and_exit(char** argv) {
     exit(1);
 }
 
+static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector<StringView>& token_types, Vector<Rule>& rules,
+                                  LinkedList<String>& literals, int position, int& end_position, int& rule_index) {
+    static LinkedList<String> created_strings;
+
+    Vector<StringView> result;
+    for (end_position = position; end_position < tokens.size() && tokens[end_position].type() != TokenType::TokenRightParenthesis;
+         end_position++) {
+        auto& token = tokens.get(end_position);
+        switch (token.type()) {
+            case TokenType::TokenWord:
+                result.add(token.text());
+                break;
+            case TokenType::TokenLeftParenthesis:
+                result.add(reduce_grouping(tokens, token_types, rules, literals, end_position + 1, end_position, rule_index));
+                break;
+            case TokenType::TokenLiteral: {
+                String real_name = literal_to_token(token.text());
+                literals.add(real_name);
+                StringView view = StringView(&literals.tail()[0], &literals.tail()[literals.tail().size() - 1]);
+                if (!token_types.includes(view)) {
+                    token_types.add(view);
+                }
+                result.add(view);
+                break;
+            }
+            default:
+                fprintf(stderr, "Syntax error\n");
+                exit(1);
+                break;
+        }
+    }
+
+    String prefix = "match_";
+    if (++end_position < tokens.size()) {
+        switch (tokens[end_position].type()) {
+            case TokenType::TokenQuestionMark:
+                prefix = "optional_";
+                break;
+            case TokenType::TokenStar:
+                prefix = "zero_or_more_";
+                break;
+            case TokenType::TokenPlus:
+                prefix = "one_or_more_";
+                break;
+            default:
+                break;
+        }
+    }
+
+    for (int i = 0; i < result.size(); i++) {
+        prefix += String(result.get(i));
+        if (i != result.size() - 1) {
+            prefix += "_";
+        }
+    }
+
+    created_strings.add(prefix);
+    StringView view = StringView(&created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1]);
+    if (end_position < tokens.size()) {
+        switch (tokens[end_position].type()) {
+            case TokenType::TokenQuestionMark: {
+                Rule e;
+                e.name() = view;
+                if (!rules.includes(e)) {
+                    e.set_number(rule_index++);
+                    rules.add(e);
+                }
+                goto regular;
+            }
+            default:
+                end_position--;
+                goto regular;
+        }
+    } else {
+    regular:
+        Rule r;
+        r.name() = view;
+        r.components() = result;
+        if (!rules.includes(r)) {
+            r.set_number(rule_index++);
+            fprintf(stderr, "Adding: %s\n", r.stringify().string());
+            rules.add(r);
+        }
+    }
+
+    return view;
+}
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         print_usage_and_exit(argv);
@@ -87,7 +175,7 @@ int main(int argc, char** argv) {
     bool start = false;
     StringView* rule_name = nullptr;
     Rule rule;
-    int num = 0;
+    int num = 1;
 
     for (int i = 0; i < tokens.size(); i++) {
         auto& token = tokens.get(i);
@@ -114,9 +202,11 @@ int main(int argc, char** argv) {
                     }
                     rule_name = &token.text();
                     // Fall through
+                case TokenType::TokenEnd:
                 case TokenType::TokenPipe:
                     if (!rules.includes(rule)) {
                         rule.set_number(num++);
+                        fprintf(stderr, "adding: %s\n", rule.stringify().string());
                         rules.add(rule);
                     }
                     rule.components().clear();
@@ -130,6 +220,11 @@ int main(int argc, char** argv) {
                     });
                     assert(lit);
                     rule.components().add(StringView(&(*lit)[0], &(*lit)[lit->size() - 1]));
+                    break;
+                }
+                case TokenType::TokenLeftParenthesis: {
+                    StringView added = reduce_grouping(tokens, token_types, rules, literals, i + 1, i, num);
+                    rule.components().add(added);
                     break;
                 }
                 default:
@@ -160,8 +255,8 @@ int main(int argc, char** argv) {
     fprintf(stderr, "\n");
 
     Vector<StringView> identifiers;
-    identifiers.add("End");
     token_types.for_each([&](auto& s) {
+        printf("%s\n", String(s).string());
         identifiers.add(s);
     });
 
@@ -176,12 +271,8 @@ int main(int argc, char** argv) {
     dummy_start.components().add(start_rule->name());
     dummy_start.set_number(0);
 
-    rules.for_each([&](auto& rule) {
-        rule.set_number(rule.number() + 1);
-    });
-
-    rules.add(dummy_start);
-    start_rule = &rules.last();
+    rules.insert(dummy_start, 0);
+    start_rule = &rules.get(0);
 
     identifiers.add("__start");
     fprintf(stderr, "Added __start rule: %s\n", dummy_start.stringify().string());

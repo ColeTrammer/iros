@@ -77,6 +77,60 @@ Vector<Token<TokenType>> Lexer::lex() {
                 consume();
                 commit_token(TokenType::TokenPipe);
                 break;
+            case '(':
+            case '[':
+                if (m_token_start) {
+                    commit_token(TokenType::TokenWord);
+                }
+                begin_token();
+                consume();
+                commit_token(TokenType::TokenLeftParenthesis);
+                break;
+            case ')':
+            case ']':
+                if (m_token_start) {
+                    commit_token(TokenType::TokenWord);
+                }
+                begin_token();
+                consume();
+                commit_token(TokenType::TokenRightParenthesis);
+                break;
+            case '+':
+                if (m_token_start) {
+                    commit_token(TokenType::TokenWord);
+                }
+                if (m_vector.last().type() != TokenType::TokenRightParenthesis) {
+                    m_vector.insert({ TokenType::TokenLeftParenthesis, "(" }, m_vector.size() - 1);
+                    m_vector.add({ TokenType::TokenRightParenthesis, ")" });
+                }
+                begin_token();
+                consume();
+                commit_token(TokenType::TokenPlus);
+                break;
+            case '*':
+                if (m_token_start) {
+                    commit_token(TokenType::TokenWord);
+                }
+                if (m_vector.last().type() != TokenType::TokenRightParenthesis) {
+                    m_vector.insert({ TokenType::TokenLeftParenthesis, "(" }, m_vector.size() - 1);
+                    m_vector.add({ TokenType::TokenRightParenthesis, ")" });
+                }
+                begin_token();
+                consume();
+                commit_token(TokenType::TokenStar);
+                break;
+            case '?':
+                if (m_token_start) {
+                    commit_token(TokenType::TokenWord);
+                }
+                if (m_vector.last().type() != TokenType::TokenRightParenthesis) {
+                    m_vector.insert({ TokenType::TokenLeftParenthesis, "(" }, m_vector.size() - 1);
+                    m_vector.add({ TokenType::TokenRightParenthesis, ")" });
+                }
+                begin_token();
+                consume();
+                commit_token(TokenType::TokenQuestionMark);
+                break;
             case ':':
                 if (m_token_start) {
                     commit_token(TokenType::TokenLhs);
@@ -123,5 +177,6 @@ Vector<Token<TokenType>> Lexer::lex() {
         }
     }
 
+    m_vector.add({ TokenType::TokenEnd, "END" });
     return m_vector;
 }
