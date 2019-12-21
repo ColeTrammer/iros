@@ -5,6 +5,7 @@
     __ENUMERATE_TOKEN_TYPES(StartMarker)    \
     __ENUMERATE_TOKEN_TYPES(PercentPercent) \
     __ENUMERATE_TOKEN_TYPES(Word)           \
+    __ENUMERATE_TOKEN_TYPES(Lhs)            \
     __ENUMERATE_TOKEN_TYPES(Colon)          \
     __ENUMERATE_TOKEN_TYPES(Pipe)           \
     __ENUMERATE_TOKEN_TYPES(Semicolon)      \

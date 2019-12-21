@@ -47,7 +47,9 @@ public:
         return ret;
     }
 
-    bool operator==(const Rule& other) const { return this->number() == other.number() && this->position() == other.position(); }
+    bool operator==(const Rule& other) const {
+        return this->name() == other.name() && this->components() == other.components() && this->position() == other.position();
+    }
 
     int position() const { return m_position; }
     void increment_position() { m_position++; }

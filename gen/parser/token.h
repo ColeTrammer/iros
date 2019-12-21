@@ -8,6 +8,8 @@ public:
     Token(const Token& other) : m_type(other.type()), m_text(other.text()) {}
 
     Type type() const { return m_type; };
+    void set_type(Type type) { m_type = type; }
+
     const StringView& text() const { return m_text; }
     StringView& text() { return m_text; }
 

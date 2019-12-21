@@ -79,11 +79,16 @@ Vector<Token<TokenType>> Lexer::lex() {
                 break;
             case ':':
                 if (m_token_start) {
-                    commit_token(TokenType::TokenWord);
+                    commit_token(TokenType::TokenLhs);
+                } else {
+                    m_vector.last().set_type(TokenType::TokenLhs);
                 }
                 begin_token();
                 consume();
                 commit_token(TokenType::TokenColon);
+                while (m_pos < m_size && (m_buffer[m_pos] == ':' || m_buffer[m_pos] == '=')) {
+                    m_pos++;
+                }
                 break;
             case ';':
                 if (m_token_start) {

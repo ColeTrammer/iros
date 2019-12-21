@@ -99,38 +99,37 @@ int main(int argc, char** argv) {
         if (start) {
             switch (token.type()) {
                 case TokenType::TokenWord:
-                    if (rule_name) {
-                        rule.components().add(token.text());
-                    } else {
-                        rule_name = &token.text();
-                    }
+                    rule.components().add(token.text());
                     break;
                 case TokenType::TokenColon:
                     assert(rule_name);
                     rule.name() = *rule_name;
                     break;
                 case TokenType::TokenSemicolon:
-                    rule_name = nullptr;
+                    break;
+                case TokenType::TokenLhs:
+                    if (!rule_name) {
+                        rule_name = &token.text();
+                        break;
+                    }
+                    rule_name = &token.text();
                     // Fall through
                 case TokenType::TokenPipe:
-                    rule.set_number(num++);
-                    rules.add(rule);
+                    if (!rules.includes(rule)) {
+                        rule.set_number(num++);
+                        rules.add(rule);
+                    }
                     rule.components().clear();
                     break;
                 case TokenType::TokenLiteral: {
-                    if (rule_name) {
-                        const String* lit = nullptr;
-                        literals.for_each([&](const auto& s) {
-                            if (s == literal_to_token(token.text())) {
-                                lit = &s;
-                            }
-                        });
-                        assert(lit);
-                        rule.components().add(StringView(&(*lit)[0], &(*lit)[lit->size() - 1]));
-                    } else {
-                        fprintf(stderr, "Literal cannot be left hand size of rule\n");
-                        exit(1);
-                    }
+                    const String* lit = nullptr;
+                    literals.for_each([&](const auto& s) {
+                        if (s == literal_to_token(token.text())) {
+                            lit = &s;
+                        }
+                    });
+                    assert(lit);
+                    rule.components().add(StringView(&(*lit)[0], &(*lit)[lit->size() - 1]));
                     break;
                 }
                 default:
@@ -141,13 +140,22 @@ int main(int argc, char** argv) {
 
     fprintf(stderr, "\n");
 
+    if (rules.size() == 0) {
+        fprintf(stderr, "No rules.\n");
+        exit(1);
+    }
+
     Rule* start_rule = nullptr;
-    rules.for_each([&](auto& rule) {
-        if (rule.name() == *start_name) {
-            start_rule = &rule;
-        }
-        fprintf(stderr, "%s\n", rule.stringify().string());
-    });
+    if (!start_name) {
+        start_rule = &rules.get(0);
+    } else {
+        rules.for_each([&](auto& rule) {
+            if (rule.name() == *start_name) {
+                start_rule = &rule;
+            }
+            fprintf(stderr, "%s\n", rule.stringify().string());
+        });
+    }
 
     fprintf(stderr, "\n");
 
