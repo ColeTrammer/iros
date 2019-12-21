@@ -14,6 +14,11 @@ class String {
 public:
     String() {}
 
+    String(char c) : m_size(2), m_string(reinterpret_cast<char*>(malloc(2))) {
+        m_string[0] = c;
+        m_string[1] = '\0';
+    }
+
     String(const char* chars) : m_size(strlen(chars)), m_string(strdup(chars)) {}
 
     String(const String& other) : m_size(other.size()), m_string(strdup(other.string())) {}
@@ -36,7 +41,8 @@ public:
 
     const char& operator[](int index) const { return string()[index]; }
 
-    bool operator==(const String& other) { return strcmp(string(), other.string()) == 0; }
+    bool operator==(const String& other) const { return strcmp(string(), other.string()) == 0; }
+    bool operator!=(const String& other) const { return !(*this == other); }
 
     String& operator+=(const String& other) {
         m_size += other.size();

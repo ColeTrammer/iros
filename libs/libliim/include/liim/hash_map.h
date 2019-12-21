@@ -52,6 +52,13 @@ public:
     }
 
     void put(const K& key, const V& val) {
+        V* slot = get(key);
+        if (slot) {
+            slot->~V();
+            new (slot) V(val);
+            return;
+        }
+
         int bucket = Traits<K>::hash(key) % m_buckets.size();
         m_buckets[bucket].prepend(HashMapObj(key, val));
     }

@@ -31,6 +31,20 @@ public:
         return -1;
     }
 
+    bool starts_with(const StringView& other) const {
+        if (this->size() < other.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < other.size(); i++) {
+            if (this->start()[i] != other.start()[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     bool operator==(const StringView& other) const {
         if (other.size() != this->size()) {
             return false;
@@ -47,7 +61,7 @@ private:
 };
 
 template<> struct Traits<StringView> {
-    static constexpr bool is_simple() { return true; }
+    static constexpr bool is_simple() { return false; }
     static unsigned int hash(const StringView& s) {
         unsigned int v = 0;
         for (int i = 0; i < s.size(); i++) {

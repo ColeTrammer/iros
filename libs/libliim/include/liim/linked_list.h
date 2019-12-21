@@ -114,6 +114,27 @@ public:
         }
     }
 
+    T& tail() {
+        LinkedListObj<T>* obj = m_head;
+        while (obj->m_next) {
+            obj = obj->m_next;
+        }
+
+        assert(obj);
+        return obj->m_val;
+    }
+
+    bool includes(const T& val) const {
+        LinkedListObj<T>* iter = m_head;
+        while (iter) {
+            if (val == iter->m_val) {
+                return true;
+            }
+            iter = iter->m_next;
+        }
+        return false;
+    }
+
 private:
     int m_size { 0 };
     LinkedListObj<T>* m_head { nullptr };
