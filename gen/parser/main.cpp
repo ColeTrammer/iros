@@ -77,10 +77,31 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
         }
     }
 
-    created_strings.add(prefix);
+    created_strings.add(prefix.to_lower_case());
     StringView view = StringView(&created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1]);
     if (end_position < tokens.size()) {
         switch (tokens[end_position].type()) {
+            case TokenType::TokenStar: {
+                Rule e;
+                e.name() = view;
+                if (!rules.includes(e)) {
+                    e.set_number(rule_index++);
+                    rules.add(e);
+                }
+            }
+                // Fall through
+            case TokenType::TokenPlus: {
+                Rule r;
+                r.name() = view;
+                Vector<StringView> rhs(result);
+                rhs.insert(view, 0);
+                r.components() = rhs;
+                if (!rules.includes(r)) {
+                    r.set_number(rule_index++);
+                    rules.add(r);
+                }
+                goto regular;
+            }
             case TokenType::TokenQuestionMark: {
                 Rule e;
                 e.name() = view;
@@ -101,7 +122,6 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
         r.components() = result;
         if (!rules.includes(r)) {
             r.set_number(rule_index++);
-            fprintf(stderr, "Adding: %s\n", r.stringify().string());
             rules.add(r);
         }
     }
@@ -185,6 +205,9 @@ int main(int argc, char** argv) {
         }
 
         if (start) {
+            if (token.type() == TokenType::TokenEnd) {
+                fprintf(stderr, "Found end\n");
+            }
             switch (token.type()) {
                 case TokenType::TokenWord:
                     rule.components().add(token.text());
@@ -206,7 +229,6 @@ int main(int argc, char** argv) {
                 case TokenType::TokenPipe:
                     if (!rules.includes(rule)) {
                         rule.set_number(num++);
-                        fprintf(stderr, "adding: %s\n", rule.stringify().string());
                         rules.add(rule);
                     }
                     rule.components().clear();
@@ -256,7 +278,6 @@ int main(int argc, char** argv) {
 
     Vector<StringView> identifiers;
     token_types.for_each([&](auto& s) {
-        printf("%s\n", String(s).string());
         identifiers.add(s);
     });
 

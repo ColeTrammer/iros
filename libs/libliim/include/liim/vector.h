@@ -41,6 +41,32 @@ public:
         }
     }
 
+    Vector<T>& operator=(const Vector<T>& other) {
+        clear();
+        if (m_vector) {
+            free(m_vector);
+            m_vector = nullptr;
+        }
+
+        m_capacity = other.capacity();
+        allocate_vector();
+
+        m_size = other.size();
+        if (m_size == 0) {
+            return *this;
+        }
+
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector, other.m_vector, sizeof(T) * m_size);
+        } else {
+            for (int i = 0; i < m_size; i++) {
+                new (&m_vector[i]) T(other.m_vector[i]);
+            }
+        }
+
+        return *this;
+    }
+
     ~Vector() {
         for (int i = 0; i < m_size; i++) {
             get(i).~T();
@@ -48,8 +74,8 @@ public:
         m_size = 0;
         if (m_vector) {
             free(m_vector);
+            m_vector = nullptr;
         }
-        m_vector = nullptr;
     }
 
     void clear() {

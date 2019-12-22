@@ -177,6 +177,9 @@ Vector<Token<TokenType>> Lexer::lex() {
         }
     }
 
+    if (m_token_start) {
+        commit_token(TokenType::TokenWord);
+    }
     m_vector.add({ TokenType::TokenEnd, "END" });
     return m_vector;
 }
