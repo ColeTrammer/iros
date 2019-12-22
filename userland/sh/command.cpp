@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #include "builtin.h"
 #include "command.h"
@@ -95,16 +96,39 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
     return true;
 }
 
+#ifndef WRDE_SPECIAL
+#define WRDE_SPECIAL 0
+#endif /* WRDE_SPECIAL */
+
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
 static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
     Vector<String> strings;
     Vector<char*> args;
 
+    bool failed = false;
     command.words.for_each([&](const auto& s) {
-        strings.add(s);
-        args.add(strings.last().string());
+        wordexp_t we;
+#ifndef USERLAND_NATIVE
+        we.we_special_vars = &special_vars;
+#endif /* USERLAND_NATIVE */
+        int ret = wordexp(String(s).string(), &we, WRDE_SPECIAL);
+        if (ret != 0) {
+            failed = true;
+            return;
+        }
+
+        for (size_t i = 0; i < we.we_wordc; i++) {
+            strings.add(String(we.we_wordv[i]));
+            args.add(strings.last().string());
+        }
+
+        wordfree(&we);
     });
     args.add(nullptr);
+
+    if (failed) {
+        return -1;
+    }
 
     struct builtin_op* op = builtin_find_op(args[0]);
     bool do_builtin = false;
