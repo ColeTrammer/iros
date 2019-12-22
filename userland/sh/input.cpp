@@ -1,5 +1,5 @@
-#include "builtin.h"
 #include "input.h"
+#include "builtin.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -25,7 +25,7 @@ static char **history;
 static size_t history_length;
 static size_t history_max;
 
-static struct termios saved_termios = { 0 };
+static struct termios saved_termios;
 
 void enable_raw_mode() {
     tcgetattr(STDIN_FILENO, &saved_termios);
@@ -44,13 +44,13 @@ void disable_raw_mode() {
 
 static char *__getcwd() {
     size_t size = 50;
-    char *buffer = malloc(size);
+    char *buffer = (char *) malloc(size);
     char *cwd = getcwd(buffer, size);
 
     while (cwd == NULL) {
         free(buffer);
         size *= 2;
-        buffer = malloc(size);
+        buffer = (char *) malloc(size);
         cwd = getcwd(buffer, size);
     }
 
@@ -77,7 +77,7 @@ static int suggestion_compar(const void *a, const void *b) {
 static void init_suggestion(struct suggestion *suggestions, size_t at, size_t suggestion_index, const char *name, const char *post) {
     suggestions[at].length = strlen(name) + strlen(post);
     suggestions[at].index = suggestion_index;
-    suggestions[at].suggestion = malloc(suggestions[at].length + 1);
+    suggestions[at].suggestion = (char *) malloc(suggestions[at].length + 1);
     strcpy(suggestions[at].suggestion, name);
     strcat(suggestions[at].suggestion, post);
 }
@@ -97,7 +97,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
         int num_found = scandir(search_path, &list, scandir_filter, alphasort);
 
         if (num_found > 0) {
-            suggestions = realloc(suggestions, ((*num_suggestions) + num_found) * sizeof(struct suggestion));
+            suggestions = (struct suggestion *) realloc(suggestions, ((*num_suggestions) + num_found) * sizeof(struct suggestion));
 
             for (int i = 0; i < num_found; i++) {
                 init_suggestion(suggestions, (*num_suggestions) + i, 0, list[i]->d_name, " ");
@@ -115,7 +115,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
     struct builtin_op *builtins = get_builtins();
     for (size_t i = 0; i < NUM_BUILTINS; i++) {
         if (strstr(builtins[i].name, line) == builtins[i].name) {
-            suggestions = realloc(suggestions, ((*num_suggestions) + 1) * sizeof(struct suggestion));
+            suggestions = (struct suggestion *) realloc(suggestions, ((*num_suggestions) + 1) * sizeof(struct suggestion));
 
             init_suggestion(suggestions, *num_suggestions, 0, builtins[i].name, " ");
 
@@ -149,7 +149,7 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
             return get_path_suggestions(line, num_suggestions);
         }
 
-        dirname = ".";
+        dirname = (char *) ".";
         currname = to_match;
     } else {
         *last_slash = '\0';
@@ -165,11 +165,11 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
         return NULL;
     }
 
-    struct suggestion *suggestions = malloc(*num_suggestions * sizeof(struct suggestion));
+    struct suggestion *suggestions = (struct suggestion *) malloc(*num_suggestions * sizeof(struct suggestion));
 
     for (ssize_t i = 0; i < (ssize_t) *num_suggestions; i++) {
         struct stat stat_struct;
-        char *path = malloc(strlen(dirname) + strlen(list[i]->d_name) + 2);
+        char *path = (char *) malloc(strlen(dirname) + strlen(list[i]->d_name) + 2);
         strcpy(path, dirname);
         strcat(path, "/");
         strcat(path, list[i]->d_name);
@@ -291,7 +291,7 @@ static char *get_tty_input(FILE *tty) {
     size_t buffer_index = 0;
     size_t buffer_length = 0;
     size_t buffer_min_index = 0;
-    char *buffer = malloc(buffer_max);
+    char *buffer = (char *) malloc(buffer_max);
 
     char *line_save = NULL;
     size_t hist_index = history_length;
@@ -301,7 +301,7 @@ static char *get_tty_input(FILE *tty) {
     for (;;) {
         if (buffer_length + 1 >= buffer_max) {
             buffer_max += 1024;
-            buffer = realloc(buffer, buffer_max);
+            buffer = (char *) realloc(buffer, buffer_max);
         }
 
         char c;
@@ -310,7 +310,7 @@ static char *get_tty_input(FILE *tty) {
 
         if (ret == -1) {
             // We were interrupted
-            if (errno = EINTR) {
+            if (errno == EINTR) {
                 buffer_length = 0;
                 break;
             } else {
@@ -360,7 +360,7 @@ static char *get_tty_input(FILE *tty) {
 
             if (buffer_length + suggestions->length >= buffer_max - 1) {
                 buffer_max += 1024;
-                buffer = realloc(buffer, buffer_max);
+                buffer = (char *) realloc(buffer, buffer_max);
             }
 
             if (suggestions->length == 0) {
@@ -653,7 +653,7 @@ tty_input_done:
 static char *get_file_input(FILE *file) {
     int sz = 1024;
     int pos = 0;
-    char *buffer = malloc(sz);
+    char *buffer = (char *) malloc(sz);
 
     bool prev_was_backslash = false;
 
@@ -695,7 +695,7 @@ static char *get_file_input(FILE *file) {
 
         if (pos >= sz) {
             sz *= 2;
-            buffer = realloc(buffer, sz);
+            buffer = (char *) realloc(buffer, sz);
         }
     }
 
@@ -717,7 +717,7 @@ static char *get_string_input(struct string_input_source *source) {
 }
 
 struct string_input_source *input_create_string_input_source(char *s) {
-    struct string_input_source *source = malloc(sizeof(struct string_input_source));
+    struct string_input_source *source = (struct string_input_source *) malloc(sizeof(struct string_input_source));
     source->offset = 0;
     source->string = s;
     return source;
@@ -725,11 +725,12 @@ struct string_input_source *input_create_string_input_source(char *s) {
 
 char *input_get_line(struct input_source *source) {
     switch (source->mode) {
-        case INPUT_TTY:
+        case INPUT_TTY: {
             enable_raw_mode();
             char *res = get_tty_input(source->source.tty);
             disable_raw_mode();
             return res;
+        }
         case INPUT_FILE:
             return get_file_input(source->source.file);
         case INPUT_STRING:
@@ -759,7 +760,7 @@ void init_history() {
         setenv("HISTSIZE", "100", 0);
     }
 
-    history = calloc(history_max, sizeof(char *));
+    history = (char **) calloc(history_max, sizeof(char *));
 
     char *hist_file = getenv("HISTFILE");
     if (!hist_file) {

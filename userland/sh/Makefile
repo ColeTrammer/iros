@@ -2,9 +2,10 @@ OBJS=\
 $(BUILDDIR)/userland/sh/builtin.o \
 $(BUILDDIR)/userland/sh/command.o \
 $(BUILDDIR)/userland/sh/input.o \
+$(BUILDDIR)/userland/sh/generic_sh_parser.o \
 $(BUILDDIR)/userland/sh/job.o \
 $(BUILDDIR)/userland/sh/main.o \
-$(BUILDDIR)/userland/sh/parser.o
+$(BUILDDIR)/userland/sh/sh_lexer.o
 
 EXECUTABLE=$(BUILDDIR)/userland/sh/sh
 
@@ -13,9 +14,9 @@ generic_sh_parser.cpp \
 generic_sh_parser.h \
 sh_token_type.h
 
-$(EXECUTABLE): $(GENERATED_FILES)
+$(EXECUTABLE) $(OBJS): $(GENERATED_FILES)
 
-$(GENERATED_FILES): sh.y $(PARSER)
+$(GENERATED_FILES): sh.y
 	$(PARSER) $< 2>sh.info
 
 export LD=$(CXX)

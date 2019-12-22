@@ -25,7 +25,7 @@ public:
     const Vector<Token>& tokens() const { return m_tokens; }
 
     virtual ShTokenType peek_next_token_type() const override {
-        if (m_current_pos >= m_tokens.size()) {
+        if (m_current_pos >= (size_t) m_tokens.size()) {
             return ShTokenType::End;
         }
 
@@ -45,7 +45,6 @@ public:
                 int param_expansion_count = 0;
                 for (int i = 0; !found_equal && i < text.size(); i++) {
                     char current = text.start()[i];
-                    char next = i + 1 < text.size() ? text.start()[i + 1] : '\0';
                     switch (current) {
                         case '\\':
                             prev_was_backslash = !prev_was_backslash;
@@ -114,7 +113,7 @@ public:
     }
 
     virtual const ShValue& peek_next_token_value() const override {
-        assert(m_current_pos < m_tokens.size());
+        assert(m_current_pos < (size_t) m_tokens.size());
         return m_tokens[m_current_pos].value();
     }
 

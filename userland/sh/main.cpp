@@ -18,13 +18,13 @@
 #include "command.h"
 #include "input.h"
 #include "job.h"
-#include "parser.h"
+#include "sh_lexer.h"
+#include "sh_parser.h"
 
-static char *line = NULL;
-static struct command *command = NULL;
+static char* line = NULL;
 static sigjmp_buf env;
 static volatile sig_atomic_t jump_active = 0;
-static struct termios saved_termios = { 0 };
+static struct termios saved_termios;
 
 static void restore_termios() {
     if (isatty(STDIN_FILENO)) {
@@ -41,7 +41,7 @@ static void on_int(int signo) {
     siglongjmp(env, 1);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     struct input_source input_source;
 
     // Respect -c
@@ -81,9 +81,9 @@ int main(int argc, char **argv) {
         tcgetattr(STDOUT_FILENO, &saved_termios);
         atexit(restore_termios);
 
-        char *base = getenv("HOME");
-        char *hist_file_name = ".sh_hist";
-        char *hist_file = malloc(strlen(base) + strlen(hist_file_name) + 2);
+        char* base = getenv("HOME");
+        char* hist_file_name = (char*) ".sh_hist";
+        char* hist_file = reinterpret_cast<char*>(malloc(strlen(base) + strlen(hist_file_name) + 2));
         strcpy(hist_file, base);
         strcat(hist_file, "/");
         strcat(hist_file, hist_file_name);
@@ -105,9 +105,6 @@ int main(int argc, char **argv) {
             if (line) {
                 free(line);
             }
-            if (command) {
-                command_cleanup(command);
-            }
             fprintf(stderr, "^C%c", '\n');
         }
         jump_active = 1;
@@ -127,20 +124,30 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        int error = 0;
-        struct command *command = parse_line(line, &error);
+        ShLexer lexer(line, strlen(line));
+        bool success = lexer.lex();
 
-        if (error) {
+        if (!success) {
             free(line);
-            command_cleanup(command);
-            fprintf(stderr, "Shell parsing error: %d\n", error);
+            fprintf(stderr, "Shell lexing error\n");
             continue;
         }
 
-        command_run(command);
+        ShParser parser(lexer);
+        lexer.set_parser(parser);
+
+        success = parser.parse();
+
+        if (!success) {
+            free(line);
+            continue;
+        }
+
+        ShValue command = parser.result();
+        assert(command.has_program());
+        command_run(command.program());
 
         free(line);
-        command_cleanup(command);
     }
 
     input_cleanup(&input_source);
