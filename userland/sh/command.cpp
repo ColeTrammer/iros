@@ -81,8 +81,8 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
         }
         case ShValue::IoRedirect::Type::InputFileDescriptor:
         case ShValue::IoRedirect::Type::OutputFileDescriptor: {
-            int target_fd = atoi(String(desc.rhs).string());
-            if (dup2(desc.number, target_fd) == -1) {
+            int old_fd = atoi(String(desc.rhs).string());
+            if (dup2(old_fd, desc.number) == -1) {
                 return false;
             }
             break;
@@ -140,7 +140,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
 
         if (do_builtin) {
-            exit(builtin_do_op(op, args.vector()));
+            _exit(builtin_do_op(op, args.vector()));
         }
         execvp(args[0], args.vector());
 

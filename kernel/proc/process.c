@@ -47,6 +47,9 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
         spin_unlock(&process->lock);
 
         proc_kill_arch_process(process, free_paging_structure);
+#ifdef PROCESSES_DEBUG
+        debug_log("Destroyed arch process: [ %d ]\n", process->pid);
+#endif /* PROCESSES_DEBUG */
 
         struct vm_region *region = process->process_memory;
         while (region != NULL) {
@@ -77,6 +80,9 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
             user_mutex = next;
         }
 
+#ifdef PROC_REF_COUNT_DEBUG
+        debug_log("Finished destroying process: [ %d ]\n", process->pid);
+#endif /* PROC_REF_COUNT_DEBUG */
         free(process->cwd);
         free(process);
         return;

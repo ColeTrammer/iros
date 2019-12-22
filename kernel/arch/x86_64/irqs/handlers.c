@@ -123,6 +123,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     dump_registers_to_screen();
     printf("\n\033[31m%s: Error %lX\n", "Page Fault", task_state->error_code);
     printf("Address: %#.16lX\n", address);
+    printf("RIP: %#.16lX\n", task_state->stack_state.rip);
     printf("task: %d\033[0m\n", get_current_task()->process->pid);
     abort();
 }

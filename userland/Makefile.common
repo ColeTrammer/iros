@@ -1,4 +1,5 @@
 CFLAGS+=-std=c99
+NATIVE_LD?=g++
 
 .PHONY: all
 all: $(EXECUTABLE)
@@ -10,13 +11,13 @@ $(EXECUTABLE): $(OBJS)
 	$(LD) -o $@ $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 $(EXECUTABLE).native: $(OBJS:.o=.native.o)
-	gcc -o $@ $(OBJS:.o=.native.o)
+	$(NATIVE_LD) -o $@ $(OBJS:.o=.native.o)
 
 $(BUILDDIR)/%.native.o: $(ROOT)/%.c
 	gcc -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 $(BUILDDIR)/%.native.o: $(ROOT)/%.cpp
-	g++ -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+	g++ -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CPPFLAGS) -std=c++17 -I../../libs/libliim/include -I../../gen/parser/include
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
 $(BUILDDIR)/%.o: $(ROOT)/%.c
