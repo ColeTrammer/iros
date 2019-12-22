@@ -394,6 +394,25 @@ static char *get_tty_input(FILE *tty) {
             continue;
         }
 
+        // Control W / WERASE
+        if (c == ('W' & 0x1F)) {
+            bool done_something = false;
+            while (buffer_index > buffer_min_index &&
+                   (!done_something || isalnum(buffer[buffer_index - 1]) || buffer[buffer_index - 1] == '_')) {
+                done_something = isalnum(buffer[buffer_index - 1]) || buffer[buffer_index - 1] == '_';
+                memmove(buffer + buffer_index - 1, buffer + buffer_index, buffer_length - buffer_index);
+                buffer[buffer_length - 1] = ' ';
+
+                buffer_index--;
+                write(fileno(tty), "\033[1D\033[s", 7);
+                write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
+                write(fileno(tty), "\033[u", 3);
+                buffer[buffer_length--] = '\0';
+            }
+
+            continue;
+        }
+
         // Terminal escape sequences
         if (c == '\033') {
             read(fileno(tty), &c, 1);
@@ -423,7 +442,7 @@ static char *get_tty_input(FILE *tty) {
                         default:
                             continue;
                     }
-                } else if (last != ';' || c != '1') {
+                } else if (last != ';' || (c != '1' && c != '3')) {
                     continue;
                 }
 
@@ -432,44 +451,68 @@ static char *get_tty_input(FILE *tty) {
                     continue;
                 }
 
-                read(fileno(tty), &c, 1);
-                switch (c) {
-                    case 'C': {
-                        // Control right arrow
-                        size_t index = buffer_index;
-                        while (index < buffer_length && !isalpha(buffer[++index]))
-                            ;
-                        while (index < buffer_length && isalpha(buffer[++index]))
-                            ;
-                        size_t delta = index - buffer_index;
-                        if (delta != 0) {
-                            buffer_index = index;
-                            char buf[50] = { 0 };
-                            snprintf(buf, 49, "\033[%luC", delta);
-                            write(fileno(tty), buf, strlen(buf));
+                char d;
+                read(fileno(tty), &d, 1);
+                if (d != '~' && c == '1') {
+                    switch (d) {
+                        case 'C': {
+                            // Control right arrow
+                            size_t index = buffer_index;
+                            while (index < buffer_length && !isalpha(buffer[++index]))
+                                ;
+                            while (index < buffer_length && isalpha(buffer[++index]))
+                                ;
+                            size_t delta = index - buffer_index;
+                            if (delta != 0) {
+                                buffer_index = index;
+                                char buf[50] = { 0 };
+                                snprintf(buf, 49, "\033[%luC", delta);
+                                write(fileno(tty), buf, strlen(buf));
+                            }
+                            continue;
                         }
-                        continue;
-                        break;
+                        case 'D': {
+                            // Control left arrow
+                            size_t index = buffer_index;
+                            while (index > buffer_min_index && !isalpha(buffer[--index]))
+                                ;
+                            while (index > buffer_min_index && isalpha(buffer[index - 1])) {
+                                index--;
+                            }
+                            size_t delta = buffer_index - index;
+                            if (delta != 0) {
+                                buffer_index = index;
+                                char buf[50] = { 0 };
+                                snprintf(buf, 49, "\033[%luD", delta);
+                                write(fileno(tty), buf, strlen(buf));
+                            }
+                            continue;
+                        }
+                        default:
+                            continue;
                     }
-                    case 'D': {
-                        // Control left arrow
-                        size_t index = buffer_index;
-                        while (index > buffer_min_index && !isalpha(buffer[--index]))
-                            ;
-                        while (index > buffer_min_index && isalpha(buffer[index - 1])) {
-                            index--;
+                } else {
+                    switch (c) {
+                        // Control Delete
+                        case '3': {
+                            bool done_something = false;
+                            while (buffer_index < buffer_length &&
+                                   (!done_something || isalnum(buffer[buffer_index]) || buffer[buffer_index] == '_')) {
+                                done_something = isalnum(buffer[buffer_index]) || buffer[buffer_index] == '_';
+                                memmove(buffer + buffer_index, buffer + buffer_index + 1, buffer_length - buffer_index);
+                                buffer[buffer_length - 1] = ' ';
+
+                                write(fileno(tty), "\033[s", 3);
+                                write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
+                                write(fileno(tty), "\033[u", 3);
+
+                                buffer[buffer_length--] = '\0';
+                            }
+                            continue;
                         }
-                        size_t delta = buffer_index - index;
-                        if (delta != 0) {
-                            buffer_index = index;
-                            char buf[50] = { 0 };
-                            snprintf(buf, 49, "\033[%luD", delta);
-                            write(fileno(tty), buf, strlen(buf));
-                        }
-                        continue;
+                        default:
+                            continue;
                     }
-                    default:
-                        continue;
                 }
             }
 

@@ -118,8 +118,14 @@ int main() {
                     if (event.flags & KEY_CONTROL_ON) {
                         event.ascii &= 0x1F;
                         switch (event.key) {
+                            case KEY_BACKSPACE: {
+                                // NOTE: no one knows what this should be...
+                                char c = 'W' & 0x1F;
+                                write(mfd, &c, 1);
+                                break;
+                            }
                             case KEY_DELETE:
-                                write(mfd, "\033[3~", 4);
+                                write(mfd, "\033[3;5~", 6);
                                 break;
                             case KEY_PAGE_UP:
                                 write(mfd, "\033[5~", 4);
