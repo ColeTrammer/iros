@@ -41,7 +41,6 @@ Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, co
         });
 
         if (!first_match) {
-
             item_set->set_number(item_set_number++);
             item_sets.add(item_set);
 

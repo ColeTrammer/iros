@@ -23,10 +23,15 @@ ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, c
 
             int start_set = set->number();
             rule.components().for_each([&](const StringView& part) {
-                int end_set = *m_sets.get(start_set)->table().get(part);
+                int* end_set = m_sets.get(start_set)->table().get(part);
+                if (!end_set) {
+                    fprintf(stderr, "Error: Symbol `%s` never appears in grammar (rule: %s)\n", String(part).string(),
+                            rule.stringify().string());
+                    exit(1);
+                }
 
-                e.components().add({ part, { start_set, end_set } });
-                start_set = end_set;
+                e.components().add({ part, { start_set, *end_set } });
+                start_set = *end_set;
             });
 
             m_rules.add(e);

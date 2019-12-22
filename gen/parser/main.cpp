@@ -233,6 +233,9 @@ int main(int argc, char** argv) {
                 case TokenType::TokenLhs:
                     if (!rule_name) {
                         rule_name = &token.text();
+                        if (!start_name) {
+                            start_name = rule_name;
+                        }
                         break;
                     }
                     rule_name = &token.text();
@@ -272,18 +275,9 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    Rule* start_rule = nullptr;
-    if (!start_name) {
-        start_rule = &rules.get(0);
-    } else {
-        rules.for_each([&](auto& rule) {
-            if (rule.name() == *start_name) {
-                start_rule = &rule;
-            }
-            fprintf(stderr, "%s\n", rule.stringify().string());
-        });
-    }
-
+    rules.for_each([&](auto& rule) {
+        fprintf(stderr, "%s\n", rule.stringify().string());
+    });
     fprintf(stderr, "\n");
 
     Vector<StringView> identifiers;
@@ -299,16 +293,16 @@ int main(int argc, char** argv) {
 
     Rule dummy_start;
     dummy_start.name() = "__start";
-    dummy_start.components().add(start_rule->name());
+    dummy_start.components().add(*start_name);
     dummy_start.set_number(0);
 
     rules.insert(dummy_start, 0);
-    start_rule = &rules.get(0);
+    Rule& start_rule = rules.get(0);
 
     identifiers.add("__start");
     fprintf(stderr, "Added __start rule: %s\n", dummy_start.stringify().string());
 
-    auto sets = ItemSet::create_item_sets(*start_rule, rules, token_types);
+    auto sets = ItemSet::create_item_sets(start_rule, rules, token_types);
     sets.for_each([&](auto& set) {
         fprintf(stderr, "%s\n", set->stringify().string());
     });
