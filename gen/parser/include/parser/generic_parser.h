@@ -6,7 +6,7 @@
 #include <parser/generic_lexer.h>
 #include <parser/generic_token.h>
 
-#define GENERIC_PARSER_DEBUG
+// #define GENERIC_PARSER_DEBUG
 
 template<typename TokenType, typename Value> class GenericParser {
 public:
@@ -15,7 +15,8 @@ public:
     GenericParser(GenericLexer<TokenType, Value>& lexer) : m_lexer(lexer) { m_state_stack.push(0); }
     virtual ~GenericParser() {}
 
-    virtual bool is_valid_token_type_in_current_state(TokenType) { return false; }
+    virtual bool is_valid_token_type_in_current_state_for_shift(TokenType) const { return false; }
+    virtual bool is_valid_token_type_in_current_state(TokenType) const { return false; }
     virtual bool parse() = 0;
 
 protected:

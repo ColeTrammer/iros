@@ -123,7 +123,9 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "        return %sTokenType::End;\n", String(m_output_name).to_title_case().string());
     fprintf(file, "    }\n\n");
 
-    fprintf(file, "    virtual bool is_valid_token_type_in_current_state(%sTokenType type) override;\n",
+    fprintf(file, "    virtual bool is_valid_token_type_in_current_state_for_shift(%sTokenType type) const override;\n",
+            String(m_output_name).to_title_case().string());
+    fprintf(file, "    virtual bool is_valid_token_type_in_current_state(%sTokenType type) const override;\n",
             String(m_output_name).to_title_case().string());
     fprintf(file, "    virtual bool parse() override;\n\n");
     {
@@ -134,7 +136,38 @@ void Generator::generate_generic_parser(String path) {
         FILE* file = fopen(path.string(), "w");
         fprintf(file, "#include \"generic_%s_parser.h\"\n\n", String(m_output_name).to_lower_case().string());
 
-        fprintf(file, "template<typename Value> bool Generic%sParser<Value>::is_valid_token_type_in_current_state(%sTokenType type) {\n",
+        fprintf(file,
+                "template<typename Value> bool Generic%sParser<Value>::is_valid_token_type_in_current_state_for_shift(%sTokenType type) "
+                "const {\n",
+                String(m_output_name).to_title_case().string(), String(m_output_name).to_title_case().string());
+        fprintf(file, "    switch (this->current_state()) {\n");
+        for (int i = 0; i < m_table.table().size(); i++) {
+            const auto& row = m_table.table()[i];
+            fprintf(file, "        case %d:\n", i);
+            fprintf(file, "            switch (type) {\n");
+
+            bool did_something = false;
+            row.for_each_key([&](const auto& s) {
+                if (row.get(s)->type == Action::Type::Shift) {
+                    fprintf(file, "                case %sTokenType::%s:\n", String(m_output_name).to_title_case().string(),
+                            String(s).string());
+                    did_something = true;
+                }
+            });
+            if (did_something) {
+                fprintf(file, "                    return true;\n");
+            }
+            fprintf(file, "                default:\n");
+            fprintf(file, "                    return false;\n");
+            fprintf(file, "            }\n");
+        }
+        fprintf(file, "        default:\n");
+        fprintf(file, "            return false;\n");
+        fprintf(file, "    }\n");
+        fprintf(file, "}\n\n");
+
+        fprintf(file,
+                "template<typename Value> bool Generic%sParser<Value>::is_valid_token_type_in_current_state(%sTokenType type) const {\n",
                 String(m_output_name).to_title_case().string(), String(m_output_name).to_title_case().string());
         fprintf(file, "    switch (this->current_state()) {\n");
         for (int i = 0; i < m_table.table().size(); i++) {

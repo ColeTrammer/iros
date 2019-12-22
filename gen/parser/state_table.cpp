@@ -1,6 +1,6 @@
 #include "state_table.h"
 
-#define START_SET_DEBUG
+#define REDUCE_RULES_DEBUG
 
 static void make_union(HashMap<StringView, bool>& s1, const HashMap<StringView, bool>& s2) {
     if (s1.empty()) {

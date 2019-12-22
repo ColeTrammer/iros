@@ -16,7 +16,7 @@ sh_token_type.h
 $(EXECUTABLE): $(GENERATED_FILES)
 
 $(GENERATED_FILES): sh.y $(PARSER)
-	$(PARSER) $< 2>/dev/null
+	$(PARSER) $< 2>sh.info
 
 export LD=$(CXX)
 
