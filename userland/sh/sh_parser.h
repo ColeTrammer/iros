@@ -16,6 +16,9 @@ public:
     ShParser(GenericLexer<ShTokenType, ShValue>& lexer) : GenericShParser<ShValue>(lexer) {}
     virtual ~ShParser() override {}
 
+    virtual const ShValue& result() const { return this->peek_value_stack(); }
+
+#if 1
     virtual ShValue reduce_program$linebreak(ShValue& l) override { return l.create_program(); }
     virtual ShValue reduce_program$linebreak_complete_commands_linebreak(ShValue&, ShValue& p, ShValue&) override {
         assert(p.has_program());
@@ -261,17 +264,17 @@ public:
         return component;
     }
 
-    virtual ShValue reduce_list$and_or(ShValue& list_component) override {
-        assert(list_component.has_list_component());
-        return list_component.create_list(list_component.list_component());
-    }
-
     virtual ShValue reduce_separator_op$semicolon(ShValue& semicolon) override {
         return semicolon.create_separator_op(ShValue::List::Combinator::Sequential);
     }
 
     virtual ShValue reduce_separator_op$ampersand(ShValue& ampersand) override {
         return ampersand.create_separator_op(ShValue::List::Combinator::Asynchronous);
+    }
+
+    virtual ShValue reduce_list$and_or(ShValue& list_component) override {
+        assert(list_component.has_list_component());
+        return list_component.create_list(list_component.list_component());
     }
 
     virtual ShValue reduce_list$list_separator_op_and_or(ShValue& list, ShValue& separator_op, ShValue& list_component) override {
@@ -311,4 +314,5 @@ public:
         program.program().add(list.list());
         return program;
     }
+#endif
 };

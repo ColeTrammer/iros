@@ -118,10 +118,7 @@ public:
         return m_tokens[m_current_pos].value();
     }
 
-    virtual void advance() override {
-        fprintf(stderr, "Advancing\n");
-        m_current_pos++;
-    }
+    virtual void advance() override { m_current_pos++; }
 
     void set_parser(GenericShParser<ShValue>& parser) { m_parser = &parser; }
 

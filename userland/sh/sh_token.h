@@ -201,6 +201,72 @@ public:
         return *this;
     }
 
+    static void dump(Program& program) {
+        program.for_each([&](ShValue::List& list) {
+            fprintf(stderr, " List\n");
+            for (int i = 0; i < list.components.size(); i++) {
+                ShValue::ListComponent& component = list.components[i];
+                fprintf(stderr, "  Component\n");
+                for (int i = 0; i < component.pipelines.size(); i++) {
+                    ShValue::Pipeline& pipeline = component.pipelines[i];
+                    fprintf(stderr, "   Pipeline%s\n", pipeline.negated ? " [ negated ]" : "");
+                    pipeline.commands.for_each([&](ShValue::Command& command) {
+                        switch (command.type) {
+                            case ShValue::Command::Type::Simple: {
+                                fprintf(stderr, "    Simple Command\n");
+                                command.simple_command.value().assignment_words.for_each([&](auto& word) {
+                                    fprintf(stderr, "     Eq: %s\n", String(word).string());
+                                });
+                                command.simple_command.value().redirect_info.for_each([&](ShValue::IoRedirect& io) {
+                                    switch (io.type) {
+                                        case ShValue::IoRedirect::Type::InputAndOutputFileName:
+                                            fprintf(stderr, "     IO: %d <> %s\n", io.number, String(io.rhs).string());
+                                            break;
+                                        case ShValue::IoRedirect::Type::InputFileDescriptor:
+                                            fprintf(stderr, "     IO: %d <& %s\n", io.number, String(io.rhs).string());
+                                            break;
+                                        case ShValue::IoRedirect::Type::InputFileName:
+                                            fprintf(stderr, "     IO: %d < %s\n", io.number, String(io.rhs).string());
+                                            break;
+                                        case ShValue::IoRedirect::Type::OutputFileDescriptor:
+                                            fprintf(stderr, "     IO: %d >& %s\n", io.number, String(io.rhs).string());
+                                            break;
+                                        case ShValue::IoRedirect::Type::OutputFileName:
+                                            fprintf(stderr, "     IO: %d > %s\n", io.number, String(io.rhs).string());
+                                            break;
+                                        case ShValue::IoRedirect::Type::OutputFileNameAppend:
+                                            fprintf(stderr, "     IO: %d >> %s\n", io.number, String(io.rhs).string());
+                                            break;
+                                        case ShValue::IoRedirect::Type::OutputFileNameClobber:
+                                            fprintf(stderr, "     IO: %d >| %s\n", io.number, String(io.rhs).string());
+                                            break;
+                                        default:
+                                            fprintf(stderr, "     IO: Invalid?\n");
+                                    }
+                                });
+                                fprintf(stderr, "     ");
+                                command.simple_command.value().words.for_each([&](auto& w) {
+                                    fprintf(stderr, "%s ", String(w).string());
+                                });
+                                fprintf(stderr, "\n");
+                                break;
+                            }
+                            default:
+                                fprintf(stderr, "    Invalid command?\n");
+                        }
+                    });
+                    fprintf(stderr, "%s\n",
+                            component.combinators[i] == ShValue::ListComponent::Combinator::And
+                                ? "   [ and ]"
+                                : component.combinators[i] == ShValue::ListComponent::Combinator::Or ? "   [ or ]" : "   [ end ]");
+                }
+
+                fprintf(stderr, "%s\n",
+                        list.combinators[i] == ShValue::List::Combinator::Asynchronous ? "  [ asynchronous ]" : "  [ synchronous ]");
+            }
+        });
+    }
+
 private:
     size_t m_line { 0 };
     size_t m_position { 0 };
