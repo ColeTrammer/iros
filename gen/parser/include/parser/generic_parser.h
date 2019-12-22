@@ -1,17 +1,21 @@
 #pragma once
 
 #include <liim/stack.h>
+#include <liim/string_view.h>
 #include <liim/vector.h>
+#include <parser/generic_lexer.h>
+#include <parser/generic_token.h>
 
-#include "generic_token.h"
+#define GENERIC_PARSER_DEBUG
 
 template<typename TokenType, typename Value> class GenericParser {
 public:
     using Token = GenericToken<TokenType, Value>;
 
-    GenericParser(const Vector<Token>& tokens) : m_tokens(tokens) { m_state_stack.push(0); }
+    GenericParser(GenericLexer<TokenType, Value>& lexer) : m_lexer(lexer) { m_state_stack.push(0); }
     virtual ~GenericParser() {}
 
+    virtual bool is_valid_token_type_in_current_state(TokenType) { return false; }
     virtual bool parse() = 0;
 
 protected:
@@ -31,14 +35,19 @@ protected:
 #ifdef GENERIC_PARSER_DEBUG
         fprintf(stderr, "Pushing value b/c consume token\n");
 #endif /* GENERIC_PARSER_DEBUG */
-        m_value_stack.push(m_tokens[m_position].value());
+        m_value_stack.push(m_lexer.peek_next_token_value());
 #ifdef GENERIC_PARSER_DEBUG
         fprintf(stderr, "Done pushing value b/c consume token\n");
 #endif /* GENERIC_PARSER_DEBUG */
-        m_position++;
+        m_lexer.advance();
     }
 
-    int current_state() const { return m_state_stack.peek(); }
+    int current_state() const {
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Current state: %d\n", m_state_stack.peek());
+#endif /* GENERIC_PARSER_DEBUG */
+        return m_state_stack.peek();
+    }
     void push_state_stack(int state) { m_state_stack.push(state); }
     Value pop_stack_state() {
         m_state_stack.pop();
@@ -67,15 +76,11 @@ protected:
             return m_reduce_type;
         }
 
-        if (m_position >= m_tokens.size()) {
-            return TokenType::End;
-        }
-
-        return m_tokens[m_position].type();
+        return m_lexer.peek_next_token_type();
     }
 
 private:
-    Vector<Token> m_tokens;
+    GenericLexer<TokenType, Value>& m_lexer;
     Stack<Value> m_value_stack;
     Stack<int> m_state_stack;
     int m_position { 0 };

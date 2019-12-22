@@ -6,13 +6,14 @@
 #include <unistd.h>
 
 #include "generic_sh_parser.h"
+#include "sh_lexer.h"
 #include "sh_token.h"
 
 class ShParser final : public GenericShParser<ShValue> {
 public:
     using Token = GenericShParser<ShValue>::Token;
 
-    ShParser(const Vector<Token>& tokens) : GenericShParser<ShValue>(tokens) {}
+    ShParser(GenericLexer<ShTokenType, ShValue>& lexer) : GenericShParser<ShValue>(lexer) {}
     virtual ~ShParser() override {}
 
     virtual ShValue reduce_program$linebreak(ShValue& l) override { return l.create_program(); }
@@ -168,6 +169,15 @@ public:
         other.redirect_info.for_each([&](const auto& i) {
             simple_command.command().simple_command.value().redirect_info.add(i);
         });
+        return simple_command;
+    }
+
+    virtual ShValue reduce_simple_command$cmd_prefix_cmd_word(ShValue& simple_command, ShValue& name) {
+        assert(name.has_text());
+        assert(simple_command.has_command());
+        assert(simple_command.command().type == ShValue::Command::Type::Simple);
+
+        simple_command.command().simple_command.value().words.add(name.text());
         return simple_command;
     }
 

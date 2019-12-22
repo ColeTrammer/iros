@@ -90,8 +90,8 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "public:\n");
     fprintf(file, "%s", String::format("    using Token = GenericToken<%sTokenType, Value>;\n\n", m_output_name.string()).string());
     fprintf(file, "%s",
-            String::format("    Generic%sParser(const Vector<Token>& tokens) : GenericParser<%sTokenType, Value>(tokens) {}\n",
-                           m_output_name.string(), m_output_name.string())
+            String::format("    Generic%sParser(GenericLexer<%sTokenType, Value>& lexer) : GenericParser<%sTokenType, Value>(lexer) {}\n",
+                           m_output_name.string(), m_output_name.string(), m_output_name.string())
                 .string());
     fprintf(file, "%s", String::format("    virtual ~Generic%sParser() override {}\n\n", m_output_name.string()).string());
 
@@ -123,7 +123,9 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "        return %sTokenType::End;\n", String(m_output_name).to_title_case().string());
     fprintf(file, "    }\n\n");
 
-    fprintf(file, "    virtual bool parse() override;\n");
+    fprintf(file, "    virtual bool is_valid_token_type_in_current_state(%sTokenType type) override;\n",
+            String(m_output_name).to_title_case().string());
+    fprintf(file, "    virtual bool parse() override;\n\n");
     {
         path[path.size() - 1] = '\0';
         path[path.size() - 2] = '\0';
@@ -131,6 +133,27 @@ void Generator::generate_generic_parser(String path) {
         path += "_impl.cpp";
         FILE* file = fopen(path.string(), "w");
         fprintf(file, "#include \"generic_%s_parser.h\"\n\n", String(m_output_name).to_lower_case().string());
+
+        fprintf(file, "template<typename Value> bool Generic%sParser<Value>::is_valid_token_type_in_current_state(%sTokenType type) {\n",
+                String(m_output_name).to_title_case().string(), String(m_output_name).to_title_case().string());
+        fprintf(file, "    switch (this->current_state()) {\n");
+        for (int i = 0; i < m_table.table().size(); i++) {
+            const auto& row = m_table.table()[i];
+            fprintf(file, "        case %d:\n", i);
+            fprintf(file, "            switch (type) {\n");
+            row.for_each_key([&](const auto& s) {
+                fprintf(file, "                case %sTokenType::%s:\n", String(m_output_name).to_title_case().string(),
+                        String(s).string());
+            });
+            fprintf(file, "                    return true;\n");
+            fprintf(file, "                default:\n");
+            fprintf(file, "                    return false;\n");
+            fprintf(file, "            }\n");
+        }
+        fprintf(file, "        default:\n");
+        fprintf(file, "            return false;\n");
+        fprintf(file, "    }\n");
+        fprintf(file, "}\n\n");
 
         fprintf(file, "template<typename Value> bool Generic%sParser<Value>::parse() {\n", String(m_output_name).to_title_case().string());
         fprintf(file, "    for (;;) {\n");

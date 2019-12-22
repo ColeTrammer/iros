@@ -1,21 +1,162 @@
 #pragma once
 
 #include <ctype.h>
+#include <liim/stack.h>
 #include <liim/string_view.h>
 #include <liim/vector.h>
+#include <parser/generic_lexer.h>
 #include <stddef.h>
 #include <stdio.h>
 
-#include "sh_parser.h"
+#include "generic_sh_parser.h"
+#include "sh_token.h"
+#include "sh_token_type.h"
 
-class ShLexer {
+class ShLexer final : public GenericLexer<ShTokenType, ShValue> {
 public:
-    ShLexer(char* input_stream, size_t length) : m_input_stream(input_stream), m_input_length(length) {}
-    ~ShLexer();
+    using Token = GenericToken<ShTokenType, ShValue>;
+
+    ShLexer(char* input_stream, size_t length)
+        : GenericLexer<ShTokenType, ShValue>(), m_input_stream(input_stream), m_input_length(length) {}
+    virtual ~ShLexer();
 
     bool lex();
 
-    const Vector<ShParser::Token>& tokens() const { return m_tokens; }
+    const Vector<Token>& tokens() const { return m_tokens; }
+
+    virtual ShTokenType peek_next_token_type() const override {
+        if (m_current_pos >= m_tokens.size()) {
+            return ShTokenType::End;
+        }
+
+        ShTokenType type = m_tokens[m_current_pos].type();
+
+        if (type == ShTokenType::WORD) {
+            const StringView& text = m_tokens[m_current_pos].value().text();
+            if (text == "if") {
+                type = ShTokenType::If;
+            } else if (text == "then") {
+                type = ShTokenType::Then;
+            } else if (text == "else") {
+                type = ShTokenType::Else;
+            } else if (text == "elif") {
+                type = ShTokenType::Elif;
+            } else if (text == "fi") {
+                type = ShTokenType::Fi;
+            } else if (text == "do") {
+                type = ShTokenType::Do;
+            } else if (text == "done") {
+                type = ShTokenType::Done;
+            } else if (text == "case") {
+                type = ShTokenType::Case;
+            } else if (text == "esac") {
+                type = ShTokenType::Esac;
+            } else if (text == "while") {
+                type = ShTokenType::While;
+            } else if (text == "until") {
+                type = ShTokenType::Until;
+            } else if (text == "for") {
+                type = ShTokenType::For;
+            } else if (text == "{") {
+                type = ShTokenType::Lbrace;
+            } else if (text == "}") {
+                type = ShTokenType::Rbrace;
+            } else if (text == "!") {
+                type = ShTokenType::Bang;
+            } else if (text == "in") {
+                type = ShTokenType::In;
+            }
+
+            if (m_parser && m_parser->is_valid_token_type_in_current_state(ShTokenType::ASSIGNMENT_WORD) && type == ShTokenType::WORD) {
+                bool in_s_quotes = false;
+                bool in_d_quotes = false;
+                bool in_b_quotes = false;
+                bool prev_was_backslash = false;
+                bool prev_was_dollar = false;
+                bool found_equal = false;
+                int param_expansion_count = 0;
+                for (int i = 0; !found_equal && i < text.size(); i++) {
+                    char current = text.start()[i];
+                    char next = i + 1 < text.size() ? text.start()[i + 1] : '\0';
+                    switch (current) {
+                        case '\\':
+                            prev_was_backslash = !prev_was_backslash;
+                            prev_was_dollar = false;
+                            continue;
+                        case '$':
+                            if (!prev_was_dollar && !prev_was_backslash && !in_d_quotes && !in_b_quotes && !in_s_quotes) {
+                                prev_was_dollar = true;
+                                continue;
+                            }
+                            break;
+                        case '\'':
+                            in_s_quotes = !prev_was_backslash && !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
+                            break;
+                        case '"':
+                            in_d_quotes = !prev_was_backslash && !in_s_quotes && !in_b_quotes ? !in_d_quotes : in_d_quotes;
+                            break;
+                        case '`':
+                            in_b_quotes = !prev_was_backslash && !in_d_quotes && !in_s_quotes ? !in_b_quotes : in_b_quotes;
+                            break;
+                        case '{':
+                            if (prev_was_dollar && !prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
+                                param_expansion_count++;
+                            }
+                            break;
+                        case '(':
+                            if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
+                                param_expansion_count++;
+                            }
+                            break;
+                        case '}':
+                        case ')':
+                            if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
+                                param_expansion_count--;
+                            }
+                            break;
+                        case '=':
+                            if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes && param_expansion_count == 0) {
+                                found_equal = true;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                    prev_was_dollar = false;
+                    prev_was_backslash = false;
+                }
+
+                if (found_equal &&
+                    !((m_current_pos == 0 || m_tokens[m_current_pos - 1].type() != ShTokenType::WORD) && text.start()[0] == '=')) {
+                    type = ShTokenType::ASSIGNMENT_WORD;
+                }
+            }
+
+            if (m_parser && type != ShTokenType::WORD && !m_parser->is_valid_token_type_in_current_state(type)) {
+                fprintf(stderr, "Changing token type away from %s to WORD.\n", GenericShParser<ShValue>::token_type_to_string(type));
+                type = ShTokenType::WORD;
+            }
+
+            if (type != ShTokenType::WORD) {
+                fprintf(stderr, "Changing token type away from WORD to %s.\n", GenericShParser<ShValue>::token_type_to_string(type));
+            }
+        }
+
+        return type;
+    }
+
+    virtual const ShValue& peek_next_token_value() const override {
+        assert(m_current_pos < m_tokens.size());
+        return m_tokens[m_current_pos].value();
+    }
+
+    virtual void advance() override {
+        fprintf(stderr, "Advancing\n");
+        m_current_pos++;
+    }
+
+    void set_parser(GenericShParser<ShValue>& parser) { m_parser = &parser; }
 
 private:
     int peek() const {
@@ -65,104 +206,8 @@ private:
                     break;
                 }
             }
-        } else if (type == ShTokenType::WORD) {
-            if (text == "if") {
-                type = ShTokenType::If;
-            } else if (text == "then") {
-                type = ShTokenType::Then;
-            } else if (text == "else") {
-                type = ShTokenType::Else;
-            } else if (text == "elif") {
-                type = ShTokenType::Elif;
-            } else if (text == "fi") {
-                type = ShTokenType::Fi;
-            } else if (text == "do") {
-                type = ShTokenType::Do;
-            } else if (text == "done") {
-                type = ShTokenType::Done;
-            } else if (text == "case") {
-                type = ShTokenType::Case;
-            } else if (text == "esac") {
-                type = ShTokenType::Esac;
-            } else if (text == "while") {
-                type = ShTokenType::While;
-            } else if (text == "until") {
-                type = ShTokenType::Until;
-            } else if (text == "for") {
-                type = ShTokenType::For;
-                m_expecting_name = true;
-            } else if (text == "{") {
-                type = ShTokenType::Lbrace;
-            } else if (text == "}") {
-                type = ShTokenType::Rbrace;
-            } else if (text == "!") {
-                type = ShTokenType::Bang;
-            } else if (text == "in") {
-                type = ShTokenType::In;
-            }
-
-            bool in_s_quotes = false;
-            bool in_d_quotes = false;
-            bool in_b_quotes = false;
-            bool prev_was_backslash = false;
-            bool prev_was_dollar = false;
-            bool found_equal = false;
-            int param_expansion_count = 0;
-            for (int i = 0; !found_equal && i < text.size(); i++) {
-                char current = text.start()[i];
-                char next = i + 1 < text.size() ? text.start()[i + 1] : '\0';
-                switch (current) {
-                    case '\\':
-                        prev_was_backslash = !prev_was_backslash;
-                        prev_was_dollar = false;
-                        continue;
-                    case '$':
-                        if (!prev_was_dollar && !prev_was_backslash && !in_d_quotes && !in_b_quotes && !in_s_quotes) {
-                            prev_was_dollar = true;
-                            continue;
-                        }
-                        break;
-                    case '\'':
-                        in_s_quotes = !prev_was_backslash && !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
-                        break;
-                    case '"':
-                        in_d_quotes = !prev_was_backslash && !in_s_quotes && !in_b_quotes ? !in_d_quotes : in_d_quotes;
-                        break;
-                    case '`':
-                        in_b_quotes = !prev_was_backslash && !in_d_quotes && !in_s_quotes ? !in_b_quotes : in_b_quotes;
-                        break;
-                    case '{':
-                        if (prev_was_dollar && !prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
-                            param_expansion_count++;
-                        }
-                        break;
-                    case '(':
-                        if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
-                            param_expansion_count++;
-                        }
-                        break;
-                    case '}':
-                    case ')':
-                        if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
-                            param_expansion_count--;
-                        }
-                        break;
-                    case '=':
-                        if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes && param_expansion_count == 0) {
-                            found_equal = true;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-
-                prev_was_dollar = false;
-                prev_was_backslash = false;
-            }
-
-            if (found_equal && !((m_tokens.size() == 0 || m_tokens.last().type() != ShTokenType::WORD) && text.start()[0] == '=')) {
-                type = ShTokenType::ASSIGNMENT_WORD;
-            }
+        } else if (type == ShTokenType::WORD && text == "For") {
+            m_expecting_name = true;
         }
 
         m_tokens.add({ type, { text, m_current_token_row, m_current_token_col } });
@@ -180,5 +225,7 @@ private:
     size_t m_current_token_col { 0 };
     char* m_current_token_start { nullptr };
     bool m_expecting_name { false };
-    Vector<ShParser::Token> m_tokens;
+    size_t m_current_pos { 0 };
+    GenericShParser<ShValue>* m_parser { nullptr };
+    Vector<Token> m_tokens;
 };

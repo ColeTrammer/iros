@@ -281,6 +281,7 @@ int main(int argc, char** argv) {
     fprintf(stderr, "\n");
 
     Vector<StringView> identifiers;
+    identifiers.add("End");
     token_types.for_each([&](auto& s) {
         identifiers.add(s);
     });
