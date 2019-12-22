@@ -25,16 +25,17 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
                                   LinkedList<String>& literals, int position, int& end_position, int& rule_index) {
     static LinkedList<String> created_strings;
 
-    Vector<StringView> result;
+    Vector<Vector<StringView>> result;
+    result.add(Vector<StringView>());
     for (end_position = position; end_position < tokens.size() && tokens[end_position].type() != TokenType::TokenRightParenthesis;
          end_position++) {
         auto& token = tokens.get(end_position);
         switch (token.type()) {
             case TokenType::TokenWord:
-                result.add(token.text());
+                result.last().add(token.text());
                 break;
             case TokenType::TokenLeftParenthesis:
-                result.add(reduce_grouping(tokens, token_types, rules, literals, end_position + 1, end_position, rule_index));
+                result.last().add(reduce_grouping(tokens, token_types, rules, literals, end_position + 1, end_position, rule_index));
                 break;
             case TokenType::TokenLiteral: {
                 String real_name = literal_to_token(token.text());
@@ -43,9 +44,12 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
                 if (!token_types.includes(view)) {
                     token_types.add(view);
                 }
-                result.add(view);
+                result.last().add(view);
                 break;
             }
+            case TokenType::TokenPipe:
+                result.add(Vector<StringView>());
+                break;
             default:
                 fprintf(stderr, "Syntax error\n");
                 exit(1);
@@ -71,9 +75,16 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
     }
 
     for (int i = 0; i < result.size(); i++) {
-        prefix += String(result.get(i));
+        const auto& list = result.get(i);
+        for (int j = 0; j < list.size(); j++) {
+            prefix += String(list.get(j));
+            if (j != list.size() - 1) {
+                prefix += "_";
+            }
+        }
+
         if (i != result.size() - 1) {
-            prefix += "_";
+            prefix += "_or_";
         }
     }
 
@@ -91,14 +102,16 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
             }
                 // Fall through
             case TokenType::TokenPlus: {
-                Rule r;
-                r.name() = view;
-                Vector<StringView> rhs(result);
-                rhs.insert(view, 0);
-                r.components() = rhs;
-                if (!rules.includes(r)) {
-                    r.set_number(rule_index++);
-                    rules.add(r);
+                for (int i = 0; i < result.size(); i++) {
+                    Rule r;
+                    r.name() = view;
+                    Vector<StringView> rhs(result[i]);
+                    rhs.insert(view, 0);
+                    r.components() = rhs;
+                    if (!rules.includes(r)) {
+                        r.set_number(rule_index++);
+                        rules.add(r);
+                    }
                 }
                 goto regular;
             }
@@ -117,12 +130,14 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
         }
     } else {
     regular:
-        Rule r;
-        r.name() = view;
-        r.components() = result;
-        if (!rules.includes(r)) {
-            r.set_number(rule_index++);
-            rules.add(r);
+        for (int i = 0; i < result.size(); i++) {
+            Rule r;
+            r.name() = view;
+            r.components() = result[i];
+            if (!rules.includes(r)) {
+                r.set_number(rule_index++);
+                rules.add(r);
+            }
         }
     }
 
@@ -205,9 +220,6 @@ int main(int argc, char** argv) {
         }
 
         if (start) {
-            if (token.type() == TokenType::TokenEnd) {
-                fprintf(stderr, "Found end\n");
-            }
             switch (token.type()) {
                 case TokenType::TokenWord:
                     rule.components().add(token.text());
@@ -254,8 +266,6 @@ int main(int argc, char** argv) {
             }
         }
     }
-
-    fprintf(stderr, "\n");
 
     if (rules.size() == 0) {
         fprintf(stderr, "No rules.\n");

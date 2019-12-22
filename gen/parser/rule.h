@@ -26,7 +26,7 @@ public:
     String stringify() const {
         String ret = "";
         char buf[50];
-        snprintf(buf, 50, "[%d] ", number());
+        snprintf(buf, 50, "[%-3d] ", number());
         ret += buf;
         ret += m_name;
         ret += " -> ";

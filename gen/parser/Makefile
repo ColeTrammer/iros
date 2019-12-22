@@ -1,4 +1,4 @@
-export ROOT?=../../
+export ROOT?=../..
 export BUILDDIR?=$(ROOT)/build
 export PROJECT_NAME=parser
 
