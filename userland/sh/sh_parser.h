@@ -214,6 +214,67 @@ public:
         return simple_command;
     }
 
+    virtual ShValue reduce_else_part$elif_compound_list_then_compound_list(ShValue&, ShValue& condition, ShValue&,
+                                                                           ShValue& action) override {
+        assert(condition.has_list());
+        assert(action.has_list());
+
+        return condition.create_if_clause({ condition.list() }, ShValue::IfClause::Condition::Type::Elif, action.list());
+    }
+
+    virtual ShValue reduce_else_part$elif_compound_list_then_compound_list_else_part(ShValue&, ShValue& condition, ShValue&,
+                                                                                     ShValue& action, ShValue& if_clause) override {
+        assert(if_clause.has_command());
+        assert(if_clause.command().type == ShValue::Command::Type::Compound);
+        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::If);
+        assert(condition.has_list());
+        assert(action.has_list());
+
+        ShValue::IfClause::Condition if_part = { condition.list(), ShValue::IfClause::Condition::Type::Elif, action.list() };
+        if_clause.command().compound_command.value().if_clause.value().conditions.insert(if_part, 0);
+        return if_clause;
+    }
+
+    virtual ShValue reduce_else_part$else_compound_list(ShValue&, ShValue& action) override {
+        assert(action.has_list());
+        return action.create_if_clause({}, ShValue::IfClause::Condition::Type::Else, action.list());
+    }
+
+    virtual ShValue reduce_if_clause$if_compound_list_then_compound_list_else_part_fi(ShValue&, ShValue& condition, ShValue&,
+                                                                                      ShValue& action, ShValue& if_clause,
+                                                                                      ShValue&) override {
+        assert(if_clause.has_command());
+        assert(if_clause.command().type == ShValue::Command::Type::Compound);
+        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::If);
+        assert(condition.has_list());
+        assert(action.has_list());
+
+        ShValue::IfClause::Condition if_part = { condition.list(), ShValue::IfClause::Condition::Type::If, action.list() };
+        if_clause.command().compound_command.value().if_clause.value().conditions.insert(if_part, 0);
+        return if_clause;
+    }
+
+    virtual ShValue reduce_if_clause$if_compound_list_then_compound_list_fi(ShValue&, ShValue& condition, ShValue&, ShValue& action,
+                                                                            ShValue&) override {
+        assert(condition.has_list());
+        assert(action.has_list());
+
+        return condition.create_if_clause({ condition.list() }, ShValue::IfClause::Condition::Type::If, action.list());
+    }
+
+    virtual ShValue reduce_compound_command$if_clause(ShValue& if_clause) override {
+        assert(if_clause.has_command());
+        assert(if_clause.command().type == ShValue::Command::Type::Compound);
+        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::If);
+        return if_clause;
+    }
+
+    virtual ShValue reduce_command$compound_command(ShValue& compound_command) override {
+        assert(compound_command.has_command());
+        assert(compound_command.command().type == ShValue::Command::Type::Compound);
+        return compound_command;
+    }
+
     virtual ShValue reduce_pipe_sequence$command(ShValue& command) override {
         assert(command.has_command());
         return command.create_pipeline(command.command());
@@ -272,6 +333,31 @@ public:
         return ampersand.create_separator_op(ShValue::List::Combinator::Asynchronous);
     }
 
+    virtual ShValue reduce_separator$newline_list(ShValue& newline_list) override {
+        return newline_list.create_separator_op(ShValue::List::Combinator::Sequential);
+    }
+
+    virtual ShValue reduce_separator$separator_op_linebreak(ShValue& sep, ShValue&) override {
+        assert(sep.has_separator_op());
+        return sep;
+    }
+
+    virtual ShValue reduce_term$and_or(ShValue& list_component) override {
+        assert(list_component.has_list_component());
+        return list_component.create_list(list_component.list_component());
+    }
+
+    virtual ShValue reduce_term$term_separator_and_or(ShValue& list, ShValue& separator_op, ShValue& list_component) override {
+        assert(list.has_list());
+        assert(separator_op.has_separator_op());
+        assert(list_component.has_list_component());
+
+        list.list().components.add(list_component.list_component());
+        list.list().combinators.last() = separator_op.separator_op();
+        list.list().combinators.add(ShValue::List::Combinator::Sequential);
+        return list;
+    }
+
     virtual ShValue reduce_list$and_or(ShValue& list_component) override {
         assert(list_component.has_list_component());
         return list_component.create_list(list_component.list_component());
@@ -285,6 +371,19 @@ public:
         list.list().components.add(list_component.list_component());
         list.list().combinators.last() = separator_op.separator_op();
         list.list().combinators.add(ShValue::List::Combinator::Sequential);
+        return list;
+    }
+
+    virtual ShValue reduce_compound_list$linebreak_term(ShValue&, ShValue& list) override {
+        assert(list.has_list());
+        return list;
+    }
+
+    virtual ShValue reduce_compound_list$linebreak_term_separator(ShValue&, ShValue& list, ShValue& separator_op) override {
+        assert(list.has_list());
+        assert(separator_op.has_separator_op());
+
+        list.list().combinators.last() = separator_op.separator_op();
         return list;
     }
 

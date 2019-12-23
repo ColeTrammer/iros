@@ -1,3 +1,6 @@
+export ROOT?=../..
+export BUILDDIR?=$(ROOT)/build
+
 OBJS=\
 $(BUILDDIR)/userland/sh/builtin.o \
 $(BUILDDIR)/userland/sh/command.o \

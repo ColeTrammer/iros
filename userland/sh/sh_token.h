@@ -33,18 +33,7 @@ public:
         Vector<IoRedirect> redirect_info;
     };
 
-    struct Command {
-        enum class Type {
-            Simple,
-            Compound,
-            FunctionDefinition,
-        };
-
-        Command(const ShValue::SimpleCommand& _simple_command) : type(Type::Simple), simple_command(_simple_command) {}
-
-        Type type;
-        Maybe<ShValue::SimpleCommand> simple_command;
-    };
+    struct Command;
 
     struct Pipeline {
         bool negated;
@@ -70,6 +59,54 @@ public:
 
         Vector<ListComponent> components;
         Vector<Combinator> combinators;
+    };
+
+    struct IfClause {
+        struct Condition {
+            enum class Type {
+                If,
+                Elif,
+                Else,
+            };
+
+            Maybe<ShValue::List> condition;
+            Type type;
+            ShValue::List action;
+        };
+
+        Vector<Condition> conditions;
+    };
+
+    struct CompoundCommand {
+        enum class Type {
+            BraceGroup,
+            Subshell,
+            For,
+            Case,
+            If,
+            While,
+            Until,
+        };
+
+        CompoundCommand(const IfClause& _if_clause) : type(Type::If), if_clause(_if_clause) {}
+
+        Type type;
+        Maybe<ShValue::IfClause> if_clause;
+    };
+
+    struct Command {
+        enum class Type {
+            Simple,
+            Compound,
+            FunctionDefinition,
+        };
+
+        Command(const ShValue::SimpleCommand& _simple_command) : type(Type::Simple), simple_command(_simple_command) {}
+        Command(const ShValue::CompoundCommand& _compound_command) : type(Type::Compound), compound_command(_compound_command) {}
+
+        Type type;
+        Maybe<ShValue::SimpleCommand> simple_command;
+        Maybe<ShValue::CompoundCommand> compound_command;
     };
 
     using Program = Vector<List>;
@@ -139,6 +176,15 @@ public:
         redirects.add(io_redirect);
 
         m_command = { SimpleCommand { Vector<StringView>(), Vector<AssignmentWord>(), redirects } };
+        return *this;
+    }
+
+    ShValue& create_if_clause(Maybe<ShValue::List> condition, ShValue::IfClause::Condition::Type type, ShValue::List action) {
+        IfClause::Condition part = IfClause::Condition { condition, type, action };
+        IfClause if_clause;
+        if_clause.conditions.add(part);
+
+        m_command = { CompoundCommand { if_clause } };
         return *this;
     }
 

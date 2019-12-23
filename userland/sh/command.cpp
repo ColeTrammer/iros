@@ -179,6 +179,54 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
     return pid;
 }
 
+static int do_command_list(ShValue::List& list);
+
+static pid_t __do_if_clause(ShValue::IfClause& if_clause, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
+    assert(mode == ShValue::List::Combinator::Sequential);
+    *was_builtin = true;
+    (void) to_set_pgid;
+
+    int ret = 0;
+    for (int i = 0; i < if_clause.conditions.size(); i++) {
+        ShValue::IfClause::Condition& condition = if_clause.conditions[i];
+        switch (condition.type) {
+            case ShValue::IfClause::Condition::Type::If:
+            case ShValue::IfClause::Condition::Type::Elif: {
+                int status = do_command_list(condition.condition.value());
+                if (status != 0) {
+                    return status;
+                }
+
+                if (get_last_exit_status() == 0) {
+                    ret = do_command_list(condition.action);
+                    goto finish_if_clause;
+                }
+                break;
+            }
+            case ShValue::IfClause::Condition::Type::Else:
+                ret = do_command_list(condition.action);
+                goto finish_if_clause;
+        }
+    }
+
+finish_if_clause:
+    if (ret < 0) {
+        return ret;
+    }
+
+    return get_last_exit_status();
+}
+
+static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin,
+                                   pid_t to_set_pgid) {
+    switch (command.type) {
+        case ShValue::CompoundCommand::Type::If:
+            return __do_if_clause(command.if_clause.value(), mode, was_builtin, to_set_pgid);
+        default:
+            assert(false);
+    }
+}
+
 static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mode) {
     int fds[(pipeline.commands.size() - 1) * 2];
     for (int i = 0; i < pipeline.commands.size() - 1; i++) {
@@ -199,7 +247,6 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
     LinkedList<String> created_strings;
     for (i = 0; i < pipeline.commands.size(); i++) {
         ShValue::Command& command = pipeline.commands[i];
-        assert(command.type == ShValue::Command::Type::Simple);
 
         if (i != pipeline.commands.size() - 1) {
             String output = String::format("%d", fds[i * 2 + 1]);
@@ -218,7 +265,18 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
         }
 
         bool is_builtin = false;
-        pid_t pid = __do_simple_command(command.simple_command.value(), mode, &is_builtin, pgid);
+        pid_t pid = -1;
+        switch (command.type) {
+            case ShValue::Command::Type::Compound:
+                pid = __do_compound_command(command.compound_command.value(), mode, &is_builtin, pgid);
+                break;
+            case ShValue::Command::Type::Simple:
+                pid = __do_simple_command(command.simple_command.value(), mode, &is_builtin, pgid);
+                break;
+            default:
+                assert(false);
+                break;
+        }
 
         if (i != pipeline.commands.size() - 1) {
             close(fds[i * 2 + 1]);
