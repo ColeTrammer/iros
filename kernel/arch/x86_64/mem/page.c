@@ -394,10 +394,18 @@ void soft_remove_paging_structure(struct vm_region *list) {
     }
 }
 
+extern struct task initial_kernel_task;
+
 /* Must be called from unpremptable context */
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     uint64_t old_cr3 = get_cr3();
-    load_cr3(phys_addr);
+    if (old_cr3 == phys_addr) {
+        old_cr3 = initial_kernel_task.process->arch_process.cr3;
+        debug_log("loading cr3: %#.16lX\n", old_cr3);
+    } else {
+        debug_log("old_cr3, phys_addr: [ %#.16lX, %#.16lX ]\n", old_cr3, phys_addr);
+        load_cr3(phys_addr);
+    }
 
     struct vm_region *region = list;
     while (region != NULL) {

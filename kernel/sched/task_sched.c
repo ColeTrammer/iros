@@ -81,9 +81,9 @@ void sched_remove_task(struct task *task) {
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct task *current = get_current_task();
-    // if (current == &initial_kernel_task) {
-    //     current = list_start;
-    // }
+    if (current == &initial_kernel_task) {
+        current = list_start;
+    }
 
     // Task signals
     struct task *task = list_start;
@@ -112,6 +112,10 @@ void sched_run_next() {
 
             if (to_remove == list_start) {
                 list_start = to_remove->next;
+            }
+
+            if (to_remove == start) {
+                start = to_remove->next;
             }
 
             struct task *prev_save = to_remove->prev;

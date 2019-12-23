@@ -135,8 +135,6 @@ void init_kernel_task() {
     initial_kernel_task.process->pgid = 1;
     initial_kernel_task.process->ppid = 1;
     initial_kernel_task.process->tty = -1;
-
-    sched_add_task(&initial_kernel_task);
 }
 
 struct task *load_kernel_task(uintptr_t entry) {
