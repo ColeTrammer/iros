@@ -181,12 +181,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 
 static int do_command_list(ShValue::List& list);
 
-static pid_t __do_if_clause(ShValue::IfClause& if_clause, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
-    assert(mode == ShValue::List::Combinator::Sequential);
-    *was_builtin = true;
-    (void) to_set_pgid;
-
-    int ret = 0;
+static pid_t __do_if_clause(ShValue::IfClause& if_clause) {
     for (int i = 0; i < if_clause.conditions.size(); i++) {
         ShValue::IfClause::Condition& condition = if_clause.conditions[i];
         switch (condition.type) {
@@ -198,32 +193,72 @@ static pid_t __do_if_clause(ShValue::IfClause& if_clause, ShValue::List::Combina
                 }
 
                 if (get_last_exit_status() == 0) {
-                    ret = do_command_list(condition.action);
-                    goto finish_if_clause;
+                    return do_command_list(condition.action);
                 }
                 break;
             }
             case ShValue::IfClause::Condition::Type::Else:
-                ret = do_command_list(condition.action);
-                goto finish_if_clause;
+                return do_command_list(condition.action);
         }
     }
 
-finish_if_clause:
-    if (ret < 0) {
-        return ret;
-    }
-
-    return get_last_exit_status();
+    return 0;
 }
 
-static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin,
-                                   pid_t to_set_pgid) {
+static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid,
+                                   bool in_subshell) {
+    if (in_subshell) {
+        // Child
+        pid_t pid = fork();
+        if (pid == 0) {
+            setpgid(to_set_pgid, to_set_pgid);
+            if (isatty(STDOUT_FILENO) && mode == ShValue::List::Combinator::Sequential) {
+                tcsetpgrp(STDOUT_FILENO, to_set_pgid == 0 ? getpid() : to_set_pgid);
+            }
+
+            struct sigaction to_set;
+            to_set.sa_handler = SIG_DFL;
+            to_set.sa_flags = 0;
+            sigaction(SIGINT, &to_set, NULL);
+
+            sigset_t mask_restore;
+            sigemptyset(&mask_restore);
+            sigprocmask(SIG_SETMASK, &mask_restore, NULL);
+
+            command.redirect_list.for_each([&](ShValue::IoRedirect& io) {
+                handle_redirection(io);
+            });
+        } else if (pid < 0) {
+            perror("Shell");
+            return -1;
+        } else {
+            *was_builtin = false;
+            return pid;
+        }
+    } else {
+        *was_builtin = true;
+    }
+
+    int ret = 0;
     switch (command.type) {
         case ShValue::CompoundCommand::Type::If:
-            return __do_if_clause(command.if_clause.value(), mode, was_builtin, to_set_pgid);
+            ret = __do_if_clause(command.if_clause.value());
+            break;
         default:
             assert(false);
+    }
+
+    int last_status = get_last_exit_status();
+    if (in_subshell) {
+        if (ret < 0) {
+            _exit(127);
+        }
+        _exit(last_status);
+    } else {
+        if (ret < 0) {
+            return ret;
+        }
+        return last_status;
     }
 }
 
@@ -252,23 +287,45 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
             String output = String::format("%d", fds[i * 2 + 1]);
             created_strings.add(output);
             StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
-            command.simple_command.value().redirect_info.add(
-                ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
+            switch (command.type) {
+                case ShValue::Command::Type::Compound:
+                    command.compound_command.value().redirect_list.add(
+                        ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
+                    break;
+                case ShValue::Command::Type::Simple:
+                    command.simple_command.value().redirect_info.add(
+                        ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
+                    break;
+                default:
+                    assert(false);
+                    break;
+            }
         }
 
         if (i != 0) {
             String input = String::format("%d", fds[(i - 1) * 2]);
             created_strings.add(input);
             StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
-            command.simple_command.value().redirect_info.add(
-                ShValue::IoRedirect { STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, view });
+            switch (command.type) {
+                case ShValue::Command::Type::Compound:
+                    command.compound_command.value().redirect_list.add(
+                        ShValue::IoRedirect { STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, view });
+                    break;
+                case ShValue::Command::Type::Simple:
+                    command.simple_command.value().redirect_info.add(
+                        ShValue::IoRedirect { STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, view });
+                    break;
+                default:
+                    assert(false);
+                    break;
+            }
         }
 
         bool is_builtin = false;
         pid_t pid = -1;
         switch (command.type) {
             case ShValue::Command::Type::Compound:
-                pid = __do_compound_command(command.compound_command.value(), mode, &is_builtin, pgid);
+                pid = __do_compound_command(command.compound_command.value(), mode, &is_builtin, pgid, pipeline.commands.size() > 1);
                 break;
             case ShValue::Command::Type::Simple:
                 pid = __do_simple_command(command.simple_command.value(), mode, &is_builtin, pgid);

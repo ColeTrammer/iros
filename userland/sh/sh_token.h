@@ -26,6 +26,7 @@ public:
     };
 
     using AssignmentWord = StringView;
+    using RedirectList = Vector<IoRedirect>;
 
     struct SimpleCommand {
         Vector<StringView> words;
@@ -92,6 +93,7 @@ public:
 
         Type type;
         Maybe<ShValue::IfClause> if_clause;
+        RedirectList redirect_list;
     };
 
     struct Command {
@@ -140,6 +142,19 @@ public:
     ShValue& create_io_redirect(int number, IoRedirect::Type type, const StringView& word) {
         m_io_redirect = { IoRedirect { number, type, word } };
 
+        return *this;
+    }
+
+    RedirectList& redirect_list() { return m_redirect_list.value(); }
+    const RedirectList& redirect_list() const { return m_redirect_list.value(); }
+
+    bool has_redirect_list() const { return m_redirect_list.has_value(); }
+
+    ShValue& create_redirect_list(const IoRedirect& io) {
+        RedirectList list;
+        list.add(io);
+
+        m_redirect_list = { list };
         return *this;
     }
 
@@ -317,6 +332,7 @@ private:
     size_t m_line { 0 };
     size_t m_position { 0 };
     Maybe<IoRedirect> m_io_redirect;
+    Maybe<RedirectList> m_redirect_list;
     Maybe<StringView> m_text;
     Maybe<Command> m_command;
     Maybe<Pipeline> m_pipeline;

@@ -84,6 +84,19 @@ public:
         return io_file;
     }
 
+    virtual ShValue reduce_redirect_list$io_redirect(ShValue& io) override {
+        assert(io.has_io_redirect());
+        return io.create_redirect_list(io.io_redirect());
+    }
+
+    virtual ShValue reduce_redirect_list$redirect_list_io_redirect(ShValue& list, ShValue& io) override {
+        assert(list.has_list());
+        assert(io.has_io_redirect());
+
+        list.redirect_list().add(io.io_redirect());
+        return list;
+    }
+
     virtual ShValue reduce_cmd_name$word(ShValue& v) override {
         assert(v.has_text());
         return v;
@@ -272,6 +285,15 @@ public:
     virtual ShValue reduce_command$compound_command(ShValue& compound_command) override {
         assert(compound_command.has_command());
         assert(compound_command.command().type == ShValue::Command::Type::Compound);
+        return compound_command;
+    }
+
+    virtual ShValue reduce_command$compound_command_redirect_list(ShValue& compound_command, ShValue& list) override {
+        assert(compound_command.has_command());
+        assert(compound_command.command().type == ShValue::Command::Type::Compound);
+        assert(list.has_redirect_list());
+
+        compound_command.command().compound_command.value().redirect_list = list.redirect_list();
         return compound_command;
     }
 
