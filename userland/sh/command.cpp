@@ -205,6 +205,27 @@ static pid_t __do_if_clause(ShValue::IfClause& if_clause) {
     return 0;
 }
 
+static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
+    auto name = String(for_clause.name);
+
+    enum PreviousState { Set, Unset };
+
+    char* previous_value = getenv(name.string());
+    PreviousState previous_state = previous_value ? Set : Unset;
+
+    for_clause.words.for_each([&](const auto& w) {
+        setenv(name.string(), String(w).string(), 1);
+        do_command_list(for_clause.action);
+    });
+
+    if (previous_state == Unset) {
+        unsetenv(name.string());
+    } else {
+        setenv(name.string(), previous_value, 1);
+    }
+    return 0;
+}
+
 static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid,
                                    bool in_subshell) {
     if (in_subshell) {
@@ -244,6 +265,9 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
     switch (command.type) {
         case ShValue::CompoundCommand::Type::If:
             ret = __do_if_clause(command.if_clause.value());
+            break;
+        case ShValue::CompoundCommand::Type::For:
+            ret = __do_for_clause(command.for_clause.value());
             break;
         default:
             assert(false);
