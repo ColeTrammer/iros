@@ -62,6 +62,12 @@ public:
         Vector<Combinator> combinators;
     };
 
+    struct ForClause {
+        StringView name;
+        Vector<StringView> words;
+        ShValue::List action;
+    };
+
     struct IfClause {
         struct Condition {
             enum class Type {
@@ -90,9 +96,11 @@ public:
         };
 
         CompoundCommand(const IfClause& _if_clause) : type(Type::If), if_clause(_if_clause) {}
+        CompoundCommand(const ForClause& _for_clause) : type(Type::For), for_clause(_for_clause) {}
 
         Type type;
         Maybe<ShValue::IfClause> if_clause;
+        Maybe<ShValue::ForClause> for_clause;
         RedirectList redirect_list;
     };
 
@@ -200,6 +208,13 @@ public:
         if_clause.conditions.add(part);
 
         m_command = { CompoundCommand { if_clause } };
+        return *this;
+    }
+
+    ShValue& create_for_clause(StringView name, const Vector<StringView>& words, const ShValue::List& action) {
+        ForClause for_clause = ForClause { name, words, action };
+
+        m_command = { CompoundCommand { for_clause } };
         return *this;
     }
 

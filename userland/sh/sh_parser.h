@@ -31,6 +31,11 @@ public:
     virtual ShValue reduce_newline_list$newline(ShValue&) override { return {}; }
     virtual ShValue reduce_newline_list$newline_list_newline(ShValue&, ShValue&) override { return {}; }
 
+    virtual ShValue reduce_name$name(ShValue& n) override {
+        assert(n.has_text());
+        return n;
+    }
+
     virtual ShValue reduce_filename$word(ShValue& word) override {
         assert(word.has_text());
         return word;
@@ -275,11 +280,71 @@ public:
         return condition.create_if_clause({ condition.list() }, ShValue::IfClause::Condition::Type::If, action.list());
     }
 
+    virtual ShValue reduce_wordlist$wordlist_word(ShValue& if_clause, ShValue& word) override {
+        assert(if_clause.has_command());
+        assert(if_clause.command().type == ShValue::Command::Type::Compound);
+        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
+        assert(word.has_text());
+
+        if_clause.command().compound_command.value().for_clause.value().words.add(word.text());
+        return if_clause;
+    }
+
+    virtual ShValue reduce_wordlist$word(ShValue& word) {
+        assert(word.has_text());
+        Vector<StringView> words;
+        words.add(word.text());
+
+        return word.create_for_clause("__wordlist__", words,
+                                      ShValue::List { Vector<ShValue::ListComponent>(), Vector<ShValue::List::Combinator>() });
+    }
+
+    virtual ShValue reduce_for_clause$for_name_do_group(ShValue&, ShValue& name, ShValue& list) override {
+        assert(name.has_text());
+        assert(list.has_list());
+
+        return name.create_for_clause(name.text(), Vector<StringView>(), list.list());
+    }
+
+    virtual ShValue reduce_for_clause$for_name_sequential_sep_do_group(ShValue&, ShValue& name, ShValue&, ShValue& list) override {
+        assert(name.has_text());
+        assert(list.has_list());
+
+        return name.create_for_clause(name.text(), Vector<StringView>(), list.list());
+    }
+
+    virtual ShValue reduce_for_clause$for_name_linebreak_in_sequential_sep_do_group(ShValue&, ShValue& name, ShValue&, ShValue&, ShValue&,
+                                                                                    ShValue& list) override {
+        assert(name.has_text());
+        assert(list.has_list());
+
+        return name.create_for_clause(name.text(), Vector<StringView>(), list.list());
+    }
+
+    virtual ShValue reduce_for_clause$for_name_linebreak_in_wordlist_sequential_sep_do_group(ShValue&, ShValue& name, ShValue&, ShValue&,
+                                                                                             ShValue& words, ShValue&,
+                                                                                             ShValue& list) override {
+        assert(name.has_text());
+        assert(list.has_list());
+        assert(words.has_command());
+        assert(words.command().type == ShValue::Command::Type::Compound);
+        assert(words.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
+
+        return name.create_for_clause(name.text(), words.command().compound_command.value().for_clause.value().words, list.list());
+    }
+
     virtual ShValue reduce_compound_command$if_clause(ShValue& if_clause) override {
         assert(if_clause.has_command());
         assert(if_clause.command().type == ShValue::Command::Type::Compound);
         assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::If);
         return if_clause;
+    }
+
+    virtual ShValue reduce_compound_command$for_clause(ShValue& for_clause) override {
+        assert(for_clause.has_command());
+        assert(for_clause.command().type == ShValue::Command::Type::Compound);
+        assert(for_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
+        return for_clause;
     }
 
     virtual ShValue reduce_command$compound_command(ShValue& compound_command) override {
@@ -407,6 +472,11 @@ public:
 
         list.list().combinators.last() = separator_op.separator_op();
         return list;
+    }
+
+    virtual ShValue reduce_do_group$do_compound_list_done(ShValue&, ShValue& compound_list, ShValue&) override {
+        assert(compound_list.has_list());
+        return compound_list;
     }
 
     virtual ShValue reduce_complete_command$list(ShValue& list) override {
