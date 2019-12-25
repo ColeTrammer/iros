@@ -111,7 +111,8 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 #ifndef USERLAND_NATIVE
         we.we_special_vars = &special_vars;
 #endif /* USERLAND_NATIVE */
-        int ret = wordexp(String(s).string(), &we, WRDE_SPECIAL);
+        String w = String(s);
+        int ret = wordexp(w.string(), &we, WRDE_SPECIAL);
         if (ret != 0) {
             failed = true;
             return;
@@ -213,8 +214,31 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
     char* previous_value = getenv(name.string());
     PreviousState previous_state = previous_value ? Set : Unset;
 
+    Vector<String> words_to_expand;
+
+    bool failed = false;
     for_clause.words.for_each([&](const auto& w) {
-        setenv(name.string(), String(w).string(), 1);
+        wordexp_t we;
+        we.we_special_vars = &special_vars;
+        String word = String(w);
+        int ret = wordexp(word.string(), &we, WRDE_SPECIAL);
+        if (ret < 0) {
+            failed = true;
+        }
+
+        for (size_t i = 0; i < we.we_wordc; i++) {
+            words_to_expand.add(String(we.we_wordv[i]));
+        }
+
+        wordfree(&we);
+    });
+
+    if (failed) {
+        return -1;
+    }
+
+    words_to_expand.for_each([&](const auto& w) {
+        setenv(name.string(), w.string(), 1);
         do_command_list(for_clause.action);
     });
 
