@@ -142,7 +142,7 @@ static int we_expand(const char *s, int flags, char **expanded, word_special_t *
                 continue;
             normal_var : {
                 // Maybe other characters are valid but this is the standard form
-                int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
                 // NOTE: Still does expansion if in_d_quotes
                 if (prev_was_backslash || in_s_quotes || to_read <= 0) {
