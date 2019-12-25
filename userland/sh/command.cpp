@@ -233,6 +233,7 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
             return -1;
         } else {
             *was_builtin = false;
+            setpgid(pid, to_set_pgid);
             return pid;
         }
     } else {
