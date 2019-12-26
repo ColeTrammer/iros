@@ -14,7 +14,7 @@ template<typename T> class Vector {
 public:
     explicit Vector(int capacity = 20) : m_capacity(capacity) { allocate_vector(); }
 
-    Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()) {
+    Vector(const Vector<T>& to_copy) : m_capacity(to_copy.capacity()) {
         allocate_vector();
         m_size = to_copy.size();
         if (m_size == 0) {
@@ -43,10 +43,6 @@ public:
 
     Vector<T>& operator=(const Vector<T>& other) {
         clear();
-        if (m_vector) {
-            free(m_vector);
-            m_vector = nullptr;
-        }
 
         m_capacity = other.capacity();
         allocate_vector();
@@ -67,7 +63,9 @@ public:
         return *this;
     }
 
-    ~Vector() {
+    ~Vector() { clear(); }
+
+    void clear() {
         for (int i = 0; i < m_size; i++) {
             get(i).~T();
         }
@@ -76,13 +74,6 @@ public:
             free(m_vector);
             m_vector = nullptr;
         }
-    }
-
-    void clear() {
-        for (int i = 0; i < m_size; i++) {
-            get(i).~T();
-        }
-        m_size = 0;
     }
 
     bool empty() const { return size() == 0; }
@@ -301,10 +292,11 @@ private:
             }
         }
 
+        free(m_vector);
         m_vector = replacement;
     }
 
-    int m_capacity;
+    int m_capacity { 0 };
     int m_size { 0 };
     T* m_vector { nullptr };
 };

@@ -27,11 +27,11 @@ public:
             }
         } else {
             if (this->has_value()) {
-                value() = other.value();
-            } else {
-                new (&m_value[0]) T(other.value());
-                m_has_value = true;
+                value().~T();
             }
+
+            new (&m_value[0]) T(other.value());
+            m_has_value = true;
         }
         return *this;
     }

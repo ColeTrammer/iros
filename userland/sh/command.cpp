@@ -106,12 +106,14 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
     Vector<char*> args;
 
     bool failed = false;
-    command.words.for_each([&](const auto& s) {
+    command.words.for_each([&](const StringView& s) {
         wordexp_t we;
 #ifndef USERLAND_NATIVE
         we.we_special_vars = &special_vars;
 #endif /* USERLAND_NATIVE */
-        String w = String(s);
+        fprintf(stderr, "attempting...\n");
+        String w(s);
+        fprintf(stderr, "O: |%s|\n", w.string());
         int ret = wordexp(w.string(), &we, WRDE_SPECIAL);
         if (ret != 0) {
             failed = true;
@@ -119,6 +121,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
 
         for (size_t i = 0; i < we.we_wordc; i++) {
+            fprintf(stderr, "E: |%s|\n", we.we_wordv[i]);
             strings.add(String(we.we_wordv[i]));
             args.add(strings.last().string());
         }
@@ -219,7 +222,9 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
     bool failed = false;
     for_clause.words.for_each([&](const auto& w) {
         wordexp_t we;
+#ifndef USERLAND_NATIVE
         we.we_special_vars = &special_vars;
+#endif /* USERLAND_NATIVE */
         String word = String(w);
         int ret = wordexp(word.string(), &we, WRDE_SPECIAL);
         if (ret < 0) {

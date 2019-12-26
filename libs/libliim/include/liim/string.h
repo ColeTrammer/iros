@@ -14,7 +14,7 @@ class String {
 public:
     String() {}
 
-    String(char c) : m_size(2), m_string(reinterpret_cast<char*>(malloc(2))) {
+    explicit String(char c) : m_size(2), m_string(reinterpret_cast<char*>(malloc(2))) {
         m_string[0] = c;
         m_string[1] = '\0';
     }

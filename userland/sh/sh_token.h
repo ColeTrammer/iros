@@ -135,6 +135,8 @@ public:
         , m_separator_op(other.m_separator_op)
         , m_program(other.m_program) {}
 
+    ~ShValue() {}
+
     size_t line() const { return m_line; }
     size_t position() const { return m_position; }
 

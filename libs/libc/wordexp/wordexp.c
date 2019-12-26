@@ -256,7 +256,7 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
     bool in_d_quotes = false;
 
     int prev = strspn(s, split_on);
-    for (size_t i = prev + 1;; i++) {
+    for (size_t i = prev;; i++) {
         switch (s[i]) {
             case '\\':
                 if (prev_was_blackslash) {
