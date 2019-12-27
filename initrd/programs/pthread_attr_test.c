@@ -53,7 +53,7 @@ static void display_pthread_attr(pthread_attr_t *attr, char *prefix) {
     s = pthread_attr_getguardsize(attr, &v);
     if (s != 0)
         handle_error_en(s, "pthread_attr_getguardsize");
-    printf("%sGuard size          = %zu bytes\n", prefix, v);
+    printf("%sGuard size          = %lu bytes\n", prefix, v);
 
     s = pthread_attr_getstack(attr, &stkaddr, &v);
     if (s != 0)

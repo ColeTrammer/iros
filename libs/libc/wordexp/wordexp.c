@@ -74,7 +74,12 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     return true;
 }
 
-static int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
+static int we_expand(const char *s, int flags, char **expanded
+#ifndef USERLAND_NATIVE
+                     ,
+                     word_special_t *special
+#endif /* USERLAND_NATIVE */
+) {
     size_t len = WE_STR_BUF_INCREMENT;
     *expanded = calloc(len, sizeof(char));
 
@@ -99,6 +104,7 @@ static int we_expand(const char *s, int flags, char **expanded, word_special_t *
                 break;
             }
             case '$': {
+#ifndef USERLAND_NATIVE
                 if (!(flags & WRDE_SPECIAL) || special == NULL) {
                     goto normal_var;
                 }
@@ -141,6 +147,7 @@ static int we_expand(const char *s, int flags, char **expanded, word_special_t *
                 prev_was_backslash = false;
                 continue;
             normal_var : {
+#endif /* USERLAND_NATIVE */
                 // Maybe other characters are valid but this is the standard form
                 int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
@@ -168,7 +175,9 @@ static int we_expand(const char *s, int flags, char **expanded, word_special_t *
 
                 prev_was_backslash = false;
                 continue;
+#ifndef USERLAND_NATIVE
             }
+#endif /* USERLAND_NATIVE */
             }
             case '`': {
                 if (prev_was_backslash || in_s_quotes) {
@@ -309,6 +318,10 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
         prev = i--; // Since loop does i++
     }
 
+    for (size_t i = 0; i < we->we_wordc; i++) {
+        fprintf(stderr, "SPL: |%s|\n", we->we_wordv[i]);
+    }
+
     return 0;
 }
 
@@ -350,6 +363,7 @@ static int we_unescape(wordexp_t *p) {
 
         free(p->we_wordv[i]);
         p->we_wordv[i] = unescaped_string;
+        fprintf(stderr, "Qtd: |%s|\n", p->we_wordv[i]);
     }
 
     return 0;
@@ -426,7 +440,12 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     p->we_wordv = NULL;
 
     char *str = NULL;
-    int ret = we_expand(s, flags, &str, p->we_special_vars);
+    int ret = we_expand(s, flags, &str
+#ifndef USERLAND_NATIVE
+                        ,
+                        p->we_special_vars
+#endif /* USERLAND_NATIVE */
+    );
     if (ret != 0) {
         return ret;
     }
@@ -458,6 +477,7 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
 void wordfree(wordexp_t *p) {
     for (size_t i = p->we_offs; i < p->we_wordc; i++) {
         if (p->we_wordv[i] != NULL) {
+            fprintf(stderr, "%p::%p::[%lu|%lu]\n", p, p->we_wordv[i], i, p->we_wordc);
             free(p->we_wordv[i]);
         }
     }

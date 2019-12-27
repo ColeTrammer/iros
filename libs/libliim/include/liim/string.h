@@ -25,8 +25,8 @@ public:
 
     String(const StringView& view) : m_size(view.size()) {
         m_string = reinterpret_cast<char*>(malloc(size() + 1));
-        memcpy(string(), view.start(), size());
-        string()[size()] = '\0';
+        memmove(m_string, view.start(), m_size);
+        m_string[m_size] = '\0';
     }
 
     ~String() {
