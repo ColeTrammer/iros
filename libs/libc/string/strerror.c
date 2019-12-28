@@ -67,6 +67,8 @@ const char *sys_errlist[] = { "Success",
                               "Prototype",
                               "EILSEQ",
                               "Not supported",
+                              "Unrecoverable state",
+                              "Owner dead",
                               "Errno end" };
 
 int sys_nerr = EMAXERRNO;

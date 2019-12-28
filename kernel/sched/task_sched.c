@@ -184,12 +184,14 @@ int signal_process_group(pid_t pgid, int signum) {
     do {
         // FIXME: only signal 1 task per process
         if (task->process->pgid == pgid) {
-            task_set_sig_pending(task, signum);
-            signalled_anything = true;
+            if (signum != 0) {
+                task_set_sig_pending(task, signum);
 
-            if (task == get_current_task()) {
-                signalled_self = true;
+                if (task == get_current_task()) {
+                    signalled_self = true;
+                }
             }
+            signalled_anything = true;
         }
     } while ((task = task->next) != list_start);
 
@@ -216,13 +218,16 @@ int signal_task(int tgid, int tid, int signum) {
     struct task *task = list_start;
     do {
         if (task->process->pid == tgid && task->tid == tid) {
-            debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
-            task_set_sig_pending(task, signum);
+            if (signum != 0) {
+                debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
+                task_set_sig_pending(task, signum);
+
+                if (task == get_current_task()) {
+                    signalled_self = true;
+                }
+            }
             signalled_anything = true;
 
-            if (task == get_current_task()) {
-                signalled_self = true;
-            }
             break;
         }
     } while ((task = task->next) != list_start);
@@ -251,13 +256,15 @@ int signal_process(pid_t pid, int signum) {
     do {
         // Maybe should only do it once instead of in a loop
         if (task->process->pid == pid) {
-            debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
-            task_set_sig_pending(task, signum);
-            signalled_anything = true;
+            if (signum != 0) {
+                debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
+                task_set_sig_pending(task, signum);
 
-            if (task == get_current_task()) {
-                signalled_self = true;
+                if (task == get_current_task()) {
+                    signalled_self = true;
+                }
             }
+            signalled_anything = true;
         }
     } while ((task = task->next) != list_start);
 

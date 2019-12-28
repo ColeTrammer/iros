@@ -69,6 +69,8 @@
 #define EILSEQ          64
 #define ENOTSUP         65
 #define EMAXERRNO       66
+#define ENOTRECOVERABLE 67
+#define EOWNERDEAD      68
 
 #ifdef __cplusplus
 extern "C" {

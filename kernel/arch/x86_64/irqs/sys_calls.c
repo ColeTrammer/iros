@@ -825,7 +825,7 @@ void arch_sys_kill(struct task_state *task_state) {
     struct task *current = get_current_task();
 
     // pid -1 is not yet implemented
-    if (signum < 1 || signum > _NSIG || pid == -1) {
+    if (signum < 0 || signum >= _NSIG || pid == -1) {
         SYS_RETURN(-EINVAL);
     }
 
@@ -1598,6 +1598,10 @@ void arch_sys_tgkill(struct task_state *task_state) {
     int signum = (int) task_state->cpu_state.rcx;
 
     struct task *current = get_current_task();
+
+    if (signum < 0 || signum >= _NSIG) {
+        SYS_RETURN(EINVAL);
+    }
 
     if (tgid == 0) {
         tgid = current->process->pid;

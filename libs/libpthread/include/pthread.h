@@ -36,6 +36,8 @@
 #define PTHREAD_MUTEX_ERRORCHECK 2
 #define PTHREAD_MUTEX_RECURSIVE  4
 #define PTHREAD_MUTEX_DEFAULT    PTHREAD_MUTEX_NORMAL
+#define PTHREAD_MUTEX_STALLED    0
+#define PTHREAD_MUTEX_ROBUST     8
 
 #define PTHREAD_ONCE_INIT 0
 
@@ -92,10 +94,13 @@ int pthread_spin_unlock(pthread_spinlock_t *lock);
 int pthread_mutexattr_init(pthread_mutexattr_t *mutexattr);
 int pthread_mutexattr_destroy(pthread_mutexattr_t *mutexattr);
 int pthread_mutexattr_getpshared(pthread_mutexattr_t *__restrict mutexattr, int *__restrict pshared);
-int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict attr, int *__restrict type);
+int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict mutexattr, int *__restrict robust);
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict mutexattr, int *__restrict type);
 int pthread_mutexattr_setpshared(pthread_mutexattr_t *mutexattr, int pshared);
-int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
+int pthread_mutexattr_setrobust(pthread_mutexattr_t *mutexattr, int robust);
+int pthread_mutexattr_settype(pthread_mutexattr_t *mutexattr, int type);
 
+int pthread_mutex_consistent(pthread_mutex_t *mutex);
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex, const pthread_mutexattr_t *__restrict mutexattr);
 int pthread_mutex_lock(pthread_mutex_t *mutex);
@@ -162,6 +167,9 @@ extern __thread struct __pthread_cleanup_handler *__cleanup_handlers;
 
 #define __PTHREAD_ONCE_IN_PROGRESS 1
 #define __PTHREAD_ONCE_FINISHED    2
+
+#define __PTHREAD_MUTEX_INCONSISTENT  16
+#define __PTHREAD_MUTEX_UNRECOVERABLE 32
 
 #define __PTHREAD_CANCEL_SIGNAL 31
 
