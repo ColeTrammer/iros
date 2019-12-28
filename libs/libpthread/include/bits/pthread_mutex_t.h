@@ -9,6 +9,7 @@ extern "C" {
 
 typedef struct {
     int __lock;
+    int __count_if_recursive;
     pthread_mutexattr_t __attr;
 } pthread_mutex_t;
 

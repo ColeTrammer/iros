@@ -32,6 +32,11 @@
 #define PTHREAD_PROCESS_SHARED  0
 #define PTHREAD_PROCESS_PRIVATE 1
 
+#define PTHREAD_MUTEX_NORMAL     0
+#define PTHREAD_MUTEX_ERRORCHECK 2
+#define PTHREAD_MUTEX_RECURSIVE  4
+#define PTHREAD_MUTEX_DEFAULT    PTHREAD_MUTEX_NORMAL
+
 #define PTHREAD_ONCE_INIT 0
 
 #define PTHREAD_COND_INITIALIZER \
@@ -41,7 +46,7 @@
 
 #define PTHREAD_MUTEX_INITIALIZER \
     {                             \
-        0, { 0 }                  \
+        0, 0, { 0 }               \
     }
 
 #ifdef __cplusplus
@@ -87,7 +92,9 @@ int pthread_spin_unlock(pthread_spinlock_t *lock);
 int pthread_mutexattr_init(pthread_mutexattr_t *mutexattr);
 int pthread_mutexattr_destroy(pthread_mutexattr_t *mutexattr);
 int pthread_mutexattr_getpshared(pthread_mutexattr_t *__restrict mutexattr, int *__restrict pshared);
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict attr, int *__restrict type);
 int pthread_mutexattr_setpshared(pthread_mutexattr_t *mutexattr, int pshared);
+int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex, const pthread_mutexattr_t *__restrict mutexattr);
