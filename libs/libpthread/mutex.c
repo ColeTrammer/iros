@@ -22,9 +22,11 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex, const pthread_mutexatt
 
 int pthread_mutex_lock(pthread_mutex_t *mutex) {
     int expected = 0;
-    if (!atomic_compare_exchange_strong(&mutex->__lock, &expected, 1)) {
+    pthread_t tid = pthread_self();
+    while (!atomic_compare_exchange_strong(&mutex->__lock, &expected, tid)) {
         // Failed to aquire the lock
-        return syscall(SC_OS_MUTEX, &mutex->__lock, MUTEX_AQUIRE, 1, 1, 0, NULL);
+        syscall(SC_OS_MUTEX, &mutex->__lock, MUTEX_AQUIRE, expected, tid, 0, NULL);
+        expected = 0;
     }
 
     return 0;
@@ -32,7 +34,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
 int pthread_mutex_trylock(pthread_mutex_t *mutex) {
     int expected = 0;
-    if (!atomic_compare_exchange_strong(&mutex->__lock, &expected, 1)) {
+    if (!atomic_compare_exchange_strong(&mutex->__lock, &expected, pthread_self())) {
         // Failed to aquire the lock
         return EBUSY;
     }
@@ -41,7 +43,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
 }
 
 int pthread_mutex_unlock(pthread_mutex_t *mutex) {
-    return syscall(SC_OS_MUTEX, &mutex->__lock, MUTEX_RELEASE, 1, 0, 1, NULL);
+    return syscall(SC_OS_MUTEX, &mutex->__lock, MUTEX_WAKE_AND_SET, pthread_self(), 0, 1, NULL);
 }
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex) {

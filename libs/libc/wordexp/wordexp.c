@@ -318,10 +318,6 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
         prev = i--; // Since loop does i++
     }
 
-    for (size_t i = 0; i < we->we_wordc; i++) {
-        fprintf(stderr, "SPL: |%s|\n", we->we_wordv[i]);
-    }
-
     return 0;
 }
 
@@ -363,7 +359,6 @@ static int we_unescape(wordexp_t *p) {
 
         free(p->we_wordv[i]);
         p->we_wordv[i] = unescaped_string;
-        fprintf(stderr, "Qtd: |%s|\n", p->we_wordv[i]);
     }
 
     return 0;
@@ -477,7 +472,6 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
 void wordfree(wordexp_t *p) {
     for (size_t i = p->we_offs; i < p->we_wordc; i++) {
         if (p->we_wordv[i] != NULL) {
-            fprintf(stderr, "%p::%p::[%lu|%lu]\n", p, p->we_wordv[i], i, p->we_wordc);
             free(p->we_wordv[i]);
         }
     }

@@ -145,7 +145,6 @@ int main(int argc, char** argv) {
 
         ShValue command = parser.result();
         assert(command.has_program());
-        ShValue::dump(command.program());
         command_run(command.program());
 
         free(line);

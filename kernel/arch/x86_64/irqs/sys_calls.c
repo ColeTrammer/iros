@@ -1535,7 +1535,6 @@ void arch_sys_os_mutex(struct task_state *task_state) {
             struct user_mutex *um = get_user_mutex_locked(to_aquire);
             if (*to_aquire != expected) {
                 // Case where MUTEX_RELEASE occurs before we lock/create the mutex
-                *to_aquire = to_place;
                 unlock_user_mutex(um);
                 SYS_RETURN(0);
             }
