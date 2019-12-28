@@ -60,7 +60,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     (void) argc;
     (void) argv;
 
-    syscall(SC_GET_INITIAL_PROCESS_INFO, &__initial_process_info);
+    get_initial_process_info(&__initial_process_info);
 
     // FIXME: __allocate_thread_control_block will call malloc which calls sbrk,
     //        which could set errno if it fails.
@@ -73,7 +73,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER;
     __threads->id = __initial_process_info.main_tid;
 
-    syscall(SC_SET_THREAD_SELF_POINTER, __threads);
+    set_thread_self_pointer(__threads);
 
     // Don't use wrappers so that signal.o won't be linked in
     sigset_t set = { 0 };

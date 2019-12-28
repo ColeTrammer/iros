@@ -34,7 +34,7 @@ void psignal(int sig, const char *s) {
 
 int raise(int signum) {
     // Make sure to signal the current thread, not just a random one in the process
-    return syscall(SC_TGKILL, 0, 0, signum);
+    return tgkill(0, 0, signum);
 }
 
 int sigaction(int signum, const struct sigaction *act, struct sigaction *old_act) {

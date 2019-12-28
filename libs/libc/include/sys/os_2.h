@@ -10,6 +10,15 @@
 extern "C" {
 #endif /* __cplusplus */
 
+struct create_task_args {
+    unsigned long entry;
+    unsigned long stack_start;
+    void *arg;
+    unsigned long push_onto_stack;
+    int *tid_ptr;
+    void *thread_self_pointer;
+};
+
 struct initial_process_info {
     void *tls_start;
     unsigned long tls_size;
@@ -19,6 +28,13 @@ struct initial_process_info {
     unsigned long guard_size;
     int main_tid;
 };
+
+int create_task(struct create_task_args *create_task_args);
+void exit_task(void) __attribute__((__noreturn__));
+int get_initial_process_info(struct initial_process_info *info);
+int os_mutex(int *__protected, int op, int expected, int to_place, int to_wake, int *to_wait);
+int set_thread_self_pointer(void *p);
+int tgkill(int tgid, int tid, int signum);
 
 #ifdef __cplusplus
 }

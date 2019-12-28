@@ -1460,14 +1460,10 @@ void arch_sys_times(struct task_state *task_state) {
 void arch_sys_create_task(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    uintptr_t rip = (uintptr_t) task_state->cpu_state.rsi;
-    uintptr_t rsp = (uintptr_t) task_state->cpu_state.rdx;
-    void *arg = (void *) task_state->cpu_state.rcx;
-    uintptr_t push_onto_stack = (uintptr_t) task_state->cpu_state.r8;
-    int *tid_ptr = (int *) task_state->cpu_state.r9;
-    void *thread_self_pointer = (void *) task_state->cpu_state.r10;
+    struct create_task_args *args = (struct create_task_args *) task_state->cpu_state.rsi;
 
-    debug_log("Creating task: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", rip, rsp, (uintptr_t) tid_ptr, (uintptr_t) thread_self_pointer);
+    debug_log("Creating task: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", args->entry, args->stack_start, (uintptr_t) args->tid_ptr,
+              (uintptr_t) args->thread_self_pointer);
 
     struct task *current = get_current_task();
     proc_bump_process(current->process);
@@ -1483,17 +1479,17 @@ void arch_sys_create_task(struct task_state *task_state) {
 
     task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     task->arch_task.setup_kernel_stack = true;
-    task->arch_task.user_thread_pointer = thread_self_pointer;
+    task->arch_task.user_thread_pointer = args->thread_self_pointer;
 
     task->arch_task.task_state.stack_state.cs = current->arch_task.task_state.stack_state.cs;
-    task->arch_task.task_state.stack_state.rip = rip;
+    task->arch_task.task_state.stack_state.rip = args->entry;
     task->arch_task.task_state.stack_state.rflags = current->arch_task.task_state.stack_state.rflags;
-    task->arch_task.task_state.stack_state.rsp = rsp - sizeof(uintptr_t);
-    *((uintptr_t *) task->arch_task.task_state.stack_state.rsp) = push_onto_stack;
+    task->arch_task.task_state.stack_state.rsp = args->stack_start - sizeof(uintptr_t);
+    *((uintptr_t *) task->arch_task.task_state.stack_state.rsp) = args->push_onto_stack;
     task->arch_task.task_state.stack_state.ss = current->arch_task.task_state.stack_state.ss;
-    task->arch_task.task_state.cpu_state.rdi = (uint64_t) arg;
+    task->arch_task.task_state.cpu_state.rdi = (uint64_t) args->arg;
 
-    *tid_ptr = task->tid;
+    *args->tid_ptr = task->tid;
     sched_add_task(task);
 
     SYS_RETURN(0);

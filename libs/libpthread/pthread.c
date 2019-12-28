@@ -113,8 +113,14 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
         __threads = to_add;
     }
 
-    int ret = syscall(SC_CREATE_TASK, (uintptr_t) start_routine, (uintptr_t) stack + to_add->attributes.__stack_len, arg,
-                      (uintptr_t) &pthread_exit_after_cleanup, &to_add->id, to_add);
+    struct create_task_args args = { (uintptr_t) start_routine,
+                                     (uintptr_t) stack + to_add->attributes.__stack_len,
+                                     arg,
+                                     (uintptr_t) &pthread_exit_after_cleanup,
+                                     &to_add->id,
+                                     to_add };
+
+    int ret = create_task(&args);
     if (ret < 0) {
         return EAGAIN;
     }
@@ -232,7 +238,7 @@ int pthread_join(pthread_t id, void **value_ptr) {
 }
 
 int pthread_kill(pthread_t thread, int sig) {
-    return syscall(SC_TGKILL, 0, thread, sig);
+    return tgkill(0, thread, sig);
 }
 
 int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict old) {
@@ -272,7 +278,7 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
 
         // Only deallocate stacks we created ourselves
         if (thread->attributes.__flags & __PTHREAD_MAUALLY_ALLOCATED_STACK) {
-            syscall(SC_EXIT_TASK);
+            exit_task();
             __builtin_unreachable();
         }
 
@@ -283,14 +289,14 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
         __free_thread_control_block(thread);
 #if ARCH == X86_64
         // Call munmap and task_exit
-        asm volatile("movq $46, %%rdi\n"
-                     "movq %0, %%rsi\n"
-                     "movq %1, %%rdx\n"
+        asm volatile("movq %0, %%rdi\n"
+                     "movq %1, %%rsi\n"
+                     "movq %2, %%rdx\n"
                      "int $0x80\n"
-                     "movq $56, %%rdi\n"
+                     "movq %3, %%rdi\n"
                      "int $0x80"
                      :
-                     : "r"(stack_start), "r"(stack_len + guard_len)
+                     : "i"(SC_MUNMAP), "r"(stack_start), "r"(stack_len + guard_len), "i"(SC_EXIT_TASK)
                      : "rdi", "rsi", "rdx", "rax", "memory");
 #endif /* ARCH == X86_64 */
         __builtin_unreachable();
@@ -308,7 +314,7 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
     thread->exit_value = value_ptr;
     thread->has_exited = 1;
 
-    syscall(SC_EXIT_TASK);
+    exit_task();
     __builtin_unreachable();
 }
 

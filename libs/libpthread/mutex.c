@@ -7,7 +7,6 @@
 #include <stddef.h>
 #include <string.h>
 #include <sys/os_2.h>
-#include <sys/syscall.h>
 
 int pthread_mutex_consistent(pthread_mutex_t *mutex) {
     if (!mutex || !(mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) || !(mutex->__attr.__flags & __PTHREAD_MUTEX_INCONSISTENT)) {
@@ -53,7 +52,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
         if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
             // FIXME: work with PSHARED mutexes
-            int ret = syscall(SC_TGKILL, 0, mutex->__lock, 0);
+            int ret = tgkill(0, mutex->__lock, 0);
             if (ret != 0) {
                 // This effectively means the thread that owns the lock is gone, so now try to lock it. Else continue.
                 int _expected = 0;
@@ -65,7 +64,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
             }
         }
 
-        syscall(SC_OS_MUTEX, &mutex->__lock, MUTEX_AQUIRE, expected, tid, 0, NULL);
+        os_mutex(&mutex->__lock, MUTEX_AQUIRE, expected, tid, 0, NULL);
         expected = 0;
     }
 
@@ -111,7 +110,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 
             // Wake all threads waiting so they'll return ENOTRECOVERABLE (store 1 so nobody can ever)
             // lock it again, since tid 1 is reserved for the kernel
-            return syscall(SC_OS_MUTEX, &mutex->__lock, MUTEX_WAKE_AND_SET, tid, 1, INT_MAX, NULL);
+            return os_mutex(&mutex->__lock, MUTEX_WAKE_AND_SET, tid, 1, INT_MAX, NULL);
         }
     }
 
@@ -119,7 +118,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
         return 0;
     }
 
-    return syscall(SC_OS_MUTEX, &mutex->__lock, MUTEX_WAKE_AND_SET, tid, 0, 1, NULL);
+    return os_mutex(&mutex->__lock, MUTEX_WAKE_AND_SET, tid, 0, 1, NULL);
 }
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex) {
