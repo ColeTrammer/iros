@@ -46,9 +46,9 @@
         0, { 0, 0 }              \
     }
 
-#define PTHREAD_MUTEX_INITIALIZER                                                          \
-    {                                                                                      \
-        0, 0, { 0 }, { 0, 0, (unsigned int *) 0, (struct __locked_robust_mutex_node *) 0 } \
+#define PTHREAD_MUTEX_INITIALIZER                                                                                                   \
+    {                                                                                                                               \
+        0, 0, { 0 }, { 0, 0, (unsigned int *) 0, (struct __locked_robust_mutex_node *) 0, (struct __locked_robust_mutex_node *) 0 } \
     }
 
 #ifdef __cplusplus
@@ -185,7 +185,7 @@ struct thread_control_block {
     int concurrency;
     void *exit_value;
     void **pthread_specific_data;
-    struct __locked_robust_mutex_node *locked_robust_mutex_node_stack_top;
+    struct __locked_robust_mutex_node *locked_robust_mutex_node_list_head;
     pthread_attr_t attributes;
 };
 

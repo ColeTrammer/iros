@@ -9,8 +9,7 @@
 #define MUTEX_RELEASE_AND_WAIT 4
 #define MUTEX_OWNER_DIED       0x80000000U
 
-#define ROBUST_MUTEX_IS_VALID_IF_VALUE     1
-#define ROBUST_MUTEX_IS_VALID_IF_NOT_VALUE 2
+#define ROBUST_MUTEX_IS_VALID_IF_VALUE 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,7 +22,7 @@ struct create_task_args {
     unsigned long push_onto_stack;
     int *tid_ptr;
     void *thread_self_pointer;
-    struct __locked_robust_mutex_node **stack_top;
+    struct __locked_robust_mutex_node **locked_robust_mutex_list_head;
 };
 
 struct initial_process_info {
@@ -40,7 +39,7 @@ int create_task(struct create_task_args *create_task_args);
 void exit_task(void) __attribute__((__noreturn__));
 int get_initial_process_info(struct initial_process_info *info);
 int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int to_wake, unsigned int *to_wait);
-int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **stack_top);
+int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **list_head);
 int tgkill(int tgid, int tid, int signum);
 
 #ifdef __cplusplus

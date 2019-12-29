@@ -9,6 +9,7 @@ struct __locked_robust_mutex_node {
     int __in_progress_flags;
     int __in_progress_value;
     unsigned int *__protected;
+    struct __locked_robust_mutex_node *__next;
     struct __locked_robust_mutex_node *__prev;
 };
 

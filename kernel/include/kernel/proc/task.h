@@ -45,7 +45,7 @@ struct task {
     struct block_info block_info;
 
     struct process *process;
-    struct __locked_robust_mutex_node **locked_robust_mutex_stack_top;
+    struct __locked_robust_mutex_node **locked_robust_mutex_list_head;
 
     struct arch_fpu_state fpu;
 };

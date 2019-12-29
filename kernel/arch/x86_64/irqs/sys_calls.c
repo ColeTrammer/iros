@@ -1474,6 +1474,8 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->sig_pending = 0;
     task->sched_state = RUNNING_INTERRUPTIBLE;
     task->tid = get_next_tid();
+    task->locked_robust_mutex_list_head = args->locked_robust_mutex_list_head;
+    debug_log("Locked robust mutex list head: [ %p ]\n", task->locked_robust_mutex_list_head);
 
     task_align_fpu(task);
 
@@ -1636,7 +1638,12 @@ void arch_sys_set_thread_self_pointer(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     void *thread_self_pointer = (void *) task_state->cpu_state.rsi;
-    get_current_task()->arch_task.user_thread_pointer = thread_self_pointer;
+    struct __locked_robust_mutex_node **locked_robust_mutex_list_head = (struct __locked_robust_mutex_node **) task_state->cpu_state.rdx;
+
+    struct task *current = get_current_task();
+    current->arch_task.user_thread_pointer = thread_self_pointer;
+    current->locked_robust_mutex_list_head = locked_robust_mutex_list_head;
+    debug_log("Locked robust mutex list head: [ %p ]\n", current->locked_robust_mutex_list_head);
 
     set_msr(MSR_FS_BASE, (uint64_t) thread_self_pointer);
 

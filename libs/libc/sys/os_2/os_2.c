@@ -18,8 +18,8 @@ int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int 
     return syscall(SC_OS_MUTEX, __protected, op, expected, to_place, to_wake, to_wait);
 }
 
-int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **stack_top) {
-    return syscall(SC_SET_THREAD_SELF_POINTER, p, stack_top);
+int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **list_head) {
+    return syscall(SC_SET_THREAD_SELF_POINTER, p, list_head);
 }
 
 int tgkill(int tgid, int tid, int signum) {
