@@ -5,7 +5,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef int pthread_once_t;
+typedef unsigned int pthread_once_t;
 
 #ifdef __cplusplus
 }

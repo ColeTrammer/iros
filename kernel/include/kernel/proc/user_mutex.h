@@ -13,8 +13,8 @@ struct user_mutex {
     struct task *next_to_wake_up;
 };
 
-struct user_mutex *get_user_mutex_locked(int *addr);
-struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(int *addr, int value);
+struct user_mutex *get_user_mutex_locked(unsigned int *addr);
+struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsigned int *addr, int value);
 void unlock_user_mutex(struct user_mutex *um);
 void add_to_user_mutex_queue(struct user_mutex *m, struct task *task);
 void wake_user_mutex(struct user_mutex *m, int to_wake);

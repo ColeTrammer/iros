@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/os_2.h>
 #include <sys/times.h>
 #include <sys/types.h>
 
@@ -44,6 +45,7 @@ struct task {
     struct block_info block_info;
 
     struct process *process;
+    struct __locked_robust_mutex_node **locked_robust_mutex_stack_top;
 
     struct arch_fpu_state fpu;
 };

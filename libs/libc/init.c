@@ -42,6 +42,7 @@ struct thread_control_block *__allocate_thread_control_block() {
     block->has_exited = false;
     block->concurrency = 0;
     block->joining_thread = 0;
+    block->locked_robust_mutex_node_stack_top = NULL;
     block->pthread_specific_data = calloc(PTHREAD_KEYS_MAX, sizeof(void *));
     return block;
 }
@@ -73,7 +74,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER;
     __threads->id = __initial_process_info.main_tid;
 
-    set_thread_self_pointer(__threads);
+    set_thread_self_pointer(__threads, &__threads->locked_robust_mutex_node_stack_top);
 
     // Don't use wrappers so that signal.o won't be linked in
     sigset_t set = { 0 };

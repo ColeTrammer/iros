@@ -43,7 +43,7 @@ struct user_mutex *__create(uintptr_t *phys_addr_p) {
     return m;
 }
 
-struct user_mutex *get_user_mutex_locked(int *addr) {
+struct user_mutex *get_user_mutex_locked(unsigned int *addr) {
     uintptr_t phys_addr = get_phys_addr((uintptr_t) addr);
     struct user_mutex *m = hash_put_if_not_present(map, &phys_addr, (void *(*) (void *) ) __create);
 
@@ -52,18 +52,18 @@ struct user_mutex *get_user_mutex_locked(int *addr) {
 }
 
 struct __write_value_args {
-    int *addr;
-    int value;
+    unsigned int *addr;
+    unsigned int value;
 };
 
 static void __write_value(struct __write_value_args *args) {
     *(args->addr) = args->value;
 }
 
-struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(int *addr, int value) {
+struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsigned int *addr, int value) {
     uintptr_t phys_addr = get_phys_addr((uintptr_t) addr);
 
-    struct __write_value_args args = { addr, value };
+    struct __write_value_args args = { addr, (unsigned int) value };
     struct user_mutex *m = hash_get_or_else_do(map, &phys_addr, (void (*)(void *)) __write_value, &args);
     if (m) {
         spin_lock(&m->lock);

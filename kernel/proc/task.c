@@ -247,6 +247,20 @@ struct task *get_current_task() {
 void free_task(struct task *task, bool free_paging_structure) {
     struct task *current_save = current_task;
     current_task = task;
+
+    struct __locked_robust_mutex_node *node = task->locked_robust_mutex_stack_top ? *task->locked_robust_mutex_stack_top : NULL;
+    while (node) {
+        if ((node->__in_progress_flags == 0) ||
+            (node->__in_progress_flags == ROBUST_MUTEX_IS_VALID_IF_VALUE &&
+             *node->__protected == (unsigned int) node->__in_progress_value) ||
+            (node->__in_progress_flags == ROBUST_MUTEX_IS_VALID_IF_NOT_VALUE &&
+             *node->__protected != (unsigned int) node->__in_progress_value)) {
+            *node->__protected = MUTEX_OWNER_DIED;
+        }
+
+        node = node->__prev;
+    }
+
     arch_free_task(task, free_paging_structure);
 
     proc_drop_process(task->process, free_paging_structure);

@@ -1515,21 +1515,21 @@ void arch_sys_os_mutex(struct task_state *task_state) {
 
     struct task *current = get_current_task();
 
-    int *__protected = (int *) task_state->cpu_state.rsi;
+    unsigned int *__protected = (unsigned int *) task_state->cpu_state.rsi;
     int operation = (int) task_state->cpu_state.rdx;
     int expected = (int) task_state->cpu_state.rcx;
     int to_place = (int) task_state->cpu_state.r8;
     int to_wake = (int) task_state->cpu_state.r9;
-    int *to_wait = (int *) task_state->cpu_state.r10;
+    unsigned int *to_wait = (unsigned int *) task_state->cpu_state.r10;
 
-    int *to_aquire = __protected;
+    unsigned int *to_aquire = __protected;
     struct user_mutex *to_unlock = NULL;
 
     switch (operation) {
         case MUTEX_AQUIRE:
         do_mutex_aquire : {
             struct user_mutex *um = get_user_mutex_locked(to_aquire);
-            if (*to_aquire != expected) {
+            if (*to_aquire != (unsigned int) expected) {
                 // Case where MUTEX_RELEASE occurs before we lock/create the mutex
                 unlock_user_mutex(um);
                 SYS_RETURN(0);

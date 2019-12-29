@@ -10,7 +10,7 @@ int pthread_cond_broadcast(pthread_cond_t *cond) {
 }
 
 int pthread_cond_destroy(pthread_cond_t *cond) {
-    if (cond == NULL || cond->__lock == -1) {
+    if (cond == NULL || cond->__lock == -1U) {
         return EINVAL;
     }
 

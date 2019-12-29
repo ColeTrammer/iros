@@ -50,17 +50,12 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
             return 0;
         }
 
-        if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
-            // FIXME: work with PSHARED mutexes
-            int ret = tgkill(0, mutex->__lock, 0);
-            if (ret != 0) {
-                // This effectively means the thread that owns the lock is gone, so now try to lock it. Else continue.
-                int _expected = 0;
-                if (atomic_compare_exchange_strong(&mutex->__lock, &_expected, tid)) {
-                    // Now we have the lock and know the owner died.
-                    mutex->__attr.__flags |= __PTHREAD_MUTEX_INCONSISTENT;
-                    return EOWNERDEAD;
-                }
+        if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST && mutex->__lock == MUTEX_OWNER_DIED) {
+            // This effectively means the thread that owns the lock is gone, so now try to lock it. Else continue.
+            if (atomic_compare_exchange_strong(&mutex->__lock, &expected, tid)) {
+                // Now we have the lock and know the owner died.
+                mutex->__attr.__flags |= __PTHREAD_MUTEX_INCONSISTENT;
+                return EOWNERDEAD;
             }
         }
 
@@ -95,7 +90,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
     pthread_t tid = pthread_self();
     if ((mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) || (mutex->__attr.__flags & PTHREAD_MUTEX_RECURSIVE) ||
         (mutex->__attr.__flags & PTHREAD_MUTEX_ERRORCHECK)) {
-        if (mutex->__lock != tid) {
+        if (mutex->__lock != (unsigned int) tid) {
             return EPERM;
         }
     }
@@ -122,7 +117,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 }
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex) {
-    if (mutex == NULL || mutex->__lock == -1) {
+    if (mutex == NULL || mutex->__lock == -1U) {
         return EINVAL;
     }
 

@@ -118,7 +118,8 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
                                      arg,
                                      (uintptr_t) &pthread_exit_after_cleanup,
                                      &to_add->id,
-                                     to_add };
+                                     to_add,
+                                     &to_add->locked_robust_mutex_node_stack_top };
 
     int ret = create_task(&args);
     if (ret < 0) {
