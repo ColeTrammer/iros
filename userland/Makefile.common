@@ -4,6 +4,8 @@ NATIVE_LD?=g++
 .PHONY: all
 all: $(EXECUTABLE)
 
+$(EXECUTABLE): $(SYSROOT)/usr/lib/libc.a
+
 .PHONY: native
 native: $(EXECUTABLE).native
 

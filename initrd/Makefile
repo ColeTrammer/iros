@@ -83,6 +83,8 @@ $(BUILDDIR)/initrd/programs/window_server_test
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
 
+$(PROGRAMS): $(SYSROOT)/usr/lib/libc.a $(SYSROOT)/usr/lib/libpthread.a $(SYSROOT)/usr/lib/libgraphics.a
+
 .PHONY: make-output-dir
 make-output-dir:
 	mkdir -p $(ROOT)/initrd/files

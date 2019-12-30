@@ -6,7 +6,7 @@ all: $(EXECUTABLE)
 .PHONY: native
 native: $(EXECUTABLE).native
 
-$(EXECUTABLE): $(OBJS)
+$(EXECUTABLE): $(OBJS) $(SYSROOT)/usr/lib/libc.a
 	$(LD) -o $@ $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 $(EXECUTABLE).native: $(OBJS:.o=.native.o)

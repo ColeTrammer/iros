@@ -6,6 +6,8 @@ $(BUILDDIR)/userland/window_server/window.o
 
 EXECUTABLE=$(BUILDDIR)/userland/window_server/window_server
 
+$(EXECUTABLE): $(SYSROOT)/usr/lib/libgraphics.a
+
 CPP_FLAGS+=-fno-exceptions
 LDFLAGS+=-lgraphics
 export LD=$(CXX)
