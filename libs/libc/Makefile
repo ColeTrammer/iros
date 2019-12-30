@@ -82,6 +82,7 @@ $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libs/libc/assert/assert.o \
 $(BUILDDIR)/libs/libc/dirent/dirent.o \
 $(BUILDDIR)/libs/libc/fcntl/fcntl.o \
+$(BUILDDIR)/libs/libc/fnmatch/fnmatch.o \
 $(BUILDDIR)/libs/libc/ftw/ftw.o \
 $(BUILDDIR)/libs/libc/glob/glob.o \
 $(BUILDDIR)/libs/libc/locale/locale.o \

@@ -91,6 +91,10 @@ static int we_expand(const char *s, int flags, char **expanded
             case '\\': {
                 if (!prev_was_backslash) {
                     prev_was_backslash = true;
+
+                    if (!we_append(expanded, s + i, 1, &len)) {
+                        return WRDE_NOSPACE;
+                    }
                     continue;
                 }
                 break;

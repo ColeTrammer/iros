@@ -266,8 +266,8 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
     //       this, and the list can be freed without having to worry.
     struct __locked_robust_mutex_node *node = thread->locked_robust_mutex_node_list_head;
     while (node) {
-        if (node->__in_progress_flags == 0 ||
-            (node->__in_progress_flags == ROBUST_MUTEX_IS_VALID_IF_VALUE && *node->__protected == node->__in_progress_value)) {
+        if (node->__in_progress_flags == 0 || (node->__in_progress_flags == ROBUST_MUTEX_IS_VALID_IF_VALUE &&
+                                               *node->__protected == (unsigned int) node->__in_progress_value)) {
             os_mutex(node->__protected, MUTEX_WAKE_AND_SET, thread->id, MUTEX_OWNER_DIED, 1, NULL);
         }
         node = node->__next;
