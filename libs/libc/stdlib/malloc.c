@@ -12,8 +12,13 @@
 #define MALLOC_SCRUB_FREE
 #define MALLOC_SCRUB_ALLOC
 
+#ifdef __is_libk
+#define MALLOC_SCRUB_BITS 0x0C
+#define FREE_SCRUB_BITS   0x0A
+#else
 #define MALLOC_SCRUB_BITS 0xC0
 #define FREE_SCRUB_BITS   0xA0
+#endif /* __is_libk */
 
 #define __MALLOC_MAGIG_CHECK 0x2A8F30B241BFA759UL
 

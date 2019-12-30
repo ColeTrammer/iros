@@ -22,6 +22,16 @@ int debug_log_internal(const char *func, const char *format, ...) {
 
     spin_lock(&debug_lock);
 
+    if (*format == '~') {
+        int written = 0;
+        written += printf("[Taskless Message]: ");
+        written += vprintf(format + 1, parameters);
+
+        spin_unlock(&debug_lock);
+        va_end(parameters);
+        return written;
+    }
+
 #ifndef KERNEL_NO_DEBUG_COLORS
     int written = 0;
     if (get_current_task() == NULL || get_current_task()->process->pid == 1) {

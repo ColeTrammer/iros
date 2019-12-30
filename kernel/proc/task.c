@@ -19,7 +19,6 @@
 #include <kernel/proc/user_mutex.h>
 #include <kernel/sched/task_sched.h>
 
-#define ROBUST_USER_MUTEX_DEBUG
 // #define TASK_SIGNAL_DEBUG
 
 struct task *current_task;
@@ -249,29 +248,6 @@ struct task *get_current_task() {
 void free_task(struct task *task, bool free_paging_structure) {
     struct task *current_save = current_task;
     current_task = task;
-
-    struct __locked_robust_mutex_node *node = task->locked_robust_mutex_list_head ? *task->locked_robust_mutex_list_head : NULL;
-#ifdef ROBUST_USER_MUTEX_DEBUG
-    debug_log("Locked robust mutex list head: [ %p ]\n", node);
-#endif /* ROBUST_USER_MUTEX_DEBUG */
-
-    while (node && find_vm_region_by_addr((uintptr_t) node)) {
-#ifdef ROBUST_USER_MUTEX_DEBUG
-        debug_log("Checking mutex: [ %p, %p, %d, %p, %p ]\n", node, node->__protected, node->__in_progress_flags, node->__prev,
-                  node->__next);
-#endif /* ROBUST_USER_MUTEX_DEBUG */
-        if ((node->__in_progress_flags == 0) || (node->__in_progress_flags == ROBUST_MUTEX_IS_VALID_IF_VALUE &&
-                                                 *node->__protected == (unsigned int) node->__in_progress_value)) {
-            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(node->__protected, MUTEX_OWNER_DIED);
-            if (um != NULL) {
-                *node->__protected = MUTEX_OWNER_DIED;
-                wake_user_mutex(um, 1);
-                unlock_user_mutex(um);
-            }
-        }
-
-        node = node->__next;
-    }
 
     arch_free_task(task, free_paging_structure);
 
