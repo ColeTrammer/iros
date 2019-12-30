@@ -60,8 +60,42 @@ void init_cmos() {
     debug_log("CMOS Year: [ %u ]\n", time.year + time.century * 100U);
     debug_log("CMOS Century: [ %u ]\n", time.century);
 
-    time_t seconds_since_epoch = time.second + 60L * time.minute + 3600L * time.hour + 86400L * (time.day - 1L) +
-                                 2629743L * (time.month - 1L) + 31556926L * (time.year + time.century * 100L - 1970L);
+    time_t seconds_since_epoch = time.second + 60L * time.minute + 3600L * time.hour + time.day * 86400L;
+
+    long current_year = time.century * 100L + time.year;
+    for (long year = 1970; year <= current_year; year++) {
+        for (long month = 1; month <= (year == current_year ? time.month - 1 : 12); month++) {
+            long days = 0;
+            switch (month) {
+                case 1:  // Jan
+                case 3:  // Mar
+                case 5:  // May
+                case 7:  // Jul
+                case 8:  // Aug
+                case 10: // Oct
+                case 12: // Dec
+                    days = 31;
+                    break;
+                case 4:  // Apr
+                case 6:  // Jun
+                case 9:  // Sep
+                case 11: // Nov
+                    days = 30;
+                    break;
+                case 2:
+                    if (year % 4 == 0 && year % 100 != 0) {
+                        days = 29;
+                    } else {
+                        days = 28;
+                    }
+                    break;
+                default:
+                    assert(false);
+            }
+
+            seconds_since_epoch += days * 86400L;
+        }
+    }
 
     pit_set_time(seconds_since_epoch);
 }

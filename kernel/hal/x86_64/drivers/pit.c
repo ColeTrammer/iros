@@ -19,6 +19,7 @@ static unsigned int count_to = 0;
 static time_t ms = 0;
 
 void pit_set_time(time_t time) {
+    debug_log("PIT set_time: [ %lu ]\n", time);
     ms = time * 1000;
 }
 
