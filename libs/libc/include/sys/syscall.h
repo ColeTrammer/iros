@@ -56,12 +56,12 @@
     __ENUMERATE_SYSCALL(GETPPID, getppid, 0)                                   \
     __ENUMERATE_SYSCALL(SIGSUSPEND, sigsuspend, 1)                             \
     __ENUMERATE_SYSCALL(TIMES, times, 1)                                       \
-    __ENUMERATE_SYSCALL(CREATE_TASK, create_task, 6)                           \
+    __ENUMERATE_SYSCALL(CREATE_TASK, create_task, 1)                           \
     __ENUMERATE_SYSCALL(EXIT_TASK, exit_task, 0)                               \
     __ENUMERATE_SYSCALL(OS_MUTEX, os_mutex, 6)                                 \
     __ENUMERATE_SYSCALL(TGKILL, tgkill, 3)                                     \
     __ENUMERATE_SYSCALL(GET_INITIAL_PROCESS_INFO, get_initial_process_info, 1) \
-    __ENUMERATE_SYSCALL(SET_THREAD_SELF_POINTER, set_thread_self_pointer, 1)   \
+    __ENUMERATE_SYSCALL(SET_THREAD_SELF_POINTER, set_thread_self_pointer, 2)   \
     __ENUMERATE_SYSCALL(MPROTECT, mprotect, 3)                                 \
     __ENUMERATE_SYSCALL(SIGPENDING, sigpending, 1)                             \
     __ENUMERATE_SYSCALL(SIGALTSTACK, sigaltstack, 2)                           \

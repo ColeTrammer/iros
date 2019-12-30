@@ -260,6 +260,16 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
 
     pthread_specific_run_destructors(thread);
 
+    // NOTE: calling pthread_exit while a threads owns a robust mutex might be UB,
+    //       but walking the list ourselves and saying the owner died makes things
+    //       much simpler, since this way we don't have to rely on the kernel to do
+    //       this, and the list can be freed without having to worry.
+    struct __locked_robust_mutex_node *node = thread->locked_robust_mutex_node_list_head;
+    while (node) {
+        os_mutex(node->__protected, MUTEX_WAKE_AND_SET, thread->id, MUTEX_OWNER_DIED, 1, NULL);
+        node = node->__next;
+    }
+
     if (thread->attributes.__flags & PTHREAD_CREATE_DETACHED) {
         pthread_spin_lock(&threads_lock);
 

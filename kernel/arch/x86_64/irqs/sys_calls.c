@@ -119,6 +119,10 @@ void arch_sys_exit(struct task_state *task_state) {
     struct task *task = get_current_task();
     exit_process(task->process);
 
+    // At this point there should be no locked mutexes in the task, since it explicitly
+    // exited. Also, the memory could now be freed and is no longer valid.
+    task->locked_robust_mutex_list_head = NULL;
+
     invalidate_last_saved(task);
 
     int exit_code = (int) task_state->cpu_state.rsi;
@@ -1475,7 +1479,7 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->sched_state = RUNNING_INTERRUPTIBLE;
     task->tid = get_next_tid();
     task->locked_robust_mutex_list_head = args->locked_robust_mutex_list_head;
-    debug_log("Locked robust mutex list head: [ %p ]\n", task->locked_robust_mutex_list_head);
+    debug_log("Locked robust mutex list head (c): [ %p ]\n", task->locked_robust_mutex_list_head);
 
     task_align_fpu(task);
 
@@ -1505,6 +1509,10 @@ void arch_sys_exit_task(struct task_state *task_state) {
 
     struct task *task = get_current_task();
     task->sched_state = EXITING;
+
+    // At this point there should be no locked mutexes in the task, since it explicitly
+    // exited. Also, the memory could now be freed and is no longer valid.
+    task->locked_robust_mutex_list_head = NULL;
 
     invalidate_last_saved(task);
 
@@ -1643,7 +1651,7 @@ void arch_sys_set_thread_self_pointer(struct task_state *task_state) {
     struct task *current = get_current_task();
     current->arch_task.user_thread_pointer = thread_self_pointer;
     current->locked_robust_mutex_list_head = locked_robust_mutex_list_head;
-    debug_log("Locked robust mutex list head: [ %p ]\n", current->locked_robust_mutex_list_head);
+    debug_log("Locked robust mutex list head (s): [ %p, %p ]\n", current->locked_robust_mutex_list_head, locked_robust_mutex_list_head);
 
     set_msr(MSR_FS_BASE, (uint64_t) thread_self_pointer);
 

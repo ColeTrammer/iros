@@ -84,6 +84,10 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
                 if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
                     robust_mutex_node->__in_progress_flags = 0;
                     memcpy(&mutex->__locked_robust_mutex_node, robust_mutex_node, sizeof(struct __locked_robust_mutex_node));
+
+                    if (mutex->__locked_robust_mutex_node.__next) {
+                        mutex->__locked_robust_mutex_node.__next->__prev = &mutex->__locked_robust_mutex_node;
+                    }
                     self->locked_robust_mutex_node_list_head = &mutex->__locked_robust_mutex_node;
                 }
 
@@ -98,6 +102,10 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
     if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
         robust_mutex_node->__in_progress_flags = 0;
         memcpy(&mutex->__locked_robust_mutex_node, robust_mutex_node, sizeof(struct __locked_robust_mutex_node));
+
+        if (mutex->__locked_robust_mutex_node.__next) {
+            mutex->__locked_robust_mutex_node.__next->__prev = &mutex->__locked_robust_mutex_node;
+        }
         self->locked_robust_mutex_node_list_head = &mutex->__locked_robust_mutex_node;
     }
 
@@ -144,6 +152,10 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
     if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
         robust_mutex_node->__in_progress_flags = 0;
         memcpy(&mutex->__locked_robust_mutex_node, robust_mutex_node, sizeof(struct __locked_robust_mutex_node));
+
+        if (mutex->__locked_robust_mutex_node.__next) {
+            mutex->__locked_robust_mutex_node.__next->__prev = &mutex->__locked_robust_mutex_node;
+        }
         self->locked_robust_mutex_node_list_head = &mutex->__locked_robust_mutex_node;
     }
 
@@ -177,18 +189,35 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
         return 0;
     }
 
+    struct __locked_robust_mutex_node *node = NULL;
     if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
         mutex->__locked_robust_mutex_node.__in_progress_value = tid;
         mutex->__locked_robust_mutex_node.__in_progress_flags |= ROBUST_MUTEX_IS_VALID_IF_VALUE;
+
+        node = alloca(sizeof(struct __locked_robust_mutex_node));
+        memcpy(node, &mutex->__locked_robust_mutex_node, sizeof(struct __locked_robust_mutex_node));
+        if (node->__next) {
+            node->__next->__prev = node;
+        }
+
+        if (!node->__prev) {
+            get_self()->locked_robust_mutex_node_list_head = node;
+        } else {
+            node->__prev->__next = node;
+        }
     }
 
     int ret = os_mutex(&mutex->__lock, MUTEX_WAKE_AND_SET, tid, 0, 1, NULL);
 
     if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
-        if (!mutex->__locked_robust_mutex_node.__prev) {
-            get_self()->locked_robust_mutex_node_list_head = mutex->__locked_robust_mutex_node.__next;
+        if (node->__next) {
+            node->__next->__prev = node->__prev;
+        }
+
+        if (!node->__prev) {
+            get_self()->locked_robust_mutex_node_list_head = node->__next;
         } else {
-            mutex->__locked_robust_mutex_node.__prev = mutex->__locked_robust_mutex_node.__next;
+            node->__prev->__next = node->__next;
         }
     }
 
