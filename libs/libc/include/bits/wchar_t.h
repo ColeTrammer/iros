@@ -5,8 +5,10 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#ifndef wchar_t
 typedef int wchar_t;
 #define wchar_t wchar_t
+#endif /* wchar_t */
 
 #ifdef __cplusplus
 }

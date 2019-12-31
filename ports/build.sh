@@ -4,6 +4,10 @@ cd ..
 make libs
 cd ports
 
+cd bash
+./build.sh
+cd ..
+
 cd figlet
 ./build.sh
 cd ..
