@@ -102,41 +102,34 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
 
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
 static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
-    LinkedList<String> strings;
-    Vector<char*> args;
 
     bool failed = false;
-    command.words.for_each([&](const StringView& s) {
-        wordexp_t we;
+    wordexp_t we;
 #ifndef USERLAND_NATIVE
-        we.we_special_vars = &special_vars;
+    we.we_special_vars = &special_vars;
 #endif /* USERLAND_NATIVE */
+
+    bool first = true;
+    command.words.for_each([&](const StringView& s) {
         String w(s);
-        fprintf(stderr, "Expanding: %s\n", w.string());
-        int ret = wordexp(w.string(), &we, WRDE_SPECIAL);
+        int ret = wordexp(w.string(), &we, WRDE_SPECIAL | (!first ? WRDE_APPEND : 0));
+        first = false;
+
         if (ret != 0) {
             failed = true;
             return;
         }
-
-        for (size_t i = 0; i < we.we_wordc; i++) {
-            strings.add(we.we_wordv[i]);
-            args.add(strings.tail().string());
-        }
-
-        wordfree(&we);
     });
-    args.add(nullptr);
 
     if (failed) {
         return -1;
     }
 
-    struct builtin_op* op = builtin_find_op(args[0]);
+    struct builtin_op* op = builtin_find_op(we.we_wordv[0]);
     bool do_builtin = false;
     if (builtin_should_run_immediately(op)) {
         *was_builtin = true;
-        return builtin_do_op(op, args.vector());
+        return builtin_do_op(op, we.we_wordv);
     } else if (op) {
         do_builtin = true;
     }
@@ -166,19 +159,21 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
 
         if (do_builtin) {
-            _exit(builtin_do_op(op, args.vector()));
+            _exit(builtin_do_op(op, we.we_wordv));
         }
 
-        execvp(args[0], args.vector());
+        execvp(we.we_wordv[0], we.we_wordv);
 
     abort_command:
         perror("Shell");
         _exit(127);
     } else if (pid < 0) {
+        wordfree(&we);
         perror("Shell");
         return -1;
     }
 
+    wordfree(&we);
     return pid;
 }
 

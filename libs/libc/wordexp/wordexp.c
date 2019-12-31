@@ -432,11 +432,16 @@ static int we_glob(wordexp_t *we) {
 
 int wordexp(const char *s, wordexp_t *p, int flags) {
     assert(!(flags & WRDE_REUSE));
-    assert(!(flags & WRDE_APPEND));
     assert(!(flags & WRDE_DOOFFS));
 
-    p->we_offs = p->we_wordc = 0;
-    p->we_wordv = NULL;
+    if (!(flags & WRDE_APPEND)) {
+        p->we_offs = p->we_wordc = 0;
+        p->we_wordv = NULL;
+    }
+
+#ifdef WORDEXP_DEBUG
+    fprintf(stderr, "expanding: |%s|\n", s);
+#endif /* WORDEXP_DEBUG */
 
     char *str = NULL;
     int ret = we_expand(s, flags, &str
@@ -448,6 +453,10 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     if (ret != 0) {
         return ret;
     }
+
+#ifdef WORDEXP_DEBUG
+    fprintf(stderr, "expand result: |%s|\n", str);
+#endif /* WORDEXP_DEBUG */
 
     char *split_on = getenv("IFS");
     if (!split_on) {
@@ -462,6 +471,12 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
         return ret;
     }
 
+#ifdef WORDEXP_DEBUG
+    for (size_t i = 0; i < p->we_wordc; i++) {
+        fprintf(stderr, "split result: %lu:|%s|\n", i, p->we_wordv[i]);
+    }
+#endif /* WORDEXP_DEBUG */
+
     assert(p->we_wordv);
     ret = we_glob(p);
 
@@ -470,7 +485,21 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
         return ret;
     }
 
-    return we_unescape(p);
+#ifdef WORDEXP_DEBUG
+    for (size_t i = 0; i < p->we_wordc; i++) {
+        fprintf(stderr, "glob result: %lu:|%s|\n", i, p->we_wordv[i]);
+    }
+#endif /* WORDEXP_DEBUG */
+
+    ret = we_unescape(p);
+
+#ifdef WORDEXP_DEBUG
+    for (size_t i = 0; i < p->we_wordc; i++) {
+        fprintf(stderr, "unescape result: %lu:|%s|\n", i, p->we_wordv[i]);
+    }
+#endif /* WORDEXP_DEBUG */
+
+    return ret;
 }
 
 void wordfree(wordexp_t *p) {

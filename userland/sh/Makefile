@@ -13,8 +13,7 @@ $(BUILDDIR)/userland/sh/sh_lexer.o
 NATIVE_OBJS=\
 $(BUILDDIR)/libs/libc/fnmatch/fnmatch.o \
 $(BUILDDIR)/libs/libc/glob/glob.o \
-$(BUILDDIR)/libs/libc/wordexp/wordexp.o \
-$(BUILDDIR)/libs/libc/stdlib/malloc.o
+$(BUILDDIR)/libs/libc/wordexp/wordexp.o
 
 EXECUTABLE=$(BUILDDIR)/userland/sh/sh
 
