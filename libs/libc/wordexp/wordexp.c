@@ -327,14 +327,13 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
 
 static int we_unescape(wordexp_t *p) {
     for (size_t i = 0; i < p->we_wordc; i++) {
-        char *unescaped_string = calloc(strlen(p->we_wordv[i]) + 1, sizeof(char));
-        if (unescaped_string == NULL) {
-            return WRDE_NOSPACE;
-        }
+        char *unescaped_string = NULL;
+        size_t unescaped_string_max = 0;
 
         bool in_s_quotes = false;
         bool in_d_quotes = false;
-        for (size_t j = 0, k = 0; p->we_wordv[i][j] != '\0'; j++, k++) {
+        size_t k = 0;
+        for (size_t j = 0; p->we_wordv[i][j] != '\0'; j++, k++) {
         again:
             switch (p->we_wordv[i][j]) {
                 case '\\':
@@ -358,10 +357,25 @@ static int we_unescape(wordexp_t *p) {
                     break;
             }
 
+            if (k + 1 >= unescaped_string_max) {
+                unescaped_string_max += 20;
+                unescaped_string = realloc(unescaped_string, unescaped_string_max);
+                if (unescaped_string == NULL) {
+                    return WRDE_NOSPACE;
+                }
+            }
             unescaped_string[k] = p->we_wordv[i][j];
         }
 
         free(p->we_wordv[i]);
+
+        if (unescaped_string == NULL) {
+            unescaped_string = strdup("");
+            if (unescaped_string == NULL) {
+                return WRDE_NOSPACE;
+            }
+        }
+        unescaped_string[k] = '\0';
         p->we_wordv[i] = unescaped_string;
     }
 
