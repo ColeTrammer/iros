@@ -529,5 +529,18 @@ public:
         program.program().add(list.list());
         return program;
     }
+
+    virtual void on_error(ShTokenType type) override {
+        if (peek_token_type() != ShTokenType::End) {
+            fprintf(stderr, "\nUnexpected token: %s (state %d)", token_type_to_string(type), this->current_state());
+        } else {
+            m_needs_more_tokens = true;
+        }
+    }
+
+    bool needs_more_tokens() const { return m_needs_more_tokens; }
+
+private:
+    bool m_needs_more_tokens { false };
 #endif
 };

@@ -111,39 +111,25 @@ int main(int argc, char** argv) {
 
         job_check_updates(true);
 
-        line = input_get_line(&input_source);
+        ShValue command;
+        char* line = nullptr;
+        auto result = input_get_line(&input_source, &line, &command);
 
         /* Check if we reached EOF */
-        if (line == NULL) {
+        if (result == InputResult::Eof) {
             break;
         }
 
         /* Check If The Line Was Empty */
-        if (line[0] == '\0') {
+        if (result == InputResult::Empty) {
+            continue;
+        }
+
+        if (result == InputResult::Error) {
             free(line);
             continue;
         }
 
-        ShLexer lexer(line, strlen(line));
-        bool success = lexer.lex();
-
-        if (!success) {
-            free(line);
-            fprintf(stderr, "Shell lexing error\n");
-            continue;
-        }
-
-        ShParser parser(lexer);
-        lexer.set_parser(parser);
-
-        success = parser.parse();
-
-        if (!success) {
-            free(line);
-            continue;
-        }
-
-        ShValue command = parser.result();
         assert(command.has_program());
         command_run(command.program());
 

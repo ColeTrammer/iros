@@ -3,7 +3,16 @@
 
 #include <stdio.h>
 
+#include "sh_token.h"
+
 enum input_mode { INPUT_TTY, INPUT_FILE, INPUT_STRING };
+
+enum class InputResult {
+    Eof,
+    Empty,
+    Error,
+    Success,
+};
 
 struct string_input_source {
     char *string;
@@ -21,7 +30,7 @@ struct input_source {
 
 struct string_input_source *input_create_string_input_source(char *s);
 
-char *input_get_line(struct input_source *source);
+InputResult input_get_line(struct input_source *source, char **line, ShValue *command);
 void input_cleanup(struct input_source *source);
 
 void init_history();
