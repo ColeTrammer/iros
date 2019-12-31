@@ -60,7 +60,7 @@ void init_cmos() {
     debug_log("CMOS Year: [ %u ]\n", time.year + time.century * 100U);
     debug_log("CMOS Century: [ %u ]\n", time.century);
 
-    time_t seconds_since_epoch = time.second + 60L * time.minute + 3600L * time.hour + time.day * 86400L;
+    time_t seconds_since_epoch = time.second + 60L * time.minute + 3600L * time.hour + (time.day - 1) * 86400L;
 
     long current_year = time.century * 100L + time.year;
     for (long year = 1970; year <= current_year; year++) {
@@ -83,7 +83,7 @@ void init_cmos() {
                     days = 30;
                     break;
                 case 2:
-                    if (year % 4 == 0 && year % 100 != 0) {
+                    if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) {
                         days = 29;
                     } else {
                         days = 28;

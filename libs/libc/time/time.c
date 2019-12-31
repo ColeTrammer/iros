@@ -109,7 +109,7 @@ struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result
                 max_days = 30;
                 break;
             case 2:
-                if (result->tm_year % 4 == 0 && result->tm_year % 100 != 0) {
+                if (result->tm_year % 400 == 0 || (result->tm_year % 4 == 0 && result->tm_year % 100 != 0)) {
                     max_days = 29;
                 } else {
                     max_days = 28;
@@ -120,7 +120,7 @@ struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result
         }
 
         if (max_days * 60 * 60 * 24 >= time) {
-            result->tm_mday = time / (3600 * 24);
+            result->tm_mday = 1 + time / (3600 * 24);
             break;
         }
 
