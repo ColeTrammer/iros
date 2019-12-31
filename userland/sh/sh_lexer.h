@@ -168,7 +168,7 @@ private:
 
     void commit_token(ShTokenType type) {
         if (!m_current_token_start) {
-            if (type == ShTokenType::NAME && m_tokens.last().type() == ShTokenType::WORD) {
+            if (type == ShTokenType::NAME && m_tokens.size() && m_tokens.last().type() == ShTokenType::WORD) {
                 m_tokens.last().set_type(ShTokenType::NAME);
             }
             return;

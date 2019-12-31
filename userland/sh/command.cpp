@@ -251,6 +251,10 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
 
 static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid,
                                    bool in_subshell) {
+    if (command.type == ShValue::CompoundCommand::Type::Subshell) {
+        in_subshell = true;
+    }
+
     if (in_subshell) {
         // Child
         pid_t pid = fork();
@@ -291,6 +295,12 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
             break;
         case ShValue::CompoundCommand::Type::For:
             ret = __do_for_clause(command.for_clause.value());
+            break;
+        case ShValue::CompoundCommand::Type::BraceGroup:
+            ret = do_command_list(command.brace_group.value());
+            break;
+        case ShValue::CompoundCommand::Type::Subshell:
+            ret = do_command_list(command.subshell.value());
             break;
         default:
             assert(false);

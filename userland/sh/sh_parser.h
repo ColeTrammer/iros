@@ -232,6 +232,16 @@ public:
         return simple_command;
     }
 
+    virtual ShValue reduce_subshell$leftparenthesis_compound_list_rightparenthesis(ShValue&, ShValue& list, ShValue&) override {
+        assert(list.has_list());
+        return list.create_subshell(list.list());
+    }
+
+    virtual ShValue reduce_brace_group$lbrace_compound_list_rbrace(ShValue&, ShValue& list, ShValue&) override {
+        assert(list.has_list());
+        return list.create_brace_group(list.list());
+    }
+
     virtual ShValue reduce_else_part$elif_compound_list_then_compound_list(ShValue&, ShValue& condition, ShValue&,
                                                                            ShValue& action) override {
         assert(condition.has_list());
@@ -331,6 +341,20 @@ public:
         assert(words.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
 
         return name.create_for_clause(name.text(), words.command().compound_command.value().for_clause.value().words, list.list());
+    }
+
+    virtual ShValue reduce_compound_command$brace_group(ShValue& brace_group) override {
+        assert(brace_group.has_command());
+        assert(brace_group.command().type == ShValue::Command::Type::Compound);
+        assert(brace_group.command().compound_command.value().type == ShValue::CompoundCommand::Type::BraceGroup);
+        return brace_group;
+    }
+
+    virtual ShValue reduce_compound_command$subshell(ShValue& subshell) override {
+        assert(subshell.has_command());
+        assert(subshell.command().type == ShValue::Command::Type::Compound);
+        assert(subshell.command().compound_command.value().type == ShValue::CompoundCommand::Type::Subshell);
+        return subshell;
     }
 
     virtual ShValue reduce_compound_command$if_clause(ShValue& if_clause) override {

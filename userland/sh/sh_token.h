@@ -84,6 +84,9 @@ public:
         Vector<Condition> conditions;
     };
 
+    using BraceGroup = List;
+    using Subshell = List;
+
     struct CompoundCommand {
         enum class Type {
             BraceGroup,
@@ -95,12 +98,19 @@ public:
             Until,
         };
 
+        enum class MakeBraceGroup { Yes };
+        enum class MakeSubshell { Yes };
+
         CompoundCommand(const IfClause& _if_clause) : type(Type::If), if_clause(_if_clause) {}
         CompoundCommand(const ForClause& _for_clause) : type(Type::For), for_clause(_for_clause) {}
+        CompoundCommand(const BraceGroup& _brace_group, MakeBraceGroup) : type(Type::BraceGroup), brace_group(_brace_group) {}
+        CompoundCommand(const Subshell& _subshell, MakeSubshell) : type(Type::Subshell), subshell(_subshell) {}
 
         Type type;
         Maybe<ShValue::IfClause> if_clause;
         Maybe<ShValue::ForClause> for_clause;
+        Maybe<ShValue::BraceGroup> brace_group;
+        Maybe<ShValue::Subshell> subshell;
         RedirectList redirect_list;
     };
 
@@ -217,6 +227,16 @@ public:
         ForClause for_clause = ForClause { name, words, action };
 
         m_command = { CompoundCommand { for_clause } };
+        return *this;
+    }
+
+    ShValue& create_brace_group(const ShValue::List& list) {
+        m_command = { CompoundCommand { list, CompoundCommand::MakeBraceGroup::Yes } };
+        return *this;
+    }
+
+    ShValue& create_subshell(const ShValue::List& list) {
+        m_command = { CompoundCommand { list, CompoundCommand::MakeSubshell::Yes } };
         return *this;
     }
 
