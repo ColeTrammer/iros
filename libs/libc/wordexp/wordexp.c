@@ -288,7 +288,7 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
                 break;
         }
 
-        if (prev_was_blackslash || in_s_quotes || in_d_quotes) {
+        if ((prev_was_blackslash && s[i] != '\0') || in_s_quotes || in_d_quotes) {
             if (s[i] == '\0') {
                 return WRDE_SYNTAX;
             }
@@ -338,6 +338,10 @@ static int we_unescape(wordexp_t *p) {
             switch (p->we_wordv[i][j]) {
                 case '\\':
                     j++;
+                    if (p->we_wordv[i][j] == '\0') {
+                        j--;
+                        break;
+                    }
                     break;
                 case '\'':
                     if (!in_d_quotes) {

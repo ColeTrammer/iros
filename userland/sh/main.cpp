@@ -136,6 +136,9 @@ int main(int argc, char** argv) {
         free(line);
     }
 
+    if (input_source.mode == INPUT_TTY) {
+        printf("exit\n");
+    }
     input_cleanup(&input_source);
 
     return EXIT_SUCCESS;

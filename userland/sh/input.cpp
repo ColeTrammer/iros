@@ -232,26 +232,18 @@ static size_t longest_common_starting_substring_length(struct suggestion *sugges
 }
 
 // Checks whether there are any open quotes or not in the line
-static LineStatus get_line_status(char *line, size_t len, ShValue *value) {
+static LineStatus get_line_status(char *line, size_t len, ShValue *value, bool consider_buffer_termination_to_be_end_of_line = false) {
     bool prev_was_backslash = false;
-    bool in_s_quotes = false;
-    bool in_d_quotes = false;
-    bool in_b_quotes = false;
 
     for (size_t i = 0; i < len; i++) {
         switch (line[i]) {
             case '\\':
                 prev_was_backslash = !prev_was_backslash;
                 continue;
-            case '\'':
-                in_s_quotes = (prev_was_backslash || in_d_quotes || in_b_quotes) ? in_s_quotes : !in_s_quotes;
-                break;
-            case '"':
-                in_d_quotes = (prev_was_backslash || in_s_quotes || in_b_quotes) ? in_d_quotes : !in_d_quotes;
-                break;
-            case '`':
-                in_b_quotes = (prev_was_backslash || in_s_quotes || in_d_quotes) ? in_b_quotes : !in_b_quotes;
-                break;
+            case '\n':
+                if (i == len - 1 && prev_was_backslash) {
+                    return LineStatus::EscapedNewline;
+                }
             default:
                 break;
         }
@@ -259,7 +251,7 @@ static LineStatus get_line_status(char *line, size_t len, ShValue *value) {
         prev_was_backslash = false;
     }
 
-    if (prev_was_backslash) {
+    if (prev_was_backslash && consider_buffer_termination_to_be_end_of_line) {
         return LineStatus::EscapedNewline;
     }
 
@@ -654,7 +646,7 @@ static InputResult get_tty_input(FILE *tty, char **line, ShValue *value) {
 
         // Stop once we get to a new line
         if (c == '\n') {
-            switch (get_line_status(buffer, buffer_length, value)) {
+            switch (get_line_status(buffer, buffer_length, value, true)) {
                 case LineStatus::Continue:
                     buffer[buffer_index++] = c;
                     buffer_length++;
@@ -713,12 +705,10 @@ tty_input_done:
     return InputResult::Empty;
 }
 
-static InputResult get_file_input(FILE *file, char **line, ShValue *command) {
+static InputResult get_file_input(FILE *file, char **line, ShValue *value) {
     int sz = 1024;
     int pos = 0;
     char *buffer = (char *) malloc(sz);
-
-    bool prev_was_backslash = false;
 
     for (;;) {
         int c = fgetc(file);
@@ -728,20 +718,53 @@ static InputResult get_file_input(FILE *file, char **line, ShValue *command) {
             return InputResult::Eof;
         }
 
-        if (c == '\n' && prev_was_backslash) {
-            buffer[--pos] = '\0';
-            prev_was_backslash = false;
-            continue;
-        }
+        buffer[pos++] = c;
 
-        if (c == '\\') {
-            prev_was_backslash = true;
-        } else {
-            prev_was_backslash = false;
+        if (pos >= sz) {
+            sz *= 2;
+            buffer = (char *) realloc(buffer, sz);
         }
 
         if (c == EOF || c == '\n') {
-            break;
+            switch (get_line_status(buffer, pos, value)) {
+                case LineStatus::Continue:
+                    buffer[pos++] = c;
+                    break;
+                case LineStatus::EscapedNewline:
+                    pos--;
+                    buffer[pos] = '\0';
+                    break;
+                case LineStatus::Done:
+                    goto file_input_done;
+                case LineStatus::Error:
+                    *line = buffer;
+                    return InputResult::Error;
+                default:
+                    assert(false);
+                    break;
+            };
+        }
+    }
+
+file_input_done:
+    buffer[pos] = '\0';
+    *line = buffer;
+
+    return InputResult::Success;
+}
+
+static InputResult get_string_input(struct string_input_source *source, char **line, ShValue *value) {
+    int sz = 1024;
+    int pos = 0;
+    char *buffer = (char *) malloc(sz);
+
+    for (;;) {
+        int c = source->string[source->offset++];
+
+        bool done = c == '\0' || source->offset >= source->max;
+        if (done && pos == 0) {
+            free(buffer);
+            return InputResult::Eof;
         }
 
         buffer[pos++] = c;
@@ -750,52 +773,32 @@ static InputResult get_file_input(FILE *file, char **line, ShValue *command) {
             sz *= 2;
             buffer = (char *) realloc(buffer, sz);
         }
+
+        if (done || c == '\n') {
+            switch (get_line_status(buffer, pos, value)) {
+                case LineStatus::Continue:
+                    buffer[pos++] = c;
+                    break;
+                case LineStatus::EscapedNewline:
+                    pos--;
+                    buffer[pos] = '\0';
+                    break;
+                case LineStatus::Done:
+                    goto file_input_done;
+                case LineStatus::Error:
+                    *line = buffer;
+                    return InputResult::Error;
+                default:
+                    assert(false);
+                    break;
+            };
+        }
     }
 
+file_input_done:
     buffer[pos] = '\0';
     *line = buffer;
 
-    ShLexer lexer(buffer, pos);
-    auto result = lexer.lex();
-    if (!result) {
-        return InputResult::Error;
-    }
-
-    ShParser parser(lexer);
-    auto parse_result = parser.parse();
-    if (!parse_result) {
-        return InputResult::Error;
-    }
-
-    new (command) ShValue(parser.result());
-    return InputResult::Success;
-}
-
-static InputResult get_string_input(struct string_input_source *source, char **line, ShValue *value) {
-    if (source->string[source->offset] == '\0') {
-        return InputResult::Eof;
-    }
-
-    // Copy the string and add a \n character so the shell parses it as a line
-    char *fixed_command = strdup(source->string);
-
-    // May need to split the command if the string has new lines characters
-    source->offset = strlen(source->string);
-    *line = fixed_command;
-
-    ShLexer lexer(fixed_command, strlen(fixed_command));
-    auto result = lexer.lex();
-    if (!result) {
-        return InputResult::Error;
-    }
-
-    ShParser parser(lexer);
-    auto parse_result = parser.parse();
-    if (!parse_result) {
-        return InputResult::Error;
-    }
-
-    new (value) ShValue(parser.result());
     return InputResult::Success;
 }
 
@@ -803,6 +806,7 @@ struct string_input_source *input_create_string_input_source(char *s) {
     struct string_input_source *source = (struct string_input_source *) malloc(sizeof(struct string_input_source));
     source->offset = 0;
     source->string = s;
+    source->max = strlen(s);
     return source;
 }
 

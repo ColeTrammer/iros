@@ -17,6 +17,7 @@ enum class InputResult {
 struct string_input_source {
     char *string;
     size_t offset;
+    size_t max;
 };
 
 struct input_source {
