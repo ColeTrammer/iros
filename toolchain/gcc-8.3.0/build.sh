@@ -43,7 +43,9 @@ make install-gcc install-target-libgcc
 # Build libc for libstdc++-v3
 cd ../../../
 make prepare-build install-headers
-cd libs/libc
+cd libs/libpthread
+make install
+cd ../libc
 make install
 cd ../../toolchain/gcc-8.3.0/build-gcc
 

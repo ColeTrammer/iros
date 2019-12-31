@@ -1,3 +1,9 @@
+export ROOT?=$(CURDIR)/../..
+export BUILDDIR?=$(ROOT)/build
+export SYSROOT?=$(ROOT)/sysroot
+export DESTDIR?=$(ROOT)/sysroot
+export INCLUDEDIR?=/usr/include
+
 export LIBRARY=$(BUILDDIR)/libs/libpthread/libpthread.a
 export OBJS=\
 $(BUILDDIR)/libs/libpthread/attr.o \

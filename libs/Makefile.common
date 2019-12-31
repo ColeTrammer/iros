@@ -21,6 +21,7 @@ install-headers:
 	cp -R --preserve=timestamps -u include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 install-library: all
+	mkdir -p $(SYSROOT)/usr/lib
 	cp --preserve=timestamps $(LIBRARY) $(SYSROOT)/usr/lib
 
 -include $(OBJS:.o:.d)

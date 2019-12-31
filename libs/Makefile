@@ -5,11 +5,12 @@ export ROOT?=$(CURDIR)/..
 export SYSROOT?=$(ROOT)/sysroot
 
 # Sets directories for install if not already set
-export DESTDIR?=
+export DESTDIR?=$(ROOT)/sysroot
 export PREFIX?=/usr
 export EXEC_PREFIX?=$(PREFIX)
 export INCLUDEDIR?=$(PREFIX)/include
 export LIBDIR?=$(EXEC_PREFIX)/lib
+export BUILDDIR?=$(ROOT)/build
 
 export CFLAGS+=-std=gnu11
 export CPPFLAGS+=-O2 -g -Werror -Wall -Wextra -DARCH=$(HOSTARCH) -D_OS_2_SOURCE
