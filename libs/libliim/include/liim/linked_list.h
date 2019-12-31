@@ -114,6 +114,15 @@ public:
         }
     }
 
+    T& head() {
+        assert(m_head);
+        return m_head->m_val;
+    }
+    const T& head() const {
+        assert(m_head);
+        return m_head->m_val;
+    }
+
     T& tail() {
         LinkedListObj<T>* obj = m_head;
         while (obj->m_next) {
