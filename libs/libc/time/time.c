@@ -6,6 +6,11 @@
 #include <sys/time.h>
 #include <time.h>
 
+// FIXME: read this from ENV variable TZ, or do something else sensible
+char *tzname[2] = { "pst", "pdt" };
+long timezone = 8 * 60 * 60;
+int daylight = 1;
+
 time_t time(time_t *t_loc) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -34,14 +39,11 @@ size_t strftime(char *__restrict s, size_t n, const char *__restrict format, con
     return 0;
 }
 
-char *ctime(const time_t *timep) {
-    (void) timep;
-    return "ctime unsupported";
-}
-
 static char wday_name[7][3] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 static char mon_name[12][3] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
 static char static_time_string_buffer[26];
+static struct tm static_tm_buffer;
 
 char *asctime(const struct tm *timeptr) {
     return asctime_r(timeptr, static_time_string_buffer);
@@ -53,24 +55,24 @@ char *asctime_r(const struct tm *__restrict timeptr, char *__restrict result) {
     return result;
 }
 
-static struct tm static_tm_buffer;
+char *ctime(const time_t *timep) {
+    return asctime(localtime(timep));
+}
+
+char *ctime_r(const time_t *__restrict timep, char *__restrict result) {
+    struct tm tm;
+    return asctime_r(localtime_r(timep, &tm), result);
+}
 
 struct tm *gmtime(const time_t *timep) {
-    (void) timep;
-
-    fprintf(stderr, "gmtime unsupported\n");
-
-    return &static_tm_buffer;
+    return gmtime_r(timep, &static_tm_buffer);
 }
 
-struct tm *localtime(const time_t *timep) {
-    return localtime_r(timep, &static_tm_buffer);
-}
-
-struct tm *localtime_r(const time_t *__restrict timer, struct tm *__restrict result) {
+struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result) {
     memset(result, 0, sizeof(struct tm));
     result->tm_year = 70;
     result->tm_mday = 1;
+    result->tm_isdst = -daylight;
 
     time_t time = *timer;
     result->tm_sec = time % 60;
@@ -126,4 +128,17 @@ struct tm *localtime_r(const time_t *__restrict timer, struct tm *__restrict res
     }
 
     return result;
+}
+
+struct tm *localtime(const time_t *timep) {
+    return localtime_r(timep, &static_tm_buffer);
+}
+
+struct tm *localtime_r(const time_t *__restrict timer, struct tm *__restrict result) {
+    time_t time = *timer - timezone;
+
+    struct tm *ret = gmtime_r(&time, result);
+
+    // FIXME: adjust for DST if daylight == 1
+    return ret;
 }

@@ -18,6 +18,10 @@ extern "C" {
 
 struct sigevent;
 
+extern char *tzname[2];
+extern long timezone;
+extern int daylight;
+
 struct tm {
     int tm_sec;
     int tm_min;
@@ -43,8 +47,10 @@ time_t mktime(struct tm *tm);
 char *asctime(const struct tm *tm);
 char *asctime_r(const struct tm *__restrict timeptr, char *__restrict result);
 char *ctime(const time_t *t);
+char *ctime_r(const time_t *__restrict t, char *__restrict result);
 
 struct tm *gmtime(const time_t *t);
+struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result);
 struct tm *localtime(const time_t *t);
 struct tm *localtime_r(const time_t *__restrict timer, struct tm *__restrict result);
 

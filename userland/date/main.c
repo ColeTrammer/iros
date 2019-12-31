@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
     } else {
         _time_ = atol(argv[1]);
     }
-    struct tm *tm = localtime(&_time_);
-    printf("%s\n", asctime(tm));
+
+    printf("%s", ctime(&_time_));
 
     return 0;
 }
