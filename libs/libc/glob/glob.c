@@ -11,7 +11,7 @@
 
 #define GLOB_BUF_INCREMENT 10
 
-static bool glob_append(glob_t *pglob, char *p, char *s) {
+static bool glob_append(glob_t *pglob, char *p, char *s, bool mark) {
     if (pglob->gl_pathc == 0) {
         pglob->gl_pathv = calloc(10, sizeof(char *));
     } else if (pglob->gl_pathc % GLOB_BUF_INCREMENT == 0) {
@@ -23,13 +23,16 @@ static bool glob_append(glob_t *pglob, char *p, char *s) {
         return false;
     }
 
-    pglob->gl_pathv[pglob->gl_pathc] = malloc(strlen(p) + strlen(s) + 1);
+    pglob->gl_pathv[pglob->gl_pathc] = malloc(strlen(p) + strlen(s) + 1 + mark);
     if (pglob->gl_pathv[pglob->gl_pathc] == NULL) {
         return false;
     }
 
     strcpy(pglob->gl_pathv[pglob->gl_pathc], p);
     strcat(pglob->gl_pathv[pglob->gl_pathc++], s);
+    if (mark) {
+        strcat(pglob->gl_pathv[pglob->gl_pathc - 1], "/");
+    }
     return true;
 }
 
@@ -84,6 +87,14 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
         return GLOB_ABORTED;
     }
 
+    bool only_trailing_slashes = first_slash != NULL;
+    for (size_t i = first_slash - pattern + 1; first_slash && pattern[i]; i++) {
+        if (pattern[i] != '/') {
+            only_trailing_slashes = false;
+            break;
+        }
+    }
+
     struct dirent *ent;
     bool found_anything = false;
     while ((ent = readdir(d)) != NULL) {
@@ -93,18 +104,36 @@ static int glob_helper(char *__restrict path, char *__restrict to_prepend, const
         }
 
         if (ret == 0) {
-            if (first_slash == NULL) {
-                found_anything = true;
-                if (!glob_append(pglob, to_prepend, ent->d_name)) {
-                    closedir(d);
-                    return GLOB_NOSPACE;
-                }
-            } else {
-                char *new_path = malloc(strlen(path) + strlen(ent->d_name) + 2);
-                strcpy(new_path, path);
-                strcat(new_path, "/");
-                strcat(new_path, ent->d_name);
+            char *new_path = malloc(strlen(path) + strlen(ent->d_name) + 2);
+            strcpy(new_path, path);
+            strcat(new_path, "/");
+            strcat(new_path, ent->d_name);
 
+            if (first_slash == NULL || only_trailing_slashes) {
+                if (first_slash == NULL || only_trailing_slashes) {
+                    bool is_dir = false;
+                    if (only_trailing_slashes || (flags & GLOB_MARK)) {
+                        if (!glob_is_dir(new_path, flags, errfunc, &is_dir)) {
+                            free(new_path);
+                            closedir(d);
+                            *first_slash = '/';
+                            return GLOB_ABORTED;
+                        }
+                    }
+
+                    if (first_slash == NULL || is_dir) {
+                        found_anything = true;
+                        if (!glob_append(pglob, to_prepend, ent->d_name, is_dir && (flags & GLOB_MARK))) {
+                            closedir(d);
+                            free(new_path);
+                            *first_slash = '/';
+                            return GLOB_NOSPACE;
+                        }
+                    }
+                }
+
+                free(new_path);
+            } else {
                 char *new_to_prepend = malloc(strlen(to_prepend) + strlen(ent->d_name) + 2);
                 strcpy(new_to_prepend, to_prepend);
                 strcat(new_to_prepend, ent->d_name);
@@ -150,8 +179,6 @@ static int glob_compare(const void *s1, const void *s2) {
 }
 
 int glob(const char *__restrict pattern, int flags, int (*errfunc)(const char *epath, int eerrno), glob_t *__restrict pglob) {
-    assert(!(flags & GLOB_MARK));
-
     if (!(flags & GLOB_APPEND)) {
         size_t offs_save = pglob->gl_offs;
         memset(pglob, 0, sizeof(glob_t));
