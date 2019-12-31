@@ -12,7 +12,7 @@ native: $(EXECUTABLE).native
 $(EXECUTABLE): $(OBJS)
 	$(LD) -o $@ $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
-$(EXECUTABLE).native: $(OBJS:.o=.native.o)
+$(EXECUTABLE).native: $(OBJS:.o=.native.o) $(NATIVE_OBJS:.o=.native.o)
 	$(NATIVE_LD) -o $@ $(OBJS:.o=.native.o)
 
 $(BUILDDIR)/%.native.o: $(ROOT)/%.c

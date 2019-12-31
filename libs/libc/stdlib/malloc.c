@@ -1,3 +1,9 @@
+#ifdef USERLAND_NATIVE
+#define _DEFAULT_SOURCE
+#define _BITS_PTHREADTYPES_COMMON_H
+typedef int pthread_t;
+#endif /* USERLAND_NATIVE */
+
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -6,8 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
-
-#include <kernel/mem/page.h>
 
 #define MALLOC_SCRUB_FREE
 #define MALLOC_SCRUB_ALLOC
@@ -38,8 +42,17 @@ void *sbrk(intptr_t increment) {
     return add_vm_pages_end(increment, VM_KERNEL_HEAP);
 }
 #else
-#include <pthread.h>
+#include <limits.h>
+
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 0x1000
+#endif /* PAGE_SIZE */
+
 #include <unistd.h>
+
+typedef struct {
+    int lock;
+} pthread_spinlock_t;
 #endif
 
 struct metadata {
@@ -74,8 +87,6 @@ static struct metadata *last_allocated;
 //        should not be copying of locking code...
 #include <stdatomic.h>
 
-#define CPU_RELAX() asm volatile("pause" : : :);
-
 int __pthread_spin_destroy(pthread_spinlock_t *lock) {
     lock->lock = -1;
     return 0;
@@ -93,7 +104,7 @@ int __pthread_spin_lock(pthread_spinlock_t *lock) {
     for (;;) {
         int expected = 0;
         if (!atomic_compare_exchange_strong(&lock->lock, &expected, 1)) {
-            CPU_RELAX();
+            __asm__ __volatile__("pause" ::: "memory");
             continue;
         }
 

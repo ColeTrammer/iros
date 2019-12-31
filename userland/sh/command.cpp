@@ -112,6 +112,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         we.we_special_vars = &special_vars;
 #endif /* USERLAND_NATIVE */
         String w(s);
+        fprintf(stderr, "Expanding: %s\n", w.string());
         int ret = wordexp(w.string(), &we, WRDE_SPECIAL);
         if (ret != 0) {
             failed = true;
