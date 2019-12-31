@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/times.h>
 #include <time.h>
 
 // FIXME: read this from ENV variable TZ, or do something else sensible
@@ -23,10 +24,10 @@ time_t time(time_t *t_loc) {
 }
 
 clock_t clock(void) {
-    fprintf(stderr, "clock not supported\n");
+    struct tms tms;
+    times(&tms);
 
-    assert(false);
-    return 0;
+    return tms.tms_stime * CLOCKS_PER_SEC + tms.tms_utime;
 }
 
 size_t strftime(char *__restrict s, size_t n, const char *__restrict format, const struct tm *__restrict tm) {
