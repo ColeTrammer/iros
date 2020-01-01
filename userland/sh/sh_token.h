@@ -87,6 +87,17 @@ public:
     using BraceGroup = List;
     using Subshell = List;
 
+    struct Loop {
+        enum class Type {
+            While,
+            Until,
+        };
+
+        Type type;
+        List condition;
+        List action;
+    };
+
     struct CompoundCommand {
         enum class Type {
             BraceGroup,
@@ -94,8 +105,7 @@ public:
             For,
             Case,
             If,
-            While,
-            Until,
+            Loop,
         };
 
         enum class MakeBraceGroup { Yes };
@@ -105,12 +115,14 @@ public:
         CompoundCommand(const ForClause& _for_clause) : type(Type::For), for_clause(_for_clause) {}
         CompoundCommand(const BraceGroup& _brace_group, MakeBraceGroup) : type(Type::BraceGroup), brace_group(_brace_group) {}
         CompoundCommand(const Subshell& _subshell, MakeSubshell) : type(Type::Subshell), subshell(_subshell) {}
+        CompoundCommand(const Loop& _loop) : type(Type::Loop), loop(_loop) {}
 
         Type type;
         Maybe<ShValue::IfClause> if_clause;
         Maybe<ShValue::ForClause> for_clause;
         Maybe<ShValue::BraceGroup> brace_group;
         Maybe<ShValue::Subshell> subshell;
+        Maybe<ShValue::Loop> loop;
         RedirectList redirect_list;
     };
 
@@ -237,6 +249,13 @@ public:
 
     ShValue& create_subshell(const ShValue::List& list) {
         m_command = { CompoundCommand { list, CompoundCommand::MakeSubshell::Yes } };
+        return *this;
+    }
+
+    ShValue& create_loop(const ShValue::List& condition, const ShValue::List& action, Loop::Type type) {
+        Loop loop = Loop { type, condition, action };
+
+        m_command = { CompoundCommand { loop } };
         return *this;
     }
 

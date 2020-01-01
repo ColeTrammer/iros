@@ -343,6 +343,20 @@ public:
         return name.create_for_clause(name.text(), words.command().compound_command.value().for_clause.value().words, list.list());
     }
 
+    virtual ShValue reduce_while_clause$while_compound_list_do_group(ShValue&, ShValue& condition, ShValue& action) override {
+        assert(condition.has_list());
+        assert(action.has_list());
+
+        return condition.create_loop(condition.list(), action.list(), ShValue::Loop::Type::While);
+    }
+
+    virtual ShValue reduce_until_clause$until_compound_list_do_group(ShValue&, ShValue& condition, ShValue& action) override {
+        assert(condition.has_list());
+        assert(action.has_list());
+
+        return condition.create_loop(condition.list(), action.list(), ShValue::Loop::Type::Until);
+    }
+
     virtual ShValue reduce_compound_command$brace_group(ShValue& brace_group) override {
         assert(brace_group.has_command());
         assert(brace_group.command().type == ShValue::Command::Type::Compound);
@@ -355,6 +369,22 @@ public:
         assert(subshell.command().type == ShValue::Command::Type::Compound);
         assert(subshell.command().compound_command.value().type == ShValue::CompoundCommand::Type::Subshell);
         return subshell;
+    }
+
+    virtual ShValue reduce_compound_command$while_clause(ShValue& loop) override {
+        assert(loop.has_command());
+        assert(loop.command().type == ShValue::Command::Type::Compound);
+        assert(loop.command().compound_command.value().type == ShValue::CompoundCommand::Type::Loop);
+        assert(loop.command().compound_command.value().loop.value().type == ShValue::Loop::Type::While);
+        return loop;
+    }
+
+    virtual ShValue reduce_compound_command$until_clause(ShValue& loop) override {
+        assert(loop.has_command());
+        assert(loop.command().type == ShValue::Command::Type::Compound);
+        assert(loop.command().compound_command.value().type == ShValue::CompoundCommand::Type::Loop);
+        assert(loop.command().compound_command.value().loop.value().type == ShValue::Loop::Type::Until);
+        return loop;
     }
 
     virtual ShValue reduce_compound_command$if_clause(ShValue& if_clause) override {
@@ -530,6 +560,7 @@ public:
         return program;
     }
 
+#endif
     virtual void on_error(ShTokenType type) override {
         if (peek_token_type() != ShTokenType::End) {
             fprintf(stderr, "\nUnexpected token: %s (state %d)", token_type_to_string(type), this->current_state());
@@ -542,5 +573,4 @@ public:
 
 private:
     bool m_needs_more_tokens { false };
-#endif
 };

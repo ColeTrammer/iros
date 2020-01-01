@@ -249,6 +249,27 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
     return 0;
 }
 
+static pid_t __do_loop_clause(ShValue::Loop& loop) {
+    int ret = 0;
+
+    for (;;) {
+        ret = do_command_list(loop.condition);
+        if (ret != 0) {
+            break;
+        }
+
+        if ((get_last_exit_status() == 0) ^ (loop.type == ShValue::Loop::Type::While)) {
+            break;
+        }
+
+        ret = do_command_list(loop.action);
+        if (ret != 0) {
+            break;
+        }
+    }
+    return ret;
+}
+
 static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid,
                                    bool in_subshell) {
     if (command.type == ShValue::CompoundCommand::Type::Subshell) {
@@ -301,6 +322,9 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
             break;
         case ShValue::CompoundCommand::Type::Subshell:
             ret = do_command_list(command.subshell.value());
+            break;
+        case ShValue::CompoundCommand::Type::Loop:
+            ret = __do_loop_clause(command.loop.value());
             break;
         default:
             assert(false);
