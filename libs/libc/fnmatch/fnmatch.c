@@ -2,6 +2,7 @@
 #include <fnmatch.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 // Determines whether a character is in a given set
 static bool fnmatch_is_valid_char_for_set(char c, const char *set, int set_end, bool invert) {
@@ -74,9 +75,9 @@ int fnmatch(const char *pattern, const char *s, int flags) {
                 invert = true;
                 pi++;
             }
+            const char *set_start = pattern + pi;
             // Sets cannot be empty
             pi++;
-            const char *set_start = pattern + pi;
             while (pattern[pi] != ']') {
                 pi++;
             }
