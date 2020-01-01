@@ -25,9 +25,12 @@ bool ShLexer::lex() {
             char current = this->m_input_stream[start];
             switch (current) {
                 case '\\':
-                    prev_was_backslash = !prev_was_backslash;
-                    prev_was_dollar = false;
-                    continue;
+                    if (!in_s_quotes) {
+                        prev_was_backslash = !prev_was_backslash;
+                        prev_was_dollar = false;
+                        continue;
+                    }
+                    break;
                 case '$':
                     if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes && !prev_was_dollar) {
                         prev_was_dollar = true;
@@ -35,7 +38,7 @@ bool ShLexer::lex() {
                     }
                     break;
                 case '\'':
-                    in_s_quotes = !prev_was_backslash && !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
+                    in_s_quotes = !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
                     break;
                 case '"':
                     in_d_quotes = !prev_was_backslash && !in_s_quotes && !in_b_quotes ? !in_d_quotes : in_d_quotes;
@@ -96,13 +99,16 @@ bool ShLexer::lex() {
                 commit_token(ShTokenType::WORD);
                 return !in_d_quotes && !in_s_quotes;
             case '\\':
-                prev_was_backslash = !prev_was_backslash;
-                if (!m_current_token_start) {
-                    begin_token();
+                if (!in_s_quotes) {
+                    prev_was_backslash = !prev_was_backslash;
+                    if (!m_current_token_start) {
+                        begin_token();
+                    }
+                    consume();
+                    prev_was_dollar = false;
+                    continue;
                 }
-                consume();
-                prev_was_dollar = false;
-                continue;
+                goto process_regular_character;
             case '$':
                 if (!prev_was_backslash && !prev_was_dollar) {
                     prev_was_dollar = true;
@@ -132,7 +138,7 @@ bool ShLexer::lex() {
                 }
                 goto process_regular_character;
             case '\'':
-                if (!prev_was_backslash && !in_d_quotes) {
+                if (!in_d_quotes) {
                     in_s_quotes = !in_s_quotes;
                 }
                 goto process_regular_character;

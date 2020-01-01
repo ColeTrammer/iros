@@ -47,9 +47,12 @@ public:
                     char current = text.start()[i];
                     switch (current) {
                         case '\\':
-                            prev_was_backslash = !prev_was_backslash;
-                            prev_was_dollar = false;
-                            continue;
+                            if (!in_s_quotes) {
+                                prev_was_backslash = !prev_was_backslash;
+                                prev_was_dollar = false;
+                                continue;
+                            }
+                            break;
                         case '$':
                             if (!prev_was_dollar && !prev_was_backslash && !in_d_quotes && !in_b_quotes && !in_s_quotes) {
                                 prev_was_dollar = true;
@@ -57,7 +60,7 @@ public:
                             }
                             break;
                         case '\'':
-                            in_s_quotes = !prev_was_backslash && !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
+                            in_s_quotes = !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
                             break;
                         case '"':
                             in_d_quotes = !prev_was_backslash && !in_s_quotes && !in_b_quotes ? !in_d_quotes : in_d_quotes;

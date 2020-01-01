@@ -89,7 +89,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
     for (size_t i = 0; s[i] != '\0'; i++) {
         switch (s[i]) {
             case '\\': {
-                if (!prev_was_backslash) {
+                if (!prev_was_backslash && !in_s_quotes) {
                     prev_was_backslash = true;
 
                     if (!we_append(expanded, s + i, 1, &len)) {
@@ -100,7 +100,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 break;
             }
             case '\'': {
-                in_s_quotes = (prev_was_backslash || in_d_quotes) ? in_s_quotes : !in_s_quotes;
+                in_s_quotes = in_d_quotes ? in_s_quotes : !in_s_quotes;
                 break;
             }
             case '"': {
@@ -268,14 +268,17 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
     for (size_t i = prev;; i++) {
         switch (s[i]) {
             case '\\':
-                if (prev_was_blackslash) {
-                    prev_was_blackslash = false;
-                    break;
+                if (!in_s_quotes) {
+                    if (prev_was_blackslash) {
+                        prev_was_blackslash = false;
+                        break;
+                    }
+                    prev_was_blackslash = true;
+                    continue;
                 }
-                prev_was_blackslash = true;
-                continue;
+                break;
             case '\'':
-                in_s_quotes = (prev_was_blackslash || in_d_quotes) ? in_s_quotes : !in_s_quotes;
+                in_s_quotes = in_d_quotes ? in_s_quotes : !in_s_quotes;
                 break;
             case '"':
                 in_d_quotes = (prev_was_blackslash || in_s_quotes) ? in_d_quotes : !in_d_quotes;
@@ -332,9 +335,12 @@ int we_unescape(char **s) {
     again:
         switch ((*s)[j]) {
             case '\\':
-                j++;
-                if ((*s)[j] == '\0') {
-                    j--;
+                if (!in_s_quotes) {
+                    j++;
+                    if ((*s)[j] == '\0') {
+                        j--;
+                        break;
+                    }
                     break;
                 }
                 break;

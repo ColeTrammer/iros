@@ -234,12 +234,26 @@ static size_t longest_common_starting_substring_length(struct suggestion *sugges
 // Checks whether there are any open quotes or not in the line
 static LineStatus get_line_status(char *line, size_t len, ShValue *value, bool consider_buffer_termination_to_be_end_of_line = false) {
     bool prev_was_backslash = false;
+    bool in_s_quotes = false;
+    bool in_d_quotes = false;
+    bool in_b_quotes = false;
 
     for (size_t i = 0; i < len; i++) {
         switch (line[i]) {
             case '\\':
-                prev_was_backslash = !prev_was_backslash;
+                if (!in_s_quotes) {
+                    prev_was_backslash = !prev_was_backslash;
+                }
                 continue;
+            case '"':
+                in_d_quotes = (prev_was_backslash || in_s_quotes || in_b_quotes) ? in_d_quotes : !in_d_quotes;
+                break;
+            case '\'':
+                in_s_quotes = (in_d_quotes || in_b_quotes) ? in_s_quotes : !in_s_quotes;
+                break;
+            case '`':
+                in_b_quotes = (prev_was_backslash || in_d_quotes || in_s_quotes) ? in_b_quotes : !in_b_quotes;
+                break;
             case '\n':
                 if (i == len - 1 && prev_was_backslash) {
                     return LineStatus::EscapedNewline;
