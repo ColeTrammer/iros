@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <liim/linked_list.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -13,13 +14,16 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
+
+#ifndef USERLAND_NATIVE
 #include <wordexp.h>
+#else
+#include "../../libs/libc/include/wordexp.h"
+#endif /* USERLAND_NATIVE */
 
 #include "builtin.h"
 #include "command.h"
 #include "job.h"
-
-#ifndef USERLAND_NATIVE
 
 static word_special_t special_vars = { { (char*) "", (char*) "", (char*) "0", NULL, (char*) "", NULL, NULL, (char*) "/bin/sh" } };
 
@@ -29,34 +33,15 @@ static void __set_exit_status(int n) {
     sprintf(special_vars.vals[WRDE_SPECIAL_QUEST], "%d", n);
 }
 
-#else
-
-static int last_exit_status;
-
-static void __set_exit_status(int n) {
-    last_exit_status = n;
-}
-
-#endif /* USERLAND_NATIVE */
-
 void set_exit_status(int n) {
     assert(WIFEXITED(n) || WIFSIGNALED(n) || WIFSTOPPED(n));
 
     __set_exit_status(WIFEXITED(n) ? WEXITSTATUS(n) : WIFSTOPPED(n) ? 0 : (127 + WTERMSIG(n)));
 }
 
-#ifndef USERLAND_NATIVE
-
 int get_last_exit_status() {
     return atoi(special_vars.vals[WRDE_SPECIAL_QUEST]);
 }
-
-#else
-int get_last_exit_status() {
-    return last_exit_status;
-}
-
-#endif /* USERLAND_NATIVE */
 
 static bool handle_redirection(ShValue::IoRedirect& desc) {
     int flags = 0;
@@ -96,18 +81,12 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
     return true;
 }
 
-#ifndef WRDE_SPECIAL
-#define WRDE_SPECIAL 0
-#endif /* WRDE_SPECIAL */
-
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
 static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
 
     bool failed = false;
     wordexp_t we;
-#ifndef USERLAND_NATIVE
     we.we_special_vars = &special_vars;
-#endif /* USERLAND_NATIVE */
 
     bool first = true;
     command.words.for_each([&](const StringView& s) {
@@ -216,9 +195,7 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
     bool failed = false;
     for_clause.words.for_each([&](const auto& w) {
         wordexp_t we;
-#ifndef USERLAND_NATIVE
         we.we_special_vars = &special_vars;
-#endif /* USERLAND_NATIVE */
         String word(w);
         int ret = wordexp(word.string(), &we, WRDE_SPECIAL);
         if (ret < 0) {
@@ -268,6 +245,53 @@ static pid_t __do_loop_clause(ShValue::Loop& loop) {
         }
     }
     return ret;
+}
+
+static pid_t __do_case_clause(ShValue::CaseClause& case_clause) {
+    char* word_expanded = NULL;
+    int ret = we_expand(String(case_clause.word).string(), WRDE_SPECIAL, &word_expanded, &special_vars);
+    if (ret != 0) {
+        ret = we_unescape(&word_expanded);
+    }
+    if (ret != 0) {
+        return ret;
+    }
+
+    for (int i = 0; i < case_clause.items.size(); i++) {
+        auto& case_item = case_clause.items[i];
+
+        for (int j = 0; j < case_item.patterns.size(); j++) {
+            char* pattern_expanded = NULL;
+            int ret = we_expand(String(case_item.patterns[j]).string(), WRDE_SPECIAL, &pattern_expanded, &special_vars);
+            if (ret != 0) {
+                ret = we_unescape(&pattern_expanded);
+            }
+            if (ret != 0) {
+                free(word_expanded);
+                free(pattern_expanded);
+                return ret;
+            }
+
+            int result = fnmatch(pattern_expanded, word_expanded, 0);
+            if (result == FNM_NOMATCH) {
+                free(pattern_expanded);
+                continue;
+            }
+
+            free(word_expanded);
+            free(pattern_expanded);
+
+            if (result != 0) {
+                return result;
+            }
+
+            return do_command_list(case_item.action);
+        }
+    }
+
+    free(word_expanded);
+    set_exit_status(0);
+    return 0;
 }
 
 static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid,
@@ -325,6 +349,9 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
             break;
         case ShValue::CompoundCommand::Type::Loop:
             ret = __do_loop_clause(command.loop.value());
+            break;
+        case ShValue::CompoundCommand::Type::Case:
+            ret = __do_case_clause(command.case_clause.value());
             break;
         default:
             assert(false);
@@ -537,10 +564,8 @@ int command_run(ShValue::Program& program) {
 }
 
 void command_init_special_vars() {
-#ifndef USERLAND_NATIVE
     special_vars.vals[WRDE_SPECIAL_QUEST] = strdup("0");
     special_vars.vals[WRDE_SPECIAL_DOLLAR] = (char*) malloc(10);
     sprintf(special_vars.vals[WRDE_SPECIAL_DOLLAR], "%d", getpid());
     special_vars.vals[WRDE_SPECIAL_EXCLAM] = strdup("");
-#endif /* USERLAND_NATIVE */
 }

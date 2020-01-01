@@ -98,6 +98,16 @@ public:
         List action;
     };
 
+    struct CaseClause {
+        struct CaseItem {
+            Vector<StringView> patterns;
+            List action;
+        };
+
+        StringView word;
+        Vector<CaseItem> items;
+    };
+
     struct CompoundCommand {
         enum class Type {
             BraceGroup,
@@ -116,6 +126,7 @@ public:
         CompoundCommand(const BraceGroup& _brace_group, MakeBraceGroup) : type(Type::BraceGroup), brace_group(_brace_group) {}
         CompoundCommand(const Subshell& _subshell, MakeSubshell) : type(Type::Subshell), subshell(_subshell) {}
         CompoundCommand(const Loop& _loop) : type(Type::Loop), loop(_loop) {}
+        CompoundCommand(const CaseClause& _case_clause) : type(Type::Case), case_clause(_case_clause) {}
 
         Type type;
         Maybe<ShValue::IfClause> if_clause;
@@ -123,6 +134,7 @@ public:
         Maybe<ShValue::BraceGroup> brace_group;
         Maybe<ShValue::Subshell> subshell;
         Maybe<ShValue::Loop> loop;
+        Maybe<ShValue::CaseClause> case_clause;
         RedirectList redirect_list;
     };
 
@@ -149,6 +161,7 @@ public:
         : m_line(other.line())
         , m_position(other.position())
         , m_io_redirect(other.m_io_redirect)
+        , m_case_item(other.m_case_item)
         , m_text(other.m_text)
         , m_command(other.m_command)
         , m_pipeline(other.m_pipeline)
@@ -174,6 +187,19 @@ public:
     ShValue& create_io_redirect(int number, IoRedirect::Type type, const StringView& word) {
         m_io_redirect = { IoRedirect { number, type, word } };
 
+        return *this;
+    }
+
+    CaseClause::CaseItem& case_item() { return m_case_item.value(); }
+    const CaseClause::CaseItem& case_item() const { return m_case_item.value(); }
+
+    bool has_case_item() const { return m_case_item.has_value(); }
+
+    ShValue& create_case_item(const StringView& pattern) {
+        Vector<StringView> patterns;
+        patterns.add(pattern);
+
+        m_case_item = { CaseClause::CaseItem { patterns, List() } };
         return *this;
     }
 
@@ -239,6 +265,22 @@ public:
         ForClause for_clause = ForClause { name, words, action };
 
         m_command = { CompoundCommand { for_clause } };
+        return *this;
+    }
+
+    ShValue& create_case_clause(const CaseClause::CaseItem& case_item) {
+        Vector<CaseClause::CaseItem> case_items;
+        case_items.add(case_item);
+        CaseClause case_clause = CaseClause { "", case_items };
+
+        m_command = { CompoundCommand { case_clause } };
+        return *this;
+    }
+
+    ShValue& create_case_clause(const StringView& word) {
+        CaseClause case_clause = CaseClause { word, Vector<CaseClause::CaseItem>() };
+
+        m_command = { CompoundCommand { case_clause } };
         return *this;
     }
 
@@ -388,6 +430,7 @@ private:
     size_t m_line { 0 };
     size_t m_position { 0 };
     Maybe<IoRedirect> m_io_redirect;
+    Maybe<CaseClause::CaseItem> m_case_item;
     Maybe<RedirectList> m_redirect_list;
     Maybe<StringView> m_text;
     Maybe<Command> m_command;

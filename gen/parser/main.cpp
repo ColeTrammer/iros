@@ -167,12 +167,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    fprintf(stderr, "Lexing...\n");
-
     Lexer lexer(contents, info.st_size);
     auto tokens = lexer.lex();
-
-    fprintf(stderr, "Done lexing...\n");
 
     StringView* start_name = nullptr;
 
@@ -209,8 +205,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    fprintf(stderr, "Done parsing tokens...\n");
-
     Vector<Rule> rules;
 
     bool start = false;
@@ -228,7 +222,6 @@ int main(int argc, char** argv) {
         if (start) {
             switch (token.type()) {
                 case TokenType::TokenWord:
-                    fprintf(stderr, "Token text: %s\n", String(token.text()).string());
                     rule.components().add(token.text());
                     break;
                 case TokenType::TokenColon:
@@ -281,8 +274,6 @@ int main(int argc, char** argv) {
         fprintf(stderr, "No rules.\n");
         exit(1);
     }
-
-    fprintf(stderr, "Done parsing rules...\n");
 
     rules.for_each([&](auto& rule) {
         fprintf(stderr, "%s\n", rule.stringify().string());

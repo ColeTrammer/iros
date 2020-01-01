@@ -1,7 +1,11 @@
 #ifndef _WORDEXP_H
 #define _WORDEXP_H 1
 
+#ifndef USERLAND_NATIVE
 #include <bits/size_t.h>
+#else
+typedef unsigned long size_t;
+#endif /* USERLAND_NATIVE */
 
 #define WRDE_APPEND  1
 #define WRDE_DOOFFS  2
@@ -23,6 +27,8 @@ extern "C" {
 #ifdef _OS_2_SOURCE
 
 #define WRDE_SPECIAL 64
+#define WRDE_NOFS    128
+#define WRDE_NOGLOB  256
 
 #define WRDE_SPECIAL_AT     0
 #define WRDE_SPECIAL_STAR   1
@@ -37,6 +43,9 @@ extern "C" {
 typedef struct {
     char *vals[WRDE_NUM_SPECIAL];
 } word_special_t;
+
+int we_expand(const char *s, int flags, char **result, word_special_t *special);
+int we_unescape(char **s);
 
 #endif /* _OS_2_SOURCE */
 

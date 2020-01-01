@@ -16,10 +16,10 @@ $(EXECUTABLE).native: $(OBJS:.o=.native.o) $(NATIVE_OBJS:.o=.native.o)
 	$(NATIVE_LD) -o $@ $^
 
 $(BUILDDIR)/%.native.o: $(ROOT)/%.c
-	gcc -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+	gcc -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -D_OS_2_SOURCE
 
 $(BUILDDIR)/%.native.o: $(ROOT)/%.cpp
-	g++ -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CPPFLAGS) -std=c++17 -I../../libs/libliim/include -I../../gen/parser/include
+	g++ -D_POSIX_C_SOURCE=201900 -D_XOPEN_SOURCE=201900 -DUSERLAND_NATIVE -MD -o $@ -c $< $(CPPFLAGS) -std=c++17 -I../../libs/libliim/include -I../../gen/parser/include -D_OS_2_SOURCE
 
 # Builds any .o file from its .c or .S, and generates its makefile dependencies with -MD
 $(BUILDDIR)/%.o: $(ROOT)/%.c

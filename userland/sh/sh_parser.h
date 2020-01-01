@@ -31,6 +31,11 @@ public:
     virtual ShValue reduce_newline_list$newline(ShValue&) override { return {}; }
     virtual ShValue reduce_newline_list$newline_list_newline(ShValue&, ShValue&) override { return {}; }
 
+    virtual ShValue reduce_in$in(ShValue& i) override {
+        assert(i.has_text());
+        return i;
+    }
+
     virtual ShValue reduce_name$name(ShValue& n) override {
         assert(n.has_text());
         return n;
@@ -361,6 +366,139 @@ public:
         return condition.create_loop(condition.list(), action.list(), ShValue::Loop::Type::Until);
     }
 
+    virtual ShValue reduce_pattern$word(ShValue& word) override {
+        assert(word.has_text());
+        return word.create_case_item(word.text());
+    }
+
+    virtual ShValue reduce_pattern$pattern_pipe_word(ShValue& words, ShValue&, ShValue& word) override {
+        assert(word.has_text());
+        assert(words.has_case_item());
+
+        words.case_item().patterns.add(word.text());
+        return words;
+    }
+
+    virtual ShValue reduce_case_item_ns$pattern_rightparenthesis_linebreak(ShValue& pattern, ShValue&, ShValue&) override {
+        assert(pattern.has_case_item());
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_item_ns$pattern_rightparenthesis_compound_list(ShValue& pattern, ShValue&, ShValue& list) override {
+        assert(pattern.has_case_item());
+        assert(list.has_list());
+
+        pattern.case_item().action = list.list();
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_item_ns$leftparenthesis_pattern_rightparenthesis_linebreak(ShValue&, ShValue& pattern, ShValue&,
+                                                                                           ShValue&) override {
+        assert(pattern.has_case_item());
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_item_ns$leftparenthesis_pattern_rightparenthesis_compound_list(ShValue&, ShValue& pattern, ShValue&,
+                                                                                               ShValue& list) override {
+        assert(pattern.has_case_item());
+        assert(list.has_list());
+
+        pattern.case_item().action = list.list();
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_item$pattern_rightparenthesis_linebreak_dsemi_linebreak(ShValue& pattern, ShValue&, ShValue&, ShValue&,
+                                                                                        ShValue&) override {
+        assert(pattern.has_case_item());
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_item$pattern_rightparenthesis_compound_list_dsemi_linebreak(ShValue& pattern, ShValue&, ShValue& list,
+                                                                                            ShValue&, ShValue&) override {
+        assert(pattern.has_case_item());
+        assert(list.has_list());
+
+        pattern.case_item().action = list.list();
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_item$leftparenthesis_pattern_rightparenthesis_linebreak_dsemi_linebreak(ShValue&, ShValue& pattern,
+                                                                                                        ShValue&, ShValue&, ShValue&,
+                                                                                                        ShValue&) override {
+        assert(pattern.has_case_item());
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_item$leftparenthesis_pattern_rightparenthesis_compound_list_dsemi_linebreak(ShValue&, ShValue& pattern,
+                                                                                                            ShValue&, ShValue& list,
+                                                                                                            ShValue&, ShValue&) override {
+        assert(pattern.has_case_item());
+        assert(list.has_list());
+
+        pattern.case_item().action = list.list();
+        return pattern;
+    }
+
+    virtual ShValue reduce_case_list_ns$case_list_case_item_ns(ShValue& case_clause, ShValue& case_item) override {
+        assert(case_clause.has_command());
+        assert(case_clause.command().type == ShValue::Command::Type::Compound);
+        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        assert(case_item.has_case_item());
+
+        case_clause.command().compound_command.value().case_clause.value().items.add(case_item.case_item());
+        return case_clause;
+    }
+
+    virtual ShValue reduce_case_list_ns$case_item_ns(ShValue& case_item) override {
+        assert(case_item.has_case_item());
+
+        return case_item.create_case_clause(case_item.case_item());
+    }
+
+    virtual ShValue reduce_case_list$case_list_case_item(ShValue& case_clause, ShValue& case_item) override {
+        assert(case_clause.has_command());
+        assert(case_clause.command().type == ShValue::Command::Type::Compound);
+        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        assert(case_item.has_case_item());
+
+        case_clause.command().compound_command.value().case_clause.value().items.add(case_item.case_item());
+        return case_clause;
+    }
+
+    virtual ShValue reduce_case_clause$case_word_linebreak_in_linebreak_case_list_esac(ShValue&, ShValue& word, ShValue&, ShValue&,
+                                                                                       ShValue&, ShValue& case_clause, ShValue&) override {
+        assert(word.has_text());
+        assert(case_clause.has_command());
+        assert(case_clause.command().type == ShValue::Command::Type::Compound);
+        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+
+        case_clause.command().compound_command.value().case_clause.value().word = word.text();
+        return case_clause;
+    }
+
+    virtual ShValue reduce_case_clause$case_word_linebreak_in_linebreak_case_list_ns_esac(ShValue&, ShValue& word, ShValue&, ShValue&,
+                                                                                       ShValue&, ShValue& case_clause, ShValue&) override {
+        assert(word.has_text());
+        assert(case_clause.has_command());
+        assert(case_clause.command().type == ShValue::Command::Type::Compound);
+        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+
+        case_clause.command().compound_command.value().case_clause.value().word = word.text();
+        return case_clause;
+    }
+
+    virtual ShValue reduce_case_clause$case_word_linebreak_in_linebreak_esac(ShValue&, ShValue& word, ShValue&, ShValue&, ShValue&,
+                                                                             ShValue&) override {
+        assert(word.has_text());
+        return word.create_case_clause(word.text());
+    }
+
+    virtual ShValue reduce_case_list$case_item(ShValue& case_item) override {
+        assert(case_item.has_case_item());
+
+        return case_item.create_case_clause(case_item.case_item());
+    }
+
     virtual ShValue reduce_compound_command$brace_group(ShValue& brace_group) override {
         assert(brace_group.has_command());
         assert(brace_group.command().type == ShValue::Command::Type::Compound);
@@ -403,6 +541,13 @@ public:
         assert(for_clause.command().type == ShValue::Command::Type::Compound);
         assert(for_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
         return for_clause;
+    }
+
+    virtual ShValue reduce_compound_command$case_clause(ShValue& case_clause) override {
+        assert(case_clause.has_command());
+        assert(case_clause.command().type == ShValue::Command::Type::Compound);
+        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        return case_clause;
     }
 
     virtual ShValue reduce_command$compound_command(ShValue& compound_command) override {
@@ -570,7 +715,8 @@ public:
 #endif
     virtual void on_error(ShTokenType type) override {
         if (peek_token_type() != ShTokenType::End) {
-            fprintf(stderr, "\nUnexpected token: %s (state %d)", token_type_to_string(type), this->current_state());
+            fprintf(stderr, "\nUnexpected token: %s <%s> (state %d)", token_type_to_string(type),
+                    String(peek_value_stack().text()).string(), this->current_state());
         } else {
             m_needs_more_tokens = true;
         }

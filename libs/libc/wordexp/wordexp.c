@@ -8,7 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef USERLAND_NATIVE
 #include <wordexp.h>
+#else
+#include "../include/wordexp.h"
+#endif /* USERLAND_NATIVE */
 
 #define WE_BUF_INCREMENT 10
 
@@ -74,12 +79,7 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     return true;
 }
 
-static int we_expand(const char *s, int flags, char **expanded
-#ifndef USERLAND_NATIVE
-                     ,
-                     word_special_t *special
-#endif /* USERLAND_NATIVE */
-) {
+int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
     size_t len = WE_STR_BUF_INCREMENT;
     *expanded = calloc(len, sizeof(char));
 
@@ -108,7 +108,6 @@ static int we_expand(const char *s, int flags, char **expanded
                 break;
             }
             case '$': {
-#ifndef USERLAND_NATIVE
                 if (!(flags & WRDE_SPECIAL) || special == NULL) {
                     goto normal_var;
                 }
@@ -151,7 +150,6 @@ static int we_expand(const char *s, int flags, char **expanded
                 prev_was_backslash = false;
                 continue;
             normal_var : {
-#endif /* USERLAND_NATIVE */
                 // Maybe other characters are valid but this is the standard form
                 int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
@@ -179,9 +177,7 @@ static int we_expand(const char *s, int flags, char **expanded
 
                 prev_was_backslash = false;
                 continue;
-#ifndef USERLAND_NATIVE
             }
-#endif /* USERLAND_NATIVE */
             }
             case '`': {
                 if (prev_was_backslash || in_s_quotes) {
@@ -325,62 +321,70 @@ static int we_split(char *s, char *split_on, wordexp_t *we) {
     return 0;
 }
 
-static int we_unescape(wordexp_t *p) {
-    for (size_t i = 0; i < p->we_wordc; i++) {
-        char *unescaped_string = NULL;
-        size_t unescaped_string_max = 0;
+int we_unescape(char **s) {
+    char *unescaped_string = NULL;
+    size_t unescaped_string_max = 0;
 
-        bool in_s_quotes = false;
-        bool in_d_quotes = false;
-        size_t k = 0;
-        for (size_t j = 0; p->we_wordv[i][j] != '\0'; j++, k++) {
-        again:
-            switch (p->we_wordv[i][j]) {
-                case '\\':
-                    j++;
-                    if (p->we_wordv[i][j] == '\0') {
-                        j--;
-                        break;
-                    }
+    bool in_s_quotes = false;
+    bool in_d_quotes = false;
+    size_t k = 0;
+    for (size_t j = 0; (*s)[j] != '\0'; j++, k++) {
+    again:
+        switch ((*s)[j]) {
+            case '\\':
+                j++;
+                if ((*s)[j] == '\0') {
+                    j--;
                     break;
-                case '\'':
-                    if (!in_d_quotes) {
-                        j++;
-                        in_s_quotes = in_d_quotes ? in_s_quotes : !in_s_quotes;
-                        goto again;
-                    }
-                    break;
-                case '"':
-                    if (!in_s_quotes) {
-                        j++;
-                        in_d_quotes = in_s_quotes ? in_d_quotes : !in_d_quotes;
-                        goto again;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            if (k + 1 >= unescaped_string_max) {
-                unescaped_string_max += 20;
-                unescaped_string = realloc(unescaped_string, unescaped_string_max);
-                if (unescaped_string == NULL) {
-                    return WRDE_NOSPACE;
                 }
-            }
-            unescaped_string[k] = p->we_wordv[i][j];
+                break;
+            case '\'':
+                if (!in_d_quotes) {
+                    j++;
+                    in_s_quotes = in_d_quotes ? in_s_quotes : !in_s_quotes;
+                    goto again;
+                }
+                break;
+            case '"':
+                if (!in_s_quotes) {
+                    j++;
+                    in_d_quotes = in_s_quotes ? in_d_quotes : !in_d_quotes;
+                    goto again;
+                }
+                break;
+            default:
+                break;
         }
 
-        free(p->we_wordv[i]);
-
-        if (unescaped_string == NULL) {
-            unescaped_string = strdup("");
+        if (k + 1 >= unescaped_string_max) {
+            unescaped_string_max += 20;
+            unescaped_string = realloc(unescaped_string, unescaped_string_max);
             if (unescaped_string == NULL) {
                 return WRDE_NOSPACE;
             }
         }
-        unescaped_string[k] = '\0';
-        p->we_wordv[i] = unescaped_string;
+        unescaped_string[k] = (*s)[j];
+    }
+
+    free(*s);
+
+    if (unescaped_string == NULL) {
+        unescaped_string = strdup("");
+        if (unescaped_string == NULL) {
+            return WRDE_NOSPACE;
+        }
+    }
+    unescaped_string[k] = '\0';
+    (*s) = unescaped_string;
+    return 0;
+}
+
+static int we_unescape_all(wordexp_t *p) {
+    for (size_t i = 0; i < p->we_wordc; i++) {
+        int ret = we_unescape(&p->we_wordv[i]);
+        if (ret != 0) {
+            return ret;
+        }
     }
 
     return 0;
@@ -462,12 +466,7 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
 #endif /* WORDEXP_DEBUG */
 
     char *str = NULL;
-    int ret = we_expand(s, flags, &str
-#ifndef USERLAND_NATIVE
-                        ,
-                        p->we_special_vars
-#endif /* USERLAND_NATIVE */
-    );
+    int ret = we_expand(s, flags, &str, p->we_special_vars);
     if (ret != 0) {
         return ret;
     }
@@ -476,9 +475,15 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     fprintf(stderr, "expand result: |%s|\n", str);
 #endif /* WORDEXP_DEBUG */
 
-    char *split_on = getenv("IFS");
-    if (!split_on) {
-        split_on = " \t\n";
+    char *split_on = NULL;
+    if (flags & WRDE_NOFS) {
+        split_on = "";
+    } else {
+        split_on = getenv("IFS");
+        if (!split_on) {
+
+            split_on = " \t\n";
+        }
     }
 
     assert(str);
@@ -496,20 +501,23 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
 #endif /* WORDEXP_DEBUG */
 
     assert(p->we_wordv);
-    ret = we_glob(p);
 
-    if (ret != 0) {
-        wordfree(p);
-        return ret;
-    }
+    if (!(flags & WRDE_NOGLOB)) {
+        ret = we_glob(p);
+
+        if (ret != 0) {
+            wordfree(p);
+            return ret;
+        }
 
 #ifdef WORDEXP_DEBUG
-    for (size_t i = 0; i < p->we_wordc; i++) {
-        fprintf(stderr, "glob result: %lu:|%s|\n", i, p->we_wordv[i]);
-    }
+        for (size_t i = 0; i < p->we_wordc; i++) {
+            fprintf(stderr, "glob result: %lu:|%s|\n", i, p->we_wordv[i]);
+        }
 #endif /* WORDEXP_DEBUG */
+    }
 
-    ret = we_unescape(p);
+    ret = we_unescape_all(p);
 
 #ifdef WORDEXP_DEBUG
     for (size_t i = 0; i < p->we_wordc; i++) {

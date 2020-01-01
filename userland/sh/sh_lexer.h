@@ -99,11 +99,6 @@ public:
                 }
             }
 
-            // Should match only the word in a case/for statement
-            if (m_parser && text == "in" && m_parser->is_valid_token_type_in_current_state_for_shift(ShTokenType::In)) {
-                type = ShTokenType::In;
-            }
-
             if (type != ShTokenType::WORD) {
                 const_cast<ShLexer&>(*this).m_tokens[m_current_pos].set_type(type);
             }
@@ -232,6 +227,11 @@ private:
                 } else {
                     m_allow_reserved_word_next = false;
                 }
+            }
+
+            if (m_tokens.size() >= 2 && m_tokens[m_tokens.size() - 2].type() == ShTokenType::Case && text == "in") {
+                m_allow_reserved_word_next = false;
+                type = ShTokenType::In;
             }
         }
 
