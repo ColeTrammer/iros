@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -340,6 +341,99 @@ void arch_sys_close(struct task_state *task_state) {
     SYS_RETURN(error);
 }
 
+static int execve_helper(char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
+                         dev_t *device, ino_t *ino_id, char **argv) {
+    int error = 0;
+    struct file *program = fs_open(*path, O_RDONLY, &error);
+    if (!program) {
+        return error;
+    }
+
+    fs_seek(program, 0, SEEK_END);
+    *buffer_length = (size_t) fs_tell(program);
+
+    if (buffer_length == 0) {
+        return -ENOEXEC;
+    }
+
+    fs_seek(program, 0, SEEK_SET);
+
+    *buffer = malloc(*buffer_length);
+    fs_read(program, *buffer, *buffer_length);
+
+    if (!elf64_is_valid(*buffer)) {
+        if (memcmp(*buffer, "#!", 2) == 0) {
+            debug_log("Encoutered #!\n");
+            bool first = *prepend_argv_length == 0;
+
+            char *path_save = NULL;
+            if (!first) {
+                free(*path);
+            } else {
+                path_save = *path;
+            }
+            size_t path_len = strcspn(*buffer + 2, " \n");
+            char restore = (*buffer)[2 + path_len];
+            (*buffer)[2 + path_len] = '\0';
+            *path = get_full_path(get_current_task()->process->cwd, *buffer + 2);
+            debug_log("#!: [ %s ]\n", *path);
+            (*buffer)[2 + path_len] = restore;
+            bool has_extra_arg = false;
+            size_t extra_arg_start = 0;
+
+            size_t i;
+            for (i = 0; (*buffer)[2 + path_len + i] != '\n' && (*buffer)[2 + path_len + i] != '\0'; i++) {
+                if (!extra_arg_start && !isspace((*buffer)[2 + path_len + i])) {
+                    has_extra_arg = true;
+                    extra_arg_start = 2 + path_len + i;
+                    break;
+                }
+            }
+
+            (*prepend_argv_length) += first;
+
+            if (has_extra_arg) {
+                (*prepend_argv_length) += 2;
+            } else {
+                (*prepend_argv_length)++;
+            }
+
+            *prepend_argv = realloc(*prepend_argv, *prepend_argv_length * sizeof(char *));
+            if (has_extra_arg) {
+                *buffer[2 + path_len] = '\0';
+                *prepend_argv[*prepend_argv_length - 3] = strdup(*buffer + 2);
+                *buffer[2 + path_len] = restore;
+                *buffer[2 + path_len + i] = '\0';
+                *prepend_argv[*prepend_argv_length - 2] = strdup(*buffer + extra_arg_start);
+            } else {
+                *buffer[2 + path_len] = '\0';
+                *prepend_argv[*prepend_argv_length - 2] = strdup(*buffer + 2);
+                *buffer[2 + path_len] = restore;
+            }
+
+            (*prepend_argv)[*prepend_argv_length - 1] = NULL;
+
+            if (first) {
+                argv[0] = path_save;
+            }
+
+            free(*buffer);
+            *buffer = NULL;
+            fs_close(program);
+            return execve_helper(path, buffer, buffer_length, prepend_argv, prepend_argv_length, device, ino_id, argv);
+        }
+
+        fs_close(program);
+        return -ENOEXEC;
+    }
+
+    *device = program->device;
+    *ino_id = program->inode_idenifier;
+    fs_close(program);
+
+    return 0;
+}
+
 void arch_sys_execve(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
@@ -357,40 +451,29 @@ void arch_sys_execve(struct task_state *task_state) {
 
     debug_log("Exec Task: [ %d, %s ]\n", current->process->pid, path);
 
-    int error = 0;
-    struct file *program = fs_open(path, O_RDONLY, &error);
-    if (!program) {
+    char *buffer = NULL;
+    size_t length = 0;
+    char **prepend_argv = NULL;
+    size_t prepend_argv_length = 0;
+    dev_t device = 0;
+    ino_t ino_id = 0;
+    int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &device, &ino_id, argv);
+    if (error) {
+        for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
+            free(prepend_argv[i]);
+        }
+        free(prepend_argv);
+
+        free(buffer);
         free(path);
-        SYS_RETURN(-ENOENT);
+        SYS_RETURN(error);
     }
-
-    fs_seek(program, 0, SEEK_END);
-    long length = fs_tell(program);
-
-    if (length == 0) {
-        free(path);
-        SYS_RETURN(-ENOEXEC);
-    }
-
-    fs_seek(program, 0, SEEK_SET);
-
-    void *buffer = malloc(length);
-    fs_read(program, buffer, length);
 
     struct task *task = calloc(1, sizeof(struct task));
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
-
-    process->inode_dev = program->device;
-    process->inode_id = program->inode_idenifier;
-
-    fs_close(program);
-
-    if (!elf64_is_valid(buffer)) {
-        free(path);
-        free(buffer);
-        SYS_RETURN(-ENOEXEC);
-    }
+    process->inode_dev = device;
+    process->inode_id = ino_id;
 
     // Dup open file descriptors
     for (int i = 0; i < FOPEN_MAX; i++) {
@@ -462,10 +545,17 @@ void arch_sys_execve(struct task_state *task_state) {
     task->arch_task.task_state.stack_state.rip = elf64_get_entry(buffer);
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
-    task->arch_task.task_state.stack_state.rsp = map_program_args(process_stack->end, argv, envp);
+    task->arch_task.task_state.stack_state.rsp = map_program_args(process_stack->end, prepend_argv, argv, envp);
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
+    for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
+        free(prepend_argv[i]);
+    }
+    free(prepend_argv);
+
     /* Memset stack to zero so that task can use old one safely (only go until rsp because args are after it). */
+    // FIXME: this will forcibily load the entire stack into memory. Instead we should map in a completely new
+    // stack
     memset((void *) process_stack->start, 0, task->arch_task.task_state.stack_state.rsp - process_stack->start);
 
     /* Ensure File Name And Args Are Still Mapped */

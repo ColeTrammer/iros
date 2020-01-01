@@ -35,16 +35,16 @@ int main(int argc, char **argv) {
 
     /* Test args */
 
-    // printf("Argc: %d\n", argc);
-    // for (size_t i = 0; argv[i] != NULL; i++) {
-    //     printf("Argv[%ld]: %s\n", i, argv[i]);
-    // }
-
-    char **e = environ;
-    while (*e != NULL) {
-        puts(*e);
-        e++;
+    printf("Argc: %d\n", argc);
+    for (size_t i = 0; argv[i] != NULL; i++) {
+        printf("Argv[%ld]: %s\n", i, argv[i]);
     }
+
+    // char **e = environ;
+    // while (*e != NULL) {
+    //     puts(*e);
+    //     e++;
+    // }
 
     /* Test Writing To stdio */
 

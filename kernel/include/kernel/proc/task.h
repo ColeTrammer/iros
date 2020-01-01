@@ -67,7 +67,7 @@ void arch_free_task(struct task *task, bool free_paging_structure);
 
 struct task *get_current_task();
 
-uintptr_t map_program_args(uintptr_t start, char **argv, char **envp);
+uintptr_t map_program_args(uintptr_t start, char **prepend_argv, char **argv, char **envp);
 
 int get_next_tid();
 
