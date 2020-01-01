@@ -81,6 +81,14 @@ int fnmatch(const char *pattern, const char *s, int flags) {
             while (pattern[pi] != ']') {
                 pi++;
             }
+
+            // Refuse to match . if FNM_PERIOD is set, and we're using a
+            // an inverted match. It's not specified whether or not it
+            // should match, so reject it.
+            if ((flags & FNM_PERIOD) && invert && si == 0 && s[si] == '.') {
+                return FNM_NOMATCH;
+            }
+
             if (!fnmatch_is_valid_char_for_set(s[si++], set_start, pi++, invert)) {
                 // Try again if we were trying to match a `*`
                 if (next_si != 0) {
