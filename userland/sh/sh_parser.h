@@ -313,14 +313,18 @@ public:
         assert(name.has_text());
         assert(list.has_list());
 
-        return name.create_for_clause(name.text(), Vector<StringView>(), list.list());
+        Vector<StringView> default_word_vector;
+        default_word_vector.add("$@");
+        return name.create_for_clause(name.text(), default_word_vector, list.list());
     }
 
     virtual ShValue reduce_for_clause$for_name_sequential_sep_do_group(ShValue&, ShValue& name, ShValue&, ShValue& list) override {
         assert(name.has_text());
         assert(list.has_list());
 
-        return name.create_for_clause(name.text(), Vector<StringView>(), list.list());
+        Vector<StringView> default_word_vector;
+        default_word_vector.add("$@");
+        return name.create_for_clause(name.text(), default_word_vector, list.list());
     }
 
     virtual ShValue reduce_for_clause$for_name_linebreak_in_sequential_sep_do_group(ShValue&, ShValue& name, ShValue&, ShValue&, ShValue&,
@@ -465,6 +469,9 @@ public:
         component.list_component().combinators.add(ShValue::ListComponent::Combinator::End);
         return component;
     }
+
+    virtual ShValue reduce_sequential_sep$semicolon_linebreak(ShValue&, ShValue&) override { return {}; }
+    virtual ShValue reduce_sequential_sep$newline_list(ShValue&) override { return {}; }
 
     virtual ShValue reduce_separator_op$semicolon(ShValue& semicolon) override {
         return semicolon.create_separator_op(ShValue::List::Combinator::Sequential);
