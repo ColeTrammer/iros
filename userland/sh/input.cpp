@@ -1,5 +1,7 @@
 #include "input.h"
 #include "builtin.h"
+#include "command.h"
+#include "job.h"
 #include "sh_lexer.h"
 #include "sh_parser.h"
 
@@ -300,6 +302,9 @@ static void history_add(char *item) {
     history_length++;
 }
 
+char *buffer = NULL;
+char *line_save = NULL;
+
 static InputResult get_tty_input(FILE *tty, char **line, ShValue *value) {
     print_ps1_prompt();
 
@@ -307,9 +312,9 @@ static InputResult get_tty_input(FILE *tty, char **line, ShValue *value) {
     size_t buffer_index = 0;
     size_t buffer_length = 0;
     size_t buffer_min_index = 0;
-    char *buffer = (char *) malloc(buffer_max);
+    buffer = (char *) malloc(buffer_max);
 
-    char *line_save = NULL;
+    line_save = NULL;
     size_t hist_index = history_length;
 
     int consecutive_tab_presses = 0;
@@ -910,4 +915,40 @@ void write_history() {
     }
 
     fclose(file);
+}
+
+int do_command_from_source(struct input_source *input_source) {
+    for (;;) {
+        job_check_updates(true);
+
+        ShValue command;
+        char *line = nullptr;
+        auto result = input_get_line(input_source, &line, &command);
+
+        /* Check if we reached EOF */
+        if (result == InputResult::Eof) {
+            break;
+        }
+
+        /* Check If The Line Was Empty */
+        if (result == InputResult::Empty) {
+            continue;
+        }
+
+        if (result == InputResult::Error) {
+            free(line);
+            continue;
+        }
+
+        assert(command.has_program());
+        command_run(command.program());
+
+        free(line);
+    }
+
+    if (input_source->mode == INPUT_TTY) {
+        printf("exit\n");
+    }
+    input_cleanup(input_source);
+    return 0;
 }

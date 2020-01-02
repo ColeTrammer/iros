@@ -21,7 +21,6 @@
 #include "sh_lexer.h"
 #include "sh_parser.h"
 
-static char* line = NULL;
 static sigjmp_buf env;
 static volatile sig_atomic_t jump_active = 0;
 static struct termios saved_termios;
@@ -97,46 +96,16 @@ int main(int argc, char** argv) {
 
     command_init_special_vars(argc - 1, argv + 1);
 
-    for (;;) {
-        if (sigsetjmp(env, 1) == 1) {
-            if (line) {
-                free(line);
-            }
-            fprintf(stderr, "^C%c", '\n');
+    if (sigsetjmp(env, 1) == 1) {
+        fprintf(stderr, "^C%c", '\n');
+        if (line_save) {
+            free(line_save);
         }
-        jump_active = 1;
-
-        job_check_updates(true);
-
-        ShValue command;
-        char* line = nullptr;
-        auto result = input_get_line(&input_source, &line, &command);
-
-        /* Check if we reached EOF */
-        if (result == InputResult::Eof) {
-            break;
+        if (buffer) {
+            free(buffer);
         }
-
-        /* Check If The Line Was Empty */
-        if (result == InputResult::Empty) {
-            continue;
-        }
-
-        if (result == InputResult::Error) {
-            free(line);
-            continue;
-        }
-
-        assert(command.has_program());
-        command_run(command.program());
-
-        free(line);
     }
+    jump_active = 1;
 
-    if (input_source.mode == INPUT_TTY) {
-        printf("exit\n");
-    }
-    input_cleanup(&input_source);
-
-    return EXIT_SUCCESS;
+    return do_command_from_source(&input_source);
 }
