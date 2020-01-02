@@ -5,6 +5,7 @@
 #include <functional>
 #include <liim/hash_map.h>
 #include <liim/linked_list.h>
+#include <memory>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -28,7 +29,13 @@
 #include "command.h"
 #include "job.h"
 
+struct FunctionBody {
+    ShValue::CompoundCommand compound_command;
+    std::shared_ptr<String> for_posterity;
+};
+
 HashMap<String, String> g_aliases;
+HashMap<String, FunctionBody> g_functions;
 
 static int loop_depth_count = 0;
 static int break_count = 0;
@@ -109,6 +116,9 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
     return true;
 }
 
+static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid,
+                                   bool in_subshell);
+
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
 static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
     wordexp_t we;
@@ -164,10 +174,20 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
     }
 
-    struct builtin_op* op = builtin_find_op(we.we_wordv[0]);
+    auto* function_body = g_functions.get(String(we.we_wordv[0]));
+    if (function_body) {
+        command_push_position_params(PositionArgs(we.we_wordv + 1, we.we_wordc - 1));
+        int ret = __do_compound_command(function_body->compound_command, mode, was_builtin, to_set_pgid, false);
+        command_pop_position_params();
+        wordfree(&we);
+        return ret;
+    }
+
     bool do_builtin = false;
+    struct builtin_op* op = builtin_find_op(we.we_wordv[0]);
     if (builtin_should_run_immediately(op)) {
         *was_builtin = true;
+        wordfree(&we);
         return builtin_do_op(op, we.we_wordv);
     } else if (op) {
         do_builtin = true;
@@ -373,13 +393,56 @@ static pid_t __do_case_clause(ShValue::CaseClause& case_clause) {
     return 0;
 }
 
+extern std::shared_ptr<String> g_line;
+
+static pid_t __do_function_definition(ShValue::FunctionDefinition& command, ShValue::List::Combinator mode, bool* was_builtin,
+                                      pid_t to_set_pgid, bool in_subshell) {
+    if (in_subshell) {
+        // Child
+        pid_t pid = fork();
+        if (pid == 0) {
+            setpgid(to_set_pgid, to_set_pgid);
+            if (isatty(STDOUT_FILENO) && mode == ShValue::List::Combinator::Sequential) {
+                tcsetpgrp(STDOUT_FILENO, to_set_pgid == 0 ? getpid() : to_set_pgid);
+            }
+
+            struct sigaction to_set;
+            to_set.sa_handler = SIG_DFL;
+            to_set.sa_flags = 0;
+            sigaction(SIGINT, &to_set, NULL);
+
+            sigset_t mask_restore;
+            sigemptyset(&mask_restore);
+            sigprocmask(SIG_SETMASK, &mask_restore, NULL);
+        } else if (pid < 0) {
+            perror("Shell");
+            return -1;
+        } else {
+            *was_builtin = false;
+            setpgid(pid, to_set_pgid);
+            return pid;
+        }
+    } else {
+        *was_builtin = true;
+    }
+
+    g_functions.put(String(command.name), { command.command, g_line });
+
+    int last_status = 0;
+    if (in_subshell) {
+        _exit(last_status);
+    } else {
+        return last_status;
+    }
+}
+
 static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid,
                                    bool in_subshell) {
     if (command.type == ShValue::CompoundCommand::Type::Subshell) {
         in_subshell = true;
     }
 
-    if (in_subshell) {
+    if (in_subshell || !command.redirect_list.empty()) {
         // Child
         pid_t pid = fork();
         if (pid == 0) {
@@ -484,6 +547,8 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
                     command.simple_command.value().redirect_info.add(
                         ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
                     break;
+                case ShValue::Command::Type::FunctionDefinition:
+                    break;
                 default:
                     assert(false);
                     break;
@@ -503,6 +568,8 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
                     command.simple_command.value().redirect_info.add(
                         ShValue::IoRedirect { STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, view });
                     break;
+                case ShValue::Command::Type::FunctionDefinition:
+                    break;
                 default:
                     assert(false);
                     break;
@@ -512,6 +579,9 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
         bool is_builtin = false;
         pid_t pid = -1;
         switch (command.type) {
+            case ShValue::Command::Type::FunctionDefinition:
+                pid = __do_function_definition(command.function_definition.value(), mode, &is_builtin, pgid, pipeline.commands.size() > 1);
+                break;
             case ShValue::Command::Type::Compound:
                 pid = __do_compound_command(command.compound_command.value(), mode, &is_builtin, pgid, pipeline.commands.size() > 1);
                 break;

@@ -1,6 +1,7 @@
 #ifndef _INPUT_H
 #define _INPUT_H 1
 
+#include <memory>
 #include <stdio.h>
 
 #include "sh_token.h"
@@ -34,7 +35,7 @@ struct input_source {
 
 struct string_input_source *input_create_string_input_source(char *s);
 
-InputResult input_get_line(struct input_source *source, char **line, ShValue *command);
+InputResult input_get_line(struct input_source *source, ShValue *command);
 void input_cleanup(struct input_source *source);
 int do_command_from_source(struct input_source *source);
 

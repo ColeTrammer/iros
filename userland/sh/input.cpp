@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <memory>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -30,6 +31,8 @@ static size_t history_length;
 static size_t history_max;
 
 static struct termios saved_termios;
+
+std::shared_ptr<String> g_line;
 
 void enable_raw_mode() {
     tcgetattr(STDIN_FILENO, &saved_termios);
@@ -305,7 +308,7 @@ static void history_add(char *item) {
 char *buffer = NULL;
 char *line_save = NULL;
 
-static InputResult get_tty_input(FILE *tty, char **line, ShValue *value) {
+static InputResult get_tty_input(FILE *tty, ShValue *value) {
     print_ps1_prompt();
 
     size_t buffer_max = 1024;
@@ -681,7 +684,7 @@ static InputResult get_tty_input(FILE *tty, char **line, ShValue *value) {
                     goto tty_input_done;
                 case LineStatus::Error:
                     write(fileno(tty), "\n", 1);
-                    *line = buffer;
+                    g_line = String::wrap_malloced_chars(buffer);
                     return InputResult::Error;
                 default:
                     assert(false);
@@ -715,15 +718,17 @@ tty_input_done:
     if (buffer_length > 0) {
         history_add(buffer);
 
-        *line = buffer;
+        g_line = String::wrap_malloced_chars(buffer);
         return InputResult::Success;
+    } else {
+        g_line = nullptr;
     }
 
     free(buffer);
     return InputResult::Empty;
 }
 
-static InputResult get_file_input(FILE *file, char **line, ShValue *value) {
+static InputResult get_file_input(FILE *file, ShValue *value) {
     int sz = 1024;
     int pos = 0;
     char *buffer = (char *) malloc(sz);
@@ -747,7 +752,7 @@ static InputResult get_file_input(FILE *file, char **line, ShValue *value) {
             switch (get_line_status(buffer, pos, value)) {
                 case LineStatus::Continue:
                     if (c == EOF) {
-                        *line = buffer;
+                        g_line = String::wrap_malloced_chars(buffer);
                         fprintf(stderr, "Unexpected end of file\n");
                         return InputResult::Error;
                     }
@@ -760,7 +765,7 @@ static InputResult get_file_input(FILE *file, char **line, ShValue *value) {
                 case LineStatus::Done:
                     goto file_input_done;
                 case LineStatus::Error:
-                    *line = buffer;
+                    g_line = String::wrap_malloced_chars(buffer);
                     return InputResult::Error;
                 default:
                     assert(false);
@@ -771,12 +776,12 @@ static InputResult get_file_input(FILE *file, char **line, ShValue *value) {
 
 file_input_done:
     buffer[pos] = '\0';
-    *line = buffer;
+    g_line = String::wrap_malloced_chars(buffer);
 
     return InputResult::Success;
 }
 
-static InputResult get_string_input(struct string_input_source *source, char **line, ShValue *value) {
+static InputResult get_string_input(struct string_input_source *source, ShValue *value) {
     int sz = 1024;
     int pos = 0;
     char *buffer = (char *) malloc(sz);
@@ -801,7 +806,7 @@ static InputResult get_string_input(struct string_input_source *source, char **l
             switch (get_line_status(buffer, pos, value)) {
                 case LineStatus::Continue:
                     if (done) {
-                        *line = buffer;
+                        g_line = String::wrap_malloced_chars(buffer);
                         fprintf(stderr, "Unexpected end of file\n");
                         return InputResult::Error;
                     }
@@ -814,7 +819,7 @@ static InputResult get_string_input(struct string_input_source *source, char **l
                 case LineStatus::Done:
                     goto file_input_done;
                 case LineStatus::Error:
-                    *line = buffer;
+                    g_line = String::wrap_malloced_chars(buffer);
                     return InputResult::Error;
                 default:
                     assert(false);
@@ -825,7 +830,7 @@ static InputResult get_string_input(struct string_input_source *source, char **l
 
 file_input_done:
     buffer[pos] = '\0';
-    *line = buffer;
+    g_line = String::wrap_malloced_chars(buffer);
 
     return InputResult::Success;
 }
@@ -838,18 +843,18 @@ struct string_input_source *input_create_string_input_source(char *s) {
     return source;
 }
 
-InputResult input_get_line(struct input_source *source, char **line, ShValue *command) {
+InputResult input_get_line(struct input_source *source, ShValue *command) {
     switch (source->mode) {
         case INPUT_TTY: {
             enable_raw_mode();
-            auto res = get_tty_input(source->source.tty, line, command);
+            auto res = get_tty_input(source->source.tty, command);
             disable_raw_mode();
             return res;
         }
         case INPUT_FILE:
-            return get_file_input(source->source.file, line, command);
+            return get_file_input(source->source.file, command);
         case INPUT_STRING:
-            return get_string_input(source->source.string_input_source, line, command);
+            return get_string_input(source->source.string_input_source, command);
         default:
             fprintf(stderr, "Invalid input mode: %d\n", source->mode);
             assert(false);
@@ -933,7 +938,7 @@ int do_command_from_source(struct input_source *input_source) {
 
         ShValue command;
         char *line = nullptr;
-        auto result = input_get_line(input_source, &line, &command);
+        auto result = input_get_line(input_source, &command);
 
         /* Check if we reached EOF */
         if (result == InputResult::Eof) {
