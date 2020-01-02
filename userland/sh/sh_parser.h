@@ -716,7 +716,8 @@ public:
 #endif
     virtual void on_error(ShTokenType type) override {
         if (peek_token_type() != ShTokenType::End) {
-            fprintf(stderr, "\nUnexpected token: %s (state %d)", token_type_to_string(type), this->current_state());
+            fprintf(stderr, "\nUnexpected token: `%s` <%s> (state %d)", token_type_to_string(type),
+                    String(this->current_token().text()).string(), this->current_state());
         } else {
             m_needs_more_tokens = true;
         }

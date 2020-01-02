@@ -72,6 +72,13 @@ protected:
         m_reduce_type = type;
     }
 
+    Value current_token() {
+        if (m_lexer.peek_next_token_type() == TokenType::End) {
+            return Value();
+        }
+        return m_lexer.peek_next_token_value();
+    }
+
     TokenType peek_token_type() {
         if (m_in_reduce) {
             return m_reduce_type;
