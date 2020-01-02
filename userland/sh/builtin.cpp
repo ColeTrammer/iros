@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "builtin.h"
+#include "command.h"
 #include "input.h"
 #include "job.h"
 
@@ -177,11 +178,52 @@ static int op_history(char **argv) {
     return 0;
 }
 
+static int op_break(char **argv) {
+    int break_count = 1;
+    if (argv[1] != NULL) {
+        break_count = atoi(argv[1]);
+    }
+
+    if (get_loop_depth_count() == 0) {
+        fprintf(stderr, "Break is meaningless outside of for,while,until.\n");
+        return 0;
+    }
+
+    if (break_count == 0) {
+        fprintf(stderr, "Invalid loop number.\n");
+        return 1;
+    }
+
+    set_break_count(break_count);
+    return 0;
+}
+
+static int op_continue(char **argv) {
+    int continue_count = 1;
+    if (argv[1] != NULL) {
+        continue_count = atoi(argv[1]);
+    }
+
+    if (get_loop_depth_count() == 0) {
+        fprintf(stderr, "Continue is meaningless outside of for,while,until.\n");
+        return 0;
+    }
+
+    if (continue_count == 0) {
+        fprintf(stderr, "Invalid loop number.\n");
+        return 1;
+    }
+
+    set_continue_count(continue_count);
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
-    { "exit", op_exit, true },   { "cd", op_cd, true },           { "echo", op_echo, false }, { "export", op_export, true },
-    { "unset", op_unset, true }, { "jobs", op_jobs, true },       { "fg", op_fg, true },      { "bg", op_bg, true },
-    { "kill", op_kill, true },   { "history", op_history, true }, { "true", op_true, true },  { "false", op_false, true },
-    { ":", op_colon, true }
+    { "exit", op_exit, true },       { "cd", op_cd, true },       { "echo", op_echo, false },
+    { "export", op_export, true },   { "unset", op_unset, true }, { "jobs", op_jobs, true },
+    { "fg", op_fg, true },           { "bg", op_bg, true },       { "kill", op_kill, true },
+    { "history", op_history, true }, { "true", op_true, true },   { "false", op_false, true },
+    { ":", op_colon, true },         { "break", op_break, true }, { "continue", op_continue, true }
 };
 
 struct builtin_op *get_builtins() {

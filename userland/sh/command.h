@@ -9,9 +9,13 @@
 
 int command_run(ShValue::Program& program);
 
-void command_init_special_vars();
+void command_init_special_vars(int argc, char** argv);
 
 void set_exit_status(int n);
 int get_last_exit_status();
+
+void set_break_count(int count);
+void set_continue_count(int count);
+int get_loop_depth_count();
 
 #endif /* _COMMAND_H */

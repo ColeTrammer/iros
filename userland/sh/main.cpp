@@ -45,19 +45,16 @@ int main(int argc, char** argv) {
     struct input_source input_source;
 
     // Respect -c
-    if (argc == 3 && strcmp(argv[1], "-c") == 0) {
+    if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         input_source.mode = INPUT_STRING;
         input_source.source.string_input_source = input_create_string_input_source(argv[2]);
-    } else if (argc == 2) {
+    } else if (argc >= 2) {
         input_source.mode = INPUT_FILE;
         input_source.source.file = fopen(argv[1], "r");
         if (input_source.source.file == NULL) {
             perror("Shell");
             return EXIT_FAILURE;
         }
-    } else if (argc > 2) {
-        printf("Usage: %s [-c] [script]\n", argv[0]);
-        return EXIT_SUCCESS;
     } else {
         input_source.mode = INPUT_TTY;
         input_source.source.tty = stdin;
@@ -98,7 +95,7 @@ int main(int argc, char** argv) {
         atexit(write_history);
     }
 
-    command_init_special_vars();
+    command_init_special_vars(argc - 1, argv + 1);
 
     for (;;) {
         if (sigsetjmp(env, 1) == 1) {

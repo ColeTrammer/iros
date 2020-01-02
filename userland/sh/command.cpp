@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <termios.h>
@@ -25,7 +26,10 @@
 #include "command.h"
 #include "job.h"
 
-static word_special_t special_vars = { { (char*) "", (char*) "", (char*) "0", NULL, (char*) "", NULL, NULL, (char*) "/bin/sh" } };
+static int loop_depth_count = 0;
+static int break_count = 0;
+static int continue_count = 0;
+static word_special_t special_vars = { { (char*) "", (char*) "0", NULL, (char*) "", NULL, NULL, NULL }, NULL, 0 };
 
 static void __set_exit_status(int n) {
     free(special_vars.vals[WRDE_SPECIAL_QUEST]);
@@ -41,6 +45,26 @@ void set_exit_status(int n) {
 
 int get_last_exit_status() {
     return atoi(special_vars.vals[WRDE_SPECIAL_QUEST]);
+}
+
+int get_loop_depth_count() {
+    return loop_depth_count;
+}
+
+static void inc_loop_depth_count() {
+    loop_depth_count++;
+}
+
+static void dec_loop_depth_count() {
+    loop_depth_count--;
+}
+
+void set_continue_count(int count) {
+    continue_count = MIN(count, loop_depth_count);
+}
+
+void set_break_count(int count) {
+    break_count = MIN(count, loop_depth_count);
 }
 
 static bool handle_redirection(ShValue::IoRedirect& desc) {
@@ -190,34 +214,37 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
     char* previous_value = getenv(name.string());
     PreviousState previous_state = previous_value ? Set : Unset;
 
-    Vector<String> words_to_expand;
-
-    bool failed = false;
-    for_clause.words.for_each([&](const auto& w) {
-        wordexp_t we;
-        we.we_special_vars = &special_vars;
-        String word(w);
-        int ret = wordexp(word.string(), &we, WRDE_SPECIAL);
-        if (ret < 0) {
-            failed = true;
+    wordexp_t we;
+    we.we_special_vars = &special_vars;
+    for (int i = 0; i < for_clause.words.size(); i++) {
+        int ret = wordexp(String(for_clause.words[i]).string(), &we, WRDE_SPECIAL | (i != 0 ? WRDE_APPEND : 0));
+        if (ret != 0) {
+            wordfree(&we);
+            return ret;
         }
-
-        for (size_t i = 0; i < we.we_wordc; i++) {
-            words_to_expand.add(String(we.we_wordv[i]));
-        }
-
-        wordfree(&we);
-    });
-
-    if (failed) {
-        return -1;
     }
 
-    words_to_expand.for_each([&](const auto& w) {
-        setenv(name.string(), w.string(), 1);
+    inc_loop_depth_count();
+    for (size_t i = 0; i < we.we_wordc; i++) {
+        setenv(name.string(), we.we_wordv[i], 1);
         do_command_list(for_clause.action);
-    });
 
+        if (break_count > 0) {
+            break_count--;
+            break;
+        }
+
+        if (continue_count > 0) {
+            if (--continue_count == 0) {
+                continue;
+            } else {
+                break;
+            }
+        }
+    }
+    dec_loop_depth_count();
+
+    wordfree(&we);
     if (previous_state == Unset) {
         unsetenv(name.string());
     } else {
@@ -229,6 +256,7 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
 static pid_t __do_loop_clause(ShValue::Loop& loop) {
     int ret = 0;
 
+    inc_loop_depth_count();
     for (;;) {
         ret = do_command_list(loop.condition);
         if (ret != 0) {
@@ -243,7 +271,22 @@ static pid_t __do_loop_clause(ShValue::Loop& loop) {
         if (ret != 0) {
             break;
         }
+
+        if (break_count > 0) {
+            break_count--;
+            break;
+        }
+
+        if (continue_count > 0) {
+            if (--continue_count == 0) {
+                continue;
+            } else {
+                break;
+            }
+        }
     }
+
+    dec_loop_depth_count();
     return ret;
 }
 
@@ -540,6 +583,10 @@ static int do_command_list(ShValue::List& list) {
                 return ret;
             }
 
+            if (break_count > 0 || continue_count > 0) {
+                goto finish_command_list;
+            }
+
             int status = get_last_exit_status();
             if ((component.combinators[j] == ShValue::ListComponent::Combinator::And && status != 0) ||
                 ((component.combinators[j] == ShValue::ListComponent::Combinator::Or) && status == 0)) {
@@ -548,6 +595,7 @@ static int do_command_list(ShValue::List& list) {
         }
     }
 
+finish_command_list:
     if (isatty(STDOUT_FILENO)) {
         tcsetattr(STDOUT_FILENO, TCSAFLUSH, &save);
     }
@@ -563,9 +611,13 @@ int command_run(ShValue::Program& program) {
     return 0;
 }
 
-void command_init_special_vars() {
+void command_init_special_vars(int argc, char** argv) {
     special_vars.vals[WRDE_SPECIAL_QUEST] = strdup("0");
     special_vars.vals[WRDE_SPECIAL_DOLLAR] = (char*) malloc(10);
     sprintf(special_vars.vals[WRDE_SPECIAL_DOLLAR], "%d", getpid());
     special_vars.vals[WRDE_SPECIAL_EXCLAM] = strdup("");
+    special_vars.vals[WRDE_SPECIAL_ZERO] = *argv ? *argv : strdup("/bin/sh");
+
+    special_vars.position_args_size = argc == 0 ? 0 : (size_t) argc - 1;
+    special_vars.position_args = argv + 1;
 }
