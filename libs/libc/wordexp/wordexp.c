@@ -115,8 +115,17 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 char *to_add;
                 switch (s[i + 1]) {
                     case '@':
-                        to_add = special->vals[WRDE_SPECIAL_AT];
-                        break;
+                        for (size_t i = 0; i < special->position_args_size; i++) {
+                            if (!we_append(expanded, special->position_args[i], strlen(special->position_args[i]), &len)) {
+                                return WRDE_NOSPACE;
+                            }
+                            if (i != special->position_args_size - 1) {
+                                if (!we_append(expanded, " ", 1, &len)) {
+                                    return WRDE_NOSPACE;
+                                }
+                            }
+                        }
+                        goto finish_special_var;
                     case '*':
                         to_add = special->vals[WRDE_SPECIAL_STAR];
                         break;
@@ -138,6 +147,21 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     case '0':
                         to_add = special->vals[WRDE_SPECIAL_ZERO];
                         break;
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        if (s[i + 1] - '1' >= special->position_args_size) {
+                            to_add = "";
+                        } else {
+                            to_add = special->position_args[s[i + 1] - '1'];
+                        }
+                        break;
                     default:
                         goto normal_var;
                 }
@@ -145,6 +169,8 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 if (!we_append(expanded, to_add, strlen(to_add), &len)) {
                     return WRDE_NOSPACE;
                 }
+
+            finish_special_var:
                 i += 2;
                 i--;
                 prev_was_backslash = false;

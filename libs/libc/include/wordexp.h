@@ -30,18 +30,19 @@ extern "C" {
 #define WRDE_NOFS    128
 #define WRDE_NOGLOB  256
 
-#define WRDE_SPECIAL_AT     0
-#define WRDE_SPECIAL_STAR   1
-#define WRDE_SPECIAL_POUND  2
-#define WRDE_SPECIAL_QUEST  3
-#define WRDE_SPECIAL_MINUS  4
-#define WRDE_SPECIAL_DOLLAR 5
-#define WRDE_SPECIAL_EXCLAM 6
-#define WRDE_SPECIAL_ZERO   7
-#define WRDE_NUM_SPECIAL    8
+#define WRDE_SPECIAL_STAR   0
+#define WRDE_SPECIAL_POUND  1
+#define WRDE_SPECIAL_QUEST  2
+#define WRDE_SPECIAL_MINUS  3
+#define WRDE_SPECIAL_DOLLAR 4
+#define WRDE_SPECIAL_EXCLAM 5
+#define WRDE_SPECIAL_ZERO   6
+#define WRDE_NUM_SPECIAL    7
 
 typedef struct {
     char *vals[WRDE_NUM_SPECIAL];
+    char **position_args;
+    size_t position_args_size;
 } word_special_t;
 
 int we_expand(const char *s, int flags, char **result, word_special_t *special);
