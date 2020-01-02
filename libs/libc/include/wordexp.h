@@ -31,13 +31,12 @@ extern "C" {
 #define WRDE_NOGLOB  256
 
 #define WRDE_SPECIAL_STAR   0
-#define WRDE_SPECIAL_POUND  1
-#define WRDE_SPECIAL_QUEST  2
-#define WRDE_SPECIAL_MINUS  3
-#define WRDE_SPECIAL_DOLLAR 4
-#define WRDE_SPECIAL_EXCLAM 5
-#define WRDE_SPECIAL_ZERO   6
-#define WRDE_NUM_SPECIAL    7
+#define WRDE_SPECIAL_QUEST  1
+#define WRDE_SPECIAL_MINUS  2
+#define WRDE_SPECIAL_DOLLAR 3
+#define WRDE_SPECIAL_EXCLAM 4
+#define WRDE_SPECIAL_ZERO   5
+#define WRDE_NUM_SPECIAL    6
 
 typedef struct {
     char *vals[WRDE_NUM_SPECIAL];

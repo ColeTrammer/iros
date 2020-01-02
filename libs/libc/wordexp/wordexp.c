@@ -129,9 +129,14 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     case '*':
                         to_add = special->vals[WRDE_SPECIAL_STAR];
                         break;
-                    case '#':
-                        to_add = special->vals[WRDE_SPECIAL_POUND];
-                        break;
+                    case '#': {
+                        char buf[50];
+                        snprintf(buf, 49, "%lu", special->position_args_size);
+                        if (!we_append(expanded, buf, strlen(buf), &len)) {
+                            return WRDE_NOSPACE;
+                        }
+                        goto finish_special_var;
+                    }
                     case '?':
                         to_add = special->vals[WRDE_SPECIAL_QUEST];
                         break;

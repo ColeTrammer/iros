@@ -33,7 +33,7 @@ HashMap<String, String> g_aliases;
 static int loop_depth_count = 0;
 static int break_count = 0;
 static int continue_count = 0;
-static word_special_t special_vars = { { (char*) "", (char*) "0", NULL, (char*) "", NULL, NULL, NULL }, NULL, 0 };
+static word_special_t special_vars = { { (char*) "", NULL, (char*) "", NULL, NULL, NULL }, NULL, 0 };
 
 static void __set_exit_status(int n) {
     free(special_vars.vals[WRDE_SPECIAL_QUEST]);
