@@ -46,6 +46,11 @@ public:
         return word;
     }
 
+    virtual ShValue reduce_fname$name(ShValue& word) override {
+        assert(word.has_text());
+        return word;
+    }
+
     virtual ShValue reduce_io_file$lessthan_filename(ShValue&, ShValue& word) {
         assert(word.has_text());
         return word.create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::InputFileName, word.text());
@@ -564,6 +569,36 @@ public:
 
         compound_command.command().compound_command.value().redirect_list = list.redirect_list();
         return compound_command;
+    }
+
+    virtual ShValue reduce_function_body$compound_command(ShValue& command) override {
+        assert(command.has_command());
+        assert(command.command().type == ShValue::Command::Type::Compound);
+
+        return command.create_function_definition(command.command().compound_command.value());
+    }
+
+    virtual ShValue reduce_function_body$compound_command_redirect_list(ShValue& compound_command, ShValue& list) override {
+        ShValue command = reduce_command$compound_command_redirect_list(compound_command, list);
+        return reduce_function_body$compound_command(command);
+    }
+
+    virtual ShValue reduce_function_definition$fname_leftparenthesis_rightparenthesis_linebreak_function_body(ShValue& name, ShValue&,
+                                                                                                              ShValue&, ShValue&,
+                                                                                                              ShValue& def) override {
+        assert(def.has_command());
+        assert(def.command().type == ShValue::Command::Type::FunctionDefinition);
+        assert(name.has_text());
+
+        def.command().function_definition.value().name = name.text();
+        return def;
+    }
+
+    virtual ShValue reduce_command$function_definition(ShValue& def) override {
+        assert(def.has_command());
+        assert(def.command().type == ShValue::Command::Type::FunctionDefinition);
+
+        return def;
     }
 
     virtual ShValue reduce_pipe_sequence$command(ShValue& command) override {

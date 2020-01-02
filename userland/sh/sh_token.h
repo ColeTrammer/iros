@@ -138,6 +138,11 @@ public:
         RedirectList redirect_list;
     };
 
+    struct FunctionDefinition {
+        StringView name;
+        CompoundCommand command;
+    };
+
     struct Command {
         enum class Type {
             Simple,
@@ -147,10 +152,13 @@ public:
 
         Command(const ShValue::SimpleCommand& _simple_command) : type(Type::Simple), simple_command(_simple_command) {}
         Command(const ShValue::CompoundCommand& _compound_command) : type(Type::Compound), compound_command(_compound_command) {}
+        Command(const ShValue::FunctionDefinition& _function_definition)
+            : type(Type::FunctionDefinition), function_definition(_function_definition) {}
 
         Type type;
         Maybe<ShValue::SimpleCommand> simple_command;
         Maybe<ShValue::CompoundCommand> compound_command;
+        Maybe<ShValue::FunctionDefinition> function_definition;
     };
 
     using Program = Vector<List>;
@@ -298,6 +306,11 @@ public:
         Loop loop = Loop { type, condition, action };
 
         m_command = { CompoundCommand { loop } };
+        return *this;
+    }
+
+    ShValue& create_function_definition(const ShValue::CompoundCommand& command) {
+        m_command = { FunctionDefinition { "", command } };
         return *this;
     }
 
