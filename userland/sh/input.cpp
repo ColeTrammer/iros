@@ -293,12 +293,11 @@ static void history_add(char *item) {
     if (history_length == history_max) {
         free(history[0]);
         memmove(history, history + 1, (history_max - 1) * sizeof(char *));
+        history_length--;
     }
 
     history[history_length] = strdup(item);
-    if (history_length < history_max) {
-        history_length++;
-    }
+    history_length++;
 }
 
 static InputResult get_tty_input(FILE *tty, char **line, ShValue *value) {
@@ -875,7 +874,7 @@ void init_history() {
 
     char *line = NULL;
     size_t line_max = 0;
-    while ((getline(&line, &line_max, file)) != -1) {
+    while (history_length < history_max && (getline(&line, &line_max, file)) != -1) {
         line[strlen(line) - 1] = '\0'; // Remove trailing \n
         if (strlen(line) == 0) {
             continue;
