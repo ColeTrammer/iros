@@ -231,6 +231,11 @@ static int op_dot(char **argv) {
         return 1;
     }
 
+    int i;
+    for (i = 2; argv[i] != NULL; i++)
+        ;
+
+    command_push_position_params(PositionArgs(argv + 2, i - 2));
     return do_command_from_source(&source);
 }
 

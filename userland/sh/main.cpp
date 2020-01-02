@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
@@ -94,7 +95,8 @@ int main(int argc, char** argv) {
         atexit(write_history);
     }
 
-    command_init_special_vars(argc - 1, argv + 1);
+    command_init_special_vars(input_source.mode == INPUT_FILE ? argv[1] : argv[0]);
+    command_push_position_params(PositionArgs(argv + 2, MAX(0, argc - 2)));
 
     if (sigsetjmp(env, 1) == 1) {
         fprintf(stderr, "^C%c", '\n');

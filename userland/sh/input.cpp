@@ -950,5 +950,6 @@ int do_command_from_source(struct input_source *input_source) {
         printf("exit\n");
     }
     input_cleanup(input_source);
+    command_pop_position_params();
     return 0;
 }

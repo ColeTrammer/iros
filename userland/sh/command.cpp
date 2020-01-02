@@ -611,13 +611,31 @@ int command_run(ShValue::Program& program) {
     return 0;
 }
 
-void command_init_special_vars(int argc, char** argv) {
+static Stack<PositionArgs> args_stack;
+
+void command_push_position_params(const PositionArgs& args) {
+    args_stack.push(args);
+    special_vars.position_args = args_stack.peek().argv.vector();
+    special_vars.position_args_size = (size_t) args_stack.peek().argc;
+}
+
+void command_pop_position_params() {
+    args_stack.pop();
+    if (args_stack.empty()) {
+        return;
+    }
+
+    special_vars.position_args = args_stack.peek().argv.vector();
+    special_vars.position_args_size = (size_t) args_stack.peek().argc;
+}
+
+void command_init_special_vars(char* arg_zero) {
     special_vars.vals[WRDE_SPECIAL_QUEST] = strdup("0");
     special_vars.vals[WRDE_SPECIAL_DOLLAR] = (char*) malloc(10);
     sprintf(special_vars.vals[WRDE_SPECIAL_DOLLAR], "%d", getpid());
     special_vars.vals[WRDE_SPECIAL_EXCLAM] = strdup("");
-    special_vars.vals[WRDE_SPECIAL_ZERO] = *argv ? *argv : strdup("/bin/sh");
+    special_vars.vals[WRDE_SPECIAL_ZERO] = arg_zero;
 
-    special_vars.position_args_size = argc == 0 ? 0 : (size_t) argc - 1;
-    special_vars.position_args = argv + 1;
+    special_vars.position_args_size = 0;
+    special_vars.position_args = nullptr;
 }
