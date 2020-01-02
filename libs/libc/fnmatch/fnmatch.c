@@ -78,8 +78,13 @@ int fnmatch(const char *pattern, const char *s, int flags) {
             const char *set_start = pattern + pi;
             // Sets cannot be empty
             pi++;
-            while (pattern[pi] != ']') {
+            while (pattern[pi] != '\0' && pattern[pi] != ']') {
                 pi++;
+            }
+
+            if (pattern[pi] == '\0') {
+                pi--;
+                goto match_regular_character;
             }
 
             // Refuse to match . if FNM_PERIOD is set, and we're using a
@@ -102,6 +107,7 @@ int fnmatch(const char *pattern, const char *s, int flags) {
             prev_was_backslash = true;
             continue;
         } else {
+        match_regular_character:
             if (s[si++] != pattern[pi++]) {
                 // Try again if we were trying to match a `*`
                 if (next_si != 0) {
