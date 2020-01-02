@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <functional>
+#include <liim/hash_map.h>
 #include <liim/linked_list.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -25,6 +27,8 @@
 #include "builtin.h"
 #include "command.h"
 #include "job.h"
+
+HashMap<String, String> g_aliases;
 
 static int loop_depth_count = 0;
 static int break_count = 0;
@@ -107,25 +111,57 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
 
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
 static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
-
-    bool failed = false;
     wordexp_t we;
+    we.we_offs = 0;
+    we.we_wordc = 0;
+    we.we_wordv = nullptr;
     we.we_special_vars = &special_vars;
 
-    bool first = true;
-    command.words.for_each([&](const StringView& s) {
-        String w(s);
-        int ret = wordexp(w.string(), &we, WRDE_SPECIAL | (!first ? WRDE_APPEND : 0));
-        first = false;
-
-        if (ret != 0) {
-            failed = true;
-            return;
+    HashMap<String, bool> expanded;
+    bool gone_once = false;
+    std::function<bool()> expand_alias = [&]() -> bool {
+        String first_word(we.we_wordv[0]);
+        auto* alias = g_aliases.get(first_word);
+        if (alias && !expanded.get(*alias)) {
+            free(we.we_wordv[0]);
+            we.we_wordv[0] = strdup(alias->string());
+            expanded.put(*alias, true);
+        } else if (gone_once) {
+            return true;
         }
-    });
 
-    if (failed) {
-        return -1;
+        wordexp_t exp;
+        exp.we_special_vars = &special_vars;
+        int ret = wordexp(we.we_wordv[0], &exp, WRDE_SPECIAL);
+        if (ret != 0) {
+            wordfree(&exp);
+            return false;
+        }
+
+        if (!we_insert(exp.we_wordv, exp.we_wordc, 0, &we)) {
+            return false;
+        }
+
+        gone_once = true;
+        return expand_alias();
+    };
+
+    if (!we_add(strdup(String(command.words[0]).string()), &we)) {
+        return WRDE_NOSPACE;
+    }
+
+    if (!expand_alias()) {
+        wordfree(&we);
+        return 1;
+    }
+
+    for (int i = 1; i < command.words.size(); i++) {
+        String w(command.words[i]);
+
+        int ret = wordexp(w.string(), &we, WRDE_SPECIAL | WRDE_APPEND);
+        if (ret != 0) {
+            return ret;
+        }
     }
 
     struct builtin_op* op = builtin_find_op(we.we_wordv[0]);

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <liim/hash_map.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -239,13 +240,78 @@ static int op_dot(char **argv) {
     return do_command_from_source(&source);
 }
 
+extern HashMap<String, String> g_aliases;
+
+static String sh_escape(const String &string) {
+    // FIXME: should escape the literal `'` with `'\''`
+    return String::format("'%s'", string.string());
+}
+
+static int op_alias(char **argv) {
+    if (argv[1] == nullptr) {
+        g_aliases.for_each_key([&](const String &name) {
+            printf("alias %s=%s\n", name.string(), sh_escape(*g_aliases.get(name)).string());
+        });
+        return 0;
+    }
+
+    bool any_failed = false;
+    for (int i = 1; argv[i] != nullptr; i++) {
+        String arg(argv[i]);
+        int equal_index = arg.index_of('=');
+        if (equal_index == -1) {
+            auto *alias_name = g_aliases.get(arg);
+            if (!alias_name) {
+                any_failed = true;
+                continue;
+            }
+
+            printf("alias %s=%s\n", arg.string(), sh_escape(*alias_name).string());
+            continue;
+        }
+
+        arg[equal_index] = '\0';
+        String name(arg.string());
+        String alias(arg.string() + equal_index + 1);
+        g_aliases.put(name, alias);
+    }
+
+    return any_failed ? 1 : 0;
+}
+
+static int op_unalias(char **argv) {
+    if (argv[1] == nullptr) {
+        fprintf(stderr, "Usage: %s [-a] name [...]\n", argv[0]);
+        return 1;
+    }
+
+    if (strcmp(argv[1], "-a") == 0) {
+        g_aliases.clear();
+        return 0;
+    }
+
+    bool any_failed = false;
+    for (int i = 1; argv[i] != nullptr; i++) {
+        String s(argv[i]);
+
+        if (!g_aliases.get(s)) {
+            any_failed = true;
+            continue;
+        }
+        g_aliases.remove(s);
+    }
+
+    return any_failed ? 1 : 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },       { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true }, { "jobs", op_jobs, true },
     { "fg", op_fg, true },           { "bg", op_bg, true },       { "kill", op_kill, true },
     { "history", op_history, true }, { "true", op_true, true },   { "false", op_false, true },
     { ":", op_colon, true },         { "break", op_break, true }, { "continue", op_continue, true },
-    { ".", op_dot, true },           { "source", op_dot, true }
+    { ".", op_dot, true },           { "source", op_dot, true },  { "alias", op_alias, true },
+    { "unalias", op_unalias, true }
 };
 
 struct builtin_op *get_builtins() {

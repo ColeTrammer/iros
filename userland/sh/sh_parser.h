@@ -477,7 +477,8 @@ public:
     }
 
     virtual ShValue reduce_case_clause$case_word_linebreak_in_linebreak_case_list_ns_esac(ShValue&, ShValue& word, ShValue&, ShValue&,
-                                                                                       ShValue&, ShValue& case_clause, ShValue&) override {
+                                                                                          ShValue&, ShValue& case_clause,
+                                                                                          ShValue&) override {
         assert(word.has_text());
         assert(case_clause.has_command());
         assert(case_clause.command().type == ShValue::Command::Type::Compound);
@@ -715,8 +716,7 @@ public:
 #endif
     virtual void on_error(ShTokenType type) override {
         if (peek_token_type() != ShTokenType::End) {
-            fprintf(stderr, "\nUnexpected token: %s <%s> (state %d)", token_type_to_string(type),
-                    String(peek_value_stack().text()).string(), this->current_state());
+            fprintf(stderr, "\nUnexpected token: %s (state %d)", token_type_to_string(type), this->current_state());
         } else {
             m_needs_more_tokens = true;
         }

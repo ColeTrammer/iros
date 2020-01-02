@@ -45,9 +45,6 @@ typedef struct {
     size_t position_args_size;
 } word_special_t;
 
-int we_expand(const char *s, int flags, char **result, word_special_t *special);
-int we_unescape(char **s);
-
 #endif /* _OS_2_SOURCE */
 
 typedef struct {
@@ -61,6 +58,13 @@ typedef struct {
 
 int wordexp(const char *s, wordexp_t *p, int flags);
 void wordfree(wordexp_t *p);
+
+#ifdef _OS_2_SOURCE
+int we_add(char *s, wordexp_t *we);
+int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we);
+int we_expand(const char *s, int flags, char **result, word_special_t *special);
+int we_unescape(char **s);
+#endif /* _OS_2_SOURCE */
 
 #ifdef __cplusplus
 }

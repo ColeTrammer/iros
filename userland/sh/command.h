@@ -32,7 +32,7 @@ public:
         return *this;
     }
 
-    PositionArgs(const PositionArgs& other) : strings(other.strings), argc(other.argc) { sync_argv(); }
+    PositionArgs(const PositionArgs& other) : argc(other.argc), strings(other.strings) { sync_argv(); }
 
 private:
     void sync_argv() {

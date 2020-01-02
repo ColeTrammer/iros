@@ -17,7 +17,7 @@
 
 #define WE_BUF_INCREMENT 10
 
-static bool we_add(char *s, wordexp_t *we) {
+int we_add(char *s, wordexp_t *we) {
     if (we->we_wordc == 0) {
         we->we_wordv = calloc(WE_BUF_INCREMENT, sizeof(char *));
     } else if (we->we_wordc % WE_BUF_INCREMENT == 0) {
@@ -35,7 +35,7 @@ static bool we_add(char *s, wordexp_t *we) {
 }
 
 // Overwrite entry at pos, move over everything else
-static bool we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
+int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
     assert(arr_size != 0);
     size_t new_size = we->we_wordc - 1 + arr_size;
     if (we->we_wordc / WE_BUF_INCREMENT != new_size / WE_BUF_INCREMENT) {
@@ -156,7 +156,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     case '7':
                     case '8':
                     case '9':
-                        if (s[i + 1] - '1' >= special->position_args_size) {
+                        if ((size_t)(s[i + 1] - '1') >= special->position_args_size) {
                             to_add = "";
                         } else {
                             to_add = special->position_args[s[i + 1] - '1'];

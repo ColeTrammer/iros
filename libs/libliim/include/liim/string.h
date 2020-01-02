@@ -117,6 +117,15 @@ public:
         return String(buffer);
     }
 
+    int index_of(char c) const {
+        char* s = strchr(m_string, c);
+        if (s == NULL) {
+            return -1;
+        }
+
+        return s - m_string;
+    }
+
 private:
     int m_size { 0 };
     char* m_string { nullptr };

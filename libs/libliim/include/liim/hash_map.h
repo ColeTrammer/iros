@@ -38,6 +38,12 @@ public:
 
     ~HashMap() {}
 
+    void clear() {
+        m_buckets.for_each([&](auto& l) {
+            l.clear();
+        });
+    }
+
     HashMap<K, V>& operator=(const HashMap<K, V>& other) {
         m_buckets.clear();
         for (int i = 0; i < other.m_buckets.size(); i++) {
