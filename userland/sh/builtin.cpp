@@ -333,14 +333,38 @@ static int op_return(char **argv) {
     return status;
 }
 
+static int op_shift(char **argv) {
+    int amount = 1;
+    if (argv[1] != NULL) {
+        if (argv[2] != NULL) {
+            fprintf(stderr, "Usage %s [n]\n", argv[0]);
+            return 1;
+        }
+
+        amount = atoi(argv[1]);
+    }
+
+    if (amount == 1 && command_position_params_size() == 0) {
+        return 0;
+    }
+
+    if (amount < 0 || amount > command_position_params_size()) {
+        fprintf(stderr, "Invalid shift amount\n");
+        return 1;
+    }
+
+    command_shift_position_params_left(amount);
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
-    { "exit", op_exit, true },       { "cd", op_cd, true },        { "echo", op_echo, false },
-    { "export", op_export, true },   { "unset", op_unset, true },  { "jobs", op_jobs, true },
-    { "fg", op_fg, true },           { "bg", op_bg, true },        { "kill", op_kill, true },
-    { "history", op_history, true }, { "true", op_true, true },    { "false", op_false, true },
-    { ":", op_colon, true },         { "break", op_break, true },  { "continue", op_continue, true },
-    { ".", op_dot, true },           { "source", op_dot, true },   { "alias", op_alias, true },
-    { "unalias", op_unalias, true }, { "return", op_return, true }
+    { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
+    { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
+    { "fg", op_fg, true },           { "bg", op_bg, true },         { "kill", op_kill, true },
+    { "history", op_history, true }, { "true", op_true, true },     { "false", op_false, true },
+    { ":", op_colon, true },         { "break", op_break, true },   { "continue", op_continue, true },
+    { ".", op_dot, true },           { "source", op_dot, true },    { "alias", op_alias, true },
+    { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true }
 };
 
 struct builtin_op *get_builtins() {

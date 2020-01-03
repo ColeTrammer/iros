@@ -886,6 +886,17 @@ void command_pop_position_params() {
     special_vars.position_args_size = (size_t) args_stack.peek().argc;
 }
 
+size_t command_position_params_size() {
+    return args_stack.peek().argc;
+}
+
+void command_shift_position_params_left(int amount) {
+    args_stack.peek().shift(amount);
+
+    special_vars.position_args = args_stack.peek().argv.vector();
+    special_vars.position_args_size = (size_t) args_stack.peek().argc;
+}
+
 void command_init_special_vars(char* arg_zero) {
     special_vars.vals[WRDE_SPECIAL_QUEST] = strdup("0");
     special_vars.vals[WRDE_SPECIAL_DOLLAR] = (char*) malloc(10);

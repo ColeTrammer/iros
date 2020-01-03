@@ -32,6 +32,17 @@ public:
         return *this;
     }
 
+    void shift(int amount) {
+        argv.clear();
+        argc -= amount;
+
+        for (int i = 0; i < amount; i++) {
+            strings.remove(strings.head());
+        }
+
+        sync_argv();
+    }
+
     PositionArgs(const PositionArgs& other) : argc(other.argc), strings(other.strings) { sync_argv(); }
 
 private:
@@ -53,6 +64,8 @@ int get_last_exit_status();
 
 void command_push_position_params(const PositionArgs& args);
 void command_pop_position_params();
+size_t command_position_params_size();
+void command_shift_position_params_left(int amount);
 
 void set_break_count(int count);
 void set_continue_count(int count);
