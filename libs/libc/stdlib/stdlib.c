@@ -184,7 +184,7 @@ int mblen(const char *s, size_t n) {
     return 1;
 }
 
-char *mktemp(char *s) {
+static char *mktemp_impl(char *s, bool care_about_invalid_names) {
     size_t len = strlen(s);
     if (len < 6) {
         errno = EINVAL;
@@ -196,8 +196,9 @@ char *mktemp(char *s) {
     unsigned int seed = time(NULL);
 
     for (; start < len; start++) {
-        if (first_attempt && s[start] != 'X') {
+        if (care_about_invalid_names && first_attempt && s[start] != 'X') {
             errno = EINVAL;
+            memset(s + start, 'X', 6);
             return s;
         }
 
@@ -206,6 +207,30 @@ char *mktemp(char *s) {
     }
 
     return s;
+}
+
+char *mktemp(char *s) {
+    return mktemp_impl(s, true);
+}
+
+int mkstemp(char *t) {
+    errno = 0;
+    for (int i = 0; i < 100; i++) {
+        mktemp_impl(t, i == 0);
+        if (errno != 0) {
+            return -1;
+        }
+
+        int fd = open(t, O_RDWR | O_CREAT | O_EXCL, 0600);
+        if (fd == -1) {
+            continue;
+        }
+
+        return fd;
+    }
+
+    errno = EEXIST;
+    return -1;
 }
 
 size_t mbstowcs(wchar_t *dest, const char *src, size_t n) {

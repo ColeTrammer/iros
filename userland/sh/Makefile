@@ -24,8 +24,8 @@ sh_token_type.h
 
 $(EXECUTABLE) $(OBJS): $(GENERATED_FILES)
 
-$(GENERATED_FILES): sh.y
-	$(PARSER) $< 2>sh.info
+# $(GENERATED_FILES): sh.y
+# 	$(PARSER) $< 2>sh.info
 
 export LD=$(CXX)
 export CPPFLAGS+=-DGENERIC_SH_PARSER_DEBUG

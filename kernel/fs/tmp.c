@@ -143,6 +143,10 @@ ssize_t tmp_read(struct file *file, void *buffer, size_t len) {
 }
 
 ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
+    if (len == 0) {
+        return len;
+    }
+
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 

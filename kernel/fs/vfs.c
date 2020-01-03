@@ -22,7 +22,7 @@
 #include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
 
-// #define INODE_REF_COUNT_DEBUG
+#define INODE_REF_COUNT_DEBUG
 
 static struct file_system *file_systems;
 static struct mount *root;

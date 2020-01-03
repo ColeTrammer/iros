@@ -66,6 +66,7 @@ int ptsname_r(int fd, char *buf, size_t buflen);
 
 int mblen(const char *s, size_t n);
 char *mktemp(char *t);
+int mkstemp(char *t);
 
 int abs(int n);
 long labs(long n);
