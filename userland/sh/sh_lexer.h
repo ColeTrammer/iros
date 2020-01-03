@@ -34,8 +34,8 @@ public:
         if (type == ShTokenType::WORD) {
             const StringView& text = m_tokens[m_current_pos].value().text();
 
-            if (m_parser && m_parser->is_valid_token_type_in_current_state_for_shift(ShTokenType::ASSIGNMENT_WORD) &&
-                type == ShTokenType::WORD) {
+            if (type == ShTokenType::WORD && would_be_first_word_of_command(m_current_pos) &&
+                !(m_current_pos == 0 && text.start()[0] == '=')) {
                 bool in_s_quotes = false;
                 bool in_d_quotes = false;
                 bool in_b_quotes = false;
@@ -97,7 +97,7 @@ public:
                     prev_was_backslash = false;
                 }
 
-                if (found_equal && !((m_current_pos == 0 || would_be_first_word_of_command(m_current_pos)) && text.start()[0] == '=')) {
+                if (found_equal) {
                     type = ShTokenType::ASSIGNMENT_WORD;
                 }
             }

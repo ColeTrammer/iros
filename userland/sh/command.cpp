@@ -222,6 +222,43 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
 
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
 static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
+    auto do_assignment_word = [](const StringView& w) {
+        char* eq = strchr((char*) w.start(), '=');
+
+        char* name_raw = (char*) malloc(eq - w.start() + 1);
+        memcpy(name_raw, w.start(), eq - w.start());
+        name_raw[eq - w.start()] = '\0';
+        auto name = String::wrap_malloced_chars(name_raw);
+
+        if (w.end() == eq) {
+            setenv(name->string(), "", 1);
+            return;
+        }
+
+        char* word_raw = (char*) malloc(w.end() - eq + 2);
+        memcpy(word_raw, eq + 1, w.end() - eq + 1);
+        word_raw[w.end() - eq + 1] = '\0';
+
+        char* expanded = nullptr;
+        int ret = we_expand(word_raw, WRDE_SPECIAL, &expanded, &special_vars);
+        if (ret == 0) {
+            ret = we_unescape(&expanded);
+        }
+
+        if (ret != 0) {
+            free(word_raw);
+            free(expanded);
+            return;
+        }
+
+        setenv(name->string(), expanded, 1);
+    };
+
+    if (command.words.size() == 0) {
+        command.assignment_words.for_each(do_assignment_word);
+        return 0;
+    }
+
     wordexp_t we;
     we.we_offs = 0;
     we.we_wordc = 0;
@@ -321,6 +358,8 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
                 goto abort_command;
             }
         }
+
+        command.assignment_words.for_each(do_assignment_word);
 
         if (do_builtin) {
             _exit(builtin_do_op(op, we.we_wordv));
