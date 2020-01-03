@@ -141,8 +141,13 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
             }
             break;
         }
+        case ShValue::IoRedirect::Type::HereString:
         case ShValue::IoRedirect::Type::HereDocument: {
             String contents = String(desc.rhs);
+            if (desc.type == ShValue::IoRedirect::Type::HereString) {
+                contents += "\n";
+            }
+
             if (desc.here_document_type == ShValue::IoRedirect::HereDocumentType::RemoveLeadingTabs) {
                 Vector<char> chars(desc.rhs.size() + 1);
                 for (int i = 0; i < desc.rhs.size(); i++) {

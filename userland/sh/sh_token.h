@@ -29,6 +29,7 @@ public:
             InputAndOutputFileName,
             OutputFileNameClobber,
             HereDocument,
+            HereString,
         };
 
         int number;

@@ -17,8 +17,8 @@
 /*      '&&'      '||'     ';;'    */
 
 
-%token  DLESS  DGREAT  LESSAND  GREATAND  LESSGREAT  DLESSDASH
-/*      '<<'   '>>'    '<&'     '>&'      '<>'       '<<-'   */
+%token  DLESS  DGREAT  LESSAND  GREATAND  LESSGREAT  DLESSDASH TLESS
+/*      '<<'   '>>'    '<&'     '>&'      '<>'       '<<-'     '<<<' */
 
 
 %token  CLOBBER
@@ -188,6 +188,7 @@ io_file          : '<'       filename
                  | DGREAT    filename
                  | LESSGREAT filename
                  | CLOBBER   filename
+                 | TLESS     WORD
                  ;
 filename         : WORD                      /* Apply rule 2 */
                  ;

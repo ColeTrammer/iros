@@ -239,6 +239,10 @@ bool ShLexer::lex() {
                             consume();
                             commit_token(ShTokenType::DLESSDASH);
                             strip_leading_tabs = true;
+                        } else if (peek() == '<') {
+                            consume();
+                            commit_token(ShTokenType::TLESS);
+                            break;
                         } else {
                             commit_token(ShTokenType::DLESS);
                         }

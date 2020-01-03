@@ -51,39 +51,44 @@ public:
         return word;
     }
 
-    virtual ShValue reduce_io_file$lessthan_filename(ShValue&, ShValue& word) {
+    virtual ShValue reduce_io_file$lessthan_filename(ShValue&, ShValue& word) override {
         assert(word.has_text());
         return word.create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::InputFileName, word.text());
     }
 
-    virtual ShValue reduce_io_file$lessand_filename(ShValue&, ShValue& word) {
+    virtual ShValue reduce_io_file$lessand_filename(ShValue&, ShValue& word) override {
         assert(word.has_text());
         return word.create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, word.text());
     }
 
-    virtual ShValue reduce_io_file$greaterthan_filename(ShValue&, ShValue& word) {
+    virtual ShValue reduce_io_file$greaterthan_filename(ShValue&, ShValue& word) override {
         assert(word.has_text());
         return word.create_io_redirect(STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileName, word.text());
     }
 
-    virtual ShValue reduce_io_file$greatand_filename(ShValue&, ShValue& word) {
+    virtual ShValue reduce_io_file$greatand_filename(ShValue&, ShValue& word) override {
         assert(word.has_text());
         return word.create_io_redirect(STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, word.text());
     }
 
-    virtual ShValue reduce_io_file$dgreat_filename(ShValue&, ShValue& word) {
+    virtual ShValue reduce_io_file$dgreat_filename(ShValue&, ShValue& word) override {
         assert(word.has_text());
         return word.create_io_redirect(STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileNameAppend, word.text());
     }
 
-    virtual ShValue reduce_io_file$lessgreat_filename(ShValue&, ShValue& word) {
+    virtual ShValue reduce_io_file$lessgreat_filename(ShValue&, ShValue& word) override {
         assert(word.has_text());
         return word.create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::InputAndOutputFileName, word.text());
     }
 
-    virtual ShValue reduce_io_file$clobber_filename(ShValue&, ShValue& word) {
+    virtual ShValue reduce_io_file$clobber_filename(ShValue&, ShValue& word) override {
         assert(word.has_text());
         return word.create_io_redirect(STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileNameClobber, word.text());
+    }
+
+    virtual ShValue reduce_io_file$tless_word(ShValue&, ShValue& word) override {
+        assert(word.has_text());
+        return word.create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::HereString, word.text());
     }
 
     virtual ShValue reduce_here_end$word(ShValue& word) override {
