@@ -312,7 +312,7 @@ bool ShLexer::lex() {
                                 }
                             }
 
-                            if (peek() == EOF) {
+                            if (peek() == EOF && new_here_end.size() != 0) {
                                 free(here_end_unescaped);
                                 return false;
                             }
@@ -322,18 +322,26 @@ bool ShLexer::lex() {
                                 consume();
                             }
 
+                            StringView entire_line(m_input_stream + line_start, m_input_stream + m_position - 1);
+
                             if (m_position - line_start <= 1) {
+                                if (new_here_end.size() == 0) {
+                                    goto heredoc_line_matches;
+                                }
+
                                 continue; // Don't compare empty lines
                             }
 
-                            StringView entire_line(m_input_stream + line_start, m_input_stream + m_position - 1);
-                            if (peek() != EOF) {
+                            if (entire_line == new_here_end) {
+                            heredoc_line_matches:
+                                free(here_end_unescaped);
                                 consume();
+                                break;
                             }
 
-                            if (entire_line == new_here_end) {
+                            if (peek() == EOF) {
                                 free(here_end_unescaped);
-                                break;
+                                return false;
                             }
                         }
 
