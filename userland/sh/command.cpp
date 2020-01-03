@@ -108,9 +108,19 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
             flags |= O_APPEND;
         }
         // Fall through
+        case ShValue::IoRedirect::Type::OutputFileNameClobber:
+        case ShValue::IoRedirect::Type::InputAndOutputFileName:
         case ShValue::IoRedirect::Type::InputFileName:
         case ShValue::IoRedirect::Type::OutputFileName: {
-            flags |= O_CREAT | O_WRONLY | O_TRUNC;
+            fprintf(stderr, "%d %s\n", desc.number, String(desc.rhs).string());
+            if (desc.type == ShValue::IoRedirect::Type::OutputFileName || desc.type == ShValue::IoRedirect::Type::OutputFileNameClobber ||
+                desc.type == ShValue::IoRedirect::Type::OutputFileNameAppend) {
+                flags |= O_CREAT | O_WRONLY | O_TRUNC;
+            } else if (desc.type == ShValue::IoRedirect::Type::InputFileName) {
+                flags |= O_RDONLY;
+            } else {
+                flags |= O_RDWR | O_CREAT | O_TRUNC;
+            }
             int fd = open(String(desc.rhs).string(), flags, 0644);
             if (fd == -1) {
                 return false;
@@ -127,6 +137,69 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
         case ShValue::IoRedirect::Type::OutputFileDescriptor: {
             int old_fd = atoi(String(desc.rhs).string());
             if (dup2(old_fd, desc.number) == -1) {
+                return false;
+            }
+            break;
+        }
+        case ShValue::IoRedirect::Type::HereDocument: {
+            String contents = String(desc.rhs);
+            if (desc.here_document_type == ShValue::IoRedirect::HereDocumentType::RemoveLeadingTabs) {
+                Vector<char> chars(desc.rhs.size() + 1);
+                for (int i = 0; i < desc.rhs.size(); i++) {
+                    while (i < desc.rhs.size() && desc.rhs.start()[i] == '\t') {
+                        i++;
+                    }
+
+                    while (i < desc.rhs.size() && desc.rhs.start()[i] != '\n') {
+                        chars.add(desc.rhs.start()[i++]);
+                    }
+
+                    if (i < desc.rhs.size()) {
+                        chars.add('\n');
+                    }
+                }
+                chars.add('\0');
+                contents = String(chars.vector());
+            }
+
+            if (desc.here_document_quoted == ShValue::IoRedirect::HereDocumentQuoted::No) {
+                wordexp_t exp;
+                exp.we_special_vars = &special_vars;
+                int ret = wordexp(contents.string(), &exp, WRDE_SPECIAL | WRDE_NOGLOB | WRDE_NOFS);
+                if (ret != 0) {
+                    wordfree(&exp);
+                    return false;
+                }
+
+                assert(exp.we_wordc == 1);
+                contents = String(exp.we_wordv[0]);
+                wordfree(&exp);
+            }
+
+            char file_name[50];
+            strcpy(file_name, "/tmp/sh_here_documentXXXXXX");
+            int fd = mkstemp(file_name);
+            if (fd == -1) {
+                return false;
+            }
+
+            unlink(file_name); // So that is will be automatically deleted
+
+            ssize_t ret = write(fd, contents.string(), contents.size());
+            if (ret != contents.size()) {
+                close(fd);
+                return false;
+            }
+
+            if (dup2(fd, desc.number) == -1) {
+                return false;
+            }
+
+            if (close(fd)) {
+                return false;
+            }
+
+            if (lseek(desc.number, 0, SEEK_SET) == -1) {
                 return false;
             }
             break;

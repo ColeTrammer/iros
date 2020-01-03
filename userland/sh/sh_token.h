@@ -10,6 +10,16 @@
 class ShValue {
 public:
     struct IoRedirect {
+        enum class HereDocumentType {
+            Regular,
+            RemoveLeadingTabs,
+        };
+
+        enum class HereDocumentQuoted {
+            Yes,
+            No,
+        };
+
         enum class Type {
             InputFileName,
             InputFileDescriptor,
@@ -18,11 +28,14 @@ public:
             OutputFileNameAppend,
             InputAndOutputFileName,
             OutputFileNameClobber,
+            HereDocument,
         };
 
         int number;
         Type type;
         StringView rhs;
+        HereDocumentType here_document_type { HereDocumentType::Regular };
+        HereDocumentQuoted here_document_quoted { HereDocumentQuoted::No };
     };
 
     using AssignmentWord = StringView;
@@ -192,8 +205,9 @@ public:
 
     bool has_io_redirect() const { return m_io_redirect.has_value(); }
 
-    ShValue& create_io_redirect(int number, IoRedirect::Type type, const StringView& word) {
-        m_io_redirect = { IoRedirect { number, type, word } };
+    ShValue& create_io_redirect(int number, IoRedirect::Type type, const StringView& word,
+                                ShValue::IoRedirect::HereDocumentQuoted quoted = ShValue::IoRedirect::HereDocumentQuoted::No) {
+        m_io_redirect = { IoRedirect { number, type, word, ShValue::IoRedirect::HereDocumentType::Regular, quoted } };
 
         return *this;
     }

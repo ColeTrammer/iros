@@ -244,6 +244,20 @@ private:
         m_current_token_col = 0;
     }
 
+    void set_resume_position() {
+        m_resume_pos = m_position;
+        m_resume_col = m_current_row;
+        m_resume_row = m_current_col;
+    }
+
+    void resume_position_if_needed() {
+        if (m_resume_pos != 0) {
+            m_position = m_resume_pos;
+            m_current_row = m_resume_row;
+            m_current_col = m_resume_col;
+        }
+    }
+
     char* m_input_stream { nullptr };
     size_t m_input_length { 0 };
     size_t m_position { 0 };
@@ -252,6 +266,9 @@ private:
     size_t m_current_token_row { 0 };
     size_t m_current_token_col { 0 };
     char* m_current_token_start { nullptr };
+    size_t m_resume_row { 0 };
+    size_t m_resume_col { 0 };
+    size_t m_resume_pos { 0 };
     bool m_expecting_name { false };
     bool m_allow_reserved_word_next { false };
     size_t m_current_pos { 0 };

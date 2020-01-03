@@ -1,5 +1,12 @@
 #include <assert.h>
 #include <stdio.h>
+#include <unistd.h>
+
+#ifndef USERLAND_NATIVE
+#include <wordexp.h>
+#else
+#include "../../libs/libc/include/wordexp.h"
+#endif /* USERLAND_NATIVE */
 
 #include "sh_lexer.h"
 
@@ -134,6 +141,9 @@ bool ShLexer::lex() {
                     begin_token();
                     consume();
                     commit_token(ShTokenType::NEWLINE);
+
+                    // For Here documents
+                    resume_position_if_needed();
                     break;
                 }
                 goto process_regular_character;
@@ -224,12 +234,114 @@ bool ShLexer::lex() {
                     consume();
                     if (peek() == '<') {
                         consume();
+                        bool strip_leading_tabs = false;
                         if (peek() == '-') {
                             consume();
                             commit_token(ShTokenType::DLESSDASH);
+                            strip_leading_tabs = true;
                         } else {
                             commit_token(ShTokenType::DLESS);
                         }
+
+                        while (isspace(peek())) {
+                            consume();
+                        }
+
+                        size_t word_start = m_position;
+                        for (;;) {
+                            switch (peek()) {
+                                case ' ':
+                                case '\t':
+                                case '\n':
+                                case '|':
+                                case ';':
+                                case '<':
+                                case '>':
+                                case '(':
+                                case ')':
+                                case '&':
+                                    break;
+                                case EOF:
+                                    // Obviously need more characters in this case
+                                    return false;
+                                default:
+                                    consume();
+                                    continue;
+                            }
+                            break;
+                        }
+
+                        size_t pos_save = m_position;
+                        size_t cont_row_save = m_current_row;
+                        size_t cont_col_save = m_current_col;
+
+                        StringView here_end(m_input_stream + word_start, m_input_stream + m_position - 1);
+                        while (peek() != '\n') {
+                            consume();
+                            if (peek() == EOF) {
+                                return false;
+                            }
+                        }
+
+                        consume(); // Trailing `\n'
+
+                        // Handle multipe here documents
+                        resume_position_if_needed();
+
+                        char* here_end_unescaped = strdup(String(here_end).string());
+                        int ret = we_unescape(&here_end_unescaped);
+                        assert(ret != WRDE_NOSPACE);
+
+                        StringView new_here_end(const_cast<const char*>(here_end_unescaped));
+                        ShValue::IoRedirect::HereDocumentQuoted here_document_quoted = new_here_end == here_end
+                                                                                           ? ShValue::IoRedirect::HereDocumentQuoted::No
+                                                                                           : ShValue::IoRedirect::HereDocumentQuoted::Yes;
+
+                        size_t row_save = m_current_row;
+                        size_t col_save = m_current_col;
+                        size_t here_document_start = m_position;
+                        size_t line_start = m_position;
+                        for (;;) {
+                            if (strip_leading_tabs) {
+                                while (peek() == '\t') {
+                                    consume();
+                                }
+                            }
+
+                            if (peek() == EOF) {
+                                free(here_end_unescaped);
+                                return false;
+                            }
+
+                            line_start = m_position;
+                            while (peek() != EOF && peek() != '\n') {
+                                consume();
+                            }
+
+                            if (m_position - line_start <= 1) {
+                                continue; // Don't compare empty lines
+                            }
+
+                            StringView entire_line(m_input_stream + line_start, m_input_stream + m_position - 1);
+                            if (peek() != EOF) {
+                                consume();
+                            }
+
+                            if (entire_line == new_here_end) {
+                                free(here_end_unescaped);
+                                break;
+                            }
+                        }
+
+                        StringView here_document(m_input_stream + here_document_start, m_input_stream + line_start - 1);
+                        m_tokens.add({ ShTokenType::WORD, { here_document, row_save, col_save } });
+                        m_tokens.last().value().create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::HereDocument, here_document,
+                                                                   here_document_quoted);
+                        set_resume_position();
+
+                        m_position = pos_save;
+                        m_current_row = cont_row_save;
+                        m_current_row = cont_col_save;
                     } else if (peek() == '>') {
                         consume();
                         commit_token(ShTokenType::LESSGREAT);
@@ -237,7 +349,7 @@ bool ShLexer::lex() {
                         consume();
                         commit_token(ShTokenType::LESSAND);
                     } else {
-                        commit_token(ShTokenType::GreaterThan);
+                        commit_token(ShTokenType::LessThan);
                     }
                     break;
                 }

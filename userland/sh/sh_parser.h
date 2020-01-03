@@ -86,6 +86,46 @@ public:
         return word.create_io_redirect(STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileNameClobber, word.text());
     }
 
+    virtual ShValue reduce_here_end$word(ShValue& word) override {
+        assert(word.has_io_redirect());
+        assert(word.io_redirect().type == ShValue::IoRedirect::Type::HereDocument);
+
+        return word;
+    }
+
+    virtual ShValue reduce_io_here$dless_here_end(ShValue&, ShValue& here_document) override {
+        assert(here_document.has_io_redirect());
+        assert(here_document.io_redirect().type == ShValue::IoRedirect::Type::HereDocument);
+
+        here_document.io_redirect().here_document_type = ShValue::IoRedirect::HereDocumentType::Regular;
+        return here_document;
+    }
+
+    virtual ShValue reduce_io_here$dlessdash_here_end(ShValue&, ShValue& here_document) override {
+        assert(here_document.has_io_redirect());
+        assert(here_document.io_redirect().type == ShValue::IoRedirect::Type::HereDocument);
+
+        here_document.io_redirect().here_document_type = ShValue::IoRedirect::HereDocumentType::RemoveLeadingTabs;
+        return here_document;
+    }
+
+    virtual ShValue reduce_io_redirect$io_here(ShValue& here_document) override {
+        assert(here_document.has_io_redirect());
+        assert(here_document.io_redirect().type == ShValue::IoRedirect::Type::HereDocument);
+
+        here_document.io_redirect().number = STDIN_FILENO;
+        return here_document;
+    }
+
+    virtual ShValue reduce_io_redirect$io_number_io_here(ShValue& io_number, ShValue& here_document) override {
+        assert(here_document.has_io_redirect());
+        assert(here_document.io_redirect().type == ShValue::IoRedirect::Type::HereDocument);
+        assert(io_number.has_text());
+
+        here_document.io_redirect().number = atoi(String(io_number.text()).string());
+        return here_document;
+    }
+
     virtual ShValue reduce_io_redirect$io_file(ShValue& io_file) override {
         assert(io_file.has_io_redirect());
         return io_file;
