@@ -343,6 +343,8 @@ bool ShLexer::lex() {
                                 free(here_end_unescaped);
                                 return false;
                             }
+
+                            consume();
                         }
 
                         StringView here_document(m_input_stream + here_document_start, m_input_stream + line_start - 1);
