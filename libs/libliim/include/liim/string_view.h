@@ -7,9 +7,9 @@ namespace LIIM {
 
 class StringView {
 public:
-    StringView(const char* str) : m_start(str), m_end(str + strlen(str) - 1) {}
-    StringView(const char* start, const char* end) : m_start(start), m_end(end) {}
-    StringView(const StringView& other) : m_start(other.start()), m_end(other.end()) {}
+    StringView(const char* str) : m_start(str), m_end(str + strlen(str)) {}
+    StringView(const char* start, const char* end) : m_start(start), m_end(end + 1) {}
+    StringView(const StringView& other) : m_start(other.m_start), m_end(other.m_end) {}
 
     ~StringView() {
         m_start = nullptr;
@@ -18,14 +18,14 @@ public:
 
     StringView& operator=(const StringView& other) {
         this->m_start = other.start();
-        this->m_end = other.end();
+        this->m_end = other.m_end;
         return *this;
     }
 
-    int size() const { return m_end - m_start + 1; }
+    int size() const { return m_end - m_start; }
 
     const char* start() const { return m_start; }
-    const char* end() const { return m_end; }
+    const char* end() const { return m_end - 1; }
 
     int index_of(char c) const {
         for (int i = 0; i < size(); i++) {
