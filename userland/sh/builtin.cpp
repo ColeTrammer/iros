@@ -12,12 +12,16 @@
 #include "job.h"
 
 static int op_exit(char **args) {
+    int status = 0;
     if (args[1] != NULL) {
-        printf("Usage: %s\n", args[0]);
-        return 0;
+        if (args[2] != NULL) {
+            printf("Usage: %s [n]\n", args[0]);
+            return 1;
+        }
+        status = atoi(args[1]);
     }
 
-    exit(0);
+    exit(status);
 }
 
 static int op_cd(char **args) {
