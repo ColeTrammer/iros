@@ -79,6 +79,44 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     return true;
 }
 
+static int we_command_subst(const char *to_expand, int flags, char **expanded, size_t *len) {
+    int save_stderr = 0;
+    int ret = 0;
+
+    // Handle redirecting error
+    if (!(flags & WRDE_SHOWERR)) {
+        save_stderr = dup(STDERR_FILENO);
+        int fd = open("/dev/null", O_RDWR);
+        dup2(fd, STDERR_FILENO);
+        close(fd);
+    }
+    FILE *_pipe = popen(to_expand, "r");
+    if (_pipe == NULL) {
+        goto cleanup_command_subst;
+    }
+
+    char *line = NULL;
+    size_t line_len = 0;
+    while (getline(&line, &line_len, _pipe) != -1) {
+        if (!we_append(expanded, line, strlen(line), len)) {
+            ret = WRDE_NOSPACE;
+            goto cleanup_command_subst_and_pipes;
+        }
+    }
+
+cleanup_command_subst_and_pipes:
+    free(line);
+    pclose(_pipe);
+
+cleanup_command_subst:
+    if (!(flags & WRDE_SHOWERR)) {
+        dup2(save_stderr, STDERR_FILENO);
+        close(save_stderr);
+    }
+
+    return ret;
+}
+
 int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
     size_t len = WE_STR_BUF_INCREMENT;
     *expanded = calloc(len, sizeof(char));
@@ -108,6 +146,80 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 break;
             }
             case '$': {
+                // Command sub
+                if (s[i + 1] == '(') {
+                    i += 2;
+                    const char *to_expand = s + i;
+                    {
+                        bool prev_was_backslash = false;
+                        bool in_s_quotes = false;
+                        bool in_d_quotes = false;
+                        bool in_b_quotes = false;
+                        int lparen_count = 1;
+                        for (;; i++) {
+                            switch (s[i]) {
+                                case '\0':
+                                    free(*expanded);
+                                    return WRDE_SYNTAX;
+                                case '\\':
+                                    if (!in_s_quotes) {
+                                        prev_was_backslash = !prev_was_backslash;
+                                        continue;
+                                    }
+                                    break;
+                                case '\'':
+                                    if (!prev_was_backslash && !in_d_quotes && !in_b_quotes) {
+                                        in_s_quotes = !in_s_quotes;
+                                    }
+                                    break;
+                                case '"':
+                                    if (!prev_was_backslash && !in_s_quotes && !in_b_quotes) {
+                                        in_d_quotes = !in_d_quotes;
+                                    }
+                                    break;
+                                case '`':
+                                    if (!prev_was_backslash && !in_s_quotes) {
+                                        in_b_quotes = !in_b_quotes;
+                                    }
+                                    break;
+                                case '(':
+                                    if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
+                                        lparen_count++;
+                                    }
+                                    break;
+                                case ')':
+                                    if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
+                                        if (--lparen_count == 0) {
+                                            goto found_command_subst_end;
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            prev_was_backslash = false;
+                        }
+                    }
+
+                found_command_subst_end : {
+                    char save = s[i];
+                    ((char *) s)[i] = '\0';
+
+                    int ret = we_command_subst(to_expand, flags, expanded, &len);
+
+                    ((char *) s)[i] = save;
+
+                    if (ret != 0) {
+                        free(*expanded);
+                        return ret;
+                    }
+
+                    prev_was_backslash = false;
+                    continue;
+                }
+                }
+
                 if (!(flags & WRDE_SPECIAL) || special == NULL) {
                     goto normal_var;
                 }
@@ -225,6 +337,10 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     size_t index = i + 1;
                     for (;; index++) {
                         switch (s[index]) {
+                            case '\0':
+                                free(to_expand);
+                                free(*expanded);
+                                return WRDE_SYNTAX;
                             case '\\':
                                 prev_was_backslash = !prev_was_backslash;
                                 continue;
@@ -264,38 +380,14 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     return WRDE_SYNTAX;
                 }
 
-                int save_stderr = 0;
-
-                // Handle redirecting error
-                if (!(flags & WRDE_SHOWERR)) {
-                    save_stderr = dup(STDERR_FILENO);
-                    int fd = open("/dev/null", O_RDWR);
-                    dup2(fd, STDERR_FILENO);
-                    close(fd);
+                int ret = we_command_subst(to_expand, flags, expanded, &len);
+                if (ret != 0) {
+                    free(*expanded);
+                    free(to_expand);
+                    return ret;
                 }
-                FILE *_pipe = popen(to_expand, "r");
-                if (_pipe == NULL) {
-                    goto bquote_end;
-                }
-
-                char *line = NULL;
-                size_t line_len = 0;
-                while (getline(&line, &line_len, _pipe) != -1) {
-                    if (!we_append(expanded, line, strlen(line), &len)) {
-                        assert(false);
-                        return WRDE_NOSPACE;
-                    }
-                }
-
-                free(line);
-                pclose(_pipe);
 
             bquote_end:
-                if (!(flags & WRDE_SHOWERR)) {
-                    dup2(save_stderr, STDERR_FILENO);
-                    close(save_stderr);
-                }
-
                 free(to_expand);
                 i = end - s;
                 prev_was_backslash = false;
