@@ -58,4 +58,10 @@ void set_break_count(int count);
 void set_continue_count(int count);
 int get_loop_depth_count();
 
+int get_exec_depth_count();
+void inc_exec_depth_count();
+void dec_exec_depth_count();
+void set_should_return();
+bool input_should_stop();
+
 #endif /* _COMMAND_H */

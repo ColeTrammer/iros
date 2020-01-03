@@ -229,6 +229,7 @@ static int op_dot(char **argv) {
     source.mode = INPUT_FILE;
     source.source.file = fopen(argv[1], "r");
     if (!source.source.file) {
+        fprintf(stderr, "%s: Failed to open file `%s'\n", argv[0], argv[1]);
         return 1;
     }
 
@@ -237,7 +238,11 @@ static int op_dot(char **argv) {
         ;
 
     command_push_position_params(PositionArgs(argv + 2, i - 2));
-    return do_command_from_source(&source);
+
+    inc_exec_depth_count();
+    int ret = do_command_from_source(&source);
+    dec_exec_depth_count();
+    return ret;
 }
 
 extern HashMap<String, String> g_aliases;
@@ -304,14 +309,34 @@ static int op_unalias(char **argv) {
     return any_failed ? 1 : 0;
 }
 
+static int op_return(char **argv) {
+    int status = 0;
+    if (argv[1] != NULL) {
+        if (argv[2] != NULL) {
+            fprintf(stderr, "Usage: %s [status]\n", argv[0]);
+            return 1;
+        }
+
+        status = atoi(argv[1]);
+    }
+
+    if (get_exec_depth_count() == 0) {
+        fprintf(stderr, "Cannot return when not in function or . script\n");
+        return 1;
+    }
+
+    set_should_return();
+    return status;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
-    { "exit", op_exit, true },       { "cd", op_cd, true },       { "echo", op_echo, false },
-    { "export", op_export, true },   { "unset", op_unset, true }, { "jobs", op_jobs, true },
-    { "fg", op_fg, true },           { "bg", op_bg, true },       { "kill", op_kill, true },
-    { "history", op_history, true }, { "true", op_true, true },   { "false", op_false, true },
-    { ":", op_colon, true },         { "break", op_break, true }, { "continue", op_continue, true },
-    { ".", op_dot, true },           { "source", op_dot, true },  { "alias", op_alias, true },
-    { "unalias", op_unalias, true }
+    { "exit", op_exit, true },       { "cd", op_cd, true },        { "echo", op_echo, false },
+    { "export", op_export, true },   { "unset", op_unset, true },  { "jobs", op_jobs, true },
+    { "fg", op_fg, true },           { "bg", op_bg, true },        { "kill", op_kill, true },
+    { "history", op_history, true }, { "true", op_true, true },    { "false", op_false, true },
+    { ":", op_colon, true },         { "break", op_break, true },  { "continue", op_continue, true },
+    { ".", op_dot, true },           { "source", op_dot, true },   { "alias", op_alias, true },
+    { "unalias", op_unalias, true }, { "return", op_return, true }
 };
 
 struct builtin_op *get_builtins() {

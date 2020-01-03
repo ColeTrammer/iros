@@ -934,10 +934,13 @@ void write_history() {
 
 int do_command_from_source(struct input_source *input_source) {
     for (;;) {
+        if (input_should_stop()) {
+            break;
+        }
+
         job_check_updates(true);
 
         ShValue command;
-        char *line = nullptr;
         auto result = input_get_line(input_source, &command);
 
         /* Check if we reached EOF */
@@ -951,14 +954,12 @@ int do_command_from_source(struct input_source *input_source) {
         }
 
         if (result == InputResult::Error) {
-            free(line);
+            g_line = nullptr;
             continue;
         }
 
         assert(command.has_program());
         command_run(command.program());
-
-        free(line);
     }
 
     if (input_source->mode == INPUT_TTY) {
@@ -966,5 +967,5 @@ int do_command_from_source(struct input_source *input_source) {
     }
     input_cleanup(input_source);
     command_pop_position_params();
-    return 0;
+    return get_last_exit_status();
 }

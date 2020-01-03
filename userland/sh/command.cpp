@@ -40,6 +40,8 @@ HashMap<String, FunctionBody> g_functions;
 static int loop_depth_count = 0;
 static int break_count = 0;
 static int continue_count = 0;
+static int exec_depth_count = 0; // For ., source, or functions
+static bool should_return = false;
 static word_special_t special_vars = { { (char*) "", NULL, (char*) "", NULL, NULL, NULL }, NULL, 0 };
 
 static void __set_exit_status(int n) {
@@ -60,6 +62,27 @@ int get_last_exit_status() {
 
 int get_loop_depth_count() {
     return loop_depth_count;
+}
+
+bool input_should_stop() {
+    return should_return;
+}
+
+int get_exec_depth_count() {
+    return exec_depth_count;
+}
+
+void inc_exec_depth_count() {
+    exec_depth_count++;
+}
+
+void dec_exec_depth_count() {
+    exec_depth_count--;
+    should_return = false;
+}
+
+void set_should_return() {
+    should_return = true;
 }
 
 static void inc_loop_depth_count() {
@@ -176,8 +199,11 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 
     auto* function_body = g_functions.get(String(we.we_wordv[0]));
     if (function_body) {
+        *was_builtin = true;
         command_push_position_params(PositionArgs(we.we_wordv + 1, we.we_wordc - 1));
+        inc_exec_depth_count();
         int ret = __do_compound_command(function_body->compound_command, mode, was_builtin, to_set_pgid, false);
+        dec_exec_depth_count();
         command_pop_position_params();
         wordfree(&we);
         return ret;
@@ -187,8 +213,9 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
     struct builtin_op* op = builtin_find_op(we.we_wordv[0]);
     if (builtin_should_run_immediately(op)) {
         *was_builtin = true;
+        int ret = builtin_do_op(op, we.we_wordv);
         wordfree(&we);
-        return builtin_do_op(op, we.we_wordv);
+        return ret;
     } else if (op) {
         do_builtin = true;
     }
@@ -249,6 +276,10 @@ static pid_t __do_if_clause(ShValue::IfClause& if_clause) {
                     return status;
                 }
 
+                if (continue_count > 0 || break_count > 0 || should_return) {
+                    return status;
+                }
+
                 if (get_last_exit_status() == 0) {
                     return do_command_list(condition.action);
                 }
@@ -265,11 +296,6 @@ static pid_t __do_if_clause(ShValue::IfClause& if_clause) {
 static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
     auto name = String(for_clause.name);
 
-    enum PreviousState { Set, Unset };
-
-    char* previous_value = getenv(name.string());
-    PreviousState previous_state = previous_value ? Set : Unset;
-
     wordexp_t we;
     we.we_special_vars = &special_vars;
     for (int i = 0; i < for_clause.words.size(); i++) {
@@ -280,10 +306,11 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
         }
     }
 
+    int ret = 0;
     inc_loop_depth_count();
     for (size_t i = 0; i < we.we_wordc; i++) {
         setenv(name.string(), we.we_wordv[i], 1);
-        do_command_list(for_clause.action);
+        ret = do_command_list(for_clause.action);
 
         if (break_count > 0) {
             break_count--;
@@ -297,16 +324,15 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
                 break;
             }
         }
+
+        if (should_return) {
+            break;
+        }
     }
     dec_loop_depth_count();
 
     wordfree(&we);
-    if (previous_state == Unset) {
-        unsetenv(name.string());
-    } else {
-        setenv(name.string(), previous_value, 1);
-    }
-    return 0;
+    return ret;
 }
 
 static pid_t __do_loop_clause(ShValue::Loop& loop) {
@@ -339,6 +365,10 @@ static pid_t __do_loop_clause(ShValue::Loop& loop) {
             } else {
                 break;
             }
+        }
+
+        if (should_return) {
+            break;
         }
     }
 
@@ -689,7 +719,7 @@ static int do_command_list(ShValue::List& list) {
                 return ret;
             }
 
-            if (break_count > 0 || continue_count > 0) {
+            if (break_count > 0 || continue_count > 0 || should_return) {
                 goto finish_command_list;
             }
 
@@ -710,9 +740,13 @@ finish_command_list:
 }
 
 int command_run(ShValue::Program& program) {
-    program.for_each([&](ShValue::List& list) {
+    for (int i = 0; i < program.size(); i++) {
+        auto& list = program[i];
         do_command_list(list);
-    });
+        if (should_return) {
+            break;
+        }
+    }
 
     return 0;
 }
