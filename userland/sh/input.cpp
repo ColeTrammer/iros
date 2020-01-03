@@ -749,6 +749,7 @@ static InputResult get_file_input(FILE *file, ShValue *value) {
         }
 
         if (c == EOF || c == '\n') {
+            buffer[pos] = '\0';
             switch (get_line_status(buffer, pos, value)) {
                 case LineStatus::Continue:
                     if (c == EOF) {
@@ -756,7 +757,6 @@ static InputResult get_file_input(FILE *file, ShValue *value) {
                         fprintf(stderr, "Unexpected end of file\n");
                         return InputResult::Error;
                     }
-                    buffer[pos++] = c;
                     break;
                 case LineStatus::EscapedNewline:
                     pos--;
@@ -803,6 +803,7 @@ static InputResult get_string_input(struct string_input_source *source, ShValue 
         }
 
         if (done || c == '\n') {
+            buffer[pos] = '\0';
             switch (get_line_status(buffer, pos, value)) {
                 case LineStatus::Continue:
                     if (done) {
@@ -810,7 +811,6 @@ static InputResult get_string_input(struct string_input_source *source, ShValue 
                         fprintf(stderr, "Unexpected end of file\n");
                         return InputResult::Error;
                     }
-                    buffer[pos++] = c;
                     break;
                 case LineStatus::EscapedNewline:
                     pos--;
