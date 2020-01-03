@@ -216,14 +216,53 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 }
 
                 // Doesn't handle escaped '`' but whatever
-                char *end = strchr(s + i + 1, '`');
+                const char *end = NULL;
+                char *to_expand = NULL;
+                size_t to_expand_index = 0;
+                size_t to_expand_max = 0;
+                {
+                    bool prev_was_backslash = false;
+                    size_t index = i + 1;
+                    for (;; index++) {
+                        switch (s[index]) {
+                            case '\\':
+                                prev_was_backslash = !prev_was_backslash;
+                                continue;
+                            case '`':
+                                if (!prev_was_backslash) {
+                                    goto found_end_bquote;
+                                }
+                                prev_was_backslash = false;
+                                // Fall through
+                            default: {
+                                if (to_expand_index + 2 >= to_expand_max) {
+                                    to_expand_max += 20;
+                                    to_expand = realloc(to_expand, to_expand_max);
+                                }
+
+                                if (prev_was_backslash) {
+                                    to_expand[to_expand_index++] = '\\';
+                                    prev_was_backslash = false;
+                                }
+
+                                to_expand[to_expand_index++] = s[index];
+                            }
+                        }
+                    }
+
+                found_end_bquote:
+                    end = s + index;
+                    if (to_expand_index == 0) {
+                        goto bquote_end;
+                    }
+
+                    to_expand[to_expand_index] = '\0';
+                }
+
                 if (end == NULL) {
                     free(*expanded);
                     return WRDE_SYNTAX;
                 }
-
-                char save = *end;
-                *end = '\0';
 
                 int save_stderr = 0;
 
@@ -234,7 +273,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     dup2(fd, STDERR_FILENO);
                     close(fd);
                 }
-                FILE *_pipe = popen(s + i + 1, "r");
+                FILE *_pipe = popen(to_expand, "r");
                 if (_pipe == NULL) {
                     goto bquote_end;
                 }
@@ -257,7 +296,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     close(save_stderr);
                 }
 
-                *end = save;
+                free(to_expand);
                 i = end - s;
                 prev_was_backslash = false;
                 continue;

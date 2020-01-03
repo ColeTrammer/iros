@@ -7,7 +7,7 @@ export HOST=${HOST:-$(./default-host.sh)}
 export ARCH=$(./target-triplet-to-arch.sh $HOST)
 
 # If debug flag is set, calls qemu with full debug, else only prints errors
-if echo "$1" | grep -Eq '[-][-]debug'; then
+if [ "X$1" -eq 'X--debug' ]; then
     export DEFINES="-DKERNEL_NO_DEBUG_COLORS"
     make clean all
 
