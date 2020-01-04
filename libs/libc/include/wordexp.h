@@ -59,6 +59,7 @@ int wordexp(const char *s, wordexp_t *p, int flags);
 void wordfree(wordexp_t *p);
 
 #ifdef _OS_2_SOURCE
+size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, size_t input_length);
 int we_add(char *s, wordexp_t *we);
 int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we);
 int we_expand(const char *s, int flags, char **result, word_special_t *special);

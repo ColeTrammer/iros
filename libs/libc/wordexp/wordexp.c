@@ -17,6 +17,95 @@
 
 #define WE_BUF_INCREMENT 10
 
+#define WE_EXPAND_MAX_DEPTH 1024
+
+enum param_expansion_type { EXPAND_BRACE, EXPAND_DOUBLE_PARAN, EXPAND_SINGLE_PAREN };
+
+size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, size_t input_length) {
+    bool in_b_quotes = false;
+    bool in_s_quotes = false;
+    bool in_d_quotes = false;
+    bool prev_was_backslash = false;
+    bool prev_was_dollar = false;
+
+    // Max depth of recursion
+    enum param_expansion_type type_stack[1024];
+    size_t type_stack_index = 0;
+
+    do {
+        char current = input_stream[start];
+        switch (current) {
+            case '\\':
+                if (!in_s_quotes) {
+                    prev_was_backslash = !prev_was_backslash;
+                    prev_was_dollar = false;
+                    continue;
+                }
+                break;
+            case '$':
+                if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes && !prev_was_dollar) {
+                    prev_was_dollar = true;
+                    continue;
+                }
+                break;
+            case '\'':
+                in_s_quotes = !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
+                break;
+            case '"':
+                in_d_quotes = !prev_was_backslash && !in_s_quotes && !in_b_quotes ? !in_d_quotes : in_d_quotes;
+                break;
+            case '`':
+                in_b_quotes = !prev_was_backslash && !in_d_quotes && !in_s_quotes ? !in_b_quotes : in_b_quotes;
+                break;
+            case '{':
+                if (prev_was_dollar && !prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
+                    type_stack[type_stack_index++] = EXPAND_BRACE;
+                }
+                break;
+            case '(':
+                if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
+                    if (start + 1 < input_length && input_stream[start + 1] == '(') {
+                        start++;
+                        type_stack[type_stack_index++] = EXPAND_DOUBLE_PARAN;
+                    } else {
+                        type_stack[type_stack_index++] = EXPAND_SINGLE_PAREN;
+                    }
+                }
+                break;
+            case '}':
+                if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
+                    if (type_stack_index == 0 || type_stack[--type_stack_index] != EXPAND_BRACE) {
+                        return 0;
+                    }
+                }
+                break;
+            case ')':
+                if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
+                    if (start + 1 < input_length && input_stream[start + 1] == ')') {
+                        if (type_stack_index == 0 || type_stack[type_stack_index] != EXPAND_DOUBLE_PARAN) {
+                            goto try_single_rparen;
+                        }
+                        type_stack_index--;
+                        start++;
+                    } else {
+                    try_single_rparen:
+                        if (type_stack_index == 0 || type_stack[--type_stack_index] != EXPAND_SINGLE_PAREN) {
+                            return 0;
+                        }
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+
+        prev_was_backslash = false;
+        prev_was_dollar = false;
+    } while (++start < input_length && (in_d_quotes || in_b_quotes || in_s_quotes || type_stack_index != 0 || prev_was_dollar));
+
+    return !in_d_quotes && !in_b_quotes && !in_s_quotes && type_stack_index == 0 ? start - 1 : 0;
+}
+
 int we_add(char *s, wordexp_t *we) {
     if (we->we_wordc == 0) {
         we->we_wordv = calloc(WE_BUF_INCREMENT, sizeof(char *));
@@ -119,6 +208,7 @@ cleanup_command_subst:
 
 int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
     size_t len = WE_STR_BUF_INCREMENT;
+    size_t input_len = strlen(s);
     *expanded = calloc(len, sizeof(char));
 
     bool prev_was_backslash = false;
@@ -148,61 +238,13 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
             case '$': {
                 // Command sub
                 if (s[i + 1] == '(') {
-                    i += 2;
-                    const char *to_expand = s + i;
-                    {
-                        bool prev_was_backslash = false;
-                        bool in_s_quotes = false;
-                        bool in_d_quotes = false;
-                        bool in_b_quotes = false;
-                        int lparen_count = 1;
-                        for (;; i++) {
-                            switch (s[i]) {
-                                case '\0':
-                                    free(*expanded);
-                                    return WRDE_SYNTAX;
-                                case '\\':
-                                    if (!in_s_quotes) {
-                                        prev_was_backslash = !prev_was_backslash;
-                                        continue;
-                                    }
-                                    break;
-                                case '\'':
-                                    if (!prev_was_backslash && !in_d_quotes && !in_b_quotes) {
-                                        in_s_quotes = !in_s_quotes;
-                                    }
-                                    break;
-                                case '"':
-                                    if (!prev_was_backslash && !in_s_quotes && !in_b_quotes) {
-                                        in_d_quotes = !in_d_quotes;
-                                    }
-                                    break;
-                                case '`':
-                                    if (!prev_was_backslash && !in_s_quotes) {
-                                        in_b_quotes = !in_b_quotes;
-                                    }
-                                    break;
-                                case '(':
-                                    if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
-                                        lparen_count++;
-                                    }
-                                    break;
-                                case ')':
-                                    if (!prev_was_backslash && !in_b_quotes && !in_s_quotes && !in_d_quotes) {
-                                        if (--lparen_count == 0) {
-                                            goto found_command_subst_end;
-                                        }
-                                    }
-                                    break;
-                                default:
-                                    break;
-                            }
-
-                            prev_was_backslash = false;
-                        }
+                    const char *to_expand = s + i + 2;
+                    i = we_find_end_of_word_expansion(s, i, input_len);
+                    if (i == 0) {
+                        free(*expanded);
+                        return WRDE_SYNTAX;
                     }
 
-                found_command_subst_end : {
                     char save = s[i];
                     ((char *) s)[i] = '\0';
 
@@ -217,7 +259,6 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
 
                     prev_was_backslash = false;
                     continue;
-                }
                 }
 
                 if (!(flags & WRDE_SPECIAL) || special == NULL) {

@@ -18,88 +18,6 @@ bool ShLexer::lex() {
     bool prev_was_backslash = false;
     bool prev_was_dollar = false;
 
-    auto find_end_of_word_expansion = [this](size_t start, bool __prev_was_dollar) -> size_t {
-        bool in_b_quotes = false;
-        bool in_s_quotes = false;
-        bool in_d_quotes = false;
-        bool prev_was_backslash = false;
-        bool prev_was_dollar = __prev_was_dollar;
-
-        enum class ParamExpansionType { Brace, Paren, DoubleParen };
-        Stack<ParamExpansionType> param_stack;
-
-        do {
-            char current = this->m_input_stream[start];
-            switch (current) {
-                case '\\':
-                    if (!in_s_quotes) {
-                        prev_was_backslash = !prev_was_backslash;
-                        prev_was_dollar = false;
-                        continue;
-                    }
-                    break;
-                case '$':
-                    if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes && !prev_was_dollar) {
-                        prev_was_dollar = true;
-                        continue;
-                    }
-                    break;
-                case '\'':
-                    in_s_quotes = !in_d_quotes && !in_b_quotes ? !in_s_quotes : in_s_quotes;
-                    break;
-                case '"':
-                    in_d_quotes = !prev_was_backslash && !in_s_quotes && !in_b_quotes ? !in_d_quotes : in_d_quotes;
-                    break;
-                case '`':
-                    in_b_quotes = !prev_was_backslash && !in_d_quotes && !in_s_quotes ? !in_b_quotes : in_b_quotes;
-                    break;
-                case '{':
-                    if (prev_was_dollar && !prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
-                        param_stack.push(ParamExpansionType::Brace);
-                    }
-                    break;
-                case '(':
-                    if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
-                        if (start + 1 < this->m_input_length && this->m_input_stream[start + 1] == '(') {
-                            start++;
-                            param_stack.push(ParamExpansionType::DoubleParen);
-                        } else {
-                            param_stack.push(ParamExpansionType::Paren);
-                        }
-                    }
-                    break;
-                case '}':
-                    if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
-                        if (param_stack.pop() != ParamExpansionType::Brace) {
-                            return 0;
-                        }
-                    }
-                    break;
-                case ')':
-                    if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
-                        if (start + 1 < this->m_input_length && this->m_input_stream[start + 1] == ')') {
-                            start++;
-                            if (param_stack.pop() != ParamExpansionType::DoubleParen) {
-                                return 0;
-                            }
-                        } else {
-                            if (param_stack.pop() != ParamExpansionType::Paren) {
-                                return 0;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            prev_was_backslash = false;
-            prev_was_dollar = false;
-        } while (++start < this->m_input_length && (in_d_quotes || in_b_quotes || in_s_quotes || !param_stack.empty()));
-
-        return !in_d_quotes && !in_b_quotes && !in_s_quotes && param_stack.empty() ? start - 1 : 0;
-    };
-
     for (;;) {
         switch (peek()) {
             case EOF:
@@ -374,7 +292,7 @@ bool ShLexer::lex() {
                         begin_token();
                     }
 
-                    size_t end_of_expansion = find_end_of_word_expansion(m_position, false);
+                    size_t end_of_expansion = we_find_end_of_word_expansion(m_input_stream, m_position, m_input_length);
                     if (end_of_expansion == 0) {
                         return false;
                     }
@@ -387,7 +305,7 @@ bool ShLexer::lex() {
                 goto process_regular_character;
             case '{':
                 if (!prev_was_backslash && !in_s_quotes && !in_d_quotes && prev_was_dollar) {
-                    size_t end_of_expansion = find_end_of_word_expansion(m_position, true);
+                    size_t end_of_expansion = we_find_end_of_word_expansion(m_input_stream, m_position - 1, m_input_length);
                     if (end_of_expansion == 0) {
                         return false;
                     }
@@ -408,7 +326,7 @@ bool ShLexer::lex() {
                 }
 
                 if (!prev_was_backslash && !in_s_quotes && !in_d_quotes && prev_was_dollar) {
-                    size_t end_of_expansion = find_end_of_word_expansion(m_position, true);
+                    size_t end_of_expansion = we_find_end_of_word_expansion(m_input_stream, m_position - 1, m_input_length);
                     if (end_of_expansion == 0) {
                         return false;
                     }
