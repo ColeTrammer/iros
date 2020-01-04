@@ -36,6 +36,15 @@ static bool fnmatch_is_valid_char_for_set(char c, const char *set, int set_end, 
 }
 
 int fnmatch(const char *pattern, const char *s, int flags) {
+    if (s[0] == '\0') {
+        for (size_t i = 0; pattern[i] != '\0'; i++) {
+            if (pattern[i] != '?' || pattern[i] != '*') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     assert(!(flags & FNM_PATHNAME));
 
     bool prev_was_backslash = false;

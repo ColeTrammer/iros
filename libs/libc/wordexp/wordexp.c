@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <glob.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -328,9 +329,16 @@ static int we_get_value_for_name(struct param_expansion_result *result, int flag
     return 0;
 }
 
-enum param_expand_type { DEFAULT, ASSIGN_DEFAULT, ERROR_IF_UNSET, USE_ALTERNATE_VALUE };
-
-int we_expand(const char *s, int flags, char **expanded, word_special_t *special);
+enum param_expand_type {
+    DEFAULT,
+    ASSIGN_DEFAULT,
+    ERROR_IF_UNSET,
+    USE_ALTERNATE_VALUE,
+    REMOVE_SMALLEST_SUFFIX,
+    REMOVE_LARGEST_SUFFIX,
+    REMOVE_SMALLEST_PREFIX,
+    REMOVE_LARGEST_PREFIX
+};
 
 // Takes in expression of form ${name[op][word]}
 static int we_param_expand(const char *s, size_t length, int flags, word_special_t *special, struct param_expansion_result *result) {
@@ -445,6 +453,22 @@ found_name:
         case '+':
             type = USE_ALTERNATE_VALUE;
             break;
+        case '%':
+            if (s[name_i + 1] != '%') {
+                type = REMOVE_SMALLEST_SUFFIX;
+            } else {
+                name_i++;
+                type = REMOVE_LARGEST_SUFFIX;
+            }
+            break;
+        case '#':
+            if (s[name_i + 1] != '#') {
+                type = REMOVE_SMALLEST_PREFIX;
+            } else {
+                name_i++;
+                type = REMOVE_LARGEST_PREFIX;
+            }
+            break;
         default:
             err = WRDE_SYNTAX;
             goto we_param_expand_fail;
@@ -459,27 +483,190 @@ found_name:
     }
 
     bool is_set = result->result && !(consider_empty_to_be_unset && result->result[0] == '\0');
-    if ((type == USE_ALTERNATE_VALUE && is_set) || !is_set) {
-        if (result->should_free_result) {
-            free(result->result);
-        }
 
+    if ((type == USE_ALTERNATE_VALUE && is_set) || !is_set || type >= REMOVE_SMALLEST_SUFFIX) {
         bool is_word_to_expand = name_i != length;
+        bool need_to_free_expanded_word = false;
+        char *expanded_word = "";
         if (is_word_to_expand) {
-            result->result = NULL;
-            result->should_free_result = true;
-
+            need_to_free_expanded_word = true;
             char save = s[length];
             ((char *) s)[length] = '\0';
-            int ret = we_expand(s + name_i, flags, &result->result, special);
+            int ret = we_expand(s + name_i, flags, &expanded_word, special);
             ((char *) s)[length] = save;
 
+            if (ret == 0) {
+                ret = we_unescape(&expanded_word);
+            }
+
             if (ret != 0) {
+                free(expanded_word);
                 err = ret;
                 goto we_param_expand_fail;
             }
         }
 
+        if (type >= REMOVE_SMALLEST_SUFFIX) {
+            if (!result->result && (flags & WRDE_UNDEF)) {
+                err = WRDE_BADVAL;
+                goto we_param_expand_fail;
+            }
+
+            if (!is_word_to_expand || !result->result || result->result[0] == '\0') {
+                return 0;
+            }
+
+            size_t result_len = strlen(result->result);
+            switch (type) {
+                case REMOVE_SMALLEST_SUFFIX: {
+                    for (ssize_t i = result_len; i >= 0; i--) {
+                        int ret = fnmatch(expanded_word, result->result + i, 0);
+                        if (ret == FNM_NOMATCH) {
+                            continue;
+                        } else if (ret != 0) {
+                            err = WRDE_SYNTAX;
+                            goto we_param_expand_fail;
+                        }
+
+                        if (result->should_free_result) {
+                            free(result->result);
+                            result->should_free_result = false;
+                        }
+
+                        result->result = strdup(result->result);
+                        if (!result->result) {
+                            err = WRDE_NOSPACE;
+                            goto we_param_expand_fail;
+                        }
+
+                        result->should_free_result = true;
+                        result->result[i] = '\0';
+                        return 0;
+                    }
+
+                    goto add_pattern;
+                }
+                case REMOVE_LARGEST_SUFFIX: {
+                    for (ssize_t i = 0; i <= result_len; i++) {
+                        int ret = fnmatch(expanded_word, result->result + i, 0);
+                        if (ret == FNM_NOMATCH) {
+                            continue;
+                        } else if (ret != 0) {
+                            err = WRDE_SYNTAX;
+                            goto we_param_expand_fail;
+                        }
+
+                        if (result->should_free_result) {
+                            free(result->result);
+                            result->should_free_result = false;
+                        }
+
+                        result->result = strdup(result->result);
+                        if (!result->result) {
+                            err = WRDE_NOSPACE;
+                            goto we_param_expand_fail;
+                        }
+
+                        result->should_free_result = true;
+                        result->result[i] = '\0';
+                        return 0;
+                    }
+
+                    goto add_pattern;
+                }
+                case REMOVE_SMALLEST_PREFIX: {
+                    char *attempt_word = strdup(result->result);
+                    if (!attempt_word) {
+                        err = WRDE_NOSPACE;
+                        goto we_param_expand_fail;
+                    }
+
+                    for (ssize_t i = 0; i < result_len; i++) {
+                        char save = attempt_word[i];
+                        attempt_word[i] = '\0';
+
+                        int ret = fnmatch(expanded_word, attempt_word, 0);
+                        if (ret == FNM_NOMATCH) {
+                            continue;
+                        } else if (ret != 0) {
+                            free(attempt_word);
+                            err = WRDE_SYNTAX;
+                            goto we_param_expand_fail;
+                        }
+
+                        attempt_word[i] = save;
+
+                        if (result->should_free_result) {
+                            free(result->result);
+                            result->should_free_result = false;
+                        }
+
+                        result->result = strdup(result->result + i);
+                        if (!result->result) {
+                            err = WRDE_NOSPACE;
+                            goto we_param_expand_fail;
+                        }
+
+                        result->should_free_result = true;
+                        return 0;
+                    }
+
+                    free(attempt_word);
+                    goto add_pattern;
+                }
+                case REMOVE_LARGEST_PREFIX: {
+                    char *attempt_word = strdup(result->result);
+                    if (!attempt_word) {
+                        err = WRDE_NOSPACE;
+                        goto we_param_expand_fail;
+                    }
+
+                    for (ssize_t i = result_len; i >= 0; i--) {
+                        char save = attempt_word[i];
+                        attempt_word[i] = '\0';
+
+                        int ret = fnmatch(expanded_word, attempt_word, 0);
+                        if (ret == FNM_NOMATCH) {
+                            continue;
+                        } else if (ret != 0) {
+                            free(attempt_word);
+                            err = WRDE_SYNTAX;
+                            goto we_param_expand_fail;
+                        }
+
+                        attempt_word[i] = save;
+
+                        if (result->should_free_result) {
+                            free(result->result);
+                            result->should_free_result = false;
+                        }
+
+                        result->result = strdup(result->result + i);
+                        if (!result->result) {
+                            err = WRDE_NOSPACE;
+                            goto we_param_expand_fail;
+                        }
+
+                        result->should_free_result = true;
+                        return 0;
+                    }
+
+                    free(attempt_word);
+                    goto add_pattern;
+                }
+            }
+
+            assert(false);
+        }
+
+    add_pattern:
+        if (result->should_free_result) {
+            free(result->result);
+            result->should_free_result = false;
+        }
+
+        result->result = expanded_word;
+        result->should_free_result = need_to_free_expanded_word;
         if (type == ERROR_IF_UNSET) {
             if (is_word_to_expand) {
                 fputs(result->result, stderr);
