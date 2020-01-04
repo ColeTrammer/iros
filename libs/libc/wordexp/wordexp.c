@@ -586,6 +586,7 @@ found_name:
                         attempt_word[i] = '\0';
 
                         int ret = fnmatch(expanded_word, attempt_word, 0);
+                        attempt_word[i] = save;
                         if (ret == FNM_NOMATCH) {
                             continue;
                         } else if (ret != 0) {
@@ -593,8 +594,6 @@ found_name:
                             err = WRDE_SYNTAX;
                             goto we_param_expand_fail;
                         }
-
-                        attempt_word[i] = save;
 
                         if (result->should_free_result) {
                             free(result->result);
@@ -626,6 +625,7 @@ found_name:
                         attempt_word[i] = '\0';
 
                         int ret = fnmatch(expanded_word, attempt_word, 0);
+                        attempt_word[i] = save;
                         if (ret == FNM_NOMATCH) {
                             continue;
                         } else if (ret != 0) {
@@ -633,8 +633,6 @@ found_name:
                             err = WRDE_SYNTAX;
                             goto we_param_expand_fail;
                         }
-
-                        attempt_word[i] = save;
 
                         if (result->should_free_result) {
                             free(result->result);

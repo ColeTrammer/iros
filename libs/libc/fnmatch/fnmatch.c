@@ -39,10 +39,10 @@ int fnmatch(const char *pattern, const char *s, int flags) {
     if (s[0] == '\0') {
         for (size_t i = 0; pattern[i] != '\0'; i++) {
             if (pattern[i] != '?' || pattern[i] != '*') {
-                return false;
+                return FNM_NOMATCH;
             }
         }
-        return true;
+        return 0;
     }
 
     assert(!(flags & FNM_PATHNAME));
@@ -55,8 +55,10 @@ int fnmatch(const char *pattern, const char *s, int flags) {
     // Avoid recursion by using greedy matching (https://research.swtch.com/glob)
     size_t next_si = 0;
     size_t next_pi = 0;
-    while (s[si] != '\0' && pattern[pi] != '\0') {
-        if (pattern[pi] == '*' && !prev_was_backslash) {
+    while (s[si] != '\0') {
+        if (pattern[pi] == '\0') {
+            goto try_again;
+        } else if (pattern[pi] == '*' && !prev_was_backslash) {
             // We're not allowed to match dots
             if ((flags & FNM_PERIOD) && si == 0 && s[si] == '.') {
                 return FNM_NOMATCH;
@@ -118,7 +120,8 @@ int fnmatch(const char *pattern, const char *s, int flags) {
         } else {
         match_regular_character:
             if (s[si++] != pattern[pi++]) {
-                // Try again if we were trying to match a `*`
+            // Try again if we were trying to match a `*`
+            try_again:
                 if (next_si != 0) {
                     si = next_si;
                     pi = next_pi;
