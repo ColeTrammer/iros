@@ -357,6 +357,18 @@ static int op_shift(char **argv) {
     return 0;
 }
 
+static int op_exec(char **argv) {
+    if (argv[1] == NULL) {
+        return 0;
+    }
+
+    execvp(argv[1], argv + 1);
+    if (errno == ENOENT) {
+        return 127;
+    }
+    return 126;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
@@ -364,7 +376,8 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "history", op_history, true }, { "true", op_true, true },     { "false", op_false, true },
     { ":", op_colon, true },         { "break", op_break, true },   { "continue", op_continue, true },
     { ".", op_dot, true },           { "source", op_dot, true },    { "alias", op_alias, true },
-    { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true }
+    { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true },
+    { "exec", op_exec, true }
 };
 
 struct builtin_op *get_builtins() {

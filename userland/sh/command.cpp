@@ -112,7 +112,6 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
         case ShValue::IoRedirect::Type::InputAndOutputFileName:
         case ShValue::IoRedirect::Type::InputFileName:
         case ShValue::IoRedirect::Type::OutputFileName: {
-            fprintf(stderr, "%d %s\n", desc.number, String(desc.rhs).string());
             if (desc.type == ShValue::IoRedirect::Type::OutputFileName || desc.type == ShValue::IoRedirect::Type::OutputFileNameClobber ||
                 desc.type == ShValue::IoRedirect::Type::OutputFileNameAppend) {
                 flags |= O_CREAT | O_WRONLY | O_TRUNC;
@@ -327,6 +326,21 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
     bool do_builtin = false;
     struct builtin_op* op = builtin_find_op(we.we_wordv[0]);
     if (builtin_should_run_immediately(op)) {
+        if (strcmp(op->name, "exec") == 0) {
+            if (we.we_wordc > 1) {
+                command.assignment_words.for_each(do_assignment_word);
+            }
+
+            for (int i = 0; i < command.redirect_info.size(); i++) {
+                if (!handle_redirection(command.redirect_info[i])) {
+                    perror("exec");
+                    *was_builtin = false;
+                    wordfree(&we);
+                    return -1;
+                }
+            }
+        }
+
         *was_builtin = true;
         int ret = builtin_do_op(op, we.we_wordv);
         wordfree(&we);
