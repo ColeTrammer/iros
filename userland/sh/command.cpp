@@ -42,7 +42,7 @@ static int break_count = 0;
 static int continue_count = 0;
 static int exec_depth_count = 0; // For ., source, or functions
 static bool should_return = false;
-static word_special_t special_vars = { { (char*) "", NULL, (char*) "", NULL, NULL, NULL }, NULL, 0 };
+static word_special_t special_vars = { { NULL, (char*) "", NULL, NULL, NULL }, NULL, 0 };
 
 static void __set_exit_status(int n) {
     free(special_vars.vals[WRDE_SPECIAL_QUEST]);

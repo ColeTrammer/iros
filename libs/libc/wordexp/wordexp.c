@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
@@ -155,6 +156,10 @@ int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
 #define WE_STR_BUF_INCREMENT 0x200
 
 static bool we_append(char **s, const char *r, size_t len, size_t *max) {
+    if (len == 0) {
+        return true;
+    }
+
     size_t new_len = strlen(*s) + len + 1;
     if (new_len > *max) {
         *max += WE_STR_BUF_INCREMENT;
@@ -169,6 +174,10 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
 }
 
 static int we_command_subst(const char *to_expand, int flags, char **expanded, size_t *len) {
+    if (flags & WRDE_NOCMD) {
+        return WRDE_CMDSUB;
+    }
+
     int save_stderr = 0;
     int ret = 0;
 
@@ -204,6 +213,262 @@ cleanup_command_subst:
     }
 
     return ret;
+}
+
+struct param_expansion_result {
+    char *name;
+    char *result;
+    bool should_free_result;
+};
+
+void we_param_expand_free(struct param_expansion_result *result) {
+    free(result->name);
+
+    if (result->should_free_result) {
+        free(result->result);
+    }
+}
+
+static int we_get_value_for_name(struct param_expansion_result *result, int flags, word_special_t *special) {
+    if ((flags & WRDE_SPECIAL) && special) {
+        switch (result->name[0]) {
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9': {
+                int index = atoi(result->name);
+                if (index == 0) {
+                    return WRDE_SYNTAX;
+                }
+
+                if (index - 1 >= special->position_args_size) {
+                    result->result = NULL;
+                    return 0;
+                }
+
+                result->result = special->position_args[index - 1];
+                return 0;
+            }
+            case '$':
+                result->result = special->vals[WRDE_SPECIAL_DOLLAR];
+                return 0;
+            case '?':
+                result->result = special->vals[WRDE_SPECIAL_QUEST];
+                return 0;
+            case '-':
+                result->result = special->vals[WRDE_SPECIAL_MINUS];
+                return 0;
+            case '!':
+                result->result = special->vals[WRDE_SPECIAL_EXCLAM];
+                return 0;
+            case '0':
+                result->result = special->vals[WRDE_SPECIAL_ZERO];
+                return 0;
+            case '#': {
+                char buf[20];
+                snprintf(buf, 19, "%lu", special->position_args_size);
+                result->result = strdup(buf);
+                if (!result->result) {
+                    return WRDE_NOSPACE;
+                }
+
+                result->should_free_result = true;
+                return 0;
+            }
+            // FIXME: $@ needs to be special cased even more when surrounded by ""
+            case '@':
+            case '*': {
+                if (special->position_args_size == 0) {
+                    result->result = "";
+                    return 0;
+                }
+
+                char split_char[2];
+                strcpy(split_char, " ");
+                if (result->name[0] == '*') {
+                    char *ifs = getenv("IFS");
+                    if (ifs) {
+                        split_char[0] = ifs[0];
+                    }
+                }
+
+                size_t len = 0;
+                for (size_t i = 0; i < special->position_args_size; i++) {
+                    len += strlen(special->position_args[i]);
+                    len += i != special->position_args_size - 1;
+                }
+
+                result->result = malloc(len + 1);
+                if (!result->result) {
+                    return WRDE_NOSPACE;
+                }
+
+                result->should_free_result = true;
+                result->result[0] = '\0';
+                for (size_t i = 0; i < special->position_args_size; i++) {
+                    strcat(result->result, special->position_args[i]);
+                    if (i != special->position_args_size - 1) {
+                        strcat(result->result, split_char);
+                    }
+                }
+
+                return 0;
+            }
+            default:
+                break;
+        }
+    }
+
+    result->result = getenv(result->name);
+    return 0;
+}
+
+enum param_expand_type { DEFAULT, ASSIGN_DEFAULT, ERROR_IF_UNSET, USE_ALTERNATE_VALUE };
+
+int we_expand(const char *s, int flags, char **expanded, word_special_t *special);
+
+// Takes in expression of form ${name[op][word]}
+static int we_param_expand(const char *s, size_t length, int flags, word_special_t *special, struct param_expansion_result *result) {
+    result->name = NULL;
+    result->result = NULL;
+    result->should_free_result = false;
+
+    int err = 0;
+    if (length <= 3 || s[0] != '$' && s[1] != '{' || s[length - 1] != '}') {
+        return WRDE_SYNTAX;
+    }
+
+    s += 2;
+    length -= 3;
+    size_t name_i = 0;
+
+    switch (s[0]) {
+        case '@':
+        case '*':
+        case '#':
+        case '?':
+        case '-':
+        case '$':
+        case '!':
+            name_i++;
+            goto found_name;
+        default:
+            break;
+    }
+
+    for (; name_i < length; name_i++) {
+
+        if (!isalpha(s[name_i]) && s[name_i] != '_' && !isdigit(s[name_i])) {
+            break;
+        }
+    }
+
+found_name:
+    result->name = malloc(name_i + 1);
+    if (result->name == NULL) {
+        return WRDE_NOSPACE;
+    }
+
+    memcpy(result->name, s, name_i);
+    result->name[name_i] = '\0';
+
+    // This means name is entirely included by {}
+    if (name_i == length) {
+        int ret = we_get_value_for_name(result, flags, special);
+        if (ret != 0) {
+            err = ret;
+            goto we_param_expand_fail;
+        }
+
+        if (!result->result && (flags & WRDE_UNDEF)) {
+            err = WRDE_BADVAL;
+            goto we_param_expand_fail;
+        }
+
+        return 0;
+    }
+
+    bool consider_empty_to_be_unset = s[name_i] == ':';
+    if (consider_empty_to_be_unset) {
+        name_i++;
+    }
+
+    enum param_expand_type type;
+    switch (s[name_i]) {
+        case '-':
+            type = DEFAULT;
+            break;
+        case '=':
+            type = ASSIGN_DEFAULT;
+            break;
+        case '?':
+            type = ERROR_IF_UNSET;
+            break;
+        case '+':
+            type = USE_ALTERNATE_VALUE;
+            break;
+        default:
+            err = WRDE_SYNTAX;
+            goto we_param_expand_fail;
+    }
+
+    name_i++;
+
+    int ret = we_get_value_for_name(result, flags, special);
+    if (ret != 0) {
+        err = ret;
+        goto we_param_expand_fail;
+    }
+
+    bool is_set = result->result && !(consider_empty_to_be_unset && result->result[0] == '\0');
+    if ((type == USE_ALTERNATE_VALUE && is_set) || !is_set) {
+        if (result->should_free_result) {
+            free(result->result);
+        }
+
+        bool is_word_to_expand = name_i != length;
+        if (is_word_to_expand) {
+            result->result = NULL;
+            result->should_free_result = true;
+
+            char save = s[length];
+            ((char *) s)[length] = '\0';
+            int ret = we_expand(s + name_i, flags, &result->result, special);
+            ((char *) s)[length] = save;
+
+            if (ret != 0) {
+                err = ret;
+                goto we_param_expand_fail;
+            }
+        }
+
+        if (type == ERROR_IF_UNSET) {
+            if (is_word_to_expand) {
+                fputs(result->result, stderr);
+            } else {
+                fprintf(stderr, "%s: parameter not set\n", result->name);
+            }
+            err = WRDE_CMDSUB;
+            goto we_param_expand_fail;
+        }
+
+        if (type == ASSIGN_DEFAULT) {
+            setenv(result->name, result->result, 1);
+        }
+
+        return 0;
+    }
+
+    return 0;
+
+we_param_expand_fail:
+    we_param_expand_free(result);
+    return err;
 }
 
 int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
@@ -261,6 +526,35 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     continue;
                 }
 
+                if (s[i + 1] == '{') {
+                    size_t end = we_find_end_of_word_expansion(s, i, input_len);
+                    if (end == 0) {
+                        free(*expanded);
+                        return WRDE_SYNTAX;
+                    }
+
+                    struct param_expansion_result result;
+                    int ret = we_param_expand(s + i, end - i + 1, flags, special, &result);
+                    if (ret != 0) {
+                        free(*expanded);
+                        return ret;
+                    }
+
+                    if (!result.result) {
+                        result.result = "";
+                    }
+
+                    if (!we_append(expanded, result.result, strlen(result.result), &len)) {
+                        we_param_expand_free(&result);
+                        return WRDE_NOSPACE;
+                    }
+
+                    we_param_expand_free(&result);
+                    i = end;
+                    prev_was_backslash = false;
+                    continue;
+                }
+
                 if (!(flags & WRDE_SPECIAL) || special == NULL) {
                     goto normal_var;
                 }
@@ -268,6 +562,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 char *to_add;
                 switch (s[i + 1]) {
                     case '@':
+                    case '*':
                         for (size_t i = 0; i < special->position_args_size; i++) {
                             if (!we_append(expanded, special->position_args[i], strlen(special->position_args[i]), &len)) {
                                 return WRDE_NOSPACE;
@@ -279,9 +574,6 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                             }
                         }
                         goto finish_special_var;
-                    case '*':
-                        to_add = special->vals[WRDE_SPECIAL_STAR];
-                        break;
                     case '#': {
                         char buf[50];
                         snprintf(buf, 49, "%lu", special->position_args_size);
@@ -683,6 +975,11 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
 #ifdef WORDEXP_DEBUG
     fprintf(stderr, "expand result: |%s|\n", str);
 #endif /* WORDEXP_DEBUG */
+
+    // Nothing more to do if the result of we_expand is the empty string
+    if (str[0] == '\0') {
+        return 0;
+    }
 
     char *split_on = NULL;
     if (flags & WRDE_NOFS) {
