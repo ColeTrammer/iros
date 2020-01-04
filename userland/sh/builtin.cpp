@@ -348,7 +348,7 @@ static int op_shift(char **argv) {
         return 0;
     }
 
-    if (amount < 0 || amount > command_position_params_size()) {
+    if (amount < 0 || amount > (int) command_position_params_size()) {
         fprintf(stderr, "Invalid shift amount\n");
         return 1;
     }

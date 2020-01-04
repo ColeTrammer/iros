@@ -246,7 +246,7 @@ static int we_get_value_for_name(struct param_expansion_result *result, int flag
                     return WRDE_SYNTAX;
                 }
 
-                if (index - 1 >= special->position_args_size) {
+                if (index - 1 >= (int) special->position_args_size) {
                     result->result = NULL;
                     return 0;
                 }
@@ -339,7 +339,7 @@ static int we_param_expand(const char *s, size_t length, int flags, word_special
     result->should_free_result = false;
 
     int err = 0;
-    if (length <= 3 || s[0] != '$' && s[1] != '{' || s[length - 1] != '}') {
+    if (length <= 3 || s[0] != '$' || s[1] != '{' || s[length - 1] != '}') {
         return WRDE_SYNTAX;
     }
 
@@ -347,10 +347,19 @@ static int we_param_expand(const char *s, size_t length, int flags, word_special
     length -= 3;
     size_t name_i = 0;
 
+    bool only_finding_length = false;
     switch (s[0]) {
+        case '#':
+            if (s[1] == '}' || s[1] == ':' || s[1] == '=' || s[1] == '-' || s[1] == '?' || s[1] == '+') {
+                name_i++;
+                goto found_name;
+            }
+            s++;
+            length--;
+            only_finding_length = true;
+            break;
         case '@':
         case '*':
-        case '#':
         case '?':
         case '-':
         case '$':
@@ -362,7 +371,6 @@ static int we_param_expand(const char *s, size_t length, int flags, word_special
     }
 
     for (; name_i < length; name_i++) {
-
         if (!isalpha(s[name_i]) && s[name_i] != '_' && !isdigit(s[name_i])) {
             break;
         }
@@ -390,7 +398,32 @@ found_name:
             goto we_param_expand_fail;
         }
 
+        if (only_finding_length) {
+            size_t len = 0;
+            if (result->result) {
+                len = strlen(result->result);
+            }
+
+            if (result->should_free_result) {
+                free(result->result);
+            }
+
+            char buf[50];
+            snprintf(buf, 49, "%lu", len);
+            result->result = strdup(buf);
+            if (!result->result) {
+                err = WRDE_NOSPACE;
+                goto we_param_expand_fail;
+            }
+
+            result->should_free_result = true;
+            return 0;
+        }
+
         return 0;
+    } else if (only_finding_length) {
+        err = WRDE_SYNTAX;
+        goto we_param_expand_fail;
     }
 
     bool consider_empty_to_be_unset = s[name_i] == ':';
