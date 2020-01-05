@@ -28,6 +28,7 @@
 #include "builtin.h"
 #include "command.h"
 #include "job.h"
+#include "sh_state.h"
 
 struct FunctionBody {
     ShValue::CompoundCommand compound_command;
@@ -169,7 +170,7 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
             if (desc.here_document_quoted == ShValue::IoRedirect::HereDocumentQuoted::No) {
                 wordexp_t exp;
                 exp.we_special_vars = &special_vars;
-                int ret = wordexp(contents.string(), &exp, WRDE_SPECIAL | WRDE_NOGLOB | WRDE_NOFS);
+                int ret = wordexp(contents.string(), &exp, ShState::the().flags_for_wordexp() | WRDE_NOGLOB | WRDE_NOFS);
                 if (ret != 0) {
                     wordfree(&exp);
                     return false;
@@ -239,7 +240,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         word_raw[w.end() - eq + 1] = '\0';
 
         char* expanded = nullptr;
-        int ret = we_expand(word_raw, WRDE_SPECIAL, &expanded, &special_vars);
+        int ret = we_expand(word_raw, ShState::the().flags_for_wordexp(), &expanded, &special_vars);
         if (ret == 0) {
             ret = we_unescape(&expanded);
         }
@@ -279,7 +280,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 
         wordexp_t exp;
         exp.we_special_vars = &special_vars;
-        int ret = wordexp(we.we_wordv[0], &exp, WRDE_SPECIAL);
+        int ret = wordexp(we.we_wordv[0], &exp, ShState::the().flags_for_wordexp());
         if (ret != 0) {
             wordfree(&exp);
             return false;
@@ -305,7 +306,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
     for (int i = 1; i < command.words.size(); i++) {
         String w(command.words[i]);
 
-        int ret = wordexp(w.string(), &we, WRDE_SPECIAL | WRDE_APPEND);
+        int ret = wordexp(w.string(), &we, ShState::the().flags_for_wordexp() | WRDE_APPEND);
         if (ret != 0) {
             return ret;
         }
@@ -430,7 +431,7 @@ static pid_t __do_for_clause(ShValue::ForClause& for_clause) {
     wordexp_t we;
     we.we_special_vars = &special_vars;
     for (int i = 0; i < for_clause.words.size(); i++) {
-        int ret = wordexp(String(for_clause.words[i]).string(), &we, WRDE_SPECIAL | (i != 0 ? WRDE_APPEND : 0));
+        int ret = wordexp(String(for_clause.words[i]).string(), &we, ShState::the().flags_for_wordexp() | (i != 0 ? WRDE_APPEND : 0));
         if (ret != 0) {
             wordfree(&we);
             return ret;
@@ -509,7 +510,7 @@ static pid_t __do_loop_clause(ShValue::Loop& loop) {
 
 static pid_t __do_case_clause(ShValue::CaseClause& case_clause) {
     char* word_expanded = NULL;
-    int ret = we_expand(String(case_clause.word).string(), WRDE_SPECIAL, &word_expanded, &special_vars);
+    int ret = we_expand(String(case_clause.word).string(), ShState::the().flags_for_wordexp(), &word_expanded, &special_vars);
     if (ret != 0) {
         ret = we_unescape(&word_expanded);
     }
@@ -522,7 +523,8 @@ static pid_t __do_case_clause(ShValue::CaseClause& case_clause) {
 
         for (int j = 0; j < case_item.patterns.size(); j++) {
             char* pattern_expanded = NULL;
-            int ret = we_expand(String(case_item.patterns[j]).string(), WRDE_SPECIAL, &pattern_expanded, &special_vars);
+            int ret =
+                we_expand(String(case_item.patterns[j]).string(), ShState::the().flags_for_wordexp(), &pattern_expanded, &special_vars);
             if (ret != 0) {
                 ret = we_unescape(&pattern_expanded);
             }
