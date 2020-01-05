@@ -43,6 +43,12 @@ public:
         sync_argv();
     }
 
+    void add(char* s) {
+        strings.add(String(s));
+        argc++;
+        sync_argv();
+    }
+
     PositionArgs(const PositionArgs& other) : argc(other.argc), strings(other.strings) { sync_argv(); }
 
 private:
@@ -66,6 +72,7 @@ void command_push_position_params(const PositionArgs& args);
 void command_pop_position_params();
 size_t command_position_params_size();
 void command_shift_position_params_left(int amount);
+void command_add_position_param(char* s);
 
 void set_break_count(int count);
 void set_continue_count(int count);

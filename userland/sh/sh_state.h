@@ -26,6 +26,7 @@ public:
     void process_option(const char* s, bool to_set);
 
     void dump() const;
+    void dump_for_reinput() const;
 
 #undef __ENUMERATE_OPTIONS
 #define __ENUMERATE_OPTIONS(s, c)             \

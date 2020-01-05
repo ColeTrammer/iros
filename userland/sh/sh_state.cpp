@@ -59,13 +59,27 @@ void ShState::process_option(const char* s, bool to_set) {
 
 void ShState::dump() const {
 #undef __ENUMERATE_OPTIONS
-#define __ENUMERATE_OPTIONS(ss, cc)        \
-    {                                      \
-        char c = '+';                      \
-        if (m_##ss) {                      \
-            c = '-';                       \
-        }                                  \
-        fprintf(stderr, "%c%s\n", c, #ss); \
+#define __ENUMERATE_OPTIONS(ss, cc) \
+    {                               \
+        char c = '+';               \
+        if (m_##ss) {               \
+            c = '-';                \
+        }                           \
+        printf("%c%s\n", c, #ss);   \
+    }
+
+    ENUMERATE_OPTIONS
+}
+
+void ShState::dump_for_reinput() const {
+#undef __ENUMERATE_OPTIONS
+#define __ENUMERATE_OPTIONS(ss, cc)     \
+    {                                   \
+        char c = '+';                   \
+        if (m_##ss) {                   \
+            c = '-';                    \
+        }                               \
+        printf("set %co %s\n", c, #ss); \
     }
 
     ENUMERATE_OPTIONS

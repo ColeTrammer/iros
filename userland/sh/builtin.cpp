@@ -10,6 +10,7 @@
 #include "command.h"
 #include "input.h"
 #include "job.h"
+#include "sh_state.h"
 
 static int op_exit(char **args) {
     int status = 0;
@@ -369,6 +370,50 @@ static int op_exec(char **argv) {
     return 126;
 }
 
+static int op_set(char **argv) {
+    if (argv[1] == NULL) {
+        // FIXME: should print out every shell variable.
+        return 0;
+    }
+
+    int i = 1;
+    for (; argv[i]; i++) {
+        if (argv[i][0] == '-' || argv[i][0] == '+') {
+            bool worked = false;
+            if (argv[i][1] != 'o') {
+                worked = ShState::the().process_arg(argv[i]);
+            } else {
+                bool to_set = argv[i][0] == '-';
+                i++;
+
+                if (argv[i]) {
+                    ShState::the().process_option(argv[i], to_set);
+                    worked = true;
+                } else {
+                    if (to_set) {
+                        ShState::the().dump_for_reinput();
+                    } else {
+                        ShState::the().dump();
+                    }
+                    worked = false;
+                }
+            }
+
+            if (worked) {
+                continue;
+            }
+        }
+
+        break;
+    }
+
+    for (; argv[i]; i++) {
+        command_add_position_param(argv[i]);
+    }
+
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
@@ -377,7 +422,7 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { ":", op_colon, true },         { "break", op_break, true },   { "continue", op_continue, true },
     { ".", op_dot, true },           { "source", op_dot, true },    { "alias", op_alias, true },
     { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true },
-    { "exec", op_exec, true }
+    { "exec", op_exec, true },       { "set", op_set, true }
 };
 
 struct builtin_op *get_builtins() {
