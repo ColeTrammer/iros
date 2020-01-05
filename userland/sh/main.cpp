@@ -21,6 +21,7 @@
 #include "job.h"
 #include "sh_lexer.h"
 #include "sh_parser.h"
+#include "sh_state.h"
 
 static sigjmp_buf env;
 static volatile sig_atomic_t jump_active = 0;
@@ -45,20 +46,77 @@ int main(int argc, char** argv) {
     struct input_source input_source;
 
     // Respect -c
+    int arg_index = 1;
+    bool input_resolved = false;
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         input_source.mode = INPUT_STRING;
-        input_source.source.string_input_source = input_create_string_input_source(argv[2]);
-    } else if (argc >= 2) {
+        arg_index++;
+        input_resolved = true;
+    } else if (argc > 1 && strcmp(argv[1], "-s") == 0) {
         input_source.mode = INPUT_FILE;
-        input_source.source.file = fopen(argv[1], "r");
-        if (input_source.source.file == NULL) {
-            perror("Shell");
-            return EXIT_FAILURE;
-        }
-    } else {
-        input_source.mode = INPUT_TTY;
-        input_source.source.tty = stdin;
+        input_source.source.file = stdin;
+        arg_index++;
+        input_resolved = true;
     }
+
+    for (; arg_index < argc; arg_index++) {
+        char* arg = argv[arg_index];
+        if (arg[0] == '+' || arg[0] == '-') {
+            bool set = arg[0] == '-';
+            bool result = false;
+            if (arg[1] == 'o') {
+                if (argv[arg_index + 1]) {
+                    ShState::the().process_option(argv[arg_index + 1], set);
+                    result = true;
+                }
+            } else {
+                result = ShState::the().process_arg(arg);
+            }
+            if (result) {
+                continue;
+            }
+        }
+
+        break;
+    }
+
+    if (arg_index >= argc) {
+        if (!input_resolved) {
+            input_source.mode = INPUT_TTY;
+            input_source.source.tty = stdin;
+
+            ShState::the().set_interactive(true);
+            ShState::the().set_notify(true);
+            ShState::the().set_vi(true);
+            command_init_special_vars(argv[0]);
+        } else if (input_source.mode == INPUT_STRING) {
+            fprintf(stderr, "Invalid args\n");
+            return 1;
+        }
+    } else if (input_resolved && input_source.mode == INPUT_STRING) {
+        input_source.source.string_input_source = input_create_string_input_source(argv[arg_index]);
+
+        arg_index++;
+        if (arg_index >= argc) {
+            command_init_special_vars(argv[0]);
+        } else {
+            command_init_special_vars(argv[arg_index++]);
+        }
+    } else if (!input_resolved) {
+        input_source.source.file = fopen(argv[arg_index], "r");
+        if (!input_source.source.file) {
+            perror("sh");
+            return 1;
+        }
+
+        command_init_special_vars(argv[arg_index++]);
+    } else {
+        command_init_special_vars(argv[0]);
+    }
+
+    command_push_position_params(PositionArgs(argv + arg_index, MAX(0, argc - arg_index)));
+
+    // ShState::the().dump();
 
     if (isatty(STDOUT_FILENO)) {
         struct sigaction to_set;
@@ -94,9 +152,6 @@ int main(int argc, char** argv) {
         init_history();
         atexit(write_history);
     }
-
-    command_init_special_vars(input_source.mode == INPUT_FILE ? argv[1] : argv[0]);
-    command_push_position_params(PositionArgs(argv + 2, MAX(0, argc - 2)));
 
     if (sigsetjmp(env, 1) == 1) {
         fprintf(stderr, "^C%c", '\n');

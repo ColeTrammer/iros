@@ -8,7 +8,8 @@ $(BUILDDIR)/userland/sh/input.o \
 $(BUILDDIR)/userland/sh/generic_sh_parser.o \
 $(BUILDDIR)/userland/sh/job.o \
 $(BUILDDIR)/userland/sh/main.o \
-$(BUILDDIR)/userland/sh/sh_lexer.o
+$(BUILDDIR)/userland/sh/sh_lexer.o \
+$(BUILDDIR)/userland/sh/sh_state.o
 
 NATIVE_OBJS=\
 $(BUILDDIR)/libs/libc/fnmatch/fnmatch.o \
