@@ -66,7 +66,7 @@ size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, siz
                 break;
             case '(':
                 if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
-                    if (start + 1 < input_length && input_stream[start + 1] == '(') {
+                    if (start + 1 < input_length && input_stream[start + 1] == '(' && prev_was_dollar) {
                         start++;
                         type_stack[type_stack_index++] = EXPAND_DOUBLE_PARAN;
                     } else {
@@ -84,7 +84,7 @@ size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, siz
             case ')':
                 if (!prev_was_backslash && !in_d_quotes && !in_s_quotes && !in_b_quotes) {
                     if (start + 1 < input_length && input_stream[start + 1] == ')') {
-                        if (type_stack_index == 0 || type_stack[type_stack_index] != EXPAND_DOUBLE_PARAN) {
+                        if (type_stack_index == 0 || type_stack[type_stack_index - 1] != EXPAND_DOUBLE_PARAN) {
                             goto try_single_rparen;
                         }
                         type_stack_index--;
