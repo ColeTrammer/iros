@@ -689,8 +689,10 @@ we_param_expand_fail:
     return err;
 }
 
+int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t *special, long *value);
+
 // Takes string of form [[!+-~]*]exp
-int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, word_special_t *special, long *value, char **end_ptr) {
+int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, word_special_t *special, long *value, const char **end_ptr) {
     *value = 0;
     *end_ptr = NULL;
 
@@ -748,6 +750,15 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, wo
             *value = result;
             return 0;
         }
+        case '(': {
+            size_t end = we_find_end_of_word_expansion(s, 1, max_length - 1) + 1;
+            if (end == 0) {
+                return WRDE_SYNTAX;
+            }
+
+            *end_ptr = s + end;
+            return we_arithmetic_expand(s + 1, max_length - 1, flags, special, value);
+        }
         case '$': {
             char *expanded = NULL;
             size_t end = 0;
@@ -799,7 +810,7 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, wo
                 return WRDE_SYNTAX;
             }
 
-            *end_ptr = (char *) (s + end);
+            *end_ptr = s + end;
 
             char save = s[end];
             ((char *) s)[end] = '\0';
@@ -822,39 +833,14 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, wo
     }
 }
 
-// Takes expression of form $((...))
-int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t *special, char **result) {
-    *result = NULL;
-
-    int err = 0;
-    if (length <= 5 || s[0] != '$' || s[1] != '(' || s[2] != '(' || s[length - 2] != ')' || s[length - 1] != ')') {
-        return WRDE_SYNTAX;
-    }
-
-    s += 3;
-    length -= 5;
-
-    long value;
-    int ret = we_arithmetic_parse_terminal(s, length, flags, special, &value, (char **) &s);
+// Takes expression of form $((s))
+int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t *special, long *value) {
+    int ret = we_arithmetic_parse_terminal(s, length, flags, special, value, &s);
     if (ret != 0) {
-        err = ret;
-        goto we_arithmetic_expand_fail;
+        return ret;
     }
 
-    char buf[50];
-    snprintf(buf, 49, "%ld", value);
-
-    *result = strdup(buf);
-    if (!result) {
-        err = WRDE_NOSPACE;
-        goto we_arithmetic_expand_fail;
-    }
-
-    return ret;
-
-we_arithmetic_expand_fail:
-    free(*result);
-    return err;
+    return 0;
 }
 
 int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
@@ -897,19 +883,18 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                             return WRDE_SYNTAX;
                         }
 
-                        char *result = NULL;
-                        int ret = we_arithmetic_expand(to_expand, (s + i) - to_expand + 1, flags, special, &result);
+                        long value = 0;
+                        int ret = we_arithmetic_expand(to_expand + 3, (s + i + 3) - to_expand + 1 - 2, flags, special, &value);
                         if (ret != 0) {
                             free(*expanded);
                             return ret;
                         }
 
+                        char result[50];
+                        snprintf(result, 49, "%ld", value);
                         if (!we_append(expanded, result, strlen(result), &len)) {
-                            free(result);
                             return WRDE_NOSPACE;
                         }
-
-                        free(result);
 
                         prev_was_backslash = false;
                         continue;
