@@ -689,6 +689,174 @@ we_param_expand_fail:
     return err;
 }
 
+// Takes string of form [[!+-~]*]exp
+int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, word_special_t *special, long *value, char **end_ptr) {
+    *value = 0;
+    *end_ptr = NULL;
+
+    switch (s[0]) {
+        case '~': {
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            if (ret != 0) {
+                return ret;
+            }
+
+            *value = ~*value;
+            return 0;
+        }
+        case '!': {
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            if (ret != 0) {
+                return ret;
+            }
+
+            *value = !*value;
+            return 0;
+        }
+        case '-': {
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            if (ret != 0) {
+                return ret;
+            }
+
+            *value = -*value;
+            return 0;
+        }
+        case '+': {
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            if (ret != 0) {
+                return ret;
+            }
+
+            *value = +*value;
+            return 0;
+        }
+        case '\0':
+            return WRDE_SYNTAX;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9': {
+            char *end_ptr;
+            long result = strtol(s, &end_ptr, 0);
+            *value = result;
+            return 0;
+        }
+        case '$': {
+            char *expanded = NULL;
+            size_t end = 0;
+            switch (s[1]) {
+                case '\0':
+                    return WRDE_SYNTAX;
+                case '{':
+                case '(':
+                    end = we_find_end_of_word_expansion(s, 0, max_length) + 1;
+                    break;
+                default:
+                    end = 2; // Assume special var
+                    if (isalpha(s[1]) || s[1] == '_') {
+                        while (isalpha(s[end]) || s[end] == '_') {
+                            end++;
+                        }
+                    }
+            }
+            if (end == 0) {
+                return WRDE_SYNTAX;
+            }
+
+            char save = s[end];
+            ((char *) s)[end] = '\0';
+
+            int ret = we_expand(s, flags, &expanded, special);
+            ((char *) s)[end] = save;
+
+            if (ret == 0) {
+                ret = we_unescape(&expanded);
+            }
+
+            if (ret != 0) {
+                free(expanded);
+                return ret;
+            }
+
+            *value = atol(expanded);
+            free(expanded);
+            return 0;
+        }
+        default: {
+            size_t end = 0;
+            while (isalpha(s[end]) || s[end] == '_') {
+                end++;
+            }
+
+            if (end == 0) {
+                return WRDE_SYNTAX;
+            }
+
+            *end_ptr = (char *) (s + end);
+
+            char save = s[end];
+            ((char *) s)[end] = '\0';
+
+            char *value_s = getenv(s);
+            ((char *) s)[end] = save;
+
+            if (!value_s) {
+                if (flags & WRDE_UNDEF) {
+                    return WRDE_BADVAL;
+                }
+
+                *value = 0;
+                return 0;
+            }
+
+            *value = atol(value_s);
+            return 0;
+        }
+    }
+}
+
+// Takes expression of form $((...))
+int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t *special, char **result) {
+    *result = NULL;
+
+    int err = 0;
+    if (length <= 5 || s[0] != '$' || s[1] != '(' || s[2] != '(' || s[length - 2] != ')' || s[length - 1] != ')') {
+        return WRDE_SYNTAX;
+    }
+
+    s += 3;
+    length -= 5;
+
+    long value;
+    int ret = we_arithmetic_parse_terminal(s, length, flags, special, &value, (char **) &s);
+    if (ret != 0) {
+        err = ret;
+        goto we_arithmetic_expand_fail;
+    }
+
+    char buf[50];
+    snprintf(buf, 49, "%ld", value);
+
+    *result = strdup(buf);
+    if (!result) {
+        err = WRDE_NOSPACE;
+        goto we_arithmetic_expand_fail;
+    }
+
+    return ret;
+
+we_arithmetic_expand_fail:
+    free(*result);
+    return err;
+}
+
 int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
     size_t len = WE_STR_BUF_INCREMENT;
     size_t input_len = strlen(s);
@@ -719,8 +887,35 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 break;
             }
             case '$': {
-                // Command sub
                 if (s[i + 1] == '(') {
+                    // Arithmetic Expansion
+                    if (s[i + 2] == '(') {
+                        const char *to_expand = s + i;
+                        i = we_find_end_of_word_expansion(s, i, input_len);
+                        if (i == 0) {
+                            free(*expanded);
+                            return WRDE_SYNTAX;
+                        }
+
+                        char *result = NULL;
+                        int ret = we_arithmetic_expand(to_expand, (s + i) - to_expand + 1, flags, special, &result);
+                        if (ret != 0) {
+                            free(*expanded);
+                            return ret;
+                        }
+
+                        if (!we_append(expanded, result, strlen(result), &len)) {
+                            free(result);
+                            return WRDE_NOSPACE;
+                        }
+
+                        free(result);
+
+                        prev_was_backslash = false;
+                        continue;
+                    }
+
+                    // Command sub
                     const char *to_expand = s + i + 2;
                     i = we_find_end_of_word_expansion(s, i, input_len);
                     if (i == 0) {
