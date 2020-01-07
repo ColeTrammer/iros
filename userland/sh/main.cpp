@@ -103,6 +103,7 @@ int main(int argc, char** argv) {
             command_init_special_vars(argv[arg_index++]);
         }
     } else if (!input_resolved) {
+        input_source.mode = INPUT_FILE;
         input_source.source.file = fopen(argv[arg_index], "r");
         if (!input_source.source.file) {
             perror("sh");

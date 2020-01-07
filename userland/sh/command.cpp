@@ -256,6 +256,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 
     if (command.words.size() == 0) {
         command.assignment_words.for_each(do_assignment_word);
+        *was_builtin = true;
         return 0;
     }
 
