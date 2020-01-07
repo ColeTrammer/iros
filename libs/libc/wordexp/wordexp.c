@@ -897,6 +897,43 @@ static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
     }
 }
 
+static int we_arithmetic_op_precedence(enum arithmetic_op op) {
+    switch (op) {
+        case OP_MULT:
+        case OP_DIV:
+        case OP_MODULO:
+            return 3;
+        case OP_ADD:
+        case OP_SUB:
+            return 4;
+        case OP_SHL:
+        case OP_SHR:
+            return 5;
+        case OP_LT:
+        case OP_LTE:
+        case OP_GT:
+        case OP_GTE:
+            return 6;
+        case OP_EQ:
+        case OP_NEQ:
+            return 7;
+        case OP_AND:
+            return 8;
+        case OP_XOR:
+            return 9;
+        case OP_OR:
+            return 10;
+        case OP_LAND:
+            return 11;
+        case OP_LOR:
+            return 12;
+        case OP_COMMA:
+            return 15;
+        default:
+            assert(false);
+    }
+}
+
 // Takes expression of form $((s))
 int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t *special, long *value) {
     const char *current = s;
@@ -905,6 +942,10 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
     size_t value_stack_index = 0;
     enum arithmetic_op op_stack[512];
     size_t op_stack_index = 0;
+
+    while (isspace(*current)) {
+        current++;
+    }
 
     while (current - s < length) {
         int ret =
@@ -922,6 +963,10 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 value_stack_index--;
             }
             break;
+        }
+
+        while (isspace(*current)) {
+            current++;
         }
 
         assert(op_stack_index <= 512);
@@ -1007,6 +1052,24 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         }
 
         current += op_size;
+
+        while (isspace(*current)) {
+            current++;
+        }
+
+        // Consider precendence
+        if (op_stack_index >= 2) {
+            assert(value_stack_index >= 2);
+            if (we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) <= we_arithmetic_op_precedence(op_stack[op_stack_index - 1])) {
+                value_stack_index -= 2;
+                value_stack[value_stack_index] =
+                    we_arithmetic_do_op(op_stack_index[op_stack - 2], value_stack[value_stack_index], value_stack[value_stack_index + 1]);
+                value_stack_index++;
+                op_stack_index -= 2;
+                op_stack[op_stack_index] = op_stack[op_stack_index + 1];
+                op_stack_index++;
+            }
+        }
     }
 
     assert(op_stack_index == 0);
