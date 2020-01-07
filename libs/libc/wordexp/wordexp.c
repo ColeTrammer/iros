@@ -547,7 +547,7 @@ found_name:
                     goto add_pattern;
                 }
                 case REMOVE_LARGEST_SUFFIX: {
-                    for (ssize_t i = 0; i <= result_len; i++) {
+                    for (ssize_t i = 0; i <= (ssize_t) result_len; i++) {
                         int ret = fnmatch(expanded_word, result->result + i, 0);
                         if (ret == FNM_NOMATCH) {
                             continue;
@@ -581,7 +581,7 @@ found_name:
                         goto we_param_expand_fail;
                     }
 
-                    for (ssize_t i = 0; i < result_len; i++) {
+                    for (ssize_t i = 0; i < (ssize_t) result_len; i++) {
                         char save = attempt_word[i];
                         attempt_word[i] = '\0';
 
@@ -652,6 +652,8 @@ found_name:
                     free(attempt_word);
                     goto add_pattern;
                 }
+                default:
+                    break;
             }
 
             assert(false);
@@ -877,9 +879,9 @@ static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
         case OP_GT:
             return v1 > v2;
         case OP_GTE:
-            return v2 >= v2;
+            return v1 >= v2;
         case OP_EQ:
-            return v1 == v1;
+            return v1 == v2;
         case OP_NEQ:
             return v1 != v2;
         case OP_AND:
@@ -891,10 +893,12 @@ static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
         case OP_LOR:
             return v1 || v2;
         case OP_COMMA:
-            return v1, v2;
+            return v2;
         default:
             assert(false);
     }
+
+    return 0;
 }
 
 static int we_arithmetic_op_precedence(enum arithmetic_op op) {
@@ -932,6 +936,8 @@ static int we_arithmetic_op_precedence(enum arithmetic_op op) {
         default:
             assert(false);
     }
+
+    return 0;
 }
 
 // Takes expression of form $((s))
@@ -947,14 +953,14 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         current++;
     }
 
-    while (current - s < length) {
+    while (current - s < (ptrdiff_t) length) {
         int ret =
             we_arithmetic_parse_terminal(current, length - (current - s), flags, special, &value_stack[value_stack_index++], &current);
         if (ret != 0) {
             return ret;
         }
 
-        if (current - s >= length) {
+        if (current - s >= (ptrdiff_t) length) {
             // Pop value / op stack
             while (op_stack_index > 0) {
                 assert(value_stack_index >= 2);
