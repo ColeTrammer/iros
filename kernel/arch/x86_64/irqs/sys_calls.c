@@ -196,7 +196,7 @@ void arch_sys_fork(struct task_state *task_state) {
     }
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
-        if (parent->process->files[i]) {
+        if (parent->process->files[i].file) {
             child_process->files[i] = fs_dup(parent->process->files[i]);
         }
     }
@@ -271,8 +271,9 @@ void arch_sys_open(struct task_state *task_state) {
     }
 
     for (int i = 0; i < FOPEN_MAX; i++) {
-        if (task->process->files[i] == NULL) {
-            task->process->files[i] = file;
+        if (task->process->files[i].file == NULL) {
+            task->process->files[i].file = file;
+            task->process->files[i].fd_flags = (flags & O_CLOEXEC) ? FD_CLOEXEC : 0;
             free(path);
             SYS_RETURN(i);
         }
@@ -294,7 +295,7 @@ void arch_sys_read(struct task_state *task_state) {
     }
 
     struct task *task = get_current_task();
-    struct file *file = task->process->files[fd];
+    struct file *file = task->process->files[fd].file;
     if (file == NULL) {
         SYS_RETURN(-EINVAL);
     }
@@ -314,7 +315,7 @@ void arch_sys_write(struct task_state *task_state) {
     }
 
     struct task *task = get_current_task();
-    struct file *file = task->process->files[fd];
+    struct file *file = task->process->files[fd].file;
     if (file == NULL) {
         SYS_RETURN(-EINVAL);
     }
@@ -332,11 +333,11 @@ void arch_sys_close(struct task_state *task_state) {
     }
 
     struct task *task = get_current_task();
-    if (task->process->files[fd] == NULL) {
+    if (task->process->files[fd].file == NULL) {
         SYS_RETURN(-EBADF);
     }
-    int error = fs_close(task->process->files[fd]);
-    task->process->files[fd] = NULL;
+    int error = fs_close(task->process->files[fd].file);
+    task->process->files[fd].file = NULL;
 
     SYS_RETURN(error);
 }
@@ -477,12 +478,8 @@ void arch_sys_execve(struct task_state *task_state) {
 
     // Dup open file descriptors
     for (int i = 0; i < FOPEN_MAX; i++) {
-        // FIXME: duplicated files should have separate fd_flags (but everything else is the same)
-        //        right now this means that FD_CLOEXEC will destroy all duplicated files, so it
-        //        cannot be used when doing dup(2) on a builtin stream. This is of course its
-        //        primary use case, so FD_CLOEXEC must be ignored or everything will break.
-        if (!current->process->files[i] ||
-            (/* (current->files[i]->fd_flags & FD_CLOEXEC) || */ (current->process->files[i]->flags & FS_DIR))) {
+        if (!current->process->files[i].file ||
+            ((current->process->files[i].fd_flags & FD_CLOEXEC) || (current->process->files[i].file->flags & FS_DIR))) {
             // NOTE: the files will be closed by the `free_task` function
             continue;
         }
@@ -729,7 +726,7 @@ void arch_sys_lseek(struct task_state *task_state) {
     int whence = (int) task_state->cpu_state.rcx;
 
     struct task *task = get_current_task();
-    struct file *file = task->process->files[fd];
+    struct file *file = task->process->files[fd].file;
     assert(file);
 
     SYS_RETURN((uint64_t) fs_seek(file, offset, whence));
@@ -747,7 +744,7 @@ void arch_sys_ioctl(struct task_state *task_state) {
     }
 
     struct task *task = get_current_task();
-    struct file *file = task->process->files[fd];
+    struct file *file = task->process->files[fd].file;
 
     if (file == NULL) {
         SYS_RETURN(-EBADF);
@@ -767,7 +764,7 @@ void arch_sys_ftruncate(struct task_state *task_state) {
     }
 
     struct task *task = get_current_task();
-    struct file *file = task->process->files[fd];
+    struct file *file = task->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -825,8 +822,8 @@ void arch_sys_dup2(struct task_state *task_state) {
     }
 
     struct task *task = get_current_task();
-    if (task->process->files[newfd] != NULL) {
-        int ret = fs_close(task->process->files[newfd]);
+    if (task->process->files[newfd].file != NULL) {
+        int ret = fs_close(task->process->files[newfd].file);
         if (ret != 0) {
             SYS_RETURN((uint64_t) ret);
         }
@@ -850,9 +847,9 @@ void arch_sys_pipe(struct task_state *task_state) {
     struct task *task = get_current_task();
     int j = 0;
     for (int i = 0; j < 2 && i < FOPEN_MAX; i++) {
-        if (task->process->files[i] == NULL) {
+        if (task->process->files[i].file == NULL) {
             debug_log("Allocating pipe to: [ %d, %d ]\n", i, j);
-            task->process->files[i] = pipe_files[j];
+            task->process->files[i] = (struct file_descriptor) { pipe_files[j], 0 };
             pipefd[j] = i;
             j++;
         }
@@ -1062,13 +1059,13 @@ void arch_sys_dup(struct task_state *task_state) {
     int oldfd = (int) task_state->cpu_state.rsi;
 
     struct task *current = get_current_task();
-    if (current->process->files[oldfd] == NULL) {
+    if (current->process->files[oldfd].file == NULL) {
         SYS_RETURN(-EBADF);
     }
 
     // Should lock task to prevent races
     for (size_t i = 0; i < FOPEN_MAX; i++) {
-        if (current->process->files[i] == NULL) {
+        if (current->process->files[i].file == NULL) {
             current->process->files[i] = fs_dup(current->process->files[oldfd]);
 #ifdef DUP_DEBUG
             debug_log("Dup: [ %d, %lu ]\n", oldfd, i);
@@ -1135,7 +1132,7 @@ void arch_sys_accept4(struct task_state *task_state) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1158,7 +1155,7 @@ void arch_sys_bind(struct task_state *task_state) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1181,7 +1178,7 @@ void arch_sys_connect(struct task_state *task_state) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1203,7 +1200,7 @@ void arch_sys_listen(struct task_state *task_state) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1268,7 +1265,7 @@ void arch_sys_setsockopt(struct task_state *task_state) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1322,7 +1319,7 @@ void arch_sys_sendto(struct task_state *task_state) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1348,7 +1345,7 @@ void arch_sys_recvfrom(struct task_state *task_state) {
         SYS_RETURN(-EBADF);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
     if (!file) {
         SYS_RETURN(-EBADF);
     }
@@ -1391,7 +1388,7 @@ void arch_sys_mmap(struct task_state *task_state) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct file *file = get_current_task()->process->files[fd];
+    struct file *file = get_current_task()->process->files[fd].file;
 
     SYS_RETURN(fs_mmap(addr, length, prot, flags, file, offset));
 }
@@ -1441,12 +1438,11 @@ void arch_sys_fcntl(struct task_state *task_state) {
     }
 
     struct task *current = get_current_task();
-    struct file *file = current->process->files[fd];
-    if (file == NULL) {
+    if (current->process->files[fd].file == NULL) {
         SYS_RETURN(-EBADF);
     }
 
-    SYS_RETURN(fs_fcntl(file, command, arg));
+    SYS_RETURN(fs_fcntl(&current->process->files[fd], command, arg));
 }
 
 void arch_sys_fstat(struct task_state *task_state) {
@@ -1460,7 +1456,7 @@ void arch_sys_fstat(struct task_state *task_state) {
     }
 
     struct task *current = get_current_task();
-    struct file *file = current->process->files[fd];
+    struct file *file = current->process->files[fd].file;
     if (file == NULL) {
         SYS_RETURN(-EBADF);
     }
@@ -1498,7 +1494,7 @@ void arch_sys_fchmod(struct task_state *task_state) {
     }
 
     struct task *current = get_current_task();
-    struct file *file = current->process->files[fd];
+    struct file *file = current->process->files[fd].file;
     if (file == NULL) {
         SYS_RETURN(-EBADF);
     }
@@ -1855,7 +1851,7 @@ void arch_sys_pselect(struct task_state *task_state) {
                     for (size_t j = 0;
                          read_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (read_fds_found[i] & (1U << j)) {
-                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
                             if (fs_is_readable(to_check)) {
                                 read_fds_found[i] ^= (1U << j);
                                 count++;
@@ -1872,7 +1868,7 @@ void arch_sys_pselect(struct task_state *task_state) {
                     for (size_t j = 0;
                          write_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (write_fds_found[i] & (1U << j)) {
-                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
                             if (fs_is_writable(to_check)) {
                                 write_fds_found[i] ^= (1U << j);
                                 count++;
@@ -1889,7 +1885,7 @@ void arch_sys_pselect(struct task_state *task_state) {
                     for (size_t j = 0;
                          except_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (except_fds_found[i] & (1U << j)) {
-                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
                             if (fs_is_exceptional(to_check)) {
                                 except_fds_found[i] ^= (1U << j);
                                 count++;

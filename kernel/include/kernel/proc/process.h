@@ -14,9 +14,16 @@
 #include ARCH_SPECIFIC(proc/process.h)
 // clang-format on
 
+struct file;
+
+struct file_descriptor {
+    struct file *file;
+    int fd_flags;
+};
+
 struct process {
     char *cwd;
-    struct file *files[FOPEN_MAX];
+    struct file_descriptor files[FOPEN_MAX];
 
     struct vm_region *process_memory;
 

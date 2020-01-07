@@ -68,8 +68,9 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
         }
 
         for (size_t i = 0; i < FOPEN_MAX; i++) {
-            if (process->files[i] != NULL) {
-                fs_close(process->files[i]);
+            if (process->files[i].file != NULL) {
+                fs_close(process->files[i].file);
+                process->files[i].file = NULL;
             }
         }
 

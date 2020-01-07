@@ -8,6 +8,8 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 
+struct file_descriptor;
+
 void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 struct tnode *iname(const char *path);
@@ -28,7 +30,7 @@ int fs_unlink(const char *path);
 int fs_rmdir(const char *path);
 int fs_chmod(const char *path, mode_t mode);
 int fs_access(const char *path, int mode);
-int fs_fcntl(struct file *file, int command, int arg);
+int fs_fcntl(struct file_descriptor *desc, int command, int arg);
 int fs_fstat(struct file *file, struct stat *stat_struct);
 int fs_fchmod(struct file *file, mode_t mode);
 intptr_t fs_mmap(void *addr, size_t length, int prot, int flags, struct file *file, off_t offset);
@@ -36,8 +38,8 @@ int fs_munmap(void *addr, size_t length);
 int fs_rename(char *old_path, char *new_path);
 int fs_mount(const char *src, const char *path, const char *type);
 
-struct file *fs_clone(struct file *file);
-struct file *fs_dup(struct file *file);
+struct file_descriptor fs_clone(struct file_descriptor desc);
+struct file_descriptor fs_dup(struct file_descriptor desc);
 
 int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id);
 

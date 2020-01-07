@@ -26,7 +26,6 @@ struct file {
     struct file_operations *f_op;
     unsigned int flags;
 
-    int fd_flags;
     int open_flags;
 
 #define FS_FILE_CAN_READ  1

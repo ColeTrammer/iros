@@ -254,7 +254,6 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
     init_spinlock(&file->lock);
     file->ref_count = 1;
     file->abilities = 0;
-    file->fd_flags = 0;
     file->open_flags = flags;
     if (flags & O_RDWR) {
         file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
@@ -262,9 +261,6 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
         file->abilities |= FS_FILE_CAN_READ;
     } else if (flags & O_WRONLY) {
         file->abilities |= FS_FILE_CAN_WRITE;
-    }
-    if (flags & O_CLOEXEC) {
-        file->fd_flags |= FD_CLOEXEC;
     }
 
     return file;
@@ -905,23 +901,25 @@ int fs_mount(const char *src, const char *path, const char *type) {
     return -1;
 }
 
-struct file *fs_clone(struct file *file) {
-    if (file == NULL) {
-        return NULL;
+struct file_descriptor fs_clone(struct file_descriptor desc) {
+    if (desc.file == NULL) {
+        return (struct file_descriptor) { NULL, 0 };
     }
 
     struct file *new_file = malloc(sizeof(struct file));
-    memcpy(new_file, file, sizeof(struct file));
+    memcpy(new_file, desc.file, sizeof(struct file));
 
     if (new_file->f_op->clone) {
         new_file->f_op->clone(new_file);
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_inode_get(desc.file->device, desc.file->inode_idenifier);
     assert(inode);
 
     bump_inode_reference(inode);
-    return new_file;
+
+    // NOTE: the new file should't have the same fdflags
+    return (struct file_descriptor) { new_file, 0 };
 }
 
 int fs_access(const char *path, int mode) {
@@ -952,12 +950,12 @@ int fs_access(const char *path, int mode) {
     return 0;
 }
 
-int fs_fcntl(struct file *file, int command, int arg) {
-    assert(file);
+int fs_fcntl(struct file_descriptor *desc, int command, int arg) {
+    assert(desc->file);
 
     switch (command) {
         case F_DUPFD_CLOEXEC:
-            file->fd_flags |= FD_CLOEXEC;
+            desc->fd_flags |= FD_CLOEXEC;
             // Fall through
         case F_DUPFD: {
             struct task *current = get_current_task();
@@ -966,8 +964,8 @@ int fs_fcntl(struct file *file, int command, int arg) {
             }
 
             for (int i = arg; i < FOPEN_MAX; i++) {
-                if (current->process->files[i] == NULL) {
-                    current->process->files[i] = fs_dup(file);
+                if (current->process->files[i].file == NULL) {
+                    current->process->files[i] = fs_dup(*desc);
                     return i;
                 }
             }
@@ -975,20 +973,20 @@ int fs_fcntl(struct file *file, int command, int arg) {
             return -EMFILE;
         }
         case F_GETFD:
-            return file->fd_flags;
+            return desc->fd_flags;
         case F_SETFD:
             if (arg == 0 || arg == FD_CLOEXEC) {
-                file->fd_flags = arg;
+                desc->fd_flags = arg;
                 return 0;
             }
 
             return -EINVAL;
         case F_GETFL:
-            return file->open_flags;
+            return desc->file->open_flags;
         case F_SETFL:
             debug_log("fcntl: f_setfl: [ %#.8X ]\n", (unsigned int) arg);
             // FIXME: this should do validity checks and update the files capabilites
-            file->open_flags = arg;
+            desc->file->open_flags = arg;
             return 0;
         default:
             return -EINVAL;
@@ -1027,16 +1025,18 @@ int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id) {
     return 0;
 }
 
-struct file *fs_dup(struct file *file) {
-    if (file == NULL) {
-        return NULL;
+struct file_descriptor fs_dup(struct file_descriptor desc) {
+    if (desc.file == NULL) {
+        return (struct file_descriptor) { NULL, 0 };
     }
 
-    spin_lock(&file->lock);
-    assert(file->ref_count > 0);
-    file->ref_count++;
-    spin_unlock(&file->lock);
-    return file;
+    spin_lock(&desc.file->lock);
+    assert(desc.file->ref_count > 0);
+    desc.file->ref_count++;
+    spin_unlock(&desc.file->lock);
+
+    // NOTE: the new descriptor reset the FD_CLOEXEC flag
+    return (struct file_descriptor) { desc.file, 0 };
 }
 
 void init_vfs() {

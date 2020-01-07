@@ -188,7 +188,7 @@ static bool select_blocker_helper(int nfds, uint8_t *readfds, uint8_t *writefds,
             if (readfds[i]) {
                 for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                     if (readfds[i] & (1U << j)) {
-                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
                         if (fs_is_readable(to_check)) {
                             return true;
                         }
@@ -203,7 +203,7 @@ static bool select_blocker_helper(int nfds, uint8_t *readfds, uint8_t *writefds,
             if (writefds[i]) {
                 for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                     if (writefds[i] & (1U << j)) {
-                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
                         if (fs_is_writable(to_check)) {
                             return true;
                         }
@@ -218,7 +218,7 @@ static bool select_blocker_helper(int nfds, uint8_t *readfds, uint8_t *writefds,
             if (exceptfds[i]) {
                 for (size_t j = 0; i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                     if (exceptfds[i] & (1U << j)) {
-                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j];
+                        struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
                         if (fs_is_exceptional(to_check)) {
                             return true;
                         }

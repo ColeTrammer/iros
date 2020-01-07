@@ -255,9 +255,9 @@ struct task *load_task(const char *file_name) {
 
     load_paging_structure(old_paging_structure);
 
-    task->process->files[0] = fs_open("/dev/serial", O_RDWR, NULL);
-    task->process->files[1] = fs_open("/dev/serial", O_RDWR, NULL);
-    task->process->files[2] = fs_open("/dev/serial", O_RDWR, NULL);
+    task->process->files[0] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, NULL), 0 };
+    task->process->files[1] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, NULL), 0 };
+    task->process->files[2] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, NULL), 0 };
 
     debug_log("Loaded Task: [ %d, %s ]\n", task->process->pid, file_name);
     return task;

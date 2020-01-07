@@ -97,14 +97,15 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
     struct task *current = get_current_task();
 
     for (int i = 0; i < FOPEN_MAX; i++) {
-        if (current->process->files[i] == NULL) {
-            current->process->files[i] = calloc(1, sizeof(struct file));
-            current->process->files[i]->flags = FS_SOCKET;
-            current->process->files[i]->f_op = &socket_file_ops;
-            current->process->files[i]->ref_count = 1;
+        if (current->process->files[i].file == NULL) {
+            current->process->files[i].file = calloc(1, sizeof(struct file));
+            current->process->files[i].fd_flags = 0;
+            current->process->files[i].file->flags = FS_SOCKET;
+            current->process->files[i].file->f_op = &socket_file_ops;
+            current->process->files[i].file->ref_count = 1;
 
             struct socket_file_data *file_data = malloc(sizeof(struct socket_file_data));
-            current->process->files[i]->private_data = file_data;
+            current->process->files[i].file->private_data = file_data;
 
             spin_lock(&id_lock);
             file_data->socket_id = socket_id_next++;
