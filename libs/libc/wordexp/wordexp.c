@@ -745,19 +745,18 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, wo
         case '7':
         case '8':
         case '9': {
-            char *end_ptr;
-            long result = strtol(s, &end_ptr, 0);
+            long result = strtol(s, (char **) end_ptr, 0);
             *value = result;
             return 0;
         }
         case '(': {
-            size_t end = we_find_end_of_word_expansion(s, 1, max_length - 1) + 1;
+            size_t end = we_find_end_of_word_expansion(s, 0, max_length);
             if (end == 0) {
                 return WRDE_SYNTAX;
             }
 
-            *end_ptr = s + end;
-            return we_arithmetic_expand(s + 1, max_length - 1, flags, special, value);
+            *end_ptr = s + end + 1;
+            return we_arithmetic_expand(s + 1, end - 1, flags, special, value);
         }
         case '$': {
             char *expanded = NULL;
@@ -833,13 +832,186 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, wo
     }
 }
 
+enum arithmetic_op {
+    OP_MULT,
+    OP_DIV,
+    OP_MODULO,
+    OP_ADD,
+    OP_SUB,
+    OP_SHL,
+    OP_SHR,
+    OP_LT,
+    OP_LTE,
+    OP_GT,
+    OP_GTE,
+    OP_EQ,
+    OP_NEQ,
+    OP_AND,
+    OP_XOR,
+    OP_OR,
+    OP_LAND,
+    OP_LOR,
+    OP_COMMA
+};
+
+static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
+    switch (op) {
+        case OP_MULT:
+            return v1 * v2;
+        case OP_DIV:
+            return v1 / v2;
+        case OP_MODULO:
+            return v1 % v2;
+        case OP_ADD:
+            return v1 + v2;
+        case OP_SUB:
+            return v1 - v2;
+        case OP_SHL:
+            return v1 << v2;
+        case OP_SHR:
+            return v1 >> v2;
+        case OP_LT:
+            return v1 < v2;
+        case OP_LTE:
+            return v1 <= v2;
+        case OP_GT:
+            return v1 > v2;
+        case OP_GTE:
+            return v2 >= v2;
+        case OP_EQ:
+            return v1 == v1;
+        case OP_NEQ:
+            return v1 != v2;
+        case OP_AND:
+            return v1 & v2;
+        case OP_OR:
+            return v1 | v2;
+        case OP_LAND:
+            return v1 && v2;
+        case OP_LOR:
+            return v1 || v2;
+        case OP_COMMA:
+            return v1, v2;
+        default:
+            assert(false);
+    }
+}
+
 // Takes expression of form $((s))
 int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t *special, long *value) {
-    int ret = we_arithmetic_parse_terminal(s, length, flags, special, value, &s);
-    if (ret != 0) {
-        return ret;
+    const char *current = s;
+
+    long value_stack[512];
+    size_t value_stack_index = 0;
+    enum arithmetic_op op_stack[512];
+    size_t op_stack_index = 0;
+
+    while (current - s < length) {
+        int ret =
+            we_arithmetic_parse_terminal(current, length - (current - s), flags, special, &value_stack[value_stack_index++], &current);
+        if (ret != 0) {
+            return ret;
+        }
+
+        if (current - s >= length) {
+            // Pop value / op stack
+            while (op_stack_index > 0) {
+                assert(value_stack_index >= 2);
+                value_stack[value_stack_index - 2] =
+                    we_arithmetic_do_op(op_stack[--op_stack_index], value_stack[value_stack_index - 2], value_stack[value_stack_index - 1]);
+                value_stack_index--;
+            }
+            break;
+        }
+
+        assert(op_stack_index <= 512);
+        size_t op_size = 1;
+        switch (current[0]) {
+            case '*':
+                op_stack[op_stack_index++] = OP_MULT;
+                break;
+            case '/':
+                op_stack[op_stack_index++] = OP_DIV;
+                break;
+            case '%':
+                op_stack[op_stack_index++] = OP_MODULO;
+                break;
+            case '+':
+                op_stack[op_stack_index++] = OP_ADD;
+                break;
+            case '-':
+                op_stack[op_stack_index++] = OP_SUB;
+                break;
+            case '<':
+                if (current[1] == '<') {
+                    op_stack[op_stack_index++] = OP_SHL;
+                    op_size++;
+                } else if (current[1] == '=') {
+                    op_stack[op_stack_index++] = OP_LTE;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_LT;
+                }
+                break;
+            case '>':
+                if (current[1] == '>') {
+                    op_stack[op_stack_index++] = OP_SHR;
+                    op_size++;
+                } else if (current[1] == '=') {
+                    op_stack[op_stack_index++] = OP_GTE;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_GT;
+                }
+                break;
+            case '=':
+                if (current[1] == '=') {
+                    op_stack[op_stack_index++] = OP_EQ;
+                    op_size++;
+                } else {
+                    return WRDE_SYNTAX;
+                }
+                break;
+            case '!':
+                if (current[1] == '=') {
+                    op_stack[op_stack_index++] = OP_NEQ;
+                    op_size++;
+                } else {
+                    return WRDE_SYNTAX;
+                }
+                break;
+            case '&':
+                if (current[1] == '&') {
+                    op_stack[op_stack_index++] = OP_AND;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_LAND;
+                }
+                break;
+            case '|':
+                if (current[1] == '|') {
+                    op_stack[op_stack_index++] = OP_OR;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_LOR;
+                }
+                break;
+            case '^':
+                op_stack[op_stack_index++] = OP_XOR;
+                break;
+            case ',':
+                op_stack[op_stack_index++] = OP_COMMA;
+                break;
+            default:
+                return WRDE_SYNTAX;
+        }
+
+        current += op_size;
     }
 
+    assert(op_stack_index == 0);
+    assert(value_stack_index == 1);
+    *value = value_stack[--value_stack_index];
     return 0;
 }
 
@@ -884,7 +1056,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                         }
 
                         long value = 0;
-                        int ret = we_arithmetic_expand(to_expand + 3, (s + i + 3) - to_expand + 1 - 2, flags, special, &value);
+                        int ret = we_arithmetic_expand(to_expand + 3, (s + i - 2) - (to_expand + 3) + 1, flags, special, &value);
                         if (ret != 0) {
                             free(*expanded);
                             return ret;
