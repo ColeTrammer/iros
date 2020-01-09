@@ -66,7 +66,14 @@
     __ENUMERATE_SYSCALL(SIGPENDING, sigpending, 1)                             \
     __ENUMERATE_SYSCALL(SIGALTSTACK, sigaltstack, 2)                           \
     __ENUMERATE_SYSCALL(PSELECT, pselect, 6)                                   \
-    __ENUMERATE_SYSCALL(YIELD, yield, 0)
+    __ENUMERATE_SYSCALL(SETUID, setuid, 1)                                     \
+    __ENUMERATE_SYSCALL(SETEUID, seteuid, 1)                                   \
+    __ENUMERATE_SYSCALL(SETGID, setgid, 1)                                     \
+    __ENUMERATE_SYSCALL(SETEGID, setegid, 1)                                   \
+    __ENUMERATE_SYSCALL(GETUID, getuid, 0)                                     \
+    __ENUMERATE_SYSCALL(GETEUID, geteuid, 0)                                   \
+    __ENUMERATE_SYSCALL(GETGID, getgid, 0)                                     \
+    __ENUMERATE_SYSCALL(GETEGID, getegid, 0)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

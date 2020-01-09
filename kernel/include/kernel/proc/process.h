@@ -33,6 +33,11 @@ struct process {
     pid_t pgid;
     pid_t ppid;
 
+    uid_t uid;
+    uid_t euid;
+    gid_t gid;
+    gid_t egid;
+
     int tty;
     int ref_count;
 

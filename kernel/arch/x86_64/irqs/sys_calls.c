@@ -181,6 +181,10 @@ void arch_sys_fork(struct task_state *task_state) {
     strcpy(child_process->cwd, parent->process->cwd);
     child_process->pgid = parent->process->pgid;
     child_process->ppid = parent->process->pid;
+    child->process->uid = parent->process->uid;
+    child->process->euid = parent->process->euid;
+    child->process->gid = parent->process->gid;
+    child->process->egid = parent->process->egid;
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
     child_process->inode_dev = parent->process->inode_dev;
@@ -508,6 +512,10 @@ void arch_sys_execve(struct task_state *task_state) {
     init_spinlock(&process->lock);
     process->pgid = current->process->pgid;
     process->ppid = current->process->ppid;
+    process->uid = current->process->uid;
+    process->euid = current->process->euid;
+    process->gid = current->process->gid;
+    process->egid = current->process->egid;
     process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->process_memory = add_vm_region(process->process_memory, process_guard);
@@ -1944,6 +1952,108 @@ void arch_sys_yield(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
     __kernel_yield();
+    SYS_RETURN(0);
+}
+
+void arch_sys_getuid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    SYS_RETURN(get_current_task()->process->uid);
+}
+
+void arch_sys_geteuid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    SYS_RETURN(get_current_task()->process->euid);
+}
+
+void arch_sys_getgid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    SYS_RETURN(get_current_task()->process->gid);
+}
+
+void arch_sys_getegid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    SYS_RETURN(get_current_task()->process->egid);
+}
+
+void arch_sys_setuid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    uid_t uid = (uid_t) task_state->cpu_state.rsi;
+
+    struct process *current = get_current_task()->process;
+    if (current->uid == 0) {
+        current->euid = uid;
+        current->uid = uid;
+        SYS_RETURN(0);
+    }
+
+    if (current->uid != uid) {
+        SYS_RETURN(-EPERM);
+    }
+
+    current->euid = uid;
+    SYS_RETURN(0);
+}
+
+void arch_sys_seteuid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    uid_t euid = (uid_t) task_state->cpu_state.rsi;
+
+    struct process *current = get_current_task()->process;
+    if (current->uid == 0) {
+        current->uid = euid;
+        SYS_RETURN(0);
+    }
+
+    if (current->euid != euid && current->uid != euid) {
+        SYS_RETURN(-EPERM);
+    }
+
+    current->euid = euid;
+    SYS_RETURN(0);
+}
+
+void arch_sys_setgid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    uid_t gid = (uid_t) task_state->cpu_state.rsi;
+
+    struct process *current = get_current_task()->process;
+    if (current->gid == 0) {
+        current->egid = gid;
+        current->gid = gid;
+        SYS_RETURN(0);
+    }
+
+    if (current->gid != gid) {
+        SYS_RETURN(-EPERM);
+    }
+
+    current->egid = gid;
+    SYS_RETURN(0);
+}
+
+void arch_sys_setegid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    uid_t egid = (uid_t) task_state->cpu_state.rsi;
+
+    struct process *current = get_current_task()->process;
+    if (current->gid == 0) {
+        current->gid = egid;
+        SYS_RETURN(0);
+    }
+
+    if (current->egid != egid && current->gid != egid) {
+        SYS_RETURN(-EPERM);
+    }
+
+    current->egid = egid;
     SYS_RETURN(0);
 }
 

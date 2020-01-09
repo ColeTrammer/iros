@@ -108,39 +108,39 @@ pid_t setpgid(pid_t pid, pid_t pgid) {
 }
 
 uid_t getuid(void) {
-    return 0;
+    return (uid_t) syscall(SC_GETUID);
 }
 
 uid_t geteuid(void) {
-    return 0;
+    return (uid_t) syscall(SC_GETEUID);
 }
 
 gid_t getgid(void) {
-    return 0;
+    return (gid_t) syscall(SC_GETGID);
 }
 
 gid_t getegid(void) {
-    return 0;
+    return (gid_t) syscall(SC_GETEGID);
 }
 
 int setuid(uid_t uid) {
-    (void) uid;
-    return 0;
+    int ret = (int) syscall(SC_SETUID, uid);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 int setgid(gid_t gid) {
-    (void) gid;
-    return 0;
+    int ret = (int) syscall(SC_SETGID, gid);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 int seteuid(uid_t uid) {
-    (void) uid;
-    return 0;
+    int ret = (int) syscall(SC_SETEUID, uid);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 int setegid(gid_t gid) {
-    (void) gid;
-    return 0;
+    int ret = (int) syscall(SC_SETEGID, gid);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 pid_t getpgrp(void) {
