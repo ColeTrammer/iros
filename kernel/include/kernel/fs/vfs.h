@@ -61,7 +61,7 @@ static inline int fs_mode_to_flags(mode_t mode) {
         return FS_DIR;
     } else if (S_ISFIFO(mode)) {
         return FS_FIFO;
-    } else if (S_ISOCK(mode)) {
+    } else if (S_ISSOCK(mode)) {
         return FS_SOCKET;
     } else {
         return 0;

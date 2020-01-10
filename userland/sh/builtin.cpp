@@ -524,7 +524,7 @@ static int op_test(char **argv) {
                 return 1;
             }
 
-            return S_ISOCK(st.st_mode) ? invert : !invert;
+            return S_ISSOCK(st.st_mode) ? invert : !invert;
         }
         if (strcmp(argv[0], "-s") == 0) {
             struct stat st;

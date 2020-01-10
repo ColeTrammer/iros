@@ -76,7 +76,7 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     inode->private_data = data;
     inode->ref_count = 1;
     inode->super_block = tparent->inode->super_block;
-    inode->flags = S_ISREG(mode) ? FS_FILE : S_ISOCK(mode) ? FS_SOCKET : 0;
+    inode->flags = S_ISREG(mode) ? FS_FILE : S_ISSOCK(mode) ? FS_SOCKET : 0;
     inode->writeable = true;
     inode->readable = true;
 

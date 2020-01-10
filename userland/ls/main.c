@@ -103,7 +103,7 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
             color_s = "\033[35m";
         } else if (S_ISBLK(stat_struct->st_mode)) {
             color_s = "\033[33m";
-        } else if (S_ISOCK(stat_struct->st_mode)) {
+        } else if (S_ISSOCK(stat_struct->st_mode)) {
             color_s = "\033[34m";
         } else {
             color_s = "\033[31m";

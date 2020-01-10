@@ -1023,7 +1023,7 @@ int fs_fchmod(struct file *file, mode_t mode) {
 //       stored on the inode after rebooting, and at that point, the binding
 //       task will no longer exist.
 int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id) {
-    assert(inode->flags & FS_SOCKET && S_ISOCK(inode->mode));
+    assert(inode->flags & FS_SOCKET && S_ISSOCK(inode->mode));
     inode->socket_id = socket_id;
 
     return 0;
