@@ -38,6 +38,8 @@ struct process {
     gid_t gid;
     gid_t egid;
 
+    mode_t umask;
+
     int tty;
     int ref_count;
 

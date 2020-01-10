@@ -164,6 +164,8 @@ struct tnode *iname(const char *_path) {
 }
 
 int fs_create(const char *file_name, mode_t mode) {
+    mode &= ~get_current_task()->process->umask;
+
     char *path = malloc(strlen(file_name) + 1);
     strcpy(path, file_name);
 
@@ -460,6 +462,8 @@ int fs_truncate(struct file *file, off_t length) {
 }
 
 int fs_mkdir(const char *_path, mode_t mode) {
+    mode &= ~get_current_task()->process->umask;
+
     char *path = malloc(strlen(_path) + 1);
     strcpy(path, _path);
 

@@ -185,6 +185,7 @@ void arch_sys_fork(struct task_state *task_state) {
     child->process->euid = parent->process->euid;
     child->process->gid = parent->process->gid;
     child->process->egid = parent->process->egid;
+    child->process->umask = parent->process->umask;
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
     child_process->inode_dev = parent->process->inode_dev;
@@ -516,6 +517,7 @@ void arch_sys_execve(struct task_state *task_state) {
     process->euid = current->process->euid;
     process->gid = current->process->gid;
     process->egid = current->process->egid;
+    process->umask = current->process->umask;
     process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
     process->process_memory = add_vm_region(process->process_memory, process_guard);
@@ -2055,6 +2057,21 @@ void arch_sys_setegid(struct task_state *task_state) {
 
     current->egid = egid;
     SYS_RETURN(0);
+}
+
+void arch_sys_umask(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    mode_t new_mask = (mode_t) task_state->cpu_state.rsi;
+
+    struct process *current = get_current_task()->process;
+    spin_lock(&current->lock);
+
+    mode_t old_mask = current->umask;
+    current->umask = new_mask;
+
+    spin_unlock(&current->lock);
+    SYS_RETURN(old_mask);
 }
 
 void arch_sys_invalid_system_call(struct task_state *task_state) {

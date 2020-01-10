@@ -29,8 +29,5 @@ int fchmod(int fd, mode_t mode) {
 }
 
 mode_t umask(mode_t mask) {
-    (void) mask;
-
-    fprintf(stderr, "umask not supported\n");
-    return 0;
+    return (mode_t) syscall(SC_UMASK, mask);
 }

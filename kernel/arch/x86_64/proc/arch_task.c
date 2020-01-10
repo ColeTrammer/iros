@@ -124,6 +124,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     kernel_proc_stack->end = KERNEL_TASK_STACK_START;
     kernel_proc_stack->start = kernel_proc_stack->end - PAGE_SIZE;
     task->process->process_memory = add_vm_region(task->process->process_memory, kernel_proc_stack);
+    task->process->umask = 022;
 
     /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before
      * Execution) */
