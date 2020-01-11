@@ -1064,17 +1064,15 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         }
 
         // Consider precendence
-        if (op_stack_index >= 2) {
-            assert(value_stack_index >= 2);
-            if (we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) <= we_arithmetic_op_precedence(op_stack[op_stack_index - 1])) {
-                value_stack_index -= 2;
-                value_stack[value_stack_index] =
-                    we_arithmetic_do_op(op_stack_index[op_stack - 2], value_stack[value_stack_index], value_stack[value_stack_index + 1]);
-                value_stack_index++;
-                op_stack_index -= 2;
-                op_stack[op_stack_index] = op_stack[op_stack_index + 1];
-                op_stack_index++;
-            }
+        while (op_stack_index >= 2 &&
+               we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) <= we_arithmetic_op_precedence(op_stack[op_stack_index - 1])) {
+            value_stack_index -= 2;
+            value_stack[value_stack_index] =
+                we_arithmetic_do_op(op_stack_index[op_stack - 2], value_stack[value_stack_index], value_stack[value_stack_index + 1]);
+            value_stack_index++;
+            op_stack_index -= 2;
+            op_stack[op_stack_index] = op_stack[op_stack_index + 1];
+            op_stack_index++;
         }
     }
 
