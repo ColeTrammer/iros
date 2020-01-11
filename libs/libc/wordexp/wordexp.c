@@ -694,42 +694,64 @@ we_param_expand_fail:
 int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t *special, long *value);
 
 // Takes string of form [[!+-~]*]exp
-int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, word_special_t *special, long *value, const char **end_ptr) {
+int we_arithmetic_parse_terminal(const char *s, size_t max_length, char **name, int flags, word_special_t *special, long *value,
+                                 const char **end_ptr) {
     *value = 0;
     *end_ptr = NULL;
+    *name = NULL;
 
     switch (s[0]) {
         case '~': {
-            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, name, flags, special, value, end_ptr);
             if (ret != 0) {
                 return ret;
+            }
+
+            if (*name != NULL) {
+                free(*name);
+                return WRDE_SYNTAX;
             }
 
             *value = ~*value;
             return 0;
         }
         case '!': {
-            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, name, flags, special, value, end_ptr);
             if (ret != 0) {
                 return ret;
+            }
+
+            if (*name != NULL) {
+                free(*name);
+                return WRDE_SYNTAX;
             }
 
             *value = !*value;
             return 0;
         }
         case '-': {
-            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, name, flags, special, value, end_ptr);
             if (ret != 0) {
                 return ret;
+            }
+
+            if (*name != NULL) {
+                free(*name);
+                return WRDE_SYNTAX;
             }
 
             *value = -*value;
             return 0;
         }
         case '+': {
-            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, flags, special, value, end_ptr);
+            int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, name, flags, special, value, end_ptr);
             if (ret != 0) {
                 return ret;
+            }
+
+            if (*name != NULL) {
+                free(*name);
+                return WRDE_SYNTAX;
             }
 
             *value = +*value;
@@ -816,11 +838,13 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, int flags, wo
             char save = s[end];
             ((char *) s)[end] = '\0';
 
+            *name = strdup(s);
             char *value_s = getenv(s);
             ((char *) s)[end] = save;
 
             if (!value_s) {
                 if (flags & WRDE_UNDEF) {
+                    free(*name);
                     return WRDE_BADVAL;
                 }
 
@@ -853,6 +877,17 @@ enum arithmetic_op {
     OP_OR,
     OP_LAND,
     OP_LOR,
+    OP_ASSIGN,
+    OP_ADD_ASSIGN,
+    OP_SUB_ASSIGN,
+    OP_MULT_ASSIGN,
+    OP_DIV_ASSIGN,
+    OP_MODULO_ASSIGN,
+    OP_SHL_ASSIGN,
+    OP_SHR_ASSIGN,
+    OP_AND_ASSIGN,
+    OP_XOR_ASSIGN,
+    OP_OR_ASSIGN,
     OP_COMMA
 };
 
@@ -892,6 +927,46 @@ static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
             return v1 && v2;
         case OP_LOR:
             return v1 || v2;
+        handle_assignment:
+        case OP_ASSIGN: {
+            char *name = (char *) v1;
+
+            char buf[50];
+            snprintf(buf, 49, "%ld", v2);
+            setenv(name, buf, 1);
+            free(name);
+            return v2;
+        }
+        case OP_ADD_ASSIGN:
+            v2 = atol(getenv((char *) v1)) + v2;
+            goto handle_assignment;
+        case OP_SUB_ASSIGN:
+            v2 = atol(getenv((char *) v1)) - v2;
+            goto handle_assignment;
+        case OP_MULT_ASSIGN:
+            v2 = atol(getenv((char *) v1)) * v2;
+            goto handle_assignment;
+        case OP_DIV_ASSIGN:
+            v2 = atol(getenv((char *) v1)) / v2;
+            goto handle_assignment;
+        case OP_MODULO_ASSIGN:
+            v2 = atol(getenv((char *) v1)) % v2;
+            goto handle_assignment;
+        case OP_SHL_ASSIGN:
+            v2 = atol(getenv((char *) v1)) << v2;
+            goto handle_assignment;
+        case OP_SHR_ASSIGN:
+            v2 = atol(getenv((char *) v1)) >> v2;
+            goto handle_assignment;
+        case OP_AND_ASSIGN:
+            v2 = atol(getenv((char *) v1)) & v2;
+            goto handle_assignment;
+        case OP_XOR_ASSIGN:
+            v2 = atol(getenv((char *) v1)) ^ v2;
+            goto handle_assignment;
+        case OP_OR_ASSIGN:
+            v2 = atol(getenv((char *) v1)) | v2;
+            goto handle_assignment;
         case OP_COMMA:
             return v2;
         default:
@@ -931,6 +1006,18 @@ static int we_arithmetic_op_precedence(enum arithmetic_op op) {
             return 11;
         case OP_LOR:
             return 12;
+        case OP_ASSIGN:
+        case OP_ADD_ASSIGN:
+        case OP_SUB_ASSIGN:
+        case OP_MULT_ASSIGN:
+        case OP_DIV_ASSIGN:
+        case OP_MODULO_ASSIGN:
+        case OP_SHL_ASSIGN:
+        case OP_SHR_ASSIGN:
+        case OP_AND_ASSIGN:
+        case OP_XOR_ASSIGN:
+        case OP_OR_ASSIGN:
+            return 14;
         case OP_COMMA:
             return 15;
         default:
@@ -938,6 +1025,25 @@ static int we_arithmetic_op_precedence(enum arithmetic_op op) {
     }
 
     return 0;
+}
+
+bool we_arithmetic_left_associative(enum arithmetic_op op) {
+    switch (op) {
+        case OP_ASSIGN:
+        case OP_ADD_ASSIGN:
+        case OP_SUB_ASSIGN:
+        case OP_MULT_ASSIGN:
+        case OP_DIV_ASSIGN:
+        case OP_MODULO_ASSIGN:
+        case OP_SHL_ASSIGN:
+        case OP_SHR_ASSIGN:
+        case OP_AND_ASSIGN:
+        case OP_XOR_ASSIGN:
+        case OP_OR_ASSIGN:
+            return false;
+        default:
+            return true;
+    }
 }
 
 // Takes expression of form $((s))
@@ -954,13 +1060,17 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
     }
 
     while (current - s < (ptrdiff_t) length) {
-        int ret =
-            we_arithmetic_parse_terminal(current, length - (current - s), flags, special, &value_stack[value_stack_index++], &current);
+        char *name = NULL;
+        int ret = we_arithmetic_parse_terminal(current, length - (current - s), &name, flags, special, &value_stack[value_stack_index++],
+                                               &current);
         if (ret != 0) {
             return ret;
         }
 
         if (current - s >= (ptrdiff_t) length) {
+            // Name doesn't matter at this point
+            free(name);
+
             // Pop value / op stack
             while (op_stack_index > 0) {
                 assert(value_stack_index >= 2);
@@ -977,25 +1087,68 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
 
         assert(op_stack_index <= 512);
         size_t op_size = 1;
+        bool name_needed = false;
         switch (current[0]) {
             case '*':
-                op_stack[op_stack_index++] = OP_MULT;
+                if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_MULT_ASSIGN;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_MULT;
+                }
                 break;
             case '/':
-                op_stack[op_stack_index++] = OP_DIV;
+                if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_DIV_ASSIGN;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_DIV;
+                }
                 break;
             case '%':
-                op_stack[op_stack_index++] = OP_MODULO;
+                if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_MODULO_ASSIGN;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_MODULO;
+                }
                 break;
             case '+':
-                op_stack[op_stack_index++] = OP_ADD;
+                if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_ADD_ASSIGN;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_ADD;
+                }
                 break;
             case '-':
-                op_stack[op_stack_index++] = OP_SUB;
+                if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_SUB_ASSIGN;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_SUB;
+                }
                 break;
             case '<':
                 if (current[1] == '<') {
-                    op_stack[op_stack_index++] = OP_SHL;
+                    if (current[2] == '=') {
+                        value_stack[value_stack_index - 1] = (long) name;
+                        name_needed = true;
+                        op_stack[op_stack_index++] = OP_SHL_ASSIGN;
+                        op_size++;
+                    } else {
+                        op_stack[op_stack_index++] = OP_SHL;
+                    }
                     op_size++;
                 } else if (current[1] == '=') {
                     op_stack[op_stack_index++] = OP_LTE;
@@ -1006,7 +1159,14 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 break;
             case '>':
                 if (current[1] == '>') {
-                    op_stack[op_stack_index++] = OP_SHR;
+                    if (current[2] == '=') {
+                        value_stack[value_stack_index - 1] = (long) name;
+                        name_needed = true;
+                        op_stack[op_stack_index++] = OP_SHR_ASSIGN;
+                        op_size++;
+                    } else {
+                        op_stack[op_stack_index++] = OP_SHR;
+                    }
                     op_size++;
                 } else if (current[1] == '=') {
                     op_stack[op_stack_index++] = OP_GTE;
@@ -1020,7 +1180,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                     op_stack[op_stack_index++] = OP_EQ;
                     op_size++;
                 } else {
-                    return WRDE_SYNTAX;
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_ASSIGN;
                 }
                 break;
             case '!':
@@ -1028,12 +1190,18 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                     op_stack[op_stack_index++] = OP_NEQ;
                     op_size++;
                 } else {
+                    free(name);
                     return WRDE_SYNTAX;
                 }
                 break;
             case '&':
                 if (current[1] == '&') {
                     op_stack[op_stack_index++] = OP_AND;
+                    op_size++;
+                } else if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_AND_ASSIGN;
                     op_size++;
                 } else {
                     op_stack[op_stack_index++] = OP_LAND;
@@ -1043,17 +1211,30 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 if (current[1] == '|') {
                     op_stack[op_stack_index++] = OP_OR;
                     op_size++;
+                } else if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_OR_ASSIGN;
+                    op_size++;
                 } else {
                     op_stack[op_stack_index++] = OP_LOR;
                 }
                 break;
             case '^':
-                op_stack[op_stack_index++] = OP_XOR;
+                if (current[1] == '=') {
+                    value_stack[value_stack_index - 1] = (long) name;
+                    name_needed = true;
+                    op_stack[op_stack_index++] = OP_XOR_ASSIGN;
+                    op_size++;
+                } else {
+                    op_stack[op_stack_index++] = OP_XOR;
+                }
                 break;
             case ',':
                 op_stack[op_stack_index++] = OP_COMMA;
                 break;
             default:
+                free(name);
                 return WRDE_SYNTAX;
         }
 
@@ -1063,9 +1244,16 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
             current++;
         }
 
+        if (!name_needed) {
+            free(name);
+        }
+
         // Consider precendence
         while (op_stack_index >= 2 &&
-               we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) <= we_arithmetic_op_precedence(op_stack[op_stack_index - 1])) {
+               ((we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) < we_arithmetic_op_precedence(op_stack[op_stack_index - 1])) ||
+                (we_arithmetic_left_associative(op_stack[op_stack_index - 2] &&
+                                                we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) ==
+                                                    we_arithmetic_op_precedence(op_stack[op_stack_index - 1]))))) {
             value_stack_index -= 2;
             value_stack[value_stack_index] =
                 we_arithmetic_do_op(op_stack_index[op_stack - 2], value_stack[value_stack_index], value_stack[value_stack_index + 1]);
