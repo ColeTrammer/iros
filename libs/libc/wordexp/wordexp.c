@@ -970,7 +970,7 @@ static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
             v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") | v2;
             goto handle_assignment;
         case OP_COMMA:
-            return v2;
+            return ((void) v1), v2;
         default:
             assert(false);
     }
@@ -1324,6 +1324,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                         if (current[1] != '(' && current[1] != '{') {
                             break;
                         }
+                        // fall-through
                     case '`': {
                         size_t end = we_find_end_of_word_expansion(current, 0, length - (current - s));
                         if (end == 0) {
@@ -1359,6 +1360,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                         if (current[1] != '(' && current[1] != '{') {
                             break;
                         }
+                        // fall-through
                     case '`': {
                         int ret = we_find_end_of_word_expansion(current, 0, length - (start - s));
                         if (ret < 0) {
