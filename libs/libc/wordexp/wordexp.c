@@ -821,6 +821,7 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, char **name, 
 
             *value = atol(expanded);
             free(expanded);
+            *end_ptr = s + end;
             return 0;
         }
         default: {
@@ -877,6 +878,7 @@ enum arithmetic_op {
     OP_OR,
     OP_LAND,
     OP_LOR,
+    OP_TERNARY,
     OP_ASSIGN,
     OP_ADD_ASSIGN,
     OP_SUB_ASSIGN,
@@ -1006,6 +1008,8 @@ static int we_arithmetic_op_precedence(enum arithmetic_op op) {
             return 11;
         case OP_LOR:
             return 12;
+        case OP_TERNARY:
+            return 13;
         case OP_ASSIGN:
         case OP_ADD_ASSIGN:
         case OP_SUB_ASSIGN:
@@ -1029,6 +1033,7 @@ static int we_arithmetic_op_precedence(enum arithmetic_op op) {
 
 bool we_arithmetic_left_associative(enum arithmetic_op op) {
     switch (op) {
+        case OP_TERNARY:
         case OP_ASSIGN:
         case OP_ADD_ASSIGN:
         case OP_SUB_ASSIGN:
@@ -1067,6 +1072,10 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
             return ret;
         }
 
+        while (isspace(*current)) {
+            current++;
+        }
+
         if (current - s >= (ptrdiff_t) length) {
             // Name doesn't matter at this point
             free(name);
@@ -1081,6 +1090,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
             break;
         }
 
+    arithmetic_process_operator:
         while (isspace(*current)) {
             current++;
         }
@@ -1089,6 +1099,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         size_t op_size = 1;
         bool name_needed = false;
         switch (current[0]) {
+            case '?':
+                op_stack[op_stack_index++] = OP_TERNARY;
+                break;
             case '*':
                 if (current[1] == '=') {
                     if (!name) {
@@ -1293,6 +1306,91 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
             op_stack_index -= 2;
             op_stack[op_stack_index] = op_stack[op_stack_index + 1];
             op_stack_index++;
+        }
+
+        if (op_stack[op_stack_index - 1] == OP_TERNARY) {
+            op_stack_index--;
+            long lhs_of_ternary = value_stack[--value_stack_index];
+
+            if (*current == ':') {
+                return WRDE_SYNTAX;
+            }
+
+            int count = 1;
+            const char *start = current;
+            while (current - s < (ptrdiff_t) length && count > 0) {
+                switch (*current) {
+                    case '$':
+                        if (current[1] != '(' && current[1] != '{') {
+                            break;
+                        }
+                    case '`': {
+                        size_t end = we_find_end_of_word_expansion(current, 0, length - (current - s));
+                        if (end == 0) {
+                            return WRDE_SYNTAX;
+                        }
+
+                        current += end;
+                        break;
+                    }
+                    case '?':
+                        count++;
+                        break;
+                    case ':':
+                        count--;
+                        break;
+                    default:
+                        break;
+                }
+
+                current++;
+            }
+
+            if (count > 0) {
+                return WRDE_SYNTAX;
+            }
+
+            assert(current[-1] == ':');
+
+            const char *end_after_ternary = current;
+            while (end_after_ternary - s < (ptrdiff_t) length) {
+                switch (*end_after_ternary) {
+                    case '$':
+                        if (current[1] != '(' && current[1] != '{') {
+                            break;
+                        }
+                    case '`': {
+                        int ret = we_find_end_of_word_expansion(current, 0, length - (start - s));
+                        if (ret < 0) {
+                            return WRDE_SYNTAX;
+                        }
+                        break;
+                    }
+                    case ',':
+                        goto found_ternary_end;
+                }
+                end_after_ternary++;
+            }
+
+        found_ternary_end:
+            if (lhs_of_ternary) {
+                int ret = we_arithmetic_expand(start, current - 1 - start, flags, special, &value_stack[value_stack_index++]);
+                if (ret < 0) {
+                    return ret;
+                }
+            } else {
+                int ret = we_arithmetic_expand(current, length - (current - s), flags, special, &value_stack[value_stack_index++]);
+                if (ret < 0) {
+                    return ret;
+                }
+            }
+
+            current = end_after_ternary;
+            if (current - s >= (ptrdiff_t) length) {
+                break;
+            }
+
+            goto arithmetic_process_operator;
         }
     }
 
