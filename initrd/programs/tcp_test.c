@@ -17,15 +17,15 @@ int main() {
     conn.sin_family = AF_INET;
     conn.sin_port = htons(80);
     // conn.sin_addr.s_addr = inet_addr("50.87.248.178");
-    // conn.sin_addr.s_addr = inet_addr("172.105.70.201");
-    conn.sin_addr.s_addr = INADDR_LOOBACK;
+    conn.sin_addr.s_addr = inet_addr("172.105.70.201");
+    // conn.sin_addr.s_addr = INADDR_LOOBACK;
 
     if (connect(fd, (const struct sockaddr *) &conn, sizeof(struct sockaddr_in)) == -1) {
         perror("connect");
         return 1;
     }
 
-    char *http_request = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
+    char *http_request = "GET / HTTP/1.0\r\nHost: www.coletrammer.com\r\n\r\n";
     ssize_t len = strlen(http_request);
 
     if (write(fd, http_request, len) != len) {

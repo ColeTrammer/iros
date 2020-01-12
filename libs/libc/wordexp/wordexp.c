@@ -938,34 +938,34 @@ static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
             return v2;
         }
         case OP_ADD_ASSIGN:
-            v2 = atol(getenv((char *) v1)) + v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") + v2;
             goto handle_assignment;
         case OP_SUB_ASSIGN:
-            v2 = atol(getenv((char *) v1)) - v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") - v2;
             goto handle_assignment;
         case OP_MULT_ASSIGN:
-            v2 = atol(getenv((char *) v1)) * v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") * v2;
             goto handle_assignment;
         case OP_DIV_ASSIGN:
-            v2 = atol(getenv((char *) v1)) / v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") / v2;
             goto handle_assignment;
         case OP_MODULO_ASSIGN:
-            v2 = atol(getenv((char *) v1)) % v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") % v2;
             goto handle_assignment;
         case OP_SHL_ASSIGN:
-            v2 = atol(getenv((char *) v1)) << v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") << v2;
             goto handle_assignment;
         case OP_SHR_ASSIGN:
-            v2 = atol(getenv((char *) v1)) >> v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") >> v2;
             goto handle_assignment;
         case OP_AND_ASSIGN:
-            v2 = atol(getenv((char *) v1)) & v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") & v2;
             goto handle_assignment;
         case OP_XOR_ASSIGN:
-            v2 = atol(getenv((char *) v1)) ^ v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") ^ v2;
             goto handle_assignment;
         case OP_OR_ASSIGN:
-            v2 = atol(getenv((char *) v1)) | v2;
+            v2 = atol(getenv((char *) v1) ? getenv((char *) v1) : "0") | v2;
             goto handle_assignment;
         case OP_COMMA:
             return v2;
@@ -1091,6 +1091,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         switch (current[0]) {
             case '*':
                 if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_MULT_ASSIGN;
@@ -1101,6 +1104,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 break;
             case '/':
                 if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_DIV_ASSIGN;
@@ -1111,6 +1117,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 break;
             case '%':
                 if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_MODULO_ASSIGN;
@@ -1121,6 +1130,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 break;
             case '+':
                 if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_ADD_ASSIGN;
@@ -1131,6 +1143,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 break;
             case '-':
                 if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_SUB_ASSIGN;
@@ -1142,6 +1157,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
             case '<':
                 if (current[1] == '<') {
                     if (current[2] == '=') {
+                        if (!name) {
+                            return WRDE_SYNTAX;
+                        }
                         value_stack[value_stack_index - 1] = (long) name;
                         name_needed = true;
                         op_stack[op_stack_index++] = OP_SHL_ASSIGN;
@@ -1160,6 +1178,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
             case '>':
                 if (current[1] == '>') {
                     if (current[2] == '=') {
+                        if (!name) {
+                            return WRDE_SYNTAX;
+                        }
                         value_stack[value_stack_index - 1] = (long) name;
                         name_needed = true;
                         op_stack[op_stack_index++] = OP_SHR_ASSIGN;
@@ -1180,6 +1201,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                     op_stack[op_stack_index++] = OP_EQ;
                     op_size++;
                 } else {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_ASSIGN;
@@ -1199,6 +1223,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                     op_stack[op_stack_index++] = OP_AND;
                     op_size++;
                 } else if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_AND_ASSIGN;
@@ -1212,6 +1239,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                     op_stack[op_stack_index++] = OP_OR;
                     op_size++;
                 } else if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_OR_ASSIGN;
@@ -1222,6 +1252,9 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                 break;
             case '^':
                 if (current[1] == '=') {
+                    if (!name) {
+                        return WRDE_SYNTAX;
+                    }
                     value_stack[value_stack_index - 1] = (long) name;
                     name_needed = true;
                     op_stack[op_stack_index++] = OP_XOR_ASSIGN;
@@ -1251,9 +1284,8 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         // Consider precendence
         while (op_stack_index >= 2 &&
                ((we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) < we_arithmetic_op_precedence(op_stack[op_stack_index - 1])) ||
-                (we_arithmetic_left_associative(op_stack[op_stack_index - 2] &&
-                                                we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) ==
-                                                    we_arithmetic_op_precedence(op_stack[op_stack_index - 1]))))) {
+                (we_arithmetic_left_associative(op_stack[op_stack_index - 2]) &&
+                 we_arithmetic_op_precedence(op_stack[op_stack_index - 2]) == we_arithmetic_op_precedence(op_stack[op_stack_index - 1])))) {
             value_stack_index -= 2;
             value_stack[value_stack_index] =
                 we_arithmetic_do_op(op_stack_index[op_stack - 2], value_stack[value_stack_index], value_stack[value_stack_index + 1]);
