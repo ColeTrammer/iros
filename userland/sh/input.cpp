@@ -1,6 +1,6 @@
-#include "input.h"
 #include "builtin.h"
 #include "command.h"
+#include "input.h"
 #include "job.h"
 #include "sh_lexer.h"
 #include "sh_parser.h"
@@ -66,7 +66,7 @@ static char *__getcwd() {
 
 static void print_ps1_prompt() {
     char *cwd = __getcwd();
-    fprintf(stderr, "\033[32m%s\033[37m:\033[36m%s\033[37m$ ", "root@os_2", cwd);
+    fprintf(stderr, "\033[32;1m%s\033[0m:\033[36;1m%s\033[0m$ ", "root@os_2", cwd);
     free(cwd);
 }
 
