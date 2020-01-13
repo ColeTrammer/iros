@@ -63,7 +63,7 @@ $(BUILDDIR)/initrd/programs/strcasecmp_test \
 $(BUILDDIR)/initrd/programs/string_test \
 $(BUILDDIR)/initrd/programs/strtoken_test \
 $(BUILDDIR)/initrd/programs/tcp_server_test_a \
-$(BUILDDIR)/initrd/programs/tcp_test \
+$(BUILDDIR)/initrd/programs/tcp_test_a \
 $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
