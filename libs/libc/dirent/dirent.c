@@ -43,6 +43,19 @@ struct dirent *readdir(DIR *dir) {
     return &dir->entry;
 }
 
+int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
+    ssize_t ret = read(dir->fd, entry, sizeof(struct dirent));
+    if (ret < 0) {
+        return ret;
+    } else if (ret == 0) {
+        *result = NULL;
+        return 0;
+    }
+
+    *result = entry;
+    return 0;
+}
+
 int alphasort(const struct dirent **a, const struct dirent **b) {
     return strcoll((*a)->d_name, (*b)->d_name);
 }

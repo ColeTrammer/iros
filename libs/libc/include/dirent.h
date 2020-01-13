@@ -26,6 +26,7 @@ DIR *fdopendir(int fd);
 DIR *opendir(const char *path);
 
 struct dirent *readdir(DIR *d);
+int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 
 int alphasort(const struct dirent **a, const struct dirent **b);
 int scandir(const char *dirp, struct dirent ***list, int (*filter)(const struct dirent *d),
