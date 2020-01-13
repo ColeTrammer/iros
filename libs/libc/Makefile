@@ -85,6 +85,7 @@ $(BUILDDIR)/libs/libc/fcntl/fcntl.o \
 $(BUILDDIR)/libs/libc/fnmatch/fnmatch.o \
 $(BUILDDIR)/libs/libc/ftw/ftw.o \
 $(BUILDDIR)/libs/libc/glob/glob.o \
+$(BUILDDIR)/libs/libc/grp/grp.o \
 $(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \

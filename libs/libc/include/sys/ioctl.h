@@ -17,6 +17,7 @@
 #define TCOOFFI    14
 #define TCIONI     15
 #define TCOONI     16
+#define TIOCGSID   17
 
 #define SGWIDTH  0x1000
 #define SGHEIGHT 0x1001

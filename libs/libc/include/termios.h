@@ -147,7 +147,7 @@ int tcdrain(int fd);
 int tcflow(int fd, int how);
 int tcflush(int fd, int how);
 
-int tcgetsid(int fd);
+pid_t tcgetsid(int fd);
 int tcsendbreak(int fd, int duration);
 
 #ifdef __cplusplus

@@ -32,7 +32,7 @@ int main() {
         int sfd = open(ptsname(mfd), O_RDWR);
         assert(sfd != -1);
 
-        setpgid(0, 0);
+        setsid();
         tcsetpgrp(mfd, getpid());
         ioctl(mfd, TIOSCTTY);
         signal(SIGTTOU, SIG_DFL);

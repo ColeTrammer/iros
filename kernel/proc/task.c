@@ -219,6 +219,7 @@ struct task *load_task(const char *file_name) {
     init_spinlock(&process->lock);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
+    task->process->sid = task->process->pid;
     task->process->ppid = initial_kernel_task.process->pid;
     task->process->process_memory = NULL;
     task->kernel_task = false;

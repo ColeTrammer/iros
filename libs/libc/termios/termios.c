@@ -54,3 +54,7 @@ int tcflush(int fd, int how) {
     assert(false);
     return 0;
 }
+
+pid_t tcgetsid(int fd) {
+    return (pid_t) ioctl(fd, TIOCGSID);
+}

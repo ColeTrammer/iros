@@ -186,6 +186,7 @@ void arch_sys_fork(struct task_state *task_state) {
     child->process->euid = parent->process->euid;
     child->process->gid = parent->process->gid;
     child->process->egid = parent->process->egid;
+    child->process->sid = parent->process->sid;
     child->process->umask = parent->process->umask;
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
@@ -518,6 +519,7 @@ void arch_sys_execve(struct task_state *task_state) {
     process->euid = current->process->euid;
     process->gid = current->process->gid;
     process->egid = current->process->egid;
+    process->sid = current->process->sid;
     process->umask = current->process->umask;
     process->process_memory = kernel_stack;
     process->process_memory = add_vm_region(process->process_memory, process_stack);
@@ -2092,6 +2094,44 @@ void arch_sys_uname(struct task_state *task_state) {
     strcpy(buf->nodename, "os_2-dev");
 
     SYS_RETURN(0);
+}
+
+void arch_sys_getsid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    pid_t pid = (pid_t) task_state->cpu_state.rsi;
+    if (pid == 0) {
+        SYS_RETURN(get_current_task()->process->sid);
+    }
+
+    struct process *process = find_by_pid(pid);
+    if (!process) {
+        SYS_RETURN(-ESRCH);
+    }
+
+    SYS_RETURN(process->sid);
+}
+
+void arch_sys_setsid(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    int ret = 0;
+
+    struct process *current = get_current_task()->process;
+    spin_lock(&current->lock);
+
+    if (current->pgid == current->pid) {
+        ret = -EPERM;
+        goto finish_setsid;
+    }
+
+    current->sid = current->pid;
+    proc_update_pgid(current->pid, current->pgid);
+    current->pgid = current->pid;
+
+finish_setsid:
+    spin_unlock(&current->lock);
+    SYS_RETURN(ret);
 }
 
 void arch_sys_invalid_system_call(struct task_state *task_state) {

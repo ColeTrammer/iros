@@ -35,6 +35,7 @@ struct slave_data {
     bool input_enabled : 1;
 
     pid_t pgid;
+    pid_t sid;
 
     char *input_buffer;
     size_t input_buffer_index;

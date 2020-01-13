@@ -32,6 +32,7 @@ struct process {
     pid_t pid;
     pid_t pgid;
     pid_t ppid;
+    pid_t sid;
 
     uid_t uid;
     uid_t euid;

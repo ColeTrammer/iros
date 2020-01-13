@@ -123,6 +123,11 @@ gid_t getegid(void) {
     return (gid_t) syscall(SC_GETEGID);
 }
 
+pid_t getsid(pid_t pid) {
+    pid_t ret = (pid_t) syscall(SC_GETSID, pid);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
 int setuid(uid_t uid) {
     int ret = (int) syscall(SC_SETUID, uid);
     __SYSCALL_TO_ERRNO(ret);
@@ -140,6 +145,11 @@ int seteuid(uid_t uid) {
 
 int setegid(gid_t gid) {
     int ret = (int) syscall(SC_SETEGID, gid);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
+pid_t setsid(void) {
+    pid_t ret = (pid_t) syscall(SC_SETSID);
     __SYSCALL_TO_ERRNO(ret);
 }
 

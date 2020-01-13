@@ -335,8 +335,21 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             return 0;
         }
         case TIOSCTTY: {
-            get_current_task()->process->tty = data->index;
-            return 0;
+            int ret = 0;
+            spin_lock(&data->lock);
+            struct process *current = get_current_task()->process;
+            if (current->sid != current->pid || current->pgid != current->pid) {
+                ret = -EPERM;
+                goto finish_slave_ioctl_tiosctty;
+            }
+
+            current->tty = data->index;
+            data->pgid = current->pid;
+            data->sid = current->sid;
+            
+        finish_slave_ioctl_tiosctty:
+            spin_unlock(&data->lock);
+            return ret;
         }
         case TIOCNOTTY: {
             get_current_task()->process->tty = -1;
@@ -365,6 +378,12 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             data->output_enabled = true;
             spin_unlock(&data->lock);
             return 0;
+        }
+        case TIOCGSID: {
+            spin_lock(&data->lock);
+            pid_t ret = data->sid;
+            spin_unlock(&data->lock);
+            return ret;
         }
         default: {
             return -ENOTTY;
