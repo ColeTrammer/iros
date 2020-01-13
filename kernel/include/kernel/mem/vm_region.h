@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/mem/vm_object.h>
+
 struct inode;
 
 struct vm_region {
@@ -44,7 +46,8 @@ struct vm_region {
 #define VM_PROCESS_ANON_MAPPING                   (42)
     uint64_t type;
 
-    struct inode *backing_inode;
+    struct vm_object *vm_object;
+    uintptr_t vm_object_offset;
 
     struct vm_region *next;
 };
@@ -57,5 +60,7 @@ int extend_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages
 int extend_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pages);
 int contract_vm_region_end(struct vm_region *list, uint64_t type, size_t num_pages);
 int contract_vm_region_start(struct vm_region *list, uint64_t type, size_t num_pages);
+
+int vm_map_region_with_object(struct vm_region *region);
 
 #endif /* _KERNEL_MEM_VM_REGION_H */

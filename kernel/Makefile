@@ -53,7 +53,9 @@ $(BUILDDIR)/kernel/hal/devices.o \
 $(BUILDDIR)/kernel/hal/ptmx.o \
 $(BUILDDIR)/kernel/main/kernel.o \
 $(BUILDDIR)/kernel/mem/page_frame_allocator.o \
+$(BUILDDIR)/kernel/mem/phys_vm_object.o \
 $(BUILDDIR)/kernel/mem/vm_allocator.o \
+$(BUILDDIR)/kernel/mem/vm_object.o \
 $(BUILDDIR)/kernel/mem/vm_region.o \
 $(BUILDDIR)/kernel/net/arp.o \
 $(BUILDDIR)/kernel/net/ethernet.o \

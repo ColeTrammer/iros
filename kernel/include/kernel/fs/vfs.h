@@ -34,7 +34,6 @@ int fs_fcntl(struct file_descriptor *desc, int command, int arg);
 int fs_fstat(struct file *file, struct stat *stat_struct);
 int fs_fchmod(struct file *file, mode_t mode);
 intptr_t fs_mmap(void *addr, size_t length, int prot, int flags, struct file *file, off_t offset);
-int fs_munmap(void *addr, size_t length);
 int fs_rename(char *old_path, char *new_path);
 int fs_mount(const char *src, const char *path, const char *type);
 

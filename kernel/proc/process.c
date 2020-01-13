@@ -9,8 +9,8 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/hash_map.h>
 
-#define PROC_REF_COUNT_DEBUG
-#define PROCESSES_DEBUG
+// #define PROC_REF_COUNT_DEBUG
+// #define PROCESSES_DEBUG
 
 extern struct process initial_kernel_process;
 
@@ -53,8 +53,8 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
 
         struct vm_region *region = process->process_memory;
         while (region != NULL) {
-            if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-                fs_munmap((void *) region->start, region->end);
+            if (region->vm_object) {
+                drop_vm_object(region->vm_object);
             }
 
             region = region->next;

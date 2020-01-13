@@ -2080,8 +2080,6 @@ void arch_sys_umask(struct task_state *task_state) {
 void arch_sys_uname(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    debug_log("uname\n");
-
     struct utsname *buf = (struct utsname *) task_state->cpu_state.rsi;
     if (!buf) {
         SYS_RETURN(-EFAULT);

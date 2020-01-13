@@ -72,6 +72,10 @@ struct inode {
     // Should be atomic
     int ref_count;
 
+    // Underlying vm_object (used for mmap)
+    // Should be lazily initialized
+    struct vm_object *vm_object;
+
     spinlock_t lock;
 
     void *private_data;

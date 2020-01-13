@@ -17,6 +17,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/phys_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
@@ -244,6 +245,13 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         joke_allocator += 0x500000000ULL;
     }
 
+    struct tmp_data *data = inode->private_data;
+    if (!inode->vm_object) {
+        inode->vm_object = vm_create_phys_object(get_phys_addr((uintptr_t) data->contents), inode->size, inode_on_kill, inode);
+    } else {
+        bump_vm_object(inode->vm_object);
+    }
+
     struct vm_region *region = calloc(1, sizeof(struct vm_region));
     assert(region);
 
@@ -256,14 +264,15 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         region->flags |= VM_WRITE;
     }
     region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
-    region->backing_inode = inode;
+    region->vm_object = inode->vm_object;
+    region->vm_object_offset = 0;
 
     struct task *current = get_current_task();
     current->process->process_memory = add_vm_region(current->process->process_memory, region);
 
-    struct tmp_data *data = inode->private_data;
-    for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
-        map_phys_page(get_phys_addr((uintptr_t) data->contents) + i - region->start, i, region->flags);
+    int ret = vm_map_region_with_object(region);
+    if (ret < 0) {
+        return (intptr_t) ret;
     }
 
     return (intptr_t) addr;

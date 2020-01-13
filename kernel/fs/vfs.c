@@ -22,7 +22,7 @@
 #include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
 
-#define INODE_REF_COUNT_DEBUG
+// #define INODE_REF_COUNT_DEBUG
 
 static struct file_system *file_systems;
 static struct mount *root;
@@ -691,24 +691,6 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
     }
 
     return -ENODEV;
-}
-
-int fs_munmap(void *addr, size_t len) {
-    (void) len;
-
-    debug_log("Doing fs_munmap: [ %#.16lX ]\n", (uintptr_t) addr);
-
-    struct vm_region *region = find_vm_region_by_addr((uintptr_t) addr);
-    if (region == NULL) {
-        debug_log("Didn't find a corresponding region\n");
-        return -EINVAL;
-    }
-
-    struct inode *inode = region->backing_inode;
-    assert(inode);
-
-    drop_inode_reference(inode);
-    return 0;
 }
 
 int fs_rename(char *old_path, char *new_path) {

@@ -7,6 +7,7 @@
 #include <kernel/fs/dev.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/phys_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
@@ -55,11 +56,21 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
         return -ENODEV;
     }
 
-    (void) device;
+    if (!device->inode->vm_object) {
+        device->inode->vm_object = vm_create_phys_object(get_phys_addr((uintptr_t) vga_buffer), PAGE_SIZE, inode_on_kill, device->inode);
+    } else {
+        bump_vm_object(device->inode->vm_object);
+    }
 
     struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
-    region->backing_inode = device->inode;
-    map_phys_page(get_phys_addr((uintptr_t) vga_buffer), region->start, region->flags);
+    region->vm_object = device->inode->vm_object;
+    region->vm_object_offset = 0;
+
+    int ret = vm_map_region_with_object(region);
+    if (ret < 0) {
+        return (intptr_t) ret;
+    }
+
     return (intptr_t) region->start;
 }
 

@@ -267,9 +267,11 @@ int unmap_range(uintptr_t addr, size_t length) {
         debug_log("Removing region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
 #endif /* MMAP_DEBUG */
 
-        if (r->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-            fs_munmap((void *) r->start, r->start + r->end);
-        } else {
+        if (r->vm_object) {
+            drop_vm_object(r->vm_object);
+        }
+
+        if (r->type != VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
             for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
                 unmap_page(i);
             }
@@ -449,14 +451,10 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
         debug_log("Protecting region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
 #endif /* MMAP_DEBUG */
 
-        if (r->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-            fs_munmap((void *) r->start, r->start + r->end);
-        } else {
-            r->flags = (r->flags & VM_STACK) | flags;
+        r->flags = (r->flags & VM_STACK) | flags;
 
-            for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
-                map_page_flags(i, r->flags);
-            }
+        for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
+            map_page_flags(i, r->flags);
         }
     }
 
@@ -581,11 +579,8 @@ struct vm_region *clone_process_vm() {
         struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
         memcpy(to_add, region, sizeof(struct vm_region));
 
-        if (to_add->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-            struct inode *inode = to_add->backing_inode;
-            spin_lock(&inode->lock);
-            inode->ref_count++;
-            spin_unlock(&inode->lock);
+        if (to_add->vm_object) {
+            bump_vm_object(to_add->vm_object);
         }
 
         new_list = add_vm_region(new_list, to_add);
