@@ -14,6 +14,7 @@
 #include <sys/syscall.h>
 #include <sys/times.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <sys/wait.h>
 
 #include <kernel/fs/file.h>
@@ -2072,6 +2073,25 @@ void arch_sys_umask(struct task_state *task_state) {
 
     spin_unlock(&current->lock);
     SYS_RETURN(old_mask);
+}
+
+void arch_sys_uname(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    debug_log("uname\n");
+
+    struct utsname *buf = (struct utsname *) task_state->cpu_state.rsi;
+    if (!buf) {
+        SYS_RETURN(-EFAULT);
+    }
+
+    strcpy(buf->machine, "x86_64");
+    strcpy(buf->sysname, "os_2");
+    strcpy(buf->release, "0.0.1");
+    strcpy(buf->version, "0");
+    strcpy(buf->nodename, "os_2-dev");
+
+    SYS_RETURN(0);
 }
 
 void arch_sys_invalid_system_call(struct task_state *task_state) {

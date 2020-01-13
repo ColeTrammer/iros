@@ -14,6 +14,7 @@ $(BUILDDIR)/userland/sh/sh_state.o
 NATIVE_OBJS=\
 $(BUILDDIR)/libs/libc/fnmatch/fnmatch.o \
 $(BUILDDIR)/libs/libc/glob/glob.o \
+$(BUILDDIR)/libs/libc/pwd/pwd.o \
 $(BUILDDIR)/libs/libc/wordexp/wordexp.o
 
 EXECUTABLE=$(BUILDDIR)/userland/sh/sh

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 dd if=/dev/zero of=os_2.img bs=516096c count=100
 
@@ -13,6 +13,12 @@ mkdir -p mnt/home/eloc
 mkdir -p mnt/etc
 touch mnt/etc/resolv.conf
 echo "localhost 127.0.0.1" >> mnt/etc/hosts
+
+rm -f mnt/etc/passwd
+cat > mnt/etc/passwd << __EOF__
+root:x:0:0:root:/:/bin/sh
+eloc:x:100:100:eloc,,,:/home/eloc:/bin/sh
+__EOF__
 
 umount /dev/loop100
 losetup -d /dev/loop100

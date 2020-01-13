@@ -105,6 +105,7 @@ $(BUILDDIR)/libs/libc/sys/stat/stat.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall.o \
 $(BUILDDIR)/libs/libc/sys/time/time.o \
 $(BUILDDIR)/libs/libc/sys/times/times.o \
+$(BUILDDIR)/libs/libc/sys/utsname/utsname.o \
 $(BUILDDIR)/libs/libc/sys/wait/wait.o \
 $(BUILDDIR)/libs/libc/termios/termios.o \
 $(BUILDDIR)/libs/libc/time/time.o \

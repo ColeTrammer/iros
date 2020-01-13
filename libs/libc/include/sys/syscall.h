@@ -74,7 +74,8 @@
     __ENUMERATE_SYSCALL(GETEUID, geteuid, 0)                                   \
     __ENUMERATE_SYSCALL(GETGID, getgid, 0)                                     \
     __ENUMERATE_SYSCALL(GETEGID, getegid, 0)                                   \
-    __ENUMERATE_SYSCALL(UMASK, umask, 1)
+    __ENUMERATE_SYSCALL(UMASK, umask, 1)                                       \
+    __ENUMERATE_SYSCALL(UNAME, uname, 1)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

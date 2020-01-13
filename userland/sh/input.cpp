@@ -10,11 +10,13 @@
 #include <dirent.h>
 #include <errno.h>
 #include <memory>
+#include <pwd.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -64,9 +66,25 @@ static char *__getcwd() {
     return cwd;
 }
 
+static struct passwd *user_passwd;
+static struct utsname system_name;
+
 static void print_ps1_prompt() {
+    if (!user_passwd) {
+        user_passwd = getpwuid(getuid());
+        if (!user_passwd) {
+            perror("getpwuid");
+            exit(1);
+        }
+
+        if (uname(&system_name)) {
+            perror("uname");
+            exit(1);
+        }
+    }
+
     char *cwd = __getcwd();
-    fprintf(stderr, "\033[32;1m%s\033[0m:\033[36;1m%s\033[0m$ ", "root@os_2", cwd);
+    fprintf(stderr, "\033[32;1m%s@%s\033[0m:\033[36;1m%s\033[0m$ ", user_passwd->pw_name, system_name.nodename, cwd);
     free(cwd);
 }
 
