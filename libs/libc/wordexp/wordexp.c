@@ -125,9 +125,57 @@ int we_add(char *s, wordexp_t *we) {
     return true;
 }
 
+// Overwriting position, inserting the rest, adds "" to the middle elements
+// For use when expanding "$@"
+// This overwritten string should be freed by the caller
+bool we_insert_quoted(wordexp_t *we, size_t pos, char **insert_arr, size_t insert_arr_size) {
+    assert(insert_arr_size >= 2);
+
+    size_t new_size = we->we_wordc - 1 + insert_arr_size;
+    if (we->we_wordc / WE_BUF_INCREMENT != new_size / WE_BUF_INCREMENT) {
+        size_t new_max_length = WE_BUF_INCREMENT * ((new_size + WE_BUF_INCREMENT - 1) / WE_BUF_INCREMENT);
+        we->we_wordv = realloc(we->we_wordv, new_max_length * sizeof(char *));
+    }
+
+    if (we->we_wordv == NULL) {
+        return false;
+    }
+
+    for (size_t i = we->we_wordc - 1; i > pos; i--) {
+        we->we_wordv[new_size - (we->we_wordc - i)] = we->we_wordv[i];
+    }
+
+    for (size_t i = pos; i < pos + insert_arr_size; i++) {
+        char *new_string = NULL;
+        if (i == pos || i == pos + insert_arr_size - 1) {
+            new_string = strdup(insert_arr[i - pos]);
+        } else {
+            new_string = malloc(strlen(insert_arr[i - pos]) + 3);
+            if (new_string) {
+                strcpy(new_string, "\"");
+                strcat(new_string, insert_arr[i - pos]);
+                strcat(new_string, "\"");
+            }
+        }
+
+        if (!new_string) {
+            return false;
+        }
+
+        we->we_wordv[i] = new_string;
+    }
+
+    we->we_wordc = new_size;
+    we->we_wordv[we->we_wordc] = NULL;
+    return true;
+}
+
 // Overwrite entry at pos, move over everything else
 int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
     assert(arr_size != 0);
+
+    free(we->we_wordv[pos]);
+
     size_t new_size = we->we_wordc - 1 + arr_size;
     if (we->we_wordc / WE_BUF_INCREMENT != new_size / WE_BUF_INCREMENT) {
         size_t new_max_length = WE_BUF_INCREMENT * ((new_size + WE_BUF_INCREMENT - 1) / WE_BUF_INCREMENT);
@@ -341,7 +389,8 @@ enum param_expand_type {
 };
 
 // Takes in expression of form ${name[op][word]}
-static int we_param_expand(const char *s, size_t length, int flags, word_special_t *special, struct param_expansion_result *result) {
+static int we_param_expand(const char *s, size_t length, int flags, word_special_t *special, struct param_expansion_result *result,
+                           bool in_d_quotes) {
     result->name = NULL;
     result->result = NULL;
     result->should_free_result = false;
@@ -367,6 +416,11 @@ static int we_param_expand(const char *s, size_t length, int flags, word_special
             only_finding_length = true;
             break;
         case '@':
+            if (in_d_quotes && special && special->position_args_size > 1) {
+                result->result = "$@";
+                return 0;
+            }
+            // fall-through
         case '*':
         case '?':
         case '-':
@@ -1432,6 +1486,11 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 break;
             }
             case '$': {
+                // NOTE: Still does expansion if in_d_quotes
+                if (prev_was_backslash || in_s_quotes) {
+                    break;
+                }
+
                 if (s[i + 1] == '(') {
                     // Arithmetic Expansion
                     if (s[i + 2] == '(') {
@@ -1491,7 +1550,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     }
 
                     struct param_expansion_result result;
-                    int ret = we_param_expand(s + i, end - i + 1, flags, special, &result);
+                    int ret = we_param_expand(s + i, end - i + 1, flags, special, &result, in_d_quotes);
                     if (ret != 0) {
                         free(*expanded);
                         return ret;
@@ -1519,6 +1578,10 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 char *to_add;
                 switch (s[i + 1]) {
                     case '@':
+                        if (in_d_quotes && special->position_args_size > 1) {
+                            goto normal_var;
+                        }
+                        // fall-through
                     case '*':
                         for (size_t i = 0; i < special->position_args_size; i++) {
                             if (!we_append(expanded, special->position_args[i], strlen(special->position_args[i]), &len)) {
@@ -1586,8 +1649,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 // Maybe other characters are valid but this is the standard form
                 int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
-                // NOTE: Still does expansion if in_d_quotes
-                if (prev_was_backslash || in_s_quotes || to_read <= 0) {
+                if (to_read == 0) {
                     break;
                 }
 
@@ -1711,68 +1773,156 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
     return 0;
 }
 
-static int we_split(char *s, char *split_on, wordexp_t *we) {
-    bool prev_was_blackslash = false;
-    bool in_s_quotes = false;
-    bool in_d_quotes = false;
+static int we_split(char *s, char *split_on, wordexp_t *we, int flags) {
+    size_t first_field_index = we->we_wordc;
+    {
+        bool prev_was_blackslash = false;
+        bool in_d_quotes = false;
+        bool in_s_quotes = false;
 
-    int prev = strspn(s, split_on);
-    for (size_t i = prev;; i++) {
-        switch (s[i]) {
-            case '\\':
-                if (!in_s_quotes) {
-                    if (prev_was_blackslash) {
-                        prev_was_blackslash = false;
-                        break;
+        int prev = strspn(s, split_on);
+        for (size_t i = prev;; i++) {
+            switch (s[i]) {
+                case '\\':
+                    if (!in_s_quotes) {
+                        if (prev_was_blackslash) {
+                            prev_was_blackslash = false;
+                            break;
+                        }
+                        prev_was_blackslash = true;
+                        continue;
                     }
-                    prev_was_blackslash = true;
-                    continue;
-                }
-                break;
-            case '\'':
-                in_s_quotes = in_d_quotes ? in_s_quotes : !in_s_quotes;
-                break;
-            case '"':
-                in_d_quotes = (prev_was_blackslash || in_s_quotes) ? in_d_quotes : !in_d_quotes;
-                break;
-            default:
-                break;
-        }
-
-        if ((prev_was_blackslash && s[i] != '\0') || in_s_quotes || in_d_quotes) {
-            if (s[i] == '\0') {
-                return WRDE_SYNTAX;
+                    break;
+                case '\'':
+                    in_s_quotes = in_d_quotes ? in_s_quotes : !in_s_quotes;
+                    break;
+                case '"':
+                    in_d_quotes = (prev_was_blackslash || in_s_quotes) ? in_d_quotes : !in_d_quotes;
+                    break;
+                default:
+                    break;
             }
-            prev_was_blackslash = false;
-            continue;
+
+            if ((prev_was_blackslash && s[i] != '\0') || in_s_quotes || in_d_quotes) {
+                if (s[i] == '\0') {
+                    return WRDE_SYNTAX;
+                }
+                prev_was_blackslash = false;
+                continue;
+            }
+
+            size_t to_advance = 0;
+            if (s[i] != '\0' && (to_advance = strspn(s + i, split_on)) == 0) {
+                continue;
+            }
+
+            size_t stopping_point = i;
+            char *to_add = malloc(stopping_point - prev + 1);
+            memcpy(to_add, s + prev, stopping_point - prev);
+            to_add[stopping_point - prev] = '\0';
+
+            if (!we_add(to_add, we)) {
+                return WRDE_NOSPACE;
+            }
+
+            if (s[i] == '\0') {
+                break;
+            }
+
+            i += to_advance;
+            if (s[i] == '\0') {
+                break;
+            }
+
+            prev = i--; // Since loop does i++
         }
 
-        size_t to_advance = 0;
-        if (s[i] != '\0' && (to_advance = strspn(s + i, split_on)) == 0) {
-            continue;
+        if (!we->we_wordv[first_field_index]) {
+            return 0;
         }
-
-        size_t stopping_point = i;
-        char *to_add = malloc(stopping_point - prev + 1);
-        memcpy(to_add, s + prev, stopping_point - prev);
-        to_add[stopping_point - prev] = '\0';
-
-        if (!we_add(to_add, we)) {
-            return WRDE_NOSPACE;
-        }
-
-        if (s[i] == '\0') {
-            break;
-        }
-
-        i += to_advance;
-        if (s[i] == '\0') {
-            break;
-        }
-
-        prev = i--; // Since loop does i++
     }
 
+    for (size_t i = first_field_index; i < we->we_wordc; i++) {
+        char *current_string = we->we_wordv[i];
+        bool should_free_current_string = false;
+
+        bool in_d_quotes = false;
+        bool in_s_quotes = false;
+        bool prev_was_backslash = false;
+        for (size_t j = 0; current_string[j] != '\0'; j++) {
+            switch (current_string[j]) {
+                case '\\':
+                    if (!in_s_quotes) {
+                        prev_was_backslash = !prev_was_backslash;
+                        continue;
+                    }
+                    break;
+                case '\'':
+                    if (!in_d_quotes && !prev_was_backslash) {
+                        in_s_quotes = !in_s_quotes;
+                    }
+                    break;
+                case '"':
+                    if (!in_s_quotes && !prev_was_backslash) {
+                        in_d_quotes = !in_d_quotes;
+                    }
+                    break;
+                case '$':
+                    if (in_d_quotes && !in_s_quotes && !prev_was_backslash && current_string[j + 1] == '@' && we->we_special_vars &&
+                        (flags & WRDE_SPECIAL)) {
+                        current_string[j] = '\0';
+                        j += 2;
+
+                        char *first_string = malloc(j + strlen(we->we_special_vars->position_args[0]));
+                        if (!first_string) {
+                            return WRDE_NOSPACE;
+                        }
+
+                        strcpy(first_string, current_string);
+                        strcat(first_string, we->we_special_vars->position_args[0]);
+                        strcat(first_string, "\"");
+
+                        char *last_string =
+                            malloc(strlen(current_string + j + 2 +
+                                          strlen(we->we_special_vars->position_args[we->we_special_vars->position_args_size - 1])));
+
+                        strcpy(last_string, "\"");
+                        strcat(last_string, we->we_special_vars->position_args[we->we_special_vars->position_args_size - 1]);
+
+                        size_t next_j = strlen(last_string);
+                        strcat(last_string, current_string + j);
+
+                        char *first_special_arg = we->we_special_vars->position_args[0];
+                        we->we_special_vars->position_args[0] = first_string;
+
+                        char *last_special_arg = we->we_special_vars->position_args[we->we_special_vars->position_args_size - 1];
+                        we->we_special_vars->position_args[we->we_special_vars->position_args_size - 1] = last_string;
+
+                        bool ret = we_insert_quoted(we, i, &we->we_special_vars->position_args[0], we->we_special_vars->position_args_size);
+
+                        we->we_special_vars->position_args[0] = first_special_arg;
+                        we->we_special_vars->position_args[we->we_special_vars->position_args_size - 1] = last_special_arg;
+
+                        if (!ret) {
+                            return WRDE_NOSPACE;
+                        }
+
+                        j = next_j;
+                        i += we->we_special_vars->position_args_size - 2;
+                        should_free_current_string = true;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            prev_was_backslash = false;
+        }
+
+        if (should_free_current_string) {
+            free(current_string);
+        }
+    }
     return 0;
 }
 
@@ -1950,7 +2100,7 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     }
 
     assert(str);
-    ret = we_split(str, split_on, p);
+    ret = we_split(str, split_on, p, flags);
     free(str);
 
     if (ret != 0) {
