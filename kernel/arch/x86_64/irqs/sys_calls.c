@@ -208,8 +208,6 @@ void arch_sys_fork(struct task_state *task_state) {
         }
     }
 
-    debug_log("Finishing fork: [ %d:%d ]\n", child->process->pid, child->tid);
-
     disable_interrupts();
     sched_add_task(child);
     SYS_RETURN(child_process->pid);
@@ -1574,7 +1572,6 @@ void arch_sys_create_task(struct task_state *task_state) {
     task->sched_state = RUNNING_INTERRUPTIBLE;
     task->tid = get_next_tid();
     task->locked_robust_mutex_list_head = args->locked_robust_mutex_list_head;
-    debug_log("Locked robust mutex list head (c): [ %p ]\n", task->locked_robust_mutex_list_head);
 
     task_align_fpu(task);
 
@@ -1746,7 +1743,6 @@ void arch_sys_set_thread_self_pointer(struct task_state *task_state) {
     struct task *current = get_current_task();
     current->arch_task.user_thread_pointer = thread_self_pointer;
     current->locked_robust_mutex_list_head = locked_robust_mutex_list_head;
-    debug_log("Locked robust mutex list head (s): [ %p, %p ]\n", current->locked_robust_mutex_list_head, locked_robust_mutex_list_head);
 
     set_msr(MSR_FS_BASE, (uint64_t) thread_self_pointer);
 

@@ -13,7 +13,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
-#define ROBUST_USER_MUTEX_DEBUG
+// #define ROBUST_USER_MUTEX_DEBUG
 // #define SCHED_DEBUG
 
 static struct task *list_start = NULL;

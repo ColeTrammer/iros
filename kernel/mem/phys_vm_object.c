@@ -11,7 +11,6 @@ static int phys_map(struct vm_object *self, struct vm_region *region) {
     assert(data->size >= region->end - region->start);
 
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
-        debug_log("Mapping phys_vm_object: [ %#.16lX, %#.16lX ]\n", region->start, data->phys_start);
         map_phys_page(region->vm_object_offset + (i - region->start) + data->phys_start, i, region->flags);
     }
 

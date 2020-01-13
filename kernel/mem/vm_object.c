@@ -4,7 +4,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/mem/vm_object.h>
 
-#define VM_OBJECT_REF_COUNT_DEBUG
+// #define VM_OBJECT_REF_COUNT_DEBUG
 
 void drop_vm_object(struct vm_object *obj) {
     spin_lock(&obj->lock);

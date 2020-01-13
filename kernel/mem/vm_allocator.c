@@ -201,10 +201,6 @@ int unmap_range(uintptr_t addr, size_t length) {
             debug_log("Removing region (split): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
 #endif /* MMAP_DEBUG */
 
-            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
-                break;
-            }
-
             for (uintptr_t i = addr; i < addr + length; i += PAGE_SIZE) {
                 unmap_page(i);
             }
@@ -214,6 +210,9 @@ int unmap_range(uintptr_t addr, size_t length) {
             to_add->end = r->end;
             to_add->flags = r->flags;
             to_add->type = r->type;
+            to_add->vm_object_offset = r->vm_object_offset + r->end - r->start;
+            to_add->vm_object = r->vm_object;
+            bump_vm_object(to_add->vm_object);
             process->process_memory = add_vm_region(process->process_memory, to_add);
 
             r->end = addr;
@@ -228,17 +227,11 @@ int unmap_range(uintptr_t addr, size_t length) {
             assert(r->end >= addr);
             size_t end_save = r->end;
 
-            // We can't do partial unmaps for non anonymous mappings yet
-            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
-                goto unmap_range_start_finish;
-            }
-
             while (r->end != addr) {
                 r->end -= PAGE_SIZE;
                 unmap_page(r->end);
             }
 
-        unmap_range_start_finish:
             length -= (end_save - addr);
             addr = end_save;
             continue;
@@ -250,13 +243,10 @@ int unmap_range(uintptr_t addr, size_t length) {
 #endif /* MMAP_DEBUG */
 
             assert(r->start <= addr + length);
-            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
-                break;
-            }
-
             while (r->start != addr + length) {
                 unmap_page(r->start);
                 r->start += PAGE_SIZE;
+                r->vm_object_offset += PAGE_SIZE;
             }
 
             // We are definately at the end
@@ -373,6 +363,9 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             to_add->end = addr + length;
             to_add->flags = (r->flags & VM_STACK) | flags;
             to_add->type = r->type;
+            to_add->vm_object_offset = r->vm_object_offset;
+            to_add->vm_object = r->vm_object;
+            bump_vm_object(to_add->vm_object);
             process->process_memory = add_vm_region(process->process_memory, to_add);
 
             for (uintptr_t i = addr; i < addr + length; i += PAGE_SIZE) {
@@ -384,8 +377,12 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             to_add_last->end = r->end;
             to_add_last->flags = r->flags;
             to_add_last->type = r->type;
+            to_add_last->vm_object_offset = to_add->vm_object_offset + addr - to_add->start;
+            to_add_last->vm_object = r->vm_object;
+            bump_vm_object(to_add_last->vm_object);
             process->process_memory = add_vm_region(process->process_memory, to_add_last);
 
+            r->vm_object_offset += r->start - to_add->start;
             r->end = addr;
             break;
         }
@@ -398,16 +395,14 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             assert(r->end >= addr);
             size_t end_save = r->end;
 
-            // We can't do partial unmaps for non anonymous mappings yet
-            if (r->type != VM_PROCESS_ANON_MAPPING && r->type != VM_TASK_STACK && r->type != VM_TASK_STACK_GUARD) {
-                goto map_range_protections_start_finish;
-            }
-
             struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
             to_add->start = addr;
             to_add->end = r->end;
             to_add->flags = (r->flags & VM_STACK) | flags;
             to_add->type = r->type;
+            to_add->vm_object_offset = r->vm_object_offset + (r->start - addr);
+            to_add->vm_object = r->vm_object;
+            bump_vm_object(to_add->vm_object);
             process->process_memory = add_vm_region(process->process_memory, to_add);
 
             while (r->end != addr) {
@@ -415,7 +410,6 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
                 map_page_flags(r->end, to_add->flags);
             }
 
-        map_range_protections_start_finish:
             length -= (end_save - addr);
             addr = end_save;
             continue;
@@ -436,6 +430,9 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             to_add->end = addr + length;
             to_add->flags = (r->flags & VM_STACK) | flags;
             to_add->type = r->type;
+            to_add->vm_object_offset = r->vm_object_offset;
+            to_add->vm_object = r->vm_object;
+            bump_vm_object(to_add->vm_object);
             process->process_memory = add_vm_region(process->process_memory, to_add);
 
             while (r->start != addr + length) {
@@ -443,6 +440,7 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
                 r->start += PAGE_SIZE;
             }
 
+            r->vm_object_offset += r->start - to_add->end;
             // We are definately at the end
             break;
         }

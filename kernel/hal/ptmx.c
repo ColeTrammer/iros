@@ -346,7 +346,7 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             current->tty = data->index;
             data->pgid = current->pid;
             data->sid = current->sid;
-            
+
         finish_slave_ioctl_tiosctty:
             spin_unlock(&data->lock);
             return ret;
@@ -653,8 +653,6 @@ static struct device_ops master_ops = { NULL,          master_read,  master_writ
 
 static struct file *ptmx_open(struct device *device, int flags, int *error) {
     (void) device;
-
-    debug_log("Opening ptmx\n");
 
     spin_lock(&lock);
     for (int i = 0; i < PTMX_MAX; i++) {
