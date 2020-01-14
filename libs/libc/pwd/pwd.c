@@ -25,16 +25,8 @@ struct passwd *getpwuid(uid_t uid) {
     return result;
 }
 
-static int find_pw_entry_impl(struct passwd *passwd, char *string_buffer, size_t string_buffer_length,
-                              bool (*matches)(struct passwd *entry, const void *closure), const void *closure) {
-    FILE *file = fopen("/etc/passwd", "r");
-    if (file == NULL) {
-        return -1;
-    }
-
-    char *string = NULL;
-    while ((string = fgets(string_buffer, string_buffer_length, file))) {
-        ssize_t i = -1;
+static void read_pw_entry(char *string, struct passwd *passwd) {
+    ssize_t i = -1;
 
 #define _(x)        x
 #define to_uid_t(x) ((uid_t) strtoul(x, NULL, 10))
@@ -48,13 +40,25 @@ static int find_pw_entry_impl(struct passwd *passwd, char *string_buffer, size_t
         passwd->pw_##name = f(start);                      \
     } while (0);
 
-        READ_ENTRY(name, _);
-        READ_ENTRY(passwd, _);
-        READ_ENTRY(uid, to_uid_t);
-        READ_ENTRY(gid, to_gid_t);
-        READ_ENTRY(gecos, _);
-        READ_ENTRY(dir, _);
-        READ_ENTRY(shell, _);
+    READ_ENTRY(name, _);
+    READ_ENTRY(passwd, _);
+    READ_ENTRY(uid, to_uid_t);
+    READ_ENTRY(gid, to_gid_t);
+    READ_ENTRY(gecos, _);
+    READ_ENTRY(dir, _);
+    READ_ENTRY(shell, _);
+}
+
+static int find_pw_entry_impl(struct passwd *passwd, char *string_buffer, size_t string_buffer_length,
+                              bool (*matches)(struct passwd *entry, const void *closure), const void *closure) {
+    FILE *file = fopen("/etc/passwd", "r");
+    if (file == NULL) {
+        return -1;
+    }
+
+    char *string = NULL;
+    while ((string = fgets(string_buffer, string_buffer_length, file))) {
+        read_pw_entry(string, passwd);
 
         if (matches(passwd, closure)) {
             return fclose(file);
@@ -99,10 +103,26 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buf, size_t buflen, struct p
     return 0;
 }
 
-void endpwent(void) {}
+static FILE *file = NULL;
 
-struct passwd *getpwent(void) {
-    return NULL;
+void endpwent(void) {
+    fclose(file);
+    file = NULL;
 }
 
-void setpwent(void) {}
+struct passwd *getpwent(void) {
+    if (!file) {
+        file = fopen("/etc/passwd", "r");
+        if (!file) {
+            return NULL;
+        }
+    }
+
+    fgets(static_passwd_string_buffer, STATIC_PWD_STRING_SIZE, file);
+    read_pw_entry(static_passwd_string_buffer, &static_passwd_buffer);
+    return &static_passwd_buffer;
+}
+
+void setpwent(void) {
+    rewind(file);
+}
