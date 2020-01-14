@@ -5,7 +5,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef unsigned short nlink_t;
+typedef unsigned long nlink_t;
 
 #ifdef __cplusplus
 }

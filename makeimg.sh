@@ -15,10 +15,14 @@ touch mnt/etc/resolv.conf
 echo "localhost 127.0.0.1" >> mnt/etc/hosts
 
 rm -f mnt/etc/passwd
-cat > mnt/etc/passwd << __EOF__
+cat > mnt/etc/passwd << __PASSWD__
 root:x:0:0:root:/:/bin/sh
 eloc:x:100:100:eloc,,,:/home/eloc:/bin/sh
-__EOF__
+__PASSWD__
+cat > mnt/etc/group << __GROUP__
+root:x:0:
+eloc:x:100:
+__GROUP__
 
 umount /dev/loop100
 losetup -d /dev/loop100

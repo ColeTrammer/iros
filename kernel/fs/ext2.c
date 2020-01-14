@@ -1154,6 +1154,8 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_mode = inode->mode;
     stat_struct->st_rdev = 0;
     stat_struct->st_nlink = raw_inode->link_count;
+    stat_struct->st_uid = raw_inode->uid;
+    stat_struct->st_gid = raw_inode->gid;
 
     return 0;
 }

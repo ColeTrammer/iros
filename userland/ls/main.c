@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <dirent.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +14,8 @@
 
 struct ls_dirent {
     char *name;
+    char *gr_name;
+    char *pw_name;
     struct stat stat_struct;
 };
 
@@ -53,6 +57,12 @@ void fill_dirent(char *_path, const char *name) {
         exit(1);
     }
 
+    struct group *gr = getgrgid(d.stat_struct.st_gid);
+    struct passwd *passwd = getpwuid(d.stat_struct.st_uid);
+
+    d.gr_name = gr && gr->gr_name ? strdup(gr->gr_name) : strdup("unknown");
+    d.pw_name = passwd && passwd->pw_name ? strdup(passwd->pw_name) : strdup("unknown");
+
     if (dirents == NULL) {
         dirents = calloc(num_dirents_max, sizeof(struct ls_dirent));
     }
@@ -68,7 +78,7 @@ void fill_dirent(char *_path, const char *name) {
 void print_entry(struct ls_dirent *dirent, bool extra_info) {
     if (extra_info) {
         char buffer[50];
-        snprintf(buffer, 50, "%%s %%%dd root root %%%dd ", widest_num_links, widest_size);
+        snprintf(buffer, 49, "%%s %%%dlu %%s %%s %%%dld ", widest_num_links, widest_size);
 
         char perm_string[11];
         perm_string[0] = S_ISDIR(dirent->stat_struct.st_mode) ? 'd' : '-';
@@ -83,7 +93,7 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
         perm_string[9] = dirent->stat_struct.st_mode & S_IXOTH ? 'x' : '-';
         perm_string[10] = '\0';
 
-        printf(buffer, perm_string, dirent->stat_struct.st_nlink, dirent->stat_struct.st_size);
+        printf(buffer, perm_string, dirent->stat_struct.st_nlink, dirent->pw_name, dirent->gr_name, dirent->stat_struct.st_size);
     }
 
     char *color_s = "";
@@ -152,6 +162,12 @@ int main(int argc, char **argv) {
                 return 1;
             }
 
+            struct group *gr = getgrgid(d.stat_struct.st_gid);
+            struct passwd *passwd = getpwuid(d.stat_struct.st_uid);
+
+            d.gr_name = gr && gr->gr_name ? strdup(gr->gr_name) : strdup("unknown");
+            d.pw_name = passwd && passwd->pw_name ? strdup(passwd->pw_name) : strdup("unknown");
+
             if (dirents == NULL) {
                 dirents = calloc(num_dirents_max, sizeof(struct ls_dirent));
             }
@@ -178,7 +194,7 @@ int main(int argc, char **argv) {
 
             char buffer[50];
             memset(buffer, 0, 50);
-            snprintf(buffer, 50, "%d", dirents[i].stat_struct.st_nlink);
+            snprintf(buffer, 50, "%lu", dirents[i].stat_struct.st_nlink);
             widest_num_links = MAX(widest_num_links, strlen(buffer));
 
             memset(buffer, 0, 50);

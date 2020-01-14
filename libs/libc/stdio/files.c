@@ -279,7 +279,7 @@ int fflush(FILE *stream) {
         assert(false);
     }
 
-    if (stream->pos != 0 && stream->buf_type != _IONBF) {
+    if (stream->pos != 0 && stream->buf_type != _IONBF && (stream->flags & O_WRONLY || stream->flags & O_RDWR)) {
         ssize_t check = write(stream->fd, stream->buffer, stream->pos);
         stream->pos = 0;
 
