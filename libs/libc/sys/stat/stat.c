@@ -19,7 +19,7 @@ int chmod(const char *pathname, mode_t mode) {
 }
 
 int fstat(int fd, struct stat *stat_struct) {
-    int ret = (int) syscall(SC_STAT, fd, stat_struct);
+    int ret = (int) syscall(SC_FSTAT, fd, stat_struct);
     __SYSCALL_TO_ERRNO(ret);
 }
 

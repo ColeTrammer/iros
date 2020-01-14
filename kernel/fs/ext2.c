@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 
 #include <kernel/fs/dev.h>
@@ -18,6 +19,10 @@
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/inode_vm_object.h>
+#include <kernel/mem/page.h>
+#include <kernel/mem/vm_allocator.h>
+#include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
 static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
@@ -25,7 +30,7 @@ static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
 static struct super_block_operations s_op = { &ext2_rename };
 
 static struct inode_operations ext2_i_op = { NULL,         &ext2_lookup, &ext2_open,  &ext2_stat, NULL, NULL,
-                                             &ext2_unlink, NULL,         &ext2_chmod, NULL,       NULL };
+                                             &ext2_unlink, NULL,         &ext2_chmod, &ext2_mmap, NULL };
 
 static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,  &ext2_stat, NULL, &ext2_mkdir,
                                                  NULL,         &ext2_rmdir,  &ext2_chmod, NULL,       NULL };
@@ -1440,6 +1445,42 @@ int ext2_chmod(struct inode *inode, mode_t mode) {
 
     inode->mode = mode;
     return ext2_sync_inode(inode);
+}
+
+intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
+    offset &= ~0xFFF;
+    len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
+    if (!region) {
+        return -ENOMEM;
+    }
+
+    assert(offset % PAGE_SIZE == 0);
+    assert(len % PAGE_SIZE == 0);
+
+    struct vm_object *object = NULL;
+    if (flags & MAP_PRIVATE) {
+        object = vm_create_inode_object(inode, flags);
+    } else {
+        if (!inode->vm_object) {
+            object = vm_create_inode_object(inode, flags);
+        } else {
+            bump_vm_object(inode->vm_object);
+        }
+        inode->vm_object = object;
+    }
+
+    assert(object);
+    region->vm_object = object;
+    region->vm_object_offset = offset;
+
+    int ret = vm_map_region_with_object(region);
+    if (ret < 0) {
+        return (intptr_t) ret;
+    }
+
+    return region->start;
 }
 
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name) {

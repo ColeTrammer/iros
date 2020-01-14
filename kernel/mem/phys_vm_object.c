@@ -14,6 +14,7 @@ static int phys_map(struct vm_object *self, struct vm_region *region) {
         map_phys_page(region->vm_object_offset + (i - region->start) + data->phys_start, i, region->flags);
     }
 
+    free(data);
     return 0;
 }
 

@@ -131,5 +131,8 @@ struct vm_region *get_vm_last_region(struct vm_region *list, uint64_t type) {
 }
 
 int vm_map_region_with_object(struct vm_region *self) {
+    assert(self->vm_object);
+    assert(self->vm_object->ops);
+    assert(self->vm_object->ops->map);
     return self->vm_object->ops->map(self->vm_object, self);
 }
