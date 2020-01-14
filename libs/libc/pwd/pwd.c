@@ -36,8 +36,9 @@ static int find_pw_entry_impl(struct passwd *passwd, char *string_buffer, size_t
     while ((string = fgets(string_buffer, string_buffer_length, file))) {
         ssize_t i = -1;
 
-#define _(x)         x
-#define to_mode_t(x) ((mode_t) strtoul(x, NULL, 10))
+#define _(x)        x
+#define to_uid_t(x) ((uid_t) strtoul(x, NULL, 10))
+#define to_gid_t(x) ((gid_t) strtoul(x, NULL, 10))
 #define READ_ENTRY(name, f)                                \
     do {                                                   \
         char *start = &string[++i];                        \
@@ -49,8 +50,8 @@ static int find_pw_entry_impl(struct passwd *passwd, char *string_buffer, size_t
 
         READ_ENTRY(name, _);
         READ_ENTRY(passwd, _);
-        READ_ENTRY(uid, to_mode_t);
-        READ_ENTRY(gid, to_mode_t);
+        READ_ENTRY(uid, to_uid_t);
+        READ_ENTRY(gid, to_gid_t);
         READ_ENTRY(gecos, _);
         READ_ENTRY(dir, _);
         READ_ENTRY(shell, _);
