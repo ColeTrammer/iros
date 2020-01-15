@@ -1394,6 +1394,7 @@ void arch_sys_mmap(struct task_state *task_state) {
             SYS_RETURN(-ENOMEM);
         }
 
+        region->flags |= (flags & MAP_SHARED) ? VM_SHARED : 0;
         region->vm_object = object;
         region->vm_object_offset = 0;
 

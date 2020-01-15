@@ -14,7 +14,7 @@
 #include <kernel/util/spinlock.h>
 
 // #define ROBUST_USER_MUTEX_DEBUG
-// #define SCHED_DEBUG
+#define SCHED_DEBUG
 
 static struct task *list_start = NULL;
 static struct task *list_end = NULL;

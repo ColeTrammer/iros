@@ -94,7 +94,7 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
 }
 
 static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct virt_page_info *info) {
-    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_PROT_NONE);
+    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_SHARED | VM_PROT_NONE);
     flags |= 0x01;
 
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
@@ -158,7 +158,7 @@ void map_page_flags(uintptr_t virt_addr, uint64_t flags) {
     }
 
     flags |= (flags & VM_PROT_NONE ? 0x01 : 0);
-    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_PROT_NONE);
+    flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_SHARED | VM_PROT_NONE);
     *pt_entry |= flags;
     invlpg(virt_addr);
 }
@@ -270,7 +270,7 @@ uintptr_t clone_process_paging_structure() {
                             invlpg((uintptr_t) pt);
 
                             for (uint64_t l = 0; l < MAX_PT_ENTRIES; l++) {
-                                if (pt[l] != 0) {
+                                if (pt[l] != 0 && !(pt[l] & VM_SHARED)) {
                                     map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
                                     uint64_t *temp_page = TEMP_PAGE;
                                     uint64_t *page = (uint64_t *) VIRT_ADDR(i, j, k, l);
