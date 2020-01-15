@@ -61,7 +61,6 @@ int main(int argc, char** argv) {
     setenv("USER", user_passwd->pw_name, 1);
     setenv("SHELL", user_passwd->pw_shell, 1);
     setenv("HOME", user_passwd->pw_dir, 1);
-    setenv("IFS", " \t\n", 0);
 
     struct input_source input_source;
 
