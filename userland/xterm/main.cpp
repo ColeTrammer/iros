@@ -32,7 +32,10 @@ int main() {
         int sfd = open(ptsname(mfd), O_RDWR);
         assert(sfd != -1);
 
-        setsid();
+        if (setsid() < -1) {
+            perror("setsid");
+            _exit(1);
+        }
         tcsetpgrp(mfd, getpid());
         ioctl(mfd, TIOSCTTY);
         signal(SIGTTOU, SIG_DFL);
@@ -44,6 +47,7 @@ int main() {
         close(sfd);
         close(mfd);
 
+        putenv((char *) "TERM=xterm");
         execl("/bin/sh", "sh", NULL);
         _exit(127);
     } else if (pid == -1) {

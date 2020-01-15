@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -11,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
+#include <sys/utsname.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
@@ -42,7 +44,25 @@ static void on_int(int signo) {
     siglongjmp(env, 1);
 }
 
+struct passwd* user_passwd;
+struct utsname system_name;
+
 int main(int argc, char** argv) {
+    if (uname(&system_name)) {
+        perror("uname");
+        return 1;
+    }
+
+    if (!(user_passwd = getpwuid(getuid()))) {
+        perror("getpwuid");
+        return 1;
+    }
+
+    setenv("USER", user_passwd->pw_name, 1);
+    setenv("SHELL", user_passwd->pw_shell, 1);
+    setenv("HOME", user_passwd->pw_dir, 1);
+    setenv("IFS", " \t\n", 0);
+
     struct input_source input_source;
 
     // Respect -c
@@ -137,7 +157,7 @@ int main(int argc, char** argv) {
         tcgetattr(STDOUT_FILENO, &saved_termios);
         atexit(restore_termios);
 
-        char* base = getenv("HOME");
+        char* base = user_passwd->pw_dir;
         char* hist_file_name = (char*) ".sh_hist";
         char* hist_file = reinterpret_cast<char*>(malloc(strlen(base) + strlen(hist_file_name) + 2));
         strcpy(hist_file, base);

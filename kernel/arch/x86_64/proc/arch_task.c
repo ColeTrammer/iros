@@ -29,9 +29,7 @@ extern struct task *current_task;
 /* Default Args And Envp Passed to First Program */
 static char *test_argv[2] = { "start", NULL };
 
-static char *test_envp[7] = {
-    "PATH=/bin:/usr/bin:/initrd", "HOME=/home/eloc", "IFS= \t\n", "USER=eloc", "TERM=xterm", "SHELL=/bin/sh", NULL
-};
+static char *test_envp[2] = { "PATH=/bin:/usr/bin:/initrd", NULL };
 
 static void kernel_idle() {
     disable_interrupts();

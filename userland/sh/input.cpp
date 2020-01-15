@@ -1,10 +1,3 @@
-#include "builtin.h"
-#include "command.h"
-#include "input.h"
-#include "job.h"
-#include "sh_lexer.h"
-#include "sh_parser.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -19,6 +12,13 @@
 #include <sys/utsname.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include "builtin.h"
+#include "command.h"
+#include "input.h"
+#include "job.h"
+#include "sh_lexer.h"
+#include "sh_parser.h"
 
 enum class LineStatus { Done, Continue, EscapedNewline, Error };
 
@@ -66,23 +66,10 @@ static char *__getcwd() {
     return cwd;
 }
 
-static struct passwd *user_passwd;
-static struct utsname system_name;
+extern struct passwd *user_passwd;
+extern struct utsname system_name;
 
 static void print_ps1_prompt() {
-    if (!user_passwd) {
-        user_passwd = getpwuid(getuid());
-        if (!user_passwd) {
-            perror("getpwuid");
-            exit(1);
-        }
-
-        if (uname(&system_name)) {
-            perror("uname");
-            exit(1);
-        }
-    }
-
     char *cwd = __getcwd();
     fprintf(stderr, "\033[32;1m%s@%s\033[0m:\033[36;1m%s\033[0m$ ", user_passwd->pw_name, system_name.nodename, cwd);
     free(cwd);
