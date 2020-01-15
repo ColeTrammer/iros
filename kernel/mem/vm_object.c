@@ -13,6 +13,9 @@ void drop_vm_object(struct vm_object *obj) {
 #endif /* VM_OBJECT_REF_COUNT_DEBUG */
     assert(obj->ref_count > 0);
     if (--obj->ref_count == 0) {
+#ifdef VM_OBJECT_REF_COUNT_DEBUG
+        debug_log("vm_object->kill: [ %p ]\n", obj);
+#endif /* VM_OBJECT_REF_COUNT_DEBUG */
         if (obj->ops->kill) {
             obj->ops->kill(obj);
         }

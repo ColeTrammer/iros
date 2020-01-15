@@ -19,6 +19,7 @@
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/elf64.h>
@@ -1383,15 +1384,20 @@ void arch_sys_mmap(struct task_state *task_state) {
     }
 
     if (flags & MAP_ANONYMOUS) {
-        if (!(flags & MAP_PRIVATE)) {
-            SYS_RETURN(-EINVAL);
-        }
-
         struct vm_region *region = map_region(addr, length, prot, flags & MAP_STACK ? VM_TASK_STACK : VM_PROCESS_ANON_MAPPING);
         if (region == NULL) {
             SYS_RETURN(-ENOMEM);
         }
 
+        struct vm_object *object = vm_create_anon_object(length);
+        if (!object) {
+            SYS_RETURN(-ENOMEM);
+        }
+
+        region->vm_object = object;
+        region->vm_object_offset = 0;
+
+        vm_map_region_with_object(region);
         SYS_RETURN(region->start);
     }
 

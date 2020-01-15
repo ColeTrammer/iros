@@ -417,7 +417,8 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
                     //       would either do nothing or cause a page fault, and thus should be
                     //       avoided.
                     continue;
-                } else if (region->type == VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
+                } else if (region->vm_object != NULL) {
+                    // NOTE: The vm object is responsible for unmapping the physical pages
                     do_unmap_page(page, false);
                 } else {
                     unmap_page(page);
