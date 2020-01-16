@@ -12,6 +12,8 @@
 #include "command.h"
 #include "input.h"
 #include "job.h"
+#include "sh_lexer.h"
+#include "sh_parser.h"
 #include "sh_state.h"
 
 static int op_exit(char **args) {
@@ -589,6 +591,35 @@ static int op_test(char **argv) {
     return !invert;
 }
 
+static int op_eval(char **argv) {
+    if (!argv[1]) {
+        return 0;
+    }
+
+    String string;
+    for (size_t i = 1; argv[i]; i++) {
+        string += argv[i];
+        if (argv[i + 1]) {
+            string += " ";
+        }
+    }
+
+    ShLexer lexer(string.string(), string.size());
+    if (!lexer.lex()) {
+        fprintf(stderr, "syntax error: unexpected end of input\n");
+        return 1;
+    }
+
+    ShParser parser(lexer);
+    if (!parser.parse()) {
+        return 1;
+    }
+
+    ShValue program(parser.result());
+    command_run(program.program());
+    return get_last_exit_status();
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
@@ -598,7 +629,7 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { ".", op_dot, true },           { "source", op_dot, true },    { "alias", op_alias, true },
     { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true },
     { "exec", op_exec, true },       { "set", op_set, true },       { "[", op_test, true },
-    { "test", op_test, true }
+    { "test", op_test, true },       { "eval", op_eval, true }
 };
 
 struct builtin_op *get_builtins() {

@@ -14,14 +14,12 @@ namespace LIIM {
 
 class String {
 public:
-    String() {}
-
     explicit String(char c) : m_size(2), m_string(reinterpret_cast<char*>(malloc(2))) {
         m_string[0] = c;
         m_string[1] = '\0';
     }
 
-    String(const char* chars) : m_size(strlen(chars)), m_string(strdup(chars)) {}
+    String(const char* chars = "") : m_size(strlen(chars)), m_string(strdup(chars)) {}
 
     String(const String& other) : m_size(other.size()), m_string(strdup(other.string())) {}
 

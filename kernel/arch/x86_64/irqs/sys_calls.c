@@ -2143,9 +2143,11 @@ void arch_sys_invalid_system_call(struct task_state *task_state) {
 void arch_system_call_entry(struct task_state *task_state) {
 #ifdef SYSCALL_DEBUG
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(x, y, a)    \
-    case SC_##x:                        \
-        debug_log("syscall: %s\n", #y); \
+#define __ENUMERATE_SYSCALL(x, y, a)                                \
+    case SC_##x:                                                    \
+        if ((enum sc_number) task_state->cpu_state.rdi != SC_IOCTL) \
+                                                                    \
+            debug_log("syscall: %s\n", #y);                         \
         break;
     switch ((enum sc_number) task_state->cpu_state.rdi) {
         ENUMERATE_SYSCALLS
