@@ -71,7 +71,16 @@ extern struct utsname system_name;
 
 static void print_ps1_prompt() {
     char *cwd = __getcwd();
-    fprintf(stderr, "\033[32;1m%s@%s\033[0m:\033[36;1m%s\033[0m$ ", user_passwd->pw_name, system_name.nodename, cwd);
+    char *cwd_use = cwd;
+
+    size_t home_dir_length = strlen(user_passwd->pw_dir);
+    if (strncmp(cwd, user_passwd->pw_dir, home_dir_length) == 0) {
+        cwd_use = cwd + home_dir_length - 1;
+        *cwd_use = '~';
+    }
+
+    fprintf(stderr, "\033[32;1m%s@%s\033[0m:\033[%s;1m%s\033[0m$ ", user_passwd->pw_name, system_name.nodename,
+            strcmp(system_name.sysname, "os_2") == 0 ? "36" : "34", cwd_use);
     free(cwd);
 }
 
