@@ -30,12 +30,19 @@ static int op_exit(char **args) {
 }
 
 static int op_cd(char **args) {
-    if (!args[1] || args[2]) {
+    if (args[2]) {
         printf("Usage: %s <dir>\n", args[0]);
         return 0;
     }
 
-    int ret = chdir(args[1]);
+    char *dir = NULL;
+    if (!args[1]) {
+        dir = getenv("HOME");
+    } else {
+        dir = args[1];
+    }
+
+    int ret = chdir(dir);
     if (ret != 0) {
         perror("Shell");
     }
