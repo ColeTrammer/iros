@@ -84,7 +84,10 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
 #ifdef PROC_REF_COUNT_DEBUG
         debug_log("Finished destroying process: [ %d ]\n", process->pid);
 #endif /* PROC_REF_COUNT_DEBUG */
-        free(process->cwd);
+        if (process->cwd) {
+            free(process->cwd->name);
+            free(process->cwd);
+        }
         free(process);
         return;
     }
