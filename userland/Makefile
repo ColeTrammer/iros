@@ -1,5 +1,5 @@
 # Lists all projects
-PROJECTS=cat chmod clear cp date echo env false grep head kill ls mkdir mv nslookup ping pwd rm rmdir sh sleep start stat touch true window_server xterm
+PROJECTS=cat chmod clear cp date echo env false grep head kill ln ls mkdir mv nslookup ping pwd rm rmdir sh sleep start stat touch true window_server xterm
 HEADER_PROJECTS=window_server
 
 export ROOT?=$(CURDIR)/..

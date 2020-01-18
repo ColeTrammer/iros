@@ -27,6 +27,7 @@ struct inode_operations {
     int (*rmdir)(struct tnode *tnode);
     int (*chmod)(struct inode *inode, mode_t mode);
     intptr_t (*mmap)(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
+    struct inode *(*symlink)(struct tnode *tnode, const char *name, const char *target, int *error);
     void (*on_inode_destruction)(struct inode *inode);
 };
 

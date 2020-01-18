@@ -185,6 +185,7 @@ struct tnode *ext2_mount(struct file_system *fs, char *device_path);
 int ext2_chmod(struct inode *inode, mode_t mode);
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name);
 intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
+struct inode *ext2_symlink(struct tnode *tnode, const char *name, const char *target, int *error);
 
 void init_ext2();
 

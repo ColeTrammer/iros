@@ -204,6 +204,11 @@ int lstat(const char *__restrict path, struct stat *__restrict stat_struct) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
+int symlink(const char *target, const char *linkpath) {
+    int ret = (int) syscall(SC_SYMLINK, target, linkpath);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
 ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t bufsiz) {
     ssize_t ret = (ssize_t) syscall(SC_READLINK, pathname, buf, bufsiz);
     __SYSCALL_TO_ERRNO(ret);

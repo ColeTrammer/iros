@@ -82,6 +82,7 @@ int unlink(const char *pathname);
 int rmdir(const char *pathname);
 int access(const char *pathname, int mode);
 ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t bufsiz);
+int symlink(const char *target, const char *linkpath);
 
 unsigned int alarm(unsigned int seconds);
 char *ttyname(int fd);

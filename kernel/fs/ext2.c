@@ -30,10 +30,10 @@ static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
 static struct super_block_operations s_op = { &ext2_rename };
 
 static struct inode_operations ext2_i_op = { NULL,         &ext2_lookup, &ext2_open,  &ext2_stat, NULL, NULL,
-                                             &ext2_unlink, NULL,         &ext2_chmod, &ext2_mmap, NULL };
+                                             &ext2_unlink, NULL,         &ext2_chmod, &ext2_mmap, NULL, NULL };
 
-static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,  &ext2_stat, NULL, &ext2_mkdir,
-                                                 NULL,         &ext2_rmdir,  &ext2_chmod, NULL,       NULL };
+static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,  &ext2_stat, NULL,          &ext2_mkdir,
+                                                 NULL,         &ext2_rmdir,  &ext2_chmod, NULL,       &ext2_symlink, NULL };
 
 static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL };
 
@@ -1169,6 +1169,36 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_gid = raw_inode->gid;
 
     return 0;
+}
+
+struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *target, int *error) {
+    if (!(tparent->inode->mode & S_IWUSR)) {
+        *error = -EPERM;
+        return NULL;
+    }
+
+    struct inode *inode = ext2_create(tparent, name, S_IFLNK | 0777, error);
+    if (inode == NULL) {
+        return NULL;
+    }
+
+    size_t target_len = strlen(target);
+    if (target_len < 60) {
+        struct raw_inode *raw_inode = inode->private_data;
+        memcpy(raw_inode->block, target, target_len);
+
+        *error = ext2_sync_inode(inode);
+        if (*error < 0) {
+            free(inode);
+            return NULL;
+        }
+
+        return inode;
+    }
+
+    // FIXME: allow symlinks longer than 60 characters
+    assert(false);
+    return inode;
 }
 
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {

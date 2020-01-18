@@ -40,6 +40,7 @@ int fs_fchmod(struct file *file, mode_t mode);
 intptr_t fs_mmap(void *addr, size_t length, int prot, int flags, struct file *file, off_t offset);
 int fs_rename(const char *old_path, const char *new_path);
 ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz);
+int fs_symlink(const char *target, const char *linkpath);
 int fs_mount(const char *src, const char *path, const char *type);
 
 struct file_descriptor fs_clone(struct file_descriptor desc);

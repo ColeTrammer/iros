@@ -1132,6 +1132,68 @@ int fs_fchmod(struct file *file, mode_t mode) {
     return -EPERM;
 }
 
+int fs_symlink(const char *target, const char *linkpath) {
+    char *path = malloc(strlen(linkpath) + 1);
+    strcpy(path, linkpath);
+
+    char *last_slash = strrchr(path, '/');
+    *last_slash = '\0';
+
+    struct tnode *tparent;
+
+    /* Root is a special case */
+    int ret;
+    if (last_slash == path) {
+        ret = iname("/", 0, &tparent);
+    } else {
+        ret = iname(path, 0, &tparent);
+    }
+
+    if (ret < 0) {
+        free(path);
+        return ret;
+    }
+
+    struct mount *mount = tparent->inode->mounts;
+    while (mount != NULL) {
+        if (strcmp(mount->name, last_slash + 1) == 0) {
+            free(path);
+            return -EEXIST;
+        }
+
+        mount = mount->next;
+    }
+
+    tparent->inode->i_op->lookup(tparent->inode, NULL);
+    if (tparent->inode->tnode_list && find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+        free(path);
+        return -EEXIST;
+    }
+
+    if (!tparent->inode->i_op->symlink) {
+        free(path);
+        return -EINVAL;
+    }
+
+    debug_log("Adding symlink to: [ %s ]\n", tparent->name);
+
+    int error = 0;
+    struct inode *inode = tparent->inode->i_op->symlink(tparent, last_slash + 1, target, &error);
+    if (inode == NULL) {
+        free(path);
+        return error;
+    }
+
+    struct tnode *tnode = malloc(sizeof(struct tnode));
+    tnode->inode = inode;
+    tnode->name = malloc(strlen(last_slash + 1) + 1);
+    strcpy(tnode->name, last_slash + 1);
+    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+
+    free(path);
+    return 0;
+}
+
 // NOTE: we don't have to write out to disk, because we only loose info
 //       stored on the inode after rebooting, and at that point, the binding
 //       task will no longer exist.
