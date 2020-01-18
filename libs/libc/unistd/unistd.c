@@ -200,7 +200,8 @@ int chown(const char *pathname, uid_t owner, gid_t group) {
 }
 
 int lstat(const char *__restrict path, struct stat *__restrict stat_struct) {
-    return stat(path, stat_struct);
+    int ret = (int) syscall(SC_LSTAT, path, stat_struct);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t bufsiz) {

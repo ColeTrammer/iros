@@ -195,8 +195,9 @@ void dev_add(struct device *device, const char *_path) {
     *_name = '\0';
     _name++;
 
-    struct tnode *parent = iname(path);
-    if (parent == NULL) {
+    struct tnode *parent;
+    int ret = iname(path, 0, &parent);
+    if (ret < 0) {
         /* Probably should add the directory that is missing */
         free(path);
         return;
@@ -247,8 +248,9 @@ void dev_add(struct device *device, const char *_path) {
 void dev_remove(const char *_path) {
     char *path = to_dev_path(_path);
 
-    struct tnode *tnode = iname(path);
-    if (tnode == NULL) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
         /* This probably shouldn't happen */
         free(path);
         return;

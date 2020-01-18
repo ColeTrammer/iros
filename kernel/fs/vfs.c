@@ -69,13 +69,19 @@ void drop_inode_reference(struct inode *inode) {
     drop_inode_reference_unlocked(inode);
 }
 
-struct tnode *iname(const char *_path) {
+struct tnode *fs_root(void) {
+    return root->super_block->root;
+}
+
+int iname(const char *_path, int flags, struct tnode **result) {
     assert(root != NULL);
     assert(root->super_block != NULL);
 
+    (void) flags;
+
     struct tnode *t_root = root->super_block->root;
     if (t_root == NULL) {
-        return NULL;
+        return -ENOENT;
     }
 
     assert(t_root->inode != NULL);
@@ -103,7 +109,7 @@ struct tnode *iname(const char *_path) {
         /* Exit if we're trying to lookup past a file */
         if (!(parent->inode->flags & FS_DIR)) {
             free(save_path);
-            return NULL;
+            return -ENOTDIR;
         }
 
         /* Check for . and .. */
@@ -157,7 +163,7 @@ struct tnode *iname(const char *_path) {
     if (parent == NULL) {
         /* Couldn't find what we were looking for */
         free(save_path);
-        return NULL;
+        return -ENOENT;
     }
 
     struct inode *inode = parent->inode;
@@ -165,11 +171,15 @@ struct tnode *iname(const char *_path) {
     /* Shouldn't let you at a / at the end of a file name or root (but only if the path is // and not /./) */
     if ((path != NULL && path[0] == '/') && ((inode->flags & FS_FILE) || (inode == inode->parent->inode && strlen(_path) == 2))) {
         free(save_path);
-        return NULL;
+        return -ENOENT;
     }
 
     free(save_path);
-    return parent;
+
+    if (result) {
+        *result = parent;
+    }
+    return 0;
 }
 
 int fs_create(const char *file_name, mode_t mode) {
@@ -182,16 +192,18 @@ int fs_create(const char *file_name, mode_t mode) {
     *last_slash = '\0';
 
     struct tnode *tparent;
+
     /* Root is a special case */
+    int ret;
     if (last_slash == path) {
-        tparent = iname("/");
+        ret = iname("/", 0, &tparent);
     } else {
-        tparent = iname(path);
+        ret = iname(path, 0, &tparent);
     }
 
-    if (tparent == NULL) {
+    if (ret < 0) {
         free(path);
-        return -ENOENT;
+        return ret;
     }
 
     struct mount *mount = tparent->inode->mounts;
@@ -240,9 +252,10 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
         return NULL;
     }
 
-    struct tnode *tnode = iname(file_name);
-    if (tnode == NULL) {
-        *error = -ENOENT;
+    struct tnode *tnode;
+    int ret = iname(file_name, 0, &tnode);
+    if (ret < 0) {
+        *error = ret;
         return NULL;
     }
 
@@ -413,9 +426,25 @@ void load_fs(struct file_system *fs) {
 }
 
 int fs_stat(const char *path, struct stat *stat_struct) {
-    struct tnode *tnode = iname(path);
-    if (tnode == NULL) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
         return -ENOENT;
+    }
+
+    struct inode *inode = tnode->inode;
+    if (!inode->i_op->stat) {
+        return -EINVAL;
+    }
+
+    return inode->i_op->stat(inode, stat_struct);
+}
+
+int fs_lstat(const char *path, struct stat *stat_struct) {
+    struct tnode *tnode;
+    int ret = iname(path, INAME_DONT_FOLLOW_SYMLINK, &tnode);
+    if (ret < 0) {
+        return ret;
     }
 
     struct inode *inode = tnode->inode;
@@ -473,16 +502,18 @@ int fs_mkdir(const char *_path, mode_t mode) {
     *last_slash = '\0';
 
     struct tnode *tparent;
+
     /* Root is a special case */
+    int ret;
     if (last_slash == path) {
-        tparent = iname("/");
+        ret = iname("/", 0, &tparent);
     } else {
-        tparent = iname(path);
+        ret = iname(path, 0, &tparent);
     }
 
-    if (tparent == NULL) {
+    if (ret < 0) {
         free(path);
-        return -ENOENT;
+        return ret;
     }
 
     if (tparent->inode->flags & FS_FILE) {
@@ -559,8 +590,9 @@ int fs_unlink(const char *path) {
 
     debug_log("Unlinking: [ %s ]\n", path);
 
-    struct tnode *tnode = iname(path);
-    if (tnode == NULL) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
         return -ENOENT;
     }
 
@@ -580,7 +612,7 @@ int fs_unlink(const char *path) {
 
     spin_lock(&tnode->inode->lock);
 
-    int ret = tnode->inode->i_op->unlink(tnode);
+    ret = tnode->inode->i_op->unlink(tnode);
     if (ret != 0) {
         return ret;
     }
@@ -625,8 +657,9 @@ static bool dir_empty(struct inode *inode) {
 int fs_rmdir(const char *path) {
     assert(path);
 
-    struct tnode *tnode = iname(path);
-    if (tnode == NULL) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
         return -ENOENT;
     }
 
@@ -644,7 +677,7 @@ int fs_rmdir(const char *path) {
 
     spin_lock(&tnode->inode->lock);
 
-    int ret = tnode->inode->i_op->rmdir(tnode);
+    ret = tnode->inode->i_op->rmdir(tnode);
     if (ret != 0) {
         return ret;
     }
@@ -660,9 +693,10 @@ int fs_rmdir(const char *path) {
 int fs_chmod(const char *path, mode_t mode) {
     assert(path);
 
-    struct tnode *tnode = iname(path);
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
 
-    if (tnode == NULL) {
+    if (ret < 0) {
         return -ENOENT;
     }
 
@@ -701,9 +735,10 @@ int fs_rename(const char *old_path, const char *new_path) {
 
     debug_log("Rename: [ %s, %s ]\n", old_path, new_path);
 
-    struct tnode *old = iname(old_path);
-    if (old == NULL) {
-        return -ENOENT;
+    struct tnode *old;
+    int ret = iname(old_path, 0, &old);
+    if (ret < 0) {
+        return ret;
     }
 
     char *new_path_last_slash = strrchr(new_path, '/');
@@ -714,7 +749,7 @@ int fs_rename(const char *old_path, const char *new_path) {
         new_parent = root->super_block->root;
     } else {
         *new_path_last_slash = '\0';
-        new_parent = iname(new_path);
+        iname(new_path, 0, &new_parent);
         *new_path_last_slash = '/';
     }
 
@@ -726,7 +761,8 @@ int fs_rename(const char *old_path, const char *new_path) {
         return -EXDEV;
     }
 
-    struct tnode *existing_tnode = iname(new_path);
+    struct tnode *existing_tnode = NULL;
+    iname(new_path, 0, &existing_tnode);
     if (existing_tnode && (((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
                            (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
         return -ENOTDIR;
@@ -770,7 +806,7 @@ int fs_rename(const char *old_path, const char *new_path) {
         drop_inode_reference(inode);
     }
 
-    int ret = old->inode->super_block->op->rename(old, new_parent, new_path_last_slash + 1);
+    ret = old->inode->super_block->op->rename(old, new_parent, new_path_last_slash + 1);
     if (ret != 0) {
         return ret;
     }
@@ -848,12 +884,16 @@ int fs_mount(const char *src, const char *path, const char *type) {
             if (strlen(path_copy) == 0) {
                 mount_on = root->super_block->root;
             } else {
-                mount_on = iname(path_copy);
+                int ret = iname(path_copy, 0, &mount_on);
+                if (ret < 0) {
+                    free(path_copy);
+                    return ret;
+                }
             }
 
             if (mount_on == NULL || !(mount_on->inode->flags & FS_DIR)) {
                 free(path_copy);
-                return -1;
+                return -ENOTDIR;
             }
 
             struct mount **list = &mount_on->inode->mounts;
@@ -913,9 +953,10 @@ struct file_descriptor fs_clone(struct file_descriptor desc) {
 int fs_access(const char *path, int mode) {
     assert(path);
 
-    struct tnode *tnode = iname(path);
-    if (!tnode) {
-        return -ENOENT;
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
+        return ret;
     }
 
     if (mode == F_OK) {

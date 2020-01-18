@@ -10,10 +10,13 @@
 
 struct file_descriptor;
 
+#define INAME_DONT_FOLLOW_SYMLINK 1
+
 void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
-struct tnode *iname(const char *path);
+int iname(const char *path, int flags, struct tnode **result);
 
+struct tnode *fs_root(void);
 int fs_create(const char *path, mode_t mode);
 struct file *fs_open(const char *file_name, int flags, int *error);
 int fs_close(struct file *file);
@@ -22,6 +25,7 @@ ssize_t fs_write(struct file *file, const void *buffer, size_t len);
 off_t fs_seek(struct file *file, off_t offset, int whence);
 long fs_tell(struct file *file);
 int fs_stat(const char *file_name, struct stat *stat_struct);
+int fs_lstat(const char *path, struct stat *stat_struct);
 int fs_ioctl(struct file *file, unsigned long request, void *argp);
 int fs_truncate(struct file *file, off_t length);
 int fs_mkdir(const char *path, mode_t mode);

@@ -684,9 +684,10 @@ void arch_sys_chdir(struct task_state *task_state) {
 
     struct task *task = get_current_task();
 
-    struct tnode *tnode = iname(path);
-    if (!tnode) {
-        SYS_RETURN(-ENOENT);
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
+        SYS_RETURN(ret);
     }
 
     if (!(tnode->inode->flags & FS_DIR)) {
@@ -2085,6 +2086,15 @@ void arch_sys_readlink(struct task_state *task_state) {
     ssize_t ret = fs_readlink(path, buf, bufsiz);
 
     SYS_RETURN(ret);
+}
+
+void arch_sys_lstat(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    const char *path = (const char *) task_state->cpu_state.rsi;
+    struct stat *stat_struct = (struct stat *) task_state->cpu_state.rdx;
+
+    SYS_RETURN(fs_lstat(path, stat_struct));
 }
 
 void arch_sys_invalid_system_call(struct task_state *task_state) {

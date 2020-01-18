@@ -74,7 +74,7 @@ int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen
     struct unix_socket_data *data = calloc(1, sizeof(struct unix_socket_data));
     strncpy(data->bound_path, addr->sun_path, UNIX_PATH_MAX);
 
-    if (iname(data->bound_path)) {
+    if (iname(data->bound_path, 0, NULL) == 0) {
         free(data);
         return -EADDRINUSE;
     }
@@ -85,7 +85,8 @@ int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen
         return ret;
     }
 
-    struct tnode *tnode = iname(data->bound_path);
+    struct tnode *tnode;
+    assert(iname(data->bound_path, 0, &tnode) == 0);
     ret = fs_bind_socket_to_inode(tnode->inode, socket->id);
     if (ret == -1) {
         free(data);
@@ -102,7 +103,8 @@ int net_unix_close(struct socket *socket) {
     if (socket->state == BOUND || socket->state == LISTENING) {
         assert(data);
 
-        struct tnode *tnode = iname(data->bound_path);
+        struct tnode *tnode;
+        assert(iname(data->bound_path, 0, &tnode) == 0);
         assert(tnode);
 
         tnode->inode->socket_id = 0;
@@ -137,7 +139,8 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
         return -EINVAL;
     }
 
-    struct tnode *tnode = iname(addr->sun_path);
+    struct tnode *tnode = NULL;
+    iname(addr->sun_path, 0, &tnode);
     if (!tnode || tnode->inode->socket_id == 0) {
         return -ECONNREFUSED;
     }

@@ -226,7 +226,7 @@ struct task *load_task(const char *file_name) {
     task->sched_state = RUNNING_INTERRUPTIBLE;
     task->process->cwd = malloc(2);
     task->process->tty = -1;
-    struct tnode *root = iname("/");
+    struct tnode *root = fs_root();
     task->process->cwd = malloc(sizeof(struct tnode));
     task->process->cwd->inode = root->inode;
     task->process->cwd->name = strdup(root->name);
