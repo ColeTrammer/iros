@@ -25,7 +25,7 @@ root:x:0:
 eloc:x:100:
 __GROUP__
 
-ln -s mnt/bin/ls mnt/home/eloc/ls
+ln -s /bin/ls mnt/home/eloc/ls
 
 umount /dev/loop100
 losetup -d /dev/loop100

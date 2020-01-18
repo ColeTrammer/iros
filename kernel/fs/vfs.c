@@ -73,15 +73,9 @@ struct tnode *fs_root(void) {
     return root->super_block->root;
 }
 
-int iname(const char *_path, int flags, struct tnode **result) {
-    assert(root != NULL);
-    assert(root->super_block != NULL);
-
-    (void) flags;
-
-    struct tnode *t_root = root->super_block->root;
-    if (t_root == NULL) {
-        return -ENOENT;
+static int do_iname(const char *_path, int flags, struct tnode *t_root, struct tnode *t_parent, struct tnode **result, int depth) {
+    if (depth >= 40) {
+        return -ELOOP;
     }
 
     assert(t_root->inode != NULL);
@@ -91,7 +85,7 @@ int iname(const char *_path, int flags, struct tnode **result) {
 
     struct tnode *parent = t_root;
     if (_path[0] != '/') {
-        parent = get_current_task()->process->cwd;
+        parent = t_parent;
         path = malloc(strlen(_path) + 2);
         path[0] = '/';
         strcpy(path + 1, _path);
@@ -176,10 +170,59 @@ int iname(const char *_path, int flags, struct tnode **result) {
 
     free(save_path);
 
-    if (result) {
+    if ((flags & INAME_DONT_FOLLOW_TRAILING_SYMLINK) || !(inode->flags & FS_LINK)) {
         *result = parent;
+        return 0;
     }
-    return 0;
+
+    char *sym_path = malloc(inode->size + 1);
+    int err = 0;
+    struct file *f = inode->i_op->open(inode, O_RDONLY, &err);
+    if (err < 0) {
+        return err;
+    }
+
+    bool in_store = false;
+    if (fs_inode_get(inode->device, inode->index)) {
+        in_store = true;
+    } else {
+        fs_inode_put(inode);
+    }
+    ssize_t _ret = f->f_op->read(f, sym_path, inode->size);
+
+    if (!in_store) {
+        fs_inode_del(inode->device, inode->index);
+    }
+
+    if (_ret < 0) {
+        return _ret;
+    }
+
+    if (f->f_op->close) {
+        f->f_op->close(f);
+    }
+
+    free(f);
+
+    sym_path[inode->size] = '\0';
+
+    int ret = do_iname(sym_path, flags, t_root, parent->inode->parent, result, depth + 1);
+
+    free(sym_path);
+
+    return ret;
+}
+
+int iname(const char *_path, int flags, struct tnode **result) {
+    assert(root != NULL);
+    assert(root->super_block != NULL);
+
+    struct tnode *t_root = root->super_block->root;
+    if (t_root == NULL) {
+        return -ENOENT;
+    }
+
+    return do_iname(_path, flags, t_root, get_current_task()->process->cwd, result, 0);
 }
 
 int fs_create(const char *file_name, mode_t mode) {
@@ -442,7 +485,8 @@ int fs_stat(const char *path, struct stat *stat_struct) {
 
 int fs_lstat(const char *path, struct stat *stat_struct) {
     struct tnode *tnode;
-    int ret = iname(path, INAME_DONT_FOLLOW_SYMLINK, &tnode);
+
+    int ret = iname(path, INAME_DONT_FOLLOW_TRAILING_SYMLINK, &tnode);
     if (ret < 0) {
         return ret;
     }
@@ -591,7 +635,7 @@ int fs_unlink(const char *path) {
     debug_log("Unlinking: [ %s ]\n", path);
 
     struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
+    int ret = iname(path, INAME_DONT_FOLLOW_TRAILING_SYMLINK, &tnode);
     if (ret < 0) {
         return -ENOENT;
     }
@@ -607,6 +651,7 @@ int fs_unlink(const char *path) {
     }
 
     if (tnode->inode->i_op->unlink == NULL) {
+        debug_log("No i_op->unlink: [ %s ]\n", tnode->name);
         return -EINVAL;
     }
 
@@ -658,7 +703,7 @@ int fs_rmdir(const char *path) {
     assert(path);
 
     struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
+    int ret = iname(path, INAME_DONT_FOLLOW_TRAILING_SYMLINK, &tnode);
     if (ret < 0) {
         return -ENOENT;
     }
@@ -1023,19 +1068,45 @@ int fs_fcntl(struct file_descriptor *desc, int command, int arg) {
 }
 
 ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
-    int err = 0;
-    struct file *file = fs_open(path, O_RDONLY, &err);
-    if (!file) {
-        return (ssize_t) err;
+    struct tnode *link;
+    {
+        int ret = iname(path, INAME_DONT_FOLLOW_TRAILING_SYMLINK, &link);
+        if (ret < 0) {
+            return ret;
+        }
     }
 
-    if (!(file->flags & FS_LINK)) {
+    if (!(link->inode->flags & FS_LINK)) {
         return -EINVAL;
     }
 
-    ssize_t ret = fs_read(file, buf, bufsiz);
+    int err = 0;
+    struct file *file = link->inode->i_op->open(link->inode, O_RDONLY, &err);
+    if (err < 0) {
+        return err;
+    }
 
-    fs_close(file);
+    assert(file->f_op->read);
+
+    bool in_store = false;
+
+    if (fs_inode_get(link->inode->device, link->inode->index)) {
+        in_store = true;
+    } else {
+        fs_inode_put(link->inode);
+    }
+
+    ssize_t ret = file->f_op->read(file, buf, bufsiz);
+
+    if (!in_store) {
+        fs_inode_del(link->inode->device, link->inode->index);
+    }
+
+    if (file->f_op->close) {
+        file->f_op->close(file);
+    }
+
+    free(file);
     return ret;
 }
 
