@@ -12,9 +12,10 @@ cp -r sysroot/* mnt
 mkdir -p mnt/home/eloc
 mkdir -p mnt/etc
 touch mnt/etc/resolv.conf
-echo "localhost 127.0.0.1" >> mnt/etc/hosts
 
-rm -f mnt/etc/passwd
+cat > mnt/etc/hosts << __HOSTS__
+localhost 127.0.0.1
+__HOSTS__
 cat > mnt/etc/passwd << __PASSWD__
 root:x:0:0:root:/:/bin/sh
 eloc:x:100:100:eloc,,,:/home/eloc:/bin/sh
@@ -23,6 +24,8 @@ cat > mnt/etc/group << __GROUP__
 root:x:0:
 eloc:x:100:
 __GROUP__
+
+ln -s mnt/bin/ls mnt/home/eloc/ls
 
 umount /dev/loop100
 losetup -d /dev/loop100

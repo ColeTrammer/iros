@@ -203,6 +203,11 @@ int lstat(const char *__restrict path, struct stat *__restrict stat_struct) {
     return stat(path, stat_struct);
 }
 
+ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t bufsiz) {
+    ssize_t ret = (ssize_t) syscall(SC_READLINK, pathname, buf, bufsiz);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
 int pause(void) {
     sigset_t set;
     sigprocmask(SIG_SETMASK, NULL, &set);

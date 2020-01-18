@@ -131,7 +131,7 @@ struct raw_dirent {
 #define EXT2_DIRENT_TYPE_CHARACTER_DEVICE 3
 #define EXT2_DIRENT_TYPE_BLOCK            4
 #define EXT2_DIRENT_TYPE_FIFO             5
-#define EXT2_DIRENT_TYPE_SOCKET           7
+#define EXT2_DIRENT_TYPE_SOCKET           6
 #define EXT2_DIRENT_TYPE_SYMBOLIC_LINK    7
     uint8_t type;
     char name[];

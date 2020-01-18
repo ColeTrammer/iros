@@ -2135,6 +2135,20 @@ finish_setsid:
     SYS_RETURN(ret);
 }
 
+void arch_sys_readlink(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    const char *_path = (const char *) task_state->cpu_state.rsi;
+    char *buf = (char *) task_state->cpu_state.rdx;
+    size_t bufsiz = (size_t) task_state->cpu_state.rcx;
+
+    char *path = get_full_path(get_current_task()->process->cwd, _path);
+    ssize_t ret = fs_readlink(path, buf, bufsiz);
+    free(path);
+
+    SYS_RETURN(ret);
+}
+
 void arch_sys_invalid_system_call(struct task_state *task_state) {
     SYS_BEGIN(task_state);
     SYS_RETURN(-ENOSYS);

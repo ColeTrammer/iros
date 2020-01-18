@@ -979,6 +979,23 @@ int fs_fcntl(struct file_descriptor *desc, int command, int arg) {
     }
 }
 
+ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
+    int err = 0;
+    struct file *file = fs_open(path, O_RDONLY, &err);
+    if (!file) {
+        return (ssize_t) err;
+    }
+
+    if (!(file->flags & FS_LINK)) {
+        return -EINVAL;
+    }
+
+    ssize_t ret = fs_read(file, buf, bufsiz);
+
+    fs_close(file);
+    return ret;
+}
+
 int fs_fstat(struct file *file, struct stat *stat_struct) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);

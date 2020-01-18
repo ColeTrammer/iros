@@ -35,6 +35,7 @@ int fs_fstat(struct file *file, struct stat *stat_struct);
 int fs_fchmod(struct file *file, mode_t mode);
 intptr_t fs_mmap(void *addr, size_t length, int prot, int flags, struct file *file, off_t offset);
 int fs_rename(char *old_path, char *new_path);
+ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz);
 int fs_mount(const char *src, const char *path, const char *type);
 
 struct file_descriptor fs_clone(struct file_descriptor desc);
@@ -60,6 +61,8 @@ static inline int fs_mode_to_flags(mode_t mode) {
         return FS_DIR;
     } else if (S_ISFIFO(mode)) {
         return FS_FIFO;
+    } else if (S_ISLNK(mode)) {
+        return FS_LINK;
     } else if (S_ISSOCK(mode)) {
         return FS_SOCKET;
     } else {

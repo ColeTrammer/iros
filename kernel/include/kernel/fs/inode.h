@@ -37,6 +37,7 @@ struct inode {
 #define FS_DIR    2U
 #define FS_FIFO   4U
 #define FS_SOCKET 8U
+#define FS_LINK   16U
     unsigned int flags;
 
     struct inode_operations *i_op;

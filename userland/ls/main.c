@@ -16,6 +16,7 @@ struct ls_dirent {
     char *name;
     char *gr_name;
     char *pw_name;
+    char *link_path;
     struct stat stat_struct;
 };
 
@@ -52,9 +53,26 @@ void fill_dirent(char *_path, const char *name) {
         strcat(d.name, name);
     }
 
-    if (stat(d.name, &d.stat_struct) != 0) {
-        perror("ls stat");
+    if (lstat(d.name, &d.stat_struct) != 0) {
+        perror("ls lstat");
         exit(1);
+    }
+
+    if (S_ISLNK(d.stat_struct.st_mode)) {
+        char *path = malloc(0x1005);
+        assert(path);
+
+        strcpy(path, " -> ");
+
+        ssize_t ret = readlink(d.name, path + 4, 0x1000);
+        if (ret < 0) {
+            perror("readlink");
+            free(path);
+            d.link_path = NULL;
+        } else {
+            path[ret + 4] = '\0';
+            d.link_path = path;
+        }
     }
 
     struct group *gr = getgrgid(d.stat_struct.st_gid);
@@ -76,6 +94,8 @@ void fill_dirent(char *_path, const char *name) {
 }
 
 void print_entry(struct ls_dirent *dirent, bool extra_info) {
+    const char *link_resolve = (extra_info && dirent->link_path && S_ISLNK(dirent->stat_struct.st_mode)) ? dirent->link_path : "";
+
     if (extra_info) {
         char buffer[50];
         snprintf(buffer, 49, "%%s %%%dlu %%s %%s %%%dld ", widest_num_links, widest_size);
@@ -113,6 +133,8 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
             color_s = "\033[35m";
         } else if (S_ISBLK(stat_struct->st_mode)) {
             color_s = "\033[33m";
+        } else if (S_ISLNK(stat_struct->st_mode)) {
+            color_s = "\033[30;47m";
         } else if (S_ISSOCK(stat_struct->st_mode)) {
             color_s = "\033[34m";
         } else {
@@ -124,7 +146,7 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
         }
     }
 
-    printf("%s%s%s%c", color_s, dirent->name, color_end, end_char);
+    printf("%s%s%s%s%c", color_s, dirent->name, color_end, link_resolve, end_char);
 }
 
 int main(int argc, char **argv) {
@@ -157,9 +179,25 @@ int main(int argc, char **argv) {
         if (d == NULL) {
             struct ls_dirent d = { 0 };
             d.name = strdup(path);
-            if (stat(d.name, &d.stat_struct) == -1) {
+            if (lstat(d.name, &d.stat_struct) == -1) {
                 perror("ls");
                 return 1;
+            }
+
+            if (S_ISLNK(d.stat_struct.st_mode)) {
+                char *path = malloc(0x1005);
+                assert(path);
+
+                strcpy(path, " -> ");
+
+                ssize_t ret = readlink(d.name, path + 4, 0x1000);
+                if (ret < 0) {
+                    free(path);
+                    d.link_path = NULL;
+                } else {
+                    path[0x1004] = '\0';
+                    d.link_path = path;
+                }
             }
 
             struct group *gr = getgrgid(d.stat_struct.st_gid);

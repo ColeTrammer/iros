@@ -533,7 +533,11 @@ static void ext2_update_tnode_list(struct inode *inode) {
             inode_to_add->index = dirent->ino;
             inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_REGULAR ? &ext2_i_op : &ext2_dir_i_op;
             inode_to_add->super_block = inode->super_block;
-            inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR ? FS_FILE : FS_DIR;
+            inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR
+                                      ? FS_FILE
+                                      : dirent->type == EXT2_DIRENT_TYPE_SOCKET
+                                            ? FS_SOCKET
+                                            : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK ? FS_LINK : FS_DIR;
             inode_to_add->ref_count = 2; // One for the vfs and one for us
             inode_to_add->readable = true;
             inode_to_add->writeable = true;
@@ -899,7 +903,7 @@ struct file *ext2_open(struct inode *inode, int flags, int *error) {
 
 /* Should provide some sort of mechanism for caching these blocks */
 static ssize_t __ext2_read(struct file *file, void *buffer, size_t len) {
-    assert(file->flags & FS_FILE);
+    assert((file->flags & FS_FILE) || (file->flags & FS_LINK));
     assert(len >= 1);
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
@@ -918,6 +922,13 @@ static ssize_t __ext2_read(struct file *file, void *buffer, size_t len) {
     size_t max_can_read = inode->size - file->position;
     len = MIN(len, max_can_read);
     ssize_t len_save = (ssize_t) len;
+
+    // Read directly from blocks if the inode->size < 60
+    if ((inode->flags & FS_LINK) && (inode->size < 60)) {
+        memcpy(buffer, (char *) ((struct raw_inode *) inode->private_data)->block + file->position, len);
+        file->position += len;
+        return len;
+    }
 
     size_t file_block_no = file->position / inode->super_block->block_size;
     size_t file_block_no_end = (file->position + len) / inode->super_block->block_size;
