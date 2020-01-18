@@ -182,7 +182,7 @@ struct task *load_kernel_task(uintptr_t entry) {
     task->process->cwd = malloc(2);
     task->process->tty = -1;
     task->tid = get_next_tid();
-    strcpy(task->process->cwd, "/");
+    task->process->cwd = NULL;
     task->next = NULL;
 
     arch_load_kernel_task(task, entry);
@@ -226,7 +226,11 @@ struct task *load_task(const char *file_name) {
     task->sched_state = RUNNING_INTERRUPTIBLE;
     task->process->cwd = malloc(2);
     task->process->tty = -1;
-    strcpy(task->process->cwd, "/");
+    struct tnode *root = iname("/");
+    task->process->cwd = malloc(sizeof(struct tnode));
+    task->process->cwd->inode = root->inode;
+    task->process->cwd->name = strdup(root->name);
+
     task->next = NULL;
 
     uintptr_t old_paging_structure = get_current_paging_structure();

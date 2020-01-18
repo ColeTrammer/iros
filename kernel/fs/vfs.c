@@ -80,16 +80,25 @@ struct tnode *iname(const char *_path) {
 
     assert(t_root->inode != NULL);
     assert(t_root->inode->i_op != NULL);
-    assert(_path[0] == '/');
 
-    char *path = malloc(strlen(_path) + 1);
-    char *save_path = path;
-    strcpy(path, _path);
+    char *path;
 
     struct tnode *parent = t_root;
+    if (_path[0] != '/') {
+        parent = get_current_task()->process->cwd;
+        path = malloc(strlen(_path) + 2);
+        path[0] = '/';
+        strcpy(path + 1, _path);
+    } else {
+        path = malloc(strlen(_path) + 1);
+        strcpy(path, _path);
+    }
+
+    char *save_path = path;
+
+    char *last_slash = strchr(path + 1, '/');
 
     /* Main VFS Loop */
-    char *last_slash = strchr(path + 1, '/');
     while (parent != NULL && path != NULL && path[1] != '\0') {
         /* Exit if we're trying to lookup past a file */
         if (!(parent->inode->flags & FS_DIR)) {
@@ -228,13 +237,6 @@ int fs_create(const char *file_name, mode_t mode) {
 struct file *fs_open(const char *file_name, int flags, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
-        return NULL;
-    }
-
-    /* We Don't Support Not Root Paths */
-    if (file_name[0] != '/') {
-        debug_log("Invalid path\n");
-        *error = -ENOENT;
         return NULL;
     }
 
@@ -693,7 +695,7 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
     return -ENODEV;
 }
 
-int fs_rename(char *old_path, char *new_path) {
+int fs_rename(const char *old_path, const char *new_path) {
     assert(old_path);
     assert(new_path);
 
@@ -1068,33 +1070,9 @@ void init_vfs() {
     assert(error == 0);
 }
 
-char *get_full_path(char *cwd, const char *relative_path) {
-    if (relative_path[0] == '/') {
-        char *path = malloc(strlen(relative_path) + 1);
-        strcpy(path, relative_path);
-        return path;
-    }
-
-    if (cwd[0] == '/' && cwd[1] == '\0') {
-        size_t len = strlen(relative_path) + 2;
-        char *path = malloc(len);
-        path[0] = '/';
-        strcpy(path + 1, relative_path);
-        return path;
-    }
-
-    size_t len = strlen(cwd) + strlen(relative_path) + 2;
-    char *path = malloc(len);
-    strcpy(path, cwd);
-    strcat(path, "/");
-    strcat(path, relative_path);
-
-    return path;
-}
-
 char *get_tnode_path(struct tnode *tnode) {
     /* Check if root */
-    if (tnode == tnode->inode->parent) {
+    if (tnode->inode == tnode->inode->parent->inode) {
         char *ret = malloc(2);
         strcpy(ret, "/");
         return ret;
@@ -1105,7 +1083,7 @@ char *get_tnode_path(struct tnode *tnode) {
 
     ssize_t len = 1;
     ssize_t i;
-    for (i = 0; tnode->inode->parent != tnode; i++) {
+    for (i = 0; tnode->inode->parent->inode != tnode->inode; i++) {
         name_buffer[i] = tnode->name;
         len += strlen(tnode->name) + 1;
         tnode = tnode->inode->parent;

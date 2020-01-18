@@ -21,8 +21,10 @@ struct file_descriptor {
     int fd_flags;
 };
 
+struct tnode;
+
 struct process {
-    char *cwd;
+    struct tnode *cwd;
     struct file_descriptor files[FOPEN_MAX];
 
     struct vm_region *process_memory;

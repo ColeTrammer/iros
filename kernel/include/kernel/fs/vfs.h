@@ -34,7 +34,7 @@ int fs_fcntl(struct file_descriptor *desc, int command, int arg);
 int fs_fstat(struct file *file, struct stat *stat_struct);
 int fs_fchmod(struct file *file, mode_t mode);
 intptr_t fs_mmap(void *addr, size_t length, int prot, int flags, struct file *file, off_t offset);
-int fs_rename(char *old_path, char *new_path);
+int fs_rename(const char *old_path, const char *new_path);
 ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz);
 int fs_mount(const char *src, const char *path, const char *type);
 
@@ -49,7 +49,6 @@ bool fs_is_exceptional(struct file *file);
 
 void load_fs(struct file_system *fs);
 
-char *get_full_path(char *cwd, const char *relative_path);
 char *get_tnode_path(struct tnode *tnode);
 
 void init_vfs();

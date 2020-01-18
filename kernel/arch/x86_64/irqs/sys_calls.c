@@ -179,8 +179,9 @@ void arch_sys_fork(struct task_state *task_state) {
     child->process->tls_master_copy_start = parent->process->tls_master_copy_start;
     child->process->tls_master_copy_size = parent->process->tls_master_copy_size;
     child->process->tls_master_copy_alignment = parent->process->tls_master_copy_alignment;
-    child_process->cwd = malloc(strlen(parent->process->cwd) + 1);
-    strcpy(child_process->cwd, parent->process->cwd);
+    child_process->cwd = malloc(sizeof(struct tnode));
+    child_process->cwd->inode = parent->process->cwd->inode;
+    child_process->cwd->name = strdup(parent->process->cwd->name);
     child_process->pgid = parent->process->pgid;
     child_process->ppid = parent->process->pid;
     child->process->uid = parent->process->uid;
@@ -217,21 +218,19 @@ void arch_sys_fork(struct task_state *task_state) {
 void arch_sys_open(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
     int flags = (int) task_state->cpu_state.rdx;
     mode_t mode = (mode_t) task_state->cpu_state.rcx;
 
-    assert(_path != NULL);
+    assert(path != NULL);
 
     int error = 0;
 
     struct task *task = get_current_task();
-    char *path = get_full_path(task->process->cwd, _path);
 
     struct file *file = fs_open(path, flags, &error);
 
     if (file && (flags & O_EXCL)) {
-        free(path);
         fs_close(file);
         SYS_RETURN(-EEXIST);
     }
@@ -242,32 +241,27 @@ void arch_sys_open(struct task_state *task_state) {
 
             error = fs_create(path, mode | S_IFREG);
             if (error) {
-                free(path);
                 SYS_RETURN((uint64_t) error);
             }
 
             file = fs_open(path, flags, &error);
             if (file == NULL) {
-                free(path);
                 SYS_RETURN((uint64_t) error);
             }
 
             debug_log("Open successful\n");
         } else {
             debug_log("File Not Found: [ %s ]\n", path);
-            free(path);
             SYS_RETURN((uint64_t) error);
         }
     }
 
     /* Should probably be some other error instead */
     if (!(file->flags & FS_DIR) && (flags & O_DIRECTORY)) {
-        free(path);
         SYS_RETURN(-EINVAL);
     }
 
     if (file->flags & FS_DIR && !(flags & O_DIRECTORY)) {
-        free(path);
         SYS_RETURN(-EISDIR);
     }
 
@@ -280,12 +274,10 @@ void arch_sys_open(struct task_state *task_state) {
         if (task->process->files[i].file == NULL) {
             task->process->files[i].file = file;
             task->process->files[i].fd_flags = (flags & O_CLOEXEC) ? FD_CLOEXEC : 0;
-            free(path);
             SYS_RETURN(i);
         }
     }
 
-    free(path);
     SYS_RETURN(-EMFILE);
 }
 
@@ -348,7 +340,7 @@ void arch_sys_close(struct task_state *task_state) {
     SYS_RETURN(error);
 }
 
-static int execve_helper(char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
+static int execve_helper(const char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
                          dev_t *device, ino_t *ino_id, char **argv) {
     int error = 0;
     struct file *program = fs_open(*path, O_RDONLY, &error);
@@ -373,16 +365,14 @@ static int execve_helper(char **path, char **buffer, size_t *buffer_length, char
             debug_log("Encoutered #!\n");
             bool first = *prepend_argv_length == 0;
 
-            char *path_save = NULL;
-            if (!first) {
-                free(*path);
-            } else {
+            const char *path_save = NULL;
+            if (first) {
                 path_save = *path;
             }
             size_t path_len = strcspn(*buffer + 2, " \n");
             char restore = (*buffer)[2 + path_len];
             (*buffer)[2 + path_len] = '\0';
-            *path = get_full_path(get_current_task()->process->cwd, *buffer + 2);
+            *path = *buffer + 2;
             debug_log("#!: [ %s ]\n", *path);
             (*buffer)[2 + path_len] = restore;
             bool has_extra_arg = false;
@@ -421,7 +411,7 @@ static int execve_helper(char **path, char **buffer, size_t *buffer_length, char
             (*prepend_argv)[*prepend_argv_length - 1] = NULL;
 
             if (first) {
-                argv[0] = path_save;
+                argv[0] = (char *) path_save;
             }
 
             free(*buffer);
@@ -444,17 +434,15 @@ static int execve_helper(char **path, char **buffer, size_t *buffer_length, char
 void arch_sys_execve(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *file_name = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
     char **argv = (char **) task_state->cpu_state.rdx;
     char **envp = (char **) task_state->cpu_state.rcx;
 
-    assert(file_name != NULL);
+    assert(path != NULL);
     assert(argv != NULL);
     assert(envp != NULL);
 
     struct task *current = get_current_task();
-
-    char *path = get_full_path(current->process->cwd, file_name);
 
     debug_log("Exec Task: [ %d, %s ]\n", current->process->pid, path);
 
@@ -472,7 +460,6 @@ void arch_sys_execve(struct task_state *task_state) {
         free(prepend_argv);
 
         free(buffer);
-        free(path);
         SYS_RETURN(error);
     }
 
@@ -526,8 +513,9 @@ void arch_sys_execve(struct task_state *task_state) {
     task->kernel_task = false;
     task->sched_state = RUNNING_INTERRUPTIBLE;
     process->tty = current->process->tty;
-    process->cwd = malloc(strlen(current->process->cwd) + 1);
-    strcpy(process->cwd, current->process->cwd);
+    process->cwd = malloc(sizeof(struct tnode));
+    process->cwd->inode = current->process->cwd->inode;
+    process->cwd->name = strdup(current->process->cwd->name);
     task->next = NULL;
     task->sig_mask = current->sig_mask;
     memcpy(&process->times, &current->process->times, sizeof(struct tms));
@@ -573,7 +561,6 @@ void arch_sys_execve(struct task_state *task_state) {
     elf64_load_program(buffer, length, task);
     elf64_map_heap(buffer, task);
 
-    free(path);
     free(buffer);
 
     /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be
@@ -676,58 +663,50 @@ void arch_sys_getcwd(struct task_state *task_state) {
     size_t size = (size_t) task_state->cpu_state.rdx;
 
     struct task *current = get_current_task();
-    if (strlen(current->process->cwd) >= size) {
-        SYS_RETURN((uint64_t) NULL);
+    char *full_path = get_tnode_path(current->process->cwd);
+
+    size_t len = strlen(full_path);
+    if (len > size) {
+        free(full_path);
+        SYS_RETURN(-ERANGE);
     }
 
-    strcpy(buffer, current->process->cwd);
-    SYS_RETURN((uint64_t) buffer);
+    strcpy(buffer, full_path);
+
+    free(full_path);
+    SYS_RETURN(buffer);
 }
 
 void arch_sys_chdir(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
-
-    /* Should probably not do this */
-    if (_path[strlen(_path) - 1] == '/') {
-        ((char *) _path)[strlen(_path) - 1] = '\0';
-    }
+    const char *path = (const char *) task_state->cpu_state.rsi;
 
     struct task *task = get_current_task();
-    char *path = get_full_path(task->process->cwd, _path);
 
     struct tnode *tnode = iname(path);
     if (!tnode) {
-        free(path);
         SYS_RETURN(-ENOENT);
     }
 
     if (!(tnode->inode->flags & FS_DIR)) {
-        free(path);
         SYS_RETURN(-ENOTDIR);
     }
 
-    task->process->cwd = get_tnode_path(tnode);
-    debug_log("Chdir: [ %s ]\n", task->process->cwd);
+    task->process->cwd = malloc(sizeof(struct tnode));
+    task->process->cwd->inode = tnode->inode;
+    task->process->cwd->name = strdup(tnode->name);
 
-    free(path);
     SYS_RETURN(0);
 }
 
 void arch_sys_stat(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
     void *stat_struct = (void *) task_state->cpu_state.rdx;
 
-    struct task *current = get_current_task();
-    char *path = get_full_path(current->process->cwd, _path);
-
-    int ret = fs_stat(path, stat_struct);
-    free(path);
-
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_stat(path, stat_struct));
 }
 
 void arch_sys_lseek(struct task_state *task_state) {
@@ -810,13 +789,7 @@ void arch_sys_mkdir(struct task_state *task_state) {
     const char *pathname = (const char *) task_state->cpu_state.rsi;
     mode_t mode = (mode_t) task_state->cpu_state.rdx;
 
-    struct task *current = get_current_task();
-    char *path = get_full_path(current->process->cwd, pathname);
-
-    int ret = fs_mkdir(path, mode);
-
-    free(path);
-    SYS_RETURN((uint64_t) ret);
+    SYS_RETURN(fs_mkdir(pathname, mode));
 }
 
 void arch_sys_dup2(struct task_state *task_state) {
@@ -875,44 +848,26 @@ void arch_sys_pipe(struct task_state *task_state) {
 void arch_sys_unlink(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
 
-    struct task *current = get_current_task();
-    char *path = get_full_path(current->process->cwd, _path);
-
-    int ret = fs_unlink(path);
-    free(path);
-
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_unlink(path));
 }
 
 void arch_sys_rmdir(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
 
-    struct task *current = get_current_task();
-    char *path = get_full_path(current->process->cwd, _path);
-
-    int ret = fs_rmdir(path);
-    free(path);
-
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_rmdir(path));
 }
 
 void arch_sys_chmod(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
     mode_t mode = (mode_t) task_state->cpu_state.rdx;
 
-    struct task *task = get_current_task();
-    char *path = get_full_path(task->process->cwd, _path);
-
-    int ret = fs_chmod(path, mode);
-
-    free(path);
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_chmod(path, mode));
 }
 
 void arch_sys_kill(struct task_state *task_state) {
@@ -1120,16 +1075,10 @@ void arch_sys_sleep(struct task_state *task_state) {
 void arch_sys_access(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
     int mode = (int) task_state->cpu_state.rdx;
 
-    struct task *current = get_current_task();
-    char *path = get_full_path(current->process->cwd, _path);
-
-    int ret = fs_access(path, mode);
-    free(path);
-
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_access(path, mode));
 }
 
 void arch_sys_accept4(struct task_state *task_state) {
@@ -1425,23 +1374,14 @@ void arch_sys_munmap(struct task_state *task_state) {
 void arch_sys_rename(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_old_path = (const char *) task_state->cpu_state.rsi;
-    const char *_new_path = (const char *) task_state->cpu_state.rdx;
+    const char *old_path = (const char *) task_state->cpu_state.rsi;
+    const char *new_path = (const char *) task_state->cpu_state.rdx;
 
-    if (_old_path == NULL || _new_path == NULL) {
+    if (old_path == NULL || new_path == NULL) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct task *current = get_current_task();
-    char *old_path = get_full_path(current->process->cwd, _old_path);
-    char *new_path = get_full_path(current->process->cwd, _new_path);
-
-    int ret = fs_rename(old_path, new_path);
-
-    free(old_path);
-    free(new_path);
-
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_rename(old_path, new_path));
 }
 
 void arch_sys_fcntl(struct task_state *task_state) {
@@ -2138,13 +2078,11 @@ finish_setsid:
 void arch_sys_readlink(struct task_state *task_state) {
     SYS_BEGIN(task_state);
 
-    const char *_path = (const char *) task_state->cpu_state.rsi;
+    const char *path = (const char *) task_state->cpu_state.rsi;
     char *buf = (char *) task_state->cpu_state.rdx;
     size_t bufsiz = (size_t) task_state->cpu_state.rcx;
 
-    char *path = get_full_path(get_current_task()->process->cwd, _path);
     ssize_t ret = fs_readlink(path, buf, bufsiz);
-    free(path);
 
     SYS_RETURN(ret);
 }
