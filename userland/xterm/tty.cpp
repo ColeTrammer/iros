@@ -195,72 +195,72 @@ void TTY::handle_escape_sequence() {
                 switch (args[i]) {
                     case 0:
                         m_buffer.reset_colors();
-                        return;
+                        break;
                     case 1:
                         // Bold is not supported.
                         break;
                     case 7:
                         m_buffer.swap_colors();
-                        return;
+                        break;
                     case 30:
                         m_buffer.set_fg(VGA_COLOR_BLACK);
-                        return;
+                        break;
                     case 31:
                         m_buffer.set_fg(VGA_COLOR_RED);
-                        return;
+                        break;
                     case 32:
                         m_buffer.set_fg(VGA_COLOR_GREEN);
-                        return;
+                        break;
                     case 33:
                         m_buffer.set_fg(VGA_COLOR_YELLOW);
-                        return;
+                        break;
                     case 34:
                         m_buffer.set_fg(VGA_COLOR_BLUE);
-                        return;
+                        break;
                     case 35:
                         m_buffer.set_fg(VGA_COLOR_MAGENTA);
-                        return;
+                        break;
                     case 36:
                         m_buffer.set_fg(VGA_COLOR_CYAN);
-                        return;
+                        break;
                     case 37:
                         m_buffer.set_fg(VGA_COLOR_LIGHT_GREY);
-                        return;
+                        break;
                     case 39:
                         m_buffer.reset_fg();
-                        return;
+                        break;
                     case 40:
                         m_buffer.set_bg(VGA_COLOR_BLACK);
-                        return;
+                        break;
                     case 41:
                         m_buffer.set_bg(VGA_COLOR_RED);
-                        return;
+                        break;
                     case 42:
                         m_buffer.set_bg(VGA_COLOR_GREEN);
-                        return;
+                        break;
                     case 43:
                         m_buffer.set_bg(VGA_COLOR_YELLOW);
-                        return;
+                        break;
                     case 44:
                         m_buffer.set_bg(VGA_COLOR_BLUE);
-                        return;
+                        break;
                     case 45:
                         m_buffer.set_bg(VGA_COLOR_MAGENTA);
-                        return;
+                        break;
                     case 46:
                         m_buffer.set_bg(VGA_COLOR_CYAN);
-                        return;
+                        break;
                     case 47:
                         m_buffer.set_bg(VGA_COLOR_LIGHT_GREY);
-                        return;
+                        break;
                     case 49:
                         m_buffer.reset_bg();
-                        return;
+                        break;
                     default:
                         break;
                 }
             }
-            break;
+            return;
         case 's':
             save_pos();
             return;
