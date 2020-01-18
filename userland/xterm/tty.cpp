@@ -212,7 +212,7 @@ void TTY::handle_escape_sequence() {
                         m_buffer.set_fg(VGA_COLOR_GREEN);
                         break;
                     case 33:
-                        m_buffer.set_fg(VGA_COLOR_YELLOW);
+                        m_buffer.set_fg(VGA_COLOR_BROWN);
                         break;
                     case 34:
                         m_buffer.set_fg(VGA_COLOR_BLUE);
@@ -239,7 +239,7 @@ void TTY::handle_escape_sequence() {
                         m_buffer.set_bg(VGA_COLOR_GREEN);
                         break;
                     case 43:
-                        m_buffer.set_bg(VGA_COLOR_YELLOW);
+                        m_buffer.set_bg(VGA_COLOR_BROWN);
                         break;
                     case 44:
                         m_buffer.set_bg(VGA_COLOR_BLUE);
@@ -255,6 +255,54 @@ void TTY::handle_escape_sequence() {
                         break;
                     case 49:
                         m_buffer.reset_bg();
+                        break;
+                    case 90:
+                        m_buffer.set_fg(VGA_COLOR_DARK_GREY);
+                        break;
+                    case 91:
+                        m_buffer.set_fg(VGA_COLOR_LIGHT_RED);
+                        break;
+                    case 92:
+                        m_buffer.set_fg(VGA_COLOR_LIGHT_GREEN);
+                        break;
+                    case 93:
+                        m_buffer.set_fg(VGA_COLOR_YELLOW);
+                        break;
+                    case 94:
+                        m_buffer.set_fg(VGA_COLOR_LIGHT_BLUE);
+                        break;
+                    case 95:
+                        m_buffer.set_fg(VGA_COLOR_LIGHT_MAGENTA);
+                        break;
+                    case 96:
+                        m_buffer.set_fg(VGA_COLOR_LIGHT_CYAN);
+                        break;
+                    case 97:
+                        m_buffer.set_fg(VGA_COLOR_WHITE);
+                        break;
+                    case 100:
+                        m_buffer.set_bg(VGA_COLOR_DARK_GREY);
+                        break;
+                    case 101:
+                        m_buffer.set_bg(VGA_COLOR_LIGHT_RED);
+                        break;
+                    case 102:
+                        m_buffer.set_bg(VGA_COLOR_LIGHT_GREEN);
+                        break;
+                    case 103:
+                        m_buffer.set_bg(VGA_COLOR_YELLOW);
+                        break;
+                    case 104:
+                        m_buffer.set_bg(VGA_COLOR_LIGHT_BLUE);
+                        break;
+                    case 105:
+                        m_buffer.set_bg(VGA_COLOR_LIGHT_MAGENTA);
+                        break;
+                    case 106:
+                        m_buffer.set_bg(VGA_COLOR_LIGHT_CYAN);
+                        break;
+                    case 107:
+                        m_buffer.set_bg(VGA_COLOR_WHITE);
                         break;
                     default:
                         break;

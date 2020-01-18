@@ -134,7 +134,7 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
         } else if (S_ISBLK(stat_struct->st_mode)) {
             color_s = "\033[33m";
         } else if (S_ISLNK(stat_struct->st_mode)) {
-            color_s = "\033[30;47m";
+            color_s = "\033[94m";
         } else if (S_ISSOCK(stat_struct->st_mode)) {
             color_s = "\033[34m";
         } else {
