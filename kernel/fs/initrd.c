@@ -142,8 +142,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->writeable = false;
     init_spinlock(&root->lock);
 
-    struct tnode *t_root = malloc(sizeof(struct tnode));
-    t_root->inode = root;
+    struct tnode *t_root = create_root_tnode(root);
 
     current_fs->super_block = &super_block;
     super_block.root = t_root;
@@ -166,10 +165,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->writeable = true;
         init_spinlock(&inode->lock);
 
-        struct tnode *to_add = malloc(sizeof(struct tnode));
-        to_add->name = entry[i].name;
-        to_add->inode = inode;
-
+        struct tnode *to_add = create_tnode(entry[i].name, inode);
         root->tnode_list = add_tnode(root->tnode_list, to_add);
     }
 

@@ -86,7 +86,9 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
 
     // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
-    printf("\n\033[31m%s: Error: %lX\033[0m\n", "General Protection Fault", task_state->error_code);
+    printf("\n\033[31m%s: Error: %lX\n", "General Protection Fault", task_state->error_code);
+    printf("RIP: %#.16lX\n", task_state->stack_state.rip);
+    printf("task: %d\033[0m\n", get_current_task()->process->pid);
     abort();
 }
 

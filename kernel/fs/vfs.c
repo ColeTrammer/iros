@@ -279,10 +279,7 @@ int fs_create(const char *file_name, mode_t mode) {
         return error;
     }
 
-    struct tnode *tnode = malloc(sizeof(struct tnode));
-    tnode->inode = inode;
-    tnode->name = malloc(strlen(last_slash + 1) + 1);
-    strcpy(tnode->name, last_slash + 1);
+    struct tnode *tnode = create_tnode(last_slash + 1, inode);
     tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
 
     free(path);
@@ -595,10 +592,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
         return error;
     }
 
-    struct tnode *tnode = malloc(sizeof(struct tnode));
-    tnode->inode = inode;
-    tnode->name = malloc(strlen(last_slash + 1) + 1);
-    strcpy(tnode->name, last_slash + 1);
+    struct tnode *tnode = create_tnode(last_slash + 1, inode);
     tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
 
     free(path);
@@ -664,7 +658,7 @@ int fs_unlink(const char *path) {
 
     tnode->inode->parent->inode->tnode_list = remove_tnode(tnode->inode->parent->inode->tnode_list, tnode);
     struct inode *inode = tnode->inode;
-    free(tnode);
+    drop_tnode(tnode);
 
     drop_inode_reference_unlocked(inode);
     return 0;
@@ -729,7 +723,7 @@ int fs_rmdir(const char *path) {
 
     struct inode *inode = tnode->inode;
     inode->parent->inode->tnode_list = remove_tnode(inode->parent->inode->tnode_list, tnode);
-    free(tnode);
+    drop_tnode(tnode);
 
     drop_inode_reference(inode);
     return 0;
@@ -846,7 +840,7 @@ int fs_rename(const char *old_path, const char *new_path) {
 
         existing_tnode->inode->parent->inode->tnode_list = remove_tnode(existing_tnode->inode->parent->inode->tnode_list, existing_tnode);
         struct inode *inode = existing_tnode->inode;
-        free(existing_tnode);
+        drop_tnode(existing_tnode);
 
         drop_inode_reference(inode);
     }
@@ -859,11 +853,13 @@ int fs_rename(const char *old_path, const char *new_path) {
     struct tnode *old_parent = old->inode->parent;
     assert(old_parent);
 
+    spin_lock(&old->lock);
     free(old->name);
     old->name = strdup(new_path_last_slash + 1);
     old->inode->parent = new_parent;
     new_parent->inode->tnode_list = add_tnode(new_parent->inode->tnode_list, old);
     old_parent->inode->tnode_list = remove_tnode(old_parent->inode->tnode_list, old);
+    spin_lock(&old->lock);
     return 0;
 }
 
@@ -1133,19 +1129,22 @@ int fs_fchmod(struct file *file, mode_t mode) {
 }
 
 int fs_symlink(const char *target, const char *linkpath) {
+    debug_log("symlink: [ %s, %s ]\n", target, linkpath);
+
     char *path = malloc(strlen(linkpath) + 1);
     strcpy(path, linkpath);
 
     char *last_slash = strrchr(path, '/');
-    *last_slash = '\0';
-
     struct tnode *tparent;
 
-    /* Root is a special case */
-    int ret;
+    int ret = 0;
     if (last_slash == path) {
-        ret = iname("/", 0, &tparent);
+        tparent = fs_root();
+    } else if (last_slash == NULL) {
+        tparent = get_current_task()->process->cwd;
+        last_slash = path - 1;
     } else {
+        *last_slash = '\0';
         ret = iname(path, 0, &tparent);
     }
 
@@ -1184,10 +1183,7 @@ int fs_symlink(const char *target, const char *linkpath) {
         return error;
     }
 
-    struct tnode *tnode = malloc(sizeof(struct tnode));
-    tnode->inode = inode;
-    tnode->name = malloc(strlen(last_slash + 1) + 1);
-    strcpy(tnode->name, last_slash + 1);
+    struct tnode *tnode = create_tnode(last_slash + 1, inode);
     tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
 
     free(path);

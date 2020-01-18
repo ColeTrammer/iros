@@ -518,7 +518,6 @@ static void ext2_update_tnode_list(struct inode *inode) {
             goto get_next_dirent;
         }
 
-        struct tnode *tnode = malloc(sizeof(struct tnode));
         struct inode *inode_to_add;
         if (strcmp(dirent->name, ".") == 0) {
             inode_to_add = inode;
@@ -544,9 +543,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
             init_spinlock(&inode_to_add->lock);
         }
 
-        tnode->name = calloc(dirent->name_length + 1, sizeof(char));
-        memcpy(tnode->name, dirent->name, dirent->name_length);
-        tnode->inode = inode_to_add;
+        struct tnode *tnode = create_tnode_from_characters(dirent->name, dirent->name_length, inode_to_add);
         inode->tnode_list = add_tnode(inode->tnode_list, tnode);
 
     get_next_dirent:
@@ -1187,6 +1184,8 @@ struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *
         struct raw_inode *raw_inode = inode->private_data;
         memcpy(raw_inode->block, target, target_len);
 
+        inode->size = target_len;
+
         *error = ext2_sync_inode(inode);
         if (*error < 0) {
             free(inode);
@@ -1562,8 +1561,8 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
         return NULL;
     }
 
-    struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
+    struct tnode *t_root = create_root_tnode(root);
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
     struct ext2_sb_data *data = calloc(1, sizeof(struct ext2_sb_data));
 
@@ -1611,8 +1610,6 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
 
     data->blk_desc_table = raw_block_group_descriptor_table;
     assert(strlen(device_path) != 0);
-
-    t_root->inode = root;
 
     root->device = super_block->device;
     root->flags = FS_DIR;

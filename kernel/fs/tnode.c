@@ -4,6 +4,101 @@
 #include <string.h>
 
 #include <kernel/fs/tnode.h>
+#include <kernel/fs/vfs.h>
+
+// #define TNODE_REF_COUNT_DEBUG
+
+struct tnode *create_root_tnode(struct inode *inode) {
+    assert(inode);
+
+    struct tnode *tnode = malloc(sizeof(struct tnode));
+    assert(tnode);
+
+    tnode->inode = inode;
+    tnode->name = NULL;
+    tnode->ref_count = 1;
+    init_spinlock(&tnode->lock);
+
+    return tnode;
+}
+
+struct tnode *create_tnode_from_characters(const char *characters, size_t length, struct inode *inode) {
+    assert(characters);
+    assert(inode);
+
+    struct tnode *tnode = malloc(sizeof(struct tnode));
+    tnode->inode = inode;
+    tnode->name = malloc(length + 1);
+    memcpy(tnode->name, characters, length);
+    tnode->name[length] = '\0';
+    tnode->ref_count = 1;
+    init_spinlock(&tnode->lock);
+
+    return tnode;
+}
+
+struct tnode *create_tnode(const char *name_to_copy, struct inode *inode) {
+    assert(name_to_copy);
+    assert(inode);
+
+    struct tnode *tnode = malloc(sizeof(struct tnode));
+    assert(tnode);
+
+    tnode->inode = inode;
+    tnode->name = strdup(name_to_copy);
+    tnode->ref_count = 1;
+    init_spinlock(&tnode->lock);
+
+    return tnode;
+}
+
+void drop_tnode(struct tnode *tnode) {
+    assert(tnode);
+
+    spin_lock(&tnode->lock);
+
+#ifdef TNODE_REF_COUNT_DEBUG
+    debug_log("tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count - 1);
+#endif /* TNODE_REF_COUNT_DEBUG */
+
+    assert(tnode->ref_count > 0);
+
+    if (--tnode->ref_count == 0) {
+        spin_unlock(&tnode->lock);
+
+#ifdef TNODE_REF_COUNT_DEBUG
+        debug_log("Destroying tnode: [ %p ]\n", tnode);
+#endif /* TNODE_REF_COUNT_DEBUG */
+
+        struct inode *inode = tnode->inode;
+
+        free(tnode->name);
+        free(tnode);
+
+        drop_inode_reference(inode);
+
+        return;
+    }
+
+    spin_unlock(&tnode->lock);
+}
+
+struct tnode *bump_tnode(struct tnode *tnode) {
+    assert(tnode);
+
+    spin_lock(&tnode->lock);
+
+#ifdef TNODE_REF_COUNT_DEBUG
+    debug_log("tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count + 1);
+#endif /* TNODE_REF_COUNT_DEBUG */
+
+    assert(tnode->ref_count > 0);
+
+    tnode->ref_count++;
+
+    spin_unlock(&tnode->lock);
+    return tnode;
+}
 
 struct tnode_list *add_tnode(struct tnode_list *list, struct tnode *tnode) {
     struct tnode_list *to_add = malloc(sizeof(struct tnode_list));

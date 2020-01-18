@@ -154,10 +154,8 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
 
-    struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
-
-    t_root->inode = root;
+    struct tnode *t_root = create_root_tnode(root);
 
     root->device = 2;
     root->flags = FS_DIR;
@@ -234,12 +232,7 @@ void dev_add(struct device *device, const char *_path) {
     to_add->super_block = &super_block;
     to_add->tnode_list = NULL;
 
-    struct tnode *tnode = malloc(sizeof(struct tnode));
-
-    char *name = malloc(strlen(_name) + 1);
-    strcpy(name, _name);
-    tnode->name = name;
-    tnode->inode = to_add;
+    struct tnode *tnode = create_tnode(_name, to_add);
 
     parent->inode->tnode_list = add_tnode(parent->inode->tnode_list, tnode);
 
@@ -264,7 +257,7 @@ void dev_remove(const char *_path) {
 
     free(tnode->inode->private_data);
 
-    /* Removes tnode */
+    // FIXME: tnode and inode are ref counted, we can't just free them like this
     tnode->inode->parent->inode->tnode_list = remove_tnode(tnode->inode->parent->inode->tnode_list, tnode);
     free(tnode->inode);
     free(tnode->name);

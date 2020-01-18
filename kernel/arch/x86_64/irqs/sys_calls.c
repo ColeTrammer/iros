@@ -179,9 +179,7 @@ void arch_sys_fork(struct task_state *task_state) {
     child->process->tls_master_copy_start = parent->process->tls_master_copy_start;
     child->process->tls_master_copy_size = parent->process->tls_master_copy_size;
     child->process->tls_master_copy_alignment = parent->process->tls_master_copy_alignment;
-    child_process->cwd = malloc(sizeof(struct tnode));
-    child_process->cwd->inode = parent->process->cwd->inode;
-    child_process->cwd->name = strdup(parent->process->cwd->name);
+    child_process->cwd = bump_tnode(parent->process->cwd);
     child_process->pgid = parent->process->pgid;
     child_process->ppid = parent->process->pid;
     child->process->uid = parent->process->uid;
@@ -513,9 +511,7 @@ void arch_sys_execve(struct task_state *task_state) {
     task->kernel_task = false;
     task->sched_state = RUNNING_INTERRUPTIBLE;
     process->tty = current->process->tty;
-    process->cwd = malloc(sizeof(struct tnode));
-    process->cwd->inode = current->process->cwd->inode;
-    process->cwd->name = strdup(current->process->cwd->name);
+    process->cwd = bump_tnode(current->process->cwd);
     task->next = NULL;
     task->sig_mask = current->sig_mask;
     memcpy(&process->times, &current->process->times, sizeof(struct tms));
@@ -694,9 +690,7 @@ void arch_sys_chdir(struct task_state *task_state) {
         SYS_RETURN(-ENOTDIR);
     }
 
-    task->process->cwd = malloc(sizeof(struct tnode));
-    task->process->cwd->inode = tnode->inode;
-    task->process->cwd->name = strdup(tnode->name);
+    task->process->cwd = bump_tnode(tnode);
 
     SYS_RETURN(0);
 }

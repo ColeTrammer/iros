@@ -297,10 +297,8 @@ struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
     sb->private_data = NULL;
     init_spinlock(&sb->super_block_lock);
 
-    struct tnode *t_root = calloc(1, sizeof(struct tnode));
     struct inode *root = calloc(1, sizeof(struct inode));
-
-    t_root->inode = root;
+    struct tnode *t_root = create_root_tnode(root);
 
     root->device = sb->device;
     root->flags = FS_DIR;
