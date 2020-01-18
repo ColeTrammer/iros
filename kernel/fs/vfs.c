@@ -236,11 +236,14 @@ int fs_create(const char *file_name, mode_t mode) {
 
     struct tnode *tparent;
 
-    /* Root is a special case */
-    int ret;
+    int ret = 0;
     if (last_slash == path) {
-        ret = iname("/", 0, &tparent);
+        tparent = fs_root();
+    } else if (last_slash == NULL) {
+        tparent = get_current_task()->process->cwd;
+        last_slash = path - 1;
     } else {
+        *last_slash = '\0';
         ret = iname(path, 0, &tparent);
     }
 
@@ -544,11 +547,14 @@ int fs_mkdir(const char *_path, mode_t mode) {
 
     struct tnode *tparent;
 
-    /* Root is a special case */
-    int ret;
+    int ret = 0;
     if (last_slash == path) {
-        ret = iname("/", 0, &tparent);
+        tparent = fs_root();
+    } else if (last_slash == NULL) {
+        tparent = get_current_task()->process->cwd;
+        last_slash = path - 1;
     } else {
+        *last_slash = '\0';
         ret = iname(path, 0, &tparent);
     }
 
