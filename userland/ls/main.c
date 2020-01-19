@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #define LS_STARTING_DIRENTS 100
@@ -28,7 +30,7 @@ static int widest_num_links = 0;
 static int widest_size = 0;
 
 static int ls_dirent_compare(const void *a, const void *b) {
-    return strcmp(((const struct ls_dirent *) a)->name, ((const struct ls_dirent *) b)->name);
+    return strcasecmp(((const struct ls_dirent *) a)->name, ((const struct ls_dirent *) b)->name);
 }
 
 void fill_dirent(char *_path, const char *name) {
@@ -105,10 +107,10 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
 
     if (extra_info) {
         char buffer[50];
-        snprintf(buffer, 49, "%%s %%%dlu %%s %%s %%%dld ", widest_num_links, widest_size);
+        snprintf(buffer, 49, "%%s %%%dlu %%s %%s %%%dld %%s ", widest_num_links, widest_size);
 
         char perm_string[11];
-        perm_string[0] = S_ISDIR(dirent->stat_struct.st_mode) ? 'd' : '-';
+        perm_string[0] = S_ISDIR(dirent->stat_struct.st_mode) ? 'd' : S_ISLNK(dirent->stat_struct.st_mode) ? 'l' : '-';
         perm_string[1] = dirent->stat_struct.st_mode & S_IRUSR ? 'r' : '-';
         perm_string[2] = dirent->stat_struct.st_mode & S_IWUSR ? 'w' : '-';
         perm_string[3] = dirent->stat_struct.st_mode & S_IXUSR ? 'x' : '-';
@@ -120,7 +122,63 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
         perm_string[9] = dirent->stat_struct.st_mode & S_IXOTH ? 'x' : '-';
         perm_string[10] = '\0';
 
-        printf(buffer, perm_string, dirent->stat_struct.st_nlink, dirent->pw_name, dirent->gr_name, dirent->stat_struct.st_size);
+        time_t current = time(NULL);
+        struct tm *now = localtime(&current);
+        int current_year = now->tm_year;
+
+        char time_string[25];
+        struct tm *tm = localtime(&dirent->stat_struct.st_mtim.tv_sec);
+
+        char *month = "???";
+        switch (tm->tm_mon) {
+            case 0:
+                month = "Jan";
+                break;
+            case 1:
+                month = "Feb";
+                break;
+            case 2:
+                month = "Mar";
+                break;
+            case 3:
+                month = "Apr";
+                break;
+            case 4:
+                month = "May";
+                break;
+            case 5:
+                month = "Jun";
+                break;
+            case 6:
+                month = "Jul";
+                break;
+            case 7:
+                month = "Aug";
+                break;
+            case 8:
+                month = "Sep";
+                break;
+            case 9:
+                month = "Oct";
+                break;
+            case 10:
+                month = "Nov";
+                break;
+            case 11:
+                month = "Dec";
+                break;
+            default:
+                break;
+        }
+
+        if (tm->tm_year == current_year) {
+            snprintf(time_string, 24, "%s %2d %02d:%02d", month, tm->tm_mday, tm->tm_hour, tm->tm_min);
+        } else {
+            snprintf(time_string, 24, "%s %2d %5d", month, tm->tm_mday, tm->tm_year + 1900);
+        }
+
+        printf(buffer, perm_string, dirent->stat_struct.st_nlink, dirent->pw_name, dirent->gr_name, dirent->stat_struct.st_size,
+               time_string);
     }
 
     char *color_s = "";
@@ -207,7 +265,14 @@ int main(int argc, char **argv) {
                     d.link_path = NULL;
                 } else {
                     path[0x1004] = '\0';
-                    d.link_path = path;
+
+                    // Check if the file exists
+                    if (access(path + 4, F_OK)) {
+                        free(path);
+                        d.link_path = NULL;
+                    } else {
+                        d.link_path = path;
+                    }
                 }
             }
 
