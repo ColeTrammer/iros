@@ -25,6 +25,9 @@ void init_hal() {
 
     init_gdt();
 
+    // Read cmos now so that kernel time is initialized ASAP
+    init_cmos();
+
     debug_log("Finished Initializing HAL\n");
 }
 
@@ -34,7 +37,6 @@ void init_drivers() {
     init_fdc();
     init_ata();
     init_pit();
-    init_cmos();
     init_serial_port_device(SERIAL_COM1_PORT);
     init_virtual_devices();
     init_pci();

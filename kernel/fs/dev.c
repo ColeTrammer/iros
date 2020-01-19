@@ -13,6 +13,7 @@
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/timer.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
@@ -29,8 +30,8 @@ static struct file_system fs = { "dev", 0, &dev_mount, NULL, NULL };
 static struct inode_operations dev_i_op = { NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL, NULL, NULL,
                                             NULL, NULL,        &dev_mmap, NULL,      NULL,       NULL, NULL };
 
-static struct inode_operations dev_dir_i_op = { NULL, &dev_lookup, &dev_open, &dev_stat, NULL, NULL, NULL, NULL,
-                                                NULL, NULL,        NULL,      NULL,      NULL, NULL, NULL };
+static struct inode_operations dev_dir_i_op = { NULL, &dev_lookup, &dev_open, NULL, NULL, NULL, NULL, NULL,
+                                                NULL, NULL,        NULL,      NULL, NULL, NULL, NULL };
 
 static struct file_operations dev_f_op = { &dev_close, &dev_read, &dev_write, NULL };
 
@@ -103,6 +104,7 @@ ssize_t dev_read(struct file *file, void *buffer, size_t len) {
     assert(inode);
 
     if (((struct device *) inode->private_data)->ops->read) {
+        inode->access_time = get_time_as_timespec();
         return ((struct device *) inode->private_data)->ops->read(inode->private_data, file, buffer, len);
     }
 
@@ -114,6 +116,7 @@ ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
     assert(inode);
 
     if (((struct device *) inode->private_data)->ops->write) {
+        inode->modify_time = get_time_as_timespec();
         return ((struct device *) inode->private_data)->ops->write(inode->private_data, file, buffer, len);
     }
 
@@ -121,13 +124,7 @@ ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
 }
 
 int dev_stat(struct inode *inode, struct stat *stat_struct) {
-    stat_struct->st_size = inode->size;
-    stat_struct->st_blocks = 0;
-    stat_struct->st_blksize = stat_struct->st_size;
-    stat_struct->st_ino = inode->index;
-    stat_struct->st_dev = inode->device;
-    stat_struct->st_mode = inode->mode;
-    stat_struct->st_rdev = (inode->flags & FS_FILE) ? ((struct device *) inode->private_data)->device_number : 0;
+    stat_struct->st_rdev = ((struct device *) inode->private_data)->device_number;
     return 0;
 }
 
@@ -172,10 +169,12 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->ref_count = 1;
     root->readable = true;
     root->writeable = true;
+    root->access_time = root->change_time = root->modify_time = get_time_as_timespec();
 
     super_block.device = root->device;
     super_block.op = NULL;
     super_block.root = t_root;
+    super_block.block_size = PAGE_SIZE;
 
     current_fs->super_block = &super_block;
 
@@ -232,6 +231,7 @@ void dev_add(struct device *device, const char *_path) {
     to_add->size = 0;
     to_add->super_block = &super_block;
     to_add->tnode_list = NULL;
+    to_add->access_time = to_add->change_time = to_add->modify_time = get_time_as_timespec();
 
     struct tnode *tnode = create_tnode(_name, to_add);
 

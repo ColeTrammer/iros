@@ -19,6 +19,7 @@
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/timer.h>
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
@@ -593,6 +594,9 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
     inode->uid = raw_inode->uid;
     inode->gid = raw_inode->gid;
     inode->size = raw_inode->size;
+    inode->access_time = (struct timespec) { .tv_sec = raw_inode->atime, .tv_nsec = 0 };
+    inode->modify_time = (struct timespec) { .tv_sec = raw_inode->mtime, .tv_nsec = 0 };
+    inode->change_time = (struct timespec) { .tv_sec = raw_inode->ctime, .tv_nsec = 0 };
 }
 
 /* Syncs raw_inode to disk */
@@ -609,6 +613,9 @@ static int ext2_sync_inode(struct inode *inode) {
     raw_inode_table[inode_table_index].mode = inode->mode;
     raw_inode_table[inode_table_index].uid = inode->uid;
     raw_inode_table[inode_table_index].gid = inode->gid;
+    raw_inode_table[inode_table_index].atime = inode->access_time.tv_sec;
+    raw_inode_table[inode_table_index].mtime = inode->modify_time.tv_sec;
+    raw_inode_table[inode_table_index].ctime = inode->change_time.tv_sec;
     /* Sector size should be retrieved from block device */
     raw_inode_table[inode_table_index].sectors = (inode->size + 511) / 512;
 
@@ -675,13 +682,13 @@ static int ext2_write_inode(struct inode *inode) {
     inode->private_data = raw_inode;
 
     raw_inode->mode = inode->mode;
-    raw_inode->uid = 0;
+    raw_inode->uid = inode->uid;
     raw_inode->size = 0;
-    raw_inode->atime = 0;
-    raw_inode->ctime = 0;
-    raw_inode->mtime = 0;
+    raw_inode->atime = inode->access_time.tv_sec;
+    raw_inode->ctime = inode->change_time.tv_sec;
+    raw_inode->mtime = inode->modify_time.tv_sec;
     raw_inode->dtime = 0;
-    raw_inode->gid = 0;
+    raw_inode->gid = inode->gid;
     raw_inode->link_count = S_ISDIR(inode->mode) ? 2 : 1;
     raw_inode->sectors = 0;
     raw_inode->flags = 0;
@@ -747,6 +754,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->tnode_list = NULL;
         inode->readable = true;
         inode->writeable = true;
+        inode->change_time = inode->modify_time = inode->access_time = get_time_as_timespec();
 
         *error = ext2_write_inode(inode);
         if (errno != 0) {
@@ -800,6 +808,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
                 parent_raw_inode->block[block_no] = block_index;
                 parent->size += parent->super_block->block_size;
                 ext2_set_block_allocated(parent->super_block, block_index);
+                parent->modify_time = get_time_as_timespec();
                 ext2_sync_inode(parent);
             }
         }
@@ -1127,6 +1136,7 @@ static ssize_t __ext2_write(struct file *file, const void *buffer, size_t len) {
         ext2_free_blocks(indirect_block);
     }
 
+    inode->modify_time = get_time_as_timespec();
     ret = ext2_sync_inode(inode);
     if (ret != 0) {
         return ret;
@@ -1177,17 +1187,7 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
     }
 
     struct raw_inode *raw_inode = inode->private_data;
-
-    stat_struct->st_size = inode->size;
-    stat_struct->st_blocks = (inode->size / inode->super_block->block_size - 1) + 1;
-    stat_struct->st_blksize = inode->super_block->block_size;
-    stat_struct->st_ino = inode->index;
-    stat_struct->st_dev = inode->device;
-    stat_struct->st_mode = inode->mode;
-    stat_struct->st_rdev = 0;
     stat_struct->st_nlink = raw_inode->link_count;
-    stat_struct->st_uid = inode->uid;
-    stat_struct->st_gid = inode->gid;
 
     return 0;
 }
@@ -1533,6 +1533,7 @@ int ext2_chown(struct inode *inode, uid_t uid, gid_t gid) {
 
     inode->uid = uid;
     inode->gid = gid;
+    inode->change_time = inode->modify_time = get_time_as_timespec();
     return ext2_sync_inode(inode);
 }
 
@@ -1542,6 +1543,7 @@ int ext2_chmod(struct inode *inode, mode_t mode) {
     }
 
     inode->mode = mode;
+    inode->change_time = inode->modify_time = get_time_as_timespec();
     return ext2_sync_inode(inode);
 }
 
@@ -1583,6 +1585,7 @@ intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *in
 
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name) {
     int error = 0;
+    tnode->inode->change_time = get_time_as_timespec();
     __ext2_create(new_parent, new_name, tnode->inode->mode, &error, tnode->inode->index);
     if (error != 0) {
         return error;
@@ -1597,6 +1600,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
         parent_raw_inode->link_count--;
         assert(parent_raw_inode->link_count > 0);
 
+        parent->change_time = get_time_as_timespec();
         int ret = ext2_sync_inode(parent);
         if (ret != 0) {
             spin_unlock(&parent->lock);

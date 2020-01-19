@@ -53,6 +53,10 @@ struct inode {
     uid_t uid;
     gid_t gid;
 
+    struct timespec access_time;
+    struct timespec modify_time;
+    struct timespec change_time;
+
     /* Device id of filesystem */
     dev_t device;
 

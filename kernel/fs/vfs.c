@@ -559,6 +559,32 @@ void load_fs(struct file_system *fs) {
     file_systems = fs;
 }
 
+static int do_stat(struct inode *inode, struct stat *stat_struct) {
+    stat_struct->st_rdev = 0;
+    stat_struct->st_nlink = 1;
+
+    if (inode->i_op->stat) {
+        int ret = inode->i_op->stat(inode, stat_struct);
+        if (ret < 0) {
+            return ret;
+        }
+    }
+
+    stat_struct->st_dev = inode->device;
+    stat_struct->st_ino = inode->index;
+    stat_struct->st_mode = inode->mode;
+    stat_struct->st_uid = inode->uid;
+    stat_struct->st_gid = inode->gid;
+    stat_struct->st_size = inode->size;
+    stat_struct->st_atim = inode->access_time;
+    stat_struct->st_ctim = inode->modify_time;
+    stat_struct->st_mtim = inode->change_time;
+    stat_struct->st_blksize = inode->super_block->block_size;
+    stat_struct->st_blocks = (inode->size + inode->super_block->block_size - 1) / inode->super_block->block_size;
+
+    return 0;
+}
+
 int fs_stat(const char *path, struct stat *stat_struct) {
     struct tnode *tnode;
     int ret = iname(path, 0, &tnode);
@@ -566,12 +592,7 @@ int fs_stat(const char *path, struct stat *stat_struct) {
         return -ENOENT;
     }
 
-    struct inode *inode = tnode->inode;
-    if (!inode->i_op->stat) {
-        return -EINVAL;
-    }
-
-    return inode->i_op->stat(inode, stat_struct);
+    return do_stat(tnode->inode, stat_struct);
 }
 
 int fs_lstat(const char *path, struct stat *stat_struct) {
@@ -582,12 +603,7 @@ int fs_lstat(const char *path, struct stat *stat_struct) {
         return ret;
     }
 
-    struct inode *inode = tnode->inode;
-    if (!inode->i_op->stat) {
-        return -EINVAL;
-    }
-
-    return inode->i_op->stat(inode, stat_struct);
+    return do_stat(tnode->inode, stat_struct);
 }
 
 int fs_ioctl(struct file *file, unsigned long request, void *argp) {
@@ -1210,11 +1226,7 @@ int fs_fstat(struct file *file, struct stat *stat_struct) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
-    if (inode->i_op->stat) {
-        return inode->i_op->stat(inode, stat_struct);
-    }
-
-    return -EPERM;
+    return do_stat(inode, stat_struct);
 }
 
 int fs_fchmod(struct file *file, mode_t mode) {

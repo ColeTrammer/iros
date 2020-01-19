@@ -120,7 +120,7 @@ struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result
         }
 
         if (max_days * 60 * 60 * 24 >= time) {
-            result->tm_mday = 1 + time / (3600 * 24);
+            result->tm_mday = time / (3600 * 24);
             break;
         }
 

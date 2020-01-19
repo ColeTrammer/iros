@@ -16,6 +16,7 @@
 #include <kernel/fs/tmp.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/timer.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/phys_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
@@ -33,12 +34,12 @@ static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &tmp_rename };
 
-static struct inode_operations tmp_i_op = { NULL,      &tmp_lookup, &tmp_open, &tmp_stat,     NULL,
+static struct inode_operations tmp_i_op = { NULL,      &tmp_lookup, &tmp_open, NULL,          NULL,
                                             NULL,      &tmp_unlink, NULL,      &tmp_chmod,    &tmp_chown,
                                             &tmp_mmap, NULL,        NULL,      &tmp_read_all, &tmp_on_inode_destruction };
 
-static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, &tmp_stat, NULL, &tmp_mkdir, NULL, &tmp_rmdir,
-                                                &tmp_chmod,  &tmp_chown,  NULL,      NULL,      NULL, NULL,       NULL };
+static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, NULL, NULL, &tmp_mkdir, NULL, &tmp_rmdir,
+                                                &tmp_chmod,  &tmp_chown,  NULL,      NULL, NULL, NULL,       NULL };
 
 static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
 
@@ -82,6 +83,7 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     inode->flags = S_ISREG(mode) ? FS_FILE : S_ISSOCK(mode) ? FS_SOCKET : 0;
     inode->writeable = true;
     inode->readable = true;
+    inode->access_time = inode->change_time = inode->modify_time = get_time_as_timespec();
 
     return inode;
 }
@@ -141,6 +143,8 @@ ssize_t tmp_read(struct file *file, void *buffer, size_t len) {
     memcpy(buffer, data->contents + file->position, to_read);
     file->position += to_read;
 
+    inode->access_time = get_time_as_timespec();
+
     spin_unlock(&inode->lock);
     return (ssize_t) to_read;
 }
@@ -177,6 +181,8 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
     inode->size += len;
     file->position += len;
 
+    inode->modify_time = get_time_as_timespec();
+
     spin_unlock(&inode->lock);
     return (ssize_t) len;
 }
@@ -198,6 +204,7 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
     inode->device = tparent->inode->device;
     inode->writeable = true;
     inode->readable = true;
+    tparent->inode->modify_time = inode->access_time = inode->modify_time = inode->change_time = get_time_as_timespec();
 
     *error = 0;
     return inode;
@@ -213,34 +220,24 @@ int tmp_rmdir(struct tnode *tnode) {
     return 0;
 }
 
-int tmp_stat(struct inode *inode, struct stat *stat_struct) {
-    stat_struct->st_size = inode->size;
-    stat_struct->st_blocks = 1;
-    stat_struct->st_blksize = stat_struct->st_size;
-    stat_struct->st_ino = inode->index;
-    stat_struct->st_dev = inode->device;
-    stat_struct->st_mode = inode->mode;
-    stat_struct->st_uid = inode->uid;
-    stat_struct->st_gid = inode->gid;
-    stat_struct->st_rdev = 0;
-    return 0;
-}
-
 int tmp_chmod(struct inode *inode, mode_t mode) {
     inode->mode = mode;
+    inode->modify_time = inode->access_time = get_time_as_timespec();
     return 0;
 }
 
 int tmp_chown(struct inode *inode, uid_t uid, gid_t gid) {
     inode->uid = uid;
     inode->gid = gid;
+    inode->modify_time = inode->access_time = get_time_as_timespec();
     return 0;
 }
 
 int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name) {
     (void) tnode;
-    (void) new_parent;
     (void) new_name;
+
+    new_parent->inode->modify_time = get_time_as_timespec();
 
     return 0;
 }
@@ -295,6 +292,7 @@ int tmp_read_all(struct inode *inode, void *buffer) {
 
     spin_lock(&inode->lock);
     memcpy(buffer, data->contents, inode->size);
+    inode->access_time = get_time_as_timespec();
     spin_unlock(&inode->lock);
 
     return 0;
@@ -339,6 +337,7 @@ struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
     root->ref_count++;
     root->readable = true;
     root->writeable = true;
+    root->access_time = root->change_time = root->modify_time = get_time_as_timespec();
 
     sb->root = t_root;
 

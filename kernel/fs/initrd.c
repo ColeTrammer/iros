@@ -15,6 +15,7 @@
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/timer.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/util/spinlock.h>
@@ -31,11 +32,11 @@ static ino_t inode_count = 1;
 
 static struct file_system fs = { "initrd", 0, &initrd_mount, NULL, NULL };
 
-static struct inode_operations initrd_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat,     NULL, NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL,           NULL,         &initrd_read_all, NULL };
+static struct inode_operations initrd_i_op = { NULL, &initrd_lookup, &initrd_open,     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                                               NULL, NULL,           &initrd_read_all, NULL };
 
-static struct inode_operations initrd_dir_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL, NULL,
-                                                   NULL, NULL,           NULL,         NULL,         NULL, NULL, NULL };
+static struct inode_operations initrd_dir_i_op = { NULL, &initrd_lookup, &initrd_open, NULL, NULL, NULL, NULL, NULL,
+                                                   NULL, NULL,           NULL,         NULL, NULL, NULL, NULL };
 
 static struct file_operations initrd_f_op = { NULL, &initrd_read, NULL, NULL };
 
@@ -116,17 +117,6 @@ int initrd_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
-int initrd_stat(struct inode *inode, struct stat *stat_struct) {
-    stat_struct->st_size = inode->size;
-    stat_struct->st_blocks = 1;
-    stat_struct->st_blksize = stat_struct->st_size;
-    stat_struct->st_ino = inode->index;
-    stat_struct->st_dev = inode->device;
-    stat_struct->st_mode = inode->mode;
-    stat_struct->st_rdev = 0;
-    return 0;
-}
-
 struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
@@ -147,6 +137,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->ref_count = 1;
     root->readable = true;
     root->writeable = false;
+    root->access_time = root->modify_time = root->change_time = get_time_as_timespec();
     init_spinlock(&root->lock);
 
     struct tnode *t_root = create_root_tnode(root);
@@ -154,6 +145,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     current_fs->super_block = &super_block;
     super_block.root = t_root;
     super_block.device = root->device;
+    super_block.block_size = PAGE_SIZE;
 
     struct initrd_file_entry *entry = file_list;
     for (size_t i = 0; i < num_files; i++) {
@@ -170,6 +162,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->parent = t_root;
         inode->readable = true;
         inode->writeable = true;
+        inode->access_time = inode->modify_time = inode->change_time = get_time_as_timespec();
         init_spinlock(&inode->lock);
 
         struct tnode *to_add = create_tnode(entry[i].name, inode);

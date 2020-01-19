@@ -12,6 +12,7 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/pipe.h>
+#include <kernel/hal/timer.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -43,6 +44,7 @@ struct inode *pipe_new_inode() {
     inode->parent = NULL;
     inode->writeable = true;
     inode->readable = false;
+    inode->access_time = inode->change_time = inode->modify_time = get_time_as_timespec();
 
     debug_log("Creating pipe: [ %llu ]\n", inode->index);
 
@@ -136,6 +138,8 @@ ssize_t pipe_write(struct file *file, const void *buffer, size_t len) {
 
     inode->size += len;
     file->position += len;
+
+    inode->modify_time = get_time_as_timespec();
 
     spin_unlock(&inode->lock);
 
