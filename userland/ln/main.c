@@ -34,8 +34,12 @@ int main(int argc, char **argv) {
     char *target = argv[argc - 1];
 
     if (!make_sym) {
-        fprintf(stderr, "Hard links are unsupported\n");
-        return 1;
+        if (link(target, source)) {
+            perror("link");
+            return 1;
+        }
+
+        return 0;
     }
 
     if (symlink(target, source)) {

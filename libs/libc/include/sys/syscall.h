@@ -80,7 +80,8 @@
     __ENUMERATE_SYSCALL(SETSID, setsid, 0)                                     \
     __ENUMERATE_SYSCALL(READLINK, readlink, 3)                                 \
     __ENUMERATE_SYSCALL(LSTAT, lstat, 2)                                       \
-    __ENUMERATE_SYSCALL(SYMLINK, symlink, 2)
+    __ENUMERATE_SYSCALL(SYMLINK, symlink, 2)                                   \
+    __ENUMERATE_SYSCALL(LINK, link, 2)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

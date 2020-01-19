@@ -75,8 +75,6 @@ void drop_tnode(struct tnode *tnode) {
         free(tnode->name);
         free(tnode);
 
-        drop_inode_reference(inode);
-
         return;
     }
 

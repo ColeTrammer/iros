@@ -33,11 +33,12 @@ static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &tmp_rename };
 
-static struct inode_operations tmp_i_op = { NULL,        &tmp_lookup, &tmp_open,  &tmp_stat, NULL, NULL,
-                                            &tmp_unlink, NULL,        &tmp_chmod, &tmp_mmap, NULL, &tmp_on_inode_destruction };
+static struct inode_operations tmp_i_op = {
+    NULL, &tmp_lookup, &tmp_open, &tmp_stat, NULL, NULL, &tmp_unlink, NULL, &tmp_chmod, &tmp_mmap, NULL, NULL, &tmp_on_inode_destruction
+};
 
-static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open,  &tmp_stat, NULL, &tmp_mkdir,
-                                                NULL,        &tmp_rmdir,  &tmp_chmod, NULL,      NULL, NULL };
+static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, &tmp_stat, NULL, &tmp_mkdir, NULL,
+                                                &tmp_rmdir,  &tmp_chmod,  NULL,      NULL,      NULL, NULL };
 
 static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
 

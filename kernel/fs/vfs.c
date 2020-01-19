@@ -46,8 +46,7 @@ void drop_inode_reference_unlocked(struct inode *inode) {
 
     // Only delete inode if it's refcount is zero
     assert(inode->ref_count > 0);
-    inode->ref_count--;
-    if (inode->ref_count <= 0) {
+    if (--inode->ref_count <= 0) {
         debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
         if (inode->i_op->on_inode_destruction) {
             inode->i_op->on_inode_destruction(inode);
@@ -232,8 +231,6 @@ int fs_create(const char *file_name, mode_t mode) {
     strcpy(path, file_name);
 
     char *last_slash = strrchr(path, '/');
-    *last_slash = '\0';
-
     struct tnode *tparent;
 
     int ret = 0;
@@ -543,8 +540,6 @@ int fs_mkdir(const char *_path, mode_t mode) {
     strcpy(path, _path);
 
     char *last_slash = strrchr(path, '/');
-    *last_slash = '\0';
-
     struct tnode *tparent;
 
     int ret = 0;
@@ -1135,8 +1130,6 @@ int fs_fchmod(struct file *file, mode_t mode) {
 }
 
 int fs_symlink(const char *target, const char *linkpath) {
-    debug_log("symlink: [ %s, %s ]\n", target, linkpath);
-
     char *path = malloc(strlen(linkpath) + 1);
     strcpy(path, linkpath);
 
@@ -1190,6 +1183,72 @@ int fs_symlink(const char *target, const char *linkpath) {
     }
 
     struct tnode *tnode = create_tnode(last_slash + 1, inode);
+    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+
+    free(path);
+    return 0;
+}
+
+int fs_link(const char *oldpath, const char *newpath) {
+    struct tnode *target;
+
+    int ret = iname(oldpath, 0, &target);
+    if (ret < 0) {
+        return ret;
+    }
+
+    char *path = malloc(strlen(newpath) + 1);
+    strcpy(path, newpath);
+
+    char *last_slash = strrchr(path, '/');
+    struct tnode *tparent;
+
+    if (last_slash == path) {
+        tparent = fs_root();
+    } else if (last_slash == NULL) {
+        tparent = get_current_task()->process->cwd;
+        last_slash = path - 1;
+    } else {
+        *last_slash = '\0';
+        ret = iname(path, 0, &tparent);
+    }
+
+    if (ret < 0) {
+        free(path);
+        return ret;
+    }
+
+    struct mount *mount = tparent->inode->mounts;
+    while (mount != NULL) {
+        if (strcmp(mount->name, last_slash + 1) == 0) {
+            free(path);
+            return -EEXIST;
+        }
+
+        mount = mount->next;
+    }
+
+    tparent->inode->i_op->lookup(tparent->inode, NULL);
+    if (tparent->inode->tnode_list && find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+        free(path);
+        return -EEXIST;
+    }
+
+    if (!tparent->inode->i_op->link) {
+        free(path);
+        return -EINVAL;
+    }
+
+    debug_log("Adding hard link to: [ %s ]\n", tparent->name);
+
+    ret = tparent->inode->i_op->link(tparent, last_slash + 1, target);
+    if (ret < 0) {
+        return ret;
+    }
+
+    bump_inode_reference(target->inode);
+
+    struct tnode *tnode = create_tnode(last_slash + 1, target->inode);
     tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
 
     free(path);

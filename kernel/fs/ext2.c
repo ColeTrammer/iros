@@ -29,11 +29,11 @@ static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &ext2_rename };
 
-static struct inode_operations ext2_i_op = { NULL,         &ext2_lookup, &ext2_open,  &ext2_stat, NULL, NULL,
-                                             &ext2_unlink, NULL,         &ext2_chmod, &ext2_mmap, NULL, NULL };
+static struct inode_operations ext2_i_op = { NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL, &ext2_unlink,
+                                             NULL, &ext2_chmod,  &ext2_mmap, NULL,       NULL, NULL };
 
-static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,  &ext2_stat, NULL,          &ext2_mkdir,
-                                                 NULL,         &ext2_rmdir,  &ext2_chmod, NULL,       &ext2_symlink, NULL };
+static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat,    NULL,       &ext2_mkdir, NULL,
+                                                 &ext2_rmdir,  &ext2_chmod,  NULL,       &ext2_symlink, &ext2_link, NULL };
 
 static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL };
 
@@ -1168,6 +1168,26 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
     return 0;
 }
 
+int ext2_link(struct tnode *tparent, const char *name, const struct tnode *target) {
+    if (!(tparent->inode->mode & S_IWUSR)) {
+        return -EPERM;
+    }
+
+    int error = 0;
+    __ext2_create(tparent, name, tparent->inode->mode, &error, target->inode->index);
+    if (error < 0) {
+        return error;
+    }
+
+    struct raw_inode *raw_inode = target->inode->private_data;
+    if (!raw_inode) {
+        raw_inode = target->inode->private_data = ext2_get_raw_inode(target->inode->super_block, target->inode->index);
+    }
+
+    raw_inode->link_count++;
+    return ext2_sync_inode(target->inode);
+}
+
 struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *target, int *error) {
     if (!(tparent->inode->mode & S_IWUSR)) {
         *error = -EPERM;
@@ -1353,8 +1373,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
     ext2_free_blocks(raw_dirent_table);
 
     if (drop_reference) {
-        raw_inode->link_count--;
-        if (raw_inode->link_count <= 0) {
+        if (--raw_inode->link_count <= 0) {
             debug_log("Destroying raw ext2 inode: [ %llu ]\n", inode->index);
 
             /* Actually free inode from disk */

@@ -31,10 +31,10 @@ static ino_t inode_count = 1;
 
 static struct file_system fs = { "initrd", 0, &initrd_mount, NULL, NULL };
 
-static struct inode_operations initrd_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL,
+static struct inode_operations initrd_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL,
                                                NULL, NULL,           NULL,         NULL,         NULL, NULL };
 
-static struct inode_operations initrd_dir_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL,
+static struct inode_operations initrd_dir_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL,
                                                    NULL, NULL,           NULL,         NULL,         NULL, NULL };
 
 static struct file_operations initrd_f_op = { NULL, &initrd_read, NULL, NULL };

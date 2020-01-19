@@ -2100,6 +2100,15 @@ void arch_sys_symlink(struct task_state *task_state) {
     SYS_RETURN(fs_symlink(target, linkpath));
 }
 
+void arch_sys_link(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    const char *oldpath = (const char *) task_state->cpu_state.rsi;
+    const char *newpath = (const char *) task_state->cpu_state.rdx;
+
+    SYS_RETURN(fs_link(oldpath, newpath));
+}
+
 void arch_sys_invalid_system_call(struct task_state *task_state) {
     SYS_BEGIN(task_state);
     SYS_RETURN(-ENOSYS);

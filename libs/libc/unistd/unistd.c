@@ -209,6 +209,11 @@ int symlink(const char *target, const char *linkpath) {
     __SYSCALL_TO_ERRNO(ret);
 }
 
+int link(const char *newpath, const char *oldpath) {
+    int ret = (int) syscall(SC_LINK, newpath, oldpath);
+    __SYSCALL_TO_ERRNO(ret);
+}
+
 ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t bufsiz) {
     ssize_t ret = (ssize_t) syscall(SC_READLINK, pathname, buf, bufsiz);
     __SYSCALL_TO_ERRNO(ret);
