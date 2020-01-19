@@ -730,6 +730,27 @@ int fs_rmdir(const char *path) {
     return 0;
 }
 
+int fs_chown(const char *path, uid_t uid, gid_t gid) {
+    assert(path);
+
+    if (get_current_task()->process->euid != 0) {
+        return -EPERM;
+    }
+
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+
+    if (ret < 0) {
+        return ret;
+    }
+
+    if (!tnode->inode->i_op->chown) {
+        return -EPERM;
+    }
+
+    return tnode->inode->i_op->chown(tnode->inode, uid, gid);
+}
+
 int fs_chmod(const char *path, mode_t mode) {
     assert(path);
 
@@ -737,7 +758,7 @@ int fs_chmod(const char *path, mode_t mode) {
     int ret = iname(path, 0, &tnode);
 
     if (ret < 0) {
-        return -ENOENT;
+        return ret;
     }
 
     if (!tnode->inode->i_op->chmod) {

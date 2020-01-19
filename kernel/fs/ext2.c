@@ -29,11 +29,11 @@ static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &ext2_rename };
 
-static struct inode_operations ext2_i_op = { NULL, &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL, &ext2_unlink,
-                                             NULL, &ext2_chmod,  &ext2_mmap, NULL,       NULL, NULL };
+static struct inode_operations ext2_i_op = { NULL, &ext2_lookup, &ext2_open,  &ext2_stat, NULL, NULL, &ext2_unlink,
+                                             NULL, &ext2_chmod,  &ext2_chown, &ext2_mmap, NULL, NULL, NULL };
 
-static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open, &ext2_stat,    NULL,       &ext2_mkdir, NULL,
-                                                 &ext2_rmdir,  &ext2_chmod,  NULL,       &ext2_symlink, &ext2_link, NULL };
+static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,  &ext2_stat, NULL,          &ext2_mkdir, NULL,
+                                                 &ext2_rmdir,  &ext2_chmod,  &ext2_chown, NULL,       &ext2_symlink, &ext2_link,  NULL };
 
 static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL };
 
@@ -589,6 +589,8 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
     }
 
     inode->mode = raw_inode->mode;
+    inode->uid = raw_inode->uid;
+    inode->gid = raw_inode->gid;
     inode->size = raw_inode->size;
 }
 
@@ -604,6 +606,8 @@ static int ext2_sync_inode(struct inode *inode) {
     assert(inode->private_data == raw_inode_table + inode_table_index);
     raw_inode_table[inode_table_index].size = inode->size;
     raw_inode_table[inode_table_index].mode = inode->mode;
+    raw_inode_table[inode_table_index].uid = inode->uid;
+    raw_inode_table[inode_table_index].gid = inode->gid;
     /* Sector size should be retrieved from block device */
     raw_inode_table[inode_table_index].sectors = (inode->size + 511) / 512;
 
@@ -731,6 +735,8 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->index = index;
         init_spinlock(&inode->lock);
         inode->mode = mode;
+        inode->uid = get_current_task()->process->uid;
+        inode->gid = get_current_task()->process->gid;
         inode->mounts = NULL;
         inode->parent = tparent;
         inode->private_data = NULL;
@@ -1162,8 +1168,8 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_mode = inode->mode;
     stat_struct->st_rdev = 0;
     stat_struct->st_nlink = raw_inode->link_count;
-    stat_struct->st_uid = raw_inode->uid;
-    stat_struct->st_gid = raw_inode->gid;
+    stat_struct->st_uid = inode->uid;
+    stat_struct->st_gid = inode->gid;
 
     return 0;
 }
@@ -1181,7 +1187,8 @@ int ext2_link(struct tnode *tparent, const char *name, const struct tnode *targe
 
     struct raw_inode *raw_inode = target->inode->private_data;
     if (!raw_inode) {
-        raw_inode = target->inode->private_data = ext2_get_raw_inode(target->inode->super_block, target->inode->index);
+        ext2_update_inode(target->inode, true);
+        raw_inode = target->inode->private_data;
     }
 
     raw_inode->link_count++;
@@ -1499,6 +1506,16 @@ int ext2_rmdir(struct tnode *tnode) {
     /* Drop . reference */
     raw_inode->link_count--;
     return ext2_unlink(tnode);
+}
+
+int ext2_chown(struct inode *inode, uid_t uid, gid_t gid) {
+    if (!inode->private_data) {
+        ext2_update_inode(inode, true);
+    }
+
+    inode->uid = uid;
+    inode->gid = gid;
+    return ext2_sync_inode(inode);
 }
 
 int ext2_chmod(struct inode *inode, mode_t mode) {

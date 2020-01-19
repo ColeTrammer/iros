@@ -33,12 +33,11 @@ static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &tmp_rename };
 
-static struct inode_operations tmp_i_op = {
-    NULL, &tmp_lookup, &tmp_open, &tmp_stat, NULL, NULL, &tmp_unlink, NULL, &tmp_chmod, &tmp_mmap, NULL, NULL, &tmp_on_inode_destruction
-};
+static struct inode_operations tmp_i_op = { NULL, &tmp_lookup, &tmp_open,  &tmp_stat, NULL, NULL, &tmp_unlink,
+                                            NULL, &tmp_chmod,  &tmp_chown, &tmp_mmap, NULL, NULL, &tmp_on_inode_destruction };
 
-static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, &tmp_stat, NULL, &tmp_mkdir, NULL,
-                                                &tmp_rmdir,  &tmp_chmod,  NULL,      NULL,      NULL, NULL };
+static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open,  &tmp_stat, NULL, &tmp_mkdir, NULL,
+                                                &tmp_rmdir,  &tmp_chmod,  &tmp_chown, NULL,      NULL, NULL,       NULL };
 
 static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
 
@@ -71,6 +70,8 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     inode->index = get_next_tmp_index();
     init_spinlock(&inode->lock);
     inode->mode = mode;
+    inode->uid = get_current_task()->process->uid;
+    inode->gid = get_current_task()->process->gid;
     inode->mounts = NULL;
     inode->parent = tparent;
     inode->device = tparent->inode->device;
@@ -187,6 +188,8 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
     inode->index = get_next_tmp_index();
     init_spinlock(&inode->lock);
     inode->mode = mode;
+    inode->uid = get_current_task()->process->uid;
+    inode->gid = get_current_task()->process->gid;
     inode->parent = tparent;
     inode->ref_count = 1;
     inode->super_block = tparent->inode->super_block;
@@ -216,12 +219,20 @@ int tmp_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_ino = inode->index;
     stat_struct->st_dev = inode->device;
     stat_struct->st_mode = inode->mode;
+    stat_struct->st_uid = inode->uid;
+    stat_struct->st_gid = inode->gid;
     stat_struct->st_rdev = 0;
     return 0;
 }
 
 int tmp_chmod(struct inode *inode, mode_t mode) {
     inode->mode = mode;
+    return 0;
+}
+
+int tmp_chown(struct inode *inode, uid_t uid, gid_t gid) {
+    inode->uid = uid;
+    inode->gid = gid;
     return 0;
 }
 

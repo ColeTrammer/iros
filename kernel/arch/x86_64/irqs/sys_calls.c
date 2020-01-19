@@ -2109,6 +2109,16 @@ void arch_sys_link(struct task_state *task_state) {
     SYS_RETURN(fs_link(oldpath, newpath));
 }
 
+void arch_sys_chown(struct task_state *task_state) {
+    SYS_BEGIN(task_state);
+
+    const char *path = (const char *) task_state->cpu_state.rsi;
+    uid_t uid = (uid_t) task_state->cpu_state.rdx;
+    gid_t gid = (gid_t) task_state->cpu_state.rcx;
+
+    SYS_RETURN(fs_chown(path, uid, gid));
+}
+
 void arch_sys_invalid_system_call(struct task_state *task_state) {
     SYS_BEGIN(task_state);
     SYS_RETURN(-ENOSYS);

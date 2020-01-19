@@ -26,6 +26,7 @@ struct inode_operations {
     int (*unlink)(struct tnode *tnode);
     int (*rmdir)(struct tnode *tnode);
     int (*chmod)(struct inode *inode, mode_t mode);
+    int (*chown)(struct inode *inode, uid_t uid, gid_t gid);
     intptr_t (*mmap)(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
     struct inode *(*symlink)(struct tnode *tnode, const char *name, const char *target, int *error);
     int (*link)(struct tnode *tnode, const char *name, const struct tnode *target);
@@ -47,6 +48,9 @@ struct inode {
 
     // Id of the socket this socket is bound to (will be 0 if unboud)
     unsigned long socket_id;
+
+    uid_t uid;
+    gid_t gid;
 
     /* Device id of filesystem */
     dev_t device;

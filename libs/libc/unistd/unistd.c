@@ -191,12 +191,8 @@ pid_t getppid(void) {
 }
 
 int chown(const char *pathname, uid_t owner, gid_t group) {
-    (void) pathname;
-    (void) owner;
-    (void) group;
-
-    fprintf(stderr, "chown not supported\n");
-    return 0;
+    int ret = (int) syscall(SC_CHOWN, pathname, owner, group);
+    __SYSCALL_TO_ERRNO(ret);
 }
 
 int lstat(const char *__restrict path, struct stat *__restrict stat_struct) {

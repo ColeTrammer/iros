@@ -26,6 +26,7 @@ int tmp_rmdir(struct tnode *tnode);
 intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 struct tnode *tmp_mount(struct file_system *fs, char *device_path);
 int tmp_chmod(struct inode *inode, mode_t mode);
+int tmp_chown(struct inode *inode, uid_t uid, gid_t gid);
 int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name);
 void tmp_on_inode_destruction(struct inode *inode);
 
