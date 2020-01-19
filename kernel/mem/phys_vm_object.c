@@ -8,13 +8,12 @@
 
 static int phys_map(struct vm_object *self, struct vm_region *region) {
     struct phys_vm_object_data *data = self->private_data;
-    assert(data->size >= region->end - region->start);
+    assert(((data->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE >= region->end - region->start);
 
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         map_phys_page(region->vm_object_offset + (i - region->start) + data->phys_start, i, region->flags);
     }
 
-    free(data);
     return 0;
 }
 
@@ -26,6 +25,7 @@ static int phys_kill(struct vm_object *self) {
         return data->on_kill(data->closure);
     }
 
+    free(data);
     return 0;
 }
 
