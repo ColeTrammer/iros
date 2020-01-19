@@ -12,6 +12,7 @@
 #include <kernel/util/spinlock.h>
 
 struct inode;
+struct timeval;
 
 /* Has to be included here so that file.h sees struct inode & ino_t */
 #include <kernel/fs/file.h>
@@ -31,6 +32,7 @@ struct inode_operations {
     struct inode *(*symlink)(struct tnode *tnode, const char *name, const char *target, int *error);
     int (*link)(struct tnode *tnode, const char *name, const struct tnode *target);
     int (*read_all)(struct inode *inode, void *buffer);
+    int (*utimes)(struct inode *inode, const struct timeval *times);
     void (*on_inode_destruction)(struct inode *inode);
 };
 

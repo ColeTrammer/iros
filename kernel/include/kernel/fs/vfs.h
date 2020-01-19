@@ -48,6 +48,7 @@ int fs_rename(const char *old_path, const char *new_path);
 ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz);
 int fs_symlink(const char *target, const char *linkpath);
 int fs_link(const char *oldpath, const char *newpath);
+int fs_utimes(const char *path, const struct timeval *times);
 int fs_mount(const char *src, const char *path, const char *type);
 
 struct file_descriptor fs_clone(struct file_descriptor desc);

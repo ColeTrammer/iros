@@ -34,12 +34,13 @@ static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &tmp_rename };
 
-static struct inode_operations tmp_i_op = { NULL,      &tmp_lookup, &tmp_open, NULL,          NULL,
-                                            NULL,      &tmp_unlink, NULL,      &tmp_chmod,    &tmp_chown,
-                                            &tmp_mmap, NULL,        NULL,      &tmp_read_all, &tmp_on_inode_destruction };
+static struct inode_operations tmp_i_op = { NULL,       &tmp_lookup,   &tmp_open,   NULL,
+                                            NULL,       NULL,          &tmp_unlink, NULL,
+                                            &tmp_chmod, &tmp_chown,    &tmp_mmap,   NULL,
+                                            NULL,       &tmp_read_all, &tmp_utimes, &tmp_on_inode_destruction };
 
-static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, NULL, NULL, &tmp_mkdir, NULL, &tmp_rmdir,
-                                                &tmp_chmod,  &tmp_chown,  NULL,      NULL, NULL, NULL,       NULL };
+static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, NULL, NULL, &tmp_mkdir, NULL,        &tmp_rmdir,
+                                                &tmp_chmod,  &tmp_chown,  NULL,      NULL, NULL, NULL,       &tmp_utimes, NULL };
 
 static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
 
@@ -230,6 +231,12 @@ int tmp_chown(struct inode *inode, uid_t uid, gid_t gid) {
     inode->uid = uid;
     inode->gid = gid;
     inode->modify_time = inode->access_time = get_time_as_timespec();
+    return 0;
+}
+
+int tmp_utimes(struct inode *inode, const struct timeval *times) {
+    inode->access_time = (struct timespec) { .tv_sec = times[0].tv_sec, .tv_nsec = times[0].tv_usec * 1000 };
+    inode->modify_time = (struct timespec) { .tv_sec = times[1].tv_sec, .tv_nsec = times[1].tv_usec * 1000 };
     return 0;
 }
 

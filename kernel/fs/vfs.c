@@ -884,6 +884,20 @@ int fs_chmod(const char *path, mode_t mode) {
     return tnode->inode->i_op->chmod(tnode->inode, mode);
 }
 
+int fs_utimes(const char *path, const struct timeval *times) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
+        return ret;
+    }
+
+    if (!tnode->inode->i_op->utimes) {
+        return -EPERM;
+    }
+
+    return tnode->inode->i_op->utimes(tnode->inode, times);
+}
+
 intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset) {
     if (file == NULL) {
         return -EINVAL;

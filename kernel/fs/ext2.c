@@ -31,11 +31,11 @@ static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
 static struct super_block_operations s_op = { &ext2_rename };
 
 static struct inode_operations ext2_i_op = { NULL,        &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL,           &ext2_unlink, NULL,
-                                             &ext2_chmod, &ext2_chown,  &ext2_mmap, NULL,       NULL, &ext2_read_all, NULL };
+                                             &ext2_chmod, &ext2_chown,  &ext2_mmap, NULL,       NULL, &ext2_read_all, &ext2_utimes, NULL };
 
-static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup,  &ext2_open,  &ext2_stat,  NULL,
-                                                 &ext2_mkdir,  NULL,          &ext2_rmdir, &ext2_chmod, &ext2_chown,
-                                                 NULL,         &ext2_symlink, &ext2_link,  NULL,        NULL };
+static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,   &ext2_stat,  NULL, &ext2_mkdir,
+                                                 NULL,         &ext2_rmdir,  &ext2_chmod,  &ext2_chown, NULL, &ext2_symlink,
+                                                 &ext2_link,   NULL,         &ext2_utimes, NULL };
 
 static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL };
 
@@ -1544,6 +1544,16 @@ int ext2_chmod(struct inode *inode, mode_t mode) {
 
     inode->mode = mode;
     inode->change_time = inode->modify_time = get_time_as_timespec();
+    return ext2_sync_inode(inode);
+}
+
+int ext2_utimes(struct inode *inode, const struct timeval *times) {
+    if (!inode->private_data) {
+        ext2_update_inode(inode, true);
+    }
+
+    inode->access_time = (struct timespec) { .tv_sec = times[0].tv_sec, .tv_nsec = times[0].tv_usec * 1000 };
+    inode->modify_time = (struct timespec) { .tv_sec = times[1].tv_sec, .tv_nsec = times[1].tv_usec * 1000 };
     return ext2_sync_inode(inode);
 }
 

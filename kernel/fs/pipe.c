@@ -21,7 +21,7 @@ static ino_t pipe_index = 1;
 
 static struct inode_operations pipe_i_op = { NULL, NULL, &pipe_open, NULL, NULL,
                                              NULL, NULL, NULL,       NULL, NULL,
-                                             NULL, NULL, NULL,       NULL, &pipe_on_inode_destruction };
+                                             NULL, NULL, NULL, NULL,       NULL, &pipe_on_inode_destruction };
 
 static struct file_operations pipe_f_op = { &pipe_close, &pipe_read, &pipe_write, &pipe_clone };
 

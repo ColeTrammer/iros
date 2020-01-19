@@ -44,6 +44,17 @@
 // #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
+#define SYS_CALL(n) void arch_sys_##n(struct task_state *task_state)
+
+#define SYS_PARAM(t, n, r) t n = (t) task_state->cpu_state.r
+
+#define SYS_PARAM1(t, n) SYS_PARAM(t, n, rsi)
+#define SYS_PARAM2(t, n) SYS_PARAM(t, n, rdx)
+#define SYS_PARAM3(t, n) SYS_PARAM(t, n, rcx)
+#define SYS_PARAM4(t, n) SYS_PARAM(t, n, r8)
+#define SYS_PARAM5(t, n) SYS_PARAM(t, n, r9)
+#define SYS_PARAM6(t, n) SYS_PARAM(t, n, r10)
+
 #define SYS_BEGIN(task_state)                                                  \
     do {                                                                       \
         get_current_task()->arch_task.user_task_state = (task_state);          \
@@ -2106,6 +2117,15 @@ void arch_sys_chown(struct task_state *task_state) {
     gid_t gid = (gid_t) task_state->cpu_state.rcx;
 
     SYS_RETURN(fs_chown(path, uid, gid));
+}
+
+SYS_CALL(utimes) {
+    SYS_BEGIN(task_state);
+
+    SYS_PARAM1(const char *, filename);
+    SYS_PARAM2(const struct timeval *, times);
+
+    SYS_RETURN(fs_utimes(filename, times));
 }
 
 void arch_sys_invalid_system_call(struct task_state *task_state) {

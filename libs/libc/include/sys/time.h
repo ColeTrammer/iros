@@ -14,6 +14,7 @@ struct timezone {
 };
 
 int gettimeofday(struct timeval *__restrict tv, void *__restrict tz);
+int utimes(const char *path, const struct timeval times[2]);
 
 #ifdef __cplusplus
 }
