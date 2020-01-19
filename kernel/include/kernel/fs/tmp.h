@@ -28,6 +28,7 @@ struct tnode *tmp_mount(struct file_system *fs, char *device_path);
 int tmp_chmod(struct inode *inode, mode_t mode);
 int tmp_chown(struct inode *inode, uid_t uid, gid_t gid);
 int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name);
+int tmp_read_all(struct inode *inode, void *buffer);
 void tmp_on_inode_destruction(struct inode *inode);
 
 void init_tmpfs();

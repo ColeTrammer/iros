@@ -33,11 +33,12 @@ static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &tmp_rename };
 
-static struct inode_operations tmp_i_op = { NULL, &tmp_lookup, &tmp_open,  &tmp_stat, NULL, NULL, &tmp_unlink,
-                                            NULL, &tmp_chmod,  &tmp_chown, &tmp_mmap, NULL, NULL, &tmp_on_inode_destruction };
+static struct inode_operations tmp_i_op = { NULL,      &tmp_lookup, &tmp_open, &tmp_stat,     NULL,
+                                            NULL,      &tmp_unlink, NULL,      &tmp_chmod,    &tmp_chown,
+                                            &tmp_mmap, NULL,        NULL,      &tmp_read_all, &tmp_on_inode_destruction };
 
-static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open,  &tmp_stat, NULL, &tmp_mkdir, NULL,
-                                                &tmp_rmdir,  &tmp_chmod,  &tmp_chown, NULL,      NULL, NULL,       NULL };
+static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, &tmp_stat, NULL, &tmp_mkdir, NULL, &tmp_rmdir,
+                                                &tmp_chmod,  &tmp_chown,  NULL,      NULL,      NULL, NULL,       NULL };
 
 static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
 
@@ -287,6 +288,16 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     }
 
     return (intptr_t) addr;
+}
+
+int tmp_read_all(struct inode *inode, void *buffer) {
+    struct tmp_data *data = inode->private_data;
+
+    spin_lock(&inode->lock);
+    memcpy(buffer, data->contents, inode->size);
+    spin_unlock(&inode->lock);
+
+    return 0;
 }
 
 void tmp_on_inode_destruction(struct inode *inode) {

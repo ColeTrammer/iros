@@ -188,6 +188,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
 intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 struct inode *ext2_symlink(struct tnode *tnode, const char *name, const char *target, int *error);
 int ext2_link(struct tnode *tnode, const char *name, const struct tnode *target);
+int ext2_read_all(struct inode *inode, void *buffer);
 
 void init_ext2();
 

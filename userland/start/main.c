@@ -36,7 +36,12 @@ void spawn_process(char **argv, uid_t uid, gid_t gid, bool redirect) {
             dup2(dev_null, 2);
             close(dev_null);
         }
-        _exit(execvp(argv[0], argv));
+        if (execvp(argv[0], argv)) {
+            perror("execvp");
+            _exit(127);
+        }
+
+        _exit(1);
     } else if (pid == -1) {
         perror("fork");
         _exit(1);

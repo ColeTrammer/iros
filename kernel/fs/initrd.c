@@ -31,10 +31,10 @@ static ino_t inode_count = 1;
 
 static struct file_system fs = { "initrd", 0, &initrd_mount, NULL, NULL };
 
-static struct inode_operations initrd_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL,
-                                               NULL, NULL,           NULL,         NULL,         NULL, NULL, NULL };
+static struct inode_operations initrd_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat,     NULL, NULL, NULL, NULL, NULL, NULL,
+                                               NULL, NULL,           NULL,         &initrd_read_all, NULL };
 
-static struct inode_operations initrd_dir_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL,
+static struct inode_operations initrd_dir_i_op = { NULL, &initrd_lookup, &initrd_open, &initrd_stat, NULL, NULL, NULL, NULL,
                                                    NULL, NULL,           NULL,         NULL,         NULL, NULL, NULL };
 
 static struct file_operations initrd_f_op = { NULL, &initrd_read, NULL, NULL };
@@ -107,6 +107,13 @@ ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
     memcpy(buffer, (void *) (initrd_start + file->start + file->position), len);
     file->position += len;
     return (ssize_t) len;
+}
+
+int initrd_read_all(struct inode *inode, void *buffer) {
+    struct initrd_file_entry *entry = (struct initrd_file_entry *) inode->private_data;
+
+    memcpy(buffer, (void *) (initrd_start + entry->offset), inode->size);
+    return 0;
 }
 
 int initrd_stat(struct inode *inode, struct stat *stat_struct) {

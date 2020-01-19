@@ -30,6 +30,7 @@ struct inode_operations {
     intptr_t (*mmap)(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
     struct inode *(*symlink)(struct tnode *tnode, const char *name, const char *target, int *error);
     int (*link)(struct tnode *tnode, const char *name, const struct tnode *target);
+    int (*read_all)(struct inode *inode, void *buffer);
     void (*on_inode_destruction)(struct inode *inode);
 };
 

@@ -192,25 +192,19 @@ struct task *load_kernel_task(uintptr_t entry) {
 }
 
 struct task *load_task(const char *file_name) {
-    int error = 0;
-    struct file *program = fs_open(file_name, O_RDONLY, &error);
-    assert(program != NULL && error == 0);
+    struct inode *program;
+    void *buffer;
+    size_t length;
 
-    fs_seek(program, 0, SEEK_END);
-    long length = fs_tell(program);
-    fs_seek(program, 0, SEEK_SET);
-
-    void *buffer = malloc(length);
-    fs_read(program, buffer, length);
+    assert(fs_read_all_path(file_name, &buffer, &length, &program) == 0);
+    assert(program != NULL);
 
     struct task *task = calloc(1, sizeof(struct task));
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
 
     task->process->inode_dev = program->device;
-    task->process->inode_id = program->inode_idenifier;
-
-    fs_close(program);
+    task->process->inode_id = program->index;
 
     assert(elf64_is_valid(buffer));
 

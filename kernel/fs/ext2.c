@@ -29,11 +29,12 @@ static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &ext2_rename };
 
-static struct inode_operations ext2_i_op = { NULL, &ext2_lookup, &ext2_open,  &ext2_stat, NULL, NULL, &ext2_unlink,
-                                             NULL, &ext2_chmod,  &ext2_chown, &ext2_mmap, NULL, NULL, NULL };
+static struct inode_operations ext2_i_op = { NULL,        &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL,           &ext2_unlink, NULL,
+                                             &ext2_chmod, &ext2_chown,  &ext2_mmap, NULL,       NULL, &ext2_read_all, NULL };
 
-static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,  &ext2_stat, NULL,          &ext2_mkdir, NULL,
-                                                 &ext2_rmdir,  &ext2_chmod,  &ext2_chown, NULL,       &ext2_symlink, &ext2_link,  NULL };
+static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup,  &ext2_open,  &ext2_stat,  NULL,
+                                                 &ext2_mkdir,  NULL,          &ext2_rmdir, &ext2_chmod, &ext2_chown,
+                                                 NULL,         &ext2_symlink, &ext2_link,  NULL,        NULL };
 
 static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL };
 
@@ -859,7 +860,13 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
 
 struct tnode *ext2_lookup(struct inode *inode, const char *name) {
     assert(inode);
-    assert(inode->flags & FS_DIR);
+
+    if (!(inode->flags & FS_DIR)) {
+        if (!inode->private_data) {
+            ext2_update_inode(inode, false);
+        }
+        return NULL;
+    }
 
     if (inode->tnode_list == NULL) {
         ext2_update_tnode_list(inode);
@@ -905,13 +912,8 @@ struct file *ext2_open(struct inode *inode, int flags, int *error) {
 }
 
 /* Should provide some sort of mechanism for caching these blocks */
-static ssize_t __ext2_read(struct file *file, void *buffer, size_t len) {
-    assert((file->flags & FS_FILE) || (file->flags & FS_LINK));
+static ssize_t __ext2_read(struct file *file, struct inode *inode, void *buffer, size_t len) {
     assert(len >= 1);
-
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
-    assert(inode);
-    assert(inode->private_data);
 
     if (!(inode->mode & S_IRUSR)) {
         return -EPERM;
@@ -1133,11 +1135,27 @@ static ssize_t __ext2_write(struct file *file, const void *buffer, size_t len) {
     return (ssize_t) len_save;
 }
 
+int ext2_read_all(struct inode *inode, void *buffer) {
+    if (!inode->private_data) {
+        ext2_update_inode(inode, false);
+    }
+
+    struct file dummy_file;
+    dummy_file.position = 0;
+
+    ssize_t ret = __ext2_read(&dummy_file, inode, buffer, inode->size);
+    if (ret < 0) {
+        return ret;
+    }
+
+    return 0;
+}
+
 ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     spin_lock(&inode->lock);
 
-    ssize_t ret = __ext2_read(file, buffer, len);
+    ssize_t ret = __ext2_read(file, inode, buffer, len);
 
     spin_unlock(&inode->lock);
     return ret;

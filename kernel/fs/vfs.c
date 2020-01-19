@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -66,6 +67,72 @@ void drop_inode_reference_unlocked(struct inode *inode) {
 void drop_inode_reference(struct inode *inode) {
     spin_lock(&inode->lock);
     drop_inode_reference_unlocked(inode);
+}
+
+int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer) {
+    if (!inode->i_op->read_all) {
+        return -EINVAL;
+    }
+
+    if (inode->i_op->lookup && inode->size == 0) {
+        inode->i_op->lookup(inode, NULL);
+    }
+
+    if (inode->size == 0) {
+        return 0;
+    }
+
+    return inode->i_op->read_all(inode, buffer);
+}
+
+int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len) {
+    if (!inode->i_op->read_all) {
+        return -EINVAL;
+    }
+
+    if (inode->size == 0 && inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
+    }
+
+    if (inode->size == 0) {
+        *buffer = NULL;
+        if (buffer_len) {
+            *buffer_len = 0;
+        }
+
+        return 0;
+    }
+
+    *buffer = malloc(inode->size);
+    if (!*buffer) {
+        return -ENOMEM;
+    }
+
+    int ret = inode->i_op->read_all(inode, *buffer);
+    if (ret < 0) {
+        return ret;
+    }
+
+    if (buffer_len) {
+        *buffer_len = inode->size;
+    }
+
+    return 0;
+}
+
+int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct inode **inode) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
+        return ret;
+    }
+
+    if (inode) {
+        *inode = tnode->inode;
+    }
+
+    assert(tnode->inode);
+    return fs_read_all_inode(tnode->inode, buffer, buffer_len);
 }
 
 struct tnode *fs_root(void) {
@@ -174,38 +241,24 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
         return 0;
     }
 
+    if (inode->size == 0 && inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
+    }
+
+    if (inode->size == 0 || !inode->i_op->read_all) {
+        return -ENOENT;
+    }
+
     char *sym_path = malloc(inode->size + 1);
-    int err = 0;
-    struct file *f = inode->i_op->open(inode, O_RDONLY, &err);
-    if (err < 0) {
-        return err;
-    }
 
-    bool in_store = false;
-    if (fs_inode_get(inode->device, inode->index)) {
-        in_store = true;
-    } else {
-        fs_inode_put(inode);
+    int ret = inode->i_op->read_all(inode, sym_path);
+    if (ret < 0) {
+        free(sym_path);
+        return ret;
     }
-    ssize_t _ret = f->f_op->read(f, sym_path, inode->size);
-
-    if (!in_store) {
-        fs_inode_del(inode->device, inode->index);
-    }
-
-    if (_ret < 0) {
-        return _ret;
-    }
-
-    if (f->f_op->close) {
-        f->f_op->close(f);
-    }
-
-    free(f);
 
     sym_path[inode->size] = '\0';
-
-    int ret = do_iname(sym_path, flags, t_root, parent->inode->parent, result, depth + 1);
+    ret = do_iname(sym_path, flags, t_root, parent->inode->parent, result, depth + 1);
 
     free(sym_path);
 
@@ -1098,34 +1151,18 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
         return -EINVAL;
     }
 
-    int err = 0;
-    struct file *file = link->inode->i_op->open(link->inode, O_RDONLY, &err);
-    if (err < 0) {
-        return err;
+    void *buffer;
+    size_t buffer_len;
+    int ret = fs_read_all_inode(link->inode, &buffer, &buffer_len);
+    if (ret < 0 || buffer == NULL) {
+        return ret;
     }
 
-    assert(file->f_op->read);
+    size_t to_write = MIN(bufsiz, buffer_len);
+    memcpy(buf, buffer, to_write);
 
-    bool in_store = false;
-
-    if (fs_inode_get(link->inode->device, link->inode->index)) {
-        in_store = true;
-    } else {
-        fs_inode_put(link->inode);
-    }
-
-    ssize_t ret = file->f_op->read(file, buf, bufsiz);
-
-    if (!in_store) {
-        fs_inode_del(link->inode->device, link->inode->index);
-    }
-
-    if (file->f_op->close) {
-        file->f_op->close(file);
-    }
-
-    free(file);
-    return ret;
+    free(buffer);
+    return to_write;
 }
 
 int fs_fstat(struct file *file, struct stat *stat_struct) {

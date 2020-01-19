@@ -16,6 +16,10 @@ void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 int iname(const char *path, int flags, struct tnode **result);
 
+int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer);
+int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len);
+int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct inode **inode);
+
 struct tnode *fs_root(void);
 int fs_create(const char *path, mode_t mode);
 struct file *fs_open(const char *file_name, int flags, int *error);

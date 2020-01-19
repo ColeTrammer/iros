@@ -107,15 +107,11 @@ void elf64_stack_trace(struct task *task) {
         return;
     }
 
-    int error = 0;
-    struct file *file = inode->i_op->open(inode, O_RDONLY, &error);
-    if (!file || error != 0) {
+    void *buffer;
+    if (!fs_read_all_inode(inode, &buffer, NULL)) {
+        debug_log("Failed to read the task's inode: [ %d ]\n", task->process->pid);
         return;
     }
-
-    void *buffer = malloc(inode->size);
-    fs_read(file, buffer, inode->size);
-    free(file);
 
     if (!elf64_is_valid(buffer)) {
         debug_log("The task is not elf64: [ %d ]\n", task->process->pid);

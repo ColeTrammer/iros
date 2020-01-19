@@ -340,23 +340,15 @@ void arch_sys_close(struct task_state *task_state) {
 
 static int execve_helper(const char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
                          dev_t *device, ino_t *ino_id, char **argv) {
-    int error = 0;
-    struct file *program = fs_open(*path, O_RDONLY, &error);
-    if (!program) {
-        return error;
+    struct inode *inode;
+    int ret = fs_read_all_path(*path, (void **) buffer, buffer_length, &inode);
+    if (ret < 0) {
+        return ret;
     }
 
-    fs_seek(program, 0, SEEK_END);
-    *buffer_length = (size_t) fs_tell(program);
-
-    if (buffer_length == 0) {
+    if (*buffer_length == 0) {
         return -ENOEXEC;
     }
-
-    fs_seek(program, 0, SEEK_SET);
-
-    *buffer = malloc(*buffer_length);
-    fs_read(program, *buffer, *buffer_length);
 
     if (!elf64_is_valid(*buffer)) {
         if (memcmp(*buffer, "#!", 2) == 0) {
@@ -414,17 +406,14 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
 
             free(*buffer);
             *buffer = NULL;
-            fs_close(program);
             return execve_helper(path, buffer, buffer_length, prepend_argv, prepend_argv_length, device, ino_id, argv);
         }
 
-        fs_close(program);
         return -ENOEXEC;
     }
 
-    *device = program->device;
-    *ino_id = program->inode_idenifier;
-    fs_close(program);
+    *device = inode->device;
+    *ino_id = inode->index;
 
     return 0;
 }

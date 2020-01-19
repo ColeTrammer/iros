@@ -16,32 +16,9 @@ static int inode_map(struct vm_object *self, struct vm_region *region) {
         data->inode_buffer = aligned_alloc(PAGE_SIZE, ((data->inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
         assert(data->inode_buffer);
 
-        int error = 0;
-
-        assert(data->inode->ref_count > 0);
-
-        struct file *file = data->inode->i_op->open(data->inode, O_RDONLY, &error);
-        if (!file) {
-            return error;
-        }
-
-        ssize_t ret = fs_read(file, data->inode_buffer, data->inode->size);
-        if (ret != (ssize_t) data->inode->size) {
-            file->f_op->close(file);
-            free(file);
-            debug_log("Failed to read inode: [ %lu, %llu ]\n", file->device, file->inode_idenifier);
+        int ret = fs_read_all_inode_with_buffer(data->inode, data->inode_buffer);
+        if (ret < 0) {
             return ret;
-        }
-
-        int rc = 0;
-        if (file->f_op->close) {
-            rc = file->f_op->close(file);
-        }
-
-        free(file);
-
-        if (rc < 0) {
-            return rc;
         }
     }
 
@@ -78,6 +55,8 @@ static struct vm_object_operations inode_ops = { &inode_map, &inode_kill };
 struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags) {
     struct inode_vm_object_data *data = malloc(sizeof(struct inode_vm_object_data));
     assert(data);
+
+    assert(inode->i_op->read_all);
 
     data->inode = inode;
     data->shared = (map_flags & MAP_SHARED) ? true : false;
