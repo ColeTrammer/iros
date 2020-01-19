@@ -139,33 +139,62 @@ struct tnode *fs_root(void) {
     return root->super_block->root;
 }
 
-static int do_iname(const char *_path, int flags, struct tnode *t_root, struct tnode *t_parent, struct tnode **result, int depth) {
-    if (depth >= 40) {
+static int do_iname(const char *_path, int flags, struct tnode *t_root, struct tnode *t_parent, struct tnode **result, int *depth) {
+    if (*depth >= 25) {
         return -ELOOP;
     }
 
     assert(t_root->inode != NULL);
     assert(t_root->inode->i_op != NULL);
 
-    char *path;
-
     struct tnode *parent = t_root;
+    char *path = flags & INAME_TAKE_OWNERSHIP_OF_PATH ? (char *) _path : strdup(_path);
+    char *save_path = path;
+
     if (_path[0] != '/') {
         parent = t_parent;
-        path = malloc(strlen(_path) + 2);
-        path[0] = '/';
-        strcpy(path + 1, _path);
-    } else {
-        path = malloc(strlen(_path) + 1);
-        strcpy(path, _path);
+        path--;
     }
-
-    char *save_path = path;
 
     char *last_slash = strchr(path + 1, '/');
 
     /* Main VFS Loop */
     while (parent != NULL && path != NULL && path[1] != '\0') {
+        if (parent->inode->flags & FS_LINK) {
+            if (parent->inode->size == 0 && parent->inode->i_op->lookup) {
+                parent->inode->i_op->lookup(parent->inode, NULL);
+            }
+
+            if (parent->inode->size == 0 || !parent->inode->i_op->read_all) {
+                free(save_path);
+                return -ENOENT;
+            }
+
+            char *link_path = malloc(parent->inode->size + 1);
+            int ret = parent->inode->i_op->read_all(parent->inode, link_path);
+            if (ret < 0) {
+                free(link_path);
+                free(save_path);
+                return ret;
+            }
+            link_path[parent->inode->size] = '\0';
+
+            if (strcmp(parent->name, link_path) == 0) {
+                free(link_path);
+                free(save_path);
+                return -ELOOP;
+            }
+
+            (*depth)++;
+            ret = do_iname(link_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->inode->parent, &parent, depth);
+            if (ret < 0) {
+                free(save_path);
+                return ret;
+            }
+
+            continue;
+        }
+
         /* Exit if we're trying to lookup past a file */
         if (!(parent->inode->flags & FS_DIR)) {
             free(save_path);
@@ -229,7 +258,8 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     struct inode *inode = parent->inode;
 
     /* Shouldn't let you at a / at the end of a file name or root (but only if the path is // and not /./) */
-    if ((path != NULL && path[0] == '/') && ((inode->flags & FS_FILE) || (inode == inode->parent->inode && strlen(_path) == 2))) {
+    if ((path != NULL && path >= save_path && path[0] == '/') &&
+        ((inode->flags & FS_FILE) || (inode == inode->parent->inode && strlen(_path) == 2))) {
         free(save_path);
         return -ENOENT;
     }
@@ -256,11 +286,15 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
         free(sym_path);
         return ret;
     }
-
     sym_path[inode->size] = '\0';
-    ret = do_iname(sym_path, flags, t_root, parent->inode->parent, result, depth + 1);
 
-    free(sym_path);
+    if (strcmp(parent->name, sym_path) == 0) {
+        free(sym_path);
+        return -ELOOP;
+    }
+
+    (*depth)++;
+    ret = do_iname(sym_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->inode->parent, result, depth);
 
     return ret;
 }
@@ -274,7 +308,14 @@ int iname(const char *_path, int flags, struct tnode **result) {
         return -ENOENT;
     }
 
-    return do_iname(_path, flags, t_root, get_current_task()->process->cwd, result, 0);
+    struct tnode *cwd = get_current_task()->process->cwd;
+    // Kernel process don't need a cwd, fill it in here.
+    if (!cwd) {
+        cwd = t_root;
+    }
+
+    int depth_storage = 0;
+    return do_iname(_path, flags, t_root, cwd, result, &depth_storage);
 }
 
 int fs_create(const char *file_name, mode_t mode) {
