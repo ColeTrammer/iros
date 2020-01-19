@@ -70,8 +70,6 @@ void drop_tnode(struct tnode *tnode) {
         debug_log("Destroying tnode: [ %p ]\n", tnode);
 #endif /* TNODE_REF_COUNT_DEBUG */
 
-        struct inode *inode = tnode->inode;
-
         free(tnode->name);
         free(tnode);
 

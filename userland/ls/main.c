@@ -71,7 +71,14 @@ void fill_dirent(char *_path, const char *name) {
             d.link_path = NULL;
         } else {
             path[ret + 4] = '\0';
-            d.link_path = path;
+
+            // Check if the file exists
+            if (access(path + 4, F_OK)) {
+                free(path);
+                d.link_path = NULL;
+            } else {
+                d.link_path = path;
+            }
         }
     }
 
@@ -134,7 +141,11 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
         } else if (S_ISBLK(stat_struct->st_mode)) {
             color_s = "\033[33m";
         } else if (S_ISLNK(stat_struct->st_mode)) {
-            color_s = "\033[94m";
+            if (dirent->link_path) {
+                color_s = "\033[94m";
+            } else {
+                color_s = "\033[107;91m";
+            }
         } else if (S_ISSOCK(stat_struct->st_mode)) {
             color_s = "\033[34m";
         } else {
