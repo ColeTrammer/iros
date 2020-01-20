@@ -59,6 +59,8 @@ $(BUILDDIR)/libs/libc/string/memcmp.o \
 $(BUILDDIR)/libs/libc/string/memcpy.o \
 $(BUILDDIR)/libs/libc/string/memmove.o \
 $(BUILDDIR)/libs/libc/string/memset.o \
+$(BUILDDIR)/libs/libc/string/stpcpy.o \
+$(BUILDDIR)/libs/libc/string/stpncpy.o \
 $(BUILDDIR)/libs/libc/string/strcat.o \
 $(BUILDDIR)/libs/libc/string/strchr.o \
 $(BUILDDIR)/libs/libc/string/strcmp.o \
@@ -69,6 +71,8 @@ $(BUILDDIR)/libs/libc/string/strlen.o \
 $(BUILDDIR)/libs/libc/string/strncat.o \
 $(BUILDDIR)/libs/libc/string/strncmp.o \
 $(BUILDDIR)/libs/libc/string/strncpy.o \
+$(BUILDDIR)/libs/libc/string/strndup.o \
+$(BUILDDIR)/libs/libc/string/strnlen.o \
 $(BUILDDIR)/libs/libc/string/strpbrk.o \
 $(BUILDDIR)/libs/libc/string/strrchr.o \
 $(BUILDDIR)/libs/libc/string/strspn.o \

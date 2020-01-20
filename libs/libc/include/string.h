@@ -22,6 +22,8 @@ void *memmove(void *dest, const void *src, size_t n);
 #endif /* #if (defined(__is_kernel) || defined(__is_libk)) && defined(KERNEL_MEMCPY_DEBUG) */
 char *strcpy(char *__restrict dest, const char *__restrict src);
 char *strncpy(char *__restrict dest, const char *__restrict src, size_t n);
+char *stpcpy(char *__restrict dest, const char *__restrict src);
+char *stpncpy(char *__restrict dest, const char *__restrict src, size_t n);
 
 char *strcat(char *__restrict dest, const char *__restrict src);
 char *strncat(char *__restrict dest, const char *__restrict src, size_t n);
@@ -41,8 +43,10 @@ char *strtok(char *__restrict str, const char *__restrict delim);
 
 void *memset(void *s, int c, size_t n);
 size_t strlen(const char *s);
+size_t strnlen(const char *s, size_t n);
 
 char *strdup(const char *s);
+char *strndup(const char *s, size_t n);
 
 char *strerror(int errnum);
 char *strsignal(int sig);
