@@ -47,6 +47,22 @@
 #define SYS_CALL(n) void arch_sys_##n(struct task_state *task_state)
 
 #define SYS_PARAM(t, n, r) t n = (t) task_state->cpu_state.r
+#define SYS_PARAM_VALIDATE(t, n, r, f, a) \
+    SYS_PARAM(t, n, r);                   \
+    do {                                  \
+        int ret = f(n, a);                \
+        if (ret < 0) {                    \
+            SYS_RETURN(ret);              \
+        }                                 \
+    } while (0)
+#define SYS_PARAM_TRANSFORM(t, n, ot, r, f)            \
+    t n;                                               \
+    do {                                               \
+        int ret = f((ot) task_state->cpu_state.r, &n); \
+        if (ret < 0) {                                 \
+            SYS_RETURN(ret);                           \
+        }                                              \
+    } while (0)
 
 #define SYS_PARAM1(t, n) SYS_PARAM(t, n, rsi)
 #define SYS_PARAM2(t, n) SYS_PARAM(t, n, rdx)
@@ -55,7 +71,21 @@
 #define SYS_PARAM5(t, n) SYS_PARAM(t, n, r9)
 #define SYS_PARAM6(t, n) SYS_PARAM(t, n, r10)
 
-#define SYS_BEGIN(task_state)                                                  \
+#define SYS_PARAM1_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rsi, f, a)
+#define SYS_PARAM2_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rdx, f, a)
+#define SYS_PARAM3_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rcx, f, a)
+#define SYS_PARAM4_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r8, f, a)
+#define SYS_PARAM5_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r9, f, a)
+#define SYS_PARAM6_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r10, f, a)
+
+#define SYS_PARAM1_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rsi, f)
+#define SYS_PARAM2_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rdx, f)
+#define SYS_PARAM3_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rcx, f)
+#define SYS_PARAM4_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r8, f)
+#define SYS_PARAM5_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r9, f)
+#define SYS_PARAM6_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r10, f)
+
+#define SYS_BEGIN()                                                            \
     do {                                                                       \
         get_current_task()->arch_task.user_task_state = (task_state);          \
         get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
@@ -64,7 +94,7 @@
         enable_interrupts();                                                   \
     } while (0)
 
-#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state)                       \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS()                                 \
     do {                                                                  \
         get_current_task()->arch_task.user_task_state = (task_state);     \
         get_current_task()->in_kernel = true;                             \
@@ -72,7 +102,7 @@
         get_current_task()->arch_task.user_task_state->cpu_state.rax = 0; \
     } while (0)
 
-#define SYS_BEGIN_SIGSUSPEND(task_state)                                       \
+#define SYS_BEGIN_SIGSUSPEND()                                                 \
     do {                                                                       \
         get_current_task()->arch_task.user_task_state = (task_state);          \
         get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
@@ -81,7 +111,7 @@
         get_current_task()->in_sigsuspend = true;                              \
     } while (0)
 
-#define SYS_BEGIN_PSELECT(task_state)                                         \
+#define SYS_BEGIN_PSELECT()                                                   \
     do {                                                                      \
         get_current_task()->arch_task.user_task_state = (task_state);         \
         get_current_task()->arch_task.user_task_state->cpu_state.rax = EINTR; \
@@ -124,8 +154,114 @@
 
 extern struct task *current_task;
 
-void arch_sys_exit(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+static int validate_string(const char *s, size_t size) {
+    (void) s;
+    (void) size;
+    return 0;
+}
+
+static int validate_write(void *buffer, size_t size) {
+    if (!buffer) {
+        return -EFAULT;
+    }
+
+    (void) size;
+    return 0;
+}
+
+static int validate_read(const void *buffer, size_t size) {
+    if (!buffer) {
+        return -EFAULT;
+    }
+
+    (void) size;
+    return 0;
+}
+
+static int validate_write_or_null(void *buffer, size_t size) {
+    if (!buffer) {
+        return 0;
+    }
+
+    (void) size;
+    return 0;
+}
+
+static int validate_read_or_null(const void *buffer, size_t size) {
+    if (!buffer) {
+        return 0;
+    }
+
+    (void) size;
+    return 0;
+}
+
+static int validate_signal_number(int signum, int unused) {
+    (void) unused;
+
+    if (signum < 0 || signum >= _NSIG) {
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
+static int validate_positive(int n, int accept_zero) {
+    if (accept_zero) {
+        return n >= 0;
+    } else {
+        return n > 0;
+    }
+}
+
+static int get_file(int fd, struct file **file) {
+    if (fd < 0 || fd >= FOPEN_MAX) {
+        return -EBADF;
+    }
+
+    struct process *current = get_current_task()->process;
+    if (!current->files[fd].file) {
+        return -EBADF;
+    }
+
+    *file = current->files[fd].file;
+    return 0;
+}
+
+static int get_file_desc(int fd, struct file_descriptor **desc) {
+    if (fd < 0 || fd >= FOPEN_MAX) {
+        return -EBADF;
+    }
+
+    struct process *current = get_current_task()->process;
+    if (!current->files[fd].file) {
+        return -EBADF;
+    }
+
+    *desc = &current->files[fd];
+    return 0;
+}
+
+static int get_socket(int fd, struct file **filep) {
+    if (fd < 0 || fd > FOPEN_MAX) {
+        return -EBADF;
+    }
+
+    struct file *file = get_current_task()->process->files[fd].file;
+    if (!file) {
+        return -EBADF;
+    }
+
+    if (!(file->flags & FS_SOCKET)) {
+        return -ENOTSOCK;
+    }
+
+    *filep = file;
+    return 0;
+}
+
+SYS_CALL(exit) {
+    SYS_BEGIN();
 
     /* Disable Interrups To Prevent Premature Task Removal, Since Sched State Is Set */
     disable_interrupts();
@@ -142,10 +278,10 @@ void arch_sys_exit(struct task_state *task_state) {
     sys_sched_run_next(task_state);
 }
 
-void arch_sys_sbrk(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(sbrk) {
+    SYS_BEGIN();
 
-    intptr_t increment = task_state->cpu_state.rsi;
+    SYS_PARAM1(intptr_t, increment);
 
     void *res;
     if (increment < 0) {
@@ -159,11 +295,11 @@ void arch_sys_sbrk(struct task_state *task_state) {
         SYS_RETURN(-ENOMEM);
     }
 
-    SYS_RETURN((uint64_t) res);
+    SYS_RETURN(res);
 }
 
-void arch_sys_fork(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(fork) {
+    SYS_BEGIN();
 
     struct task *parent = get_current_task();
     struct task *child = calloc(1, sizeof(struct task));
@@ -224,12 +360,12 @@ void arch_sys_fork(struct task_state *task_state) {
     SYS_RETURN(child_process->pid);
 }
 
-void arch_sys_open(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(open) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    int flags = (int) task_state->cpu_state.rdx;
-    mode_t mode = (mode_t) task_state->cpu_state.rcx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM2(int, flags);
+    SYS_PARAM3(mode_t, mode);
 
     assert(path != NULL);
 
@@ -290,61 +426,33 @@ void arch_sys_open(struct task_state *task_state) {
     SYS_RETURN(-EMFILE);
 }
 
-void arch_sys_read(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(read) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    char *buf = (void *) task_state->cpu_state.rdx;
-    size_t count = (size_t) task_state->cpu_state.rcx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM3(size_t, count);
+    SYS_PARAM2_VALIDATE(char *, buf, validate_write, count);
 
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EINVAL);
-    }
-
-    struct task *task = get_current_task();
-    struct file *file = task->process->files[fd].file;
-    if (file == NULL) {
-        SYS_RETURN(-EINVAL);
-    }
-
-    SYS_RETURN((uint64_t) fs_read(file, buf, count));
+    SYS_RETURN(fs_read(file, buf, count));
 }
 
-void arch_sys_write(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(write) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    void *buf = (void *) task_state->cpu_state.rdx;
-    size_t count = (size_t) task_state->cpu_state.rcx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM3(size_t, count);
+    SYS_PARAM2_VALIDATE(const void *, buf, validate_read, count);
 
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EINVAL);
-    }
-
-    struct task *task = get_current_task();
-    struct file *file = task->process->files[fd].file;
-    if (file == NULL) {
-        SYS_RETURN(-EINVAL);
-    }
-
-    SYS_RETURN((uint64_t) fs_write(file, buf, count));
+    SYS_RETURN(fs_write(file, buf, count));
 }
 
-void arch_sys_close(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(close) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
+    SYS_PARAM1_TRANSFORM(struct file_descriptor *, desc, int, get_file_desc);
 
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct task *task = get_current_task();
-    if (task->process->files[fd].file == NULL) {
-        SYS_RETURN(-EBADF);
-    }
-    int error = fs_close(task->process->files[fd].file);
-    task->process->files[fd].file = NULL;
+    int error = fs_close(desc->file);
+    desc->file = NULL;
 
     SYS_RETURN(error);
 }
@@ -429,12 +537,14 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
     return 0;
 }
 
-void arch_sys_execve(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(execve) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    char **argv = (char **) task_state->cpu_state.rdx;
-    char **envp = (char **) task_state->cpu_state.rcx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+
+    // FIXME: validate these arrays
+    SYS_PARAM2(char **, argv);
+    SYS_PARAM2(char **, envp);
 
     assert(path != NULL);
     assert(argv != NULL);
@@ -577,12 +687,12 @@ void arch_sys_execve(struct task_state *task_state) {
     sys_sched_run_next(&task->arch_task.task_state);
 }
 
-void arch_sys_waitpid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(waitpid) {
+    SYS_BEGIN();
 
-    pid_t pid = (pid_t) task_state->cpu_state.rsi;
-    int *status = (int *) task_state->cpu_state.rdx;
-    int flags = (int) task_state->cpu_state.rcx;
+    SYS_PARAM1(pid_t, pid);
+    SYS_PARAM2_VALIDATE(int *, status, validate_write, sizeof(int));
+    SYS_PARAM3(int, flags);
 
     struct task *current = get_current_task();
 
@@ -646,17 +756,16 @@ void arch_sys_waitpid(struct task_state *task_state) {
     SYS_RETURN(found_pid);
 }
 
-void arch_sys_getpid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
-
+SYS_CALL(getpid) {
+    SYS_BEGIN();
     SYS_RETURN(get_current_task()->process->pid);
 }
 
-void arch_sys_getcwd(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getcwd) {
+    SYS_BEGIN();
 
-    char *buffer = (char *) task_state->cpu_state.rsi;
-    size_t size = (size_t) task_state->cpu_state.rdx;
+    SYS_PARAM2(size_t, size);
+    SYS_PARAM1_VALIDATE(char *, buffer, validate_write, size);
 
     struct task *current = get_current_task();
     char *full_path = get_tnode_path(current->process->cwd);
@@ -673,10 +782,10 @@ void arch_sys_getcwd(struct task_state *task_state) {
     SYS_RETURN(buffer);
 }
 
-void arch_sys_chdir(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(chdir) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
 
     struct task *task = get_current_task();
 
@@ -695,74 +804,49 @@ void arch_sys_chdir(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_stat(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(stat) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    void *stat_struct = (void *) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM2_VALIDATE(void *, stat_struct, validate_write, sizeof(struct stat));
 
     SYS_RETURN(fs_stat(path, stat_struct));
 }
 
-void arch_sys_lseek(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(lseek) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    off_t offset = (off_t) task_state->cpu_state.rdx;
-    int whence = (int) task_state->cpu_state.rcx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM2(off_t, offset);
+    SYS_PARAM3(int, whence);
 
-    struct task *task = get_current_task();
-    struct file *file = task->process->files[fd].file;
-    assert(file);
-
-    SYS_RETURN((uint64_t) fs_seek(file, offset, whence));
+    SYS_RETURN(fs_seek(file, offset, whence));
 }
 
-void arch_sys_ioctl(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(ioctl) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    unsigned long request = (unsigned long) task_state->cpu_state.rdx;
-    void *argp = (void *) task_state->cpu_state.rcx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM2(unsigned long, request);
+    SYS_PARAM3(void *, argp);
 
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct task *task = get_current_task();
-    struct file *file = task->process->files[fd].file;
-
-    if (file == NULL) {
-        SYS_RETURN(-EBADF);
-    }
-
-    SYS_RETURN((uint64_t) fs_ioctl(file, request, argp));
+    SYS_RETURN(fs_ioctl(file, request, argp));
 }
 
-void arch_sys_ftruncate(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(ftruncate) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    off_t length = (off_t) task_state->cpu_state.rdx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM2(off_t, length);
 
-    if (fd < 0 || fd >= FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct task *task = get_current_task();
-    struct file *file = task->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    SYS_RETURN((uint64_t) fs_truncate(file, length));
+    SYS_RETURN(fs_truncate(file, length));
 }
 
-void arch_sys_gettimeofday(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(gettimeofday) {
+    SYS_BEGIN();
 
-    struct timeval *tv = (struct timeval *) task_state->cpu_state.rsi;
-    struct timezone *tz = (struct timezone *) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(struct timeval *, tv, validate_write_or_null, sizeof(struct timeval));
+    SYS_PARAM2_VALIDATE(struct timezone *, tz, validate_write_or_null, sizeof(struct timezone));
 
     time_t micro_seconds = get_time();
     if (tv) {
@@ -778,20 +862,21 @@ void arch_sys_gettimeofday(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_mkdir(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(mkdir) {
+    SYS_BEGIN();
 
-    const char *pathname = (const char *) task_state->cpu_state.rsi;
-    mode_t mode = (mode_t) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const char *, pathname, validate_string, -1);
+    SYS_PARAM2(mode_t, mode);
 
     SYS_RETURN(fs_mkdir(pathname, mode));
 }
 
-void arch_sys_dup2(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(dup2) {
+    SYS_BEGIN();
 
-    int oldfd = (int) task_state->cpu_state.rsi;
-    int newfd = (int) task_state->cpu_state.rdx;
+    // FIXME: validate oldfd?
+    SYS_PARAM1(int, oldfd);
+    SYS_PARAM2(int, newfd);
 
 #ifdef DUP_DEBUG
     debug_log("Dup: [ %d, %d ]\n", oldfd, newfd);
@@ -813,10 +898,10 @@ void arch_sys_dup2(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_pipe(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(pipe) {
+    SYS_BEGIN();
 
-    int *pipefd = (int *) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(int *, pipefd, validate_write, 2 * sizeof(int));
 
     struct file *pipe_files[2];
     int ret = fs_create_pipe(pipe_files);
@@ -840,41 +925,41 @@ void arch_sys_pipe(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_unlink(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(unlink) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
 
     SYS_RETURN(fs_unlink(path));
 }
 
-void arch_sys_rmdir(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(rmdir) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
 
     SYS_RETURN(fs_rmdir(path));
 }
 
-void arch_sys_chmod(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(chmod) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    mode_t mode = (mode_t) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM2(mode_t, mode);
 
     SYS_RETURN(fs_chmod(path, mode));
 }
 
-void arch_sys_kill(struct task_state *task_state) {
-    SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state);
+SYS_CALL(kill) {
+    SYS_BEGIN_CAN_SEND_SELF_SIGNALS();
 
-    pid_t pid = (pid_t) task_state->cpu_state.rsi;
-    int signum = (int) task_state->cpu_state.rdx;
+    SYS_PARAM1(pid_t, pid);
+    SYS_PARAM2_VALIDATE(int, signum, validate_signal_number, -1);
 
     struct task *current = get_current_task();
 
     // pid -1 is not yet implemented
-    if (signum < 0 || signum >= _NSIG || pid == -1) {
+    if (pid == -1) {
         SYS_RETURN(-EINVAL);
     }
 
@@ -889,11 +974,11 @@ void arch_sys_kill(struct task_state *task_state) {
     }
 }
 
-void arch_sys_setpgid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(setpgid) {
+    SYS_BEGIN();
 
-    pid_t pid = (pid_t) task_state->cpu_state.rsi;
-    pid_t pgid = (pid_t) task_state->cpu_state.rdx;
+    SYS_PARAM1(pid_t, pid);
+    SYS_PARAM2(pid_t, pgid);
 
     if (pgid < 0) {
         SYS_RETURN(-EINVAL);
@@ -924,12 +1009,12 @@ void arch_sys_setpgid(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_sigaction(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(sigaction) {
+    SYS_BEGIN();
 
-    int signum = (int) task_state->cpu_state.rsi;
-    const struct sigaction *act = (const struct sigaction *) task_state->cpu_state.rdx;
-    struct sigaction *old_act = (struct sigaction *) task_state->cpu_state.rcx;
+    SYS_PARAM1_VALIDATE(int, signum, validate_signal_number, -1);
+    SYS_PARAM2_VALIDATE(const struct sigaction *, act, validate_read_or_null, sizeof(struct sigaction));
+    SYS_PARAM3_VALIDATE(struct sigaction *, old_act, validate_write_or_null, sizeof(struct sigaction));
 
     if (signum <= 0 || signum > _NSIG) {
         SYS_RETURN(-EINVAL);
@@ -953,7 +1038,7 @@ void arch_sys_sigaction(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_sigreturn(struct task_state *task_state) {
+SYS_CALL(sigreturn) {
     struct task *task = get_current_task();
     siginfo_t *info = (siginfo_t *) (((uint64_t *) task_state->stack_state.rsp) + 1);
     ucontext_t *context = (ucontext_t *) (info + 1);
@@ -975,12 +1060,12 @@ void arch_sys_sigreturn(struct task_state *task_state) {
     __run_task(&task->arch_task);
 }
 
-void arch_sys_sigprocmask(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(sigprocmask) {
+    SYS_BEGIN();
 
-    int how = (int) task_state->cpu_state.rsi;
-    const sigset_t *set = (const sigset_t *) task_state->cpu_state.rdx;
-    sigset_t *old = (sigset_t *) task_state->cpu_state.rcx;
+    SYS_PARAM1(int, how);
+    SYS_PARAM2_VALIDATE(const sigset_t *, set, validate_read_or_null, sizeof(sigset_t));
+    SYS_PARAM3_VALIDATE(sigset_t *, old, validate_write_or_null, sizeof(sigset_t));
 
     struct task *current = get_current_task();
 
@@ -1015,20 +1100,17 @@ void arch_sys_sigprocmask(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_dup(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(dup) {
+    SYS_BEGIN();
 
-    int oldfd = (int) task_state->cpu_state.rsi;
+    SYS_PARAM1_TRANSFORM(struct file_descriptor *, old_desc, int, get_file_desc);
 
     struct task *current = get_current_task();
-    if (current->process->files[oldfd].file == NULL) {
-        SYS_RETURN(-EBADF);
-    }
 
     // Should lock task to prevent races
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (current->process->files[i].file == NULL) {
-            current->process->files[i] = fs_dup(current->process->files[oldfd]);
+            current->process->files[i] = fs_dup(*old_desc);
 #ifdef DUP_DEBUG
             debug_log("Dup: [ %d, %lu ]\n", oldfd, i);
 #endif /* DUP_DEBUG */
@@ -1039,10 +1121,10 @@ void arch_sys_dup(struct task_state *task_state) {
     SYS_RETURN(-EMFILE);
 }
 
-void arch_sys_getpgid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getpgid) {
+    SYS_BEGIN();
 
-    pid_t pid = (pid_t) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(pid_t, pid, validate_positive, 1);
     if (pid == 0) {
         pid = get_current_task()->process->pid;
     }
@@ -1050,10 +1132,10 @@ void arch_sys_getpgid(struct task_state *task_state) {
     SYS_RETURN(proc_get_pgid(pid));
 }
 
-void arch_sys_sleep(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(sleep) {
+    SYS_BEGIN();
 
-    unsigned int seconds = (unsigned int) task_state->cpu_state.rsi;
+    SYS_PARAM1(unsigned int, seconds);
 
     debug_log("Sleeping: [ %u ]\n", seconds);
 
@@ -1067,139 +1149,87 @@ void arch_sys_sleep(struct task_state *task_state) {
     SYS_RETURN(now < end_time ? end_time - now : 0);
 }
 
-void arch_sys_access(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(access) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    int mode = (int) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM2(int, mode);
 
     SYS_RETURN(fs_access(path, mode));
 }
 
-void arch_sys_accept4(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(accept4) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.rcx;
-    int flags = (int) task_state->cpu_state.r8;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct file *file = get_current_task()->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    if (!(file->flags & FS_SOCKET)) {
-        SYS_RETURN(-ENOTSOCK);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, sizeof(struct sockaddr));
+    SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
+    SYS_PARAM4(int, flags);
 
     SYS_RETURN(net_accept(file, addr, addrlen, flags));
 }
 
-void arch_sys_bind(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(bind) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    const struct sockaddr *addr = (const struct sockaddr *) task_state->cpu_state.rdx;
-    socklen_t addrlen = (socklen_t) task_state->cpu_state.rcx;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct file *file = get_current_task()->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    if (!(file->flags & FS_SOCKET)) {
-        SYS_RETURN(-ENOTSOCK);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2_VALIDATE(const struct sockaddr *, addr, validate_read, sizeof(struct sockaddr));
+    SYS_PARAM3(socklen_t, addrlen);
 
     SYS_RETURN(net_bind(file, addr, addrlen));
 }
 
-void arch_sys_connect(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(connect) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
-    socklen_t addrlen = (socklen_t) task_state->cpu_state.rcx;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct file *file = get_current_task()->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    if (!(file->flags & FS_SOCKET)) {
-        SYS_RETURN(-ENOTSOCK);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2_VALIDATE(const struct sockaddr *, addr, validate_read, sizeof(struct sockaddr));
+    SYS_PARAM3(socklen_t, addrlen);
 
     SYS_RETURN(net_connect(file, addr, addrlen));
 }
 
-void arch_sys_listen(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(listen) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    int backlog = (int) task_state->cpu_state.rdx;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct file *file = get_current_task()->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    if (!(file->flags & FS_SOCKET)) {
-        SYS_RETURN(-ENOTSOCK);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2_VALIDATE(int, backlog, validate_positive, 0);
 
     SYS_RETURN(net_listen(file, backlog));
 }
 
-void arch_sys_socket(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(socket) {
+    SYS_BEGIN();
 
-    int domain = (int) task_state->cpu_state.rsi;
-    int type = (int) task_state->cpu_state.rdx;
-    int protocol = (int) task_state->cpu_state.rcx;
+    SYS_PARAM1(int, domain);
+    SYS_PARAM2(int, type);
+    SYS_PARAM3(int, protocol);
 
     SYS_RETURN(net_socket(domain, type, protocol));
 }
 
-void arch_sys_shutdown(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(shutdown) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    int how = (int) task_state->cpu_state.rdx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2(int, how);
 
-    (void) fd;
+    (void) file;
     (void) how;
 
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_sys_getsockopt(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getsockopt) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    int level = (int) task_state->cpu_state.rdx;
-    int optname = (int) task_state->cpu_state.rcx;
-    const void *optval = (const void *) task_state->cpu_state.r8;
-    socklen_t *optlen = (socklen_t *) task_state->cpu_state.r9;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2(int, level);
+    SYS_PARAM3(int, optname);
+    SYS_PARAM4(void *, optval);
+    SYS_PARAM5_VALIDATE(socklen_t *, optlen, validate_write, sizeof(socklen_t));
 
-    (void) fd;
+    (void) file;
     (void) level;
     (void) optname;
     (void) optval;
@@ -1208,124 +1238,81 @@ void arch_sys_getsockopt(struct task_state *task_state) {
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_sys_setsockopt(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(setsockopt) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    int level = (int) task_state->cpu_state.rdx;
-    int optname = (int) task_state->cpu_state.rcx;
-    const void *optval = (const void *) task_state->cpu_state.r8;
-    socklen_t optlen = (socklen_t) task_state->cpu_state.r9;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct file *file = get_current_task()->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    if (!(file->flags & FS_SOCKET)) {
-        SYS_RETURN(-ENOTSOCK);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2(int, level);
+    SYS_PARAM3(int, optname);
+    SYS_PARAM5(socklen_t, optlen);
+    SYS_PARAM4_VALIDATE(const void *, optval, validate_read, (size_t) optlen);
 
     SYS_RETURN(net_setsockopt(file, level, optname, optval, optlen));
 }
 
-void arch_sys_getpeername(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getpeername) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.rcx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2(struct sockaddr *, addr);
+    SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
 
-    (void) fd;
+    (void) file;
     (void) addr;
     (void) addrlen;
 
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_sys_getsockname(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getsockname) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    struct sockaddr *addr = (struct sockaddr *) task_state->cpu_state.rdx;
-    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.rcx;
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM2(struct sockaddr *, addr);
+    SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
 
-    (void) fd;
+    (void) file;
     (void) addr;
     (void) addrlen;
 
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_sys_sendto(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(sendto) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    const void *buf = (const void *) task_state->cpu_state.rdx;
-    size_t len = (size_t) task_state->cpu_state.rcx;
-    int flags = (int) task_state->cpu_state.r8;
-    const struct sockaddr *dest = (const struct sockaddr *) task_state->cpu_state.r9;
-    socklen_t addrlen = (socklen_t) task_state->cpu_state.r10;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct file *file = get_current_task()->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    if (!(file->flags & FS_SOCKET)) {
-        SYS_RETURN(-ENOTSOCK);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM3(size_t, len);
+    SYS_PARAM2_VALIDATE(const void *, buf, validate_read, len);
+    SYS_PARAM4(int, flags);
+    SYS_PARAM6(socklen_t, addrlen);
+    SYS_PARAM5_VALIDATE(const struct sockaddr *, dest, validate_read_or_null, addrlen);
 
     SYS_RETURN(net_sendto(file, buf, len, flags, dest, addrlen));
 }
 
-void arch_sys_recvfrom(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(recvfrom) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    void *buf = (void *) task_state->cpu_state.rdx;
-    size_t len = (size_t) task_state->cpu_state.rcx;
-    int flags = (int) task_state->cpu_state.r8;
-    struct sockaddr *source = (struct sockaddr *) task_state->cpu_state.r9;
-    socklen_t *addrlen = (socklen_t *) task_state->cpu_state.r10;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct file *file = get_current_task()->process->files[fd].file;
-    if (!file) {
-        SYS_RETURN(-EBADF);
-    }
-
-    if (!(file->flags & FS_SOCKET)) {
-        SYS_RETURN(-ENOTSOCK);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
+    SYS_PARAM3(size_t, len);
+    SYS_PARAM2_VALIDATE(void *, buf, validate_write, len);
+    SYS_PARAM4(int, flags);
+    SYS_PARAM5(struct sockaddr *, source);
+    SYS_PARAM6_VALIDATE(socklen_t *, addrlen, validate_write_or_null, sizeof(socklen_t));
 
     SYS_RETURN(net_recvfrom(file, buf, len, flags, source, addrlen));
 }
 
-void arch_sys_mmap(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(mmap) {
+    SYS_BEGIN();
 
-    void *addr = (void *) task_state->cpu_state.rsi;
-    size_t length = (size_t) task_state->cpu_state.rdx;
-    int prot = (int) task_state->cpu_state.rcx;
-    int flags = (int) task_state->cpu_state.r8;
-    int fd = (int) task_state->cpu_state.r9;
-    off_t offset = (off_t) task_state->cpu_state.r10;
-
-    if (length == 0) {
-        SYS_RETURN(-EINVAL);
-    }
+    SYS_PARAM1(void *, addr);
+    SYS_PARAM2_VALIDATE(size_t, length, validate_positive, 0);
+    SYS_PARAM3(int, prot);
+    SYS_PARAM4(int, flags);
+    SYS_PARAM5(int, fd);
+    SYS_PARAM6(off_t, offset);
 
     if (flags & MAP_ANONYMOUS) {
         struct vm_region *region = map_region(addr, length, prot, flags & MAP_STACK ? VM_TASK_STACK : VM_PROCESS_ANON_MAPPING);
@@ -1351,76 +1338,56 @@ void arch_sys_mmap(struct task_state *task_state) {
     }
 
     struct file *file = get_current_task()->process->files[fd].file;
+    if (!file) {
+        SYS_RETURN(-EBADF);
+    }
 
     SYS_RETURN(fs_mmap(addr, length, prot, flags, file, offset));
 }
 
-void arch_sys_munmap(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(munmap) {
+    SYS_BEGIN();
 
-    void *addr = (void *) task_state->cpu_state.rsi;
-    size_t length = (size_t) task_state->cpu_state.rdx;
+    SYS_PARAM1(void *, addr);
+    SYS_PARAM2(size_t, length);
 
     debug_log("munmap: [ %p, %#.16lX, %#.16lX ]\n", addr, length, (uintptr_t) addr + length);
 
     SYS_RETURN(unmap_range((uintptr_t) addr, length));
 }
 
-void arch_sys_rename(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(rename) {
+    SYS_BEGIN();
 
-    const char *old_path = (const char *) task_state->cpu_state.rsi;
-    const char *new_path = (const char *) task_state->cpu_state.rdx;
-
-    if (old_path == NULL || new_path == NULL) {
-        SYS_RETURN(-EINVAL);
-    }
+    SYS_PARAM1_VALIDATE(const char *, old_path, validate_string, -1);
+    SYS_PARAM2_VALIDATE(const char *, new_path, validate_string, -1);
 
     SYS_RETURN(fs_rename(old_path, new_path));
 }
 
-void arch_sys_fcntl(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(fcntl) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    int command = (int) task_state->cpu_state.rdx;
-    int arg = (int) task_state->cpu_state.rcx;
+    SYS_PARAM1_TRANSFORM(struct file_descriptor *, desc, int, get_file_desc);
+    SYS_PARAM2(int, command);
+    SYS_PARAM3(int, arg);
 
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct task *current = get_current_task();
-    if (current->process->files[fd].file == NULL) {
-        SYS_RETURN(-EBADF);
-    }
-
-    SYS_RETURN(fs_fcntl(&current->process->files[fd], command, arg));
+    SYS_RETURN(fs_fcntl(desc, command, arg));
 }
 
-void arch_sys_fstat(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(fstat) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    struct stat *stat_struct = (struct stat *) task_state->cpu_state.rdx;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct task *current = get_current_task();
-    struct file *file = current->process->files[fd].file;
-    if (file == NULL) {
-        SYS_RETURN(-EBADF);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM2_VALIDATE(struct stat *, stat_struct, validate_write, sizeof(struct stat));
 
     SYS_RETURN(fs_fstat(file, stat_struct));
 }
 
-void arch_sys_alarm(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(alarm) {
+    SYS_BEGIN();
 
-    unsigned int seconds = (unsigned int) task_state->cpu_state.rsi;
+    SYS_PARAM1(unsigned int, seconds);
 
     struct task *current = get_current_task();
 
@@ -1436,40 +1403,27 @@ void arch_sys_alarm(struct task_state *task_state) {
     assert(false);
 }
 
-void arch_sys_fchmod(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(fchmod) {
+    SYS_BEGIN();
 
-    int fd = (int) task_state->cpu_state.rsi;
-    mode_t mode = (mode_t) task_state->cpu_state.rdx;
-
-    if (fd < 0 || fd > FOPEN_MAX) {
-        SYS_RETURN(-EBADF);
-    }
-
-    struct task *current = get_current_task();
-    struct file *file = current->process->files[fd].file;
-    if (file == NULL) {
-        SYS_RETURN(-EBADF);
-    }
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM2(mode_t, mode);
 
     SYS_RETURN(fs_fchmod(file, mode));
 }
 
-void arch_sys_getppid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getppid) {
+    SYS_BEGIN();
 
     SYS_RETURN(get_current_task()->process->ppid);
 }
 
-void arch_sys_sigsuspend(struct task_state *task_state) {
-    SYS_BEGIN_SIGSUSPEND(task_state);
+SYS_CALL(sigsuspend) {
+    SYS_BEGIN_SIGSUSPEND();
+
+    SYS_PARAM1_VALIDATE(const sigset_t *, mask, validate_read, sizeof(sigset_t));
 
     struct task *current = get_current_task();
-    const sigset_t *mask = (const sigset_t *) task_state->cpu_state.rsi;
-    if (mask == NULL) {
-        current->in_sigsuspend = false;
-        SYS_RETURN(-EFAULT);
-    }
 
     memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
     memcpy(&current->sig_mask, mask, sizeof(sigset_t));
@@ -1477,13 +1431,10 @@ void arch_sys_sigsuspend(struct task_state *task_state) {
     proc_block_custom(current);
 }
 
-void arch_sys_times(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(times) {
+    SYS_BEGIN();
 
-    struct tms *tms = (struct tms *) task_state->cpu_state.rsi;
-    if (tms == NULL) {
-        SYS_RETURN(-EFAULT);
-    }
+    SYS_PARAM1_VALIDATE(struct tms *, tms, validate_write, sizeof(struct tms));
 
     struct task *current = get_current_task();
 
@@ -1496,10 +1447,10 @@ void arch_sys_times(struct task_state *task_state) {
     SYS_RETURN(get_time() / 10);
 }
 
-void arch_sys_create_task(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(create_task) {
+    SYS_BEGIN();
 
-    struct create_task_args *args = (struct create_task_args *) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(struct create_task_args *, args, validate_read, sizeof(struct create_task_args));
 
     debug_log("Creating task: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", args->entry, args->stack_start, (uintptr_t) args->tid_ptr,
               (uintptr_t) args->thread_self_pointer);
@@ -1535,8 +1486,8 @@ void arch_sys_create_task(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_exit_task(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(exit_task) {
+    SYS_BEGIN();
 
     /* Disable Interrups To Prevent Premature Task Removal, Since Sched State Is Set */
     disable_interrupts();
@@ -1554,17 +1505,17 @@ void arch_sys_exit_task(struct task_state *task_state) {
     sys_sched_run_next(task_state);
 }
 
-void arch_sys_os_mutex(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(os_mutex) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_VALIDATE(unsigned int *, __protected, validate_write, sizeof(unsigned int));
+    SYS_PARAM2(int, operation);
+    SYS_PARAM3(int, expected);
+    SYS_PARAM4(int, to_place);
+    SYS_PARAM5(int, to_wake);
+    SYS_PARAM6_VALIDATE(unsigned int *, to_wait, validate_write_or_null, sizeof(unsigned int));
 
     struct task *current = get_current_task();
-
-    unsigned int *__protected = (unsigned int *) task_state->cpu_state.rsi;
-    int operation = (int) task_state->cpu_state.rdx;
-    int expected = (int) task_state->cpu_state.rcx;
-    int to_place = (int) task_state->cpu_state.r8;
-    int to_wake = (int) task_state->cpu_state.r9;
-    unsigned int *to_wait = (unsigned int *) task_state->cpu_state.r10;
 
     unsigned int *to_aquire = __protected;
     struct user_mutex *to_unlock = NULL;
@@ -1614,6 +1565,9 @@ void arch_sys_os_mutex(struct task_state *task_state) {
             SYS_RETURN(0);
         }
         case MUTEX_RELEASE_AND_WAIT: {
+            if (!to_wait) {
+                SYS_RETURN(EINVAL);
+            }
             to_aquire = to_wait;
             struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
             if (um == NULL) {
@@ -1625,23 +1579,19 @@ void arch_sys_os_mutex(struct task_state *task_state) {
             goto do_mutex_aquire;
         }
         default: {
-            SYS_RETURN(EINVAL);
+            SYS_RETURN(-EINVAL);
         }
     }
 }
 
-void arch_sys_tgkill(struct task_state *task_state) {
-    SYS_BEGIN_CAN_SEND_SELF_SIGNALS(task_state);
+SYS_CALL(tgkill) {
+    SYS_BEGIN_CAN_SEND_SELF_SIGNALS();
 
-    int tgid = (int) task_state->cpu_state.rsi;
-    int tid = (int) task_state->cpu_state.rdx;
-    int signum = (int) task_state->cpu_state.rcx;
+    SYS_PARAM1(int, tgid);
+    SYS_PARAM2(int, tid);
+    SYS_PARAM3_VALIDATE(int, signum, validate_signal_number, 1);
 
     struct task *current = get_current_task();
-
-    if (signum < 0 || signum >= _NSIG) {
-        SYS_RETURN(EINVAL);
-    }
 
     if (tgid == 0) {
         tgid = current->process->pid;
@@ -1654,10 +1604,10 @@ void arch_sys_tgkill(struct task_state *task_state) {
     SYS_RETURN(signal_task(tgid, tid, signum));
 }
 
-void arch_sys_get_initial_process_info(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(get_initial_process_info) {
+    SYS_BEGIN();
 
-    struct initial_process_info *info = (struct initial_process_info *) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(struct initial_process_info *, info, validate_write, sizeof(struct initial_process_info));
     struct task *current = get_current_task();
 
     info->tls_start = current->process->tls_master_copy_start;
@@ -1676,11 +1626,14 @@ void arch_sys_get_initial_process_info(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_set_thread_self_pointer(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(set_thread_self_pointer) {
+    SYS_BEGIN();
 
-    void *thread_self_pointer = (void *) task_state->cpu_state.rsi;
-    struct __locked_robust_mutex_node **locked_robust_mutex_list_head = (struct __locked_robust_mutex_node **) task_state->cpu_state.rdx;
+    SYS_PARAM1(void *, thread_self_pointer);
+
+    // NOTE: these list items need to be validated later, when they are
+    //       traversed during task clean up
+    SYS_PARAM2(struct __locked_robust_mutex_node **, locked_robust_mutex_list_head);
 
     struct task *current = get_current_task();
     current->arch_task.user_thread_pointer = thread_self_pointer;
@@ -1691,33 +1644,30 @@ void arch_sys_set_thread_self_pointer(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_mprotect(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(mprotect) {
+    SYS_BEGIN();
 
-    void *addr = (void *) task_state->cpu_state.rsi;
-    size_t length = (size_t) task_state->cpu_state.rdx;
-    int prot = (int) task_state->cpu_state.rcx;
+    SYS_PARAM1(void *, addr);
+    SYS_PARAM2(size_t, length);
+    SYS_PARAM3(int, prot);
 
     SYS_RETURN(map_range_protections((uintptr_t) addr, length, prot));
 }
 
-void arch_sys_sigpending(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(sigpending) {
+    SYS_BEGIN();
 
-    sigset_t *set = (sigset_t *) task_state->cpu_state.rsi;
-    if (set == NULL) {
-        SYS_RETURN(-EFAULT);
-    }
+    SYS_PARAM1_VALIDATE(sigset_t *, set, validate_write, sizeof(sigset_t));
 
     memcpy(set, &get_current_task()->sig_pending, sizeof(sigset_t));
     SYS_RETURN(0);
 }
 
-void arch_sys_sigaltstack(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(sigaltstack) {
+    SYS_BEGIN();
 
-    const stack_t *stack = (const stack_t *) task_state->cpu_state.rsi;
-    stack_t *old_stack = (stack_t *) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const stack_t *, stack, validate_read_or_null, sizeof(stack_t));
+    SYS_PARAM2_VALIDATE(stack_t *, old_stack, validate_write_or_null, sizeof(stack_t));
 
     struct process *current_process = get_current_task()->process;
 
@@ -1746,15 +1696,17 @@ void arch_sys_sigaltstack(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_pselect(struct task_state *task_state) {
-    SYS_BEGIN_PSELECT(task_state);
+SYS_CALL(pselect) {
+    SYS_BEGIN_PSELECT();
 
-    int nfds = (int) task_state->cpu_state.rsi;
-    uint8_t *readfds = (uint8_t *) task_state->cpu_state.rdx;
-    uint8_t *writefds = (uint8_t *) task_state->cpu_state.rcx;
-    uint8_t *exceptfds = (uint8_t *) task_state->cpu_state.r8;
-    const struct timespec *timeout = (const struct timespec *) task_state->cpu_state.r9;
-    const sigset_t *sigmask = (const sigset_t *) task_state->cpu_state.r10;
+    SYS_PARAM1_VALIDATE(int, nfds, validate_positive, 1);
+    size_t fd_set_size = ((nfds + sizeof(uint8_t) * CHAR_BIT - 1) / sizeof(uint8_t) / CHAR_BIT);
+
+    SYS_PARAM2_VALIDATE(uint8_t *, readfds, validate_write_or_null, fd_set_size);
+    SYS_PARAM3_VALIDATE(uint8_t *, writefds, validate_write_or_null, fd_set_size);
+    SYS_PARAM4_VALIDATE(uint8_t *, exceptfds, validate_write_or_null, fd_set_size);
+    SYS_PARAM5_VALIDATE(const struct timespec *, timeout, validate_read_or_null, sizeof(struct timespec));
+    SYS_PARAM6_VALIDATE(const sigset_t *, sigmask, validate_read_or_null, sizeof(sigset_t));
 
     struct task *current = get_current_task();
 
@@ -1772,8 +1724,6 @@ void arch_sys_pselect(struct task_state *task_state) {
     }
 
     time_t start = get_time();
-
-    size_t fd_set_size = ((nfds + sizeof(uint8_t) * CHAR_BIT - 1) / sizeof(uint8_t) / CHAR_BIT);
 
     uint8_t *read_fds_found = NULL;
     if (readfds) {
@@ -1891,41 +1841,41 @@ pselect_return:
     SYS_RETURN(count);
 }
 
-void arch_sys_yield(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(yield) {
+    SYS_BEGIN();
 
     __kernel_yield();
     SYS_RETURN(0);
 }
 
-void arch_sys_getuid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getuid) {
+    SYS_BEGIN();
 
     SYS_RETURN(get_current_task()->process->uid);
 }
 
-void arch_sys_geteuid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(geteuid) {
+    SYS_BEGIN();
 
     SYS_RETURN(get_current_task()->process->euid);
 }
 
-void arch_sys_getgid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getgid) {
+    SYS_BEGIN();
 
     SYS_RETURN(get_current_task()->process->gid);
 }
 
-void arch_sys_getegid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getegid) {
+    SYS_BEGIN();
 
     SYS_RETURN(get_current_task()->process->egid);
 }
 
-void arch_sys_setuid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(setuid) {
+    SYS_BEGIN();
 
-    uid_t uid = (uid_t) task_state->cpu_state.rsi;
+    SYS_PARAM1(uid_t, uid);
 
     struct process *current = get_current_task()->process;
     if (current->uid == 0) {
@@ -1942,10 +1892,10 @@ void arch_sys_setuid(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_seteuid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(seteuid) {
+    SYS_BEGIN();
 
-    uid_t euid = (uid_t) task_state->cpu_state.rsi;
+    SYS_PARAM1(uid_t, euid);
 
     struct process *current = get_current_task()->process;
     if (current->uid == 0) {
@@ -1961,10 +1911,10 @@ void arch_sys_seteuid(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_setgid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(setgid) {
+    SYS_BEGIN();
 
-    uid_t gid = (uid_t) task_state->cpu_state.rsi;
+    SYS_PARAM1(gid_t, gid);
 
     struct process *current = get_current_task()->process;
     if (current->gid == 0) {
@@ -1981,10 +1931,10 @@ void arch_sys_setgid(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_setegid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(setegid) {
+    SYS_BEGIN();
 
-    uid_t egid = (uid_t) task_state->cpu_state.rsi;
+    SYS_PARAM1(gid_t, egid);
 
     struct process *current = get_current_task()->process;
     if (current->gid == 0) {
@@ -2000,10 +1950,10 @@ void arch_sys_setegid(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_umask(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(umask) {
+    SYS_BEGIN();
 
-    mode_t new_mask = (mode_t) task_state->cpu_state.rsi;
+    SYS_PARAM1(mode_t, new_mask);
 
     struct process *current = get_current_task()->process;
     spin_lock(&current->lock);
@@ -2015,13 +1965,10 @@ void arch_sys_umask(struct task_state *task_state) {
     SYS_RETURN(old_mask);
 }
 
-void arch_sys_uname(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(uname) {
+    SYS_BEGIN();
 
-    struct utsname *buf = (struct utsname *) task_state->cpu_state.rsi;
-    if (!buf) {
-        SYS_RETURN(-EFAULT);
-    }
+    SYS_PARAM1_VALIDATE(struct utsname *, buf, validate_write, sizeof(struct utsname));
 
     strcpy(buf->machine, "x86_64");
     strcpy(buf->sysname, "os_2");
@@ -2032,10 +1979,10 @@ void arch_sys_uname(struct task_state *task_state) {
     SYS_RETURN(0);
 }
 
-void arch_sys_getsid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(getsid) {
+    SYS_BEGIN();
 
-    pid_t pid = (pid_t) task_state->cpu_state.rsi;
+    SYS_PARAM1_VALIDATE(pid_t, pid, validate_positive, 1);
     if (pid == 0) {
         SYS_RETURN(get_current_task()->process->sid);
     }
@@ -2048,8 +1995,8 @@ void arch_sys_getsid(struct task_state *task_state) {
     SYS_RETURN(process->sid);
 }
 
-void arch_sys_setsid(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(setsid) {
+    SYS_BEGIN();
 
     int ret = 0;
 
@@ -2070,57 +2017,55 @@ finish_setsid:
     SYS_RETURN(ret);
 }
 
-void arch_sys_readlink(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(readlink) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    char *buf = (char *) task_state->cpu_state.rdx;
-    size_t bufsiz = (size_t) task_state->cpu_state.rcx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM3(size_t, bufsiz);
+    SYS_PARAM2_VALIDATE(char *, buf, validate_write, bufsiz);
 
-    ssize_t ret = fs_readlink(path, buf, bufsiz);
-
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_readlink(path, buf, bufsiz));
 }
 
-void arch_sys_lstat(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(lstat) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    struct stat *stat_struct = (struct stat *) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM2_VALIDATE(struct stat *, stat_struct, validate_write, sizeof(struct stat));
 
     SYS_RETURN(fs_lstat(path, stat_struct));
 }
 
-void arch_sys_symlink(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(symlink) {
+    SYS_BEGIN();
 
-    const char *target = (const char *) task_state->cpu_state.rsi;
-    const char *linkpath = (const char *) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const char *, target, validate_string, -1);
+    SYS_PARAM2_VALIDATE(const char *, linkpath, validate_string, -1);
 
     SYS_RETURN(fs_symlink(target, linkpath));
 }
 
-void arch_sys_link(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(link) {
+    SYS_BEGIN();
 
-    const char *oldpath = (const char *) task_state->cpu_state.rsi;
-    const char *newpath = (const char *) task_state->cpu_state.rdx;
+    SYS_PARAM1_VALIDATE(const char *, oldpath, validate_string, -1);
+    SYS_PARAM2_VALIDATE(const char *, newpath, validate_string, -1);
 
     SYS_RETURN(fs_link(oldpath, newpath));
 }
 
-void arch_sys_chown(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(chown) {
+    SYS_BEGIN();
 
-    const char *path = (const char *) task_state->cpu_state.rsi;
-    uid_t uid = (uid_t) task_state->cpu_state.rdx;
-    gid_t gid = (gid_t) task_state->cpu_state.rcx;
+    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM2(uid_t, uid);
+    SYS_PARAM3(gid_t, gid);
 
     SYS_RETURN(fs_chown(path, uid, gid));
 }
 
 SYS_CALL(utimes) {
-    SYS_BEGIN(task_state);
+    SYS_BEGIN();
 
     SYS_PARAM1(const char *, filename);
     SYS_PARAM2(const struct timeval *, times);
@@ -2128,8 +2073,8 @@ SYS_CALL(utimes) {
     SYS_RETURN(fs_utimes(filename, times));
 }
 
-void arch_sys_invalid_system_call(struct task_state *task_state) {
-    SYS_BEGIN(task_state);
+SYS_CALL(invalid_system_call) {
+    SYS_BEGIN();
     SYS_RETURN(-ENOSYS);
 }
 
