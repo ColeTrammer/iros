@@ -27,6 +27,7 @@
 #include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/util/validators.h>
 
 #include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/hal.h>
@@ -47,13 +48,10 @@
 #define SYS_CALL(n) void arch_sys_##n(struct task_state *task_state)
 
 #define SYS_PARAM(t, n, r) t n = (t) task_state->cpu_state.r
-#define SYS_PARAM_VALIDATE(t, n, r, f, a) \
-    SYS_PARAM(t, n, r);                   \
-    do {                                  \
-        int ret = f(n, a);                \
-        if (ret < 0) {                    \
-            SYS_RETURN(ret);              \
-        }                                 \
+#define SYS_PARAM_VALIDATE(t, n, r, f, a)   \
+    SYS_PARAM(t, n, r);                     \
+    do {                                    \
+        __DO_VALIDATE(n, a, f, SYS_RETURN); \
     } while (0)
 #define SYS_PARAM_TRANSFORM(t, n, ot, r, f)            \
     t n;                                               \
@@ -153,66 +151,6 @@
     } while (0)
 
 extern struct task *current_task;
-
-static int validate_string(const char *s, size_t size) {
-    (void) s;
-    (void) size;
-    return 0;
-}
-
-static int validate_write(void *buffer, size_t size) {
-    if (!buffer) {
-        return -EFAULT;
-    }
-
-    (void) size;
-    return 0;
-}
-
-static int validate_read(const void *buffer, size_t size) {
-    if (!buffer) {
-        return -EFAULT;
-    }
-
-    (void) size;
-    return 0;
-}
-
-static int validate_write_or_null(void *buffer, size_t size) {
-    if (!buffer) {
-        return 0;
-    }
-
-    (void) size;
-    return 0;
-}
-
-static int validate_read_or_null(const void *buffer, size_t size) {
-    if (!buffer) {
-        return 0;
-    }
-
-    (void) size;
-    return 0;
-}
-
-static int validate_signal_number(int signum, int unused) {
-    (void) unused;
-
-    if (signum < 0 || signum >= _NSIG) {
-        return -EINVAL;
-    }
-
-    return 0;
-}
-
-static int validate_positive(int n, int accept_zero) {
-    if (accept_zero) {
-        return n >= 0;
-    } else {
-        return n > 0;
-    }
-}
 
 static int get_file(int fd, struct file **file) {
     if (fd < 0 || fd >= FOPEN_MAX) {
@@ -363,7 +301,7 @@ SYS_CALL(fork) {
 SYS_CALL(open) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2(int, flags);
     SYS_PARAM3(mode_t, mode);
 
@@ -540,11 +478,9 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
 SYS_CALL(execve) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
-
-    // FIXME: validate these arrays
-    SYS_PARAM2(char **, argv);
-    SYS_PARAM2(char **, envp);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
+    SYS_PARAM2_VALIDATE(char **, argv, validate_string_array, -1);
+    SYS_PARAM3_VALIDATE(char **, envp, validate_string_array, -1);
 
     assert(path != NULL);
     assert(argv != NULL);
@@ -785,7 +721,7 @@ SYS_CALL(getcwd) {
 SYS_CALL(chdir) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
 
     struct task *task = get_current_task();
 
@@ -807,7 +743,7 @@ SYS_CALL(chdir) {
 SYS_CALL(stat) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2_VALIDATE(void *, stat_struct, validate_write, sizeof(struct stat));
 
     SYS_RETURN(fs_stat(path, stat_struct));
@@ -865,7 +801,7 @@ SYS_CALL(gettimeofday) {
 SYS_CALL(mkdir) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, pathname, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, pathname, validate_path, -1);
     SYS_PARAM2(mode_t, mode);
 
     SYS_RETURN(fs_mkdir(pathname, mode));
@@ -928,7 +864,7 @@ SYS_CALL(pipe) {
 SYS_CALL(unlink) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
 
     SYS_RETURN(fs_unlink(path));
 }
@@ -936,7 +872,7 @@ SYS_CALL(unlink) {
 SYS_CALL(rmdir) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
 
     SYS_RETURN(fs_rmdir(path));
 }
@@ -944,7 +880,7 @@ SYS_CALL(rmdir) {
 SYS_CALL(chmod) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2(mode_t, mode);
 
     SYS_RETURN(fs_chmod(path, mode));
@@ -1152,7 +1088,7 @@ SYS_CALL(sleep) {
 SYS_CALL(access) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2(int, mode);
 
     SYS_RETURN(fs_access(path, mode));
@@ -1162,8 +1098,8 @@ SYS_CALL(accept4) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
-    SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, sizeof(struct sockaddr));
     SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
+    SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, *addrlen);
     SYS_PARAM4(int, flags);
 
     SYS_RETURN(net_accept(file, addr, addrlen, flags));
@@ -1173,8 +1109,8 @@ SYS_CALL(bind) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
-    SYS_PARAM2_VALIDATE(const struct sockaddr *, addr, validate_read, sizeof(struct sockaddr));
     SYS_PARAM3(socklen_t, addrlen);
+    SYS_PARAM2_VALIDATE(const struct sockaddr *, addr, validate_read, addrlen);
 
     SYS_RETURN(net_bind(file, addr, addrlen));
 }
@@ -1183,8 +1119,8 @@ SYS_CALL(connect) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
-    SYS_PARAM2_VALIDATE(const struct sockaddr *, addr, validate_read, sizeof(struct sockaddr));
     SYS_PARAM3(socklen_t, addrlen);
+    SYS_PARAM2_VALIDATE(const struct sockaddr *, addr, validate_read, addrlen);
 
     SYS_RETURN(net_connect(file, addr, addrlen));
 }
@@ -1226,8 +1162,8 @@ SYS_CALL(getsockopt) {
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
     SYS_PARAM2(int, level);
     SYS_PARAM3(int, optname);
-    SYS_PARAM4(void *, optval);
     SYS_PARAM5_VALIDATE(socklen_t *, optlen, validate_write, sizeof(socklen_t));
+    SYS_PARAM4_VALIDATE(void *, optval, validate_write, *optlen);
 
     (void) file;
     (void) level;
@@ -1245,7 +1181,7 @@ SYS_CALL(setsockopt) {
     SYS_PARAM2(int, level);
     SYS_PARAM3(int, optname);
     SYS_PARAM5(socklen_t, optlen);
-    SYS_PARAM4_VALIDATE(const void *, optval, validate_read, (size_t) optlen);
+    SYS_PARAM4_VALIDATE(const void *, optval, validate_read, optlen);
 
     SYS_RETURN(net_setsockopt(file, level, optname, optval, optlen));
 }
@@ -1254,8 +1190,8 @@ SYS_CALL(getpeername) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
-    SYS_PARAM2(struct sockaddr *, addr);
     SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
+    SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, *addrlen);
 
     (void) file;
     (void) addr;
@@ -1268,8 +1204,8 @@ SYS_CALL(getsockname) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
-    SYS_PARAM2(struct sockaddr *, addr);
     SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
+    SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, *addrlen);
 
     (void) file;
     (void) addr;
@@ -1298,8 +1234,8 @@ SYS_CALL(recvfrom) {
     SYS_PARAM3(size_t, len);
     SYS_PARAM2_VALIDATE(void *, buf, validate_write, len);
     SYS_PARAM4(int, flags);
-    SYS_PARAM5(struct sockaddr *, source);
     SYS_PARAM6_VALIDATE(socklen_t *, addrlen, validate_write_or_null, sizeof(socklen_t));
+    SYS_PARAM5_VALIDATE(struct sockaddr *, source, validate_write_or_null, addrlen ? *addrlen : 0);
 
     SYS_RETURN(net_recvfrom(file, buf, len, flags, source, addrlen));
 }
@@ -1359,8 +1295,8 @@ SYS_CALL(munmap) {
 SYS_CALL(rename) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, old_path, validate_string, -1);
-    SYS_PARAM2_VALIDATE(const char *, new_path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, old_path, validate_path, -1);
+    SYS_PARAM2_VALIDATE(const char *, new_path, validate_path, -1);
 
     SYS_RETURN(fs_rename(old_path, new_path));
 }
@@ -2020,7 +1956,7 @@ finish_setsid:
 SYS_CALL(readlink) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM3(size_t, bufsiz);
     SYS_PARAM2_VALIDATE(char *, buf, validate_write, bufsiz);
 
@@ -2030,7 +1966,7 @@ SYS_CALL(readlink) {
 SYS_CALL(lstat) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2_VALIDATE(struct stat *, stat_struct, validate_write, sizeof(struct stat));
 
     SYS_RETURN(fs_lstat(path, stat_struct));
@@ -2039,8 +1975,8 @@ SYS_CALL(lstat) {
 SYS_CALL(symlink) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, target, validate_string, -1);
-    SYS_PARAM2_VALIDATE(const char *, linkpath, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, target, validate_path, -1);
+    SYS_PARAM2_VALIDATE(const char *, linkpath, validate_path, -1);
 
     SYS_RETURN(fs_symlink(target, linkpath));
 }
@@ -2048,8 +1984,8 @@ SYS_CALL(symlink) {
 SYS_CALL(link) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, oldpath, validate_string, -1);
-    SYS_PARAM2_VALIDATE(const char *, newpath, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, oldpath, validate_path, -1);
+    SYS_PARAM2_VALIDATE(const char *, newpath, validate_path, -1);
 
     SYS_RETURN(fs_link(oldpath, newpath));
 }
@@ -2057,7 +1993,7 @@ SYS_CALL(link) {
 SYS_CALL(chown) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_string, -1);
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2(uid_t, uid);
     SYS_PARAM3(gid_t, gid);
 

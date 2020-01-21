@@ -33,6 +33,7 @@ $(BUILDDIR)/initrd/programs/cancel_test \
 $(BUILDDIR)/initrd/programs/cond_test \
 $(BUILDDIR)/initrd/programs/cleanup_handler_test \
 $(BUILDDIR)/initrd/programs/detached_thread_test \
+$(BUILDDIR)/initrd/programs/fault_test \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
