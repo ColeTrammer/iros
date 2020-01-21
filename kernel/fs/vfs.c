@@ -769,9 +769,9 @@ int fs_unlink(const char *path) {
 
     tnode->inode->parent->inode->tnode_list = remove_tnode(tnode->inode->parent->inode->tnode_list, tnode);
     struct inode *inode = tnode->inode;
-    drop_tnode(tnode);
 
-    drop_inode_reference_unlocked(inode);
+    spin_unlock(&inode->lock);
+    drop_tnode(tnode);
     return 0;
 }
 
@@ -835,8 +835,6 @@ int fs_rmdir(const char *path) {
     struct inode *inode = tnode->inode;
     inode->parent->inode->tnode_list = remove_tnode(inode->parent->inode->tnode_list, tnode);
     drop_tnode(tnode);
-
-    drop_inode_reference(inode);
     return 0;
 }
 
@@ -985,10 +983,7 @@ int fs_rename(const char *old_path, const char *new_path) {
         }
 
         existing_tnode->inode->parent->inode->tnode_list = remove_tnode(existing_tnode->inode->parent->inode->tnode_list, existing_tnode);
-        struct inode *inode = existing_tnode->inode;
         drop_tnode(existing_tnode);
-
-        drop_inode_reference(inode);
     }
 
     ret = old->inode->super_block->op->rename(old, new_parent, new_path_last_slash + 1);
