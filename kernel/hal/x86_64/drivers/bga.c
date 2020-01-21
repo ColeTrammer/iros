@@ -50,7 +50,7 @@ static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
         }
         case SSWAPBUF: {
             uintptr_t new_buffer = (uintptr_t) argp;
-            bga_write(BGA_INDEX_Y_OFFSET, (new_buffer - find_vm_region_by_addr(new_buffer)->start) / data.x_res / sizeof(uint32_t));
+            bga_write(BGA_INDEX_Y_OFFSET, (new_buffer - find_user_vm_region_by_addr(new_buffer)->start) / data.x_res / sizeof(uint32_t));
             return 0;
         }
         default:

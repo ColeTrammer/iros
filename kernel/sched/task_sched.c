@@ -299,7 +299,7 @@ void exit_process(struct process *process) {
             debug_log("Locked robust mutex list head: [ %p ]\n", node);
 #endif /* ROBUST_USER_MUTEX_DEBUG */
 
-            while (node && find_vm_region_by_addr((uintptr_t) node)) {
+            while (node && find_user_vm_region_by_addr((uintptr_t) node)) {
 #ifdef ROBUST_USER_MUTEX_DEBUG
                 debug_log("Checking mutex: [ %p, %p, %d, %p, %p ]\n", node, node->__protected, node->__in_progress_flags, node->__prev,
                           node->__next);

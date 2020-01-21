@@ -2017,17 +2017,17 @@ SYS_CALL(invalid_system_call) {
 void arch_system_call_entry(struct task_state *task_state) {
 #ifdef SYSCALL_DEBUG
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(x, y, a)                                \
-    case SC_##x:                                                    \
-        if ((enum sc_number) task_state->cpu_state.rdi != SC_IOCTL) \
-                                                                    \
-            debug_log("syscall: %s\n", #y);                         \
+#define __ENUMERATE_SYSCALL(x, y, a)    \
+    case SC_##x:                        \
+        debug_log("syscall: %s\n", #y); \
         break;
-    switch ((enum sc_number) task_state->cpu_state.rdi) {
-        ENUMERATE_SYSCALLS
-        default:
-            debug_log("unknown syscall: [ %d ]\n", (enum sc_number) task_state->cpu_state.rdi);
-            break;
+    if (get_current_task()->process->should_trace) {
+        switch ((enum sc_number) task_state->cpu_state.rdi) {
+            ENUMERATE_SYSCALLS
+            default:
+                debug_log("unknown syscall: [ %d ]\n", (enum sc_number) task_state->cpu_state.rdi);
+                break;
+        }
     }
 #endif /* SYSCALL_DEBUG */
 

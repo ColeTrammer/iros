@@ -164,7 +164,7 @@ void elf64_stack_trace(struct task *task) {
         }
 
         frame = frame->next;
-        if (!find_vm_region_by_addr((uintptr_t) frame)) {
+        if (!find_user_vm_region_by_addr((uintptr_t) frame)) {
             break;
         }
     }

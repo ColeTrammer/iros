@@ -22,8 +22,8 @@ int map_range_protections(uintptr_t addr, size_t len, int prot);
 
 struct vm_region *find_first_kernel_vm_region();
 struct vm_region *find_vm_region(uint64_t type);
-struct vm_region *find_vm_region_by_addr(uintptr_t addr);
-struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end);
+struct vm_region *find_user_vm_region_by_addr(uintptr_t addr);
+struct vm_region *find_user_vm_region_in_range(uintptr_t start, uintptr_t end);
 struct vm_region *clone_process_vm();
 
 void *create_phys_addr_mapping(uintptr_t phys_addr);

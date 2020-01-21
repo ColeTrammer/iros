@@ -195,7 +195,7 @@ int unmap_range(uintptr_t addr, size_t length) {
     spin_lock(&process->lock);
 
     struct vm_region *r;
-    while ((r = find_vm_region_in_range(addr, addr + length))) {
+    while ((r = find_user_vm_region_in_range(addr, addr + length))) {
         if (r->start < addr && r->end > addr + length) {
 #ifdef MMAP_DEBUG
             debug_log("Removing region (split): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
@@ -290,7 +290,7 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
 
     if (addr != NULL) {
         // Do not overwrite an already existing region
-        if (find_vm_region_in_range((uintptr_t) addr, (uintptr_t) addr + len)) {
+        if (find_user_vm_region_in_range((uintptr_t) addr, (uintptr_t) addr + len)) {
             addr = NULL;
         }
     }
@@ -299,14 +299,14 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
         if (type == VM_TASK_STACK) {
             uintptr_t to_search = find_vm_region(VM_TASK_STACK)->start;
             struct vm_region *r;
-            while ((r = find_vm_region_in_range(to_search - len, len))) {
+            while ((r = find_user_vm_region_in_range(to_search - len, len))) {
                 to_search = r->start;
             }
             addr = (void *) (to_search - len);
         } else {
             uintptr_t to_search = find_vm_region(VM_PROCESS_HEAP)->end + 0x10000000;
             struct vm_region *r;
-            while ((r = find_vm_region_in_range(to_search, to_search + len))) {
+            while ((r = find_user_vm_region_in_range(to_search, to_search + len))) {
                 to_search = r->end + 5 * PAGE_SIZE;
             }
             addr = (void *) to_search;
@@ -348,7 +348,7 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
     spin_lock(&process->lock);
 
     struct vm_region *r;
-    while ((r = find_vm_region_in_range(addr, addr + length))) {
+    while ((r = find_user_vm_region_in_range(addr, addr + length))) {
         if (r->start < addr && r->end > addr + length) {
 #ifdef MMAP_DEBUG
             debug_log("Protecting region (split): [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
@@ -516,17 +516,9 @@ struct vm_region *find_vm_region(uint64_t type) {
     return region;
 }
 
-struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
+struct vm_region *find_user_vm_region_by_addr(uintptr_t addr) {
     struct vm_region *region = get_current_task()->process->process_memory;
 
-    while (region) {
-        if (region->start <= addr && addr <= region->end) {
-            return region;
-        }
-        region = region->next;
-    }
-
-    region = kernel_vm_list;
     while (region) {
         if (region->start <= addr && addr <= region->end) {
             return region;
@@ -537,7 +529,7 @@ struct vm_region *find_vm_region_by_addr(uintptr_t addr) {
     return NULL;
 }
 
-struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
+struct vm_region *find_user_vm_region_in_range(uintptr_t start, uintptr_t end) {
     if (start == end) {
         return NULL;
     }
@@ -548,17 +540,6 @@ struct vm_region *find_vm_region_in_range(uintptr_t start, uintptr_t end) {
         if (((start <= region->start) && (region->end <= end)) ||  // start-end contain the region
             ((start >= region->start) && (start < region->end)) || // region contains start
             ((end > region->start) && (end <= region->end))        // region contains end
-        ) {
-            return region;
-        }
-        region = region->next;
-    }
-
-    region = kernel_vm_list;
-    while (region) {
-        if (((start <= region->start) && (region->end <= end)) ||  // start-end contain the region
-            ((start >= region->start) && (start < region->end)) || // region contains start
-            ((end >= region->start) && (end <= region->end))       // region contains end
         ) {
             return region;
         }

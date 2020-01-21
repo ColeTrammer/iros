@@ -10,14 +10,14 @@
 int validate_string(const char *s, int unused) {
     (void) unused;
 
-    struct vm_region *region = find_vm_region_by_addr((uintptr_t) s);
+    struct vm_region *region = find_user_vm_region_by_addr((uintptr_t) s);
     if (!region || (region->flags & VM_PROT_NONE)) {
         return -EFAULT;
     }
 
     for (size_t i = 0; i < 16 * PAGE_SIZE; i++) {
         if ((uintptr_t)(s + i) > region->end) {
-            region = find_vm_region_by_addr((uintptr_t)(s + i));
+            region = find_user_vm_region_by_addr((uintptr_t)(s + i));
             if (!region || (region->flags & VM_PROT_NONE)) {
                 return -EFAULT;
             }
@@ -34,14 +34,14 @@ int validate_string(const char *s, int unused) {
 int validate_string_array(char **arr, int unused) {
     (void) unused;
 
-    struct vm_region *region = find_vm_region_by_addr((uintptr_t) arr);
+    struct vm_region *region = find_user_vm_region_by_addr((uintptr_t) arr);
     if (!region || (region->flags & VM_PROT_NONE)) {
         return -EFAULT;
     }
 
     for (size_t i = 0; i < 8192; i++) {
         if ((uintptr_t)(arr + i) > region->end) {
-            region = find_vm_region_by_addr((uintptr_t)(arr + i));
+            region = find_user_vm_region_by_addr((uintptr_t)(arr + i));
             if (!region || (region->flags & VM_PROT_NONE)) {
                 return -EFAULT;
             }
@@ -61,7 +61,7 @@ int validate_string_array(char **arr, int unused) {
 int validate_path(const char *s, int unused) {
     (void) unused;
 
-    struct vm_region *region = find_vm_region_by_addr((uintptr_t) s);
+    struct vm_region *region = find_user_vm_region_by_addr((uintptr_t) s);
     if (!region || (region->flags & VM_PROT_NONE)) {
         return -EFAULT;
     }
@@ -69,7 +69,7 @@ int validate_path(const char *s, int unused) {
     size_t component_length = 0;
     for (size_t i = 0; i <= PATH_MAX; i++) {
         if ((uintptr_t)(s + i) > region->end) {
-            region = find_vm_region_by_addr((uintptr_t)(s + i));
+            region = find_user_vm_region_by_addr((uintptr_t)(s + i));
             if (!region || (region->flags & VM_PROT_NONE)) {
                 return -EFAULT;
             }
@@ -97,7 +97,7 @@ int validate_write(void *buffer, size_t size) {
     uintptr_t offset = 0;
     struct vm_region *region;
     do {
-        region = find_vm_region_by_addr((uintptr_t) buffer + offset);
+        region = find_user_vm_region_by_addr((uintptr_t) buffer + offset);
         if (!region || !(region->flags & VM_WRITE)) {
             return -EFAULT;
         }
@@ -115,7 +115,7 @@ int validate_read(const void *buffer, size_t size) {
     uintptr_t offset = 0;
     struct vm_region *region;
     do {
-        region = find_vm_region_by_addr((uintptr_t) buffer + offset);
+        region = find_user_vm_region_by_addr((uintptr_t) buffer + offset);
         if (!region || (region->flags & VM_PROT_NONE)) {
             return -EFAULT;
         }

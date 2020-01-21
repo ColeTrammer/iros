@@ -382,7 +382,7 @@ int fseek(FILE *stream, long offset, int whence) {
     }
 
     stream->eof = 0;
-    return (int) ret;
+    return 0;
 }
 
 int fsetpos(FILE *stream, const fpos_t *pos) {

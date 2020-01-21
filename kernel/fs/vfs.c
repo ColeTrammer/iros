@@ -538,10 +538,6 @@ off_t fs_seek(struct file *file, off_t offset, int whence) {
         return -EINVAL;
     }
 
-    if (new_position > file->length) {
-        return -EINVAL;
-    }
-
     file->position = new_position;
     return new_position;
 }
