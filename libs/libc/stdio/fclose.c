@@ -18,10 +18,10 @@ int fclose(FILE *stream) {
 
     __lock(&__file_list_lock);
     if (__file_list_tail == stream) {
-        __file_list_tail = stream->__next;
+        __file_list_tail = stream->__prev;
     }
     if (__file_list_head == stream) {
-        __file_list_tail = stream->__prev;
+        __file_list_head = stream->__next;
     }
     remque(stream);
     __unlock(&__file_list_lock);

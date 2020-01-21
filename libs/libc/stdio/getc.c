@@ -5,7 +5,7 @@
 
 int getc(FILE *stream) {
     __lock(&stream->__lock);
-    int ret = getc(stream);
+    int ret = getc_unlocked(stream);
     __unlock(&stream->__lock);
     return ret;
 }
