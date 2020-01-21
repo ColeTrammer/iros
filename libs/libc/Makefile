@@ -9,7 +9,7 @@ export ROOT?=$(CURDIR)/../..
 export SYSROOT?=$(ROOT)/sysroot
 export BUILDDIR?=$(ROOT)/build
 
-export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export CC?=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
 export AR?=$(HOST)-ar
 
 # Sets directories for install if not already set
@@ -94,8 +94,55 @@ $(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \
 $(BUILDDIR)/libs/libc/signal/signal.o \
+$(BUILDDIR)/libs/libc/stdio/clearerr_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/clearerr.o \
+$(BUILDDIR)/libs/libc/stdio/fclose.o \
+$(BUILDDIR)/libs/libc/stdio/fdopen.o \
+$(BUILDDIR)/libs/libc/stdio/feof_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/feof.o \
+$(BUILDDIR)/libs/libc/stdio/ferror_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/ferror.o \
+$(BUILDDIR)/libs/libc/stdio/fflush_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fflush.o \
+$(BUILDDIR)/libs/libc/stdio/fgetc_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fgetc.o \
+$(BUILDDIR)/libs/libc/stdio/fgetpos.o \
+$(BUILDDIR)/libs/libc/stdio/fgets_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fgets.o \
+$(BUILDDIR)/libs/libc/stdio/fileno_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fileno.o \
 $(BUILDDIR)/libs/libc/stdio/files.o \
+$(BUILDDIR)/libs/libc/stdio/flockfile.o \
+$(BUILDDIR)/libs/libc/stdio/fopen_internal.o \
+$(BUILDDIR)/libs/libc/stdio/fopen.o \
+$(BUILDDIR)/libs/libc/stdio/fputc_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fputc.o \
+$(BUILDDIR)/libs/libc/stdio/fputs_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fputs.o \
+$(BUILDDIR)/libs/libc/stdio/fread_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fread.o \
+$(BUILDDIR)/libs/libc/stdio/freopen.o \
+$(BUILDDIR)/libs/libc/stdio/fseek.o \
+$(BUILDDIR)/libs/libc/stdio/fsetpos.o \
+$(BUILDDIR)/libs/libc/stdio/ftell.o \
+$(BUILDDIR)/libs/libc/stdio/ftrylockfile.o \
+$(BUILDDIR)/libs/libc/stdio/funlockfile.o \
+$(BUILDDIR)/libs/libc/stdio/fwrite_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/fwrite.o \
+$(BUILDDIR)/libs/libc/stdio/getc_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/getc.o \
+$(BUILDDIR)/libs/libc/stdio/getchar_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/getchar.o \
+$(BUILDDIR)/libs/libc/stdio/init_files.o \
+$(BUILDDIR)/libs/libc/stdio/putc_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/putc.o \
+$(BUILDDIR)/libs/libc/stdio/putchar_unlocked.o \
+$(BUILDDIR)/libs/libc/stdio/putchar.o \
 $(BUILDDIR)/libs/libc/stdio/puts.o \
+$(BUILDDIR)/libs/libc/stdio/rewind.o \
+$(BUILDDIR)/libs/libc/stdio/setbuf.o \
+$(BUILDDIR)/libs/libc/stdio/setvbuf.o \
+$(BUILDDIR)/libs/libc/stdio/unget.o \
 $(BUILDDIR)/libs/libc/stdlib/atexit.o \
 $(BUILDDIR)/libs/libc/stdlib/env.o \
 $(BUILDDIR)/libs/libc/string/strcoll.o \

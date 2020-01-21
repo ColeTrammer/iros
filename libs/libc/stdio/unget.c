@@ -1,0 +1,19 @@
+#ifdef NEW_STDIO
+
+#include <bits/lock.h>
+#include <stdio.h>
+
+int ungetc(int c, FILE *stream) {
+    int ret = c;
+    __lock(&stream->__lock);
+    if (stream->__flags & __STDIO_HAS_UNGETC_CHARACTER) {
+        ret = EOF;
+    } else {
+        stream->__flags |= __STDIO_HAS_UNGETC_CHARACTER;
+        stream->__ungetc_character = c;
+    }
+    __unlock(&stream->__lock);
+    return ret;
+}
+
+#endif /* NEW_STDIO */

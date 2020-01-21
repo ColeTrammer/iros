@@ -15,9 +15,7 @@ __attribute__((__noreturn__)) void _Exit(int status) {
 __attribute__((__noreturn__)) void exit(int status) {
     __on_exit();
 
-    fflush(stdin);
-    fflush(stdout);
-    fflush(stderr);
+    fflush(NULL);
 
     _Exit(status);
 

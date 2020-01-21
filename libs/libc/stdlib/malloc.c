@@ -49,10 +49,6 @@ void *sbrk(intptr_t increment) {
 #endif /* PAGE_SIZE */
 
 #include <unistd.h>
-
-typedef struct {
-    int lock;
-} pthread_spinlock_t;
 #endif
 
 struct metadata {
@@ -79,64 +75,13 @@ static struct metadata *last_allocated;
 
 #ifdef __is_libk
 #include <kernel/util/spinlock.h>
-#define pthread_spin_lock   spin_lock
-#define pthread_spin_unlock spin_unlock
-#define pthread_spinlock_t  spinlock_t
+static spinlock_t __malloc_lock;
+#define __lock   spin_lock
+#define __unlock spin_unlock
 #else
-// FIXME: figure out how this should work: there
-//        should not be copying of locking code...
-#include <stdatomic.h>
-
-int __pthread_spin_destroy(pthread_spinlock_t *lock) {
-    lock->lock = -1;
-    return 0;
-}
-
-int __pthread_spin_init(pthread_spinlock_t *lock, int pshared) {
-    // FIXME: do something with pshared
-    (void) pshared;
-
-    lock->lock = 0;
-    return 0;
-}
-
-int __pthread_spin_lock(pthread_spinlock_t *lock) {
-    for (;;) {
-        int expected = 0;
-        if (!atomic_compare_exchange_strong(&lock->lock, &expected, 1)) {
-            __asm__ __volatile__("pause" ::: "memory");
-            continue;
-        }
-
-        break;
-    }
-
-    return 0;
-}
-
-int __pthread_spin_trylock(pthread_spinlock_t *lock) {
-    int expected = 0;
-    if (!atomic_compare_exchange_strong(&lock->lock, &expected, 1)) {
-        // Failed to aquire the lock
-        return EBUSY;
-    }
-
-    return 0;
-}
-
-int __pthread_spin_unlock(pthread_spinlock_t *lock) {
-    lock->lock = 0;
-    return 0;
-}
-
-#define pthread_spin_lock   __pthread_spin_lock
-#define pthread_spin_unlock __pthread_spin_unlock
-
-// FIXME: this should be a mutex...
-#define SPINLOCK_INITIALIZER \
-    { 0 }
+#include <bits/lock.h>
+static unsigned int __malloc_lock;
 #endif /* __is_libk */
-static pthread_spinlock_t heap_lock = SPINLOCK_INITIALIZER;
 
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
 #undef calloc
@@ -196,7 +141,7 @@ void free(void *p) {
         return;
     }
 
-    pthread_spin_lock(&heap_lock);
+    __lock(&__malloc_lock);
 
     struct metadata *block = GET_BLOCK(p);
     assert(block->magic == __MALLOC_MAGIG_CHECK);
@@ -212,7 +157,7 @@ void free(void *p) {
     debug_log("Malloc block freed: [ %#.16lX ]\n", (uintptr_t) block);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
-    pthread_spin_unlock(&heap_lock);
+    __unlock(&__malloc_lock);
 }
 
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
@@ -244,7 +189,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
 
     n = MAX(n, 16);
 
-    pthread_spin_lock(&heap_lock);
+    __lock(&__malloc_lock);
 
     if (!start) {
         start = sbrk(NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)));
@@ -267,7 +212,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
                 if (GET_SIZE(block) >= n) {
                     SET_ALLOCATED(block);
 
-                    pthread_spin_unlock(&heap_lock);
+                    __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
                     debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(block + 1), __LINE__);
@@ -323,7 +268,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(new_block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
-    pthread_spin_unlock(&heap_lock);
+    __unlock(&__malloc_lock);
 
     return new_block + 1;
 }
@@ -349,7 +294,7 @@ void *malloc(size_t n) {
         n = n - (n % sizeof(uint64_t)) + sizeof(uint64_t);
     }
 
-    pthread_spin_lock(&heap_lock);
+    __lock(&__malloc_lock);
 
     if (!start) {
         start = sbrk(NUM_PAGES_IN_LENGTH(NEW_BLOCK_SIZE(n)));
@@ -364,7 +309,7 @@ void *malloc(size_t n) {
         start->magic = __MALLOC_MAGIG_CHECK;
         start = PREV_BLOCK(start);
 
-        pthread_spin_unlock(&heap_lock);
+        __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
         debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) start, __LINE__);
@@ -385,7 +330,7 @@ void *malloc(size_t n) {
             SET_ALLOCATED(block);
             last_allocated = block;
 
-            pthread_spin_unlock(&heap_lock);
+            __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
             debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(block + 1), __LINE__);
@@ -417,7 +362,7 @@ void *malloc(size_t n) {
     debug_log("Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
-    pthread_spin_unlock(&heap_lock);
+    __unlock(&__malloc_lock);
 
 #ifdef MALLOC_SCRUB_ALLOC
     memset(ret, MALLOC_SCRUB_BITS, GET_SIZE(ret - 1));

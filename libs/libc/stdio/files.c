@@ -14,6 +14,8 @@
 
 #define STDIO_OWNED 0x800000
 
+#ifndef NEW_STDIO
+
 FILE *stdout;
 FILE *stdin;
 FILE *stderr;
@@ -436,6 +438,46 @@ int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
     return 0;
 }
 
+void init_files() {
+    /* stdin */
+    files[0].fd = 0;
+    files[0].pos = 0;
+    files[0].buf_type = isatty(STDIN_FILENO) ? _IONBF : _IOFBF;
+    files[0].buffer = malloc(BUFSIZ);
+    files[0].length = 0;
+    files[0].eof = 0;
+    files[0].error = 0;
+    files[0].flags = O_RDWR | STDIO_OWNED;
+    files[0].pushed_back_char = '\0';
+    stdin = files + 0;
+
+    /* stdout */
+    files[1].fd = 1;
+    files[1].buf_type = isatty(STDOUT_FILENO) ? _IOLBF : _IOFBF;
+    files[1].buffer = malloc(BUFSIZ);
+    files[1].length = BUFSIZ;
+    files[1].eof = 0;
+    files[1].error = 0;
+    files[1].flags = O_RDWR | STDIO_OWNED;
+    files[1].pos = 0;
+    files[1].pushed_back_char = '\0';
+    stdout = files + 1;
+
+    /* stderr */
+    files[2].fd = 2;
+    files[2].pos = 0;
+    files[2].buf_type = _IONBF;
+    files[2].buffer = NULL;
+    files[2].length = 0;
+    files[2].eof = 0;
+    files[2].error = 0;
+    files[2].flags = O_RDWR | STDIO_OWNED;
+    files[2].pushed_back_char = '\0';
+    stderr = files + 2;
+}
+
+#endif /* NEW_STDIO */
+
 static char tmp_name_buffer[L_tmpnam] = { 0 };
 static bool is_tmp_name_buffer_initialzied = false;
 
@@ -612,42 +654,4 @@ int remove(const char *path) {
     }
 
     return ret;
-}
-
-void init_files() {
-    /* stdin */
-    files[0].fd = 0;
-    files[0].pos = 0;
-    files[0].buf_type = isatty(STDIN_FILENO) ? _IONBF : _IOFBF;
-    files[0].buffer = malloc(BUFSIZ);
-    files[0].length = 0;
-    files[0].eof = 0;
-    files[0].error = 0;
-    files[0].flags = O_RDWR | STDIO_OWNED;
-    files[0].pushed_back_char = '\0';
-    stdin = files + 0;
-
-    /* stdout */
-    files[1].fd = 1;
-    files[1].buf_type = isatty(STDOUT_FILENO) ? _IOLBF : _IOFBF;
-    files[1].buffer = malloc(BUFSIZ);
-    files[1].length = BUFSIZ;
-    files[1].eof = 0;
-    files[1].error = 0;
-    files[1].flags = O_RDWR | STDIO_OWNED;
-    files[1].pos = 0;
-    files[1].pushed_back_char = '\0';
-    stdout = files + 1;
-
-    /* stderr */
-    files[2].fd = 2;
-    files[2].pos = 0;
-    files[2].buf_type = _IONBF;
-    files[2].buffer = NULL;
-    files[2].length = 0;
-    files[2].eof = 0;
-    files[2].error = 0;
-    files[2].flags = O_RDWR | STDIO_OWNED;
-    files[2].pushed_back_char = '\0';
-    stderr = files + 2;
 }
