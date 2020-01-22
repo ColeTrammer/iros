@@ -14,6 +14,7 @@ size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__r
         ((unsigned char *) buf)[bytes_read++] = (unsigned char) c;
     }
 
+    __stdio_log(stream, "fread_unlocked: %p %lu %lu %d %lu", buf, size, nmemb, stream->__fd, bytes_read / size);
     return bytes_read / size;
 }
 

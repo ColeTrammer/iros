@@ -3,11 +3,12 @@
 #include <bits/lock.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/param.h>
 #include <unistd.h>
 
 long ftell(FILE *stream) {
     __lock(&stream->__lock);
-    off_t ret = 0;
+    off_t ret = stream->__position;
 
     // NOTE: this is has very strange consequences when the actual file position is 0
     if (stream->__flags & __STDIO_HAS_UNGETC_CHARACTER) {
@@ -18,7 +19,7 @@ long ftell(FILE *stream) {
     if (res == -1) {
         ret = -1;
     } else if (res == 0) {
-        ret = 0;
+        ret = MAX(0, res + ret);
     } else {
         ret += res;
     }

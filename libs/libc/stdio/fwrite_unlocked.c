@@ -12,6 +12,7 @@ size_t fwrite_unlocked(const void *__restrict buf, size_t size, size_t nmemb, FI
         }
     }
 
+    __stdio_log(stream, "fwrite_unlocked: %p %lu %lu %d %lu", buf, size, nmemb, stream->__fd, bytes_written / size);
     return bytes_written / size;
 }
 

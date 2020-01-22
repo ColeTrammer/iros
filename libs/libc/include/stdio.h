@@ -94,7 +94,7 @@ FILE *__stdio_allocate_stream(int fd, int flags);
         }                                                  \
     } while (0)
 #else
-#define __stdio_log (void)
+#define __stdio_log(stream, s, ...) (void) (stream)
 #endif /* STDIO_DEBUG */
 
 #endif /* OLD_STDIO */
