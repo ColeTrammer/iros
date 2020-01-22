@@ -14,7 +14,7 @@
 
 #define STDIO_OWNED 0x800000
 
-#ifndef NEW_STDIO
+#ifdef OLD_STDIO
 
 FILE *stdout;
 FILE *stdin;
@@ -476,7 +476,7 @@ void init_files() {
     stderr = files + 2;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */
 
 static char tmp_name_buffer[L_tmpnam] = { 0 };
 static bool is_tmp_name_buffer_initialzied = false;

@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <stdio.h>
 #include <unistd.h>
@@ -44,4 +44,4 @@ int fgetc_unlocked(FILE *stream) {
     }
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

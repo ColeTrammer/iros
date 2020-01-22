@@ -122,6 +122,7 @@ $(BUILDDIR)/libs/libc/stdio/fputs.o \
 $(BUILDDIR)/libs/libc/stdio/fread_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/fread.o \
 $(BUILDDIR)/libs/libc/stdio/freopen.o \
+$(BUILDDIR)/libs/libc/stdio/fseek_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/fseek.o \
 $(BUILDDIR)/libs/libc/stdio/fsetpos.o \
 $(BUILDDIR)/libs/libc/stdio/ftell.o \

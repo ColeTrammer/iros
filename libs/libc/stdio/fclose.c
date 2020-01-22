@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <search.h>
@@ -7,16 +7,11 @@
 #include <unistd.h>
 
 int fclose(FILE *stream) {
+    // This lock order is important to prevent deadlock
+    // when someone calls fflush(NULL)
+    __lock(&__file_list_lock);
     __lock(&stream->__lock);
 
-    int ret1 = fflush_unlocked(stream);
-    int ret2 = close(stream->__fd);
-
-    if (stream->__flags & __STDIO_OWNED) {
-        free(stream->__buffer);
-    }
-
-    __lock(&__file_list_lock);
     if (__file_list_tail == stream) {
         __file_list_tail = stream->__prev;
     }
@@ -26,6 +21,13 @@ int fclose(FILE *stream) {
     remque(stream);
     __unlock(&__file_list_lock);
 
+    int ret1 = fflush_unlocked(stream);
+    int ret2 = close(stream->__fd);
+
+    if (stream->__flags & __STDIO_OWNED) {
+        free(stream->__buffer);
+    }
+
     __unlock(&stream->__lock);
 
     if (stream->__flags & __STDIO_DYNAMICALLY_ALLOCATED) {
@@ -34,4 +36,4 @@ int fclose(FILE *stream) {
     return (ret1 == -1 || ret2 == -1) ? -1 : 0;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

@@ -1,9 +1,9 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <stdio.h>
 
 void clearerr_unlocked(FILE *stream) {
-    stream->__flags &= ~__STDIO_ERROR;
+    stream->__flags &= ~(__STDIO_ERROR | __STDIO_EOF);
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

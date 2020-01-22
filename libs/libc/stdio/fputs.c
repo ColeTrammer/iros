@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <stdio.h>
@@ -10,4 +10,4 @@ int fputs(const char *__restrict s, FILE *__restrict stream) {
     return ret;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

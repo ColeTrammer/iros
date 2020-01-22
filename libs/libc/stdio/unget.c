@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <stdio.h>
@@ -16,4 +16,4 @@ int ungetc(int c, FILE *stream) {
     return ret;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

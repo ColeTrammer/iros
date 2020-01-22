@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,4 +52,4 @@ void init_files() {
     stderr = files + 2;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

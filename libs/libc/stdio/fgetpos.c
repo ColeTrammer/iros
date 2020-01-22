@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <stdio.h>
@@ -17,4 +17,4 @@ int fgetpos(FILE *__restrict stream, fpos_t *__restrict pos) {
     return -1;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

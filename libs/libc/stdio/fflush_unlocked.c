@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <assert.h>
 #include <bits/lock.h>
@@ -49,4 +49,4 @@ int fflush_unlocked(FILE *stream) {
     return 0;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

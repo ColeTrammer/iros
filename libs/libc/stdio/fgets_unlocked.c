@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <stdio.h>
@@ -26,4 +26,4 @@ char *fgets_unlocked(char *__restrict buf, int size, FILE *__restrict stream) {
     return buf;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

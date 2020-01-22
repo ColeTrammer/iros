@@ -1,11 +1,13 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <stdio.h>
 
 void rewind(FILE *stream) {
-    fseek(stream, 0, SEEK_SET);
-    clearerr(stream);
+    __lock(&stream->__lock);
+    fseek_unlocked(stream, 0, SEEK_SET);
+    clearerr_unlocked(stream);
+    __unlock(&stream->__lock);
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

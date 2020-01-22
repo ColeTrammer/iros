@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <stdio.h>
 
@@ -17,4 +17,4 @@ size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__r
     return bytes_read / size;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

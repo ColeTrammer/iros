@@ -25,7 +25,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#ifndef NEW_STDIO
+#ifdef OLD_STDIO
 
 typedef long fpos_t;
 
@@ -85,7 +85,7 @@ extern unsigned int __file_list_lock;
 struct __stdio_flags __stdio_parse_mode_string(const char *s);
 FILE *__stdio_allocate_stream(int fd, int flags);
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */
 
 #ifndef __is_libk
 
@@ -165,6 +165,7 @@ int getc_unlocked(FILE *stream);
 int getchar_unlocked(void);
 int putc_unlocked(int c, FILE *stream);
 int putchar_unlocked(int c);
+int fseek_unlocked(FILE *stream, long offset, int whence);
 
 void flockfile(FILE *stream);
 int ftrylockfile(FILE *stream);

@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <errno.h>
 #include <fcntl.h>
@@ -19,4 +19,4 @@ FILE *fopen(const char *__restrict path, const char *__restrict mode) {
     return __stdio_allocate_stream(fd, flags.__stream_flags);
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

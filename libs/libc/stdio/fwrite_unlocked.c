@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <stdio.h>
@@ -15,4 +15,4 @@ size_t fwrite_unlocked(const void *__restrict buf, size_t size, size_t nmemb, FI
     return bytes_written / size;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

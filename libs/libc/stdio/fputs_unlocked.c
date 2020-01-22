@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <stdio.h>
 
@@ -12,4 +12,4 @@ int fputs_unlocked(const char *__restrict s, FILE *__restrict stream) {
     return 1;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

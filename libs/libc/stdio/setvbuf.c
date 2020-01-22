@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <bits/lock.h>
 #include <stdio.h>
@@ -31,4 +31,4 @@ int setvbuf(FILE *__restrict stream, char *__restrict buf, int mode, size_t size
     return 0;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */

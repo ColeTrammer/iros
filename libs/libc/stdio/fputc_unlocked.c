@@ -1,4 +1,4 @@
-#ifdef NEW_STDIO
+#ifndef OLD_STDIO
 
 #include <stdio.h>
 #include <unistd.h>
@@ -29,4 +29,4 @@ int fputc_unlocked(int a, FILE *stream) {
     return (int) c;
 }
 
-#endif /* NEW_STDIO */
+#endif /* OLD_STDIO */
