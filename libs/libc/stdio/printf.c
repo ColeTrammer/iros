@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <bits/lock.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -14,6 +15,9 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
 #ifdef __is_libk
 #define stdout NULL
 
+#define __lock(l)   ((void) 0)
+#define __unlock(l) ((void) 0)
+
 bool kprint(const char *, size_t);
 bool fprint(void *stream, const char *s, size_t len) {
     (void) stream;
@@ -21,10 +25,11 @@ bool fprint(void *stream, const char *s, size_t len) {
 }
 
 #else
+#include <bits/lock.h>
 #include <unistd.h>
 
 bool fprint(void *stream, const char *s, size_t n) {
-    return n == fwrite(s, 1, n, stream);
+    return n == fwrite_unlocked(s, 1, n, stream);
 }
 
 #endif /* __is_libk */
@@ -43,6 +48,29 @@ bool sprint(void *_info, const char *s, size_t len) {
 
     return true;
 }
+
+#ifndef __is_libk
+
+bool dprint(void *_fd, const char *s, size_t len) {
+    int fd = (int) (uintptr_t) _fd;
+    return write(fd, s, len) == (ssize_t) len;
+}
+
+int dprintf(int fd, const char *__restrict format, ...) {
+    va_list parameters;
+    va_start(parameters, format);
+
+    int written = dprintf(fd, format, parameters);
+
+    va_end(parameters);
+    return written;
+}
+
+int vdprintf(int fd, const char *__restrict format, va_list parameters) {
+    return printf_internal(dprint, (void *) (uintptr_t) fd, format, parameters);
+}
+
+#endif /* __is_libk */
 
 static int parseInt(const char *num, size_t length) {
     int n = 0;
@@ -111,7 +139,10 @@ int fprintf(FILE *stream, const char *__restrict format, ...) {
 }
 
 int vfprintf(FILE *stream, const char *__restrict format, va_list parameters) {
-    return printf_internal(fprint, stream, format, parameters);
+    __lock(&stream->__lock);
+    int ret = printf_internal(fprint, stream, format, parameters);
+    __unlock(&stream->__lock);
+    return ret;
 }
 
 int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *obj, const char *__restrict format, va_list parameters) {

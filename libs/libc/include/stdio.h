@@ -120,6 +120,7 @@ FILE *freopen(const char *path, const char *mode, FILE *stream);
 void setbuf(FILE *__restrict stream, char *__restrict buf);
 int setvbuf(FILE *__restrict stream, char *__restrict buf, int mode, size_t size);
 
+int dprintf(int fd, const char *__restrict format, ...) __attribute__((format(printf, 2, 3)));
 int fprintf(FILE *stream, const char *__restrict format, ...) __attribute__((format(printf, 2, 3)));
 int fscanf(FILE *stream, const char *__restrict format, ...) __attribute__((format(scanf, 2, 3)));
 int printf(const char *__restrict format, ...) __attribute__((format(printf, 1, 2)));
@@ -128,6 +129,7 @@ int snprintf(char *__restrict str, size_t size, const char *__restrict format, .
 int sprintf(char *__restrict str, const char *__restrict format, ...) __attribute__((format(printf, 2, 3)));
 int sscanf(const char *__restrict src, const char *__restrict format, ...) __attribute__((format(scanf, 2, 3)));
 
+int vdprintf(int fd, const char *__restrict format, va_list args) __attribute__((format(printf, 2, 0)));
 int vfprintf(FILE *stream, const char *__restrict format, va_list args) __attribute__((format(printf, 2, 0)));
 int vfscanf(FILE *stream, const char *__restrict format, va_list args) __attribute__((format(scanf, 2, 0)));
 int vprintf(const char *__restrict format, va_list args) __attribute__((format(printf, 1, 0)));
