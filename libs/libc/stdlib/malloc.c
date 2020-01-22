@@ -4,6 +4,10 @@
 typedef int pthread_t;
 #endif /* USERLAND_NATIVE */
 
+#ifndef __is_libk
+#define NDEBUG
+#endif /* __is_libk */
+
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>

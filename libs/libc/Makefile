@@ -146,6 +146,7 @@ $(BUILDDIR)/libs/libc/stdio/setvbuf.o \
 $(BUILDDIR)/libs/libc/stdio/unget.o \
 $(BUILDDIR)/libs/libc/stdlib/atexit.o \
 $(BUILDDIR)/libs/libc/stdlib/env.o \
+$(BUILDDIR)/libs/libc/stdlib/init_env.o \
 $(BUILDDIR)/libs/libc/string/strcoll.o \
 $(BUILDDIR)/libs/libc/string/strerror.o \
 $(BUILDDIR)/libs/libc/string/strxfrm.o \
@@ -155,6 +156,7 @@ $(BUILDDIR)/libs/libc/sys/os_2/os_2.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
 $(BUILDDIR)/libs/libc/sys/select/select.o \
 $(BUILDDIR)/libs/libc/sys/stat/stat.o \
+$(BUILDDIR)/libs/libc/sys/syscall/syscall_to_string.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall.o \
 $(BUILDDIR)/libs/libc/sys/time/time.o \
 $(BUILDDIR)/libs/libc/sys/times/times.o \
@@ -162,11 +164,19 @@ $(BUILDDIR)/libs/libc/sys/utsname/utsname.o \
 $(BUILDDIR)/libs/libc/sys/wait/wait.o \
 $(BUILDDIR)/libs/libc/termios/termios.o \
 $(BUILDDIR)/libs/libc/time/time.o \
+$(BUILDDIR)/libs/libc/unistd/_exit.o \
+$(BUILDDIR)/libs/libc/unistd/close.o \
 $(BUILDDIR)/libs/libc/unistd/exec.o \
+$(BUILDDIR)/libs/libc/unistd/fork.o \
 $(BUILDDIR)/libs/libc/unistd/getlogin.o \
 $(BUILDDIR)/libs/libc/unistd/getopt.o \
 $(BUILDDIR)/libs/libc/unistd/isatty.o \
+$(BUILDDIR)/libs/libc/unistd/lseek.o \
+$(BUILDDIR)/libs/libc/unistd/read.o \
+$(BUILDDIR)/libs/libc/unistd/sbrk.o \
+$(BUILDDIR)/libs/libc/unistd/tty_stuff.o \
 $(BUILDDIR)/libs/libc/unistd/unistd.o \
+$(BUILDDIR)/libs/libc/unistd/write.o \
 $(BUILDDIR)/libs/libc/utime/utime.o \
 $(BUILDDIR)/libs/libc/wordexp/wordexp.o \
 $(BUILDDIR)/libs/libc/init.o

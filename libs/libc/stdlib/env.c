@@ -10,9 +10,9 @@
 #define ENV_NUM_BITS_BASE (10 * 64)
 #define ENV_BUF_INC       20
 
-static uint64_t *bitmap = NULL;
-static size_t num_bits = ENV_NUM_BITS_BASE;
-static size_t num_env_vars = 0;
+extern uint64_t *bitmap;
+extern size_t num_bits;
+extern size_t num_env_vars;
 static size_t max_env_vars = 0;
 static bool is_environ_malloced = false;
 
@@ -201,17 +201,4 @@ int unsetenv(const char *name) {
 
     // Do nothing
     return 0;
-}
-
-void init_env() {
-    char **e = environ;
-    while (*e++) {
-        num_env_vars++;
-    }
-
-    while (num_env_vars > num_bits) {
-        num_bits += ENV_NUM_BITS_BASE;
-    }
-
-    bitmap = calloc(num_bits / 64, sizeof(uint64_t));
 }

@@ -9,39 +9,6 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-void *sbrk(intptr_t increment) {
-    void *ret = (void *) syscall(SC_SBRK, increment);
-    if (ret == (void *) -1) {
-        errno = ENOMEM;
-    }
-    return ret;
-}
-
-__attribute__((__noreturn__)) void _exit(int status) {
-    syscall(SC_EXIT, status);
-    __builtin_unreachable();
-}
-
-pid_t fork() {
-    pid_t ret = (pid_t) syscall(SC_FORK);
-    __SYSCALL_TO_ERRNO(ret);
-}
-
-ssize_t read(int fd, void *buf, size_t count) {
-    ssize_t ret = syscall(SC_READ, fd, buf, count);
-    __SYSCALL_TO_ERRNO(ret);
-}
-
-ssize_t write(int fd, const void *buf, size_t count) {
-    ssize_t ret = syscall(SC_WRITE, fd, buf, count);
-    __SYSCALL_TO_ERRNO(ret);
-}
-
-int close(int fd) {
-    int ret = (int) syscall(SC_CLOSE, fd);
-    __SYSCALL_TO_ERRNO(ret);
-}
-
 int execve(const char *file, char *const argv[], char *const envp[]) {
     int ret = (int) syscall(SC_EXECVE, file, argv, envp);
     __SYSCALL_TO_ERRNO(ret);
@@ -69,11 +36,6 @@ char *getcwd(char *buf, size_t size) {
 
 int chdir(const char *path) {
     int ret = (int) syscall(SC_CHDIR, path);
-    __SYSCALL_TO_ERRNO(ret);
-}
-
-off_t lseek(int fd, off_t offset, int whence) {
-    off_t ret = syscall(SC_LSEEK, fd, offset, whence);
     __SYSCALL_TO_ERRNO(ret);
 }
 
