@@ -8,6 +8,10 @@ cd bash
 ./build.sh
 cd ..
 
+cd binutils
+./build.sh
+cd ..
+
 cd figlet
 ./build.sh
 cd ..

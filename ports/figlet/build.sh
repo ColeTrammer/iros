@@ -2,17 +2,20 @@
 
 export ROOT="$PWD/../.."
 
-# Download tar.gz
-curl ftp://ftp.figlet.org/pub/figlet/program/unix/figlet-2.2.5.tar.gz --output figlet.tar.gz
 
-# Extract contents
-tar -xzvf figlet.tar.gz
+if [! -d figlet-2.2.5 ]; then
+    # Download tar.gz
+    curl ftp://ftp.figlet.org/pub/figlet/program/unix/figlet-2.2.5.tar.gz --output figlet.tar.gz
 
-# Apply patch
-cd figlet-2.2.5
-git init
-git apply ../figlet-2.2.5.patch
-cd ..
+    # Extract contents
+    tar -xzvf figlet.tar.gz
+
+    # Apply patch
+    cd figlet-2.2.5
+    git init
+    git apply ../figlet-2.2.5.patch
+    cd ..
+fi
 
 # Build and install
 cd figlet-2.2.5

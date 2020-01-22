@@ -2,13 +2,16 @@
 
 export ROOT="$PWD/../.."
 
-# Get source from GitHub
-git clone https://github.com/antirez/kilo.git
 
-# Apply patch
-cd kilo
-git apply ../kilo.patch
-cd ..
+if [ ! -d kilo ]; then
+    # Get source from GitHub
+    git clone https://github.com/antirez/kilo.git
+
+    # Apply patch
+    cd kilo
+    git apply ../kilo.patch
+    cd ..
+fi
 
 # Build
 cd kilo
