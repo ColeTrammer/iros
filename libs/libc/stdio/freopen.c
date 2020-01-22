@@ -17,6 +17,8 @@ FILE *freopen(const char *__restrict path, const char *__restrict mode, FILE *__
     // We need to take this lock in case freopen fails, and we need to remove the file from the list
     __lock(&__file_list_lock);
     __lock(&stream->__lock);
+    __stdio_log(NULL, "freopen: %s %s %d", path, mode, stream->__fd);
+
     fflush_unlocked(stream);
 
     stream->__flags &= ~(__STDIO_READABLE | __STDIO_WRITABLE | __STDIO_APPEND | __STDIO_ERROR | __STDIO_EOF);

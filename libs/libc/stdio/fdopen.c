@@ -7,6 +7,8 @@
 #include <stdio.h>
 
 FILE *fdopen(int fd, const char *mode) {
+    __stdio_log(NULL, "fdopen: %d %s", fd, mode);
+
     struct __stdio_flags flags = __stdio_parse_mode_string(mode);
     if (flags.__open_flags == -1 && flags.__stream_flags == -1) {
         errno = EINVAL;

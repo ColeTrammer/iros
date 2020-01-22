@@ -22,6 +22,8 @@ int fflush_unlocked(FILE *stream) {
         return any_failed ? -1 : 0;
     }
 
+    __stdio_log(stream, "fflush: %d", stream->__fd);
+
     if (!(stream->__flags & __STDIO_WRITABLE)) {
         stream->__flags &= ~__STDIO_HAS_UNGETC_CHARACTER;
         if (!(stream->__flags & __STDIO_EOF) && (stream->__position < (off_t) stream->__buffer_length)) {

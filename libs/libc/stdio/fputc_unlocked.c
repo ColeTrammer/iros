@@ -4,6 +4,8 @@
 #include <unistd.h>
 
 int fputc_unlocked(int a, FILE *stream) {
+    __stdio_log(stream, "fputc_unlocked: %c %d", (char) a, stream->__fd);
+
     unsigned char c = (unsigned char) a;
     if (stream->__flags & _IONBF) {
         ssize_t ret = write(stream->__fd, &c, 1);

@@ -5,6 +5,8 @@
 #include <unistd.h>
 
 int fseek_unlocked(FILE *stream, long offset, int whence) {
+    __stdio_log(NULL, "fseek: %d, %ld, %d", stream->__fd, offset, whence);
+
     if (stream->__flags & __STDIO_HAS_UNGETC_CHARACTER) {
         stream->__flags &= ~__STDIO_HAS_UNGETC_CHARACTER;
         offset--;

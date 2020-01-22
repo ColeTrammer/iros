@@ -12,6 +12,8 @@ int fclose(FILE *stream) {
     __lock(&__file_list_lock);
     __lock(&stream->__lock);
 
+    __stdio_log(NULL, "fclose: %d", stream->__fd);
+
     if (__file_list_tail == stream) {
         __file_list_tail = stream->__prev;
     }

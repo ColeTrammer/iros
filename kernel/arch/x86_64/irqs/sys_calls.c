@@ -41,7 +41,7 @@
 // #define SIGACTION_DEBUG
 // #define SIGPROCMASK_DEBUG
 // #define SIGRETURN_DEBUG
-#define SYSCALL_DEBUG
+// #define SYSCALL_DEBUG
 // #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
@@ -547,7 +547,6 @@ SYS_CALL(execve) {
     process->ppid = current->process->ppid;
     process->uid = current->process->uid;
     process->euid = current->process->euid;
-    process->should_trace = strcmp(path, "/usr/bin/as") == 0;
     process->gid = current->process->gid;
     process->egid = current->process->egid;
     process->sid = current->process->sid;
