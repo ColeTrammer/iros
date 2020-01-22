@@ -152,7 +152,12 @@ $(BUILDDIR)/libs/libc/string/strerror.o \
 $(BUILDDIR)/libs/libc/string/strxfrm.o \
 $(BUILDDIR)/libs/libc/sys/ioctl/ioctl.o \
 $(BUILDDIR)/libs/libc/sys/mman/mman.o \
-$(BUILDDIR)/libs/libc/sys/os_2/os_2.o \
+$(BUILDDIR)/libs/libc/sys/os_2/create_task.o \
+$(BUILDDIR)/libs/libc/sys/os_2/exit_task.o \
+$(BUILDDIR)/libs/libc/sys/os_2/get_initial_process_info.o \
+$(BUILDDIR)/libs/libc/sys/os_2/os_mutex.o \
+$(BUILDDIR)/libs/libc/sys/os_2/set_thread_self_pointer.o \
+$(BUILDDIR)/libs/libc/sys/os_2/tgkill.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
 $(BUILDDIR)/libs/libc/sys/select/select.o \
 $(BUILDDIR)/libs/libc/sys/stat/stat.o \
