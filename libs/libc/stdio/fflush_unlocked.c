@@ -42,12 +42,12 @@ int fflush_unlocked(FILE *stream) {
     }
 
     ssize_t ret = write(stream->__fd, stream->__buffer, stream->__buffer_length);
+    stream->__position = stream->__buffer_length = 0;
     if (ret < 0) {
         stream->__flags |= __STDIO_ERROR;
         return EOF;
     }
 
-    stream->__position = stream->__buffer_length = 0;
     return 0;
 }
 

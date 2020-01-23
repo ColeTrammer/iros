@@ -9,5 +9,7 @@ int main() {
 
     printf("%.6f\n", atof("-100.015446"));
 
+    puts("Hello world\n");
+
     return 0;
 }
