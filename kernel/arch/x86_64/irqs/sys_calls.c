@@ -47,11 +47,16 @@
 
 #define SYS_CALL(n) void arch_sys_##n(struct task_state *task_state)
 
-#define SYS_PARAM(t, n, r) t n = (t) task_state->cpu_state.r
-#define SYS_PARAM_VALIDATE(t, n, r, f, a)   \
-    SYS_PARAM(t, n, r);                     \
+#define SYS_VALIDATE(n, a, f)               \
     do {                                    \
         __DO_VALIDATE(n, a, f, SYS_RETURN); \
+    } while (0)
+
+#define SYS_PARAM(t, n, r) t n = (t) task_state->cpu_state.r
+#define SYS_PARAM_VALIDATE(t, n, r, f, a) \
+    SYS_PARAM(t, n, r);                   \
+    do {                                  \
+        SYS_VALIDATE(n, a, f);            \
     } while (0)
 #define SYS_PARAM_TRANSFORM(t, n, ot, r, f)            \
     t n;                                               \
@@ -2007,6 +2012,30 @@ SYS_CALL(utimes) {
     SYS_PARAM2(const struct timeval *, times);
 
     SYS_RETURN(fs_utimes(filename, times));
+}
+
+SYS_CALL(pread) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM3(size_t, count);
+    SYS_PARAM2_VALIDATE(void *, buf, validate_write, count);
+    SYS_PARAM4_VALIDATE(off_t, offset, validate_positive, 1);
+
+    SYS_RETURN(-ENOSYS);
+    // SYS_RETURN(fs_pread(file, buf, count, offset));
+}
+
+SYS_CALL(pwrite) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM3(size_t, count);
+    SYS_PARAM2_VALIDATE(const void *, buf, validate_read, count);
+    SYS_PARAM4_VALIDATE(off_t, offset, validate_positive, 1);
+
+    SYS_RETURN(-ENOSYS);
+    // SYS_RETURN(fs_pwrite(file, buf, count, offset));
 }
 
 SYS_CALL(invalid_system_call) {

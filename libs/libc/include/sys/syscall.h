@@ -83,7 +83,9 @@
     __ENUMERATE_SYSCALL(SYMLINK, symlink, 2)                                   \
     __ENUMERATE_SYSCALL(LINK, link, 2)                                         \
     __ENUMERATE_SYSCALL(CHOWN, chown, 3)                                       \
-    __ENUMERATE_SYSCALL(UTIMES, utimes, 2)
+    __ENUMERATE_SYSCALL(UTIMES, utimes, 2)                                     \
+    __ENUMERATE_SYSCALL(PREAD, pread, 4)                                       \
+    __ENUMERATE_SYSCALL(PWRITE, pwrite, 4)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27
@@ -95,10 +97,30 @@ enum sc_number {
     ENUMERATE_SYSCALLS SC_NUM
 };
 
-__attribute__((__noreturn__)) void __sigreturn(void);
 long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5, unsigned long a6);
-long syscall(enum sc_number sc, ...);
+
+#define __syscall0(n)             __do_syscall(n, 0, 0, 0, 0, 0, 0)
+#define __syscall1(n, a)          __do_syscall(n, (unsigned long) (a), 0, 0, 0, 0, 0)
+#define __syscall2(n, a, b)       __do_syscall(n, (unsigned long) (a), (unsigned long) (b), 0, 0, 0, 0)
+#define __syscall3(n, a, b, c)    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), 0, 0, 0)
+#define __syscall4(n, a, b, c, d) __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), 0, 0)
+#define __syscall5(n, a, b, c, d, e) \
+    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), (unsigned long) (e), 0)
+#define __syscall6(n, a, b, c, d, e, f)                                                                                      \
+    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), (unsigned long) (e), \
+                 (unsigned long) (f))
+
+#define __COUNT_ARGS(...)                               __COUNT_ARGS_(, ##__VA_ARGS__, 7, 6, 5, 4, 3, 2, 1, 0)
+#define __COUNT_ARGS_(z, a, b, c, d, e, f, g, cnt, ...) cnt
+
+#define __SYSCALL_WITH_ARG_COUNT(...)  __SYSCALL_WITH_ARG_COUNT_(__VA_ARGS__)
+#define __SYSCALL_WITH_ARG_COUNT_(...) __syscall##__VA_ARGS__
+
+#define syscall(n, ...) __SYSCALL_WITH_ARG_COUNT(__COUNT_ARGS(__VA_ARGS__))(n, ##__VA_ARGS__)
+
 char *syscall_to_string(enum sc_number sc);
+
+__attribute__((__noreturn__)) void __sigreturn(void);
 
 #endif /*__ASSEMBLER */
 

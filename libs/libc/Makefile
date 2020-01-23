@@ -162,7 +162,6 @@ $(BUILDDIR)/libs/libc/sys/socket/socket.o \
 $(BUILDDIR)/libs/libc/sys/select/select.o \
 $(BUILDDIR)/libs/libc/sys/stat/stat.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall_to_string.o \
-$(BUILDDIR)/libs/libc/sys/syscall/syscall.o \
 $(BUILDDIR)/libs/libc/sys/time/time.o \
 $(BUILDDIR)/libs/libc/sys/times/times.o \
 $(BUILDDIR)/libs/libc/sys/utsname/utsname.o \
@@ -177,6 +176,8 @@ $(BUILDDIR)/libs/libc/unistd/getlogin.o \
 $(BUILDDIR)/libs/libc/unistd/getopt.o \
 $(BUILDDIR)/libs/libc/unistd/isatty.o \
 $(BUILDDIR)/libs/libc/unistd/lseek.o \
+$(BUILDDIR)/libs/libc/unistd/pread.o \
+$(BUILDDIR)/libs/libc/unistd/pwrite.o \
 $(BUILDDIR)/libs/libc/unistd/read.o \
 $(BUILDDIR)/libs/libc/unistd/sbrk.o \
 $(BUILDDIR)/libs/libc/unistd/tty_stuff.o \

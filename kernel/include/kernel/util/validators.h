@@ -3,12 +3,12 @@
 
 #include <stddef.h>
 
-#define __DO_VALIDATE(a1, a2, f, ret) \
-    do {                              \
-        int ret = f(a1, a2);          \
-        if (ret < 0) {                \
-            ret(ret);                 \
-        }                             \
+#define __DO_VALIDATE(a1, a2, f, r) \
+    do {                            \
+        int ret = f(a1, a2);        \
+        if (ret < 0) {              \
+            r(ret);                 \
+        }                           \
     } while (0)
 
 #define __RETURN(r)         return r

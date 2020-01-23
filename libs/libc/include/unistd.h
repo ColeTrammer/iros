@@ -85,6 +85,9 @@ ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t b
 int symlink(const char *target, const char *linkpath);
 int link(const char *oldpath, const char *newpath);
 
+ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+
 unsigned int alarm(unsigned int seconds);
 char *ttyname(int fd);
 int ttyname_r(int fd, char *buf, size_t buflen);
