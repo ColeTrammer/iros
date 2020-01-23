@@ -1,6 +1,8 @@
 #ifndef _SYS_SYSCALL_H
 #define _SYS_SYSCALL_H 1
 
+#include <assert.h>
+
 #define ENUMERATE_SYSCALLS                                                     \
     __ENUMERATE_SYSCALL(EXIT, exit, 1)                                         \
     __ENUMERATE_SYSCALL(SBRK, sbrk, 1)                                         \
@@ -116,7 +118,19 @@ long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, 
 #define __SYSCALL_WITH_ARG_COUNT(...)  __SYSCALL_WITH_ARG_COUNT_(__VA_ARGS__)
 #define __SYSCALL_WITH_ARG_COUNT_(...) __syscall##__VA_ARGS__
 
+#undef __ENUMERATE_SYSCALL
+#define __ENUMERATE_SYSCALL(x, y, v) __SC_##x##_ARG_COUNT = v,
+enum __sc_arg_count { ENUMERATE_SYSCALLS __INVALID };
+
+#ifdef __is_libc
+#define syscall(n, ...)                                                                                              \
+    ({                                                                                                               \
+        _Static_assert(__COUNT_ARGS(__VA_ARGS__) == __##n##_ARG_COUNT, "Incorrect number of arguments for " #n "."); \
+        __SYSCALL_WITH_ARG_COUNT(__COUNT_ARGS(__VA_ARGS__))(n, ##__VA_ARGS__);                                       \
+    })
+#else
 #define syscall(n, ...) __SYSCALL_WITH_ARG_COUNT(__COUNT_ARGS(__VA_ARGS__))(n, ##__VA_ARGS__)
+#endif /* __is_libc */
 
 char *syscall_to_string(enum sc_number sc);
 
