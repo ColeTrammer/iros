@@ -26,7 +26,7 @@ static struct mouse_event_queue *start;
 static struct mouse_event_queue *end;
 static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
 
-static ssize_t mouse_f_read(struct device *device, struct file *file, void *buffer, size_t len);
+static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len);
 
 static void mouse_f_add(struct device *device) {
     device->inode->readable = false;
@@ -39,9 +39,9 @@ static struct mouse_data data = { false, 0, { 0 } };
 
 static struct device mouse = { 0x500, S_IFCHR, "mouse", false, &mouse_ops, NULL, &data };
 
-static ssize_t mouse_f_read(struct device *device, struct file *file, void *buffer, size_t len) {
+static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len) {
     (void) device;
-    (void) file;
+    (void) offset;
 
     size_t read = 0;
 

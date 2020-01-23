@@ -17,8 +17,8 @@ struct tmp_data {
 struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, int *error);
 struct tnode *tmp_lookup(struct inode *inode, const char *name);
 struct file *tmp_open(struct inode *inode, int flags, int *error);
-ssize_t tmp_read(struct file *file, void *buffer, size_t len);
-ssize_t tmp_write(struct file *file, const void *buffer, size_t len);
+ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len);
+ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t len);
 struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error);
 int tmp_unlink(struct tnode *tnode);
 int tmp_rmdir(struct tnode *tnode);

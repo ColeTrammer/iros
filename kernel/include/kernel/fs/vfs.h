@@ -27,6 +27,8 @@ struct file *fs_open(const char *file_name, int flags, int *error);
 int fs_close(struct file *file);
 ssize_t fs_read(struct file *file, void *buffer, size_t len);
 ssize_t fs_write(struct file *file, const void *buffer, size_t len);
+ssize_t fs_pread(struct file *file, void *buffer, size_t len, off_t offset);
+ssize_t fs_pwrite(struct file *file, const void *buffer, size_t len, off_t offset);
 off_t fs_seek(struct file *file, off_t offset, int whence);
 long fs_tell(struct file *file);
 int fs_stat(const char *file_name, struct stat *stat_struct);

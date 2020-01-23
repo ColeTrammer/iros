@@ -95,18 +95,17 @@ struct file *initrd_open(struct inode *inode, int flags, int *error) {
     return file;
 }
 
-ssize_t initrd_read(struct file *file, void *buffer, size_t _len) {
+ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     if (file->flags & FS_DIR) {
         return -EISDIR;
     }
 
-    size_t len = MIN(_len, file->length - file->position);
-    if (len == 0 || *((char *) (initrd_start + file->start + file->position)) == '\0') {
+    size_t len = MIN(_len, file->length - offset);
+    if (len == 0 || *((char *) (initrd_start + file->start + offset)) == '\0') {
         return 0;
     }
 
-    memcpy(buffer, (void *) (initrd_start + file->start + file->position), len);
-    file->position += len;
+    memcpy(buffer, (void *) (initrd_start + file->start + offset), len);
     return (ssize_t) len;
 }
 

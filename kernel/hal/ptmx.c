@@ -50,8 +50,8 @@ static void slave_on_open(struct device *device) {
     spin_unlock(&data->lock);
 }
 
-static ssize_t slave_read(struct device *device, struct file *file, void *buf, size_t len) {
-    (void) file;
+static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t len) {
+    assert(offset == 0);
 
     struct slave_data *data = device->private;
     if (get_current_task()->process->pgid != data->pgid) {
@@ -127,8 +127,8 @@ static ssize_t slave_read(struct device *device, struct file *file, void *buf, s
     return (ssize_t) to_copy;
 }
 
-static ssize_t slave_write(struct device *device, struct file *file, const void *buf, size_t len) {
-    (void) file;
+static ssize_t slave_write(struct device *device, off_t offset, const void *buf, size_t len) {
+    assert(offset == 0);
 
     if (len == 0) {
         return 0;
@@ -399,8 +399,8 @@ static void master_on_open(struct device *device) {
     device->cannot_open = true;
 }
 
-static ssize_t master_read(struct device *device, struct file *file, void *buf, size_t len) {
-    (void) file;
+static ssize_t master_read(struct device *device, off_t offset, void *buf, size_t len) {
+    assert(offset == 0);
 
     struct master_data *data = device->private;
 
@@ -454,7 +454,7 @@ static ssize_t master_read(struct device *device, struct file *file, void *buf, 
 static void tty_do_echo(struct master_data *data, struct slave_data *sdata, char c) {
     if (sdata->config.c_lflag & ECHO) {
         spin_unlock(&data->lock);
-        slave_write(slaves[data->index], NULL, &c, 1);
+        slave_write(slaves[data->index], 0, &c, 1);
         spin_lock(&data->lock);
     }
 }
@@ -477,8 +477,8 @@ static bool tty_do_signals(struct slave_data *sdata, char c) {
     return true;
 }
 
-static ssize_t master_write(struct device *device, struct file *file, const void *buf, size_t len) {
-    (void) file;
+static ssize_t master_write(struct device *device, off_t offset, const void *buf, size_t len) {
+    assert(offset == 0);
 
     if (len == 0) {
         return 0;

@@ -19,9 +19,8 @@
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
-static struct inode_operations pipe_i_op = { NULL, NULL, &pipe_open, NULL, NULL,
-                                             NULL, NULL, NULL,       NULL, NULL,
-                                             NULL, NULL, NULL, NULL,       NULL, &pipe_on_inode_destruction };
+static struct inode_operations pipe_i_op = { NULL, NULL, &pipe_open, NULL, NULL, NULL, NULL, NULL,
+                                             NULL, NULL, NULL,       NULL, NULL, NULL, NULL, &pipe_on_inode_destruction };
 
 static struct file_operations pipe_f_op = { &pipe_close, &pipe_read, &pipe_write, &pipe_clone };
 
@@ -75,6 +74,7 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     file->start = 0;
     file->abilities = 0;
     file->ref_count = 0;
+    file->abilities |= FS_FILE_CANT_SEEK;
 
     struct pipe_data *data = inode->private_data;
 
@@ -89,7 +89,9 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     return file;
 }
 
-ssize_t pipe_read(struct file *file, void *buffer, size_t _len) {
+ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
+    assert(offset == 0);
+
     debug_log("Reading from pipe: [ %llu, %lu, %lu ]\n", file->inode_idenifier, _len, file->position);
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
@@ -115,7 +117,8 @@ ssize_t pipe_read(struct file *file, void *buffer, size_t _len) {
     return len;
 }
 
-ssize_t pipe_write(struct file *file, const void *buffer, size_t len) {
+ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t len) {
+    assert(offset == 0);
     debug_log("Writing to pipe: [ %llu, %lu, %lu ]\n", file->inode_idenifier, len, file->position);
 
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);

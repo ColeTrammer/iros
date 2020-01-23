@@ -11,26 +11,26 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/task.h>
 
-static ssize_t dev_null_read(struct device *device, struct file *file, void *buffer, size_t len) {
+static ssize_t dev_null_read(struct device *device, off_t offset, void *buffer, size_t len) {
     (void) device;
-    (void) file;
+    (void) offset;
     (void) buffer;
     (void) len;
 
     return 0;
 }
 
-static ssize_t dev_zero_read(struct device *device, struct file *file, void *buffer, size_t len) {
+static ssize_t dev_zero_read(struct device *device, off_t offset, void *buffer, size_t len) {
     (void) device;
-    (void) file;
+    (void) offset;
 
     memset(buffer, 0, len);
     return len;
 }
 
-static ssize_t dev_ignore_write(struct device *device, struct file *file, const void *buffer, size_t len) {
+static ssize_t dev_ignore_write(struct device *device, off_t offset, const void *buffer, size_t len) {
     (void) device;
-    (void) file;
+    (void) offset;
     (void) buffer;
 
     return len;
@@ -87,18 +87,18 @@ static struct file *stderr_open(struct device *device, int flags, int *error) {
     return fake_symlink(file, flags, error);
 }
 
-static ssize_t full_read(struct device *device, struct file *file, void *buf, size_t n) {
+static ssize_t full_read(struct device *device, off_t offset, void *buf, size_t n) {
     (void) device;
-    (void) file;
+    (void) offset;
     (void) buf;
     (void) n;
 
     return -ENOSPC;
 }
 
-static ssize_t full_write(struct device *device, struct file *file, const void *buf, size_t n) {
+static ssize_t full_write(struct device *device, off_t offset, const void *buf, size_t n) {
     (void) device;
-    (void) file;
+    (void) offset;
     (void) buf;
     (void) n;
 

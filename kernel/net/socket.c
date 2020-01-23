@@ -24,8 +24,8 @@ static unsigned long socket_id_next = 1;
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 
 static int socket_file_close(struct file *file);
-static ssize_t net_read(struct file *file, void *buf, size_t len);
-static ssize_t net_write(struct file *file, const void *buf, size_t len);
+static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len);
+static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len);
 
 static struct file_operations socket_file_ops = { socket_file_close, net_read, net_write, NULL };
 
@@ -85,11 +85,13 @@ static int socket_file_close(struct file *file) {
     return ret;
 }
 
-static ssize_t net_read(struct file *file, void *buf, size_t len) {
+static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len) {
+    assert(offset == 0);
     return net_recvfrom(file, buf, len, 0, NULL, NULL);
 }
 
-static ssize_t net_write(struct file *file, const void *buf, size_t len) {
+static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len) {
+    assert(offset == 0);
     return net_sendto(file, buf, len, 0, NULL, 0);
 }
 
@@ -103,6 +105,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
             current->process->files[i].file->flags = FS_SOCKET;
             current->process->files[i].file->f_op = &socket_file_ops;
             current->process->files[i].file->ref_count = 1;
+            current->process->files[i].file->abilities = FS_FILE_CAN_READ | FS_FILE_CAN_WRITE | FS_FILE_CANT_SEEK;
 
             struct socket_file_data *file_data = malloc(sizeof(struct socket_file_data));
             current->process->files[i].file->private_data = file_data;

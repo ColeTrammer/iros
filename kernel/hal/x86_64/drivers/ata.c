@@ -236,28 +236,28 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
     return true;
 }
 
-static ssize_t ata_read(struct device *device, struct file *file, void *buffer, size_t n) {
+static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_t n) {
     struct ata_device_data *data = device->private;
 
-    if (n % data->sector_size == 0 && file->position % data->sector_size == 0) {
+    if (n % data->sector_size == 0 && offset % data->sector_size == 0) {
         size_t num_sectors_to_read = n / data->sector_size;
         size_t num_sectors = MIN(2, num_sectors_to_read);
         ssize_t read = 0;
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
-            ssize_t ret = ata_read_sectors(data, (file->position / data->sector_size),
-                                           (void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
+            ssize_t ret = ata_read_sectors(data, (offset / data->sector_size), (void *) (((uintptr_t) buffer) + (i * data->sector_size)),
+                                           num_sectors);
             if (ret != (ssize_t)(num_sectors * data->sector_size)) {
                 if (ret < 0) {
                     return ret;
                 }
 
-                file->position += ret;
+                offset += ret;
                 return read;
             }
 
             read += ret;
-            file->position += ret;
+            offset += ret;
         }
 
         return read;
@@ -266,28 +266,28 @@ static ssize_t ata_read(struct device *device, struct file *file, void *buffer, 
     return -EINVAL;
 }
 
-static ssize_t ata_write(struct device *device, struct file *file, const void *buffer, size_t n) {
+static ssize_t ata_write(struct device *device, off_t offset, const void *buffer, size_t n) {
     struct ata_device_data *data = device->private;
 
-    if (n % data->sector_size == 0 && file->position % data->sector_size == 0) {
+    if (n % data->sector_size == 0 && offset % data->sector_size == 0) {
         size_t num_sectors_to_write = n / data->sector_size;
         size_t num_sectors = MIN(2, num_sectors_to_write);
         ssize_t written = 0;
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
-            ssize_t ret = ata_write_sectors(data, (file->position / data->sector_size),
+            ssize_t ret = ata_write_sectors(data, (offset / data->sector_size),
                                             (const void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
             if (ret != (ssize_t)(num_sectors * data->sector_size)) {
                 if (ret < 0) {
                     return ret;
                 }
 
-                file->position += ret;
+                offset += ret;
                 return written;
             }
 
             written += ret;
-            file->position += ret;
+            offset += ret;
         }
 
         return written;

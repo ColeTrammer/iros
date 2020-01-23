@@ -126,7 +126,7 @@ struct file *tmp_open(struct inode *inode, int flags, int *error) {
     return file;
 }
 
-ssize_t tmp_read(struct file *file, void *buffer, size_t len) {
+ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
@@ -134,15 +134,15 @@ ssize_t tmp_read(struct file *file, void *buffer, size_t len) {
     assert(data);
 
     spin_lock(&inode->lock);
-    size_t to_read = MIN(len, inode->size - file->position);
+    size_t to_read = MIN(len, inode->size - offset);
 
     if (to_read == 0) {
         spin_unlock(&inode->lock);
         return 0;
     }
 
-    memcpy(buffer, data->contents + file->position, to_read);
-    file->position += to_read;
+    memcpy(buffer, data->contents + offset, to_read);
+    offset += to_read;
 
     inode->access_time = get_time_as_timespec();
 
@@ -150,7 +150,7 @@ ssize_t tmp_read(struct file *file, void *buffer, size_t len) {
     return (ssize_t) to_read;
 }
 
-ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
+ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t len) {
     if (len == 0) {
         return len;
     }
@@ -169,8 +169,8 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
     }
 
-    if (file->position + len > data->max) {
-        data->max = ((file->position + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    if (offset + len > data->max) {
+        data->max = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         char *save = data->contents;
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
@@ -178,9 +178,8 @@ ssize_t tmp_write(struct file *file, const void *buffer, size_t len) {
         free(save);
     }
 
-    memcpy(data->contents + file->position, buffer, len);
+    memcpy(data->contents + offset, buffer, len);
     inode->size += len;
-    file->position += len;
 
     inode->modify_time = get_time_as_timespec();
 

@@ -15,8 +15,8 @@ struct device;
 
 struct device_ops {
     struct file *(*open)(struct device *device, int flags, int *error);
-    ssize_t (*read)(struct device *device, struct file *file, void *buffer, size_t len);
-    ssize_t (*write)(struct device *device, struct file *file, const void *buffer, size_t len);
+    ssize_t (*read)(struct device *device, off_t offset, void *buffer, size_t len);
+    ssize_t (*write)(struct device *device, off_t offset, const void *buffer, size_t len);
     int (*close)(struct device *device);
     void (*add)(struct device *device);
     void (*remove)(struct device *device);
@@ -43,8 +43,8 @@ void init_dev();
 struct tnode *dev_lookup(struct inode *inode, const char *name);
 struct file *dev_open(struct inode *inode, int flags, int *error);
 int dev_close(struct file *file);
-ssize_t dev_read(struct file *file, void *buffer, size_t len);
-ssize_t dev_write(struct file *file, const void *buffer, size_t len);
+ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len);
+ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t len);
 int dev_stat(struct inode *inode, struct stat *stat_struct);
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);

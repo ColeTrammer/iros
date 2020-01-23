@@ -921,7 +921,7 @@ struct file *ext2_open(struct inode *inode, int flags, int *error) {
 }
 
 /* Should provide some sort of mechanism for caching these blocks */
-static ssize_t __ext2_read(struct file *file, struct inode *inode, void *buffer, size_t len) {
+static ssize_t __ext2_read(struct inode *inode, off_t offset, void *buffer, size_t len) {
     assert(len >= 1);
 
     if (!(inode->mode & S_IRUSR)) {
@@ -929,23 +929,22 @@ static ssize_t __ext2_read(struct file *file, struct inode *inode, void *buffer,
     }
 
     /* Indicate done reading */
-    if (file->position >= inode->size) {
+    if (offset >= (off_t) inode->size) {
         return 0;
     }
 
-    size_t max_can_read = inode->size - file->position;
+    size_t max_can_read = inode->size - offset;
     len = MIN(len, max_can_read);
     ssize_t len_save = (ssize_t) len;
 
     // Read directly from blocks if the inode->size < 60
     if ((inode->flags & FS_LINK) && (inode->size < 60)) {
-        memcpy(buffer, (char *) ((struct raw_inode *) inode->private_data)->block + file->position, len);
-        file->position += len;
+        memcpy(buffer, (char *) ((struct raw_inode *) inode->private_data)->block + offset, len);
         return len;
     }
 
-    size_t file_block_no = file->position / inode->super_block->block_size;
-    size_t file_block_no_end = (file->position + len) / inode->super_block->block_size;
+    size_t file_block_no = offset / inode->super_block->block_size;
+    size_t file_block_no_end = (offset + len) / inode->super_block->block_size;
 
     uint32_t *indirect_block = NULL;
     uint32_t *double_indirect_block = NULL;
@@ -1019,11 +1018,11 @@ static ssize_t __ext2_read(struct file *file, struct inode *inode, void *buffer,
             return ret;
         }
 
-        size_t buffer_offset = file->position % inode->super_block->block_size;
+        size_t buffer_offset = offset % inode->super_block->block_size;
         size_t to_read = MIN(inode->super_block->block_size - buffer_offset, len);
 
         memcpy(buffer, (void *) (((uintptr_t) block) + buffer_offset), to_read);
-        file->position += to_read;
+        offset += to_read;
         len -= to_read;
 
         ext2_free_blocks(block);
@@ -1042,23 +1041,20 @@ static ssize_t __ext2_read(struct file *file, struct inode *inode, void *buffer,
     return len_save;
 }
 
-static ssize_t __ext2_write(struct file *file, const void *buffer, size_t len) {
-    assert(file->flags & FS_FILE);
+static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffer, size_t len) {
+    debug_log("Writing file: [ %lu, %lu ]\n", offset, len);
 
-    debug_log("Writing file: [ %lu, %lu ]\n", file->position, len);
-
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     struct raw_inode *raw_inode = inode->private_data;
     ssize_t ret = 0;
-    inode->size = file->position + len;
+    inode->size = offset + len;
 
     if (!(raw_inode->mode & S_IWUSR)) {
         return -EPERM;
     }
 
     size_t len_save = len;
-    size_t file_block_no = file->position / inode->super_block->block_size;
-    size_t file_block_no_end = (file->position + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
+    size_t file_block_no = offset / inode->super_block->block_size;
+    size_t file_block_no_end = (offset + len + inode->super_block->block_size - 1) / inode->super_block->block_size;
     size_t buffer_offset = 0;
 
     uint32_t *indirect_block = NULL;
@@ -1107,17 +1103,17 @@ static ssize_t __ext2_write(struct file *file, const void *buffer, size_t len) {
         }
 
         char *buf = ext2_allocate_blocks(inode->super_block, 1);
-        if (file->position % inode->super_block->block_size != 0) {
+        if (offset % inode->super_block->block_size != 0) {
             ret = ext2_read_blocks(inode->super_block, buf, block_no, 1);
             if (ret != 1) {
                 return (int) ret;
             }
         }
 
-        size_t to_write = MIN(len, inode->super_block->block_size - (file->position % inode->super_block->block_size));
-        memcpy(buf + (file->position % inode->super_block->block_size), (const void *) (((char *) buffer) + buffer_offset), to_write);
-        memset(buf + (file->position % inode->super_block->block_size) + to_write, 0,
-               inode->super_block->block_size - (to_write + (file->position % inode->super_block->block_size)));
+        size_t to_write = MIN(len, inode->super_block->block_size - (offset % inode->super_block->block_size));
+        memcpy(buf + (offset % inode->super_block->block_size), (const void *) (((char *) buffer) + buffer_offset), to_write);
+        memset(buf + (offset % inode->super_block->block_size) + to_write, 0,
+               inode->super_block->block_size - (to_write + (offset % inode->super_block->block_size)));
         ret = ext2_write_blocks(inode->super_block, buf, block_no, 1);
         if (ret != 1) {
             ext2_free_blocks(buf);
@@ -1129,7 +1125,7 @@ static ssize_t __ext2_write(struct file *file, const void *buffer, size_t len) {
         file_block_no++;
         len -= to_write;
         buffer_offset += to_write;
-        file->position += to_write;
+        offset += to_write;
     }
 
     if (indirect_block) {
@@ -1150,10 +1146,7 @@ int ext2_read_all(struct inode *inode, void *buffer) {
         ext2_update_inode(inode, false);
     }
 
-    struct file dummy_file;
-    dummy_file.position = 0;
-
-    ssize_t ret = __ext2_read(&dummy_file, inode, buffer, inode->size);
+    ssize_t ret = __ext2_read(inode, 0, buffer, inode->size);
     if (ret < 0) {
         return ret;
     }
@@ -1161,21 +1154,21 @@ int ext2_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
-ssize_t ext2_read(struct file *file, void *buffer, size_t len) {
+ssize_t ext2_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     spin_lock(&inode->lock);
 
-    ssize_t ret = __ext2_read(file, inode, buffer, len);
+    ssize_t ret = __ext2_read(inode, offset, buffer, len);
 
     spin_unlock(&inode->lock);
     return ret;
 }
 
-ssize_t ext2_write(struct file *file, const void *buffer, size_t len) {
+ssize_t ext2_write(struct file *file, off_t offset, const void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     spin_lock(&inode->lock);
 
-    ssize_t ret = __ext2_write(file, buffer, len);
+    ssize_t ret = __ext2_write(inode, offset, buffer, len);
 
     spin_unlock(&inode->lock);
     return ret;

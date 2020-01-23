@@ -2022,8 +2022,7 @@ SYS_CALL(pread) {
     SYS_PARAM2_VALIDATE(void *, buf, validate_write, count);
     SYS_PARAM4_VALIDATE(off_t, offset, validate_positive, 1);
 
-    SYS_RETURN(-ENOSYS);
-    // SYS_RETURN(fs_pread(file, buf, count, offset));
+    SYS_RETURN(fs_pread(file, buf, count, offset));
 }
 
 SYS_CALL(pwrite) {
@@ -2034,8 +2033,7 @@ SYS_CALL(pwrite) {
     SYS_PARAM2_VALIDATE(const void *, buf, validate_read, count);
     SYS_PARAM4_VALIDATE(off_t, offset, validate_positive, 1);
 
-    SYS_RETURN(-ENOSYS);
-    // SYS_RETURN(fs_pwrite(file, buf, count, offset));
+    SYS_RETURN(fs_pwrite(file, buf, count, offset));
 }
 
 SYS_CALL(invalid_system_call) {

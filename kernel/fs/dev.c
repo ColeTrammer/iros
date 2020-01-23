@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,6 +81,10 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
         ((struct device *) inode->private_data)->ops->on_open(inode->private_data);
     }
 
+    if (!S_ISBLK(inode->mode)) {
+        file->abilities |= FS_FILE_CANT_SEEK;
+    }
+
     return file;
 }
 
@@ -95,7 +100,7 @@ int dev_close(struct file *file) {
     return error;
 }
 
-ssize_t dev_read(struct file *file, void *buffer, size_t len) {
+ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
     if (file->flags & FS_DIR) {
         return -EISDIR;
     }
@@ -105,19 +110,19 @@ ssize_t dev_read(struct file *file, void *buffer, size_t len) {
 
     if (((struct device *) inode->private_data)->ops->read) {
         inode->access_time = get_time_as_timespec();
-        return ((struct device *) inode->private_data)->ops->read(inode->private_data, file, buffer, len);
+        return ((struct device *) inode->private_data)->ops->read(inode->private_data, offset, buffer, len);
     }
 
     return -EINVAL;
 }
 
-ssize_t dev_write(struct file *file, const void *buffer, size_t len) {
+ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
     if (((struct device *) inode->private_data)->ops->write) {
         inode->modify_time = get_time_as_timespec();
-        return ((struct device *) inode->private_data)->ops->write(inode->private_data, file, buffer, len);
+        return ((struct device *) inode->private_data)->ops->write(inode->private_data, offset, buffer, len);
     }
 
     return -EINVAL;

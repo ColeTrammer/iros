@@ -21,8 +21,8 @@ bool is_pipe_write_end_open(struct inode *inode);
 struct inode *pipe_new_inode();
 
 struct file *pipe_open(struct inode *inode, int flags, int *error);
-ssize_t pipe_read(struct file *file, void *buffer, size_t len);
-ssize_t pipe_write(struct file *file, const void *buffer, size_t len);
+ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t len);
+ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t len);
 int pipe_close(struct file *file);
 void pipe_clone(struct file *file);
 void pipe_on_inode_destruction(struct inode *inode);

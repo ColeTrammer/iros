@@ -22,9 +22,9 @@ static struct keyboard_event_queue *end;
 static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
 static struct device *device;
 
-static ssize_t kbd_read(struct device *device, struct file *file, void *buffer, size_t len) {
+static ssize_t kbd_read(struct device *device, off_t offset, void *buffer, size_t len) {
     (void) device;
-    (void) file;
+    (void) offset;
 
     size_t read = 0;
 

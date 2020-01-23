@@ -404,8 +404,8 @@ struct file *fs_open(const char *file_name, int flags, int *error) {
 
     init_spinlock(&file->lock);
     file->ref_count = 1;
-    file->abilities = 0;
     file->open_flags = flags;
+    file->abilities &= FS_FILE_CANT_SEEK;
     if (flags & O_RDWR) {
         file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
     } else if (flags & O_RDONLY) {
@@ -507,7 +507,16 @@ ssize_t fs_read(struct file *file, void *buffer, size_t len) {
     assert(file);
     assert(file->f_op);
     if (file->f_op->read) {
-        return file->f_op->read(file, buffer, len);
+        if (file->abilities & FS_FILE_CANT_SEEK) {
+            return file->f_op->read(file, 0, buffer, len);
+        }
+
+        ssize_t ret = file->f_op->read(file, file->position, buffer, len);
+        if (ret > 0) {
+            file->position += ret;
+        }
+
+        return ret;
     }
 
     if (file->flags & FS_DIR) {
@@ -517,15 +526,66 @@ ssize_t fs_read(struct file *file, void *buffer, size_t len) {
     return -EINVAL;
 }
 
+ssize_t fs_pread(struct file *file, void *buffer, size_t len, off_t offset) {
+    if (file->abilities & FS_FILE_CANT_SEEK) {
+        return -ESPIPE;
+    }
+
+    if (len == 0) {
+        return 0;
+    }
+
+    assert(file);
+    assert(file->f_op);
+    if (file->f_op->read) {
+        return file->f_op->read(file, offset, buffer, len);
+    }
+
+    return -EINVAL;
+}
+
 ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
+    if (len == 0) {
+        return 0;
+    }
+
     if (file->f_op->write) {
-        return file->f_op->write(file, buffer, len);
+        if (file->abilities & FS_FILE_CANT_SEEK) {
+            return file->f_op->write(file, 0, buffer, len);
+        }
+
+        ssize_t ret = file->f_op->write(file, file->position, buffer, len);
+        if (ret > 0) {
+            file->position += ret;
+        }
+
+        return ret;
+    }
+
+    return -EINVAL;
+}
+
+ssize_t fs_pwrite(struct file *file, const void *buffer, size_t len, off_t offset) {
+    if (file->abilities & FS_FILE_CANT_SEEK) {
+        return -ESPIPE;
+    }
+
+    if (len == 0) {
+        return 0;
+    }
+
+    if (file->f_op->write) {
+        return file->f_op->write(file, offset, buffer, len);
     }
 
     return -EINVAL;
 }
 
 off_t fs_seek(struct file *file, off_t offset, int whence) {
+    if (file->abilities & FS_FILE_CANT_SEEK) {
+        return -ESPIPE;
+    }
+
     off_t new_position;
     if (whence == SEEK_SET) {
         new_position = offset;
