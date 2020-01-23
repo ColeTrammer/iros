@@ -33,7 +33,7 @@ int puts(const char *s) {
         goto finish_puts;
     }
 
-    if (fwrite_unlocked(stdout, sizeof(char), len, stdout) != len) {
+    if (fwrite_unlocked(s, sizeof(char), len, stdout) != len) {
         ret = EOF;
         goto finish_puts;
     }
