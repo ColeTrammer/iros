@@ -9,6 +9,7 @@
 #include <kernel/fs/inode.h>
 
 struct file_descriptor;
+struct iovec;
 
 #define INAME_DONT_FOLLOW_TRAILING_SYMLINK 1
 #define INAME_TAKE_OWNERSHIP_OF_PATH       2
@@ -29,6 +30,8 @@ ssize_t fs_read(struct file *file, void *buffer, size_t len);
 ssize_t fs_write(struct file *file, const void *buffer, size_t len);
 ssize_t fs_pread(struct file *file, void *buffer, size_t len, off_t offset);
 ssize_t fs_pwrite(struct file *file, const void *buffer, size_t len, off_t offset);
+ssize_t fs_readv(struct file *file, const struct iovec *vec, int item_count);
+ssize_t fs_writev(struct file *file, const struct iovec *vec, int item_count);
 off_t fs_seek(struct file *file, off_t offset, int whence);
 long fs_tell(struct file *file);
 int fs_stat(const char *file_name, struct stat *stat_struct);

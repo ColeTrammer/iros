@@ -87,7 +87,9 @@
     __ENUMERATE_SYSCALL(CHOWN, chown, 3)                                       \
     __ENUMERATE_SYSCALL(UTIMES, utimes, 2)                                     \
     __ENUMERATE_SYSCALL(PREAD, pread, 4)                                       \
-    __ENUMERATE_SYSCALL(PWRITE, pwrite, 4)
+    __ENUMERATE_SYSCALL(PWRITE, pwrite, 4)                                     \
+    __ENUMERATE_SYSCALL(READV, readv, 3)                                       \
+    __ENUMERATE_SYSCALL(WRITEV, writev, 3)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

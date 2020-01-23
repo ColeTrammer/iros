@@ -8,6 +8,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 
 #include <kernel/fs/dev.h>
 #include <kernel/fs/ext2.h>
@@ -22,6 +23,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
+#include <kernel/util/validators.h>
 
 // #define INODE_REF_COUNT_DEBUG
 
@@ -579,6 +581,46 @@ ssize_t fs_pwrite(struct file *file, const void *buffer, size_t len, off_t offse
     }
 
     return -EINVAL;
+}
+
+ssize_t fs_readv(struct file *file, const struct iovec *vec, int item_count) {
+    ssize_t ret = 0;
+
+    // FIXME: this function should lock the file or inode somehow
+    for (int i = 0; i < item_count; i++) {
+        VALIDATE(vec[i].iov_base, vec[i].iov_len, validate_write);
+        ssize_t res = fs_read(file, vec[i].iov_base, vec[i].iov_len);
+        if (res < 0) {
+            return res;
+        }
+
+        ret += res;
+        if (res < (ssize_t) vec[i].iov_len) {
+            break;
+        }
+    }
+
+    return ret;
+}
+
+ssize_t fs_writev(struct file *file, const struct iovec *vec, int item_count) {
+    ssize_t ret = 0;
+
+    // FIXME: this function should lock the file or inode somehow
+    for (int i = 0; i < item_count; i++) {
+        VALIDATE(vec[i].iov_base, vec[i].iov_len, validate_read);
+        ssize_t res = fs_write(file, vec[i].iov_base, vec[i].iov_len);
+        if (res < 0) {
+            return res;
+        }
+
+        ret += res;
+        if (res < (ssize_t) vec[i].iov_len) {
+            break;
+        }
+    }
+
+    return ret;
 }
 
 off_t fs_seek(struct file *file, off_t offset, int whence) {

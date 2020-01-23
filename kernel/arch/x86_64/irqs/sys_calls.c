@@ -2036,6 +2036,26 @@ SYS_CALL(pwrite) {
     SYS_RETURN(fs_pwrite(file, buf, count, offset));
 }
 
+SYS_CALL(readv) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM3_VALIDATE(int, item_count, validate_positive, 1);
+    SYS_PARAM2_VALIDATE(const struct iovec *, vec, validate_read, item_count * sizeof(struct iovec));
+
+    SYS_RETURN(fs_readv(file, vec, item_count));
+}
+
+SYS_CALL(writev) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM3_VALIDATE(int, item_count, validate_positive, 1);
+    SYS_PARAM2_VALIDATE(const struct iovec *, vec, validate_read, item_count + sizeof(struct iovec));
+
+    SYS_RETURN(fs_writev(file, vec, item_count));
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);

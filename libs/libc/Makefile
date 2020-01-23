@@ -164,6 +164,8 @@ $(BUILDDIR)/libs/libc/sys/stat/stat.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall_to_string.o \
 $(BUILDDIR)/libs/libc/sys/time/time.o \
 $(BUILDDIR)/libs/libc/sys/times/times.o \
+$(BUILDDIR)/libs/libc/sys/uio/readv.o \
+$(BUILDDIR)/libs/libc/sys/uio/writev.o \
 $(BUILDDIR)/libs/libc/sys/utsname/utsname.o \
 $(BUILDDIR)/libs/libc/sys/wait/wait.o \
 $(BUILDDIR)/libs/libc/termios/termios.o \
