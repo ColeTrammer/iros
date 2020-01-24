@@ -18,6 +18,7 @@ struct ftw_dirent {
     char *path;
     bool expanded;
     struct stat stat_struct;
+    int flag;
     int depth;
 };
 
@@ -88,24 +89,13 @@ static struct ftw_dirent *peek_dirent() {
     return end;
 }
 
-static int ftw_call(fn_t fn, const char *path, struct stat *stat_struct, int depth) {
-    int type = 0;
-    if (!stat_struct) {
-        type = FTW_NS;
-    } else if (S_ISREG(stat_struct->st_mode)) {
-        type = FTW_F;
-    } else if (S_ISDIR(stat_struct->st_mode)) {
-        type = FTW_D;
-    } else {
-        assert(false);
-    }
-
+static int ftw_call(fn_t fn, struct ftw_dirent *dirent) {
     struct FTW ftw_buf;
-    char *last_slash = strrchr(path, '/');
-    ftw_buf.base = last_slash ? last_slash - path + 1 : 0;
-    ftw_buf.level = depth;
+    char *last_slash = strrchr(dirent->path, '/');
+    ftw_buf.base = last_slash ? last_slash - dirent->path + 1 : 0;
+    ftw_buf.level = dirent->depth;
 
-    return fn(path, stat_struct, type, &ftw_buf);
+    return fn(dirent->path, &dirent->stat_struct, dirent->flag, &ftw_buf);
 }
 
 static int ftw_build_dirents(const char *path, int depth) {
@@ -130,19 +120,37 @@ static int ftw_build_dirents(const char *path, int depth) {
     return closedir(d);
 }
 
-static int ftw_traverse_bf(fn_t fn) {
+static int ftw_expand(struct ftw_dirent *d, int flags) {
+    int ret = 0;
+    if (!(flags & FTW_PHYS ? lstat : stat)(d->path, &d->stat_struct)) {
+        if (S_ISDIR(d->stat_struct.st_mode)) {
+            if (access(d->path, R_OK)) {
+                d->flag = FTW_DNR;
+            } else {
+                d->flag = flags & FTW_DEPTH ? FTW_DP : FTW_D;
+                ret = ftw_build_dirents(d->path, d->depth + 1);
+            }
+        } else if (S_ISLNK(d->stat_struct.st_mode)) {
+            d->flag = FTW_SL;
+        } else {
+            d->flag = FTW_F;
+        }
+    } else {
+        d->flag = FTW_NS;
+    }
+
+    return ret;
+}
+
+static int ftw_traverse_bf(fn_t fn, int flags) {
     int depth = 0;
     while (size > 0) {
         size_t size_save = size;
         for (size_t i = 0; i < size_save; i++) {
             struct ftw_dirent *d = consume_dirent();
+            ftw_expand(d, flags);
 
-            struct stat stat_struct;
-            if (!stat(d->path, &stat_struct) && S_ISDIR(stat_struct.st_mode)) {
-                ftw_build_dirents(d->path, depth + 1);
-            }
-
-            int ret = ftw_call(fn, d->path, &stat_struct, depth);
+            int ret = ftw_call(fn, d);
 
             free_dirent(d);
 
@@ -157,20 +165,18 @@ static int ftw_traverse_bf(fn_t fn) {
     return 0;
 }
 
-static int ftw_traverse_df(fn_t fn) {
+static int ftw_traverse_df(fn_t fn, int flags) {
     while (size > 0) {
         struct ftw_dirent *d = peek_dirent();
 
         if (!d->expanded) {
-            if (!stat(d->path, &d->stat_struct) && S_ISDIR(d->stat_struct.st_mode)) {
-                ftw_build_dirents(d->path, d->depth + 1);
-                d->expanded = true;
-                continue;
-            }
+            d->expanded = true;
+            ftw_expand(d, flags);
+            continue;
         }
 
         pop_dirent();
-        int ret = ftw_call(fn, d->path, &d->stat_struct, d->depth);
+        int ret = ftw_call(fn, d);
 
         free_dirent(d);
 
@@ -188,7 +194,6 @@ int nftw(const char *path, fn_t fn, int fd_limit, int flags) {
     }
 
     assert(!(flags & FTW_CHDIR));
-    assert(!(flags & FTW_PHYS));
 
     char *last_slash = strrchr(path, '/');
     char *path_copy = strdup(path);
@@ -202,9 +207,9 @@ int nftw(const char *path, fn_t fn, int fd_limit, int flags) {
     }
 
     if (flags & FTW_DEPTH) {
-        ret = ftw_traverse_df(fn);
+        ret = ftw_traverse_df(fn, flags);
     } else {
-        ret = ftw_traverse_bf(fn);
+        ret = ftw_traverse_bf(fn, flags);
     }
 
 cleanup:
