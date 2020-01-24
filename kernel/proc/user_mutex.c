@@ -139,7 +139,8 @@ void wake_user_mutex(struct user_mutex *m, int to_wake, int *to_place) {
     }
 
     // This means there are no waiters left
-    if (!m->next_to_wake_up) {
+    if (to_place && !m->next_to_wake_up) {
+        debug_log("No Waiters on mutex");
         *to_place &= ~MUTEX_WAITERS;
     }
 }

@@ -1,6 +1,8 @@
 #ifndef _BITS_LOCK_H
 #define _BITS_LOCK_H 1
 
+#ifndef __is_libk
+
 #include <bits/null.h>
 #include <stdatomic.h>
 #include <sys/os_2.h>
@@ -10,6 +12,11 @@ static inline void __lock(unsigned int *lock) {
     int to_place = 1;
 
     while (!atomic_compare_exchange_strong(lock, &expected, to_place)) {
+        if ((expected & MUTEX_WAITERS) && !(expected & ~MUTEX_WAITERS)) {
+            to_place |= MUTEX_WAITERS;
+            continue;
+        }
+
         if (!(expected & MUTEX_WAITERS)) {
             to_place = expected | MUTEX_WAITERS;
             if (!atomic_compare_exchange_strong(lock, &expected, to_place)) {
@@ -18,7 +25,7 @@ static inline void __lock(unsigned int *lock) {
             }
 
             expected |= MUTEX_WAITERS;
-            to_place = 1;
+            to_place = MUTEX_WAITERS | 1;
         }
 
         os_mutex(lock, MUTEX_AQUIRE, expected, to_place, 0, NULL);
@@ -44,5 +51,7 @@ static inline void __unlock(unsigned int *lock) {
         os_mutex(lock, MUTEX_WAKE_AND_SET, expected, MUTEX_WAITERS, 1, NULL);
     }
 }
+
+#endif /* __is_libk */
 
 #endif /* _BITS_LOCK_H */

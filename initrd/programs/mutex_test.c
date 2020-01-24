@@ -53,8 +53,6 @@ int main() {
     write(1, "A2\n", 3);
 
     pthread_mutex_unlock(&mutex);
-    pthread_mutex_unlock(&mutex);
-    pthread_mutex_unlock(&mutex);
 
     pthread_join(id, NULL);
 

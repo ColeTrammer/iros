@@ -12,7 +12,6 @@ int fflush_unlocked(FILE *stream) {
         __lock(&__file_list_lock);
         FILE *iter = __file_list_head;
         while (iter) {
-            __unlock(&iter->__lock);
             if (fflush(iter) == EOF) {
                 any_failed = true;
             }

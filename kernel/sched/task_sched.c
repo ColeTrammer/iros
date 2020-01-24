@@ -310,9 +310,8 @@ void exit_process(struct process *process) {
                                                              *node->__protected == (unsigned int) node->__in_progress_value)) {
                         struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(node->__protected, MUTEX_OWNER_DIED);
                         if (um != NULL) {
-                            int to_place = MUTEX_OWNER_DIED | (*node->__protected & MUTEX_WAITERS);
-                            wake_user_mutex(um, 1, &to_place);
-                            *node->__protected = to_place;
+                            wake_user_mutex(um, 1, NULL);
+                            *node->__protected = MUTEX_OWNER_DIED;
                             unlock_user_mutex(um);
                         }
                     }

@@ -1481,7 +1481,7 @@ SYS_CALL(os_mutex) {
             SYS_RETURN(0);
         }
         case MUTEX_WAKE_AND_SET: {
-            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
+            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place & ~MUTEX_WAITERS);
             if (um == NULL) {
                 SYS_RETURN(0);
             }
@@ -1496,7 +1496,7 @@ SYS_CALL(os_mutex) {
                 SYS_RETURN(EINVAL);
             }
             to_aquire = to_wait;
-            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
+            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place & ~MUTEX_WAITERS);
             if (um == NULL) {
                 goto do_mutex_aquire;
             }

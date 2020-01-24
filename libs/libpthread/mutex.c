@@ -95,6 +95,21 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
             }
         }
 
+        if ((expected & MUTEX_WAITERS) && !(expected & ~MUTEX_WAITERS)) {
+            tid |= MUTEX_WAITERS;
+            continue;
+        }
+
+        if (!(expected & MUTEX_WAITERS)) {
+            int to_place = expected | MUTEX_WAITERS;
+            if (!atomic_compare_exchange_strong(&mutex->__lock, &expected, to_place)) {
+                expected = 0;
+                continue;
+            }
+
+            expected = to_place;
+        }
+
         os_mutex(&mutex->__lock, MUTEX_AQUIRE, expected, tid, 0, NULL);
         expected = 0;
     }
@@ -207,7 +222,12 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
         }
     }
 
-    int ret = os_mutex(&mutex->__lock, MUTEX_WAKE_AND_SET, tid, 0, 1, NULL);
+    int ret = 0;
+
+    int expected = tid;
+    if (!atomic_compare_exchange_strong(&mutex->__lock, &expected, 0)) {
+        ret = os_mutex(&mutex->__lock, MUTEX_WAKE_AND_SET, expected, MUTEX_WAITERS, 1, NULL);
+    }
 
     if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
         if (node->__next) {

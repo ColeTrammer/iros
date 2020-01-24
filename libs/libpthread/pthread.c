@@ -272,6 +272,7 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
         }
         node = node->__next;
     }
+    thread->locked_robust_mutex_node_list_head = NULL;
 
     if (thread->attributes.__flags & PTHREAD_CREATE_DETACHED) {
         pthread_spin_lock(&threads_lock);
