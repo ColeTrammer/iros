@@ -190,6 +190,7 @@ void funlockfile(FILE *stream);
 int remove(const char *path);
 int rename(const char *old_path, const char *new_path);
 
+ssize_t getdelim(char **__restrict line_ptr, size_t *__restrict n, int delim, FILE *__restrict stream);
 ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restrict stream);
 
 char *tmpnam(char *s);

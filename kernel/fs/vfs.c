@@ -131,6 +131,9 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
 
     if (inode) {
         *inode = tnode->inode;
+        if (!fs_inode_get(tnode->inode->device, tnode->inode->index)) {
+            fs_inode_put(tnode->inode);
+        }
     }
 
     assert(tnode->inode);

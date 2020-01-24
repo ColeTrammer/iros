@@ -134,6 +134,8 @@ $(BUILDDIR)/libs/libc/stdio/getc_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/getc.o \
 $(BUILDDIR)/libs/libc/stdio/getchar_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/getchar.o \
+$(BUILDDIR)/libs/libc/stdio/getdelim.o \
+$(BUILDDIR)/libs/libc/stdio/getline.o \
 $(BUILDDIR)/libs/libc/stdio/gets.o \
 $(BUILDDIR)/libs/libc/stdio/init_files.o \
 $(BUILDDIR)/libs/libc/stdio/putc_unlocked.o \

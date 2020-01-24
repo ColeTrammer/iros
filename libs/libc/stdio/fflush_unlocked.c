@@ -22,12 +22,16 @@ int fflush_unlocked(FILE *stream) {
         return any_failed ? -1 : 0;
     }
 
-    __stdio_log(stream, "fflush: %d", stream->__fd);
+    __stdio_log(stream, "fflush_unlocked: %d %#X", stream->__fd, stream->__flags);
+
+    if (stream->__flags & __STDIO_ERROR) {
+        return EOF;
+    }
 
     if (stream->__flags & __STDIO_LAST_OP_READ) {
         stream->__flags &= ~__STDIO_HAS_UNGETC_CHARACTER;
         if (!(stream->__flags & __STDIO_EOF) && (stream->__position < (off_t) stream->__buffer_length)) {
-            if (lseek(stream->__fd, stream->__position - stream->__buffer_length, SEEK_CUR)) {
+            if (lseek(stream->__fd, stream->__position - stream->__buffer_length, SEEK_CUR) < 0) {
                 return EOF;
             }
 

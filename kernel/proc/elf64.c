@@ -108,7 +108,7 @@ void elf64_stack_trace(struct task *task) {
     }
 
     void *buffer;
-    if (!fs_read_all_inode(inode, &buffer, NULL)) {
+    if (fs_read_all_inode(inode, &buffer, NULL)) {
         debug_log("Failed to read the task's inode: [ %d ]\n", task->process->pid);
         return;
     }

@@ -14,13 +14,13 @@ static struct passwd static_passwd_buffer;
 static char static_passwd_string_buffer[STATIC_PWD_STRING_SIZE];
 
 struct passwd *getpwnam(const char *name) {
-    struct passwd *result;
+    struct passwd *result = NULL;
     getpwnam_r(name, &static_passwd_buffer, static_passwd_string_buffer, STATIC_PWD_STRING_SIZE, &result);
     return result;
 }
 
 struct passwd *getpwuid(uid_t uid) {
-    struct passwd *result;
+    struct passwd *result = NULL;
     getpwuid_r(uid, &static_passwd_buffer, static_passwd_string_buffer, STATIC_PWD_STRING_SIZE, &result);
     return result;
 }

@@ -523,49 +523,6 @@ FILE *tmpfile(void) {
     return NULL;
 }
 
-#define DEFAULT_LINE_BUFFER_SIZE 100
-
-ssize_t getline(char **__restrict line_ptr, size_t *__restrict n, FILE *__restrict stream) {
-    if (*line_ptr == NULL) {
-        if (*n == 0) {
-            *n = DEFAULT_LINE_BUFFER_SIZE;
-        }
-
-        *line_ptr = malloc(*n);
-    }
-
-    size_t pos = 0;
-    for (;;) {
-        errno = 0;
-        int c = fgetc(stream);
-
-        /* Indicate IO error or out of lines */
-        if (c == EOF && (errno || pos == 0)) {
-            return -1;
-        }
-
-        if (c == EOF) {
-            (*line_ptr)[pos] = '\0';
-            break;
-        }
-
-        if (c == '\n' || c == '\r') {
-            (*line_ptr)[pos++] = c;
-            (*line_ptr)[pos] = '\0';
-            break;
-        }
-
-        (*line_ptr)[pos++] = c;
-
-        if (pos + 1 >= *n) {
-            *n *= 2;
-            *line_ptr = realloc(*line_ptr, *n);
-        }
-    }
-
-    return (ssize_t) pos;
-}
-
 static pid_t p_child_pid = 0;
 
 FILE *popen(const char *command, const char *mode) {

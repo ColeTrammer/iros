@@ -12,13 +12,13 @@ static struct group static_group_buffer;
 static char static_group_string_buffer[STATIC_GRP_STRING_SIZE];
 
 struct group *getgrgid(gid_t gid) {
-    struct group *result;
+    struct group *result = NULL;
     getgrgid_r(gid, &static_group_buffer, static_group_string_buffer, STATIC_GRP_STRING_SIZE, &result);
     return result;
 }
 
 struct group *getgrnam(const char *name) {
-    struct group *result;
+    struct group *result = NULL;
     getgrnam_r(name, &static_group_buffer, static_group_string_buffer, STATIC_GRP_STRING_SIZE, &result);
     return result;
 }
