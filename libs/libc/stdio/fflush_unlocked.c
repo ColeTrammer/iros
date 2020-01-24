@@ -24,7 +24,7 @@ int fflush_unlocked(FILE *stream) {
 
     __stdio_log(stream, "fflush: %d", stream->__fd);
 
-    if (!(stream->__flags & __STDIO_WRITABLE)) {
+    if (stream->__flags & __STDIO_LAST_OP_READ) {
         stream->__flags &= ~__STDIO_HAS_UNGETC_CHARACTER;
         if (!(stream->__flags & __STDIO_EOF) && (stream->__position < (off_t) stream->__buffer_length)) {
             if (lseek(stream->__fd, stream->__position - stream->__buffer_length, SEEK_CUR)) {
@@ -32,12 +32,12 @@ int fflush_unlocked(FILE *stream) {
             }
 
             stream->__position = stream->__buffer_length = 0;
-            return 0;
         }
+
         return 0;
     }
 
-    if ((stream->__flags & _IONBF) || stream->__buffer_length == 0) {
+    if (!(stream->__flags & __STDIO_LAST_OP_WRITE) || (stream->__flags & _IONBF) || stream->__buffer_length == 0) {
         return 0;
     }
 

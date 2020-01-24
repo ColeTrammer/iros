@@ -8,6 +8,20 @@
 size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__restrict stream) {
     __stdio_log(stream, "fread_unlocked: %p %lu %lu %d", buf, size, nmemb, stream->__fd);
 
+    if ((stream->__flags & __STDIO_EOF) || (stream->__flags & __STDIO_ERROR)) {
+        return EOF;
+    }
+
+    if (stream->__flags & __STDIO_LAST_OP_WRITE) {
+        if (fflush_unlocked(stream)) {
+            return EOF;
+        }
+
+        stream->__flags &= ~__STDIO_LAST_OP_WRITE;
+    }
+
+    stream->__flags |= __STDIO_LAST_OP_READ;
+
     unsigned char *buffer = (unsigned char *) buf;
 
     size_t to_read = size * nmemb;
@@ -26,8 +40,11 @@ size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__r
         ssize_t ret = read(stream->__fd, buffer + bytes_read, to_read);
         if (ret < 0) {
             stream->__flags |= __STDIO_ERROR;
-        } else if ((size_t) ret < to_read) {
+        } else if (ret == 0) {
+            stream->__position = stream->__buffer_length = 0;
             stream->__flags |= __STDIO_EOF;
+        } else if ((size_t) ret < to_read) {
+            stream->__position = stream->__buffer_length = 0;
             bytes_read += (size_t) ret;
         } else {
             bytes_read += to_read;
@@ -56,9 +73,8 @@ size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__r
         bytes_read += to_read;
         return bytes_read / size;
     } else if (stream->__buffer_length != 0 && stream->__buffer_length < stream->__buffer_max) {
-        stream->__flags |= __STDIO_EOF;
         memcpy(buffer + bytes_read, stream->__buffer + stream->__position, can_read_from_current_buffer);
-        stream->__position = stream->__buffer_length;
+        stream->__position = stream->__buffer_length = 0;
         bytes_read += can_read_from_current_buffer;
         return bytes_read / size;
     }
@@ -77,8 +93,10 @@ size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__r
     if (ret < 0) {
         stream->__flags |= __STDIO_ERROR;
         return bytes_read / size;
-    } else if ((size_t) ret <= bytes_to_skip_buffering) {
+    } else if (ret == 0) {
         stream->__flags |= __STDIO_EOF;
+        return bytes_read / size;
+    } else if ((size_t) ret <= bytes_to_skip_buffering) {
         bytes_read += (size_t) ret;
         return bytes_read / size;
     } else {

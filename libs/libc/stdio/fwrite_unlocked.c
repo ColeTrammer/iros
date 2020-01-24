@@ -8,10 +8,26 @@
 #include <unistd.h>
 
 size_t fwrite_unlocked(const void *__restrict buf, size_t size, size_t nmemb, FILE *__restrict stream) {
+    if (stream->__flags & __STDIO_ERROR) {
+        return 0;
+    }
+
+    if (stream->__flags & __STDIO_LAST_OP_READ) {
+        if (fflush_unlocked(stream)) {
+            return 0;
+        }
+
+        stream->__flags &= ~__STDIO_LAST_OP_READ;
+    }
+
+    stream->__flags |= __STDIO_LAST_OP_WRITE;
+
     size_t to_write = size * nmemb;
     if (to_write == 0) {
         return 0;
     }
+
+    stream->__flags &= ~__STDIO_EOF;
 
     __stdio_log(stream, "fwrite_unlocked: %p %lu %lu %d", buf, size, nmemb, stream->__fd);
     if (stream->__flags & _IONBF) {

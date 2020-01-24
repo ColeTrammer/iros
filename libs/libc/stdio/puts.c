@@ -9,6 +9,21 @@ int puts(const char *s) {
 
     __lock(&stdout->__lock);
 
+    if (stdout->__flags & __STDIO_ERROR) {
+        return EOF;
+    }
+
+    if (stdout->__flags & __STDIO_LAST_OP_READ) {
+        if (fflush_unlocked(stdout)) {
+            return EOF;
+        }
+
+        stdout->__flags &= ~__STDIO_LAST_OP_READ;
+    }
+
+    stdout->__flags |= __STDIO_LAST_OP_WRITE;
+    stdout->__flags &= ~__STDIO_EOF;
+
     if ((stdout->__flags & _IONBF) || ((stdout->__flags & _IOLBF) && stdout->__buffer_length == 0)) {
         char newline = '\n';
         struct iovec vec[2] = { { .iov_base = (char *) s, .iov_len = len }, { .iov_base = &newline, .iov_len = 1 } };

@@ -4,6 +4,20 @@
 #include <unistd.h>
 
 int fgetc_unlocked(FILE *stream) {
+    if ((stream->__flags & __STDIO_EOF) || (stream->__flags & __STDIO_ERROR)) {
+        return EOF;
+    }
+
+    if (stream->__flags & __STDIO_LAST_OP_WRITE) {
+        if (fflush_unlocked(stream)) {
+            return EOF;
+        }
+
+        stream->__flags &= ~__STDIO_LAST_OP_WRITE;
+    }
+
+    stream->__flags |= __STDIO_LAST_OP_READ;
+
     if (stream->__flags & __STDIO_HAS_UNGETC_CHARACTER) {
         stream->__flags &= ~__STDIO_HAS_UNGETC_CHARACTER;
         return stream->__ungetc_character;

@@ -10,6 +10,7 @@ int ungetc(int c, FILE *stream) {
         ret = EOF;
     } else {
         stream->__flags |= __STDIO_HAS_UNGETC_CHARACTER;
+        stream->__flags &= ~__STDIO_EOF;
         stream->__ungetc_character = c;
     }
     __unlock(&stream->__lock);
