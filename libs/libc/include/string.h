@@ -40,6 +40,7 @@ char *strrchr(const char *s, int c);
 size_t strspn(const char *s, const char *accept);
 char *strstr(const char *s, const char *sub);
 char *strtok(char *__restrict str, const char *__restrict delim);
+char *strtok_r(char *__restrict str, const char *__restrict delim, char **__restrict save_ptr);
 
 void *memset(void *s, int c, size_t n);
 size_t strlen(const char *s);
