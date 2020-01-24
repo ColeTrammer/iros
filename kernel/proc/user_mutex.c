@@ -122,7 +122,7 @@ void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
 #endif /* USER_MUTEX_DEBUG */
 }
 
-void wake_user_mutex(struct user_mutex *m, int to_wake) {
+void wake_user_mutex(struct user_mutex *m, int to_wake, int *to_place) {
     for (int i = 0; i < to_wake; i++) {
         struct task *to_wake = m->next_to_wake_up;
         if (to_wake == NULL) {
@@ -136,6 +136,11 @@ void wake_user_mutex(struct user_mutex *m, int to_wake) {
 #endif /* USER_MUTEX_DEBUG */
 
         to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
+    }
+
+    // This means there are no waiters left
+    if (!m->next_to_wake_up) {
+        *to_place &= ~MUTEX_WAITERS;
     }
 }
 

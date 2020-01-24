@@ -1480,28 +1480,14 @@ SYS_CALL(os_mutex) {
             proc_block_custom(current);
             SYS_RETURN(0);
         }
-        case MUTEX_RELEASE: {
-            struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
-            if (um == NULL) {
-                // There was no one waiting
-#ifdef USER_MUTEX_DEBUG
-                debug_log("no one waiting\n");
-#endif /* USER_MUTEX_DEBUG */
-                SYS_RETURN(0);
-            }
-
-            wake_user_mutex(um, to_wake);
-            unlock_user_mutex(um);
-            SYS_RETURN(0);
-        }
         case MUTEX_WAKE_AND_SET: {
             struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place);
             if (um == NULL) {
                 SYS_RETURN(0);
             }
 
+            wake_user_mutex(um, to_wake, &to_place);
             *__protected = to_place;
-            wake_user_mutex(um, to_wake);
             unlock_user_mutex(um);
             SYS_RETURN(0);
         }
@@ -1515,7 +1501,7 @@ SYS_CALL(os_mutex) {
                 goto do_mutex_aquire;
             }
 
-            wake_user_mutex(um, to_wake);
+            wake_user_mutex(um, to_wake, &to_place);
             to_unlock = um;
             goto do_mutex_aquire;
         }

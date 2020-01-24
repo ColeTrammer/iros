@@ -4,10 +4,10 @@
 #include <bits/__locked_robust_mutex_node.h>
 
 #define MUTEX_AQUIRE           1
-#define MUTEX_RELEASE          2
 #define MUTEX_WAKE_AND_SET     3
 #define MUTEX_RELEASE_AND_WAIT 4
-#define MUTEX_OWNER_DIED       0x80000000U
+#define MUTEX_OWNER_DIED       0x40000000U
+#define MUTEX_WAITERS          0x80000000U
 
 #define ROBUST_MUTEX_IS_VALID_IF_VALUE 1
 

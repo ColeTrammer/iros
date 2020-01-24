@@ -57,6 +57,8 @@ typedef long fpos_t;
 #define __STDIO_DYNAMICALLY_ALLOCATED 128
 #define __STDIO_APPEND                256
 #define __STDIO_HAS_UNGETC_CHARACTER  512
+#define __STDIO_LAST_OP_READ          1024
+#define __STDIO_LAST_OP_WRITE         2048
 
 struct __stdio_flags {
     int __stream_flags;
