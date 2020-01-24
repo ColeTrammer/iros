@@ -118,7 +118,8 @@ int execvpe(const char *file, char *const argv[], char *const envp[]) {
     int error = 0;
     char *path = strdup(pathvar);
 
-    char *test_dir = strtok(path, ":");
+    char *save = NULL;
+    char *test_dir = strtok_r(path, ":", &save);
     while (test_dir) {
         char *test_file = malloc(strlen(test_dir) + strlen(file) + 2);
         strcpy(test_file, test_dir);
@@ -147,7 +148,7 @@ int execvpe(const char *file, char *const argv[], char *const envp[]) {
 
         free(test_file);
 
-        test_dir = strtok(NULL, ":");
+        test_dir = strtok_r(NULL, ":", &save);
     }
 
     free(path);

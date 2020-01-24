@@ -3,7 +3,7 @@
 char *strtok_r(char *__restrict str, const char *__restrict delim, char **__restrict save_ptr) {
     char *start = str;
     if (str == NULL) {
-        if (save_ptr == NULL) {
+        if (save_ptr == NULL || *save_ptr == NULL) {
             return NULL;
         }
 

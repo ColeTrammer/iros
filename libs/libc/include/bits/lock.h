@@ -18,6 +18,7 @@ static inline void __lock(unsigned int *lock) {
             }
 
             expected |= MUTEX_WAITERS;
+            to_place = 1;
         }
 
         os_mutex(lock, MUTEX_AQUIRE, expected, to_place, 0, NULL);
@@ -40,7 +41,7 @@ static inline void __unlock(unsigned int *lock) {
     int to_place = 0;
     if (!atomic_compare_exchange_strong(lock, &expected, to_place)) {
         // This means there was waiters...
-        os_mutex(lock, MUTEX_WAKE_AND_SET, expected, to_place, 1, NULL);
+        os_mutex(lock, MUTEX_WAKE_AND_SET, expected, MUTEX_WAITERS, 1, NULL);
     }
 }
 
