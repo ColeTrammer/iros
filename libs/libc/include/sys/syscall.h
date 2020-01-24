@@ -1,8 +1,6 @@
 #ifndef _SYS_SYSCALL_H
 #define _SYS_SYSCALL_H 1
 
-#include <assert.h>
-
 #define ENUMERATE_SYSCALLS                                                     \
     __ENUMERATE_SYSCALL(EXIT, exit, 1)                                         \
     __ENUMERATE_SYSCALL(SBRK, sbrk, 1)                                         \
@@ -20,13 +18,13 @@
     __ENUMERATE_SYSCALL(LSEEK, lseek, 3)                                       \
     __ENUMERATE_SYSCALL(IOCTL, ioctl, 3)                                       \
     __ENUMERATE_SYSCALL(FTRUNCATE, ftruncate, 2)                               \
-    __ENUMERATE_SYSCALL(GETTIMEOFDAY, gettimeofday, 3)                         \
+    __ENUMERATE_SYSCALL(GETTIMEOFDAY, gettimeofday, 2)                         \
     __ENUMERATE_SYSCALL(MKDIR, mkdir, 2)                                       \
     __ENUMERATE_SYSCALL(DUP2, dup2, 2)                                         \
     __ENUMERATE_SYSCALL(PIPE, pipe, 1)                                         \
     __ENUMERATE_SYSCALL(UNLINK, unlink, 1)                                     \
     __ENUMERATE_SYSCALL(RMDIR, rmdir, 1)                                       \
-    __ENUMERATE_SYSCALL(CHMOD, chmod, 1)                                       \
+    __ENUMERATE_SYSCALL(CHMOD, chmod, 2)                                       \
     __ENUMERATE_SYSCALL(KILL, kill, 2)                                         \
     __ENUMERATE_SYSCALL(SETPGID, setpgid, 2)                                   \
     __ENUMERATE_SYSCALL(SIGACTION, sigaction, 3)                               \

@@ -9,38 +9,40 @@ int fgetc_unlocked(FILE *stream) {
         return stream->__ungetc_character;
     }
 
-    if (stream->__flags & _IOFBF) {
-        if (stream->__position < (off_t) stream->__buffer_length) {
-            return (int) stream->__buffer[stream->__position++];
-        } else if (stream->__buffer_length < stream->__buffer_max) {
+    if ((stream->__flags & _IONBF) || (stream->__flags & _IOLBF)) {
+        unsigned char c;
+        ssize_t ret = read(stream->__fd, &c, 1);
+        if (ret < 0) {
+            stream->__flags |= __STDIO_ERROR;
+            return EOF;
+        } else if (ret == 0) {
             stream->__flags |= __STDIO_EOF;
             return EOF;
         } else {
-            stream->__position = 0;
-            ssize_t ret = read(stream->__fd, stream->__buffer, stream->__buffer_max);
-            if (ret < 0) {
-                stream->__flags |= __STDIO_ERROR;
-                return EOF;
-            } else if (ret == 0) {
-                stream->__flags |= __STDIO_EOF;
-                return EOF;
-            } else {
-                stream->__buffer_length = ret;
-                return (int) stream->__buffer[stream->__position++];
-            }
+            return (int) c;
         }
     }
 
-    unsigned char c;
-    ssize_t ret = read(stream->__fd, &c, 1);
-    if (ret < 0) {
-        stream->__flags |= __STDIO_ERROR;
-        return EOF;
-    } else if (ret == 0) {
+    __stdio_log(stream, "flags: %ld %lu %lu", stream->__position, stream->__buffer_length, stream->__buffer_max);
+
+    if (stream->__position < (off_t) stream->__buffer_length) {
+        return (int) stream->__buffer[stream->__position++];
+    } else if (stream->__position != 0 && stream->__buffer_length < stream->__buffer_max) {
         stream->__flags |= __STDIO_EOF;
         return EOF;
     } else {
-        return (int) c;
+        stream->__position = 0;
+        ssize_t ret = read(stream->__fd, stream->__buffer, stream->__buffer_max);
+        if (ret < 0) {
+            stream->__flags |= __STDIO_ERROR;
+            return EOF;
+        } else if (ret == 0) {
+            stream->__flags |= __STDIO_EOF;
+            return EOF;
+        } else {
+            stream->__buffer_length = ret;
+            return (int) stream->__buffer[stream->__position++];
+        }
     }
 }
 
