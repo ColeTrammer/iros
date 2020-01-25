@@ -23,6 +23,11 @@ public:
 
     String(const String& other) : m_size(other.size()), m_string(strdup(other.string())) {}
 
+    String(String&& other) : m_size(other.size()), m_string(other.string()) {
+        other.m_string = nullptr;
+        other.m_size = 0;
+    }
+
     String(const StringView& view) : m_size(view.size()) {
         m_string = reinterpret_cast<char*>(malloc(size() + 1));
         memmove(m_string, view.start(), m_size);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/traits.h>
+#include <liim/utilities.h>
 #include <string.h>
 
 namespace LIIM {

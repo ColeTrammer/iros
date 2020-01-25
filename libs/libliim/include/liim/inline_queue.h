@@ -16,6 +16,15 @@ template<typename T> class InlineQueue {
 public:
     InlineQueue() {}
     InlineQueue(const InlineQueue<T>& other) { copy(other); }
+    InlineQueue(InlineQueue<T>&& other) : m_head(other.m_head), m_tail(other.m_tail), m_size(other.m_size) {
+        if (other.m_tail == &other.m_head) {
+            m_tail = &m_head;
+        }
+
+        other.m_size = 0;
+        other.m_head = nullptr;
+        other.m_tail = &other.m_head;
+    }
 
     InlineQueue<T>& operator==(const InlineQueue<T>& other) {
         clear();
@@ -43,7 +52,7 @@ public:
         }
 
         m_head = nullptr;
-        m_tail = nullptr;
+        m_tail = &m_head;
         m_size = 0;
     }
 
