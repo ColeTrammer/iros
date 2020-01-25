@@ -36,6 +36,8 @@ void srand(unsigned int seed);
 int rand(void);
 int rand_r(unsigned int *seedp);
 
+char *realpath(const char *__restrict path, char *resolved_path);
+
 int system(const char *cmd);
 
 #endif /* __is_libk */

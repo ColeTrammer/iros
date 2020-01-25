@@ -2042,6 +2042,37 @@ SYS_CALL(writev) {
     SYS_RETURN(fs_writev(file, vec, item_count));
 }
 
+SYS_CALL(realpath) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
+    SYS_PARAM3(size_t, buf_max);
+    SYS_PARAM2_VALIDATE(char *, buf, validate_write, buf_max);
+
+    struct tnode *tnode;
+    {
+        int ret = iname(path, 0, &tnode);
+        if (ret < 0) {
+            SYS_RETURN(ret);
+        }
+    }
+
+    char *full_path = get_tnode_path(tnode);
+    size_t full_path_len = strlen(full_path);
+    int ret = 0;
+
+    if (full_path_len >= buf_max) {
+        ret = ERANGE;
+        goto finish_realpath;
+    }
+
+    strcpy(buf, full_path);
+
+finish_realpath:
+    free(full_path);
+    SYS_RETURN(ret);
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);

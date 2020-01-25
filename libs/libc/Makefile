@@ -153,6 +153,7 @@ $(BUILDDIR)/libs/libc/stdio/unget.o \
 $(BUILDDIR)/libs/libc/stdlib/atexit.o \
 $(BUILDDIR)/libs/libc/stdlib/env.o \
 $(BUILDDIR)/libs/libc/stdlib/init_env.o \
+$(BUILDDIR)/libs/libc/stdlib/realpath.o \
 $(BUILDDIR)/libs/libc/string/strcoll.o \
 $(BUILDDIR)/libs/libc/string/strerror.o \
 $(BUILDDIR)/libs/libc/string/strxfrm.o \
