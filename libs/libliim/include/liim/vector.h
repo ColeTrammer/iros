@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <liim/traits.h>
+#include <liim/utilities.h>
 #include <new>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,11 +13,10 @@ namespace LIIM {
 
 template<typename T> class Vector {
 public:
-    explicit Vector(int capacity = 20) : m_capacity(capacity) { allocate_vector(); }
+    explicit Vector(int capacity = 20) : m_capacity(capacity) {}
 
-    Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()) {
+    Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()), m_size(to_copy.size()) {
         allocate_vector();
-        m_size = to_copy.size();
         if (m_size == 0) {
             return;
         }
@@ -27,6 +27,12 @@ public:
                 new (&m_vector[i]) T(to_copy.m_vector[i]);
             }
         }
+    }
+
+    Vector(T&& other) : m_capacity(other.capacity()), m_size(other.size()), m_vector(other.vector()) {
+        other.m_vector = nullptr;
+        other.m_size = 0;
+        other.m_capacity = 0;
     }
 
     Vector(const T* buffer, int num_elements) : m_capacity(num_elements), m_size(num_elements) {
@@ -42,26 +48,18 @@ public:
     }
 
     Vector<T>& operator=(const Vector<T>& other) {
-        clear();
-        if (m_vector) {
-            free(m_vector);
-            m_vector = nullptr;
+        if (this != &other) {
+            Vector<T> temp(other);
+            swap(temp);
         }
 
-        m_capacity = other.capacity();
-        allocate_vector();
+        return *this;
+    }
 
-        m_size = other.size();
-        if (m_size == 0) {
-            return *this;
-        }
-
-        if constexpr (Traits<T>::is_simple()) {
-            memmove(m_vector, other.m_vector, sizeof(T) * m_size);
-        } else {
-            for (int i = 0; i < m_size; i++) {
-                new (&m_vector[i]) T(other.m_vector[i]);
-            }
+    Vector<T>& operator=(Vector<T>&& other) {
+        if (this != &other) {
+            Vector<T> temp(other);
+            swap(other);
         }
 
         return *this;
@@ -91,7 +89,16 @@ public:
     int capacity() const { return m_capacity; }
 
     void add(const T& t) {
-        if (m_size >= m_capacity) {
+        if (!m_vector || m_size >= m_capacity) {
+            increase_capacity();
+            allocate_vector();
+        }
+
+        new (&m_vector[m_size++]) T(t);
+    }
+
+    void add(T&& t) {
+        if (!m_vector || m_size >= m_capacity) {
             increase_capacity();
             allocate_vector();
         }
@@ -228,7 +235,32 @@ public:
             return;
         }
 
-        if (m_size >= m_capacity) {
+        if (!m_vector || m_size >= m_capacity) {
+            increase_capacity();
+            allocate_vector();
+        }
+        m_size++;
+
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector + position + 1, m_vector + position, sizeof(T) * (size() - position - 1));
+        } else {
+            for (int j = size() - 1; j > position; j--) {
+                new (m_vector + j) T(get(j - 1));
+                get(j - 1).~T();
+            }
+        }
+
+        new (m_vector + position) T(val);
+    }
+
+    void insert(T&& val, int position) {
+        assert(position >= 0 && position <= size());
+        if (position == size()) {
+            add(val);
+            return;
+        }
+
+        if (!m_vector || m_size >= m_capacity) {
             increase_capacity();
             allocate_vector();
         }
@@ -282,8 +314,18 @@ public:
         return true;
     }
 
+    void swap(Vector<T>& other) {
+        LIIM::swap(this->m_capacity, other.m_capacity);
+        LIIM::swap(this->m_size, other.m_size);
+        LIIM::swap(this->m_vector, other.m_vector);
+    }
+
 private:
-    void increase_capacity() { m_capacity *= 2; }
+    void increase_capacity() {
+        if (m_size > 0) {
+            m_capacity *= 2;
+        }
+    }
 
     void allocate_vector() {
         T* replacement = static_cast<T*>(malloc(m_capacity * sizeof(T)));
@@ -296,7 +338,7 @@ private:
             memmove(replacement, m_vector, sizeof(T) * m_size);
         } else {
             for (int i = 0; i < m_size; i++) {
-                new (&replacement[i]) T(m_vector[i]);
+                new (&replacement[i]) T(LIIM::move(m_vector[i]));
                 get(i).~T();
             }
         }
@@ -308,6 +350,10 @@ private:
     int m_size { 0 };
     T* m_vector { nullptr };
 };
+
+template<typename T> void swap(Vector<T>& a, Vector<T>& b) {
+    a.swap(b);
+}
 
 }
 

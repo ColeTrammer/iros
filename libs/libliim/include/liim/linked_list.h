@@ -1,8 +1,8 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/utilities.h>
 #include <new>
-#include <stdio.h>
 
 namespace LIIM {
 
@@ -30,7 +30,21 @@ public:
         });
     }
 
+    LinkedList(LinkedList<T>&& other) : m_size(other.m_size), m_head(other.m_head) {
+        other.m_head = nullptr;
+        other.m_size = 0;
+    }
+
     ~LinkedList() { clear(); }
+
+    LinkedList<T>& operator=(const LinkedList<T>& other) {
+        if (this != &other) {
+            LinkedList<T> temp(other);
+            swap(temp);
+        }
+
+        return *this;
+    }
 
     int size() const { return m_size; }
 
@@ -144,10 +158,19 @@ public:
         return false;
     }
 
+    void swap(LinkedList<T>& other) {
+        LIIM::swap(m_size, other.m_size);
+        LIIM::swap(m_head, other.m_head);
+    }
+
 private:
     int m_size { 0 };
     LinkedListObj<T>* m_head { nullptr };
 };
+
+template<typename T> void swap(LinkedList<T>& a, LinkedList<T>& b) {
+    a.swap(b);
+}
 
 }
 
