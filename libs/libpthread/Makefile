@@ -6,6 +6,7 @@ export INCLUDEDIR?=/usr/include
 
 export LIBRARY=$(BUILDDIR)/libs/libpthread/libpthread.a
 export OBJS=\
+$(BUILDDIR)/libs/libpthread/atfork.o \
 $(BUILDDIR)/libs/libpthread/attr.o \
 $(BUILDDIR)/libs/libpthread/cancel.o \
 $(BUILDDIR)/libs/libpthread/cond.o \

@@ -55,6 +55,8 @@
 extern "C" {
 #endif /* __plusplus */
 
+int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(void));
+
 pthread_t pthread_self(void);
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
                    void *__restrict arg);
