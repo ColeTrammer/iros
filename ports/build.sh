@@ -23,3 +23,7 @@ cd ..
 cd mysh
 ./build.sh
 cd ..
+
+cd vttest
+./build.sh
+cd ..

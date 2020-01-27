@@ -1,0 +1,13 @@
+diff --git a/config.sub b/config.sub
+index a318a46..92b426c 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1341,7 +1341,7 @@ case $os in
+ 	gnu* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
+ 	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]*\
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+-	     | sym* | kopensolaris* | plan9* \
++	     | sym* | kopensolaris* | plan9* | os_2* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+ 	     | aos* | aros* | cloudabi* | sortix* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
