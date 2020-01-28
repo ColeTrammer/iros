@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
-#include <memory>
+#include <liim/pointers.h>
 #include <pwd.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -34,7 +34,7 @@ static size_t history_max;
 
 static struct termios saved_termios;
 
-std::shared_ptr<String> g_line;
+SharedPtr<String> g_line;
 
 void enable_raw_mode() {
     tcgetattr(STDIN_FILENO, &saved_termios);

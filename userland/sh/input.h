@@ -1,7 +1,7 @@
 #ifndef _INPUT_H
 #define _INPUT_H 1
 
-#include <memory>
+#include <liim/pointers.h>
 #include <stdio.h>
 
 #include "sh_token.h"

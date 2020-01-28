@@ -12,8 +12,8 @@
 #include "window.h"
 #include "window_manager.h"
 
-Server::Server(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_ptr<PixelBuffer> back_buffer)
-    : m_manager(std::make_unique<WindowManager>(fb, front_buffer, back_buffer)) {
+Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
+    : m_manager(make_unique<WindowManager>(fb, front_buffer, back_buffer)) {
     m_socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     assert(m_socket_fd != -1);
 
@@ -37,7 +37,7 @@ void Server::handle_create_window_request(const WindowServer::Message& request, 
     snprintf(s, 49, "/window_server_%d", client_fd);
 
     const WindowServer::Message::CreateWindowRequest& data = request.data.create_window_request;
-    auto window = std::make_shared<Window>(s, Rect(data.x, data.y, data.width, data.height), client_fd);
+    auto window = make_shared<Window>(s, Rect(data.x, data.y, data.width, data.height), client_fd);
     m_manager->add_window(window);
 
     auto to_send = WindowServer::Message::CreateWindowResponse::create(window->id(), window->buffer()->size_in_bytes(), s);

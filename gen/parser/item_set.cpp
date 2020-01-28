@@ -4,19 +4,18 @@
 
 static int item_set_number = 0;
 
-Vector<std::shared_ptr<ItemSet>> ItemSet::create_item_sets(const Rule& start, const Vector<Rule>& rules,
-                                                           const Vector<StringView>& token_types) {
-    Vector<std::shared_ptr<ItemSet>> item_sets;
-    Vector<std::shared_ptr<ItemSet>> to_process;
+Vector<SharedPtr<ItemSet>> ItemSet::create_item_sets(const Rule& start, const Vector<Rule>& rules, const Vector<StringView>& token_types) {
+    Vector<SharedPtr<ItemSet>> item_sets;
+    Vector<SharedPtr<ItemSet>> to_process;
 
-    auto create_from_rule_set = [&](const HashMap<Rule, bool>& rule_set) -> std::shared_ptr<ItemSet> {
+    auto create_from_rule_set = [&](const HashMap<Rule, bool>& rule_set) -> SharedPtr<ItemSet> {
         Vector<Rule> to_expand;
 
         rule_set.for_each_key([&](auto& rule) {
             to_expand.add(rule);
         });
 
-        auto set = std::make_shared<ItemSet>(rule_set);
+        auto set = make_shared<ItemSet>(rule_set);
 
         while (to_expand.size() != 0) {
             for (int size_save = to_expand.size() - 1; size_save >= 0; size_save--) {

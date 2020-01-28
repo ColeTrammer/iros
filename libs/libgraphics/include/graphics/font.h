@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <liim/bitmap.h>
 #include <liim/hash_map.h>
-#include <memory>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,9 +32,9 @@ public:
 
     ~Font() {}
 
-    std::shared_ptr<Bitmap<uint8_t>> get_for_character(int c) { return m_font_map.get_or(c, m_unknown); }
+    SharedPtr<Bitmap<uint8_t>> get_for_character(int c) { return m_font_map.get_or(c, m_unknown); }
 
 private:
-    std::shared_ptr<Bitmap<uint8_t>> m_unknown;
-    HashMap<int, std::shared_ptr<Bitmap<uint8_t>>> m_font_map;
+    SharedPtr<Bitmap<uint8_t>> m_unknown;
+    HashMap<int, SharedPtr<Bitmap<uint8_t>>> m_font_map;
 };

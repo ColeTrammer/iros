@@ -78,7 +78,7 @@ private:
 
 class ExtendedGrammar {
 public:
-    ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, const Vector<StringView>& token_types);
+    ExtendedGrammar(const Vector<SharedPtr<ItemSet>>& sets, const Vector<StringView>& token_types);
     ~ExtendedGrammar();
 
     const Vector<ExtendedRule>& rules() const { return m_rules; }
@@ -103,16 +103,16 @@ public:
         return ret;
     }
 
-    const HashMap<ExtendedInfo, std::shared_ptr<HashMap<StringView, bool>>>& follow_sets() const { return m_follow_sets; }
-    const Vector<std::shared_ptr<ItemSet>>& sets() const { return m_sets; }
+    const HashMap<ExtendedInfo, SharedPtr<HashMap<StringView, bool>>>& follow_sets() const { return m_follow_sets; }
+    const Vector<SharedPtr<ItemSet>>& sets() const { return m_sets; }
 
 private:
     void compute_first_sets();
     void compute_follow_sets();
 
-    const Vector<std::shared_ptr<ItemSet>>& m_sets;
+    const Vector<SharedPtr<ItemSet>>& m_sets;
     const Vector<StringView>& m_token_types;
     Vector<ExtendedRule> m_rules;
-    HashMap<ExtendedInfo, std::shared_ptr<HashMap<StringView, bool>>> m_first_sets;
-    HashMap<ExtendedInfo, std::shared_ptr<HashMap<StringView, bool>>> m_follow_sets;
+    HashMap<ExtendedInfo, SharedPtr<HashMap<StringView, bool>>> m_first_sets;
+    HashMap<ExtendedInfo, SharedPtr<HashMap<StringView, bool>>> m_follow_sets;
 };

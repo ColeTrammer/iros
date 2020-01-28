@@ -1,8 +1,10 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/utilities.h>
 #include <stdio.h>
 
+#if 0
 namespace LIIM {
 
 template<typename T> class UniquePtr {
@@ -15,11 +17,18 @@ public:
 
     ~UniquePtr() { delete m_ptr; }
 
-    UniquePtr<T>& operator=(const UniquePtr& other) = delete;
+    UniquePtr& operator=(std::nullptr_t) {
+        UniquePtr<T> temp;
+        swap(temp);
+        return *this;
+    }
 
-    UniquePtr<T>& operator=(UniquePtr&& other) {
+    UniquePtr& operator=(const UniquePtr& other) = delete;
+
+    UniquePtr& operator=(UniquePtr&& other) {
         UniquePtr<T> temp(other);
-        swap(other);
+        swap(temp);
+        return *this;
     }
 
     void swap(UniquePtr& other) { LIIM::swap(m_ptr, other.m_ptr); }
@@ -59,12 +68,13 @@ template<typename T> void swap(UniquePtr<T>& a, UniquePtr<T>& b) {
 }
 
 template<typename T, class... Args> UniquePtr<T> make_unique(Args&&... args) {
-    return UniquePtr<T>(*new T(args));
+    return UniquePtr<T>(new T(forward<Args>(args)...));
 }
+
 
 template<typename T> class SharedPtrControlBlock {
 public:
-    explicit SharedPtrControlBlock(T* ptr) : m_ptr(ptr), m_ref_count(1) { assert(m_ptr); }
+    explicit SharedPtrControlBlock(T* ptr) : m_ref_count(1), m_ptr(ptr) { assert(m_ptr); }
 
     ~SharedPtrControlBlock() {
         assert(m_ref_count == 0);
@@ -113,12 +123,20 @@ public:
 
     SharedPtr& operator=(const SharedPtr& other) {
         SharedPtr temp(other);
-        swap(other);
+        swap(temp);
+        return *this;
     }
 
-    SharedPtr&& operator=(SharedPtr&& other) {
+    SharedPtr& operator=(SharedPtr&& other) {
         SharedPtr temp(other);
-        swap(other);
+        swap(temp);
+        return *this;
+    }
+
+    SharedPtr& operator=(std::nullptr_t) {
+        SharedPtr temp;
+        swap(temp);
+        return *this;
     }
 
     T* get() {
@@ -158,7 +176,7 @@ public:
     bool operator!() const { return !get(); }
     operator bool() const { return !!get(); }
 
-    void swap(SharedPtr& other) { LIIM::swap(this->m_control_block, other.m_control_block) }
+    void swap(SharedPtr& other) { LIIM::swap(this->m_control_block, other.m_control_block); }
 
 private:
     SharedPtrControlBlock<T>* m_control_block { nullptr };
@@ -169,12 +187,19 @@ template<typename T> void swap(SharedPtr<T>& a, SharedPtr<T>& b) {
 }
 
 template<typename T, class... Args> SharedPtr<T> make_shared(Args&&... args) {
-    return SharedPtr<T>(*new T(args));
+    return SharedPtr<T>(new T(forward<Args>(args)...));
 }
 
 }
 
 using LIIM::make_shared;
-using LIIM::make_unique;
 using LIIM::SharedPtr;
+using LIIM::make_unique;
 using LIIM::UniquePtr;
+#else
+#include <memory>
+template<typename T> using SharedPtr = std::shared_ptr<T>;
+template<typename T> using UniquePtr = std::unique_ptr<T>;
+using std::make_shared;
+using std::make_unique;
+#endif

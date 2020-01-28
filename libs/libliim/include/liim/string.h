@@ -2,9 +2,9 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <liim/pointers.h>
 #include <liim/string_view.h>
 #include <liim/traits.h>
-#include <memory>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,11 +130,11 @@ public:
         return s - m_string;
     }
 
-    static std::shared_ptr<String> wrap_malloced_chars(char* str) {
+    static SharedPtr<String> wrap_malloced_chars(char* str) {
         String* s = new String;
         s->m_size = strlen(str);
         s->m_string = str;
-        return std::shared_ptr<String>(s);
+        return SharedPtr<String>(s);
     }
 
 private:

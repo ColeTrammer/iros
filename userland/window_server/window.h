@@ -1,8 +1,8 @@
 #pragma once
 
 #include <graphics/rect.h>
+#include <liim/pointers.h>
 #include <liim/string.h>
-#include <memory>
 
 class PixelBuffer;
 
@@ -26,14 +26,14 @@ public:
         m_front_buffer = temp;
     }
 
-    std::shared_ptr<PixelBuffer> buffer() { return m_front_buffer; }
-    const std::shared_ptr<PixelBuffer> buffer() const { return m_front_buffer; }
+    SharedPtr<PixelBuffer> buffer() { return m_front_buffer; }
+    const SharedPtr<PixelBuffer> buffer() const { return m_front_buffer; }
 
 private:
     String m_shm_path;
     Rect m_rect;
     const wid_t m_id;
     const int m_client_id;
-    std::shared_ptr<PixelBuffer> m_front_buffer;
-    std::shared_ptr<PixelBuffer> m_back_buffer;
+    SharedPtr<PixelBuffer> m_front_buffer;
+    SharedPtr<PixelBuffer> m_back_buffer;
 };

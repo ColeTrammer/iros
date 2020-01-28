@@ -37,13 +37,13 @@ StateTable::StateTable(const ExtendedGrammar& grammar, const Vector<StringView>&
         }
     });
 
-    const Vector<std::shared_ptr<ItemSet>>& sets = grammar.sets();
-    sets.for_each([&](const std::shared_ptr<ItemSet>& set) {
+    const Vector<SharedPtr<ItemSet>>& sets = grammar.sets();
+    sets.for_each([&](const SharedPtr<ItemSet>& set) {
         HashMap<StringView, Action> m;
         m_table.add(m);
         auto& row = m_table.last();
         identifiers.for_each([&](const StringView& id) {
-            int* jump_number = set->table().get(id);
+            const int* jump_number = set->table().get(id);
             if (jump_number) {
                 row.put(id, { token_types.includes(id) ? Action::Type::Shift : Action::Type::Jump, *jump_number });
                 return;

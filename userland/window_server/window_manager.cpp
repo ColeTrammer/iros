@@ -3,12 +3,12 @@
 
 #include "window_manager.h"
 
-WindowManager::WindowManager(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_ptr<PixelBuffer> back_buffer)
+WindowManager::WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
     : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer) {}
 
 WindowManager::~WindowManager() {}
 
-void WindowManager::add_window(std::shared_ptr<Window> window) {
+void WindowManager::add_window(SharedPtr<Window> window) {
     windows().add(window);
 }
 

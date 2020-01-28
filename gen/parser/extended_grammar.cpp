@@ -5,7 +5,7 @@
 // #define START_SET_DEBUG
 // #define FOLLOW_SET_DEBUG
 
-ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, const Vector<StringView>& token_types)
+ExtendedGrammar::ExtendedGrammar(const Vector<SharedPtr<ItemSet>>& sets, const Vector<StringView>& token_types)
     : m_sets(sets), m_token_types(token_types) {
     auto first_set = m_sets.get(0);
     first_set->rules().for_each_key([&](const Rule& rule) {
@@ -17,13 +17,13 @@ ExtendedGrammar::ExtendedGrammar(const Vector<std::shared_ptr<ItemSet>>& sets, c
         m_rules.add(e);
     });
 
-    sets.for_each([&](const std::shared_ptr<ItemSet>& set) {
+    sets.for_each([&](const SharedPtr<ItemSet>& set) {
         set->set().for_each_key([&](const Rule& rule) {
             ExtendedRule e({ rule.name(), { set->number(), *set->table().get(rule.name()) } }, rule.number());
 
             int start_set = set->number();
             rule.components().for_each([&](const StringView& part) {
-                int* end_set = m_sets.get(start_set)->table().get(part);
+                const int* end_set = m_sets.get(start_set)->table().get(part);
                 if (!end_set) {
                     fprintf(stderr, "Error: Symbol `%s` never appears in grammar (rule: %s)\n", String(part).string(),
                             rule.stringify().string());
@@ -67,7 +67,7 @@ void ExtendedGrammar::compute_first_sets() {
         start_indexes.add(0);
 
         if (!m_first_sets.get(rule.lhs())) {
-            m_first_sets.put(rule.lhs(), std::make_shared<HashMap<StringView, bool>>());
+            m_first_sets.put(rule.lhs(), make_shared<HashMap<StringView, bool>>());
         }
 
         if (!start_dependencies.get(rule.lhs())) {
@@ -80,7 +80,7 @@ void ExtendedGrammar::compute_first_sets() {
 
         rule.components().for_each([&](const ExtendedInfo& info) {
             if (m_token_types.includes(info.name)) {
-                auto set1 = std::make_shared<HashMap<StringView, bool>>();
+                auto set1 = make_shared<HashMap<StringView, bool>>();
                 set1->put(info.name, true);
                 m_first_sets.put(info, set1);
                 start_dependencies.put(info, Vector<int>());
@@ -184,14 +184,14 @@ void ExtendedGrammar::compute_follow_sets() {
     HashMap<ExtendedInfo, Vector<ExtendedInfo>> to_add;
 
     auto& first_rule = m_rules.get(0).lhs();
-    m_follow_sets.put(first_rule, std::make_shared<HashMap<StringView, bool>>());
+    m_follow_sets.put(first_rule, make_shared<HashMap<StringView, bool>>());
     (*m_follow_sets.get(first_rule))->put("End", true);
 
     Vector<int> last_processed;
     for (int i = 0; i < m_rules.size(); i++) {
         auto& rule = m_rules[i].lhs();
         if (!m_follow_sets.get(rule)) {
-            m_follow_sets.put(rule, std::make_shared<HashMap<StringView, bool>>());
+            m_follow_sets.put(rule, make_shared<HashMap<StringView, bool>>());
         }
 
         last_processed.add(0);

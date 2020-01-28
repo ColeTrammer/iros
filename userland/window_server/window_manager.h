@@ -1,19 +1,19 @@
 #pragma once
 
+#include <liim/pointers.h>
 #include <liim/vector.h>
-#include <memory>
 
 #include "window.h"
 
 class WindowManager {
 public:
-    WindowManager(int fb, std::shared_ptr<PixelBuffer> front_buffer, std::shared_ptr<PixelBuffer> back_buffer);
+    WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer);
     ~WindowManager();
 
-    Vector<std::shared_ptr<Window>>& windows() { return m_windows; }
-    const Vector<std::shared_ptr<Window>>& windows() const { return m_windows; }
+    Vector<SharedPtr<Window>>& windows() { return m_windows; }
+    const Vector<SharedPtr<Window>>& windows() const { return m_windows; }
 
-    void add_window(std::shared_ptr<Window> window);
+    void add_window(SharedPtr<Window> window);
 
     template<typename C> void for_each_window(C callback) { m_windows.for_each(callback); }
 
@@ -23,7 +23,7 @@ private:
     void swap_buffers();
 
     int m_fb;
-    std::shared_ptr<PixelBuffer> m_front_buffer;
-    std::shared_ptr<PixelBuffer> m_back_buffer;
-    Vector<std::shared_ptr<Window>> m_windows;
+    SharedPtr<PixelBuffer> m_front_buffer;
+    SharedPtr<PixelBuffer> m_back_buffer;
+    Vector<SharedPtr<Window>> m_windows;
 };

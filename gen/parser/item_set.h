@@ -1,16 +1,15 @@
 #pragma once
 
 #include <liim/hash_map.h>
+#include <liim/pointers.h>
 #include <liim/string_view.h>
 #include <liim/traits.h>
-#include <memory>
 
 #include "rule.h"
 
 class ItemSet {
 public:
-    static Vector<std::shared_ptr<ItemSet>> create_item_sets(const Rule& start, const Vector<Rule>& rules,
-                                                             const Vector<StringView>& token_types);
+    static Vector<SharedPtr<ItemSet>> create_item_sets(const Rule& start, const Vector<Rule>& rules, const Vector<StringView>& token_types);
 
     int number() const { return m_number; }
 

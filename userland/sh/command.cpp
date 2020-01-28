@@ -5,7 +5,7 @@
 #include <functional>
 #include <liim/hash_map.h>
 #include <liim/linked_list.h>
-#include <memory>
+#include <liim/pointers.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -32,7 +32,7 @@
 
 struct FunctionBody {
     ShValue::CompoundCommand compound_command;
-    std::shared_ptr<String> for_posterity;
+    SharedPtr<String> for_posterity;
 };
 
 HashMap<String, String> g_aliases;
@@ -557,7 +557,7 @@ static pid_t __do_case_clause(ShValue::CaseClause& case_clause) {
     return 0;
 }
 
-extern std::shared_ptr<String> g_line;
+extern SharedPtr<String> g_line;
 
 static pid_t __do_function_definition(ShValue::FunctionDefinition& command, ShValue::List::Combinator mode, bool* was_builtin,
                                       pid_t to_set_pgid, bool in_subshell) {

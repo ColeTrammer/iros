@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <graphics/rect.h>
-#include <memory>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -23,7 +22,7 @@ public:
         }
     }
 
-    static std::shared_ptr<PixelBuffer> wrap(uint32_t* pixels, int width, int height) {
+    static SharedPtr<PixelBuffer> wrap(uint32_t* pixels, int width, int height) {
         return std::make_shared<PixelBuffer>(pixels, width, height);
     }
 
