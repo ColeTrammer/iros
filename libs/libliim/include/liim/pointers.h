@@ -4,7 +4,7 @@
 #include <liim/utilities.h>
 #include <stdio.h>
 
-#if 0
+#ifdef LIIM_POINTERS
 namespace LIIM {
 
 template<typename T> class UniquePtr {
@@ -71,7 +71,6 @@ template<typename T, class... Args> UniquePtr<T> make_unique(Args&&... args) {
     return UniquePtr<T>(new T(forward<Args>(args)...));
 }
 
-
 template<typename T> class SharedPtrControlBlock {
 public:
     explicit SharedPtrControlBlock(T* ptr) : m_ref_count(1), m_ptr(ptr) { assert(m_ptr); }
@@ -97,7 +96,7 @@ private:
 
 template<typename T> class SharedPtr {
 public:
-    explicit SharedPtr(T* ptr) : m_control_block(new SharedPtrControlBlock(ptr)) {}
+    explicit SharedPtr(T* ptr) : m_control_block(new SharedPtrControlBlock<T>(ptr)) {}
 
     SharedPtr() {}
 
@@ -193,8 +192,8 @@ template<typename T, class... Args> SharedPtr<T> make_shared(Args&&... args) {
 }
 
 using LIIM::make_shared;
-using LIIM::SharedPtr;
 using LIIM::make_unique;
+using LIIM::SharedPtr;
 using LIIM::UniquePtr;
 #else
 #include <memory>

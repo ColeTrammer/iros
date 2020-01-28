@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
-#include <new>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

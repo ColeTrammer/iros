@@ -1,7 +1,7 @@
 #pragma once
 
 #include <assert.h>
-#include <new>
+#include <liim/utilities.h>
 
 template<typename T> class Maybe {
 public:

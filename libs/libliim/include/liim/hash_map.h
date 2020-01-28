@@ -4,7 +4,6 @@
 #include <liim/traits.h>
 #include <liim/utilities.h>
 #include <liim/vector.h>
-#include <new>
 
 namespace LIIM {
 

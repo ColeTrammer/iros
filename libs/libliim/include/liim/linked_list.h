@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <liim/utilities.h>
-#include <new>
 
 namespace LIIM {
 
