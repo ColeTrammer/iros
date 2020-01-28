@@ -38,7 +38,7 @@ public:
         assert(buffer);
         allocate_vector();
         if constexpr (Traits<T>::is_simple()) {
-            memmove(m_vector, buffer, sizeof(T) * num_elements);
+            memcpy(m_vector, buffer, sizeof(T) * num_elements);
         } else {
             for (int i = 0; i < m_size; i++) {
                 new (&m_vector[i]) T(buffer[i]);
@@ -213,10 +213,10 @@ public:
                 get(i).~T();
                 if (i != size() - 1) {
                     if constexpr (Traits<T>::is_simple()) {
-                        memmove(m_vector + i, m_vector + i + 1, sizeof(T) * (size() - i - 1));
+                        memcpy(m_vector + i, m_vector + i + 1, sizeof(T) * (size() - i - 1));
                     } else {
                         for (int j = i; j < size() - 1; j++) {
-                            new (m_vector + j) T(get(j + 1));
+                            new (m_vector + j) T(LIIM::move(get(j + 1)));
                             get(j + 1).~T();
                         }
                     }
@@ -244,7 +244,7 @@ public:
             memmove(m_vector + position + 1, m_vector + position, sizeof(T) * (size() - position - 1));
         } else {
             for (int j = size() - 1; j > position; j--) {
-                new (m_vector + j) T(get(j - 1));
+                new (m_vector + j) T(LIIM::move(get(j - 1)));
                 get(j - 1).~T();
             }
         }
@@ -269,7 +269,7 @@ public:
             memmove(m_vector + position + 1, m_vector + position, sizeof(T) * (size() - position - 1));
         } else {
             for (int j = size() - 1; j > position; j--) {
-                new (m_vector + j) T(get(j - 1));
+                new (m_vector + j) T(LIIM::move(get(j - 1)));
                 get(j - 1).~T();
             }
         }
@@ -342,6 +342,7 @@ private:
             }
         }
 
+        free(m_vector);
         m_vector = replacement;
     }
 

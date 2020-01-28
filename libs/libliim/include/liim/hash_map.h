@@ -29,7 +29,10 @@ public:
         });
     }
 
-    HashMap(HashMap<K, V>&& other) : m_buckets(move(other.m_buckets)), m_size(other.size()) {}
+    HashMap(HashMap<K, V>&& other) : m_buckets(other.m_buckets), m_size(other.size()) {
+        other.m_buckets.clear();
+        other.m_size = 0;
+    }
 
     ~HashMap() {}
 

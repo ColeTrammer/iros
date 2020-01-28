@@ -65,7 +65,7 @@ Vector<SharedPtr<ItemSet>> ItemSet::create_item_sets(const Rule& start, const Ve
 
     while (to_process.size() != 0) {
         for (int size_save = to_process.size() - 1; size_save >= 0; size_save--) {
-            auto& item_set_to_process = to_process.get(size_save);
+            auto item_set_to_process = to_process.get(size_save);
 
             auto process_identifier = [&](const StringView& identifier) {
                 HashMap<Rule, bool> rule_set;

@@ -45,6 +45,15 @@ public:
         return *this;
     }
 
+    LinkedList<T>& operator=(LinkedList<T>&& other) {
+        if (this != other) {
+            LinkedList<T> temp(other);
+            swap(temp);
+        }
+
+        return *this;
+    }
+
     int size() const { return m_size; }
 
     void prepend(const T& to_add) {
