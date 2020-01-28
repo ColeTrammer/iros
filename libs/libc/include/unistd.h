@@ -27,6 +27,8 @@
 #define _SC_PAGESIZE  1
 #define _SC_PAGE_SIZE _SC_PAGESIZE
 
+#define _POSIX_VDISABLE (__UINT8_MAX__ - 1)
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* cplusplus */
