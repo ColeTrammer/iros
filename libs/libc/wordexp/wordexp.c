@@ -758,6 +758,10 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, char **name, 
     *end_ptr = NULL;
     *name = NULL;
 
+    if (max_length == 0) {
+        return WRDE_SYNTAX;
+    }
+
     switch (s[0]) {
         case '~': {
             int ret = we_arithmetic_parse_terminal(s + 1, max_length - 1, name, flags, special, value, end_ptr);
@@ -830,15 +834,6 @@ int we_arithmetic_parse_terminal(const char *s, size_t max_length, char **name, 
             long result = strtol(s, (char **) end_ptr, 0);
             *value = result;
             return 0;
-        }
-        case '(': {
-            size_t end = we_find_end_of_word_expansion(s, 0, max_length);
-            if (end == 0) {
-                return WRDE_SYNTAX;
-            }
-
-            *end_ptr = s + end + 1;
-            return we_arithmetic_expand(s + 1, end - 1, flags, special, value);
         }
         case '$': {
             char *expanded = NULL;
@@ -948,7 +943,8 @@ enum arithmetic_op {
     OP_AND_ASSIGN,
     OP_XOR_ASSIGN,
     OP_OR_ASSIGN,
-    OP_COMMA
+    OP_COMMA,
+    OP_PARANETHESIS
 };
 
 static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
@@ -1029,6 +1025,7 @@ static long we_arithmetic_do_op(enum arithmetic_op op, long v1, long v2) {
             goto handle_assignment;
         case OP_COMMA:
             return ((void) v1), v2;
+        case OP_PARANETHESIS:
         default:
             assert(false);
     }
@@ -1082,6 +1079,8 @@ static int we_arithmetic_op_precedence(enum arithmetic_op op) {
             return 14;
         case OP_COMMA:
             return 15;
+        case OP_PARANETHESIS:
+            return 16;
         default:
             assert(false);
     }
@@ -1123,6 +1122,13 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
     }
 
     while (current - s < (ptrdiff_t) length) {
+        while (*current == '(' || isspace(*current)) {
+            if (*current == '(') {
+                op_stack[op_stack_index++] = OP_PARANETHESIS;
+            }
+            current++;
+        }
+
         char *name = NULL;
         int ret = we_arithmetic_parse_terminal(current, length - (current - s), &name, flags, special, &value_stack[value_stack_index++],
                                                &current);
@@ -1135,6 +1141,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         }
 
         if (current - s >= (ptrdiff_t) length) {
+        we_finish_arithmetic_expand_computation:
             // Name doesn't matter at this point
             free(name);
 
@@ -1149,6 +1156,28 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         }
 
     arithmetic_process_operator:
+        while (*current == ')' && current - s < (ptrdiff_t) length) {
+            while (op_stack_index > 0 && op_stack[op_stack_index - 1] != OP_PARANETHESIS) {
+                if (value_stack_index < 2) {
+                    free(name);
+                    return WRDE_SYNTAX;
+                }
+                value_stack[value_stack_index - 2] =
+                    we_arithmetic_do_op(op_stack[--op_stack_index], value_stack[value_stack_index - 2], value_stack[value_stack_index - 1]);
+                value_stack_index--;
+            }
+            op_stack_index--;
+            current++;
+
+            while (isspace(*current)) {
+                current++;
+            }
+        }
+
+        if (current - s >= (ptrdiff_t) length) {
+            goto we_finish_arithmetic_expand_computation;
+        }
+
         while (isspace(*current)) {
             current++;
         }
@@ -1351,6 +1380,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
         if (!name_needed) {
             free(name);
         }
+        name = NULL;
 
         // Consider precendence
         while (op_stack_index >= 2 &&
@@ -1412,6 +1442,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
             assert(current[-1] == ':');
 
             const char *end_after_ternary = current;
+            int lparen_count = 0;
             while (end_after_ternary - s < (ptrdiff_t) length) {
                 switch (*end_after_ternary) {
                     case '$':
@@ -1426,6 +1457,15 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
                         }
                         break;
                     }
+                    case '(':
+                        lparen_count++;
+                        break;
+                    case ')':
+                        if (lparen_count > 0) {
+                            lparen_count--;
+                            break;
+                        }
+                        // fall-through
                     case ',':
                         goto found_ternary_end;
                 }
