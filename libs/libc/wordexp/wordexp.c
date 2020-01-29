@@ -17,7 +17,7 @@
 #include "../include/wordexp.h"
 #endif /* USERLAND_NATIVE */
 
-#define WE_BUF_INCREMENT 10
+#define WE_BUF_DEFAULT 16
 
 #define WE_EXPAND_MAX_DEPTH 1024
 
@@ -110,9 +110,9 @@ size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, siz
 
 int we_add(char *s, wordexp_t *we) {
     if (we->we_wordc == 0) {
-        we->we_wordv = calloc(WE_BUF_INCREMENT, sizeof(char *));
-    } else if (we->we_wordc % WE_BUF_INCREMENT == 0) {
-        we->we_wordv = realloc(we->we_wordv, (we->we_wordc + WE_BUF_INCREMENT) * sizeof(char *));
+        we->we_wordv = calloc(WE_BUF_DEFAULT, sizeof(char *));
+    } else if (we->we_wordc % 2 == 0) {
+        we->we_wordv = realloc(we->we_wordv, (we->we_wordc * 2) * sizeof(char *));
     }
 
     // Memory allocation error
@@ -132,8 +132,8 @@ bool we_insert_quoted(wordexp_t *we, size_t pos, char **insert_arr, size_t inser
     assert(insert_arr_size >= 2);
 
     size_t new_size = we->we_wordc - 1 + insert_arr_size;
-    if (we->we_wordc / WE_BUF_INCREMENT != new_size / WE_BUF_INCREMENT) {
-        size_t new_max_length = WE_BUF_INCREMENT * ((new_size + WE_BUF_INCREMENT - 1) / WE_BUF_INCREMENT);
+    if (we->we_wordc / 2 != new_size / 2) {
+        size_t new_max_length = (new_size / 2 + 1) * 2;
         we->we_wordv = realloc(we->we_wordv, new_max_length * sizeof(char *));
     }
 
@@ -177,8 +177,8 @@ int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
     free(we->we_wordv[pos]);
 
     size_t new_size = we->we_wordc - 1 + arr_size;
-    if (we->we_wordc / WE_BUF_INCREMENT != new_size / WE_BUF_INCREMENT) {
-        size_t new_max_length = WE_BUF_INCREMENT * ((new_size + WE_BUF_INCREMENT - 1) / WE_BUF_INCREMENT);
+    if (we->we_wordc / 2 != new_size / 2) {
+        size_t new_max_length = (new_size / 2 + 1) * 2;
         we->we_wordv = realloc(we->we_wordv, new_max_length * sizeof(char *));
     }
 
@@ -202,7 +202,7 @@ int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we) {
     return true;
 }
 
-#define WE_STR_BUF_INCREMENT 0x200
+#define WE_STR_BUF_DEFAULT 32
 
 static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     if (len == 0) {
@@ -211,7 +211,11 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
 
     size_t new_len = strlen(*s) + len + 1;
     if (new_len > *max) {
-        *max += WE_STR_BUF_INCREMENT;
+        if (*max == 0) {
+            *max = WE_STR_BUF_DEFAULT;
+        } else {
+            *max *= 2;
+        }
         *s = realloc(*s, *max);
         if (!*s) {
             return false;
@@ -1457,7 +1461,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
 }
 
 int we_expand(const char *s, int flags, char **expanded, word_special_t *special) {
-    size_t len = WE_STR_BUF_INCREMENT;
+    size_t len = WE_STR_BUF_DEFAULT;
     size_t input_len = strlen(s);
     *expanded = calloc(len, sizeof(char));
 
