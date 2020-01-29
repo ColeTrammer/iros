@@ -10,6 +10,7 @@
 
 namespace LIIM {
 
+template<typename VectorType, typename T> class VectorIterator;
 template<typename T> class Vector {
 public:
     explicit Vector(int capacity = 20) : m_capacity(capacity) {}
@@ -28,7 +29,7 @@ public:
         }
     }
 
-    Vector(T&& other) : m_capacity(other.capacity()), m_size(other.size()), m_vector(other.vector()) {
+    Vector(Vector&& other) : m_capacity(other.capacity()), m_size(other.size()), m_vector(other.vector()) {
         other.m_vector = nullptr;
         other.m_size = 0;
         other.m_capacity = 0;
@@ -205,7 +206,7 @@ public:
         }
 
         return -1;
-    };
+    }
 
     void remove_element(const T& val) {
         for (int i = size() - 1; i >= 0; i--) {
@@ -313,6 +314,14 @@ public:
         return true;
     }
 
+    using Iterator = VectorIterator<Vector, T>;
+    Iterator begin() { return Iterator(*this, 0); }
+    Iterator end() { return Iterator(*this, size()); }
+
+    using ConstIterator = VectorIterator<const Vector, const T>;
+    Iterator begin() const { return ConstIterator(*this, 0); }
+    Iterator end() const { return ConstIterator(*this, size()); }
+
     void swap(Vector<T>& other) {
         LIIM::swap(this->m_capacity, other.m_capacity);
         LIIM::swap(this->m_size, other.m_size);
@@ -354,6 +363,55 @@ private:
 template<typename T> void swap(Vector<T>& a, Vector<T>& b) {
     a.swap(b);
 }
+
+template<typename VectorType, typename T> class VectorIterator {
+public:
+    VectorIterator(VectorType& vector, int offset) : m_vector(vector), m_offset(offset) {}
+
+    bool operator!=(const VectorIterator& other) const { return !(*this == other); }
+    bool operator==(const VectorIterator& other) const { return m_offset == other.m_offset; }
+    bool operator<(const VectorIterator& other) const { return m_offset < other.m_offset; }
+    bool operator>(const VectorIterator& other) const { return m_offset > other.m_offset; }
+    bool operator<=(const VectorIterator& other) const { return !(*this > other); }
+    bool operator>=(const VectorIterator& other) const { return !(*this < other); }
+
+    VectorIterator& operator++() {
+        m_offset++;
+        return *this;
+    }
+
+    VectorIterator operator++(int) {
+        VectorIterator ret(*this);
+        m_offset++;
+        return ret;
+    }
+
+    VectorIterator operator--() {
+        m_offset--;
+        return *this;
+    }
+
+    VectorIterator operator--(int) {
+        VectorIterator ret(*this);
+        m_offset--;
+        return ret;
+    }
+
+    VectorIterator operator+(int offset) { return { m_vector, m_offset + offset }; }
+    VectorIterator operator-(int offset) { return { m_vector, m_offset - offset }; }
+
+    VectorIterator& operator=(const VectorIterator& other) {
+        m_offset = other.m_offset;
+        return *this;
+    }
+
+    T& operator*() { return m_vector[m_offset]; }
+    T* operator->() { return &m_vector[m_offset]; }
+
+private:
+    VectorType& m_vector;
+    int m_offset;
+};
 
 }
 

@@ -11,7 +11,7 @@ public:
     Bitmap(int num_bits) { m_bits = new T[(num_bits + sizeof(T) * CHAR_BIT - 1) / (sizeof(T) * CHAR_BIT)]; }
 
     template<typename U> static SharedPtr<Bitmap<U>> wrap(U* bits, int num_bits) {
-        auto bitmap = std::make_shared<Bitmap<U>>();
+        auto bitmap = make_shared<Bitmap<U>>();
         bitmap->m_should_deallocate = false;
         bitmap->m_bits = bits;
         return bitmap;

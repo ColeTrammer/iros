@@ -17,5 +17,11 @@ int main() {
         fprintf(stderr, "ll[%d][%d] == %d\n", i, i, ll[i][i]);
     }
 
+    for (auto& l : ll) {
+        for (auto& i : l) {
+            fprintf(stderr, "%d\n", i);
+        }
+    }
+
     return 0;
 }
