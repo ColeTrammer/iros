@@ -1487,7 +1487,7 @@ int we_arithmetic_expand(const char *s, size_t length, int flags, word_special_t
 
             current = end_after_ternary;
             if (current - s >= (ptrdiff_t) length) {
-                break;
+                goto we_finish_arithmetic_expand_computation;
             }
 
             goto arithmetic_process_operator;
