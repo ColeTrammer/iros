@@ -26,7 +26,7 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
 void Server::kill_client(int client_id) {
     close(client_id);
     m_clients.remove_element(client_id);
-    m_manager->windows().remove_if([&](auto& window) {
+    m_manager->windows().remove_if([&](auto window) {
         return window->client_id() == client_id;
     });
 }
