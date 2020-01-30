@@ -5,6 +5,7 @@
 #include <liim/pointers.h>
 #include <liim/string_view.h>
 #include <liim/traits.h>
+#include <liim/utilities.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,11 +52,18 @@ public:
     const char& operator[](int index) const { return string()[index]; }
 
     String& operator=(const String& other) {
-        free(m_string);
+        if (this != &other) {
+            String temp(other);
+            swap(temp);
+        }
+        return *this;
+    }
 
-        this->m_string = strdup(other.string());
-        assert(this->m_string);
-        this->m_size = other.m_size;
+    String& operator=(String&& other) {
+        if (this != &other) {
+            String temp(LIIM::move(other));
+            swap(temp);
+        }
         return *this;
     }
 
@@ -130,6 +138,11 @@ public:
         return s - m_string;
     }
 
+    void swap(String& other) {
+        LIIM::swap(this->m_size, other.m_size);
+        LIIM::swap(this->m_string, other.m_string);
+    }
+
     static SharedPtr<String> wrap_malloced_chars(char* str) {
         String* s = new String;
         s->m_size = strlen(str);
@@ -141,6 +154,10 @@ private:
     int m_size { 0 };
     char* m_string { nullptr };
 };
+
+template<typename T> void swap(String& a, String& b) {
+    a.swap(b);
+}
 
 template<> struct Traits<String> {
     static constexpr bool is_simple() { return false; }
