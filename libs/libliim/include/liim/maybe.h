@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <liim/utilities.h>
+#include <stdio.h>
 
 namespace LIIM {
 
@@ -14,10 +15,10 @@ public:
             new (&m_value[0]) T(other.value());
         }
     }
-    Maybe(Maybe<T>&& other) : m_has_value(other.has_value()) {
+    Maybe(Maybe&& other) : m_has_value(other.has_value()) {
         if (m_has_value) {
-            new (&m_value[0]) T(LIIM::move(*reinterpret_cast<T*>(&other.m_value[0])));
-            other.m_value().~T();
+            new (&m_value[0]) T(LIIM::move(other.value()));
+            other.value().~T();
             other.m_has_value = false;
         }
     }
@@ -29,28 +30,18 @@ public:
     }
 
     Maybe<T>& operator=(const Maybe<T>& other) {
-        if (!other.has_value()) {
-            if (this->has_value()) {
-                value().~T();
-                m_has_value = false;
-            }
-        } else {
-            if (this->has_value()) {
-                value().~T();
-            }
-
-            new (&m_value[0]) T(other.value());
-            m_has_value = true;
+        if (this != &other) {
+            Maybe<T> temp(other);
+            swap(temp);
         }
         return *this;
     }
 
-    Maybe<T>& operator=(Maybe&& other) {
+    Maybe<T>& operator=(Maybe<T>&& other) {
         if (this != &other) {
-            Maybe<T> temp(other);
-            swap(other);
+            Maybe<T> temp(LIIM::move(other));
+            swap(temp);
         }
-
         return *this;
     }
 
@@ -62,14 +53,14 @@ public:
     }
     const T& value() const { return const_cast<Maybe<T>&>(*this).value(); }
 
-    void swap(Maybe<T>& other) {
+    void swap(Maybe& other) {
         if (this->has_value() && other.has_value()) {
             LIIM::swap(this->value(), other.value());
         } else if (this->has_value()) {
-            new (&other.m_value[0]) T(LIIM::move(*reinterpret_cast<T*>(&m_value[0])));
+            new (&other.m_value[0]) T(LIIM::move(other.value()));
             this->value().~T();
         } else if (other.has_value()) {
-            new (&this->m_value[0]) T(LIIM::move(*reinterpret_cast<T*>(&m_value[0])));
+            new (&this->m_value[0]) T(LIIM::move(other.value()));
             other.value().~T();
         }
         LIIM::swap(this->m_has_value, other.m_has_value);
