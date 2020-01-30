@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <liim/utilities.h>
-#include <stdio.h>
 
 #ifndef STD_POINTERS
 namespace LIIM {

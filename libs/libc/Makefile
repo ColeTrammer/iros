@@ -10,6 +10,7 @@ export SYSROOT?=$(ROOT)/sysroot
 export BUILDDIR?=$(ROOT)/build
 
 export CC?=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export CXX?=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
 export AR?=$(HOST)-ar
 
 # Sets directories for install if not already set
@@ -221,11 +222,17 @@ $(BUILDDIR)/libs/libc/libk.a: $(LIBK_OBJS)
 $(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
+$(BUILDDIR)/%.o: $(ROOT)/%.cpp
+	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -std=c++17
+
 $(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)
 
 $(BUILDDIR)/%.libk.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+
+$(BUILDDIR)/%.libk.o: $(ROOT)/%.cpp
+	$(CXX) -MD -c $< -o $@ $(LIBK_CPPFLAGS) -std=c++17
 
 $(BUILDDIR)/%.libk.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)

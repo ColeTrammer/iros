@@ -94,6 +94,10 @@
 #define SC_SIGRETURN 27
 #else
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 enum sc_number {
 #define __ENUMERATE_SYSCALL(x, y, v) SC_##x,
     SC_START,
@@ -136,6 +140,10 @@ enum __sc_arg_count { ENUMERATE_SYSCALLS __INVALID };
 char *syscall_to_string(enum sc_number sc);
 
 __attribute__((__noreturn__)) void __sigreturn(void);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /*__ASSEMBLER */
 
