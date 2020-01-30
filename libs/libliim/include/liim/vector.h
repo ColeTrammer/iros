@@ -58,7 +58,7 @@ public:
 
     Vector<T>& operator=(Vector<T>&& other) {
         if (this != &other) {
-            Vector<T> temp(other);
+            Vector<T> temp(LIIM::move(other));
             swap(other);
         }
 
@@ -103,7 +103,7 @@ public:
             allocate_vector();
         }
 
-        new (&m_vector[m_size++]) T(t);
+        new (&m_vector[m_size++]) T(LIIM::move(t));
     }
 
     void remove_last() {
@@ -275,7 +275,7 @@ public:
             }
         }
 
-        new (m_vector + position) T(val);
+        new (m_vector + position) T(LIIM::move(val));
     }
 
     template<typename C> bool remove_if(C callback) {

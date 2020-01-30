@@ -179,18 +179,6 @@ public:
 
     ShValue() {}
     ShValue(const StringView& text, size_t line, size_t position) : m_line(line), m_position(position), m_text(text) {}
-    ShValue(const ShValue& other)
-        : m_line(other.line())
-        , m_position(other.position())
-        , m_io_redirect(other.m_io_redirect)
-        , m_case_item(other.m_case_item)
-        , m_text(other.m_text)
-        , m_command(other.m_command)
-        , m_pipeline(other.m_pipeline)
-        , m_list_component(other.m_list_component)
-        , m_list(other.m_list)
-        , m_separator_op(other.m_separator_op)
-        , m_program(other.m_program) {}
 
     ~ShValue() {}
 

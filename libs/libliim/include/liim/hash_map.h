@@ -91,7 +91,7 @@ public:
         V* slot = get(key);
         if (slot) {
             slot->~V();
-            new (slot) V(val);
+            new (slot) V(LIIM::move(val));
             return;
         }
 
