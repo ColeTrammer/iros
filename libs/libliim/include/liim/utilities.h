@@ -72,6 +72,28 @@ template<typename T> struct RemoveReference { typedef T type; };
 template<typename T> struct RemoveReference<T&> { typedef T type; };
 template<typename T> struct RemoveReference<T&&> { typedef T type; };
 
+template<bool Z, typename A, typename B> struct Conditional { typedef B type; };
+template<typename A, typename B> struct Conditional<true, A, B> { typedef A type; };
+
+template<typename T> T& declval() {
+    return 0;
+}
+
+namespace details {
+    template<typename> using TrueTypeFor = TrueType;
+
+    template<typename T> auto test_returnable(int) -> TrueTypeFor<T()>;
+    template<typename T> auto test_returnable(...) -> FalseType;
+
+    template<typename From, typename To>
+    auto test_nonvoid_convertible(int) -> TrueTypeFor<decltype(declval<void (&)(To)>()(declval<From>()))>;
+    template<typename From, typename To> auto test_nonvoid_convertible(...) -> FalseType;
+}
+
+template<typename From, typename To> struct IsConvertible {
+    enum { value = (decltype(details::test_returnable<To>(0))::value&& decltype(details::test_nonvoid_convertible<From, To>(0))::value) };
+};
+
 template<typename T> struct Identity { typedef T Type; };
 template<typename T> inline constexpr T&& forward(typename Identity<T>::Type& param) {
     return static_cast<T&&>(param);
