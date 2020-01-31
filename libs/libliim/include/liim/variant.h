@@ -4,24 +4,6 @@
 #include <liim/utility.h>
 #include <stddef.h>
 
-struct TrueType {
-    enum { value = true };
-};
-
-struct FalseType {
-    enum { value = false };
-};
-
-template<bool B, typename T = void> struct EnableIf {};
-template<typename T> struct EnableIf<true, T> { typedef T type; };
-
-template<typename A, typename B> struct IsSame : FalseType {};
-
-template<typename T> struct IsSame<T, T> : TrueType {};
-
-static_assert(!IsSame<int, double>::value);
-static_assert(IsSame<int, int>::value);
-
 template<typename ToFind, int index, typename... Types> struct TypeListIndexImpl;
 
 template<typename ToFind, int index, typename Type, typename... Types> struct TypeListIndexImpl<ToFind, index, Type, Types...> {

@@ -30,14 +30,55 @@ typedef decltype(nullptr) nullptr_t;
 
 namespace LIIM {
 
-template<typename T> struct Identity { typedef T Type; };
+struct TrueType {
+    enum { value = true };
+};
 
+struct FalseType {
+    enum { value = false };
+};
+
+template<bool B, typename T = void> struct EnableIf {};
+template<typename T> struct EnableIf<true, T> { typedef T type; };
+
+template<typename A, typename B> struct IsSame : FalseType {};
+
+template<typename T> struct IsSame<T, T> : TrueType {};
+
+template<typename T> struct IsPointer : FalseType {};
+template<typename T> struct IsPointer<T*> : TrueType {};
+
+template<typename T> struct IsReference : FalseType {};
+template<typename T> struct IsReference<T&> : TrueType {};
+template<typename T> struct IsReference<T&&> : TrueType {};
+
+template<typename T> struct IsConst : FalseType {};
+template<typename T> struct IsConst<const T> : TrueType {};
+
+template<typename T> struct IsFunction {
+    enum { value = !IsConst<const T>::value && !IsReference<T>::value };
+};
+
+template<class T> struct IsRValueReference : FalseType {};
+template<class T> struct IsRValueReference<T&&> : TrueType {};
+
+template<typename T> struct RemovePointer { typedef T type; };
+template<typename T> struct RemovePointer<T*> { typedef T type; };
+template<typename T> struct RemovePointer<T* const> { typedef T type; };
+template<typename T> struct RemovePointer<T* volatile> { typedef T type; };
+template<typename T> struct RemovePointer<T* const volatile> { typedef T type; };
+
+template<typename T> struct RemoveReference { typedef T type; };
+template<typename T> struct RemoveReference<T&> { typedef T type; };
+template<typename T> struct RemoveReference<T&&> { typedef T type; };
+
+template<typename T> struct Identity { typedef T Type; };
 template<typename T> inline constexpr T&& forward(typename Identity<T>::Type& param) {
     return static_cast<T&&>(param);
 }
 
-template<typename T> inline T&& move(T&& arg) {
-    return static_cast<T&&>(arg);
+template<typename T> inline typename RemoveReference<T>::type&& move(T&& arg) {
+    return static_cast<typename RemoveReference<T>::type&&>(arg);
 }
 
 template<typename T> void swap(T& a, T& b) {

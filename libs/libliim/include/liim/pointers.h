@@ -10,9 +10,8 @@ template<typename T> class UniquePtr {
 public:
     explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {}
 
-    UniquePtr(const UniquePtr& other) = delete;
-
     UniquePtr(UniquePtr&& other) : m_ptr(other.m_ptr) { other.m_ptr = nullptr; }
+    template<typename U> UniquePtr(UniquePtr<U>&& other) : m_ptr(static_cast<T*>(other.m_ptr)) { other.m_ptr = nullptr; }
 
     ~UniquePtr() { delete m_ptr; }
 
@@ -24,12 +23,23 @@ public:
 
     UniquePtr& operator=(const UniquePtr& other) = delete;
 
-    UniquePtr& operator=(UniquePtr&& other) {
-        UniquePtr<T> temp(other);
-        swap(temp);
+    template<typename U> UniquePtr& operator=(UniquePtr<U>&& other) {
+        if (this != &other) {
+            UniquePtr<T> temp(other);
+            swap(temp);
+        }
         return *this;
     }
 
+    UniquePtr& operator=(UniquePtr&& other) {
+        if (this != &other) {
+            UniquePtr<T> temp(other);
+            swap(temp);
+        }
+        return *this;
+    }
+
+    template<typename U> void swap(UniquePtr<U>& other) { LIIM::swap(m_ptr, other.m_ptr); }
     void swap(UniquePtr& other) { LIIM::swap(m_ptr, other.m_ptr); }
 
     T& operator*() {
@@ -59,6 +69,8 @@ public:
     operator bool() { return !!m_ptr; }
 
 private:
+    template<typename U> friend class UniquePtr;
+
     T* m_ptr;
 };
 
