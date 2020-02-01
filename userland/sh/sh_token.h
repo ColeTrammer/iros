@@ -3,12 +3,19 @@
 #include <liim/maybe.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
+#include <liim/variant.h>
 #include <liim/vector.h>
 #include <stddef.h>
 #include <stdio.h>
 
 class ShValue {
 public:
+    struct Token {
+        size_t line;
+        size_t position;
+        StringView text;
+    };
+
     struct IoRedirect {
         enum class HereDocumentType {
             Regular,
@@ -51,6 +58,8 @@ public:
     struct Command;
 
     struct Pipeline {
+        Pipeline(bool _negated, Vector<Command>&& _commands) : negated(_negated), commands(move(_commands)) {}
+
         bool negated;
         Vector<Command> commands;
     };
@@ -62,6 +71,9 @@ public:
             End,
         };
 
+        ListComponent(Vector<Pipeline>&& _pipelines, Vector<Combinator>&& _combinators)
+            : pipelines(move(_pipelines)), combinators(move(_combinators)) {}
+
         Vector<Pipeline> pipelines;
         Vector<Combinator> combinators;
     };
@@ -71,6 +83,11 @@ public:
             Sequential,
             Asynchronous,
         };
+
+        List() = default;
+
+        List(Vector<ListComponent>&& _components, Vector<Combinator>&& _combinators)
+            : components(move(_components)), combinators(move(_combinators)) {}
 
         Vector<ListComponent> components;
         Vector<Combinator> combinators;
@@ -178,62 +195,62 @@ public:
     using Program = Vector<List>;
 
     ShValue() {}
-    ShValue(const StringView& text, size_t line, size_t position) : m_line(line), m_position(position), m_text(text) {}
+    ShValue(const StringView& text, size_t line, size_t position) : m_variant(Token { line, position, text }) {}
 
     ~ShValue() {}
 
-    size_t line() const { return m_line; }
-    size_t position() const { return m_position; }
+    size_t line() const { return m_variant.as<Token>().line; }
+    size_t position() const { return m_variant.as<Token>().line; }
 
-    const StringView& text() const { return m_text.value(); }
+    const StringView& text() const { return m_variant.as<Token>().text; }
 
-    bool has_text() const { return m_text.has_value(); }
+    bool has_text() const { return m_variant.is<Token>(); }
 
-    IoRedirect& io_redirect() { return m_io_redirect.value(); }
-    const IoRedirect& io_redirect() const { return m_io_redirect.value(); }
+    IoRedirect& io_redirect() { return m_variant.as<IoRedirect>(); }
+    const IoRedirect& io_redirect() const { return m_variant.as<IoRedirect>(); }
 
-    bool has_io_redirect() const { return m_io_redirect.has_value(); }
+    bool has_io_redirect() const { return m_variant.is<IoRedirect>(); }
 
     ShValue& create_io_redirect(int number, IoRedirect::Type type, const StringView& word,
                                 ShValue::IoRedirect::HereDocumentQuoted quoted = ShValue::IoRedirect::HereDocumentQuoted::No) {
-        m_io_redirect = { IoRedirect { number, type, word, ShValue::IoRedirect::HereDocumentType::Regular, quoted } };
+        m_variant = IoRedirect { number, type, word, ShValue::IoRedirect::HereDocumentType::Regular, quoted };
 
         return *this;
     }
 
-    CaseClause::CaseItem& case_item() { return m_case_item.value(); }
-    const CaseClause::CaseItem& case_item() const { return m_case_item.value(); }
+    CaseClause::CaseItem& case_item() { return m_variant.as<CaseClause::CaseItem>(); }
+    const CaseClause::CaseItem& case_item() const { return m_variant.as<CaseClause::CaseItem>(); }
 
-    bool has_case_item() const { return m_case_item.has_value(); }
+    bool has_case_item() const { return m_variant.is<CaseClause::CaseItem>(); }
 
     ShValue& create_case_item(const StringView& pattern) {
         Vector<StringView> patterns;
         patterns.add(pattern);
 
-        m_case_item = { CaseClause::CaseItem { patterns, List() } };
+        m_variant = CaseClause::CaseItem { patterns, List() };
         return *this;
     }
 
-    RedirectList& redirect_list() { return m_redirect_list.value(); }
-    const RedirectList& redirect_list() const { return m_redirect_list.value(); }
+    RedirectList& redirect_list() { return m_variant.as<RedirectList>(); }
+    const RedirectList& redirect_list() const { return m_variant.as<RedirectList>(); }
 
-    bool has_redirect_list() const { return m_redirect_list.has_value(); }
+    bool has_redirect_list() const { return m_variant.is<RedirectList>(); }
 
     ShValue& create_redirect_list(const IoRedirect& io) {
         RedirectList list;
         list.add(io);
 
-        m_redirect_list = { list };
+        m_variant = list;
         return *this;
     }
 
-    Command& command() { return m_command.value(); }
-    const Command& command() const { return m_command.value(); }
+    Command& command() { return m_variant.as<Command>(); }
+    const Command& command() const { return m_variant.as<Command>(); }
 
-    bool has_command() const { return m_command.has_value(); }
+    bool has_command() const { return m_variant.is<Command>(); }
 
     ShValue& create_simple_command() {
-        m_command = { SimpleCommand { Vector<StringView>(), Vector<AssignmentWord>(), Vector<IoRedirect>() } };
+        m_variant = SimpleCommand { Vector<StringView>(), Vector<AssignmentWord>(), Vector<IoRedirect>() };
         return *this;
     }
 
@@ -241,7 +258,7 @@ public:
         Vector<StringView> words;
         words.add(word);
 
-        m_command = { SimpleCommand { words, Vector<AssignmentWord>(), Vector<IoRedirect>() } };
+        m_variant = SimpleCommand { words, Vector<AssignmentWord>(), Vector<IoRedirect>() };
         return *this;
     }
 
@@ -251,7 +268,7 @@ public:
         Vector<AssignmentWord> words;
         words.add(assignment_word);
 
-        m_command = { SimpleCommand { Vector<StringView>(), words, Vector<IoRedirect>() } };
+        m_variant = SimpleCommand { Vector<StringView>(), words, Vector<IoRedirect>() };
         return *this;
     }
 
@@ -259,7 +276,7 @@ public:
         Vector<IoRedirect> redirects;
         redirects.add(io_redirect);
 
-        m_command = { SimpleCommand { Vector<StringView>(), Vector<AssignmentWord>(), redirects } };
+        m_variant = SimpleCommand { Vector<StringView>(), Vector<AssignmentWord>(), redirects };
         return *this;
     }
 
@@ -268,14 +285,14 @@ public:
         IfClause if_clause;
         if_clause.conditions.add(part);
 
-        m_command = { CompoundCommand { if_clause } };
+        m_variant = CompoundCommand { if_clause };
         return *this;
     }
 
     ShValue& create_for_clause(StringView name, const Vector<StringView>& words, const ShValue::List& action) {
         ForClause for_clause = ForClause { name, words, action };
 
-        m_command = { CompoundCommand { for_clause } };
+        m_variant = CompoundCommand { for_clause };
         return *this;
     }
 
@@ -284,95 +301,103 @@ public:
         case_items.add(case_item);
         CaseClause case_clause = CaseClause { "", case_items };
 
-        m_command = { CompoundCommand { case_clause } };
+        m_variant = CompoundCommand { case_clause };
         return *this;
     }
 
     ShValue& create_case_clause(const StringView& word) {
         CaseClause case_clause = CaseClause { word, Vector<CaseClause::CaseItem>() };
 
-        m_command = { CompoundCommand { case_clause } };
+        m_variant = CompoundCommand { case_clause };
         return *this;
     }
 
     ShValue& create_brace_group(const ShValue::List& list) {
-        m_command = { CompoundCommand { list, CompoundCommand::MakeBraceGroup::Yes } };
+        m_variant = CompoundCommand { list, CompoundCommand::MakeBraceGroup::Yes };
         return *this;
     }
 
     ShValue& create_subshell(const ShValue::List& list) {
-        m_command = { CompoundCommand { list, CompoundCommand::MakeSubshell::Yes } };
+        m_variant = CompoundCommand { list, CompoundCommand::MakeSubshell::Yes };
         return *this;
     }
 
     ShValue& create_loop(const ShValue::List& condition, const ShValue::List& action, Loop::Type type) {
         Loop loop = Loop { type, condition, action };
 
-        m_command = { CompoundCommand { loop } };
+        m_variant = CompoundCommand { loop };
         return *this;
     }
 
     ShValue& create_function_definition(const ShValue::CompoundCommand& command) {
-        m_command = { FunctionDefinition { "", command } };
+        m_variant = FunctionDefinition { "", command };
         return *this;
     }
 
-    Pipeline& pipeline() { return m_pipeline.value(); }
-    const Pipeline& pipeline() const { return m_pipeline.value(); }
+    Pipeline& pipeline() { return m_variant.as<Pipeline>(); }
+    const Pipeline& pipeline() const { return m_variant.as<Pipeline>(); }
 
-    bool has_pipeline() const { return m_pipeline.has_value(); }
+    bool has_pipeline() const { return m_variant.is<Pipeline>(); }
 
     ShValue& create_pipeline(const Command& command) {
-        m_pipeline = { Pipeline { false, Vector<Command>() } };
-        pipeline().commands.add(command);
+        Vector<Command> commands;
+        commands.add(move(command));
+        m_variant.emplace<Pipeline>(false, move(commands));
         return *this;
     }
 
-    ListComponent& list_component() { return m_list_component.value(); }
-    const ListComponent& list_component() const { return m_list_component.value(); }
+    ListComponent& list_component() { return m_variant.as<ListComponent>(); }
+    const ListComponent& list_component() const { return m_variant.as<ListComponent>(); }
 
-    bool has_list_component() const { return m_list_component.has_value(); }
+    bool has_list_component() const { return m_variant.is<ListComponent>(); }
 
     ShValue& create_list_component(const Pipeline& pipeline) {
-        m_list_component = { ListComponent { Vector<Pipeline>(), Vector<ListComponent::Combinator>() } };
-        list_component().pipelines.add(pipeline);
-        list_component().combinators.add(ListComponent::Combinator::End);
+        Vector<Pipeline> pipelines;
+        pipelines.add(move(pipeline));
+        Vector<ListComponent::Combinator> combinators;
+        combinators.add(ListComponent::Combinator::End);
+
+        m_variant.emplace<ListComponent>(move(pipelines), move(combinators));
         return *this;
     }
 
-    List& list() { return m_list.value(); }
-    const List& list() const { return m_list.value(); }
+    List& list() { return m_variant.as<List>(); }
+    const List& list() const { return m_variant.as<List>(); }
 
-    bool has_list() const { return m_list.has_value(); }
+    bool has_list() const { return m_variant.is<List>(); }
 
     ShValue& create_list(const ListComponent& list_component, List::Combinator combinator = List::Combinator::Sequential) {
-        m_list = { List { Vector<ListComponent>(), Vector<List::Combinator>() } };
-        list().components.add(list_component);
-        list().combinators.add(combinator);
+        Vector<ListComponent> components;
+        Vector<List::Combinator> combinators;
+        components.add(LIIM::move(list_component));
+        combinators.add(combinator);
+
+        m_variant.emplace<List>(move(components), move(combinators));
         return *this;
     }
 
-    List::Combinator separator_op() const { return m_separator_op.value(); }
-    bool has_separator_op() const { return m_separator_op.has_value(); }
+    List::Combinator separator_op() const { return m_variant.as<List::Combinator>(); }
+    bool has_separator_op() const { return m_variant.is<List::Combinator>(); }
 
     ShValue& create_separator_op(List::Combinator combinator) {
-        m_separator_op = { combinator };
+        m_variant = combinator;
         return *this;
     }
 
-    Program& program() { return m_program.value(); }
-    const Program& program() const { return m_program.value(); }
+    Program& program() { return m_variant.as<Program>(); }
+    const Program& program() const { return m_variant.as<Program>(); }
 
-    bool has_program() const { return m_program.has_value(); }
+    bool has_program() const { return m_variant.is<Program>(); }
 
     ShValue& create_program() {
-        m_program = { Program {} };
+        m_variant = Program {};
         return *this;
     }
 
     ShValue& create_program(const List& list) {
-        m_program = { Program {} };
-        program().add(list);
+        Vector<List> lists;
+        lists.add(LIIM::move(list));
+        m_variant.emplace<Program>(LIIM::move(lists));
         return *this;
     }
 
@@ -443,16 +468,17 @@ public:
     }
 
 private:
-    size_t m_line { 0 };
-    size_t m_position { 0 };
-    Maybe<IoRedirect> m_io_redirect;
-    Maybe<CaseClause::CaseItem> m_case_item;
-    Maybe<RedirectList> m_redirect_list;
-    Maybe<StringView> m_text;
-    Maybe<Command> m_command;
-    Maybe<Pipeline> m_pipeline;
-    Maybe<ListComponent> m_list_component;
-    Maybe<List> m_list;
-    Maybe<List::Combinator> m_separator_op;
-    Maybe<Program> m_program;
+    Variant<Monostate, Token, IoRedirect, CaseClause::CaseItem, RedirectList, Command, Pipeline, ListComponent, List, List::Combinator,
+            Program>
+        m_variant;
+    // Maybe<Token> m_variant;
+    // Maybe<IoRedirect> m_variant;
+    // Maybe<CaseClause::CaseItem> m_variant;
+    // Maybe<RedirectList> m_variant;
+    // Maybe<Command> m_variant;
+    // Maybe<Pipeline> m_variant;
+    // Maybe<ListComponent> m_variant;
+    // Maybe<List> m_variant;
+    // Maybe<List::Combinator> m_variant;
+    // Maybe<Program> m_variant;
 };
