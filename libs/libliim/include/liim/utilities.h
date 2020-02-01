@@ -26,6 +26,7 @@ void* calloc(size_t n, size_t sz);
 
 namespace std {
 typedef decltype(nullptr) nullptr_t;
+typedef __SIZE_TYPE__ size_t;
 }
 
 namespace LIIM {
@@ -38,12 +39,18 @@ struct FalseType {
     enum { value = false };
 };
 
+template<typename T> struct TypeIdentity { typedef T type; };
+
 template<bool B, typename T = void> struct EnableIf {};
 template<typename T> struct EnableIf<true, T> { typedef T type; };
 
 template<typename A, typename B> struct IsSame : FalseType {};
 
 template<typename T> struct IsSame<T, T> : TrueType {};
+
+template<typename T> struct IsArray : FalseType {};
+template<typename T> struct IsArray<T[]> : TrueType {};
+template<typename T, std::size_t N> struct IsArray<T[N]> : TrueType {};
 
 template<typename T> struct IsPointer : FalseType {};
 template<typename T> struct IsPointer<T*> : TrueType {};
@@ -72,6 +79,25 @@ template<typename T> struct RemoveReference { typedef T type; };
 template<typename T> struct RemoveReference<T&> { typedef T type; };
 template<typename T> struct RemoveReference<T&&> { typedef T type; };
 
+template<typename T> struct RemoveExtent { typedef T type; };
+template<typename T> struct RemoveExtent<T[]> { typedef T type; };
+template<typename T, std::size_t N> struct RemoveExtent<T[N]> { typedef T type; };
+
+template<typename T> struct RemoveConst { typedef T type; };
+template<typename T> struct RemoveConst<const T> { typedef T type; };
+
+template<typename T> struct RemoveVolatile { typedef T type; };
+template<typename T> struct RemoveVolatile<volatile T> { typedef T type; };
+
+template<typename T> struct RemoveCV { typedef typename RemoveConst<typename RemoveVolatile<T>::type>::type type; };
+
+namespace details {
+    template<typename T> auto try_add_pointer(int) -> TypeIdentity<typename RemoveReference<T>::type*>;
+    template<typename T> auto try_add_pointer(...) -> TypeIdentity<T>;
+}
+
+template<typename T> struct AddPointer : decltype(details::try_add_pointer<T>(0)) {};
+
 template<bool Z, typename A, typename B> struct Conditional { typedef B type; };
 template<typename A, typename B> struct Conditional<true, A, B> { typedef A type; };
 
@@ -94,8 +120,19 @@ template<typename From, typename To> struct IsConvertible {
     enum { value = (decltype(details::test_returnable<To>(0))::value&& decltype(details::test_nonvoid_convertible<From, To>(0))::value) };
 };
 
-template<typename T> struct Identity { typedef T Type; };
-template<typename T> inline constexpr T&& forward(typename Identity<T>::Type& param) {
+template<typename T> struct Decay {
+private:
+    typedef typename RemoveReference<T>::type U;
+
+public:
+    typedef typename Conditional<
+        IsArray<U>::value, typename RemoveExtent<U>::type*,
+        typename Conditional<IsFunction<U>::value, typename AddPointer<U>::type, typename RemoveCV<U>::type>::type>::type type;
+};
+
+template<typename T> using decay_t = typename Decay<T>::type;
+
+template<typename T> inline constexpr T&& forward(typename TypeIdentity<T>::type& param) {
     return static_cast<T&&>(param);
 }
 
