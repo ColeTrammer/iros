@@ -31,6 +31,8 @@ typedef __SIZE_TYPE__ size_t;
 
 namespace LIIM {
 
+using std::size_t;
+
 struct TrueType {
     enum { value = true };
 };
@@ -91,6 +93,25 @@ template<typename T> struct RemoveVolatile<volatile T> { typedef T type; };
 
 template<typename T> struct RemoveCV { typedef typename RemoveConst<typename RemoveVolatile<T>::type>::type type; };
 
+template<class T> struct RemoveCVRef { typedef typename RemoveCV<typename RemoveReference<T>::type>::type type; };
+
+template<typename T> struct IsVoid : IsSame<void, typename RemoveCV<T>::type> {};
+
+namespace details {
+    template<class T> struct IsMemberFunctionPointerImpl : FalseType {};
+    template<class T, class U> struct IsMemberFunctionPointerImpl<T U::*> : IsFunction<T> {};
+
+    template<class T> struct IsMemberPointerImpl : FalseType {};
+    template<class T, class U> struct IsMemberPointerImpl<T U::*> : TrueType {};
+}
+
+template<class T> struct IsMemberFunctionPointer : details::IsMemberFunctionPointerImpl<typename RemoveCV<T>::type> {};
+template<class T> struct IsMemberPointer : details::IsMemberPointerImpl<typename RemoveCV<T>::type> {};
+
+template<class T> struct IsMemberObjectPointer {
+    enum { value = IsMemberPointer<T>::value && !IsMemberFunctionPointer<T>::value };
+};
+
 namespace details {
     template<typename T> auto try_add_pointer(int) -> TypeIdentity<typename RemoveReference<T>::type*>;
     template<typename T> auto try_add_pointer(...) -> TypeIdentity<T>;
@@ -112,7 +133,7 @@ namespace details {
     template<typename T> auto test_returnable(...) -> FalseType;
 
     template<typename From, typename To>
-    auto test_nonvoid_convertible(int) -> TrueTypeFor<decltype(declval<void (&)(To)>()(declval<From>()))>;
+    auto test_nonvoid_convertible(int) -> TrueTypeFor<decltype(LIIM::declval<void (&)(To)>()(LIIM::declval<From>()))>;
     template<typename From, typename To> auto test_nonvoid_convertible(...) -> FalseType;
 }
 
@@ -139,6 +160,161 @@ template<typename T> inline constexpr T&& forward(typename TypeIdentity<T>::type
 template<typename T> inline typename RemoveReference<T>::type&& move(T&& arg) {
     return static_cast<typename RemoveReference<T>::type&&>(arg);
 }
+
+template<size_t... Ints> struct IndexSequence {
+    static constexpr int size() { return sizeof...(Ints); }
+    typedef IndexSequence type;
+    typedef size_t value_type;
+};
+
+namespace details {
+    template<typename T> using Invoke = typename T::type;
+
+    template<typename S1, typename S2> struct ConcatImpl;
+
+    template<size_t... I1, size_t... I2>
+    struct ConcatImpl<IndexSequence<I1...>, IndexSequence<I2...>> : IndexSequence<I1..., (sizeof...(I1) + I2)...> {};
+
+    template<typename S1, typename S2> using Concat = Invoke<ConcatImpl<S1, S2>>;
+
+    template<size_t N> struct GenSeqImpl;
+    template<size_t N> using GenSeq = Invoke<GenSeqImpl<N>>;
+    template<size_t N> struct GenSeqImpl : Concat<GenSeq<N / 2>, GenSeq<N - N / 2>> {};
+
+    template<> struct GenSeqImpl<0> : IndexSequence<> {};
+    template<> struct GenSeqImpl<1> : IndexSequence<0> {};
+}
+
+template<size_t N> using make_index_sequence = details::GenSeq<N>;
+
+template<typename T> struct ReferenceWrapper;
+
+template<typename T> struct IsReferenceWrapper : FalseType {};
+template<typename U> struct IsReferenceWrapper<ReferenceWrapper<U>> : TrueType {};
+
+template<typename T> struct IsUnion : FalseType {};
+
+namespace details {
+    template<bool b> struct BoolType {
+        enum { value = b };
+    };
+
+    template<class T> BoolType<!IsUnion<T>::value> test(int T::*);
+
+    template<class> FalseType test(...);
+}
+
+template<class T> struct IsClass : decltype(details::test<T>(nullptr)) {};
+
+namespace details {
+    template<typename B> TrueType test_pre_ptr_convertible(const volatile B*);
+    template<typename> FalseType test_pre_ptr_convertible(const volatile void*);
+
+    template<typename, typename> auto test_is_pre_base_of(...) -> TrueType;
+    template<typename B, typename D> auto test_is_pre_base_of(int) -> decltype(test_pre_ptr_convertible<B>(static_cast<D*>(nullptr)));
+}
+
+template<typename Base, typename Derived> struct IsBaseOf {
+    enum { value = IsClass<Base>::value && IsClass<Derived>::value && decltype(details::test_is_pre_base_of<Base, Derived>(0))::value };
+};
+
+namespace details {
+    namespace invoke {
+
+        template<typename T> struct InvokeImpl {
+            template<typename F, typename... Args>
+            static auto call(F&& f, Args&&... args) -> decltype(forward<F>(f)(forward<Args>(args)...));
+        };
+
+        template<typename B, typename MT> struct InvokeImpl<MT B::*> {
+            template<typename T, typename Td = typename Decay<T>::type, typename = typename EnableIf<IsBaseOf<B, Td>::value>::type>
+            static auto get(T&& t) -> T&&;
+
+            template<typename T, typename Td = typename Decay<T>::type, typename = typename EnableIf<IsReferenceWrapper<Td>::value>::type>
+            static auto get(T&& t) -> decltype(t.get());
+
+            template<typename T, typename Td = typename Decay<T>::type, class = typename EnableIf<!IsBaseOf<B, Td>::value>::type,
+                     typename = typename EnableIf<!IsReferenceWrapper<Td>::value>::type>
+            static auto get(T&& t) -> decltype(*forward<T>(t));
+
+            template<typename T, typename... Args, typename MT1, typename = typename EnableIf<IsFunction<MT1>::value>::type>
+            static auto call(MT1 B::*pmf, T&& t, Args&&... args) -> decltype((InvokeImpl::get(forward<T>(t)).*pmf)(forward<Args>(args)...));
+
+            template<typename T> static auto call(MT B::*pmd, T&& t) -> decltype(InvokeImpl::get(forward<T>(t)).*pmd);
+        };
+
+        template<typename F, typename... Args, typename Fd = typename Decay<F>::type>
+        auto INVOKE(F&& f, Args&&... args) -> decltype(InvokeImpl<Fd>::call(forward<F>(f), forward<Args>(args)...));
+
+        template<typename AlwaysVoid, typename, typename...> struct InvokeResult {};
+        template<typename F, typename... Args>
+        struct InvokeResult<decltype(void(invoke::INVOKE(LIIM::declval<F>(), LIIM::declval<Args>()...))), F, Args...> {
+            using type = decltype(invoke::INVOKE(LIIM::declval<F>(), LIIM::declval<Args>()...));
+        };
+    }
+}
+
+template<typename F, typename... ArgTypes> struct InvokeResult : details::invoke::InvokeResult<void, F, ArgTypes...> {};
+
+namespace details {
+    template<typename T, typename Type, typename T1, typename... Args>
+    constexpr decltype(auto) INVOKE(Type T::*f, T1&& t1, Args&&... args) {
+        if constexpr (IsMemberFunctionPointer<decltype(f)>::value) {
+            if constexpr (IsBaseOf<T, decay_t<T1>>::value)
+                return (forward<T1>(t1).*f)(forward<Args>(args)...);
+            else if constexpr (LIIM::IsReferenceWrapper<decay_t<T1>>::value)
+                return (t1.get().*f)(forward<Args>(args)...);
+            else
+                return ((*forward<T1>(t1)).*f)(forward<Args>(args)...);
+        } else {
+            static_assert(IsMemberObjectPointer<decltype(f)>::value);
+            static_assert(sizeof...(args) == 0);
+            if constexpr (IsBaseOf<T, decay_t<T1>>::value)
+                return forward<T1>(t1).*f;
+            else if constexpr (LIIM::IsReferenceWrapper<decay_t<T1>>::value)
+                return t1.get().*f;
+            else
+                return (*forward<T1>(t1)).*f;
+        }
+    }
+
+    template<class F, class... Args> constexpr decltype(auto) INVOKE(F&& f, Args&&... args) {
+        return forward<F>(f)(forward<Args>(args)...);
+    }
+}
+
+template<class F, class... Args> constexpr typename InvokeResult<F, Args...>::type invoke(F&& f, Args&&... args) {
+    return details::INVOKE(forward<F>(f), forward<Args>(args)...);
+}
+
+namespace details {
+    template<class T> constexpr T& FUN(T& t) { return t; }
+    template<class T> void FUN(T&&) = delete;
+}
+
+template<typename T> class ReferenceWrapper {
+public:
+    typedef T type;
+
+    template<class U, class = decltype(details::FUN<T>(LIIM::declval<U>()),
+                                       typename LIIM::EnableIf<!IsSame<ReferenceWrapper, typename RemoveCVRef<U>::type>::value>::type())>
+    constexpr ReferenceWrapper(U&& u) : _ptr(addressof(details::FUN<T>(forward<U>(u)))) {}
+    ReferenceWrapper(const ReferenceWrapper&) = default;
+
+    ReferenceWrapper& operator=(const ReferenceWrapper&) = default;
+
+    constexpr operator T&() const { return *_ptr; }
+    constexpr T& get() const { return *_ptr; }
+
+    template<typename... ArgTypes> constexpr typename InvokeResult<T&, ArgTypes...>::type operator()(ArgTypes&&... args) const {
+        return invoke(get(), forward<ArgTypes>(args)...);
+    }
+
+private:
+    T* _ptr;
+};
+
+template<typename T> ReferenceWrapper(T&)->ReferenceWrapper<T>;
 
 template<typename T> void swap(T& a, T& b) {
     T temp(a);
