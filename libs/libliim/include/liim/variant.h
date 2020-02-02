@@ -69,41 +69,104 @@ namespace TypeList {
     template<> struct Count<> {
         enum { value = 0 };
     };
+}
 
-    template<typename T> struct Box {
-        T& get_as_value() { return *reinterpret_cast<T*>(&m_storage[0]); }
-        unsigned char m_storage[sizeof(T)];
+namespace details {
+    template<typename T, size_t... place> struct Array;
+    template<typename T> struct Array<T> {
+        constexpr const T& access() const { return m_value; }
+
+        T m_value;
+    };
+    template<typename R, typename Visitor, typename... Variants, size_t head, size_t... tail>
+    struct Array<R (*)(Visitor, Variants...), head, tail...> {
+        static constexpr size_t index_in_array = sizeof...(Variants) - sizeof...(tail) - 1;
+
+        using FunctionType = R (*)(Visitor, Variants...);
+
+        template<typename... Args> constexpr const FunctionType& access(size_t first_index, Args... rest) const {
+            return m_array[first_index].access(rest...);
+        }
+
+        Array<FunctionType, tail...> m_array[head];
     };
 
-    template<typename... Types> union VariadicUnion;
-    template<typename First, typename... Last> union VariadicUnion<First, Last...> {
-        Box<First> m_first;
-        VariadicUnion<Last...> m_last;
+    template<typename ArrayType, typename VariantTuple, typename IndexSequence> struct ArrayBuilderImpl;
+    template<typename R, typename Visitor, size_t... dimensions, typename... Variants, size_t... indicies>
+    struct ArrayBuilderImpl<Array<R (*)(Visitor, Variants...), dimensions...>, Tuple<Variants...>, IndexSequence<indicies...>> {
+        static constexpr size_t variant_index = sizeof...(indicies);
+        using VariantType = typename RemoveReference<typename TypeList::TypeAtIndex<variant_index, Variants...>::type>::type;
+        using ArrayType = Array<R (*)(Visitor, Variants...), dimensions...>;
+
+        static constexpr ArrayType apply() {
+            ArrayType table {};
+            apply_all(table, LIIM::make_index_sequence<VariantType::num_variants()>());
+            return table;
+        }
+
+        template<size_t... variant_indicies> static constexpr void apply_all(ArrayType& table, IndexSequence<variant_indicies...>) {
+            (apply_one<variant_indicies>(table, table.m_array[variant_indicies]), ...);
+        }
+
+        template<size_t index, typename T> static constexpr void apply_one(ArrayType& array, T& element) {
+            element = ArrayBuilderImpl<typename RemoveReference<decltype(element)>::type, Tuple<Variants...>,
+                                       IndexSequence<indicies..., index>>::apply();
+        }
     };
-    template<> union VariadicUnion<> {};
+
+    template<typename R, typename Visitor, typename... Variants, size_t... indices>
+    struct ArrayBuilderImpl<Array<R (*)(Visitor, Variants...)>, Tuple<Variants...>, IndexSequence<indices...>> {
+        using ArrayType = Array<R (*)(Visitor, Variants...)>;
+
+        template<size_t index, typename Variant> static constexpr decltype(auto) element_in_variant_by_index(Variant&& var) {
+            return forward<Variant>(var).get(in_place_index<index>);
+        }
+
+        static constexpr decltype(auto) visit_invoke_impl(Visitor&& visitor, Variants... vars) {
+            if constexpr (IsVoid<R>::value) {
+                return (void) LIIM::invoke(forward<Visitor>(visitor), element_in_variant_by_index<indices>(forward<Variants>(vars))...);
+            } else
+                return LIIM::invoke(forward<Visitor>(visitor), element_in_variant_by_index<indices>(forward<Variants>(vars))...);
+        }
+
+        static constexpr decltype(auto) do_visit_invoke(Visitor&& visitor, Variants... vars) {
+            return visit_invoke_impl(forward<Visitor>(visitor), forward<Variants>(vars)...);
+        }
+
+        static constexpr decltype(auto) visit_invoke(Visitor&& visitor, Variants... vars) {
+            return do_visit_invoke(forward<Visitor>(visitor), forward<Variants>(vars)...);
+        }
+
+        static constexpr auto apply() { return ArrayType { &visit_invoke }; }
+    };
+
+    template<typename R, typename Visitor, typename... Variants> struct ArrayBuilder {
+        using ArrayType = Array<R (*)(Visitor, Variants...), (RemoveReference<Variants>::type::num_variants())...>;
+
+        static constexpr ArrayType table = ArrayBuilderImpl<ArrayType, Tuple<Variants...>, IndexSequence<>>::apply();
+    };
 }
 
 template<typename Visitor, typename... Variants> inline constexpr decltype(auto) visit(Visitor&& vis, Variants&&...);
-template<typename Visitor, typename Variant> inline constexpr decltype(auto) variant_get(Visitor&& vis);
 
 template<typename... Types> class Variant {
 public:
     Variant() {
         using FirstType = typename TypeList::First<Types...>::type;
-        new (&m_value_storage) FirstType();
+        new (&m_value_storage[0]) FirstType();
     }
 
     Variant(const Variant& other) : m_value_index(other.m_value_index) {
         const_cast<Variant&>(other).visit([&](auto&& value) {
             using RealType = decay_t<decltype(value)>;
-            new (&m_value_storage) RealType(value);
+            new (&m_value_storage[0]) RealType(value);
         });
     }
 
     Variant(Variant&& other) : m_value_index(other.m_value_index) {
         other.visit([&](auto&& value) {
             using RealType = decay_t<decltype(value)>;
-            new (&m_value_storage) RealType(LIIM::move(value));
+            new (&m_value_storage[0]) RealType(LIIM::move(value));
         });
     }
 
@@ -111,7 +174,7 @@ public:
         using RealType = typename TypeList::IsValid<T, Types...>::type;
         constexpr size_t index = TypeList::Index<RealType, Types...>::value;
         static_assert(index != -1);
-        new (&m_value_storage) RealType(other);
+        new (&m_value_storage[0]) RealType(other);
         m_value_index = index;
     }
 
@@ -119,7 +182,7 @@ public:
         using RealType = typename TypeList::IsValid<T, Types...>::type;
         constexpr size_t index = TypeList::Index<RealType, Types...>::value;
         static_assert(index != -1);
-        new (&m_value_storage) RealType(move(other));
+        new (&m_value_storage[0]) RealType(move(other));
         m_value_index = index;
     }
 
@@ -167,10 +230,17 @@ public:
         return &this->get<index>();
     }
 
+    template<size_t index> constexpr typename TypeList::TypeAtIndex<index, Types...>::type& get(in_place_index_t<index>) {
+        return this->get<index>();
+    }
+    template<size_t index> constexpr const typename TypeList::TypeAtIndex<index, Types...>::type& get(in_place_index_t<index>) const {
+        return this->get<index>();
+    }
+
     template<size_t index> constexpr typename TypeList::TypeAtIndex<index, Types...>::type& get() {
         assert(m_value_index == index);
         using RealType = typename TypeList::TypeAtIndex<index, Types...>::type;
-        return *reinterpret_cast<RealType*>(&m_value_storage);
+        return *reinterpret_cast<RealType*>(&m_value_storage[0]);
     }
     template<size_t index> constexpr const typename TypeList::TypeAtIndex<index, Types...>::type& get() const {
         return const_cast<Variant&>(*this).get<index>();
@@ -198,7 +268,7 @@ public:
     template<typename T, typename... Args, typename = typename EnableIf<TypeList::Index<T, Types...>::value != -1>::type>
     void emplace(Args&&... args) {
         this->destroy();
-        new (&m_value_storage) T(forward<Args>(args)...);
+        new (&m_value_storage[0]) T(forward<Args>(args)...);
         m_value_index = TypeList::Index<T, Types...>::value;
     }
 
@@ -212,7 +282,7 @@ public:
                 using OtherType = decay_t<decltype(b)>;
 
                 this->destroy();
-                new (&m_value_storage) OtherType(LIIM::move(b));
+                new (&m_value_storage[0]) OtherType(LIIM::move(b));
 
                 other.destroy();
                 new (&other.m_value_storage) TempType(LIIM::move(temp));
@@ -268,7 +338,6 @@ public:
 
 private:
     template<typename Visitor, typename... Variants> friend inline constexpr decltype(auto) visit(Visitor&&, Variants&&...);
-    template<size_t index, typename Variant> friend inline constexpr decltype(auto) variant_get(Variant&&);
 
     void destroy() {
         this->visit([this](auto&& val) {
@@ -277,7 +346,7 @@ private:
         });
     }
 
-    TypeList::VariadicUnion<Types...> m_value_storage;
+    unsigned char m_value_storage[TypeList::Size<Types...>::value];
     size_t m_value_index { 0 };
     static_assert(sizeof(m_value_storage) >= TypeList::Size<Types...>::value);
 };
@@ -286,98 +355,10 @@ template<typename... Types> void swap(Variant<Types...>& a, Variant<Types...>& b
     a.swap(b);
 }
 
-template<size_t index, typename Union> inline constexpr decltype(auto) variant_get(std::in_place_index_t<0>, Union&& u);
-
-template<typename Union> inline constexpr decltype(auto) variant_get(std::in_place_index_t<0>, Union&& u) {
-    return u.m_first.get_as_value();
-}
-
-template<size_t index, typename Union> inline constexpr decltype(auto) variant_get(std::in_place_index_t<index>, Union&& u) {
-    return LIIM::variant_get(std::in_place_index<index - 1>, forward<Union>(u).m_last);
-}
-
-template<size_t index, typename Variant> inline constexpr decltype(auto) variant_get(Variant&& v) {
-    return LIIM::variant_get(std::in_place_index<index>, forward<Variant>(v).m_value_storage);
-}
-
-template<typename T, size_t... place> struct Array;
-template<typename T> struct Array<T> {
-    constexpr const T& access() const { return m_value; }
-
-    T m_value;
-};
-template<typename R, typename Visitor, typename... Variants, size_t head, size_t... tail>
-struct Array<R (*)(Visitor, Variants...), head, tail...> {
-    static constexpr size_t index_in_array = sizeof...(Variants) - sizeof...(tail) - 1;
-
-    using FunctionType = R (*)(Visitor, Variants...);
-
-    template<typename... Args> constexpr const FunctionType& access(size_t first_index, Args... rest) const {
-        return m_array[first_index].access(rest...);
-    }
-
-    Array<FunctionType, tail...> m_array[head];
-};
-
-template<typename ArrayType, typename VariantTuple, typename IndexSequence> struct ArrayBuilderImpl;
-template<typename R, typename Visitor, size_t... dimensions, typename... Variants, size_t... indicies>
-struct ArrayBuilderImpl<Array<R (*)(Visitor, Variants...), dimensions...>, Tuple<Variants...>, IndexSequence<indicies...>> {
-    static constexpr size_t variant_index = sizeof...(indicies);
-    using VariantType = typename RemoveReference<typename TypeList::TypeAtIndex<variant_index, Variants...>::type>::type;
-    using ArrayType = Array<R (*)(Visitor, Variants...), dimensions...>;
-
-    static constexpr ArrayType apply() {
-        ArrayType table {};
-        apply_all(table, LIIM::make_index_sequence<VariantType::num_variants()>());
-        return table;
-    }
-
-    template<size_t... variant_indicies> static constexpr void apply_all(ArrayType& table, IndexSequence<variant_indicies...>) {
-        (apply_one<variant_indicies>(table, table.m_array[variant_indicies]), ...);
-    }
-
-    template<size_t index, typename T> static constexpr void apply_one(ArrayType& array, T& element) {
-        element = ArrayBuilderImpl<typename RemoveReference<decltype(element)>::type, Tuple<Variants...>,
-                                   IndexSequence<indicies..., index>>::apply();
-    }
-};
-
-template<typename R, typename Visitor, typename... Variants, size_t... indices>
-struct ArrayBuilderImpl<Array<R (*)(Visitor, Variants...)>, Tuple<Variants...>, IndexSequence<indices...>> {
-    using ArrayType = Array<R (*)(Visitor, Variants...)>;
-
-    template<size_t index, typename Variant> static constexpr decltype(auto) element_in_variant_by_index(Variant&& var) {
-        return variant_get<index>(forward<Variant>(var));
-    }
-
-    static constexpr decltype(auto) visit_invoke_impl(Visitor&& visitor, Variants... vars) {
-        if constexpr (IsVoid<R>::value) {
-            return (void) LIIM::invoke(forward<Visitor>(visitor), element_in_variant_by_index<indices>(forward<Variants>(vars))...);
-        } else
-            return LIIM::invoke(forward<Visitor>(visitor), element_in_variant_by_index<indices>(forward<Variants>(vars))...);
-    }
-
-    static constexpr decltype(auto) do_visit_invoke(Visitor&& visitor, Variants... vars) {
-        return visit_invoke_impl(forward<Visitor>(visitor), forward<Variants>(vars)...);
-    }
-
-    static constexpr decltype(auto) visit_invoke(Visitor&& visitor, Variants... vars) {
-        return do_visit_invoke(forward<Visitor>(visitor), forward<Variants>(vars)...);
-    }
-
-    static constexpr auto apply() { return ArrayType { &visit_invoke }; }
-};
-
-template<typename R, typename Visitor, typename... Variants> struct ArrayBuilder {
-    using ArrayType = Array<R (*)(Visitor, Variants...), (RemoveReference<Variants>::type::num_variants())...>;
-
-    static constexpr ArrayType table = ArrayBuilderImpl<ArrayType, Tuple<Variants...>, IndexSequence<>>::apply();
-};
-
 template<typename Visitor, typename... Variants> inline constexpr decltype(auto) visit(Visitor&& vis, Variants&&... vs) {
-    using R = typename InvokeResult<Visitor, decltype(variant_get<0>(LIIM::declval<Variants>()))...>::type;
+    using R = typename InvokeResult<Visitor, decltype(LIIM::declval<Variants>().get(in_place_index<0>))...>::type;
 
-    constexpr auto& table = ArrayBuilder<R, Visitor&&, Variants&&...>::table;
+    constexpr auto& table = details::ArrayBuilder<R, Visitor&&, Variants&&...>::table;
 
     auto func_ptr = table.access(vs.index()...);
     assert(func_ptr != nullptr);

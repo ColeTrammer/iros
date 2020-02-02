@@ -22,7 +22,7 @@ public:
         uint8_t b[16];
         int i = 0;
         while (read(font_file, b, 16) == 16) {
-            auto bitmap = std::make_shared<Bitmap<uint8_t>>(16 * CHAR_BIT);
+            auto bitmap = make_shared<Bitmap<uint8_t>>(16 * CHAR_BIT);
             memcpy(bitmap->bitmap(), b, 16);
             m_font_map.put(i++, bitmap);
         }

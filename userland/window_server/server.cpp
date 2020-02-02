@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <graphics/pixel_buffer.h>
 #include <graphics/renderer.h>
+#include <liim/pointers.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/un.h>

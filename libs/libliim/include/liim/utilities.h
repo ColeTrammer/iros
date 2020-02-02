@@ -10,7 +10,6 @@ inline void* operator new(size_t, void* p) {
     return p;
 }
 inline void* operator new[](size_t, void* p) {
-
     return p;
 }
 
@@ -27,12 +26,11 @@ void* calloc(size_t n, size_t sz);
 
 namespace std {
 typedef decltype(nullptr) nullptr_t;
-typedef __SIZE_TYPE__ size_t;
 }
 
 namespace LIIM {
 
-using std::size_t;
+typedef __SIZE_TYPE__ size_t;
 
 struct TrueType {
     enum { value = true };
@@ -53,7 +51,7 @@ template<typename T> struct IsSame<T, T> : TrueType {};
 
 template<typename T> struct IsArray : FalseType {};
 template<typename T> struct IsArray<T[]> : TrueType {};
-template<typename T, std::size_t N> struct IsArray<T[N]> : TrueType {};
+template<typename T, size_t N> struct IsArray<T[N]> : TrueType {};
 
 template<typename T> struct IsPointer : FalseType {};
 template<typename T> struct IsPointer<T*> : TrueType {};
@@ -84,7 +82,7 @@ template<typename T> struct RemoveReference<T&&> { typedef T type; };
 
 template<typename T> struct RemoveExtent { typedef T type; };
 template<typename T> struct RemoveExtent<T[]> { typedef T type; };
-template<typename T, std::size_t N> struct RemoveExtent<T[N]> { typedef T type; };
+template<typename T, size_t N> struct RemoveExtent<T[N]> { typedef T type; };
 
 template<typename T> struct RemoveConst { typedef T type; };
 template<typename T> struct RemoveConst<const T> { typedef T type; };
@@ -317,6 +315,9 @@ private:
 
 template<typename T> ReferenceWrapper(T&)->ReferenceWrapper<T>;
 
+template<size_t I> struct in_place_index_t { explicit in_place_index_t() = default; };
+template<size_t I> inline constexpr in_place_index_t<I> in_place_index {};
+
 template<typename T> void swap(T& a, T& b) {
     T temp(a);
     a = b;
@@ -325,4 +326,6 @@ template<typename T> void swap(T& a, T& b) {
 
 }
 
+using LIIM::in_place_index;
+using LIIM::in_place_index_t;
 using LIIM::move;

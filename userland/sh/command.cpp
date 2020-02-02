@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <functional>
+#include <liim/function.h>
 #include <liim/hash_map.h>
 #include <liim/linked_list.h>
 #include <liim/pointers.h>
@@ -268,7 +269,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 
     HashMap<String, bool> expanded;
     bool gone_once = false;
-    std::function<bool()> expand_alias = [&]() -> bool {
+    Function<bool()> expand_alias = [&]() -> bool {
         String first_word(we.we_wordv[0]);
         auto* alias = g_aliases.get(first_word);
         if (alias && !expanded.get(*alias)) {
