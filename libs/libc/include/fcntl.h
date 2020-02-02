@@ -1,6 +1,7 @@
 #ifndef _FCNTL_H
 #define _FCNTL_H 1
 
+#include <bits/seek_constants.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -37,13 +38,20 @@
 #define O_RSYNC    1024
 #define O_SYNC     2048
 
-#define O_ACCMODE 3
-
 #define O_EXEC   4096
 #define O_RDONLY 8192
 #define O_RDWR   16384
 #define O_SEARCH 32768
 #define O_WRONLY 65536
+
+#define O_ACCMODE (O_EXEC | O_RDONLY | O_RDWR | O_WRONLY)
+
+#define AT_FDCWD -1
+
+#define AT_EACCESS          1
+#define AT_SYMLINK_NOFOLLOW 2
+#define AT_SYMLINK_FOLLOW   4
+#define AT_REMOVE_DIR       8
 
 #ifdef __cplusplus
 extern "C" {
