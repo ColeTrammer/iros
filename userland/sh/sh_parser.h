@@ -177,7 +177,7 @@ public:
         assert(sc.command().type == ShValue::Command::Type::Simple);
         assert(io.has_io_redirect());
 
-        sc.command().simple_command.value().redirect_info.add(io.io_redirect());
+        sc.command().command.as<ShValue::SimpleCommand>().redirect_info.add(io.io_redirect());
         return sc;
     }
 
@@ -191,7 +191,7 @@ public:
         assert(sc.command().type == ShValue::Command::Type::Simple);
         assert(w.has_text());
 
-        sc.command().simple_command.value().assignment_words.add(ShValue::AssignmentWord { w.text() });
+        sc.command().command.as<ShValue::SimpleCommand>().assignment_words.add(ShValue::AssignmentWord { w.text() });
         return sc;
     }
 
@@ -205,7 +205,7 @@ public:
         assert(simple_command.command().type == ShValue::Command::Type::Simple);
         assert(io_redirect.has_io_redirect());
 
-        simple_command.command().simple_command.value().redirect_info.add(io_redirect.io_redirect());
+        simple_command.command().command.as<ShValue::SimpleCommand>().redirect_info.add(io_redirect.io_redirect());
         return simple_command;
     }
 
@@ -219,7 +219,7 @@ public:
         assert(simple_command.command().type == ShValue::Command::Type::Simple);
         assert(new_word.has_text());
 
-        simple_command.command().simple_command.value().words.add(new_word.text());
+        simple_command.command().command.as<ShValue::SimpleCommand>().words.add(new_word.text());
         return simple_command;
     }
 
@@ -235,15 +235,15 @@ public:
         assert(suffix.has_command());
         assert(suffix.command().type == ShValue::Command::Type::Simple);
 
-        simple_command.command().simple_command.value().words.add(name.text());
+        simple_command.command().command.as<ShValue::SimpleCommand>().words.add(name.text());
 
         // NOTE: the suffix can't have any assignment words
-        auto& other = suffix.command().simple_command.value();
+        auto& other = suffix.command().command.as<ShValue::SimpleCommand>();
         other.words.for_each([&](const auto& s) {
-            simple_command.command().simple_command.value().words.add(s);
+            simple_command.command().command.as<ShValue::SimpleCommand>().words.add(s);
         });
         other.redirect_info.for_each([&](const auto& i) {
-            simple_command.command().simple_command.value().redirect_info.add(i);
+            simple_command.command().command.as<ShValue::SimpleCommand>().redirect_info.add(i);
         });
         return simple_command;
     }
@@ -253,7 +253,7 @@ public:
         assert(simple_command.has_command());
         assert(simple_command.command().type == ShValue::Command::Type::Simple);
 
-        simple_command.command().simple_command.value().words.add(name.text());
+        simple_command.command().command.as<ShValue::SimpleCommand>().words.add(name.text());
         return simple_command;
     }
 
@@ -262,7 +262,7 @@ public:
         assert(simple_command.has_command());
         assert(simple_command.command().type == ShValue::Command::Type::Simple);
 
-        simple_command.command().simple_command.value().words.add(name.text());
+        simple_command.command().command.as<ShValue::SimpleCommand>().words.add(name.text());
         return simple_command;
     }
 
@@ -271,7 +271,7 @@ public:
         assert(simple_command.has_command());
         assert(simple_command.command().type == ShValue::Command::Type::Simple);
 
-        simple_command.command().simple_command.value().words.insert(command_name.text(), 0);
+        simple_command.command().command.as<ShValue::SimpleCommand>().words.insert(command_name.text(), 0);
         return simple_command;
     }
 
@@ -309,12 +309,12 @@ public:
                                                                                      ShValue& action, ShValue& if_clause) override {
         assert(if_clause.has_command());
         assert(if_clause.command().type == ShValue::Command::Type::Compound);
-        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::If);
+        assert(if_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::If);
         assert(condition.has_list());
         assert(action.has_list());
 
         ShValue::IfClause::Condition if_part = { condition.list(), ShValue::IfClause::Condition::Type::Elif, action.list() };
-        if_clause.command().compound_command.value().if_clause.value().conditions.insert(if_part, 0);
+        if_clause.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::IfClause>().conditions.insert(if_part, 0);
         return if_clause;
     }
 
@@ -328,12 +328,12 @@ public:
                                                                                       ShValue&) override {
         assert(if_clause.has_command());
         assert(if_clause.command().type == ShValue::Command::Type::Compound);
-        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::If);
+        assert(if_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::If);
         assert(condition.has_list());
         assert(action.has_list());
 
         ShValue::IfClause::Condition if_part = { condition.list(), ShValue::IfClause::Condition::Type::If, action.list() };
-        if_clause.command().compound_command.value().if_clause.value().conditions.insert(if_part, 0);
+        if_clause.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::IfClause>().conditions.insert(if_part, 0);
         return if_clause;
     }
 
@@ -348,10 +348,10 @@ public:
     virtual ShValue reduce_wordlist$wordlist_word(ShValue& if_clause, ShValue& word) override {
         assert(if_clause.has_command());
         assert(if_clause.command().type == ShValue::Command::Type::Compound);
-        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
+        assert(if_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::For);
         assert(word.has_text());
 
-        if_clause.command().compound_command.value().for_clause.value().words.add(word.text());
+        if_clause.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::ForClause>().words.add(word.text());
         return if_clause;
     }
 
@@ -397,9 +397,10 @@ public:
         assert(list.has_list());
         assert(words.has_command());
         assert(words.command().type == ShValue::Command::Type::Compound);
-        assert(words.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
+        assert(words.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::For);
 
-        return name.create_for_clause(name.text(), words.command().compound_command.value().for_clause.value().words, list.list());
+        return name.create_for_clause(
+            name.text(), words.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::ForClause>().words, list.list());
     }
 
     virtual ShValue reduce_while_clause$while_compound_list_do_group(ShValue&, ShValue& condition, ShValue& action) override {
@@ -492,10 +493,10 @@ public:
     virtual ShValue reduce_case_list_ns$case_list_case_item_ns(ShValue& case_clause, ShValue& case_item) override {
         assert(case_clause.has_command());
         assert(case_clause.command().type == ShValue::Command::Type::Compound);
-        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        assert(case_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Case);
         assert(case_item.has_case_item());
 
-        case_clause.command().compound_command.value().case_clause.value().items.add(case_item.case_item());
+        case_clause.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::CaseClause>().items.add(case_item.case_item());
         return case_clause;
     }
 
@@ -508,10 +509,10 @@ public:
     virtual ShValue reduce_case_list$case_list_case_item(ShValue& case_clause, ShValue& case_item) override {
         assert(case_clause.has_command());
         assert(case_clause.command().type == ShValue::Command::Type::Compound);
-        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        assert(case_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Case);
         assert(case_item.has_case_item());
 
-        case_clause.command().compound_command.value().case_clause.value().items.add(case_item.case_item());
+        case_clause.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::CaseClause>().items.add(case_item.case_item());
         return case_clause;
     }
 
@@ -520,9 +521,9 @@ public:
         assert(word.has_text());
         assert(case_clause.has_command());
         assert(case_clause.command().type == ShValue::Command::Type::Compound);
-        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        assert(case_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Case);
 
-        case_clause.command().compound_command.value().case_clause.value().word = word.text();
+        case_clause.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::CaseClause>().word = word.text();
         return case_clause;
     }
 
@@ -532,9 +533,9 @@ public:
         assert(word.has_text());
         assert(case_clause.has_command());
         assert(case_clause.command().type == ShValue::Command::Type::Compound);
-        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        assert(case_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Case);
 
-        case_clause.command().compound_command.value().case_clause.value().word = word.text();
+        case_clause.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::CaseClause>().word = word.text();
         return case_clause;
     }
 
@@ -553,51 +554,51 @@ public:
     virtual ShValue reduce_compound_command$brace_group(ShValue& brace_group) override {
         assert(brace_group.has_command());
         assert(brace_group.command().type == ShValue::Command::Type::Compound);
-        assert(brace_group.command().compound_command.value().type == ShValue::CompoundCommand::Type::BraceGroup);
+        assert(brace_group.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::BraceGroup);
         return brace_group;
     }
 
     virtual ShValue reduce_compound_command$subshell(ShValue& subshell) override {
         assert(subshell.has_command());
         assert(subshell.command().type == ShValue::Command::Type::Compound);
-        assert(subshell.command().compound_command.value().type == ShValue::CompoundCommand::Type::Subshell);
+        assert(subshell.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Subshell);
         return subshell;
     }
 
     virtual ShValue reduce_compound_command$while_clause(ShValue& loop) override {
         assert(loop.has_command());
         assert(loop.command().type == ShValue::Command::Type::Compound);
-        assert(loop.command().compound_command.value().type == ShValue::CompoundCommand::Type::Loop);
-        assert(loop.command().compound_command.value().loop.value().type == ShValue::Loop::Type::While);
+        assert(loop.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Loop);
+        assert(loop.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::Loop>().type == ShValue::Loop::Type::While);
         return loop;
     }
 
     virtual ShValue reduce_compound_command$until_clause(ShValue& loop) override {
         assert(loop.has_command());
         assert(loop.command().type == ShValue::Command::Type::Compound);
-        assert(loop.command().compound_command.value().type == ShValue::CompoundCommand::Type::Loop);
-        assert(loop.command().compound_command.value().loop.value().type == ShValue::Loop::Type::Until);
+        assert(loop.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Loop);
+        assert(loop.command().command.as<ShValue::CompoundCommand>().clause.as<ShValue::Loop>().type == ShValue::Loop::Type::Until);
         return loop;
     }
 
     virtual ShValue reduce_compound_command$if_clause(ShValue& if_clause) override {
         assert(if_clause.has_command());
         assert(if_clause.command().type == ShValue::Command::Type::Compound);
-        assert(if_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::If);
+        assert(if_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::If);
         return if_clause;
     }
 
     virtual ShValue reduce_compound_command$for_clause(ShValue& for_clause) override {
         assert(for_clause.has_command());
         assert(for_clause.command().type == ShValue::Command::Type::Compound);
-        assert(for_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::For);
+        assert(for_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::For);
         return for_clause;
     }
 
     virtual ShValue reduce_compound_command$case_clause(ShValue& case_clause) override {
         assert(case_clause.has_command());
         assert(case_clause.command().type == ShValue::Command::Type::Compound);
-        assert(case_clause.command().compound_command.value().type == ShValue::CompoundCommand::Type::Case);
+        assert(case_clause.command().command.as<ShValue::CompoundCommand>().type == ShValue::CompoundCommand::Type::Case);
         return case_clause;
     }
 
@@ -612,7 +613,7 @@ public:
         assert(compound_command.command().type == ShValue::Command::Type::Compound);
         assert(list.has_redirect_list());
 
-        compound_command.command().compound_command.value().redirect_list = list.redirect_list();
+        compound_command.command().command.as<ShValue::CompoundCommand>().redirect_list = list.redirect_list();
         return compound_command;
     }
 
@@ -620,7 +621,7 @@ public:
         assert(command.has_command());
         assert(command.command().type == ShValue::Command::Type::Compound);
 
-        return command.create_function_definition(command.command().compound_command.value());
+        return command.create_function_definition(command.command().command.as<ShValue::CompoundCommand>());
     }
 
     virtual ShValue reduce_function_body$compound_command_redirect_list(ShValue& compound_command, ShValue& list) override {
@@ -635,7 +636,7 @@ public:
         assert(def.command().type == ShValue::Command::Type::FunctionDefinition);
         assert(name.has_text());
 
-        def.command().function_definition.value().name = name.text();
+        def.command().command.as<ShValue::FunctionDefinition>().name = name.text();
         return def;
     }
 

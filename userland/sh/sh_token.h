@@ -152,20 +152,15 @@ public:
         enum class MakeBraceGroup { Yes };
         enum class MakeSubshell { Yes };
 
-        CompoundCommand(const IfClause& _if_clause) : type(Type::If), if_clause(_if_clause) {}
-        CompoundCommand(const ForClause& _for_clause) : type(Type::For), for_clause(_for_clause) {}
-        CompoundCommand(const BraceGroup& _brace_group, MakeBraceGroup) : type(Type::BraceGroup), brace_group(_brace_group) {}
-        CompoundCommand(const Subshell& _subshell, MakeSubshell) : type(Type::Subshell), subshell(_subshell) {}
-        CompoundCommand(const Loop& _loop) : type(Type::Loop), loop(_loop) {}
-        CompoundCommand(const CaseClause& _case_clause) : type(Type::Case), case_clause(_case_clause) {}
+        CompoundCommand(const IfClause& _if_clause) : type(Type::If), clause(_if_clause) {}
+        CompoundCommand(const ForClause& _for_clause) : type(Type::For), clause(_for_clause) {}
+        CompoundCommand(const BraceGroup& _brace_group, MakeBraceGroup) : type(Type::BraceGroup), clause(_brace_group) {}
+        CompoundCommand(const Subshell& _subshell, MakeSubshell) : type(Type::Subshell), clause(_subshell) {}
+        CompoundCommand(const Loop& _loop) : type(Type::Loop), clause(_loop) {}
+        CompoundCommand(const CaseClause& _case_clause) : type(Type::Case), clause(_case_clause) {}
 
         Type type;
-        Maybe<ShValue::IfClause> if_clause;
-        Maybe<ShValue::ForClause> for_clause;
-        Maybe<ShValue::BraceGroup> brace_group;
-        Maybe<ShValue::Subshell> subshell;
-        Maybe<ShValue::Loop> loop;
-        Maybe<ShValue::CaseClause> case_clause;
+        Variant<ShValue::IfClause, ShValue::ForClause, ShValue::BraceGroup, ShValue::Subshell, ShValue::Loop, ShValue::CaseClause> clause;
         RedirectList redirect_list;
     };
 
@@ -181,15 +176,12 @@ public:
             FunctionDefinition,
         };
 
-        Command(const ShValue::SimpleCommand& _simple_command) : type(Type::Simple), simple_command(_simple_command) {}
-        Command(const ShValue::CompoundCommand& _compound_command) : type(Type::Compound), compound_command(_compound_command) {}
-        Command(const ShValue::FunctionDefinition& _function_definition)
-            : type(Type::FunctionDefinition), function_definition(_function_definition) {}
+        Command(const ShValue::SimpleCommand& _simple_command) : type(Type::Simple), command(_simple_command) {}
+        Command(const ShValue::CompoundCommand& _compound_command) : type(Type::Compound), command(_compound_command) {}
+        Command(const ShValue::FunctionDefinition& _function_definition) : type(Type::FunctionDefinition), command(_function_definition) {}
 
         Type type;
-        Maybe<ShValue::SimpleCommand> simple_command;
-        Maybe<ShValue::CompoundCommand> compound_command;
-        Maybe<ShValue::FunctionDefinition> function_definition;
+        Variant<ShValue::SimpleCommand, ShValue::CompoundCommand, ShValue::FunctionDefinition> command;
     };
 
     using Program = Vector<List>;
@@ -414,10 +406,10 @@ public:
                         switch (command.type) {
                             case ShValue::Command::Type::Simple: {
                                 fprintf(stderr, "    Simple Command\n");
-                                command.simple_command.value().assignment_words.for_each([&](auto& word) {
+                                command.command.as<SimpleCommand>().assignment_words.for_each([&](auto& word) {
                                     fprintf(stderr, "     Eq: %s\n", String(word).string());
                                 });
-                                command.simple_command.value().redirect_info.for_each([&](ShValue::IoRedirect& io) {
+                                command.command.as<SimpleCommand>().redirect_info.for_each([&](ShValue::IoRedirect& io) {
                                     switch (io.type) {
                                         case ShValue::IoRedirect::Type::InputAndOutputFileName:
                                             fprintf(stderr, "     IO: %d <> %s\n", io.number, String(io.rhs).string());
@@ -445,7 +437,7 @@ public:
                                     }
                                 });
                                 fprintf(stderr, "     ");
-                                command.simple_command.value().words.for_each([&](auto& w) {
+                                command.command.as<SimpleCommand>().words.for_each([&](auto& w) {
                                     fprintf(stderr, "%s ", String(w).string());
                                 });
                                 fprintf(stderr, "\n");

@@ -642,22 +642,22 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
     int ret = 0;
     switch (command.type) {
         case ShValue::CompoundCommand::Type::If:
-            ret = __do_if_clause(command.if_clause.value());
+            ret = __do_if_clause(command.clause.as<ShValue::IfClause>());
             break;
         case ShValue::CompoundCommand::Type::For:
-            ret = __do_for_clause(command.for_clause.value());
+            ret = __do_for_clause(command.clause.as<ShValue::ForClause>());
             break;
         case ShValue::CompoundCommand::Type::BraceGroup:
-            ret = do_command_list(command.brace_group.value());
+            ret = do_command_list(command.clause.as<ShValue::BraceGroup>());
             break;
         case ShValue::CompoundCommand::Type::Subshell:
-            ret = do_command_list(command.subshell.value());
+            ret = do_command_list(command.clause.as<ShValue::Subshell>());
             break;
         case ShValue::CompoundCommand::Type::Loop:
-            ret = __do_loop_clause(command.loop.value());
+            ret = __do_loop_clause(command.clause.as<ShValue::Loop>());
             break;
         case ShValue::CompoundCommand::Type::Case:
-            ret = __do_case_clause(command.case_clause.value());
+            ret = __do_case_clause(command.clause.as<ShValue::CaseClause>());
             break;
         default:
             assert(false);
@@ -704,11 +704,11 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
             StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
             switch (command.type) {
                 case ShValue::Command::Type::Compound:
-                    command.compound_command.value().redirect_list.add(
+                    command.command.as<ShValue::CompoundCommand>().redirect_list.add(
                         ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
                     break;
                 case ShValue::Command::Type::Simple:
-                    command.simple_command.value().redirect_info.add(
+                    command.command.as<ShValue::SimpleCommand>().redirect_info.add(
                         ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
                     break;
                 case ShValue::Command::Type::FunctionDefinition:
@@ -725,11 +725,11 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
             StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
             switch (command.type) {
                 case ShValue::Command::Type::Compound:
-                    command.compound_command.value().redirect_list.add(
+                    command.command.as<ShValue::CompoundCommand>().redirect_list.add(
                         ShValue::IoRedirect { STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, view });
                     break;
                 case ShValue::Command::Type::Simple:
-                    command.simple_command.value().redirect_info.add(
+                    command.command.as<ShValue::SimpleCommand>().redirect_info.add(
                         ShValue::IoRedirect { STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, view });
                     break;
                 case ShValue::Command::Type::FunctionDefinition:
@@ -744,13 +744,15 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
         pid_t pid = -1;
         switch (command.type) {
             case ShValue::Command::Type::FunctionDefinition:
-                pid = __do_function_definition(command.function_definition.value(), mode, &is_builtin, pgid, pipeline.commands.size() > 1);
+                pid = __do_function_definition(command.command.as<ShValue::FunctionDefinition>(), mode, &is_builtin, pgid,
+                                               pipeline.commands.size() > 1);
                 break;
             case ShValue::Command::Type::Compound:
-                pid = __do_compound_command(command.compound_command.value(), mode, &is_builtin, pgid, pipeline.commands.size() > 1);
+                pid = __do_compound_command(command.command.as<ShValue::CompoundCommand>(), mode, &is_builtin, pgid,
+                                            pipeline.commands.size() > 1);
                 break;
             case ShValue::Command::Type::Simple:
-                pid = __do_simple_command(command.simple_command.value(), mode, &is_builtin, pgid);
+                pid = __do_simple_command(command.command.as<ShValue::SimpleCommand>(), mode, &is_builtin, pgid);
                 break;
             default:
                 assert(false);
