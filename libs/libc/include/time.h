@@ -12,6 +12,13 @@
 
 #define CLOCKS_PER_SEC ((clock_t) 1000000)
 
+#define CLOCK_MONOTONIC          0
+#define CLOCK_PROCESS_CPUTIME_ID 1
+#define CLOCK_REALTIME           2
+#define CLOCK_THREAD_CPUIME_ID   3
+
+#define TIMER_ABSTIME 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -39,6 +46,11 @@ struct timespec {
     long tv_nsec;
 };
 
+struct itimerspec {
+    struct timespec it_interval;
+    struct timespec it_value;
+};
+
 time_t time(time_t *tloc);
 clock_t clock(void);
 double difftime(time_t t1, time_t t2);
@@ -55,6 +67,23 @@ struct tm *localtime(const time_t *t);
 struct tm *localtime_r(const time_t *__restrict timer, struct tm *__restrict result);
 
 size_t strftime(char *__restrict s, size_t n, const char *__restrict format, const struct tm *__restrict tm);
+char *strptime(const char *__restrict s, const char *__restrict format, struct tm *__restrict result);
+
+int nanosleep(const struct timespec *amount, struct timespec *remaining);
+
+int clock_getcpuclockid(pid_t pid, clockid_t *id);
+int clock_getres(clockid_t id, struct timespec *res);
+int clock_gettime(clockid_t id, struct timespec *res);
+int clock_nanosleep(clockid_t id, int flags, const struct timespec *amount, struct timespec *remaining);
+int clock_settime(clockid_t id, const struct timespec *to);
+
+int timer_create(clockid_t id, struct sigevent *__restrict sig, timer_t *__restrict timer);
+int timer_delete(timer_t timer);
+int timer_getoverrun(timer_t timer);
+int timer_gettime(timer_t timer, struct itimerspec *time);
+int timer_settime(timer_t timer, int flags, const struct itimerspec *__restrict new_time, struct itimerspec *__restrict old);
+
+void tzset(void);
 
 #ifdef __cplusplus
 }
