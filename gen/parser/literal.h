@@ -118,7 +118,11 @@ static inline String token_to_literal(const StringView& name) {
 #undef __ENUMERATE_LITERALS
 #define __ENUMERATE_LITERALS(c, n)          \
     if (next.starts_with(StringView(#n))) { \
-        output += String(c);                \
+        if (strcmp(#n, "BackSlash") == 0) { \
+            output += String("\\\\");       \
+        } else {                            \
+            output += String(c);            \
+        }                                   \
         i += StringView(#n).size();         \
         continue;                           \
     }

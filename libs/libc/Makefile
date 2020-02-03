@@ -36,6 +36,9 @@ LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
 ARCHDIR=arch/$(HOSTARCH)
 include $(ARCHDIR)/make.config
 
+# Include regex specific rules
+include $(ROOT)/libs/libc/regex/make.config
+
 # Updates flags
 CFLAGS:=$(CFLAGS) $(ARCH_CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) $(ARCH_CPPFLAGS) -DARCH=$(HOSTARCH)
@@ -100,6 +103,8 @@ $(BUILDDIR)/libs/libc/libgen/dirname.o \
 $(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \
+$(BUILDDIR)/libs/libc/regex/bre_lexer.o \
+$(BUILDDIR)/libs/libc/regex/generic_basic_parser.o \
 $(BUILDDIR)/libs/libc/signal/signal.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr.o \

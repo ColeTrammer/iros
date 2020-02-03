@@ -24,7 +24,7 @@ void Generator::generate_token_type_header(const String& path) {
     FILE* token_type_header = fdopen(ofd, "w");
     fprintf(token_type_header, "#pragma once\n\n");
 
-    fprintf(token_type_header, "enum class %sTokenType {\n", m_output_name.to_title_case().string());
+    fprintf(token_type_header, "enum class %sTokenType {\n", String(m_output_name).to_title_case().string());
     m_identifiers.for_each([&](const auto& id) {
         String name = String(id);
         fprintf(token_type_header, "    %s,\n", name.string());
