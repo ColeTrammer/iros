@@ -6,6 +6,8 @@
 #include <bits/clock_t.h>
 #include <bits/clockid_t.h>
 #include <bits/dev_t.h>
+#include <bits/fsblkcnt_t.h>
+#include <bits/fsfilcnt_t.h>
 #include <bits/gid_t.h>
 #include <bits/id_t.h>
 #include <bits/ino_t.h>
@@ -29,7 +31,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif /* __plusplus */
+#endif /* __cplusplus */
 
 typedef unsigned char u_char;
 typedef unsigned short u_short;
