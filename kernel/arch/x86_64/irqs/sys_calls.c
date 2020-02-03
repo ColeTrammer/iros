@@ -185,6 +185,33 @@ static int get_file_desc(int fd, struct file_descriptor **desc) {
     return 0;
 }
 
+static int get_at_directory(int fd, struct tnode **tnode) {
+    struct process *current = get_current_task()->process;
+    if (fd == AT_FDCWD) {
+        *tnode = current->cwd;
+        return 0;
+    }
+
+    if (fd < 0 || fd >= FOPEN_MAX) {
+        return -EBADF;
+    }
+
+    struct file *file = current->files[fd].file;
+    if (!file) {
+        return -EBADF;
+    }
+
+    if (!(file->flags & FS_DIR)) {
+        return -ENOTDIR;
+    }
+
+    *tnode = fs_get_tnode_for_file(file);
+    if (!*tnode) {
+        return -ENOTDIR;
+    }
+    return 0;
+}
+
 static int get_socket(int fd, struct file **filep) {
     if (fd < 0 || fd > FOPEN_MAX) {
         return -EBADF;
@@ -303,12 +330,13 @@ SYS_CALL(fork) {
     SYS_RETURN(child_process->pid);
 }
 
-SYS_CALL(open) {
+SYS_CALL(openat) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
-    SYS_PARAM2(int, flags);
-    SYS_PARAM3(mode_t, mode);
+    SYS_PARAM1_TRANSFORM(struct tnode *, base, int, get_at_directory);
+    SYS_PARAM2_VALIDATE(const char *, path, validate_path, -1);
+    SYS_PARAM3(int, flags);
+    SYS_PARAM4(mode_t, mode);
 
     assert(path != NULL);
 
@@ -316,7 +344,7 @@ SYS_CALL(open) {
 
     struct task *task = get_current_task();
 
-    struct file *file = fs_open(path, flags, &error);
+    struct file *file = fs_openat(base, path, flags, &error);
 
     if (file && (flags & O_EXCL)) {
         fs_close(file);

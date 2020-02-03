@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 int main(/* int argc, char **argv, char **envp */) {
-    int fd = syscall(SC_OPEN, "/usr/include/sys/syscall.h", O_RDONLY, 0);
+    int fd = syscall(SC_OPENAT, AT_FDCWD, "/usr/include/sys/syscall.h", O_RDONLY, 0);
     assert(fd != -1);
 
     char buf[4096];

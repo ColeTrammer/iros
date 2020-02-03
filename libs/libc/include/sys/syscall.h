@@ -5,7 +5,7 @@
     __ENUMERATE_SYSCALL(EXIT, exit, 1)                                         \
     __ENUMERATE_SYSCALL(SBRK, sbrk, 1)                                         \
     __ENUMERATE_SYSCALL(FORK, fork, 0)                                         \
-    __ENUMERATE_SYSCALL(OPEN, open, 3)                                         \
+    __ENUMERATE_SYSCALL(OPENAT, openat, 4)                                     \
     __ENUMERATE_SYSCALL(READ, read, 3)                                         \
     __ENUMERATE_SYSCALL(WRITE, write, 3)                                       \
     __ENUMERATE_SYSCALL(CLOSE, close, 1)                                       \

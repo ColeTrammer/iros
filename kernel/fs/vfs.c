@@ -305,6 +305,15 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 }
 
 int iname(const char *_path, int flags, struct tnode **result) {
+    struct task *current = get_current_task();
+    struct tnode *cwd = NULL;
+    if (current && current->process && current->process->cwd) {
+        cwd = current->process->cwd;
+    }
+    return iname_with_base(cwd, _path, flags, result);
+}
+
+int iname_with_base(struct tnode *base, const char *_path, int flags, struct tnode **result) {
     assert(root != NULL);
     assert(root->super_block != NULL);
 
@@ -313,14 +322,12 @@ int iname(const char *_path, int flags, struct tnode **result) {
         return -ENOENT;
     }
 
-    struct tnode *cwd = get_current_task()->process->cwd;
-    // Kernel process don't need a cwd, fill it in here.
-    if (!cwd) {
-        cwd = t_root;
+    if (!base) {
+        base = t_root;
     }
 
     int depth_storage = 0;
-    return do_iname(_path, flags, t_root, cwd, result, &depth_storage);
+    return do_iname(_path, flags, t_root, base, result, &depth_storage);
 }
 
 int fs_create(const char *file_name, mode_t mode) {
@@ -386,13 +393,17 @@ int fs_create(const char *file_name, mode_t mode) {
 }
 
 struct file *fs_open(const char *file_name, int flags, int *error) {
+    return fs_openat(NULL, file_name, flags, error);
+}
+
+struct file *fs_openat(struct tnode *base, const char *file_name, int flags, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
         return NULL;
     }
 
     struct tnode *tnode;
-    int ret = iname(file_name, 0, &tnode);
+    int ret = iname_with_base(base, file_name, 0, &tnode);
     if (ret < 0) {
         *error = ret;
         return NULL;
@@ -1604,4 +1615,27 @@ bool fs_is_exceptional(struct file *file) {
     assert(inode);
 
     return inode->excetional_activity;
+}
+
+struct tnode *fs_get_tnode_for_file(struct file *file) {
+    assert(file);
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    if (!inode) {
+        return NULL;
+    }
+
+    struct inode *parent = inode->parent->inode;
+    if (parent == inode) {
+        return fs_root();
+    }
+
+    struct tnode_list *child = parent->tnode_list;
+    while (child) {
+        if (child->tnode->inode == inode) {
+            return child->tnode;
+        }
+        child = child->next;
+    }
+
+    return NULL;
 }

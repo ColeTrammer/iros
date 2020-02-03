@@ -66,6 +66,7 @@ struct flock {
 };
 
 int open(const char *pathname, int flags, ...);
+int openat(int dirfd, const char *pathname, int flags, ...);
 int fcntl(int fd, int cmd, ...);
 int creat(const char *pathname, mode_t mode);
 

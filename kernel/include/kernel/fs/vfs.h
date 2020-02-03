@@ -17,6 +17,7 @@ struct iovec;
 void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 int iname(const char *path, int flags, struct tnode **result);
+int iname_with_base(struct tnode *base, const char *_path, int flags, struct tnode **result);
 
 int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer);
 int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len);
@@ -25,6 +26,7 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
 struct tnode *fs_root(void);
 int fs_create(const char *path, mode_t mode);
 struct file *fs_open(const char *file_name, int flags, int *error);
+struct file *fs_openat(struct tnode *base, const char *file_name, int flags, int *error);
 int fs_close(struct file *file);
 ssize_t fs_read(struct file *file, void *buffer, size_t len);
 ssize_t fs_write(struct file *file, const void *buffer, size_t len);
@@ -68,6 +70,8 @@ bool fs_is_exceptional(struct file *file);
 void load_fs(struct file_system *fs);
 
 char *get_tnode_path(struct tnode *tnode);
+
+struct tnode *fs_get_tnode_for_file(struct file *file);
 
 void init_vfs();
 
