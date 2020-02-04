@@ -87,11 +87,15 @@ protected:
         return m_lexer.peek_next_token_type();
     }
 
+    bool error() const { return m_error; }
+    void set_error() { m_error = true; }
+
 private:
     GenericLexer<TokenType, Value>& m_lexer;
     Stack<Value> m_value_stack;
     Stack<int> m_state_stack;
     int m_position { 0 };
     bool m_in_reduce { false };
+    bool m_error { false };
     TokenType m_reduce_type { TokenType::End };
 };

@@ -189,7 +189,7 @@ void Generator::generate_generic_parser(String path) {
         fprintf(file, "}\n\n");
 
         fprintf(file, "template<typename Value> bool Generic%sParser<Value>::parse() {\n", String(m_output_name).to_title_case().string());
-        fprintf(file, "    for (;;) {\n");
+        fprintf(file, "    for (; !this->error() ;) {\n");
         fprintf(file, "        switch (this->current_state()) {\n");
 
         for (int i = 0; i < m_table.table().size(); i++) {
@@ -262,7 +262,6 @@ void Generator::generate_generic_parser(String path) {
 
         fprintf(file, "        }\n");
         fprintf(file, "    }\n\n");
-        fprintf(file, "    assert(false);\n");
         fprintf(file, "    return false;\n");
         fprintf(file, "}\n\n");
     }
