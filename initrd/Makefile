@@ -70,6 +70,7 @@ $(BUILDDIR)/initrd/programs/tcp_test_a \
 $(BUILDDIR)/initrd/programs/te \
 $(BUILDDIR)/initrd/programs/test_cpp \
 $(BUILDDIR)/initrd/programs/test_exec \
+$(BUILDDIR)/initrd/programs/test_regex \
 $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/tgkill_test \
 $(BUILDDIR)/initrd/programs/thread_specific_data_test \
