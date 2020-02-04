@@ -1,6 +1,8 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/string.h>
+#include <liim/string_view.h>
 #include <liim/vector.h>
 #include <parser/generic_lexer.h>
 
@@ -34,8 +36,25 @@ public:
 
     int error_code() const { return m_error_code; }
 
+    const Vector<Token>& tokens() const { return m_tokens; }
+
 private:
-    const char* m_input_stream;
+    StringView peek(int n) const { return { &m_input_stream[m_position], &m_input_stream[m_position + n - 1] }; }
+    char peek() const { return m_input_stream[m_position]; }
+    char prev() const { return m_input_stream[m_position - 1]; }
+    void consume() { m_position++; }
+    void commit_token(BasicTokenType type) {
+        if (type == BasicTokenType::QuotedCharacter || type == BasicTokenType::BackReference) {
+            m_token_start++;
+        }
+        StringView text = { m_input_stream.string() + m_token_start, m_input_stream.string() + m_position - 1 };
+        m_tokens.add(Token { type, BREValue { TokenInfo { text, m_token_start } } });
+        m_token_start = m_position;
+    }
+
+    String m_input_stream;
+    size_t m_position { 0 };
+    size_t m_token_start { 0 };
     Vector<Token> m_tokens;
     int m_error_code { 0 };
     size_t m_current_position_to_parser { 0 };

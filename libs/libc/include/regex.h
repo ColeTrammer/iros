@@ -42,7 +42,7 @@ typedef struct {
 
 int regcomp(regex_t *__restrict regex, const char *__restrict str, int cflags);
 size_t regerror(int error, const regex_t *__restrict regex, char *__restrict buf, size_t buffer_len);
-int regexec(const regex_t *__restrict regex, const char *__restrict str, size_t nmatch, regmatch_t matches[__restrict], int eflags);
+int regexec(const regex_t *__restrict regex, const char *__restrict str, size_t nmatch, regmatch_t __restrict matches[], int eflags);
 void regfree(regex_t *regex);
 
 #ifdef __cplusplus
