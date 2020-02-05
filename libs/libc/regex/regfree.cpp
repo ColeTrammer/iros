@@ -4,10 +4,12 @@
 #include "bre_parser.h"
 
 extern "C" void regfree(regex_t* regex) {
-    BRECompiledData* data = reinterpret_cast<BRECompiledData*>(regex->__re_compiled_data);
-    data->~BRECompiledData();
-    free(data);
+    if (regex->__re_compiled_data) {
+        BRECompiledData* data = reinterpret_cast<BRECompiledData*>(regex->__re_compiled_data);
+        data->~BRECompiledData();
+        free(data);
+        regex->__re_compiled_data = nullptr;
+    }
 
     regex->re_nsub = 0;
-    regex->__re_compiled_data = nullptr;
 }

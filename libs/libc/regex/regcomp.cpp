@@ -33,5 +33,6 @@ extern "C" int regcomp(regex_t* __restrict regex, const char* __restrict str, in
 regcomp_error:
     compiled_data->~BRECompiledData();
     free(compiled_data);
+    regex->__re_compiled_data = nullptr;
     return error;
 }
