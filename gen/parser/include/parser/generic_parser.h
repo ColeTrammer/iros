@@ -90,6 +90,9 @@ protected:
     bool error() const { return m_error; }
     void set_error() { m_error = true; }
 
+    GenericLexer<TokenType, Value>& lexer() { return m_lexer; }
+    const GenericLexer<TokenType, Value>& lexer() const { return m_lexer; }
+
 private:
     GenericLexer<TokenType, Value>& m_lexer;
     Stack<Value> m_value_stack;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/hash_map.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <liim/vector.h>
@@ -36,6 +37,18 @@ public:
 
     int error_code() const { return m_error_code; }
 
+    int group_at_position(size_t index) const {
+        ssize_t i = static_cast<ssize_t>(index);
+        for (; i >= 0; i--) {
+            printf("%ld\n", i);
+            const int* group_index = m_group_incidices.get(static_cast<size_t>(i));
+            if (group_index) {
+                return *group_index;
+            }
+        }
+        return 0;
+    }
+
     const Vector<Token>& tokens() const { return m_tokens; }
 
 private:
@@ -57,5 +70,7 @@ private:
     size_t m_token_start { 0 };
     Vector<Token> m_tokens;
     int m_error_code { 0 };
+    int m_group_count { 0 };
     size_t m_current_position_to_parser { 0 };
+    HashMap<size_t, int> m_group_incidices;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/maybe.h>
+#include <liim/pointers.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <liim/variant.h>
@@ -21,15 +22,18 @@ struct DuplicateCount {
     int max;
 };
 
-struct BRESingleExpression {
-    enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression };
-    Type type;
-    Variant<char, BracketExpression> expression;
-    Maybe<DuplicateCount> duplicate;
-};
+struct BRESingleExpression;
 
 struct BRExpression {
-    Vector<BRESingleExpression> parts;
+    Vector<SharedPtr<BRESingleExpression>> parts;
+    int index;
+};
+
+struct BRESingleExpression {
+    enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression, Backreference, Group };
+    Type type;
+    Variant<char, BracketExpression, int, BRExpression> expression;
+    Maybe<DuplicateCount> duplicate;
 };
 
 struct BRE {
@@ -38,7 +42,7 @@ struct BRE {
     BRExpression expression;
 };
 
-using BREValue = Variant<Monostate, TokenInfo, DuplicateCount, BRESingleExpression, BRExpression, BRE>;
+using BREValue = Variant<Monostate, TokenInfo, DuplicateCount, SharedPtr<BRESingleExpression>, BRExpression, BRE>;
 
 inline void dump(const BREValue& value) {
     const_cast<BREValue&>(value).visit([](auto&& v) {
@@ -64,8 +68,8 @@ inline void dump(const BREValue& value) {
                     fprintf(stderr, "  DUPL: Between %d %d\n", dup.min, dup.max);
                     break;
             }
-        } else if constexpr (IsSame<BRESingleExpression, T>::value) {
-            const BRESingleExpression& exp = v;
+        } else if constexpr (IsSame<SharedPtr<BRESingleExpression>, T>::value) {
+            const BRESingleExpression& exp = *v;
             switch (exp.type) {
                 case BRESingleExpression::Type::Any:
                     fprintf(stderr, "  Any\n");
@@ -79,12 +83,22 @@ inline void dump(const BREValue& value) {
                 case BRESingleExpression::Type::BracketExpression:
                     fprintf(stderr, "  []\n");
                     break;
+                case BRESingleExpression::Type::Backreference:
+                    fprintf(stderr, "  \\%d\n", exp.expression.as<int>());
+                    break;
+                case BRESingleExpression::Type::Group:
+                    fprintf(stderr, "  - Group -\n");
+                    dump({ exp.expression.as<BRExpression>() });
+                    fprintf(stderr, "  - End -\n");
+                    break;
             }
             if (exp.duplicate.has_value()) {
                 dump({ exp.duplicate.value() });
             }
         } else if constexpr (IsSame<BRExpression, T>::value) {
-            v.parts.for_each([&](const BRESingleExpression& exp) {
+            const Vector<SharedPtr<BRESingleExpression>> exps = v.parts;
+            fprintf(stderr, "BRExpression: %d\n", v.index);
+            exps.for_each([&](const auto& exp) {
                 dump({ exp });
             });
         } else {

@@ -179,7 +179,12 @@ bool BRELexer::lex() {
             case '9':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::BackReference);
+                    if (prev() == '0') {
+                        m_error_code = REG_ESUBREG;
+                        return false;
+                    } else {
+                        commit_token(BasicTokenType::BackReference);
+                    }
                 } else if (m_tokens.last().type() == BasicTokenType::BackSlashLeftCurlyBrace ||
                            m_tokens.last().type() == BasicTokenType::Comma) {
                     while (isdigit(peek())) {
@@ -194,6 +199,8 @@ bool BRELexer::lex() {
                 consume();
                 if (prev_was_backslash) {
                     commit_token(BasicTokenType::BackSlashLeftParenthesis);
+                    printf("%lu: %d\n", m_position - 2, m_group_count + 1);
+                    m_group_incidices.put(m_position - 2, ++m_group_count);
                 } else {
                     commit_token(BasicTokenType::OrdinaryCharacter);
                 }

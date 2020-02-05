@@ -2,6 +2,7 @@
 
 #include <regex.h>
 
+#include "bre_lexer.h"
 #include "bre_value.h"
 #include "generic_basic_parser.h"
 
@@ -9,7 +10,10 @@ class BREParser final : public GenericBasicParser<BREValue> {
 public:
     using Token = GenericToken<BasicTokenType, BREValue>;
 
-    BREParser(GenericLexer<BasicTokenType, BREValue>& lexer) : GenericBasicParser<BREValue>(lexer) {}
+    BREParser(BRELexer& lexer) : GenericBasicParser<BREValue>(lexer) {}
+
+    BRELexer& lexer() { return static_cast<BRELexer&>(this->GenericParser::lexer()); }
+    const BRELexer& lexer() const { return const_cast<BREParser&>(*this).lexer(); }
 
     int error_code() const { return m_error_code; }
 
@@ -74,43 +78,91 @@ public:
 
     virtual BREValue reduce_one_char_or_coll_elem_re$ordinarycharacter(BREValue& ch) override {
         assert(ch.is<TokenInfo>());
-        return { BRESingleExpression { BRESingleExpression::Type::OrdinaryCharacter, *ch.as<TokenInfo>().text.start(), {} } };
+        return { SharedPtr<BRESingleExpression>(
+            new BRESingleExpression { BRESingleExpression::Type::OrdinaryCharacter, *ch.as<TokenInfo>().text.start(), {} }) };
     }
 
     virtual BREValue reduce_nondupl_re$one_char_or_coll_elem_re(BREValue& se) override {
-        assert(se.is<BRESingleExpression>());
+        assert(se.is<SharedPtr<BRESingleExpression>>());
         return se;
     }
 
+    virtual BREValue reduce_nondupl_re$backreference(BREValue& v) override {
+        assert(v.is<TokenInfo>());
+        int group_index = static_cast<int>(*v.as<TokenInfo>().text.start() - '0');
+        if (group_index > lexer().group_at_position(v.as<TokenInfo>().position)) {
+            m_error_code = REG_ESUBREG;
+            set_error();
+            return {};
+        }
+        return { SharedPtr<BRESingleExpression>(new BRESingleExpression { BRESingleExpression::Type::Backreference, group_index, {} }) };
+    }
+
+    virtual BREValue reduce_nondupl_re$backslashleftparenthesis_re_expression_backslashrightparenthesis(BREValue& a, BREValue& v,
+                                                                                                        BREValue&) override {
+        assert(a.is<TokenInfo>());
+        assert(v.is<BRExpression>());
+        v.as<BRExpression>().index = lexer().group_at_position(a.as<TokenInfo>().position);
+        return { SharedPtr<BRESingleExpression>(
+            new BRESingleExpression { BRESingleExpression::Type::Group, move(v.as<BRExpression>()), {} }) };
+    }
+
     virtual BREValue reduce_simple_re$nondupl_re(BREValue& v) override {
-        assert(v.is<BRESingleExpression>());
+        assert(v.is<SharedPtr<BRESingleExpression>>());
         return v;
     }
 
     virtual BREValue reduce_simple_re$nondupl_re_re_dupl_symbol(BREValue& v, BREValue& c) override {
-        assert(v.is<BRESingleExpression>());
+        assert(v.is<SharedPtr<BRESingleExpression>>());
         assert(c.is<DuplicateCount>());
-        v.as<BRESingleExpression>().duplicate = { move(c.as<DuplicateCount>()) };
+        v.as<SharedPtr<BRESingleExpression>>()->duplicate = { move(c.as<DuplicateCount>()) };
         return v;
     }
 
     virtual BREValue reduce_re_expression$simple_re(BREValue& v) override {
-        assert(v.is<BRESingleExpression>());
-        Vector<BRESingleExpression> exps;
-        exps.add(move(v.as<BRESingleExpression>()));
-        return { BRExpression { move(exps) } };
+        assert(v.is<SharedPtr<BRESingleExpression>>());
+        Vector<SharedPtr<BRESingleExpression>> exps;
+        exps.add(v.as<SharedPtr<BRESingleExpression>>());
+        return { BRExpression { move(exps), 0 } };
     }
 
     virtual BREValue reduce_re_expression$re_expression_simple_re(BREValue& exps, BREValue& v) override {
         assert(exps.is<BRExpression>());
-        assert(v.is<BRESingleExpression>());
-        exps.as<BRExpression>().parts.add(move(v.as<BRESingleExpression>()));
+        assert(v.is<SharedPtr<BRESingleExpression>>());
+        exps.as<BRExpression>().parts.add(v.as<SharedPtr<BRESingleExpression>>());
         return exps;
     }
 
     virtual BREValue reduce_basic_reg_exp$re_expression(BREValue& v) override {
         assert(v.is<BRExpression>());
         return { BRE { false, false, move(v.as<BRExpression>()) } };
+    }
+
+    virtual BREValue reduce_basic_reg_exp$leftanchor_re_expression(BREValue&, BREValue& v) override {
+        assert(v.is<BRExpression>());
+        return { BRE { true, false, move(v.as<BRExpression>()) } };
+    }
+
+    virtual BREValue reduce_basic_reg_exp$re_expression_rightanchor(BREValue& v, BREValue&) override {
+        assert(v.is<BRExpression>());
+        return { BRE { false, true, move(v.as<BRExpression>()) } };
+    }
+
+    virtual BREValue reduce_basic_reg_exp$leftanchor_re_expression_rightanchor(BREValue&, BREValue& v, BREValue&) override {
+        assert(v.is<BRExpression>());
+        return { BRE { true, true, move(v.as<BRExpression>()) } };
+    }
+
+    virtual BREValue reduce_basic_reg_exp$leftanchor(BREValue&) override {
+        return { BRE { true, false, BRExpression { Vector<SharedPtr<BRESingleExpression>> {}, 0 } } };
+    }
+
+    virtual BREValue reduce_basic_reg_exp$rightanchor(BREValue&) override {
+        return { BRE { false, true, BRExpression { Vector<SharedPtr<BRESingleExpression>> {}, 0 } } };
+    }
+
+    virtual BREValue reduce_basic_reg_exp$leftanchor_rightanchor(BREValue&, BREValue&) override {
+        return { BRE { true, true, BRExpression { Vector<SharedPtr<BRESingleExpression>> {}, 0 } } };
     }
 
 private:
