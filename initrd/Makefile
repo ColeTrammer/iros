@@ -51,6 +51,7 @@ $(BUILDDIR)/initrd/programs/pipe_test \
 $(BUILDDIR)/initrd/programs/pthread_atfork_test \
 $(BUILDDIR)/initrd/programs/pthread_attr_test \
 $(BUILDDIR)/initrd/programs/queue_test \
+$(BUILDDIR)/initrd/programs/regex_test \
 $(BUILDDIR)/initrd/programs/scanf_test \
 $(BUILDDIR)/initrd/programs/select_test \
 $(BUILDDIR)/initrd/programs/serial \

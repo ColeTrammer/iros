@@ -11,6 +11,7 @@ typedef long regoff_t;
 
 typedef struct {
     size_t re_nsub;
+    void *__re_compiled_data;
 } regex_t;
 
 typedef struct {
@@ -42,7 +43,11 @@ typedef struct {
 
 int regcomp(regex_t *__restrict regex, const char *__restrict str, int cflags);
 size_t regerror(int error, const regex_t *__restrict regex, char *__restrict buf, size_t buffer_len);
+#ifdef __cplusplus
 int regexec(const regex_t *__restrict regex, const char *__restrict str, size_t nmatch, regmatch_t __restrict matches[], int eflags);
+#else
+int regexec(const regex_t *__restrict regex, const char *__restrict str, size_t nmatch, regmatch_t matches[__restrict], int eflags);
+#endif /* __cplusplus */
 void regfree(regex_t *regex);
 
 #ifdef __cplusplus

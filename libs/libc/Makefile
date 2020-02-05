@@ -105,6 +105,10 @@ $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \
 $(BUILDDIR)/libs/libc/regex/bre_lexer.o \
 $(BUILDDIR)/libs/libc/regex/generic_basic_parser.o \
+$(BUILDDIR)/libs/libc/regex/regcomp.o \
+$(BUILDDIR)/libs/libc/regex/regerror.o \
+$(BUILDDIR)/libs/libc/regex/regexec.o \
+$(BUILDDIR)/libs/libc/regex/regfree.o \
 $(BUILDDIR)/libs/libc/signal/signal.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr.o \
@@ -203,6 +207,7 @@ $(BUILDDIR)/libs/libc/unistd/unistd.o \
 $(BUILDDIR)/libs/libc/unistd/write.o \
 $(BUILDDIR)/libs/libc/utime/utime.o \
 $(BUILDDIR)/libs/libc/wordexp/wordexp.o \
+$(BUILDDIR)/libs/libc/cxx.o \
 $(BUILDDIR)/libs/libc/init.o
 
 # Lists all objects
@@ -231,7 +236,7 @@ $(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 $(BUILDDIR)/%.o: $(ROOT)/%.cpp
-	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -std=c++17
+	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -std=c++17 -fno-rtti -fno-exceptions -Werror -Wall -Wextra -std=c++17 -ffreestanding -nostdinc++
 
 $(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)

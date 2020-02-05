@@ -4,6 +4,7 @@
 #include <new>
 #include <stdlib.h>
 #else
+#include <bits/malloc.h>
 #include <stddef.h>
 
 inline void* operator new(size_t, void* p) {

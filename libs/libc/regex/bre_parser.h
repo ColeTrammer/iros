@@ -168,3 +168,10 @@ public:
 private:
     int m_error_code { 0 };
 };
+
+struct BRECompiledData {
+    BRELexer lexer;
+    BREParser parser;
+
+    BRECompiledData(const char* str) : lexer(str), parser(lexer) {}
+};

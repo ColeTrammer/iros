@@ -36,6 +36,7 @@ public:
     virtual void advance() override { m_current_position_to_parser++; }
 
     int error_code() const { return m_error_code; }
+    int num_sub_expressions() const { return m_group_count; }
 
     int group_at_position(size_t index) const {
         ssize_t i = static_cast<ssize_t>(index);
