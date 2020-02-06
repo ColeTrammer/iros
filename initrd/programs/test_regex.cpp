@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    BRELexer lexer(argv[1]);
+    BRELexer lexer(argv[1], 0);
     if (!lexer.lex()) {
         printf("Failed: %d\n", lexer.error_code());
         return 1;
@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
         printf("%s '%s'\n", BREParser::token_type_to_string(token.type()), String(token.value().as<TokenInfo>().text).string());
     });
 
-    BREParser parser(lexer);
+    BREParser parser(lexer, 0);
     if (!parser.parse()) {
         printf("Failed: %d\n", parser.error_code());
         return 1;

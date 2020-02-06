@@ -179,7 +179,7 @@ bool BRELexer::lex() {
             case '9':
                 consume();
                 if (prev_was_backslash) {
-                    if (prev() == '0') {
+                    if (prev() == '0' || (m_flags & REG_NOSUB)) {
                         m_error_code = REG_ESUBREG;
                         return false;
                     } else {

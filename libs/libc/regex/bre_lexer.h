@@ -14,7 +14,7 @@ class BRELexer final : public GenericLexer<BasicTokenType, BREValue> {
 public:
     using Token = GenericToken<BasicTokenType, BREValue>;
 
-    BRELexer(const char* regex) : m_input_stream(regex) {};
+    BRELexer(const char* regex, int cflags) : m_input_stream(regex), m_flags(cflags) {};
     virtual ~BRELexer();
 
     bool lex();
@@ -72,6 +72,7 @@ private:
     Vector<Token> m_tokens;
     int m_error_code { 0 };
     int m_group_count { 0 };
+    int m_flags { 0 };
     size_t m_current_position_to_parser { 0 };
     HashMap<size_t, int> m_group_incidices;
 };

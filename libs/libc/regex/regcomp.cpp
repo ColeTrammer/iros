@@ -15,7 +15,7 @@ extern "C" int regcomp(regex_t* __restrict regex, const char* __restrict str, in
     }
 
     int error = 0;
-    new (compiled_data) BRECompiledData(str);
+    new (compiled_data) BRECompiledData(str, cflags);
     if (!compiled_data->lexer.lex()) {
         error = compiled_data->lexer.error_code();
         goto regcomp_error;

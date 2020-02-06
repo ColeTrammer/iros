@@ -10,14 +10,12 @@ class BREParser final : public GenericBasicParser<BREValue> {
 public:
     using Token = GenericToken<BasicTokenType, BREValue>;
 
-    BREParser(BRELexer& lexer) : GenericBasicParser<BREValue>(lexer) {}
+    BREParser(BRELexer& lexer, int cflags) : GenericBasicParser<BREValue>(lexer), m_flags(cflags) {}
 
     BRELexer& lexer() { return static_cast<BRELexer&>(this->GenericParser::lexer()); }
     const BRELexer& lexer() const { return const_cast<BREParser&>(*this).lexer(); }
 
     int error_code() const { return m_error_code; }
-
-    virtual void on_error(BasicTokenType) override { m_error_code = REG_BADPAT; }
 
     const BREValue& result() const { return peek_value_stack(); };
 
@@ -25,6 +23,9 @@ public:
         assert(v.is<TokenInfo>());
         return { DuplicateCount { DuplicateCount::Type::Star, 0, __INT_MAX__ } };
     }
+
+private:
+    virtual void on_error(BasicTokenType) override { m_error_code = REG_BADPAT; }
 
     virtual BREValue reduce_re_dupl_symbol$backslashleftcurlybrace_duplicatecount_backslashrightcurlybrace(BREValue&, BREValue& c,
                                                                                                            BREValue&) override {
@@ -167,11 +168,13 @@ public:
 
 private:
     int m_error_code { 0 };
+    int m_flags { 0 };
 };
 
 struct BRECompiledData {
     BRELexer lexer;
     BREParser parser;
+    int cflags;
 
-    BRECompiledData(const char* str) : lexer(str), parser(lexer) {}
+    BRECompiledData(const char* str, int flags) : lexer(str, flags), parser(lexer, flags) {}
 };

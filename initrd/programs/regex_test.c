@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
         char error_string[1024];
         regerror(ret, &regex, error_string, 1024);
         fprintf(stderr, "regcomp: %s\n", error_string);
+        regfree(&regex);
         return 1;
     }
 
@@ -23,6 +24,7 @@ int main(int argc, char **argv) {
     if (result != 0) {
         assert(result == REG_NOMATCH);
         fprintf(stderr, "regexec: no match '%s' '%s'\n", argv[1], argv[2]);
+        regfree(&regex);
         return 1;
     }
 
