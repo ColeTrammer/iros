@@ -80,7 +80,11 @@ private:
     virtual BREValue reduce_one_char_or_coll_elem_re$ordinarycharacter(BREValue& ch) override {
         assert(ch.is<TokenInfo>());
         return { SharedPtr<BRESingleExpression>(
-            new BRESingleExpression { BRESingleExpression::Type::OrdinaryCharacter, *ch.as<TokenInfo>().text.start(), {} }) };
+            new BRESingleExpression { BRESingleExpression::Type::OrdinaryCharacter, { *ch.as<TokenInfo>().text.start() }, {} }) };
+    }
+
+    virtual BREValue reduce_one_char_or_coll_elem_re$period(BREValue&) override {
+        return { SharedPtr<BRESingleExpression>(new BRESingleExpression { BRESingleExpression::Type::Any, { '.' }, {} }) };
     }
 
     virtual BREValue reduce_nondupl_re$one_char_or_coll_elem_re(BREValue& se) override {
@@ -169,12 +173,4 @@ private:
 private:
     int m_error_code { 0 };
     int m_flags { 0 };
-};
-
-struct BRECompiledData {
-    BRELexer lexer;
-    BREParser parser;
-    int cflags;
-
-    BRECompiledData(const char* str, int flags) : lexer(str, flags), parser(lexer, flags) {}
 };

@@ -316,6 +316,9 @@ private:
 
 template<typename T> ReferenceWrapper(T&)->ReferenceWrapper<T>;
 
+template<class T> struct in_place_type_t { explicit in_place_type_t() = default; };
+template<class T> inline constexpr in_place_type_t<T> in_place_type {};
+
 template<size_t I> struct in_place_index_t { explicit in_place_index_t() = default; };
 template<size_t I> inline constexpr in_place_index_t<I> in_place_index {};
 
@@ -327,6 +330,9 @@ template<typename T> void swap(T& a, T& b) {
 
 }
 
+using LIIM::forward;
 using LIIM::in_place_index;
 using LIIM::in_place_index_t;
+using LIIM::in_place_type;
+using LIIM::in_place_type_t;
 using LIIM::move;

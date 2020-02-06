@@ -2,6 +2,7 @@
 #include <bits/malloc.h>
 #include <regex.h>
 
+#include "bre_graph.h"
 #include "bre_lexer.h"
 #include "bre_parser.h"
 #include "bre_value.h"
@@ -9,30 +10,39 @@
 extern "C" int regcomp(regex_t* __restrict regex, const char* __restrict str, int cflags) {
     assert(!(cflags & REG_EXTENDED));
 
-    BRECompiledData* compiled_data = static_cast<BRECompiledData*>(malloc(sizeof(BRECompiledData)));
-    if (!compiled_data) {
-        return REG_ESPACE;
-    }
-
     int error = 0;
-    new (compiled_data) BRECompiledData(str, cflags);
-    if (!compiled_data->lexer.lex()) {
-        error = compiled_data->lexer.error_code();
+    BREGraph* compiled = nullptr;
+    BRELexer lexer(str, cflags);
+    BREParser parser(lexer, cflags);
+
+    if (!lexer.lex()) {
+        error = lexer.error_code();
         goto regcomp_error;
     }
 
-    if (!compiled_data->parser.parse()) {
-        error = compiled_data->parser.error_code();
+    if (!parser.parse()) {
+        error = parser.error_code();
         goto regcomp_error;
     }
 
-    regex->re_nsub = compiled_data->lexer.num_sub_expressions();
-    regex->__re_compiled_data = static_cast<void*>(compiled_data);
+    if (!parser.result().is<BRE>()) {
+        error = REG_BADPAT;
+        goto regcomp_error;
+    }
+
+    compiled = static_cast<BREGraph*>(malloc(sizeof(BREGraph)));
+    if (!compiled) {
+        error = REG_ESPACE;
+        goto regcomp_error;
+    }
+
+    new (compiled) BREGraph(parser.result().as<BRE>(), cflags);
+
+    regex->re_nsub = lexer.num_sub_expressions();
+    regex->__re_compiled_data = static_cast<void*>(compiled);
     return 0;
 
 regcomp_error:
-    compiled_data->~BRECompiledData();
-    free(compiled_data);
     regex->__re_compiled_data = nullptr;
     return error;
 }

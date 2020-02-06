@@ -104,6 +104,7 @@ $(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \
 $(BUILDDIR)/libs/libc/regex/bre_lexer.o \
+$(BUILDDIR)/libs/libc/regex/bre_graph.o \
 $(BUILDDIR)/libs/libc/regex/generic_basic_parser.o \
 $(BUILDDIR)/libs/libc/regex/regcomp.o \
 $(BUILDDIR)/libs/libc/regex/regerror.o \
