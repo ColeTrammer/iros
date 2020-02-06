@@ -82,15 +82,11 @@ template<typename T, class... Args> UniquePtr<T> make_unique(Args&&... args) {
     return UniquePtr<T>(new T(forward<Args>(args)...));
 }
 
-template<typename T> class SharedPtrControlBlock {
+class SharedPtrControlBlock {
 public:
-    explicit SharedPtrControlBlock(T* ptr) : m_ref_count(1), m_ptr(ptr) { assert(m_ptr); }
+    explicit SharedPtrControlBlock() : m_ref_count(1) {}
 
-    ~SharedPtrControlBlock() {
-        assert(m_ref_count == 0);
-        delete m_ptr;
-        m_ptr = nullptr;
-    }
+    ~SharedPtrControlBlock() { assert(m_ref_count == 0); }
 
     int ref_count() const { return m_ref_count; }
 
@@ -98,17 +94,13 @@ public:
 
     void deref() { m_ref_count--; }
 
-    T* ptr() { return m_ptr; }
-    const T* ptr() const { return m_ptr; }
-
 private:
     int m_ref_count;
-    T* m_ptr;
 };
 
 template<typename T> class SharedPtr {
 public:
-    explicit SharedPtr(T* ptr) : m_control_block(new SharedPtrControlBlock<T>(ptr)) {}
+    explicit SharedPtr(T* ptr) : m_ptr(ptr), m_control_block(new SharedPtrControlBlock) {}
 
     SharedPtr() {}
 
@@ -120,17 +112,33 @@ public:
         m_control_block->deref();
         if (m_control_block->ref_count() == 0) {
             delete m_control_block;
+            delete m_ptr;
         }
         m_control_block = nullptr;
+        m_ptr = nullptr;
     }
 
-    SharedPtr(const SharedPtr& other) : m_control_block(other.m_control_block) {
+    SharedPtr(const SharedPtr& other) : m_ptr(other.m_ptr), m_control_block(other.m_control_block) {
         if (m_control_block) {
             m_control_block->ref();
         }
     }
 
-    SharedPtr(SharedPtr&& other) : m_control_block(other.m_control_block) { other.m_control_block = nullptr; }
+    template<typename U>
+    SharedPtr(const SharedPtr<U>& other) : m_ptr(static_cast<T*>(other.m_ptr)), m_control_block(other.m_control_block) {
+        if (m_control_block) {
+            m_control_block->ref();
+        }
+    }
+
+    SharedPtr(SharedPtr&& other) : m_ptr(other.m_ptr), m_control_block(other.m_control_block) {
+        other.m_ptr = nullptr;
+        other.m_control_block = nullptr;
+    }
+    template<typename U> SharedPtr(SharedPtr<U>&& other) : m_ptr(static_cast<T*>(other.m_ptr)), m_control_block(other.m_control_block) {
+        other.m_ptr = nullptr;
+        other.m_control_block = nullptr;
+    }
 
     SharedPtr& operator=(const SharedPtr& other) {
         SharedPtr temp(other);
@@ -138,8 +146,20 @@ public:
         return *this;
     }
 
-    SharedPtr& operator=(SharedPtr&& other) {
+    template<typename U> SharedPtr& operator=(const SharedPtr<U>& other) {
         SharedPtr temp(other);
+        swap(temp);
+        return *this;
+    }
+
+    SharedPtr& operator=(SharedPtr&& other) {
+        SharedPtr temp(move(other));
+        swap(temp);
+        return *this;
+    }
+
+    template<typename U> SharedPtr& operator=(SharedPtr<U>&& other) {
+        SharedPtr temp(move(other));
         swap(temp);
         return *this;
     }
@@ -154,14 +174,14 @@ public:
         if (!m_control_block) {
             return nullptr;
         }
-        return m_control_block->ptr();
+        return m_ptr;
     }
 
     const T* get() const {
         if (!m_control_block) {
             return nullptr;
         }
-        return m_control_block->ptr();
+        return m_ptr;
     }
 
     T& operator*() {
@@ -190,10 +210,16 @@ public:
     bool operator==(const SharedPtr& other) const { return this->get() == other.get(); }
     bool operator!=(const SharedPtr& other) const { return !(*this == other); }
 
-    void swap(SharedPtr& other) { LIIM::swap(this->m_control_block, other.m_control_block); }
+    void swap(SharedPtr& other) {
+        LIIM::swap(this->m_control_block, other.m_control_block);
+        LIIM::swap(this->m_ptr, other.m_ptr);
+    }
 
 private:
-    SharedPtrControlBlock<T>* m_control_block { nullptr };
+    template<typename U> friend class SharedPtr;
+
+    T* m_ptr { nullptr };
+    SharedPtrControlBlock* m_control_block { nullptr };
 };
 
 template<typename T> void swap(SharedPtr<T>& a, SharedPtr<T>& b) {
