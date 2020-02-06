@@ -100,8 +100,46 @@ BREGraph::BREGraph(const BRE& bre, int cflags) : m_cflags(cflags) {
     if (bre.right_anchor) {
         add_forward_transition(in_place_type<RightAnchorTransition>);
     }
+}
 
-    dump();
+Maybe<size_t> BREGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {
+    const BREState& current_state = m_states[state];
+    if (current_state.transitions().empty()) {
+        return { index };
+    }
+
+    if (str[index] == '\0') {
+        return {};
+    }
+
+    for (int i = 0; i < current_state.transitions().size(); i++) {
+        const auto& trans = current_state.transitions()[i];
+        if (!trans->can_transition(str, index, eflags | m_cflags)) {
+            continue;
+        }
+
+        index += trans->transition(state);
+        return try_match_at(str, index, eflags, state, dest_matches);
+    }
+
+    return {};
+}
+
+Vector<regmatch_t> BREGraph::do_match(const char* str, int eflags) const {
+    Vector<regmatch_t> matches(1);
+    for (int i = 0; i < matches.capacity(); i++) {
+        matches.add({ -1, -1 });
+    }
+
+    for (size_t i = 0; str[i] != '\0'; i++) {
+        Maybe<size_t> result = try_match_at(str, i, eflags, 0, matches);
+        if (result.has_value()) {
+            matches[0] = { (regoff_t) i, (regoff_t) result.value() };
+            break;
+        }
+    }
+
+    return matches;
 }
 
 void BREGraph::dump() const {
