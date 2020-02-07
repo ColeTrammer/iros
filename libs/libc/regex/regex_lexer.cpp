@@ -218,7 +218,7 @@ bool RegexLexer::lex() {
             case '{':
                 consume();
                 if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
-                    commit_token(RegexTokenType::RightCurlyBrace);
+                    commit_token(RegexTokenType::LeftCurlyBrace);
                 } else {
                     commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
                 }
@@ -226,7 +226,7 @@ bool RegexLexer::lex() {
             case '}':
                 consume();
                 if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
-                    commit_token(RegexTokenType::LeftCurlyBrace);
+                    commit_token(RegexTokenType::RightCurlyBrace);
                 } else {
                     commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
                 }

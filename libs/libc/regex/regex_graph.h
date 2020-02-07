@@ -24,6 +24,8 @@ public:
 
     virtual void dump() const = 0;
 
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const = 0;
+
 protected:
     int state() const { return m_state; }
 
@@ -39,6 +41,14 @@ class RegexState {
 public:
     Vector<SharedPtr<RegexTransition>>& transitions() { return m_transitions; }
     const Vector<SharedPtr<RegexTransition>>& transitions() const { return m_transitions; }
+
+    static RegexState copy_with_shift(const RegexState& other, int shift) {
+        RegexState ret;
+        other.transitions().for_each([&](const auto& tr) {
+            ret.transitions().add(tr->clone_with_shift(shift));
+        });
+        return ret;
+    }
 
 private:
     Vector<SharedPtr<RegexTransition>> m_transitions;

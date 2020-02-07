@@ -15,7 +15,7 @@ struct TokenInfo {
 
 struct BracketExpression {};
 struct DuplicateCount {
-    enum class Type { Star, Exact, AtLeast, Between };
+    enum class Type { Exact, AtLeast, Between };
 
     Type type;
     int min;
@@ -53,9 +53,6 @@ inline void dump(const RegexValue& value) {
         } else if constexpr (IsSame<DuplicateCount, T>::value) {
             const DuplicateCount& dup = v;
             switch (dup.type) {
-                case DuplicateCount::Type::Star:
-                    fprintf(stderr, "  DUPL: *\n");
-                    break;
                 case DuplicateCount::Type::AtLeast:
                     fprintf(stderr, "  DUPL: AtLeast %d\n", dup.min);
                     break;

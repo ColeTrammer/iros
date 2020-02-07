@@ -18,6 +18,10 @@ public:
         fprintf(stderr, "  EpsilonTransition(forward=%s) to %d\n", m_forward ? "true" : "false", state());
     }
 
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const {
+        return make_shared<EpsilonTransition>(state() + shift, m_forward);
+    }
+
 private:
     bool m_forward;
 };
@@ -33,6 +37,10 @@ public:
     }
 
     virtual void dump() const override { fprintf(stderr, "  LeftAnchor to %d\n", state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<LeftAnchorTransition>(state() + shift);
+    }
 };
 
 class RightAnchorTransition final : public RegexTransition {
@@ -46,6 +54,10 @@ public:
     }
 
     virtual void dump() const override { fprintf(stderr, "  RightAnchor to %d\n", state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<RightAnchorTransition>(state() + shift);
+    }
 };
 
 class OrdinaryCharacterTransition final : public RegexTransition {
@@ -65,6 +77,10 @@ public:
 
     virtual void dump() const override { fprintf(stderr, "  OrdinaryCharacterTransition (%c) to %d\n", m_to_match, state()); }
 
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<OrdinaryCharacterTransition>(state() + shift, m_to_match);
+    }
+
 private:
     char m_to_match;
 };
@@ -80,6 +96,10 @@ public:
     }
 
     virtual void dump() const override { fprintf(stderr, "  AnyCharacterTransition to %d\n", state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<AnyCharacterTransition>(state() + shift);
+    }
 };
 
 class BeginGroupCaptureTransition final : public RegexTransition {
@@ -92,6 +112,10 @@ public:
     }
 
     virtual void dump() const override { fprintf(stderr, "  BeginGroupCaptureTransition (%d) to %d\n", m_group, state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<BeginGroupCaptureTransition>(state() + shift, m_group);
+    }
 
 private:
     int m_group;
@@ -107,6 +131,10 @@ public:
     }
 
     virtual void dump() const override { fprintf(stderr, "  EndGroupCaptureTransition (%d) to %d\n", m_group, state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<EndGroupCaptureTransition>(state() + shift, m_group);
+    }
 
 private:
     int m_group;
@@ -128,6 +156,23 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
         } else {
             m_states[from].transitions().insert(make_shared<EpsilonTransition>(to, false), 0);
         }
+    };
+
+    auto duplicate_states_after = [&](int start_state, int times_to_do_so) -> int {
+        m_states.remove_last();
+        int last_state = m_states.size() - 1;
+        int num_states_added_each_time = last_state - start_state + 1;
+        int shifted_start = start_state;
+        for (int i = 0; i < times_to_do_so; i++) {
+            shifted_start = m_states.size();
+            for (int state = start_state; state <= last_state; state++) {
+                RegexState state_to_add = RegexState::copy_with_shift(m_states[state], num_states_added_each_time * (i + 1));
+                m_states.add(move(state_to_add));
+            }
+        }
+        m_states.add(RegexState());
+        current_state = &m_states.last();
+        return shifted_start;
     };
 
     Function<void(const ParsedRegex&)> build_graph = [&](const ParsedRegex& regex) {
@@ -160,14 +205,21 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
             if (exp->duplicate.has_value()) {
                 const DuplicateCount& dup = exp->duplicate.value();
                 switch (dup.type) {
-                    case DuplicateCount::Type::Star:
-                        add_epsilon_transition(start_state, m_states.size());
+                    case DuplicateCount::Type::Exact:
+                        if (dup.min != 0) {
+                            duplicate_states_after(start_state, dup.min - 1);
+                        }
+                        break;
+                    case DuplicateCount::Type::AtLeast:
+                        if (dup.min == 0) {
+                            add_epsilon_transition(start_state, m_states.size());
+                        } else {
+                            start_state = duplicate_states_after(start_state, dup.min - 1);
+                        }
                         add_epsilon_transition(m_states.size() - 1, start_state);
                         add_forward_transition(in_place_type<EpsilonTransition>, true);
                         break;
-                    case DuplicateCount::Type::AtLeast:
                     case DuplicateCount::Type::Between:
-                    case DuplicateCount::Type::Exact:
                         break;
                 }
             }
@@ -180,6 +232,9 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
     };
 
     build_graph(regex_base);
+
+    ::dump(regex_base);
+    dump();
 }
 
 Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {

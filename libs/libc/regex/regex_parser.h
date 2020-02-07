@@ -21,11 +21,19 @@ public:
 
     virtual RegexValue reduce_duplicate_symbol$asterisk(RegexValue& v) override {
         assert(v.is<TokenInfo>());
-        return { DuplicateCount { DuplicateCount::Type::Star, 0, __INT_MAX__ } };
+        return { DuplicateCount { DuplicateCount::Type::AtLeast, 0, __INT_MAX__ } };
     }
 
 private:
     virtual void on_error(RegexTokenType) override { m_error_code = REG_BADPAT; }
+
+    virtual RegexValue reduce_duplicate_symbol$plus(RegexValue&) override {
+        return { DuplicateCount { DuplicateCount::Type::AtLeast, 1, __INT_MAX__ } };
+    }
+
+    virtual RegexValue reduce_duplicate_symbol$questionmark(RegexValue&) override {
+        return { DuplicateCount { DuplicateCount::Type::Between, 0, 1 } };
+    }
 
     virtual RegexValue reduce_duplicate_symbol$leftcurlybrace_duplicatecount_rightcurlybrace(RegexValue&, RegexValue& c,
                                                                                              RegexValue&) override {
@@ -70,6 +78,11 @@ private:
             return {};
         }
         if (sscanf(d.as<TokenInfo>().text.start(), "%d", &max) != 1) {
+            this->set_error();
+            m_error_code = REG_BADBR;
+            return {};
+        }
+        if (max < min) {
             this->set_error();
             m_error_code = REG_BADBR;
             return {};

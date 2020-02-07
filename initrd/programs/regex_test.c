@@ -37,11 +37,17 @@ int main(int argc, char **argv) {
         }
 
         char *start = argv[2] + match.rm_so;
+        char save_start = *start;
+        *start = '\0';
+        printf("%lu: '%s", i, argv[2]);
+        *start = save_start;
+
         char *end = argv[2] + match.rm_eo;
-        char save = *end;
+        char save_end = *end;
         *end = '\0';
-        printf("%lu: '%s'\n", i, start);
-        *end = save;
+        printf("\033[31m%s\033[0m", start);
+        *end = save_end;
+        printf("%s'\n", end);
     }
 
     regfree(&regex);
