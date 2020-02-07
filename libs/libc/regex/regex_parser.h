@@ -123,6 +123,14 @@ private:
             new RegexSingleExpression { RegexSingleExpression::Type::Backreference, group_index, {} }) };
     }
 
+    virtual RegexValue reduce_expression$carrot(RegexValue&) override {
+        return { SharedPtr<RegexSingleExpression>(new RegexSingleExpression { RegexSingleExpression::Type::LeftAnchor, {}, {} }) };
+    }
+
+    virtual RegexValue reduce_expression$dollar(RegexValue&) override {
+        return { SharedPtr<RegexSingleExpression>(new RegexSingleExpression { RegexSingleExpression::Type::RightAnchor, {}, {} }) };
+    }
+
     virtual RegexValue reduce_expression$leftparenthesis_regex_rightparenthesis(RegexValue& a, RegexValue& v, RegexValue&) override {
         assert(a.is<TokenInfo>());
         assert(v.is<ParsedRegex>());

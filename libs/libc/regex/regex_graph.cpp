@@ -197,6 +197,12 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
                     add_forward_transition(in_place_type<EndGroupCaptureTransition>, exp->expression.as<ParsedRegex>().index);
                     break;
                 }
+                case RegexSingleExpression::Type::LeftAnchor:
+                    add_forward_transition(in_place_type<LeftAnchorTransition>);
+                    break;
+                case RegexSingleExpression::Type::RightAnchor:
+                    add_forward_transition(in_place_type<RightAnchorTransition>);
+                    break;
                 case RegexSingleExpression::Type::Backreference:
                 case RegexSingleExpression::Type::BracketExpression:
                     break;

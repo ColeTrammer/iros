@@ -34,7 +34,7 @@ struct ParsedRegex {
 };
 
 struct RegexSingleExpression {
-    enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression, Backreference, Group };
+    enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression, Backreference, Group, LeftAnchor, RightAnchor };
     Type type;
     Variant<char, BracketExpression, int, ParsedRegex> expression;
     Maybe<DuplicateCount> duplicate;
@@ -80,6 +80,12 @@ inline void dump(const RegexValue& value) {
                     break;
                 case RegexSingleExpression::Type::Backreference:
                     fprintf(stderr, "  \\%d\n", exp.expression.as<int>());
+                    break;
+                case RegexSingleExpression::Type::LeftAnchor:
+                    fprintf(stderr, "  ^\n");
+                    break;
+                case RegexSingleExpression::Type::RightAnchor:
+                    fprintf(stderr, "  $\n");
                     break;
                 case RegexSingleExpression::Type::Group:
                     fprintf(stderr, "  - Group -\n");
