@@ -6,16 +6,51 @@
 
 #include "regex_value.h"
 
+class RegexTransition;
+
+class RegexState {
+public:
+    Vector<SharedPtr<RegexTransition>>& transitions() { return m_transitions; }
+    const Vector<SharedPtr<RegexTransition>>& transitions() const { return m_transitions; }
+
+    static RegexState copy_with_shift(const RegexState& other, int shift) {
+        RegexState ret;
+        other.transitions().for_each([&](const auto& tr) {
+            ret.transitions().add(tr->clone_with_shift(shift));
+        });
+        return ret;
+    }
+
+    void set_groups_to_match(Vector<int>&& groups_to_match) { m_groups_to_match = move(groups_to_match); }
+
+    void reject_non_matched_groups(Vector<regmatch_t>& dest_matches) const {
+        if (m_groups_to_match.has_value()) {
+            const auto& groups_allowed = m_groups_to_match.value();
+            for (int i = 1; i < dest_matches.size(); i++) {
+                if (!groups_allowed.includes(i)) {
+                    dest_matches[i] = { -1, -1 };
+                }
+            }
+        }
+    }
+
+private:
+    Vector<SharedPtr<RegexTransition>> m_transitions;
+    Maybe<Vector<int>> m_groups_to_match;
+};
+
 class RegexTransition {
 public:
     RegexTransition(int state) : m_state(state) {}
     virtual ~RegexTransition() {}
 
-    bool try_transition(const char* s, size_t index, int flags, int& state, size_t& dest_index, Vector<regmatch_t>& dest_matches) const {
+    bool try_transition(const char* s, size_t index, int flags, const Vector<RegexState>& states, int& state, size_t& dest_index,
+                        Vector<regmatch_t>& dest_matches) const {
         auto result = do_try_transition(s, index, flags, dest_matches);
         if (result.has_value()) {
             state = m_state;
             dest_index += result.value();
+            states[state].reject_non_matched_groups(dest_matches);
             return true;
         }
 
@@ -35,23 +70,6 @@ protected:
 
 private:
     int m_state {};
-};
-
-class RegexState {
-public:
-    Vector<SharedPtr<RegexTransition>>& transitions() { return m_transitions; }
-    const Vector<SharedPtr<RegexTransition>>& transitions() const { return m_transitions; }
-
-    static RegexState copy_with_shift(const RegexState& other, int shift) {
-        RegexState ret;
-        other.transitions().for_each([&](const auto& tr) {
-            ret.transitions().add(tr->clone_with_shift(shift));
-        });
-        return ret;
-    }
-
-private:
-    Vector<SharedPtr<RegexTransition>> m_transitions;
 };
 
 class RegexGraph {

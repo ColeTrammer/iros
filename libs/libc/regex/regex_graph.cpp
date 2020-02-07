@@ -210,10 +210,12 @@ bool RegexGraph::compile() {
         return shifted_start;
     };
 
-    Function<bool(const ParsedRegex&)> build_graph = [&](const ParsedRegex& regex) {
+    Function<bool(const ParsedRegex&, const Vector<int>&)> build_graph = [&](const ParsedRegex& regex,
+                                                                             const Vector<int>& groups_to_match_base) {
         int alternative_state = m_states.size() - 1;
         Vector<int> end_states(regex.alternatives.size());
         for (int j = 0; j < regex.alternatives.size(); j++) {
+            Vector<int> groups_to_match(groups_to_match_base);
             auto expression = regex.alternatives[j];
             if (j != 0) {
                 m_states.add(RegexState());
@@ -236,8 +238,9 @@ bool RegexGraph::compile() {
                         break;
                     case RegexSingleExpression::Type::Group: {
                         const auto& sub_regex = exp->expression.as<ParsedRegex>();
+                        groups_to_match.add(sub_regex.index);
                         add_forward_transition(in_place_type<BeginGroupCaptureTransition>, sub_regex.index);
-                        if (!build_graph(sub_regex)) {
+                        if (!build_graph(sub_regex, groups_to_match)) {
                             return false;
                         }
                         add_forward_transition(in_place_type<EndGroupCaptureTransition>, exp->expression.as<ParsedRegex>().index);
@@ -249,10 +252,16 @@ bool RegexGraph::compile() {
                     case RegexSingleExpression::Type::RightAnchor:
                         add_forward_transition(in_place_type<RightAnchorTransition>);
                         break;
-                    case RegexSingleExpression::Type::Backreference:
+                    case RegexSingleExpression::Type::Backreference: {
                         assert(exp->expression.is<int>());
-                        add_forward_transition(in_place_type<BackreferenceTransition>, exp->expression.as<int>());
+                        int group_index = exp->expression.as<int>();
+                        if (!groups_to_match.includes(group_index)) {
+                            m_error_code = REG_ESUBREG;
+                            return false;
+                        }
+                        add_forward_transition(in_place_type<BackreferenceTransition>, group_index);
                         break;
+                    }
                     case RegexSingleExpression::Type::BracketExpression:
                         break;
                 }
@@ -292,6 +301,7 @@ bool RegexGraph::compile() {
                 add_forward_transition(in_place_type<EpsilonTransition>, true);
             }
 
+            m_states.last().set_groups_to_match(move(groups_to_match));
             end_states.add(m_states.size() - 1);
         }
 
@@ -306,7 +316,7 @@ bool RegexGraph::compile() {
         return true;
     };
 
-    return build_graph(m_regex_base);
+    return build_graph(m_regex_base, Vector<int>());
 }
 
 Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {
@@ -317,7 +327,7 @@ Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags
 
     for (int i = 0; i < current_state.transitions().size(); i++) {
         const auto& trans = current_state.transitions()[i];
-        if (!trans->try_transition(str, index, eflags | m_cflags, state, index, dest_matches)) {
+        if (!trans->try_transition(str, index, eflags | m_cflags, m_states, state, index, dest_matches)) {
             continue;
         }
 
