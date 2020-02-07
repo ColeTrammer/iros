@@ -1,15 +1,19 @@
 #include <ftw.h>
+#include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 static char *pattern = NULL;
 static size_t pattern_len = 0;
 static bool print_path = false;
-static int status = 0;
+static int status = 1;
+static regex_t regex;
+static bool use_regex = true;
 
 static int process_file(FILE *file, char *pattern, size_t pattern_len, const char *path, bool print_path) {
     char *line = NULL;
@@ -28,14 +32,39 @@ static int process_file(FILE *file, char *pattern, size_t pattern_len, const cha
         char *match = NULL;
         char *s = line;
         bool matched = false;
-        while ((match = strstr(s, pattern))) {
-            *match = '\0';
-            if (!matched && print_path) {
-                printf("%s%s%s:", path_color, path, restore_color);
+        if (!use_regex) {
+            while ((match = strstr(s, pattern))) {
+                if (!matched && print_path) {
+                    printf("%s%s%s:", path_color, path, restore_color);
+                }
+
+                *match = '\0';
+                printf("%s%s%s%s", s, found_color, pattern, restore_color);
+                s = match + pattern_len;
+                matched = true;
+                status = 0;
             }
-            printf("%s%s%s%s", s, found_color, pattern, restore_color);
-            s = match + pattern_len;
-            matched = true;
+        } else {
+            regmatch_t regmatch;
+            while (regexec(&regex, s, 1, &regmatch, matched ? REG_NOTBOL : 0) == 0) {
+                if (!matched && print_path) {
+                    printf("%s%s%s:", path_color, path, restore_color);
+                }
+
+                char start_save = s[regmatch.rm_so];
+                s[regmatch.rm_so] = '\0';
+                printf("%s", s);
+                s[regmatch.rm_so] = start_save;
+
+                char end_save = s[regmatch.rm_eo];
+                s[regmatch.rm_eo] = '\0';
+                printf("%s%s%s", found_color, s + regmatch.rm_so, restore_color);
+                s[regmatch.rm_eo] = end_save;
+
+                s += MAX(regmatch.rm_eo, 1);
+                matched = true;
+                status = 0;
+            }
         }
 
         if (!matched) {
@@ -84,7 +113,7 @@ static int per_path(const char *path, const struct stat *stat_struct, int type, 
 }
 
 void print_usage(char **argv) {
-    printf("Usage: %s [-r] <pattern> <files ...>\n", argv[0]);
+    printf("Usage: %s [-r] [-Ei|F] <pattern> <files ...>\n", argv[0]);
 }
 
 int main(int argc, char **argv) {
@@ -93,15 +122,23 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    int regex_flags = REG_NEWLINE;
     bool recursive = false;
-    (void) recursive;
     char opt;
-
     opterr = 0;
-    while ((opt = getopt(argc, argv, ":r")) != -1) {
+    while ((opt = getopt(argc, argv, ":rEFi")) != -1) {
         switch (opt) {
             case 'r':
                 recursive = true;
+                break;
+            case 'E':
+                regex_flags |= REG_EXTENDED;
+                break;
+            case 'F':
+                use_regex = false;
+                break;
+            case 'i':
+                regex_flags |= REG_ICASE;
                 break;
             case '?':
                 print_usage(argv);
@@ -119,6 +156,15 @@ int main(int argc, char **argv) {
     pattern = argv[optind++];
     pattern_len = strlen(pattern);
     print_path = argc - optind >= 2 || recursive;
+    if (use_regex) {
+        int ret = regcomp(&regex, pattern, regex_flags);
+        if (ret != 0) {
+            char buf[512];
+            regerror(ret, &regex, buf, 512);
+            fprintf(stderr, "grep: regex failed: %s\n", pattern);
+            return 3;
+        }
+    }
 
     if (optind >= argc) {
         if (!recursive) {
