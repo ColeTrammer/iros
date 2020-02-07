@@ -3,36 +3,33 @@
 %token    CollateSingleElement CollateMultipleElements MetaCharacter
 %token    ClassName
 
-%start    basic_reg_exp
+%start    regex
 %%
-basic_reg_exp            :            RE_expression
-                         | LeftAnchor
-                         |                          RightAnchor
-                         | LeftAnchor               RightAnchor
-                         | LeftAnchor RE_expression
-                         |            RE_expression RightAnchor
-                         | LeftAnchor RE_expression RightAnchor
-                         ;
-RE_expression            :               simple_RE
-                         | RE_expression simple_RE
-                         ;
-simple_RE                : nondupl_RE
-                         | nondupl_RE RE_dupl_symbol
-                         ;
-nondupl_RE               : one_char_or_coll_elem_RE
-                         | '\(' RE_expression '\)'
-                         | BackReference
-                         ;
-one_char_or_coll_elem_RE : OrdinaryCharacter
-                         | QuotedCharacter
-                         | '.'
-                         | bracket_expression
-                         ;
-RE_dupl_symbol           : '*'
-                         | '\{' DuplicateCount                    '\}'
-                         | '\{' DuplicateCount ','                '\}'
-                         | '\{' DuplicateCount ',' DuplicateCount '\}'
-                         ;
+regex              :                      regex_branch
+                   | regex '|'            regex_branch
+                   ;
+regex_branch       :              expression
+                   | regex_branch expression
+                   ;
+expression         : regex_one_char
+                   | '^'
+                   | '$'
+                   | '(' regex ')'
+                   | BackReference
+                   | expression duplicate_symbol
+                   ;
+regex_one_char     : OrdinaryCharacter
+                   | QuotedCharacter
+                   | '.'
+                   | bracket_expression
+                   ;
+duplicate_symbol   : '*'
+                   | '+'
+                   | '?'
+                   | '{' DuplicateCount                    '}'
+                   | '{' DuplicateCount ','                '}'
+                   | '{' DuplicateCount ',' DuplicateCount '}'
+                   ;
 
 
 /* --------------------------------------------

@@ -1,14 +1,14 @@
 #include <ctype.h>
 #include <regex.h>
 
-#include "bre_lexer.h"
+#include "regex_lexer.h"
 
-BRELexer::~BRELexer() {}
+RegexLexer::~RegexLexer() {}
 
-bool BRELexer::lex() {
+bool RegexLexer::lex() {
     if (peek() == '^') {
         consume();
-        commit_token(BasicTokenType::LeftAnchor);
+        commit_token(RegexTokenType::LeftAnchor);
     }
 
     bool prev_was_backslash = false;
@@ -20,7 +20,7 @@ bool BRELexer::lex() {
             case '\\':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::QuotedCharacter);
+                    commit_token(RegexTokenType::QuotedCharacter);
                     break;
                 }
                 prev_was_backslash = true;
@@ -28,29 +28,29 @@ bool BRELexer::lex() {
             case '[':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::QuotedCharacter);
+                    commit_token(RegexTokenType::QuotedCharacter);
                     break;
                 }
-                commit_token(BasicTokenType::LeftSquareBracket);
+                commit_token(RegexTokenType::LeftSquareBracket);
                 if (peek() == '^') {
                     consume();
-                    commit_token(BasicTokenType::Carrot);
+                    commit_token(RegexTokenType::Carrot);
                 }
                 if (peek() == ']') {
                     consume();
-                    commit_token(BasicTokenType::CollateSingleElement);
+                    commit_token(RegexTokenType::CollateSingleElement);
                 } else if (peek() == '-') {
                     consume();
-                    commit_token(BasicTokenType::CollateSingleElement);
+                    commit_token(RegexTokenType::CollateSingleElement);
                 }
                 while (peek() != '\0' && peek() != ']') {
                     switch (peek()) {
                         case '-':
                             consume();
-                            if (peek() == ']' || m_tokens.last().type() == BasicTokenType::Minus) {
-                                commit_token(BasicTokenType::CollateSingleElement);
+                            if (peek() == ']' || m_tokens.last().type() == RegexTokenType::Minus) {
+                                commit_token(RegexTokenType::CollateSingleElement);
                             } else {
-                                commit_token(BasicTokenType::Minus);
+                                commit_token(RegexTokenType::Minus);
                             }
                             break;
                         case '[':
@@ -58,7 +58,7 @@ bool BRELexer::lex() {
                             switch (peek()) {
                                 case '.':
                                     consume();
-                                    commit_token(BasicTokenType::LeftSquareBracketPeriod);
+                                    commit_token(RegexTokenType::LeftSquareBracketPeriod);
                                     while (peek() && peek(2) != ".]") {
                                         consume();
                                     }
@@ -67,19 +67,19 @@ bool BRELexer::lex() {
                                         return false;
                                     }
                                     if (m_position - m_token_start > 1) {
-                                        commit_token(BasicTokenType::CollateMultipleElements);
+                                        commit_token(RegexTokenType::CollateMultipleElements);
                                     } else if (prev() == '-' || prev() == ']') {
-                                        commit_token(BasicTokenType::MetaCharacter);
+                                        commit_token(RegexTokenType::MetaCharacter);
                                     } else {
-                                        commit_token(BasicTokenType::CollateSingleElement);
+                                        commit_token(RegexTokenType::CollateSingleElement);
                                     }
                                     consume();
                                     consume();
-                                    commit_token(BasicTokenType::PeriodRightSquareBracket);
+                                    commit_token(RegexTokenType::PeriodRightSquareBracket);
                                     break;
                                 case '=':
                                     consume();
-                                    commit_token(BasicTokenType::LeftSquareBracketEqual);
+                                    commit_token(RegexTokenType::LeftSquareBracketEqual);
                                     while (peek() && peek(2) != "=]") {
                                         consume();
                                     }
@@ -88,17 +88,17 @@ bool BRELexer::lex() {
                                         return false;
                                     }
                                     if (m_position - m_token_start > 1) {
-                                        commit_token(BasicTokenType::CollateMultipleElements);
+                                        commit_token(RegexTokenType::CollateMultipleElements);
                                     } else {
-                                        commit_token(BasicTokenType::CollateSingleElement);
+                                        commit_token(RegexTokenType::CollateSingleElement);
                                     }
                                     consume();
                                     consume();
-                                    commit_token(BasicTokenType::EqualRightSquareBracket);
+                                    commit_token(RegexTokenType::EqualRightSquareBracket);
                                     break;
                                 case ':':
                                     consume();
-                                    commit_token(BasicTokenType::LeftSquareBracketColon);
+                                    commit_token(RegexTokenType::LeftSquareBracketColon);
                                     while (peek() && peek(2) != ":]") {
                                         consume();
                                     }
@@ -106,19 +106,19 @@ bool BRELexer::lex() {
                                         m_error_code = REG_EBRACK;
                                         return false;
                                     }
-                                    commit_token(BasicTokenType::ClassName);
+                                    commit_token(RegexTokenType::ClassName);
                                     consume();
                                     consume();
-                                    commit_token(BasicTokenType::ColonRightSquareBracket);
+                                    commit_token(RegexTokenType::ColonRightSquareBracket);
                                     break;
                                 default:
-                                    commit_token(BasicTokenType::CollateSingleElement);
+                                    commit_token(RegexTokenType::CollateSingleElement);
                                     break;
                             }
                             break;
                         default:
                             consume();
-                            commit_token(BasicTokenType::CollateSingleElement);
+                            commit_token(RegexTokenType::CollateSingleElement);
                             break;
                     }
                 }
@@ -128,43 +128,43 @@ bool BRELexer::lex() {
                     return false;
                 }
                 consume();
-                commit_token(BasicTokenType::RightSquareBracket);
+                commit_token(RegexTokenType::RightSquareBracket);
                 break;
             case '.':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::QuotedCharacter);
+                    commit_token(RegexTokenType::QuotedCharacter);
                 } else {
-                    commit_token(BasicTokenType::Period);
+                    commit_token(RegexTokenType::Period);
                 }
                 break;
             case '*':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::QuotedCharacter);
-                } else if (m_tokens.empty() || m_tokens.last().type() == BasicTokenType::LeftAnchor ||
-                           m_tokens.last().type() == BasicTokenType::BackSlashLeftParenthesis) {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::QuotedCharacter);
+                } else if (m_tokens.empty() || m_tokens.last().type() == RegexTokenType::LeftAnchor ||
+                           m_tokens.last().type() == RegexTokenType::LeftParenthesis) {
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 } else {
-                    commit_token(BasicTokenType::Asterisk);
+                    commit_token(RegexTokenType::Asterisk);
                 }
                 break;
             case '$':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::QuotedCharacter);
+                    commit_token(RegexTokenType::QuotedCharacter);
                 } else if (peek() == '\0') {
-                    commit_token(BasicTokenType::RightAnchor);
+                    commit_token(RegexTokenType::RightAnchor);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case ',':
                 consume();
-                if (m_tokens.last().type() == BasicTokenType::DuplicateCount) {
-                    commit_token(BasicTokenType::Comma);
+                if (m_tokens.last().type() == RegexTokenType::DuplicateCount) {
+                    commit_token(RegexTokenType::Comma);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case '0':
@@ -183,58 +183,57 @@ bool BRELexer::lex() {
                         m_error_code = REG_ESUBREG;
                         return false;
                     } else {
-                        commit_token(BasicTokenType::BackReference);
+                        commit_token(RegexTokenType::BackReference);
                     }
-                } else if (m_tokens.last().type() == BasicTokenType::BackSlashLeftCurlyBrace ||
-                           m_tokens.last().type() == BasicTokenType::Comma) {
+                } else if (m_tokens.last().type() == RegexTokenType::LeftCurlyBrace || m_tokens.last().type() == RegexTokenType::Comma) {
                     while (isdigit(peek())) {
                         consume();
                     }
-                    commit_token(BasicTokenType::DuplicateCount);
+                    commit_token(RegexTokenType::DuplicateCount);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case '(':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::BackSlashLeftParenthesis);
+                    commit_token(RegexTokenType::LeftParenthesis);
                     printf("%lu: %d\n", m_position - 2, m_group_count + 1);
                     m_group_incidices.put(m_position - 2, ++m_group_count);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case ')':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::BackSlashRightParenthesis);
+                    commit_token(RegexTokenType::RightParenthesis);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case '{':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::BackSlashLeftCurlyBrace);
+                    commit_token(RegexTokenType::LeftCurlyBrace);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case '}':
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::BackSlashRightCurlyBrace);
+                    commit_token(RegexTokenType::RightCurlyBrace);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             default:
                 consume();
                 if (prev_was_backslash) {
-                    commit_token(BasicTokenType::QuotedCharacter);
+                    commit_token(RegexTokenType::QuotedCharacter);
                 } else {
-                    commit_token(BasicTokenType::OrdinaryCharacter);
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
         }

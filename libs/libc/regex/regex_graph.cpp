@@ -1,11 +1,11 @@
 #include <regex.h>
 #include <stdio.h>
 
-#include "bre_graph.h"
+#include "regex_graph.h"
 
-class EpsilonTransition final : public BRETransition {
+class EpsilonTransition final : public RegexTransition {
 public:
-    EpsilonTransition(int state, bool forward) : BRETransition(state), m_forward(forward) {}
+    EpsilonTransition(int state, bool forward) : RegexTransition(state), m_forward(forward) {}
 
     virtual bool can_transition(const char* s, size_t i, int) const override { return m_forward || s[i] != '\0'; }
 
@@ -19,9 +19,9 @@ private:
     bool m_forward;
 };
 
-class LeftAnchorTransition final : public BRETransition {
+class LeftAnchorTransition final : public RegexTransition {
 public:
-    LeftAnchorTransition(int state) : BRETransition(state) {}
+    LeftAnchorTransition(int state) : RegexTransition(state) {}
 
     virtual bool can_transition(const char* s, size_t index, int flags) const override {
         return ((flags & REG_NEWLINE) && s[index] == '\n') || (index == 0 && !(flags & REG_NOTBOL));
@@ -32,9 +32,9 @@ public:
     virtual void dump() const override { fprintf(stderr, "  LeftAnchor to %d\n", state()); }
 };
 
-class RightAnchorTransition final : public BRETransition {
+class RightAnchorTransition final : public RegexTransition {
 public:
-    RightAnchorTransition(int state) : BRETransition(state) {}
+    RightAnchorTransition(int state) : RegexTransition(state) {}
 
     virtual bool can_transition(const char* s, size_t index, int flags) const override {
         return ((flags & REG_NEWLINE) && s[index] == '\n') || (s[index] == '\0' && !(flags & REG_NOTEOL));
@@ -45,9 +45,9 @@ public:
     virtual void dump() const override { fprintf(stderr, "  RightAnchor to %d\n", state()); }
 };
 
-class OrdinaryCharacterTransition final : public BRETransition {
+class OrdinaryCharacterTransition final : public RegexTransition {
 public:
-    OrdinaryCharacterTransition(int state, char to_match) : BRETransition(state), m_to_match(to_match) {}
+    OrdinaryCharacterTransition(int state, char to_match) : RegexTransition(state), m_to_match(to_match) {}
 
     virtual bool can_transition(const char* s, size_t index, int flags) const override {
         if (flags & REG_ICASE) {
@@ -62,9 +62,9 @@ private:
     char m_to_match;
 };
 
-class AnyCharacterTransition final : public BRETransition {
+class AnyCharacterTransition final : public RegexTransition {
 public:
-    AnyCharacterTransition(int state) : BRETransition(state) {}
+    AnyCharacterTransition(int state) : RegexTransition(state) {}
 
     virtual bool can_transition(const char* s, size_t index, int flags) const override {
         return (!(flags & REG_NEWLINE) || s[index] != '\n') && s[index] != '\0';
@@ -73,13 +73,13 @@ public:
     virtual void dump() const override { fprintf(stderr, "  AnyCharacterTransition to %d\n", state()); }
 };
 
-BREGraph::BREGraph(const BRE& bre, int cflags) : m_cflags(cflags) {
-    m_states.add(BREState());
-    BREState* current_state = &m_states.last();
+RegexGraph::RegexGraph(const ParsedRegex& regex, int cflags) : m_cflags(cflags) {
+    m_states.add(RegexState());
+    RegexState* current_state = &m_states.last();
 
     auto add_forward_transition = [&]<typename Transition, typename... Args>(in_place_type_t<Transition>, Args... args) {
         current_state->transitions().add(make_shared<Transition>(m_states.size(), forward<Args>(args)...));
-        m_states.add(BREState());
+        m_states.add(RegexState());
         current_state = &m_states.last();
     };
 
@@ -91,24 +91,21 @@ BREGraph::BREGraph(const BRE& bre, int cflags) : m_cflags(cflags) {
         }
     };
 
-    if (bre.left_anchor) {
-        add_forward_transition(in_place_type<LeftAnchorTransition>);
-    }
-
-    for (int i = 0; i < bre.expression.parts.size(); i++) {
-        const SharedPtr<BRESingleExpression>& exp = bre.expression.parts[i];
+    auto expression = regex.alternatives.first();
+    for (int i = 0; i < expression.parts.size(); i++) {
+        const SharedPtr<RegexSingleExpression>& exp = expression.parts[i];
         switch (exp->type) {
-            case BRESingleExpression::Type::OrdinaryCharacter:
-            case BRESingleExpression::Type::QuotedCharacter:
+            case RegexSingleExpression::Type::OrdinaryCharacter:
+            case RegexSingleExpression::Type::QuotedCharacter:
                 assert(exp->expression.is<char>());
                 add_forward_transition(in_place_type<OrdinaryCharacterTransition>, exp->expression.as<char>());
                 break;
-            case BRESingleExpression::Type::Any:
+            case RegexSingleExpression::Type::Any:
                 add_forward_transition(in_place_type<AnyCharacterTransition>);
                 break;
-            case BRESingleExpression::Type::BracketExpression:
-            case BRESingleExpression::Type::Backreference:
-            case BRESingleExpression::Type::Group:
+            case RegexSingleExpression::Type::BracketExpression:
+            case RegexSingleExpression::Type::Backreference:
+            case RegexSingleExpression::Type::Group:
                 break;
         }
 
@@ -128,18 +125,14 @@ BREGraph::BREGraph(const BRE& bre, int cflags) : m_cflags(cflags) {
         }
     }
 
-    if (bre.right_anchor) {
-        add_forward_transition(in_place_type<RightAnchorTransition>);
-    }
-
     // Create a null rule so that the regex can be finished
     if (!current_state->transitions().empty()) {
         add_forward_transition(in_place_type<EpsilonTransition>, true);
     }
 }
 
-Maybe<size_t> BREGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {
-    const BREState& current_state = m_states[state];
+Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {
+    const RegexState& current_state = m_states[state];
     if (current_state.transitions().empty()) {
         return { index };
     }
@@ -160,7 +153,7 @@ Maybe<size_t> BREGraph::try_match_at(const char* str, size_t index, int eflags, 
     return {};
 }
 
-Vector<regmatch_t> BREGraph::do_match(const char* str, int eflags) const {
+Vector<regmatch_t> RegexGraph::do_match(const char* str, int eflags) const {
     Vector<regmatch_t> matches(1);
     for (int i = 0; i < matches.capacity(); i++) {
         matches.add({ -1, -1 });
@@ -178,8 +171,8 @@ Vector<regmatch_t> BREGraph::do_match(const char* str, int eflags) const {
     return matches;
 }
 
-void BREGraph::dump() const {
-    fprintf(stderr, "BREGraph::num_states() %d\n", m_states.size());
+void RegexGraph::dump() const {
+    fprintf(stderr, "RegexGraph::num_states() %d\n", m_states.size());
     for (int i = 0; i < m_states.size(); i++) {
         auto& state = m_states[i];
         fprintf(stderr, "State: %d (%d)\n", i, state.transitions().size());

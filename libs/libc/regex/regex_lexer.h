@@ -7,28 +7,28 @@
 #include <liim/vector.h>
 #include <parser/generic_lexer.h>
 
-#include "basic_token_type.h"
-#include "bre_value.h"
+#include "regex_token_type.h"
+#include "regex_value.h"
 
-class BRELexer final : public GenericLexer<BasicTokenType, BREValue> {
+class RegexLexer final : public GenericLexer<RegexTokenType, RegexValue> {
 public:
-    using Token = GenericToken<BasicTokenType, BREValue>;
+    using Token = GenericToken<RegexTokenType, RegexValue>;
 
-    BRELexer(const char* regex, int cflags) : m_input_stream(regex), m_flags(cflags) {};
-    virtual ~BRELexer();
+    RegexLexer(const char* regex, int cflags) : m_input_stream(regex), m_flags(cflags) {};
+    virtual ~RegexLexer();
 
     bool lex();
 
-    virtual BasicTokenType peek_next_token_type() const override {
+    virtual RegexTokenType peek_next_token_type() const override {
         if (m_current_position_to_parser >= (size_t) m_tokens.size()) {
-            return BasicTokenType::End;
+            return RegexTokenType::End;
         }
 
-        BasicTokenType type = m_tokens[m_current_position_to_parser].type();
+        RegexTokenType type = m_tokens[m_current_position_to_parser].type();
         return type;
     }
 
-    virtual const BREValue& peek_next_token_value() const override {
+    virtual const RegexValue& peek_next_token_value() const override {
         assert(m_current_position_to_parser < (size_t) m_tokens.size());
         return m_tokens[m_current_position_to_parser].value();
     }
@@ -57,12 +57,12 @@ private:
     char peek() const { return m_input_stream[m_position]; }
     char prev() const { return m_input_stream[m_position - 1]; }
     void consume() { m_position++; }
-    void commit_token(BasicTokenType type) {
-        if (type == BasicTokenType::QuotedCharacter || type == BasicTokenType::BackReference) {
+    void commit_token(RegexTokenType type) {
+        if (type == RegexTokenType::QuotedCharacter || type == RegexTokenType::BackReference) {
             m_token_start++;
         }
         StringView text = { m_input_stream.string() + m_token_start, m_input_stream.string() + m_position - 1 };
-        m_tokens.add(Token { type, BREValue { TokenInfo { text, m_token_start } } });
+        m_tokens.add(Token { type, RegexValue { TokenInfo { text, m_token_start } } });
         m_token_start = m_position;
     }
 

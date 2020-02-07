@@ -4,12 +4,12 @@
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
-#include "bre_value.h"
+#include "regex_value.h"
 
-class BRETransition {
+class RegexTransition {
 public:
-    BRETransition(int state) : m_state(state) {}
-    virtual ~BRETransition() {}
+    RegexTransition(int state) : m_state(state) {}
+    virtual ~RegexTransition() {}
 
     virtual bool can_transition(const char* s, size_t index, int flags) const = 0;
     size_t transition(int& state) const {
@@ -28,18 +28,18 @@ private:
     int m_state {};
 };
 
-class BREState {
+class RegexState {
 public:
-    Vector<SharedPtr<BRETransition>>& transitions() { return m_transitions; }
-    const Vector<SharedPtr<BRETransition>>& transitions() const { return m_transitions; }
+    Vector<SharedPtr<RegexTransition>>& transitions() { return m_transitions; }
+    const Vector<SharedPtr<RegexTransition>>& transitions() const { return m_transitions; }
 
 private:
-    Vector<SharedPtr<BRETransition>> m_transitions;
+    Vector<SharedPtr<RegexTransition>> m_transitions;
 };
 
-class BREGraph {
+class RegexGraph {
 public:
-    BREGraph(const BRE& bre, int cflags);
+    RegexGraph(const ParsedRegex& regex, int cflags);
 
     void dump() const;
 
@@ -48,6 +48,6 @@ public:
 private:
     Maybe<size_t> try_match_at(const char* s, size_t index, int cflags, int state, Vector<regmatch_t>& dest_matches) const;
 
-    Vector<BREState> m_states;
+    Vector<RegexState> m_states;
     int m_cflags;
 };

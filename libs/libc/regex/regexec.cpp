@@ -1,7 +1,7 @@
 #include <regex.h>
 #include <string.h>
 
-#include "bre_graph.h"
+#include "regex_graph.h"
 
 extern "C" int regexec(const regex_t* __restrict regex, const char* __restrict str, size_t nmatch, regmatch_t __restrict dest_matches[],
                        int eflags) {
@@ -9,7 +9,7 @@ extern "C" int regexec(const regex_t* __restrict regex, const char* __restrict s
         return REG_NOMATCH;
     }
 
-    BREGraph* graph = static_cast<BREGraph*>(regex->__re_compiled_data);
+    RegexGraph* graph = static_cast<RegexGraph*>(regex->__re_compiled_data);
     auto matches = graph->do_match(str, eflags);
     if (!matches.size()) {
         return REG_NOMATCH;

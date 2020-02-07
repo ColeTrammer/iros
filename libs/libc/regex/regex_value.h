@@ -22,30 +22,28 @@ struct DuplicateCount {
     int max;
 };
 
-struct BRESingleExpression;
+struct RegexSingleExpression;
 
-struct BRExpression {
-    Vector<SharedPtr<BRESingleExpression>> parts;
-    int index;
+struct RegexExpression {
+    Vector<SharedPtr<RegexSingleExpression>> parts;
 };
 
-struct BRESingleExpression {
+struct RegexSingleExpression {
     enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression, Backreference, Group };
     Type type;
-    Variant<char, BracketExpression, int, BRExpression> expression;
+    Variant<char, BracketExpression, int, RegexExpression> expression;
     Maybe<DuplicateCount> duplicate;
 };
 
-struct BRE {
-    bool left_anchor : 1;
-    bool right_anchor : 1;
-    BRExpression expression;
+struct ParsedRegex {
+    Vector<RegexExpression> alternatives;
+    int index;
 };
 
-using BREValue = Variant<Monostate, TokenInfo, DuplicateCount, SharedPtr<BRESingleExpression>, BRExpression, BRE>;
+using RegexValue = Variant<Monostate, TokenInfo, DuplicateCount, SharedPtr<RegexSingleExpression>, RegexExpression, ParsedRegex>;
 
-inline void dump(const BREValue& value) {
-    const_cast<BREValue&>(value).visit([](auto&& v) {
+inline void dump(const RegexValue& value) {
+    const_cast<RegexValue&>(value).visit([](auto&& v) {
         using T = LIIM::decay_t<decltype(v)>;
         using LIIM::IsSame;
         if constexpr (IsSame<Monostate, T>::value) {
@@ -68,48 +66,45 @@ inline void dump(const BREValue& value) {
                     fprintf(stderr, "  DUPL: Between %d %d\n", dup.min, dup.max);
                     break;
             }
-        } else if constexpr (IsSame<SharedPtr<BRESingleExpression>, T>::value) {
-            const BRESingleExpression& exp = *v;
+        } else if constexpr (IsSame<SharedPtr<RegexSingleExpression>, T>::value) {
+            const RegexSingleExpression& exp = *v;
             switch (exp.type) {
-                case BRESingleExpression::Type::Any:
+                case RegexSingleExpression::Type::Any:
                     fprintf(stderr, "  Any\n");
                     break;
-                case BRESingleExpression::Type::OrdinaryCharacter:
+                case RegexSingleExpression::Type::OrdinaryCharacter:
                     fprintf(stderr, "  %c\n", exp.expression.as<char>());
                     break;
-                case BRESingleExpression::Type::QuotedCharacter:
+                case RegexSingleExpression::Type::QuotedCharacter:
                     fprintf(stderr, "  \\%c\n", exp.expression.as<char>());
                     break;
-                case BRESingleExpression::Type::BracketExpression:
+                case RegexSingleExpression::Type::BracketExpression:
                     fprintf(stderr, "  []\n");
                     break;
-                case BRESingleExpression::Type::Backreference:
+                case RegexSingleExpression::Type::Backreference:
                     fprintf(stderr, "  \\%d\n", exp.expression.as<int>());
                     break;
-                case BRESingleExpression::Type::Group:
+                case RegexSingleExpression::Type::Group:
                     fprintf(stderr, "  - Group -\n");
-                    dump({ exp.expression.as<BRExpression>() });
+                    dump({ exp.expression.as<RegexExpression>() });
                     fprintf(stderr, "  - End -\n");
                     break;
             }
             if (exp.duplicate.has_value()) {
                 dump({ exp.duplicate.value() });
             }
-        } else if constexpr (IsSame<BRExpression, T>::value) {
-            const Vector<SharedPtr<BRESingleExpression>> exps = v.parts;
-            fprintf(stderr, "BRExpression: %d\n", v.index);
+        } else if constexpr (IsSame<RegexExpression, T>::value) {
+            const Vector<SharedPtr<RegexSingleExpression>> exps = v.parts;
+            fprintf(stderr, "RegexExpression\n");
             exps.for_each([&](const auto& exp) {
                 dump({ exp });
             });
         } else {
-            fprintf(stderr, "Regex\n");
-            if (v.left_anchor) {
-                fprintf(stderr, "LeftAnchor\n");
-            }
-            if (v.right_anchor) {
-                fprintf(stderr, "Right Anchor\n");
-            }
-            dump({ v.expression });
+            const ParsedRegex& regex = v;
+            fprintf(stderr, "Regex: %d\n", regex.index);
+            regex.alternatives.for_each([&](const auto& a) {
+                dump({ a });
+            });
         }
     });
 }
