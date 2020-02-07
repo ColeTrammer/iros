@@ -83,6 +83,12 @@ private:
             new BRESingleExpression { BRESingleExpression::Type::OrdinaryCharacter, { *ch.as<TokenInfo>().text.start() }, {} }) };
     }
 
+    virtual BREValue reduce_one_char_or_coll_elem_re$quotedcharacter(BREValue& ch) override {
+        assert(ch.is<TokenInfo>());
+        return { SharedPtr<BRESingleExpression>(
+            new BRESingleExpression { BRESingleExpression::Type::QuotedCharacter, { *ch.as<TokenInfo>().text.start() }, {} }) };
+    }
+
     virtual BREValue reduce_one_char_or_coll_elem_re$period(BREValue&) override {
         return { SharedPtr<BRESingleExpression>(new BRESingleExpression { BRESingleExpression::Type::Any, { '.' }, {} }) };
     }
