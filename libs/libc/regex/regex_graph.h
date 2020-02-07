@@ -60,7 +60,7 @@ public:
 
     void dump() const;
 
-    Vector<regmatch_t> do_match(const char* str, int eflags) const;
+    Maybe<Vector<regmatch_t>> do_match(const char* str, int eflags) const;
 
 private:
     Maybe<size_t> try_match_at(const char* s, size_t index, int cflags, int state, Vector<regmatch_t>& dest_matches) const;

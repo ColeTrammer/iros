@@ -10,11 +10,12 @@ extern "C" int regexec(const regex_t* __restrict regex, const char* __restrict s
     }
 
     RegexGraph* graph = static_cast<RegexGraph*>(regex->__re_compiled_data);
-    auto matches = graph->do_match(str, eflags);
-    if (!matches.size()) {
+    auto result = graph->do_match(str, eflags);
+    if (!result.has_value()) {
         return REG_NOMATCH;
     }
 
+    auto& matches = result.value();
     for (size_t i = 0; i < nmatch; i++) {
         if (i < (size_t) matches.size()) {
             dest_matches[i] = matches[i];

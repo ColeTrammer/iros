@@ -220,6 +220,13 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
                         add_forward_transition(in_place_type<EpsilonTransition>, true);
                         break;
                     case DuplicateCount::Type::Between:
+                        if (dup.max != 0) {
+                            int num_states_in_part = m_states.size() - 1 - start_state;
+                            duplicate_states_after(start_state, dup.max - 1);
+                            for (int j = dup.min; j < dup.max; j++) {
+                                add_epsilon_transition(start_state + j * num_states_in_part, m_states.size() - 1);
+                            }
+                        }
                         break;
                 }
             }
@@ -232,9 +239,6 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
     };
 
     build_graph(regex_base);
-
-    ::dump(regex_base);
-    dump();
 }
 
 Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {
@@ -258,7 +262,7 @@ Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags
     return {};
 }
 
-Vector<regmatch_t> RegexGraph::do_match(const char* str, int eflags) const {
+Maybe<Vector<regmatch_t>> RegexGraph::do_match(const char* str, int eflags) const {
     Vector<regmatch_t> matches(m_num_groups + 1);
     for (int i = 0; i < matches.capacity(); i++) {
         matches.add({ -1, -1 });
@@ -269,11 +273,17 @@ Vector<regmatch_t> RegexGraph::do_match(const char* str, int eflags) const {
         Maybe<size_t> result = try_match_at(str, i, eflags, 0, matches);
         if (result.has_value()) {
             matches[0] = { (regoff_t) i, (regoff_t) result.value() };
-            break;
+            for (int i = 0; i < matches.size(); i++) {
+                if (matches[i].rm_eo == -1 || matches[i].rm_so == -1) {
+                    matches[i] = { -1, -1 };
+                }
+            }
+
+            return matches;
         }
     } while (str[i++] != '\0');
 
-    return matches;
+    return {};
 }
 
 void RegexGraph::dump() const {

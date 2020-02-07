@@ -202,7 +202,7 @@ bool RegexLexer::lex() {
                 consume();
                 if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
                     commit_token(RegexTokenType::LeftParenthesis);
-                    m_group_incidices.put(m_position - 2, ++m_group_count);
+                    m_group_incidices.put(m_position - 1 - (m_flags & REG_EXTENDED ? 0 : 1), ++m_group_count);
                 } else {
                     commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
                 }
