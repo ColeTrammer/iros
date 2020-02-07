@@ -172,7 +172,10 @@ private:
     int m_group;
 };
 
-RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups) : m_cflags(cflags), m_num_groups(num_groups) {
+RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups)
+    : m_regex_base(regex_base), m_cflags(cflags), m_num_groups(num_groups) {}
+
+bool RegexGraph::compile() {
     m_states.add(RegexState());
     RegexState* current_state = &m_states.last();
 
@@ -207,79 +210,103 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
         return shifted_start;
     };
 
-    Function<void(const ParsedRegex&)> build_graph = [&](const ParsedRegex& regex) {
-        auto expression = regex.alternatives.first();
-        for (int i = 0; i < expression.parts.size(); i++) {
-            int start_state = m_states.size() - 1;
-
-            const SharedPtr<RegexSingleExpression>& exp = expression.parts[i];
-            switch (exp->type) {
-                case RegexSingleExpression::Type::OrdinaryCharacter:
-                case RegexSingleExpression::Type::QuotedCharacter:
-                    assert(exp->expression.is<char>());
-                    add_forward_transition(in_place_type<OrdinaryCharacterTransition>, exp->expression.as<char>());
-                    break;
-                case RegexSingleExpression::Type::Any:
-                    add_forward_transition(in_place_type<AnyCharacterTransition>);
-                    break;
-                case RegexSingleExpression::Type::Group: {
-                    const auto& sub_regex = exp->expression.as<ParsedRegex>();
-                    add_forward_transition(in_place_type<BeginGroupCaptureTransition>, sub_regex.index);
-                    build_graph(sub_regex);
-                    add_forward_transition(in_place_type<EndGroupCaptureTransition>, exp->expression.as<ParsedRegex>().index);
-                    break;
-                }
-                case RegexSingleExpression::Type::LeftAnchor:
-                    add_forward_transition(in_place_type<LeftAnchorTransition>);
-                    break;
-                case RegexSingleExpression::Type::RightAnchor:
-                    add_forward_transition(in_place_type<RightAnchorTransition>);
-                    break;
-                case RegexSingleExpression::Type::Backreference:
-                    assert(exp->expression.is<int>());
-                    add_forward_transition(in_place_type<BackreferenceTransition>, exp->expression.as<int>());
-                    break;
-                case RegexSingleExpression::Type::BracketExpression:
-                    break;
+    Function<bool(const ParsedRegex&)> build_graph = [&](const ParsedRegex& regex) {
+        int alternative_state = m_states.size() - 1;
+        Vector<int> end_states(regex.alternatives.size());
+        for (int j = 0; j < regex.alternatives.size(); j++) {
+            auto expression = regex.alternatives[j];
+            if (j != 0) {
+                m_states.add(RegexState());
+                add_epsilon_transition(alternative_state, m_states.size() - 1);
+                current_state = &m_states.last();
             }
 
-            if (exp->duplicate.has_value()) {
-                const DuplicateCount& dup = exp->duplicate.value();
-                switch (dup.type) {
-                    case DuplicateCount::Type::Exact:
-                        if (dup.min != 0) {
-                            duplicate_states_after(start_state, dup.min - 1);
-                        }
+            for (int i = 0; i < expression.parts.size(); i++) {
+                int start_state = m_states.size() - 1;
+
+                const SharedPtr<RegexSingleExpression>& exp = expression.parts[i];
+                switch (exp->type) {
+                    case RegexSingleExpression::Type::OrdinaryCharacter:
+                    case RegexSingleExpression::Type::QuotedCharacter:
+                        assert(exp->expression.is<char>());
+                        add_forward_transition(in_place_type<OrdinaryCharacterTransition>, exp->expression.as<char>());
                         break;
-                    case DuplicateCount::Type::AtLeast:
-                        if (dup.min == 0) {
-                            add_epsilon_transition(start_state, m_states.size());
-                        } else {
-                            start_state = duplicate_states_after(start_state, dup.min - 1);
-                        }
-                        add_epsilon_transition(m_states.size() - 1, start_state);
-                        add_forward_transition(in_place_type<EpsilonTransition>, true);
+                    case RegexSingleExpression::Type::Any:
+                        add_forward_transition(in_place_type<AnyCharacterTransition>);
                         break;
-                    case DuplicateCount::Type::Between:
-                        if (dup.max != 0) {
-                            int num_states_in_part = m_states.size() - 1 - start_state;
-                            duplicate_states_after(start_state, dup.max - 1);
-                            for (int j = dup.min; j < dup.max; j++) {
-                                add_epsilon_transition(start_state + j * num_states_in_part, m_states.size() - 1);
+                    case RegexSingleExpression::Type::Group: {
+                        const auto& sub_regex = exp->expression.as<ParsedRegex>();
+                        add_forward_transition(in_place_type<BeginGroupCaptureTransition>, sub_regex.index);
+                        if (!build_graph(sub_regex)) {
+                            return false;
+                        }
+                        add_forward_transition(in_place_type<EndGroupCaptureTransition>, exp->expression.as<ParsedRegex>().index);
+                        break;
+                    }
+                    case RegexSingleExpression::Type::LeftAnchor:
+                        add_forward_transition(in_place_type<LeftAnchorTransition>);
+                        break;
+                    case RegexSingleExpression::Type::RightAnchor:
+                        add_forward_transition(in_place_type<RightAnchorTransition>);
+                        break;
+                    case RegexSingleExpression::Type::Backreference:
+                        assert(exp->expression.is<int>());
+                        add_forward_transition(in_place_type<BackreferenceTransition>, exp->expression.as<int>());
+                        break;
+                    case RegexSingleExpression::Type::BracketExpression:
+                        break;
+                }
+
+                if (exp->duplicate.has_value()) {
+                    const DuplicateCount& dup = exp->duplicate.value();
+                    switch (dup.type) {
+                        case DuplicateCount::Type::Exact:
+                            if (dup.min != 0) {
+                                duplicate_states_after(start_state, dup.min - 1);
                             }
-                        }
-                        break;
+                            break;
+                        case DuplicateCount::Type::AtLeast:
+                            if (dup.min == 0) {
+                                add_epsilon_transition(start_state, m_states.size());
+                            } else {
+                                start_state = duplicate_states_after(start_state, dup.min - 1);
+                            }
+                            add_epsilon_transition(m_states.size() - 1, start_state);
+                            add_forward_transition(in_place_type<EpsilonTransition>, true);
+                            break;
+                        case DuplicateCount::Type::Between:
+                            if (dup.max != 0) {
+                                int num_states_in_part = m_states.size() - 1 - start_state;
+                                duplicate_states_after(start_state, dup.max - 1);
+                                for (int j = dup.min; j < dup.max; j++) {
+                                    add_epsilon_transition(start_state + j * num_states_in_part, m_states.size() - 1);
+                                }
+                            }
+                            break;
+                    }
                 }
             }
+
+            // Create a null rule so that the regex can be finished
+            if (!current_state->transitions().empty()) {
+                add_forward_transition(in_place_type<EpsilonTransition>, true);
+            }
+
+            end_states.add(m_states.size() - 1);
         }
 
-        // Create a null rule so that the regex can be finished
-        if (!current_state->transitions().empty()) {
-            add_forward_transition(in_place_type<EpsilonTransition>, true);
+        if (end_states.size() > 1) {
+            end_states.for_each([&](int from) {
+                add_epsilon_transition(from, m_states.size());
+            });
+            m_states.add(RegexState());
+            current_state = &m_states.last();
         }
+
+        return true;
     };
 
-    build_graph(regex_base);
+    return build_graph(m_regex_base);
 }
 
 Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {

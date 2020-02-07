@@ -35,10 +35,18 @@ extern "C" int regcomp(regex_t* __restrict regex, const char* __restrict str, in
     }
 
     new (compiled) RegexGraph(parser.result().as<ParsedRegex>(), cflags, lexer.num_sub_expressions());
+    if (!compiled->compile()) {
+        error = compiled->error_code();
+        goto regcomp_error_after_allocation;
+    }
 
     regex->re_nsub = lexer.num_sub_expressions();
     regex->__re_compiled_data = static_cast<void*>(compiled);
     return 0;
+
+regcomp_error_after_allocation:
+    compiled->~RegexGraph();
+    free(compiled);
 
 regcomp_error:
     regex->__re_compiled_data = nullptr;

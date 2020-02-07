@@ -62,10 +62,16 @@ public:
 
     Maybe<Vector<regmatch_t>> do_match(const char* str, int eflags) const;
 
+    bool compile();
+
+    int error_code() const { return m_error_code; }
+
 private:
     Maybe<size_t> try_match_at(const char* s, size_t index, int cflags, int state, Vector<regmatch_t>& dest_matches) const;
 
+    const ParsedRegex& m_regex_base;
     Vector<RegexState> m_states;
     int m_cflags;
     int m_num_groups;
+    int m_error_code { 0 };
 };

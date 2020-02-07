@@ -4,7 +4,6 @@
 #include <liim/tuple.h>
 #include <liim/utilities.h>
 #include <stddef.h>
-#include <utility>
 
 namespace LIIM {
 
