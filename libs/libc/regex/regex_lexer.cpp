@@ -6,14 +6,8 @@
 RegexLexer::~RegexLexer() {}
 
 bool RegexLexer::lex() {
-    if (peek() == '^') {
-        consume();
-        commit_token(RegexTokenType::LeftAnchor);
-    }
-
     bool prev_was_backslash = false;
     while (peek() != '\0') {
-
         switch (peek()) {
             case '\0':
                 break;
@@ -143,18 +137,28 @@ bool RegexLexer::lex() {
                 if (prev_was_backslash) {
                     commit_token(RegexTokenType::QuotedCharacter);
                 } else if (m_tokens.empty() || m_tokens.last().type() == RegexTokenType::LeftAnchor ||
-                           m_tokens.last().type() == RegexTokenType::LeftParenthesis) {
+                           m_tokens.last().type() == RegexTokenType::LeftParenthesis || m_tokens.last().type() == RegexTokenType::Pipe) {
                     commit_token(RegexTokenType::OrdinaryCharacter);
                 } else {
                     commit_token(RegexTokenType::Asterisk);
+                }
+                break;
+            case '^':
+                consume();
+                if (prev_was_backslash) {
+                    commit_token(RegexTokenType::QuotedCharacter);
+                } else if ((m_flags & REG_EXTENDED) || m_position == 0) {
+                    commit_token(RegexTokenType::Carrot);
+                } else {
+                    commit_token(RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case '$':
                 consume();
                 if (prev_was_backslash) {
                     commit_token(RegexTokenType::QuotedCharacter);
-                } else if (peek() == '\0') {
-                    commit_token(RegexTokenType::RightAnchor);
+                } else if ((m_flags & REG_EXTENDED) || peek() == '\0') {
+                    commit_token(RegexTokenType::Dollar);
                 } else {
                     commit_token(RegexTokenType::OrdinaryCharacter);
                 }
@@ -196,36 +200,59 @@ bool RegexLexer::lex() {
                 break;
             case '(':
                 consume();
-                if (prev_was_backslash) {
+                if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
                     commit_token(RegexTokenType::LeftParenthesis);
-                    printf("%lu: %d\n", m_position - 2, m_group_count + 1);
                     m_group_incidices.put(m_position - 2, ++m_group_count);
                 } else {
-                    commit_token(RegexTokenType::OrdinaryCharacter);
+                    commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case ')':
                 consume();
-                if (prev_was_backslash) {
+                if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
                     commit_token(RegexTokenType::RightParenthesis);
                 } else {
-                    commit_token(RegexTokenType::OrdinaryCharacter);
+                    commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case '{':
                 consume();
-                if (prev_was_backslash) {
-                    commit_token(RegexTokenType::LeftCurlyBrace);
+                if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
+                    commit_token(RegexTokenType::RightCurlyBrace);
                 } else {
-                    commit_token(RegexTokenType::OrdinaryCharacter);
+                    commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             case '}':
                 consume();
-                if (prev_was_backslash) {
-                    commit_token(RegexTokenType::RightCurlyBrace);
+                if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
+                    commit_token(RegexTokenType::LeftCurlyBrace);
                 } else {
-                    commit_token(RegexTokenType::OrdinaryCharacter);
+                    commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
+                }
+                break;
+            case '|':
+                consume();
+                if (!prev_was_backslash && (m_flags & REG_EXTENDED)) {
+                    commit_token(RegexTokenType::Pipe);
+                } else {
+                    commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
+                }
+                break;
+            case '+':
+                consume();
+                if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
+                    commit_token(RegexTokenType::Plus);
+                } else {
+                    commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
+                }
+                break;
+            case '?':
+                consume();
+                if (prev_was_backslash ^ (m_flags & REG_EXTENDED)) {
+                    commit_token(RegexTokenType::QuestionMark);
+                } else {
+                    commit_token(m_flags & REG_EXTENDED ? RegexTokenType::QuotedCharacter : RegexTokenType::OrdinaryCharacter);
                 }
                 break;
             default:

@@ -8,8 +8,6 @@
 #include "regex_value.h"
 
 extern "C" int regcomp(regex_t* __restrict regex, const char* __restrict str, int cflags) {
-    assert(!(cflags & REG_EXTENDED));
-
     int error = 0;
     RegexGraph* compiled = nullptr;
     RegexLexer lexer(str, cflags);
