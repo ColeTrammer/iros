@@ -170,6 +170,20 @@ public:
         });
     }
 
+    template<typename T, typename... Args>
+    Variant(in_place_type_t<T>, Args... args, typename EnableIf<TypeList::Index<T, Types...>::value != -1>::type* = 0) {
+        constexpr size_t index = TypeList::Index<T, Types...>::value;
+        static_assert(index != -1);
+        new (&m_value_storage[0]) T(forward<Args>(args)...);
+        m_value_index = index;
+    }
+
+    template<size_t index, typename... Args> Variant(in_place_index_t<index>, Args... args) {
+        using RealType = typename TypeList::TypeAtIndex<index, Types...>::type;
+        new (&m_value_storage[0]) RealType(forward<Args>(args)...);
+        m_value_index = index;
+    }
+
     template<typename T> Variant(const T& other, typename EnableIf<TypeList::IsValid<T, Types...>::value>::type* = 0) {
         using RealType = typename TypeList::IsValid<T, Types...>::type;
         constexpr size_t index = TypeList::Index<RealType, Types...>::value;
