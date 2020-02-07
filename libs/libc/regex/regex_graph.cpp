@@ -140,6 +140,38 @@ private:
     int m_group;
 };
 
+class BackreferenceTransition final : public RegexTransition {
+public:
+    BackreferenceTransition(int state, int group) : RegexTransition(state), m_group(group) {}
+
+    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>& matches) const override {
+        regmatch_t match = matches[m_group];
+        if (match.rm_eo == -1 || match.rm_so == -1) {
+            return {};
+        }
+
+        // FIXME: use some highly advanced string searching algorithm
+        //        instead of a simple for loop
+        size_t start_index = index;
+        for (; match.rm_so < match.rm_eo; match.rm_so++) {
+            if (s[index++] != s[match.rm_so]) {
+                return {};
+            }
+        }
+
+        return { index - start_index };
+    }
+
+    virtual void dump() const override { fprintf(stderr, "  BackreferenceTransition (%d) to %d", m_group, state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<BackreferenceTransition>(state() + shift, m_group);
+    }
+
+private:
+    int m_group;
+};
+
 RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups) : m_cflags(cflags), m_num_groups(num_groups) {
     m_states.add(RegexState());
     RegexState* current_state = &m_states.last();
@@ -204,6 +236,9 @@ RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups
                     add_forward_transition(in_place_type<RightAnchorTransition>);
                     break;
                 case RegexSingleExpression::Type::Backreference:
+                    assert(exp->expression.is<int>());
+                    add_forward_transition(in_place_type<BackreferenceTransition>, exp->expression.as<int>());
+                    break;
                 case RegexSingleExpression::Type::BracketExpression:
                     break;
             }
