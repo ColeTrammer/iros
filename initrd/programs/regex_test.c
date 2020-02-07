@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
     }
 
     regex_t regex;
-    int ret = regcomp(&regex, argv[1], 0);
+    int ret = regcomp(&regex, argv[1], REG_EXTENDED);
     if (ret != 0) {
         char error_string[1024];
         regerror(ret, &regex, error_string, 1024);

@@ -11,18 +11,25 @@ public:
     RegexTransition(int state) : m_state(state) {}
     virtual ~RegexTransition() {}
 
-    virtual bool can_transition(const char* s, size_t index, int flags) const = 0;
-    size_t transition(int& state) const {
-        state = m_state;
-        return num_characters_matched();
-    };
+    bool try_transition(const char* s, size_t index, int flags, int& state, size_t& dest_index, Vector<regmatch_t>& dest_matches) const {
+        auto result = do_try_transition(s, index, flags, dest_matches);
+        if (result.has_value()) {
+            state = m_state;
+            dest_index += result.value();
+            return true;
+        }
 
-    virtual size_t num_characters_matched() const { return 1; }
+        return false;
+    }
 
     virtual void dump() const = 0;
 
 protected:
     int state() const { return m_state; }
+
+    virtual size_t num_characters_matched() const { return 1; }
+
+    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>& dest_matches) const = 0;
 
 private:
     int m_state {};
@@ -39,7 +46,7 @@ private:
 
 class RegexGraph {
 public:
-    RegexGraph(const ParsedRegex& regex, int cflags);
+    RegexGraph(const ParsedRegex& regex, int cflags, int num_groups);
 
     void dump() const;
 
@@ -50,4 +57,5 @@ private:
 
     Vector<RegexState> m_states;
     int m_cflags;
+    int m_num_groups;
 };

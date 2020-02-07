@@ -115,7 +115,7 @@ private:
         assert(v.is<ParsedRegex>());
         v.as<ParsedRegex>().index = lexer().group_at_position(a.as<TokenInfo>().position);
         return { SharedPtr<RegexSingleExpression>(
-            new RegexSingleExpression { RegexSingleExpression::Type::Group, move(v.as<RegexExpression>()), {} }) };
+            new RegexSingleExpression { RegexSingleExpression::Type::Group, move(v.as<ParsedRegex>()), {} }) };
     }
 
     virtual RegexValue reduce_expression$expression_duplicate_symbol(RegexValue& v, RegexValue& c) override {

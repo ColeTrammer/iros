@@ -28,16 +28,16 @@ struct RegexExpression {
     Vector<SharedPtr<RegexSingleExpression>> parts;
 };
 
-struct RegexSingleExpression {
-    enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression, Backreference, Group };
-    Type type;
-    Variant<char, BracketExpression, int, RegexExpression> expression;
-    Maybe<DuplicateCount> duplicate;
-};
-
 struct ParsedRegex {
     Vector<RegexExpression> alternatives;
     int index;
+};
+
+struct RegexSingleExpression {
+    enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression, Backreference, Group };
+    Type type;
+    Variant<char, BracketExpression, int, ParsedRegex> expression;
+    Maybe<DuplicateCount> duplicate;
 };
 
 using RegexValue = Variant<Monostate, TokenInfo, DuplicateCount, SharedPtr<RegexSingleExpression>, RegexExpression, ParsedRegex>;
@@ -86,7 +86,7 @@ inline void dump(const RegexValue& value) {
                     break;
                 case RegexSingleExpression::Type::Group:
                     fprintf(stderr, "  - Group -\n");
-                    dump({ exp.expression.as<RegexExpression>() });
+                    dump({ exp.expression.as<ParsedRegex>() });
                     fprintf(stderr, "  - End -\n");
                     break;
             }

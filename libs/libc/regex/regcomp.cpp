@@ -34,7 +34,7 @@ extern "C" int regcomp(regex_t* __restrict regex, const char* __restrict str, in
         goto regcomp_error;
     }
 
-    new (compiled) RegexGraph(parser.result().as<ParsedRegex>(), cflags);
+    new (compiled) RegexGraph(parser.result().as<ParsedRegex>(), cflags, lexer.num_sub_expressions());
 
     regex->re_nsub = lexer.num_sub_expressions();
     regex->__re_compiled_data = static_cast<void*>(compiled);
