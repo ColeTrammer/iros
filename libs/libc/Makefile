@@ -237,7 +237,7 @@ $(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 $(BUILDDIR)/%.o: $(ROOT)/%.cpp
-	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -std=c++17 -fno-rtti -fno-exceptions -Werror -Wall -Wextra -std=c++17 -ffreestanding -nostdinc++
+	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -fno-rtti -fno-exceptions -Werror -Wall -Wextra -ffreestanding -nostdinc++
 
 $(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)
@@ -246,7 +246,7 @@ $(BUILDDIR)/%.libk.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 $(BUILDDIR)/%.libk.o: $(ROOT)/%.cpp
-	$(CXX) -MD -c $< -o $@ $(LIBK_CPPFLAGS) -std=c++17
+	$(CXX) -MD -c $< -o $@ $(LIBK_CPPFLAGS)
 
 $(BUILDDIR)/%.libk.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)

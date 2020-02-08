@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <liim/function.h>
 #include <regex.h>
 #include <stdio.h>
@@ -172,6 +173,208 @@ private:
     int m_group;
 };
 
+class BracketItemMatcher {
+public:
+    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const = 0;
+};
+
+class BracketRangeMatcher final : public BracketItemMatcher {
+public:
+    BracketRangeMatcher(StringView a, StringView b, int&) {
+        // FIXME: consider multi character collating sequences
+        char c = a.start()[0];
+        char d = b.start()[0];
+        min = LIIM::min(c, d);
+        max = LIIM::max(c, d);
+    }
+
+    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
+        // FIXME: fix non linear collating sequences
+        if (flags & REG_ICASE) {
+            if (tolower(s[index]) >= tolower(min) && tolower(s[index]) <= tolower(max))
+                return { 1 };
+            return {};
+        }
+        if (s[index] >= min && s[index] <= max)
+            return { 1 };
+        return {};
+    }
+
+private:
+    char min;
+    char max;
+};
+
+class BracketSingleCollateMatcher final : public BracketItemMatcher {
+public:
+    BracketSingleCollateMatcher(StringView sv, int&) { to_match = sv.start()[0]; }
+
+    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
+        if (flags & REG_ICASE) {
+            if (tolower(s[index]) == tolower(to_match))
+                return { 1 };
+            return {};
+        }
+        if (s[index] == to_match)
+            return { 1 };
+        return {};
+    }
+
+private:
+    char to_match;
+};
+
+class BracketEquivalenceClassMatcher final : public BracketItemMatcher {
+public:
+    BracketEquivalenceClassMatcher(StringView sv, int&) { to_match = sv.start()[0]; }
+
+    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
+        // FIXME: what even are equivalence classes anyway?
+        if (flags & REG_ICASE) {
+            if (tolower(s[index]) == tolower(to_match))
+                return { 1 };
+            return {};
+        }
+        if (s[index] == to_match)
+            return { 1 };
+        return {};
+    }
+
+private:
+    char to_match;
+};
+
+class BracketCharacterClassMatcher final : public BracketItemMatcher {
+public:
+    BracketCharacterClassMatcher(StringView sv, int& error) {
+        if (sv == "upper")
+            match_function = isupper;
+        else if (sv == "lower")
+            match_function = islower;
+        else if (sv == "alpha")
+            match_function = isalpha;
+        else if (sv == "digit")
+            match_function = isdigit;
+        else if (sv == "xdigit")
+            match_function = isxdigit;
+        else if (sv == "alnum")
+            match_function = isalnum;
+        else if (sv == "punct")
+            match_function = ispunct;
+        else if (sv == "blank")
+            match_function = isblank;
+        else if (sv == "space")
+            match_function = isspace;
+        else if (sv == "cntrl")
+            match_function = iscntrl;
+        else if (sv == "graph")
+            match_function = isgraph;
+        else if (sv == "print")
+            match_function = isprint;
+        else
+            error = REG_ECTYPE;
+    }
+
+    virtual Maybe<size_t> matches(const char* s, size_t index, int) const override {
+        // FIXME: Should [:upper:] or [:lower:] always match if REG_ICASE is set?
+        if (match_function(s[index]))
+            return { 1 };
+        return {};
+    }
+
+private:
+    int (*match_function)(int);
+};
+
+class BracketExpressionTransition final : public RegexTransition {
+private:
+    enum class Badge { Construct };
+
+public:
+    static Variant<int, SharedPtr<RegexTransition>> try_construct(int state, const BracketExpression& exp) {
+        int error = 0;
+        auto ptr = make_shared<BracketExpressionTransition>(state, exp, error, Badge::Construct);
+        if (error != 0) {
+            return { error };
+        }
+        return { move(static_cast<SharedPtr<RegexTransition>>(ptr)) };
+    }
+
+    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
+        // We shouldn't be able to match the null terminator, even when the bracket expression is inverted.
+        if (s[index] == '\0') {
+            return {};
+        }
+
+        for (int i = 0; i < m_components.size(); i++) {
+            const auto& matcher = m_components[i];
+            auto result = matcher->matches(s, index, flags);
+            if (result.has_value()) {
+                if (m_inverted)
+                    return {};
+                return result;
+            }
+        }
+
+        if (m_inverted)
+            return { 1 };
+        return {};
+    }
+
+    virtual void dump() const override { fprintf(stderr, "  BracketExpression to %d", state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<BracketExpressionTransition>(state() + shift, m_components, m_inverted, Badge::Construct);
+    }
+
+    BracketExpressionTransition(int state, const Vector<SharedPtr<BracketItemMatcher>>& v, bool inverted, Badge)
+        : RegexTransition(state), m_components(v), m_inverted(inverted) {}
+
+    BracketExpressionTransition(int state, const BracketExpression& exp, int& out_error, Badge)
+        : RegexTransition(state), m_inverted(exp.inverted) {
+        const auto& items = exp.list;
+        for (int i = 0; i < items.size(); i++) {
+            const auto& exp = items[i];
+            int error = 0;
+            if (exp.type == BracketItem::Type::RangeExpression) {
+                const auto& range = exp.expression.as<BracketRangeExpression>();
+                auto matcher = make_shared<BracketRangeMatcher>(range.start, range.end, error);
+                if (error != 0) {
+                    out_error = error;
+                    return;
+                }
+                m_components.add(move(matcher));
+                continue;
+            }
+
+            const auto& single_expression = exp.expression.as<BracketSingleExpression>();
+            SharedPtr<BracketItemMatcher> matcher;
+            switch (single_expression.type) {
+                case BracketSingleExpression::Type::SingleCollatingSymbol:
+                case BracketSingleExpression::Type::GroupedCollatingSymbol:
+                    matcher = make_shared<BracketSingleCollateMatcher>(single_expression.expression, error);
+                    break;
+                case BracketSingleExpression::Type::EquivalenceClass:
+                    matcher = make_shared<BracketEquivalenceClassMatcher>(single_expression.expression, error);
+                    break;
+                case BracketSingleExpression::Type::CharacterClass:
+                    matcher = make_shared<BracketCharacterClassMatcher>(single_expression.expression, error);
+                    break;
+            }
+
+            if (error != 0) {
+                out_error = error;
+                return;
+            }
+            m_components.add(move(matcher));
+        }
+    }
+
+private:
+    Vector<SharedPtr<BracketItemMatcher>> m_components;
+    bool m_inverted;
+};
+
 RegexGraph::RegexGraph(const ParsedRegex& regex_base, int cflags, int num_groups)
     : m_regex_base(regex_base), m_cflags(cflags), m_num_groups(num_groups) {}
 
@@ -183,6 +386,17 @@ bool RegexGraph::compile() {
         current_state->transitions().add(make_shared<Transition>(m_states.size(), forward<Args>(args)...));
         m_states.add(RegexState());
         current_state = &m_states.last();
+    };
+
+    auto add_forward_transition_for_bracket_expression = [&](const BracketExpression& exp) -> int {
+        auto result = BracketExpressionTransition::try_construct(m_states.size(), exp);
+        if (result.is<int>()) {
+            return result.as<int>();
+        }
+        current_state->transitions().add(move(result.as<SharedPtr<RegexTransition>>()));
+        m_states.add(RegexState());
+        current_state = &m_states.last();
+        return 0;
     };
 
     auto add_epsilon_transition = [&](int from, int to) {
@@ -262,8 +476,15 @@ bool RegexGraph::compile() {
                         add_forward_transition(in_place_type<BackreferenceTransition>, group_index);
                         break;
                     }
-                    case RegexSingleExpression::Type::BracketExpression:
+                    case RegexSingleExpression::Type::BracketExpression: {
+                        assert(exp->expression.is<BracketExpression>());
+                        int ret = add_forward_transition_for_bracket_expression(exp->expression.as<BracketExpression>());
+                        if (ret != 0) {
+                            m_error_code = ret;
+                            return false;
+                        }
                         break;
+                    }
                 }
 
                 if (exp->duplicate.has_value()) {

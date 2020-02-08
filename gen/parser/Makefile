@@ -13,6 +13,6 @@ $(BUILDDIR)/gen/parser/state_table.o \
 EXECUTABLE=$(BUILDDIR)/gen/parser/parser
 
 export LD=$(CXX)
-export CPPFLAGS+=-I$(ROOT)/libs/libliim/include -std=c++17
+export CPPFLAGS+=-I$(ROOT)/libs/libliim/include -std=c++2a
 
 include $(ROOT)/gen/Makefile.common
