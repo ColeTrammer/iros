@@ -41,11 +41,7 @@ bool RegexLexer::lex() {
                     switch (peek()) {
                         case '-':
                             consume();
-                            if (peek() == ']' || m_tokens.last().type() == RegexTokenType::Minus) {
-                                commit_token(RegexTokenType::CollateSingleElement);
-                            } else {
-                                commit_token(RegexTokenType::Minus);
-                            }
+                            commit_token(RegexTokenType::Minus);
                             break;
                         case '[':
                             consume();

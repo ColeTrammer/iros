@@ -106,6 +106,12 @@ private:
         return { SharedPtr<RegexSingleExpression>(new RegexSingleExpression { RegexSingleExpression::Type::Any, { '.' }, {} }) };
     }
 
+    virtual RegexValue reduce_regex_one_char$bracket_expression(RegexValue& v) override {
+        assert(v.is<BracketExpression>());
+        return { SharedPtr<RegexSingleExpression>(
+            new RegexSingleExpression { RegexSingleExpression::Type::BracketExpression, { move(v.as<BracketExpression>()) }, {} }) };
+    }
+
     virtual RegexValue reduce_expression$regex_one_char(RegexValue& se) override {
         assert(se.is<SharedPtr<RegexSingleExpression>>());
         return se;
@@ -177,6 +183,153 @@ private:
         assert(v.is<RegexExpression>());
         exps.as<ParsedRegex>().alternatives.add(move(v.as<RegexExpression>()));
         return exps;
+    }
+
+    virtual RegexValue reduce_bracket_expression$leftsquarebracket_matching_list_rightsquarebracket(RegexValue&, RegexValue& v,
+                                                                                                    RegexValue&) override {
+        assert(v.is<BracketExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_bracket_expression$leftsquarebracket_nonmatching_list_rightsquarebracket(RegexValue&, RegexValue& v,
+                                                                                                       RegexValue&) override {
+        assert(v.is<BracketExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_matching_list$bracket_list(RegexValue& v) override {
+        assert(v.is<BracketExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_nonmatching_list$carrot_bracket_list(RegexValue&, RegexValue& v) override {
+        assert(v.is<BracketExpression>());
+        v.as<BracketExpression>().inverted = true;
+        return move(v);
+    }
+
+    virtual RegexValue reduce_bracket_list$follow_list(RegexValue& v) override {
+        assert(v.is<BracketExpression>());
+        return v;
+    }
+
+    virtual RegexValue reduce_bracket_list$follow_list_minus(RegexValue& v, RegexValue&) override {
+        assert(v.is<BracketExpression>());
+        v.as<BracketExpression>().list.add(
+            BracketItem { BracketItem::Type::SingleExpression,
+                          { BracketSingleExpression { BracketSingleExpression::Type::SingleCollatingSymbol, "." } } });
+        return v;
+    }
+
+    virtual RegexValue reduce_follow_list$expression_term(RegexValue& v) override {
+        assert(v.is<BracketItem>());
+        Vector<BracketItem> items;
+        items.add(move(v.as<BracketItem>()));
+        return { BracketExpression { move(items), false } };
+    }
+
+    virtual RegexValue reduce_follow_list$follow_list_expression_term(RegexValue& vs, RegexValue& v) override {
+        assert(vs.is<BracketExpression>());
+        assert(v.is<BracketItem>());
+        vs.as<BracketExpression>().list.add(move(v.as<BracketItem>()));
+        return move(vs);
+    }
+
+    virtual RegexValue reduce_expression_term$single_expression(RegexValue& v) override {
+        assert(v.is<BracketSingleExpression>());
+        return { BracketItem { BracketItem::Type::SingleExpression, { move(v.as<BracketSingleExpression>()) } } };
+    }
+
+    virtual RegexValue reduce_expression_term$range_expression(RegexValue& v) override {
+        assert(v.is<BracketRangeExpression>());
+        return { BracketItem { BracketItem::Type::RangeExpression, { move(v.as<BracketRangeExpression>()) } } };
+    }
+
+    virtual RegexValue reduce_single_expression$collatesingleelement(RegexValue& v) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::SingleCollatingSymbol, v.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue reduce_single_expression$collating_symbol(RegexValue& v) override {
+        assert(v.is<BracketSingleExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_single_expression$character_class(RegexValue& v) override {
+        assert(v.is<BracketSingleExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_single_expression$equivalence_class(RegexValue& v) override {
+        assert(v.is<BracketSingleExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_range_expression$start_range_end_range(RegexValue& s, RegexValue& e) override {
+        assert(s.is<BracketSingleExpression>());
+        assert(e.is<BracketSingleExpression>());
+        return { BracketRangeExpression { s.as<BracketSingleExpression>().expression, e.as<BracketSingleExpression>().expression } };
+    }
+
+    virtual RegexValue reduce_range_expression$start_range_minus(RegexValue& s, RegexValue& e) override {
+        assert(s.is<BracketSingleExpression>());
+        assert(e.is<TokenInfo>());
+        return { BracketRangeExpression { s.as<BracketSingleExpression>().expression, e.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue reduce_start_range$end_range_minus(RegexValue& v, RegexValue&) override {
+        assert(v.is<BracketSingleExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_end_range$collatesingleelement(RegexValue& v) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::SingleCollatingSymbol, v.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue reduce_end_range$collating_symbol(RegexValue& v) override {
+        assert(v.is<BracketSingleExpression>());
+        return move(v);
+    }
+
+    virtual RegexValue reduce_collating_symbol$leftsquarebracketperiod_collatesingleelement_periodrightsquarebracket(RegexValue&,
+                                                                                                                     RegexValue& v,
+                                                                                                                     RegexValue&) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::GroupedCollatingSymbol, v.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue
+    reduce_collating_symbol$leftsquarebracketperiod_collatemultipleelements_periodrightsquarebracket(RegexValue&, RegexValue& v,
+                                                                                                     RegexValue&) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::GroupedCollatingSymbol, v.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue reduce_collating_symbol$leftsquarebracketperiod_metacharacter_periodrightsquarebracket(RegexValue&, RegexValue& v,
+                                                                                                              RegexValue&) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::GroupedCollatingSymbol, v.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue reduce_equivalence_class$leftsquarebracketequal_collatesingleelement_equalrightsquarebracket(RegexValue&,
+                                                                                                                    RegexValue& v,
+                                                                                                                    RegexValue&) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::EquivalenceClass, v.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue
+    reduce_equivalence_class$leftsquarebracketequal_collatemultipleelements_equalrightsquarebracket(RegexValue&, RegexValue& v,
+                                                                                                    RegexValue&) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::EquivalenceClass, v.as<TokenInfo>().text } };
+    }
+
+    virtual RegexValue reduce_character_class$leftsquarebracketcolon_classname_colonrightsquarebracket(RegexValue&, RegexValue& v,
+                                                                                                       RegexValue&) override {
+        assert(v.is<TokenInfo>());
+        return { BracketSingleExpression { BracketSingleExpression::Type::CharacterClass, v.as<TokenInfo>().text } };
     }
 
 private:

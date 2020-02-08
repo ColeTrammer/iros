@@ -13,7 +13,29 @@ struct TokenInfo {
     size_t position;
 };
 
-struct BracketExpression {};
+struct BracketSingleExpression {
+    enum class Type { EquivalenceClass, CharacterClass, GroupedCollatingSymbol, SingleCollatingSymbol };
+
+    Type type;
+    StringView expression;
+};
+
+struct BracketRangeExpression {
+    StringView start;
+    StringView end;
+};
+
+struct BracketItem {
+    enum class Type { SingleExpression, RangeExpression };
+
+    Type type;
+    Variant<BracketSingleExpression, BracketRangeExpression> expression;
+};
+
+struct BracketExpression {
+    Vector<BracketItem> list;
+    bool inverted;
+};
 struct DuplicateCount {
     enum class Type { Exact, AtLeast, Between };
 
@@ -40,7 +62,8 @@ struct RegexSingleExpression {
     Maybe<DuplicateCount> duplicate;
 };
 
-using RegexValue = Variant<Monostate, TokenInfo, DuplicateCount, SharedPtr<RegexSingleExpression>, RegexExpression, ParsedRegex>;
+using RegexValue = Variant<Monostate, TokenInfo, DuplicateCount, SharedPtr<RegexSingleExpression>, RegexExpression, ParsedRegex,
+                           BracketExpression, BracketItem, BracketRangeExpression, BracketSingleExpression>;
 
 inline void dump(const RegexValue& value) {
     const_cast<RegexValue&>(value).visit([](auto&& v) {
@@ -102,7 +125,7 @@ inline void dump(const RegexValue& value) {
             exps.for_each([&](const auto& exp) {
                 dump({ exp });
             });
-        } else {
+        } else if constexpr (IsSame<ParsedRegex, T>::value) {
             const ParsedRegex& regex = v;
             fprintf(stderr, "Regex: %d\n", regex.index);
             regex.alternatives.for_each([&](const auto& a) {
