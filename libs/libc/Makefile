@@ -103,13 +103,7 @@ $(BUILDDIR)/libs/libc/libgen/dirname.o \
 $(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \
-$(BUILDDIR)/libs/libc/regex/regex_lexer.o \
-$(BUILDDIR)/libs/libc/regex/regex_graph.o \
-$(BUILDDIR)/libs/libc/regex/generic_regex_parser.o \
-$(BUILDDIR)/libs/libc/regex/regcomp.o \
-$(BUILDDIR)/libs/libc/regex/regerror.o \
-$(BUILDDIR)/libs/libc/regex/regexec.o \
-$(BUILDDIR)/libs/libc/regex/regfree.o \
+$(REGEX_OBJS) \
 $(BUILDDIR)/libs/libc/signal/signal.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr.o \

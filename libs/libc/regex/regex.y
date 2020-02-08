@@ -52,8 +52,7 @@ follow_list        :             expression_term
 expression_term    : single_expression
                    | range_expression
                    ;
-single_expression  : CollateSingleElement
-                   | collating_symbol
+single_expression  : end_range
                    | character_class
                    | equivalence_class
                    ;

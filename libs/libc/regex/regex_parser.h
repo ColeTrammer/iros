@@ -245,12 +245,7 @@ private:
         return { BracketItem { BracketItem::Type::RangeExpression, { move(v.as<BracketRangeExpression>()) } } };
     }
 
-    virtual RegexValue reduce_single_expression$collatesingleelement(RegexValue& v) override {
-        assert(v.is<TokenInfo>());
-        return { BracketSingleExpression { BracketSingleExpression::Type::SingleCollatingSymbol, v.as<TokenInfo>().text } };
-    }
-
-    virtual RegexValue reduce_single_expression$collating_symbol(RegexValue& v) override {
+    virtual RegexValue reduce_single_expression$end_range(RegexValue& v) override {
         assert(v.is<BracketSingleExpression>());
         return move(v);
     }
