@@ -67,7 +67,7 @@ public:
 
     virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
         if (flags & REG_ICASE) {
-            if (tolower(s[index] == tolower(m_to_match)))
+            if (tolower(s[index]) == tolower(m_to_match))
                 return { 1 };
             return {};
         }
