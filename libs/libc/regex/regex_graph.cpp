@@ -86,6 +86,111 @@ private:
     char m_to_match;
 };
 
+class SpaceCharacterTransition final : public RegexTransition {
+public:
+    SpaceCharacterTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
+
+    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+        char ch = s[index];
+        if (ch == '\0') {
+            return {};
+        }
+
+        if (isspace(ch) ^ m_inverted)
+            return { 1 };
+        return {};
+    }
+
+    virtual void dump() const override { fprintf(stderr, "  SpaceCharacterTransition (\\%c) to %d\n", m_inverted ? 'S' : 's', state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<SpaceCharacterTransition>(state() + shift, m_inverted);
+    }
+
+private:
+    bool m_inverted;
+};
+
+class WordCharacterTransition final : public RegexTransition {
+public:
+    WordCharacterTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
+
+    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+        char ch = s[index];
+        if (ch == '\0') {
+            return {};
+        }
+
+        if ((isalnum(ch) || ch == '_') ^ m_inverted)
+            return { 1 };
+        return {};
+    }
+
+    virtual void dump() const override { fprintf(stderr, "  WordCharacterTransition (\\%c) to %d\n", m_inverted ? 'W' : 'w', state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<WordCharacterTransition>(state() + shift, m_inverted);
+    }
+
+private:
+    bool m_inverted;
+};
+
+class DigitCharacterTransition final : public RegexTransition {
+public:
+    DigitCharacterTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
+
+    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+        char ch = s[index];
+        if (ch == '\0') {
+            return {};
+        }
+
+        if (isdigit(ch) ^ m_inverted)
+            return { 1 };
+        return {};
+    }
+
+    virtual void dump() const override { fprintf(stderr, "  DigitCharacterTransition (\\%c) to %d\n", m_inverted ? 'D' : 'd', state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<DigitCharacterTransition>(state() + shift, m_inverted);
+    }
+
+private:
+    bool m_inverted;
+};
+
+class WordBoundaryTransition final : public RegexTransition {
+public:
+    WordBoundaryTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
+
+    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+        char ch = s[index];
+        if (ch == '\0' || index == 0) {
+            if (!m_inverted)
+                return { 0 };
+            return {};
+        }
+
+        char prev = s[index - 1];
+        bool is_prev_word = isalpha(prev) || prev == '_';
+        bool is_curr_word = isalpha(ch) || ch == '_';
+        if ((is_prev_word != is_curr_word) ^ m_inverted)
+            return { 0 };
+        return {};
+    }
+
+    virtual void dump() const override { fprintf(stderr, "  WordBoundaryTransition (\\%c) to %d\n", m_inverted ? 'B' : 'b', state()); }
+
+    virtual SharedPtr<RegexTransition> clone_with_shift(int shift) const override {
+        return make_shared<WordBoundaryTransition>(state() + shift, m_inverted);
+    }
+
+private:
+    bool m_inverted;
+};
+
 class AnyCharacterTransition final : public RegexTransition {
 public:
     AnyCharacterTransition(int state) : RegexTransition(state) {}
@@ -442,8 +547,51 @@ bool RegexGraph::compile() {
 
                 const SharedPtr<RegexSingleExpression>& exp = expression.parts[i];
                 switch (exp->type) {
+                    case RegexSingleExpression::Type::QuotedCharacter: {
+                        assert(exp->expression.is<char>());
+                        char ch = exp->expression.as<char>();
+                        switch (ch) {
+                            case 'd':
+                            case 'D':
+                                add_forward_transition(in_place_type<DigitCharacterTransition>, isupper(ch));
+                                break;
+                            case 'w':
+                            case 'W':
+                                add_forward_transition(in_place_type<WordCharacterTransition>, isupper(ch));
+                                break;
+                            case 's':
+                            case 'S':
+                                add_forward_transition(in_place_type<SpaceCharacterTransition>, isupper(ch));
+                                break;
+                            case 'b':
+                            case 'B':
+                                add_forward_transition(in_place_type<WordBoundaryTransition>, isupper(ch));
+                                break;
+                            case 'a':
+                                add_forward_transition(in_place_type<OrdinaryCharacterTransition>, '\a');
+                                break;
+                            case 'f':
+                                add_forward_transition(in_place_type<OrdinaryCharacterTransition>, '\f');
+                                break;
+                            case 'n':
+                                add_forward_transition(in_place_type<OrdinaryCharacterTransition>, '\n');
+                                break;
+                            case 'r':
+                                add_forward_transition(in_place_type<OrdinaryCharacterTransition>, '\r');
+                                break;
+                            case 't':
+                                add_forward_transition(in_place_type<OrdinaryCharacterTransition>, '\t');
+                                break;
+                            case 'v':
+                                add_forward_transition(in_place_type<OrdinaryCharacterTransition>, '\v');
+                                break;
+                            default:
+                                goto regex_single_expression_ordinary_character;
+                        }
+                        break;
+                    }
                     case RegexSingleExpression::Type::OrdinaryCharacter:
-                    case RegexSingleExpression::Type::QuotedCharacter:
+                    regex_single_expression_ordinary_character:
                         assert(exp->expression.is<char>());
                         add_forward_transition(in_place_type<OrdinaryCharacterTransition>, exp->expression.as<char>());
                         break;
