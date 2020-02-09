@@ -1,0 +1,182 @@
+diff --git a/bfd/config.bfd b/bfd/config.bfd
+index b96931f5..708fea69 100644
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -576,6 +576,18 @@ case "${targ}" in
+     targ_selvecs="x86_64_elf64_sol2_vec l1om_elf64_vec k1om_elf64_vec iamcu_elf32_vec i386_coff_vec i386_pei_vec x86_64_pei_vec"
+     want64=true
+     ;;
++#endif
++  i[3-7]86-*-os_2*)
++    targ_defvec=i386_elf32_vec
++    targ_selvecs=
++    targ64_selvecs=x86_64_elf64_vec
++    ;;
++#ifdef BFD64
++  x86_64-*-os_2*)
++    targ_defvec=x86_64_elf64_vec
++    targ_selvecs=i386_elf32_vec
++    want64=true
++    ;;
+ #endif
+   i[3-7]86-*-nto*)
+     targ_defvec=i386_elf32_vec
+diff --git a/config.sub b/config.sub
+index f02d43ad..61fef13f 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1341,7 +1341,7 @@ case $os in
+ 	gnu* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
+ 	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]*\
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+-	     | sym* | kopensolaris* | plan9* \
++	     | sym* | kopensolaris* | plan9* | os_2* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+ 	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+diff --git a/gas/configure.tgt b/gas/configure.tgt
+index 37224c51..a742340e 100644
+--- a/gas/configure.tgt
++++ b/gas/configure.tgt
+@@ -236,6 +236,7 @@ case ${generic_target} in
+   i386-*-lynxos*)			fmt=elf em=lynx ;;
+   i386-*-redox*)			fmt=elf ;;
+   i386-*-solaris*)			fmt=elf em=solaris ;;
++  i386-*-os_2*)			fmt=elf em=gnu ;;
+   i386-*-freebsd* \
+   | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
+   i386-*-msdosdjgpp* \
+diff --git a/ld/Makefile.am b/ld/Makefile.am
+index 4a9b8404..80208105 100644
+--- a/ld/Makefile.am
++++ b/ld/Makefile.am
+@@ -294,6 +294,7 @@ ALL_EMULATION_SOURCES = \
+ 	eelf_i386_ldso.c \
+ 	eelf_i386_nacl.c \
+ 	eelf_i386_sol2.c \
++	eelf_i386_os_2.c \
+ 	eelf_i386_vxworks.c \
+ 	eelf_iamcu.c \
+ 	eelf_s390.c \
+@@ -463,6 +464,7 @@ ALL_64_EMULATION_SOURCES = \
+ 	eelf_x86_64_fbsd.c \
+ 	eelf_x86_64_nacl.c \
+ 	eelf_x86_64_sol2.c \
++	eelf_x86_64_os_2.c \
+ 	ehppa64linux.c \
+ 	ei386pep.c \
+ 	emmo.c
+@@ -782,6 +784,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_ldso.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_nacl.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_sol2.Pc@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_os_2.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_vxworks.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_iamcu.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_s390.Pc@am__quote@
+@@ -947,6 +950,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_fbsd.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_nacl.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_sol2.Pc@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_os_2.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ehppa64linux.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ei386pep.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/emmo.Pc@am__quote@
+diff --git a/ld/Makefile.in b/ld/Makefile.in
+index 46d9b140..cbd9e942 100644
+--- a/ld/Makefile.in
++++ b/ld/Makefile.in
+@@ -522,6 +522,7 @@ pdfdir = @pdfdir@
+ prefix = @prefix@
+ program_transform_name = @program_transform_name@
+ psdir = @psdir@
++runstatedir = @runstatedir@
+ sbindir = @sbindir@
+ sharedstatedir = @sharedstatedir@
+ srcdir = @srcdir@
+@@ -784,6 +785,7 @@ ALL_EMULATION_SOURCES = \
+ 	eelf_i386_ldso.c \
+ 	eelf_i386_nacl.c \
+ 	eelf_i386_sol2.c \
++	eelf_i386_os_2.c \
+ 	eelf_i386_vxworks.c \
+ 	eelf_iamcu.c \
+ 	eelf_s390.c \
+@@ -952,6 +954,7 @@ ALL_64_EMULATION_SOURCES = \
+ 	eelf_x86_64_fbsd.c \
+ 	eelf_x86_64_nacl.c \
+ 	eelf_x86_64_sol2.c \
++	eelf_x86_64_os_2.c \
+ 	ehppa64linux.c \
+ 	ei386pep.c \
+ 	emmo.c
+@@ -1389,6 +1392,7 @@ distclean-compile:
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_fbsd.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_ldso.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_nacl.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_os_2.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_sol2.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_vxworks.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_iamcu.Po@am__quote@
+@@ -1401,6 +1405,7 @@ distclean-compile:
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_cloudabi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_fbsd.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_nacl.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_os_2.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_sol2.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eh8300elf.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eh8300elf_linux.Po@am__quote@
+@@ -2386,6 +2391,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_ldso.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_nacl.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_sol2.Pc@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_os_2.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_vxworks.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_iamcu.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_s390.Pc@am__quote@
+@@ -2551,6 +2557,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_fbsd.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_nacl.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_sol2.Pc@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_os_2.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ehppa64linux.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ei386pep.Pc@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/emmo.Pc@am__quote@
+diff --git a/ld/configure.tgt b/ld/configure.tgt
+index 23194e35..21d75292 100644
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -947,6 +947,15 @@ x86_64-*-solaris2*)	targ_emul=elf_x86_64_sol2
+ 			targ_extra_libpath=$targ_extra_emuls
+ 			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/x86_64/i386/'`
+ 			;;
++i[3-7]86-*-os_2*)
++			targ_emul=elf_i386_os_2
++			targ_extra_emuls=elf_i386
++			targ64_extra_emuls="elf_x86_64_os_2 elf_x86_64"
++			;;
++x86_64-*-os_2*)
++			targ_emul=elf_x86_64_os_2
++			targ_extra_emuls="elf_i386_os_2 elf_x86_64 elf_i386"
++			;;
+ x86_64-*-netbsd*)	targ_emul=elf_x86_64
+ 			targ_extra_emuls="elf_i386 elf_iamcu elf_l1om elf_k1om"
+ 			tdir_elf_iamcu=`echo ${targ_alias} | \
+diff --git a/ld/emulparams/elf_i386_os_2.sh b/ld/emulparams/elf_i386_os_2.sh
+new file mode 100644
+index 00000000..dc33fdc1
+--- /dev/null
++++ b/ld/emulparams/elf_i386_os_2.sh
+@@ -0,0 +1,3 @@
++. ${srcdir}/emulparams/elf_i386.sh
++GENERATE_SHLIB_SCRIPT=yes
++GENERATE_PIE_SCRIPT=yes
+\ No newline at end of file
+diff --git a/ld/emulparams/elf_x86_64_os_2.sh b/ld/emulparams/elf_x86_64_os_2.sh
+new file mode 100644
+index 00000000..f4f4496f
+--- /dev/null
++++ b/ld/emulparams/elf_x86_64_os_2.sh
+@@ -0,0 +1 @@
++. ${srcdir}/emulparams/elf_x86_64.sh
+\ No newline at end of file
