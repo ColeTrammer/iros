@@ -2031,8 +2031,8 @@ int we_unescape(char **s) {
     return 0;
 }
 
-static int we_unescape_all(wordexp_t *p) {
-    for (size_t i = 0; i < p->we_wordc; i++) {
+static int we_unescape_all(wordexp_t *p, size_t start) {
+    for (size_t i = start; i < p->we_wordc; i++) {
         int ret = we_unescape(&p->we_wordv[i]);
         if (ret != 0) {
             return ret;
@@ -2042,8 +2042,8 @@ static int we_unescape_all(wordexp_t *p) {
     return 0;
 }
 
-static int we_glob(wordexp_t *we) {
-    for (size_t i = 0; i < we->we_wordc; i++) {
+static int we_glob(wordexp_t *we, size_t start) {
+    for (size_t i = start; i < we->we_wordc; i++) {
         char *token = we->we_wordv[i];
 
         bool prev_was_bachslash = false;
@@ -2108,9 +2108,12 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     assert(!(flags & WRDE_REUSE));
     assert(!(flags & WRDE_DOOFFS));
 
+    size_t start = 0;
     if (!(flags & WRDE_APPEND)) {
         p->we_offs = p->we_wordc = 0;
         p->we_wordv = NULL;
+    } else {
+        start = p->we_wordc;
     }
 
 #ifdef WORDEXP_DEBUG
@@ -2160,7 +2163,7 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
     assert(p->we_wordv);
 
     if (!(flags & WRDE_NOGLOB)) {
-        ret = we_glob(p);
+        ret = we_glob(p, start);
 
         if (ret != 0) {
             wordfree(p);
@@ -2174,7 +2177,7 @@ int wordexp(const char *s, wordexp_t *p, int flags) {
 #endif /* WORDEXP_DEBUG */
     }
 
-    ret = we_unescape_all(p);
+    ret = we_unescape_all(p, start);
 
 #ifdef WORDEXP_DEBUG
     for (size_t i = 0; i < p->we_wordc; i++) {
