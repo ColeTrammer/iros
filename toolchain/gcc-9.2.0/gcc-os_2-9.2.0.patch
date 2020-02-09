@@ -1,0 +1,122 @@
+diff --git a/config.sub b/config.sub
+index 75bb6a313..4cfb94b0d 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1339,7 +1339,7 @@ case $os in
+ 	gnu* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
+ 	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]*\
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+-	     | sym* | kopensolaris* | plan9* \
++	     | sym* | kopensolaris* | plan9* | os_2* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+ 	     | aos* | aros* | cloudabi* | sortix* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+diff --git a/fixincludes/mkfixinc.sh b/fixincludes/mkfixinc.sh
+index 0f9648608..a52333b2a 100755
+--- a/fixincludes/mkfixinc.sh
++++ b/fixincludes/mkfixinc.sh
+@@ -14,6 +14,7 @@ case $machine in
+     i?86-*-cygwin* | \
+     i?86-*-mingw32* | \
+     x86_64-*-mingw32* | \
++    *os_2-* | \
+     powerpc-*-eabisim* | \
+     powerpc-*-eabi*    | \
+     powerpc-*-rtems*   | \
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index ddd3b8f4d..d7afa9b0b 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -776,6 +776,12 @@ case ${target} in
+ *-*-fuchsia*)
+   native_system_header_dir=/include
+   ;;
++*-*-os_2*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  use_gcc_stdint=wrap
++  ;;
+ *-*-linux* | frv-*-*linux* | *-*-kfreebsd*-gnu | *-*-gnu* | *-*-kopensolaris*-gnu)
+   extra_options="$extra_options gnu-user.opt"
+   gas=yes
+@@ -1486,6 +1492,12 @@ hppa*-*-openbsd*)
+ 	gas=yes
+ 	gnu_ld=yes
+ 	;;
++i[34567]86-*-os_2*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h os_2.h"
++    ;;
++x86_64-*-os_2*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h os_2.h"
++    ;;
+ hppa[12]*-*-hpux10*)
+ 	case ${target} in
+ 	hppa1.1-*-* | hppa2*-*-*)
+diff --git a/gcc/config/os_2.h b/gcc/config/os_2.h
+new file mode 100644
+index 000000000..509f29e8d
+--- /dev/null
++++ b/gcc/config/os_2.h
+@@ -0,0 +1,24 @@
++#undef TARGET_OS_2
++#define TARGET_OS_2 1
++
++#undef LIB_SPEC
++#define LIB_SPEC "-lc"
++
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
++
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++
++#undef LINK_SPEC
++#define LINK_SPEC "-z max-page-size=4096"
++
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()        \
++    do {                                \
++        builtin_define("__os_2__");     \
++        builtin_define("__unix__");     \
++        builtin_assert("system=os_2");  \
++        builtin_assert("system=unix");  \
++        builtin_assert("system=posix"); \
++    } while (0);
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 91abc84da..4d08bed67 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -391,6 +391,14 @@ alpha*-dec-*vms*)
+ 	extra_parts="$extra_parts vms-dwarf2.o vms-dwarf2eh.o"
+ 	md_unwind_header=alpha/vms-unwind.h
+ 	;;
++i[34567]86-*-os_2*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
++x86_64-*-os_2*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
+ amdgcn*-*-amdhsa)
+ 	tmake_file="$tmake_file gcn/t-amdgcn"
+ 	extra_parts="crt0.o"
+diff --git a/libstdc++-v3/crossconfig.m4 b/libstdc++-v3/crossconfig.m4
+index 344eec09d..692c44aab 100644
+--- a/libstdc++-v3/crossconfig.m4
++++ b/libstdc++-v3/crossconfig.m4
+@@ -92,6 +92,13 @@ case "${host}" in
+     AC_DEFINE(HAVE_HYPOT)
+     ;;
+ 
++  *-os_2*)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES
++    GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
++
+   *-freebsd*)
+     SECTION_FLAGS='-ffunction-sections -fdata-sections'
+     AC_SUBST(SECTION_FLAGS) 
