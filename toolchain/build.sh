@@ -2,10 +2,10 @@
 
 set -e
 
-cd binutils-2.31.1
+cd binutils-2.34
 ./build.sh
 cd ..
 
-cd gcc-8.3.0
+cd gcc-9.2.0
 ./build.sh
 cd ..

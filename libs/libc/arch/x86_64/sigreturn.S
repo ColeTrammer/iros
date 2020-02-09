@@ -5,4 +5,4 @@
 __sigreturn:
     movq $SC_SIGRETURN, %rdi
     int $0x80
-    jmpq __halt
+    jmp __halt

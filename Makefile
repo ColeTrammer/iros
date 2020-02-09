@@ -21,7 +21,7 @@ export HOST?=$(DEFAULT_HOST)
 export HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 
 # Sets CC, AR, and OBJCOPY to respect host and use SYSROOT
-export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=gnu11
+export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=gnu2x
 export CXX:=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=c++2a
 export PARSER:=$(BUILDDIR)/gen/parser/parser.native
 export CFLAGS:=-fno-omit-frame-pointer -fno-inline -g -O2

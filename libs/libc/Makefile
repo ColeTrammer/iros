@@ -9,9 +9,9 @@ export ROOT?=$(CURDIR)/../..
 export SYSROOT?=$(ROOT)/sysroot
 export BUILDDIR?=$(ROOT)/build
 
-export CC?=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
-export CXX?=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
-export AR?=$(HOST)-ar
+export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
+export CXX:=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=c++2a
+export AR:=$(HOST)-ar
 
 # Sets directories for install if not already set
 export DESTDIR?=$(SYSROOT)
@@ -27,8 +27,8 @@ LDFLAGS?=
 LIBS?=
 
 # Include options that should always be set
-CFLAGS:=$(CFLAGS) -ffreestanding -Werror -Wall -Wextra -std=gnu11
-CPPFLAGS:=$(CPPFLAGS) -D__is_libc -Iinclude
+CFLAGS:=$(CFLAGS) -ffreestanding -Werror -Wall -Wextra -std=gnu2x
+CPPFLAGS:=$(CPPFLAGS) -D__is_libc -Iinclude -D_OS_2_SOURCE
 LIBK_CFLAGS:=$(CFLAGS)
 LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
 

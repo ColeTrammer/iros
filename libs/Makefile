@@ -12,7 +12,7 @@ export INCLUDEDIR?=$(PREFIX)/include
 export LIBDIR?=$(EXEC_PREFIX)/lib
 export BUILDDIR?=$(ROOT)/build
 
-export CFLAGS+=-std=gnu11
+export CFLAGS+=-std=gnu2x
 export CPPFLAGS+=-O2 -g -Werror -Wall -Wextra -DARCH=$(HOSTARCH) -D_OS_2_SOURCE
 export LDFLAGS+=-T $(ROOT)/userland/link.ld
 

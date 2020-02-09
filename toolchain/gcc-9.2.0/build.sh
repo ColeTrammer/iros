@@ -6,23 +6,25 @@ set -e
 export ROOT="$PWD/../.."
 export TARGET=`$ROOT/default-host.sh`
 
-# Download tar.gz
-curl http://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz --output gcc-os_2-9.2.0.tar.gz
+if [ ! -e gcc-9.2.0 ]; then
+    # Download tar.gz
+    curl http://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz --output gcc-os_2-9.2.0.tar.gz
 
-# Extract contents
-tar -xzvf gcc-os_2-9.2.0.tar.gz
+    # Extract contents
+    tar -xzvf gcc-os_2-9.2.0.tar.gz
 
-# Apply patch
-cd gcc-9.2.0
-git init
-git apply ../gcc-os_2-9.2.0.patch
-cd ..
+    # Apply patch
+    cd gcc-9.2.0
+    git init
+    git apply ../gcc-os_2-9.2.0.patch
+    cd ..
 
-# Run autoconf
-cd gcc-9.2.0
-cd libstdc++-v3
-autoconf2.69
-cd ../..
+    # Run autoconf
+    cd gcc-9.2.0
+    cd libstdc++-v3
+    autoconf2.69
+    cd ../..
+fi
 
 # Install headers for correct build
 cd ../..

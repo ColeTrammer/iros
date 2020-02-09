@@ -1,4 +1,4 @@
-CFLAGS+=-std=gnu11
+CFLAGS+=-std=gnu2x
 
 .PHONY: all
 all: $(EXECUTABLE)

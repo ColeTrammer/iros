@@ -56,7 +56,7 @@ struct pci_configuration {
     uint8_t bus;
     uint8_t slot;
     uint8_t func;
-} __attribute__((packed));
+} __attribute__((packed)) __attribute__((aligned(2)));
 
 static inline uint32_t pci_make_config_address(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
     return (uint32_t)(0x80000000U | (((uint32_t) bus) << 16U) | (((uint32_t) slot) << 11U) | (((uint32_t) func) << 8U) |

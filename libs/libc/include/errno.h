@@ -70,7 +70,8 @@
 #define ENOTSUP         65
 #define ENOTRECOVERABLE 66
 #define EOWNERDEAD      67
-#define EMAXERRNO       68
+#define EOVERFLOW       68
+#define EMAXERRNO       69
 
 #ifdef __cplusplus
 extern "C" {

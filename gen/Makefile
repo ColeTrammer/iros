@@ -7,7 +7,7 @@ export ROOT?=$(CURDIR)/..
 export SYSROOT?=$(ROOT)/sysroot
 
 # Init flags if not already set (can be overridden)
-export CFLAGS?=-std=gnu11
+export CFLAGS?=-std=gnu2x
 export CPPFLAGS?=-O2 -g -Werror -Wall -Wextra
 export LDFLAGS+=-T $(ROOT)/ports/kilo/kilo/link.ld
 export LIBS?=
