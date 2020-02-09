@@ -89,6 +89,9 @@ $(BUILDDIR)/libs/libc/strings/strings.o
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
 $(BUILDDIR)/libs/libc/assert/assert.o \
+$(BUILDDIR)/libs/libc/bits/lock/__lock.o \
+$(BUILDDIR)/libs/libc/bits/lock/__trylock.o \
+$(BUILDDIR)/libs/libc/bits/lock/__unlock.o \
 $(BUILDDIR)/libs/libc/dirent/dirent.o \
 $(BUILDDIR)/libs/libc/fcntl/creat.o \
 $(BUILDDIR)/libs/libc/fcntl/fcntl.o \
