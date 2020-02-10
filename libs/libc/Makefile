@@ -234,7 +234,7 @@ $(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 $(BUILDDIR)/%.o: $(ROOT)/%.cpp
-	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -fno-rtti -fno-exceptions -Werror -Wall -Wextra -ffreestanding -nostdinc++
+	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -fno-rtti -fno-exceptions -Werror -Wall -Wextra -ffreestanding -nostdinc++ -fconcepts
 
 $(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)

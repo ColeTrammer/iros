@@ -7,6 +7,11 @@
 
 namespace LIIM {
 
+template<typename T> concept Hashable = requires(T a, T b) {
+    Traits<T>::hash(a);
+    a == b;
+};
+
 template<typename K, typename V> struct HashMapObj {
     HashMapObj(const K& key, const V& val) : m_key(key), m_value(val) {}
     HashMapObj(const K& key, V&& val) : m_key(key), m_value(val) {}
@@ -19,7 +24,7 @@ template<typename K, typename V> struct HashMapObj {
     V m_value;
 };
 
-template<typename K, typename V> class HashMap {
+template<typename K, typename V> requires Hashable<K> class HashMap {
 public:
     explicit HashMap(int num_buckets = 20) : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets)) {}
 
