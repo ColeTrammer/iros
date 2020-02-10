@@ -21,7 +21,7 @@ ShState& ShState::the() {
 }
 
 int ShState::flags_for_wordexp() const {
-    int flags = WRDE_SPECIAL;
+    int flags = WRDE_SPECIAL | WRDE_SHOWERR;
     flags |= option_noglob() ? WRDE_NOGLOB : 0;
     flags |= option_nounset() ? WRDE_UNDEF : 0;
     return flags;

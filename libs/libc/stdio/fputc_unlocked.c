@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 int fputc_unlocked(int a, FILE *stream) {
-    __stdio_log(stream, "fputc_unlocked: %c %d", (char) a, stream->__fd);
+    __stdio_log(stream, "fputc_unlocked: %c %d %d", (char) a, stream->__fd, stream->__flags);
 
     if (stream->__flags & __STDIO_ERROR) {
         return EOF;
@@ -38,7 +38,7 @@ int fputc_unlocked(int a, FILE *stream) {
 
     stream->__buffer[stream->__position++] = c;
 
-    if (stream->__position >= (off_t) stream->__buffer_max || ((stream->__flags & _IOLBF) && c == '\n')) {
+    if ((stream->__position >= (off_t) stream->__buffer_max) || ((stream->__flags & _IOLBF) && c == '\n')) {
         if (fflush_unlocked(stream) == EOF) {
             return EOF;
         }

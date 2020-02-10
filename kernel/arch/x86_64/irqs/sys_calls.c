@@ -1579,7 +1579,13 @@ SYS_CALL(get_initial_process_info) {
 
     info->main_tid = current->tid;
 
-    info->isatty_mask = 7;
+    info->isatty_mask = 0;
+    for (int i = 0; i <= 3; i++) {
+        struct file *file = current->process->files[i].file;
+        if (file && !fs_ioctl(file, TISATTY, NULL)) {
+            info->isatty_mask |= (1 << i);
+        }
+    }
 
     SYS_RETURN(0);
 }
