@@ -29,6 +29,8 @@
 #include "builtin.h"
 #include "command.h"
 #include "job.h"
+#include "sh_lexer.h"
+#include "sh_parser.h"
 #include "sh_state.h"
 
 struct FunctionBody {
@@ -39,12 +41,14 @@ struct FunctionBody {
 HashMap<String, String> g_aliases;
 HashMap<String, FunctionBody> g_functions;
 
+static int do_command_subst(char* s);
+
 static int loop_depth_count = 0;
 static int break_count = 0;
 static int continue_count = 0;
 static int exec_depth_count = 0; // For ., source, or functions
 static bool should_return = false;
-static word_special_t special_vars = { { NULL, (char*) "", NULL, NULL, NULL }, NULL, 0 };
+static word_special_t special_vars = { { NULL, (char*) "", NULL, NULL, NULL }, NULL, 0, do_command_subst };
 
 static void __set_exit_status(int n) {
     free(special_vars.vals[WRDE_SPECIAL_QUEST]);
@@ -886,6 +890,21 @@ int command_run(ShValue::Program& program) {
     }
 
     return 0;
+}
+
+static int do_command_subst(char* s) {
+    ShLexer lexer(s, strlen(s));
+    if (!lexer.lex()) {
+        return 1;
+    }
+
+    ShParser parser(lexer);
+    if (!parser.parse()) {
+        return 1;
+    }
+
+    ShValue::Program pr(parser.result().program());
+    return command_run(pr);
 }
 
 static Stack<PositionArgs> args_stack;

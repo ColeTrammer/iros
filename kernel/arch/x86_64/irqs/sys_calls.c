@@ -660,7 +660,7 @@ SYS_CALL(waitpid) {
     SYS_BEGIN();
 
     SYS_PARAM1(pid_t, pid);
-    SYS_PARAM2_VALIDATE(int *, status, validate_write, sizeof(int));
+    SYS_PARAM2_VALIDATE(int *, status, validate_write_or_null, sizeof(int));
     SYS_PARAM3(int, flags);
 
     struct task *current = get_current_task();

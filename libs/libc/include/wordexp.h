@@ -41,6 +41,7 @@ typedef struct {
     char *vals[WRDE_NUM_SPECIAL];
     char **position_args;
     size_t position_args_size;
+    int (*do_command_subst)(char *str);
 } word_special_t;
 
 #endif /* _OS_2_SOURCE */

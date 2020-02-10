@@ -226,11 +226,12 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     return true;
 }
 
-static int we_command_subst(const char *to_expand, int flags, char **expanded, size_t *len) {
+static int we_command_subst(const char *to_expand, int flags, char **expanded, size_t *len, word_special_t *special) {
     if (flags & WRDE_NOCMD) {
         return WRDE_CMDSUB;
     }
 
+    char *line = NULL;
     int save_stderr = 0;
     int ret = 0;
 
@@ -241,12 +242,37 @@ static int we_command_subst(const char *to_expand, int flags, char **expanded, s
         dup2(fd, STDERR_FILENO);
         close(fd);
     }
-    FILE *_pipe = popen(to_expand, "r");
-    if (_pipe == NULL) {
+
+    int fds[2];
+    if (pipe(fds) < 0) {
+        ret = WRDE_CMDSUB;
         goto cleanup_command_subst;
     }
 
-    char *line = NULL;
+    pid_t pid = fork();
+    if (pid < 0) {
+        ret = WRDE_CMDSUB;
+        close(fds[0]);
+        close(fds[1]);
+        goto cleanup_command_subst;
+    } else if (pid == 0) {
+        dup2(fds[1], STDOUT_FILENO);
+        close(fds[1]);
+        close(fds[0]);
+        if (special && special->do_command_subst) {
+            _exit(special->do_command_subst((char *) to_expand));
+        } else {
+            _exit(execl("/bin/sh", "-c", to_expand, NULL));
+        }
+    }
+
+    close(fds[1]);
+    FILE *_pipe = fdopen(fds[0], "r");
+    if (_pipe == NULL) {
+        close(fds[0]);
+        goto cleanup_command_subst;
+    }
+
     size_t line_len = 0;
     while (getline(&line, &line_len, _pipe) != -1) {
         if (!we_append(expanded, line, strlen(line), len)) {
@@ -255,9 +281,12 @@ static int we_command_subst(const char *to_expand, int flags, char **expanded, s
         }
     }
 
+    while (!waitpid(pid, NULL, 0))
+        ;
+
 cleanup_command_subst_and_pipes:
     free(line);
-    pclose(_pipe);
+    fclose(_pipe);
 
 cleanup_command_subst:
     if (!(flags & WRDE_SHOWERR)) {
@@ -1573,7 +1602,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     char save = s[i];
                     ((char *) s)[i] = '\0';
 
-                    int ret = we_command_subst(to_expand, flags, expanded, &len);
+                    int ret = we_command_subst(to_expand, flags, expanded, &len, special);
 
                     ((char *) s)[i] = save;
 
@@ -1776,7 +1805,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     return WRDE_SYNTAX;
                 }
 
-                int ret = we_command_subst(to_expand, flags, expanded, &len);
+                int ret = we_command_subst(to_expand, flags, expanded, &len, special);
                 if (ret != 0) {
                     free(*expanded);
                     free(to_expand);
