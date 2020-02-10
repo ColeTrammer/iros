@@ -9,9 +9,3 @@ char *getlogin(void) {
     getlogin_r(buf, GETLOGIN_BUF_SZ);
     return buf;
 }
-
-int getlogin_r(char *buf, size_t bufsize) {
-    (void) bufsize;
-    strcpy(buf, "root");
-    return 0;
-}
