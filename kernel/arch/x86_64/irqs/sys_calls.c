@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/os_2.h>
 #include <sys/socket.h>
@@ -1577,6 +1578,8 @@ SYS_CALL(get_initial_process_info) {
     info->guard_size = guard->end - guard->start;
 
     info->main_tid = current->tid;
+
+    info->isatty_mask = 7;
 
     SYS_RETURN(0);
 }

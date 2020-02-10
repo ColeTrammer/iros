@@ -83,6 +83,6 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
 
     environ = envp;
 
-    init_files();
+    init_files(__initial_process_info.isatty_mask);
     init_env();
 }

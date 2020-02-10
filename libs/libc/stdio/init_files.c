@@ -14,11 +14,11 @@ FILE *__file_list_head = files + 0;
 FILE *__file_list_tail = files + 2;
 unsigned int __file_list_lock;
 
-void init_files() {
+void init_files(int isatty_mask) {
     /* stdin */
     files[0].__fd = 0;
     files[0].__position = 0;
-    files[0].__flags |= isatty(STDIN_FILENO) ? _IONBF : _IOFBF;
+    files[0].__flags |= (isatty_mask & (1 << 0)) ? _IONBF : _IOFBF;
     files[0].__buffer = malloc(BUFSIZ);
     files[0].__buffer_length = 0;
     files[0].__buffer_max = BUFSIZ;
@@ -29,7 +29,7 @@ void init_files() {
 
     /* stdout */
     files[1].__fd = 1;
-    files[1].__flags |= isatty(STDOUT_FILENO) ? _IOLBF : _IOFBF;
+    files[1].__flags |= (isatty_mask & (1 << 1)) ? _IOLBF : _IOFBF;
     files[1].__buffer = malloc(BUFSIZ);
     files[1].__buffer_max = BUFSIZ;
     files[1].__buffer_length = 0;

@@ -33,6 +33,7 @@ struct initial_process_info {
     unsigned long stack_size;
     unsigned long guard_size;
     int main_tid;
+    int isatty_mask;
 };
 
 int create_task(struct create_task_args *create_task_args);

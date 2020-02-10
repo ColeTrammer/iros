@@ -203,7 +203,7 @@ void perror(const char *s);
 
 #ifdef __libc_internal
 
-void init_files();
+void init_files(int isatty_mask);
 
 #endif /* __libc_internal */
 
