@@ -6,18 +6,12 @@
 
 void __cxa_atexit() {}
 
-__attribute__((__noreturn__)) void _Exit(int status) {
-    _exit(status);
-
-    __builtin_unreachable();
-}
-
 __attribute__((__noreturn__)) void exit(int status) {
     __on_exit();
 
-    fflush(NULL);
+    fflush_unlocked(NULL);
 
-    _Exit(status);
+    _exit(status);
 
     __builtin_unreachable();
 }

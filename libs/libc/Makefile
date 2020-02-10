@@ -161,6 +161,8 @@ $(BUILDDIR)/libs/libc/stdio/rewind.o \
 $(BUILDDIR)/libs/libc/stdio/setbuf.o \
 $(BUILDDIR)/libs/libc/stdio/setvbuf.o \
 $(BUILDDIR)/libs/libc/stdio/unget.o \
+$(BUILDDIR)/libs/libc/stdlib/__on_exit.o \
+$(BUILDDIR)/libs/libc/stdlib/_Exit.o \
 $(BUILDDIR)/libs/libc/stdlib/atexit.o \
 $(BUILDDIR)/libs/libc/stdlib/env.o \
 $(BUILDDIR)/libs/libc/stdlib/init_env.o \
