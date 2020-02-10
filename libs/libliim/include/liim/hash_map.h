@@ -7,12 +7,14 @@
 
 namespace LIIM {
 
-template<typename T> concept Hashable = requires(T a, T b) {
+template<typename T>
+concept Hashable = requires(T a, T b) {
     Traits<T>::hash(a);
     a == b;
 };
 
-template<typename K, typename V> struct HashMapObj {
+template<typename K, typename V>
+struct HashMapObj {
     HashMapObj(const K& key, const V& val) : m_key(key), m_value(val) {}
     HashMapObj(const K& key, V&& val) : m_key(key), m_value(val) {}
 
@@ -24,7 +26,8 @@ template<typename K, typename V> struct HashMapObj {
     V m_value;
 };
 
-template<typename K, typename V> requires Hashable<K> class HashMap {
+template<typename K, typename V>
+requires Hashable<K> class HashMap {
 public:
     explicit HashMap(int num_buckets = 20) : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets)) {}
 
@@ -144,7 +147,8 @@ public:
         });
     }
 
-    template<typename C> void for_each(C callback) const {
+    template<typename C>
+    void for_each(C callback) const {
         m_buckets.for_each([&](auto& list) {
             list.for_each([&](auto& obj) {
                 callback(obj.m_value);
@@ -152,7 +156,8 @@ public:
         });
     }
 
-    template<typename C> void for_each_key(C callback) const {
+    template<typename C>
+    void for_each_key(C callback) const {
         m_buckets.for_each([&](const auto& list) {
             list.for_each([&](const auto& obj) {
                 callback(obj.m_key);
@@ -198,7 +203,8 @@ private:
     int m_size { 0 };
 };
 
-template<typename K, typename V> void swap(HashMap<K, V>& a, HashMap<K, V> b) {
+template<typename K, typename V>
+void swap(HashMap<K, V>& a, HashMap<K, V> b) {
     a.swap(b);
 }
 

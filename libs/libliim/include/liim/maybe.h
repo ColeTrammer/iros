@@ -5,7 +5,8 @@
 
 namespace LIIM {
 
-template<typename T> class Maybe {
+template<typename T>
+class Maybe {
 public:
     Maybe() {}
     Maybe(const T& value) : m_has_value(true) { new (&m_value[0]) T(value); }
@@ -70,7 +71,8 @@ private:
     bool m_has_value { false };
 };
 
-template<typename T> void swap(Maybe<T>& a, Maybe<T>& b) {
+template<typename T>
+void swap(Maybe<T>& a, Maybe<T>& b) {
     a.swap(b);
 }
 

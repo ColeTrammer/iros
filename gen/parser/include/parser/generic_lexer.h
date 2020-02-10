@@ -2,7 +2,8 @@
 
 #include <parser/generic_token.h>
 
-template<typename TokenType, typename Value> class GenericLexer {
+template<typename TokenType, typename Value>
+class GenericLexer {
 public:
     GenericLexer() {}
     virtual ~GenericLexer() {}

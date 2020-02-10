@@ -28,7 +28,8 @@ struct ExtendedInfo {
 
 namespace LIIM {
 
-template<> struct Traits<ExtendedInfo> {
+template<>
+struct Traits<ExtendedInfo> {
     static constexpr bool is_simple() { return false; }
     static unsigned int hash(const ExtendedInfo& info) {
         unsigned int v = 0;

@@ -8,7 +8,8 @@
 
 // #define GENERIC_PARSER_DEBUG
 
-template<typename TokenType, typename Value> class GenericParser {
+template<typename TokenType, typename Value>
+class GenericParser {
 public:
     using Token = GenericToken<TokenType, Value>;
 

@@ -5,7 +5,8 @@
 
 namespace LIIM {
 
-template<typename T> class Stack {
+template<typename T>
+class Stack {
 public:
     Stack() {}
     Stack(const Stack<T>& other) : m_vector(other.m_vector) {}

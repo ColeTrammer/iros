@@ -63,7 +63,8 @@ private:
 
 namespace LIIM {
 
-template<> struct Traits<Rule> {
+template<>
+struct Traits<Rule> {
     static constexpr bool is_simple() { return false; }
     static unsigned int hash(const Rule& rule) { return static_cast<unsigned int>(rule.number()); }
 };

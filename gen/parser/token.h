@@ -2,7 +2,8 @@
 
 #include <liim/string_view.h>
 
-template<typename Type> struct Token {
+template<typename Type>
+struct Token {
 public:
     Token(Type type, StringView text) : m_type(type), m_text(text) {}
     Token(const Token& other) : m_type(other.type()), m_text(other.text()) {}

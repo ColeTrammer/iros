@@ -17,12 +17,12 @@
 #define MM_PRINT   8192
 #define MM_CONSOLE 16384
 
-#define MM_NULLLBL ((char*) 0)
+#define MM_NULLLBL ((char *) 0)
 #define MM_NULLSEV 0
 #define MM_NULLMC  0L
-#define MM_NULLTXT ((char*) 0)
-#define MM_NULLACT ((char*) 0)
-#define MM_NULLTAG ((char*) 0)
+#define MM_NULLTXT ((char *) 0)
+#define MM_NULLACT ((char *) 0)
+#define MM_NULLTAG ((char *) 0)
 
 #define MM_OK    0
 #define MM_NOTOK -1

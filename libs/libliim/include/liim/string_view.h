@@ -67,7 +67,8 @@ private:
     const char* m_end;
 };
 
-template<> struct Traits<StringView> {
+template<>
+struct Traits<StringView> {
     static constexpr bool is_simple() { return false; }
     static unsigned int hash(const StringView& s) {
         unsigned int v = 0;

@@ -75,7 +75,8 @@ struct Action {
 
 namespace LIIM {
 
-template<> struct Traits<Action> {
+template<>
+struct Traits<Action> {
     static constexpr bool is_simple() { return false; }
     static unsigned int hash(const Action& action) {
         unsigned int v = (unsigned int) action.type;

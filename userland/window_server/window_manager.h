@@ -15,7 +15,10 @@ public:
 
     void add_window(SharedPtr<Window> window);
 
-    template<typename C> void for_each_window(C callback) { m_windows.for_each(callback); }
+    template<typename C>
+    void for_each_window(C callback) {
+        m_windows.for_each(callback);
+    }
 
     void draw();
 

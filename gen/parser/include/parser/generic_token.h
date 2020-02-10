@@ -1,6 +1,7 @@
 #pragma once
 
-template<typename TokenType, typename Value> class GenericToken {
+template<typename TokenType, typename Value>
+class GenericToken {
 public:
     GenericToken(TokenType type, const Value& value) : m_type(type), m_value(value) {}
     ~GenericToken() {}

@@ -9,8 +9,11 @@
 
 namespace LIIM {
 
-template<typename VectorType, typename T> class VectorIterator;
-template<typename T> class Vector {
+template<typename VectorType, typename T>
+class VectorIterator;
+
+template<typename T>
+class Vector {
 public:
     explicit Vector(int capacity = 20) : m_capacity(capacity) {}
 
@@ -149,25 +152,29 @@ public:
     T* vector() { return m_vector; }
     const T* vector() const { return m_vector; }
 
-    template<typename C> void for_each(C callback) {
+    template<typename C>
+    void for_each(C callback) {
         for (int i = 0; i < size(); i++) {
             callback(get(i));
         }
     }
 
-    template<typename C> void for_each(C callback) const {
+    template<typename C>
+    void for_each(C callback) const {
         for (int i = 0; i < size(); i++) {
             callback(get(i));
         }
     }
 
-    template<typename C> void for_each_reverse(C callback) const {
+    template<typename C>
+    void for_each_reverse(C callback) const {
         for (int i = size() - 1; i >= 0; i--) {
             callback(get(i));
         }
     }
 
-    template<typename C> bool any_match(C callback) const {
+    template<typename C>
+    bool any_match(C callback) const {
         for (int i = 0; i < size(); i++) {
             if (callback(get(i))) {
                 return true;
@@ -177,7 +184,8 @@ public:
         return false;
     }
 
-    template<typename C> const T* first_match(C callback) const {
+    template<typename C>
+    const T* first_match(C callback) const {
         for (int i = 0; i < size(); i++) {
             if (callback(get(i))) {
                 return &get(i);
@@ -187,7 +195,8 @@ public:
         return nullptr;
     }
 
-    template<typename C> T* first_match(C callback) {
+    template<typename C>
+    T* first_match(C callback) {
         for (int i = 0; i < size(); i++) {
             if (callback(get(i))) {
                 return &get(i);
@@ -277,7 +286,8 @@ public:
         new (m_vector + position) T(LIIM::move(val));
     }
 
-    template<typename C> bool remove_if(C callback) {
+    template<typename C>
+    bool remove_if(C callback) {
         bool removed = false;
         for_each_reverse([&](auto& elem) {
             if (callback(elem)) {
@@ -359,11 +369,13 @@ private:
     T* m_vector { nullptr };
 };
 
-template<typename T> void swap(Vector<T>& a, Vector<T>& b) {
+template<typename T>
+void swap(Vector<T>& a, Vector<T>& b) {
     a.swap(b);
 }
 
-template<typename VectorType, typename T> class VectorIterator {
+template<typename VectorType, typename T>
+class VectorIterator {
 public:
     VectorIterator(VectorType& vector, int offset) : m_vector(vector), m_offset(offset) {}
 

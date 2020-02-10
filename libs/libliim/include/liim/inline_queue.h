@@ -3,7 +3,8 @@
 #include <assert.h>
 #include <stddef.h>
 
-template<typename T> class InlineLinkedListNode {
+template<typename T>
+class InlineLinkedListNode {
 public:
     T*& next() { return m_next; }
     const T*& next() const { return m_next; }
@@ -12,7 +13,8 @@ private:
     T* m_next { nullptr };
 };
 
-template<typename T> class InlineQueue {
+template<typename T>
+class InlineQueue {
 public:
     InlineQueue() {}
     InlineQueue(const InlineQueue<T>& other) { copy(other); }

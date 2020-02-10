@@ -154,11 +154,13 @@ private:
     char* m_string { nullptr };
 };
 
-template<typename T> void swap(String& a, String& b) {
+template<typename T>
+void swap(String& a, String& b) {
     a.swap(b);
 }
 
-template<> struct Traits<String> {
+template<>
+struct Traits<String> {
     static constexpr bool is_simple() { return false; }
     static unsigned int hash(const String& s) {
         unsigned int v = 0;

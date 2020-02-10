@@ -2,7 +2,8 @@
 
 namespace LIIM {
 
-template<typename... Types> class Tuple {};
+template<typename... Types>
+class Tuple {};
 
 };
 

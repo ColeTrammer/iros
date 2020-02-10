@@ -5,9 +5,11 @@
 
 namespace LIIM {
 
-template<typename> class Function;
+template<typename>
+class Function;
 
-template<typename R, typename... Args> class Function<R(Args...)> {
+template<typename R, typename... Args>
+class Function<R(Args...)> {
 public:
     Function() {};
     Function(std::nullptr_t) {}
@@ -53,7 +55,8 @@ private:
         virtual R call(Args...) const = 0;
     };
 
-    template<typename Callable> class Closure : public ClosureBase {
+    template<typename Callable>
+    class Closure : public ClosureBase {
     public:
         explicit Closure(Callable&& c) : m_callable(move(c)) {}
 
@@ -69,9 +72,11 @@ private:
     UniquePtr<ClosureBase> m_closure;
 };
 
-template<typename R, typename... Args> Function(R (*)(Args...))->Function<R(Args...)>;
+template<typename R, typename... Args>
+Function(R (*)(Args...))->Function<R(Args...)>;
 
-template<typename R, typename... Args> void swap(Function<R(Args...)>& a, Function<R(Args...)>& b) {
+template<typename R, typename... Args>
+void swap(Function<R(Args...)>& a, Function<R(Args...)>& b) {
     a.swap(b);
 }
 

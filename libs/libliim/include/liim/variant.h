@@ -13,66 +13,94 @@ using LIIM::IsConvertible;
 using LIIM::TrueType;
 
 namespace TypeList {
-    template<typename ToFind, size_t index, typename... Types> struct IndexImpl;
-    template<typename ToFind, size_t index, typename Type, typename... Types> struct IndexImpl<ToFind, index, Type, Types...> {
+    template<typename ToFind, size_t index, typename... Types>
+    struct IndexImpl;
+    template<typename ToFind, size_t index, typename Type, typename... Types>
+    struct IndexImpl<ToFind, index, Type, Types...> {
         enum { value = IsSame<ToFind, Type>::value ? index : IndexImpl<ToFind, index + 1, Types...>::value };
     };
-    template<typename ToFind, size_t index> struct IndexImpl<ToFind, index> {
+    template<typename ToFind, size_t index>
+    struct IndexImpl<ToFind, index> {
         enum { value = -1 };
     };
 
-    template<typename ToFind, typename... Types> struct Index {
+    template<typename ToFind, typename... Types>
+    struct Index {
         enum { value = IndexImpl<ToFind, 0, Types...>::value };
     };
 
-    template<typename... Types> struct Size;
-    template<typename T, typename... Types> struct Size<T, Types...> {
+    template<typename... Types>
+    struct Size;
+    template<typename T, typename... Types>
+    struct Size<T, Types...> {
         enum { value = sizeof(T) >= Size<Types...>::value ? sizeof(T) : Size<Types...>::value };
     };
-    template<typename T> struct Size<T> {
+    template<typename T>
+    struct Size<T> {
         enum { value = sizeof(T) };
     };
 
-    template<typename T, bool already_found, typename... Types> struct IsValidImpl;
-    template<typename T, bool already_found, typename T1, typename... Types> struct IsValidImpl<T, already_found, T1, Types...> {
+    template<typename T, bool already_found, typename... Types>
+    struct IsValidImpl;
+    template<typename T, bool already_found, typename T1, typename... Types>
+    struct IsValidImpl<T, already_found, T1, Types...> {
         enum {
             value = (IsConvertible<T, T1>::value) ? (already_found ? false : IsValidImpl<T, true, Types...>::value)
                                                   : IsValidImpl<T, already_found, Types...>::value
         };
         typedef typename Conditional<IsConvertible<T, T1>::value, T1, typename IsValidImpl<T, already_found, Types...>::type>::type type;
     };
-    template<typename T, bool already_found, typename T1> struct IsValidImpl<T, already_found, T1> {
+    template<typename T, bool already_found, typename T1>
+    struct IsValidImpl<T, already_found, T1> {
         enum { value = already_found ^ IsConvertible<T, T1>::value };
         typedef T1 type;
     };
 
-    template<typename T, typename... Types> struct IsValid {
+    template<typename T, typename... Types>
+    struct IsValid {
         enum { value = Index<T, Types...>::value == -1 ? IsValidImpl<T, false, Types...>::value : true };
         typedef typename Conditional<Index<T, Types...>::value != -1, T, typename IsValidImpl<T, false, Types...>::type>::type type;
     };
 
-    template<typename... Types> struct First;
-    template<typename T, typename... Types> struct First<T, Types...> { typedef T type; };
-    template<typename T> struct First<T> { typedef T type; };
+    template<typename... Types>
+    struct First;
+    template<typename T, typename... Types>
+    struct First<T, Types...> {
+        typedef T type;
+    };
+    template<typename T>
+    struct First<T> {
+        typedef T type;
+    };
 
-    template<size_t index, typename... Types> struct TypeAtIndex;
-    template<size_t index, typename T, typename... Types> struct TypeAtIndex<index, T, Types...> {
+    template<size_t index, typename... Types>
+    struct TypeAtIndex;
+    template<size_t index, typename T, typename... Types>
+    struct TypeAtIndex<index, T, Types...> {
         typedef typename Conditional<index == 0, T, typename TypeAtIndex<index - 1, Types...>::type>::type type;
     };
-    template<size_t index> struct TypeAtIndex<index> { typedef void type; };
+    template<size_t index>
+    struct TypeAtIndex<index> {
+        typedef void type;
+    };
 
-    template<typename... Types> struct Count;
-    template<typename T, typename... Types> struct Count<T, Types...> {
+    template<typename... Types>
+    struct Count;
+    template<typename T, typename... Types>
+    struct Count<T, Types...> {
         enum { value = 1 + Count<Types...>::value };
     };
-    template<> struct Count<> {
+    template<>
+    struct Count<> {
         enum { value = 0 };
     };
 }
 
 namespace details {
-    template<typename T, size_t... place> struct Array;
-    template<typename T> struct Array<T> {
+    template<typename T, size_t... place>
+    struct Array;
+    template<typename T>
+    struct Array<T> {
         constexpr const T& access() const { return m_value; }
 
         T m_value;
@@ -83,14 +111,16 @@ namespace details {
 
         using FunctionType = R (*)(Visitor, Variants...);
 
-        template<typename... Args> constexpr const FunctionType& access(size_t first_index, Args... rest) const {
+        template<typename... Args>
+        constexpr const FunctionType& access(size_t first_index, Args... rest) const {
             return m_array[first_index].access(rest...);
         }
 
         Array<FunctionType, tail...> m_array[head];
     };
 
-    template<typename ArrayType, typename VariantTuple, typename IndexSequence> struct ArrayBuilderImpl;
+    template<typename ArrayType, typename VariantTuple, typename IndexSequence>
+    struct ArrayBuilderImpl;
     template<typename R, typename Visitor, size_t... dimensions, typename... Variants, size_t... indicies>
     struct ArrayBuilderImpl<Array<R (*)(Visitor, Variants...), dimensions...>, Tuple<Variants...>, IndexSequence<indicies...>> {
         static constexpr size_t variant_index = sizeof...(indicies);
@@ -103,11 +133,13 @@ namespace details {
             return table;
         }
 
-        template<size_t... variant_indicies> static constexpr void apply_all(ArrayType& table, IndexSequence<variant_indicies...>) {
+        template<size_t... variant_indicies>
+        static constexpr void apply_all(ArrayType& table, IndexSequence<variant_indicies...>) {
             (apply_one<variant_indicies>(table, table.m_array[variant_indicies]), ...);
         }
 
-        template<size_t index, typename T> static constexpr void apply_one(ArrayType& array, T& element) {
+        template<size_t index, typename T>
+        static constexpr void apply_one(ArrayType& array, T& element) {
             element = ArrayBuilderImpl<typename RemoveReference<decltype(element)>::type, Tuple<Variants...>,
                                        IndexSequence<indicies..., index>>::apply();
         }
@@ -117,7 +149,8 @@ namespace details {
     struct ArrayBuilderImpl<Array<R (*)(Visitor, Variants...)>, Tuple<Variants...>, IndexSequence<indices...>> {
         using ArrayType = Array<R (*)(Visitor, Variants...)>;
 
-        template<size_t index, typename Variant> static constexpr decltype(auto) element_in_variant_by_index(Variant&& var) {
+        template<size_t index, typename Variant>
+        static constexpr decltype(auto) element_in_variant_by_index(Variant&& var) {
             return forward<Variant>(var).get(in_place_index<index>);
         }
 
@@ -139,16 +172,19 @@ namespace details {
         static constexpr auto apply() { return ArrayType { &visit_invoke }; }
     };
 
-    template<typename R, typename Visitor, typename... Variants> struct ArrayBuilder {
+    template<typename R, typename Visitor, typename... Variants>
+    struct ArrayBuilder {
         using ArrayType = Array<R (*)(Visitor, Variants...), (RemoveReference<Variants>::type::num_variants())...>;
 
         static constexpr ArrayType table = ArrayBuilderImpl<ArrayType, Tuple<Variants...>, IndexSequence<>>::apply();
     };
 }
 
-template<typename Visitor, typename... Variants> inline constexpr decltype(auto) visit(Visitor&& vis, Variants&&...);
+template<typename Visitor, typename... Variants>
+inline constexpr decltype(auto) visit(Visitor&& vis, Variants&&...);
 
-template<typename... Types> class Variant {
+template<typename... Types>
+class Variant {
 public:
     Variant() {
         using FirstType = typename TypeList::First<Types...>::type;
@@ -177,13 +213,15 @@ public:
         m_value_index = index;
     }
 
-    template<size_t index, typename... Args> Variant(in_place_index_t<index>, Args... args) {
+    template<size_t index, typename... Args>
+    Variant(in_place_index_t<index>, Args... args) {
         using RealType = typename TypeList::TypeAtIndex<index, Types...>::type;
         new (&m_value_storage[0]) RealType(forward<Args>(args)...);
         m_value_index = index;
     }
 
-    template<typename T> Variant(const T& other, typename EnableIf<TypeList::IsValid<T, Types...>::value>::type* = 0) {
+    template<typename T>
+    Variant(const T& other, typename EnableIf<TypeList::IsValid<T, Types...>::value>::type* = 0) {
         using RealType = typename TypeList::IsValid<T, Types...>::type;
         constexpr size_t index = TypeList::Index<RealType, Types...>::value;
         static_assert(index != -1);
@@ -191,7 +229,8 @@ public:
         m_value_index = index;
     }
 
-    template<typename T> Variant(T&& other, typename EnableIf<TypeList::IsValid<T, Types...>::value>::type* = 0) {
+    template<typename T>
+    Variant(T&& other, typename EnableIf<TypeList::IsValid<T, Types...>::value>::type* = 0) {
         using RealType = typename TypeList::IsValid<T, Types...>::type;
         constexpr size_t index = TypeList::Index<RealType, Types...>::value;
         static_assert(index != -1);
@@ -215,18 +254,21 @@ public:
         }
         return *this;
     }
-    template<typename T, typename = typename EnableIf<TypeList::IsValid<T, Types...>::value>::type> Variant& operator=(const T& value) {
+    template<typename T, typename = typename EnableIf<TypeList::IsValid<T, Types...>::value>::type>
+    Variant& operator=(const T& value) {
         Variant temp(value);
         swap(temp);
         return *this;
     }
-    template<typename T, typename = typename EnableIf<TypeList::IsValid<T, Types...>::value>::type> Variant& operator=(T&& value) {
+    template<typename T, typename = typename EnableIf<TypeList::IsValid<T, Types...>::value>::type>
+    Variant& operator=(T&& value) {
         Variant temp(LIIM::move(value));
         swap(temp);
         return *this;
     }
 
-    template<typename T> constexpr T* get_if() {
+    template<typename T>
+    constexpr T* get_if() {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         if (m_value_index != index) {
@@ -234,7 +276,8 @@ public:
         }
         return &this->get<index>();
     }
-    template<typename T> constexpr const T* get_if() const {
+    template<typename T>
+    constexpr const T* get_if() const {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         if (m_value_index != index) {
@@ -243,38 +286,51 @@ public:
         return &this->get<index>();
     }
 
-    template<size_t index> constexpr typename TypeList::TypeAtIndex<index, Types...>::type& get(in_place_index_t<index>) {
+    template<size_t index>
+    constexpr typename TypeList::TypeAtIndex<index, Types...>::type& get(in_place_index_t<index>) {
         return this->get<index>();
     }
-    template<size_t index> constexpr const typename TypeList::TypeAtIndex<index, Types...>::type& get(in_place_index_t<index>) const {
+    template<size_t index>
+    constexpr const typename TypeList::TypeAtIndex<index, Types...>::type& get(in_place_index_t<index>) const {
         return this->get<index>();
     }
 
-    template<size_t index> constexpr typename TypeList::TypeAtIndex<index, Types...>::type& get() {
+    template<size_t index>
+    constexpr typename TypeList::TypeAtIndex<index, Types...>::type& get() {
         assert(m_value_index == index);
         using RealType = typename TypeList::TypeAtIndex<index, Types...>::type;
         return *reinterpret_cast<RealType*>(&m_value_storage[0]);
     }
-    template<size_t index> constexpr const typename TypeList::TypeAtIndex<index, Types...>::type& get() const {
+    template<size_t index>
+    constexpr const typename TypeList::TypeAtIndex<index, Types...>::type& get() const {
         return const_cast<Variant&>(*this).get<index>();
     }
 
-    template<typename T> constexpr T& as() {
+    template<typename T>
+    constexpr T& as() {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         return this->get<index>();
     }
-    template<typename T> constexpr const T& as() const { return const_cast<Variant&>(*this).as<T>(); }
+    template<typename T>
+    constexpr const T& as() const {
+        return const_cast<Variant&>(*this).as<T>();
+    }
 
-    template<size_t index> constexpr bool is() const { return m_value_index == index; }
+    template<size_t index>
+    constexpr bool is() const {
+        return m_value_index == index;
+    }
 
-    template<typename T> constexpr bool is() const {
+    template<typename T>
+    constexpr bool is() const {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         return this->is<index>();
     }
 
-    template<typename Visitor> constexpr decltype(auto) visit(Visitor&& vis) {
+    template<typename Visitor>
+    constexpr decltype(auto) visit(Visitor&& vis) {
         return LIIM::visit(forward<Visitor>(vis), forward<Variant>(*this));
     }
 
@@ -350,7 +406,8 @@ public:
     }
 
 private:
-    template<typename Visitor, typename... Variants> friend inline constexpr decltype(auto) visit(Visitor&&, Variants&&...);
+    template<typename Visitor, typename... Variants>
+    friend inline constexpr decltype(auto) visit(Visitor&&, Variants&&...);
 
     void destroy() {
         this->visit([this](auto&& val) {
@@ -364,11 +421,13 @@ private:
     static_assert(sizeof(m_value_storage) >= TypeList::Size<Types...>::value);
 };
 
-template<typename... Types> void swap(Variant<Types...>& a, Variant<Types...>& b) {
+template<typename... Types>
+void swap(Variant<Types...>& a, Variant<Types...>& b) {
     a.swap(b);
 }
 
-template<typename Visitor, typename... Variants> inline constexpr decltype(auto) visit(Visitor&& vis, Variants&&... vs) {
+template<typename Visitor, typename... Variants>
+inline constexpr decltype(auto) visit(Visitor&& vis, Variants&&... vs) {
     using R = typename InvokeResult<Visitor, decltype(LIIM::declval<Variants>().get(in_place_index<0>))...>::type;
 
     constexpr auto& table = details::ArrayBuilder<R, Visitor&&, Variants&&...>::table;

@@ -5,7 +5,8 @@
 
 namespace LIIM {
 
-template<typename T> struct LinkedListObj {
+template<typename T>
+struct LinkedListObj {
     LinkedListObj(const T& val) : m_val(val) {}
     ~LinkedListObj() {}
 
@@ -13,7 +14,8 @@ template<typename T> struct LinkedListObj {
     LinkedListObj<T>* m_next { nullptr };
 };
 
-template<typename T> class LinkedList {
+template<typename T>
+class LinkedList {
 public:
     LinkedList() {}
 
@@ -103,7 +105,8 @@ public:
 
     bool is_empty() { return m_size == 0; }
 
-    template<typename C> void for_each(C callback) {
+    template<typename C>
+    void for_each(C callback) {
         auto* iter = m_head;
         while (iter) {
             callback(iter->m_val);
@@ -111,7 +114,8 @@ public:
         }
     }
 
-    template<typename C> void for_each(C callback) const {
+    template<typename C>
+    void for_each(C callback) const {
         auto* iter = m_head;
         while (iter) {
             callback(iter->m_val);
@@ -119,7 +123,8 @@ public:
         }
     }
 
-    template<typename C> void remove_if(C test) {
+    template<typename C>
+    void remove_if(C test) {
         auto** iter = &m_head;
         while (*iter) {
             if (test((*iter)->m_val)) {
@@ -176,7 +181,8 @@ private:
     LinkedListObj<T>* m_head { nullptr };
 };
 
-template<typename T> void swap(LinkedList<T>& a, LinkedList<T>& b) {
+template<typename T>
+void swap(LinkedList<T>& a, LinkedList<T>& b) {
     a.swap(b);
 }
 

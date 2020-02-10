@@ -35,3 +35,4 @@ AlignAfterOpenBracket: true
 AllowAllArgumentsOnNextLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortLambdasOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
