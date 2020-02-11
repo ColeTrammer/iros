@@ -2,6 +2,7 @@
 #define _SYS_OS_2_H 1
 
 #include <bits/__locked_robust_mutex_node.h>
+#include <bits/clockid_t.h>
 
 #define MUTEX_AQUIRE           1
 #define MUTEX_WAKE_AND_SET     3
@@ -42,6 +43,7 @@ int get_initial_process_info(struct initial_process_info *info);
 int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int to_wake, unsigned int *to_wait);
 int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **list_head);
 int tgkill(int tgid, int tid, int signum);
+int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
 
 #ifdef __cplusplus
 }

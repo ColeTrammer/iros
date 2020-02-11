@@ -175,6 +175,7 @@ $(BUILDDIR)/libs/libc/sys/mman/mman.o \
 $(BUILDDIR)/libs/libc/sys/os_2/create_task.o \
 $(BUILDDIR)/libs/libc/sys/os_2/exit_task.o \
 $(BUILDDIR)/libs/libc/sys/os_2/get_initial_process_info.o \
+$(BUILDDIR)/libs/libc/sys/os_2/getcpuclockid.o \
 $(BUILDDIR)/libs/libc/sys/os_2/os_mutex.o \
 $(BUILDDIR)/libs/libc/sys/os_2/set_thread_self_pointer.o \
 $(BUILDDIR)/libs/libc/sys/os_2/tgkill.o \
@@ -189,6 +190,7 @@ $(BUILDDIR)/libs/libc/sys/uio/writev.o \
 $(BUILDDIR)/libs/libc/sys/utsname/utsname.o \
 $(BUILDDIR)/libs/libc/sys/wait/wait.o \
 $(BUILDDIR)/libs/libc/termios/termios.o \
+$(BUILDDIR)/libs/libc/time/clock_getcpuclockid.o \
 $(BUILDDIR)/libs/libc/time/clock_getres.o \
 $(BUILDDIR)/libs/libc/time/clock_gettime.o \
 $(BUILDDIR)/libs/libc/time/clock_nanosleep.o \

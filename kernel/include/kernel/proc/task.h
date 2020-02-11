@@ -20,6 +20,8 @@
 
 enum sched_state { RUNNING_INTERRUPTIBLE, RUNNING_UNINTERRUPTIBLE, WAITING, EXITING };
 
+struct clock;
+
 struct task {
     struct arch_task arch_task;
 
@@ -43,6 +45,8 @@ struct task {
     bool blocking : 1;
 
     struct block_info block_info;
+
+    struct clock *task_clock;
 
     struct process *process;
     struct __locked_robust_mutex_node **locked_robust_mutex_list_head;

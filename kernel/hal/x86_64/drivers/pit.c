@@ -27,6 +27,13 @@ void handle_pit_interrupt(struct task_state *task_state) {
         current->process->times.tms_utime++;
     }
 
+    // Check for NULL b/c kernel tasks don't have a clock
+    if (current->task_clock) {
+        time_inc_clock(current->task_clock, 1000000L);
+        // NOTE: we can't simply inc the process clock if we were doing SMP
+        time_inc_clock(current->process->process_clock, 1000000L);
+    }
+
     if (callback != NULL) {
         count++;
         if (count >= count_to) {

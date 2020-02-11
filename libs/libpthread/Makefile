@@ -24,6 +24,7 @@ $(BUILDDIR)/libs/libpthread/attr.o \
 $(BUILDDIR)/libs/libpthread/cancel.o \
 $(BUILDDIR)/libs/libpthread/cond.o \
 $(BUILDDIR)/libs/libpthread/condattr.o \
+$(BUILDDIR)/libs/libpthread/getcpuclockid.o \
 $(BUILDDIR)/libs/libpthread/key.o \
 $(BUILDDIR)/libs/libpthread/mutex.o \
 $(BUILDDIR)/libs/libpthread/mutexattr.o \

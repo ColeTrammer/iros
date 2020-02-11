@@ -14,6 +14,7 @@
 #include ARCH_SPECIFIC(proc/process.h)
 // clang-format on
 
+struct clock;
 struct file;
 
 struct file_descriptor {
@@ -30,6 +31,8 @@ struct process {
     struct vm_region *process_memory;
 
     struct user_mutex *used_user_mutexes;
+
+    struct clock *process_clock;
 
     pid_t pid;
     pid_t pgid;

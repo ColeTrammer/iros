@@ -66,6 +66,7 @@ void pthread_exit(void *value_ptr) __attribute__((__noreturn__));
 int pthread_join(pthread_t thread, void **value_ptr);
 int pthread_kill(pthread_t thread, int sig);
 
+int pthread_getcpuclockid(pthread_t thread, clockid_t *clock_id);
 int pthread_getconcurrency(void);
 int pthread_getschedparam(pthread_t thread, int *__restrict policy, struct sched_param *__restrict param);
 int pthread_setconcurrency(int new_level);

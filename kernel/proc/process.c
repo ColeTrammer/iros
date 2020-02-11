@@ -7,6 +7,7 @@
 #include <kernel/proc/process.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/hash_map.h>
 
 // #define PROC_REF_COUNT_DEBUG
@@ -87,6 +88,8 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
         if (process->cwd) {
             drop_tnode(process->cwd);
         }
+
+        time_destroy_clock(process->process_clock);
         free(process);
         return;
     }

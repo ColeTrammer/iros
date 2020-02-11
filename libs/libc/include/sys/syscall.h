@@ -91,7 +91,8 @@
     __ENUMERATE_SYSCALL(CLOCK_NANOSLEEP, clock_nanosleep, 4)                   \
     __ENUMERATE_SYSCALL(CLOCK_GETRES, clock_getres, 2)                         \
     __ENUMERATE_SYSCALL(CLOCK_GETTIME, clock_gettime, 2)                       \
-    __ENUMERATE_SYSCALL(CLOCK_SETTIME, clock_settime, 2)
+    __ENUMERATE_SYSCALL(CLOCK_SETTIME, clock_settime, 2)                       \
+    __ENUMERATE_SYSCALL(GETCPUCLOCKID, getcpuclockid, 3)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

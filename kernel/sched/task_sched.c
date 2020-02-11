@@ -213,6 +213,22 @@ int signal_process_group(pid_t pgid, int signum) {
     return signalled_anything ? 0 : -ESRCH;
 }
 
+struct task *find_by_tid(int tgid, int tid) {
+    spin_lock(&task_list_lock);
+
+    struct task *task = list_start;
+    do {
+        if (task->process->pid == tgid && task->tid == tid) {
+            spin_unlock(&task_list_lock);
+            return task;
+            break;
+        }
+    } while ((task = task->next) != list_start);
+
+    spin_unlock(&task_list_lock);
+    return NULL;
+}
+
 int signal_task(int tgid, int tid, int signum) {
     spin_lock(&task_list_lock);
 

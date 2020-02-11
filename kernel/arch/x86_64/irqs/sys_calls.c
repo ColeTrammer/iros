@@ -322,6 +322,8 @@ SYS_CALL(fork) {
     child_process->inode_dev = parent->process->inode_dev;
     child_process->inode_id = parent->process->inode_id;
     memcpy(&child_process->sig_state, &parent->process->sig_state, sizeof(struct sigaction) * _NSIG);
+    child_process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
+    child->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
     task_align_fpu(child);
 
@@ -606,6 +608,8 @@ SYS_CALL(execve) {
     task->next = NULL;
     task->sig_mask = current->sig_mask;
     memcpy(&process->times, &current->process->times, sizeof(struct tms));
+    process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
+    task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
     // Clone only signal dispositions that don't have a handler
     for (int i = 0; i < _NSIG; i++) {
@@ -1433,6 +1437,7 @@ SYS_CALL(create_task) {
     task->sched_state = RUNNING_INTERRUPTIBLE;
     task->tid = get_next_tid();
     task->locked_robust_mutex_list_head = args->locked_robust_mutex_list_head;
+    task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
     task_align_fpu(task);
 
@@ -2186,6 +2191,41 @@ SYS_CALL(clock_settime) {
     //        precomputed end_time is not correct anymore (or some other solution).
     clock->time = *tp;
 
+    SYS_RETURN(0);
+}
+
+SYS_CALL(getcpuclockid) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_VALIDATE(int, tgid, validate_positive, 1);
+    SYS_PARAM2_VALIDATE(int, tid, validate_positive, 1);
+    SYS_PARAM3_VALIDATE(clockid_t *, id, validate_write, sizeof(clockid_t));
+
+    struct task *current = get_current_task();
+    struct process *current_process = current->process;
+
+    clockid_t ret;
+    if (tgid == 0) {
+        if (tid == 0) {
+            ret = current_process->process_clock->id;
+        } else {
+            struct task *task = find_by_tid(current_process->pid, tid);
+            if (!task) {
+                SYS_RETURN(-ESRCH);
+            }
+
+            ret = task->task_clock->id;
+        }
+    } else {
+        struct process *process = find_by_pid(tgid);
+        if (!process) {
+            SYS_RETURN(-ESRCH);
+        }
+
+        ret = process->process_clock->id;
+    }
+
+    *id = ret;
     SYS_RETURN(0);
 }
 

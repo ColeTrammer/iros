@@ -18,6 +18,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/proc/user_mutex.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 
 // #define TASK_SIGNAL_DEBUG
 
@@ -221,6 +222,8 @@ struct task *load_task(const char *file_name) {
     task->process->cwd = malloc(2);
     task->process->tty = -1;
     task->process->cwd = bump_tnode(fs_root());
+    task->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
+    task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
     task->next = NULL;
 
@@ -275,6 +278,7 @@ void free_task(struct task *task, bool free_paging_structure) {
 
     arch_free_task(task, free_paging_structure);
 
+    time_destroy_clock(task->task_clock);
     proc_drop_process(task->process, free_paging_structure);
     free(task);
     current_task = current_save;

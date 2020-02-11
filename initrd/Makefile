@@ -35,6 +35,7 @@ $(BUILDDIR)/initrd/programs/cleanup_handler_test \
 $(BUILDDIR)/initrd/programs/detached_thread_test \
 $(BUILDDIR)/initrd/programs/fault_test \
 $(BUILDDIR)/initrd/programs/fwrite \
+$(BUILDDIR)/initrd/programs/getcpuclockid_test \
 $(BUILDDIR)/initrd/programs/getopt_test \
 $(BUILDDIR)/initrd/programs/glob_test \
 $(BUILDDIR)/initrd/programs/guess \

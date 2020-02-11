@@ -7,7 +7,7 @@
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
-#define CLOCKID_ALLOCATION_DEBUG
+// #define CLOCKID_ALLOCATION_DEBUG
 
 struct clock global_monotonic_clock = { CLOCK_MONOTONIC, { 0 }, { 0 } };
 struct clock global_realtime_clock = { CLOCK_REALTIME, { 0 }, { 0 } };
@@ -41,7 +41,7 @@ static clockid_t allocate_clockid() {
     return ret;
 }
 
-static void free_clockid(clockid_t id) {
+static void free_clockid(clockid_t __attribute__((unused)) id) {
 #ifdef CLOCKID_ALLOCATION_DEBUG
     debug_log("Freeing clockid: [ %d ]\n", id);
 #endif /* CLOCKID_ALLOCATION_DEBUG */
@@ -80,6 +80,10 @@ struct clock *time_get_clock(clockid_t id) {
             return &global_monotonic_clock;
         case CLOCK_REALTIME:
             return &global_realtime_clock;
+        case CLOCK_PROCESS_CPUTIME_ID:
+            return get_current_task()->process->process_clock;
+        case CLOCK_THREAD_CPUTIME_ID:
+            return get_current_task()->task_clock;
         default:
             break;
     }
