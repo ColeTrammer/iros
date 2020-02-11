@@ -189,6 +189,11 @@ $(BUILDDIR)/libs/libc/sys/uio/writev.o \
 $(BUILDDIR)/libs/libc/sys/utsname/utsname.o \
 $(BUILDDIR)/libs/libc/sys/wait/wait.o \
 $(BUILDDIR)/libs/libc/termios/termios.o \
+$(BUILDDIR)/libs/libc/time/clock_getres.o \
+$(BUILDDIR)/libs/libc/time/clock_gettime.o \
+$(BUILDDIR)/libs/libc/time/clock_nanosleep.o \
+$(BUILDDIR)/libs/libc/time/clock_settime.o \
+$(BUILDDIR)/libs/libc/time/nanosleep.o \
 $(BUILDDIR)/libs/libc/time/time.o \
 $(BUILDDIR)/libs/libc/unistd/_exit.o \
 $(BUILDDIR)/libs/libc/unistd/access.o \

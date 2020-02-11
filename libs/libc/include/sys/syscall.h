@@ -88,7 +88,10 @@
     __ENUMERATE_SYSCALL(READV, readv, 3)                                       \
     __ENUMERATE_SYSCALL(WRITEV, writev, 3)                                     \
     __ENUMERATE_SYSCALL(REALPATH, realpath, 3)                                 \
-    __ENUMERATE_SYSCALL(CLOCK_NANOSLEEP, clock_nanosleep, 4)
+    __ENUMERATE_SYSCALL(CLOCK_NANOSLEEP, clock_nanosleep, 4)                   \
+    __ENUMERATE_SYSCALL(CLOCK_GETRES, clock_getres, 2)                         \
+    __ENUMERATE_SYSCALL(CLOCK_GETTIME, clock_gettime, 2)                       \
+    __ENUMERATE_SYSCALL(CLOCK_SETTIME, clock_settime, 2)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

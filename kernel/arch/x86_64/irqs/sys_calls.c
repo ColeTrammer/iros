@@ -2146,6 +2146,49 @@ SYS_CALL(clock_nanosleep) {
     SYS_RETURN(ret);
 }
 
+SYS_CALL(clock_getres) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct clock *, clock, clockid_t, get_clock);
+    SYS_PARAM2_VALIDATE(struct timespec *, res, validate_write, sizeof(struct timespec));
+
+    *res = clock->resolution;
+
+    SYS_RETURN(0);
+}
+
+SYS_CALL(clock_gettime) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct clock *, clock, clockid_t, get_clock);
+    SYS_PARAM2_VALIDATE(struct timespec *, tp, validate_write, sizeof(struct timespec));
+
+    *tp = clock->time;
+
+    SYS_RETURN(0);
+}
+
+SYS_CALL(clock_settime) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct clock *, clock, clockid_t, get_clock);
+    SYS_PARAM2_VALIDATE(const struct timespec *, tp, validate_read, sizeof(struct timespec));
+
+    if (clock->id != CLOCK_REALTIME) {
+        SYS_RETURN(-EPERM);
+    }
+
+    if (get_current_task()->process->euid != 0) {
+        SYS_RETURN(-EPERM);
+    }
+
+    // FIXME: We need to notify threads sleeping on this clock that their
+    //        precomputed end_time is not correct anymore (or some other solution).
+    clock->time = *tp;
+
+    SYS_RETURN(0);
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);
