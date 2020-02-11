@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void __cxa_atexit() {}
-
 __attribute__((__noreturn__)) void exit(int status) {
     __on_exit();
 

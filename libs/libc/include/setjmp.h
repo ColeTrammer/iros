@@ -20,6 +20,9 @@ __attribute__((noreturn)) void longjmp(jmp_buf buf, int val);
 int sigsetjmp(sigjmp_buf env, int val);
 __attribute__((noreturn)) void siglongjmp(sigjmp_buf env, int val);
 
+int _setjmp(jmp_buf buf);
+__attribute__((noreturn)) void _longjmp(jmp_buf buf, int val);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

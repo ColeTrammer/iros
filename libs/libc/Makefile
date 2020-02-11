@@ -79,6 +79,7 @@ $(BUILDDIR)/libs/libc/string/strndup.o \
 $(BUILDDIR)/libs/libc/string/strnlen.o \
 $(BUILDDIR)/libs/libc/string/strpbrk.o \
 $(BUILDDIR)/libs/libc/string/strrchr.o \
+$(BUILDDIR)/libs/libc/string/strsignal.o \
 $(BUILDDIR)/libs/libc/string/strspn.o \
 $(BUILDDIR)/libs/libc/string/strstr.o \
 $(BUILDDIR)/libs/libc/string/strtok_r.o \
@@ -92,6 +93,8 @@ $(BUILDDIR)/libs/libc/assert/assert.o \
 $(BUILDDIR)/libs/libc/bits/lock/__lock.o \
 $(BUILDDIR)/libs/libc/bits/lock/__trylock.o \
 $(BUILDDIR)/libs/libc/bits/lock/__unlock.o \
+$(BUILDDIR)/libs/libc/bits/__allocate_thread_control_block.o \
+$(BUILDDIR)/libs/libc/bits/__free_thread_control_block.o \
 $(BUILDDIR)/libs/libc/dirent/dirent.o \
 $(BUILDDIR)/libs/libc/fcntl/creat.o \
 $(BUILDDIR)/libs/libc/fcntl/fcntl.o \
@@ -107,7 +110,25 @@ $(BUILDDIR)/libs/libc/locale/locale.o \
 $(BUILDDIR)/libs/libc/netdb/netdb.o \
 $(BUILDDIR)/libs/libc/pwd/pwd.o \
 $(REGEX_OBJS) \
+$(BUILDDIR)/libs/libc/setjmp/__sigsetjmp.o \
+$(BUILDDIR)/libs/libc/setjmp/siglongjmp.o \
+$(BUILDDIR)/libs/libc/signal/kill.o \
+$(BUILDDIR)/libs/libc/signal/killpg.o \
+$(BUILDDIR)/libs/libc/signal/psignal.o \
+$(BUILDDIR)/libs/libc/signal/raise.o \
+$(BUILDDIR)/libs/libc/signal/sigaction.o \
+$(BUILDDIR)/libs/libc/signal/sigaddset.o \
+$(BUILDDIR)/libs/libc/signal/sigaltstack.o \
+$(BUILDDIR)/libs/libc/signal/sigdelset.o \
+$(BUILDDIR)/libs/libc/signal/sigemptyset.o \
+$(BUILDDIR)/libs/libc/signal/sigfillset.o \
+$(BUILDDIR)/libs/libc/signal/siginterrupt.o \
+$(BUILDDIR)/libs/libc/signal/sigismember.o \
+$(BUILDDIR)/libs/libc/signal/sigismember.o \
 $(BUILDDIR)/libs/libc/signal/signal.o \
+$(BUILDDIR)/libs/libc/signal/sigpending.o \
+$(BUILDDIR)/libs/libc/signal/sigprocmask.o \
+$(BUILDDIR)/libs/libc/signal/sigsuspend.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr.o \
 $(BUILDDIR)/libs/libc/stdio/fclose.o \
@@ -160,7 +181,7 @@ $(BUILDDIR)/libs/libc/stdio/puts.o \
 $(BUILDDIR)/libs/libc/stdio/rewind.o \
 $(BUILDDIR)/libs/libc/stdio/setbuf.o \
 $(BUILDDIR)/libs/libc/stdio/setvbuf.o \
-$(BUILDDIR)/libs/libc/stdio/unget.o \
+$(BUILDDIR)/libs/libc/stdio/ungetc.o \
 $(BUILDDIR)/libs/libc/stdlib/__on_exit.o \
 $(BUILDDIR)/libs/libc/stdlib/_Exit.o \
 $(BUILDDIR)/libs/libc/stdlib/atexit.o \
@@ -257,6 +278,7 @@ $(BUILDDIR)/libs/libc/unistd/unlink.o \
 $(BUILDDIR)/libs/libc/unistd/write.o \
 $(BUILDDIR)/libs/libc/utime/utime.o \
 $(BUILDDIR)/libs/libc/wordexp/wordexp.o \
+$(BUILDDIR)/libs/libc/__cxa_atexit.o \
 $(BUILDDIR)/libs/libc/cxx.o \
 $(BUILDDIR)/libs/libc/init.o
 
