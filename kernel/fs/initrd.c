@@ -18,6 +18,7 @@
 #include <kernel/hal/timer.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
 static struct file_system fs;
@@ -136,7 +137,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->ref_count = 1;
     root->readable = true;
     root->writeable = false;
-    root->access_time = root->modify_time = root->change_time = get_time_as_timespec();
+    root->access_time = root->modify_time = root->change_time = time_read_clock(CLOCK_REALTIME);
     init_spinlock(&root->lock);
 
     struct tnode *t_root = create_root_tnode(root);
@@ -161,7 +162,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->parent = t_root;
         inode->readable = true;
         inode->writeable = true;
-        inode->access_time = inode->modify_time = inode->change_time = get_time_as_timespec();
+        inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
         init_spinlock(&inode->lock);
 
         struct tnode *to_add = create_tnode(entry[i].name, inode);

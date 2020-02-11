@@ -18,6 +18,7 @@
 #include <kernel/hal/timer.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
 // #define PTMX_BLOCKING_DEBUG
@@ -71,9 +72,10 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
 #endif /* PTMX_BLOCKING_DEBUG */
 
             if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
-                time_t end_time = data->config.c_cc[VTIME] * 100;
+                time_t end_time_ms = data->config.c_cc[VTIME] * 100;
+                struct timespec end_time = { .tv_sec = end_time_ms / 1000, .tv_nsec = (end_time_ms % 1000) * 1000000 };
                 proc_block_until_inode_is_readable_or_timeout(get_current_task(), device->inode, end_time);
-                if (get_time() >= end_time) {
+                if (time_compare(time_read_clock(CLOCK_MONOTONIC), end_time) >= 0) {
                     return 0;
                 }
 

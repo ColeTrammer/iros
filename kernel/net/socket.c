@@ -17,6 +17,7 @@
 #include <kernel/net/unix_socket.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
@@ -143,7 +144,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
 
     struct socket_data *data;
 
-    time_t start_time = get_time();
+    struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
 
     for (;;) {
         spin_lock(&socket->lock);
@@ -173,12 +174,11 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         }
 
         if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
-            time_t ms_seconds_to_wait = socket->timeout.tv_sec * 1000 + socket->timeout.tv_usec / 1000 - (start_time - get_time());
-
-            proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, ms_seconds_to_wait);
+            struct timespec timeout = time_from_timeval(socket->timeout);
+            proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, timeout);
 
             // We timed out
-            if (start_time >= start_time + ms_seconds_to_wait) {
+            if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
                 return -EAGAIN;
             }
         }

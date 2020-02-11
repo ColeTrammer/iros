@@ -203,6 +203,7 @@ $(BUILDDIR)/libs/libc/unistd/execle.o \
 $(BUILDDIR)/libs/libc/unistd/execlp.o \
 $(BUILDDIR)/libs/libc/unistd/execv.o \
 $(BUILDDIR)/libs/libc/unistd/execve.o \
+$(BUILDDIR)/libs/libc/unistd/execvp.o \
 $(BUILDDIR)/libs/libc/unistd/execvpe.o \
 $(BUILDDIR)/libs/libc/unistd/fork.o \
 $(BUILDDIR)/libs/libc/unistd/ftruncate.o \

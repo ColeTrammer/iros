@@ -10,17 +10,19 @@
 #include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 
-static bool sleep_milliseconds_blocker(struct block_info *info) {
-    assert(info->type == SLEEP_MILLISECONDS);
-    return get_time() >= info->sleep_milliseconds_info.end_time;
+static bool sleep_blocker(struct block_info *info) {
+    assert(info->type == SLEEP);
+    return time_compare(time_read_clock(info->sleep_info.id), info->sleep_info.end_time) >= 0;
 }
 
-void proc_block_sleep_milliseconds(struct task *current, time_t end_time) {
+void proc_block_sleep(struct task *current, clockid_t id, struct timespec end_time) {
     disable_interrupts();
-    current->block_info.sleep_milliseconds_info.end_time = end_time;
-    current->block_info.type = SLEEP_MILLISECONDS;
-    current->block_info.should_unblock = &sleep_milliseconds_blocker;
+    current->block_info.sleep_info.id = id;
+    current->block_info.sleep_info.end_time = end_time;
+    current->block_info.type = SLEEP;
+    current->block_info.should_unblock = &sleep_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
     __kernel_yield();
@@ -80,11 +82,11 @@ void proc_block_until_socket_is_connected(struct task *current, struct socket *s
 static bool until_inode_is_readable_or_timeout_blocker(struct block_info *info) {
     assert(info->type == UNTIL_INODE_IS_READABLE_OR_TIMEOUT);
 
-    return get_time() >= info->until_inode_is_readable_or_timeout_info.end_time ||
+    return time_compare(time_read_clock(CLOCK_MONOTONIC), info->until_inode_is_readable_or_timeout_info.end_time) >= 0 ||
            info->until_inode_is_readable_or_timeout_info.inode->readable;
 }
 
-void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, time_t end_time) {
+void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, struct timespec end_time) {
     disable_interrupts();
     current->block_info.until_inode_is_readable_or_timeout_info.inode = inode;
     current->block_info.until_inode_is_readable_or_timeout_info.end_time = end_time;
@@ -164,11 +166,11 @@ void proc_block_until_socket_is_readable(struct task *current, struct socket *so
 static bool until_socket_is_readable_with_timeout_blocker(struct block_info *info) {
     assert(info->type == UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT);
 
-    return get_time() >= info->until_socket_is_readable_with_timeout_info.end_time ||
+    return time_compare(time_read_clock(CLOCK_MONOTONIC), info->until_socket_is_readable_with_timeout_info.end_time) >= 0 ||
            info->until_socket_is_readable_with_timeout_info.socket->readable || info->until_socket_is_readable_info.socket->exceptional;
 }
 
-void proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, time_t end_time) {
+void proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, struct timespec end_time) {
     disable_interrupts();
     current->block_info.until_socket_is_readable_with_timeout_info.socket = socket;
     current->block_info.until_socket_is_readable_with_timeout_info.end_time = end_time;
@@ -254,7 +256,7 @@ void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t
 static bool select_timeout_blocker(struct block_info *info) {
     assert(info->type == SELECT_TIMEOUT);
 
-    if (get_time() >= info->select_timeout_info.end_time) {
+    if (time_compare(time_read_clock(CLOCK_MONOTONIC), info->select_timeout_info.end_time) >= 0) {
         return true;
     }
 
@@ -262,7 +264,8 @@ static bool select_timeout_blocker(struct block_info *info) {
                                  info->select_timeout_info.exceptfds);
 }
 
-void proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds, time_t end_time) {
+void proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds,
+                               struct timespec end_time) {
     disable_interrupts();
     current->block_info.select_timeout_info.nfds = nfds;
     current->block_info.select_timeout_info.readfds = readfds;

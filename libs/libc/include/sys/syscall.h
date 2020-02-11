@@ -32,7 +32,6 @@
     __ENUMERATE_SYSCALL(SIGPROCMASK, sigprocmask, 3)                           \
     __ENUMERATE_SYSCALL(DUP, dup, 1)                                           \
     __ENUMERATE_SYSCALL(GETPGID, getpgid, 1)                                   \
-    __ENUMERATE_SYSCALL(SLEEP, sleep, 1)                                       \
     __ENUMERATE_SYSCALL(ACCESS, access, 2)                                     \
     __ENUMERATE_SYSCALL(ACCEPT4, accept4, 4)                                   \
     __ENUMERATE_SYSCALL(BIND, bind, 3)                                         \
@@ -88,7 +87,8 @@
     __ENUMERATE_SYSCALL(PWRITE, pwrite, 4)                                     \
     __ENUMERATE_SYSCALL(READV, readv, 3)                                       \
     __ENUMERATE_SYSCALL(WRITEV, writev, 3)                                     \
-    __ENUMERATE_SYSCALL(REALPATH, realpath, 3)
+    __ENUMERATE_SYSCALL(REALPATH, realpath, 3)                                 \
+    __ENUMERATE_SYSCALL(CLOCK_NANOSLEEP, clock_nanosleep, 4)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

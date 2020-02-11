@@ -28,6 +28,7 @@
 #include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/validators.h>
 
 #include <kernel/arch/x86_64/proc/task.h>
@@ -228,6 +229,16 @@ static int get_socket(int fd, struct file **filep) {
     }
 
     *filep = file;
+    return 0;
+}
+
+static int get_clock(clockid_t id, struct clock **clockp) {
+    struct clock *clock = time_get_clock(id);
+    if (!clock) {
+        return -EINVAL;
+    }
+
+    *clockp = clock;
     return 0;
 }
 
@@ -818,10 +829,11 @@ SYS_CALL(gettimeofday) {
     SYS_PARAM1_VALIDATE(struct timeval *, tv, validate_write_or_null, sizeof(struct timeval));
     SYS_PARAM2_VALIDATE(struct timezone *, tz, validate_write_or_null, sizeof(struct timezone));
 
-    time_t micro_seconds = get_time();
+    struct timespec time = time_read_clock(CLOCK_REALTIME);
+
     if (tv) {
-        tv->tv_sec = micro_seconds / 1000;
-        tv->tv_usec = (micro_seconds % 1000) * 1000;
+        tv->tv_sec = time.tv_sec;
+        tv->tv_usec = time.tv_nsec / 1000;
     }
 
     if (tz) {
@@ -1102,23 +1114,6 @@ SYS_CALL(getpgid) {
     SYS_RETURN(proc_get_pgid(pid));
 }
 
-SYS_CALL(sleep) {
-    SYS_BEGIN();
-
-    SYS_PARAM1(unsigned int, seconds);
-
-    debug_log("Sleeping: [ %u ]\n", seconds);
-
-    struct task *current = get_current_task();
-
-    time_t end_time = get_time() + seconds * 1000;
-
-    proc_block_sleep_milliseconds(current, end_time);
-
-    time_t now = get_time();
-    SYS_RETURN(now < end_time ? end_time - now : 0);
-}
-
 SYS_CALL(access) {
     SYS_BEGIN();
 
@@ -1361,7 +1356,9 @@ SYS_CALL(alarm) {
 
     struct task *current = get_current_task();
 
-    proc_block_sleep_milliseconds(current, get_time() + seconds * 1000);
+    struct timespec now = time_read_clock(CLOCK_MONOTONIC);
+    now.tv_sec += seconds;
+    proc_block_sleep(current, CLOCK_MONOTONIC, now);
 
     disable_interrupts();
     // Tell signal handling code we were not interruped (as would be implied by this saying -EINTR)
@@ -1414,7 +1411,8 @@ SYS_CALL(times) {
     tms->tms_cutime = current->process->times.tms_cutime / 10;
     tms->tms_cstime = current->process->times.tms_cstime / 10;
 
-    SYS_RETURN(get_time() / 10);
+    struct timespec now = time_read_clock(CLOCK_MONOTONIC);
+    SYS_RETURN(now.tv_sec * 100 + now.tv_nsec / 10000000L);
 }
 
 SYS_CALL(create_task) {
@@ -1687,7 +1685,7 @@ SYS_CALL(pselect) {
         goto pselect_return;
     }
 
-    time_t start = get_time();
+    struct timespec start = time_read_clock(CLOCK_MONOTONIC);
 
     uint8_t *read_fds_found = NULL;
     if (readfds) {
@@ -1766,14 +1764,15 @@ SYS_CALL(pselect) {
         }
 
         if (timeout) {
-            time_t now = get_time();
-            time_t end_time = timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000 - (start - now);
+            struct timespec now = time_read_clock(CLOCK_MONOTONIC);
+            struct timespec end_time = { .tv_sec = now.tv_sec - start.tv_sec, .tv_nsec = now.tv_nsec - start.tv_nsec };
 
             proc_block_select_timeout(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
                                       create_phys_addr_mapping_from_virt_addr(write_fds_found),
                                       create_phys_addr_mapping_from_virt_addr(except_fds_found), end_time);
 
-            if (get_time() >= end_time) {
+            struct timespec after = time_read_clock(CLOCK_MONOTONIC);
+            if (time_compare(after, end_time) >= 0) {
                 goto pselect_return;
             }
 
@@ -2107,6 +2106,43 @@ SYS_CALL(realpath) {
 
 finish_realpath:
     free(full_path);
+    SYS_RETURN(ret);
+}
+
+SYS_CALL(clock_nanosleep) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct clock *, clock, clockid_t, get_clock);
+    SYS_PARAM2(int, flags);
+    SYS_PARAM3_VALIDATE(const struct timespec *, amt, validate_read, sizeof(struct timespec));
+    SYS_PARAM4_VALIDATE(struct timespec *, rem, validate_write_or_null, sizeof(struct timespec));
+
+    // Can't sleep on your own clock, since while sleeping your clock will never advance.
+    if (clock->id == CLOCK_THREAD_CPUTIME_ID) {
+        SYS_RETURN(-EINVAL);
+    }
+
+    struct timespec end_time;
+
+    bool absolute = flags == TIMER_ABSTIME;
+    if (absolute) {
+        end_time = *amt;
+    } else {
+        end_time = time_add(clock->time, *amt);
+    }
+
+    proc_block_sleep(get_current_task(), clock->id, end_time);
+
+    int ret = 0;
+
+    struct timespec after = clock->time;
+    if (time_compare(after, end_time) < 0) {
+        ret = -EINTR;
+        if (!absolute && rem) {
+            *rem = time_sub(end_time, after);
+        }
+    }
+
     SYS_RETURN(ret);
 }
 

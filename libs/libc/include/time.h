@@ -15,7 +15,7 @@
 #define CLOCK_MONOTONIC          0
 #define CLOCK_PROCESS_CPUTIME_ID 1
 #define CLOCK_REALTIME           2
-#define CLOCK_THREAD_CPUIME_ID   3
+#define CLOCK_THREAD_CPUTIME_ID  3
 
 #define TIMER_ABSTIME 1
 

@@ -14,6 +14,7 @@
 #include <kernel/fs/pipe.h>
 #include <kernel/hal/timer.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
@@ -43,7 +44,7 @@ struct inode *pipe_new_inode() {
     inode->parent = NULL;
     inode->writeable = true;
     inode->readable = false;
-    inode->access_time = inode->change_time = inode->modify_time = get_time_as_timespec();
+    inode->access_time = inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
     debug_log("Creating pipe: [ %llu ]\n", inode->index);
 
@@ -142,7 +143,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
     inode->size += len;
     file->position += len;
 
-    inode->modify_time = get_time_as_timespec();
+    inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
     spin_unlock(&inode->lock);
 

@@ -18,6 +18,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
 static struct file_system fs;
@@ -109,7 +110,7 @@ ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
     assert(inode);
 
     if (((struct device *) inode->private_data)->ops->read) {
-        inode->access_time = get_time_as_timespec();
+        inode->access_time = time_read_clock(CLOCK_REALTIME);
         return ((struct device *) inode->private_data)->ops->read(inode->private_data, offset, buffer, len);
     }
 
@@ -121,7 +122,7 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
     assert(inode);
 
     if (((struct device *) inode->private_data)->ops->write) {
-        inode->modify_time = get_time_as_timespec();
+        inode->modify_time = time_read_clock(CLOCK_REALTIME);
         return ((struct device *) inode->private_data)->ops->write(inode->private_data, offset, buffer, len);
     }
 
@@ -174,7 +175,7 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->ref_count = 1;
     root->readable = true;
     root->writeable = true;
-    root->access_time = root->change_time = root->modify_time = get_time_as_timespec();
+    root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
 
     super_block.device = root->device;
     super_block.op = NULL;
@@ -236,7 +237,7 @@ void dev_add(struct device *device, const char *_path) {
     to_add->size = 0;
     to_add->super_block = &super_block;
     to_add->tnode_list = NULL;
-    to_add->access_time = to_add->change_time = to_add->modify_time = get_time_as_timespec();
+    to_add->access_time = to_add->change_time = to_add->modify_time = time_read_clock(CLOCK_REALTIME);
 
     struct tnode *tnode = create_tnode(_name, to_add);
 

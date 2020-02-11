@@ -24,6 +24,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
 static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
@@ -754,7 +755,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->tnode_list = NULL;
         inode->readable = true;
         inode->writeable = true;
-        inode->change_time = inode->modify_time = inode->access_time = get_time_as_timespec();
+        inode->change_time = inode->modify_time = inode->access_time = time_read_clock(CLOCK_REALTIME);
 
         *error = ext2_write_inode(inode);
         if (errno != 0) {
@@ -808,7 +809,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
                 parent_raw_inode->block[block_no] = block_index;
                 parent->size += parent->super_block->block_size;
                 ext2_set_block_allocated(parent->super_block, block_index);
-                parent->modify_time = get_time_as_timespec();
+                parent->modify_time = time_read_clock(CLOCK_REALTIME);
                 ext2_sync_inode(parent);
             }
         }
@@ -1132,7 +1133,7 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
         ext2_free_blocks(indirect_block);
     }
 
-    inode->modify_time = get_time_as_timespec();
+    inode->modify_time = time_read_clock(CLOCK_REALTIME);
     ret = ext2_sync_inode(inode);
     if (ret != 0) {
         return ret;
@@ -1526,7 +1527,7 @@ int ext2_chown(struct inode *inode, uid_t uid, gid_t gid) {
 
     inode->uid = uid;
     inode->gid = gid;
-    inode->change_time = inode->modify_time = get_time_as_timespec();
+    inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
     return ext2_sync_inode(inode);
 }
 
@@ -1536,7 +1537,7 @@ int ext2_chmod(struct inode *inode, mode_t mode) {
     }
 
     inode->mode = mode;
-    inode->change_time = inode->modify_time = get_time_as_timespec();
+    inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
     return ext2_sync_inode(inode);
 }
 
@@ -1588,7 +1589,7 @@ intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *in
 
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name) {
     int error = 0;
-    tnode->inode->change_time = get_time_as_timespec();
+    tnode->inode->change_time = time_read_clock(CLOCK_REALTIME);
     __ext2_create(new_parent, new_name, tnode->inode->mode, &error, tnode->inode->index);
     if (error != 0) {
         return error;
@@ -1603,7 +1604,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
         parent_raw_inode->link_count--;
         assert(parent_raw_inode->link_count > 0);
 
-        parent->change_time = get_time_as_timespec();
+        parent->change_time = time_read_clock(CLOCK_REALTIME);
         int ret = ext2_sync_inode(parent);
         if (ret != 0) {
             spin_unlock(&parent->lock);

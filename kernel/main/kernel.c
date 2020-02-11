@@ -15,6 +15,7 @@
 #include <kernel/net/net.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 
 void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t inintrd_phys_start, uint64_t initrd_phys_end,
                  uint32_t *multiboot_info) {
@@ -25,6 +26,7 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_vm_allocator(inintrd_phys_start, initrd_phys_end);
     init_vfs();
     init_drivers();
+    init_clocks();
     init_task_sched();
     init_net();
 

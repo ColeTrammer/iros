@@ -4,6 +4,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
+#include <kernel/time/clock.h>
 
 static inline uint8_t convert_from_bcd(uint8_t x) {
     return (x & 0xF) + ((x / 16) * 10);
@@ -97,5 +98,5 @@ void init_cmos() {
         }
     }
 
-    pit_set_time(seconds_since_epoch);
+    global_realtime_clock.time.tv_sec = seconds_since_epoch;
 }

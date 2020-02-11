@@ -82,6 +82,7 @@ $(BUILDDIR)/kernel/proc/process.o \
 $(BUILDDIR)/kernel/proc/task.o \
 $(BUILDDIR)/kernel/proc/user_mutex.o \
 $(BUILDDIR)/kernel/sched/task_sched.o \
+$(BUILDDIR)/kernel/time/clock.o \
 $(BUILDDIR)/kernel/util/spinlock.o \
 $(BUILDDIR)/kernel/util/hash_map.o \
 $(BUILDDIR)/kernel/util/validators.o
