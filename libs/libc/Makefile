@@ -114,6 +114,7 @@ $(BUILDDIR)/libs/libc/setjmp/__sigsetjmp.o \
 $(BUILDDIR)/libs/libc/setjmp/siglongjmp.o \
 $(BUILDDIR)/libs/libc/signal/kill.o \
 $(BUILDDIR)/libs/libc/signal/killpg.o \
+$(BUILDDIR)/libs/libc/signal/psiginfo.o \
 $(BUILDDIR)/libs/libc/signal/psignal.o \
 $(BUILDDIR)/libs/libc/signal/raise.o \
 $(BUILDDIR)/libs/libc/signal/sigaction.o \
