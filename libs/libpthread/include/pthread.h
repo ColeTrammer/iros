@@ -174,6 +174,7 @@ extern __thread struct __pthread_cleanup_handler *__cleanup_handlers;
 #define __PTHREAD_MUTEX_INCONSISTENT  16
 #define __PTHREAD_MUTEX_UNRECOVERABLE 32
 
+#define __PTHREAD_TIMER_SIGNAL  30
 #define __PTHREAD_CANCEL_SIGNAL 31
 
 #define __PTHREAD_MAUALLY_ALLOCATED_STACK 01000

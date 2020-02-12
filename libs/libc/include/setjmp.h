@@ -8,7 +8,7 @@ extern "C" {
 struct __jmp_buf {
     unsigned long registers[8]; // 7 Saved for SYS V ABI and 1 for RIP
     int is_mask_saved;
-    unsigned int mask;
+    __UINT64_TYPE__ mask;
 };
 
 typedef struct __jmp_buf jmp_buf[1];

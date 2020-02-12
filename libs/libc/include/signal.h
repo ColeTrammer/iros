@@ -37,7 +37,14 @@
 #define SIGCHLD   28
 #define SIGCLD    SIGCHLD
 #define SIGWINCH  29
-#define _NSIG     32
+// 30 - 31 are reserved for pthread implemenation
+#ifdef __is_kernel
+#define SIGRTMIN 30
+#else
+#define SIGRTMIN 32
+#endif /* __is_kernel */
+#define SIGRTMAX 63
+#define _NSIG    64
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +53,7 @@ extern "C" {
 extern const char *const sys_siglist[];
 
 typedef int sig_atomic_t;
-typedef unsigned int sigset_t;
+typedef __UINT64_TYPE__ sigset_t;
 
 typedef void (*sighandler_t)(int);
 
