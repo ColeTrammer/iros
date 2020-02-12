@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -292,11 +293,11 @@ void free_task(struct task *task, bool free_paging_structure) {
 }
 
 void task_set_sig_pending(struct task *task, int signum) {
-    task->sig_pending |= (1 << signum);
+    task->sig_pending |= (UINT64_C(1) << signum);
 }
 
 void task_unset_sig_pending(struct task *task, int signum) {
-    task->sig_pending &= ~(1 << signum);
+    task->sig_pending &= ~(UINT64_C(1) << signum);
 }
 
 void task_enqueue_signal(struct task *task, int signum, void *val) {
@@ -308,8 +309,6 @@ void task_enqueue_signal(struct task *task, int signum, void *val) {
     }
 
     struct queued_signal *to_add = malloc(sizeof(struct queued_signal));
-    to_add->next = NULL;
-    to_add->num_following = 0;
     to_add->info.si_signo = signum;
     to_add->info.si_code = SI_QUEUE;
     to_add->info.si_addr = NULL;
@@ -320,15 +319,19 @@ void task_enqueue_signal(struct task *task, int signum, void *val) {
     to_add->info.si_band = 0;
     to_add->info.si_value.sival_ptr = val;
 
-    struct queued_signal *tail = task->queued_signals;
-    for (; tail; tail = tail->next) {
-        if (tail->info.si_signo == signum) {
-            tail->num_following++;
+    struct queued_signal *tail = NULL;
+    if (task->queued_signals && task->queued_signals->info.si_signo <= signum) {
+        tail = task->queued_signals;
+        for (;; tail = tail->next) {
+            if (!tail->next || tail->next->info.si_signo > signum) {
+                break;
+            }
         }
 
-        if (!tail->next) {
-            break;
-        }
+        assert(tail);
+        to_add->next = tail->next;
+    } else {
+        to_add->next = task->queued_signals;
     }
 
     if (!tail) {
@@ -343,7 +346,7 @@ task_enqueue_signal_end:
 
 void task_dequeue_signal(struct task *task) {
     struct queued_signal *next = task->queued_signals->next;
-    if (task->queued_signals->num_following == 0) {
+    if (!next || next->info.si_signo != task->queued_signals->info.si_signo) {
         task_unset_sig_pending(task, task->queued_signals->info.si_signo);
     }
     free(task->queued_signals);
@@ -356,7 +359,7 @@ int task_get_next_sig(struct task *task) {
     }
 
     for (size_t i = 1; i < _NSIG; i++) {
-        if ((task->sig_pending & (1 << i)) && !task_is_sig_blocked(task, i)) {
+        if ((task->sig_pending & (UINT64_C(1) << i)) && !task_is_sig_blocked(task, i)) {
             return i;
         }
     }
@@ -470,5 +473,5 @@ void task_do_sig(struct task *task, int signum) {
 
 bool task_is_sig_blocked(struct task *task, int signum) {
     assert(signum >= 1 && signum < _NSIG);
-    return task->sig_mask & (1 << (signum - 1));
+    return task->sig_mask & (UINT64_C(1) << (signum - UINT64_C(1)));
 }

@@ -1062,7 +1062,7 @@ SYS_CALL(sigprocmask) {
 
     if (set) {
 #ifdef SIGPROCMASK_DEBUG
-        debug_log("Setting sigprocmask: [ %d, %lu ]\n", how, *set);
+        debug_log("Setting sigprocmask: [ %d, %#.16lX ]\n", how, *set);
 #endif /* SIGPROCMASK_DEBUG */
 
         switch (how) {
@@ -1080,7 +1080,7 @@ SYS_CALL(sigprocmask) {
         }
 
 #ifdef SIGPROCMASK_DEBUG
-        debug_log("New mask: [ %lu ]\n", current->sig_mask);
+        debug_log("New mask: [ %#.16lX ]\n", current->sig_mask);
 #endif /* SIGPROCMASK_DEBUG */
     }
 

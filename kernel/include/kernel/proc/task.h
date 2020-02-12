@@ -25,7 +25,6 @@ struct clock;
 struct queued_signal {
     struct queued_signal *next;
     siginfo_t info;
-    int num_following;
 };
 
 struct task {
