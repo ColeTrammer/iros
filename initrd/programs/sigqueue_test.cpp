@@ -38,7 +38,7 @@ int main() {
 
     pid_t pid = getpid();
 
-    // kill(pid, s2);
+    kill(pid, s2);
 
     union sigval val;
     val.sival_int = 42;
@@ -53,20 +53,20 @@ int main() {
     val.sival_int = 41;
     sigqueue(pid, s1, val);
 
-    // kill(pid, s2);
-    // kill(pid, s2);
+    kill(pid, s2);
+    kill(pid, s2);
 
-    // val.sival_int = 40;
-    // kill(pid, SIGUSR1);
-    // sigqueue(pid, SIGUSR1, val);
-    // sigqueue(pid, SIGUSR1, val);
-    // sigqueue(pid, SIGUSR1, val);
-    // kill(pid, SIGUSR1);
-    // kill(pid, SIGUSR1);
+    val.sival_int = 40;
+    kill(pid, SIGUSR1);
+    sigqueue(pid, SIGUSR1, val);
+    sigqueue(pid, SIGUSR1, val);
+    sigqueue(pid, SIGUSR1, val);
+    kill(pid, SIGUSR1);
+    kill(pid, SIGUSR1);
 
-    // kill(pid, SIGUSR2);
-    // kill(pid, SIGUSR2);
-    // kill(pid, SIGUSR2);
+    kill(pid, SIGUSR2);
+    kill(pid, SIGUSR2);
+    kill(pid, SIGUSR2);
 
     sigdelset(&set, s1);
     sigdelset(&set, s2);

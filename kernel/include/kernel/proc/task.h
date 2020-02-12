@@ -84,12 +84,13 @@ int get_next_tid();
 
 void task_set_sig_pending(struct task *task, int signum);
 void task_unset_sig_pending(struct task *task, int signum);
+bool task_is_sig_pending(struct task *task, int signum);
 int task_get_next_sig(struct task *task);
 void task_do_sig(struct task *task, int signum);
 void task_do_sig_handler(struct task *task, int signum);
 bool task_is_sig_blocked(struct task *task, int signum);
 void proc_notify_parent(pid_t child_pid);
-void task_enqueue_signal(struct task *task, int signum, void *val);
+void task_enqueue_signal(struct task *task, int signum, void *val, bool was_sigqueue);
 void task_dequeue_signal(struct task *task);
 
 void task_do_sigs_if_needed(struct task *task);
