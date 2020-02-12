@@ -2233,13 +2233,9 @@ SYS_CALL(getcpuclockid) {
 SYS_CALL(sigqueue) {
     SYS_BEGIN_CAN_SEND_SELF_SIGNALS();
 
-    SYS_PARAM1_VALIDATE(pid_t, pid, validate_positive, 1);
+    SYS_PARAM1_VALIDATE(pid_t, pid, validate_positive, 0);
     SYS_PARAM2_VALIDATE(int, sig, validate_signal_number, 1);
     SYS_PARAM3(void *, val);
-
-    if (pid == 0) {
-        pid = get_current_task()->process->pid;
-    }
 
     SYS_RETURN(queue_signal_process(pid, sig, val));
 }

@@ -251,7 +251,11 @@ pid_t proc_consume_message(pid_t pid, struct proc_state_message *m) {
 
         // Clean up entire queue since there won't be any more messages
         if (m->type == STATE_EXITED || m->type == STATE_INTERRUPTED) {
-            assert(queue->start == NULL);
+            while (queue->start != NULL) {
+                struct proc_state_message *next = queue->start->next;
+                free(queue->start);
+                queue->start = next;
+            }
             __free_queue(queue);
             return pid;
         }

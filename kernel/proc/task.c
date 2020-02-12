@@ -414,9 +414,7 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
     TERMINATE_AND_DUMP, // SIGXCPU
     TERMINATE_AND_DUMP, // SIGXFSZ
     IGNORE,             // SIGCHLD
-    TERMINATE,          // INVAL
-    TERMINATE,          // INVAL
-    TERMINATE           // __PTHREAD_CANCEL_SIGNAL
+    TERMINATE           // SIGWINCH
 };
 
 void task_do_sig(struct task *task, int signum) {
@@ -431,11 +429,12 @@ void task_do_sig(struct task *task, int signum) {
 
     if (task->process->sig_state[signum].sa_handler != SIG_DFL) {
         task_do_sig_handler(task, signum);
+        return;
     }
 
-    assert(sig_defaults[signum] != INVAL);
+    enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
     task_unset_sig_pending(task, signum);
-    switch (sig_defaults[signum]) {
+    switch (behavior) {
         case TERMINATE_AND_DUMP:
             elf64_stack_trace(task);
             // Fall through
