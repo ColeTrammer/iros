@@ -6,6 +6,6 @@ int sigdelset(sigset_t *set, int signum) {
         errno = EINVAL;
         return -1;
     }
-    *set &= ~(1U << (signum - 1));
+    *set &= ~(1 << (signum - 1));
     return 0;
 }

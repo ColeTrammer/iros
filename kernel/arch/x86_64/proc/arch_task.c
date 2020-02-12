@@ -189,7 +189,20 @@ void task_do_sig_handler(struct task *task, int signum) {
     uint8_t *fpu_save_state = (uint8_t *) ((save_rsp - 128) & ~0xF) - FPU_IMAGE_SIZE; // Sub 128 to enforce red-zone
     ucontext_t *save_state = ((ucontext_t *) fpu_save_state) - 1;
     siginfo_t *info = ((siginfo_t *) save_state) - 1;
-    info->si_value.sival_int = 42;
+    if (act->sa_flags & SA_SIGINFO) {
+        if (task->queued_signals->info.si_signo == signum) {
+            memcpy(info, &task->queued_signals->info, sizeof(siginfo_t));
+            task_dequeue_signal(task);
+        } else {
+            // NOTE: this probably shouldn't happen, but for now means that the
+            //       signal was sent by kill instead of sigqueue.
+            //       We probably should allocate a struct in this case
+            info->si_code = SI_USER;
+            task_unset_sig_pending(task, signum);
+        }
+    } else {
+        task_unset_sig_pending(task, signum);
+    }
 
     struct task_state *to_copy = proc_in_kernel(task) ? task->arch_task.user_task_state : &task->arch_task.task_state;
 

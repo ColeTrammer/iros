@@ -1043,6 +1043,7 @@ SYS_CALL(sigreturn) {
               task->arch_task.task_state.stack_state.rsp, task->arch_task.task_state.stack_state.ss);
 #endif /* SIGRETURN_DEBUG */
 
+    task_do_sigs_if_needed(task);
     __run_task(&task->arch_task);
 }
 
@@ -1061,7 +1062,7 @@ SYS_CALL(sigprocmask) {
 
     if (set) {
 #ifdef SIGPROCMASK_DEBUG
-        debug_log("Setting sigprocmask: [ %d, %u ]\n", how, *set);
+        debug_log("Setting sigprocmask: [ %d, %lu ]\n", how, *set);
 #endif /* SIGPROCMASK_DEBUG */
 
         switch (how) {
@@ -1079,7 +1080,7 @@ SYS_CALL(sigprocmask) {
         }
 
 #ifdef SIGPROCMASK_DEBUG
-        debug_log("New mask: [ %u ]\n", current->sig_mask);
+        debug_log("New mask: [ %lu ]\n", current->sig_mask);
 #endif /* SIGPROCMASK_DEBUG */
     }
 
@@ -2227,6 +2228,20 @@ SYS_CALL(getcpuclockid) {
 
     *id = ret;
     SYS_RETURN(0);
+}
+
+SYS_CALL(sigqueue) {
+    SYS_BEGIN_CAN_SEND_SELF_SIGNALS();
+
+    SYS_PARAM1_VALIDATE(pid_t, pid, validate_positive, 1);
+    SYS_PARAM2_VALIDATE(int, sig, validate_signal_number, 1);
+    SYS_PARAM3(void *, val);
+
+    if (pid == 0) {
+        pid = get_current_task()->process->pid;
+    }
+
+    SYS_RETURN(queue_signal_process(pid, sig, val));
 }
 
 SYS_CALL(invalid_system_call) {

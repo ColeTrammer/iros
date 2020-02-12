@@ -23,6 +23,7 @@ void __kernel_yield();
 int signal_task(int tgid, int tid, int signum);
 int signal_process_group(pid_t pgid, int signum);
 int signal_process(pid_t pid, int signum);
+int queue_signal_process(pid_t pid, int signum, void *val);
 
 void exit_process(struct process *process);
 

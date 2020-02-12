@@ -278,6 +278,13 @@ void free_task(struct task *task, bool free_paging_structure) {
 
     arch_free_task(task, free_paging_structure);
 
+    struct queued_signal *si = task->queued_signals;
+    while (si) {
+        struct queued_signal *next = si->next;
+        free(si);
+        si = next;
+    }
+
     time_destroy_clock(task->task_clock);
     proc_drop_process(task->process, free_paging_structure);
     free(task);
@@ -285,11 +292,62 @@ void free_task(struct task *task, bool free_paging_structure) {
 }
 
 void task_set_sig_pending(struct task *task, int signum) {
-    task->sig_pending |= (1U << signum);
+    task->sig_pending |= (1 << signum);
 }
 
 void task_unset_sig_pending(struct task *task, int signum) {
-    task->sig_pending &= ~(1U << signum);
+    task->sig_pending &= ~(1 << signum);
+}
+
+void task_enqueue_signal(struct task *task, int signum, void *val) {
+    unsigned long save = disable_interrupts_save();
+
+    task_set_sig_pending(task, signum);
+    if (!(task->process->sig_state[signum].sa_flags & SA_SIGINFO)) {
+        goto task_enqueue_signal_end;
+    }
+
+    struct queued_signal *to_add = malloc(sizeof(struct queued_signal));
+    to_add->next = NULL;
+    to_add->num_following = 0;
+    to_add->info.si_signo = signum;
+    to_add->info.si_code = SI_QUEUE;
+    to_add->info.si_addr = NULL;
+    to_add->info.si_errno = 0;
+    to_add->info.si_pid = get_current_task()->process->pid;
+    to_add->info.si_uid = get_current_task()->process->uid;
+    to_add->info.si_status = 0;
+    to_add->info.si_band = 0;
+    to_add->info.si_value.sival_ptr = val;
+
+    struct queued_signal *tail = task->queued_signals;
+    for (; tail; tail = tail->next) {
+        if (tail->info.si_signo == signum) {
+            tail->num_following++;
+        }
+
+        if (!tail->next) {
+            break;
+        }
+    }
+
+    if (!tail) {
+        task->queued_signals = to_add;
+    } else {
+        tail->next = to_add;
+    }
+
+task_enqueue_signal_end:
+    interrupts_restore(save);
+}
+
+void task_dequeue_signal(struct task *task) {
+    struct queued_signal *next = task->queued_signals->next;
+    if (task->queued_signals->num_following == 0) {
+        task_unset_sig_pending(task, task->queued_signals->info.si_signo);
+    }
+    free(task->queued_signals);
+    task->queued_signals = next;
 }
 
 int task_get_next_sig(struct task *task) {
@@ -298,7 +356,7 @@ int task_get_next_sig(struct task *task) {
     }
 
     for (size_t i = 1; i < _NSIG; i++) {
-        if ((task->sig_pending & (1U << i)) && !task_is_sig_blocked(task, i)) {
+        if ((task->sig_pending & (1 << i)) && !task_is_sig_blocked(task, i)) {
             return i;
         }
     }
@@ -366,9 +424,8 @@ void task_do_sig(struct task *task, int signum) {
     debug_log("Doing signal: [ %d, %d ]\n", task->pid, signum);
 #endif /* TASK_SIGNAL_DEBUG */
 
-    task_unset_sig_pending(task, signum);
-
     if (task->process->sig_state[signum].sa_handler == SIG_IGN) {
+        task_unset_sig_pending(task, signum);
         return;
     }
 
@@ -377,6 +434,7 @@ void task_do_sig(struct task *task, int signum) {
     }
 
     assert(sig_defaults[signum] != INVAL);
+    task_unset_sig_pending(task, signum);
     switch (sig_defaults[signum]) {
         case TERMINATE_AND_DUMP:
             elf64_stack_trace(task);
@@ -413,5 +471,5 @@ void task_do_sig(struct task *task, int signum) {
 
 bool task_is_sig_blocked(struct task *task, int signum) {
     assert(signum >= 1 && signum < _NSIG);
-    return task->sig_mask & (1U << (signum - 1));
+    return task->sig_mask & (1 << (signum - 1));
 }

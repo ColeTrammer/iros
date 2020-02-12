@@ -241,7 +241,7 @@ int signal_task(int tgid, int tid, int signum) {
                 debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
                 task_set_sig_pending(task, signum);
 
-                if (task == get_current_task()) {
+                if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
                     signalled_self = true;
                 }
             }
@@ -279,7 +279,7 @@ int signal_process(pid_t pid, int signum) {
                 debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
                 task_set_sig_pending(task, signum);
 
-                if (task == get_current_task()) {
+                if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
                     signalled_self = true;
                 }
             }
@@ -292,6 +292,42 @@ int signal_process(pid_t pid, int signum) {
     if (signalled_self) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
+        task_do_sig(current, signum);
+        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+            yield_signal();
+        }
+        interrupts_restore(save);
+    }
+
+    return signalled_anything ? 0 : -ESRCH;
+}
+
+int queue_signal_process(pid_t pid, int signum, void *val) {
+    spin_lock(&task_list_lock);
+
+    bool signalled_self = false;
+    bool signalled_anything = false;
+    struct task *task = list_start;
+    do {
+        // Maybe should only do it once instead of in a loop
+        if (task->process->pid == pid) {
+            if (signum != 0) {
+                debug_log("Signaling queue: [ %d, %d ]\n", task->process->pid, signum);
+                task_enqueue_signal(task, signum, val);
+
+                if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
+                    signalled_self = true;
+                }
+            }
+            signalled_anything = true;
+        }
+    } while ((task = task->next) != list_start);
+
+    spin_unlock(&task_list_lock);
+
+    if (signalled_self) {
+        struct task *current = get_current_task();
+        unsigned long save = disable_interrupts_save();
         task_do_sig(current, signum);
         if (current->sched_state == EXITING || current->sched_state == WAITING) {
             yield_signal();

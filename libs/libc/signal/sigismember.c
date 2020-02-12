@@ -6,5 +6,5 @@ int sigismember(const sigset_t *set, int signum) {
         errno = EINVAL;
         return -1;
     }
-    return *set & (1U << (signum - 1)) ? 1 : 0;
+    return *set & (1 << (signum - 1)) ? 1 : 0;
 }

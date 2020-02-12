@@ -46,6 +46,46 @@
 #define SIGRTMAX 63
 #define _NSIG    64
 
+#define SI_USER       0
+#define SI_QUEUE      1
+#define SI_TIMER      2
+#define SI_ASYNCIO    3
+#define SI_MESGQ      4
+#define ILL_ILLOPC    5
+#define ILL_ILLOPN    6
+#define ILL_ILLADR    7
+#define ILL_ILLTRP    8
+#define ILL_PRVOPC    9
+#define ILL_PRVREG    10
+#define ILL_COPROC    11
+#define ILL_BADSTK    12
+#define FPE_INTDIV    13
+#define FPE_INTOVF    14
+#define FPE_FLTDIV    15
+#define FPE_FLTOVF    16
+#define FPE_FLTUND    17
+#define FPE_FLTRES    18
+#define FPE_FLTINV    19
+#define FPE_FLTSUB    20
+#define SEGV_MAPERR   21
+#define SEGV_ACCERR   22
+#define BUS_ADRALN    23
+#define BUS_ADRERR    24
+#define TRAP_BRKPT    25
+#define TRAP_TRACE    26
+#define CLD_EXITED    27
+#define CLD_KILLED    28
+#define CLD_DUMPED    29
+#define CLD_TRAPPED   30
+#define CLD_STOPPED   31
+#define CLD_CONTINUED 32
+#define POLL_IN       33
+#define POLL_OUT      34
+#define POLL_MSG      35
+#define POLL_ERR      36
+#define POLL_PRI      37
+#define POLL_HUP      38
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

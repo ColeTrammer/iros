@@ -128,6 +128,7 @@ $(BUILDDIR)/libs/libc/signal/sigismember.o \
 $(BUILDDIR)/libs/libc/signal/signal.o \
 $(BUILDDIR)/libs/libc/signal/sigpending.o \
 $(BUILDDIR)/libs/libc/signal/sigprocmask.o \
+$(BUILDDIR)/libs/libc/signal/sigqueue.o \
 $(BUILDDIR)/libs/libc/signal/sigsuspend.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr_unlocked.o \
 $(BUILDDIR)/libs/libc/stdio/clearerr.o \
