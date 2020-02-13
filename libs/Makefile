@@ -1,4 +1,4 @@
-LIBS=libc libgraphics libm libpthread
+LIBS=libc libgraphics libm libpthread librt
 HEADER_LIBS=$(LIBS) libliim
 
 export ROOT?=$(CURDIR)/..
@@ -13,7 +13,7 @@ export LIBDIR?=$(EXEC_PREFIX)/lib
 export BUILDDIR?=$(ROOT)/build
 
 export CFLAGS+=-std=gnu2x
-export CPPFLAGS+=-O2 -g -Werror -Wall -Wextra -DARCH=$(HOSTARCH) -D_OS_2_SOURCE
+export CPPFLAGS+=-O2 -g -Werror -Wall -Wextra -DARCH=$(HOSTARCH) -D_OS_2_SOURCE -D__is_libc
 export LDFLAGS+=-T $(ROOT)/userland/link.ld
 
 .PHONY: all

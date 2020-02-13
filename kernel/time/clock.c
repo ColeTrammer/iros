@@ -1,16 +1,18 @@
 #include <assert.h>
+#include <search.h>
 #include <stdlib.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
 #include <kernel/time/clock.h>
+#include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
 // #define CLOCKID_ALLOCATION_DEBUG
 
-struct clock global_monotonic_clock = { CLOCK_MONOTONIC, { 0 }, { 0 } };
-struct clock global_realtime_clock = { CLOCK_REALTIME, { 0 }, { 0 } };
+struct clock global_monotonic_clock = { CLOCK_MONOTONIC, SPINLOCK_INITIALIZER, { 0 }, { 0 }, NULL };
+struct clock global_realtime_clock = { CLOCK_REALTIME, SPINLOCK_INITIALIZER, { 0 }, { 0 }, NULL };
 
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 static clockid_t id_start = 10; // Start at 10 since CLOCK_MONOTONIC etc. are reserved
@@ -58,6 +60,8 @@ struct clock *time_create_clock(clockid_t id) {
             clock->id = real_id;
             clock->resolution = get_time_resolution();
             clock->time = (struct timespec) { 0 };
+            clock->timers = NULL;
+            init_spinlock(&clock->lock);
             break;
         }
         default:
@@ -94,6 +98,28 @@ struct timespec time_read_clock(clockid_t id) {
     struct clock *clock = time_get_clock(id);
     assert(clock);
     return clock->time;
+}
+
+void time_inc_clock_timers(struct timer *timers_list, long nanoseconds) {
+    while (timers_list) {
+        time_tick_timer(timers_list, nanoseconds);
+        timers_list = timers_list->next;
+    }
+}
+
+void time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
+    if (!clock->timers) {
+        clock->timers = timer;
+    } else {
+        insque(timer, clock->timers);
+    }
+}
+
+void time_remove_timer_from_clock(struct clock *clock, struct timer *timer) {
+    if (clock->timers == timer) {
+        clock->timers = timer->next;
+    }
+    remque(timer);
 }
 
 static void __inc_global_clocks() {

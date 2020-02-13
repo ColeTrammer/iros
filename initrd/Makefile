@@ -9,7 +9,7 @@ CFLAGS:=$(CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) -DARCH=$(HOSTARCH) -Werror -Wall -Wextra -D_OS_2_SOURCE
 LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
 CXX_LIBS:=$(CXX_LIBS) -lc -lgraphics -lpthread
-C_LIBS:=$(C_LIBS) -lpthread
+C_LIBS:=$(C_LIBS) -lpthread -lrt
 
 # Sets directories for install if not already set
 DESTDIR?=
@@ -78,6 +78,7 @@ $(BUILDDIR)/initrd/programs/test \
 $(BUILDDIR)/initrd/programs/tgkill_test \
 $(BUILDDIR)/initrd/programs/thread_specific_data_test \
 $(BUILDDIR)/initrd/programs/thread_test \
+$(BUILDDIR)/initrd/programs/timer_test \
 $(BUILDDIR)/initrd/programs/times_test \
 $(BUILDDIR)/initrd/programs/tls_test \
 $(BUILDDIR)/initrd/programs/tmpnam_test \

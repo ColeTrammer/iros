@@ -16,6 +16,7 @@
 
 struct clock;
 struct file;
+struct timer;
 
 struct file_descriptor {
     struct file *file;
@@ -33,6 +34,7 @@ struct process {
     struct user_mutex *used_user_mutexes;
 
     struct clock *process_clock;
+    struct timer *timers;
 
     pid_t pid;
     pid_t pgid;

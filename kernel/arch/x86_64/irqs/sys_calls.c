@@ -29,6 +29,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
+#include <kernel/time/timer.h>
 #include <kernel/util/validators.h>
 
 #include <kernel/arch/x86_64/proc/task.h>
@@ -239,6 +240,16 @@ static int get_clock(clockid_t id, struct clock **clockp) {
     }
 
     *clockp = clock;
+    return 0;
+}
+
+static int get_timer(timer_t id, struct timer **timerp) {
+    struct timer *timer = time_get_timer(id);
+    if (!timer) {
+        return -EINVAL;
+    }
+
+    *timerp = timer;
     return 0;
 }
 
@@ -2238,6 +2249,52 @@ SYS_CALL(sigqueue) {
     SYS_PARAM3(void *, val);
 
     SYS_RETURN(queue_signal_process(pid, sig, val));
+}
+
+SYS_CALL(timer_create) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct clock *, clock, clockid_t, get_clock);
+    SYS_PARAM2_VALIDATE(struct sigevent *, sevp, validate_read, sizeof(struct sigevent));
+    SYS_PARAM3_VALIDATE(timer_t *, timerid, validate_write, sizeof(timer_t));
+
+    SYS_RETURN(time_create_timer(clock, sevp, timerid));
+}
+
+SYS_CALL(timer_delete) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct timer *, timer, timer_t, get_timer);
+
+    SYS_RETURN(time_delete_timer(timer));
+}
+
+SYS_CALL(timer_getoverrun) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct timer *, timer, timer_t, get_timer);
+
+    SYS_RETURN(time_get_timer_overrun(timer));
+}
+
+SYS_CALL(timer_gettime) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct timer *, timer, timer_t, get_timer);
+    SYS_PARAM2_VALIDATE(struct itimerspec *, valp, validate_write, sizeof(struct itimerspec));
+
+    SYS_RETURN(time_get_timer_value(timer, valp));
+}
+
+SYS_CALL(timer_settime) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct timer *, timer, timer_t, get_timer);
+    SYS_PARAM2(int, flags);
+    SYS_PARAM3_VALIDATE(const struct itimerspec *, new_value, validate_read_or_null, sizeof(struct itimerspec));
+    SYS_PARAM4_VALIDATE(struct itimerspec *, old, validate_write_or_null, sizeof(struct itimerspec));
+
+    SYS_RETURN(time_set_timer(timer, flags, new_value, old));
 }
 
 SYS_CALL(invalid_system_call) {

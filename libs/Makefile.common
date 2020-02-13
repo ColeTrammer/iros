@@ -5,7 +5,7 @@ $(LIBRARY): $(OBJS) $(MAKEFILE)
 	$(AR) rcs $@ $^
 
 $(BUILDDIR)/%.o: $(ROOT)/%.cpp
-	$(CXX) -MD -c $< -o $@ $(CPPFLAGS)
+	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -fconcepts -std=c++2a -fno-exceptions -fno-rtti -nostdinc++ -ffreestanding
 
 $(BUILDDIR)/%.o: $(ROOT)/%.c
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
@@ -18,7 +18,9 @@ install: install-headers install-library
 
 install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R --preserve=timestamps -u include/. $(DESTDIR)$(INCLUDEDIR)/.
+	if [ -e include ]; then \
+	  cp -R --preserve=timestamps -u include/. $(DESTDIR)$(INCLUDEDIR)/.; \
+	fi
 
 install-library: all
 	mkdir -p $(SYSROOT)/usr/lib

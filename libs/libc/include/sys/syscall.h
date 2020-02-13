@@ -93,7 +93,12 @@
     __ENUMERATE_SYSCALL(CLOCK_GETTIME, clock_gettime, 2)                       \
     __ENUMERATE_SYSCALL(CLOCK_SETTIME, clock_settime, 2)                       \
     __ENUMERATE_SYSCALL(GETCPUCLOCKID, getcpuclockid, 3)                       \
-    __ENUMERATE_SYSCALL(SIGQUEUE, sigqueue, 3)
+    __ENUMERATE_SYSCALL(SIGQUEUE, sigqueue, 3)                                 \
+    __ENUMERATE_SYSCALL(TIMER_CREATE, timer_create, 3)                         \
+    __ENUMERATE_SYSCALL(TIMER_DELETE, timer_delete, 1)                         \
+    __ENUMERATE_SYSCALL(TIMER_GETOVERRUN, timer_getoverrun, 1)                 \
+    __ENUMERATE_SYSCALL(TIMER_GETTIME, timer_gettime, 2)                       \
+    __ENUMERATE_SYSCALL(TIMER_SETTIME, timer_settime, 4)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

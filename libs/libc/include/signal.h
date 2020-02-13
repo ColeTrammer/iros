@@ -224,6 +224,13 @@ int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
 #define SIG_UNBLOCK 1
 #define SIG_SETMASK 2
 
+#define SIGEV_NONE   0
+#define SIGEV_SIGNAL 1
+#define SIGEV_THREAD 2
+#ifdef __is_kernel
+#define SIGEV_KERNEL 3
+#endif /* __is_kernel */
+
 #define SA_NOCLDSTOP 1
 #define SA_ONSTACK   2
 #define SA_RESETHAND 4
