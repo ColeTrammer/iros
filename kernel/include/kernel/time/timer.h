@@ -6,6 +6,8 @@
 #include <time.h>
 
 struct clock;
+struct queued_signal;
+struct task;
 
 struct timer {
     // Linked list between timer waiting on same clock
@@ -17,6 +19,8 @@ struct timer {
     struct sigevent event;
     int overuns;
     timer_t id;
+    struct queued_signal *signal;
+    struct task *task;
 };
 
 struct timer *time_get_timer(timer_t id);
@@ -29,6 +33,7 @@ int time_get_timer_overrun(struct timer *timer);
 int time_get_timer_value(struct timer *timer, struct itimerspec *valp);
 int time_set_timer(struct timer *timer, int flags, const struct itimerspec *new_spec, struct itimerspec *old);
 
+void time_fire_timer(struct timer *timer);
 void time_tick_timer(struct timer *timer, long nanoseconds);
 
 void init_timers();

@@ -6,6 +6,7 @@
 #include <stdalign.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +41,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     set_thread_self_pointer(__threads, &__threads->locked_robust_mutex_node_list_head);
 
     sigset_t set = { 0 };
-    set |= (1 << __PTHREAD_CANCEL_SIGNAL);
+    set |= (UINT64_C(1) << __PTHREAD_CANCEL_SIGNAL);
     syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
 
     environ = envp;

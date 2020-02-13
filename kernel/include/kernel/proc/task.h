@@ -22,8 +22,11 @@ enum sched_state { RUNNING_INTERRUPTIBLE, RUNNING_UNINTERRUPTIBLE, WAITING, EXIT
 
 struct clock;
 
+#define QUEUED_SIGNAL_DONT_FREE_FLAG 1
+
 struct queued_signal {
     struct queued_signal *next;
+    int flags;
     siginfo_t info;
 };
 
@@ -91,6 +94,7 @@ void task_do_sig_handler(struct task *task, int signum);
 bool task_is_sig_blocked(struct task *task, int signum);
 void proc_notify_parent(pid_t child_pid);
 void task_enqueue_signal(struct task *task, int signum, void *val, bool was_sigqueue);
+void task_enqueue_signal_object(struct task *task, struct queued_signal *sig);
 void task_dequeue_signal(struct task *task);
 
 void task_do_sigs_if_needed(struct task *task);

@@ -108,18 +108,22 @@ void time_inc_clock_timers(struct timer *timers_list, long nanoseconds) {
 }
 
 void time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
+    spin_lock(&clock->lock);
     if (!clock->timers) {
         clock->timers = timer;
     } else {
         insque(timer, clock->timers);
     }
+    spin_unlock(&clock->lock);
 }
 
 void time_remove_timer_from_clock(struct clock *clock, struct timer *timer) {
+    spin_lock(&clock->lock);
     if (clock->timers == timer) {
         clock->timers = timer->next;
     }
     remque(timer);
+    spin_unlock(&clock->lock);
 }
 
 static void __inc_global_clocks() {

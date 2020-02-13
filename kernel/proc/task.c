@@ -304,28 +304,10 @@ bool task_is_sig_pending(struct task *task, int signum) {
     return task->sig_pending & (UINT64_C(1) << signum) ? 1 : 0;
 }
 
-void task_enqueue_signal(struct task *task, int signum, void *val, bool is_sigqueue) {
+void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add) {
     unsigned long save = disable_interrupts_save();
 
-    if (signum < SIGRTMIN && task_is_sig_pending(task, signum)) {
-        goto task_enqueue_signal_end;
-    }
-
-    task_set_sig_pending(task, signum);
-    if (!(task->process->sig_state[signum].sa_flags & SA_SIGINFO)) {
-        goto task_enqueue_signal_end;
-    }
-
-    struct queued_signal *to_add = malloc(sizeof(struct queued_signal));
-    to_add->info.si_signo = signum;
-    to_add->info.si_code = is_sigqueue ? SI_QUEUE : SI_USER;
-    to_add->info.si_addr = NULL;
-    to_add->info.si_errno = 0;
-    to_add->info.si_pid = get_current_task()->process->pid;
-    to_add->info.si_uid = get_current_task()->process->uid;
-    to_add->info.si_status = 0;
-    to_add->info.si_band = 0;
-    to_add->info.si_value.sival_ptr = val;
+    int signum = to_add->info.si_signo;
 
     struct queued_signal *tail = NULL;
     if (task->queued_signals && task->queued_signals->info.si_signo <= signum) {
@@ -348,6 +330,36 @@ void task_enqueue_signal(struct task *task, int signum, void *val, bool is_sigqu
         tail->next = to_add;
     }
 
+    task_set_sig_pending(task, signum);
+    interrupts_restore(save);
+}
+
+void task_enqueue_signal(struct task *task, int signum, void *val, bool is_sigqueue) {
+    unsigned long save = disable_interrupts_save();
+
+    if (signum < SIGRTMIN && task_is_sig_pending(task, signum)) {
+        goto task_enqueue_signal_end;
+    }
+
+    if (!(task->process->sig_state[signum].sa_flags & SA_SIGINFO)) {
+        task_set_sig_pending(task, signum);
+        goto task_enqueue_signal_end;
+    }
+
+    struct queued_signal *to_add = malloc(sizeof(struct queued_signal));
+    to_add->info.si_signo = signum;
+    to_add->info.si_code = is_sigqueue ? SI_QUEUE : SI_USER;
+    to_add->info.si_addr = NULL;
+    to_add->info.si_errno = 0;
+    to_add->info.si_pid = get_current_task()->process->pid;
+    to_add->info.si_uid = get_current_task()->process->uid;
+    to_add->info.si_status = 0;
+    to_add->info.si_band = 0;
+    to_add->info.si_value.sival_ptr = val;
+    to_add->flags = 0;
+
+    task_enqueue_signal_object(task, to_add);
+
 task_enqueue_signal_end:
     interrupts_restore(save);
 }
@@ -358,7 +370,13 @@ void task_dequeue_signal(struct task *task) {
         task_unset_sig_pending(task, task->queued_signals->info.si_signo);
         debug_log("task_unset_sig_pending: [ %d ]\n", task->queued_signals->info.si_signo);
     }
-    free(task->queued_signals);
+
+    if (task->queued_signals->flags & QUEUED_SIGNAL_DONT_FREE_FLAG) {
+        task->queued_signals->flags &= ~QUEUED_SIGNAL_DONT_FREE_FLAG;
+        task->queued_signals->next = NULL;
+    } else {
+        free(task->queued_signals);
+    }
     task->queued_signals = next;
 }
 
