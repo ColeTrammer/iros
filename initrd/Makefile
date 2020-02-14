@@ -9,7 +9,7 @@ CFLAGS:=$(CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) -DARCH=$(HOSTARCH) -Werror -Wall -Wextra -D_OS_2_SOURCE
 LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
 CXX_LIBS:=$(CXX_LIBS) -lc -lgraphics -lpthread -lrt
-C_LIBS:=$(C_LIBS) -lpthread -lrt
+C_LIBS:=$(C_LIBS) -lrt
 
 # Sets directories for install if not already set
 DESTDIR?=

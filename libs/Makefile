@@ -23,6 +23,7 @@ all: $(LIBS)
 install: all
 
 libc: libpthread
+librt: libpthread
 
 .PHONY: install-headers
 install-headers:

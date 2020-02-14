@@ -5,10 +5,10 @@ $(LIBRARY): $(OBJS) $(MAKEFILE)
 	$(AR) rcs $@ $^
 
 $(BUILDDIR)/%.o: $(ROOT)/%.cpp
-	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -fconcepts -std=c++2a -fno-exceptions -fno-rtti -nostdinc++ -ffreestanding
+	$(CXX) -MD -c $< -o $@ $(CPPFLAGS) -fconcepts -std=c++2a -fno-exceptions -fno-rtti -nostdinc++ -ffreestanding $(LD_FLAGS)
 
 $(BUILDDIR)/%.o: $(ROOT)/%.c
-	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS) $(LD_FLAGS)
 
 $(BUILDDIR)/%.o: $(ROOT)/%.S
 	$(CC) -c $< -o $@ $(CFLAFS) $(CPPFLAGS)
