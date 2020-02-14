@@ -42,7 +42,7 @@ int main() {
     }
 
     struct itimerspec spec;
-    spec.it_value = { .tv_sec = 0, .tv_nsec = INT64_C(1000000) };
+    spec.it_value = { .tv_sec = 0, .tv_nsec = 500000000 };
     spec.it_interval = spec.it_value;
     if (timer_settime(timer, 0, &spec, nullptr)) {
         perror("time_settime");

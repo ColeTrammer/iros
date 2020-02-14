@@ -167,7 +167,7 @@ void time_tick_timer(struct timer *timer, long nanoseconds) {
     timer->spec.it_value = time_sub(timer->spec.it_value, to_sub);
 
     // This means timer expired
-    if (timer->spec.it_value.tv_sec <= 0) {
+    if (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0)) {
         time_fire_timer(timer);
         timer->spec.it_value = timer->spec.it_interval;
         if (!time_is_timer_armed(timer)) {
