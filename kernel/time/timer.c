@@ -168,9 +168,13 @@ void time_tick_timer(struct timer *timer, long nanoseconds) {
 
     // This means timer expired
     if (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0)) {
-        time_fire_timer(timer);
-        timer->spec.it_value = timer->spec.it_interval;
-        if (!time_is_timer_armed(timer)) {
+        if (timer->spec.it_interval.tv_sec != 0 || timer->spec.it_interval.tv_nsec != 0) {
+            do {
+                time_fire_timer(timer);
+                timer->spec.it_value = time_add(timer->spec.it_value, timer->spec.it_interval);
+            } while (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0));
+        } else {
+            time_fire_timer(timer);
             time_remove_timer_from_clock(timer->clock, timer);
         }
     }
