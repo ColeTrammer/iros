@@ -27,7 +27,11 @@ struct HashMapObj {
 };
 
 template<typename K, typename V>
+#ifdef __cpp_concepts
 requires Hashable<K> class HashMap {
+#else
+class HashMap {
+#endif
 public:
     explicit HashMap(int num_buckets = 20) : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets)) {}
 
