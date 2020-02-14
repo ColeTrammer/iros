@@ -16,7 +16,7 @@ struct timer {
     struct clock *clock;
 
     struct itimerspec spec;
-    struct sigevent event;
+    int event_type;
     int overuns;
     timer_t id;
     struct queued_signal *signal;

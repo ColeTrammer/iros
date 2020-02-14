@@ -60,7 +60,7 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     }
 
     to_add->overuns = 0;
-    to_add->event = *sevp;
+    to_add->event_type = sevp->sigev_notify;
     to_add->id = allocate_timerid();
     to_add->next = NULL;
     to_add->prev = NULL;
@@ -75,16 +75,16 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     to_add->clock = clock;
     to_add->task = get_current_task();
 
-    if (to_add->event.sigev_notify == SIGEV_SIGNAL) {
+    if (to_add->event_type == SIGEV_SIGNAL || to_add->event_type == SIGEV_SIGNAL) {
         to_add->signal = malloc(sizeof(struct queued_signal));
         if (!to_add->signal) {
             free(to_add);
             return -EAGAIN;
         }
 
-        to_add->signal->info.si_value = to_add->event.sigev_value;
+        to_add->signal->info.si_value = sevp->sigev_value;
         to_add->signal->info.si_code = SI_TIMER;
-        to_add->signal->info.si_signo = to_add->event.sigev_signo;
+        to_add->signal->info.si_signo = sevp->sigev_signo;
     }
 
     hash_put(timer_map, to_add);
@@ -138,8 +138,9 @@ int time_set_timer(struct timer *timer, int flags, const struct itimerspec *new_
 }
 
 void time_fire_timer(struct timer *timer) {
-    switch (timer->event.sigev_notify) {
+    switch (timer->event_type) {
         case SIGEV_SIGNAL:
+        case SIGEV_THREAD:
             // If already allocated, update overrun count.
             if (timer->signal->flags & QUEUED_SIGNAL_DONT_FREE_FLAG) {
                 timer->overuns++;
@@ -149,8 +150,6 @@ void time_fire_timer(struct timer *timer) {
                 timer->signal->flags |= QUEUED_SIGNAL_DONT_FREE_FLAG;
                 task_enqueue_signal_object(timer->task, timer->signal);
             }
-            break;
-        case SIGEV_THREAD:
             break;
         case SIGEV_KERNEL:
             break;
