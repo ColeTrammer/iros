@@ -21,17 +21,6 @@ int main() {
         return 1;
     }
 
-    act.sa_handler = [](int) {
-        timer_delete(timer);
-        exit(0);
-    };
-
-    act.sa_flags &= ~SA_SIGINFO;
-    if (sigaction(SIGINT, &act, nullptr)) {
-        perror("sigaction");
-        return 1;
-    }
-
     sigevent ev;
     ev.sigev_signo = SIGRTMIN;
     ev.sigev_notify = SIGEV_SIGNAL;

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <search.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -87,6 +88,15 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
         to_add->signal->info.si_signo = sevp->sigev_signo;
     }
 
+    struct process *process = to_add->task->process;
+    if (!process->timers) {
+        to_add->proc_next = NULL;
+        to_add->proc_prev = NULL;
+        process->timers = to_add;
+    } else {
+        insque(&to_add->proc_next, &process->timers->proc_next);
+    }
+
     hash_put(timer_map, to_add);
 
     *timerid = to_add->id;
@@ -94,7 +104,16 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
 }
 
 int time_delete_timer(struct timer *timer) {
-    time_remove_timer_from_clock(timer->clock, timer);
+    if (time_is_timer_armed(timer)) {
+        time_remove_timer_from_clock(timer->clock, timer);
+    }
+
+    struct process *process = timer->task->process;
+    if (process->timers == timer) {
+        process->timers = timer->next;
+    }
+    remque(&timer->proc_next);
+
     hash_del(timer_map, &timer->id);
     free_timerid(timer->id);
     free(timer);

@@ -8,6 +8,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
+#include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
 
 // #define PROC_REF_COUNT_DEBUG
@@ -80,6 +81,14 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
             struct user_mutex *next = user_mutex->next;
             free(user_mutex);
             user_mutex = next;
+        }
+
+        struct timer *timer = process->timers;
+        while (timer) {
+            debug_log("Destroying timer: [ %p ]\n", timer);
+            struct timer *next = timer->proc_next;
+            time_delete_timer(timer);
+            timer = next;
         }
 
 #ifdef PROC_REF_COUNT_DEBUG
