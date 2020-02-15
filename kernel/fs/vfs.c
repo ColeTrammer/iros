@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -1114,6 +1115,40 @@ int fs_rename(const char *old_path, const char *new_path) {
     old_parent->inode->tnode_list = remove_tnode(old_parent->inode->tnode_list, old);
     spin_lock(&old->lock);
     return 0;
+}
+
+static int do_statvfs(struct super_block *sb, struct statvfs *buf) {
+    buf->f_bsize = sb->block_size;
+    buf->f_frsize = sb->block_size;
+
+    buf->f_blocks = sb->num_blocks;
+    buf->f_bfree = sb->free_blocks;
+    buf->f_bavail = sb->available_blocks;
+
+    buf->f_files = sb->num_inodes;
+    buf->f_ffree = sb->free_inodes;
+    buf->f_favail = sb->available_blocks;
+
+    buf->f_fsid = sb->device;
+    buf->f_flag = sb->flags;
+    buf->f_namemax = NAME_MAX;
+
+    return 0;
+}
+
+int fs_fstatvfs(struct file *file, struct statvfs *buf) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    return do_statvfs(inode->super_block, buf);
+}
+
+int fs_statvfs(const char *path, struct statvfs *buf) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret < 0) {
+        return ret;
+    }
+
+    return do_statvfs(tnode->inode->super_block, buf);
 }
 
 int fs_mount(const char *src, const char *path, const char *type) {

@@ -205,6 +205,8 @@ $(BUILDDIR)/libs/libc/sys/os_2/tgkill.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
 $(BUILDDIR)/libs/libc/sys/select/select.o \
 $(BUILDDIR)/libs/libc/sys/stat/stat.o \
+$(BUILDDIR)/libs/libc/sys/statvfs/fstatvfs.o \
+$(BUILDDIR)/libs/libc/sys/statvfs/statvfs.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall_to_string.o \
 $(BUILDDIR)/libs/libc/sys/time/time.o \
 $(BUILDDIR)/libs/libc/sys/times/times.o \

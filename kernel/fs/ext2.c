@@ -212,9 +212,25 @@ static int ext2_sync_block_group(struct super_block *sb, uint32_t blk_grp_index)
     return 0;
 }
 
+static void ext2_sync_raw_super_block_with_virtual_super_block(struct super_block *sb) {
+    struct ext2_sb_data *data = sb->private_data;
+
+    sb->num_blocks = data->sb->num_blocks;
+    sb->free_blocks = data->sb->num_unallocated_blocks;
+    sb->available_blocks = sb->free_blocks - data->sb->num_reserved_blocks;
+
+    sb->num_inodes = data->sb->num_inodes;
+    sb->free_inodes = data->sb->num_unallocated_inodes;
+    sb->available_inodes = sb->free_inodes - data->sb->first_non_reserved_inode;
+}
+
 /* Syncs super_block to disk */
 static int ext2_sync_super_block(struct super_block *sb) {
     struct ext2_sb_data *data = sb->private_data;
+
+    // Sync to os super_block structure, since we write to the
+    // actual raw_super_block when accounting fields are updated.
+    ext2_sync_raw_super_block_with_virtual_super_block(sb);
 
     ssize_t ret = ext2_write_blocks(sb, data->sb, 1, 1);
 
@@ -1635,6 +1651,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
     super_block->dev_file = dev_file;
     super_block->private_data = data;
+    super_block->flags = 0;
     data->block_group_map = hash_create_hash_map(block_group_hash, block_group_equals, block_group_key);
     data->block_map = hash_create_hash_map(block_hash, block_equals, block_key);
     data->num_blocks_cached = 0;
@@ -1688,6 +1705,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->readable = true;
     root->writeable = true;
 
+    ext2_sync_raw_super_block_with_virtual_super_block(super_block);
     current_fs->super_block = super_block;
 
     return t_root;

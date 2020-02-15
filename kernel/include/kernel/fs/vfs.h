@@ -10,6 +10,7 @@
 
 struct file_descriptor;
 struct iovec;
+struct statvfs;
 
 #define INAME_DONT_FOLLOW_TRAILING_SYMLINK 1
 #define INAME_TAKE_OWNERSHIP_OF_PATH       2
@@ -56,6 +57,8 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz);
 int fs_symlink(const char *target, const char *linkpath);
 int fs_link(const char *oldpath, const char *newpath);
 int fs_utimes(const char *path, const struct timeval *times);
+int fs_fstatvfs(struct file *file, struct statvfs *buf);
+int fs_statvfs(const char *path, struct statvfs *buf);
 int fs_mount(const char *src, const char *path, const char *type);
 
 struct file_descriptor fs_clone(struct file_descriptor desc);

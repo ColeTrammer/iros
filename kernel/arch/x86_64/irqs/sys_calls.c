@@ -12,6 +12,7 @@
 #include <sys/mman.h>
 #include <sys/os_2.h>
 #include <sys/socket.h>
+#include <sys/statvfs.h>
 #include <sys/syscall.h>
 #include <sys/times.h>
 #include <sys/types.h>
@@ -2295,6 +2296,24 @@ SYS_CALL(timer_settime) {
     SYS_PARAM4_VALIDATE(struct itimerspec *, old, validate_write_or_null, sizeof(struct itimerspec));
 
     SYS_RETURN(time_set_timer(timer, flags, new_value, old));
+}
+
+SYS_CALL(fstatvfs) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM2_VALIDATE(struct statvfs *, buf, validate_write, sizeof(struct statvfs));
+
+    SYS_RETURN(fs_fstatvfs(file, buf));
+}
+
+SYS_CALL(statvfs) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
+    SYS_PARAM2_VALIDATE(struct statvfs *, buf, validate_write, sizeof(struct statvfs));
+
+    SYS_RETURN(fs_statvfs(path, buf));
 }
 
 SYS_CALL(invalid_system_call) {
