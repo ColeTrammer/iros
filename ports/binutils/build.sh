@@ -14,7 +14,7 @@ cd ports/binutils
 # Build
 mkdir -p build-binutils
 cd build-binutils
-../../../toolchain/binutils-2.31.1/binutils-2.31.1 --host=$HOST --disable-nls --prefix=/usr --target=$HOST --with-sysroot=/ --with-build-sysroot=$ROOt/sysroot --disable-werror --disable-gdb
+../../../toolchain/binutils-2.34/binutils-2.34 --host=$HOST --disable-nls --prefix=/usr --target=$HOST --with-sysroot=/ --with-build-sysroot=$ROOt/sysroot --disable-werror --disable-gdb
 
 make clean
 make all -j5
