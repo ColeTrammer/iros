@@ -537,13 +537,11 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
 SYS_CALL(execve) {
     SYS_BEGIN();
 
+    disable_interrupts();
+
     SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2_VALIDATE(char **, argv, validate_string_array, -1);
     SYS_PARAM3_VALIDATE(char **, envp, validate_string_array, -1);
-
-    assert(path != NULL);
-    assert(argv != NULL);
-    assert(envp != NULL);
 
     struct task *current = get_current_task();
 
@@ -583,20 +581,8 @@ SYS_CALL(execve) {
         process->files[i] = fs_dup(current->process->files[i]);
     }
 
-    /* Clone vm_regions so that they can be freed later */
-    struct vm_region *__process_stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
-    struct vm_region *__process_guard = get_vm_last_region(current->process->process_memory, VM_TASK_STACK_GUARD);
-    assert(__process_stack);
-    assert(__process_guard);
-
     struct vm_region *__kernel_stack = get_vm_region(current->process->process_memory, VM_KERNEL_STACK);
-
-    struct vm_region *process_stack = calloc(1, sizeof(struct vm_region));
-    struct vm_region *process_guard = calloc(1, sizeof(struct vm_region));
     struct vm_region *kernel_stack = calloc(1, sizeof(struct vm_region));
-
-    memcpy(process_stack, __process_stack, sizeof(struct vm_region));
-    memcpy(process_guard, __process_guard, sizeof(struct vm_region));
     memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
 
     task->tid = current->tid;
@@ -611,8 +597,7 @@ SYS_CALL(execve) {
     process->sid = current->process->sid;
     process->umask = current->process->umask;
     process->process_memory = kernel_stack;
-    process->process_memory = add_vm_region(process->process_memory, process_stack);
-    process->process_memory = add_vm_region(process->process_memory, process_guard);
+
     task->kernel_task = false;
     task->sched_state = RUNNING_INTERRUPTIBLE;
     process->tty = current->process->tty;
@@ -645,21 +630,20 @@ SYS_CALL(execve) {
     task->arch_task.task_state.stack_state.rip = elf64_get_entry(buffer);
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
-    task->arch_task.task_state.stack_state.rsp = map_program_args(process_stack->end, prepend_argv, argv, envp);
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
+
+    struct args_context args_context;
+    proc_clone_program_args(prepend_argv, argv, envp, &args_context);
+
+    /* Ensure File Name And Args Are Still Mapped */
+    soft_remove_paging_structure(current->process->process_memory);
+
+    uintptr_t stack_end = proc_allocate_user_stack(process);
 
     for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
         free(prepend_argv[i]);
     }
     free(prepend_argv);
-
-    /* Memset stack to zero so that task can use old one safely (only go until rsp because args are after it). */
-    // FIXME: this will forcibily load the entire stack into memory. Instead we should map in a completely new
-    // stack
-    memset((void *) process_stack->start, 0, task->arch_task.task_state.stack_state.rsp - process_stack->start);
-
-    /* Ensure File Name And Args Are Still Mapped */
-    soft_remove_paging_structure(current->process->process_memory);
 
     elf64_load_program(buffer, length, task);
     elf64_map_heap(buffer, task);
@@ -680,6 +664,7 @@ SYS_CALL(execve) {
     assert(get_current_task() == task);
     sched_add_task(task);
     proc_add_process(process);
+    task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, &args_context);
 
     sys_sched_run_next(&task->arch_task.task_state);
 }

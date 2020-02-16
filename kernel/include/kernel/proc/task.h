@@ -22,6 +22,18 @@ enum sched_state { RUNNING_INTERRUPTIBLE, RUNNING_UNINTERRUPTIBLE, WAITING, EXIT
 
 struct clock;
 
+struct args_context {
+    size_t prepend_argc;
+    size_t argc;
+    size_t envc;
+    char **prepend_args_copy;
+    char **args_copy;
+    char **envp_copy;
+    char *prepend_args_buffer;
+    char *args_buffer;
+    char *env_buffer;
+};
+
 #define QUEUED_SIGNAL_DONT_FREE_FLAG 1
 
 struct queued_signal {
@@ -81,7 +93,8 @@ void arch_free_task(struct task *task, bool free_paging_structure);
 
 struct task *get_current_task();
 
-uintptr_t map_program_args(uintptr_t start, char **prepend_argv, char **argv, char **envp);
+void proc_clone_program_args(char **prepend_argv, char **argv, char **envp, struct args_context *context);
+uintptr_t map_program_args(uintptr_t start, struct args_context *context);
 
 int get_next_tid();
 

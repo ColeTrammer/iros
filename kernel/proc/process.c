@@ -3,6 +3,7 @@
 
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/task.h>
@@ -130,6 +131,25 @@ void proc_bump_process(struct process *process) {
     assert(process->ref_count > 0);
     process->ref_count++;
     spin_unlock(&process->lock);
+}
+
+uintptr_t proc_allocate_user_stack(struct process *process) {
+    struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
+    task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC | VM_STACK;
+    task_stack->type = VM_TASK_STACK;
+    task_stack->start = find_first_kernel_vm_region()->start - PAGE_SIZE - 2 * 1024 * 1024;
+    task_stack->end = task_stack->start + 2 * 1024 * 1024;
+    process->process_memory = add_vm_region(process->process_memory, task_stack);
+    map_page(task_stack->end - PAGE_SIZE, task_stack->flags);
+
+    struct vm_region *guard_page = calloc(1, sizeof(struct vm_region));
+    guard_page->flags = VM_PROT_NONE;
+    guard_page->type = VM_TASK_STACK_GUARD;
+    guard_page->start = task_stack->end;
+    guard_page->end = guard_page->start + PAGE_SIZE;
+    process->process_memory = add_vm_region(process->process_memory, guard_page);
+
+    return task_stack->end;
 }
 
 struct process *find_by_pid(pid_t pid) {
