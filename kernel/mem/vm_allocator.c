@@ -454,6 +454,9 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
         for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
             map_page_flags(i, r->flags);
         }
+
+        length -= r->end - addr;
+        addr = r->end;
     }
 
     spin_unlock(&process->lock);

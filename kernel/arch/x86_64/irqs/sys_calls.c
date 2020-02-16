@@ -1571,12 +1571,12 @@ SYS_CALL(get_initial_process_info) {
     info->tls_size = current->process->tls_master_copy_size;
     info->tls_alignment = current->process->tls_master_copy_alignment;
 
-    struct vm_region *stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
-    info->stack_start = (void *) stack->start;
-    info->stack_size = stack->end - stack->start;
-
     struct vm_region *guard = get_vm_last_region(current->process->process_memory, VM_TASK_STACK_GUARD);
     info->guard_size = guard->end - guard->start;
+    info->stack_start = (void *) guard->start;
+
+    struct vm_region *stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
+    info->stack_size = stack->end - stack->start;
 
     info->main_tid = current->tid;
 
