@@ -639,6 +639,7 @@ SYS_CALL(execve) {
     soft_remove_paging_structure(current->process->process_memory);
 
     uintptr_t stack_end = proc_allocate_user_stack(process);
+    task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, &args_context);
 
     for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
         free(prepend_argv[i]);
@@ -664,7 +665,6 @@ SYS_CALL(execve) {
     assert(get_current_task() == task);
     sched_add_task(task);
     proc_add_process(process);
-    task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, &args_context);
 
     sys_sched_run_next(&task->arch_task.task_state);
 }

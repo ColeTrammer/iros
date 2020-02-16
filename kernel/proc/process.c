@@ -145,7 +145,7 @@ uintptr_t proc_allocate_user_stack(struct process *process) {
     struct vm_region *guard_page = calloc(1, sizeof(struct vm_region));
     guard_page->flags = VM_PROT_NONE;
     guard_page->type = VM_TASK_STACK_GUARD;
-    guard_page->start = task_stack->end;
+    guard_page->start = task_stack->start - PAGE_SIZE;
     guard_page->end = guard_page->start + PAGE_SIZE;
     process->process_memory = add_vm_region(process->process_memory, guard_page);
 
