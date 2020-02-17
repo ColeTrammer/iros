@@ -370,46 +370,9 @@ SYS_CALL(openat) {
 
     struct task *task = get_current_task();
 
-    struct file *file = fs_openat(base, path, flags, &error);
-
-    if (file && (flags & O_EXCL)) {
-        fs_close(file);
-        SYS_RETURN(-EEXIST);
-    }
-
-    if (file == NULL) {
-        if (flags & O_CREAT) {
-            debug_log("Creating file: [ %s ]\n", path);
-
-            error = fs_create(path, mode | S_IFREG);
-            if (error) {
-                SYS_RETURN((uint64_t) error);
-            }
-
-            file = fs_open(path, flags, &error);
-            if (file == NULL) {
-                SYS_RETURN((uint64_t) error);
-            }
-
-            debug_log("Open successful\n");
-        } else {
-            debug_log("File Not Found: [ %s ]\n", path);
-            SYS_RETURN((uint64_t) error);
-        }
-    }
-
-    /* Should probably be some other error instead */
-    if (!(file->flags & FS_DIR) && (flags & O_DIRECTORY)) {
-        SYS_RETURN(-EINVAL);
-    }
-
-    if (file->flags & FS_DIR && !(flags & O_DIRECTORY)) {
-        SYS_RETURN(-EISDIR);
-    }
-
-    /* Handle append mode */
-    if (flags & O_APPEND) {
-        fs_seek(file, 0, SEEK_END);
+    struct file *file = fs_openat(base, path, flags, mode, &error);
+    if (error < 0) {
+        SYS_RETURN(error);
     }
 
     for (int i = 0; i < FOPEN_MAX; i++) {

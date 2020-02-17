@@ -1634,7 +1634,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     int error = 0;
-    struct file *dev_file = fs_open(device_path, O_RDWR, &error);
+    struct file *dev_file = fs_open(device_path, O_RDWR, 0, &error);
     if (dev_file == NULL) {
         return NULL;
     }

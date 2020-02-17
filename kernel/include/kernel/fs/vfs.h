@@ -25,9 +25,9 @@ int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len);
 int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct inode **inode);
 
 struct tnode *fs_root(void);
-int fs_create(const char *path, mode_t mode);
-struct file *fs_open(const char *file_name, int flags, int *error);
-struct file *fs_openat(struct tnode *base, const char *file_name, int flags, int *error);
+struct tnode *fs_create(const char *path, mode_t mode, int *error);
+struct file *fs_open(const char *file_name, int flags, mode_t mode, int *error);
+struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mode_t mode, int *error);
 int fs_close(struct file *file);
 ssize_t fs_read(struct file *file, void *buffer, size_t len);
 ssize_t fs_write(struct file *file, const void *buffer, size_t len);

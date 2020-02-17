@@ -331,7 +331,7 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
     return do_iname(_path, flags, t_root, base, result, &depth_storage);
 }
 
-int fs_create(const char *file_name, mode_t mode) {
+struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
     mode &= ~get_current_task()->process->umask;
 
     char *path = malloc(strlen(file_name) + 1);
@@ -353,14 +353,16 @@ int fs_create(const char *file_name, mode_t mode) {
 
     if (ret < 0) {
         free(path);
-        return ret;
+        *error = ret;
+        return NULL;
     }
 
     struct mount *mount = tparent->inode->mounts;
     while (mount != NULL) {
         if (strcmp(mount->name, last_slash + 1) == 0) {
             free(path);
-            return -EEXIST;
+            *error = -EEXIST;
+            return NULL;
         }
 
         mount = mount->next;
@@ -369,35 +371,36 @@ int fs_create(const char *file_name, mode_t mode) {
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (tparent->inode->tnode_list && find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
         free(path);
-        return -EEXIST;
+        *error = -EEXIST;
+        return NULL;
     }
 
     if (!tparent->inode->i_op->create) {
         free(path);
-        return -EINVAL;
+        *error = -EINVAL;
+        return NULL;
     }
 
     debug_log("Adding to: [ %s ]\n", tparent->name);
 
-    int error = 0;
-    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, &error);
+    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, error);
     if (inode == NULL) {
         free(path);
-        return error;
+        return NULL;
     }
 
     struct tnode *tnode = create_tnode(last_slash + 1, inode);
     tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
 
     free(path);
-    return 0;
+    return tnode;
 }
 
-struct file *fs_open(const char *file_name, int flags, int *error) {
-    return fs_openat(NULL, file_name, flags, error);
+struct file *fs_open(const char *file_name, int flags, mode_t mode, int *error) {
+    return fs_openat(NULL, file_name, flags, mode, error);
 }
 
-struct file *fs_openat(struct tnode *base, const char *file_name, int flags, int *error) {
+struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mode_t mode, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
         return NULL;
@@ -405,8 +408,36 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, int
 
     struct tnode *tnode;
     int ret = iname_with_base(base, file_name, 0, &tnode);
-    if (ret < 0) {
+    if (ret == ENOENT) {
+        if (flags & O_CREAT) {
+            debug_log("Creating file: [ %s ]\n", file_name);
+
+            ret = 0;
+            tnode = fs_create(file_name, mode | S_IFREG, &ret);
+            if (ret < 0) {
+                *error = ret;
+                return NULL;
+            }
+        } else {
+            debug_log("File Not Found: [ %s ]\n", file_name);
+            *error = ret;
+            return NULL;
+        }
+    } else if (ret < 0) {
         *error = ret;
+        return NULL;
+    } else if (flags & O_EXCL) {
+        *error = -EEXIST;
+        return NULL;
+    }
+
+    if (!(tnode->inode->flags & FS_DIR) && (flags & O_DIRECTORY)) {
+        *error = -ENOTDIR;
+        return NULL;
+    }
+
+    if (tnode->inode->flags & FS_DIR && !(flags & O_DIRECTORY)) {
+        *error = -EISDIR;
         return NULL;
     }
 
@@ -429,6 +460,11 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, int
         file->abilities |= FS_FILE_CAN_READ;
     } else if (flags & O_WRONLY) {
         file->abilities |= FS_FILE_CAN_WRITE;
+    }
+
+    /* Handle append mode */
+    if (flags & O_APPEND) {
+        fs_seek(file, 0, SEEK_END);
     }
 
     return file;

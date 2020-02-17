@@ -79,14 +79,13 @@ int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen
         return -EADDRINUSE;
     }
 
-    int ret = fs_create(data->bound_path, S_IFSOCK | 0666);
+    int ret = 0;
+    struct tnode *tnode = fs_create(data->bound_path, S_IFSOCK | 0666, &ret);
     if (ret < 0) {
         free(data);
         return ret;
     }
 
-    struct tnode *tnode;
-    assert(iname(data->bound_path, 0, &tnode) == 0);
     ret = fs_bind_socket_to_inode(tnode->inode, socket->id);
     if (ret == -1) {
         free(data);
