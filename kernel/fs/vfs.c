@@ -408,7 +408,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
 
     struct tnode *tnode;
     int ret = iname_with_base(base, file_name, 0, &tnode);
-    if (ret == ENOENT) {
+    if (ret == -ENOENT) {
         if (flags & O_CREAT) {
             debug_log("Creating file: [ %s ]\n", file_name);
 
