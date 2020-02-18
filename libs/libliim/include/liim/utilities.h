@@ -469,9 +469,9 @@ inline constexpr in_place_index_t<I> in_place_index {};
 
 template<typename T>
 void swap(T& a, T& b) {
-    T temp(a);
-    a = b;
-    b = temp;
+    T temp(move(a));
+    a = move(b);
+    b = move(temp);
 }
 
 template<typename T>

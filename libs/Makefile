@@ -1,4 +1,4 @@
-LIBS=libc libgraphics libm libpthread librt
+LIBS=libc libgraphics libm libpthread librt libws
 HEADER_LIBS=$(LIBS) libliim
 
 export ROOT?=$(CURDIR)/..
