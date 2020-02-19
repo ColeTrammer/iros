@@ -22,11 +22,11 @@ public:
     template<typename C>
     void set_draw_callback(SharedPtr<Window>& window, C callback) {
         window->set_draw_callback(move(callback));
-        setup_timer(window);
+        setup_timer();
     }
 
 private:
-    void setup_timer(SharedPtr<Window>& window);
+    void setup_timer();
 
     int m_fd;
 };

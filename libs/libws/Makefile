@@ -23,7 +23,3 @@ $(BUILDDIR)/libs/libws/connection.o \
 $(BUILDDIR)/libs/libws/window.o
 
 include ../Makefile.common
-
-$(LIBRARY): $(OBJS) $(MAKEFILE)
-	cp $(BUILDDIR)/libs/libpthread/libpthread.a $(LIBRARY)
-	$(AR) r $@ $^

@@ -38,28 +38,28 @@ SharedPtr<Window> Connection::create_window(int x, int y, int height, int width)
     assert(message->type == Message::Type::CreateWindowResponse);
 
     Message::CreateWindowResponse& created_data = message->data.create_window_response;
-    Window* window = new Window(Rect(x, y, width, height), created_data, *this);
-    return SharedPtr<Window>(window);
+    return Window::construct(Rect(x, y, width, height), created_data);
 }
 
 void Connection::send_swap_buffer_request(wid_t wid) {
+    fprintf(stderr, "!@!\n");
     auto swap_buffer_request = WindowServer::Message::SwapBufferRequest::create(wid);
     assert(write(m_fd, swap_buffer_request.get(), swap_buffer_request->total_size()) != -1);
 }
 
-void Connection::setup_timer(SharedPtr<Window>& window) {
+void Connection::setup_timer() {
     struct sigaction act;
     sigfillset(&act.sa_mask);
     act.sa_flags = SA_SIGINFO;
     act.sa_sigaction = [](int, siginfo_t* info, void*) {
-        Window* window = static_cast<Window*>(info->si_value.sival_ptr);
-        window->draw();
+        Connection* connection = static_cast<Connection*>(info->si_value.sival_ptr);
+        Window::draw_all(*connection);
     };
     sigaction(SIGRTMIN, &act, nullptr);
 
     sigevent ev;
     ev.sigev_notify = SIGEV_SIGNAL;
-    ev.sigev_value.sival_ptr = window.get();
+    ev.sigev_value.sival_ptr = static_cast<void*>(this);
     ev.sigev_signo = SIGRTMIN;
 
     timer_t timerid;

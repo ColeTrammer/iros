@@ -381,7 +381,7 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
         return NULL;
     }
 
-    debug_log("Adding to: [ %s ]\n", tparent->name);
+    debug_log("Adding to: [ %s, %p ]\n", tparent->name, tparent->inode);
 
     struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, error);
     if (inode == NULL) {
