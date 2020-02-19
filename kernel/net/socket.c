@@ -163,10 +163,10 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
                     debug_log("Connection terminated: [ %lu ]\n", socket->id);
                     return 0;
                 }
-            }
-            default: {
                 break;
             }
+            default:
+                break;
         }
 
         if (socket->type & SOCK_NONBLOCK) {
@@ -181,6 +181,8 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
                 return -EAGAIN;
             }
+
+            continue;
         }
 
         proc_block_until_socket_is_readable(get_current_task(), socket);
