@@ -95,7 +95,6 @@ struct tnode *tmp_lookup(struct inode *inode, const char *name) {
         return NULL;
     }
 
-    debug_log("Inode: [ %p ]\n", inode);
     struct tnode_list *list = inode->tnode_list;
     while (list != NULL) {
         assert(list->tnode != NULL);

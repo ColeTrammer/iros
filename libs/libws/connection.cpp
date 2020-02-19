@@ -42,7 +42,6 @@ SharedPtr<Window> Connection::create_window(int x, int y, int height, int width)
 }
 
 void Connection::send_swap_buffer_request(wid_t wid) {
-    fprintf(stderr, "!@!\n");
     auto swap_buffer_request = WindowServer::Message::SwapBufferRequest::create(wid);
     assert(write(m_fd, swap_buffer_request.get(), swap_buffer_request->total_size()) != -1);
 }
