@@ -122,6 +122,8 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???
+    dump_kernel_regions(address);
+
     dump_registers_to_screen();
     printf("\n\033[31m%s: Error %lX\n", "Page Fault", task_state->error_code);
     printf("Address: %#.16lX\n", address);
