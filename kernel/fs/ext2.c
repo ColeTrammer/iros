@@ -529,6 +529,13 @@ static void ext2_update_tnode_list(struct inode *inode) {
 
     spin_lock(&inode->lock);
 
+    if (inode->tnode_list != NULL) {
+        // NOTE: this prevents duplicate tnode's from being created.
+        //       should eventually just not add duplicates instead though.
+        spin_unlock(&inode->lock);
+        return;
+    }
+
     size_t block_no = 0;
     struct raw_dirent *dirent = raw_dirent_table;
 
