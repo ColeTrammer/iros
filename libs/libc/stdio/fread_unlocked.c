@@ -100,7 +100,7 @@ size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__r
         bytes_read += (size_t) ret;
         return bytes_read / size;
     } else {
-        bytes_read += (size_t) ret;
+        bytes_read += bytes_to_skip_buffering;
     }
 
     stream->__buffer_length = (size_t) ret - bytes_to_skip_buffering;
