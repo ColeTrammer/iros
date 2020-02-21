@@ -19,7 +19,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
-// #define STACK_TRACE_ON_ANY_SIGSEGV
+#define STACK_TRACE_ON_ANY_SIGSEGV
 
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 

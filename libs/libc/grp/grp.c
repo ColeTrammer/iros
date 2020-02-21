@@ -120,8 +120,10 @@ int getgrgid_r(gid_t gid, struct group *group, char *buf, size_t buflen, struct 
 static FILE *file = NULL;
 
 void endgrent(void) {
-    fclose(file);
-    file = NULL;
+    if (file) {
+        fclose(file);
+        file = NULL;
+    }
 }
 
 struct group *getgrent(void) {
@@ -138,5 +140,7 @@ struct group *getgrent(void) {
 }
 
 void setgrent(void) {
-    rewind(file);
+    if (file) {
+        rewind(file);
+    }
 }

@@ -106,8 +106,10 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buf, size_t buflen, struct p
 static FILE *file = NULL;
 
 void endpwent(void) {
-    fclose(file);
-    file = NULL;
+    if (file) {
+        fclose(file);
+        file = NULL;
+    }
 }
 
 struct passwd *getpwent(void) {
@@ -124,5 +126,7 @@ struct passwd *getpwent(void) {
 }
 
 void setpwent(void) {
-    rewind(file);
+    if (file) {
+        rewind(file);
+    }
 }
