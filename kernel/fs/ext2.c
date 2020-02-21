@@ -1070,7 +1070,6 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
 
     struct raw_inode *raw_inode = inode->private_data;
     ssize_t ret = 0;
-    inode->size = offset + len;
 
     if (!(raw_inode->mode & S_IWUSR)) {
         return -EPERM;
@@ -1127,17 +1126,20 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
         }
 
         char *buf = ext2_allocate_blocks(inode->super_block, 1);
-        if (offset % inode->super_block->block_size != 0) {
+        size_t in_block_offset = offset % inode->super_block->block_size;
+        size_t to_write = MIN(len, inode->super_block->block_size - in_block_offset);
+        bool read_block = ((size_t) offset < inode->size) || (in_block_offset != 0);
+        if (read_block) {
             ret = ext2_read_blocks(inode->super_block, buf, block_no, 1);
             if (ret != 1) {
                 return (int) ret;
             }
+        } else {
+            memset(buf, 0, in_block_offset);
+            memset(buf + in_block_offset + to_write, 0, inode->super_block->block_size - (to_write + in_block_offset));
         }
 
-        size_t to_write = MIN(len, inode->super_block->block_size - (offset % inode->super_block->block_size));
-        memcpy(buf + (offset % inode->super_block->block_size), (const void *) (((char *) buffer) + buffer_offset), to_write);
-        memset(buf + (offset % inode->super_block->block_size) + to_write, 0,
-               inode->super_block->block_size - (to_write + (offset % inode->super_block->block_size)));
+        memcpy(buf + in_block_offset, (const void *) (((char *) buffer) + buffer_offset), to_write);
         ret = ext2_write_blocks(inode->super_block, buf, block_no, 1);
         if (ret != 1) {
             ext2_free_blocks(buf);
@@ -1156,6 +1158,7 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
         ext2_free_blocks(indirect_block);
     }
 
+    inode->size = MAX(inode->size, offset + len);
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
     ret = ext2_sync_inode(inode);
     if (ret != 0) {

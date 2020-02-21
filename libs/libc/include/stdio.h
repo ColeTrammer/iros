@@ -87,18 +87,18 @@ extern unsigned int __file_list_lock;
 struct __stdio_flags __stdio_parse_mode_string(const char *s);
 FILE *__stdio_allocate_stream(int fd, int flags);
 
-#ifdef STDIO_DEBUG
+#ifdef NDEBUG
+#define __stdio_log(ignore, s, ...) ((void) 0)
+#else
+extern int __should_log;
 #define __stdio_log(stream, s, ...)                        \
     do {                                                   \
-        if (stream != stderr) {                            \
+        if (__should_log && stream != stderr) {            \
             fprintf(stderr, s __VA_OPT__(, ) __VA_ARGS__); \
             fputc('\n', stderr);                           \
         }                                                  \
     } while (0)
-#else
-#define __stdio_log(stream, s, ...) ((void) 0)
-#endif /* STDIO_DEBUG */
-
+#endif /* NDEBUG */
 #endif /* OLD_STDIO */
 
 #ifndef __is_libk

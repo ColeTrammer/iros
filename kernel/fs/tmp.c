@@ -168,8 +168,9 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
     }
 
-    if (offset + len > data->max) {
-        data->max = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    inode->size = MAX(inode->size, offset + len);
+    if (inode->size > data->max) {
+        data->max = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         char *save = data->contents;
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
@@ -178,7 +179,6 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
     }
 
     memcpy(data->contents + offset, buffer, len);
-    inode->size += len;
 
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
