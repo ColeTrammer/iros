@@ -135,14 +135,16 @@ void elf64_stack_trace(struct task *task) {
         }
     }
 
-    assert(symbols);
-    assert(string_table);
-
     uintptr_t rsp = task->in_kernel ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
     uintptr_t rbp = task->in_kernel ? task->arch_task.user_task_state->cpu_state.rbp : task->arch_task.task_state.cpu_state.rbp;
     uintptr_t rip = task->in_kernel ? task->arch_task.user_task_state->stack_state.rip : task->arch_task.task_state.stack_state.rip;
 
     debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+
+    if (!symbols || !string_table) {
+        debug_log("No symbols or string table (probably stripped binary)\n");
+        return;
+    }
 
     for (int i = 0; (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
         if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
