@@ -256,6 +256,7 @@ $(BUILDDIR)/libs/libc/unistd/isatty.o \
 $(BUILDDIR)/libs/libc/unistd/link.o \
 $(BUILDDIR)/libs/libc/unistd/lseek.o \
 $(BUILDDIR)/libs/libc/unistd/lstat.o \
+$(BUILDDIR)/libs/libc/unistd/pathconf.o \
 $(BUILDDIR)/libs/libc/unistd/pause.o \
 $(BUILDDIR)/libs/libc/unistd/pipe.o \
 $(BUILDDIR)/libs/libc/unistd/pread.o \

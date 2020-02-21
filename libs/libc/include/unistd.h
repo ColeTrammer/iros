@@ -27,6 +27,8 @@
 #define _SC_PAGESIZE  1
 #define _SC_PAGE_SIZE _SC_PAGESIZE
 
+#define _PC_PATH_MAX 1
+
 #define _POSIX_VDISABLE (__UINT8_MAX__ - 1)
 
 #ifdef __cplusplus
@@ -60,6 +62,7 @@ unsigned int sleep(unsigned int seconds);
 int chown(const char *pathname, uid_t owner, gid_t group);
 int pause(void);
 int sysconf(int name);
+long pathconf(const char *path, int name);
 
 ssize_t read(int fd, void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count);
