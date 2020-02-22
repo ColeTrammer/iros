@@ -1,9 +1,9 @@
 #!/bin/sh
 
-dd if=/dev/zero of=os_2.img bs=516096c count=400
+dd if=/dev/zero of=os_2.img bs=516096c count=200
 
 losetup -o0 /dev/loop100 os_2.img
-mke2fs -b1024 /dev/loop100
+mke2fs /dev/loop100
 
 mkdir -p mnt
 mount -text2 /dev/loop100 mnt
