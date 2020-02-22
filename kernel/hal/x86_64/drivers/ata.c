@@ -433,20 +433,20 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     data->waiter = NULL;
     device->private = data;
 
-    // struct pci_configuration pci_config;
-    // if (pci_config_for_class(PCI_CLASS_MASS_STORAGE, PCI_SUBCLASS_IDE_CONTROLLER, &pci_config)) {
-    //     pci_enable_bus_mastering(&pci_config);
-    //     uint32_t base = pci_config.bar[4] & 0xFFFC;
-    //     data->port_info->bus_mastering_base = base;
-    //     data->port_info->use_dma = true;
-    //     data->dma_page = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
+    struct pci_configuration pci_config;
+    if (pci_config_for_class(PCI_CLASS_MASS_STORAGE, PCI_SUBCLASS_IDE_CONTROLLER, &pci_config)) {
+        pci_enable_bus_mastering(&pci_config);
+        uint32_t base = pci_config.bar[4] & 0xFFFC;
+        data->port_info->bus_mastering_base = base;
+        data->port_info->use_dma = true;
+        data->dma_page = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
 
-    //     if (!is_irq_line_registered(info->irq)) {
-    //         register_irq_line_handler((void (*)(void *)) ata_handle_irq, info->irq, data, true);
-    //     }
+        if (!is_irq_line_registered(info->irq)) {
+            register_irq_line_handler((void (*)(void *)) ata_handle_irq, info->irq, data, true);
+        }
 
-    //     debug_log("found pic for ata (so will use dma): [ %#.8X ]\n", base);
-    // }
+        debug_log("found pic for ata (so will use dma): [ %#.8X ]\n", base);
+    }
 
     dev_add(device, device->name);
 }

@@ -67,8 +67,8 @@ struct task;
 struct ata_port_info {
     uint16_t io_base;
     uint16_t control_base;
+    uint16_t irq;
     uint16_t bus_mastering_base;
-    int irq;
     bool is_slave : 1;
     bool use_dma : 1;
 };
