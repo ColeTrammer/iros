@@ -12,6 +12,7 @@
 #include <kernel/sched/task_sched.h>
 
 // #define PAGE_FAULT_DEBUG
+// #define DEVICE_NOT_AVAILABLE_DEBUG
 
 void init_irq_handlers() {
     register_irq_handler(&handle_divide_by_zero, 0, false, false);
@@ -155,6 +156,10 @@ void invalidate_last_saved(struct task *task) {
 void handle_device_not_available() {
     struct task *current = get_current_task();
     assert(current);
+
+#ifdef DEVICE_NOT_AVAILABLE_DEBUG
+    debug_log("handling: [ %d:%d ]\n", current->process->pid, current->tid);
+#endif /* DEVICE_NOT_AVAILABLE_DEBUG */
 
     if (last_saved == current) {
         return;
