@@ -13,14 +13,15 @@
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
+#include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/proc/task.h>
 
 static void ata_wait_irq(struct ata_device_data *data __attribute__((unused))) {
-    // if (data->waiter->process->pid != 1) {
-    //     proc_block_custom(data->waiter);
-    // }
+    if (data->waiter && !data->waiter->kernel_task) {
+        proc_block_custom(data->waiter);
+    }
 }
 
 static void ata_wait(struct ata_port_info *info) {
@@ -122,8 +123,6 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
         n = 0;
     }
 
-    uint64_t flags = disable_interrupts_save();
-
     ata_wait_not_busy(data->port_info);
 
     ata_set_sector_count(data->port_info, (uint8_t) n);
@@ -142,20 +141,12 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
         ata_wait_not_busy(data->port_info);
 
         if (ata_read_status(data->port_info) & ATA_STATUS_ERR || !(ata_read_status(data->port_info) & ATA_STATUS_DRQ)) {
-            if (flags & INTERRUPS_ENABLED_FLAG) {
-                enable_interrupts();
-            }
-
             return -EIO;
         }
 
         for (size_t i = 0; i < data->sector_size / sizeof(uint16_t); i++) {
             buf[j * data->sector_size / sizeof(uint16_t) + i] = ata_read_word(data->port_info);
         }
-    }
-
-    if (flags & INTERRUPS_ENABLED_FLAG) {
-        enable_interrupts();
     }
 
     return n * data->sector_size;
@@ -169,8 +160,6 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
     } else if (n == 255) {
         n = 0;
     }
-
-    uint64_t flags = disable_interrupts_save();
 
     ata_wait_not_busy(data->port_info);
 
@@ -190,10 +179,6 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
         ata_wait_not_busy(data->port_info);
 
         if (ata_get_error(data->port_info)) {
-            if (flags & INTERRUPS_ENABLED_FLAG) {
-                enable_interrupts();
-            }
-
             /* Might have to also reset the drive */
             return -EIO;
         }
@@ -209,16 +194,8 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
     ata_wait_not_busy(data->port_info);
 
     if (ata_get_error(data->port_info)) {
-        if (flags & INTERRUPS_ENABLED_FLAG) {
-            enable_interrupts();
-        }
-
         /* Might have to also reset the drive */
         return -EIO;
-    }
-
-    if (flags & INTERRUPS_ENABLED_FLAG) {
-        enable_interrupts();
     }
 
     return n * data->sector_size;
@@ -360,6 +337,11 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     data->num_sectors = identity[60] | (identity[61] << 16);
     data->waiter = NULL;
     device->private = data;
+
+    struct pci_configuration pci_config;
+    if (pci_config_for_class(PCI_CLASS_MASS_STORAGE, PCI_SUBCLASS_IDE_CONTROLLER, &pci_config)) {
+        debug_log("found pic: [ %#.8X ]\n", pci_config.bar[4]);
+    }
 
     if (!is_irq_line_registered(info->irq)) {
         register_irq_line_handler((void (*)(void *)) ata_handle_irq, info->irq, data, true);
