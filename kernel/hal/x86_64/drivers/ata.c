@@ -18,6 +18,8 @@
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/proc/task.h>
 
+#define DMA_BUFFER_PAGES 15
+
 static void ata_wait(struct ata_port_info *info) {
     for (size_t i = 0; i < 4; i++) {
         inb(info->control_base + ATA_ALT_STATUS_OFFSET);
@@ -146,13 +148,17 @@ static bool ata_indentify(struct ata_port_info *info, uint16_t *buf) {
 }
 
 static ssize_t ata_read_sectors_dma(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {
+    size_t sectors = n;
     if (n == 0) {
         return 0;
+    } else if (n == 16 * PAGE_SIZE / data->sector_size) {
+        sectors = 0;
+    } else if (n > 16 * PAGE_SIZE / data->sector_size) {
+        return -EINVAL;
     }
 
     data->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) data->dma_page);
-    data->prdt[0].size = data->sector_size * n;
-    assert(data->prdt[0].size <= PAGE_SIZE);
+    data->prdt[0].size = (uint16_t)(data->sector_size * sectors);
 
     // DMA bus mastering specifc
     outb(data->port_info->bus_mastering_base, 0);
@@ -162,7 +168,7 @@ static ssize_t ata_read_sectors_dma(struct ata_device_data *data, size_t offset,
 
     ata_wait_not_busy(data->port_info);
 
-    ata_setup_registers_dma(data->port_info, offset, n);
+    ata_setup_registers_dma(data->port_info, offset, sectors);
 
     ata_full_wait(data->port_info);
 
@@ -216,15 +222,19 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
 }
 
 static ssize_t ata_write_sectors_dma(struct ata_device_data *data, size_t offset, const void *buffer, size_t n) {
+    size_t sectors = n;
     if (n == 0) {
         return 0;
+    } else if (n == 16 * PAGE_SIZE / data->sector_size) {
+        sectors = 0;
+    } else if (n > 16 * PAGE_SIZE / data->sector_size) {
+        return -EINVAL;
     }
 
     data->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) data->dma_page);
-    data->prdt[0].size = data->sector_size * n;
+    data->prdt[0].size = (uint16_t)(data->sector_size * sectors);
 
     memcpy(data->dma_page, buffer, n * data->sector_size);
-    assert(data->prdt[0].size <= PAGE_SIZE);
 
     // DMA bus mastering specifc
     outb(data->port_info->bus_mastering_base, 0);
@@ -247,7 +257,7 @@ static ssize_t ata_write_sectors_dma(struct ata_device_data *data, size_t offset
     ata_wait_irq(data);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
-    return data->sector_size;
+    return n * data->sector_size;
 }
 
 static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, const void *buffer, size_t n) {
@@ -325,7 +335,7 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
 
     if (n % data->sector_size == 0 && offset % data->sector_size == 0) {
         size_t num_sectors_to_read = n / data->sector_size;
-        size_t num_sectors = MIN(2, num_sectors_to_read);
+        size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t read = 0;
 
         spin_lock(&device->inode->lock);
@@ -334,9 +344,11 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         spin_unlock(&device->inode->lock);
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
+            i = MIN(i, num_sectors_to_read);
+            size_t to_read = MIN(num_sectors, num_sectors_to_read - i);
             ssize_t ret = (data->port_info->use_dma ? ata_read_sectors_dma : ata_read_sectors)(
-                data, (offset / data->sector_size), (void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
-            if (ret != (ssize_t)(num_sectors * data->sector_size)) {
+                data, (offset / data->sector_size), (void *) (((uintptr_t) buffer) + (i * data->sector_size)), to_read);
+            if (ret != (ssize_t)(to_read * data->sector_size)) {
                 if (ret < 0) {
                     read = ret;
                     goto finsih_ata_read;
@@ -365,7 +377,7 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
 
     if (n % data->sector_size == 0 && offset % data->sector_size == 0) {
         size_t num_sectors_to_write = n / data->sector_size;
-        size_t num_sectors = MIN(2, num_sectors_to_write);
+        size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t written = 0;
 
         spin_lock(&device->inode->lock);
@@ -374,9 +386,11 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         spin_unlock(&device->inode->lock);
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
+            i = MIN(i, num_sectors_to_write);
+            size_t to_write = MIN(num_sectors, num_sectors_to_write - i);
             ssize_t ret = (data->port_info->use_dma ? ata_write_sectors_dma : ata_write_sectors)(
-                data, (offset / data->sector_size), (const void *) (((uintptr_t) buffer) + (i * data->sector_size)), num_sectors);
-            if (ret != (ssize_t)(num_sectors * data->sector_size)) {
+                data, (offset / data->sector_size), (const void *) (((uintptr_t) buffer) + (i * data->sector_size)), to_write);
+            if (ret != (ssize_t)(to_write * data->sector_size)) {
                 if (ret < 0) {
                     written = ret;
                     goto finsih_ata_write;
@@ -439,7 +453,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
         uint32_t base = pci_config.bar[4] & 0xFFFC;
         data->port_info->bus_mastering_base = base;
         data->port_info->use_dma = true;
-        data->dma_page = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
+        data->dma_page = aligned_alloc(PAGE_SIZE, DMA_BUFFER_PAGES * PAGE_SIZE);
 
         if (!is_irq_line_registered(info->irq)) {
             register_irq_line_handler((void (*)(void *)) ata_handle_irq, info->irq, data, true);
