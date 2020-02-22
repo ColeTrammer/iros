@@ -31,6 +31,7 @@ install: all
 
 .PHONY: install-headers
 install-headers:
+	mkdir -p $(SYSROOT)/usr/include
 	cp -R --preserve=timestamps -u $(ROOT)/gen/$(PROJECT_NAME)/include/. $(SYSROOT)/usr/include
 
 # Includes the .d files for each object, if it exists.

@@ -13,6 +13,11 @@
 #define ATA4_IO_BASE      0x168
 #define ATA4_CONTROL_BASE 0x366
 
+#define ATA1_IRQ 14
+#define ATA2_IRQ 15
+#define ATA3_IRQ 14
+#define ATA4_IRQ 15
+
 #define ATA_SECTOR_SIZE 512
 
 #define ATA_DATA_OFFSET          0
@@ -53,14 +58,18 @@
 #define ATA_COMMAND_CACHE_FLUSH 0xE7
 #define ATA_COMMAND_INDENTIFY   0xEC
 
+struct task;
+
 struct ata_port_info {
     uint16_t io_base;
     uint16_t control_base;
+    int irq;
     bool is_slave;
 };
 
 struct ata_device_data {
     struct ata_port_info *port_info;
+    struct task *waiter;
     size_t sector_size;
     size_t num_sectors;
 };

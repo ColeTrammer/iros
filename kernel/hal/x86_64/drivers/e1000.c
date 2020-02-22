@@ -142,7 +142,7 @@ static void e1000_recieve() {
     }
 }
 
-static void handle_interrupt() {
+static void handle_interrupt(void *closure __attribute__((unused))) {
     struct e1000_data *data = interface->private_data;
 
     debug_log("Recived a interrupt for E1000\n");
@@ -204,7 +204,7 @@ void init_intel_e1000(struct pci_configuration *config) {
     write_command(data, E1000_CTRL_IMASK, 0xFF & ~4);
     read_command(data, 0xC0);
 
-    register_irq_line_handler(handle_interrupt, config->interrupt_line, true);
+    register_irq_line_handler(handle_interrupt, config->interrupt_line, NULL, true);
 
     interface = net_create_network_interface("e1000", NETWORK_INTERFACE_ETHERNET, &e1000_ops, data);
 }

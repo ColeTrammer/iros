@@ -19,7 +19,7 @@ all: $(PROJECTS)
 install: all
 
 .PHONY: native
-native:
+native: install-headers
 	for proj in $(NATIVE_PROJECTS); do \
 	  $(MAKE) native -C $(ROOT)/gen/$$proj; \
 	done

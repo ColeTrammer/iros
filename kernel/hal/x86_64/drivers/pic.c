@@ -8,7 +8,8 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 
-static void (*handlers[2 * PIC_IRQS])(void) = { 0 };
+static void (*handlers[2 * PIC_IRQS])(void *) = { 0 };
+static void *closures[2 * PIC_IRQS];
 
 void sendEOI(unsigned int irq_line) {
     if (irq_line >= 8) {
@@ -93,7 +94,7 @@ void pic_generic_handler() {
         }
     }
     if (handlers[irq_line] != NULL) {
-        handlers[irq_line]();
+        handlers[irq_line](closures[irq_line]);
     } else {
         debug_log("Recieved Interrupt on IRQ Line: [ %u ]\n", irq_line);
     }
@@ -101,10 +102,15 @@ void pic_generic_handler() {
     sendEOI(irq_line);
 }
 
-void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, bool use_generic_handler) {
+bool is_irq_line_registered(unsigned int irq_line) {
+    return is_irq_registered(irq_line + PIC_IRQ_OFFSET);
+}
+
+void register_irq_line_handler(void (*handler)(void *cls), unsigned int irq_line, void *closure, bool use_generic_handler) {
     if (irq_line < 2 * PIC_IRQS) {
         if (use_generic_handler) {
             handlers[irq_line] = handler;
+            closures[irq_line] = closure;
             register_irq_handler(&pic_generic_handler_entry, irq_line + PIC_IRQ_OFFSET, false, true);
         } else {
             register_irq_handler(handler, irq_line + PIC_IRQ_OFFSET, false, true);

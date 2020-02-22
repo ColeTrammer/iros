@@ -485,7 +485,7 @@ static unsigned int flags = 0;
 
 static struct key_event event;
 
-static void handle_keyboard_interrupt() {
+static void handle_keyboard_interrupt(void *closure __attribute__((unused))) {
     uint8_t scan_code = inb(KEYBOARD_DATA_PORT);
 
     if (scan_code == KEYBOARD_ACK) {
@@ -558,7 +558,7 @@ static void handle_keyboard_interrupt() {
 }
 
 void init_keyboard() {
-    register_irq_line_handler(&handle_keyboard_interrupt, KEYBOARD_IRQ_LINE, true);
+    register_irq_line_handler(&handle_keyboard_interrupt, KEYBOARD_IRQ_LINE, NULL, true);
 
     while (inb(0x60) & 0x1) {
         inb(KEYBOARD_DATA_PORT);

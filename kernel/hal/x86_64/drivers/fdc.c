@@ -13,10 +13,10 @@ static volatile bool has_been_interrupted = false;
     while (!has_been_interrupted) \
         ;
 
-static void handle_fdc_interrupt() {
+static void handle_fdc_interrupt(void *closure __attribute__((unused))) {
     has_been_interrupted = true;
 }
 
 void init_fdc() {
-    register_irq_line_handler(&handle_fdc_interrupt, FDC_IRQ_LINE, true);
+    register_irq_line_handler(&handle_fdc_interrupt, FDC_IRQ_LINE, NULL, true);
 }

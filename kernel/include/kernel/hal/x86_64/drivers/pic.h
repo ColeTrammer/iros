@@ -35,10 +35,11 @@ void init_pic();
 
 void pic_generic_handler_entry();
 
+bool is_irq_line_registered(unsigned int irq_line);
 void enable_irq_line(uint8_t irq_line);
 void disable_irq_line(uint8_t irq_line);
 
 void sendEOI(unsigned int irq_line);
-void register_irq_line_handler(void (*handler)(void), unsigned int irq_line, bool use_generic_handler);
+void register_irq_line_handler(void (*handler)(void *), unsigned int irq_line, void *closure, bool use_generic_handler);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PIC_H */
