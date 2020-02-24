@@ -14,6 +14,10 @@ FILE *__file_list_head = files + 0;
 FILE *__file_list_tail = files + 2;
 unsigned int __file_list_lock;
 
+#ifndef NDEBUG
+int __should_log;
+#endif /* NDEBUG */
+
 void init_files(int isatty_mask) {
     /* stdin */
     files[0].__fd = 0;
@@ -50,6 +54,10 @@ void init_files(int isatty_mask) {
     files[2].__prev = files + 1;
     files[2].__next = NULL;
     stderr = files + 2;
+
+#ifndef NDEBUG
+    __should_log = getenv("STDIO_DEBUG") ? 1 : 0;
+#endif /* NDEBUG */
 }
 
 #endif /* OLD_STDIO */

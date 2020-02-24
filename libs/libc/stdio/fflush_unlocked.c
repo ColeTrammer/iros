@@ -33,10 +33,9 @@ int fflush_unlocked(FILE *stream) {
             if (lseek(stream->__fd, stream->__position - stream->__buffer_length, SEEK_CUR) < 0) {
                 return EOF;
             }
-
-            stream->__position = stream->__buffer_length = 0;
         }
 
+        stream->__position = stream->__buffer_length = 0;
         return 0;
     }
 

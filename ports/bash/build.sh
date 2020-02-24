@@ -19,12 +19,14 @@ if [ ! -d bash-5.0 ]; then
     git apply ../bash-5.0.patch
     cd ..
 
-    # Install headers for correct build
-    cd ../..
-    make install-headers
-    cd ports/bash
+fi
 
-    # Build
+# Install headers for correct build
+cd ../..
+make install-headers
+cd ports/bash
+
+if [ ! -e build-bash ]; then
     mkdir -p build-bash
     cd build-bash
     ../bash-5.0/configure --host=$HOST --disable-nls --without-bash-malloc --prefix=/usr
@@ -35,8 +37,9 @@ if [ ! -d bash-5.0 ]; then
     cd ..
 fi
 
+# Build
 cd build-bash
 make clean
 make -j5
-make install DESTDIR=$ROOT/sysroot -j5
+make install-strip DESTDIR=$ROOT/sysroot -j5
 cd ..

@@ -76,12 +76,12 @@ static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
 #define MAX_BLOCKS_TO_CACHE 1000
 
 /* Reads blocks at a given offset into the buffer */
-static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks, bool cache) {
     struct ext2_sb_data *data = sb->private_data;
     spin_lock(&sb->super_block_lock);
 
     struct ext2_block *block = NULL;
-    if (num_blocks == 1 && (block = hash_get(data->block_map, &block_offset))) {
+    if (cache && num_blocks == 1 && (block = hash_get(data->block_map, &block_offset))) {
         memcpy(buffer, block->block, sb->block_size);
         spin_unlock(&sb->super_block_lock);
         return num_blocks;
@@ -93,7 +93,7 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
         return -EIO;
     }
 
-    if (num_blocks == 1 && data->num_blocks_cached < MAX_BLOCKS_TO_CACHE) {
+    if (cache && num_blocks == 1 && data->num_blocks_cached < MAX_BLOCKS_TO_CACHE) {
         block = malloc(sizeof(struct ext2_block));
         block->index = block_offset;
         block->block = ext2_allocate_blocks(sb, 1);
@@ -103,6 +103,10 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
 
     spin_unlock(&sb->super_block_lock);
     return num_blocks;
+}
+
+static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+    return __ext2_read_blocks(sb, buffer, block_offset, num_blocks, true);
 }
 
 /* Writes to blocks at a given offset from buffer */
@@ -212,9 +216,25 @@ static int ext2_sync_block_group(struct super_block *sb, uint32_t blk_grp_index)
     return 0;
 }
 
+static void ext2_sync_raw_super_block_with_virtual_super_block(struct super_block *sb) {
+    struct ext2_sb_data *data = sb->private_data;
+
+    sb->num_blocks = data->sb->num_blocks;
+    sb->free_blocks = data->sb->num_unallocated_blocks;
+    sb->available_blocks = sb->free_blocks - data->sb->num_reserved_blocks;
+
+    sb->num_inodes = data->sb->num_inodes;
+    sb->free_inodes = data->sb->num_unallocated_inodes;
+    sb->available_inodes = sb->free_inodes - data->sb->first_non_reserved_inode;
+}
+
 /* Syncs super_block to disk */
 static int ext2_sync_super_block(struct super_block *sb) {
     struct ext2_sb_data *data = sb->private_data;
+
+    // Sync to os super_block structure, since we write to the
+    // actual raw_super_block when accounting fields are updated.
+    ext2_sync_raw_super_block_with_virtual_super_block(sb);
 
     ssize_t ret = ext2_write_blocks(sb, data->sb, 1, 1);
 
@@ -512,6 +532,13 @@ static void ext2_update_tnode_list(struct inode *inode) {
     }
 
     spin_lock(&inode->lock);
+
+    if (inode->tnode_list != NULL) {
+        // NOTE: this prevents duplicate tnode's from being created.
+        //       should eventually just not add duplicates instead though.
+        spin_unlock(&inode->lock);
+        return;
+    }
 
     size_t block_no = 0;
     struct raw_dirent *dirent = raw_dirent_table;
@@ -1047,7 +1074,6 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
 
     struct raw_inode *raw_inode = inode->private_data;
     ssize_t ret = 0;
-    inode->size = offset + len;
 
     if (!(raw_inode->mode & S_IWUSR)) {
         return -EPERM;
@@ -1104,17 +1130,20 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
         }
 
         char *buf = ext2_allocate_blocks(inode->super_block, 1);
-        if (offset % inode->super_block->block_size != 0) {
+        size_t in_block_offset = offset % inode->super_block->block_size;
+        size_t to_write = MIN(len, inode->super_block->block_size - in_block_offset);
+        bool read_block = ((size_t) offset < inode->size) || (in_block_offset != 0);
+        if (read_block) {
             ret = ext2_read_blocks(inode->super_block, buf, block_no, 1);
             if (ret != 1) {
                 return (int) ret;
             }
+        } else {
+            memset(buf, 0, in_block_offset);
+            memset(buf + in_block_offset + to_write, 0, inode->super_block->block_size - (to_write + in_block_offset));
         }
 
-        size_t to_write = MIN(len, inode->super_block->block_size - (offset % inode->super_block->block_size));
-        memcpy(buf + (offset % inode->super_block->block_size), (const void *) (((char *) buffer) + buffer_offset), to_write);
-        memset(buf + (offset % inode->super_block->block_size) + to_write, 0,
-               inode->super_block->block_size - (to_write + (offset % inode->super_block->block_size)));
+        memcpy(buf + in_block_offset, (const void *) (((char *) buffer) + buffer_offset), to_write);
         ret = ext2_write_blocks(inode->super_block, buf, block_no, 1);
         if (ret != 1) {
             ext2_free_blocks(buf);
@@ -1133,6 +1162,7 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
         ext2_free_blocks(indirect_block);
     }
 
+    inode->size = MAX(inode->size, offset + len);
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
     ret = ext2_sync_inode(inode);
     if (ret != 0) {
@@ -1618,7 +1648,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
 
 struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     int error = 0;
-    struct file *dev_file = fs_open(device_path, O_RDWR, &error);
+    struct file *dev_file = fs_open(device_path, O_RDWR, 0, &error);
     if (dev_file == NULL) {
         return NULL;
     }
@@ -1635,35 +1665,36 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
     super_block->dev_file = dev_file;
     super_block->private_data = data;
+    super_block->flags = 0;
     data->block_group_map = hash_create_hash_map(block_group_hash, block_group_equals, block_group_key);
     data->block_map = hash_create_hash_map(block_hash, block_equals, block_key);
     data->num_blocks_cached = 0;
 
     struct ext2_raw_super_block *raw_super_block = ext2_allocate_blocks(super_block, 1);
-    if (ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1) != 1) {
+    if (__ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1, false) != 1) {
         debug_log("Ext2 Read Error: [ Super Block ]\n");
         ext2_free_blocks(raw_super_block);
         return NULL;
     }
-
-    debug_log("Ext2 Num Inodes in Block Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
-    debug_log("Ext2 Num Blocks: [ %#.8X ]\n", raw_super_block->num_blocks);
-    debug_log("Ext2 Num Inodes: [ %#.8X ]\n", raw_super_block->num_inodes);
-    debug_log("Ext2 Num Inodes in Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
-    debug_log("Ext2 Num Blocks in Group: [ %u ]\n", raw_super_block->num_blocks_in_block_group);
 
     data->sb = raw_super_block;
     data->num_block_groups =
         (raw_super_block->num_blocks + raw_super_block->num_blocks_in_block_group - 1) / raw_super_block->num_blocks_in_block_group;
     super_block->block_size = 1024 << raw_super_block->shifted_blck_size;
 
-    /* Other sizes are not supported */
-    assert(super_block->block_size == 1024);
+    debug_log("Ext2 Num Inodes in Block Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
+    debug_log("Ext2 Num Blocks: [ %u ]\n", raw_super_block->num_blocks);
+    debug_log("Ext2 Num Inodes: [ %u ]\n", raw_super_block->num_inodes);
+    debug_log("Ext2 Num Inodes in Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
+    debug_log("Ext2 Num Blocks in Group: [ %u ]\n", raw_super_block->num_blocks_in_block_group);
+    debug_log("Ext2 Block Size: [ %lu ]\n", super_block->block_size);
+    debug_log("Ext2 Num Block Groups: [ %lu ]\n", data->num_block_groups);
 
     blkcnt_t num_blocks =
         (data->num_block_groups * sizeof(struct raw_block_group_descriptor) + super_block->block_size - 1) / super_block->block_size;
     struct raw_block_group_descriptor *raw_block_group_descriptor_table = ext2_allocate_blocks(super_block, num_blocks);
-    if (ext2_read_blocks(super_block, raw_block_group_descriptor_table, 2, num_blocks) != num_blocks) {
+    uint32_t block_group_descriptor_offset = super_block->block_size == 1024 ? 2 : 1;
+    if (__ext2_read_blocks(super_block, raw_block_group_descriptor_table, block_group_descriptor_offset, num_blocks, false) != num_blocks) {
         debug_log("Ext2 Read Error: [ Block Group Descriptor Table ]\n");
         ext2_free_blocks(raw_super_block);
         ext2_free_blocks(raw_block_group_descriptor_table);
@@ -1688,6 +1719,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->readable = true;
     root->writeable = true;
 
+    ext2_sync_raw_super_block_with_virtual_super_block(super_block);
     current_fs->super_block = super_block;
 
     return t_root;

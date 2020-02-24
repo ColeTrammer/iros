@@ -12,6 +12,7 @@
 #include <kernel/sched/task_sched.h>
 
 // #define PAGE_FAULT_DEBUG
+// #define DEVICE_NOT_AVAILABLE_DEBUG
 
 void init_irq_handlers() {
     register_irq_handler(&handle_divide_by_zero, 0, false, false);
@@ -122,6 +123,8 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???
+    dump_kernel_regions(address);
+
     dump_registers_to_screen();
     printf("\n\033[31m%s: Error %lX\n", "Page Fault", task_state->error_code);
     printf("Address: %#.16lX\n", address);
@@ -153,6 +156,10 @@ void invalidate_last_saved(struct task *task) {
 void handle_device_not_available() {
     struct task *current = get_current_task();
     assert(current);
+
+#ifdef DEVICE_NOT_AVAILABLE_DEBUG
+    debug_log("handling: [ %d:%d ]\n", current->process->pid, current->tid);
+#endif /* DEVICE_NOT_AVAILABLE_DEBUG */
 
     if (last_saved == current) {
         return;

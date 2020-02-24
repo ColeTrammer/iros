@@ -1,4 +1,5 @@
 #include <graphics/renderer.h>
+#include <stdlib.h>
 
 void Renderer::fill_rect(int x, int y, int width, int height) {
     for (int i = x; i < x + width; i++) {

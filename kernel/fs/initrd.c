@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
+#include <sys/statvfs.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
@@ -146,6 +147,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     super_block.root = t_root;
     super_block.device = root->device;
     super_block.block_size = PAGE_SIZE;
+    super_block.flags = ST_RDONLY;
 
     struct initrd_file_entry *entry = file_list;
     for (size_t i = 0; i < num_files; i++) {

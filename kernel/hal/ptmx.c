@@ -682,7 +682,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
             char path[16] = { 0 };
             snprintf(path, 15, "/dev/mtty%d", i);
             debug_log("Opening: [ %s ]\n", path);
-            return fs_open(path, flags, error);
+            return fs_open(path, flags, 0, error);
         }
     }
 
@@ -705,7 +705,7 @@ static struct file *tty_open(struct device *device, int flags, int *error) {
     char path[20] = { 0 };
     snprintf(path, 19, "/dev/tty%d", tty_num);
     debug_log("Redirecting /dev/tty to [ %s ]\n", path);
-    return fs_open(path, flags, error);
+    return fs_open(path, flags, 0, error);
 }
 
 struct device_ops tty_ops = { tty_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };

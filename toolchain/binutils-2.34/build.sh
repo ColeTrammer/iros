@@ -21,6 +21,10 @@ if [ ! -e binutils-os_2-2.34 ]; then
     cd ..
 fi
 
+if [ $ONLY_DOWNLOAD_AND_EXTRACT ]; then 
+    exit
+fi
+
 # Install headers for correct build
 cd ../..
 make install-headers

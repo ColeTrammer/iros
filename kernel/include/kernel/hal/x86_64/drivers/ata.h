@@ -13,6 +13,11 @@
 #define ATA4_IO_BASE      0x168
 #define ATA4_CONTROL_BASE 0x366
 
+#define ATA1_IRQ 14
+#define ATA2_IRQ 15
+#define ATA3_IRQ 14
+#define ATA4_IRQ 15
+
 #define ATA_SECTOR_SIZE 512
 
 #define ATA_DATA_OFFSET          0
@@ -49,18 +54,36 @@
 #define ATA_STATUS_BSY  (1 << 7)
 
 #define ATA_COMMAND_READ        0x20
+#define ATA_COMMAND_READ_DMA    0x25
 #define ATA_COMMAND_WRITE       0x30
+#define ATA_COMMAND_WRITE_DMA   0x35
 #define ATA_COMMAND_CACHE_FLUSH 0xE7
 #define ATA_COMMAND_INDENTIFY   0xEC
+
+#define ATA_PRD_END 0x8000U
+
+struct task;
 
 struct ata_port_info {
     uint16_t io_base;
     uint16_t control_base;
-    bool is_slave;
+    uint16_t irq;
+    uint16_t bus_mastering_base;
+    bool is_slave : 1;
+    bool use_dma : 1;
 };
+
+struct ata_physical_range_descriptor {
+    uint32_t phys_addr;
+    uint16_t size;
+    uint16_t flag;
+} __attribute__((packed));
 
 struct ata_device_data {
     struct ata_port_info *port_info;
+    struct ata_physical_range_descriptor prdt[1];
+    uint8_t *dma_page;
+    struct task *waiter;
     size_t sector_size;
     size_t num_sectors;
 };

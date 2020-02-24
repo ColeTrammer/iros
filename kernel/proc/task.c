@@ -27,44 +27,43 @@ struct task *current_task;
 struct task initial_kernel_task;
 struct process initial_kernel_process;
 
-/* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
-uintptr_t map_program_args(uintptr_t start, char **prepend_argv, char **argv, char **envp) {
-    size_t prepend_argc = 0;
+void proc_clone_program_args(char **prepend_argv, char **argv, char **envp, struct args_context *context) {
+    context->prepend_argc = 0;
     size_t prepend_args_str_length = 0;
-    while (prepend_argv && prepend_argv[prepend_argc] != NULL) {
-        prepend_args_str_length += strlen(prepend_argv[prepend_argc++]) + 1;
+    while (prepend_argv && prepend_argv[context->prepend_argc] != NULL) {
+        prepend_args_str_length += strlen(prepend_argv[context->prepend_argc++]) + 1;
     }
 
-    size_t argc = 0;
+    context->argc = 0;
     size_t args_str_length = 0;
-    while (argv[argc++] != NULL) {
-        args_str_length += strlen(argv[argc - 1]) + 1;
+    while (argv[context->argc++] != NULL) {
+        args_str_length += strlen(argv[context->argc - 1]) + 1;
     }
 
-    size_t envc = 0;
+    context->envc = 0;
     size_t env_str_length = 0;
-    while (envp[envc++] != NULL) {
-        env_str_length += strlen(envp[envc - 1]) + 1;
+    while (envp[context->envc++] != NULL) {
+        env_str_length += strlen(envp[context->envc - 1]) + 1;
     }
 
-    char **prepend_args_copy = calloc(prepend_argc, sizeof(char **));
-    char **args_copy = calloc(argc, sizeof(char **));
-    char **envp_copy = calloc(envc, sizeof(char **));
+    context->prepend_args_copy = calloc(context->prepend_argc, sizeof(char **));
+    context->args_copy = calloc(context->argc, sizeof(char **));
+    context->envp_copy = calloc(context->envc, sizeof(char **));
 
-    char *prepend_args_buffer = malloc(prepend_args_str_length);
-    char *args_buffer = malloc(args_str_length);
-    char *env_buffer = malloc(env_str_length);
+    context->prepend_args_buffer = malloc(prepend_args_str_length);
+    context->args_buffer = malloc(args_str_length);
+    context->env_buffer = malloc(env_str_length);
 
     ssize_t j = 0;
     ssize_t i = 0;
     while (prepend_argv && prepend_argv[i]) {
         ssize_t last = j;
         while (prepend_argv[i][j - last] != '\0') {
-            prepend_args_buffer[j] = prepend_argv[i][j - last];
+            context->prepend_args_buffer[j] = prepend_argv[i][j - last];
             j++;
         }
-        prepend_args_buffer[j++] = '\0';
-        prepend_args_copy[i++] = prepend_args_buffer + last;
+        context->prepend_args_buffer[j++] = '\0';
+        context->prepend_args_copy[i++] = context->prepend_args_buffer + last;
     }
 
     i = 0;
@@ -72,69 +71,73 @@ uintptr_t map_program_args(uintptr_t start, char **prepend_argv, char **argv, ch
     while (argv[i] != NULL) {
         ssize_t last = j;
         while (argv[i][j - last] != '\0') {
-            args_buffer[j] = argv[i][j - last];
+            context->args_buffer[j] = argv[i][j - last];
             j++;
         }
-        args_buffer[j++] = '\0';
-        args_copy[i++] = args_buffer + last;
+        context->args_buffer[j++] = '\0';
+        context->args_copy[i++] = context->args_buffer + last;
     }
-    args_copy[i] = NULL;
+    context->args_copy[i] = NULL;
 
     j = 0;
     i = 0;
     while (envp[i] != NULL) {
         ssize_t last = j;
         while (envp[i][j - last] != '\0') {
-            env_buffer[j] = envp[i][j - last];
+            context->env_buffer[j] = envp[i][j - last];
             j++;
         }
-        env_buffer[j++] = '\0';
-        envp_copy[i++] = env_buffer + last;
+        context->env_buffer[j++] = '\0';
+        context->envp_copy[i++] = context->env_buffer + last;
     }
-    envp_copy[i] = NULL;
+    context->envp_copy[i] = NULL;
+}
 
+/* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
+uintptr_t map_program_args(uintptr_t start, struct args_context *context) {
     char **argv_start = (char **) (start - sizeof(char **));
 
-    size_t count = prepend_argc + argc + envc;
+    size_t count = context->prepend_argc + context->argc + context->envc;
     char *args_start = (char *) (argv_start - count);
 
-    for (i = 0; args_copy[i] != NULL; i++) {
-        args_start -= strlen(args_copy[i]) + 1;
-        strcpy(args_start, args_copy[i]);
-        argv_start[i - argc] = args_start;
+    ssize_t i;
+    for (i = 0; context->args_copy[i] != NULL; i++) {
+        args_start -= strlen(context->args_copy[i]) + 1;
+        strcpy(args_start, context->args_copy[i]);
+        argv_start[i - context->argc] = args_start;
     }
 
-    for (i = 0; i < (ssize_t) prepend_argc; i++) {
-        args_start -= strlen(prepend_args_copy[i]) + 1;
-        strcpy(args_start, prepend_args_copy[i]);
-        argv_start[i - prepend_argc - argc] = args_start;
+    for (i = 0; i < (ssize_t) context->prepend_argc; i++) {
+        args_start -= strlen(context->prepend_args_copy[i]) + 1;
+        strcpy(args_start, context->prepend_args_copy[i]);
+        argv_start[i - context->prepend_argc - context->argc] = args_start;
     }
 
     argv_start[0] = NULL;
 
-    for (i = 0; envp_copy[i] != NULL; i++) {
-        args_start -= strlen(envp_copy[i]) + 1;
-        strcpy(args_start, envp_copy[i]);
+    for (i = 0; context->envp_copy[i] != NULL; i++) {
+        args_start -= strlen(context->envp_copy[i]) + 1;
+        strcpy(args_start, context->envp_copy[i]);
         argv_start[i - count] = args_start;
     }
 
-    argv_start[-(prepend_argc + argc + 1)] = NULL;
+    argv_start[-(context->prepend_argc + context->argc + 1)] = NULL;
 
     args_start = (char *) ((((uintptr_t) args_start) & ~0x7) - 0x08);
 
     args_start -= sizeof(size_t);
-    *((size_t *) args_start) = prepend_argc + argc - 1;
+    *((size_t *) args_start) = context->prepend_argc + context->argc - 1;
     args_start -= sizeof(char **);
-    *((char ***) args_start) = argv_start - prepend_argc - argc;
+    *((char ***) args_start) = argv_start - context->prepend_argc - context->argc;
     args_start -= sizeof(char **);
     *((char ***) args_start) = argv_start - count;
 
-    free(prepend_args_copy);
-    free(args_copy);
-    free(envp_copy);
-    free(prepend_args_buffer);
-    free(args_buffer);
-    free(env_buffer);
+    free(context->prepend_args_copy);
+    free(context->args_copy);
+    free(context->envp_copy);
+    free(context->prepend_args_buffer);
+    free(context->args_buffer);
+    free(context->env_buffer);
 
     return (uintptr_t) args_start;
 }
@@ -235,29 +238,16 @@ struct task *load_task(const char *file_name) {
     elf64_load_program(buffer, length, task);
     elf64_map_heap(buffer, task);
 
-    struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
-    task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC | VM_STACK;
-    task_stack->type = VM_TASK_STACK;
-    task_stack->start = find_first_kernel_vm_region()->start - PAGE_SIZE - 2 * 1024 * 1024;
-    task_stack->end = task_stack->start + 2 * 1024 * 1024;
-    task->process->process_memory = add_vm_region(task->process->process_memory, task_stack);
-    map_page(task_stack->end - PAGE_SIZE, task_stack->flags);
-
-    struct vm_region *guard_page = calloc(1, sizeof(struct vm_region));
-    guard_page->flags = VM_PROT_NONE;
-    guard_page->type = VM_TASK_STACK_GUARD;
-    guard_page->start = task_stack->end;
-    guard_page->end = guard_page->start + PAGE_SIZE;
-    task->process->process_memory = add_vm_region(task->process->process_memory, guard_page);
+    proc_allocate_user_stack(process);
 
     arch_load_task(task, elf64_get_entry(buffer));
     free(buffer);
 
     load_paging_structure(old_paging_structure);
 
-    task->process->files[0] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, NULL), 0 };
-    task->process->files[1] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, NULL), 0 };
-    task->process->files[2] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, NULL), 0 };
+    task->process->files[0] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, 0, NULL), 0 };
+    task->process->files[1] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, 0, NULL), 0 };
+    task->process->files[2] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, 0, NULL), 0 };
 
     debug_log("Loaded Task: [ %d, %s ]\n", task->process->pid, file_name);
     return task;

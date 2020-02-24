@@ -19,6 +19,16 @@ struct super_block {
     struct super_block_operations *op;
     blksize_t block_size;
 
+    fsblkcnt_t num_blocks;
+    fsblkcnt_t free_blocks;
+    fsblkcnt_t available_blocks;
+
+    fsfilcnt_t num_inodes;
+    fsfilcnt_t free_inodes;
+    fsfilcnt_t available_inodes;
+
+    int flags;
+
     struct file *dev_file;
     spinlock_t super_block_lock;
 

@@ -51,7 +51,7 @@ static struct file *fake_symlink(struct file *file, int flags, int *error) {
     char *path = get_tnode_path(tnode);
     debug_log("to: [ %s ]\n", path);
 
-    struct file *ret = fs_open(path, flags, error);
+    struct file *ret = fs_open(path, flags, 0, error);
 
     free(path);
     return ret;

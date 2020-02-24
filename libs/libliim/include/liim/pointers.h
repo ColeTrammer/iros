@@ -26,28 +26,22 @@ public:
     }
 
     UniquePtr& operator=(const UniquePtr& other) = delete;
+    template<typename U>
+    UniquePtr& operator=(const UniquePtr<U>& other) = delete;
 
     template<typename U>
     UniquePtr& operator=(UniquePtr<U>&& other) {
-        if (this != &other) {
-            UniquePtr<T> temp(other);
-            swap(temp);
-        }
+        UniquePtr<T> temp(move(other));
+        swap(temp);
         return *this;
     }
 
     UniquePtr& operator=(UniquePtr&& other) {
-        if (this != &other) {
-            UniquePtr<T> temp(other);
-            swap(temp);
-        }
+        UniquePtr<T> temp(move(other));
+        swap(temp);
         return *this;
     }
 
-    template<typename U>
-    void swap(UniquePtr<U>& other) {
-        LIIM::swap(m_ptr, other.m_ptr);
-    }
     void swap(UniquePtr& other) { LIIM::swap(m_ptr, other.m_ptr); }
 
     T& operator*() {

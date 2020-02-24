@@ -87,6 +87,17 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     debug_log("Finished Initializing VM Allocator\n");
 }
 
+void dump_kernel_regions(uintptr_t addr) {
+    struct vm_region *region = kernel_vm_list;
+    while (region) {
+        debug_log("Region: [ %#.16lX, %#.16lX, %lu, %#.16lX ]\n", region->start, region->end, region->type, region->flags);
+        if (addr >= region->start && addr <= region->end) {
+            debug_log("Addr found in above: [ %#.16lX ]\n", addr);
+        }
+        region = region->next;
+    }
+}
+
 void *add_vm_pages_end(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {
@@ -454,6 +465,9 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
         for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
             map_page_flags(i, r->flags);
         }
+
+        length -= r->end - addr;
+        addr = r->end;
     }
 
     spin_unlock(&process->lock);

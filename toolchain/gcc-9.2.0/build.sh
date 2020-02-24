@@ -22,8 +22,12 @@ if [ ! -e gcc-9.2.0 ]; then
     # Run autoconf
     cd gcc-9.2.0
     cd libstdc++-v3
-    autoconf2.69
+    autoconf
     cd ../..
+fi
+
+if [ $ONLY_DOWNLOAD_AND_EXTRACT ]; then 
+    exit
 fi
 
 # Install headers for correct build

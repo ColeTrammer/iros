@@ -8,8 +8,8 @@ LIBS?=
 CFLAGS:=$(CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) -DARCH=$(HOSTARCH) -Werror -Wall -Wextra -D_OS_2_SOURCE
 LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
-CXX_LIBS:=$(CXX_LIBS) -lc -lgraphics -lpthread -lrt
-C_LIBS:=$(C_LIBS) -lpthread -lrt
+CXX_LIBS:=$(CXX_LIBS) -lc -lws -lgraphics -lrt
+C_LIBS:=$(C_LIBS) -lrt
 
 # Sets directories for install if not already set
 DESTDIR?=
@@ -34,6 +34,7 @@ $(BUILDDIR)/initrd/programs/cond_test \
 $(BUILDDIR)/initrd/programs/cleanup_handler_test \
 $(BUILDDIR)/initrd/programs/detached_thread_test \
 $(BUILDDIR)/initrd/programs/fault_test \
+$(BUILDDIR)/initrd/programs/fread_test \
 $(BUILDDIR)/initrd/programs/fwrite \
 $(BUILDDIR)/initrd/programs/getcpuclockid_test \
 $(BUILDDIR)/initrd/programs/getopt_test \

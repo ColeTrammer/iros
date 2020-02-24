@@ -385,7 +385,7 @@ void load_paging_structure(uintptr_t phys_addr) {
 void soft_remove_paging_structure(struct vm_region *list) {
     struct vm_region *region = list;
     while (region != NULL) {
-        if (!(region->flags & VM_GLOBAL) && !(region->type == VM_KERNEL_STACK) && !(region->type == VM_TASK_STACK)) {
+        if (!(region->flags & VM_GLOBAL) && !(region->type == VM_KERNEL_STACK)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
                 unmap_page(page);
             }

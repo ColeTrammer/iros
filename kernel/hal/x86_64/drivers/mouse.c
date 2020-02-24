@@ -99,7 +99,7 @@ static void add_mouse_event(struct mouse_event *event) {
 
 static struct mouse_event s_event = { 0 };
 
-void on_interrupt() {
+void on_interrupt(void *closure __attribute__((unused))) {
     uint8_t status = inb(PS2_CONTROL_REGISTER);
     if (!(((status & 0x20) == 0x20) && (status & 0x1))) {
         return;
@@ -143,7 +143,7 @@ void on_interrupt() {
 }
 
 void init_mouse() {
-    register_irq_line_handler(on_interrupt, MOUSE_IRQ_LINE_NUM, true);
+    register_irq_line_handler(on_interrupt, MOUSE_IRQ_LINE_NUM, NULL, true);
 
     mouse_wait_for_output();
     outb(PS2_CONTROL_REGISTER, 0xA8);

@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <string.h>
 
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
@@ -11,6 +12,10 @@ void init_irqs() {
     idt_descriptor.idt = idt;
     idt_descriptor.limit = NUM_IRQS * sizeof(struct idt_entry) - 1;
     load_idt(idt_descriptor);
+}
+
+bool is_irq_registered(unsigned int irq) {
+    return idt[irq].flags ? true : false;
 }
 
 void register_irq_handler(void *handler, unsigned int irq, bool is_user, bool needs_separate_stack) {

@@ -9,6 +9,8 @@ int setvbuf(FILE *__restrict stream, char *__restrict buf, int mode, size_t size
         return -1;
     }
 
+    __stdio_log(stream, "setvbuf: [ %d, %p, %d, %lu ]\n", stream->__fd, buf, mode, size);
+
     fflush(stream);
 
     if (stream->__flags & __STDIO_OWNED) {

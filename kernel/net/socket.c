@@ -163,10 +163,10 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
                     debug_log("Connection terminated: [ %lu ]\n", socket->id);
                     return 0;
                 }
-            }
-            default: {
                 break;
             }
+            default:
+                break;
         }
 
         if (socket->type & SOCK_NONBLOCK) {
@@ -181,6 +181,8 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
                 return -EAGAIN;
             }
+
+            continue;
         }
 
         proc_block_until_socket_is_readable(get_current_task(), socket);
@@ -192,8 +194,6 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         socket->data_tail = NULL;
         socket->readable = false;
     }
-
-    spin_unlock(&socket->lock);
 
     if (socket->protocol == IPPROTO_TCP) {
         struct inet_socket_data *data = socket->private_data;
@@ -210,6 +210,8 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             }
         }
     }
+
+    spin_unlock(&socket->lock);
 
     size_t to_copy = MIN(len, data->len);
     memcpy(buf, data->data, to_copy);
@@ -273,8 +275,9 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
 
     debug_log("Sent message to: [ %lu ]\n", to_send->id);
 
+    ssize_t ret = socket_data->len;
     spin_unlock(&to_send->lock);
-    return (ssize_t) socket_data->len;
+    return ret;
 }
 
 int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags) {

@@ -10,13 +10,18 @@ struct queued_signal;
 struct task;
 
 struct timer {
-    // Linked list between timer waiting on same clock
+    // Linked list between timers waiting on same clock
     struct timer *next;
     struct timer *prev;
+
+    // Linked list between timers of same process
+    struct timer *proc_next;
+    struct timer *proc_prev;
+
     struct clock *clock;
 
     struct itimerspec spec;
-    struct sigevent event;
+    int event_type;
     int overuns;
     timer_t id;
     struct queued_signal *signal;

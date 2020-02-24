@@ -204,7 +204,10 @@ $(BUILDDIR)/libs/libc/sys/os_2/set_thread_self_pointer.o \
 $(BUILDDIR)/libs/libc/sys/os_2/tgkill.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
 $(BUILDDIR)/libs/libc/sys/select/select.o \
+$(BUILDDIR)/libs/libc/sys/stat/mknod.o \
 $(BUILDDIR)/libs/libc/sys/stat/stat.o \
+$(BUILDDIR)/libs/libc/sys/statvfs/fstatvfs.o \
+$(BUILDDIR)/libs/libc/sys/statvfs/statvfs.o \
 $(BUILDDIR)/libs/libc/sys/syscall/syscall_to_string.o \
 $(BUILDDIR)/libs/libc/sys/time/time.o \
 $(BUILDDIR)/libs/libc/sys/times/times.o \
@@ -220,6 +223,7 @@ $(BUILDDIR)/libs/libc/time/clock_nanosleep.o \
 $(BUILDDIR)/libs/libc/time/clock_settime.o \
 $(BUILDDIR)/libs/libc/time/nanosleep.o \
 $(BUILDDIR)/libs/libc/time/time.o \
+$(BUILDDIR)/libs/libc/ulimit/ulimit.o \
 $(BUILDDIR)/libs/libc/unistd/_exit.o \
 $(BUILDDIR)/libs/libc/unistd/access.o \
 $(BUILDDIR)/libs/libc/unistd/alarm.o \
@@ -254,6 +258,7 @@ $(BUILDDIR)/libs/libc/unistd/isatty.o \
 $(BUILDDIR)/libs/libc/unistd/link.o \
 $(BUILDDIR)/libs/libc/unistd/lseek.o \
 $(BUILDDIR)/libs/libc/unistd/lstat.o \
+$(BUILDDIR)/libs/libc/unistd/pathconf.o \
 $(BUILDDIR)/libs/libc/unistd/pause.o \
 $(BUILDDIR)/libs/libc/unistd/pipe.o \
 $(BUILDDIR)/libs/libc/unistd/pread.o \

@@ -10,6 +10,12 @@
 
 #define PCI_BUS_MAX  256
 #define PCI_SLOT_MAX 32
+#define PCI_FUNC_MAX 8
+
+#define PCI_MULTI_FUNCTION_FLAG 0x80
+
+#define PCI_CLASS_MASS_STORAGE      0x1
+#define PCI_SUBCLASS_IDE_CONTROLLER 0x1
 
 #define PCI_VENDOR_INTEL       0x8086
 #define PCI_DEVICE_INTEL_E1000 0x100E
@@ -92,8 +98,8 @@ static inline void pci_write_config_word(uint8_t bus, uint8_t slot, uint8_t func
     outl(PCI_CONFIG_DATA, to_write);
 }
 
-static inline uint16_t pci_get_vendor(uint8_t bus, uint8_t slot) {
-    return pci_read_config_word(bus, slot, 0, 0);
+static inline uint16_t pci_get_vendor(uint8_t bus, uint8_t slot, uint8_t function) {
+    return pci_read_config_word(bus, slot, function, 0);
 }
 
 static inline void pci_read_configuation(uint8_t bus, uint8_t slot, uint8_t func, struct pci_configuration *config) {
@@ -113,6 +119,7 @@ static inline void pci_enable_bus_mastering(struct pci_configuration *config) {
     pci_write_config_word(config->bus, config->slot, config->func, ((uintptr_t) &config->command) - ((uintptr_t) config), config->command);
 }
 
+bool pci_config_for_class(uint8_t class_code, uint8_t subclass, struct pci_configuration *config);
 void init_pci();
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PCI_H */

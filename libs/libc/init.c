@@ -41,11 +41,11 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     set_thread_self_pointer(__threads, &__threads->locked_robust_mutex_node_list_head);
 
     sigset_t set = { 0 };
-    set |= (UINT64_C(1) << __PTHREAD_CANCEL_SIGNAL);
+    set |= (UINT64_C(1) << (__PTHREAD_CANCEL_SIGNAL - UINT64_C(1)));
     syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
 
     environ = envp;
 
-    init_files(__initial_process_info.isatty_mask);
     init_env();
+    init_files(__initial_process_info.isatty_mask);
 }

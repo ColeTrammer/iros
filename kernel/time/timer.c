@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <search.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -60,7 +61,7 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     }
 
     to_add->overuns = 0;
-    to_add->event = *sevp;
+    to_add->event_type = sevp->sigev_notify;
     to_add->id = allocate_timerid();
     to_add->next = NULL;
     to_add->prev = NULL;
@@ -75,16 +76,25 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     to_add->clock = clock;
     to_add->task = get_current_task();
 
-    if (to_add->event.sigev_notify == SIGEV_SIGNAL) {
+    if (to_add->event_type == SIGEV_SIGNAL || to_add->event_type == SIGEV_SIGNAL) {
         to_add->signal = malloc(sizeof(struct queued_signal));
         if (!to_add->signal) {
             free(to_add);
             return -EAGAIN;
         }
 
-        to_add->signal->info.si_value = to_add->event.sigev_value;
+        to_add->signal->info.si_value = sevp->sigev_value;
         to_add->signal->info.si_code = SI_TIMER;
-        to_add->signal->info.si_signo = to_add->event.sigev_signo;
+        to_add->signal->info.si_signo = sevp->sigev_signo;
+    }
+
+    struct process *process = to_add->task->process;
+    if (!process->timers) {
+        to_add->proc_next = NULL;
+        to_add->proc_prev = NULL;
+        process->timers = to_add;
+    } else {
+        insque(&to_add->proc_next, &process->timers->proc_next);
     }
 
     hash_put(timer_map, to_add);
@@ -94,7 +104,16 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
 }
 
 int time_delete_timer(struct timer *timer) {
-    time_remove_timer_from_clock(timer->clock, timer);
+    if (time_is_timer_armed(timer)) {
+        time_remove_timer_from_clock(timer->clock, timer);
+    }
+
+    struct process *process = timer->task->process;
+    if (process->timers == timer) {
+        process->timers = timer->next;
+    }
+    remque(&timer->proc_next);
+
     hash_del(timer_map, &timer->id);
     free_timerid(timer->id);
     free(timer);
@@ -138,8 +157,9 @@ int time_set_timer(struct timer *timer, int flags, const struct itimerspec *new_
 }
 
 void time_fire_timer(struct timer *timer) {
-    switch (timer->event.sigev_notify) {
+    switch (timer->event_type) {
         case SIGEV_SIGNAL:
+        case SIGEV_THREAD:
             // If already allocated, update overrun count.
             if (timer->signal->flags & QUEUED_SIGNAL_DONT_FREE_FLAG) {
                 timer->overuns++;
@@ -149,8 +169,6 @@ void time_fire_timer(struct timer *timer) {
                 timer->signal->flags |= QUEUED_SIGNAL_DONT_FREE_FLAG;
                 task_enqueue_signal_object(timer->task, timer->signal);
             }
-            break;
-        case SIGEV_THREAD:
             break;
         case SIGEV_KERNEL:
             break;
@@ -167,10 +185,14 @@ void time_tick_timer(struct timer *timer, long nanoseconds) {
     timer->spec.it_value = time_sub(timer->spec.it_value, to_sub);
 
     // This means timer expired
-    if (timer->spec.it_value.tv_sec <= 0) {
-        time_fire_timer(timer);
-        timer->spec.it_value = timer->spec.it_interval;
-        if (!time_is_timer_armed(timer)) {
+    if (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0)) {
+        if (timer->spec.it_interval.tv_sec != 0 || timer->spec.it_interval.tv_nsec != 0) {
+            do {
+                time_fire_timer(timer);
+                timer->spec.it_value = time_add(timer->spec.it_value, timer->spec.it_interval);
+            } while (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0));
+        } else {
+            time_fire_timer(timer);
             time_remove_timer_from_clock(timer->clock, timer);
         }
     }
