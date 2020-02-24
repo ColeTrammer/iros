@@ -24,10 +24,8 @@ My second attempt to create an OS
 * Run `make run` within the top level directory
 
 # TODO
-* Shell supporting if, for, etc
 * Networking (TCP resending)
 * Graphics (windowing support)
-* mmap in kernel (now just need support for files)
 * configuration/startup files
 * SMP
 * pthreads like library (conditions, barriers, cancellation, rdwrlock, scheduling)
@@ -36,7 +34,4 @@ My second attempt to create an OS
 # Current Issues
 * Unix permission support is extremely limited, nothing has uids or gids, and the
   execute but is never respected.
-* Created files can only be read by this OS, not any others. This is probably an issue
-  in block allocation that causes the inode's data blocks to not be marked as used, but
-  I do not know for certain.
 * make run always rebuilds the disk image, so we can never save info in between sessions.
