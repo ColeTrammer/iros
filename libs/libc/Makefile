@@ -332,6 +332,7 @@ $(BUILDDIR)/%.libk.o: $(ROOT)/%.S
 # Cleans by removing all .o, .d, and .a files
 .PHONY: clean
 clean:
+	rm -f $(REGEX_GENERATED_FILES)
 	rm -f $(BINARIES)
 	rm -f $(OBJS) $(LIBK_OBJS) $(ARCH_RAW_OBJS) $(LIBM_OBJS)
 	rm -f $(OBJS:.o=.d) $(LIBK_OBJS:.o=.d) $(ARCH_RAW_OBJS:.o=.d) $(LIBM_OBJS:.o=.d)

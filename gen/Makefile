@@ -34,3 +34,9 @@ install-headers:
 .PHONY: $(PROJECTS)
 $(PROJECTS):
 	$(MAKE) install -C $(ROOT)/gen/$@
+
+.PHONY: clean
+clean:
+	for proj in $(PROJECTS); do \
+	  $(MAKE) clean -C $(ROOT)/gen/$$proj; \
+	done

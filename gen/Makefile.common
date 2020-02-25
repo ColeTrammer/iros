@@ -34,6 +34,9 @@ install-headers:
 	mkdir -p $(SYSROOT)/usr/include
 	cp -R --preserve=timestamps -u $(ROOT)/gen/$(PROJECT_NAME)/include/. $(SYSROOT)/usr/include
 
+.PHONY: clean
+clean:
+
 # Includes the .d files for each object, if it exists.
 # This will cause any object that depends on a specific header,
 # that was changed, to be recompiled, as this include will 

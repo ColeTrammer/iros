@@ -32,6 +32,9 @@ $(BUILDDIR)/%.o: $(ROOT)/%.cpp
 install: all
 	cp --preserve=timestamps $(EXECUTABLE) $(SYSROOT)/bin
 
+.PHONY: clean
+clean:
+
 # Includes the .d files for each object, if it exists.
 # This will cause any object that depends on a specific header,
 # that was changed, to be recompiled, as this include will 

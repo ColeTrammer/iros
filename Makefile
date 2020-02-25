@@ -73,9 +73,13 @@ native:
 # Cleans by removing all output directories and calling each project's clean
 .PHONY: clean
 clean:
+	for dir in $(PROJECTS); do \
+	  $(MAKE) clean -C $(ROOT)/$$dir; \
+	done
+	rm -rf $(SYSROOT)
 	rm -rf $(ISODIR)
 	rm -rf $(BUILDDIR)
-	rm -f $(ROOT)/initrd/files/*.o
+	rm -rf $(ROOT)/initrd/files
 	rm -f $(ROOT)/*.dis
 	rm -f $(ROOT)/debug.log
 	rm -f $(ROOT)/os_2.iso

@@ -27,3 +27,9 @@ install-headers:
 	for proj in $(HEADER_PROJECTS); do \
 	  $(MAKE) install-headers -C $(ROOT)/userland/$$proj; \
 	done
+
+.PHONY: clean
+clean:
+	for proj in $(PROJECTS); do \
+	  $(MAKE) clean -C $(ROOT)/userland/$$proj; \
+	done

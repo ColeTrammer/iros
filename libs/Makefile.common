@@ -26,4 +26,7 @@ install-library: all
 	mkdir -p $(SYSROOT)/usr/lib
 	cp --preserve=timestamps $(LIBRARY) $(SYSROOT)/usr/lib
 
+.PHONY: clean
+clean:
+
 -include $(OBJS:.o:.d)

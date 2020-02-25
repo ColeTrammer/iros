@@ -20,9 +20,10 @@ $(BUILDDIR)/libs/libc/wordexp/wordexp.o
 EXECUTABLE=$(BUILDDIR)/userland/sh/sh
 
 GENERATED_FILES=\
-generic_sh_parser.cpp \
+generic_sh_parser_impl.cpp \
 generic_sh_parser.h \
-sh_token_type.h
+sh_token_type.h \
+sh.info
 
 $(EXECUTABLE) $(OBJS): $(GENERATED_FILES)
 
@@ -33,3 +34,6 @@ export LD=$(CXX)
 export CPPFLAGS+=-DGENERIC_SH_PARSER_DEBUG
 
 include $(ROOT)/userland/Makefile.common
+
+clean:
+	rm -f $(GENERATED_FILES)

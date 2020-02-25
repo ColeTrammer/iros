@@ -28,7 +28,13 @@ librt: libpthread
 .PHONY: install-headers
 install-headers:
 	for lib in $(HEADER_LIBS); do \
-	    $(MAKE) install-headers -C $(ROOT)/libs/$$lib; \
+	  $(MAKE) install-headers -C $(ROOT)/libs/$$lib; \
+	done
+
+.PHONY: clean
+clean:
+	for lib in $(LIBS); do \
+	  $(MAKE) clean -C $(ROOT)/libs/$$lib; \
 	done
 
 # Makes project by calling its Makefile
