@@ -175,7 +175,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
 
         if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
             struct timespec timeout = time_from_timeval(socket->timeout);
-            proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, timeout);
+            proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
 
             // We timed out
             if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
