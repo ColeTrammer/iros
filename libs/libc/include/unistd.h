@@ -63,6 +63,7 @@ int chown(const char *pathname, uid_t owner, gid_t group);
 int pause(void);
 int sysconf(int name);
 long pathconf(const char *path, int name);
+int gethostname(char *name, size_t len);
 
 ssize_t read(int fd, void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count);
