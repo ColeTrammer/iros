@@ -13,13 +13,13 @@ void spawn_process(char **argv, uid_t uid, gid_t gid, bool redirect) {
     int pid = fork();
     if (pid == 0) {
         if (uid != 0) {
-            if (setuid(uid)) {
-                perror("setuid");
+            if (setgid(gid)) {
+                perror("setgid");
                 exit(1);
             }
 
-            if (setgid(gid)) {
-                perror("setgid");
+            if (setuid(uid)) {
+                perror("setuid");
                 exit(1);
             }
 
