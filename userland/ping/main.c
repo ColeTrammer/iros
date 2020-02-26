@@ -44,6 +44,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    if (seteuid(getuid())) {
+        perror("seteuid");
+        return 1;
+    }
+
     struct timeval tv = { 1, 0 };
     if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) == -1) {
         perror("setsockopt");

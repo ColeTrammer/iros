@@ -404,6 +404,10 @@ int net_setsockopt(struct file *file, int level, int optname, const void *optval
 }
 
 int net_socket(int domain, int type, int protocol) {
+    if (type == SOCK_RAW && get_current_task()->process->euid != 0) {
+        return -EPERM;
+    }
+
     switch (domain) {
         case AF_UNIX:
             return net_unix_socket(domain, type, protocol);
