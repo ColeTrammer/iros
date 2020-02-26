@@ -31,13 +31,13 @@ static void read_pw_entry(char *string, struct passwd *passwd) {
 #define _(x)        x
 #define to_uid_t(x) ((uid_t) strtoul(x, NULL, 10))
 #define to_gid_t(x) ((gid_t) strtoul(x, NULL, 10))
-#define READ_ENTRY(name, f)                                \
-    do {                                                   \
-        char *start = &string[++i];                        \
-        for (; string[i] != ':' && string[i] != '\0'; i++) \
-            ;                                              \
-        string[i] = '\0';                                  \
-        passwd->pw_##name = f(start);                      \
+#define READ_ENTRY(name, f)                                                     \
+    do {                                                                        \
+        char *start = &string[++i];                                             \
+        for (; string[i] != ':' && string[i] != '\0' && string[i] != '\n'; i++) \
+            ;                                                                   \
+        string[i] = '\0';                                                       \
+        passwd->pw_##name = f(start);                                           \
     } while (0);
 
     READ_ENTRY(name, _);

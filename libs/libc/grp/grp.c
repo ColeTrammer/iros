@@ -56,8 +56,8 @@ static void read_gr_entry(char *string, struct group *group) {
             group->gr_mem[j] = NULL;
         } else {
             group->gr_mem[j] = string + gr_mem_start;
-            while (string[gr_mem_start++] != '\0')
-                ;
+            while (string[gr_mem_start] != '\0' && string[gr_mem_start] != '\n')
+                gr_mem_start++;
         }
     }
 }
