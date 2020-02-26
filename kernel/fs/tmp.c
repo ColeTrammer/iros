@@ -162,7 +162,7 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
 
     spin_lock(&inode->lock);
     if (data->contents == NULL) {
-        data->max = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        data->max = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(data->contents);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
@@ -247,16 +247,9 @@ int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_na
     return 0;
 }
 
-static uintptr_t joke_allocator = 0x500000000000ULL;
-
 intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
     if (offset != 0 || !(flags & MAP_SHARED) || len > inode->size || len == 0) {
         return -EINVAL;
-    }
-
-    if (!addr) {
-        addr = (void *) joke_allocator;
-        joke_allocator += 0x500000000ULL;
     }
 
     struct tmp_data *data = inode->private_data;
@@ -266,30 +259,16 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         bump_vm_object(inode->vm_object);
     }
 
-    struct vm_region *region = calloc(1, sizeof(struct vm_region));
-    assert(region);
-
-    region->start = (uintptr_t) addr;
-    region->end = ((region->start + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-    region->flags = VM_USER | VM_NO_EXEC;
-    if (prot & PROT_EXEC) {
-        region->flags &= ~VM_NO_EXEC;
-    } else if (prot & PROT_WRITE) {
-        region->flags |= VM_WRITE;
-    }
-    region->type = VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES;
+    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     region->vm_object = inode->vm_object;
     region->vm_object_offset = 0;
-
-    struct task *current = get_current_task();
-    current->process->process_memory = add_vm_region(current->process->process_memory, region);
 
     int ret = vm_map_region_with_object(region);
     if (ret < 0) {
         return (intptr_t) ret;
     }
 
-    return (intptr_t) addr;
+    return (intptr_t) region->start;
 }
 
 int tmp_read_all(struct inode *inode, void *buffer) {

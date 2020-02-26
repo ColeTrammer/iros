@@ -18,9 +18,14 @@ Window::Window(const Rect& rect, Message::CreateWindowResponse& created_data) : 
     int shm_front = shm_open(created_data.shared_buffer_path, O_RDWR, 0);
     created_data.shared_buffer_path[strlen(created_data.shared_buffer_path) - 1]++;
     int shm_back = shm_open(created_data.shared_buffer_path, O_RDWR, 0);
+    assert(shm_front != -1);
+    assert(shm_back != -1);
 
     void* front_raw_memory = mmap(nullptr, created_data.shared_buffer_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm_front, 0);
     void* back_raw_memory = mmap(nullptr, created_data.shared_buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_back, 0);
+    assert(front_raw_memory != MAP_FAILED);
+    assert(back_raw_memory != MAP_FAILED);
+
     close(shm_front);
     close(shm_back);
 

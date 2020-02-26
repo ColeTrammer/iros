@@ -17,8 +17,8 @@ if echo "$1" | grep -Eq '[-][-]debug'; then
     x-terminal-emulator -e "gdb"
 else
     # export DEFINES="-DKERNEL_NO_GRAPHICS -DKERNEL_NO_DEBUG_COLORS -DKERNEL_MALLOC_DEBUG"
-    export DEFINES="-DKERNEL_NO_GRAPHICS"
-    # export DEFINES=""
+    # export DEFINES="-DKERNEL_NO_GRAPHICS"
+    export DEFINES=""
 
     # Calls make to build iso
     make

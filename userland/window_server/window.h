@@ -26,8 +26,8 @@ public:
         m_front_buffer = temp;
     }
 
-    SharedPtr<PixelBuffer> buffer() { return m_front_buffer; }
-    const SharedPtr<PixelBuffer> buffer() const { return m_front_buffer; }
+    SharedPtr<PixelBuffer>& buffer() { return m_front_buffer; }
+    const SharedPtr<PixelBuffer>& buffer() const { return m_front_buffer; }
 
 private:
     String m_shm_path;

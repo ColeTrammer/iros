@@ -31,7 +31,6 @@ $(GENERATED_FILES): sh.y
 	$(PARSER) $< 2>sh.info
 
 export LD=$(CXX)
-export CPPFLAGS+=-DGENERIC_SH_PARSER_DEBUG
 
 include $(ROOT)/userland/Makefile.common
 
