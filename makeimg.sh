@@ -12,6 +12,8 @@ cp -r base/* mnt
 cp -r sysroot/* mnt
 chown -R 100:100 mnt/home/eloc
 
+chmod u+s mnt/bin/su
+
 umount /dev/loop100
 losetup -d /dev/loop100
 

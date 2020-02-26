@@ -418,9 +418,8 @@ SYS_CALL(close) {
 }
 
 static int execve_helper(const char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
-                         dev_t *device, ino_t *ino_id, char **argv) {
-    struct inode *inode;
-    int ret = fs_read_all_path(*path, (void **) buffer, buffer_length, &inode);
+                         struct inode **inode, int *depth, char **argv) {
+    int ret = fs_read_all_path(*path, (void **) buffer, buffer_length, inode);
     if (ret < 0) {
         return ret;
     }
@@ -485,14 +484,12 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
 
             free(*buffer);
             *buffer = NULL;
-            return execve_helper(path, buffer, buffer_length, prepend_argv, prepend_argv_length, device, ino_id, argv);
+            (*depth)++;
+            return execve_helper(path, buffer, buffer_length, prepend_argv, prepend_argv_length, inode, depth, argv);
         }
 
         return -ENOEXEC;
     }
-
-    *device = inode->device;
-    *ino_id = inode->index;
 
     return 0;
 }
@@ -514,9 +511,9 @@ SYS_CALL(execve) {
     size_t length = 0;
     char **prepend_argv = NULL;
     size_t prepend_argv_length = 0;
-    dev_t device = 0;
-    ino_t ino_id = 0;
-    int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &device, &ino_id, argv);
+    int depth = 0;
+    struct inode *inode;
+    int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &inode, &depth, argv);
     if (error) {
         for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
             free(prepend_argv[i]);
@@ -530,8 +527,22 @@ SYS_CALL(execve) {
     struct task *task = calloc(1, sizeof(struct task));
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
-    process->inode_dev = device;
-    process->inode_id = ino_id;
+    process->inode_dev = inode->device;
+    process->inode_id = inode->index;
+
+    process->uid = current->process->uid;
+    if (depth == 0 && (inode->mode & S_ISUID)) {
+        process->euid = inode->uid;
+    } else {
+        process->euid = current->process->euid;
+    }
+
+    process->gid = current->process->gid;
+    if (depth == 0 && (inode->mode & S_ISGID)) {
+        process->egid = inode->gid;
+    } else {
+        process->egid = current->process->egid;
+    }
 
     // Dup open file descriptors
     for (int i = 0; i < FOPEN_MAX; i++) {
@@ -553,10 +564,6 @@ SYS_CALL(execve) {
     init_spinlock(&process->lock);
     process->pgid = current->process->pgid;
     process->ppid = current->process->ppid;
-    process->uid = current->process->uid;
-    process->euid = current->process->euid;
-    process->gid = current->process->gid;
-    process->egid = current->process->egid;
     process->sid = current->process->sid;
     process->umask = current->process->umask;
     process->process_memory = kernel_stack;
@@ -1807,7 +1814,7 @@ SYS_CALL(setuid) {
     SYS_PARAM1(uid_t, uid);
 
     struct process *current = get_current_task()->process;
-    if (current->uid == 0) {
+    if (current->euid == 0) {
         current->euid = uid;
         current->uid = uid;
         SYS_RETURN(0);
@@ -1827,7 +1834,7 @@ SYS_CALL(seteuid) {
     SYS_PARAM1(uid_t, euid);
 
     struct process *current = get_current_task()->process;
-    if (current->uid == 0) {
+    if (current->euid == 0) {
         current->uid = euid;
         SYS_RETURN(0);
     }
@@ -1846,7 +1853,7 @@ SYS_CALL(setgid) {
     SYS_PARAM1(gid_t, gid);
 
     struct process *current = get_current_task()->process;
-    if (current->gid == 0) {
+    if (current->euid == 0) {
         current->egid = gid;
         current->gid = gid;
         SYS_RETURN(0);
@@ -1866,7 +1873,7 @@ SYS_CALL(setegid) {
     SYS_PARAM1(gid_t, egid);
 
     struct process *current = get_current_task()->process;
-    if (current->gid == 0) {
+    if (current->euid == 0) {
         current->gid = egid;
         SYS_RETURN(0);
     }
