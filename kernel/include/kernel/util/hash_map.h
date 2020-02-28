@@ -38,4 +38,11 @@ void hash_free_hash_map(struct hash_map *map);
 
 void hash_for_each(struct hash_map *map, void (*f)(void *o, void *d), void *d);
 
+#define __HASH_MAKE_NAME(prefix, suffix) prefix##_##suffix
+
+#define HASH_DEFINE_FUNCTIONS(name_prefix, type, key_type, key_name)                                                                   \
+    static int __HASH_MAKE_NAME(name_prefix, hash)(void *key_name, int num_buckets) { return *((key_type *) key_name) % num_buckets; } \
+    static int __HASH_MAKE_NAME(name_prefix, equals)(void *a, void *b) { return *((key_type *) a) == *((key_type *) b); }              \
+    static void *__HASH_MAKE_NAME(name_prefix, key)(void *obj) { return &((type *) obj)->key_name; }
+
 #endif /* _KERNEL_UTIL_HASH_MAP_H */

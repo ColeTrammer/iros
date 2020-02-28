@@ -32,17 +32,7 @@ static struct file_operations socket_file_ops = { socket_file_close, net_read, n
 
 static struct hash_map *map;
 
-static int socket_hash(void *i, int num_buckets) {
-    return *((unsigned long *) i) % num_buckets;
-}
-
-static int socket_equals(void *i1, void *i2) {
-    return *((unsigned long *) i1) == *((unsigned long *) i2);
-}
-
-static void *socket_key(void *socket) {
-    return &((struct socket *) socket)->id;
-}
+HASH_DEFINE_FUNCTIONS(socket, struct socket, unsigned long, id)
 
 static int socket_file_close(struct file *file) {
     assert(file);

@@ -12,17 +12,7 @@
 
 static struct hash_map *map;
 
-static int hash(void *i, int num_buckets) {
-    return *((uint16_t *) i) % num_buckets;
-}
-
-static int equals(void *i1, void *i2) {
-    return *((uint16_t *) i1) == *((uint16_t *) i2);
-}
-
-static void *key(void *p) {
-    return &((struct port_to_socket_id *) p)->port;
-}
+HASH_DEFINE_FUNCTIONS(port, struct port_to_socket_id, uint16_t, port)
 
 struct socket *net_get_socket_from_port(uint16_t port) {
     struct port_to_socket_id *p = hash_get(map, &port);
@@ -83,5 +73,5 @@ void net_unbind_port(uint16_t port) {
 }
 
 void init_ports() {
-    map = hash_create_hash_map(hash, equals, key);
+    map = hash_create_hash_map(port_hash, port_equals, port_key);
 }

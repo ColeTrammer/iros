@@ -19,17 +19,7 @@ static clockid_t id_start = 10; // Start at 10 since CLOCK_MONOTONIC etc. are re
 
 static struct hash_map *clock_map;
 
-static int clock_hash(void *index, int num_buckets) {
-    return *((clockid_t *) index) % num_buckets;
-}
-
-static int clock_equals(void *i1, void *i2) {
-    return *((clockid_t *) i1) == *((clockid_t *) i2);
-}
-
-static void *clock_key(void *clock) {
-    return &((struct clock *) clock)->id;
-}
+HASH_DEFINE_FUNCTIONS(clock, struct clock, clockid_t, id)
 
 static clockid_t allocate_clockid() {
     spin_lock(&id_lock);

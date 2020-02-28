@@ -42,29 +42,8 @@ static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL 
 
 static struct file_operations ext2_dir_f_op = { NULL, NULL, NULL, NULL };
 
-static int block_group_hash(void *index, int num_buckets) {
-    return *((size_t *) index) % num_buckets;
-}
-
-static int block_group_equals(void *i1, void *i2) {
-    return *((size_t *) i1) == *((size_t *) i2);
-}
-
-static void *block_group_key(void *block_group) {
-    return &((struct ext2_block_group *) block_group)->index;
-}
-
-static int block_hash(void *index, int num_buckets) {
-    return *((uint32_t *) index) % num_buckets;
-}
-
-static int block_equals(void *i1, void *i2) {
-    return *((uint32_t *) i1) == *((uint32_t *) i2);
-}
-
-static void *block_key(void *block_obj) {
-    return &((struct ext2_block *) block_obj)->index;
-}
+HASH_DEFINE_FUNCTIONS(block_group, struct ext2_block_group, size_t, index)
+HASH_DEFINE_FUNCTIONS(block, struct ext2_block, uint32_t, index)
 
 /* Allocate space to read blocks (eventually should probably not use malloc and instead another mechanism) */
 static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {

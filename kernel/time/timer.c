@@ -16,17 +16,7 @@ static timer_t id_start = 0;
 
 static struct hash_map *timer_map;
 
-static int timer_hash(void *index, int num_buckets) {
-    return *((timer_t *) index) % num_buckets;
-}
-
-static int timer_equals(void *i1, void *i2) {
-    return *((timer_t *) i1) == *((timer_t *) i2);
-}
-
-static void *timer_key(void *timer) {
-    return &((struct timer *) timer)->id;
-}
+HASH_DEFINE_FUNCTIONS(timer, struct timer, timer_t, id)
 
 static timer_t allocate_timerid() {
     spin_lock(&id_lock);

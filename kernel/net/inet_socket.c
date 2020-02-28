@@ -32,17 +32,7 @@ static void *ip_v4_and_port_key(void *m) {
     return &((struct tcp_socket_mapping *) m)->key;
 }
 
-static int tcp_data_hash(void *k, int num_buckets) {
-    return *((uint32_t *) k) % num_buckets;
-}
-
-static int tcp_data_equals(void *i1, void *i2) {
-    return *((uint32_t *) i1) == *((uint32_t *) i2);
-}
-
-static void *tcp_data_key(void *tcp_data) {
-    return &((struct tcp_packet_data *) tcp_data)->sequence_number;
-}
+HASH_DEFINE_FUNCTIONS(tcp_data, struct tcp_packet, uint32_t, sequence_number)
 
 static void create_tcp_socket_mapping(struct socket *socket) {
     assert(socket->private_data);

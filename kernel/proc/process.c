@@ -19,21 +19,7 @@ extern struct process initial_kernel_process;
 
 static struct hash_map *map;
 
-static int hash(void *pid, int num_buckets) {
-    assert(pid);
-    return *((pid_t *) pid) % num_buckets;
-}
-
-static int equals(void *p1, void *p2) {
-    assert(p1);
-    assert(p2);
-    return *((pid_t *) p1) == *((pid_t *) p2);
-}
-
-static void *key(void *p) {
-    assert(p);
-    return &((struct process *) p)->pid;
-}
+HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
 void proc_drop_process_unlocked(struct process *process, bool free_paging_structure) {
 #ifdef PROC_REF_COUNT_DEBUG
@@ -162,7 +148,7 @@ void proc_set_sig_pending(struct process *process, int n) {
 
 void init_processes() {
     debug_log("Initializing processes\n");
-    map = hash_create_hash_map(hash, equals, key);
+    map = hash_create_hash_map(process_hash, process_equals, process_key);
     assert(map);
     proc_add_process(&initial_kernel_process);
 }

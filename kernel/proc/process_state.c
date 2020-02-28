@@ -14,25 +14,9 @@ static struct hash_map *queue_map;
 static struct hash_map *pg_queue_map;
 static struct hash_map *parent_queue_map;
 
-static int proc_hash(void *index, int num_buckets) {
-    return *((pid_t *) index) % num_buckets;
-}
-
-static int proc_equals(void *i1, void *i2) {
-    return *((pid_t *) i1) == *((pid_t *) i2);
-}
-
-static void *pid_key(void *queue) {
-    return &((struct proc_state_message_queue *) queue)->pid;
-}
-
-static void *pg_key(void *queue) {
-    return &((struct proc_state_message_queue *) queue)->pgid;
-}
-
-static void *parent_key(void *queue) {
-    return &((struct proc_state_message_queue *) queue)->ppid;
-}
+HASH_DEFINE_FUNCTIONS(proc, struct proc_state_message_queue, pid_t, pid)
+HASH_DEFINE_FUNCTIONS(pg, struct proc_state_message_queue, pid_t, pgid)
+HASH_DEFINE_FUNCTIONS(parent, struct proc_state_message_queue, pid_t, ppid)
 
 static void setup_queue_lists(struct proc_state_message_queue *queue) {
     struct proc_state_message_queue *pg_list = hash_get(pg_queue_map, &queue->pgid);
@@ -338,9 +322,9 @@ pid_t proc_consume_message_by_parent(pid_t ppid, struct proc_state_message *m) {
 }
 
 void init_proc_state() {
-    queue_map = hash_create_hash_map(&proc_hash, &proc_equals, &pid_key);
-    pg_queue_map = hash_create_hash_map(&proc_hash, &proc_equals, &pg_key);
-    parent_queue_map = hash_create_hash_map(&proc_hash, &proc_equals, &parent_key);
+    queue_map = hash_create_hash_map(&proc_hash, &proc_equals, &proc_key);
+    pg_queue_map = hash_create_hash_map(&pg_hash, &pg_equals, &pg_key);
+    parent_queue_map = hash_create_hash_map(&parent_hash, &parent_equals, &parent_key);
 }
 
 pid_t proc_get_pgid(pid_t pid) {

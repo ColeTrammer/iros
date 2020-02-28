@@ -10,29 +10,8 @@
 
 static struct hash_map *dev_map;
 
-static int gen_hash(void *inode_id, int hash_size) {
-    return *((ino_t *) inode_id) % hash_size;
-}
-
-static int gen_equals(void *inode_id1, void *inode_id2) {
-    return *((ino_t *) inode_id1) == *((ino_t *) inode_id2);
-}
-
-static void *gen_key(void *inode) {
-    return &((struct inode *) inode)->index;
-}
-
-static int dev_hash(void *dev_num, int hash_size) {
-    return *((dev_t *) dev_num) % hash_size;
-}
-
-static int dev_equals(void *dev1, void *dev2) {
-    return *((dev_t *) dev1) == *((dev_t *) dev2);
-}
-
-static void *dev_key(void *store) {
-    return &((struct inode_store *) store)->device;
-}
+HASH_DEFINE_FUNCTIONS(gen, struct inode, ino_t, index)
+HASH_DEFINE_FUNCTIONS(dev, struct inode_store, dev_t, device)
 
 void init_fs_inode_store() {
     dev_map = hash_create_hash_map(dev_hash, dev_equals, dev_key);

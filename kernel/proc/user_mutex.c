@@ -11,17 +11,7 @@
 
 static struct hash_map *map;
 
-int __hash(void *k, int num_buckets) {
-    return *((uintptr_t *) k) % num_buckets;
-}
-
-int __equals(void *k1, void *k2) {
-    return *((uintptr_t *) k1) == *((uintptr_t *) k2);
-}
-
-void *__key(void *m) {
-    return &((struct user_mutex *) m)->phys_addr;
-}
+HASH_DEFINE_FUNCTIONS(_, struct user_mutex, uintptr_t, phys_addr)
 
 struct user_mutex *__create(uintptr_t *phys_addr_p) {
     struct user_mutex *m = malloc(sizeof(struct user_mutex));
