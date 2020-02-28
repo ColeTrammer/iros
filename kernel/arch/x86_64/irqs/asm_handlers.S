@@ -71,9 +71,6 @@ handle_device_not_available_entry:
     push %r14
     push %r15
 
-    # Manually clear cr0.TS so that we can mess with fpu state
-    clts
-
     call handle_device_not_available
 
     pop %r15

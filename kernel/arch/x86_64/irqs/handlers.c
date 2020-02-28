@@ -145,43 +145,10 @@ void handle_fpu_exception() {
     abort();
 }
 
-static struct task *last_saved = NULL;
-
-void invalidate_last_saved(struct task *task) {
-    if (last_saved == task) {
-        last_saved = NULL;
-    }
-}
-
 void handle_device_not_available() {
+#ifdef DEVICE_NOT_AVAILABLE_DEBUG
     struct task *current = get_current_task();
     assert(current);
-
-#ifdef DEVICE_NOT_AVAILABLE_DEBUG
     debug_log("handling: [ %d:%d ]\n", current->process->pid, current->tid);
 #endif /* DEVICE_NOT_AVAILABLE_DEBUG */
-
-    if (last_saved == current) {
-        return;
-    }
-
-    if (last_saved == NULL) {
-        last_saved = current;
-        fninit();
-        return;
-    } else {
-        fxsave(last_saved->fpu.aligned_state);
-    }
-
-    if (!last_saved->fpu.saved) {
-        last_saved->fpu.saved = true;
-    }
-
-    if (current->fpu.saved) {
-        fxrstor(last_saved->fpu.aligned_state);
-    } else {
-        fninit();
-    }
-
-    return;
 }

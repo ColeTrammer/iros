@@ -43,6 +43,9 @@ static void load_task_into_memory(struct task *task) {
 
     set_tss_stack_pointer(task->arch_task.kernel_stack);
     load_cr3(task->process->arch_process.cr3);
+    if (!task->kernel_task) {
+        fxrstor(task->fpu.aligned_state);
+    }
 
     // Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In
     // Currently
@@ -76,7 +79,10 @@ void arch_init_kernel_task(struct task *kernel_task) {
     kernel_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
     kernel_task->arch_task.task_state.stack_state.rsp = __KERNEL_VM_STACK_START;
     kernel_task->arch_task.setup_kernel_stack = false;
-    kernel_task->fpu.saved = false;
+
+    task_align_fpu(kernel_task);
+    fninit();
+    fxrstor(kernel_task->fpu.aligned_state);
 }
 
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
@@ -101,7 +107,6 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
     do_unmap_page(kernel_proc_stack->start, false);
     task->arch_task.setup_kernel_stack = false;
-    task->fpu.saved = false;
     task->in_kernel = true;
 }
 
@@ -133,9 +138,9 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags);
     do_unmap_page(kernel_proc_stack->start, false);
     task->arch_task.setup_kernel_stack = false;
-    task->fpu.saved = false;
 
     task_align_fpu(task);
+    memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
 }
 
 /* Must be called from unpremptable context */

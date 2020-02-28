@@ -159,6 +159,7 @@
         return;                                                                 \
     } while (0)
 
+extern struct task initial_kernel_task;
 extern struct task *current_task;
 
 static int get_file(int fd, struct file **file) {
@@ -263,8 +264,6 @@ SYS_CALL(exit) {
     struct task *task = get_current_task();
     exit_process(task->process);
 
-    invalidate_last_saved(task);
-
     int exit_code = (int) task_state->cpu_state.rsi;
     proc_add_message(task->process->pid, proc_create_message(STATE_EXITED, exit_code));
     debug_log("Process Exited: [ %d, %d ]\n", task->process->pid, exit_code);
@@ -338,12 +337,7 @@ SYS_CALL(fork) {
     child->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
     task_align_fpu(child);
-
-    // Clone fpu if necessary
-    if (parent->fpu.saved) {
-        child->fpu.saved = true;
-        memcpy(child->fpu.aligned_state, parent->fpu.aligned_state, sizeof(child->fpu.raw_fpu_state.image));
-    }
+    memcpy(child->fpu.aligned_state, parent->fpu.aligned_state, FPU_IMAGE_SIZE);
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (parent->process->files[i].file) {
@@ -595,6 +589,7 @@ SYS_CALL(execve) {
     task->arch_task.setup_kernel_stack = false;
 
     task_align_fpu(task);
+    memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
 
     task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.stack_state.rip = elf64_get_entry(buffer);
@@ -630,7 +625,6 @@ SYS_CALL(execve) {
     current_task = task;
 
     sched_remove_task(current);
-    invalidate_last_saved(current);
     free_task(current, false);
     assert(get_current_task() == task);
     sched_add_task(task);
@@ -1408,6 +1402,7 @@ SYS_CALL(create_task) {
     task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
     task_align_fpu(task);
+    memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
 
     task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     task->arch_task.setup_kernel_stack = true;
@@ -1439,8 +1434,6 @@ SYS_CALL(exit_task) {
     // At this point there should be no locked mutexes in the task, since it explicitly
     // exited. Also, the memory could now be freed and is no longer valid.
     task->locked_robust_mutex_list_head = NULL;
-
-    invalidate_last_saved(task);
 
     debug_log("Task Exited: [ %d, %d ]\n", task->process->pid, task->tid);
     sys_sched_run_next(task_state);

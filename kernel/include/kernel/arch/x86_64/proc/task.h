@@ -61,7 +61,6 @@ struct raw_fpu_state {
 struct arch_fpu_state {
     struct raw_fpu_state raw_fpu_state;
     uint8_t *aligned_state;
-    bool saved;
 };
 
 struct task;

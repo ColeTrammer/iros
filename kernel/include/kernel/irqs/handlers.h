@@ -12,6 +12,4 @@ struct task;
 
 void init_irq_handlers();
 
-void invalidate_last_saved(struct task *task);
-
 #endif /* _KERNEL_INTERRUPTS_INTERRUPTS_H */

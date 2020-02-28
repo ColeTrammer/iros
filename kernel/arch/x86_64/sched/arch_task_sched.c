@@ -13,6 +13,8 @@ void arch_init_task_sched() {
 void arch_sched_run_next(struct task_state *task_state) {
     struct task *current_task = get_current_task();
     memcpy(&current_task->arch_task.task_state, task_state, sizeof(struct task_state));
-
+    if (!current_task->kernel_task) {
+        fxsave(current_task->fpu.aligned_state);
+    }
     sched_run_next();
 }
