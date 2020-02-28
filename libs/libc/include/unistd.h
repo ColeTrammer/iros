@@ -26,6 +26,7 @@
 
 #define _SC_PAGESIZE  1
 #define _SC_PAGE_SIZE _SC_PAGESIZE
+#define _SC_CLK_TCK   2
 
 #define _PC_PATH_MAX 1
 
