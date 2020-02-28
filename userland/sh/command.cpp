@@ -382,7 +382,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 
         command.assignment_words.for_each(do_assignment_word);
 
-        if (do_builtin) {
+        if (do_builtin && op->op) {
             _exit(builtin_do_op(op, we.we_wordv));
         }
 
