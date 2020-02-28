@@ -12,6 +12,7 @@ export BUILDDIR?=$(ROOT)/build
 export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES)
 export CXX:=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=c++2a
 export AR:=$(HOST)-ar
+export PARSER:=$(BUILDDIR)/gen/parser/parser.native
 
 # Sets directories for install if not already set
 export DESTDIR?=$(SYSROOT)

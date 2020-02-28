@@ -66,7 +66,7 @@ initrd: libs
 userland: libs
 
 .PHONY: native
-native:
+native: prepare-build
 	for dir in $(NATIVE_PROJECTS); do \
 	  $(MAKE) native -C $(ROOT)/$$dir; \
 	done
