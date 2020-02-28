@@ -16,9 +16,17 @@ struct hash_map {
     int (*equals)(void *ptr, void *id);
     void *(*key)(void *ptr);
     spinlock_t lock;
-    struct hash_entry *entries[HASH_DEFAULT_NUM_BUCKETS];
+    size_t num_buckets;
+    size_t size;
+    struct hash_entry **entries;
 };
 
+static inline __attribute__((always_inline)) size_t hash_size(struct hash_map *map) {
+    return map->size;
+}
+
+struct hash_map *hash_create_hash_map_with_size(int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id),
+                                                void *(*key)(void *ptr), size_t num_buckets);
 struct hash_map *hash_create_hash_map(int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id), void *(*key)(void *ptr));
 void *hash_get(struct hash_map *map, void *key);
 void *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *), void *arg);

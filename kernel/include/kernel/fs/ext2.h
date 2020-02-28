@@ -144,7 +144,6 @@ struct ext2_sb_data {
     struct raw_block_group_descriptor *blk_desc_table;
     struct hash_map *block_group_map;
     struct hash_map *block_map;
-    size_t num_blocks_cached;
     size_t num_block_groups;
 };
 

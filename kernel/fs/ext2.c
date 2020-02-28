@@ -93,7 +93,7 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
         return -EIO;
     }
 
-    if (cache && num_blocks == 1 && data->num_blocks_cached < MAX_BLOCKS_TO_CACHE) {
+    if (cache && num_blocks == 1 && hash_size(data->block_map) < MAX_BLOCKS_TO_CACHE) {
         block = malloc(sizeof(struct ext2_block));
         block->index = block_offset;
         block->block = ext2_allocate_blocks(sb, 1);
@@ -1667,8 +1667,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     super_block->private_data = data;
     super_block->flags = 0;
     data->block_group_map = hash_create_hash_map(block_group_hash, block_group_equals, block_group_key);
-    data->block_map = hash_create_hash_map(block_hash, block_equals, block_key);
-    data->num_blocks_cached = 0;
+    data->block_map = hash_create_hash_map_with_size(block_hash, block_equals, block_key, MAX_BLOCKS_TO_CACHE);
 
     struct ext2_raw_super_block *raw_super_block = ext2_allocate_blocks(super_block, 1);
     if (__ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1, false) != 1) {
