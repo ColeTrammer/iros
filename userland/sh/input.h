@@ -43,4 +43,7 @@ void init_history();
 void print_history();
 void write_history();
 
+void __refreshcwd();
+char *__getcwd();
+
 #endif /* _INPUT_H */

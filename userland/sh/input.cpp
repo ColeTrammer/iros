@@ -51,26 +51,37 @@ void disable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_termios);
 }
 
-static char *__getcwd() {
-    size_t size = 50;
-    char *buffer = (char *) malloc(size);
-    char *cwd = getcwd(buffer, size);
+static size_t __cwd_size;
+static char *__cwd_buffer;
 
-    while (cwd == NULL) {
-        free(buffer);
-        size *= 2;
-        buffer = (char *) malloc(size);
-        cwd = getcwd(buffer, size);
+void __refreshcwd() {
+    if (!__cwd_size) {
+        __cwd_size = PATH_MAX;
     }
 
-    return cwd;
+    if (!__cwd_buffer) {
+        __cwd_buffer = static_cast<char *>(malloc(__cwd_size));
+    }
+
+    while (!getcwd(__cwd_buffer, __cwd_size)) {
+        __cwd_size *= 2;
+        __cwd_buffer = static_cast<char *>(realloc(__cwd_buffer, __cwd_size));
+    }
+}
+
+char *__getcwd() {
+    if (!__cwd_buffer) {
+        __refreshcwd();
+    }
+
+    return __cwd_buffer;
 }
 
 extern struct passwd *user_passwd;
 extern struct utsname system_name;
 
 static void print_ps1_prompt() {
-    char *cwd = __getcwd();
+    char *cwd = strdup(__getcwd());
     char *cwd_use = cwd;
 
     size_t home_dir_length = strlen(user_passwd->pw_dir);

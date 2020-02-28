@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <liim/hash_map.h>
+#include <liim/string.h>
+#include <liim/vector.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +54,7 @@ static int op_cd(char **args) {
         perror("Shell");
     }
 
+    __refreshcwd();
     return 0;
 }
 
@@ -680,6 +683,55 @@ static int op_time(char **argv) {
     return 0;
 }
 
+static Vector<String> s_dir_stack;
+
+static void print_dirs() {
+    printf("%s", __getcwd());
+    s_dir_stack.for_each([](const auto &dir) {
+        printf("%c%s", ' ', dir.string());
+    });
+    printf("%c", '\n');
+}
+
+static int op_dirs(char **) {
+    print_dirs();
+    return 0;
+}
+
+static int op_pushd(char **argv) {
+    if (!argv[1]) {
+        fprintf(stderr, "Usage: %s <dir>\n", argv[0]);
+        return 2;
+    }
+
+    if (chdir(argv[1]) < 0) {
+        perror("chdir");
+        return 1;
+    }
+
+    s_dir_stack.add(String(__getcwd()));
+    __refreshcwd();
+    print_dirs();
+    return 0;
+}
+
+static int op_popd(char **argv) {
+    if (s_dir_stack.empty()) {
+        fprintf(stderr, "%s: directory stack empty\n", argv[0]);
+        return 1;
+    }
+
+    if (chdir(s_dir_stack.last().string()) < 0) {
+        perror("chdir");
+        return 1;
+    }
+
+    s_dir_stack.remove_last();
+    __refreshcwd();
+    print_dirs();
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
@@ -689,7 +741,8 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { ".", op_dot, true },           { "source", op_dot, true },    { "alias", op_alias, true },
     { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true },
     { "exec", op_exec, true },       { "set", op_set, true },       { "[", op_test, true },
-    { "test", op_test, true },       { "eval", op_eval, true },     { "time", op_time, false }
+    { "test", op_test, true },       { "eval", op_eval, true },     { "time", op_time, false },
+    { "pushd", op_pushd, true },     { "popd", op_popd, true },     { "dirs", op_dirs, true }
 };
 
 struct builtin_op *get_builtins() {
