@@ -245,6 +245,7 @@ $(BUILDDIR)/libs/libc/unistd/getcwd.o \
 $(BUILDDIR)/libs/libc/unistd/getegid.o \
 $(BUILDDIR)/libs/libc/unistd/geteuid.o \
 $(BUILDDIR)/libs/libc/unistd/getgid.o \
+$(BUILDDIR)/libs/libc/unistd/gethostname.o \
 $(BUILDDIR)/libs/libc/unistd/getlogin_r.o \
 $(BUILDDIR)/libs/libc/unistd/getlogin.o \
 $(BUILDDIR)/libs/libc/unistd/getopt.o \
