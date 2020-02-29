@@ -32,8 +32,8 @@ static char *test_argv[2] = { "start", NULL };
 static char *test_envp[2] = { "PATH=/bin:/usr/bin:/initrd", NULL };
 
 static void kernel_idle() {
-    disable_interrupts();
-    sched_run_next();
+    for (;;)
+        ;
 }
 
 static void load_task_into_memory(struct task *task) {
