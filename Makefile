@@ -24,7 +24,8 @@ export HOSTARCH!=./target-triplet-to-arch.sh $(HOST)
 export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=gnu2x
 export CXX:=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=c++2a -fconcepts -fno-exceptions -fno-rtti
 export PARSER:=$(BUILDDIR)/gen/parser/parser.native
-export CFLAGS:=-fno-omit-frame-pointer -fno-inline -g -O2
+export CFLAGS:=-fno-omit-frame-pointer -fno-inline -O2 -Wall -Wextra -Werror
+export CPPFLAGS:=$(CFLAGS)
 export LD:=$(CC)
 export AR:=$(HOST)-ar
 export OBJCOPY:=$(HOST)-objcopy

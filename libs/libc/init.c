@@ -15,6 +15,13 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+extern void (*__preinit_array_start[])(int, char **, char **) __attribute__((visibility("hidden")));
+extern void (*__preinit_array_end[])(int, char **, char **) __attribute__((visibility("hidden")));
+extern void (*__init_array_start[])(int, char **, char **) __attribute__((visibility("hidden")));
+extern void (*__init_array_end[])(int, char **, char **) __attribute__((visibility("hidden")));
+
+extern void _init(void);
+
 __thread int errno;
 char **environ;
 
@@ -48,4 +55,16 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
 
     init_env();
     init_files(__initial_process_info.isatty_mask);
+
+    const size_t preinit_size = __preinit_array_end - __preinit_array_start;
+    for (size_t i = 0; i < preinit_size; i++) {
+        (*__preinit_array_start[i])(argc, argv, envp);
+    }
+
+    _init();
+
+    const size_t size = __init_array_end - __init_array_start;
+    for (size_t i = 0; i < size; i++) {
+        (*__init_array_start[i])(argc, argv, envp);
+    }
 }

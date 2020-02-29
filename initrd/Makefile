@@ -1,5 +1,5 @@
 # Init flags if not already set (can be overridden)
-CFLAGS?=-O2 -g
+CFLAGS?=-O2
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
@@ -7,7 +7,6 @@ LIBS?=
 # Include options that should always be set
 CFLAGS:=$(CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) -DARCH=$(HOSTARCH) -Werror -Wall -Wextra -D_OS_2_SOURCE
-LDFLAFS:=$(LDFLAGS) -T $(ROOT)/ports/kilo/kilo/link.ld
 CXX_LIBS:=$(CXX_LIBS) -lc -lws -lgraphics -lrt
 C_LIBS:=$(C_LIBS) -lrt
 

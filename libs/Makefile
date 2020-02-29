@@ -13,8 +13,8 @@ export LIBDIR?=$(EXEC_PREFIX)/lib
 export BUILDDIR?=$(ROOT)/build
 
 export CFLAGS+=-std=gnu2x
-export CPPFLAGS+=-O2 -g -Werror -Wall -Wextra -DARCH=$(HOSTARCH) -D_OS_2_SOURCE -D__is_libc
-export LDFLAGS+=-T $(ROOT)/userland/link.ld
+export CPPFLAGS+=-O2 -Werror -Wall -Wextra -DARCH=$(HOSTARCH) -D_OS_2_SOURCE -D__is_libc
+export LDFLAGS?=
 
 .PHONY: all
 all: $(LIBS)

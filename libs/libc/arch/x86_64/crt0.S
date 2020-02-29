@@ -14,8 +14,6 @@ _start:
 
     callq initialize_standard_library
 
-    callq _init
-
     movq 16(%rsp), %rdx # ENVP
     movq 24(%rsp), %rsi # ARGV
     movq 32(%rsp), %rdi # ARGC
@@ -23,11 +21,8 @@ _start:
     xorq %rax, %rax # Zero RAX
 
     callq main
-    pushq %rax
 
-    callq _fini
-
-    popq %rdi
+    movq %rax, %rdi
     callq exit
 
 .global __halt

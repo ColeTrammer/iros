@@ -7,8 +7,8 @@ export SYSROOT?=$(ROOT)/sysroot
 
 # Init flags if not already set (can be overridden)
 export CFLAGS?=
-export CPPFLAGS?=-O2 -g -Werror -Wall -Wextra
-export LDFLAGS+=-T $(ROOT)/ports/kilo/kilo/link.ld
+export CPPFLAGS?=-O2 -Werror -Wall -Wextra
+export LDFLAGS?=
 export LIBS?=
 
 .PHONY: all
