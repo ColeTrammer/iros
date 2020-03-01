@@ -49,6 +49,7 @@ $(BUILDDIR)/initrd/programs/mutex_test \
 $(BUILDDIR)/initrd/programs/nftw_test \
 $(BUILDDIR)/initrd/programs/once_test \
 $(BUILDDIR)/initrd/programs/pipe_test \
+$(BUILDDIR)/initrd/programs/protections_test \
 $(BUILDDIR)/initrd/programs/pthread_atfork_test \
 $(BUILDDIR)/initrd/programs/pthread_attr_test \
 $(BUILDDIR)/initrd/programs/queue_test \
