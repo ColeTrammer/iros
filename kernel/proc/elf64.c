@@ -74,6 +74,10 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
 
         map_vm_region(to_add);
 
+#ifdef ELF64_DEBUG
+        debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start, program_headers[i].p_offset,
+                  program_headers[i].p_filesz, program_headers[i].p_memsz, program_section_end);
+#endif /* ELF64_DEBUG */
         memcpy((char *) program_section_start, ((char *) buffer) + program_headers[i].p_offset, program_headers[i].p_filesz);
         memset((char *) program_section_start + program_headers[i].p_filesz, 0, program_headers[i].p_memsz - program_headers[i].p_filesz);
 
@@ -101,6 +105,12 @@ struct stack_frame {
 
 // NOTE: this must be called from within a task's address space
 void elf64_stack_trace(struct task *task) {
+    struct vm_region *region = task->process->process_memory;
+    while (region) {
+        debug_log("region: [ %p, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", region, region->start, region->end, region->flags, region->type);
+        region = region->next;
+    }
+
     struct inode *inode = fs_inode_get(task->process->inode_dev, task->process->inode_id);
     if (!inode) {
         debug_log("The task has no inode: [ %d, %lu, %llu ]\n", task->process->pid, task->process->inode_dev, task->process->inode_id);
