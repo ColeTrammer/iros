@@ -32,7 +32,10 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     (void) argc;
     (void) argv;
 
+    environ = envp;
+
     get_initial_process_info(&__initial_process_info);
+    init_files(__initial_process_info.isatty_mask);
 
     // FIXME: __allocate_thread_control_block will call malloc which calls sbrk,
     //        which could set errno if it fails.
@@ -51,11 +54,7 @@ void initialize_standard_library(int argc, char *argv[], char *envp[]) {
     set |= (UINT64_C(1) << (__PTHREAD_CANCEL_SIGNAL - UINT64_C(1)));
     syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
 
-    environ = envp;
-
     init_env();
-    init_files(__initial_process_info.isatty_mask);
-
     const size_t preinit_size = __preinit_array_end - __preinit_array_start;
     for (size_t i = 0; i < preinit_size; i++) {
         (*__preinit_array_start[i])(argc, argv, envp);

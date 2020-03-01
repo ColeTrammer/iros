@@ -45,8 +45,33 @@ void *sbrk(intptr_t increment) {
     }
     return add_vm_pages_end(increment, VM_KERNEL_HEAP);
 }
+
+#define __malloc_debug(s, ...) ((void) s)
 #else
 #include <limits.h>
+#include <stdio.h>
+
+FILE *__serial_out;
+int __do_logging;
+
+#define __malloc_debug(s, ...)                                     \
+    do {                                                           \
+        if (!__do_logging) {                                       \
+            __do_logging = getenv("MALLOC_DEBUG") != NULL ? 2 : 1; \
+        }                                                          \
+        if (__do_logging == 2) {                                   \
+            __do_logging++;                                        \
+        } else if (__do_logging == 3) {                            \
+            __do_logging++;                                        \
+        } else if (__do_logging == 4) {                            \
+            __do_logging = 1;                                      \
+            __serial_out = fopen("/dev/serial", "w");              \
+            __do_logging = 5;                                      \
+        }                                                          \
+        if (__do_logging == 5) {                                   \
+            fprintf(__serial_out, s __VA_OPT__(, ) __VA_ARGS__);   \
+        }                                                          \
+    } while (0)
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 0x1000
@@ -156,6 +181,7 @@ void free(void *p) {
     struct metadata *block = GET_BLOCK(p);
     assert(block->magic == __MALLOC_MAGIG_CHECK);
     assert(IS_ALLOCATED(block));
+    __malloc_debug("free: [ %p, %lu ]\n", p, GET_SIZE(block));
     CLEAR_ALLOCATED(block);
     last_allocated = NULL;
 
@@ -252,6 +278,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
                     memset(block + 1, MALLOC_SCRUB_BITS, GET_SIZE(block));
 #endif /* MALLOC_SCRUB_ALLOC */
 
+                    __malloc_debug("aligned_alloc: [ %lu, %lu, %p ]\n", alignment, n, block + 1);
                     return block + 1;
                 }
 
@@ -300,6 +327,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
 
     __unlock(&__malloc_lock);
 
+    __malloc_debug("aligned_alloc: [ %lu, %lu, %p ]\n", alignment, n, new_block + 1);
     return new_block + 1;
 }
 
@@ -359,6 +387,7 @@ void *malloc(size_t n) {
 #endif /* MALLOC_SCRUB_ALLOC */
 
         last_allocated = start;
+        __malloc_debug("malloc: [ %lu, %p ]\n", n, start + 1);
         return start + 1;
     }
 
@@ -379,6 +408,7 @@ void *malloc(size_t n) {
             memset(block + 1, MALLOC_SCRUB_BITS, GET_SIZE(block));
 #endif /* MALLOC_SCRUB_ALLOC */
 
+            __malloc_debug("malloc: [ %lu, %p ]\n", n, block + 1);
             return block + 1;
         }
         block = NEXT_BLOCK(block);
@@ -407,5 +437,6 @@ void *malloc(size_t n) {
     memset(ret, MALLOC_SCRUB_BITS, GET_SIZE(ret - 1));
 #endif /* MALLOC_SCRUB_ALLOC */
 
+    __malloc_debug("malloc: [ %lu, %p ]\n", n, ret);
     return ret;
 }
