@@ -111,10 +111,10 @@ $(BUILDDIR)/initrd/initrd.o: $(ROOT)/initrd/initrd.c
 	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -Wno-stringop-truncation
 
 $(BUILDDIR)/%: $(ROOT)/%.S
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAFS)
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 $(BUILDDIR)/%: $(ROOT)/%.c
-	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAFS) $(C_LIBS)
+	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(C_LIBS)
 
 $(BUILDDIR)/%: $(ROOT)/%.cpp
 	$(CXX) -MD -o $@ $< $(CPPFLAGS) $(LDFLAGS) $(CXX_LIBS)

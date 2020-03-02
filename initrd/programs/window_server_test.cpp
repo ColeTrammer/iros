@@ -16,7 +16,7 @@ int main() {
     auto window = connection.create_window(100, 100, 200, 200);
 
     int cnt = 0;
-    connection.set_draw_callback(window, [&](SharedPtr<PixelBuffer> pixels) {
+    connection.set_draw_callback(window, [&](auto& pixels) {
         Renderer renderer(pixels);
         renderer.fill_rect(50 + cnt, 50 + cnt, 50, 50);
         if (++cnt >= 100) {
