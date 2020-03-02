@@ -12,9 +12,9 @@ extern void _fini(void);
 __attribute__((__noreturn__)) void exit(int status) {
     __on_exit();
 
-    ssize_t count = (ssize_t)(__fini_array_end - __fini_array_start);
-    for (ssize_t i = count - 1; i >= 0; i--) {
-        __fini_array_start[i]();
+    size_t count = (__fini_array_end - __fini_array_start);
+    for (size_t i = count; i > 0; i--) {
+        __fini_array_start[i - 1]();
     }
 
     _fini();
