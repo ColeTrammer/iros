@@ -175,6 +175,7 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
     char *last_slash = strrchr(to_match, '/');
     char *dirname;
     char *currname;
+    bool relative_to_root = false;
     if (last_slash == NULL) {
         if (is_first_word) {
             free(to_match);
@@ -183,6 +184,10 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
 
         dirname = (char *) ".";
         currname = to_match;
+    } else if (last_slash == to_match) {
+        dirname = (char *) "/";
+        currname = to_match + 1;
+        relative_to_root = true;
     } else {
         *last_slash = '\0';
         dirname = to_match;
@@ -201,10 +206,15 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
 
     for (ssize_t i = 0; i < (ssize_t) *num_suggestions; i++) {
         struct stat stat_struct;
-        char *path = (char *) malloc(strlen(dirname) + strlen(list[i]->d_name) + 2);
-        strcpy(path, dirname);
-        strcat(path, "/");
-        strcat(path, list[i]->d_name);
+        char *path;
+        if (relative_to_root) {
+            path = static_cast<char *>(malloc(strlen(list[i]->d_name) + 2));
+            strcpy(stpcpy(path, "/"), list[i]->d_name);
+        } else {
+            path = static_cast<char *>(malloc(strlen(dirname) + strlen(list[i]->d_name) + 2));
+            stpcpy(stpcpy(stpcpy(path, dirname), "/"), list[i]->d_name);
+        }
+
         if (stat(path, &stat_struct)) {
             goto suggestions_skip_entry;
         }
@@ -218,6 +228,8 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
 
         if (last_slash == NULL) {
             suggestions[i].index = to_match_start - line;
+        } else if (relative_to_root) {
+            suggestions[i].index = to_match_start - line + 1;
         } else {
             suggestions[i].index = to_match_start - line + (currname - dirname);
         }
