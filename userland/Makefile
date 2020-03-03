@@ -1,5 +1,5 @@
 # Lists all projects
-PROJECTS=basename cat chmod chown clear cp date dirname echo env false grep head id kill ln ls mkdir mv nslookup ping pwd realpath rm rmdir sh sleep start stat su tail touch true uname window_server xterm
+PROJECTS=basename cat chmod chown clear cp date dirname echo env false grep head id kill ln ls mkdir mv nslookup ping pwd realpath rm rmdir sh sleep start stat su tail touch true uname window_server window_server_test xterm
 HEADER_PROJECTS=window_server
 
 export ROOT?=$(CURDIR)/..

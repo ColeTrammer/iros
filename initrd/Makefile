@@ -87,8 +87,7 @@ $(BUILDDIR)/initrd/programs/tmpnam_test \
 $(BUILDDIR)/initrd/programs/udp_test \
 $(BUILDDIR)/initrd/programs/vector_test \
 $(BUILDDIR)/initrd/programs/vga_test_a \
-$(BUILDDIR)/initrd/programs/we_test \
-$(BUILDDIR)/initrd/programs/window_server_test
+$(BUILDDIR)/initrd/programs/we_test
 
 .PHONY: all
 all: $(BUILDDIR)/initrd/initrd.bin
