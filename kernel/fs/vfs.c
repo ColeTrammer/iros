@@ -18,6 +18,7 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/inode_store.h>
 #include <kernel/fs/pipe.h>
+#include <kernel/fs/procfs.h>
 #include <kernel/fs/tmp.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
@@ -1590,6 +1591,7 @@ void init_vfs() {
     init_ext2();
     init_pipe();
     init_tmpfs();
+    init_procfs();
 
     /* Mount INITRD as root */
     int error = fs_mount("", "/", "initrd");
@@ -1605,6 +1607,9 @@ void init_vfs() {
 
     // Mount tmpfs at /dev/shm
     error = fs_mount("", "/dev/shm", "tmpfs");
+    assert(error == 0);
+
+    error = fs_mount("", "/proc", "procfs");
     assert(error == 0);
 }
 

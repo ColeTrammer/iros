@@ -46,8 +46,9 @@ $(BUILDDIR)/kernel/fs/ext2.o \
 $(BUILDDIR)/kernel/fs/initrd.o \
 $(BUILDDIR)/kernel/fs/inode_store.o \
 $(BUILDDIR)/kernel/fs/pipe.o \
-$(BUILDDIR)/kernel/fs/tnode.o \
+$(BUILDDIR)/kernel/fs/procfs.o \
 $(BUILDDIR)/kernel/fs/tmp.o \
+$(BUILDDIR)/kernel/fs/tnode.o \
 $(BUILDDIR)/kernel/fs/vfs.o \
 $(BUILDDIR)/kernel/hal/devices.o \
 $(BUILDDIR)/kernel/hal/ptmx.o \
