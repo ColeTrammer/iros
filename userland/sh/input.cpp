@@ -85,7 +85,7 @@ static void print_ps1_prompt() {
     char *cwd_use = cwd;
 
     size_t home_dir_length = strlen(user_passwd->pw_dir);
-    if (strncmp(cwd, user_passwd->pw_dir, home_dir_length) == 0) {
+    if (strcmp(user_passwd->pw_dir, "/") != 0 && strncmp(cwd, user_passwd->pw_dir, home_dir_length) == 0) {
         cwd_use = cwd + home_dir_length - 1;
         *cwd_use = '~';
     }
