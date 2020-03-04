@@ -386,13 +386,11 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
         // tab autocompletion
         if (c == '\t') {
-            if (buffer_index != buffer_length) {
-                continue;
-            }
-
             size_t num_suggestions = 0;
-            buffer[buffer_length] = '\0'; // Ensure buffer is null terminated
+            char end_save = buffer[buffer_index];
+            buffer[buffer_index] = '\0'; // Ensure buffer is null terminated
             struct suggestion *suggestions = get_suggestions(buffer, &num_suggestions);
+            buffer[buffer_index] = end_save;
 
             if (num_suggestions == 0) {
                 consecutive_tab_presses = 0;
@@ -428,14 +426,19 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 goto cleanup_suggestions;
             }
 
+            memmove(buffer + suggestions->index + suggestions->length, buffer + buffer_index, buffer_length - buffer_index);
             memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
 
             char f_buf[20];
             snprintf(f_buf, 20, "\033[%luD", buffer_index - suggestions->index);
             write(fileno(tty), f_buf, strlen(f_buf));
 
-            write(fileno(tty), suggestions->suggestion, suggestions->length);
-            buffer_index = buffer_length = suggestions->index + suggestions->length;
+            write(fileno(tty), buffer + suggestions->index, suggestions->length + buffer_length - buffer_index);
+            buffer_index += suggestions->length - 1;
+            buffer_length += suggestions->length;
+
+            snprintf(f_buf, 20, "\033[%luD", buffer_length - buffer_index);
+            write(fileno(tty), f_buf, strlen(f_buf));
 
         cleanup_suggestions:
             free_suggestions(suggestions, num_suggestions);
