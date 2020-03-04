@@ -99,6 +99,9 @@ static char *scandir_match_string = NULL;
 
 static int scandir_filter(const struct dirent *d) {
     assert(scandir_match_string);
+    if (d->d_name[0] == '.' && scandir_match_string[0] != '.') {
+        return false;
+    }
     return strstr(d->d_name, scandir_match_string) == d->d_name;
 }
 
@@ -411,6 +414,11 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     fprintf(stderr, "%c", '\n');
                     print_ps1_prompt();
                     fprintf(stderr, "%s", buffer);
+                    if (buffer_length != buffer_index) {
+                        char f_buf[20];
+                        snprintf(f_buf, 19, "\033[%luD", buffer_length - buffer_index);
+                        write(fileno(tty), f_buf, strlen(f_buf));
+                    }
                     goto cleanup_suggestions;
                 }
             } else {
@@ -429,16 +437,24 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             memmove(buffer + suggestions->index + suggestions->length, buffer + buffer_index, buffer_length - buffer_index);
             memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
 
-            char f_buf[20];
-            snprintf(f_buf, 20, "\033[%luD", buffer_index - suggestions->index);
-            write(fileno(tty), f_buf, strlen(f_buf));
+            if (buffer_index - suggestions->index > 0) {
+                char f_buf[20];
+                snprintf(f_buf, 20, "\033[%luD", buffer_index - suggestions->index);
+                write(fileno(tty), f_buf, strlen(f_buf));
+            }
 
-            write(fileno(tty), buffer + suggestions->index, suggestions->length + buffer_length - buffer_index);
-            buffer_index += suggestions->length - 1;
-            buffer_length += suggestions->length;
+            if (buffer_length != buffer_index) {
+                write(fileno(tty), buffer + suggestions->index, suggestions->length + buffer_length - buffer_index);
+                buffer_index += suggestions->length;
+                buffer_length += suggestions->length;
 
-            snprintf(f_buf, 20, "\033[%luD", buffer_length - buffer_index);
-            write(fileno(tty), f_buf, strlen(f_buf));
+                char f_buf[20];
+                snprintf(f_buf, 20, "\033[%luD", buffer_length - buffer_index);
+                write(fileno(tty), f_buf, strlen(f_buf));
+            } else {
+                write(fileno(tty), suggestions->suggestion, suggestions->length);
+                buffer_index = buffer_length = suggestions->index + suggestions->length;
+            }
 
         cleanup_suggestions:
             free_suggestions(suggestions, num_suggestions);
