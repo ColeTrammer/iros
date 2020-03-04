@@ -474,6 +474,16 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             continue;
         }
 
+        // Control L
+        if (c == ('L' & 0x1F)) {
+            if (buffer_length == 0) {
+                write(fileno(tty), "\033[1;1H\033[2J", 11);
+                print_ps1_prompt();
+            }
+
+            continue;
+        }
+
         // Control W / WERASE
         if (c == ('W' & 0x1F)) {
             bool done_something = false;
