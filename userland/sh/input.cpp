@@ -476,11 +476,14 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
         // Control L
         if (c == ('L' & 0x1F)) {
-            if (buffer_length == 0) {
-                write(fileno(tty), "\033[1;1H\033[2J", 11);
-                print_ps1_prompt();
+            write(fileno(tty), "\033[1;1H\033[2J", 11);
+            print_ps1_prompt();
+            write(fileno(tty), buffer, buffer_length);
+            if (buffer_length != buffer_index) {
+                char f_buf[20];
+                snprintf(f_buf, 19, "\033[%luD", buffer_length - buffer_index);
+                write(fileno(tty), f_buf, strlen(f_buf));
             }
-
             continue;
         }
 
