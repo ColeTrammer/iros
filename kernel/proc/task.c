@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>

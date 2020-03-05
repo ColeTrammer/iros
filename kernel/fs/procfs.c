@@ -24,7 +24,7 @@
 static struct file_system fs;
 static struct super_block super_block;
 
-static __attribute__((unused)) spinlock_t inode_counter_lock = SPINLOCK_INITIALIZER;
+static spinlock_t inode_counter_lock = SPINLOCK_INITIALIZER;
 static ino_t inode_counter = 1;
 
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
@@ -81,11 +81,55 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t _len) 
     return -EOPNOTSUPP;
 }
 
+static struct inode *root;
+
+void procfs_register_process(struct process *process) {
+    assert(root);
+
+    struct inode *inode = calloc(1, sizeof(struct inode));
+    inode->flags = FS_DIR;
+    inode->super_block = root->super_block;
+    inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_MONOTONIC);
+    inode->device = root->device;
+    inode->gid = process->gid;
+    inode->uid = process->uid;
+    inode->mode = S_IFDIR | 0555;
+    inode->i_op = &procfs_dir_i_op;
+    inode->ref_count = 1;
+    init_spinlock(&inode->lock);
+    spin_lock(&inode_counter_lock);
+    inode->index = inode_counter++;
+    spin_unlock(&inode_counter_lock);
+
+    char pid_string[16];
+    snprintf(pid_string, sizeof(pid_string) - 1, "%d", process->pid);
+    struct tnode *parent = create_tnode(pid_string, inode);
+
+    spin_lock(&root->lock);
+    root->tnode_list = add_tnode(root->tnode_list, parent);
+    spin_unlock(&root->lock);
+}
+
+void procfs_unregister_process(struct process *process) {
+    assert(root);
+
+    char pid_string[16];
+    snprintf(pid_string, sizeof(pid_string) - 1, "%d", process->pid);
+    struct tnode *tnode = find_tnode(root->tnode_list, pid_string);
+    assert(tnode);
+
+    spin_lock(&root->lock);
+    root->tnode_list = remove_tnode(root->tnode_list, tnode);
+    spin_unlock(&root->lock);
+
+    drop_tnode(tnode);
+}
+
 struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
 
-    struct inode *root = calloc(1, sizeof(struct inode));
+    root = calloc(1, sizeof(struct inode));
     struct tnode *t_root = create_root_tnode(root);
 
     root->device = 4;

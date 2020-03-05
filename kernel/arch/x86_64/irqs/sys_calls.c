@@ -20,6 +20,7 @@
 #include <sys/wait.h>
 
 #include <kernel/fs/file.h>
+#include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>

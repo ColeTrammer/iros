@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/vm_allocator.h>
@@ -33,6 +34,7 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
         debug_log("Destroying process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
         hash_del(map, &process->pid);
+        procfs_unregister_process(process);
         spin_unlock(&process->lock);
 
         proc_kill_arch_process(process, free_paging_structure);
@@ -107,6 +109,8 @@ void proc_add_process(struct process *process) {
 #endif /* PROCESSES_DEBUG */
     process->ref_count = 1;
     hash_put(map, process);
+
+    procfs_register_process(process);
 }
 
 void proc_bump_process(struct process *process) {
