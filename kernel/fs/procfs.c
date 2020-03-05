@@ -29,8 +29,8 @@ static ino_t inode_counter = 1;
 
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
 
-static __attribute__((unused)) struct inode_operations procfs_i_op = { NULL, NULL, &procfs_open, NULL, NULL, NULL, NULL, NULL,
-                                                                       NULL, NULL, NULL,         NULL, NULL, NULL, NULL, NULL };
+static struct inode_operations procfs_i_op = { NULL, NULL, &procfs_open, NULL, NULL, NULL, NULL, NULL,
+                                               NULL, NULL, NULL,         NULL, NULL, NULL, NULL, NULL };
 
 static struct inode_operations procfs_dir_i_op = { NULL, &procfs_lookup, &procfs_open, NULL, NULL, NULL, NULL, NULL,
                                                    NULL, NULL,           NULL,         NULL, NULL, NULL, NULL, NULL };
@@ -82,6 +82,37 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t _len) 
 }
 
 static struct inode *root;
+static struct tnode *t_root;
+
+static void procfs_create_process_directory_structure(struct tnode *tparent, struct process *process __attribute__((unused))) {
+    struct inode *parent = tparent->inode;
+
+    struct inode *status_inode = calloc(1, sizeof(struct inode));
+    status_inode->flags = FS_FILE;
+    status_inode->super_block = parent->super_block;
+    status_inode->access_time = status_inode->modify_time = status_inode->change_time = time_read_clock(CLOCK_REALTIME);
+    status_inode->device = parent->device;
+    status_inode->mode = S_IFREG | 0444;
+    status_inode->i_op = &procfs_i_op;
+    status_inode->ref_count = 1;
+    status_inode->parent = tparent;
+    init_spinlock(&status_inode->lock);
+    spin_lock(&inode_counter_lock);
+    status_inode->index = inode_counter++;
+    spin_unlock(&inode_counter_lock);
+
+    struct tnode *status_tnode = create_tnode("status", status_inode);
+    parent->tnode_list = add_tnode(parent->tnode_list, status_tnode);
+}
+
+static void procfs_destroy_process_directory_structure(struct inode *parent) {
+    struct tnode_list *tnode_list_node = parent->tnode_list;
+    while (tnode_list_node) {
+        struct tnode *tnode = tnode_list_node->tnode;
+        tnode_list_node = remove_tnode(tnode_list_node, tnode);
+        drop_tnode(tnode);
+    }
+}
 
 void procfs_register_process(struct process *process) {
     assert(root);
@@ -89,13 +120,14 @@ void procfs_register_process(struct process *process) {
     struct inode *inode = calloc(1, sizeof(struct inode));
     inode->flags = FS_DIR;
     inode->super_block = root->super_block;
-    inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_MONOTONIC);
+    inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
     inode->device = root->device;
     inode->gid = process->gid;
     inode->uid = process->uid;
     inode->mode = S_IFDIR | 0555;
     inode->i_op = &procfs_dir_i_op;
     inode->ref_count = 1;
+    inode->parent = t_root;
     init_spinlock(&inode->lock);
     spin_lock(&inode_counter_lock);
     inode->index = inode_counter++;
@@ -104,6 +136,8 @@ void procfs_register_process(struct process *process) {
     char pid_string[16];
     snprintf(pid_string, sizeof(pid_string) - 1, "%d", process->pid);
     struct tnode *parent = create_tnode(pid_string, inode);
+
+    procfs_create_process_directory_structure(parent, process);
 
     spin_lock(&root->lock);
     root->tnode_list = add_tnode(root->tnode_list, parent);
@@ -122,6 +156,7 @@ void procfs_unregister_process(struct process *process) {
     root->tnode_list = remove_tnode(root->tnode_list, tnode);
     spin_unlock(&root->lock);
 
+    procfs_destroy_process_directory_structure(tnode->inode);
     drop_tnode(tnode);
 }
 
@@ -130,7 +165,7 @@ struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     assert(strlen(device_path) == 0);
 
     root = calloc(1, sizeof(struct inode));
-    struct tnode *t_root = create_root_tnode(root);
+    t_root = create_root_tnode(root);
 
     root->device = 4;
     root->flags = FS_DIR;
