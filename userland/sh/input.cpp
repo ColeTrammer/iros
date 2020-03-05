@@ -476,7 +476,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
         // Control L
         if (c == ('L' & 0x1F)) {
-            write(fileno(tty), "\033[1;1H\033[2J", 11);
+            write(fileno(tty), "\033[1;1H\033[2J", 10);
             print_ps1_prompt();
             write(fileno(tty), buffer, buffer_length);
             if (buffer_length != buffer_index) {
