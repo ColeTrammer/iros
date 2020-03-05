@@ -75,8 +75,10 @@ static struct proc_state_message_queue *ensure_queue(pid_t pid) {
     if (!(queue = hash_get(queue_map, &pid))) {
         queue = malloc(sizeof(struct proc_state_message_queue));
         queue->pid = pid;
-        queue->pgid = find_by_pid(pid)->pgid;
-        queue->ppid = find_by_pid(pid)->ppid;
+        struct process *proc = find_by_pid(pid);
+        assert(proc);
+        queue->pgid = proc->pgid;
+        queue->ppid = proc->ppid;
         queue->start = NULL;
         queue->end = NULL;
         queue->pg_next = NULL;
