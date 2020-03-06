@@ -78,7 +78,7 @@ int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer) {
         return -EINVAL;
     }
 
-    if (inode->i_op->lookup && inode->size == 0) {
+    if (inode->i_op->lookup) {
         inode->i_op->lookup(inode, NULL);
     }
 
@@ -94,7 +94,7 @@ int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len) {
         return -EINVAL;
     }
 
-    if (inode->size == 0 && inode->i_op->lookup) {
+    if (inode->i_op->lookup) {
         inode->i_op->lookup(inode, NULL);
     }
 
@@ -168,7 +168,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     /* Main VFS Loop */
     while (parent != NULL && path != NULL && path[1] != '\0') {
         if (parent->inode->flags & FS_LINK) {
-            if (parent->inode->size == 0 && parent->inode->i_op->lookup) {
+            if (parent->inode->i_op->lookup) {
                 parent->inode->i_op->lookup(parent->inode, NULL);
             }
 
@@ -278,7 +278,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
         return 0;
     }
 
-    if (inode->size == 0 && inode->i_op->lookup) {
+    if (inode->i_op->lookup) {
         inode->i_op->lookup(inode, NULL);
     }
 

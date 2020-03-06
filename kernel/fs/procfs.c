@@ -22,6 +22,11 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
+#define PROCFS_DYNAMIC_FLAG      (1UL)
+#define PROCFS_IS_DYNAMIC(inode) ((((uintptr_t)(inode)->private_data)) & PROCFS_DYNAMIC_FLAG)
+
+#define PROCFS_GET_FUNCTION(inode) ((procfs_function_t)(((uintptr_t)((inode)->private_data)) & ~(PROCFS_DYNAMIC_FLAG)))
+
 static struct file_system fs;
 static struct super_block super_block;
 
@@ -30,8 +35,8 @@ static ino_t inode_counter = 1;
 
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
 
-static struct inode_operations procfs_i_op = { NULL, NULL, &procfs_open, NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL, NULL,         NULL, NULL, NULL, NULL, NULL };
+static struct inode_operations procfs_i_op = { NULL, NULL, &procfs_open,     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                                               NULL, NULL, &procfs_read_all, NULL, NULL };
 
 static struct inode_operations procfs_dir_i_op = { NULL, &procfs_lookup, &procfs_open, NULL, NULL, NULL, NULL, NULL,
                                                    NULL, NULL,           NULL,         NULL, NULL, NULL, NULL, NULL };
@@ -40,8 +45,36 @@ static struct file_operations procfs_f_op = { NULL, &procfs_read, NULL, NULL };
 
 static struct file_operations procfs_dir_f_op = { NULL, NULL, NULL, NULL };
 
+static struct process *procfs_get_process(struct inode *inode) {
+    if (PROCFS_IS_DYNAMIC(inode)) {
+        return get_current_task()->process;
+    }
+
+    struct tnode *parent = inode->parent;
+    pid_t pid = atoi(parent->name);
+    return find_by_pid(pid);
+}
+
+static struct procfs_buffer procfs_get_data(struct inode *inode) {
+    struct process *process = procfs_get_process(inode);
+
+    procfs_function_t getter = PROCFS_GET_FUNCTION(inode);
+    return getter(process);
+}
+
+static void procfs_cleanup_data(struct procfs_buffer data, struct inode *inode __attribute__((unused))) {
+    free(data.buffer);
+}
+
 struct tnode *procfs_lookup(struct inode *inode, const char *name) {
-    if (inode == NULL || inode->tnode_list == NULL || name == NULL) {
+    assert(inode);
+    if (!name) {
+        if (!(inode->flags & FS_DIR)) {
+            struct procfs_buffer result = procfs_get_data(inode);
+            inode->size = result.size;
+            procfs_cleanup_data(result, inode);
+        }
+
         return NULL;
     }
 
@@ -74,27 +107,25 @@ struct file *procfs_open(struct inode *inode, int flags, int *error) {
     return file;
 }
 
-static struct process *procfs_get_process(struct inode *inode) {
-    struct tnode *parent = inode->parent;
-    pid_t pid = atoi(parent->name);
-    return find_by_pid(pid);
+int procfs_read_all(struct inode *inode, void *buffer) {
+    struct procfs_buffer data = procfs_get_data(inode);
+
+    memcpy(buffer, data.buffer, data.size);
+
+    procfs_cleanup_data(data, inode);
+    return 0;
 }
 
 ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
-    struct process *process = procfs_get_process(inode);
-
-    procfs_function_t getter = inode->private_data;
-    assert(getter);
-
-    struct procfs_buffer data = getter(process);
+    struct procfs_buffer data = procfs_get_data(inode);
 
     size_t to_read = MIN(len, data.size - offset);
     memcpy(buffer, data.buffer + offset, to_read);
 
-    free(data.buffer);
+    procfs_cleanup_data(data, inode);
     return to_read;
 }
 
