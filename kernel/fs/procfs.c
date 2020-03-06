@@ -158,6 +158,18 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
     return to_read;
 }
 
+static struct procfs_buffer procfs_cwd(struct process *process) {
+    char *buffer = get_tnode_path(process->cwd);
+    size_t length = strlen(buffer);
+    return (struct procfs_buffer) { buffer, length };
+}
+
+static struct procfs_buffer procfs_exe(struct process *process) {
+    char *buffer = get_tnode_path(process->exe);
+    size_t length = strlen(buffer);
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static struct procfs_buffer procfs_status(struct process *process) {
     char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
     size_t length = snprintf(buffer, PAGE_SIZE,
@@ -182,9 +194,16 @@ static void procfs_create_process_directory_structure(struct tnode *tparent, str
     struct inode *parent = tparent->inode;
 
     struct inode *status_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_status);
-
     struct tnode *status_tnode = create_tnode("status", status_inode);
     parent->tnode_list = add_tnode(parent->tnode_list, status_tnode);
+
+    struct inode *cwd_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_cwd);
+    struct tnode *cwd_tnode = create_tnode("cwd", cwd_inode);
+    parent->tnode_list = add_tnode(parent->tnode_list, cwd_tnode);
+
+    struct inode *exe_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_exe);
+    struct tnode *exe_tnode = create_tnode("exe", exe_inode);
+    parent->tnode_list = add_tnode(parent->tnode_list, exe_tnode);
 }
 
 static void procfs_destroy_process_directory_structure(struct inode *parent) {
