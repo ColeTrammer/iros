@@ -413,7 +413,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
                     fprintf(stderr, "%c", '\n');
                     print_ps1_prompt();
-                    fprintf(stderr, "%s", buffer);
+                    write(fileno(tty), buffer, buffer_length);
                     if (buffer_length != buffer_index) {
                         char f_buf[20];
                         snprintf(f_buf, 19, "\033[%luD", buffer_length - buffer_index);
