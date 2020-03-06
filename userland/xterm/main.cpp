@@ -32,12 +32,18 @@ int main() {
         int sfd = open(ptsname(mfd), O_RDWR);
         assert(sfd != -1);
 
-        if (setsid() < -1) {
+        if (setsid() < 0) {
             perror("setsid");
             _exit(1);
         }
-        tcsetpgrp(mfd, getpid());
-        ioctl(mfd, TIOSCTTY);
+        if (tcsetpgrp(mfd, getpid())) {
+            perror("tcsetpgrp");
+            _exit(1);
+        }
+        if (ioctl(mfd, TIOSCTTY)) {
+            perror("ioctl(TIOSCTTY)");
+            _exit(1);
+        }
         signal(SIGTTOU, SIG_DFL);
 
         dup2(sfd, STDIN_FILENO);
@@ -55,7 +61,6 @@ int main() {
         return -1;
     }
 
-    setpgid(pid, pid);
     tcsetpgrp(mfd, pid);
     signal(SIGTTOU, SIG_DFL);
 
