@@ -26,9 +26,11 @@
 
 #define PROCFS_FILE_MODE      (S_IFREG | 0444)
 #define PROCFS_DIRECTORY_MODE (S_IFDIR | 0555)
+#define PROCFS_SYMLINK_MODE   (S_IFLNK | 0777)
 
-#define PROCFS_DYNAMIC_FLAG      (1UL)
-#define PROCFS_IS_DYNAMIC(inode) ((((uintptr_t)(inode)->private_data)) & PROCFS_DYNAMIC_FLAG)
+#define PROCFS_DYNAMIC_FLAG        (1UL)
+#define PROCFS_IS_DYNAMIC(inode)   ((((uintptr_t)(inode)->private_data)) & PROCFS_DYNAMIC_FLAG)
+#define PROCFS_MAKE_DYNAMIC(inode) ((inode)->private_data = (void *) ((((uintptr_t)(inode)->private_data)) | PROCFS_DYNAMIC_FLAG))
 
 #define PROCFS_GET_FUNCTION(inode) ((procfs_function_t)(((uintptr_t)((inode)->private_data)) & ~(PROCFS_DYNAMIC_FLAG)))
 
@@ -226,6 +228,22 @@ void procfs_unregister_process(struct process *process) {
     drop_tnode(tnode);
 }
 
+static struct procfs_buffer procfs_self(struct process *process) {
+    char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
+    size_t length = snprintf(buffer, PAGE_SIZE, "%d", process->pid);
+    return (struct procfs_buffer) { buffer, length };
+}
+
+static void procfs_create_base_directory_structure(struct tnode *tparent) {
+    struct inode *parent = tparent->inode;
+
+    struct inode *self_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, 0, 0, procfs_self);
+    PROCFS_MAKE_DYNAMIC(self_inode);
+
+    struct tnode *self_tnode = create_tnode("self", self_inode);
+    parent->tnode_list = add_tnode(parent->tnode_list, self_tnode);
+}
+
 struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
@@ -239,6 +257,8 @@ struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     super_block.block_size = PAGE_SIZE;
 
     current_fs->super_block = &super_block;
+
+    procfs_create_base_directory_structure(t_root);
 
     return t_root;
 }

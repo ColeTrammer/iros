@@ -40,7 +40,9 @@ static struct file_operations dev_f_op = { &dev_close, &dev_read, &dev_write, NU
 static struct file_operations dev_dir_f_op = { NULL, NULL, NULL, NULL };
 
 struct tnode *dev_lookup(struct inode *inode, const char *name) {
-    assert(name != NULL);
+    if (!inode || !name) {
+        return NULL;
+    }
 
     if (inode->tnode_list == NULL) {
         return NULL;

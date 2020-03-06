@@ -45,10 +45,9 @@ static struct file_operations initrd_f_op = { NULL, &initrd_read, NULL, NULL };
 static struct file_operations initrd_dir_f_op = { NULL, NULL, NULL, NULL };
 
 struct tnode *initrd_lookup(struct inode *inode, const char *name) {
-    /* Assumes we were called on root inode */
-    assert(inode->flags & FS_DIR);
-    assert(inode->tnode_list != NULL);
-    assert(name != NULL);
+    if (!inode || !name) {
+        return NULL;
+    }
 
     struct tnode_list *list = inode->tnode_list;
     while (list != NULL) {
