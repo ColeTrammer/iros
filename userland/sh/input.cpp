@@ -525,8 +525,14 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
         // Terminal escape sequences
         if (c == '\033') {
             read(fileno(tty), &c, 1);
-            if (c != '[') {
-                continue;
+
+            switch (c) {
+                case 'd':
+                    goto control_delete;
+                case '[':
+                    break;
+                default:
+                    continue;
             }
 
             read(fileno(tty), &c, 1);
@@ -603,7 +609,8 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 } else {
                     switch (c) {
                         // Control Delete
-                        case '3': {
+                        case '3':
+                        control_delete : {
                             bool done_something = false;
                             while (buffer_index < buffer_length &&
                                    (!done_something || isalnum(buffer[buffer_index]) || buffer[buffer_index] == '_')) {
