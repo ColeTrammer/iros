@@ -713,6 +713,10 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_rdev = 0;
     stat_struct->st_nlink = 1;
 
+    if (inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
+    }
+
     if (inode->i_op->stat) {
         int ret = inode->i_op->stat(inode, stat_struct);
         if (ret < 0) {

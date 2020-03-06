@@ -174,8 +174,6 @@ void *hash_del(struct hash_map *map, void *key) {
     }
 
     spin_unlock(&map->lock);
-
-    debug_log("Hash Map tried to delete non existent entry\n");
     return NULL;
 }
 

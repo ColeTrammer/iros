@@ -22,6 +22,11 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
+#define PROCFS_DEVICE_ID 4
+
+#define PROCFS_FILE_MODE      (S_IFREG | 0444)
+#define PROCFS_DIRECTORY_MODE (S_IFDIR | 0555)
+
 #define PROCFS_DYNAMIC_FLAG      (1UL)
 #define PROCFS_IS_DYNAMIC(inode) ((((uintptr_t)(inode)->private_data)) & PROCFS_DYNAMIC_FLAG)
 
@@ -35,8 +40,8 @@ static ino_t inode_counter = 1;
 
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
 
-static struct inode_operations procfs_i_op = { NULL, NULL, &procfs_open,     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL, &procfs_read_all, NULL, NULL };
+static struct inode_operations procfs_i_op = { NULL, &procfs_lookup, &procfs_open,     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                                               NULL, NULL,           &procfs_read_all, NULL, NULL };
 
 static struct inode_operations procfs_dir_i_op = { NULL, &procfs_lookup, &procfs_open, NULL, NULL, NULL, NULL, NULL,
                                                    NULL, NULL,           NULL,         NULL, NULL, NULL, NULL, NULL };
@@ -44,6 +49,28 @@ static struct inode_operations procfs_dir_i_op = { NULL, &procfs_lookup, &procfs
 static struct file_operations procfs_f_op = { NULL, &procfs_read, NULL, NULL };
 
 static struct file_operations procfs_dir_f_op = { NULL, NULL, NULL, NULL };
+
+static struct inode *procfs_create_inode(struct tnode *tparent, mode_t mode, uid_t uid, gid_t gid, procfs_function_t function) {
+    struct inode *inode = calloc(1, sizeof(struct inode));
+    inode->flags = fs_mode_to_flags(mode);
+    inode->super_block = &super_block;
+    inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
+    inode->device = PROCFS_DEVICE_ID;
+    inode->gid = gid;
+    inode->uid = uid;
+    inode->mode = mode;
+    inode->i_op = S_ISDIR(mode) ? &procfs_dir_i_op : &procfs_i_op;
+    inode->ref_count = 1;
+    inode->parent = tparent;
+    inode->private_data = function;
+    init_spinlock(&inode->lock);
+
+    spin_lock(&inode_counter_lock);
+    inode->index = inode_counter++;
+    spin_unlock(&inode_counter_lock);
+
+    return inode;
+}
 
 static struct process *procfs_get_process(struct inode *inode) {
     if (PROCFS_IS_DYNAMIC(inode)) {
@@ -152,20 +179,7 @@ static struct tnode *t_root;
 static void procfs_create_process_directory_structure(struct tnode *tparent, struct process *process __attribute__((unused))) {
     struct inode *parent = tparent->inode;
 
-    struct inode *status_inode = calloc(1, sizeof(struct inode));
-    status_inode->flags = FS_FILE;
-    status_inode->super_block = parent->super_block;
-    status_inode->access_time = status_inode->modify_time = status_inode->change_time = time_read_clock(CLOCK_REALTIME);
-    status_inode->device = parent->device;
-    status_inode->mode = S_IFREG | 0444;
-    status_inode->i_op = &procfs_i_op;
-    status_inode->ref_count = 1;
-    status_inode->parent = tparent;
-    status_inode->private_data = &procfs_status;
-    init_spinlock(&status_inode->lock);
-    spin_lock(&inode_counter_lock);
-    status_inode->index = inode_counter++;
-    spin_unlock(&inode_counter_lock);
+    struct inode *status_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_status);
 
     struct tnode *status_tnode = create_tnode("status", status_inode);
     parent->tnode_list = add_tnode(parent->tnode_list, status_tnode);
@@ -183,21 +197,7 @@ static void procfs_destroy_process_directory_structure(struct inode *parent) {
 void procfs_register_process(struct process *process) {
     assert(root);
 
-    struct inode *inode = calloc(1, sizeof(struct inode));
-    inode->flags = FS_DIR;
-    inode->super_block = root->super_block;
-    inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
-    inode->device = root->device;
-    inode->gid = process->gid;
-    inode->uid = process->uid;
-    inode->mode = S_IFDIR | 0555;
-    inode->i_op = &procfs_dir_i_op;
-    inode->ref_count = 1;
-    inode->parent = t_root;
-    init_spinlock(&inode->lock);
-    spin_lock(&inode_counter_lock);
-    inode->index = inode_counter++;
-    spin_unlock(&inode_counter_lock);
+    struct inode *inode = procfs_create_inode(t_root, PROCFS_DIRECTORY_MODE, process->uid, process->gid, NULL);
 
     char pid_string[16];
     snprintf(pid_string, sizeof(pid_string) - 1, "%d", process->pid);
@@ -230,24 +230,8 @@ struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
 
-    root = calloc(1, sizeof(struct inode));
+    root = procfs_create_inode(NULL, PROCFS_DIRECTORY_MODE, 0, 0, NULL);
     t_root = create_root_tnode(root);
-
-    root->device = 4;
-    root->flags = FS_DIR;
-    root->i_op = &procfs_dir_i_op;
-    root->index = inode_counter++;
-    init_spinlock(&root->lock);
-    root->mode = S_IFDIR | 0777;
-    root->mounts = NULL;
-    root->private_data = NULL;
-    root->size = 0;
-    root->super_block = &super_block;
-    root->tnode_list = NULL;
-    root->ref_count = 1;
-    root->readable = true;
-    root->writeable = true;
-    root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
 
     super_block.device = root->device;
     super_block.op = NULL;
