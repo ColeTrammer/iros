@@ -87,6 +87,10 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
             drop_tnode(process->cwd);
         }
 
+        if (process->exe) {
+            drop_tnode(process->exe);
+        }
+
         time_destroy_clock(process->process_clock);
         free(process);
         return;

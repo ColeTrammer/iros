@@ -27,6 +27,7 @@ struct tnode;
 
 struct process {
     struct tnode *cwd;
+    struct tnode *exe;
     struct file_descriptor files[FOPEN_MAX];
 
     struct vm_region *process_memory;
@@ -52,9 +53,6 @@ struct process {
     int ref_count;
 
     struct arch_process arch_process;
-
-    ino_t inode_id;
-    dev_t inode_dev;
 
     struct tms times;
 

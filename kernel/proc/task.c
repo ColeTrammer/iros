@@ -209,8 +209,7 @@ struct task *load_task(const char *file_name) {
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
 
-    task->process->inode_dev = program->device;
-    task->process->inode_id = program->index;
+    task->process->exe = find_tnode_inode(program->parent->inode->tnode_list, program);
 
     assert(elf64_is_valid(buffer));
 

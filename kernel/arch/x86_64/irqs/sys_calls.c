@@ -331,8 +331,7 @@ SYS_CALL(fork) {
     child->process->umask = parent->process->umask;
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
-    child_process->inode_dev = parent->process->inode_dev;
-    child_process->inode_id = parent->process->inode_id;
+    child_process->exe = bump_tnode(parent->process->exe);
     memcpy(&child_process->sig_state, &parent->process->sig_state, sizeof(struct sigaction) * _NSIG);
     child_process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
     child->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
@@ -522,8 +521,10 @@ SYS_CALL(execve) {
     struct task *task = calloc(1, sizeof(struct task));
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
-    process->inode_dev = inode->device;
-    process->inode_id = inode->index;
+
+    struct tnode *tnode = find_tnode_inode(inode->parent->inode->tnode_list, inode);
+    assert(tnode);
+    process->exe = bump_tnode(tnode);
 
     process->uid = current->process->uid;
     if (depth == 0 && (inode->mode & S_ISUID)) {

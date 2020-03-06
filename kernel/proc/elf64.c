@@ -111,11 +111,7 @@ void elf64_stack_trace(struct task *task) {
         region = region->next;
     }
 
-    struct inode *inode = fs_inode_get(task->process->inode_dev, task->process->inode_id);
-    if (!inode) {
-        debug_log("The task has no inode: [ %d, %lu, %llu ]\n", task->process->pid, task->process->inode_dev, task->process->inode_id);
-        return;
-    }
+    struct inode *inode = task->process->exe->inode;
 
     void *buffer;
     if (fs_read_all_inode(inode, &buffer, NULL)) {
