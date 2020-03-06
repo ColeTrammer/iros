@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
@@ -73,12 +74,45 @@ struct file *procfs_open(struct inode *inode, int flags, int *error) {
     return file;
 }
 
-ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t _len) {
-    (void) file;
-    (void) offset;
-    (void) buffer;
-    (void) _len;
-    return -EOPNOTSUPP;
+static struct process *procfs_get_process(struct inode *inode) {
+    struct tnode *parent = inode->parent;
+    pid_t pid = atoi(parent->name);
+    return find_by_pid(pid);
+}
+
+ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode);
+
+    struct process *process = procfs_get_process(inode);
+
+    procfs_function_t getter = inode->private_data;
+    assert(getter);
+
+    struct procfs_buffer data = getter(process);
+
+    size_t to_read = MIN(len, data.size - offset);
+    memcpy(buffer, data.buffer + offset, to_read);
+
+    free(data.buffer);
+    return to_read;
+}
+
+static struct procfs_buffer procfs_status(struct process *process) {
+    char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
+    size_t length = snprintf(buffer, PAGE_SIZE,
+                             "PID: %d\n"
+                             "UID: %hu\n"
+                             "GID: %hu\n"
+                             "PPID: %d\n"
+                             "UMASK: %04o\n"
+                             "EUID: %hu\n"
+                             "EGID: %hu\n"
+                             "PGID: %d\n"
+                             "SID: %d\n",
+                             process->pid, process->uid, process->gid, process->ppid, process->umask, process->euid, process->egid,
+                             process->pgid, process->sid);
+    return (struct procfs_buffer) { buffer, length };
 }
 
 static struct inode *root;
@@ -96,6 +130,7 @@ static void procfs_create_process_directory_structure(struct tnode *tparent, str
     status_inode->i_op = &procfs_i_op;
     status_inode->ref_count = 1;
     status_inode->parent = tparent;
+    status_inode->private_data = &procfs_status;
     init_spinlock(&status_inode->lock);
     spin_lock(&inode_counter_lock);
     status_inode->index = inode_counter++;

@@ -8,6 +8,13 @@ struct file_system;
 struct inode;
 struct process;
 
+struct procfs_buffer {
+    char *buffer;
+    size_t size;
+};
+
+typedef struct procfs_buffer (*procfs_function_t)(struct process *process);
+
 struct tnode *procfs_lookup(struct inode *inode, const char *name);
 struct file *procfs_open(struct inode *inode, int flags, int *error);
 ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len);
