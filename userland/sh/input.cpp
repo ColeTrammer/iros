@@ -117,7 +117,7 @@ static void init_suggestion(struct suggestion *suggestions, size_t at, size_t su
     strcat(suggestions[at].suggestion, post);
 }
 
-static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestions) {
+static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestions, bool at_end) {
     char *path_var = getenv("PATH");
     if (path_var == NULL) {
         return NULL;
@@ -135,7 +135,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
             suggestions = (struct suggestion *) realloc(suggestions, ((*num_suggestions) + num_found) * sizeof(struct suggestion));
 
             for (int i = 0; i < num_found; i++) {
-                init_suggestion(suggestions, (*num_suggestions) + i, 0, list[i]->d_name, " ");
+                init_suggestion(suggestions, (*num_suggestions) + i, 0, list[i]->d_name, at_end ? " " : "");
                 free(list[i]);
             }
 
@@ -163,7 +163,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
     return suggestions;
 }
 
-static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
+static struct suggestion *get_suggestions(char *line, size_t *num_suggestions, bool at_end) {
     *num_suggestions = 0;
 
     char *last_space = strrchr(line, ' ');
@@ -182,7 +182,7 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
     if (last_slash == NULL) {
         if (is_first_word) {
             free(to_match);
-            return get_path_suggestions(line, num_suggestions);
+            return get_path_suggestions(line, num_suggestions, at_end);
         }
 
         dirname = (char *) ".";
@@ -227,7 +227,7 @@ static struct suggestion *get_suggestions(char *line, size_t *num_suggestions) {
         }
 
         free(path);
-        init_suggestion(suggestions, (size_t) i, 0, list[i]->d_name, S_ISDIR(stat_struct.st_mode) ? "/" : " ");
+        init_suggestion(suggestions, (size_t) i, 0, list[i]->d_name, S_ISDIR(stat_struct.st_mode) ? "/" : at_end ? " " : "");
 
         if (last_slash == NULL) {
             suggestions[i].index = to_match_start - line;
@@ -389,10 +389,13 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
         // tab autocompletion
         if (c == '\t') {
+            bool at_end = buffer_index == buffer_length;
+            char *suggestion_buffer = nullptr;
+            size_t i = 0;
             size_t num_suggestions = 0;
             char end_save = buffer[buffer_index];
             buffer[buffer_index] = '\0'; // Ensure buffer is null terminated
-            struct suggestion *suggestions = get_suggestions(buffer, &num_suggestions);
+            struct suggestion *suggestions = get_suggestions(buffer, &num_suggestions, at_end);
             buffer[buffer_index] = end_save;
 
             if (num_suggestions == 0) {
@@ -425,6 +428,19 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 consecutive_tab_presses = 0;
             }
 
+            while (i < suggestions->length && suggestions->index + i < buffer_index &&
+                   buffer[suggestions->index + i] == suggestions->suggestion[i]) {
+                i++;
+            }
+
+            if (i == suggestions->length) {
+                goto cleanup_suggestions;
+            }
+
+            suggestions->index += i;
+            suggestions->length -= i;
+            suggestion_buffer = suggestions->suggestion + i;
+
             if (buffer_length + suggestions->length >= buffer_max - 1) {
                 buffer_max += 1024;
                 buffer = (char *) realloc(buffer, buffer_max);
@@ -435,7 +451,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             }
 
             memmove(buffer + suggestions->index + suggestions->length, buffer + buffer_index, buffer_length - buffer_index);
-            memcpy(buffer + suggestions->index, suggestions->suggestion, suggestions->length);
+            memcpy(buffer + suggestions->index, suggestion_buffer, suggestions->length);
 
             if (buffer_index - suggestions->index > 0) {
                 char f_buf[20];
@@ -452,7 +468,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 snprintf(f_buf, 20, "\033[%luD", buffer_length - buffer_index);
                 write(fileno(tty), f_buf, strlen(f_buf));
             } else {
-                write(fileno(tty), suggestions->suggestion, suggestions->length);
+                write(fileno(tty), suggestion_buffer, suggestions->length);
                 buffer_index = buffer_length = suggestions->index + suggestions->length;
             }
 
