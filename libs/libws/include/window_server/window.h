@@ -14,7 +14,7 @@ class Window {
 public:
     ~Window();
 
-    void swap_buffers(Connection& connection);
+    void swap_buffers();
 
     wid_t wid() const { return m_wid; }
 
@@ -26,18 +26,20 @@ public:
 private:
     friend class Connection;
 
-    static SharedPtr<Window> construct(const Rect& rect, Message::CreateWindowResponse& message);
-    static void draw_all(Connection& connection);
+    static SharedPtr<Window> construct(const Rect& rect, Message::CreateWindowResponse& message, Connection& connection);
 
-    void draw(Connection& connection);
+    void draw();
 
-    Window(const Rect& rect, Message::CreateWindowResponse& message);
+    Connection& connection() { return m_connection; }
+
+    Window(const Rect& rect, Message::CreateWindowResponse& message, Connection& connection);
 
     Rect m_rect;
     SharedPtr<PixelBuffer> m_front;
     SharedPtr<PixelBuffer> m_back;
     wid_t m_wid;
     Function<void(SharedPtr<PixelBuffer>&)> m_draw_callback;
+    Connection& m_connection;
 };
 
 }

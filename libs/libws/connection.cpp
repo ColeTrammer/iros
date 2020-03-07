@@ -38,7 +38,7 @@ SharedPtr<Window> Connection::create_window(int x, int y, int height, int width)
     assert(message->type == Message::Type::CreateWindowResponse);
 
     Message::CreateWindowResponse& created_data = message->data.create_window_response;
-    return Window::construct(Rect(x, y, width, height), created_data);
+    return Window::construct(Rect(x, y, width, height), created_data, *this);
 }
 
 void Connection::send_swap_buffer_request(wid_t wid) {
@@ -52,7 +52,9 @@ void Connection::setup_timer() {
     act.sa_flags = SA_SIGINFO;
     act.sa_sigaction = [](int, siginfo_t* info, void*) {
         Connection* connection = static_cast<Connection*>(info->si_value.sival_ptr);
-        Window::draw_all(*connection);
+        connection->windows().for_each([](auto* window) {
+            window->draw();
+        });
     };
     sigaction(SIGRTMIN, &act, nullptr);
 

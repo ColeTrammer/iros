@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/function.h>
+#include <liim/hash_map.h>
 #include <liim/pointers.h>
 #include <window_server/message.h>
 
@@ -26,8 +27,13 @@ public:
     }
 
 private:
+    friend class Window;
+
+    auto& windows() { return m_windows; }
+
     void setup_timer();
 
+    HashMap<wid_t, Window*> m_windows;
     int m_fd;
 };
 
