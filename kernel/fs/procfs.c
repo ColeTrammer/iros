@@ -28,17 +28,29 @@
 #define PROCFS_DIRECTORY_MODE (S_IFDIR | 0555)
 #define PROCFS_SYMLINK_MODE   (S_IFLNK | 0777)
 
-#define PROCFS_DYNAMIC_FLAG        (1UL)
-#define PROCFS_IS_DYNAMIC(inode)   ((((uintptr_t)(inode)->private_data)) & PROCFS_DYNAMIC_FLAG)
-#define PROCFS_MAKE_DYNAMIC(inode) ((inode)->private_data = (void *) ((((uintptr_t)(inode)->private_data)) | PROCFS_DYNAMIC_FLAG))
+#define __PROCFS_IS(inode, flag)   ((((uintptr_t)(inode)->private_data)) & (flag))
+#define __PROCFS_MAKE(inode, flag) ((inode)->private_data = (void *) ((((uintptr_t)(inode)->private_data)) | (flag)))
 
-#define PROCFS_GET_FUNCTION(inode) ((procfs_function_t)(((uintptr_t)((inode)->private_data)) & ~(PROCFS_DYNAMIC_FLAG)))
+#define PROCFS_DYNAMIC_FLAG        (1UL)
+#define PROCFS_IS_DYNAMIC(inode)   __PROCFS_IS(inode, PROCFS_DYNAMIC_FLAG)
+#define PROCFS_MAKE_DYNAMIC(inode) __PROCFS_MAKE(inode, PROCFS_DYNAMIC_FLAG)
+
+#define PROCFS_LOADED_FLAG        (2UL)
+#define PROCFS_IS_LOADED(inode)   __PROCFS_IS(inode, PROCFS_LOADED_FLAG)
+#define PROCFS_MAKE_LOADED(inode) __PROCFS_MAKE(inode, PROCFS_LOADED_FLAG)
+
+#define PROCFS_GET_FILE_FUNCTION(inode) ((procfs_file_function_t)(((uintptr_t)((inode)->private_data)) & ~(PROCFS_DYNAMIC_FLAG)))
+#define PROCFS_GET_DIRECTORY_FUNCTION(inode) \
+    ((procfs_directory_function_t)(((uintptr_t)((inode)->private_data)) & ~(PROCFS_DYNAMIC_FLAG | PROCFS_LOADED_FLAG)))
 
 static struct file_system fs;
 static struct super_block super_block;
 
 static spinlock_t inode_counter_lock = SPINLOCK_INITIALIZER;
 static ino_t inode_counter = 1;
+
+static struct inode *root;
+static struct tnode *t_root;
 
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
 
@@ -52,7 +64,7 @@ static struct file_operations procfs_f_op = { NULL, &procfs_read, NULL, NULL };
 
 static struct file_operations procfs_dir_f_op = { NULL, NULL, NULL, NULL };
 
-static struct inode *procfs_create_inode(struct tnode *tparent, mode_t mode, uid_t uid, gid_t gid, procfs_function_t function) {
+static struct inode *procfs_create_inode(struct tnode *tparent, mode_t mode, uid_t uid, gid_t gid, void *function) {
     struct inode *inode = calloc(1, sizeof(struct inode));
     inode->flags = fs_mode_to_flags(mode);
     inode->super_block = &super_block;
@@ -79,15 +91,20 @@ static struct process *procfs_get_process(struct inode *inode) {
         return get_current_task()->process;
     }
 
-    struct tnode *parent = inode->parent;
-    pid_t pid = atoi(parent->name);
+    struct tnode *tnode;
+    if (inode->flags & FS_DIR) {
+        tnode = find_tnode_inode(inode->parent->inode->tnode_list, inode);
+    } else {
+        tnode = inode->parent;
+    }
+    pid_t pid = atoi(tnode->name);
     return find_by_pid(pid);
 }
 
 static struct procfs_buffer procfs_get_data(struct inode *inode) {
     struct process *process = procfs_get_process(inode);
 
-    procfs_function_t getter = PROCFS_GET_FUNCTION(inode);
+    procfs_file_function_t getter = PROCFS_GET_FILE_FUNCTION(inode);
     return getter(process);
 }
 
@@ -95,15 +112,26 @@ static void procfs_cleanup_data(struct procfs_buffer data, struct inode *inode _
     free(data.buffer);
 }
 
+static void procfs_refresh_directory(struct inode *inode) {
+    struct process *process = procfs_get_process(inode);
+
+    procfs_directory_function_t refresher = PROCFS_GET_DIRECTORY_FUNCTION(inode);
+
+    refresher(inode == root ? t_root : find_tnode_inode(inode->parent->inode->tnode_list, inode), process, PROCFS_IS_LOADED(inode));
+    PROCFS_MAKE_LOADED(inode);
+}
+
 struct tnode *procfs_lookup(struct inode *inode, const char *name) {
     assert(inode);
-    if (!name) {
-        if (!(inode->flags & FS_DIR)) {
-            struct procfs_buffer result = procfs_get_data(inode);
-            inode->size = result.size;
-            procfs_cleanup_data(result, inode);
-        }
+    if (!(inode->flags & FS_DIR)) {
+        struct procfs_buffer result = procfs_get_data(inode);
+        inode->size = result.size;
+        procfs_cleanup_data(result, inode);
+    } else {
+        procfs_refresh_directory(inode);
+    }
 
+    if (name == NULL) {
         return NULL;
     }
 
@@ -187,23 +215,22 @@ static struct procfs_buffer procfs_status(struct process *process) {
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct inode *root;
-static struct tnode *t_root;
-
-static void procfs_create_process_directory_structure(struct tnode *tparent, struct process *process __attribute__((unused))) {
+static void procfs_create_process_directory_structure(struct tnode *tparent, struct process *process, bool loaded) {
     struct inode *parent = tparent->inode;
 
-    struct inode *status_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_status);
-    struct tnode *status_tnode = create_tnode("status", status_inode);
-    parent->tnode_list = add_tnode(parent->tnode_list, status_tnode);
+    if (!loaded) {
+        struct inode *status_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_status);
+        struct tnode *status_tnode = create_tnode("status", status_inode);
+        parent->tnode_list = add_tnode(parent->tnode_list, status_tnode);
 
-    struct inode *cwd_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_cwd);
-    struct tnode *cwd_tnode = create_tnode("cwd", cwd_inode);
-    parent->tnode_list = add_tnode(parent->tnode_list, cwd_tnode);
+        struct inode *cwd_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_cwd);
+        struct tnode *cwd_tnode = create_tnode("cwd", cwd_inode);
+        parent->tnode_list = add_tnode(parent->tnode_list, cwd_tnode);
 
-    struct inode *exe_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_exe);
-    struct tnode *exe_tnode = create_tnode("exe", exe_inode);
-    parent->tnode_list = add_tnode(parent->tnode_list, exe_tnode);
+        struct inode *exe_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_exe);
+        struct tnode *exe_tnode = create_tnode("exe", exe_inode);
+        parent->tnode_list = add_tnode(parent->tnode_list, exe_tnode);
+    }
 }
 
 static void procfs_destroy_process_directory_structure(struct inode *parent) {
@@ -218,13 +245,12 @@ static void procfs_destroy_process_directory_structure(struct inode *parent) {
 void procfs_register_process(struct process *process) {
     assert(root);
 
-    struct inode *inode = procfs_create_inode(t_root, PROCFS_DIRECTORY_MODE, process->uid, process->gid, NULL);
+    struct inode *inode =
+        procfs_create_inode(t_root, PROCFS_DIRECTORY_MODE, process->uid, process->gid, procfs_create_process_directory_structure);
 
     char pid_string[16];
     snprintf(pid_string, sizeof(pid_string) - 1, "%d", process->pid);
     struct tnode *parent = create_tnode(pid_string, inode);
-
-    procfs_create_process_directory_structure(parent, process);
 
     spin_lock(&root->lock);
     root->tnode_list = add_tnode(root->tnode_list, parent);
@@ -253,21 +279,28 @@ static struct procfs_buffer procfs_self(struct process *process) {
     return (struct procfs_buffer) { buffer, length };
 }
 
-static void procfs_create_base_directory_structure(struct tnode *tparent) {
+static void procfs_create_base_directory_structure(struct tnode *tparent, struct process *process __attribute__((unused)), bool loaded) {
+    assert(tparent);
     struct inode *parent = tparent->inode;
 
-    struct inode *self_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, 0, 0, procfs_self);
-    PROCFS_MAKE_DYNAMIC(self_inode);
+    if (!loaded) {
+        struct inode *self_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, 0, 0, procfs_self);
+        PROCFS_MAKE_DYNAMIC(self_inode);
 
-    struct tnode *self_tnode = create_tnode("self", self_inode);
-    parent->tnode_list = add_tnode(parent->tnode_list, self_tnode);
+        struct tnode *self_tnode = create_tnode("self", self_inode);
+        spin_lock(&parent->lock);
+        parent->tnode_list = add_tnode(parent->tnode_list, self_tnode);
+        spin_unlock(&parent->lock);
+    }
 }
 
 struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
 
-    root = procfs_create_inode(NULL, PROCFS_DIRECTORY_MODE, 0, 0, NULL);
+    root = procfs_create_inode(NULL, PROCFS_DIRECTORY_MODE, 0, 0, procfs_create_base_directory_structure);
+    PROCFS_MAKE_DYNAMIC(root);
+
     t_root = create_root_tnode(root);
 
     super_block.device = root->device;
@@ -276,9 +309,6 @@ struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     super_block.block_size = PAGE_SIZE;
 
     current_fs->super_block = &super_block;
-
-    procfs_create_base_directory_structure(t_root);
-
     return t_root;
 }
 

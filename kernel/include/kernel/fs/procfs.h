@@ -1,19 +1,22 @@
 #ifndef _KERNEL_FS_PROCFS_H
 #define _KERNEL_FS_PROCFS_H 1
 
+#include <stdbool.h>
 #include <sys/types.h>
 
 struct file;
 struct file_system;
 struct inode;
 struct process;
+struct tnode;
 
 struct procfs_buffer {
     char *buffer;
     size_t size;
 };
 
-typedef struct procfs_buffer (*procfs_function_t)(struct process *process);
+typedef struct procfs_buffer (*procfs_file_function_t)(struct process *process);
+typedef void (*procfs_directory_function_t)(struct tnode *tnode, struct process *process, bool loaded);
 
 struct tnode *procfs_lookup(struct inode *inode, const char *name);
 struct file *procfs_open(struct inode *inode, int flags, int *error);

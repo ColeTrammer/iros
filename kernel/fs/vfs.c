@@ -509,11 +509,10 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 
     struct dirent *entry = (struct dirent *) buffer;
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    assert(inode->i_op->lookup);
+    inode->i_op->lookup(inode, NULL);
     if (!inode->tnode_list) {
-        inode->i_op->lookup(inode, NULL);
-        if (!inode->tnode_list) {
-            return -EINVAL;
-        }
+        return 0;
     }
 
     spin_lock(&inode->lock);

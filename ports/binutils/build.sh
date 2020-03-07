@@ -27,7 +27,7 @@ fi
 
 # Build
 cd build-binutils
-make clean
-make all -j5
+# make clean
+# make all -j5
 make install-strip DESTDIR=$ROOT/sysroot -j5
 cd ..
