@@ -93,7 +93,8 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 void dump_kernel_regions(uintptr_t addr) {
     struct vm_region *region = kernel_vm_list;
     while (region) {
-        debug_log("Region: [ %#.16lX, %#.16lX, %lu, %#.16lX ]\n", region->start, region->end, region->type, region->flags);
+        debug_log("Region: [ %#.16lX, %#.16lX, %s, %#.16lX ]\n", region->start, region->end, vm_type_to_string(region->type),
+                  region->flags);
         if (addr >= region->start && addr <= region->end) {
             debug_log("Addr found in above: [ %#.16lX ]\n", addr);
         }
