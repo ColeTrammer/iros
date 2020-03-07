@@ -136,3 +136,46 @@ int vm_map_region_with_object(struct vm_region *self) {
     assert(self->vm_object->ops->map);
     return self->vm_object->ops->map(self->vm_object, self);
 }
+
+const char *vm_type_to_string(uint64_t type) {
+    switch (type) {
+        case VM_KERNEL_PHYS_ID:
+            return "kernel=>physical id map";
+        case VM_KERNEL_TEXT:
+            return "kernel=>text";
+        case VM_KERNEL_ROD:
+            return "kernel=>read only data";
+        case VM_KERNEL_DATA:
+            return "kernel=>data";
+        case VM_INITRD:
+            return "kernel=>initial ram disk";
+        case VM_KERNEL_HEAP:
+            return "kernel=>heap";
+        case VM_KERNEL_STACK:
+            return "kernel=>stack";
+        case VM_PROCESS_TEXT:
+            return "text";
+        case VM_PROCESS_ROD:
+            return "read only data";
+        case VM_PROCESS_DATA:
+            return "data";
+        case VM_PROCESS_BSS:
+            return "bss";
+        case VM_PROCESS_HEAP:
+            return "heap";
+        case VM_PROCESS_TLS_MASTER_COPY:
+            return "thread local storage";
+        case VM_TASK_STACK:
+            return "stack";
+        case VM_TASK_STACK_GUARD:
+            return "stack guard";
+        case VM_PROCESS_FILE:
+            return "file";
+        case VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES:
+            return "device map";
+        case VM_PROCESS_ANON_MAPPING:
+            return "anonymous mapping";
+        default:
+            return "unknown";
+    }
+}

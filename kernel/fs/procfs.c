@@ -215,6 +215,23 @@ static struct procfs_buffer procfs_status(struct process *process) {
     return (struct procfs_buffer) { buffer, length };
 }
 
+static struct procfs_buffer procfs_vm(struct process *process) {
+    char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
+    size_t length = 0;
+    struct vm_region *vm = process->process_memory;
+    while (vm) {
+        length += snprintf(buffer + length, PAGE_SIZE - length,
+                           "START: %p END: %p TYPE: %s\n"
+                           "PERM: %c%c%c%c BACKED: %s\n",
+                           (void *) vm->start, (void *) vm->end, vm_type_to_string(vm->type), (vm->flags & VM_WRITE) ? 'w' : ' ',
+                           (vm->flags & VM_NO_EXEC) ? ' ' : 'x', (vm->flags & VM_STACK) ? 's' : ' ', (vm->flags & VM_PROT_NONE) ? '0' : ' ',
+                           vm->vm_object ? "yes" : "no");
+        vm = vm->next;
+    }
+
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static void procfs_create_process_directory_structure(struct tnode *tparent, struct process *process, bool loaded) {
     struct inode *parent = tparent->inode;
 
@@ -230,6 +247,10 @@ static void procfs_create_process_directory_structure(struct tnode *tparent, str
         struct inode *exe_inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_exe);
         struct tnode *exe_tnode = create_tnode("exe", exe_inode);
         parent->tnode_list = add_tnode(parent->tnode_list, exe_tnode);
+
+        struct inode *vm_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_vm);
+        struct tnode *vm_tnode = create_tnode("vm", vm_inode);
+        parent->tnode_list = add_tnode(parent->tnode_list, vm_tnode);
     }
 }
 

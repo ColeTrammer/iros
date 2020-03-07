@@ -64,4 +64,6 @@ int contract_vm_region_start(struct vm_region *list, uint64_t type, size_t num_p
 
 int vm_map_region_with_object(struct vm_region *region);
 
+const char *vm_type_to_string(uint64_t type);
+
 #endif /* _KERNEL_MEM_VM_REGION_H */
