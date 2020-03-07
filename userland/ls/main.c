@@ -75,7 +75,7 @@ void fill_dirent(char *_path, const char *name) {
             path[ret + 4] = '\0';
 
             // Check if the file exists
-            if (access(path + 4, F_OK)) {
+            if (access(d.name, F_OK)) {
                 free(path);
                 d.link_path = NULL;
             } else {
@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
                     path[0x1004] = '\0';
 
                     // Check if the file exists
-                    if (access(path + 4, F_OK)) {
+                    if (access(d.name, F_OK)) {
                         free(path);
                         d.link_path = NULL;
                     } else {
