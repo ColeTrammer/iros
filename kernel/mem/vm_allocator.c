@@ -32,6 +32,8 @@ static struct vm_region kernel_heap;
 static struct vm_region initrd;
 static spinlock_t kernel_vm_lock = SPINLOCK_INITIALIZER;
 
+extern struct process initial_kernel_process;
+
 void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 #if ARCH == X86_64
     kernel_phys_id.start = VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0);
@@ -84,6 +86,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     create_phys_id_map();
 #endif /* ARCH==X86_64 */
 
+    initial_kernel_process.process_memory = kernel_vm_list;
     debug_log("Finished Initializing VM Allocator\n");
 }
 

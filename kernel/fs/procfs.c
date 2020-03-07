@@ -223,8 +223,8 @@ static struct procfs_buffer procfs_vm(struct process *process) {
         length += snprintf(buffer + length, PAGE_SIZE - length,
                            "START: %p END: %p TYPE: %s\n"
                            "PERM: %c%c%c%c BACKED: %s\n",
-                           (void *) vm->start, (void *) vm->end, vm_type_to_string(vm->type), (vm->flags & VM_WRITE) ? 'w' : ' ',
-                           (vm->flags & VM_NO_EXEC) ? ' ' : 'x', (vm->flags & VM_STACK) ? 's' : ' ', (vm->flags & VM_PROT_NONE) ? '0' : ' ',
+                           (void *) vm->start, (void *) vm->end, vm_type_to_string(vm->type), (vm->flags & VM_PROT_NONE) ? ' ' : 'r',
+                           (vm->flags & VM_WRITE) ? 'w' : ' ', (vm->flags & VM_NO_EXEC) ? ' ' : 'x', (vm->flags & VM_STACK) ? 's' : ' ',
                            vm->vm_object ? "yes" : "no");
         vm = vm->next;
     }
