@@ -172,7 +172,7 @@ void init_kernel_task() {
     initial_kernel_task.process->tty = -1;
 }
 
-struct task *load_kernel_task(uintptr_t entry) {
+struct task *load_kernel_task(uintptr_t entry, const char *name) {
     struct task *task = calloc(1, sizeof(struct task));
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
@@ -190,6 +190,7 @@ struct task *load_kernel_task(uintptr_t entry) {
     task->tid = get_next_tid();
     task->process->cwd = NULL;
     task->next = NULL;
+    process->name = (char *) name;
 
     arch_load_kernel_task(task, entry);
 
@@ -210,6 +211,7 @@ struct task *load_task(const char *file_name) {
     task->process = process;
 
     task->process->exe = find_tnode_inode(program->parent->inode->tnode_list, program);
+    process->name = process->exe->name;
 
     assert(elf64_is_valid(buffer));
 

@@ -201,6 +201,7 @@ static struct procfs_buffer procfs_exe(struct process *process) {
 static struct procfs_buffer procfs_status(struct process *process) {
     char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
     size_t length = snprintf(buffer, PAGE_SIZE,
+                             "NAME: %s\n"
                              "PID: %d\n"
                              "UID: %hu\n"
                              "GID: %hu\n"
@@ -210,8 +211,8 @@ static struct procfs_buffer procfs_status(struct process *process) {
                              "EGID: %hu\n"
                              "PGID: %d\n"
                              "SID: %d\n",
-                             process->pid, process->uid, process->gid, process->ppid, process->umask, process->euid, process->egid,
-                             process->pgid, process->sid);
+                             process->name, process->pid, process->uid, process->gid, process->ppid, process->umask, process->euid,
+                             process->egid, process->pgid, process->sid);
     return (struct procfs_buffer) { buffer, length };
 }
 

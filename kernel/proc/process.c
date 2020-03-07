@@ -159,4 +159,5 @@ void init_processes() {
     map = hash_create_hash_map(process_hash, process_equals, process_key);
     assert(map);
     proc_add_process(&initial_kernel_process);
+    initial_kernel_process.name = "init";
 }

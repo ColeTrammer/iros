@@ -79,7 +79,7 @@ struct task {
 void init_kernel_task();
 void arch_init_kernel_task(struct task *kernel_task);
 
-struct task *load_kernel_task(uintptr_t entry);
+struct task *load_kernel_task(uintptr_t entry, const char *name);
 void arch_load_kernel_task(struct task *task, uintptr_t entry);
 
 struct task *load_task(const char *file_name);

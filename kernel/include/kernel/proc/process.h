@@ -52,6 +52,8 @@ struct process {
     int tty;
     int ref_count;
 
+    char *name;
+
     struct arch_process arch_process;
 
     struct tms times;

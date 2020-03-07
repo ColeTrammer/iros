@@ -29,7 +29,7 @@ void init_net() {
     init_mac();
     init_ports();
 
-    network_task = load_kernel_task((uintptr_t) net_network_task_start);
+    network_task = load_kernel_task((uintptr_t) net_network_task_start, "net");
     assert(network_task);
 
     sched_add_task(network_task);
