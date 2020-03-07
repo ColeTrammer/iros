@@ -49,7 +49,7 @@ fi
 AUTO_CONF_OPTS='ac_cv_c_bigendian=no'
 
 cd build-gcc
-# make clean
-# make all-gcc all-target-libgcc all-target-libstdc++-v3 -j5 $AUTO_CONF_OPTS
+make clean
+make all-gcc all-target-libgcc all-target-libstdc++-v3 -j5 $AUTO_CONF_OPTS
 make install-strip-gcc install-strip-target-libgcc install-strip-target-libstdc++-v3 DESTDIR=$ROOT/sysroot -j5 $AUTO_CONF_OPTS
 cd ..

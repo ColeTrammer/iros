@@ -1,0 +1,110 @@
+diff --git a/build-aux/config.sub b/build-aux/config.sub
+index 0f2234c..2176b17 100755
+--- a/build-aux/config.sub
++++ b/build-aux/config.sub
+@@ -1341,7 +1341,7 @@ case $os in
+ 	gnu* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
+ 	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]*\
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+-	     | sym* | kopensolaris* | plan9* \
++	     | sym* | kopensolaris* | plan9* | os_2* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+ 	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
+ 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+diff --git a/lib/getprogname.c b/lib/getprogname.c
+index 9f69f5a..916604d 100644
+--- a/lib/getprogname.c
++++ b/lib/getprogname.c
+@@ -246,7 +246,7 @@ getprogname (void)
+     }
+   return NULL;
+ # else
+-#  error "getprogname module not ported to this OS"
++  return strdup("make");
+ # endif
+ }
+ 
+diff --git a/src/ar.c b/src/ar.c
+index 62919ff..93bd7ea 100644
+--- a/src/ar.c
++++ b/src/ar.c
+@@ -17,6 +17,7 @@ this program.  If not, see <http://www.gnu.org/licenses/>.  */
+ 
+ #include "makeint.h"
+ 
++#define NO_ARCHIVES
+ #ifndef NO_ARCHIVES
+ 
+ #include "filedef.h"
+diff --git a/src/arscan.c b/src/arscan.c
+index 3ce21db..e9cea1c 100644
+--- a/src/arscan.c
++++ b/src/arscan.c
+@@ -27,6 +27,7 @@ this program.  If not, see <http://www.gnu.org/licenses/>.  */
+ #include <sys/file.h>
+ #endif
+ 
++#define NO_ARCHIVES
+ #ifndef NO_ARCHIVES
+ 
+ #ifdef VMS
+diff --git a/src/commands.c b/src/commands.c
+index 88c33a3..6af7c46 100644
+--- a/src/commands.c
++++ b/src/commands.c
+@@ -66,6 +66,7 @@ set_file_variables (struct file *file)
+   struct dep *d;
+   const char *at, *percent, *star, *less;
+ 
++#define NO_ARCHIVES
+ #ifndef NO_ARCHIVES
+   /* If the target is an archive member 'lib(member)',
+      then $@ is 'lib' and $% is 'member'.  */
+diff --git a/src/dir.c b/src/dir.c
+index 862a18e..c39190b 100644
+--- a/src/dir.c
++++ b/src/dir.c
+@@ -784,6 +784,7 @@ file_exists_p (const char *name)
+   const char *dirname;
+   const char *slash;
+ 
++#define NO_ARCHIVES
+ #ifndef NO_ARCHIVES
+   if (ar_name (name))
+     return ar_member_date (name) != (time_t) -1;
+diff --git a/src/implicit.c b/src/implicit.c
+index b281a17..11521c8 100644
+--- a/src/implicit.c
++++ b/src/implicit.c
+@@ -45,6 +45,7 @@ try_implicit_rule (struct file *file, unsigned int depth)
+   if (pattern_search (file, 0, depth, 0))
+     return 1;
+ 
++#define NO_ARCHIVES
+ #ifndef NO_ARCHIVES
+   /* If this is an archive member reference, use just the
+      archive member name to search for implicit rules.  */
+diff --git a/src/read.c b/src/read.c
+index fa197fb..eb33a4c 100644
+--- a/src/read.c
++++ b/src/read.c
+@@ -3172,6 +3172,7 @@ parse_file_seq (char **stringp, size_t size, int stopmap,
+       const char **nlist = 0;
+       char *tildep = 0;
+       int globme = 1;
++#define NO_ARCHIVES
+ #ifndef NO_ARCHIVES
+       char *arname = 0;
+       char *memname = 0;
+diff --git a/src/remake.c b/src/remake.c
+index fb237c5..0c2b16a 100644
+--- a/src/remake.c
++++ b/src/remake.c
+@@ -1151,6 +1151,7 @@ touch_file (struct file *file)
+   if (just_print_flag)
+     return us_success;
+ 
++#define NO_ARCHIVES
+ #ifndef NO_ARCHIVES
+   if (ar_name (file->name))
+     return ar_touch (file->name) ? us_failed : us_success;
