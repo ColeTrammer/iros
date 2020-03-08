@@ -489,6 +489,21 @@ void task_do_sig(struct task *task, int signum) {
     }
 }
 
+const char *task_state_to_string(enum sched_state state) {
+    switch (state) {
+        case RUNNING_INTERRUPTIBLE:
+            return "R (running)";
+        case RUNNING_UNINTERRUPTIBLE:
+            return "U (running uninterruptible)";
+        case WAITING:
+            return "W (waiting)";
+        case EXITING:
+            return "E (exiting)";
+        default:
+            return "? (Unknown)";
+    }
+}
+
 bool task_is_sig_blocked(struct task *task, int signum) {
     assert(signum >= 1 && signum < _NSIG);
     return task->sig_mask & (UINT64_C(1) << (signum - UINT64_C(1)));

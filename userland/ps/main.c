@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
     struct proc_info {
         char name[64];
         pid_t pid;
+        char state[64];
         uid_t uid;
         gid_t gid;
         pid_t ppid;
@@ -132,6 +133,7 @@ int main(int argc, char **argv) {
 
         READ_PROCFS_STRING_FIELD(name, "%64s");
         READ_PROCFS_FIELD(pid, "%d");
+        READ_PROCFS_STRING_FIELD(state, "%64[^\n]");
         READ_PROCFS_FIELD(uid, "%hu");
         READ_PROCFS_FIELD(gid, "%hu");
         READ_PROCFS_FIELD(ppid, "%d");
@@ -149,7 +151,7 @@ int main(int argc, char **argv) {
     }
 
     if (print_extra) {
-        printf("%-8s %5s %5s %-12s %s\n", "UID", "PID", "PPID", "TTY", "CMD");
+        printf("%.1s %-8s %5s %5s %-12s %s\n", "S", "UID", "PID", "PPID", "TTY", "CMD");
     } else {
         printf("%5s %-12s %s\n", "PID", "TTY", "CMD");
     }
@@ -158,7 +160,8 @@ int main(int argc, char **argv) {
         if (print_all || strcmp(info[i].tty, tty_name) == 0) {
             if (print_extra) {
                 struct passwd *p = getpwuid(info[i].uid);
-                printf("%-8s %5d %5d %-12s %s\n", p ? p->pw_name : "unknown", info[i].pid, info[i].ppid, info[i].tty, info[i].name);
+                printf("%.1s %-8s %5d %5d %-12s %s\n", info[i].state, p ? p->pw_name : "unknown", info[i].pid, info[i].ppid, info[i].tty,
+                       info[i].name);
             } else {
                 printf("%5d %-12s %s\n", info[i].pid, info[i].tty, info[i].name);
             }

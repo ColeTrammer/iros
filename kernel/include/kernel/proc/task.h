@@ -18,7 +18,12 @@
 #include ARCH_SPECIFIC(proc/task.h)
 // clang-format on
 
-enum sched_state { RUNNING_INTERRUPTIBLE, RUNNING_UNINTERRUPTIBLE, WAITING, EXITING };
+enum sched_state {
+    RUNNING_INTERRUPTIBLE,
+    RUNNING_UNINTERRUPTIBLE,
+    WAITING,
+    EXITING,
+};
 
 struct clock;
 
@@ -112,6 +117,7 @@ void task_dequeue_signal(struct task *task);
 
 void task_do_sigs_if_needed(struct task *task);
 
+const char *task_state_to_string(enum sched_state state);
 bool task_in_kernel(struct task *task);
 
 #endif /* _KERNEL_PROC_TASK_H */

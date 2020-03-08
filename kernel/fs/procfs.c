@@ -215,20 +215,23 @@ static struct procfs_buffer procfs_status(struct process *process, bool need_buf
         snprintf(tty_string, sizeof(tty_string) - 1, "%s", "?");
     }
 
-    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
-                             "NAME: %s\n"
-                             "PID: %d\n"
-                             "UID: %hu\n"
-                             "GID: %hu\n"
-                             "PPID: %d\n"
-                             "UMASK: %04o\n"
-                             "EUID: %hu\n"
-                             "EGID: %hu\n"
-                             "PGID: %d\n"
-                             "SID: %d\n"
-                             "TTY: %s\n",
-                             process->name, process->pid, process->uid, process->gid, process->ppid, process->umask, process->euid,
-                             process->egid, process->pgid, process->sid, tty_string);
+    struct task *main_task = find_by_tid(process->pgid, process->pid);
+    size_t length =
+        snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
+                 "NAME: %s\n"
+                 "PID: %d\n"
+                 "STATE: %s\n"
+                 "UID: %hu\n"
+                 "GID: %hu\n"
+                 "PPID: %d\n"
+                 "UMASK: %04o\n"
+                 "EUID: %hu\n"
+                 "EGID: %hu\n"
+                 "PGID: %d\n"
+                 "SID: %d\n"
+                 "TTY: %s\n",
+                 process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)", process->uid,
+                 process->gid, process->ppid, process->umask, process->euid, process->egid, process->pgid, process->sid, tty_string);
     return (struct procfs_buffer) { buffer, length };
 }
 

@@ -214,6 +214,10 @@ int signal_process_group(pid_t pgid, int signum) {
 }
 
 struct task *find_by_tid(int tgid, int tid) {
+    if (tgid == 1 && tid == 1) {
+        return &initial_kernel_task;
+    }
+
     spin_lock(&task_list_lock);
 
     struct task *task = list_start;
