@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     do {                                                                                                             \
         char field_name[64];                                                                                         \
         if (fscanf(status, "%64[^:]: " convert_spec, field_name, info[i].name) != 2) {                               \
-            perror("fscanf");                                                                                        \
+            fprintf(stderr, "fscanf: failed to read field `%s`\n", _(name));                                         \
             return 1;                                                                                                \
         }                                                                                                            \
         if (strcasecmp(field_name, _(name)) != 0) {                                                                  \
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
     do {                                                                                                             \
         char field_name[64];                                                                                         \
         if (fscanf(status, "%64[^:]: " convert_spec, field_name, &info[i].name) != 2) {                              \
-            perror("fscanf");                                                                                        \
+            fprintf(stderr, "fscanf: failed to read field `%s`\n", _(name));                                         \
             return 1;                                                                                                \
         }                                                                                                            \
         if (strcasecmp(field_name, _(name)) != 0) {                                                                  \
@@ -165,5 +165,6 @@ int main(int argc, char **argv) {
         }
     }
 
+    free(info);
     return 0;
 }
