@@ -101,11 +101,11 @@ static struct process *procfs_get_process(struct inode *inode) {
     return find_by_pid(pid);
 }
 
-static struct procfs_buffer procfs_get_data(struct inode *inode) {
+static struct procfs_buffer procfs_get_data(struct inode *inode, bool need_buffer) {
     struct process *process = procfs_get_process(inode);
 
     procfs_file_function_t getter = PROCFS_GET_FILE_FUNCTION(inode);
-    return getter(process);
+    return getter(process, need_buffer);
 }
 
 static void procfs_cleanup_data(struct procfs_buffer data, struct inode *inode __attribute__((unused))) {
@@ -124,7 +124,7 @@ static void procfs_refresh_directory(struct inode *inode) {
 struct tnode *procfs_lookup(struct inode *inode, const char *name) {
     assert(inode);
     if (!(inode->flags & FS_DIR)) {
-        struct procfs_buffer result = procfs_get_data(inode);
+        struct procfs_buffer result = procfs_get_data(inode, false);
         inode->size = result.size;
         procfs_cleanup_data(result, inode);
     } else {
@@ -165,7 +165,7 @@ struct file *procfs_open(struct inode *inode, int flags, int *error) {
 }
 
 int procfs_read_all(struct inode *inode, void *buffer) {
-    struct procfs_buffer data = procfs_get_data(inode);
+    struct procfs_buffer data = procfs_get_data(inode, true);
 
     memcpy(buffer, data.buffer, data.size);
 
@@ -177,7 +177,7 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode);
 
-    struct procfs_buffer data = procfs_get_data(inode);
+    struct procfs_buffer data = procfs_get_data(inode, true);
 
     size_t to_read = MIN(len, data.size - offset);
     memcpy(buffer, data.buffer + offset, to_read);
@@ -186,20 +186,28 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
     return to_read;
 }
 
-static struct procfs_buffer procfs_cwd(struct process *process) {
+static struct procfs_buffer procfs_cwd(struct process *process, bool need_buffer) {
     char *buffer = get_tnode_path(process->cwd);
     size_t length = strlen(buffer);
+    if (!need_buffer) {
+        free(buffer);
+        buffer = NULL;
+    }
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_exe(struct process *process) {
+static struct procfs_buffer procfs_exe(struct process *process, bool need_buffer) {
     char *buffer = get_tnode_path(process->exe);
     size_t length = strlen(buffer);
+    if (!need_buffer) {
+        free(buffer);
+        buffer = NULL;
+    }
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_status(struct process *process) {
-    char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
+static struct procfs_buffer procfs_status(struct process *process, bool need_buffer) {
+    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
     char tty_string[16];
     if (process->tty != -1) {
         snprintf(tty_string, sizeof(tty_string) - 1, "/dev/tty%d", process->tty);
@@ -207,7 +215,7 @@ static struct procfs_buffer procfs_status(struct process *process) {
         snprintf(tty_string, sizeof(tty_string) - 1, "%s", "?");
     }
 
-    size_t length = snprintf(buffer, PAGE_SIZE,
+    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
                              "NAME: %s\n"
                              "PID: %d\n"
                              "UID: %hu\n"
@@ -224,12 +232,12 @@ static struct procfs_buffer procfs_status(struct process *process) {
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_vm(struct process *process) {
-    char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
+static struct procfs_buffer procfs_vm(struct process *process, bool need_buffer) {
+    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
     size_t length = 0;
     struct vm_region *vm = process->process_memory;
     while (vm) {
-        length += snprintf(buffer + length, PAGE_SIZE - length,
+        length += snprintf(buffer + length, need_buffer ? PAGE_SIZE - length : 0,
                            "START: %p END: %p TYPE: %s\n"
                            "PERM: %c%c%c%c BACKED: %s\n",
                            (void *) vm->start, (void *) vm->end, vm_type_to_string(vm->type), (vm->flags & VM_PROT_NONE) ? ' ' : 'r',
@@ -303,9 +311,9 @@ void procfs_unregister_process(struct process *process) {
     drop_tnode(tnode);
 }
 
-static struct procfs_buffer procfs_self(struct process *process) {
-    char *buffer = aligned_alloc(PAGE_SIZE, PAGE_SIZE);
-    size_t length = snprintf(buffer, PAGE_SIZE, "%d", process->pid);
+static struct procfs_buffer procfs_self(struct process *process, bool need_buffer) {
+    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
+    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "%d", process->pid);
     return (struct procfs_buffer) { buffer, length };
 }
 
