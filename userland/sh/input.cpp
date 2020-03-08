@@ -117,7 +117,7 @@ static void init_suggestion(struct suggestion *suggestions, size_t at, size_t su
     strcat(suggestions[at].suggestion, post);
 }
 
-static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestions, bool at_end) {
+static struct suggestion *get_path_suggestions(char *line, int *num_suggestions, bool at_end) {
     char *path_var = getenv("PATH");
     if (path_var == NULL) {
         return NULL;
@@ -163,7 +163,7 @@ static struct suggestion *get_path_suggestions(char *line, size_t *num_suggestio
     return suggestions;
 }
 
-static struct suggestion *get_suggestions(char *line, size_t *num_suggestions, bool at_end) {
+static struct suggestion *get_suggestions(char *line, int *num_suggestions, bool at_end) {
     *num_suggestions = 0;
 
     char *last_space = strrchr(line, ' ');
@@ -392,11 +392,15 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             bool at_end = buffer_index == buffer_length;
             char *suggestion_buffer = nullptr;
             size_t i = 0;
-            size_t num_suggestions = 0;
+            int num_suggestions = 0;
             char end_save = buffer[buffer_index];
             buffer[buffer_index] = '\0'; // Ensure buffer is null terminated
             struct suggestion *suggestions = get_suggestions(buffer, &num_suggestions, at_end);
             buffer[buffer_index] = end_save;
+
+            if (!suggestions) {
+                continue;
+            }
 
             if (num_suggestions == 0) {
                 consecutive_tab_presses = 0;
@@ -410,7 +414,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 if (consecutive_tab_presses > 1) {
                     fprintf(stderr, "%c", '\n');
 
-                    for (size_t i = 0; i < num_suggestions; i++) {
+                    for (int i = 0; i < num_suggestions; i++) {
                         fprintf(stderr, "%s ", suggestions[i].suggestion);
                     }
 
