@@ -22,7 +22,7 @@ static int scandir_filter(const struct dirent *ent) {
         }
     }
 
-    return atoi(ent->d_name) != our_pid;
+    return 1;
 }
 
 static int sort_by_pid(const struct dirent **a, const struct dirent **b) {
