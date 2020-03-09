@@ -65,7 +65,7 @@ int main() {
 
     sleep(1);
 
-    char *window_server_test_args[] = { "/initrd/window_server_test", NULL };
+    char *window_server_test_args[] = { "/bin/xterm", NULL };
 
     spawn_process(window_server_test_args, 100, 100, false);
 #endif /* KERNEL_NO_GRAPHICS */

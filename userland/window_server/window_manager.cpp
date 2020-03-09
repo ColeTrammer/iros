@@ -13,7 +13,6 @@ void WindowManager::add_window(SharedPtr<Window> window) {
 }
 
 void WindowManager::draw() {
-    m_back_buffer->clear();
     auto render_window = [&](auto& window) {
         for (int x = window->rect().x(); x < window->rect().x() + window->rect().width(); x++) {
             for (int y = window->rect().y(); y < window->rect().y() + window->rect().height(); y++) {
@@ -32,4 +31,5 @@ void WindowManager::swap_buffers() {
     m_front_buffer = temp;
 
     ioctl(m_fb, SSWAPBUF, m_front_buffer->pixels());
+    memcpy(m_back_buffer->pixels(), m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
 }

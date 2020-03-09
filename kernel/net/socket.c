@@ -21,6 +21,8 @@
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
+// #define SOCKET_DEBUG
+
 static unsigned long socket_id_next = 1;
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 
@@ -45,7 +47,9 @@ static int socket_file_close(struct file *file) {
 
     spin_lock(&socket->lock);
 
+#ifdef SOCKET_DEBUG
     debug_log("Destroying socket: [ %lu ]\n", socket->id);
+#endif /* SOCKET_DEBUG */
 
     int ret = 0;
     switch (socket->domain) {
@@ -150,7 +154,9 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             case AF_UNIX: {
                 struct unix_socket_data *d = socket->private_data;
                 if (!net_get_socket_by_id(d->connected_id)) {
+#ifdef SOCKET_DEBUG
                     debug_log("Connection terminated: [ %lu ]\n", socket->id);
+#endif /* SOCKET_DEBUG */
                     return 0;
                 }
                 break;
@@ -212,7 +218,9 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         *addrlen = len;
     }
 
+#ifdef SOCKET_DEBUG
     debug_log("Received message: [ %lu, %lu ]\n", socket->id, to_copy);
+#endif /* SOCKET_DEBUG */
 
     free(data);
     return (ssize_t) to_copy;
@@ -263,7 +271,9 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
 
     to_send->readable = true;
 
+#ifdef SOCKET_DEBUG
     debug_log("Sent message to: [ %lu ]\n", to_send->id);
+#endif /* SOCKET_DEBUG */
 
     ssize_t ret = socket_data->len;
     spin_unlock(&to_send->lock);
@@ -362,7 +372,9 @@ int net_listen(struct file *file, int backlog) {
     socket->pending_length = backlog;
     socket->num_pending = 0;
 
+#ifdef SOCKET_DEBUG
     debug_log("Set socket to listening: [ %lu, %d ]\n", socket->id, socket->pending_length);
+#endif /* SOCKET_DEBUG */
 
     socket->state = LISTENING;
     return 0;

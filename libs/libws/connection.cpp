@@ -28,8 +28,8 @@ Connection::~Connection() {
     close(m_fd);
 }
 
-SharedPtr<Window> Connection::create_window(int x, int y, int height, int width) {
-    auto create_message = WindowServer::Message::CreateWindowRequest::create(100, 100, 200, 200);
+SharedPtr<Window> Connection::create_window(int x, int y, int width, int height) {
+    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height);
     assert(write(m_fd, create_message.get(), create_message->total_size()) != -1);
 
     uint8_t message_buffer[4096];
@@ -47,36 +47,36 @@ void Connection::send_swap_buffer_request(wid_t wid) {
 }
 
 void Connection::setup_timer() {
-    struct sigaction act;
-    sigfillset(&act.sa_mask);
-    act.sa_flags = SA_SIGINFO;
-    act.sa_sigaction = [](int, siginfo_t* info, void*) {
-        Connection* connection = static_cast<Connection*>(info->si_value.sival_ptr);
-        connection->windows().for_each([](auto* window) {
-            window->draw();
-        });
-    };
-    sigaction(SIGRTMIN, &act, nullptr);
+    // struct sigaction act;
+    // sigfillset(&act.sa_mask);
+    // act.sa_flags = SA_SIGINFO;
+    // act.sa_sigaction = [](int, siginfo_t* info, void*) {
+    //     Connection* connection = static_cast<Connection*>(info->si_value.sival_ptr);
+    //     connection->windows().for_each([](auto* window) {
+    //         window->draw();
+    //     });
+    // };
+    // sigaction(SIGRTMIN, &act, nullptr);
 
-    sigevent ev;
-    ev.sigev_notify = SIGEV_SIGNAL;
-    ev.sigev_value.sival_ptr = static_cast<void*>(this);
-    ev.sigev_signo = SIGRTMIN;
+    // sigevent ev;
+    // ev.sigev_notify = SIGEV_SIGNAL;
+    // ev.sigev_value.sival_ptr = static_cast<void*>(this);
+    // ev.sigev_signo = SIGRTMIN;
 
-    timer_t timerid;
-    if (timer_create(CLOCK_MONOTONIC, &ev, &timerid)) {
-        perror("timer_create");
-        exit(1);
-    }
+    // timer_t timerid;
+    // if (timer_create(CLOCK_MONOTONIC, &ev, &timerid)) {
+    //     perror("timer_create");
+    //     exit(1);
+    // }
 
-    struct itimerspec spec;
-    spec.it_interval.tv_sec = 0;
-    spec.it_interval.tv_nsec = 100000000; // 10 FPS
-    spec.it_value = spec.it_interval;
-    if (timer_settime(timerid, 0, &spec, nullptr)) {
-        perror("timer_settime");
-        exit(1);
-    }
+    // struct itimerspec spec;
+    // spec.it_interval.tv_sec = 2;
+    // spec.it_interval.tv_nsec = 0; // 10 FPS
+    // spec.it_value = spec.it_interval;
+    // if (timer_settime(timerid, 0, &spec, nullptr)) {
+    //     perror("timer_settime");
+    //     exit(1);
+    // }
 }
 
 }

@@ -23,12 +23,14 @@ public:
         m_draw_callback = move(c);
     }
 
+    void draw();
+
+    SharedPtr<PixelBuffer>& pixels() { return m_back; }
+
 private:
     friend class Connection;
 
     static SharedPtr<Window> construct(const Rect& rect, Message::CreateWindowResponse& message, Connection& connection);
-
-    void draw();
 
     Connection& connection() { return m_connection; }
 

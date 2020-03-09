@@ -44,7 +44,8 @@ public:
     }
 
     explicit operator bool() const { return !!m_closure; }
-    R operator()(Args... args) const { return m_closure->call(args...); }
+    bool operator!() const { return !m_closure; }
+    R operator()(Args... args) const { return m_closure->call(forward<Args>(args)...); }
 
     void swap(Function& other) { swap(this->m_closure, other.m_closure); }
 

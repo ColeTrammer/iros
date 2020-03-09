@@ -7,6 +7,8 @@
 #include <liim/pointers.h>
 #include <window_server/connection.h>
 #include <window_server/window.h>
+
+class Renderer;
 #endif /* KERNEL_NO_GRAPHICS */
 
 #include <kernel/hal/x86_64/drivers/vga.h>
@@ -57,16 +59,20 @@ public:
     void hide_cursor();
     void set_cursor(int row, int col);
 
+    void refresh();
+
 private:
     bool m_is_cursor_enabled { true };
-    int m_width { 25 };
-    int m_height { 80 };
+    int m_width { 80 };
+    int m_height { 10 };
     enum vga_color m_bg { VGA_COLOR_BLACK };
     enum vga_color m_fg { VGA_COLOR_LIGHT_GREY };
     uint16_t* m_buffer;
 #ifdef KERNEL_NO_GRAPHICS
     const int m_fb;
 #else
+    void update_entry(int r, int c);
+
     WindowServer::Connection m_connection;
     SharedPtr<WindowServer::Window> m_window { nullptr };
 #endif /* KERNEL_NO_GRAPHICS */

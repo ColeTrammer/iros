@@ -166,6 +166,7 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(data->contents);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
+        debug_log("data->max: [ %lu ]\n", data->max);
     }
 
     inode->size = MAX(inode->size, offset + len);
@@ -176,6 +177,7 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
         memcpy(data->contents, save, inode->size);
         free(save);
+        debug_log("data->max: [ %lu ]\n", data->max);
     }
 
     memcpy(data->contents + offset, buffer, len);

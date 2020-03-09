@@ -67,8 +67,8 @@ public:
     T* get() { return m_ptr; }
     const T* get() const { return m_ptr; }
 
-    bool operator!() { return !m_ptr; }
-    operator bool() { return !!m_ptr; }
+    bool operator!() const { return !m_ptr; }
+    operator bool() const { return !!m_ptr; }
 
 private:
     template<typename U>
@@ -107,6 +107,8 @@ template<typename T>
 class SharedPtr {
 public:
     explicit SharedPtr(T* ptr) : m_ptr(ptr), m_control_block(new SharedPtrControlBlock) {}
+
+    SharedPtr(std::nullptr_t) : m_ptr(nullptr), m_control_block(nullptr) {}
 
     SharedPtr() {}
 

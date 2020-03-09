@@ -263,7 +263,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     struct metadata *block = start;
     while (block->size != 0) {
         assert(block->magic == __MALLOC_MAGIG_CHECK);
-        if (!IS_ALLOCATED(block)) {
+        if (!IS_ALLOCATED(block) && !((uintptr_t)(block + 1) % PAGE_SIZE == 0)) {
             if (((uintptr_t)(block + 1)) % alignment == 0) {
                 if (GET_SIZE(block) >= n) {
                     SET_ALLOCATED(block);

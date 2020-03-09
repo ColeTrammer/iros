@@ -36,11 +36,13 @@ Window::~Window() {
 void Window::swap_buffers() {
     connection().send_swap_buffer_request(wid());
     LIIM::swap(m_front, m_back);
+    memcpy(m_back->pixels(), m_front->pixels(), m_front->size_in_bytes());
 }
 
 void Window::draw() {
-    m_back->clear();
-    m_draw_callback(m_back);
+    if (m_draw_callback) {
+        m_draw_callback(m_back);
+    }
     swap_buffers();
 }
 

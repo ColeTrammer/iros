@@ -761,6 +761,10 @@ int fs_lstat(const char *path, struct stat *stat_struct) {
 
 int fs_ioctl(struct file *file, unsigned long request, void *argp) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    if (!inode) {
+        debug_log("Trying to get inode: [ %lu, %llu ]\n", file->device, file->inode_idenifier);
+        return -ENOTTY;
+    }
 
     if (inode->i_op->ioctl) {
         return inode->i_op->ioctl(inode, request, argp);
