@@ -33,7 +33,7 @@ static void mouse_f_add(struct device *device) {
     device->inode->writeable = false;
 }
 
-static struct device_ops mouse_ops = { NULL, mouse_f_read, NULL, NULL, mouse_f_add, NULL, NULL, NULL, NULL };
+static struct device_ops mouse_ops = { NULL, mouse_f_read, NULL, NULL, mouse_f_add, NULL, NULL, NULL, NULL, NULL };
 
 static struct mouse_data data = { false, 0, { 0 } };
 

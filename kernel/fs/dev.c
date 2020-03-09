@@ -29,8 +29,8 @@ static ino_t inode_counter = 1;
 
 static struct file_system fs = { "dev", 0, &dev_mount, NULL, NULL };
 
-static struct inode_operations dev_i_op = { NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL, NULL, NULL,
-                                            NULL, NULL,        &dev_mmap, NULL,      NULL,       NULL, NULL, NULL };
+static struct inode_operations dev_i_op = { NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL,          NULL, NULL,
+                                            NULL, NULL,        &dev_mmap, NULL,      NULL,       &dev_read_all, NULL, NULL };
 
 static struct inode_operations dev_dir_i_op = { NULL, &dev_lookup, &dev_open, NULL, NULL, NULL, NULL, NULL,
                                                 NULL, NULL,        NULL,      NULL, NULL, NULL, NULL, NULL };
@@ -61,6 +61,14 @@ struct tnode *dev_lookup(struct inode *inode, const char *name) {
     return NULL;
 }
 
+int dev_read_all(struct inode *inode, void *buf) {
+    if (((struct device *) inode->private_data)->ops->read_all) {
+        return ((struct device *) inode->private_data)->ops->read_all(inode->private_data, buf);
+    }
+
+    return -EOPNOTSUPP;
+}
+
 struct file *dev_open(struct inode *inode, int flags, int *error) {
     if (inode->private_data && ((struct device *) inode->private_data)->cannot_open) {
         *error = -EPERM;
@@ -76,7 +84,7 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
     file->length = inode->size;
     file->start = 0;
     file->position = 0;
-    file->f_op = inode->flags & FS_FILE ? &dev_f_op : &dev_dir_f_op;
+    file->f_op = inode->flags & FS_DIR ? &dev_dir_f_op : &dev_f_op;
     file->device = inode->device;
     file->flags = inode->flags;
 
@@ -84,7 +92,7 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
         ((struct device *) inode->private_data)->ops->on_open(inode->private_data);
     }
 
-    if (!S_ISBLK(inode->mode)) {
+    if (!S_ISBLK(inode->mode) && !S_ISLNK(inode->mode)) {
         file->abilities |= FS_FILE_CANT_SEEK;
     }
 
@@ -215,6 +223,7 @@ void dev_add(struct device *device, const char *_path) {
 
     to_add->readable = true;
     to_add->writeable = true;
+    to_add->size = 0;
 
     /* Adds the device */
     device->cannot_open = false;
@@ -223,7 +232,7 @@ void dev_add(struct device *device, const char *_path) {
     }
 
     to_add->device = super_block.device;
-    to_add->flags = FS_FILE;
+    to_add->flags = fs_mode_to_flags(device->type);
     to_add->i_op = &dev_i_op;
 
     spin_lock(&inode_counter_lock);
@@ -236,7 +245,6 @@ void dev_add(struct device *device, const char *_path) {
     to_add->parent = parent;
     to_add->private_data = device;
     to_add->ref_count = 1;
-    to_add->size = 0;
     to_add->super_block = &super_block;
     to_add->tnode_list = NULL;
     to_add->access_time = to_add->change_time = to_add->modify_time = time_read_clock(CLOCK_REALTIME);

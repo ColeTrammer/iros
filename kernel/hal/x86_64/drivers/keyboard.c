@@ -65,7 +65,7 @@ static void kbd_add(struct device *device) {
     device->inode->writeable = false;
 }
 
-static struct device_ops kbd_ops = { NULL, kbd_read, NULL, NULL, kbd_add, NULL, NULL, NULL, NULL };
+static struct device_ops kbd_ops = { NULL, kbd_read, NULL, NULL, kbd_add, NULL, NULL, NULL, NULL, NULL };
 
 static void add_keyboard_event(struct key_event *event) {
     struct keyboard_event_queue *e = malloc(sizeof(struct keyboard_event_queue));

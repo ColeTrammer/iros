@@ -23,6 +23,7 @@ struct device_ops {
     int (*ioctl)(struct device *device, unsigned long request, void *argp);
     void (*on_open)(struct device *device);
     intptr_t (*mmap)(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset);
+    int (*read_all)(struct device *device, void *buf);
 };
 
 struct device {
@@ -48,6 +49,7 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
 int dev_stat(struct inode *inode, struct stat *stat_struct);
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
+int dev_read_all(struct inode *inode, void *buf);
 struct tnode *dev_mount(struct file_system *fs, char *device_path);
 
 dev_t dev_get_device_number(struct file *file);

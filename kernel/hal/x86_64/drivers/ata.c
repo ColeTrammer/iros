@@ -414,7 +414,7 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
     return -EINVAL;
 }
 
-static struct device_ops ata_ops = { NULL, ata_read, ata_write, NULL, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops ata_ops = { NULL, ata_read, ata_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 static void __attribute__((unused)) ata_handle_irq(struct ata_device_data *data) {
     uint8_t status = inb(data->port_info->io_base + ATA_STATUS_OFFSET);

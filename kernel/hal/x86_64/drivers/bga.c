@@ -24,7 +24,7 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
 
 static struct bga_data data = { 0 };
 
-struct device_ops bga_ops = { NULL, NULL, NULL, NULL, NULL, NULL, bga_ioctl, NULL, bga_mmap };
+struct device_ops bga_ops = { NULL, NULL, NULL, NULL, NULL, NULL, bga_ioctl, NULL, bga_mmap, NULL };
 
 struct device bga_device = { 0x4200, S_IFCHR, "fb0", false, &bga_ops, NULL, &data };
 
