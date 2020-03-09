@@ -300,21 +300,43 @@ static struct procfs_buffer procfs_fd(struct tnode *tnode, struct process *proce
     return (struct procfs_buffer) { buffer, length };
 }
 
-static void procfs_create_fd_directory_structure(struct tnode *tparent, struct process *process, bool loaded) {
+static void procfs_create_fd_directory_structure(struct tnode *tparent, struct process *process, bool loaded __attribute__((unused))) {
     struct inode *parent = tparent->inode;
 
-    if (!loaded) {
-        for (int i = 0; i < FOPEN_MAX; i++) {
-            struct file *file = process->files[i].file;
-            if (file) {
-                char fd_string[32];
-                snprintf(fd_string, sizeof(fd_string) - 1, "%d", i);
-
-                struct inode *inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_fd);
-                struct tnode *tnode = create_tnode(fd_string, inode);
-                parent->tnode_list = add_tnode(parent->tnode_list, tnode);
+    struct tnode_list *node = tparent->inode->tnode_list;
+    int node_fd = node ? atoi(node->tnode->name) : -1;
+    for (int i = 0; i < FOPEN_MAX; i++) {
+        struct file *file = process->files[i].file;
+        if (file) {
+            while (node && node_fd < i) {
+                node = node->next;
+                node_fd = atoi(node->tnode->name);
             }
+
+            // Already in the tnode list
+            if (node && node_fd == i) {
+                continue;
+            }
+
+            char fd_string[32];
+            snprintf(fd_string, sizeof(fd_string) - 1, "%d", i);
+
+            struct inode *inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_fd);
+            struct tnode *tnode = create_tnode(fd_string, inode);
+            parent->tnode_list = add_tnode_before(parent->tnode_list, node, tnode);
         }
+    }
+
+    struct tnode_list *tnode = parent->tnode_list;
+    while (tnode) {
+        struct tnode_list *next = tnode->next;
+        int fd = atoi(tnode->tnode->name);
+        if (!process->files[fd].file) {
+            struct tnode *real_tnode = tnode->tnode;
+            parent->tnode_list = remove_tnode(parent->tnode_list, tnode->tnode);
+            drop_tnode(real_tnode);
+        }
+        tnode = next;
     }
 }
 

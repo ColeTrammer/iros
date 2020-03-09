@@ -106,6 +106,23 @@ struct tnode_list *add_tnode(struct tnode_list *list, struct tnode *tnode) {
     return to_add;
 }
 
+struct tnode_list *add_tnode_before(struct tnode_list *list, struct tnode_list *after, struct tnode *tnode) {
+    struct tnode_list *to_add = malloc(sizeof(struct tnode_list));
+    to_add->tnode = tnode;
+    to_add->next = after;
+
+    struct tnode_list **link = &list;
+    for (;;) {
+        if (*link == after) {
+            *link = to_add;
+            break;
+        }
+
+        link = &(*link)->next;
+    }
+    return list;
+}
+
 struct tnode_list *remove_tnode(struct tnode_list *list, struct tnode *tnode) {
     assert(list != NULL);
     assert(tnode);

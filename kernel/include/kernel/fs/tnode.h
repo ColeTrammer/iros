@@ -23,6 +23,7 @@ void drop_tnode(struct tnode *tnode);
 struct tnode *bump_tnode(struct tnode *tnode);
 
 struct tnode_list *add_tnode(struct tnode_list *list, struct tnode *tnode);
+struct tnode_list *add_tnode_before(struct tnode_list *list, struct tnode_list *after, struct tnode *tnode);
 struct tnode_list *remove_tnode(struct tnode_list *list, struct tnode *tnode);
 struct tnode *find_tnode(struct tnode_list *list, const char *name);
 struct tnode *find_tnode_inode(struct tnode_list *list, struct inode *inode);
