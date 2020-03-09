@@ -303,6 +303,18 @@ static struct procfs_buffer procfs_fd(struct tnode *tnode, struct process *proce
 static void procfs_create_fd_directory_structure(struct tnode *tparent, struct process *process, bool loaded __attribute__((unused))) {
     struct inode *parent = tparent->inode;
 
+    struct tnode_list *tnode = parent->tnode_list;
+    while (tnode) {
+        struct tnode_list *next = tnode->next;
+        int fd = atoi(tnode->tnode->name);
+        if (!process->files[fd].file) {
+            struct tnode *real_tnode = tnode->tnode;
+            parent->tnode_list = remove_tnode(parent->tnode_list, tnode->tnode);
+            drop_tnode(real_tnode);
+        }
+        tnode = next;
+    }
+
     struct tnode_list *node = tparent->inode->tnode_list;
     int node_fd = node ? atoi(node->tnode->name) : -1;
     for (int i = 0; i < FOPEN_MAX; i++) {
@@ -325,18 +337,6 @@ static void procfs_create_fd_directory_structure(struct tnode *tparent, struct p
             struct tnode *tnode = create_tnode(fd_string, inode);
             parent->tnode_list = add_tnode_before(parent->tnode_list, node, tnode);
         }
-    }
-
-    struct tnode_list *tnode = parent->tnode_list;
-    while (tnode) {
-        struct tnode_list *next = tnode->next;
-        int fd = atoi(tnode->tnode->name);
-        if (!process->files[fd].file) {
-            struct tnode *real_tnode = tnode->tnode;
-            parent->tnode_list = remove_tnode(parent->tnode_list, tnode->tnode);
-            drop_tnode(real_tnode);
-        }
-        tnode = next;
     }
 }
 
