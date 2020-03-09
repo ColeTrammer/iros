@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -97,6 +98,10 @@ static struct process *procfs_get_process(struct inode *inode) {
     } else {
         tnode = inode->parent;
     }
+
+    while (!isdigit(*tnode->name)) {
+        tnode = tnode->inode->parent;
+    }
     pid_t pid = atoi(tnode->name);
     return find_by_pid(pid);
 }
@@ -105,7 +110,7 @@ static struct procfs_buffer procfs_get_data(struct inode *inode, bool need_buffe
     struct process *process = procfs_get_process(inode);
 
     procfs_file_function_t getter = PROCFS_GET_FILE_FUNCTION(inode);
-    return getter(process, need_buffer);
+    return getter(find_tnode_inode(inode->parent->inode->tnode_list, inode), process, need_buffer);
 }
 
 static void procfs_cleanup_data(struct procfs_buffer data, struct inode *inode __attribute__((unused))) {
@@ -186,7 +191,7 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
     return to_read;
 }
 
-static struct procfs_buffer procfs_cwd(struct process *process, bool need_buffer) {
+static struct procfs_buffer procfs_cwd(struct tnode *tnode __attribute__((unused)), struct process *process, bool need_buffer) {
     char *buffer = get_tnode_path(process->cwd);
     size_t length = strlen(buffer);
     if (!need_buffer) {
@@ -196,7 +201,7 @@ static struct procfs_buffer procfs_cwd(struct process *process, bool need_buffer
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_exe(struct process *process, bool need_buffer) {
+static struct procfs_buffer procfs_exe(struct tnode *tnode __attribute__((unused)), struct process *process, bool need_buffer) {
     char *buffer = get_tnode_path(process->exe);
     size_t length = strlen(buffer);
     if (!need_buffer) {
@@ -206,7 +211,7 @@ static struct procfs_buffer procfs_exe(struct process *process, bool need_buffer
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_status(struct process *process, bool need_buffer) {
+static struct procfs_buffer procfs_status(struct tnode *tnode __attribute__((unused)), struct process *process, bool need_buffer) {
     char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
     char tty_string[16];
     if (process->tty != -1) {
@@ -235,7 +240,7 @@ static struct procfs_buffer procfs_status(struct process *process, bool need_buf
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_vm(struct process *process, bool need_buffer) {
+static struct procfs_buffer procfs_vm(struct tnode *tnode __attribute__((unused)), struct process *process, bool need_buffer) {
     char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
     size_t length = 0;
     struct vm_region *vm = process->process_memory;
@@ -252,7 +257,7 @@ static struct procfs_buffer procfs_vm(struct process *process, bool need_buffer)
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_signal(struct process *process, bool need_buffer) {
+static struct procfs_buffer procfs_signal(struct tnode *tnode __attribute__((unused)), struct process *process, bool need_buffer) {
     char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
     size_t length = 0;
     for (int i = 1; i < _NSIG; i++) {
@@ -270,6 +275,47 @@ static struct procfs_buffer procfs_signal(struct process *process, bool need_buf
             process->sig_state[i].sa_flags & SA_NODEFER ? 'D' : ' ', process->sig_state[i].sa_mask);
     }
     return (struct procfs_buffer) { buffer, length };
+}
+
+static struct procfs_buffer procfs_fd(struct tnode *tnode, struct process *process, bool need_buffer) {
+    int fd = atoi(tnode->name);
+    struct file *file = process->files[fd].file;
+    if (!file) {
+        return (struct procfs_buffer) { NULL, 0 };
+    }
+
+    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    if (!inode) {
+        return (struct procfs_buffer) { NULL, 0 };
+    }
+
+    struct tnode *fd_tnode = find_tnode_inode(inode->parent->inode->tnode_list, inode);
+
+    char *buffer = get_tnode_path(fd_tnode);
+    size_t length = strlen(buffer);
+    if (!need_buffer) {
+        free(buffer);
+        buffer = NULL;
+    }
+    return (struct procfs_buffer) { buffer, length };
+}
+
+static void procfs_create_fd_directory_structure(struct tnode *tparent, struct process *process, bool loaded) {
+    struct inode *parent = tparent->inode;
+
+    if (!loaded) {
+        for (int i = 0; i < FOPEN_MAX; i++) {
+            struct file *file = process->files[i].file;
+            if (file) {
+                char fd_string[32];
+                snprintf(fd_string, sizeof(fd_string) - 1, "%d", i);
+
+                struct inode *inode = procfs_create_inode(tparent, PROCFS_SYMLINK_MODE, process->uid, process->gid, procfs_fd);
+                struct tnode *tnode = create_tnode(fd_string, inode);
+                parent->tnode_list = add_tnode(parent->tnode_list, tnode);
+            }
+        }
+    }
 }
 
 static void procfs_create_process_directory_structure(struct tnode *tparent, struct process *process, bool loaded) {
@@ -295,6 +341,11 @@ static void procfs_create_process_directory_structure(struct tnode *tparent, str
         struct inode *signal_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_signal);
         struct tnode *signal_tnode = create_tnode("signal", signal_inode);
         parent->tnode_list = add_tnode(parent->tnode_list, signal_tnode);
+
+        struct inode *fd_inode =
+            procfs_create_inode(tparent, PROCFS_DIRECTORY_MODE, process->uid, process->gid, procfs_create_fd_directory_structure);
+        struct tnode *fd_tnode = create_tnode("fd", fd_inode);
+        parent->tnode_list = add_tnode(parent->tnode_list, fd_tnode);
     }
 }
 
@@ -338,7 +389,7 @@ void procfs_unregister_process(struct process *process) {
     drop_tnode(tnode);
 }
 
-static struct procfs_buffer procfs_self(struct process *process, bool need_buffer) {
+static struct procfs_buffer procfs_self(struct tnode *tnode __attribute__((unused)), struct process *process, bool need_buffer) {
     char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "%d", process->pid);
     return (struct procfs_buffer) { buffer, length };
