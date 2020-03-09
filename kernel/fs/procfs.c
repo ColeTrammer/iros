@@ -252,6 +252,26 @@ static struct procfs_buffer procfs_vm(struct process *process, bool need_buffer)
     return (struct procfs_buffer) { buffer, length };
 }
 
+static struct procfs_buffer procfs_signal(struct process *process, bool need_buffer) {
+    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
+    size_t length = 0;
+    for (int i = 1; i < _NSIG; i++) {
+        length += snprintf(
+            buffer + length, need_buffer ? PAGE_SIZE - length : 0,
+            "SIGNAL: %d (%s)\n"
+            "STATE: %s\n"
+            "FLAGS: %c%c%c%c%c%c%c\n"
+            "MASK: %#.16lX\n",
+            i, strsignal(i),
+            process->sig_state[i].sa_handler == SIG_IGN ? "ignored" : process->sig_state[i].sa_handler == SIG_DFL ? "default" : "handled",
+            process->sig_state[i].sa_flags & SA_NOCLDSTOP ? 'C' : ' ', process->sig_state[i].sa_flags & SA_ONSTACK ? 'S' : ' ',
+            process->sig_state[i].sa_flags & SA_RESETHAND ? 'X' : ' ', process->sig_state[i].sa_flags & SA_RESTART ? 'R' : ' ',
+            process->sig_state[i].sa_flags & SA_SIGINFO ? 'I' : ' ', process->sig_state[i].sa_flags & SA_NOCLDWAIT ? 'W' : ' ',
+            process->sig_state[i].sa_flags & SA_NODEFER ? 'D' : ' ', process->sig_state[i].sa_mask);
+    }
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static void procfs_create_process_directory_structure(struct tnode *tparent, struct process *process, bool loaded) {
     struct inode *parent = tparent->inode;
 
@@ -271,6 +291,10 @@ static void procfs_create_process_directory_structure(struct tnode *tparent, str
         struct inode *vm_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_vm);
         struct tnode *vm_tnode = create_tnode("vm", vm_inode);
         parent->tnode_list = add_tnode(parent->tnode_list, vm_tnode);
+
+        struct inode *signal_inode = procfs_create_inode(tparent, PROCFS_FILE_MODE, process->uid, process->gid, procfs_signal);
+        struct tnode *signal_tnode = create_tnode("signal", signal_inode);
+        parent->tnode_list = add_tnode(parent->tnode_list, signal_tnode);
     }
 }
 
