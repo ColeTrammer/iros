@@ -354,6 +354,10 @@ static void procfs_destroy_process_directory_structure(struct inode *parent) {
     while (tnode_list_node) {
         struct tnode *tnode = tnode_list_node->tnode;
         tnode_list_node = remove_tnode(tnode_list_node, tnode);
+        // Recursively destroy all directory entries.
+        if (tnode->inode->flags & FS_DIR) {
+            procfs_destroy_process_directory_structure(tnode->inode);
+        }
         drop_tnode(tnode);
     }
 }

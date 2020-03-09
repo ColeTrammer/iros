@@ -113,7 +113,9 @@ struct tnode_list *remove_tnode(struct tnode_list *list, struct tnode *tnode) {
     struct tnode_list **link = &list;
     while (*link != NULL) {
         if ((*link)->tnode == tnode) {
-            *link = (*link)->next;
+            struct tnode_list *next = (*link)->next;
+            free(*link);
+            *link = next;
             break;
         }
 
