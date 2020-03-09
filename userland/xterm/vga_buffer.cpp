@@ -12,7 +12,7 @@
 #include "vga_buffer.h"
 
 #ifdef KERNEL_NO_GRAPHICS
-VgaBuffer::VgaBuffer(const char* path) : m_fb(open(path, O_RDWR)) {
+VgaBuffer::VgaBuffer(const char* path) : m_fb(open(path, O_RDWR | O_CLOEXEC)) {
     assert(m_fb != -1);
 
     assert(ioctl(m_fb, SGWIDTH, &m_width) == 0);

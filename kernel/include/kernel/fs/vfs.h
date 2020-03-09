@@ -63,6 +63,7 @@ int fs_mount(const char *src, const char *path, const char *type);
 
 struct file_descriptor fs_clone(struct file_descriptor desc);
 struct file_descriptor fs_dup(struct file_descriptor desc);
+struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc);
 
 int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id);
 

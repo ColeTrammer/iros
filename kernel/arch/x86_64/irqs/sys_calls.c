@@ -342,7 +342,7 @@ SYS_CALL(fork) {
 
     for (size_t i = 0; i < FOPEN_MAX; i++) {
         if (parent->process->files[i].file) {
-            child_process->files[i] = fs_dup(parent->process->files[i]);
+            child_process->files[i] = fs_dup_accross_fork(parent->process->files[i]);
         }
     }
 

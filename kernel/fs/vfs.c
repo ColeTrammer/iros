@@ -52,7 +52,9 @@ void drop_inode_reference_unlocked(struct inode *inode) {
     // Only delete inode if it's refcount is zero
     assert(inode->ref_count > 0);
     if (--inode->ref_count <= 0) {
+#ifdef INODE_REF_COUNT_DEBUG
         debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+#endif /* INODE_REF_COUNT_DEBUG */
         if (inode->i_op->on_inode_destruction) {
             inode->i_op->on_inode_destruction(inode);
         }
@@ -1588,6 +1590,20 @@ struct file_descriptor fs_dup(struct file_descriptor desc) {
 
     // NOTE: the new descriptor reset the FD_CLOEXEC flag
     return (struct file_descriptor) { desc.file, 0 };
+}
+
+struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc) {
+    if (desc.file == NULL) {
+        return (struct file_descriptor) { NULL, 0 };
+    }
+
+    spin_lock(&desc.file->lock);
+    assert(desc.file->ref_count > 0);
+    desc.file->ref_count++;
+    spin_unlock(&desc.file->lock);
+
+    // NOTE: the new descriptor reset the FD_CLOEXEC flag
+    return (struct file_descriptor) { desc.file, desc.fd_flags };
 }
 
 void init_vfs() {

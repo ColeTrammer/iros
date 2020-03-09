@@ -11,7 +11,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
-#define PAGE_FAULT_DEBUG
+// #define PAGE_FAULT_DEBUG
 // #define DEVICE_NOT_AVAILABLE_DEBUG
 
 void init_irq_handlers() {
