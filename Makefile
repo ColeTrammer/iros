@@ -25,7 +25,7 @@ export CC:=$(HOST)-gcc --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DE
 export CXX:=$(HOST)-g++ --sysroot=$(SYSROOT) -isystem=$(SYSROOT)/usr/include $(DEFINES) -std=c++2a -fconcepts -fno-exceptions -fno-rtti
 export PARSER:=$(BUILDDIR)/gen/parser/parser.native
 export CFLAGS:=-fno-omit-frame-pointer -fno-inline -O2 -Wall -Wextra -Werror
-export CPPFLAGS:=$(CFLAGS)
+export CPPFLAGS:=-fno-omit-frame-pointer -fno-inline -O0 -Wall -Wextra -Werror 
 export LD:=$(CC)
 export AR:=$(HOST)-ar
 export OBJCOPY:=$(HOST)-objcopy
