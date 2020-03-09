@@ -15,7 +15,13 @@ struct procfs_buffer {
     size_t size;
 };
 
-typedef struct procfs_buffer (*procfs_file_function_t)(struct tnode *tnode, struct process *process, bool need_buffer);
+struct procfs_data {
+    struct process *process;
+    void *function;
+    int fd;
+};
+
+typedef struct procfs_buffer (*procfs_file_function_t)(struct procfs_data *data, struct process *process, bool need_buffer);
 typedef void (*procfs_directory_function_t)(struct tnode *tnode, struct process *process, bool loaded);
 
 struct tnode *procfs_lookup(struct inode *inode, const char *name);
