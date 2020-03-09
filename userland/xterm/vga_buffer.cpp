@@ -4,11 +4,13 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <window_server/window.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 
 #include "vga_buffer.h"
 
+#ifdef KERNEL_NO_GRRAPHICS
 VgaBuffer::VgaBuffer(const char* path) : m_fb(open(path, O_RDWR)) {
     assert(m_fb != -1);
 
@@ -26,6 +28,21 @@ VgaBuffer::~VgaBuffer() {
     munmap(m_buffer, size_in_bytes());
     close(m_fb);
 }
+#else
+
+VgaBuffer::VgaBuffer(const char*) {
+    m_window = m_connection.create_window(200, 200, m_width * 16, m_height * 16);
+    m_buffer = new uint16_t[m_width * m_height];
+    m_window->set_draw_callback([this](auto&) {
+        // Do something.
+    });
+}
+
+VgaBuffer::~VgaBuffer() {
+    delete[] m_buffer;
+}
+
+#endif /* KERNEL_NO_GRRAPHICS */
 
 void VgaBuffer::draw(int row, int col, char c) {
     draw(row, col, (uint16_t) VGA_ENTRY(c, fg(), bg()));
@@ -33,20 +50,6 @@ void VgaBuffer::draw(int row, int col, char c) {
 
 void VgaBuffer::draw(int row, int col, uint16_t val) {
     m_buffer[row * m_width + col] = val;
-}
-
-void VgaBuffer::hide_cursor() {
-    if (!m_is_cursor_enabled) {
-        return;
-    }
-
-    ioctl(m_fb, SDCURSOR);
-    m_is_cursor_enabled = false;
-}
-
-void VgaBuffer::show_cursor() {
-    ioctl(m_fb, SECURSOR);
-    m_is_cursor_enabled = true;
 }
 
 void VgaBuffer::clear_row_to_end(int row, int col) {
@@ -98,7 +101,28 @@ void VgaBuffer::clear() {
     }
 }
 
-void VgaBuffer::set_cursor(int row, int col) {
+void VgaBuffer::set_cursor(int row [[maybe_unused]], int col [[maybe_unused]]) {
+#ifdef KERNEL_NO_GRRAPHICS
     cursor_pos pos = { static_cast<unsigned short>(row), static_cast<unsigned short>(col) };
     ioctl(m_fb, SSCURSOR, &pos);
+#endif /* KERNEL_NO_GRRAPHICS */
+}
+
+void VgaBuffer::hide_cursor() {
+    if (!m_is_cursor_enabled) {
+        return;
+    }
+
+#ifdef KERNEL_NO_GRRAPHICS
+    ioctl(m_fb, SDCURSOR);
+#endif /* KERNEL_NO_GRRAPHICS */
+
+    m_is_cursor_enabled = false;
+}
+
+void VgaBuffer::show_cursor() {
+#ifdef KERNEL_NO_GRRAPHICS
+    ioctl(m_fb, SECURSOR);
+#endif /* KERNEL_NO_GRRAPHICS */
+    m_is_cursor_enabled = true;
 }

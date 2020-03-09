@@ -3,12 +3,17 @@
 #include <liim/vector.h>
 #include <stddef.h>
 #include <stdint.h>
+#ifndef KERNEL_NO_GRAPHICS
+#include <liim/pointers.h>
+#include <window_server/connection.h>
+#include <window_server/window.h>
+#endif /* KERNEL_NO_GRAPHICS */
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 
 class VgaBuffer {
 public:
-    VgaBuffer(const char *path);
+    VgaBuffer(const char* path);
     ~VgaBuffer();
 
     size_t size() const { return m_width * m_height; }
@@ -45,8 +50,8 @@ public:
     void draw(int row, int col, char c);
     void draw(int row, int col, uint16_t val);
 
-    LIIM::Vector<uint16_t> scroll_up(const LIIM::Vector<uint16_t> *first_row = nullptr);
-    LIIM::Vector<uint16_t> scroll_down(const LIIM::Vector<uint16_t> *last_row = nullptr);
+    LIIM::Vector<uint16_t> scroll_up(const LIIM::Vector<uint16_t>* first_row = nullptr);
+    LIIM::Vector<uint16_t> scroll_down(const LIIM::Vector<uint16_t>* last_row = nullptr);
 
     void show_cursor();
     void hide_cursor();
@@ -54,10 +59,15 @@ public:
 
 private:
     bool m_is_cursor_enabled { true };
-    int m_width;
-    int m_height;
-    const int m_fb;
+    int m_width { 25 };
+    int m_height { 80 };
     enum vga_color m_bg { VGA_COLOR_BLACK };
     enum vga_color m_fg { VGA_COLOR_LIGHT_GREY };
-    uint16_t *m_buffer;
+    uint16_t* m_buffer;
+#ifdef KERNEL_NO_GRAPHICS
+    const int m_fb;
+#else
+    WindowServer::Connection m_connection;
+    SharedPtr<WindowServer::Window> m_window { nullptr };
+#endif /* KERNEL_NO_GRAPHICS */
 };
