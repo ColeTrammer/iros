@@ -15,6 +15,7 @@ struct statvfs;
 #define INAME_DONT_FOLLOW_TRAILING_SYMLINK 1
 #define INAME_TAKE_OWNERSHIP_OF_PATH       2
 
+void bump_inode_reference(struct inode *inode);
 void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 int iname(const char *path, int flags, struct tnode **result);
@@ -22,7 +23,7 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
 
 int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer);
 int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len);
-int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct inode **inode);
+int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct tnode **tnode);
 
 struct tnode *fs_root(void);
 struct tnode *fs_create(const char *path, mode_t mode, int *error);

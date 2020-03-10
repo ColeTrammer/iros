@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
@@ -39,26 +40,12 @@ static struct file_operations dev_f_op = { &dev_close, &dev_read, &dev_write, NU
 
 static struct file_operations dev_dir_f_op = { NULL, NULL, NULL, NULL };
 
-struct tnode *dev_lookup(struct inode *inode, const char *name) {
+struct inode *dev_lookup(struct inode *inode, const char *name) {
     if (!inode || !name) {
         return NULL;
     }
 
-    if (inode->tnode_list == NULL) {
-        return NULL;
-    }
-
-    struct tnode_list *list = inode->tnode_list;
-    while (list != NULL) {
-        assert(list->tnode != NULL);
-        assert(list->tnode->name != NULL);
-        if (strcmp(list->tnode->name, name) == 0) {
-            return list->tnode;
-        }
-        list = list->next;
-    }
-
-    return NULL;
+    return fs_lookup_in_cache(inode->dirent_cache, name);
 }
 
 int dev_read_all(struct inode *inode, void *buf) {
@@ -181,11 +168,11 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->private_data = NULL;
     root->size = 0;
     root->super_block = &super_block;
-    root->tnode_list = NULL;
     root->ref_count = 1;
     root->readable = true;
     root->writeable = true;
     root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
+    root->dirent_cache = fs_create_dirent_cache();
 
     super_block.device = root->device;
     super_block.op = NULL;
@@ -242,16 +229,12 @@ void dev_add(struct device *device, const char *_path) {
     init_spinlock(&to_add->lock);
     to_add->mode = device->type | 0777;
     to_add->mounts = NULL;
-    to_add->parent = parent;
     to_add->private_data = device;
     to_add->ref_count = 1;
     to_add->super_block = &super_block;
-    to_add->tnode_list = NULL;
     to_add->access_time = to_add->change_time = to_add->modify_time = time_read_clock(CLOCK_REALTIME);
 
-    struct tnode *tnode = create_tnode(_name, to_add);
-
-    parent->inode->tnode_list = add_tnode(parent->inode->tnode_list, tnode);
+    fs_put_dirent_cache(parent->inode->dirent_cache, to_add, device->name, strlen(device->name));
 
     free(path);
 }
@@ -273,12 +256,8 @@ void dev_remove(const char *_path) {
     }
 
     free(tnode->inode->private_data);
-
-    // FIXME: tnode and inode are ref counted, we can't just free them like this
-    tnode->inode->parent->inode->tnode_list = remove_tnode(tnode->inode->parent->inode->tnode_list, tnode);
-    free(tnode->inode);
-    free(tnode->name);
-    free(tnode);
+    fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
+    drop_inode_reference(tnode->inode);
 
     free(path);
 }

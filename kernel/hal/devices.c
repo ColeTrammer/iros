@@ -43,11 +43,7 @@ static struct file *fake_symlink(struct file *file, int flags, int *error) {
         return NULL;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
-    assert(inode);
-
-    struct inode *parent = inode->parent->inode;
-    struct tnode *tnode = find_tnode_inode(parent->tnode_list, inode);
+    struct tnode *tnode = file->tnode;
 
     char *path = get_tnode_path(tnode);
     debug_log("to: [ %s ]\n", path);

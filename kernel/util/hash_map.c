@@ -35,7 +35,7 @@ static void __hash_resize_if_needed(struct hash_map *map) {
     }
 }
 
-struct hash_map *hash_create_hash_map_with_size(int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id),
+struct hash_map *hash_create_hash_map_with_size(unsigned int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id),
                                                 void *(*key)(void *ptr), size_t num_buckets) {
     struct hash_map *map = malloc(sizeof(struct hash_map));
     map->hash = hash;
@@ -48,12 +48,32 @@ struct hash_map *hash_create_hash_map_with_size(int (*hash)(void *ptr, int hash_
     return map;
 }
 
-struct hash_map *hash_create_hash_map(int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id), void *(*key)(void *ptr)) {
+struct hash_map *hash_create_hash_map(unsigned int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id),
+                                      void *(*key)(void *ptr)) {
     return hash_create_hash_map_with_size(hash, equals, key, HASH_DEFAULT_NUM_BUCKETS);
 }
 
 void *hash_get(struct hash_map *map, void *key) {
     return hash_get_or_else_do(map, key, NULL, NULL);
+}
+
+void *hash_get_at_index(struct hash_map *map, size_t index) {
+    if (index >= hash_size(map)) {
+        return NULL;
+    }
+
+    size_t i = 0;
+    for (size_t b = 0; b < map->num_buckets; b++) {
+        struct hash_entry *entry = map->entries[i];
+        while (entry != NULL) {
+            if (i++ == index) {
+                return entry->data;
+            }
+            entry = entry->next;
+        }
+    }
+
+    return NULL;
 }
 
 void *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *), void *arg) {

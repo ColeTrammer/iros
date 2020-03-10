@@ -199,18 +199,18 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
 }
 
 struct task *load_task(const char *file_name) {
-    struct inode *program;
+    struct tnode *tprogram;
     void *buffer;
     size_t length;
 
-    assert(fs_read_all_path(file_name, &buffer, &length, &program) == 0);
-    assert(program != NULL);
+    assert(fs_read_all_path(file_name, &buffer, &length, &tprogram) == 0);
+    assert(tprogram != NULL);
 
     struct task *task = calloc(1, sizeof(struct task));
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
 
-    task->process->exe = find_tnode_inode(program->parent->inode->tnode_list, program);
+    task->process->exe = tprogram;
     process->name = process->exe->name;
 
     assert(elf64_is_valid(buffer));

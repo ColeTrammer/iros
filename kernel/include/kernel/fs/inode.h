@@ -11,6 +11,7 @@
 #include <kernel/fs/tnode.h>
 #include <kernel/util/spinlock.h>
 
+struct hash_map;
 struct inode;
 struct timeval;
 
@@ -19,7 +20,7 @@ struct timeval;
 
 struct inode_operations {
     struct inode *(*create)(struct tnode *tnode, const char *name, mode_t mode, int *error);
-    struct tnode *(*lookup)(struct inode *inode, const char *name);
+    struct inode *(*lookup)(struct inode *inode, const char *name);
     struct file *(*open)(struct inode *inode, int flags, int *error);
     int (*stat)(struct inode *inode, struct stat *stat_struct);
     int (*ioctl)(struct inode *inode, unsigned long request, void *argp);
@@ -68,14 +69,8 @@ struct inode {
     /* Unique inode identifier (for the filesystem) */
     ino_t index;
 
-    /* List of tnodes in directory (if inode is a directory) */
-    struct tnode_list *tnode_list;
-
     /* Listens file systems mounted directly below this inode */
     struct mount *mounts;
-
-    /* Parent of inode */
-    struct tnode *parent;
 
     // flags for things like pselect and blocking
     bool readable : 1;
@@ -85,6 +80,9 @@ struct inode {
     // Delete inode when count is 0 (only applies to pipes right now)
     // Should be atomic
     int ref_count;
+
+    // Dirent cache for path name resolution
+    struct hash_map *dirent_cache;
 
     // Underlying vm_object (used for mmap)
     // Should be lazily initialized

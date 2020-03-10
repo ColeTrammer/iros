@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
+#include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/ext2.h>
 #include <kernel/fs/file_system.h>
@@ -27,12 +28,13 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/validators.h>
 
+// #define INAME_DEBUG
 // #define INODE_REF_COUNT_DEBUG
 
 static struct file_system *file_systems;
 static struct mount *root;
 
-static void bump_inode_reference(struct inode *inode) {
+void bump_inode_reference(struct inode *inode) {
     spin_lock(&inode->lock);
 
 #ifdef INODE_REF_COUNT_DEBUG
@@ -60,6 +62,10 @@ void drop_inode_reference_unlocked(struct inode *inode) {
         }
 
         fs_inode_del(inode->device, inode->index);
+
+        if (inode->dirent_cache) {
+            fs_destroy_dirent_cache(inode->dirent_cache);
+        }
 
         spin_unlock(&inode->lock);
 
@@ -126,15 +132,15 @@ int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len) {
     return 0;
 }
 
-int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct inode **inode) {
-    struct tnode *tnode;
+int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct tnode **tnode_out) {
+    struct tnode *tnode = NULL;
     int ret = iname(path, 0, &tnode);
     if (ret < 0) {
         return ret;
     }
 
-    if (inode) {
-        *inode = tnode->inode;
+    if (tnode_out) {
+        *tnode_out = tnode;
         if (!fs_inode_get(tnode->inode->device, tnode->inode->index)) {
             fs_inode_put(tnode->inode);
         }
@@ -152,6 +158,10 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     if (*depth >= 25) {
         return -ELOOP;
     }
+
+#ifdef INAME_DEBUG
+    debug_log("path: [ %s ]\n", _path);
+#endif /* INAME_DEBUG */
 
     assert(t_root->inode != NULL);
     assert(t_root->inode->i_op != NULL);
@@ -195,7 +205,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             }
 
             (*depth)++;
-            ret = do_iname(link_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->inode->parent, &parent, depth);
+            ret = do_iname(link_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->parent, &parent, depth);
             if (ret < 0) {
                 free(save_path);
                 return ret;
@@ -218,7 +228,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 
         if (path[1] == '.' && path[2] == '.' && (path[3] == '/' || path[3] == '\0')) {
             /* Simply go to parent */
-            parent = parent->inode->parent;
+            parent = parent->parent;
             goto vfs_loop_end;
         }
 
@@ -248,7 +258,15 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
         assert(parent->inode->i_op);
         assert(parent->inode->i_op->lookup);
 
-        parent = parent->inode->i_op->lookup(parent->inode, path + 1);
+#ifdef INAME_DEBUG
+        debug_log("looking up: [ %s, %s ]\n", parent->name, path + 1);
+#endif /* INAME_DEBUG */
+        struct inode *inode = parent->inode->i_op->lookup(parent->inode, path + 1);
+        if (!inode) {
+            parent = NULL;
+            break;
+        }
+        parent = create_tnode(path + 1, parent, inode);
 
     vfs_loop_end:
         path = last_slash;
@@ -268,7 +286,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 
     /* Shouldn't let you at a / at the end of a file name or root (but only if the path is // and not /./) */
     if ((path != NULL && path >= save_path && path[0] == '/') &&
-        ((inode->flags & FS_FILE) || (inode == inode->parent->inode && strlen(_path) == 2))) {
+        ((inode->flags & FS_FILE) || (parent->parent == NULL && strlen(_path) == 2))) {
         free(save_path);
         return -ENOENT;
     }
@@ -303,7 +321,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     }
 
     (*depth)++;
-    ret = do_iname(sym_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->inode->parent, result, depth);
+    ret = do_iname(sym_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->parent, result, depth);
 
     return ret;
 }
@@ -372,7 +390,7 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
-    if (tparent->inode->tnode_list && find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+    if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
         *error = -EEXIST;
         return NULL;
@@ -392,9 +410,9 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
         return NULL;
     }
 
-    struct tnode *tnode = create_tnode(last_slash + 1, inode);
-    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+    fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
+    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
     free(path);
     return tnode;
 }
@@ -457,6 +475,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
     file->ref_count = 1;
     file->open_flags = flags;
     file->abilities &= FS_FILE_CANT_SEEK;
+    file->tnode = tnode;
     if (flags & O_RDWR) {
         file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
     } else if (flags & O_RDONLY) {
@@ -489,6 +508,10 @@ int fs_close(struct file *file) {
             drop_inode_reference(inode);
         }
 
+        if (file->tnode) {
+            drop_tnode(file->tnode);
+        }
+
         int error = 0;
         if (file->f_op->close) {
             error = file->f_op->close(file);
@@ -513,16 +536,16 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode->i_op->lookup);
     inode->i_op->lookup(inode, NULL);
-    if (!inode->tnode_list) {
+    if (!inode->dirent_cache) {
         return 0;
     }
 
     spin_lock(&inode->lock);
-    struct tnode *tnode = find_tnode_index(inode->tnode_list, file->position);
+    struct cached_dirent *tnode = fs_lookup_in_cache_with_index(inode->dirent_cache, file->position);
 
     if (!tnode) {
         /* Traverse mount points as well */
-        size_t len = get_tnode_list_length(inode->tnode_list);
+        size_t len = fs_get_dirent_cache_size(inode->dirent_cache);
         size_t mount_index = file->position - len;
         size_t i = 0;
         struct mount *mount = inode->mounts;
@@ -843,7 +866,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
-    if (!tparent->inode->tnode_list || find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+    if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
         return -EEXIST;
     }
@@ -862,8 +885,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
         return error;
     }
 
-    struct tnode *tnode = create_tnode(last_slash + 1, inode);
-    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+    fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
     free(path);
     return 0;
@@ -926,7 +948,7 @@ int fs_unlink(const char *path) {
         return ret;
     }
 
-    tnode->inode->parent->inode->tnode_list = remove_tnode(tnode->inode->parent->inode->tnode_list, tnode);
+    fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
     struct inode *inode = tnode->inode;
 
     spin_unlock(&inode->lock);
@@ -942,25 +964,8 @@ static bool dir_empty(struct inode *inode) {
         return false;
     }
 
-    if (inode->tnode_list == NULL) {
-        inode->i_op->lookup(inode, NULL);
-        /* There is no dir entries */
-        if (inode->tnode_list == NULL) {
-            return true;
-        }
-    }
-
-    size_t tnode_list_length = get_tnode_list_length(inode->tnode_list);
-    if (tnode_list_length == 0) {
-        return true;
-    }
-
-    /* Handle . and .. */
-    if (tnode_list_length == 2) {
-        return find_tnode(inode->tnode_list, ".") != NULL && find_tnode(inode->tnode_list, "..") != NULL;
-    }
-
-    return false;
+    inode->i_op->lookup(inode, NULL);
+    return fs_get_dirent_cache_size(inode->dirent_cache);
 }
 
 int fs_rmdir(const char *path) {
@@ -991,8 +996,7 @@ int fs_rmdir(const char *path) {
         return ret;
     }
 
-    struct inode *inode = tnode->inode;
-    inode->parent->inode->tnode_list = remove_tnode(inode->parent->inode->tnode_list, tnode);
+    fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
     drop_tnode(tnode);
     return 0;
 }
@@ -1141,7 +1145,8 @@ int fs_rename(const char *old_path, const char *new_path) {
             return ret;
         }
 
-        existing_tnode->inode->parent->inode->tnode_list = remove_tnode(existing_tnode->inode->parent->inode->tnode_list, existing_tnode);
+        struct inode *parent = existing_tnode->parent->inode;
+        fs_del_dirent_cache(parent->dirent_cache, existing_tnode->name);
         drop_tnode(existing_tnode);
     }
 
@@ -1150,16 +1155,11 @@ int fs_rename(const char *old_path, const char *new_path) {
         return ret;
     }
 
-    struct tnode *old_parent = old->inode->parent;
+    struct tnode *old_parent = old->parent;
     assert(old_parent);
 
-    spin_lock(&old->lock);
-    free(old->name);
-    old->name = strdup(new_path_last_slash + 1);
-    old->inode->parent = new_parent;
-    new_parent->inode->tnode_list = add_tnode(new_parent->inode->tnode_list, old);
-    old_parent->inode->tnode_list = remove_tnode(old_parent->inode->tnode_list, old);
-    spin_lock(&old->lock);
+    fs_put_dirent_cache(new_parent->inode->dirent_cache, old->inode, new_path_last_slash + 1, strlen(new_path_last_slash + 1));
+    fs_del_dirent_cache(old_parent->inode->dirent_cache, old->name);
     return 0;
 }
 
@@ -1214,7 +1214,6 @@ int fs_mount(const char *src, const char *path, const char *type) {
                 file_system->mount(file_system, mount->device_path);
                 mount->super_block = file_system->super_block;
                 mount->super_block->root->name = "/";
-                mount->super_block->root->inode->parent = mount->super_block->root;
 
                 /* For now, when mounting as / when there is already something mounted,
                    we will just move things around instead of unmounting what was
@@ -1228,12 +1227,6 @@ int fs_mount(const char *src, const char *path, const char *type) {
                     char *name = malloc(strlen(root->name) + 1);
                     strcpy(name, root->name);
                     root->super_block->root->name = name;
-
-                    struct mount *mount_iter = mount->super_block->root->inode->mounts;
-                    while (mount_iter != NULL) {
-                        mount_iter->super_block->root->inode->parent = mount->super_block->root;
-                        mount_iter = mount_iter->next;
-                    }
                 }
 
                 root = mount;
@@ -1289,7 +1282,6 @@ int fs_mount(const char *src, const char *path, const char *type) {
             assert(file_system->mount(file_system, mount->device_path));
             mount->super_block = file_system->super_block;
             mount->super_block->root->name = name;
-            mount->super_block->root->inode->parent = mount_on;
 
             fs_inode_create_store(file_system->super_block->device);
             free(path_copy);
@@ -1476,7 +1468,7 @@ int fs_symlink(const char *target, const char *linkpath) {
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
-    if (tparent->inode->tnode_list && find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+    if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
         return -EEXIST;
     }
@@ -1495,8 +1487,7 @@ int fs_symlink(const char *target, const char *linkpath) {
         return error;
     }
 
-    struct tnode *tnode = create_tnode(last_slash + 1, inode);
-    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+    fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
     free(path);
     return 0;
@@ -1542,7 +1533,7 @@ int fs_link(const char *oldpath, const char *newpath) {
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
-    if (tparent->inode->tnode_list && find_tnode(tparent->inode->tnode_list, last_slash + 1) != NULL) {
+    if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
         return -EEXIST;
     }
@@ -1561,8 +1552,7 @@ int fs_link(const char *oldpath, const char *newpath) {
 
     bump_inode_reference(target->inode);
 
-    struct tnode *tnode = create_tnode(last_slash + 1, target->inode);
-    tparent->inode->tnode_list = add_tnode(tparent->inode->tnode_list, tnode);
+    fs_put_dirent_cache(tparent->inode->dirent_cache, target->inode, last_slash + 1, strlen(last_slash + 1));
 
     free(path);
     return 0;
@@ -1638,7 +1628,7 @@ void init_vfs() {
 
 char *get_tnode_path(struct tnode *tnode) {
     /* Check if root */
-    if (tnode->inode == tnode->inode->parent->inode) {
+    if (!tnode->parent) {
         char *ret = malloc(2);
         strcpy(ret, "/");
         return ret;
@@ -1649,10 +1639,10 @@ char *get_tnode_path(struct tnode *tnode) {
 
     ssize_t len = 1;
     ssize_t i;
-    for (i = 0; tnode->inode->parent->inode != tnode->inode; i++) {
+    for (i = 0; tnode->parent != NULL; i++) {
         name_buffer[i] = tnode->name;
         len += strlen(tnode->name) + 1;
-        tnode = tnode->inode->parent;
+        tnode = tnode->parent;
 
         if (i >= size) {
             size *= 2;
@@ -1718,23 +1708,5 @@ bool fs_is_exceptional(struct file *file) {
 
 struct tnode *fs_get_tnode_for_file(struct file *file) {
     assert(file);
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
-    if (!inode) {
-        return NULL;
-    }
-
-    struct inode *parent = inode->parent->inode;
-    if (parent == inode) {
-        return fs_root();
-    }
-
-    struct tnode_list *child = parent->tnode_list;
-    while (child) {
-        if (child->tnode->inode == inode) {
-            return child->tnode;
-        }
-        child = child->next;
-    }
-
-    return NULL;
+    return file->tnode;
 }

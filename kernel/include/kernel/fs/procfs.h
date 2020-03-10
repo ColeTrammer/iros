@@ -22,9 +22,9 @@ struct procfs_data {
 };
 
 typedef struct procfs_buffer (*procfs_file_function_t)(struct procfs_data *data, struct process *process, bool need_buffer);
-typedef void (*procfs_directory_function_t)(struct tnode *tnode, struct process *process, bool loaded);
+typedef void (*procfs_directory_function_t)(struct inode *inode, struct process *process, bool loaded);
 
-struct tnode *procfs_lookup(struct inode *inode, const char *name);
+struct inode *procfs_lookup(struct inode *inode, const char *name);
 struct file *procfs_open(struct inode *inode, int flags, int *error);
 int procfs_read_all(struct inode *inode, void *buffer);
 ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len);

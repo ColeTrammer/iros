@@ -8,6 +8,7 @@
 #include <sys/param.h>
 #include <sys/statvfs.h>
 
+#include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/initrd.h>
@@ -44,22 +45,12 @@ static struct file_operations initrd_f_op = { NULL, &initrd_read, NULL, NULL };
 
 static struct file_operations initrd_dir_f_op = { NULL, NULL, NULL, NULL };
 
-struct tnode *initrd_lookup(struct inode *inode, const char *name) {
+struct inode *initrd_lookup(struct inode *inode, const char *name) {
     if (!inode || !name) {
         return NULL;
     }
 
-    struct tnode_list *list = inode->tnode_list;
-    while (list != NULL) {
-        assert(list->tnode != NULL);
-        assert(list->tnode->name != NULL);
-        if (strcmp(list->tnode->name, name) == 0) {
-            return list->tnode;
-        }
-        list = list->next;
-    }
-
-    return NULL;
+    return fs_lookup_in_cache(inode->dirent_cache, name);
 }
 
 struct file *initrd_open(struct inode *inode, int flags, int *error) {
@@ -138,6 +129,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->readable = true;
     root->writeable = false;
     root->access_time = root->modify_time = root->change_time = time_read_clock(CLOCK_REALTIME);
+    root->dirent_cache = fs_create_dirent_cache();
     init_spinlock(&root->lock);
 
     struct tnode *t_root = create_root_tnode(root);
@@ -160,14 +152,12 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->i_op = &initrd_i_op;
         inode->ref_count = 1;
         inode->private_data = entry + i;
-        inode->parent = t_root;
         inode->readable = true;
         inode->writeable = true;
         inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
         init_spinlock(&inode->lock);
 
-        struct tnode *to_add = create_tnode(entry[i].name, inode);
-        root->tnode_list = add_tnode(root->tnode_list, to_add);
+        fs_put_dirent_cache(root->dirent_cache, inode, entry[i].name, strlen(entry[i].name));
     }
 
     return t_root;

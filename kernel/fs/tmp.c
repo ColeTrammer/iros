@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/param.h>
 
+#include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
@@ -77,7 +78,6 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     inode->uid = get_current_task()->process->uid;
     inode->gid = get_current_task()->process->gid;
     inode->mounts = NULL;
-    inode->parent = tparent;
     inode->device = tparent->inode->device;
     inode->private_data = data;
     inode->ref_count = 1;
@@ -90,22 +90,12 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     return inode;
 }
 
-struct tnode *tmp_lookup(struct inode *inode, const char *name) {
+struct inode *tmp_lookup(struct inode *inode, const char *name) {
     if (inode == NULL || name == NULL) {
         return NULL;
     }
 
-    struct tnode_list *list = inode->tnode_list;
-    while (list != NULL) {
-        assert(list->tnode != NULL);
-        assert(list->tnode->name != NULL);
-        if (strcmp(list->tnode->name, name) == 0) {
-            return list->tnode;
-        }
-        list = list->next;
-    }
-
-    return NULL;
+    return fs_lookup_in_cache(inode->dirent_cache, name);
 }
 
 struct file *tmp_open(struct inode *inode, int flags, int *error) {
@@ -198,7 +188,6 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
     inode->mode = mode;
     inode->uid = get_current_task()->process->uid;
     inode->gid = get_current_task()->process->gid;
-    inode->parent = tparent;
     inode->ref_count = 1;
     inode->super_block = tparent->inode->super_block;
     inode->flags = FS_DIR;
@@ -206,6 +195,7 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
     inode->writeable = true;
     inode->readable = true;
     tparent->inode->modify_time = inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
+    inode->dirent_cache = fs_create_dirent_cache();
 
     *error = 0;
     return inode;
@@ -319,11 +309,11 @@ struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
     root->private_data = NULL;
     root->size = 0;
     root->super_block = sb;
-    root->tnode_list = NULL;
     root->ref_count++;
     root->readable = true;
     root->writeable = true;
     root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
+    root->dirent_cache = fs_create_dirent_cache();
 
     sb->root = t_root;
 

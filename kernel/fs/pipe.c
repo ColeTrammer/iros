@@ -41,7 +41,6 @@ struct inode *pipe_new_inode() {
     init_spinlock(&inode->lock);
     inode->mode = 0777 | S_IFIFO;
     inode->mounts = NULL;
-    inode->parent = NULL;
     inode->writeable = true;
     inode->readable = false;
     inode->access_time = inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
@@ -57,7 +56,6 @@ struct inode *pipe_new_inode() {
     inode->ref_count = 0;
     inode->size = 0;
     inode->super_block = NULL;
-    inode->tnode_list = NULL;
 
     return inode;
 }

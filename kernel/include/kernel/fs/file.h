@@ -8,6 +8,7 @@
 #include <kernel/util/spinlock.h>
 
 struct file;
+struct tnode;
 
 struct file_operations {
     int (*close)(struct file *file);
@@ -35,6 +36,8 @@ struct file {
 
     int ref_count;
     spinlock_t lock;
+
+    struct tnode *tnode;
 
     dev_t device;
     void *private_data;

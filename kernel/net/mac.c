@@ -7,7 +7,7 @@
 
 static struct hash_map *map;
 
-static int hash(void *ip_addr, int num_buckets) {
+static unsigned int hash(void *ip_addr, int num_buckets) {
     struct ip_v4_address *addr = ip_addr;
 
     int sum = 0;

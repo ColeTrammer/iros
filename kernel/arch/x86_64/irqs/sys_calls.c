@@ -413,8 +413,8 @@ SYS_CALL(close) {
 }
 
 static int execve_helper(const char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
-                         struct inode **inode, int *depth, char **argv) {
-    int ret = fs_read_all_path(*path, (void **) buffer, buffer_length, inode);
+                         struct tnode **tnode, int *depth, char **argv) {
+    int ret = fs_read_all_path(*path, (void **) buffer, buffer_length, tnode);
     if (ret < 0) {
         return ret;
     }
@@ -480,7 +480,7 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
             free(*buffer);
             *buffer = NULL;
             (*depth)++;
-            return execve_helper(path, buffer, buffer_length, prepend_argv, prepend_argv_length, inode, depth, argv);
+            return execve_helper(path, buffer, buffer_length, prepend_argv, prepend_argv_length, tnode, depth, argv);
         }
 
         return -ENOEXEC;
@@ -507,8 +507,8 @@ SYS_CALL(execve) {
     char **prepend_argv = NULL;
     size_t prepend_argv_length = 0;
     int depth = 0;
-    struct inode *inode;
-    int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &inode, &depth, argv);
+    struct tnode *tnode;
+    int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &tnode, &depth, argv);
     if (error) {
         for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
             free(prepend_argv[i]);
@@ -523,8 +523,8 @@ SYS_CALL(execve) {
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
 
-    struct tnode *tnode = find_tnode_inode(inode->parent->inode->tnode_list, inode);
     assert(tnode);
+    struct inode *inode = tnode->inode;
     process->exe = bump_tnode(tnode);
     process->name = tnode->name;
 

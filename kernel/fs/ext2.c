@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 #include <sys/param.h>
 
+#include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/ext2.h>
 #include <kernel/fs/file.h>
@@ -56,6 +57,7 @@ static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
 
 /* Reads blocks at a given offset into the buffer */
 static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks, bool cache) {
+    assert(sb);
     struct ext2_sb_data *data = sb->private_data;
     spin_lock(&sb->super_block_lock);
 
@@ -505,18 +507,20 @@ static void ext2_update_tnode_list(struct inode *inode) {
     assert(raw_inode);
 
     struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
-    if (!ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[0], 1)) {
+    if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[0], 1) != 1) {
         debug_log("Ext2 Read Error: [ %llu ]\n", inode->index);
         return;
     }
 
     spin_lock(&inode->lock);
 
-    if (inode->tnode_list != NULL) {
+    if (inode->dirent_cache != NULL) {
         // NOTE: this prevents duplicate tnode's from being created.
         //       should eventually just not add duplicates instead though.
         spin_unlock(&inode->lock);
         return;
+    } else {
+        inode->dirent_cache = fs_create_dirent_cache();
     }
 
     size_t block_no = 0;
@@ -528,32 +532,27 @@ static void ext2_update_tnode_list(struct inode *inode) {
         }
 
         struct inode *inode_to_add;
-        if (strcmp(dirent->name, ".") == 0) {
-            inode_to_add = inode;
-        } else if (strcmp(dirent->name, "..") == 0) {
-            inode_to_add = inode->parent->inode;
-        } else {
-            inode_to_add = calloc(1, sizeof(struct inode));
-            inode_to_add->device = inode->device;
-            inode_to_add->parent = inode == inode->super_block->root->inode ? inode->super_block->root
-                                                                            : find_tnode_inode(inode->parent->inode->tnode_list, inode);
-            assert(inode_to_add->parent->inode == inode);
-            inode_to_add->index = dirent->ino;
-            inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
-            inode_to_add->super_block = inode->super_block;
-            inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR
-                                      ? FS_FILE
-                                      : dirent->type == EXT2_DIRENT_TYPE_SOCKET
-                                            ? FS_SOCKET
-                                            : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK ? FS_LINK : FS_DIR;
-            inode_to_add->ref_count = 2; // One for the vfs and one for us
-            inode_to_add->readable = true;
-            inode_to_add->writeable = true;
-            init_spinlock(&inode_to_add->lock);
+
+        if ((dirent->name[0] == '.' && dirent->name_length == 1) ||
+            (dirent->name[0] == '.' && dirent->name[1] == '.' && dirent->name[2] == '\0')) {
+            goto get_next_dirent;
         }
 
-        struct tnode *tnode = create_tnode_from_characters(dirent->name, dirent->name_length, inode_to_add);
-        inode->tnode_list = add_tnode(inode->tnode_list, tnode);
+        inode_to_add = calloc(1, sizeof(struct inode));
+        inode_to_add->device = inode->device;
+        inode_to_add->index = dirent->ino;
+        inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
+        inode_to_add->super_block = inode->super_block;
+        inode_to_add->flags =
+            dirent->type == EXT2_DIRENT_TYPE_REGULAR
+                ? FS_FILE
+                : dirent->type == EXT2_DIRENT_TYPE_SOCKET ? FS_SOCKET : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK ? FS_LINK : FS_DIR;
+        inode_to_add->ref_count = 2; // One for the vfs and one for us
+        inode_to_add->readable = true;
+        inode_to_add->writeable = true;
+        init_spinlock(&inode_to_add->lock);
+
+        fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
 
     get_next_dirent:
         dirent = EXT2_NEXT_DIRENT(dirent);
@@ -593,7 +592,7 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
     assert(raw_inode);
     inode->private_data = raw_inode;
 
-    if (update_tnodes && inode->flags & FS_DIR && inode->tnode_list == NULL) {
+    if (update_tnodes && inode->flags & FS_DIR && inode->dirent_cache == NULL) {
         ext2_update_tnode_list(inode);
     }
 
@@ -753,12 +752,10 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->uid = get_current_task()->process->uid;
         inode->gid = get_current_task()->process->gid;
         inode->mounts = NULL;
-        inode->parent = tparent;
         inode->private_data = NULL;
         inode->ref_count = 2; // One for the vfs and one for us
         inode->size = 0;
         inode->super_block = parent->super_block;
-        inode->tnode_list = NULL;
         inode->readable = true;
         inode->writeable = true;
         inode->change_time = inode->modify_time = inode->access_time = time_read_clock(CLOCK_REALTIME);
@@ -874,7 +871,7 @@ struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, 
     return __ext2_create(tparent, name, mode, error, 0);
 }
 
-struct tnode *ext2_lookup(struct inode *inode, const char *name) {
+struct inode *ext2_lookup(struct inode *inode, const char *name) {
     assert(inode);
 
     if (!(inode->flags & FS_DIR)) {
@@ -884,7 +881,7 @@ struct tnode *ext2_lookup(struct inode *inode, const char *name) {
         return NULL;
     }
 
-    if (inode->tnode_list == NULL) {
+    if (inode->dirent_cache == NULL) {
         ext2_update_tnode_list(inode);
     }
 
@@ -892,17 +889,7 @@ struct tnode *ext2_lookup(struct inode *inode, const char *name) {
         return NULL;
     }
 
-    struct tnode_list *list = inode->tnode_list;
-    while (list != NULL) {
-        assert(list->tnode != NULL);
-        assert(list->tnode->name != NULL);
-        if (strcmp(list->tnode->name, name) == 0) {
-            return list->tnode;
-        }
-        list = list->next;
-    }
-
-    return NULL;
+    return fs_lookup_in_cache(inode->dirent_cache, name);
 }
 
 struct file *ext2_open(struct inode *inode, int flags, int *error) {
@@ -1336,7 +1323,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
         return -EPERM;
     }
 
-    struct inode *parent = inode->parent->inode;
+    struct inode *parent = tnode->parent->inode;
     struct raw_inode *parent_raw_inode = parent->private_data;
     assert(parent != inode);
     assert(parent_raw_inode != NULL);
@@ -1384,7 +1371,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
         }
     }
 
-    debug_log("Removing inode to from: [ %llu, %s ]\n", inode->index, inode->parent->name);
+    debug_log("Removing inode to from: [ %llu, %s ]\n", inode->index, tnode->parent->name);
 
     /* We have found the right dirent, now delete it */
     uint16_t size_save = dirent->size;
@@ -1499,9 +1486,7 @@ int ext2_unlink(struct tnode *tnode) {
 }
 
 int ext2_rmdir(struct tnode *tnode) {
-    assert(get_tnode_list_length(tnode->inode->tnode_list) == 2);
-    assert(find_tnode(tnode->inode->tnode_list, "."));
-    assert(find_tnode(tnode->inode->tnode_list, ".."));
+    assert(fs_get_dirent_cache_size(tnode->inode->dirent_cache) == 0);
 
     /* Can't delete reserved inodes */
     if (tnode->inode->index <= ((struct ext2_sb_data *) tnode->inode->super_block->private_data)->sb->first_non_reserved_inode) {
@@ -1509,7 +1494,7 @@ int ext2_rmdir(struct tnode *tnode) {
     }
 
     struct raw_inode *raw_inode = tnode->inode->private_data;
-    struct inode *parent = tnode->inode->parent->inode;
+    struct inode *parent = tnode->parent->inode;
     struct raw_inode *parent_raw_inode = parent->private_data;
 
     /* Drop .. reference */
@@ -1605,11 +1590,11 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
     }
 
     if (tnode->inode->flags & FS_DIR) {
-        struct inode *parent = tnode->inode->parent->inode;
+        struct inode *parent = tnode->parent->inode;
         struct raw_inode *parent_raw_inode = parent->private_data;
 
         /* Drop .. reference */
-        spin_lock(&tnode->inode->parent->inode->lock);
+        spin_lock(&tnode->parent->inode->lock);
         parent_raw_inode->link_count--;
         assert(parent_raw_inode->link_count > 0);
 
@@ -1693,7 +1678,6 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     root->ref_count = 2;
     root->size = 0;
     root->super_block = super_block;
-    root->tnode_list = NULL;
     root->readable = true;
     root->writeable = true;
 

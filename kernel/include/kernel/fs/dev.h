@@ -41,7 +41,7 @@ void dev_remove(const char *path);
 
 void init_dev();
 
-struct tnode *dev_lookup(struct inode *inode, const char *name);
+struct inode *dev_lookup(struct inode *inode, const char *name);
 struct file *dev_open(struct inode *inode, int flags, int *error);
 int dev_close(struct file *file);
 ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len);

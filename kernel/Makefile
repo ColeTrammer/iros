@@ -41,6 +41,7 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 # Lists kernel objects
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
+$(BUILDDIR)/kernel/fs/cached_dirent.o \
 $(BUILDDIR)/kernel/fs/dev.o \
 $(BUILDDIR)/kernel/fs/ext2.o \
 $(BUILDDIR)/kernel/fs/initrd.o \
