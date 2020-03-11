@@ -242,6 +242,10 @@ void *aligned_alloc(size_t alignment, size_t n) {
         return NULL;
     }
 
+    if (n % sizeof(uint64_t) != 0) {
+        n = n - (n % sizeof(uint64_t)) + sizeof(uint64_t);
+    }
+
     n = MAX(n, 16);
 
     __lock(&__malloc_lock);
@@ -299,8 +303,8 @@ void *aligned_alloc(size_t alignment, size_t n) {
     assert(new_block + 1 >= block + 1);
 
     if (heap_end <= ((uintptr_t) new_block) + n + sizeof(struct metadata)) {
-        sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end) + sizeof(struct metadata));
-        heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + n - heap_end + sizeof(struct metadata)) * PAGE_SIZE;
+        sbrk(NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + NEW_BLOCK_SIZE(n) - heap_end));
+        heap_end += NUM_PAGES_IN_LENGTH(((uintptr_t) new_block) + NEW_BLOCK_SIZE(n) - heap_end) * PAGE_SIZE;
     }
 
     PREV_BLOCK(block)->size =
