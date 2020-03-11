@@ -9,7 +9,7 @@
 #define VGA_HEIGHT           25
 #define VGA_PHYS_ADDR        0xB8000
 #define VGA_INDEX(row, col)  ((row) *VGA_WIDTH + (col))
-#define VGA_ENTRY(c, fg, bg) (((uint16_t)(c) &0x00FF) | ((uint16_t)(fg) << 8 & 0x0F00) | ((uint16_t)(bg) << 12 & 0xF000))
+#define VGA_ENTRY(c, fg, bg) ((uint16_t)(((uint16_t)(c) &0x00FF) | ((uint16_t)(fg) << 8 & 0x0F00) | ((uint16_t)(bg) << 12 & 0xF000)))
 
 #ifdef __cplusplus
 extern "C" {

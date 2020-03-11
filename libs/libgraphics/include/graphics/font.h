@@ -12,6 +12,14 @@ static uint8_t font_unknown[16] = { 0b00000000, 0b00000000, 0b00000000, 0b111111
 
 class Font {
 public:
+    static Font& default_font() {
+        static Font* s_default;
+        if (!s_default) {
+            s_default = new Font;
+        }
+        return *s_default;
+    }
+
     Font() : m_unknown(Bitmap<uint8_t>::wrap(font_unknown, 16 * 8)) {
         int font_file = open("/usr/share/font.psf", O_RDONLY);
         assert(font_file != -1);
