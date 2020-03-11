@@ -179,6 +179,10 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
 }
 
 static struct procfs_buffer procfs_cwd(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+    if (!process->cwd) {
+        return (struct procfs_buffer) { NULL, 0 };
+    }
+
     char *buffer = get_tnode_path(process->cwd);
     size_t length = strlen(buffer);
     if (!need_buffer) {
@@ -189,6 +193,10 @@ static struct procfs_buffer procfs_cwd(struct procfs_data *data __attribute__((u
 }
 
 static struct procfs_buffer procfs_exe(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+    if (!process->exe) {
+        return (struct procfs_buffer) { NULL, 0 };
+    }
+
     char *buffer = get_tnode_path(process->exe);
     size_t length = strlen(buffer);
     if (!need_buffer) {
