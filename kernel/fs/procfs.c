@@ -207,7 +207,7 @@ static struct procfs_buffer procfs_exe(struct procfs_data *data __attribute__((u
 }
 
 static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
-    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     char tty_string[16];
     if (process->tty != -1) {
         snprintf(tty_string, sizeof(tty_string) - 1, "/dev/tty%d", process->tty);
@@ -236,7 +236,7 @@ static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__
 }
 
 static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
-    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = 0;
     struct vm_region *vm = process->process_memory;
     while (vm) {
@@ -253,7 +253,7 @@ static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((un
 }
 
 static struct procfs_buffer procfs_signal(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
-    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = 0;
     for (int i = 1; i < _NSIG; i++) {
         length += snprintf(
@@ -389,7 +389,7 @@ void procfs_unregister_process(struct process *process) {
 }
 
 static struct procfs_buffer procfs_self(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
-    char *buffer = need_buffer ? aligned_alloc(PAGE_SIZE, PAGE_SIZE) : NULL;
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "%d", process->pid);
     return (struct procfs_buffer) { buffer, length };
 }
