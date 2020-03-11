@@ -31,7 +31,7 @@ struct tnode *create_tnode(const char *name_to_copy, struct tnode *parent, struc
     struct tnode *tnode = malloc(sizeof(struct tnode));
     assert(tnode);
 
-    tnode->parent = bump_tnode(parent);
+    tnode->parent = parent;
     tnode->inode = inode;
     bump_inode_reference(inode);
     tnode->name = strdup(name_to_copy);
@@ -47,7 +47,7 @@ void drop_tnode(struct tnode *tnode) {
     spin_lock(&tnode->lock);
 
 #ifdef TNODE_REF_COUNT_DEBUG
-    debug_log("tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count - 1);
+    debug_log("-tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count - 1);
 #endif /* TNODE_REF_COUNT_DEBUG */
 
     assert(tnode->ref_count > 0);
@@ -81,7 +81,7 @@ struct tnode *bump_tnode(struct tnode *tnode) {
     spin_lock(&tnode->lock);
 
 #ifdef TNODE_REF_COUNT_DEBUG
-    debug_log("tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count + 1);
+    debug_log("+tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count + 1);
 #endif /* TNODE_REF_COUNT_DEBUG */
 
     assert(tnode->ref_count > 0);

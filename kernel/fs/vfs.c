@@ -38,7 +38,7 @@ void bump_inode_reference(struct inode *inode) {
     spin_lock(&inode->lock);
 
 #ifdef INODE_REF_COUNT_DEBUG
-    debug_log("Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count + 1);
+    debug_log("+Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count + 1);
 #endif /* INODE_REF_COUNT_DEBUG */
 
     assert(inode->ref_count > 0);
@@ -48,7 +48,7 @@ void bump_inode_reference(struct inode *inode) {
 
 void drop_inode_reference_unlocked(struct inode *inode) {
 #ifdef INODE_REF_COUNT_DEBUG
-    debug_log("Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count - 1);
+    debug_log("-Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count - 1);
 #endif /* INODE_REF_COUNT_DEBUG */
 
     // Only delete inode if it's refcount is zero
@@ -170,13 +170,15 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     assert(t_root->inode != NULL);
     assert(t_root->inode->i_op != NULL);
 
-    struct tnode *parent = t_root;
     char *path = flags & INAME_TAKE_OWNERSHIP_OF_PATH ? (char *) _path : strdup(_path);
     char *save_path = path;
 
+    struct tnode *parent;
     if (_path[0] != '/') {
-        parent = t_parent;
+        parent = bump_tnode(t_parent);
         path--;
+    } else {
+        parent = bump_tnode(t_root);
     }
 
     char *last_slash = strchr(path + 1, '/');
@@ -190,6 +192,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 
             if (parent->inode->size == 0 || !parent->inode->i_op->read_all) {
                 free(save_path);
+                drop_tnode(parent);
                 return -ENOENT;
             }
 
@@ -198,6 +201,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             if (ret < 0) {
                 free(link_path);
                 free(save_path);
+                drop_tnode(parent);
                 return ret;
             }
             link_path[parent->inode->size] = '\0';
@@ -205,11 +209,15 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             if (strcmp(parent->name, link_path) == 0) {
                 free(link_path);
                 free(save_path);
+                drop_tnode(parent);
                 return -ELOOP;
             }
 
             (*depth)++;
-            ret = do_iname(link_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->parent, &parent, depth);
+            struct tnode *parent_to_pass = bump_tnode(parent->parent);
+            drop_tnode(parent);
+            ret = do_iname(link_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent_to_pass, &parent, depth);
+            drop_tnode(parent_to_pass);
             if (ret < 0) {
                 free(save_path);
                 return ret;
@@ -220,6 +228,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 
         /* Exit if we're trying to lookup past a file */
         if (!(parent->inode->flags & FS_DIR)) {
+            drop_tnode(parent);
             free(save_path);
             return -ENOTDIR;
         }
@@ -232,7 +241,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 
         if (path[1] == '.' && path[2] == '.' && (path[3] == '/' || path[3] == '\0')) {
             /* Simply go to parent */
-            struct tnode *next = parent->parent;
+            struct tnode *next = bump_tnode(parent->parent);
             drop_tnode(parent);
             parent = next;
             goto vfs_loop_end;
@@ -248,7 +257,6 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
         while (mount != NULL) {
             assert(mount->name);
             assert(mount->super_block);
-            assert(mount->super_block->root);
             assert(mount->super_block->root);
 
             if (strcmp(mount->name, path + 1) == 0) {
@@ -269,6 +277,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 #endif /* INAME_DEBUG */
         struct inode *inode = parent->inode->i_op->lookup(parent->inode, path + 1);
         if (!inode) {
+            drop_tnode(parent);
             parent = NULL;
             break;
         }
@@ -294,6 +303,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     if ((path != NULL && path >= save_path && path[0] == '/') &&
         ((inode->flags & FS_FILE) || (parent->parent == NULL && strlen(_path) == 2))) {
         free(save_path);
+        drop_tnode(parent);
         return -ENOENT;
     }
 
@@ -309,6 +319,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     }
 
     if (inode->size == 0 || !inode->i_op->read_all) {
+        drop_tnode(parent);
         return -ENOENT;
     }
 
@@ -317,17 +328,22 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     int ret = inode->i_op->read_all(inode, sym_path);
     if (ret < 0) {
         free(sym_path);
+        drop_tnode(parent);
         return ret;
     }
     sym_path[inode->size] = '\0';
 
     if (strcmp(parent->name, sym_path) == 0) {
         free(sym_path);
+        drop_tnode(parent);
         return -ELOOP;
     }
 
     (*depth)++;
-    ret = do_iname(sym_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent->parent, result, depth);
+    struct tnode *parent_to_pass = bump_tnode(parent->parent);
+    drop_tnode(parent);
+    ret = do_iname(sym_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent_to_pass, result, depth);
+    drop_tnode(parent_to_pass);
 
     return ret;
 }
@@ -422,7 +438,6 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
     struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
-    drop_tnode(tparent);
     free(path);
     return tnode;
 }
@@ -458,16 +473,19 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         *error = ret;
         return NULL;
     } else if (flags & O_EXCL) {
+        drop_tnode(tnode);
         *error = -EEXIST;
         return NULL;
     }
 
     if (!(tnode->inode->flags & FS_DIR) && (flags & O_DIRECTORY)) {
+        drop_tnode(tnode);
         *error = -ENOTDIR;
         return NULL;
     }
 
     if (tnode->inode->flags & FS_DIR && !(flags & O_DIRECTORY)) {
+        drop_tnode(tnode);
         *error = -EISDIR;
         return NULL;
     }
@@ -478,6 +496,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
 
     struct file *file = tnode->inode->i_op->open(tnode->inode, flags, error);
     if (file == NULL) {
+        drop_tnode(tnode);
         return file;
     }
 

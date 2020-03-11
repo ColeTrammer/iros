@@ -300,7 +300,7 @@ static void procfs_create_fd_directory_structure(struct inode *parent, struct pr
         if (existing_inode && !file) {
             fs_del_dirent_cache(parent->dirent_cache, fd_string);
             drop_inode_reference(existing_inode);
-        } else if (!existing_inode) {
+        } else if (!existing_inode && file) {
             struct inode *inode = procfs_create_inode(PROCFS_SYMLINK_MODE, process->uid, process->gid, process, procfs_fd);
             struct procfs_data *data = inode->private_data;
             data->fd = i;

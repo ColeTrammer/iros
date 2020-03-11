@@ -394,7 +394,7 @@ void *malloc(size_t n) {
     struct metadata *block = last_allocated ? last_allocated : start;
     while (block->size != 0) {
         assert(block->magic == __MALLOC_MAGIG_CHECK);
-        if (!IS_ALLOCATED(block) && GET_SIZE(block) >= n) {
+        if (!IS_ALLOCATED(block) && GET_SIZE(block) >= n && ((uintptr_t)(block + 1)) % PAGE_SIZE != 0) {
             SET_ALLOCATED(block);
             last_allocated = block;
 
