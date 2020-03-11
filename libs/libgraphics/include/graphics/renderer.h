@@ -5,7 +5,6 @@
 #include <liim/string.h>
 
 #include <graphics/color.h>
-#include <graphics/font.h>
 #include <graphics/pixel_buffer.h>
 
 class Color;
@@ -28,11 +27,7 @@ public:
     PixelBuffer& pixels() { return m_pixels; }
     const PixelBuffer& pixels() const { return m_pixels; }
 
-    Font& font() { return m_font; }
-    const Font& font() const { return m_font; }
-
 private:
     Color m_color;
     PixelBuffer& m_pixels;
-    Font m_font;
 };

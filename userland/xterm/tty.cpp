@@ -349,7 +349,6 @@ void TTY::on_next_escape_char(char c) {
         m_escape_buffer[m_escape_index] = '\0';
         handle_escape_sequence();
         update_cursor();
-        m_buffer.refresh();
         m_escape_index = 0;
         m_in_escape = false;
     }
@@ -406,5 +405,4 @@ void TTY::on_char(char c) {
     }
 
     update_cursor();
-    m_buffer.refresh();
 }

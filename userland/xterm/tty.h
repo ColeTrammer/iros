@@ -2,7 +2,7 @@
 
 #include <liim/vector.h>
 
-class VgaBuffer;
+#include "vga_buffer.h"
 
 class TTY {
 public:
@@ -16,6 +16,8 @@ public:
     void scroll_to_top();
 
     void on_char(char);
+
+    void refresh() { m_buffer.refresh(); }
 
 private:
     void save_pos() {
@@ -47,6 +49,6 @@ private:
     char m_escape_buffer[50] { 0 };
 
     VgaBuffer& m_buffer;
-    LIIM::Vector<LIIM::Vector<uint16_t>> m_above_rows;
-    LIIM::Vector<LIIM::Vector<uint16_t>> m_below_rows;
+    Vector<VgaBuffer::Row> m_above_rows;
+    Vector<VgaBuffer::Row> m_below_rows;
 };

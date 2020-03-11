@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #ifndef KERNEL_NO_GRAPHICS
+#include <graphics/color.h>
+#include <graphics/renderer.h>
 #include <liim/pointers.h>
 #include <window_server/connection.h>
 #include <window_server/window.h>
@@ -15,27 +17,33 @@ class Renderer;
 
 class VgaBuffer {
 public:
+#ifdef KERNEL_NO_GRAPHICS
+    using Row = Vector<uint16_t>;
+    using VgaColor = enum vga_color;
+#else
+    using Row = Vector<uint32_t>;
+    using VgaColor = Color;
+#endif /* KERNEL_NO_GRAPHICS */
+
     VgaBuffer(const char* path);
     ~VgaBuffer();
 
     size_t size() const { return m_width * m_height; }
+#ifdef KERNEL_NO_GRAPHICS
     size_t row_size_in_bytes() const { return m_width * sizeof(uint16_t); }
     size_t size_in_bytes() const { return size() * sizeof(uint16_t); }
+#endif /* KERNEL_NO_GRAPHICS */
 
     int width() const { return m_width; }
     int height() const { return m_height; }
 
-    enum vga_color bg() const { return m_bg; }
-    void set_bg(enum vga_color bg) { m_bg = bg; }
+    VgaColor bg() const { return m_bg; }
+    void set_bg(VgaColor bg) { m_bg = bg; }
 
-    enum vga_color fg() const { return m_fg; }
-    void set_fg(enum vga_color fg) { m_fg = fg; }
+    VgaColor fg() const { return m_fg; }
+    void set_fg(VgaColor fg) { m_fg = fg; }
 
-    void swap_colors() {
-        enum vga_color t = m_bg;
-        m_bg = m_fg;
-        m_fg = t;
-    }
+    void swap_colors() { LIIM::swap(m_fg, m_bg); }
 
     void reset_colors() {
         reset_fg();
@@ -50,10 +58,9 @@ public:
     void clear();
 
     void draw(int row, int col, char c);
-    void draw(int row, int col, uint16_t val);
 
-    LIIM::Vector<uint16_t> scroll_up(const LIIM::Vector<uint16_t>* first_row = nullptr);
-    LIIM::Vector<uint16_t> scroll_down(const LIIM::Vector<uint16_t>* last_row = nullptr);
+    Row scroll_up(const Row* first_row = nullptr);
+    Row scroll_down(const Row* last_row = nullptr);
 
     void show_cursor();
     void hide_cursor();
@@ -64,14 +71,16 @@ public:
 private:
     bool m_is_cursor_enabled { true };
     int m_width { 80 };
-    int m_height { 10 };
-    enum vga_color m_bg { VGA_COLOR_BLACK };
-    enum vga_color m_fg { VGA_COLOR_LIGHT_GREY };
-    uint16_t* m_buffer;
+    int m_height { 25 };
+    VgaColor m_bg { VGA_COLOR_BLACK };
+    VgaColor m_fg { VGA_COLOR_LIGHT_GREY };
 #ifdef KERNEL_NO_GRAPHICS
+    void draw(int row, int col, uint16_t value);
+
+    uint16_t* m_buffer;
     const int m_fb;
 #else
-    void update_entry(int r, int c);
+    void draw(int row, int col, char c, Color fg, Color bg);
 
     WindowServer::Connection m_connection;
     SharedPtr<WindowServer::Window> m_window { nullptr };

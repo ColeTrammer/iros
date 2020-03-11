@@ -219,6 +219,8 @@ int main() {
                 kill(pid, SIGHUP);
                 return 1;
             }
+
+            tty.refresh();
         }
     }
 
