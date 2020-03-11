@@ -86,7 +86,9 @@ int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen
         return ret;
     }
 
-    ret = fs_bind_socket_to_inode(tnode->inode, socket->id);
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+    ret = fs_bind_socket_to_inode(inode, socket->id);
     if (ret == -1) {
         free(data);
         return ret;

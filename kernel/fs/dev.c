@@ -234,6 +234,7 @@ void dev_add(struct device *device, const char *_path) {
     to_add->access_time = to_add->change_time = to_add->modify_time = time_read_clock(CLOCK_REALTIME);
 
     fs_put_dirent_cache(parent->inode->dirent_cache, to_add, device->name, strlen(device->name));
+    drop_tnode(parent);
 
     free(path);
 }
@@ -255,6 +256,7 @@ void dev_remove(const char *_path) {
     }
 
     free(tnode->inode->private_data);
+    drop_tnode(tnode);
     fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
     drop_inode_reference(tnode->inode);
 

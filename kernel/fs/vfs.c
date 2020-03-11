@@ -144,6 +144,8 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
         if (!fs_inode_get(tnode->inode->device, tnode->inode->index)) {
             fs_inode_put(tnode->inode);
         }
+    } else {
+        drop_tnode(tnode);
     }
 
     assert(tnode->inode);
@@ -230,7 +232,9 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 
         if (path[1] == '.' && path[2] == '.' && (path[3] == '/' || path[3] == '\0')) {
             /* Simply go to parent */
-            parent = parent->parent;
+            struct tnode *next = parent->parent;
+            drop_tnode(parent);
+            parent = next;
             goto vfs_loop_end;
         }
 
@@ -365,25 +369,25 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
 
     int ret = 0;
     if (last_slash == path) {
-        tparent = fs_root();
+        tparent = bump_tnode(fs_root());
     } else if (last_slash == NULL) {
-        tparent = get_current_task()->process->cwd;
+        tparent = bump_tnode(get_current_task()->process->cwd);
         last_slash = path - 1;
     } else {
         *last_slash = '\0';
         ret = iname(path, 0, &tparent);
-    }
-
-    if (ret < 0) {
-        free(path);
-        *error = ret;
-        return NULL;
+        if (ret < 0) {
+            free(path);
+            *error = ret;
+            return NULL;
+        }
     }
 
     struct mount *mount = tparent->inode->mounts;
     while (mount != NULL) {
         if (strcmp(mount->name, last_slash + 1) == 0) {
             free(path);
+            drop_tnode(tparent);
             *error = -EEXIST;
             return NULL;
         }
@@ -393,12 +397,14 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
+        drop_tnode(tparent);
         free(path);
         *error = -EEXIST;
         return NULL;
     }
 
     if (!tparent->inode->i_op->create) {
+        drop_tnode(tparent);
         free(path);
         *error = -EINVAL;
         return NULL;
@@ -408,6 +414,7 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
 
     struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, error);
     if (inode == NULL) {
+        drop_tnode(tparent);
         free(path);
         return NULL;
     }
@@ -415,6 +422,7 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
     struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
+    drop_tnode(tparent);
     free(path);
     return tnode;
 }
@@ -769,7 +777,9 @@ int fs_stat(const char *path, struct stat *stat_struct) {
         return -ENOENT;
     }
 
-    return do_stat(tnode->inode, stat_struct);
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+    return do_stat(inode, stat_struct);
 }
 
 int fs_lstat(const char *path, struct stat *stat_struct) {
@@ -780,7 +790,9 @@ int fs_lstat(const char *path, struct stat *stat_struct) {
         return ret;
     }
 
-    return do_stat(tnode->inode, stat_struct);
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+    return do_stat(inode, stat_struct);
 }
 
 int fs_ioctl(struct file *file, unsigned long request, void *argp) {
@@ -835,21 +847,21 @@ int fs_mkdir(const char *_path, mode_t mode) {
 
     int ret = 0;
     if (last_slash == path) {
-        tparent = fs_root();
+        tparent = bump_tnode(fs_root());
     } else if (last_slash == NULL) {
-        tparent = get_current_task()->process->cwd;
+        tparent = bump_tnode(get_current_task()->process->cwd);
         last_slash = path - 1;
     } else {
         *last_slash = '\0';
         ret = iname(path, 0, &tparent);
-    }
-
-    if (ret < 0) {
-        free(path);
-        return ret;
+        if (ret < 0) {
+            free(path);
+            return ret;
+        }
     }
 
     if (tparent->inode->flags & FS_FILE) {
+        drop_tnode(tparent);
         free(path);
         return -EINVAL;
     }
@@ -858,6 +870,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
     while (mount != NULL) {
         if (strcmp(mount->name, last_slash + 1) == 0) {
             free(path);
+            drop_tnode(tparent);
             return -EEXIST;
         }
 
@@ -867,11 +880,13 @@ int fs_mkdir(const char *_path, mode_t mode) {
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
+        drop_tnode(tparent);
         return -EEXIST;
     }
 
     if (!tparent->inode->i_op->mkdir) {
         free(path);
+        drop_tnode(tparent);
         return -EINVAL;
     }
 
@@ -880,12 +895,14 @@ int fs_mkdir(const char *_path, mode_t mode) {
     int error = 0;
     struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode | S_IFDIR, &error);
     if (inode == NULL) {
+        drop_tnode(tparent);
         free(path);
         return error;
     }
 
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
+    drop_tnode(tparent);
     free(path);
     return 0;
 }
@@ -922,21 +939,24 @@ int fs_unlink(const char *path) {
     struct tnode *tnode;
     int ret = iname(path, INAME_DONT_FOLLOW_TRAILING_SYMLINK, &tnode);
     if (ret < 0) {
-        return -ENOENT;
+        return ret;
     }
 
     // Can't remove a unix socket that is being currently being used
     if (tnode->inode->socket_id != 0) {
+        drop_tnode(tnode);
         return -EBUSY;
     }
 
     if (tnode->inode->flags & FS_DIR) {
         debug_log("Name: [ %s, %u ]\n", tnode->name, tnode->inode->flags);
+        drop_tnode(tnode);
         return -EISDIR;
     }
 
     if (tnode->inode->i_op->unlink == NULL) {
         debug_log("No i_op->unlink: [ %s ]\n", tnode->name);
+        drop_tnode(tnode);
         return -EINVAL;
     }
 
@@ -944,6 +964,7 @@ int fs_unlink(const char *path) {
 
     ret = tnode->inode->i_op->unlink(tnode);
     if (ret != 0) {
+        drop_tnode(tnode);
         return ret;
     }
 
@@ -964,7 +985,7 @@ static bool dir_empty(struct inode *inode) {
     }
 
     inode->i_op->lookup(inode, NULL);
-    return fs_get_dirent_cache_size(inode->dirent_cache);
+    return fs_get_dirent_cache_size(inode->dirent_cache) == 0;
 }
 
 int fs_rmdir(const char *path) {
@@ -977,14 +998,17 @@ int fs_rmdir(const char *path) {
     }
 
     if (!(tnode->inode->flags & FS_DIR)) {
+        drop_tnode(tnode);
         return -ENOTDIR;
     }
 
     if (!dir_empty(tnode->inode)) {
+        drop_tnode(tnode);
         return -ENOTEMPTY;
     }
 
     if (tnode->inode->i_op->rmdir == NULL) {
+        drop_tnode(tnode);
         return -EINVAL;
     }
 
@@ -992,6 +1016,7 @@ int fs_rmdir(const char *path) {
 
     ret = tnode->inode->i_op->rmdir(tnode);
     if (ret != 0) {
+        drop_tnode(tnode);
         return ret;
     }
 
@@ -1015,10 +1040,13 @@ int fs_chown(const char *path, uid_t uid, gid_t gid) {
     }
 
     if (!tnode->inode->i_op->chown) {
+        drop_tnode(tnode);
         return -EPERM;
     }
 
-    return tnode->inode->i_op->chown(tnode->inode, uid, gid);
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+    return tnode->inode->i_op->chown(inode, uid, gid);
 }
 
 int fs_chmod(const char *path, mode_t mode) {
@@ -1032,6 +1060,7 @@ int fs_chmod(const char *path, mode_t mode) {
     }
 
     if (!tnode->inode->i_op->chmod) {
+        drop_tnode(tnode);
         return -EPERM;
     }
 
@@ -1041,7 +1070,9 @@ int fs_chmod(const char *path, mode_t mode) {
     // Retain type information
     mode |= tnode->inode->mode & ~07777;
 
-    return tnode->inode->i_op->chmod(tnode->inode, mode);
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+    return tnode->inode->i_op->chmod(inode, mode);
 }
 
 int fs_utimes(const char *path, const struct timeval *times) {
@@ -1052,10 +1083,13 @@ int fs_utimes(const char *path, const struct timeval *times) {
     }
 
     if (!tnode->inode->i_op->utimes) {
+        drop_tnode(tnode);
         return -EPERM;
     }
 
-    return tnode->inode->i_op->utimes(tnode->inode, times);
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+    return tnode->inode->i_op->utimes(inode, times);
 }
 
 intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset) {
@@ -1099,35 +1133,59 @@ int fs_rename(const char *old_path, const char *new_path) {
     }
 
     if (new_parent == NULL) {
+        drop_tnode(old);
         return -ENOENT;
     }
 
     if (old->inode->super_block != new_parent->inode->super_block) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
         return -EXDEV;
     }
 
     struct tnode *existing_tnode = NULL;
-    iname(new_path, 0, &existing_tnode);
-    if (existing_tnode && (((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
-                           (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
+    ret = iname(new_path, 0, &existing_tnode);
+    if (ret < 0) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
+        return ret;
+    }
+
+    if ((((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
+         (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
+        drop_tnode(existing_tnode);
         return -ENOTDIR;
     }
 
     if (existing_tnode && (existing_tnode->inode->flags & FS_DIR) && !dir_empty(existing_tnode->inode)) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
+        drop_tnode(existing_tnode);
         return -ENOTEMPTY;
     }
 
     if (!old->inode->super_block->op || !old->inode->super_block->op->rename) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
+        drop_tnode(existing_tnode);
         return -EINVAL;
     }
 
     // Destroy the existing tnode if necessary
     if (existing_tnode) {
         if (existing_tnode->inode == old->inode) {
+            drop_tnode(old);
+            drop_tnode(new_parent);
+            drop_tnode(existing_tnode);
             return 0;
         }
 
         if (((existing_tnode->inode->flags & FS_DIR) && !existing_tnode->inode->i_op->rmdir) || !existing_tnode->inode->i_op->unlink) {
+            drop_tnode(old);
+            drop_tnode(new_parent);
+            drop_tnode(existing_tnode);
             return -EINVAL;
         }
 
@@ -1141,6 +1199,9 @@ int fs_rename(const char *old_path, const char *new_path) {
         }
 
         if (ret != 0) {
+            drop_tnode(old);
+            drop_tnode(new_parent);
+            drop_tnode(existing_tnode);
             return ret;
         }
 
@@ -1151,6 +1212,8 @@ int fs_rename(const char *old_path, const char *new_path) {
 
     ret = old->inode->super_block->op->rename(old, new_parent, new_path_last_slash + 1);
     if (ret != 0) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
         return ret;
     }
 
@@ -1159,6 +1222,8 @@ int fs_rename(const char *old_path, const char *new_path) {
 
     fs_put_dirent_cache(new_parent->inode->dirent_cache, old->inode, new_path_last_slash + 1, strlen(new_path_last_slash + 1));
     fs_del_dirent_cache(old_parent->inode->dirent_cache, old->name);
+    drop_tnode(old);
+    drop_tnode(new_parent);
     return 0;
 }
 
@@ -1193,7 +1258,9 @@ int fs_statvfs(const char *path, struct statvfs *buf) {
         return ret;
     }
 
-    return do_statvfs(tnode->inode->super_block, buf);
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+    return do_statvfs(inode->super_block, buf);
 }
 
 int fs_mount(const char *src, const char *path, const char *type) {
@@ -1250,7 +1317,7 @@ int fs_mount(const char *src, const char *path, const char *type) {
 
             /* Means we are mounting to root */
             if (strlen(path_copy) == 0) {
-                mount_on = fs_root();
+                mount_on = bump_tnode(fs_root());
             } else {
                 int ret = iname(path_copy, 0, &mount_on);
                 if (ret < 0) {
@@ -1261,6 +1328,7 @@ int fs_mount(const char *src, const char *path, const char *type) {
 
             if (mount_on == NULL || !(mount_on->inode->flags & FS_DIR)) {
                 free(path_copy);
+                drop_tnode(mount_on);
                 return -ENOTDIR;
             }
 
@@ -1284,6 +1352,7 @@ int fs_mount(const char *src, const char *path, const char *type) {
 
             fs_inode_create_store(file_system->super_block->device);
             free(path_copy);
+            drop_tnode(mount_on);
             return 0;
         }
 
@@ -1302,6 +1371,9 @@ struct file_descriptor fs_clone(struct file_descriptor desc) {
 
     struct file *new_file = malloc(sizeof(struct file));
     memcpy(new_file, desc.file, sizeof(struct file));
+    if (new_file->tnode) {
+        bump_tnode(new_file->tnode);
+    }
 
     if (new_file->f_op->clone) {
         new_file->f_op->clone(new_file);
@@ -1325,11 +1397,12 @@ int fs_access(const char *path, int mode) {
         return ret;
     }
 
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
     if (mode == F_OK) {
         return 0;
     }
 
-    struct inode *inode = tnode->inode;
     if (mode &= R_OK && !(inode->mode & S_IRUSR)) {
         return EPERM;
     }
@@ -1398,6 +1471,7 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
     }
 
     if (!(link->inode->flags & FS_LINK)) {
+        drop_tnode(link);
         return -EINVAL;
     }
 
@@ -1405,6 +1479,7 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
     size_t buffer_len;
     int ret = fs_read_all_inode(link->inode, &buffer, &buffer_len);
     if (ret < 0 || buffer == NULL) {
+        drop_tnode(link);
         return ret;
     }
 
@@ -1412,6 +1487,7 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
     memcpy(buf, buffer, to_write);
 
     free(buffer);
+    drop_tnode(link);
     return to_write;
 }
 
@@ -1442,24 +1518,24 @@ int fs_symlink(const char *target, const char *linkpath) {
 
     int ret = 0;
     if (last_slash == path) {
-        tparent = fs_root();
+        tparent = bump_tnode(fs_root());
     } else if (last_slash == NULL) {
-        tparent = get_current_task()->process->cwd;
+        tparent = bump_tnode(get_current_task()->process->cwd);
         last_slash = path - 1;
     } else {
         *last_slash = '\0';
         ret = iname(path, 0, &tparent);
-    }
-
-    if (ret < 0) {
-        free(path);
-        return ret;
+        if (ret < 0) {
+            free(path);
+            return ret;
+        }
     }
 
     struct mount *mount = tparent->inode->mounts;
     while (mount != NULL) {
         if (strcmp(mount->name, last_slash + 1) == 0) {
             free(path);
+            drop_tnode(tparent);
             return -EEXIST;
         }
 
@@ -1469,11 +1545,13 @@ int fs_symlink(const char *target, const char *linkpath) {
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
+        drop_tnode(tparent);
         return -EEXIST;
     }
 
     if (!tparent->inode->i_op->symlink) {
         free(path);
+        drop_tnode(tparent);
         return -EINVAL;
     }
 
@@ -1483,10 +1561,12 @@ int fs_symlink(const char *target, const char *linkpath) {
     struct inode *inode = tparent->inode->i_op->symlink(tparent, last_slash + 1, target, &error);
     if (inode == NULL) {
         free(path);
+        drop_tnode(tparent);
         return error;
     }
 
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
+    drop_tnode(tparent);
 
     free(path);
     return 0;
@@ -1507,24 +1587,24 @@ int fs_link(const char *oldpath, const char *newpath) {
     struct tnode *tparent;
 
     if (last_slash == path) {
-        tparent = fs_root();
+        tparent = bump_tnode(fs_root());
     } else if (last_slash == NULL) {
-        tparent = get_current_task()->process->cwd;
+        tparent = bump_tnode(get_current_task()->process->cwd);
         last_slash = path - 1;
     } else {
         *last_slash = '\0';
         ret = iname(path, 0, &tparent);
-    }
-
-    if (ret < 0) {
-        free(path);
-        return ret;
+        if (ret < 0) {
+            free(path);
+            return ret;
+        }
     }
 
     struct mount *mount = tparent->inode->mounts;
     while (mount != NULL) {
         if (strcmp(mount->name, last_slash + 1) == 0) {
             free(path);
+            drop_tnode(tparent);
             return -EEXIST;
         }
 
@@ -1534,11 +1614,13 @@ int fs_link(const char *oldpath, const char *newpath) {
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
+        drop_tnode(tparent);
         return -EEXIST;
     }
 
     if (!tparent->inode->i_op->link) {
         free(path);
+        drop_tnode(tparent);
         return -EINVAL;
     }
 
@@ -1546,6 +1628,7 @@ int fs_link(const char *oldpath, const char *newpath) {
 
     ret = tparent->inode->i_op->link(tparent, last_slash + 1, target);
     if (ret < 0) {
+        drop_tnode(tparent);
         return ret;
     }
 
@@ -1553,6 +1636,7 @@ int fs_link(const char *oldpath, const char *newpath) {
 
     fs_put_dirent_cache(tparent->inode->dirent_cache, target->inode, last_slash + 1, strlen(last_slash + 1));
 
+    drop_tnode(tparent);
     free(path);
     return 0;
 }

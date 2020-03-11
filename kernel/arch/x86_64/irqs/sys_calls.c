@@ -414,6 +414,9 @@ SYS_CALL(close) {
 
 static int execve_helper(const char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
                          struct tnode **tnode, int *depth, char **argv) {
+    if (*tnode) {
+        drop_tnode(*tnode);
+    }
     int ret = fs_read_all_path(*path, (void **) buffer, buffer_length, tnode);
     if (ret < 0) {
         return ret;
@@ -507,7 +510,7 @@ SYS_CALL(execve) {
     char **prepend_argv = NULL;
     size_t prepend_argv_length = 0;
     int depth = 0;
-    struct tnode *tnode;
+    struct tnode *tnode = NULL;
     int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &tnode, &depth, argv);
     if (error) {
         for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
@@ -525,7 +528,7 @@ SYS_CALL(execve) {
 
     assert(tnode);
     struct inode *inode = tnode->inode;
-    process->exe = bump_tnode(tnode);
+    process->exe = tnode;
     process->name = tnode->name;
 
     process->uid = current->process->uid;
@@ -749,7 +752,8 @@ SYS_CALL(chdir) {
         SYS_RETURN(-ENOTDIR);
     }
 
-    task->process->cwd = bump_tnode(tnode);
+    drop_tnode(task->process->cwd);
+    task->process->cwd = tnode;
 
     SYS_RETURN(0);
 }
@@ -2064,6 +2068,8 @@ SYS_CALL(realpath) {
     }
 
     char *full_path = get_tnode_path(tnode);
+    drop_tnode(tnode);
+
     size_t full_path_len = strlen(full_path);
     int ret = 0;
 
