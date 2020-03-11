@@ -15,7 +15,7 @@ struct super_block_operations {
 
 struct super_block {
     dev_t device;
-    struct tnode *root;
+    struct inode *root;
     struct super_block_operations *op;
     blksize_t block_size;
 

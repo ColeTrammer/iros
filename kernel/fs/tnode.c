@@ -16,9 +16,10 @@ struct tnode *create_root_tnode(struct inode *inode) {
 
     tnode->inode = inode;
     tnode->parent = NULL;
-    tnode->name = NULL;
+    tnode->name = strdup("/");
     tnode->ref_count = 1;
     init_spinlock(&tnode->lock);
+    bump_inode_reference(inode);
 
     return tnode;
 }
@@ -32,6 +33,7 @@ struct tnode *create_tnode(const char *name_to_copy, struct tnode *parent, struc
 
     tnode->parent = bump_tnode(parent);
     tnode->inode = inode;
+    bump_inode_reference(inode);
     tnode->name = strdup(name_to_copy);
     tnode->ref_count = 1;
     init_spinlock(&tnode->lock);

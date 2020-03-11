@@ -150,8 +150,10 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
     return fs_read_all_inode(tnode->inode, buffer, buffer_len);
 }
 
+static struct tnode *t_root;
+
 struct tnode *fs_root(void) {
-    return root->super_block->root;
+    return t_root;
 }
 
 static int do_iname(const char *_path, int flags, struct tnode *t_root, struct tnode *t_parent, struct tnode **result, int *depth) {
@@ -243,10 +245,10 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             assert(mount->name);
             assert(mount->super_block);
             assert(mount->super_block->root);
-            assert(mount->super_block->root->inode);
+            assert(mount->super_block->root);
 
             if (strcmp(mount->name, path + 1) == 0) {
-                parent = mount->super_block->root;
+                parent = create_tnode(mount->name, parent, mount->super_block->root);
                 goto vfs_loop_end;
             }
 
@@ -339,7 +341,7 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
     assert(root != NULL);
     assert(root->super_block != NULL);
 
-    struct tnode *t_root = root->super_block->root;
+    struct tnode *t_root = fs_root();
     if (t_root == NULL) {
         return -ENOENT;
     }
@@ -536,24 +538,21 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     assert(inode->i_op->lookup);
     inode->i_op->lookup(inode, NULL);
-    if (!inode->dirent_cache) {
-        return 0;
-    }
 
     spin_lock(&inode->lock);
     struct cached_dirent *tnode = fs_lookup_in_cache_with_index(inode->dirent_cache, file->position);
 
     if (!tnode) {
         /* Traverse mount points as well */
-        size_t len = fs_get_dirent_cache_size(inode->dirent_cache);
-        size_t mount_index = file->position - len;
+        size_t num = fs_get_dirent_cache_size(inode->dirent_cache);
+        size_t mount_index = file->position - num;
         size_t i = 0;
         struct mount *mount = inode->mounts;
         while (mount != NULL) {
             if (i++ == mount_index) {
                 file->position++;
 
-                entry->d_ino = mount->super_block->root->inode->index;
+                entry->d_ino = mount->super_block->root->index;
                 strcpy(entry->d_name, mount->name);
 
                 spin_unlock(&inode->lock);
@@ -1092,7 +1091,7 @@ int fs_rename(const char *old_path, const char *new_path) {
 
     struct tnode *new_parent;
     if (new_path_last_slash == new_path) {
-        new_parent = root->super_block->root;
+        new_parent = fs_root();
     } else {
         *new_path_last_slash = '\0';
         iname(new_path, 0, &new_parent);
@@ -1213,23 +1212,24 @@ int fs_mount(const char *src, const char *path, const char *type) {
                 mount->fs = file_system;
                 file_system->mount(file_system, mount->device_path);
                 mount->super_block = file_system->super_block;
-                mount->super_block->root->name = "/";
 
                 /* For now, when mounting as / when there is already something mounted,
                    we will just move things around instead of unmounting what was
                    already there */
                 if (root != NULL) {
-                    mount->super_block->root->inode->mounts = root;
-                    root->next = root->super_block->root->inode->mounts;
-                    root->super_block->root->inode->mounts = NULL;
+                    mount->super_block->root->mounts = root;
+                    root->next = root->super_block->root->mounts;
+                    root->super_block->root->mounts = NULL;
 
                     root->name = root->fs->name;
-                    char *name = malloc(strlen(root->name) + 1);
-                    strcpy(name, root->name);
-                    root->super_block->root->name = name;
                 }
 
                 root = mount;
+
+                if (t_root) {
+                    drop_tnode(t_root);
+                }
+                t_root = create_root_tnode(mount->super_block->root);
 
                 fs_inode_create_store(file_system->super_block->device);
                 return 0;
@@ -1250,7 +1250,7 @@ int fs_mount(const char *src, const char *path, const char *type) {
 
             /* Means we are mounting to root */
             if (strlen(path_copy) == 0) {
-                mount_on = root->super_block->root;
+                mount_on = fs_root();
             } else {
                 int ret = iname(path_copy, 0, &mount_on);
                 if (ret < 0) {
@@ -1281,7 +1281,6 @@ int fs_mount(const char *src, const char *path, const char *type) {
             mount->next = NULL;
             assert(file_system->mount(file_system, mount->device_path));
             mount->super_block = file_system->super_block;
-            mount->super_block->root->name = name;
 
             fs_inode_create_store(file_system->super_block->device);
             free(path_copy);

@@ -1610,7 +1610,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
     return __ext2_unlink(tnode, false);
 }
 
-struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
+struct inode *ext2_mount(struct file_system *current_fs, char *device_path) {
     int error = 0;
     struct file *dev_file = fs_open(device_path, O_RDWR, 0, &error);
     if (dev_file == NULL) {
@@ -1618,13 +1618,12 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     }
 
     struct inode *root = calloc(1, sizeof(struct inode));
-    struct tnode *t_root = create_root_tnode(root);
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
     struct ext2_sb_data *data = calloc(1, sizeof(struct ext2_sb_data));
 
     super_block->device = dev_get_device_number(dev_file);
     super_block->op = &s_op;
-    super_block->root = t_root;
+    super_block->root = root;
     init_spinlock(&super_block->super_block_lock);
     super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
     super_block->dev_file = dev_file;
@@ -1684,7 +1683,7 @@ struct tnode *ext2_mount(struct file_system *current_fs, char *device_path) {
     ext2_sync_raw_super_block_with_virtual_super_block(super_block);
     current_fs->super_block = super_block;
 
-    return t_root;
+    return root;
 }
 
 void init_ext2() {

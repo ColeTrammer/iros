@@ -64,7 +64,7 @@ void *hash_get_at_index(struct hash_map *map, size_t index) {
 
     size_t i = 0;
     for (size_t b = 0; b < map->num_buckets; b++) {
-        struct hash_entry *entry = map->entries[i];
+        struct hash_entry *entry = map->entries[b];
         while (entry != NULL) {
             if (i++ == index) {
                 return entry->data;

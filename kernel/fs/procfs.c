@@ -52,7 +52,6 @@ static spinlock_t inode_counter_lock = SPINLOCK_INITIALIZER;
 static ino_t inode_counter = 1;
 
 static struct inode *root;
-static struct tnode *t_root;
 
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
 
@@ -401,7 +400,7 @@ static void procfs_create_base_directory_structure(struct inode *parent, struct 
     }
 }
 
-struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
+struct inode *procfs_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
 
@@ -410,15 +409,13 @@ struct tnode *procfs_mount(struct file_system *current_fs, char *device_path) {
     struct procfs_data *root_data = root->private_data;
     PROCFS_MAKE_DYNAMIC(root_data);
 
-    t_root = create_root_tnode(root);
-
     super_block.device = root->device;
     super_block.op = NULL;
-    super_block.root = t_root;
+    super_block.root = root;
     super_block.block_size = PAGE_SIZE;
 
     current_fs->super_block = &super_block;
-    return t_root;
+    return root;
 }
 
 void init_procfs() {

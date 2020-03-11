@@ -20,6 +20,6 @@ struct inode *initrd_lookup(struct inode *inode, const char *name);
 struct file *initrd_open(struct inode *inode, int flags, int *error);
 ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t len);
 int initrd_read_all(struct inode *inode, void *buffer);
-struct tnode *initrd_mount(struct file_system *fs, char *device_path);
+struct inode *initrd_mount(struct file_system *fs, char *device_path);
 
 #endif /* _KERNEL_FS_INITRD_H */

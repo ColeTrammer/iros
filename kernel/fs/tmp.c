@@ -282,7 +282,7 @@ void tmp_on_inode_destruction(struct inode *inode) {
     }
 }
 
-struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
+struct inode *tmp_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
 
@@ -295,7 +295,6 @@ struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
     init_spinlock(&sb->super_block_lock);
 
     struct inode *root = calloc(1, sizeof(struct inode));
-    struct tnode *t_root = create_root_tnode(root);
 
     root->device = sb->device;
     root->flags = FS_DIR;
@@ -315,11 +314,11 @@ struct tnode *tmp_mount(struct file_system *current_fs, char *device_path) {
     root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
     root->dirent_cache = fs_create_dirent_cache();
 
-    sb->root = t_root;
+    sb->root = root;
 
     current_fs->super_block = sb;
 
-    return t_root;
+    return root;
 }
 
 void init_tmpfs() {

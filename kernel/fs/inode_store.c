@@ -35,6 +35,8 @@ struct inode *fs_inode_get(dev_t dev, ino_t id) {
 }
 
 void fs_inode_put(struct inode *inode) {
+    debug_log("dev: [ %lu, %llu ]\n", inode->device, inode->index);
+
     struct inode_store *store = hash_get(dev_map, &inode->device);
     assert(store);
 

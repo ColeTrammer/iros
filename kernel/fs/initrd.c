@@ -108,7 +108,7 @@ int initrd_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
-struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
+struct inode *initrd_mount(struct file_system *current_fs, char *device_path) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
     assert(strlen(device_path) == 0);
@@ -132,10 +132,8 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->dirent_cache = fs_create_dirent_cache();
     init_spinlock(&root->lock);
 
-    struct tnode *t_root = create_root_tnode(root);
-
     current_fs->super_block = &super_block;
-    super_block.root = t_root;
+    super_block.root = root;
     super_block.device = root->device;
     super_block.block_size = PAGE_SIZE;
     super_block.flags = ST_RDONLY;
@@ -160,7 +158,7 @@ struct tnode *initrd_mount(struct file_system *current_fs, char *device_path) {
         fs_put_dirent_cache(root->dirent_cache, inode, entry[i].name, strlen(entry[i].name));
     }
 
-    return t_root;
+    return root;
 }
 
 void init_initrd() {

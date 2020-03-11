@@ -151,12 +151,11 @@ intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     return -ENODEV;
 }
 
-struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
+struct inode *dev_mount(struct file_system *current_fs, char *device_path) {
     assert(current_fs != NULL);
     assert(strlen(device_path) == 0);
 
     struct inode *root = calloc(1, sizeof(struct inode));
-    struct tnode *t_root = create_root_tnode(root);
 
     root->device = 2;
     root->flags = FS_DIR;
@@ -176,12 +175,12 @@ struct tnode *dev_mount(struct file_system *current_fs, char *device_path) {
 
     super_block.device = root->device;
     super_block.op = NULL;
-    super_block.root = t_root;
+    super_block.root = root;
     super_block.block_size = PAGE_SIZE;
 
     current_fs->super_block = &super_block;
 
-    return t_root;
+    return root;
 }
 
 static char *to_dev_path(const char *path) {
