@@ -37,12 +37,57 @@ void VgaBuffer::refresh() {}
 #undef VGA_ENTRY
 #define VGA_ENTRY(c, f, b) c, f, b
 
-VgaBuffer::VgaBuffer(const char*) : m_window(m_connection.create_window(200, 200, m_width * 8, m_height * 16)) {}
+VgaBuffer::VgaBuffer(const char*) : m_window(m_connection.create_window(200, 200, m_width * 8, m_height * 16)) {
+    set_cursor(0, 0);
+}
 
 VgaBuffer::~VgaBuffer() {}
 
 void VgaBuffer::refresh() {
+    Vector<Vector<uint32_t>> square_save;
+    if (m_is_cursor_enabled) {
+        for (int r = 0; r < 16; r++) {
+            auto row = Vector<uint32_t>();
+            for (int c = 0; c < 8; c++) {
+                row.add(m_window->pixels()->get_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16));
+            }
+            square_save.add(move(row));
+        }
+
+        Color bg = square_save[0][0];
+        Color fg = bg.invert();
+        for (int r = 0; r < square_save.size(); r++) {
+            auto& row = square_save[r];
+            for (int c = 0; c < row.size(); c++) {
+                if (bg.color() != row[c]) {
+                    fg = row[c];
+                    goto break_out;
+                }
+            }
+        }
+
+    break_out:
+        Renderer renderer(*m_window->pixels());
+        for (int r = 0; r < 16; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (bg == square_save[r][c]) {
+                    m_window->pixels()->put_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16, fg);
+                } else {
+                    m_window->pixels()->put_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16, bg);
+                }
+            }
+        }
+    }
+
     m_window->draw();
+
+    if (m_is_cursor_enabled) {
+        for (int r = 0; r < 16; r++) {
+            for (int c = 0; c < 8; c++) {
+                m_window->pixels()->put_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16, square_save[r][c]);
+            }
+        }
+    }
 }
 
 #endif /* KERNEL_NO_GRRAPHICS */
@@ -147,10 +192,13 @@ void VgaBuffer::clear() {
     }
 }
 
-void VgaBuffer::set_cursor(int row [[maybe_unused]], int col [[maybe_unused]]) {
+void VgaBuffer::set_cursor(int row, int col) {
 #ifdef KERNEL_NO_GRAPHICS
     cursor_pos pos = { static_cast<unsigned short>(row), static_cast<unsigned short>(col) };
     ioctl(m_fb, SSCURSOR, &pos);
+#else
+    m_cursor_row = row;
+    m_cursor_col = col;
 #endif /* KERNEL_NO_GRAPHICS */
 }
 

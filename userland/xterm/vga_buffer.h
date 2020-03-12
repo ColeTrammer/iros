@@ -82,6 +82,9 @@ private:
 #else
     void draw(int row, int col, char c, Color fg, Color bg);
 
+    int m_cursor_row { 0 };
+    int m_cursor_col { 0 };
+
     WindowServer::Connection m_connection;
     SharedPtr<WindowServer::Window> m_window { nullptr };
 #endif /* KERNEL_NO_GRAPHICS */
