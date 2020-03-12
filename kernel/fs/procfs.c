@@ -253,11 +253,11 @@ static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((un
 }
 
 static struct procfs_buffer procfs_signal(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
-    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+    char *buffer = need_buffer ? malloc(2 * PAGE_SIZE) : NULL;
     size_t length = 0;
     for (int i = 1; i < _NSIG; i++) {
         length += snprintf(
-            buffer + length, need_buffer ? PAGE_SIZE - length : 0,
+            buffer + length, need_buffer ? 2 * PAGE_SIZE - length : 0,
             "SIGNAL: %d (%s)\n"
             "STATE: %s\n"
             "FLAGS: %c%c%c%c%c%c%c\n"
