@@ -19,4 +19,5 @@ make all
 cd ..
 
 # Copy into image
+mkdir -p $ROOT/sysroot/usr/bin
 cp kilo/kilo $ROOT/sysroot/usr/bin
