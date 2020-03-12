@@ -3,7 +3,7 @@
 export ROOT="$PWD/../.."
 
 
-if [! -d figlet-2.2.5 ]; then
+if [ ! -d figlet-2.2.5 ]; then
     # Download tar.gz
     curl ftp://ftp.figlet.org/pub/figlet/program/unix/figlet-2.2.5.tar.gz --output figlet.tar.gz
 
