@@ -19,8 +19,18 @@ void VgaBuffer::refresh() {}
 void VgaBuffer::switch_to(UniquePtr<SaveState> state) {
     if (!state) {
         clear();
+    } else {
+        memcpy(buffer(), state->vector(), m_graphics_container.size_in_bytes());
     }
     set_cursor(m_cursor_row, m_cursor_col);
+}
+
+UniquePtr<VgaBuffer::SaveState> VgaBuffer::save_state() {
+    auto ptr = UniquePtr<SaveState>(new SaveState(m_graphics_container.size()));
+    for (size_t i = 0; i < m_graphics_container.size(); i++) {
+        ptr->add(buffer()[i]);
+    }
+    return move(ptr);
 }
 
 #else

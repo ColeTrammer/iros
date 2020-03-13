@@ -72,6 +72,7 @@ public:
     int height() const { return m_graphics_container.height(); }
 
     void switch_to(UniquePtr<SaveState> state);
+    UniquePtr<SaveState> save_state();
 
 private:
 #ifdef KERNEL_NO_GRAPHICS

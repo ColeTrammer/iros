@@ -24,8 +24,7 @@ public:
             Terminal t;
             m_terminals.add(move(t));
         }
-        current_tty().load(m_container);
-        current_tty().vga_buffer().switch_to(nullptr);
+        switch_to(0);
     }
 
     int current_mfd() const { return current_tty().mfd(); }
@@ -33,8 +32,24 @@ public:
     Terminal& current_tty() { return m_terminals[m_current_tty]; }
     const Terminal& current_tty() const { return m_terminals[m_current_tty]; }
 
+    void switch_to(int tty_number) {
+        if (tty_number == m_current_tty) {
+            return;
+        }
+
+        if (m_current_tty != -1) {
+            current_tty().save();
+        }
+        assert(tty_number >= 0 && tty_number < m_terminals.size());
+        m_current_tty = tty_number;
+        if (!current_tty().is_loaded()) {
+            current_tty().load(m_container);
+        }
+        current_tty().switch_to();
+    }
+
 private:
-    int m_current_tty { 0 };
+    int m_current_tty { -1 };
     Vector<Terminal> m_terminals;
     VgaBuffer::GraphicsContainer m_container;
 };
@@ -144,6 +159,18 @@ int main() {
                                 break;
                             case KEY_END:
                                 write(mfd, "\033[1;5F", 6);
+                                break;
+                            case KEY_1:
+                                application.switch_to(0);
+                                break;
+                            case KEY_2:
+                                application.switch_to(1);
+                                break;
+                            case KEY_3:
+                                application.switch_to(2);
+                                break;
+                            case KEY_4:
+                                application.switch_to(3);
                                 break;
                             default:
                                 if (event.ascii != '\0') {

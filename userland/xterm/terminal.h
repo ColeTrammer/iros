@@ -31,7 +31,11 @@ public:
     VgaBuffer& vga_buffer() { return *m_buffer; }
     const VgaBuffer& vga_buffer() const { return *m_buffer; }
 
+    void save();
+    void switch_to();
+
 private:
+    UniquePtr<VgaBuffer::SaveState> m_save_state;
     UniquePtr<VgaBuffer> m_buffer;
     UniquePtr<TTY> m_tty;
     int m_mfd { -1 };
