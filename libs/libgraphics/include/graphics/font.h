@@ -13,15 +13,23 @@ static uint8_t font_unknown[16] = { 0b00000000, 0b00000000, 0b00000000, 0b111111
 class Font {
 public:
     static Font& default_font() {
-        static Font* s_default;
+        static const Font* s_default;
         if (!s_default) {
-            s_default = new Font;
+            s_default = new Font("/usr/share/font.psf");
         }
         return *s_default;
     }
 
-    Font() : m_unknown(Bitmap<uint8_t>::wrap(font_unknown, 16 * 8)) {
-        int font_file = open("/usr/share/font.psf", O_RDONLY);
+    static const Font& bold_font() {
+        static Font* s_bold;
+        if (!s_bold) {
+            s_bold = new Font("/usr/share/bold.psf");
+        }
+        return *s_bold;
+    }
+
+    Font(const char* path) : m_unknown(Bitmap<uint8_t>::wrap(font_unknown, 16 * 8)) {
+        int font_file = open(path, O_RDONLY);
         assert(font_file != -1);
 
         uint8_t z[4];
@@ -40,7 +48,7 @@ public:
 
     ~Font() {}
 
-    SharedPtr<Bitmap<uint8_t>> get_for_character(int c) { return m_font_map.get_or(c, m_unknown); }
+    SharedPtr<Bitmap<uint8_t>> get_for_character(int c) const { return m_font_map.get_or(c, m_unknown); }
 
 private:
     SharedPtr<Bitmap<uint8_t>> m_unknown;

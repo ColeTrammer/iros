@@ -141,7 +141,14 @@ public:
         }
     }
 
-    const V& get_or(const K& key, const V& val) const { return const_cast<HashMap<K, V>&>(*this).get_or(key, val); }
+    const V& get_or(const K& key, const V& val) const {
+        const V* res = get(key);
+        if (res) {
+            return *res;
+        } else {
+            return val;
+        }
+    }
 
     void remove(const K& key) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();

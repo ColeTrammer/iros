@@ -48,6 +48,7 @@ public:
     void reset_colors() {
         reset_fg();
         reset_bg();
+        set_bold(false);
     }
 
     void reset_fg() { m_fg = VGA_COLOR_LIGHT_GREY; }
@@ -68,8 +69,11 @@ public:
 
     void refresh();
 
+    void set_bold(bool value) { m_bold = value; }
+
 private:
     bool m_is_cursor_enabled { true };
+    bool m_bold { false };
     int m_width { 80 };
     int m_height { 25 };
     VgaColor m_bg { VGA_COLOR_BLACK };

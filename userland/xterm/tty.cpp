@@ -197,7 +197,7 @@ void TTY::handle_escape_sequence() {
                         m_buffer.reset_colors();
                         break;
                     case 1:
-                        // Bold is not supported.
+                        m_buffer.set_bold(true);
                         break;
                     case 7:
                         m_buffer.swap_colors();

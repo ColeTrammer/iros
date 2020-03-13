@@ -111,7 +111,7 @@ void VgaBuffer::draw(int row, int col, char ch, VgaColor fg, VgaColor bg) {
     renderer.fill_rect(col * 8, row * 16, 8, 16);
 
     renderer.set_color(fg);
-    renderer.render_text(col * 8, row * 16, text);
+    renderer.render_text(col * 8, row * 16, text, m_bold ? Font::bold_font() : Font::default_font());
 }
 #endif /* KERNEL_NO_GRAPHICS */
 
