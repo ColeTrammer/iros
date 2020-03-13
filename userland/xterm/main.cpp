@@ -1,68 +1,46 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <liim/pointers.h>
+#include <liim/vector.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/select.h>
 #include <sys/wait.h>
-#include <termios.h>
 #include <unistd.h>
 
 #include <kernel/hal/input.h>
 
+#include "terminal.h"
 #include "tty.h"
 #include "vga_buffer.h"
 
+class Application {
+public:
+    Application() {
+        for (int i = 0; i < 4; i++) {
+            Terminal t;
+            m_terminals.add(move(t));
+        }
+        current_tty().load();
+    }
+
+    int current_mfd() const { return current_tty().mfd(); }
+
+    Terminal& current_tty() { return m_terminals[m_current_tty]; }
+    const Terminal& current_tty() const { return m_terminals[m_current_tty]; }
+
+private:
+    int m_current_tty { 0 };
+    Vector<Terminal> m_terminals;
+};
+
 int main() {
-    VgaBuffer vga_buffer("/dev/fb0");
-    TTY tty(vga_buffer);
-
-    int mfd = posix_openpt(O_RDWR);
-    assert(mfd != -1);
-
     // FIXME: There is some buf that makes it necessary to always ignore SIGTTOU,
     //        when only ignoring it for the tcsetpgrp calls should suffice
     signal(SIGTTOU, SIG_IGN);
-
-    pid_t pid = fork();
-    if (pid == 0) {
-        int sfd = open(ptsname(mfd), O_RDWR);
-        assert(sfd != -1);
-
-        if (setsid() < 0) {
-            perror("setsid");
-            _exit(1);
-        }
-        if (tcsetpgrp(mfd, getpid())) {
-            perror("tcsetpgrp");
-            _exit(1);
-        }
-        if (ioctl(mfd, TIOSCTTY)) {
-            perror("ioctl(TIOSCTTY)");
-            _exit(1);
-        }
-        signal(SIGTTOU, SIG_DFL);
-
-        dup2(sfd, STDIN_FILENO);
-        dup2(sfd, STDOUT_FILENO);
-        dup2(sfd, STDERR_FILENO);
-
-        close(sfd);
-        close(mfd);
-
-        putenv((char *) "TERM=xterm");
-        execl("/bin/sh", "sh", NULL);
-        _exit(127);
-    } else if (pid == -1) {
-        perror("fork");
-        return -1;
-    }
-
-    tcsetpgrp(mfd, pid);
-    signal(SIGTTOU, SIG_DFL);
 
     signal(SIGCHLD, [](auto) {
         int status;
@@ -71,6 +49,8 @@ int main() {
             exit(0);
         }
     });
+
+    Application application;
 
     int kfd = open("/dev/keyboard", O_RDONLY);
     assert(kfd != -1);
@@ -85,6 +65,10 @@ int main() {
     fd_set set;
 
     for (;;) {
+        int mfd = application.current_mfd();
+        assert(mfd != -1);
+        auto& tty = application.current_tty().tty();
+
         FD_ZERO(&set);
         FD_SET(mouse_fd, &set);
         FD_SET(kfd, &set);
@@ -98,7 +82,6 @@ int main() {
             }
 
             perror("select");
-            kill(pid, SIGHUP);
             return 1;
         }
 
@@ -216,7 +199,6 @@ int main() {
 
             if (bytes == -1) {
                 perror("master read");
-                kill(pid, SIGHUP);
                 return 1;
             }
 

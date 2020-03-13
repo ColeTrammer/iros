@@ -12,8 +12,8 @@ static uint8_t font_unknown[16] = { 0b00000000, 0b00000000, 0b00000000, 0b111111
 
 class Font {
 public:
-    static Font& default_font() {
-        static const Font* s_default;
+    static const Font& default_font() {
+        static Font* s_default;
         if (!s_default) {
             s_default = new Font("/usr/share/font.psf");
         }
