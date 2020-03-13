@@ -371,6 +371,8 @@ void TTY::on_char(char c) {
 #endif /**/
 
     switch (c) {
+        case '\0':
+            return;
         case CTRL_KEY('d'):
             break;
         case '\033':
