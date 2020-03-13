@@ -604,14 +604,13 @@ SYS_CALL(execve) {
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
-    struct args_context args_context;
-    proc_clone_program_args(prepend_argv, argv, envp, &args_context);
+    proc_clone_program_args(process, prepend_argv, argv, envp);
 
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process->process_memory);
 
     uintptr_t stack_end = proc_allocate_user_stack(process);
-    task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, &args_context);
+    task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, process->args_context);
 
     for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
         free(prepend_argv[i]);

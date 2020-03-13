@@ -28,7 +28,9 @@ struct task *current_task;
 struct task initial_kernel_task;
 struct process initial_kernel_process;
 
-void proc_clone_program_args(char **prepend_argv, char **argv, char **envp, struct args_context *context) {
+void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp) {
+    struct args_context *context = process->args_context = malloc(sizeof(struct args_context));
+
     context->prepend_argc = 0;
     size_t prepend_args_str_length = 0;
     while (prepend_argv && prepend_argv[context->prepend_argc] != NULL) {
@@ -51,9 +53,12 @@ void proc_clone_program_args(char **prepend_argv, char **argv, char **envp, stru
     context->args_copy = calloc(context->argc, sizeof(char **));
     context->envp_copy = calloc(context->envc, sizeof(char **));
 
-    context->prepend_args_buffer = malloc(prepend_args_str_length);
-    context->args_buffer = malloc(args_str_length);
+    context->prepend_args_buffer = malloc(prepend_args_str_length + args_str_length);
+    context->args_buffer = context->prepend_args_buffer + prepend_args_str_length;
     context->env_buffer = malloc(env_str_length);
+
+    context->args_bytes = prepend_args_str_length + args_str_length;
+    context->env_bytes = env_str_length;
 
     ssize_t j = 0;
     ssize_t i = 0;
@@ -133,14 +138,15 @@ uintptr_t map_program_args(uintptr_t start, struct args_context *context) {
     args_start -= sizeof(char **);
     *((char ***) args_start) = argv_start - count;
 
+    return (uintptr_t) args_start;
+}
+
+void free_program_args(struct args_context *context) {
     free(context->prepend_args_copy);
     free(context->args_copy);
     free(context->envp_copy);
     free(context->prepend_args_buffer);
-    free(context->args_buffer);
     free(context->env_buffer);
-
-    return (uintptr_t) args_start;
 }
 
 static spinlock_t tid_lock;

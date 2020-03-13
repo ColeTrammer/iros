@@ -31,6 +31,8 @@ struct args_context {
     size_t prepend_argc;
     size_t argc;
     size_t envc;
+    size_t args_bytes;
+    size_t env_bytes;
     char **prepend_args_copy;
     char **args_copy;
     char **envp_copy;
@@ -98,8 +100,9 @@ void arch_free_task(struct task *task, bool free_paging_structure);
 
 struct task *get_current_task();
 
-void proc_clone_program_args(char **prepend_argv, char **argv, char **envp, struct args_context *context);
+void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp);
 uintptr_t map_program_args(uintptr_t start, struct args_context *context);
+void free_program_args(struct args_context *context);
 
 int get_next_tid();
 

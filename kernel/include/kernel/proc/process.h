@@ -14,6 +14,7 @@
 #include ARCH_SPECIFIC(proc/process.h)
 // clang-format on
 
+struct args_context;
 struct clock;
 struct file;
 struct timer;
@@ -36,6 +37,8 @@ struct process {
 
     struct clock *process_clock;
     struct timer *timers;
+
+    struct args_context *args_context;
 
     pid_t pid;
     pid_t pgid;

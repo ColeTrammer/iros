@@ -118,10 +118,9 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
 
-    struct args_context context;
-    proc_clone_program_args(NULL, test_argv, test_envp, &context);
+    proc_clone_program_args(task->process, NULL, test_argv, test_envp);
     task->arch_task.task_state.stack_state.rsp =
-        map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, &context);
+        map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, task->process->args_context);
 
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 

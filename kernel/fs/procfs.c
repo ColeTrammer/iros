@@ -272,6 +272,36 @@ static struct procfs_buffer procfs_signal(struct procfs_data *data __attribute__
     return (struct procfs_buffer) { buffer, length };
 }
 
+static struct procfs_buffer procfs_cmdline(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+    if (!process->args_context) {
+        return (struct procfs_buffer) { NULL, 0 };
+    }
+
+    size_t length = process->args_context->args_bytes;
+    if (!need_buffer) {
+        return (struct procfs_buffer) { NULL, length };
+    }
+
+    char *buffer = malloc(length);
+    memcpy(buffer, process->args_context->prepend_args_buffer, length);
+    return (struct procfs_buffer) { buffer, length };
+}
+
+static struct procfs_buffer procfs_environ(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+    if (!process->args_context) {
+        return (struct procfs_buffer) { NULL, 0 };
+    }
+
+    size_t length = process->args_context->env_bytes;
+    if (!need_buffer) {
+        return (struct procfs_buffer) { NULL, length };
+    }
+
+    char *buffer = malloc(length);
+    memcpy(buffer, process->args_context->env_buffer, length);
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static struct procfs_buffer procfs_fd(struct procfs_data *data, struct process *process, bool need_buffer) {
     int fd = data->fd;
     struct file *file = process->files[fd].file;
@@ -336,6 +366,12 @@ static void procfs_create_process_directory_structure(struct inode *parent, stru
 
         struct inode *signal_inode = procfs_create_inode(PROCFS_FILE_MODE, process->uid, process->gid, process, procfs_signal);
         fs_put_dirent_cache(parent->dirent_cache, signal_inode, "signal", strlen("signal"));
+
+        struct inode *cmdline_inode = procfs_create_inode(PROCFS_FILE_MODE, process->uid, process->gid, process, procfs_cmdline);
+        fs_put_dirent_cache(parent->dirent_cache, cmdline_inode, "cmdline", strlen("cmdline"));
+
+        struct inode *environ_inode = procfs_create_inode(PROCFS_FILE_MODE, process->uid, process->gid, process, procfs_environ);
+        fs_put_dirent_cache(parent->dirent_cache, environ_inode, "environ", strlen("environ"));
 
         struct inode *fd_inode =
             procfs_create_inode(PROCFS_DIRECTORY_MODE, process->uid, process->gid, process, procfs_create_fd_directory_structure);
