@@ -980,17 +980,15 @@ int fs_unlink(const char *path) {
     }
 
     spin_lock(&tnode->inode->lock);
-
     ret = tnode->inode->i_op->unlink(tnode);
     if (ret != 0) {
         drop_tnode(tnode);
+        spin_unlock(&tnode->inode->lock);
         return ret;
     }
+    spin_unlock(&tnode->inode->lock);
 
     fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
-    struct inode *inode = tnode->inode;
-
-    spin_unlock(&inode->lock);
     drop_tnode(tnode);
     return 0;
 }
