@@ -34,7 +34,7 @@ static int inode_kill(struct vm_object *self) {
 
     debug_log("Destroying inode_vm_object: [ %p, %lu, %llu ]\n", self, data->inode->device, data->inode->index);
 
-    if (data->inode_buffer) {
+    if (data->inode_buffer && data->owned) {
         free(data->inode_buffer);
     }
 
@@ -60,7 +60,20 @@ struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags) {
 
     data->inode = inode;
     data->shared = (map_flags & MAP_SHARED) ? true : false;
+    data->owned = true;
     data->inode_buffer = NULL;
+
+    return vm_create_object(VM_INODE, &inode_ops, data);
+}
+
+struct vm_object *vm_create_direct_inode_object(struct inode *inode, void *base_buffer) {
+    struct inode_vm_object_data *data = malloc(sizeof(struct inode_vm_object_data));
+    assert(data);
+
+    data->inode = inode;
+    data->shared = true;
+    data->owned = false;
+    data->inode_buffer = base_buffer;
 
     return vm_create_object(VM_INODE, &inode_ops, data);
 }

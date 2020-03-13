@@ -18,8 +18,8 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
+#include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/page.h>
-#include <kernel/mem/phys_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
@@ -244,7 +244,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 
     struct tmp_data *data = inode->private_data;
     if (!inode->vm_object) {
-        inode->vm_object = vm_create_phys_object(get_phys_addr((uintptr_t) data->contents), inode->size, inode_on_kill, inode);
+        inode->vm_object = vm_create_direct_inode_object(inode, data->contents);
     } else {
         bump_vm_object(inode->vm_object);
     }
