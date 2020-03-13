@@ -13,12 +13,12 @@ void Renderer::fill_rect(int x, int y, int width, int height) {
 void Renderer::draw_rect(int x, int y, int width, int height) {
     for (int r = x; r < x + width; r++) {
         m_pixels.put_pixel(r, y, color());
-        m_pixels.put_pixel(r, y + height, color());
+        m_pixels.put_pixel(r, y + height - 1, color());
     }
 
-    for (int c = y + 1; c < y + height; c++) {
+    for (int c = y + 1; c < y + height - 1; c++) {
         m_pixels.put_pixel(x, c, color());
-        m_pixels.put_pixel(x + width, c, color());
+        m_pixels.put_pixel(x + width - 1, c, color());
     }
 }
 
