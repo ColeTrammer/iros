@@ -3,8 +3,9 @@
 #include <liim/pointers.h>
 #include <sys/types.h>
 
+#include "vga_buffer.h"
+
 class TTY;
-class VgaBuffer;
 
 class Terminal {
 public:
@@ -20,12 +21,15 @@ public:
 
     bool is_loaded() const { return m_buffer; }
 
-    void load();
+    void load(VgaBuffer::GraphicsContainer& container);
 
     int mfd() const { return m_mfd; }
 
     TTY& tty() { return *m_tty; }
     const TTY& tty() const { return *m_tty; }
+
+    VgaBuffer& vga_buffer() { return *m_buffer; }
+    const VgaBuffer& vga_buffer() const { return *m_buffer; }
 
 private:
     UniquePtr<VgaBuffer> m_buffer;

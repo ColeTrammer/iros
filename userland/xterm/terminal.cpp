@@ -8,8 +8,8 @@
 #include "tty.h"
 #include "vga_buffer.h"
 
-void Terminal::load() {
-    m_buffer = make_unique<VgaBuffer>("/dev/fb0");
+void Terminal::load(VgaBuffer::GraphicsContainer& container) {
+    m_buffer = make_unique<VgaBuffer>(container);
     m_tty = make_unique<TTY>(*m_buffer);
 
     m_mfd = posix_openpt(O_RDWR);

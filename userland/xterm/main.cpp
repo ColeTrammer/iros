@@ -24,7 +24,8 @@ public:
             Terminal t;
             m_terminals.add(move(t));
         }
-        current_tty().load();
+        current_tty().load(m_container);
+        current_tty().vga_buffer().switch_to(nullptr);
     }
 
     int current_mfd() const { return current_tty().mfd(); }
@@ -35,6 +36,7 @@ public:
 private:
     int m_current_tty { 0 };
     Vector<Terminal> m_terminals;
+    VgaBuffer::GraphicsContainer m_container;
 };
 
 int main() {

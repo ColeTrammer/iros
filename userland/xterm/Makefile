@@ -1,5 +1,6 @@
 OBJS=\
 $(BUILDDIR)/userland/xterm/main.o \
+$(BUILDDIR)/userland/xterm/raw_frame_buffer_wrapper.o \
 $(BUILDDIR)/userland/xterm/terminal.o \
 $(BUILDDIR)/userland/xterm/tty.o \
 $(BUILDDIR)/userland/xterm/vga_buffer.o

@@ -1,12 +1,14 @@
 #pragma once
 
+#include <liim/pointers.h>
 #include <liim/vector.h>
 #include <stddef.h>
 #include <stdint.h>
-#ifndef KERNEL_NO_GRAPHICS
+#ifdef KERNEL_NO_GRAPHICS
+#include "raw_frame_buffer_wrapper.h"
+#else
 #include <graphics/color.h>
 #include <graphics/renderer.h>
-#include <liim/pointers.h>
 #include <window_server/connection.h>
 #include <window_server/window.h>
 
@@ -20,22 +22,17 @@ public:
 #ifdef KERNEL_NO_GRAPHICS
     using Row = Vector<uint16_t>;
     using VgaColor = enum vga_color;
+    using GraphicsContainer = RawFrameBufferWrapper;
+    using SaveState = Vector<uint16_t>;
 #else
     using Row = Vector<uint32_t>;
     using VgaColor = Color;
+    using GraphicsContainer = WindowServer::Window;
+    using SaveState = Vector<uint32_t>;
 #endif /* KERNEL_NO_GRAPHICS */
 
-    VgaBuffer(const char* path);
+    VgaBuffer(GraphicsContainer& container);
     ~VgaBuffer();
-
-    size_t size() const { return m_width * m_height; }
-#ifdef KERNEL_NO_GRAPHICS
-    size_t row_size_in_bytes() const { return m_width * sizeof(uint16_t); }
-    size_t size_in_bytes() const { return size() * sizeof(uint16_t); }
-#endif /* KERNEL_NO_GRAPHICS */
-
-    int width() const { return m_width; }
-    int height() const { return m_height; }
 
     VgaColor bg() const { return m_bg; }
     void set_bg(VgaColor bg) { m_bg = bg; }
@@ -71,25 +68,24 @@ public:
 
     void set_bold(bool value) { m_bold = value; }
 
-private:
-    bool m_is_cursor_enabled { true };
-    bool m_bold { false };
-    int m_width { 80 };
-    int m_height { 25 };
-    VgaColor m_bg { VGA_COLOR_BLACK };
-    VgaColor m_fg { VGA_COLOR_LIGHT_GREY };
-#ifdef KERNEL_NO_GRAPHICS
-    void draw(int row, int col, uint16_t value);
+    int width() const { return m_graphics_container.width(); }
+    int height() const { return m_graphics_container.height(); }
 
-    uint16_t* m_buffer;
-    const int m_fb;
+    void switch_to(UniquePtr<SaveState> state);
+
+private:
+#ifdef KERNEL_NO_GRAPHICS
+    uint16_t* buffer() { return m_graphics_container.buffer(); }
+    void draw(int row, int col, uint16_t value);
 #else
     void draw(int row, int col, char c, Color fg, Color bg);
+#endif /* KERNEL_NO_GRAPHICS */
 
+    bool m_is_cursor_enabled { true };
+    bool m_bold { false };
+    VgaColor m_bg { VGA_COLOR_BLACK };
+    VgaColor m_fg { VGA_COLOR_LIGHT_GREY };
     int m_cursor_row { 0 };
     int m_cursor_col { 0 };
-
-    WindowServer::Connection m_connection;
-    SharedPtr<WindowServer::Window> m_window { nullptr };
-#endif /* KERNEL_NO_GRAPHICS */
+    GraphicsContainer& m_graphics_container;
 };

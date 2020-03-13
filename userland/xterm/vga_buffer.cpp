@@ -12,25 +12,16 @@
 #include "vga_buffer.h"
 
 #ifdef KERNEL_NO_GRAPHICS
-VgaBuffer::VgaBuffer(const char* path) : m_fb(open(path, O_RDWR | O_CLOEXEC)) {
-    assert(m_fb != -1);
-
-    assert(ioctl(m_fb, SGWIDTH, &m_width) == 0);
-    assert(ioctl(m_fb, SGHEIGHT, &m_height) == 0);
-
-    m_buffer = static_cast<uint16_t*>(mmap(nullptr, size_in_bytes(), PROT_READ | PROT_WRITE, MAP_SHARED, m_fb, 0));
-    assert(m_buffer != MAP_FAILED);
-
-    clear();
-    set_cursor(0, 0);
-}
-
-VgaBuffer::~VgaBuffer() {
-    munmap(m_buffer, size_in_bytes());
-    close(m_fb);
-}
+VgaBuffer::VgaBuffer(GraphicsContainer& wrapper) : m_graphics_container(wrapper) {}
 
 void VgaBuffer::refresh() {}
+
+void VgaBuffer::switch_to(UniquePtr<SaveState> state) {
+    if (!state) {
+        clear();
+    }
+    set_cursor(m_cursor_row, m_cursor_col);
+}
 
 #else
 
@@ -40,8 +31,6 @@ void VgaBuffer::refresh() {}
 VgaBuffer::VgaBuffer(const char*) : m_window(m_connection.create_window(200, 200, m_width * 8, m_height * 16)) {
     set_cursor(0, 0);
 }
-
-VgaBuffer::~VgaBuffer() {}
 
 void VgaBuffer::refresh() {
     Vector<Vector<uint32_t>> square_save;
@@ -92,13 +81,15 @@ void VgaBuffer::refresh() {
 
 #endif /* KERNEL_NO_GRRAPHICS */
 
+VgaBuffer::~VgaBuffer() {}
+
 void VgaBuffer::draw(int row, int col, char c) {
     draw(row, col, VGA_ENTRY(c, fg(), bg()));
 }
 
 #ifdef KERNEL_NO_GRAPHICS
 void VgaBuffer::draw(int row, int col, uint16_t val) {
-    m_buffer[row * m_width + col] = val;
+    buffer()[row * width() + col] = val;
 }
 #else
 void VgaBuffer::draw(int row, int col, char ch, VgaColor fg, VgaColor bg) {
@@ -116,7 +107,7 @@ void VgaBuffer::draw(int row, int col, char ch, VgaColor fg, VgaColor bg) {
 #endif /* KERNEL_NO_GRAPHICS */
 
 void VgaBuffer::clear_row_to_end(int row, int col) {
-    for (int c = col; c < m_width; c++) {
+    for (int c = col; c < width(); c++) {
         draw(row, c, ' ');
     }
 }
@@ -127,18 +118,18 @@ void VgaBuffer::clear_row(int row) {
 
 VgaBuffer::Row VgaBuffer::scroll_up(const Row* replacement [[maybe_unused]]) {
 #ifdef KERNEL_NO_GRAPHICS
-    LIIM::Vector<uint16_t> first_row(m_buffer, m_width);
+    LIIM::Vector<uint16_t> first_row(buffer(), width());
 
-    for (int r = 0; r < m_height - 1; r++) {
-        for (int c = 0; c < m_width; c++) {
-            draw(r, c, m_buffer[(r + 1) * m_width + c]);
+    for (int r = 0; r < height() - 1; r++) {
+        for (int c = 0; c < width(); c++) {
+            draw(r, c, buffer()[(r + 1) * width() + c]);
         }
     }
 
     if (!replacement) {
-        clear_row(m_height - 1);
+        clear_row(height() - 1);
     } else {
-        memcpy(m_buffer + (m_height - 1) * m_width, replacement->vector(), row_size_in_bytes());
+        memcpy(buffer() + (height() - 1) * width(), replacement->vector(), m_graphics_container.row_size_in_bytes());
     }
     return first_row;
 #else
@@ -158,17 +149,17 @@ VgaBuffer::Row VgaBuffer::scroll_up(const Row* replacement [[maybe_unused]]) {
 
 VgaBuffer::Row VgaBuffer::scroll_down(const Row* replacement [[maybe_unused]]) {
 #ifdef KERNEL_NO_GRAPHICS
-    Row last_row(m_buffer + (m_height - 1) * m_width, m_width);
+    Row last_row(buffer() + (height() - 1) * width(), width());
 
-    for (int r = m_height - 1; r > 0; r--) {
-        for (int c = 0; c < m_width; c++) {
-            draw(r, c, m_buffer[(r - 1) * m_width + c]);
+    for (int r = height() - 1; r > 0; r--) {
+        for (int c = 0; c < width(); c++) {
+            draw(r, c, buffer()[(r - 1) * width() + c]);
         }
     }
     if (!replacement) {
         clear_row(0);
     } else {
-        memcpy(m_buffer, replacement->vector(), row_size_in_bytes());
+        memcpy(buffer(), replacement->vector(), m_graphics_container.row_size_in_bytes());
     }
     return last_row;
 #else
@@ -187,7 +178,7 @@ VgaBuffer::Row VgaBuffer::scroll_down(const Row* replacement [[maybe_unused]]) {
 }
 
 void VgaBuffer::clear() {
-    for (int r = 0; r < m_height; r++) {
+    for (int r = 0; r < height(); r++) {
         clear_row(r);
     }
 }
@@ -195,11 +186,10 @@ void VgaBuffer::clear() {
 void VgaBuffer::set_cursor(int row, int col) {
 #ifdef KERNEL_NO_GRAPHICS
     cursor_pos pos = { static_cast<unsigned short>(row), static_cast<unsigned short>(col) };
-    ioctl(m_fb, SSCURSOR, &pos);
-#else
+    ioctl(m_graphics_container.fb(), SSCURSOR, &pos);
+#endif /* KERNEL_NO_GRAPHICS */
     m_cursor_row = row;
     m_cursor_col = col;
-#endif /* KERNEL_NO_GRAPHICS */
 }
 
 void VgaBuffer::hide_cursor() {
@@ -208,7 +198,7 @@ void VgaBuffer::hide_cursor() {
     }
 
 #ifdef KERNEL_NO_GRAPHICS
-    ioctl(m_fb, SDCURSOR);
+    ioctl(m_graphics_container.fb(), SDCURSOR);
 #endif /* KERNEL_NO_GRAPHICS */
 
     m_is_cursor_enabled = false;
@@ -216,7 +206,7 @@ void VgaBuffer::hide_cursor() {
 
 void VgaBuffer::show_cursor() {
 #ifdef KERNEL_NO_GRAPHICS
-    ioctl(m_fb, SECURSOR);
+    ioctl(m_graphics_container.fb(), SECURSOR);
 #endif /* KERNEL_NO_GRAPHICS */
     m_is_cursor_enabled = true;
 }
