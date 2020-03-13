@@ -46,7 +46,7 @@
 // #define SIGACTION_DEBUG
 // #define SIGPROCMASK_DEBUG
 // #define SIGRETURN_DEBUG
-// #define SYSCALL_DEBUG
+#define SYSCALL_DEBUG
 // #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
@@ -412,7 +412,7 @@ SYS_CALL(close) {
     SYS_RETURN(error);
 }
 
-static int execve_helper(const char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
+static int execve_helper(char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
                          struct tnode **tnode, int *depth, char **argv) {
     if (*tnode) {
         drop_tnode(*tnode);
@@ -431,14 +431,15 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
             debug_log("Encoutered #!\n");
             bool first = *prepend_argv_length == 0;
 
-            const char *path_save = NULL;
+            char *path_save = NULL;
             if (first) {
-                path_save = *path;
+                path_save = strdup(*path);
             }
             size_t path_len = strcspn(*buffer + 2, " \n");
             char restore = (*buffer)[2 + path_len];
             (*buffer)[2 + path_len] = '\0';
-            *path = *buffer + 2;
+            free(*path);
+            *path = strdup(*buffer + 2);
             debug_log("#!: [ %s ]\n", *path);
             (*buffer)[2 + path_len] = restore;
             bool has_extra_arg = false;
@@ -477,7 +478,7 @@ static int execve_helper(const char **path, char **buffer, size_t *buffer_length
             (*prepend_argv)[*prepend_argv_length - 1] = NULL;
 
             if (first) {
-                argv[0] = (char *) path_save;
+                argv[0] = path_save;
             }
 
             free(*buffer);
@@ -497,7 +498,7 @@ SYS_CALL(execve) {
 
     disable_interrupts();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
+    SYS_PARAM1_VALIDATE(char *, path, validate_path, -1);
     SYS_PARAM2_VALIDATE(char **, argv, validate_string_array, -1);
     SYS_PARAM3_VALIDATE(char **, envp, validate_string_array, -1);
 
@@ -505,6 +506,7 @@ SYS_CALL(execve) {
 
     debug_log("Exec Task: [ %d, %s ]\n", current->process->pid, path);
 
+    path = strdup(path);
     char *buffer = NULL;
     size_t length = 0;
     char **prepend_argv = NULL;
@@ -512,6 +514,7 @@ SYS_CALL(execve) {
     int depth = 0;
     struct tnode *tnode = NULL;
     int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &tnode, &depth, argv);
+    free(path);
     if (error) {
         for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
             free(prepend_argv[i]);
@@ -605,6 +608,9 @@ SYS_CALL(execve) {
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
     proc_clone_program_args(process, prepend_argv, argv, envp);
+    if (prepend_argv != NULL) {
+        free(argv[0]);
+    }
 
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process->process_memory);
