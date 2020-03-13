@@ -5,28 +5,41 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int main(int argc, char **argv) {
-    int fd = STDIN_FILENO;
-    if (argc == 2) {
-        fd = open(argv[1], O_RDONLY);
-        if (fd == -1) {
-            perror("cat");
-            return 1;
-        }
-    }
-
+static void do_cat(FILE *file) {
     char buf[BUFSIZ];
-    ssize_t amount;
-    while ((amount = read(fd, buf, BUFSIZ)) > 0) {
-        if (write(STDOUT_FILENO, buf, amount) != amount) {
-            perror("cat");
-            return 1;
-        }
+    size_t nread;
+    while ((nread = fread(buf, sizeof(char), BUFSIZ, file)) != 0) {
+        fwrite(buf, sizeof(char), nread, stdout);
     }
 
-    if (amount != 0) {
+    if (ferror(file)) {
+        perror("fread");
+        exit(1);
+    }
+}
+
+void cat(const char *path) {
+    FILE *file = fopen(path, "r");
+    if (!file) {
         perror("cat");
-        return 1;
+        exit(1);
+    }
+
+    do_cat(file);
+
+    if (fclose(file)) {
+        perror("cat");
+        exit(1);
+    }
+}
+
+int main(int argc, char **argv) {
+    if (argc == 1) {
+        do_cat(stdin);
+    } else {
+        for (int i = 1; i < argc; i++) {
+            cat(argv[i]);
+        }
     }
 
     return 0;
