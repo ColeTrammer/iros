@@ -196,7 +196,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->tid = get_next_tid();
     task->process->cwd = NULL;
     task->next = NULL;
-    process->name = (char *) name;
+    process->name = strdup(name);
 
     arch_load_kernel_task(task, entry);
 
@@ -217,7 +217,7 @@ struct task *load_task(const char *file_name) {
     task->process = process;
 
     task->process->exe = tprogram;
-    process->name = process->exe->name;
+    process->name = strdup(process->exe->name);
 
     assert(elf64_is_valid(buffer));
 

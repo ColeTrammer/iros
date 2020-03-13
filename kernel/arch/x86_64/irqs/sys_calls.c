@@ -332,7 +332,7 @@ SYS_CALL(fork) {
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
     child_process->exe = bump_tnode(parent->process->exe);
-    child_process->name = parent->process->name;
+    child_process->name = strdup(parent->process->name);
     memcpy(&child_process->sig_state, &parent->process->sig_state, sizeof(struct sigaction) * _NSIG);
     child_process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
     child->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
@@ -532,7 +532,7 @@ SYS_CALL(execve) {
     assert(tnode);
     struct inode *inode = tnode->inode;
     process->exe = tnode;
-    process->name = tnode->name;
+    process->name = prepend_argv != NULL ? argv[0] : strdup(argv[0]);
 
     process->uid = current->process->uid;
     if (depth == 0 && (inode->mode & S_ISUID)) {
@@ -608,9 +608,6 @@ SYS_CALL(execve) {
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
     proc_clone_program_args(process, prepend_argv, argv, envp);
-    if (prepend_argv != NULL) {
-        free(argv[0]);
-    }
 
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process->process_memory);

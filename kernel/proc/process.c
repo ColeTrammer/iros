@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
@@ -96,6 +97,7 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
         }
 
         time_destroy_clock(process->process_clock);
+        free(process->name);
         free(process);
         return;
     }
@@ -163,5 +165,5 @@ void init_processes() {
     map = hash_create_hash_map(process_hash, process_equals, process_key);
     assert(map);
     proc_add_process(&initial_kernel_process);
-    initial_kernel_process.name = "init";
+    initial_kernel_process.name = strdup("init");
 }
