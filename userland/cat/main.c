@@ -19,6 +19,11 @@ static void do_cat(FILE *file) {
 }
 
 void cat(const char *path) {
+    if (strcmp(path, "-") == 0) {
+        do_cat(stdin);
+        return;
+    }
+
     FILE *file = fopen(path, "r");
     if (!file) {
         perror("cat");
