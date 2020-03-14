@@ -3,6 +3,7 @@
 
 #include <bits/__locked_robust_mutex_node.h>
 #include <bits/clockid_t.h>
+#include <sys/types.h>
 
 #define MUTEX_AQUIRE           1
 #define MUTEX_WAKE_AND_SET     3
@@ -37,6 +38,21 @@ struct initial_process_info {
     int isatty_mask;
 };
 
+struct proc_info {
+    char name[64];
+    pid_t pid;
+    char state[64];
+    uid_t uid;
+    gid_t gid;
+    pid_t ppid;
+    mode_t umask;
+    uid_t euid;
+    gid_t egid;
+    pid_t pgid;
+    pid_t sid;
+    char tty[64];
+};
+
 int create_task(struct create_task_args *create_task_args);
 void exit_task(void) __attribute__((__noreturn__));
 int get_initial_process_info(struct initial_process_info *info);
@@ -44,6 +60,9 @@ int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int 
 int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **list_head);
 int tgkill(int tgid, int tid, int signum);
 int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
+
+int read_procfs_info(struct proc_info **info, size_t *length, int flags);
+void free_procfs_info(struct proc_info *info);
 
 #ifdef __cplusplus
 }

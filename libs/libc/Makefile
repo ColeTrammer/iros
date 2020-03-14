@@ -198,9 +198,11 @@ $(BUILDDIR)/libs/libc/sys/ioctl/ioctl.o \
 $(BUILDDIR)/libs/libc/sys/mman/mman.o \
 $(BUILDDIR)/libs/libc/sys/os_2/create_task.o \
 $(BUILDDIR)/libs/libc/sys/os_2/exit_task.o \
+$(BUILDDIR)/libs/libc/sys/os_2/free_procfs_info.o \
 $(BUILDDIR)/libs/libc/sys/os_2/get_initial_process_info.o \
 $(BUILDDIR)/libs/libc/sys/os_2/getcpuclockid.o \
 $(BUILDDIR)/libs/libc/sys/os_2/os_mutex.o \
+$(BUILDDIR)/libs/libc/sys/os_2/read_procfs_info.o \
 $(BUILDDIR)/libs/libc/sys/os_2/set_thread_self_pointer.o \
 $(BUILDDIR)/libs/libc/sys/os_2/tgkill.o \
 $(BUILDDIR)/libs/libc/sys/socket/socket.o \
