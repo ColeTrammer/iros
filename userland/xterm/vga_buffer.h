@@ -8,14 +8,14 @@
 #include "raw_frame_buffer_wrapper.h"
 #else
 #include <graphics/color.h>
-#include <graphics/renderer.h>
-#include <window_server/connection.h>
-#include <window_server/window.h>
-
-class Renderer;
+#include "window_wrapper.h"
 #endif /* KERNEL_NO_GRAPHICS */
 
 #include <kernel/hal/x86_64/drivers/vga.h>
+#ifndef KERNEL_NO_GRAPHICS
+#undef VGA_ENTRY
+#define VGA_ENTRY(c, f, b) c, f, b
+#endif /* KERNEL_NO_GRAPHICS */
 
 class VgaBuffer {
 public:
@@ -27,7 +27,7 @@ public:
 #else
     using Row = Vector<uint32_t>;
     using VgaColor = Color;
-    using GraphicsContainer = WindowServer::Window;
+    using GraphicsContainer = WindowWrapper;
     using SaveState = Vector<uint32_t>;
 #endif /* KERNEL_NO_GRAPHICS */
 
@@ -79,7 +79,9 @@ private:
     uint16_t* buffer() { return m_graphics_container.buffer(); }
     void draw(int row, int col, uint16_t value);
 #else
+    WindowServer::Window& window() { return m_graphics_container.window(); }
     void draw(int row, int col, char c, Color fg, Color bg);
+    uint32_t* buffer() { return window().pixels()->pixels(); }
 #endif /* KERNEL_NO_GRAPHICS */
 
     bool m_is_cursor_enabled { true };

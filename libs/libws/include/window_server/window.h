@@ -27,6 +27,8 @@ public:
 
     SharedPtr<PixelBuffer>& pixels() { return m_back; }
 
+    const Rect& rect() const { return m_rect; }
+
 private:
     friend class Connection;
 
