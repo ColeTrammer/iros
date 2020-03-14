@@ -24,6 +24,7 @@ public:
     void load(VgaBuffer::GraphicsContainer& container);
 
     int mfd() const { return m_mfd; }
+    pid_t pid() const { return m_pid; }
 
     TTY& tty() { return *m_tty; }
     const TTY& tty() const { return *m_tty; }
@@ -33,6 +34,7 @@ public:
 
     void save();
     void switch_to();
+    void reset();
 
 private:
     UniquePtr<VgaBuffer::SaveState> m_save_state;

@@ -68,3 +68,11 @@ void Terminal::save() {
 void Terminal::switch_to() {
     m_buffer->switch_to(move(m_save_state));
 }
+
+void Terminal::reset() {
+    m_buffer = nullptr;
+    m_save_state = nullptr;
+    m_tty = nullptr;
+    m_mfd = -1;
+    m_pid = -1;
+}

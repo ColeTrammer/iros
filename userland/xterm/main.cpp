@@ -48,24 +48,60 @@ public:
         current_tty().switch_to();
     }
 
+    void reset_tty_with_pid(int pid) {
+        auto* tty = m_terminals.first_match([pid](const auto& terminal) {
+            return terminal.pid() == pid;
+        });
+        if (tty) {
+            tty->reset();
+            m_current_tty = -1;
+            for (int i = 0; i < m_terminals.size(); i++) {
+                if (m_terminals[i].is_loaded()) {
+                    switch_to(i);
+                    return;
+                }
+            }
+            switch_to(0);
+        }
+    }
+
 private:
     int m_current_tty { -1 };
     Vector<Terminal> m_terminals;
     VgaBuffer::GraphicsContainer m_container;
 };
 
+static volatile sig_atomic_t pid = -1;
+
 int main() {
-    // FIXME: There is some buf that makes it necessary to always ignore SIGTTOU,
+    {
+        // Block SIGCHLD so that we are never going to be interrupted.
+        // We will use pselect to wait for it when ready.
+        sigset_t set;
+        sigemptyset(&set);
+        sigaddset(&set, SIGCHLD);
+        sigprocmask(SIG_BLOCK, &set, nullptr);
+    }
+
+    // FIXME: There is some bug that makes it necessary to always ignore SIGTTOU,
     //        when only ignoring it for the tcsetpgrp calls should suffice
     signal(SIGTTOU, SIG_IGN);
 
-    signal(SIGCHLD, [](auto) {
+    struct sigaction act;
+    act.sa_flags = 0;
+    sigfillset(&act.sa_mask);
+    act.sa_handler = [](auto) {
         int status;
-        waitpid(-1, &status, WNOHANG);
+        pid_t ret = waitpid(-1, &status, WNOHANG);
+        assert(ret != -1);
         if (WIFEXITED(status) || WIFSIGNALED(status)) {
-            exit(0);
+            pid = ret;
         }
-    });
+    };
+    if (sigaction(SIGCHLD, &act, nullptr) < 0) {
+        perror("sigaction(SIGCHLD)");
+        return 1;
+    }
 
     Application application;
 
@@ -81,6 +117,10 @@ int main() {
 
     fd_set set;
 
+    sigset_t sigmask;
+    sigprocmask(0, nullptr, &sigmask);
+    sigdelset(&sigmask, SIGCHLD);
+
     for (;;) {
         int mfd = application.current_mfd();
         assert(mfd != -1);
@@ -91,10 +131,14 @@ int main() {
         FD_SET(kfd, &set);
         FD_SET(mfd, &set);
 
-        int ret = select(FD_SETSIZE, &set, nullptr, nullptr, nullptr);
+        int ret = pselect(FD_SETSIZE, &set, nullptr, nullptr, nullptr, &sigmask);
         assert(ret != 0);
         if (ret == -1) {
             if (errno == EINTR) {
+                if (pid != -1) {
+                    application.reset_tty_with_pid(pid);
+                    pid = -1;
+                }
                 continue;
             }
 

@@ -119,12 +119,12 @@
         get_current_task()->in_sigsuspend = true;                              \
     } while (0)
 
-#define SYS_BEGIN_PSELECT()                                                   \
-    do {                                                                      \
-        get_current_task()->arch_task.user_task_state = (task_state);         \
-        get_current_task()->arch_task.user_task_state->cpu_state.rax = EINTR; \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;            \
-        get_current_task()->in_kernel = true;                                 \
+#define SYS_BEGIN_PSELECT()                                                    \
+    do {                                                                       \
+        get_current_task()->arch_task.user_task_state = (task_state);          \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;             \
+        get_current_task()->in_kernel = true;                                  \
     } while (0)
 
 #define SYS_RETURN(val)                                       \
