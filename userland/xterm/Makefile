@@ -1,4 +1,5 @@
 OBJS=\
+$(BUILDDIR)/userland/xterm/application.o \
 $(BUILDDIR)/userland/xterm/main.o \
 $(BUILDDIR)/userland/xterm/raw_frame_buffer_wrapper.o \
 $(BUILDDIR)/userland/xterm/terminal.o \
