@@ -129,6 +129,18 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
     return (void *) old_end;
 }
 
+size_t vm_compute_total_virtual_memory(struct process *process) {
+    size_t result = 0;
+
+    struct vm_region *region = process->process_memory;
+    while (region) {
+        result += region->end - region->start;
+        region = region->next;
+    }
+
+    return result;
+}
+
 void *add_vm_pages_start(size_t n, uint64_t type) {
     struct vm_region *list;
     if (type > VM_KERNEL_HEAP) {

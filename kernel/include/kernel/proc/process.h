@@ -56,6 +56,7 @@ struct process {
     int ref_count;
 
     char *name;
+    size_t resident_memory;
 
     struct arch_process arch_process;
 

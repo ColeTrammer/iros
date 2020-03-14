@@ -216,22 +216,24 @@ static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__
     }
 
     struct task *main_task = find_by_tid(process->pgid, process->pid);
-    size_t length =
-        snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
-                 "NAME: %s\n"
-                 "PID: %d\n"
-                 "STATE: %s\n"
-                 "UID: %hu\n"
-                 "GID: %hu\n"
-                 "PPID: %d\n"
-                 "UMASK: %04o\n"
-                 "EUID: %hu\n"
-                 "EGID: %hu\n"
-                 "PGID: %d\n"
-                 "SID: %d\n"
-                 "TTY: %s\n",
-                 process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)", process->uid,
-                 process->gid, process->ppid, process->umask, process->euid, process->egid, process->pgid, process->sid, tty_string);
+    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
+                             "NAME: %s\n"
+                             "PID: %d\n"
+                             "STATE: %s\n"
+                             "UID: %hu\n"
+                             "GID: %hu\n"
+                             "PPID: %d\n"
+                             "UMASK: %04o\n"
+                             "EUID: %hu\n"
+                             "EGID: %hu\n"
+                             "PGID: %d\n"
+                             "SID: %d\n"
+                             "TTY: %s\n"
+                             "VIRTUAL MEM: %lu\n"
+                             "RESIDENT MEM: %lu\n",
+                             process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)",
+                             process->uid, process->gid, process->ppid, process->umask, process->euid, process->egid, process->pgid,
+                             process->sid, tty_string, vm_compute_total_virtual_memory(process), process->resident_memory);
     return (struct procfs_buffer) { buffer, length };
 }
 

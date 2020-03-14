@@ -7,6 +7,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
+#include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
 static uintptr_t page_bitmap[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
