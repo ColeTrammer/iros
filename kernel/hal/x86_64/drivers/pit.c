@@ -17,16 +17,24 @@ static void (*callback)(void) = NULL;
 static unsigned int count = 0;
 static unsigned int count_to = 0;
 
+extern struct task initial_kernel_task;
+extern uint64_t idle_ticks;
+extern uint64_t user_ticks;
+extern uint64_t kernel_ticks;
+
 void handle_pit_interrupt(struct task_state *task_state) {
     sendEOI(PIT_IRQ_LINE);
 
     struct task *current = get_current_task();
-    if (current->in_kernel) {
+    if (current == &initial_kernel_task) {
+        idle_ticks++;
+    } else if (current->in_kernel) {
         current->process->times.tms_stime++;
+        kernel_ticks++;
     } else {
         current->process->times.tms_utime++;
+        user_ticks++;
     }
-
     // Check for NULL b/c kernel tasks don't have a clock
     if (current->task_clock) {
         time_inc_clock(current->task_clock, 1000000L);

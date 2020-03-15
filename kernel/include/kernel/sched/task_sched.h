@@ -27,4 +27,8 @@ int queue_signal_process(pid_t pid, int signum, void *val);
 
 void exit_process(struct process *process);
 
+uint64_t sched_idle_ticks(void);
+uint64_t sched_user_ticks(void);
+uint64_t sched_kernel_ticks(void);
+
 #endif /* _KERNEL_task_SCHED_H */

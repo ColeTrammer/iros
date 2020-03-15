@@ -378,3 +378,19 @@ void exit_process(struct process *process) {
         }
     } while ((task = task->next) != list_start);
 }
+
+uint64_t idle_ticks;
+uint64_t user_ticks;
+uint64_t kernel_ticks;
+
+uint64_t sched_idle_ticks() {
+    return idle_ticks;
+}
+
+uint64_t sched_user_ticks() {
+    return user_ticks;
+}
+
+uint64_t sched_kernel_ticks() {
+    return kernel_ticks;
+}

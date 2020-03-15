@@ -304,6 +304,15 @@ static struct procfs_buffer procfs_environ(struct procfs_data *data __attribute_
     return (struct procfs_buffer) { buffer, length };
 }
 
+static struct procfs_buffer procfs_pid_sched(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
+                             "USER_TICKS: %lu\n"
+                             "KERNEL_TICKS: %lu\n",
+                             process->times.tms_utime, process->times.tms_stime);
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static struct procfs_buffer procfs_fd(struct procfs_data *data, struct process *process, bool need_buffer) {
     int fd = data->fd;
     struct file *file = process->files[fd].file;
@@ -375,6 +384,9 @@ static void procfs_create_process_directory_structure(struct inode *parent, stru
         struct inode *environ_inode = procfs_create_inode(PROCFS_FILE_MODE, process->uid, process->gid, process, procfs_environ);
         fs_put_dirent_cache(parent->dirent_cache, environ_inode, "environ", strlen("environ"));
 
+        struct inode *sched_inode = procfs_create_inode(PROCFS_FILE_MODE, process->uid, process->gid, process, procfs_pid_sched);
+        fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
+
         struct inode *fd_inode =
             procfs_create_inode(PROCFS_DIRECTORY_MODE, process->uid, process->gid, process, procfs_create_fd_directory_structure);
         fs_put_dirent_cache(parent->dirent_cache, fd_inode, "fd", strlen("fd"));
@@ -432,6 +444,17 @@ static struct procfs_buffer procfs_self(struct procfs_data *data __attribute__((
     return (struct procfs_buffer) { buffer, length };
 }
 
+static struct procfs_buffer procfs_sched(struct procfs_data *data __attribute((unused)), struct process *process __attribute__((unused)),
+                                         bool need_buffer) {
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
+                             "IDLE_TICKS: %lu\n"
+                             "USER_TICKS: %lu\n"
+                             "KERNEL_TICKS: %lu\n",
+                             sched_idle_ticks(), sched_user_ticks(), sched_kernel_ticks());
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static void procfs_create_base_directory_structure(struct inode *parent, struct process *process __attribute__((unused)), bool loaded) {
     assert(parent);
 
@@ -440,8 +463,13 @@ static void procfs_create_base_directory_structure(struct inode *parent, struct 
         struct procfs_data *data = self_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *sched_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_sched);
+        data = self_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
         spin_lock(&parent->lock);
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));
+        fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
         spin_unlock(&parent->lock);
     }
 }
