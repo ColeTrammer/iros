@@ -54,6 +54,8 @@ struct proc_info {
     pid_t pgid;
     pid_t sid;
     char tty[64];
+    int priority;
+    int nice;
     size_t virtual_memory;
     size_t resident_memory;
     uint64_t user_ticks;

@@ -20,6 +20,18 @@
 #define USER_SPECIFIER "s"
 #define USER_STRING    "USER"
 
+#define PRIORITY_WIDTH     3
+#define PRIORITY_PREC      0
+#define PRIORITY_FLAGS     ""
+#define PRIORITY_SPECIFIER "d"
+#define PRIORITY_STRING    "PR"
+
+#define NICE_WIDTH     3
+#define NICE_PREC      0
+#define NICE_FLAGS     ""
+#define NICE_SPECIFIER "d"
+#define NICE_STRING    "NI"
+
 #define VIRTUAL_MEM_WIDTH     8
 #define VIRTUAL_MEM_PREC      0
 #define VIRTUAL_MEM_FLAGS     ""
@@ -44,19 +56,21 @@
 #define CPU_SPECIFIER "f"
 #define CPU_STRING    "%CPU"
 
-#define NAME_WIDTH     (win_size.ws_col - (PID_WIDTH + USER_WIDTH + VIRTUAL_MEM_WIDTH + RESIDENT_MEM_WIDTH + STATUS_WIDTH + CPU_WIDTH + 6))
+#define NAME_WIDTH     \
+    (win_size.ws_col - \
+     (PID_WIDTH + USER_WIDTH + PRIORITY_WIDTH + NICE_WIDTH + VIRTUAL_MEM_WIDTH + RESIDENT_MEM_WIDTH + STATUS_WIDTH + CPU_WIDTH + 8))
 #define NAME_PREC      NAME_WIDTH
 #define NAME_FLAGS     "-"
 #define NAME_SPECIFIER "s"
 #define NAME_STRING    "COMMAND"
 
-#define FORMAT_STRING_HEADER                                                                                                          \
-    "%" PID_FLAGS "*.*s %" USER_FLAGS "*.*s %" VIRTUAL_MEM_FLAGS "*.*s %" RESIDENT_MEM_FLAGS "*.*s %" STATUS_FLAGS "*.*s %" CPU_FLAGS \
-    "*.*s %" NAME_FLAGS "*.*s\n"
-#define FORMAT_STRING_ROW                                                                                                            \
-    "%" PID_FLAGS "*.*" PID_SPECIFIER " %" USER_FLAGS "*.*" USER_SPECIFIER " %" VIRTUAL_MEM_FLAGS "*.*" VIRTUAL_MEM_SPECIFIER        \
-    " %" RESIDENT_MEM_FLAGS "*.*" RESIDENT_MEM_SPECIFIER " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" CPU_FLAGS "*.*" CPU_SPECIFIER \
-    " %" NAME_FLAGS "*.*" NAME_SPECIFIER "\n"
+#define FORMAT_STRING_HEADER                                                                                                             \
+    "%" PID_FLAGS "*.*s %" USER_FLAGS "*.*s %" VIRTUAL_MEM_FLAGS "*.*s %" PRIORITY_FLAGS "*.*s %" NICE_FLAGS "*.*s %" RESIDENT_MEM_FLAGS \
+    "*.*s %" STATUS_FLAGS "*.*s %" CPU_FLAGS "*.*s %" NAME_FLAGS "*.*s\n"
+#define FORMAT_STRING_ROW                                                                                                               \
+    "%" PID_FLAGS "*.*" PID_SPECIFIER " %" USER_FLAGS "*.*" USER_SPECIFIER " %" PRIORITY_FLAGS "*.*" PRIORITY_SPECIFIER " %" NICE_FLAGS \
+    "*.*" NICE_SPECIFIER " %" VIRTUAL_MEM_FLAGS "*.*" VIRTUAL_MEM_SPECIFIER " %" RESIDENT_MEM_FLAGS "*.*" RESIDENT_MEM_SPECIFIER        \
+    " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" CPU_FLAGS "*.*" CPU_SPECIFIER " %" NAME_FLAGS "*.*" NAME_SPECIFIER "\n"
 
 static struct winsize win_size;
 static struct termios tty_info;
@@ -78,9 +92,10 @@ static void disable_cursor() {
 }
 
 static size_t display_header() {
-    printf("\033[7m" FORMAT_STRING_HEADER "\033[0m", PID_WIDTH, PID_WIDTH, PID_STRING, USER_WIDTH, USER_WIDTH, USER_STRING,
-           VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_STRING, RESIDENT_MEM_WIDTH, RESIDENT_MEM_WIDTH, RESIDENT_MEM_STRING,
-           STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, CPU_WIDTH, CPU_WIDTH, CPU_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
+    printf("\033[7m" FORMAT_STRING_HEADER "\033[0m", PID_WIDTH, PID_WIDTH, PID_STRING, USER_WIDTH, USER_WIDTH, USER_STRING, PRIORITY_WIDTH,
+           PRIORITY_WIDTH, PRIORITY_STRING, NICE_WIDTH, NICE_WIDTH, NICE_STRING, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_STRING,
+           RESIDENT_MEM_WIDTH, RESIDENT_MEM_WIDTH, RESIDENT_MEM_STRING, STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, CPU_WIDTH, CPU_WIDTH,
+           CPU_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
     return 1;
 }
 
@@ -114,9 +129,10 @@ static void display_row(struct proc_global_info *global_info, struct proc_info *
         cpu_percent = (double) d_process_ticks / (double) d_total_ticks * 100;
     }
 
-    printf(FORMAT_STRING_ROW, PID_WIDTH, PID_PREC, info->pid, USER_WIDTH, USER_PREC, user_string, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_PREC,
-           info->virtual_memory, RESIDENT_MEM_WIDTH, RESIDENT_MEM_PREC, info->resident_memory, STATUS_WIDTH, STATUS_PREC, info->state,
-           CPU_WIDTH, CPU_PREC, cpu_percent, NAME_WIDTH, NAME_PREC, info->name);
+    printf(FORMAT_STRING_ROW, PID_WIDTH, PID_PREC, info->pid, USER_WIDTH, USER_PREC, user_string, PRIORITY_WIDTH, PRIORITY_PREC,
+           info->priority, NICE_WIDTH, NICE_PREC, info->nice, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_PREC, info->virtual_memory, RESIDENT_MEM_WIDTH,
+           RESIDENT_MEM_PREC, info->resident_memory, STATUS_WIDTH, STATUS_PREC, info->state, CPU_WIDTH, CPU_PREC, cpu_percent, NAME_WIDTH,
+           NAME_PREC, info->name);
 }
 
 static void display(struct proc_global_info *global_info, struct proc_info *info, size_t num_pids) {

@@ -229,11 +229,13 @@ static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__
                              "PGID: %d\n"
                              "SID: %d\n"
                              "TTY: %s\n"
+                             "PRIORITY: %d\n"
+                             "NICE: %d\n"
                              "VIRTUAL_MEMORY: %lu\n"
                              "RESIDENT_MEMORY: %lu\n",
                              process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)",
                              process->uid, process->gid, process->ppid, process->umask, process->euid, process->egid, process->pgid,
-                             process->sid, tty_string, vm_compute_total_virtual_memory(process), process->resident_memory);
+                             process->sid, tty_string, 20, 0, vm_compute_total_virtual_memory(process), process->resident_memory);
     return (struct procfs_buffer) { buffer, length };
 }
 
