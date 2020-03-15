@@ -792,14 +792,6 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
             format++;
             double num = va_arg(parameters, double);
 
-            if (num < 0) {
-                num *= -1.0;
-                char minus = '-';
-                if (!print(obj, &minus, 1))
-                    return -1;
-                written++;
-            }
-
             size_t len = 1;
             double div = 1.0;
             while (num / div >= 10.0) {
@@ -809,6 +801,23 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
 
             size_t total_len = len;
             total_len += MAX(0, precision + 1);
+
+            while (total_len < (size_t) width) {
+                char space = ' ';
+                if (!print(obj, &space, 1)) {
+                    return -1;
+                }
+                written++;
+                width--;
+            }
+
+            if (num < 0) {
+                num *= -1.0;
+                char minus = '-';
+                if (!print(obj, &minus, 1))
+                    return -1;
+                written++;
+            }
 
             for (size_t i = 0; i < total_len; i++) {
                 if (i == len) {
