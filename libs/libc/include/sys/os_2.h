@@ -51,6 +51,8 @@ struct proc_info {
     pid_t pgid;
     pid_t sid;
     char tty[64];
+    size_t virtual_memory;
+    size_t resident_memory;
 };
 
 int create_task(struct create_task_args *create_task_args);

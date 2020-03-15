@@ -98,6 +98,8 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags __attrib
         READ_PROCFS_FIELD(pgid, "%d");
         READ_PROCFS_FIELD(sid, "%d");
         READ_PROCFS_STRING_FIELD(tty, "%64s");
+        READ_PROCFS_FIELD(virtual_memory, "%lu");
+        READ_PROCFS_FIELD(resident_memory, "%lu");
 
         if (fclose(status)) {
             goto read_procfs_info_fail;
