@@ -1740,9 +1740,7 @@ SYS_CALL(pselect) {
         }
 
         if (timeout) {
-            struct timespec now = time_read_clock(CLOCK_MONOTONIC);
-            struct timespec end_time = { .tv_sec = now.tv_sec - start.tv_sec, .tv_nsec = now.tv_nsec - start.tv_nsec };
-
+            struct timespec end_time = { .tv_sec = start.tv_sec + timeout->tv_sec, .tv_nsec = start.tv_nsec + timeout->tv_nsec };
             proc_block_select_timeout(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
                                       create_phys_addr_mapping_from_virt_addr(write_fds_found),
                                       create_phys_addr_mapping_from_virt_addr(except_fds_found), end_time);
