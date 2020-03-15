@@ -30,7 +30,7 @@ static int sort_by_pid(const struct dirent **a, const struct dirent **b) {
     }
 }
 
-int read_procfs_info(struct proc_info **info, size_t *length, int flags __attribute__((unused))) {
+int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
     assert(info);
     assert(length);
 
@@ -52,19 +52,20 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags __attrib
             continue;
         }
 
-        char path_buf[1024];
-        snprintf(path_buf, sizeof(path_buf) - 1, "/proc/%s/status", dirent->d_name);
+        {
+            char path_buf[1024];
+            snprintf(path_buf, sizeof(path_buf) - 1, "/proc/%s/status", dirent->d_name);
 
-        FILE *status = fopen(path_buf, "r");
-        if (!status) {
-            goto read_procfs_info_fail;
-        }
+            FILE *file = fopen(path_buf, "r");
+            if (!file) {
+                goto read_procfs_info_fail;
+            }
 
 #define _(x) "" #x
 #define READ_PROCFS_STRING_FIELD(name, convert_spec)                                                                 \
     do {                                                                                                             \
         char field_name[64];                                                                                         \
-        if (fscanf(status, "%64[^:]: " convert_spec, field_name, (*info)[i].name) != 2) {                            \
+        if (fscanf(file, "%64[^:]: " convert_spec, field_name, (*info)[i].name) != 2) {                              \
             fprintf(stderr, "fscanf: failed to read field `%s`\n", _(name));                                         \
             goto read_procfs_info_fail;                                                                              \
         }                                                                                                            \
@@ -76,7 +77,7 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags __attrib
 #define READ_PROCFS_FIELD(name, convert_spec)                                                                        \
     do {                                                                                                             \
         char field_name[64];                                                                                         \
-        if (fscanf(status, "%64[^:]: " convert_spec, field_name, &(*info)[i].name) != 2) {                           \
+        if (fscanf(file, "%64[^:]: " convert_spec, field_name, &(*info)[i].name) != 2) {                             \
             fprintf(stderr, "fscanf: failed to read field `%s`\n", _(name));                                         \
             goto read_procfs_info_fail;                                                                              \
         }                                                                                                            \
@@ -86,23 +87,40 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags __attrib
         }                                                                                                            \
     } while (0)
 
-        READ_PROCFS_STRING_FIELD(name, "%64s");
-        READ_PROCFS_FIELD(pid, "%d");
-        READ_PROCFS_STRING_FIELD(state, "%64[^\n]");
-        READ_PROCFS_FIELD(uid, "%hu");
-        READ_PROCFS_FIELD(gid, "%hu");
-        READ_PROCFS_FIELD(ppid, "%d");
-        READ_PROCFS_FIELD(umask, "%o");
-        READ_PROCFS_FIELD(euid, "%hu");
-        READ_PROCFS_FIELD(egid, "%hu");
-        READ_PROCFS_FIELD(pgid, "%d");
-        READ_PROCFS_FIELD(sid, "%d");
-        READ_PROCFS_STRING_FIELD(tty, "%64s");
-        READ_PROCFS_FIELD(virtual_memory, "%lu");
-        READ_PROCFS_FIELD(resident_memory, "%lu");
+            READ_PROCFS_STRING_FIELD(name, "%64s");
+            READ_PROCFS_FIELD(pid, "%d");
+            READ_PROCFS_STRING_FIELD(state, "%64[^\n]");
+            READ_PROCFS_FIELD(uid, "%hu");
+            READ_PROCFS_FIELD(gid, "%hu");
+            READ_PROCFS_FIELD(ppid, "%d");
+            READ_PROCFS_FIELD(umask, "%o");
+            READ_PROCFS_FIELD(euid, "%hu");
+            READ_PROCFS_FIELD(egid, "%hu");
+            READ_PROCFS_FIELD(pgid, "%d");
+            READ_PROCFS_FIELD(sid, "%d");
+            READ_PROCFS_STRING_FIELD(tty, "%64s");
+            READ_PROCFS_FIELD(virtual_memory, "%lu");
+            READ_PROCFS_FIELD(resident_memory, "%lu");
 
-        if (fclose(status)) {
-            goto read_procfs_info_fail;
+            if (fclose(file)) {
+                goto read_procfs_info_fail;
+            }
+        }
+        if (flags & READ_PROCFS_SCHED) {
+            char path_buf[1024];
+            snprintf(path_buf, sizeof(path_buf) - 1, "/proc/%s/sched", dirent->d_name);
+
+            FILE *file = fopen(path_buf, "r");
+            if (!file) {
+                goto read_procfs_info_fail;
+            }
+
+            READ_PROCFS_FIELD(user_ticks, "%lu");
+            READ_PROCFS_FIELD(kernel_ticks, "%lu");
+
+            if (fclose(file)) {
+                goto read_procfs_info_fail;
+            }
         }
 
         free(dirent);

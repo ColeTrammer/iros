@@ -3,6 +3,7 @@
 
 #include <bits/__locked_robust_mutex_node.h>
 #include <bits/clockid_t.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 #define MUTEX_AQUIRE           1
@@ -12,6 +13,8 @@
 #define MUTEX_WAITERS          0x80000000U
 
 #define ROBUST_MUTEX_IS_VALID_IF_VALUE 1
+
+#define READ_PROCFS_SCHED 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +56,14 @@ struct proc_info {
     char tty[64];
     size_t virtual_memory;
     size_t resident_memory;
+    uint64_t user_ticks;
+    uint64_t kernel_ticks;
+};
+
+struct proc_global_info {
+    uint64_t idle_ticks;
+    uint64_t user_ticks;
+    uint64_t kernel_ticks;
 };
 
 int create_task(struct create_task_args *create_task_args);
@@ -65,6 +76,8 @@ int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
 
 int read_procfs_info(struct proc_info **info, size_t *length, int flags);
 void free_procfs_info(struct proc_info *info);
+
+int read_procfs_global_info(struct proc_global_info *info);
 
 #ifdef __cplusplus
 }

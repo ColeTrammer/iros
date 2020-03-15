@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -37,22 +38,32 @@
 #define STATUS_SPECIFIER "s"
 #define STATUS_STRING    "S"
 
-#define NAME_WIDTH     (win_size.ws_col - (PID_WIDTH + USER_WIDTH + VIRTUAL_MEM_WIDTH + RESIDENT_MEM_WIDTH + STATUS_WIDTH + 5))
+#define CPU_WIDTH     5
+#define CPU_PREC      1
+#define CPU_FLAGS     ""
+#define CPU_SPECIFIER "f"
+#define CPU_STRING    "%CPU"
+
+#define NAME_WIDTH     (win_size.ws_col - (PID_WIDTH + USER_WIDTH + VIRTUAL_MEM_WIDTH + RESIDENT_MEM_WIDTH + STATUS_WIDTH + CPU_WIDTH + 6))
 #define NAME_PREC      NAME_WIDTH
 #define NAME_FLAGS     "-"
 #define NAME_SPECIFIER "s"
 #define NAME_STRING    "COMMAND"
 
-#define FORMAT_STRING_HEADER                                                                                                           \
-    "%" PID_FLAGS "*.*s %" USER_FLAGS "*.*s %" VIRTUAL_MEM_FLAGS "*.*s %" RESIDENT_MEM_FLAGS "*.*s %" STATUS_FLAGS "*.*s %" NAME_FLAGS \
-    "*.*s\n"
-#define FORMAT_STRING_ROW                                                                                                              \
-    "%" PID_FLAGS "*.*" PID_SPECIFIER " %" USER_FLAGS "*.*" USER_SPECIFIER " %" VIRTUAL_MEM_FLAGS "*.*" VIRTUAL_MEM_SPECIFIER          \
-    " %" RESIDENT_MEM_FLAGS "*.*" RESIDENT_MEM_SPECIFIER " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" NAME_FLAGS "*.*" NAME_SPECIFIER \
-    "\n"
+#define FORMAT_STRING_HEADER                                                                                                          \
+    "%" PID_FLAGS "*.*s %" USER_FLAGS "*.*s %" VIRTUAL_MEM_FLAGS "*.*s %" RESIDENT_MEM_FLAGS "*.*s %" STATUS_FLAGS "*.*s %" CPU_FLAGS \
+    "*.*s %" NAME_FLAGS "*.*s\n"
+#define FORMAT_STRING_ROW                                                                                                            \
+    "%" PID_FLAGS "*.*" PID_SPECIFIER " %" USER_FLAGS "*.*" USER_SPECIFIER " %" VIRTUAL_MEM_FLAGS "*.*" VIRTUAL_MEM_SPECIFIER        \
+    " %" RESIDENT_MEM_FLAGS "*.*" RESIDENT_MEM_SPECIFIER " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" CPU_FLAGS "*.*" CPU_SPECIFIER \
+    " %" NAME_FLAGS "*.*" NAME_SPECIFIER "\n"
 
 static struct winsize win_size;
 static struct termios tty_info;
+
+static struct proc_global_info *prev_global_data;
+static struct proc_info *prev_data;
+static size_t prev_data_num;
 
 static void reset_cursor() {
     printf("\033[1;1H");
@@ -66,29 +77,56 @@ static void disable_cursor() {
     printf("\033[?25l");
 }
 
-size_t display_header() {
+static size_t display_header() {
     printf("\033[7m" FORMAT_STRING_HEADER "\033[0m", PID_WIDTH, PID_WIDTH, PID_STRING, USER_WIDTH, USER_WIDTH, USER_STRING,
            VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_STRING, RESIDENT_MEM_WIDTH, RESIDENT_MEM_WIDTH, RESIDENT_MEM_STRING,
-           STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
+           STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, CPU_WIDTH, CPU_WIDTH, CPU_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
     return 1;
 }
 
-static void display_row(struct proc_info *info) {
-    struct passwd *user = getpwuid(info->uid);
-    char *user_string = user ? user->pw_name : "unknown";
-    printf(FORMAT_STRING_ROW, PID_WIDTH, PID_PREC, info->pid, USER_WIDTH, USER_PREC, user_string, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_PREC,
-           info->virtual_memory, RESIDENT_MEM_WIDTH, RESIDENT_MEM_PREC, info->resident_memory, STATUS_WIDTH, STATUS_PREC, info->state,
-           NAME_WIDTH, NAME_PREC, info->name);
+static int prev_process_ticks(pid_t pid, uint64_t *out_ticks) {
+    assert(prev_data);
+    for (size_t i = 0; i < prev_data_num; i++) {
+        if (prev_data[i].pid == pid) {
+            *out_ticks = prev_data[i].kernel_ticks + prev_data[i].user_ticks;
+            return 0;
+        }
+    }
+
+    return 1;
 }
 
-static void display(struct proc_info *info, size_t num_pids) {
+static void display_row(struct proc_global_info *global_info, struct proc_info *info) {
+    struct passwd *user = getpwuid(info->uid);
+    char *user_string = user ? user->pw_name : "unknown";
+    uint64_t total_process_ticks = info->user_ticks + info->kernel_ticks;
+    uint64_t total_ticks = global_info->idle_ticks + global_info->user_ticks + global_info->kernel_ticks;
+
+    double cpu_percent;
+    if (!prev_data || !prev_global_data) {
+        cpu_percent = (double) total_process_ticks / (double) total_ticks * 100;
+    } else {
+        uint64_t prev_ticks = 0.0;
+        prev_process_ticks(info->pid, &prev_ticks);
+
+        uint64_t d_total_ticks = total_ticks - prev_global_data->idle_ticks - prev_global_data->user_ticks - prev_global_data->kernel_ticks;
+        uint64_t d_process_ticks = total_process_ticks - prev_ticks;
+        cpu_percent = (double) d_process_ticks / (double) d_total_ticks * 100;
+    }
+
+    printf(FORMAT_STRING_ROW, PID_WIDTH, PID_PREC, info->pid, USER_WIDTH, USER_PREC, user_string, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_PREC,
+           info->virtual_memory, RESIDENT_MEM_WIDTH, RESIDENT_MEM_PREC, info->resident_memory, STATUS_WIDTH, STATUS_PREC, info->state,
+           CPU_WIDTH, CPU_PREC, cpu_percent, NAME_WIDTH, NAME_PREC, info->name);
+}
+
+static void display(struct proc_global_info *global_info, struct proc_info *info, size_t num_pids) {
     reset_cursor();
     size_t header_rows = display_header();
 
     size_t num_rows_available = (size_t) win_size.ws_row - header_rows;
     size_t num_rows_to_display = MIN(num_pids, num_rows_available);
     for (size_t i = 0; i < num_rows_to_display; i++) {
-        display_row(info + i);
+        display_row(global_info, info + i);
     }
 
     for (size_t i = num_rows_to_display; i < num_rows_available; i++) {
@@ -101,13 +139,29 @@ static void display(struct proc_info *info, size_t num_pids) {
 static void update() {
     struct proc_info *info;
     size_t num_pids;
-    if (read_procfs_info(&info, &num_pids, 0)) {
+    if (read_procfs_info(&info, &num_pids, READ_PROCFS_SCHED)) {
         perror("read_procfs_info");
         exit(1);
     }
 
-    display(info, num_pids);
-    free_procfs_info(info);
+    struct proc_global_info current_global_info;
+    if (read_procfs_global_info(&current_global_info)) {
+        perror("read_procfs_global_info");
+        exit(1);
+    }
+
+    display(&current_global_info, info, num_pids);
+
+    if (prev_data) {
+        free_procfs_info(prev_data);
+    }
+    prev_data = info;
+    prev_data_num = num_pids;
+
+    if (!prev_global_data) {
+        prev_global_data = malloc(sizeof(struct proc_global_info));
+    }
+    *prev_global_data = current_global_info;
 }
 
 static void on_input(char *buffer, size_t amount_read) {
@@ -124,6 +178,8 @@ static void cleanup() {
     putchar('\n');
     enable_cursor();
     tcsetattr(STDOUT_FILENO, TCIOFLUSH, &tty_info);
+    free_procfs_info(prev_data);
+    free(prev_global_data);
 }
 
 int main() {
