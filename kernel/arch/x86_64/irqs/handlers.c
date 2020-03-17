@@ -105,7 +105,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
 
     if (vm_region && !current->kernel_task && !(task_state->error_code & 1) && address != vm_region->end &&
         !(vm_region->flags & VM_PROT_NONE) && !(vm_region->flags & VM_COW)) {
-        map_page(address & ~0xFFF, vm_region->flags);
+        map_page(address & ~0xFFF, vm_region->flags, current->process);
 
         if (vm_region->type == VM_PROCESS_ANON_MAPPING) {
             memset((void *) (address & ~0xFFF), 0, PAGE_SIZE);

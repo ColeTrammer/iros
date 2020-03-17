@@ -464,7 +464,7 @@ static struct procfs_buffer procfs_sched(struct procfs_data *data __attribute((u
 static struct procfs_buffer procfs_meminfo(struct procfs_data *data __attribute__((unused)),
                                            struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
-    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "TOTAL_MEMORY: %#lX\n", get_total_phys_memory());
+    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "TOTAL_MEMORY: %lu\n", get_total_phys_memory());
     return (struct procfs_buffer) { buffer, length };
 }
 

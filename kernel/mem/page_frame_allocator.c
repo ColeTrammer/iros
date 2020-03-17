@@ -33,7 +33,7 @@ void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
     }
 }
 
-uintptr_t get_next_phys_page() {
+uintptr_t get_next_phys_page(struct process *process) {
     spin_lock(&bitmap_lock);
 
     for (uintptr_t i = 0; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
@@ -46,6 +46,7 @@ uintptr_t get_next_phys_page() {
 
             spin_unlock(&bitmap_lock);
 
+            process->resident_memory += PAGE_SIZE;
             return bit_index * PAGE_SIZE;
         }
     }
@@ -54,17 +55,25 @@ uintptr_t get_next_phys_page() {
     return 0; // indicates there are no available physical pages
 }
 
-void free_phys_page(uintptr_t phys_addr) {
+void free_phys_page(uintptr_t phys_addr, struct process *process) {
     spin_lock(&bitmap_lock);
 
     set_bit(phys_addr / PAGE_SIZE, false);
+    if (process) {
+        process->resident_memory -= PAGE_SIZE;
+    }
 
     spin_unlock(&bitmap_lock);
 }
 
+static unsigned long phys_memory_total = 0;
 static unsigned long phys_memory_max = 0;
 
-unsigned long get_total_phys_memory() {
+unsigned long get_total_phys_memory(void) {
+    return phys_memory_total;
+}
+
+unsigned long get_max_phys_memory(void) {
     return phys_memory_max;
 }
 
@@ -81,6 +90,7 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
             while ((uint32_t *) mem < data + data[1] / sizeof(uint32_t)) {
                 if ((uint32_t) mem[2] == 2) {
                     mark_used(mem[0] & ~0xFFF, mem[1]);
+                    phys_memory_total += mem[1] - (mem[0] & ~0xFFF);
                     phys_memory_max = MAX((mem[0] & ~0xFFF) + mem[1], phys_memory_max);
                 }
                 mem += data[2] / sizeof(uintptr_t);

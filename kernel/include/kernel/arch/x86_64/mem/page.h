@@ -26,6 +26,8 @@
 extern void _temp_page();
 #define TEMP_PAGE ((uint64_t *) &_temp_page)
 
+struct process;
+
 struct virt_page_info {
     uint64_t pml4_index;
     uint64_t pdp_index;
@@ -37,10 +39,10 @@ struct virt_page_info {
     uintptr_t pt_entry;
 };
 
-void do_unmap_page(uintptr_t virt_addr, bool free_phys);
+void do_unmap_page(uintptr_t virt_addr, bool free_phys, struct process *process);
 
 void map_page_info(struct virt_page_info *info);
-struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags);
+struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags, struct process *process);
 
 void create_phys_id_map();
 

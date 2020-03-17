@@ -8,6 +8,7 @@
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/task.h>
 
 static int inode_map(struct vm_object *self, struct vm_region *region) {
     struct inode_vm_object_data *data = self->private_data;
@@ -22,8 +23,10 @@ static int inode_map(struct vm_object *self, struct vm_region *region) {
         }
     }
 
+    struct process *current = get_current_task()->process;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
-        map_phys_page(get_phys_addr((uintptr_t) data->inode_buffer + (i - region->start) + region->vm_object_offset), i, region->flags);
+        map_phys_page(get_phys_addr((uintptr_t) data->inode_buffer + (i - region->start) + region->vm_object_offset), i, region->flags,
+                      current);
     }
 
     return 0;

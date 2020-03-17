@@ -243,7 +243,7 @@ struct task *load_task(const char *file_name) {
     task->next = NULL;
 
     uintptr_t old_paging_structure = get_current_paging_structure();
-    uintptr_t structure = create_paging_structure(task->process->process_memory, false);
+    uintptr_t structure = create_paging_structure(task->process->process_memory, false, task->process);
     load_paging_structure(structure);
 
     elf64_load_program(buffer, length, task);

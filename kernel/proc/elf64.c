@@ -72,7 +72,7 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
 
         task->process->process_memory = add_vm_region(task->process->process_memory, to_add);
 
-        map_vm_region(to_add);
+        map_vm_region(to_add, task->process);
 
 #ifdef ELF64_DEBUG
         debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start, program_headers[i].p_offset,
@@ -82,7 +82,7 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
         memset((char *) program_section_start + program_headers[i].p_filesz, 0, program_headers[i].p_memsz - program_headers[i].p_filesz);
 
         to_add->flags = program_flags;
-        map_vm_region_flags(to_add);
+        map_vm_region_flags(to_add, task->process);
     }
 }
 

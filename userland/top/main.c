@@ -38,7 +38,7 @@
 #define VIRTUAL_MEM_SPECIFIER "ld"
 #define VIRTUAL_MEM_STRING    "VIRT"
 
-#define RESIDENT_MEM_WIDTH     6
+#define RESIDENT_MEM_WIDTH     8
 #define RESIDENT_MEM_PREC      0
 #define RESIDENT_MEM_FLAGS     ""
 #define RESIDENT_MEM_SPECIFIER "ld"
@@ -146,7 +146,7 @@ static void display_row(struct proc_info *info) {
     char *user_string = user ? user->pw_name : "unknown";
 
     double cpu_percent = compute_cpu_usage(info);
-    double mem_percent = info->resident_memory / current_global_info.total_memory;
+    double mem_percent = (double) info->resident_memory / (double) current_global_info.total_memory * 100;
 
     struct timespec now;
     if (clock_gettime(CLOCK_REALTIME, &now) < 0) {

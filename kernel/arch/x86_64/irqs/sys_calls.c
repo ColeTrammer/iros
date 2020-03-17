@@ -313,7 +313,7 @@ SYS_CALL(fork) {
 
     memcpy(&child->arch_task.task_state, task_state, sizeof(struct task_state));
     child->arch_task.task_state.cpu_state.rax = 0;
-    child_process->arch_process.cr3 = clone_process_paging_structure();
+    child_process->arch_process.cr3 = clone_process_paging_structure(child_process);
     child->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     child->arch_task.setup_kernel_stack = true;
     child->arch_task.user_thread_pointer = parent->arch_task.user_thread_pointer;
@@ -612,7 +612,7 @@ SYS_CALL(execve) {
     proc_clone_program_args(process, prepend_argv, argv, envp);
 
     /* Ensure File Name And Args Are Still Mapped */
-    soft_remove_paging_structure(current->process->process_memory);
+    soft_remove_paging_structure(current->process->process_memory, current->process);
 
     uintptr_t stack_end = proc_allocate_user_stack(process);
     task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, process->args_context);

@@ -17,22 +17,24 @@
 
 #define NUM_PAGES(start, end) ((((end) & ~0xFFF) - ((start) & ~0xFFF) + ((end) % PAGE_SIZE != 0 ? PAGE_SIZE : 0)) / PAGE_SIZE)
 
+struct process;
+
 void clear_initial_page_mappings();
 
 uintptr_t get_current_paging_structure();
-uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy);
-uintptr_t clone_process_paging_structure();
+uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy, struct process *process);
+uintptr_t clone_process_paging_structure(struct process *process);
 void load_paging_structure(uintptr_t phys_addr);
-void soft_remove_paging_structure(struct vm_region *list);
+void soft_remove_paging_structure(struct vm_region *list, struct process *process);
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list);
 
-void map_vm_region_flags(struct vm_region *region);
-void map_vm_region(struct vm_region *region);
+void map_vm_region_flags(struct vm_region *region, struct process *process);
+void map_vm_region(struct vm_region *region, struct process *process);
 
-void map_page(uintptr_t virt_addr, uint64_t flags);
+void map_page(uintptr_t virt_addr, uint64_t flags, struct process *process);
 void map_page_flags(uintptr_t virt_addr, uint64_t flags);
-void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags);
-void unmap_page(uintptr_t virt_addr);
+void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct process *process);
+void unmap_page(uintptr_t virt_addr, struct process *process);
 
 uintptr_t get_phys_addr(uintptr_t virt_addr);
 

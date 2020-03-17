@@ -37,7 +37,7 @@ extern struct process initial_kernel_process;
 void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 #if ARCH == X86_64
     kernel_phys_id.start = VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0);
-    kernel_phys_id.end = kernel_phys_id.start + get_total_phys_memory();
+    kernel_phys_id.end = kernel_phys_id.start + get_max_phys_memory();
     kernel_phys_id.flags = VM_NO_EXEC | VM_GLOBAL | VM_WRITE;
     kernel_phys_id.type = VM_KERNEL_PHYS_ID;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_phys_id);
@@ -68,7 +68,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
     initrd.type = VM_INITRD;
     kernel_vm_list = add_vm_region(kernel_vm_list, &initrd);
     for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
-        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags);
+        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags, &initial_kernel_process);
     }
 
     kernel_heap.start = initrd.end;
@@ -79,7 +79,7 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 
     clear_initial_page_mappings();
 
-    uintptr_t new_structure = create_paging_structure(kernel_vm_list, true);
+    uintptr_t new_structure = create_paging_structure(kernel_vm_list, true, &initial_kernel_process);
     load_paging_structure(new_structure);
 
 #if ARCH == X86_64
@@ -118,7 +118,7 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 0; i < n; i++) {
-        map_page(old_end + i * PAGE_SIZE, region->flags);
+        map_page(old_end + i * PAGE_SIZE, region->flags, list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
     }
 
     if (type <= VM_KERNEL_HEAP) {
@@ -156,7 +156,7 @@ void *add_vm_pages_start(size_t n, uint64_t type) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 1; i <= n; i++) {
-        map_page(old_start - i * PAGE_SIZE, region->flags);
+        map_page(old_start - i * PAGE_SIZE, region->flags, list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
     }
 
     if (type <= VM_KERNEL_HEAP) {
@@ -187,7 +187,7 @@ void remove_vm_pages_end(size_t n, uint64_t type) {
     }
 
     for (size_t i = 1; i <= n; i++) {
-        unmap_page(old_end - i * PAGE_SIZE);
+        unmap_page(old_end - i * PAGE_SIZE, list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
     }
 }
 
@@ -202,7 +202,7 @@ void *map_file(off_t length, uint64_t flags) {
     to_add->end = ((to_add->start + length) & ~0xFFF) + PAGE_SIZE;
     *list = add_vm_region(*list, to_add);
 
-    map_vm_region(to_add);
+    map_vm_region(to_add, get_current_task()->process);
 
     return (void *) to_add->start;
 }
@@ -229,7 +229,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 #endif /* MMAP_DEBUG */
 
             for (uintptr_t i = addr; i < addr + length; i += PAGE_SIZE) {
-                do_unmap_page(i, !r->vm_object);
+                do_unmap_page(i, !r->vm_object, process);
             }
 
             struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
@@ -256,7 +256,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 
             while (r->end != addr) {
                 r->end -= PAGE_SIZE;
-                do_unmap_page(r->end, !r->vm_object);
+                do_unmap_page(r->end, !r->vm_object, process);
             }
 
             length -= (end_save - addr);
@@ -271,7 +271,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 
             assert(r->start <= addr + length);
             while (r->start != addr + length) {
-                do_unmap_page(r->start, !r->vm_object);
+                do_unmap_page(r->start, !r->vm_object, process);
                 r->start += PAGE_SIZE;
                 r->vm_object_offset += PAGE_SIZE;
             }
@@ -290,7 +290,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 
         if (r->type != VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
             for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
-                do_unmap_page(i, !r->vm_object);
+                do_unmap_page(i, !r->vm_object, process);
             }
         }
 
@@ -509,8 +509,9 @@ void remove_vm_pages_start(size_t n, uint64_t type) {
         spin_unlock(&kernel_vm_lock);
     }
 
+    struct process *process = get_current_task()->process;
     for (size_t i = 0; i < n; i++) {
-        unmap_page(old_start + i * PAGE_SIZE);
+        unmap_page(old_start + i * PAGE_SIZE, process);
     }
 }
 

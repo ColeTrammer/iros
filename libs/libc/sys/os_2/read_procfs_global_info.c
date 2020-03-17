@@ -38,7 +38,7 @@ int read_procfs_global_info(struct proc_global_info *info, int flags) {
             return 1;
         }
 
-        READ_ENTRY(total_memory, "%lx");
+        READ_ENTRY(total_memory, "%lu");
 
         if (fclose(file)) {
             return 1;

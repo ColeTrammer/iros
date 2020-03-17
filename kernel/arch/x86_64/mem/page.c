@@ -19,6 +19,7 @@
 // #define MAP_VM_REGION_DEBUG
 
 static spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
+extern struct process initial_kernel_process;
 
 uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
@@ -49,7 +50,7 @@ static bool all_empty(uint64_t *page) {
     return true;
 }
 
-void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
+void do_unmap_page(uintptr_t virt_addr, bool free_phys, struct process *process) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -66,34 +67,35 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys) {
     }
 
     if (free_phys) {
-        free_phys_page(get_phys_addr(virt_addr));
+        free_phys_page(get_phys_addr(virt_addr), process);
     }
     pt[pt_offset] = 0;
     invlpg(virt_addr);
 
     if (all_empty(pt)) {
         if (free_phys) {
-            free_phys_page(get_phys_addr((uintptr_t) pt));
+            free_phys_page(get_phys_addr((uintptr_t) pt), process);
         }
         pd[pd_offset] = 0;
     }
 
     if (all_empty(pd)) {
         if (free_phys) {
-            free_phys_page(get_phys_addr((uintptr_t) pd));
+            free_phys_page(get_phys_addr((uintptr_t) pd), process);
         }
         pdp[pdp_offset] = 0;
     }
 
     if (all_empty(pdp)) {
         if (free_phys) {
-            free_phys_page(get_phys_addr((uintptr_t) pdp));
+            free_phys_page(get_phys_addr((uintptr_t) pdp), process);
         }
         pml4[pml4_offset] = 0;
     }
 }
 
-static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct virt_page_info *info) {
+static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct virt_page_info *info,
+                             struct process *process) {
     flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_SHARED | VM_PROT_NONE);
     flags |= 0x01;
 
@@ -108,19 +110,19 @@ static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t 
     uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
 
     if (!(*pml4_entry & 1)) {
-        *pml4_entry = get_next_phys_page() | VM_WRITE | (VM_USER & flags) | 0x01;
+        *pml4_entry = get_next_phys_page(process) | VM_WRITE | (VM_USER & flags) | 0x01;
         invlpg((uintptr_t) pdp_entry);
         memset(pdp_entry - pdp_offset, 0, PAGE_SIZE);
     }
 
     if (!(*pdp_entry & 1)) {
-        *pdp_entry = get_next_phys_page() | VM_WRITE | (VM_USER & flags) | 0x01;
+        *pdp_entry = get_next_phys_page(process) | VM_WRITE | (VM_USER & flags) | 0x01;
         invlpg((uintptr_t) pd_entry);
         memset(pd_entry - pd_offset, 0, PAGE_SIZE);
     }
 
     if (!(*pd_entry & 1)) {
-        *pd_entry = get_next_phys_page() | VM_WRITE | (VM_USER & flags) | 0x01;
+        *pd_entry = get_next_phys_page(process) | VM_WRITE | (VM_USER & flags) | 0x01;
         invlpg((uintptr_t) pt_entry);
         memset(pt_entry - pt_offset, 0, PAGE_SIZE);
     }
@@ -192,36 +194,36 @@ void clear_initial_page_mappings() {
     update_vga_buffer();
 
     for (size_t i = 0; i < 0x600000; i += PAGE_SIZE) {
-        do_unmap_page(i, false);
+        do_unmap_page(i, false, &initial_kernel_process);
     }
 }
 
-void map_page(uintptr_t virt_addr, uint64_t flags) {
-    do_map_phys_page(get_next_phys_page(), virt_addr, flags, NULL);
+void map_page(uintptr_t virt_addr, uint64_t flags, struct process *process) {
+    do_map_phys_page(get_next_phys_page(process), virt_addr, flags, NULL, process);
 }
 
-void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags) {
-    do_map_phys_page(phys_addr, virt_addr, flags, NULL);
+void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct process *process) {
+    do_map_phys_page(phys_addr, virt_addr, flags, NULL, process);
 }
 
-struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags) {
+struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags, struct process *process) {
     struct virt_page_info *info = calloc(1, sizeof(struct virt_page_info));
-    do_map_phys_page(get_next_phys_page(), virt_addr, flags, info);
+    do_map_phys_page(get_next_phys_page(process), virt_addr, flags, info, process);
     return info;
 }
 
-void unmap_page(uintptr_t virt_addr) {
-    do_unmap_page(virt_addr, true);
+void unmap_page(uintptr_t virt_addr, struct process *process) {
+    do_unmap_page(virt_addr, true, process);
 }
 
 uintptr_t get_current_paging_structure() {
     return get_current_task()->process->arch_process.cr3;
 }
 
-uintptr_t clone_process_paging_structure() {
+uintptr_t clone_process_paging_structure(struct process *process) {
     spin_lock(&temp_page_lock);
 
-    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+    map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
     uint64_t *pml4 = TEMP_PAGE;
 
     for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {
@@ -237,7 +239,7 @@ uintptr_t clone_process_paging_structure() {
 
     for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 3; i++) {
         if (PML4_BASE[i] != 0) {
-            map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+            map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
             uint64_t *temp_pdp = TEMP_PAGE;
             uint64_t *pdp = PDP_BASE + (0x1000 * i) / sizeof(uint64_t);
             for (uint64_t j = 0; j < MAX_PDP_ENTRIES; j++) {
@@ -248,7 +250,7 @@ uintptr_t clone_process_paging_structure() {
 
             for (uint64_t j = 0; j < MAX_PDP_ENTRIES; j++) {
                 if (pdp[j] != 0) {
-                    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                    map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
                     uint64_t *temp_pd = TEMP_PAGE;
                     uint64_t *pd = PD_BASE + (0x200000 * i + 0x1000 * j) / sizeof(uint64_t);
                     for (uint64_t k = 0; k < MAX_PD_ENTRIES; k++) {
@@ -260,7 +262,7 @@ uintptr_t clone_process_paging_structure() {
                     for (uint64_t k = 0; k < MAX_PD_ENTRIES; k++) {
                         uint64_t *pd = PD_BASE + (0x200000 * i + 0x1000 * j) / sizeof(uint64_t);
                         if (pd[k] != 0) {
-                            map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                            map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
                             uint64_t *temp_pt = TEMP_PAGE;
                             uint64_t *pt = PT_BASE + (0x40000000 * i + 0x200000 * j + 0x1000 * k) / sizeof(uint64_t);
                             for (uint64_t l = 0; l < MAX_PT_ENTRIES; l++) {
@@ -271,7 +273,7 @@ uintptr_t clone_process_paging_structure() {
 
                             for (uint64_t l = 0; l < MAX_PT_ENTRIES; l++) {
                                 if (pt[l] != 0 && !(pt[l] & VM_SHARED)) {
-                                    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                                    map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
                                     uint64_t *temp_page = TEMP_PAGE;
                                     uint64_t *page = (uint64_t *) VIRT_ADDR(i, j, k, l);
                                     memcpy(temp_page, page, PAGE_SIZE);
@@ -294,10 +296,10 @@ uintptr_t clone_process_paging_structure() {
     return pml4_addr;
 }
 
-uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
+uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy, struct process *process) {
     spin_lock(&temp_page_lock);
 
-    map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+    map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
     uint64_t *pml4 = TEMP_PAGE;
 
     for (uint64_t i = 0; i < MAX_PML4_ENTRIES - 1; i++) {
@@ -320,7 +322,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
                         for (uint64_t k = 0; k < MAX_PD_ENTRIES; k++) {
                             uint64_t *pd = PD_BASE + (0x200000 * i + 0x1000 * j) / sizeof(uint64_t);
                             if (pd[k] != 0) {
-                                map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                                map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
                                 uint64_t *pt = TEMP_PAGE;
                                 uint64_t *old_pt = PT_BASE + (0x40000000 * i + 0x200000 * j + 0x1000 * k) / sizeof(uint64_t);
                                 for (uint64_t l = 0; l < MAX_PT_ENTRIES; l++) {
@@ -331,7 +333,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
                             }
                         }
 
-                        map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                        map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
                         uint64_t *pd = TEMP_PAGE;
                         uint64_t *old_pd = PD_BASE + (0x200000 * i + 0x1000 * j) / sizeof(uint64_t);
                         for (uint64_t k = 0; k < MAX_PD_ENTRIES; k++) {
@@ -342,7 +344,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
                     }
                 }
 
-                map_page((uintptr_t) TEMP_PAGE, VM_WRITE);
+                map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
                 uint64_t *pdp = TEMP_PAGE;
                 uint64_t *old_pdp = PDP_BASE + (0x1000 * i) / sizeof(uint64_t);
                 for (uint64_t j = 0; j < MAX_PDP_ENTRIES; j++) {
@@ -355,7 +357,7 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
 
         while (list != NULL) {
             if (list->type != VM_KERNEL_PHYS_ID) {
-                map_vm_region_flags(list);
+                map_vm_region_flags(list, process);
             }
             list = list->next;
         }
@@ -371,9 +373,9 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy) {
 
 void create_phys_id_map() {
     // Map entries at PML4_MAX - 3 to a replica of phys memory
-    debug_log("Mapping physical address identity map: [ %#lX ]\n", get_total_phys_memory());
-    for (uintptr_t i = 0; i < get_total_phys_memory(); i += PAGE_SIZE) {
-        map_phys_page(i, VIRT_ADDR(MAX_PML4_ENTRIES - 3UL, 0, 0, 0) + i, VM_WRITE | VM_GLOBAL | VM_NO_EXEC);
+    debug_log("Mapping physical address identity map: [ %#lX ]\n", get_max_phys_memory());
+    for (uintptr_t i = 0; i < get_max_phys_memory(); i += PAGE_SIZE) {
+        map_phys_page(i, VIRT_ADDR(MAX_PML4_ENTRIES - 3UL, 0, 0, 0) + i, VM_WRITE | VM_GLOBAL | VM_NO_EXEC, &initial_kernel_process);
     }
 }
 
@@ -382,12 +384,12 @@ void load_paging_structure(uintptr_t phys_addr) {
     load_cr3(phys_addr);
 }
 
-void soft_remove_paging_structure(struct vm_region *list) {
+void soft_remove_paging_structure(struct vm_region *list, struct process *process) {
     struct vm_region *region = list;
     while (region != NULL) {
         if (!(region->flags & VM_GLOBAL) && !(region->type == VM_KERNEL_STACK)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-                unmap_page(page);
+                unmap_page(page, process);
             }
         }
         region = region->next;
@@ -419,9 +421,9 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
                     continue;
                 } else if (region->vm_object != NULL) {
                     // NOTE: The vm object is responsible for unmapping the physical pages
-                    do_unmap_page(page, false);
+                    do_unmap_page(page, false, NULL);
                 } else {
-                    unmap_page(page);
+                    unmap_page(page, NULL);
                 }
             }
         }
@@ -429,21 +431,21 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     }
 
     load_cr3(old_cr3);
-    free_phys_page(phys_addr);
+    free_phys_page(phys_addr, NULL);
 }
 
-void map_vm_region_flags(struct vm_region *region) {
+void map_vm_region_flags(struct vm_region *region, struct process *process) {
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
-        map_phys_page(get_phys_addr(addr), addr, region->flags);
+        map_phys_page(get_phys_addr(addr), addr, region->flags, process);
     }
 }
 
-void map_vm_region(struct vm_region *region) {
+void map_vm_region(struct vm_region *region, struct process *process) {
 #ifdef MAP_VM_REGION_DEBUG
     debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start,
               region->end);
 #endif /* MAP_VM_REGION_DEBUG */
     for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
-        map_page(addr, region->flags);
+        map_page(addr, region->flags, process);
     }
 }
