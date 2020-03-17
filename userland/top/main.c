@@ -56,9 +56,15 @@
 #define CPU_SPECIFIER "f"
 #define CPU_STRING    "%CPU"
 
-#define NAME_WIDTH     \
-    (win_size.ws_col - \
-     (PID_WIDTH + USER_WIDTH + PRIORITY_WIDTH + NICE_WIDTH + VIRTUAL_MEM_WIDTH + RESIDENT_MEM_WIDTH + STATUS_WIDTH + CPU_WIDTH + 8))
+#define TIME_WIDTH     9
+#define TIME_PREC      9
+#define TIME_FLAGS     ""
+#define TIME_SPECIFIER "s"
+#define TIME_STRING    "TIME+"
+
+#define NAME_WIDTH                                                                                                                     \
+    (win_size.ws_col - (PID_WIDTH + USER_WIDTH + PRIORITY_WIDTH + NICE_WIDTH + VIRTUAL_MEM_WIDTH + RESIDENT_MEM_WIDTH + STATUS_WIDTH + \
+                        CPU_WIDTH + TIME_WIDTH + 9))
 #define NAME_PREC      NAME_WIDTH
 #define NAME_FLAGS     "-"
 #define NAME_SPECIFIER "s"
@@ -66,11 +72,12 @@
 
 #define FORMAT_STRING_HEADER                                                                                                             \
     "%" PID_FLAGS "*.*s %" USER_FLAGS "*.*s %" VIRTUAL_MEM_FLAGS "*.*s %" PRIORITY_FLAGS "*.*s %" NICE_FLAGS "*.*s %" RESIDENT_MEM_FLAGS \
-    "*.*s %" STATUS_FLAGS "*.*s %" CPU_FLAGS "*.*s %" NAME_FLAGS "*.*s\n"
+    "*.*s %" STATUS_FLAGS "*.*s %" CPU_FLAGS "*.*s %" TIME_FLAGS "*.*s %" NAME_FLAGS "*.*s\n"
 #define FORMAT_STRING_ROW                                                                                                               \
     "%" PID_FLAGS "*.*" PID_SPECIFIER " %" USER_FLAGS "*.*" USER_SPECIFIER " %" PRIORITY_FLAGS "*.*" PRIORITY_SPECIFIER " %" NICE_FLAGS \
     "*.*" NICE_SPECIFIER " %" VIRTUAL_MEM_FLAGS "*.*" VIRTUAL_MEM_SPECIFIER " %" RESIDENT_MEM_FLAGS "*.*" RESIDENT_MEM_SPECIFIER        \
-    " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" CPU_FLAGS "*.*" CPU_SPECIFIER " %" NAME_FLAGS "*.*" NAME_SPECIFIER "\n"
+    " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" CPU_FLAGS "*.*" CPU_SPECIFIER " %" TIME_FLAGS "*.*" TIME_SPECIFIER " %" NAME_FLAGS    \
+    "*.*" NAME_SPECIFIER "\n"
 
 static struct winsize win_size;
 static struct termios tty_info;
@@ -95,7 +102,7 @@ static size_t display_header() {
     printf("\033[7m" FORMAT_STRING_HEADER "\033[0m", PID_WIDTH, PID_WIDTH, PID_STRING, USER_WIDTH, USER_WIDTH, USER_STRING, PRIORITY_WIDTH,
            PRIORITY_WIDTH, PRIORITY_STRING, NICE_WIDTH, NICE_WIDTH, NICE_STRING, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_STRING,
            RESIDENT_MEM_WIDTH, RESIDENT_MEM_WIDTH, RESIDENT_MEM_STRING, STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, CPU_WIDTH, CPU_WIDTH,
-           CPU_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
+           CPU_STRING, TIME_WIDTH, TIME_WIDTH, TIME_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
     return 1;
 }
 
@@ -129,10 +136,27 @@ static void display_row(struct proc_global_info *global_info, struct proc_info *
         cpu_percent = (double) d_process_ticks / (double) d_total_ticks * 100;
     }
 
+    struct timespec now;
+    if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+        perror("clock_gettime");
+        exit(1);
+    }
+    struct timespec delta = { .tv_sec = now.tv_sec - info->start_time.tv_sec, .tv_nsec = now.tv_nsec - info->start_time.tv_nsec };
+    double seconds = delta.tv_sec + delta.tv_nsec / 1000000000.0;
+    long int_seconds = (int) seconds;
+    seconds -= int_seconds;
+    seconds *= 100;
+
+    long minutes = int_seconds / 60;
+    int_seconds %= 60;
+
+    char time_string[80];
+    snprintf(time_string, sizeof(time_string) - 1, "%ld:%02ld.%02d", minutes, int_seconds, (int) seconds);
+
     printf(FORMAT_STRING_ROW, PID_WIDTH, PID_PREC, info->pid, USER_WIDTH, USER_PREC, user_string, PRIORITY_WIDTH, PRIORITY_PREC,
            info->priority, NICE_WIDTH, NICE_PREC, info->nice, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_PREC, info->virtual_memory, RESIDENT_MEM_WIDTH,
-           RESIDENT_MEM_PREC, info->resident_memory, STATUS_WIDTH, STATUS_PREC, info->state, CPU_WIDTH, CPU_PREC, cpu_percent, NAME_WIDTH,
-           NAME_PREC, info->name);
+           RESIDENT_MEM_PREC, info->resident_memory, STATUS_WIDTH, STATUS_PREC, info->state, CPU_WIDTH, CPU_PREC, cpu_percent, TIME_WIDTH,
+           TIME_PREC, time_string, NAME_WIDTH, NAME_PREC, info->name);
 }
 
 static void display(struct proc_global_info *global_info, struct proc_info *info, size_t num_pids) {

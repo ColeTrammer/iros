@@ -103,6 +103,8 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
             READ_PROCFS_FIELD(nice, "%d");
             READ_PROCFS_FIELD(virtual_memory, "%lu");
             READ_PROCFS_FIELD(resident_memory, "%lu");
+            READ_PROCFS_FIELD(start_time.tv_sec, "%lu");
+            READ_PROCFS_FIELD(start_time.tv_nsec, "%lu");
 
             if (fclose(file)) {
                 goto read_procfs_info_fail;

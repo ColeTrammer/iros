@@ -329,6 +329,7 @@ SYS_CALL(fork) {
     child->process->egid = parent->process->egid;
     child->process->sid = parent->process->sid;
     child->process->umask = parent->process->umask;
+    child->process->start_time = time_read_clock(CLOCK_REALTIME);
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
     child_process->exe = bump_tnode(parent->process->exe);
@@ -571,6 +572,7 @@ SYS_CALL(execve) {
     process->sid = current->process->sid;
     process->umask = current->process->umask;
     process->process_memory = kernel_stack;
+    process->start_time = time_read_clock(CLOCK_REALTIME);
 
     task->kernel_task = false;
     task->sched_state = RUNNING_INTERRUPTIBLE;

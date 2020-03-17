@@ -5,6 +5,7 @@
 #include <bits/clockid_t.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <time.h>
 
 #define MUTEX_AQUIRE           1
 #define MUTEX_WAKE_AND_SET     3
@@ -58,6 +59,7 @@ struct proc_info {
     int nice;
     size_t virtual_memory;
     size_t resident_memory;
+    struct timespec start_time;
     uint64_t user_ticks;
     uint64_t kernel_ticks;
 };

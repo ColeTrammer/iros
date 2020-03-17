@@ -176,6 +176,7 @@ void init_kernel_task() {
     initial_kernel_task.process->pgid = 1;
     initial_kernel_task.process->ppid = 1;
     initial_kernel_task.process->tty = -1;
+    initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
 }
 
 struct task *load_kernel_task(uintptr_t entry, const char *name) {
@@ -197,6 +198,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->process->cwd = NULL;
     task->next = NULL;
     process->name = strdup(name);
+    process->start_time = time_read_clock(CLOCK_REALTIME);
 
     arch_load_kernel_task(task, entry);
 
@@ -236,6 +238,7 @@ struct task *load_task(const char *file_name) {
     task->process->cwd = bump_tnode(fs_root());
     task->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
     task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
+    task->process->start_time = time_read_clock(CLOCK_REALTIME);
 
     task->next = NULL;
 

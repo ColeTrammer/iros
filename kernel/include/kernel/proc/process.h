@@ -62,6 +62,8 @@ struct process {
 
     struct tms times;
 
+    struct timespec start_time;
+
     // TLS info
     void *tls_master_copy_start;
     size_t tls_master_copy_size;
