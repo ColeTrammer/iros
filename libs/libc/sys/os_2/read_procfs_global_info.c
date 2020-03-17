@@ -2,11 +2,13 @@
 #include <strings.h>
 #include <sys/os_2.h>
 
-int read_procfs_global_info(struct proc_global_info *info) {
-    FILE *file = fopen("/proc/sched", "r");
-    if (!file) {
-        return 1;
-    }
+int read_procfs_global_info(struct proc_global_info *info, int flags) {
+    FILE *file = NULL;
+    if (flags & READ_PROCFS_GLOBAL_SCHED) {
+        file = fopen("/proc/sched", "r");
+        if (!file) {
+            return 1;
+        }
 
 #define READ_ENTRY(name, spec)                                             \
     do {                                                                   \
@@ -21,11 +23,29 @@ int read_procfs_global_info(struct proc_global_info *info) {
         }                                                                  \
     } while (0)
 
-    READ_ENTRY(idle_ticks, "%lu");
-    READ_ENTRY(user_ticks, "%lu");
-    READ_ENTRY(kernel_ticks, "%lu");
+        READ_ENTRY(idle_ticks, "%lu");
+        READ_ENTRY(user_ticks, "%lu");
+        READ_ENTRY(kernel_ticks, "%lu");
 
-    return fclose(file);
+        if (fclose(file)) {
+            return 1;
+        }
+    }
+
+    if (flags & READ_PROCFS_GLOBAL_MEMINFO) {
+        file = fopen("/proc/meminfo", "r");
+        if (!file) {
+            return 1;
+        }
+
+        READ_ENTRY(total_memory, "%lx");
+
+        if (fclose(file)) {
+            return 1;
+        }
+    }
+
+    return 0;
 
 fail:
     fclose(file);

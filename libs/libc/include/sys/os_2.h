@@ -17,6 +17,9 @@
 
 #define READ_PROCFS_SCHED 1
 
+#define READ_PROCFS_GLOBAL_SCHED   1
+#define READ_PROCFS_GLOBAL_MEMINFO 2
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -65,6 +68,7 @@ struct proc_info {
 };
 
 struct proc_global_info {
+    uintptr_t total_memory;
     uint64_t idle_ticks;
     uint64_t user_ticks;
     uint64_t kernel_ticks;
@@ -81,7 +85,7 @@ int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
 int read_procfs_info(struct proc_info **info, size_t *length, int flags);
 void free_procfs_info(struct proc_info *info);
 
-int read_procfs_global_info(struct proc_global_info *info);
+int read_procfs_global_info(struct proc_global_info *info, int flags);
 
 #ifdef __cplusplus
 }
