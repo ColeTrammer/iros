@@ -83,6 +83,7 @@ static struct winsize win_size;
 static struct termios tty_info;
 
 static struct proc_global_info *prev_global_data;
+static struct proc_global_info current_global_info;
 static struct proc_info *prev_data;
 static size_t prev_data_num;
 
@@ -118,23 +119,27 @@ static int prev_process_ticks(pid_t pid, uint64_t *out_ticks) {
     return 1;
 }
 
-static void display_row(struct proc_global_info *global_info, struct proc_info *info) {
-    struct passwd *user = getpwuid(info->uid);
-    char *user_string = user ? user->pw_name : "unknown";
+static double compute_cpu_usage(const struct proc_info *info) {
     uint64_t total_process_ticks = info->user_ticks + info->kernel_ticks;
-    uint64_t total_ticks = global_info->idle_ticks + global_info->user_ticks + global_info->kernel_ticks;
+    uint64_t total_ticks = current_global_info.idle_ticks + current_global_info.user_ticks + current_global_info.kernel_ticks;
 
-    double cpu_percent;
     if (!prev_data || !prev_global_data) {
-        cpu_percent = (double) total_process_ticks / (double) total_ticks * 100;
+        return (double) total_process_ticks / (double) total_ticks * 100;
     } else {
         uint64_t prev_ticks = 0.0;
         prev_process_ticks(info->pid, &prev_ticks);
 
         uint64_t d_total_ticks = total_ticks - prev_global_data->idle_ticks - prev_global_data->user_ticks - prev_global_data->kernel_ticks;
         uint64_t d_process_ticks = total_process_ticks - prev_ticks;
-        cpu_percent = (double) d_process_ticks / (double) d_total_ticks * 100;
+        return (double) d_process_ticks / (double) d_total_ticks * 100;
     }
+}
+
+static void display_row(struct proc_info *info) {
+    struct passwd *user = getpwuid(info->uid);
+    char *user_string = user ? user->pw_name : "unknown";
+
+    double cpu_percent = compute_cpu_usage(info);
 
     struct timespec now;
     if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
@@ -159,14 +164,14 @@ static void display_row(struct proc_global_info *global_info, struct proc_info *
            TIME_PREC, time_string, NAME_WIDTH, NAME_PREC, info->name);
 }
 
-static void display(struct proc_global_info *global_info, struct proc_info *info, size_t num_pids) {
+static void display(struct proc_info *info, size_t num_pids) {
     reset_cursor();
     size_t header_rows = display_header();
 
     size_t num_rows_available = (size_t) win_size.ws_row - header_rows;
     size_t num_rows_to_display = MIN(num_pids, num_rows_available);
     for (size_t i = 0; i < num_rows_to_display; i++) {
-        display_row(global_info, info + i);
+        display_row(info + i);
     }
 
     for (size_t i = num_rows_to_display; i < num_rows_available; i++) {
@@ -174,6 +179,14 @@ static void display(struct proc_global_info *global_info, struct proc_info *info
         snprintf(buffer, sizeof(buffer) - 1, "%%%us%s", win_size.ws_col, i == num_rows_available - 1 ? "" : "\n");
         printf(buffer, "");
     }
+}
+
+static int proc_info_compar(const void *_i1, const void *_i2) {
+    const struct proc_info *i1 = _i1;
+    const struct proc_info *i2 = _i2;
+    double c1 = compute_cpu_usage(i1);
+    double c2 = compute_cpu_usage(i2);
+    return c1 < c2 ? 1 : c1 == c2 ? 0 : -1;
 }
 
 static void update() {
@@ -184,13 +197,13 @@ static void update() {
         exit(1);
     }
 
-    struct proc_global_info current_global_info;
     if (read_procfs_global_info(&current_global_info)) {
         perror("read_procfs_global_info");
         exit(1);
     }
 
-    display(&current_global_info, info, num_pids);
+    qsort(info, num_pids, sizeof(struct proc_info), proc_info_compar);
+    display(info, num_pids);
 
     if (prev_data) {
         free_procfs_info(prev_data);
