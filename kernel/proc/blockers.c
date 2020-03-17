@@ -256,7 +256,8 @@ void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t
 static bool select_timeout_blocker(struct block_info *info) {
     assert(info->type == SELECT_TIMEOUT);
 
-    if (time_compare(time_read_clock(CLOCK_MONOTONIC), info->select_timeout_info.end_time) >= 0) {
+    struct timespec now = time_read_clock(CLOCK_MONOTONIC);
+    if (time_compare(now, info->select_timeout_info.end_time) >= 0) {
         return true;
     }
 

@@ -1655,6 +1655,9 @@ SYS_CALL(pselect) {
     }
 
     int count = 0;
+    uint8_t *read_fds_found = NULL;
+    uint8_t *write_fds_found = NULL;
+    uint8_t *except_fds_found = NULL;
 
     if (nfds > FOPEN_MAX) {
         count = -EINVAL;
@@ -1663,19 +1666,16 @@ SYS_CALL(pselect) {
 
     struct timespec start = time_read_clock(CLOCK_MONOTONIC);
 
-    uint8_t *read_fds_found = NULL;
     if (readfds) {
         read_fds_found = alloca(fd_set_size);
         memcpy(read_fds_found, readfds, fd_set_size);
     }
 
-    uint8_t *write_fds_found = NULL;
     if (writefds) {
         write_fds_found = alloca(fd_set_size);
         memcpy(write_fds_found, writefds, fd_set_size);
     }
 
-    uint8_t *except_fds_found = NULL;
     if (exceptfds) {
         except_fds_found = alloca(fd_set_size);
         memcpy(except_fds_found, exceptfds, fd_set_size);
@@ -1758,6 +1758,7 @@ SYS_CALL(pselect) {
                           create_phys_addr_mapping_from_virt_addr(except_fds_found));
     }
 
+pselect_return:
     for (size_t i = 0; i < fd_set_size; i++) {
         if (readfds) {
             readfds[i] ^= read_fds_found[i];
@@ -1770,7 +1771,6 @@ SYS_CALL(pselect) {
         }
     }
 
-pselect_return:
     if (current->in_sigsuspend) {
         SYS_RETURN_RESTORE_SIGMASK(count);
     }
