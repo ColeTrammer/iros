@@ -106,11 +106,12 @@ static void disable_cursor() {
 }
 
 static size_t display_header() {
+    printf("%*s\n", win_size.ws_col, "");
     printf("\033[7m" FORMAT_STRING_HEADER "\033[0m", PID_WIDTH, PID_WIDTH, PID_STRING, USER_WIDTH, USER_WIDTH, USER_STRING, PRIORITY_WIDTH,
            PRIORITY_WIDTH, PRIORITY_STRING, NICE_WIDTH, NICE_WIDTH, NICE_STRING, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_STRING,
            RESIDENT_MEM_WIDTH, RESIDENT_MEM_WIDTH, RESIDENT_MEM_STRING, STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, CPU_WIDTH, CPU_WIDTH,
            CPU_STRING, MEM_WIDTH, MEM_WIDTH, MEM_STRING, TIME_WIDTH, TIME_WIDTH, TIME_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
-    return 1;
+    return 2;
 }
 
 static int prev_process_ticks(pid_t pid, uint64_t *out_ticks) {
@@ -182,9 +183,7 @@ static void display(struct proc_info *info, size_t num_pids) {
     }
 
     for (size_t i = num_rows_to_display; i < num_rows_available; i++) {
-        char buffer[255];
-        snprintf(buffer, sizeof(buffer) - 1, "%%%us%s", win_size.ws_col, i == num_rows_available - 1 ? "" : "\n");
-        printf(buffer, "");
+        printf("%*s\n", win_size.ws_col, "");
     }
 }
 
