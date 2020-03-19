@@ -858,10 +858,15 @@ int fs_truncate(struct file *file, off_t length) {
 int fs_mkdir(const char *_path, mode_t mode) {
     mode &= ~get_current_task()->process->umask;
 
-    char *path = malloc(strlen(_path) + 1);
-    strcpy(path, _path);
+    size_t length = strlen(_path);
+    char *path = malloc(length + 1);
+    memcpy(path, _path, length);
+    path[length] = '\0';
 
-    char *last_slash = strrchr(path, '/');
+    char *last_slash;
+    do {
+        last_slash = strrchr(path, '/');
+    } while (last_slash && (last_slash == path + length - 1) && (*last_slash = '\0', length--, 1));
     struct tnode *tparent;
 
     int ret = 0;
