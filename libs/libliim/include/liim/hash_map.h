@@ -7,11 +7,13 @@
 
 namespace LIIM {
 
+#ifdef __cpp_concepts
 template<typename T>
 concept Hashable = requires(T a, T b) {
     Traits<T>::hash(a);
     a == b;
 };
+#endif /* __cpp_concepts */
 
 template<typename K, typename V>
 struct HashMapObj {

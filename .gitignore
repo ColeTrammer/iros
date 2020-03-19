@@ -1,7 +1,7 @@
 # Project Specific
 sysroot/
 isodir/
-build/
+build*/
 ports/
 mnt/
 toolchain/
