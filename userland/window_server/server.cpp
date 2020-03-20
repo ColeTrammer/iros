@@ -16,6 +16,12 @@
 
 Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
     : m_manager(make_unique<WindowManager>(fb, front_buffer, back_buffer)) {
+    m_kbd_fd = open("/dev/keyboard", O_RDONLY);
+    assert(m_kbd_fd != -1);
+
+    m_mouse_fd = open("/dev/mouse", O_RDONLY);
+    assert(m_mouse_fd != -1);
+
     m_socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     assert(m_socket_fd != -1);
 
@@ -80,6 +86,8 @@ void Server::start() {
 
         FD_ZERO(&set);
         FD_SET(m_socket_fd, &set);
+        FD_SET(m_kbd_fd, &set);
+        FD_SET(m_mouse_fd, &set);
         m_clients.for_each([&](int fd) {
             FD_SET(fd, &set);
         });
@@ -122,6 +130,30 @@ void Server::start() {
                     break;
             }
         });
+
+        if (FD_ISSET(m_kbd_fd, &set)) {
+            key_event event;
+            assert(read(m_kbd_fd, &event, sizeof(event)) == sizeof(event));
+
+            auto* active_window = m_manager->active_window();
+            if (active_window) {
+                auto to_send = WindowServer::Message::KeyEventMessage::create(event);
+                assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                       static_cast<ssize_t>(to_send->total_size()));
+            }
+        }
+
+        if (FD_ISSET(m_mouse_fd, &set)) {
+            mouse_event event;
+            assert(read(m_mouse_fd, &event, sizeof(event)) == sizeof(event));
+
+            auto* active_window = m_manager->active_window();
+            if (active_window) {
+                auto to_send = WindowServer::Message::MouseEventMessage::create(event);
+                assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                       static_cast<ssize_t>(to_send->total_size()));
+            }
+        }
 
         if (FD_ISSET(m_socket_fd, &set)) {
             int client_fd = accept4(m_socket_fd, (sockaddr*) &client_addr, &client_addr_len, SOCK_NONBLOCK);

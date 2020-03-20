@@ -22,6 +22,9 @@ public:
 
     void draw();
 
+    Window* active_window() { return m_active_window; }
+    const Window* active_window() const { return m_active_window; };
+
 private:
     void swap_buffers();
 
@@ -29,4 +32,5 @@ private:
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
     Vector<SharedPtr<Window>> m_windows;
+    Window* m_active_window { nullptr };
 };

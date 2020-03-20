@@ -57,16 +57,138 @@ void Application::switch_to(int tty_number) {
     current_tty().switch_to();
 }
 
+bool Application::handle_mouse_event(mouse_event event) {
+    auto& tty = current_tty().tty();
+    if (event.scroll_state == SCROLL_UP) {
+        tty.scroll_up();
+    } else if (event.scroll_state == SCROLL_DOWN) {
+        tty.scroll_down();
+    }
+
+    return false;
+}
+
+bool Application::handle_keyboard_event(key_event event) {
+    int mfd = current_mfd();
+    auto& tty = current_tty().tty();
+    if (event.flags & KEY_DOWN) {
+        if (event.flags & KEY_SHIFT_ON && !(event.flags & KEY_ALT_ON) && !(event.flags & KEY_CONTROL_ON)) {
+            if (event.key == KEY_HOME) {
+                tty.scroll_to_top();
+                return true;
+            } else if (event.key == KEY_END) {
+                tty.scroll_to_bottom();
+                return true;
+            }
+        }
+        if (event.flags & KEY_CONTROL_ON) {
+            event.ascii &= 0x1F;
+            switch (event.key) {
+                case KEY_BACKSPACE: {
+                    // NOTE: no one knows what this should be...
+                    char c = 'W' & 0x1F;
+                    write(mfd, &c, 1);
+                    break;
+                }
+                case KEY_DELETE:
+                    write(mfd, "\033[3;5~", 6);
+                    break;
+                case KEY_PAGE_UP:
+                    write(mfd, "\033[5~", 4);
+                    break;
+                case KEY_PAGE_DOWN:
+                    write(mfd, "\033[6~", 4);
+                    break;
+                case KEY_CURSOR_UP:
+                    write(mfd, "\033[1;5A", 6);
+                    break;
+                case KEY_CURSOR_DOWN:
+                    write(mfd, "\033[1;5B", 6);
+                    break;
+                case KEY_CURSOR_RIGHT:
+                    write(mfd, "\033[1;5C", 6);
+                    break;
+                case KEY_CURSOR_LEFT:
+                    write(mfd, "\033[1;5D", 6);
+                    break;
+                case KEY_HOME:
+                    write(mfd, "\033[1;5H", 6);
+                    break;
+                case KEY_END:
+                    write(mfd, "\033[1;5F", 6);
+                    break;
+                case KEY_1:
+                    switch_to(0);
+                    break;
+                case KEY_2:
+                    switch_to(1);
+                    break;
+                case KEY_3:
+                    switch_to(2);
+                    break;
+                case KEY_4:
+                    switch_to(3);
+                    break;
+                default:
+                    if (event.ascii != '\0') {
+                        write(mfd, &event.ascii, 1);
+                    }
+                    break;
+            }
+        } else {
+            switch (event.key) {
+                case KEY_DELETE:
+                    write(mfd, "\033[3~", 4);
+                    break;
+                case KEY_PAGE_UP:
+                    write(mfd, "\033[5~", 4);
+                    break;
+                case KEY_PAGE_DOWN:
+                    write(mfd, "\033[6~", 4);
+                    break;
+                case KEY_CURSOR_UP:
+                    write(mfd, "\033[A", 3);
+                    break;
+                case KEY_CURSOR_DOWN:
+                    write(mfd, "\033[B", 3);
+                    break;
+                case KEY_CURSOR_RIGHT:
+                    write(mfd, "\033[C", 3);
+                    break;
+                case KEY_CURSOR_LEFT:
+                    write(mfd, "\033[D", 3);
+                    break;
+                case KEY_HOME:
+                    write(mfd, "\033[H", 3);
+                    break;
+                case KEY_END:
+                    write(mfd, "\033[F", 3);
+                    break;
+                default:
+                    if (event.ascii != '\0') {
+                        write(mfd, &event.ascii, 1);
+                    }
+                    break;
+            }
+        }
+    }
+
+    return false;
+}
+
 int Application::run() {
+#ifdef KERNEL_NO_GRAPHICS
     int kfd = open("/dev/keyboard", O_RDONLY);
     assert(kfd != -1);
 
     int mouse_fd = open("/dev/mouse", O_RDONLY);
     assert(mouse_fd != -1);
 
-    char buf[4096];
     mouse_event mouse_event;
     key_event event;
+#endif /* KERNEL_NO_GRAPHICS */
+
+    char buf[4096];
 
     fd_set set;
 
@@ -80,9 +202,13 @@ int Application::run() {
         auto& tty = current_tty().tty();
 
         FD_ZERO(&set);
+        FD_SET(mfd, &set);
+#ifdef KERNEL_NO_GRAPHICS
         FD_SET(mouse_fd, &set);
         FD_SET(kfd, &set);
-        FD_SET(mfd, &set);
+#else
+        FD_SET(m_container.connection().fd(), &set);
+#endif /* KERNEL_NO_GRAPHICS */
 
         int ret = pselect(FD_SETSIZE, &set, nullptr, nullptr, nullptr, &sigmask);
         assert(ret != 0);
@@ -99,121 +225,45 @@ int Application::run() {
             return 1;
         }
 
+#ifdef KERNEL_NO_GRAPHICS
         if (FD_ISSET(mouse_fd, &set)) {
             if (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
-                if (mouse_event.scroll_state == SCROLL_UP) {
-                    tty.scroll_up();
-                } else if (mouse_event.scroll_state == SCROLL_DOWN) {
-                    tty.scroll_down();
+                if (handle_mouse_event(tty, mouse_event)) {
+                    continue;
                 }
             }
         }
 
         if (FD_ISSET(kfd, &set)) {
             if (read(kfd, &event, sizeof(key_event)) == sizeof(key_event)) {
-                if (event.flags & KEY_DOWN) {
-                    if (event.flags & KEY_SHIFT_ON && !(event.flags & KEY_ALT_ON) && !(event.flags & KEY_CONTROL_ON)) {
-                        if (event.key == KEY_HOME) {
-                            tty.scroll_to_top();
-                            continue;
-                        } else if (event.key == KEY_END) {
-                            tty.scroll_to_bottom();
-                            continue;
-                        }
-                    }
-                    if (event.flags & KEY_CONTROL_ON) {
-                        event.ascii &= 0x1F;
-                        switch (event.key) {
-                            case KEY_BACKSPACE: {
-                                // NOTE: no one knows what this should be...
-                                char c = 'W' & 0x1F;
-                                write(mfd, &c, 1);
-                                break;
-                            }
-                            case KEY_DELETE:
-                                write(mfd, "\033[3;5~", 6);
-                                break;
-                            case KEY_PAGE_UP:
-                                write(mfd, "\033[5~", 4);
-                                break;
-                            case KEY_PAGE_DOWN:
-                                write(mfd, "\033[6~", 4);
-                                break;
-                            case KEY_CURSOR_UP:
-                                write(mfd, "\033[1;5A", 6);
-                                break;
-                            case KEY_CURSOR_DOWN:
-                                write(mfd, "\033[1;5B", 6);
-                                break;
-                            case KEY_CURSOR_RIGHT:
-                                write(mfd, "\033[1;5C", 6);
-                                break;
-                            case KEY_CURSOR_LEFT:
-                                write(mfd, "\033[1;5D", 6);
-                                break;
-                            case KEY_HOME:
-                                write(mfd, "\033[1;5H", 6);
-                                break;
-                            case KEY_END:
-                                write(mfd, "\033[1;5F", 6);
-                                break;
-                            case KEY_1:
-                                switch_to(0);
-                                break;
-                            case KEY_2:
-                                switch_to(1);
-                                break;
-                            case KEY_3:
-                                switch_to(2);
-                                break;
-                            case KEY_4:
-                                switch_to(3);
-                                break;
-                            default:
-                                if (event.ascii != '\0') {
-                                    write(mfd, &event.ascii, 1);
-                                }
-                                break;
-                        }
-                    } else {
-                        switch (event.key) {
-                            case KEY_DELETE:
-                                write(mfd, "\033[3~", 4);
-                                break;
-                            case KEY_PAGE_UP:
-                                write(mfd, "\033[5~", 4);
-                                break;
-                            case KEY_PAGE_DOWN:
-                                write(mfd, "\033[6~", 4);
-                                break;
-                            case KEY_CURSOR_UP:
-                                write(mfd, "\033[A", 3);
-                                break;
-                            case KEY_CURSOR_DOWN:
-                                write(mfd, "\033[B", 3);
-                                break;
-                            case KEY_CURSOR_RIGHT:
-                                write(mfd, "\033[C", 3);
-                                break;
-                            case KEY_CURSOR_LEFT:
-                                write(mfd, "\033[D", 3);
-                                break;
-                            case KEY_HOME:
-                                write(mfd, "\033[H", 3);
-                                break;
-                            case KEY_END:
-                                write(mfd, "\033[F", 3);
-                                break;
-                            default:
-                                if (event.ascii != '\0') {
-                                    write(mfd, &event.ascii, 1);
-                                }
-                                break;
-                        }
-                    }
+                if (handle_keyboard_event(tty, event)) {
+                    continue;
                 }
             }
         }
+#else
+        if (FD_ISSET(m_container.connection().fd(), &set)) {
+            ssize_t ret = read(m_container.connection().fd(), buf, sizeof(buf));
+            if (ret > 0) {
+                WindowServer::Message* message = reinterpret_cast<WindowServer::Message*>(buf);
+                switch (message->type) {
+                    case WindowServer::Message::Type::KeyEventMessage:
+                        if (handle_keyboard_event(message->data.key_event_message.event)) {
+                            continue;
+                        }
+                        break;
+                    case WindowServer::Message::Type::MouseEventMessage:
+                        if (handle_mouse_event(message->data.mouse_event_message.event)) {
+                            continue;
+                        }
+                        break;
+                    default:
+                        assert(false);
+                        break;
+                }
+            }
+        }
+#endif /* KERNEL_NO_GRAPHICS */
 
         if (FD_ISSET(mfd, &set)) {
             ssize_t bytes;

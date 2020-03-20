@@ -11,6 +11,7 @@ WindowManager::~WindowManager() {}
 
 void WindowManager::add_window(SharedPtr<Window> window) {
     windows().add(window);
+    m_active_window = window.get();
 }
 
 void WindowManager::draw() {

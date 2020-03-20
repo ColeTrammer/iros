@@ -18,6 +18,8 @@ public:
     WindowServer::Window& window() { return *m_window; }
     const WindowServer::Window& window() const { return *m_window; }
 
+    WindowServer::Connection& connection() { return m_connection; }
+
 private:
     WindowServer::Connection m_connection;
     SharedPtr<WindowServer::Window> m_window;

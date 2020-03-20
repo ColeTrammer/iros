@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/vector.h>
+#include <kernel/hal/input.h>
 
 #include "terminal.h"
 #include "vga_buffer.h"
@@ -20,6 +21,9 @@ public:
     int run();
 
 private:
+    bool handle_mouse_event(mouse_event event);
+    bool handle_keyboard_event(key_event event);
+
     int m_current_tty { -1 };
     Vector<Terminal> m_terminals;
     VgaBuffer::GraphicsContainer m_container;

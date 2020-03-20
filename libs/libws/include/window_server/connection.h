@@ -26,6 +26,8 @@ public:
         setup_timer();
     }
 
+    int fd() const { return m_fd; }
+
 private:
     friend class Window;
 

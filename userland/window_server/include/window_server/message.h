@@ -5,13 +5,23 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <kernel/hal/input.h>
 
 typedef uint64_t wid_t;
 
 namespace WindowServer {
 
 struct Message {
-    enum class Type { Invalid, CreateWindowRequest, CreateWindowResponse, RemoveWindowRequest, RemoveWindowResponse, SwapBufferRequest };
+    enum class Type {
+        Invalid,
+        CreateWindowRequest,
+        CreateWindowResponse,
+        RemoveWindowRequest,
+        RemoveWindowResponse,
+        SwapBufferRequest,
+        KeyEventMessage,
+        MouseEventMessage,
+    };
 
     struct CreateWindowRequest {
         CreateWindowRequest(int xx, int yy, int wwidth, int hheight) : x(xx), y(yy), width(wwidth), height(hheight) {}
@@ -87,6 +97,32 @@ struct Message {
         wid_t wid;
     };
 
+    struct KeyEventMessage {
+        static UniquePtr<Message> create(key_event event) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(KeyEventMessage));
+            message->type = Message::Type::KeyEventMessage;
+            message->data_len = sizeof(KeyEventMessage);
+            auto& data = message->data.key_event_message;
+            data.event = event;
+            return UniquePtr<Message>(message);
+        }
+
+        key_event event;
+    };
+
+    struct MouseEventMessage {
+        static UniquePtr<Message> create(mouse_event event) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(MouseEventMessage));
+            message->type = Message::Type::MouseEventMessage;
+            message->data_len = sizeof(MouseEventMessage);
+            auto& data = message->data.mouse_event_message;
+            data.event = event;
+            return UniquePtr<Message>(message);
+        }
+
+        mouse_event event;
+    };
+
     size_t total_size() const { return sizeof(Message) + data_len; };
 
     Type type { Type::Invalid };
@@ -97,6 +133,8 @@ struct Message {
         RemoveWindowRequest remove_window_request;
         RemoveWindowResponse remove_window_response;
         SwapBufferRequest swap_buffer_request;
+        KeyEventMessage key_event_message;
+        MouseEventMessage mouse_event_message;
     } data;
 };
 

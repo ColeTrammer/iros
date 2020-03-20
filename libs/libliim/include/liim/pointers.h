@@ -9,7 +9,7 @@ namespace LIIM {
 template<typename T>
 class UniquePtr {
 public:
-    explicit UniquePtr(T* ptr) : m_ptr(ptr) {}
+    explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {}
 
     UniquePtr(std::nullptr_t) : m_ptr(nullptr) {}
 

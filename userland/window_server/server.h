@@ -23,5 +23,7 @@ private:
 
     UniquePtr<WindowManager> m_manager;
     int m_socket_fd;
+    int m_kbd_fd;
+    int m_mouse_fd;
     Vector<int> m_clients;
 };
