@@ -4,6 +4,7 @@
 #include <graphics/renderer.h>
 #include <liim/pointers.h>
 #include <stdio.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -72,16 +73,31 @@ void Server::start() {
     sockaddr_un client_addr;
     socklen_t client_addr_len = sizeof(sockaddr_un);
 
+    fd_set set;
+    uint8_t buffer[BUFSIZ];
     for (;;) {
         m_manager->draw();
 
-        uint8_t buffer[4096];
+        FD_ZERO(&set);
+        FD_SET(m_socket_fd, &set);
+        m_clients.for_each([&](int fd) {
+            FD_SET(fd, &set);
+        });
+
+        int ret = select(FD_SETSIZE, &set, nullptr, nullptr, nullptr);
+        if (ret < 0) {
+            perror("select");
+            exit(1);
+        }
+
         m_clients.for_each_reverse([&](int client_fd) {
-            ssize_t data_len = read(client_fd, buffer, 4096);
-            if ((data_len == -1 && errno != EAGAIN) || data_len == 0) {
-                kill_client(client_fd);
+            if (!FD_ISSET(client_fd, &set)) {
                 return;
-            } else if (data_len == -1) {
+            }
+
+            ssize_t data_len = read(client_fd, buffer, sizeof(buffer));
+            if (data_len <= 0) {
+                kill_client(client_fd);
                 return;
             }
 
@@ -107,15 +123,17 @@ void Server::start() {
             }
         });
 
-        int client_fd = accept4(m_socket_fd, (sockaddr*) &client_addr, &client_addr_len, SOCK_NONBLOCK);
-        if (client_fd == -1 && errno != EAGAIN) {
-            fprintf(stderr, "Accept failed: errno = %d\n", errno);
-            assert(false);
-        } else if (client_fd == -1) {
-            continue;
-        }
+        if (FD_ISSET(m_socket_fd, &set)) {
+            int client_fd = accept4(m_socket_fd, (sockaddr*) &client_addr, &client_addr_len, SOCK_NONBLOCK);
+            if (client_fd == -1 && errno != EAGAIN) {
+                perror("accept");
+                exit(1);
+            } else if (client_fd == -1) {
+                continue;
+            }
 
-        m_clients.add(client_fd);
+            m_clients.add(client_fd);
+        }
     }
 }
 
