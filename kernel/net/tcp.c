@@ -92,6 +92,7 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
             }
 
             socket->pending[socket->num_pending++] = connection;
+            socket->readable = true;
             spin_unlock(&socket->lock);
 
             debug_log("Recived a connection request to socket: [ %lu ]\n", socket->id);

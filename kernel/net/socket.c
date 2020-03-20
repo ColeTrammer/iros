@@ -246,7 +246,7 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             return -EAGAIN;
         }
 
-        proc_block_until_socket_has_connection(get_current_task(), socket);
+        proc_block_until_socket_is_readable(get_current_task(), socket);
     }
 
     return 0;

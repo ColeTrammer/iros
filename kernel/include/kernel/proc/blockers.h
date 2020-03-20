@@ -17,7 +17,6 @@ enum block_type {
     UNTIL_SOCKET_IS_CONNECTED,
     UNTIL_INODE_IS_READABLE_OR_TIMEOUT,
     UNTIL_INODE_IS_WRITABLE,
-    UNTIL_SOCKET_HAS_CONNECTION,
     UNTIL_SOCKET_IS_READABLE,
     UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT,
     SELECT,
@@ -52,9 +51,6 @@ struct block_info {
         } until_inode_is_writable_info;
         struct {
             struct socket *socket;
-        } until_socket_has_connection_info;
-        struct {
-            struct socket *socket;
         } until_socket_is_readable_info;
         struct {
             struct socket *socket;
@@ -83,7 +79,6 @@ struct block_info {
 #define until_socket_is_connected_info             __info.until_socket_is_connected_info
 #define until_inode_is_readable_or_timeout_info    __info.until_inode_is_readable_or_timeout_info
 #define until_inode_is_writable_info               __info.until_inode_is_writable_info
-#define until_socket_has_connection_info           __info.until_socket_has_connection_info
 #define until_socket_is_readable_info              __info.until_socket_is_readable_info
 #define until_socket_is_readable_with_timeout_info __info.until_socket_is_readable_with_timeout_info
 #define select_info                                __info.select_info
@@ -98,7 +93,6 @@ void proc_block_until_socket_is_connected(struct task *current, struct socket *s
 void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, struct timespec end_time);
 void proc_block_until_inode_is_writable(struct task *current, struct inode *inode);
 void proc_block_custom(struct task *current);
-void proc_block_until_socket_has_connection(struct task *current, struct socket *socket);
 void proc_block_until_socket_is_readable(struct task *current, struct socket *socket);
 void proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, struct timespec end_time);
 void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds);

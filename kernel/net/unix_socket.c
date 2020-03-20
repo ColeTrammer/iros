@@ -164,6 +164,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
     connection->connect_to_id = socket->id;
 
     connect_to->pending[connect_to->num_pending++] = connection;
+    connect_to->readable = true;
 
     spin_lock(&socket->lock);
     spin_unlock(&connect_to->lock);
