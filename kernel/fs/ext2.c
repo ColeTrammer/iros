@@ -590,12 +590,8 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
 
     struct raw_inode *raw_inode = ext2_get_raw_inode(inode->super_block, inode->index);
     assert(raw_inode);
+
     inode->private_data = raw_inode;
-
-    if (update_tnodes && inode->flags & FS_DIR && inode->dirent_cache == NULL) {
-        ext2_update_tnode_list(inode);
-    }
-
     inode->mode = raw_inode->mode;
     inode->uid = raw_inode->uid;
     inode->gid = raw_inode->gid;
@@ -603,6 +599,10 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
     inode->access_time = (struct timespec) { .tv_sec = raw_inode->atime, .tv_nsec = 0 };
     inode->modify_time = (struct timespec) { .tv_sec = raw_inode->mtime, .tv_nsec = 0 };
     inode->change_time = (struct timespec) { .tv_sec = raw_inode->ctime, .tv_nsec = 0 };
+
+    if (update_tnodes && inode->flags & FS_DIR && inode->dirent_cache == NULL) {
+        ext2_update_tnode_list(inode);
+    }
 }
 
 /* Syncs raw_inode to disk */
@@ -1313,7 +1313,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
     struct inode *inode = tnode->inode;
 
     if (inode->private_data == NULL) {
-        ext2_update_inode(inode, false);
+        ext2_update_inode(inode, true);
     }
 
     struct raw_inode *raw_inode = inode->private_data;

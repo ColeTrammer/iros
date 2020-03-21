@@ -537,7 +537,6 @@ SYS_CALL(execve) {
     struct inode *inode = tnode->inode;
     process->exe = tnode;
     process->name = prepend_argv != NULL ? argv[0] : strdup(argv[0]);
-    process->should_trace = strcmp(argv[0], "vttest") == 0;
 
     process->uid = current->process->uid;
     if (depth == 0 && (inode->mode & S_ISUID)) {
