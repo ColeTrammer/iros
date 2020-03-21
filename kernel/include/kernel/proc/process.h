@@ -37,6 +37,7 @@ struct process {
 
     struct clock *process_clock;
     struct timer *timers;
+    struct timer *alarm_timer;
 
     struct args_context *args_context;
 

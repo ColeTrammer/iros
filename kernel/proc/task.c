@@ -450,7 +450,7 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
 
 void task_do_sig(struct task *task, int signum) {
 #ifdef TASK_SIGNAL_DEBUG
-    debug_log("Doing signal: [ %d, %d ]\n", task->pid, signum);
+    debug_log("Doing signal: [ %d, %d ]\n", task->process->pid, signum);
 #endif /* TASK_SIGNAL_DEBUG */
 
     if (task->process->sig_state[signum].sa_handler == SIG_IGN) {

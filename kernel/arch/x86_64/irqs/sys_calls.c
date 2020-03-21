@@ -127,25 +127,27 @@
         get_current_task()->in_kernel = true;                                  \
     } while (0)
 
-#define SYS_RETURN(val)                                       \
-    do {                                                      \
-        uint64_t _val = (uint64_t)(val);                      \
-        disable_interrupts();                                 \
-        task_state->cpu_state.rax = (_val);                   \
-        task_do_sigs_if_needed(get_current_task());           \
-        get_current_task()->in_kernel = false;                \
-        get_current_task()->arch_task.user_task_state = NULL; \
-        return;                                               \
+#define SYS_RETURN(val)                                          \
+    do {                                                         \
+        uint64_t _val = (uint64_t)(val);                         \
+        disable_interrupts();                                    \
+        task_state->cpu_state.rax = (_val);                      \
+        task_do_sigs_if_needed(get_current_task());              \
+        get_current_task()->in_kernel = false;                   \
+        get_current_task()->arch_task.user_task_state = NULL;    \
+        get_current_task()->sched_state = RUNNING_INTERRUPTIBLE; \
+        return;                                                  \
     } while (0)
 
-#define SYS_RETURN_DONT_CHECK_SIGNALS(val)                    \
-    do {                                                      \
-        uint64_t _val = (uint64_t)(val);                      \
-        disable_interrupts();                                 \
-        task_state->cpu_state.rax = (_val);                   \
-        get_current_task()->in_kernel = false;                \
-        get_current_task()->arch_task.user_task_state = NULL; \
-        return;                                               \
+#define SYS_RETURN_DONT_CHECK_SIGNALS(val)                       \
+    do {                                                         \
+        uint64_t _val = (uint64_t)(val);                         \
+        disable_interrupts();                                    \
+        task_state->cpu_state.rax = (_val);                      \
+        get_current_task()->in_kernel = false;                   \
+        get_current_task()->arch_task.user_task_state = NULL;    \
+        get_current_task()->sched_state = RUNNING_INTERRUPTIBLE; \
+        return;                                                  \
     } while (0)
 
 #define SYS_RETURN_RESTORE_SIGMASK(val)                                         \
@@ -157,6 +159,7 @@
         memcpy(&current->sig_mask, &current->saved_sig_mask, sizeof(sigset_t)); \
         get_current_task()->in_kernel = false;                                  \
         get_current_task()->in_sigsuspend = false;                              \
+        get_current_task()->sched_state = RUNNING_INTERRUPTIBLE;                \
         return;                                                                 \
     } while (0)
 
@@ -534,6 +537,7 @@ SYS_CALL(execve) {
     struct inode *inode = tnode->inode;
     process->exe = tnode;
     process->name = prepend_argv != NULL ? argv[0] : strdup(argv[0]);
+    process->should_trace = strcmp(argv[0], "vttest") == 0;
 
     process->uid = current->process->uid;
     if (depth == 0 && (inode->mode & S_ISUID)) {
@@ -1332,20 +1336,42 @@ SYS_CALL(alarm) {
 
     SYS_PARAM1(unsigned int, seconds);
 
-    struct task *current = get_current_task();
+    unsigned int ret = 0;
 
-    struct timespec now = time_read_clock(CLOCK_MONOTONIC);
-    now.tv_sec += seconds;
-    proc_block_sleep(current, CLOCK_MONOTONIC, now);
+    struct process *process = get_current_task()->process;
+    spin_lock(&process->lock);
 
-    disable_interrupts();
-    // Tell signal handling code we were not interruped (as would be implied by this saying -EINTR)
-    task_state->cpu_state.rax = 0;
+    if (process->alarm_timer) {
+        ret = process->alarm_timer->spec.it_value.tv_sec + process->alarm_timer->spec.it_value.tv_nsec ? 1U : 0U;
+    }
 
-    // Potentially the process should be signaled, but sending it to the thread that made the call
-    // to alarm makes more sense anyway.
-    signal_task(current->process->pid, current->tid, SIGALRM);
-    assert(false);
+    if (seconds == 0) {
+        if (process->alarm_timer) {
+            time_delete_timer(process->alarm_timer);
+            process->alarm_timer = NULL;
+        }
+    } else {
+        if (!process->alarm_timer) {
+            struct clock *clock = time_get_clock(CLOCK_MONOTONIC);
+            struct sigevent evp;
+            evp.sigev_notify = SIGEV_SIGNAL;
+            evp.sigev_signo = SIGALRM;
+            timer_t id;
+            if (time_create_timer(clock, &evp, &id)) {
+                goto finish_alarm;
+            }
+            process->alarm_timer = time_get_timer(id);
+        }
+
+        struct itimerspec timer_spec = { 0 };
+        timer_spec.it_value.tv_sec = seconds;
+        time_set_timer(process->alarm_timer, 0, &timer_spec, NULL);
+    }
+
+finish_alarm:
+    spin_unlock(&process->lock);
+
+    SYS_RETURN(ret);
 }
 
 SYS_CALL(fchmod) {
