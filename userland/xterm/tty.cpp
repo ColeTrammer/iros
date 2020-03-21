@@ -4,6 +4,7 @@
 #include <liim/vector.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "tty.h"
 #include "vga_buffer.h"
@@ -13,7 +14,11 @@
 #define CTRL_KEY(c) ((c) & (0x1F))
 #define IS_CTRL(c)  (!((c) & ~0x1F))
 
-TTY::TTY(VgaBuffer& buffer) : m_buffer(buffer) {}
+TTY::TTY(VgaBuffer& buffer, int fd) : m_buffer(buffer), m_fd(fd) {}
+
+void TTY::write(const char* buffer, size_t length) {
+    assert(::write(m_fd, buffer, length) == static_cast<ssize_t>(length));
+}
 
 void TTY::scroll_up() {
     if (m_above_rows.size() == 0) {
@@ -187,6 +192,11 @@ void TTY::handle_escape_sequence() {
                 return;
             }
             break;
+        case 'c': {
+            const char* string = "\033[?1;0c";
+            write(string, strlen(string));
+            return;
+        }
         case 'm':
             if (args.size() == 0) {
                 args.add(0);

@@ -6,7 +6,7 @@
 
 class TTY {
 public:
-    TTY(VgaBuffer&);
+    TTY(VgaBuffer&, int fd);
     ~TTY() {}
 
     void scroll_up();
@@ -28,6 +28,8 @@ private:
         m_row = m_saved_row;
         m_col = m_saved_col;
     }
+
+    void write(const char* buffer, size_t length);
 
     void draw(char);
     void update_cursor();
@@ -51,4 +53,5 @@ private:
     VgaBuffer& m_buffer;
     Vector<VgaBuffer::Row> m_above_rows;
     Vector<VgaBuffer::Row> m_below_rows;
+    int m_fd;
 };

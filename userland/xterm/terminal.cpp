@@ -9,11 +9,11 @@
 #include "vga_buffer.h"
 
 void Terminal::load(VgaBuffer::GraphicsContainer& container) {
-    m_buffer = make_unique<VgaBuffer>(container);
-    m_tty = make_unique<TTY>(*m_buffer);
-
     m_mfd = posix_openpt(O_RDWR);
     assert(m_mfd != -1);
+
+    m_buffer = make_unique<VgaBuffer>(container);
+    m_tty = make_unique<TTY>(*m_buffer, m_mfd);
 
     m_pid = fork();
     if (m_pid == 0) {

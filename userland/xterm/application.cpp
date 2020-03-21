@@ -228,7 +228,7 @@ int Application::run() {
 #ifdef KERNEL_NO_GRAPHICS
         if (FD_ISSET(mouse_fd, &set)) {
             if (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
-                if (handle_mouse_event(tty, mouse_event)) {
+                if (handle_mouse_event(mouse_event)) {
                     continue;
                 }
             }
@@ -236,7 +236,7 @@ int Application::run() {
 
         if (FD_ISSET(kfd, &set)) {
             if (read(kfd, &event, sizeof(key_event)) == sizeof(key_event)) {
-                if (handle_keyboard_event(tty, event)) {
+                if (handle_keyboard_event(event)) {
                     continue;
                 }
             }
