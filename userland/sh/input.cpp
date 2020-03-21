@@ -222,7 +222,7 @@ static struct suggestion *get_suggestions(char *line, int *num_suggestions, bool
             goto suggestions_skip_entry;
         }
 
-        if (is_first_word && (!(stat_struct.st_mode & S_IXUSR) || !(S_ISREG(stat_struct.st_mode)))) {
+        if (is_first_word && !(stat_struct.st_mode & S_IXUSR)) {
             goto suggestions_skip_entry;
         }
 
