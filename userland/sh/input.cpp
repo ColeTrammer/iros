@@ -622,22 +622,34 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     }
                 }
 
-                if (c != 127 && (iscntrl(c) || c == '\t')) {
+                if (c != 127 && c != ('R' & 0x1F) && (iscntrl(c) || c == '\t')) {
                     need_input = false;
                     break;
                 }
 
+                if (history_length == 0) {
+                    failed = true;
+                    continue;
+                }
+
+                size_t search_index = history_length - 1;
                 if (c == 127) {
                     if (needle.size() > 1) {
                         needle.remove_last();
                         needle.last() = '\0';
                     }
+                } else if (c == ('R' & 0x1F)) {
+                    if (hist_index == 0) {
+                        failed = true;
+                        continue;
+                    }
+                    search_index = hist_index - 1;
                 } else {
                     needle.last() = c;
                     needle.add('\0');
                 }
 
-                auto result = history_find(needle, history_length - 1);
+                auto result = history_find(needle, search_index);
                 failed = !result.has_value();
                 if (result.has_value()) {
                     set_hist_index(result.value().index, result.value().position);
