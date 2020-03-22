@@ -363,6 +363,46 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
     int consecutive_tab_presses = 0;
     bool need_input = true;
 
+    auto set_hist_index = [&](size_t new_hist_index) {
+        if (hist_index >= history_length) {
+            buffer[buffer_length] = '\0';
+            if (buffer_length > 0) {
+                line_save = strdup(buffer);
+            } else {
+                line_save = NULL;
+            }
+        }
+
+        hist_index = new_hist_index;
+
+        memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
+
+        if (buffer_index - buffer_min_index > 0) {
+            char f_buf[20];
+            snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
+            write(fileno(tty), f_buf, strlen(f_buf));
+        }
+
+        write(fileno(tty), "\033[s", 3);
+        write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
+        write(fileno(tty), "\033[u", 3);
+
+        if (hist_index >= history_length) {
+            if (!line_save) {
+                buffer_index = buffer_min_index = buffer_length = 0;
+                return;
+            } else {
+                strncpy(buffer, line_save, buffer_max);
+            }
+        } else {
+            strncpy(buffer, history[hist_index], buffer_max);
+        }
+
+        write(fileno(tty), buffer, strlen(buffer));
+        buffer_index = buffer_length = strlen(buffer);
+        buffer_min_index = 0;
+    };
+
     char c;
     for (;;) {
         if (buffer_length + 1 >= buffer_max) {
@@ -704,66 +744,13 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 case 'A':
                     // Up arrow
                     if (hist_index > 0) {
-                        if (hist_index >= history_length) {
-                            buffer[buffer_length] = '\0';
-                            if (buffer_length > 0) {
-                                line_save = strdup(buffer);
-                            } else {
-                                line_save = NULL;
-                            }
-                        }
-
-                        hist_index--;
-
-                        memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
-
-                        if (buffer_index - buffer_min_index > 0) {
-                            char f_buf[20];
-                            snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
-                            write(fileno(tty), f_buf, strlen(f_buf));
-                        }
-
-                        write(fileno(tty), "\033[s", 3);
-                        write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
-                        write(fileno(tty), "\033[u", 3);
-
-                        strncpy(buffer, history[hist_index], buffer_max);
-                        write(fileno(tty), buffer, strlen(buffer));
-                        buffer_index = buffer_length = strlen(buffer);
-                        buffer_min_index = 0;
+                        set_hist_index(hist_index - 1);
                     }
                     continue;
                 case 'B':
                     // Down arrow
                     if (hist_index < history_length) {
-                        hist_index++;
-
-                        memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
-
-                        if (buffer_index - buffer_min_index > 0) {
-                            char f_buf[20];
-                            snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
-                            write(fileno(tty), f_buf, strlen(f_buf));
-                        }
-
-                        write(fileno(tty), "\033[s", 3);
-                        write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
-                        write(fileno(tty), "\033[u", 3);
-
-                        if (hist_index >= history_length) {
-                            if (!line_save) {
-                                buffer_index = buffer_min_index = buffer_length = 0;
-                                continue;
-                            } else {
-                                strncpy(buffer, line_save, buffer_max);
-                            }
-                        } else {
-                            strncpy(buffer, history[hist_index], buffer_max);
-                        }
-
-                        write(fileno(tty), buffer, strlen(buffer));
-                        buffer_index = buffer_length = strlen(buffer);
-                        buffer_min_index = 0;
+                        set_hist_index(hist_index + 1);
                     }
                     continue;
                 case 'C':
