@@ -588,12 +588,12 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
         // Control R (reverse index search)
         if (c == ('R' & 0x1F)) {
-            auto clear_line = [&]() {
-                dprintf(fileno(tty), "%s", "\033[999D\033[0J");
+            auto reset_line = [&]() {
+                dprintf(fileno(tty), "%s", "\033[999D");
             };
 
             auto write_line = [&](const Vector<char> &view, bool failed = false) {
-                clear_line();
+                reset_line();
                 dprintf(fileno(tty), "(%sreverse-i-search)`%.*s': %.*s", failed ? "failed " : "", view.size(), view.vector(),
                         static_cast<int>(buffer_length), buffer);
                 if (buffer_length - buffer_index > 0) {
@@ -656,7 +656,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 }
             }
 
-            clear_line();
+            reset_line();
             print_ps1_prompt();
             write(fileno(tty), buffer, buffer_length);
             if (buffer_length - buffer_index > 0) {
