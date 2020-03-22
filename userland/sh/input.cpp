@@ -522,9 +522,11 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 clear_line();
                 dprintf(fileno(tty), "(%sreverse-i-search)`%.*s': %.*s", failed ? "failed " : "", view.size(), view.vector(),
                         static_cast<int>(buffer_length), buffer);
-                char f_buf[20];
-                snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
-                write(fileno(tty), f_buf, strlen(f_buf));
+                if (buffer_length - buffer_index > 0) {
+                    char f_buf[20];
+                    snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+                    write(fileno(tty), f_buf, strlen(f_buf));
+                }
             };
 
             Vector<char> needle;
@@ -561,9 +563,11 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             clear_line();
             print_ps1_prompt();
             write(fileno(tty), buffer, buffer_length);
-            char f_buf[20];
-            snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
-            write(fileno(tty), f_buf, strlen(f_buf));
+            if (buffer_length - buffer_index > 0) {
+                char f_buf[20];
+                snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+                write(fileno(tty), f_buf, strlen(f_buf));
+            }
             continue;
         }
 
@@ -713,7 +717,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
                         memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
 
-                        if (buffer_length > 0) {
+                        if (buffer_index - buffer_min_index > 0) {
                             char f_buf[20];
                             snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
                             write(fileno(tty), f_buf, strlen(f_buf));
@@ -736,7 +740,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
                         memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
 
-                        if (buffer_length > 0) {
+                        if (buffer_index - buffer_min_index > 0) {
                             char f_buf[20];
                             snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
                             write(fileno(tty), f_buf, strlen(f_buf));
