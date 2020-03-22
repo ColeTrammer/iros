@@ -345,6 +345,29 @@ static void history_add(char *item) {
     history_length++;
 }
 
+struct HistorySearchResult {
+    size_t index;
+    size_t position;
+};
+
+static Maybe<HistorySearchResult> history_find(const Vector<char> &needle, size_t start_index) {
+    if (needle.size() <= 1) {
+        return {};
+    }
+
+    size_t hist_index = start_index + 1;
+    do {
+        auto string = history[--hist_index];
+        char *result = strstr(string, needle.vector());
+        if (result) {
+            return { { hist_index, static_cast<size_t>(result - string) } };
+        }
+
+    } while (hist_index != 0);
+
+    return {};
+}
+
 char *buffer = NULL;
 char *line_save = NULL;
 
@@ -363,7 +386,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
     int consecutive_tab_presses = 0;
     bool need_input = true;
 
-    auto set_hist_index = [&](size_t new_hist_index) {
+    auto set_hist_index = [&](size_t new_hist_index, ssize_t new_buffer_index = -1) {
         if (hist_index >= history_length) {
             buffer[buffer_length] = '\0';
             if (buffer_length > 0) {
@@ -399,8 +422,19 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
         }
 
         write(fileno(tty), buffer, strlen(buffer));
-        buffer_index = buffer_length = strlen(buffer);
+        buffer_length = strlen(buffer);
+        if (new_buffer_index == -1) {
+            buffer_index = buffer_length;
+        } else {
+            buffer_index = new_buffer_index;
+        }
         buffer_min_index = 0;
+
+        if (buffer_length - buffer_index > 0) {
+            char f_buf[20];
+            snprintf(f_buf, 20, "\033[%luD", buffer_length - buffer_index);
+            write(fileno(tty), f_buf, strlen(f_buf));
+        }
     };
 
     char c;
@@ -570,9 +604,11 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             };
 
             Vector<char> needle;
+            needle.add('\0');
+            bool failed = false;
 
             for (;;) {
-                write_line(needle);
+                write_line(needle, failed);
 
                 errno = 0;
                 int ret = read(fileno(tty), &c, 1);
@@ -592,11 +628,19 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 }
 
                 if (c == 127) {
-                    if (!needle.empty()) {
+                    if (needle.size() > 1) {
                         needle.remove_last();
+                        needle.last() = '\0';
                     }
                 } else {
-                    needle.add(c);
+                    needle.last() = c;
+                    needle.add('\0');
+                }
+
+                auto result = history_find(needle, history_length - 1);
+                failed = !result.has_value();
+                if (result.has_value()) {
+                    set_hist_index(result.value().index, result.value().position);
                 }
             }
 
