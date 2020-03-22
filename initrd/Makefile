@@ -16,10 +16,6 @@ PREFIX?=
 EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 
-# Lists all objects - includes extra objects needed for standard c programs
-OBJS=\
-$(BUILDDIR)/initrd/initrd.o
-
 # Lists all files included in initrd
 FILES:=$(shell find files)
 
@@ -100,15 +96,11 @@ make-output-dir:
 	mkdir -p $(ROOT)/initrd/files
 
 # Builds initrd.img from generated tool
-$(BUILDDIR)/initrd/initrd.bin: $(BUILDDIR)/initrd/initrd.o make-output-dir $(FILES) $(PROGRAMS)
+$(BUILDDIR)/initrd/initrd.bin: make-output-dir $(FILES) $(PROGRAMS)
 	for program in $(PROGRAMS); do \
 	  cp $$program files; \
 	done
-	$< files $@
-
-# Builds any .o file from its .c, and generates its makefile dependencies with -MD
-$(BUILDDIR)/initrd/initrd.o: $(ROOT)/initrd/initrd.c
-	gcc -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) -Wno-stringop-truncation
+	$(INITRD) files $@
 
 $(BUILDDIR)/%: $(ROOT)/%.S
 	$(CC) -MD -o $@ $< $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)

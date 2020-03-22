@@ -1,7 +1,7 @@
 # Lists all projects
-PROJECTS=parser
+PROJECTS=initrd parser
 HEADER_PROJECTS=parser
-NATIVE_PROJECTS=parser
+NATIVE_PROJECTS=initrd parser
 
 export ROOT?=$(CURDIR)/..
 export SYSROOT?=$(ROOT)/sysroot

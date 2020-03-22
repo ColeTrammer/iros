@@ -29,7 +29,7 @@ int64_t count_files(char *dir) {
 
 int main(int argc, char **argv) {
     if (argc < 3) {
-        printf("Usage: %s dir outfile\n", argv[0]);
+        printf("Usage: %s <dir> <outfile>\n", argv[0]);
         return 1;
     }
 
