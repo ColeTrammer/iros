@@ -361,31 +361,36 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
     size_t hist_index = history_length;
 
     int consecutive_tab_presses = 0;
+    bool need_input = true;
 
+    char c;
     for (;;) {
         if (buffer_length + 1 >= buffer_max) {
             buffer_max += 1024;
             buffer = (char *) realloc(buffer, buffer_max);
         }
 
-        char c;
-        errno = 0;
-        int ret = read(fileno(tty), &c, 1);
+        if (need_input) {
+            errno = 0;
+            int ret = read(fileno(tty), &c, 1);
 
-        if (ret == -1) {
-            // We were interrupted
-            if (errno == EINTR) {
-                buffer_length = 0;
-                break;
-            } else {
-                free(line_save);
-                free(buffer);
-                return InputResult::Eof;
+            if (ret == -1) {
+                // We were interrupted
+                if (errno == EINTR) {
+                    buffer_length = 0;
+                    break;
+                } else {
+                    free(line_save);
+                    free(buffer);
+                    return InputResult::Eof;
+                }
             }
-        }
 
-        // We will never get 0 back from read, since we block for input
-        assert(ret == 1);
+            // We will never get 0 back from read, since we block for input
+            assert(ret == 1);
+        } else {
+            need_input = true;
+        }
 
         // tab autocompletion
         if (c == '\t') {
@@ -504,6 +509,61 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 snprintf(f_buf, 19, "\033[%luD", buffer_length - buffer_index);
                 write(fileno(tty), f_buf, strlen(f_buf));
             }
+            continue;
+        }
+
+        // Control R (reverse index search)
+        if (c == ('R' & 0x1F)) {
+            auto clear_line = [&]() {
+                dprintf(fileno(tty), "%s", "\033[999D\033[0J");
+            };
+
+            auto write_line = [&](const Vector<char> &view, bool failed = false) {
+                clear_line();
+                dprintf(fileno(tty), "(%sreverse-i-search)`%.*s': %.*s", failed ? "failed " : "", view.size(), view.vector(),
+                        static_cast<int>(buffer_length), buffer);
+                char f_buf[20];
+                snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+                write(fileno(tty), f_buf, strlen(f_buf));
+            };
+
+            Vector<char> needle;
+
+            for (;;) {
+                write_line(needle);
+
+                errno = 0;
+                int ret = read(fileno(tty), &c, 1);
+                if (ret == -1) {
+                    if (errno == EINTR) {
+                        break;
+                    } else {
+                        free(line_save);
+                        free(buffer);
+                        return InputResult::Eof;
+                    }
+                }
+
+                if (c != 127 && (iscntrl(c) || c == '\t')) {
+                    need_input = false;
+                    break;
+                }
+
+                if (c == 127) {
+                    if (!needle.empty()) {
+                        needle.remove_last();
+                    }
+                } else {
+                    needle.add(c);
+                }
+            }
+
+            clear_line();
+            print_ps1_prompt();
+            write(fileno(tty), buffer, buffer_length);
+            char f_buf[20];
+            snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+            write(fileno(tty), f_buf, strlen(f_buf));
             continue;
         }
 
