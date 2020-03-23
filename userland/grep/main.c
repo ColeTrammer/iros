@@ -122,8 +122,10 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    int regex_flags = REG_NEWLINE;
-    bool recursive = false;
+    bool recursive = strcmp(argv[0], "rgrep") == 0;
+    int regex_flags = REG_NEWLINE | (strcmp(argv[0], "egrep") == 0 ? REG_EXTENDED : 0);
+    use_regex = strcmp(argv[0], "fgrep") != 0;
+
     char opt;
     opterr = 0;
     while ((opt = getopt(argc, argv, ":rEFi")) != -1) {

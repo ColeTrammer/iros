@@ -15,6 +15,10 @@ chown -R 100:100 mnt/home/eloc
 chmod u+s mnt/bin/ping
 chmod u+s mnt/bin/su
 
+ln -s grep mnt/bin/egrep
+ln -s grep mnt/bin/fgrep
+ln -s grep mnt/bin/rgrep
+
 umount /dev/loop100
 losetup -d /dev/loop100
 
