@@ -256,7 +256,7 @@ static int op_continue(char **argv) {
     return 0;
 }
 
-static int op_dot(char **argv) {
+int op_dot(char **argv) {
     if (argv[1] == NULL) {
         fprintf(stderr, "Usage: %s <filename> [args]\n", argv[0]);
         return 2;

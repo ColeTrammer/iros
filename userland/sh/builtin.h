@@ -17,6 +17,8 @@ struct builtin_op *builtin_find_op(char *name);
 bool builtin_should_run_immediately(struct builtin_op *op);
 int builtin_do_op(struct builtin_op *op, char **args);
 
+int op_dot(char **argv);
+
 struct builtin_op *get_builtins();
 
 #endif /* _BUILTIN_H */

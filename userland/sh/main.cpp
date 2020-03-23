@@ -136,8 +136,6 @@ int main(int argc, char** argv) {
 
     command_push_position_params(PositionArgs(argv + arg_index, MAX(0, argc - arg_index)));
 
-    // ShState::the().dump();
-
     if (isatty(STDOUT_FILENO)) {
         struct sigaction to_set;
         to_set.sa_handler = &on_int;
@@ -155,6 +153,15 @@ int main(int argc, char** argv) {
 
         tcgetattr(STDOUT_FILENO, &saved_termios);
         atexit(restore_termios);
+
+        if (ShState::the().option_interactive()) {
+            String path = user_passwd->pw_dir;
+            path += "/.sh_init";
+            if (!access(path.string(), F_OK)) {
+                char* args[3] = { const_cast<char*>("."), path.string(), nullptr };
+                op_dot(args);
+            }
+        }
 
         char* base = user_passwd->pw_dir;
         char* hist_file_name = (char*) ".sh_hist";
