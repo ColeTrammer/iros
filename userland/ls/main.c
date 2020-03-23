@@ -28,13 +28,29 @@ static size_t num_dirents_max = LS_STARTING_DIRENTS;
 
 static int widest_num_links = 0;
 static int widest_size = 0;
+static bool allow_dot_files = false;
+static bool allow_dot_and_dot_dot_dirs = false;
 
-static int ls_dirent_compare(const void *a, const void *b) {
-    return strcasecmp(((const struct ls_dirent *) a)->name, ((const struct ls_dirent *) b)->name);
+static int ls_dirent_compare(const void *_a, const void *_b) {
+    const char *a = ((const struct ls_dirent *) _a)->name;
+    const char *b = ((const struct ls_dirent *) _b)->name;
+
+    if (a[0] == '.') {
+        a++;
+    }
+    if (b[0] == '.') {
+        b++;
+    }
+
+    return strcasecmp(a, b);
 }
 
 void fill_dirent(char *_path, const char *name) {
-    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+    if (!allow_dot_and_dot_dot_dirs && (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)) {
+        return;
+    }
+
+    if (!allow_dot_files && name[0] == '.') {
         return;
     }
 
@@ -224,13 +240,20 @@ int main(int argc, char **argv) {
     char opt;
 
     opterr = 0;
-    while ((opt = getopt(argc, argv, "l")) != -1) {
+    while ((opt = getopt(argc, argv, "laA")) != -1) {
         switch (opt) {
             case 'l':
                 extra_info = true;
                 break;
+            case 'a':
+                allow_dot_and_dot_dot_dirs = true;
+                allow_dot_files = true;
+                break;
+            case 'A':
+                allow_dot_files = true;
+                break;
             case '?':
-                printf("Usage: %s [path]\n", argv[0]);
+                printf("Usage: %s [-Aal] [path]\n", argv[0]);
                 return 0;
             default:
                 abort();
