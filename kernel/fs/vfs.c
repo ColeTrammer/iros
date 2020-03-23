@@ -570,7 +570,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         file->position++;
         return len;
     } else if (file->position == 1) {
-        entry->d_ino = file->tnode->parent->inode->index;
+        entry->d_ino = file->tnode->parent ? file->tnode->parent->inode->index : inode->index;
         strcpy(entry->d_name, "..");
         file->position++;
         return len;
@@ -584,7 +584,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 
     if (!tnode) {
         /* Traverse mount points as well */
-        size_t num = fs_get_dirent_cache_size(inode->dirent_cache + 2);
+        size_t num = fs_get_dirent_cache_size(inode->dirent_cache) + 2;
         size_t mount_index = file->position - num;
         size_t i = 0;
         struct mount *mount = inode->mounts;
