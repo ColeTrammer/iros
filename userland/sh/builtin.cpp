@@ -65,7 +65,13 @@ static int op_echo(char **args) {
     }
 
     size_t i = 1;
-    for (;;) {
+    bool print_new_line = true;
+    if (strcmp(args[i], "-n") == 0) {
+        print_new_line = false;
+        i++;
+    }
+
+    for (; args[i];) {
         printf("%s", args[i]);
         if (args[i + 1] != NULL) {
             printf("%c", ' ');
@@ -75,7 +81,14 @@ static int op_echo(char **args) {
         }
     }
 
-    printf("%c", '\n');
+    if (print_new_line) {
+        printf("%c", '\n');
+    }
+
+    if (fflush(stdout)) {
+        perror("echo");
+        return 1;
+    }
     return 0;
 }
 
