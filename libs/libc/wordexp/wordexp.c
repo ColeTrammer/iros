@@ -1847,7 +1847,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
     return 0;
 }
 
-static int we_split(char *s, char *split_on, wordexp_t *we, int flags) {
+int we_split(char *s, const char *split_on, wordexp_t *we, int flags) {
     size_t first_field_index = we->we_wordc;
     {
         bool prev_was_blackslash = false;
@@ -2072,7 +2072,7 @@ static int we_unescape_all(wordexp_t *p, size_t start) {
     return 0;
 }
 
-static int we_glob(wordexp_t *we, size_t start) {
+int we_glob(wordexp_t *we, size_t start) {
     for (size_t i = start; i < we->we_wordc; i++) {
         char *token = we->we_wordv[i];
 

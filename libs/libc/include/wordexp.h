@@ -63,6 +63,8 @@ size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, siz
 int we_add(char *s, wordexp_t *we);
 int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we);
 int we_expand(const char *s, int flags, char **result, word_special_t *special);
+int we_split(char *s, const char *split_on, wordexp_t *we, int flags);
+int we_glob(wordexp_t *we, size_t start);
 int we_unescape(char **s);
 #endif /* _OS_2_SOURCE */
 
