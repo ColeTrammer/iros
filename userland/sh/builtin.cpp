@@ -732,6 +732,67 @@ static int op_popd(char **argv) {
     return 0;
 }
 
+static int op_read(char **argv) {
+    Vector<char> input;
+
+    bool prev_was_backslash = false;
+    for (;;) {
+        errno = 0;
+        int ret = fgetc(stdin);
+        if (ret == EOF) {
+            if (errno == EINTR) {
+                clearerr(stdin);
+                continue;
+            }
+            break;
+        }
+
+        char c = (char) ret;
+        if (c == '\\') {
+            prev_was_backslash = true;
+            input.add(c);
+            continue;
+        }
+
+        if (c == '\n') {
+            if (!prev_was_backslash) {
+                break;
+            }
+
+            input.remove_last();
+        } else {
+            input.add(c);
+        }
+        prev_was_backslash = false;
+    }
+
+    input.add('\0');
+
+    const char *ifs = getenv("IFS");
+    const char *split_on = ifs ? ifs : " \t\n";
+
+    wordexp_t exp;
+    exp.we_offs = 0;
+    exp.we_wordc = 0;
+    exp.we_wordv = nullptr;
+    int ret = we_split(input.vector(), split_on, &exp, 0);
+    if (ret != 0) {
+        return 1;
+    }
+
+    for (size_t i = 1; argv[i] != nullptr; i++) {
+        if (exp.we_wordc <= i - 1) {
+            break;
+        }
+
+        char *name = argv[i];
+        setenv(name, exp.we_wordv[i - 1], 1);
+    }
+
+    wordfree(&exp);
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
@@ -742,7 +803,8 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true },
     { "exec", op_exec, true },       { "set", op_set, true },       { "[", op_test, true },
     { "test", op_test, true },       { "eval", op_eval, true },     { "time", op_time, false },
-    { "pushd", op_pushd, true },     { "popd", op_popd, true },     { "dirs", op_dirs, true }
+    { "pushd", op_pushd, true },     { "popd", op_popd, true },     { "dirs", op_dirs, true },
+    { "read", op_read, true }
 };
 
 struct builtin_op *get_builtins() {
