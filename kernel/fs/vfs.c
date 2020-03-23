@@ -561,17 +561,30 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         return -EINVAL;
     }
 
-    struct dirent *entry = (struct dirent *) buffer;
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+
+    struct dirent *entry = (struct dirent *) buffer;
+    if (file->position == 0) {
+        entry->d_ino = inode->index;
+        strcpy(entry->d_name, ".");
+        file->position++;
+        return len;
+    } else if (file->position == 1) {
+        entry->d_ino = file->tnode->parent->inode->index;
+        strcpy(entry->d_name, "..");
+        file->position++;
+        return len;
+    }
+
     assert(inode->i_op->lookup);
     inode->i_op->lookup(inode, NULL);
 
     spin_lock(&inode->lock);
-    struct cached_dirent *tnode = fs_lookup_in_cache_with_index(inode->dirent_cache, file->position);
+    struct cached_dirent *tnode = fs_lookup_in_cache_with_index(inode->dirent_cache, file->position - 2);
 
     if (!tnode) {
         /* Traverse mount points as well */
-        size_t num = fs_get_dirent_cache_size(inode->dirent_cache);
+        size_t num = fs_get_dirent_cache_size(inode->dirent_cache + 2);
         size_t mount_index = file->position - num;
         size_t i = 0;
         struct mount *mount = inode->mounts;
