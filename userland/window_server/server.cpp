@@ -81,8 +81,31 @@ void Server::start() {
 
     fd_set set;
     uint8_t buffer[BUFSIZ];
+
+    timespec time_of_last_paint { 0, 0 };
+    bool did_draw = false;
+    long remaining_time = 0;
     for (;;) {
-        m_manager->draw();
+        timespec current_time;
+        clock_gettime(CLOCK_MONOTONIC, &current_time);
+
+        if (current_time.tv_sec - time_of_last_paint.tv_sec > 2) {
+            m_manager->draw();
+            did_draw = true;
+        } else {
+            long min_delta_time = 1000 / 60;
+            long delta_time =
+                (current_time.tv_sec - time_of_last_paint.tv_sec) * 1000 + (current_time.tv_nsec - time_of_last_paint.tv_nsec) / 1000000;
+            if (delta_time >= min_delta_time) {
+                m_manager->draw();
+                did_draw = true;
+            } else {
+                remaining_time = delta_time - min_delta_time;
+                did_draw = false;
+            }
+        }
+
+        time_of_last_paint = current_time;
 
         FD_ZERO(&set);
         FD_SET(m_socket_fd, &set);
@@ -92,7 +115,9 @@ void Server::start() {
             FD_SET(fd, &set);
         });
 
-        int ret = select(FD_SETSIZE, &set, nullptr, nullptr, nullptr);
+        timespec timeout { .tv_sec = 0, .tv_nsec = remaining_time * 1000000 };
+        timespec* timeout_to_pass = did_draw ? nullptr : &timeout;
+        int ret = select(FD_SETSIZE, &set, nullptr, nullptr, timeout_to_pass);
         if (ret < 0) {
             perror("select");
             exit(1);
