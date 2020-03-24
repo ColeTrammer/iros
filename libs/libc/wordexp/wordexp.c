@@ -18,6 +18,8 @@
 #include "../include/wordexp.h"
 #endif /* USERLAND_NATIVE */
 
+// #define WORDEXP_DEBUG
+
 #define WE_BUF_DEFAULT 16
 
 #define WE_EXPAND_MAX_DEPTH 1024
@@ -2011,7 +2013,8 @@ int we_unescape(char **s) {
     again:
         switch ((*s)[j]) {
             case '\\':
-                if (!in_s_quotes) {
+                if (!(in_s_quotes ||
+                      (in_d_quotes && ((*s)[j + 1] != '\\' && (*s)[j + 1] != '"' && (*s)[j + 1] != '$' && (*s)[j + 1] != '`')))) {
                     j++;
                     if ((*s)[j] == '\0') {
                         j--;
