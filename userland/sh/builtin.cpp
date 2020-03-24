@@ -15,6 +15,12 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifndef USERLAND_NATIVE
+#include <wordexp.h>
+#else
+#include "../../libs/libc/include/wordexp.h"
+#endif /* USERLAND_NATIVE */
+
 #include "builtin.h"
 #include "command.h"
 #include "input.h"
