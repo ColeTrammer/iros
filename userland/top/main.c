@@ -85,6 +85,12 @@
     " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" CPU_FLAGS "*.*" CPU_SPECIFIER " %" MEM_FLAGS "*.*" MEM_SPECIFIER " %" TIME_FLAGS      \
     "*.*" TIME_SPECIFIER " %" NAME_FLAGS "*.*" NAME_SPECIFIER "\n"
 
+struct proc_summary {
+    int tasks_total;
+    int tasks_running;
+    int tasks_sleeping;
+};
+
 static struct winsize win_size;
 static struct termios tty_info;
 
@@ -105,13 +111,17 @@ static void disable_cursor() {
     printf("\033[?25l");
 }
 
-static size_t display_header() {
+static size_t display_header(struct proc_summary *summary) {
+    int written = printf("Tasks: \033[1;97m%3d\033[0m total, \033[1;97m%3d\033[0m running, \033[1;97m%3d\033[0m sleeping",
+                         summary->tasks_total, summary->tasks_running, summary->tasks_sleeping);
+    printf("%*s\n", win_size.ws_col - written, "");
+
     printf("%*s\n", win_size.ws_col, "");
     printf("\033[7m" FORMAT_STRING_HEADER "\033[0m", PID_WIDTH, PID_WIDTH, PID_STRING, USER_WIDTH, USER_WIDTH, USER_STRING, PRIORITY_WIDTH,
            PRIORITY_WIDTH, PRIORITY_STRING, NICE_WIDTH, NICE_WIDTH, NICE_STRING, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_STRING,
            RESIDENT_MEM_WIDTH, RESIDENT_MEM_WIDTH, RESIDENT_MEM_STRING, STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, CPU_WIDTH, CPU_WIDTH,
            CPU_STRING, MEM_WIDTH, MEM_WIDTH, MEM_STRING, TIME_WIDTH, TIME_WIDTH, TIME_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
-    return 2;
+    return 3;
 }
 
 static int prev_process_ticks(pid_t pid, uint64_t *out_ticks) {
@@ -172,9 +182,34 @@ static void display_row(struct proc_info *info) {
            MEM_PREC, mem_percent, TIME_WIDTH, TIME_PREC, time_string, NAME_WIDTH, NAME_PREC, info->name);
 }
 
+static void summarize_data(struct proc_info *info, size_t num_pids, struct proc_summary *summary) {
+    int total = 0;
+    int running = 0;
+    int sleeping = 0;
+
+    for (size_t i = 0; i < num_pids; i++) {
+        struct proc_info *proc = info + i;
+        if (proc->pid != 1) {
+            total++;
+            if (proc->state[0] == 'R' || proc->state[0] == 'U') {
+                running++;
+            } else if (proc->state[0] == 'W') {
+                sleeping++;
+            }
+        }
+    }
+
+    summary->tasks_total = total;
+    summary->tasks_running = running;
+    summary->tasks_sleeping = sleeping;
+}
+
 static void display(struct proc_info *info, size_t num_pids) {
     reset_cursor();
-    size_t header_rows = display_header();
+
+    struct proc_summary summary;
+    summarize_data(info, num_pids, &summary);
+    size_t header_rows = display_header(&summary);
 
     size_t num_rows_available = (size_t) win_size.ws_row - header_rows;
     size_t num_rows_to_display = MIN(num_pids, num_rows_available);
@@ -182,7 +217,7 @@ static void display(struct proc_info *info, size_t num_pids) {
         display_row(info + i);
     }
 
-    for (size_t i = num_rows_to_display; i < num_rows_available; i++) {
+    for (size_t i = num_rows_to_display; i < num_rows_available - 1; i++) {
         printf("%*s\n", win_size.ws_col, "");
     }
 }
