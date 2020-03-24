@@ -1,8 +1,8 @@
 #include <assert.h>
+#include <procinfo.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <sys/os_2.h>
 #include <sys/param.h>
 #include <sys/select.h>
 #include <termios.h>

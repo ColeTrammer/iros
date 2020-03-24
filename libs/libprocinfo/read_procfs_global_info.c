@@ -1,6 +1,6 @@
+#include <procinfo.h>
 #include <stdio.h>
 #include <strings.h>
-#include <sys/os_2.h>
 
 int read_procfs_global_info(struct proc_global_info *info, int flags) {
     FILE *file = NULL;

@@ -1,12 +1,12 @@
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <procinfo.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/os_2.h>
 
 static int scandir_filter(const struct dirent *ent) {
     for (size_t i = 0; ent->d_name[i] != '\0'; i++) {

@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <ctype.h>
+#include <procinfo.h>
 #include <pwd.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/os_2.h>
 #include <unistd.h>
 
 static bool print_all;
