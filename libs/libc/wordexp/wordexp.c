@@ -1721,7 +1721,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                 continue;
             normal_var : {
                 // Maybe other characters are valid but this is the standard form
-                int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+                int to_read = strspn(s + i + 1, "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 
                 if (to_read == 0) {
                     break;
