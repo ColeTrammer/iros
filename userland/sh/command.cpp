@@ -880,6 +880,8 @@ finish_command_list:
     return 0;
 }
 
+extern size_t g_command_count;
+
 int command_run(ShValue::Program& program) {
     for (int i = 0; i < program.size(); i++) {
         auto& list = program[i];
@@ -889,6 +891,7 @@ int command_run(ShValue::Program& program) {
         }
     }
 
+    g_command_count++;
     return 0;
 }
 

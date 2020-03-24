@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "builtin.h"
@@ -31,6 +32,8 @@ struct suggestion {
 static char **history;
 static size_t history_length;
 static size_t history_max;
+
+size_t g_command_count;
 
 static struct termios saved_termios;
 
@@ -80,19 +83,170 @@ char *__getcwd() {
 extern struct passwd *user_passwd;
 extern struct utsname system_name;
 
-static void print_ps1_prompt() {
-    char *cwd = strdup(__getcwd());
-    char *cwd_use = cwd;
+static const char *month(int m) {
+    switch (m) {
+        case 1:
+            return "Jan";
+        case 2:
+            return "Feb";
+        case 3:
+            return "Mar";
+        case '4':
+            return "Apr";
+        case 5:
+            return "May";
+        case 6:
+            return "Jun";
+        case 7:
+            return "Jul";
+        case 8:
+            return "Aug";
+        case 9:
+            return "Sep";
+        case 10:
+            return "Oct";
+        case 11:
+            return "Nov";
+        case 12:
+            return "Dec";
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
 
-    size_t home_dir_length = strlen(user_passwd->pw_dir);
-    if (strcmp(user_passwd->pw_dir, "/") != 0 && strncmp(cwd, user_passwd->pw_dir, home_dir_length) == 0) {
-        cwd_use = cwd + home_dir_length - 1;
-        *cwd_use = '~';
+static const char *weekday(int d) {
+    switch (d) {
+        case 1:
+            return "Mon";
+        case 2:
+            return "Tue";
+        case 3:
+            return "Wed";
+        case 4:
+            return "Thu";
+        case 5:
+            return "Fri";
+        case 6:
+            return "Sat";
+        case 7:
+            return "Sun";
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+static void print_ps1_prompt() {
+    char *PS1 = getenv("PS1");
+    if (!PS1) {
+        fprintf(stderr, "$ ");
+        return;
     }
 
-    fprintf(stderr, "\033[32;1m%s@%s\033[0m:\033[%s;1m%s\033[0m$ ", user_passwd->pw_name, system_name.nodename,
-            strcmp(system_name.sysname, "os_2") == 0 ? "36" : "34", cwd_use);
-    free(cwd);
+    bool prev_was_backslash = false;
+    for (size_t i = 0; PS1[i] != '\0'; i++) {
+        char c = PS1[i];
+        if (prev_was_backslash) {
+            switch (c) {
+                case 'a':
+                    fprintf(stderr, "%c", '\a');
+                    break;
+                case 'd': {
+                    time_t time = ::time(nullptr);
+                    struct tm *date = localtime(&time);
+                    fprintf(stderr, "%s %s %d", weekday(date->tm_wday), month(date->tm_mon), date->tm_mday);
+                    break;
+                }
+                case 'H':
+                case 'h':
+                    fprintf(stderr, "%s", system_name.nodename);
+                    break;
+                case 'n':
+                    fprintf(stderr, "%c", '\n');
+                    break;
+                case 'r':
+                    fprintf(stderr, "%c", '\r');
+                    break;
+                case 's':
+                    fprintf(stderr, "%s", "sh");
+                    break;
+                case 't': {
+                    time_t time = ::time(nullptr);
+                    struct tm *date = localtime(&time);
+                    fprintf(stderr, "%02d:%02d:%02d", date->tm_hour, date->tm_min, date->tm_sec);
+                    break;
+                }
+                case 'T': {
+                    time_t time = ::time(nullptr);
+                    struct tm *date = localtime(&time);
+                    fprintf(stderr, "%02d:%02d:%02d", date->tm_hour % 12, date->tm_min, date->tm_sec);
+                    break;
+                }
+                case '@': {
+                    time_t time = ::time(nullptr);
+                    struct tm *date = localtime(&time);
+                    fprintf(stderr, "%02d:%02d %s", date->tm_hour % 12, date->tm_min, date->tm_hour < 12 ? "AM" : "PM");
+                    break;
+                }
+                case 'A': {
+                    time_t time = ::time(nullptr);
+                    struct tm *date = localtime(&time);
+                    fprintf(stderr, "%02d:%02d", date->tm_hour, date->tm_min);
+                    break;
+                }
+                case 'u':
+                    fprintf(stderr, "%s", user_passwd->pw_name);
+                    break;
+                case 'W':
+                case 'w': {
+                    char *cwd = strdup(__getcwd());
+                    char *cwd_use = cwd;
+
+                    size_t home_dir_length = strlen(user_passwd->pw_dir);
+                    if (strcmp(user_passwd->pw_dir, "/") != 0 && strncmp(cwd, user_passwd->pw_dir, home_dir_length) == 0) {
+                        cwd_use = cwd + home_dir_length - 1;
+                        *cwd_use = '~';
+                    }
+
+                    fprintf(stderr, "%s", cwd_use);
+                    free(cwd);
+                    break;
+                }
+                case '#':
+                    fprintf(stderr, "%lu", g_command_count);
+                    break;
+                case '!':
+                    fprintf(stderr, "%lu", history_length);
+                    break;
+                case '$':
+                    if (geteuid() == 0) {
+                        fprintf(stderr, "%c", '#');
+                    } else {
+                        fprintf(stderr, "%c", '$');
+                    }
+                    break;
+                case 'e':
+                    fprintf(stderr, "%c", '\033');
+                    break;
+                case '[':
+                case ']':
+                    break;
+                default:
+                    fprintf(stderr, "%c", c);
+                    break;
+            }
+
+            prev_was_backslash = false;
+            continue;
+        }
+
+        if (c == '\\') {
+            prev_was_backslash = true;
+        } else {
+            fprintf(stderr, "%c", c);
+        }
+    }
 }
 
 static char *scandir_match_string = NULL;
