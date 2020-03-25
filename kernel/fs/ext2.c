@@ -473,7 +473,7 @@ static struct raw_inode *ext2_get_inode_table(struct super_block *sb, size_t ind
     struct ext2_block_group *group = ext2_get_block_group(sb, index);
 
     if (!group->inode_table_start) {
-        ssize_t num_blocks = (data->sb->num_inodes_in_block_group * sizeof(struct raw_inode) + sb->block_size - 1) / sb->block_size;
+        ssize_t num_blocks = (data->sb->num_inodes_in_block_group * data->sb->inode_size + sb->block_size - 1) / sb->block_size;
         struct raw_inode *inode_table_start = ext2_allocate_blocks(sb, num_blocks);
         if (ext2_read_blocks(sb, inode_table_start, group->blk_desc->inode_table_block_address, num_blocks) != num_blocks) {
             debug_log("Ext2 Read Inode Table Failed: [ %lu ]\n", index);
@@ -492,7 +492,8 @@ static struct raw_inode *ext2_get_raw_inode(struct super_block *sb, uint32_t ind
     struct raw_inode *inode_table = ext2_get_inode_table(sb, ext2_get_block_group_from_inode(sb, index));
     assert(inode_table);
 
-    return inode_table + ext2_get_inode_table_index(sb, index);
+    struct ext2_sb_data *data = sb->private_data;
+    return (struct raw_inode *) (((char *) inode_table) + ext2_get_inode_table_index(sb, index) * data->sb->inode_size);
 }
 
 static void ext2_update_inode(struct inode *inode, bool update_tnodes);
@@ -613,27 +614,28 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
 
 /* Syncs raw_inode to disk */
 static int ext2_sync_inode(struct inode *inode) {
+    struct ext2_sb_data *sb_data = inode->super_block->private_data;
+
     size_t inode_table_index = ext2_get_inode_table_index(inode->super_block, inode->index);
-    size_t block_off = ((inode_table_index) * sizeof(struct raw_inode)) / inode->super_block->block_size;
+    size_t block_off = (inode_table_index * sb_data->sb->inode_size) / inode->super_block->block_size;
     size_t block_group = ext2_get_block_group_from_inode(inode->super_block, inode->index);
     size_t raw_offset = block_off * inode->super_block->block_size;
     struct raw_inode *raw_inode_table = ext2_get_inode_table(inode->super_block, block_group);
+    struct raw_inode *raw_inode = (struct raw_inode *) (((char *) raw_inode_table) + inode_table_index * sb_data->sb->inode_size);
 
-    assert(((struct ext2_sb_data *) inode->super_block->private_data)->sb->inode_size == sizeof(struct raw_inode));
     assert(inode->private_data == raw_inode_table + inode_table_index);
-    raw_inode_table[inode_table_index].size = inode->size;
-    raw_inode_table[inode_table_index].mode = inode->mode;
-    raw_inode_table[inode_table_index].uid = inode->uid;
-    raw_inode_table[inode_table_index].gid = inode->gid;
-    raw_inode_table[inode_table_index].atime = inode->access_time.tv_sec;
-    raw_inode_table[inode_table_index].mtime = inode->modify_time.tv_sec;
-    raw_inode_table[inode_table_index].ctime = inode->change_time.tv_sec;
+    raw_inode->size = inode->size;
+    raw_inode->mode = inode->mode;
+    raw_inode->uid = inode->uid;
+    raw_inode->gid = inode->gid;
+    raw_inode->atime = inode->access_time.tv_sec;
+    raw_inode->mtime = inode->modify_time.tv_sec;
+    raw_inode->ctime = inode->change_time.tv_sec;
     /* Sector size should be retrieved from block device */
-    raw_inode_table[inode_table_index].sectors = (inode->size + 511) / 512;
+    raw_inode->sectors = (inode->size + 511) / 512;
 
-    ssize_t ret = ext2_write_blocks(
-        inode->super_block, (void *) (((uintptr_t) raw_inode_table) + raw_offset),
-        ((struct ext2_sb_data *) inode->super_block->private_data)->blk_desc_table[block_group].inode_table_block_address + block_off, 1);
+    ssize_t ret = ext2_write_blocks(inode->super_block, (void *) (((uintptr_t) raw_inode_table) + raw_offset),
+                                    sb_data->blk_desc_table[block_group].inode_table_block_address + block_off, 1);
 
     if (ret != 1) {
         return (int) ret;
@@ -1657,6 +1659,7 @@ struct inode *ext2_mount(struct file_system *current_fs, char *device_path) {
     debug_log("Ext2 Num Blocks in Group: [ %u ]\n", raw_super_block->num_blocks_in_block_group);
     debug_log("Ext2 Block Size: [ %lu ]\n", super_block->block_size);
     debug_log("Ext2 Num Block Groups: [ %lu ]\n", data->num_block_groups);
+    debug_log("Ext2 Inode Size: [ %u ]\n", raw_super_block->inode_size);
 
     blkcnt_t num_blocks =
         (data->num_block_groups * sizeof(struct raw_block_group_descriptor) + super_block->block_size - 1) / super_block->block_size;
