@@ -68,7 +68,7 @@ $(BUILDDIR)/initrd/programs/strtoken_test \
 $(BUILDDIR)/initrd/programs/tcp_server_test_a \
 $(BUILDDIR)/initrd/programs/tcp_test_a \
 $(BUILDDIR)/initrd/programs/te \
-$(BUILDDIR)/initrd/programs/test_cpp \
+$(BUILDDIR)/initrd/programs/test_cpp_a \
 $(BUILDDIR)/initrd/programs/test_exec \
 $(BUILDDIR)/initrd/programs/test_regex \
 $(BUILDDIR)/initrd/programs/test \
