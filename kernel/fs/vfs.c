@@ -28,7 +28,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/validators.h>
 
-// #define INAME_DEBUG
+#define INAME_DEBUG
 // #define INODE_REF_COUNT_DEBUG
 
 static struct file_system *file_systems;
@@ -149,6 +149,7 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
     }
 
     assert(tnode->inode);
+    debug_log("reading from: [ %s ]\n", path);
     return fs_read_all_inode(tnode->inode, buffer, buffer_len);
 }
 

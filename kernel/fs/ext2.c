@@ -503,15 +503,6 @@ static void ext2_update_tnode_list(struct inode *inode) {
         ext2_update_inode(inode, false);
     }
 
-    struct raw_inode *raw_inode = inode->private_data;
-    assert(raw_inode);
-
-    struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
-    if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[0], 1) != 1) {
-        debug_log("Ext2 Read Error: [ %llu ]\n", inode->index);
-        return;
-    }
-
     spin_lock(&inode->lock);
 
     if (inode->dirent_cache != NULL) {
@@ -521,6 +512,21 @@ static void ext2_update_tnode_list(struct inode *inode) {
         return;
     } else {
         inode->dirent_cache = fs_create_dirent_cache();
+    }
+
+    if (inode->size == 0) {
+        debug_log("directory inode empty?: [ %llu ]\n", inode->index);
+        spin_unlock(&inode->lock);
+        return;
+    }
+
+    struct raw_inode *raw_inode = inode->private_data;
+    assert(raw_inode);
+
+    struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
+    if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[0], 1) != 1) {
+        debug_log("Ext2 Read Error: [ %llu ]\n", inode->index);
+        return;
     }
 
     size_t block_no = 0;
