@@ -41,11 +41,11 @@ fake_popd() {
 run() {
     case $TARGET in
         all)
-            download || die "download failed"
-            patch || die "patch failed"
-            configure || die "configure failed"
-            build || die "build failed"
-            install || die "install failed"
+            TARGET=download run 
+            TARGET=patch run 
+            TARGET=configure run 
+            TARGET=build run 
+            TARGET=install run 
             ;;
         clean)
             fake_pushd $BUILD_DIR
@@ -63,7 +63,9 @@ run() {
             fake_popd
             ;;
         download)
-            download || die "download failed"
+            if [ ! -e $SRC_DIR ]; then
+                download || die "download failed"
+            fi
             ;;
         patch)
             fake_pushd $SRC_DIR
@@ -74,6 +76,7 @@ run() {
             if [ ! -e $BUILD_DIR ]; then
                 fake_pushd ../..
                 make install-headers
+                rm sysroot/usr/include/dlfcn.h
                 fake_popd
 
                 mkdir -p $BUILD_DIR

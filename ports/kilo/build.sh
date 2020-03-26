@@ -1,23 +1,32 @@
 #!/bin/sh
 
-export ROOT="$PWD/../.."
+export PORT_NAME=kilo
+export SRC_DIR=kilo
+export BUILD_DIR=kilo
 
-
-if [ ! -d kilo ]; then
-    # Get source from GitHub
+download() {
     git clone https://github.com/antirez/kilo.git
+}
 
-    # Apply patch
-    cd kilo
+patch() {
     git apply ../kilo.patch
-    cd ..
-fi
+}
 
-# Build
-cd kilo
-make all
-cd ..
+configure() {
+    :
+}
 
-# Copy into image
-mkdir -p $ROOT/sysroot/usr/bin
-cp kilo/kilo $ROOT/sysroot/usr/bin
+build() {
+    make all
+}
+
+install() {
+    mkdir -p $ROOT/sysroot/usr/bin
+    cp kilo $ROOT/sysroot/usr/bin
+}
+
+clean() {
+    make clean
+}
+
+. ../.build_include.sh

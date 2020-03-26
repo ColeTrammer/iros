@@ -1,33 +1,31 @@
-#!/bin/bash
+#!/bin/sh
 
-set -e
+export PORT_NAME=binutils
+export SRC_DIR='../../toolchain/binutils-2.34/binutils-os_2-2.34'
+export BUILD_DIR='build-binutils'
 
-# Variables
-export ROOT="$PWD/../.."
-export HOST=`$ROOT/default-host.sh`
-PORT_DIR=$ROOT/toolchain/binutils-2.34
+download() {
+    :
+}
 
-export ONLY_DOWNLOAD_AND_EXTRACT=1
-pushd $PORT_DIR
-./build.sh
-popd
+patch() {
+    :
+}
 
-# Install headers for correct build
-cd ../..
-make install-headers
-cd ports/binutils
-rm $ROOT/sysroot/usr/include/dlfcn.h
+configure() {
+    $ROOT/toolchain/binutils-2.34/binutils-os_2-2.34/configure --host=$HOST --disable-nls --prefix=/usr --target=$HOST --with-sysroot=/ --with-build-sysroot=$ROOt/sysroot --disable-werror --disable-gdb
+}
 
-if [ ! -e build-binutils ]; then
-    mkdir -p build-binutils
-    cd build-binutils
-    $PORT_DIR/binutils-os_2-2.34/configure --host=$HOST --disable-nls --prefix=/usr --target=$HOST --with-sysroot=/ --with-build-sysroot=$ROOt/sysroot --disable-werror --disable-gdb
-    cd ..
-fi
+clean() {
+    make clean
+}
 
-# Build
-cd build-binutils
-make clean
-make all -j5
-make install-strip DESTDIR=$ROOT/sysroot -j5
-cd ..
+build() {
+    make -j5
+}
+
+install() {
+    make install-strip DESTDIR=$ROOT/sysroot -j5
+}
+
+. ../.build_include.sh
