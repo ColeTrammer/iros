@@ -623,7 +623,6 @@ static int ext2_sync_inode(struct inode *inode) {
     struct raw_inode *raw_inode_table = ext2_get_inode_table(inode->super_block, block_group);
     struct raw_inode *raw_inode = (struct raw_inode *) (((char *) raw_inode_table) + inode_table_index * sb_data->sb->inode_size);
 
-    assert(inode->private_data == raw_inode_table + inode_table_index);
     raw_inode->size = inode->size;
     raw_inode->mode = inode->mode;
     raw_inode->uid = inode->uid;
