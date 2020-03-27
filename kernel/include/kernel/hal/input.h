@@ -153,6 +153,8 @@ struct mouse_event {
     enum scroll_state scroll_state;
     enum mouse_button_state left;
     enum mouse_button_state right;
+    int dx;
+    int dy;
 };
 
 #ifdef __cplusplus

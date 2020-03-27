@@ -133,9 +133,14 @@ void on_interrupt(void *closure __attribute__((unused))) {
         s_event.scroll_state = SCROLL_DOWN;
     } else if (data.buffer[3] == 0xFF) {
         s_event.scroll_state = SCROLL_UP;
+    }
+
+    if (data.buffer[0] & 0xC0) {
+        s_event.dx = 0;
+        s_event.dy = 0;
     } else {
-        data.index = 0;
-        return;
+        s_event.dx = (int) data.buffer[1] - ((((int) data.buffer[0]) << 4) & 0x100);
+        s_event.dy = (int) data.buffer[2] - ((((int) data.buffer[0]) << 3) & 0x100);
     }
 
     add_mouse_event(&s_event);

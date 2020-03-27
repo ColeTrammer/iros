@@ -7,7 +7,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/util/hash_map.h>
 
-#define DIRENT_CACHE_DEBUG
+// #define DIRENT_CACHE_DEBUG
 
 static unsigned int cached_dirent_hash(void *d, int num_buckets) {
     char *s = d;

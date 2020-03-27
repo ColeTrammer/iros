@@ -28,7 +28,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/validators.h>
 
-#define INAME_DEBUG
+// #define INAME_DEBUG
 // #define INODE_REF_COUNT_DEBUG
 
 static struct file_system *file_systems;
