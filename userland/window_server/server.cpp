@@ -158,25 +158,29 @@ void Server::start() {
 
         if (FD_ISSET(m_kbd_fd, &set)) {
             key_event event;
-            assert(read(m_kbd_fd, &event, sizeof(event)) == sizeof(event));
-
-            auto* active_window = m_manager->active_window();
-            if (active_window) {
-                auto to_send = WindowServer::Message::KeyEventMessage::create(event);
-                assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                       static_cast<ssize_t>(to_send->total_size()));
+            while (read(m_kbd_fd, &event, sizeof(event)) == sizeof(event)) {
+                auto* active_window = m_manager->active_window();
+                if (active_window) {
+                    auto to_send = WindowServer::Message::KeyEventMessage::create(event);
+                    assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                           static_cast<ssize_t>(to_send->total_size()));
+                }
             }
         }
 
         if (FD_ISSET(m_mouse_fd, &set)) {
             mouse_event event;
-            assert(read(m_mouse_fd, &event, sizeof(event)) == sizeof(event));
+            while (read(m_mouse_fd, &event, sizeof(event)) == sizeof(event)) {
+                if (event.dx != 0 || event.dy != 0) {
+                    m_manager->notify_mouse_moved(event.dx, event.dy);
+                }
 
-            auto* active_window = m_manager->active_window();
-            if (active_window) {
-                auto to_send = WindowServer::Message::MouseEventMessage::create(event);
-                assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                       static_cast<ssize_t>(to_send->total_size()));
+                auto* active_window = m_manager->active_window();
+                if (active_window) {
+                    auto to_send = WindowServer::Message::MouseEventMessage::create(event);
+                    assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                           static_cast<ssize_t>(to_send->total_size()));
+                }
             }
         }
 
