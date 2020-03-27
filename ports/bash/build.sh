@@ -3,6 +3,7 @@
 export PORT_NAME=bash
 export SRC_DIR='bash-5.0'
 export BUILD_DIR='build-bash'
+export INSTALL_COMMAND='install-strip'
 
 download() {
     # Download tar.gz
@@ -22,18 +23,6 @@ configure() {
 
     perl -p -i -e "s/#define CAN_REDEFINE_GETENV 1/\/* #undef CAN_REDEFINE_GETENV *\//" config.h
     perl -p -i -e "s/#define GETCWD_BROKEN 1/\/* #undef GETCWD_BROKEN *\//" config.h
-}
-
-build() {
-    make -j5
-}
-
-install() {
-    make install-strip DESTDIR=$ROOT/sysroot -j5
-}
-
-clean() {
-    make clean
 }
 
 . ../.build_include.sh

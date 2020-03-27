@@ -21,16 +21,4 @@ configure() {
     ../vttest/configure --host=$HOST --prefix=/usr
 }
 
-clean() {
-    make clean
-}
-
-build() {
-    make -j5
-}
-
-install() {
-    make install DESTDIR=$ROOT/sysroot -j5
-}
-
 . ../.build_include.sh

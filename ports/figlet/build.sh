@@ -18,11 +18,7 @@ patch() {
 }
 
 build() {
-    make install -j5
-}
-
-clean() {
-    make clean
+    make install $MAKE_ARGS
 }
 
 install() {

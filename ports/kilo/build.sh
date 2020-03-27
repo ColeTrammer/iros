@@ -12,21 +12,9 @@ patch() {
     git apply ../kilo.patch
 }
 
-configure() {
-    :
-}
-
-build() {
-    make all
-}
-
 install() {
     mkdir -p $ROOT/sysroot/usr/bin
     cp kilo $ROOT/sysroot/usr/bin
-}
-
-clean() {
-    make clean
 }
 
 . ../.build_include.sh

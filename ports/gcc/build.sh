@@ -1,5 +1,12 @@
 #!/bin/sh
 
+export PORT_NAME=gcc
+export SRC_DIR='gcc-9.2.0'
+export BUILD_DIR='build-gcc'
+export INSTALL_COMMAND='install-strip'
+export AUTO_CONF_OPTS='ac_cv_c_bigendian=no'
+export MAKE_ARGS="$AUTO_CONF_OPTS"
+
 download() {
     # Download tar.gz
     curl http://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz --output gcc-os_2-9.2.0.tar.gz
@@ -23,7 +30,6 @@ configure() {
     ../gcc-9.2.0/configure --host=$HOST --target=$HOST --prefix=/usr --disable-nls --disable-lto --with-sysroot=/ --with-build-sysroot=$ROOT/sysroot --enable-languages=c,c++
 }
 
-export AUTO_CONF_OPTS='ac_cv_c_bigendian=no'
 
 clean() {
     make clean

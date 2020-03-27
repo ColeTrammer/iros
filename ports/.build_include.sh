@@ -38,6 +38,36 @@ fake_popd() {
     cd $__OLD_PUSHD_DIRECTORY
 }
 
+function_exists() {
+    TYPE_RESULT="$(type $1 | head -n 1)"
+    TYPE_TARGET="$1 is a shell function"
+    [ "$TYPE_TARGET" = "$TYPE_RESULT" ]
+}
+
+MAKE_ARGS="$MAKE_ARGS -j5"
+
+function_exists download || die "download() is not defined"
+
+function_exists configure || configure() {
+    :
+}
+
+function_exists clean || clean() {
+    make clean $MAKE_ARGS
+}
+
+function_exists build || build() {
+    make $MAKE_ARGS
+}
+
+function_exists patch || patch() {
+    :
+}
+
+function_exists install || install() {
+    make ${INSTALL_COMMAND:-install} DESTDIR="$ROOT/sysroot" $MAKE_ARGS
+}
+
 run() {
     case $TARGET in
         all)
