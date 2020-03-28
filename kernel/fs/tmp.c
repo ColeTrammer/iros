@@ -39,10 +39,11 @@ static struct super_block_operations s_op = { &tmp_rename };
 static struct inode_operations tmp_i_op = { NULL,       &tmp_lookup,   &tmp_open,   NULL,
                                             NULL,       NULL,          &tmp_unlink, NULL,
                                             &tmp_chmod, &tmp_chown,    &tmp_mmap,   NULL,
-                                            NULL,       &tmp_read_all, &tmp_utimes, &tmp_on_inode_destruction };
+                                            NULL,       &tmp_read_all, &tmp_utimes, &tmp_on_inode_destruction,
+                                            NULL };
 
-static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, NULL, NULL, &tmp_mkdir, NULL,        &tmp_rmdir,
-                                                &tmp_chmod,  &tmp_chown,  NULL,      NULL, NULL, NULL,       &tmp_utimes, NULL };
+static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, NULL, NULL, &tmp_mkdir,  NULL, &tmp_rmdir, &tmp_chmod,
+                                                &tmp_chown,  NULL,        NULL,      NULL, NULL, &tmp_utimes, NULL, NULL };
 
 static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
 

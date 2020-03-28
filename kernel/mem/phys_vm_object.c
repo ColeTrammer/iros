@@ -31,7 +31,7 @@ static int phys_kill(struct vm_object *self) {
     return 0;
 }
 
-static struct vm_object_operations phys_ops = { &phys_map, &phys_kill };
+static struct vm_object_operations phys_ops = { &phys_map, NULL, &phys_kill };
 
 struct vm_object *vm_create_phys_object(uintptr_t phys_start, size_t size, int (*on_kill)(void *closure), void *closure) {
     struct phys_vm_object_data *data = malloc(sizeof(struct phys_vm_object_data));

@@ -175,6 +175,7 @@ struct inode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int flags, int *error);
 int ext2_close(struct file *file);
 ssize_t ext2_read(struct file *file, off_t offset, void *buffer, size_t len);
+ssize_t ext2_iread(struct inode *inode, void *buffer, size_t len, off_t offset);
 ssize_t ext2_write(struct file *file, off_t offset, const void *buffer, size_t len);
 int ext2_stat(struct inode *inode, struct stat *stat_struct);
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error);

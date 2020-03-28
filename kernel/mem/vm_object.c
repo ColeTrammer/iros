@@ -1,8 +1,12 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include <string.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/page.h>
 #include <kernel/mem/vm_object.h>
+#include <kernel/mem/vm_region.h>
+#include <kernel/proc/task.h>
 
 // #define VM_OBJECT_REF_COUNT_DEBUG
 
@@ -35,6 +39,29 @@ void bump_vm_object(struct vm_object *obj) {
 #endif /* VM_OBJECT_REF_COUNT_DEBUG */
     obj->ref_count++;
     spin_unlock(&obj->lock);
+}
+
+int vm_handle_fault_in_region(struct vm_region *region, uintptr_t address) {
+    address &= ~(PAGE_SIZE - 1);
+
+    struct process *process = get_current_task()->process;
+    if (!region->vm_object) {
+        map_page(address, region->flags, process);
+        memset((void *) address, 0, PAGE_SIZE);
+        return 0;
+    }
+
+    struct vm_object *object = region->vm_object;
+    uintptr_t offset_in_object = region->vm_object_offset + address - region->start;
+
+    if (!object->ops->handle_fault) {
+        debug_log("unrecoverable vm_object fault: [ %#.16lX ]\n", address);
+        return 1;
+    }
+
+    uintptr_t phys_address_to_map = object->ops->handle_fault(object, offset_in_object);
+    map_phys_page(phys_address_to_map, address, region->flags, process);
+    return 0;
 }
 
 struct vm_object *vm_create_object(enum vm_object_type type, struct vm_object_operations *ops, void *private_data) {

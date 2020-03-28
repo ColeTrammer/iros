@@ -8,10 +8,11 @@
 #include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/mem/vm_object.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
-// #define PAGE_FAULT_DEBUG
+#define PAGE_FAULT_DEBUG
 // #define DEVICE_NOT_AVAILABLE_DEBUG
 
 void init_irq_handlers() {
@@ -21,7 +22,7 @@ void init_irq_handlers() {
     register_irq_handler(&handle_double_fault_entry, 8, false, true);
     register_irq_handler(&handle_stack_fault, 12, false, true);
     register_irq_handler(&handle_general_protection_fault_entry, 13, false, false);
-    register_irq_handler(&handle_page_fault_entry, 14, false, true);
+    register_irq_handler(&handle_page_fault_entry, 14, false, false);
     register_irq_handler(&handle_fpu_exception_entry, 16, false, false);
 
     register_irq_handler(&sys_call_entry, 128, true, false);
@@ -105,12 +106,10 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
 
     if (vm_region && !current->kernel_task && !(task_state->error_code & 1) && address != vm_region->end &&
         !(vm_region->flags & VM_PROT_NONE) && !(vm_region->flags & VM_COW)) {
-        map_page(address & ~0xFFF, vm_region->flags, current->process);
-
-        if (vm_region->type == VM_PROCESS_ANON_MAPPING) {
-            memset((void *) (address & ~0xFFF), 0, PAGE_SIZE);
+        // Return if we can handle the fault
+        if (!vm_handle_fault_in_region(vm_region, address)) {
+            return;
         }
-        return;
     }
 
     if (!current->kernel_task && !current->in_kernel) {

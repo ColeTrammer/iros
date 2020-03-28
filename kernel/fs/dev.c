@@ -30,10 +30,10 @@ static ino_t inode_counter = 1;
 
 static struct file_system fs = { "dev", 0, &dev_mount, NULL, NULL };
 
-static struct inode_operations dev_i_op = { NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl, NULL,          NULL, NULL,
-                                            NULL, NULL,        &dev_mmap, NULL,      NULL,       &dev_read_all, NULL, NULL };
+static struct inode_operations dev_i_op = { NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl,    NULL, NULL, NULL, NULL,
+                                            NULL, &dev_mmap,   NULL,      NULL,      &dev_read_all, NULL, NULL, NULL };
 
-static struct inode_operations dev_dir_i_op = { NULL, &dev_lookup, &dev_open, NULL, NULL, NULL, NULL, NULL,
+static struct inode_operations dev_dir_i_op = { NULL, &dev_lookup, &dev_open, NULL, NULL, NULL, NULL, NULL, NULL,
                                                 NULL, NULL,        NULL,      NULL, NULL, NULL, NULL, NULL };
 
 static struct file_operations dev_f_op = { &dev_close, &dev_read, &dev_write, NULL };

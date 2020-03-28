@@ -14,17 +14,17 @@ static int anon_map(struct vm_object *self, struct vm_region *region) {
 
     struct task *current_task = get_current_task();
 
+    spin_lock(&self->lock);
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         size_t page_index = (i + region->vm_object_offset - region->start) / PAGE_SIZE;
         assert(page_index < data->pages);
 
-        if (!data->phys_pages[page_index]) {
-            data->phys_pages[page_index] = get_next_phys_page(current_task->process);
+        if (data->phys_pages[page_index]) {
+            map_phys_page(data->phys_pages[page_index], i, region->flags, current_task->process);
         }
-
-        map_phys_page(data->phys_pages[page_index], i, region->flags, current_task->process);
     }
 
+    spin_unlock(&self->lock);
     return 0;
 }
 
@@ -42,13 +42,35 @@ static int anon_kill(struct vm_object *self) {
     return 0;
 }
 
-static struct vm_object_operations anon_ops = { &anon_map, &anon_kill };
+static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into_self) {
+    struct anon_vm_object_data *data = self->private_data;
+
+    struct task *current_task = get_current_task();
+
+    size_t page_index = offset_into_self / PAGE_SIZE;
+    assert(page_index < data->pages);
+
+    spin_lock(&self->lock);
+
+    assert(!data->phys_pages[page_index]);
+    size_t phys_addr = get_next_phys_page(current_task->process);
+    data->phys_pages[page_index] = phys_addr;
+
+    void *phys_addr_mapping = create_phys_addr_mapping(phys_addr);
+    memset(phys_addr_mapping, 0, PAGE_SIZE);
+
+    spin_unlock(&self->lock);
+    return data->phys_pages[page_index];
+}
+
+static struct vm_object_operations anon_ops = { &anon_map, &anon_handle_fault, &anon_kill };
 
 struct vm_object *vm_create_anon_object(size_t size) {
-    struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + size / PAGE_SIZE * sizeof(uintptr_t));
+    size_t num_pages = ((size + PAGE_SIZE - 1) / PAGE_SIZE);
+    struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + num_pages * sizeof(uintptr_t));
     assert(data);
 
-    data->pages = ((size + PAGE_SIZE - 1) / PAGE_SIZE);
-    memset(data->phys_pages, 0, data->pages * sizeof(uintptr_t));
+    data->pages = num_pages;
+    memset(data->phys_pages, 0, num_pages * sizeof(uintptr_t));
     return vm_create_object(VM_ANON, &anon_ops, data);
 }

@@ -57,9 +57,9 @@ static struct inode *root;
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
 
 static struct inode_operations procfs_i_op = { NULL, &procfs_lookup, &procfs_open,     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL,           &procfs_read_all, NULL, NULL };
+                                               NULL, NULL,           &procfs_read_all, NULL, NULL, NULL };
 
-static struct inode_operations procfs_dir_i_op = { NULL, &procfs_lookup, &procfs_open, NULL, NULL, NULL, NULL, NULL,
+static struct inode_operations procfs_dir_i_op = { NULL, &procfs_lookup, &procfs_open, NULL, NULL, NULL, NULL, NULL, NULL,
                                                    NULL, NULL,           NULL,         NULL, NULL, NULL, NULL, NULL };
 
 static struct file_operations procfs_f_op = { NULL, &procfs_read, NULL, NULL };

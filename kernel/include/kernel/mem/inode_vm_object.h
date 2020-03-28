@@ -7,9 +7,9 @@
 
 struct inode_vm_object_data {
     struct inode *inode;
-    void *inode_buffer;
-    bool shared;
     bool owned;
+    size_t pages;
+    uintptr_t phys_pages[];
 };
 
 struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags);

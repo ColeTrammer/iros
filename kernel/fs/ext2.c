@@ -32,12 +32,13 @@ static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &ext2_rename };
 
-static struct inode_operations ext2_i_op = { NULL,        &ext2_lookup, &ext2_open, &ext2_stat, NULL, NULL,           &ext2_unlink, NULL,
-                                             &ext2_chmod, &ext2_chown,  &ext2_mmap, NULL,       NULL, &ext2_read_all, &ext2_utimes, NULL };
+static struct inode_operations ext2_i_op = { NULL,         &ext2_lookup,   &ext2_open,   &ext2_stat,  NULL,       NULL,
+                                             &ext2_unlink, NULL,           &ext2_chmod,  &ext2_chown, &ext2_mmap, NULL,
+                                             NULL,         &ext2_read_all, &ext2_utimes, NULL,        &ext2_iread };
 
 static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,   &ext2_stat,  NULL, &ext2_mkdir,
                                                  NULL,         &ext2_rmdir,  &ext2_chmod,  &ext2_chown, NULL, &ext2_symlink,
-                                                 &ext2_link,   NULL,         &ext2_utimes, NULL };
+                                                 &ext2_link,   NULL,         &ext2_utimes, NULL,        NULL };
 
 static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL };
 
@@ -1158,6 +1159,10 @@ int ext2_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
+ssize_t ext2_iread(struct inode *inode, void *buffer, size_t len, off_t offset) {
+    return __ext2_read(inode, offset, buffer, len);
+}
+
 ssize_t ext2_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
     spin_lock(&inode->lock);
@@ -1555,6 +1560,10 @@ int ext2_utimes(struct inode *inode, const struct timeval *times) {
 intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
     offset &= ~0xFFF;
     len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    if (!inode->private_data) {
+        ext2_update_inode(inode, true);
+    }
 
     struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     if (!region) {
