@@ -564,6 +564,8 @@ struct vm_region *find_user_vm_region_by_addr(uintptr_t addr) {
 }
 
 struct vm_region *find_user_vm_region_in_range(uintptr_t start, uintptr_t end) {
+    assert(start <= end);
+
     if (start == end) {
         return NULL;
     }

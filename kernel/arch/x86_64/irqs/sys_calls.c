@@ -1423,6 +1423,10 @@ SYS_CALL(create_task) {
 
     SYS_PARAM1_VALIDATE(struct create_task_args *, args, validate_read, sizeof(struct create_task_args));
 
+    // FIXME: a more robust check for the validity of the new stack could be helpful.
+    uintptr_t new_rsp = args->stack_start - sizeof(uintptr_t);
+    SYS_VALIDATE((uintptr_t *) new_rsp, sizeof(uintptr_t), validate_write);
+
     debug_log("Creating task: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", args->entry, args->stack_start, (uintptr_t) args->tid_ptr,
               (uintptr_t) args->thread_self_pointer);
 
@@ -1448,7 +1452,7 @@ SYS_CALL(create_task) {
     task->arch_task.task_state.stack_state.cs = current->arch_task.task_state.stack_state.cs;
     task->arch_task.task_state.stack_state.rip = args->entry;
     task->arch_task.task_state.stack_state.rflags = current->arch_task.task_state.stack_state.rflags;
-    task->arch_task.task_state.stack_state.rsp = args->stack_start - sizeof(uintptr_t);
+    task->arch_task.task_state.stack_state.rsp = new_rsp;
     *((uintptr_t *) task->arch_task.task_state.stack_state.rsp) = args->push_onto_stack;
     task->arch_task.task_state.stack_state.ss = current->arch_task.task_state.stack_state.ss;
     task->arch_task.task_state.cpu_state.rdi = (uint64_t) args->arg;
