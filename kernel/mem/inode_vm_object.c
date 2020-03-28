@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 
 #include <kernel/fs/vfs.h>
@@ -14,13 +15,16 @@ static int inode_map(struct vm_object *self, struct vm_region *region) {
     struct inode_vm_object_data *data = self->private_data;
 
     if (!data->inode_buffer) {
-        data->inode_buffer = aligned_alloc(PAGE_SIZE, ((data->inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
+        size_t page_rounded_inode_size = ((data->inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        data->inode_buffer = aligned_alloc(PAGE_SIZE, page_rounded_inode_size);
         assert(data->inode_buffer);
 
         int ret = fs_read_all_inode_with_buffer(data->inode, data->inode_buffer);
         if (ret < 0) {
             return ret;
         }
+
+        memset(data->inode_buffer + data->inode->size, 0, page_rounded_inode_size - data->inode->size);
     }
 
     struct process *current = get_current_task()->process;
