@@ -3,7 +3,7 @@
 export PORT_NAME=gcc
 export SRC_DIR='gcc-9.2.0'
 export BUILD_DIR='build-gcc'
-export INSTALL_COMMAND='install-strip'
+export INSTALL_COMMAND="${INSTALL_COMMAND:-install-strip-gcc install-strip-target-libgcc install-strip-target-libstdc++-v3}"
 export AUTO_CONF_OPTS='ac_cv_c_bigendian=no'
 export MAKE_ARGS="$AUTO_CONF_OPTS"
 
@@ -30,17 +30,8 @@ configure() {
     ../gcc-9.2.0/configure --host=$HOST --target=$HOST --prefix=/usr --disable-nls --disable-lto --with-sysroot=/ --with-build-sysroot=$ROOT/sysroot --enable-languages=c,c++
 }
 
-
-clean() {
-    make clean
-}
-
 build() {
     make all-gcc all-target-libgcc all-target-libstdc++-v3 -j5 $AUTO_CONF_OPTS
-}
-
-install() {
-    make install-strip-gcc install-strip-target-libgcc install-strip-target-libstdc++-v3 DESTDIR=$ROOT/sysroot -j5 $AUTO_CONF_OPTS
 }
 
 . ../.build_include.sh

@@ -3,7 +3,7 @@
 export PORT_NAME=bash
 export SRC_DIR='bash-5.0'
 export BUILD_DIR='build-bash'
-export INSTALL_COMMAND='install-strip'
+export INSTALL_COMMAND=${INSTALL_COMMAND:-'install-strip'}
 
 download() {
     # Download tar.gz

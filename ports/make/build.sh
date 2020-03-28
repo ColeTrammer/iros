@@ -3,7 +3,7 @@
 PORT_NAME=make
 SRC_DIR='make-4.3'
 BUILD_DIR='build-make'
-INSTALL_COMMAND='install-strip'
+export INSTALL_COMMAND=${INSTALL_COMMAND:-'install-strip'}
 
 download() {
     # Download tar.gz
