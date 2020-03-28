@@ -27,7 +27,7 @@ struct vm_object {
 };
 
 void drop_vm_object(struct vm_object *obj);
-void bump_vm_object(struct vm_object *obj);
+struct vm_object *bump_vm_object(struct vm_object *obj);
 struct vm_object *vm_create_object(enum vm_object_type type, struct vm_object_operations *ops, void *private_data);
 
 int vm_handle_fault_in_region(struct vm_region *region, uintptr_t address);

@@ -32,13 +32,14 @@ void drop_vm_object(struct vm_object *obj) {
     spin_unlock(&obj->lock);
 }
 
-void bump_vm_object(struct vm_object *obj) {
+struct vm_object *bump_vm_object(struct vm_object *obj) {
     spin_lock(&obj->lock);
 #ifdef VM_OBJECT_REF_COUNT_DEBUG
     debug_log("vm_object ref count: [ %p, %d ]\n", obj, obj->ref_count + 1);
 #endif /* VM_OBJECT_REF_COUNT_DEBUG */
     obj->ref_count++;
     spin_unlock(&obj->lock);
+    return obj;
 }
 
 int vm_handle_fault_in_region(struct vm_region *region, uintptr_t address) {

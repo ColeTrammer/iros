@@ -5,6 +5,7 @@
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/process.h>
@@ -137,11 +138,16 @@ uintptr_t proc_allocate_user_stack(struct process *process) {
     // Guard Pages: 0xFFFFFE7FFFDFE000 - 0xFFFFFE7FFFDFF000
     // Stack Pages: 0xFFFFFE7FFFDFF000 - 0xFFFFFE7FFFFFF000
 
+    struct vm_object *stack_object = vm_create_anon_object(PAGE_SIZE + 2 * 1024 * 1024);
+    assert(stack_object);
+
     struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
     task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC | VM_STACK;
     task_stack->type = VM_TASK_STACK;
     task_stack->start = find_first_kernel_vm_region()->start - PAGE_SIZE - 2 * 1024 * 1024;
     task_stack->end = task_stack->start + 2 * 1024 * 1024;
+    task_stack->vm_object = stack_object;
+    task_stack->vm_object_offset = PAGE_SIZE;
     process->process_memory = add_vm_region(process->process_memory, task_stack);
     map_page(task_stack->end - PAGE_SIZE, task_stack->flags, process);
 
@@ -150,6 +156,8 @@ uintptr_t proc_allocate_user_stack(struct process *process) {
     guard_page->type = VM_TASK_STACK_GUARD;
     guard_page->start = task_stack->start - PAGE_SIZE;
     guard_page->end = guard_page->start + PAGE_SIZE;
+    guard_page->vm_object = bump_vm_object(stack_object);
+    guard_page->vm_object_offset = 0;
     process->process_memory = add_vm_region(process->process_memory, guard_page);
 
     return task_stack->end;
