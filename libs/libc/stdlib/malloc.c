@@ -135,6 +135,8 @@ void *realloc(void *p, size_t sz, int line, const char *func) {
 #else
 void *realloc(void *p, size_t sz) {
 #endif /* defined(__is_libk) && (defined(KERNEL_MALLOC_DEBUG) || defined(KERNEL_MEMCPY_DEBUG)) */
+    __malloc_debug("Realloc: [ %p, %lu ]\n", p, sz);
+
     void *new_p = malloc(sz);
     if (p == NULL) {
         return new_p;
