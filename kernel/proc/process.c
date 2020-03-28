@@ -134,6 +134,9 @@ void proc_bump_process(struct process *process) {
 }
 
 uintptr_t proc_allocate_user_stack(struct process *process) {
+    // Guard Pages: 0xFFFFFE7FFFDFE000 - 0xFFFFFE7FFFDFF000
+    // Stack Pages: 0xFFFFFE7FFFDFF000 - 0xFFFFFE7FFFFFF000
+
     struct vm_region *task_stack = calloc(1, sizeof(struct vm_region));
     task_stack->flags = VM_USER | VM_WRITE | VM_NO_EXEC | VM_STACK;
     task_stack->type = VM_TASK_STACK;

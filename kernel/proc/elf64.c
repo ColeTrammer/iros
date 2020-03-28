@@ -105,13 +105,7 @@ struct stack_frame {
 
 // NOTE: this must be called from within a task's address space
 void elf64_stack_trace(struct task *task) {
-    struct vm_region *region = task->process->process_memory;
-    while (region) {
-        debug_log("region: [ %p, %#.16lX, %#.16lX, %#.16lX, %s ]\n", region, region->start, region->end, region->flags,
-                  vm_type_to_string(region->type));
-        region = region->next;
-    }
-
+    dump_process_regions(task->process);
     struct inode *inode = task->process->exe->inode;
 
     void *buffer;

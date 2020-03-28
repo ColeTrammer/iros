@@ -93,8 +93,8 @@ void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end) {
 void dump_kernel_regions(uintptr_t addr) {
     struct vm_region *region = kernel_vm_list;
     while (region) {
-        debug_log("Region: [ %#.16lX, %#.16lX, %s, %#.16lX ]\n", region->start, region->end, vm_type_to_string(region->type),
-                  region->flags);
+        debug_log(" region: [ %p, %#.16lX, %#.16lX, %#.16lX, %s ]\n", region, region->start, region->end, region->flags,
+                  vm_type_to_string(region->type));
         if (addr >= region->start && addr <= region->end) {
             debug_log("Addr found in above: [ %#.16lX ]\n", addr);
         }
@@ -240,9 +240,9 @@ int unmap_range(uintptr_t addr, size_t length) {
             to_add->vm_object_offset = r->vm_object_offset + r->end - r->start;
             to_add->vm_object = r->vm_object;
             bump_vm_object(to_add->vm_object);
-            process->process_memory = add_vm_region(process->process_memory, to_add);
 
             r->end = addr;
+            process->process_memory = add_vm_region(process->process_memory, to_add);
             break;
         }
 
@@ -326,7 +326,7 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
         if (type == VM_TASK_STACK) {
             uintptr_t to_search = find_vm_region(VM_TASK_STACK)->start;
             struct vm_region *r;
-            while ((r = find_user_vm_region_in_range(to_search - len, len))) {
+            while ((r = find_user_vm_region_in_range(to_search - len, to_search))) {
                 to_search = r->start;
             }
             addr = (void *) (to_search - len);
@@ -407,10 +407,11 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             to_add_last->vm_object_offset = to_add->vm_object_offset + addr - to_add->start;
             to_add_last->vm_object = r->vm_object;
             bump_vm_object(to_add_last->vm_object);
-            process->process_memory = add_vm_region(process->process_memory, to_add_last);
 
             r->vm_object_offset += r->start - to_add->start;
             r->end = addr;
+
+            process->process_memory = add_vm_region(process->process_memory, to_add_last);
             break;
         }
 
@@ -430,7 +431,6 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             to_add->vm_object_offset = r->vm_object_offset + (r->start - addr);
             to_add->vm_object = r->vm_object;
             bump_vm_object(to_add->vm_object);
-            process->process_memory = add_vm_region(process->process_memory, to_add);
 
             while (r->end != addr) {
                 r->end -= PAGE_SIZE;
@@ -439,6 +439,8 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
 
             length -= (end_save - addr);
             addr = end_save;
+
+            process->process_memory = add_vm_region(process->process_memory, to_add);
             continue;
         }
 
@@ -460,14 +462,15 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             to_add->vm_object_offset = r->vm_object_offset;
             to_add->vm_object = r->vm_object;
             bump_vm_object(to_add->vm_object);
-            process->process_memory = add_vm_region(process->process_memory, to_add);
 
             while (r->start != addr + length) {
                 map_page_flags(r->start, to_add->flags);
                 r->start += PAGE_SIZE;
             }
 
-            r->vm_object_offset += r->start - to_add->end;
+            r->vm_object_offset += r->start - to_add->start;
+
+            process->process_memory = add_vm_region(process->process_memory, to_add);
             // We are definately at the end
             break;
         }
@@ -598,4 +601,13 @@ struct vm_region *clone_process_vm() {
     }
 
     return new_list;
+}
+
+void dump_process_regions(struct process *process) {
+    struct vm_region *region = process->process_memory;
+    while (region) {
+        debug_log("region: [ %p, %#.16lX, %#.16lX, %#.16lX, %s ]\n", region, region->start, region->end, region->flags,
+                  vm_type_to_string(region->type));
+        region = region->next;
+    }
 }

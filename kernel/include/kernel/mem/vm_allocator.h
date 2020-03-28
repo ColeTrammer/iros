@@ -34,5 +34,6 @@ void *create_phys_addr_mapping_from_virt_addr(void *virt_addr);
 size_t vm_compute_total_virtual_memory(struct process *process);
 
 void dump_kernel_regions(uintptr_t addr);
+void dump_process_regions(struct process *process);
 
 #endif /* _KERNEL_MEM_VM_ALLOCATOR_H */
