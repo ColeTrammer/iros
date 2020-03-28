@@ -27,6 +27,6 @@ $(BUILDDIR)/libs/librt/time/timer_settime.o
 
 include ../Makefile.common
 
-$(LIBRARY): $(OBJS) $(MAKEFILE)
+$(LIBRARY): $(OBJS) $(MAKEFILE) $(BUILDDIR)/libs/libpthread/libpthread.a
 	cp $(BUILDDIR)/libs/libpthread/libpthread.a $(LIBRARY)
 	$(AR) r $@ $^
