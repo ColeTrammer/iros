@@ -40,6 +40,7 @@ $(BUILDDIR)/initrd/programs/linked_list_test_a \
 $(BUILDDIR)/initrd/programs/local_socket_client_test \
 $(BUILDDIR)/initrd/programs/local_socket_server_test \
 $(BUILDDIR)/initrd/programs/map_shared_test \
+$(BUILDDIR)/initrd/programs/mmap_file_test \
 $(BUILDDIR)/initrd/programs/mmap_test \
 $(BUILDDIR)/initrd/programs/mutex_test \
 $(BUILDDIR)/initrd/programs/nftw_test \
