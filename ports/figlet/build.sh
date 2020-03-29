@@ -17,13 +17,4 @@ patch() {
     git apply ../figlet-2.2.5.patch
 }
 
-build() {
-    make install $MAKE_ARGS
-}
-
-install() {
-    cp -r ../figlet/bin $ROOT/sysroot/usr
-    cp -r ../figlet/share $ROOT/sysroot
-}
-
 . ../.build_include.sh

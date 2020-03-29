@@ -29,19 +29,25 @@ if [ $TARGET = '--help' ]; then
     exit 0
 fi
 
-fake_pushd() {
-    export __OLD_PUSHD_DIRECTORY=$PWD
-    cd $1
-}
-
-fake_popd() {
-    cd $__OLD_PUSHD_DIRECTORY
-}
-
 function_exists() {
     TYPE_RESULT="$(type $1 | head -n 1)"
     TYPE_TARGET="$1 is a shell function"
     [ "$TYPE_TARGET" = "$TYPE_RESULT" ]
+}
+
+builtin_exists() {
+    TYPE_TARGET="$1 is a shell function"
+    TYPE_TARGET="$1 is a shell builtin"
+    [ "$TYPE_TARGET" = "$TYPE_RESULT" ]
+}
+
+builtin_exists pushd || pushd() {
+    export __OLD_PUSHD_DIRECTORY=$PWD
+    cd $1
+}
+
+builtin_exists popd || popd() {
+    cd $__OLD_PUSHD_DIRECTORY
 }
 
 MAKE_ARGS="$MAKE_ARGS -j5"
@@ -68,6 +74,11 @@ function_exists install || install() {
     make ${INSTALL_COMMAND:-install} DESTDIR="$ROOT/sysroot" $MAKE_ARGS
 }
 
+pushd ../..
+make install-headers
+rm sysroot/usr/include/dlfcn.h
+popd
+
 run() {
     case $TARGET in
         all)
@@ -78,19 +89,19 @@ run() {
             TARGET=install run 
             ;;
         clean)
-            fake_pushd $BUILD_DIR
+            pushd $BUILD_DIR
             clean || die "clean failed"
-            fake_popd
+            popd
             ;;
         install)
-            fake_pushd $BUILD_DIR
+            pushd $BUILD_DIR
             install || die "install failed"
-            fake_popd
+            popd
             ;;
         build)
-            fake_pushd $BUILD_DIR
+            pushd $BUILD_DIR
             build || die "build failed"
-            fake_popd
+            popd
             ;;
         download)
             if [ ! -e $SRC_DIR ]; then
@@ -98,21 +109,16 @@ run() {
             fi
             ;;
         patch)
-            fake_pushd $SRC_DIR
+            pushd $SRC_DIR
             patch || die "patch failed"
-            fake_popd
+            popd
             ;;
         configure)
             if [ ! -e $BUILD_DIR ]; then
-                fake_pushd ../..
-                make install-headers
-                rm sysroot/usr/include/dlfcn.h
-                fake_popd
-
                 mkdir -p $BUILD_DIR
-                fake_pushd $BUILD_DIR
+                pushd $BUILD_DIR
                 configure || die "configure failed"
-                fake_popd
+                popd
             fi
             ;;
         *)
