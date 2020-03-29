@@ -33,7 +33,7 @@
 static struct file_system *file_systems;
 static struct mount *root;
 
-void bump_inode_reference(struct inode *inode) {
+struct inode *bump_inode_reference(struct inode *inode) {
     spin_lock(&inode->lock);
 
 #ifdef INODE_REF_COUNT_DEBUG
@@ -43,6 +43,8 @@ void bump_inode_reference(struct inode *inode) {
     assert(inode->ref_count > 0);
     inode->ref_count++;
     spin_unlock(&inode->lock);
+
+    return inode;
 }
 
 void drop_inode_reference_unlocked(struct inode *inode) {
@@ -501,7 +503,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         return file;
     }
 
-    bump_inode_reference(tnode->inode);
+    file->inode = bump_inode_reference(tnode->inode);
     init_spinlock(&file->lock);
     file->ref_count = 1;
     file->open_flags = flags;
@@ -963,6 +965,7 @@ int fs_create_pipe(struct file *pipe_files[2]) {
     int error = 0;
     pipe_files[0] = pipe_inode->i_op->open(pipe_inode, O_RDONLY, &error);
     pipe_files[0]->abilities |= FS_FILE_CAN_READ;
+    pipe_files[0]->inode = pipe_inode;
     init_spinlock(&pipe_files[0]->lock);
     pipe_files[0]->ref_count = 1;
     if (error != 0) {
@@ -971,6 +974,7 @@ int fs_create_pipe(struct file *pipe_files[2]) {
 
     pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY, &error);
     pipe_files[1]->abilities |= FS_FILE_CAN_WRITE;
+    pipe_files[1]->inode = pipe_inode;
     init_spinlock(&pipe_files[1]->lock);
     pipe_files[1]->ref_count = 1;
     if (error != 0) {

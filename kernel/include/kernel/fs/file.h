@@ -34,6 +34,7 @@ struct file {
     spinlock_t lock;
 
     struct tnode *tnode;
+    struct inode *inode;
 
     void *private_data;
 };

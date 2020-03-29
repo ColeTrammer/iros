@@ -54,7 +54,7 @@ struct inode *pipe_new_inode() {
     pipe_data->write_count = 0;
     inode->private_data = pipe_data;
 
-    inode->ref_count = 0;
+    inode->ref_count = 2;
     inode->size = 0;
     inode->super_block = NULL;
 

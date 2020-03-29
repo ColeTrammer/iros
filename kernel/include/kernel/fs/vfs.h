@@ -15,7 +15,7 @@ struct statvfs;
 #define INAME_DONT_FOLLOW_TRAILING_SYMLINK 1
 #define INAME_TAKE_OWNERSHIP_OF_PATH       2
 
-void bump_inode_reference(struct inode *inode);
+struct inode *bump_inode_reference(struct inode *inode);
 void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 int iname(const char *path, int flags, struct tnode **result);
@@ -100,7 +100,8 @@ static inline int fs_mode_to_flags(mode_t mode) {
 }
 
 static inline struct inode *fs_file_inode(struct file *file) {
-    return file->tnode ? file->tnode->inode : NULL;
+    assert(file->inode);
+    return file->inode;
 }
 
 #endif /* _KERNEL_FS_VFS_H */
