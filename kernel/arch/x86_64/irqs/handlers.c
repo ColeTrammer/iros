@@ -101,7 +101,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
 
 #ifdef PAGE_FAULT_DEBUG
     debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu, %p ]\n", current->process->pid, task_state->stack_state.rsp,
-              task_state->stack_state.rip, address, task_state->error_code, vm_region, );
+              task_state->stack_state.rip, address, task_state->error_code, vm_region);
 #endif /* PAGE_FAULT_DEBUG */
 
     if (vm_region && !current->kernel_task && !(task_state->error_code & 1) && address != vm_region->end &&

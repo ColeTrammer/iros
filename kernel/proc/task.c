@@ -251,7 +251,10 @@ struct task *load_task(const char *file_name) {
 
     proc_allocate_user_stack(process);
 
+    current_task = task;
     arch_load_task(task, elf64_get_entry(buffer));
+    current_task = &initial_kernel_task;
+
     free(buffer);
 
     load_paging_structure(old_paging_structure);

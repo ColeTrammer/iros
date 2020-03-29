@@ -1,6 +1,9 @@
+#include <kernel/hal/output.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>
+
+// #define WAIT_QUEUE_DEBUG
 
 void init_wait_queue(struct wait_queue *queue) {
     init_spinlock(&queue->lock);
@@ -14,12 +17,20 @@ void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task) {
         queue->waiters_tail->wait_queue_next = task;
         queue->waiters_tail = task;
     }
+
+#ifdef WAIT_QUEUE_DEBUG
+    debug_log("unqueuing task: [ %p, %d:%d ]\n", queue, task->process->pid, task->tid);
+#endif /* WAIT_QUEUE_DEBUG */
 }
 
 bool __wake_up(struct wait_queue *queue) {
     struct task *to_wake = queue->waiters_head;
     if (to_wake) {
         to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
+#ifdef WAIT_QUEUE_DEBUG
+        debug_log("waking up task: [ %p, %d:%d ]\n", queue, to_wake->process->pid, to_wake->tid);
+#endif /* WAIT_QUEUE_DEBUG */
+
         queue->waiters_head = to_wake->wait_queue_next;
 
         if (queue->waiters_tail == to_wake) {
@@ -67,6 +78,9 @@ void wake_up_all(struct wait_queue *queue) {
     struct task *to_wake = queue->waiters_head;
     while (to_wake) {
         to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
+#ifdef WAIT_QUEUE_DEBUG
+        debug_log("waking up task: [ %p, %d:%d ]\n", queue, to_wake->process->pid, to_wake->tid);
+#endif /* WAIT_QUEUE_DEBUG */
         to_wake = to_wake->wait_queue_next;
     }
 

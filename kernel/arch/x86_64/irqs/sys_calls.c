@@ -617,6 +617,14 @@ SYS_CALL(execve) {
     /* Ensure File Name And Args Are Still Mapped */
     soft_remove_paging_structure(current->process->process_memory, current->process);
 
+    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be
+     * Interrupted) */
+    disable_interrupts();
+
+    // NOTE: this is necessary b/c current_task must always be valid. Otherwise, we will save state
+    //       automatically on a pointer to a freed address, corrupting memory.
+    current_task = task;
+
     uintptr_t stack_end = proc_allocate_user_stack(process);
     task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, process->args_context);
 
@@ -629,14 +637,6 @@ SYS_CALL(execve) {
     elf64_map_heap(buffer, task);
 
     free(buffer);
-
-    /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be
-     * Interrupted) */
-    disable_interrupts();
-
-    // NOTE: this is necessary b/c current_task must always be valid. Otherwise, we will save state
-    //       automatically on a pointer to a freed address, corrupting memory.
-    current_task = task;
 
     sched_remove_task(current);
     free_task(current, false);
