@@ -163,6 +163,15 @@
         return;                                                                 \
     } while (0)
 
+#define SYS_RETURN_EXECVE()                                      \
+    do {                                                         \
+        disable_interrupts();                                    \
+        get_current_task()->in_kernel = false;                   \
+        get_current_task()->arch_task.user_task_state = NULL;    \
+        get_current_task()->sched_state = RUNNING_INTERRUPTIBLE; \
+        return;                                                  \
+    } while (0)
+
 extern struct task initial_kernel_task;
 extern struct task *current_task;
 
@@ -416,22 +425,29 @@ SYS_CALL(close) {
     SYS_RETURN(error);
 }
 
-static int execve_helper(char **path, char **buffer, size_t *buffer_length, char ***prepend_argv, size_t *prepend_argv_length,
-                         struct tnode **tnode, int *depth, char **argv) {
-    if (*tnode) {
-        drop_tnode(*tnode);
+static int execve_helper(char **path, char *buffer, size_t buffer_length, struct file **file, char ***prepend_argv,
+                         size_t *prepend_argv_length, int *depth, char **argv) {
+    if (*file) {
+        fs_close(*file);
     }
-    int ret = fs_read_all_path(*path, (void **) buffer, buffer_length, tnode);
+
+    int ret = 0;
+    *file = fs_open(*path, O_RDONLY, 0, &ret);
     if (ret < 0) {
         return ret;
     }
 
-    if (*buffer_length == 0) {
+    ssize_t nread = fs_read(*file, buffer, buffer_length);
+    if (nread < 0) {
+        fs_close(*file);
+        return (int) nread;
+    } else if (nread == 0) {
+        fs_close(*file);
         return -ENOEXEC;
     }
 
-    if (!elf64_is_valid(*buffer)) {
-        if (memcmp(*buffer, "#!", 2) == 0) {
+    if (!elf64_is_valid(buffer)) {
+        if (memcmp(buffer, "#!", 2) == 0) {
             debug_log("Encoutered #!\n");
             bool first = *prepend_argv_length == 0;
 
@@ -439,19 +455,19 @@ static int execve_helper(char **path, char **buffer, size_t *buffer_length, char
             if (first) {
                 path_save = strdup(*path);
             }
-            size_t path_len = strcspn(*buffer + 2, " \n");
-            char restore = (*buffer)[2 + path_len];
-            (*buffer)[2 + path_len] = '\0';
+            size_t path_len = strcspn(buffer + 2, " \n");
+            char restore = buffer[2 + path_len];
+            buffer[2 + path_len] = '\0';
             free(*path);
-            *path = strdup(*buffer + 2);
+            *path = strdup(buffer + 2);
             debug_log("#!: [ %s ]\n", *path);
-            (*buffer)[2 + path_len] = restore;
+            buffer[2 + path_len] = restore;
             bool has_extra_arg = false;
             size_t extra_arg_start = 0;
 
             size_t i;
-            for (i = 0; (*buffer)[2 + path_len + i] != '\n' && (*buffer)[2 + path_len + i] != '\0'; i++) {
-                if (!extra_arg_start && !isspace((*buffer)[2 + path_len + i])) {
+            for (i = 0; buffer[2 + path_len + i] != '\n' && buffer[2 + path_len + i] != '\0'; i++) {
+                if (!extra_arg_start && !isspace(buffer[2 + path_len + i])) {
                     has_extra_arg = true;
                     extra_arg_start = 2 + path_len + i;
                     break;
@@ -468,15 +484,15 @@ static int execve_helper(char **path, char **buffer, size_t *buffer_length, char
 
             *prepend_argv = realloc(*prepend_argv, *prepend_argv_length * sizeof(char *));
             if (has_extra_arg) {
-                *buffer[2 + path_len] = '\0';
-                *prepend_argv[*prepend_argv_length - 3] = strdup(*buffer + 2);
-                *buffer[2 + path_len] = restore;
-                *buffer[2 + path_len + i] = '\0';
-                *prepend_argv[*prepend_argv_length - 2] = strdup(*buffer + extra_arg_start);
+                buffer[2 + path_len] = '\0';
+                *prepend_argv[*prepend_argv_length - 3] = strdup(buffer + 2);
+                buffer[2 + path_len] = restore;
+                buffer[2 + path_len + i] = '\0';
+                *prepend_argv[*prepend_argv_length - 2] = strdup(buffer + extra_arg_start);
             } else {
-                *buffer[2 + path_len] = '\0';
-                *prepend_argv[*prepend_argv_length - 2] = strdup(*buffer + 2);
-                *buffer[2 + path_len] = restore;
+                buffer[2 + path_len] = '\0';
+                *prepend_argv[*prepend_argv_length - 2] = strdup(buffer + 2);
+                buffer[2 + path_len] = restore;
             }
 
             (*prepend_argv)[*prepend_argv_length - 1] = NULL;
@@ -485,12 +501,11 @@ static int execve_helper(char **path, char **buffer, size_t *buffer_length, char
                 argv[0] = path_save;
             }
 
-            free(*buffer);
-            *buffer = NULL;
             (*depth)++;
-            return execve_helper(path, buffer, buffer_length, prepend_argv, prepend_argv_length, tnode, depth, argv);
+            return execve_helper(path, buffer, buffer_length, file, prepend_argv, prepend_argv_length, depth, argv);
         }
 
+        fs_close(*file);
         return -ENOEXEC;
     }
 
@@ -511,21 +526,19 @@ SYS_CALL(execve) {
     debug_log("Exec Task: [ %d, %s ]\n", current->process->pid, path);
 
     path = strdup(path);
-    char *buffer = NULL;
-    size_t length = 0;
+    char temp_buffer[512];
+    size_t temp_buffer_length = sizeof(temp_buffer);
+    struct file *file = NULL;
     char **prepend_argv = NULL;
     size_t prepend_argv_length = 0;
     int depth = 0;
-    struct tnode *tnode = NULL;
-    int error = execve_helper(&path, &buffer, &length, &prepend_argv, &prepend_argv_length, &tnode, &depth, argv);
+    int error = execve_helper(&path, temp_buffer, temp_buffer_length, &file, &prepend_argv, &prepend_argv_length, &depth, argv);
     free(path);
     if (error) {
         for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
             free(prepend_argv[i]);
         }
         free(prepend_argv);
-
-        free(buffer);
         SYS_RETURN(error);
     }
 
@@ -533,8 +546,9 @@ SYS_CALL(execve) {
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
 
-    assert(tnode);
-    struct inode *inode = tnode->inode;
+    assert(file->tnode);
+    struct tnode *tnode = bump_tnode(file->tnode);
+    struct inode *inode = fs_file_inode(file);
     process->exe = tnode;
     process->name = prepend_argv != NULL ? argv[0] : strdup(argv[0]);
 
@@ -578,7 +592,6 @@ SYS_CALL(execve) {
     process->start_time = time_read_clock(CLOCK_REALTIME);
 
     task->kernel_task = false;
-    task->sched_state = RUNNING_INTERRUPTIBLE;
     process->tty = current->process->tty;
     process->cwd = bump_tnode(current->process->cwd);
     task->next = NULL;
@@ -606,12 +619,12 @@ SYS_CALL(execve) {
     task_align_fpu(task);
     memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
 
-    task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
-    task->arch_task.task_state.stack_state.rip = elf64_get_entry(buffer);
-    task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
-    task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
-    task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
+    task->arch_task.user_task_state = task_state;
+    task_state->stack_state.cs = USER_CODE_SELECTOR;
+    task_state->stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
+    task_state->stack_state.ss = USER_DATA_SELECTOR;
 
+    size_t length = fs_file_size(file);
     proc_clone_program_args(process, prepend_argv, argv, envp);
 
     /* Ensure File Name And Args Are Still Mapped */
@@ -621,22 +634,9 @@ SYS_CALL(execve) {
      * Interrupted) */
     disable_interrupts();
 
-    // NOTE: this is necessary b/c current_task must always be valid. Otherwise, we will save state
-    //       automatically on a pointer to a freed address, corrupting memory.
     current_task = task;
-
-    uintptr_t stack_end = proc_allocate_user_stack(process);
-    task->arch_task.task_state.stack_state.rsp = map_program_args(stack_end, process->args_context);
-
-    for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
-        free(prepend_argv[i]);
-    }
-    free(prepend_argv);
-
-    elf64_load_program(buffer, length, task);
-    elf64_map_heap(buffer, task);
-
-    free(buffer);
+    task->in_kernel = true;
+    task->sched_state = RUNNING_UNINTERRUPTIBLE;
 
     sched_remove_task(current);
     free_task(current, false);
@@ -644,7 +644,31 @@ SYS_CALL(execve) {
     sched_add_task(task);
     proc_add_process(process);
 
-    sys_sched_run_next(&task->arch_task.task_state);
+    // NOTE: once we re-enable interrupts we're effectively running as the new task inside a system call.
+    enable_interrupts();
+
+    uintptr_t stack_end = proc_allocate_user_stack(process);
+    task_state->stack_state.rsp = map_program_args(stack_end, process->args_context);
+
+    for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
+        free(prepend_argv[i]);
+    }
+    free(prepend_argv);
+
+    char *buffer = (char *) fs_mmap(NULL, length, PROT_READ, MAP_SHARED, file, 0);
+    // FIXME: this assert is very dangerous, but we can't return an error condition since
+    //        we've already destroyed the old process's address space.
+    assert(buffer != MAP_FAILED);
+
+    assert(elf64_is_valid(buffer));
+    elf64_load_program(buffer, length, task);
+    elf64_map_heap(buffer, task);
+    task_state->stack_state.rip = elf64_get_entry(buffer);
+
+    fs_close(file);
+    unmap_range((uintptr_t) buffer, length);
+
+    SYS_RETURN_EXECVE();
 }
 
 SYS_CALL(waitpid) {
