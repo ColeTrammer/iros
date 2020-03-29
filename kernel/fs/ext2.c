@@ -1572,10 +1572,10 @@ intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *in
     } else {
         if (!inode->vm_object) {
             object = vm_create_inode_object(inode, flags);
+            inode->vm_object = object;
         } else {
-            bump_vm_object(inode->vm_object);
+            object = bump_vm_object(inode->vm_object);
         }
-        inode->vm_object = object;
     }
 
     assert(object);
