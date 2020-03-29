@@ -44,9 +44,10 @@ static void ata_wait_ready(struct ata_port_info *info) {
         ;
 }
 
-static void ata_wait_irq(struct ata_device_data *data __attribute__((unused))) {
-    if (data->waiter && !data->waiter->kernel_task) {
-        proc_block_custom(data->waiter);
+static void ata_wait_irq(struct ata_device_data *data) {
+    struct task *current = get_current_task();
+    if (current && !current->kernel_task) {
+        wait_on(&data->wait_queue);
     } else {
         // Terrible hack b/c we can't wait on irq's before scheduling starts.
         // This is seriously the worst, as it is entirely possible this wait
@@ -339,9 +340,6 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         ssize_t read = 0;
 
         spin_lock(&device->inode->lock);
-        assert(!data->waiter);
-        data->waiter = get_current_task();
-        spin_unlock(&device->inode->lock);
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
             i = MIN(i, num_sectors_to_read);
@@ -363,8 +361,6 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         }
 
     finsih_ata_read:
-        spin_lock(&device->inode->lock);
-        data->waiter = NULL;
         spin_unlock(&device->inode->lock);
         return read;
     }
@@ -381,9 +377,6 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         ssize_t written = 0;
 
         spin_lock(&device->inode->lock);
-        assert(!data->waiter);
-        data->waiter = get_current_task();
-        spin_unlock(&device->inode->lock);
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
             i = MIN(i, num_sectors_to_write);
@@ -405,8 +398,6 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         }
 
     finsih_ata_write:
-        spin_lock(&device->inode->lock);
-        data->waiter = NULL;
         spin_unlock(&device->inode->lock);
         return written;
     }
@@ -416,15 +407,13 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
 
 static struct device_ops ata_ops = { NULL, ata_read, ata_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static void __attribute__((unused)) ata_handle_irq(struct ata_device_data *data) {
+static void ata_handle_irq(struct ata_device_data *data) {
     uint8_t status = inb(data->port_info->io_base + ATA_STATUS_OFFSET);
     if (status & 1) {
         debug_log("ata error: [ %u ]\n", status);
     }
 
-    if (data->waiter) {
-        data->waiter->sched_state = RUNNING_UNINTERRUPTIBLE;
-    }
+    wake_up_all(&data->wait_queue);
 }
 
 static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {
@@ -444,8 +433,8 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     data->port_info = info;
     data->sector_size = ATA_SECTOR_SIZE;
     data->num_sectors = identity[60] | (identity[61] << 16);
-    data->waiter = NULL;
     device->private = data;
+    init_wait_queue(&data->wait_queue);
 
     struct pci_configuration pci_config;
     if (pci_config_for_class(PCI_CLASS_MASS_STORAGE, PCI_SUBCLASS_IDE_CONTROLLER, &pci_config)) {

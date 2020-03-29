@@ -58,6 +58,9 @@ struct task {
     // This is inline so that excessive malloc allocations can be avoided
     struct task *user_mutex_waiting_queue_next;
 
+    // Inline list pointer used by wait_queue functions
+    struct task *wait_queue_next;
+
     enum sched_state sched_state;
 
     sigset_t sig_mask;

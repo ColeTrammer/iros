@@ -1,6 +1,8 @@
 #ifndef _KERNEL_HAL_X86_64_DRIVERS_ATA_PIO_H
 #define _KERNEL_HAL_X86_64_DRIVERS_ATA_PIO_H 1
 
+#include <kernel/proc/wait_queue.h>
+
 #define ATA1_IO_BASE      0x1F0
 #define ATA1_CONTROL_BASE 0x3F6
 
@@ -62,8 +64,6 @@
 
 #define ATA_PRD_END 0x8000U
 
-struct task;
-
 struct ata_port_info {
     uint16_t io_base;
     uint16_t control_base;
@@ -83,9 +83,9 @@ struct ata_device_data {
     struct ata_port_info *port_info;
     struct ata_physical_range_descriptor prdt[1];
     uint8_t *dma_page;
-    struct task *waiter;
     size_t sector_size;
     size_t num_sectors;
+    struct wait_queue wait_queue;
 };
 
 void init_ata();

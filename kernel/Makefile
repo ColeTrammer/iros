@@ -83,6 +83,7 @@ $(BUILDDIR)/kernel/proc/process_state.o \
 $(BUILDDIR)/kernel/proc/process.o \
 $(BUILDDIR)/kernel/proc/task.o \
 $(BUILDDIR)/kernel/proc/user_mutex.o \
+$(BUILDDIR)/kernel/proc/wait_queue.o \
 $(BUILDDIR)/kernel/sched/task_sched.o \
 $(BUILDDIR)/kernel/time/clock.o \
 $(BUILDDIR)/kernel/time/timer.o \
