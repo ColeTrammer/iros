@@ -73,23 +73,17 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys, struct process *process)
     invlpg(virt_addr);
 
     if (all_empty(pt)) {
-        if (free_phys) {
-            free_phys_page(get_phys_addr((uintptr_t) pt), process);
-        }
+        free_phys_page(get_phys_addr((uintptr_t) pt), process);
         pd[pd_offset] = 0;
     }
 
     if (all_empty(pd)) {
-        if (free_phys) {
-            free_phys_page(get_phys_addr((uintptr_t) pd), process);
-        }
+        free_phys_page(get_phys_addr((uintptr_t) pd), process);
         pdp[pdp_offset] = 0;
     }
 
     if (all_empty(pdp)) {
-        if (free_phys) {
-            free_phys_page(get_phys_addr((uintptr_t) pdp), process);
-        }
+        free_phys_page(get_phys_addr((uintptr_t) pdp), process);
         pml4[pml4_offset] = 0;
     }
 }
