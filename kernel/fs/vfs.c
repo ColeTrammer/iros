@@ -1816,3 +1816,9 @@ struct tnode *fs_get_tnode_for_file(struct file *file) {
     assert(file);
     return file->tnode;
 }
+
+ssize_t fs_do_read(char *buf, off_t offset, size_t n, const char *source, size_t source_max) {
+    size_t to_read = MIN(source_max, n - offset);
+    memcpy(buf + offset, source + offset, to_read);
+    return to_read;
+}

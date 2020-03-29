@@ -105,20 +105,15 @@ static const char *fd_path = "/proc/self/fd";
 
 static ssize_t fd_read(struct device *device, off_t offset, void *buf, size_t n) {
     (void) device;
-    (void) offset;
-    (void) buf;
-    (void) n;
 
-    size_t to_read = MIN(strlen(fd_path), n - offset);
-    memcpy((char *) buf + offset, fd_path + offset, to_read);
-    return to_read;
+    return fs_do_read(buf, offset, n, fd_path, strlen(fd_path));
 }
 
 static int fd_read_all(struct device *device, void *buf) {
     (void) device;
 
-    memcpy(buf, fd_path, strlen(fd_path));
-    return 0;
+    size_t to_read = strlen(fd_path);
+    return fs_do_read(buf, 0, to_read, fd_path, to_read);
 }
 
 static void fd_add(struct device *device) {
