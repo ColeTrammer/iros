@@ -7,7 +7,7 @@
 #include <kernel/proc/user_mutex.h>
 #include <kernel/util/hash_map.h>
 
-// #define USER_MUTEX_DEBUG
+#define USER_MUTEX_DEBUG
 
 static struct hash_map *map;
 
@@ -15,8 +15,7 @@ HASH_DEFINE_FUNCTIONS(_, struct user_mutex, uintptr_t, phys_addr)
 
 struct user_mutex *__create(uintptr_t *phys_addr_p) {
     struct user_mutex *m = malloc(sizeof(struct user_mutex));
-    init_spinlock(&m->lock);
-    m->next_to_wake_up = NULL;
+    init_wait_queue(&m->wait_queue);
     m->phys_addr = *phys_addr_p;
 
     struct process *process = get_current_task()->process;
@@ -37,7 +36,7 @@ struct user_mutex *get_user_mutex_locked(unsigned int *addr) {
     uintptr_t phys_addr = get_phys_addr((uintptr_t) addr);
     struct user_mutex *m = hash_put_if_not_present(map, &phys_addr, (void *(*) (void *) ) __create);
 
-    spin_lock(&m->lock);
+    spin_lock(&m->wait_queue.lock);
     return m;
 }
 
@@ -56,11 +55,11 @@ struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsign
     struct __write_value_args args = { addr, (unsigned int) value };
     struct user_mutex *m = hash_get_or_else_do(map, &phys_addr, (void (*)(void *)) __write_value, &args);
     if (m) {
-        spin_lock(&m->lock);
-        if (m->next_to_wake_up == NULL) {
+        spin_lock(&m->wait_queue.lock);
+        if (__wait_queue_is_empty(&m->wait_queue)) {
             __write_value(&args);
             hash_del(map, &m->phys_addr);
-            spin_unlock(&m->lock);
+            spin_unlock(&m->wait_queue.lock);
 
 #ifdef USER_MUTEX_DEBUG
             debug_log("Destroying mutex: [ %#.16lX ]\n", (uintptr_t) addr);
@@ -95,17 +94,11 @@ struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsign
 }
 
 void unlock_user_mutex(struct user_mutex *um) {
-    spin_unlock(&um->lock);
+    spin_unlock(&um->wait_queue.lock);
 }
 
 void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
-    struct task **link = &m->next_to_wake_up;
-    while (*link) {
-        link = &(*link)->user_mutex_waiting_queue_next;
-    }
-
-    task->user_mutex_waiting_queue_next = NULL;
-    *link = task;
+    __wait_queue_enqueue_task(&m->wait_queue, task);
 
 #ifdef USER_MUTEX_DEBUG
     debug_log("Adding to queue: [ %d:%d ]\n", task->process->pid, task->tid);
@@ -113,26 +106,17 @@ void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
 }
 
 void wake_user_mutex(struct user_mutex *m, int to_wake, int *to_place) {
-    for (int i = 0; i < to_wake; i++) {
-        struct task *to_wake = m->next_to_wake_up;
-        if (to_wake == NULL) {
-            break;
-        }
-
-        m->next_to_wake_up = to_wake->user_mutex_waiting_queue_next;
-
-#ifdef USER_MUTEX_DEBUG
-        debug_log("Waking up: [ %d:%d ]\n", to_wake->process->pid, to_wake->tid);
-#endif /* USER_MUTEX_DEBUG */
-
-        to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
-    }
+    __wake_up_n(&m->wait_queue, to_wake);
 
     // This means there are no waiters left
-    if (to_place && !m->next_to_wake_up) {
-        debug_log("No Waiters on mutex");
+    if (to_place && __wait_queue_is_empty(&m->wait_queue)) {
+        debug_log("No Waiters on mutex\n");
         *to_place &= ~MUTEX_WAITERS;
     }
+}
+
+void user_mutex_wait_on(struct user_mutex *m) {
+    wait_on(&m->wait_queue);
 }
 
 void init_user_mutexes() {

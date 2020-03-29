@@ -21,8 +21,7 @@ enum block_type {
     UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT,
     SELECT,
     SELECT_TIMEOUT,
-    WAITPID,
-    CUSTOM
+    WAITPID
 };
 
 struct block_info {
@@ -92,7 +91,6 @@ void proc_block_until_pipe_is_readable(struct task *current, struct inode *inode
 void proc_block_until_socket_is_connected(struct task *current, struct socket *socket);
 void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, struct timespec end_time);
 void proc_block_until_inode_is_writable(struct task *current, struct inode *inode);
-void proc_block_custom(struct task *current);
 void proc_block_until_socket_is_readable(struct task *current, struct socket *socket);
 void proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, struct timespec end_time);
 void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds);

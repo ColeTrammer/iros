@@ -1398,7 +1398,8 @@ SYS_CALL(sigsuspend) {
     memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
     memcpy(&current->sig_mask, mask, sizeof(sigset_t));
 
-    proc_block_custom(current);
+    current->sched_state = WAITING;
+    __kernel_yield();
 }
 
 SYS_CALL(times) {
@@ -1511,7 +1512,7 @@ SYS_CALL(os_mutex) {
                 unlock_user_mutex(to_unlock);
             }
             unlock_user_mutex(um);
-            proc_block_custom(current);
+            user_mutex_wait_on(um);
             SYS_RETURN(0);
         }
         case MUTEX_WAKE_AND_SET: {

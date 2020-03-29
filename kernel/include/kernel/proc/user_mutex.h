@@ -3,14 +3,12 @@
 
 #include <stdint.h>
 
-#include <kernel/proc/task.h>
-#include <kernel/util/spinlock.h>
+#include <kernel/proc/wait_queue.h>
 
 struct user_mutex {
     struct user_mutex *next;
     uintptr_t phys_addr;
-    spinlock_t lock;
-    struct task *next_to_wake_up;
+    struct wait_queue wait_queue;
 };
 
 struct user_mutex *get_user_mutex_locked(unsigned int *addr);
@@ -18,7 +16,8 @@ struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsign
 void unlock_user_mutex(struct user_mutex *um);
 void add_to_user_mutex_queue(struct user_mutex *m, struct task *task);
 void wake_user_mutex(struct user_mutex *m, int to_wake, int *to_place);
+void user_mutex_wait_on(struct user_mutex *um);
 
-void init_user_mutexes();
+void init_user_mutexes(void);
 
 #endif /* _KERNEL_PROC_USER_MUTEX_H */

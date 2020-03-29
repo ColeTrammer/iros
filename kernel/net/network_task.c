@@ -9,6 +9,7 @@
 #include <kernel/net/ethernet.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -17,6 +18,8 @@ extern struct task *network_task;
 static struct network_data *head = NULL;
 static struct network_data *tail = NULL;
 static spinlock_t lock = SPINLOCK_INITIALIZER;
+
+static struct wait_queue net_wait_queue = WAIT_QUEUE_INITIALIZER;
 
 static struct network_data *consume() {
     spin_lock(&lock);
@@ -53,7 +56,7 @@ void net_on_incoming_packet(const void *buf, size_t len) {
     }
 
     // Unblock ourselves once we have data
-    network_task->sched_state = RUNNING_UNINTERRUPTIBLE;
+    wake_up_all(&net_wait_queue);
     spin_unlock(&lock);
 }
 
@@ -75,7 +78,7 @@ void net_network_task_start() {
     for (;;) {
         struct network_data *data = consume();
         if (data == NULL) {
-            proc_block_custom(get_current_task());
+            wait_on(&net_wait_queue);
             continue;
         }
 
