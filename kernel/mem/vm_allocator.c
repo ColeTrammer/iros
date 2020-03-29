@@ -331,7 +331,8 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
             }
             addr = (void *) (to_search - len);
         } else {
-            uintptr_t to_search = find_vm_region(VM_PROCESS_HEAP)->end + 0x10000000;
+            struct vm_region *heap = find_vm_region(VM_PROCESS_HEAP);
+            uintptr_t to_search = heap ? heap->end + 0x10000000 : 0x10000000;
             struct vm_region *r;
             while ((r = find_user_vm_region_in_range(to_search, to_search + len))) {
                 to_search = r->end + 5 * PAGE_SIZE;

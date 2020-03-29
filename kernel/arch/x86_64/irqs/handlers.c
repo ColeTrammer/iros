@@ -104,8 +104,8 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
               task_state->stack_state.rip, address, task_state->error_code, vm_region);
 #endif /* PAGE_FAULT_DEBUG */
 
-    if (vm_region && !current->kernel_task && !(task_state->error_code & 1) && address != vm_region->end &&
-        !(vm_region->flags & VM_PROT_NONE) && !(vm_region->flags & VM_COW)) {
+    if (vm_region && !(task_state->error_code & 1) && address != vm_region->end && !(vm_region->flags & VM_PROT_NONE) &&
+        !(vm_region->flags & VM_COW)) {
         // Return if we can handle the fault
         if (!vm_handle_fault_in_region(vm_region, address)) {
             return;

@@ -76,6 +76,7 @@ bool fs_is_exceptional(struct file *file);
 
 void load_fs(struct file_system *fs);
 
+size_t fs_file_size(struct file *file);
 char *get_tnode_path(struct tnode *tnode);
 
 struct tnode *fs_get_tnode_for_file(struct file *file);

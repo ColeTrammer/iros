@@ -766,6 +766,18 @@ long fs_tell(struct file *file) {
     return file->position;
 }
 
+size_t fs_file_size(struct file *file) {
+    struct inode *inode = fs_file_inode(file);
+    if (!inode) {
+        return 0;
+    }
+
+    if (inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
+    }
+    return inode->size;
+}
+
 void load_fs(struct file_system *fs) {
     assert(fs);
 

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
@@ -207,21 +208,28 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
 }
 
 struct task *load_task(const char *file_name) {
-    struct tnode *tprogram;
-    void *buffer;
-    size_t length;
-
-    assert(fs_read_all_path(file_name, &buffer, &length, &tprogram) == 0);
-    assert(tprogram != NULL);
-
     struct task *task = calloc(1, sizeof(struct task));
     struct process *process = calloc(1, sizeof(struct process));
     task->process = process;
 
-    task->process->exe = tprogram;
-    process->name = strdup(process->exe->name);
+    int error = 0;
+    struct file *file = fs_open(file_name, O_RDONLY, 0, &error);
+    assert(error == 0);
 
-    assert(elf64_is_valid(buffer));
+    uintptr_t old_paging_structure = get_current_paging_structure();
+
+    current_task = task;
+    uintptr_t structure = create_paging_structure(task->process->process_memory, false, task->process);
+    load_paging_structure(structure);
+
+    size_t length = fs_file_size(file);
+    char *buffer = (char *) fs_mmap(NULL, length, PROT_READ, MAP_SHARED, file, 0);
+    assert(buffer != MAP_FAILED);
+
+    task->process->exe = bump_tnode(fs_get_tnode_for_file(file));
+    assert(fs_close(file) == 0);
+
+    process->name = strdup(process->exe->name);
 
     task->tid = get_next_tid();
     task->process->pid = get_next_pid();
@@ -230,10 +238,7 @@ struct task *load_task(const char *file_name) {
     task->process->pgid = task->process->pid;
     task->process->sid = task->process->pid;
     task->process->ppid = initial_kernel_task.process->pid;
-    task->process->process_memory = NULL;
-    task->kernel_task = false;
     task->sched_state = RUNNING_INTERRUPTIBLE;
-    task->process->cwd = malloc(2);
     task->process->tty = -1;
     task->process->cwd = bump_tnode(fs_root());
     task->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
@@ -242,20 +247,18 @@ struct task *load_task(const char *file_name) {
 
     task->next = NULL;
 
-    uintptr_t old_paging_structure = get_current_paging_structure();
-    uintptr_t structure = create_paging_structure(task->process->process_memory, false, task->process);
-    load_paging_structure(structure);
-
+    task->kernel_task = true;
+    assert(elf64_is_valid(buffer));
     elf64_load_program(buffer, length, task);
     elf64_map_heap(buffer, task);
+    uintptr_t entry = elf64_get_entry(buffer);
+    unmap_range((uintptr_t) buffer, length);
 
     proc_allocate_user_stack(process);
+    arch_load_task(task, entry);
 
-    current_task = task;
-    arch_load_task(task, elf64_get_entry(buffer));
     current_task = &initial_kernel_task;
-
-    free(buffer);
+    task->kernel_task = false;
 
     load_paging_structure(old_paging_structure);
 
