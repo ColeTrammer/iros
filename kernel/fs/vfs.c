@@ -485,14 +485,23 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         return NULL;
     }
 
-    bump_inode_reference(tnode->inode);
-
     struct file *file = tnode->inode->i_op->open(tnode->inode, flags, error);
     if (file == NULL) {
         drop_tnode(tnode);
         return file;
     }
 
+    // FIXME: this is a hack to allow calls to fs_open to return a call to fs_open.
+    //        functions in the device file system that fake being a symlink (like
+    //        ptmx) rely on this functionality, and we cannot overwrite the file's
+    //        information here or the file will just be incorrect and memory will
+    //        be leaked.
+    if (file->tnode) {
+        drop_tnode(tnode);
+        return file;
+    }
+
+    bump_inode_reference(tnode->inode);
     init_spinlock(&file->lock);
     file->ref_count = 1;
     file->open_flags = flags;
