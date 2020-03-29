@@ -17,7 +17,6 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/pipe.h>
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/tmp.h>
@@ -60,8 +59,6 @@ void drop_inode_reference_unlocked(struct inode *inode) {
         if (inode->i_op->on_inode_destruction) {
             inode->i_op->on_inode_destruction(inode);
         }
-
-        fs_inode_del(inode->device, inode->index);
 
         if (inode->dirent_cache) {
             fs_destroy_dirent_cache(inode->dirent_cache);
@@ -141,9 +138,6 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
 
     if (tnode_out) {
         *tnode_out = tnode;
-        if (!fs_inode_get(tnode->inode->device, tnode->inode->index)) {
-            fs_inode_put(tnode->inode);
-        }
     } else {
         drop_tnode(tnode);
     }
@@ -491,8 +485,6 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         return NULL;
     }
 
-    fs_inode_put(tnode->inode);
-
     bump_inode_reference(tnode->inode);
 
     struct file *file = tnode->inode->i_op->open(tnode->inode, flags, error);
@@ -526,7 +518,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
 int fs_close(struct file *file) {
     assert(file);
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
 
     spin_lock(&file->lock);
     assert(file->ref_count > 0);
@@ -562,7 +554,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         return -EINVAL;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
 
     struct dirent *entry = (struct dirent *) buffer;
     if (file->position == 0) {
@@ -829,7 +821,7 @@ int fs_lstat(const char *path, struct stat *stat_struct) {
 }
 
 int fs_ioctl(struct file *file, unsigned long request, void *argp) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     if (!inode) {
         debug_log("Trying to get inode: [ %lu, %llu ]\n", file->device, file->inode_idenifier);
         return -ENOTTY;
@@ -947,7 +939,6 @@ int fs_mkdir(const char *_path, mode_t mode) {
 
 int fs_create_pipe(struct file *pipe_files[2]) {
     struct inode *pipe_inode = pipe_new_inode();
-    fs_inode_put(pipe_inode);
     int error = 0;
     pipe_files[0] = pipe_inode->i_op->open(pipe_inode, O_RDONLY, &error);
     pipe_files[0]->abilities |= FS_FILE_CAN_READ;
@@ -1133,7 +1124,7 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
         return -EINVAL;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     if (inode->i_op->mmap) {
@@ -1283,7 +1274,7 @@ static int do_statvfs(struct super_block *sb, struct statvfs *buf) {
 }
 
 int fs_fstatvfs(struct file *file, struct statvfs *buf) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     return do_statvfs(inode->super_block, buf);
 }
 
@@ -1334,7 +1325,6 @@ int fs_mount(const char *src, const char *path, const char *type) {
                 }
                 t_root = create_root_tnode(mount->super_block->root);
 
-                fs_inode_create_store(file_system->super_block->device);
                 return 0;
             }
 
@@ -1386,7 +1376,6 @@ int fs_mount(const char *src, const char *path, const char *type) {
             assert(file_system->mount(file_system, mount->device_path));
             mount->super_block = file_system->super_block;
 
-            fs_inode_create_store(file_system->super_block->device);
             free(path_copy);
             drop_tnode(mount_on);
             return 0;
@@ -1415,7 +1404,7 @@ struct file_descriptor fs_clone(struct file_descriptor desc) {
         new_file->f_op->clone(new_file);
     }
 
-    struct inode *inode = fs_inode_get(desc.file->device, desc.file->inode_idenifier);
+    struct inode *inode = fs_file_inode(desc.file);
     assert(inode);
 
     bump_inode_reference(inode);
@@ -1528,14 +1517,14 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
 }
 
 int fs_fstat(struct file *file, struct stat *stat_struct) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     return do_stat(inode, stat_struct);
 }
 
 int fs_fchmod(struct file *file, mode_t mode) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     if (inode->i_op->chmod) {
@@ -1716,8 +1705,6 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc) {
 }
 
 void init_vfs() {
-    init_fs_inode_store();
-
     init_initrd();
     init_dev();
     init_ext2();
@@ -1789,7 +1776,7 @@ bool fs_is_readable(struct file *file) {
         return socket->readable;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     return inode->readable;
@@ -1804,7 +1791,7 @@ bool fs_is_writable(struct file *file) {
         return socket->writable;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     return inode->writeable;
@@ -1819,7 +1806,7 @@ bool fs_is_exceptional(struct file *file) {
         return socket->exceptional;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     return inode->excetional_activity;

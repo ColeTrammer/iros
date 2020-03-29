@@ -13,7 +13,6 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>

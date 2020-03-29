@@ -10,8 +10,8 @@
 
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/pipe.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/hal/timer.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
@@ -94,7 +94,7 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 
     debug_log("Reading from pipe: [ %llu, %lu, %lu ]\n", file->inode_idenifier, _len, file->position);
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
     struct pipe_data *data = inode->private_data;
     assert(data);
@@ -121,7 +121,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
     assert(offset == 0);
     debug_log("Writing to pipe: [ %llu, %lu, %lu ]\n", file->inode_idenifier, len, file->position);
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
     assert(file->position == inode->size);
     struct pipe_data *data = inode->private_data;
@@ -150,7 +150,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 }
 
 int pipe_close(struct file *file) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     // This means we already killed the inode and called on_inode_destruction
     // We still needs this method to detect when there are no more writers
     // to the pipe, but obviously if no one is using the pipe it no longer
@@ -182,7 +182,7 @@ void pipe_on_inode_destruction(struct inode *inode) {
 
 void pipe_clone(struct file *file) {
     if (file->abilities & FS_FILE_CAN_WRITE) {
-        struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+        struct inode *inode = fs_file_inode(file);
         struct pipe_data *data = inode->private_data;
 
         spin_lock(&inode->lock);
@@ -191,6 +191,4 @@ void pipe_clone(struct file *file) {
     }
 }
 
-void init_pipe() {
-    fs_inode_create_store(PIPE_DEVICE);
-}
+void init_pipe() {}

@@ -12,7 +12,6 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/tmp.h>
 #include <kernel/fs/vfs.h>
@@ -117,7 +116,7 @@ struct file *tmp_open(struct inode *inode, int flags, int *error) {
 }
 
 ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     struct tmp_data *data = inode->private_data;
@@ -145,7 +144,7 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
         return len;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     struct tmp_data *data = inode->private_data;

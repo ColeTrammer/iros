@@ -45,7 +45,6 @@ $(BUILDDIR)/kernel/fs/cached_dirent.o \
 $(BUILDDIR)/kernel/fs/dev.o \
 $(BUILDDIR)/kernel/fs/ext2.o \
 $(BUILDDIR)/kernel/fs/initrd.o \
-$(BUILDDIR)/kernel/fs/inode_store.o \
 $(BUILDDIR)/kernel/fs/pipe.o \
 $(BUILDDIR)/kernel/fs/procfs.o \
 $(BUILDDIR)/kernel/fs/tmp.o \

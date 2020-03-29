@@ -16,7 +16,6 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
@@ -1164,7 +1163,7 @@ ssize_t ext2_iread(struct inode *inode, void *buffer, size_t len, off_t offset) 
 }
 
 ssize_t ext2_read(struct file *file, off_t offset, void *buffer, size_t len) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     spin_lock(&inode->lock);
 
     ssize_t ret = __ext2_read(inode, offset, buffer, len);
@@ -1174,7 +1173,7 @@ ssize_t ext2_read(struct file *file, off_t offset, void *buffer, size_t len) {
 }
 
 ssize_t ext2_write(struct file *file, off_t offset, const void *buffer, size_t len) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     spin_lock(&inode->lock);
 
     ssize_t ret = __ext2_write(inode, offset, buffer, len);

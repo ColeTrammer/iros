@@ -12,7 +12,6 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
@@ -167,7 +166,7 @@ int procfs_read_all(struct inode *inode, void *buffer) {
 }
 
 ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     struct procfs_buffer data = procfs_get_data(inode, true);

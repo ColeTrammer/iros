@@ -8,7 +8,6 @@
 #include <unistd.h>
 
 #include <kernel/fs/dev.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/task.h>
 

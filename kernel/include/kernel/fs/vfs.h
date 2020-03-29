@@ -96,4 +96,8 @@ static inline int fs_mode_to_flags(mode_t mode) {
     }
 }
 
+static inline struct inode *fs_file_inode(struct file *file) {
+    return file->tnode ? file->tnode->inode : NULL;
+}
+
 #endif /* _KERNEL_FS_VFS_H */

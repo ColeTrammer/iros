@@ -11,7 +11,6 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
@@ -87,7 +86,7 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
 }
 
 int dev_close(struct file *file) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     int error = 0;
@@ -103,7 +102,7 @@ ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
         return -EISDIR;
     }
 
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     if (((struct device *) inode->private_data)->ops->read) {
@@ -111,11 +110,12 @@ ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
         return ((struct device *) inode->private_data)->ops->read(inode->private_data, offset, buffer, len);
     }
 
+    debug_log("???\n");
     return -EINVAL;
 }
 
 ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t len) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     if (((struct device *) inode->private_data)->ops->write) {
@@ -264,7 +264,7 @@ void dev_remove(const char *_path) {
 }
 
 dev_t dev_get_device_number(struct file *file) {
-    struct inode *inode = fs_inode_get(file->device, file->inode_idenifier);
+    struct inode *inode = fs_file_inode(file);
     assert(inode);
 
     return ((struct device *) inode->private_data)->device_number;

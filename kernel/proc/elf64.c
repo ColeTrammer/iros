@@ -5,7 +5,6 @@
 #include <string.h>
 #include <sys/param.h>
 
-#include <kernel/fs/inode_store.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
