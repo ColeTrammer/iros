@@ -65,13 +65,9 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     assert(!(flags & O_RDWR));
 
     struct file *file = calloc(1, sizeof(struct file));
-    file->device = inode->device;
     file->f_op = &pipe_f_op;
     file->flags = inode->flags;
-    file->inode_idenifier = inode->index;
-    file->length = inode->size;
     file->position = 0;
-    file->start = 0;
     file->abilities = 0;
     file->ref_count = 0;
     file->abilities |= FS_FILE_CANT_SEEK;
@@ -92,7 +88,7 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
 ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     assert(offset == 0);
 
-    debug_log("Reading from pipe: [ %llu, %lu, %lu ]\n", file->inode_idenifier, _len, file->position);
+    debug_log("Reading from pipe: [ %lu, %lu ]\n", _len, file->position);
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
@@ -109,7 +105,7 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     memcpy(buffer, data->buffer + file->position, len);
     file->position += len;
 
-    if (file->position == inode->size) {
+    if (file->position == (off_t) inode->size) {
         inode->readable = false;
     }
 
@@ -119,11 +115,11 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 
 ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t len) {
     assert(offset == 0);
-    debug_log("Writing to pipe: [ %llu, %lu, %lu ]\n", file->inode_idenifier, len, file->position);
+    debug_log("Writing to pipe: [ %lu, %lu ]\n", len, file->position);
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
-    assert(file->position == inode->size);
+    assert(file->position == (off_t) inode->size);
     struct pipe_data *data = inode->private_data;
     assert(data);
 

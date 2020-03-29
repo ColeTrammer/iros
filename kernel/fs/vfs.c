@@ -751,7 +751,8 @@ off_t fs_seek(struct file *file, off_t offset, int whence) {
     } else if (whence == SEEK_CUR) {
         new_position = file->position + offset;
     } else if (whence == SEEK_END) {
-        new_position = file->length + offset;
+        struct inode *inode = fs_file_inode(file);
+        new_position = inode->size + offset;
     } else {
         debug_log("Invalid arguments for fs_seek - whence: %d\n", whence);
         return -EINVAL;
@@ -832,7 +833,6 @@ int fs_lstat(const char *path, struct stat *stat_struct) {
 int fs_ioctl(struct file *file, unsigned long request, void *argp) {
     struct inode *inode = fs_file_inode(file);
     if (!inode) {
-        debug_log("Trying to get inode: [ %lu, %llu ]\n", file->device, file->inode_idenifier);
         return -ENOTTY;
     }
 

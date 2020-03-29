@@ -110,8 +110,6 @@ struct file *tmp_open(struct inode *inode, int flags, int *error) {
     file->f_op = (inode->flags & FS_DIR) ? &tmp_dir_f_op : &tmp_f_op;
     file->flags = inode->flags;
     init_spinlock(&file->lock);
-    file->device = inode->device;
-    file->inode_idenifier = inode->index;
     return file;
 }
 

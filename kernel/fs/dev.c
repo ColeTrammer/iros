@@ -66,12 +66,8 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
     }
 
     struct file *file = calloc(sizeof(struct file), 1);
-    file->inode_idenifier = inode->index;
-    file->length = inode->size;
-    file->start = 0;
     file->position = 0;
     file->f_op = inode->flags & FS_DIR ? &dev_dir_f_op : &dev_f_op;
-    file->device = inode->device;
     file->flags = inode->flags;
 
     if (inode->private_data && ((struct device *) inode->private_data)->ops->on_open) {

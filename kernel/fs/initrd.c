@@ -65,23 +65,16 @@ struct file *initrd_open(struct inode *inode, int flags, int *error) {
     /* Means we are on root */
     if (!entry) {
         struct file *file = calloc(1, sizeof(struct file));
-        file->inode_idenifier = inode->index;
-        file->length = 0;
-        file->start = 0;
         file->position = 0;
         file->f_op = &initrd_dir_f_op;
-        file->device = inode->device;
         file->flags = inode->flags;
         return file;
     }
 
     struct file *file = calloc(1, sizeof(struct file));
-    file->inode_idenifier = inode->index;
-    file->length = entry->length;
-    file->start = entry->offset;
+    file->private_data = (void *) (uintptr_t) entry->offset;
     file->position = 0;
     file->f_op = &initrd_f_op;
-    file->device = inode->device;
     file->flags = inode->flags;
     return file;
 }
@@ -91,12 +84,13 @@ ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t _len) 
         return -EISDIR;
     }
 
-    size_t len = MIN(_len, file->length - offset);
-    if (len == 0 || *((char *) (initrd_start + file->start + offset)) == '\0') {
+    struct inode *inode = fs_file_inode(file);
+    size_t len = MIN(_len, inode->size - offset);
+    if (len == 0 || *((char *) (initrd_start + (uint32_t)(uintptr_t) file->private_data + offset)) == '\0') {
         return 0;
     }
 
-    memcpy(buffer, (void *) (initrd_start + file->start + offset), len);
+    memcpy(buffer, (void *) (initrd_start + (uintptr_t) file->private_data + offset), len);
     return (ssize_t) len;
 }
 

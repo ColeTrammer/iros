@@ -18,11 +18,7 @@ struct file_operations {
 };
 
 struct file {
-    ino_t inode_idenifier;
-
-    off_t length;
-    uintptr_t start;
-    uintptr_t position;
+    off_t position;
 
     struct file_operations *f_op;
     unsigned int flags;
@@ -39,7 +35,6 @@ struct file {
 
     struct tnode *tnode;
 
-    dev_t device;
     void *private_data;
 };
 

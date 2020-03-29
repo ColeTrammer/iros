@@ -142,13 +142,9 @@ struct file *procfs_open(struct inode *inode, int flags, int *error) {
     assert(!(flags & O_RDWR));
 
     struct file *file = calloc(1, sizeof(struct file));
-    file->device = inode->device;
     file->f_op = (inode->flags & FS_DIR) ? &procfs_dir_f_op : &procfs_f_op;
     file->flags = inode->flags;
-    file->inode_idenifier = inode->index;
-    file->length = inode->size;
     file->position = 0;
-    file->start = 0;
     file->abilities = 0;
     file->ref_count = 0;
 

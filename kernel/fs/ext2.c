@@ -906,16 +906,10 @@ struct file *ext2_open(struct inode *inode, int flags, int *error) {
         ext2_update_inode(inode, true);
     }
 
-    struct raw_inode *raw_inode = inode->private_data;
-
     struct file *file = calloc(1, sizeof(struct file));
-    file->device = inode->device;
     file->f_op = inode->flags & FS_DIR ? &ext2_dir_f_op : &ext2_f_op;
     file->flags = inode->flags;
-    file->inode_idenifier = inode->index;
-    file->length = raw_inode->size;
     file->position = 0;
-    file->start = 0;
 
     *error = 0;
     return file;
