@@ -41,7 +41,7 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     spin_lock(&self->lock);
     if (data->phys_pages[page_index]) {
         uintptr_t ret = data->phys_pages[page_index];
-        spin_lock(&self->lock);
+        spin_unlock(&self->lock);
         return ret;
     }
 

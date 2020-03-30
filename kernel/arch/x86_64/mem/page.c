@@ -127,10 +127,10 @@ static void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t 
         memset(pt_entry - pt_offset, 0, PAGE_SIZE);
     }
 
+    *pt_entry = phys_addr | flags;
     if (*pt_entry & 1) {
         invlpg(virt_addr);
     }
-    *pt_entry = phys_addr | flags;
 
     if (info != NULL) {
         info->pml4_index = pml4_offset;

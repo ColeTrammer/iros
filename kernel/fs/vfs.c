@@ -1143,6 +1143,7 @@ int fs_utimes(const char *path, const struct timeval *times) {
 }
 
 intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
+    len += offset - (offset & ~0xFFF);
     offset &= ~0xFFF;
     len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
 
@@ -1162,6 +1163,7 @@ intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct ino
     if (flags & MAP_PRIVATE) {
         object = vm_create_inode_object(inode, flags);
     } else {
+        region->flags |= VM_SHARED;
         if (!inode->vm_object) {
             object = vm_create_inode_object(inode, flags);
             inode->vm_object = object;

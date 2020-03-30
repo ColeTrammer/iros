@@ -42,7 +42,7 @@ uint64_t elf64_get_size(void *buffer) {
     return program_headers[1].p_memsz + program_headers[0].p_filesz;
 }
 
-void elf64_load_program(void *buffer, size_t length, struct file *execuatable __attribute__((unused)), struct task *task) {
+void elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct task *task) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
 
@@ -68,26 +68,28 @@ void elf64_load_program(void *buffer, size_t length, struct file *execuatable __
         uint64_t type =
             program_headers[i].p_type == 7 ? VM_PROCESS_TLS_MASTER_COPY : protections & PROT_EXEC ? VM_PROCESS_TEXT : VM_PROCESS_DATA;
 
-        struct vm_region *added = map_region((void *) aligned_start, aligned_end - aligned_start, PROT_WRITE, type);
+        // This will be true for the text segment
+        if (program_headers[i].p_memsz == program_headers[i].p_filesz && program_section_start % PAGE_SIZE == 0) {
+            assert(fs_mmap((void *) aligned_start, program_headers[i].p_filesz, PROT_READ | PROT_EXEC, MAP_SHARED, execuatable,
+                           program_headers[i].p_offset) != (intptr_t) MAP_FAILED);
+        } else {
+            struct vm_region *added = map_region((void *) aligned_start, aligned_end - aligned_start, PROT_WRITE, type);
 
-        struct vm_object *object = vm_create_anon_object(aligned_end - aligned_start);
-        added->vm_object = object;
-        added->vm_object_offset = 0;
+            struct vm_object *object = vm_create_anon_object(aligned_end - aligned_start);
+            added->vm_object = object;
+            added->vm_object_offset = 0;
 
-        vm_map_region_with_object(added);
+            vm_map_region_with_object(added);
 
 #ifdef ELF64_DEBUG
-        debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start, program_headers[i].p_offset,
-                  program_headers[i].p_filesz, program_headers[i].p_memsz, program_section_end);
+            debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start,
+                      program_headers[i].p_offset, program_headers[i].p_filesz, program_headers[i].p_memsz, program_section_end);
 #endif /* ELF64_DEBUG */
 
-        memcpy((char *) program_section_start, ((char *) buffer) + program_headers[i].p_offset, program_headers[i].p_filesz);
-        memset((char *) program_section_start + program_headers[i].p_filesz, 0, program_headers[i].p_memsz - program_headers[i].p_filesz);
-
-        added->flags &= ~(VM_WRITE | VM_NO_EXEC);
-        added->flags |= !(protections & PROT_EXEC) ? VM_NO_EXEC : 0;
-        added->flags |= (protections & PROT_WRITE) ? VM_WRITE : 0;
-        map_vm_region_flags(added, task->process);
+            // FIXME: check for the possibility of a read only section here, we would need to temporarily change protections
+            //        in that case.
+            memcpy((char *) program_section_start, ((char *) buffer) + program_headers[i].p_offset, program_headers[i].p_filesz);
+        }
     }
 }
 
