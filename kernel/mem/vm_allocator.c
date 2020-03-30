@@ -606,10 +606,8 @@ struct vm_region *clone_process_vm() {
         assert(to_add->vm_object || to_add->type == VM_KERNEL_STACK);
         if (to_add->vm_object) {
             if (to_add->flags & VM_SHARED) {
-                debug_log("refing object\n");
                 bump_vm_object(to_add->vm_object);
             } else {
-                debug_log("cloning object\n");
                 to_add->vm_object = vm_clone_object(to_add->vm_object);
             }
         }

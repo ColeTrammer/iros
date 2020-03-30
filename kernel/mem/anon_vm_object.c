@@ -51,8 +51,12 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
     assert(page_index < data->pages);
 
     spin_lock(&self->lock);
+    if (data->phys_pages[page_index]) {
+        uintptr_t ret = data->phys_pages[page_index];
+        spin_unlock(&self->lock);
+        return ret;
+    }
 
-    assert(!data->phys_pages[page_index]);
     size_t phys_addr = get_next_phys_page(current_task->process);
     data->phys_pages[page_index] = phys_addr;
 

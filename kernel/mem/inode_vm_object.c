@@ -39,7 +39,12 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     assert(page_index < data->pages);
 
     spin_lock(&self->lock);
-    assert(!data->phys_pages[page_index]);
+    if (data->phys_pages[page_index]) {
+        uintptr_t ret = data->phys_pages[page_index];
+        spin_lock(&self->lock);
+        return ret;
+    }
+
     uintptr_t phys_addr = get_next_phys_page(get_current_task()->process);
     data->phys_pages[page_index] = phys_addr;
     char *phys_page_mapping = create_phys_addr_mapping(phys_addr);
