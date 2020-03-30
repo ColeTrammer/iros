@@ -15,6 +15,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/mem/vm_object.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
@@ -117,15 +118,24 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
     if (extend_vm_region_end(list, type, n) < 0) {
         return NULL; // indicate there is no room
     }
-    for (size_t i = 0; i < n; i++) {
-        map_page(old_end + i * PAGE_SIZE, region->flags, list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
+
+    if (region->vm_object) {
+        if (!region->vm_object->ops->extend || region->vm_object->ops->extend(region->vm_object, n)) {
+            return NULL;
+        }
+    } else {
+        for (size_t i = 0; i < n; i++) {
+            map_page(old_end + i * PAGE_SIZE, region->flags,
+                     list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
+        }
+
+        memset((void *) old_end, 0, n * PAGE_SIZE);
     }
 
     if (type <= VM_KERNEL_HEAP) {
         spin_unlock(&kernel_vm_lock);
     }
 
-    memset((void *) old_end, 0, n * PAGE_SIZE);
     return (void *) old_end;
 }
 

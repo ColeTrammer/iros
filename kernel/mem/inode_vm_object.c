@@ -78,7 +78,7 @@ static int inode_kill(struct vm_object *self) {
     return 0;
 }
 
-static struct vm_object_operations inode_ops = { &inode_map, &inode_handle_fault, &inode_kill };
+static struct vm_object_operations inode_ops = { .map = &inode_map, .handle_fault = &inode_handle_fault, .kill = &inode_kill };
 
 struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags __attribute__((unused))) {
     size_t num_pages = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE);

@@ -63,12 +63,28 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
     return data->phys_pages[page_index];
 }
 
-static struct vm_object_operations anon_ops = { &anon_map, &anon_handle_fault, &anon_kill };
+static int anon_extend(struct vm_object *self, size_t pages) {
+    struct anon_vm_object_data *data = self->private_data;
+
+    size_t old_num_pages = data->pages;
+    size_t num_pages = old_num_pages + pages;
+    struct anon_vm_object_data *new_data = self->private_data =
+        realloc(self->private_data, sizeof(struct anon_vm_object_data) + num_pages * sizeof(uintptr_t));
+    assert(new_data);
+
+    new_data->pages = num_pages;
+    memset(new_data->phys_pages + old_num_pages, 0, (num_pages - old_num_pages) * sizeof(uintptr_t));
+    return 0;
+}
+
+static struct vm_object_operations anon_ops = {
+    .map = &anon_map, .handle_fault = &anon_handle_fault, .kill = &anon_kill, .extend = &anon_extend
+};
 
 struct vm_object *vm_create_anon_object(size_t size) {
     size_t num_pages = ((size + PAGE_SIZE - 1) / PAGE_SIZE);
     struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + num_pages * sizeof(uintptr_t));
-    assert(data);
+    assert(!size || data);
 
     data->pages = num_pages;
     memset(data->phys_pages, 0, num_pages * sizeof(uintptr_t));

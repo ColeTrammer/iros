@@ -100,6 +100,8 @@ void elf64_map_heap(void *buffer, struct task *task) {
     debug_log("Heap start: [ %#.16lX ]\n", task_heap->start);
 #endif /* ELF64_DEBUG */
     task_heap->end = task_heap->start;
+    task_heap->vm_object = vm_create_anon_object(0);
+    task_heap->vm_object_offset = 0;
     task->process->process_memory = add_vm_region(task->process->process_memory, task_heap);
 }
 
