@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -22,6 +23,7 @@
 #include <kernel/fs/tmp.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
@@ -1138,6 +1140,46 @@ int fs_utimes(const char *path, const struct timeval *times) {
     struct inode *inode = tnode->inode;
     drop_tnode(tnode);
     return tnode->inode->i_op->utimes(inode, times);
+}
+
+intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
+    offset &= ~0xFFF;
+    len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    if (inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
+    }
+
+    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
+    if (!region) {
+        return -ENOMEM;
+    }
+
+    assert(offset % PAGE_SIZE == 0);
+    assert(len % PAGE_SIZE == 0);
+
+    struct vm_object *object = NULL;
+    if (flags & MAP_PRIVATE) {
+        object = vm_create_inode_object(inode, flags);
+    } else {
+        if (!inode->vm_object) {
+            object = vm_create_inode_object(inode, flags);
+            inode->vm_object = object;
+        } else {
+            object = bump_vm_object(inode->vm_object);
+        }
+    }
+
+    assert(object);
+    region->vm_object = object;
+    region->vm_object_offset = offset;
+
+    int ret = vm_map_region_with_object(region);
+    if (ret < 0) {
+        return (intptr_t) ret;
+    }
+
+    return region->start;
 }
 
 intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset) {

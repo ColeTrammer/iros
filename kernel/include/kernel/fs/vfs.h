@@ -61,6 +61,8 @@ int fs_fstatvfs(struct file *file, struct statvfs *buf);
 int fs_statvfs(const char *path, struct statvfs *buf);
 int fs_mount(const char *src, const char *path, const char *type);
 
+intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
+
 struct file_descriptor fs_clone(struct file_descriptor desc);
 struct file_descriptor fs_dup(struct file_descriptor desc);
 struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc);

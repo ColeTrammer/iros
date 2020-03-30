@@ -32,17 +32,29 @@ static struct initrd_file_entry *file_list;
 
 static ino_t inode_count = 1;
 
-static struct file_system fs = { "initrd", 0, &initrd_mount, NULL, NULL };
+static struct file_system fs = {
+    .name = "initrd",
+    .mount = &initrd_mount,
+};
 
-static struct inode_operations initrd_i_op = { NULL, &initrd_lookup, &initrd_open,     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL,           &initrd_read_all, NULL, NULL, NULL };
+static struct inode_operations initrd_i_op = {
+    .lookup = &initrd_lookup,
+    .open = &initrd_open,
+    .mmap = &fs_default_mmap,
+    .read_all = &initrd_read_all,
+    .read = &initrd_iread,
+};
 
-static struct inode_operations initrd_dir_i_op = { NULL, &initrd_lookup, &initrd_open, NULL, NULL, NULL, NULL, NULL, NULL,
-                                                   NULL, NULL,           NULL,         NULL, NULL, NULL, NULL, NULL };
+static struct inode_operations initrd_dir_i_op = {
+    .lookup = &initrd_lookup,
+    .open = &initrd_open,
+};
 
-static struct file_operations initrd_f_op = { NULL, &initrd_read, NULL, NULL };
+static struct file_operations initrd_f_op = {
+    .read = &initrd_read,
+};
 
-static struct file_operations initrd_dir_f_op = { NULL, NULL, NULL, NULL };
+static struct file_operations initrd_dir_f_op = {};
 
 struct inode *initrd_lookup(struct inode *inode, const char *name) {
     if (!inode || !name) {
@@ -55,15 +67,13 @@ struct inode *initrd_lookup(struct inode *inode, const char *name) {
 struct file *initrd_open(struct inode *inode, int flags, int *error) {
     (void) flags;
 
-    struct initrd_file_entry *entry = (struct initrd_file_entry *) inode->private_data;
-
     if (!inode) {
         *error = -EINVAL;
         return NULL;
     }
 
     /* Means we are on root */
-    if (!entry) {
+    if (inode->flags & FS_DIR) {
         struct file *file = calloc(1, sizeof(struct file));
         file->position = 0;
         file->f_op = &initrd_dir_f_op;
@@ -72,11 +82,22 @@ struct file *initrd_open(struct inode *inode, int flags, int *error) {
     }
 
     struct file *file = calloc(1, sizeof(struct file));
-    file->private_data = (void *) (uintptr_t) entry->offset;
     file->position = 0;
     file->f_op = &initrd_f_op;
     file->flags = inode->flags;
     return file;
+}
+
+ssize_t initrd_iread(struct inode *inode, void *buffer, size_t _len, off_t offset) {
+    struct initrd_file_entry *entry = inode->private_data;
+
+    size_t len = MIN(_len, inode->size - offset);
+    if (len == 0 || *((char *) (initrd_start + (uint32_t)(uintptr_t) entry->offset + offset)) == '\0') {
+        return 0;
+    }
+
+    memcpy(buffer, (void *) (initrd_start + (uintptr_t) entry->offset + offset), len);
+    return (ssize_t) len;
 }
 
 ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t _len) {
@@ -85,13 +106,7 @@ ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t _len) 
     }
 
     struct inode *inode = fs_file_inode(file);
-    size_t len = MIN(_len, inode->size - offset);
-    if (len == 0 || *((char *) (initrd_start + (uint32_t)(uintptr_t) file->private_data + offset)) == '\0') {
-        return 0;
-    }
-
-    memcpy(buffer, (void *) (initrd_start + (uintptr_t) file->private_data + offset), len);
-    return (ssize_t) len;
+    return initrd_iread(inode, buffer, _len, offset);
 }
 
 int initrd_read_all(struct inode *inode, void *buffer) {

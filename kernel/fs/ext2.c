@@ -27,21 +27,48 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
-static struct file_system fs = { "ext2", 0, &ext2_mount, NULL, NULL };
+static struct file_system fs = {
+    .name = "ext2",
+    .mount = &ext2_mount,
+};
 
-static struct super_block_operations s_op = { &ext2_rename };
+static struct super_block_operations s_op = {
+    .rename = &ext2_rename,
+};
 
-static struct inode_operations ext2_i_op = { NULL,         &ext2_lookup,   &ext2_open,   &ext2_stat,  NULL,       NULL,
-                                             &ext2_unlink, NULL,           &ext2_chmod,  &ext2_chown, &ext2_mmap, NULL,
-                                             NULL,         &ext2_read_all, &ext2_utimes, NULL,        &ext2_iread };
+static struct inode_operations ext2_i_op = {
+    .lookup = &ext2_lookup,
+    .open = &ext2_open,
+    .stat = &ext2_stat,
+    .unlink = &ext2_unlink,
+    .chmod = &ext2_chmod,
+    .chown = &ext2_chown,
+    .mmap = &fs_default_mmap,
+    .read_all = &ext2_read_all,
+    .utimes = &ext2_utimes,
+    .read = &ext2_iread,
+};
 
-static struct inode_operations ext2_dir_i_op = { &ext2_create, &ext2_lookup, &ext2_open,   &ext2_stat,  NULL, &ext2_mkdir,
-                                                 NULL,         &ext2_rmdir,  &ext2_chmod,  &ext2_chown, NULL, &ext2_symlink,
-                                                 &ext2_link,   NULL,         &ext2_utimes, NULL,        NULL };
+static struct inode_operations ext2_dir_i_op = {
+    .create = &ext2_create,
+    .lookup = &ext2_lookup,
+    .open = &ext2_open,
+    .stat = &ext2_stat,
+    .mkdir = &ext2_mkdir,
+    .rmdir = &ext2_rmdir,
+    .chmod = &ext2_chmod,
+    .chown = &ext2_chown,
+    .symlink = &ext2_symlink,
+    .link = &ext2_link,
+    .utimes = &ext2_utimes,
+};
 
-static struct file_operations ext2_f_op = { NULL, &ext2_read, &ext2_write, NULL };
+static struct file_operations ext2_f_op = {
+    .read = &ext2_read,
+    .write = &ext2_write,
+};
 
-static struct file_operations ext2_dir_f_op = { NULL, NULL, NULL, NULL };
+static struct file_operations ext2_dir_f_op = {};
 
 HASH_DEFINE_FUNCTIONS(block_group, struct ext2_block_group, size_t, index)
 HASH_DEFINE_FUNCTIONS(block, struct ext2_block, uint32_t, index)
@@ -1548,46 +1575,6 @@ int ext2_utimes(struct inode *inode, const struct timeval *times) {
     inode->access_time = (struct timespec) { .tv_sec = times[0].tv_sec, .tv_nsec = times[0].tv_usec * 1000 };
     inode->modify_time = (struct timespec) { .tv_sec = times[1].tv_sec, .tv_nsec = times[1].tv_usec * 1000 };
     return ext2_sync_inode(inode);
-}
-
-intptr_t ext2_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
-    offset &= ~0xFFF;
-    len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-
-    if (!inode->private_data) {
-        ext2_update_inode(inode, true);
-    }
-
-    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
-    if (!region) {
-        return -ENOMEM;
-    }
-
-    assert(offset % PAGE_SIZE == 0);
-    assert(len % PAGE_SIZE == 0);
-
-    struct vm_object *object = NULL;
-    if (flags & MAP_PRIVATE) {
-        object = vm_create_inode_object(inode, flags);
-    } else {
-        if (!inode->vm_object) {
-            object = vm_create_inode_object(inode, flags);
-            inode->vm_object = object;
-        } else {
-            object = bump_vm_object(inode->vm_object);
-        }
-    }
-
-    assert(object);
-    region->vm_object = object;
-    region->vm_object_offset = offset;
-
-    int ret = vm_map_region_with_object(region);
-    if (ret < 0) {
-        return (intptr_t) ret;
-    }
-
-    return region->start;
 }
 
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name) {
