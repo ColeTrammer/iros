@@ -603,8 +603,15 @@ struct vm_region *clone_process_vm() {
         struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
         memcpy(to_add, region, sizeof(struct vm_region));
 
+        assert(to_add->vm_object || to_add->type == VM_KERNEL_STACK);
         if (to_add->vm_object) {
-            bump_vm_object(to_add->vm_object);
+            if (to_add->flags & VM_SHARED) {
+                debug_log("refing object\n");
+                bump_vm_object(to_add->vm_object);
+            } else {
+                debug_log("cloning object\n");
+                to_add->vm_object = vm_clone_object(to_add->vm_object);
+            }
         }
 
         new_list = add_vm_region(new_list, to_add);

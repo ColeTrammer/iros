@@ -325,7 +325,7 @@ SYS_CALL(fork) {
 
     memcpy(&child->arch_task.task_state, task_state, sizeof(struct task_state));
     child->arch_task.task_state.cpu_state.rax = 0;
-    child_process->arch_process.cr3 = clone_process_paging_structure(child_process);
+    child_process->arch_process.cr3 = create_clone_process_paging_structure(child_process);
     child->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
     child->arch_task.setup_kernel_stack = true;
     child->arch_task.user_thread_pointer = parent->arch_task.user_thread_pointer;

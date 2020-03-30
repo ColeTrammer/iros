@@ -77,9 +77,42 @@ static int anon_extend(struct vm_object *self, size_t pages) {
     return 0;
 }
 
+static struct vm_object *anon_clone(struct vm_object *self);
+
 static struct vm_object_operations anon_ops = {
-    .map = &anon_map, .handle_fault = &anon_handle_fault, .kill = &anon_kill, .extend = &anon_extend
+    .map = &anon_map, .handle_fault = &anon_handle_fault, .kill = &anon_kill, .extend = &anon_extend, .clone = &anon_clone
 };
+
+static struct vm_object *anon_clone(struct vm_object *self) {
+
+    struct anon_vm_object_data *self_data = self->private_data;
+
+    struct process *process = get_current_task()->process;
+
+    spin_lock(&temp_page_lock);
+    spin_lock(&self->lock);
+
+    struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + self_data->pages * sizeof(uintptr_t));
+    data->pages = self_data->pages;
+
+    for (size_t i = 0; i < self_data->pages; i++) {
+        uintptr_t page_value = self_data->phys_pages[i];
+        if (!page_value) {
+            data->phys_pages[i] = page_value;
+        } else {
+            map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
+            data->phys_pages[i] = get_phys_addr((uintptr_t) TEMP_PAGE);
+
+            void *source = create_phys_addr_mapping(self_data->phys_pages[i]);
+            memcpy(TEMP_PAGE, source, PAGE_SIZE);
+        }
+    }
+
+    spin_unlock(&self->lock);
+    spin_unlock(&temp_page_lock);
+
+    return vm_create_object(VM_ANON, &anon_ops, data);
+}
 
 struct vm_object *vm_create_anon_object(size_t size) {
     size_t num_pages = ((size + PAGE_SIZE - 1) / PAGE_SIZE);

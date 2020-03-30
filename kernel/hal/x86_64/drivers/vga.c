@@ -65,6 +65,7 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
     struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     region->vm_object = device->inode->vm_object;
     region->vm_object_offset = 0;
+    region->flags |= VM_SHARED;
 
     int ret = vm_map_region_with_object(region);
     if (ret < 0) {

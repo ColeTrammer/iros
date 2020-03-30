@@ -18,7 +18,7 @@
 
 // #define MAP_VM_REGION_DEBUG
 
-static spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
+spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
 extern struct process initial_kernel_process;
 
 uintptr_t get_phys_addr(uintptr_t virt_addr) {
@@ -371,6 +371,37 @@ uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy, struct
     return pml4_addr;
 }
 
+uintptr_t create_clone_process_paging_structure(struct process *process) {
+    spin_lock(&temp_page_lock);
+
+    map_page((uintptr_t) TEMP_PAGE, VM_WRITE, process);
+    uint64_t *pml4 = TEMP_PAGE;
+
+    // Only clone the kernel entries in this table.
+    pml4[MAX_PML4_ENTRIES - 3] = PML4_BASE[MAX_PML4_ENTRIES - 3];
+    pml4[MAX_PML4_ENTRIES - 2] = PML4_BASE[MAX_PML4_ENTRIES - 2];
+    pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | PAGE_STRUCTURE_FLAGS | VM_NO_EXEC;
+    uintptr_t pml4_addr = get_phys_addr((uintptr_t) TEMP_PAGE);
+
+    uint64_t old_cr3 = get_cr3();
+    uint64_t flags = disable_interrupts_save();
+
+    load_cr3(pml4_addr);
+
+    struct vm_region *region = process->process_memory;
+    while (region) {
+        if (region->vm_object) {
+            vm_map_region_with_object(region);
+        }
+        region = region->next;
+    }
+
+    load_cr3(old_cr3);
+    interrupts_restore(flags);
+    spin_unlock(&temp_page_lock);
+    return pml4_addr;
+}
+
 void create_phys_id_map() {
     // Map entries at PML4_MAX - 3 to a replica of phys memory
     debug_log("Mapping physical address identity map: [ %#lX ]\n", get_max_phys_memory());
@@ -387,9 +418,22 @@ void load_paging_structure(uintptr_t phys_addr) {
 void soft_remove_paging_structure(struct vm_region *list, struct process *process) {
     struct vm_region *region = list;
     while (region != NULL) {
-        if (!(region->flags & VM_GLOBAL) && !(region->type == VM_KERNEL_STACK)) {
+        if (!(region->flags & VM_GLOBAL)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-                unmap_page(page, process);
+                if (region->type == VM_KERNEL_STACK) {
+                    // NOTE: This section should be removed separately, when an individual task
+                    //       ends. This is because each and every task gets its own kernel stack,
+                    //       but they share the rest of the memory. Since this method should only
+                    //       be called when all tasks are gone, unmapping the pages in the region
+                    //       would either do nothing or cause a page fault, and thus should be
+                    //       avoided.
+                    continue;
+                } else if (region->vm_object != NULL) {
+                    // NOTE: The vm object is responsible for unmapping the physical pages
+                    do_unmap_page(page, false, true, NULL);
+                } else {
+                    unmap_page(page, process);
+                }
             }
         }
         region = region->next;
@@ -407,28 +451,7 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
         load_cr3(phys_addr);
     }
 
-    struct vm_region *region = list;
-    while (region != NULL) {
-        if (!(region->flags & VM_GLOBAL)) {
-            for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-                if (region->type == VM_KERNEL_STACK) {
-                    // NOTE: This section should be removed separately, when an individual task
-                    //       ends. This is because each and every task gets its own kernel stack,
-                    //       but they share the rest of the memory. Since this method should only
-                    //       be called when all tasks are gone, unmapping the pages in the region
-                    //       would either do nothing or cause a page fault, and thus should be
-                    //       avoided.
-                    continue;
-                } else if (region->vm_object != NULL) {
-                    // NOTE: The vm object is responsible for unmapping the physical pages
-                    do_unmap_page(page, false, true, NULL);
-                } else {
-                    unmap_page(page, NULL);
-                }
-            }
-        }
-        region = region->next;
-    }
+    soft_remove_paging_structure(list, get_current_task()->process);
 
     load_cr3(old_cr3);
     free_phys_page(phys_addr, NULL);

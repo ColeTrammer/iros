@@ -26,6 +26,8 @@
 extern void _temp_page();
 #define TEMP_PAGE ((uint64_t *) &_temp_page)
 
+extern spinlock_t temp_page_lock;
+
 struct process;
 
 struct virt_page_info {

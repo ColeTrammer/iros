@@ -79,3 +79,8 @@ struct vm_object *vm_create_object(enum vm_object_type type, struct vm_object_op
 
     return object;
 }
+
+struct vm_object *vm_clone_object(struct vm_object *obj) {
+    assert(obj->ops->clone);
+    return obj->ops->clone(obj);
+}
