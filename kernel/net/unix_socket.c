@@ -171,14 +171,16 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
 
     socket->private_data = calloc(1, sizeof(struct unix_socket_data));
     assert(socket->private_data);
-    spin_unlock(&socket->lock);
 
     for (;;) {
-        if (socket->state == CONNECTED) {
+        enum socket_state state = socket->state;
+        spin_unlock(&socket->lock);
+        if (state == CONNECTED) {
             break;
         }
 
         proc_block_until_socket_is_connected(get_current_task(), socket);
+        spin_lock(&socket->lock);
     }
 
     return 0;

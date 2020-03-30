@@ -236,6 +236,10 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             memmove(socket->pending, socket->pending + 1, (socket->pending_length - 1) * sizeof(struct socket_connection *));
             socket->pending[--socket->num_pending] = NULL;
 
+            if (socket->num_pending == 0) {
+                socket->readable = false;
+            }
+
             spin_unlock(&socket->lock);
             break;
         }
