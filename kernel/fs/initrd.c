@@ -90,14 +90,7 @@ struct file *initrd_open(struct inode *inode, int flags, int *error) {
 
 ssize_t initrd_iread(struct inode *inode, void *buffer, size_t _len, off_t offset) {
     struct initrd_file_entry *entry = inode->private_data;
-
-    size_t len = MIN(_len, inode->size - offset);
-    if (len == 0 || *((char *) (initrd_start + (uint32_t)(uintptr_t) entry->offset + offset)) == '\0') {
-        return 0;
-    }
-
-    memcpy(buffer, (void *) (initrd_start + (uintptr_t) entry->offset + offset), len);
-    return (ssize_t) len;
+    return fs_do_read(buffer, offset, _len, (void *) (initrd_start + entry->offset), inode->size);
 }
 
 ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t _len) {

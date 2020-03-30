@@ -167,11 +167,10 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
 
     struct procfs_buffer data = procfs_get_data(inode, true);
 
-    size_t to_read = MIN(len, data.size - offset);
-    memcpy(buffer, data.buffer + offset, to_read);
+    size_t nread = fs_do_read(buffer, offset, len, data.buffer, data.size);
 
     procfs_cleanup_data(data, inode);
-    return to_read;
+    return nread;
 }
 
 static struct procfs_buffer procfs_cwd(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
