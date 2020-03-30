@@ -553,7 +553,7 @@ struct vm_region *find_user_vm_region_by_addr(uintptr_t addr) {
     struct vm_region *region = get_current_task()->process->process_memory;
 
     while (region) {
-        if (region->start <= addr && addr <= region->end) {
+        if (region->start <= addr && addr < region->end) {
             return region;
         }
         region = region->next;

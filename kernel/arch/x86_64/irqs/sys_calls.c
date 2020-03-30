@@ -661,7 +661,7 @@ SYS_CALL(execve) {
     assert(buffer != MAP_FAILED);
 
     assert(elf64_is_valid(buffer));
-    elf64_load_program(buffer, length, task);
+    elf64_load_program(buffer, length, file, task);
     elf64_map_heap(buffer, task);
     task_state->stack_state.rip = elf64_get_entry(buffer);
 

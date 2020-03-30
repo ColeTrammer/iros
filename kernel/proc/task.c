@@ -227,7 +227,6 @@ struct task *load_task(const char *file_name) {
     assert(buffer != MAP_FAILED);
 
     task->process->exe = bump_tnode(fs_get_tnode_for_file(file));
-    assert(fs_close(file) == 0);
 
     process->name = strdup(process->exe->name);
 
@@ -249,9 +248,11 @@ struct task *load_task(const char *file_name) {
 
     task->kernel_task = true;
     assert(elf64_is_valid(buffer));
-    elf64_load_program(buffer, length, task);
+    elf64_load_program(buffer, length, file, task);
     elf64_map_heap(buffer, task);
     uintptr_t entry = elf64_get_entry(buffer);
+
+    assert(fs_close(file) == 0);
     unmap_range((uintptr_t) buffer, length);
 
     proc_allocate_user_stack(process);

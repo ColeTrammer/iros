@@ -3,9 +3,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 
 #include <kernel/fs/vfs.h>
+#include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
@@ -40,7 +42,7 @@ uint64_t elf64_get_size(void *buffer) {
     return program_headers[1].p_memsz + program_headers[0].p_filesz;
 }
 
-void elf64_load_program(void *buffer, size_t length, struct task *task) {
+void elf64_load_program(void *buffer, size_t length, struct file *execuatable __attribute__((unused)), struct task *task) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
 
@@ -60,28 +62,32 @@ void elf64_load_program(void *buffer, size_t length, struct task *task) {
         assert(program_section_start < ((uintptr_t) buffer) + length);
 
         uintptr_t program_section_end = program_section_start + program_headers[i].p_memsz;
-        uint64_t program_flags = program_headers[i].p_flags == 0x5 ? (VM_USER) : (VM_NO_EXEC | VM_WRITE | VM_USER);
+        uintptr_t aligned_start = program_section_start & ~0xFFFULL;
+        uintptr_t aligned_end = ((program_section_end + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        int protections = program_headers[i].p_flags == 0x5 ? (PROT_READ | PROT_EXEC) : (PROT_READ | PROT_WRITE);
+        uint64_t type =
+            program_headers[i].p_type == 7 ? VM_PROCESS_TLS_MASTER_COPY : protections & PROT_EXEC ? VM_PROCESS_TEXT : VM_PROCESS_DATA;
 
-        struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
-        to_add->start = program_section_start & ~0xFFFULL;
-        to_add->end = ((program_section_end + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        to_add->flags = VM_WRITE | VM_USER;
-        to_add->type =
-            program_headers[i].p_type == 7 ? VM_PROCESS_TLS_MASTER_COPY : program_flags & VM_NO_EXEC ? VM_PROCESS_DATA : VM_PROCESS_TEXT;
+        struct vm_region *added = map_region((void *) aligned_start, aligned_end - aligned_start, PROT_WRITE, type);
 
-        task->process->process_memory = add_vm_region(task->process->process_memory, to_add);
+        struct vm_object *object = vm_create_anon_object(aligned_end - aligned_start);
+        added->vm_object = object;
+        added->vm_object_offset = 0;
 
-        map_vm_region(to_add, task->process);
+        vm_map_region_with_object(added);
 
 #ifdef ELF64_DEBUG
         debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start, program_headers[i].p_offset,
                   program_headers[i].p_filesz, program_headers[i].p_memsz, program_section_end);
 #endif /* ELF64_DEBUG */
+
         memcpy((char *) program_section_start, ((char *) buffer) + program_headers[i].p_offset, program_headers[i].p_filesz);
         memset((char *) program_section_start + program_headers[i].p_filesz, 0, program_headers[i].p_memsz - program_headers[i].p_filesz);
 
-        to_add->flags = program_flags;
-        map_vm_region_flags(to_add, task->process);
+        added->flags &= ~(VM_WRITE | VM_NO_EXEC);
+        added->flags |= !(protections & PROT_EXEC) ? VM_NO_EXEC : 0;
+        added->flags |= (protections & PROT_WRITE) ? VM_WRITE : 0;
+        map_vm_region_flags(added, task->process);
     }
 }
 
