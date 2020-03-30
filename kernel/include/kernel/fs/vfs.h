@@ -101,7 +101,6 @@ static inline int fs_mode_to_flags(mode_t mode) {
 }
 
 static inline struct inode *fs_file_inode(struct file *file) {
-    assert(file->inode);
     return file->inode;
 }
 
