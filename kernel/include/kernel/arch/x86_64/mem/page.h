@@ -39,7 +39,7 @@ struct virt_page_info {
     uintptr_t pt_entry;
 };
 
-void do_unmap_page(uintptr_t virt_addr, bool free_phys, struct process *process);
+void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure, struct process *process);
 
 void map_page_info(struct virt_page_info *info);
 struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags, struct process *process);

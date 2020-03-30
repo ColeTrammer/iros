@@ -51,7 +51,7 @@ static void load_task_into_memory(struct task *task) {
     // Currently
     if (task->arch_task.setup_kernel_stack) {
         struct vm_region *kernel_stack = get_vm_region(task->process->process_memory, VM_KERNEL_STACK);
-        do_unmap_page(kernel_stack->start, false, task->process);
+        do_unmap_page(kernel_stack->start, false, true, task->process);
         task->arch_task.kernel_stack_info = map_page_with_info(kernel_stack->start, kernel_stack->flags, task->process);
         task->arch_task.setup_kernel_stack = false;
     } else if (task->arch_task.kernel_stack_info != NULL) {
@@ -105,7 +105,7 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before
      * Execution) */
     task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags, task->process);
-    do_unmap_page(kernel_proc_stack->start, false, task->process);
+    do_unmap_page(kernel_proc_stack->start, false, true, task->process);
     task->arch_task.setup_kernel_stack = false;
     task->in_kernel = true;
 }
@@ -135,7 +135,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before
      * Execution) */
     task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags, task->process);
-    do_unmap_page(kernel_proc_stack->start, false, task->process);
+    do_unmap_page(kernel_proc_stack->start, false, true, task->process);
     task->arch_task.setup_kernel_stack = false;
 
     task_align_fpu(task);

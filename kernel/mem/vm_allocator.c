@@ -229,7 +229,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 #endif /* MMAP_DEBUG */
 
             for (uintptr_t i = addr; i < addr + length; i += PAGE_SIZE) {
-                do_unmap_page(i, !r->vm_object, process);
+                do_unmap_page(i, !r->vm_object, true, process);
             }
 
             struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
@@ -256,7 +256,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 
             while (r->end != addr) {
                 r->end -= PAGE_SIZE;
-                do_unmap_page(r->end, !r->vm_object, process);
+                do_unmap_page(r->end, !r->vm_object, true, process);
             }
 
             length -= (end_save - addr);
@@ -271,7 +271,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 
             assert(r->start <= addr + length);
             while (r->start != addr + length) {
-                do_unmap_page(r->start, !r->vm_object, process);
+                do_unmap_page(r->start, !r->vm_object, true, process);
                 r->start += PAGE_SIZE;
                 r->vm_object_offset += PAGE_SIZE;
             }
@@ -288,10 +288,8 @@ int unmap_range(uintptr_t addr, size_t length) {
             drop_vm_object(r->vm_object);
         }
 
-        if (r->type != VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES) {
-            for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
-                do_unmap_page(i, !r->vm_object, process);
-            }
+        for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
+            do_unmap_page(i, !r->vm_object, true, process);
         }
 
         if (r == process->process_memory) {

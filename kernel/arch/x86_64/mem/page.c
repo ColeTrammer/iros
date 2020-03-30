@@ -50,7 +50,7 @@ static bool all_empty(uint64_t *page) {
     return true;
 }
 
-void do_unmap_page(uintptr_t virt_addr, bool free_phys, struct process *process) {
+void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure __attribute__((unused)), struct process *process) {
     uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
     uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
@@ -73,17 +73,23 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys, struct process *process)
     invlpg(virt_addr);
 
     if (all_empty(pt)) {
-        free_phys_page(get_phys_addr((uintptr_t) pt), process);
+        if (free_phys) {
+            free_phys_page(get_phys_addr((uintptr_t) pt), process);
+        }
         pd[pd_offset] = 0;
     }
 
     if (all_empty(pd)) {
-        free_phys_page(get_phys_addr((uintptr_t) pd), process);
+        if (free_phys) {
+            free_phys_page(get_phys_addr((uintptr_t) pd), process);
+        }
         pdp[pdp_offset] = 0;
     }
 
     if (all_empty(pdp)) {
-        free_phys_page(get_phys_addr((uintptr_t) pdp), process);
+        if (free_phys) {
+            free_phys_page(get_phys_addr((uintptr_t) pdp), process);
+        }
         pml4[pml4_offset] = 0;
     }
 }
@@ -188,7 +194,7 @@ void clear_initial_page_mappings() {
     update_vga_buffer();
 
     for (size_t i = 0; i < 0x600000; i += PAGE_SIZE) {
-        do_unmap_page(i, false, &initial_kernel_process);
+        do_unmap_page(i, false, false, &initial_kernel_process);
     }
 }
 
@@ -207,7 +213,7 @@ struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags, s
 }
 
 void unmap_page(uintptr_t virt_addr, struct process *process) {
-    do_unmap_page(virt_addr, true, process);
+    do_unmap_page(virt_addr, true, true, process);
 }
 
 uintptr_t get_current_paging_structure() {
@@ -415,7 +421,7 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
                     continue;
                 } else if (region->vm_object != NULL) {
                     // NOTE: The vm object is responsible for unmapping the physical pages
-                    do_unmap_page(page, false, NULL);
+                    do_unmap_page(page, false, true, NULL);
                 } else {
                     unmap_page(page, NULL);
                 }
