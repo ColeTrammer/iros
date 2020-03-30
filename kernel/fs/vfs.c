@@ -439,10 +439,6 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
     return tnode;
 }
 
-struct file *fs_open(const char *file_name, int flags, mode_t mode, int *error) {
-    return fs_openat(NULL, file_name, flags, mode, error);
-}
-
 struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mode_t mode, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;

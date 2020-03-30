@@ -213,7 +213,7 @@ struct task *load_task(const char *file_name) {
     task->process = process;
 
     int error = 0;
-    struct file *file = fs_open(file_name, O_RDONLY, 0, &error);
+    struct file *file = fs_openat(NULL, file_name, O_RDONLY, 0, &error);
     assert(error == 0);
 
     uintptr_t old_paging_structure = get_current_paging_structure();
@@ -262,7 +262,7 @@ struct task *load_task(const char *file_name) {
 
     load_paging_structure(old_paging_structure);
 
-    task->process->files[0] = (struct file_descriptor) { fs_open("/dev/serial", O_RDWR, 0, NULL), 0 };
+    task->process->files[0] = (struct file_descriptor) { fs_openat(NULL, "/dev/serial", O_RDWR, 0, NULL), 0 };
     task->process->files[1] = fs_dup(task->process->files[0]);
     task->process->files[2] = fs_dup(task->process->files[0]);
 

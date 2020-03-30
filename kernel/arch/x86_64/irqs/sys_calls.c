@@ -432,7 +432,7 @@ static int execve_helper(char **path, char *buffer, size_t buffer_length, struct
     }
 
     int ret = 0;
-    *file = fs_open(*path, O_RDONLY, 0, &ret);
+    *file = fs_openat(get_current_task()->process->cwd, *path, O_RDONLY, 0, &ret);
     if (ret < 0) {
         return ret;
     }
