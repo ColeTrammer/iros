@@ -381,6 +381,7 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
     uint64_t *pml4 = TEMP_PAGE;
 
     // Only clone the kernel entries in this table.
+    memset(pml4, 0, (MAX_PML4_ENTRIES - 3) * sizeof(uint64_t));
     pml4[MAX_PML4_ENTRIES - 3] = PML4_BASE[MAX_PML4_ENTRIES - 3];
     pml4[MAX_PML4_ENTRIES - 2] = PML4_BASE[MAX_PML4_ENTRIES - 2];
     pml4[MAX_PML4_ENTRIES - 1] = get_phys_addr((uintptr_t) pml4) | PAGE_STRUCTURE_FLAGS | VM_NO_EXEC;

@@ -13,6 +13,7 @@
 #include <kernel/sched/task_sched.h>
 
 // #define PAGE_FAULT_DEBUG
+// #define PAGING_DEBUG
 // #define DEVICE_NOT_AVAILABLE_DEBUG
 
 void init_irq_handlers() {
@@ -111,6 +112,22 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
             return;
         }
     }
+
+#ifdef PAGING_DEBUG
+    uint64_t pml4_offset = (address >> 39) & 0x1FF;
+    uint64_t pdp_offset = (address >> 30) & 0x1FF;
+    uint64_t pd_offset = (address >> 21) & 0x1FF;
+    uint64_t pt_offset = (address >> 12) & 0x1FF;
+
+    uint64_t *pml4_entry = PML4_BASE + pml4_offset;
+    uint64_t *pdp_entry = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
+    uint64_t *pd_entry = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
+    uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
+    debug_log("*pml4_entry: [ %#.16lX ]\n", *pml4_entry);
+    debug_log("*pdp_entry: [ %#.16lX ]\n", *pdp_entry);
+    debug_log("*pd_entry: [ %#.16lX ]\n", *pd_entry);
+    debug_log("*pt_entry: [ %#.16lX ]\n", *pt_entry);
+#endif /* PAGING_DEBUG */
 
     if (!current->kernel_task && !current->in_kernel) {
         memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
