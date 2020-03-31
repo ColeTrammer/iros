@@ -20,7 +20,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
-#define MMAP_DEBUG
+// #define MMAP_DEBUG
 
 static struct vm_region *kernel_vm_list = NULL;
 #if ARCH == X86_64
