@@ -10,6 +10,8 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
+// #define PAGE_FRAME_ALLOCATOR_DEBUG
+
 static uintptr_t page_bitmap[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
 static spinlock_t bitmap_lock = SPINLOCK_INITIALIZER;
 
@@ -47,6 +49,9 @@ uintptr_t get_next_phys_page(struct process *process) {
             spin_unlock(&bitmap_lock);
 
             process->resident_memory += PAGE_SIZE;
+#ifdef PAGE_FRAME_ALLOCATOR_DEBUG
+            debug_log("allocated: [ %#.16lX ]\n", bit_index * PAGE_SIZE);
+#endif /* PAGE_FRAME_ALLOCATOR_DEBUG */
             return bit_index * PAGE_SIZE;
         }
     }
@@ -56,6 +61,10 @@ uintptr_t get_next_phys_page(struct process *process) {
 }
 
 void free_phys_page(uintptr_t phys_addr, struct process *process) {
+#ifdef PAGE_FRAME_ALLOCATOR_DEBUG
+    debug_log("freed: [ %#.16lX ]\n", phys_addr);
+#endif /* PAGE_FRAME_ALLOCATOR_DEBUG */
+
     spin_lock(&bitmap_lock);
 
     set_bit(phys_addr / PAGE_SIZE, false);

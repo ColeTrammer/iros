@@ -46,7 +46,7 @@ void handle_divide_by_zero(struct task_state *task_state) {
         task_do_sig(current, SIGFPE); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
-        sched_run_next();
+        sys_sched_run_next(&current->arch_task.task_state);
     }
 
     dump_registers_to_screen();
@@ -64,7 +64,7 @@ void handle_stack_fault(struct task_interrupt_state *task_state) {
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
-        sched_run_next();
+        sys_sched_run_next(&current->arch_task.task_state);
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???
@@ -83,7 +83,7 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
-        sched_run_next();
+        sys_sched_run_next(&current->arch_task.task_state);
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???
@@ -118,7 +118,7 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
-        sched_run_next();
+        sys_sched_run_next(&current->arch_task.task_state);
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???

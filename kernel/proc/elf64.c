@@ -13,6 +13,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
+#include <kernel/util/validators.h>
 
 // #define ELF64_DEBUG
 
@@ -166,7 +167,7 @@ void elf64_stack_trace(struct task *task) {
 
     struct stack_frame *frame = (struct stack_frame *) rbp;
 
-    while (frame && frame->next != NULL) {
+    while (!validate_read(frame, sizeof(struct stack_frame)) && frame->next != NULL) {
         for (int i = 0; (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
             if (symbols[i].st_name != 0) {
                 if (frame->rip >= symbols[i].st_value && frame->rip <= symbols[i].st_value + symbols[i].st_size) {
@@ -176,9 +177,6 @@ void elf64_stack_trace(struct task *task) {
         }
 
         frame = frame->next;
-        if (!find_user_vm_region_by_addr((uintptr_t) frame)) {
-            break;
-        }
     }
 
     free(buffer);
