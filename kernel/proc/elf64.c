@@ -113,13 +113,28 @@ struct stack_frame {
     uintptr_t rip;
 };
 
+void print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbols_size, const char *string_table) {
+    for (int i = 0; symbols && string_table && (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
+        if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
+            if (rip >= symbols[i].st_value && rip <= symbols[i].st_value + symbols[i].st_size) {
+                debug_log("[ %#.16lX, %#.16lX, %s ]\n", rip, symbols[i].st_value, string_table + symbols[i].st_name);
+                return;
+            }
+        }
+    }
+
+    // We didn't find a matching symbol
+    debug_log("[ %#.16lX, %#.16lX, %s ]\n", rip, 0UL, "??");
+}
+
 // NOTE: this must be called from within a task's address space
 void elf64_stack_trace(struct task *task) {
     dump_process_regions(task->process);
     struct inode *inode = task->process->exe->inode;
 
-    void *buffer;
-    if (fs_read_all_inode(inode, &buffer, NULL)) {
+    assert(inode->i_op->mmap);
+    void *buffer = (void *) inode->i_op->mmap(NULL, inode->size, PROT_READ, MAP_SHARED, inode, 0);
+    if (buffer == MAP_FAILED) {
         debug_log("Failed to read the task's inode: [ %d ]\n", task->process->pid);
         return;
     }
@@ -150,34 +165,19 @@ void elf64_stack_trace(struct task *task) {
     uintptr_t rbp = task->in_kernel ? task->arch_task.user_task_state->cpu_state.rbp : task->arch_task.task_state.cpu_state.rbp;
     uintptr_t rip = task->in_kernel ? task->arch_task.user_task_state->stack_state.rip : task->arch_task.task_state.stack_state.rip;
 
-    debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
-
     if (!symbols || !string_table) {
         debug_log("No symbols or string table (probably stripped binary)\n");
-        return;
     }
 
-    for (int i = 0; (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
-        if (symbols[i].st_name != 0 && symbols[i].st_info == 18) {
-            if (rip >= symbols[i].st_value && rip < symbols[i].st_value + symbols[i].st_size) {
-                debug_log("[ %#.16lX, %s ]\n", symbols[i].st_value, string_table + symbols[i].st_name);
-            }
-        }
-    }
+    debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+
+    print_symbol_at(rip, symbols, symbols_size, string_table);
 
     struct stack_frame *frame = (struct stack_frame *) rbp;
-
     while (!validate_read(frame, sizeof(struct stack_frame)) && frame->next != NULL) {
-        for (int i = 0; (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
-            if (symbols[i].st_name != 0) {
-                if (frame->rip >= symbols[i].st_value && frame->rip <= symbols[i].st_value + symbols[i].st_size) {
-                    debug_log("[ %#.16lX, %s ]\n", symbols[i].st_value, string_table + symbols[i].st_name);
-                }
-            }
-        }
-
+        print_symbol_at(frame->rip, symbols, symbols_size, string_table);
         frame = frame->next;
     }
 
-    free(buffer);
+    unmap_range((uintptr_t) buffer, ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
 }
