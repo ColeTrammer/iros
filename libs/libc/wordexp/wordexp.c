@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -215,9 +216,11 @@ static bool we_append(char **s, const char *r, size_t len, size_t *max) {
     size_t new_len = strlen(*s) + len + 1;
     if (new_len > *max) {
         if (*max == 0) {
-            *max = WE_STR_BUF_DEFAULT;
+            *max = MAX(WE_STR_BUF_DEFAULT, new_len);
         } else {
-            *max *= 2;
+            do {
+                *max *= 2;
+            } while (*max < new_len);
         }
         *s = realloc(*s, *max);
         if (!*s) {
