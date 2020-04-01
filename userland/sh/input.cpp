@@ -138,10 +138,9 @@ static const char *weekday(int d) {
 }
 
 static void print_ps1_prompt() {
-    char *PS1 = getenv("PS1");
+    const char *PS1 = getenv("PS1");
     if (!PS1) {
-        fprintf(stderr, "$ ");
-        return;
+        PS1 = "\\$ ";
     }
 
     bool prev_was_backslash = false;
