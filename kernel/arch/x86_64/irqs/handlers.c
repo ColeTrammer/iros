@@ -123,10 +123,17 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     uint64_t *pdp_entry = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
     uint64_t *pd_entry = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
     uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
+
     debug_log("*pml4_entry: [ %#.16lX ]\n", *pml4_entry);
-    debug_log("*pdp_entry: [ %#.16lX ]\n", *pdp_entry);
-    debug_log("*pd_entry: [ %#.16lX ]\n", *pd_entry);
-    debug_log("*pt_entry: [ %#.16lX ]\n", *pt_entry);
+    if (*pml4_entry & 1) {
+        debug_log("*pdp_entry: [ %#.16lX ]\n", *pdp_entry);
+        if (*pdp_entry & 1) {
+            debug_log("*pd_entry: [ %#.16lX ]\n", *pd_entry);
+            if (*pd_entry & 1) {
+                debug_log("*pt_entry: [ %#.16lX ]\n", *pt_entry);
+            }
+        }
+    }
 #endif /* PAGING_DEBUG */
 
     if (!current->kernel_task && !current->in_kernel) {
