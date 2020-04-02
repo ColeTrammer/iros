@@ -323,7 +323,7 @@ SYS_CALL(fork) {
 
     debug_log("Forking Task: [ %d ]\n", parent->process->pid);
 
-    memcpy(&child->arch_task.task_state, task_state, sizeof(struct task_state));
+    memcpy(&child->arch_task.task_state, parent->arch_task.user_task_state, sizeof(struct task_state));
     child->arch_task.task_state.cpu_state.rax = 0;
     child_process->arch_process.cr3 = create_clone_process_paging_structure(child_process);
     child->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
@@ -1474,12 +1474,12 @@ SYS_CALL(create_task) {
     task->arch_task.setup_kernel_stack = true;
     task->arch_task.user_thread_pointer = args->thread_self_pointer;
 
-    task->arch_task.task_state.stack_state.cs = current->arch_task.task_state.stack_state.cs;
+    task->arch_task.task_state.stack_state.cs = current->arch_task.user_task_state->stack_state.cs;
     task->arch_task.task_state.stack_state.rip = args->entry;
-    task->arch_task.task_state.stack_state.rflags = current->arch_task.task_state.stack_state.rflags;
+    task->arch_task.task_state.stack_state.rflags = current->arch_task.user_task_state->stack_state.rflags;
     task->arch_task.task_state.stack_state.rsp = new_rsp;
     *((uintptr_t *) task->arch_task.task_state.stack_state.rsp) = args->push_onto_stack;
-    task->arch_task.task_state.stack_state.ss = current->arch_task.task_state.stack_state.ss;
+    task->arch_task.task_state.stack_state.ss = current->arch_task.user_task_state->stack_state.ss;
     task->arch_task.task_state.cpu_state.rdi = (uint64_t) args->arg;
 
     *args->tid_ptr = task->tid;
