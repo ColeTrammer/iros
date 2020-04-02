@@ -420,6 +420,12 @@ void task_do_sigs_if_needed(struct task *task) {
     }
 }
 
+void task_yield_if_state_changed(struct task *task) {
+    if (task->sched_state != RUNNING_UNINTERRUPTIBLE) {
+        sys_sched_run_next(&task->arch_task.task_state);
+    }
+}
+
 enum sig_default_behavior { TERMINATE, TERMINATE_AND_DUMP, IGNORE, STOP, CONTINUE, INVAL };
 
 static enum sig_default_behavior sig_defaults[_NSIG] = {
@@ -484,17 +490,17 @@ void task_do_sig(struct task *task, int signum) {
             proc_add_message(task->process->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;
         case STOP:
-            if (task->sched_state == WAITING) {
+            if (task->sched_state == STOPPED) {
                 break;
             }
-            task->sched_state = WAITING;
+            task->sched_state = STOPPED;
             proc_add_message(task->process->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
-            if (task->sched_state == RUNNING_INTERRUPTIBLE || task->sched_state == RUNNING_UNINTERRUPTIBLE) {
+            if (task->sched_state != STOPPED) {
                 break;
             }
-            task->sched_state = RUNNING_INTERRUPTIBLE;
+            task->sched_state = task->blocking ? WAITING : task->in_kernel ? RUNNING_UNINTERRUPTIBLE : RUNNING_INTERRUPTIBLE;
             proc_add_message(task->process->pid, proc_create_message(STATE_CONTINUED, signum));
             break;
         case IGNORE:
@@ -515,6 +521,8 @@ const char *task_state_to_string(enum sched_state state) {
             return "W (waiting)";
         case EXITING:
             return "E (exiting)";
+        case STOPPED:
+            return "S (stopped)";
         default:
             return "? (Unknown)";
     }

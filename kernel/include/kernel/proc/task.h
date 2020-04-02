@@ -22,6 +22,7 @@ enum sched_state {
     RUNNING_INTERRUPTIBLE,
     RUNNING_UNINTERRUPTIBLE,
     WAITING,
+    STOPPED,
     EXITING,
 };
 
@@ -118,6 +119,7 @@ void task_enqueue_signal(struct task *task, int signum, void *val, bool was_sigq
 void task_enqueue_signal_object(struct task *task, struct queued_signal *sig);
 void task_dequeue_signal(struct task *task);
 
+void task_yield_if_state_changed(struct task *task);
 void task_do_sigs_if_needed(struct task *task);
 
 const char *task_state_to_string(enum sched_state state);

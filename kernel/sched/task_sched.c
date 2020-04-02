@@ -92,6 +92,8 @@ void sched_run_next() {
     struct task *task = list_start;
     do {
         // Don't send the signals if the task is running UNINTERRUPTABLY, or if it is just going to exit anyway
+        // FIXME: what to do if the task is stopped? It might be unsafe to send a terminating signal, since it
+        //        might leak resources.
         if (task->sched_state == RUNNING_UNINTERRUPTIBLE || task->sched_state == EXITING) {
             continue;
         }
@@ -158,7 +160,7 @@ void sched_run_next() {
     }
 #endif /* SCHED_DEBUG */
 
-    assert(to_run->sched_state != WAITING);
+    assert(to_run->sched_state != WAITING && to_run->sched_state != STOPPED && to_run->sched_state != EXITING);
     run_task(to_run);
 }
 
@@ -204,7 +206,7 @@ int signal_process_group(pid_t pgid, int signum) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
         task_do_sig(current, signum);
-        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+        if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             yield_signal();
         }
         interrupts_restore(save);
@@ -261,7 +263,7 @@ int signal_task(int tgid, int tid, int signum) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
         task_do_sig(current, signum);
-        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+        if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             yield_signal();
         }
         interrupts_restore(save);
@@ -297,7 +299,7 @@ int signal_process(pid_t pid, int signum) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
         task_do_sig(current, signum);
-        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+        if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             yield_signal();
         }
         interrupts_restore(save);
@@ -333,7 +335,7 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
         struct task *current = get_current_task();
         unsigned long save = disable_interrupts_save();
         task_do_sig(current, signum);
-        if (current->sched_state == EXITING || current->sched_state == WAITING) {
+        if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             yield_signal();
         }
         interrupts_restore(save);

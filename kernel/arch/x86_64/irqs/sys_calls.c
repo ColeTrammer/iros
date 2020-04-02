@@ -132,6 +132,7 @@
         disable_interrupts();                                    \
         task_state->cpu_state.rax = (_val);                      \
         task_do_sigs_if_needed(get_current_task());              \
+        task_yield_if_state_changed(get_current_task());         \
         get_current_task()->in_kernel = false;                   \
         get_current_task()->arch_task.user_task_state = NULL;    \
         get_current_task()->sched_state = RUNNING_INTERRUPTIBLE; \
@@ -143,6 +144,7 @@
         uint64_t _val = (uint64_t)(val);                         \
         disable_interrupts();                                    \
         task_state->cpu_state.rax = (_val);                      \
+        task_yield_if_state_changed(get_current_task());         \
         get_current_task()->in_kernel = false;                   \
         get_current_task()->arch_task.user_task_state = NULL;    \
         get_current_task()->sched_state = RUNNING_INTERRUPTIBLE; \
@@ -156,6 +158,7 @@
         task_state->cpu_state.rax = (_val);                                     \
         task_do_sigs_if_needed(get_current_task());                             \
         memcpy(&current->sig_mask, &current->saved_sig_mask, sizeof(sigset_t)); \
+        task_yield_if_state_changed(get_current_task());                        \
         get_current_task()->in_kernel = false;                                  \
         get_current_task()->in_sigsuspend = false;                              \
         get_current_task()->sched_state = RUNNING_INTERRUPTIBLE;                \
