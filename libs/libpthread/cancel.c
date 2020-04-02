@@ -100,8 +100,8 @@ void pthread_testcancel(void) {
     sigset_t pending;
     sigpending(&pending);
     if (sigismember(&pending, __PTHREAD_CANCEL_SIGNAL)) {
-        sigemptyset(&pending);
-        sigaddset(&pending, __PTHREAD_CANCEL_SIGNAL);
+        sigfillset(&pending);
+        sigdelset(&pending, __PTHREAD_CANCEL_SIGNAL);
         sigsuspend(&pending);
         assert(false);
     }
