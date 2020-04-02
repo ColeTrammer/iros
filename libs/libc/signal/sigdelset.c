@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 int sigdelset(sigset_t *set, int signum) {
-    if (signum < 1 || signum > _NSIG) {
+    if (signum < 1 || signum >= _NSIG) {
         errno = EINVAL;
         return -1;
     }

@@ -23,7 +23,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
-// #define TASK_SIGNAL_DEBUG
+#define TASK_SIGNAL_DEBUG
 
 struct task *current_task;
 struct task initial_kernel_task;

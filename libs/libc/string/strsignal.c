@@ -71,4 +71,5 @@ const char *const sys_siglist[_NSIG] = { "Invalid signal number",
                                          "SIGRTMIN+28",
                                          "SIGRTMIN+29",
                                          "SIGRTMIN+30",
+                                         "SIGRTMIN+31",
                                          "SIGRTMAX" };

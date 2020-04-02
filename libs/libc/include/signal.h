@@ -43,8 +43,8 @@
 #else
 #define SIGRTMIN 32
 #endif /* __is_kernel */
-#define SIGRTMAX 63
-#define _NSIG    64
+#define SIGRTMAX 64
+#define _NSIG    65
 
 #define SI_USER       0
 #define SI_QUEUE      1

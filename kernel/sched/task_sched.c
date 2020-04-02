@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
@@ -190,9 +191,10 @@ int signal_process_group(pid_t pgid, int signum) {
         // FIXME: only signal 1 task per process
         if (task->process->pgid == pgid) {
             if (signum != 0) {
-                task_set_sig_pending(task, signum);
+                debug_log("Signaling: [ %d, %s ]\n", task->process->pid, strsignal(signum));
+                task_enqueue_signal(task, signum, NULL, false);
 
-                if (task == get_current_task()) {
+                if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
                     signalled_self = true;
                 }
             }
@@ -244,7 +246,7 @@ int signal_task(int tgid, int tid, int signum) {
     do {
         if (task->process->pid == tgid && task->tid == tid) {
             if (signum != 0) {
-                debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
+                debug_log("Signaling: [ %d, %s ]\n", task->process->pid, strsignal(signum));
                 task_enqueue_signal(task, signum, NULL, false);
 
                 if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
@@ -282,7 +284,7 @@ int signal_process(pid_t pid, int signum) {
         // Maybe should only do it once instead of in a loop
         if (task->process->pid == pid) {
             if (signum != 0) {
-                debug_log("Signaling: [ %d, %d ]\n", task->process->pid, signum);
+                debug_log("Signaling: [ %d, %s ]\n", task->process->pid, strsignal(signum));
                 task_enqueue_signal(task, signum, NULL, false);
 
                 if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
@@ -318,7 +320,7 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
         // Maybe should only do it once instead of in a loop
         if (task->process->pid == pid) {
             if (signum != 0) {
-                debug_log("Signaling queue: [ %d, %d ]\n", task->process->pid, signum);
+                debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
                 task_enqueue_signal(task, signum, val, true);
 
                 if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {

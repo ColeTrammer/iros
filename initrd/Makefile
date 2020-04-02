@@ -60,6 +60,7 @@ $(BUILDDIR)/initrd/programs/sigaltstack_test \
 $(BUILDDIR)/initrd/programs/siginfo_test \
 $(BUILDDIR)/initrd/programs/signal_test \
 $(BUILDDIR)/initrd/programs/sigqueue_test \
+$(BUILDDIR)/initrd/programs/sigset_test \
 $(BUILDDIR)/initrd/programs/sigsuspend_test_a \
 $(BUILDDIR)/initrd/programs/smart_pointer_test \
 $(BUILDDIR)/initrd/programs/stack_trace_test \
