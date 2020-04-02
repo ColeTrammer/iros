@@ -176,18 +176,22 @@ void map_page_info(struct virt_page_info *info) {
 
     if ((*pml4_entry & ~0xFFF) != (info->pml4_entry & ~0xFFF)) {
         *pml4_entry = info->pml4_entry;
+        invlpg((uintptr_t) pdp_entry);
     }
 
     if ((*pdp_entry & ~0xFFF) != (info->pdp_entry & ~0xFFF)) {
         *pdp_entry = info->pdp_entry;
+        invlpg((uintptr_t) pd_entry);
     }
 
     if ((*pd_entry & ~0xFFF) != (info->pd_entry & ~0xFFF)) {
         *pd_entry = info->pd_entry;
+        invlpg((uintptr_t) pt_entry);
     }
 
     if ((*pt_entry & ~0xFFF) != (info->pt_entry & ~0xFFF)) {
         *pt_entry = info->pt_entry;
+        invlpg(VIRT_ADDR(info->pml4_index, info->pdp_index, info->pd_index, info->pt_index));
     }
 }
 
