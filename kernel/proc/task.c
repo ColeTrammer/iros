@@ -301,15 +301,15 @@ void free_task(struct task *task, bool free_paging_structure) {
 }
 
 void task_set_sig_pending(struct task *task, int signum) {
-    task->sig_pending |= (UINT64_C(1) << signum);
+    task->sig_pending |= (UINT64_C(1) << (signum - UINT64_C(1)));
 }
 
 void task_unset_sig_pending(struct task *task, int signum) {
-    task->sig_pending &= ~(UINT64_C(1) << signum);
+    task->sig_pending &= ~(UINT64_C(1) << (signum - UINT64_C(1)));
 }
 
 bool task_is_sig_pending(struct task *task, int signum) {
-    return task->sig_pending & (UINT64_C(1) << signum) ? 1 : 0;
+    return task->sig_pending & (UINT64_C(1) << (signum - UINT64_C(1))) ? 1 : 0;
 }
 
 void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add) {
@@ -394,7 +394,7 @@ int task_get_next_sig(struct task *task) {
     }
 
     for (size_t i = 1; i < _NSIG; i++) {
-        if ((task->sig_pending & (UINT64_C(1) << i)) && !task_is_sig_blocked(task, i)) {
+        if (task_is_sig_pending(task, i) && !task_is_sig_blocked(task, i)) {
             return i;
         }
     }
