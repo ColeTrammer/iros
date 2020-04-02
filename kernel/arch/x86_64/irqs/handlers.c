@@ -14,17 +14,32 @@
 
 // #define PAGE_FAULT_DEBUG
 // #define PAGING_DEBUG
-// #define DEVICE_NOT_AVAILABLE_DEBUG
+#define DEVICE_NOT_AVAILABLE_DEBUG
 
 void init_irq_handlers() {
     register_irq_handler(&handle_divide_by_zero, 0, false, false);
+    register_irq_handler(&handle_debug_entry, 1, false, false);
+    register_irq_handler(&handle_non_maskable_interrupt_entry, 2, false, false);
+    register_irq_handler(&handle_breakpoint_entry, 3, false, false);
+    register_irq_handler(&handle_overflow_entry, 4, false, false);
+    register_irq_handler(&handle_bound_range_exceeded_entry, 5, false, false);
     register_irq_handler(&handle_invalid_opcode_entry, 6, false, false);
     register_irq_handler(&handle_device_not_available_entry, 7, false, false);
     register_irq_handler(&handle_double_fault_entry, 8, false, true);
+
+    register_irq_handler(&handle_invalid_tss_entry, 10, false, false);
+    register_irq_handler(&handle_segment_not_present_entry, 11, false, false);
     register_irq_handler(&handle_stack_fault, 12, false, true);
     register_irq_handler(&handle_general_protection_fault_entry, 13, false, false);
     register_irq_handler(&handle_page_fault_entry, 14, false, false);
+
     register_irq_handler(&handle_fpu_exception_entry, 16, false, false);
+    register_irq_handler(&handle_alignment_check_entry, 17, false, false);
+    register_irq_handler(&handle_machine_check_entry, 18, false, false);
+    register_irq_handler(&handle_simd_exception_entry, 19, false, false);
+    register_irq_handler(&handle_virtualization_exception, 20, false, false);
+
+    register_irq_handler(&handle_security_exception, 30, false, false);
 
     register_irq_handler(&sys_call_entry, 128, true, false);
 
@@ -178,4 +193,76 @@ void handle_device_not_available() {
     assert(current);
     debug_log("handling: [ %d:%d ]\n", current->process->pid, current->tid);
 #endif /* DEVICE_NOT_AVAILABLE_DEBUG */
+}
+
+void handle_debug() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Debug");
+    abort();
+}
+
+void handle_non_maskable_interrupt() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Non-maskable Interrupt");
+    abort();
+}
+
+void handle_breakpoint() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Breakpoint");
+    abort();
+}
+
+void handle_overflow() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Overflow");
+    abort();
+}
+
+void handle_bound_range_exceeded() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Bound Range Exceeded");
+    abort();
+}
+
+void handle_invalid_tss() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Invalid TSS");
+    abort();
+}
+
+void handle_segment_not_present() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Segment Not Present");
+    abort();
+}
+
+void handle_alignment_check() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Alignment Check");
+    abort();
+}
+
+void handle_machine_check() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Machine Check");
+    abort();
+}
+
+void handle_simd_exception() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "SIMD Exception");
+    abort();
+}
+
+void handle_virtualization_exception() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Virtualization Exception");
+    abort();
+}
+
+void handle_security_exception() {
+    dump_registers_to_screen();
+    printf("\n\033[31m%s\033[0m\n", "Security Exception");
+    abort();
 }

@@ -1,4 +1,64 @@
 .section .text
+.global handle_debug_entry
+handle_debug_entry:
+    call handle_debug
+    iretq
+
+.global handle_non_maskable_interrupt_entry
+handle_non_maskable_interrupt_entry:
+    call handle_non_maskable_interrupt
+    iretq
+    
+.global handle_breakpoint_entry
+handle_breakpoint_entry:
+    call handle_breakpoint
+    iretq
+
+.global handle_overflow_entry
+handle_overflow_entry:
+    call handle_overflow
+    iretq
+    
+.global handle_bound_range_exceeded_entry
+handle_bound_range_exceeded_entry:
+    call handle_bound_range_exceeded
+    iretq
+    
+.global handle_invalid_tss_entry
+handle_invalid_tss_entry:
+    call handle_invalid_tss
+    iretq
+    
+.global handle_segment_not_present_entry
+handle_segment_not_present_entry:
+    call handle_segment_not_present
+    iretq
+    
+.global handle_alignment_check_entry
+handle_alignment_check_entry:
+    call handle_alignment_check
+    iretq
+    
+.global handle_machine_check_entry
+handle_machine_check_entry:
+    call handle_machine_check
+    iretq
+    
+.global handle_simd_exception_entry
+handle_simd_exception_entry:
+    call handle_simd_exception
+    iretq
+    
+.global handle_virtualization_exception_entry
+handle_virtualization_exception_entry:
+    call handle_virtualization_exception
+    iretq
+    
+.global handle_security_exception_entry
+handle_security_exception_entry:
+    call handle_security_exception
+    iretq
+
 .global handle_double_fault_entry
 handle_double_fault_entry:
     call handle_double_fault
