@@ -8,7 +8,6 @@
 #include <sys/types.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/gdt.h>

@@ -1,10 +1,9 @@
-#ifndef _KERNEL_ARCH_X86_64_PROC_TASK_H
-#define _KERNEL_ARCH_X86_64_PROC_TASK_H 1
+#ifndef _KERNEL_ARCH_X86_64_PROC_ARCH_TASK_H
+#define _KERNEL_ARCH_X86_64_PROC_ARCH_TASK_H 1
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/mem/page.h>
 
 #define KERNEL_TASK_STACK_START (((uintptr_t) PT_BASE) - PAGE_SIZE)
@@ -69,4 +68,4 @@ void task_align_fpu(struct task *task);
 
 extern void __run_task(struct arch_task *state);
 
-#endif /* _KERNEL_ARCH_X86_64_PROC_TASK_H */
+#endif /* _KERNEL_ARCH_X86_64_ARCH_PROC_TASK_H */

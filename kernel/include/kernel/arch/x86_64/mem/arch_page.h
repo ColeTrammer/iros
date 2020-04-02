@@ -1,5 +1,5 @@
-#ifndef _KERNEL_ARCH_X86_64_MEM_PAGE_H
-#define _KERNEL_ARCH_X86_64_MEM_PAGE_H 1
+#ifndef _KERNEL_ARCH_X86_64_MEM_ARCH_PAGE_H
+#define _KERNEL_ARCH_X86_64_MEM_ARCH_PAGE_H 1
 
 #include <stdint.h>
 
@@ -48,4 +48,4 @@ struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags, s
 
 void create_phys_id_map();
 
-#endif /* _KERNEL_ARCH_X86_64_MEM_PAGE_H */
+#endif /* _KERNEL_ARCH_X86_64_MEM_ARCH_PAGE_H */

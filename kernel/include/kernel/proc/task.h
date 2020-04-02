@@ -15,7 +15,7 @@
 
 // clang-format off
 #include <kernel/arch/arch.h>
-#include ARCH_SPECIFIC(proc/task.h)
+#include ARCH_SPECIFIC(proc/arch_task.h)
 // clang-format on
 
 enum sched_state {

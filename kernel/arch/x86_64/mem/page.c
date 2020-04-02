@@ -13,7 +13,6 @@
 #include <kernel/proc/task.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/arch/x86_64/mem/page.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 
 // #define MAP_VM_REGION_DEBUG

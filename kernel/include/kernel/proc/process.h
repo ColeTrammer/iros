@@ -11,7 +11,7 @@
 
 // clang-format off
 #include <kernel/arch/arch.h>
-#include ARCH_SPECIFIC(proc/process.h)
+#include ARCH_SPECIFIC(proc/arch_process.h)
 // clang-format on
 
 struct args_context;

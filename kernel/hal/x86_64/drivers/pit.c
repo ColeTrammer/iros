@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>

@@ -8,7 +8,7 @@
 
 // clang-format off
 #include <kernel/arch/arch.h>
-#include ARCH_SPECIFIC(mem/page.h)
+#include ARCH_SPECIFIC(mem/arch_page.h)
 // clang-format on
 
 #ifndef PAGE_SIZE

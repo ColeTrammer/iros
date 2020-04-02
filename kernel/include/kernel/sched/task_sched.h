@@ -5,7 +5,7 @@
 
 // clang-format off
 #include <kernel/arch/arch.h>
-#include ARCH_SPECIFIC(sched/task_sched.h)
+#include ARCH_SPECIFIC(sched/arch_task_sched.h)
 // clang-format on
 
 void init_task_sched(void);

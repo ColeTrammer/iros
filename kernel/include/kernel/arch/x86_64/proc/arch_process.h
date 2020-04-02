@@ -1,5 +1,5 @@
-#ifndef _KERNEL_ARCH_X86_64_PROC_PROCESS_H
-#define _KERNEL_ARCH_X86_64_PROC_PROCESS_H 1
+#ifndef _KERNEL_ARCH_X86_64_PROC_ARCH_PROCESS_H
+#define _KERNEL_ARCH_X86_64_PROC_ARCH_PROCESS_H 1
 
 #include <stdint.h>
 
@@ -11,4 +11,4 @@ struct process;
 
 void proc_kill_arch_process(struct process *process, bool free_paging_structure);
 
-#endif /* _KERNEL_ARCH_X86_64_PROC_PROCESS_H */
+#endif /* _KERNEL_ARCH_X86_64_PROC_ARCH_PROCESS_H */

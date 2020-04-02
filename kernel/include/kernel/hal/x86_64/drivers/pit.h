@@ -4,7 +4,6 @@
 #include <sys/time.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/arch/x86_64/proc/task.h>
 
 #define PIT_IRQ_LINE 0
 
@@ -32,6 +31,8 @@
 
 #define PIT_BASE_RATE       (1.193182 * 1000.0) // Hz
 #define PIT_GET_DIVISOR(ms) ((int) (((ms) *PIT_BASE_RATE) + 0.5))
+
+struct task_state;
 
 void handle_pit_interrupt_entry();
 void handle_pit_interrupt(struct task_state *task_state);

@@ -1,15 +1,13 @@
-#ifndef _KERNEL_INTERRUPTS_INTERRUPTS_H
-#define _KERNEL_INTERRUPTS_INTERRUPTS_H 1
+#ifndef _KERNEL_IRQS_HANDLERS_H
+#define _KERNEL_IRQS_HANDLERS_H 1
 
 #include <stdint.h>
 
 // clang-format off
 #include <kernel/arch/arch.h>
-#include ARCH_SPECIFIC(irqs/handlers.h)
+#include ARCH_SPECIFIC(irqs/arch_handlers.h)
 // clang-format on
 
-struct task;
+void init_irq_handlers(void);
 
-void init_irq_handlers();
-
-#endif /* _KERNEL_INTERRUPTS_INTERRUPTS_H */
+#endif /* _KERNEL_IRQS_HANDLERS_H */

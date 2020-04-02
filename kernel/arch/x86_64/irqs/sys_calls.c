@@ -22,6 +22,7 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
@@ -34,12 +35,10 @@
 #include <kernel/time/timer.h>
 #include <kernel/util/validators.h>
 
-#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
 #include <kernel/hal/x86_64/gdt.h>
-#include <kernel/irqs/handlers.h>
 
 // #define DUP_DEBUG
 // #define SET_PGID_DEBUG

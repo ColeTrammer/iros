@@ -1,5 +1,5 @@
-#ifndef _KERNEL_ARCH_X86_64_IRQS_HANDLERS_H
-#define _KERNEL_ARCH_X86_64_IRQS_HANDLERS_H 1
+#ifndef _KERNEL_ARCH_X86_64_IRQS_ARCH_HANDLERS_H
+#define _KERNEL_ARCH_X86_64_IRQS_ARCH_HANDLERS_H 1
 
 #include <stdint.h>
 
@@ -31,4 +31,4 @@ void handle_invalid_opcode();
 void handle_fpu_exception();
 void handle_device_not_available();
 
-#endif /* _KERNEL_ARCH_X86_64_IRQS_HANDLERS_H */
+#endif /* _KERNEL_ARCH_X86_64_IRQS_ARCH_HANDLERS_H */

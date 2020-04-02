@@ -2,6 +2,7 @@
 #define _KERNEL_HAL_X86_64_DRIVERS_PIC_H 1
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #define PIC1         0x20 /* IO base address for master PIC */
 #define PIC2         0xA0 /* IO base address for slave PIC */

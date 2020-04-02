@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <kernel/arch/x86_64/proc/task.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/mem/kernel_vm.h>
+#include <kernel/proc/task.h>
 
 static struct gdt_entry gdt[GDT_ENTRIES];
 static struct gdt_descriptor gdt_descriptor;
