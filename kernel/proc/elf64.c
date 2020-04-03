@@ -185,7 +185,7 @@ static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, s
         struct stack_frame *old_frame = frame;
         frame = frame->next;
         frame = (struct stack_frame *) (mapper ? mapper(closure2, (uintptr_t) frame) : (uintptr_t) frame);
-        if (!frame || !old_frame->rip) {
+        if (!old_frame->rip) {
             break;
         }
         ret += print_symbol_at(old_frame->rip, symbols, symbols_size, string_table, output, closure1, kernel);
@@ -298,7 +298,7 @@ size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_
     }
 
     struct snprintf_object obj = { .buffer = buffer, .max = buffer_max };
-    if (main_task->kernel_task) {
+    if (main_task->kernel_task || main_task->in_kernel) {
         uintptr_t stack_phys_mapping =
             (uintptr_t) create_phys_addr_mapping(main_task->arch_task.kernel_stack_info->pt_entry & (~0xFFF ^ (1ULL << 63ULL)));
         return do_stack_trace(main_task->arch_task.task_state.stack_state.rip, main_task->arch_task.task_state.cpu_state.rbp,
