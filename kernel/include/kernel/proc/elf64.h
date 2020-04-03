@@ -85,7 +85,7 @@ uint64_t elf64_get_size(void *buffer);
 void elf64_load_program(void *buffer, size_t length, struct file *executable, struct task *task);
 void elf64_map_heap(void *buffer, struct task *task);
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type);
-void elf64_stack_trace(struct task *task);
+void elf64_stack_trace(struct task *task, bool extra_info);
 
 void kernel_stack_trace(uintptr_t instruction_pointer, uintptr_t frame_base);
 void init_kernel_symbols(void);

@@ -173,7 +173,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     // For debugging purposes (bash will catch SIGSEGV and try to cleanup)
 #ifdef STACK_TRACE_ON_ANY_SIGSEGV
     if (signum == SIGSEGV) {
-        elf64_stack_trace(task);
+        elf64_stack_trace(task, true);
     }
 #endif /* STACK_TRACE_ON_ANY_SIGSEGV */
 

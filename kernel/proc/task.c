@@ -480,7 +480,7 @@ void task_do_sig(struct task *task, int signum) {
     task_unset_sig_pending(task, signum);
     switch (behavior) {
         case TERMINATE_AND_DUMP:
-            elf64_stack_trace(task);
+            elf64_stack_trace(task, true);
             // Fall through
         case TERMINATE:
             if (task->sched_state == EXITING) {

@@ -186,11 +186,19 @@ static void do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, siz
 
 void kernel_stack_trace(uintptr_t instruction_pointer, uintptr_t frame_base) {
     do_stack_trace(instruction_pointer, frame_base, kernel_symbols, kernel_symbols_size, kernel_string_table, true);
+
+    struct task *current = get_current_task();
+    if (current->in_kernel && !current->kernel_task) {
+        elf64_stack_trace(current, false);
+    }
 }
 
 // NOTE: this must be called from within a task's address space
-void elf64_stack_trace(struct task *task) {
-    dump_process_regions(task->process);
+void elf64_stack_trace(struct task *task, bool extra_info) {
+    if (extra_info) {
+        dump_process_regions(task->process);
+    }
+
     struct inode *inode = task->process->exe->inode;
 
     assert(inode->i_op->mmap);
@@ -219,7 +227,9 @@ void elf64_stack_trace(struct task *task) {
         debug_log("No symbols or string table (probably stripped binary)\n");
     }
 
-    debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+    if (extra_info) {
+        debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+    }
 
     do_stack_trace(rip, rbp, symbols, symbols_size, string_table, false);
 

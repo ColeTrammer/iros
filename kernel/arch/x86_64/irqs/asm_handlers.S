@@ -274,6 +274,7 @@ handle_page_fault_entry:
     iretq
 
 .global sys_call_entry
+.type sys_call_entry, @function
 sys_call_entry:
     push %rax
     push %rbx
@@ -311,3 +312,4 @@ sys_call_entry:
     pop %rax
 
     iretq
+.size sys_call_entry, . - sys_call_entry
