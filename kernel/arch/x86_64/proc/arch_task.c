@@ -36,12 +36,10 @@ static void kernel_idle() {
 }
 
 static void load_task_into_memory(struct task *task) {
-    if (get_current_task() == task) {
-        return;
-    }
-
     set_tss_stack_pointer(task->arch_task.kernel_stack);
-    load_cr3(task->process->arch_process.cr3);
+    if (task->process->arch_process.cr3 != get_cr3()) {
+        load_cr3(task->process->arch_process.cr3);
+    }
     if (!task->kernel_task) {
         fxrstor(task->fpu.aligned_state);
     }
