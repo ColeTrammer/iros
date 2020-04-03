@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -158,43 +159,43 @@ struct stack_frame {
     uintptr_t rip;
 };
 
-void print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbols_size, const char *string_table, bool kernel) {
+static size_t print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbols_size, const char *string_table,
+                              size_t (*output)(void *closure, const char *string, ...), void *closure1, bool kernel) {
     for (int i = 0; symbols && string_table && (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
-        if (symbols[i].st_name != 0) {
+        if (symbols[i].st_name != 0 && symbols[i].st_size != 0) {
             if (rip >= symbols[i].st_value && rip <= symbols[i].st_value + symbols[i].st_size) {
-                debug_log("<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, symbols[i].st_value,
-                          string_table + symbols[i].st_name);
-                return;
+                return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, symbols[i].st_value,
+                              string_table + symbols[i].st_name);
             }
         }
     }
 
     // We didn't find a matching symbol
-    debug_log("<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, 0UL, "??");
+    return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, 0UL, "??");
 }
 
-static void do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, size_t symbols_size, char *string_table, bool kernel) {
-    print_symbol_at(rip, symbols, symbols_size, string_table, kernel);
+static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, size_t symbols_size, char *string_table,
+                             size_t (*output)(void *closure, const char *string, ...), void *closure1,
+                             uintptr_t (*mapper)(void *closure, uintptr_t address), void *closure2, bool kernel) {
+    size_t ret = print_symbol_at(rip, symbols, symbols_size, string_table, output, closure1, kernel);
 
-    struct stack_frame *frame = (struct stack_frame *) rbp;
-    int (*validate)(const void *addr, size_t size) = kernel ? &validate_kernel_read : &validate_read;
-    while (!validate(frame, sizeof(struct stack_frame)) && frame->next != NULL) {
-        print_symbol_at(frame->rip, symbols, symbols_size, string_table, kernel);
+    struct stack_frame *frame = (struct stack_frame *) (mapper ? mapper(closure2, rbp) : rbp);
+    int (*validate)(const void *addr, size_t size) = mapper ? NULL : kernel ? &validate_kernel_read : &validate_read;
+    while ((!validate || !validate(frame, sizeof(struct stack_frame))) && frame) {
+        struct stack_frame *old_frame = frame;
         frame = frame->next;
+        frame = (struct stack_frame *) (mapper ? mapper(closure2, (uintptr_t) frame) : (uintptr_t) frame);
+        if (!frame || !old_frame->rip) {
+            break;
+        }
+        ret += print_symbol_at(old_frame->rip, symbols, symbols_size, string_table, output, closure1, kernel);
     }
-}
 
-void kernel_stack_trace(uintptr_t instruction_pointer, uintptr_t frame_base) {
-    do_stack_trace(instruction_pointer, frame_base, kernel_symbols, kernel_symbols_size, kernel_string_table, true);
-
-    struct task *current = get_current_task();
-    if (current->in_kernel && !current->kernel_task) {
-        elf64_stack_trace(current, false);
-    }
+    return ret;
 }
 
 // NOTE: this must be called from within a task's address space
-void elf64_stack_trace(struct task *task, bool extra_info) {
+size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)(void *closure, const char *string, ...), void *closure) {
     if (extra_info) {
         dump_process_regions(task->process);
     }
@@ -205,12 +206,12 @@ void elf64_stack_trace(struct task *task, bool extra_info) {
     void *buffer = (void *) inode->i_op->mmap(NULL, inode->size, PROT_READ, MAP_SHARED, inode, 0);
     if (buffer == MAP_FAILED) {
         debug_log("Failed to read the task's inode: [ %d ]\n", task->process->pid);
-        return;
+        return 0;
     }
 
     if (!elf64_is_valid(buffer)) {
         debug_log("The task is not elf64: [ %d ]\n", task->process->pid);
-        return;
+        return 0;
     }
 
     Elf64_Sym *symbols = NULL;
@@ -231,7 +232,79 @@ void elf64_stack_trace(struct task *task, bool extra_info) {
         debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
     }
 
-    do_stack_trace(rip, rbp, symbols, symbols_size, string_table, false);
+    size_t ret = do_stack_trace(rip, rbp, symbols, symbols_size, string_table, output, closure, NULL, NULL, false);
 
     unmap_range((uintptr_t) buffer, ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
+
+    return ret;
+}
+
+static size_t debug_log_wrapper(void *closure __attribute__((unused)), const char *string, ...) {
+    va_list parameters;
+    va_start(parameters, string);
+
+    size_t ret = vdebug_log(string, parameters);
+
+    va_end(parameters);
+    return ret;
+}
+
+void elf64_stack_trace(struct task *task, bool extra_info) {
+    do_elf64_stack_trace(task, extra_info, debug_log_wrapper, NULL);
+}
+
+void kernel_stack_trace(uintptr_t instruction_pointer, uintptr_t frame_base) {
+    do_stack_trace(instruction_pointer, frame_base, kernel_symbols, kernel_symbols_size, kernel_string_table, debug_log_wrapper, NULL, NULL,
+                   NULL, true);
+
+    struct task *current = get_current_task();
+    if (current->in_kernel && !current->kernel_task) {
+        elf64_stack_trace(current, false);
+    }
+}
+
+struct snprintf_object {
+    char *buffer;
+    size_t max;
+};
+
+static size_t snprintf_wrapper(void *closure, const char *string, ...) {
+    va_list parameters;
+    va_start(parameters, string);
+
+    struct snprintf_object *cls = closure;
+    size_t ret = vsnprintf(cls->buffer, cls->max, string, parameters);
+    cls->max = cls->max - ret > cls->max ? 0 : cls->max - ret;
+    cls->buffer += ret;
+
+    va_end(parameters);
+    return ret;
+}
+
+static uintptr_t kernel_stack_mapper(void *closure, uintptr_t address) {
+    uintptr_t virt_base = (uintptr_t) closure;
+    uintptr_t mapped = address - KERNEL_TASK_STACK_START + virt_base + PAGE_SIZE;
+
+    if (mapped - virt_base > PAGE_SIZE) {
+        return 0;
+    }
+    return mapped;
+}
+
+size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_t buffer_max) {
+    // Can't stack trace the idle task
+    if (main_task->tid == 1) {
+        return 0;
+    }
+
+    struct snprintf_object obj = { .buffer = buffer, .max = buffer_max };
+    if (main_task->kernel_task) {
+        uintptr_t stack_phys_mapping =
+            (uintptr_t) create_phys_addr_mapping(main_task->arch_task.kernel_stack_info->pt_entry & (~0xFFF ^ (1ULL << 63ULL)));
+        return do_stack_trace(main_task->arch_task.task_state.stack_state.rip, main_task->arch_task.task_state.cpu_state.rbp,
+                              kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj, kernel_stack_mapper,
+                              (void *) stack_phys_mapping, true);
+    }
+
+    return 0;
 }

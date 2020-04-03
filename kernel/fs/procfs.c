@@ -20,6 +20,7 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
@@ -237,6 +238,18 @@ static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__
     return (struct procfs_buffer) { buffer, length };
 }
 
+static struct procfs_buffer procfs_stack(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+    struct task *main_task = find_by_tid(process->pgid, process->pid);
+    if (!main_task) {
+        return (struct procfs_buffer) { NULL, 0 };
+    }
+
+    size_t buffer_max = need_buffer ? PAGE_SIZE : 0;
+    char *buffer = malloc(buffer_max);
+    size_t length = kernel_stack_trace_for_procfs(main_task, buffer, buffer_max);
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = 0;
@@ -365,6 +378,9 @@ static void procfs_create_process_directory_structure(struct inode *parent, stru
 
         struct inode *status_inode = procfs_create_inode(PROCFS_FILE_MODE, process->uid, process->gid, process, procfs_status);
         fs_put_dirent_cache(parent->dirent_cache, status_inode, "status", strlen("status"));
+
+        struct inode *stack_inode = procfs_create_inode(PROCFS_FILE_MODE, process->uid, process->gid, process, procfs_stack);
+        fs_put_dirent_cache(parent->dirent_cache, stack_inode, "stack", strlen("stack"));
 
         struct inode *cwd_inode = procfs_create_inode(PROCFS_SYMLINK_MODE, process->uid, process->gid, process, procfs_cwd);
         fs_put_dirent_cache(parent->dirent_cache, cwd_inode, "cwd", strlen("cwd"));

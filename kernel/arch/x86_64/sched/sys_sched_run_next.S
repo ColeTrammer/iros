@@ -18,7 +18,11 @@ yield_signal:
     jmp __halt
 
 .global __kernel_yield
+.type __kernel_yield, @function
 __kernel_yield:
+    push %rbp
+    mov %rsp, %rbp
+
     # Switches stack and then builds task_state struct on that stack
 
     # Save old rsp and provide rip for reentry
@@ -58,4 +62,6 @@ __kernel_yield:
     jmp __halt
 
 continue:
+    pop %rbp
     retq
+.size __kernel_yield, . - __kernel_yield

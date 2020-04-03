@@ -87,6 +87,7 @@ void elf64_map_heap(void *buffer, struct task *task);
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type);
 void elf64_stack_trace(struct task *task, bool extra_info);
 
+size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_t buffer_max);
 void kernel_stack_trace(uintptr_t instruction_pointer, uintptr_t frame_base);
 void init_kernel_symbols(void);
 

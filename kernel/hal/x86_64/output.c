@@ -16,10 +16,7 @@ bool kprint(const char *str, size_t len) {
     return serial_write_message(str, len);
 }
 
-int debug_log_internal(const char *func, const char *format, ...) {
-    va_list parameters;
-    va_start(parameters, format);
-
+int vdebug_log_internal(const char *func, const char *format, va_list parameters) {
     spin_lock(&debug_lock);
 
     if (*format == '~') {
@@ -53,6 +50,14 @@ int debug_log_internal(const char *func, const char *format, ...) {
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
     spin_unlock(&debug_lock);
+    return written;
+}
+
+int debug_log_internal(const char *func, const char *format, ...) {
+    va_list parameters;
+    va_start(parameters, format);
+
+    int written = vdebug_log_internal(func, format, parameters);
 
     va_end(parameters);
     return written;
