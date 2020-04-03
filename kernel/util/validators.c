@@ -125,6 +125,24 @@ int validate_read(const void *buffer, size_t size) {
     return 0;
 }
 
+int validate_kernel_read(const void *buffer, size_t size) {
+    if (!buffer) {
+        return -EFAULT;
+    }
+
+    uintptr_t offset = 0;
+    struct vm_region *region;
+    do {
+        region = find_kernel_vm_region_by_addr((uintptr_t) buffer + offset);
+        if (!region || (region->flags & VM_PROT_NONE)) {
+            return -EFAULT;
+        }
+        offset = region->end - (uintptr_t) buffer;
+    } while ((uintptr_t) buffer + size > region->end);
+
+    return 0;
+}
+
 int validate_write_or_null(void *buffer, size_t size) {
     if (!buffer) {
         return 0;

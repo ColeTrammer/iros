@@ -24,4 +24,7 @@ int validate_read_or_null(const void *buffer, size_t size);
 int validate_signal_number(int signum, int unused);
 int validate_positive(int n, int accept_zero);
 
+// Sanity check when accessing kernel memory
+int validate_kernel_read(const void *buffer, size_t size);
+
 #endif /* _KERNEL_UTIL_VALIDATORS_H */

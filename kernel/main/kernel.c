@@ -13,6 +13,7 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/net.h>
+#include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
@@ -36,6 +37,10 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     int error = 0;
     error = fs_mount("/dev/hdd0", "/", "ext2");
     assert(error == 0);
+
+    // NOTE: if we put these symbols on the initrd instead of in /boot/os_2.o, thse symbols
+    //       could be loaded sooner
+    init_kernel_symbols();
 
     // Start Shell
     struct task *shell = load_task("/bin/start");

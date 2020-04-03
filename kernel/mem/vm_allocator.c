@@ -201,20 +201,8 @@ void remove_vm_pages_end(size_t n, uint64_t type) {
     }
 }
 
-void *map_file(off_t length, uint64_t flags) {
-    struct vm_region **list = &get_current_task()->process->process_memory;
-    struct vm_region *last_file = get_vm_last_region(*list, VM_PROCESS_FILE);
-
-    struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
-    to_add->type = VM_PROCESS_FILE;
-    to_add->flags = flags;
-    to_add->start = last_file->end;
-    to_add->end = ((to_add->start + length) & ~0xFFF) + PAGE_SIZE;
-    *list = add_vm_region(*list, to_add);
-
-    map_vm_region(to_add, get_current_task()->process);
-
-    return (void *) to_add->start;
+bool vm_is_kernel_address(uintptr_t addr) {
+    return addr >= KERNEL_TASK_STACK_START;
 }
 
 int unmap_range(uintptr_t addr, size_t length) {
@@ -569,6 +557,27 @@ struct vm_region *find_user_vm_region_by_addr(uintptr_t addr) {
         region = region->next;
     }
 
+    return NULL;
+}
+
+struct vm_region *find_kernel_vm_region_by_addr(uintptr_t addr) {
+    struct vm_region *region = find_user_vm_region_by_addr(addr);
+    if (region->type == VM_KERNEL_STACK) {
+        return region;
+    }
+
+    spin_lock(&kernel_vm_lock);
+    region = kernel_vm_list;
+
+    while (region) {
+        if (region->start <= addr && addr < region->end) {
+            spin_unlock(&kernel_vm_lock);
+            return region;
+        }
+        region = region->next;
+    }
+
+    spin_unlock(&kernel_vm_lock);
     return NULL;
 }
 

@@ -140,15 +140,16 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
         return ret;
     }
 
+    struct inode *inode = tnode->inode;
     if (tnode_out) {
         *tnode_out = tnode;
     } else {
         drop_tnode(tnode);
     }
 
-    assert(tnode->inode);
+    assert(inode);
     debug_log("reading from: [ %s ]\n", path);
-    return fs_read_all_inode(tnode->inode, buffer, buffer_len);
+    return fs_read_all_inode(inode, buffer, buffer_len);
 }
 
 static struct tnode *t_root;

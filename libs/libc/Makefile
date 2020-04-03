@@ -72,6 +72,7 @@ $(BUILDDIR)/libs/libc/string/strcmp.o \
 $(BUILDDIR)/libs/libc/string/strcpy.o \
 $(BUILDDIR)/libs/libc/string/strcspn.o \
 $(BUILDDIR)/libs/libc/string/strdup.o \
+$(BUILDDIR)/libs/libc/string/strerror.o \
 $(BUILDDIR)/libs/libc/string/strlen.o \
 $(BUILDDIR)/libs/libc/string/strncat.o \
 $(BUILDDIR)/libs/libc/string/strncmp.o \
@@ -192,7 +193,6 @@ $(BUILDDIR)/libs/libc/stdlib/env.o \
 $(BUILDDIR)/libs/libc/stdlib/init_env.o \
 $(BUILDDIR)/libs/libc/stdlib/realpath.o \
 $(BUILDDIR)/libs/libc/string/strcoll.o \
-$(BUILDDIR)/libs/libc/string/strerror.o \
 $(BUILDDIR)/libs/libc/string/strxfrm.o \
 $(BUILDDIR)/libs/libc/sys/ioctl/ioctl.o \
 $(BUILDDIR)/libs/libc/sys/mman/mman.o \

@@ -1,6 +1,7 @@
 #ifndef _KERNEL_MEM_VM_ALLOCATOR_H
 #define _KERNEL_MEM_VM_ALLOCATOR_H 1
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -17,7 +18,6 @@ void *add_vm_pages_start(size_t n, uint64_t type);
 void remove_vm_pages_end(size_t n, uint64_t type);
 void remove_vm_pages_start(size_t n, uint64_t type);
 
-void *map_file(off_t length, uint64_t flags);
 int unmap_range(uintptr_t addr, size_t length);
 struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type);
 int map_range_protections(uintptr_t addr, size_t len, int prot);
@@ -35,5 +35,8 @@ size_t vm_compute_total_virtual_memory(struct process *process);
 
 void dump_kernel_regions(uintptr_t addr);
 void dump_process_regions(struct process *process);
+
+struct vm_region *find_kernel_vm_region_by_addr(uintptr_t addr);
+bool vm_is_kernel_address(uintptr_t addr);
 
 #endif /* _KERNEL_MEM_VM_ALLOCATOR_H */
