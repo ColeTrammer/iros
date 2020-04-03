@@ -23,7 +23,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
-#define TASK_SIGNAL_DEBUG
+// #define TASK_SIGNAL_DEBUG
 
 struct task *current_task;
 struct task initial_kernel_task;
@@ -282,7 +282,7 @@ struct task *get_current_task() {
 
 /* Must be called from unpremptable context */
 void free_task(struct task *task, bool free_paging_structure) {
-    struct task *current_save = current_task;
+    struct task *current_save = task == current_task ? &initial_kernel_task : current_task;
     current_task = task;
 
     arch_free_task(task, free_paging_structure);
