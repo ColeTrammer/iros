@@ -287,6 +287,8 @@ void free_task(struct task *task, bool free_paging_structure) {
     struct task *current_save = task == current_task ? &initial_kernel_task : current_task;
     current_task = task;
 
+    debug_log("destroying: [ %d:%d ]\n", task->process->pid, task->tid);
+
     arch_free_task(task, free_paging_structure);
 
     struct queued_signal *si = task->queued_signals;
@@ -487,6 +489,8 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
 };
 
 void task_do_sig(struct task *task, int signum) {
+    assert(current_task == task);
+
 #ifdef TASK_SIGNAL_DEBUG
     debug_log("Doing signal: [ %d, %s ]\n", task->process->pid, strsignal(signum));
 #endif /* TASK_SIGNAL_DEBUG */

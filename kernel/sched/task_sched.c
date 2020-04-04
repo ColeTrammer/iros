@@ -102,7 +102,10 @@ void sched_run_next() {
 
         int sig;
         while ((sig = task_get_next_sig(task)) != -1) {
+            struct task *current_save = current;
+            current_task = task;
             task_do_sig(task, sig);
+            current_task = current_save;
         }
     } while ((task = task->next) != list_start);
 
