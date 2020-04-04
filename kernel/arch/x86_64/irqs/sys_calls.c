@@ -635,7 +635,7 @@ SYS_CALL(execve) {
 
     /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be
      * Interrupted) */
-    disable_interrupts();
+    uint64_t save = disable_interrupts_save();
 
     current_task = task;
     task->in_kernel = true;
@@ -648,7 +648,7 @@ SYS_CALL(execve) {
     proc_add_process(process);
 
     // NOTE: once we re-enable interrupts we're effectively running as the new task inside a system call.
-    enable_interrupts();
+    interrupts_restore(save);
 
     uintptr_t stack_end = proc_allocate_user_stack(process);
     task_state->stack_state.rsp = map_program_args(stack_end, process->args_context);
