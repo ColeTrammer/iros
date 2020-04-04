@@ -562,7 +562,7 @@ struct vm_region *find_user_vm_region_by_addr(uintptr_t addr) {
 
 struct vm_region *find_kernel_vm_region_by_addr(uintptr_t addr) {
     struct vm_region *region = find_user_vm_region_by_addr(addr);
-    if (region->type == VM_KERNEL_STACK) {
+    if (region && region->type == VM_KERNEL_STACK) {
         return region;
     }
 

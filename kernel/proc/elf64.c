@@ -180,8 +180,8 @@ static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, s
     size_t ret = print_symbol_at(rip, symbols, symbols_size, string_table, output, closure1, kernel);
 
     struct stack_frame *frame = (struct stack_frame *) (mapper ? mapper(closure2, rbp) : rbp);
-    int (*validate)(const void *addr, size_t size) = mapper ? NULL : kernel ? &validate_kernel_read : &validate_read;
-    while ((!validate || !validate(frame, sizeof(struct stack_frame))) && frame) {
+    int (*validate)(const void *addr, size_t size) = kernel ? &validate_kernel_read : &validate_read;
+    while (!validate(frame, sizeof(struct stack_frame)) && frame) {
         struct stack_frame *old_frame = frame;
         frame = frame->next;
         frame = (struct stack_frame *) (mapper ? mapper(closure2, (uintptr_t) frame) : (uintptr_t) frame);
