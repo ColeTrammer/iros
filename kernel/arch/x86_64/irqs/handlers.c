@@ -94,6 +94,9 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
     struct task *current = get_current_task();
     debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rip, task_state->error_code);
 
+    printf("\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (general protection fault)\033[0;37m: [ %#.16lX, "
+           "%#.16lX ]\n",
+           current->process->pid, current->tid, task_state->stack_state.rip, task_state->stack_state.rsp);
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
         memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
@@ -104,10 +107,10 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
     }
 
     // We shouldn't get here unless SIGSEGV is blocked???
-    dump_registers_to_screen();
-    printf("\n\033[31m%s: Error: %lX\n", "General Protection Fault", task_state->error_code);
-    printf("RIP: %#.16lX\n", task_state->stack_state.rip);
-    printf("task: %d\033[0m\n", get_current_task()->process->pid);
+    dump_process_regions(current->process);
+    dump_kernel_regions(0);
+
+    kernel_stack_trace(task_state->stack_state.rip, task_state->cpu_state.rbp);
     abort();
 }
 
