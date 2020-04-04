@@ -301,9 +301,17 @@ size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_
     if (main_task->kernel_task || main_task->in_kernel) {
         uintptr_t stack_phys_mapping =
             (uintptr_t) create_phys_addr_mapping(main_task->arch_task.kernel_stack_info->pt_entry & (~0xFFF ^ (1ULL << 63ULL)));
-        return do_stack_trace(main_task->arch_task.task_state.stack_state.rip, main_task->arch_task.task_state.cpu_state.rbp,
-                              kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj, kernel_stack_mapper,
-                              (void *) stack_phys_mapping, true);
+
+        struct task *current = get_current_task();
+
+        uintptr_t rip =
+            current == main_task ? (uintptr_t)(&kernel_stack_trace_for_procfs) : main_task->arch_task.task_state.stack_state.rip;
+
+        uintptr_t current_rbp;
+        asm("mov %%rbp, %0" : "=r"(current_rbp) : :);
+        uintptr_t rbp = main_task ? current_rbp : main_task->arch_task.task_state.cpu_state.rbp;
+        return do_stack_trace(rip, rbp, kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj,
+                              kernel_stack_mapper, (void *) stack_phys_mapping, true);
     }
 
     return 0;
