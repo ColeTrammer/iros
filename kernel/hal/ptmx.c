@@ -74,7 +74,11 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
             if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
                 time_t end_time_ms = data->config.c_cc[VTIME] * 100;
                 struct timespec end_time = { .tv_sec = end_time_ms / 1000, .tv_nsec = (end_time_ms % 1000) * 1000000 };
-                proc_block_until_inode_is_readable_or_timeout(get_current_task(), device->inode, end_time);
+                int ret = proc_block_until_inode_is_readable_or_timeout(get_current_task(), device->inode, end_time);
+                if (ret) {
+                    return ret;
+                }
+
                 if (time_compare(time_read_clock(CLOCK_MONOTONIC), end_time) >= 0) {
                     return 0;
                 }
@@ -88,7 +92,10 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
                 }
                 break;
             } else {
-                proc_block_until_inode_is_readable(get_current_task(), device->inode);
+                int ret = proc_block_until_inode_is_readable(get_current_task(), device->inode);
+                if (ret) {
+                    return ret;
+                }
             }
             spin_lock(&data->lock);
         }
@@ -174,7 +181,10 @@ slave_write_again:
 #ifdef PTMX_BLOCKING_DEBUG
                 debug_log("Blocking until master is writable: [ %d ]\n", mdata->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-                proc_block_until_inode_is_writable(get_current_task(), mdata->device->inode);
+                int ret = proc_block_until_inode_is_writable(get_current_task(), mdata->device->inode);
+                if (ret) {
+                    return ret;
+                }
                 spin_lock(&mdata->lock);
             }
 

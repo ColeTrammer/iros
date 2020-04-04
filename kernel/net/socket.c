@@ -171,7 +171,10 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
 
         if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
             struct timespec timeout = time_from_timeval(socket->timeout);
-            proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
+            int ret = proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
+            if (ret) {
+                return ret;
+            }
 
             // We timed out
             if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
@@ -181,7 +184,10 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
             continue;
         }
 
-        proc_block_until_socket_is_readable(get_current_task(), socket);
+        int ret = proc_block_until_socket_is_readable(get_current_task(), socket);
+        if (ret) {
+            return ret;
+        }
     }
 
     socket->data_head = data->next;
@@ -250,7 +256,10 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             return -EAGAIN;
         }
 
-        proc_block_until_socket_is_readable(get_current_task(), socket);
+        int ret = proc_block_until_socket_is_readable(get_current_task(), socket);
+        if (ret) {
+            return ret;
+        }
     }
 
     return 0;

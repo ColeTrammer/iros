@@ -95,7 +95,8 @@ void sched_run_next() {
         // Don't send the signals if the task is running UNINTERRUPTABLY, or if it is just going to exit anyway
         // FIXME: what to do if the task is stopped? It might be unsafe to send a terminating signal, since it
         //        might leak resources.
-        if (task->sched_state == RUNNING_UNINTERRUPTIBLE || task->sched_state == EXITING) {
+        if (task->sched_state == RUNNING_UNINTERRUPTIBLE || task->sched_state == EXITING ||
+            (task->sched_state == WAITING && !task->blocking)) {
             continue;
         }
 
@@ -133,9 +134,8 @@ void sched_run_next() {
             struct task *current_save = current_task;
             current_task = to_run;
             if (to_run->block_info.should_unblock(&to_run->block_info)) {
-                to_run->blocking = false;
+                task_interrupt_blocking(to_run, 0);
                 current_task = current_save;
-                to_run->sched_state = RUNNING_UNINTERRUPTIBLE;
                 break;
             }
             current_task = current_save;
@@ -350,7 +350,7 @@ void exit_process(struct process *process) {
     struct task *task = list_start;
     do {
         if (task->process == process) {
-            task->sched_state = EXITING;
+            task_set_state_to_exiting(task);
 
 #ifdef ROBUST_USER_MUTEX_DEBUG
             debug_log("Locked robust mutex list head pointer: [ %p ]\n", task->locked_robust_mutex_list_head);

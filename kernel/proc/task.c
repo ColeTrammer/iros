@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -23,6 +24,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
+// #define TASK_SCHED_STATE_DEBUB
 // #define TASK_SIGNAL_DEBUG
 
 struct task *current_task;
@@ -414,14 +416,37 @@ void proc_notify_parent(pid_t child_pid) {
 }
 
 void task_do_sigs_if_needed(struct task *task) {
+    // No need to do signals if we should exit anyway.
+    if (task->should_exit) {
+        return;
+    }
+
     int sig = task_get_next_sig(task);
     if (sig != -1) {
         task_do_sig(task, sig);
     }
 }
 
+void task_set_state_to_exiting(struct task *task) {
+    if (task->blocking) {
+        // Defer exit state change until after the blocking code has a chance
+        // to clean up
+        task_interrupt_blocking(task, -EINTR);
+    }
+
+    if (task->in_kernel) {
+        task->should_exit = true;
+    } else {
+        task->sched_state = EXITING;
+    }
+}
+
 void task_yield_if_state_changed(struct task *task) {
-    if (task->sched_state != RUNNING_UNINTERRUPTIBLE) {
+    if (task->should_exit) {
+#ifdef TASK_SCHED_STATE_DEBUB
+        debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
+#endif /* TASK_SCHED_STATE_DEBUB */
+        task->sched_state = EXITING;
         sys_sched_run_next(&task->arch_task.task_state);
     }
 }

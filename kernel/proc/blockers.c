@@ -17,7 +17,7 @@ static bool sleep_blocker(struct block_info *info) {
     return time_compare(time_read_clock(info->sleep_info.id), info->sleep_info.end_time) >= 0;
 }
 
-void proc_block_sleep(struct task *current, clockid_t id, struct timespec end_time) {
+int proc_block_sleep(struct task *current, clockid_t id, struct timespec end_time) {
     disable_interrupts();
     current->block_info.sleep_info.id = id;
     current->block_info.sleep_info.end_time = end_time;
@@ -25,7 +25,7 @@ void proc_block_sleep(struct task *current, clockid_t id, struct timespec end_ti
     current->block_info.should_unblock = &sleep_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool until_inode_is_readable_blocker(struct block_info *info) {
@@ -33,14 +33,14 @@ static bool until_inode_is_readable_blocker(struct block_info *info) {
     return info->until_inode_is_readable_info.inode->readable;
 }
 
-void proc_block_until_inode_is_readable(struct task *current, struct inode *inode) {
+int proc_block_until_inode_is_readable(struct task *current, struct inode *inode) {
     disable_interrupts();
     current->block_info.until_inode_is_readable_info.inode = inode;
     current->block_info.type = UNTIL_INODE_IS_READABLE;
     current->block_info.should_unblock = &until_inode_is_readable_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool until_pipe_is_readable_blocker(struct block_info *info) {
@@ -51,7 +51,7 @@ static bool until_pipe_is_readable_blocker(struct block_info *info) {
     return inode->readable || !is_pipe_write_end_open(inode);
 }
 
-void proc_block_until_pipe_is_readable(struct task *current, struct inode *inode) {
+int proc_block_until_pipe_is_readable(struct task *current, struct inode *inode) {
     assert(inode->flags & FS_FIFO);
     disable_interrupts();
     current->block_info.until_pipe_is_readable_info.inode = inode;
@@ -59,7 +59,7 @@ void proc_block_until_pipe_is_readable(struct task *current, struct inode *inode
     current->block_info.should_unblock = &until_pipe_is_readable_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool until_socket_is_connected_blocker(struct block_info *info) {
@@ -68,7 +68,7 @@ static bool until_socket_is_connected_blocker(struct block_info *info) {
     return info->until_socket_is_connected_info.socket->state == CONNECTED;
 }
 
-void proc_block_until_socket_is_connected(struct task *current, struct socket *socket) {
+int proc_block_until_socket_is_connected(struct task *current, struct socket *socket) {
     assert(socket->state != CONNECTED);
     disable_interrupts();
     current->block_info.until_socket_is_connected_info.socket = socket;
@@ -76,7 +76,7 @@ void proc_block_until_socket_is_connected(struct task *current, struct socket *s
     current->block_info.should_unblock = &until_socket_is_connected_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool until_inode_is_readable_or_timeout_blocker(struct block_info *info) {
@@ -86,7 +86,7 @@ static bool until_inode_is_readable_or_timeout_blocker(struct block_info *info) 
            info->until_inode_is_readable_or_timeout_info.inode->readable;
 }
 
-void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, struct timespec end_time) {
+int proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, struct timespec end_time) {
     disable_interrupts();
     current->block_info.until_inode_is_readable_or_timeout_info.inode = inode;
     current->block_info.until_inode_is_readable_or_timeout_info.end_time = end_time;
@@ -94,7 +94,7 @@ void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct 
     current->block_info.should_unblock = &until_inode_is_readable_or_timeout_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool until_inode_is_writable_blocker(struct block_info *info) {
@@ -102,14 +102,14 @@ static bool until_inode_is_writable_blocker(struct block_info *info) {
     return info->until_inode_is_writable_info.inode->writeable;
 }
 
-void proc_block_until_inode_is_writable(struct task *current, struct inode *inode) {
+int proc_block_until_inode_is_writable(struct task *current, struct inode *inode) {
     disable_interrupts();
     current->block_info.until_inode_is_writable_info.inode = inode;
     current->block_info.type = UNTIL_INODE_IS_WRITABLE;
     current->block_info.should_unblock = &until_inode_is_writable_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool until_socket_is_readable_blocker(struct block_info *info) {
@@ -118,14 +118,14 @@ static bool until_socket_is_readable_blocker(struct block_info *info) {
     return info->until_socket_is_readable_info.socket->readable || info->until_socket_is_readable_info.socket->exceptional;
 }
 
-void proc_block_until_socket_is_readable(struct task *current, struct socket *socket) {
+int proc_block_until_socket_is_readable(struct task *current, struct socket *socket) {
     disable_interrupts();
     current->block_info.until_socket_is_readable_info.socket = socket;
     current->block_info.type = UNTIL_SOCKET_IS_READABLE;
     current->block_info.should_unblock = &until_socket_is_readable_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool until_socket_is_readable_with_timeout_blocker(struct block_info *info) {
@@ -135,7 +135,7 @@ static bool until_socket_is_readable_with_timeout_blocker(struct block_info *inf
            info->until_socket_is_readable_with_timeout_info.socket->readable || info->until_socket_is_readable_info.socket->exceptional;
 }
 
-void proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, struct timespec end_time) {
+int proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, struct timespec end_time) {
     disable_interrupts();
     current->block_info.until_socket_is_readable_with_timeout_info.socket = socket;
     current->block_info.until_socket_is_readable_with_timeout_info.end_time = end_time;
@@ -143,7 +143,7 @@ void proc_block_until_socket_is_readable_with_timeout(struct task *current, stru
     current->block_info.should_unblock = &until_socket_is_readable_with_timeout_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool select_blocker_helper(int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds) {
@@ -205,7 +205,7 @@ static bool select_blocker(struct block_info *info) {
                                  info->select_info.exceptfds);
 }
 
-void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds) {
+int proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds) {
     disable_interrupts();
     current->block_info.select_info.nfds = nfds;
     current->block_info.select_info.readfds = readfds;
@@ -215,7 +215,7 @@ void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t
     current->block_info.should_unblock = &select_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool select_timeout_blocker(struct block_info *info) {
@@ -230,8 +230,8 @@ static bool select_timeout_blocker(struct block_info *info) {
                                  info->select_timeout_info.exceptfds);
 }
 
-void proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds,
-                               struct timespec end_time) {
+int proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds,
+                              struct timespec end_time) {
     disable_interrupts();
     current->block_info.select_timeout_info.nfds = nfds;
     current->block_info.select_timeout_info.readfds = readfds;
@@ -242,7 +242,7 @@ void proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds,
     current->block_info.should_unblock = &select_timeout_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }
 
 static bool waitpid_blocker(struct block_info *info) {
@@ -259,12 +259,12 @@ static bool waitpid_blocker(struct block_info *info) {
     }
 }
 
-void proc_block_waitpid(struct task *current, pid_t pid) {
+int proc_block_waitpid(struct task *current, pid_t pid) {
     disable_interrupts();
     current->block_info.waitpid_info.pid = pid;
     current->block_info.type = WAITPID;
     current->block_info.should_unblock = &waitpid_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
-    __kernel_yield();
+    return __kernel_yield();
 }

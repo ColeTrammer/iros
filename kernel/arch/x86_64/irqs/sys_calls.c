@@ -165,9 +165,10 @@
         return;                                                                 \
     } while (0)
 
-#define SYS_RETURN_EXECVE()                                      \
+#define SYS_RETURN_NORETURN()                                    \
     do {                                                         \
         disable_interrupts();                                    \
+        task_yield_if_state_changed(get_current_task());         \
         get_current_task()->in_kernel = false;                   \
         get_current_task()->arch_task.user_task_state = NULL;    \
         get_current_task()->sched_state = RUNNING_INTERRUPTIBLE; \
@@ -283,7 +284,7 @@ SYS_CALL(exit) {
     proc_add_message(task->process->pid, proc_create_message(STATE_EXITED, exit_code));
     debug_log("Process Exited: [ %d, %d ]\n", task->process->pid, exit_code);
 
-    sys_sched_run_next(task_state);
+    SYS_RETURN_NORETURN();
 }
 
 SYS_CALL(sbrk) {
@@ -670,7 +671,7 @@ SYS_CALL(execve) {
     fs_close(file);
     unmap_range((uintptr_t) buffer, length);
 
-    SYS_RETURN_EXECVE();
+    SYS_RETURN_NORETURN();
 }
 
 SYS_CALL(waitpid) {
@@ -708,7 +709,10 @@ SYS_CALL(waitpid) {
 #endif /* WAIT_PID_DEBUG */
                 SYS_RETURN(-ECHILD);
             } else {
-                proc_block_waitpid(current, pid);
+                int ret = proc_block_waitpid(current, pid);
+                if (ret) {
+                    SYS_RETURN(ret);
+                }
             }
         } else {
             if ((m.type == STATE_STOPPED && !(flags & WUNTRACED)) || (m.type == STATE_CONTINUED && !(flags & WCONTINUED))) {
@@ -1497,14 +1501,14 @@ SYS_CALL(exit_task) {
     disable_interrupts();
 
     struct task *task = get_current_task();
-    task->sched_state = EXITING;
+    task_set_state_to_exiting(task);
 
     // At this point there should be no locked mutexes in the task, since it explicitly
     // exited. Also, the memory could now be freed and is no longer valid.
     task->locked_robust_mutex_list_head = NULL;
 
     debug_log("Task Exited: [ %d, %d ]\n", task->process->pid, task->tid);
-    sys_sched_run_next(task_state);
+    SYS_RETURN_NORETURN();
 }
 
 SYS_CALL(os_mutex) {
@@ -1799,9 +1803,13 @@ SYS_CALL(pselect) {
 
         if (timeout) {
             struct timespec end_time = { .tv_sec = start.tv_sec + timeout->tv_sec, .tv_nsec = start.tv_nsec + timeout->tv_nsec };
-            proc_block_select_timeout(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
-                                      create_phys_addr_mapping_from_virt_addr(write_fds_found),
-                                      create_phys_addr_mapping_from_virt_addr(except_fds_found), end_time);
+            int ret = proc_block_select_timeout(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
+                                                create_phys_addr_mapping_from_virt_addr(write_fds_found),
+                                                create_phys_addr_mapping_from_virt_addr(except_fds_found), end_time);
+            if (ret) {
+                count = ret;
+                goto pselect_return;
+            }
 
             struct timespec after = time_read_clock(CLOCK_MONOTONIC);
             if (time_compare(after, end_time) >= 0) {
@@ -1811,9 +1819,13 @@ SYS_CALL(pselect) {
             continue;
         }
 
-        proc_block_select(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
-                          create_phys_addr_mapping_from_virt_addr(write_fds_found),
-                          create_phys_addr_mapping_from_virt_addr(except_fds_found));
+        int ret = proc_block_select(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
+                                    create_phys_addr_mapping_from_virt_addr(write_fds_found),
+                                    create_phys_addr_mapping_from_virt_addr(except_fds_found));
+        if (ret) {
+            count = ret;
+            goto pselect_return;
+        }
     }
 
 pselect_return:
@@ -2165,15 +2177,13 @@ SYS_CALL(clock_nanosleep) {
         end_time = time_add(clock->time, *amt);
     }
 
-    proc_block_sleep(get_current_task(), clock->id, end_time);
-
-    int ret = 0;
-
-    struct timespec after = clock->time;
-    if (time_compare(after, end_time) < 0) {
-        ret = -EINTR;
-        if (!absolute && rem) {
-            *rem = time_sub(end_time, after);
+    int ret = proc_block_sleep(get_current_task(), clock->id, end_time);
+    if (!ret) {
+        struct timespec after = clock->time;
+        if (time_compare(after, end_time) < 0) {
+            if (!absolute && rem) {
+                *rem = time_sub(end_time, after);
+            }
         }
     }
 

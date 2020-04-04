@@ -179,7 +179,10 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
             break;
         }
 
-        proc_block_until_socket_is_connected(get_current_task(), socket);
+        int ret = proc_block_until_socket_is_connected(get_current_task(), socket);
+        if (ret) {
+            return ret;
+        }
         spin_lock(&socket->lock);
     }
 

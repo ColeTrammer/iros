@@ -97,7 +97,10 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 
     size_t len = MIN(_len, inode->size - file->position);
     if (len == 0 && is_pipe_write_end_open(inode)) {
-        proc_block_until_pipe_is_readable(get_current_task(), inode);
+        int ret = proc_block_until_pipe_is_readable(get_current_task(), inode);
+        if (ret) {
+            return ret;
+        }
         len = MIN(_len, inode->size - file->position);
     }
 

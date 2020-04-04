@@ -73,6 +73,7 @@ struct task {
     bool in_kernel : 1;
     bool in_sigsuspend : 1;
     bool blocking : 1;
+    bool should_exit : 1;
 
     struct block_info block_info;
 
@@ -121,6 +122,9 @@ void task_dequeue_signal(struct task *task);
 
 void task_yield_if_state_changed(struct task *task);
 void task_do_sigs_if_needed(struct task *task);
+
+void task_interrupt_blocking(struct task *task, int ret);
+void task_set_state_to_exiting(struct task *task);
 
 const char *task_state_to_string(enum sched_state state);
 bool task_in_kernel(struct task *task);

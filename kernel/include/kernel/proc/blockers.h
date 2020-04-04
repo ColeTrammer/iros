@@ -85,17 +85,20 @@ struct block_info {
 #define waitpid_info                               __info.waitpid_info
 };
 
-void proc_block_sleep(struct task *current, clockid_t clock, struct timespec end_time);
-void proc_block_until_inode_is_readable(struct task *current, struct inode *inode);
-void proc_block_until_pipe_is_readable(struct task *current, struct inode *inode);
-void proc_block_until_socket_is_connected(struct task *current, struct socket *socket);
-void proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode, struct timespec end_time);
-void proc_block_until_inode_is_writable(struct task *current, struct inode *inode);
-void proc_block_until_socket_is_readable(struct task *current, struct socket *socket);
-void proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, struct timespec end_time);
-void proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds);
-void proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds,
-                               struct timespec end_time);
-void proc_block_waitpid(struct task *current, pid_t pid);
+__attribute__((warn_unused_result)) int proc_block_sleep(struct task *current, clockid_t clock, struct timespec end_time);
+__attribute__((warn_unused_result)) int proc_block_until_inode_is_readable(struct task *current, struct inode *inode);
+__attribute__((warn_unused_result)) int proc_block_until_pipe_is_readable(struct task *current, struct inode *inode);
+__attribute__((warn_unused_result)) int proc_block_until_socket_is_connected(struct task *current, struct socket *socket);
+__attribute__((warn_unused_result)) int proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode,
+                                                                                      struct timespec end_time);
+__attribute__((warn_unused_result)) int proc_block_until_inode_is_writable(struct task *current, struct inode *inode);
+__attribute__((warn_unused_result)) int proc_block_until_socket_is_readable(struct task *current, struct socket *socket);
+__attribute__((warn_unused_result)) int proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket,
+                                                                                         struct timespec end_time);
+__attribute__((warn_unused_result)) int proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds,
+                                                          uint8_t *exceptfds);
+__attribute__((warn_unused_result)) int proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds,
+                                                                  uint8_t *exceptfds, struct timespec end_time);
+__attribute__((warn_unused_result)) int proc_block_waitpid(struct task *current, pid_t pid);
 
 #endif /* _KERNEL_PROC_BLOCKERS_H */
