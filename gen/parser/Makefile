@@ -8,7 +8,7 @@ $(BUILDDIR)/gen/parser/generator.o \
 $(BUILDDIR)/gen/parser/item_set.o \
 $(BUILDDIR)/gen/parser/lexer.o \
 $(BUILDDIR)/gen/parser/main.o \
-$(BUILDDIR)/gen/parser/state_table.o \
+$(BUILDDIR)/gen/parser/state_table.o
 
 EXECUTABLE=$(BUILDDIR)/gen/parser/parser
 

@@ -14,7 +14,7 @@ int main() {
     struct sockaddr_in addr = { 0 };
     addr.sin_family = AF_INET;
     addr.sin_port = htons(80);
-    addr.sin_addr.s_addr = INADDR_LOOBACK;
+    addr.sin_addr.s_addr = INADDR_LOOPBACK;
 
     if (bind(fd, (const struct sockaddr*) &addr, sizeof(struct sockaddr_in)) == -1) {
         perror("bind");

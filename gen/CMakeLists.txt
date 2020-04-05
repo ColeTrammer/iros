@@ -1,0 +1,2 @@
+add_subdirectory(initrd)
+add_subdirectory(parser)

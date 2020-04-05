@@ -30,6 +30,7 @@ public:
                                                 LIIM::IsRValueReference<Callable&&>::value>::type>
     Function& operator=(Callable&& callable) {
         m_closure = make_unique<Closure<Callable>>(move(callable));
+        return *this;
     }
 
     template<typename F, typename = typename LIIM::EnableIf<IsPointer<F>::value &&

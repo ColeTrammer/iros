@@ -11,6 +11,7 @@
 #include <kernel/hal/x86_64/drivers/vga.h>
 
 int main() {
+#ifdef __os_2__
     int fb = open("/dev/fb0", O_RDWR);
     assert(fb != -1);
 
@@ -69,6 +70,6 @@ int main() {
             }
         }
     }
-
+#endif /* __os_2__ */
     return 0;
 }

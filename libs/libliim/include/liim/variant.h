@@ -17,7 +17,7 @@ namespace TypeList {
     struct IndexImpl;
     template<typename ToFind, size_t index, typename Type, typename... Types>
     struct IndexImpl<ToFind, index, Type, Types...> {
-        enum { value = IsSame<ToFind, Type>::value ? index : IndexImpl<ToFind, index + 1, Types...>::value };
+        enum { value = IsSame<ToFind, Type>::value ? index : static_cast<size_t>(IndexImpl<ToFind, index + 1, Types...>::value) };
     };
     template<typename ToFind, size_t index>
     struct IndexImpl<ToFind, index> {
@@ -33,7 +33,7 @@ namespace TypeList {
     struct Size;
     template<typename T, typename... Types>
     struct Size<T, Types...> {
-        enum { value = sizeof(T) >= Size<Types...>::value ? sizeof(T) : Size<Types...>::value };
+        enum { value = sizeof(T) >= Size<Types...>::value ? sizeof(T) : static_cast<size_t>(Size<Types...>::value) };
     };
     template<typename T>
     struct Size<T> {
@@ -45,8 +45,8 @@ namespace TypeList {
     template<typename T, bool already_found, typename T1, typename... Types>
     struct IsValidImpl<T, already_found, T1, Types...> {
         enum {
-            value = (IsConvertible<T, T1>::value) ? (already_found ? false : IsValidImpl<T, true, Types...>::value)
-                                                  : IsValidImpl<T, already_found, Types...>::value
+            value = (IsConvertible<T, T1>::value) ? (already_found ? false : static_cast<bool>(IsValidImpl<T, true, Types...>::value))
+                                                  : static_cast<bool>(IsValidImpl<T, already_found, Types...>::value)
         };
         typedef typename Conditional<IsConvertible<T, T1>::value, T1, typename IsValidImpl<T, already_found, Types...>::type>::type type;
     };
@@ -58,8 +58,12 @@ namespace TypeList {
 
     template<typename T, typename... Types>
     struct IsValid {
-        enum { value = Index<T, Types...>::value == -1 ? IsValidImpl<T, false, Types...>::value : true };
-        typedef typename Conditional<Index<T, Types...>::value != -1, T, typename IsValidImpl<T, false, Types...>::type>::type type;
+        enum {
+            value = static_cast<int>(Index<T, Types...>::value) == -1 ? static_cast<bool>(IsValidImpl<T, false, Types...>::value) : true
+        };
+        typedef
+            typename Conditional<static_cast<int>(Index<T, Types...>::value) != -1, T, typename IsValidImpl<T, false, Types...>::type>::type
+                type;
     };
 
     template<typename... Types>
@@ -139,7 +143,7 @@ namespace details {
         }
 
         template<size_t index, typename T>
-        static constexpr void apply_one(ArrayType& array, T& element) {
+        static constexpr void apply_one(ArrayType&, T& element) {
             element = ArrayBuilderImpl<typename RemoveReference<decltype(element)>::type, Tuple<Variants...>,
                                        IndexSequence<indicies..., index>>::apply();
         }

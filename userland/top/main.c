@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <procinfo.h>
 #include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>

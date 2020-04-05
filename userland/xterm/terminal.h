@@ -3,9 +3,8 @@
 #include <liim/pointers.h>
 #include <sys/types.h>
 
+#include "tty.h"
 #include "vga_buffer.h"
-
-class TTY;
 
 class Terminal {
 public:

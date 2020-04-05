@@ -1,4 +1,3 @@
-#define _GNU_SOURCE /* To get pthread_getattr_np() declaration */
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>

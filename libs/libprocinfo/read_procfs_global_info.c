@@ -1,8 +1,15 @@
+#include <errno.h>
 #include <procinfo.h>
 #include <stdio.h>
 #include <strings.h>
 
 int read_procfs_global_info(struct proc_global_info *info, int flags) {
+#ifndef __os_2__
+    (void) info;
+    (void) flags;
+    errno = ENOTSUP;
+    return 1;
+#else
     FILE *file = NULL;
     if (flags & READ_PROCFS_GLOBAL_SCHED) {
         file = fopen("/proc/sched", "r");
@@ -50,4 +57,5 @@ int read_procfs_global_info(struct proc_global_info *info, int flags) {
 fail:
     fclose(file);
     return 1;
+#endif /* __os_2__ */
 }

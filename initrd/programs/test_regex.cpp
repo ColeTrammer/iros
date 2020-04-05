@@ -5,7 +5,8 @@
 #include "../../libs/libc/regex/regex_lexer.h"
 #include "../../libs/libc/regex/regex_parser.h"
 
-int main(int argc, char** argv) {
+int main(int argc [[maybe_unused]], char** argv [[maybe_unused]]) {
+#ifdef __os_2__
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <string>\n", argv[0]);
         return 1;
@@ -28,5 +29,6 @@ int main(int argc, char** argv) {
     }
 
     dump(parser.result());
+#endif /* __os_2__ */
     return 0;
 }

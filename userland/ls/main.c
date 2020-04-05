@@ -26,8 +26,8 @@ static struct ls_dirent *dirents = NULL;
 static size_t num_dirents = 0;
 static size_t num_dirents_max = LS_STARTING_DIRENTS;
 
-static int widest_num_links = 0;
-static int widest_size = 0;
+static size_t widest_num_links = 0;
+static size_t widest_size = 0;
 static bool allow_dot_files = false;
 static bool allow_dot_and_dot_dot_dirs = false;
 
@@ -123,7 +123,7 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
 
     if (extra_info) {
         char buffer[50];
-        snprintf(buffer, 49, "%%s %%%dlu %%s %%s %%%dld %%s ", widest_num_links, widest_size);
+        snprintf(buffer, 49, "%%s %%%lulu %%s %%s %%%luld %%s ", widest_num_links, widest_size);
 
         char perm_string[11];
         perm_string[0] = S_ISDIR(dirent->stat_struct.st_mode) ? 'd' : S_ISLNK(dirent->stat_struct.st_mode) ? 'l' : '-';

@@ -1,3 +1,5 @@
+#ifdef __os_2__
+
 #include <assert.h>
 #include <fcntl.h>
 #include <graphics/pixel_buffer.h>
@@ -29,3 +31,7 @@ int main() {
     }
     return 0;
 }
+
+#else
+int main() {}
+#endif /* __os_2__ */

@@ -4,6 +4,7 @@
 #include <string.h>
 
 int main() {
+#ifdef __os_2__
     sigset_t set;
     sigemptyset(&set);
     printf("Empty set: %#.16lX\n", set);
@@ -26,5 +27,6 @@ int main() {
         assert(!sigismember(&set, test_sig));
     }
 
+#endif /* __os_2__ */
     return 0;
 }

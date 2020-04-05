@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
         struct ping_message recieved_message = { 0 };
         ssize_t ret = recvfrom(fd, &recieved_message, sizeof(struct ping_message), 0, (struct sockaddr *) &addr, &addr_size);
         if (ret < 0) {
-            if (errno = EINTR) {
+            if (errno == EINTR) {
                 printf("Timed out: seq %d\n", sequence - 1);
                 continue;
             }

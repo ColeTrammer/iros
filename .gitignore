@@ -4,6 +4,7 @@ isodir/
 build*/
 ports/
 mnt/
+native/
 toolchain/
 initrd/files
 *.bin

@@ -9,7 +9,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 int bcmp(const void *s1, const void *s2, size_t n);
-void bcopy(const void *src, const void *dest, size_t n);
+void bcopy(const void *src, void *dest, size_t n);
 void bzero(void *p, size_t n);
 
 char *index(const char *s, int c);

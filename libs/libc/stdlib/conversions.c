@@ -122,7 +122,7 @@ long long strtoll(const char *__restrict str, char **__restrict endptr, int base
         unsigned long long digit_value = get_value_from_char(str[str_off]);
 
         /* Detect overflow */
-        if (value > ((sign == 1LL ? ((unsigned long long) LLONG_MAX) : (unsigned long long) -LLONG_MIN) - digit_value) / base) {
+        if (value > ((sign == 1LL ? ((unsigned long long) LLONG_MAX) : (unsigned long long) LLONG_MIN) - digit_value) / base) {
             /* Read the rest of the characters but ignore them */
             while (is_valid_char_for_base(str[++str_off], base))
                 ;

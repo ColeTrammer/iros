@@ -18,10 +18,12 @@ int main() {
     struct sigaction act;
     act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
     sigemptyset(&act.sa_mask);
-    act.sa_sigaction = [](int, siginfo_t*, void* _context) {
+    act.sa_sigaction = [](int, siginfo_t*, void* _context [[maybe_unused]]) {
+#ifdef __os_2__
         ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
         fprintf(stderr, "rsp on now: [ %p ]\n", context->uc_stack.ss_sp);
         fprintf(stderr, "rsp return: [ %#.16lX ]\n", context->uc_mcontext.__stack_state.rsp);
+#endif /* __os_2__ */
     };
 
     sigaction(SIGINT, &act, nullptr);

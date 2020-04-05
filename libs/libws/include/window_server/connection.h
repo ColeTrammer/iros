@@ -4,6 +4,7 @@
 #include <liim/hash_map.h>
 #include <liim/pointers.h>
 #include <window_server/message.h>
+#include <window_server/window.h>
 
 class PixelBuffer;
 

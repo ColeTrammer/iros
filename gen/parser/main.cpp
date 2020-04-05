@@ -315,12 +315,24 @@ int main(int argc, char** argv) {
     fprintf(stderr, "%s\n", state_table.stringify().string());
 
     *strrchr(argv[1], '.') = '\0';
-    String output_name = argv[1];
 
-    String output_header = output_name;
+    String output_name = argv[1];
+    String prepend = "";
+
+    char* trailing_slash = strrchr(argv[1], '/');
+    if (trailing_slash) {
+        *trailing_slash = '\0';
+        output_name = String(trailing_slash + 1);
+        prepend = String(argv[1]);
+        prepend += "/";
+    }
+
+    String output_header = prepend;
+    output_header += output_name;
     output_header += "_token_type.h";
 
-    String output_parser = "generic_";
+    String output_parser = prepend;
+    output_parser += "generic_";
     output_parser += output_name;
     output_parser += "_parser.h";
 

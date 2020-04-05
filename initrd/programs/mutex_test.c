@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <unistd.h>
 
 static pthread_mutex_t mutex;

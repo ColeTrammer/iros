@@ -22,7 +22,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service, con
     result->ai_addrlen = sizeof(struct sockaddr_in);
 
     if (node == NULL) {
-        found->sin_addr.s_addr = INADDR_LOOBACK;
+        found->sin_addr.s_addr = INADDR_LOOPBACK;
         return 0;
     }
 

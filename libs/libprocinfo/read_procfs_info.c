@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
 #include <procinfo.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,7 +9,7 @@
 #include <string.h>
 #include <strings.h>
 
-static int scandir_filter(const struct dirent *ent) {
+__attribute__((unused)) static int scandir_filter(const struct dirent *ent) {
     for (size_t i = 0; ent->d_name[i] != '\0'; i++) {
         if (!isdigit(ent->d_name[i])) {
             return 0;
@@ -18,7 +19,7 @@ static int scandir_filter(const struct dirent *ent) {
     return 1;
 }
 
-static int sort_by_pid(const struct dirent **a, const struct dirent **b) {
+__attribute__((unused)) static int sort_by_pid(const struct dirent **a, const struct dirent **b) {
     int a_pid = atoi((*a)->d_name);
     int b_pid = atoi((*b)->d_name);
     if (a_pid < b_pid) {
@@ -31,6 +32,13 @@ static int sort_by_pid(const struct dirent **a, const struct dirent **b) {
 }
 
 int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
+#ifndef __os_2__
+    (void) info;
+    (void) length;
+    (void) flags;
+    errno = ENOTSUP;
+    return 1;
+#else
     assert(info);
     assert(length);
 
@@ -138,4 +146,5 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
 
     free(pids);
     return success ? 0 : 1;
+#endif /* __os_2__ */
 }

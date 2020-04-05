@@ -281,6 +281,8 @@ private:
 class BracketItemMatcher {
 public:
     virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const = 0;
+
+    virtual ~BracketItemMatcher() {}
 };
 
 class BracketRangeMatcher final : public BracketItemMatcher {

@@ -4,11 +4,14 @@
 #include <unistd.h>
 
 int main() {
-    auto on_int = [](int sig, siginfo_t* info, void* _context) {
+    auto on_int = [](int sig, siginfo_t* info, void* _context [[maybe_unused]]) {
         assert(sig == SIGINT);
-        ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
 
+#ifdef __os_2__
+        ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
         fprintf(stderr, "rax: %#.16lX\n", context->uc_mcontext.__cpu_state.rax);
+#endif /* __os_2__ */
+
         fprintf(stderr, "val: %d\n", info->si_value.sival_int);
     };
 
