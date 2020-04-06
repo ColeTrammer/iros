@@ -647,7 +647,7 @@ SYS_CALL(execve) {
 
     task->arch_task.user_task_state = task_state;
     task_state->stack_state.cs = USER_CODE_SELECTOR;
-    task_state->stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
+    task_state->stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
     task_state->stack_state.ss = USER_DATA_SELECTOR;
 
     size_t length = fs_file_size(file);

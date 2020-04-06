@@ -72,7 +72,7 @@ void arch_init_kernel_task(struct task *kernel_task) {
     /* Sets Up Kernel Task To Idle */
     kernel_task->arch_task.task_state.stack_state.rip = (uint64_t) &kernel_idle;
     kernel_task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
-    kernel_task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
+    kernel_task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
     kernel_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
     kernel_task->arch_task.task_state.stack_state.rsp = __KERNEL_VM_STACK_START;
     kernel_task->arch_task.setup_kernel_stack = false;
@@ -88,7 +88,7 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.stack_state.rip = entry;
     task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
-    task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
+    task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
     task->arch_task.task_state.stack_state.rsp = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
 
@@ -113,7 +113,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
     task->arch_task.task_state.stack_state.rip = entry;
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
-    task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPS_ENABLED_FLAG;
+    task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
 
     proc_clone_program_args(task->process, NULL, test_argv, test_envp);
     task->arch_task.task_state.stack_state.rsp =
