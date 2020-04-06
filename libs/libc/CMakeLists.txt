@@ -269,8 +269,10 @@ set(HOSTED_SOURCES
     init.c
 )
 
-add_library(c ${FREE_SOURCES} ${HOSTED_SOURCES})
-add_library(k ${FREE_SOURCES})
+set(SOURCES ${FREE_SOURCES})
+add_os_library(k FALSE)
+set(SOURCES ${SOURCES} ${HOSTED_SOURCES})
+add_os_library(c TRUE)
 
 target_compile_definitions(k PRIVATE __is_libk)
 set_target_properties(k PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
@@ -287,16 +289,8 @@ add_custom_target(
     install-libc
     COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libc/cmake_install.cmake
     COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libm/cmake_install.cmake
-    DEPENDS c k m
+    COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libpthread/cmake_install.cmake
+    DEPENDS c k m pthread
 )
 
 install(FILES ${CRT0_PATH} DESTINATION usr/lib RENAME crt0.o)
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-    DESTINATION "usr/include"
-    FILES_MATCHING PATTERN "*.h"
-)
-
-install(TARGETS c ARCHIVE DESTINATION usr/lib)
-
-install(TARGETS k ARCHIVE DESTINATION usr/lib)

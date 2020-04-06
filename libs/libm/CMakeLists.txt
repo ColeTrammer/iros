@@ -2,6 +2,4 @@ set(SOURCES
     math.c
 )
 
-add_library(m ${SOURCES})
-
-install(TARGETS m ARCHIVE DESTINATION usr/lib)
+add_os_library(m FALSE)
