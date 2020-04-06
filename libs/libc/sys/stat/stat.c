@@ -1,11 +1,10 @@
 #include <errno.h>
-#include <stdio.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
 int stat(const char *restrict path, struct stat *restrict stat_struct) {
-    int ret = (int) syscall(SC_STAT, path, stat_struct);
-    __SYSCALL_TO_ERRNO(ret);
+    return fstatat(AT_FDCWD, path, stat_struct, 0);
 }
 
 int mkdir(const char *path, mode_t mode) {
@@ -15,11 +14,6 @@ int mkdir(const char *path, mode_t mode) {
 
 int chmod(const char *pathname, mode_t mode) {
     int ret = (int) syscall(SC_CHMOD, pathname, mode);
-    __SYSCALL_TO_ERRNO(ret);
-}
-
-int fstat(int fd, struct stat *stat_struct) {
-    int ret = (int) syscall(SC_FSTAT, fd, stat_struct);
     __SYSCALL_TO_ERRNO(ret);
 }
 

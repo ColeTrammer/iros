@@ -14,7 +14,7 @@
     __ENUMERATE_SYSCALL(GETPID, getpid, 0)                                     \
     __ENUMERATE_SYSCALL(GETCWD, getcwd, 2)                                     \
     __ENUMERATE_SYSCALL(CHDIR, chdir, 1)                                       \
-    __ENUMERATE_SYSCALL(STAT, stat, 2)                                         \
+    __ENUMERATE_SYSCALL(FSTATAT, fstatat, 4)                                   \
     __ENUMERATE_SYSCALL(LSEEK, lseek, 3)                                       \
     __ENUMERATE_SYSCALL(IOCTL, ioctl, 3)                                       \
     __ENUMERATE_SYSCALL(FTRUNCATE, ftruncate, 2)                               \
@@ -49,7 +49,6 @@
     __ENUMERATE_SYSCALL(MUNMAP, munmap, 2)                                     \
     __ENUMERATE_SYSCALL(RENAME, rename, 2)                                     \
     __ENUMERATE_SYSCALL(FCNTL, fcntl, 3)                                       \
-    __ENUMERATE_SYSCALL(FSTAT, fstat, 2)                                       \
     __ENUMERATE_SYSCALL(ALARM, alarm, 1)                                       \
     __ENUMERATE_SYSCALL(FCHMOD, fchmod, 2)                                     \
     __ENUMERATE_SYSCALL(GETPPID, getppid, 0)                                   \
@@ -78,7 +77,6 @@
     __ENUMERATE_SYSCALL(GETSID, getsid, 1)                                     \
     __ENUMERATE_SYSCALL(SETSID, setsid, 0)                                     \
     __ENUMERATE_SYSCALL(READLINK, readlink, 3)                                 \
-    __ENUMERATE_SYSCALL(LSTAT, lstat, 2)                                       \
     __ENUMERATE_SYSCALL(SYMLINK, symlink, 2)                                   \
     __ENUMERATE_SYSCALL(LINK, link, 2)                                         \
     __ENUMERATE_SYSCALL(CHOWN, chown, 3)                                       \

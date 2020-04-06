@@ -233,6 +233,29 @@ static int get_at_directory(int fd, struct tnode **tnode) {
     return 0;
 }
 
+static int get_file_tnode(int fd, struct tnode **tnode) {
+    struct process *current = get_current_task()->process;
+    if (fd == AT_FDCWD) {
+        *tnode = current->cwd;
+        return 0;
+    }
+
+    if (fd < 0 || fd >= FOPEN_MAX) {
+        return -EBADF;
+    }
+
+    struct file *file = current->files[fd].file;
+    if (!file) {
+        return -EBADF;
+    }
+
+    *tnode = fs_get_tnode_for_file(file);
+    if (!*tnode) {
+        return -ENOTDIR;
+    }
+    return 0;
+}
+
 static int get_socket(int fd, struct file **filep) {
     if (fd < 0 || fd > FOPEN_MAX) {
         return -EBADF;
@@ -795,13 +818,15 @@ SYS_CALL(chdir) {
     SYS_RETURN(0);
 }
 
-SYS_CALL(stat) {
+SYS_CALL(fstatat) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
-    SYS_PARAM2_VALIDATE(void *, stat_struct, validate_write, sizeof(struct stat));
+    SYS_PARAM4(int, flags);
+    SYS_PARAM1_TRANSFORM(struct tnode *, base, int, get_file_tnode);
+    SYS_PARAM2_VALIDATE(const char *, path, validate_path_or_null, !(flags & AT_EMPTY_PATH));
+    SYS_PARAM3_VALIDATE(void *, stat_struct, validate_write, sizeof(struct stat));
 
-    SYS_RETURN(fs_stat(path, stat_struct));
+    SYS_RETURN(fs_fstatat(base, path, stat_struct, flags));
 }
 
 SYS_CALL(lseek) {
@@ -1349,15 +1374,6 @@ SYS_CALL(fcntl) {
     SYS_PARAM3(int, arg);
 
     SYS_RETURN(fs_fcntl(desc, command, arg));
-}
-
-SYS_CALL(fstat) {
-    SYS_BEGIN();
-
-    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
-    SYS_PARAM2_VALIDATE(struct stat *, stat_struct, validate_write, sizeof(struct stat));
-
-    SYS_RETURN(fs_fstat(file, stat_struct));
 }
 
 SYS_CALL(alarm) {
@@ -2032,15 +2048,6 @@ SYS_CALL(readlink) {
     SYS_PARAM2_VALIDATE(char *, buf, validate_write, bufsiz);
 
     SYS_RETURN(fs_readlink(path, buf, bufsiz));
-}
-
-SYS_CALL(lstat) {
-    SYS_BEGIN();
-
-    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
-    SYS_PARAM2_VALIDATE(struct stat *, stat_struct, validate_write, sizeof(struct stat));
-
-    SYS_RETURN(fs_lstat(path, stat_struct));
 }
 
 SYS_CALL(symlink) {

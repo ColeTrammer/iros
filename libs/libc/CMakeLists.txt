@@ -180,7 +180,9 @@ set(HOSTED_SOURCES
     sys/os_2/tgkill.c
     sys/socket/socket.c
     sys/select/select.c
+    sys/stat/fstat.c
     sys/stat/fstatat.c
+    sys/stat/lstat.c
     sys/stat/mknod.c
     sys/stat/stat.c
     sys/statvfs/fstatvfs.c
@@ -235,7 +237,6 @@ set(HOSTED_SOURCES
     unistd/isatty.c
     unistd/link.c
     unistd/lseek.c
-    unistd/lstat.c
     unistd/pathconf.c
     unistd/pause.c
     unistd/pipe.c

@@ -52,6 +52,7 @@
 #define AT_SYMLINK_NOFOLLOW 2
 #define AT_SYMLINK_FOLLOW   4
 #define AT_REMOVE_DIR       8
+#define AT_EMPTY_PATH       16
 
 #ifdef __cplusplus
 extern "C" {

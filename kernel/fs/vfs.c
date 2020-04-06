@@ -818,22 +818,17 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
     return 0;
 }
 
-int fs_stat(const char *path, struct stat *stat_struct) {
-    struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
-    if (ret < 0) {
-        return -ENOENT;
+int fs_fstatat(struct tnode *base, const char *file_name, struct stat *stat_struct, int flags) {
+    if (flags & AT_EMPTY_PATH) {
+        return do_stat(base->inode, stat_struct);
     }
 
-    struct inode *inode = tnode->inode;
-    drop_tnode(tnode);
-    return do_stat(inode, stat_struct);
-}
+    if (!(base->inode->flags & FS_DIR)) {
+        return -ENOTDIR;
+    }
 
-int fs_lstat(const char *path, struct stat *stat_struct) {
     struct tnode *tnode;
-
-    int ret = iname(path, INAME_DONT_FOLLOW_TRAILING_SYMLINK, &tnode);
+    int ret = iname_with_base(base, file_name, (flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
     if (ret < 0) {
         return ret;
     }
@@ -1580,13 +1575,6 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
     free(buffer);
     drop_tnode(link);
     return to_write;
-}
-
-int fs_fstat(struct file *file, struct stat *stat_struct) {
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    return do_stat(inode, stat_struct);
 }
 
 int fs_fchmod(struct file *file, mode_t mode) {

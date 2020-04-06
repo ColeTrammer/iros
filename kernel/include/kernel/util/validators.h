@@ -17,6 +17,7 @@
 int validate_string(const char *s, int unused);
 int validate_string_array(char **arr, int unused);
 int validate_path(const char *s, int unused);
+int validate_path_or_null(const char *s, int dont_tolerate_null_after_all);
 int validate_write(void *buffer, size_t size);
 int validate_read(const void *buffer, size_t size);
 int validate_write_or_null(void *buffer, size_t size);

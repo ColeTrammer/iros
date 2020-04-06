@@ -58,6 +58,14 @@ int validate_string_array(char **arr, int unused) {
     return -E2BIG;
 }
 
+int validate_path_or_null(const char *s, int dont_tolerate_null_after_all) {
+    if (s == NULL && !dont_tolerate_null_after_all) {
+        return 0;
+    }
+
+    return validate_path(s, 0);
+}
+
 int validate_path(const char *s, int unused) {
     (void) unused;
 

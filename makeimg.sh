@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ "$(id -u)" != 0 ];
+then
+    echo "this script must be ran as root"
+    exit 1
+fi
+
 dd if=/dev/zero of=os_2.img bs=516096c count=200
 
 losetup -o0 /dev/loop100 os_2.img
