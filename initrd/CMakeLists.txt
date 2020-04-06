@@ -3,7 +3,7 @@ file (GLOB INITRD_PROGRAMS "programs/*.c*")
 foreach (SOURCE ${INITRD_PROGRAMS})
     get_filename_component(PROGRAM_NAME ${SOURCE} NAME_WE)
     add_executable(${PROGRAM_NAME} ${SOURCE})
-    install(TARGETS ${PROGRAM_NAME} RUNTIME DESTINATION bin)
+    install(TARGETS ${PROGRAM_NAME} RUNTIME DESTINATION boot/initrd)
 endforeach()
 
 target_link_libraries(cancel_test pthread)
