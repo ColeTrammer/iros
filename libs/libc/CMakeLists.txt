@@ -180,6 +180,7 @@ set(HOSTED_SOURCES
     sys/os_2/tgkill.c
     sys/socket/socket.c
     sys/select/select.c
+    sys/stat/fstatat.c
     sys/stat/mknod.c
     sys/stat/stat.c
     sys/statvfs/fstatvfs.c

@@ -71,6 +71,7 @@ struct stat {
 
 int stat(const char *__restrict path, struct stat *__restrict stat_struct);
 int fstat(int fd, struct stat *stat_struct);
+int fstatat(int fd, const char *__restrict path, struct stat *__restrict stat_struct, int flag);
 int lstat(const char *__restrict path, struct stat *__restrict stat_struct);
 int mkdir(const char *path, mode_t mode);
 int chmod(const char *pathname, mode_t mode);
