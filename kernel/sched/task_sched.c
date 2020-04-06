@@ -96,7 +96,7 @@ void sched_run_next() {
         // FIXME: what to do if the task is stopped? It might be unsafe to send a terminating signal, since it
         //        might leak resources.
         if (task->sched_state == RUNNING_UNINTERRUPTIBLE || task->sched_state == EXITING ||
-            (task->sched_state == WAITING && !task->blocking)) {
+            (task->sched_state == WAITING && !task->blocking && !task->in_sigsuspend)) {
             continue;
         }
 

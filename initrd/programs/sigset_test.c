@@ -27,6 +27,9 @@ int main() {
         assert(!sigismember(&set, test_sig));
     }
 
+    sigfillset(&set);
+    printf("Full set: %#.16lX\n", set);
+
 #endif /* __os_2__ */
     return 0;
 }

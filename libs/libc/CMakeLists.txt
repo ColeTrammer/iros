@@ -281,7 +281,7 @@ target_link_libraries(c PRIVATE liim parser_headers)
 add_dependencies(c generate-regex-parser crt0_object)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdinc++")
 
 add_custom_target(
     install-libc

@@ -10,6 +10,8 @@
 
 #define MAX_FILE_NAME_LENGTH 64
 
+static char *exclude;
+
 struct initrd_file_entry {
     char name[MAX_FILE_NAME_LENGTH];
     uint32_t offset;
@@ -22,10 +24,19 @@ int64_t count_files(char *dir) {
         int64_t n = 0;
         struct dirent *dir;
         while ((dir = readdir(d)) != NULL) {
-            n++;
+            struct stat st;
+            if (fstatat(dirfd(d), dir->d_name, &st, 0)) {
+                perror("fstatat");
+                return -1;
+            }
+
+            if (S_ISREG(st.st_mode) && strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") &&
+                (!exclude || strcmp(dir->d_name, exclude))) {
+                n++;
+            }
         }
         closedir(d);
-        return n - 2;
+        return n;
     }
     return -1;
 }
@@ -37,7 +48,6 @@ void print_usage_and_exit(const char *name) {
 
 int main(int argc, char **argv) {
     int opt;
-    char *exclude = NULL;
 
     while ((opt = getopt(argc, argv, ":e:")) != -1) {
         switch (opt) {

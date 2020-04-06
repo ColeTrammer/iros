@@ -40,7 +40,7 @@ static void try_load_symbols(void *buffer, Elf64_Sym **symbols, size_t *symbols_
 }
 
 void init_kernel_symbols(void) {
-    int ret = fs_read_all_path("/boot/os_2.o", &kernel_buffer, NULL, NULL);
+    int ret = fs_read_all_path("/boot/kernel", &kernel_buffer, NULL, NULL);
     if (ret) {
         debug_log("failed to read kernel object file: [ %s ]\n", strerror(-ret));
         return;
