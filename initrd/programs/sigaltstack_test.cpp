@@ -19,6 +19,9 @@ int main() {
     act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
     sigemptyset(&act.sa_mask);
     act.sa_sigaction = [](int, siginfo_t*, void* _context [[maybe_unused]]) {
+        uint64_t rsp;
+        asm("mov %%rsp, %0" : "=r"(rsp) : :);
+        fprintf(stderr, "\n%%rsp=%#.16lX\n", rsp);
 #ifdef __os_2__
         ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
         fprintf(stderr, "rsp on now: [ %p ]\n", context->uc_stack.ss_sp);
