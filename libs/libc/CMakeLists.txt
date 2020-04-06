@@ -7,6 +7,10 @@ set(REGEX_GENERATED_FILES
     regex/regex.info
 )
 
+set(CRT0_PATH ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/crt0_object.dir/arch/${ARCH}/crt0.S.o)
+
+add_library(crt0_object OBJECT arch/${ARCH}/crt0.S)
+
 add_custom_target(
     generate-regex-parser
     COMMAND [ -e ${CMAKE_CURRENT_SOURCE_DIR}/regex/generic_regex_parser_impl.cpp ] || ${NATIVE_PARSER} ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2>${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.info
@@ -263,8 +267,6 @@ set(HOSTED_SOURCES
     init.c
 )
 
-set(CRT0_PATH ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/c.dir/arch/${ARCH}/crt0.S.o)
-
 add_library(c ${FREE_SOURCES} ${HOSTED_SOURCES})
 add_library(k ${FREE_SOURCES})
 
@@ -274,7 +276,7 @@ target_link_libraries(k PRIVATE kernel_headers)
 
 target_compile_definitions(c PRIVATE __is_libc)
 target_link_libraries(c PRIVATE liim parser_headers)
-add_dependencies(c generate-regex-parser)
+add_dependencies(c generate-regex-parser crt0_object)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding")
@@ -283,6 +285,7 @@ add_custom_target(
     install-libc
     COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libc/cmake_install.cmake
     COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libm/cmake_install.cmake
+    DEPENDS c k m
 )
 
 install(FILES ${CRT0_PATH} DESTINATION usr/lib RENAME crt0.o)

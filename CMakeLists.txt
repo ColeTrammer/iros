@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(os_2 C CXX ASM)
 
-set(ARCH x86_64)
-set(TARGET_OS os_2)
+set(ARCH $ENV{ARCH} CACHE STRING "architecture for the os")
+set(TARGET_OS $ENV{TARGET_OS} CACHE STRING "target operating system for build")
 
 add_compile_definitions("ARCH=${ARCH}")
 add_compile_definitions("_OS_2_SOURCE")
