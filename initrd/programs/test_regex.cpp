@@ -2,8 +2,10 @@
 
 #include <stdio.h>
 
+#ifdef __os_2__
 #include "../../libs/libc/regex/regex_lexer.h"
 #include "../../libs/libc/regex/regex_parser.h"
+#endif /* __os_2__ */
 
 int main(int argc [[maybe_unused]], char** argv [[maybe_unused]]) {
 #ifdef __os_2__
