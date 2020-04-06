@@ -6,6 +6,6 @@ set(SOURCES
     time/timer_settime.cpp
 )
 
-add_library(rt ${SOURCES})
+add_os_library(rt FALSE)
 
 target_link_libraries(rt PUBLIC pthread)

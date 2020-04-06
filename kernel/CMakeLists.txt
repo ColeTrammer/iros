@@ -1,5 +1,4 @@
-add_library(kernel_headers INTERFACE)
-target_include_directories(kernel_headers INTERFACE include)
+add_os_headers(kernel_headers)
 
 if (${TARGET_OS} STREQUAL os_2)
     add_subdirectory("arch/${ARCH}")

@@ -4,7 +4,6 @@ set(SOURCES
     renderer.cpp
 )
 
-add_library(graphics ${SOURCES})
+add_os_library(graphics TRUE)
 
-target_include_directories(graphics PUBLIC include)
 target_link_libraries(graphics PUBLIC liim kernel_headers)

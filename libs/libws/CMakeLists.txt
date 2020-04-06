@@ -3,7 +3,6 @@ set(SOURCES
     window.cpp
 )
 
-add_library(ws ${SOURCES})
+add_os_library(ws TRUE)
 
-target_include_directories(ws PUBLIC include)
 target_link_libraries(ws PUBLIC liim graphics window_server_headers)

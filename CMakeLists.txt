@@ -30,6 +30,29 @@ else()
     add_compile_definitions("_POSIX_C_SOURCE=201900L")
 endif()
 
+function(install_headers)
+    install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+        DESTINATION "usr/include"
+        FILES_MATCHING PATTERN "*.h"
+    )
+endfunction()
+
+function(add_os_headers name)
+    add_library(${name} INTERFACE)
+    target_include_directories(${name} INTERFACE include)
+    install_headers()
+endfunction()
+
+function(add_os_library name has_headers)
+    add_library(${name} ${SOURCES})
+    install(TARGETS ${name} ARCHIVE DESTINATION usr/lib)
+    if (${has_headers})
+        target_include_directories(${name} PUBLIC include)
+        install_headers()
+    endif()
+endfunction()
+
 add_custom_target(
     generate-initrd
     BYPRODUCTS ${SYSROOT}/boot/initrd.bin

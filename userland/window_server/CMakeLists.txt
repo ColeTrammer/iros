@@ -1,5 +1,4 @@
-add_library(window_server_headers INTERFACE)
-target_include_directories(window_server_headers INTERFACE include)
+add_os_headers(window_server_headers)
 target_link_libraries(window_server_headers INTERFACE kernel_headers)
 
 if (${TARGET_OS} STREQUAL os_2)

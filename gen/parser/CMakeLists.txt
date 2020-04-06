@@ -1,5 +1,4 @@
-add_library(parser_headers INTERFACE)
-target_include_directories(parser_headers INTERFACE include)
+add_os_headers(parser_headers)
 target_link_libraries(parser_headers INTERFACE liim)
 
 set(SOURCES
