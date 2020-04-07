@@ -17,7 +17,7 @@
 #include "state_table.h"
 
 void print_usage_and_exit(char** argv) {
-    fprintf(stderr, "Usage: %s <grammar>\n", argv[0]);
+    fprintf(stderr, "Usage: %s [-p output-dir] <grammar>\n", argv[0]);
     exit(1);
 }
 
@@ -145,17 +145,33 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
 }
 
 int main(int argc, char** argv) {
-    if (argc != 2) {
+    int opt;
+    char* output_dir = nullptr;
+    while ((opt = getopt(argc, argv, ":p:")) != -1) {
+        switch (opt) {
+            case 'p':
+                output_dir = optarg;
+                break;
+            case ':':
+            case '?':
+                print_usage_and_exit(argv);
+                break;
+        }
+    }
+
+    if (optind >= argc) {
         print_usage_and_exit(argv);
     }
 
+    char* input_file = argv[optind];
+
     struct stat info;
-    if (stat(argv[1], &info) != 0) {
+    if (stat(input_file, &info) != 0) {
         perror("stat");
         return 1;
     }
 
-    int fd = open(argv[1], O_RDONLY);
+    int fd = open(input_file, O_RDONLY);
     char* contents = reinterpret_cast<char*>(mmap(nullptr, info.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
     if (contents == MAP_FAILED) {
         perror("mmap");
@@ -314,16 +330,29 @@ int main(int argc, char** argv) {
     StateTable state_table(extended_grammar, identifiers, token_types);
     fprintf(stderr, "%s\n", state_table.stringify().string());
 
-    *strrchr(argv[1], '.') = '\0';
+    *strrchr(input_file, '.') = '\0';
 
-    String output_name = argv[1];
+    String output_name = input_file;
     String prepend = "";
 
-    char* trailing_slash = strrchr(argv[1], '/');
+    char* trailing_slash = strrchr(input_file, '/');
     if (trailing_slash) {
         *trailing_slash = '\0';
         output_name = String(trailing_slash + 1);
-        prepend = String(argv[1]);
+        prepend = String(input_file);
+        prepend += "/";
+    }
+
+    if (output_dir) {
+        while (char* last_slash = strrchr(output_dir, '/')) {
+            size_t output_dir_length = strlen(output_dir);
+            if (last_slash && last_slash - output_dir + 1 == static_cast<ptrdiff_t>(output_dir_length)) {
+                *last_slash = '\0';
+                continue;
+            }
+            break;
+        }
+        prepend = String(output_dir);
         prepend += "/";
     }
 
