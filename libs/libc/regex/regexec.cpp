@@ -1,5 +1,10 @@
-#include <regex.h>
 #include <string.h>
+
+#ifdef USERLAND_NATIVE
+#include "../include/regex.h"
+#else
+#include <regex.h>
+#endif /* USERLAND_NATIVE */
 
 #include "regex_graph.h"
 

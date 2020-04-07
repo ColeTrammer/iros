@@ -2,7 +2,6 @@ if (NOT ${NATIVE_BUILD})
     set(OS_TARGETS
         chown
         ping
-        sh
         stat
         top
         xterm
@@ -35,6 +34,7 @@ set(TARGETS
     realpath
     rm
     rmdir
+    sh
     sleep
     start
     su

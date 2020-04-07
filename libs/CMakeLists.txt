@@ -1,6 +1,5 @@
 if (NOT ${NATIVE_BUILD})
     set(OS_LIBS
-        libc
         libm
         libpthread
         librt
@@ -9,6 +8,7 @@ endif()
 
 set(TARGETS
     ${OS_LIBS}
+    libc
     libgraphics
     libliim
     libprocinfo

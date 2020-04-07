@@ -1,5 +1,10 @@
+#ifdef USERLAND_NATIVE
+#include <stdlib.h>
+#include "../include/regex.h"
+#else
 #include <bits/malloc.h>
 #include <regex.h>
+#endif /* USERLAND_NATIVE */
 
 #include "regex_graph.h"
 

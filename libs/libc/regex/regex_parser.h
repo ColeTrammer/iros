@@ -1,6 +1,10 @@
 #pragma once
 
+#ifdef USERLAND_NATIVE
+#include "../include/regex.h"
+#else
 #include <regex.h>
+#endif /* USERLAND_NATIVE */
 
 #include "generic_regex_parser.h"
 #include "regex_lexer.h"

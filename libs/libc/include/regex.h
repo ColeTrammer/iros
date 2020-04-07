@@ -1,7 +1,11 @@
 #ifndef _REGEX_H
 #define _REGEX_H 1
 
+#ifdef USERLAND_NATIVE
+#include <stddef.h>
+#else
 #include <bits/size_t.h>
+#endif /* USERLAND_NATIVE */
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,7 +1,12 @@
 #include <ctype.h>
 #include <liim/function.h>
-#include <regex.h>
 #include <stdio.h>
+
+#ifdef USERLAND_NATIVE
+#include "../include/regex.h"
+#else
+#include <regex.h>
+#endif /* USERLAND_NATIVE */
 
 #include "regex_graph.h"
 

@@ -1,5 +1,4 @@
 #include <ftw.h>
-#include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +6,12 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#ifdef USERLAND_NATIVE
+#include "../../libs/libc/include/regex.h"
+#else
+#include <regex.h>
+#endif /* USERLAND_NATIVE */
 
 static char *pattern = NULL;
 static size_t pattern_len = 0;

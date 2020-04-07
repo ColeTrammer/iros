@@ -5,14 +5,11 @@ set(GENERATED_FILES
     sh.info
 )
 
-add_custom_command(
-    OUTPUT ${GENERATED_FILES}
-    COMMAND [ -e ${CMAKE_CURRENT_SOURCE_DIR}/generic_sh_parser_impl.cpp ] || ${NATIVE_PARSER} ${CMAKE_CURRENT_SOURCE_DIR}/sh.y 2>sh.info
-)
-
 add_custom_target(
     generate-sh-parser
-    DEPENDS ${GENERATED_FILES}
+    BYPRODUCTS ${GENERATED_FILES}
+    COMMAND ${NATIVE_PARSER} -p . ${CMAKE_CURRENT_SOURCE_DIR}/sh.y 2>sh.info
+    DEPENDS sh.y
 )
 
 set(SOURCES
@@ -28,5 +25,11 @@ set(SOURCES
 
 add_os_executable(sh bin)
 target_link_libraries(sh parser_headers libliim)
+target_include_directories(sh PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+
+if (${NATIVE_BUILD})
+    target_compile_definitions(sh PRIVATE USERLAND_NATIVE)
+    target_link_libraries(sh libwordexp)
+endif()
 
 add_dependencies(sh generate-sh-parser)

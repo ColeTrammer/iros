@@ -1,5 +1,10 @@
-#include <regex.h>
 #include <string.h>
+
+#ifdef USERLAND_NATIVE
+#include "../include/regex.h"
+#else
+#include <regex.h>
+#endif /* USERLAND_NATIVE */
 
 extern "C" size_t regerror(int error, const regex_t* __restrict, char* __restrict buf, size_t buffer_len) {
     const char* str;
