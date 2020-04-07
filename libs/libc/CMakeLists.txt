@@ -26,7 +26,7 @@ set(REGEX_LIB_SOURCES
 add_custom_target(
     generate-regex-parser
     BYPRODUCTS ${REGEX_GENERATED_FILES}
-    COMMAND ${NATIVE_PARSER} -p regex ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2>regex/regex.info
+    COMMAND ${NATIVE_PARSER} -s -p regex ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2>regex/regex.info || [ $$? = 2 ]
     DEPENDS regex/regex.y
 )
 

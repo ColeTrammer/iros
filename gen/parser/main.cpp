@@ -17,7 +17,7 @@
 #include "state_table.h"
 
 void print_usage_and_exit(char** argv) {
-    fprintf(stderr, "Usage: %s [-p output-dir] <grammar>\n", argv[0]);
+    fprintf(stderr, "Usage: %s [-s] [-p output-dir] <grammar>\n", argv[0]);
     exit(1);
 }
 
@@ -147,10 +147,14 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
 int main(int argc, char** argv) {
     int opt;
     char* output_dir = nullptr;
-    while ((opt = getopt(argc, argv, ":p:")) != -1) {
+    bool dont_overwrite_files = false;
+    while ((opt = getopt(argc, argv, ":sp:")) != -1) {
         switch (opt) {
             case 'p':
                 output_dir = optarg;
+                break;
+            case 's':
+                dont_overwrite_files = true;
                 break;
             case ':':
             case '?':
@@ -365,7 +369,7 @@ int main(int argc, char** argv) {
     output_parser += output_name;
     output_parser += "_parser.h";
 
-    Generator generator(state_table, identifiers, token_types, literals, output_name);
+    Generator generator(state_table, identifiers, token_types, literals, output_name, dont_overwrite_files);
     generator.generate_token_type_header(output_header);
     generator.generate_generic_parser(output_parser);
 

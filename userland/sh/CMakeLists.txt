@@ -8,7 +8,7 @@ set(GENERATED_FILES
 add_custom_target(
     generate-sh-parser
     BYPRODUCTS ${GENERATED_FILES}
-    COMMAND ${NATIVE_PARSER} -p . ${CMAKE_CURRENT_SOURCE_DIR}/sh.y 2>sh.info
+    COMMAND ${NATIVE_PARSER} -s -p . ${CMAKE_CURRENT_SOURCE_DIR}/sh.y 2>sh.info || [ $$? = 2 ]
     DEPENDS sh.y
 )
 

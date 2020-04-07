@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,17 +8,25 @@
 #include "literal.h"
 
 Generator::Generator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
-                     const LinkedList<String>& literals, const String& output_name)
-    : m_table(table), m_identifiers(identifiers), m_token_types(token_types), m_literals(literals), m_output_name(output_name) {}
+                     const LinkedList<String>& literals, const String& output_name, bool dont_overwite)
+    : m_table(table)
+    , m_identifiers(identifiers)
+    , m_token_types(token_types)
+    , m_literals(literals)
+    , m_output_name(output_name)
+    , m_dont_overwrite(dont_overwite) {}
 
 Generator::~Generator() {}
 
 void Generator::generate_token_type_header(const String& path) {
     fprintf(stderr, "Writing token types to %s.\n", path.string());
 
-    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC, 0664);
+    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0664);
     if (ofd == -1) {
-        perror("opening output header");
+        perror("opening generic parser");
+        if (errno == EEXIST) {
+            exit(2);
+        }
         exit(1);
     }
 
@@ -68,9 +77,12 @@ void Generator::generate_generic_parser(String path) {
 
     fprintf(stderr, "Writing generic parser to %s.\n", path.string());
 
-    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0644);
     if (ofd == -1) {
         perror("opening generic parser");
+        if (errno == EEXIST) {
+            exit(2);
+        }
         exit(1);
     }
 
@@ -133,7 +145,15 @@ void Generator::generate_generic_parser(String path) {
         path[path.size() - 2] = '\0';
         path.set_size(path.size() - 2);
         path += "_impl.cpp";
-        FILE* file = fopen(path.string(), "w");
+        int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0644);
+        if (ofd == -1) {
+            perror("opening generic parser");
+            if (errno == EEXIST) {
+                exit(2);
+            }
+            exit(1);
+        }
+        FILE* file = fdopen(ofd, "w");
         fprintf(file, "#include \"generic_%s_parser.h\"\n\n", String(m_output_name).to_lower_case().string());
 
         fprintf(file,
