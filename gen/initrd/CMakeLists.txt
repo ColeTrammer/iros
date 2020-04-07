@@ -2,8 +2,6 @@ set(SOURCES
     main.c
 )
 
-add_executable(initrd ${SOURCES})
+add_os_executable(initrd bin)
 
 target_compile_options(initrd PRIVATE "-Wno-stringop-truncation")
-
-install(TARGETS initrd RUNTIME DESTINATION bin)

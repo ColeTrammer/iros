@@ -10,7 +10,5 @@ set(SOURCES
     state_table.cpp
 )
 
-add_executable(parser ${SOURCES})
+add_os_executable(parser bin)
 target_link_libraries(parser liim)
-
-install(TARGETS parser RUNTIME DESTINATION bin)

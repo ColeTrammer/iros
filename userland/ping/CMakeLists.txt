@@ -2,6 +2,4 @@ set(SOURCES
     main.c
 )
 
-add_executable(ping ${SOURCES})
-
-install(TARGETS ping RUNTIME DESTINATION bin)
+add_os_executable(ping bin)

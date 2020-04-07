@@ -2,7 +2,5 @@ set(SOURCES
     main.c
 )
 
-add_executable(top ${SOURCES})
+add_os_executable(top bin)
 target_link_libraries(top procinfo)
-
-install(TARGETS top RUNTIME DESTINATION bin)

@@ -1,9 +1,8 @@
 file (GLOB INITRD_PROGRAMS "programs/*.c*")
 
-foreach (SOURCE ${INITRD_PROGRAMS})
-    get_filename_component(PROGRAM_NAME ${SOURCE} NAME_WE)
-    add_executable(${PROGRAM_NAME} ${SOURCE})
-    install(TARGETS ${PROGRAM_NAME} RUNTIME DESTINATION boot/initrd)
+foreach (SOURCES ${INITRD_PROGRAMS})
+    get_filename_component(PROGRAM_NAME ${SOURCES} NAME_WE)
+    add_os_executable(${PROGRAM_NAME} boot/initrd)
 endforeach()
 
 target_link_libraries(cancel_test pthread)

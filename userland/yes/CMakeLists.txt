@@ -2,7 +2,6 @@ set(SOURCES
     main.cpp
 )
 
-add_executable(yes ${SOURCES})
+add_os_executable(yes bin)
 
 target_link_libraries(yes liim)
-install(TARGETS yes RUNTIME DESTINATION bin)

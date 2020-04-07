@@ -1,4 +1,4 @@
-if (${TARGET_OS} STREQUAL os_2)
+if (NOT ${IS_NATIVE_BUILD})
     add_subdirectory("arch/${ARCH}")
 
     add_library(boot_startfiles OBJECT

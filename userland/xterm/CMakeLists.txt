@@ -8,7 +8,5 @@ set(SOURCES
     window_wrapper.cpp
 )
 
-add_executable(xterm ${SOURCES})
+add_os_executable(xterm bin)
 target_link_libraries(xterm graphics liim ws)
-
-install(TARGETS xterm RUNTIME DESTINATION bin)

@@ -2,6 +2,4 @@ set(SOURCES
     main.c
 )
 
-add_executable(start ${SOURCES})
-
-install(TARGETS start RUNTIME DESTINATION bin)
+add_os_executable(start bin)

@@ -3,6 +3,11 @@ project(os_2 C CXX ASM)
 
 set(ARCH $ENV{ARCH} CACHE STRING "architecture for the os")
 set(TARGET_OS $ENV{TARGET_OS} CACHE STRING "target operating system for build")
+if (${TARGET_OS} STREQUAL os_2)
+    set(NATIVE_BUILD FALSE)
+else()
+    set(NATIVE_BUILD TRUE)
+endif()
 
 add_compile_definitions("ARCH=${ARCH}")
 add_compile_definitions("_OS_2_SOURCE")
@@ -12,7 +17,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -fdiagnostics-color=al
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -fconcepts -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer")
 
 set(CMAKE_CXX_STANDARD 20)
-
 
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ISODIR ${ROOT}/isodir)
@@ -51,6 +55,14 @@ function(add_os_library name has_headers)
         target_include_directories(${name} PUBLIC include)
         install_headers()
     endif()
+endfunction()
+
+function(add_os_executable name dest_dir)
+    add_executable(${name} ${SOURCES})
+    if (NOT ${NATIVE_BUILD})
+        target_link_libraries(${name} c)
+    endif()
+    install(TARGETS ${name} RUNTIME DESTINATION ${dest_dir})
 endfunction()
 
 add_custom_target(

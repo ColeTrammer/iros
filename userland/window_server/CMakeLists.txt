@@ -9,9 +9,7 @@ if (${TARGET_OS} STREQUAL os_2)
         window.cpp
     )
 
-    add_executable(window_server ${SOURCES})
+    add_os_executable(window_server bin)
 
-    target_link_libraries(window_server PRIVATE window_server_headers liim graphics)
-
-    install(TARGETS window_server RUNTIME DESTINATION bin)
+    target_link_libraries(window_server window_server_headers liim graphics)
 endif()

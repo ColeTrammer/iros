@@ -26,9 +26,7 @@ set(SOURCES
     sh_state.cpp
 )
 
-add_executable(sh ${SOURCES})
+add_os_executable(sh bin)
 target_link_libraries(sh parser_headers liim)
 
 add_dependencies(sh generate-sh-parser)
-
-install(TARGETS sh RUNTIME DESTINATION bin)

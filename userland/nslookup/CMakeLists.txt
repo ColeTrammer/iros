@@ -5,6 +5,4 @@ set(SOURCES
     server.c
 )
 
-add_executable(nslookup ${SOURCES})
-
-install(TARGETS nslookup RUNTIME DESTINATION bin)
+add_os_executable(nslookup bin)
