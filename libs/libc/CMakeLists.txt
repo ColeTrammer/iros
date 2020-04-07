@@ -270,17 +270,17 @@ set(HOSTED_SOURCES
 )
 
 set(SOURCES ${FREE_SOURCES})
-add_os_library(k FALSE)
+add_os_library(libk k FALSE)
 set(SOURCES ${SOURCES} ${HOSTED_SOURCES})
-add_os_library(c TRUE)
+add_os_library(libc c TRUE)
 
-target_compile_definitions(k PRIVATE __is_libk)
-set_target_properties(k PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
-target_link_libraries(k PRIVATE kernel_headers)
+target_compile_definitions(libk PRIVATE __is_libk)
+set_target_properties(libk PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
+target_link_libraries(libk PRIVATE kernel_headers)
 
-target_compile_definitions(c PRIVATE __is_libc)
-target_link_libraries(c PRIVATE liim parser_headers)
-add_dependencies(c generate-regex-parser crt0_object)
+target_compile_definitions(libc PRIVATE __is_libc)
+target_link_libraries(libc PRIVATE libliim parser_headers)
+add_dependencies(libc generate-regex-parser crt0_object)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdinc++")
@@ -290,7 +290,7 @@ add_custom_target(
     COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libc/cmake_install.cmake
     COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libm/cmake_install.cmake
     COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libpthread/cmake_install.cmake
-    DEPENDS c k m pthread
+    DEPENDS libc libk libm libpthread
 )
 
 install(FILES ${CRT0_PATH} DESTINATION usr/lib RENAME crt0.o)

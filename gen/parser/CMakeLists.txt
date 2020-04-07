@@ -1,5 +1,5 @@
 add_os_headers(parser_headers)
-target_link_libraries(parser_headers INTERFACE liim)
+target_link_libraries(parser_headers INTERFACE libliim)
 
 set(SOURCES
     extended_grammar.cpp
@@ -11,4 +11,4 @@ set(SOURCES
 )
 
 add_os_executable(parser bin)
-target_link_libraries(parser liim)
+target_link_libraries(parser libliim)

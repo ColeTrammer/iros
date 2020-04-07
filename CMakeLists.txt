@@ -22,16 +22,16 @@ set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ISODIR ${ROOT}/isodir)
 set(SYSROOT ${ROOT}/sysroot)
 
-if (${TARGET_OS} STREQUAL os_2)
+if (${NATIVE_BUILD})
+    add_compile_definitions("_GNU_SOURCE")
+    add_compile_definitions("_POSIX_C_SOURCE=201900L")
+else()
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/native)
     set(CMAKE_INSTALL_PREFIX ${SYSROOT})
     set(NATIVE_DIR $ENV{OS_2_NATIVE_DIR} CACHE STRING "directory of native cmake build")
     set(NATIVE_INITRD ${NATIVE_DIR}/gen/initrd/initrd)
     set(NATIVE_PARSER ${NATIVE_DIR}/gen/parser/parser)
     include_directories(libs/libc/include)
-else()
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/native)
-    add_compile_definitions("_GNU_SOURCE")
-    add_compile_definitions("_POSIX_C_SOURCE=201900L")
 endif()
 
 function(install_headers)
@@ -42,48 +42,36 @@ function(install_headers)
     )
 endfunction()
 
+function(add_all_targets)
+    foreach(TARGET ${TARGETS})
+        add_subdirectory(${TARGET})
+    endforeach()
+endfunction()
+
 function(add_os_headers name)
     add_library(${name} INTERFACE)
     target_include_directories(${name} INTERFACE include)
     install_headers()
 endfunction()
 
-function(add_os_library name has_headers)
-    add_library(${name} ${SOURCES})
-    install(TARGETS ${name} ARCHIVE DESTINATION usr/lib)
+function(add_os_library target_name short_name has_headers)
+    add_library(${target_name} ${SOURCES})
+    install(TARGETS ${target_name} ARCHIVE DESTINATION usr/lib)
     if (${has_headers})
-        target_include_directories(${name} PUBLIC include)
+        target_include_directories(${target_name} PUBLIC include)
         install_headers()
     endif()
+    set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${short_name})
 endfunction()
 
 function(add_os_executable name dest_dir)
     add_executable(${name} ${SOURCES})
     if (NOT ${NATIVE_BUILD})
-        target_link_libraries(${name} c)
+        target_link_libraries(${name} libc)
+        add_dependencies(${name} install-libc)
     endif()
     install(TARGETS ${name} RUNTIME DESTINATION ${dest_dir})
 endfunction()
-
-add_custom_target(
-    generate-initrd
-    BYPRODUCTS ${SYSROOT}/boot/initrd.bin
-    COMMAND ${NATIVE_INITRD} -e cmake_install.cmake initrd ${SYSROOT}/boot/initrd.bin > /dev/null
-)
-
-add_custom_target(
-    os_2.iso
-    BYPRODUCTS ${ROOT}/os_2.iso
-    COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
-	COMMAND /bin/mkdir -p ${ISODIR}/modules
-	COMMAND objcopy -S ${SYSROOT}/boot/boot ${ISODIR}/boot/boot
-	COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/modules/kernel
-	COMMAND /bin/cp --preserve=timestamps ${SYSROOT}/boot/initrd.bin ${ISODIR}/modules/initrd.bin
-	COMMAND /bin/cp --preserve=timestamps ${ROOT}/grub.cfg ${ISODIR}/boot/grub
-	COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/boot
-    COMMAND grub-mkrescue -o ${ROOT}/os_2.iso ${ISODIR}
-    DEPENDS generate-initrd kernel boot
-)
 
 add_subdirectory(libs)
 add_subdirectory(gen)
@@ -91,3 +79,48 @@ add_subdirectory(userland)
 add_subdirectory(initrd)
 add_subdirectory(boot)
 add_subdirectory(kernel)
+set(ALL_TARGETS ${LIBS_TARGETS} ${GEN_TARGETS} ${USERLAND_TARGETS} ${INITRD_TARGETS} ${BOOT_TARGETS} ${KERNEL_TARGETS})
+
+if (NOT ${NATIVE_BUILD})
+    add_custom_target(
+        generate-initrd
+        BYPRODUCTS ${SYSROOT}/boot/initrd.bin
+        COMMAND /bin/mkdir -p ${SYSROOT}/boot
+        COMMAND ${NATIVE_INITRD} -e cmake_install.cmake initrd ${SYSROOT}/boot/initrd.bin > /dev/null
+        DEPENDS ${INITRD_TARGETS}
+    )
+
+    add_custom_target(
+        install-all
+        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/cmake_install.cmake
+        DEPENDS ${ALL_TARGETS}
+    )
+
+    add_custom_target(
+        os_2.iso
+        ALL
+        BYPRODUCTS ${ROOT}/os_2.iso
+        COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
+        COMMAND /bin/mkdir -p ${ISODIR}/modules
+        COMMAND objcopy -S ${SYSROOT}/boot/boot ${ISODIR}/boot/boot
+        COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/modules/kernel
+        COMMAND /bin/cp --preserve=timestamps ${SYSROOT}/boot/initrd.bin ${ISODIR}/modules/initrd.bin
+        COMMAND /bin/cp --preserve=timestamps ${ROOT}/grub.cfg ${ISODIR}/boot/grub
+        COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/boot
+        COMMAND grub-mkrescue -o ${ROOT}/os_2.iso ${ISODIR}
+        DEPENDS generate-initrd ${ALL_TARGETS} install-all
+    )
+
+    add_custom_target(
+        os_2.img
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND sudo ./makeimg.sh
+        USES_TERMINAL
+    )
+
+    add_custom_target(
+        run
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ./qemu.sh
+    )
+endif()

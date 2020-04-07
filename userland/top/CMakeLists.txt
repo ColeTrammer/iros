@@ -3,4 +3,4 @@ set(SOURCES
 )
 
 add_os_executable(top bin)
-target_link_libraries(top procinfo)
+target_link_libraries(top libprocinfo)

@@ -1,7 +1,7 @@
 add_os_headers(window_server_headers)
 target_link_libraries(window_server_headers INTERFACE kernel_headers)
 
-if (${TARGET_OS} STREQUAL os_2)
+if (NOT ${NATIVE_BUILD})
     set(SOURCES
         main.cpp
         server.cpp
@@ -11,5 +11,5 @@ if (${TARGET_OS} STREQUAL os_2)
 
     add_os_executable(window_server bin)
 
-    target_link_libraries(window_server window_server_headers liim graphics)
+    target_link_libraries(window_server window_server_headers libliim libgraphics)
 endif()

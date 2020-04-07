@@ -2,4 +2,4 @@ set(SOURCES
     math.c
 )
 
-add_os_library(m FALSE)
+add_os_library(libm m FALSE)

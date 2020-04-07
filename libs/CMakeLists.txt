@@ -1,11 +1,19 @@
-if (${TARGET_OS} STREQUAL os_2)
-    add_subdirectory(libc)
-    add_subdirectory(libm)
-    add_subdirectory(libpthread)
-    add_subdirectory(librt)
+if (NOT ${NATIVE_BUILD})
+    set(OS_LIBS
+        libc
+        libm
+        libpthread
+        librt
+    )
 endif()
 
-add_subdirectory(libgraphics)
-add_subdirectory(libliim)
-add_subdirectory(libprocinfo)
-add_subdirectory(libws)
+set(TARGETS
+    ${OS_LIBS}
+    libgraphics
+    libliim
+    libprocinfo
+    libws
+)
+
+add_all_targets()
+set(LIBS_TARGETS ${TARGETS} PARENT_SCOPE)

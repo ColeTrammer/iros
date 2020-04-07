@@ -9,4 +9,4 @@ set(SOURCES
 )
 
 add_os_executable(xterm bin)
-target_link_libraries(xterm graphics liim ws)
+target_link_libraries(xterm libgraphics libliim libws)

@@ -4,4 +4,4 @@ set(SOURCES
     read_procfs_info.c
 )
 
-add_os_library(procinfo TRUE)
+add_os_library(libprocinfo procinfo TRUE)

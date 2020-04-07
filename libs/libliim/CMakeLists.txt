@@ -1,1 +1,1 @@
-add_os_headers(liim)
+add_os_headers(libliim)

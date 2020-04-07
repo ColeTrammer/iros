@@ -1,4 +1,4 @@
-if (NOT ${IS_NATIVE_BUILD})
+if (NOT ${NATIVE_BUILD})
     add_subdirectory("arch/${ARCH}")
 
     add_library(boot_startfiles OBJECT
@@ -25,4 +25,6 @@ if (NOT ${IS_NATIVE_BUILD})
     set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_COMPILER} <CMAKE_C_LINK_FLAGS> <FLAGS> <LINK_FLAGS> ${STARTFILE_PREFIX}/boot.S.o ${STARTFILE_PREFIX}/crti.S.o ${CRTBEGIN_PATH} <OBJECTS> -o <TARGET> <LINK_LIBRARIES> ${CRTEND_PATH} ${STARTFILE_PREFIX}/crtn.S.o")
 
     install(TARGETS boot RUNTIME DESTINATION boot)
+
+    set(BOOT_TARGETS boot PARENT_SCOPE)
 endif()

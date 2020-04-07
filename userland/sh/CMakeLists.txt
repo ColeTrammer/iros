@@ -27,6 +27,6 @@ set(SOURCES
 )
 
 add_os_executable(sh bin)
-target_link_libraries(sh parser_headers liim)
+target_link_libraries(sh parser_headers libliim)
 
 add_dependencies(sh generate-sh-parser)

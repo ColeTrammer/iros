@@ -1,42 +1,50 @@
-if (${TARGET_OS} STREQUAL os_2)
-    add_subdirectory(chown)
-    add_subdirectory(ping)
-    add_subdirectory(sh)
-    add_subdirectory(stat)
-    add_subdirectory(top)
-    add_subdirectory(xterm)
+if (NOT ${NATIVE_BUILD})
+    set(OS_TARGETS
+        chown
+        ping
+        sh
+        stat
+        top
+        xterm
+    )
 endif()
 
-add_subdirectory(basename)
-add_subdirectory(cat)
-add_subdirectory(chmod)
-add_subdirectory(clear)
-add_subdirectory(cp)
-add_subdirectory(date)
-add_subdirectory(dirname)
-add_subdirectory(echo)
-add_subdirectory(env)
-add_subdirectory(false)
-add_subdirectory(grep)
-add_subdirectory(head)
-add_subdirectory(id)
-add_subdirectory(kill)
-add_subdirectory(ln)
-add_subdirectory(ls)
-add_subdirectory(mkdir)
-add_subdirectory(mv)
-add_subdirectory(nslookup)
-add_subdirectory(ps)
-add_subdirectory(pwd)
-add_subdirectory(realpath)
-add_subdirectory(rm)
-add_subdirectory(rmdir)
-add_subdirectory(sleep)
-add_subdirectory(start)
-add_subdirectory(su)
-add_subdirectory(tail)
-add_subdirectory(touch)
-add_subdirectory(true)
-add_subdirectory(uname)
-add_subdirectory(window_server)
-add_subdirectory(yes)
+set(TARGETS
+    ${OS_TARGETS}
+    basename
+    cat
+    chmod
+    clear
+    cp
+    date
+    dirname
+    echo
+    env
+    false
+    grep
+    head
+    id
+    kill
+    ln
+    ls
+    mkdir
+    mv
+    nslookup
+    ps
+    pwd
+    realpath
+    rm
+    rmdir
+    sleep
+    start
+    su
+    tail
+    touch
+    true
+    uname
+    window_server
+    yes
+)
+
+add_all_targets()
+set(USERLAND_TARGETS ${TARGETS} PARENT_SCOPE)

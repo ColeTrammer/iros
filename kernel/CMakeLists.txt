@@ -1,6 +1,6 @@
 add_os_headers(kernel_headers)
 
-if (${TARGET_OS} STREQUAL os_2)
+if (NOT ${NATIVE_BUILD})
     add_subdirectory("arch/${ARCH}")
 
     add_library(kernel_startfiles OBJECT
@@ -69,8 +69,7 @@ if (${TARGET_OS} STREQUAL os_2)
     target_compile_definitions(kernel PRIVATE __is_kernel)
 
     add_dependencies(kernel kernel_startfiles)
-    target_link_libraries(kernel kernel_headers)
-    target_link_libraries(kernel k)
+    target_link_libraries(kernel libk kernel_headers)
 
     execute_process(COMMAND ${CMAKE_C_COMPILER} -print-file-name=crtbegin.o OUTPUT_VARIABLE CRTBEGIN_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND ${CMAKE_C_COMPILER} -print-file-name=crtend.o OUTPUT_VARIABLE CRTEND_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -79,4 +78,5 @@ if (${TARGET_OS} STREQUAL os_2)
     set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_COMPILER} <CMAKE_C_LINK_FLAGS> <FLAGS> <LINK_FLAGS> ${STARTFILE_PREFIX}/crt0.S.o ${STARTFILE_PREFIX}/crti.S.o ${CRTBEGIN_PATH} <OBJECTS> -o <TARGET> <LINK_LIBRARIES> ${CRTEND_PATH} ${STARTFILE_PREFIX}/crtn.S.o")
 
     install(TARGETS kernel RUNTIME DESTINATION boot)
+    set(KERNEL_TARGETS kernel PARENT_SCOPE)
 endif()

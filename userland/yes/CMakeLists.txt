@@ -4,4 +4,4 @@ set(SOURCES
 
 add_os_executable(yes bin)
 
-target_link_libraries(yes liim)
+target_link_libraries(yes libliim)

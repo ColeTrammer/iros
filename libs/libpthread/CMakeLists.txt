@@ -13,4 +13,4 @@ set(SOURCES
     spinlock.c
 )
 
-add_os_library(pthread FALSE)
+add_os_library(libpthread pthread FALSE)
