@@ -18,6 +18,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -fconcepts -fno-ex
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
+
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ISODIR ${ROOT}/isodir)
 set(SYSROOT ${ROOT}/sysroot)
@@ -25,12 +30,16 @@ set(SYSROOT ${ROOT}/sysroot)
 if (${NATIVE_BUILD})
     add_compile_definitions("_GNU_SOURCE")
     add_compile_definitions("_POSIX_C_SOURCE=201900L")
+    set(PTHREAD_LIB pthread)
+    set(REALTIME_LIB rt)
 else()
     set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/native)
     set(CMAKE_INSTALL_PREFIX ${SYSROOT})
     set(NATIVE_DIR $ENV{OS_2_NATIVE_DIR} CACHE STRING "directory of native cmake build")
     set(NATIVE_INITRD ${NATIVE_DIR}/gen/initrd/initrd)
     set(NATIVE_PARSER ${NATIVE_DIR}/gen/parser/parser)
+    set(PTHREAD_LIB libpthread)
+    set(REALTIME_LIB librt)
     include_directories(libs/libc/include)
 endif()
 
@@ -122,5 +131,6 @@ if (NOT ${NATIVE_BUILD})
         run
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ./qemu.sh
+        USES_TERMINAL
     )
 endif()

@@ -46,8 +46,6 @@ cmake -S . -B "$OS_2_BUILD_DIR" -G "$GENERATOR" \
     -DCMAKE_CXX_COMPILER_WORKS=TRUE \
     || die "Failed to create os cmake project at" "$OS_2_BUILD_DIR"
 
-cmake --build "$OS_2_BUILD_DIR" --target install-libc
-
 echo "Successfully created cmake build directories:"
 echo "  'OS_2_NATIVE_DIR=$OS_2_NATIVE_DIR'"
 echo "  'OS_2_BUILD_DIR=$OS_2_BUILD_DIR'"
