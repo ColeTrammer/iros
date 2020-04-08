@@ -77,7 +77,6 @@ struct process {
     spinlock_t lock;
 };
 
-void proc_drop_process_unlocked(struct process *process, bool free_paging_structure);
 void proc_drop_process(struct process *process, bool free_paging_structure);
 void proc_add_process(struct process *process);
 void proc_bump_process(struct process *process);

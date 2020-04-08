@@ -2,6 +2,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,27 +37,27 @@ static struct file_system *file_systems;
 static struct mount *root;
 
 struct inode *bump_inode_reference(struct inode *inode) {
-    spin_lock(&inode->lock);
+    int fetched_ref_count = atomic_fetch_add(&inode->ref_count, 1);
+    (void) fetched_ref_count;
 
 #ifdef INODE_REF_COUNT_DEBUG
-    debug_log("+Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count + 1);
+    debug_log("+Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, fetched_ref_count + 1);
 #endif /* INODE_REF_COUNT_DEBUG */
 
-    assert(inode->ref_count > 0);
-    inode->ref_count++;
-    spin_unlock(&inode->lock);
-
+    assert(fetched_ref_count > 0);
     return inode;
 }
 
-void drop_inode_reference_unlocked(struct inode *inode) {
+void drop_inode_reference(struct inode *inode) {
+    int fetched_ref_count = atomic_fetch_sub(&inode->ref_count, 1);
+
 #ifdef INODE_REF_COUNT_DEBUG
-    debug_log("-Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, inode->ref_count - 1);
+    debug_log("-Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, fetched_ref_count - 1);
 #endif /* INODE_REF_COUNT_DEBUG */
 
     // Only delete inode if it's refcount is zero
-    assert(inode->ref_count > 0);
-    if (--inode->ref_count <= 0) {
+    assert(fetched_ref_count > 0);
+    if (fetched_ref_count == 1) {
 #ifdef INODE_REF_COUNT_DEBUG
         debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
 #endif /* INODE_REF_COUNT_DEBUG */
@@ -68,18 +69,9 @@ void drop_inode_reference_unlocked(struct inode *inode) {
             fs_destroy_dirent_cache(inode->dirent_cache);
         }
 
-        spin_unlock(&inode->lock);
-
         free(inode);
         return;
     }
-
-    spin_unlock(&inode->lock);
-}
-
-void drop_inode_reference(struct inode *inode) {
-    spin_lock(&inode->lock);
-    drop_inode_reference_unlocked(inode);
 }
 
 int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer) {
@@ -530,12 +522,9 @@ int fs_close(struct file *file) {
 
     struct inode *inode = fs_file_inode(file);
 
-    spin_lock(&file->lock);
-    assert(file->ref_count > 0);
-    file->ref_count--;
-    if (file->ref_count <= 0) {
-        spin_unlock(&file->lock);
-
+    int fetched_ref_count = atomic_fetch_sub(&file->ref_count, 1);
+    assert(fetched_ref_count > 0);
+    if (fetched_ref_count == 1) {
         if (inode) {
             drop_inode_reference(inode);
         }
@@ -552,8 +541,6 @@ int fs_close(struct file *file) {
         free(file);
         return error;
     }
-
-    spin_unlock(&file->lock);
 
     return 0;
 }
@@ -1735,10 +1722,8 @@ struct file_descriptor fs_dup(struct file_descriptor desc) {
         return (struct file_descriptor) { NULL, 0 };
     }
 
-    spin_lock(&desc.file->lock);
-    assert(desc.file->ref_count > 0);
-    desc.file->ref_count++;
-    spin_unlock(&desc.file->lock);
+    int fetched_ref_count = atomic_fetch_add(&desc.file->ref_count, 1);
+    assert(fetched_ref_count > 0);
 
     // NOTE: the new descriptor reset the FD_CLOEXEC flag
     return (struct file_descriptor) { desc.file, 0 };
@@ -1749,10 +1734,8 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc) {
         return (struct file_descriptor) { NULL, 0 };
     }
 
-    spin_lock(&desc.file->lock);
-    assert(desc.file->ref_count > 0);
-    desc.file->ref_count++;
-    spin_unlock(&desc.file->lock);
+    int fetched_ref_count = atomic_fetch_add(&desc.file->ref_count, 1);
+    assert(fetched_ref_count > 0);
 
     // NOTE: the new descriptor reset the FD_CLOEXEC flag
     return (struct file_descriptor) { desc.file, desc.fd_flags };

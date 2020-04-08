@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -24,20 +25,20 @@ static struct hash_map *map;
 
 HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
-void proc_drop_process_unlocked(struct process *process, bool free_paging_structure) {
+void proc_drop_process(struct process *process, bool free_paging_structure) {
+    int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
+
 #ifdef PROC_REF_COUNT_DEBUG
-    debug_log("Process ref count: [ %d, %d ]\n", process->pid, process->ref_count - 1);
+    debug_log("Process ref count: [ %d, %d ]\n", process->pid, fetched_ref_count - 1);
 #endif /* PROC_REF_COUNT_DEBUG */
 
-    assert(process->ref_count > 0);
-    process->ref_count--;
-    if (process->ref_count == 0) {
+    assert(fetched_ref_count > 0);
+    if (fetched_ref_count == 1) {
 #ifdef PROCESSES_DEBUG
         debug_log("Destroying process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
         hash_del(map, &process->pid);
         procfs_unregister_process(process);
-        spin_unlock(&process->lock);
 
         proc_kill_arch_process(process, free_paging_structure);
 #ifdef PROCESSES_DEBUG
@@ -102,13 +103,6 @@ void proc_drop_process_unlocked(struct process *process, bool free_paging_struct
         free(process);
         return;
     }
-
-    spin_unlock(&process->lock);
-}
-
-void proc_drop_process(struct process *process, bool free_paging_structure) {
-    spin_lock(&process->lock);
-    proc_drop_process_unlocked(process, free_paging_structure);
 }
 
 void proc_add_process(struct process *process) {
@@ -125,13 +119,12 @@ void proc_add_process(struct process *process) {
 }
 
 void proc_bump_process(struct process *process) {
-    spin_lock(&process->lock);
+    int fetched_ref_count = atomic_fetch_add(&process->ref_count, 1);
+    (void) fetched_ref_count;
 #ifdef PROC_REF_COUNT_DEBUG
-    debug_log("Process ref count: [ %d, %d ]\n", process->pid, process->ref_count + 1);
+    debug_log("Process ref count: [ %d, %d ]\n", process->pid, fetched_ref_count + 1);
 #endif /* PROC_REF_COUNT_DEBUG */
-    assert(process->ref_count > 0);
-    process->ref_count++;
-    spin_unlock(&process->lock);
+    assert(fetched_ref_count > 0);
 }
 
 uintptr_t proc_allocate_user_stack(struct process *process) {

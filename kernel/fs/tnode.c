@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,17 +45,15 @@ struct tnode *create_tnode(const char *name_to_copy, struct tnode *parent, struc
 void drop_tnode(struct tnode *tnode) {
     assert(tnode);
 
-    spin_lock(&tnode->lock);
+    int fetched_ref_count = atomic_fetch_sub(&tnode->ref_count, 1);
 
 #ifdef TNODE_REF_COUNT_DEBUG
-    debug_log("-tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count - 1);
+    debug_log("-tnode ref_count: [ %p, %d ]\n", tnode, fetched_ref_count - 1);
 #endif /* TNODE_REF_COUNT_DEBUG */
 
-    assert(tnode->ref_count > 0);
+    assert(fetched_ref_count > 0);
 
-    if (--tnode->ref_count == 0) {
-        spin_unlock(&tnode->lock);
-
+    if (fetched_ref_count == 1) {
 #ifdef TNODE_REF_COUNT_DEBUG
         debug_log("Destroying tnode: [ %p ]\n", tnode);
 #endif /* TNODE_REF_COUNT_DEBUG */
@@ -71,23 +70,18 @@ void drop_tnode(struct tnode *tnode) {
         }
         return;
     }
-
-    spin_unlock(&tnode->lock);
 }
 
 struct tnode *bump_tnode(struct tnode *tnode) {
     assert(tnode);
 
-    spin_lock(&tnode->lock);
+    int fetched_ref_count = atomic_fetch_add(&tnode->ref_count, 1);
+    (void) fetched_ref_count;
 
 #ifdef TNODE_REF_COUNT_DEBUG
-    debug_log("+tnode ref_count: [ %p, %d ]\n", tnode, tnode->ref_count + 1);
+    debug_log("+tnode ref_count: [ %p, %d ]\n", tnode, fetched_ref_count + 1);
 #endif /* TNODE_REF_COUNT_DEBUG */
 
-    assert(tnode->ref_count > 0);
-
-    tnode->ref_count++;
-
-    spin_unlock(&tnode->lock);
+    assert(fetched_ref_count > 0);
     return tnode;
 }

@@ -76,8 +76,8 @@ static int inode_kill(struct vm_object *self) {
 
     spin_lock(&data->inode->lock);
     data->inode->vm_object = NULL;
-    drop_inode_reference_unlocked(data->inode);
     spin_unlock(&data->inode->lock);
+    drop_inode_reference(data->inode);
 
     free(data);
     return 0;

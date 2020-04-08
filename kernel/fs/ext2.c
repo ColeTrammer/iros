@@ -1502,7 +1502,10 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
                 return ret;
             }
 
-            drop_inode_reference_unlocked(inode);
+            // NOTE: it's fine to call drop_inode_reference with the lock here
+            //       because the tnode still has a reference and therefore the
+            //       inode will never actually be freed by this call.
+            drop_inode_reference(inode);
             return 0;
         }
 

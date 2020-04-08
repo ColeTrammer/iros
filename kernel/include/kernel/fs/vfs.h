@@ -16,7 +16,6 @@ struct statvfs;
 #define INAME_TAKE_OWNERSHIP_OF_PATH       2
 
 struct inode *bump_inode_reference(struct inode *inode);
-void drop_inode_reference_unlocked(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 int iname(const char *path, int flags, struct tnode **result);
 int iname_with_base(struct tnode *base, const char *_path, int flags, struct tnode **result);
