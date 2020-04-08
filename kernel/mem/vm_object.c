@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 
 #include <string.h>
@@ -11,34 +12,31 @@
 // #define VM_OBJECT_REF_COUNT_DEBUG
 
 void drop_vm_object(struct vm_object *obj) {
-    spin_lock(&obj->lock);
+    int fetched_ref_count = atomic_fetch_sub(&obj->ref_count, 1);
 #ifdef VM_OBJECT_REF_COUNT_DEBUG
-    debug_log("vm_object ref count: [ %p, %d ]\n", obj, obj->ref_count - 1);
+    debug_log("vm_object ref count: [ %p, %d ]\n", obj, fetched_ref_count - 1);
 #endif /* VM_OBJECT_REF_COUNT_DEBUG */
-    assert(obj->ref_count > 0);
-    if (--obj->ref_count == 0) {
+    assert(fetched_ref_count > 0);
+    if (fetched_ref_count == 1) {
 #ifdef VM_OBJECT_REF_COUNT_DEBUG
         debug_log("vm_object->kill: [ %p ]\n", obj);
 #endif /* VM_OBJECT_REF_COUNT_DEBUG */
+
         if (obj->ops->kill) {
             obj->ops->kill(obj);
         }
 
-        spin_unlock(&obj->lock);
         free(obj);
         return;
     }
-
-    spin_unlock(&obj->lock);
 }
 
 struct vm_object *bump_vm_object(struct vm_object *obj) {
-    spin_lock(&obj->lock);
+    int fetched_ref_count = atomic_fetch_add(&obj->ref_count, 1);
+    (void) fetched_ref_count;
 #ifdef VM_OBJECT_REF_COUNT_DEBUG
-    debug_log("vm_object ref count: [ %p, %d ]\n", obj, obj->ref_count + 1);
+    debug_log("vm_object ref count: [ %p, %d ]\n", obj, fetched_ref_count + 1);
 #endif /* VM_OBJECT_REF_COUNT_DEBUG */
-    obj->ref_count++;
-    spin_unlock(&obj->lock);
     return obj;
 }
 
