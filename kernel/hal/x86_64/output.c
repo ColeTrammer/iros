@@ -12,11 +12,14 @@
 
 static spinlock_t debug_lock = SPINLOCK_INITIALIZER;
 
+extern bool g_should_log;
+
 bool kprint(const char *str, size_t len) {
     return serial_write_message(str, len);
 }
 
 int vdebug_log_internal(const char *func, const char *format, va_list parameters) {
+    g_should_log = false;
     spin_lock(&debug_lock);
 
     if (*format == '~') {
@@ -25,6 +28,7 @@ int vdebug_log_internal(const char *func, const char *format, va_list parameters
         written += vprintf(format + 1, parameters);
 
         spin_unlock(&debug_lock);
+        g_should_log = true;
         va_end(parameters);
         return written;
     }
@@ -50,6 +54,7 @@ int vdebug_log_internal(const char *func, const char *format, va_list parameters
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
     spin_unlock(&debug_lock);
+    g_should_log = true;
     return written;
 }
 
