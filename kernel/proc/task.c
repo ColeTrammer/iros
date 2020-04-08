@@ -24,7 +24,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
-// #define TASK_SCHED_STATE_DEBUB
+// #define TASK_SCHED_STATE_DEBUG
 // #define TASK_SIGNAL_DEBUG
 
 struct task *current_task;
@@ -430,6 +430,10 @@ void task_do_sigs_if_needed(struct task *task) {
 }
 
 void task_set_state_to_exiting(struct task *task) {
+    if (task->sched_state == EXITING) {
+        return;
+    }
+
     if (task->blocking) {
         // Defer exit state change until after the blocking code has a chance
         // to clean up
@@ -445,9 +449,9 @@ void task_set_state_to_exiting(struct task *task) {
 
 void task_yield_if_state_changed(struct task *task) {
     if (task->should_exit) {
-#ifdef TASK_SCHED_STATE_DEBUB
+#ifdef TASK_SCHED_STATE_DEBUG
         debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
-#endif /* TASK_SCHED_STATE_DEBUB */
+#endif /* TASK_SCHED_STATE_DEBUG */
         task->sched_state = EXITING;
         sys_sched_run_next(&task->arch_task.task_state);
     }
