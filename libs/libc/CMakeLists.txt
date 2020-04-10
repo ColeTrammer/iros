@@ -241,6 +241,7 @@ else()
         unistd/execve.c
         unistd/execvp.c
         unistd/execvpe.c
+        unistd/fchdir.c
         unistd/fork.c
         unistd/ftruncate.c
         unistd/getcwd.c

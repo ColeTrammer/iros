@@ -58,6 +58,7 @@ pid_t getpgid(pid_t pid);
 pid_t getpgrp(void);
 char *getcwd(char *buf, size_t size);
 int chdir(const char *path);
+int fchdir(int fd);
 off_t lseek(int fd, off_t offset, int whence);
 unsigned int sleep(unsigned int seconds);
 int chown(const char *pathname, uid_t owner, gid_t group);

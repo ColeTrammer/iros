@@ -2349,6 +2349,23 @@ SYS_CALL(statvfs) {
     SYS_RETURN(fs_statvfs(path, buf));
 }
 
+SYS_CALL(fchdir) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+
+    struct task *task = get_current_task();
+
+    if (!(fs_file_inode(file)->flags & FS_DIR)) {
+        SYS_RETURN(-ENOTDIR);
+    }
+
+    drop_tnode(task->process->cwd);
+    task->process->cwd = bump_tnode(file->tnode);
+
+    SYS_RETURN(0);
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);
