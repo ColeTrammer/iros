@@ -1646,6 +1646,10 @@ int fs_link(const char *oldpath, const char *newpath) {
         return ret;
     }
 
+    if (target->inode->flags & FS_DIR) {
+        return -EPERM;
+    }
+
     char *path = malloc(strlen(newpath) + 1);
     strcpy(path, newpath);
 
