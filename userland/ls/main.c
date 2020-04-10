@@ -126,7 +126,16 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
         snprintf(buffer, 49, "%%s %%%lulu %%s %%s %%%luld %%s ", widest_num_links, widest_size);
 
         char perm_string[11];
-        perm_string[0] = S_ISDIR(dirent->stat_struct.st_mode) ? 'd' : S_ISLNK(dirent->stat_struct.st_mode) ? 'l' : '-';
+        perm_string[0] =
+            S_ISCHR(dirent->stat_struct.st_mode)
+                ? 'c'
+                : S_ISBLK(dirent->stat_struct.st_mode)
+                      ? 'b'
+                      : S_ISSOCK(dirent->stat_struct.st_mode)
+                            ? 's'
+                            : S_ISFIFO(dirent->stat_struct.st_mode)
+                                  ? 'p'
+                                  : S_ISDIR(dirent->stat_struct.st_mode) ? 'd' : S_ISLNK(dirent->stat_struct.st_mode) ? 'l' : '-';
         perm_string[1] = dirent->stat_struct.st_mode & S_IRUSR ? 'r' : '-';
         perm_string[2] = dirent->stat_struct.st_mode & S_IWUSR ? 'w' : '-';
         perm_string[3] = dirent->stat_struct.st_mode & S_IXUSR ? 'x' : '-';
