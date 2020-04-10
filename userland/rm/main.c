@@ -1,5 +1,8 @@
+#define _XOPEN_SOURCE 700
+
 #include <errno.h>
 #include <fcntl.h>
+#include <ftw.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +14,7 @@ static bool recursive;
 static bool interactive;
 static bool suppress;
 static bool input_is_terminal;
+static bool failed;
 
 #define rm_err(s)        \
     do {                 \
@@ -43,14 +47,8 @@ static enum prompt_result do_prompt(const char *path) {
     return PROMPT_NO;
 }
 
-static int do_remove(char *path) {
-    struct stat st;
-    if (lstat(path, &st)) {
-        rm_err("lstat");
-        return 1;
-    }
-
-    bool is_link = S_ISLNK(st.st_mode);
+static int do_remove_with_info(const char *path, const struct stat *st) {
+    bool is_link = S_ISLNK(st->st_mode);
     bool can_write = is_link ? true : access(path, W_OK) == 0;
     if (!can_write && errno != EACCES) {
         rm_err("access");
@@ -70,18 +68,43 @@ static int do_remove(char *path) {
     }
 
     // NOTE: is seems like POSIX would allow calling rm <dir> with no flags, but linux does't.
-    int (*remover)(const char *path) = S_ISDIR(st.st_mode) ? rmdir : unlink;
+    int (*remover)(const char *path) = S_ISDIR(st->st_mode) ? rmdir : unlink;
     if (remover(path)) {
-        rm_err(S_ISDIR(st.st_mode) ? "rmdir" : "unlink");
+        rm_err(S_ISDIR(st->st_mode) ? "rmdir" : "unlink");
         return 1;
     }
 
     return 0;
 }
 
+static int do_remove(char *path) {
+    struct stat st;
+    if (lstat(path, &st)) {
+        rm_err("lstat");
+        return 1;
+    }
+
+    return do_remove_with_info(path, &st);
+}
+
+static int rm_recurse(const char *path, const struct stat *st, int flag, struct FTW *ftwbuf) {
+    (void) flag;
+    (void) ftwbuf;
+
+    if (do_remove_with_info(path, st)) {
+        failed = true;
+    }
+    return 0;
+}
+
 static int do_rm(char *path) {
     if (!recursive) {
         return do_remove(path);
+    }
+
+    if (nftw(path, rm_recurse, 10, FTW_PHYS | FTW_DEPTH)) {
+        rm_err("ntfw");
+        return 1;
     }
 
     return 0;
@@ -127,6 +150,12 @@ int main(int argc, char **argv) {
         if (do_rm(argv[optind])) {
             any_failed = true;
         }
+    }
+
+    // This global is a hack we can't return values through ntfw without causing the
+    // file traversal to stop
+    if (failed) {
+        any_failed = true;
     }
 
     return any_failed && !suppress ? 1 : 0;
