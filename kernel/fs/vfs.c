@@ -810,6 +810,10 @@ int fs_fstatat(struct tnode *base, const char *file_name, struct stat *stat_stru
         return do_stat(base->inode, stat_struct);
     }
 
+    if (!file_name) {
+        return -EFAULT;
+    }
+
     if (!(base->inode->flags & FS_DIR)) {
         return -ENOTDIR;
     }
