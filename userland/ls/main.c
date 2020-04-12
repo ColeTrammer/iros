@@ -107,7 +107,6 @@ void fill_dirent(char *_path, const char *name, bool direct) {
 
             // Check if the file exists
             if (access(actual_path, F_OK)) {
-                perror("access");
                 free(path);
                 d.link_path = NULL;
             } else {
@@ -282,7 +281,7 @@ int do_ls(char *path, bool first, bool multiple_args) {
     }
 
     if (d && multiple_args) {
-        printf("%s/\n", path);
+        printf("%s:\n", path);
     }
 
     if (extra_info) {
