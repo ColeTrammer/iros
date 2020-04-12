@@ -156,8 +156,9 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
 #endif /* PAGING_DEBUG */
 
     bool is_kernel = current->kernel_task || current->in_kernel;
-    printf("\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX ]\n",
-           current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp);
+    printf(
+        "\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n",
+        current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, task_state->error_code);
     if (!is_kernel) {
         memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
         memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
