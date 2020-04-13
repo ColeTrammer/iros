@@ -89,10 +89,8 @@ void do_cp(const char *source_path, const char *dest_path) {
             any_failed = 1;
         }
 
-        int (*do_chown)(const char *path, uid_t owner, gid_t group) = dont_follow_symlinks ? lchown : chown;
-#else
-        int (*do_chown)(const char *path, uid_t owner, gid_t group) = chown;
 #endif /* __os_2__ */
+        int (*do_chown)(const char *path, uid_t owner, gid_t group) = dont_follow_symlinks ? lchown : chown;
 
         if (do_chown(dest_path, st.st_uid, st.st_gid)) {
             perror("chown");

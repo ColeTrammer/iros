@@ -821,10 +821,10 @@ SYS_CALL(chdir) {
 SYS_CALL(fstatat) {
     SYS_BEGIN();
 
-    SYS_PARAM4(int, flags);
     SYS_PARAM1_TRANSFORM(struct tnode *, base, int, get_file_tnode);
-    SYS_PARAM2_VALIDATE(const char *, path, validate_path_or_null, !(flags & AT_EMPTY_PATH));
+    SYS_PARAM2_VALIDATE(const char *, path, validate_path, 0);
     SYS_PARAM3_VALIDATE(void *, stat_struct, validate_write, sizeof(struct stat));
+    SYS_PARAM4(int, flags);
 
     SYS_RETURN(fs_fstatat(base, path, stat_struct, flags));
 }
@@ -2068,14 +2068,16 @@ SYS_CALL(link) {
     SYS_RETURN(fs_link(oldpath, newpath));
 }
 
-SYS_CALL(chown) {
+SYS_CALL(fchownat) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
-    SYS_PARAM2(uid_t, uid);
-    SYS_PARAM3(gid_t, gid);
+    SYS_PARAM1_TRANSFORM(struct tnode *, base, int, get_file_tnode);
+    SYS_PARAM2_VALIDATE(const char *, path, validate_path, 0);
+    SYS_PARAM3(uid_t, uid);
+    SYS_PARAM4(gid_t, gid);
+    SYS_PARAM5(int, flags);
 
-    SYS_RETURN(fs_chown(path, uid, gid));
+    SYS_RETURN(fs_fchownat(base, path, uid, gid, flags));
 }
 
 SYS_CALL(utimes) {

@@ -242,6 +242,8 @@ else()
         unistd/execvp.c
         unistd/execvpe.c
         unistd/fchdir.c
+        unistd/fchown.c
+        unistd/fchownat.c
         unistd/fork.c
         unistd/ftruncate.c
         unistd/getcwd.c
@@ -259,6 +261,7 @@ else()
         unistd/getsid.c
         unistd/getuid.c
         unistd/isatty.c
+        unistd/lchown.c
         unistd/link.c
         unistd/lseek.c
         unistd/pathconf.c

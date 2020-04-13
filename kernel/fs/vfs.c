@@ -806,7 +806,7 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
 }
 
 int fs_fstatat(struct tnode *base, const char *file_name, struct stat *stat_struct, int flags) {
-    if (flags & AT_EMPTY_PATH) {
+    if (*file_name == '\0' && (flags & AT_EMPTY_PATH)) {
         return do_stat(base->inode, stat_struct);
     }
 
@@ -1062,28 +1062,36 @@ int fs_rmdir(const char *path) {
     return 0;
 }
 
-int fs_chown(const char *path, uid_t uid, gid_t gid) {
-    assert(path);
+static int do_chown(struct inode *inode, uid_t uid, gid_t gid) {
+    if (inode->uid == uid && inode->gid == gid) {
+        return 0;
+    }
+
+    if (!inode->i_op->chown) {
+        return -EPERM;
+    }
 
     if (get_current_task()->process->euid != 0) {
         return -EPERM;
     }
 
+    return inode->i_op->chown(inode, uid, gid);
+}
+
+int fs_fchownat(struct tnode *base, const char *path, uid_t uid, gid_t gid, int flags) {
+    if (*path == '\0' && (flags & AT_EMPTY_PATH)) {
+        return do_chown(base->inode, uid, gid);
+    }
+
     struct tnode *tnode;
     int ret = iname(path, 0, &tnode);
-
     if (ret < 0) {
         return ret;
     }
 
-    if (!tnode->inode->i_op->chown) {
-        drop_tnode(tnode);
-        return -EPERM;
-    }
-
-    struct inode *inode = tnode->inode;
+    ret = do_chown(tnode->inode, uid, gid);
     drop_tnode(tnode);
-    return tnode->inode->i_op->chown(inode, uid, gid);
+    return ret;
 }
 
 int fs_chmod(const char *path, mode_t mode) {
