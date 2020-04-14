@@ -98,12 +98,6 @@ void do_cp(const char *source_path, const char *dest_path) {
     }
 
     if (preserve_modifiers) {
-        struct timespec tms[2] = { st.st_atim, st.st_mtim };
-        if (utimensat(AT_FDCWD, dest_path, tms, dont_follow_symlinks ? AT_SYMLINK_NOFOLLOW : 0)) {
-            perror("utimesat");
-            any_failed = 1;
-        }
-
         int (*do_chown)(const char *path, uid_t owner, gid_t group) = dont_follow_symlinks ? lchown : chown;
 
         if (do_chown(dest_path, st.st_uid, st.st_gid)) {
@@ -116,6 +110,12 @@ void do_cp(const char *source_path, const char *dest_path) {
                 perror("chmod");
                 any_failed = 1;
             }
+        }
+
+        struct timespec tms[2] = { st.st_atim, st.st_mtim };
+        if (utimensat(AT_FDCWD, dest_path, tms, dont_follow_symlinks ? AT_SYMLINK_NOFOLLOW : 0)) {
+            perror("utimesat");
+            any_failed = 1;
         }
     }
 }
