@@ -10,10 +10,11 @@
 
 static bool dont_follow_symlinks;
 static bool preserve_modifiers;
+static bool force;
 static bool any_failed;
 
 void do_cp(const char *source_path, const char *dest_path) {
-    struct stat st;
+    struct stat st = { 0 };
     int (*do_stat)(const char *path, struct stat *st) = dont_follow_symlinks ? lstat : stat;
     if (do_stat(source_path, &st)) {
         perror("stat");
@@ -53,6 +54,20 @@ void do_cp(const char *source_path, const char *dest_path) {
 
         int dest = open(dest_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (dest == -1) {
+            if (force) {
+                if (unlink(source_path)) {
+                    goto open_dest_fail;
+                }
+
+                source = open(source_path, O_WRONLY | O_CREAT | O_TRUNC);
+                if (source == -1) {
+                    goto open_dest_fail;
+                }
+
+                goto do_copy;
+            }
+
+        open_dest_fail:
             perror("open");
             any_failed = true;
             if (close(source)) {
@@ -61,6 +76,7 @@ void do_cp(const char *source_path, const char *dest_path) {
             return;
         }
 
+    do_copy : {}
         char buf[BUFSIZ];
         ssize_t len;
         while ((len = read(source, buf, BUFSIZ)) > 0) {
@@ -107,16 +123,19 @@ void do_cp(const char *source_path, const char *dest_path) {
 }
 
 void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-Pp] <source...> <target>\n", s);
+    fprintf(stderr, "Usage: %s [-Pfp] <source...> <target>\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, ":Pp")) != -1) {
+    while ((opt = getopt(argc, argv, ":Pfp")) != -1) {
         switch (opt) {
             case 'P':
                 dont_follow_symlinks = true;
+                break;
+            case 'f':
+                force = true;
                 break;
             case 'p':
                 preserve_modifiers = true;
