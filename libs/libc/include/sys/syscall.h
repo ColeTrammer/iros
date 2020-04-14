@@ -80,7 +80,7 @@
     __ENUMERATE_SYSCALL(SYMLINK, symlink, 2)                                   \
     __ENUMERATE_SYSCALL(LINK, link, 2)                                         \
     __ENUMERATE_SYSCALL(FCHOWNAT, fchownat, 5)                                 \
-    __ENUMERATE_SYSCALL(UTIMES, utimes, 2)                                     \
+    __ENUMERATE_SYSCALL(UTIMENSAT, utimensat, 4)                               \
     __ENUMERATE_SYSCALL(PREAD, pread, 4)                                       \
     __ENUMERATE_SYSCALL(PWRITE, pwrite, 4)                                     \
     __ENUMERATE_SYSCALL(READV, readv, 3)                                       \

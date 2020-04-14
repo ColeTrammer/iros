@@ -28,6 +28,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/validators.h>
 
 // #define INAME_DEBUG
@@ -1084,7 +1085,7 @@ int fs_fchownat(struct tnode *base, const char *path, uid_t uid, gid_t gid, int 
     }
 
     struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
+    int ret = iname_with_base(base, path, (flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
     if (ret < 0) {
         return ret;
     }
@@ -1120,21 +1121,48 @@ int fs_chmod(const char *path, mode_t mode) {
     return tnode->inode->i_op->chmod(inode, mode);
 }
 
-int fs_utimes(const char *path, const struct timeval *times) {
+static int fs_do_utimens(struct inode *inode, const struct timespec *in_times) {
+    struct timespec now = time_read_clock(CLOCK_REALTIME);
+
+    struct timespec times[2];
+
+    if (in_times == NULL) {
+        times[0] = now;
+        times[1] = now;
+    } else {
+        times[0] = in_times[0];
+        times[1] = in_times[1];
+    }
+
+    if (times[0].tv_nsec == UTIME_NOW) {
+        times[0].tv_nsec = now.tv_nsec;
+    }
+
+    if (times[1].tv_nsec == UTIME_NOW) {
+        times[1].tv_nsec = now.tv_nsec;
+    }
+
+    if (!inode->i_op->utimes) {
+        return -EPERM;
+    }
+
+    return inode->i_op->utimes(inode, times);
+}
+
+int fs_utimensat(struct tnode *base, const char *path, const struct timespec *times, int flags) {
+    if (*path == '\0' && (flags & AT_EMPTY_PATH)) {
+        return fs_do_utimens(base->inode, times);
+    }
+
     struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
+    int ret = iname_with_base(base, path, (flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
     if (ret < 0) {
         return ret;
     }
 
-    if (!tnode->inode->i_op->utimes) {
-        drop_tnode(tnode);
-        return -EPERM;
-    }
-
-    struct inode *inode = tnode->inode;
+    ret = fs_do_utimens(tnode->inode, times);
     drop_tnode(tnode);
-    return tnode->inode->i_op->utimes(inode, times);
+    return ret;
 }
 
 intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {

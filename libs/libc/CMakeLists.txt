@@ -205,13 +205,16 @@ else()
         sys/select/select.c
         sys/stat/fstat.c
         sys/stat/fstatat.c
+        sys/stat/futimens.c
         sys/stat/lstat.c
         sys/stat/mknod.c
         sys/stat/stat.c
+        sys/stat/utimensat.c
         sys/statvfs/fstatvfs.c
         sys/statvfs/statvfs.c
         sys/syscall/syscall_to_string.c
-        sys/time/time.c
+        sys/time/gettimeofday.c
+        sys/time/utimes.c
         sys/times/times.c
         sys/uio/readv.c
         sys/uio/writev.c

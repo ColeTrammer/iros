@@ -33,7 +33,7 @@ struct inode_operations {
     struct inode *(*symlink)(struct tnode *tnode, const char *name, const char *target, int *error);
     int (*link)(struct tnode *tnode, const char *name, const struct tnode *target);
     int (*read_all)(struct inode *inode, void *buffer);
-    int (*utimes)(struct inode *inode, const struct timeval *times);
+    int (*utimes)(struct inode *inode, const struct timespec *times);
     void (*on_inode_destruction)(struct inode *inode);
     ssize_t (*read)(struct inode *inode, void *buffer, size_t size, off_t offset);
 };

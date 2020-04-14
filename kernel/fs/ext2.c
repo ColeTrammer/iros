@@ -1570,13 +1570,19 @@ int ext2_chmod(struct inode *inode, mode_t mode) {
     return ext2_sync_inode(inode);
 }
 
-int ext2_utimes(struct inode *inode, const struct timeval *times) {
+int ext2_utimes(struct inode *inode, const struct timespec *times) {
     if (!inode->private_data) {
         ext2_update_inode(inode, true);
     }
 
-    inode->access_time = (struct timespec) { .tv_sec = times[0].tv_sec, .tv_nsec = times[0].tv_usec * 1000 };
-    inode->modify_time = (struct timespec) { .tv_sec = times[1].tv_sec, .tv_nsec = times[1].tv_usec * 1000 };
+    if (times[0].tv_nsec != UTIME_OMIT) {
+        inode->access_time = times[0];
+    }
+
+    if (times[1].tv_nsec != UTIME_OMIT) {
+        inode->modify_time = times[1];
+    }
+
     return ext2_sync_inode(inode);
 }
 

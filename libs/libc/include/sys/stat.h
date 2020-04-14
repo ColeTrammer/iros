@@ -46,6 +46,9 @@
 #define S_ISGID 02000
 #define S_SIVTX 01000
 
+#define UTIME_OMIT -1
+#define UTIME_NOW  -2
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -78,6 +81,8 @@ int chmod(const char *pathname, mode_t mode);
 int fchmod(int fd, mode_t mode);
 mode_t umask(mode_t mask);
 int mknod(const char *pathname, mode_t mode, dev_t dev);
+int futimens(int fd, const struct timespec times[2]);
+int utimensat(int fd, const char *path, const struct timespec times[2], int flags);
 
 #ifdef __cplusplus
 }

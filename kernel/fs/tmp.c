@@ -220,9 +220,14 @@ int tmp_chown(struct inode *inode, uid_t uid, gid_t gid) {
     return 0;
 }
 
-int tmp_utimes(struct inode *inode, const struct timeval *times) {
-    inode->access_time = (struct timespec) { .tv_sec = times[0].tv_sec, .tv_nsec = times[0].tv_usec * 1000 };
-    inode->modify_time = (struct timespec) { .tv_sec = times[1].tv_sec, .tv_nsec = times[1].tv_usec * 1000 };
+int tmp_utimes(struct inode *inode, const struct timespec *times) {
+    if (times[0].tv_nsec != UTIME_OMIT) {
+        inode->access_time = times[0];
+    }
+
+    if (times[1].tv_nsec != UTIME_OMIT) {
+        inode->modify_time = times[1];
+    }
     return 0;
 }
 

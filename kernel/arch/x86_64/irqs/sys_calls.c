@@ -2080,13 +2080,15 @@ SYS_CALL(fchownat) {
     SYS_RETURN(fs_fchownat(base, path, uid, gid, flags));
 }
 
-SYS_CALL(utimes) {
+SYS_CALL(utimensat) {
     SYS_BEGIN();
 
-    SYS_PARAM1(const char *, filename);
-    SYS_PARAM2(const struct timeval *, times);
+    SYS_PARAM1_TRANSFORM(struct tnode *, base, int, get_file_tnode);
+    SYS_PARAM2_VALIDATE(const char *, path, validate_path, 0);
+    SYS_PARAM3_VALIDATE(const struct timespec *, times, validate_read_or_null, 2 * sizeof(struct timespec));
+    SYS_PARAM4(int, flags);
 
-    SYS_RETURN(fs_utimes(filename, times));
+    SYS_RETURN(fs_utimensat(base, path, times, flags));
 }
 
 SYS_CALL(pread) {
