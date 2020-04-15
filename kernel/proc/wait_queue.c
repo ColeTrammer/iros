@@ -11,6 +11,7 @@ void init_wait_queue(struct wait_queue *queue) {
 }
 
 void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task) {
+    assert(task->wait_queue_next == NULL);
     if (!queue->waiters_head) {
         queue->waiters_head = queue->waiters_tail = task;
     } else {
@@ -26,12 +27,14 @@ void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task) {
 bool __wake_up(struct wait_queue *queue) {
     struct task *to_wake = queue->waiters_head;
     if (to_wake) {
+        assert(to_wake->sched_state != EXITING);
         to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
 #ifdef WAIT_QUEUE_DEBUG
         debug_log("waking up task: [ %p, %d:%d ]\n", queue, to_wake->process->pid, to_wake->tid);
 #endif /* WAIT_QUEUE_DEBUG */
 
         queue->waiters_head = to_wake->wait_queue_next;
+        to_wake->wait_queue_next = NULL;
 
         if (queue->waiters_tail == to_wake) {
             queue->waiters_tail = NULL;
