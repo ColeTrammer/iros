@@ -453,6 +453,10 @@ static int op_set(char **argv) {
 }
 
 static int op_test(char **argv) {
+    if (!argv[1]) {
+        return 1;
+    }
+
     int argc = 0;
     while (argv[++argc]) {
     }
