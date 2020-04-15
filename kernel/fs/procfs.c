@@ -25,6 +25,8 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
+#define PROCFS_ENSURE_ALIGNMENT __attribute__((optimize("align-functions=4")))
+
 #define PROCFS_DEVICE_ID 4
 
 #define PROCFS_FILE_MODE      (S_IFREG | 0444)
@@ -174,7 +176,8 @@ ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len) {
     return nread;
 }
 
-static struct procfs_buffer procfs_cwd(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_cwd(struct procfs_data *data __attribute__((unused)), struct process *process,
+                                                               bool need_buffer) {
     if (!process->cwd) {
         return (struct procfs_buffer) { NULL, 0 };
     }
@@ -188,7 +191,8 @@ static struct procfs_buffer procfs_cwd(struct procfs_data *data __attribute__((u
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_exe(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_exe(struct procfs_data *data __attribute__((unused)), struct process *process,
+                                                               bool need_buffer) {
     if (!process->exe) {
         return (struct procfs_buffer) { NULL, 0 };
     }
@@ -202,7 +206,8 @@ static struct procfs_buffer procfs_exe(struct procfs_data *data __attribute__((u
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__((unused)), struct process *process,
+                                                                  bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     char tty_string[16];
     if (process->tty != -1) {
@@ -238,7 +243,8 @@ static struct procfs_buffer procfs_status(struct procfs_data *data __attribute__
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_stack(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_stack(struct procfs_data *data __attribute__((unused)), struct process *process,
+                                                                 bool need_buffer) {
     struct task *main_task = find_by_tid(process->pgid, process->pid);
     if (!main_task) {
         return (struct procfs_buffer) { NULL, 0 };
@@ -250,7 +256,8 @@ static struct procfs_buffer procfs_stack(struct procfs_data *data __attribute__(
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((unused)), struct process *process,
+                                                              bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = 0;
     struct vm_region *vm = process->process_memory;
@@ -267,7 +274,8 @@ static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((un
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_signal(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_signal(struct procfs_data *data __attribute__((unused)), struct process *process,
+                                                                  bool need_buffer) {
     char *buffer = need_buffer ? malloc(2 * PAGE_SIZE) : NULL;
     size_t length = 0;
     for (int i = 1; i < _NSIG; i++) {
@@ -287,7 +295,8 @@ static struct procfs_buffer procfs_signal(struct procfs_data *data __attribute__
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_cmdline(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_cmdline(struct procfs_data *data __attribute__((unused)),
+                                                                   struct process *process, bool need_buffer) {
     if (!process->args_context) {
         return (struct procfs_buffer) { NULL, 0 };
     }
@@ -302,7 +311,8 @@ static struct procfs_buffer procfs_cmdline(struct procfs_data *data __attribute_
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_environ(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_environ(struct procfs_data *data __attribute__((unused)),
+                                                                   struct process *process, bool need_buffer) {
     if (!process->args_context) {
         return (struct procfs_buffer) { NULL, 0 };
     }
@@ -317,7 +327,8 @@ static struct procfs_buffer procfs_environ(struct procfs_data *data __attribute_
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_pid_sched(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_pid_sched(struct procfs_data *data __attribute__((unused)),
+                                                                     struct process *process, bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
                              "USER_TICKS: %lu\n"
@@ -326,7 +337,7 @@ static struct procfs_buffer procfs_pid_sched(struct procfs_data *data __attribut
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_fd(struct procfs_data *data, struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_fd(struct procfs_data *data, struct process *process, bool need_buffer) {
     int fd = data->fd;
     struct file *file = process->files[fd].file;
     if (!file) {
@@ -348,7 +359,7 @@ static struct procfs_buffer procfs_fd(struct procfs_data *data, struct process *
     return (struct procfs_buffer) { buffer, length };
 }
 
-static void procfs_create_fd_directory_structure(struct inode *parent, struct process *process, bool loaded) {
+PROCFS_ENSURE_ALIGNMENT static void procfs_create_fd_directory_structure(struct inode *parent, struct process *process, bool loaded) {
     if (!loaded) {
         parent->dirent_cache = fs_create_dirent_cache();
     }
@@ -372,7 +383,7 @@ static void procfs_create_fd_directory_structure(struct inode *parent, struct pr
     }
 }
 
-static void procfs_create_process_directory_structure(struct inode *parent, struct process *process, bool loaded) {
+PROCFS_ENSURE_ALIGNMENT static void procfs_create_process_directory_structure(struct inode *parent, struct process *process, bool loaded) {
     if (!loaded) {
         parent->dirent_cache = fs_create_dirent_cache();
 
@@ -454,14 +465,15 @@ void procfs_unregister_process(struct process *process) {
     drop_inode_reference(inode);
 }
 
-static struct procfs_buffer procfs_self(struct procfs_data *data __attribute__((unused)), struct process *process, bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_self(struct procfs_data *data __attribute__((unused)), struct process *process,
+                                                                bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "%d", process->pid);
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_sched(struct procfs_data *data __attribute((unused)), struct process *process __attribute__((unused)),
-                                         bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_sched(struct procfs_data *data __attribute((unused)),
+                                                                 struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
                              "IDLE_TICKS: %lu\n"
@@ -471,14 +483,15 @@ static struct procfs_buffer procfs_sched(struct procfs_data *data __attribute((u
     return (struct procfs_buffer) { buffer, length };
 }
 
-static struct procfs_buffer procfs_meminfo(struct procfs_data *data __attribute__((unused)),
-                                           struct process *process __attribute__((unused)), bool need_buffer) {
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_meminfo(struct procfs_data *data __attribute__((unused)),
+                                                                   struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "TOTAL_MEMORY: %lu\n", get_total_phys_memory());
     return (struct procfs_buffer) { buffer, length };
 }
 
-static void procfs_create_base_directory_structure(struct inode *parent, struct process *process __attribute__((unused)), bool loaded) {
+PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struct inode *parent,
+                                                                           struct process *process __attribute__((unused)), bool loaded) {
     assert(parent);
 
     if (!loaded) {
