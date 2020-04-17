@@ -5,13 +5,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 static bool dont_follow_symlinks;
 static bool preserve_modifiers;
 static bool force;
+static bool interactive;
 static bool any_failed;
+
+enum prompt_result { PROMPT_ERR, PROMPT_YES, PROMPT_NO };
+
+static enum prompt_result do_prompt(const char *path) {
+    fprintf(stderr, "Do you really want to overwrite: `%s'? (y/n) ", path);
+
+    char buf[1024];
+    if (fgets(buf, sizeof(buf), stdin) == NULL) {
+        if (ferror(stdin)) {
+            perror("fgets");
+            return PROMPT_ERR;
+        }
+        return PROMPT_NO;
+    }
+
+    if (strcasecmp(buf, "y\n") == 0 || strcasecmp(buf, "yes\n") == 0) {
+        return PROMPT_YES;
+    }
+    return PROMPT_NO;
+}
 
 void do_cp(const char *source_path, const char *dest_path) {
     struct stat st = { 0 };
@@ -20,6 +42,21 @@ void do_cp(const char *source_path, const char *dest_path) {
         perror("stat");
         any_failed = true;
         return;
+    }
+
+    if (interactive) {
+        if (access(dest_path, F_OK) == 0) {
+            enum prompt_result result = do_prompt(dest_path);
+            switch (result) {
+                case PROMPT_ERR:
+                    any_failed = 1;
+                    return;
+                case PROMPT_NO:
+                    return;
+                case PROMPT_YES:
+                    break;
+            }
+        }
     }
 
     if (S_ISLNK(st.st_mode)) {
@@ -121,19 +158,22 @@ void do_cp(const char *source_path, const char *dest_path) {
 }
 
 void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-Pfp] <source...> <target>\n", s);
+    fprintf(stderr, "Usage: %s [-Pfip] <source...> <target>\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, ":Pfp")) != -1) {
+    while ((opt = getopt(argc, argv, ":Pfip")) != -1) {
         switch (opt) {
             case 'P':
                 dont_follow_symlinks = true;
                 break;
             case 'f':
                 force = true;
+                break;
+            case 'i':
+                interactive = true;
                 break;
             case 'p':
                 preserve_modifiers = true;
