@@ -16,6 +16,14 @@ static bool preserve_modifiers;
 static bool force;
 static bool interactive;
 static bool recursive;
+static bool verbose;
+
+#define cp_log(m, ...)                                     \
+    do {                                                   \
+        if (verbose) {                                     \
+            fprintf(stderr, m __VA_OPT__(, ) __VA_ARGS__); \
+        }                                                  \
+    } while (0)
 
 static bool any_failed;
 static bool target_is_dir;
@@ -67,6 +75,8 @@ void do_preserve_modifiers(const struct stat *st, const char *dest_path) {
 }
 
 void do_cp(const char *source_path, const char *dest_path) {
+    cp_log("do_cp(\"%s\", \"%s\")\n", source_path, dest_path);
+
     struct stat st = { 0 };
     int (*do_stat)(const char *path, struct stat *st) = dont_follow_symlinks ? lstat : stat;
     if (do_stat(source_path, &st)) {
@@ -189,13 +199,15 @@ const char *path_base_at_level(const char *path, int level) {
 }
 
 static int do_cp_r(const char *source, const struct stat *st, int type, struct FTW *ftwbuf) {
-    const char *relative_name = path_base_at_level(source, ftwbuf->level);
+    const char *relative_name = path_base_at_level(source, ftwbuf->level - !target_is_dir);
     char *dest_path = malloc(strlen(target) + strlen(relative_name) + 2);
     stpcpy(stpcpy(stpcpy(dest_path, target), "/"), relative_name);
 
     if (type == FTW_D) {
         const char *dir_path = (ftwbuf->level == 0 && !target_is_dir) ? target : dest_path;
+        cp_log("mkdir(\"%s\")\n", dir_path);
         if (mkdir(dir_path, 0777)) {
+            perror("mkdir");
             any_failed = true;
         }
 
@@ -211,13 +223,13 @@ static int do_cp_r(const char *source, const struct stat *st, int type, struct F
 }
 
 void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-rR] [-Pfip] <source...> <target>\n", s);
+    fprintf(stderr, "Usage: %s [-rR] [-Pfipv] <source...> <target>\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, ":rRPfip")) != -1) {
+    while ((opt = getopt(argc, argv, ":rRPfipv")) != -1) {
         switch (opt) {
             case 'P':
                 dont_follow_symlinks = true;
@@ -234,6 +246,9 @@ int main(int argc, char **argv) {
             case 'r':
             case 'R':
                 recursive = true;
+                break;
+            case 'v':
+                verbose = true;
                 break;
             case ':':
             case '?':
@@ -267,7 +282,9 @@ int main(int argc, char **argv) {
     int cp_r_flags = FTW_PHYS;
     for (; optind < argc - 1; optind++) {
         if (recursive) {
-            nftw(argv[optind], do_cp_r, 10, cp_r_flags);
+            if (nftw(argv[optind], do_cp_r, 10, cp_r_flags) < 0) {
+                perror("nftw");
+            }
         } else if (target_is_dir) {
             char *name = basename(argv[optind]);
             char *path = malloc(strlen(name + strlen(target) + 2));
