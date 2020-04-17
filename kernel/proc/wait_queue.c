@@ -20,7 +20,7 @@ void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task) {
     }
 
 #ifdef WAIT_QUEUE_DEBUG
-    debug_log("unqueuing task: [ %p, %d:%d ]\n", queue, task->process->pid, task->tid);
+    debug_log("enqueuing task: [ %p, %d:%d ]\n", queue, task->process->pid, task->tid);
 #endif /* WAIT_QUEUE_DEBUG */
 }
 

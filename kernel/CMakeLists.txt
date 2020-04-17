@@ -56,8 +56,9 @@ if (NOT ${NATIVE_BUILD})
         sched/task_sched.c
         time/clock.c
         time/timer.c
-        util/spinlock.c
         util/hash_map.c
+        util/mutex.c
+        util/spinlock.c
         util/validators.c
     )
 
