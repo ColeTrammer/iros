@@ -340,6 +340,7 @@ SYS_CALL(fork) {
 
     child->tid = get_next_tid();
     child_process->pid = get_next_pid();
+    child_process->main_tid = child->tid;
     init_spinlock(&child_process->lock);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
@@ -609,6 +610,7 @@ SYS_CALL(execve) {
 
     task->tid = current->tid;
     process->pid = current->process->pid;
+    process->main_tid = task->tid;
     init_spinlock(&process->lock);
     process->pgid = current->process->pgid;
     process->ppid = current->process->ppid;

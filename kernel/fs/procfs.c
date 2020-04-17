@@ -216,7 +216,7 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_status(struct procfs_
         snprintf(tty_string, sizeof(tty_string) - 1, "%s", "?");
     }
 
-    struct task *main_task = find_by_tid(process->pgid, process->pid);
+    struct task *main_task = find_by_tid(process->pgid, process->main_tid);
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
                              "NAME: %s\n"
                              "PID: %d\n"
@@ -245,7 +245,7 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_status(struct procfs_
 
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_stack(struct procfs_data *data __attribute__((unused)), struct process *process,
                                                                  bool need_buffer) {
-    struct task *main_task = find_by_tid(process->pgid, process->pid);
+    struct task *main_task = find_by_tid(process->pgid, process->main_tid);
     if (!main_task) {
         return (struct procfs_buffer) { NULL, 0 };
     }

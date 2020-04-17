@@ -176,6 +176,7 @@ void init_kernel_task() {
     init_spinlock(&initial_kernel_process.lock);
     initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
     initial_kernel_task.next = NULL;
+    initial_kernel_task.process->main_tid = initial_kernel_task.tid;
     initial_kernel_task.process->pgid = 1;
     initial_kernel_task.process->ppid = 1;
     initial_kernel_task.process->tty = -1;
@@ -198,6 +199,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->process->cwd = malloc(2);
     task->process->tty = -1;
     task->tid = get_next_tid();
+    task->process->main_tid = task->tid;
     task->process->cwd = NULL;
     task->next = NULL;
     process->name = strdup(name);
@@ -234,6 +236,7 @@ struct task *load_task(const char *file_name) {
 
     task->tid = get_next_tid();
     task->process->pid = get_next_pid();
+    task->process->main_tid = task->tid;
     init_spinlock(&process->lock);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
@@ -299,7 +302,7 @@ void free_task(struct task *task, bool free_paging_structure) {
     }
 
     time_destroy_clock(task->task_clock);
-    proc_drop_process(task->process, free_paging_structure);
+    proc_drop_process(task->process, task->tid, free_paging_structure);
     free(task);
     current_task = current_save;
 }

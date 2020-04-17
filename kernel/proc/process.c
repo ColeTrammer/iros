@@ -25,7 +25,7 @@ static struct hash_map *map;
 
 HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
-void proc_drop_process(struct process *process, bool free_paging_structure) {
+void proc_drop_process(struct process *process, pid_t tid, bool free_paging_structure) {
     int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
 
 #ifdef PROC_REF_COUNT_DEBUG
@@ -103,6 +103,16 @@ void proc_drop_process(struct process *process, bool free_paging_structure) {
         free(process);
         return;
     }
+
+    // Reassign the main tid of the process if it exits early
+    spin_lock(&process->lock);
+    if (process->main_tid == tid) {
+        struct task *new_task = find_task_for_process(process->pid);
+        assert(new_task);
+        process->main_tid = new_task->tid;
+        assert(process->main_tid != tid);
+    }
+    spin_unlock(&process->lock);
 }
 
 void proc_add_process(struct process *process) {
