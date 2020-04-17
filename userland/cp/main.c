@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ftw.h>
+#include <libgen.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +15,12 @@ static bool dont_follow_symlinks;
 static bool preserve_modifiers;
 static bool force;
 static bool interactive;
+static bool recursive;
+
 static bool any_failed;
+static bool target_is_dir;
+
+static const char *target;
 
 enum prompt_result { PROMPT_ERR, PROMPT_YES, PROMPT_NO };
 
@@ -33,6 +40,30 @@ static enum prompt_result do_prompt(const char *path) {
         return PROMPT_YES;
     }
     return PROMPT_NO;
+}
+
+void do_preserve_modifiers(const struct stat *st, const char *dest_path) {
+    if (preserve_modifiers) {
+        int (*do_chown)(const char *path, uid_t owner, gid_t group) = dont_follow_symlinks ? lchown : chown;
+
+        if (do_chown(dest_path, st->st_uid, st->st_gid)) {
+            perror("chown");
+            any_failed = 1;
+        }
+
+        if (!S_ISLNK(st->st_mode)) {
+            if (chmod(dest_path, st->st_mode)) {
+                perror("chmod");
+                any_failed = 1;
+            }
+        }
+
+        struct timespec tms[2] = { st->st_atim, st->st_mtim };
+        if (utimensat(AT_FDCWD, dest_path, tms, dont_follow_symlinks ? AT_SYMLINK_NOFOLLOW : 0)) {
+            perror("utimesat");
+            any_failed = 1;
+        }
+    }
 }
 
 void do_cp(const char *source_path, const char *dest_path) {
@@ -134,37 +165,59 @@ void do_cp(const char *source_path, const char *dest_path) {
         return;
     }
 
-    if (preserve_modifiers) {
-        int (*do_chown)(const char *path, uid_t owner, gid_t group) = dont_follow_symlinks ? lchown : chown;
+    do_preserve_modifiers(&st, dest_path);
+}
 
-        if (do_chown(dest_path, st.st_uid, st.st_gid)) {
-            perror("chown");
-            any_failed = 1;
+const char *path_base_at_level(const char *path, int level) {
+    char *last_slash = NULL;
+    do {
+        char *last_slash_save = last_slash;
+        if (last_slash) {
+            *last_slash = '\0';
+        }
+        last_slash = strrchr(path, '/');
+        if (last_slash_save) {
+            *last_slash_save = '/';
         }
 
-        if (!S_ISLNK(st.st_mode)) {
-            if (chmod(dest_path, st.st_mode)) {
-                perror("chmod");
-                any_failed = 1;
-            }
+        if (!last_slash) {
+            return path;
+        }
+    } while (level--);
+
+    return last_slash + 1;
+}
+
+static int do_cp_r(const char *source, const struct stat *st, int type, struct FTW *ftwbuf) {
+    const char *relative_name = path_base_at_level(source, ftwbuf->level);
+    char *dest_path = malloc(strlen(target) + strlen(relative_name) + 2);
+    stpcpy(stpcpy(stpcpy(dest_path, target), "/"), relative_name);
+
+    if (type == FTW_D) {
+        const char *dir_path = (ftwbuf->level == 0 && !target_is_dir) ? target : dest_path;
+        if (mkdir(dir_path, 0777)) {
+            any_failed = true;
         }
 
-        struct timespec tms[2] = { st.st_atim, st.st_mtim };
-        if (utimensat(AT_FDCWD, dest_path, tms, dont_follow_symlinks ? AT_SYMLINK_NOFOLLOW : 0)) {
-            perror("utimesat");
-            any_failed = 1;
-        }
+        do_preserve_modifiers(st, dir_path);
+    } else {
+        do_cp(source, dest_path);
     }
+
+    free(dest_path);
+    return 0;
+
+    return 0;
 }
 
 void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-Pfip] <source...> <target>\n", s);
+    fprintf(stderr, "Usage: %s [-rR] [-Pfip] <source...> <target>\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, ":Pfip")) != -1) {
+    while ((opt = getopt(argc, argv, ":rRPfip")) != -1) {
         switch (opt) {
             case 'P':
                 dont_follow_symlinks = true;
@@ -178,6 +231,10 @@ int main(int argc, char **argv) {
             case 'p':
                 preserve_modifiers = true;
                 break;
+            case 'r':
+            case 'R':
+                recursive = true;
+                break;
             case ':':
             case '?':
                 print_usage_and_exit(*argv);
@@ -188,7 +245,7 @@ int main(int argc, char **argv) {
         print_usage_and_exit(*argv);
     }
 
-    const char *target = argv[argc - 1];
+    target = argv[argc - 1];
     struct stat st;
 
     bool target_exists = true;
@@ -200,21 +257,25 @@ int main(int argc, char **argv) {
         }
     }
 
-    bool target_is_dir = target_exists && S_ISDIR(st.st_mode);
-    bool target_must_be_dir = argc - optind > 2;
+    target_is_dir = target_exists && S_ISDIR(st.st_mode);
+    bool target_must_be_dir = (argc - optind > 2);
     if (target_must_be_dir && !target_is_dir) {
         fprintf(stderr, "cp: %s is not a directory\n", target);
         return 1;
     }
 
+    int cp_r_flags = FTW_PHYS;
     for (; optind < argc - 1; optind++) {
-        if (target_is_dir) {
-            char *path = malloc(strlen(argv[optind] + strlen(target) + 2));
+        if (recursive) {
+            nftw(argv[optind], do_cp_r, 10, cp_r_flags);
+        } else if (target_is_dir) {
+            char *name = basename(argv[optind]);
+            char *path = malloc(strlen(name + strlen(target) + 2));
             if (!path) {
                 perror("malloc");
                 return 1;
             }
-            stpcpy(stpcpy(stpcpy(path, target), "/"), argv[optind]);
+            stpcpy(stpcpy(stpcpy(path, target), "/"), name);
             do_cp(argv[optind], path);
             free(path);
         } else {
