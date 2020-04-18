@@ -144,11 +144,13 @@ void *realloc(void *p, size_t sz) {
     if (new_p == NULL) {
         return new_p;
     }
+
+    size_t size_to_copy = MIN(GET_SIZE(GET_BLOCK(p)), sz);
 #if defined(__is_libk) && defined(KERNEL_MEMCPY_DEBUG)
 #undef memmove
-    memmove(new_p, p, sz, line, func);
+    memmove(new_p, p, size_to_copy, line, func);
 #else
-    memmove(new_p, p, sz);
+    memmove(new_p, p, size_to_copy);
 #endif /* defined(__is_libk) && defined(KERNEL_MEMCPY_DEBUG) */
     free(p);
     return new_p;
