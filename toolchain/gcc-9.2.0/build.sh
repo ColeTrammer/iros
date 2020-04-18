@@ -3,8 +3,12 @@
 set -e
 
 # Variables
-export ROOT="$PWD/../.."
+export ROOT="${ROOT:-$PWD/../..}"
 export TARGET=`$ROOT/default-host.sh`
+
+CC=gcc
+CXX=g++
+AS=as
 
 if [ ! -e gcc-9.2.0 ]; then
     # Download tar.gz
@@ -30,32 +34,29 @@ if [ $ONLY_DOWNLOAD_AND_EXTRACT ]; then
     exit
 fi
 
-# Install headers for correct build
-cd ../..
-make install-headers
-cd toolchain/gcc-9.2.0
+if [ ! -d "$ROOT/sysroot/usr/include" ];
+then
+    echo "Installing libc headers..."
+    mkdir -p "$ROOT/sysroot/usr"
+    cp -R -p "$ROOT/libs/libc/include" "$ROOT/sysroot/usr"
+    echo "Done"
+fi
+
+if [ ! -d build-gcc ];
+then
+    mkdir -p build-gcc
+    cd build-gcc
+    ../gcc-9.2.0/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --disable-lto --with-sysroot=$ROOT/sysroot --enable-languages=c,c++ --with-build-time-tools=$ROOT/toolchain/cross/bin
+    cd ..
+fi
 
 # Build
-mkdir -p build-gcc
 cd build-gcc
-../gcc-9.2.0/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --disable-lto --with-sysroot=$ROOT/sysroot --enable-languages=c,c++ --with-build-time-tools=$ROOT/toolchain/cross/bin
 make all-gcc -j5
 make all-target-libgcc CFLAGS_FOR_TARGET='-g -O2 -mcmodel=large -mno-red-zone' -j5
 
 # Install
 mkdir -p ../../cross
 make install-gcc install-target-libgcc 
-
-# Build libc for libstdc++-v3
-cd ../../../
-make prepare-build install-headers native
-cd libs/libpthread
-make install
-cd ../libc
-make install
-cd ../../toolchain/gcc-9.2.0/build-gcc
-
-make all-target-libstdc++-v3 -j5
-make install-target-libstdc++-v3
 
 cd ..

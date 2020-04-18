@@ -18,10 +18,12 @@ My second attempt to create an OS
 # To build
 * You need to install various dependencies for gcc (look on osdev)
 * Install qemu-system-x86_64 to run the os, also grub-mkrescue
-* Add the output of ./path.sh when inside the toolchain directory to your path
-* Run ./build.sh from within the toolchain directory
-* Run ./build.sh from within the ports directory (if you want ports)
-* Run `make run` within the top level directory
+* Run `./setup.sh`, which will prompt you to build the toolchain and create two cmake build directories
+  native - for tools that must be run on the host operating system
+  build - for the os and other cross compiled components
+* Now, you can build the system by typing `cmake --build build`
+* Make the disk image with `sudo ./makeimg.sh`
+* Run the system inside qemu with `./qemu.sh`
 
 # TODO
 * Networking (TCP resending)

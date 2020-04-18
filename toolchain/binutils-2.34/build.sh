@@ -3,12 +3,18 @@
 set -e
 
 # Variables
-export ROOT="$PWD/../.."
+export ROOT="${ROOT:-$PWD/../..}"
 export TARGET=`$ROOT/default-host.sh`
 
+CC=gcc
+CXX=g++
+AS=as
+
 if [ ! -e binutils-os_2-2.34 ]; then
-    # Download tar.gz
-    curl https://ftp.gnu.org/gnu/binutils/binutils-2.34.tar.gz --output binutils-os_2-2.34.tar.gz
+    if [ ! -e binutils-os_2-2.34.tar.gz ]; then
+        # Download tar.gz
+        curl https://ftp.gnu.org/gnu/binutils/binutils-2.34.tar.gz --output binutils-os_2-2.34.tar.gz
+    fi
 
     # Extract contents
     tar -xzvf binutils-os_2-2.34.tar.gz
@@ -25,13 +31,14 @@ if [ $ONLY_DOWNLOAD_AND_EXTRACT ]; then
     exit
 fi
 
-# Install headers for correct build
-cd ../..
-make install-headers
-cd toolchain/binutils-2.34
+if [ ! -d build-binutils ]; then
+    mkdir -p build-binutils
+    cd build-binutils
+    ../binutils-os_2-2.34/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --with-sysroot=$ROOT/sysroot --disable-werror
+    cd ..
+fi
 
-# Build
-mkdir -p build-binutils
+
 cd build-binutils
 ../binutils-os_2-2.34/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --with-sysroot=$ROOT/sysroot --disable-werror
 make -j5

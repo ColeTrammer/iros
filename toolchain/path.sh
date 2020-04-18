@@ -1,3 +1,5 @@
 #!/bin/sh
 
-echo $PWD/cross/bin
+ROOT="${ROOT:-$PWD/..}"
+
+echo $(realpath "$ROOT/toolchain/cross/bin")
