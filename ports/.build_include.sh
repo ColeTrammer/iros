@@ -75,8 +75,7 @@ function_exists install || install() {
 }
 
 pushd ../..
-make install-headers
-rm sysroot/usr/include/dlfcn.h
+rm -f sysroot/usr/include/dlfcn.h
 popd
 
 run() {
