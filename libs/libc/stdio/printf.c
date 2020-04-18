@@ -717,7 +717,8 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
             int num = va_arg(parameters, int);
             size_t len = 1;
             unsigned int div = 1;
-            while (num / div > 9) {
+            int abs_num = num < 0 ? -num : num;
+            while (abs_num / div > 9) {
                 div *= 10;
                 len++;
             }
