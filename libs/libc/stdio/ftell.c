@@ -15,7 +15,7 @@ long ftell(FILE *stream) {
         ret--;
     }
 
-    off_t res = lseek(stream->__fd, SEEK_CUR, 0);
+    off_t res = lseek(stream->__fd, 0, SEEK_CUR);
     if (res == -1) {
         ret = -1;
     } else if (res == 0) {
