@@ -1118,7 +1118,7 @@ int fs_chmod(const char *path, mode_t mode) {
 
     struct inode *inode = tnode->inode;
     drop_tnode(tnode);
-    return tnode->inode->i_op->chmod(inode, mode);
+    return inode->i_op->chmod(inode, mode);
 }
 
 static int fs_do_utimens(struct inode *inode, const struct timespec *in_times) {
