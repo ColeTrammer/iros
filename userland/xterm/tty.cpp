@@ -55,6 +55,11 @@ void TTY::scroll_to_top() {
 }
 
 void TTY::draw(char c) {
+    if (c == '\t') {
+        draw(' ');
+        return;
+    }
+
     if (IS_CTRL(c)) {
         draw('^');
         draw(c | 0x40);
