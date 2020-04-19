@@ -239,18 +239,16 @@ static void ext2_sync_raw_super_block_with_virtual_super_block(struct super_bloc
 /* Syncs super_block to disk */
 static int ext2_sync_super_block(struct super_block *sb) {
     struct ext2_sb_data *data = sb->private_data;
+    spin_lock(&sb->super_block_lock);
 
     // Sync to os super_block structure, since we write to the
     // actual raw_super_block when accounting fields are updated.
     ext2_sync_raw_super_block_with_virtual_super_block(sb);
 
-    ssize_t ret = ext2_write_blocks(sb, data->sb, 1, 1);
+    int ret = (int) fs_pwrite(sb->dev_file, data->sb, EXT2_SUPER_BLOCK_SIZE, EXT2_SUPER_BLOCK_OFFSET);
 
-    if (ret < 1) {
-        return (int) ret;
-    }
-
-    return 0;
+    spin_unlock(&sb->super_block_lock);
+    return ret == EXT2_SUPER_BLOCK_SIZE ? 0 : ret;
 }
 
 /*

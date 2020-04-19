@@ -453,6 +453,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
                 *error = ret;
                 return NULL;
             }
+            assert(tnode);
         } else {
             debug_log("File Not Found: [ %s ]\n", file_name);
             *error = ret;
@@ -1003,8 +1004,8 @@ int fs_unlink(const char *path) {
     spin_lock(&tnode->inode->lock);
     ret = tnode->inode->i_op->unlink(tnode);
     if (ret != 0) {
-        spin_unlock(&tnode->inode->lock);
         drop_tnode(tnode);
+        spin_unlock(&tnode->inode->lock);
         return ret;
     }
     spin_unlock(&tnode->inode->lock);
