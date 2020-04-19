@@ -51,7 +51,6 @@ size_t fwrite_unlocked(const void *__restrict buf, size_t size, size_t nmemb, FI
         return bytes_written / size;
     }
 
-    size_t max_written = to_write;
     size_t new_buffer_offset = stream->__position + to_write;
     if (new_buffer_offset < stream->__buffer_max) {
         memcpy(stream->__buffer + stream->__position, buf, to_write);
@@ -60,26 +59,27 @@ size_t fwrite_unlocked(const void *__restrict buf, size_t size, size_t nmemb, FI
         return to_write / size;
     }
 
+    size_t max_written = to_write;
+    size_t bytes_to_flush = stream->__position;
     size_t extra_buffer_length = stream->__buffer_max - new_buffer_offset;
-    to_write -= extra_buffer_length;
-    size_t bytes_to_skip_buffering = (to_write / stream->__buffer_max) * stream->__buffer_max;
-    size_t total_writev_bytes = extra_buffer_length + bytes_to_skip_buffering;
+    size_t bytes_to_skip_buffering = extra_buffer_length + ((to_write - extra_buffer_length) / stream->__buffer_max) * stream->__buffer_max;
+    size_t total_writev_bytes = stream->__position + bytes_to_skip_buffering;
 
-    struct iovec vec[2] = { { .iov_base = stream->__buffer, .iov_len = stream->__position },
-                            { .iov_base = (void *) buf, .iov_len = total_writev_bytes } };
+    struct iovec vec[2] = { { .iov_base = stream->__buffer, .iov_len = bytes_to_flush },
+                            { .iov_base = (void *) buf, .iov_len = bytes_to_skip_buffering } };
     ssize_t ret = writev(stream->__fd, vec, 2);
-    if (ret < 0) {
+    if (ret < (ssize_t) bytes_to_flush) {
         stream->__flags |= __STDIO_ERROR;
         return 0;
     }
 
-    to_write -= total_writev_bytes;
+    to_write -= bytes_to_skip_buffering;
     if (ret != (ssize_t) total_writev_bytes || to_write == 0) {
         stream->__position = stream->__buffer_length = 0;
-        return total_writev_bytes / size;
+        return (ret - bytes_to_flush) / size;
     }
 
-    memcpy(stream->__buffer, buf, to_write);
+    memcpy(stream->__buffer, (char *) buf + bytes_to_skip_buffering, to_write);
     stream->__position = stream->__buffer_length = to_write;
     return max_written / size;
 }
