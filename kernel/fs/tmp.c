@@ -156,13 +156,15 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
     }
 
+    size_t old_size = inode->size;
     inode->size = MAX(inode->size, offset + len);
     if (inode->size > data->max) {
         data->max = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        assert(data->max >= inode->size);
         char *save = data->contents;
         data->contents = aligned_alloc(PAGE_SIZE, data->max);
         assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
-        memcpy(data->contents, save, inode->size);
+        memcpy(data->contents, save, old_size);
         free(save);
     }
 
