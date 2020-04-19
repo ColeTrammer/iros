@@ -355,7 +355,7 @@ static uint32_t ext2_find_open_block(struct super_block *sb, size_t blk_grp_inde
         return 0;
     }
 
-    ret += data->sb->num_inodes_in_block_group * blk_grp_index + 1;
+    ret += data->sb->num_blocks_in_block_group * blk_grp_index + 1;
     debug_log("Allocated block index: [ %ld ]\n", ret);
     return (uint32_t) ret;
 }
