@@ -37,8 +37,6 @@ int fgetc_unlocked(FILE *stream) {
         }
     }
 
-    __stdio_log(stream, "flags: %ld %lu %lu", stream->__position, stream->__buffer_length, stream->__buffer_max);
-
     if (stream->__position < (off_t) stream->__buffer_length) {
         return (int) stream->__buffer[stream->__position++];
     } else if (stream->__position != 0 && stream->__buffer_length < stream->__buffer_max) {
