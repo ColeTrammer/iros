@@ -43,11 +43,18 @@ int fflush_unlocked(FILE *stream) {
         return 0;
     }
 
+    off_t amount_to_go_back = stream->__buffer_length - stream->__position;
     ssize_t ret = write(stream->__fd, stream->__buffer, stream->__buffer_length);
     stream->__position = stream->__buffer_length = 0;
     if (ret < 0) {
         stream->__flags |= __STDIO_ERROR;
         return EOF;
+    }
+
+    if (amount_to_go_back != 0) {
+        if (lseek(stream->__fd, -amount_to_go_back, SEEK_CUR) == -1) {
+            return EOF;
+        }
     }
 
     return 0;
