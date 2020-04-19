@@ -1004,8 +1004,8 @@ int fs_unlink(const char *path) {
     spin_lock(&tnode->inode->lock);
     ret = tnode->inode->i_op->unlink(tnode);
     if (ret != 0) {
-        drop_tnode(tnode);
         spin_unlock(&tnode->inode->lock);
+        drop_tnode(tnode);
         return ret;
     }
     spin_unlock(&tnode->inode->lock);
