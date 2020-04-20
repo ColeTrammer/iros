@@ -61,7 +61,7 @@ size_t fwrite_unlocked(const void *__restrict buf, size_t size, size_t nmemb, FI
 
     size_t max_written = to_write;
     size_t bytes_to_flush = stream->__position;
-    size_t extra_buffer_length = stream->__buffer_max - new_buffer_offset;
+    size_t extra_buffer_length = stream->__buffer_max - stream->__position;
     size_t bytes_to_skip_buffering = extra_buffer_length + ((to_write - extra_buffer_length) / stream->__buffer_max) * stream->__buffer_max;
     size_t total_writev_bytes = stream->__position + bytes_to_skip_buffering;
 
