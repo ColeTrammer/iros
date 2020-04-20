@@ -26,6 +26,7 @@ if (NOT ${NATIVE_BUILD})
         mem/anon_vm_object.c
         mem/inode_vm_object.c
         mem/page_frame_allocator.c
+        mem/phys_page.c
         mem/phys_vm_object.c
         mem/vm_allocator.c
         mem/vm_object.c
