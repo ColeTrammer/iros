@@ -9,6 +9,7 @@
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
+#include <kernel/mem/phys_page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
@@ -24,7 +25,11 @@ static int inode_map(struct vm_object *self, struct vm_region *region) {
         assert(page_index < data->pages);
 
         if (data->phys_pages[page_index]) {
-            map_phys_page(data->phys_pages[page_index], i, region->flags, current_task->process);
+            if (!data->owned) {
+                map_phys_page((uintptr_t) data->phys_pages[page_index], i, region->flags, current_task->process);
+            } else {
+                map_phys_page(data->phys_pages[page_index]->phys_addr, i, region->flags, current_task->process);
+            }
         }
     }
 
@@ -39,14 +44,20 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     assert(page_index < data->pages);
 
     spin_lock(&self->lock);
+    if (!data->owned) {
+        return (uintptr_t) data->phys_pages[page_index];
+    }
+
     if (data->phys_pages[page_index]) {
-        uintptr_t ret = data->phys_pages[page_index];
+        uintptr_t ret = data->phys_pages[page_index]->phys_addr;
         spin_unlock(&self->lock);
         return ret;
     }
 
-    uintptr_t phys_addr = get_next_phys_page(get_current_task()->process);
-    data->phys_pages[page_index] = phys_addr;
+    struct phys_page *page = allocate_phys_page();
+    data->phys_pages[page_index] = page;
+
+    uintptr_t phys_addr = page->phys_addr;
     char *phys_page_mapping = create_phys_addr_mapping(phys_addr);
 
     struct inode *inode = data->inode;
@@ -66,10 +77,9 @@ static int inode_kill(struct vm_object *self) {
     debug_log("Destroying inode_vm_object: [ %p, %lu, %llu ]\n", self, data->inode->device, data->inode->index);
 
     if (data->owned) {
-        struct process *process = get_current_task()->process;
         for (size_t i = 0; i < data->pages; i++) {
             if (data->phys_pages[i]) {
-                free_phys_page(data->phys_pages[i], process);
+                drop_phys_page(data->phys_pages[i]);
             }
         }
     }
@@ -87,7 +97,7 @@ static struct vm_object_operations inode_ops = { .map = &inode_map, .handle_faul
 
 struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags __attribute__((unused))) {
     size_t num_pages = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE);
-    struct inode_vm_object_data *data = malloc(sizeof(struct inode_vm_object_data) + num_pages * sizeof(uintptr_t));
+    struct inode_vm_object_data *data = malloc(sizeof(struct inode_vm_object_data) + num_pages * sizeof(struct phys_page *));
     assert(data);
 
     assert(inode->i_op->read);
@@ -95,7 +105,7 @@ struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags __at
     data->inode = inode;
     data->owned = true;
     data->pages = num_pages;
-    memset(data->phys_pages, 0, num_pages * sizeof(uintptr_t));
+    memset(data->phys_pages, 0, num_pages * sizeof(struct phys_page *));
 
     return vm_create_object(VM_INODE, &inode_ops, data);
 }
@@ -111,7 +121,7 @@ struct vm_object *vm_create_direct_inode_object(struct inode *inode, void *base_
 
     char *buffer = base_buffer;
     for (size_t i = 0; i < num_pages; i++) {
-        data->phys_pages[i] = get_phys_addr((uintptr_t)(buffer + (i * PAGE_SIZE)));
+        data->phys_pages[i] = (void *) get_phys_addr((uintptr_t)(buffer + (i * PAGE_SIZE)));
     }
 
     // Make sure to zero excess bytes before allowing the pages to be mapped in

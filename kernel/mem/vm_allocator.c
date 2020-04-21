@@ -604,7 +604,8 @@ struct vm_region *find_user_vm_region_in_range(uintptr_t start, uintptr_t end) {
 }
 
 struct vm_region *clone_process_vm() {
-    struct vm_region *list = get_current_task()->process->process_memory;
+    struct process *process_to_clone = get_current_task()->process;
+    struct vm_region *list = process_to_clone->process_memory;
     struct vm_region *new_list = NULL;
     struct vm_region *region = list;
 
@@ -614,9 +615,10 @@ struct vm_region *clone_process_vm() {
 
         assert(to_add->vm_object || to_add->type == VM_KERNEL_STACK);
         if (to_add->vm_object) {
-            if (to_add->flags & VM_SHARED) {
+            if ((to_add->flags & VM_SHARED) || !(to_add->flags & VM_WRITE)) {
                 bump_vm_object(to_add->vm_object);
             } else {
+                mark_region_as_cow(region);
                 to_add->vm_object = vm_clone_object(to_add->vm_object);
             }
         }

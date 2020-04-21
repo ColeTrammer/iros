@@ -40,6 +40,24 @@ struct vm_object *bump_vm_object(struct vm_object *obj) {
     return obj;
 }
 
+int vm_handle_cow_fault_in_region(struct vm_region *region, uintptr_t address) {
+    address &= ~(PAGE_SIZE - 1);
+
+    struct process *process = get_current_task()->process;
+
+    struct vm_object *object = region->vm_object;
+    uintptr_t offset_in_object = region->vm_object_offset + address - region->start;
+
+    if (!object->ops->handle_cow_fault) {
+        debug_log("unrecoverable vm_object cow fault: [ %#.16lX ]\n", address);
+        return 1;
+    }
+
+    uintptr_t phys_address_to_map = object->ops->handle_cow_fault(object, offset_in_object);
+    map_phys_page(phys_address_to_map, address, region->flags, process);
+    return 0;
+}
+
 int vm_handle_fault_in_region(struct vm_region *region, uintptr_t address) {
     address &= ~(PAGE_SIZE - 1);
 

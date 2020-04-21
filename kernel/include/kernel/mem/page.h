@@ -37,6 +37,9 @@ void map_page_flags(uintptr_t virt_addr, uint64_t flags);
 void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct process *process);
 void unmap_page(uintptr_t virt_addr, struct process *process);
 
+void mark_region_as_cow(struct vm_region *region);
+bool is_virt_addr_cow(uintptr_t virt_addr);
+
 uintptr_t get_phys_addr(uintptr_t virt_addr);
 
 #endif /* _KERNEL_MEM_PAGE_H */
