@@ -132,6 +132,16 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
         }
     }
 
+    if (vm_region && ((task_state->error_code & 3) == 3) && address != vm_region->end && is_virt_addr_cow(address) &&
+        !(vm_region->flags & VM_PROT_NONE) && (vm_region->flags & VM_WRITE)) {
+#ifdef PAGE_FAULT_DEBUG
+        debug_log("handling cow fault: [ %#.16lX ]\n", address);
+#endif /* PAGE_FAULT_DEBUG */
+        if (!vm_handle_cow_fault_in_region(vm_region, address)) {
+            return;
+        }
+    }
+
 #ifdef PAGING_DEBUG
     uint64_t pml4_offset = (address >> 39) & 0x1FF;
     uint64_t pdp_offset = (address >> 30) & 0x1FF;

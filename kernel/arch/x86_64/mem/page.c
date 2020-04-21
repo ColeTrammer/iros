@@ -166,6 +166,31 @@ void map_page_flags(uintptr_t virt_addr, uint64_t flags) {
     invlpg(virt_addr);
 }
 
+uint64_t *get_page_table_entry(uintptr_t virt_addr) {
+    virt_addr &= ~0xFFF;
+
+    uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
+    uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
+    uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
+    uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
+
+    uint64_t *pml4_entry = PML4_BASE + pml4_offset;
+    uint64_t *pdp_entry = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
+    uint64_t *pd_entry = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
+    uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
+
+    if (!(*pml4_entry & 1) || !(*pdp_entry & 1) || !(*pd_entry & 1)) {
+        return NULL;
+    }
+
+    return pt_entry;
+}
+
+bool is_virt_addr_cow(uintptr_t virt_addr) {
+    uint64_t *pt_entry = get_page_table_entry(virt_addr);
+    return pt_entry && (*pt_entry & VM_COW);
+}
+
 void map_page_info(struct virt_page_info *info) {
     uint64_t *pml4_entry = PML4_BASE + info->pml4_index;
     uint64_t *pdp_entry = PDP_BASE + (0x1000 * info->pml4_index) / sizeof(uint64_t) + info->pdp_index;
@@ -447,6 +472,18 @@ void soft_remove_paging_structure(struct vm_region *list, struct process *proces
 }
 
 extern struct task initial_kernel_task;
+
+void mark_region_as_cow(struct vm_region *region) {
+    for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
+        uint64_t *pt_entry = get_page_table_entry(addr);
+        if (!pt_entry || !(*pt_entry & 1)) {
+            continue;
+        }
+
+        *pt_entry |= VM_COW;
+        *pt_entry &= ~VM_WRITE;
+    }
+}
 
 /* Must be called from unpremptable context */
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
