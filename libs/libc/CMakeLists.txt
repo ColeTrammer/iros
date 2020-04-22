@@ -244,6 +244,7 @@ else()
         unistd/execve.c
         unistd/execvp.c
         unistd/execvpe.c
+        unistd/faccessat.c
         unistd/fchdir.c
         unistd/fchown.c
         unistd/fchownat.c

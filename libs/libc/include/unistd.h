@@ -92,6 +92,7 @@ int pipe(int pipefd[2]);
 int unlink(const char *pathname);
 int rmdir(const char *pathname);
 int access(const char *pathname, int mode);
+int faccessat(int dirfd, const char *pathname, int mode, int flags);
 ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t bufsiz);
 int symlink(const char *target, const char *linkpath);
 int link(const char *oldpath, const char *newpath);

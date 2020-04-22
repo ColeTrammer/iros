@@ -45,7 +45,7 @@ int fs_unlink(const char *path);
 int fs_rmdir(const char *path);
 int fs_chmod(const char *path, mode_t mode);
 int fs_fchownat(struct tnode *base, const char *path, uid_t uid, gid_t gid, int flags);
-int fs_access(const char *path, int mode);
+int fs_faccessat(struct tnode *base, const char *path, int mode, int flags);
 int fs_fcntl(struct file_descriptor *desc, int command, int arg);
 int fs_fchmod(struct file *file, mode_t mode);
 intptr_t fs_mmap(void *addr, size_t length, int prot, int flags, struct file *file, off_t offset);

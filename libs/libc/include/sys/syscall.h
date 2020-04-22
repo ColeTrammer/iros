@@ -32,7 +32,7 @@
     __ENUMERATE_SYSCALL(SIGPROCMASK, sigprocmask, 3)                           \
     __ENUMERATE_SYSCALL(DUP, dup, 1)                                           \
     __ENUMERATE_SYSCALL(GETPGID, getpgid, 1)                                   \
-    __ENUMERATE_SYSCALL(ACCESS, access, 2)                                     \
+    __ENUMERATE_SYSCALL(FACCESSAT, faccessat, 4)                               \
     __ENUMERATE_SYSCALL(ACCEPT4, accept4, 4)                                   \
     __ENUMERATE_SYSCALL(BIND, bind, 3)                                         \
     __ENUMERATE_SYSCALL(CONNECT, connect, 3)                                   \

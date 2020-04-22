@@ -1149,13 +1149,15 @@ SYS_CALL(getpgid) {
     SYS_RETURN(proc_get_pgid(pid));
 }
 
-SYS_CALL(access) {
+SYS_CALL(faccessat) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
-    SYS_PARAM2(int, mode);
+    SYS_PARAM1_TRANSFORM(struct tnode *, base, int, get_at_directory);
+    SYS_PARAM2_VALIDATE(const char *, path, validate_path, -1);
+    SYS_PARAM3(int, mode);
+    SYS_PARAM4(int, flags);
 
-    SYS_RETURN(fs_access(path, mode));
+    SYS_RETURN(fs_faccessat(base, path, mode, flags));
 }
 
 SYS_CALL(accept4) {

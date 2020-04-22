@@ -1502,11 +1502,9 @@ struct file_descriptor fs_clone(struct file_descriptor desc) {
     return (struct file_descriptor) { new_file, 0 };
 }
 
-int fs_access(const char *path, int mode) {
-    assert(path);
-
+int fs_faccessat(struct tnode *base, const char *path, int mode, int flags) {
     struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
+    int ret = iname_with_base(base, path, (flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
     if (ret < 0) {
         return ret;
     }
