@@ -42,6 +42,7 @@ set(TARGETS
     touch
     true
     uname
+    which
     window_server
     yes
 )
