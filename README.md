@@ -36,4 +36,3 @@ My second attempt to create an OS
 # Current Issues
 * Unix permission support is extremely limited, nothing has uids or gids, and the
   execute but is never respected.
-* make run always rebuilds the disk image, so we can never save info in between sessions.
