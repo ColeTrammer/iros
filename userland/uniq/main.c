@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,9 +9,11 @@
 static bool suppress_duplicates;
 static bool suppress_nonduplicates;
 static bool show_count;
+static int chars_to_skip;
 
 static int do_uniq(FILE *in_file, FILE *out_file) {
     char *prev_line = NULL;
+    char *prev_line_after_fields = NULL;
     char *line = NULL;
     int duplicate_count = 0;
     size_t line_max = 0;
@@ -19,12 +23,18 @@ static int do_uniq(FILE *in_file, FILE *out_file) {
             *strrchr(line, '\n') = '\0';
         }
 
+        long i = 0;
+        while (line[i] && i < chars_to_skip) {
+            i++;
+        }
+
         if (!prev_line) {
             prev_line = strdup(line);
+            prev_line_after_fields = prev_line + i;
             continue;
         }
 
-        if (strcmp(prev_line, line) == 0) {
+        if (strcmp(prev_line_after_fields, line + i) == 0) {
             duplicate_count++;
             continue;
         }
@@ -38,6 +48,7 @@ static int do_uniq(FILE *in_file, FILE *out_file) {
 
         free(prev_line);
         prev_line = strdup(line);
+        prev_line_after_fields = prev_line + i;
         duplicate_count = 0;
     }
 
@@ -59,13 +70,13 @@ static int do_uniq(FILE *in_file, FILE *out_file) {
 }
 
 void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-cdu] [input_file [output_file]]\n", s);
+    fprintf(stderr, "Usage: %s [-cdu] [-s chars] [input_file [output_file]]\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, ":cdu")) != -1) {
+    while ((opt = getopt(argc, argv, ":cdus:")) != -1) {
         switch (opt) {
             case 'c':
                 show_count = true;
@@ -73,6 +84,14 @@ int main(int argc, char **argv) {
             case 'd':
                 suppress_nonduplicates = true;
                 break;
+            case 's': {
+                long a = strtol(optarg, NULL, 10);
+                if ((a == 0 && errno != 0) || (a < 0) || (a > INT_MAX)) {
+                    print_usage_and_exit(*argv);
+                }
+                chars_to_skip = (int) a;
+                break;
+            }
             case 'u':
                 suppress_duplicates = true;
                 break;
