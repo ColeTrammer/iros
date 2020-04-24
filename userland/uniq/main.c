@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -10,6 +11,7 @@ static bool suppress_duplicates;
 static bool suppress_nonduplicates;
 static bool show_count;
 static int chars_to_skip;
+static int fields_to_skip;
 
 static int do_uniq(FILE *in_file, FILE *out_file) {
     char *prev_line = NULL;
@@ -24,7 +26,18 @@ static int do_uniq(FILE *in_file, FILE *out_file) {
         }
 
         long i = 0;
-        while (line[i] && i < chars_to_skip) {
+        for (long fields_skipped = 0; line[i] && fields_skipped < fields_to_skip; fields_skipped++) {
+            while (line[i] && isblank(line[i])) {
+                i++;
+            }
+
+            while (line[i] && !isblank(line[i])) {
+                i++;
+            }
+        }
+
+        long start = i;
+        while (line[i] && i - start < chars_to_skip) {
             i++;
         }
 
@@ -70,13 +83,13 @@ static int do_uniq(FILE *in_file, FILE *out_file) {
 }
 
 void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-cdu] [-s chars] [input_file [output_file]]\n", s);
+    fprintf(stderr, "Usage: %s [-cdu] [-f fields] [-s chars] [input_file [output_file]]\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, ":cdus:")) != -1) {
+    while ((opt = getopt(argc, argv, ":cdus:f:")) != -1) {
         switch (opt) {
             case 'c':
                 show_count = true;
@@ -84,6 +97,14 @@ int main(int argc, char **argv) {
             case 'd':
                 suppress_nonduplicates = true;
                 break;
+            case 'f': {
+                long a = strtol(optarg, NULL, 10);
+                if ((a == 0 && errno != 0) || (a < 0) || (a > INT_MAX)) {
+                    print_usage_and_exit(*argv);
+                }
+                fields_to_skip = (int) a;
+                break;
+            }
             case 's': {
                 long a = strtol(optarg, NULL, 10);
                 if ((a == 0 && errno != 0) || (a < 0) || (a > INT_MAX)) {
