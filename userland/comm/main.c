@@ -34,15 +34,21 @@ static FILE *comm_open(const char *path) {
 }
 
 static void output_col1(const char *s) {
-    printf("%s\n", s);
+    if (!suppress_1) {
+        printf("%s\n", s);
+    }
 }
 
 static void output_col2(const char *s) {
-    printf("\t%s\n", s);
+    if (!suppress_2) {
+        printf("%s%s\n", suppress_1 ? "" : "\t", s);
+    }
 }
 
 static void output_col3(const char *s) {
-    printf("\t\t%s\n", s);
+    if (!suppress_3) {
+        printf("%s%s%s\n", suppress_1 ? "" : "\t", suppress_2 ? "" : "\t", s);
+    }
 }
 
 #define getline_strip(lp, m, f)                     \
