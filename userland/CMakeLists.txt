@@ -15,6 +15,7 @@ set(TARGETS
     chmod
     clear
     cmp
+    comm
     cp
     date
     dirname
