@@ -14,6 +14,7 @@ set(TARGETS
     cat
     chmod
     clear
+    cmp
     cp
     date
     dirname
