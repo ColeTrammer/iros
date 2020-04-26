@@ -268,7 +268,6 @@ else()
         unistd/lchown.c
         unistd/link.c
         unistd/lseek.c
-        unistd/nanosleep.c
         unistd/pathconf.c
         unistd/pause.c
         unistd/pipe.c
