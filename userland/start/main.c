@@ -50,25 +50,41 @@ void spawn_process(char **argv, uid_t uid, gid_t gid, bool redirect) {
     setpgid(pid, pid);
 }
 
-int main() {
+int main(int argc, char **argv) {
+    bool use_graphics = false;
+
+    int opt;
+    while ((opt = getopt(argc, argv, ":gv")) != -1) {
+        switch (opt) {
+            case 'g':
+                use_graphics = true;
+                break;
+            case 'v':
+                use_graphics = false;
+                break;
+            case ':':
+            case '?':
+                fprintf(stderr, "Usage: %s [-g|-v]\n", *argv);
+                break;
+        }
+    }
+
     char *nslookup_args[] = { "/bin/nslookup", "-s", NULL };
 
     spawn_process(nslookup_args, 0, 0, false);
-#ifdef KERNEL_NO_GRAPHICS
-    char *xterm_args[] = { "/bin/xterm", NULL };
 
-    spawn_process(xterm_args, 100, 100, false);
-#else
-    char *window_server_args[] = { "/bin/window_server", NULL };
+    if (!use_graphics) {
+        char *xterm_args[] = { "/bin/xterm", "-g", NULL };
+        spawn_process(xterm_args, 100, 100, false);
+    } else {
+        char *window_server_args[] = { "/bin/window_server", NULL };
+        spawn_process(window_server_args, 0, 0, false);
 
-    spawn_process(window_server_args, 0, 0, false);
+        sleep(1);
 
-    sleep(1);
-
-    char *window_server_test_args[] = { "/bin/xterm", NULL };
-
-    spawn_process(window_server_test_args, 100, 100, false);
-#endif /* KERNEL_NO_GRAPHICS */
+        char *window_server_test_args[] = { "/bin/xterm", NULL };
+        spawn_process(window_server_test_args, 100, 100, false);
+    }
 
     for (;;) {
         sleep(100);
