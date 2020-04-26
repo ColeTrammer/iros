@@ -1770,6 +1770,10 @@ SYS_CALL(pselect) {
                          read_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (read_fds_found[i] & (1U << j)) {
                             struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
+                            if (!to_check) {
+                                count = EBADF;
+                                goto pselect_return;
+                            }
                             if (fs_is_readable(to_check)) {
                                 read_fds_found[i] ^= (1U << j);
                                 count++;
@@ -1787,6 +1791,10 @@ SYS_CALL(pselect) {
                          write_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (write_fds_found[i] & (1U << j)) {
                             struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
+                            if (!to_check) {
+                                count = EBADF;
+                                goto pselect_return;
+                            }
                             if (fs_is_writable(to_check)) {
                                 write_fds_found[i] ^= (1U << j);
                                 count++;
@@ -1804,6 +1812,10 @@ SYS_CALL(pselect) {
                          except_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
                         if (except_fds_found[i] & (1U << j)) {
                             struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
+                            if (!to_check) {
+                                count = EBADF;
+                                goto pselect_return;
+                            }
                             if (fs_is_exceptional(to_check)) {
                                 except_fds_found[i] ^= (1U << j);
                                 count++;
