@@ -11,7 +11,6 @@ endif()
 
 add_compile_definitions("ARCH=${ARCH}")
 add_compile_definitions("_OS_2_SOURCE")
-add_compile_definitions("KERNEL_NO_GRAPHICS")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -fdiagnostics-color=always -fno-omit-frame-pointer -std=gnu2x")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -fconcepts -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer")

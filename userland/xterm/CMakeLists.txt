@@ -10,3 +10,7 @@ set(SOURCES
 
 add_os_executable(xterm bin)
 target_link_libraries(xterm libgraphics libliim libws)
+
+add_os_executable(xterm-vga bin)
+target_link_libraries(xterm-vga libgraphics libliim libws)
+target_compile_definitions(xterm-vga PRIVATE KERNEL_NO_GRAPHICS)
