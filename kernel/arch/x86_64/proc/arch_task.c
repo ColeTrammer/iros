@@ -26,7 +26,8 @@ extern struct task initial_kernel_task;
 extern struct task *current_task;
 
 /* Default Args And Envp Passed to First Program */
-static char *test_argv[2] = { "start", NULL };
+static char first_arg[50];
+static char *test_argv[3] = { "start", first_arg, NULL };
 
 static char *test_envp[2] = { "PATH=/bin:/usr/bin:/initrd", NULL };
 
@@ -115,6 +116,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
 
+    strcpy(test_argv[1], kernel_use_graphics() ? "-g" : "-v");
     proc_clone_program_args(task->process, NULL, test_argv, test_envp);
     task->arch_task.task_state.stack_state.rsp =
         map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, task->process->args_context);

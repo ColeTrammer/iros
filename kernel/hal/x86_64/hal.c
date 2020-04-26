@@ -40,10 +40,23 @@ void init_drivers() {
     init_serial_port_device(SERIAL_COM1_PORT);
     init_virtual_devices();
     init_pci();
-#ifdef KERNEL_NO_GRAPHICS
-    init_vga_device();
-#endif /* KERNEL_NO_GRAPHICS */
+
+    if (!kernel_use_graphics()) {
+        init_vga_device();
+    }
+
     init_ptmx();
 
     debug_log("Finished Initializing Drivers\n");
+}
+
+static bool use_graphics;
+
+void kernel_enable_graphics(void) {
+    use_graphics = true;
+    debug_log("kernel graphics enabled\n");
+}
+
+bool kernel_use_graphics(void) {
+    return use_graphics;
 }

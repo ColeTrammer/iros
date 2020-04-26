@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
@@ -94,6 +95,14 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
 
     uint32_t *data = multiboot_info + 2;
     while (data < multiboot_info + multiboot_info[0] / sizeof(uint32_t)) {
+        if (data[0] == 1) {
+            char *cmd_line = (char *) &data[2];
+            debug_log("kernel command line: [ %s ]\n", cmd_line);
+            if (strcmp(cmd_line, "graphics=1") == 0) {
+                kernel_enable_graphics();
+            }
+        }
+
         if (data[0] == 6) {
             uintptr_t *mem = (uintptr_t *) (data + 4);
             while ((uint32_t *) mem < data + data[1] / sizeof(uint32_t)) {
