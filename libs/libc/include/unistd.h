@@ -36,6 +36,8 @@
 extern "C" {
 #endif /* cplusplus */
 
+typedef unsigned int useconds_t;
+
 extern char **environ;
 
 void *sbrk(intptr_t increment);
@@ -61,6 +63,8 @@ int chdir(const char *path);
 int fchdir(int fd);
 off_t lseek(int fd, off_t offset, int whence);
 unsigned int sleep(unsigned int seconds);
+int usleep(useconds_t usec);
+int nanosleep(const struct timespec *req, struct timespec *rem);
 int chown(const char *pathname, uid_t owner, gid_t group);
 int fchown(int fd, uid_t owner, gid_t group);
 int lchown(const char *pathname, uid_t owner, gid_t group);

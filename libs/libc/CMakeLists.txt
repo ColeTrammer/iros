@@ -268,6 +268,7 @@ else()
         unistd/lchown.c
         unistd/link.c
         unistd/lseek.c
+        unistd/nanosleep.c
         unistd/pathconf.c
         unistd/pause.c
         unistd/pipe.c
@@ -292,6 +293,7 @@ else()
         unistd/ttyname_r.c
         unistd/ttyname.c
         unistd/unlink.c
+        unistd/usleep.c
         unistd/write.c
         utime/utime.c
         __cxa_atexit.c
