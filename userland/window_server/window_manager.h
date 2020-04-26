@@ -20,10 +20,13 @@ public:
         m_windows.for_each(callback);
     }
 
+    void remove_window(wid_t wid);
+    void remove_windows_of_client(int client_id);
+
     void draw();
 
-    Window* active_window() { return m_active_window; }
-    const Window* active_window() const { return m_active_window; };
+    Window* active_window() { return m_active_window.get(); }
+    const Window* active_window() const { return m_active_window.get(); };
 
     void notify_mouse_moved(int dx, int dy);
 
@@ -37,5 +40,5 @@ private:
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
     Vector<SharedPtr<Window>> m_windows;
-    Window* m_active_window { nullptr };
+    SharedPtr<Window> m_active_window;
 };

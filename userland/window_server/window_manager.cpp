@@ -14,7 +14,25 @@ WindowManager::~WindowManager() {}
 
 void WindowManager::add_window(SharedPtr<Window> window) {
     windows().add(window);
-    m_active_window = window.get();
+    m_active_window = window;
+}
+
+void WindowManager::remove_window(wid_t wid) {
+    m_windows.remove_if([&](auto& window) {
+        return window->id() == wid;
+    });
+
+    if (m_active_window->id() == wid) {
+        m_active_window = m_windows.first();
+    }
+}
+
+void WindowManager::remove_windows_of_client(int client_id) {
+    m_windows.for_each_reverse([&](auto& window) {
+        if (window->client_id() == client_id) {
+            remove_window(window->id());
+        }
+    });
 }
 
 void WindowManager::draw() {

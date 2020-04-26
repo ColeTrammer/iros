@@ -34,9 +34,7 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
 void Server::kill_client(int client_id) {
     close(client_id);
     m_clients.remove_element(client_id);
-    m_manager->windows().remove_if([&](auto window) {
-        return window->client_id() == client_id;
-    });
+    m_manager->remove_windows_of_client(client_id);
 }
 
 void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd) {
@@ -54,9 +52,7 @@ void Server::handle_create_window_request(const WindowServer::Message& request, 
 
 void Server::handle_remove_window_request(const WindowServer::Message& request, int client_fd) {
     wid_t wid = request.data.remove_window_request.wid;
-    m_manager->windows().remove_if([&](auto& window) {
-        return window->id() == wid;
-    });
+    m_manager->remove_window(wid);
 
     auto to_send = WindowServer::Message::RemoveWindowResponse::create(true);
     assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
