@@ -119,9 +119,9 @@ if (NOT ${NATIVE_BUILD})
         COMMAND /bin/echo "set menu_color_highlight=black/light-gray" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "menuentry \"os_2\" {" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "\tmultiboot2 /boot/boot $$OS_2_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "\tmodule2 /modules/initrd.bin initrd" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "\tmodule2 /modules/kernel kernel" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /bin/echo "    multiboot2 /boot/boot $$OS_2_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /bin/echo "    module2 /modules/initrd.bin initrd" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /bin/echo "    module2 /modules/kernel kernel" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "}" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set timeout_style=menu" >> ${ISODIR}/boot/grub/grub.cfg
