@@ -167,7 +167,7 @@ struct cut_range *cut_parse_list(char *list, size_t *length) {
 
         if (*length >= size) {
             size = MAX(size * 2, 20);
-            criteria = realloc(criteria, size);
+            criteria = realloc(criteria, size * sizeof(struct cut_range));
             if (!criteria) {
                 perror("cut: realloc");
                 return NULL;
