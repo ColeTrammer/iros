@@ -17,6 +17,7 @@ set(TARGETS
     cmp
     comm
     cp
+    cut
     date
     dirname
     echo
