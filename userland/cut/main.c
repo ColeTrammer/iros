@@ -35,7 +35,7 @@ bool cut_matches(long position, struct cut_range *criteria, size_t criteria_leng
     return false;
 }
 
-void do_line_cut(const char *line, struct cut_info *info) {
+void do_line_cut(char *line, struct cut_info *info) {
     switch (info->mode) {
         case MODE_INVALID:
             assert(false);
@@ -51,6 +51,29 @@ void do_line_cut(const char *line, struct cut_info *info) {
             }
             break;
         case MODE_FIELD:
+            if (strchr(line, info->delim) == NULL) {
+                if (info->suppress_delimiterless_lines) {
+                    return;
+                }
+
+                puts(line);
+                return;
+            }
+
+            char delim_string[2] = { 0 };
+            delim_string[0] = info->delim;
+            char *part = strtok(line, delim_string);
+            bool first = true;
+            size_t index = 1;
+            while (part) {
+                if (cut_matches(index, info->criteria, info->criteria_length)) {
+                    printf("%s%s", first ? "" : delim_string, part);
+                    first = false;
+                }
+
+                part = strtok(NULL, delim_string);
+                index++;
+            }
             break;
     }
 
