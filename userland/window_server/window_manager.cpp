@@ -4,8 +4,23 @@
 
 #include "window_manager.h"
 
-constexpr int cursor_width = 16;
-constexpr int cursor_height = 16;
+constexpr int cursor_width = 12;
+constexpr int cursor_height = 12;
+
+// clang-format off
+constexpr char cursor[cursor_height][cursor_width + 1] = { "............",
+                                                           "...x........",
+                                                           "...xx.......",
+                                                           "...xxx......",
+                                                           "...xxxx.....",
+                                                           "...xxxxx....",
+                                                           "...xxxxxx...",
+                                                           "...xxxxx....",
+                                                           "......xx....",
+                                                           "......xx....",
+                                                           ".......x....",
+                                                           "............" };
+// clang-format on
 
 WindowManager::WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
     : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer) {}
@@ -52,7 +67,13 @@ void WindowManager::draw() {
 
     for_each_window(render_window);
 
-    renderer.fill_rect(m_mouse_x, m_mouse_y, cursor_width, cursor_height);
+    for (int y = 0; y < cursor_height; y++) {
+        for (int x = 0; x < cursor_width; x++) {
+            if (cursor[y][x] == 'x') {
+                renderer.pixels().put_pixel(m_mouse_x + x, m_mouse_y + y, Color(255, 255, 255));
+            }
+        }
+    }
 
     swap_buffers();
 }
