@@ -67,6 +67,25 @@ public:
         return *this;
     }
 
+    // Example of this function:
+    // this = { 1, 2, 3, 4, 5 }
+    // start_index=2, end_index=5
+    // result = { 1, 2, 4, 5, 3 }
+    void rotate_left(int start_index, int end_index) {
+        assert(start_index <= end_index);
+        assert(start_index >= 0);
+        assert(end_index <= size());
+        if (end_index - start_index <= 1) {
+            return;
+        }
+
+        T temp(LIIM::move(get(start_index)));
+        for (int i = start_index; i < end_index - 1; i++) {
+            get(i) = LIIM::move(get(i + 1));
+        }
+        get(end_index - 1) = LIIM::move(temp);
+    }
+
     ~Vector() {
         for (int i = 0; i < m_size; i++) {
             get(i).~T();
