@@ -5,7 +5,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-extern void __assert_failed(const char *exp, const char *file, int line, const char *func);
+extern __attribute__((noreturn)) void __assert_failed(const char *exp, const char *file, int line, const char *func);
 
 #ifdef NDEBUG
 #define assert(ignore) ((void) 0)
