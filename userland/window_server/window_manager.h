@@ -5,6 +5,8 @@
 
 #include "window.h"
 
+class Point;
+
 class WindowManager {
 public:
     WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer);
@@ -29,6 +31,11 @@ public:
     const Window* active_window() const { return m_active_window.get(); };
 
     void notify_mouse_moved(int dx, int dy);
+    void notify_mouse_pressed();
+
+    void set_active_window(SharedPtr<Window> window);
+
+    int find_window_intersecting_point(Point p);
 
 private:
     void swap_buffers();

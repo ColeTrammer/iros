@@ -29,7 +29,7 @@ WindowManager::~WindowManager() {}
 
 void WindowManager::add_window(SharedPtr<Window> window) {
     windows().add(window);
-    m_active_window = window;
+    set_active_window(window);
 }
 
 void WindowManager::remove_window(wid_t wid) {
@@ -38,7 +38,11 @@ void WindowManager::remove_window(wid_t wid) {
     });
 
     if (m_active_window->id() == wid) {
-        m_active_window = m_windows.first();
+        if (windows().size() == 0) {
+            set_active_window(nullptr);
+        } else {
+            set_active_window(windows().last());
+        }
     }
 }
 
@@ -88,10 +92,34 @@ void WindowManager::swap_buffers() {
 }
 
 void WindowManager::notify_mouse_moved(int dx, int dy) {
-    int new_mouse_x = LIIM::clamp(m_mouse_x + dx, 0, m_front_buffer->width() * m_front_buffer->height() - cursor_width);
-    int new_mouse_y = LIIM::clamp(m_mouse_y - dy, 0, m_front_buffer->width() * m_front_buffer->height() - cursor_height);
+    int new_mouse_x = LIIM::clamp(m_mouse_x + dx, 0, m_front_buffer->width() - cursor_width);
+    int new_mouse_y = LIIM::clamp(m_mouse_y - dy, 0, m_front_buffer->height() - cursor_height);
 
     set_mouse_coordinates(new_mouse_x, new_mouse_y);
+}
+
+void WindowManager::set_active_window(SharedPtr<Window> window) {
+    m_active_window = move(window);
+}
+
+int WindowManager::find_window_intersecting_point(Point p) {
+    for (int i = windows().size() - 1; i >= 0; i--) {
+        if (windows()[i]->rect().intersects(p)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void WindowManager::notify_mouse_pressed() {
+    int index = find_window_intersecting_point({ m_mouse_x, m_mouse_y });
+    if (index == -1) {
+        return;
+    }
+
+    windows().rotate_left(index, windows().size());
+    set_active_window(windows().last());
 }
 
 void WindowManager::set_mouse_coordinates(int x, int y) {

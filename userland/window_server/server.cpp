@@ -181,6 +181,10 @@ void Server::start() {
                     m_manager->notify_mouse_moved(event.dx, event.dy);
                 }
 
+                if (event.left == MOUSE_DOWN || event.right == MOUSE_DOWN) {
+                    m_manager->notify_mouse_pressed();
+                }
+
                 auto* active_window = m_manager->active_window();
                 if (active_window) {
                     auto to_send = WindowServer::Message::MouseEventMessage::create(event);
