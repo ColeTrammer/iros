@@ -20,6 +20,8 @@ public:
 
     Point center() const { return Point(x() + width() / 2, y() + height() / 2); }
 
+    bool intersects(Point p) { return p.x() >= m_x && p.x() <= m_x + m_width && p.y() >= m_y && p.y() <= m_y + m_height; }
+
     ~Rect() {}
 
 private:
