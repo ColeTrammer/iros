@@ -99,6 +99,9 @@ static void add_mouse_event(struct mouse_event *event) {
 
 static struct mouse_event s_event = { 0 };
 
+static bool left_is_down = false;
+static bool right_is_down = false;
+
 void on_interrupt(void *closure __attribute__((unused))) {
     uint8_t status = inb(PS2_CONTROL_REGISTER);
     if (!(((status & 0x20) == 0x20) && (status & 0x1))) {
@@ -115,15 +118,13 @@ void on_interrupt(void *closure __attribute__((unused))) {
         case 1:
         case 2:
             data.buffer[data.index++] = mouse_data;
-            return;
-        case 3:
             if (data.has_scroll_wheel) {
-                data.buffer[data.index++] = mouse_data;
                 return;
             }
             break;
-        case 4:
+        case 3:
             assert(data.has_scroll_wheel);
+            data.buffer[data.index++] = mouse_data;
             break;
         default:
             assert(false);
@@ -133,6 +134,38 @@ void on_interrupt(void *closure __attribute__((unused))) {
         s_event.scroll_state = SCROLL_DOWN;
     } else if (data.buffer[3] == 0xFF) {
         s_event.scroll_state = SCROLL_UP;
+    }
+
+    if (data.buffer[0] & 0x1) {
+        if (left_is_down) {
+            s_event.left = MOUSE_NO_CHANGE;
+        } else {
+            s_event.left = MOUSE_DOWN;
+            left_is_down = true;
+        }
+    } else {
+        if (!left_is_down) {
+            s_event.left = MOUSE_NO_CHANGE;
+        } else {
+            s_event.left = MOUSE_UP;
+            left_is_down = false;
+        }
+    }
+
+    if (data.buffer[0] & 0x2) {
+        if (right_is_down) {
+            s_event.right = MOUSE_NO_CHANGE;
+        } else {
+            s_event.right = MOUSE_DOWN;
+            right_is_down = true;
+        }
+    } else {
+        if (!right_is_down) {
+            s_event.right = MOUSE_NO_CHANGE;
+        } else {
+            s_event.right = MOUSE_UP;
+            right_is_down = false;
+        }
     }
 
     if (data.buffer[0] & 0xC0) {
