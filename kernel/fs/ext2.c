@@ -913,9 +913,7 @@ struct inode *ext2_lookup(struct inode *inode, const char *name) {
         return NULL;
     }
 
-    if (inode->dirent_cache == NULL) {
-        ext2_update_tnode_list(inode);
-    }
+    ext2_update_tnode_list(inode);
 
     if (name == NULL) {
         return NULL;
