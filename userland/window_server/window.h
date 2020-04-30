@@ -10,7 +10,7 @@ typedef uint64_t wid_t;
 
 class Window {
 public:
-    Window(String shm_path, const Rect& rect, int client_id);
+    Window(String shm_path, const Rect& rect, String title, int client_id);
     ~Window();
 
     Window(const Window& other) = delete;
@@ -27,6 +27,8 @@ public:
         m_front_buffer = temp;
     }
 
+    const String& title() const { return m_title; }
+
     SharedPtr<PixelBuffer>& buffer() { return m_front_buffer; }
     const SharedPtr<PixelBuffer>& buffer() const { return m_front_buffer; }
 
@@ -35,6 +37,7 @@ private:
     Rect m_rect;
     Rect m_content_rect;
     const wid_t m_id;
+    String m_title;
     const int m_client_id;
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/pointers.h>
+#include <liim/string.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -24,13 +25,16 @@ struct Message {
     };
 
     struct CreateWindowRequest {
-        CreateWindowRequest(int xx, int yy, int wwidth, int hheight) : x(xx), y(yy), width(wwidth), height(hheight) {}
-
-        static SharedPtr<Message> create(int x, int y, int width, int height) {
-            auto* message = (Message*) malloc(sizeof(Message) + sizeof(CreateWindowRequest));
+        static SharedPtr<Message> create(int x, int y, int width, int height, const String& name) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(CreateWindowRequest) + name.size() + 1);
             message->type = Message::Type::CreateWindowRequest;
-            message->data_len = sizeof(CreateWindowRequest);
-            new (&message->data.create_window_request) CreateWindowRequest(x, y, width, height);
+            message->data_len = sizeof(CreateWindowRequest) + name.size() + 1;
+            auto& request = message->data.create_window_request;
+            request.x = x;
+            request.y = y;
+            request.width = width;
+            request.height = height;
+            strcpy(request.name, name.string());
             return SharedPtr<Message>(message);
         }
 
@@ -38,6 +42,7 @@ struct Message {
         int y;
         int width;
         int height;
+        char name[0];
     };
 
     struct CreateWindowResponse {

@@ -28,8 +28,8 @@ Connection::~Connection() {
     close(m_fd);
 }
 
-SharedPtr<Window> Connection::create_window(int x, int y, int width, int height) {
-    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height);
+SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name) {
+    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name);
     assert(write(m_fd, create_message.get(), create_message->total_size()) != -1);
 
     uint8_t message_buffer[4096];

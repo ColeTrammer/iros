@@ -11,8 +11,8 @@ static wid_t get_next_id() {
     return next_wid++;
 }
 
-Window::Window(String shm_path, const Rect& rect, int client_id)
-    : m_shm_path(shm_path.string()), m_content_rect(rect), m_id(get_next_id()), m_client_id(client_id) {
+Window::Window(String shm_path, const Rect& rect, String title, int client_id)
+    : m_shm_path(shm_path.string()), m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id) {
     m_rect.set_x(rect.x() - 1);
     m_rect.set_y(rect.y() - 22);
     m_rect.set_width(rect.width() + 2);

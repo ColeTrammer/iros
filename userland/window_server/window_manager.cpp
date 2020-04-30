@@ -64,6 +64,8 @@ void WindowManager::draw() {
             m_back_buffer->put_pixel(x, window->rect().y() + 21, Color(255, 255, 255));
         }
 
+        renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title());
+
         auto& rect = window->content_rect();
         for (int x = rect.x(); x < rect.x() + rect.width(); x++) {
             for (int y = rect.y(); y < rect.y() + rect.height(); y++) {

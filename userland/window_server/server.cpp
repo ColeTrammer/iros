@@ -43,7 +43,7 @@ void Server::handle_create_window_request(const WindowServer::Message& request, 
     snprintf(s, 49, "/window_server_%d", 2 * client_fd);
 
     const WindowServer::Message::CreateWindowRequest& data = request.data.create_window_request;
-    auto window = make_shared<Window>(s, Rect(data.x, data.y, data.width, data.height), client_fd);
+    auto window = make_shared<Window>(s, Rect(data.x, data.y, data.width, data.height), String(data.name), client_fd);
     m_manager->add_window(window);
 
     auto to_send = WindowServer::Message::CreateWindowResponse::create(window->id(), window->buffer()->size_in_bytes(), s);
