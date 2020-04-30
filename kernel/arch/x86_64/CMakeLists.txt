@@ -31,6 +31,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/drivers/pit.c
     ${KERNEL_HALDIR}/drivers/serial.c
     ${KERNEL_HALDIR}/drivers/vga.c
+    ${KERNEL_HALDIR}/drivers/vmware_back_door.c
     ${KERNEL_HALDIR}/gdt.c
     ${KERNEL_HALDIR}/hal.c
     ${KERNEL_HALDIR}/idt.c

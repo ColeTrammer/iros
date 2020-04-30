@@ -10,6 +10,7 @@
 
 #include <kernel/hal/x86_64/drivers/mouse.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/hal/x86_64/drivers/vmware_back_door.h>
 
 struct mouse_event_queue {
     struct mouse_event entry;
@@ -109,6 +110,14 @@ void on_interrupt(void *closure __attribute__((unused))) {
     }
 
     uint8_t mouse_data = inb(PS2_DATA_REGISTER);
+    if (vmmouse_is_enabled()) {
+        struct mouse_event *event = vmmouse_read();
+        if (event) {
+            add_mouse_event(event);
+        }
+        return;
+    }
+
     switch (data.index) {
         case 0:
             if (!(mouse_data & (1 << 3))) {
@@ -176,6 +185,7 @@ void on_interrupt(void *closure __attribute__((unused))) {
         s_event.dy = (int) data.buffer[2] - ((((int) data.buffer[0]) << 3) & 0x100);
     }
 
+    s_event.scale_mode = SCALE_NONE;
     add_mouse_event(&s_event);
     data.index = 0;
 }

@@ -149,10 +149,13 @@ enum scroll_state { SCROLL_NONE, SCROLL_UP, SCROLL_DOWN };
 
 enum mouse_button_state { MOUSE_NO_CHANGE, MOUSE_DOWN, MOUSE_UP };
 
+enum scale_mode { SCALE_NONE, SCALE_RELATIVE };
+
 struct mouse_event {
     enum scroll_state scroll_state;
     enum mouse_button_state left;
     enum mouse_button_state right;
+    enum scale_mode scale_mode;
     int dx;
     int dy;
 };

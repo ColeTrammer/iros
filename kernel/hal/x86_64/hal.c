@@ -15,6 +15,7 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
+#include <kernel/hal/x86_64/drivers/vmware_back_door.h>
 #include <kernel/hal/x86_64/gdt.h>
 
 void init_hal() {
@@ -34,6 +35,7 @@ void init_hal() {
 void init_drivers() {
     init_keyboard();
     init_mouse();
+    init_vmware_back_door();
     init_fdc();
     init_ata();
     init_pit();
