@@ -4,6 +4,7 @@
 #include <graphics/color.h>
 #include <graphics/font.h>
 #include <graphics/pixel_buffer.h>
+#include <graphics/rect.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 
@@ -15,6 +16,9 @@ public:
 
     Color color() const { return m_color; }
     void set_color(Color c) { m_color = c; }
+
+    void fill_rect(const Rect& rect) { fill_rect(rect.x(), rect.y(), rect.width(), rect.height()); }
+    void draw_rect(const Rect& rect) { draw_rect(rect.x(), rect.y(), rect.width(), rect.height()); }
 
     void fill_rect(int x, int y, int width, int height);
     void draw_rect(int x, int y, int width, int height);

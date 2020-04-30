@@ -15,7 +15,8 @@ public:
 
     Window(const Window& other) = delete;
 
-    Rect rect() const { return m_rect; }
+    const Rect& rect() const { return m_rect; }
+    const Rect& content_rect() const { return m_content_rect; }
 
     wid_t id() const { return m_id; }
     int client_id() const { return m_client_id; }
@@ -32,6 +33,7 @@ public:
 private:
     String m_shm_path;
     Rect m_rect;
+    Rect m_content_rect;
     const wid_t m_id;
     const int m_client_id;
     SharedPtr<PixelBuffer> m_front_buffer;
