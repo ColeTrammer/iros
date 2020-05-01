@@ -39,6 +39,7 @@ set(TARGETS
     rmdir
     sh
     sleep
+    sort
     start
     su
     tail
