@@ -162,7 +162,6 @@ struct ext2_block_group {
     struct raw_block_group_descriptor *blk_desc;
     struct ext2_block_bitmap block_bitmap;
     struct ext2_inode_bitmap inode_bitmap;
-    struct raw_inode *inode_table_start;
 };
 
 struct ext2_block {
@@ -189,6 +188,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
 struct inode *ext2_symlink(struct tnode *tnode, const char *name, const char *target, int *error);
 int ext2_link(struct tnode *tnode, const char *name, const struct tnode *target);
 int ext2_read_all(struct inode *inode, void *buffer);
+void ext2_on_inode_destruction(struct inode *inode);
 
 void init_ext2();
 

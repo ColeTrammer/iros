@@ -47,6 +47,7 @@ static struct inode_operations ext2_i_op = {
     .read_all = &ext2_read_all,
     .utimes = &ext2_utimes,
     .read = &ext2_iread,
+    .on_inode_destruction = &ext2_on_inode_destruction,
 };
 
 static struct inode_operations ext2_dir_i_op = {
@@ -61,6 +62,7 @@ static struct inode_operations ext2_dir_i_op = {
     .symlink = &ext2_symlink,
     .link = &ext2_link,
     .utimes = &ext2_utimes,
+    .on_inode_destruction = &ext2_on_inode_destruction,
 };
 
 static struct file_operations ext2_f_op = {
@@ -490,35 +492,30 @@ static uint32_t ext2_find_open_inode(struct super_block *sb, size_t blk_grp_inde
     return (uint32_t) ret;
 }
 
-/* Gets inode table for a given block group index */
-static struct raw_inode *ext2_get_inode_table(struct super_block *sb, size_t index) {
-    struct ext2_sb_data *data = sb->private_data;
-    assert(index < data->num_block_groups);
-
-    struct ext2_block_group *group = ext2_get_block_group(sb, index);
-
-    if (!group->inode_table_start) {
-        ssize_t num_blocks = (data->sb->num_inodes_in_block_group * data->sb->inode_size + sb->block_size - 1) / sb->block_size;
-        struct raw_inode *inode_table_start = ext2_allocate_blocks(sb, num_blocks);
-        if (ext2_read_blocks(sb, inode_table_start, group->blk_desc->inode_table_block_address, num_blocks) != num_blocks) {
-            debug_log("Ext2 Read Inode Table Failed: [ %lu ]\n", index);
-            ext2_free_blocks(inode_table_start);
-            return NULL;
-        }
-
-        group->inode_table_start = inode_table_start;
-    }
-
-    return group->inode_table_start;
-}
-
 /* Gets the raw inode from index */
 static struct raw_inode *ext2_get_raw_inode(struct super_block *sb, uint32_t index) {
-    struct raw_inode *inode_table = ext2_get_inode_table(sb, ext2_get_block_group_from_inode(sb, index));
-    assert(inode_table);
+    struct ext2_sb_data *sb_data = sb->private_data;
 
-    struct ext2_sb_data *data = sb->private_data;
-    return (struct raw_inode *) (((char *) inode_table) + ext2_get_inode_table_index(sb, index) * data->sb->inode_size);
+    size_t inode_table_index = ext2_get_inode_table_index(sb, index);
+    size_t block_off = (inode_table_index * sb_data->sb->inode_size) / sb->block_size;
+    size_t block_group_index = ext2_get_block_group_from_inode(sb, index);
+
+    char *block = ext2_allocate_blocks(sb, 1);
+    struct ext2_block_group *group = ext2_get_block_group(sb, block_group_index);
+    size_t block_address = group->blk_desc->inode_table_block_address + block_off;
+    ssize_t ret = ext2_read_blocks(sb, block, block_address, 1);
+    if (ret != 1) {
+        debug_log("Error reading inode table: [ %lu, %lu, %lu ]\n", block_group_index, block_address, inode_table_index);
+        ext2_free_blocks(block);
+        return NULL;
+    }
+
+    struct raw_inode *raw_inode = (struct raw_inode *) (block + (inode_table_index * sb_data->sb->inode_size) % sb->block_size);
+    struct raw_inode *raw_inode_copy = malloc(sizeof(struct raw_inode));
+    memcpy(raw_inode_copy, raw_inode, sb_data->sb->inode_size);
+
+    ext2_free_blocks(block);
+    return raw_inode_copy;
 }
 
 static void ext2_update_inode(struct inode *inode, bool update_tnodes);
@@ -643,10 +640,19 @@ static int ext2_sync_inode(struct inode *inode) {
 
     size_t inode_table_index = ext2_get_inode_table_index(inode->super_block, inode->index);
     size_t block_off = (inode_table_index * sb_data->sb->inode_size) / inode->super_block->block_size;
-    size_t block_group = ext2_get_block_group_from_inode(inode->super_block, inode->index);
-    size_t raw_offset = block_off * inode->super_block->block_size;
-    struct raw_inode *raw_inode_table = ext2_get_inode_table(inode->super_block, block_group);
-    struct raw_inode *raw_inode = (struct raw_inode *) (((char *) raw_inode_table) + inode_table_index * sb_data->sb->inode_size);
+    size_t block_group_index = ext2_get_block_group_from_inode(inode->super_block, inode->index);
+
+    char *block = ext2_allocate_blocks(inode->super_block, 1);
+    struct ext2_block_group *group = ext2_get_block_group(inode->super_block, block_group_index);
+    size_t block_address = group->blk_desc->inode_table_block_address + block_off;
+    ssize_t ret = ext2_read_blocks(inode->super_block, block, block_address, 1);
+    if (ret != 1) {
+        debug_log("Error reading inode table: [ %lu, %lu, %lu ]\n", block_group_index, block_address, inode_table_index);
+        ext2_free_blocks(block);
+        return (int) ret;
+    }
+
+    struct raw_inode *raw_inode = inode->private_data;
 
     raw_inode->size = inode->size;
     raw_inode->mode = inode->mode;
@@ -658,13 +664,16 @@ static int ext2_sync_inode(struct inode *inode) {
     /* Sector size should be retrieved from block device */
     raw_inode->sectors = (inode->size + 511) / 512;
 
-    ssize_t ret = ext2_write_blocks(inode->super_block, (void *) (((uintptr_t) raw_inode_table) + raw_offset),
-                                    sb_data->blk_desc_table[block_group].inode_table_block_address + block_off, 1);
+    memcpy(block + (inode_table_index * sb_data->sb->inode_size) % inode->super_block->block_size, raw_inode, sb_data->sb->inode_size);
+    ret = ext2_write_blocks(inode->super_block, block, block_address, 1);
 
     if (ret != 1) {
+        debug_log("Error writing inode table: [ %lu, %lu, %lu ]\n", block_group_index, block_address, inode_table_index);
+        ext2_free_blocks(block);
         return (int) ret;
     }
 
+    ext2_free_blocks(block);
     return 0;
 }
 
@@ -1160,6 +1169,12 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
     }
 
     return (ssize_t) len_save;
+}
+
+void ext2_on_inode_destruction(struct inode *inode) {
+    if (inode->private_data) {
+        free(inode->private_data);
+    }
 }
 
 int ext2_read_all(struct inode *inode, void *buffer) {
