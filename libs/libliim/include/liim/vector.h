@@ -356,6 +356,20 @@ public:
         LIIM::swap(this->m_vector, other.m_vector);
     }
 
+    void resize(int new_size) {
+        if (new_size == size()) {
+            return;
+        }
+
+        while (new_size < size()) {
+            remove_last();
+        }
+
+        while (new_size > size()) {
+            add(T());
+        }
+    }
+
 private:
     void increase_capacity() {
         if (m_size > 0) {
