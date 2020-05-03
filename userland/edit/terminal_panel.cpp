@@ -1,11 +1,47 @@
 #include <assert.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #include <unistd.h>
 
 #include "terminal_panel.h"
 
+static termios s_original_termios;
+static bool s_raw_mode_enabled;
+
+static void restore_termios() {
+    tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
+
+    // FIXME: it would be nice to somehow restore the old terminal
+    //        state instead of just clearing everything.
+    fputs("\033[3J", stdout);
+}
+
+static void enable_raw_mode() {
+    s_raw_mode_enabled = true;
+
+    assert(tcgetattr(STDOUT_FILENO, &s_original_termios) == 0);
+
+    termios to_set = s_original_termios;
+
+    // Raw mode flags according to `man tcsetattr (GNU/Linux)`
+    to_set.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+    to_set.c_oflag &= ~OPOST;
+    to_set.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    to_set.c_cflag &= ~(CSIZE | PARENB);
+    to_set.c_cflag |= CS8;
+
+    assert(tcsetattr(STDOUT_FILENO, TCSAFLUSH, &to_set) == 0);
+
+    atexit(restore_termios);
+}
+
 TerminalPanel::TerminalPanel() {
     assert(isatty(STDOUT_FILENO));
+
+    if (!s_raw_mode_enabled) {
+        enable_raw_mode();
+    }
 
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
@@ -54,6 +90,7 @@ void TerminalPanel::flush_row(int row) {
     }
 
     if (row != rows() - 1) {
+        fputc('\r', stdout);
         fputc('\n', stdout);
     }
 }
