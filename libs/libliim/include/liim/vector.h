@@ -347,8 +347,8 @@ public:
     Iterator end() { return Iterator(*this, size()); }
 
     using ConstIterator = VectorIterator<const Vector, const T>;
-    Iterator begin() const { return ConstIterator(*this, 0); }
-    Iterator end() const { return ConstIterator(*this, size()); }
+    ConstIterator begin() const { return ConstIterator(*this, 0); }
+    ConstIterator end() const { return ConstIterator(*this, size()); }
 
     void swap(Vector<T>& other) {
         LIIM::swap(this->m_capacity, other.m_capacity);
