@@ -21,6 +21,7 @@ set(TARGETS
     date
     dirname
     echo
+    edit
     env
     false
     grep
