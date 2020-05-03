@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "editor.h"
+#include "terminal_panel.h"
 
 void print_usage_and_exit(const char* s) {
     fprintf(stderr, "Usage: %s <text-file>\n", s);
@@ -21,7 +22,12 @@ int main(int argc, char** argv) {
         }
     }
 
-    auto document = Document::create_from_file(String(argv[optind]));
+    if (argc - optind != 1) {
+        print_usage_and_exit(*argv);
+    }
+
+    TerminalPanel panel;
+    auto document = Document::create_from_file(String(argv[optind]), panel);
     if (!document) {
         return 1;
     }

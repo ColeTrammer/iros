@@ -1,6 +1,7 @@
 set(SOURCES
     editor.cpp
     main.cpp
+    terminal_panel.cpp
 )
 
 add_os_executable(edit bin)
