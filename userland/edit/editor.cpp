@@ -89,11 +89,9 @@ void Document::move_cursor_right() {
 
 void Document::move_cursor_down() {
     int cursor_row = m_panel.cursor_row();
-    if (cursor_row == m_panel.rows() - 1) {
-        if (m_row_offset == m_lines.size() - m_panel.rows()) {
-            move_cursor_to_line_end();
-            return;
-        }
+    if (cursor_row + m_row_offset == m_lines.size() - 1) {
+        move_cursor_to_line_end();
+        return;
     }
 
     if (cursor_row == m_panel.rows() - 1) {
