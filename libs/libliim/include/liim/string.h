@@ -76,6 +76,16 @@ public:
         return *this;
     }
 
+    void insert(char c, int position) {
+        m_size++;
+        char* new_buffer = reinterpret_cast<char*>(malloc(size() + 1));
+        memcpy(new_buffer, m_string, position);
+        new_buffer[position] = c;
+        strcpy(new_buffer + position + 1, m_string + position);
+        free(m_string);
+        m_string = new_buffer;
+    }
+
     String& to_upper_case() {
         for (int i = 0; i < size(); i++) {
             if (islower(m_string[i])) {
