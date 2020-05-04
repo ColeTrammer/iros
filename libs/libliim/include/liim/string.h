@@ -86,6 +86,17 @@ public:
         m_string = new_buffer;
     }
 
+    void remove_index(int position) {
+        assert(position >= 0 && position < size());
+
+        m_size--;
+        char* new_buffer = reinterpret_cast<char*>(malloc(size() + 1));
+        memcpy(new_buffer, m_string, position);
+        strcpy(new_buffer + position, m_string + position + 1);
+        free(m_string);
+        m_string = new_buffer;
+    }
+
     String& to_upper_case() {
         for (int i = 0; i < size(); i++) {
             if (islower(m_string[i])) {
