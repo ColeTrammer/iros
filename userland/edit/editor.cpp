@@ -48,7 +48,7 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     if (ferror(file)) {
         display_error("edit: error reading file: `%s'", path.string());
     } else {
-        ret = make_unique<Document>(move(lines), path, panel);
+        ret = make_unique<Document>(move(lines), path, panel, LineMode::Multiple);
     }
 
     if (fclose(file)) {
@@ -59,10 +59,21 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
 }
 
 UniquePtr<Document> Document::create_empty(Panel& panel) {
-    Vector<Line> lines;
-    lines.add(Line(""));
-    return make_unique<Document>(move(lines), "", panel);
+    return make_unique<Document>(Vector<Line>(), "", panel, LineMode::Multiple);
 }
+
+UniquePtr<Document> Document::create_single_line(Panel& panel) {
+    return make_unique<Document>(Vector<Line>(), "", panel, LineMode::Single);
+}
+
+Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
+    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_line_mode(mode) {
+    if (m_lines.empty()) {
+        m_lines.add(Line(""));
+    }
+}
+
+Document::~Document() {}
 
 void Document::render_line(int line_number, int row_in_panel) const {
     auto& line = m_lines[line_number];
@@ -386,7 +397,9 @@ void Document::notify_key_pressed(KeyPress press) {
                 exit(0);
                 break;
             case 'S':
-                save();
+                if (!single_line_mode()) {
+                    save();
+                }
                 break;
             default:
                 break;
@@ -421,7 +434,9 @@ void Document::notify_key_pressed(KeyPress press) {
             delete_char(DeleteCharMode::Delete);
             break;
         case KeyPress::Key::Enter:
-            split_line_at_cursor();
+            if (!single_line_mode()) {
+                split_line_at_cursor();
+            }
             break;
         default:
             insert_char(press.key);

@@ -60,12 +60,16 @@ enum class UpdateMaxCursorCol { No, Yes };
 
 enum class DeleteCharMode { Backspace, Delete };
 
+enum class LineMode { Single, Multiple };
+
 class Document {
 public:
     static UniquePtr<Document> create_from_file(const String& path, Panel& panel);
     static UniquePtr<Document> create_empty(Panel& panel);
+    static UniquePtr<Document> create_single_line(Panel& panel);
 
-    Document(Vector<Line> lines, String name, Panel& panel) : m_lines(move(lines)), m_name(move(name)), m_panel(panel) {}
+    Document(Vector<Line> lines, String name, Panel& panel, LineMode mode);
+    ~Document();
 
     void display() const;
 
@@ -75,6 +79,8 @@ public:
     void notify_key_pressed(KeyPress press);
 
     void save();
+
+    bool single_line_mode() const { return m_line_mode == LineMode::Single; }
 
 private:
     void move_cursor_left();
@@ -98,6 +104,7 @@ private:
     Vector<Line> m_lines;
     String m_name;
     Panel& m_panel;
+    LineMode m_line_mode { LineMode::Multiple };
     int m_row_offset { 0 };
     int m_col_offset { 0 };
     int m_max_cursor_col { 0 };
