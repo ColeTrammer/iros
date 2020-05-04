@@ -40,6 +40,8 @@ public:
     void insert_char_at(int position, char c) { m_contents.insert(c, position); }
     void remove_char_at(int position) { m_contents.remove_index(position); }
 
+    void combine_line(Line& line) { m_contents += line.contents(); }
+
 private:
     String m_contents;
 };
@@ -72,6 +74,8 @@ private:
 
     void insert_char(char c);
     void delete_char(DeleteCharMode mode);
+
+    void merge_lines(int l1, int l2);
 
     void render_line(int line, int row_in_panel) const;
 

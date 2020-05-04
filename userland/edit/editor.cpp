@@ -199,6 +199,14 @@ void Document::insert_char(char c) {
     display();
 }
 
+void Document::merge_lines(int l1i, int l2i) {
+    auto& l1 = m_lines[l1i];
+    auto& l2 = m_lines[l2i];
+
+    l1.combine_line(l2);
+    m_lines.remove(l2i);
+}
+
 void Document::delete_char(DeleteCharMode mode) {
     auto& line = line_at_cursor();
 
@@ -216,10 +224,20 @@ void Document::delete_char(DeleteCharMode mode) {
             }
 
             int position = m_col_offset + m_panel.cursor_col();
-            assert(position != 0);
+            if (position == 0) {
+                if (&line == &m_lines.first()) {
+                    return;
+                }
 
-            line.remove_char_at(position - 1);
-            move_cursor_left();
+                int row_index = m_row_offset + m_panel.cursor_row();
+                move_cursor_up();
+                move_cursor_to_line_end();
+                merge_lines(row_index - 1, row_index);
+            } else {
+                line.remove_char_at(position - 1);
+                move_cursor_left();
+            }
+
             display();
             break;
         }
@@ -235,9 +253,16 @@ void Document::delete_char(DeleteCharMode mode) {
             }
 
             int position = m_col_offset + m_panel.cursor_col();
-            assert(position != line.length());
+            if (position == line.length()) {
+                if (&line == &m_lines.last()) {
+                    return;
+                }
 
-            line.remove_char_at(position);
+                merge_lines(m_row_offset + m_panel.cursor_row(), m_row_offset + m_panel.cursor_row() + 1);
+            } else {
+                line.remove_char_at(position);
+            }
+
             display();
             break;
     }
