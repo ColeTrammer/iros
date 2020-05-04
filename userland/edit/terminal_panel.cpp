@@ -134,6 +134,12 @@ KeyPress TerminalPanel::read_key() {
                 return { 0, KeyPress::Key::End };
             case 'H':
                 return { 0, KeyPress::Key::Home };
+            case '3':
+                assert(read(STDIN_FILENO, escape_buffer + 2, 1) > 0);
+                switch (escape_buffer[2]) {
+                    case '~':
+                        return { 0, KeyPress::Key::Delete };
+                }
         }
     }
 

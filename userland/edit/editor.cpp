@@ -224,6 +224,21 @@ void Document::delete_char(DeleteCharMode mode) {
             break;
         }
         case DeleteCharMode::Delete:
+            if (line.empty()) {
+                if (m_lines.size() == 0) {
+                    return;
+                }
+
+                m_lines.remove(m_row_offset + m_panel.cursor_row());
+                display();
+                return;
+            }
+
+            int position = m_col_offset + m_panel.cursor_col();
+            assert(position != line.length());
+
+            line.remove_char_at(position);
+            display();
             break;
     }
 }
