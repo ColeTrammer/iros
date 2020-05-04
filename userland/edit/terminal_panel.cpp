@@ -4,6 +4,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "editor.h"
 #include "terminal_panel.h"
 
 static termios s_original_termios;
@@ -14,7 +15,7 @@ static void restore_termios() {
 
     // FIXME: it would be nice to somehow restore the old terminal
     //        state instead of just clearing everything.
-    fputs("\033[3J", stdout);
+    fputs("\033[1;1H\033[2J", stdout);
 }
 
 static void enable_raw_mode() {
@@ -34,6 +35,8 @@ static void enable_raw_mode() {
     assert(tcsetattr(STDOUT_FILENO, TCSAFLUSH, &to_set) == 0);
 
     atexit(restore_termios);
+
+    setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
 }
 
 TerminalPanel::TerminalPanel() {
@@ -54,12 +57,13 @@ TerminalPanel::TerminalPanel() {
 TerminalPanel::~TerminalPanel() {}
 
 void TerminalPanel::clear() {
-    fputs("\033[3J", stdout);
+    fputs("\033[2J", stdout);
     draw_cursor();
 }
 
 void TerminalPanel::draw_cursor() {
     printf("\033[%d;%dH", m_cursor_row + 1, m_cursor_col + 1);
+    fflush(stdout);
 }
 
 void TerminalPanel::set_text_at(int row, int col, char c) {
@@ -96,9 +100,48 @@ void TerminalPanel::flush_row(int row) {
 }
 
 void TerminalPanel::flush() {
-    fputs("\033[0;0H", stdout);
+    fputs("\033[1;1H", stdout);
     for (int r = 0; r < rows(); r++) {
         flush_row(r);
     }
     draw_cursor();
+}
+
+KeyPress TerminalPanel::read_key() {
+    char ch;
+    assert(read(STDIN_FILENO, &ch, 1) > 0);
+
+    if (ch == '\033') {
+        char escape_buffer[40];
+        assert(read(STDIN_FILENO, escape_buffer, 1) > 0);
+
+        assert(escape_buffer[0] == '[');
+
+        assert(read(STDIN_FILENO, escape_buffer + 1, 1) > 0);
+        switch (escape_buffer[1]) {
+            case 'A':
+                return { 0, KeyPress::Key::UpArrow };
+            case 'B':
+                return { 0, KeyPress::Key::DownArrow };
+            case 'C':
+                return { 0, KeyPress::Key::RightArrow };
+            case 'D':
+                return { 0, KeyPress::Key::LeftArrow };
+        }
+    }
+
+    return { 0, ch };
+}
+
+void TerminalPanel::enter() {
+    for (;;) {
+        KeyPress press = read_key();
+        if (press.key == 'q') {
+            exit(0);
+        }
+
+        if (auto* document = Panel::document()) {
+            document->notify_key_pressed(press);
+        }
+    }
 }

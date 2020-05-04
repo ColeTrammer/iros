@@ -1,6 +1,7 @@
 set(SOURCES
     editor.cpp
     main.cpp
+    panel.cpp
     terminal_panel.cpp
 )
 

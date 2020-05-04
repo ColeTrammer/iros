@@ -61,3 +61,48 @@ void Document::display() const {
     }
     m_panel.flush();
 }
+
+void Document::move_cursor_right() {
+    int cursor_col = m_panel.cursor_col();
+    if (cursor_col == m_panel.cols() - 1) {
+        m_panel.set_cursor_col(0);
+        move_cursor_down();
+        return;
+    }
+
+    m_panel.set_cursor_col(cursor_col + 1);
+}
+
+void Document::move_cursor_down() {
+    int cursor_row = m_panel.cursor_row();
+    m_panel.set_cursor_row(cursor_row + 1);
+}
+
+void Document::move_cursor_left() {
+    int cursor_col = m_panel.cursor_col();
+    m_panel.set_cursor_col(cursor_col - 1);
+}
+
+void Document::move_cursor_up() {
+    int cursor_row = m_panel.cursor_row();
+    m_panel.set_cursor_row(cursor_row - 1);
+}
+
+void Document::notify_key_pressed(KeyPress press) {
+    switch (press.key) {
+        case KeyPress::Key::LeftArrow:
+            move_cursor_left();
+            break;
+        case KeyPress::Key::RightArrow:
+            move_cursor_right();
+            break;
+        case KeyPress::Key::DownArrow:
+            move_cursor_down();
+            break;
+        case KeyPress::Key::UpArrow:
+            move_cursor_up();
+            break;
+        default:
+            break;
+    }
+}

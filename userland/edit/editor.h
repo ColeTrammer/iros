@@ -5,6 +5,24 @@
 
 class Panel;
 
+struct KeyPress {
+    enum Modifier {
+        Control,
+        Alt,
+    };
+
+    enum Key {
+        // Ascii keys are mapped to themselves
+        LeftArrow = 1000,
+        RightArrow = 1001,
+        UpArrow = 1002,
+        DownArrow = 1003,
+    };
+
+    int modifiers;
+    int key;
+};
+
 class Line {
 public:
     Line(String contents) : m_contents(move(contents)) {}
@@ -26,7 +44,14 @@ public:
     Panel& panel() { return m_panel; }
     const Panel& panel() const { return m_panel; }
 
+    void notify_key_pressed(KeyPress press);
+
 private:
+    void move_cursor_left();
+    void move_cursor_right();
+    void move_cursor_down();
+    void move_cursor_up();
+
     void render_line(int line, int row_in_panel) const;
 
     Vector<Line> m_lines;

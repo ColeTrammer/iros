@@ -15,9 +15,16 @@ public:
     virtual void clear() override;
     virtual void set_text_at(int row, int col, char c) override;
     virtual void flush() override;
+    virtual void enter() override;
+
     virtual void set_cursor(int row, int col) override;
 
+    virtual int cursor_col() const { return m_cursor_col; }
+    virtual int cursor_row() const { return m_cursor_row; }
+
 private:
+    KeyPress read_key();
+
     void draw_cursor();
     void print_char(char c);
     void flush_row(int line);
