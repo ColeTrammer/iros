@@ -58,6 +58,12 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     return ret;
 }
 
+UniquePtr<Document> Document::create_empty(Panel& panel) {
+    Vector<Line> lines;
+    lines.add(Line(""));
+    return make_unique<Document>(move(lines), "", panel);
+}
+
 void Document::render_line(int line_number, int row_in_panel) const {
     auto& line = m_lines[line_number];
     for (int i = m_col_offset; i < line.length() && i - m_col_offset < m_panel.cols(); i++) {

@@ -63,6 +63,7 @@ enum class DeleteCharMode { Backspace, Delete };
 class Document {
 public:
     static UniquePtr<Document> create_from_file(const String& path, Panel& panel);
+    static UniquePtr<Document> create_empty(Panel& panel);
 
     Document(Vector<Line> lines, String name, Panel& panel) : m_lines(move(lines)), m_name(move(name)), m_panel(panel) {}
 

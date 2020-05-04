@@ -22,12 +22,18 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (argc - optind != 1) {
+    if (argc - optind > 1) {
         print_usage_and_exit(*argv);
     }
 
     TerminalPanel panel;
-    auto document = Document::create_from_file(String(argv[optind]), panel);
+    UniquePtr<Document> document;
+    if (argc - optind == 1) {
+        document = Document::create_from_file(String(argv[optind]), panel);
+    } else {
+        document = Document::create_empty(panel);
+    }
+
     if (!document) {
         return 1;
     }
