@@ -82,6 +82,8 @@ public:
 
     bool single_line_mode() const { return m_line_mode == LineMode::Single; }
 
+    String content_string() const;
+
 private:
     void move_cursor_left();
     void move_cursor_right();

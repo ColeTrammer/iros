@@ -25,7 +25,11 @@ public:
     virtual int cursor_col() const { return m_cursor_col; }
     virtual int cursor_row() const { return m_cursor_row; }
 
+    void set_stop_on_enter(bool b) { m_stop_on_enter = b; }
+
 private:
+    TerminalPanel(int rows, int cols, int row_off, int col_off);
+
     KeyPress read_key();
 
     void draw_cursor();
@@ -34,7 +38,7 @@ private:
     void print_char(char c);
     void flush_row(int line);
 
-    void enter_prompt(const String& message);
+    String enter_prompt(const String& message);
 
     int index(int row, int col) const { return row * m_cols + col; }
 
@@ -46,4 +50,7 @@ private:
     int m_cols { 0 };
     int m_cursor_row { 0 };
     int m_cursor_col { 0 };
+    int m_row_offset { 0 };
+    int m_col_offset { 0 };
+    bool m_stop_on_enter { false };
 };

@@ -57,16 +57,24 @@ TerminalPanel::TerminalPanel() {
     assert(m_chars.size() == m_rows * m_cols);
 }
 
+TerminalPanel::TerminalPanel(int rows, int cols, int row_off, int col_off)
+    : m_rows(rows), m_cols(cols), m_row_offset(row_off), m_col_offset(col_off) {
+    m_chars.resize(m_rows * m_cols);
+}
+
 TerminalPanel::~TerminalPanel() {}
 
 void TerminalPanel::clear() {
-    fputs("\033[2J", stdout);
+    for (int r = 0; r < rows(); r++) {
+        printf("\033[%d;%dH", m_row_offset + r + 1, m_col_offset + 1);
+        fputs("\033[0K", stdout);
+    }
     draw_cursor();
     memset(m_chars.vector(), 0, m_chars.size());
 }
 
 void TerminalPanel::draw_cursor() {
-    printf("\033[%d;%dH", m_cursor_row + 1, m_cursor_col + 1);
+    printf("\033[%d;%dH", m_row_offset + m_cursor_row + 1, m_col_offset + m_cursor_col + 1);
     fflush(stdout);
 }
 
@@ -76,11 +84,11 @@ void TerminalPanel::draw_status_message() {
     }
 
     fputs("\033[s", stdout);
-    printf("\033[%d;1H", m_rows + 1);
+    printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
+    fputs("\033[0K", stdout);
 
     if (time(nullptr) - m_status_message_time > status_message_timeout) {
         m_status_message = "";
-        fputs("\033[0J", stdout);
     } else {
         fputs(m_status_message.string(), stdout);
     }
@@ -130,8 +138,8 @@ void TerminalPanel::flush_row(int row) {
 
 void TerminalPanel::flush() {
     fputs("\033[?l", stdout);
-    fputs("\033[1;1H", stdout);
     for (int r = 0; r < rows(); r++) {
+        printf("\033[%d;%dH", m_row_offset + r + 1, m_col_offset + 1);
         flush_row(r);
     }
     fputs("\033[?h", stdout);
@@ -190,6 +198,10 @@ KeyPress TerminalPanel::read_key() {
 void TerminalPanel::enter() {
     for (;;) {
         KeyPress press = read_key();
+        if (press.key == KeyPress::Key::Enter && m_stop_on_enter) {
+            return;
+        }
+
         if (auto* document = Panel::document()) {
             document->notify_key_pressed(press);
         }
@@ -198,38 +210,26 @@ void TerminalPanel::enter() {
     }
 }
 
-void TerminalPanel::enter_prompt(const String& message) {
-    printf("\033[%d;1H", rows());
-    fputs("\033[0J", stdout);
-    printf("%.*s", cols(), message.string());
+String TerminalPanel::enter_prompt(const String& message) {
+    printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
+    fputs("\033[0K", stdout);
+
+    int message_size = LIIM::min(message.size(), cols() / 2);
+    printf("%.*s", cols() / 2, message.string());
     fflush(stdout);
 
-    for (;;) {
-        KeyPress press = read_key();
-        if (press.key == KeyPress::Key::Enter) {
-            return;
-        }
+    TerminalPanel text_panel(1, m_col_offset + cols() - message_size, rows() + m_row_offset, message_size);
+    text_panel.set_stop_on_enter(true);
 
-        if (press.key == KeyPress::Backspace) {
-            if (m_prompt_buffer.is_empty()) {
-                continue;
-            }
+    auto document = Document::create_single_line(text_panel);
+    text_panel.set_document(move(document));
+    text_panel.enter();
 
-            m_prompt_buffer.remove_index(m_prompt_buffer.size() - 1);
-            fputs("\033[1D \033[1D", stdout);
-            fflush(stdout);
-            continue;
-        }
-
-        if (isascii(press.key)) {
-            m_prompt_buffer += String(press.key);
-            write(STDOUT_FILENO, &press.key, 1);
-        }
-    }
+    return text_panel.document()->content_string();
 }
 
 String TerminalPanel::prompt(const String& prompt) {
-    enter_prompt(prompt);
-    flush();
-    return move(m_prompt_buffer);
+    String result = enter_prompt(prompt);
+    draw_cursor();
+    return result;
 }

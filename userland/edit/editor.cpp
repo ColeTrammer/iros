@@ -75,6 +75,19 @@ Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
 
 Document::~Document() {}
 
+String Document::content_string() const {
+    if (single_line_mode()) {
+        return m_lines.first().contents();
+    }
+
+    String ret;
+    for (auto& line : m_lines) {
+        ret += line.contents();
+        ret += "\n";
+    }
+    return ret;
+}
+
 void Document::render_line(int line_number, int row_in_panel) const {
     auto& line = m_lines[line_number];
     for (int i = m_col_offset; i < line.length() && i - m_col_offset < m_panel.cols(); i++) {
@@ -244,7 +257,7 @@ void Document::delete_char(DeleteCharMode mode) {
     switch (mode) {
         case DeleteCharMode::Backspace: {
             if (line.empty()) {
-                if (m_lines.size() == 0) {
+                if (m_lines.size() == 1) {
                     return;
                 }
 
@@ -274,7 +287,7 @@ void Document::delete_char(DeleteCharMode mode) {
         }
         case DeleteCharMode::Delete:
             if (line.empty()) {
-                if (m_lines.size() == 0) {
+                if (m_lines.size() == 1) {
                     return;
                 }
 
