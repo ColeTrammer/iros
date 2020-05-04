@@ -72,6 +72,18 @@ public:
     bool operator!() const { return !m_ptr; }
     operator bool() const { return !!m_ptr; }
 
+    template<typename U>
+    bool operator==(const UniquePtr<U>& other) const {
+        return m_ptr == other.m_ptr;
+    }
+    bool operator==(const UniquePtr& other) { return m_ptr == other.m_ptr; }
+
+    template<typename U>
+    bool operator!=(const UniquePtr<U>& other) const {
+        return m_ptr != other.m_ptr;
+    }
+    bool operator!=(const UniquePtr& other) { return m_ptr != other.m_ptr; }
+
 private:
     template<typename U>
     friend class UniquePtr;
