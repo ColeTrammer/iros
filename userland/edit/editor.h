@@ -7,8 +7,8 @@ class Panel;
 
 struct KeyPress {
     enum Modifier {
-        Control,
-        Alt,
+        Control = 1,
+        Alt = 2,
     };
 
     enum Key {

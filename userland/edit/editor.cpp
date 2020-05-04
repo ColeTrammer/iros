@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <liim/utilities.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "editor.h"
 #include "panel.h"
@@ -290,6 +291,16 @@ void Document::split_line_at_cursor() {
 }
 
 void Document::notify_key_pressed(KeyPress press) {
+    if (press.modifiers & KeyPress::Modifier::Control) {
+        switch (press.key) {
+            case 'W':
+                exit(0);
+                break;
+            default:
+                return;
+        }
+    }
+
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
             move_cursor_left();
