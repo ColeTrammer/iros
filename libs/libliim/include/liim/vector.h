@@ -235,22 +235,26 @@ public:
         return -1;
     }
 
+    void remove(int index) {
+        get(index).~T();
+        if (index != size() - 1) {
+            if constexpr (Traits<T>::is_simple()) {
+                memcpy(m_vector + index, m_vector + index + 1, sizeof(T) * (size() - index - 1));
+            } else {
+                for (int j = index; j < size() - 1; j++) {
+                    new (m_vector + j) T(LIIM::move(get(j + 1)));
+                    get(j + 1).~T();
+                }
+            }
+        }
+
+        m_size--;
+    }
+
     void remove_element(const T& val) {
         for (int i = size() - 1; i >= 0; i--) {
             if (get(i) == val) {
-                get(i).~T();
-                if (i != size() - 1) {
-                    if constexpr (Traits<T>::is_simple()) {
-                        memcpy(m_vector + i, m_vector + i + 1, sizeof(T) * (size() - i - 1));
-                    } else {
-                        for (int j = i; j < size() - 1; j++) {
-                            new (m_vector + j) T(LIIM::move(get(j + 1)));
-                            get(j + 1).~T();
-                        }
-                    }
-                }
-
-                m_size--;
+                remove(i);
             }
         }
     }
