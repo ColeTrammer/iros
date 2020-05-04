@@ -2,6 +2,7 @@
 #include <liim/utilities.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "editor.h"
@@ -296,6 +297,17 @@ void Document::split_line_at_cursor() {
 }
 
 void Document::save() {
+    struct stat st;
+    if (stat(m_name.string(), &st)) {
+        m_panel.send_status_message(String::format("Error looking up file - `%s'", strerror(errno)));
+        return;
+    }
+
+    if (access(m_name.string(), W_OK)) {
+        m_panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
+        return;
+    }
+
     auto temp_path_template = String::format("%sXXXXXX", m_name.string());
     char* temp_path = temp_path_template.string();
     int fd = mkstemp(temp_path);
@@ -316,6 +328,12 @@ void Document::save() {
 
     if (ferror(file)) {
         m_panel.send_status_message(String::format("Failed to write to disk - `%s'", strerror(errno)));
+        fclose(file);
+        return;
+    }
+
+    if (fchmod(fileno(file), st.st_mode)) {
+        m_panel.send_status_message(String::format("Faild to sync file metadata - `%s'", strerror(errno)));
         fclose(file);
         return;
     }
