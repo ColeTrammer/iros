@@ -341,8 +341,16 @@ void Document::save() {
         return;
     }
 
-    for (auto& line : m_lines) {
-        fprintf(file, "%s\n", line.contents().string());
+    if (m_lines.size() == 1 && m_lines.first().empty()) {
+        if (ftruncate(fileno(file), 0)) {
+            m_panel.send_status_message(String::format("Failed to sync to disk - `%s'", strerror(errno)));
+            fclose(file);
+            return;
+        }
+    } else {
+        for (auto& line : m_lines) {
+            fprintf(file, "%s\n", line.contents().string());
+        }
     }
 
     if (ferror(file)) {
