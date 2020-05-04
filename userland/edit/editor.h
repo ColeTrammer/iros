@@ -57,4 +57,6 @@ private:
     Vector<Line> m_lines;
     String m_name;
     Panel& m_panel;
+    int m_row_offset { 0 };
+    int m_col_offset { 0 };
 };

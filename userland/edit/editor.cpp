@@ -56,8 +56,8 @@ void Document::render_line(int line_number, int row_in_panel) const {
 
 void Document::display() const {
     m_panel.clear();
-    for (int line_num = 0; line_num < m_lines.size() && line_num < m_panel.rows(); line_num++) {
-        render_line(line_num, line_num);
+    for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
+        render_line(line_num, line_num - m_row_offset);
     }
     m_panel.flush();
 }
@@ -75,16 +75,42 @@ void Document::move_cursor_right() {
 
 void Document::move_cursor_down() {
     int cursor_row = m_panel.cursor_row();
+    if (cursor_row == m_panel.rows() - 1) {
+        if (m_row_offset == m_lines.size() - m_panel.rows()) {
+            return;
+        }
+
+        m_row_offset++;
+        display();
+        return;
+    }
+
     m_panel.set_cursor_row(cursor_row + 1);
 }
 
 void Document::move_cursor_left() {
     int cursor_col = m_panel.cursor_col();
+    if (cursor_col == 0) {
+        move_cursor_up();
+        return;
+    }
+
     m_panel.set_cursor_col(cursor_col - 1);
 }
 
 void Document::move_cursor_up() {
     int cursor_row = m_panel.cursor_row();
+    if (cursor_row == 0) {
+        if (m_row_offset == 0) {
+            m_panel.set_cursor_col(0);
+            return;
+        }
+
+        m_row_offset--;
+        display();
+        return;
+    }
+
     m_panel.set_cursor_row(cursor_row - 1);
 }
 

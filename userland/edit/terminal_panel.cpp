@@ -59,6 +59,7 @@ TerminalPanel::~TerminalPanel() {}
 void TerminalPanel::clear() {
     fputs("\033[2J", stdout);
     draw_cursor();
+    memset(m_chars.vector(), 0, m_chars.size());
 }
 
 void TerminalPanel::draw_cursor() {
