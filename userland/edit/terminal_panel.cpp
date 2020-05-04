@@ -147,6 +147,10 @@ KeyPress TerminalPanel::read_key() {
         return { 0, KeyPress::Key::Backspace };
     }
 
+    if (ch == '\r') {
+        return { 0, KeyPress::Key::Enter };
+    }
+
     return { 0, ch };
 }
 

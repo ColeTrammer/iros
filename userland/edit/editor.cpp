@@ -13,6 +13,13 @@
     } while (0)
 #endif /* display_error */
 
+LineSplitResult Line::split_at(int position) {
+    StringView first = StringView(contents().string(), contents().string() + position - 1);
+    StringView second = StringView(contents().string() + position);
+
+    return { Line(first), Line(second) };
+}
+
 UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
     FILE* file = fopen(path.string(), "r");
     if (!file) {
@@ -268,6 +275,20 @@ void Document::delete_char(DeleteCharMode mode) {
     }
 }
 
+void Document::split_line_at_cursor() {
+    auto& line = line_at_cursor();
+
+    int row_index = m_row_offset + m_panel.cursor_row();
+    auto result = line.split_at(m_col_offset + m_panel.cursor_col());
+
+    line = move(result.first);
+    m_lines.insert(move(result.second), row_index + 1);
+
+    move_cursor_down();
+    move_cursor_to_line_start();
+    display();
+}
+
 void Document::notify_key_pressed(KeyPress press) {
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
@@ -293,6 +314,9 @@ void Document::notify_key_pressed(KeyPress press) {
             break;
         case KeyPress::Key::Delete:
             delete_char(DeleteCharMode::Delete);
+            break;
+        case KeyPress::Key::Enter:
+            split_line_at_cursor();
             break;
         default:
             insert_char(press.key);

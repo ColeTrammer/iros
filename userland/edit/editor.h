@@ -22,11 +22,14 @@ struct KeyPress {
 
         Backspace = 2000,
         Delete = 2001,
+        Enter = 2002,
     };
 
     int modifiers;
     int key;
 };
+
+struct LineSplitResult;
 
 class Line {
 public:
@@ -42,8 +45,15 @@ public:
 
     void combine_line(Line& line) { m_contents += line.contents(); }
 
+    LineSplitResult split_at(int position);
+
 private:
     String m_contents;
+};
+
+struct LineSplitResult {
+    Line first;
+    Line second;
 };
 
 enum class UpdateMaxCursorCol { No, Yes };
@@ -71,6 +81,7 @@ private:
     void move_cursor_to_line_start();
     void move_cursor_to_line_end(UpdateMaxCursorCol update = UpdateMaxCursorCol::Yes);
     void clamp_cursor_to_line_end();
+    void split_line_at_cursor();
 
     void insert_char(char c);
     void delete_char(DeleteCharMode mode);
