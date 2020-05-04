@@ -17,6 +17,8 @@ struct KeyPress {
         RightArrow = 1001,
         UpArrow = 1002,
         DownArrow = 1003,
+        Home = 1004,
+        End = 1005,
     };
 
     int modifiers;
@@ -26,6 +28,8 @@ struct KeyPress {
 class Line {
 public:
     Line(String contents) : m_contents(move(contents)) {}
+
+    int length() const { return m_contents.size(); }
 
     const String& contents() const { return m_contents; }
 
@@ -51,8 +55,12 @@ private:
     void move_cursor_right();
     void move_cursor_down();
     void move_cursor_up();
+    void move_cursor_to_line_start();
+    void move_cursor_to_line_end();
 
     void render_line(int line, int row_in_panel) const;
+
+    Line& line_at_cursor();
 
     Vector<Line> m_lines;
     String m_name;

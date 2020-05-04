@@ -128,6 +128,10 @@ KeyPress TerminalPanel::read_key() {
                 return { 0, KeyPress::Key::RightArrow };
             case 'D':
                 return { 0, KeyPress::Key::LeftArrow };
+            case 'F':
+                return { 0, KeyPress::Key::End };
+            case 'H':
+                return { 0, KeyPress::Key::Home };
         }
     }
 

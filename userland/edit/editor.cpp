@@ -49,8 +49,8 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
 
 void Document::render_line(int line_number, int row_in_panel) const {
     auto& line = m_lines[line_number];
-    for (int i = 0; i < line.contents().size() && i < m_panel.cols(); i++) {
-        m_panel.set_text_at(row_in_panel, i, line.contents()[i]);
+    for (int i = m_col_offset; i < line.length() && i - m_col_offset < m_panel.cols(); i++) {
+        m_panel.set_text_at(row_in_panel, i - m_col_offset, line.contents()[i]);
     }
 }
 
@@ -62,11 +62,22 @@ void Document::display() const {
     m_panel.flush();
 }
 
+Line& Document::line_at_cursor() {
+    return m_lines[m_panel.cursor_row() + m_row_offset];
+}
+
 void Document::move_cursor_right() {
     int cursor_col = m_panel.cursor_col();
-    if (cursor_col == m_panel.cols() - 1) {
-        m_panel.set_cursor_col(0);
+    auto& line = line_at_cursor();
+    if (cursor_col + m_col_offset == line.length()) {
         move_cursor_down();
+        move_cursor_to_line_start();
+        return;
+    }
+
+    if (cursor_col == m_panel.cols() - 1) {
+        m_col_offset++;
+        display();
         return;
     }
 
@@ -91,7 +102,16 @@ void Document::move_cursor_down() {
 void Document::move_cursor_left() {
     int cursor_col = m_panel.cursor_col();
     if (cursor_col == 0) {
-        move_cursor_up();
+        if (m_col_offset == 0) {
+            if (m_row_offset != 0 || m_panel.cursor_row() != 0) {
+                move_cursor_up();
+                move_cursor_to_line_end();
+            }
+            return;
+        }
+
+        m_col_offset--;
+        display();
         return;
     }
 
@@ -114,6 +134,26 @@ void Document::move_cursor_up() {
     m_panel.set_cursor_row(cursor_row - 1);
 }
 
+void Document::move_cursor_to_line_start() {
+    m_panel.set_cursor_col(0);
+    if (m_col_offset != 0) {
+        m_col_offset = 0;
+        display();
+    }
+}
+
+void Document::move_cursor_to_line_end() {
+    auto& line = line_at_cursor();
+    if (line.length() >= m_panel.cols()) {
+        m_col_offset = line.length() - m_panel.cols() + 1;
+        m_panel.set_cursor_col(m_panel.cols() - 1);
+        display();
+        return;
+    }
+
+    m_panel.set_cursor_col(line.length());
+}
+
 void Document::notify_key_pressed(KeyPress press) {
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
@@ -127,6 +167,12 @@ void Document::notify_key_pressed(KeyPress press) {
             break;
         case KeyPress::Key::UpArrow:
             move_cursor_up();
+            break;
+        case KeyPress::Key::Home:
+            move_cursor_to_line_start();
+            break;
+        case KeyPress::Key::End:
+            move_cursor_to_line_end();
             break;
         default:
             break;
