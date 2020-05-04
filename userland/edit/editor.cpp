@@ -114,7 +114,7 @@ void Document::clamp_cursor_to_line_end() {
         if (m_max_cursor_col > m_col_offset + m_panel.cursor_col()) {
             int new_cursor_col = LIIM::min(m_max_cursor_col, line.length());
             if (new_cursor_col >= m_panel.cols()) {
-                m_col_offset = new_cursor_col - m_panel.cols() - 1;
+                m_col_offset = new_cursor_col - m_panel.cols() + 1;
                 m_panel.set_cursor_col(m_panel.cols() - 1);
                 display();
             } else {
@@ -187,6 +187,11 @@ void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_curs
     }
 
     m_panel.set_cursor_col(line.length());
+
+    if (m_col_offset != 0) {
+        m_col_offset = 0;
+        display();
+    }
 }
 
 void Document::notify_key_pressed(KeyPress press) {
