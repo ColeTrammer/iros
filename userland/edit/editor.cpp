@@ -293,6 +293,7 @@ void Document::split_line_at_cursor() {
 void Document::notify_key_pressed(KeyPress press) {
     if (press.modifiers & KeyPress::Modifier::Control) {
         switch (press.key) {
+            case 'Q':
             case 'W':
                 exit(0);
                 break;

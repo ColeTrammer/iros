@@ -39,6 +39,9 @@ static void enable_raw_mode() {
     setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
 }
 
+constexpr int status_bar_height = 1;
+constexpr time_t status_message_timeout = 3;
+
 TerminalPanel::TerminalPanel() {
     assert(isatty(STDOUT_FILENO));
 
@@ -48,7 +51,7 @@ TerminalPanel::TerminalPanel() {
 
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
-    m_rows = sz.ws_row;
+    m_rows = sz.ws_row - status_bar_height;
     m_cols = sz.ws_col;
     m_chars.resize(m_rows * m_cols);
     assert(m_chars.size() == m_rows * m_cols);
@@ -65,6 +68,31 @@ void TerminalPanel::clear() {
 void TerminalPanel::draw_cursor() {
     printf("\033[%d;%dH", m_cursor_row + 1, m_cursor_col + 1);
     fflush(stdout);
+}
+
+void TerminalPanel::draw_status_message() {
+    if (m_status_message.is_empty()) {
+        return;
+    }
+
+    fputs("\033[s", stdout);
+    printf("\033[%d;1H", m_rows + 1);
+
+    if (time(nullptr) - m_status_message_time > status_message_timeout) {
+        m_status_message = "";
+        fputs("\033[0J", stdout);
+    } else {
+        fputs(m_status_message.string(), stdout);
+    }
+
+    fputs("\033[u", stdout);
+    fflush(stdout);
+}
+
+void TerminalPanel::send_status_message(String message) {
+    m_status_message = move(message);
+    m_status_message_time = time(nullptr);
+    draw_status_message();
 }
 
 void TerminalPanel::set_text_at(int row, int col, char c) {
@@ -107,6 +135,7 @@ void TerminalPanel::flush() {
         flush_row(r);
     }
     fputs("\033[?h", stdout);
+    draw_status_message();
     draw_cursor();
 }
 
@@ -164,5 +193,7 @@ void TerminalPanel::enter() {
         if (auto* document = Panel::document()) {
             document->notify_key_pressed(press);
         }
+
+        draw_status_message();
     }
 }
