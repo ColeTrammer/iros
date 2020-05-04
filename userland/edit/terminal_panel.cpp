@@ -101,10 +101,12 @@ void TerminalPanel::flush_row(int row) {
 }
 
 void TerminalPanel::flush() {
+    fputs("\033[?l", stdout);
     fputs("\033[1;1H", stdout);
     for (int r = 0; r < rows(); r++) {
         flush_row(r);
     }
+    fputs("\033[?h", stdout);
     draw_cursor();
 }
 
