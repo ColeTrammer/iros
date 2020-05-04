@@ -18,6 +18,7 @@ public:
     virtual void flush() override;
     virtual void enter() override;
     virtual void send_status_message(String message) override;
+    virtual String prompt(const String& message) override;
 
     virtual void set_cursor(int row, int col) override;
 
@@ -33,11 +34,14 @@ private:
     void print_char(char c);
     void flush_row(int line);
 
+    void enter_prompt(const String& message);
+
     int index(int row, int col) const { return row * m_cols + col; }
 
     Vector<char> m_chars;
     String m_status_message;
     time_t m_status_message_time { 0 };
+    String m_prompt_buffer;
     int m_rows { 0 };
     int m_cols { 0 };
     int m_cursor_row { 0 };

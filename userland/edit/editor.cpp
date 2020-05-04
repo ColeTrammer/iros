@@ -304,14 +304,27 @@ void Document::split_line_at_cursor() {
 
 void Document::save() {
     struct stat st;
-    if (stat(m_name.string(), &st)) {
-        m_panel.send_status_message(String::format("Error looking up file - `%s'", strerror(errno)));
-        return;
-    }
+    if (m_name.is_empty()) {
+        String result = m_panel.prompt("Save as: ");
+        if (access(result.string(), F_OK) == 0) {
+            String ok = m_panel.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.string()));
+            if (ok != "y" && ok != "yes") {
+                return;
+            }
+        }
 
-    if (access(m_name.string(), W_OK)) {
-        m_panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
-        return;
+        m_name = move(result);
+        st.st_mode = 0644;
+    } else {
+        if (stat(m_name.string(), &st)) {
+            m_panel.send_status_message(String::format("Error looking up file - `%s'", strerror(errno)));
+            return;
+        }
+
+        if (access(m_name.string(), W_OK)) {
+            m_panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
+            return;
+        }
     }
 
     auto temp_path_template = String::format("%sXXXXXX", m_name.string());

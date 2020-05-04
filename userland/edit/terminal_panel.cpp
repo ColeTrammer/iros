@@ -197,3 +197,39 @@ void TerminalPanel::enter() {
         draw_status_message();
     }
 }
+
+void TerminalPanel::enter_prompt(const String& message) {
+    printf("\033[%d;1H", rows());
+    fputs("\033[0J", stdout);
+    printf("%.*s", cols(), message.string());
+    fflush(stdout);
+
+    for (;;) {
+        KeyPress press = read_key();
+        if (press.key == KeyPress::Key::Enter) {
+            return;
+        }
+
+        if (press.key == KeyPress::Backspace) {
+            if (m_prompt_buffer.is_empty()) {
+                continue;
+            }
+
+            m_prompt_buffer.remove_index(m_prompt_buffer.size() - 1);
+            fputs("\033[1D \033[1D", stdout);
+            fflush(stdout);
+            continue;
+        }
+
+        if (isascii(press.key)) {
+            m_prompt_buffer += String(press.key);
+            write(STDOUT_FILENO, &press.key, 1);
+        }
+    }
+}
+
+String TerminalPanel::prompt(const String& prompt) {
+    enter_prompt(prompt);
+    flush();
+    return move(m_prompt_buffer);
+}
