@@ -30,12 +30,15 @@ public:
     Line(String contents) : m_contents(move(contents)) {}
 
     int length() const { return m_contents.size(); }
+    bool empty() const { return m_contents.size() == 0; }
 
     const String& contents() const { return m_contents; }
 
 private:
     String m_contents;
 };
+
+enum class UpdateMaxCursorCol { No, Yes };
 
 class Document {
 public:
@@ -56,7 +59,8 @@ private:
     void move_cursor_down();
     void move_cursor_up();
     void move_cursor_to_line_start();
-    void move_cursor_to_line_end();
+    void move_cursor_to_line_end(UpdateMaxCursorCol update = UpdateMaxCursorCol::Yes);
+    void clamp_cursor_to_line_end();
 
     void render_line(int line, int row_in_panel) const;
 
@@ -67,4 +71,5 @@ private:
     Panel& m_panel;
     int m_row_offset { 0 };
     int m_col_offset { 0 };
+    int m_max_cursor_col { 0 };
 };
