@@ -293,9 +293,14 @@ void Document::split_line_at_cursor() {
 
 void Document::save() {
     auto temp_path_template = String::format("%sXXXXXX", m_name.string());
-    char* temp_path = tmpnam(temp_path_template.string());
+    char* temp_path = temp_path_template.string();
+    int fd = mkstemp(temp_path);
+    if (fd < 0) {
+        m_panel.send_status_message(String::format("Failed to create a temp file - `%s'", strerror(errno)));
+        return;
+    }
 
-    FILE* file = fopen(temp_path, "w");
+    FILE* file = fdopen(fd, "w");
     if (!file) {
         m_panel.send_status_message(String::format("Failed to save - `%s'", strerror(errno)));
         return;
