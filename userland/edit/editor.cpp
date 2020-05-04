@@ -192,6 +192,13 @@ void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_curs
     }
 }
 
+void Document::insert_char(char c) {
+    auto& line = line_at_cursor();
+    line.insert_char_at(m_panel.cursor_col() + m_col_offset, c);
+    move_cursor_right();
+    display();
+}
+
 void Document::notify_key_pressed(KeyPress press) {
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
@@ -213,6 +220,7 @@ void Document::notify_key_pressed(KeyPress press) {
             move_cursor_to_line_end();
             break;
         default:
+            insert_char(press.key);
             break;
     }
 }

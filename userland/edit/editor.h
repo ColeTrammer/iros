@@ -34,6 +34,8 @@ public:
 
     const String& contents() const { return m_contents; }
 
+    void insert_char_at(int position, char c) { m_contents.insert(c, position); }
+
 private:
     String m_contents;
 };
@@ -61,6 +63,8 @@ private:
     void move_cursor_to_line_start();
     void move_cursor_to_line_end(UpdateMaxCursorCol update = UpdateMaxCursorCol::Yes);
     void clamp_cursor_to_line_end();
+
+    void insert_char(char c);
 
     void render_line(int line, int row_in_panel) const;
 
