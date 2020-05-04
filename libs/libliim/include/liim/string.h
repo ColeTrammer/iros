@@ -14,7 +14,7 @@ namespace LIIM {
 
 class String {
 public:
-    explicit String(char c) : m_size(2), m_string(reinterpret_cast<char*>(malloc(2))) {
+    explicit String(char c) : m_size(1), m_string(reinterpret_cast<char*>(malloc(2))) {
         m_string[0] = c;
         m_string[1] = '\0';
     }
@@ -24,7 +24,7 @@ public:
     String(const String& other) : m_size(other.size()), m_string(strdup(other.string())) {}
 
     String(String&& other) : m_size(other.size()), m_string(other.string()) {
-        other.m_string = nullptr;
+        other.m_string = strdup("");
         other.m_size = 0;
     }
 
