@@ -180,7 +180,7 @@ KeyPress TerminalPanel::read_key() {
         return { 0, KeyPress::Key::Enter };
     }
 
-    if (ch >= ('a' & 0x1F) && (ch <= 'z') & 0x1F) {
+    if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
         return { KeyPress::Modifier::Control, ch | 0b1000000 };
     }
 

@@ -2,6 +2,7 @@
 #include <liim/utilities.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "editor.h"
 #include "panel.h"
@@ -290,6 +291,39 @@ void Document::split_line_at_cursor() {
     display();
 }
 
+void Document::save() {
+    auto temp_path_template = String::format("%sXXXXXX", m_name.string());
+    char* temp_path = tmpnam(temp_path_template.string());
+
+    FILE* file = fopen(temp_path, "w");
+    if (!file) {
+        m_panel.send_status_message(String::format("Failed to save - `%s'", strerror(errno)));
+        return;
+    }
+
+    for (auto& line : m_lines) {
+        fprintf(file, "%s\n", line.contents().string());
+    }
+
+    if (ferror(file)) {
+        m_panel.send_status_message(String::format("Failed to write to disk - `%s'", strerror(errno)));
+        fclose(file);
+        return;
+    }
+
+    if (fclose(file)) {
+        m_panel.send_status_message(String::format("Failed to sync to disk - `%s'", strerror(errno)));
+        return;
+    }
+
+    if (rename(temp_path, m_name.string())) {
+        m_panel.send_status_message(String::format("Failed to overwrite file - `%s'", strerror(errno)));
+        return;
+    }
+
+    m_panel.send_status_message(String::format("Successfully saved file: `%s'", m_name.string()));
+}
+
 void Document::notify_key_pressed(KeyPress press) {
     if (press.modifiers & KeyPress::Modifier::Control) {
         switch (press.key) {
@@ -297,9 +331,14 @@ void Document::notify_key_pressed(KeyPress press) {
             case 'W':
                 exit(0);
                 break;
+            case 'S':
+                save();
+                break;
             default:
-                return;
+                break;
         }
+
+        return;
     }
 
     switch (press.key) {

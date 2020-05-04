@@ -73,6 +73,8 @@ public:
 
     void notify_key_pressed(KeyPress press);
 
+    void save();
+
 private:
     void move_cursor_left();
     void move_cursor_right();
