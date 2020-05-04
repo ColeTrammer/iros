@@ -99,7 +99,8 @@
     __ENUMERATE_SYSCALL(TIMER_SETTIME, timer_settime, 4)                       \
     __ENUMERATE_SYSCALL(FSTATVFS, fstatvfs, 2)                                 \
     __ENUMERATE_SYSCALL(STATVFS, statvfs, 2)                                   \
-    __ENUMERATE_SYSCALL(FCHDIR, fchdir, 1)
+    __ENUMERATE_SYSCALL(FCHDIR, fchdir, 1)                                     \
+    __ENUMERATE_SYSCALL(TRUNCATE, truncate, 2)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

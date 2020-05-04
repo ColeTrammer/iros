@@ -89,6 +89,7 @@ int isatty(int fd);
 int tcgetpgrp(int fd);
 int tcsetpgrp(int fd, pid_t pgid);
 int ftruncate(int fd, off_t length);
+int truncate(const char *path, off_t length);
 int dup(int oldfd);
 int dup2(int oldfd, int newfd);
 int pipe(int pipefd[2]);

@@ -2383,6 +2383,24 @@ SYS_CALL(fchdir) {
     SYS_RETURN(0);
 }
 
+SYS_CALL(truncate) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
+    SYS_PARAM2_VALIDATE(off_t, length, validate_positive, 1);
+
+    int error = 0;
+    struct file *file = fs_openat(get_current_task()->process->cwd, path, O_RDWR, 0, &error);
+    if (!file) {
+        SYS_RETURN(error);
+    }
+
+    int ret = fs_truncate(file, length);
+
+    fs_close(file);
+    SYS_RETURN(ret);
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);

@@ -289,6 +289,7 @@ else()
         unistd/sysconf.c
         unistd/tcgetpgrp.c
         unistd/tcsetpgrp.c
+        unistd/truncate.c
         unistd/ttyname_r.c
         unistd/ttyname.c
         unistd/unlink.c
