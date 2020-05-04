@@ -137,6 +137,10 @@ KeyPress TerminalPanel::read_key() {
         }
     }
 
+    if (ch == 127) {
+        return { 0, KeyPress::Key::Backspace };
+    }
+
     return { 0, ch };
 }
 

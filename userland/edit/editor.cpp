@@ -199,6 +199,35 @@ void Document::insert_char(char c) {
     display();
 }
 
+void Document::delete_char(DeleteCharMode mode) {
+    auto& line = line_at_cursor();
+
+    switch (mode) {
+        case DeleteCharMode::Backspace: {
+            if (line.empty()) {
+                if (m_lines.size() == 0) {
+                    return;
+                }
+
+                m_lines.remove(m_row_offset + m_panel.cursor_row());
+                move_cursor_left();
+                display();
+                return;
+            }
+
+            int position = m_col_offset + m_panel.cursor_col();
+            assert(position != 0);
+
+            line.remove_char_at(position - 1);
+            move_cursor_left();
+            display();
+            break;
+        }
+        case DeleteCharMode::Delete:
+            break;
+    }
+}
+
 void Document::notify_key_pressed(KeyPress press) {
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
@@ -218,6 +247,12 @@ void Document::notify_key_pressed(KeyPress press) {
             break;
         case KeyPress::Key::End:
             move_cursor_to_line_end();
+            break;
+        case KeyPress::Key::Backspace:
+            delete_char(DeleteCharMode::Backspace);
+            break;
+        case KeyPress::Key::Delete:
+            delete_char(DeleteCharMode::Delete);
             break;
         default:
             insert_char(press.key);

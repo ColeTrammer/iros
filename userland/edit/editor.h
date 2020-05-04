@@ -19,6 +19,9 @@ struct KeyPress {
         DownArrow = 1003,
         Home = 1004,
         End = 1005,
+
+        Backspace = 2000,
+        Delete = 2001,
     };
 
     int modifiers;
@@ -35,12 +38,15 @@ public:
     const String& contents() const { return m_contents; }
 
     void insert_char_at(int position, char c) { m_contents.insert(c, position); }
+    void remove_char_at(int position) { m_contents.remove_index(position); }
 
 private:
     String m_contents;
 };
 
 enum class UpdateMaxCursorCol { No, Yes };
+
+enum class DeleteCharMode { Backspace, Delete };
 
 class Document {
 public:
@@ -65,6 +71,7 @@ private:
     void clamp_cursor_to_line_end();
 
     void insert_char(char c);
+    void delete_char(DeleteCharMode mode);
 
     void render_line(int line, int row_in_panel) const;
 
