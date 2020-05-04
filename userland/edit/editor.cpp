@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <liim/utilities.h>
 #include <stdio.h>
 
 #include "editor.h"
@@ -78,16 +79,19 @@ void Document::move_cursor_right() {
     if (cursor_col == m_panel.cols() - 1) {
         m_col_offset++;
         display();
+        m_max_cursor_col = m_col_offset + m_panel.cols() - 1;
         return;
     }
 
     m_panel.set_cursor_col(cursor_col + 1);
+    m_max_cursor_col = m_col_offset + cursor_col + 1;
 }
 
 void Document::move_cursor_down() {
     int cursor_row = m_panel.cursor_row();
     if (cursor_row == m_panel.rows() - 1) {
         if (m_row_offset == m_lines.size() - m_panel.rows()) {
+            move_cursor_to_line_end();
             return;
         }
     }
@@ -106,6 +110,17 @@ void Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
     if (m_col_offset + m_panel.cursor_col() > line.length()) {
         move_cursor_to_line_end(UpdateMaxCursorCol::No);
+    } else if (m_col_offset + m_panel.cursor_col() < line.length()) {
+        if (m_max_cursor_col > m_col_offset + m_panel.cursor_col()) {
+            int new_cursor_col = LIIM::min(m_max_cursor_col, line.length());
+            if (new_cursor_col >= m_panel.cols()) {
+                m_col_offset = new_cursor_col - m_panel.cols() - 1;
+                m_panel.set_cursor_col(m_panel.cols() - 1);
+                display();
+            } else {
+                m_panel.set_cursor_col(new_cursor_col);
+            }
+        }
     }
 }
 
@@ -122,22 +137,25 @@ void Document::move_cursor_left() {
 
         m_col_offset--;
         display();
+        m_max_cursor_col = m_col_offset;
         return;
     }
 
     m_panel.set_cursor_col(cursor_col - 1);
+    m_max_cursor_col = m_col_offset + cursor_col - 1;
 }
 
 void Document::move_cursor_up() {
     int cursor_row = m_panel.cursor_row();
     if (cursor_row == 0 && m_row_offset == 0) {
         m_panel.set_cursor_col(0);
+        m_max_cursor_col = 0;
         return;
     }
 
     if (cursor_row == 0) {
-        display();
         m_row_offset--;
+        display();
     } else {
         m_panel.set_cursor_row(cursor_row - 1);
     }
@@ -151,10 +169,16 @@ void Document::move_cursor_to_line_start() {
         m_col_offset = 0;
         display();
     }
+    m_max_cursor_col = 0;
 }
 
-void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_cursor_col [[maybe_unused]]) {
+void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_cursor_col) {
     auto& line = line_at_cursor();
+
+    if (should_update_max_cursor_col == UpdateMaxCursorCol::Yes) {
+        m_max_cursor_col = line.length();
+    }
+
     if (line.length() >= m_panel.cols()) {
         m_col_offset = line.length() - m_panel.cols() + 1;
         m_panel.set_cursor_col(m_panel.cols() - 1);
