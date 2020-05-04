@@ -80,6 +80,10 @@ void Document::move_cursor_right() {
     int cursor_col = m_panel.cursor_col();
     auto& line = line_at_cursor();
     if (cursor_col + m_col_offset == line.length()) {
+        if (m_row_offset + m_panel.cursor_row() == m_lines.size() - 1) {
+            return;
+        }
+
         move_cursor_down();
         move_cursor_to_line_start();
         return;
