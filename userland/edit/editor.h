@@ -83,6 +83,7 @@ public:
     void notify_panel_size_changed();
 
     void save();
+    void quit();
 
     bool single_line_mode() const { return m_line_mode == LineMode::Single; }
 
@@ -126,4 +127,5 @@ private:
     int m_max_cursor_col { 0 };
     bool m_convert_tabs_to_spaces { true };
     mutable bool m_needs_display { false };
+    bool m_document_was_modified { false };
 };

@@ -332,6 +332,7 @@ void Document::insert_char(char c) {
         move_cursor_right();
     }
     set_needs_display();
+    m_document_was_modified = true;
 }
 
 void Document::merge_lines(int l1i, int l2i) {
@@ -345,6 +346,7 @@ void Document::merge_lines(int l1i, int l2i) {
 void Document::delete_char(DeleteCharMode mode) {
     auto& line = line_at_cursor();
 
+    m_document_was_modified = true;
     switch (mode) {
         case DeleteCharMode::Backspace: {
             if (line.empty()) {
@@ -355,6 +357,7 @@ void Document::delete_char(DeleteCharMode mode) {
                 move_cursor_left();
                 m_lines.remove(m_row_offset + m_panel.cursor_row());
                 set_needs_display();
+                m_document_was_modified = true;
                 return;
             }
 
@@ -374,6 +377,7 @@ void Document::delete_char(DeleteCharMode mode) {
             }
 
             set_needs_display();
+            m_document_was_modified = true;
             break;
         }
         case DeleteCharMode::Delete:
@@ -384,6 +388,7 @@ void Document::delete_char(DeleteCharMode mode) {
 
                 m_lines.remove(m_row_offset + m_panel.cursor_row());
                 set_needs_display();
+                m_document_was_modified = true;
                 return;
             }
 
@@ -399,6 +404,7 @@ void Document::delete_char(DeleteCharMode mode) {
             }
 
             set_needs_display();
+            m_document_was_modified = true;
             break;
     }
 }
@@ -415,6 +421,7 @@ void Document::split_line_at_cursor() {
     move_cursor_down();
     move_cursor_to_line_start();
     set_needs_display();
+    m_document_was_modified = true;
 }
 
 void Document::notify_panel_size_changed() {
@@ -503,6 +510,18 @@ void Document::save() {
     }
 
     m_panel.send_status_message(String::format("Successfully saved file: `%s'", m_name.string()));
+    m_document_was_modified = false;
+}
+
+void Document::quit() {
+    if (m_document_was_modified) {
+        auto result = m_panel.prompt("Quit without saving? ");
+        if (result != "y" && result != "yes") {
+            return;
+        }
+    }
+
+    exit(0);
 }
 
 void Document::notify_key_pressed(KeyPress press) {
@@ -510,7 +529,7 @@ void Document::notify_key_pressed(KeyPress press) {
         switch (press.key) {
             case 'Q':
             case 'W':
-                exit(0);
+                quit();
                 break;
             case 'S':
                 if (!single_line_mode()) {
