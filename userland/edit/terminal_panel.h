@@ -27,6 +27,8 @@ public:
 
     void set_stop_on_enter(bool b) { m_stop_on_enter = b; }
 
+    void set_coordinates(int row_offset, int col_offset, int rows, int cols);
+
 private:
     TerminalPanel(int rows, int cols, int row_off, int col_off);
 

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -10,12 +11,25 @@
 static termios s_original_termios;
 static bool s_raw_mode_enabled;
 
+static TerminalPanel* s_main_panel;
+
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
 
     // FIXME: it would be nice to somehow restore the old terminal
     //        state instead of just clearing everything.
     fputs("\033[1;1H\033[2J", stdout);
+}
+
+static void update_panel_sizes() {
+    assert(s_main_panel);
+
+    fputs("\033[2J", stdout);
+    fflush(stdout);
+
+    winsize sz;
+    assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
+    s_main_panel->set_coordinates(0, 0, sz.ws_row - 1, sz.ws_col);
 }
 
 static void enable_raw_mode() {
@@ -34,6 +48,10 @@ static void enable_raw_mode() {
 
     assert(tcsetattr(STDOUT_FILENO, TCSAFLUSH, &to_set) == 0);
 
+    signal(SIGWINCH, [](int) {
+        update_panel_sizes();
+    });
+
     atexit(restore_termios);
 
     setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
@@ -49,17 +67,24 @@ TerminalPanel::TerminalPanel() {
         enable_raw_mode();
     }
 
-    winsize sz;
-    assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
-    m_rows = sz.ws_row - status_bar_height;
-    m_cols = sz.ws_col;
-    m_chars.resize(m_rows * m_cols);
-    assert(m_chars.size() == m_rows * m_cols);
+    s_main_panel = this;
+    update_panel_sizes();
 }
 
-TerminalPanel::TerminalPanel(int rows, int cols, int row_off, int col_off)
-    : m_rows(rows), m_cols(cols), m_row_offset(row_off), m_col_offset(col_off) {
+TerminalPanel::TerminalPanel(int rows, int cols, int row_off, int col_off) {
+    set_coordinates(row_off, col_off, rows, cols);
+}
+
+void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols) {
+    m_rows = rows;
+    m_cols = cols;
+    m_row_offset = row_off;
+    m_col_offset = col_off;
     m_chars.resize(m_rows * m_cols);
+
+    if (auto* doc = document()) {
+        doc->notify_panel_size_changed();
+    }
 }
 
 TerminalPanel::~TerminalPanel() {}

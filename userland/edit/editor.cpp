@@ -417,6 +417,18 @@ void Document::split_line_at_cursor() {
     set_needs_display();
 }
 
+void Document::notify_panel_size_changed() {
+    while (m_panel.cursor_row() >= m_panel.rows()) {
+        move_cursor_up();
+    }
+
+    while (m_panel.cursor_col() >= m_panel.cols()) {
+        move_cursor_left();
+    }
+
+    display();
+}
+
 void Document::save() {
     struct stat st;
     if (m_name.is_empty()) {

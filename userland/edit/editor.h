@@ -80,6 +80,7 @@ public:
     const Panel& panel() const { return m_panel; }
 
     void notify_key_pressed(KeyPress press);
+    void notify_panel_size_changed();
 
     void save();
 
@@ -123,6 +124,6 @@ private:
     int m_row_offset { 0 };
     int m_col_offset { 0 };
     int m_max_cursor_col { 0 };
-    bool m_convert_tabs_to_spaces { false };
+    bool m_convert_tabs_to_spaces { true };
     mutable bool m_needs_display { false };
 };
