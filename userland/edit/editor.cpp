@@ -340,8 +340,8 @@ void Document::delete_char(DeleteCharMode mode) {
                     return;
                 }
 
-                m_lines.remove(m_row_offset + m_panel.cursor_row());
                 move_cursor_left();
+                m_lines.remove(m_row_offset + m_panel.cursor_row());
                 display();
                 return;
             }
@@ -357,8 +357,8 @@ void Document::delete_char(DeleteCharMode mode) {
                 move_cursor_to_line_end();
                 merge_lines(row_index - 1, row_index);
             } else {
-                line.remove_char_at(index - 1);
                 move_cursor_left();
+                line.remove_char_at(index - 1);
             }
 
             display();
