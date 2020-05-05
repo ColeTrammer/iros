@@ -12,6 +12,8 @@ static termios s_original_termios;
 static bool s_raw_mode_enabled;
 
 static TerminalPanel* s_main_panel;
+static TerminalPanel* s_prompt_panel;
+static String s_prompt_message;
 
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
@@ -30,6 +32,17 @@ static void update_panel_sizes() {
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
     s_main_panel->set_coordinates(0, 0, sz.ws_row - 1, sz.ws_col);
+
+    if (s_prompt_panel) {
+        printf("\033[%d;%dH", sz.ws_row + 1, 1);
+        fputs("\033[0K", stdout);
+
+        int message_size = LIIM::min(s_prompt_message.size(), sz.ws_col / 2);
+        printf("%.*s", sz.ws_col / 2, s_prompt_message.string());
+        fflush(stdout);
+
+        s_prompt_panel->set_coordinates(sz.ws_row - 1, message_size, 1, sz.ws_col - message_size);
+    }
 }
 
 static void enable_raw_mode() {
@@ -250,6 +263,8 @@ String TerminalPanel::enter_prompt(const String& message) {
 
     TerminalPanel text_panel(1, m_col_offset + cols() - message_size, rows() + m_row_offset, message_size);
     text_panel.set_stop_on_enter(true);
+    s_prompt_panel = &text_panel;
+    s_prompt_message = message;
 
     auto document = Document::create_single_line(text_panel);
     text_panel.set_document(move(document));

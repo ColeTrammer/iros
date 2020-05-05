@@ -29,6 +29,9 @@ public:
 
     void set_coordinates(int row_offset, int col_offset, int rows, int cols);
 
+    int col_offset() const { return m_col_offset; }
+    int row_offset() const { return m_row_offset; }
+
 private:
     TerminalPanel(int rows, int cols, int row_off, int col_off);
 
