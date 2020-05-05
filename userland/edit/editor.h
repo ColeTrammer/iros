@@ -47,8 +47,8 @@ public:
 
     LineSplitResult split_at(int position);
 
-    int col_position_of_index(int index);
-    int index_of_col_position(int index);
+    int col_position_of_index(int index) const;
+    int index_of_col_position(int position) const;
 
 private:
     String m_contents;
@@ -105,6 +105,7 @@ private:
     void render_line(int line, int row_in_panel) const;
 
     Line& line_at_cursor();
+    const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int line_index_at_cursor() const;
 
     int cursor_col_position() const;

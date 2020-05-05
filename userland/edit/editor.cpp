@@ -16,6 +16,8 @@
     } while (0)
 #endif /* display_error */
 
+constexpr int tab_width = 4;
+
 LineSplitResult Line::split_at(int position) {
     StringView first = StringView(contents().string(), contents().string() + position - 1);
     StringView second = StringView(contents().string() + position);
@@ -23,12 +25,35 @@ LineSplitResult Line::split_at(int position) {
     return { Line(first), Line(second) };
 }
 
-int Line::col_position_of_index(int index) {
-    return index;
+int Line::col_position_of_index(int index) const {
+    int col = 0;
+    for (int i = 0; i < index; i++) {
+        char c = contents()[i];
+        if (c == '\t') {
+            col += tab_width - (col % tab_width);
+        } else {
+            col++;
+        }
+    }
+    return col;
 }
 
-int Line::index_of_col_position(int index) {
-    return LIIM::min(index, length());
+int Line::index_of_col_position(int position) const {
+    int col = 0;
+    int index;
+    for (index = 0; index < length(); index++) {
+        char c = contents()[index];
+        int col_width = 1;
+        if (c == '\t') {
+            col_width = tab_width - (col % tab_width);
+        }
+
+        col += col_width;
+        if (col > position) {
+            break;
+        }
+    }
+    return index;
 }
 
 UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
@@ -98,8 +123,21 @@ String Document::content_string() const {
 
 void Document::render_line(int line_number, int row_in_panel) const {
     auto& line = m_lines[line_number];
-    for (int i = m_col_offset; i < line.length() && i - m_col_offset < m_panel.cols(); i++) {
-        m_panel.set_text_at(row_in_panel, i - m_col_offset, line.contents()[i]);
+
+    int col_position = m_col_offset;
+    int line_index = line.index_of_col_position(col_position);
+    while (line_index < line.length() && col_position < m_panel.cols()) {
+        char c = line.contents()[line_index];
+        if (c == '\t') {
+            int num_spaces = tab_width - (col_position % tab_width);
+            for (int i = 0; col_position < m_panel.cols() && i < num_spaces; i++) {
+                m_panel.set_text_at(row_in_panel, col_position++, ' ');
+            }
+        } else {
+            m_panel.set_text_at(row_in_panel, col_position++, c);
+        }
+
+        line_index++;
     }
 }
 
@@ -116,7 +154,7 @@ Line& Document::line_at_cursor() {
 }
 
 int Document::line_index_at_cursor() const {
-    return m_panel.cursor_col() + m_col_offset;
+    return line_at_cursor().index_of_col_position(cursor_col_position());
 }
 
 int Document::cursor_col_position() const {
@@ -279,7 +317,7 @@ void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_curs
 
 void Document::insert_char(char c) {
     auto& line = line_at_cursor();
-    line.insert_char_at(m_panel.cursor_col() + m_col_offset, c);
+    line.insert_char_at(line.index_of_col_position(cursor_col_position()), c);
     move_cursor_right();
     display();
 }
@@ -308,8 +346,8 @@ void Document::delete_char(DeleteCharMode mode) {
                 return;
             }
 
-            int position = m_col_offset + m_panel.cursor_col();
-            if (position == 0) {
+            int index = line.index_of_col_position(cursor_col_position());
+            if (index == 0) {
                 if (&line == &m_lines.first()) {
                     return;
                 }
@@ -319,7 +357,7 @@ void Document::delete_char(DeleteCharMode mode) {
                 move_cursor_to_line_end();
                 merge_lines(row_index - 1, row_index);
             } else {
-                line.remove_char_at(position - 1);
+                line.remove_char_at(index - 1);
                 move_cursor_left();
             }
 
@@ -337,15 +375,15 @@ void Document::delete_char(DeleteCharMode mode) {
                 return;
             }
 
-            int position = m_col_offset + m_panel.cursor_col();
-            if (position == line.length()) {
+            int index = line.index_of_col_position(cursor_col_position());
+            if (index == line.length()) {
                 if (&line == &m_lines.last()) {
                     return;
                 }
 
                 merge_lines(m_row_offset + m_panel.cursor_row(), m_row_offset + m_panel.cursor_row() + 1);
             } else {
-                line.remove_char_at(position);
+                line.remove_char_at(index);
             }
 
             display();
@@ -357,7 +395,7 @@ void Document::split_line_at_cursor() {
     auto& line = line_at_cursor();
 
     int row_index = m_row_offset + m_panel.cursor_row();
-    auto result = line.split_at(m_col_offset + m_panel.cursor_col());
+    auto result = line.split_at(line.index_of_col_position(cursor_col_position()));
 
     line = move(result.first);
     m_lines.insert(move(result.second), row_index + 1);
