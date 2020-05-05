@@ -123,6 +123,6 @@ private:
     int m_row_offset { 0 };
     int m_col_offset { 0 };
     int m_max_cursor_col { 0 };
-    bool m_convert_tabs_to_spaces { true };
+    bool m_convert_tabs_to_spaces { false };
     mutable bool m_needs_display { false };
 };

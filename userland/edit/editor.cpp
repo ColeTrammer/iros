@@ -183,7 +183,7 @@ void Document::move_cursor_right() {
 
     int cursor_col = m_panel.cursor_col();
     if (cursor_col + cols_to_advance >= m_panel.cols()) {
-        m_col_offset += m_panel.cols() - cols_to_advance - cursor_col + 1;
+        m_col_offset += cursor_col + cols_to_advance - m_panel.cols() + 1;
         m_panel.set_cursor_col(m_panel.cols() - 1);
         set_needs_display();
         return;
@@ -274,7 +274,7 @@ void Document::clamp_cursor_to_line_end() {
         int new_line_index = line.index_of_col_position(m_max_cursor_col);
         int new_cursor_col = line.col_position_of_index(new_line_index);
         if (new_cursor_col >= m_panel.cols()) {
-            m_col_offset = new_cursor_col - m_panel.cols() - 1;
+            m_col_offset = new_cursor_col - m_panel.cols() + 1;
             m_panel.set_cursor_col(m_panel.cols() - 1);
             set_needs_display();
             return;
