@@ -1237,11 +1237,11 @@ int fs_rename(const char *old_path, const char *new_path) {
     }
 
     char *new_path_last_slash = strrchr(new_path, '/');
-    assert(new_path_last_slash);
-
     struct tnode *new_parent;
-    if (new_path_last_slash == new_path) {
-        new_parent = fs_root();
+    if (!new_path_last_slash) {
+        new_parent = bump_tnode(get_current_task()->process->cwd);
+    } else if (new_path_last_slash == new_path) {
+        new_parent = bump_tnode(fs_root());
     } else {
         *new_path_last_slash = '\0';
         iname(new_path, 0, &new_parent);
@@ -1326,7 +1326,8 @@ int fs_rename(const char *old_path, const char *new_path) {
         drop_tnode(existing_tnode);
     }
 
-    ret = old->inode->super_block->op->rename(old, new_parent, new_path_last_slash + 1);
+    const char *name = !new_path_last_slash ? new_path : new_path_last_slash + 1;
+    ret = old->inode->super_block->op->rename(old, new_parent, name);
     if (ret != 0) {
         drop_tnode(old);
         drop_tnode(new_parent);
@@ -1336,7 +1337,7 @@ int fs_rename(const char *old_path, const char *new_path) {
     struct tnode *old_parent = old->parent;
     assert(old_parent);
 
-    fs_put_dirent_cache(new_parent->inode->dirent_cache, old->inode, new_path_last_slash + 1, strlen(new_path_last_slash + 1));
+    fs_put_dirent_cache(new_parent->inode->dirent_cache, old->inode, name, strlen(name));
     fs_del_dirent_cache(old_parent->inode->dirent_cache, old->name);
     drop_tnode(old);
     drop_tnode(new_parent);
