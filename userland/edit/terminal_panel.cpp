@@ -188,6 +188,11 @@ KeyPress TerminalPanel::read_key() {
         return { 0, KeyPress::Key::Enter };
     }
 
+    if (ch == '\t') {
+        // \t is not a control key
+        return { 0, '\t' };
+    }
+
     if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
         return { KeyPress::Modifier::Control, ch | 0b1000000 };
     }

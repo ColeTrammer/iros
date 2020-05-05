@@ -124,12 +124,12 @@ String Document::content_string() const {
 void Document::render_line(int line_number, int row_in_panel) const {
     auto& line = m_lines[line_number];
 
-    int col_position = m_col_offset;
-    int line_index = line.index_of_col_position(col_position);
+    int col_position = 0;
+    int line_index = line.index_of_col_position(m_col_offset);
     while (line_index < line.length() && col_position < m_panel.cols()) {
         char c = line.contents()[line_index];
         if (c == '\t') {
-            int num_spaces = tab_width - (col_position % tab_width);
+            int num_spaces = tab_width - ((col_position + m_col_offset) % tab_width);
             for (int i = 0; col_position < m_panel.cols() && i < num_spaces; i++) {
                 m_panel.set_text_at(row_in_panel, col_position++, ' ');
             }
