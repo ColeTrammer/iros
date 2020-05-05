@@ -147,6 +147,7 @@ void Document::display() const {
         render_line(line_num, line_num - m_row_offset);
     }
     m_panel.flush();
+    m_needs_display = false;
 }
 
 Line& Document::line_at_cursor() {
@@ -184,7 +185,7 @@ void Document::move_cursor_right() {
     if (cursor_col + cols_to_advance >= m_panel.cols()) {
         m_col_offset += m_panel.cols() - cols_to_advance - cursor_col + 1;
         m_panel.set_cursor_col(m_panel.cols() - 1);
-        display();
+        set_needs_display();
         return;
     }
 
@@ -214,7 +215,7 @@ void Document::move_cursor_left() {
     if (cursor_col - cols_to_recede < 0) {
         m_col_offset += cursor_col - cols_to_recede;
         m_panel.set_cursor_col(0);
-        display();
+        set_needs_display();
         return;
     }
 
@@ -230,7 +231,7 @@ void Document::move_cursor_down() {
 
     if (cursor_row == m_panel.rows() - 1) {
         m_row_offset++;
-        display();
+        set_needs_display();
     } else {
         m_panel.set_cursor_row(cursor_row + 1);
     }
@@ -248,7 +249,7 @@ void Document::move_cursor_up() {
 
     if (cursor_row == 0) {
         m_row_offset--;
-        display();
+        set_needs_display();
     } else {
         m_panel.set_cursor_row(cursor_row - 1);
     }
@@ -275,7 +276,7 @@ void Document::clamp_cursor_to_line_end() {
         if (new_cursor_col >= m_panel.cols()) {
             m_col_offset = new_cursor_col - m_panel.cols() - 1;
             m_panel.set_cursor_col(m_panel.cols() - 1);
-            display();
+            set_needs_display();
             return;
         }
 
@@ -287,7 +288,7 @@ void Document::move_cursor_to_line_start() {
     m_panel.set_cursor_col(0);
     if (m_col_offset != 0) {
         m_col_offset = 0;
-        display();
+        set_needs_display();
     }
     m_max_cursor_col = 0;
 }
@@ -303,7 +304,7 @@ void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_curs
     if (new_col_position >= m_panel.cols()) {
         m_col_offset = new_col_position - m_panel.cols() + 1;
         m_panel.set_cursor_col(m_panel.cols() - 1);
-        display();
+        set_needs_display();
         return;
     }
 
@@ -311,7 +312,7 @@ void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_curs
 
     if (m_col_offset != 0) {
         m_col_offset = 0;
-        display();
+        set_needs_display();
     }
 }
 
@@ -330,7 +331,7 @@ void Document::insert_char(char c) {
         line.insert_char_at(line_index, c);
         move_cursor_right();
     }
-    display();
+    set_needs_display();
 }
 
 void Document::merge_lines(int l1i, int l2i) {
@@ -353,7 +354,7 @@ void Document::delete_char(DeleteCharMode mode) {
 
                 move_cursor_left();
                 m_lines.remove(m_row_offset + m_panel.cursor_row());
-                display();
+                set_needs_display();
                 return;
             }
 
@@ -372,7 +373,7 @@ void Document::delete_char(DeleteCharMode mode) {
                 line.remove_char_at(index - 1);
             }
 
-            display();
+            set_needs_display();
             break;
         }
         case DeleteCharMode::Delete:
@@ -382,7 +383,7 @@ void Document::delete_char(DeleteCharMode mode) {
                 }
 
                 m_lines.remove(m_row_offset + m_panel.cursor_row());
-                display();
+                set_needs_display();
                 return;
             }
 
@@ -397,7 +398,7 @@ void Document::delete_char(DeleteCharMode mode) {
                 line.remove_char_at(index);
             }
 
-            display();
+            set_needs_display();
             break;
     }
 }
@@ -413,7 +414,7 @@ void Document::split_line_at_cursor() {
 
     move_cursor_down();
     move_cursor_to_line_start();
-    display();
+    set_needs_display();
 }
 
 void Document::save() {
@@ -544,5 +545,9 @@ void Document::notify_key_pressed(KeyPress press) {
         default:
             insert_char(press.key);
             break;
+    }
+
+    if (needs_display()) {
+        display();
     }
 }

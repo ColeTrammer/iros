@@ -90,6 +90,9 @@ public:
     bool convert_tabs_to_spaces() const { return m_convert_tabs_to_spaces; }
     void set_convert_tabs_to_spaces(bool b) { m_convert_tabs_to_spaces = b; }
 
+    bool needs_display() const { return m_needs_display; }
+    void set_needs_display() { m_needs_display = true; }
+
 private:
     void move_cursor_left();
     void move_cursor_right();
@@ -121,4 +124,5 @@ private:
     int m_col_offset { 0 };
     int m_max_cursor_col { 0 };
     bool m_convert_tabs_to_spaces { true };
+    mutable bool m_needs_display { false };
 };
