@@ -23,6 +23,14 @@ LineSplitResult Line::split_at(int position) {
     return { Line(first), Line(second) };
 }
 
+int Line::col_position_of_index(int index) {
+    return index;
+}
+
+int Line::index_of_col_position(int index) {
+    return LIIM::min(index, length());
+}
+
 UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
     FILE* file = fopen(path.string(), "r");
     if (!file) {
@@ -107,11 +115,19 @@ Line& Document::line_at_cursor() {
     return m_lines[m_panel.cursor_row() + m_row_offset];
 }
 
+int Document::line_index_at_cursor() const {
+    return m_panel.cursor_col() + m_col_offset;
+}
+
+int Document::cursor_col_position() const {
+    return m_panel.cursor_col() + m_col_offset;
+}
+
 void Document::move_cursor_right() {
-    int cursor_col = m_panel.cursor_col();
     auto& line = line_at_cursor();
-    if (cursor_col + m_col_offset == line.length()) {
-        if (m_row_offset + m_panel.cursor_row() == m_lines.size() - 1) {
+    int index_into_line = line_index_at_cursor();
+    if (index_into_line == line.length()) {
+        if (&line == &m_lines.last()) {
             return;
         }
 
@@ -120,15 +136,51 @@ void Document::move_cursor_right() {
         return;
     }
 
-    if (cursor_col == m_panel.cols() - 1) {
-        m_col_offset++;
+    int new_col_position = line.col_position_of_index(index_into_line + 1);
+    int current_col_position = cursor_col_position();
+    int cols_to_advance = new_col_position - current_col_position;
+
+    m_max_cursor_col = new_col_position;
+
+    int cursor_col = m_panel.cursor_col();
+    if (cursor_col + cols_to_advance >= m_panel.cols()) {
+        m_col_offset += m_panel.cols() - cols_to_advance - cursor_col + 1;
+        m_panel.set_cursor_col(m_panel.cols() - 1);
         display();
-        m_max_cursor_col = m_col_offset + m_panel.cols() - 1;
         return;
     }
 
-    m_panel.set_cursor_col(cursor_col + 1);
-    m_max_cursor_col = m_col_offset + cursor_col + 1;
+    m_panel.set_cursor_col(m_panel.cursor_col() + cols_to_advance);
+}
+
+void Document::move_cursor_left() {
+    auto& line = line_at_cursor();
+    int index_into_line = line_index_at_cursor();
+    if (index_into_line == 0) {
+        if (&line == &m_lines.first()) {
+            return;
+        }
+
+        move_cursor_up();
+        move_cursor_to_line_end();
+        return;
+    }
+
+    int new_col_position = line.col_position_of_index(index_into_line - 1);
+    int current_col_position = cursor_col_position();
+    int cols_to_recede = current_col_position - new_col_position;
+
+    m_max_cursor_col = new_col_position;
+
+    int cursor_col = m_panel.cursor_col();
+    if (cursor_col - cols_to_recede < 0) {
+        m_col_offset += cursor_col - cols_to_recede;
+        m_panel.set_cursor_col(0);
+        display();
+        return;
+    }
+
+    m_panel.set_cursor_col(m_panel.cursor_col() - cols_to_recede);
 }
 
 void Document::move_cursor_down() {
@@ -146,45 +198,6 @@ void Document::move_cursor_down() {
     }
 
     clamp_cursor_to_line_end();
-}
-
-void Document::clamp_cursor_to_line_end() {
-    auto& line = line_at_cursor();
-    if (m_col_offset + m_panel.cursor_col() > line.length()) {
-        move_cursor_to_line_end(UpdateMaxCursorCol::No);
-    } else if (m_col_offset + m_panel.cursor_col() < line.length()) {
-        if (m_max_cursor_col > m_col_offset + m_panel.cursor_col()) {
-            int new_cursor_col = LIIM::min(m_max_cursor_col, line.length());
-            if (new_cursor_col >= m_panel.cols()) {
-                m_col_offset = new_cursor_col - m_panel.cols() + 1;
-                m_panel.set_cursor_col(m_panel.cols() - 1);
-                display();
-            } else {
-                m_panel.set_cursor_col(new_cursor_col);
-            }
-        }
-    }
-}
-
-void Document::move_cursor_left() {
-    int cursor_col = m_panel.cursor_col();
-    if (cursor_col == 0) {
-        if (m_col_offset == 0) {
-            if (m_row_offset != 0 || m_panel.cursor_row() != 0) {
-                move_cursor_up();
-                move_cursor_to_line_end();
-            }
-            return;
-        }
-
-        m_col_offset--;
-        display();
-        m_max_cursor_col = m_col_offset;
-        return;
-    }
-
-    m_panel.set_cursor_col(cursor_col - 1);
-    m_max_cursor_col = m_col_offset + cursor_col - 1;
 }
 
 void Document::move_cursor_up() {
@@ -205,6 +218,33 @@ void Document::move_cursor_up() {
     clamp_cursor_to_line_end();
 }
 
+void Document::clamp_cursor_to_line_end() {
+    auto& line = line_at_cursor();
+    int current_col = cursor_col_position();
+    int max_col = line.col_position_of_index(line.length());
+    if (current_col == max_col) {
+        return;
+    }
+
+    if (current_col > max_col) {
+        move_cursor_to_line_end(UpdateMaxCursorCol::No);
+        return;
+    }
+
+    if (m_max_cursor_col > current_col) {
+        int new_line_index = line.index_of_col_position(m_max_cursor_col);
+        int new_cursor_col = line.col_position_of_index(new_line_index);
+        if (new_cursor_col >= m_panel.cols()) {
+            m_col_offset = new_cursor_col - m_panel.cols() - 1;
+            m_panel.set_cursor_col(m_panel.cols() - 1);
+            display();
+            return;
+        }
+
+        m_panel.set_cursor_col(new_cursor_col);
+    }
+}
+
 void Document::move_cursor_to_line_start() {
     m_panel.set_cursor_col(0);
     if (m_col_offset != 0) {
@@ -216,19 +256,20 @@ void Document::move_cursor_to_line_start() {
 
 void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_cursor_col) {
     auto& line = line_at_cursor();
+    int new_col_position = line.col_position_of_index(line.length());
 
     if (should_update_max_cursor_col == UpdateMaxCursorCol::Yes) {
-        m_max_cursor_col = line.length();
+        m_max_cursor_col = new_col_position;
     }
 
-    if (line.length() >= m_panel.cols()) {
-        m_col_offset = line.length() - m_panel.cols() + 1;
+    if (new_col_position >= m_panel.cols()) {
+        m_col_offset = new_col_position - m_panel.cols() + 1;
         m_panel.set_cursor_col(m_panel.cols() - 1);
         display();
         return;
     }
 
-    m_panel.set_cursor_col(line.length());
+    m_panel.set_cursor_col(new_col_position);
 
     if (m_col_offset != 0) {
         m_col_offset = 0;

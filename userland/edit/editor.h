@@ -47,6 +47,9 @@ public:
 
     LineSplitResult split_at(int position);
 
+    int col_position_of_index(int index);
+    int index_of_col_position(int index);
+
 private:
     String m_contents;
 };
@@ -102,6 +105,9 @@ private:
     void render_line(int line, int row_in_panel) const;
 
     Line& line_at_cursor();
+    int line_index_at_cursor() const;
+
+    int cursor_col_position() const;
 
     Vector<Line> m_lines;
     String m_name;
