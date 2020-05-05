@@ -317,8 +317,19 @@ void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_curs
 
 void Document::insert_char(char c) {
     auto& line = line_at_cursor();
-    line.insert_char_at(line.index_of_col_position(cursor_col_position()), c);
-    move_cursor_right();
+
+    int col_position = cursor_col_position();
+    int line_index = line.index_of_col_position(col_position);
+    if (c == '\t' && convert_tabs_to_spaces()) {
+        int num_spaces = tab_width - (col_position % tab_width);
+        for (int i = 0; i < num_spaces; i++) {
+            line.insert_char_at(line_index, ' ');
+            move_cursor_right();
+        }
+    } else {
+        line.insert_char_at(line_index, c);
+        move_cursor_right();
+    }
     display();
 }
 
