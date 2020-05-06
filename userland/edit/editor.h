@@ -122,6 +122,13 @@ public:
     bool needs_display() const { return m_needs_display; }
     void set_needs_display() { m_needs_display = true; }
 
+    int cursor_col_position() const;
+    int cursor_row_position() const;
+
+    bool modified() const { return m_document_was_modified; }
+
+    const String& name() const { return m_name; }
+
 private:
     void move_cursor_left();
     void move_cursor_right();
@@ -142,8 +149,6 @@ private:
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int line_index_at_cursor() const;
-
-    int cursor_col_position() const;
 
     Vector<Line> m_lines;
     String m_name;

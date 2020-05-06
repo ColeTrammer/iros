@@ -125,7 +125,7 @@ void TerminalPanel::draw_cursor() {
 }
 
 void TerminalPanel::draw_status_message() {
-    if (m_status_message.is_empty()) {
+    if (this != s_main_panel || !document()) {
         return;
     }
 
@@ -135,9 +135,12 @@ void TerminalPanel::draw_status_message() {
 
     if (time(nullptr) - m_status_message_time > status_message_timeout) {
         m_status_message = "";
-    } else {
-        fputs(m_status_message.string(), stdout);
     }
+
+    auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
+    auto position_string = String::format("%d,%d", document()->cursor_row_position() + 1, document()->cursor_col_position() + 1);
+    auto status_rhs = String::format("%s%s %9s", name.string(), document()->modified() ? "*" : " ", position_string.string());
+    printf("%-*s%s", cols() - status_rhs.size(), m_status_message.string(), status_rhs.string());
 
     fputs("\033[u", stdout);
     fflush(stdout);
@@ -422,7 +425,9 @@ void TerminalPanel::enter() {
             document->notify_key_pressed(press);
         }
 
-        draw_status_message();
+        if (this == s_main_panel) {
+            draw_status_message();
+        }
     }
 }
 
