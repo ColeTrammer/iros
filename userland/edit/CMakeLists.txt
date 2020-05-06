@@ -1,5 +1,6 @@
 set(SOURCES
-    editor.cpp
+    document.cpp
+    line.cpp
     main.cpp
     panel.cpp
     terminal_panel.cpp

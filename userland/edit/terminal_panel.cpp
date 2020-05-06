@@ -7,7 +7,8 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "editor.h"
+#include "document.h"
+#include "key_press.h"
 #include "terminal_panel.h"
 
 static termios s_original_termios;

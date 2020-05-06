@@ -1,66 +1,18 @@
 #include <errno.h>
-#include <liim/utilities.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "editor.h"
+#include "document.h"
+#include "key_press.h"
 #include "panel.h"
-
-#ifndef display_error
-#define display_error(format, ...)                          \
-    do {                                                    \
-        fprintf(stderr, format __VA_OPT__(, ) __VA_ARGS__); \
-        fprintf(stderr, ": %s\n", strerror(errno));         \
-    } while (0)
-#endif /* display_error */
-
-constexpr int tab_width = 4;
-
-LineSplitResult Line::split_at(int position) {
-    StringView first = StringView(contents().string(), contents().string() + position - 1);
-    StringView second = StringView(contents().string() + position);
-
-    return { Line(first), Line(second) };
-}
-
-int Line::col_position_of_index(int index) const {
-    int col = 0;
-    for (int i = 0; i < index; i++) {
-        char c = contents()[i];
-        if (c == '\t') {
-            col += tab_width - (col % tab_width);
-        } else {
-            col++;
-        }
-    }
-    return col;
-}
-
-int Line::index_of_col_position(int position) const {
-    int col = 0;
-    int index;
-    for (index = 0; index < length(); index++) {
-        char c = contents()[index];
-        int col_width = 1;
-        if (c == '\t') {
-            col_width = tab_width - (col % tab_width);
-        }
-
-        col += col_width;
-        if (col > position) {
-            break;
-        }
-    }
-    return index;
-}
 
 UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
     FILE* file = fopen(path.string(), "r");
     if (!file) {
-        display_error("edit: error reading file: `%s'", path.string());
-        return nullptr;
+        panel.send_status_message(String::format("new file: `%s'", path.string()));
+        return make_unique<Document>(Vector<Line>(), path, panel, LineMode::Multiple);
     }
 
     Vector<Line> lines;
@@ -79,13 +31,14 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     UniquePtr<Document> ret;
 
     if (ferror(file)) {
-        display_error("edit: error reading file: `%s'", path.string());
+        panel.send_status_message(String::format("error reading file: `%s'", path.string()));
+        ret = Document::create_empty(panel);
     } else {
         ret = make_unique<Document>(move(lines), path, panel, LineMode::Multiple);
     }
 
     if (fclose(file)) {
-        display_error("edit: error closing file: `%s'", path.string());
+        panel.send_status_message(String::format("error closing file: `%s'", path.string()));
     }
 
     return ret;

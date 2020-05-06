@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "editor.h"
+#include "document.h"
 #include "terminal_panel.h"
 
 void print_usage_and_exit(const char* s) {
@@ -37,7 +37,6 @@ int main(int argc, char** argv) {
     if (!document) {
         return 1;
     }
-
 
     panel.set_document(move(document));
     panel.document()->display();

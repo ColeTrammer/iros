@@ -1,90 +1,12 @@
 #pragma once
 
-#include <liim/string.h>
+#include <liim/pointers.h>
 #include <liim/vector.h>
 
+#include "line.h"
+
+struct KeyPress;
 class Panel;
-
-struct KeyPress {
-    enum Modifier {
-        Shift = 1,
-        Alt = 2,
-        Control = 4,
-    };
-
-    enum Key {
-        // Ascii keys are mapped to themselves
-        LeftArrow = 1000,
-        RightArrow,
-        UpArrow,
-        DownArrow,
-        Home,
-        End,
-
-        Backspace = 2000,
-        Delete,
-        Enter,
-        Insert,
-        Escape,
-        PageUp,
-        PageDown,
-
-        F0 = 3000,
-        F1,
-        F2,
-        F3,
-        F4,
-        F5,
-        F6,
-        F7,
-        F8,
-        F9,
-        F10,
-        F11,
-        F12,
-        F13,
-        F14,
-        F15,
-        F16,
-        F17,
-        F18,
-        F19,
-        F20,
-    };
-
-    int modifiers;
-    int key;
-};
-
-struct LineSplitResult;
-
-class Line {
-public:
-    Line(String contents) : m_contents(move(contents)) {}
-
-    int length() const { return m_contents.size(); }
-    bool empty() const { return m_contents.size() == 0; }
-
-    const String& contents() const { return m_contents; }
-
-    void insert_char_at(int position, char c) { m_contents.insert(c, position); }
-    void remove_char_at(int position) { m_contents.remove_index(position); }
-
-    void combine_line(Line& line) { m_contents += line.contents(); }
-
-    LineSplitResult split_at(int position);
-
-    int col_position_of_index(int index) const;
-    int index_of_col_position(int position) const;
-
-private:
-    String m_contents;
-};
-
-struct LineSplitResult {
-    Line first;
-    Line second;
-};
 
 enum class UpdateMaxCursorCol { No, Yes };
 
