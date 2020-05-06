@@ -29,7 +29,7 @@ int main() {
 
     for (;;) {
         window->draw();
-        usleep(300);
+        usleep(300000);
     }
     return 0;
 }
