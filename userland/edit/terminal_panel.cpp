@@ -103,10 +103,6 @@ void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols
 TerminalPanel::~TerminalPanel() {}
 
 void TerminalPanel::clear() {
-    for (int r = 0; r < rows(); r++) {
-        printf("\033[%d;%dH", m_row_offset + r + 1, m_col_offset + 1);
-        fputs("\033[0K", stdout);
-    }
     draw_cursor();
     memset(m_chars.vector(), 0, m_chars.size());
 }
@@ -177,7 +173,7 @@ void TerminalPanel::flush_row(int row) {
 void TerminalPanel::flush() {
     fputs("\033[?l", stdout);
     for (int r = 0; r < rows(); r++) {
-        printf("\033[%d;%dH", m_row_offset + r + 1, m_col_offset + 1);
+        printf("\033[%d;%dH\033[0K", m_row_offset + r + 1, m_col_offset + 1);
         flush_row(r);
     }
     fputs("\033[?h", stdout);
