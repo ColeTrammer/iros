@@ -384,6 +384,12 @@ Maybe<KeyPress> TerminalPanel::read_key() {
         return { { 0, '\t' } };
     }
 
+    if (ch == ('w' & 0x1F)) {
+        // control backspace unfortunately binds to control w, but control backspace
+        // takes prcedence.
+        return { { KeyPress::Modifier::Control, KeyPress::Key::Backspace } };
+    }
+
     if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
         return { { KeyPress::Modifier::Control, ch | 0b1000000 } };
     }
