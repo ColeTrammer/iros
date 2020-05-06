@@ -62,6 +62,10 @@ static void enable_raw_mode() {
     to_set.c_cflag &= ~(CSIZE | PARENB);
     to_set.c_cflag |= CS8;
 
+    // 100 ms timeout on reads
+    to_set.c_cc[VMIN] = 0;
+    to_set.c_cc[VTIME] = 1;
+
     assert(tcsetattr(STDOUT_FILENO, TCSAFLUSH, &to_set) == 0);
 
     signal(SIGWINCH, [](int) {
@@ -188,62 +192,212 @@ void TerminalPanel::flush() {
     draw_cursor();
 }
 
-KeyPress TerminalPanel::read_key() {
+Maybe<KeyPress> TerminalPanel::read_key() {
     char ch;
-    assert(read(STDIN_FILENO, &ch, 1) > 0);
+    ssize_t ret = read(STDIN_FILENO, &ch, 1);
+    assert(ret >= 0);
+    if (ret == 0) {
+        return {};
+    }
 
     if (ch == '\033') {
         char escape_buffer[40];
-        assert(read(STDIN_FILENO, escape_buffer, 1) > 0);
+        ret = read(STDIN_FILENO, escape_buffer, 1);
+        assert(ret >= 0);
 
-        assert(escape_buffer[0] == '[');
+        if (ret == 0) {
+            return { { 0, KeyPress::Key::Escape } };
+        }
 
-        assert(read(STDIN_FILENO, escape_buffer + 1, 1) > 0);
-        switch (escape_buffer[1]) {
-            case 'A':
-                return { 0, KeyPress::Key::UpArrow };
-            case 'B':
-                return { 0, KeyPress::Key::DownArrow };
-            case 'C':
-                return { 0, KeyPress::Key::RightArrow };
-            case 'D':
-                return { 0, KeyPress::Key::LeftArrow };
-            case 'F':
-                return { 0, KeyPress::Key::End };
-            case 'H':
-                return { 0, KeyPress::Key::Home };
-            case '3':
-                assert(read(STDIN_FILENO, escape_buffer + 2, 1) > 0);
-                switch (escape_buffer[2]) {
-                    case '~':
-                        return { 0, KeyPress::Key::Delete };
+        if (escape_buffer[0] != '[' && escape_buffer[0] != 'O') {
+            return { { KeyPress::Modifier::Alt, escape_buffer[0] } };
+        } else {
+            // Information from https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
+            auto modifiers_from_digit = [](char digit) -> int {
+                if (!isdigit(digit) || digit < '0' || digit > '8') {
+                    return 0;
                 }
+                return digit - 1;
+            };
+
+            auto xterm_sequence_to_key = [](char ch, int modifiers) -> KeyPress {
+                switch (ch) {
+                    case 'A':
+                        return { modifiers, KeyPress::Key::UpArrow };
+                    case 'B':
+                        return { modifiers, KeyPress::Key::DownArrow };
+                    case 'C':
+                        return { modifiers, KeyPress::Key::RightArrow };
+                    case 'D':
+                        return { modifiers, KeyPress::Key::LeftArrow };
+                    case 'F':
+                        return { modifiers, KeyPress::Key::End };
+                    case 'H':
+                        return { modifiers, KeyPress::Key::Home };
+                    case 'P':
+                        return { modifiers, KeyPress::Key::F1 };
+                    case 'Q':
+                        return { modifiers, KeyPress::Key::F2 };
+                    case 'R':
+                        return { modifiers, KeyPress::Key::F3 };
+                    case 'S':
+                        return { modifiers, KeyPress::Key::F4 };
+                    default:
+                        return { modifiers, ch };
+                }
+            };
+
+            auto vt_sequence_to_key = [](int num, int modifiers) -> Maybe<KeyPress> {
+                switch (num) {
+                    case 1:
+                        return { { modifiers, KeyPress::Key::Home } };
+                    case 2:
+                        return { { modifiers, KeyPress::Key::Insert } };
+                    case 3:
+                        return { { modifiers, KeyPress::Key::Delete } };
+                    case 4:
+                        return { { modifiers, KeyPress::Key::End } };
+                    case 5:
+                        return { { modifiers, KeyPress::Key::PageUp } };
+                    case 6:
+                        return { { modifiers, KeyPress::Key::PageDown } };
+                    case 7:
+                        return { { modifiers, KeyPress::Key::Home } };
+                    case 8:
+                        return { { modifiers, KeyPress::Key::End } };
+                    case 10:
+                        return { { modifiers, KeyPress::Key::F0 } };
+                    case 11:
+                        return { { modifiers, KeyPress::Key::F1 } };
+                    case 12:
+                        return { { modifiers, KeyPress::Key::F2 } };
+                    case 13:
+                        return { { modifiers, KeyPress::Key::F3 } };
+                    case 14:
+                        return { { modifiers, KeyPress::Key::F4 } };
+                    case 15:
+                        return { { modifiers, KeyPress::Key::F5 } };
+                    case 17:
+                        return { { modifiers, KeyPress::Key::F6 } };
+                    case 18:
+                        return { { modifiers, KeyPress::Key::F7 } };
+                    case 19:
+                        return { { modifiers, KeyPress::Key::F8 } };
+                    case 20:
+                        return { { modifiers, KeyPress::Key::F9 } };
+                    case 21:
+                        return { { modifiers, KeyPress::Key::F10 } };
+                    case 23:
+                        return { { modifiers, KeyPress::Key::F11 } };
+                    case 24:
+                        return { { modifiers, KeyPress::Key::F12 } };
+                    case 25:
+                        return { { modifiers, KeyPress::Key::F13 } };
+                    case 26:
+                        return { { modifiers, KeyPress::Key::F14 } };
+                    case 28:
+                        return { { modifiers, KeyPress::Key::F15 } };
+                    case 29:
+                        return { { modifiers, KeyPress::Key::F16 } };
+                    case 31:
+                        return { { modifiers, KeyPress::Key::F17 } };
+                    case 32:
+                        return { { modifiers, KeyPress::Key::F18 } };
+                    case 33:
+                        return { { modifiers, KeyPress::Key::F19 } };
+                    case 34:
+                        return { { modifiers, KeyPress::Key::F20 } };
+                    default:
+                        return {};
+                }
+            };
+
+            ret = read(STDIN_FILENO, escape_buffer + 1, 1);
+            assert(ret >= 0);
+
+            if (ret == 0) {
+                return { { KeyPress::Modifier::Alt, KeyPress::Key::Escape } };
+            }
+
+            if (isalpha(escape_buffer[1])) {
+                return xterm_sequence_to_key(escape_buffer[1], 0);
+            }
+
+            if (isdigit(escape_buffer[1])) {
+                ret = read(STDIN_FILENO, escape_buffer + 2, 1);
+                assert(ret >= 0);
+                if (ret == 0) {
+                    ch = escape_buffer[1];
+                } else {
+                    if (isalpha(escape_buffer[2])) {
+                        int modifiers = modifiers_from_digit(escape_buffer[1]);
+                        return xterm_sequence_to_key(escape_buffer[2], modifiers);
+                    }
+
+                    size_t i = 2;
+                    while (i < sizeof(escape_buffer) && escape_buffer[i] != '~') {
+                        ret = read(STDIN_FILENO, escape_buffer + ++i, 1);
+                        assert(ret >= 0);
+                        if (ret == 0) {
+                            return {};
+                        }
+                    }
+
+                    if (escape_buffer[i] != '~') {
+                        return {};
+                    }
+
+                    if (strchr(escape_buffer, ';')) {
+                        int num;
+                        char modifiers;
+                        if (sscanf(escape_buffer, "[%d;%c~", &num, &modifiers) != 2) {
+                            return {};
+                        }
+
+                        return vt_sequence_to_key(num, modifiers_from_digit(modifiers));
+                    }
+
+                    int num;
+                    if (sscanf(escape_buffer, "[%d~", &num) != 1) {
+                        return {};
+                    }
+
+                    return vt_sequence_to_key(num, 0);
+                }
+            }
+
+            ch = escape_buffer[1];
         }
     }
 
     if (ch == 127) {
-        return { 0, KeyPress::Key::Backspace };
+        return { { 0, KeyPress::Key::Backspace } };
     }
 
     if (ch == '\r') {
-        return { 0, KeyPress::Key::Enter };
+        return { { 0, KeyPress::Key::Enter } };
     }
 
     if (ch == '\t') {
         // \t is not a control key
-        return { 0, '\t' };
+        return { { 0, '\t' } };
     }
 
     if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
-        return { KeyPress::Modifier::Control, ch | 0b1000000 };
+        return { { KeyPress::Modifier::Control, ch | 0b1000000 } };
     }
 
-    return { 0, ch };
+    return { { 0, ch } };
 }
 
 void TerminalPanel::enter() {
     for (;;) {
-        KeyPress press = read_key();
+        auto maybe_press = read_key();
+        if (!maybe_press.has_value()) {
+            continue;
+        }
+
+        auto& press = maybe_press.value();
         if (press.key == KeyPress::Key::Enter && m_stop_on_enter) {
             return;
         }

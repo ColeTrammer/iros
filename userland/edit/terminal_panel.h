@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/maybe.h>
 #include <liim/vector.h>
 #include <time.h>
 
@@ -35,7 +36,7 @@ public:
 private:
     TerminalPanel(int rows, int cols, int row_off, int col_off);
 
-    KeyPress read_key();
+    Maybe<KeyPress> read_key();
 
     void draw_cursor();
     void draw_status_message();

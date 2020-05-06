@@ -574,7 +574,9 @@ void Document::notify_key_pressed(KeyPress press) {
             }
             break;
         default:
-            insert_char(press.key);
+            if (isascii(press.key)) {
+                insert_char(press.key);
+            }
             break;
     }
 
