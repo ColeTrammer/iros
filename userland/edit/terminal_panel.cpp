@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -406,6 +407,10 @@ void TerminalPanel::enter() {
         FD_ZERO(&set);
         FD_SET(STDIN_FILENO, &set);
         int ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
+        if (ret == -1 && errno == EINTR) {
+            continue;
+        }
+
         assert(ret >= 0);
         if (ret == 0) {
             continue;
