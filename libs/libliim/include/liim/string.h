@@ -70,6 +70,10 @@ public:
     bool operator!=(const String& other) const { return !(*this == other); }
 
     String& operator+=(const String& other) {
+        if (other.is_empty()) {
+            return *this;
+        }
+
         m_size += other.size();
         m_string = reinterpret_cast<char*>(realloc(m_string, size() + 1));
         strcat(string(), other.string());
