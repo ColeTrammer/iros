@@ -345,6 +345,7 @@ void Document::merge_lines(int l1i, int l2i) {
 
 void Document::delete_char(DeleteCharMode mode) {
     auto& line = line_at_cursor();
+    int row_index = m_row_offset + m_panel.cursor_row();
 
     m_document_was_modified = true;
     switch (mode) {
@@ -355,7 +356,7 @@ void Document::delete_char(DeleteCharMode mode) {
                 }
 
                 move_cursor_left();
-                m_lines.remove(m_row_offset + m_panel.cursor_row());
+                m_lines.remove(row_index);
                 set_needs_display();
                 m_document_was_modified = true;
                 return;
@@ -367,7 +368,6 @@ void Document::delete_char(DeleteCharMode mode) {
                     return;
                 }
 
-                int row_index = m_row_offset + m_panel.cursor_row();
                 move_cursor_up();
                 move_cursor_to_line_end();
                 merge_lines(row_index - 1, row_index);
@@ -382,11 +382,11 @@ void Document::delete_char(DeleteCharMode mode) {
         }
         case DeleteCharMode::Delete:
             if (line.empty()) {
-                if (m_lines.size() == 1) {
+                if (&line == &m_lines.last()) {
                     return;
                 }
 
-                m_lines.remove(m_row_offset + m_panel.cursor_row());
+                m_lines.remove(row_index);
                 set_needs_display();
                 m_document_was_modified = true;
                 return;
@@ -398,7 +398,7 @@ void Document::delete_char(DeleteCharMode mode) {
                     return;
                 }
 
-                merge_lines(m_row_offset + m_panel.cursor_row(), m_row_offset + m_panel.cursor_row() + 1);
+                merge_lines(row_index, row_index + 1);
             } else {
                 line.remove_char_at(index);
             }
