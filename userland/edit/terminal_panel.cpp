@@ -18,9 +18,12 @@ static String s_prompt_message;
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
 
-    // FIXME: it would be nice to somehow restore the old terminal
-    //        state instead of just clearing everything.
+#ifndef __os_2__
+    fputs("\033[?1049l", stdout);
+#else
     fputs("\033[1;1H\033[2J", stdout);
+#endif /* __os_2__ */
+    fflush(stdout);
 }
 
 static void update_panel_sizes() {
@@ -68,6 +71,10 @@ static void enable_raw_mode() {
     atexit(restore_termios);
 
     setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
+
+#ifndef __os_2__
+    fputs("\033[?1049h", stdout);
+#endif /* __os_2__ */
 }
 
 constexpr int status_bar_height = 1;
@@ -171,12 +178,12 @@ void TerminalPanel::flush_row(int row) {
 }
 
 void TerminalPanel::flush() {
-    fputs("\033[?l", stdout);
+    fputs("\033[?25l", stdout);
     for (int r = 0; r < rows(); r++) {
         printf("\033[%d;%dH\033[0K", m_row_offset + r + 1, m_col_offset + 1);
         flush_row(r);
     }
-    fputs("\033[?h", stdout);
+    fputs("\033[?25h", stdout);
     draw_status_message();
     draw_cursor();
 }
