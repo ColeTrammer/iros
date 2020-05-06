@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -391,7 +392,16 @@ Maybe<KeyPress> TerminalPanel::read_key() {
 }
 
 void TerminalPanel::enter() {
+    fd_set set;
     for (;;) {
+        FD_ZERO(&set);
+        FD_SET(STDIN_FILENO, &set);
+        int ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
+        assert(ret >= 0);
+        if (ret == 0) {
+            continue;
+        }
+
         auto maybe_press = read_key();
         if (!maybe_press.has_value()) {
             continue;
