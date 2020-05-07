@@ -5,6 +5,10 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
+DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot_state()) {}
+
+DeltaBackedCommand::~DeltaBackedCommand() {}
+
 SnapshotBackedCommand::SnapshotBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot()) {}
 
 SnapshotBackedCommand::~SnapshotBackedCommand() {}
@@ -13,7 +17,7 @@ void SnapshotBackedCommand::undo() {
     document().restore(snapshot());
 }
 
-InsertCommand::InsertCommand(Document& document, char c) : SnapshotBackedCommand(document), m_char(c) {}
+InsertCommand::InsertCommand(Document& document, char c) : DeltaBackedCommand(document), m_char(c) {}
 
 InsertCommand::~InsertCommand() {}
 
@@ -34,6 +38,26 @@ void InsertCommand::execute() {
     }
     document().set_needs_display();
     document().set_was_modified(true);
+}
+
+void InsertCommand::undo() {
+    document().restore_state(state_snapshot());
+
+    auto& line = document().line_at_cursor();
+    int col_position = document().cursor_col_position();
+    int line_index = line.index_of_col_position(col_position);
+
+    // FIXME: what if convert_tabs_to_spaces() changes value
+    if (m_char == '\t' && document().convert_tabs_to_spaces()) {
+        int num_spaces = tab_width - (col_position % tab_width);
+        for (int i = 0; i < num_spaces; i++) {
+            line.remove_char_at(line_index);
+        }
+    } else {
+        line.remove_char_at(line_index);
+    }
+
+    document().set_needs_display();
 }
 
 DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : SnapshotBackedCommand(document), m_mode(mode) {}

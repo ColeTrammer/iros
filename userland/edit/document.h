@@ -21,14 +21,18 @@ public:
     static UniquePtr<Document> create_empty(Panel& panel);
     static UniquePtr<Document> create_single_line(Panel& panel);
 
-    struct Snapshot {
-        Vector<Line> lines;
+    struct StateSnapshot {
         int row_offset { 0 };
         int col_offset { 0 };
         int cursor_row { 0 };
         int cursor_col { 0 };
         int max_cursor_col { 0 };
         bool document_was_modified { false };
+    };
+
+    struct Snapshot {
+        Vector<Line> lines;
+        StateSnapshot state;
     };
 
     Document(Vector<Line> lines, String name, Panel& panel, LineMode mode);
@@ -85,6 +89,9 @@ public:
 
     Snapshot snapshot() const;
     void restore(Snapshot snapshot);
+
+    StateSnapshot snapshot_state() const;
+    void restore_state(const StateSnapshot& state_snapshot);
 
 private:
     void clamp_cursor_to_line_end();

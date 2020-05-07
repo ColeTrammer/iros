@@ -17,6 +17,19 @@ private:
     Document& m_document;
 };
 
+class DeltaBackedCommand : public Command {
+public:
+    DeltaBackedCommand(Document& document);
+    virtual ~DeltaBackedCommand() override;
+
+    virtual void undo() = 0;
+
+    const Document::StateSnapshot& state_snapshot() const { return m_snapshot; }
+
+private:
+    Document::StateSnapshot m_snapshot;
+};
+
 class SnapshotBackedCommand : public Command {
 public:
     SnapshotBackedCommand(Document& document);
@@ -30,12 +43,13 @@ private:
     Document::Snapshot m_snapshot;
 };
 
-class InsertCommand final : public SnapshotBackedCommand {
+class InsertCommand final : public DeltaBackedCommand {
 public:
     InsertCommand(Document& document, char c);
     virtual ~InsertCommand();
 
     virtual void execute() override;
+    virtual void undo() override;
 
 private:
     char m_char { 0 };

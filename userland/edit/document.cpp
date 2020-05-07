@@ -293,19 +293,32 @@ void Document::undo() {
     command.undo();
 }
 
+Document::StateSnapshot Document::snapshot_state() const {
+    return { m_row_offset, m_col_offset, m_panel.cursor_row(), m_panel.cursor_col(), m_max_cursor_col, m_document_was_modified };
+}
+
 Document::Snapshot Document::snapshot() const {
-    return { Vector<Line>(m_lines), m_row_offset,     m_col_offset,           m_panel.cursor_row(),
-             m_panel.cursor_col(),  m_max_cursor_col, m_document_was_modified };
+    return { Vector<Line>(m_lines), snapshot_state() };
 }
 
 void Document::restore(Snapshot s) {
     m_lines = move(s.lines);
+    m_row_offset = s.state.row_offset;
+    m_col_offset = s.state.col_offset;
+    m_max_cursor_col = s.state.max_cursor_col;
+    m_document_was_modified = s.state.document_was_modified;
+
+    update_search_results();
+    m_panel.set_cursor(s.state.cursor_row, s.state.cursor_col);
+    set_needs_display();
+}
+
+void Document::restore_state(const StateSnapshot& s) {
     m_row_offset = s.row_offset;
     m_col_offset = s.col_offset;
     m_max_cursor_col = s.max_cursor_col;
     m_document_was_modified = s.document_was_modified;
 
-    update_search_results();
     m_panel.set_cursor(s.cursor_row, s.cursor_col);
     set_needs_display();
 }
