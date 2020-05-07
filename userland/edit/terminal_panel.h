@@ -20,6 +20,7 @@ public:
     virtual void enter() override;
     virtual void send_status_message(String message) override;
     virtual String prompt(const String& message) override;
+    virtual void enter_search(String starting_text) override;
 
     virtual void set_cursor(int row, int col) override;
 

@@ -36,6 +36,9 @@ public:
     CharacterMetadata& metadata_at(int index) { return m_metadata[index]; }
     const CharacterMetadata& metadata_at(int index) const { return m_metadata[index]; }
 
+    int search(const String& text);
+    void clear_search();
+
     void render(Panel& panel, int col_offset, int row_in_panel) const;
 
 private:

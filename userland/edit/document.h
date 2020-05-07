@@ -51,6 +51,9 @@ public:
 
     const String& name() const { return m_name; }
 
+    const String& search_text() const { return m_search_text; }
+    void set_search_text(String text);
+
 private:
     void move_cursor_left();
     void move_cursor_right();
@@ -60,6 +63,10 @@ private:
     void move_cursor_to_line_end(UpdateMaxCursorCol update = UpdateMaxCursorCol::Yes);
     void clamp_cursor_to_line_end();
     void split_line_at_cursor();
+
+    void update_search_results();
+    void clear_search_results();
+    void enter_interactive_search();
 
     void insert_char(char c);
     void delete_char(DeleteCharMode mode);
@@ -72,6 +79,7 @@ private:
 
     Vector<Line> m_lines;
     String m_name;
+    String m_search_text;
     Panel& m_panel;
     LineMode m_line_mode { LineMode::Multiple };
     int m_row_offset { 0 };

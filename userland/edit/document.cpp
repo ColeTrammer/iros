@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -461,9 +462,40 @@ void Document::quit() {
     exit(0);
 }
 
+void Document::update_search_results() {
+    for (auto& line : m_lines) {
+        if (line.search(m_search_text) > 0) {
+            set_needs_display();
+        }
+    }
+}
+
+void Document::clear_search_results() {
+    for (auto& line : m_lines) {
+        line.clear_search();
+    }
+    set_needs_display();
+}
+
+void Document::set_search_text(String text) {
+    if (m_search_text == text) {
+        return;
+    }
+
+    m_search_text = move(text);
+    update_search_results();
+}
+
+void Document::enter_interactive_search() {
+    m_panel.enter_search(m_search_text);
+}
+
 void Document::notify_key_pressed(KeyPress press) {
     if (press.modifiers & KeyPress::Modifier::Control) {
         switch (press.key) {
+            case 'F':
+                enter_interactive_search();
+                break;
             case 'Q':
             case 'W':
                 quit();
@@ -477,6 +509,9 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
         }
 
+        if (needs_display()) {
+            display();
+        }
         return;
     }
 
@@ -509,6 +544,9 @@ void Document::notify_key_pressed(KeyPress press) {
             if (!single_line_mode()) {
                 split_line_at_cursor();
             }
+            break;
+        case KeyPress::Key::Escape:
+            clear_search_results();
             break;
         default:
             if (isascii(press.key)) {

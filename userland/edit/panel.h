@@ -27,6 +27,7 @@ public:
     virtual void enter() = 0;
     virtual void send_status_message(LIIM::String message) = 0;
     virtual LIIM::String prompt(const LIIM::String& message) = 0;
+    virtual void enter_search(LIIM::String starting_text) = 0;
 
     virtual void set_cursor(int row, int col) = 0;
     virtual int cursor_row() const = 0;

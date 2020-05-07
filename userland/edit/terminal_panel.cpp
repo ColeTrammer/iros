@@ -493,3 +493,14 @@ String TerminalPanel::prompt(const String& prompt) {
     draw_cursor();
     return result;
 }
+
+void TerminalPanel::enter_search(String) {
+    String result = enter_prompt("Find: ");
+
+    printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
+    fputs("\033[0K", stdout);
+    draw_cursor();
+
+    assert(document());
+    document()->set_search_text(result);
+}

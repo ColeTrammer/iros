@@ -76,6 +76,32 @@ void Line::combine_line(Line& line) {
     assert(m_metadata.size() == m_contents.size());
 }
 
+void Line::clear_search() {
+    for (auto& m : m_metadata) {
+        m.set_highlighted(false);
+    }
+}
+
+int Line::search(const String& text) {
+    char* s = m_contents.string();
+    int matches = 0;
+    for (;;) {
+        char* match = strstr(s, text.string());
+        if (!match) {
+            break;
+        }
+
+        for (int i = match - m_contents.string(); i < match - m_contents.string() + text.size(); i++) {
+            metadata_at(i).set_highlighted(true);
+        }
+
+        s = match + text.size();
+        matches++;
+    }
+
+    return matches;
+}
+
 void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
     int col_position = 0;
     int line_index = index_of_col_position(col_offset);
