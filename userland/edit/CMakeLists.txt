@@ -1,4 +1,5 @@
 set(SOURCES
+    command.cpp
     document.cpp
     line.cpp
     main.cpp

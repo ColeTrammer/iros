@@ -3,14 +3,13 @@
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
+#include "command.h"
 #include "line.h"
 
 struct KeyPress;
 class Panel;
 
 enum class UpdateMaxCursorCol { No, Yes };
-
-enum class DeleteCharMode { Backspace, Delete };
 
 enum class LineMode { Single, Multiple };
 
@@ -54,39 +53,48 @@ public:
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);
 
-private:
     void move_cursor_left();
     void move_cursor_right();
     void move_cursor_down();
     void move_cursor_up();
     void move_cursor_to_line_start();
     void move_cursor_to_line_end(UpdateMaxCursorCol update = UpdateMaxCursorCol::Yes);
+
+    Line& line_at_cursor();
+    const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
+    int line_index_at_cursor() const;
+    int num_lines() const { return m_lines.size(); }
+    void remove_line(int index) { m_lines.remove(index); }
+    void insert_line(Line&& line, int index) { m_lines.insert(move(line), index); }
+
+    void merge_lines(int l1, int l2);
+
+    void set_was_modified(bool b) { m_document_was_modified = b; }
+
+private:
     void clamp_cursor_to_line_end();
-    void split_line_at_cursor();
 
     void update_search_results();
     void clear_search_results();
     void enter_interactive_search();
 
+    void split_line_at_cursor();
     void insert_char(char c);
     void delete_char(DeleteCharMode mode);
 
-    void merge_lines(int l1, int l2);
-
-    Line& line_at_cursor();
-    const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
-    int line_index_at_cursor() const;
-
     Vector<Line> m_lines;
     String m_name;
-    String m_search_text;
-    int m_search_result_count { 0 };
     Panel& m_panel;
     LineMode m_line_mode { LineMode::Multiple };
+
+    String m_search_text;
+    int m_search_result_count { 0 };
+
     int m_row_offset { 0 };
     int m_col_offset { 0 };
     int m_max_cursor_col { 0 };
     bool m_convert_tabs_to_spaces { true };
-    mutable bool m_needs_display { false };
     bool m_document_was_modified { false };
+
+    mutable bool m_needs_display { false };
 };

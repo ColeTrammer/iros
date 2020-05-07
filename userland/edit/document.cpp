@@ -254,25 +254,6 @@ void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_curs
     }
 }
 
-void Document::insert_char(char c) {
-    auto& line = line_at_cursor();
-
-    int col_position = cursor_col_position();
-    int line_index = line.index_of_col_position(col_position);
-    if (c == '\t' && convert_tabs_to_spaces()) {
-        int num_spaces = tab_width - (col_position % tab_width);
-        for (int i = 0; i < num_spaces; i++) {
-            line.insert_char_at(line_index, ' ');
-            move_cursor_right();
-        }
-    } else {
-        line.insert_char_at(line_index, c);
-        move_cursor_right();
-    }
-    set_needs_display();
-    m_document_was_modified = true;
-}
-
 void Document::merge_lines(int l1i, int l2i) {
     auto& l1 = m_lines[l1i];
     auto& l2 = m_lines[l2i];
@@ -281,85 +262,19 @@ void Document::merge_lines(int l1i, int l2i) {
     m_lines.remove(l2i);
 }
 
+void Document::insert_char(char c) {
+    auto command = make_unique<InsertCommand>(*this, c);
+    command->execute();
+}
+
 void Document::delete_char(DeleteCharMode mode) {
-    auto& line = line_at_cursor();
-    int row_index = m_row_offset + m_panel.cursor_row();
-
-    m_document_was_modified = true;
-    switch (mode) {
-        case DeleteCharMode::Backspace: {
-            if (line.empty()) {
-                if (m_lines.size() == 1) {
-                    return;
-                }
-
-                move_cursor_left();
-                m_lines.remove(row_index);
-                set_needs_display();
-                m_document_was_modified = true;
-                return;
-            }
-
-            int index = line.index_of_col_position(cursor_col_position());
-            if (index == 0) {
-                if (&line == &m_lines.first()) {
-                    return;
-                }
-
-                move_cursor_up();
-                move_cursor_to_line_end();
-                merge_lines(row_index - 1, row_index);
-            } else {
-                move_cursor_left();
-                line.remove_char_at(index - 1);
-            }
-
-            set_needs_display();
-            m_document_was_modified = true;
-            break;
-        }
-        case DeleteCharMode::Delete:
-            if (line.empty()) {
-                if (&line == &m_lines.last()) {
-                    return;
-                }
-
-                m_lines.remove(row_index);
-                set_needs_display();
-                m_document_was_modified = true;
-                return;
-            }
-
-            int index = line.index_of_col_position(cursor_col_position());
-            if (index == line.length()) {
-                if (&line == &m_lines.last()) {
-                    return;
-                }
-
-                merge_lines(row_index, row_index + 1);
-            } else {
-                line.remove_char_at(index);
-            }
-
-            set_needs_display();
-            m_document_was_modified = true;
-            break;
-    }
+    auto command = make_unique<DeleteCommand>(*this, mode);
+    command->execute();
 }
 
 void Document::split_line_at_cursor() {
-    auto& line = line_at_cursor();
-
-    int row_index = m_row_offset + m_panel.cursor_row();
-    auto result = line.split_at(line.index_of_col_position(cursor_col_position()));
-
-    line = move(result.first);
-    m_lines.insert(move(result.second), row_index + 1);
-
-    move_cursor_down();
-    move_cursor_to_line_start();
-    set_needs_display();
-    m_document_was_modified = true;
+    auto command = make_unique<SplitLineCommand>(*this);
+    command->execute();
 }
 
 void Document::notify_panel_size_changed() {
