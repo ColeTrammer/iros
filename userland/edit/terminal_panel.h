@@ -15,7 +15,7 @@ public:
     virtual int cols() const override { return m_cols; }
 
     virtual void clear() override;
-    virtual void set_text_at(int row, int col, char c) override;
+    virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
     virtual void flush() override;
     virtual void enter() override;
     virtual void send_status_message(String message) override;
@@ -34,6 +34,11 @@ public:
     int row_offset() const { return m_row_offset; }
 
 private:
+    struct Info {
+        char ch;
+        CharacterMetadata metadata;
+    };
+
     TerminalPanel(int rows, int cols, int row_off, int col_off);
 
     Maybe<KeyPress> read_key();
@@ -48,7 +53,7 @@ private:
 
     int index(int row, int col) const { return row * m_cols + col; }
 
-    Vector<char> m_chars;
+    Vector<Info> m_screen_info;
     String m_status_message;
     time_t m_status_message_time { 0 };
     String m_prompt_buffer;

@@ -107,7 +107,7 @@ void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols
     m_cols = cols;
     m_row_offset = row_off;
     m_col_offset = col_off;
-    m_chars.resize(m_rows * m_cols);
+    m_screen_info.resize(m_rows * m_cols);
 
     if (auto* doc = document()) {
         doc->notify_panel_size_changed();
@@ -118,7 +118,8 @@ TerminalPanel::~TerminalPanel() {}
 
 void TerminalPanel::clear() {
     draw_cursor();
-    memset(m_chars.vector(), 0, m_chars.size());
+    m_screen_info.clear();
+    m_screen_info.resize(m_rows * m_cols);
 }
 
 void TerminalPanel::draw_cursor() {
@@ -154,8 +155,8 @@ void TerminalPanel::send_status_message(String message) {
     draw_status_message();
 }
 
-void TerminalPanel::set_text_at(int row, int col, char c) {
-    m_chars[index(row, col)] = c;
+void TerminalPanel::set_text_at(int row, int col, char c, CharacterMetadata metadata) {
+    m_screen_info[index(row, col)] = { c, metadata };
 }
 
 void TerminalPanel::set_cursor(int row, int col) {
@@ -178,7 +179,7 @@ void TerminalPanel::print_char(char c) {
 
 void TerminalPanel::flush_row(int row) {
     for (int c = 0; c < m_cols; c++) {
-        print_char(m_chars[index(row, c)]);
+        print_char(m_screen_info[index(row, c)].ch);
     }
 
     if (row != rows() - 1) {

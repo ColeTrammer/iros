@@ -81,13 +81,14 @@ void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
     int line_index = index_of_col_position(col_offset);
     while (line_index < length() && col_position < panel.cols()) {
         char c = char_at(line_index);
+        auto metadata = metadata_at(line_index);
         if (c == '\t') {
             int num_spaces = tab_width - ((col_position + col_offset) % tab_width);
             for (int i = 0; col_position < panel.cols() && i < num_spaces; i++) {
-                panel.set_text_at(row_in_panel, col_position++, ' ');
+                panel.set_text_at(row_in_panel, col_position++, ' ', metadata);
             }
         } else {
-            panel.set_text_at(row_in_panel, col_position++, c);
+            panel.set_text_at(row_in_panel, col_position++, c, metadata);
         }
 
         line_index++;

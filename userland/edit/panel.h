@@ -2,6 +2,8 @@
 
 #include <liim/pointers.h>
 
+#include "character_metadata.h"
+
 class Document;
 
 namespace LIIM {
@@ -20,7 +22,7 @@ public:
     virtual int cols() const = 0;
 
     virtual void clear() = 0;
-    virtual void set_text_at(int row, int col, char c) = 0;
+    virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) = 0;
     virtual void flush() = 0;
     virtual void enter() = 0;
     virtual void send_status_message(LIIM::String message) = 0;
