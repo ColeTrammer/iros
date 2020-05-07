@@ -127,6 +127,19 @@ public:
         new (&m_vector[m_size++]) T(LIIM::move(t));
     }
 
+    void add(const Vector<T>& other) {
+        for (auto& v : other) {
+            add(v);
+        }
+    }
+
+    void add(Vector<T>&& other) {
+        for (auto& v : other) {
+            add(move(v));
+        }
+        other.resize(0);
+    }
+
     void remove_last() {
         assert(m_size > 0);
         get(m_size - 1).~T();
