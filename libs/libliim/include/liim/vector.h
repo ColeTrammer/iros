@@ -61,7 +61,7 @@ public:
     Vector<T>& operator=(Vector<T>&& other) {
         if (this != &other) {
             Vector<T> temp(LIIM::move(other));
-            swap(other);
+            swap(temp);
         }
 
         return *this;
