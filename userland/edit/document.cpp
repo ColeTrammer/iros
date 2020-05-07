@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "command.h"
 #include "document.h"
 #include "key_press.h"
 #include "panel.h"
@@ -263,18 +264,50 @@ void Document::merge_lines(int l1i, int l2i) {
 }
 
 void Document::insert_char(char c) {
-    auto command = make_unique<InsertCommand>(*this, c);
-    command->execute();
+    push_command<InsertCommand>(c);
 }
 
 void Document::delete_char(DeleteCharMode mode) {
-    auto command = make_unique<DeleteCommand>(*this, mode);
-    command->execute();
+    push_command<DeleteCommand>(mode);
 }
 
 void Document::split_line_at_cursor() {
-    auto command = make_unique<SplitLineCommand>(*this);
-    command->execute();
+    push_command<SplitLineCommand>();
+}
+
+void Document::redo() {
+    if (m_command_stack_index == m_command_stack.size()) {
+        return;
+    }
+
+    auto& command = *m_command_stack[m_command_stack_index++];
+    command.execute();
+}
+
+void Document::undo() {
+    if (m_command_stack_index == 0) {
+        return;
+    }
+
+    auto& command = *m_command_stack[--m_command_stack_index];
+    command.undo();
+}
+
+Document::Snapshot Document::snapshot() const {
+    return { Vector<Line>(m_lines), m_row_offset,     m_col_offset,           m_panel.cursor_row(),
+             m_panel.cursor_col(),  m_max_cursor_col, m_document_was_modified };
+}
+
+void Document::restore(Snapshot s) {
+    m_lines = move(s.lines);
+    m_row_offset = s.row_offset;
+    m_col_offset = s.col_offset;
+    m_max_cursor_col = s.max_cursor_col;
+    m_document_was_modified = s.document_was_modified;
+
+    update_search_results();
+    m_panel.set_cursor(s.cursor_row, s.cursor_col);
+    set_needs_display();
 }
 
 void Document::notify_panel_size_changed() {
@@ -379,6 +412,10 @@ void Document::quit() {
 
 void Document::update_search_results() {
     m_search_result_count = 0;
+    if (m_search_text.is_empty()) {
+        return;
+    }
+
     for (auto& line : m_lines) {
         int num = line.search(m_search_text);
         m_search_result_count += num;
@@ -427,6 +464,12 @@ void Document::notify_key_pressed(KeyPress press) {
                 if (!single_line_mode()) {
                     save();
                 }
+                break;
+            case 'Y':
+                redo();
+                break;
+            case 'Z':
+                undo();
                 break;
             default:
                 break;

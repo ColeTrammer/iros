@@ -5,7 +5,15 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
-InsertCommand::InsertCommand(Document& document, char c) : Command(document), m_char(c) {}
+SnapshotBackedCommand::SnapshotBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot()) {}
+
+SnapshotBackedCommand::~SnapshotBackedCommand() {}
+
+void SnapshotBackedCommand::undo() {
+    document().restore(snapshot());
+}
+
+InsertCommand::InsertCommand(Document& document, char c) : SnapshotBackedCommand(document), m_char(c) {}
 
 InsertCommand::~InsertCommand() {}
 
@@ -28,7 +36,7 @@ void InsertCommand::execute() {
     document().set_was_modified(true);
 }
 
-DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : Command(document), m_mode(mode) {}
+DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : SnapshotBackedCommand(document), m_mode(mode) {}
 
 DeleteCommand::~DeleteCommand() {}
 
@@ -97,7 +105,7 @@ void DeleteCommand::execute() {
     }
 }
 
-SplitLineCommand::SplitLineCommand(Document& document) : Command(document) {}
+SplitLineCommand::SplitLineCommand(Document& document) : SnapshotBackedCommand(document) {}
 
 SplitLineCommand::~SplitLineCommand() {}
 
