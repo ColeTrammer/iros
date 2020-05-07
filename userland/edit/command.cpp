@@ -9,12 +9,22 @@ DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), 
 
 DeltaBackedCommand::~DeltaBackedCommand() {}
 
+void DeltaBackedCommand::redo() {
+    document().restore_state(state_snapshot());
+    execute();
+}
+
 SnapshotBackedCommand::SnapshotBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot()) {}
 
 SnapshotBackedCommand::~SnapshotBackedCommand() {}
 
 void SnapshotBackedCommand::undo() {
     document().restore(snapshot());
+}
+
+void SnapshotBackedCommand::redo() {
+    document().restore_state(snapshot().state);
+    execute();
 }
 
 InsertCommand::InsertCommand(Document& document, char c) : DeltaBackedCommand(document), m_char(c) {}

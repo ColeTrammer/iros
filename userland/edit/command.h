@@ -12,6 +12,7 @@ public:
 
     virtual void execute() = 0;
     virtual void undo() = 0;
+    virtual void redo() = 0;
 
 private:
     Document& m_document;
@@ -22,7 +23,7 @@ public:
     DeltaBackedCommand(Document& document);
     virtual ~DeltaBackedCommand() override;
 
-    virtual void undo() = 0;
+    virtual void redo() override;
 
     const Document::StateSnapshot& state_snapshot() const { return m_snapshot; }
 
@@ -36,6 +37,7 @@ public:
     virtual ~SnapshotBackedCommand() override;
 
     virtual void undo() override;
+    virtual void redo() override;
 
     const Document::Snapshot& snapshot() const { return m_snapshot; }
 

@@ -281,7 +281,7 @@ void Document::redo() {
     }
 
     auto& command = *m_command_stack[m_command_stack_index++];
-    command.execute();
+    command.redo();
 }
 
 void Document::undo() {
