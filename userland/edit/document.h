@@ -66,8 +66,6 @@ private:
 
     void merge_lines(int l1, int l2);
 
-    void render_line(int line, int row_in_panel) const;
-
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int line_index_at_cursor() const;

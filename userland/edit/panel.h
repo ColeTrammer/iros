@@ -39,7 +39,7 @@ public:
     const Document* document() const { return m_document.get(); }
 
 protected:
-    Panel() {}
+    Panel();
 
 private:
     UniquePtr<Document> m_document;

@@ -1,6 +1,8 @@
 #include "panel.h"
 #include "document.h"
 
+Panel::Panel() {}
+
 Panel::~Panel() {}
 
 void Panel::set_document(UniquePtr<Document> document) {

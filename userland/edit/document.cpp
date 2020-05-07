@@ -74,30 +74,10 @@ String Document::content_string() const {
     return ret;
 }
 
-void Document::render_line(int line_number, int row_in_panel) const {
-    auto& line = m_lines[line_number];
-
-    int col_position = 0;
-    int line_index = line.index_of_col_position(m_col_offset);
-    while (line_index < line.length() && col_position < m_panel.cols()) {
-        char c = line.contents()[line_index];
-        if (c == '\t') {
-            int num_spaces = tab_width - ((col_position + m_col_offset) % tab_width);
-            for (int i = 0; col_position < m_panel.cols() && i < num_spaces; i++) {
-                m_panel.set_text_at(row_in_panel, col_position++, ' ');
-            }
-        } else {
-            m_panel.set_text_at(row_in_panel, col_position++, c);
-        }
-
-        line_index++;
-    }
-}
-
 void Document::display() const {
     m_panel.clear();
     for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
-        render_line(line_num, line_num - m_row_offset);
+        m_lines[line_num].render(const_cast<Document&>(*this).panel(), m_col_offset, line_num - m_row_offset);
     }
     m_panel.flush();
     m_needs_display = false;
