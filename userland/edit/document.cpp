@@ -463,14 +463,21 @@ void Document::quit() {
 }
 
 void Document::update_search_results() {
+    m_search_result_count = 0;
     for (auto& line : m_lines) {
-        if (line.search(m_search_text) > 0) {
+        int num = line.search(m_search_text);
+        m_search_result_count += num;
+        if (num > 0) {
             set_needs_display();
         }
     }
 }
 
 void Document::clear_search_results() {
+    if (m_search_result_count == 0) {
+        return;
+    }
+
     for (auto& line : m_lines) {
         line.clear_search();
     }
@@ -488,6 +495,7 @@ void Document::set_search_text(String text) {
 
 void Document::enter_interactive_search() {
     m_panel.enter_search(m_search_text);
+    m_panel.send_status_message(String::format("Found %d result(s)", m_search_result_count));
 }
 
 void Document::notify_key_pressed(KeyPress press) {

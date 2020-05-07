@@ -80,6 +80,7 @@ private:
     Vector<Line> m_lines;
     String m_name;
     String m_search_text;
+    int m_search_result_count { 0 };
     Panel& m_panel;
     LineMode m_line_mode { LineMode::Multiple };
     int m_row_offset { 0 };
