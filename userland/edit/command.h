@@ -10,7 +10,7 @@ public:
     Document& document() { return m_document; }
     const Document& document() const { return m_document; }
 
-    virtual void execute() = 0;
+    virtual bool execute() = 0;
     virtual void undo() = 0;
     virtual void redo() = 0;
 
@@ -50,7 +50,7 @@ public:
     InsertCommand(Document& document, char c);
     virtual ~InsertCommand();
 
-    virtual void execute() override;
+    virtual bool execute() override;
     virtual void undo() override;
 
 private:
@@ -62,7 +62,7 @@ public:
     DeleteCommand(Document& document, DeleteCharMode mode);
     virtual ~DeleteCommand();
 
-    virtual void execute() override;
+    virtual bool execute() override;
 
 private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
@@ -73,5 +73,5 @@ public:
     SplitLineCommand(Document& document);
     virtual ~SplitLineCommand();
 
-    virtual void execute() override;
+    virtual bool execute() override;
 };

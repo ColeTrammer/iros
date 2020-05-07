@@ -122,9 +122,12 @@ private:
         }
 
         auto command = make_unique<C>(*this, forward<Args>(args)...);
-        command->execute();
-        m_command_stack.add(move(command));
-        m_command_stack_index++;
+        bool did_modify = command->execute();
+        if (did_modify) {
+            m_command_stack.add(move(command));
+            m_command_stack_index++;
+            m_document_was_modified = true;
+        }
     }
 
     Vector<Line> m_lines;
