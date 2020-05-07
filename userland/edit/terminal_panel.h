@@ -46,7 +46,9 @@ private:
     void draw_cursor();
     void draw_status_message();
 
-    void print_char(char c);
+    const String& string_for_metadata(CharacterMetadata metadata) const;
+
+    void print_char(char c, CharacterMetadata metadata);
     void flush_row(int line);
 
     String enter_prompt(const String& message);
@@ -57,6 +59,7 @@ private:
     String m_status_message;
     time_t m_status_message_time { 0 };
     String m_prompt_buffer;
+    CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };
     int m_cursor_row { 0 };

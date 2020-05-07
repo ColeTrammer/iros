@@ -3,12 +3,15 @@
 class CharacterMetadata {
 public:
     enum Flags {
-        Highlighted,
-        Selected,
+        Highlighted = 1,
+        Selected = 2,
     };
 
     CharacterMetadata() {}
     CharacterMetadata(int flags) : m_flags(flags) {}
+
+    bool operator==(const CharacterMetadata& other) const { return this->m_flags == other.m_flags; }
+    bool operator!=(const CharacterMetadata& other) const { return !(*this == other); }
 
     bool highlighted() const { return m_flags & Flags::Highlighted; }
     void set_highlighted(bool b) {

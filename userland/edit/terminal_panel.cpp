@@ -122,6 +122,22 @@ void TerminalPanel::clear() {
     m_screen_info.resize(m_rows * m_cols);
 }
 
+const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {
+    static String default_string("\033[0m");
+    static String highlight_string("\033[30;103m");
+    static String selected_string("\033[107;30m");
+
+    if (metadata.highlighted()) {
+        return highlight_string;
+    }
+
+    if (metadata.selected()) {
+        return selected_string;
+    }
+
+    return default_string;
+}
+
 void TerminalPanel::draw_cursor() {
     printf("\033[%d;%dH", m_row_offset + m_cursor_row + 1, m_col_offset + m_cursor_col + 1);
     fflush(stdout);
@@ -169,9 +185,14 @@ void TerminalPanel::set_cursor(int row, int col) {
     draw_cursor();
 }
 
-void TerminalPanel::print_char(char c) {
+void TerminalPanel::print_char(char c, CharacterMetadata metadata) {
     if (c == '\0') {
         c = ' ';
+    }
+
+    if (metadata != m_last_metadata_rendered) {
+        m_last_metadata_rendered = metadata;
+        fputs(string_for_metadata(metadata).string(), stdout);
     }
 
     fputc(c, stdout);
@@ -179,7 +200,8 @@ void TerminalPanel::print_char(char c) {
 
 void TerminalPanel::flush_row(int row) {
     for (int c = 0; c < m_cols; c++) {
-        print_char(m_screen_info[index(row, c)].ch);
+        auto& info = m_screen_info[index(row, c)];
+        print_char(info.ch, info.metadata);
     }
 
     if (row != rows() - 1) {
@@ -194,6 +216,11 @@ void TerminalPanel::flush() {
         printf("\033[%d;%dH\033[0K", m_row_offset + r + 1, m_col_offset + 1);
         flush_row(r);
     }
+
+    // Reset modifiers after every render, so that status bar, etc. are unaffected.
+    m_last_metadata_rendered = CharacterMetadata();
+    fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
+
     fputs("\033[?25h", stdout);
     draw_status_message();
     draw_cursor();
