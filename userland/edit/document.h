@@ -120,6 +120,10 @@ private:
     void redo();
     void undo();
 
+    void copy();
+    void paste();
+    void cut();
+
     void render_selection();
 
     template<typename C, typename... Args>

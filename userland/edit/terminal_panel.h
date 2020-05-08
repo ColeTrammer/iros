@@ -22,6 +22,9 @@ public:
     virtual String prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
 
+    virtual void set_clipboard_contents(String text) override { m_clipboard_contents = text; }
+    virtual String clipboard_contents() const override { return m_clipboard_contents; }
+
     virtual void set_cursor(int row, int col) override;
 
     virtual int cursor_col() const { return m_cursor_col; }
@@ -60,6 +63,7 @@ private:
     String m_status_message;
     time_t m_status_message_time { 0 };
     String m_prompt_buffer;
+    String m_clipboard_contents;
     CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };

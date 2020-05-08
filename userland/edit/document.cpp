@@ -569,6 +569,46 @@ void Document::clear_selection() {
     }
 }
 
+void Document::copy() {
+    if (m_selection.empty()) {
+        String contents = line_at_cursor().contents();
+        contents += "\n";
+        m_panel.set_clipboard_contents(move(contents));
+        return;
+    }
+
+    m_panel.set_clipboard_contents(selection_text());
+}
+
+void Document::cut() {
+    if (m_selection.empty()) {
+        auto& line = line_at_cursor();
+        String contents = line.contents();
+        contents += "\n";
+        m_panel.set_clipboard_contents(move(contents));
+        m_lines.remove(cursor_row_position());
+        if (m_lines.empty()) {
+            m_lines.add(Line(""));
+        }
+
+        set_needs_display();
+        m_document_was_modified = true;
+        return;
+    }
+
+    m_panel.set_clipboard_contents(selection_text());
+    delete_selection();
+}
+
+void Document::paste() {
+    auto text_to_insert = m_panel.clipboard_contents();
+    if (text_to_insert.is_empty()) {
+        return;
+    }
+
+    insert_text_at_cursor(text_to_insert);
+}
+
 void Document::notify_panel_size_changed() {
     while (m_panel.cursor_row() >= m_panel.rows()) {
         move_cursor_up();
@@ -712,6 +752,9 @@ void Document::enter_interactive_search() {
 void Document::notify_key_pressed(KeyPress press) {
     if (press.modifiers & KeyPress::Modifier::Control) {
         switch (press.key) {
+            case 'C':
+                copy();
+                break;
             case 'F':
                 enter_interactive_search();
                 break;
@@ -723,6 +766,12 @@ void Document::notify_key_pressed(KeyPress press) {
                 if (!single_line_mode()) {
                     save();
                 }
+                break;
+            case 'V':
+                paste();
+                break;
+            case 'X':
+                cut();
                 break;
             case 'Y':
                 redo();
