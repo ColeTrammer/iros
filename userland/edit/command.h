@@ -53,6 +53,9 @@ public:
     virtual bool execute() override;
     virtual void undo() override;
 
+    bool split_line_execute();
+    void split_line_undo();
+
 private:
     char m_char { 0 };
 };
@@ -66,13 +69,4 @@ public:
 
 private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
-};
-
-class SplitLineCommand final : public DeltaBackedCommand {
-public:
-    SplitLineCommand(Document& document);
-    virtual ~SplitLineCommand();
-
-    virtual bool execute() override;
-    virtual void undo() override;
 };

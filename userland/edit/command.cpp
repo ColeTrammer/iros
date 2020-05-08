@@ -32,12 +32,15 @@ InsertCommand::InsertCommand(Document& document, char c) : DeltaBackedCommand(do
 InsertCommand::~InsertCommand() {}
 
 bool InsertCommand::execute() {
-    auto& line = document().line_at_cursor();
-
     if (!document().selection().empty()) {
         document().delete_selection();
     }
 
+    if (m_char == '\n') {
+        return split_line_execute();
+    }
+
+    auto& line = document().line_at_cursor();
     int col_position = document().cursor_col_position();
     int line_index = line.index_of_col_position(col_position);
     if (m_char == '\t' && document().convert_tabs_to_spaces()) {
@@ -57,6 +60,11 @@ bool InsertCommand::execute() {
 void InsertCommand::undo() {
     document().restore_state(state_snapshot());
 
+    if (m_char == '\n') {
+        split_line_undo();
+        return;
+    }
+
     auto& line = document().line_at_cursor();
     int col_position = document().cursor_col_position();
     int line_index = line.index_of_col_position(col_position);
@@ -72,6 +80,26 @@ void InsertCommand::undo() {
     }
 
     document().set_needs_display();
+}
+
+bool InsertCommand::split_line_execute() {
+    auto& line = document().line_at_cursor();
+
+    int row_index = document().cursor_row_position();
+    auto result = line.split_at(line.index_of_col_position(document().cursor_col_position()));
+
+    line = move(result.first);
+    document().insert_line(move(result.second), row_index + 1);
+
+    document().move_cursor_down();
+    document().move_cursor_to_line_start();
+    document().set_needs_display();
+    return true;
+}
+
+void InsertCommand::split_line_undo() {
+    int row_index = document().cursor_row_position();
+    document().merge_lines(row_index, row_index + 1);
 }
 
 DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : SnapshotBackedCommand(document), m_mode(mode) {}
@@ -144,30 +172,4 @@ bool DeleteCommand::execute() {
     }
 
     return false;
-}
-
-SplitLineCommand::SplitLineCommand(Document& document) : DeltaBackedCommand(document) {}
-
-SplitLineCommand::~SplitLineCommand() {}
-
-bool SplitLineCommand::execute() {
-    auto& line = document().line_at_cursor();
-
-    int row_index = document().cursor_row_position();
-    auto result = line.split_at(line.index_of_col_position(document().cursor_col_position()));
-
-    line = move(result.first);
-    document().insert_line(move(result.second), row_index + 1);
-
-    document().move_cursor_down();
-    document().move_cursor_to_line_start();
-    document().set_needs_display();
-    return true;
-}
-
-void SplitLineCommand::undo() {
-    int row_index = document().cursor_row_position();
-    document().move_cursor_up();
-    document().move_cursor_to_line_end();
-    document().merge_lines(row_index - 1, row_index);
 }

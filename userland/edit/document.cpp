@@ -351,7 +351,7 @@ void Document::delete_char(DeleteCharMode mode) {
 }
 
 void Document::split_line_at_cursor() {
-    push_command<SplitLineCommand>();
+    push_command<InsertCommand>('\n');
 }
 
 void Document::redo() {
