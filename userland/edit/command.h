@@ -50,19 +50,19 @@ private:
 
 class InsertCommand final : public DeltaBackedCommand {
 public:
-    InsertCommand(Document& document, char c);
+    InsertCommand(Document& document, String string);
     virtual ~InsertCommand();
 
     virtual bool execute() override;
     virtual void undo() override;
 
-    bool split_line_execute();
+    void split_line_execute();
     void split_line_undo();
 
-    void set_char(char c) { m_char = c; }
+    void do_insert(char c);
 
 private:
-    char m_char { 0 };
+    String m_text;
 };
 
 class DeleteCommand final : public SnapshotBackedCommand {

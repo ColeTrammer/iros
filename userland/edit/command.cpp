@@ -29,7 +29,7 @@ void SnapshotBackedCommand::redo() {
     execute();
 }
 
-InsertCommand::InsertCommand(Document& document, char c) : DeltaBackedCommand(document), m_char(c) {}
+InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
 
 InsertCommand::~InsertCommand() {}
 
@@ -38,61 +38,75 @@ bool InsertCommand::execute() {
         document().delete_selection();
     }
 
-    if (m_char == '\n') {
-        return split_line_execute();
+    for (int i = 0; i < m_text.size(); i++) {
+        do_insert(m_text[i]);
+    }
+
+    document().set_needs_display();
+    return true;
+}
+
+void InsertCommand::do_insert(char c) {
+    if (c == '\n') {
+        split_line_execute();
+        return;
     }
 
     auto& line = document().line_at_cursor();
     int col_position = document().cursor_col_position();
     int line_index = line.index_of_col_position(col_position);
-    if (m_char == '\t' && document().convert_tabs_to_spaces()) {
+    if (c == '\t' && document().convert_tabs_to_spaces()) {
         int num_spaces = tab_width - (col_position % tab_width);
         for (int i = 0; i < num_spaces; i++) {
             line.insert_char_at(line_index, ' ');
             document().move_cursor_right();
         }
     } else {
-        line.insert_char_at(line_index, m_char);
+        line.insert_char_at(line_index, c);
         document().move_cursor_right();
     }
-    document().set_needs_display();
-    return true;
 }
 
 void InsertCommand::undo() {
+    document().clear_selection();
     if (!state_snapshot().selection.empty()) {
         document().move_cursor_to(state_snapshot().selection.upper_line(), state_snapshot().selection.upper_index());
     } else {
         document().restore_state(state_snapshot());
     }
 
-    if (m_char == '\n') {
-        split_line_undo();
-    } else {
-        auto& line = document().line_at_cursor();
-        int col_position = document().cursor_col_position();
-        int line_index = line.index_of_col_position(col_position);
+    for (int i = 0; i < m_text.size(); i++) {
+        char c = m_text[i];
+        if (c == '\n') {
+            split_line_undo();
+        } else {
+            auto& line = document().line_at_cursor();
+            int col_position = document().cursor_col_position();
+            int line_index = line.index_of_col_position(col_position);
 
-        // FIXME: what if convert_tabs_to_spaces() changes value
-        if (m_char == '\t' && document().convert_tabs_to_spaces()) {
-            int num_spaces = tab_width - (col_position % tab_width);
-            for (int i = 0; i < num_spaces; i++) {
+            // FIXME: what if convert_tabs_to_spaces() changes value
+            if (c == '\t' && document().convert_tabs_to_spaces()) {
+                int num_spaces = tab_width - (col_position % tab_width);
+                for (int i = 0; i < num_spaces; i++) {
+                    line.remove_char_at(line_index);
+                }
+            } else {
                 line.remove_char_at(line_index);
             }
-        } else {
-            line.remove_char_at(line_index);
-        }
 
-        document().set_needs_display();
+            document().set_needs_display();
+        }
     }
 
     if (!state_snapshot().selection.empty()) {
-        document().insert_text_at_cursor(selection_text());
+        for (int i = 0; i < selection_text().size(); i++) {
+            do_insert(selection_text()[i]);
+        }
         document().restore_state(state_snapshot());
     }
 }
 
-bool InsertCommand::split_line_execute() {
+void InsertCommand::split_line_execute() {
     auto& line = document().line_at_cursor();
 
     int row_index = document().cursor_row_position();
@@ -104,7 +118,6 @@ bool InsertCommand::split_line_execute() {
     document().move_cursor_down();
     document().move_cursor_to_line_start();
     document().set_needs_display();
-    return true;
 }
 
 void InsertCommand::split_line_undo() {

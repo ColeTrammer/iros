@@ -343,7 +343,7 @@ void Document::merge_lines(int l1i, int l2i) {
 }
 
 void Document::insert_char(char c) {
-    push_command<InsertCommand>(c);
+    push_command<InsertCommand>(String(c));
 }
 
 void Document::delete_char(DeleteCharMode mode) {
@@ -351,7 +351,7 @@ void Document::delete_char(DeleteCharMode mode) {
 }
 
 void Document::split_line_at_cursor() {
-    push_command<InsertCommand>('\n');
+    push_command<InsertCommand>("\n");
 }
 
 void Document::redo() {
@@ -401,7 +401,7 @@ void Document::restore_state(const StateSnapshot& s) {
     m_max_cursor_col = s.max_cursor_col;
     m_document_was_modified = s.document_was_modified;
 
-    m_selection.clear();
+    clear_selection();
     m_selection = s.selection;
     render_selection();
 
@@ -414,20 +414,7 @@ void Document::insert_text_at_cursor(const String& text) {
         return;
     }
 
-    auto select = m_selection;
-    m_selection.clear();
-
-    auto insert_command = make_unique<InsertCommand>(*this, text[0]);
-    insert_command->execute();
-
-    for (int i = 1; i < text.size(); i++) {
-        char to_insert = text[i];
-        insert_command->set_char(to_insert);
-        insert_command->execute();
-    }
-
-    m_document_was_modified = true;
-    m_selection = select;
+    push_command<InsertCommand>(text);
 }
 
 void Document::render_selection() {
