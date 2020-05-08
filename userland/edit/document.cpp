@@ -582,22 +582,13 @@ void Document::copy() {
 
 void Document::cut() {
     if (m_selection.empty()) {
-        auto& line = line_at_cursor();
-        String contents = line.contents();
-        contents += "\n";
-        m_panel.set_clipboard_contents(move(contents));
-        m_lines.remove(cursor_row_position());
-        if (m_lines.empty()) {
-            m_lines.add(Line(""));
-        }
-
-        set_needs_display();
-        m_document_was_modified = true;
-        return;
+        int row_index = cursor_row_position();
+        m_selection.begin(row_index, 0);
+        m_selection.set_end_line(row_index + 1);
     }
 
     m_panel.set_clipboard_contents(selection_text());
-    delete_selection();
+    push_command<DeleteCommand>(DeleteCharMode::Delete);
 }
 
 void Document::paste() {
