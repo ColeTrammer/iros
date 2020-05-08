@@ -102,7 +102,7 @@ void Line::toggle_select_before(int index) {
 
 void Line::select_all() {
     for (auto& m : m_metadata) {
-        m.set_selected(false);
+        m.set_selected(true);
     }
 }
 

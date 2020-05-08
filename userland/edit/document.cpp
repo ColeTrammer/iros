@@ -468,10 +468,10 @@ void Document::render_selection() {
 
 void Document::move_cursor_to(int line_index, int index_into_line) {
     while (cursor_row_position() < line_index) {
-        move_cursor_up();
+        move_cursor_down();
     }
     while (cursor_row_position() > line_index) {
-        move_cursor_down();
+        move_cursor_up();
     }
 
     while (line_index_at_cursor() < index_into_line) {
@@ -504,7 +504,7 @@ void Document::delete_selection() {
             ei = index_end;
         }
 
-        if (si == 0 && ei == line.length()) {
+        if (si == 0 && ei == line.length() && li != line_end) {
             remove_line(li);
             continue;
         }
