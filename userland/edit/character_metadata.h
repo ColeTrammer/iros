@@ -21,6 +21,7 @@ public:
             m_flags &= ~Flags::Highlighted;
         }
     }
+    void invert_highlighted() { m_flags ^= Flags::Highlighted; }
 
     bool selected() const { return m_flags & Flags::Selected; }
     void set_selected(bool b) {
@@ -30,6 +31,7 @@ public:
             m_flags &= ~Flags::Selected;
         }
     }
+    void invert_selected() { m_flags ^= Flags::Selected; }
 
 private:
     int m_flags { 0 };

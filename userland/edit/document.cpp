@@ -55,7 +55,7 @@ UniquePtr<Document> Document::create_single_line(Panel& panel) {
 }
 
 Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
-    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_line_mode(mode) {
+    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_line_mode(mode), m_selection(*this) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -101,7 +101,18 @@ int Document::cursor_row_position() const {
     return m_panel.cursor_row() + m_row_offset;
 }
 
-void Document::move_cursor_right() {
+void Document::update_selection_state_for_mode(MovementMode mode) {
+    if (mode == MovementMode::Move) {
+        clear_selection();
+        return;
+    }
+
+    if (m_selection.empty()) {
+        m_selection.begin(cursor_row_position(), line_index_at_cursor());
+    }
+}
+
+void Document::move_cursor_right(MovementMode mode) {
     auto& line = line_at_cursor();
     int index_into_line = line_index_at_cursor();
     if (index_into_line == line.length()) {
@@ -109,8 +120,8 @@ void Document::move_cursor_right() {
             return;
         }
 
-        move_cursor_down();
-        move_cursor_to_line_start();
+        move_cursor_down(mode);
+        move_cursor_to_line_start(mode);
         return;
     }
 
@@ -119,6 +130,13 @@ void Document::move_cursor_right() {
     int cols_to_advance = new_col_position - current_col_position;
 
     m_max_cursor_col = new_col_position;
+
+    update_selection_state_for_mode(mode);
+    if (mode == MovementMode::Select) {
+        m_selection.set_end_index(index_into_line + 1);
+        line.metadata_at(index_into_line).invert_selected();
+        set_needs_display();
+    }
 
     int cursor_col = m_panel.cursor_col();
     if (cursor_col + cols_to_advance >= m_panel.cols()) {
@@ -131,7 +149,7 @@ void Document::move_cursor_right() {
     m_panel.set_cursor_col(m_panel.cursor_col() + cols_to_advance);
 }
 
-void Document::move_cursor_left() {
+void Document::move_cursor_left(MovementMode mode) {
     auto& line = line_at_cursor();
     int index_into_line = line_index_at_cursor();
     if (index_into_line == 0) {
@@ -139,8 +157,8 @@ void Document::move_cursor_left() {
             return;
         }
 
-        move_cursor_up();
-        move_cursor_to_line_end();
+        move_cursor_up(mode);
+        move_cursor_to_line_end(mode);
         return;
     }
 
@@ -149,6 +167,13 @@ void Document::move_cursor_left() {
     int cols_to_recede = current_col_position - new_col_position;
 
     m_max_cursor_col = new_col_position;
+
+    update_selection_state_for_mode(mode);
+    if (mode == MovementMode::Select) {
+        m_selection.set_end_index(index_into_line - 1);
+        line.metadata_at(index_into_line - 1).invert_selected();
+        set_needs_display();
+    }
 
     int cursor_col = m_panel.cursor_col();
     if (cursor_col - cols_to_recede < 0) {
@@ -161,12 +186,16 @@ void Document::move_cursor_left() {
     m_panel.set_cursor_col(m_panel.cursor_col() - cols_to_recede);
 }
 
-void Document::move_cursor_down() {
+void Document::move_cursor_down(MovementMode mode) {
     int cursor_row = m_panel.cursor_row();
     if (cursor_row + m_row_offset == m_lines.size() - 1) {
-        move_cursor_to_line_end();
+        move_cursor_to_line_end(mode);
         return;
     }
+
+    auto& prev_line = line_at_cursor();
+    int prev_line_index = line_index_at_cursor();
+    update_selection_state_for_mode(mode);
 
     if (cursor_row == m_panel.rows() - 1) {
         m_row_offset++;
@@ -175,16 +204,27 @@ void Document::move_cursor_down() {
         m_panel.set_cursor_row(cursor_row + 1);
     }
 
-    clamp_cursor_to_line_end();
+    int new_line_index = clamp_cursor_to_line_end();
+    if (mode == MovementMode::Select) {
+        prev_line.toggle_select_after(prev_line_index);
+        auto& new_line = line_at_cursor();
+        new_line.toggle_select_before(new_line_index);
+        m_selection.set_end_line(cursor_row_position());
+        m_selection.set_end_index(new_line_index);
+        set_needs_display();
+    }
 }
 
-void Document::move_cursor_up() {
+void Document::move_cursor_up(MovementMode mode) {
     int cursor_row = m_panel.cursor_row();
     if (cursor_row == 0 && m_row_offset == 0) {
-        m_panel.set_cursor_col(0);
-        m_max_cursor_col = 0;
+        move_cursor_to_line_start(mode);
         return;
     }
+
+    auto& prev_line = line_at_cursor();
+    int prev_line_index = line_index_at_cursor();
+    update_selection_state_for_mode(mode);
 
     if (cursor_row == 0) {
         m_row_offset--;
@@ -193,20 +233,40 @@ void Document::move_cursor_up() {
         m_panel.set_cursor_row(cursor_row - 1);
     }
 
-    clamp_cursor_to_line_end();
+    int new_line_index = clamp_cursor_to_line_end();
+    if (mode == MovementMode::Select) {
+        prev_line.toggle_select_before(prev_line_index);
+        auto& new_line = line_at_cursor();
+        new_line.toggle_select_after(new_line_index);
+        m_selection.set_end_line(cursor_row_position());
+        m_selection.set_end_index(new_line_index);
+        set_needs_display();
+    }
 }
 
-void Document::clamp_cursor_to_line_end() {
+int Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
     int current_col = cursor_col_position();
     int max_col = line.col_position_of_index(line.length());
     if (current_col == max_col) {
-        return;
+        return line.length();
     }
 
     if (current_col > max_col) {
-        move_cursor_to_line_end(UpdateMaxCursorCol::No);
-        return;
+        if (max_col >= m_panel.cols()) {
+            m_col_offset = max_col - m_panel.cols() + 1;
+            m_panel.set_cursor_col(m_panel.cols() - 1);
+            set_needs_display();
+            return line.length();
+        }
+
+        m_panel.set_cursor_col(max_col);
+
+        if (m_col_offset != 0) {
+            m_col_offset = 0;
+            set_needs_display();
+        }
+        return line.length();
     }
 
     if (m_max_cursor_col > current_col) {
@@ -216,14 +276,26 @@ void Document::clamp_cursor_to_line_end() {
             m_col_offset = new_cursor_col - m_panel.cols() + 1;
             m_panel.set_cursor_col(m_panel.cols() - 1);
             set_needs_display();
-            return;
+            return new_line_index;
         }
 
         m_panel.set_cursor_col(new_cursor_col);
+        return new_line_index;
     }
+
+    return line_index_at_cursor();
 }
 
-void Document::move_cursor_to_line_start() {
+void Document::move_cursor_to_line_start(MovementMode mode) {
+    update_selection_state_for_mode(mode);
+    if (mode == MovementMode::Select) {
+        auto& line = line_at_cursor();
+        int line_index = line_index_at_cursor();
+        line.toggle_select_before(line_index);
+        m_selection.set_end_index(0);
+        set_needs_display();
+    }
+
     m_panel.set_cursor_col(0);
     if (m_col_offset != 0) {
         m_col_offset = 0;
@@ -232,12 +304,18 @@ void Document::move_cursor_to_line_start() {
     m_max_cursor_col = 0;
 }
 
-void Document::move_cursor_to_line_end(UpdateMaxCursorCol should_update_max_cursor_col) {
+void Document::move_cursor_to_line_end(MovementMode mode) {
     auto& line = line_at_cursor();
     int new_col_position = line.col_position_of_index(line.length());
 
-    if (should_update_max_cursor_col == UpdateMaxCursorCol::Yes) {
-        m_max_cursor_col = new_col_position;
+    m_max_cursor_col = new_col_position;
+
+    update_selection_state_for_mode(mode);
+    if (mode == MovementMode::Select) {
+        int line_index = line_index_at_cursor();
+        line.toggle_select_after(line_index);
+        m_selection.set_end_index(line.length());
+        set_needs_display();
     }
 
     if (new_col_position >= m_panel.cols()) {
@@ -321,6 +399,16 @@ void Document::restore_state(const StateSnapshot& s) {
 
     m_panel.set_cursor(s.cursor_row, s.cursor_col);
     set_needs_display();
+}
+
+void Document::clear_selection() {
+    if (!m_selection.empty()) {
+        m_selection.clear();
+        for (auto& line : m_lines) {
+            line.clear_selection();
+        }
+        set_needs_display();
+    }
 }
 
 void Document::notify_panel_size_changed() {
@@ -496,22 +584,22 @@ void Document::notify_key_pressed(KeyPress press) {
 
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
-            move_cursor_left();
+            move_cursor_left(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
             break;
         case KeyPress::Key::RightArrow:
-            move_cursor_right();
+            move_cursor_right(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
             break;
         case KeyPress::Key::DownArrow:
-            move_cursor_down();
+            move_cursor_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
             break;
         case KeyPress::Key::UpArrow:
-            move_cursor_up();
+            move_cursor_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
             break;
         case KeyPress::Key::Home:
-            move_cursor_to_line_start();
+            move_cursor_to_line_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
             break;
         case KeyPress::Key::End:
-            move_cursor_to_line_end();
+            move_cursor_to_line_end(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
             break;
         case KeyPress::Key::Backspace:
             delete_char(DeleteCharMode::Backspace);

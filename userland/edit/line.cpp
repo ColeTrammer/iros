@@ -82,6 +82,24 @@ void Line::clear_search() {
     }
 }
 
+void Line::clear_selection() {
+    for (auto& m : m_metadata) {
+        m.set_selected(false);
+    }
+}
+
+void Line::toggle_select_after(int index) {
+    for (int i = index; i < length(); i++) {
+        metadata_at(i).invert_selected();
+    }
+}
+
+void Line::toggle_select_before(int index) {
+    for (int i = 0; i < index; i++) {
+        metadata_at(i).invert_selected();
+    }
+}
+
 int Line::search(const String& text) {
     char* s = m_contents.string();
     int matches = 0;

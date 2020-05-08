@@ -39,6 +39,10 @@ public:
     int search(const String& text);
     void clear_search();
 
+    void clear_selection();
+    void toggle_select_after(int index);
+    void toggle_select_before(int index);
+
     void render(Panel& panel, int col_offset, int row_in_panel) const;
 
 private:

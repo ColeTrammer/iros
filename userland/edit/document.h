@@ -4,12 +4,15 @@
 #include <liim/vector.h>
 
 #include "line.h"
+#include "selection.h"
 
 class Command;
 struct KeyPress;
 class Panel;
 
 enum class UpdateMaxCursorCol { No, Yes };
+
+enum class MovementMode { Move, Select };
 
 enum class DeleteCharMode { Backspace, Delete };
 
@@ -69,12 +72,12 @@ public:
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);
 
-    void move_cursor_left();
-    void move_cursor_right();
-    void move_cursor_down();
-    void move_cursor_up();
-    void move_cursor_to_line_start();
-    void move_cursor_to_line_end(UpdateMaxCursorCol update = UpdateMaxCursorCol::Yes);
+    void move_cursor_left(MovementMode mode = MovementMode::Move);
+    void move_cursor_right(MovementMode mode = MovementMode::Move);
+    void move_cursor_down(MovementMode mode = MovementMode::Move);
+    void move_cursor_up(MovementMode mode = MovementMode::Move);
+    void move_cursor_to_line_start(MovementMode mode = MovementMode::Move);
+    void move_cursor_to_line_end(MovementMode mode = MovementMode::Move);
 
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
@@ -93,8 +96,11 @@ public:
     StateSnapshot snapshot_state() const;
     void restore_state(const StateSnapshot& state_snapshot);
 
+    void clear_selection();
+
 private:
-    void clamp_cursor_to_line_end();
+    int clamp_cursor_to_line_end();
+    void update_selection_state_for_mode(MovementMode mode);
 
     void update_search_results();
     void clear_search_results();
@@ -145,6 +151,7 @@ private:
     int m_col_offset { 0 };
     int m_max_cursor_col { 0 };
     bool m_document_was_modified { false };
+    Selection m_selection;
 
     int m_max_undo_stack { 30 };
     bool m_convert_tabs_to_spaces { true };
