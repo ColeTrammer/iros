@@ -369,7 +369,7 @@ Maybe<KeyPress> TerminalPanel::read_key() {
                     }
 
                     size_t i = 2;
-                    while (i < sizeof(escape_buffer) && escape_buffer[i] != '~') {
+                    while (i < sizeof(escape_buffer) && (escape_buffer[i] != '~' && !isalpha(escape_buffer[i]))) {
                         ret = read(STDIN_FILENO, escape_buffer + ++i, 1);
                         assert(ret >= 0);
                         if (ret == 0) {
@@ -377,7 +377,7 @@ Maybe<KeyPress> TerminalPanel::read_key() {
                         }
                     }
 
-                    if (escape_buffer[i] != '~') {
+                    if (escape_buffer[i] != '~' && !isalpha(escape_buffer[i])) {
                         return {};
                     }
 
@@ -388,7 +388,12 @@ Maybe<KeyPress> TerminalPanel::read_key() {
                             return {};
                         }
 
-                        return vt_sequence_to_key(num, modifiers_from_digit(modifiers));
+                        if (isalpha(escape_buffer[i]) && num == 1) {
+                            return xterm_sequence_to_key(escape_buffer[i], modifiers_from_digit(modifiers));
+                        } else if (escape_buffer[i] == '~') {
+                            return vt_sequence_to_key(num, modifiers_from_digit(modifiers));
+                        }
+                        return {};
                     }
 
                     int num;
