@@ -5,7 +5,9 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
-DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot_state()) {}
+DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot_state()) {
+    m_selection_text = document.selection_text();
+}
 
 DeltaBackedCommand::~DeltaBackedCommand() {}
 
@@ -58,28 +60,36 @@ bool InsertCommand::execute() {
 }
 
 void InsertCommand::undo() {
-    document().restore_state(state_snapshot());
+    if (!state_snapshot().selection.empty()) {
+        document().move_cursor_to(state_snapshot().selection.upper_line(), state_snapshot().selection.upper_index());
+    } else {
+        document().restore_state(state_snapshot());
+    }
 
     if (m_char == '\n') {
         split_line_undo();
-        return;
-    }
+    } else {
+        auto& line = document().line_at_cursor();
+        int col_position = document().cursor_col_position();
+        int line_index = line.index_of_col_position(col_position);
 
-    auto& line = document().line_at_cursor();
-    int col_position = document().cursor_col_position();
-    int line_index = line.index_of_col_position(col_position);
-
-    // FIXME: what if convert_tabs_to_spaces() changes value
-    if (m_char == '\t' && document().convert_tabs_to_spaces()) {
-        int num_spaces = tab_width - (col_position % tab_width);
-        for (int i = 0; i < num_spaces; i++) {
+        // FIXME: what if convert_tabs_to_spaces() changes value
+        if (m_char == '\t' && document().convert_tabs_to_spaces()) {
+            int num_spaces = tab_width - (col_position % tab_width);
+            for (int i = 0; i < num_spaces; i++) {
+                line.remove_char_at(line_index);
+            }
+        } else {
             line.remove_char_at(line_index);
         }
-    } else {
-        line.remove_char_at(line_index);
+
+        document().set_needs_display();
     }
 
-    document().set_needs_display();
+    if (!state_snapshot().selection.empty()) {
+        document().insert_text_at_cursor(selection_text());
+        document().restore_state(state_snapshot());
+    }
 }
 
 bool InsertCommand::split_line_execute() {

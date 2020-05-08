@@ -100,9 +100,10 @@ public:
     const Selection& selection() const { return m_selection; }
     void delete_selection();
     void clear_selection();
+    String selection_text() const;
 
     void move_cursor_to(int line_index, int index_into_line);
-    void render_selection();
+    void insert_text_at_cursor(const String& string);
 
 private:
     int clamp_cursor_to_line_end();
@@ -118,6 +119,8 @@ private:
 
     void redo();
     void undo();
+
+    void render_selection();
 
     template<typename C, typename... Args>
     void push_command(Args... args) {

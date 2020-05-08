@@ -403,9 +403,31 @@ void Document::restore_state(const StateSnapshot& s) {
 
     m_selection.clear();
     m_selection = s.selection;
+    render_selection();
 
     m_panel.set_cursor(s.cursor_row, s.cursor_col);
     set_needs_display();
+}
+
+void Document::insert_text_at_cursor(const String& text) {
+    if (text.is_empty()) {
+        return;
+    }
+
+    auto select = m_selection;
+    m_selection.clear();
+
+    auto insert_command = make_unique<InsertCommand>(*this, text[0]);
+    insert_command->execute();
+
+    for (int i = 1; i < text.size(); i++) {
+        char to_insert = text[i];
+        insert_command->set_char(to_insert);
+        insert_command->execute();
+    }
+
+    m_document_was_modified = true;
+    m_selection = select;
 }
 
 void Document::render_selection() {
@@ -461,10 +483,6 @@ void Document::move_cursor_to(int line_index, int index_into_line) {
 }
 
 void Document::delete_selection() {
-    if (m_selection.empty()) {
-        return;
-    }
-
     int line_start = m_selection.upper_line();
     int index_start = m_selection.upper_index();
     int line_end = m_selection.lower_line();
@@ -498,6 +516,47 @@ void Document::delete_selection() {
 
     set_needs_display();
     m_document_was_modified = true;
+}
+
+String Document::selection_text() const {
+    if (m_selection.empty()) {
+        return "";
+    }
+
+    int line_start = m_selection.upper_line();
+    int index_start = m_selection.upper_index();
+    int line_end = m_selection.lower_line();
+    int index_end = m_selection.lower_index();
+
+    String result;
+    for (int li = line_start; li <= line_end; li++) {
+        auto& line = m_lines[li];
+
+        if (li != line_start) {
+            result += "\n";
+        }
+
+        int si = 0;
+        if (li == line_start) {
+            si = index_start;
+        }
+
+        int ei = line.length();
+        if (li == line_end) {
+            ei = index_end;
+        }
+
+        if (si == 0 && ei == line.length()) {
+            result += line.contents();
+            continue;
+        }
+
+        for (int i = si; i < ei; i++) {
+            result += String(line.char_at(i));
+        }
+    }
+
+    return result;
 }
 
 void Document::clear_selection() {

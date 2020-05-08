@@ -27,8 +27,11 @@ public:
 
     const Document::StateSnapshot& state_snapshot() const { return m_snapshot; }
 
+    const String& selection_text() const { return m_selection_text; }
+
 private:
     Document::StateSnapshot m_snapshot;
+    String m_selection_text;
 };
 
 class SnapshotBackedCommand : public Command {
@@ -55,6 +58,8 @@ public:
 
     bool split_line_execute();
     void split_line_undo();
+
+    void set_char(char c) { m_char = c; }
 
 private:
     char m_char { 0 };
