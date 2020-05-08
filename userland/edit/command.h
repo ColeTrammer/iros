@@ -56,22 +56,24 @@ public:
     virtual bool execute() override;
     virtual void undo() override;
 
-    void split_line_execute();
-    void split_line_undo();
-
-    void do_insert(char c);
+    static void do_insert(Document& document, char c);
+    static void do_insert(Document& document, const String& string);
 
 private:
     String m_text;
 };
 
-class DeleteCommand final : public SnapshotBackedCommand {
+class DeleteCommand final : public DeltaBackedCommand {
 public:
     DeleteCommand(Document& document, DeleteCharMode mode);
     virtual ~DeleteCommand();
 
     virtual bool execute() override;
+    virtual void undo() override;
 
 private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
+    char m_deleted_char { 0 };
+    int m_end_line { 0 };
+    int m_end_index { 0 };
 };
