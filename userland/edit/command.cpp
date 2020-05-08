@@ -34,6 +34,10 @@ InsertCommand::~InsertCommand() {}
 bool InsertCommand::execute() {
     auto& line = document().line_at_cursor();
 
+    if (!document().selection().empty()) {
+        document().delete_selection();
+    }
+
     int col_position = document().cursor_col_position();
     int line_index = line.index_of_col_position(col_position);
     if (m_char == '\t' && document().convert_tabs_to_spaces()) {

@@ -31,6 +31,7 @@ public:
         int cursor_col { 0 };
         int max_cursor_col { 0 };
         bool document_was_modified { false };
+        Selection selection;
     };
 
     struct Snapshot {
@@ -101,6 +102,7 @@ public:
     void clear_selection();
 
     void move_cursor_to(int line_index, int index_into_line);
+    void render_selection();
 
 private:
     int clamp_cursor_to_line_end();

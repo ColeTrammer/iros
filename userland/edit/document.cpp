@@ -55,7 +55,7 @@ UniquePtr<Document> Document::create_single_line(Panel& panel) {
 }
 
 Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
-    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_line_mode(mode), m_selection(*this) {
+    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_line_mode(mode) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -372,7 +372,9 @@ void Document::undo() {
 }
 
 Document::StateSnapshot Document::snapshot_state() const {
-    return { m_row_offset, m_col_offset, m_panel.cursor_row(), m_panel.cursor_col(), m_max_cursor_col, m_document_was_modified };
+    return {
+        m_row_offset, m_col_offset, m_panel.cursor_row(), m_panel.cursor_col(), m_max_cursor_col, m_document_was_modified, m_selection
+    };
 }
 
 Document::Snapshot Document::snapshot() const {
@@ -385,6 +387,7 @@ void Document::restore(Snapshot s) {
     m_col_offset = s.state.col_offset;
     m_max_cursor_col = s.state.max_cursor_col;
     m_document_was_modified = s.state.document_was_modified;
+    m_selection = s.state.selection;
 
     update_search_results();
     m_panel.set_cursor(s.state.cursor_row, s.state.cursor_col);
@@ -397,7 +400,46 @@ void Document::restore_state(const StateSnapshot& s) {
     m_max_cursor_col = s.max_cursor_col;
     m_document_was_modified = s.document_was_modified;
 
+    m_selection.clear();
+    m_selection = s.selection;
+
     m_panel.set_cursor(s.cursor_row, s.cursor_col);
+    set_needs_display();
+}
+
+void Document::render_selection() {
+    if (m_selection.empty()) {
+        return;
+    }
+
+    int line_start = m_selection.upper_line();
+    int index_start = m_selection.upper_index();
+    int line_end = m_selection.lower_line();
+    int index_end = m_selection.lower_index();
+
+    for (int li = line_start; li <= line_end; li++) {
+        auto& line = m_lines[li];
+
+        int si = 0;
+        if (li == line_start) {
+            si = index_start;
+        }
+
+        int ei = line.length();
+        if (li == line_end) {
+            ei = index_end;
+        }
+
+        if (si == 0 && ei == line.length()) {
+            line.select_all();
+            continue;
+        }
+
+        for (int i = si; i < ei; i++) {
+            line.metadata_at(i).set_selected(true);
+        }
+    }
+
     set_needs_display();
 }
 

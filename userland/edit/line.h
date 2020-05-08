@@ -42,6 +42,7 @@ public:
     void clear_selection();
     void toggle_select_after(int index);
     void toggle_select_before(int index);
+    void select_all();
 
     void render(Panel& panel, int col_offset, int row_in_panel) const;
 

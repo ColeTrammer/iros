@@ -100,6 +100,12 @@ void Line::toggle_select_before(int index) {
     }
 }
 
+void Line::select_all() {
+    for (auto& m : m_metadata) {
+        m.set_selected(false);
+    }
+}
+
 int Line::search(const String& text) {
     char* s = m_contents.string();
     int matches = 0;
