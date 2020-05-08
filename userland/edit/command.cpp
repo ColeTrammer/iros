@@ -75,6 +75,11 @@ DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : Snapshot
 DeleteCommand::~DeleteCommand() {}
 
 bool DeleteCommand::execute() {
+    if (!document().selection().empty()) {
+        document().delete_selection();
+        return true;
+    }
+
     auto& line = document().line_at_cursor();
     int row_index = document().cursor_row_position();
 

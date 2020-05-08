@@ -96,7 +96,11 @@ public:
     StateSnapshot snapshot_state() const;
     void restore_state(const StateSnapshot& state_snapshot);
 
+    const Selection& selection() const { return m_selection; }
+    void delete_selection();
     void clear_selection();
+
+    void move_cursor_to(int line_index, int index_into_line);
 
 private:
     int clamp_cursor_to_line_end();

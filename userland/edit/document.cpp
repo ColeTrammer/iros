@@ -401,6 +401,62 @@ void Document::restore_state(const StateSnapshot& s) {
     set_needs_display();
 }
 
+void Document::move_cursor_to(int line_index, int index_into_line) {
+    while (cursor_row_position() < line_index) {
+        move_cursor_up();
+    }
+    while (cursor_row_position() > line_index) {
+        move_cursor_down();
+    }
+
+    while (line_index_at_cursor() < index_into_line) {
+        move_cursor_right();
+    }
+    while (line_index_at_cursor() > index_into_line) {
+        move_cursor_left();
+    }
+}
+
+void Document::delete_selection() {
+    if (m_selection.empty()) {
+        return;
+    }
+
+    int line_start = m_selection.upper_line();
+    int index_start = m_selection.upper_index();
+    int line_end = m_selection.lower_line();
+    int index_end = m_selection.lower_index();
+    m_selection.clear();
+
+    move_cursor_to(line_start, index_start);
+
+    for (int li = line_end; li >= line_start; li--) {
+        auto& line = m_lines[li];
+
+        int si = 0;
+        if (li == line_start) {
+            si = index_start;
+        }
+
+        int ei = line.length();
+        if (li == line_end) {
+            ei = index_end;
+        }
+
+        if (si == 0 && ei == line.length()) {
+            remove_line(li);
+            continue;
+        }
+
+        for (int i = ei - 1; i >= si; i--) {
+            line.remove_char_at(i);
+        }
+    }
+
+    set_needs_display();
+    m_document_was_modified = true;
+}
+
 void Document::clear_selection() {
     if (!m_selection.empty()) {
         m_selection.clear();
