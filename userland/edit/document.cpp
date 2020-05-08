@@ -339,6 +339,7 @@ void Document::merge_lines(int l1i, int l2i) {
 
     l1.combine_line(l2);
     m_lines.remove(l2i);
+    set_needs_display();
 }
 
 void Document::insert_char(char c) {

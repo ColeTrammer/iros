@@ -68,10 +68,11 @@ private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
 };
 
-class SplitLineCommand final : public SnapshotBackedCommand {
+class SplitLineCommand final : public DeltaBackedCommand {
 public:
     SplitLineCommand(Document& document);
     virtual ~SplitLineCommand();
 
     virtual bool execute() override;
+    virtual void undo() override;
 };

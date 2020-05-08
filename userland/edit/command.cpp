@@ -146,7 +146,7 @@ bool DeleteCommand::execute() {
     return false;
 }
 
-SplitLineCommand::SplitLineCommand(Document& document) : SnapshotBackedCommand(document) {}
+SplitLineCommand::SplitLineCommand(Document& document) : DeltaBackedCommand(document) {}
 
 SplitLineCommand::~SplitLineCommand() {}
 
@@ -163,4 +163,11 @@ bool SplitLineCommand::execute() {
     document().move_cursor_to_line_start();
     document().set_needs_display();
     return true;
+}
+
+void SplitLineCommand::undo() {
+    int row_index = document().cursor_row_position();
+    document().move_cursor_up();
+    document().move_cursor_to_line_end();
+    document().merge_lines(row_index - 1, row_index);
 }
