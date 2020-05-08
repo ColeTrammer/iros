@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <liim/string.h>
 #include <sys/select.h>
 
 #include <kernel/hal/input.h>
@@ -71,108 +72,143 @@ bool Application::handle_mouse_event(mouse_event event) {
 bool Application::handle_keyboard_event(key_event event) {
     int mfd = current_mfd();
     auto& tty = current_tty().tty();
-    if (event.flags & KEY_DOWN) {
-        if (event.flags & KEY_SHIFT_ON && !(event.flags & KEY_ALT_ON) && !(event.flags & KEY_CONTROL_ON)) {
-            if (event.key == KEY_HOME) {
-                tty.scroll_to_top();
-                return true;
-            } else if (event.key == KEY_END) {
-                tty.scroll_to_bottom();
-                return true;
-            }
-        }
-        if (event.flags & KEY_CONTROL_ON) {
-            event.ascii &= 0x1F;
-            switch (event.key) {
-                case KEY_BACKSPACE: {
-                    // NOTE: no one knows what this should be...
-                    char c = 'W' & 0x1F;
-                    write(mfd, &c, 1);
-                    break;
-                }
-                case KEY_DELETE:
-                    write(mfd, "\033[3;5~", 6);
-                    break;
-                case KEY_PAGE_UP:
-                    write(mfd, "\033[5~", 4);
-                    break;
-                case KEY_PAGE_DOWN:
-                    write(mfd, "\033[6~", 4);
-                    break;
-                case KEY_CURSOR_UP:
-                    write(mfd, "\033[1;5A", 6);
-                    break;
-                case KEY_CURSOR_DOWN:
-                    write(mfd, "\033[1;5B", 6);
-                    break;
-                case KEY_CURSOR_RIGHT:
-                    write(mfd, "\033[1;5C", 6);
-                    break;
-                case KEY_CURSOR_LEFT:
-                    write(mfd, "\033[1;5D", 6);
-                    break;
-                case KEY_HOME:
-                    write(mfd, "\033[1;5H", 6);
-                    break;
-                case KEY_END:
-                    write(mfd, "\033[1;5F", 6);
-                    break;
-                case KEY_1:
-                    switch_to(0);
-                    break;
-                case KEY_2:
-                    switch_to(1);
-                    break;
-                case KEY_3:
-                    switch_to(2);
-                    break;
-                case KEY_4:
-                    switch_to(3);
-                    break;
-                default:
-                    if (event.ascii != '\0') {
-                        write(mfd, &event.ascii, 1);
-                    }
-                    break;
-            }
-        } else {
-            switch (event.key) {
-                case KEY_DELETE:
-                    write(mfd, "\033[3~", 4);
-                    break;
-                case KEY_PAGE_UP:
-                    write(mfd, "\033[5~", 4);
-                    break;
-                case KEY_PAGE_DOWN:
-                    write(mfd, "\033[6~", 4);
-                    break;
-                case KEY_CURSOR_UP:
-                    write(mfd, "\033[A", 3);
-                    break;
-                case KEY_CURSOR_DOWN:
-                    write(mfd, "\033[B", 3);
-                    break;
-                case KEY_CURSOR_RIGHT:
-                    write(mfd, "\033[C", 3);
-                    break;
-                case KEY_CURSOR_LEFT:
-                    write(mfd, "\033[D", 3);
-                    break;
-                case KEY_HOME:
-                    write(mfd, "\033[H", 3);
-                    break;
-                case KEY_END:
-                    write(mfd, "\033[F", 3);
-                    break;
-                default:
-                    if (event.ascii != '\0') {
-                        write(mfd, &event.ascii, 1);
-                    }
-                    break;
-            }
+    if (!(event.flags & KEY_DOWN)) {
+        return false;
+    }
+
+    if (event.flags & KEY_SHIFT_ON && !(event.flags & KEY_ALT_ON) && !(event.flags & KEY_CONTROL_ON)) {
+        if (event.key == KEY_HOME) {
+            tty.scroll_to_top();
+            return true;
+        } else if (event.key == KEY_END) {
+            tty.scroll_to_bottom();
+            return true;
         }
     }
 
+    int modifiers = 1;
+    if (event.flags & KEY_CONTROL_ON) {
+        modifiers += 4;
+    }
+    if (event.flags & KEY_ALT_ON) {
+        modifiers += 2;
+    }
+    if (event.flags & KEY_SHIFT_ON) {
+        modifiers += 1;
+    }
+
+    auto send_xterm_escape = [&](char ch, int modifiers) {
+        String seq;
+        if (modifiers == 1) {
+            seq = String::format("\033[%c", ch);
+        } else {
+            seq = String::format("\033[1;%d%c", modifiers, ch);
+        }
+        write(mfd, seq.string(), seq.size());
+    };
+
+    auto send_vt_escape = [&](int key_num, int modifiers) {
+        String seq;
+        if (modifiers == 1) {
+            seq = String::format("\033[%d~", key_num);
+        } else {
+            seq = String::format("\033[%d;%d~", key_num, modifiers);
+        }
+        write(mfd, seq.string(), seq.size());
+    };
+
+    switch (event.key) {
+        case KEY_CURSOR_UP:
+            send_xterm_escape('A', modifiers);
+            return false;
+        case KEY_CURSOR_DOWN:
+            send_xterm_escape('B', modifiers);
+            return false;
+        case KEY_CURSOR_RIGHT:
+            send_xterm_escape('C', modifiers);
+            return false;
+        case KEY_CURSOR_LEFT:
+            send_xterm_escape('D', modifiers);
+            return false;
+        case KEY_END:
+            send_xterm_escape('F', modifiers);
+            return false;
+        case KEY_HOME:
+            send_xterm_escape('H', modifiers);
+            return false;
+        case KEY_INSERT:
+            send_vt_escape(2, modifiers);
+            return false;
+        case KEY_DELETE:
+            send_vt_escape(3, modifiers);
+            return false;
+        case KEY_PAGE_UP:
+            send_vt_escape(5, modifiers);
+            return false;
+        case KEY_PAGE_DOWN:
+            send_vt_escape(6, modifiers);
+            return false;
+        case KEY_F1:
+            send_vt_escape(11, modifiers);
+            return false;
+        case KEY_F2:
+            send_vt_escape(12, modifiers);
+            return false;
+        case KEY_F3:
+            send_vt_escape(13, modifiers);
+            return false;
+        case KEY_F4:
+            send_vt_escape(14, modifiers);
+            return false;
+        case KEY_F5:
+            send_vt_escape(15, modifiers);
+            return false;
+        case KEY_F6:
+            send_vt_escape(17, modifiers);
+            return false;
+        // case KEY_F7:
+        //     send_vt_escape(18, modifiers);
+        //     return false;
+        case KEY_F8:
+            send_vt_escape(19, modifiers);
+            return false;
+        case KEY_F9:
+            send_vt_escape(20, modifiers);
+            return false;
+        case KEY_F10:
+            send_vt_escape(21, modifiers);
+            return false;
+        case KEY_F11:
+            send_vt_escape(23, modifiers);
+            return false;
+        case KEY_F12:
+            send_vt_escape(24, modifiers);
+            return false;
+        case KEY_1:
+            switch_to(0);
+            return false;
+        case KEY_2:
+            switch_to(1);
+            return false;
+        case KEY_3:
+            switch_to(2);
+            return false;
+        case KEY_4:
+            switch_to(3);
+            return false;
+        default:
+            break;
+    }
+
+    if (!event.ascii) {
+        return false;
+    }
+
+    if (event.flags & KEY_CONTROL_ON) {
+        event.ascii &= 0x1F;
+    }
+
+    write(mfd, &event.ascii, 1);
     return false;
 }
 
