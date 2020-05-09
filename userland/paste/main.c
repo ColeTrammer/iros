@@ -66,6 +66,40 @@ end_paste:
     return ret;
 }
 
+int do_serial_paste(FILE **files, size_t num_files, const char *delim, size_t delim_length) {
+    char *line = NULL;
+    size_t line_max = 0;
+
+    for (size_t i = 0; i < num_files; i++) {
+        size_t line_number = 0;
+        while (getline(&line, &line_max, files[i]) != -1) {
+            if (line_number != 0) {
+                char delim_char = get_delim_for_index(delim, delim_length, line_number - 1);
+                if (delim_char != '\0') {
+                    putchar(delim_char);
+                }
+            }
+
+            char *trailing_newline = strchr(line, '\n');
+            if (trailing_newline) {
+                *trailing_newline = '\0';
+            }
+            fputs(line, stdout);
+            line_number++;
+        }
+
+        if (ferror(files[i])) {
+            perror("paste: getline");
+            return 1;
+        }
+
+        putchar('\n');
+    }
+
+    free(line);
+    return 0;
+}
+
 char *parse_delim(const char *input, size_t *out_length) {
     size_t length = 0;
     size_t max = 20;
@@ -126,7 +160,6 @@ void print_usage_and_exit(const char *s) {
 int main(int argc, char **argv) {
     char *delim = "\t";
     bool serial = false;
-    (void) serial;
 
     int opt;
     while ((opt = getopt(argc, argv, ":sd:")) != -1) {
@@ -183,7 +216,11 @@ int main(int argc, char **argv) {
         files[num_files++] = f;
     }
 
-    ret = do_paste(files, num_files, real_delim, real_delim_size);
+    if (serial) {
+        ret = do_serial_paste(files, num_files, real_delim, real_delim_size);
+    } else {
+        ret = do_paste(files, num_files, real_delim, real_delim_size);
+    }
 
 end:
     for (size_t i = 0; i < num_files; i++) {
