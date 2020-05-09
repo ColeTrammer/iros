@@ -90,6 +90,20 @@ public:
         m_string = new_buffer;
     }
 
+    void insert(const String& string, int position) {
+        if (string.is_empty()) {
+            return;
+        }
+
+        m_size += string.size();
+        char* new_buffer = reinterpret_cast<char*>(malloc(size() + 1));
+        memcpy(new_buffer, m_string, position);
+        memcpy(new_buffer + position, string.string(), string.size());
+        strcpy(new_buffer + position + 1, m_string + position);
+        free(m_string);
+        m_string = new_buffer;
+    }
+
     void remove_index(int position) {
         assert(position >= 0 && position < size());
 
