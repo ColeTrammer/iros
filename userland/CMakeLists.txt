@@ -33,6 +33,7 @@ set(TARGETS
     mkdir
     mv
     nslookup
+    paste
     ps
     pwd
     realpath
