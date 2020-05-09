@@ -77,3 +77,15 @@ private:
     int m_end_line { 0 };
     int m_end_index { 0 };
 };
+
+class DeleteLineCommand final : public DeltaBackedCommand {
+public:
+    DeleteLineCommand(Document& document);
+    virtual ~DeleteLineCommand();
+
+    virtual bool execute() override;
+    virtual void undo() override;
+
+private:
+    Line m_saved_line;
+};

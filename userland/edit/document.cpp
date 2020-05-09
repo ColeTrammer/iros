@@ -569,9 +569,12 @@ void Document::copy() {
 
 void Document::cut() {
     if (m_selection.empty()) {
-        int row_index = cursor_row_position();
-        m_selection.begin(row_index, 0);
-        m_selection.set_end_line(row_index + 1);
+        auto& line = line_at_cursor();
+        auto contents = line.contents();
+        contents += "\n";
+        m_panel.set_clipboard_contents(contents);
+        push_command<DeleteLineCommand>();
+        return;
     }
 
     m_panel.set_clipboard_contents(selection_text());
@@ -584,7 +587,13 @@ void Document::paste() {
         return;
     }
 
+    // if (m_selection.empty() && text_to_insert.index_of('\n') == text_to_insert.size() - 1) {
+
+    //} else {
     insert_text_at_cursor(text_to_insert);
+    //}
+
+    set_needs_display();
 }
 
 void Document::notify_panel_size_changed() {

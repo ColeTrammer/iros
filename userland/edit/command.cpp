@@ -216,3 +216,20 @@ void DeleteCommand::undo() {
 
     document().restore_state(state_snapshot());
 }
+
+DeleteLineCommand::DeleteLineCommand(Document& document) : DeltaBackedCommand(document), m_saved_line("") {}
+
+DeleteLineCommand::~DeleteLineCommand() {}
+
+bool DeleteLineCommand::execute() {
+    m_saved_line = document().line_at_cursor();
+    document().remove_line(document().cursor_row_position());
+    document().move_cursor_to_line_start();
+    document().set_needs_display();
+    return true;
+}
+
+void DeleteLineCommand::undo() {
+    document().restore_state(state_snapshot());
+    document().insert_line(Line(m_saved_line), document().cursor_row_position());
+}
