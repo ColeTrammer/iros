@@ -560,7 +560,7 @@ void Document::copy() {
     if (m_selection.empty()) {
         String contents = line_at_cursor().contents();
         contents += "\n";
-        m_panel.set_clipboard_contents(move(contents));
+        m_panel.set_clipboard_contents(move(contents), true);
         return;
     }
 
@@ -569,10 +569,9 @@ void Document::copy() {
 
 void Document::cut() {
     if (m_selection.empty()) {
-        auto& line = line_at_cursor();
-        auto contents = line.contents();
+        auto contents = line_at_cursor().contents();
         contents += "\n";
-        m_panel.set_clipboard_contents(contents);
+        m_panel.set_clipboard_contents(move(contents), true);
         push_command<DeleteLineCommand>();
         return;
     }
@@ -587,11 +586,11 @@ void Document::paste() {
         return;
     }
 
-    // if (m_selection.empty() && text_to_insert.index_of('\n') == text_to_insert.size() - 1) {
-
-    //} else {
-    insert_text_at_cursor(text_to_insert);
-    //}
+    if (m_selection.empty() && m_panel.clipboard_contents_is_whole_line()) {
+        push_command<InsertLineCommand>(text_to_insert);
+    } else {
+        insert_text_at_cursor(text_to_insert);
+    }
 
     set_needs_display();
 }

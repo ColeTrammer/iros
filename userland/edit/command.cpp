@@ -233,3 +233,20 @@ void DeleteLineCommand::undo() {
     document().restore_state(state_snapshot());
     document().insert_line(Line(m_saved_line), document().cursor_row_position());
 }
+
+InsertLineCommand::InsertLineCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
+
+InsertLineCommand::~InsertLineCommand() {}
+
+bool InsertLineCommand::execute() {
+    Line to_add(m_text);
+    document().insert_line(move(to_add), document().cursor_row_position());
+    document().move_cursor_down();
+    document().set_needs_display();
+    return true;
+}
+
+void InsertLineCommand::undo() {
+    document().restore_state(state_snapshot());
+    document().remove_line(document().cursor_row_position());
+}

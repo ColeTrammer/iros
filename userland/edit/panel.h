@@ -29,8 +29,9 @@ public:
     virtual LIIM::String prompt(const LIIM::String& message) = 0;
     virtual void enter_search(LIIM::String starting_text) = 0;
 
-    virtual void set_clipboard_contents(LIIM::String text) = 0;
+    virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
     virtual LIIM::String clipboard_contents() const = 0;
+    virtual bool clipboard_contents_is_whole_line() const = 0;
 
     virtual void set_cursor(int row, int col) = 0;
     virtual int cursor_row() const = 0;

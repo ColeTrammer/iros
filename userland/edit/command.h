@@ -89,3 +89,15 @@ public:
 private:
     Line m_saved_line;
 };
+
+class InsertLineCommand final : public DeltaBackedCommand {
+public:
+    InsertLineCommand(Document& document, String text);
+    virtual ~InsertLineCommand() override;
+
+    virtual bool execute() override;
+    virtual void undo() override;
+
+private:
+    String m_text;
+};
