@@ -45,6 +45,7 @@ set(TARGETS
     start
     su
     tail
+    tee
     touch
     true
     uname
