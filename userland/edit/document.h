@@ -141,6 +141,7 @@ private:
             // FIXME: this makes the Vector data structure very inefficent
             //        a doubly-linked list would be much nicer.
             m_command_stack.remove(0);
+            m_command_stack_index--;
         }
 
         auto command = make_unique<C>(*this, forward<Args>(args)...);
@@ -169,7 +170,7 @@ private:
     bool m_document_was_modified { false };
     Selection m_selection;
 
-    int m_max_undo_stack { 30 };
+    int m_max_undo_stack { 50 };
     bool m_convert_tabs_to_spaces { true };
     mutable bool m_needs_display { false };
 };
