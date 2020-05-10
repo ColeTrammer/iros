@@ -11,11 +11,16 @@ char get_delim_for_index(const char *delim, size_t delim_length, size_t index) {
 int do_paste(FILE **files, size_t num_files, const char *delim, size_t delim_length) {
     char **lines = calloc(num_files, sizeof(char *));
     size_t *line_maxes = calloc(num_files, sizeof(char *));
+    bool *is_eof = calloc(num_files, sizeof(bool));
 
     size_t eof_count = 0;
     int ret = 0;
     for (;;) {
         for (size_t i = 0; i < num_files; i++) {
+            if (is_eof[i]) {
+                continue;
+            }
+
             ssize_t ret = getline(&lines[i], &line_maxes[i], files[i]);
             if (ret == -1) {
                 if (ferror(files[i])) {
@@ -26,6 +31,10 @@ int do_paste(FILE **files, size_t num_files, const char *delim, size_t delim_len
 
                 free(lines[i]);
                 lines[i] = NULL;
+
+                // For repeated stdin
+                clearerr(files[i]);
+                is_eof[i] = true;
                 eof_count++;
                 continue;
             }
@@ -63,6 +72,7 @@ end_paste:
     }
     free(lines);
     free(line_maxes);
+    free(is_eof);
     return ret;
 }
 
@@ -93,6 +103,8 @@ int do_serial_paste(FILE **files, size_t num_files, const char *delim, size_t de
             return 1;
         }
 
+        // For repeated stdin's
+        clearerr(files[i]);
         putchar('\n');
     }
 
