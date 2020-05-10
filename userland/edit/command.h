@@ -88,6 +88,7 @@ public:
 
 private:
     Line m_saved_line;
+    bool m_document_was_empty { false };
 };
 
 class InsertLineCommand final : public DeltaBackedCommand {

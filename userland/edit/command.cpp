@@ -223,8 +223,25 @@ DeleteLineCommand::~DeleteLineCommand() {}
 
 bool DeleteLineCommand::execute() {
     m_saved_line = document().line_at_cursor();
-    document().remove_line(document().cursor_row_position());
-    document().move_cursor_to_line_start();
+
+    int line_number = document().cursor_row_position();
+    bool deleted_last_line = false;
+    if (line_number != 0 && line_number == document().num_lines() - 1) {
+        deleted_last_line = true;
+        document().move_cursor_up();
+        document().move_cursor_to_line_end();
+    }
+
+    document().remove_line(line_number);
+    if (document().num_lines() == 0) {
+        m_document_was_empty = true;
+        document().insert_line(Line(""), 0);
+    }
+
+    if (!deleted_last_line) {
+        document().move_cursor_to_line_start();
+    }
+
     document().set_needs_display();
     return true;
 }
@@ -232,6 +249,9 @@ bool DeleteLineCommand::execute() {
 void DeleteLineCommand::undo() {
     document().restore_state(state_snapshot());
     document().insert_line(Line(m_saved_line), document().cursor_row_position());
+    if (m_document_was_empty) {
+        document().remove_line(1);
+    }
 }
 
 InsertLineCommand::InsertLineCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}

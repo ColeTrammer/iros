@@ -595,7 +595,9 @@ void Document::clear_selection() {
 void Document::copy() {
     if (m_selection.empty()) {
         String contents = line_at_cursor().contents();
-        contents += "\n";
+        if (!single_line_mode()) {
+            contents += "\n";
+        }
         m_panel.set_clipboard_contents(move(contents), true);
         return;
     }
@@ -606,7 +608,9 @@ void Document::copy() {
 void Document::cut() {
     if (m_selection.empty()) {
         auto contents = line_at_cursor().contents();
-        contents += "\n";
+        if (!single_line_mode()) {
+            contents += "\n";
+        }
         m_panel.set_clipboard_contents(move(contents), true);
         push_command<DeleteLineCommand>();
         return;
@@ -622,7 +626,7 @@ void Document::paste() {
         return;
     }
 
-    if (m_selection.empty() && m_panel.clipboard_contents_is_whole_line()) {
+    if (!single_line_mode() && m_selection.empty() && m_panel.clipboard_contents_is_whole_line()) {
         push_command<InsertLineCommand>(text_to_insert);
     } else {
         insert_text_at_cursor(text_to_insert);
@@ -778,6 +782,12 @@ void Document::notify_key_pressed(KeyPress press) {
                 move_cursor_left_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;
             case KeyPress::Key::RightArrow:
+                move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
+            case KeyPress::Key::UpArrow:
+                move_cursor_left_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
+            case KeyPress::Key::DownArrow:
                 move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;
             case 'C':
