@@ -89,6 +89,11 @@ Line& Document::line_at_cursor() {
     return m_lines[m_panel.cursor_row() + m_row_offset];
 }
 
+char Document::char_at_cursor() const {
+    auto& line = line_at_cursor();
+    return line.char_at(line.index_of_col_position(cursor_col_position()));
+}
+
 int Document::line_index_at_cursor() const {
     return line_at_cursor().index_of_col_position(cursor_col_position());
 }
@@ -147,6 +152,37 @@ void Document::move_cursor_right(MovementMode mode) {
     }
 
     m_panel.set_cursor_col(m_panel.cursor_col() + cols_to_advance);
+}
+
+void Document::move_cursor_right_by_word(MovementMode mode) {
+    move_cursor_right(mode);
+
+    auto& line = line_at_cursor();
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isalpha(char_at_cursor())) {
+        move_cursor_right(mode);
+    }
+
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && isalpha(char_at_cursor())) {
+        move_cursor_right(mode);
+    }
+}
+
+void Document::move_cursor_left_by_word(MovementMode mode) {
+    move_cursor_left(mode);
+
+    while (cursor_col_position() > 0 && !isalpha(char_at_cursor())) {
+        move_cursor_left(mode);
+    }
+
+    bool found_word = false;
+    while (cursor_col_position() > 0 && isalpha(char_at_cursor())) {
+        move_cursor_left(mode);
+        found_word = true;
+    }
+
+    if (found_word && !isalpha(char_at_cursor())) {
+        move_cursor_right(mode);
+    }
 }
 
 void Document::move_cursor_left(MovementMode mode) {
@@ -738,6 +774,12 @@ void Document::enter_interactive_search() {
 void Document::notify_key_pressed(KeyPress press) {
     if (press.modifiers & KeyPress::Modifier::Control) {
         switch (press.key) {
+            case KeyPress::Key::LeftArrow:
+                move_cursor_left_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
+            case KeyPress::Key::RightArrow:
+                move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
             case 'C':
                 copy();
                 break;

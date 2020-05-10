@@ -79,10 +79,13 @@ public:
     void move_cursor_up(MovementMode mode = MovementMode::Move);
     void move_cursor_to_line_start(MovementMode mode = MovementMode::Move);
     void move_cursor_to_line_end(MovementMode mode = MovementMode::Move);
+    void move_cursor_left_by_word(MovementMode mode = MovementMode::Move);
+    void move_cursor_right_by_word(MovementMode mode = MovementMode::Move);
 
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int line_index_at_cursor() const;
+    char char_at_cursor() const;
     int num_lines() const { return m_lines.size(); }
     void remove_line(int index) { m_lines.remove(index); }
     void insert_line(Line&& line, int index) { m_lines.insert(move(line), index); }
