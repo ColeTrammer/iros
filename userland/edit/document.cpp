@@ -698,6 +698,7 @@ void Document::paste() {
     }
 
     if (!single_line_mode() && m_selection.empty() && m_panel.clipboard_contents_is_whole_line()) {
+        text_to_insert.remove_index(text_to_insert.size() - 1);
         push_command<InsertLineCommand>(text_to_insert);
     } else {
         insert_text_at_cursor(text_to_insert);
