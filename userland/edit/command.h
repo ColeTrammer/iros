@@ -65,7 +65,7 @@ private:
 
 class DeleteCommand final : public DeltaBackedCommand {
 public:
-    DeleteCommand(Document& document, DeleteCharMode mode);
+    DeleteCommand(Document& document, DeleteCharMode mode, bool should_clear_selection = false);
     virtual ~DeleteCommand();
 
     virtual bool execute() override;
@@ -73,6 +73,7 @@ public:
 
 private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
+    bool m_should_clear_selection { false };
     char m_deleted_char { 0 };
     int m_end_line { 0 };
     int m_end_index { 0 };

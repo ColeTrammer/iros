@@ -386,6 +386,43 @@ void Document::delete_char(DeleteCharMode mode) {
     push_command<DeleteCommand>(mode);
 }
 
+void Document::delete_word(DeleteCharMode mode) {
+    if (!m_selection.empty()) {
+        delete_char(mode);
+        return;
+    }
+
+    int line_index = line_index_at_cursor();
+    if ((mode == DeleteCharMode::Backspace && line_index == 0) ||
+        (mode == DeleteCharMode::Delete && line_index == line_at_cursor().length())) {
+        delete_char(mode);
+        return;
+    }
+
+    if (mode == DeleteCharMode::Backspace) {
+        move_cursor_left_by_word(MovementMode::Select);
+    } else {
+        move_cursor_right_by_word(MovementMode::Select);
+    }
+
+    swap_selection_start_and_cursor();
+    push_command<DeleteCommand>(mode, true);
+}
+
+void Document::swap_selection_start_and_cursor() {
+    int dest_line = m_selection.start_line();
+    int dest_index = m_selection.start_index();
+    int old_end_line = m_selection.end_line();
+    int old_end_index = m_selection.end_index();
+
+    move_cursor_to(dest_line, dest_index);
+
+    m_selection.set_start_line(dest_line);
+    m_selection.set_start_index(dest_index);
+    m_selection.set_end_line(old_end_line);
+    m_selection.set_end_index(old_end_index);
+}
+
 void Document::split_line_at_cursor() {
     push_command<InsertCommand>("\n");
 }
@@ -789,6 +826,12 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
             case KeyPress::Key::DownArrow:
                 move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
+            case KeyPress::Key::Backspace:
+                delete_word(DeleteCharMode::Backspace);
+                break;
+            case KeyPress::Key::Delete:
+                delete_word(DeleteCharMode::Delete);
                 break;
             case 'C':
                 copy();

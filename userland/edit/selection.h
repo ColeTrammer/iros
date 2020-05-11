@@ -17,6 +17,9 @@ public:
         m_start_index = m_end_index = index;
     }
 
+    void set_start_line(int line) { m_start_line = line; }
+    void set_start_index(int index) { m_start_index = index; }
+
     void set_end_line(int line) { m_end_line = line; }
     void set_end_index(int index) { m_end_index = index; }
 
@@ -41,6 +44,12 @@ public:
             return m_start_index;
         }
     }
+
+    int start_line() const { return m_start_line; }
+    int start_index() const { return m_start_index; }
+
+    int end_line() const { return m_end_line; }
+    int end_index() const { return m_end_index; }
 
 private:
     int m_start_line { 0 };

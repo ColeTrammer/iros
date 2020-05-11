@@ -116,7 +116,8 @@ void InsertCommand::undo() {
     }
 }
 
-DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : DeltaBackedCommand(document), m_mode(mode) {}
+DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode, bool should_clear_selection)
+    : DeltaBackedCommand(document), m_mode(mode), m_should_clear_selection(should_clear_selection) {}
 
 DeleteCommand::~DeleteCommand() {}
 
@@ -215,6 +216,9 @@ void DeleteCommand::undo() {
     }
 
     document().restore_state(state_snapshot());
+    if (m_should_clear_selection) {
+        document().clear_selection();
+    }
 }
 
 DeleteLineCommand::DeleteLineCommand(Document& document) : DeltaBackedCommand(document), m_saved_line("") {}

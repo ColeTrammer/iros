@@ -119,6 +119,7 @@ private:
     void split_line_at_cursor();
     void insert_char(char c);
     void delete_char(DeleteCharMode mode);
+    void delete_word(DeleteCharMode mode);
 
     void redo();
     void undo();
@@ -128,6 +129,7 @@ private:
     void cut();
 
     void render_selection();
+    void swap_selection_start_and_cursor();
 
     template<typename C, typename... Args>
     void push_command(Args... args) {
