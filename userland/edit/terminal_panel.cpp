@@ -107,7 +107,7 @@ void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols
     m_cols = cols;
     m_row_offset = row_off;
     m_col_offset = col_off;
-    m_screen_info.resize(m_rows * m_cols);
+    m_screen_info.resize(m_rows * TerminalPanel::cols());
 
     if (auto* doc = document()) {
         doc->notify_panel_size_changed();
@@ -138,8 +138,50 @@ const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) con
     return default_string;
 }
 
+void TerminalPanel::document_did_change() {
+    if (document()) {
+        notify_line_count_changed();
+    }
+}
+
+void TerminalPanel::notify_line_count_changed() {
+    int old_cols_needed_for_line_numbers = m_cols_needed_for_line_numbers;
+    compute_cols_needed_for_line_numbers();
+
+    if (old_cols_needed_for_line_numbers != m_cols_needed_for_line_numbers) {
+        // Updates character storage and notifies the document
+        set_coordinates(m_row_offset, m_col_offset, m_rows, m_cols);
+    }
+}
+
+void TerminalPanel::compute_cols_needed_for_line_numbers() {
+    if (auto* doc = document()) {
+        if (doc->show_line_numbers()) {
+            int num_lines = doc->num_lines();
+            if (num_lines == 0 || doc->single_line_mode()) {
+                m_cols_needed_for_line_numbers = 0;
+                return;
+            }
+
+            int digits = 0;
+            while (num_lines > 0) {
+                num_lines /= 10;
+                digits++;
+            }
+
+            m_cols_needed_for_line_numbers = digits + 1;
+            return;
+        }
+    }
+    m_cols_needed_for_line_numbers = 0;
+}
+
+int TerminalPanel::cols() const {
+    return m_cols - m_cols_needed_for_line_numbers;
+}
+
 void TerminalPanel::draw_cursor() {
-    printf("\033[%d;%dH", m_row_offset + m_cursor_row + 1, m_col_offset + m_cursor_col + 1);
+    printf("\033[%d;%dH", m_row_offset + m_cursor_row + 1, m_col_offset + m_cursor_col + m_cols_needed_for_line_numbers + 1);
     fflush(stdout);
 }
 
@@ -160,7 +202,7 @@ void TerminalPanel::draw_status_message() {
     auto position_string = String::format("%d,%d", document()->cursor_row_position() + 1, document()->cursor_col_position() + 1);
     auto status_rhs = String::format("%s%s %9s", name.string(), document()->modified() ? "*" : " ", position_string.string());
 
-    int width_for_message = cols() - status_rhs.size() - 4;
+    int width_for_message = m_cols - status_rhs.size() - 4;
     String fill_chars = "    ";
     if (m_status_message.size() > width_for_message) {
         fill_chars = "... ";
@@ -205,7 +247,8 @@ void TerminalPanel::print_char(char c, CharacterMetadata metadata) {
 }
 
 void TerminalPanel::flush_row(int row) {
-    for (int c = 0; c < m_cols; c++) {
+    int cols = TerminalPanel::cols();
+    for (int c = 0; c < cols; c++) {
         auto& info = m_screen_info[index(row, c)];
         print_char(info.ch, info.metadata);
     }
@@ -218,8 +261,16 @@ void TerminalPanel::flush_row(int row) {
 
 void TerminalPanel::flush() {
     fputs("\033[?25l", stdout);
+
     for (int r = 0; r < rows(); r++) {
         printf("\033[%d;%dH\033[0K", m_row_offset + r + 1, m_col_offset + 1);
+
+        int line_number = document()->row_offset() + r + 1;
+        if (document()->show_line_numbers() && line_number <= document()->num_lines()) {
+            char buf[48];
+            snprintf(buf, sizeof(buf) - 1, "%*d ", m_cols_needed_for_line_numbers - 1, line_number);
+            fputs(buf, stdout);
+        }
         flush_row(r);
     }
 
@@ -480,11 +531,11 @@ String TerminalPanel::enter_prompt(const String& message) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
 
-    int message_size = LIIM::min(message.size(), cols() / 2);
-    printf("%.*s", cols() / 2, message.string());
+    int message_size = LIIM::min(message.size(), m_cols / 2);
+    printf("%.*s", m_cols / 2, message.string());
     fflush(stdout);
 
-    TerminalPanel text_panel(1, m_col_offset + cols() - message_size, rows() + m_row_offset, message_size);
+    TerminalPanel text_panel(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
     text_panel.set_stop_on_enter(true);
     s_prompt_panel = &text_panel;
     s_prompt_message = message;

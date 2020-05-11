@@ -11,4 +11,5 @@ void Panel::set_document(UniquePtr<Document> document) {
     }
 
     m_document = move(document);
+    document_did_change();
 }

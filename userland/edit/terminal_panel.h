@@ -12,7 +12,7 @@ public:
     virtual ~TerminalPanel() override;
 
     virtual int rows() const override { return m_rows; }
-    virtual int cols() const override { return m_cols; }
+    virtual int cols() const override;
 
     virtual void clear() override;
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
@@ -21,6 +21,7 @@ public:
     virtual void send_status_message(String message) override;
     virtual String prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
+    virtual void notify_line_count_changed() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override {
         m_clipboard_contents = text;
@@ -49,10 +50,14 @@ private:
 
     TerminalPanel(int rows, int cols, int row_off, int col_off);
 
+    virtual void document_did_change() override;
+
     Maybe<KeyPress> read_key();
 
     void draw_cursor();
     void draw_status_message();
+
+    void compute_cols_needed_for_line_numbers();
 
     const String& string_for_metadata(CharacterMetadata metadata) const;
 
@@ -76,5 +81,6 @@ private:
     int m_cursor_col { 0 };
     int m_row_offset { 0 };
     int m_col_offset { 0 };
+    int m_cols_needed_for_line_numbers { 0 };
     bool m_stop_on_enter { false };
 };

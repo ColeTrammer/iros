@@ -95,8 +95,8 @@ public:
     bool cursor_at_document_start() const;
     bool cursor_at_document_end() const;
 
-    void remove_line(int index) { m_lines.remove(index); }
-    void insert_line(Line&& line, int index) { m_lines.insert(move(line), index); }
+    void remove_line(int index);
+    void insert_line(Line&& line, int index);
 
     void merge_lines(int l1, int l2);
 
@@ -115,6 +115,12 @@ public:
 
     void move_cursor_to(int line_index, int index_into_line, MovementMode mode = MovementMode::Move);
     void insert_text_at_cursor(const String& string);
+
+    bool show_line_numbers() const { return m_show_line_numbers; }
+    void set_show_line_numbers(bool b);
+
+    int row_offset() const { return m_row_offset; }
+    int col_offset() const { return m_col_offset; }
 
 private:
     int clamp_cursor_to_line_end();
@@ -183,6 +189,7 @@ private:
     Selection m_selection;
 
     int m_max_undo_stack { 50 };
+    bool m_show_line_numbers { false };
     bool m_convert_tabs_to_spaces { true };
     mutable bool m_needs_display { false };
 };

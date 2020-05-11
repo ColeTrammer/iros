@@ -37,6 +37,8 @@ public:
     virtual int cursor_row() const = 0;
     virtual int cursor_col() const = 0;
 
+    virtual void notify_line_count_changed() {}
+
     void set_cursor_row(int row) { set_cursor(row, cursor_col()); }
     void set_cursor_col(int col) { set_cursor(cursor_row(), col); }
 
@@ -47,6 +49,8 @@ public:
 
 protected:
     Panel();
+
+    virtual void document_did_change() {}
 
 private:
     UniquePtr<Document> m_document;

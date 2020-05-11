@@ -51,7 +51,9 @@ UniquePtr<Document> Document::create_empty(Panel& panel) {
 }
 
 UniquePtr<Document> Document::create_single_line(Panel& panel) {
-    return make_unique<Document>(Vector<Line>(), "", panel, LineMode::Single);
+    auto ret = make_unique<Document>(Vector<Line>(), "", panel, LineMode::Single);
+    ret->set_show_line_numbers(false);
+    return ret;
 }
 
 Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
@@ -663,6 +665,16 @@ void Document::clear_selection() {
     }
 }
 
+void Document::remove_line(int index) {
+    m_lines.remove(index);
+    m_panel.notify_line_count_changed();
+}
+
+void Document::insert_line(Line&& line, int index) {
+    m_lines.insert(move(line), index);
+    m_panel.notify_line_count_changed();
+}
+
 void Document::copy() {
     if (m_selection.empty()) {
         String contents = line_at_cursor().contents();
@@ -705,6 +717,13 @@ void Document::paste() {
     }
 
     set_needs_display();
+}
+
+void Document::set_show_line_numbers(bool b) {
+    if (m_show_line_numbers != b) {
+        m_show_line_numbers = b;
+        m_panel.notify_line_count_changed();
+    }
 }
 
 void Document::notify_panel_size_changed() {
@@ -906,6 +925,11 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
             case 'G':
                 go_to_line();
+                break;
+            case 'L':
+                if (!single_line_mode()) {
+                    set_show_line_numbers(!m_show_line_numbers);
+                }
                 break;
             case 'Q':
             case 'W':
