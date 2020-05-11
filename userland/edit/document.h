@@ -83,12 +83,18 @@ public:
     void move_cursor_right_by_word(MovementMode mode = MovementMode::Move);
     void move_cursor_to_document_start(MovementMode mode = MovementMode::Move);
     void move_cursor_to_document_end(MovementMode mode = MovementMode::Move);
+    void move_cursor_page_up(MovementMode mode = MovementMode::Move);
+    void move_cursor_page_down(MovementMode mode = MovementMode::Move);
 
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int line_index_at_cursor() const;
     char char_at_cursor() const;
     int num_lines() const { return m_lines.size(); }
+
+    bool cursor_at_document_start() const;
+    bool cursor_at_document_end() const;
+
     void remove_line(int index) { m_lines.remove(index); }
     void insert_line(Line&& line, int index) { m_lines.insert(move(line), index); }
 

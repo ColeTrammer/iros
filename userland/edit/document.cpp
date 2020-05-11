@@ -106,6 +106,14 @@ int Document::cursor_row_position() const {
     return m_panel.cursor_row() + m_row_offset;
 }
 
+bool Document::cursor_at_document_start() const {
+    return cursor_row_position() == 0 && cursor_col_position() == 0;
+}
+
+bool Document::cursor_at_document_end() const {
+    return cursor_row_position() == num_lines() - 1 && cursor_col_position() == m_lines.last().length();
+}
+
 void Document::update_selection_state_for_mode(MovementMode mode) {
     if (mode == MovementMode::Move) {
         clear_selection();
@@ -377,6 +385,22 @@ void Document::move_cursor_to_document_end(MovementMode mode) {
     int last_line_index = m_lines.size() - 1;
     auto& last_line = m_lines.last();
     move_cursor_to(last_line_index, last_line.length(), mode);
+}
+
+void Document::move_cursor_page_up(MovementMode mode) {
+    int rows_to_move = m_panel.rows() - 1;
+
+    for (int i = 0; !cursor_at_document_start() && i < rows_to_move; i++) {
+        move_cursor_up(mode);
+    }
+}
+
+void Document::move_cursor_page_down(MovementMode mode) {
+    int rows_to_move = m_panel.rows() - 1;
+
+    for (int i = 0; !cursor_at_document_end() <= num_lines() && i < rows_to_move; i++) {
+        move_cursor_down(mode);
+    }
 }
 
 void Document::merge_lines(int l1i, int l2i) {
@@ -837,7 +861,7 @@ void Document::notify_key_pressed(KeyPress press) {
             case KeyPress::Key::DownArrow:
                 move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;
-        case KeyPress::Key::Home:
+            case KeyPress::Key::Home:
                 move_cursor_to_document_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;
             case KeyPress::Key::End:
@@ -904,6 +928,12 @@ void Document::notify_key_pressed(KeyPress press) {
             break;
         case KeyPress::Key::End:
             move_cursor_to_line_end(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            break;
+        case KeyPress::Key::PageUp:
+            move_cursor_page_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            break;
+        case KeyPress::Key::PageDown:
+            move_cursor_page_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
             break;
         case KeyPress::Key::Backspace:
             delete_char(DeleteCharMode::Backspace);
