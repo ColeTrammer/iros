@@ -81,6 +81,8 @@ public:
     void move_cursor_to_line_end(MovementMode mode = MovementMode::Move);
     void move_cursor_left_by_word(MovementMode mode = MovementMode::Move);
     void move_cursor_right_by_word(MovementMode mode = MovementMode::Move);
+    void move_cursor_to_document_start(MovementMode mode = MovementMode::Move);
+    void move_cursor_to_document_end(MovementMode mode = MovementMode::Move);
 
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
@@ -105,7 +107,7 @@ public:
     void clear_selection();
     String selection_text() const;
 
-    void move_cursor_to(int line_index, int index_into_line);
+    void move_cursor_to(int line_index, int index_into_line, MovementMode mode = MovementMode::Move);
     void insert_text_at_cursor(const String& string);
 
 private:

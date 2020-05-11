@@ -369,6 +369,16 @@ void Document::move_cursor_to_line_end(MovementMode mode) {
     }
 }
 
+void Document::move_cursor_to_document_start(MovementMode mode) {
+    move_cursor_to(0, 0, mode);
+}
+
+void Document::move_cursor_to_document_end(MovementMode mode) {
+    int last_line_index = m_lines.size() - 1;
+    auto& last_line = m_lines.last();
+    move_cursor_to(last_line_index, last_line.length(), mode);
+}
+
 void Document::merge_lines(int l1i, int l2i) {
     auto& l1 = m_lines[l1i];
     auto& l2 = m_lines[l2i];
@@ -526,19 +536,19 @@ void Document::render_selection() {
     set_needs_display();
 }
 
-void Document::move_cursor_to(int line_index, int index_into_line) {
+void Document::move_cursor_to(int line_index, int index_into_line, MovementMode mode) {
     while (cursor_row_position() < line_index) {
-        move_cursor_down();
+        move_cursor_down(mode);
     }
     while (cursor_row_position() > line_index) {
-        move_cursor_up();
+        move_cursor_up(mode);
     }
 
     while (line_index_at_cursor() < index_into_line) {
-        move_cursor_right();
+        move_cursor_right(mode);
     }
     while (line_index_at_cursor() > index_into_line) {
-        move_cursor_left();
+        move_cursor_left(mode);
     }
 }
 
@@ -826,6 +836,12 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
             case KeyPress::Key::DownArrow:
                 move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
+        case KeyPress::Key::Home:
+                move_cursor_to_document_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
+            case KeyPress::Key::End:
+                move_cursor_to_document_end(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;
             case KeyPress::Key::Backspace:
                 delete_word(DeleteCharMode::Backspace);
