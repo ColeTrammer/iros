@@ -718,6 +718,30 @@ void Document::notify_panel_size_changed() {
     display();
 }
 
+void Document::go_to_line() {
+    auto result = m_panel.prompt("Go to line: ");
+    char* end_ptr = result.string();
+    long line_number = strtol(result.string(), &end_ptr, 10);
+    if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
+        m_panel.send_status_message(String::format("Line `%s' is not between 1 and %d", result.string(), num_lines()));
+        return;
+    }
+
+    clear_selection();
+
+    int screen_midpoint = m_panel.rows() / 2;
+    if (line_number - 1 < screen_midpoint) {
+        m_panel.set_cursor_row(line_number - 1);
+        m_row_offset = 0;
+    } else {
+        m_panel.set_cursor_row(screen_midpoint);
+        m_row_offset = line_number - 1 - screen_midpoint;
+    }
+
+    move_cursor_to_line_start();
+    set_needs_display();
+}
+
 void Document::save() {
     struct stat st;
     if (m_name.is_empty()) {
@@ -878,6 +902,9 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
             case 'F':
                 enter_interactive_search();
+                break;
+            case 'G':
+                go_to_line();
                 break;
             case 'Q':
             case 'W':

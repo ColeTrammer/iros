@@ -136,6 +136,8 @@ private:
     void paste();
     void cut();
 
+    void go_to_line();
+
     void render_selection();
     void swap_selection_start_and_cursor();
 
