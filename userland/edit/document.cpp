@@ -855,11 +855,11 @@ void Document::notify_key_pressed(KeyPress press) {
             case KeyPress::Key::RightArrow:
                 move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;
-            case KeyPress::Key::UpArrow:
-                move_cursor_left_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-                break;
             case KeyPress::Key::DownArrow:
-                move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                break;
+            case KeyPress::Key::UpArrow:
+                move_cursor_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;
             case KeyPress::Key::Home:
                 move_cursor_to_document_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
