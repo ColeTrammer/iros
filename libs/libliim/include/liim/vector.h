@@ -86,6 +86,25 @@ public:
         get(end_index - 1) = LIIM::move(temp);
     }
 
+    // Example of this function:
+    // this = { 1, 2, 3, 4, 5 }
+    // start_index=2, end_index=5
+    // result = { 1, 2, 5, 3, 4 }
+    void rotate_right(int start_index, int end_index) {
+        assert(start_index <= end_index);
+        assert(start_index >= 0);
+        assert(end_index <= size());
+        if (end_index - start_index <= 1) {
+            return;
+        }
+
+        T temp(LIIM::move(get(end_index - 1)));
+        for (int i = end_index - 1; i > start_index; i--) {
+            get(i) = LIIM::move(get(i - 1));
+        }
+        get(start_index) = LIIM::move(temp);
+    }
+
     ~Vector() {
         for (int i = 0; i < m_size; i++) {
             get(i).~T();
