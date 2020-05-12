@@ -777,13 +777,16 @@ void Document::save() {
         st.st_mode = 0644;
     } else {
         if (stat(m_name.string(), &st)) {
-            m_panel.send_status_message(String::format("Error looking up file - `%s'", strerror(errno)));
-            return;
-        }
-
-        if (access(m_name.string(), W_OK)) {
-            m_panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
-            return;
+            if (errno != ENOENT) {
+                m_panel.send_status_message(String::format("Error looking up file - `%s'", strerror(errno)));
+                return;
+            }
+            st.st_mode = 0644;
+        } else {
+            if (access(m_name.string(), W_OK)) {
+                m_panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
+                return;
+            }
         }
     }
 
