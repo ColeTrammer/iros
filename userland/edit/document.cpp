@@ -50,9 +50,12 @@ UniquePtr<Document> Document::create_empty(Panel& panel) {
     return make_unique<Document>(Vector<Line>(), "", panel, LineMode::Multiple);
 }
 
-UniquePtr<Document> Document::create_single_line(Panel& panel) {
-    auto ret = make_unique<Document>(Vector<Line>(), "", panel, LineMode::Single);
+UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
+    Vector<Line> lines;
+    lines.add(Line(move(text)));
+    auto ret = make_unique<Document>(move(lines), "", panel, LineMode::Single);
     ret->set_show_line_numbers(false);
+    ret->move_cursor_to_line_end();
     return ret;
 }
 

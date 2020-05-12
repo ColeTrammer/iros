@@ -527,7 +527,7 @@ void TerminalPanel::enter() {
     }
 }
 
-String TerminalPanel::enter_prompt(const String& message) {
+String TerminalPanel::enter_prompt(const String& message, String staring_text) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
 
@@ -540,8 +540,9 @@ String TerminalPanel::enter_prompt(const String& message) {
     s_prompt_panel = &text_panel;
     s_prompt_message = message;
 
-    auto document = Document::create_single_line(text_panel);
+    auto document = Document::create_single_line(text_panel, move(staring_text));
     text_panel.set_document(move(document));
+    text_panel.document()->display();
     text_panel.enter();
 
     return text_panel.document()->content_string();
@@ -556,8 +557,8 @@ String TerminalPanel::prompt(const String& prompt) {
     return result;
 }
 
-void TerminalPanel::enter_search(String) {
-    String result = enter_prompt("Find: ");
+void TerminalPanel::enter_search(String starting_text) {
+    String result = enter_prompt("Find: ", starting_text);
 
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);

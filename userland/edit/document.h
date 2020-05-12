@@ -24,7 +24,7 @@ class Document {
 public:
     static UniquePtr<Document> create_from_file(const String& path, Panel& panel);
     static UniquePtr<Document> create_empty(Panel& panel);
-    static UniquePtr<Document> create_single_line(Panel& panel);
+    static UniquePtr<Document> create_single_line(Panel& panel, String text = "");
 
     struct StateSnapshot {
         int row_offset { 0 };

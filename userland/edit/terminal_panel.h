@@ -64,7 +64,7 @@ private:
     void print_char(char c, CharacterMetadata metadata);
     void flush_row(int line);
 
-    String enter_prompt(const String& message);
+    String enter_prompt(const String& message, String starting_text = "");
 
     int index(int row, int col) const { return row * m_cols + col; }
 
