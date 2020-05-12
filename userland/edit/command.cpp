@@ -274,3 +274,76 @@ void InsertLineCommand::undo() {
     document().restore_state(state_snapshot());
     document().remove_line(document().cursor_row_position());
 }
+
+SwapLinesCommand::SwapLinesCommand(Document& document, SwapDirection direction) : DeltaBackedCommand(document), m_direction(direction) {}
+
+SwapLinesCommand::~SwapLinesCommand() {}
+
+bool SwapLinesCommand::execute() {
+    bool ret = do_swap(m_direction);
+    m_end_line = document().cursor_row_position();
+    m_end_index = document().line_index_at_cursor();
+    m_end_selection = document().selection();
+    return ret;
+}
+
+bool SwapLinesCommand::do_swap(SwapDirection direction) {
+    if (document().selection().empty()) {
+        int cursor_row = document().cursor_row_position();
+        if ((cursor_row == 0 && direction == SwapDirection::Up) ||
+            (cursor_row == document().num_lines() - 1 && direction == SwapDirection::Down)) {
+            return false;
+        }
+
+        if (direction == SwapDirection::Up) {
+            document().rotate_lines_up(cursor_row - 1, cursor_row);
+            document().move_cursor_up();
+        } else {
+            document().rotate_lines_down(cursor_row, cursor_row + 1);
+            document().move_cursor_down();
+        }
+
+        document().set_needs_display();
+        return true;
+    }
+
+    int selection_start_line = document().selection().upper_line();
+    int selection_end_line = document().selection().lower_line();
+
+    if ((selection_start_line == 0 && direction == SwapDirection::Up) ||
+        (selection_end_line == document().num_lines() - 1 && direction == SwapDirection::Down)) {
+        return false;
+    }
+
+    if (direction == SwapDirection::Up) {
+        document().rotate_lines_up(selection_start_line - 1, selection_end_line);
+        auto selection = document().selection();
+        const_cast<Selection&>(document().selection()).clear();
+
+        document().move_cursor_up();
+        selection.set_start_line(selection_start_line - 1);
+        selection.set_end_line(selection_end_line - 1);
+
+        document().set_selection(move(selection));
+    } else {
+        document().rotate_lines_down(selection_start_line, selection_end_line + 1);
+        auto selection = document().selection();
+        const_cast<Selection&>(document().selection()).clear();
+
+        document().move_cursor_down();
+        selection.set_start_line(selection_start_line + 1);
+        selection.set_end_line(selection_end_line + 1);
+
+        document().set_selection(move(selection));
+    }
+
+    document().set_needs_display();
+    return true;
+}
+
+void SwapLinesCommand::undo() {
+    document().move_cursor_to(m_end_line, m_end_index);
+    document().set_selection(m_end_selection);
+    do_swap(m_direction == SwapDirection::Up ? SwapDirection::Down : SwapDirection::Up);
+    document().restore_state(state_snapshot());
+}

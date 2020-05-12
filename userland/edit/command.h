@@ -103,3 +103,20 @@ public:
 private:
     String m_text;
 };
+
+class SwapLinesCommand final : public DeltaBackedCommand {
+public:
+    SwapLinesCommand(Document& document, SwapDirection direction);
+    virtual ~SwapLinesCommand() override;
+
+    virtual bool execute() override;
+    virtual void undo() override;
+
+private:
+    bool do_swap(SwapDirection direction);
+
+    SwapDirection m_direction { SwapDirection::Down };
+    int m_end_line { 0 };
+    int m_end_index { 0 };
+    Selection m_end_selection;
+};

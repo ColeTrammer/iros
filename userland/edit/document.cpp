@@ -675,6 +675,16 @@ void Document::insert_line(Line&& line, int index) {
     m_panel.notify_line_count_changed();
 }
 
+void Document::rotate_lines_up(int start, int end) {
+    // Vector::rotate is exclusive, this is inclusive
+    m_lines.rotate_left(start, end + 1);
+}
+
+void Document::rotate_lines_down(int start, int end) {
+    // Vector::rotate is exclusive, this is inclusive
+    m_lines.rotate_right(start, end + 1);
+}
+
 void Document::copy() {
     if (m_selection.empty()) {
         String contents = line_at_cursor().contents();
@@ -893,7 +903,29 @@ void Document::enter_interactive_search() {
     m_panel.send_status_message(String::format("Found %d result(s)", m_search_result_count));
 }
 
+void Document::swap_lines_at_cursor(SwapDirection direction) {
+    push_command<SwapLinesCommand>(direction);
+}
+
 void Document::notify_key_pressed(KeyPress press) {
+    if (press.modifiers & KeyPress::Modifier::Alt) {
+        switch (press.key) {
+            case KeyPress::Key::DownArrow:
+                swap_lines_at_cursor(SwapDirection::Down);
+                break;
+            case KeyPress::Key::UpArrow:
+                swap_lines_at_cursor(SwapDirection::Up);
+                break;
+            default:
+                break;
+        }
+
+        if (needs_display()) {
+            display();
+        }
+        return;
+    }
+
     if (press.modifiers & KeyPress::Modifier::Control) {
         switch (press.key) {
             case KeyPress::Key::LeftArrow:

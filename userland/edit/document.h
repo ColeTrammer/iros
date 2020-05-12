@@ -16,6 +16,8 @@ enum class MovementMode { Move, Select };
 
 enum class DeleteCharMode { Backspace, Delete };
 
+enum class SwapDirection { Up, Down };
+
 enum class LineMode { Single, Multiple };
 
 class Document {
@@ -97,6 +99,8 @@ public:
 
     void remove_line(int index);
     void insert_line(Line&& line, int index);
+    void rotate_lines_up(int start, int end);
+    void rotate_lines_down(int start, int end);
 
     void merge_lines(int l1, int l2);
 
@@ -109,6 +113,7 @@ public:
     void restore_state(const StateSnapshot& state_snapshot);
 
     const Selection& selection() const { return m_selection; }
+    void set_selection(Selection selection) { m_selection = move(selection); }
     void delete_selection();
     void clear_selection();
     String selection_text() const;
@@ -130,6 +135,7 @@ private:
     void clear_search_results();
     void enter_interactive_search();
 
+    void swap_lines_at_cursor(SwapDirection direction);
     void split_line_at_cursor();
     void insert_char(char c);
     void delete_char(DeleteCharMode mode);
