@@ -127,12 +127,12 @@ const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) con
     static String highlight_string("\033[30;103m");
     static String selected_string("\033[107;30m");
 
-    if (metadata.highlighted()) {
-        return highlight_string;
-    }
-
     if (metadata.selected()) {
         return selected_string;
+    }
+
+    if (metadata.highlighted()) {
+        return highlight_string;
     }
 
     return default_string;
@@ -186,7 +186,7 @@ void TerminalPanel::draw_cursor() {
 }
 
 void TerminalPanel::draw_status_message() {
-    if (this != s_main_panel || !document()) {
+    if (this != s_main_panel || !document() || !m_show_status_bar) {
         return;
     }
 
@@ -521,9 +521,7 @@ void TerminalPanel::enter() {
             document->notify_key_pressed(press);
         }
 
-        if (this == s_main_panel) {
-            draw_status_message();
-        }
+        draw_status_message();
     }
 }
 
@@ -558,12 +556,64 @@ String TerminalPanel::prompt(const String& prompt) {
 }
 
 void TerminalPanel::enter_search(String starting_text) {
-    String result = enter_prompt("Find: ", starting_text);
+    printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
+    fputs("\033[0K", stdout);
+
+    String message = "Find: ";
+    int message_size = LIIM::min(message.size(), m_cols / 2);
+    printf("%.*s", m_cols / 2, message.string());
+    fflush(stdout);
+
+    TerminalPanel text_panel(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
+    s_prompt_panel = &text_panel;
+    s_prompt_message = message;
+
+    auto document = Document::create_single_line(text_panel, move(starting_text));
+    text_panel.set_document(move(document));
+    text_panel.document()->display();
+
+    m_show_status_bar = false;
+
+    fd_set set;
+    for (;;) {
+        FD_ZERO(&set);
+        FD_SET(STDIN_FILENO, &set);
+        int ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
+        if (ret == -1 && errno == EINTR) {
+            continue;
+        }
+
+        assert(ret >= 0);
+        if (ret == 0) {
+            continue;
+        }
+
+        auto maybe_press = read_key();
+        if (!maybe_press.has_value()) {
+            continue;
+        }
+
+        auto& press = maybe_press.value();
+        if (press.key == KeyPress::Key::Enter) {
+            TerminalPanel::document()->move_cursor_to_next_search_match();
+        }
+
+        if (press.key == KeyPress::Key::Escape) {
+            break;
+        }
+
+        text_panel.document()->notify_key_pressed(press);
+
+        auto search_text = text_panel.document()->content_string();
+        TerminalPanel::document()->set_search_text(search_text);
+        TerminalPanel::document()->display_if_needed();
+
+        text_panel.draw_cursor();
+    }
+
+    m_show_status_bar = true;
 
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
     draw_cursor();
-
-    assert(document());
-    document()->set_search_text(result);
 }

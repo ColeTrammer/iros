@@ -83,4 +83,5 @@ private:
     int m_col_offset { 0 };
     int m_cols_needed_for_line_numbers { 0 };
     bool m_stop_on_enter { false };
+    bool m_show_status_bar { true };
 };

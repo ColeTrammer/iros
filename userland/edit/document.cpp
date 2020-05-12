@@ -81,6 +81,12 @@ String Document::content_string() const {
     return ret;
 }
 
+void Document::display_if_needed() const {
+    if (needs_display()) {
+        display();
+    }
+}
+
 void Document::display() const {
     m_panel.clear();
     for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
@@ -482,6 +488,7 @@ void Document::undo() {
 
     auto& command = *m_command_stack[--m_command_stack_index];
     command.undo();
+    update_search_results();
 }
 
 Document::StateSnapshot Document::snapshot_state() const {
@@ -867,6 +874,7 @@ void Document::quit() {
 }
 
 void Document::update_search_results() {
+    clear_search_results();
     m_search_result_count = 0;
     if (m_search_text.is_empty()) {
         return;
@@ -899,6 +907,28 @@ void Document::set_search_text(String text) {
 
     m_search_text = move(text);
     update_search_results();
+}
+
+void Document::move_cursor_to_next_search_match() {
+    if (m_search_result_count <= 1) {
+        return;
+    }
+
+    for (;;) {
+        move_cursor_right();
+        if (cursor_at_document_end()) {
+            move_cursor_to_document_start();
+        }
+
+        auto& line = line_at_cursor();
+        int line_index = line_index_at_cursor();
+        if (strstr(line.contents().string() + line_index, m_search_text.string()) == line.contents().string() + line_index) {
+            for (int i = 0; i < m_search_text.size(); i++) {
+                move_cursor_right(MovementMode::Select);
+            }
+            return;
+        }
+    }
 }
 
 void Document::enter_interactive_search() {
@@ -1038,6 +1068,7 @@ void Document::notify_key_pressed(KeyPress press) {
             break;
         case KeyPress::Key::Escape:
             clear_search_results();
+            clear_selection();
             break;
         default:
             if (isascii(press.key)) {

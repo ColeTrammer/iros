@@ -45,6 +45,7 @@ public:
     ~Document();
 
     void display() const;
+    void display_if_needed() const;
 
     Panel& panel() { return m_panel; }
     const Panel& panel() const { return m_panel; }
@@ -74,6 +75,8 @@ public:
 
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);
+    int search_result_count() const { return m_search_result_count; }
+    void move_cursor_to_next_search_match();
 
     void move_cursor_left(MovementMode mode = MovementMode::Move);
     void move_cursor_right(MovementMode mode = MovementMode::Move);
@@ -174,6 +177,7 @@ private:
             m_command_stack.add(move(command));
             m_command_stack_index++;
             m_document_was_modified = true;
+            update_search_results();
         }
     }
 
