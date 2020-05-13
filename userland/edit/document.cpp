@@ -64,6 +64,7 @@ Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
+    guess_type_from_name();
 }
 
 Document::~Document() {}
@@ -782,6 +783,19 @@ void Document::go_to_line() {
     set_needs_display();
 }
 
+void Document::set_type(DocumentType type) {
+    m_type = type;
+}
+
+void Document::guess_type_from_name() {
+    char* extension_start = strrchr(m_name.string(), '.');
+    if (!extension_start) {
+        return;
+    }
+
+    m_type = document_type_from_extension(StringView(extension_start + 1, m_name.string() + m_name.size() - 1));
+}
+
 void Document::save() {
     struct stat st;
     if (m_name.is_empty()) {
@@ -794,6 +808,7 @@ void Document::save() {
         }
 
         m_name = move(result);
+        guess_type_from_name();
         st.st_mode = 0644;
     } else {
         if (stat(m_name.string(), &st)) {

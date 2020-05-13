@@ -3,6 +3,7 @@
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
+#include "document_type.h"
 #include "line.h"
 #include "selection.h"
 
@@ -130,6 +131,9 @@ public:
     int row_offset() const { return m_row_offset; }
     int col_offset() const { return m_col_offset; }
 
+    DocumentType type() const { return m_type; }
+    void set_type(DocumentType type);
+
 private:
     int clamp_cursor_to_line_end();
     void update_selection_state_for_mode(MovementMode mode);
@@ -155,6 +159,8 @@ private:
 
     void render_selection();
     void swap_selection_start_and_cursor();
+
+    void guess_type_from_name();
 
     template<typename C, typename... Args>
     void push_command(Args... args) {
@@ -202,4 +208,5 @@ private:
     bool m_show_line_numbers { false };
     bool m_convert_tabs_to_spaces { true };
     mutable bool m_needs_display { false };
+    DocumentType m_type { DocumentType::Text };
 };

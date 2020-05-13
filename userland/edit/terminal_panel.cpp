@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "document.h"
+#include "document_type.h"
 #include "key_press.h"
 #include "terminal_panel.h"
 
@@ -200,7 +201,8 @@ void TerminalPanel::draw_status_message() {
 
     auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
     auto position_string = String::format("%d,%d", document()->cursor_row_position() + 1, document()->cursor_col_position() + 1);
-    auto status_rhs = String::format("%s%s %9s", name.string(), document()->modified() ? "*" : " ", position_string.string());
+    auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document()->modified() ? "*" : " ",
+                                     document_type_to_string(document()->type()).string(), position_string.string());
 
     int width_for_message = m_cols - status_rhs.size() - 4;
     String fill_chars = "    ";
