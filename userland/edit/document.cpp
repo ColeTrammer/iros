@@ -177,11 +177,11 @@ void Document::move_cursor_right_by_word(MovementMode mode) {
     move_cursor_right(mode);
 
     auto& line = line_at_cursor();
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isalpha(char_at_cursor())) {
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isalnum(char_at_cursor())) {
         move_cursor_right(mode);
     }
 
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && isalpha(char_at_cursor())) {
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && isalnum(char_at_cursor())) {
         move_cursor_right(mode);
     }
 }
@@ -189,12 +189,12 @@ void Document::move_cursor_right_by_word(MovementMode mode) {
 void Document::move_cursor_left_by_word(MovementMode mode) {
     move_cursor_left(mode);
 
-    while (cursor_col_position() > 0 && !isalpha(char_at_cursor())) {
+    while (cursor_col_position() > 0 && !isalnum(char_at_cursor())) {
         move_cursor_left(mode);
     }
 
     bool found_word = false;
-    while (cursor_col_position() > 0 && isalpha(char_at_cursor())) {
+    while (cursor_col_position() > 0 && isalnum(char_at_cursor())) {
         move_cursor_left(mode);
         found_word = true;
     }
