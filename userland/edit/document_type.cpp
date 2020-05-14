@@ -2,6 +2,7 @@
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <sh/sh_lexer.h>
+#include <stdlib.h>
 
 #include "character_metadata.h"
 #include "document.h"
@@ -100,6 +101,23 @@ static void highlight_sh(Document& document) {
     if (lexer.tokens().empty()) {
         return;
     }
+
+    auto do_sort = [](const void* a, const void* b) -> int {
+        auto t1 = reinterpret_cast<const ShLexer::Token*>(a);
+        auto t2 = reinterpret_cast<const ShLexer::Token*>(b);
+
+        assert(t1->value().has_text());
+        assert(t2->value().has_text());
+
+        if (t1->value().line() < t2->value().line()) {
+            return -1;
+        } else if (t1->value().line() > t2->value().line()) {
+            return 1;
+        }
+        return t1->value().position() - t2->value().position();
+    };
+
+    qsort(const_cast<ShLexer::Token*>(lexer.tokens().vector()), lexer.tokens().size(), sizeof(ShLexer::Token), do_sort);
 
     int line_index = 0;
     int index_into_line = 0;
