@@ -185,17 +185,25 @@ bool Application::handle_keyboard_event(key_event event) {
             send_vt_escape(24, modifiers);
             return false;
         case KEY_1:
-            switch_to(0);
-            return false;
+            if (modifiers & KEY_CONTROL_ON) {
+                switch_to(0);
+                return false;
+            }
         case KEY_2:
-            switch_to(1);
-            return false;
+            if (modifiers & KEY_CONTROL_ON) {
+                switch_to(1);
+                return false;
+            }
         case KEY_3:
-            switch_to(2);
-            return false;
+            if (modifiers & KEY_CONTROL_ON) {
+                switch_to(2);
+                return false;
+            }
         case KEY_4:
-            switch_to(3);
-            return false;
+            if (modifiers & KEY_CONTROL_ON) {
+                switch_to(3);
+                return false;
+            }
         default:
             break;
     }
