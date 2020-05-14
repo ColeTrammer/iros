@@ -187,16 +187,16 @@ public:
     using Program = Vector<List>;
 
     ShValue() {}
-    ShValue(const StringView& text, size_t line, size_t position) : m_variant(Token { line, position, text }) {}
+    ShValue(const StringView& text, size_t line, size_t position) : m_token({ line, position, text }) {}
 
     ~ShValue() {}
 
-    size_t line() const { return m_variant.as<Token>().line; }
-    size_t position() const { return m_variant.as<Token>().position; }
+    size_t line() const { return m_token.value().line; }
+    size_t position() const { return m_token.value().position; }
 
-    const StringView& text() const { return m_variant.as<Token>().text; }
+    const StringView& text() const { return m_token.value().text; }
 
-    bool has_text() const { return m_variant.is<Token>(); }
+    bool has_text() const { return m_token.has_value(); }
 
     IoRedirect& io_redirect() { return m_variant.as<IoRedirect>(); }
     const IoRedirect& io_redirect() const { return m_variant.as<IoRedirect>(); }
@@ -460,17 +460,7 @@ public:
     }
 
 private:
-    Variant<Monostate, Token, IoRedirect, CaseClause::CaseItem, RedirectList, Command, Pipeline, ListComponent, List, List::Combinator,
-            Program>
+    Variant<Monostate, IoRedirect, CaseClause::CaseItem, RedirectList, Command, Pipeline, ListComponent, List, List::Combinator, Program>
         m_variant;
-    // Maybe<Token> m_variant;
-    // Maybe<IoRedirect> m_variant;
-    // Maybe<CaseClause::CaseItem> m_variant;
-    // Maybe<RedirectList> m_variant;
-    // Maybe<Command> m_variant;
-    // Maybe<Pipeline> m_variant;
-    // Maybe<ListComponent> m_variant;
-    // Maybe<List> m_variant;
-    // Maybe<List::Combinator> m_variant;
-    // Maybe<Program> m_variant;
+    Maybe<Token> m_token;
 };
