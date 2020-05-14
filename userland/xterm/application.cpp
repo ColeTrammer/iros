@@ -189,21 +189,25 @@ bool Application::handle_keyboard_event(key_event event) {
                 switch_to(0);
                 return false;
             }
+            break;
         case KEY_2:
             if (modifiers & KEY_CONTROL_ON) {
                 switch_to(1);
                 return false;
             }
+            break;
         case KEY_3:
             if (modifiers & KEY_CONTROL_ON) {
                 switch_to(2);
                 return false;
             }
+            break;
         case KEY_4:
             if (modifiers & KEY_CONTROL_ON) {
                 switch_to(3);
                 return false;
             }
+            break;
         default:
             break;
     }
@@ -213,7 +217,11 @@ bool Application::handle_keyboard_event(key_event event) {
     }
 
     if (event.flags & KEY_CONTROL_ON) {
-        event.ascii &= 0x1F;
+        if (event.key == KEY_BACKSPACE) {
+            event.ascii = 'W' & 0x1F;
+        } else {
+            event.ascii &= 0x1F;
+        }
     }
 
     write(mfd, &event.ascii, 1);
