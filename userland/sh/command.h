@@ -5,10 +5,9 @@
 #include <liim/stack.h>
 #include <liim/string.h>
 #include <liim/vector.h>
+#include <sh/sh_token.h>
 #include <stdio.h>
 #include <wordexp.h>
-
-#include "sh_token.h"
 
 #define MAX_REDIRECTIONS 10
 

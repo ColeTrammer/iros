@@ -7,6 +7,8 @@
 #include <liim/hash_map.h>
 #include <liim/linked_list.h>
 #include <liim/pointers.h>
+#include <sh/sh_lexer.h>
+#include <sh/sh_parser.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -29,8 +31,6 @@
 #include "builtin.h"
 #include "command.h"
 #include "job.h"
-#include "sh_lexer.h"
-#include "sh_parser.h"
 #include "sh_state.h"
 
 struct FunctionBody {

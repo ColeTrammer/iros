@@ -2,9 +2,8 @@
 #define _INPUT_H 1
 
 #include <liim/pointers.h>
+#include <sh/sh_token.h>
 #include <stdio.h>
-
-#include "sh_token.h"
 
 extern char *buffer;
 extern char *line_save;

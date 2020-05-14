@@ -4,6 +4,8 @@
 #include <liim/hash_map.h>
 #include <liim/string.h>
 #include <liim/vector.h>
+#include <sh/sh_lexer.h>
+#include <sh/sh_parser.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +27,6 @@
 #include "command.h"
 #include "input.h"
 #include "job.h"
-#include "sh_lexer.h"
-#include "sh_parser.h"
 #include "sh_state.h"
 
 static int op_exit(char **args) {

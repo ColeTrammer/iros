@@ -4,6 +4,8 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <setjmp.h>
+#include <sh/sh_lexer.h>
+#include <sh/sh_parser.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -21,8 +23,6 @@
 #include "command.h"
 #include "input.h"
 #include "job.h"
-#include "sh_lexer.h"
-#include "sh_parser.h"
 #include "sh_state.h"
 
 static sigjmp_buf env;

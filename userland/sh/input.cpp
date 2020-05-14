@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <liim/pointers.h>
 #include <pwd.h>
+#include <sh/sh_lexer.h>
+#include <sh/sh_parser.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -18,8 +20,6 @@
 #include "command.h"
 #include "input.h"
 #include "job.h"
-#include "sh_lexer.h"
-#include "sh_parser.h"
 
 enum class LineStatus { Done, Continue, EscapedNewline, Error };
 
