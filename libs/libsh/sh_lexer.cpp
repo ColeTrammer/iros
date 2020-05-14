@@ -170,7 +170,7 @@ bool ShLexer::lex(LexComments lex_comments) {
                             commit_token(ShTokenType::DLESS);
                         }
 
-                        while (isspace(peek())) {
+                        while (peek() == '\t' || peek() == ' ') {
                             consume();
                         }
 
@@ -203,6 +203,10 @@ bool ShLexer::lex(LexComments lex_comments) {
                         size_t cont_col_save = m_current_col;
 
                         StringView here_end(m_input_stream + word_start, m_input_stream + m_position - 1);
+                        if (m_position == word_start) {
+                            return false;
+                        }
+
                         while (peek() != '\n') {
                             consume();
                             if (peek() == EOF) {
@@ -247,11 +251,12 @@ bool ShLexer::lex(LexComments lex_comments) {
 
                             StringView entire_line(m_input_stream + line_start, m_input_stream + m_position - 1);
 
-                            if (m_position - line_start <= 1) {
+                            if (m_position - line_start == 0) {
                                 if (new_here_end.size() == 0) {
                                     goto heredoc_line_matches;
                                 }
 
+                                consume();
                                 continue; // Don't compare empty lines
                             }
 
@@ -278,7 +283,7 @@ bool ShLexer::lex(LexComments lex_comments) {
 
                         m_position = pos_save;
                         m_current_row = cont_row_save;
-                        m_current_row = cont_col_save;
+                        m_current_col = cont_col_save;
                     } else if (peek() == '>') {
                         consume();
                         commit_token(ShTokenType::LESSGREAT);

@@ -254,6 +254,9 @@ private:
             m_position = m_resume_pos;
             m_current_row = m_resume_row;
             m_current_col = m_resume_col;
+            m_resume_pos = 0;
+            m_resume_row = 0;
+            m_resume_col = 0;
         }
     }
 
