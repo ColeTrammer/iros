@@ -131,6 +131,7 @@ const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) con
     static String keyword_string("\033[0;1;32m");
     static String number_string("\033[0;31m");
     static String identifier_string("\033[0;1;93m");
+    static String comment_string("\033[0;90m");
 
     if (metadata.selected()) {
         return selected_string;
@@ -154,6 +155,10 @@ const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) con
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxIdentifier) {
         return identifier_string;
+    }
+
+    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxComment) {
+        return comment_string;
     }
 
     return default_string;

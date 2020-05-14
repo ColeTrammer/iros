@@ -67,6 +67,8 @@ int sh_flags_for_token_type(ShTokenType type) {
             return CharacterMetadata::Flags::SyntaxIdentifier;
         case ShTokenType::IO_NUMBER:
             return CharacterMetadata::Flags::SyntaxNumber;
+        case ShTokenType::COMMENT:
+            return CharacterMetadata::Flags::SyntaxComment;
         case ShTokenType::Case:
         case ShTokenType::Do:
         case ShTokenType::Done:
@@ -91,7 +93,7 @@ int sh_flags_for_token_type(ShTokenType type) {
 static void highlight_sh(Document& document) {
     auto contents = document.content_string();
     ShLexer lexer(contents.string(), contents.size());
-    if (!lexer.lex()) {
+    if (!lexer.lex(LexComments::Yes)) {
         return;
     }
 
