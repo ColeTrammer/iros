@@ -245,8 +245,8 @@ private:
 
     void set_resume_position() {
         m_resume_pos = m_position;
-        m_resume_col = m_current_row;
-        m_resume_row = m_current_col;
+        m_resume_row = m_current_row;
+        m_resume_col = m_current_col;
     }
 
     void resume_position_if_needed() {
