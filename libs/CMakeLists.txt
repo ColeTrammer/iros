@@ -12,6 +12,7 @@ set(TARGETS
     libgraphics
     libliim
     libprocinfo
+    libsh
     libws
 )
 
