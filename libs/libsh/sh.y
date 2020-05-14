@@ -6,6 +6,7 @@
 %token  NAME
 %token  NEWLINE
 %token  IO_NUMBER
+%token  COMMENT
 
 
 /* The following are the operators (see XBD Operator)

@@ -11,6 +11,8 @@
 
 #include "sh_token_type.h"
 
+enum class LexComments { Yes, No };
+
 class ShLexer final : public GenericLexer<ShTokenType, ShValue> {
 public:
     using Token = GenericToken<ShTokenType, ShValue>;
@@ -19,7 +21,7 @@ public:
         : GenericLexer<ShTokenType, ShValue>(), m_input_stream(input_stream), m_input_length(length) {}
     virtual ~ShLexer();
 
-    bool lex();
+    bool lex(LexComments lex_comments = LexComments::No);
 
     const Vector<Token>& tokens() const { return m_tokens; }
 

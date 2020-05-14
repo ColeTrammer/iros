@@ -11,7 +11,7 @@
 
 ShLexer::~ShLexer() {}
 
-bool ShLexer::lex() {
+bool ShLexer::lex(LexComments lex_comments) {
     bool in_d_quotes = false;
     bool in_s_quotes = false;
     bool prev_was_backslash = false;
@@ -76,8 +76,14 @@ bool ShLexer::lex() {
                 goto process_regular_character;
             case '#':
                 if (!m_current_token_start && !prev_was_backslash && !in_s_quotes && !in_d_quotes) {
+                    if (lex_comments == LexComments::Yes) {
+                        begin_token();
+                    }
                     while (peek() != '\n' && peek() != EOF) {
                         consume();
+                    }
+                    if (lex_comments == LexComments::Yes) {
+                        commit_token(ShTokenType::COMMENT);
                     }
                     break;
                 }
