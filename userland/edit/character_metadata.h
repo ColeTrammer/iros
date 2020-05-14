@@ -5,6 +5,12 @@ public:
     enum Flags {
         Highlighted = 1,
         Selected = 2,
+        SyntaxString = 4,
+        SyntaxOperator = 8,
+        SyntaxIdentifier = 16,
+        SyntaxNumber = 32,
+        SyntaxKeyword = 64,
+        SyntaxComment = 128,
     };
 
     CharacterMetadata() {}
@@ -32,6 +38,13 @@ public:
         }
     }
     void invert_selected() { m_flags ^= Flags::Selected; }
+
+    void clear_syntax_highlighting() { m_flags &= (Flags::Highlighted | Flags::Selected); }
+    void set_syntax_highlighting(int flags) {
+        clear_syntax_highlighting();
+        m_flags |= flags;
+    }
+    int syntax_highlighting() const { return m_flags & (~(Flags::Highlighted | Flags::Selected)); }
 
 private:
     int m_flags { 0 };

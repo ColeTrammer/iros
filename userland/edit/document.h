@@ -134,6 +134,15 @@ public:
     DocumentType type() const { return m_type; }
     void set_type(DocumentType type);
 
+    Line& line_at_index(int index) { return m_lines[index]; }
+    const Line& line_at_index(int index) const { return m_lines[index]; }
+
+    Line& first_line() { return m_lines.first(); }
+    const Line& first_line() const { return m_lines.first(); }
+
+    Line& last_line() { return m_lines.last(); }
+    const Line& last_line() const { return m_lines.last(); }
+
 private:
     int clamp_cursor_to_line_end();
     void update_selection_state_for_mode(MovementMode mode);
@@ -141,6 +150,8 @@ private:
     void update_search_results();
     void clear_search_results();
     void enter_interactive_search();
+
+    void update_syntax_highlighting();
 
     void swap_lines_at_cursor(SwapDirection direction);
     void split_line_at_cursor();
@@ -184,6 +195,7 @@ private:
             m_command_stack_index++;
             m_document_was_modified = true;
             update_search_results();
+            update_syntax_highlighting();
         }
     }
 

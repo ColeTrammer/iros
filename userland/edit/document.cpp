@@ -490,6 +490,7 @@ void Document::undo() {
     auto& command = *m_command_stack[--m_command_stack_index];
     command.undo();
     update_search_results();
+    update_syntax_highlighting();
 }
 
 Document::StateSnapshot Document::snapshot_state() const {
@@ -784,7 +785,12 @@ void Document::go_to_line() {
 }
 
 void Document::set_type(DocumentType type) {
+    if (type == m_type) {
+        return;
+    }
+
     m_type = type;
+    update_syntax_highlighting();
 }
 
 void Document::guess_type_from_name() {
@@ -793,7 +799,7 @@ void Document::guess_type_from_name() {
         return;
     }
 
-    m_type = document_type_from_extension(StringView(extension_start + 1, m_name.string() + m_name.size() - 1));
+    set_type(document_type_from_extension(StringView(extension_start + 1, m_name.string() + m_name.size() - 1)));
 }
 
 void Document::save() {
@@ -886,6 +892,13 @@ void Document::quit() {
     }
 
     exit(0);
+}
+
+void Document::update_syntax_highlighting() {
+    for (auto& line : m_lines) {
+        line.clear_syntax_highlighting();
+    }
+    highlight_document(*this);
 }
 
 void Document::update_search_results() {

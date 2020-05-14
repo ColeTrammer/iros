@@ -126,6 +126,12 @@ int Line::search(const String& text) {
     return matches;
 }
 
+void Line::clear_syntax_highlighting() {
+    for (auto& m : m_metadata) {
+        m.clear_syntax_highlighting();
+    }
+}
+
 void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
     int col_position = 0;
     int line_index = index_of_col_position(col_offset);

@@ -125,8 +125,12 @@ void TerminalPanel::clear() {
 
 const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {
     static String default_string("\033[0m");
-    static String highlight_string("\033[30;103m");
-    static String selected_string("\033[107;30m");
+    static String highlight_string("\033[0;30;103m");
+    static String selected_string("\033[0;107;30m");
+    static String operator_string("\033[0;36m");
+    static String keyword_string("\033[0;1;32m");
+    static String number_string("\033[0;31m");
+    static String identifier_string("\033[0;1;93m");
 
     if (metadata.selected()) {
         return selected_string;
@@ -134,6 +138,22 @@ const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) con
 
     if (metadata.highlighted()) {
         return highlight_string;
+    }
+
+    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxOperator) {
+        return operator_string;
+    }
+
+    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxKeyword) {
+        return keyword_string;
+    }
+
+    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxNumber) {
+        return number_string;
+    }
+
+    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxIdentifier) {
+        return identifier_string;
     }
 
     return default_string;

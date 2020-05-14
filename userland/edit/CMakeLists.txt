@@ -9,4 +9,4 @@ set(SOURCES
 )
 
 add_os_executable(edit bin)
-target_link_libraries(edit libliim)
+target_link_libraries(edit libliim libsh)

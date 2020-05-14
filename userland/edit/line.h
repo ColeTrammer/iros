@@ -44,6 +44,8 @@ public:
     void toggle_select_before(int index);
     void select_all();
 
+    void clear_syntax_highlighting();
+
     void render(Panel& panel, int col_offset, int row_in_panel) const;
 
 private:
