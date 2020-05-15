@@ -9,6 +9,7 @@ endif()
 set(TARGETS
     ${OS_LIBS}
     libc
+    libclanguage
     libgraphics
     libliim
     libprocinfo
