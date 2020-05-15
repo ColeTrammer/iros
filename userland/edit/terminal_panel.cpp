@@ -128,11 +128,11 @@ const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) con
     static String highlight_string("\033[0;30;103m");
     static String selected_string("\033[0;107;30m");
     static String operator_string("\033[0;36m");
-    static String keyword_string("\033[0;1;32m");
+    static String keyword_string("\033[0;35m");
     static String number_string("\033[0;31m");
     static String identifier_string("\033[0;1;93m");
     static String comment_string("\033[0;90m");
-    static String string_string("\033[0;35m");
+    static String string_string("\033[0;32m");
 
     if (metadata.selected()) {
         return selected_string;
