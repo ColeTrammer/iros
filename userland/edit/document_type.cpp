@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <clanguage/clexer.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <sh/sh_lexer.h>
@@ -41,7 +42,75 @@ LIIM::String document_type_to_string(DocumentType type) {
     }
 }
 
-int sh_flags_for_token_type(ShTokenType type) {
+static int c_flags_for_token_type(CLanguage::CToken::Type type) {
+    using CLanguage::CToken;
+    switch (type) {
+        case CToken::Type::CharacterLiteral:
+        case CToken::Type::StringLiteral:
+            return CharacterMetadata::Flags::SyntaxString;
+        case CToken::Type::NumericLiteral:
+            return CharacterMetadata::Flags::SyntaxNumber;
+        case CToken::Type::Comment:
+            return CharacterMetadata::Flags::SyntaxComment;
+
+#undef __ENUMERATE_C_KEYWORD
+#define __ENUMERATE_C_KEYWORD(n, s) \
+    case CToken::Type::Keyword##n:  \
+        return CharacterMetadata::Flags::SyntaxKeyword;
+            __ENUMERATE_C_KEYWORDS
+
+#undef __ENUMERATE_C_OP
+#define __ENUMERATE_C_OP(n, s)      \
+    case CToken::Type::Operator##n: \
+        return CharacterMetadata::Flags::SyntaxOperator;
+            __ENUMERATE_C_OPS
+
+        case CToken::Type::Identifier:
+        default:
+            return 0;
+    }
+}
+
+static void highlight_c(Document& document) {
+    auto contents = document.content_string();
+    CLanguage::CLexer lexer(contents.string(), contents.size());
+    if (!lexer.lex(CLanguage::CLexMode::IncludeComments)) {
+        return;
+    }
+
+    for (auto& token : lexer.tokens()) {
+        int flags = c_flags_for_token_type(token.type);
+
+        int line_start = token.start_line;
+        int index_start = token.start_col;
+        int line_end = token.end_line;
+        int index_end = token.end_col;
+
+        for (int li = line_start; li <= line_end; li++) {
+            if (li == line_end && index_end == 0) {
+                break;
+            }
+
+            auto& line = document.line_at_index(li);
+
+            int si = 0;
+            if (li == line_start) {
+                si = index_start;
+            }
+
+            int ei = line.length();
+            if (li == line_end) {
+                ei = index_end;
+            }
+
+            for (int i = si; i < ei; i++) {
+                line.metadata_at(i).set_syntax_highlighting(flags);
+            }
+        }
+    }
+}
+
+static int sh_flags_for_token_type(ShTokenType type) {
     switch (type) {
         case ShTokenType::Ampersand:
         case ShTokenType::Bang:
@@ -156,6 +225,9 @@ static void highlight_sh(Document& document) {
 
 void highlight_document(Document& document) {
     switch (document.type()) {
+        case DocumentType::C:
+            highlight_c(document);
+            return;
         case DocumentType::ShellScript:
             highlight_sh(document);
             return;
