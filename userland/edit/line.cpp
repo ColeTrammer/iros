@@ -149,4 +149,8 @@ void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
 
         line_index++;
     }
+
+    for (; col_position < panel.cols(); col_position++) {
+        panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
+    }
 }

@@ -89,7 +89,6 @@ void Document::display_if_needed() const {
 }
 
 void Document::display() const {
-    m_panel.clear();
     for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
         m_lines[line_num].render(const_cast<Document&>(*this).panel(), m_col_offset, line_num - m_row_offset);
     }
