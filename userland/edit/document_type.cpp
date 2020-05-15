@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <clanguage/clexer.h>
+#include <clanguage/cpplexer.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <sh/sh_lexer.h>
@@ -39,6 +40,83 @@ LIIM::String document_type_to_string(DocumentType type) {
             return "Text";
         default:
             assert(false);
+    }
+}
+
+static int cpp_flags_for_token_type(CLanguage::CPPToken::Type type) {
+    using CLanguage::CPPToken;
+    switch (type) {
+        case CPPToken::Type::CharacterLiteral:
+        case CPPToken::Type::StringLiteral:
+            return CharacterMetadata::Flags::SyntaxString;
+#undef __ENUMERATE_CPP_LITERAL
+#define __ENUMERATE_CPP_LITERAL(n, s) case CPPToken::Type::Literal##n:
+            __ENUMERATE_CPP_LITERALS
+        case CPPToken::Type::NumericLiteral:
+            return CharacterMetadata::Flags::SyntaxNumber;
+        case CPPToken::Type::Comment:
+            return CharacterMetadata::Flags::SyntaxComment;
+
+#undef __ENUMERATE_CPP_TYPE_TOKEN
+#define __ENUMERATE_CPP_TYPE_TOKEN(n, s) \
+    case CPPToken::Type::Type##n:        \
+        return CharacterMetadata::Flags::SyntaxKeyword;
+            __ENUMERATE_CPP_TYPE_TOKENS
+
+#undef __ENUMERATE_CPP_KEYWORD
+#define __ENUMERATE_CPP_KEYWORD(n, s) \
+    case CPPToken::Type::Keyword##n:  \
+        return CharacterMetadata::Flags::SyntaxKeyword;
+            __ENUMERATE_CPP_KEYWORDS
+
+#undef __ENUMERATE_CPP_OP
+#define __ENUMERATE_CPP_OP(n, s)      \
+    case CPPToken::Type::Operator##n: \
+        return CharacterMetadata::Flags::SyntaxOperator;
+            __ENUMERATE_CPP_OPS
+
+        case CPPToken::Type::Identifier:
+        default:
+            return 0;
+    }
+}
+
+static void highlight_cpp(Document& document) {
+    auto contents = document.content_string();
+    CLanguage::CPPLexer lexer(contents.string(), contents.size());
+    if (!lexer.lex(CLanguage::CPPLexMode::IncludeComments)) {
+        return;
+    }
+
+    for (auto& token : lexer.tokens()) {
+        int flags = cpp_flags_for_token_type(token.type);
+
+        int line_start = token.start_line;
+        int index_start = token.start_col;
+        int line_end = token.end_line;
+        int index_end = token.end_col;
+
+        for (int li = line_start; li <= line_end; li++) {
+            if (li == line_end && index_end == 0) {
+                break;
+            }
+
+            auto& line = document.line_at_index(li);
+
+            int si = 0;
+            if (li == line_start) {
+                si = index_start;
+            }
+
+            int ei = line.length();
+            if (li == line_end) {
+                ei = index_end;
+            }
+
+            for (int i = si; i < ei; i++) {
+                line.metadata_at(i).set_syntax_highlighting(flags);
+            }
+        }
     }
 }
 
@@ -225,6 +303,9 @@ static void highlight_sh(Document& document) {
 
 void highlight_document(Document& document) {
     switch (document.type()) {
+        case DocumentType::CPP:
+            highlight_cpp(document);
+            return;
         case DocumentType::C:
             highlight_c(document);
             return;
