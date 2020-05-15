@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/vector.h>
 #include <time.h>
@@ -69,6 +70,7 @@ private:
     int index(int row, int col) const { return row * m_cols + col; }
 
     Vector<Info> m_screen_info;
+    Vector<bool> m_dirty_rows;
     String m_status_message;
     time_t m_status_message_time { 0 };
     String m_prompt_buffer;

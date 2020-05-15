@@ -109,6 +109,10 @@ void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols
     m_row_offset = row_off;
     m_col_offset = col_off;
     m_screen_info.resize(m_rows * TerminalPanel::cols());
+    m_dirty_rows.resize(m_rows);
+    for (auto& b : m_dirty_rows) {
+        b = true;
+    }
 
     if (auto* doc = document()) {
         doc->notify_panel_size_changed();
@@ -252,7 +256,11 @@ void TerminalPanel::send_status_message(String message) {
 }
 
 void TerminalPanel::set_text_at(int row, int col, char c, CharacterMetadata metadata) {
-    m_screen_info[index(row, col)] = { c, metadata };
+    auto& info = m_screen_info[index(row, col)];
+    if (info.ch != c || info.metadata != metadata) {
+        m_screen_info[index(row, col)] = { c, metadata };
+        m_dirty_rows[row] = true;
+    }
 }
 
 void TerminalPanel::set_cursor(int row, int col) {
@@ -295,6 +303,11 @@ void TerminalPanel::flush() {
     fputs("\033[?25l", stdout);
 
     for (int r = 0; r < rows(); r++) {
+        if (!m_dirty_rows[r]) {
+            continue;
+        }
+        m_dirty_rows[r] = false;
+
         printf("\033[%d;%dH\033[0K", m_row_offset + r + 1, m_col_offset + 1);
 
         int line_number = document()->row_offset() + r + 1;
