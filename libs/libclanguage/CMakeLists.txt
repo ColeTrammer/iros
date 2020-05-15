@@ -1,5 +1,6 @@
 set(SOURCES
     clexer.cpp
+    cpplexer.cpp
 )
 
 add_os_library(libclanguage clanguage TRUE)

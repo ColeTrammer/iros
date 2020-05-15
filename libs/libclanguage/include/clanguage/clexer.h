@@ -121,13 +121,13 @@ struct CToken {
     Type type;
 };
 
-enum CLexMode { IgnoreComments, IncludeComments };
+enum class CLexMode { IgnoreComments, IncludeComments };
 
 class CLexer {
 public:
     CLexer(const char* input, size_t length) : m_input(input), m_length(length) {}
 
-    bool lex(CLexMode mode = IgnoreComments);
+    bool lex(CLexMode mode = CLexMode::IgnoreComments);
 
     const Vector<CToken>& tokens() const { return m_tokens; }
 

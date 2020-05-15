@@ -103,12 +103,13 @@ bool CLexer::lex(CLexMode mode) {
         }
 
 #undef __ENUMERATE_C_KEYWORD
-#define __ENUMERATE_C_KEYWORD(n, s)                                                                                       \
-    if (input_starts_with(StringView(s)) && (isspace(peek(StringView(s).size())) || peek(StringView(s).size()) == EOF)) { \
-        begin_token();                                                                                                    \
-        consume(StringView(s).size());                                                                                    \
-        commit_token(CToken::Type::Keyword##n);                                                                           \
-        continue;                                                                                                         \
+#define __ENUMERATE_C_KEYWORD(n, s)                                                                                      \
+    if (input_starts_with(StringView(s)) && !isalnum(peek(StringView(s).size())) && peek(StringView(s).size()) != '_' && \
+        peek(StringView(s).size()) != '$' && peek(StringView(s).size()) != EOF) {                                        \
+        begin_token();                                                                                                   \
+        consume(StringView(s).size());                                                                                   \
+        commit_token(CToken::Type::Keyword##n);                                                                          \
+        continue;                                                                                                        \
     }
         __ENUMERATE_C_KEYWORDS
 
