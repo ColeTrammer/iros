@@ -5,42 +5,51 @@
 
 namespace CLanguage {
 
-#define __ENUMERATE_C_KEYWORDS                     \
-    __ENUMERATE_C_KEYWORD(Auto, "auto")            \
-    __ENUMERATE_C_KEYWORD(Bool, "_Bool")           \
-    __ENUMERATE_C_KEYWORD(Break, "case")           \
-    __ENUMERATE_C_KEYWORD(Char, "char")            \
-    __ENUMERATE_C_KEYWORD(Complex, "_Complex")     \
-    __ENUMERATE_C_KEYWORD(Const, "const")          \
-    __ENUMERATE_C_KEYWORD(Continue, "continue")    \
-    __ENUMERATE_C_KEYWORD(Default, "default")      \
-    __ENUMERATE_C_KEYWORD(Do, "do")                \
-    __ENUMERATE_C_KEYWORD(Double, "double")        \
-    __ENUMERATE_C_KEYWORD(Else, "else")            \
-    __ENUMERATE_C_KEYWORD(Enum, "enum")            \
-    __ENUMERATE_C_KEYWORD(Extern, "extern")        \
-    __ENUMERATE_C_KEYWORD(Float, "float")          \
-    __ENUMERATE_C_KEYWORD(For, "for")              \
-    __ENUMERATE_C_KEYWORD(Goto, "goto")            \
-    __ENUMERATE_C_KEYWORD(If, "if")                \
-    __ENUMERATE_C_KEYWORD(Imaninary, "_Imaginary") \
-    __ENUMERATE_C_KEYWORD(Inline, "inline")        \
-    __ENUMERATE_C_KEYWORD(Int, "int")              \
-    __ENUMERATE_C_KEYWORD(Long, "long")            \
-    __ENUMERATE_C_KEYWORD(Register, "register")    \
-    __ENUMERATE_C_KEYWORD(Restrict, "restrict")    \
-    __ENUMERATE_C_KEYWORD(Return, "return")        \
-    __ENUMERATE_C_KEYWORD(Short, "short")          \
-    __ENUMERATE_C_KEYWORD(Signed, "signed")        \
-    __ENUMERATE_C_KEYWORD(Sizeof, "sizeof")        \
-    __ENUMERATE_C_KEYWORD(Static, "static")        \
-    __ENUMERATE_C_KEYWORD(Struct, "struct")        \
-    __ENUMERATE_C_KEYWORD(Switch, "switch")        \
-    __ENUMERATE_C_KEYWORD(Typedef, "typedef")      \
-    __ENUMERATE_C_KEYWORD(Union, "union")          \
-    __ENUMERATE_C_KEYWORD(Unsigned, "unsigned")    \
-    __ENUMERATE_C_KEYWORD(Void, "void")            \
-    __ENUMERATE_C_KEYWORD(Volatile, "volatile")    \
+#define __ENUMERATE_C_KEYWORDS                            \
+    __ENUMERATE_C_KEYWORD(AlignAs, "_Alignas")            \
+    __ENUMERATE_C_KEYWORD(AlignOf, "_AlignOf")            \
+    __ENUMERATE_C_KEYWORD(Atomic, "_Atomic")              \
+    __ENUMERATE_C_KEYWORD(Bool, "_Bool")                  \
+    __ENUMERATE_C_KEYWORD(Complex, "_Complex")            \
+    __ENUMERATE_C_KEYWORD(Generic, "_Generic")            \
+    __ENUMERATE_C_KEYWORD(Imaninary, "_Imaginary")        \
+    __ENUMERATE_C_KEYWORD(NoReturn, "_Noreturn")          \
+    __ENUMERATE_C_KEYWORD(StaticAssert, "_Static_assert") \
+    __ENUMERATE_C_KEYWORD(ThreadLocal, "_Thread_local")   \
+    __ENUMERATE_C_KEYWORD(Asm, "asm")                     \
+    __ENUMERATE_C_KEYWORD(Auto, "auto")                   \
+    __ENUMERATE_C_KEYWORD(Break, "break")                 \
+    __ENUMERATE_C_KEYWORD(Case, "case")                   \
+    __ENUMERATE_C_KEYWORD(Char, "char")                   \
+    __ENUMERATE_C_KEYWORD(Const, "const")                 \
+    __ENUMERATE_C_KEYWORD(Continue, "continue")           \
+    __ENUMERATE_C_KEYWORD(Default, "default")             \
+    __ENUMERATE_C_KEYWORD(Do, "do")                       \
+    __ENUMERATE_C_KEYWORD(Double, "double")               \
+    __ENUMERATE_C_KEYWORD(Else, "else")                   \
+    __ENUMERATE_C_KEYWORD(Enum, "enum")                   \
+    __ENUMERATE_C_KEYWORD(Extern, "extern")               \
+    __ENUMERATE_C_KEYWORD(Float, "float")                 \
+    __ENUMERATE_C_KEYWORD(For, "for")                     \
+    __ENUMERATE_C_KEYWORD(Goto, "goto")                   \
+    __ENUMERATE_C_KEYWORD(If, "if")                       \
+    __ENUMERATE_C_KEYWORD(Inline, "inline")               \
+    __ENUMERATE_C_KEYWORD(Int, "int")                     \
+    __ENUMERATE_C_KEYWORD(Long, "long")                   \
+    __ENUMERATE_C_KEYWORD(Register, "register")           \
+    __ENUMERATE_C_KEYWORD(Restrict, "restrict")           \
+    __ENUMERATE_C_KEYWORD(Return, "return")               \
+    __ENUMERATE_C_KEYWORD(Short, "short")                 \
+    __ENUMERATE_C_KEYWORD(Signed, "signed")               \
+    __ENUMERATE_C_KEYWORD(Sizeof, "sizeof")               \
+    __ENUMERATE_C_KEYWORD(Static, "static")               \
+    __ENUMERATE_C_KEYWORD(Struct, "struct")               \
+    __ENUMERATE_C_KEYWORD(Switch, "switch")               \
+    __ENUMERATE_C_KEYWORD(Typedef, "typedef")             \
+    __ENUMERATE_C_KEYWORD(Union, "union")                 \
+    __ENUMERATE_C_KEYWORD(Unsigned, "unsigned")           \
+    __ENUMERATE_C_KEYWORD(Void, "void")                   \
+    __ENUMERATE_C_KEYWORD(Volatile, "volatile")           \
     __ENUMERATE_C_KEYWORD(While, "while")
 
 #define __ENUMERATE_C_OPS                     \
