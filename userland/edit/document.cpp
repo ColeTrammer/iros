@@ -155,8 +155,18 @@ void Document::move_cursor_right(MovementMode mode) {
 
     m_max_cursor_col = new_col_position;
 
-    update_selection_state_for_mode(mode);
+    if (!m_selection.empty() && mode == MovementMode::Move) {
+        int line_end = m_selection.lower_line();
+        int index = m_selection.lower_index();
+        clear_selection();
+        move_cursor_to(line_end, index);
+        return;
+    }
+
     if (mode == MovementMode::Select) {
+        if (m_selection.empty()) {
+            m_selection.begin(cursor_row_position(), line_index_at_cursor());
+        }
         m_selection.set_end_index(index_into_line + 1);
         line.metadata_at(index_into_line).invert_selected();
         set_needs_display();
@@ -223,8 +233,18 @@ void Document::move_cursor_left(MovementMode mode) {
 
     m_max_cursor_col = new_col_position;
 
-    update_selection_state_for_mode(mode);
+    if (!m_selection.empty() && mode == MovementMode::Move) {
+        int line_start = m_selection.upper_line();
+        int index = m_selection.upper_index();
+        clear_selection();
+        move_cursor_to(line_start, index);
+        return;
+    }
+
     if (mode == MovementMode::Select) {
+        if (m_selection.empty()) {
+            m_selection.begin(cursor_row_position(), line_index_at_cursor());
+        }
         m_selection.set_end_index(index_into_line - 1);
         line.metadata_at(index_into_line - 1).invert_selected();
         set_needs_display();
