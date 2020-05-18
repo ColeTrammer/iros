@@ -43,6 +43,8 @@ public:
     int col_offset() const { return m_col_offset; }
     int row_offset() const { return m_row_offset; }
 
+    virtual void do_open_prompt() override;
+
 private:
     struct Info {
         char ch;

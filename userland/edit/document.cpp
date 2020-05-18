@@ -1046,6 +1046,11 @@ void Document::notify_key_pressed(KeyPress press) {
                     set_show_line_numbers(!m_show_line_numbers);
                 }
                 break;
+            case 'O':
+                if (!single_line_mode()) {
+                    m_panel.do_open_prompt();
+                }
+                break;
             case 'Q':
             case 'W':
                 quit();

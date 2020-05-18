@@ -39,7 +39,6 @@ int main(int argc, char** argv) {
     }
 
     panel.set_document(move(document));
-    panel.document()->display();
     panel.enter();
     return 0;
 }

@@ -176,6 +176,7 @@ const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) con
 void TerminalPanel::document_did_change() {
     if (document()) {
         notify_line_count_changed();
+        document()->display();
     }
 }
 
@@ -297,6 +298,17 @@ void TerminalPanel::flush_row(int row) {
         fputc('\r', stdout);
         fputc('\n', stdout);
     }
+}
+
+void TerminalPanel::do_open_prompt() {
+    auto result = prompt("Open: ");
+    auto document = Document::create_from_file(result.string(), *this);
+    if (!document) {
+        send_status_message(String::format("Failed to open `%s'", result.string()));
+        return;
+    }
+
+    set_document(move(document));
 }
 
 void TerminalPanel::flush() {
@@ -585,7 +597,6 @@ String TerminalPanel::enter_prompt(const String& message, String staring_text) {
 
     auto document = Document::create_single_line(text_panel, move(staring_text));
     text_panel.set_document(move(document));
-    text_panel.document()->display();
     text_panel.enter();
 
     return text_panel.document()->content_string();
@@ -615,7 +626,6 @@ void TerminalPanel::enter_search(String starting_text) {
 
     auto document = Document::create_single_line(text_panel, move(starting_text));
     text_panel.set_document(move(document));
-    text_panel.document()->display();
 
     m_show_status_bar = false;
 
