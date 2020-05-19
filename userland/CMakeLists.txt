@@ -51,6 +51,7 @@ set(TARGETS
     uname
     uniq
     which
+    whoami
     window_server
     yes
 )
