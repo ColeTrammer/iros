@@ -57,6 +57,7 @@ struct host_mapping *lookup_host(char *host) {
 
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (fd == -1) {
+        free(message);
         perror("socket");
         return NULL;
     }
@@ -64,6 +65,7 @@ struct host_mapping *lookup_host(char *host) {
     struct timeval tv = { 1, 0 };
     if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) == -1) {
         perror("setsockopt");
+        free(message);
         return NULL;
     }
 
@@ -74,8 +76,11 @@ struct host_mapping *lookup_host(char *host) {
 
     if (sendto(fd, message, new_len, 0, (const struct sockaddr *) &dest, sizeof(struct sockaddr_in)) == -1) {
         perror("sendto");
+        free(message);
         return NULL;
     }
+
+    free(message);
 
     struct sockaddr_in source = { 0 };
     socklen_t source_len = sizeof(struct sockaddr_in);
