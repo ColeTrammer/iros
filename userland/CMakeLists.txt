@@ -48,6 +48,7 @@ set(TARGETS
     tee
     touch
     true
+    tty
     uname
     uniq
     which
