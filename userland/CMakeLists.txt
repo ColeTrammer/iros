@@ -10,6 +10,7 @@ endif()
 
 set(TARGETS
     ${OS_TARGETS}
+    about
     basename
     cat
     chmod
