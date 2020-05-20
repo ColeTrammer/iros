@@ -8,6 +8,7 @@ endif()
 
 set(TARGETS
     ${OS_LIBS}
+    libapp
     libc
     libclanguage
     libgraphics
