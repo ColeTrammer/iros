@@ -1,5 +1,6 @@
 if (NOT ${NATIVE_BUILD})
     set(OS_TARGETS
+        about
         chown
         ping
         stat
@@ -10,7 +11,6 @@ endif()
 
 set(TARGETS
     ${OS_TARGETS}
-    about
     basename
     cat
     chmod
@@ -24,6 +24,7 @@ set(TARGETS
     echo
     edit
     env
+    expand
     false
     grep
     head
