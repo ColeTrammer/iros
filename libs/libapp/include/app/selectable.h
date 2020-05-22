@@ -4,7 +4,7 @@
 
 namespace App {
 
-enum NotifyOn {
+enum NotifyWhen {
     Readable = 1,
     Writeable = 2,
     Exceptional = 4,
@@ -22,11 +22,11 @@ public:
 
     int fd() const { return m_fd; }
 
-protected:
     virtual void notify_readable() {}
     virtual void notify_writeable() {}
     virtual void notify_exceptional() {}
 
+protected:
     void set_fd(int fd) { m_fd = fd; }
 
 private:
