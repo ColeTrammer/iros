@@ -1,5 +1,7 @@
 set(SOURCES
+    event_loop.cpp
     object.cpp
+    selectable.cpp
     widget.cpp
     window.cpp
 )
