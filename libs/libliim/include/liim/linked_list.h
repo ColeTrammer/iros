@@ -57,6 +57,7 @@ public:
     }
 
     int size() const { return m_size; }
+    bool empty() const { return size() == 0; }
 
     void prepend(const T& to_add) {
         auto* next = new LinkedListObj<T>(to_add);
