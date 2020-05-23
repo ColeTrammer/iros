@@ -6,6 +6,7 @@
 namespace App {
 
 class Event;
+class Object;
 class Selectable;
 
 class EventLoop {
@@ -19,7 +20,7 @@ public:
     static void unregister_selectable(Selectable& selectable);
 
     void enter();
-    void queue_event(UniquePtr<Event> event);
+    void queue_event(WeakPtr<Object> target, UniquePtr<Event> event);
 
     void set_should_exit(bool b) { m_should_exit = b; }
 
@@ -27,7 +28,12 @@ private:
     void do_select();
     void do_event_dispatch();
 
-    Vector<UniquePtr<Event>> m_events;
+    struct QueuedEvent {
+        WeakPtr<Object> target;
+        UniquePtr<Event> event;
+    };
+
+    Vector<QueuedEvent> m_events;
     bool m_should_exit { false };
 };
 

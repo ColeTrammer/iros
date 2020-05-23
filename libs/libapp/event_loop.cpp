@@ -22,8 +22,8 @@ EventLoop::EventLoop() {}
 
 EventLoop::~EventLoop() {}
 
-void EventLoop::queue_event(UniquePtr<Event> event) {
-    m_events.add(move(event));
+void EventLoop::queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
+    m_events.add({ move(target), move(event) });
 }
 
 void EventLoop::do_select() {
@@ -91,8 +91,9 @@ void EventLoop::do_event_dispatch() {
         }
 
         for (auto& event : events) {
-            // dispatch events somewhere.
-            (void) event;
+            if (auto target = event.target.lock()) {
+                target->on_event(*event.event);
+            }
         }
     }
 }

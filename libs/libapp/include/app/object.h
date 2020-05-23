@@ -5,6 +5,8 @@
 
 namespace App {
 
+class Event;
+
 class Object {
 public:
     template<typename... Args>
@@ -29,6 +31,8 @@ public:
     const Object* parent() const { return m_parent; }
 
     void set_parent(Object* parent) { m_parent = parent; }
+
+    virtual void on_event(Event&) {}
 
 protected:
     Object();
