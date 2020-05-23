@@ -38,6 +38,7 @@ set(TARGETS
     paste
     ps
     pwd
+    readlink
     realpath
     rm
     rmdir
