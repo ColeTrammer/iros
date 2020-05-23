@@ -103,19 +103,23 @@ UniquePtr<T> make_unique(Args&&... args) {
 
 class SharedPtrControlBlock {
 public:
-    explicit SharedPtrControlBlock() : m_ref_count(1) {}
-
     ~SharedPtrControlBlock() { assert(m_ref_count == 0); }
 
     int ref_count() const { return m_ref_count; }
-
     void ref() { m_ref_count++; }
-
     void deref() { m_ref_count--; }
 
+    int weak_ref_count() { return m_weak_ref_count; }
+    void weak_ref() { m_weak_ref_count++; }
+    void weak_deref() { m_weak_ref_count--; }
+
 private:
-    int m_ref_count;
+    int m_ref_count { 1 };
+    int m_weak_ref_count { 0 };
 };
+
+template<typename T>
+class WeakPtr;
 
 template<typename T>
 class SharedPtr {
@@ -133,8 +137,10 @@ public:
 
         m_control_block->deref();
         if (m_control_block->ref_count() == 0) {
-            delete m_control_block;
             delete m_ptr;
+            if (m_control_block->weak_ref_count() == 0) {
+                delete m_control_block;
+            }
         }
         m_control_block = nullptr;
         m_ptr = nullptr;
@@ -244,6 +250,10 @@ private:
     template<typename U>
     friend class SharedPtr;
 
+    template<typename U>
+    friend class WeakPtr;
+    SharedPtr(SharedPtrControlBlock* control_block, T* ptr) : m_ptr(ptr), m_control_block(control_block) {}
+
     T* m_ptr { nullptr };
     SharedPtrControlBlock* m_control_block { nullptr };
 };
@@ -257,18 +267,138 @@ template<typename T, class... Args>
 SharedPtr<T> make_shared(Args&&... args) {
     return SharedPtr<T>(new T(forward<Args>(args)...));
 }
+
+template<typename T>
+class WeakPtr {
+public:
+    constexpr WeakPtr() {}
+
+    WeakPtr(const WeakPtr& other) : m_control_block(other.m_control_block), m_ptr(other.m_ptr) {
+        if (m_control_block) {
+            m_control_block->weak_ref();
+        }
+    }
+
+    template<typename U>
+    WeakPtr(const WeakPtr<U>& other) : m_control_block(other.m_control_block), m_ptr(static_cast<T*>(other.m_ptr)) {
+        if (m_control_block) {
+            m_control_block->weak_ref();
+        }
+    }
+
+    WeakPtr(WeakPtr&& other) : m_control_block(other.m_control_block), m_ptr(other.m_ptr) {
+        other.m_control_block = nullptr;
+        other.m_ptr = nullptr;
+    }
+
+    template<typename U>
+    WeakPtr(WeakPtr<U>&& other) : m_control_block(other.m_control_block), m_ptr(static_cast<T*>(other.m_ptr)) {
+        other.m_control_block = nullptr;
+        other.m_ptr = nullptr;
+    }
+
+    template<typename U>
+    WeakPtr(const SharedPtr<U>& s) : m_control_block(s.m_control_block), m_ptr(static_cast<T*>(s.m_ptr)) {
+        if (m_control_block) {
+            m_control_block->weak_ref();
+        }
+    }
+
+    ~WeakPtr() { reset(); }
+
+    WeakPtr& operator=(const WeakPtr& other) {
+        WeakPtr temp(other);
+        swap(temp);
+        return *this;
+    }
+
+    template<typename U>
+    WeakPtr& operator=(const WeakPtr<U>& other) {
+        WeakPtr temp(other);
+        swap(temp);
+        return *this;
+    }
+
+    WeakPtr& operator=(WeakPtr&& other) {
+        WeakPtr temp(move(other));
+        swap(temp);
+        return *this;
+    }
+
+    template<typename U>
+    WeakPtr& operator=(WeakPtr<U>&& other) {
+        WeakPtr temp(move(other));
+        swap(temp);
+        return *this;
+    }
+
+    template<typename U>
+    WeakPtr& operator=(const SharedPtr<U>& other) {
+        WeakPtr temp(other);
+        swap(temp);
+        return *this;
+    }
+
+    void reset() {
+        if (m_control_block) {
+            m_control_block->weak_deref();
+            if (m_control_block->ref_count() == 0 && m_control_block->weak_ref_count() == 0) {
+                delete m_control_block;
+            }
+        }
+        m_control_block = nullptr;
+        m_ptr = nullptr;
+    }
+
+    void swap(WeakPtr& other) {
+        LIIM::swap(this->m_control_block, other.m_control_block);
+        LIIM::swap(this->m_ptr, other.m_ptr);
+    }
+
+    int use_count() const {
+        if (!m_control_block) {
+            return 0;
+        }
+        return m_control_block->ref_count();
+    }
+    bool expired() const { return use_count() == 0; }
+
+    SharedPtr<T> lock() const {
+        if (!m_control_block || expired()) {
+            return SharedPtr<T>();
+        }
+        m_control_block->ref();
+        return SharedPtr<T>(m_control_block, m_ptr);
+    }
+
+private:
+    template<typename U>
+    friend class WeakPtr;
+
+    SharedPtrControlBlock* m_control_block { nullptr };
+    T* m_ptr { nullptr };
+};
+
+template<typename T>
+void swap(WeakPtr<T>& a, WeakPtr<T>& b) {
+    a.swap(b);
+}
+
 }
 
 using LIIM::make_shared;
 using LIIM::make_unique;
 using LIIM::SharedPtr;
 using LIIM::UniquePtr;
+using LIIM::WeakPtr;
 #else
 #include <memory>
 template<typename T>
 using SharedPtr = std::shared_ptr<T>;
 template<typename T>
 using UniquePtr = std::unique_ptr<T>;
+template<typename T>
+using WeakPtr = std::weak_ptr<T>;
 using std::make_shared;
 using std::make_unique;
 #endif

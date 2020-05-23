@@ -20,4 +20,19 @@ int main() {
 
     test3->test();
     test2->test();
+
+    WeakPtr<Test> w1(test2);
+    assert(!w1.expired());
+    w1.lock()->test();
+
+    auto test4 = w1.lock();
+
+    test2 = nullptr;
+    test3 = nullptr;
+
+    test4->test();
+    test4 = nullptr;
+
+    assert(w1.expired());
+    assert(!w1.lock());
 }
