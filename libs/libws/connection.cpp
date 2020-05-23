@@ -41,6 +41,13 @@ SharedPtr<Window> Connection::create_window(int x, int y, int width, int height,
     return Window::construct(Rect(x, y, width, height), created_data, *this);
 }
 
+UniquePtr<Message> Connection::recieve_message() {
+    uint8_t buffer[4096];
+    auto* message = reinterpret_cast<Message*>(buffer);
+    read(m_fd, buffer, sizeof(buffer));
+    return make_unique<Message>(*message);
+}
+
 void Connection::send_swap_buffer_request(wid_t wid) {
     auto swap_buffer_request = WindowServer::Message::SwapBufferRequest::create(wid);
     assert(write(m_fd, swap_buffer_request.get(), swap_buffer_request->total_size()) != -1);

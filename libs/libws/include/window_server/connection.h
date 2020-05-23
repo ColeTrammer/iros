@@ -29,6 +29,8 @@ public:
 
     int fd() const { return m_fd; }
 
+    UniquePtr<Message> recieve_message();
+
 private:
     friend class Window;
 

@@ -1,4 +1,5 @@
 set(SOURCES
+    app.cpp
     event_loop.cpp
     object.cpp
     selectable.cpp
