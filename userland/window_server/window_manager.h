@@ -47,6 +47,7 @@ private:
     int m_fb { -1 };
     int m_mouse_x { 0 };
     int m_mouse_y { 0 };
+    Rect m_previous_cursor_rect;
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
     Vector<SharedPtr<Window>> m_windows;

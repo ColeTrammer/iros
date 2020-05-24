@@ -56,7 +56,6 @@ void WindowManager::remove_windows_of_client(int client_id) {
 
 void WindowManager::draw() {
     Renderer renderer(*m_back_buffer);
-    renderer.set_color(Color(255, 255, 255));
 
     auto render_window = [&](auto& window) {
         renderer.draw_rect(window->rect());
@@ -75,7 +74,9 @@ void WindowManager::draw() {
         }
     };
 
-    m_back_buffer->clear();
+    renderer.set_color(Color(0, 0, 0));
+    renderer.fill_rect(m_previous_cursor_rect);
+    renderer.set_color(Color(255, 255, 255));
 
     for_each_window(render_window);
 
@@ -86,6 +87,7 @@ void WindowManager::draw() {
             }
         }
     }
+    m_previous_cursor_rect = { m_mouse_x, m_mouse_y, cursor_width, cursor_height };
 
     swap_buffers();
 }
