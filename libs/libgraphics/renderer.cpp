@@ -54,8 +54,9 @@ void Renderer::render_text(int x, int y, const String& text, const Font& font) {
     for (int k = 0; k < text.size(); k++) {
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 8; j++) {
-                m_pixels.put_pixel(k * 8 + x - j + 7, y + i,
-                                   font.get_for_character(text[k])->get(i * 8 + j) ? color().color() : 0xFF000000);
+                if (font.get_for_character(text[k])->get(i * 8 + j)) {
+                    m_pixels.put_pixel(k * 8 + x - j + 7, y + i, color().color());
+                }
             }
         }
     }
