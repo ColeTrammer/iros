@@ -12,8 +12,8 @@ endif()
 add_compile_definitions("ARCH=${ARCH}")
 add_compile_definitions("_OS_2_SOURCE")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -Wextra -Werror -fdiagnostics-color=always -fno-omit-frame-pointer -std=gnu2x")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -Werror -fconcepts -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -Wextra -fdiagnostics-color=always -fno-omit-frame-pointer -std=gnu2x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -fconcepts -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer")
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -42,6 +42,8 @@ else()
     set(PTHREAD_LIB libpthread)
     set(REALTIME_LIB librt)
     include_directories(libs/libc/include)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
 
 function(install_headers)
