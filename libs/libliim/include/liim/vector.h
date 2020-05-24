@@ -34,7 +34,6 @@ public:
     Vector(Vector&& other) : m_capacity(other.capacity()), m_size(other.size()), m_vector(other.vector()) {
         other.m_vector = nullptr;
         other.m_size = 0;
-        other.m_capacity = 0;
     }
 
     Vector(const T* buffer, int num_elements) : m_capacity(num_elements), m_size(num_elements) {
@@ -415,6 +414,7 @@ private:
 
     void allocate_vector() {
         T* replacement = static_cast<T*>(malloc(m_capacity * sizeof(T)));
+        assert(replacement);
         if (!m_vector) {
             m_vector = replacement;
             return;
