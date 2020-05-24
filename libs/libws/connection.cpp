@@ -14,7 +14,7 @@
 
 namespace WindowServer {
 
-Connection::Connection() : m_fd(socket(AF_UNIX, SOCK_STREAM, 0)) {
+Connection::Connection() : m_fd(socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) {
     assert(m_fd != -1);
 
     sockaddr_un addr;
