@@ -12,6 +12,8 @@ do
     case $opt in
         g)   enable_graphics='graphics=1';;
         ?)   print_usage_and_exit
+             return $?
+             ;;
     esac
 done
 
