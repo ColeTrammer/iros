@@ -4,8 +4,8 @@ if (NOT ${NATIVE_BUILD})
         chown
         ping
         stat
+        terminal
         top
-        xterm
     )
 endif()
 

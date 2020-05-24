@@ -74,15 +74,15 @@ int main(int argc, char **argv) {
     spawn_process(nslookup_args, 0, 0, false);
 
     if (!use_graphics) {
-        char *xterm_args[] = { "/bin/xterm-vga", NULL };
-        spawn_process(xterm_args, 100, 100, false);
+        char *terminal_args[] = { "/bin/terminal-vga", NULL };
+        spawn_process(terminal_args, 100, 100, false);
     } else {
         char *window_server_args[] = { "/bin/window_server", NULL };
         spawn_process(window_server_args, 0, 0, false);
 
         sleep(1);
 
-        char *window_server_test_args[] = { "/bin/xterm", NULL };
+        char *window_server_test_args[] = { "/bin/terminal", NULL };
         spawn_process(window_server_test_args, 100, 100, false);
     }
 
