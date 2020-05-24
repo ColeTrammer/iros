@@ -17,21 +17,39 @@ VgaBuffer::~VgaBuffer() {}
 #ifdef KERNEL_NO_GRAPHICS
 void VgaBuffer::refresh() {}
 #else
+void VgaBuffer::restore_cursor_pixels() {
+    if (m_cursor_was_drawn) {
+        for (int r = 0; r < 16; r++) {
+            for (int c = 0; c < 8; c++) {
+                window().pixels()->put_pixel(c + m_drawn_cursor_col * 8, r + m_drawn_cursor_row * 16, m_cursor_location_save[r][c]);
+            }
+        }
+    }
+
+    m_cursor_location_save.clear();
+    m_cursor_was_drawn = false;
+}
+
 void VgaBuffer::refresh() {
-    Vector<Vector<uint32_t>> square_save;
+    restore_cursor_pixels();
+
     if (m_is_cursor_enabled) {
+        m_cursor_was_drawn = true;
+        m_drawn_cursor_row = m_cursor_row;
+        m_drawn_cursor_col = m_cursor_col;
+
         for (int r = 0; r < 16; r++) {
             auto row = Vector<uint32_t>();
             for (int c = 0; c < 8; c++) {
                 row.add(window().pixels()->get_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16));
             }
-            square_save.add(move(row));
+            m_cursor_location_save.add(move(row));
         }
 
-        Color bg = square_save[0][0];
+        Color bg = m_cursor_location_save[0][0];
         Color fg = bg.invert();
-        for (int r = 0; r < square_save.size(); r++) {
-            auto& row = square_save[r];
+        for (int r = 0; r < m_cursor_location_save.size(); r++) {
+            auto& row = m_cursor_location_save[r];
             for (int c = 0; c < row.size(); c++) {
                 if (bg.color() != row[c]) {
                     fg = row[c];
@@ -44,7 +62,7 @@ void VgaBuffer::refresh() {
         Renderer renderer(*window().pixels());
         for (int r = 0; r < 16; r++) {
             for (int c = 0; c < 8; c++) {
-                if (bg == square_save[r][c]) {
+                if (bg == m_cursor_location_save[r][c]) {
                     window().pixels()->put_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16, fg);
                 } else {
                     window().pixels()->put_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16, bg);
@@ -54,14 +72,6 @@ void VgaBuffer::refresh() {
     }
 
     window().draw();
-
-    if (m_is_cursor_enabled) {
-        for (int r = 0; r < 16; r++) {
-            for (int c = 0; c < 8; c++) {
-                window().pixels()->put_pixel(c + m_cursor_col * 8, r + m_cursor_row * 16, square_save[r][c]);
-            }
-        }
-    }
 }
 #endif /* KERNEL_NO_GRRAPHICS */
 
@@ -103,6 +113,14 @@ void VgaBuffer::draw(int row, int col, char ch, VgaColor fg, VgaColor bg) {
 
     renderer.set_color(fg);
     renderer.render_text(col * 8, row * 16, text, m_bold ? Font::bold_font() : Font::default_font());
+
+    if (m_cursor_was_drawn && row == m_drawn_cursor_row && col == m_drawn_cursor_col) {
+        for (int r = 0; r < 16; r++) {
+            for (int c = 0; c < 8; c++) {
+                m_cursor_location_save[r][c] = window().pixels()->get_pixel(c + m_drawn_cursor_col * 8, r + m_drawn_cursor_row * 16);
+            }
+        }
+    }
 }
 #endif /* KERNEL_NO_GRAPHICS */
 
@@ -133,6 +151,8 @@ VgaBuffer::Row VgaBuffer::scroll_up(const Row* replacement [[maybe_unused]]) {
     }
     return first_row;
 #else
+    restore_cursor_pixels();
+
     Row first_row(window().pixels()->pixels(), width() * 16 * 8);
 
     size_t raw_offset = (height() - 1) * width() * 16 * 8;
@@ -163,6 +183,8 @@ VgaBuffer::Row VgaBuffer::scroll_down(const Row* replacement [[maybe_unused]]) {
     }
     return last_row;
 #else
+    restore_cursor_pixels();
+
     size_t raw_offset = (height() - 1) * width() * 16 * 8;
     Row last_row(window().pixels()->pixels() + raw_offset, width() * 16 * 8);
 

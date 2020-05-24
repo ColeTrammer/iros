@@ -82,6 +82,12 @@ private:
     WindowServer::Window& window() { return m_graphics_container.window(); }
     void draw(int row, int col, char c, Color fg, Color bg);
     uint32_t* buffer() { return window().pixels()->pixels(); }
+    void restore_cursor_pixels();
+
+    bool m_cursor_was_drawn { false };
+    Vector<Vector<uint32_t>> m_cursor_location_save;
+    int m_drawn_cursor_row { 0 };
+    int m_drawn_cursor_col { 0 };
 #endif /* KERNEL_NO_GRAPHICS */
 
     bool m_is_cursor_enabled { true };
