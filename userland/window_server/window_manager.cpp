@@ -58,6 +58,10 @@ void WindowManager::draw() {
     Renderer renderer(*m_back_buffer);
 
     auto render_window = [&](auto& window) {
+        renderer.set_color(Color(0, 0, 0));
+        renderer.fill_rect(window->rect().x() + 1, window->rect().y(), window->rect().width() - 1, 21);
+        renderer.set_color(Color(255, 255, 255));
+
         renderer.draw_rect(window->rect());
         for (int x = window->rect().x(); x < window->rect().x() + window->rect().width(); x++) {
             m_back_buffer->put_pixel(x, window->rect().y() + 21, Color(255, 255, 255));
