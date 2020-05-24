@@ -13,6 +13,7 @@ public:
     WindowServer::Connection& ws_connection() { return m_connection; }
 
     void enter() { return m_loop.enter(); }
+    EventLoop& main_event_loop() { return m_loop; }
 
 private:
     void setup_ws_connection_notifier();
