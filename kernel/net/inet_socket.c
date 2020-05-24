@@ -272,11 +272,11 @@ int net_inet_listen(struct socket *socket) {
 int net_inet_socket(int domain, int type, int protocol) {
     assert(domain == AF_INET);
 
-    if (protocol == 0 && type == SOCK_DGRAM) {
+    if (protocol == 0 && (type & SOCK_TYPE_MASK) == SOCK_DGRAM) {
         protocol = IPPROTO_UDP;
     }
 
-    if (protocol == 0 && type == SOCK_STREAM) {
+    if (protocol == 0 && (type & SOCK_TYPE_MASK) == SOCK_STREAM) {
         protocol = IPPROTO_TCP;
     }
 

@@ -12,6 +12,7 @@
 #define SOCK_SEQPACKET 3
 #define SOCK_STREAM    4
 #define SOCK_NONBLOCK  0x100
+#define SOCK_CLOEXEC   0x200
 
 #define AF_UNSPEC 0
 #define AF_INET   1

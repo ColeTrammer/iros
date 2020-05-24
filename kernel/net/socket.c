@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,7 +97,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
     for (int i = 0; i < FOPEN_MAX; i++) {
         if (current->process->files[i].file == NULL) {
             current->process->files[i].file = calloc(1, sizeof(struct file));
-            current->process->files[i].fd_flags = 0;
+            current->process->files[i].fd_flags = (type & SOCK_CLOEXEC) ? FD_CLOEXEC : 0;
             current->process->files[i].file->flags = FS_SOCKET;
             current->process->files[i].file->f_op = &socket_file_ops;
             current->process->files[i].file->ref_count = 1;
