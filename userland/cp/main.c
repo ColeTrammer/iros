@@ -137,7 +137,7 @@ void do_cp(const char *source_path, const char *dest_path) {
                     goto open_dest_fail;
                 }
 
-                source = open(source_path, O_WRONLY | O_CREAT | O_TRUNC);
+                source = open(source_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 if (source == -1) {
                     goto open_dest_fail;
                 }
