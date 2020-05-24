@@ -252,9 +252,9 @@ void dev_remove(const char *_path) {
     }
 
     free(tnode->inode->private_data);
-    drop_tnode(tnode);
     fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
     drop_inode_reference(tnode->inode);
+    drop_tnode(tnode);
 
     free(path);
 }
