@@ -309,6 +309,9 @@ int Application::run() {
                             continue;
                         }
                         break;
+                    case WindowServer::Message::Type::WindowClosedEventMessage:
+                        exit(0);
+                        break;
                     default:
                         assert(false);
                         break;
