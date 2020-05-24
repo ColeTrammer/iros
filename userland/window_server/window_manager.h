@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
@@ -36,6 +37,8 @@ public:
     void set_active_window(SharedPtr<Window> window);
 
     int find_window_intersecting_point(Point p);
+
+    Function<void(Window&)> on_window_close_button_pressed;
 
 private:
     void swap_buffers();

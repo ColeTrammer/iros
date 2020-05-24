@@ -18,6 +18,10 @@ public:
     const Rect& rect() const { return m_rect; }
     const Rect& content_rect() const { return m_content_rect; }
 
+    int close_button_x() const { return rect().x() + rect().width() - 13; }
+    int close_button_y() const { return rect().y() + 10; }
+    int close_button_radius() const { return 6; }
+
     wid_t id() const { return m_id; }
     int client_id() const { return m_client_id; }
 

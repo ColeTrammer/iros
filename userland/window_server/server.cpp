@@ -29,6 +29,12 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
     addr.sun_family = AF_UNIX;
     strcpy(addr.sun_path, "/tmp/.window_server.socket");
     assert(bind(m_socket_fd, (const sockaddr*) &addr, sizeof(sockaddr_un)) == 0);
+
+    m_manager->on_window_close_button_pressed = [&](auto& window) {
+        auto message = WindowServer::Message::WindowClosedEventMessage::create(window.id());
+        assert(write(window.client_id(), message.get(), message->total_size()) != -1);
+        m_manager->remove_window(window.id());
+    };
 }
 
 void Server::kill_client(int client_id) {

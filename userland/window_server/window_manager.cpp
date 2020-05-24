@@ -65,6 +65,7 @@ void WindowManager::draw() {
         }
 
         renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title());
+        renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius());
 
         auto& rect = window->content_rect();
         for (int x = rect.x(); x < rect.x() + rect.width(); x++) {
@@ -125,6 +126,16 @@ int WindowManager::find_window_intersecting_point(Point p) {
 void WindowManager::notify_mouse_pressed() {
     int index = find_window_intersecting_point({ m_mouse_x, m_mouse_y });
     if (index == -1) {
+        return;
+    }
+
+    auto& window = windows()[index];
+    int dx = m_mouse_x - window->close_button_x();
+    int dy = m_mouse_y - window->close_button_y();
+    if (dx * dx + dy * dy <= window->close_button_radius() * window->close_button_radius()) {
+        if (on_window_close_button_pressed) {
+            on_window_close_button_pressed(*window);
+        }
         return;
     }
 

@@ -22,6 +22,7 @@ struct Message {
         SwapBufferRequest,
         KeyEventMessage,
         MouseEventMessage,
+        WindowClosedEventMessage,
     };
 
     struct CreateWindowRequest {
@@ -128,6 +129,19 @@ struct Message {
         mouse_event event;
     };
 
+    struct WindowClosedEventMessage {
+        static UniquePtr<Message> create(wid_t wid) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(MouseEventMessage));
+            message->type = Message::Type::WindowClosedEventMessage;
+            message->data_len = sizeof(WindowClosedEventMessage);
+            auto& data = message->data.window_closed_event_messasge;
+            data.wid = wid;
+            return UniquePtr<Message>(message);
+        }
+
+        wid_t wid;
+    };
+
     size_t total_size() const { return sizeof(Message) + data_len; };
 
     Type type { Type::Invalid };
@@ -140,6 +154,7 @@ struct Message {
         SwapBufferRequest swap_buffer_request;
         KeyEventMessage key_event_message;
         MouseEventMessage mouse_event_message;
+        WindowClosedEventMessage window_closed_event_messasge;
     } data;
 };
 
