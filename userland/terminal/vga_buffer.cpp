@@ -72,6 +72,7 @@ void VgaBuffer::switch_to(UniquePtr<SaveState> state) {
         memcpy(buffer(), state->vector(), m_graphics_container.size_in_bytes());
     }
     set_cursor(m_cursor_row, m_cursor_col);
+    refresh();
 }
 
 UniquePtr<VgaBuffer::SaveState> VgaBuffer::save_state() {

@@ -62,8 +62,10 @@ bool Application::handle_mouse_event(mouse_event event) {
     auto& tty = current_tty().tty();
     if (event.scroll_state == SCROLL_UP) {
         tty.scroll_up();
+        tty.refresh();
     } else if (event.scroll_state == SCROLL_DOWN) {
         tty.scroll_down();
+        tty.refresh();
     }
 
     return false;
@@ -79,9 +81,11 @@ bool Application::handle_keyboard_event(key_event event) {
     if (event.flags & KEY_SHIFT_ON && !(event.flags & KEY_ALT_ON) && !(event.flags & KEY_CONTROL_ON)) {
         if (event.key == KEY_HOME) {
             tty.scroll_to_top();
+            tty.refresh();
             return true;
         } else if (event.key == KEY_END) {
             tty.scroll_to_bottom();
+            tty.refresh();
             return true;
         }
     }
@@ -185,25 +189,25 @@ bool Application::handle_keyboard_event(key_event event) {
             send_vt_escape(24, modifiers);
             return false;
         case KEY_1:
-            if (modifiers & KEY_CONTROL_ON) {
+            if (event.flags & KEY_CONTROL_ON) {
                 switch_to(0);
                 return false;
             }
             break;
         case KEY_2:
-            if (modifiers & KEY_CONTROL_ON) {
+            if (event.flags & KEY_CONTROL_ON) {
                 switch_to(1);
                 return false;
             }
             break;
         case KEY_3:
-            if (modifiers & KEY_CONTROL_ON) {
+            if (event.flags & KEY_CONTROL_ON) {
                 switch_to(2);
                 return false;
             }
             break;
         case KEY_4:
-            if (modifiers & KEY_CONTROL_ON) {
+            if (event.flags & KEY_CONTROL_ON) {
                 switch_to(3);
                 return false;
             }
