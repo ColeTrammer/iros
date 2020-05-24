@@ -134,7 +134,7 @@ void VgaBuffer::clear_row(int row) {
     clear_row_to_end(row, 0);
 }
 
-VgaBuffer::Row VgaBuffer::scroll_up(const Row* replacement [[maybe_unused]]) {
+VgaBuffer::Row VgaBuffer::scroll_up(const Row* replacement) {
 #ifdef KERNEL_NO_GRAPHICS
     LIIM::Vector<uint16_t> first_row(buffer(), width());
 
@@ -167,7 +167,7 @@ VgaBuffer::Row VgaBuffer::scroll_up(const Row* replacement [[maybe_unused]]) {
 #endif /* KERNEL_NO_GRAPHICS */
 }
 
-VgaBuffer::Row VgaBuffer::scroll_down(const Row* replacement [[maybe_unused]]) {
+VgaBuffer::Row VgaBuffer::scroll_down(const Row* replacement) {
 #ifdef KERNEL_NO_GRAPHICS
     Row last_row(buffer() + (height() - 1) * width(), width());
 
@@ -188,7 +188,7 @@ VgaBuffer::Row VgaBuffer::scroll_down(const Row* replacement [[maybe_unused]]) {
     size_t raw_offset = (height() - 1) * width() * 16 * 8;
     Row last_row(window().pixels()->pixels() + raw_offset, width() * 16 * 8);
 
-    memmove(window().pixels()->pixels() + 16 * 8 * sizeof(uint32_t), window().pixels()->pixels(), raw_offset * sizeof(uint32_t));
+    memmove(window().pixels()->pixels() + width() * 16 * 8, window().pixels()->pixels(), raw_offset * sizeof(uint32_t));
 
     if (!replacement) {
         clear_row(0);
