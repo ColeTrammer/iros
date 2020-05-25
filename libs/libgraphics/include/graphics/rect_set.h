@@ -1,0 +1,22 @@
+#pragma once
+
+#include <graphics/rect.h>
+#include <liim/vector.h>
+
+class RectSet {
+public:
+    RectSet() {}
+
+    void add(const Rect& rect) { m_rects.add(rect); }
+
+    Vector<Rect>::Iterator begin() { return m_rects.begin(); }
+    Vector<Rect>::Iterator end() { return m_rects.end(); }
+
+    Vector<Rect>::ConstIterator begin() const { return m_rects.begin(); }
+    Vector<Rect>::ConstIterator end() const { return m_rects.end(); }
+
+    void clear() { m_rects.clear(); }
+
+private:
+    Vector<Rect> m_rects;
+};
