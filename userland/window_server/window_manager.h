@@ -1,5 +1,6 @@
 #pragma once
 
+#include <graphics/rect_set.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
@@ -47,7 +48,7 @@ private:
     int m_fb { -1 };
     int m_mouse_x { 0 };
     int m_mouse_y { 0 };
-    Rect m_previous_cursor_rect;
+    RectSet m_dirty_rects;
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
     Vector<SharedPtr<Window>> m_windows;

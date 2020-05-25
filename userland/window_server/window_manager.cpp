@@ -34,7 +34,11 @@ void WindowManager::add_window(SharedPtr<Window> window) {
 
 void WindowManager::remove_window(wid_t wid) {
     m_windows.remove_if([&](auto& window) {
-        return window->id() == wid;
+        if (window->id() == wid) {
+            m_dirty_rects.add(window->rect());
+            return true;
+        }
+        return false;
     });
 
     if (m_active_window->id() == wid) {
@@ -79,7 +83,10 @@ void WindowManager::draw() {
     };
 
     renderer.set_color(Color(0, 0, 0));
-    renderer.fill_rect(m_previous_cursor_rect);
+    for (auto& rect : m_dirty_rects) {
+        renderer.fill_rect(rect);
+    }
+    m_dirty_rects.clear();
     renderer.set_color(Color(255, 255, 255));
 
     for_each_window(render_window);
@@ -91,7 +98,6 @@ void WindowManager::draw() {
             }
         }
     }
-    m_previous_cursor_rect = { m_mouse_x, m_mouse_y, cursor_width, cursor_height };
 
     swap_buffers();
 }
@@ -153,6 +159,8 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
     if (m_mouse_x == x && m_mouse_y == y) {
         return;
     }
+
+    m_dirty_rects.add({ m_mouse_x, m_mouse_y, cursor_width, cursor_height });
 
     m_mouse_x = x;
     m_mouse_y = y;

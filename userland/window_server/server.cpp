@@ -108,7 +108,9 @@ void Server::start() {
             }
         }
 
-        time_of_last_paint = current_time;
+        if (did_draw) {
+            time_of_last_paint = current_time;
+        }
 
         FD_ZERO(&set);
         FD_ZERO(&exceptional);
