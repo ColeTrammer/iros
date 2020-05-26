@@ -4,6 +4,9 @@
 #include <string.h>
 
 void PixelBuffer::put_pixel(int x, int y, uint32_t p) {
+    if (x < 0 || y < 0 || x >= width() || y >= height()) {
+        return;
+    }
     m_pixels[y * m_width + x] = p;
 }
 
