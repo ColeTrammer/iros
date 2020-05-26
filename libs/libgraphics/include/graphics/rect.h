@@ -18,6 +18,7 @@ public:
     void set_width(int width) { m_width = width; }
     void set_height(int height) { m_height = height; }
 
+    Point top_left() const { return { x(), y() }; }
     Point center() const { return Point(x() + width() / 2, y() + height() / 2); }
 
     bool intersects(Point p) const { return p.x() >= m_x && p.x() <= m_x + m_width && p.y() >= m_y && p.y() <= m_y + m_height; }
