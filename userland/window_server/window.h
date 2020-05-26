@@ -18,6 +18,9 @@ public:
     const Rect& rect() const { return m_rect; }
     const Rect& content_rect() const { return m_content_rect; }
 
+    void set_x(int x);
+    void set_y(int y);
+
     int close_button_x() const { return rect().x() + rect().width() - 13; }
     int close_button_y() const { return rect().y() + 10; }
     int close_button_radius() const { return 6; }

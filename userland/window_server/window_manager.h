@@ -4,6 +4,7 @@
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
+#include <kernel/hal/input.h>
 
 #include "window.h"
 
@@ -33,7 +34,7 @@ public:
     const Window* active_window() const { return m_active_window.get(); };
 
     void notify_mouse_moved(int dx, int dy, bool scale);
-    void notify_mouse_pressed();
+    void notify_mouse_pressed(mouse_button_state left, mouse_button_state right);
 
     void set_active_window(SharedPtr<Window> window);
 
@@ -53,4 +54,7 @@ private:
     SharedPtr<PixelBuffer> m_back_buffer;
     Vector<SharedPtr<Window>> m_windows;
     SharedPtr<Window> m_active_window;
+    SharedPtr<Window> m_window_to_move;
+    Point m_window_move_initial_location;
+    Point m_window_move_origin;
 };

@@ -189,8 +189,8 @@ void Server::start() {
                     m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_RELATIVE);
                 }
 
-                if (event.left == MOUSE_DOWN || event.right == MOUSE_DOWN) {
-                    m_manager->notify_mouse_pressed();
+                if (event.left != MOUSE_NO_CHANGE || event.right != MOUSE_NO_CHANGE) {
+                    m_manager->notify_mouse_pressed(event.left, event.right);
                 }
 
                 auto* active_window = m_manager->active_window();

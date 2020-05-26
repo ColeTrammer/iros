@@ -60,3 +60,13 @@ Window::~Window() {
         shm_unlink(m_shm_path.string());
     }
 }
+
+void Window::set_x(int x) {
+    m_rect.set_x(x);
+    m_content_rect.set_x(x + 1);
+}
+
+void Window::set_y(int y) {
+    m_rect.set_y(y);
+    m_content_rect.set_y(y + 22);
+}

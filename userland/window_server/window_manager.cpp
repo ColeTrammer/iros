@@ -48,6 +48,10 @@ void WindowManager::remove_window(wid_t wid) {
             set_active_window(windows().last());
         }
     }
+
+    if (m_window_to_move->id() == wid) {
+        m_window_to_move = nullptr;
+    }
 }
 
 void WindowManager::remove_windows_of_client(int client_id) {
@@ -135,7 +139,7 @@ int WindowManager::find_window_intersecting_point(Point p) {
     return -1;
 }
 
-void WindowManager::notify_mouse_pressed() {
+void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state) {
     int index = find_window_intersecting_point({ m_mouse_x, m_mouse_y });
     if (index == -1) {
         return;
@@ -151,6 +155,17 @@ void WindowManager::notify_mouse_pressed() {
         return;
     }
 
+    if (left == MOUSE_DOWN && m_mouse_y <= window->rect().y() + 20) {
+        // Mouse down on window title bar
+        m_window_to_move = window;
+        m_window_move_initial_location = window->rect().top_left();
+        m_window_move_origin = { m_mouse_x, m_mouse_y };
+    }
+
+    if (left == MOUSE_UP) {
+        m_window_to_move = nullptr;
+    }
+
     windows().rotate_left(index, windows().size());
     set_active_window(windows().last());
 }
@@ -164,4 +179,17 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
 
     m_mouse_x = x;
     m_mouse_y = y;
+
+    if (m_window_to_move) {
+        int dx = m_mouse_x - m_window_move_origin.x();
+        int dy = m_mouse_y - m_window_move_origin.y();
+        if (!dx && !dy) {
+            return;
+        }
+
+        m_dirty_rects.add(m_window_to_move->rect());
+        m_window_to_move->set_x(m_window_move_initial_location.x() + dx);
+        m_window_to_move->set_y(m_window_move_initial_location.y() + dy);
+        m_dirty_rects.add(m_window_to_move->rect());
+    }
 }
