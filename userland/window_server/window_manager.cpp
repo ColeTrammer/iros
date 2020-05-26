@@ -49,7 +49,7 @@ void WindowManager::remove_window(wid_t wid) {
         }
     }
 
-    if (m_window_to_move->id() == wid) {
+    if (m_window_to_move && m_window_to_move->id() == wid) {
         m_window_to_move = nullptr;
     }
 }
@@ -79,8 +79,8 @@ void WindowManager::draw() {
         renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius());
 
         auto& rect = window->content_rect();
-        for (int x = rect.x(); x < rect.x() + rect.width(); x++) {
-            for (int y = rect.y(); y < rect.y() + rect.height(); y++) {
+        for (int x = LIIM::max(0, rect.x()); x < m_back_buffer->width() && x < rect.x() + rect.width(); x++) {
+            for (int y = LIIM::max(rect.y(), 0); y < m_back_buffer->height() && y < rect.y() + rect.height(); y++) {
                 m_back_buffer->put_pixel(x, y, window->buffer()->get_pixel(x - rect.x(), y - rect.y()));
             }
         }
