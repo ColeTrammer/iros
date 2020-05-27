@@ -699,6 +699,16 @@ void Document::clear_selection() {
 void Document::remove_line(int index) {
     m_lines.remove(index);
     m_panel.notify_line_count_changed();
+
+    int last_row_index = m_lines.size();
+    int row_in_panel = last_row_index - m_row_offset;
+    if (row_in_panel >= 0 && row_in_panel < m_panel.rows()) {
+        for (int c = 0; c < m_panel.cols(); c++) {
+            m_panel.set_text_at(row_in_panel, c, ' ', {});
+        }
+    }
+
+    set_needs_display();
 }
 
 void Document::insert_line(Line&& line, int index) {
