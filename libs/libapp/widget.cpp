@@ -1,3 +1,4 @@
+#include <app/layout.h>
 #include <app/widget.h>
 #include <app/window.h>
 #include <graphics/renderer.h>
