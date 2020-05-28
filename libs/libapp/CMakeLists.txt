@@ -2,6 +2,7 @@ set(SOURCES
     app.cpp
     box_layout.cpp
     event_loop.cpp
+    layout.cpp
     object.cpp
     selectable.cpp
     widget.cpp

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <app/layout.h>
-#include <graphics/rect.h>
 #include <liim/vector.h>
 
 namespace App {
@@ -18,7 +17,6 @@ public:
     virtual void layout() override;
 
 private:
-    const Rect& container_rect() const;
     int compute_available_space() const;
     int flexible_widget_count() const;
 

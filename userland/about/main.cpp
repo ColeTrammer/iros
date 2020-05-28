@@ -18,6 +18,7 @@ int main() {
     layout.add(App::Widget::create(nullptr));
     layout.add(App::Widget::create(nullptr));
     layout.add(App::Widget::create(nullptr));
+    layout.add(App::Widget::create(nullptr));
 
     window->draw();
 
