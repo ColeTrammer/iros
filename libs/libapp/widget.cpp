@@ -14,6 +14,13 @@ Widget::~Widget() {}
 void Widget::render() {
     Renderer renderer(*window()->pixels());
     renderer.draw_rect(m_rect);
+
+    for (auto& child : children()) {
+        if (child->is_widget()) {
+            auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));
+            widget.render();
+        }
+    }
 }
 
 Window* Widget::window() {

@@ -1,5 +1,6 @@
 set(SOURCES
     app.cpp
+    box_layout.cpp
     event_loop.cpp
     object.cpp
     selectable.cpp

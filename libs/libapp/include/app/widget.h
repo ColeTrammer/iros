@@ -33,7 +33,7 @@ public:
 
     template<typename LayoutClass, typename... Args>
     Layout& set_layout(Args... args) {
-        return *(m_layout = make_unique<LayoutClass>(forward<Args>(args)...));
+        return *(m_layout = make_unique<LayoutClass>(*this, forward<Args>(args)...));
     }
 
     bool hidden() const { return m_hidden; }
