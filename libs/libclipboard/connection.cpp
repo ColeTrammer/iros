@@ -94,10 +94,13 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
 #include <X11/Xlib.h>
 #include <assert.h>
 #include <clipboard/connection.h>
+#include <errno.h>
 #include <pthread.h>
+#include <sys/select.h>
 
 namespace Clipboard {
 
+static int s_x_fd;
 static Display* s_display;
 static int s_screen;
 static Window s_root;
@@ -107,14 +110,11 @@ static Atom s_selection_atom;
 static Atom s_text_type_atom;
 static Atom s_incr_atom;
 
+static pthread_t s_thread_id;
 static pthread_mutex_t s_clipboard_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t s_get_clipboard_condition = PTHREAD_COND_INITIALIZER;
 static Maybe<String> s_clipboard_contents;
 static bool s_clipboard_contents_get_request_completed;
-
-static pthread_mutex_t s_should_process_events_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t s_should_process_events_cond = PTHREAD_COND_INITIALIZER;
-static bool s_should_process_events;
 
 static void* x11_background_thread_start(void*) {
     auto handle_selection_notify_event = [](XSelectionEvent& event) {
@@ -153,30 +153,36 @@ static void* x11_background_thread_start(void*) {
     };
 
     for (;;) {
-        pthread_mutex_lock(&s_should_process_events_mutex);
-        for (;;) {
-            if (s_should_process_events) {
-                s_should_process_events = false;
-                break;
-            }
-            pthread_cond_wait(&s_should_process_events_cond, &s_should_process_events_mutex);
-        }
-        pthread_mutex_unlock(&s_should_process_events_mutex);
+        fd_set set;
+        FD_ZERO(&set);
+        FD_SET(s_x_fd, &set);
 
-        pthread_mutex_lock(&s_clipboard_mutex);
+        if (select(s_x_fd + 1, &set, nullptr, nullptr, nullptr) < 0) {
+            assert(errno == EINTR);
+            continue;
+        }
 
         XEvent ev;
-        XNextEvent(s_display, &ev);
-        switch (ev.type) {
-            case SelectionNotify: {
-                handle_selection_notify_event(ev.xselection);
-                break;
-            }
-            default:
-                break;
-        }
+        if (XCheckIfEvent(
+                s_display, &ev,
+                [](Display*, XEvent*, XPointer) {
+                    return True;
+                },
+                nullptr)) {
 
-        pthread_mutex_unlock(&s_clipboard_mutex);
+            pthread_mutex_lock(&s_clipboard_mutex);
+
+            switch (ev.type) {
+                case SelectionNotify: {
+                    handle_selection_notify_event(ev.xselection);
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            pthread_mutex_unlock(&s_clipboard_mutex);
+        }
     }
 
     return nullptr;
@@ -185,6 +191,7 @@ static void* x11_background_thread_start(void*) {
 void Connection::initialize() {
     s_display = XOpenDisplay(nullptr);
     assert(s_display);
+    s_x_fd = XConnectionNumber(s_display);
 
     s_screen = DefaultScreen(s_display);
     s_root = RootWindow(s_display, s_screen);
@@ -195,8 +202,7 @@ void Connection::initialize() {
 
     s_target_window = XCreateSimpleWindow(s_display, s_root, -10, -10, 1, 1, 0, 0, 0);
 
-    pthread_t tid;
-    assert(!pthread_create(&tid, nullptr, x11_background_thread_start, nullptr));
+    assert(!pthread_create(&s_thread_id, nullptr, x11_background_thread_start, nullptr));
 }
 
 Connection& Connection::the() {
@@ -213,11 +219,6 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
     s_clipboard_contents_get_request_completed = false;
     s_target_property = XInternAtom(s_display, "LIBCLIPBOARD", False);
     XConvertSelection(s_display, s_selection_atom, s_text_type_atom, s_target_property, s_target_window, CurrentTime);
-
-    pthread_mutex_lock(&s_should_process_events_mutex);
-    s_should_process_events = true;
-    pthread_cond_signal(&s_should_process_events_cond);
-    pthread_mutex_unlock(&s_should_process_events_mutex);
 
     for (;;) {
         if (s_clipboard_contents_get_request_completed) {
