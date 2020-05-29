@@ -755,12 +755,13 @@ void Document::cut() {
 }
 
 void Document::paste() {
-    auto text_to_insert = m_panel.clipboard_contents();
+    bool is_whole_line;
+    auto text_to_insert = m_panel.clipboard_contents(is_whole_line);
     if (text_to_insert.is_empty()) {
         return;
     }
 
-    if (!single_line_mode() && m_selection.empty() && m_panel.clipboard_contents_is_whole_line()) {
+    if (!single_line_mode() && m_selection.empty() && is_whole_line) {
         text_to_insert.remove_index(text_to_insert.size() - 1);
         push_command<InsertLineCommand>(text_to_insert);
     } else {

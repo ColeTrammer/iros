@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <clipboard/connection.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -93,6 +94,7 @@ TerminalPanel::TerminalPanel() {
 
     if (!s_raw_mode_enabled) {
         enable_raw_mode();
+        Clipboard::Connection::initialize();
     }
 
     s_main_panel = this;
@@ -671,4 +673,27 @@ void TerminalPanel::enter_search(String starting_text) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
     draw_cursor();
+}
+
+void TerminalPanel::set_clipboard_contents(String text, bool is_whole_line) {
+    m_prev_clipboard_contents = move(text);
+    m_prev_clipboard_contents_were_whole_line = is_whole_line;
+    Clipboard::Connection::the().set_clipboard_contents_to_text(m_prev_clipboard_contents);
+}
+
+String TerminalPanel::clipboard_contents(bool& is_whole_line) const {
+    auto contents = Clipboard::Connection::the().get_clipboard_contents_as_text();
+    if (!contents.value()) {
+        is_whole_line = m_prev_clipboard_contents_were_whole_line;
+        return m_prev_clipboard_contents;
+    }
+
+    auto& ret = contents.value();
+    if (ret == m_prev_clipboard_contents) {
+        is_whole_line = m_prev_clipboard_contents_were_whole_line;
+    } else {
+        m_prev_clipboard_contents = "";
+        is_whole_line = m_prev_clipboard_contents_were_whole_line = false;
+    }
+    return move(ret);
 }
