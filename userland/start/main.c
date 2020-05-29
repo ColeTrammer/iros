@@ -73,6 +73,10 @@ int main(int argc, char **argv) {
 
     spawn_process(nslookup_args, 0, 0, false);
 
+    char *clipboard_server_args[] = { "/bin/clipboard_server", NULL };
+
+    spawn_process(clipboard_server_args, 0, 0, false);
+
     if (!use_graphics) {
         char *terminal_args[] = { "/bin/terminal-vga", NULL };
         spawn_process(terminal_args, 100, 100, false);
