@@ -212,12 +212,12 @@ static void* x11_background_thread_start(void*) {
         pthread_mutex_lock(&s_clipboard_mutex);
 
         XEvent ev;
-        if (XCheckIfEvent(
-                s_display, &ev,
-                [](Display*, XEvent*, XPointer) {
-                    return True;
-                },
-                nullptr)) {
+        while (XCheckIfEvent(
+            s_display, &ev,
+            [](Display*, XEvent*, XPointer) {
+                return True;
+            },
+            nullptr)) {
 
             switch (ev.type) {
                 case SelectionNotify:
@@ -239,7 +239,8 @@ static void* x11_background_thread_start(void*) {
         FD_ZERO(&set);
         FD_SET(s_x_fd, &set);
 
-        if (select(FD_SETSIZE, &set, nullptr, nullptr, nullptr) < 0) {
+        timeval timeout { .tv_sec = 0, .tv_usec = 750'000'000 };
+        if (select(FD_SETSIZE, &set, nullptr, nullptr, &timeout) < 0) {
             assert(errno == EINTR);
             continue;
         }
@@ -295,11 +296,18 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
     XFlush(s_display);
 
     pthread_kill(s_thread_id, SIGUSR1);
+
+    time_t start = time(nullptr);
     for (;;) {
         if (s_clipboard_contents_get_request_completed) {
             break;
         }
-        pthread_cond_wait(&s_get_clipboard_condition, &s_clipboard_mutex);
+        timespec timeout { .tv_sec = 0, .tv_nsec = 750'000'000 };
+        pthread_cond_timedwait(&s_get_clipboard_condition, &s_clipboard_mutex, &timeout);
+        if (time(nullptr) - start >= 2) {
+            pthread_mutex_unlock(&s_clipboard_mutex);
+            return {};
+        }
     }
 
     auto result = move(s_clipboard_contents);
