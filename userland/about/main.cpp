@@ -14,7 +14,7 @@ int main() {
     auto widget = App::Widget::create(window);
     widget->set_rect(Rect(25, 25, 200, 200));
 
-    auto& layout = widget->set_layout<App::BoxLayout>();
+    auto& layout = widget->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
     layout.add(App::Widget::create(nullptr));
     layout.add(App::Widget::create(nullptr));
     layout.add(App::Widget::create(nullptr));
