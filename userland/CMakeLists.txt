@@ -15,6 +15,7 @@ set(TARGETS
     cat
     chmod
     clear
+    clipboard
     clipboard_server
     cmp
     comm

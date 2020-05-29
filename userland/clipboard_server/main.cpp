@@ -10,7 +10,7 @@ int main() {
     using namespace ClipboardServer;
 
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (!fd) {
+    if (fd < 0) {
         perror("socket");
         return 1;
     }
@@ -77,6 +77,9 @@ int main() {
                 clipboard_type = String(request.content_type());
                 clipboard_contents = UniquePtr<char>((char*) malloc(request.data_length));
                 memcpy(clipboard_contents.get(), request.data(), request.data_length);
+
+                fprintf(stderr, "set clipboard content: type='%s' data='%s'\n", clipboard_type.string(), clipboard_contents.get());
+
                 send_message(*Message::SetContentsResponse::create(true), client_fd);
                 break;
             }

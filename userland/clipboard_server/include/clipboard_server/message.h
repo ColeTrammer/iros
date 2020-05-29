@@ -42,7 +42,7 @@ struct Message {
         }
 
         char* content_type() { return payload; }
-        char* data() { return payload + data_length; }
+        char* data() { return payload + type_length; }
 
         size_t type_length;
         size_t data_length;
