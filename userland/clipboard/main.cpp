@@ -29,6 +29,11 @@ int main(int argc, char** argv) {
             return 1;
         }
 
+#ifndef __os_2__
+        // Sleep to give the cliboard manager a change to see that we put something on the clipboard.
+        sleep(5);
+#endif /* __os_2__ */
+
         return 0;
     }
 
