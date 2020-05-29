@@ -42,7 +42,7 @@ bool Connection::set_clipboard_contents_to_text(const String& text) {
         return false;
     }
 
-    auto request = ClipboardServer::Message::SetContentsRequest::create("text/plain", text.string(), text.size() + 1);
+    auto request = ClipboardServer::Message::SetContentsRequest::create("text/plain", text.string(), text.size());
     if (write(fd, request.get(), request->total_size()) != static_cast<ssize_t>(request->total_size())) {
         close(fd);
         return false;
@@ -82,9 +82,8 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
         return {};
     }
 
-    assert((reinterpret_cast<char*>(response.data))[response_message.data_len - sizeof(ClipboardServer::Message::GetConentsResponse)] ==
-           '\0');
-    return { String(response.data) };
+    return { String(
+        StringView(response.data, response.data + response_message.data_len - sizeof(ClipboardServer::Message::GetContentsRequest) - 1)) };
 }
 
 }
@@ -146,7 +145,7 @@ static void* x11_background_thread_start(void*) {
 
         Atom da;
         XGetWindowProperty(s_display, s_target_window, s_target_property, 0, size, False, AnyPropertyType, &da, &di, &dul, &dul, &prop_ret);
-        auto data = String((char*) prop_ret);
+        auto data = String(StringView((char*) prop_ret, (char*) prop_ret + size - 1));
         XFree(prop_ret);
         XDeleteProperty(s_display, s_target_window, s_target_property);
 
