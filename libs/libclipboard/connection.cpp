@@ -95,6 +95,7 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
 #include <clipboard/connection.h>
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/select.h>
 
 namespace Clipboard {
@@ -148,6 +149,7 @@ static void* x11_background_thread_start(void*) {
         auto data = String(StringView((char*) prop_ret, (char*) prop_ret + size - 1));
         XFree(prop_ret);
         XDeleteProperty(s_display, s_target_window, s_target_property);
+        XFlush(s_display);
 
         s_clipboard_contents_get_request_completed = true;
         s_clipboard_contents = { move(data) };
@@ -237,10 +239,9 @@ static void* x11_background_thread_start(void*) {
         FD_ZERO(&set);
         FD_SET(s_x_fd, &set);
 
-    select_again:
         if (select(FD_SETSIZE, &set, nullptr, nullptr, nullptr) < 0) {
             assert(errno == EINTR);
-            goto select_again;
+            continue;
         }
     }
 
@@ -266,6 +267,8 @@ void Connection::initialize() {
 
     s_target_window = XCreateSimpleWindow(s_display, s_root, -10, -10, 1, 1, 0, 0, 0);
 
+    signal(SIGUSR1, [](int) {});
+
     assert(!pthread_create(&s_thread_id, nullptr, x11_background_thread_start, nullptr));
 }
 
@@ -289,7 +292,9 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
     s_clipboard_contents_get_request_completed = false;
     s_target_property = XInternAtom(s_display, "LIBCLIPBOARD", False);
     XConvertSelection(s_display, s_selection_atom, s_text_type_atoms[0], s_target_property, s_target_window, CurrentTime);
+    XFlush(s_display);
 
+    pthread_kill(s_thread_id, SIGUSR1);
     for (;;) {
         if (s_clipboard_contents_get_request_completed) {
             break;
@@ -308,7 +313,10 @@ bool Connection::set_clipboard_contents_to_text(const String& text) {
 
     s_clipboard_contents = { text };
     XSetSelectionOwner(s_display, s_selection_atom, s_target_window, CurrentTime);
+    XFlush(s_display);
+
     s_currently_own_clipboard = true;
+    pthread_kill(s_thread_id, SIGUSR1);
 
     pthread_mutex_unlock(&s_clipboard_mutex);
     return true;
