@@ -1,3 +1,5 @@
+#ifdef __os_2__
+
 #include <assert.h>
 #include <clipboard/connection.h>
 #include <clipboard_server/message.h>
@@ -86,3 +88,154 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
 }
 
 }
+
+#else
+
+#include <X11/Xlib.h>
+#include <assert.h>
+#include <clipboard/connection.h>
+#include <pthread.h>
+
+namespace Clipboard {
+
+static Display* s_display;
+static int s_screen;
+static Window s_root;
+static Window s_target_window;
+static Atom s_target_property;
+static Atom s_selection_atom;
+static Atom s_text_type_atom;
+static Atom s_incr_atom;
+
+static pthread_mutex_t s_clipboard_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t s_get_clipboard_condition = PTHREAD_COND_INITIALIZER;
+static Maybe<String> s_clipboard_contents;
+static bool s_clipboard_contents_get_request_completed;
+
+static pthread_mutex_t s_should_process_events_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t s_should_process_events_cond = PTHREAD_COND_INITIALIZER;
+static bool s_should_process_events;
+
+static void* x11_background_thread_start(void*) {
+    auto handle_selection_notify_event = [](XSelectionEvent& event) {
+        auto fail = []() {
+            s_clipboard_contents_get_request_completed = true;
+            s_clipboard_contents = {};
+            pthread_cond_signal(&s_get_clipboard_condition);
+        };
+
+        if (event.property == None) {
+            fail();
+            return;
+        }
+
+        Atom type;
+        int di;
+        unsigned long dul, size;
+        unsigned char* prop_ret = NULL;
+        XGetWindowProperty(s_display, s_target_window, s_target_property, 0, 0, False, AnyPropertyType, &type, &di, &dul, &size, &prop_ret);
+        XFree(prop_ret);
+
+        if (type == s_incr_atom) {
+            fail();
+            return;
+        }
+
+        Atom da;
+        XGetWindowProperty(s_display, s_target_window, s_target_property, 0, size, False, AnyPropertyType, &da, &di, &dul, &dul, &prop_ret);
+        auto data = String((char*) prop_ret);
+        XFree(prop_ret);
+        XDeleteProperty(s_display, s_target_window, s_target_property);
+
+        s_clipboard_contents_get_request_completed = true;
+        s_clipboard_contents = { move(data) };
+        pthread_cond_signal(&s_get_clipboard_condition);
+    };
+
+    for (;;) {
+        pthread_mutex_lock(&s_should_process_events_mutex);
+        for (;;) {
+            if (s_should_process_events) {
+                s_should_process_events = false;
+                break;
+            }
+            pthread_cond_wait(&s_should_process_events_cond, &s_should_process_events_mutex);
+        }
+        pthread_mutex_unlock(&s_should_process_events_mutex);
+
+        pthread_mutex_lock(&s_clipboard_mutex);
+
+        XEvent ev;
+        XNextEvent(s_display, &ev);
+        switch (ev.type) {
+            case SelectionNotify: {
+                handle_selection_notify_event(ev.xselection);
+                break;
+            }
+            default:
+                break;
+        }
+
+        pthread_mutex_unlock(&s_clipboard_mutex);
+    }
+
+    return nullptr;
+}
+
+void Connection::initialize() {
+    s_display = XOpenDisplay(nullptr);
+    assert(s_display);
+
+    s_screen = DefaultScreen(s_display);
+    s_root = RootWindow(s_display, s_screen);
+
+    s_selection_atom = XInternAtom(s_display, "CLIPBOARD", False);
+    s_text_type_atom = XInternAtom(s_display, "UTF8_STRING", False);
+    s_incr_atom = XInternAtom(s_display, "INCR", False);
+
+    s_target_window = XCreateSimpleWindow(s_display, s_root, -10, -10, 1, 1, 0, 0, 0);
+
+    pthread_t tid;
+    assert(!pthread_create(&tid, nullptr, x11_background_thread_start, nullptr));
+}
+
+Connection& Connection::the() {
+    static Connection* s_connection;
+    if (!s_connection) {
+        s_connection = new Connection;
+    }
+    return *s_connection;
+}
+
+Maybe<String> Connection::get_clipboard_contents_as_text() {
+    pthread_mutex_lock(&s_clipboard_mutex);
+
+    s_clipboard_contents_get_request_completed = false;
+    s_target_property = XInternAtom(s_display, "LIBCLIPBOARD", False);
+    XConvertSelection(s_display, s_selection_atom, s_text_type_atom, s_target_property, s_target_window, CurrentTime);
+
+    pthread_mutex_lock(&s_should_process_events_mutex);
+    s_should_process_events = true;
+    pthread_cond_signal(&s_should_process_events_cond);
+    pthread_mutex_unlock(&s_should_process_events_mutex);
+
+    for (;;) {
+        if (s_clipboard_contents_get_request_completed) {
+            break;
+        }
+        pthread_cond_wait(&s_get_clipboard_condition, &s_clipboard_mutex);
+    }
+
+    auto result = move(s_clipboard_contents);
+
+    pthread_mutex_unlock(&s_clipboard_mutex);
+    return result;
+}
+
+bool Connection::set_clipboard_contents_to_text(const String&) {
+    return false;
+}
+
+}
+
+#endif /* __os_2__ */
