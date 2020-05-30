@@ -10,7 +10,7 @@ namespace App {
 class Window : public Object {
 public:
     template<typename... Args>
-    static SharedPtr<Window> create(SharedPtr<Object> parent, Args... args) {
+    static SharedPtr<Window> create(SharedPtr<Object> parent, Args&&... args) {
         auto ret = SharedPtr<Window>(new Window(forward<Args>(args)...));
         register_window(ret);
         if (parent) {

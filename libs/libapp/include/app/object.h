@@ -3,21 +3,25 @@
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
+#define APP_OBJECT(name)                                                      \
+public:                                                                       \
+    template<typename... Args>                                                \
+    static SharedPtr<name> create(SharedPtr<Object> parent, Args&&... args) { \
+        auto ret = SharedPtr<name>(new name(forward<Args>(args)...));         \
+        if (parent) {                                                         \
+            parent->add_child(ret);                                           \
+        }                                                                     \
+        return ret;                                                           \
+    }                                                                         \
+                                                                              \
+private:
+
 namespace App {
 
 class Event;
 
 class Object {
 public:
-    template<typename... Args>
-    static SharedPtr<Object> create(SharedPtr<Object> parent, Args... args) {
-        auto ret = SharedPtr<Object>(new Object(forward<Args>(args)...));
-        if (parent) {
-            parent->add_child(ret);
-        }
-        return ret;
-    }
-
     virtual ~Object();
 
     void add_child(SharedPtr<Object> child);

@@ -6,16 +6,9 @@
 namespace App {
 
 class TextLabel : public Widget {
-public:
-    template<typename... Args>
-    static SharedPtr<TextLabel> create(SharedPtr<Object> parent, Args... args) {
-        auto ret = SharedPtr<TextLabel>(new TextLabel(forward<Args>(args)...));
-        if (parent) {
-            parent->add_child(ret);
-        }
-        return ret;
-    }
+    APP_OBJECT(TextLabel)
 
+public:
     TextLabel(String text) : m_text(move(text)) {}
 
     const String& text() const { return m_text; }

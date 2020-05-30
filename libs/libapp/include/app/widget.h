@@ -9,16 +9,9 @@ class Layout;
 class Window;
 
 class Widget : public Object {
-public:
-    template<typename... Args>
-    static SharedPtr<Widget> create(SharedPtr<Object> parent, Args... args) {
-        auto ret = SharedPtr<Widget>(new Widget(forward<Args>(args)...));
-        if (parent) {
-            parent->add_child(ret);
-        }
-        return ret;
-    }
+    APP_OBJECT(Widget)
 
+public:
     virtual ~Widget() override;
 
     virtual void render();
@@ -32,7 +25,7 @@ public:
     const Layout* layout() const { return m_layout.get(); }
 
     template<typename LayoutClass, typename... Args>
-    Layout& set_layout(Args... args) {
+    Layout& set_layout(Args&&... args) {
         return *(m_layout = make_unique<LayoutClass>(*this, forward<Args>(args)...));
     }
 
