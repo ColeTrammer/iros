@@ -30,6 +30,13 @@ public:
     void set_margins(const Margins& m) { m_margins = m; }
     const Margins& margins() const { return m_margins; }
 
+    template<typename WidgetClass, typename... Args>
+    WidgetClass& add(Args&&... args) {
+        auto ret = WidgetClass::create(nullptr, forward<Args>(args)...);
+        add(ret);
+        return *ret;
+    }
+
 protected:
     Layout(Widget& widget) : m_widget(widget) {}
 

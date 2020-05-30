@@ -16,10 +16,10 @@ int main() {
     widget->set_rect(Rect(25, 25, 200, 200));
 
     auto& layout = widget->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
-    layout.add(App::TextLabel::create(nullptr, "Hello World!"));
-    layout.add(App::Widget::create(nullptr));
-    layout.add(App::Widget::create(nullptr));
-    layout.add(App::Widget::create(nullptr));
+    layout.add<App::TextLabel>("Hello World!");
+    layout.add<App::Widget>();
+    layout.add<App::Widget>();
+    layout.add<App::Widget>();
 
     window->draw();
 
