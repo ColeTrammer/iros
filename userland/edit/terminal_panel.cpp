@@ -129,50 +129,56 @@ void TerminalPanel::clear() {
     m_screen_info.resize(m_rows * m_cols);
 }
 
-const String& TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {
+String TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {
     static String default_string("\033[0m");
-    static String highlight_string("\033[0;30;103m");
-    static String selected_string("\033[0;107;30m");
-    static String operator_string("\033[0;36m");
-    static String keyword_string("\033[0;35m");
-    static String number_string("\033[0;31m");
-    static String identifier_string("\033[0;1;93m");
-    static String comment_string("\033[0;90m");
-    static String string_string("\033[0;32m");
+    static String highlight_string("\033[30;103m");
+    static String selected_string("\033[30;107m");
+    static String highlighted_and_selected_string("\033[93;107m");
+    static String operator_string("\033[36m");
+    static String keyword_string("\033[35m");
+    static String number_string("\033[31m");
+    static String identifier_string("\033[1;93m");
+    static String comment_string("\033[90m");
+    static String string_string("\033[32m");
 
-    if (metadata.selected()) {
-        return selected_string;
+    String ret = default_string;
+    if (metadata.highlighted()) {
+        ret += highlight_string;
     }
 
-    if (metadata.highlighted()) {
-        return highlight_string;
+    if (metadata.selected()) {
+        ret += selected_string;
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxOperator) {
-        return operator_string;
+        ret += operator_string;
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxKeyword) {
-        return keyword_string;
+        ret += keyword_string;
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxNumber) {
-        return number_string;
+        ret += number_string;
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxIdentifier) {
-        return identifier_string;
+        ret += identifier_string;
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxComment) {
-        return comment_string;
+        ret += comment_string;
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxString) {
-        return string_string;
+        ret += string_string;
     }
 
-    return default_string;
+    if (metadata.highlighted() && metadata.selected()) {
+        ret += highlighted_and_selected_string;
+    }
+
+    return ret;
 }
 
 void TerminalPanel::document_did_change() {

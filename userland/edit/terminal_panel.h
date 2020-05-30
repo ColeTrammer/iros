@@ -58,7 +58,7 @@ private:
 
     void compute_cols_needed_for_line_numbers();
 
-    const String& string_for_metadata(CharacterMetadata metadata) const;
+    String string_for_metadata(CharacterMetadata metadata) const;
 
     void print_char(char c, CharacterMetadata metadata);
     void flush_row(int line);
