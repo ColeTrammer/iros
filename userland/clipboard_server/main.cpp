@@ -78,7 +78,8 @@ int main() {
                 clipboard_contents = UniquePtr<char>((char*) malloc(request.data_length));
                 memcpy(clipboard_contents.get(), request.data(), request.data_length);
 
-                fprintf(stderr, "set clipboard content: type='%s' data='%s'\n", clipboard_type.string(), clipboard_contents.get());
+                fprintf(stderr, "set clipboard content: type='%s' data='%s'\n", clipboard_type.string(),
+                        String(StringView(clipboard_contents.get(), clipboard_contents.get() + clipboard_contents_size - 1)).string());
 
                 send_message(*Message::SetContentsResponse::create(true), client_fd);
                 break;
