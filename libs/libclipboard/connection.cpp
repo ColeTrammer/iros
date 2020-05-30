@@ -239,7 +239,7 @@ static void* x11_background_thread_start(void*) {
         FD_ZERO(&set);
         FD_SET(s_x_fd, &set);
 
-        timeval timeout { .tv_sec = 0, .tv_usec = 750'000'000 };
+        timeval timeout { .tv_sec = 0, .tv_usec = 750'000 };
         if (select(FD_SETSIZE, &set, nullptr, nullptr, &timeout) < 0) {
             assert(errno == EINTR);
             continue;
@@ -268,8 +268,6 @@ void Connection::initialize() {
 
     s_target_window = XCreateSimpleWindow(s_display, s_root, -10, -10, 1, 1, 0, 0, 0);
 
-    signal(SIGUSR1, [](int) {});
-
     assert(!pthread_create(&s_thread_id, nullptr, x11_background_thread_start, nullptr));
 }
 
@@ -294,8 +292,6 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
     s_target_property = XInternAtom(s_display, "LIBCLIPBOARD", False);
     XConvertSelection(s_display, s_selection_atom, s_text_type_atoms[0], s_target_property, s_target_window, CurrentTime);
     XFlush(s_display);
-
-    pthread_kill(s_thread_id, SIGUSR1);
 
     time_t start = time(nullptr);
     for (;;) {
@@ -324,7 +320,6 @@ bool Connection::set_clipboard_contents_to_text(const String& text) {
     XFlush(s_display);
 
     s_currently_own_clipboard = true;
-    pthread_kill(s_thread_id, SIGUSR1);
 
     pthread_mutex_unlock(&s_clipboard_mutex);
     return true;
