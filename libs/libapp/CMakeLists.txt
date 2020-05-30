@@ -5,6 +5,7 @@ set(SOURCES
     layout.cpp
     object.cpp
     selectable.cpp
+    text_label.cpp
     widget.cpp
     window.cpp
 )

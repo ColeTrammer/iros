@@ -1,6 +1,7 @@
 #include <app/app.h>
 #include <app/box_layout.h>
 #include <app/object.h>
+#include <app/text_label.h>
 #include <app/widget.h>
 #include <app/window.h>
 #include <assert.h>
@@ -15,7 +16,7 @@ int main() {
     widget->set_rect(Rect(25, 25, 200, 200));
 
     auto& layout = widget->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
-    layout.add(App::Widget::create(nullptr));
+    layout.add(App::TextLabel::create(nullptr, "Hello World!"));
     layout.add(App::Widget::create(nullptr));
     layout.add(App::Widget::create(nullptr));
     layout.add(App::Widget::create(nullptr));
