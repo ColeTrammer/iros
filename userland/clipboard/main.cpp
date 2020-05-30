@@ -5,6 +5,7 @@
 
 void print_usage_and_exit(const char* s) {
     fprintf(stderr, "Usage: %s [-c text]\n", s);
+    exit(2);
 }
 
 int main(int argc, char** argv) {
