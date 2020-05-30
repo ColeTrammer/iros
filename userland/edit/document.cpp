@@ -1158,6 +1158,7 @@ void Document::notify_key_pressed(KeyPress press) {
             }
             break;
         case KeyPress::Key::Escape:
+            m_search_text = "";
             clear_search_results();
             clear_selection();
             break;
