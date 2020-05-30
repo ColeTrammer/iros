@@ -23,6 +23,7 @@ enum class LineMode { Single, Multiple };
 
 class Document {
 public:
+    static UniquePtr<Document> create_from_stdin(const String& path, Panel& panel);
     static UniquePtr<Document> create_from_file(const String& path, Panel& panel);
     static UniquePtr<Document> create_empty(Panel& panel);
     static UniquePtr<Document> create_single_line(Panel& panel, String text = "");
@@ -73,6 +74,7 @@ public:
     bool modified() const { return m_document_was_modified; }
 
     const String& name() const { return m_name; }
+    void set_name(String name) { m_name = move(name); }
 
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);

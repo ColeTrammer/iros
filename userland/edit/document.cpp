@@ -10,6 +10,34 @@
 #include "key_press.h"
 #include "panel.h"
 
+UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
+    Vector<Line> lines;
+    char* line = nullptr;
+    size_t line_max = 0;
+    ssize_t line_length;
+    while ((line_length = getline(&line, &line_max, stdin)) != -1) {
+        char* trailing_newline = strchr(line, '\n');
+        if (trailing_newline) {
+            *trailing_newline = '\0';
+        }
+
+        lines.add(Line(String(line)));
+    }
+
+    UniquePtr<Document> ret;
+
+    if (ferror(stdin)) {
+        panel.send_status_message(String::format("error reading stdin: `%s'", strerror(errno)));
+        ret = Document::create_empty(panel);
+        ret->set_name(path);
+    } else {
+        ret = make_unique<Document>(move(lines), path, panel, LineMode::Multiple);
+    }
+
+    assert(freopen("/dev/tty", "r+", stdin));
+    return ret;
+}
+
 UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
     FILE* file = fopen(path.string(), "r");
     if (!file) {
