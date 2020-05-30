@@ -18,7 +18,7 @@ typedef struct {
 int pselect(int numfds, fd_set *__restrict readfds, fd_set *__restrict writefds, fd_set *__restrict exceptfds,
             const struct timespec *__restrict timeout, const sigset_t *__restrict sigmask);
 int select(int numfds, fd_set *__restrict readfds, fd_set *__restrict writefds, fd_set *__restrict exceptfds,
-           const struct timespec *__restrict timeout);
+           struct timeval *__restrict timeout);
 
 #ifdef __cplusplus
 }

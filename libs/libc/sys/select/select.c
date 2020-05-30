@@ -10,6 +10,10 @@ int pselect(int numfds, fd_set *__restrict readfds, fd_set *__restrict writefds,
 }
 
 int select(int numfds, fd_set *__restrict readfds, fd_set *__restrict writefds, fd_set *__restrict exceptfds,
-           const struct timespec *__restrict timeout) {
-    return pselect(numfds, readfds, writefds, exceptfds, timeout, NULL);
+           struct timeval *__restrict timeout) {
+    if (timeout) {
+        struct timespec timeout_as_timespec = { .tv_sec = timeout->tv_sec, .tv_nsec = timeout->tv_usec * 1000 };
+        return pselect(numfds, readfds, writefds, exceptfds, &timeout_as_timespec, NULL);
+    }
+    return pselect(numfds, readfds, writefds, exceptfds, NULL, NULL);
 }

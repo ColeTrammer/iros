@@ -308,7 +308,7 @@ int main() {
     FD_ZERO(&set);
     FD_SET(STDIN_FILENO, &set);
 
-    struct timespec timeout = { .tv_sec = 2, .tv_nsec = 0 };
+    struct timeval timeout = { .tv_sec = 2, .tv_usec = 0 };
 
     char buf[BUFSIZ];
     while (select(FD_SETSIZE, &set, NULL, NULL, &timeout) >= 0) {

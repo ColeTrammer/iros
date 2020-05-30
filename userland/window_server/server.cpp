@@ -124,7 +124,7 @@ void Server::start() {
 
         timespec timeout { .tv_sec = 0, .tv_nsec = remaining_time * 1000000 };
         timespec* timeout_to_pass = did_draw ? nullptr : &timeout;
-        int ret = select(FD_SETSIZE, &set, nullptr, &exceptional, timeout_to_pass);
+        int ret = pselect(FD_SETSIZE, &set, nullptr, &exceptional, timeout_to_pass, nullptr);
         if (ret < 0) {
             perror("select");
             exit(1);
