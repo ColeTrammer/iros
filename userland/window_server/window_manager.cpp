@@ -54,6 +54,10 @@ void WindowManager::remove_window(wid_t wid) {
     }
 }
 
+Point WindowManager::mouse_position_relative_to_window(const Window& window) const {
+    return { m_mouse_x - window.content_rect().x(), m_mouse_y - window.content_rect().y() };
+}
+
 void WindowManager::remove_windows_of_client(int client_id) {
     m_windows.for_each_reverse([&](auto& window) {
         if (window->client_id() == client_id) {

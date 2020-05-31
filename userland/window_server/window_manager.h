@@ -40,6 +40,8 @@ public:
 
     int find_window_intersecting_point(Point p);
 
+    Point mouse_position_relative_to_window(const Window& window) const;
+
     Function<void(Window&)> on_window_close_button_pressed;
 
 private:

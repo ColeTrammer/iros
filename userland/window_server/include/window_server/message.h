@@ -117,16 +117,24 @@ struct Message {
     };
 
     struct MouseEventMessage {
-        static UniquePtr<Message> create(mouse_event event) {
+        static UniquePtr<Message> create(int x, int y, scroll_state scroll, mouse_button_state left, mouse_button_state right) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(MouseEventMessage));
             message->type = Message::Type::MouseEventMessage;
             message->data_len = sizeof(MouseEventMessage);
             auto& data = message->data.mouse_event_message;
-            data.event = event;
+            data.x = x;
+            data.y = y;
+            data.scroll = scroll;
+            data.left = left;
+            data.right = right;
             return UniquePtr<Message>(message);
         }
 
-        mouse_event event;
+        int x;
+        int y;
+        scroll_state scroll;
+        mouse_button_state left;
+        mouse_button_state right;
     };
 
     struct WindowClosedEventMessage {

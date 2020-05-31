@@ -58,12 +58,12 @@ void Application::switch_to(int tty_number) {
     current_tty().switch_to();
 }
 
-bool Application::handle_mouse_event(mouse_event event) {
+bool Application::handle_mouse_event(scroll_state scroll) {
     auto& tty = current_tty().tty();
-    if (event.scroll_state == SCROLL_UP) {
+    if (scroll == SCROLL_UP) {
         tty.scroll_up();
         tty.refresh();
-    } else if (event.scroll_state == SCROLL_DOWN) {
+    } else if (scroll == SCROLL_DOWN) {
         tty.scroll_down();
         tty.refresh();
     }
@@ -284,7 +284,7 @@ int Application::run() {
 #ifdef KERNEL_NO_GRAPHICS
         if (FD_ISSET(mouse_fd, &set)) {
             if (read(mouse_fd, &mouse_event, sizeof(struct mouse_event)) == sizeof(struct mouse_event)) {
-                if (handle_mouse_event(mouse_event)) {
+                if (handle_mouse_event(mouse_event.scroll_state)) {
                     continue;
                 }
             }
@@ -309,7 +309,7 @@ int Application::run() {
                         }
                         break;
                     case WindowServer::Message::Type::MouseEventMessage:
-                        if (handle_mouse_event(message->data.mouse_event_message.event)) {
+                        if (handle_mouse_event(message->data.mouse_event_message.scroll)) {
                             continue;
                         }
                         break;

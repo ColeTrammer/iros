@@ -21,7 +21,7 @@ public:
     int run();
 
 private:
-    bool handle_mouse_event(mouse_event event);
+    bool handle_mouse_event(scroll_state scroll);
     bool handle_keyboard_event(key_event event);
 
     int m_current_tty { -1 };
