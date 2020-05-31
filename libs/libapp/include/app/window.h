@@ -1,13 +1,13 @@
 #pragma once
 
-#include <app/object.h>
+#include <app/widget.h>
 #include <liim/maybe.h>
 #include <liim/string.h>
 #include <window_server/window.h>
 
 namespace App {
 
-class Window : public Object {
+class Window : public Widget {
 public:
     template<typename... Args>
     static SharedPtr<Window> create(SharedPtr<Object> parent, Args&&... args) {

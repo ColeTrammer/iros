@@ -38,6 +38,7 @@ Window::Window(int x, int y, int width, int height, String name) {
             }
         }
     });
+    set_rect({ 0, 0, width, height });
 }
 
 void Window::on_event(Event& event) {
@@ -54,5 +55,4 @@ void Window::on_event(Event& event) {
             break;
     }
 }
-
 }

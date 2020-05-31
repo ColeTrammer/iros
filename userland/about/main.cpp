@@ -12,10 +12,7 @@ int main() {
 
     auto window = App::Window::create(nullptr, 300, 300, 250, 250, "About");
 
-    auto widget = App::Widget::create(window);
-    widget->set_rect(Rect(25, 25, 200, 200));
-
-    auto& layout = widget->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
+    auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
     layout.add<App::TextLabel>("Hello World!");
     layout.add<App::Widget>();
     layout.add<App::Widget>();
