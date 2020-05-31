@@ -51,8 +51,30 @@ void Window::on_event(Event& event) {
             }
             break;
         }
+        case Event::Type::Mouse: {
+            auto& mouse_event = static_cast<MouseEvent&>(event);
+            auto& widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
+            mouse_event.set_x(mouse_event.x() - widget.rect().x());
+            mouse_event.set_y(mouse_event.y() - widget.rect().y());
+            widget.on_mouse_event(mouse_event);
+            break;
+        }
         default:
             break;
     }
 }
+
+Widget& Window::find_widget_at_point(Point p) {
+    Widget* parent = this;
+    for (auto& child : parent->children()) {
+        if (child->is_widget()) {
+            auto& widget_child = const_cast<Widget&>(static_cast<const Widget&>(*child));
+            if (widget_child.rect().intersects(p)) {
+                parent = &widget_child;
+            }
+        }
+    }
+    return *parent;
+}
+
 }

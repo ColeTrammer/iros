@@ -12,4 +12,4 @@ set(SOURCES
 
 add_os_library(libapp app TRUE)
 
-target_link_libraries(libapp PUBLIC libliim libgraphics libws)
+target_link_libraries(libapp PUBLIC libliim libgraphics libws kernel_headers)

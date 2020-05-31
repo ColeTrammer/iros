@@ -6,6 +6,7 @@
 namespace App {
 
 class Layout;
+class MouseEvent;
 class Window;
 
 class Widget : public Object {
@@ -15,6 +16,7 @@ public:
     virtual ~Widget() override;
 
     virtual void render();
+    virtual void on_mouse_event(MouseEvent&) {}
 
     void set_rect(Rect rect) { m_rect = move(rect); }
     const Rect& rect() const { return m_rect; }

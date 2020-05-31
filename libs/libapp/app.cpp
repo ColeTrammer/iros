@@ -46,6 +46,17 @@ void App::process_ws_message(UniquePtr<WindowServer::Message> message) {
             }
             break;
         }
+        case WindowServer::Message::Type::MouseEventMessage: {
+            auto& mouse_event = message->data.mouse_event_message;
+            auto maybe_window = Window::find_by_wid(mouse_event.wid);
+            assert(maybe_window.has_value());
+            if (!maybe_window.value().expired()) {
+                m_loop.queue_event(
+                    move(maybe_window.value()),
+                    move(make_unique<MouseEvent>(mouse_event.x, mouse_event.y, mouse_event.scroll, mouse_event.left, mouse_event.right)));
+            }
+            break;
+        }
         default:
             break;
     }
