@@ -100,6 +100,20 @@ namespace CLanguage {
     __ENUMERATE_C_OP(LeftBracket, "[")        \
     __ENUMERATE_C_OP(RightBracket, "]")
 
+#define __ENUMERATE_C_PREPROCESSOR_KEYWORDS                \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(If, "if")           \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(IfDef, "ifdef")     \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(IfNDef, "ifndef")   \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Elif, "elif")       \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Else, "else")       \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(EndIf, "endif")     \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Define, "define")   \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Undef, "undef")     \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Include, "include") \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Pragma, "pragma")   \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Error, "error")     \
+    __ENUMERATE_C_PREPROCESSOR_KEYWORD(Line, "line")
+
 struct CToken {
     enum class Type {
 #undef __ENUMERATE_C_KEYWORD
@@ -112,6 +126,17 @@ struct CToken {
 #undef __ENUMERATE_C_OP
 #define __ENUMERATE_C_OP(n, s) Operator##n,
         __ENUMERATE_C_OPS
+
+#undef __ENUMERATE_C_PREPROCESSOR_KEYWORD
+#define __ENUMERATE_C_PREPROCESSOR_KEYWORD(n, s) Preprocessor##n,
+            __ENUMERATE_C_PREPROCESSOR_KEYWORDS
+
+                PreprocessorStart,
+        PreprocessorPound,
+        PreprocessorPoundPound,
+        PreprocessorDefined,
+        PreprocessorBackslash,
+        PreprocessorSystemIncludeString,
     };
 
     int start_line;
@@ -191,6 +216,9 @@ private:
     int m_current_col { 0 };
     bool m_token_started { false };
     Vector<CToken> m_tokens;
+    bool m_in_preprocessor { false };
+    bool m_expecting_preprocessor_keyword { false };
+    bool m_in_include { false };
 };
 
 }

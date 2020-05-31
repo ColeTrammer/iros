@@ -30,13 +30,62 @@ bool CPPLexer::lex(CPPLexMode mode) {
         }
     };
 
+    bool prev_was_backslash = false;
     for (;;) {
         if (peek() == EOF) {
             return true;
         }
 
+        if (m_in_preprocessor) {
+            if (peek() == '\\') {
+                prev_was_backslash = !prev_was_backslash;
+                if (prev_was_backslash && peek(1) == '\n') {
+                    begin_token();
+                    consume();
+                    commit_token(CPPToken::Type::PreprocessorBackslash);
+                    consume();
+                    prev_was_backslash = false;
+                    continue;
+                }
+                consume();
+                continue;
+            }
+
+            if (peek() == '\n') {
+                consume();
+                m_in_preprocessor = false;
+                continue;
+            }
+
+            if (peek() == '#' && peek(1) == '#') {
+                begin_token();
+                consume(2);
+                commit_token(CPPToken::Type::PreprocessorPoundPound);
+                continue;
+            }
+
+            if (peek() == '#') {
+                begin_token();
+                consume();
+                commit_token(CPPToken::Type::PreprocessorPound);
+                continue;
+            }
+
+            if (peek() == '<' && m_in_include) {
+                begin_token();
+                find_unescaped_char('>');
+                commit_token(CPPToken::Type::PreprocessorSystemIncludeString);
+                m_in_include = false;
+                continue;
+            }
+        }
+
         if (peek() == '#' && m_current_col == 0) {
-            find_unescaped_char('\n');
+            begin_token();
+            consume();
+            commit_token(CPPToken::Type::PreprocessorStart);
+            m_in_preprocessor = true;
+            m_expecting_preprocessor_keyword = true;
             continue;
         }
 
@@ -99,6 +148,29 @@ bool CPPLexer::lex(CPPLexMode mode) {
             while (isspace(peek())) {
                 consume();
             }
+            continue;
+        }
+
+        if (m_in_preprocessor && m_expecting_preprocessor_keyword) {
+#undef __ENUMERATE_CPP_PREPROCESSOR_KEYWORD
+#define __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(n, s)                                              \
+    if (input_starts_with(StringView(s)) && isspace(peek(StringView(s).size()))) {              \
+        begin_token();                                                                          \
+        consume(StringView(s).size());                                                          \
+        commit_token(CPPToken::Type::Preprocessor##n);                                          \
+        m_expecting_preprocessor_keyword = false;                                               \
+        if constexpr (CPPToken::Type::Preprocessor##n == CPPToken::Type::PreprocessorInclude) { \
+            m_in_include = true;                                                                \
+        }                                                                                       \
+        continue;                                                                               \
+    }
+            __ENUMERATE_CPP_PREPROCESSOR_KEYWORDS
+        }
+
+        if (m_in_preprocessor && input_starts_with("defined") && !isalnum(peek(7)) && peek(7) != '_' && peek(7) != '$' && peek(7) != EOF) {
+            begin_token();
+            consume(7);
+            commit_token(CPPToken::Type::PreprocessorDefined);
             continue;
         }
 

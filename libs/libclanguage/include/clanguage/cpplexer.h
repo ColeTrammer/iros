@@ -154,6 +154,20 @@ namespace CLanguage {
     __ENUMERATE_CPP_OP(LeftBracket, "[")        \
     __ENUMERATE_CPP_OP(RightBracket, "]")
 
+#define __ENUMERATE_CPP_PREPROCESSOR_KEYWORDS                \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(If, "if")           \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(IfDef, "ifdef")     \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(IfNDef, "ifndef")   \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Elif, "elif")       \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Else, "else")       \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(EndIf, "endif")     \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Define, "define")   \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Undef, "undef")     \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Include, "include") \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Pragma, "pragma")   \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Error, "error")     \
+    __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(Line, "line")
+
 struct CPPToken {
     enum class Type {
 #undef __ENUMERATE_CPP_KEYWORD
@@ -177,6 +191,17 @@ struct CPPToken {
         CharacterLiteral,
         Identifier,
         Comment,
+
+#undef __ENUMERATE_CPP_PREPROCESSOR_KEYWORD
+#define __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(n, s) Preprocessor##n,
+        __ENUMERATE_CPP_PREPROCESSOR_KEYWORDS
+
+            PreprocessorStart,
+        PreprocessorPound,
+        PreprocessorPoundPound,
+        PreprocessorDefined,
+        PreprocessorBackslash,
+        PreprocessorSystemIncludeString,
     };
 
     int start_line;
@@ -256,6 +281,8 @@ private:
     int m_current_col { 0 };
     bool m_token_started { false };
     Vector<CPPToken> m_tokens;
+    bool m_in_preprocessor { false };
+    bool m_expecting_preprocessor_keyword { false };
+    bool m_in_include { false };
 };
-
 }
