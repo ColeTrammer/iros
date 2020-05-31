@@ -48,6 +48,7 @@ static int cpp_flags_for_token_type(CLanguage::CPPToken::Type type) {
     switch (type) {
         case CPPToken::Type::CharacterLiteral:
         case CPPToken::Type::StringLiteral:
+        case CPPToken::Type::PreprocessorSystemIncludeString:
             return CharacterMetadata::Flags::SyntaxString;
 #undef __ENUMERATE_CPP_LITERAL
 #define __ENUMERATE_CPP_LITERAL(n, s) case CPPToken::Type::Literal##n:
@@ -74,6 +75,19 @@ static int cpp_flags_for_token_type(CLanguage::CPPToken::Type type) {
     case CPPToken::Type::Operator##n: \
         return CharacterMetadata::Flags::SyntaxOperator;
             __ENUMERATE_CPP_OPS
+
+#undef __ENUMERATE_CPP_PREPROCESSOR_KEYWORD
+#define __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(n, s) \
+    case CPPToken::Type::Preprocessor##n:          \
+        return CharacterMetadata::Flags::SyntaxOperator;
+            __ENUMERATE_CPP_PREPROCESSOR_KEYWORDS
+
+        case CPPToken::Type::PreprocessorBackslash:
+        case CPPToken::Type::PreprocessorDefined:
+        case CPPToken::Type::PreprocessorStart:
+        case CPPToken::Type::PreprocessorPound:
+        case CPPToken::Type::PreprocessorPoundPound:
+            return CharacterMetadata::Flags::SyntaxOperator;
 
         case CPPToken::Type::Identifier:
         default:
@@ -125,6 +139,7 @@ static int c_flags_for_token_type(CLanguage::CToken::Type type) {
     switch (type) {
         case CToken::Type::CharacterLiteral:
         case CToken::Type::StringLiteral:
+        case CToken::Type::PreprocessorSystemIncludeString:
             return CharacterMetadata::Flags::SyntaxString;
         case CToken::Type::NumericLiteral:
             return CharacterMetadata::Flags::SyntaxNumber;
@@ -142,6 +157,19 @@ static int c_flags_for_token_type(CLanguage::CToken::Type type) {
     case CToken::Type::Operator##n: \
         return CharacterMetadata::Flags::SyntaxOperator;
             __ENUMERATE_C_OPS
+
+#undef __ENUMERATE_C_PREPROCESSOR_KEYWORD
+#define __ENUMERATE_C_PREPROCESSOR_KEYWORD(n, s) \
+    case CToken::Type::Preprocessor##n:          \
+        return CharacterMetadata::Flags::SyntaxOperator;
+            __ENUMERATE_C_PREPROCESSOR_KEYWORDS
+
+        case CToken::Type::PreprocessorBackslash:
+        case CToken::Type::PreprocessorDefined:
+        case CToken::Type::PreprocessorStart:
+        case CToken::Type::PreprocessorPound:
+        case CToken::Type::PreprocessorPoundPound:
+            return CharacterMetadata::Flags::SyntaxOperator;
 
         case CToken::Type::Identifier:
         default:
