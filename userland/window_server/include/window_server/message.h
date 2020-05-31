@@ -117,11 +117,12 @@ struct Message {
     };
 
     struct MouseEventMessage {
-        static UniquePtr<Message> create(int x, int y, scroll_state scroll, mouse_button_state left, mouse_button_state right) {
+        static UniquePtr<Message> create(wid_t wid, int x, int y, scroll_state scroll, mouse_button_state left, mouse_button_state right) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(MouseEventMessage));
             message->type = Message::Type::MouseEventMessage;
             message->data_len = sizeof(MouseEventMessage);
             auto& data = message->data.mouse_event_message;
+            data.wid = wid;
             data.x = x;
             data.y = y;
             data.scroll = scroll;
@@ -130,6 +131,7 @@ struct Message {
             return UniquePtr<Message>(message);
         }
 
+        wid_t wid;
         int x;
         int y;
         scroll_state scroll;

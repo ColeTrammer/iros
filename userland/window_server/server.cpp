@@ -196,8 +196,8 @@ void Server::start() {
                 auto* active_window = m_manager->active_window();
                 if (active_window) {
                     Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
-                    auto to_send = WindowServer::Message::MouseEventMessage::create(relative_mouse.x(), relative_mouse.y(),
-                                                                                    event.scroll_state, event.left, event.right);
+                    auto to_send = WindowServer::Message::MouseEventMessage::create(
+                        active_window->id(), relative_mouse.x(), relative_mouse.y(), event.scroll_state, event.left, event.right);
                     assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
                            static_cast<ssize_t>(to_send->total_size()));
                 }
