@@ -12,9 +12,10 @@ enum class DocumentType {
     C,
     CPP,
     ShellScript,
+    Makefile,
 };
 
-DocumentType document_type_from_extension(const LIIM::StringView& view);
+void update_document_type(Document& document);
 
 LIIM::String document_type_to_string(DocumentType type);
 

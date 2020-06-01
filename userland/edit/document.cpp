@@ -852,12 +852,7 @@ void Document::set_type(DocumentType type) {
 }
 
 void Document::guess_type_from_name() {
-    char* extension_start = strrchr(m_name.string(), '.');
-    if (!extension_start) {
-        return;
-    }
-
-    set_type(document_type_from_extension(StringView(extension_start + 1, m_name.string() + m_name.size() - 1)));
+    update_document_type(*this);
 }
 
 void Document::save() {

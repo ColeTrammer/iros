@@ -5,27 +5,44 @@
 #include <liim/string_view.h>
 #include <sh/sh_lexer.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "character_metadata.h"
 #include "document.h"
 #include "document_type.h"
 #include "line.h"
 
-DocumentType document_type_from_extension(const LIIM::StringView& view) {
-    if (view == "c") {
-        return DocumentType::C;
+void update_document_type(Document& document) {
+    auto path = document.name();
+
+    auto filename = StringView(path.string(), path.string() + path.size() - 1);
+    if (char* last_slash = strrchr(path.string(), '/')) {
+        filename = StringView(last_slash + 1, path.string() + path.size() - 1);
     }
-    if (view == "cpp") {
-        return DocumentType::CPP;
+
+    auto extension = StringView("");
+    if (const char* last_dot = strrchr(filename.start(), '.')) {
+        extension = StringView(last_dot + 1, filename.end());
     }
-    if (view == "h") {
+
+    DocumentType type;
+    if (extension == "c") {
+        type = DocumentType::C;
+    } else if (extension == "cpp") {
+        type = DocumentType::CPP;
+    } else if (extension == "h") {
         // FIXME: this should sometimes return C, but CPP mode will hopefully work fine with most C headers.
-        return DocumentType::CPP;
+        type = DocumentType::CPP;
+    } else if (extension == "sh" || filename == ".sh_init" || filename == ".bashrc") {
+        type = DocumentType::ShellScript;
+    } else if (filename == "Makefile" || extension == "d" || extension == "config") {
+        type = DocumentType::Makefile;
+        document.set_convert_tabs_to_spaces(false);
+    } else {
+        type = DocumentType::Text;
     }
-    if (view == "sh" || view == "sh_init" || view == "bashrc") {
-        return DocumentType::ShellScript;
-    }
-    return DocumentType::Text;
+
+    document.set_type(type);
 }
 
 LIIM::String document_type_to_string(DocumentType type) {
@@ -36,6 +53,8 @@ LIIM::String document_type_to_string(DocumentType type) {
             return "C++";
         case DocumentType::ShellScript:
             return "Shell Script";
+        case DocumentType::Makefile:
+            return "Makefile";
         case DocumentType::Text:
             return "Text";
         default:
