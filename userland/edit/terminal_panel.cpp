@@ -126,7 +126,7 @@ TerminalPanel::~TerminalPanel() {}
 void TerminalPanel::clear() {
     draw_cursor();
     m_screen_info.clear();
-    m_screen_info.resize(m_rows * m_cols);
+    m_screen_info.resize(m_rows * TerminalPanel::cols());
 }
 
 String TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {

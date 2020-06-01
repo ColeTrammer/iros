@@ -65,7 +65,7 @@ private:
 
     String enter_prompt(const String& message, String starting_text = "");
 
-    int index(int row, int col) const { return row * m_cols + col; }
+    int index(int row, int col) const { return row * cols() + col; }
 
     Vector<Info> m_screen_info;
     Vector<bool> m_dirty_rows;
