@@ -332,6 +332,9 @@ void TerminalPanel::flush() {
 
         int line_number = document()->row_offset() + r + 1;
         if (document()->show_line_numbers() && line_number <= document()->num_lines()) {
+            m_last_metadata_rendered = CharacterMetadata();
+            fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
+
             char buf[48];
             snprintf(buf, sizeof(buf) - 1, "%*d ", m_cols_needed_for_line_numbers - 1, line_number);
             fputs(buf, stdout);
