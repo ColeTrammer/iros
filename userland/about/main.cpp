@@ -1,5 +1,6 @@
 #include <app/app.h>
 #include <app/box_layout.h>
+#include <app/button.h>
 #include <app/object.h>
 #include <app/text_label.h>
 #include <app/widget.h>
@@ -16,7 +17,10 @@ int main() {
     layout.add<App::TextLabel>("Hello World!");
     layout.add<App::Widget>();
     layout.add<App::Widget>();
-    layout.add<App::Widget>();
+    auto& button = layout.add<App::Button>("Click Me!");
+    button.on_click = [] {
+        printf("clicked!\n");
+    };
 
     window->draw();
 

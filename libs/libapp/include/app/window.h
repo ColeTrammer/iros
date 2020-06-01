@@ -37,6 +37,8 @@ private:
 
     virtual void on_event(Event& event) override;
 
+    virtual void render() override {};
+
     Widget& find_widget_at_point(Point p);
 
     static void register_window(const SharedPtr<Window>& window);

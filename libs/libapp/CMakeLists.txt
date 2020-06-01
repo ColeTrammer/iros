@@ -1,6 +1,7 @@
 set(SOURCES
     app.cpp
     box_layout.cpp
+    button.cpp
     event_loop.cpp
     layout.cpp
     object.cpp
