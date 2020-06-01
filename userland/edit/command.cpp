@@ -1,5 +1,6 @@
 #include "command.h"
 #include "document.h"
+#include "panel.h"
 
 Command::Command(Document& document) : m_document(document) {}
 
@@ -36,6 +37,19 @@ InsertCommand::~InsertCommand() {}
 bool InsertCommand::execute() {
     if (!document().selection().empty()) {
         document().delete_selection();
+    }
+
+    if (m_text.size() == 1 && m_text[0] == '\n') {
+        String leading_whitespace = "";
+        auto& line = document().line_at_cursor();
+        for (int i = 0; i < line.length(); i++) {
+            if (!isspace(line.char_at(i))) {
+                break;
+            }
+
+            leading_whitespace += String(line.char_at(i));
+        }
+        m_text += move(leading_whitespace);
     }
 
     do_insert(document(), m_text);
