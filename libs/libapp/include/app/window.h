@@ -8,18 +8,10 @@
 namespace App {
 
 class Window : public Widget {
-public:
-    template<typename... Args>
-    static SharedPtr<Window> create(SharedPtr<Object> parent, Args&&... args) {
-        auto ret = SharedPtr<Window>(new Window(forward<Args>(args)...));
-        register_window(ret);
-        if (parent) {
-            parent->add_child(ret);
-        }
-        return ret;
-    }
+    APP_OBJECT(Window)
 
-    static Maybe<WeakPtr<Window>> find_by_wid(wid_t wid);
+public:
+    static Maybe<SharedPtr<Window>> find_by_wid(wid_t wid);
 
     virtual ~Window();
 
@@ -41,7 +33,7 @@ private:
 
     Widget& find_widget_at_point(Point p);
 
-    static void register_window(const SharedPtr<Window>& window);
+    static void register_window(Window& window);
     static void unregister_window(wid_t wid);
 
     SharedPtr<WindowServer::Window> m_ws_window;

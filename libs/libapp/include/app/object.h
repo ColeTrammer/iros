@@ -8,6 +8,7 @@ public:                                                                       \
     template<typename... Args>                                                \
     static SharedPtr<name> create(SharedPtr<Object> parent, Args&&... args) { \
         auto ret = SharedPtr<name>(new name(forward<Args>(args)...));         \
+        ret->__set_weak_this(WeakPtr<name>(ret));                             \
         if (parent) {                                                         \
             parent->add_child(ret);                                           \
         }                                                                     \
@@ -38,12 +39,24 @@ public:
 
     virtual void on_event(Event&) {}
 
+    SharedPtr<Object> shared_from_this() { return m_weak_this.lock(); }
+    SharedPtr<const Object> shared_from_this() const { return m_weak_this.lock(); }
+
+    WeakPtr<Object> weak_from_this() { return m_weak_this; }
+    WeakPtr<const Object> weak_from_this() const { return m_weak_this; }
+
+    void __set_weak_this(WeakPtr<Object> weak_this) {
+        assert(m_weak_this.expired());
+        m_weak_this = move(weak_this);
+    }
+
 protected:
     Object();
 
 private:
     Vector<SharedPtr<Object>> m_children;
     Object* m_parent;
+    mutable WeakPtr<Object> m_weak_this;
 };
 
 }

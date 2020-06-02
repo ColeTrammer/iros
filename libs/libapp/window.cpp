@@ -7,22 +7,22 @@
 
 namespace App {
 
-static HashMap<wid_t, WeakPtr<Window>> s_windows;
+static HashMap<wid_t, Window*> s_windows;
 
-void Window::register_window(const SharedPtr<Window>& window) {
-    s_windows.put(window->wid(), window);
+void Window::register_window(Window& window) {
+    s_windows.put(window.wid(), &window);
 }
 
 void Window::unregister_window(wid_t wid) {
     s_windows.remove(wid);
 }
 
-Maybe<WeakPtr<Window>> Window::find_by_wid(wid_t wid) {
+Maybe<SharedPtr<Window>> Window::find_by_wid(wid_t wid) {
     auto result = s_windows.get(wid);
     if (!result) {
         return {};
     }
-    return { *result };
+    return { (*result)->shared_from_this() };
 }
 
 Window::~Window() {
@@ -39,6 +39,7 @@ Window::Window(int x, int y, int width, int height, String name) {
         }
     });
     set_rect({ 0, 0, width, height });
+    register_window(*this);
 }
 
 void Window::on_event(Event& event) {
