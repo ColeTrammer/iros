@@ -59,4 +59,23 @@ private:
     mouse_button_state m_right { MOUSE_NO_CHANGE };
 };
 
+class KeyEvent final : public Event {
+public:
+    KeyEvent(char ascii, key k, int flags) : Event(Event::Type::Key), m_ascii(ascii), m_key(k), m_flags(flags) {}
+
+    char ascii() const { return m_ascii; }
+    enum key key() const { return m_key; }
+
+    bool key_up() const { return m_flags & KEY_UP; }
+    bool key_down() const { return m_flags & KEY_DOWN; }
+    bool control_down() const { return m_flags & KEY_CONTROL_ON; }
+    bool shift_down() const { return m_flags & KEY_SHIFT_ON; }
+    bool alt_down() const { return m_flags & KEY_ALT_ON; }
+
+private:
+    char m_ascii;
+    enum key m_key;
+    int m_flags;
+};
+
 }
