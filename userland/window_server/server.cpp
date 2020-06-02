@@ -175,7 +175,7 @@ void Server::start() {
             while (read(m_kbd_fd, &event, sizeof(event)) == sizeof(event)) {
                 auto* active_window = m_manager->active_window();
                 if (active_window) {
-                    auto to_send = WindowServer::Message::KeyEventMessage::create(event);
+                    auto to_send = WindowServer::Message::KeyEventMessage::create(active_window->id(), event);
                     assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
                            static_cast<ssize_t>(to_send->total_size()));
                 }

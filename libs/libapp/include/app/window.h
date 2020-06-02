@@ -33,10 +33,14 @@ private:
 
     Widget& find_widget_at_point(Point p);
 
+    void set_focused_widget(Widget& widget);
+    SharedPtr<Widget> focused_widget();
+
     static void register_window(Window& window);
     static void unregister_window(wid_t wid);
 
     SharedPtr<WindowServer::Window> m_ws_window;
+    WeakPtr<Widget> m_focused_widget;
 };
 
 }

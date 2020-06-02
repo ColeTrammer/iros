@@ -104,15 +104,17 @@ struct Message {
     };
 
     struct KeyEventMessage {
-        static UniquePtr<Message> create(key_event event) {
+        static UniquePtr<Message> create(wid_t wid, key_event event) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(KeyEventMessage));
             message->type = Message::Type::KeyEventMessage;
             message->data_len = sizeof(KeyEventMessage);
             auto& data = message->data.key_event_message;
+            data.wid = wid;
             data.event = event;
             return UniquePtr<Message>(message);
         }
 
+        wid_t wid;
         key_event event;
     };
 

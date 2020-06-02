@@ -57,7 +57,14 @@ void Window::on_event(Event& event) {
             auto& widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
             mouse_event.set_x(mouse_event.x() - widget.rect().x());
             mouse_event.set_y(mouse_event.y() - widget.rect().y());
+            set_focused_widget(widget);
             widget.on_mouse_event(mouse_event);
+            break;
+        }
+        case Event::Type::Key: {
+            auto& key_event = static_cast<KeyEvent&>(event);
+            auto widget = focused_widget();
+            widget->on_key_event(key_event);
             break;
         }
         default:
@@ -76,6 +83,19 @@ Widget& Window::find_widget_at_point(Point p) {
         }
     }
     return *parent;
+}
+
+void Window::set_focused_widget(Widget& widget) {
+    m_focused_widget = move(widget.weak_from_this());
+}
+
+SharedPtr<Widget> Window::focused_widget() {
+    auto ret = m_focused_widget.lock();
+    if (!ret) {
+        set_focused_widget(*this);
+        return shared_from_this();
+    }
+    return move(ret);
 }
 
 }

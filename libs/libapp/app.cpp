@@ -52,6 +52,14 @@ void App::process_ws_message(UniquePtr<WindowServer::Message> message) {
                                                                                   mouse_event.left, mouse_event.right)));
             break;
         }
+        case WindowServer::Message::Type::KeyEventMessage: {
+            auto& key_event = message->data.key_event_message;
+            auto maybe_window = Window::find_by_wid(key_event.wid);
+            assert(maybe_window.has_value());
+            m_loop.queue_event(maybe_window.value(),
+                               move(make_unique<KeyEvent>(key_event.event.ascii, key_event.event.key, key_event.event.flags)));
+            break;
+        }
         default:
             break;
     }

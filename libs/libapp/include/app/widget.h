@@ -6,6 +6,7 @@
 namespace App {
 
 class Layout;
+class KeyEvent;
 class MouseEvent;
 class Window;
 
@@ -17,6 +18,7 @@ public:
 
     virtual void render();
     virtual void on_mouse_event(MouseEvent&) {}
+    virtual void on_key_event(KeyEvent&) {}
 
     void set_rect(Rect rect) { m_rect = move(rect); }
     const Rect& rect() const { return m_rect; }
