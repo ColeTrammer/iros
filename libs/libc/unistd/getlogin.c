@@ -6,6 +6,8 @@
 static char buf[GETLOGIN_BUF_SZ];
 
 char *getlogin(void) {
-    getlogin_r(buf, GETLOGIN_BUF_SZ);
+    if (getlogin_r(buf, GETLOGIN_BUF_SZ) == -1) {
+        return NULL;
+    }
     return buf;
 }
