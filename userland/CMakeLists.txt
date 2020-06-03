@@ -33,6 +33,7 @@ set(TARGETS
     id
     kill
     ln
+    logname
     ls
     mkdir
     mv
