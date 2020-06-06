@@ -50,6 +50,8 @@ public:
     char* string() { return is_small() ? m_string.small.data : m_string.large.data; }
     const char* string() const { return is_small() ? m_string.small.data : m_string.large.data; }
 
+    StringView view() const { return StringView(string(), string() + size() - 1); }
+
     void insert(const String& string, size_t position);
     void insert(char c, size_t position) { insert(String(c), position); }
 
