@@ -2,8 +2,11 @@
 
 #include <app/widget.h>
 #include <liim/string.h>
+#include <liim/vector.h>
 
 #include "panel.h"
+
+class Renderer;
 
 class AppPanel final
     : public Panel
@@ -38,11 +41,26 @@ public:
 
     virtual void do_open_prompt() override;
 
+    virtual void render() override;
+
 private:
+    struct CellData {
+        char c;
+        CharacterMetadata metadata;
+    };
+
     AppPanel(int x, int y, int width, int height);
+
+    virtual void document_did_change() override;
+
+    int index(int row, int col) const { return row * cols() + col; }
+
+    void render_cell(Renderer& renderer, int x, int y, CellData& cell);
+    void update_coordinates(int x, int y, int width, int height);
 
     int m_rows { 0 };
     int m_cols { 0 };
     int m_cursor_col { 0 };
     int m_cursor_row { 0 };
+    Vector<CellData> m_cells;
 };
