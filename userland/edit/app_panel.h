@@ -42,6 +42,7 @@ public:
     virtual void do_open_prompt() override;
 
     virtual void render() override;
+    virtual void on_key_event(App::KeyEvent& event) override;
 
 private:
     struct CellData {
@@ -55,7 +56,7 @@ private:
 
     int index(int row, int col) const { return row * cols() + col; }
 
-    void render_cell(Renderer& renderer, int x, int y, CellData& cell);
+    void render_cell(Renderer& renderer, int x, int y, CellData& cell, bool at_cursor);
     void update_coordinates(int x, int y, int width, int height);
 
     int m_rows { 0 };
