@@ -27,12 +27,18 @@ void AppPanel::clear() {
     m_cells.resize(m_rows * m_cols);
     for (auto& cell : m_cells) {
         cell.c = ' ';
+        cell.dirty = true;
         cell.metadata = CharacterMetadata();
     }
 }
 
 void AppPanel::set_text_at(int row, int col, char c, CharacterMetadata metadata) {
-    m_cells[index(row, col)] = { c, metadata };
+    auto& cell = m_cells[index(row, col)];
+    if (cell.c == c && cell.metadata == metadata) {
+        return;
+    }
+
+    m_cells[index(row, col)] = { c, true, metadata };
 }
 
 void AppPanel::flush() {
@@ -51,6 +57,12 @@ String AppPanel::prompt(const String&) {
 
 void AppPanel::enter_search(String) {}
 
+void AppPanel::notify_now_is_a_good_time_to_draw_cursor() {
+    if (m_cursor_dirty) {
+        flush();
+    }
+}
+
 void AppPanel::notify_line_count_changed() {}
 
 void AppPanel::set_clipboard_contents(String, bool) {}
@@ -66,25 +78,33 @@ void AppPanel::set_cursor(int row, int col) {
 
     m_cursor_row = row;
     m_cursor_col = col;
-    if (document()) {
-        document()->set_needs_display();
+    if (m_last_drawn_cursor_col != -1 && m_last_drawn_cursor_row != -1 &&
+        (m_last_drawn_cursor_col != m_cursor_col || m_last_drawn_cursor_row != m_cursor_row)) {
+        m_cells[index(m_last_drawn_cursor_row, m_last_drawn_cursor_col)].dirty = true;
     }
+    m_cursor_dirty = true;
 }
 
 void AppPanel::do_open_prompt() {}
 
-void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell, bool at_cursor) {
+void AppPanel::render_cursor(Renderer& renderer) {
+    int cursor_x = rect().x() + m_cursor_col * col_width();
+    int cursor_y = rect().y() + m_cursor_row * row_height();
+    for (int y = cursor_y; y < cursor_y + row_height(); y++) {
+        renderer.pixels().put_pixel(cursor_x, y, Color(255, 255, 255));
+    }
+
+    m_last_drawn_cursor_col = m_cursor_col;
+    m_last_drawn_cursor_row = m_cursor_row;
+    m_cursor_dirty = false;
+}
+
+void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {
     renderer.set_color(0);
     renderer.fill_rect(x, y, col_width(), row_height());
 
     renderer.set_color(Color(255, 255, 255));
     renderer.render_text(x, y, String(cell.c));
-
-    if (at_cursor) {
-        for (int yy = y; yy < y + row_height(); yy++) {
-            renderer.pixels().put_pixel(x, yy, Color(255, 255, 255));
-        }
-    }
 }
 
 void AppPanel::render() {
@@ -93,10 +113,14 @@ void AppPanel::render() {
     for (int r = 0; r < rows(); r++) {
         for (int c = 0; c < cols(); c++) {
             auto& cell = m_cells[index(r, c)];
-            render_cell(renderer, rect().x() + c * col_width(), rect().y() + r * row_height(), cell,
-                        r == cursor_row() && c == cursor_col());
+            if (cell.dirty) {
+                cell.dirty = false;
+                render_cell(renderer, rect().x() + c * col_width(), rect().y() + r * row_height(), cell);
+            }
         }
     }
+
+    render_cursor(renderer);
 }
 
 void AppPanel::on_key_event(App::KeyEvent& event) {

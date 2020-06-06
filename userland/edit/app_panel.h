@@ -1,6 +1,7 @@
 #pragma once
 
 #include <app/widget.h>
+#include <liim/bitmap.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -29,6 +30,8 @@ public:
     virtual void send_status_message(String message) override;
     virtual String prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
+
+    virtual void notify_now_is_a_good_time_to_draw_cursor() override;
     virtual void notify_line_count_changed() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
@@ -47,6 +50,7 @@ public:
 private:
     struct CellData {
         char c;
+        bool dirty;
         CharacterMetadata metadata;
     };
 
@@ -56,12 +60,16 @@ private:
 
     int index(int row, int col) const { return row * cols() + col; }
 
-    void render_cell(Renderer& renderer, int x, int y, CellData& cell, bool at_cursor);
+    void render_cursor(Renderer& renderer);
+    void render_cell(Renderer& renderer, int x, int y, CellData& cell);
     void update_coordinates(int x, int y, int width, int height);
 
     int m_rows { 0 };
     int m_cols { 0 };
+    int m_last_drawn_cursor_col { -1 };
+    int m_last_drawn_cursor_row { -1 };
     int m_cursor_col { 0 };
     int m_cursor_row { 0 };
+    bool m_cursor_dirty { true };
     Vector<CellData> m_cells;
 };

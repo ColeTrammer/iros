@@ -38,6 +38,7 @@ public:
     virtual int cursor_col() const = 0;
 
     virtual void notify_line_count_changed() {}
+    virtual void notify_now_is_a_good_time_to_draw_cursor() {}
 
     void set_cursor_row(int row) { set_cursor(row, cursor_col()); }
     void set_cursor_col(int col) { set_cursor(cursor_row(), col); }

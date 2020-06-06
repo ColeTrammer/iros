@@ -1036,6 +1036,8 @@ void Document::notify_key_pressed(KeyPress press) {
 
         if (needs_display()) {
             display();
+        } else {
+            m_panel.notify_now_is_a_good_time_to_draw_cursor();
         }
         return;
     }
@@ -1112,6 +1114,8 @@ void Document::notify_key_pressed(KeyPress press) {
 
         if (needs_display()) {
             display();
+        } else {
+            m_panel.notify_now_is_a_good_time_to_draw_cursor();
         }
         return;
     }
@@ -1166,5 +1170,7 @@ void Document::notify_key_pressed(KeyPress press) {
 
     if (needs_display()) {
         display();
+    } else {
+        m_panel.notify_now_is_a_good_time_to_draw_cursor();
     }
 }
