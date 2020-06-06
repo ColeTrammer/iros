@@ -7,8 +7,8 @@ LineSplitResult Line::split_at(int position) {
     StringView first = StringView(contents().string(), contents().string() + position - 1);
     StringView second = StringView(contents().string() + position);
 
-    Line l1(first);
-    Line l2(second);
+    auto l1 = Line(String(first));
+    auto l2 = Line(String(second));
 
     for (int i = 0; i < position; i++) {
         l1.metadata_at(i) = move(metadata_at(i));
@@ -23,7 +23,7 @@ LineSplitResult Line::split_at(int position) {
 
 Line::Line(String contents) : m_contents(move(contents)) {
     m_metadata.resize(m_contents.size());
-    assert(m_contents.size() == m_metadata.size());
+    assert(m_contents.size() == static_cast<size_t>(m_metadata.size()));
 }
 
 Line::~Line() {}
@@ -60,7 +60,7 @@ int Line::index_of_col_position(int position) const {
 }
 
 void Line::insert_char_at(int position, char c) {
-    assert(m_contents.size() == m_metadata.size());
+    assert(m_contents.size() == static_cast<size_t>(m_metadata.size()));
     m_contents.insert(c, position);
     m_metadata.insert(CharacterMetadata(), position);
 }
@@ -73,7 +73,7 @@ void Line::remove_char_at(int position) {
 void Line::combine_line(Line& line) {
     m_contents += line.contents();
     m_metadata.add(move(line.metadata()));
-    assert(m_metadata.size() == m_contents.size());
+    assert(static_cast<size_t>(m_metadata.size()) == m_contents.size());
 }
 
 void Line::clear_search() {
@@ -115,7 +115,7 @@ int Line::search(const String& text) {
             break;
         }
 
-        for (int i = match - m_contents.string(); i < match - m_contents.string() + text.size(); i++) {
+        for (size_t i = match - m_contents.string(); i < match - m_contents.string() + text.size(); i++) {
             metadata_at(i).set_highlighted(true);
         }
 

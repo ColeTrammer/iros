@@ -105,7 +105,7 @@ static inline String literal_to_token(const StringView& literal) {
 #undef __ENUMERATE_LITERALS
 #define __ENUMERATE_LITERALS(c, n) \
     if (literal.start()[i] == c)   \
-        translated += #n;
+        translated += String(#n);
         ENUMERATE_LITERALS
     }
     return translated;

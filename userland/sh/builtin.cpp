@@ -306,8 +306,8 @@ static int op_alias(char **argv) {
     bool any_failed = false;
     for (int i = 1; argv[i] != nullptr; i++) {
         String arg(argv[i]);
-        int equal_index = arg.index_of('=');
-        if (equal_index == -1) {
+        auto equal_index = arg.index_of('=');
+        if (!equal_index.has_value()) {
             auto *alias_name = g_aliases.get(arg);
             if (!alias_name) {
                 any_failed = true;
@@ -318,9 +318,9 @@ static int op_alias(char **argv) {
             continue;
         }
 
-        arg[equal_index] = '\0';
+        arg[equal_index.value()] = '\0';
         String name(arg.string());
-        String alias(arg.string() + equal_index + 1);
+        String alias(arg.string() + equal_index.value() + 1);
         g_aliases.put(name, alias);
     }
 

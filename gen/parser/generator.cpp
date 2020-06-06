@@ -141,9 +141,8 @@ void Generator::generate_generic_parser(String path) {
             String(m_output_name).to_title_case().string());
     fprintf(file, "    virtual bool parse() override;\n\n");
     {
-        path[path.size() - 1] = '\0';
-        path[path.size() - 2] = '\0';
-        path.set_size(path.size() - 2);
+        path.remove_index(path.size() - 1);
+        path.remove_index(path.size() - 1);
         path += "_impl.cpp";
         int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0644);
         if (ofd == -1) {

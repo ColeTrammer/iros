@@ -45,7 +45,7 @@ static void update_panel_sizes() {
         printf("\033[%d;%dH", sz.ws_row + 1, 1);
         fputs("\033[0K", stdout);
 
-        int message_size = LIIM::min(s_prompt_message.size(), sz.ws_col / 2);
+        int message_size = LIIM::min(s_prompt_message.size(), static_cast<size_t>(sz.ws_col / 2));
         printf("%.*s", sz.ws_col / 2, s_prompt_message.string());
         fflush(stdout);
 
@@ -247,12 +247,13 @@ void TerminalPanel::draw_status_message() {
     auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document()->modified() ? "*" : " ",
                                      document_type_to_string(document()->type()).string(), position_string.string());
 
-    int width_for_message = m_cols - status_rhs.size() - 4;
+    size_t width_for_message = m_cols - status_rhs.size() - 4;
     String fill_chars = "    ";
     if (m_status_message.size() > width_for_message) {
         fill_chars = "... ";
     }
-    printf("%-*.*s%s%s", width_for_message, width_for_message, m_status_message.string(), fill_chars.string(), status_rhs.string());
+    printf("%-*.*s%s%s", static_cast<int>(width_for_message), static_cast<int>(width_for_message), m_status_message.string(),
+           fill_chars.string(), status_rhs.string());
 
     fputs("\033[u", stdout);
     fflush(stdout);
@@ -597,7 +598,7 @@ String TerminalPanel::enter_prompt(const String& message, String staring_text) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
 
-    int message_size = LIIM::min(message.size(), m_cols / 2);
+    int message_size = LIIM::min(message.size(), static_cast<size_t>(m_cols / 2));
     printf("%.*s", m_cols / 2, message.string());
     fflush(stdout);
 
@@ -627,7 +628,7 @@ void TerminalPanel::enter_search(String starting_text) {
     fputs("\033[0K", stdout);
 
     String message = "Find: ";
-    int message_size = LIIM::min(message.size(), m_cols / 2);
+    int message_size = LIIM::min(message.size(), static_cast<size_t>(m_cols / 2));
     printf("%.*s", m_cols / 2, message.string());
     fflush(stdout);
 
@@ -692,7 +693,7 @@ void TerminalPanel::set_clipboard_contents(String text, bool is_whole_line) {
 
 String TerminalPanel::clipboard_contents(bool& is_whole_line) const {
     auto contents = Clipboard::Connection::the().get_clipboard_contents_as_text();
-    if (!contents.value()) {
+    if (!contents.has_value()) {
         is_whole_line = m_prev_clipboard_contents_were_whole_line;
         return m_prev_clipboard_contents;
     }

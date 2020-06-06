@@ -28,7 +28,7 @@ public:
         char buf[50];
         snprintf(buf, 50, "[%-3d] ", number());
         ret += buf;
-        ret += m_name;
+        ret += String(m_name);
         ret += " -> ";
 
         int i = 0;
@@ -36,7 +36,7 @@ public:
             if (i++ == position()) {
                 ret += ". ";
             }
-            ret += part;
+            ret += String(part);
             ret += " ";
         });
 

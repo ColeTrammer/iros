@@ -52,7 +52,7 @@ Window::Window(String shm_path, const Rect& rect, String title, int client_id)
 }
 
 Window::~Window() {
-    if (m_front_buffer && m_back_buffer && m_shm_path) {
+    if (m_front_buffer && m_back_buffer && !m_shm_path.is_empty()) {
         munmap(m_back_buffer->pixels(), m_back_buffer->size_in_bytes());
         shm_unlink(m_shm_path.string());
         m_shm_path[m_shm_path.size() - 1]++;

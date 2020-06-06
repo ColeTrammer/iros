@@ -6,6 +6,11 @@ int main() {
     String s("asfd");
     puts(s.string());
 
+    for (auto c : s) {
+        putchar(c);
+    }
+    putchar('\n');
+
     HashMap<String, int> map;
     map.put("asdf", 5);
     map.put("aaaa", 10);

@@ -196,7 +196,7 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
             unlink(file_name); // So that is will be automatically deleted
 
             ssize_t ret = write(fd, contents.string(), contents.size());
-            if (ret != contents.size()) {
+            if (ret != static_cast<ssize_t>(contents.size())) {
                 close(fd);
                 return false;
             }
@@ -233,10 +233,11 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         char* name_raw = (char*) malloc(eq - w.start() + 1);
         memcpy(name_raw, w.start(), eq - w.start());
         name_raw[eq - w.start()] = '\0';
-        auto name = String::wrap_malloced_chars(name_raw);
+        auto name = String(name_raw);
+        free(name_raw);
 
         if (w.end() == eq) {
-            setenv(name->string(), "", 1);
+            setenv(name.string(), "", 1);
             return;
         }
 
@@ -256,7 +257,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
             return;
         }
 
-        setenv(name->string(), expanded, 1);
+        setenv(name.string(), expanded, 1);
     };
 
     if (command.words.size() == 0) {

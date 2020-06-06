@@ -25,16 +25,16 @@ public:
 
     String stringify() const {
         String ret = String::format("%-2d ", m_number);
-        ret += m_lhs;
+        ret += String(m_lhs);
         ret += " ->";
         m_components.for_each([&](auto& s) {
             ret += " ";
-            ret += s;
+            ret += String(s);
         });
         ret += " {";
         m_follow_set.for_each_key([&](auto& s) {
             ret += " ";
-            ret += s;
+            ret += String(s);
         });
         ret += " }\n";
         return ret;

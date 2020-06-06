@@ -92,12 +92,12 @@ public:
             ret += " {";
             (*m_first_sets.get(rule.lhs()))->for_each_key([&](auto& st) {
                 ret += " ";
-                ret += st;
+                ret += String(st);
             });
             ret += " } {";
             (*m_follow_sets.get(rule.lhs()))->for_each_key([&](auto& st) {
                 ret += " ";
-                ret += st;
+                ret += String(st);
             });
             ret += " }\n";
         });

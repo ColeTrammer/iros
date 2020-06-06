@@ -51,7 +51,7 @@ void Renderer::draw_circle(int x, int y, int r) {
 }
 
 void Renderer::render_text(int x, int y, const String& text, const Font& font) {
-    for (int k = 0; k < text.size(); k++) {
+    for (size_t k = 0; k < text.size(); k++) {
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 8; j++) {
                 if (font.get_for_character(text[k])->get(i * 8 + j)) {

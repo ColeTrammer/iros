@@ -1004,7 +1004,7 @@ void Document::move_cursor_to_next_search_match() {
         auto& line = line_at_cursor();
         int line_index = line_index_at_cursor();
         if (strstr(line.contents().string() + line_index, m_search_text.string()) == line.contents().string() + line_index) {
-            for (int i = 0; i < m_search_text.size(); i++) {
+            for (size_t i = 0; i < m_search_text.size(); i++) {
                 move_cursor_right(MovementMode::Select);
             }
             return;

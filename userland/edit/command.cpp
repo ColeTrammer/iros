@@ -87,7 +87,7 @@ void InsertCommand::do_insert(Document& document, char c) {
 }
 
 void InsertCommand::do_insert(Document& document, const String& text) {
-    for (int i = 0; i < text.size(); i++) {
+    for (size_t i = 0; i < text.size(); i++) {
         do_insert(document, text[i]);
     }
 }
@@ -100,7 +100,7 @@ void InsertCommand::undo() {
         document().restore_state(state_snapshot());
     }
 
-    for (int i = 0; i < m_text.size(); i++) {
+    for (size_t i = 0; i < m_text.size(); i++) {
         char c = m_text[i];
         if (c == '\n') {
             int row_index = document().cursor_row_position();
