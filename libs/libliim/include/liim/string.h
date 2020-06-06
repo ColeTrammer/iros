@@ -47,6 +47,15 @@ public:
 
     size_t capacity() const { return is_small() ? sizeof(m_string.small.data) : (m_string.large.capacity & ~1); };
 
+    char* begin() { return string(); }
+    char* end() { return string() + size(); }
+
+    const char* begin() const { return string(); }
+    const char* end() const { return string() + size(); }
+
+    const char* cbegin() const { return string(); }
+    const char* cend() const { return string() + size(); }
+
     char* string() { return is_small() ? m_string.small.data : m_string.large.data; }
     const char* string() const { return is_small() ? m_string.small.data : m_string.large.data; }
 
