@@ -57,7 +57,7 @@ public:
         if (this->has_value() && other.has_value()) {
             LIIM::swap(this->value(), other.value());
         } else if (this->has_value()) {
-            new (&other.m_value[0]) T(LIIM::move(other.value()));
+            new (&other.m_value[0]) T(LIIM::move(this->value()));
             this->value().~T();
         } else if (other.has_value()) {
             new (&this->m_value[0]) T(LIIM::move(other.value()));
