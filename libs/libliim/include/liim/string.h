@@ -275,6 +275,7 @@ inline void String::swap(String& other) {
 
     if (this->is_small() && !other.is_small()) {
         other.swap(*this);
+        return;
     }
 
     if (!this->is_small() && other.is_small()) {
