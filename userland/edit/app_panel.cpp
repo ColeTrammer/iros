@@ -100,11 +100,16 @@ void AppPanel::render_cursor(Renderer& renderer) {
 }
 
 void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {
-    renderer.set_color(0);
+    RenderingInfo info = rendering_info_for_metadata(cell.metadata);
+
+    Color fg = info.fg.has_value() ? Color(info.fg.value()) : Color(VGA_COLOR_LIGHT_GREY);
+    Color bg = info.bg.has_value() ? Color(info.bg.value()) : Color(0, 0, 0);
+
+    renderer.set_color(bg);
     renderer.fill_rect(x, y, col_width(), row_height());
 
-    renderer.set_color(Color(255, 255, 255));
-    renderer.render_text(x, y, String(cell.c));
+    renderer.set_color(fg);
+    renderer.render_text(x, y, String(cell.c), info.bold ? Font::bold_font() : Font::default_font());
 }
 
 void AppPanel::render() {

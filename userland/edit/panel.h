@@ -1,5 +1,7 @@
 #pragma once
 
+#include <graphics/color.h>
+#include <liim/maybe.h>
 #include <liim/pointers.h>
 
 #include "character_metadata.h"
@@ -47,6 +49,14 @@ public:
 
     Document* document() { return m_document.get(); }
     const Document* document() const { return m_document.get(); }
+
+    struct RenderingInfo {
+        Maybe<vga_color> fg;
+        Maybe<vga_color> bg;
+        bool bold { false };
+    };
+
+    RenderingInfo rendering_info_for_metadata(const CharacterMetadata& metadata) const;
 
 protected:
     Panel();

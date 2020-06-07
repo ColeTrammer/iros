@@ -129,55 +129,84 @@ void TerminalPanel::clear() {
     m_screen_info.resize(m_rows * TerminalPanel::cols());
 }
 
+static int vga_color_to_number(vga_color color, bool background) {
+    int ret = 0;
+
+    switch (color) {
+        case VGA_COLOR_BLACK:
+            ret = 30;
+            break;
+        case VGA_COLOR_RED:
+            ret = 31;
+            break;
+        case VGA_COLOR_GREEN:
+            ret = 32;
+            break;
+        case VGA_COLOR_BROWN:
+            ret = 33;
+            break;
+        case VGA_COLOR_BLUE:
+            ret = 34;
+            break;
+        case VGA_COLOR_MAGENTA:
+            ret = 35;
+            break;
+        case VGA_COLOR_CYAN:
+            ret = 36;
+            break;
+        case VGA_COLOR_LIGHT_GREY:
+            ret = 37;
+            break;
+        case VGA_COLOR_DARK_GREY:
+            ret = 90;
+            break;
+        case VGA_COLOR_LIGHT_RED:
+            ret = 91;
+            break;
+        case VGA_COLOR_LIGHT_GREEN:
+            ret = 92;
+            break;
+        case VGA_COLOR_YELLOW:
+            ret = 93;
+            break;
+        case VGA_COLOR_LIGHT_BLUE:
+            ret = 94;
+            break;
+        case VGA_COLOR_LIGHT_MAGENTA:
+            ret = 95;
+            break;
+        case VGA_COLOR_LIGHT_CYAN:
+            ret = 96;
+            break;
+        case VGA_COLOR_WHITE:
+            ret = 97;
+            break;
+    }
+
+    return background ? ret + 10 : ret;
+}
+
 String TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {
-    static String default_string("\033[0m");
-    static String highlight_string("\033[30;103m");
-    static String selected_string("\033[39;100m");
-    static String highlighted_and_selected_string("\033[93;107m");
-    static String operator_string("\033[36m");
-    static String keyword_string("\033[35m");
-    static String number_string("\033[31m");
-    static String identifier_string("\033[1;93m");
-    static String comment_string("\033[90m");
-    static String string_string("\033[32m");
+    String ret = "\033[0";
 
-    String ret = default_string;
-    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxComment) {
-        ret += comment_string;
+    RenderingInfo info = rendering_info_for_metadata(metadata);
+    if (info.bold) {
+        ret += ";1";
     }
 
-    if (metadata.highlighted()) {
-        ret += highlight_string;
+    if (info.fg.has_value()) {
+        ret += String::format(";%d", vga_color_to_number(info.fg.value(), false));
+    } else {
+        ret += ";39";
     }
 
-    if (metadata.selected()) {
-        ret += selected_string;
+    if (info.bg.has_value()) {
+        ret += String::format(";%d", vga_color_to_number(info.bg.value(), true));
+    } else {
+        ret += ";49";
     }
 
-    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxOperator) {
-        ret += operator_string;
-    }
-
-    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxKeyword) {
-        ret += keyword_string;
-    }
-
-    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxNumber) {
-        ret += number_string;
-    }
-
-    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxIdentifier) {
-        ret += identifier_string;
-    }
-
-    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxString) {
-        ret += string_string;
-    }
-
-    if (metadata.highlighted() && metadata.selected()) {
-        ret += highlighted_and_selected_string;
-    }
-
+    ret += "m";
     return ret;
 }
 

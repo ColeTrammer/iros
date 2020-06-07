@@ -15,4 +15,4 @@ if (NOT ${NATIVE_BUILD})
 endif()
 
 add_os_executable(edit bin)
-target_link_libraries(edit libapp libclanguage libclipboard libliim libsh)
+target_link_libraries(edit libapp libclanguage libclipboard libliim libsh kernel_headers)
