@@ -61,7 +61,8 @@ public:
 
     StringView view() const { return StringView(string(), string() + size() - 1); }
 
-    void insert(const String& string, size_t position);
+    void insert(const StringView& view, size_t position);
+    void insert(const String& string, size_t position) { insert(string.view(), position); }
     void insert(char c, size_t position) { insert(String(c), position); }
 
     void clear();
@@ -167,7 +168,7 @@ inline String& String::operator=(String&& other) {
     return *this;
 }
 
-inline void String::insert(const String& to_insert, size_t position) {
+inline void String::insert(const StringView& to_insert, size_t position) {
     assert(position <= size());
     size_t new_size = size() + to_insert.size();
     if (new_size + 1 > capacity()) {
@@ -176,7 +177,7 @@ inline void String::insert(const String& to_insert, size_t position) {
         char* allocated_string = allocate_string(new_capacity);
 
         memcpy(allocated_string, string(), position);
-        memcpy(allocated_string + position, to_insert.string(), to_insert.size());
+        memcpy(allocated_string + position, to_insert.start(), to_insert.size());
         memcpy(allocated_string + position + to_insert.size(), string() + position, size() + 1 - position);
 
         set_capacity(new_capacity);
@@ -189,7 +190,7 @@ inline void String::insert(const String& to_insert, size_t position) {
     }
 
     memmove(string() + position + to_insert.size(), string() + position, size() + 1 - position);
-    memcpy(string() + position, to_insert.string(), to_insert.size());
+    memcpy(string() + position, to_insert.start(), to_insert.size());
     set_size(new_size);
 }
 
