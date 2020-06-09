@@ -24,6 +24,7 @@ My second attempt to create an OS
 * Now, you can build the system by typing `cmake --build build`
 * Make the disk image with `sudo ./makeimg.sh`
 * Run the system inside qemu with `./qemu.sh`
+* Alternatively, you can cd into the build directory and type `make`, `make os_2.img`, and `make run`
 
 # TODO
 * Networking (TCP resending)
