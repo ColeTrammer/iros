@@ -108,12 +108,6 @@ This object represents an open file in the kernel. Should be obtained via `fs_op
 
 *inode_identifier* - field that stores the inode->index that corresponds to this file.
 
-*length* - field that stores the length of a file's inode. This field should never be
-used, since inode->size can change without the file knowing.
-
-*start* - field that stores the start of the file within a backing device. Again this
-should never be used and is a remnant of the early initrd implementation.
-
 *position* - field that corresponds to the file's lseek(2) based position.
 
 *f_op* - field that points to operations that can be done to a file.
@@ -137,7 +131,7 @@ is stored.
 
 *lock* - used to lock the file
 
-*devuce* - backing device of the file
+*device* - backing device of the file
 
 *private_data* - can be used to store arbitrary data
 
