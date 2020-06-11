@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         auto window = App::Window::create(nullptr, 250, 250, 400, 400, "Edit");
 
         auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
-        auto& panel = layout.add<AppPanel>(window, 0, 0, 400, 400);
+        auto& panel = layout.add<AppPanel>(0, 0, 400, 400);
         layout.set_margins({ 0, 0, 0, 0 });
 
         int ret = make_document(panel);
