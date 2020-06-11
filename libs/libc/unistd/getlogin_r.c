@@ -17,7 +17,7 @@ int getlogin_r(char *buf, size_t bufsize) {
     struct passwd pwd;
     struct passwd *result;
     char pwd_buf[1024];
-    if (!getpwuid_r(st.st_uid, &pwd, pwd_buf, sizeof(pwd_buf), &result)) {
+    if (getpwuid_r(st.st_uid, &pwd, pwd_buf, sizeof(pwd_buf), &result)) {
         return -1;
     }
 
