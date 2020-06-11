@@ -19,8 +19,9 @@ public:
     virtual void render();
     virtual void on_mouse_event(MouseEvent&) {}
     virtual void on_key_event(KeyEvent&) {}
+    virtual void on_resize();
 
-    void set_rect(Rect rect) { m_rect = move(rect); }
+    void set_rect(const Rect& rect);
     const Rect& rect() const { return m_rect; }
 
     Window* window();
@@ -29,8 +30,10 @@ public:
     const Layout* layout() const { return m_layout.get(); }
 
     template<typename LayoutClass, typename... Args>
-    Layout& set_layout(Args&&... args) {
-        return *(m_layout = make_unique<LayoutClass>(*this, forward<Args>(args)...));
+    LayoutClass& set_layout(Args&&... args) {
+        auto layout = make_unique<LayoutClass>(*this, forward<Args>(args)...);
+        m_layout = move(layout);
+        return static_cast<LayoutClass&>(*m_layout);
     }
 
     bool hidden() const { return m_hidden; }

@@ -74,12 +74,21 @@ void Window::on_event(Event& event) {
 
 Widget& Window::find_widget_at_point(Point p) {
     Widget* parent = this;
-    for (auto& child : parent->children()) {
-        if (child->is_widget()) {
-            auto& widget_child = const_cast<Widget&>(static_cast<const Widget&>(*child));
-            if (widget_child.rect().intersects(p)) {
-                parent = &widget_child;
+    while (!parent->children().empty()) {
+        bool found = false;
+        for (auto& child : parent->children()) {
+            if (child->is_widget()) {
+                auto& widget_child = const_cast<Widget&>(static_cast<const Widget&>(*child));
+                if (widget_child.rect().intersects(p)) {
+                    parent = &widget_child;
+                    found = true;
+                    break;
+                }
             }
+        }
+
+        if (!found) {
+            break;
         }
     }
     return *parent;

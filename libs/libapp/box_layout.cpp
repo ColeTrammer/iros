@@ -7,7 +7,7 @@ BoxLayout::BoxLayout(Widget& widget, Orientation orientation) : Layout(widget), 
 
 BoxLayout::~BoxLayout() {}
 
-void BoxLayout::add(SharedPtr<Widget> to_add) {
+void BoxLayout::do_add(SharedPtr<Widget> to_add) {
     widget().add_child(to_add);
     m_widgets.add(to_add.get());
     layout();

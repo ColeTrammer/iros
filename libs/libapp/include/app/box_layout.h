@@ -18,7 +18,7 @@ public:
     int spacing() const { return m_spacing; }
     void set_spacing(int spacing) { m_spacing = spacing; }
 
-    virtual void add(SharedPtr<Widget> widget) override;
+    virtual void do_add(SharedPtr<Widget> widget) override;
     virtual void layout() override;
 
     void set_orientation(Orientation o) { m_orientation = o; }

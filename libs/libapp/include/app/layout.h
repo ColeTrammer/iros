@@ -19,7 +19,7 @@ public:
     Layout();
     virtual ~Layout() {}
 
-    virtual void add(SharedPtr<Widget> widget) = 0;
+    virtual void do_add(SharedPtr<Widget> widget) = 0;
     virtual void layout() = 0;
 
     Widget& widget() { return m_widget; }
@@ -33,7 +33,7 @@ public:
     template<typename WidgetClass, typename... Args>
     WidgetClass& add(Args&&... args) {
         auto ret = WidgetClass::create(nullptr, forward<Args>(args)...);
-        add(ret);
+        do_add(ret);
         return *ret;
     }
 
