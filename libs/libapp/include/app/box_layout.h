@@ -33,4 +33,14 @@ private:
     Orientation m_orientation { Orientation::Horizontal };
 };
 
+class HorizontalBoxLayout final : public BoxLayout {
+public:
+    HorizontalBoxLayout(Widget& widget) : BoxLayout(widget, Orientation::Horizontal) {}
+};
+
+class VerticalBoxLayout final : public BoxLayout {
+public:
+    VerticalBoxLayout(Widget& widget) : BoxLayout(widget, Orientation::Vertical) {}
+};
+
 }
