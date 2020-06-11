@@ -3,6 +3,7 @@ if (NOT ${NATIVE_BUILD})
         about
         chown
         ping
+        psfedit
         stat
         terminal
         top
