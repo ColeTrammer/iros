@@ -49,6 +49,9 @@ static void slave_on_open(struct device *device) {
     spin_lock(&data->lock);
     data->ref_count++;
     spin_unlock(&data->lock);
+
+    device->inode->uid = get_current_task()->process->uid;
+    device->inode->gid = get_current_task()->process->gid;
 }
 
 static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t len) {
