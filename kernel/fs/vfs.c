@@ -1602,7 +1602,7 @@ bool fs_can_write_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
         return !!(inode->mode & S_IWUSR);
     }
 
-    if (inode->gid == gid) {
+    if (inode->gid == gid || proc_in_group(get_current_task()->process, inode->gid)) {
         return !!(inode->mode & S_IWGRP);
     }
 
@@ -1622,7 +1622,7 @@ bool fs_can_execute_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
         return !!(inode->mode & S_IXUSR);
     }
 
-    if (inode->gid == gid) {
+    if (inode->gid == gid || proc_in_group(get_current_task()->process, inode->gid)) {
         return !!(inode->mode & S_IXGRP);
     }
 

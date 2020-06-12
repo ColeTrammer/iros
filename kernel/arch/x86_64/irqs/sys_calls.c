@@ -377,6 +377,10 @@ SYS_CALL(fork) {
     child_process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
     child->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
+    child_process->supplemental_gids_size = parent->process->supplemental_gids_size;
+    child_process->supplemental_gids = malloc(parent->process->supplemental_gids_size * sizeof(gid_t));
+    memcpy(child_process->supplemental_gids, parent->process->supplemental_gids, parent->process->supplemental_gids_size * sizeof(gid_t));
+
     task_align_fpu(child);
     memcpy(child->fpu.aligned_state, parent->fpu.aligned_state, FPU_IMAGE_SIZE);
 
@@ -603,6 +607,10 @@ SYS_CALL(execve) {
 
         process->files[i] = fs_dup(current->process->files[i]);
     }
+
+    process->supplemental_gids_size = current->process->supplemental_gids_size;
+    process->supplemental_gids = malloc(current->process->supplemental_gids_size * sizeof(gid_t));
+    memcpy(process->supplemental_gids, current->process->supplemental_gids, current->process->supplemental_gids_size * sizeof(gid_t));
 
     struct vm_region *__kernel_stack = get_vm_region(current->process->process_memory, VM_KERNEL_STACK);
     struct vm_region *kernel_stack = calloc(1, sizeof(struct vm_region));

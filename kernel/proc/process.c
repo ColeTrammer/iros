@@ -191,7 +191,7 @@ int proc_getgroups(size_t size, gid_t *list) {
 
 int proc_setgroups(size_t size, const gid_t *list) {
     struct process *process = get_current_task()->process;
-    if (process->egid != 0) {
+    if (process->euid != 0) {
         return -EPERM;
     }
 
