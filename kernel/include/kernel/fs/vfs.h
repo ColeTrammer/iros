@@ -72,6 +72,14 @@ bool fs_is_readable(struct file *file);
 bool fs_is_writable(struct file *file);
 bool fs_is_exceptional(struct file *file);
 
+bool fs_can_read_inode_impl(struct inode *inode, uid_t uid, gid_t gid);
+bool fs_can_write_inode_impl(struct inode *inode, uid_t uid, gid_t gid);
+bool fs_can_execute_inode_impl(struct inode *inode, uid_t uid, gid_t gid);
+
+bool fs_can_read_inode(struct inode *inode);
+bool fs_can_write_inode(struct inode *inode);
+bool fs_can_execute_inode(struct inode *inode);
+
 void load_fs(struct file_system *fs);
 
 size_t fs_file_size(struct file *file);

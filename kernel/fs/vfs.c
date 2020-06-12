@@ -1503,6 +1503,66 @@ struct file_descriptor fs_clone(struct file_descriptor desc) {
     return (struct file_descriptor) { new_file, 0 };
 }
 
+bool fs_can_read_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
+    if (uid == 0) {
+        return true;
+    }
+
+    if (inode->uid == uid) {
+        return !!(inode->mode & S_IRUSR);
+    }
+
+    if (inode->gid == gid) {
+        return !!(inode->mode & S_IRGRP);
+    }
+
+    return !!(inode->mode & S_IROTH);
+}
+
+bool fs_can_write_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
+    if (uid == 0) {
+        return true;
+    }
+
+    if (inode->uid == uid) {
+        return !!(inode->mode & S_IWUSR);
+    }
+
+    if (inode->gid == gid) {
+        return !!(inode->mode & S_IWGRP);
+    }
+
+    return !!(inode->mode & S_IWOTH);
+}
+
+bool fs_can_execute_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
+    if (uid == 0) {
+        return true;
+    }
+
+    if (inode->uid == uid) {
+        return !!(inode->mode & S_IXUSR);
+    }
+
+    if (inode->gid == gid) {
+        return !!(inode->mode & S_IXGRP);
+    }
+
+    return !!(inode->mode & S_IXOTH);
+}
+
+bool fs_can_read_inode(struct inode *inode) {
+    return fs_can_read_inode_impl(inode, get_current_task()->process->euid, get_current_task()->process->egid);
+}
+
+bool fs_can_write_inode(struct inode *inode) {
+    return fs_can_write_inode_impl(inode, get_current_task()->process->euid, get_current_task()->process->egid);
+}
+
+bool fs_can_execute_inode(struct inode *inode) {
+    return fs_can_execute_inode_impl(inode, get_current_task()->process->euid, get_current_task()->process->egid);
+}
+
 int fs_faccessat(struct tnode *base, const char *path, int mode, int flags) {
     struct tnode *tnode;
     int ret = iname_with_base(base, path, (flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
@@ -1516,16 +1576,16 @@ int fs_faccessat(struct tnode *base, const char *path, int mode, int flags) {
         return 0;
     }
 
-    if (mode &= R_OK && !(inode->mode & S_IRUSR)) {
-        return EPERM;
+    if (mode &= R_OK && !fs_can_read_inode_impl(inode, get_current_task()->process->uid, get_current_task()->process->gid)) {
+        return -EACCES;
     }
 
-    if (mode &= W_OK && !(inode->mode & S_IWUSR)) {
-        return EPERM;
+    if (mode &= W_OK && !fs_can_write_inode_impl(inode, get_current_task()->process->uid, get_current_task()->process->gid)) {
+        return -EACCES;
     }
 
-    if (mode &= X_OK && !(inode->mode & S_IXUSR)) {
-        return EPERM;
+    if (mode &= X_OK && !fs_can_execute_inode_impl(inode, get_current_task()->process->uid, get_current_task()->process->gid)) {
+        return -EACCES;
     }
 
     return 0;
