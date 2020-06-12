@@ -41,8 +41,12 @@ UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel
 UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
     FILE* file = fopen(path.string(), "r");
     if (!file) {
-        panel.send_status_message(String::format("new file: `%s'", path.string()));
-        return make_unique<Document>(Vector<Line>(), path, panel, LineMode::Multiple);
+        if (errno == ENOENT) {
+            panel.send_status_message(String::format("new file: `%s'", path.string()));
+            return make_unique<Document>(Vector<Line>(), path, panel, LineMode::Multiple);
+        }
+        panel.send_status_message(String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno)));
+        return Document::create_empty(panel);
     }
 
     Vector<Line> lines;
