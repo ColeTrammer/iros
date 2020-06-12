@@ -16,8 +16,9 @@ mke2fs /dev/loop100
 mkdir -p mnt
 mount -text2 /dev/loop100 mnt
 
-cp -r base/* mnt
-cp -r sysroot/* mnt
+cp -r --preserve=mode base/* mnt
+cp -r --preserve=mode sysroot/* mnt
+chown -R 50:50 mnt/home/test
 chown -R 100:100 mnt/home/eloc
 
 chmod u+s mnt/bin/ping
