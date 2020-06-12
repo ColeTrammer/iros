@@ -1,5 +1,6 @@
 set(SOURCES
     color.cpp
+    font.cpp
     pixel_buffer.cpp
     renderer.cpp
 )
