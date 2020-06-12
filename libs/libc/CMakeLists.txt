@@ -104,7 +104,9 @@ else()
         fcntl/open.c
         fcntl/openat.c
         ftw/ftw.c
+        grp/getgrouplist.c
         grp/grp.c
+        grp/initgroups.c
         grp/setgroups.c
         libgen/basename.c
         libgen/dirname.c
