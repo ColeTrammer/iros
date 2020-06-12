@@ -811,7 +811,13 @@ SYS_CALL(chdir) {
     }
 
     if (!(tnode->inode->flags & FS_DIR)) {
+        drop_tnode(tnode);
         SYS_RETURN(-ENOTDIR);
+    }
+
+    if (!fs_can_execute_inode(tnode->inode)) {
+        drop_tnode(tnode);
+        SYS_RETURN(-EACCES);
     }
 
     drop_tnode(task->process->cwd);
@@ -2375,6 +2381,10 @@ SYS_CALL(fchdir) {
 
     if (!(fs_file_inode(file)->flags & FS_DIR)) {
         SYS_RETURN(-ENOTDIR);
+    }
+
+    if (!fs_can_execute_inode(fs_file_inode(file))) {
+        SYS_RETURN(-EACCES);
     }
 
     drop_tnode(task->process->cwd);
