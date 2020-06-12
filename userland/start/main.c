@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -13,6 +14,14 @@ void spawn_process(char **argv, uid_t uid, gid_t gid, bool redirect) {
     int pid = fork();
     if (pid == 0) {
         if (uid != 0) {
+            struct passwd *pwd = getpwuid(uid);
+            assert(pwd);
+
+            if (initgroups(pwd->pw_name, pwd->pw_gid)) {
+                perror("initgroups");
+                exit(1);
+            }
+
             if (setgid(gid)) {
                 perror("setgid");
                 exit(1);

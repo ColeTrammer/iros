@@ -1,3 +1,4 @@
+#include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -17,13 +18,18 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (setuid(pw->pw_uid)) {
-        perror("setuid");
+    if (initgroups(pw->pw_name, pw->pw_gid)) {
+        perror("initgroups");
         return 1;
     }
 
     if (setgid(pw->pw_gid)) {
         perror("setgid");
+        return 1;
+    }
+
+    if (setuid(pw->pw_uid)) {
+        perror("setuid");
         return 1;
     }
 
