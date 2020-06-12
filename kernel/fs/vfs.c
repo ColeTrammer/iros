@@ -414,6 +414,13 @@ struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
         mount = mount->next;
     }
 
+    if (!fs_can_write_inode(tparent->inode)) {
+        drop_tnode(tparent);
+        free(path);
+        *error = -EACCES;
+        return NULL;
+    }
+
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         drop_tnode(tparent);
@@ -1030,14 +1037,18 @@ int fs_unlink(const char *path) {
         return -EBUSY;
     }
 
+    struct inode *parent = tnode->parent->inode;
+    if (parent && !fs_can_write_inode(parent)) {
+        drop_tnode(tnode);
+        return -EACCES;
+    }
+
     if (tnode->inode->flags & FS_DIR) {
-        debug_log("Name: [ %s, %u ]\n", tnode->name, tnode->inode->flags);
         drop_tnode(tnode);
         return -EISDIR;
     }
 
     if (tnode->inode->i_op->unlink == NULL) {
-        debug_log("No i_op->unlink: [ %s ]\n", tnode->name);
         drop_tnode(tnode);
         return -EINVAL;
     }
@@ -1080,6 +1091,12 @@ int fs_rmdir(const char *path) {
     if (!(tnode->inode->flags & FS_DIR)) {
         drop_tnode(tnode);
         return -ENOTDIR;
+    }
+
+    struct inode *parent = tnode->parent->inode;
+    if (parent && !fs_can_write_inode(parent)) {
+        drop_tnode(tnode);
+        return -EACCES;
     }
 
     if (!dir_empty(tnode->inode)) {
@@ -1763,6 +1780,12 @@ int fs_symlink(const char *target, const char *linkpath) {
         mount = mount->next;
     }
 
+    if (!fs_can_write_inode(tparent->inode)) {
+        drop_tnode(tparent);
+        free(path);
+        return -EACCES;
+    }
+
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
@@ -1834,6 +1857,12 @@ int fs_link(const char *oldpath, const char *newpath) {
         }
 
         mount = mount->next;
+    }
+
+    if (!fs_can_write_inode(tparent->inode)) {
+        drop_tnode(tparent);
+        free(path);
+        return -EACCES;
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
