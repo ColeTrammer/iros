@@ -92,6 +92,8 @@ void proc_drop_process(struct process *process, pid_t tid, bool free_paging_stru
             timer = next;
         }
 
+        free(process->supplemental_gids);
+
 #ifdef PROC_REF_COUNT_DEBUG
         debug_log("Finished destroying process: [ %d ]\n", process->pid);
 #endif /* PROC_REF_COUNT_DEBUG */
@@ -170,6 +172,20 @@ struct process *find_by_pid(pid_t pid) {
 
 void proc_set_sig_pending(struct process *process, int n) {
     task_set_sig_pending(find_task_for_process(process->pid), n);
+}
+
+bool proc_in_group(struct process *process, gid_t group) {
+    if (!process->supplemental_gids) {
+        return false;
+    }
+
+    for (size_t i = 0; i < process->supplemental_gids_size; i++) {
+        if (process->supplemental_gids[i] == group) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void init_processes() {

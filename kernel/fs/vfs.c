@@ -1582,7 +1582,7 @@ bool fs_can_read_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
         return !!(inode->mode & S_IRUSR);
     }
 
-    if (inode->gid == gid) {
+    if (inode->gid == gid || proc_in_group(get_current_task()->process, inode->gid)) {
         return !!(inode->mode & S_IRGRP);
     }
 

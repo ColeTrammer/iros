@@ -52,6 +52,9 @@ struct process {
     gid_t gid;
     gid_t egid;
 
+    gid_t *supplemental_gids;
+    size_t supplemental_gids_size;
+
     mode_t umask;
 
     int tty;
@@ -82,6 +85,7 @@ void proc_drop_process(struct process *process, pid_t tid, bool free_paging_stru
 void proc_add_process(struct process *process);
 void proc_bump_process(struct process *process);
 uintptr_t proc_allocate_user_stack(struct process *process);
+bool proc_in_group(struct process *process, gid_t group);
 struct process *find_by_pid(pid_t pid);
 void proc_set_sig_pending(struct process *process, int n);
 void init_processes();
