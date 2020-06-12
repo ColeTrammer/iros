@@ -24,7 +24,7 @@
     __ENUMERATE_SYSCALL(PIPE, pipe, 1)                                         \
     __ENUMERATE_SYSCALL(UNLINK, unlink, 1)                                     \
     __ENUMERATE_SYSCALL(RMDIR, rmdir, 1)                                       \
-    __ENUMERATE_SYSCALL(CHMOD, chmod, 2)                                       \
+    __ENUMERATE_SYSCALL(FCHMODAT, fchmodat, 4)                                 \
     __ENUMERATE_SYSCALL(KILL, kill, 2)                                         \
     __ENUMERATE_SYSCALL(SETPGID, setpgid, 2)                                   \
     __ENUMERATE_SYSCALL(SIGACTION, sigaction, 3)                               \
@@ -50,7 +50,6 @@
     __ENUMERATE_SYSCALL(RENAME, rename, 2)                                     \
     __ENUMERATE_SYSCALL(FCNTL, fcntl, 3)                                       \
     __ENUMERATE_SYSCALL(ALARM, alarm, 1)                                       \
-    __ENUMERATE_SYSCALL(FCHMOD, fchmod, 2)                                     \
     __ENUMERATE_SYSCALL(GETPPID, getppid, 0)                                   \
     __ENUMERATE_SYSCALL(SIGSUSPEND, sigsuspend, 1)                             \
     __ENUMERATE_SYSCALL(TIMES, times, 1)                                       \

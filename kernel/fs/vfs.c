@@ -1154,30 +1154,38 @@ int fs_fchownat(struct tnode *base, const char *path, uid_t uid, gid_t gid, int 
     return ret;
 }
 
-int fs_chmod(const char *path, mode_t mode) {
-    assert(path);
+static int do_chmod(struct inode *inode, mode_t mode) {
+    struct process *process = get_current_task()->process;
+    if (process->euid != 0 && process->euid != inode->uid) {
+        return -EPERM;
+    }
+
+    if (!inode->i_op->chmod) {
+        return -EPERM;
+    }
+
+    mode &= 07777;
+
+    // Retain type information
+    mode |= inode->mode & ~07777;
+
+    return inode->i_op->chmod(inode, mode);
+}
+
+int fs_fchmodat(struct tnode *base, const char *path, mode_t mode, int flags) {
+    if (*path == '\0' && (flags & AT_EMPTY_PATH)) {
+        return do_chmod(base->inode, mode);
+    }
 
     struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
-
+    int ret = iname_with_base(base, path, (flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
     if (ret < 0) {
         return ret;
     }
 
-    if (!tnode->inode->i_op->chmod) {
-        drop_tnode(tnode);
-        return -EPERM;
-    }
-
-    // Don't yet support SETUID and SETGID
-    mode &= 0777;
-
-    // Retain type information
-    mode |= tnode->inode->mode & ~07777;
-
-    struct inode *inode = tnode->inode;
+    ret = do_chmod(tnode->inode, mode);
     drop_tnode(tnode);
-    return inode->i_op->chmod(inode, mode);
+    return ret;
 }
 
 static int fs_do_utimens(struct inode *inode, const struct timespec *in_times) {
@@ -1734,17 +1742,6 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsiz) {
     free(buffer);
     drop_tnode(link);
     return to_write;
-}
-
-int fs_fchmod(struct file *file, mode_t mode) {
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    if (inode->i_op->chmod) {
-        return inode->i_op->chmod(inode, mode);
-    }
-
-    return -EPERM;
 }
 
 int fs_symlink(const char *target, const char *linkpath) {

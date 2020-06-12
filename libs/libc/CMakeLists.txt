@@ -203,12 +203,17 @@ else()
         sys/os_2/tgkill.c
         sys/socket/socket.c
         sys/select/select.c
+        sys/stat/chmod.c
+        sys/stat/fchmod.c
+        sys/stat/fchmodat.c
         sys/stat/fstat.c
         sys/stat/fstatat.c
         sys/stat/futimens.c
         sys/stat/lstat.c
+        sys/stat/mkdir.c
         sys/stat/mknod.c
         sys/stat/stat.c
+        sys/stat/umask.c
         sys/stat/utimensat.c
         sys/statvfs/fstatvfs.c
         sys/statvfs/statvfs.c

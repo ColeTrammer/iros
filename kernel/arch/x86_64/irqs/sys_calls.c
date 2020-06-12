@@ -966,13 +966,15 @@ SYS_CALL(rmdir) {
     SYS_RETURN(fs_rmdir(path));
 }
 
-SYS_CALL(chmod) {
+SYS_CALL(fchmodat) {
     SYS_BEGIN();
 
-    SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
-    SYS_PARAM2(mode_t, mode);
+    SYS_PARAM1_TRANSFORM(struct tnode *, base, int, get_file_tnode);
+    SYS_PARAM2_VALIDATE(const char *, path, validate_path, 0);
+    SYS_PARAM3(mode_t, mode);
+    SYS_PARAM4(int, flags);
 
-    SYS_RETURN(fs_chmod(path, mode));
+    SYS_RETURN(fs_fchmodat(base, path, mode, flags));
 }
 
 SYS_CALL(kill) {
@@ -1424,15 +1426,6 @@ finish_alarm:
     spin_unlock(&process->lock);
 
     SYS_RETURN(ret);
-}
-
-SYS_CALL(fchmod) {
-    SYS_BEGIN();
-
-    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
-    SYS_PARAM2(mode_t, mode);
-
-    SYS_RETURN(fs_fchmod(file, mode));
 }
 
 SYS_CALL(getppid) {
