@@ -2404,6 +2404,24 @@ SYS_CALL(truncate) {
     SYS_RETURN(ret);
 }
 
+SYS_CALL(getgroups) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_VALIDATE(int, size, validate_positive, 1);
+    SYS_PARAM2_VALIDATE(gid_t *, list, validate_write, size * sizeof(gid_t));
+
+    SYS_RETURN(proc_getgroups(size, list));
+}
+
+SYS_CALL(setgroups) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(size_t, size);
+    SYS_PARAM2_VALIDATE(const gid_t *, list, validate_read, size * sizeof(gid_t));
+
+    SYS_RETURN(proc_setgroups(size, list));
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);

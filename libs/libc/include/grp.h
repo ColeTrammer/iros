@@ -25,6 +25,8 @@ void endgrent(void);
 void setgrent(void);
 struct group *getgrent(void);
 
+int setgroups(size_t size, const gid_t *list);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
@@ -172,6 +173,33 @@ struct process *find_by_pid(pid_t pid) {
 
 void proc_set_sig_pending(struct process *process, int n) {
     task_set_sig_pending(find_task_for_process(process->pid), n);
+}
+
+int proc_getgroups(size_t size, gid_t *list) {
+    struct process *process = get_current_task()->process;
+    if (size == 0) {
+        return process->supplemental_gids_size;
+    }
+
+    if (size < process->supplemental_gids_size) {
+        return -EINVAL;
+    }
+
+    memcpy(list, process->supplemental_gids, process->supplemental_gids_size * sizeof(gid_t));
+    return process->supplemental_gids_size;
+}
+
+int proc_setgroups(size_t size, const gid_t *list) {
+    struct process *process = get_current_task()->process;
+    if (process->egid != 0) {
+        return -EPERM;
+    }
+
+    process->supplemental_gids_size = size;
+    process->supplemental_gids = realloc(process->supplemental_gids, size * sizeof(gid_t));
+    memcpy(process->supplemental_gids, list, size * sizeof(gid_t));
+
+    return 0;
 }
 
 bool proc_in_group(struct process *process, gid_t group) {

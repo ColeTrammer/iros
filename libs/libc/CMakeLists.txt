@@ -105,6 +105,7 @@ else()
         fcntl/openat.c
         ftw/ftw.c
         grp/grp.c
+        grp/setgroups.c
         libgen/basename.c
         libgen/dirname.c
         locale/locale.c
@@ -257,6 +258,7 @@ else()
         unistd/ftruncate.c
         unistd/getcwd.c
         unistd/getegid.c
+        unistd/getgroups.c
         unistd/geteuid.c
         unistd/getgid.c
         unistd/gethostname.c
