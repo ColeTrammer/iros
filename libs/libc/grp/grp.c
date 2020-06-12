@@ -28,23 +28,23 @@ static void read_gr_entry(char *string, struct group *group) {
 
 #define _(x)        x
 #define to_gid_t(x) ((gid_t) strtoul(x, NULL, 10))
-#define READ_ENTRY(name, f)                                \
-    do {                                                   \
-        char *start = &string[++i];                        \
-        for (; string[i] != ':' && string[i] != '\0'; i++) \
-            ;                                              \
-        string[i] = '\0';                                  \
-        group->gr_##name = f(start);                       \
+#define READ_ENTRY(name, f)                                                     \
+    do {                                                                        \
+        char *start = &string[++i];                                             \
+        for (; string[i] != ':' && string[i] != '\0' && string[i] != '\n'; i++) \
+            ;                                                                   \
+        string[i] = '\0';                                                       \
+        group->gr_##name = f(start);                                            \
     } while (0);
 
     READ_ENTRY(name, _);
     READ_ENTRY(passwd, _);
     READ_ENTRY(gid, to_gid_t);
 
-    size_t gr_mem_start = i;
-    size_t count = string[i] == '\0' ? 0 : 1;
+    size_t gr_mem_start = ++i;
+    size_t count = (string[i] == '\0' || string[i] == '\n') ? 0 : 1;
     for (; string[i] != '\0'; i++) {
-        if (string[i] == ',') {
+        if (string[i] == ',' || string[i] == '\n') {
             string[i] = '\0';
             count++;
         }
@@ -134,7 +134,9 @@ struct group *getgrent(void) {
         }
     }
 
-    fgets(static_group_string_buffer, STATIC_GRP_STRING_SIZE, file);
+    if (!fgets(static_group_string_buffer, STATIC_GRP_STRING_SIZE, file)) {
+        return NULL;
+    }
     read_gr_entry(static_group_string_buffer, &static_group_buffer);
     return &static_group_buffer;
 }

@@ -40,5 +40,5 @@ int getgrouplist(const char *user, gid_t extra_group, gid_t *groups, int *ngroup
     }
 
     *ngroups = groups_found;
-    return max_groups <= groups_found ? groups_found : -1;
+    return groups_found <= max_groups ? groups_found : -1;
 }

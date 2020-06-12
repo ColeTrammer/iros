@@ -120,7 +120,9 @@ struct passwd *getpwent(void) {
         }
     }
 
-    fgets(static_passwd_string_buffer, STATIC_PWD_STRING_SIZE, file);
+    if (!fgets(static_passwd_string_buffer, STATIC_PWD_STRING_SIZE, file)) {
+        return NULL;
+    }
     read_pw_entry(static_passwd_string_buffer, &static_passwd_buffer);
     return &static_passwd_buffer;
 }
