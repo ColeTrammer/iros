@@ -513,10 +513,25 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
     file->abilities &= FS_FILE_CANT_SEEK;
     file->tnode = tnode;
     if (flags & O_RDWR) {
+        if (!fs_can_read_inode(fs_file_inode(file)) || !fs_can_write_inode(fs_file_inode(file))) {
+            drop_tnode(tnode);
+            *error = -EACCES;
+            return NULL;
+        }
         file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
     } else if (flags & O_RDONLY) {
+        if (!fs_can_read_inode(fs_file_inode(file))) {
+            drop_tnode(tnode);
+            *error = -EACCES;
+            return NULL;
+        }
         file->abilities |= FS_FILE_CAN_READ;
     } else if (flags & O_WRONLY) {
+        if (!fs_can_write_inode(fs_file_inode(file))) {
+            drop_tnode(tnode);
+            *error = -EACCES;
+            return NULL;
+        }
         file->abilities |= FS_FILE_CAN_WRITE;
     }
 
@@ -619,6 +634,10 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 }
 
 ssize_t fs_read(struct file *file, void *buffer, size_t len) {
+    if (!(file->abilities & FS_FILE_CAN_READ)) {
+        return -EBADF;
+    }
+
     if (len == 0) {
         return 0;
     }
@@ -646,6 +665,10 @@ ssize_t fs_read(struct file *file, void *buffer, size_t len) {
 }
 
 ssize_t fs_pread(struct file *file, void *buffer, size_t len, off_t offset) {
+    if (!(file->abilities & FS_FILE_CAN_READ)) {
+        return -EBADF;
+    }
+
     if (file->abilities & FS_FILE_CANT_SEEK) {
         return -ESPIPE;
     }
@@ -664,6 +687,10 @@ ssize_t fs_pread(struct file *file, void *buffer, size_t len, off_t offset) {
 }
 
 ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
+    if (!(file->abilities & FS_FILE_CAN_WRITE)) {
+        return -EBADF;
+    }
+
     if (len == 0) {
         return 0;
     }
@@ -685,6 +712,10 @@ ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
 }
 
 ssize_t fs_pwrite(struct file *file, const void *buffer, size_t len, off_t offset) {
+    if (!(file->abilities & FS_FILE_CAN_WRITE)) {
+        return -EBADF;
+    }
+
     if (file->abilities & FS_FILE_CANT_SEEK) {
         return -ESPIPE;
     }

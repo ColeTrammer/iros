@@ -951,10 +951,6 @@ struct file *ext2_open(struct inode *inode, int flags, int *error) {
 static ssize_t __ext2_read(struct inode *inode, off_t offset, void *buffer, size_t len) {
     assert(len >= 1);
 
-    if (!(inode->mode & S_IRUSR)) {
-        return -EPERM;
-    }
-
     /* Indicate done reading */
     if (offset >= (off_t) inode->size) {
         return 0;
@@ -1073,10 +1069,6 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
 
     struct raw_inode *raw_inode = inode->private_data;
     ssize_t ret = 0;
-
-    if (!(raw_inode->mode & S_IWUSR)) {
-        return -EPERM;
-    }
 
     size_t len_save = len;
     size_t file_block_no = offset / inode->super_block->block_size;
