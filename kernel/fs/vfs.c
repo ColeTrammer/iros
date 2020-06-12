@@ -1327,14 +1327,14 @@ int fs_rename(const char *old_path, const char *new_path) {
 
     struct tnode *existing_tnode = NULL;
     ret = iname(new_path, 0, &existing_tnode);
-    if (ret < 0) {
+    if (ret < 0 && ret != -ENOENT) {
         drop_tnode(old);
         drop_tnode(new_parent);
         return ret;
     }
 
-    if ((((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
-         (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
+    if (existing_tnode && (((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
+                           (!(existing_tnode->inode->flags & FS_DIR) && (old->inode->flags & FS_DIR)))) {
         drop_tnode(old);
         drop_tnode(new_parent);
         drop_tnode(existing_tnode);
