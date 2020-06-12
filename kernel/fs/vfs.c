@@ -176,6 +176,10 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
 
     char *last_slash = strchr(path + 1, '/');
 
+    struct process *process = get_current_task()->process;
+    uid_t uid_to_check = (flags & INAME_CHECK_PERMISSIONS_WITH_REAL_UID_AND_GID) ? process->uid : process->euid;
+    gid_t gid_to_check = (flags & INAME_CHECK_PERMISSIONS_WITH_REAL_UID_AND_GID) ? process->gid : process->egid;
+
     /* Main VFS Loop */
     while (parent != NULL && path != NULL && path[1] != '\0') {
         if (parent->inode->flags & FS_LINK) {
@@ -217,6 +221,12 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             }
 
             continue;
+        }
+
+        if (!fs_can_execute_inode_impl(parent->inode, uid_to_check, gid_to_check)) {
+            drop_tnode(parent);
+            free(save_path);
+            return -EACCES;
         }
 
         /* Exit if we're trying to lookup past a file */
@@ -1508,6 +1518,10 @@ bool fs_can_read_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
         return true;
     }
 
+    if (inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
+    }
+
     if (inode->uid == uid) {
         return !!(inode->mode & S_IRUSR);
     }
@@ -1524,6 +1538,10 @@ bool fs_can_write_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
         return true;
     }
 
+    if (inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
+    }
+
     if (inode->uid == uid) {
         return !!(inode->mode & S_IWUSR);
     }
@@ -1538,6 +1556,10 @@ bool fs_can_write_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
 bool fs_can_execute_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
     if (uid == 0) {
         return true;
+    }
+
+    if (inode->i_op->lookup) {
+        inode->i_op->lookup(inode, NULL);
     }
 
     if (inode->uid == uid) {
@@ -1565,7 +1587,9 @@ bool fs_can_execute_inode(struct inode *inode) {
 
 int fs_faccessat(struct tnode *base, const char *path, int mode, int flags) {
     struct tnode *tnode;
-    int ret = iname_with_base(base, path, (flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
+    int ret = iname_with_base(
+        base, path,
+        INAME_CHECK_PERMISSIONS_WITH_REAL_UID_AND_GID | ((flags & AT_SYMLINK_NOFOLLOW) ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0), &tnode);
     if (ret < 0) {
         return ret;
     }

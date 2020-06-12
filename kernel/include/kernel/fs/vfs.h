@@ -12,8 +12,9 @@ struct file_descriptor;
 struct iovec;
 struct statvfs;
 
-#define INAME_DONT_FOLLOW_TRAILING_SYMLINK 1
-#define INAME_TAKE_OWNERSHIP_OF_PATH       2
+#define INAME_DONT_FOLLOW_TRAILING_SYMLINK            1
+#define INAME_TAKE_OWNERSHIP_OF_PATH                  2
+#define INAME_CHECK_PERMISSIONS_WITH_REAL_UID_AND_GID 4
 
 struct inode *bump_inode_reference(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
