@@ -1302,21 +1302,34 @@ int fs_rename(const char *old_path, const char *new_path) {
         return ret;
     }
 
+    // Write permission is needed to modify old's parent, and old's .. entry (if it's a directory)
+    if (!fs_can_write_inode(old->parent->inode) || ((old->inode->flags & FS_DIR) && !fs_can_write_inode(old->inode))) {
+        drop_tnode(old);
+        return -EACCES;
+    }
+
     char *new_path_last_slash = strrchr(new_path, '/');
     struct tnode *new_parent;
+    ret = 0;
     if (!new_path_last_slash) {
         new_parent = bump_tnode(get_current_task()->process->cwd);
     } else if (new_path_last_slash == new_path) {
         new_parent = bump_tnode(fs_root());
     } else {
         *new_path_last_slash = '\0';
-        iname(new_path, 0, &new_parent);
+        ret = iname(new_path, 0, &new_parent);
         *new_path_last_slash = '/';
     }
 
-    if (new_parent == NULL) {
+    if (ret < 0) {
         drop_tnode(old);
-        return -ENOENT;
+        return ret;
+    }
+
+    if (!fs_can_write_inode(new_parent->inode)) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
+        return -EACCES;
     }
 
     if (old->inode->super_block != new_parent->inode->super_block) {
@@ -1331,6 +1344,14 @@ int fs_rename(const char *old_path, const char *new_path) {
         drop_tnode(old);
         drop_tnode(new_parent);
         return ret;
+    }
+
+    // Do nothing if the two tnode's point to the same inode
+    if (existing_tnode && existing_tnode->inode == old->inode) {
+        drop_tnode(old);
+        drop_tnode(new_parent);
+        drop_tnode(existing_tnode);
+        return 0;
     }
 
     if (existing_tnode && (((existing_tnode->inode->flags & FS_DIR) && !(old->inode->flags & FS_DIR)) ||
