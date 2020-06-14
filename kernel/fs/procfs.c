@@ -73,7 +73,7 @@ static struct inode *procfs_create_inode(mode_t mode, uid_t uid, gid_t gid, stru
     inode->flags = fs_mode_to_flags(mode);
     inode->super_block = &super_block;
     inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
-    inode->device = PROCFS_DEVICE_ID;
+    inode->fsid = PROCFS_DEVICE_ID;
     inode->gid = gid;
     inode->uid = uid;
     inode->mode = mode;
@@ -524,7 +524,7 @@ struct inode *procfs_mount(struct file_system *current_fs, char *device_path) {
     struct procfs_data *root_data = root->private_data;
     PROCFS_MAKE_DYNAMIC(root_data);
 
-    super_block.device = root->device;
+    super_block.device = root->fsid;
     super_block.op = NULL;
     super_block.root = root;
     super_block.block_size = PAGE_SIZE;

@@ -840,7 +840,7 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
         }
     }
 
-    stat_struct->st_dev = inode->device;
+    stat_struct->st_dev = inode->fsid;
     stat_struct->st_ino = inode->index;
     stat_struct->st_mode = inode->mode;
     stat_struct->st_uid = inode->uid;

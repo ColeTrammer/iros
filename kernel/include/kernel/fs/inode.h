@@ -11,6 +11,7 @@
 #include <kernel/fs/tnode.h>
 #include <kernel/util/spinlock.h>
 
+struct device;
 struct hash_map;
 struct inode;
 struct timeval;
@@ -46,6 +47,7 @@ struct inode {
 #define FS_FIFO   4U
 #define FS_SOCKET 8U
 #define FS_LINK   16U
+#define FS_DEVICE 32U
     unsigned int flags;
 
     struct inode_operations *i_op;
@@ -62,7 +64,7 @@ struct inode {
     struct timespec change_time;
 
     /* Device id of filesystem */
-    dev_t device;
+    dev_t fsid;
 
     /* File system size */
     size_t size;

@@ -153,7 +153,7 @@ struct inode *dev_mount(struct file_system *current_fs, char *device_path) {
 
     struct inode *root = calloc(1, sizeof(struct inode));
 
-    root->device = 2;
+    root->fsid = 2;
     root->flags = FS_DIR;
     root->i_op = &dev_dir_i_op;
     root->index = inode_counter++;
@@ -169,7 +169,7 @@ struct inode *dev_mount(struct file_system *current_fs, char *device_path) {
     root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
     root->dirent_cache = fs_create_dirent_cache();
 
-    super_block.device = root->device;
+    super_block.device = root->fsid;
     super_block.op = NULL;
     super_block.root = root;
     super_block.block_size = PAGE_SIZE;
@@ -213,7 +213,7 @@ void dev_add(struct device *device, const char *_path) {
         device->ops->add(device);
     }
 
-    to_add->device = super_block.device;
+    to_add->fsid = super_block.device;
     to_add->flags = fs_mode_to_flags(device->type);
     to_add->i_op = &dev_i_op;
 
