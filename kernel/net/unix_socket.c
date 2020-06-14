@@ -149,16 +149,16 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
     struct inode *inode = tnode->inode;
     drop_tnode(tnode);
 
-    if (!fs_can_write_inode(tnode->inode)) {
+    if (!fs_can_write_inode(inode)) {
         return -EACCES;
     }
 
-    if (tnode->inode->socket_id == 0) {
+    if (inode->socket_id == 0) {
         // There is no socket bound to this inode
         return -ECONNREFUSED;
     }
 
-    struct socket *connect_to = net_get_socket_by_id(tnode->inode->socket_id);
+    struct socket *connect_to = net_get_socket_by_id(inode->socket_id);
     assert(connect_to);
 
     spin_lock(&connect_to->lock);
