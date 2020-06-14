@@ -141,8 +141,20 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
     }
 
     struct tnode *tnode = NULL;
-    iname(addr->sun_path, 0, &tnode);
-    if (!tnode || tnode->inode->socket_id == 0) {
+    int ret = iname(addr->sun_path, 0, &tnode);
+    if (ret < 0) {
+        return ret;
+    }
+
+    struct inode *inode = tnode->inode;
+    drop_tnode(tnode);
+
+    if (!fs_can_write_inode(tnode->inode)) {
+        return -EACCES;
+    }
+
+    if (tnode->inode->socket_id == 0) {
+        // There is no socket bound to this inode
         return -ECONNREFUSED;
     }
 
