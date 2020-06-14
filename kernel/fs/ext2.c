@@ -568,7 +568,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
         }
 
         inode_to_add = calloc(1, sizeof(struct inode));
-        inode_to_add->device = inode->device;
+        inode_to_add->fsid = inode->fsid;
         inode_to_add->index = dirent->ino;
         inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
         inode_to_add->super_block = inode->super_block;
@@ -784,7 +784,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
             return NULL;
         }
 
-        inode->device = parent->device;
+        inode->fsid = parent->fsid;
         inode->flags = fs_mode_to_flags(mode);
         inode->i_op = S_ISDIR(mode) ? &ext2_dir_i_op : &ext2_i_op;
         inode->index = index;
@@ -1675,7 +1675,7 @@ struct inode *ext2_mount(struct file_system *current_fs, char *device_path) {
     data->blk_desc_table = raw_block_group_descriptor_table;
     assert(strlen(device_path) != 0);
 
-    root->device = super_block->device;
+    root->fsid = super_block->device;
     root->flags = FS_DIR;
     root->i_op = &ext2_dir_i_op;
     root->index = EXT2_ROOT_INODE;

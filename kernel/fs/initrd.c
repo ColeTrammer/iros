@@ -123,7 +123,7 @@ struct inode *initrd_mount(struct file_system *current_fs, char *device_path) {
     root->size = initrd->end - initrd->start;
     root->super_block = &super_block;
     root->flags = FS_DIR;
-    root->device = 1;
+    root->fsid = 1;
     root->i_op = &initrd_dir_i_op;
     root->mode = S_IFDIR | 0777;
     root->ref_count = 1;
@@ -135,7 +135,7 @@ struct inode *initrd_mount(struct file_system *current_fs, char *device_path) {
 
     current_fs->super_block = &super_block;
     super_block.root = root;
-    super_block.device = root->device;
+    super_block.device = root->fsid;
     super_block.block_size = PAGE_SIZE;
     super_block.flags = ST_RDONLY;
 
@@ -146,7 +146,7 @@ struct inode *initrd_mount(struct file_system *current_fs, char *device_path) {
         inode->size = entry[i].length;
         inode->super_block = &super_block;
         inode->flags = FS_FILE;
-        inode->device = root->device;
+        inode->fsid = root->fsid;
         inode->mode = S_IFREG | 0777;
         inode->i_op = &initrd_i_op;
         inode->ref_count = 1;

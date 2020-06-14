@@ -74,7 +74,7 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
 static int inode_kill(struct vm_object *self) {
     struct inode_vm_object_data *data = self->private_data;
 
-    debug_log("Destroying inode_vm_object: [ %p, %lu, %llu ]\n", self, data->inode->device, data->inode->index);
+    debug_log("Destroying inode_vm_object: [ %p, %lu, %llu ]\n", self, data->inode->fsid, data->inode->index);
 
     if (data->owned) {
         for (size_t i = 0; i < data->pages; i++) {

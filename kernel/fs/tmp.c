@@ -78,7 +78,7 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     inode->uid = get_current_task()->process->uid;
     inode->gid = get_current_task()->process->gid;
     inode->mounts = NULL;
-    inode->device = tparent->inode->device;
+    inode->fsid = tparent->inode->fsid;
     inode->private_data = data;
     inode->ref_count = 1;
     inode->super_block = tparent->inode->super_block;
@@ -189,7 +189,7 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
     inode->ref_count = 1;
     inode->super_block = tparent->inode->super_block;
     inode->flags = FS_DIR;
-    inode->device = tparent->inode->device;
+    inode->fsid = tparent->inode->fsid;
     inode->writeable = true;
     inode->readable = true;
     tparent->inode->modify_time = inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
@@ -300,7 +300,7 @@ struct inode *tmp_mount(struct file_system *current_fs, char *device_path) {
 
     struct inode *root = calloc(1, sizeof(struct inode));
 
-    root->device = sb->device;
+    root->fsid = sb->device;
     root->flags = FS_DIR;
     root->i_op = &tmp_dir_i_op;
     spin_lock(&inode_count_lock);
