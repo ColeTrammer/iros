@@ -82,7 +82,9 @@ static void add_keyboard_event(struct key_event *event) {
         end = e;
     }
 
-    device->inode->readable = true;
+    if (device->inode) {
+        device->inode->readable = true;
+    }
     spin_unlock(&queue_lock);
 }
 
@@ -564,7 +566,7 @@ void init_keyboard() {
         inb(KEYBOARD_DATA_PORT);
     }
 
-    device = malloc(sizeof(struct device));
+    device = calloc(1, sizeof(struct device));
     device->device_number = 0x20;
     device->ops = &kbd_ops;
     device->private = NULL;

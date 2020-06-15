@@ -575,7 +575,12 @@ static void ext2_update_tnode_list(struct inode *inode) {
         inode_to_add->flags =
             dirent->type == EXT2_DIRENT_TYPE_REGULAR
                 ? FS_FILE
-                : dirent->type == EXT2_DIRENT_TYPE_SOCKET ? FS_SOCKET : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK ? FS_LINK : FS_DIR;
+                : dirent->type == EXT2_DIRENT_TYPE_SOCKET
+                      ? FS_SOCKET
+                      : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK
+                            ? FS_LINK
+                            : (dirent->type == EXT2_DIRENT_TYPE_BLOCK || dirent->type == EXT2_DIRENT_TYPE_CHARACTER_DEVICE) ? FS_DEVICE
+                                                                                                                            : FS_DIR;
         inode_to_add->ref_count = 2; // One for the vfs and one for us
         inode_to_add->readable = true;
         inode_to_add->writeable = true;
@@ -635,6 +640,10 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
 
     if (S_ISBLK(inode->mode) || S_ISCHR(inode->mode)) {
         dev_t device_number = raw_inode->block[0];
+        if (!device_number) {
+            device_number = raw_inode->block[1];
+        }
+        device_number &= 0xFFFFFU;
         fs_bind_device_to_inode(inode, device_number);
     }
 }

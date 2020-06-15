@@ -29,6 +29,12 @@ ln -s grep mnt/bin/fgrep
 ln -s grep mnt/bin/rgrep
 
 mkdir mnt/dev
+mknod mnt/dev/serial c 0x003 0xF8
+mknod mnt/dev/fb0 c 0x012 0x34 -m 777
+mknod mnt/dev/ptmx c 0x075 0x00 -m 777
+mknod mnt/dev/hdd0 b 0x004 0x30
+mknod mnt/dev/keyboard c 0x000 0x20 -m 777
+mknod mnt/dev/mouse c 0x005 0x00 -m 777
 
 umount /dev/loop100
 losetup -d /dev/loop100

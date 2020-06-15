@@ -54,21 +54,27 @@ struct inode *dev_lookup(struct inode *inode, const char *name) {
 }
 
 int dev_read_all(struct inode *inode, void *buf) {
-    if (((struct device *) inode->private_data)->ops->read_all) {
-        return ((struct device *) inode->private_data)->ops->read_all(inode->private_data, buf);
+    struct device *device = inode->device;
+    assert(device);
+
+    if (device->ops->read_all) {
+        return device->ops->read_all(device, buf);
     }
 
     return -EOPNOTSUPP;
 }
 
 struct file *dev_open(struct inode *inode, int flags, int *error) {
-    if (inode->private_data && ((struct device *) inode->private_data)->cannot_open) {
+    struct device *device = inode->device;
+    assert(device);
+
+    if (device->cannot_open) {
         *error = -EPERM;
         return NULL;
     }
 
-    if (inode->private_data && ((struct device *) inode->private_data)->ops->open) {
-        return ((struct device *) inode->private_data)->ops->open(inode->private_data, flags, error);
+    if (device->ops->open) {
+        return device->ops->open(device, flags, error);
     }
 
     struct file *file = calloc(sizeof(struct file), 1);
@@ -76,8 +82,8 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
     file->f_op = &dev_f_op;
     file->flags = inode->flags;
 
-    if (inode->private_data && ((struct device *) inode->private_data)->ops->on_open) {
-        ((struct device *) inode->private_data)->ops->on_open(inode->private_data);
+    if (device->ops->on_open) {
+        device->ops->on_open(device);
     }
 
     if (!S_ISBLK(inode->mode) && !S_ISLNK(inode->mode)) {
@@ -91,9 +97,12 @@ int dev_close(struct file *file) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
+    struct device *device = inode->device;
+    assert(device);
+
     int error = 0;
-    if (((struct device *) inode->private_data)->ops->close) {
-        error = ((struct device *) inode->private_data)->ops->close(inode->private_data);
+    if (device->ops->close) {
+        error = device->ops->close(device);
     }
 
     return error;
@@ -107,12 +116,15 @@ ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    if (((struct device *) inode->private_data)->ops->read) {
+    struct device *device = inode->device;
+    assert(device);
+
+    if (device->ops->read) {
         inode->access_time = time_read_clock(CLOCK_REALTIME);
-        return ((struct device *) inode->private_data)->ops->read(inode->private_data, offset, buffer, len);
+        return device->ops->read(device, offset, buffer, len);
     }
 
-    debug_log("???\n");
+    debug_log("???: [ %#.16lX ]\n", device->device_number);
     return -EINVAL;
 }
 
@@ -120,21 +132,28 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    if (((struct device *) inode->private_data)->ops->write) {
+    struct device *device = inode->device;
+    assert(device);
+
+    if (device->ops->write) {
         inode->modify_time = time_read_clock(CLOCK_REALTIME);
-        return ((struct device *) inode->private_data)->ops->write(inode->private_data, offset, buffer, len);
+        return device->ops->write(device, offset, buffer, len);
     }
 
     return -EINVAL;
 }
 
 int dev_stat(struct inode *inode, struct stat *stat_struct) {
-    stat_struct->st_rdev = ((struct device *) inode->private_data)->device_number;
+    struct device *device = inode->device;
+    assert(device);
+
+    stat_struct->st_rdev = device->device_number;
     return 0;
 }
 
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
-    struct device *device = inode->private_data;
+    struct device *device = inode->device;
+    assert(device);
 
     if (device->ops->ioctl) {
         return device->ops->ioctl(device, request, argp);
@@ -144,7 +163,8 @@ int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
 }
 
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
-    struct device *device = inode->private_data;
+    struct device *device = inode->device;
+    assert(device);
 
     if (device->ops->mmap) {
         return device->ops->mmap(device, addr, len, prot, flags, offset);

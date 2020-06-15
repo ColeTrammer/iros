@@ -120,33 +120,33 @@ static void fd_add(struct device *device) {
     device->inode->size = strlen(fd_path);
 }
 
-static struct device_ops dev_null_ops = { NULL, &dev_null_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops dev_null_ops = { .read = &dev_null_read, .write = &dev_ignore_write };
 
-static struct device dev_null = { 0x31, S_IFCHR, false, &dev_null_ops, NULL, NULL };
+static struct device dev_null = { .device_number = 0x31, .type = S_IFCHR, .ops = &dev_null_ops, .lock = SPINLOCK_INITIALIZER };
 
-static struct device_ops dev_zero_ops = { NULL, &dev_zero_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops dev_zero_ops = { .read = &dev_zero_read, .write = &dev_ignore_write };
 
-static struct device dev_zero = { 0x32, S_IFCHR, false, &dev_zero_ops, NULL, NULL };
+static struct device dev_zero = { .device_number = 0x32, .type = S_IFCHR, .ops = &dev_zero_ops, .lock = SPINLOCK_INITIALIZER };
 
-static struct device_ops dev_stdin_ops = { &stdin_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops dev_stdin_ops = { .open = &stdin_open };
 
-static struct device_ops dev_stdout_ops = { &stdout_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops dev_stdout_ops = { .open = &stdout_open };
 
-static struct device_ops dev_stderr_ops = { &stderr_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops dev_stderr_ops = { .open = &stderr_open };
 
-static struct device_ops dev_fd_ops = { NULL, &fd_read, NULL, NULL, &fd_add, NULL, NULL, NULL, NULL, &fd_read_all };
+static struct device_ops dev_fd_ops = { .read = &fd_read, .add = &fd_add, .read_all = &fd_read_all };
 
-static struct device dev_stdin = { 0x33, S_IFCHR, false, &dev_stdin_ops, NULL, NULL };
+static struct device dev_stdin = { .device_number = 0x33, .type = S_IFCHR, .ops = &dev_stdin_ops, .lock = SPINLOCK_INITIALIZER };
 
-static struct device dev_stdout = { 0x34, S_IFCHR, false, &dev_stdout_ops, NULL, NULL };
+static struct device dev_stdout = { .device_number = 0x34, .type = S_IFCHR, .ops = &dev_stdout_ops, .lock = SPINLOCK_INITIALIZER };
 
-static struct device dev_stderr = { 0x35, S_IFCHR, false, &dev_stderr_ops, NULL, NULL };
+static struct device dev_stderr = { .device_number = 0x35, .type = S_IFCHR, .ops = &dev_stderr_ops, .lock = SPINLOCK_INITIALIZER };
 
-static struct device_ops dev_full_ops = { NULL, &full_read, &full_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops dev_full_ops = { .read = &full_read, .write = &full_write };
 
-static struct device dev_full = { 0x36, S_IFCHR, false, &dev_full_ops, NULL, NULL };
+static struct device dev_full = { .device_number = 0x36, .type = S_IFCHR, .ops = &dev_full_ops, .lock = SPINLOCK_INITIALIZER };
 
-static struct device dev_fd = { 0x37, S_IFLNK, false, &dev_fd_ops, NULL, NULL };
+static struct device dev_fd = { .device_number = 0x37, .type = S_IFLNK, .ops = &dev_fd_ops, .lock = SPINLOCK_INITIALIZER };
 
 void init_virtual_devices() {
     dev_register(&dev_null);

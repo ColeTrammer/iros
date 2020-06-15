@@ -497,7 +497,22 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         return NULL;
     }
 
-    struct file *file = tnode->inode->i_op->open(tnode->inode, flags, error);
+    if (tnode->inode->i_op->lookup) {
+        tnode->inode->i_op->lookup(tnode->inode, NULL);
+    }
+
+    struct file *file = NULL;
+    if (tnode->inode->flags & FS_DEVICE) {
+        if (!tnode->inode->device) {
+            // This means the inode corresponds to a bogus device number
+            *error = -ENXIO;
+        } else {
+            file = dev_open(tnode->inode, flags, error);
+        }
+    } else {
+        file = tnode->inode->i_op->open(tnode->inode, flags, error);
+    }
+
     if (file == NULL) {
         drop_tnode(tnode);
         return file;
@@ -833,6 +848,10 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
         inode->i_op->lookup(inode, NULL);
     }
 
+    if (inode->flags & FS_DEVICE) {
+        stat_struct->st_rdev = inode->device ? inode->device->device_number : 0;
+    }
+
     if (inode->i_op->stat) {
         int ret = inode->i_op->stat(inode, stat_struct);
         if (ret < 0) {
@@ -849,8 +868,15 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_atim = inode->access_time;
     stat_struct->st_ctim = inode->modify_time;
     stat_struct->st_mtim = inode->change_time;
-    stat_struct->st_blksize = inode->super_block->block_size;
-    stat_struct->st_blocks = (inode->size + inode->super_block->block_size - 1) / inode->super_block->block_size;
+
+    // There's no super block for some generated inode, like dynamic master/slave pseudo terminals
+    if (inode->super_block) {
+        stat_struct->st_blksize = inode->super_block->block_size;
+        stat_struct->st_blocks = (inode->size + inode->super_block->block_size - 1) / inode->super_block->block_size;
+    } else {
+        stat_struct->st_blksize = PAGE_SIZE;
+        stat_struct->st_blocks = 0;
+    }
 
     return 0;
 }
@@ -883,6 +909,10 @@ int fs_ioctl(struct file *file, unsigned long request, void *argp) {
     struct inode *inode = fs_file_inode(file);
     if (!inode) {
         return -ENOTTY;
+    }
+
+    if (inode->flags & FS_DEVICE) {
+        return dev_ioctl(inode, request, argp);
     }
 
     if (inode->i_op->ioctl) {
@@ -1281,6 +1311,11 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
+
+    if (inode->flags & FS_DEVICE) {
+        bump_inode_reference(inode);
+        return dev_mmap(addr, len, prot, flags, inode, offset);
+    }
 
     if (inode->i_op->mmap) {
         bump_inode_reference(inode);

@@ -348,7 +348,10 @@ void *malloc(size_t n, int line, const char *func) {
     __lock(&__malloc_lock);
     struct metadata *_block = start;
     while (_block != NULL && _block->size != 0) {
-        assert(_block->magic == __MALLOC_MAGIG_CHECK);
+        if (_block->magic != __MALLOC_MAGIG_CHECK) {
+            debug_log("~Error at address: [ %p ]\n", _block + 1);
+            assert(_block->magic == __MALLOC_MAGIG_CHECK);
+        }
         _block = NEXT_BLOCK(_block);
     }
 

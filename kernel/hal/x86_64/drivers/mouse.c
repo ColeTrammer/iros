@@ -34,11 +34,11 @@ static void mouse_f_add(struct device *device) {
     device->inode->writeable = false;
 }
 
-static struct device_ops mouse_ops = { NULL, mouse_f_read, NULL, NULL, mouse_f_add, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops mouse_ops = { .read = mouse_f_read, .add = mouse_f_add };
 
 static struct mouse_data data = { false, 0, { 0 } };
 
-static struct device mouse = { 0x500, S_IFCHR, false, &mouse_ops, NULL, &data };
+static struct device mouse = { .device_number = 0x500, .type = S_IFCHR, .ops = &mouse_ops, .private = &data, .lock = SPINLOCK_INITIALIZER };
 
 static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len) {
     (void) device;
@@ -93,7 +93,9 @@ static void add_mouse_event(struct mouse_event *event) {
         end = e;
     }
 
-    mouse.inode->readable = true;
+    if (mouse.inode) {
+        mouse.inode->readable = true;
+    }
 
     spin_unlock(&queue_lock);
 }
