@@ -21,6 +21,6 @@ struct file *initrd_open(struct inode *inode, int flags, int *error);
 ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t len);
 ssize_t initrd_iread(struct inode *inode, void *buffer, size_t len, off_t offset);
 int initrd_read_all(struct inode *inode, void *buffer);
-struct inode *initrd_mount(struct file_system *fs, char *device_path);
+struct inode *initrd_mount(struct file_system *fs, struct device *device);
 
 #endif /* _KERNEL_FS_INITRD_H */

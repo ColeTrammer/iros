@@ -286,21 +286,20 @@ void tmp_on_inode_destruction(struct inode *inode) {
     }
 }
 
-struct inode *tmp_mount(struct file_system *current_fs, char *device_path) {
+struct inode *tmp_mount(struct file_system *current_fs, struct device *device) {
     assert(current_fs != NULL);
-    assert(strlen(device_path) == 0);
+    assert(!device);
 
     struct super_block *sb = calloc(1, sizeof(struct super_block));
     sb->block_size = PAGE_SIZE;
-    sb->dev_file = NULL;
-    sb->device = tmp_fs_id++;
+    sb->fsid = tmp_fs_id++;
     sb->op = &s_op;
     sb->private_data = NULL;
     init_spinlock(&sb->super_block_lock);
 
     struct inode *root = calloc(1, sizeof(struct inode));
 
-    root->fsid = sb->device;
+    root->fsid = sb->fsid;
     root->flags = FS_DIR;
     root->i_op = &tmp_dir_i_op;
     spin_lock(&inode_count_lock);

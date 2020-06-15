@@ -66,6 +66,9 @@ struct inode {
     /* Device id of filesystem */
     dev_t fsid;
 
+    // Null if the inode is not a device
+    struct device *device;
+
     /* File system size */
     size_t size;
 

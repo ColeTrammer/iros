@@ -180,7 +180,7 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct);
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error);
 int ext2_unlink(struct tnode *tnode);
 int ext2_rmdir(struct tnode *tnode);
-struct inode *ext2_mount(struct file_system *fs, char *device_path);
+struct inode *ext2_mount(struct file_system *fs, struct device *device);
 int ext2_chmod(struct inode *inode, mode_t mode);
 int ext2_chown(struct inode *inode, uid_t uid, gid_t gid);
 int ext2_utimes(struct inode *inode, const struct timespec *times);

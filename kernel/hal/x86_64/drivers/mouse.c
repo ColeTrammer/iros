@@ -38,7 +38,7 @@ static struct device_ops mouse_ops = { NULL, mouse_f_read, NULL, NULL, mouse_f_a
 
 static struct mouse_data data = { false, 0, { 0 } };
 
-static struct device mouse = { 0x500, S_IFCHR, "mouse", false, &mouse_ops, NULL, &data };
+static struct device mouse = { 0x500, S_IFCHR, false, &mouse_ops, NULL, &data };
 
 static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len) {
     (void) device;
@@ -248,5 +248,5 @@ void init_mouse() {
 
     data.has_scroll_wheel = mouse_id == 3;
 
-    dev_add(&mouse, mouse.name);
+    dev_register(&mouse);
 }

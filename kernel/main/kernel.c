@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/fs/dev.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
@@ -34,8 +35,14 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_net();
 
     /* Mount hdd0 at / */
+    struct device *hdd0 = dev_get_device(0x430);
+    assert(hdd0);
     int error = 0;
-    error = fs_mount("/dev/hdd0", "/", "ext2");
+    error = fs_mount(hdd0, "/", "ext2");
+    assert(error == 0);
+
+    // Mount tmpfs at /dev/shm
+    error = fs_mount(NULL, "/dev/shm", "tmpfs");
     assert(error == 0);
 
     // NOTE: if we put these symbols on the initrd instead of in /boot/os_2.o, thse symbols

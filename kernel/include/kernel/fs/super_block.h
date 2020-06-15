@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include <kernel/fs/file.h>
 #include <kernel/util/spinlock.h>
 
+struct device;
 struct tnode;
 
 struct super_block_operations {
@@ -14,7 +14,7 @@ struct super_block_operations {
 };
 
 struct super_block {
-    dev_t device;
+    dev_t fsid;
     struct inode *root;
     struct super_block_operations *op;
     blksize_t block_size;
@@ -29,7 +29,7 @@ struct super_block {
 
     int flags;
 
-    struct file *dev_file;
+    struct device *device;
     spinlock_t super_block_lock;
 
     void *private_data;

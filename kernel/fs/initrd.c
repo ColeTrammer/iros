@@ -109,10 +109,10 @@ int initrd_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
-struct inode *initrd_mount(struct file_system *current_fs, char *device_path) {
+struct inode *initrd_mount(struct file_system *current_fs, struct device *device) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
-    assert(strlen(device_path) == 0);
+    assert(!device);
 
     initrd_start = initrd->start;
     num_files = *((int64_t *) initrd_start);
@@ -135,7 +135,7 @@ struct inode *initrd_mount(struct file_system *current_fs, char *device_path) {
 
     current_fs->super_block = &super_block;
     super_block.root = root;
-    super_block.device = root->fsid;
+    super_block.fsid = root->fsid;
     super_block.block_size = PAGE_SIZE;
     super_block.flags = ST_RDONLY;
 

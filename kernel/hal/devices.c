@@ -122,11 +122,11 @@ static void fd_add(struct device *device) {
 
 static struct device_ops dev_null_ops = { NULL, &dev_null_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device dev_null = { 0x31, S_IFCHR, "null", false, &dev_null_ops, NULL, NULL };
+static struct device dev_null = { 0x31, S_IFCHR, false, &dev_null_ops, NULL, NULL };
 
 static struct device_ops dev_zero_ops = { NULL, &dev_zero_read, &dev_ignore_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device dev_zero = { 0x32, S_IFCHR, "zero", false, &dev_zero_ops, NULL, NULL };
+static struct device dev_zero = { 0x32, S_IFCHR, false, &dev_zero_ops, NULL, NULL };
 
 static struct device_ops dev_stdin_ops = { &stdin_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
@@ -136,24 +136,24 @@ static struct device_ops dev_stderr_ops = { &stderr_open, NULL, NULL, NULL, NULL
 
 static struct device_ops dev_fd_ops = { NULL, &fd_read, NULL, NULL, &fd_add, NULL, NULL, NULL, NULL, &fd_read_all };
 
-static struct device dev_stdin = { 0x33, S_IFCHR, "stdin", false, &dev_stdin_ops, NULL, NULL };
+static struct device dev_stdin = { 0x33, S_IFCHR, false, &dev_stdin_ops, NULL, NULL };
 
-static struct device dev_stdout = { 0x34, S_IFCHR, "stdout", false, &dev_stdout_ops, NULL, NULL };
+static struct device dev_stdout = { 0x34, S_IFCHR, false, &dev_stdout_ops, NULL, NULL };
 
-static struct device dev_stderr = { 0x35, S_IFCHR, "stderr", false, &dev_stderr_ops, NULL, NULL };
+static struct device dev_stderr = { 0x35, S_IFCHR, false, &dev_stderr_ops, NULL, NULL };
 
 static struct device_ops dev_full_ops = { NULL, &full_read, &full_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-static struct device dev_full = { 0x36, S_IFCHR, "full", false, &dev_full_ops, NULL, NULL };
+static struct device dev_full = { 0x36, S_IFCHR, false, &dev_full_ops, NULL, NULL };
 
-static struct device dev_fd = { 0x37, S_IFLNK, "fd", false, &dev_fd_ops, NULL, NULL };
+static struct device dev_fd = { 0x37, S_IFLNK, false, &dev_fd_ops, NULL, NULL };
 
 void init_virtual_devices() {
-    dev_add(&dev_null, "null");
-    dev_add(&dev_zero, "zero");
-    dev_add(&dev_stdin, "stdin");
-    dev_add(&dev_stdout, "stdout");
-    dev_add(&dev_stderr, "stderr");
-    dev_add(&dev_full, "full");
-    dev_add(&dev_fd, "fd");
+    dev_register(&dev_null);
+    dev_register(&dev_zero);
+    dev_register(&dev_stdin);
+    dev_register(&dev_stdout);
+    dev_register(&dev_stderr);
+    dev_register(&dev_full);
+    dev_register(&dev_fd);
 }
