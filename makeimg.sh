@@ -28,6 +28,8 @@ ln -s grep mnt/bin/egrep
 ln -s grep mnt/bin/fgrep
 ln -s grep mnt/bin/rgrep
 
+mkdir mnt/dev
+
 umount /dev/loop100
 losetup -d /dev/loop100
 

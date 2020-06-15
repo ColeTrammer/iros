@@ -19,25 +19,31 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
+#include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
-static struct file_system fs;
-static struct super_block super_block;
+static struct hash_map *device_map;
 
-static spinlock_t inode_counter_lock = SPINLOCK_INITIALIZER;
-static ino_t inode_counter = 1;
+HASH_DEFINE_FUNCTIONS(device, struct device, dev_t, device_number)
 
-static struct file_system fs = { "dev", 0, &dev_mount, NULL, NULL };
+void dev_register(struct device *device) {
+    assert(!hash_get(device_map, &device->device_number));
+    hash_put(device_map, device);
+}
 
-static struct inode_operations dev_i_op = { NULL, &dev_lookup, &dev_open, &dev_stat, &dev_ioctl,    NULL, NULL, NULL, NULL,
-                                            NULL, &dev_mmap,   NULL,      NULL,      &dev_read_all, NULL, NULL, NULL };
+void dev_unregister(struct device *device) {
+    hash_del(device_map, &device->device_number);
 
-static struct inode_operations dev_dir_i_op = { NULL, &dev_lookup, &dev_open, NULL, NULL, NULL, NULL, NULL, NULL,
-                                                NULL, NULL,        NULL,      NULL, NULL, NULL, NULL, NULL };
+    if (device->ops->remove) {
+        device->ops->remove(device);
+    }
+}
+
+struct device *dev_get_device(dev_t device_number) {
+    return hash_get(device_map, &device_number);
+}
 
 static struct file_operations dev_f_op = { &dev_close, &dev_read, &dev_write, NULL };
-
-static struct file_operations dev_dir_f_op = { NULL, NULL, NULL, NULL };
 
 struct inode *dev_lookup(struct inode *inode, const char *name) {
     if (!inode || !name) {
@@ -67,7 +73,7 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
 
     struct file *file = calloc(sizeof(struct file), 1);
     file->position = 0;
-    file->f_op = inode->flags & FS_DIR ? &dev_dir_f_op : &dev_f_op;
+    file->f_op = &dev_f_op;
     file->flags = inode->flags;
 
     if (inode->private_data && ((struct device *) inode->private_data)->ops->on_open) {
@@ -147,125 +153,6 @@ intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     return -ENODEV;
 }
 
-struct inode *dev_mount(struct file_system *current_fs, char *device_path) {
-    assert(current_fs != NULL);
-    assert(strlen(device_path) == 0);
-
-    struct inode *root = calloc(1, sizeof(struct inode));
-
-    root->fsid = 2;
-    root->flags = FS_DIR;
-    root->i_op = &dev_dir_i_op;
-    root->index = inode_counter++;
-    init_spinlock(&root->lock);
-    root->mode = S_IFDIR | 0777;
-    root->mounts = NULL;
-    root->private_data = NULL;
-    root->size = 0;
-    root->super_block = &super_block;
-    root->ref_count = 1;
-    root->readable = true;
-    root->writeable = true;
-    root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
-    root->dirent_cache = fs_create_dirent_cache();
-
-    super_block.device = root->fsid;
-    super_block.op = NULL;
-    super_block.root = root;
-    super_block.block_size = PAGE_SIZE;
-
-    current_fs->super_block = &super_block;
-
-    return root;
-}
-
-static char *to_dev_path(const char *path) {
-    char *new_path = malloc(strlen(path) + 6);
-    strcpy(new_path, "/dev/");
-    strcat(new_path, path);
-    return new_path;
-}
-
-void dev_add(struct device *device, const char *_path) {
-    char *path = to_dev_path(_path);
-    char *_name = strrchr(path, '/');
-    *_name = '\0';
-    _name++;
-
-    struct tnode *parent;
-    int ret = iname(path, 0, &parent);
-    if (ret < 0) {
-        /* Probably should add the directory that is missing */
-        free(path);
-        return;
-    }
-
-    struct inode *to_add = calloc(1, sizeof(struct inode));
-    device->inode = to_add;
-
-    to_add->readable = true;
-    to_add->writeable = true;
-    to_add->size = 0;
-
-    /* Adds the device */
-    device->cannot_open = false;
-    if (device->ops->add) {
-        device->ops->add(device);
-    }
-
-    to_add->fsid = super_block.device;
-    to_add->flags = fs_mode_to_flags(device->type);
-    to_add->i_op = &dev_i_op;
-
-    spin_lock(&inode_counter_lock);
-    to_add->index = inode_counter++;
-    spin_unlock(&inode_counter_lock);
-
-    init_spinlock(&to_add->lock);
-    to_add->mode = device->type | 0777;
-    to_add->mounts = NULL;
-    to_add->private_data = device;
-    to_add->ref_count = 1;
-    to_add->super_block = &super_block;
-    to_add->access_time = to_add->change_time = to_add->modify_time = time_read_clock(CLOCK_REALTIME);
-
-    fs_put_dirent_cache(parent->inode->dirent_cache, to_add, device->name, strlen(device->name));
-    drop_tnode(parent);
-
-    free(path);
-}
-
-void dev_remove(const char *_path) {
-    char *path = to_dev_path(_path);
-
-    struct tnode *tnode;
-    int ret = iname(path, 0, &tnode);
-    if (ret < 0) {
-        /* This probably shouldn't happen */
-        free(path);
-        return;
-    }
-
-    /* Frees the device */
-    if (((struct device *) tnode->inode->private_data)->ops->remove) {
-        ((struct device *) tnode->inode->private_data)->ops->remove(tnode->inode->private_data);
-    }
-
-    free(tnode->inode->private_data);
-    fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
-    drop_inode_reference(tnode->inode);
-    drop_tnode(tnode);
-
-    free(path);
-}
-
-dev_t dev_get_device_number(struct file *file) {
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    return ((struct device *) inode->private_data)->device_number;
-}
-
 void init_dev() {
-    load_fs(&fs);
+    device_map = hash_create_hash_map(device_hash, device_equals, device_key);
 }

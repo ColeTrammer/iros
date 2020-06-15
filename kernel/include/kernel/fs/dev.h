@@ -29,15 +29,16 @@ struct device_ops {
 struct device {
     dev_t device_number;
     mode_t type;
-    char name[16];
     bool cannot_open;
     struct device_ops *ops;
     struct inode *inode;
     void *private;
 };
 
-void dev_add(struct device *device, const char *path);
-void dev_remove(const char *path);
+void dev_register(struct device *device);
+void dev_unregister(struct device *device);
+
+struct device *dev_get_device(dev_t device_number);
 
 void init_dev();
 
@@ -51,7 +52,5 @@ int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 int dev_read_all(struct inode *inode, void *buf);
 struct inode *dev_mount(struct file_system *fs, char *device_path);
-
-dev_t dev_get_device_number(struct file *file);
 
 #endif /* _KERNEL_FS_DEV_H */

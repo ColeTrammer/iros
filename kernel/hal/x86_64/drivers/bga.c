@@ -26,7 +26,7 @@ static struct bga_data data = { 0 };
 
 struct device_ops bga_ops = { NULL, NULL, NULL, NULL, NULL, NULL, bga_ioctl, NULL, bga_mmap, NULL };
 
-struct device bga_device = { 0x4200, S_IFCHR, "fb0", false, &bga_ops, NULL, &data };
+struct device bga_device = { 0x4200, S_IFCHR, false, &bga_ops, NULL, &data };
 
 static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
     assert(device);
@@ -94,5 +94,5 @@ void init_bga(struct pci_configuration *config) {
     debug_log("Detected bga device: [ %#.8X ]\n", config->bar[0] & ~0xF);
 
     data.frame_buffer = config->bar[0] & ~0xF;
-    dev_add(&bga_device, bga_device.name);
+    dev_register(&bga_device);
 }

@@ -566,9 +566,8 @@ void init_keyboard() {
 
     device = malloc(sizeof(struct device));
     device->device_number = 0x20;
-    strcpy(device->name, "keyboard");
     device->ops = &kbd_ops;
     device->private = NULL;
     device->type = S_IFCHR;
-    dev_add(device, device->name);
+    dev_register(device);
 }

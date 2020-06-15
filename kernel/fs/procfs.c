@@ -515,16 +515,16 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
     }
 }
 
-struct inode *procfs_mount(struct file_system *current_fs, char *device_path) {
+struct inode *procfs_mount(struct file_system *current_fs, struct device *device) {
     assert(current_fs != NULL);
-    assert(strlen(device_path) == 0);
+    assert(!device);
 
     root = procfs_create_inode(PROCFS_DIRECTORY_MODE, 0, 0, NULL, procfs_create_base_directory_structure);
     root->dirent_cache = fs_create_dirent_cache();
     struct procfs_data *root_data = root->private_data;
     PROCFS_MAKE_DYNAMIC(root_data);
 
-    super_block.device = root->fsid;
+    super_block.fsid = root->fsid;
     super_block.op = NULL;
     super_block.root = root;
     super_block.block_size = PAGE_SIZE;

@@ -339,7 +339,9 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t read = 0;
 
-        spin_lock(&device->inode->lock);
+        if (device->inode) {
+            spin_lock(&device->inode->lock);
+        }
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
             i = MIN(i, num_sectors_to_read);
@@ -361,7 +363,9 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         }
 
     finsih_ata_read:
-        spin_unlock(&device->inode->lock);
+        if (device->inode) {
+            spin_unlock(&device->inode->lock);
+        }
         return read;
     }
 
@@ -376,7 +380,9 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t written = 0;
 
-        spin_lock(&device->inode->lock);
+        if (device->inode) {
+            spin_lock(&device->inode->lock);
+        }
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
             i = MIN(i, num_sectors_to_write);
@@ -398,7 +404,9 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         }
 
     finsih_ata_write:
-        spin_unlock(&device->inode->lock);
+        if (device->inode) {
+            spin_unlock(&device->inode->lock);
+        }
         return written;
     }
 
@@ -418,18 +426,13 @@ static void ata_handle_irq(struct ata_device_data *data) {
 
 static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {
     struct device *device = malloc(sizeof(struct device));
-    device->device_number = info->io_base + info->is_slave;
-
-    char num[2];
-    num[0] = (char) (i + '0');
-    num[1] = '\0';
-    strcpy(device->name, "hdd");
-    strcat(device->name, num);
-
+    device->device_number = 0x430 + i;
     device->ops = &ata_ops;
     device->type = S_IFBLK;
+    device->inode = NULL;
 
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));
+    device->private = data;
     data->port_info = info;
     data->sector_size = ATA_SECTOR_SIZE;
     data->num_sectors = identity[60] | (identity[61] << 16);
@@ -451,7 +454,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
         debug_log("found pic for ata (so will use dma): [ %#.8X ]\n", base);
     }
 
-    dev_add(device, device->name);
+    dev_register(device);
 }
 
 #define NUM_POSSIBLE_ATA_DEVICES 8

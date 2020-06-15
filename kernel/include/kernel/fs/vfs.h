@@ -56,7 +56,7 @@ int fs_link(const char *oldpath, const char *newpath);
 int fs_utimensat(struct tnode *base, const char *path, const struct timespec *times, int flags);
 int fs_fstatvfs(struct file *file, struct statvfs *buf);
 int fs_statvfs(const char *path, struct statvfs *buf);
-int fs_mount(const char *src, const char *path, const char *type);
+int fs_mount(struct device *device, const char *path, const char *type);
 
 intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 
@@ -67,6 +67,7 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc);
 ssize_t fs_do_read(char *buf, off_t offset, size_t n, const char *source, size_t source_max);
 
 int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id);
+int fs_bind_device_to_inode(struct inode *inode, dev_t device);
 
 bool fs_is_readable(struct file *file);
 bool fs_is_writable(struct file *file);
@@ -100,6 +101,8 @@ static inline int fs_mode_to_flags(mode_t mode) {
         return FS_LINK;
     } else if (S_ISSOCK(mode)) {
         return FS_SOCKET;
+    } else if (S_ISCHR(mode) || S_ISBLK(mode)) {
+        return FS_DEVICE;
     } else {
         return 0;
     }

@@ -94,7 +94,7 @@ static void init_vmmouse(void) {
         return;
     }
 
-    debug_log("initializing vmmouse");
+    debug_log("initializing vmmouse\n");
     enable_vmmouse();
 }
 

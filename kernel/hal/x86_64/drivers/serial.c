@@ -77,10 +77,9 @@ void init_serial_port_device(dev_t dev) {
 
     struct device *device = malloc(sizeof(struct device));
     device->device_number = dev;
-    strcpy(device->name, "serial");
     device->ops = &serial_ops;
     device->type = S_IFCHR;
     device->private = NULL;
 
-    dev_add(device, device->name);
+    dev_register(device);
 }

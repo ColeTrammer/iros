@@ -6,8 +6,10 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/super_block.h>
 
+struct device;
+
 struct mount {
-    char *device_path;
+    struct device *device;
     const char *name;
     struct file_system *fs;
     struct super_block *super_block;

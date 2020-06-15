@@ -1443,7 +1443,7 @@ static int do_statvfs(struct super_block *sb, struct statvfs *buf) {
     buf->f_ffree = sb->free_inodes;
     buf->f_favail = sb->available_blocks;
 
-    buf->f_fsid = sb->device;
+    buf->f_fsid = sb->fsid;
     buf->f_flag = sb->flags;
     buf->f_namemax = NAME_MAX;
 
@@ -1467,7 +1467,7 @@ int fs_statvfs(const char *path, struct statvfs *buf) {
     return do_statvfs(inode->super_block, buf);
 }
 
-int fs_mount(const char *src, const char *path, const char *type) {
+int fs_mount(struct device *device, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 
     struct file_system *file_system = file_systems;
@@ -1477,11 +1477,9 @@ int fs_mount(const char *src, const char *path, const char *type) {
             if (strcmp(path, "/") == 0) {
                 mount->name = "/";
                 mount->next = NULL;
-                char *dev_path = malloc(strlen(src) + 1);
-                strcpy(dev_path, src);
-                mount->device_path = dev_path;
+                mount->device = device;
                 mount->fs = file_system;
-                file_system->mount(file_system, mount->device_path);
+                file_system->mount(file_system, mount->device);
                 mount->super_block = file_system->super_block;
 
                 /* For now, when mounting as / when there is already something mounted,
@@ -1545,12 +1543,10 @@ int fs_mount(const char *src, const char *path, const char *type) {
             strcpy(name, parent_end + 1);
 
             mount->name = name;
-            char *dev_path = malloc(strlen(src) + 1);
-            strcpy(dev_path, src);
-            mount->device_path = dev_path;
             mount->fs = file_system;
             mount->next = NULL;
-            assert(file_system->mount(file_system, mount->device_path));
+            mount->device = device;
+            assert(file_system->mount(file_system, mount->device));
             mount->super_block = file_system->super_block;
 
             free(path_copy);
@@ -1923,6 +1919,26 @@ int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id) {
     return 0;
 }
 
+// NOTE: this function should be called by file systems that support devices (ext2), to
+//       direct all future interaction with the file to a device.
+int fs_bind_device_to_inode(struct inode *inode, dev_t device_number) {
+    struct device *device = dev_get_device(device_number);
+    if (!device) {
+        debug_log("Failed to find device with id: [ %lu ]\n", device_number);
+        return -EINVAL;
+    }
+
+    // Right now, every device number corresponds to a single device
+    inode->device = device;
+    device->inode = inode;
+
+    if (device->ops->add) {
+        device->ops->add(device);
+    }
+
+    return 0;
+}
+
 struct file_descriptor fs_dup(struct file_descriptor desc) {
     if (desc.file == NULL) {
         return (struct file_descriptor) { NULL, 0 };
@@ -1956,22 +1972,14 @@ void init_vfs() {
     init_procfs();
 
     /* Mount INITRD as root */
-    int error = fs_mount("", "/", "initrd");
-    assert(error == 0);
-
-    /* Mount dev at /dev */
-    error = fs_mount("", "/dev", "dev");
+    int error = fs_mount(NULL, "/", "initrd");
     assert(error == 0);
 
     // Mount tmpfs at /tmp
-    error = fs_mount("", "/tmp", "tmpfs");
+    error = fs_mount(NULL, "/tmp", "tmpfs");
     assert(error == 0);
 
-    // Mount tmpfs at /dev/shm
-    error = fs_mount("", "/dev/shm", "tmpfs");
-    assert(error == 0);
-
-    error = fs_mount("", "/proc", "procfs");
+    error = fs_mount(NULL, "/proc", "procfs");
     assert(error == 0);
 }
 

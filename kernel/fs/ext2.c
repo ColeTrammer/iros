@@ -97,8 +97,8 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
         return num_blocks;
     }
 
-    sb->dev_file->position = sb->block_size * block_offset;
-    if (fs_read(sb->dev_file, (void *) buffer, num_blocks * sb->block_size) != num_blocks * sb->block_size) {
+    if (sb->device->ops->read(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size) !=
+        num_blocks * sb->block_size) {
         spin_unlock(&sb->super_block_lock);
         return -EIO;
     }
@@ -124,8 +124,8 @@ static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uin
     struct ext2_sb_data *data = sb->private_data;
     spin_lock(&sb->super_block_lock);
 
-    sb->dev_file->position = sb->block_size * block_offset;
-    if (fs_write(sb->dev_file, buffer, num_blocks * sb->block_size) != num_blocks * sb->block_size) {
+    if (sb->device->ops->write(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size) !=
+        num_blocks * sb->block_size) {
         spin_unlock(&sb->super_block_lock);
         return -EIO;
     }
@@ -247,7 +247,7 @@ static int ext2_sync_super_block(struct super_block *sb) {
     // actual raw_super_block when accounting fields are updated.
     ext2_sync_raw_super_block_with_virtual_super_block(sb);
 
-    int ret = (int) fs_pwrite(sb->dev_file, data->sb, EXT2_SUPER_BLOCK_SIZE, EXT2_SUPER_BLOCK_OFFSET);
+    int ret = sb->device->ops->read(sb->device, EXT2_SUPER_BLOCK_OFFSET, data->sb, EXT2_SUPER_BLOCK_SIZE);
 
     spin_unlock(&sb->super_block_lock);
     return ret == EXT2_SUPER_BLOCK_SIZE ? 0 : ret;
@@ -631,6 +631,11 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
 
     if (update_tnodes && inode->flags & FS_DIR && inode->dirent_cache == NULL) {
         ext2_update_tnode_list(inode);
+    }
+
+    if (S_ISBLK(inode->mode) || S_ISCHR(inode->mode)) {
+        dev_t device_number = raw_inode->block[0];
+        fs_bind_device_to_inode(inode, device_number);
     }
 }
 
@@ -1618,23 +1623,19 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
     return __ext2_unlink(tnode, false);
 }
 
-struct inode *ext2_mount(struct file_system *current_fs, char *device_path) {
-    int error = 0;
-    struct file *dev_file = fs_openat(NULL, device_path, O_RDWR, 0, &error);
-    if (dev_file == NULL) {
-        return NULL;
-    }
+struct inode *ext2_mount(struct file_system *current_fs, struct device *device) {
+    assert(device);
 
     struct inode *root = calloc(1, sizeof(struct inode));
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
     struct ext2_sb_data *data = calloc(1, sizeof(struct ext2_sb_data));
 
-    super_block->device = dev_get_device_number(dev_file);
+    super_block->fsid = device->device_number;
     super_block->op = &s_op;
     super_block->root = root;
     init_spinlock(&super_block->super_block_lock);
     super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
-    super_block->dev_file = dev_file;
+    super_block->device = device;
     super_block->private_data = data;
     super_block->flags = 0;
     data->block_group_map = hash_create_hash_map(block_group_hash, block_group_equals, block_group_key);
@@ -1673,9 +1674,8 @@ struct inode *ext2_mount(struct file_system *current_fs, char *device_path) {
     }
 
     data->blk_desc_table = raw_block_group_descriptor_table;
-    assert(strlen(device_path) != 0);
 
-    root->fsid = super_block->device;
+    root->fsid = super_block->fsid;
     root->flags = FS_DIR;
     root->i_op = &ext2_dir_i_op;
     root->index = EXT2_ROOT_INODE;
