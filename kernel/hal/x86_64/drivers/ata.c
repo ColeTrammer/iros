@@ -339,9 +339,7 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t read = 0;
 
-        if (device->inode) {
-            spin_lock(&device->inode->lock);
-        }
+        spin_lock(&device->lock);
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
             i = MIN(i, num_sectors_to_read);
@@ -363,9 +361,7 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         }
 
     finsih_ata_read:
-        if (device->inode) {
-            spin_unlock(&device->inode->lock);
-        }
+        spin_unlock(&device->lock);
         return read;
     }
 
@@ -380,9 +376,7 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t written = 0;
 
-        if (device->inode) {
-            spin_lock(&device->inode->lock);
-        }
+        spin_lock(&device->lock);
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
             i = MIN(i, num_sectors_to_write);
@@ -404,9 +398,7 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         }
 
     finsih_ata_write:
-        if (device->inode) {
-            spin_unlock(&device->inode->lock);
-        }
+        spin_unlock(&device->lock);
         return written;
     }
 
@@ -430,6 +422,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     device->ops = &ata_ops;
     device->type = S_IFBLK;
     device->inode = NULL;
+    init_spinlock(&device->lock);
 
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));
     device->private = data;

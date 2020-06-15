@@ -10,6 +10,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/tnode.h>
+#include <kernel/util/spinlock.h>
 
 struct device;
 
@@ -32,6 +33,7 @@ struct device {
     bool cannot_open;
     struct device_ops *ops;
     struct inode *inode;
+    spinlock_t lock;
     void *private;
 };
 

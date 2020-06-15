@@ -75,7 +75,7 @@ void init_serial_port_device(dev_t dev) {
     /* Could be anything */
     assert(dev == SERIAL_COM1_PORT);
 
-    struct device *device = malloc(sizeof(struct device));
+    struct device *device = calloc(1, sizeof(struct device));
     device->device_number = dev;
     device->ops = &serial_ops;
     device->type = S_IFCHR;

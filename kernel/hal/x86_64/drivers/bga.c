@@ -24,9 +24,9 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
 
 static struct bga_data data = { 0 };
 
-struct device_ops bga_ops = { NULL, NULL, NULL, NULL, NULL, NULL, bga_ioctl, NULL, bga_mmap, NULL };
+struct device_ops bga_ops = { .ioctl = bga_ioctl, .mmap = bga_mmap };
 
-struct device bga_device = { 0x4200, S_IFCHR, false, &bga_ops, NULL, &data };
+struct device bga_device = { .device_number = 0x1234, .type = S_IFCHR, .ops = &bga_ops, .private = &data, .lock = SPINLOCK_INITIALIZER };
 
 static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
     assert(device);

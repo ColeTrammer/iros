@@ -10,6 +10,7 @@
 #include <sys/param.h>
 #include <termios.h>
 
+#include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/vfs.h>
@@ -665,6 +666,8 @@ static int master_ioctl(struct device *device, unsigned long request, void *argp
 static struct device_ops master_ops = { NULL,          master_read,  master_write,   master_close, master_add,
                                         master_remove, master_ioctl, master_on_open, NULL,         NULL };
 
+static struct inode_operations empty_ops = { 0 };
+
 static struct file *ptmx_open(struct device *device, int flags, int *error) {
     (void) device;
 
@@ -689,10 +692,35 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
             dev_register(masters[i]);
             dev_register(slaves[i]);
 
-            char path[16] = { 0 };
-            snprintf(path, 15, "/dev/mtty%d", i);
-            debug_log("Opening: [ %s ]\n", path);
-            return fs_openat(NULL, path, flags, 0, error);
+            char master_name[16];
+            size_t master_length = snprintf(master_name, sizeof(master_name) - 1, "mtty%d", i);
+
+            struct inode *master_inode = calloc(1, sizeof(struct inode));
+            fs_bind_device_to_inode(master_inode, master->device_number);
+            master_inode->i_op = &empty_ops;
+            master_inode->ref_count = 1;
+            master_inode->flags = FS_DEVICE;
+            master_inode->mode = S_IFCHR | 0777;
+
+            char slave_name[16];
+            size_t slave_length = snprintf(slave_name, sizeof(slave_name) - 1, "tty%d", i);
+
+            struct inode *slave_inode = calloc(1, sizeof(struct inode));
+            fs_bind_device_to_inode(slave_inode, slaves[i]->device_number);
+            slave_inode->i_op = &empty_ops;
+            slave_inode->ref_count = 1;
+            slave_inode->flags = FS_DEVICE;
+            slave_inode->mode = S_IFCHR | 0777;
+
+            struct tnode *tnode;
+            assert(iname("/dev", 0, &tnode) == 0);
+
+            fs_put_dirent_cache(tnode->inode->dirent_cache, master_inode, master_name, master_length);
+            fs_put_dirent_cache(tnode->inode->dirent_cache, slave_inode, slave_name, slave_length);
+
+            struct file *ret = fs_openat(tnode, master_name, flags, 0, error);
+            drop_tnode(tnode);
+            return ret;
         }
     }
 
