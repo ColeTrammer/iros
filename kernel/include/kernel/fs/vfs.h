@@ -9,6 +9,7 @@
 #include <kernel/fs/inode.h>
 
 struct file_descriptor;
+struct file_operations;
 struct iovec;
 struct statvfs;
 
@@ -24,6 +25,8 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
 int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer);
 int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len);
 int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct tnode **tnode);
+
+struct file *fs_create_file(struct inode *inode, int type, int abilities, int flags, struct file_operations *operations, void *private);
 
 struct tnode *fs_root(void);
 struct tnode *fs_create(const char *path, mode_t mode, int *error);

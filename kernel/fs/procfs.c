@@ -142,15 +142,8 @@ struct inode *procfs_lookup(struct inode *inode, const char *name) {
 struct file *procfs_open(struct inode *inode, int flags, int *error) {
     assert(!(flags & O_RDWR));
 
-    struct file *file = calloc(1, sizeof(struct file));
-    file->f_op = (inode->flags & FS_DIR) ? &procfs_dir_f_op : &procfs_f_op;
-    file->flags = inode->flags;
-    file->position = 0;
-    file->abilities = 0;
-    file->ref_count = 0;
-
     *error = 0;
-    return file;
+    return fs_create_file(inode, inode->flags, 0, flags, (inode->flags & FS_DIR) ? &procfs_dir_f_op : &procfs_f_op, NULL);
 }
 
 int procfs_read_all(struct inode *inode, void *buffer) {

@@ -83,17 +83,9 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
         return device->ops->open(device, flags, error);
     }
 
-    struct file *file = calloc(sizeof(struct file), 1);
-    file->position = 0;
-    file->f_op = &dev_f_op;
-    file->flags = inode->flags;
-
+    struct file *file = fs_create_file(inode, inode->flags, !S_ISBLK(device->type) ? FS_FILE_CANT_SEEK : 0, flags, &dev_f_op, NULL);
     if (device->ops->on_open) {
         device->ops->on_open(device);
-    }
-
-    if (!S_ISBLK(inode->mode) && !S_ISLNK(inode->mode)) {
-        file->abilities |= FS_FILE_CANT_SEEK;
     }
 
     return file;

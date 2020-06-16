@@ -65,8 +65,6 @@ struct inode *initrd_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *initrd_open(struct inode *inode, int flags, int *error) {
-    (void) flags;
-
     if (!inode) {
         *error = -EINVAL;
         return NULL;
@@ -74,18 +72,10 @@ struct file *initrd_open(struct inode *inode, int flags, int *error) {
 
     /* Means we are on root */
     if (inode->flags & FS_DIR) {
-        struct file *file = calloc(1, sizeof(struct file));
-        file->position = 0;
-        file->f_op = &initrd_dir_f_op;
-        file->flags = inode->flags;
-        return file;
+        return fs_create_file(inode, FS_DIR, 0, flags, &initrd_dir_f_op, NULL);
     }
 
-    struct file *file = calloc(1, sizeof(struct file));
-    file->position = 0;
-    file->f_op = &initrd_f_op;
-    file->flags = inode->flags;
-    return file;
+    return fs_create_file(inode, FS_FILE, 0, flags, &initrd_f_op, NULL);
 }
 
 ssize_t initrd_iread(struct inode *inode, void *buffer, size_t _len, off_t offset) {

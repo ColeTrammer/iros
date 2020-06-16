@@ -109,18 +109,8 @@ struct inode *tmp_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *tmp_open(struct inode *inode, int flags, int *error) {
-    (void) flags;
-
-    struct file *file = calloc(1, sizeof(struct file));
-    if (file == NULL) {
-        *error = -ENOMEM;
-        return NULL;
-    }
-
-    file->f_op = (inode->flags & FS_DIR) ? &tmp_dir_f_op : &tmp_f_op;
-    file->flags = inode->flags;
-    init_spinlock(&file->lock);
-    return file;
+    *error = 0;
+    return fs_create_file(inode, inode->flags, 0, flags, (inode->flags & FS_DIR) ? &tmp_dir_f_op : &tmp_f_op, NULL);
 }
 
 ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len) {

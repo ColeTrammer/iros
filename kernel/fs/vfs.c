@@ -145,6 +145,32 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
     return fs_read_all_inode(inode, buffer, buffer_len);
 }
 
+struct file *fs_create_file(struct inode *inode, int type, int abilities, int flags, struct file_operations *operations, void *private) {
+    struct file *file = calloc(1, sizeof(struct file));
+    assert(file);
+
+    if (inode) {
+        file->inode = bump_inode_reference(inode);
+    }
+
+    init_spinlock(&file->lock);
+    file->ref_count = 1;
+    file->open_flags = flags;
+    file->flags = type;
+    file->abilities = abilities & FS_FILE_CANT_SEEK;
+    file->f_op = operations;
+    file->private_data = private;
+    if (flags & O_RDWR) {
+        file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
+    } else if (flags & O_RDONLY) {
+        file->abilities |= FS_FILE_CAN_READ;
+    } else if (flags & O_WRONLY) {
+        file->abilities |= FS_FILE_CAN_WRITE;
+    }
+
+    return file;
+}
+
 static struct tnode *t_root;
 
 struct tnode *fs_root(void) {
@@ -501,6 +527,26 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         tnode->inode->i_op->lookup(tnode->inode, NULL);
     }
 
+    if (flags & O_RDWR) {
+        if (!fs_can_read_inode(tnode->inode) || !fs_can_write_inode(tnode->inode)) {
+            drop_tnode(tnode);
+            *error = -EACCES;
+            return NULL;
+        }
+    } else if (flags & O_RDONLY) {
+        if (!fs_can_read_inode(tnode->inode)) {
+            drop_tnode(tnode);
+            *error = -EACCES;
+            return NULL;
+        }
+    } else if (flags & O_WRONLY) {
+        if (!fs_can_write_inode(tnode->inode)) {
+            drop_tnode(tnode);
+            *error = -EACCES;
+            return NULL;
+        }
+    }
+
     struct file *file = NULL;
     if (tnode->inode->flags & FS_DEVICE) {
         if (!tnode->inode->device) {
@@ -518,43 +564,11 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         return file;
     }
 
-    // FIXME: this is a hack to allow calls to fs_open to return a call to fs_open.
-    //        functions in the device file system that fake being a symlink (like
-    //        ptmx) rely on this functionality, and we cannot overwrite the file's
-    //        information here or the file will just be incorrect and memory will
-    //        be leaked.
     if (file->tnode) {
+        // NOTE: some calls to open act like a symlink (e.g. /dev/tty), and thus specify their own tnode.
         drop_tnode(tnode);
-        return file;
-    }
-
-    file->inode = bump_inode_reference(tnode->inode);
-    init_spinlock(&file->lock);
-    file->ref_count = 1;
-    file->open_flags = flags;
-    file->abilities &= FS_FILE_CANT_SEEK;
-    file->tnode = tnode;
-    if (flags & O_RDWR) {
-        if (!fs_can_read_inode(fs_file_inode(file)) || !fs_can_write_inode(fs_file_inode(file))) {
-            drop_tnode(tnode);
-            *error = -EACCES;
-            return NULL;
-        }
-        file->abilities |= FS_FILE_CAN_WRITE | FS_FILE_CAN_READ;
-    } else if (flags & O_RDONLY) {
-        if (!fs_can_read_inode(fs_file_inode(file))) {
-            drop_tnode(tnode);
-            *error = -EACCES;
-            return NULL;
-        }
-        file->abilities |= FS_FILE_CAN_READ;
-    } else if (flags & O_WRONLY) {
-        if (!fs_can_write_inode(fs_file_inode(file))) {
-            drop_tnode(tnode);
-            *error = -EACCES;
-            return NULL;
-        }
-        file->abilities |= FS_FILE_CAN_WRITE;
+    } else {
+        file->tnode = tnode;
     }
 
     /* Handle append mode */

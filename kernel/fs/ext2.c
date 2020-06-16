@@ -962,19 +962,12 @@ struct inode *ext2_lookup(struct inode *inode, const char *name) {
 }
 
 struct file *ext2_open(struct inode *inode, int flags, int *error) {
-    (void) flags;
-
     if (!inode->private_data) {
         ext2_update_inode(inode, true);
     }
 
-    struct file *file = calloc(1, sizeof(struct file));
-    file->f_op = inode->flags & FS_DIR ? &ext2_dir_f_op : &ext2_f_op;
-    file->flags = inode->flags;
-    file->position = 0;
-
     *error = 0;
-    return file;
+    return fs_create_file(inode, inode->flags, 0, flags, inode->flags & FS_DIR ? &ext2_dir_f_op : &ext2_f_op, NULL);
 }
 
 /* Should provide some sort of mechanism for caching these blocks */

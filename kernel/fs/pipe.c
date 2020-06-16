@@ -62,18 +62,10 @@ struct inode *pipe_new_inode() {
 struct file *pipe_open(struct inode *inode, int flags, int *error) {
     assert(!(flags & O_RDWR));
 
-    struct file *file = calloc(1, sizeof(struct file));
-    file->f_op = &pipe_f_op;
-    file->flags = inode->flags;
-    file->position = 0;
-    file->abilities = 0;
-    file->ref_count = 0;
-    file->abilities |= FS_FILE_CANT_SEEK;
+    struct file *file = fs_create_file(inode, FS_FIFO, FS_FILE_CANT_SEEK, flags, &pipe_f_op, NULL);
 
     struct pipe_data *data = inode->private_data;
-
     spin_lock(&inode->lock);
-    inode->ref_count++;
     if (flags & O_WRONLY) {
         data->write_count++;
     }

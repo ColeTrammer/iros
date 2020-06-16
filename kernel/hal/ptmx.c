@@ -727,10 +727,9 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
 
             fs_put_dirent_cache(tnode->inode->dirent_cache, master_inode, master_name, master_length);
             fs_put_dirent_cache(tnode->inode->dirent_cache, slave_inode, slave_name, slave_length);
-
-            struct file *ret = fs_openat(tnode, master_name, flags, 0, error);
             drop_tnode(tnode);
-            return ret;
+
+            return dev_open(master_inode, flags, error);
         }
     }
 
