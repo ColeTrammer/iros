@@ -37,6 +37,8 @@ void dev_unregister(struct device *device) {
     if (device->ops->remove) {
         device->ops->remove(device);
     }
+
+    free(device);
 }
 
 struct device *dev_get_device(dev_t device_number) {

@@ -1050,7 +1050,7 @@ int fs_create_pipe(struct file *pipe_files[2]) {
     return 0;
 }
 
-int fs_unlink(const char *path) {
+int fs_unlink(const char *path, bool ignore_permission_checks) {
     assert(path);
 
     debug_log("Unlinking: [ %s ]\n", path);
@@ -1067,8 +1067,8 @@ int fs_unlink(const char *path) {
         return -EBUSY;
     }
 
-    struct inode *parent = tnode->parent->inode;
-    if (parent && !fs_can_write_inode(parent)) {
+    struct inode *parent = tnode->parent ? tnode->parent->inode : NULL;
+    if (parent && !ignore_permission_checks && !fs_can_write_inode(parent)) {
         drop_tnode(tnode);
         return -EACCES;
     }
