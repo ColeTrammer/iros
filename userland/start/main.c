@@ -80,18 +80,18 @@ int main(int argc, char **argv) {
 
     char *nslookup_args[] = { "/bin/nslookup", "-s", NULL };
 
-    spawn_process(nslookup_args, 0, 0, false);
+    spawn_process(nslookup_args, 12, 12, false);
 
     char *clipboard_server_args[] = { "/bin/clipboard_server", NULL };
 
-    spawn_process(clipboard_server_args, 0, 0, false);
+    spawn_process(clipboard_server_args, 11, 11, false);
 
     if (!use_graphics) {
         char *terminal_args[] = { "/bin/terminal-vga", NULL };
         spawn_process(terminal_args, 100, 100, false);
     } else {
         char *window_server_args[] = { "/bin/window_server", NULL };
-        spawn_process(window_server_args, 0, 0, false);
+        spawn_process(window_server_args, 10, 10, false);
 
         sleep(1);
 

@@ -34,11 +34,14 @@ mknod mnt/dev/zero c 1 2 -m 666
 mknod mnt/dev/full c 1 3 -m 666
 mknod mnt/dev/ptmx c 2 1 -m 666
 mknod mnt/dev/tty c 2 2 -m 666
-mknod mnt/dev/hdd0 b 5 0 -m 666
-mknod mnt/dev/fb0 c 6 0 -m 666
-mknod mnt/dev/keyboard c 7 1 -m 444
-mknod mnt/dev/mouse c 7 2 -m 444
+mknod mnt/dev/hdd0 b 5 0 -m 660
+mknod mnt/dev/fb0 c 6 0 -m 660
+mknod mnt/dev/keyboard c 7 1 -m 440
+mknod mnt/dev/mouse c 7 2 -m 440
 mknod mnt/dev/serial0 c 8 0 -m 222
+
+chgrp 13 mnt/dev/keyboard mnt/dev/mouse
+chgrp 14 mnt/dev/fb0
 
 ln -s /proc/self/fd mnt/dev/fd
 ln -s /proc/self/fd/0 mnt/dev/stdin

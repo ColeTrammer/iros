@@ -26,7 +26,7 @@ int start_server() {
 
     unlink(addr.sun_path);
 
-    mode_t mask = umask(0);
+    mode_t mask = umask(0002);
     if (bind(fd, (const struct sockaddr *) &addr, sizeof(struct sockaddr_un)) == -1) {
         perror("bind");
         return 1;

@@ -14,7 +14,7 @@
 #include "window.h"
 
 int main() {
-    umask(0);
+    umask(0002);
 
     int fb = open("/dev/fb0", O_RDWR);
     if (fb == -1) {
