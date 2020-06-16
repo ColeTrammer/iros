@@ -41,6 +41,7 @@ int fs_fstatat(struct tnode *base, const char *file_name, struct stat *stat_stru
 int fs_ioctl(struct file *file, unsigned long request, void *argp);
 int fs_truncate(struct file *file, off_t length);
 int fs_mkdir(const char *path, mode_t mode);
+int fs_mknod(const char *path, mode_t mode, dev_t dev);
 int fs_create_pipe(struct file *pipe_files[2]);
 int fs_unlink(const char *path, bool ignore_permission_checks);
 int fs_rmdir(const char *path);

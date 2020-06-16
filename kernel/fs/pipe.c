@@ -20,11 +20,9 @@
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
-static struct inode_operations pipe_i_op = { NULL, NULL, &pipe_open, NULL, NULL, NULL, NULL, NULL,
-                                             NULL, NULL, NULL,       NULL, NULL, NULL, NULL, &pipe_on_inode_destruction,
-                                             NULL };
+static struct inode_operations pipe_i_op = { .open = &pipe_open, .on_inode_destruction = &pipe_on_inode_destruction };
 
-static struct file_operations pipe_f_op = { &pipe_close, &pipe_read, &pipe_write, &pipe_clone };
+static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write, .clone = &pipe_clone };
 
 bool is_pipe_write_end_open(struct inode *inode) {
     struct pipe_data *data = inode->private_data;

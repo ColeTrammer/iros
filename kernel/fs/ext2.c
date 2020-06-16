@@ -56,6 +56,7 @@ static struct inode_operations ext2_dir_i_op = {
     .open = &ext2_open,
     .stat = &ext2_stat,
     .mkdir = &ext2_mkdir,
+    .mknod = &ext2_mknod,
     .rmdir = &ext2_rmdir,
     .chmod = &ext2_chmod,
     .chown = &ext2_chown,
@@ -754,18 +755,25 @@ static int ext2_write_inode(struct inode *inode) {
     raw_inode->sectors = 0;
     raw_inode->flags = 0;
     raw_inode->os_specific_1 = 0;
-    ssize_t to_preallocate =
-        S_ISREG(inode->mode) ? data->sb->num_blocks_to_preallocate_for_files : data->sb->num_blocks_to_preallocate_for_directories;
-    void *zeroes = ext2_allocate_blocks(inode->super_block, 1);
-    memset(zeroes, 0, inode->super_block->block_size);
-    for (ssize_t i = 0; i < to_preallocate; i++) {
-        int ret = ext2_allocate_block_for_inode(inode->super_block, inode, i);
-        if (ret != 0) {
-            return ret;
+    ssize_t to_preallocate = S_ISREG(inode->mode) ? data->sb->num_blocks_to_preallocate_for_files
+                                                  : S_ISDIR(inode->mode) ? data->sb->num_blocks_to_preallocate_for_directories : 0;
+    if (to_preallocate != 0) {
+        void *zeroes = ext2_allocate_blocks(inode->super_block, 1);
+        memset(zeroes, 0, inode->super_block->block_size);
+        for (ssize_t i = 0; i < to_preallocate; i++) {
+            int ret = ext2_allocate_block_for_inode(inode->super_block, inode, i);
+            if (ret != 0) {
+                return ret;
+            }
         }
+        ext2_free_blocks(zeroes);
     }
-    ext2_free_blocks(zeroes);
+
     memset(raw_inode->block + MIN(EXT2_SINGLY_INDIRECT_BLOCK_INDEX, to_preallocate), 0, (MAX(15 - to_preallocate, 2)) * sizeof(uint32_t));
+    if (S_ISCHR(inode->mode) || S_ISBLK(inode->mode)) {
+        raw_inode->block[1] = inode->device_id;
+    }
+
     raw_inode->generation = 0;
     raw_inode->file_acl = 0;
     raw_inode->dir_acl = 0;
@@ -775,7 +783,7 @@ static int ext2_write_inode(struct inode *inode) {
     return ext2_sync_inode(inode);
 }
 
-struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error, ino_t inode_id) {
+struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error, ino_t inode_id, dev_t device) {
     struct inode *parent = tparent->inode;
     uint32_t index;
     struct inode *inode = NULL;
@@ -801,6 +809,9 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->fsid = parent->fsid;
         inode->flags = fs_mode_to_flags(mode);
         inode->i_op = S_ISDIR(mode) ? &ext2_dir_i_op : &ext2_i_op;
+        if (mode & S_IFCHR || mode & S_IFBLK) {
+            fs_bind_device_to_inode(inode, device);
+        }
         inode->index = index;
         init_spinlock(&inode->lock);
         inode->mode = mode;
@@ -903,7 +914,12 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
     memcpy(dirent->name, name, strlen(name));
     dirent->name_length = strlen(name);
     dirent->size = parent->super_block->block_size - ((uintptr_t) dirent - (uintptr_t) raw_dirent_table);
-    dirent->type = S_ISREG(mode) ? EXT2_DIRENT_TYPE_REGULAR : S_ISDIR(mode) ? EXT2_DIRENT_TYPE_DIRECTORY : EXT2_DIRENT_TYPE_SOCKET;
+    dirent->type = S_ISREG(mode) ? EXT2_DIRENT_TYPE_REGULAR
+                                 : S_ISDIR(mode) ? EXT2_DIRENT_TYPE_DIRECTORY
+                                                 : S_ISLNK(mode) ? EXT2_DIRENT_TYPE_SYMBOLIC_LINK
+                                                                 : S_ISBLK(mode) ? EXT2_DIRENT_TYPE_BLOCK
+                                                                                 : S_ISCHR(mode) ? EXT2_DIRENT_TYPE_CHARACTER_DEVICE
+                                                                                                 : EXT2_DIRENT_TYPE_SOCKET;
     memset((void *) (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length), 0,
            parent->super_block->block_size -
                (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length - (uintptr_t) raw_dirent_table));
@@ -923,7 +939,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
 }
 
 struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error) {
-    return __ext2_create(tparent, name, mode, error, 0);
+    return __ext2_create(tparent, name, mode, error, 0, 0);
 }
 
 struct inode *ext2_lookup(struct inode *inode, const char *name) {
@@ -1237,7 +1253,7 @@ int ext2_link(struct tnode *tparent, const char *name, const struct tnode *targe
     }
 
     int error = 0;
-    __ext2_create(tparent, name, tparent->inode->mode, &error, target->inode->index);
+    __ext2_create(tparent, name, tparent->inode->mode, &error, target->inode->index, 0);
     if (error < 0) {
         return error;
     }
@@ -1285,11 +1301,6 @@ struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *
 }
 
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
-    if (!(tparent->inode->mode & S_IWUSR)) {
-        *error = -EPERM;
-        return NULL;
-    }
-
     struct inode *inode = ext2_create(tparent, name, mode, error);
     if (inode == NULL) {
         return NULL;
@@ -1356,6 +1367,10 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
 
     ext2_free_blocks(dirents_start);
     return inode;
+}
+
+struct inode *ext2_mknod(struct tnode *tparent, const char *name, mode_t mode, dev_t device, int *error) {
+    return __ext2_create(tparent, name, mode, error, 0, device);
 }
 
 int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
@@ -1606,7 +1621,7 @@ int ext2_utimes(struct inode *inode, const struct timespec *times) {
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name) {
     int error = 0;
     tnode->inode->change_time = time_read_clock(CLOCK_REALTIME);
-    __ext2_create(new_parent, new_name, tnode->inode->mode, &error, tnode->inode->index);
+    __ext2_create(new_parent, new_name, tnode->inode->mode, &error, tnode->inode->index, 0);
     if (error != 0) {
         return error;
     }

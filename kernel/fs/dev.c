@@ -145,14 +145,6 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
     return -EINVAL;
 }
 
-int dev_stat(struct inode *inode, struct stat *stat_struct) {
-    struct device *device = inode->device;
-    assert(device);
-
-    stat_struct->st_rdev = device->device_number;
-    return 0;
-}
-
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
     struct device *device = inode->device;
     assert(device);

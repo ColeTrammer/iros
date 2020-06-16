@@ -26,6 +26,7 @@ struct inode_operations {
     int (*stat)(struct inode *inode, struct stat *stat_struct);
     int (*ioctl)(struct inode *inode, unsigned long request, void *argp);
     struct inode *(*mkdir)(struct tnode *tnode, const char *name, mode_t mode, int *error);
+    struct inode *(*mknod)(struct tnode *tnode, const char *name, mode_t mode, dev_t device, int *error);
     int (*unlink)(struct tnode *tnode);
     int (*rmdir)(struct tnode *tnode);
     int (*chmod)(struct inode *inode, mode_t mode);
@@ -66,7 +67,10 @@ struct inode {
     /* Device id of filesystem */
     dev_t fsid;
 
-    // Null if the inode is not a device
+    // Device id associated with the file
+    dev_t device_id;
+
+    // Null if the inode is not a device or the device does not exist
     struct device *device;
 
     /* File system size */

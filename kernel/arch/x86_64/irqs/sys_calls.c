@@ -2430,6 +2430,16 @@ SYS_CALL(setgroups) {
     SYS_RETURN(proc_setgroups(size, list));
 }
 
+SYS_CALL(mknod) {
+    SYS_BEGIN();
+
+    SYS_PARAM1_VALIDATE(const char *, path, validate_path, 0);
+    SYS_PARAM2(mode_t, mode);
+    SYS_PARAM3(dev_t, dev);
+
+    SYS_RETURN(fs_mknod(path, mode, dev));
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);
