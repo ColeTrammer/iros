@@ -66,14 +66,14 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
     size_t total_size = sizeof(uint32_t) * (size_t) data.x_res * (size_t) data.y_res * (size_t) 2;
     debug_log("Framebuffer total size: [ %lu ]\n", total_size);
 
-    if (!device->inode->vm_object) {
-        device->inode->vm_object = vm_create_phys_object(data.frame_buffer, total_size, inode_on_kill, device->inode);
+    if (!device->vm_object) {
+        device->vm_object = vm_create_phys_object(data.frame_buffer, total_size, device_on_kill, device);
     } else {
-        bump_vm_object(device->inode->vm_object);
+        bump_vm_object(device->vm_object);
     }
 
     struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
-    region->vm_object = device->inode->vm_object;
+    region->vm_object = device->vm_object;
     region->vm_object_offset = 0;
     region->flags |= VM_SHARED;
 

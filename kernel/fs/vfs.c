@@ -2058,14 +2058,7 @@ int fs_bind_device_to_inode(struct inode *inode, dev_t device_number) {
         return -EINVAL;
     }
 
-    // Right now, every device number corresponds to a single device
     inode->device = device;
-    device->inode = inode;
-
-    if (device->ops->add) {
-        device->ops->add(device);
-    }
-
     return 0;
 }
 
@@ -2160,6 +2153,13 @@ bool fs_is_readable(struct file *file) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
+    if (file->flags & FS_DEVICE) {
+        struct device *device = inode->device;
+        assert(device);
+
+        return device->readable;
+    }
+
     return inode->readable;
 }
 
@@ -2175,6 +2175,13 @@ bool fs_is_writable(struct file *file) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
+    if (file->flags & FS_DEVICE) {
+        struct device *device = inode->device;
+        assert(device);
+
+        return device->writeable;
+    }
+
     return inode->writeable;
 }
 
@@ -2189,6 +2196,13 @@ bool fs_is_exceptional(struct file *file) {
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
+
+    if (file->flags & FS_DEVICE) {
+        struct device *device = inode->device;
+        assert(device);
+
+        return device->exceptional;
+    }
 
     return inode->excetional_activity;
 }

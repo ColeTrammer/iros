@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <limits.h>
 
+#include <kernel/fs/dev.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/pipe.h>
 #include <kernel/fs/vfs.h>
@@ -132,7 +133,8 @@ static bool until_socket_is_readable_with_timeout_blocker(struct block_info *inf
     assert(info->type == UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT);
 
     return time_compare(time_read_clock(CLOCK_MONOTONIC), info->until_socket_is_readable_with_timeout_info.end_time) >= 0 ||
-           info->until_socket_is_readable_with_timeout_info.socket->readable || info->until_socket_is_readable_info.socket->exceptional;
+           info->until_socket_is_readable_with_timeout_info.socket->readable ||
+           info->until_socket_is_readable_with_timeout_info.socket->exceptional;
 }
 
 int proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket, struct timespec end_time) {
@@ -141,6 +143,56 @@ int proc_block_until_socket_is_readable_with_timeout(struct task *current, struc
     current->block_info.until_socket_is_readable_with_timeout_info.end_time = end_time;
     current->block_info.type = UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT;
     current->block_info.should_unblock = &until_socket_is_readable_with_timeout_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    return __kernel_yield();
+}
+
+static bool until_device_is_readable_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_DEVICE_IS_READABLE);
+
+    return info->until_device_is_readable_info.device->readable;
+}
+
+int proc_block_until_device_is_readable(struct task *current, struct device *device) {
+    disable_interrupts();
+    current->block_info.until_device_is_readable_info.device = device;
+    current->block_info.type = UNTIL_DEVICE_IS_READABLE;
+    current->block_info.should_unblock = &until_device_is_readable_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    return __kernel_yield();
+}
+
+static bool until_device_is_writeable_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_DEVICE_IS_WRITEABLE);
+
+    return info->until_device_is_writeable_info.device->writeable;
+}
+
+int proc_block_until_device_is_writeable(struct task *current, struct device *device) {
+    disable_interrupts();
+    current->block_info.until_device_is_writeable_info.device = device;
+    current->block_info.type = UNTIL_DEVICE_IS_WRITEABLE;
+    current->block_info.should_unblock = &until_device_is_writeable_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    return __kernel_yield();
+}
+
+static bool until_device_is_readable_or_timeout_blocker(struct block_info *info) {
+    assert(info->type == UNTIL_DEVICE_IS_READABLE_OR_TIMEOUT);
+
+    return time_compare(time_read_clock(CLOCK_MONOTONIC), info->until_device_is_readable_or_timeout_info.end_time) >= 0 ||
+           info->until_device_is_readable_or_timeout_info.device->readable;
+}
+
+int proc_block_until_device_is_readable_or_timeout(struct task *current, struct device *device, struct timespec end_time) {
+    disable_interrupts();
+    current->block_info.until_device_is_readable_or_timeout_info.device = device;
+    current->block_info.until_device_is_readable_or_timeout_info.end_time = end_time;
+    current->block_info.type = UNTIL_DEVICE_IS_READABLE_OR_TIMEOUT;
+    current->block_info.should_unblock = &until_device_is_readable_or_timeout_blocker;
     current->blocking = true;
     current->sched_state = WAITING;
     return __kernel_yield();

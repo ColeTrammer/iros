@@ -50,9 +50,6 @@ static void slave_on_open(struct device *device) {
     spin_lock(&data->lock);
     data->ref_count++;
     spin_unlock(&data->lock);
-
-    device->inode->uid = get_current_task()->process->uid;
-    device->inode->gid = get_current_task()->process->gid;
 }
 
 static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t len) {
@@ -78,7 +75,7 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
             if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
                 time_t end_time_ms = data->config.c_cc[VTIME] * 100;
                 struct timespec end_time = { .tv_sec = end_time_ms / 1000, .tv_nsec = (end_time_ms % 1000) * 1000000 };
-                int ret = proc_block_until_inode_is_readable_or_timeout(get_current_task(), device->inode, end_time);
+                int ret = proc_block_until_device_is_readable_or_timeout(get_current_task(), device, end_time);
                 if (ret) {
                     return ret;
                 }
@@ -96,7 +93,7 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
                 }
                 break;
             } else {
-                int ret = proc_block_until_inode_is_readable(get_current_task(), device->inode);
+                int ret = proc_block_until_device_is_readable(get_current_task(), device);
                 if (ret) {
                     return ret;
                 }
@@ -131,7 +128,7 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Setting readable flag on slave to false: [ %d ]\n", data->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-            device->inode->readable = false;
+            device->readable = false;
         }
     }
 
@@ -179,13 +176,13 @@ slave_write_again:
         mdata->messages = message;
     } else {
         if (message->max < message->len + len) {
-            mdata->device->inode->writeable = false;
+            mdata->device->writeable = false;
             while (mdata->messages != NULL) {
                 spin_unlock(&mdata->lock);
 #ifdef PTMX_BLOCKING_DEBUG
                 debug_log("Blocking until master is writable: [ %d ]\n", mdata->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-                int ret = proc_block_until_inode_is_writable(get_current_task(), mdata->device->inode);
+                int ret = proc_block_until_device_is_writeable(get_current_task(), mdata->device);
                 if (ret) {
                     return ret;
                 }
@@ -211,7 +208,7 @@ slave_write_again:
 #ifdef PTMX_BLOCKING_DEBUG
     debug_log("Setting master to readable: [ %d ]\n", mdata->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-    mdata->device->inode->readable = true;
+    mdata->device->readable = true;
 
     spin_unlock(&mdata->lock);
     return (ssize_t) save_len;
@@ -252,7 +249,7 @@ static void slave_add(struct device *device) {
         }
     }
 
-    device->inode->readable = false;
+    device->readable = false;
 
     device->private = data;
     data->device = device;
@@ -459,8 +456,8 @@ static ssize_t master_read(struct device *device, off_t offset, void *buf, size_
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Resetting master flags: [ %d ]\n", data->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-            device->inode->writeable = true;
-            device->inode->readable = false;
+            device->writeable = true;
+            device->readable = false;
         }
     }
 
@@ -565,7 +562,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
 #endif /* PTMX_BLOCKING_DEBUG */
 
             // The slave is readable now that we wrote to it.
-            sdata->device->inode->readable = true;
+            sdata->device->readable = true;
 
             spin_unlock(&sdata->lock);
             continue;
@@ -598,7 +595,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
 #endif /* PTMX_BLOCKING_DEBUG */
 
             // The slave is readable now that we wrote to it.
-            sdata->device->inode->readable = true;
+            sdata->device->readable = true;
 
             spin_unlock(&sdata->lock);
             continue;
@@ -625,7 +622,7 @@ static void master_add(struct device *device) {
         }
     }
 
-    device->inode->readable = false;
+    device->readable = false;
 
     device->private = data;
     data->device = device;

@@ -11,6 +11,7 @@ struct phys_vm_object_data {
 };
 
 int inode_on_kill(void *inode);
+int device_on_kill(void *device);
 
 struct vm_object *vm_create_phys_object(uintptr_t phys_end, size_t size, int (*on_kill)(void *closure), void *closure);
 

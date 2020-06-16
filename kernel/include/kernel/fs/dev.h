@@ -13,6 +13,7 @@
 #include <kernel/util/spinlock.h>
 
 struct device;
+struct vm_object;
 
 struct device_ops {
     struct file *(*open)(struct device *device, int flags, int *error);
@@ -31,8 +32,11 @@ struct device {
     dev_t device_number;
     mode_t type;
     bool cannot_open;
+    bool readable;
+    bool writeable;
+    bool exceptional;
     struct device_ops *ops;
-    struct inode *inode;
+    struct vm_object *vm_object;
     spinlock_t lock;
     void *private;
 };

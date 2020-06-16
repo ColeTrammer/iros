@@ -56,14 +56,14 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
         return -ENODEV;
     }
 
-    if (!device->inode->vm_object) {
-        device->inode->vm_object = vm_create_phys_object(get_phys_addr((uintptr_t) vga_buffer), PAGE_SIZE, inode_on_kill, device->inode);
+    if (!device->vm_object) {
+        device->vm_object = vm_create_phys_object(get_phys_addr((uintptr_t) vga_buffer), PAGE_SIZE, device_on_kill, device);
     } else {
-        bump_vm_object(device->inode->vm_object);
+        bump_vm_object(device->vm_object);
     }
 
     struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
-    region->vm_object = device->inode->vm_object;
+    region->vm_object = device->vm_object;
     region->vm_object_offset = 0;
     region->flags |= VM_SHARED;
 

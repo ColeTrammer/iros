@@ -417,11 +417,10 @@ static void ata_handle_irq(struct ata_device_data *data) {
 }
 
 static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {
-    struct device *device = malloc(sizeof(struct device));
+    struct device *device = calloc(1, sizeof(struct device));
     device->device_number = 0x00500 + i;
     device->ops = &ata_ops;
     device->type = S_IFBLK;
-    device->inode = NULL;
     init_spinlock(&device->lock);
 
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));

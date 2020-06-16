@@ -50,7 +50,7 @@ static ssize_t kbd_read(struct device *device, off_t offset, void *buffer, size_
             start = save;
 
             if (start == NULL) {
-                device->inode->readable = false;
+                device->readable = false;
             }
 
             spin_unlock(&queue_lock);
@@ -60,12 +60,7 @@ static ssize_t kbd_read(struct device *device, off_t offset, void *buffer, size_
     return (ssize_t) read;
 }
 
-static void kbd_add(struct device *device) {
-    device->inode->readable = false;
-    device->inode->writeable = false;
-}
-
-static struct device_ops kbd_ops = { NULL, kbd_read, NULL, NULL, kbd_add, NULL, NULL, NULL, NULL, NULL };
+static struct device_ops kbd_ops = { .read = kbd_read };
 
 static void add_keyboard_event(struct key_event *event) {
     struct keyboard_event_queue *e = malloc(sizeof(struct keyboard_event_queue));
@@ -82,9 +77,7 @@ static void add_keyboard_event(struct key_event *event) {
         end = e;
     }
 
-    if (device->inode) {
-        device->inode->readable = true;
-    }
+    device->readable = true;
     spin_unlock(&queue_lock);
 }
 

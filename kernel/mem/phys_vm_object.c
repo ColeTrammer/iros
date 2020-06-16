@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include <kernel/fs/dev.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/phys_vm_object.h>
@@ -49,5 +50,11 @@ int inode_on_kill(void *_inode) {
     struct inode *inode = _inode;
     drop_inode_reference(inode);
     inode->vm_object = NULL;
+    return 0;
+}
+
+int device_on_kill(void *_device) {
+    struct device *device = _device;
+    device->vm_object = NULL;
     return 0;
 }

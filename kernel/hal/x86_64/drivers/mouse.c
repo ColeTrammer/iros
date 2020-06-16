@@ -29,12 +29,7 @@ static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
 
 static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len);
 
-static void mouse_f_add(struct device *device) {
-    device->inode->readable = false;
-    device->inode->writeable = false;
-}
-
-static struct device_ops mouse_ops = { .read = mouse_f_read, .add = mouse_f_add };
+static struct device_ops mouse_ops = { .read = mouse_f_read };
 
 static struct mouse_data data = { false, 0, { 0 } };
 
@@ -69,10 +64,7 @@ static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, s
             free(start);
             start = save;
 
-            if (start == NULL) {
-                mouse.inode->readable = false;
-            }
-
+            mouse.readable = false;
             spin_unlock(&queue_lock);
         }
     }
@@ -95,10 +87,7 @@ static void add_mouse_event(struct mouse_event *event) {
         end = e;
     }
 
-    if (mouse.inode) {
-        mouse.inode->readable = true;
-    }
-
+    mouse.readable = true;
     spin_unlock(&queue_lock);
 }
 
