@@ -39,7 +39,7 @@ void init_drivers() {
     init_fdc();
     init_ata();
     init_pit();
-    init_serial_port_device(SERIAL_COM1_PORT);
+    init_serial_port_device(SERIAL_COM1_PORT, 0);
     init_virtual_devices();
     init_pci();
 

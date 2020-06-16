@@ -123,7 +123,7 @@ void TTY::handle_escape_sequence() {
     }
 
 #ifdef XTERM_TTY_DEBUG
-    FILE* s = fopen("/dev/serial", "w");
+    FILE* s = fopen("/dev/serial0", "w");
     fprintf(s, "%s %d\n", m_escape_buffer, args.size());
     for (int i = 0; i < args.size(); i++) {
         fprintf(s, "[%d]: [%d]\n", i, args[i]);
@@ -380,7 +380,7 @@ void TTY::on_char(char c) {
     }
 
 #ifdef XTERM_TTY_DEBUG
-    FILE* s = fopen("/dev/serial", "w");
+    FILE* s = fopen("/dev/serial0", "w");
     fprintf(s, "%c, (%d)\n", c, c);
     fclose(s);
 #endif /**/

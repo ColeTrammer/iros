@@ -35,7 +35,7 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_net();
 
     /* Mount hdd0 at / */
-    struct device *hdd0 = dev_get_device(0x430);
+    struct device *hdd0 = dev_get_device(0x00500);
     assert(hdd0);
     int error = 0;
     error = fs_mount(hdd0, "/", "ext2");

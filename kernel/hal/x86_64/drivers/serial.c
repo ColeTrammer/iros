@@ -71,12 +71,12 @@ static ssize_t serial_write(struct device *device, off_t offset, const void *buf
 
 struct device_ops serial_ops = { NULL, NULL, &serial_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-void init_serial_port_device(dev_t dev) {
+void init_serial_port_device(dev_t port, size_t i) {
     /* Could be anything */
-    assert(dev == SERIAL_COM1_PORT);
+    assert(port == SERIAL_COM1_PORT);
 
     struct device *device = calloc(1, sizeof(struct device));
-    device->device_number = dev;
+    device->device_number = 0x00800 + i;
     device->ops = &serial_ops;
     device->type = S_IFCHR;
     device->private = NULL;

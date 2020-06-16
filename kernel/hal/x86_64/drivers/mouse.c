@@ -38,7 +38,9 @@ static struct device_ops mouse_ops = { .read = mouse_f_read, .add = mouse_f_add 
 
 static struct mouse_data data = { false, 0, { 0 } };
 
-static struct device mouse = { .device_number = 0x500, .type = S_IFCHR, .ops = &mouse_ops, .private = &data, .lock = SPINLOCK_INITIALIZER };
+static struct device mouse = {
+    .device_number = 0x00702, .type = S_IFCHR, .ops = &mouse_ops, .private = &data, .lock = SPINLOCK_INITIALIZER
+};
 
 static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len) {
     (void) device;

@@ -567,7 +567,7 @@ void init_keyboard() {
     }
 
     device = calloc(1, sizeof(struct device));
-    device->device_number = 0x20;
+    device->device_number = 0x00701;
     device->ops = &kbd_ops;
     device->private = NULL;
     device->type = S_IFCHR;

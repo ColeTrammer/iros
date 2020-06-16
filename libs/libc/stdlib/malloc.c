@@ -65,7 +65,7 @@ int __do_logging;
             __do_logging++;                                        \
         } else if (__do_logging == 4) {                            \
             __do_logging = 1;                                      \
-            __serial_out = fopen("/dev/serial", "w");              \
+            __serial_out = fopen("/dev/serial0", "w");             \
             __do_logging = 5;                                      \
         }                                                          \
         if (__do_logging == 5) {                                   \

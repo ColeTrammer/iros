@@ -29,12 +29,16 @@ ln -s grep mnt/bin/fgrep
 ln -s grep mnt/bin/rgrep
 
 mkdir mnt/dev
-mknod mnt/dev/serial c 0x003 0xF8
-mknod mnt/dev/fb0 c 0x012 0x34 -m 777
-mknod mnt/dev/ptmx c 0x075 0x00 -m 777
-mknod mnt/dev/hdd0 b 0x004 0x30
-mknod mnt/dev/keyboard c 0x000 0x20 -m 777
-mknod mnt/dev/mouse c 0x005 0x00 -m 777
+mknod mnt/dev/null c 1 1 -m 666
+mknod mnt/dev/zero c 1 2 -m 666
+mknod mnt/dev/full c 1 3 -m 666
+mknod mnt/dev/ptmx c 2 1 -m 666
+mknod mnt/dev/tty c 2 2 -m 666
+mknod mnt/dev/hdd0 b 5 0 -m 666
+mknod mnt/dev/fb0 c 6 0 -m 666
+mknod mnt/dev/keyboard c 7 1 -m 444
+mknod mnt/dev/mouse c 7 2 -m 444
+mknod mnt/dev/serial0 c 8 0 -m 222
 
 ln -s /proc/self/fd mnt/dev/fd
 ln -s /proc/self/fd/0 mnt/dev/stdin
