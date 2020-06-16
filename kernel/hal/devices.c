@@ -60,11 +60,11 @@ static struct device dev_null = { .device_number = 0x00101, .type = S_IFCHR, .op
 
 static struct device_ops dev_zero_ops = { .read = &dev_zero_read, .write = &dev_ignore_write };
 
-static struct device dev_zero = { .device_number = 0x10002, .type = S_IFCHR, .ops = &dev_zero_ops, .lock = SPINLOCK_INITIALIZER };
+static struct device dev_zero = { .device_number = 0x00102, .type = S_IFCHR, .ops = &dev_zero_ops, .lock = SPINLOCK_INITIALIZER };
 
 static struct device_ops dev_full_ops = { .read = &full_read, .write = &full_write };
 
-static struct device dev_full = { .device_number = 0x10003, .type = S_IFCHR, .ops = &dev_full_ops, .lock = SPINLOCK_INITIALIZER };
+static struct device dev_full = { .device_number = 0x00103, .type = S_IFCHR, .ops = &dev_full_ops, .lock = SPINLOCK_INITIALIZER };
 
 void init_virtual_devices() {
     dev_register(&dev_null);
