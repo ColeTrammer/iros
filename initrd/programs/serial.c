@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    FILE *serial = fopen("/dev/serial", "w");
+    FILE *serial = fopen("/dev/serial0", "w");
     if (serial == NULL) {
         perror("serial");
     }

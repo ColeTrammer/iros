@@ -58,7 +58,7 @@
 #define SERIAL_IMPENDING_ERROR          (1 << 7)
 
 void init_serial_ports();
-void init_serial_port_device(dev_t dev);
+void init_serial_port_device(dev_t port, size_t i);
 
 bool serial_write_message(const char *s, size_t n);
 

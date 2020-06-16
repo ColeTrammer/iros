@@ -690,13 +690,13 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
             slaves[i] = calloc(1, sizeof(struct device));
             spin_unlock(&lock);
 
-            slaves[i]->device_number = 0x5000 + i;
+            slaves[i]->device_number = 0x00300 + i;
             slaves[i]->ops = &slave_ops;
             slaves[i]->type = S_IFCHR;
             slaves[i]->private = NULL;
 
             struct device *master = calloc(1, sizeof(struct device));
-            master->device_number = 0x10000 + i;
+            master->device_number = 0x00400 + i;
             master->ops = &master_ops;
             master->type = S_IFCHR;
             master->private = NULL;
@@ -763,7 +763,7 @@ struct device_ops tty_ops = { tty_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 
 void init_ptmx() {
     struct device *ptmx_device = calloc(1, sizeof(struct device));
-    ptmx_device->device_number = 0x7500;
+    ptmx_device->device_number = 0x00201;
     ptmx_device->ops = &ptmx_ops;
     ptmx_device->private = NULL;
     ptmx_device->type = S_IFCHR;
@@ -771,7 +771,7 @@ void init_ptmx() {
     dev_register(ptmx_device);
 
     struct device *tty_device = calloc(1, sizeof(struct device));
-    tty_device->device_number = 0x2000;
+    tty_device->device_number = 0x00202;
     tty_device->ops = &tty_ops;
     tty_device->private = NULL;
     tty_device->type = S_IFCHR;
