@@ -35,18 +35,28 @@ static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
 static struct super_block_operations s_op = { &tmp_rename };
 
-static struct inode_operations tmp_i_op = { NULL,       &tmp_lookup,   &tmp_open,   NULL,
-                                            NULL,       NULL,          &tmp_unlink, NULL,
-                                            &tmp_chmod, &tmp_chown,    &tmp_mmap,   NULL,
-                                            NULL,       &tmp_read_all, &tmp_utimes, &tmp_on_inode_destruction,
-                                            NULL };
+static struct inode_operations tmp_i_op = { .lookup = &tmp_lookup,
+                                            .open = &tmp_open,
+                                            .unlink = &tmp_unlink,
+                                            .chmod = &tmp_chmod,
+                                            .chown = &tmp_chown,
+                                            .mmap = &tmp_mmap,
+                                            .read_all = &tmp_read_all,
+                                            .utimes = &tmp_utimes,
+                                            .on_inode_destruction = &tmp_on_inode_destruction };
 
-static struct inode_operations tmp_dir_i_op = { &tmp_create, &tmp_lookup, &tmp_open, NULL, NULL, &tmp_mkdir,  NULL, &tmp_rmdir, &tmp_chmod,
-                                                &tmp_chown,  NULL,        NULL,      NULL, NULL, &tmp_utimes, NULL, NULL };
+static struct inode_operations tmp_dir_i_op = { .create = &tmp_create,
+                                                .lookup = &tmp_lookup,
+                                                .open = &tmp_open,
+                                                .mkdir = &tmp_mkdir,
+                                                .rmdir = &tmp_rmdir,
+                                                .chmod = &tmp_chmod,
+                                                .chown = &tmp_chown,
+                                                .utimes = &tmp_utimes };
 
-static struct file_operations tmp_f_op = { NULL, &tmp_read, &tmp_write, NULL };
+static struct file_operations tmp_f_op = { .read = &tmp_read, .write = &tmp_write };
 
-static struct file_operations tmp_dir_f_op = { NULL, NULL, NULL, NULL };
+static struct file_operations tmp_dir_f_op = { 0 };
 
 static ino_t get_next_tmp_index() {
     spin_lock(&inode_count_lock);

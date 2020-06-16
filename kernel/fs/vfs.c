@@ -848,10 +848,6 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
         inode->i_op->lookup(inode, NULL);
     }
 
-    if (inode->flags & FS_DEVICE) {
-        stat_struct->st_rdev = inode->device ? inode->device->device_number : 0;
-    }
-
     if (inode->i_op->stat) {
         int ret = inode->i_op->stat(inode, stat_struct);
         if (ret < 0) {
@@ -860,6 +856,7 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
     }
 
     stat_struct->st_dev = inode->fsid;
+    stat_struct->st_rdev = inode->device_id;
     stat_struct->st_ino = inode->index;
     stat_struct->st_mode = inode->mode;
     stat_struct->st_uid = inode->uid;
@@ -978,10 +975,10 @@ int fs_mkdir(const char *_path, mode_t mode) {
         }
     }
 
-    if (tparent->inode->flags & FS_FILE) {
+    if (!(tparent->inode->flags & FS_DIR)) {
         drop_tnode(tparent);
         free(path);
-        return -EINVAL;
+        return -ENOTDIR;
     }
 
     struct mount *mount = tparent->inode->mounts;
@@ -1012,6 +1009,102 @@ int fs_mkdir(const char *_path, mode_t mode) {
 
     int error = 0;
     struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode | S_IFDIR, &error);
+    if (inode == NULL) {
+        drop_tnode(tparent);
+        free(path);
+        return error;
+    }
+
+    fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
+
+    drop_tnode(tparent);
+    free(path);
+    return 0;
+}
+
+int fs_mknod(const char *_path, mode_t mode, dev_t device) {
+    if (S_ISREG(mode) || ((mode & 0xFF0000) == 0)) {
+        int error = 0;
+        fs_create(_path, mode, &error);
+        return error;
+    }
+    if (S_ISDIR(mode)) {
+        return fs_mkdir(_path, mode);
+    }
+    if (S_ISFIFO(mode)) {
+        // FIXME: mkfifo
+        return -EOPNOTSUPP;
+    }
+    if (S_ISLNK(mode)) {
+        return -EINVAL;
+    }
+    if (S_ISSOCK(mode)) {
+        // FIXME: make unix domain socket
+        return -EOPNOTSUPP;
+    }
+
+    mode &= ~get_current_task()->process->umask;
+
+    size_t length = strlen(_path);
+    char *path = malloc(length + 1);
+    memcpy(path, _path, length);
+    path[length] = '\0';
+
+    char *last_slash;
+    do {
+        last_slash = strrchr(path, '/');
+    } while (last_slash && (last_slash == path + length - 1) && (*last_slash = '\0', length--, 1));
+    struct tnode *tparent;
+
+    int ret = 0;
+    if (last_slash == path) {
+        tparent = bump_tnode(fs_root());
+    } else if (last_slash == NULL) {
+        tparent = bump_tnode(get_current_task()->process->cwd);
+        last_slash = path - 1;
+    } else {
+        *last_slash = '\0';
+        ret = iname(path, 0, &tparent);
+        if (ret < 0) {
+            free(path);
+            return ret;
+        }
+    }
+
+    if (!(tparent->inode->flags & FS_DIR)) {
+        drop_tnode(tparent);
+        free(path);
+        return -ENOTDIR;
+    }
+
+    struct mount *mount = tparent->inode->mounts;
+    while (mount != NULL) {
+        if (strcmp(mount->name, last_slash + 1) == 0) {
+            free(path);
+            drop_tnode(tparent);
+            return -EEXIST;
+        }
+
+        mount = mount->next;
+    }
+
+    tparent->inode->i_op->lookup(tparent->inode, NULL);
+    if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
+        free(path);
+        drop_tnode(tparent);
+        return -EEXIST;
+    }
+
+    if (!tparent->inode->i_op->mknod) {
+        free(path);
+        drop_tnode(tparent);
+        return -EINVAL;
+    }
+
+    debug_log("Adding device to: [ %s, %#.5lX ]\n", tparent->name, device);
+
+    int error = 0;
+    struct inode *inode = tparent->inode->i_op->mknod(tparent, last_slash + 1, mode, device, &error);
     if (inode == NULL) {
         drop_tnode(tparent);
         free(path);
@@ -1965,6 +2058,7 @@ int fs_bind_device_to_inode(struct inode *inode, dev_t device_number) {
 
     // Right now, every device number corresponds to a single device
     inode->device = device;
+    inode->device_id = device_number;
     device->inode = inode;
 
     if (device->ops->add) {

@@ -49,7 +49,6 @@ struct file *dev_open(struct inode *inode, int flags, int *error);
 int dev_close(struct file *file);
 ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len);
 ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t len);
-int dev_stat(struct inode *inode, struct stat *stat_struct);
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 int dev_read_all(struct inode *inode, void *buf);

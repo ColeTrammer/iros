@@ -178,6 +178,7 @@ ssize_t ext2_iread(struct inode *inode, void *buffer, size_t len, off_t offset);
 ssize_t ext2_write(struct file *file, off_t offset, const void *buffer, size_t len);
 int ext2_stat(struct inode *inode, struct stat *stat_struct);
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error);
+struct inode *ext2_mknod(struct tnode *tparent, const char *name, mode_t mode, dev_t device, int *error);
 int ext2_unlink(struct tnode *tnode);
 int ext2_rmdir(struct tnode *tnode);
 struct inode *ext2_mount(struct file_system *fs, struct device *device);

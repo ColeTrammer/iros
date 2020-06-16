@@ -58,15 +58,13 @@ static struct inode *root;
 
 static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
 
-static struct inode_operations procfs_i_op = { NULL, &procfs_lookup, &procfs_open,     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL,           &procfs_read_all, NULL, NULL, NULL };
+static struct inode_operations procfs_i_op = { .lookup = &procfs_lookup, .open = &procfs_open, .read_all = &procfs_read_all };
 
-static struct inode_operations procfs_dir_i_op = { NULL, &procfs_lookup, &procfs_open, NULL, NULL, NULL, NULL, NULL, NULL,
-                                                   NULL, NULL,           NULL,         NULL, NULL, NULL, NULL, NULL };
+static struct inode_operations procfs_dir_i_op = { .lookup = &procfs_lookup, .open = &procfs_open };
 
-static struct file_operations procfs_f_op = { NULL, &procfs_read, NULL, NULL };
+static struct file_operations procfs_f_op = { .read = &procfs_read };
 
-static struct file_operations procfs_dir_f_op = { NULL, NULL, NULL, NULL };
+static struct file_operations procfs_dir_f_op = { 0 };
 
 static struct inode *procfs_create_inode(mode_t mode, uid_t uid, gid_t gid, struct process *process, void *function) {
     struct inode *inode = calloc(1, sizeof(struct inode) + sizeof(struct procfs_data));
