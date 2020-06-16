@@ -1023,7 +1023,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
 }
 
 int fs_mknod(const char *_path, mode_t mode, dev_t device) {
-    if (S_ISREG(mode) || ((mode & 0xFF0000) == 0)) {
+    if (S_ISREG(mode) || ((mode & 0770000) == 0)) {
         int error = 0;
         fs_create(_path, mode, &error);
         return error;
@@ -2050,6 +2050,8 @@ int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id) {
 // NOTE: this function should be called by file systems that support devices (ext2), to
 //       direct all future interaction with the file to a device.
 int fs_bind_device_to_inode(struct inode *inode, dev_t device_number) {
+    inode->device_id = device_number;
+
     struct device *device = dev_get_device(device_number);
     if (!device) {
         debug_log("Failed to find device with id: [ %lu ]\n", device_number);
@@ -2058,7 +2060,6 @@ int fs_bind_device_to_inode(struct inode *inode, dev_t device_number) {
 
     // Right now, every device number corresponds to a single device
     inode->device = device;
-    inode->device_id = device_number;
     device->inode = inode;
 
     if (device->ops->add) {
