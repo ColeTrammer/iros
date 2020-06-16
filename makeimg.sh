@@ -36,6 +36,11 @@ mknod mnt/dev/hdd0 b 0x004 0x30
 mknod mnt/dev/keyboard c 0x000 0x20 -m 777
 mknod mnt/dev/mouse c 0x005 0x00 -m 777
 
+ln -s /proc/self/fd mnt/dev/fd
+ln -s /proc/self/fd/0 mnt/dev/stdin
+ln -s /proc/self/fd/1 mnt/dev/stdout
+ln -s /proc/self/fd/2 mnt/dev/stderr
+
 umount /dev/loop100
 losetup -d /dev/loop100
 
