@@ -70,6 +70,9 @@ void Terminal::switch_to() {
 }
 
 void Terminal::reset() {
+    if (m_mfd != -1) {
+        close(m_mfd);
+    }
     m_buffer = nullptr;
     m_save_state = nullptr;
     m_tty = nullptr;

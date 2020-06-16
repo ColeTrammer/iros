@@ -963,7 +963,7 @@ SYS_CALL(unlink) {
 
     SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
 
-    SYS_RETURN(fs_unlink(path));
+    SYS_RETURN(fs_unlink(path, false));
 }
 
 SYS_CALL(rmdir) {

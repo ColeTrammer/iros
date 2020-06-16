@@ -268,7 +268,7 @@ static void slave_remove(struct device *device) {
 
     free(data->input_buffer);
 
-    debug_log("Removing slave tty 1: [ %d ]\n", data->index);
+    debug_log("Removing slave tty: [ %d ]\n", data->index);
 
     while (data->messages) {
         struct tty_buffer_message *m = data->messages->next == data->messages ? NULL : data->messages->next;
@@ -278,9 +278,12 @@ static void slave_remove(struct device *device) {
         data->messages = m;
     }
 
-    debug_log("Removing slave tty 2: [ %d ]\n", data->index);
-
+    int index = data->index;
     free(data);
+
+    char path[32];
+    snprintf(path, sizeof(path) - 1, "/dev/tty%d", index);
+    assert(fs_unlink(path, true) == 0);
 }
 
 static int slave_ioctl(struct device *device, unsigned long request, void *argp) {
@@ -649,7 +652,12 @@ static void master_remove(struct device *device) {
         data->messages = m;
     }
 
+    int index = data->index;
     free(data);
+
+    char path[32];
+    snprintf(path, sizeof(path) - 1, "/dev/mtty%d", index);
+    assert(fs_unlink(path, true) == 0);
 }
 
 static int master_ioctl(struct device *device, unsigned long request, void *argp) {
@@ -666,7 +674,12 @@ static int master_ioctl(struct device *device, unsigned long request, void *argp
 static struct device_ops master_ops = { NULL,          master_read,  master_write,   master_close, master_add,
                                         master_remove, master_ioctl, master_on_open, NULL,         NULL };
 
-static struct inode_operations empty_ops = { 0 };
+static int noop_unlink(struct tnode *tnode) {
+    (void) tnode;
+    return 0;
+}
+
+static struct inode_operations empty_ops = { .unlink = noop_unlink };
 
 static struct file *ptmx_open(struct device *device, int flags, int *error) {
     (void) device;
