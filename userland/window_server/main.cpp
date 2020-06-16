@@ -7,12 +7,15 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "server.h"
 #include "window.h"
 
 int main() {
+    umask(0);
+
     int fb = open("/dev/fb0", O_RDWR);
     if (fb == -1) {
         perror("open");

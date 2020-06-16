@@ -3,6 +3,7 @@
 #include <liim/string.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -20,10 +21,13 @@ int main() {
     strcpy(addr.sun_path, "/tmp/.clipboard_server.socket");
 
     unlink(addr.sun_path);
+
+    mode_t mask = umask(0);
     if (bind(fd, (const struct sockaddr*) &addr, sizeof(struct sockaddr_un)) == -1) {
         perror("bind");
         return 1;
     }
+    umask(mask);
 
     if (listen(fd, 5) == -1) {
         perror("listen");
