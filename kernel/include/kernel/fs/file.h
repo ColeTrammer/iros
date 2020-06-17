@@ -14,7 +14,6 @@ struct file_operations {
     int (*close)(struct file *file);
     ssize_t (*read)(struct file *file, off_t offset, void *buffer, size_t len);
     ssize_t (*write)(struct file *file, off_t offset, const void *buffer, size_t len);
-    void (*clone)(struct file *file);
 };
 
 struct file {

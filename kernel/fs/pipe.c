@@ -22,7 +22,7 @@ static ino_t pipe_index = 1;
 
 static struct inode_operations pipe_i_op = { .open = &pipe_open, .on_inode_destruction = &pipe_on_inode_destruction };
 
-static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write, .clone = &pipe_clone };
+static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write };
 
 bool is_pipe_write_end_open(struct inode *inode) {
     struct pipe_data *data = inode->private_data;
@@ -48,13 +48,11 @@ struct inode *pipe_new_inode() {
 }
 
 struct file *pipe_open(struct inode *inode, int flags, int *error) {
-    assert(!(flags & O_RDWR));
-
     struct file *file = fs_create_file(inode, FS_FIFO, FS_FILE_CANT_SEEK, flags, &pipe_f_op, NULL);
 
     struct pipe_data *data = inode->private_data;
     spin_lock(&inode->lock);
-    if (flags & O_WRONLY) {
+    if (file->abilities & FS_FILE_CAN_WRITE) {
         data->write_count++;
     }
     spin_unlock(&inode->lock);
@@ -154,17 +152,6 @@ void pipe_on_inode_destruction(struct inode *inode) {
     if (data) {
         free(data->buffer);
         free(data);
-    }
-}
-
-void pipe_clone(struct file *file) {
-    if (file->abilities & FS_FILE_CAN_WRITE) {
-        struct inode *inode = fs_file_inode(file);
-        struct pipe_data *data = inode->private_data;
-
-        spin_lock(&inode->lock);
-        data->write_count++;
-        spin_unlock(&inode->lock);
     }
 }
 

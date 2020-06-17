@@ -1740,30 +1740,6 @@ int fs_mount(struct device *device, const char *path, const char *type) {
     return -1;
 }
 
-struct file_descriptor fs_clone(struct file_descriptor desc) {
-    if (desc.file == NULL) {
-        return (struct file_descriptor) { NULL, 0 };
-    }
-
-    struct file *new_file = malloc(sizeof(struct file));
-    memcpy(new_file, desc.file, sizeof(struct file));
-    if (new_file->tnode) {
-        bump_tnode(new_file->tnode);
-    }
-
-    if (new_file->f_op->clone) {
-        new_file->f_op->clone(new_file);
-    }
-
-    struct inode *inode = fs_file_inode(desc.file);
-    assert(inode);
-
-    bump_inode_reference(inode);
-
-    // NOTE: the new file should't have the same fdflags
-    return (struct file_descriptor) { new_file, 0 };
-}
-
 bool fs_can_read_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
     if (uid == 0) {
         return true;
@@ -2132,7 +2108,6 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc) {
     int fetched_ref_count = atomic_fetch_add(&desc.file->ref_count, 1);
     assert(fetched_ref_count > 0);
 
-    // NOTE: the new descriptor reset the FD_CLOEXEC flag
     return (struct file_descriptor) { desc.file, desc.fd_flags };
 }
 

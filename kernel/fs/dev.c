@@ -49,7 +49,7 @@ struct device *dev_get_device(dev_t device_number) {
     return hash_get(device_map, &device_number);
 }
 
-static struct file_operations dev_f_op = { &dev_close, &dev_read, &dev_write, NULL };
+static struct file_operations dev_f_op = { .close = &dev_close, .read = &dev_read, .write = &dev_write };
 
 struct inode *dev_lookup(struct inode *inode, const char *name) {
     if (!inode || !name) {

@@ -32,7 +32,7 @@ static int socket_file_close(struct file *file);
 static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len);
 static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len);
 
-static struct file_operations socket_file_ops = { socket_file_close, net_read, net_write, NULL };
+static struct file_operations socket_file_ops = { .close = socket_file_close, .read = net_read, .write = net_write };
 
 static struct hash_map *map;
 
