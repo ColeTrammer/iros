@@ -171,6 +171,40 @@ struct file *fs_create_file(struct inode *inode, int type, int abilities, int fl
     return file;
 }
 
+struct inode *fs_create_inode(struct super_block *sb, ino_t id, uid_t uid, gid_t gid, mode_t mode, size_t size,
+                              struct inode_operations *ops, void *private) {
+    struct inode *inode = fs_create_inode_without_sb(sb->fsid, id, uid, gid, mode, size, ops, private);
+    inode->super_block = sb;
+    inode->writeable = !(sb->flags & ST_RDONLY);
+    return inode;
+}
+
+struct inode *fs_create_inode_without_sb(dev_t fsid, ino_t id, uid_t uid, gid_t gid, mode_t mode, size_t size, struct inode_operations *ops,
+                                         void *private) {
+    struct inode *inode = calloc(1, sizeof(struct inode));
+    assert(inode);
+
+    inode->access_time = inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
+    inode->flags = fs_mode_to_flags(mode);
+    inode->fsid = fsid;
+    inode->gid = gid;
+    inode->i_op = ops;
+    inode->index = id;
+    init_spinlock(&inode->lock);
+    inode->mode = mode;
+    inode->private_data = private;
+    inode->readable = !!size;
+    inode->ref_count = 1;
+    inode->size = size;
+    inode->uid = uid;
+    inode->writeable = true;
+
+    if (inode->flags & FS_DIR) {
+        inode->dirent_cache = fs_create_dirent_cache();
+    }
+    return inode;
+}
+
 static struct tnode *t_root;
 
 struct tnode *fs_root(void) {

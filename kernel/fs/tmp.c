@@ -72,31 +72,17 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
 
     debug_log("Tmp create: [ %s ]\n", name);
 
-    struct inode *inode = calloc(1, sizeof(struct inode));
+    struct tmp_data *data = calloc(1, sizeof(struct tmp_data));
+    data->owner = get_current_task()->process->pid;
+
+    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->uid,
+                                          get_current_task()->process->gid, mode, 0, &tmp_i_op, data);
     if (inode == NULL) {
         *error = ENOMEM;
         return NULL;
     }
 
-    struct tmp_data *data = calloc(1, sizeof(struct tmp_data));
-    data->owner = get_current_task()->process->pid;
-
-    inode->i_op = &tmp_i_op;
-    inode->index = get_next_tmp_index();
-    init_spinlock(&inode->lock);
-    inode->mode = mode;
-    inode->uid = get_current_task()->process->uid;
-    inode->gid = get_current_task()->process->gid;
-    inode->mounts = NULL;
-    inode->fsid = tparent->inode->fsid;
-    inode->private_data = data;
-    inode->ref_count = 1;
-    inode->super_block = tparent->inode->super_block;
-    inode->flags = S_ISREG(mode) ? FS_FILE : S_ISSOCK(mode) ? FS_SOCKET : 0;
-    inode->writeable = true;
-    inode->readable = true;
-    inode->access_time = inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
-
+    tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
     return inode;
 }
 
@@ -179,21 +165,9 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
 struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
     assert(name);
 
-    struct inode *inode = calloc(1, sizeof(struct inode));
-    inode->i_op = &tmp_dir_i_op;
-    inode->index = get_next_tmp_index();
-    init_spinlock(&inode->lock);
-    inode->mode = mode;
-    inode->uid = get_current_task()->process->uid;
-    inode->gid = get_current_task()->process->gid;
-    inode->ref_count = 1;
-    inode->super_block = tparent->inode->super_block;
-    inode->flags = FS_DIR;
-    inode->fsid = tparent->inode->fsid;
-    inode->writeable = true;
-    inode->readable = true;
-    tparent->inode->modify_time = inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
-    inode->dirent_cache = fs_create_dirent_cache();
+    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->uid,
+                                          get_current_task()->process->gid, mode, 0, &tmp_dir_i_op, NULL);
+    tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
     *error = 0;
     return inode;
@@ -297,28 +271,9 @@ struct inode *tmp_mount(struct file_system *current_fs, struct device *device) {
     sb->private_data = NULL;
     init_spinlock(&sb->super_block_lock);
 
-    struct inode *root = calloc(1, sizeof(struct inode));
-
-    root->fsid = sb->fsid;
-    root->flags = FS_DIR;
-    root->i_op = &tmp_dir_i_op;
-    spin_lock(&inode_count_lock);
-    root->index = inode_counter++;
-    spin_unlock(&inode_count_lock);
-    init_spinlock(&root->lock);
-    root->mode = S_IFDIR | 0777;
-    root->mounts = NULL;
-    root->private_data = NULL;
-    root->size = 0;
-    root->super_block = sb;
-    root->ref_count++;
-    root->readable = true;
-    root->writeable = true;
-    root->access_time = root->change_time = root->modify_time = time_read_clock(CLOCK_REALTIME);
-    root->dirent_cache = fs_create_dirent_cache();
+    struct inode *root = fs_create_inode(sb, get_next_tmp_index(), 0, 0, S_IFDIR | 0777, 0, &tmp_dir_i_op, NULL);
 
     sb->root = root;
-
     current_fs->super_block = sb;
 
     return root;

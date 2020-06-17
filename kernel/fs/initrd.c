@@ -108,44 +108,19 @@ struct inode *initrd_mount(struct file_system *current_fs, struct device *device
     num_files = *((int64_t *) initrd_start);
     file_list = (struct initrd_file_entry *) (initrd_start + sizeof(int64_t));
 
-    struct inode *root = calloc(1, sizeof(struct inode));
-    root->index = inode_count++;
-    root->size = initrd->end - initrd->start;
-    root->super_block = &super_block;
-    root->flags = FS_DIR;
-    root->fsid = 1;
-    root->i_op = &initrd_dir_i_op;
-    root->mode = S_IFDIR | 0777;
-    root->ref_count = 1;
-    root->readable = true;
-    root->writeable = false;
-    root->access_time = root->modify_time = root->change_time = time_read_clock(CLOCK_REALTIME);
-    root->dirent_cache = fs_create_dirent_cache();
-    init_spinlock(&root->lock);
-
-    current_fs->super_block = &super_block;
-    super_block.root = root;
-    super_block.fsid = root->fsid;
+    super_block.fsid = 1;
     super_block.block_size = PAGE_SIZE;
     super_block.flags = ST_RDONLY;
 
+    struct inode *root =
+        fs_create_inode(&super_block, inode_count++, 0, 0, S_IFDIR | 0777, initrd->end - initrd->start, &initrd_dir_i_op, NULL);
+
+    current_fs->super_block = &super_block;
+    super_block.root = root;
+
     struct initrd_file_entry *entry = file_list;
     for (size_t i = 0; i < num_files; i++) {
-        struct inode *inode = calloc(1, sizeof(struct inode));
-        inode->index = inode_count++;
-        inode->size = entry[i].length;
-        inode->super_block = &super_block;
-        inode->flags = FS_FILE;
-        inode->fsid = root->fsid;
-        inode->mode = S_IFREG | 0777;
-        inode->i_op = &initrd_i_op;
-        inode->ref_count = 1;
-        inode->private_data = entry + i;
-        inode->readable = true;
-        inode->writeable = true;
-        inode->access_time = inode->modify_time = inode->change_time = time_read_clock(CLOCK_REALTIME);
-        init_spinlock(&inode->lock);
-
+        struct inode *inode = fs_create_inode(&super_block, inode_count++, 0, 0, S_IFREG | 0777, entry[i].length, &initrd_i_op, entry + i);
         fs_put_dirent_cache(root->dirent_cache, inode, entry[i].name, strlen(entry[i].name));
     }
 

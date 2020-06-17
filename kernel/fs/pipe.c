@@ -30,32 +30,20 @@ bool is_pipe_write_end_open(struct inode *inode) {
 }
 
 struct inode *pipe_new_inode() {
-    struct inode *inode = calloc(1, sizeof(struct inode));
-    inode->fsid = PIPE_DEVICE;
-    inode->flags = FS_FIFO;
-    inode->i_op = &pipe_i_op;
     spin_lock(&pipe_index_lock);
-    inode->index = pipe_index++;
+    ino_t id = pipe_index++;
     spin_unlock(&pipe_index_lock);
-    init_spinlock(&inode->lock);
-    inode->mode = 0777 | S_IFIFO;
-    inode->mounts = NULL;
-    inode->writeable = true;
-    inode->readable = false;
-    inode->access_time = inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
-
-    debug_log("Creating pipe: [ %llu ]\n", inode->index);
 
     struct pipe_data *pipe_data = malloc(sizeof(struct pipe_data));
     pipe_data->buffer = malloc(PIPE_DEFAULT_BUFFER_SIZE);
     pipe_data->len = PIPE_DEFAULT_BUFFER_SIZE;
     pipe_data->write_count = 0;
-    inode->private_data = pipe_data;
 
-    inode->ref_count = 2;
-    inode->size = 0;
-    inode->super_block = NULL;
+    struct inode *inode = fs_create_inode_without_sb(PIPE_DEVICE, id, get_current_task()->process->uid, get_current_task()->process->gid,
+                                                     0777 | S_IFIFO, 0, &pipe_i_op, pipe_data);
+    bump_inode_reference(inode); // One more is needed since there is 2 ends of a pipe
 
+    debug_log("Created pipe: [ %llu ]\n", inode->index);
     return inode;
 }
 
