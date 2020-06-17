@@ -525,7 +525,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
             debug_log("Creating file: [ %s ]\n", file_name);
 
             ret = 0;
-            tnode = fs_create(file_name, mode | S_IFREG, &ret);
+            tnode = fs_create(file_name, (mode & 07777) | S_IFREG, &ret);
             if (ret < 0) {
                 *error = ret;
                 return NULL;
@@ -1071,7 +1071,7 @@ int fs_mkdir(const char *_path, mode_t mode) {
 }
 
 int fs_mknod(const char *_path, mode_t mode, dev_t device) {
-    if (S_ISREG(mode) || ((mode & 0770000) == 0)) {
+    if (S_ISREG(mode) || S_ISSOCK(mode) || ((mode & 0770000) == 0)) {
         int error = 0;
         fs_create(_path, mode, &error);
         return error;
@@ -1085,10 +1085,6 @@ int fs_mknod(const char *_path, mode_t mode, dev_t device) {
     }
     if (S_ISLNK(mode)) {
         return -EINVAL;
-    }
-    if (S_ISSOCK(mode)) {
-        // FIXME: make unix domain socket
-        return -EOPNOTSUPP;
     }
 
     mode &= ~get_current_task()->process->umask;
