@@ -10,6 +10,7 @@
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
 #include <kernel/net/inet_socket.h>
@@ -96,15 +97,9 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
 
     for (int i = 0; i < FOPEN_MAX; i++) {
         if (current->process->files[i].file == NULL) {
-            current->process->files[i].file = calloc(1, sizeof(struct file));
-            current->process->files[i].fd_flags = (type & SOCK_CLOEXEC) ? FD_CLOEXEC : 0;
-            current->process->files[i].file->flags = FS_SOCKET;
-            current->process->files[i].file->f_op = &socket_file_ops;
-            current->process->files[i].file->ref_count = 1;
-            current->process->files[i].file->abilities = FS_FILE_CAN_READ | FS_FILE_CAN_WRITE | FS_FILE_CANT_SEEK;
-
             struct socket_file_data *file_data = malloc(sizeof(struct socket_file_data));
-            current->process->files[i].file->private_data = file_data;
+            current->process->files[i].file = fs_create_file(NULL, FS_SOCKET, FS_FILE_CANT_SEEK, O_RDWR, &socket_file_ops, file_data);
+            current->process->files[i].fd_flags = (type & SOCK_CLOEXEC) ? FD_CLOEXEC : 0;
 
             spin_lock(&id_lock);
             file_data->socket_id = socket_id_next++;
