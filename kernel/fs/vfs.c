@@ -545,6 +545,12 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         return NULL;
     }
 
+    if (tnode->inode->flags & FS_SOCKET) {
+        drop_tnode(tnode);
+        *error = -ENXIO;
+        return NULL;
+    }
+
     if (!(tnode->inode->flags & FS_DIR) && (flags & O_DIRECTORY)) {
         drop_tnode(tnode);
         *error = -ENOTDIR;
