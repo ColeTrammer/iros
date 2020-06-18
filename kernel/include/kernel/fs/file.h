@@ -8,6 +8,7 @@
 #include <kernel/util/spinlock.h>
 
 struct file;
+struct inode;
 struct tnode;
 
 struct file_operations {

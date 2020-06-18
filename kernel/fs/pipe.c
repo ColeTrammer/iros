@@ -20,14 +20,12 @@
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
-static struct inode_operations pipe_i_op = { .open = &pipe_open,
-                                             .on_inode_destruction = &pipe_on_inode_destruction,
-                                             .all_files_closed = &pipe_all_files_closed };
+static struct inode_operations pipe_i_op = { .open = &pipe_open };
 
 static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write };
 
 bool is_pipe_write_end_open(struct inode *inode) {
-    struct pipe_data *data = inode->private_data;
+    struct pipe_data *data = inode->pipe_data;
     return data->write_count > 0;
 }
 
@@ -36,13 +34,8 @@ struct inode *pipe_new_inode() {
     ino_t id = pipe_index++;
     spin_unlock(&pipe_index_lock);
 
-    struct pipe_data *pipe_data = malloc(sizeof(struct pipe_data));
-    pipe_data->buffer = malloc(PIPE_DEFAULT_BUFFER_SIZE);
-    pipe_data->len = PIPE_DEFAULT_BUFFER_SIZE;
-    pipe_data->write_count = 0;
-
     struct inode *inode = fs_create_inode_without_sb(PIPE_DEVICE, id, get_current_task()->process->euid, get_current_task()->process->egid,
-                                                     0777 | S_IFIFO, 0, &pipe_i_op, pipe_data);
+                                                     0777 | S_IFIFO, 0, &pipe_i_op, NULL);
 
     debug_log("Created pipe: [ %llu ]\n", inode->index);
     return inode;
@@ -51,9 +44,16 @@ struct inode *pipe_new_inode() {
 struct file *pipe_open(struct inode *inode, int flags, int *error) {
     struct file *file = fs_create_file(inode, FS_FIFO, FS_FILE_CANT_SEEK, flags, &pipe_f_op, NULL);
 
-    struct pipe_data *data = inode->private_data;
+    struct pipe_data *data = inode->pipe_data;
     spin_lock(&inode->lock);
     if (file->abilities & FS_FILE_CAN_WRITE) {
+        if (!data) {
+            data = malloc(sizeof(struct pipe_data));
+            data->buffer = malloc(PIPE_DEFAULT_BUFFER_SIZE);
+            data->len = PIPE_DEFAULT_BUFFER_SIZE;
+            data->write_count = 0;
+            inode->pipe_data = data;
+        }
         data->write_count++;
     }
     spin_unlock(&inode->lock);
@@ -69,12 +69,12 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
-    struct pipe_data *data = inode->private_data;
+    struct pipe_data *data = inode->pipe_data;
     assert(data);
 
     size_t len = MIN(_len, inode->size - file->position);
     if (len == 0 && is_pipe_write_end_open(inode)) {
-        int ret = proc_block_until_pipe_is_readable(get_current_task(), inode);
+        int ret = proc_block_until_inode_is_readable(get_current_task(), inode);
         if (ret) {
             return ret;
         }
@@ -100,7 +100,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
     struct inode *inode = fs_file_inode(file);
     assert(inode);
     assert(file->position == (off_t) inode->size);
-    struct pipe_data *data = inode->private_data;
+    struct pipe_data *data = inode->pipe_data;
     assert(data);
 
     spin_lock(&inode->lock);
@@ -125,6 +125,18 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
     return len;
 }
 
+static void free_pipe_data(struct inode *inode) {
+    debug_log("Destroying pipe: [ %llu ]\n", inode->index);
+
+    struct pipe_data *data = inode->pipe_data;
+    inode->pipe_data = NULL;
+
+    if (data) {
+        free(data->buffer);
+        free(data);
+    }
+}
+
 int pipe_close(struct file *file) {
     struct inode *inode = fs_file_inode(file);
     // This means we already killed the inode and called on_inode_destruction
@@ -135,30 +147,24 @@ int pipe_close(struct file *file) {
         return 0;
     }
 
-    struct pipe_data *data = inode->private_data;
+    struct pipe_data *data = inode->pipe_data;
 
     spin_lock(&inode->lock);
     if (file->abilities & FS_FILE_CAN_WRITE) {
         data->write_count--;
     }
-
     spin_unlock(&inode->lock);
+
     return 0;
 }
 
-void pipe_on_inode_destruction(struct inode *inode) {
-    debug_log("Destroying pipe: [ %llu ]\n", inode->index);
-
-    struct pipe_data *data = inode->private_data;
-    if (data) {
-        free(data->buffer);
-        free(data);
-    }
-}
-
 void pipe_all_files_closed(struct inode *inode) {
-    // Drop our inode reference so that the pipe inode is automatically deleted.
-    drop_inode_reference(inode);
+    free_pipe_data(inode);
+
+    // Drop our inode reference so that the anonymous pipe inode is automatically deleted.
+    if (inode->fsid == PIPE_DEVICE) {
+        drop_inode_reference(inode);
+    }
 }
 
 void init_pipe() {}

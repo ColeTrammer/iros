@@ -647,8 +647,8 @@ int fs_close(struct file *file) {
 
         free(file);
 
-        if (all_files_closed && inode->i_op->all_files_closed) {
-            inode->i_op->all_files_closed(inode);
+        if (all_files_closed && (inode->flags & FS_FIFO)) {
+            pipe_all_files_closed(inode);
         }
 
         return error;

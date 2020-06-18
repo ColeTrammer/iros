@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <kernel/fs/file.h>
 #include <kernel/fs/mount.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/tnode.h>
@@ -14,10 +15,8 @@
 struct device;
 struct hash_map;
 struct inode;
+struct pipe_data;
 struct timeval;
-
-/* Has to be included here so that file.h sees struct inode & ino_t */
-#include <kernel/fs/file.h>
 
 struct inode_operations {
     struct inode *(*create)(struct tnode *tnode, const char *name, mode_t mode, int *error);
@@ -38,7 +37,6 @@ struct inode_operations {
     int (*utimes)(struct inode *inode, const struct timespec *times);
     void (*on_inode_destruction)(struct inode *inode);
     ssize_t (*read)(struct inode *inode, void *buffer, size_t size, off_t offset);
-    void (*all_files_closed)(struct inode *inode);
 };
 
 struct inode {
@@ -73,6 +71,9 @@ struct inode {
 
     // Null if the inode is not a device or the device does not exist
     struct device *device;
+
+    // Only present for FIFO inodes that are currently opened.
+    struct pipe_data *pipe_data;
 
     /* File system size */
     size_t size;
