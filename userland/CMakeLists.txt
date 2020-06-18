@@ -37,6 +37,7 @@ set(TARGETS
     logname
     ls
     mkdir
+    mkfifo
     mknod
     mv
     nslookup
