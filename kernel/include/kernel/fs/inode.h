@@ -38,6 +38,7 @@ struct inode_operations {
     int (*utimes)(struct inode *inode, const struct timespec *times);
     void (*on_inode_destruction)(struct inode *inode);
     ssize_t (*read)(struct inode *inode, void *buffer, size_t size, off_t offset);
+    void (*all_files_closed)(struct inode *inode);
 };
 
 struct inode {
@@ -90,6 +91,10 @@ struct inode {
     // Delete inode when count is 0 (only applies to pipes right now)
     // Should be atomic
     int ref_count;
+
+    // Count of the number of files open for this inode
+    // When zero, the vfs will call i_op::all_files_closed()
+    int open_file_count;
 
     // Dirent cache for path name resolution
     struct hash_map *dirent_cache;

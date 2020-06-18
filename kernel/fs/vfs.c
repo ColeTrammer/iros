@@ -42,7 +42,7 @@ struct inode *bump_inode_reference(struct inode *inode) {
     (void) fetched_ref_count;
 
 #ifdef INODE_REF_COUNT_DEBUG
-    debug_log("+Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, fetched_ref_count + 1);
+    debug_log("+Ref count: [ %lu, %llu, %d ]\n", inode->fsid, inode->index, fetched_ref_count + 1);
 #endif /* INODE_REF_COUNT_DEBUG */
 
     assert(fetched_ref_count > 0);
@@ -53,14 +53,14 @@ void drop_inode_reference(struct inode *inode) {
     int fetched_ref_count = atomic_fetch_sub(&inode->ref_count, 1);
 
 #ifdef INODE_REF_COUNT_DEBUG
-    debug_log("-Ref count: [ %lu, %llu, %d ]\n", inode->device, inode->index, fetched_ref_count - 1);
+    debug_log("-Ref count: [ %lu, %llu, %d ]\n", inode->fsid, inode->index, fetched_ref_count - 1);
 #endif /* INODE_REF_COUNT_DEBUG */
 
     // Only delete inode if it's refcount is zero
     assert(fetched_ref_count > 0);
     if (fetched_ref_count == 1) {
 #ifdef INODE_REF_COUNT_DEBUG
-        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->device, inode->index);
+        debug_log("Destroying inode: [ %lu, %llu ]\n", inode->fsid, inode->index);
 #endif /* INODE_REF_COUNT_DEBUG */
         if (inode->i_op->on_inode_destruction) {
             inode->i_op->on_inode_destruction(inode);
@@ -151,6 +151,7 @@ struct file *fs_create_file(struct inode *inode, int type, int abilities, int fl
 
     if (inode) {
         file->inode = bump_inode_reference(inode);
+        atomic_fetch_add(&file->inode->open_file_count, 1);
     }
 
     init_spinlock(&file->lock);
@@ -628,7 +629,10 @@ int fs_close(struct file *file) {
     int fetched_ref_count = atomic_fetch_sub(&file->ref_count, 1);
     assert(fetched_ref_count > 0);
     if (fetched_ref_count == 1) {
+        bool all_files_closed = false;
         if (inode) {
+            int old_open_file_count = atomic_fetch_sub(&inode->open_file_count, 1);
+            all_files_closed = old_open_file_count == 1;
             drop_inode_reference(inode);
         }
 
@@ -642,6 +646,11 @@ int fs_close(struct file *file) {
         }
 
         free(file);
+
+        if (all_files_closed && inode->i_op->all_files_closed) {
+            inode->i_op->all_files_closed(inode);
+        }
+
         return error;
     }
 

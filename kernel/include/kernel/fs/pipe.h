@@ -26,6 +26,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 int pipe_close(struct file *file);
 void pipe_clone(struct file *file);
 void pipe_on_inode_destruction(struct inode *inode);
+void pipe_all_files_closed(struct inode *inode);
 
 void init_pipe();
 

@@ -20,7 +20,9 @@
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
-static struct inode_operations pipe_i_op = { .open = &pipe_open, .on_inode_destruction = &pipe_on_inode_destruction };
+static struct inode_operations pipe_i_op = { .open = &pipe_open,
+                                             .on_inode_destruction = &pipe_on_inode_destruction,
+                                             .all_files_closed = &pipe_all_files_closed };
 
 static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write };
 
@@ -41,7 +43,6 @@ struct inode *pipe_new_inode() {
 
     struct inode *inode = fs_create_inode_without_sb(PIPE_DEVICE, id, get_current_task()->process->uid, get_current_task()->process->gid,
                                                      0777 | S_IFIFO, 0, &pipe_i_op, pipe_data);
-    bump_inode_reference(inode); // One more is needed since there is 2 ends of a pipe
 
     debug_log("Created pipe: [ %llu ]\n", inode->index);
     return inode;
@@ -153,6 +154,11 @@ void pipe_on_inode_destruction(struct inode *inode) {
         free(data->buffer);
         free(data);
     }
+}
+
+void pipe_all_files_closed(struct inode *inode) {
+    // Drop our inode reference so that the pipe inode is automatically deleted.
+    drop_inode_reference(inode);
 }
 
 void init_pipe() {}
