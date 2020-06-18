@@ -584,8 +584,8 @@ static void ext2_update_tnode_list(struct inode *inode) {
                                   ? FS_DEVICE
                                   : dirent->type == EXT2_DIRENT_TYPE_FIFO ? FS_FIFO : FS_DIR;
         inode_to_add->ref_count = 2; // One for the vfs and one for us
-        inode_to_add->readable = true;
-        inode_to_add->writeable = true;
+        inode_to_add->readable = !!inode->size;
+        inode_to_add->writeable = !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK));
         init_spinlock(&inode_to_add->lock);
 
         fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
@@ -823,7 +823,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->ref_count = 2; // One for the vfs and one for us
         inode->size = 0;
         inode->super_block = parent->super_block;
-        inode->readable = true;
+        inode->readable = !!inode->size;
         inode->writeable = true;
         inode->change_time = inode->modify_time = inode->access_time = time_read_clock(CLOCK_REALTIME);
 

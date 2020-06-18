@@ -50,15 +50,21 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
 
     struct pipe_data *data = inode->pipe_data;
     spin_lock(&inode->lock);
+    if (!data) {
+        data = malloc(sizeof(struct pipe_data));
+        data->buffer = NULL;
+        data->len = 0;
+        data->max = PIPE_DEFAULT_BUFFER_SIZE;
+        data->read_count = 0;
+        data->write_count = 0;
+        inode->pipe_data = data;
+    }
+
     if (file->abilities & FS_FILE_CAN_WRITE) {
-        if (!data) {
-            data = malloc(sizeof(struct pipe_data));
-            data->buffer = malloc(PIPE_DEFAULT_BUFFER_SIZE);
-            data->len = 0;
-            data->max = PIPE_DEFAULT_BUFFER_SIZE;
-            data->write_count = 0;
-            inode->pipe_data = data;
+        if (data->buffer == NULL) {
+            data->buffer = malloc(data->max);
         }
+
         if (data->write_count++ == 0) {
             // Clear the exceptional_activity flag once another writer is opened.
             inode->excetional_activity = false;
@@ -73,24 +79,29 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     }
 
     if ((file->abilities & FS_FILE_CAN_WRITE) && data->read_count == 0) {
-        if (!(flags & O_NONBLOCK)) {
-            int ret = proc_block_until_pipe_has_readers(get_current_task(), data);
-            if (ret) {
-                spin_unlock(&inode->lock);
-                *error = ret;
-                fs_close(file);
-                return NULL;
-            }
-        }
-    }
-
-    if ((file->abilities & FS_FILE_CAN_READ) && data->write_count == 0) {
         if (flags & O_NONBLOCK) {
             spin_unlock(&inode->lock);
             *error = -ENXIO;
             fs_close(file);
             return NULL;
         } else {
+            spin_unlock(&inode->lock);
+
+            int ret = proc_block_until_pipe_has_readers(get_current_task(), data);
+            if (ret) {
+                *error = ret;
+                fs_close(file);
+                return NULL;
+            }
+
+            spin_lock(&inode->lock);
+        }
+    }
+
+    if ((file->abilities & FS_FILE_CAN_READ) && data->write_count == 0) {
+        if (!(flags & O_NONBLOCK)) {
+            spin_unlock(&inode->lock);
+
             int ret = proc_block_until_pipe_has_writers(get_current_task(), data);
             if (ret) {
                 spin_unlock(&inode->lock);
@@ -98,6 +109,8 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
                 fs_close(file);
                 return NULL;
             }
+
+            spin_lock(&inode->lock);
         }
     }
     spin_unlock(&inode->lock);
@@ -219,6 +232,8 @@ int pipe_close(struct file *file) {
 
 void pipe_all_files_closed(struct inode *inode) {
     free_pipe_data(inode);
+
+    inode->readable = inode->writeable = inode->excetional_activity = false;
 
     // Drop our inode reference so that the anonymous pipe inode is automatically deleted.
     if (inode->fsid == PIPE_DEVICE) {
