@@ -214,6 +214,7 @@ else()
         sys/stat/futimens.c
         sys/stat/lstat.c
         sys/stat/mkdir.c
+        sys/stat/mkfifo.c
         sys/stat/mknod.c
         sys/stat/stat.c
         sys/stat/umask.c

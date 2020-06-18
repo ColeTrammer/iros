@@ -81,6 +81,7 @@ int chmod(const char *pathname, mode_t mode);
 int fchmod(int fd, mode_t mode);
 int fchmodat(int dirfd, const char *pathname, mode_t mode, int flags);
 mode_t umask(mode_t mask);
+int mkfifo(const char *pathname, mode_t mode);
 int mknod(const char *pathname, mode_t mode, dev_t dev);
 int futimens(int fd, const struct timespec times[2]);
 int utimensat(int fd, const char *path, const struct timespec times[2], int flags);
