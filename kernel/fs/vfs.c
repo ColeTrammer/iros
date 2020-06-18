@@ -1181,19 +1181,11 @@ int fs_create_pipe(struct file *pipe_files[2]) {
     struct inode *pipe_inode = pipe_new_inode();
     int error = 0;
     pipe_files[0] = pipe_inode->i_op->open(pipe_inode, O_RDONLY, &error);
-    pipe_files[0]->abilities |= FS_FILE_CAN_READ;
-    pipe_files[0]->inode = pipe_inode;
-    init_spinlock(&pipe_files[0]->lock);
-    pipe_files[0]->ref_count = 1;
     if (error != 0) {
         return error;
     }
 
     pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY, &error);
-    pipe_files[1]->abilities |= FS_FILE_CAN_WRITE;
-    pipe_files[1]->inode = pipe_inode;
-    init_spinlock(&pipe_files[1]->lock);
-    pipe_files[1]->ref_count = 1;
     if (error != 0) {
         fs_close(pipe_files[0]);
         return error;
