@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -23,6 +24,11 @@ static ino_t pipe_index = 1;
 static struct inode_operations pipe_i_op = { .open = &pipe_open };
 
 static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write };
+
+bool is_pipe_read_end_open(struct inode *inode) {
+    struct pipe_data *data = inode->pipe_data;
+    return data->read_count > 0;
+}
 
 bool is_pipe_write_end_open(struct inode *inode) {
     struct pipe_data *data = inode->pipe_data;
@@ -55,10 +61,17 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
             data->write_count = 0;
             inode->pipe_data = data;
         }
-        data->write_count++;
+        if (data->write_count++ == 0) {
+            // Clear the exceptional_activity flag once another writer is opened.
+            inode->excetional_activity = false;
+        }
+    }
 
-        // Clear the exceptional_activity flag once another writer is opened.
-        inode->excetional_activity = false;
+    if (file->abilities & FS_FILE_CAN_READ) {
+        if (data->read_count++ == 0) {
+            // Clear the exceptional_activity flag once another reader is opened.
+            inode->excetional_activity = false;
+        }
     }
     spin_unlock(&inode->lock);
 
@@ -109,6 +122,12 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 
     spin_lock(&inode->lock);
 
+    if (!is_pipe_read_end_open(data)) {
+        spin_unlock(&inode->lock);
+        signal_task(get_current_task()->process->pid, get_current_task()->tid, SIGPIPE);
+        return -EPIPE;
+    }
+
     if (data->max < file->position + len) {
         data->max = MAX(data->max * 2, file->position + len);
         data->buffer = realloc(data->buffer, data->max);
@@ -157,6 +176,12 @@ int pipe_close(struct file *file) {
     if (file->abilities & FS_FILE_CAN_WRITE) {
         if (data->write_count-- == 1) {
             // The writer disconnected, wake up anyone waiting to read from this pipe.
+            inode->excetional_activity = true;
+        }
+    }
+    if (file->abilities & FS_FILE_CAN_READ) {
+        if (data->read_count-- == 1) {
+            // The reader disconnected, wake up anyone waiting to write to this pipe.
             inode->excetional_activity = true;
         }
     }

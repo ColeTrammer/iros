@@ -13,7 +13,7 @@ struct pipe_data {
     size_t len;
     size_t max;
 
-    // We only care about open write ends for now
+    int read_count;
     int write_count;
 };
 
