@@ -169,7 +169,6 @@ struct ext2_block {
     char *block;
 };
 
-struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error);
 struct inode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int flags, int *error);
 int ext2_close(struct file *file);

@@ -80,7 +80,7 @@ int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen
     }
 
     int ret = 0;
-    struct tnode *tnode = fs_create(data->bound_path, S_IFSOCK | 0666, &ret);
+    struct tnode *tnode = fs_mknod(data->bound_path, S_IFSOCK | 0666, 0, &ret);
     if (ret < 0) {
         free(data);
         return ret;

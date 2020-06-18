@@ -51,7 +51,6 @@ static struct inode_operations ext2_i_op = {
 };
 
 static struct inode_operations ext2_dir_i_op = {
-    .create = &ext2_create,
     .lookup = &ext2_lookup,
     .open = &ext2_open,
     .stat = &ext2_stat,
@@ -940,10 +939,6 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
     return inode;
 }
 
-struct inode *ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error) {
-    return __ext2_create(tparent, name, mode, error, 0, 0);
-}
-
 struct inode *ext2_lookup(struct inode *inode, const char *name) {
     assert(inode);
 
@@ -1269,7 +1264,7 @@ struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *
         return NULL;
     }
 
-    struct inode *inode = ext2_create(tparent, name, S_IFLNK | 0777, error);
+    struct inode *inode = __ext2_create(tparent, name, S_IFLNK | 0777, error, 0, 0);
     if (inode == NULL) {
         return NULL;
     }
@@ -1296,7 +1291,7 @@ struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *
 }
 
 struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
-    struct inode *inode = ext2_create(tparent, name, mode, error);
+    struct inode *inode = __ext2_create(tparent, name, mode, error, 0, 0);
     if (inode == NULL) {
         return NULL;
     }

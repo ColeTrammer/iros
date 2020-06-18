@@ -35,7 +35,6 @@ struct inode *fs_create_inode_without_sb(dev_t fsid, ino_t id, uid_t uid, gid_t 
                                          void *private);
 
 struct tnode *fs_root(void);
-struct tnode *fs_create(const char *path, mode_t mode, int *error);
 struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mode_t mode, int *error);
 int fs_close(struct file *file);
 ssize_t fs_read(struct file *file, void *buffer, size_t len);
@@ -49,8 +48,8 @@ long fs_tell(struct file *file);
 int fs_fstatat(struct tnode *base, const char *file_name, struct stat *stat_struct, int flags);
 int fs_ioctl(struct file *file, unsigned long request, void *argp);
 int fs_truncate(struct file *file, off_t length);
-int fs_mkdir(const char *path, mode_t mode);
-int fs_mknod(const char *path, mode_t mode, dev_t dev);
+struct tnode *fs_mkdir(const char *path, mode_t mode, int *error);
+struct tnode *fs_mknod(const char *path, mode_t mode, dev_t dev, int *error);
 int fs_create_pipe(struct file *pipe_files[2]);
 int fs_unlink(const char *path, bool ignore_permission_checks);
 int fs_rmdir(const char *path);

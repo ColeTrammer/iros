@@ -438,81 +438,6 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
     return do_iname(_path, flags, t_root, base, result, &depth_storage);
 }
 
-struct tnode *fs_create(const char *file_name, mode_t mode, int *error) {
-    mode &= ~get_current_task()->process->umask;
-
-    char *path = malloc(strlen(file_name) + 1);
-    strcpy(path, file_name);
-
-    char *last_slash = strrchr(path, '/');
-    struct tnode *tparent;
-
-    int ret = 0;
-    if (last_slash == path) {
-        tparent = bump_tnode(fs_root());
-    } else if (last_slash == NULL) {
-        tparent = bump_tnode(get_current_task()->process->cwd);
-        last_slash = path - 1;
-    } else {
-        *last_slash = '\0';
-        ret = iname(path, 0, &tparent);
-        if (ret < 0) {
-            free(path);
-            *error = ret;
-            return NULL;
-        }
-    }
-
-    struct mount *mount = tparent->inode->mounts;
-    while (mount != NULL) {
-        if (strcmp(mount->name, last_slash + 1) == 0) {
-            free(path);
-            drop_tnode(tparent);
-            *error = -EEXIST;
-            return NULL;
-        }
-
-        mount = mount->next;
-    }
-
-    if (!fs_can_write_inode(tparent->inode)) {
-        drop_tnode(tparent);
-        free(path);
-        *error = -EACCES;
-        return NULL;
-    }
-
-    tparent->inode->i_op->lookup(tparent->inode, NULL);
-    if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
-        drop_tnode(tparent);
-        free(path);
-        *error = -EEXIST;
-        return NULL;
-    }
-
-    if (!tparent->inode->i_op->create) {
-        drop_tnode(tparent);
-        free(path);
-        *error = -EINVAL;
-        return NULL;
-    }
-
-    debug_log("Adding to: [ %s, %p ]\n", tparent->name, tparent->inode);
-
-    struct inode *inode = tparent->inode->i_op->create(tparent, last_slash + 1, mode, error);
-    if (inode == NULL) {
-        drop_tnode(tparent);
-        free(path);
-        return NULL;
-    }
-
-    fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
-
-    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
-    free(path);
-    return tnode;
-}
-
 struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mode_t mode, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
@@ -526,7 +451,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
             debug_log("Creating file: [ %s ]\n", file_name);
 
             ret = 0;
-            tnode = fs_create(file_name, (mode & 07777) | S_IFREG, &ret);
+            tnode = fs_mknod(file_name, (mode & 07777) | S_IFREG, 0, &ret);
             if (ret < 0) {
                 *error = ret;
                 return NULL;
@@ -1011,7 +936,7 @@ int fs_truncate(struct file *file, off_t length) {
     return 0;
 }
 
-int fs_mkdir(const char *_path, mode_t mode) {
+struct tnode *fs_mkdir(const char *_path, mode_t mode, int *error) {
     mode &= ~get_current_task()->process->umask;
 
     size_t length = strlen(_path);
@@ -1036,14 +961,16 @@ int fs_mkdir(const char *_path, mode_t mode) {
         ret = iname(path, 0, &tparent);
         if (ret < 0) {
             free(path);
-            return ret;
+            *error = ret;
+            return NULL;
         }
     }
 
     if (!(tparent->inode->flags & FS_DIR)) {
         drop_tnode(tparent);
         free(path);
-        return -ENOTDIR;
+        *error = -ENOTDIR;
+        return NULL;
     }
 
     struct mount *mount = tparent->inode->mounts;
@@ -1051,7 +978,8 @@ int fs_mkdir(const char *_path, mode_t mode) {
         if (strcmp(mount->name, last_slash + 1) == 0) {
             free(path);
             drop_tnode(tparent);
-            return -EEXIST;
+            *error = -EEXIST;
+            return NULL;
         }
 
         mount = mount->next;
@@ -1061,43 +989,44 @@ int fs_mkdir(const char *_path, mode_t mode) {
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
         drop_tnode(tparent);
-        return -EEXIST;
+        *error = -EEXIST;
+        return NULL;
     }
 
     if (!tparent->inode->i_op->mkdir) {
         free(path);
         drop_tnode(tparent);
-        return -EINVAL;
+        *error = -EINVAL;
+        return NULL;
     }
 
     debug_log("Adding dir to: [ %s ]\n", tparent->name);
 
-    int error = 0;
-    struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode | S_IFDIR, &error);
+    struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode | S_IFDIR, error);
     if (inode == NULL) {
         drop_tnode(tparent);
         free(path);
-        return error;
+        return NULL;
     }
 
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
-    drop_tnode(tparent);
+    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
     free(path);
-    return 0;
+    return tnode;
 }
 
-int fs_mknod(const char *_path, mode_t mode, dev_t device) {
-    if (S_ISREG(mode) || S_ISSOCK(mode) || ((mode & 0770000) == 0)) {
-        int error = 0;
-        fs_create(_path, mode, &error);
-        return error;
+struct tnode *fs_mknod(const char *_path, mode_t mode, dev_t device, int *error) {
+    if (((mode & 0770000) == 0)) {
+        mode |= S_IFREG;
     }
+
     if (S_ISDIR(mode)) {
-        return fs_mkdir(_path, mode);
+        return fs_mkdir(_path, mode, error);
     }
     if (S_ISLNK(mode)) {
-        return -EINVAL;
+        *error = -EINVAL;
+        return NULL;
     }
 
     mode &= ~get_current_task()->process->umask;
@@ -1124,14 +1053,16 @@ int fs_mknod(const char *_path, mode_t mode, dev_t device) {
         ret = iname(path, 0, &tparent);
         if (ret < 0) {
             free(path);
-            return ret;
+            *error = ret;
+            return NULL;
         }
     }
 
     if (!(tparent->inode->flags & FS_DIR)) {
         drop_tnode(tparent);
         free(path);
-        return -ENOTDIR;
+        *error = -ENOTDIR;
+        return NULL;
     }
 
     struct mount *mount = tparent->inode->mounts;
@@ -1139,7 +1070,8 @@ int fs_mknod(const char *_path, mode_t mode, dev_t device) {
         if (strcmp(mount->name, last_slash + 1) == 0) {
             free(path);
             drop_tnode(tparent);
-            return -EEXIST;
+            *error = -EEXIST;
+            return NULL;
         }
 
         mount = mount->next;
@@ -1149,30 +1081,31 @@ int fs_mknod(const char *_path, mode_t mode, dev_t device) {
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
         drop_tnode(tparent);
-        return -EEXIST;
+        *error = -EEXIST;
+        return NULL;
     }
 
     if (!tparent->inode->i_op->mknod) {
         free(path);
         drop_tnode(tparent);
-        return -EINVAL;
+        *error = -EINVAL;
+        return NULL;
     }
 
     debug_log("Adding device to: [ %s, %#.5lX ]\n", tparent->name, device);
 
-    int error = 0;
-    struct inode *inode = tparent->inode->i_op->mknod(tparent, last_slash + 1, mode, device, &error);
+    struct inode *inode = tparent->inode->i_op->mknod(tparent, last_slash + 1, mode, device, error);
     if (inode == NULL) {
         drop_tnode(tparent);
         free(path);
-        return error;
+        return NULL;
     }
 
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
-    drop_tnode(tparent);
+    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
     free(path);
-    return 0;
+    return tnode;
 }
 
 int fs_create_pipe(struct file *pipe_files[2]) {

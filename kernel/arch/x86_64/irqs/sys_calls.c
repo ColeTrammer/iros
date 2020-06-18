@@ -901,7 +901,12 @@ SYS_CALL(mkdir) {
     SYS_PARAM1_VALIDATE(const char *, pathname, validate_path, -1);
     SYS_PARAM2(mode_t, mode);
 
-    SYS_RETURN(fs_mkdir(pathname, mode));
+    int error = 0;
+    struct tnode *tnode = fs_mkdir(pathname, mode, &error);
+    if (tnode) {
+        drop_tnode(tnode);
+    }
+    SYS_RETURN(error);
 }
 
 SYS_CALL(dup2) {
@@ -2437,7 +2442,12 @@ SYS_CALL(mknod) {
     SYS_PARAM2(mode_t, mode);
     SYS_PARAM3(dev_t, dev);
 
-    SYS_RETURN(fs_mknod(path, mode, dev));
+    int error = 0;
+    struct tnode *tnode = fs_mknod(path, mode, dev, &error);
+    if (tnode) {
+        drop_tnode(tnode);
+    }
+    SYS_RETURN(error);
 }
 
 SYS_CALL(invalid_system_call) {

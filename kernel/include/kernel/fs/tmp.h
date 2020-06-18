@@ -14,7 +14,7 @@ struct tmp_data {
     pid_t owner;
 };
 
-struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, int *error);
+struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, dev_t device, int *error);
 struct inode *tmp_lookup(struct inode *inode, const char *name);
 struct file *tmp_open(struct inode *inode, int flags, int *error);
 ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len);

@@ -45,7 +45,7 @@ static struct inode_operations tmp_i_op = { .lookup = &tmp_lookup,
                                             .utimes = &tmp_utimes,
                                             .on_inode_destruction = &tmp_on_inode_destruction };
 
-static struct inode_operations tmp_dir_i_op = { .create = &tmp_create,
+static struct inode_operations tmp_dir_i_op = { .mknod = &tmp_mknod,
                                                 .lookup = &tmp_lookup,
                                                 .open = &tmp_open,
                                                 .mkdir = &tmp_mkdir,
@@ -65,7 +65,7 @@ static ino_t get_next_tmp_index() {
     return next;
 }
 
-struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, int *error) {
+struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, dev_t device, int *error) {
     assert(tparent);
     assert(tparent->inode->flags & FS_DIR);
     assert(name);
@@ -80,6 +80,10 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     if (inode == NULL) {
         *error = ENOMEM;
         return NULL;
+    }
+
+    if (inode->flags & FS_DEVICE) {
+        fs_bind_device_to_inode(inode, device);
     }
 
     tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);

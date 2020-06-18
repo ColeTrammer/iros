@@ -19,7 +19,6 @@ struct pipe_data;
 struct timeval;
 
 struct inode_operations {
-    struct inode *(*create)(struct tnode *tnode, const char *name, mode_t mode, int *error);
     struct inode *(*lookup)(struct inode *inode, const char *name);
     struct file *(*open)(struct inode *inode, int flags, int *error);
     int (*stat)(struct inode *inode, struct stat *stat_struct);
