@@ -26,6 +26,8 @@ struct device_ops {
     void (*on_open)(struct device *device);
     intptr_t (*mmap)(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset);
     int (*read_all)(struct device *device, void *buf);
+    blksize_t (*block_size)(struct device *device);
+    blkcnt_t (*block_count)(struct device *device);
 };
 
 struct device {
@@ -56,6 +58,8 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 int dev_read_all(struct inode *inode, void *buf);
+blksize_t dev_block_size(struct device *device);
+blkcnt_t dev_block_count(struct device *device);
 struct inode *dev_mount(struct file_system *fs, char *device_path);
 
 #endif /* _KERNEL_FS_DEV_H */

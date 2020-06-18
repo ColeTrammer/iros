@@ -69,7 +69,7 @@ static ssize_t serial_write(struct device *device, off_t offset, const void *buf
     return (ssize_t) len;
 }
 
-struct device_ops serial_ops = { NULL, NULL, &serial_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+struct device_ops serial_ops = { .write = &serial_write };
 
 void init_serial_port_device(dev_t port, size_t i) {
     /* Could be anything */

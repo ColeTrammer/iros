@@ -163,6 +163,18 @@ intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     return -ENODEV;
 }
 
+blksize_t dev_block_size(struct device *device) {
+    assert(device->type == S_IFBLK);
+    assert(device->ops->block_size);
+    return device->ops->block_size(device);
+}
+
+blkcnt_t dev_block_count(struct device *device) {
+    assert(device->type == S_IFBLK);
+    assert(device->ops->block_count);
+    return device->ops->block_count(device);
+}
+
 void init_dev() {
     device_map = hash_create_hash_map(device_hash, device_equals, device_key);
 }

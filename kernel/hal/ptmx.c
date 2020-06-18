@@ -407,8 +407,13 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
     }
 }
 
-static struct device_ops slave_ops = { NULL,         slave_read,  slave_write,   slave_close, slave_add,
-                                       slave_remove, slave_ioctl, slave_on_open, NULL,        NULL };
+static struct device_ops slave_ops = { .read = slave_read,
+                                       .write = slave_write,
+                                       .close = slave_close,
+                                       .add = slave_add,
+                                       .remove = slave_remove,
+                                       .ioctl = slave_ioctl,
+                                       .on_open = slave_on_open };
 
 static void master_on_open(struct device *device) {
     device->cannot_open = true;
@@ -668,8 +673,13 @@ static int master_ioctl(struct device *device, unsigned long request, void *argp
     return slave_ioctl(slave, request, argp);
 }
 
-static struct device_ops master_ops = { NULL,          master_read,  master_write,   master_close, master_add,
-                                        master_remove, master_ioctl, master_on_open, NULL,         NULL };
+static struct device_ops master_ops = { .read = master_read,
+                                        .write = master_write,
+                                        .close = master_close,
+                                        .add = master_add,
+                                        .remove = master_remove,
+                                        .ioctl = master_ioctl,
+                                        .on_open = master_on_open };
 
 static int noop_unlink(struct tnode *tnode) {
     (void) tnode;
@@ -732,7 +742,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
     return NULL;
 }
 
-struct device_ops ptmx_ops = { ptmx_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+struct device_ops ptmx_ops = { .open = ptmx_open };
 
 static struct file *tty_open(struct device *device, int flags, int *error) {
     (void) device;
@@ -749,7 +759,7 @@ static struct file *tty_open(struct device *device, int flags, int *error) {
     return fs_openat(NULL, path, flags, 0, error);
 }
 
-struct device_ops tty_ops = { tty_open, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+struct device_ops tty_ops = { .open = tty_open };
 
 void init_ptmx() {
     struct device *ptmx_device = calloc(1, sizeof(struct device));

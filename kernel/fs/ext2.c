@@ -215,9 +215,7 @@ static int ext2_sync_block_group(struct super_block *sb, uint32_t blk_grp_index)
     size_t block_off = blk_grp_index * sizeof(struct raw_block_group_descriptor) / sb->block_size;
     size_t raw_off = block_off * sb->block_size;
 
-    ssize_t ret = ext2_write_blocks(sb, (void *) (((uintptr_t)(data->blk_desc_table)) + raw_off), 2 + block_off, 1
-
-    );
+    ssize_t ret = ext2_write_blocks(sb, (void *) (((uintptr_t)(data->blk_desc_table)) + raw_off), 2 + block_off, 1);
 
     if (ret != 1) {
         return (int) ret;
@@ -677,7 +675,8 @@ static int ext2_sync_inode(struct inode *inode) {
     raw_inode->mtime = inode->modify_time.tv_sec;
     raw_inode->ctime = inode->change_time.tv_sec;
     /* Sector size should be retrieved from block device */
-    raw_inode->sectors = (inode->size + 511) / 512;
+    blksize_t blk_size = dev_block_size(inode->super_block->device);
+    raw_inode->sectors = (inode->size + blk_size - 1) / blk_size;
 
     memcpy(block + (inode_table_index * sb_data->sb->inode_size) % inode->super_block->block_size, raw_inode, sb_data->sb->inode_size);
     ret = ext2_write_blocks(inode->super_block, block, block_address, 1);

@@ -75,7 +75,7 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
     return (intptr_t) region->start;
 }
 
-static struct device_ops vga_ops = { NULL, NULL, NULL, NULL, NULL, NULL, vga_ioctl, NULL, vga_mmap, NULL };
+static struct device_ops vga_ops = { .ioctl = vga_ioctl, .mmap = vga_mmap };
 
 static struct device vga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &vga_ops, .lock = SPINLOCK_INITIALIZER };
 

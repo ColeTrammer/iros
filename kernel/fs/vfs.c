@@ -857,7 +857,10 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_mtim = inode->change_time;
 
     // There's no super block for some generated inode, like dynamic master/slave pseudo terminals
-    if (inode->super_block) {
+    if (inode->device && (inode->device->type == S_IFBLK)) {
+        stat_struct->st_blksize = dev_block_size(inode->device);
+        stat_struct->st_blocks = dev_block_count(inode->device);
+    } else if (inode->super_block) {
         stat_struct->st_blksize = inode->super_block->block_size;
         stat_struct->st_blocks = (inode->size + inode->super_block->block_size - 1) / inode->super_block->block_size;
     } else {

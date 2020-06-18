@@ -405,7 +405,17 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
     return -EINVAL;
 }
 
-static struct device_ops ata_ops = { NULL, ata_read, ata_write, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static blksize_t ata_block_size(struct device *device) {
+    struct ata_device_data *data = device->private;
+    return (blksize_t) data->sector_size;
+}
+
+static blkcnt_t ata_block_count(struct device *device) {
+    struct ata_device_data *data = device->private;
+    return data->num_sectors;
+}
+
+static struct device_ops ata_ops = { .read = ata_read, .write = ata_write, .block_size = &ata_block_size, .block_count = &ata_block_count };
 
 static void ata_handle_irq(struct ata_device_data *data) {
     uint8_t status = inb(data->port_info->io_base + ATA_STATUS_OFFSET);
