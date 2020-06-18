@@ -248,6 +248,8 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
             }
         } else if (S_ISSOCK(stat_struct->st_mode)) {
             color_s = "\033[34m";
+        } else if (S_ISFIFO(stat_struct->st_mode)) {
+            color_s = "\033[40;93m";
         } else {
             color_s = "\033[31m";
         }
