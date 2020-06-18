@@ -580,8 +580,9 @@ static void ext2_update_tnode_list(struct inode *inode) {
                       ? FS_SOCKET
                       : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK
                             ? FS_LINK
-                            : (dirent->type == EXT2_DIRENT_TYPE_BLOCK || dirent->type == EXT2_DIRENT_TYPE_CHARACTER_DEVICE) ? FS_DEVICE
-                                                                                                                            : FS_DIR;
+                            : (dirent->type == EXT2_DIRENT_TYPE_BLOCK || dirent->type == EXT2_DIRENT_TYPE_CHARACTER_DEVICE)
+                                  ? FS_DEVICE
+                                  : dirent->type == EXT2_DIRENT_TYPE_FIFO ? FS_FIFO : FS_DIR;
         inode_to_add->ref_count = 2; // One for the vfs and one for us
         inode_to_add->readable = true;
         inode_to_add->writeable = true;
@@ -919,7 +920,8 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
                                                  : S_ISLNK(mode) ? EXT2_DIRENT_TYPE_SYMBOLIC_LINK
                                                                  : S_ISBLK(mode) ? EXT2_DIRENT_TYPE_BLOCK
                                                                                  : S_ISCHR(mode) ? EXT2_DIRENT_TYPE_CHARACTER_DEVICE
-                                                                                                 : EXT2_DIRENT_TYPE_SOCKET;
+                                                                                                 : S_ISFIFO(mode) ? EXT2_DIRENT_TYPE_FIFO
+                                                                                                                  : EXT2_DIRENT_TYPE_SOCKET;
     memset((void *) (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length), 0,
            parent->super_block->block_size -
                (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length - (uintptr_t) raw_dirent_table));

@@ -1094,10 +1094,6 @@ int fs_mknod(const char *_path, mode_t mode, dev_t device) {
     if (S_ISDIR(mode)) {
         return fs_mkdir(_path, mode);
     }
-    if (S_ISFIFO(mode)) {
-        // FIXME: mkfifo
-        return -EOPNOTSUPP;
-    }
     if (S_ISLNK(mode)) {
         return -EINVAL;
     }
