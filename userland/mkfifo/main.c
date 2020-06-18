@@ -17,8 +17,20 @@ int main(int argc, char **argv) {
     int opt;
     while ((opt = getopt(argc, argv, ":m:")) != -1) {
         switch (opt) {
-            case 'm':
+            case 'm': {
+                char *end_ptr;
+                errno = 0;
+                mode = strtol(optarg, &end_ptr, 8);
+                if (errno) {
+                    fprintf(stderr, "%s: failed to read mode `%s': %s\n", *argv, optarg, strerror(errno));
+                    return 1;
+                }
+                if (*end_ptr) {
+                    fprintf(stderr, "%s: invalid mode: %s\n", *argv, optarg);
+                    return 1;
+                }
                 break;
+            }
             case ':':
             case '?':
                 print_usage_and_exit(*argv);
