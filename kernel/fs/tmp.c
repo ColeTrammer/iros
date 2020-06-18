@@ -75,8 +75,8 @@ struct inode *tmp_create(struct tnode *tparent, const char *name, mode_t mode, i
     struct tmp_data *data = calloc(1, sizeof(struct tmp_data));
     data->owner = get_current_task()->process->pid;
 
-    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->uid,
-                                          get_current_task()->process->gid, mode, 0, &tmp_i_op, data);
+    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->euid,
+                                          get_current_task()->process->egid, mode, 0, &tmp_i_op, data);
     if (inode == NULL) {
         *error = ENOMEM;
         return NULL;
@@ -165,8 +165,8 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
 struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
     assert(name);
 
-    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->uid,
-                                          get_current_task()->process->gid, mode, 0, &tmp_dir_i_op, NULL);
+    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->euid,
+                                          get_current_task()->process->egid, mode, 0, &tmp_dir_i_op, NULL);
     tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
     *error = 0;

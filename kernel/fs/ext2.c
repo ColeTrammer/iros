@@ -815,8 +815,8 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->index = index;
         init_spinlock(&inode->lock);
         inode->mode = mode;
-        inode->uid = get_current_task()->process->uid;
-        inode->gid = get_current_task()->process->gid;
+        inode->uid = get_current_task()->process->euid;
+        inode->gid = get_current_task()->process->egid;
         inode->mounts = NULL;
         inode->private_data = NULL;
         inode->ref_count = 2; // One for the vfs and one for us

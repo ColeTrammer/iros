@@ -41,7 +41,7 @@ struct inode *pipe_new_inode() {
     pipe_data->len = PIPE_DEFAULT_BUFFER_SIZE;
     pipe_data->write_count = 0;
 
-    struct inode *inode = fs_create_inode_without_sb(PIPE_DEVICE, id, get_current_task()->process->uid, get_current_task()->process->gid,
+    struct inode *inode = fs_create_inode_without_sb(PIPE_DEVICE, id, get_current_task()->process->euid, get_current_task()->process->egid,
                                                      0777 | S_IFIFO, 0, &pipe_i_op, pipe_data);
 
     debug_log("Created pipe: [ %llu ]\n", inode->index);
