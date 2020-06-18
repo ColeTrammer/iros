@@ -11,6 +11,7 @@
 struct pipe_data {
     char *buffer;
     size_t len;
+    size_t max;
 
     // We only care about open write ends for now
     int write_count;

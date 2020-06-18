@@ -50,11 +50,15 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
         if (!data) {
             data = malloc(sizeof(struct pipe_data));
             data->buffer = malloc(PIPE_DEFAULT_BUFFER_SIZE);
-            data->len = PIPE_DEFAULT_BUFFER_SIZE;
+            data->len = 0;
+            data->max = PIPE_DEFAULT_BUFFER_SIZE;
             data->write_count = 0;
             inode->pipe_data = data;
         }
         data->write_count++;
+
+        // Clear the exceptional_activity flag once another writer is opened.
+        inode->excetional_activity = false;
     }
     spin_unlock(&inode->lock);
 
@@ -72,20 +76,20 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     struct pipe_data *data = inode->pipe_data;
     assert(data);
 
-    size_t len = MIN(_len, inode->size - file->position);
-    if (len == 0 && is_pipe_write_end_open(inode)) {
+    size_t len = MIN(_len, data->len - file->position);
+    if (len == 0 && (is_pipe_write_end_open(inode) || inode->fsid != PIPE_DEVICE)) {
         int ret = proc_block_until_inode_is_readable(get_current_task(), inode);
         if (ret) {
             return ret;
         }
-        len = MIN(_len, inode->size - file->position);
+        len = MIN(_len, data->len - file->position);
     }
 
     spin_lock(&inode->lock);
     memcpy(buffer, data->buffer + file->position, len);
     file->position += len;
 
-    if (file->position == (off_t) inode->size) {
+    if (file->position == (off_t) data->len) {
         inode->readable = false;
     }
 
@@ -99,15 +103,15 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
-    assert(file->position == (off_t) inode->size);
     struct pipe_data *data = inode->pipe_data;
+    assert(file->position == (off_t) data->len);
     assert(data);
 
     spin_lock(&inode->lock);
 
-    if (data->len < file->position + len) {
-        data->len = MAX(data->len * 2, file->position + len);
-        data->buffer = realloc(data->buffer, data->len);
+    if (data->max < file->position + len) {
+        data->max = MAX(data->max * 2, file->position + len);
+        data->buffer = realloc(data->buffer, data->max);
     }
 
     // Now there is something to read from
@@ -115,7 +119,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 
     memcpy(data->buffer + file->position, buffer, len);
 
-    inode->size += len;
+    data->len += len;
     file->position += len;
 
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
@@ -151,7 +155,10 @@ int pipe_close(struct file *file) {
 
     spin_lock(&inode->lock);
     if (file->abilities & FS_FILE_CAN_WRITE) {
-        data->write_count--;
+        if (data->write_count-- == 1) {
+            // The writer disconnected, wake up anyone waiting to read from this pipe.
+            inode->excetional_activity = true;
+        }
     }
     spin_unlock(&inode->lock);
 
