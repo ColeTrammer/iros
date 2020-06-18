@@ -187,6 +187,7 @@ int ext2_utimes(struct inode *inode, const struct timespec *times);
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name);
 struct inode *ext2_symlink(struct tnode *tnode, const char *name, const char *target, int *error);
 int ext2_link(struct tnode *tnode, const char *name, const struct tnode *target);
+int ext2_truncate(struct inode *inode, off_t length);
 int ext2_read_all(struct inode *inode, void *buffer);
 void ext2_on_inode_destruction(struct inode *inode);
 

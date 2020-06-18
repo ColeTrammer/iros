@@ -869,9 +869,9 @@ SYS_CALL(ftruncate) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
-    SYS_PARAM2(off_t, length);
+    SYS_PARAM2_VALIDATE(off_t, length, validate_positive, 1);
 
-    SYS_RETURN(fs_truncate(file, length));
+    SYS_RETURN(fs_ftruncate(file, length));
 }
 
 SYS_CALL(gettimeofday) {
@@ -2405,16 +2405,7 @@ SYS_CALL(truncate) {
     SYS_PARAM1_VALIDATE(const char *, path, validate_path, -1);
     SYS_PARAM2_VALIDATE(off_t, length, validate_positive, 1);
 
-    int error = 0;
-    struct file *file = fs_openat(get_current_task()->process->cwd, path, O_RDWR, 0, &error);
-    if (!file) {
-        SYS_RETURN(error);
-    }
-
-    int ret = fs_truncate(file, length);
-
-    fs_close(file);
-    SYS_RETURN(ret);
+    SYS_RETURN(fs_truncate(path, length));
 }
 
 SYS_CALL(getgroups) {

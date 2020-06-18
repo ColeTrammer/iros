@@ -438,6 +438,34 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
     return do_iname(_path, flags, t_root, base, result, &depth_storage);
 }
 
+static int do_truncate(struct inode *inode, off_t length) {
+    if (!inode) {
+        return 0;
+    }
+
+    if (inode->flags & FS_DIR) {
+        return -EISDIR;
+    }
+
+    if (!(inode->flags & FS_FILE)) {
+        return 0;
+    }
+
+    if (inode->super_block && (inode->super_block->flags & ST_RDONLY)) {
+        return -EROFS;
+    }
+
+    if (!inode->i_op->truncate) {
+        return -EPERM;
+    }
+
+    if (inode->size == (size_t) length) {
+        return 0;
+    }
+
+    return inode->i_op->truncate(inode, length);
+}
+
 struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mode_t mode, int *error) {
     if (file_name == NULL) {
         *error = -EINVAL;
@@ -524,6 +552,15 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
     } else if (tnode->inode->flags & FS_FIFO) {
         file = pipe_open(tnode->inode, flags, error);
     } else {
+        if (flags & O_TRUNC) {
+            ret = do_truncate(tnode->inode, 0);
+            if (ret) {
+                drop_tnode(tnode);
+                *error = ret;
+                return NULL;
+            }
+        }
+
         file = tnode->inode->i_op->open(tnode->inode, flags, error);
     }
 
@@ -912,31 +949,24 @@ int fs_ioctl(struct file *file, unsigned long request, void *argp) {
     return -ENOTTY;
 }
 
-int fs_truncate(struct file *file, off_t length) {
+int fs_ftruncate(struct file *file, off_t length) {
     assert(file);
 
-    char *file_contents = malloc(length);
-    assert(file_contents);
+    struct inode *inode = fs_file_inode(file);
+    return do_truncate(inode, length);
+}
 
-    ssize_t read = fs_read(file, file_contents, length);
-    if (read < 0) {
-        return read;
+int fs_truncate(const char *path, off_t length) {
+    struct tnode *tnode;
+    int ret = iname(path, 0, &tnode);
+    if (ret) {
+        return ret;
     }
 
-    /* Makes rest of file null bytes */
-    if (read < length) {
-        memset(file_contents + read, 0, length - read);
-    }
-
-    file->position = 0;
-    ssize_t ret = fs_write(file, file_contents, length);
-    file->position = 0;
-
-    if (ret < 0) {
-        return (int) ret;
-    }
-
-    return 0;
+    struct inode *inode = tnode->inode;
+    ret = do_truncate(inode, length);
+    drop_tnode(tnode);
+    return ret;
 }
 
 struct tnode *fs_mkdir(const char *_path, mode_t mode, int *error) {

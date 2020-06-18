@@ -48,6 +48,7 @@ static struct inode_operations ext2_i_op = {
     .utimes = &ext2_utimes,
     .read = &ext2_iread,
     .on_inode_destruction = &ext2_on_inode_destruction,
+    .truncate = &ext2_truncate,
 };
 
 static struct inode_operations ext2_dir_i_op = {
@@ -1103,7 +1104,7 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
             if (raw_inode->block[file_block_no] == 0) {
                 int __ret = ext2_allocate_block_for_inode(inode->super_block, inode, file_block_no);
                 if (__ret != 0) {
-                    return ret;
+                    return __ret;
                 }
             }
 
@@ -1180,6 +1181,187 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
     }
 
     return (ssize_t) len_save;
+}
+
+int ext2_truncate(struct inode *inode, off_t size) {
+    size_t new_size = (size_t) size;
+    size_t old_size = inode->size;
+
+    struct raw_inode *raw_inode = inode->private_data;
+    assert(raw_inode);
+
+    if (new_size < old_size) {
+        size_t num_blocks_freed = 0;
+        size_t block_index = 0;
+
+        uint32_t *indirect_block = NULL;
+        for (;;) {
+            size_t block_no;
+
+            if (block_index < EXT2_SINGLY_INDIRECT_BLOCK_INDEX) {
+                block_no = ((struct raw_inode *) inode->private_data)->block[block_index];
+            } else {
+                if (indirect_block == NULL) {
+                    indirect_block = ext2_allocate_blocks(inode->super_block, 1);
+                    ssize_t _ret;
+                    debug_log("Indirect block: [ %u ]\n",
+                              ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX]);
+                    if ((_ret = ext2_read_blocks(inode->super_block, indirect_block,
+                                                 ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX], 1)) !=
+                        1) {
+                        ext2_free_blocks(indirect_block);
+                        return _ret;
+                    }
+
+                    block_no = ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX];
+                } else {
+                    size_t real_block_offset = block_index - EXT2_SINGLY_INDIRECT_BLOCK_INDEX - 1;
+
+                    if (real_block_offset * sizeof(uint32_t) >= (size_t) inode->super_block->block_size) {
+                        /* Should instead start reading from the doubly indirect block */
+                        break;
+                    }
+
+                    block_no = indirect_block[real_block_offset];
+                }
+            }
+
+            if (block_no == 0) {
+                break;
+            }
+
+            if (block_index * inode->super_block->block_size <= inode->size) {
+                debug_log("Freeing block: [ %lu ]\n", block_no);
+                int ret = ext2_free_block(inode->super_block, block_no, false);
+                if (ret != 0) {
+                    return ret;
+                }
+
+                num_blocks_freed++;
+            }
+            block_index++;
+        }
+
+        if (indirect_block != NULL) {
+            ext2_free_blocks(indirect_block);
+        }
+
+        /* Update bookkepping fields */
+        struct ext2_block_group *group =
+            ext2_get_block_group(inode->super_block, ext2_get_block_group_from_inode(inode->super_block, inode->index));
+        group->blk_desc->num_unallocated_blocks += num_blocks_freed;
+        group->blk_desc->num_unallocated_inodes++;
+        if (inode->flags & FS_DIR) {
+            group->blk_desc->num_directories--;
+        }
+        int ret = ext2_sync_block_group(inode->super_block, group->index);
+        if (ret != 0) {
+            return ret;
+        }
+
+        struct ext2_sb_data *sb_data = inode->super_block->private_data;
+        sb_data->sb->num_unallocated_blocks += num_blocks_freed;
+        sb_data->sb->num_unallocated_inodes++;
+
+        ret = ext2_sync_super_block(inode->super_block);
+        if (ret != 0) {
+            return ret;
+        }
+
+        inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
+        inode->size = new_size;
+        ret = ext2_sync_inode(inode);
+        if (ret != 0) {
+            return 0;
+        }
+
+        return 0;
+    }
+
+    size_t file_block_no = old_size / inode->super_block->block_size;
+    size_t file_block_no_end = (new_size + inode->super_block->block_size - 1) / inode->super_block->block_size;
+
+    uint32_t *indirect_block = NULL;
+
+    while (file_block_no < file_block_no_end) {
+        size_t block_no;
+
+        if (file_block_no < EXT2_SINGLY_INDIRECT_BLOCK_INDEX) {
+            if (raw_inode->block[file_block_no] == 0) {
+                int __ret = ext2_allocate_block_for_inode(inode->super_block, inode, file_block_no);
+                if (__ret != 0) {
+                    return __ret;
+                }
+            }
+
+            block_no = raw_inode->block[file_block_no];
+        } else {
+            /* Handle single indirect block */
+            if (indirect_block == NULL) {
+                indirect_block = ext2_allocate_blocks(inode->super_block, 1);
+                ssize_t _ret;
+                if ((_ret = ext2_read_blocks(inode->super_block, indirect_block,
+                                             ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX], 1)) !=
+                    1) {
+                    ext2_free_blocks(indirect_block);
+                    return _ret;
+                }
+            }
+            size_t real_block_offset = file_block_no - EXT2_SINGLY_INDIRECT_BLOCK_INDEX;
+
+            if (real_block_offset * sizeof(uint32_t) >= (size_t) inode->super_block->block_size) {
+                /* Should instead start writing to the doubly indirect block */
+                ext2_free_blocks(indirect_block);
+                break;
+            }
+
+            if (indirect_block[real_block_offset] == 0) {
+                int __ret = ext2_allocate_block_for_inode(inode->super_block, inode, file_block_no);
+                if (__ret < 0) {
+                    ext2_free_blocks(indirect_block);
+                    return __ret;
+                }
+            }
+
+            block_no = indirect_block[real_block_offset];
+        }
+
+        char *buf = ext2_allocate_blocks(inode->super_block, 1);
+        size_t in_block_offset = old_size % inode->super_block->block_size;
+        size_t to_write = inode->super_block->block_size - in_block_offset;
+        bool read_block = ((size_t) old_size < inode->size) || (in_block_offset != 0);
+        if (read_block) {
+            int ret = ext2_read_blocks(inode->super_block, buf, block_no, 1);
+            if (ret != 1) {
+                return (int) ret;
+            }
+        }
+
+        memset(buf + in_block_offset, 0, to_write);
+        int ret = ext2_write_blocks(inode->super_block, buf, block_no, 1);
+        if (ret != 1) {
+            ext2_free_blocks(buf);
+            return -EIO;
+        }
+
+        ext2_free_blocks(buf);
+
+        file_block_no++;
+        old_size += to_write;
+    }
+
+    if (indirect_block) {
+        ext2_free_blocks(indirect_block);
+    }
+
+    inode->size = new_size;
+    inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
+    int ret = ext2_sync_inode(inode);
+    if (ret != 0) {
+        return ret;
+    }
+
+    return 0;
 }
 
 void ext2_on_inode_destruction(struct inode *inode) {
@@ -1371,10 +1553,6 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
 
     struct raw_inode *raw_inode = inode->private_data;
     assert(raw_inode);
-
-    if (!(raw_inode->mode & S_IWUSR)) {
-        return -EPERM;
-    }
 
     struct inode *parent = tnode->parent->inode;
     struct raw_inode *parent_raw_inode = parent->private_data;

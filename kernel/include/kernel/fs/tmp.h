@@ -29,6 +29,7 @@ int tmp_chown(struct inode *inode, uid_t uid, gid_t gid);
 int tmp_utimes(struct inode *inode, const struct timespec *times);
 int tmp_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name);
 int tmp_read_all(struct inode *inode, void *buffer);
+int tmp_truncate(struct inode *inode, off_t len);
 void tmp_on_inode_destruction(struct inode *inode);
 
 void init_tmpfs();

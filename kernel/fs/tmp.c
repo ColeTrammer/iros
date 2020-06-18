@@ -43,7 +43,8 @@ static struct inode_operations tmp_i_op = { .lookup = &tmp_lookup,
                                             .mmap = &tmp_mmap,
                                             .read_all = &tmp_read_all,
                                             .utimes = &tmp_utimes,
-                                            .on_inode_destruction = &tmp_on_inode_destruction };
+                                            .on_inode_destruction = &tmp_on_inode_destruction,
+                                            .truncate = &tmp_truncate };
 
 static struct inode_operations tmp_dir_i_op = { .mknod = &tmp_mknod,
                                                 .lookup = &tmp_lookup,
@@ -253,6 +254,32 @@ int tmp_read_all(struct inode *inode, void *buffer) {
     inode->access_time = time_read_clock(CLOCK_REALTIME);
     spin_unlock(&inode->lock);
 
+    return 0;
+}
+
+int tmp_truncate(struct inode *inode, off_t len) {
+    size_t new_size = (size_t) len;
+    size_t old_size = inode->size;
+
+    struct tmp_data *data = inode->private_data;
+
+    if (new_size < old_size) {
+        inode->size = new_size;
+    } else {
+        inode->size = new_size;
+        if (inode->size > data->max) {
+            data->max = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+            assert(data->max >= inode->size);
+            char *save = data->contents;
+            data->contents = aligned_alloc(PAGE_SIZE, data->max);
+            assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
+            memcpy(data->contents, save, old_size);
+            memset(data->contents + old_size, 0, new_size - old_size);
+            free(save);
+        }
+    }
+
+    inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
     return 0;
 }
 

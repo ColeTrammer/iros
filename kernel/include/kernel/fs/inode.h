@@ -36,6 +36,7 @@ struct inode_operations {
     int (*utimes)(struct inode *inode, const struct timespec *times);
     void (*on_inode_destruction)(struct inode *inode);
     ssize_t (*read)(struct inode *inode, void *buffer, size_t size, off_t offset);
+    int (*truncate)(struct inode *inode, off_t length);
 };
 
 struct inode {
