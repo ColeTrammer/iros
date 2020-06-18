@@ -860,7 +860,6 @@ void Document::guess_type_from_name() {
 }
 
 void Document::save() {
-    struct stat st;
     if (m_name.is_empty()) {
         String result = m_panel.prompt("Save as: ");
         if (access(result.string(), F_OK) == 0) {
@@ -872,43 +871,22 @@ void Document::save() {
 
         m_name = move(result);
         guess_type_from_name();
-        st.st_mode = 0644;
-    } else {
-        if (stat(m_name.string(), &st)) {
-            if (errno != ENOENT) {
-                m_panel.send_status_message(String::format("Error looking up file - `%s'", strerror(errno)));
-                return;
-            }
-            st.st_mode = 0644;
-        } else {
-            if (access(m_name.string(), W_OK)) {
-                m_panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
-                return;
-            }
+    }
+
+    if (access(m_name.string(), W_OK)) {
+        if (errno != ENOENT) {
+            m_panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
+            return;
         }
     }
 
-    auto temp_path_template = String::format("%sXXXXXX", m_name.string());
-    char* temp_path = temp_path_template.string();
-    int fd = mkstemp(temp_path);
-    if (fd < 0) {
-        m_panel.send_status_message(String::format("Failed to create a temp file - `%s'", strerror(errno)));
-        return;
-    }
-
-    FILE* file = fdopen(fd, "w");
+    FILE* file = fopen(m_name.string(), "w");
     if (!file) {
         m_panel.send_status_message(String::format("Failed to save - `%s'", strerror(errno)));
         return;
     }
 
-    if (m_lines.size() == 1 && m_lines.first().empty()) {
-        if (ftruncate(fileno(file), 0)) {
-            m_panel.send_status_message(String::format("Failed to sync to disk - `%s'", strerror(errno)));
-            fclose(file);
-            return;
-        }
-    } else {
+    if (m_lines.size() != 1 || !m_lines.first().empty()) {
         for (auto& line : m_lines) {
             fprintf(file, "%s\n", line.contents().string());
         }
@@ -920,19 +898,8 @@ void Document::save() {
         return;
     }
 
-    if (fchmod(fileno(file), st.st_mode)) {
-        m_panel.send_status_message(String::format("Faild to sync file metadata - `%s'", strerror(errno)));
-        fclose(file);
-        return;
-    }
-
     if (fclose(file)) {
         m_panel.send_status_message(String::format("Failed to sync to disk - `%s'", strerror(errno)));
-        return;
-    }
-
-    if (rename(temp_path, m_name.string())) {
-        m_panel.send_status_message(String::format("Failed to overwrite file - `%s'", strerror(errno)));
         return;
     }
 
