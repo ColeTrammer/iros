@@ -17,7 +17,8 @@ struct pipe_data {
     int write_count;
 };
 
-bool is_pipe_write_end_open(struct inode *inode);
+bool is_pipe_read_end_open(struct pipe_data *data);
+bool is_pipe_write_end_open(struct pipe_data *data);
 
 struct inode *pipe_new_inode();
 

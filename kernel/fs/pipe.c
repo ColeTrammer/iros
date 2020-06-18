@@ -25,13 +25,11 @@ static struct inode_operations pipe_i_op = { .open = &pipe_open };
 
 static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write };
 
-bool is_pipe_read_end_open(struct inode *inode) {
-    struct pipe_data *data = inode->pipe_data;
+bool is_pipe_read_end_open(struct pipe_data *data) {
     return data->read_count > 0;
 }
 
-bool is_pipe_write_end_open(struct inode *inode) {
-    struct pipe_data *data = inode->pipe_data;
+bool is_pipe_write_end_open(struct pipe_data *data) {
     return data->write_count > 0;
 }
 
@@ -73,6 +71,35 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
             inode->excetional_activity = false;
         }
     }
+
+    if ((file->abilities & FS_FILE_CAN_WRITE) && data->read_count == 0) {
+        if (!(flags & O_NONBLOCK)) {
+            int ret = proc_block_until_pipe_has_readers(get_current_task(), data);
+            if (ret) {
+                spin_unlock(&inode->lock);
+                *error = ret;
+                fs_close(file);
+                return NULL;
+            }
+        }
+    }
+
+    if ((file->abilities & FS_FILE_CAN_READ) && data->write_count == 0) {
+        if (flags & O_NONBLOCK) {
+            spin_unlock(&inode->lock);
+            *error = -ENXIO;
+            fs_close(file);
+            return NULL;
+        } else {
+            int ret = proc_block_until_pipe_has_writers(get_current_task(), data);
+            if (ret) {
+                spin_unlock(&inode->lock);
+                *error = ret;
+                fs_close(file);
+                return NULL;
+            }
+        }
+    }
     spin_unlock(&inode->lock);
 
     *error = 0;
@@ -90,7 +117,7 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     assert(data);
 
     size_t len = MIN(_len, data->len - file->position);
-    if (len == 0 && (is_pipe_write_end_open(inode) || inode->fsid != PIPE_DEVICE)) {
+    if (len == 0 && (is_pipe_write_end_open(data) || inode->fsid != PIPE_DEVICE)) {
         int ret = proc_block_until_inode_is_readable(get_current_task(), inode);
         if (ret) {
             return ret;

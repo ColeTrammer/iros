@@ -179,6 +179,36 @@ int proc_block_until_device_is_readable_or_timeout(struct task *current, struct 
     return __kernel_yield();
 }
 
+static bool until_pipe_has_readers_helper(struct block_info *info) {
+    assert(info->type == UNTIL_PIPE_HAS_READERS);
+    return is_pipe_read_end_open(info->until_pipe_has_readers_info.pipe_data);
+}
+
+int proc_block_until_pipe_has_readers(struct task *current, struct pipe_data *pipe_data) {
+    disable_interrupts();
+    current->block_info.until_pipe_has_readers_info.pipe_data = pipe_data;
+    current->block_info.type = UNTIL_PIPE_HAS_READERS;
+    current->block_info.should_unblock = &until_pipe_has_readers_helper;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    return __kernel_yield();
+}
+
+static bool until_pipe_has_writers_helper(struct block_info *info) {
+    assert(info->type == UNTIL_PIPE_HAS_WRITERS);
+    return is_pipe_write_end_open(info->until_pipe_has_writers_info.pipe_data);
+}
+
+int proc_block_until_pipe_has_writers(struct task *current, struct pipe_data *pipe_data) {
+    disable_interrupts();
+    current->block_info.until_pipe_has_writers_info.pipe_data = pipe_data;
+    current->block_info.type = UNTIL_PIPE_HAS_WRITERS;
+    current->block_info.should_unblock = &until_pipe_has_writers_helper;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    return __kernel_yield();
+}
+
 static bool select_blocker_helper(int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds) {
     struct task *current = get_current_task();
     size_t fd_set_size = ((nfds + sizeof(uint8_t) * CHAR_BIT - 1) / sizeof(uint8_t) / CHAR_BIT) * sizeof(uint8_t);

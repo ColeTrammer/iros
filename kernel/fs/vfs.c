@@ -596,6 +596,8 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         } else {
             file = dev_open(tnode->inode, flags, error);
         }
+    } else if (tnode->inode->flags & FS_FIFO) {
+        file = pipe_open(tnode->inode, flags, error);
     } else {
         file = tnode->inode->i_op->open(tnode->inode, flags, error);
     }
@@ -1176,12 +1178,12 @@ int fs_mknod(const char *_path, mode_t mode, dev_t device) {
 int fs_create_pipe(struct file *pipe_files[2]) {
     struct inode *pipe_inode = pipe_new_inode();
     int error = 0;
-    pipe_files[0] = pipe_inode->i_op->open(pipe_inode, O_RDONLY, &error);
+    pipe_files[0] = pipe_inode->i_op->open(pipe_inode, O_RDONLY | O_NONBLOCK, &error);
     if (error != 0) {
         return error;
     }
 
-    pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY, &error);
+    pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY | O_NONBLOCK, &error);
     if (error != 0) {
         fs_close(pipe_files[0]);
         return error;
