@@ -16,6 +16,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -Wextra -fdiagnostics-color=always
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -fconcepts -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer")
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_INSTALL_MESSAGE LAZY)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
