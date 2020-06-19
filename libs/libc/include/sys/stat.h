@@ -44,7 +44,7 @@
 
 #define S_ISUID 04000
 #define S_ISGID 02000
-#define S_SIVTX 01000
+#define S_ISVTX 01000
 
 #define UTIME_OMIT -1
 #define UTIME_NOW  -2

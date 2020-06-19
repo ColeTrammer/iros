@@ -255,11 +255,31 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
                 max_perm |= max_perm << 3;
                 return max_perm & computed_mask;
             }
-            case SymbolicMode::Permission::SetID:
+            case SymbolicMode::Permission::SetID: {
+                if (who_list.empty()) {
+                    return S_ISUID | S_ISGID;
+                }
+
+                mode_t ret = 0;
+                if (computed_mask & 0700) {
+                    ret |= S_ISUID;
+                }
+                if (computed_mask & 0070) {
+                    ret |= S_ISGID;
+                }
+                return ret;
+            }
             case SymbolicMode::Permission::Sticky:
-            case SymbolicMode::Permission::Search:
-                assert(false);
+                if (who_list.empty() || (who_list.size() == 1 && who_list.first() == SymbolicMode::Who::All)) {
+                    return S_ISVTX;
+                }
                 return 0;
+            case SymbolicMode::Permission::Search: {
+                if ((reference & S_IFDIR) || (reference & 0111)) {
+                    return 0111 & computed_mask;
+                }
+                return 0;
+            }
         }
 
         return 0;
@@ -307,6 +327,7 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
             } else {
                 reference &= ~computed_mask;
             }
+            reference &= ~07000;
 
             goto plus;
         }
