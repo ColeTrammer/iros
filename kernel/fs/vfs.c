@@ -1261,16 +1261,24 @@ int fs_rmdir(const char *path) {
 }
 
 static int do_chown(struct inode *inode, uid_t uid, gid_t gid) {
-    if (inode->uid == uid && inode->gid == gid) {
-        return 0;
-    }
-
     if (!inode->i_op->chown) {
         return -EPERM;
     }
 
     if (get_current_task()->process->euid != 0) {
         return -EPERM;
+    }
+
+    if (uid == (uid_t) -1) {
+        uid = inode->uid;
+    }
+
+    if (gid == (gid_t) -1) {
+        gid = inode->gid;
+    }
+
+    if (inode->uid == uid && inode->gid == gid) {
+        return 0;
     }
 
     return inode->i_op->chown(inode, uid, gid);
