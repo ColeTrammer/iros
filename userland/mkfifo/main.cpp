@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <ext/parse_mode.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,23 +13,19 @@ void print_usage_and_exit(const char *s) {
 }
 
 int main(int argc, char **argv) {
-    mode_t mode = 0666;
+    mode_t umask_value = umask(0);
+    mode_t mode = 0666 & ~umask_value;
 
     int opt;
     while ((opt = getopt(argc, argv, ":m:")) != -1) {
         switch (opt) {
             case 'm': {
-                char *end_ptr;
-                errno = 0;
-                mode = strtol(optarg, &end_ptr, 8);
-                if (errno) {
-                    fprintf(stderr, "%s: failed to read mode `%s': %s\n", *argv, optarg, strerror(errno));
+                auto fancy_mode = Ext::parse_mode(optarg);
+                if (!fancy_mode.has_value()) {
+                    fprintf(stderr, "%s: failed to parse mode: `%s'\n", *argv, optarg);
                     return 1;
                 }
-                if (*end_ptr) {
-                    fprintf(stderr, "%s: invalid mode: %s\n", *argv, optarg);
-                    return 1;
-                }
+                mode = fancy_mode.value().resolve(mode, umask_value);
                 break;
             }
             case ':':
