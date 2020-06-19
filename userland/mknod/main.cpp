@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <ext/parse_mode.h>
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -15,21 +16,17 @@ void print_usage_and_exit(const char *s) {
 
 int main(int argc, char **argv) {
     int opt;
-    mode_t mode = 0666;
+    mode_t umask_value = umask(0);
+    mode_t mode = 0666 & ~umask_value;
     while ((opt = getopt(argc, argv, ":m:")) != -1) {
         switch (opt) {
             case 'm': {
-                char *end_ptr;
-                errno = 0;
-                mode = strtol(optarg, &end_ptr, 8);
-                if (errno) {
-                    fprintf(stderr, "%s: failed to read mode `%s': %s\n", *argv, optarg, strerror(errno));
+                auto fancy_mode = Ext::parse_mode(optarg);
+                if (!fancy_mode.has_value()) {
+                    fprintf(stderr, "%s: failed to parse mode: `%s'\n", *argv, optarg);
                     return 1;
                 }
-                if (*end_ptr) {
-                    fprintf(stderr, "%s: invalid mode: %s\n", *argv, optarg);
-                    return 1;
-                }
+                mode = fancy_mode.value().resolve(mode, umask_value);
                 break;
             }
             case ':':
@@ -50,12 +47,13 @@ int main(int argc, char **argv) {
     const char *type = argv[optind + 1];
     if (strcmp(type, "b") == 0) {
         mode |= S_IFBLK;
-    } else if (strcmp(type, "c") == 0 || strcmp(type, "u")) {
+    } else if (strcmp(type, "c") == 0 || strcmp(type, "u") == 0) {
         mode |= S_IFCHR;
     } else if (strcmp(type, "p") == 0) {
         mode |= S_IFIFO;
     } else {
         fprintf(stderr, "%s: unknown type: %s\n", *argv, type);
+        return 2;
     }
 
     if ((S_ISFIFO(mode) && argc != optind + 2) || (!S_ISFIFO(mode) && argc != optind + 4)) {
