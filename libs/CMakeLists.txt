@@ -12,6 +12,7 @@ set(TARGETS
     libc
     libclanguage
     libclipboard
+    libext
     libgraphics
     libliim
     libprocinfo
