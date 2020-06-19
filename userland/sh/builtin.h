@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#define NUM_BUILTINS 31
+#define NUM_BUILTINS 32
 
 typedef int (*op_function_t)(char **args);
 

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <ext/parse_mode.h>
 #include <fcntl.h>
 #include <liim/hash_map.h>
 #include <liim/string.h>
@@ -816,6 +817,37 @@ static int op_read(char **argv) {
     return 0;
 }
 
+static int op_umask(char **argv) {
+    if (argv[2]) {
+        fprintf(stderr, "Usage: %s <mode>\n", *argv);
+        return 2;
+    }
+
+    if (!argv[1]) {
+        mode_t mask = umask(0);
+        umask(mask);
+
+        printf("%#.4o\n", mask);
+        return 0;
+    }
+
+    auto fancy_mode = Ext::parse_mode(argv[1]);
+    if (!fancy_mode.has_value()) {
+        fprintf(stderr, "%s: failed to parse mode: `%s'\n", *argv, argv[1]);
+        return 1;
+    }
+
+    if (fancy_mode.value().impl().is<mode_t>()) {
+        umask(fancy_mode.value().resolve(0) & 0777);
+        return 0;
+    }
+
+    mode_t mode = ~umask(0);
+    mode = fancy_mode.value().resolve(mode, 0);
+    umask(~mode);
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
@@ -827,7 +859,7 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exec", op_exec, true },       { "set", op_set, true },       { "[", op_test, true },
     { "test", op_test, true },       { "eval", op_eval, true },     { "time", op_time, false },
     { "pushd", op_pushd, true },     { "popd", op_popd, true },     { "dirs", op_dirs, true },
-    { "read", op_read, true }
+    { "read", op_read, true },       { "umask", op_umask, true }
 };
 
 struct builtin_op *get_builtins() {
