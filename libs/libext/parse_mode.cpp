@@ -266,7 +266,8 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
     };
 
     switch (this->modifier) {
-        case SymbolicMode::Modifier::Plus: {
+        case SymbolicMode::Modifier::Plus:
+        plus : {
             if (this->copy_or_permission_list.is<Monostate>()) {
                 return reference;
             }
@@ -300,8 +301,15 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
 
             return reference;
         }
-        case SymbolicMode::Modifier::Equal:
-            assert(false);
+        case SymbolicMode::Modifier::Equal: {
+            if (who_list.empty()) {
+                reference = 0;
+            } else {
+                reference &= ~computed_mask;
+            }
+
+            goto plus;
+        }
     }
 
     return reference;
