@@ -348,7 +348,7 @@ mode_t SymbolicMode::resolve(mode_t reference, mode_t mask) const {
 
 mode_t Mode::resolve(mode_t reference, Maybe<mode_t> umask_value) const {
     if (impl().is<mode_t>()) {
-        return impl().as<mode_t>();
+        return impl().as<mode_t>() & 07777;
     }
 
     if (!umask_value.has_value()) {
@@ -357,7 +357,7 @@ mode_t Mode::resolve(mode_t reference, Maybe<mode_t> umask_value) const {
         umask_value = mask;
     }
 
-    return impl().as<SymbolicMode>().resolve(reference, ~umask_value.value() & 0777);
+    return impl().as<SymbolicMode>().resolve(reference, ~umask_value.value() & 0777) & 07777;
 }
 
 }
