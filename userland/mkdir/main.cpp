@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int do_mkdir(char *path, mode_t mode, bool make_parents) {
+int do_mkdir(char *path, mode_t mode, mode_t umask_value, bool make_parents) {
     if (!make_parents) {
         int ret = mkdir(path, mode);
         if (ret != 0) {
@@ -35,18 +35,20 @@ int do_mkdir(char *path, mode_t mode, bool make_parents) {
 
     char *component = strtok(path, "/");
     while (component) {
-        int ret = mkdir(component, mode);
+        char *current = component;
+        component = strtok(NULL, "/");
+
+        mode_t mode_to_use = !component ? mode : ((S_IWUSR | S_IXUSR | ~umask_value) & 0777);
+        int ret = mkdir(current, mode_to_use);
         if (ret != 0 && errno != EEXIST) {
             perror("mkdir");
             return 1;
         }
 
-        if (chdir(component)) {
+        if (component && chdir(current)) {
             perror("chdir");
             return 1;
         }
-
-        component = strtok(NULL, "/");
     }
 
     if (fchdir(cwd_save)) {
@@ -99,7 +101,7 @@ int main(int argc, char **argv) {
     }
 
     for (; optind < argc; optind++) {
-        int ret = do_mkdir(argv[optind], mode, p);
+        int ret = do_mkdir(argv[optind], mode, umask_value, p);
         if (ret) {
             return ret;
         }
