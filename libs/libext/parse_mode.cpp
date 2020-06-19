@@ -222,27 +222,38 @@ Maybe<Mode> parse_mode(const String& string) {
 }
 
 mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, const Vector<SymbolicMode::Who>& who_list) const {
+    mode_t computed_mask = mask;
+    if (!who_list.empty()) {
+        computed_mask = 0;
+    }
+
+    for (auto who : who_list) {
+        if (who == SymbolicMode::Who::All) {
+            computed_mask = 0777;
+            break;
+        }
+        computed_mask |= (7U << ((mode_t) who) * 3);
+    }
+
+    auto resolve_permission_copy = [&](SymbolicMode::PermissionCopy copy) -> mode_t {
+        int bits_to_shift = ((int) copy) * 3;
+        mode_t part_mask = 7 << bits_to_shift;
+        mode_t max_perm = (reference & part_mask) >> bits_to_shift;
+        max_perm |= max_perm << 3;
+        max_perm |= max_perm << 3;
+
+        return max_perm & computed_mask;
+    };
+
     auto resolve_permission = [&](SymbolicMode::Permission perm) -> mode_t {
         switch (perm) {
             case SymbolicMode::Permission::Read:
             case SymbolicMode::Permission::Write:
             case SymbolicMode::Permission::Execute: {
-                if (!who_list.empty()) {
-                    mask = 0;
-                }
-
-                for (auto who : who_list) {
-                    if (who == SymbolicMode::Who::All) {
-                        mask = 0777;
-                        break;
-                    }
-                    mask |= (7U << ((mode_t) who) * 3);
-                }
-
                 mode_t max_perm = (mode_t) perm;
                 max_perm |= max_perm << 3;
                 max_perm |= max_perm << 3;
-                return max_perm & mask;
+                return max_perm & computed_mask;
             }
             case SymbolicMode::Permission::SetID:
             case SymbolicMode::Permission::Sticky:
@@ -261,7 +272,8 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
             }
 
             if (this->copy_or_permission_list.is<PermissionCopy>()) {
-                assert(false);
+                reference |= resolve_permission_copy(this->copy_or_permission_list.as<PermissionCopy>());
+                return reference;
             }
 
             auto& perm_list = this->copy_or_permission_list.as<Vector<SymbolicMode::Permission>>();
@@ -277,7 +289,8 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
             }
 
             if (this->copy_or_permission_list.is<PermissionCopy>()) {
-                assert(false);
+                reference &= ~(resolve_permission_copy(this->copy_or_permission_list.as<PermissionCopy>()));
+                return reference;
             }
 
             auto& perm_list = this->copy_or_permission_list.as<Vector<SymbolicMode::Permission>>();
