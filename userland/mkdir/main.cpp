@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "%s: failed to parse mode: `%s'\n", *argv, optarg);
                     return 1;
                 }
-                mode = fancy_mode.value().resolve(mode, umask_value);
+                mode = fancy_mode.value().resolve(mode | S_IFDIR, umask_value);
                 break;
             }
             case ':':
