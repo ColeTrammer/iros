@@ -127,9 +127,14 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    bool recursive = strcmp(argv[0], "rgrep") == 0;
-    int regex_flags = REG_NEWLINE | (strcmp(argv[0], "egrep") == 0 ? REG_EXTENDED : 0);
-    use_regex = strcmp(argv[0], "fgrep") != 0;
+    char *last_slash = strrchr(argv[0], '/');
+    if (!last_slash) {
+        last_slash = argv[0] - 1;
+    }
+
+    bool recursive = strcmp(last_slash + 1, "rgrep") == 0;
+    int regex_flags = REG_NEWLINE | (strcmp(last_slash + 1, "egrep") == 0 ? REG_EXTENDED : 0);
+    use_regex = strcmp(last_slash + 1, "fgrep") != 0;
 
     char opt;
     opterr = 0;
