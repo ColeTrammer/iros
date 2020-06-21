@@ -1,7 +1,6 @@
 if (NOT ${NATIVE_BUILD})
     set(OS_TARGETS
         about
-        chown
         ping
         psfedit
         stat
@@ -15,6 +14,7 @@ set(TARGETS
     basename
     cat
     chmod
+    chown
     clear
     clipboard
     clipboard_server

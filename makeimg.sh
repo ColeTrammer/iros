@@ -28,6 +28,8 @@ ln -s grep mnt/bin/egrep
 ln -s grep mnt/bin/fgrep
 ln -s grep mnt/bin/rgrep
 
+ln -s chown mnt/bin/chgrp
+
 mkdir mnt/dev
 mknod mnt/dev/null c 1 1 -m 666
 mknod mnt/dev/zero c 1 2 -m 666
