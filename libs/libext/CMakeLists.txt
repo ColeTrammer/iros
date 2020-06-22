@@ -8,7 +8,7 @@ set(GENERATED_FILES
 add_custom_target(
     generate-mode-parser
     BYPRODUCTS ${GENERATED_FILES}
-    COMMAND ${NATIVE_PARSER} -s -p . ${CMAKE_CURRENT_SOURCE_DIR}/mode.y 2>mode.info || [ $$? = 2 ]
+    COMMAND ${NATIVE_PARSER} -p . -n Ext -v '<ext/parse_mode.h>' ${CMAKE_CURRENT_SOURCE_DIR}/mode.y 2>mode.info || [ $$? = 2 ]
     DEPENDS mode.y
 )
 

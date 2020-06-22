@@ -361,7 +361,7 @@ void Generator::generate_value_header(const String& path, const String& value_ty
         fprintf(file, "namespace %s {\n\n", m_name_space.string());
     }
 
-    fprintf(file, "using %sValue = LIIM::Variant<%sLiteral", m_output_name.string(), m_output_name.string());
+    fprintf(file, "using %sValue = LIIM::Variant<\n    %sLiteral", m_output_name.string(), m_output_name.string());
     for (const auto& id_view : m_identifiers) {
         String id(id_view);
         if (!m_token_types.includes(id_view) && id_view != "End" && id_view != "__start") {
