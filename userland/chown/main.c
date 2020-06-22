@@ -14,9 +14,11 @@ const char *UID_GID_SCANF_STRING = sizeof(uid_t) == 2 ? "%hd" : "%d";
 static char *prog_name;
 static bool chgrp;
 static bool any_failed;
+static bool follow_symlinks = true;
 
 void do_chown(uid_t uid, gid_t gid, const char *path) {
-    if (chown(path, uid, gid)) {
+    int (*chown_function)(const char *path, uid_t uid, gid_t gid) = follow_symlinks ? chown : lchown;
+    if (chown_function(path, uid, gid)) {
         fprintf(stderr, "%s: chown failed: %s", prog_name, strerror(errno));
         any_failed = 1;
     }
@@ -24,9 +26,9 @@ void do_chown(uid_t uid, gid_t gid, const char *path) {
 
 void print_usage_and_exit(const char *s) {
     if (chgrp) {
-        printf("Usage: %s <group> <file...>\n", s);
+        printf("Usage: %s [-h] <group> <file...>\n", s);
     } else {
-        printf("Usage: %s <user:group> <file...>\n", s);
+        printf("Usage: %s [-h] <user:group> <file...>\n", s);
     }
     exit(2);
 }
@@ -40,8 +42,11 @@ int main(int argc, char **argv) {
     chgrp = strcmp(last_slash + 1, "chgrp") == 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, ":")) != -1) {
+    while ((opt = getopt(argc, argv, ":h")) != -1) {
         switch (opt) {
+            case 'h':
+                follow_symlinks = false;
+                break;
             case ':':
             case '?':
                 print_usage_and_exit(*argv);
