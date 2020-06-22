@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <ftw.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdbool.h>
@@ -14,21 +15,33 @@ const char *UID_GID_SCANF_STRING = sizeof(uid_t) == 2 ? "%hd" : "%d";
 static char *prog_name;
 static bool chgrp;
 static bool any_failed;
+static bool recursive;
 static bool follow_symlinks = true;
 
-void do_chown(uid_t uid, gid_t gid, const char *path) {
+static uid_t uid = -1;
+static gid_t gid = -1;
+
+static void do_chown(const char *path) {
     int (*chown_function)(const char *path, uid_t uid, gid_t gid) = follow_symlinks ? chown : lchown;
     if (chown_function(path, uid, gid)) {
-        fprintf(stderr, "%s: chown failed: %s", prog_name, strerror(errno));
+        fprintf(stderr, "%s: chown failed for `%s': %s\n", prog_name, path, strerror(errno));
         any_failed = 1;
     }
 }
 
+static int recursive_chown(const char *path, const struct stat *st, int typeflag, struct FTW *ftwbuf) {
+    (void) st;
+    (void) typeflag;
+    (void) ftwbuf;
+    do_chown(path);
+    return 0;
+}
+
 void print_usage_and_exit(const char *s) {
     if (chgrp) {
-        printf("Usage: %s [-h] <group> <file...>\n", s);
+        printf("Usage: %s [-hR] <group> <file...>\n", s);
     } else {
-        printf("Usage: %s [-h] <user:group> <file...>\n", s);
+        printf("Usage: %s [-hR] <user:group> <file...>\n", s);
     }
     exit(2);
 }
@@ -42,10 +55,13 @@ int main(int argc, char **argv) {
     chgrp = strcmp(last_slash + 1, "chgrp") == 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, ":h")) != -1) {
+    while ((opt = getopt(argc, argv, ":hR")) != -1) {
         switch (opt) {
             case 'h':
                 follow_symlinks = false;
+                break;
+            case 'R':
+                recursive = true;
                 break;
             case ':':
             case '?':
@@ -71,7 +87,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    uid_t uid = -1;
     if (user) {
         struct passwd *p = getpwnam(user);
         if (!p) {
@@ -83,7 +98,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    gid_t gid = -1;
     if (group) {
         struct group *g = getgrnam(group);
         if (!g) {
@@ -96,7 +110,11 @@ int main(int argc, char **argv) {
     }
 
     for (; optind < argc; optind++) {
-        do_chown(uid, gid, argv[optind]);
+        if (recursive) {
+            nftw(argv[optind], recursive_chown, FOPEN_MAX - 3, FTW_PHYS | FTW_DEPTH);
+        } else {
+            do_chown(argv[optind]);
+        }
     }
 
     return any_failed;
