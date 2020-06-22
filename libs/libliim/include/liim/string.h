@@ -238,7 +238,8 @@ inline String& String::to_title_case() {
 
         if (string()[i] == '_') {
             string()[i + 1] = toupper(string()[i + 1]);
-            memmove(string() + i, string() + i + 1, size() - i - 1);
+            memmove(string() + i, string() + i + 1, size() - i);
+            set_size(size() - 1);
         } else {
             string()[i] = tolower(string()[i]);
         }
