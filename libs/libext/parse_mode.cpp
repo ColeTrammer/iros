@@ -110,88 +110,85 @@ public:
         return last_value.as<SymbolicMode>();
     }
 
-    virtual ModeValue reduce_who$lowercasea(ModeValue&) override { return { SymbolicMode::Who::All }; }
-    virtual ModeValue reduce_who$lowercaseg(ModeValue&) override { return { SymbolicMode::Who::Group }; }
-    virtual ModeValue reduce_who$lowercaseo(ModeValue&) override { return { SymbolicMode::Who::Other }; }
-    virtual ModeValue reduce_who$lowercaseu(ModeValue&) override { return { SymbolicMode::Who::User }; }
+    virtual ModeValue reduce_who$lowercasea(ModeValue&) override { return { Who::All }; }
+    virtual ModeValue reduce_who$lowercaseg(ModeValue&) override { return { Who::Group }; }
+    virtual ModeValue reduce_who$lowercaseo(ModeValue&) override { return { Who::Other }; }
+    virtual ModeValue reduce_who$lowercaseu(ModeValue&) override { return { Who::User }; }
 
     virtual ModeValue reduce_wholist$who(ModeValue& value) override {
-        Vector<SymbolicMode::Who> who_list;
-        who_list.add(value.as<SymbolicMode::Who>());
+        Vector<Who> who_list;
+        who_list.add(value.as<Who>());
         return { move(who_list) };
     }
 
     virtual ModeValue reduce_wholist$wholist_who(ModeValue& list, ModeValue& who) override {
-        list.as<Vector<SymbolicMode::Who>>().add(who.as<SymbolicMode::Who>());
+        list.as<Vector<Who>>().add(who.as<Who>());
         return list;
     }
 
-    virtual ModeValue reduce_op$minus(ModeValue&) override { return { SymbolicMode::Modifier::Minus }; }
-    virtual ModeValue reduce_op$plus(ModeValue&) override { return { SymbolicMode::Modifier::Plus }; }
-    virtual ModeValue reduce_op$equal(ModeValue&) override { return { SymbolicMode::Modifier::Equal }; }
+    virtual ModeValue reduce_modifier$minus(ModeValue&) override { return { Modifier::Minus }; }
+    virtual ModeValue reduce_modifier$plus(ModeValue&) override { return { Modifier::Plus }; }
+    virtual ModeValue reduce_modifier$equal(ModeValue&) override { return { Modifier::Equal }; }
 
-    virtual ModeValue reduce_perm$lowercaser(ModeValue&) override { return { SymbolicMode::Permission::Read }; }
-    virtual ModeValue reduce_perm$lowercases(ModeValue&) override { return { SymbolicMode::Permission::SetID }; }
-    virtual ModeValue reduce_perm$lowercaset(ModeValue&) override { return { SymbolicMode::Permission::Sticky }; }
-    virtual ModeValue reduce_perm$lowercasew(ModeValue&) override { return { SymbolicMode::Permission::Write }; }
-    virtual ModeValue reduce_perm$lowercasex(ModeValue&) override { return { SymbolicMode::Permission::Execute }; }
-    virtual ModeValue reduce_perm$uppercasex(ModeValue&) override { return { SymbolicMode::Permission::Search }; }
+    virtual ModeValue reduce_permission$lowercaser(ModeValue&) override { return { Permission::Read }; }
+    virtual ModeValue reduce_permission$lowercases(ModeValue&) override { return { Permission::SetID }; }
+    virtual ModeValue reduce_permission$lowercaset(ModeValue&) override { return { Permission::Sticky }; }
+    virtual ModeValue reduce_permission$lowercasew(ModeValue&) override { return { Permission::Write }; }
+    virtual ModeValue reduce_permission$lowercasex(ModeValue&) override { return { Permission::Execute }; }
+    virtual ModeValue reduce_permission$uppercasex(ModeValue&) override { return { Permission::Search }; }
 
-    virtual ModeValue reduce_permlist$perm(ModeValue& value) override {
-        Vector<SymbolicMode::Permission> perms;
-        perms.add(value.as<SymbolicMode::Permission>());
+    virtual ModeValue reduce_permlist$permission(ModeValue& value) override {
+        Permlist perms;
+        perms.add(value.as<Permission>());
         return { move(perms) };
     }
 
-    virtual ModeValue reduce_permlist$perm_permlist(ModeValue& value, ModeValue& list) override {
-        list.as<Vector<SymbolicMode::Permission>>().insert(value.as<SymbolicMode::Permission>(), 0);
+    virtual ModeValue reduce_permlist$permission_permlist(ModeValue& value, ModeValue& list) override {
+        list.as<Permlist>().insert(value.as<Permission>(), 0);
         return list;
     }
 
-    virtual ModeValue reduce_permcopy$lowercaseg(ModeValue&) override { return { SymbolicMode::PermissionCopy::Group }; }
-    virtual ModeValue reduce_permcopy$lowercaseo(ModeValue&) override { return { SymbolicMode::PermissionCopy::Other }; }
-    virtual ModeValue reduce_permcopy$lowercaseu(ModeValue&) override { return { SymbolicMode::PermissionCopy::User }; }
+    virtual ModeValue reduce_permission_copy$lowercaseg(ModeValue&) override { return { PermissionCopy::Group }; }
+    virtual ModeValue reduce_permission_copy$lowercaseo(ModeValue&) override { return { PermissionCopy::Other }; }
+    virtual ModeValue reduce_permission_copy$lowercaseu(ModeValue&) override { return { PermissionCopy::User }; }
 
-    virtual ModeValue reduce_action$op(ModeValue& op) override {
-        return { SymbolicMode::Clause::Action { op.as<SymbolicMode::Modifier>(), {} } };
+    virtual ModeValue reduce_action$modifier(ModeValue& op) override { return { Action { op.as<Modifier>(), {} } }; }
+
+    virtual ModeValue reduce_action$modifier_permlist(ModeValue& op, ModeValue& permlist) override {
+        return { Action { op.as<Modifier>(), { permlist.as<Vector<Permission>>() } } };
     }
 
-    virtual ModeValue reduce_action$op_permlist(ModeValue& op, ModeValue& permlist) override {
-        return { SymbolicMode::Clause::Action { op.as<SymbolicMode::Modifier>(), { permlist.as<Vector<SymbolicMode::Permission>>() } } };
-    }
-
-    virtual ModeValue reduce_action$op_permcopy(ModeValue& op, ModeValue& permlist) override {
-        return { SymbolicMode::Clause::Action { op.as<SymbolicMode::Modifier>(), { permlist.as<SymbolicMode::PermissionCopy>() } } };
+    virtual ModeValue reduce_action$modifier_permission_copy(ModeValue& op, ModeValue& permlist) override {
+        return { Action { op.as<Modifier>(), { permlist.as<PermissionCopy>() } } };
     }
 
     virtual ModeValue reduce_actionlist$action(ModeValue& value) override {
-        Vector<SymbolicMode::Clause::Action> actions;
-        actions.add(value.as<SymbolicMode::Clause::Action>());
+        Actionlist actions;
+        actions.add(value.as<Action>());
         return { move(actions) };
     }
 
     virtual ModeValue reduce_actionlist$actionlist_action(ModeValue& list, ModeValue& value) override {
-        list.as<Vector<SymbolicMode::Clause::Action>>().add(value.as<SymbolicMode::Clause::Action>());
+        list.as<Actionlist>().add(value.as<Action>());
         return list;
     }
 
     virtual ModeValue reduce_clause$actionlist(ModeValue& list) override {
-        return { SymbolicMode::Clause { Vector<SymbolicMode::Who>(), move(list.as<Vector<SymbolicMode::Clause::Action>>()) } };
+        return { Clause { Vector<Who>(), move(list.as<Actionlist>()) } };
     }
 
     virtual ModeValue reduce_clause$wholist_actionlist(ModeValue& wlist, ModeValue& list) override {
-        return { SymbolicMode::Clause { move(wlist.as<Vector<SymbolicMode::Who>>()),
-                                        move(list.as<Vector<SymbolicMode::Clause::Action>>()) } };
+        return { Clause { move(wlist.as<Vector<Who>>()), move(list.as<Actionlist>()) } };
     }
 
     virtual ModeValue reduce_symbolic_mode$clause(ModeValue& value) override {
         SymbolicMode mode;
-        mode.clauses().add(value.as<SymbolicMode::Clause>());
+        mode.clauses().add(value.as<Clause>());
         return mode;
     }
 
     virtual ModeValue reduce_symbolic_mode$symbolic_mode_comma_clause(ModeValue& mode, ModeValue&, ModeValue& value) override {
-        mode.as<SymbolicMode>().clauses().add(value.as<SymbolicMode::Clause>());
+        mode.as<SymbolicMode>().clauses().add(value.as<Clause>());
         return mode;
     }
 };
@@ -221,21 +218,21 @@ Maybe<Mode> parse_mode(const String& string) {
     return { { move(parser.result()) } };
 }
 
-mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, const Vector<SymbolicMode::Who>& who_list) const {
+mode_t Action::resolve(mode_t reference, mode_t mask, const Wholist& who_list) const {
     mode_t computed_mask = mask;
     if (!who_list.empty()) {
         computed_mask = 0;
     }
 
     for (auto who : who_list) {
-        if (who == SymbolicMode::Who::All) {
+        if (who == Who::All) {
             computed_mask = 0777;
             break;
         }
         computed_mask |= (7U << ((mode_t) who) * 3);
     }
 
-    auto resolve_permission_copy = [&](SymbolicMode::PermissionCopy copy) -> mode_t {
+    auto resolve_permission_copy = [&](PermissionCopy copy) -> mode_t {
         int bits_to_shift = ((int) copy) * 3;
         mode_t part_mask = 7 << bits_to_shift;
         mode_t max_perm = (reference & part_mask) >> bits_to_shift;
@@ -245,17 +242,17 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
         return max_perm & computed_mask;
     };
 
-    auto resolve_permission = [&](SymbolicMode::Permission perm) -> mode_t {
+    auto resolve_permission = [&](Permission perm) -> mode_t {
         switch (perm) {
-            case SymbolicMode::Permission::Read:
-            case SymbolicMode::Permission::Write:
-            case SymbolicMode::Permission::Execute: {
+            case Permission::Read:
+            case Permission::Write:
+            case Permission::Execute: {
                 mode_t max_perm = (mode_t) perm;
                 max_perm |= max_perm << 3;
                 max_perm |= max_perm << 3;
                 return max_perm & computed_mask;
             }
-            case SymbolicMode::Permission::SetID: {
+            case Permission::SetID: {
                 if (who_list.empty()) {
                     return S_ISUID | S_ISGID;
                 }
@@ -269,12 +266,12 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
                 }
                 return ret;
             }
-            case SymbolicMode::Permission::Sticky:
-                if (who_list.empty() || (who_list.size() == 1 && who_list.first() == SymbolicMode::Who::All)) {
+            case Permission::Sticky:
+                if (who_list.empty() || (who_list.size() == 1 && who_list.first() == Who::All)) {
                     return S_ISVTX;
                 }
                 return 0;
-            case SymbolicMode::Permission::Search: {
+            case Permission::Search: {
                 if ((reference & S_IFDIR) || (reference & 0111)) {
                     return 0111 & computed_mask;
                 }
@@ -286,9 +283,9 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
     };
 
     switch (this->modifier) {
-        case SymbolicMode::Modifier::Plus:
+        case Modifier::Plus:
         plus : {
-            if (this->copy_or_permission_list.is<Monostate>()) {
+            if (this->copy_or_permission_list.is<ModeLiteral>()) {
                 return reference;
             }
 
@@ -297,14 +294,14 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
                 return reference;
             }
 
-            auto& perm_list = this->copy_or_permission_list.as<Vector<SymbolicMode::Permission>>();
+            auto& perm_list = this->copy_or_permission_list.as<Permlist>();
             for (auto perm : perm_list) {
                 reference |= resolve_permission(perm);
             }
 
             return reference;
         }
-        case SymbolicMode::Modifier::Minus: {
+        case Modifier::Minus: {
             if (this->copy_or_permission_list.is<Monostate>()) {
                 return reference;
             }
@@ -314,14 +311,14 @@ mode_t SymbolicMode::Clause::Action::resolve(mode_t reference, mode_t mask, cons
                 return reference;
             }
 
-            auto& perm_list = this->copy_or_permission_list.as<Vector<SymbolicMode::Permission>>();
+            auto& perm_list = this->copy_or_permission_list.as<Permlist>();
             for (auto perm : perm_list) {
                 reference &= ~(resolve_permission(perm));
             }
 
             return reference;
         }
-        case SymbolicMode::Modifier::Equal: {
+        case Modifier::Equal: {
             if (who_list.empty()) {
                 reference = 0;
             } else {

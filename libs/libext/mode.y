@@ -26,24 +26,24 @@ actionlist       : action
                  ;
 
 
-action           : op
-                 | op permlist
-                 | op permcopy
+action           : modifier
+                 | modifier permlist
+                 | modifier permission_copy
                  ;
 
 
-permcopy         : 'u' | 'g' | 'o'
+permission_copy  : 'u' | 'g' | 'o'
                  ;
 
 
-op               : '+' | '-' | '='
+modifier         : '+' | '-' | '='
                  ;
 
 
-permlist         : perm
-                 | perm permlist
+permlist         : permission
+                 | permission permlist
                  ;
 
 
-perm             : 'r' | 'w' | 'x' | 'X' | 's' | 't'  
+permission       : 'r' | 'w' | 'x' | 'X' | 's' | 't'  
                  ;

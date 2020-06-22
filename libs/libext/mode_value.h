@@ -5,8 +5,7 @@
 
 namespace Ext {
 
-using ModeValue = Variant<Monostate, SymbolicMode, SymbolicMode::Who, Vector<SymbolicMode::Who>, SymbolicMode::Modifier,
-                          SymbolicMode::Permission, Vector<SymbolicMode::Permission>, SymbolicMode::Clause::Action,
-                          Vector<SymbolicMode::Clause::Action>, SymbolicMode::PermissionCopy, SymbolicMode::Clause>;
+using ModeValue =
+    LIIM::Variant<ModeLiteral, SymbolicMode, Clause, Wholist, Who, Actionlist, Action, PermissionCopy, Modifier, Permlist, Permission>;
 
 }
