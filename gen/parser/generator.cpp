@@ -8,12 +8,13 @@
 #include "literal.h"
 
 Generator::Generator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
-                     const LinkedList<String>& literals, const String& output_name, bool dont_overwite)
+                     const LinkedList<String>& literals, const String& output_name, bool dont_overwite, const String& name_space)
     : m_table(table)
     , m_identifiers(identifiers)
     , m_token_types(token_types)
     , m_literals(literals)
     , m_output_name(output_name)
+    , m_name_space(name_space)
     , m_dont_overwrite(dont_overwite) {}
 
 Generator::~Generator() {}
@@ -21,7 +22,7 @@ Generator::~Generator() {}
 void Generator::generate_token_type_header(const String& path) {
     fprintf(stderr, "Writing token types to %s.\n", path.string());
 
-    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0664);
+    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0666);
     if (ofd == -1) {
         perror("opening generic parser");
         if (errno == EEXIST) {
@@ -77,7 +78,7 @@ void Generator::generate_generic_parser(String path) {
 
     fprintf(stderr, "Writing generic parser to %s.\n", path.string());
 
-    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0644);
+    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0666);
     if (ofd == -1) {
         perror("opening generic parser");
         if (errno == EEXIST) {
@@ -334,6 +335,47 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "};\n");
     if (fclose(file) != 0) {
         perror("close");
+        exit(1);
+    }
+}
+
+void Generator::generate_value_header(const String& path, const String& value_types_header) {
+    fprintf(stderr, "Writing value header to %s.\n", path.string());
+
+    int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0666);
+    if (ofd == -1) {
+        perror("opening generic parser");
+        if (errno == EEXIST) {
+            exit(2);
+        }
+        exit(1);
+    }
+
+    FILE* file = fdopen(ofd, "w");
+
+    fprintf(file, "#pragma once\n\n");
+    fprintf(file, "#include <liim/variant.h>\n");
+    fprintf(file, "#include %s\n\n", value_types_header.string());
+
+    if (!m_name_space.is_empty()) {
+        fprintf(file, "namespace %s {\n\n", m_name_space.string());
+    }
+
+    fprintf(file, "using %sValue = LIIM::Variant<%sLiteral", m_output_name.string(), m_output_name.string());
+    for (const auto& id_view : m_identifiers) {
+        String id(id_view);
+        if (!m_token_types.includes(id_view) && id_view != "End" && id_view != "__start") {
+            fprintf(file, ",\n    %s", id.to_title_case().string());
+        }
+    }
+    fprintf(file, "\n>;\n");
+
+    if (!m_name_space.is_empty()) {
+        fprintf(file, "\n}\n");
+    }
+
+    if (fclose(file) != 0) {
+        perror("fclose");
         exit(1);
     }
 }

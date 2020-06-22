@@ -17,7 +17,7 @@
 #include "state_table.h"
 
 void print_usage_and_exit(char** argv) {
-    fprintf(stderr, "Usage: %s [-s] [-p output-dir] <grammar>\n", argv[0]);
+    fprintf(stderr, "Usage: %s [-s] [-p output-dir] [-v value-types-header] [-n namespace] <grammar>\n", argv[0]);
     exit(1);
 }
 
@@ -147,14 +147,24 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
 int main(int argc, char** argv) {
     int opt;
     char* output_dir = nullptr;
+    const char* name_space = "";
+    const char* value_types_header = "";
     bool dont_overwrite_files = false;
-    while ((opt = getopt(argc, argv, ":sp:")) != -1) {
+    bool generate_value_header = false;
+    while ((opt = getopt(argc, argv, ":n:p:sv:")) != -1) {
         switch (opt) {
+            case 'n':
+                name_space = optarg;
+                break;
             case 'p':
                 output_dir = optarg;
                 break;
             case 's':
                 dont_overwrite_files = true;
+                break;
+            case 'v':
+                generate_value_header = true;
+                value_types_header = optarg;
                 break;
             case ':':
             case '?':
@@ -369,9 +379,17 @@ int main(int argc, char** argv) {
     output_parser += output_name;
     output_parser += "_parser.h";
 
-    Generator generator(state_table, identifiers, token_types, literals, output_name, dont_overwrite_files);
+    String value_header = prepend;
+    value_header += output_name;
+    value_header += "_value.h";
+
+    Generator generator(state_table, identifiers, token_types, literals, output_name, dont_overwrite_files, name_space);
     generator.generate_token_type_header(output_header);
     generator.generate_generic_parser(output_parser);
+
+    if (generate_value_header) {
+        generator.generate_value_header(value_header, value_types_header);
+    }
 
     if (munmap(contents, info.st_size) != 0) {
         perror("munmap");
