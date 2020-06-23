@@ -28,6 +28,7 @@ add_custom_command(
     OUTPUT ${REGEX_GENERATED_FILES}
     COMMAND ${NATIVE_PARSER} -p . ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2> regex/regex.info
     VERBATIM
+    DEPENDS ${NATIVE_PARSER}
     MAIN_DEPENDENCY regex/regex.y
 )
 add_custom_target(generate-regex-parser DEPENDS ${REGEX_GENERATED_FILES})

@@ -9,6 +9,7 @@ add_custom_command(
     OUTPUT ${GENERATED_FILES}
     COMMAND ${NATIVE_PARSER} -p . -n Ext -v <ext/parse_mode.h> ${CMAKE_CURRENT_SOURCE_DIR}/mode.y 2> mode.info
     VERBATIM
+    DEPENDS ${NATIVE_PARSER}
     MAIN_DEPENDENCY mode.y
 )
 add_custom_target(generate-mode-parser DEPENDS ${GENERATED_FILES})

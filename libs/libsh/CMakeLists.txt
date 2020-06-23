@@ -9,6 +9,7 @@ add_custom_command(
     OUTPUT ${GENERATED_FILES}
     COMMAND ${NATIVE_PARSER} -p . ${CMAKE_CURRENT_SOURCE_DIR}/sh.y 2> sh.info
     VERBATIM
+    DEPENDS ${NATIVE_PARSER}
     MAIN_DEPENDENCY sh.y
 )
 add_custom_target(generate-sh-parser DEPENDS ${GENERATED_FILES})
