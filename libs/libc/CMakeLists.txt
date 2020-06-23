@@ -14,6 +14,7 @@ set(REGEX_GENERATED_FILES
 )
 
 set(REGEX_LIB_SOURCES
+    ${REGEX_GENERATED_FILES}
     regex/regex_lexer.cpp
     regex/regex_graph.cpp
     regex/generic_regex_parser.cpp
@@ -23,12 +24,13 @@ set(REGEX_LIB_SOURCES
     regex/regfree.cpp
 )
 
-add_custom_target(
-    generate-regex-parser
-    BYPRODUCTS ${REGEX_GENERATED_FILES}
-    COMMAND ${NATIVE_PARSER} -s -p regex ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2>regex/regex.info || [ $$? = 2 ]
-    DEPENDS regex/regex.y
+add_custom_command(
+    OUTPUT ${REGEX_GENERATED_FILES}
+    COMMAND ${NATIVE_PARSER} -p . ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2> regex/regex.info
+    VERBATIM
+    MAIN_DEPENDENCY regex/regex.y
 )
+add_custom_target(generate-regex-parser DEPENDS ${REGEX_GENERATED_FILES})
 
 add_library(libregex OBJECT ${REGEX_LIB_SOURCES})
 target_link_libraries(libregex PRIVATE libliim parser_headers)

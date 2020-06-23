@@ -5,14 +5,16 @@ set(GENERATED_FILES
     sh.info
 )
 
-add_custom_target(
-    generate-sh-parser
-    BYPRODUCTS ${GENERATED_FILES}
-    COMMAND ${NATIVE_PARSER} -s -p . ${CMAKE_CURRENT_SOURCE_DIR}/sh.y 2>sh.info || [ $$? = 2 ]
-    DEPENDS sh.y
+add_custom_command(
+    OUTPUT ${GENERATED_FILES}
+    COMMAND ${NATIVE_PARSER} -p . ${CMAKE_CURRENT_SOURCE_DIR}/sh.y 2> sh.info
+    VERBATIM
+    MAIN_DEPENDENCY sh.y
 )
+add_custom_target(generate-sh-parser DEPENDS ${GENERATED_FILES})
 
 set(SOURCES
+    ${GENERATED_FILES}
     generic_sh_parser.cpp
     sh_lexer.cpp
 )
