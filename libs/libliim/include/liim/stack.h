@@ -22,13 +22,14 @@ public:
     T pop() {
         assert(!empty());
 
-        T val = m_vector.last();
+        T val = move(m_vector.last());
         m_vector.remove_last();
 
         return val;
     }
 
     void push(const T& val) { m_vector.add(val); }
+    void push(T&& val) { m_vector.add(move(val)); }
 
     bool empty() const { return m_vector.empty(); }
 
