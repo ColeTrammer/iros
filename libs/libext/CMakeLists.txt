@@ -16,7 +16,6 @@ add_custom_target(generate-mode-parser DEPENDS ${GENERATED_FILES})
 
 set(SOURCES
     ${GENERATED_FILES}
-    generic_mode_parser.cpp
     parse_mode.cpp
 )
 

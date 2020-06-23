@@ -96,11 +96,11 @@ private:
     Vector<Token> m_tokens;
 };
 
-class ModeParser final : public GenericModeParser<ModeValue> {
+class ModeParser final : public GenericModeParser {
 public:
     using Token = GenericToken<ModeTokenType, ModeValue>;
 
-    ModeParser(GenericLexer<ModeTokenType, ModeValue>& lexer) : GenericModeParser<ModeValue>(lexer) {}
+    ModeParser(GenericLexer<ModeTokenType, ModeValue>& lexer) : GenericModeParser(lexer) {}
 
     virtual void on_error(ModeTokenType) override {}
 

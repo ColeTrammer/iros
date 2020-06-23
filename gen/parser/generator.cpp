@@ -8,14 +8,16 @@
 #include "literal.h"
 
 Generator::Generator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
-                     const LinkedList<String>& literals, const String& output_name, bool dont_overwite, const String& name_space)
+                     const LinkedList<String>& literals, const String& output_name, bool dont_overwite, bool has_value_header,
+                     const String& name_space)
     : m_table(table)
     , m_identifiers(identifiers)
     , m_token_types(token_types)
     , m_literals(literals)
     , m_output_name(output_name)
     , m_name_space(name_space)
-    , m_dont_overwrite(dont_overwite) {}
+    , m_dont_overwrite(dont_overwite)
+    , m_has_value_header(has_value_header) {}
 
 Generator::~Generator() {}
 
@@ -94,19 +96,28 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "#include <stdio.h>\n\n");
     fprintf(file, "#include <parser/generic_parser.h>\n");
     fprintf(file, "#include <parser/generic_token.h>\n");
-    fprintf(file, "%s", String::format("#include \"%s_token_type.h\"\n\n", m_output_name.to_lower_case().string()).string());
+    fprintf(file, "%s", String::format("#include \"%s_token_type.h\"\n", m_output_name.to_lower_case().string()).string());
 
-    fprintf(file, "%s",
-            String::format("template<typename Value> class Generic%sParser : public GenericParser<%sTokenType, Value> {\n",
-                           m_output_name.to_title_case().string(), m_output_name.string())
-                .string());
+    String value_string = String::format("%sValue", String(m_output_name).to_title_case().string());
+    if (m_has_value_header) {
+        fprintf(file, "#include \"%s_value.h\"\n", m_output_name.string());
+    }
+
+    if (!m_name_space.is_empty()) {
+        fprintf(file, "\nnamespace %s {\n", m_name_space.string());
+    }
+
+    if (!m_has_value_header) {
+        fprintf(file, "\ntemplate<typename %s>", value_string.string());
+    }
+
+    fprintf(file, "\nclass Generic%sParser : public GenericParser<%sTokenType, %s> {\n", m_output_name.to_title_case().string(),
+            m_output_name.string(), value_string.string());
     fprintf(file, "public:\n");
-    fprintf(file, "%s", String::format("    using Token = GenericToken<%sTokenType, Value>;\n\n", m_output_name.string()).string());
-    fprintf(file, "%s",
-            String::format("    Generic%sParser(GenericLexer<%sTokenType, Value>& lexer) : GenericParser<%sTokenType, Value>(lexer) {}\n",
-                           m_output_name.string(), m_output_name.string(), m_output_name.string())
-                .string());
-    fprintf(file, "%s", String::format("    virtual ~Generic%sParser() override {}\n\n", m_output_name.string()).string());
+    fprintf(file, "    using Token = GenericToken<%sTokenType, %s>;\n\n", m_output_name.string(), value_string.string());
+    fprintf(file, "    Generic%sParser(GenericLexer<%sTokenType, %s>& lexer) : GenericParser<%sTokenType, %s>(lexer) {}\n",
+            m_output_name.string(), m_output_name.string(), value_string.string(), m_output_name.string(), value_string.string());
+    fprintf(file, "    virtual ~Generic%sParser() override {}\n\n", m_output_name.string());
 
     fprintf(file, "    static const char* token_type_to_string(%sTokenType type) {\n",
             String(m_output_name.to_title_case().string()).string());
@@ -156,10 +167,22 @@ void Generator::generate_generic_parser(String path) {
         FILE* file = fdopen(ofd, "w");
         fprintf(file, "#include \"generic_%s_parser.h\"\n\n", String(m_output_name).to_lower_case().string());
 
-        fprintf(file,
-                "template<typename Value> bool Generic%sParser<Value>::is_valid_token_type_in_current_state_for_shift(%sTokenType type) "
-                "const {\n",
-                String(m_output_name).to_title_case().string(), String(m_output_name).to_title_case().string());
+        if (!m_name_space.is_empty()) {
+            fprintf(file, "namespace %s {\n\n", m_name_space.string());
+        }
+
+        if (!m_has_value_header) {
+            fprintf(file,
+                    "template<typename %s> bool Generic%sParser<%s>::is_valid_token_type_in_current_state_for_shift(%sTokenType type) "
+                    "const {\n",
+                    value_string.string(), String(m_output_name).to_title_case().string(), value_string.string(),
+                    String(m_output_name).to_title_case().string());
+        } else {
+            fprintf(file,
+                    "bool Generic%sParser::is_valid_token_type_in_current_state_for_shift(%sTokenType type) "
+                    "const {\n",
+                    String(m_output_name).to_title_case().string(), String(m_output_name).to_title_case().string());
+        }
         fprintf(file, "    switch (this->current_state()) {\n");
         for (int i = 0; i < m_table.table().size(); i++) {
             const auto& row = m_table.table()[i];
@@ -186,9 +209,15 @@ void Generator::generate_generic_parser(String path) {
         fprintf(file, "    }\n");
         fprintf(file, "}\n\n");
 
-        fprintf(file,
-                "template<typename Value> bool Generic%sParser<Value>::is_valid_token_type_in_current_state(%sTokenType type) const {\n",
-                String(m_output_name).to_title_case().string(), String(m_output_name).to_title_case().string());
+        if (!m_has_value_header) {
+            fprintf(file,
+                    "template<typename %s> bool Generic%sParser<%s>::is_valid_token_type_in_current_state(%sTokenType type) const {\n",
+                    value_string.string(), String(m_output_name).to_title_case().string(), value_string.string(),
+                    String(m_output_name).to_title_case().string());
+        } else {
+            fprintf(file, "bool Generic%sParser::is_valid_token_type_in_current_state(%sTokenType type) const {\n",
+                    String(m_output_name).to_title_case().string(), String(m_output_name).to_title_case().string());
+        }
         fprintf(file, "    switch (this->current_state()) {\n");
         for (int i = 0; i < m_table.table().size(); i++) {
             const auto& row = m_table.table()[i];
@@ -208,7 +237,12 @@ void Generator::generate_generic_parser(String path) {
         fprintf(file, "    }\n");
         fprintf(file, "}\n\n");
 
-        fprintf(file, "template<typename Value> bool Generic%sParser<Value>::parse() {\n", String(m_output_name).to_title_case().string());
+        if (!m_has_value_header) {
+            fprintf(file, "template<typename %s> bool Generic%sParser<%s>::parse() {\n", value_string.string(),
+                    String(m_output_name).to_title_case().string(), value_string.string());
+        } else {
+            fprintf(file, "bool Generic%sParser::parse() {\n", String(m_output_name).to_title_case().string());
+        }
         fprintf(file, "    for (; !this->error() ;) {\n");
         fprintf(file, "        switch (this->current_state()) {\n");
 
@@ -253,7 +287,8 @@ void Generator::generate_generic_parser(String path) {
                         assert(info);
                         String args = "";
                         for (int i = 0; i < info->arg_count; i++) {
-                            fprintf(file, "                        Value v%d = this->pop_stack_state();\n", info->arg_count - i - 1);
+                            fprintf(file, "                        %s v%d = this->pop_stack_state();\n", value_string.string(),
+                                    info->arg_count - i - 1);
                             args += String::format("v%d", i);
                             if (i != info->arg_count - 1) {
                                 args += ", ";
@@ -283,7 +318,11 @@ void Generator::generate_generic_parser(String path) {
         fprintf(file, "        }\n");
         fprintf(file, "    }\n\n");
         fprintf(file, "    return false;\n");
-        fprintf(file, "}\n\n");
+        fprintf(file, "}\n");
+
+        if (!m_name_space.is_empty()) {
+            fprintf(file, "\n}\n");
+        }
     }
 
     fprintf(file, "protected:\n");
@@ -299,9 +338,9 @@ void Generator::generate_generic_parser(String path) {
             String arg_list = "(";
             for (int i = 0; i < info.arg_count; i++) {
                 if (i == 0) {
-                    arg_list += "Value& v";
+                    arg_list += String::format("%s& v", value_string.string());
                 } else {
-                    arg_list += "Value&";
+                    arg_list += String::format("%s&", value_string.string());
                 }
 
                 if (i != info.arg_count - 1) {
@@ -310,12 +349,12 @@ void Generator::generate_generic_parser(String path) {
             }
             arg_list += ")";
 
-            String return_string = info.arg_count == 0 ? "Value()" : "v";
+            String return_string = info.arg_count == 0 ? String::format("%s()", value_string.string()) : "v";
 
 #if 0
-            fprintf(file, "    virtual Value %s%s = 0;\n", info.function_name.string(), arg_list.string());
+            fprintf(file, "    virtual %s %s%s = 0;\n", value_string.string(), info.function_name.string(), arg_list.string());
 #else
-            fprintf(file, "    virtual Value %s%s {\n", info.function_name.string(), arg_list.string());
+            fprintf(file, "    virtual %s %s%s {\n", value_string.string(), info.function_name.string(), arg_list.string());
             fprintf(file, "#ifdef GENERIC_%s_PARSER_DEBUG\n", String(m_output_name).to_upper_case().string());
             fprintf(file, "        fprintf(stderr, \"%%s called.\\n\", __FUNCTION__);\n");
             fprintf(file, "#endif /* GENERIC_%s_PARSER_DEBUG */\n", String(m_output_name).to_upper_case().string());
@@ -333,6 +372,10 @@ void Generator::generate_generic_parser(String path) {
             m_output_name.string());
 
     fprintf(file, "};\n");
+    if (!m_name_space.is_empty()) {
+        fprintf(file, "\n}\n");
+    }
+
     if (fclose(file) != 0) {
         perror("close");
         exit(1);

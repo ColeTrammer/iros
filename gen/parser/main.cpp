@@ -383,7 +383,8 @@ int main(int argc, char** argv) {
     value_header += output_name;
     value_header += "_value.h";
 
-    Generator generator(state_table, identifiers, token_types, literals, output_name, dont_overwrite_files, name_space);
+    Generator generator(state_table, identifiers, token_types, literals, output_name, dont_overwrite_files, generate_value_header,
+                        name_space);
     generator.generate_token_type_header(output_header);
     generator.generate_generic_parser(output_parser);
 
