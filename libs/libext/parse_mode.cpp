@@ -110,85 +110,71 @@ public:
         return last_value.as<SymbolicMode>();
     }
 
-    virtual ModeValue reduce_who$lowercasea(ModeValue&) override { return { Who::All }; }
-    virtual ModeValue reduce_who$lowercaseg(ModeValue&) override { return { Who::Group }; }
-    virtual ModeValue reduce_who$lowercaseo(ModeValue&) override { return { Who::Other }; }
-    virtual ModeValue reduce_who$lowercaseu(ModeValue&) override { return { Who::User }; }
+    virtual Who reduce_who$lowercasea(ModeTerminal&) override { return { Who::All }; }
+    virtual Who reduce_who$lowercaseg(ModeTerminal&) override { return { Who::Group }; }
+    virtual Who reduce_who$lowercaseo(ModeTerminal&) override { return { Who::Other }; }
+    virtual Who reduce_who$lowercaseu(ModeTerminal&) override { return { Who::User }; }
 
-    virtual ModeValue reduce_wholist$who(ModeValue& value) override {
-        Vector<Who> who_list;
-        who_list.add(value.as<Who>());
-        return { move(who_list) };
-    }
+    virtual Wholist reduce_wholist$who(Who& value) override { return Wholist::create_from_single_element(value); }
 
-    virtual ModeValue reduce_wholist$wholist_who(ModeValue& list, ModeValue& who) override {
-        list.as<Vector<Who>>().add(who.as<Who>());
+    virtual Wholist reduce_wholist$wholist_who(Wholist& list, Who& who) override {
+        list.add(who);
         return list;
     }
 
-    virtual ModeValue reduce_modifier$minus(ModeValue&) override { return { Modifier::Minus }; }
-    virtual ModeValue reduce_modifier$plus(ModeValue&) override { return { Modifier::Plus }; }
-    virtual ModeValue reduce_modifier$equal(ModeValue&) override { return { Modifier::Equal }; }
+    virtual Modifier reduce_modifier$minus(ModeTerminal&) override { return { Modifier::Minus }; }
+    virtual Modifier reduce_modifier$plus(ModeTerminal&) override { return { Modifier::Plus }; }
+    virtual Modifier reduce_modifier$equal(ModeTerminal&) override { return { Modifier::Equal }; }
 
-    virtual ModeValue reduce_permission$lowercaser(ModeValue&) override { return { Permission::Read }; }
-    virtual ModeValue reduce_permission$lowercases(ModeValue&) override { return { Permission::SetID }; }
-    virtual ModeValue reduce_permission$lowercaset(ModeValue&) override { return { Permission::Sticky }; }
-    virtual ModeValue reduce_permission$lowercasew(ModeValue&) override { return { Permission::Write }; }
-    virtual ModeValue reduce_permission$lowercasex(ModeValue&) override { return { Permission::Execute }; }
-    virtual ModeValue reduce_permission$uppercasex(ModeValue&) override { return { Permission::Search }; }
+    virtual Permission reduce_permission$lowercaser(ModeTerminal&) override { return { Permission::Read }; }
+    virtual Permission reduce_permission$lowercases(ModeTerminal&) override { return { Permission::SetID }; }
+    virtual Permission reduce_permission$lowercaset(ModeTerminal&) override { return { Permission::Sticky }; }
+    virtual Permission reduce_permission$lowercasew(ModeTerminal&) override { return { Permission::Write }; }
+    virtual Permission reduce_permission$lowercasex(ModeTerminal&) override { return { Permission::Execute }; }
+    virtual Permission reduce_permission$uppercasex(ModeTerminal&) override { return { Permission::Search }; }
 
-    virtual ModeValue reduce_permlist$permission(ModeValue& value) override {
-        Permlist perms;
-        perms.add(value.as<Permission>());
-        return { move(perms) };
-    }
+    virtual Permlist reduce_permlist$permission(Permission& value) override { return Permlist::create_from_single_element(move(value)); }
 
-    virtual ModeValue reduce_permlist$permission_permlist(ModeValue& value, ModeValue& list) override {
-        list.as<Permlist>().insert(value.as<Permission>(), 0);
+    virtual Permlist reduce_permlist$permission_permlist(Permission& value, Permlist& list) override {
+        list.insert(move(value), 0);
         return list;
     }
 
-    virtual ModeValue reduce_permission_copy$lowercaseg(ModeValue&) override { return { PermissionCopy::Group }; }
-    virtual ModeValue reduce_permission_copy$lowercaseo(ModeValue&) override { return { PermissionCopy::Other }; }
-    virtual ModeValue reduce_permission_copy$lowercaseu(ModeValue&) override { return { PermissionCopy::User }; }
+    virtual PermissionCopy reduce_permission_copy$lowercaseg(ModeTerminal&) override { return { PermissionCopy::Group }; }
+    virtual PermissionCopy reduce_permission_copy$lowercaseo(ModeTerminal&) override { return { PermissionCopy::Other }; }
+    virtual PermissionCopy reduce_permission_copy$lowercaseu(ModeTerminal&) override { return { PermissionCopy::User }; }
 
-    virtual ModeValue reduce_action$modifier(ModeValue& op) override { return { Action { op.as<Modifier>(), {} } }; }
+    virtual Action reduce_action$modifier(Modifier& op) override { return { Action { op, {} } }; }
 
-    virtual ModeValue reduce_action$modifier_permlist(ModeValue& op, ModeValue& permlist) override {
-        return { Action { op.as<Modifier>(), { permlist.as<Vector<Permission>>() } } };
+    virtual Action reduce_action$modifier_permlist(Modifier& op, Permlist& permlist) override {
+        return { Action { op, { move(permlist) } } };
     }
 
-    virtual ModeValue reduce_action$modifier_permission_copy(ModeValue& op, ModeValue& permlist) override {
-        return { Action { op.as<Modifier>(), { permlist.as<PermissionCopy>() } } };
+    virtual Action reduce_action$modifier_permission_copy(Modifier& op, PermissionCopy& permlist) override {
+        return { Action { op, { move(permlist) } } };
     }
 
-    virtual ModeValue reduce_actionlist$action(ModeValue& value) override {
-        Actionlist actions;
-        actions.add(value.as<Action>());
-        return { move(actions) };
-    }
+    virtual Actionlist reduce_actionlist$action(Action& value) override { return Actionlist::create_from_single_element(move(value)); }
 
-    virtual ModeValue reduce_actionlist$actionlist_action(ModeValue& list, ModeValue& value) override {
-        list.as<Actionlist>().add(value.as<Action>());
+    virtual Actionlist reduce_actionlist$actionlist_action(Actionlist& list, Action& value) override {
+        list.add(move(value));
         return list;
     }
 
-    virtual ModeValue reduce_clause$actionlist(ModeValue& list) override {
-        return { Clause { Vector<Who>(), move(list.as<Actionlist>()) } };
+    virtual Clause reduce_clause$actionlist(Actionlist& list) override { return { Clause { Vector<Who>(), move(list) } }; }
+
+    virtual Clause reduce_clause$wholist_actionlist(Wholist& wlist, Actionlist& list) override {
+        return { Clause { move(wlist), move(list) } };
     }
 
-    virtual ModeValue reduce_clause$wholist_actionlist(ModeValue& wlist, ModeValue& list) override {
-        return { Clause { move(wlist.as<Vector<Who>>()), move(list.as<Actionlist>()) } };
-    }
-
-    virtual ModeValue reduce_symbolic_mode$clause(ModeValue& value) override {
+    virtual SymbolicMode reduce_symbolic_mode$clause(Clause& value) override {
         SymbolicMode mode;
-        mode.clauses().add(value.as<Clause>());
+        mode.clauses().add(move(value));
         return mode;
     }
 
-    virtual ModeValue reduce_symbolic_mode$symbolic_mode_comma_clause(ModeValue& mode, ModeValue&, ModeValue& value) override {
-        mode.as<SymbolicMode>().clauses().add(value.as<Clause>());
+    virtual SymbolicMode reduce_symbolic_mode$symbolic_mode_comma_clause(SymbolicMode& mode, ModeTerminal&, Clause& value) override {
+        mode.clauses().add(move(value));
         return mode;
     }
 };
@@ -285,7 +271,7 @@ mode_t Action::resolve(mode_t reference, mode_t mask, const Wholist& who_list) c
     switch (this->modifier) {
         case Modifier::Plus:
         plus : {
-            if (this->copy_or_permission_list.is<ModeLiteral>()) {
+            if (this->copy_or_permission_list.is<ModeTerminal>()) {
                 return reference;
             }
 

@@ -51,9 +51,16 @@ void Generator::generate_token_type_header(const String& path) {
 void Generator::generate_generic_parser(String path) {
     struct ReductionInfo {
         String function_name;
-        int arg_count;
+        Vector<StringView> args;
         int number;
         StringView name;
+    };
+
+    auto component_name_to_type = [&](const StringView& view) -> String {
+        if (m_token_types.includes(view)) {
+            return String::format("%sTerminal", String(m_output_name).to_title_case().string());
+        }
+        return String(view).to_title_case();
     };
 
     HashMap<int, Vector<ReductionInfo>> reduce_info;
@@ -63,7 +70,7 @@ void Generator::generate_generic_parser(String path) {
                 return;
             }
 
-            ReductionInfo info { "reduce_", rule.components().size(), rule.original_number(), rule.lhs() };
+            ReductionInfo info { "reduce_", rule.components(), rule.original_number(), rule.lhs() };
             info.function_name += String(rule.lhs()).to_lower_case();
             for (int i = 0; i < rule.components().size(); i++) {
                 auto& v = rule.components().get(i);
@@ -286,20 +293,22 @@ void Generator::generate_generic_parser(String path) {
                         });
                         assert(info);
                         String args = "";
-                        for (int i = 0; i < info->arg_count; i++) {
+                        for (int i = 0; i < info->args.size(); i++) {
                             fprintf(file, "                        %s v%d = this->pop_stack_state();\n", value_string.string(),
-                                    info->arg_count - i - 1);
-                            args += String::format("v%d", i);
-                            if (i != info->arg_count - 1) {
+                                    info->args.size() - i - 1);
+                            if (!m_has_value_header) {
+                                args += String::format("v%d", i);
+                            } else {
+                                args += String::format("v%d.as<%s>()", i, component_name_to_type(info->args[i]).string());
+                            }
+                            if (i != info->args.size() - 1) {
                                 args += ", ";
                             }
                         }
                         fprintf(file, "                        this->push_value_stack(%s(%s));\n", info->function_name.string(),
                                 args.string());
-
                         fprintf(file, "                        this->reduce(%sTokenType::%s);\n", m_output_name.string(),
                                 String(info->name).string());
-
                         fprintf(file, "                        continue;\n");
                         break;
                     }
@@ -336,32 +345,19 @@ void Generator::generate_generic_parser(String path) {
             }
 
             String arg_list = "(";
-            for (int i = 0; i < info.arg_count; i++) {
-                if (i == 0) {
-                    arg_list += String::format("%s& v", value_string.string());
-                } else {
-                    arg_list += String::format("%s&", value_string.string());
-                }
+            for (int i = 0; i < info.args.size(); i++) {
+                String type = m_has_value_header ? component_name_to_type(info.args[i]) : value_string;
+                arg_list += String::format("%s&", type.string());
 
-                if (i != info.arg_count - 1) {
+                if (i != info.args.size() - 1) {
                     arg_list += ", ";
                 }
             }
             arg_list += ")";
 
-            String return_string = info.arg_count == 0 ? String::format("%s()", value_string.string()) : "v";
+            String return_type = m_has_value_header ? component_name_to_type(info.name) : value_string;
 
-#if 0
-            fprintf(file, "    virtual %s %s%s = 0;\n", value_string.string(), info.function_name.string(), arg_list.string());
-#else
-            fprintf(file, "    virtual %s %s%s {\n", value_string.string(), info.function_name.string(), arg_list.string());
-            fprintf(file, "#ifdef GENERIC_%s_PARSER_DEBUG\n", String(m_output_name).to_upper_case().string());
-            fprintf(file, "        fprintf(stderr, \"%%s called.\\n\", __FUNCTION__);\n");
-            fprintf(file, "#endif /* GENERIC_%s_PARSER_DEBUG */\n", String(m_output_name).to_upper_case().string());
-            fprintf(file, "        return %s;\n", return_string.string());
-            fprintf(file, "    }\n");
-#endif
-
+            fprintf(file, "    virtual %s %s%s = 0;\n", return_type.string(), info.function_name.string(), arg_list.string());
             already_declared.put(info.function_name, true);
         });
     });
@@ -404,7 +400,7 @@ void Generator::generate_value_header(const String& path, const String& value_ty
         fprintf(file, "namespace %s {\n\n", m_name_space.string());
     }
 
-    fprintf(file, "using %sValue = LIIM::Variant<\n    %sLiteral", m_output_name.string(), m_output_name.string());
+    fprintf(file, "using %sValue = LIIM::Variant<\n    %sTerminal", m_output_name.string(), m_output_name.string());
     for (const auto& id_view : m_identifiers) {
         String id(id_view);
         if (!m_token_types.includes(id_view) && id_view != "End" && id_view != "__start") {

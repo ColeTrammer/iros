@@ -8,7 +8,7 @@
 
 namespace Ext {
 
-using ModeLiteral = Monostate;
+using ModeTerminal = Monostate;
 
 enum class Who {
     User = 2,

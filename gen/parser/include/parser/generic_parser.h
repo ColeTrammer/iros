@@ -33,6 +33,16 @@ protected:
 #endif /* GENERIC_PARSER_DEBUG */
     }
 
+    void push_value_stack(Value&& value) {
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Pushing value stack\n");
+#endif /* GENERIC_PARSER_DEBUG */
+        m_value_stack.push(move(value));
+#ifdef GENERIC_PARSER_DEBUG
+        fprintf(stderr, "Done pushing value stack\n");
+#endif /* GENERIC_PARSER_DEBUG */
+    }
+
     void consume_token() {
 #ifdef GENERIC_PARSER_DEBUG
         fprintf(stderr, "Pushing value b/c consume token\n");
