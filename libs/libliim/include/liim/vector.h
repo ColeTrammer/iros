@@ -15,6 +15,18 @@ class VectorIterator;
 template<typename T>
 class Vector {
 public:
+    static Vector create_from_single_element(const T& val) {
+        Vector v;
+        v.add(val);
+        return v;
+    }
+
+    static Vector create_from_single_element(T&& val) {
+        Vector v;
+        v.add(move(val));
+        return v;
+    }
+
     explicit Vector(int capacity = 20) : m_capacity(capacity) {}
 
     Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()), m_size(to_copy.size()) {
