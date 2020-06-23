@@ -111,7 +111,6 @@ if (NOT ${NATIVE_BUILD})
 
     add_custom_target(
         os_2.iso
-        ALL
         BYPRODUCTS ${ROOT}/os_2.iso
         COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
         COMMAND /bin/mkdir -p ${ISODIR}/modules
