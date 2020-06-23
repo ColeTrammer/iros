@@ -26,7 +26,7 @@ set(REGEX_LIB_SOURCES
 
 add_custom_command(
     OUTPUT ${REGEX_GENERATED_FILES}
-    COMMAND ${NATIVE_PARSER} -p . ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2> regex/regex.info
+    COMMAND ${NATIVE_PARSER} -p regex ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2> regex/regex.info
     VERBATIM
     DEPENDS ${NATIVE_PARSER}
     MAIN_DEPENDENCY regex/regex.y
