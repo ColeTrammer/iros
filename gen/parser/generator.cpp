@@ -154,6 +154,13 @@ void Generator::generate_generic_parser(String path) {
     fprintf(file, "        return %sTokenType::End;\n", String(m_output_name).to_title_case().string());
     fprintf(file, "    }\n\n");
 
+    if (m_has_value_header) {
+        auto result_type = component_name_to_type(reduce_info.get(1)->first().name);
+        fprintf(file, "    const %s& result() const {\n", result_type.string());
+        fprintf(file, "        return this->peek_value_stack().as<%s>();\n", result_type.string());
+        fprintf(file, "    }\n\n");
+    }
+
     fprintf(file, "    virtual bool is_valid_token_type_in_current_state_for_shift(%sTokenType type) const override;\n",
             String(m_output_name).to_title_case().string());
     fprintf(file, "    virtual bool is_valid_token_type_in_current_state(%sTokenType type) const override;\n",

@@ -104,12 +104,6 @@ public:
 
     virtual void on_error(ModeTokenType) override {}
 
-    const SymbolicMode& result() {
-        auto& last_value = this->peek_value_stack();
-        assert(last_value.is<SymbolicMode>());
-        return last_value.as<SymbolicMode>();
-    }
-
     virtual Who reduce_who$lowercasea(ModeTerminal&) override { return Who::All; }
     virtual Who reduce_who$lowercaseg(ModeTerminal&) override { return Who::Group; }
     virtual Who reduce_who$lowercaseo(ModeTerminal&) override { return Who::Other; }
