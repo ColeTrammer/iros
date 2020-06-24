@@ -55,14 +55,14 @@ public:
 
 private:
     GlyphEditorWidget(int width, int height, Font font) {
-        auto& layout = set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Horizontal);
+        auto& layout = set_layout<App::HorizontalBoxLayout>();
         auto& left_container = layout.add<App::Widget>();
 
-        auto& row_layout = left_container.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
+        auto& row_layout = left_container.set_layout<App::VerticalBoxLayout>();
         row_layout.set_spacing(0);
         for (int i = 0; i < height; i++) {
             auto& row_widget = row_layout.add<App::Widget>();
-            auto& col_layout = row_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Horizontal);
+            auto& col_layout = row_widget.set_layout<App::HorizontalBoxLayout>();
             col_layout.set_margins({ 0, 0, 0, 0 });
             col_layout.set_spacing(0);
 
@@ -77,7 +77,10 @@ private:
 
         m_info_label = text_layout.add<App::TextLabel>("").shared_from_this();
 
-        auto& demo_label = text_layout.add<App::TextLabel>("Important Text");
+        auto& demo_label = text_layout.add<App::TextLabel>("abcdefghijklmnopqrstuvwxyz\n"
+                                                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
+                                                           "1234567890`~!@#$%^&*()-=_+\n"
+                                                           "[]{}\\|;:'\",.<>/?");
         demo_label.set_font(font);
     }
 
@@ -126,17 +129,17 @@ int main(int argc, char** argv) {
 
     auto window = App::Window::create(nullptr, 250, 150, 500, 600, "PSF Edit");
 
-    auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
+    auto& layout = window->set_layout<App::VerticalBoxLayout>();
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
     glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(0)), 0);
 
     auto& glyph_widget = layout.add<App::Widget>();
-    auto& row_layout = glyph_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
+    auto& row_layout = glyph_widget.set_layout<App::VerticalBoxLayout>();
     row_layout.set_spacing(0);
 
     for (int i = 0; i < 16; i++) {
         auto& row_widget = row_layout.add<App::Widget>();
-        auto& col_layout = row_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Horizontal);
+        auto& col_layout = row_widget.set_layout<App::HorizontalBoxLayout>();
         col_layout.set_margins({ 0, 0, 0, 0 });
         col_layout.set_spacing(0);
         for (int j = 0; j < 16; j++) {
