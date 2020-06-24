@@ -13,7 +13,7 @@ void Button::render() {
 
     renderer.set_color(Color(255, 255, 255));
     renderer.draw_rect(rect());
-    renderer.render_text(rect().x() + 2, rect().y() + 2, label());
+    renderer.render_text(rect().x() + 2, rect().y() + 2, label(), font());
 }
 
 void Button::on_mouse_event(MouseEvent& mouse_event) {

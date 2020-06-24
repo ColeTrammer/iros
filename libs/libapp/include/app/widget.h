@@ -1,6 +1,7 @@
 #pragma once
 
 #include <app/object.h>
+#include <graphics/font.h>
 #include <graphics/rect.h>
 
 namespace App {
@@ -39,6 +40,9 @@ public:
     bool hidden() const { return m_hidden; }
     void set_hidden(bool b) { m_hidden = b; }
 
+    void set_font(Font font) { m_font = move(font); }
+    const Font& font() const { return m_font; }
+
 protected:
     Widget();
 
@@ -46,6 +50,7 @@ private:
     virtual bool is_widget() const final { return true; }
 
     Rect m_rect;
+    Font m_font { Font::default_font() };
     UniquePtr<Layout> m_layout;
     bool m_hidden { false };
 };

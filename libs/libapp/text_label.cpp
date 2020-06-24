@@ -11,7 +11,7 @@ void TextLabel::render() {
     renderer.fill_rect(rect());
 
     renderer.set_color(Color(255, 255, 255));
-    renderer.render_text(rect().x(), rect().y(), text());
+    renderer.render_text(rect().x(), rect().y(), text(), font());
 
     Widget::render();
 }
