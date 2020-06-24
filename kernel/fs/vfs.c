@@ -473,7 +473,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
     }
 
     struct tnode *tnode;
-    int ret = iname_with_base(base, file_name, 0, &tnode);
+    int ret = iname_with_base(base, file_name, flags & O_NOFOLLOW ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
     if (ret == -ENOENT) {
         if (flags & O_CREAT) {
             debug_log("Creating file: [ %s ]\n", file_name);
@@ -496,6 +496,13 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
     } else if (flags & O_EXCL) {
         drop_tnode(tnode);
         *error = -EEXIST;
+        return NULL;
+    }
+
+    if (tnode->inode->flags & FS_LINK) {
+        assert(flags & O_NOFOLLOW);
+        drop_tnode(tnode);
+        *error = -ELOOP;
         return NULL;
     }
 
