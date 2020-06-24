@@ -8,18 +8,18 @@ constexpr int cursor_width = 12;
 constexpr int cursor_height = 12;
 
 // clang-format off
-constexpr char cursor[cursor_height][cursor_width + 1] = { "............",
-                                                           "...x........",
-                                                           "...xx.......",
-                                                           "...xxx......",
-                                                           "...xxxx.....",
-                                                           "...xxxxx....",
-                                                           "...xxxxxx...",
-                                                           "...xxxxx....",
-                                                           "......xx....",
-                                                           "......xx....",
-                                                           ".......x....",
-                                                           "............" };
+constexpr char cursor[cursor_height][cursor_width + 1] = { "..XX........",
+                                                           "..XxX.......",
+                                                           "..XxxX......",
+                                                           "..XxxxX.....",
+                                                           "..XxxxxX....",
+                                                           "..XxxxxxX...",
+                                                           "..XxxxxxxX..",
+                                                           "..XxxxxxXX..",
+                                                           "..XXXXxxX...",
+                                                           ".....XxxX...",
+                                                           "......XxX...",
+                                                           ".......XX..." };
 // clang-format on
 
 WindowManager::WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
@@ -101,8 +101,9 @@ void WindowManager::draw() {
 
     for (int y = 0; y < cursor_height; y++) {
         for (int x = 0; x < cursor_width; x++) {
-            if (cursor[y][x] == 'x') {
-                renderer.pixels().put_pixel(m_mouse_x + x, m_mouse_y + y, Color(255, 255, 255));
+            if (cursor[y][x] != '.') {
+                auto c = cursor[y][x] == 'X' ? Color(0, 0, 0) : Color(255, 255, 255);
+                renderer.pixels().put_pixel(m_mouse_x + x, m_mouse_y + y, c);
             }
         }
     }
