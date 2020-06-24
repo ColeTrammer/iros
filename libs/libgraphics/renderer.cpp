@@ -51,8 +51,19 @@ void Renderer::draw_circle(int x, int y, int r) {
 }
 
 void Renderer::render_text(int x, int y, const String& text, const Font& font) {
+    int x_offset = -8;
+    int y_offset = 0;
     for (size_t k = 0; k < text.size(); k++) {
-        auto* bitmap = font.get_for_character(text[k]);
+        char c = text[k];
+        if (c == '\n') {
+            y_offset += 16;
+            x_offset = -8;
+            continue;
+        } else {
+            x_offset += 8;
+        }
+
+        auto* bitmap = font.get_for_character(c);
         if (!bitmap) {
             bitmap = font.get_for_character('?');
             assert(bitmap);
@@ -60,7 +71,7 @@ void Renderer::render_text(int x, int y, const String& text, const Font& font) {
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 8; j++) {
                 if (bitmap->get(i * 8 + j)) {
-                    m_pixels.put_pixel(k * 8 + x - j + 7, y + i, color().color());
+                    m_pixels.put_pixel(x + x_offset - j + 7, y + y_offset + i, color().color());
                 }
             }
         }
