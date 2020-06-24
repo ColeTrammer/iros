@@ -23,6 +23,7 @@ public:
     explicit String(char c);
     explicit String(const StringView& view);
     String(const char* chars = "");
+    String(const char* chars, size_t length);
     String(const String& other);
     String(String&& other);
 
@@ -111,9 +112,9 @@ inline String String::format(const char* format, ...) {
     char buffer[2048];
     va_list args;
     va_start(args, format);
-    vsnprintf(buffer, 2047, format, args);
+    int size = vsnprintf(buffer, 2047, format, args);
     va_end(args);
-    return String(buffer);
+    return String(buffer, size);
 }
 
 inline String::String(char c) {
@@ -138,6 +139,8 @@ inline String::String(const StringView& view) {
 }
 
 inline String::String(const char* chars) : String(StringView(chars)) {}
+
+inline String::String(const char* chars, size_t size) : String(StringView(chars, chars + size - 1)) {}
 
 inline String::String(const String& other) : String(other.string()) {}
 
