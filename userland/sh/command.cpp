@@ -110,20 +110,18 @@ void set_break_count(int count) {
 static bool handle_redirection(ShValue::IoRedirect& desc) {
     int flags = 0;
     switch (desc.type) {
-        case ShValue::IoRedirect::Type::OutputFileNameAppend: {
-            flags |= O_APPEND;
-        }
-        // Fall through
+        case ShValue::IoRedirect::Type::OutputFileNameAppend:
         case ShValue::IoRedirect::Type::OutputFileNameClobber:
         case ShValue::IoRedirect::Type::InputAndOutputFileName:
         case ShValue::IoRedirect::Type::InputFileName:
         case ShValue::IoRedirect::Type::OutputFileName: {
-            if (desc.type == ShValue::IoRedirect::Type::OutputFileName || desc.type == ShValue::IoRedirect::Type::OutputFileNameClobber ||
-                desc.type == ShValue::IoRedirect::Type::OutputFileNameAppend) {
+            if (desc.type == ShValue::IoRedirect::Type::OutputFileName || desc.type == ShValue::IoRedirect::Type::OutputFileNameClobber) {
                 flags |= O_CREAT | O_WRONLY | O_TRUNC;
             } else if (desc.type == ShValue::IoRedirect::Type::InputFileName) {
                 flags |= O_RDONLY;
-            } else {
+            } else if (desc.type == ShValue::IoRedirect::Type::OutputFileNameAppend) {
+                flags |= O_CREAT | O_WRONLY | O_APPEND;
+            } else if (desc.type == ShValue::IoRedirect::Type::InputAndOutputFileName) {
                 flags |= O_RDWR | O_CREAT | O_TRUNC;
             }
             int fd = open(String(desc.rhs).string(), flags, 0644);
