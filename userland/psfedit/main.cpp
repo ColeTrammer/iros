@@ -7,6 +7,8 @@
 #include <app/window.h>
 #include <graphics/font.h>
 #include <graphics/renderer.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 class GlyphEditorWidgetCell final : public App::Widget {
     APP_OBJECT(GlyphEditorWidgetCell)
@@ -49,7 +51,7 @@ public:
     void set_bitmap(Bitmap<uint8_t>* bitmap) { m_bitmap = bitmap; }
 
 private:
-    GlyphEditorWidget(int width, int height) {
+    GlyphEditorWidget(int width, int height, Font font) {
         auto& layout = set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Horizontal);
         auto& left_container = layout.add<App::Widget>();
 
@@ -67,21 +69,56 @@ private:
             }
         }
 
-        layout.add<App::TextLabel>("Important Text");
+        auto& label = layout.add<App::TextLabel>("Important Text");
+        label.set_font(font);
     }
 
     Bitmap<uint8_t>* m_bitmap { nullptr };
 };
 
-int main() {
+static void print_usage_and_exit(const char* s) {
+    fprintf(stderr, "Usage: %s [-c] [-o save-destination] [psf-font-file]\n", s);
+    exit(2);
+}
+
+int main(int argc, char** argv) {
+    bool create_new_font = false;
+    char* save_destination = nullptr;
+
+    int opt;
+    while ((opt = getopt(argc, argv, ":co:")) != -1) {
+        switch (opt) {
+            case 'c':
+                create_new_font = true;
+                break;
+            case 'o':
+                save_destination = optarg;
+                break;
+            case ':':
+            case '?':
+                print_usage_and_exit(*argv);
+                break;
+        }
+    }
+
+    if ((create_new_font && (!save_destination || optind != argc)) || optind + 1 < argc) {
+        print_usage_and_exit(*argv);
+    }
+
+    if (!argv[optind]) {
+        argv[optind] = (char*) "/usr/share/font.psf";
+    }
+    if (!save_destination) {
+        save_destination = argv[optind];
+    }
+    Font font = create_new_font ? Font::create_blank() : Font(argv[optind]);
+
     App::App app;
 
     auto window = App::Window::create(nullptr, 250, 150, 500, 600, "PSF Edit");
 
-    auto& font = Font::default_font();
-
     auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
-    auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16);
+    auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
     glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(0)));
 
     auto& glyph_widget = layout.add<App::Widget>();
@@ -96,12 +133,20 @@ int main() {
         for (int j = 0; j < 16; j++) {
             int code_point = i * 16 + j;
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
+            button.set_font(font);
             button.on_click = [&, code_point]() {
                 glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(code_point)));
                 window->draw();
             };
         }
     }
+
+    auto& save_button = layout.add<App::Button>("Save");
+    save_button.on_click = [&] {
+        if (!font.save_to_file(save_destination)) {
+            fprintf(stderr, "psfedit: Failed to save font to `%s'\n", save_destination);
+        }
+    };
 
     window->draw();
     app.enter();

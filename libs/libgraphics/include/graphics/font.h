@@ -11,6 +11,7 @@
 class FontImpl {
 public:
     FontImpl(const char* path);
+    FontImpl(int num_chars);
     ~FontImpl();
 
     const Bitmap<uint8_t>* get_for_character(int c) const;
@@ -38,12 +39,15 @@ public:
         return *s_bold;
     }
 
+    static Font create_blank();
+
     Font(const char* path) : m_impl(make_shared<FontImpl>(path)) {}
-    ~Font() {}
 
     const Bitmap<uint8_t>* get_for_character(int c) const { return m_impl->get_for_character(c); }
     bool save_to_file(const String& path) const { return m_impl->save_to_file(path); }
 
 private:
+    Font(int num_chars) : m_impl(make_shared<FontImpl>(num_chars)) {}
+
     SharedPtr<FontImpl> m_impl;
 };

@@ -19,6 +19,14 @@ FontImpl::FontImpl(const char* path) {
     close(font_file);
 }
 
+FontImpl::FontImpl(int num_chars) {
+    for (int i = 0; i < num_chars; i++) {
+        auto empty_bitmap = Bitmap<uint8_t>(16 * 8);
+        memset(empty_bitmap.bitmap(), 0, 16);
+        m_font_map.put(i, move(empty_bitmap));
+    }
+}
+
 FontImpl::~FontImpl() {}
 
 const Bitmap<uint8_t>* FontImpl::get_for_character(int c) const {
@@ -55,4 +63,8 @@ bool FontImpl::save_to_file(const String& path) const {
     }
 
     return ret;
+}
+
+Font Font::create_blank() {
+    return Font(256);
 }
