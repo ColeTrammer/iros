@@ -589,8 +589,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         file->tnode = tnode;
     }
 
-    /* Handle append mode */
-    if (flags & O_APPEND) {
+    if ((flags & O_APPEND) && !(file->abilities & FS_FILE_CANT_SEEK)) {
         fs_seek(file, 0, SEEK_END);
     }
 
@@ -760,6 +759,11 @@ ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
     if (file->f_op->write) {
         if (file->abilities & FS_FILE_CANT_SEEK) {
             return file->f_op->write(file, 0, buffer, len);
+        }
+
+        if (file->open_flags & O_APPEND) {
+            // FIXME: do this race condition free
+            fs_seek(file, 0, SEEK_END);
         }
 
         ssize_t ret = file->f_op->write(file, file->position, buffer, len);
