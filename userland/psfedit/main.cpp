@@ -48,7 +48,10 @@ class GlyphEditorWidget final : public App::Widget {
     APP_OBJECT(GlyphEditorWidget)
 
 public:
-    void set_bitmap(Bitmap<uint8_t>* bitmap) { m_bitmap = bitmap; }
+    void set_bitmap(Bitmap<uint8_t>* bitmap, char c) {
+        m_bitmap = bitmap;
+        m_info_label->set_text(String::format("Editing glyph %d (%c)", c, c));
+    }
 
 private:
     GlyphEditorWidget(int width, int height, Font font) {
@@ -69,11 +72,17 @@ private:
             }
         }
 
-        auto& label = layout.add<App::TextLabel>("Important Text");
-        label.set_font(font);
+        auto& text_container = layout.add<App::Widget>();
+        auto& text_layout = text_container.set_layout<App::VerticalBoxLayout>();
+
+        m_info_label = text_layout.add<App::TextLabel>("").shared_from_this();
+
+        auto& demo_label = text_layout.add<App::TextLabel>("Important Text");
+        demo_label.set_font(font);
     }
 
     Bitmap<uint8_t>* m_bitmap { nullptr };
+    SharedPtr<App::TextLabel> m_info_label;
 };
 
 static void print_usage_and_exit(const char* s) {
@@ -119,7 +128,7 @@ int main(int argc, char** argv) {
 
     auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
-    glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(0)));
+    glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(0)), 0);
 
     auto& glyph_widget = layout.add<App::Widget>();
     auto& row_layout = glyph_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
@@ -135,7 +144,7 @@ int main(int argc, char** argv) {
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
             button.set_font(font);
             button.on_click = [&, code_point]() {
-                glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(code_point)));
+                glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(code_point)), code_point);
                 window->draw();
             };
         }
