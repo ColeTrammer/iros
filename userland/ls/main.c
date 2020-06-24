@@ -22,18 +22,19 @@ struct ls_dirent {
     struct stat stat_struct;
 };
 
-static struct ls_dirent *dirents = NULL;
-static size_t num_dirents = 0;
-static size_t num_dirents_max = LS_STARTING_DIRENTS;
+static struct ls_dirent *dirents;
+static size_t num_dirents;
+static size_t num_dirents_max;
 
-static size_t widest_num_links = 0;
-static size_t widest_size = 0;
-static size_t widest_user_name = 0;
-static size_t widest_group_name = 0;
-static bool allow_dot_files = false;
-static bool allow_dot_and_dot_dot_dirs = false;
-static bool extra_info = false;
-static bool last_was_regular = false;
+static size_t widest_num_links;
+static size_t widest_size;
+static size_t widest_user_name;
+static size_t widest_group_name;
+static bool allow_dot_files;
+static bool allow_dot_and_dot_dot_dirs;
+static bool extra_info;
+static bool last_was_regular;
+static bool dont_expand_dirs;
 
 static int ls_dirent_compare(const void *_a, const void *_b) {
     const char *a = ((const struct ls_dirent *) _a)->name;
@@ -265,17 +266,23 @@ void print_entry(struct ls_dirent *dirent, bool extra_info) {
 int do_ls(char *path, bool first, bool multiple_args) {
     bool last_was_regular_save = last_was_regular;
 
-    DIR *d = opendir(path);
-    if (d == NULL) {
+    DIR *d = NULL;
+    if (dont_expand_dirs) {
         fill_dirent(path, path, true);
         last_was_regular = true;
     } else {
-        struct dirent *entry;
-        while ((entry = readdir(d)) != NULL) {
-            fill_dirent(path, entry->d_name, false);
+        d = opendir(path);
+        if (d == NULL) {
+            fill_dirent(path, path, true);
+            last_was_regular = true;
+        } else {
+            struct dirent *entry;
+            while ((entry = readdir(d)) != NULL) {
+                fill_dirent(path, entry->d_name, false);
+            }
+            closedir(d);
+            last_was_regular = false;
         }
-        closedir(d);
-        last_was_regular = false;
     }
 
     if (!first && (!last_was_regular_save || d)) {
@@ -323,17 +330,20 @@ int do_ls(char *path, bool first, bool multiple_args) {
     dirents = NULL;
     num_dirents = 0;
     num_dirents_max = 0;
-    widest_num_links = 0;
-    widest_size = 0;
-    widest_user_name = 0;
-    widest_group_name = 0;
+
+    if (!dont_expand_dirs) {
+        widest_num_links = 0;
+        widest_size = 0;
+        widest_user_name = 0;
+        widest_group_name = 0;
+    }
     return 0;
 }
 
 int main(int argc, char **argv) {
     opterr = 0;
     int opt;
-    while ((opt = getopt(argc, argv, "laA")) != -1) {
+    while ((opt = getopt(argc, argv, "laAd")) != -1) {
         switch (opt) {
             case 'l':
                 extra_info = true;
@@ -345,8 +355,11 @@ int main(int argc, char **argv) {
             case 'A':
                 allow_dot_files = true;
                 break;
+            case 'd':
+                dont_expand_dirs = true;
+                break;
             case '?':
-                printf("Usage: %s [-Aal] [path]\n", argv[0]);
+                printf("Usage: %s [-Aald] [path]\n", argv[0]);
                 return 0;
             default:
                 abort();
