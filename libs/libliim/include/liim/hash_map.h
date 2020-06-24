@@ -18,11 +18,12 @@ concept Hashable = requires(T a, T b) {
 template<typename K, typename V>
 struct HashMapObj {
     HashMapObj(const K& key, const V& val) : m_key(key), m_value(val) {}
-    HashMapObj(const K& key, V&& val) : m_key(key), m_value(val) {}
+    HashMapObj(const K& key, V&& val) : m_key(key), m_value(move(val)) {}
 
     ~HashMapObj() {}
 
     HashMapObj(const HashMapObj& other) : HashMapObj(other.m_key, other.m_value) {}
+    HashMapObj(HashMapObj&& other) : HashMapObj(move(other.m_key), move(other.m_value)) {}
 
     K m_key;
     V m_value;
@@ -110,7 +111,7 @@ public:
         }
 
         int bucket = Traits<K>::hash(key) % m_buckets.size();
-        m_buckets[bucket].prepend(HashMapObj(key, val));
+        m_buckets[bucket].prepend(HashMapObj(key, move(val)));
         if (++m_size >= m_buckets.capacity() * 2) {
             resize(m_buckets.capacity() * 4);
         }
@@ -200,7 +201,7 @@ public:
         HashMap<K, V> temp(new_capacity);
 
         for_each_key([&](const auto& key) {
-            temp.put(key, *get(key));
+            temp.put(key, move(*get(key)));
         });
 
         swap(temp);

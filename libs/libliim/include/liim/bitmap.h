@@ -11,6 +11,12 @@ class Bitmap {
 public:
     Bitmap(size_t num_bits) : m_bit_count(num_bits) { m_bits = new T[(num_bits + sizeof(T) * CHAR_BIT - 1) / (sizeof(T) * CHAR_BIT)]; }
 
+    Bitmap(Bitmap&& other) : m_should_deallocate(other.m_should_deallocate), m_bits(other.m_bits), m_bit_count(other.m_bit_count) {
+        other.m_should_deallocate = false;
+        other.m_bits = nullptr;
+        other.m_bit_count = 0;
+    }
+
     template<typename U>
     static SharedPtr<Bitmap<U>> wrap(U* bits, size_t num_bits) {
         auto bitmap = make_shared<Bitmap<U>>();
@@ -57,6 +63,13 @@ public:
 
     template<typename Callback>
     void for_each_storage_part(Callback&& callback) {
+        for (size_t i = 0; i < ((m_bit_count / CHAR_BIT) + sizeof(T) - 1) / sizeof(T); i++) {
+            callback(m_bits[i]);
+        }
+    }
+
+    template<typename Callback>
+    void for_each_storage_part(Callback&& callback) const {
         for (size_t i = 0; i < ((m_bit_count / CHAR_BIT) + sizeof(T) - 1) / sizeof(T); i++) {
             callback(m_bits[i]);
         }

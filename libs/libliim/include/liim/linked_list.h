@@ -8,6 +8,7 @@ namespace LIIM {
 template<typename T>
 struct LinkedListObj {
     LinkedListObj(const T& val) : m_val(val) {}
+    LinkedListObj(T&& val) : m_val(move(val)) {}
     ~LinkedListObj() {}
 
     T m_val;
@@ -61,6 +62,13 @@ public:
 
     void prepend(const T& to_add) {
         auto* next = new LinkedListObj<T>(to_add);
+        next->m_next = m_head;
+        m_head = next;
+        m_size++;
+    }
+
+    void prepend(T&& to_add) {
+        auto* next = new LinkedListObj<T>(move(to_add));
         next->m_next = m_head;
         m_head = next;
         m_size++;
