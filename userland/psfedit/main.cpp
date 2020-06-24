@@ -36,9 +36,9 @@ public:
     }
 
 private:
-    GlyphEditorWidgetCell(SharedPtr<Bitmap<uint8_t>>& bitmap, int index) : m_bitmap(bitmap), m_index(index) {}
+    GlyphEditorWidgetCell(Bitmap<uint8_t>*& bitmap, int index) : m_bitmap(bitmap), m_index(index) {}
 
-    SharedPtr<Bitmap<uint8_t>>& m_bitmap;
+    Bitmap<uint8_t>*& m_bitmap;
     int m_index { 0 };
 };
 
@@ -46,7 +46,7 @@ class GlyphEditorWidget final : public App::Widget {
     APP_OBJECT(GlyphEditorWidget)
 
 public:
-    void set_bitmap(SharedPtr<Bitmap<uint8_t>> bitmap) { m_bitmap = move(bitmap); }
+    void set_bitmap(Bitmap<uint8_t>* bitmap) { m_bitmap = bitmap; }
 
 private:
     GlyphEditorWidget(int width, int height) {
@@ -70,7 +70,7 @@ private:
         layout.add<App::TextLabel>("Important Text");
     }
 
-    SharedPtr<Bitmap<uint8_t>> m_bitmap;
+    Bitmap<uint8_t>* m_bitmap { nullptr };
 };
 
 int main() {
@@ -82,7 +82,7 @@ int main() {
 
     auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16);
-    glyph_editor.set_bitmap(font.get_for_character(0));
+    glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(0)));
 
     auto& glyph_widget = layout.add<App::Widget>();
     auto& row_layout = glyph_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
@@ -97,7 +97,7 @@ int main() {
             int code_point = i * 16 + j;
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
             button.on_click = [&, code_point]() {
-                glyph_editor.set_bitmap(font.get_for_character(code_point));
+                glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(code_point)));
                 window->draw();
             };
         }
