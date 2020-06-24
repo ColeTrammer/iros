@@ -44,6 +44,21 @@ void Widget::set_rect(const Rect& rect) {
     }
 }
 
+void Widget::set_preferred_size(const Size& size) {
+    if (m_preferred_size.width == size.width && m_preferred_size.height == size.height) {
+        return;
+    }
+
+    m_preferred_size = size;
+    if (auto* parent = this->parent()) {
+        if (parent->is_widget()) {
+            if (auto* parent_layout = static_cast<Widget&>(*parent).layout()) {
+                parent_layout->layout();
+            }
+        }
+    }
+}
+
 Window* Widget::window() {
     Object* object = parent();
     while (object) {

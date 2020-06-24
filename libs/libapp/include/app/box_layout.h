@@ -26,6 +26,7 @@ public:
 
 private:
     int compute_available_space() const;
+    int visible_widget_count() const;
     int flexible_widget_count() const;
 
     Vector<Widget*> m_widgets;

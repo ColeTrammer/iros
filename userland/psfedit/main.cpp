@@ -151,6 +151,7 @@ int main(int argc, char** argv) {
     }
 
     auto& save_button = layout.add<App::Button>("Save");
+    save_button.set_preferred_size({ App::Size::Auto, 24 });
     save_button.on_click = [&] {
         if (!font.save_to_file(save_destination)) {
             fprintf(stderr, "psfedit: Failed to save font to `%s'\n", save_destination);

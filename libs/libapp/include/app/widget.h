@@ -11,6 +11,13 @@ class KeyEvent;
 class MouseEvent;
 class Window;
 
+struct Size {
+    enum { Auto = -1 };
+
+    int width { 0 };
+    int height { 0 };
+};
+
 class Widget : public Object {
     APP_OBJECT(Widget)
 
@@ -40,8 +47,11 @@ public:
     bool hidden() const { return m_hidden; }
     void set_hidden(bool b) { m_hidden = b; }
 
-    void set_font(Font font) { m_font = move(font); }
     const Font& font() const { return m_font; }
+    void set_font(Font font) { m_font = move(font); }
+
+    const Size& preferred_size() const { return m_preferred_size; }
+    void set_preferred_size(const Size& size);
 
 protected:
     Widget();
@@ -51,6 +61,7 @@ private:
 
     Rect m_rect;
     Font m_font { Font::default_font() };
+    Size m_preferred_size { Size::Auto, Size::Auto };
     UniquePtr<Layout> m_layout;
     bool m_hidden { false };
 };
