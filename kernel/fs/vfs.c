@@ -541,6 +541,12 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         }
     }
 
+    if (((flags & O_RDWR) || (flags & O_WRONLY)) && (tnode->inode->super_block && (tnode->inode->super_block->flags & ST_RDONLY))) {
+        drop_tnode(tnode);
+        *error = -EROFS;
+        return NULL;
+    }
+
     struct file *file = NULL;
     if (tnode->inode->flags & FS_DEVICE) {
         if (!tnode->inode->device) {
