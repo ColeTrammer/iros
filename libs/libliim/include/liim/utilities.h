@@ -502,4 +502,6 @@ using LIIM::in_place_index;
 using LIIM::in_place_index_t;
 using LIIM::in_place_type;
 using LIIM::in_place_type_t;
+using LIIM::max;
+using LIIM::min;
 using LIIM::move;
