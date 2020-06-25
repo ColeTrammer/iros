@@ -72,8 +72,7 @@ void WindowManager::draw_taskbar(Renderer& renderer) {
     constexpr int taskbar_height = 32;
 
     int taskbar_top = renderer.pixels().height() - taskbar_height;
-    renderer.set_color(Color(0, 0, 0));
-    renderer.fill_rect(0, taskbar_top, renderer.pixels().width(), taskbar_height);
+    renderer.fill_rect(0, taskbar_top, renderer.pixels().width(), taskbar_height, Color(0, 0, 0));
 
     for (int x = 0; x < renderer.pixels().width(); x++) {
         renderer.pixels().put_pixel(x, taskbar_top, Color(255, 255, 255));
@@ -83,8 +82,7 @@ void WindowManager::draw_taskbar(Renderer& renderer) {
     struct tm* tm = localtime(&now);
     auto time_string = String::format("%2d:%02d:%02d %s", tm->tm_hour % 12, tm->tm_min, tm->tm_sec, tm->tm_hour > 12 ? "PM" : "AM");
 
-    renderer.set_color(Color(255, 255, 255));
-    renderer.render_text(2, taskbar_top + 2, time_string);
+    renderer.render_text(2, taskbar_top + 2, time_string, Color(255, 255, 255));
 }
 
 void WindowManager::draw() {
@@ -96,17 +94,14 @@ void WindowManager::draw() {
     Renderer renderer(*m_back_buffer);
 
     auto render_window = [&](auto& window) {
-        renderer.set_color(Color(0, 0, 0));
-        renderer.fill_rect(window->rect().x() + 1, window->rect().y(), window->rect().width() - 1, 21);
-        renderer.set_color(Color(255, 255, 255));
-
-        renderer.draw_rect(window->rect());
+        renderer.fill_rect(window->rect().x() + 1, window->rect().y(), window->rect().width() - 1, 21, Color(0, 0, 0));
+        renderer.draw_rect(window->rect(), Color(255, 255, 255));
         for (int x = window->rect().x(); x < window->rect().x() + window->rect().width(); x++) {
             m_back_buffer->put_pixel(x, window->rect().y() + 21, Color(255, 255, 255));
         }
 
-        renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title());
-        renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius());
+        renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title(), Color(255, 255, 255));
+        renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), Color(255, 255, 255));
 
         auto& rect = window->content_rect();
         auto& src = *window->buffer();
@@ -153,18 +148,15 @@ void WindowManager::draw() {
         }
     };
 
-    renderer.set_color(Color(0, 0, 0));
     for (auto& rect : m_dirty_rects) {
-        renderer.fill_rect(rect);
+        renderer.fill_rect(rect, Color(0, 0, 0));
     }
     m_dirty_rects.clear();
-    renderer.set_color(Color(255, 255, 255));
 
     for_each_window(render_window);
 
     draw_taskbar(renderer);
 
-    renderer.set_color(Color(255, 255, 255));
     for (int y = 0; y < cursor_height; y++) {
         for (int x = 0; x < cursor_width; x++) {
             if (cursor[y][x] != '.') {

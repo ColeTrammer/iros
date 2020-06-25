@@ -108,11 +108,8 @@ void VgaBuffer::draw(int row, int col, char ch, VgaColor fg, VgaColor bg) {
     text[0] = ch;
     text[1] = '\0';
 
-    renderer.set_color(bg);
-    renderer.fill_rect(col * 8, row * 16, 8, 16);
-
-    renderer.set_color(fg);
-    renderer.render_text(col * 8, row * 16, text, m_bold ? Font::bold_font() : Font::default_font());
+    renderer.fill_rect(col * 8, row * 16, 8, 16, Color(bg));
+    renderer.render_text(col * 8, row * 16, text, Color(fg), m_bold ? Font::bold_font() : Font::default_font());
 
     if (m_cursor_was_drawn && row == m_drawn_cursor_row && col == m_drawn_cursor_col) {
         for (int r = 0; r < 16; r++) {

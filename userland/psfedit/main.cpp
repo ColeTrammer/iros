@@ -21,11 +21,9 @@ public:
             color = Color(0, 0, 0);
         }
 
-        renderer.set_color(color);
-        renderer.fill_rect(rect());
+        renderer.fill_rect(rect(), color);
 
-        renderer.set_color(Color(0, 0, 0));
-        renderer.draw_rect(rect());
+        renderer.draw_rect(rect(), Color(0, 0, 0));
     }
 
     virtual void on_mouse_event(App::MouseEvent& event) override {

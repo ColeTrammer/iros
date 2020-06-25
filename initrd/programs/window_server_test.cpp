@@ -21,7 +21,7 @@ int main() {
     connection.set_draw_callback(window, [&](auto& pixels) {
         Renderer renderer(*pixels);
         renderer.pixels().clear();
-        renderer.fill_rect(50 + cnt, 50 + cnt, 50, 50);
+        renderer.fill_rect(50 + cnt, 50 + cnt, 50, 50, Color(255, 255, 255));
         if (++cnt >= 100) {
             exit(0);
         }
