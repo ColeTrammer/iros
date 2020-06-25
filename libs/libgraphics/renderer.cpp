@@ -36,6 +36,39 @@ void Renderer::draw_rect(int x, int y, int width, int height, Color color) {
     }
 }
 
+void Renderer::draw_line(Point start, Point end, Color color) {
+    auto x_start = max(0, min(start.x(), end.x()));
+    auto x_end = min(m_pixels.width(), max(start.x(), end.x()));
+
+    auto y_start = max(0, min(start.y(), end.y()));
+    auto y_end = min(m_pixels.height(), max(start.y(), end.y()));
+
+    if (x_start == x_end && y_start == y_end) {
+        return;
+    }
+
+    auto raw_color = color.color();
+    if (y_start == y_end) {
+        auto raw_pixels = m_pixels.pixels() + y_start * m_pixels.width();
+        for (auto x = x_start; x < x_end; x++) {
+            raw_pixels[x] = raw_color;
+        }
+        return;
+    }
+
+    if (x_start == x_end) {
+        auto raw_pixels = m_pixels.pixels() + x_start;
+        auto raw_pixels_width = m_pixels.width();
+        auto adjusted_y_end = y_end * raw_pixels_width;
+        for (auto y = y_start * raw_pixels_width; y < adjusted_y_end; y += raw_pixels_width) {
+            raw_pixels[y] = raw_color;
+        }
+        return;
+    }
+
+    assert(false);
+}
+
 void Renderer::fill_circle(int x, int y, int r, Color color) {
     int r2 = r * r;
     for (int a = x - r; a < x + r; a++) {

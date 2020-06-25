@@ -12,16 +12,17 @@ class Renderer {
 public:
     Renderer(PixelBuffer& buffer) : m_pixels(buffer) {}
 
+    void fill_rect(int x, int y, int width, int height, Color color);
+    void draw_rect(int x, int y, int width, int height, Color color);
     void fill_rect(const Rect& rect, Color color) { fill_rect(rect.x(), rect.y(), rect.width(), rect.height(), color); }
     void draw_rect(const Rect& rect, Color color) { draw_rect(rect.x(), rect.y(), rect.width(), rect.height(), color); }
 
-    void fill_rect(int x, int y, int width, int height, Color color);
-    void draw_rect(int x, int y, int width, int height, Color color);
-
-    void render_text(int x, int y, const String& text, Color color, const Font& font = Font::default_font());
+    void draw_line(Point start, Point end, Color color);
 
     void fill_circle(int x, int y, int r, Color color);
     void draw_circle(int x, int y, int r, Color color);
+
+    void render_text(int x, int y, const String& text, Color color, const Font& font = Font::default_font());
 
     PixelBuffer& pixels() { return m_pixels; }
     const PixelBuffer& pixels() const { return m_pixels; }
