@@ -32,11 +32,7 @@ Window::~Window() {
 Window::Window(int x, int y, int width, int height, String name) {
     m_ws_window = App::the().ws_connection().create_window(x, y, width, height, move(name));
     m_ws_window->set_draw_callback([this](auto&) {
-        for (auto& child : children()) {
-            if (child->is_widget()) {
-                static_cast<Widget&>(const_cast<Object&>(*child)).render();
-            }
-        }
+        render();
     });
     set_rect({ 0, 0, width, height });
     register_window(*this);

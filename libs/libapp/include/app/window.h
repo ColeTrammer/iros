@@ -25,13 +25,10 @@ public:
 
 protected:
     Window(int x, int y, int width, int height, String name);
+    virtual void on_event(Event& event) override;
 
 private:
     virtual bool is_window() const final { return true; }
-
-    virtual void on_event(Event& event) override;
-
-    virtual void render() override {};
 
     Widget& find_widget_at_point(Point p);
 
