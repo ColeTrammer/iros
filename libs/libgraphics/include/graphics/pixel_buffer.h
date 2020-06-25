@@ -1,12 +1,11 @@
 #pragma once
 
 #include <assert.h>
+#include <graphics/color.h>
 #include <graphics/rect.h>
 #include <liim/pointers.h>
 #include <stdint.h>
 #include <stdio.h>
-
-class Color;
 
 class PixelBuffer {
 public:
@@ -34,8 +33,13 @@ public:
 
     void clear();
 
-    void put_pixel(int x, int y, uint32_t p);
-    void put_pixel(int x, int y, Color color);
+    void __attribute__((always_inline)) put_pixel(int x, int y, uint32_t p) {
+        if (x < 0 || y < 0 || x >= width() || y >= height()) {
+            return;
+        }
+        m_pixels[y * m_width + x] = p;
+    }
+    void __attribute__((always_inline)) put_pixel(int x, int y, Color color) { put_pixel(x, y, color.color()); }
 
     uint32_t get_pixel(int x, int y) const {
         assert(m_pixels);
