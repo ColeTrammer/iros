@@ -109,10 +109,47 @@ void WindowManager::draw() {
         renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius());
 
         auto& rect = window->content_rect();
-        for (int x = LIIM::max(0, rect.x()); x < m_back_buffer->width() && x < rect.x() + rect.width(); x++) {
-            for (int y = LIIM::max(rect.y(), 0); y < m_back_buffer->height() && y < rect.y() + rect.height(); y++) {
-                m_back_buffer->put_pixel(x, y, window->buffer()->get_pixel(x - rect.x(), y - rect.y()));
-            }
+        auto& src = *window->buffer();
+        auto src_x_offset = rect.x();
+        auto src_y_offset = rect.y();
+        auto src_width = src.width();
+        auto src_height = src.height();
+
+        auto& dest = *m_back_buffer;
+        auto dest_width = m_back_buffer->width();
+        auto dest_height = m_back_buffer->height();
+
+        auto src_x_start = 0;
+        auto src_x_end = src_width;
+        auto src_y_start = 0;
+        auto src_y_end = src_height;
+
+        if (src_x_offset + src_width <= 0 || src_x_offset >= dest_width || src_y_offset + src_height <= 0 || src_y_offset >= dest_height) {
+            return;
+        }
+
+        if (src_x_offset < 0) {
+            src_x_start += -src_x_offset;
+            src_x_offset = 0;
+        }
+        if (src_x_offset + src_width > dest_width) {
+            src_x_end = dest_width - src_x_offset;
+        }
+
+        if (src_y_offset < 0) {
+            src_y_start += -src_y_offset;
+            src_y_offset = 0;
+        }
+        if (src_y_offset + src_height > dest_height) {
+            src_y_end = dest_height - src_y_offset;
+        }
+
+        auto* src_buffer = src.pixels();
+        auto* dest_buffer = dest.pixels();
+        auto src_row_size_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
+        for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
+            auto dest_y = src_y + src_y_offset;
+            memcpy(dest_buffer + dest_y * dest_width + src_x_offset, src_buffer + src_y * src_width + src_x_start, src_row_size_in_bytes);
         }
     };
 
