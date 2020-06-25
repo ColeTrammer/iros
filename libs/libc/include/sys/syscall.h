@@ -102,7 +102,8 @@
     __ENUMERATE_SYSCALL(TRUNCATE, truncate, 2)                                 \
     __ENUMERATE_SYSCALL(GETGROUPS, getgroups, 2)                               \
     __ENUMERATE_SYSCALL(SETGROUPS, setgroups, 2)                               \
-    __ENUMERATE_SYSCALL(MKNOD, mknod, 3)
+    __ENUMERATE_SYSCALL(MKNOD, mknod, 3)                                       \
+    __ENUMERATE_SYSCALL(PPOLL, ppoll, 4)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

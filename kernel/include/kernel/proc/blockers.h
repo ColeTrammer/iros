@@ -3,6 +3,7 @@
 
 #include <bits/pid_t.h>
 #include <bits/time_t.h>
+#include <poll.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -27,6 +28,8 @@ enum block_type {
     UNTIL_PIPE_HAS_WRITERS,
     SELECT,
     SELECT_TIMEOUT,
+    POLL,
+    POLL_TIMEOUT,
     WAITPID
 };
 
@@ -88,6 +91,15 @@ struct block_info {
             struct timespec end_time;
         } select_timeout_info;
         struct {
+            nfds_t nfds;
+            struct pollfd *fds;
+        } poll_info;
+        struct {
+            nfds_t nfds;
+            struct pollfd *fds;
+            struct timespec end_time;
+        } poll_timeout_info;
+        struct {
             pid_t pid;
         } waitpid_info;
     } __info;
@@ -105,6 +117,8 @@ struct block_info {
 #define until_pipe_has_writers_info                __info.until_pipe_has_writers_info
 #define select_info                                __info.select_info
 #define select_timeout_info                        __info.select_timeout_info
+#define poll_info                                  __info.poll_info
+#define poll_timeout_info                          __info.poll_timeout_info
 #define waitpid_info                               __info.waitpid_info
 };
 
@@ -127,6 +141,9 @@ __attribute__((warn_unused_result)) int proc_block_select(struct task *current, 
                                                           uint8_t *exceptfds);
 __attribute__((warn_unused_result)) int proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds,
                                                                   uint8_t *exceptfds, struct timespec end_time);
+__attribute__((warn_unused_result)) int proc_block_poll(struct task *current, nfds_t nfds, struct pollfd *fds);
+__attribute__((warn_unused_result)) int proc_block_poll_timeout(struct task *current, nfds_t nfds, struct pollfd *fds,
+                                                                struct timespec end_time);
 __attribute__((warn_unused_result)) int proc_block_waitpid(struct task *current, pid_t pid);
 
 #endif /* _KERNEL_PROC_BLOCKERS_H */

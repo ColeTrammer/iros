@@ -115,6 +115,8 @@ else()
         libgen/dirname.c
         locale/locale.c
         netdb/netdb.c
+        poll/poll.c
+        poll/ppoll.c
         pwd/pwd.c
         setjmp/__sigsetjmp.c
         setjmp/siglongjmp.c

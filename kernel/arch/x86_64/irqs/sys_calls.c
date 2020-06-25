@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdatomic.h>
 #include <stdbool.h>
@@ -2439,6 +2440,99 @@ SYS_CALL(mknod) {
         drop_tnode(tnode);
     }
     SYS_RETURN(error);
+}
+
+SYS_CALL(ppoll) {
+    SYS_BEGIN_PSELECT();
+
+    SYS_PARAM2(nfds_t, nfds);
+    SYS_PARAM1_VALIDATE(struct pollfd *, fds, validate_write, nfds * sizeof(struct pollfd));
+    SYS_PARAM3_VALIDATE(const struct timespec *, timeout, validate_read_or_null, sizeof(struct timespec));
+    SYS_PARAM4_VALIDATE(const sigset_t *, sigmask, validate_read_or_null, sizeof(sigset_t));
+
+    struct task *current = get_current_task();
+
+    if (sigmask) {
+        memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
+        memcpy(&current->sig_mask, sigmask, sizeof(sigset_t));
+        current->in_sigsuspend = true;
+    }
+
+    int count = 0;
+    if (nfds > FOPEN_MAX) {
+        count = -EINVAL;
+        goto ppoll_return;
+    }
+
+    struct timespec start = time_read_clock(CLOCK_MONOTONIC);
+
+    // NOTE: don't need to take process lock since its undefined behavior to close
+    //       a file while another thread is selecting on it
+    for (;;) {
+        for (nfds_t i = 0; i < nfds; i++) {
+            struct pollfd *pfd = &fds[i];
+            int current_fd = pfd->fd;
+            if (current_fd < 0) {
+                continue;
+            }
+
+            struct file *file = current->process->files[i].file;
+            if (!file) {
+                pfd->revents = POLLNVAL;
+                count++;
+                continue;
+            }
+
+            pfd->revents = 0;
+            bool found = false;
+            if ((pfd->events & POLLIN) && fs_is_readable(file)) {
+                pfd->revents |= POLLIN;
+                found = true;
+            }
+            if ((pfd->events & POLLPRI) && fs_is_exceptional(file)) {
+                pfd->revents |= POLLPRI;
+                found = true;
+            }
+            if ((pfd->events & POLLOUT) && fs_is_writable(file)) {
+                pfd->revents |= POLLOUT;
+                found = true;
+            }
+            count += found;
+        }
+
+        if (count > 0) {
+            break;
+        }
+
+        if (timeout) {
+            struct timespec end_time = { .tv_sec = start.tv_sec + timeout->tv_sec, .tv_nsec = start.tv_nsec + timeout->tv_nsec };
+            int ret = proc_block_poll_timeout(current, nfds, fds, end_time);
+            if (ret) {
+                count = ret;
+                goto ppoll_return;
+            }
+
+            struct timespec after = time_read_clock(CLOCK_MONOTONIC);
+            if (time_compare(after, end_time) >= 0) {
+                goto ppoll_return;
+            }
+
+            continue;
+        }
+
+        int ret = proc_block_poll(current, nfds, fds);
+        if (ret) {
+            count = ret;
+            goto ppoll_return;
+        }
+    }
+
+ppoll_return:
+    if (current->in_sigsuspend) {
+        SYS_RETURN_RESTORE_SIGMASK(count);
+    }
+
+    SYS_RETURN(count);
 }
 
 SYS_CALL(invalid_system_call) {

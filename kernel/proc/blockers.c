@@ -308,6 +308,73 @@ int proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, 
     return __kernel_yield();
 }
 
+static bool poll_blocker_helper(nfds_t nfds, struct pollfd *fds) {
+    struct task *current = get_current_task();
+    for (nfds_t i = 0; i < nfds; i++) {
+        struct pollfd *pfd = &fds[i];
+        int current_fd = pfd->fd;
+        if (current_fd < 0) {
+            continue;
+        }
+
+        struct file *file = current->process->files[i].file;
+        if (!file) {
+            return true;
+        }
+
+        if ((pfd->events & POLLIN) && fs_is_readable(file)) {
+            return true;
+        }
+        if ((pfd->events & POLLPRI) && fs_is_exceptional(file)) {
+            return true;
+        }
+        if ((pfd->events & POLLOUT) && fs_is_writable(file)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool poll_blocker(struct block_info *info) {
+    assert(info->type == POLL);
+    return poll_blocker_helper(info->poll_info.nfds, info->poll_info.fds);
+}
+
+int proc_block_poll(struct task *current, nfds_t nfds, struct pollfd *fds) {
+    disable_interrupts();
+    current->block_info.poll_info.nfds = nfds;
+    current->block_info.poll_info.fds = fds;
+    current->block_info.type = POLL;
+    current->block_info.should_unblock = &poll_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    return __kernel_yield();
+}
+
+static bool poll_timeout_blocker(struct block_info *info) {
+    assert(info->type == POLL_TIMEOUT);
+
+    struct timespec now = time_read_clock(CLOCK_MONOTONIC);
+    if (time_compare(now, info->poll_timeout_info.end_time) >= 0) {
+        return true;
+    }
+
+    return poll_blocker_helper(info->poll_timeout_info.nfds, info->poll_timeout_info.fds);
+}
+
+int proc_block_poll_timeout(struct task *current, nfds_t nfds, struct pollfd *fds, struct timespec end_time) {
+    disable_interrupts();
+    current->block_info.poll_timeout_info.nfds = nfds;
+    current->block_info.poll_timeout_info.fds = fds;
+    current->block_info.poll_timeout_info.end_time = end_time;
+    current->block_info.type = POLL_TIMEOUT;
+    current->block_info.should_unblock = &poll_timeout_blocker;
+    current->blocking = true;
+    current->sched_state = WAITING;
+    return __kernel_yield();
+}
+
 static bool waitpid_blocker(struct block_info *info) {
     assert(info->type == WAITPID);
 

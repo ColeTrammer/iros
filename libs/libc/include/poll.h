@@ -1,6 +1,8 @@
 #ifndef _POLL_H
 #define _POLL_H 1
 
+#include <signal.h>
+
 #define POLLIN     1
 #define POLLRDNORM 2
 #define POLLRDBAND 4
@@ -24,7 +26,8 @@ struct pollfd {
 
 typedef unsigned short nfds_t;
 
-int poll(struct pollfd[], nfds_t nfds, int timeout);
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout, const sigset_t *sigset);
 
 #ifdef __cplusplus
 }
