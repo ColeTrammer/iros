@@ -4,6 +4,8 @@
 
 #include "window_manager.h"
 
+// #define WM_DRAW_DEBUG
+
 constexpr int cursor_width = 12;
 constexpr int cursor_height = 12;
 
@@ -86,6 +88,11 @@ void WindowManager::draw_taskbar(Renderer& renderer) {
 }
 
 void WindowManager::draw() {
+#ifdef WM_DRAW_DEBUG
+    timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+#endif /* WM_DRAW_DEBUG */
+
     Renderer renderer(*m_back_buffer);
 
     auto render_window = [&](auto& window) {
@@ -131,6 +138,16 @@ void WindowManager::draw() {
     }
 
     swap_buffers();
+
+#ifdef WM_DRAW_DEBUG
+    timespec end;
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    long delta_seconds = end.tv_sec - start.tv_sec;
+    long delta_nano_seconds = end.tv_nsec - start.tv_nsec;
+    time_t delta_milli_seconds = delta_seconds * 1000 + delta_nano_seconds / 1000000;
+    fprintf(stderr, "WindowManager::draw() took %lu ms\n", delta_milli_seconds);
+#endif /* WM_DRAW_DEBUG */
 }
 
 void WindowManager::swap_buffers() {
