@@ -123,8 +123,10 @@ void Server::start() {
             FD_SET(fd, &exceptional);
         });
 
-        timespec timeout { .tv_sec = 0, .tv_nsec = remaining_time * 1000000 };
-        int ret = pselect(FD_SETSIZE, &set, nullptr, &exceptional, &timeout, nullptr);
+        timespec fps_timeout { .tv_sec = 0, .tv_nsec = remaining_time * 1000000 };
+        timespec max_timeout { .tv_sec = 1, .tv_nsec = 0 };
+        timespec* timeout_to_pass = did_draw ? &max_timeout : &fps_timeout;
+        int ret = pselect(FD_SETSIZE, &set, nullptr, &exceptional, timeout_to_pass, nullptr);
         if (ret < 0) {
             perror("select");
             exit(1);
