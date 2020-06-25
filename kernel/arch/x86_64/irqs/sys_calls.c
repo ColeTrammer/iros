@@ -1844,18 +1844,22 @@ SYS_CALL(pselect) {
         }
 
         if (timeout) {
+            if (timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
+                break;
+            }
+
             struct timespec end_time = { .tv_sec = start.tv_sec + timeout->tv_sec, .tv_nsec = start.tv_nsec + timeout->tv_nsec };
             int ret = proc_block_select_timeout(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
                                                 create_phys_addr_mapping_from_virt_addr(write_fds_found),
                                                 create_phys_addr_mapping_from_virt_addr(except_fds_found), end_time);
             if (ret) {
                 count = ret;
-                goto pselect_return;
+                break;
             }
 
             struct timespec after = time_read_clock(CLOCK_MONOTONIC);
             if (time_compare(after, end_time) >= 0) {
-                goto pselect_return;
+                break;
             }
 
             continue;
@@ -1866,7 +1870,7 @@ SYS_CALL(pselect) {
                                     create_phys_addr_mapping_from_virt_addr(except_fds_found));
         if (ret) {
             count = ret;
-            goto pselect_return;
+            break;
         }
     }
 
@@ -2505,16 +2509,20 @@ SYS_CALL(ppoll) {
         }
 
         if (timeout) {
+            if (timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
+                break;
+            }
+
             struct timespec end_time = { .tv_sec = start.tv_sec + timeout->tv_sec, .tv_nsec = start.tv_nsec + timeout->tv_nsec };
             int ret = proc_block_poll_timeout(current, nfds, fds, end_time);
             if (ret) {
                 count = ret;
-                goto ppoll_return;
+                break;
             }
 
             struct timespec after = time_read_clock(CLOCK_MONOTONIC);
             if (time_compare(after, end_time) >= 0) {
-                goto ppoll_return;
+                break;
             }
 
             continue;
@@ -2523,7 +2531,7 @@ SYS_CALL(ppoll) {
         int ret = proc_block_poll(current, nfds, fds);
         if (ret) {
             count = ret;
-            goto ppoll_return;
+            break;
         }
     }
 
