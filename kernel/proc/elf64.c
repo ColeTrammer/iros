@@ -196,6 +196,13 @@ static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, s
 
 // NOTE: this must be called from within a task's address space
 size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)(void *closure, const char *string, ...), void *closure) {
+    // NOTE: rsp, rbp, and rip must be fetched before call try_load_symbols, as that function reads from disk and thus can block.
+    //       if it blocks, the fields on task will be overwritten if this function was called from a fault handler where we make no
+    //       effort to properly recover the task (in this case the kernel tramples the saved information).
+    uintptr_t rsp = task->in_kernel ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
+    uintptr_t rbp = task->in_kernel ? task->arch_task.user_task_state->cpu_state.rbp : task->arch_task.task_state.cpu_state.rbp;
+    uintptr_t rip = task->in_kernel ? task->arch_task.user_task_state->stack_state.rip : task->arch_task.task_state.stack_state.rip;
+
     if (extra_info) {
         dump_process_regions(task->process);
     }
@@ -219,10 +226,6 @@ size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)
     size_t symbols_size = 0;
 
     try_load_symbols(buffer, &symbols, &symbols_size, &string_table);
-
-    uintptr_t rsp = task->in_kernel ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
-    uintptr_t rbp = task->in_kernel ? task->arch_task.user_task_state->cpu_state.rbp : task->arch_task.task_state.cpu_state.rbp;
-    uintptr_t rip = task->in_kernel ? task->arch_task.user_task_state->stack_state.rip : task->arch_task.task_state.stack_state.rip;
 
     if (!symbols || !string_table) {
         debug_log("No symbols or string table (probably stripped binary)\n");
