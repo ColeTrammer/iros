@@ -91,7 +91,7 @@ void AppPanel::render_cursor(Renderer& renderer) {
     int cursor_x = rect().x() + m_cursor_col * col_width();
     int cursor_y = rect().y() + m_cursor_row * row_height();
     for (int y = cursor_y; y < cursor_y + row_height(); y++) {
-        renderer.pixels().put_pixel(cursor_x, y, Color(255, 255, 255));
+        renderer.pixels().put_pixel(cursor_x, y, ColorValue::White);
     }
 
     m_last_drawn_cursor_col = m_cursor_col;
@@ -103,7 +103,7 @@ void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {
     RenderingInfo info = rendering_info_for_metadata(cell.metadata);
 
     Color fg = info.fg.has_value() ? Color(info.fg.value()) : Color(VGA_COLOR_LIGHT_GREY);
-    Color bg = info.bg.has_value() ? Color(info.bg.value()) : Color(0, 0, 0);
+    Color bg = info.bg.has_value() ? Color(info.bg.value()) : ColorValue::Black;
 
     renderer.fill_rect(x, y, col_width(), row_height(), bg);
     renderer.render_text(x, y, String(cell.c), fg, info.bold ? Font::bold_font() : Font::default_font());

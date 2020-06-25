@@ -4,13 +4,28 @@
 
 #include <kernel/hal/x86_64/drivers/vga.h>
 
+enum class ColorValue {
+    White,
+    Black,
+};
+
 class Color {
 public:
-    Color() : Color(0xFF, 0xFF, 0xFF) {}
-
-    Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0x00) : m_color(a << 24 | r << 16 | g << 8 | b) {}
+    constexpr Color() : Color(0xFF, 0xFF, 0xFF) {}
+    constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0x00) : m_color(a << 24 | r << 16 | g << 8 | b) {}
+    constexpr Color(uint32_t value) : m_color(value) {}
     Color(enum vga_color color);
-    Color(uint32_t value) : m_color(value) {}
+
+    constexpr Color(ColorValue v) {
+        switch (v) {
+            case ColorValue::White:
+                set(255, 255, 255);
+                break;
+            case ColorValue::Black:
+                set(0, 0, 0);
+                break;
+        }
+    }
 
     Color invert() const { return Color(255 - r(), 255 - g(), 255 - b(), a()); }
 
@@ -27,5 +42,5 @@ public:
     bool operator!=(const Color& other) const { return *this != other; }
 
 private:
-    uint32_t m_color;
+    uint32_t m_color { 0 };
 };

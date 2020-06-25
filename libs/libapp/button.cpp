@@ -8,9 +8,9 @@ namespace App {
 void Button::render() {
     Renderer renderer(*window()->pixels());
 
-    renderer.fill_rect(rect(), Color(0, 0, 0));
-    renderer.draw_rect(rect(), Color(255, 255, 255));
-    renderer.render_text(rect().x() + 2, rect().y() + 2, label(), Color(255, 255, 255), font());
+    renderer.fill_rect(rect(), ColorValue::Black);
+    renderer.draw_rect(rect(), ColorValue::White);
+    renderer.render_text(rect().x() + 2, rect().y() + 2, label(), ColorValue::White, font());
 }
 
 void Button::on_mouse_event(MouseEvent& mouse_event) {
