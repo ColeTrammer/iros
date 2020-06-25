@@ -73,7 +73,7 @@ struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result
     memset(result, 0, sizeof(struct tm));
     result->tm_year = 70;
     result->tm_mday = 1;
-    result->tm_isdst = -daylight;
+    result->tm_isdst = 0;
 
     time_t time = *timer;
     result->tm_sec = time % 60;
@@ -140,6 +140,37 @@ struct tm *localtime_r(const time_t *__restrict timer, struct tm *__restrict res
 
     struct tm *ret = gmtime_r(&time, result);
 
-    // FIXME: adjust for DST if daylight == 1
+    if (daylight) {
+        // FIXME: this code only works for the US "Daylight Saving Time", not European "Summer Time"
+        if (ret->tm_mon + 1 >= 3 && ret->tm_mon + 1 <= 11) {
+            // DST begins on the second Sunday of March at 2:00 AM
+            if (ret->tm_mon + 1 == 3) {
+                int day = ret->tm_wday;
+                int earlier_sunday_mday = ret->tm_mday - day;
+                if (earlier_sunday_mday < 8) {
+                    return ret;
+                }
+
+                if (earlier_sunday_mday >= 8) {
+                    if (day == 0 && earlier_sunday_mday <= 14 && ret->tm_hour < 2) {
+                        return ret;
+                    }
+                }
+            }
+
+            // DST ends on the first Sunday of November
+            if (ret->tm_mon + 1 == 11) {
+                int day = ret->tm_wday;
+                int earlier_sunday_mday = ret->tm_mday - day;
+                if (earlier_sunday_mday >= 0) {
+                    return ret;
+                }
+            }
+
+            time += 60 * 60;
+            ret = gmtime_r(&time, ret);
+            ret->tm_isdst = 1;
+        }
+    }
     return ret;
 }
