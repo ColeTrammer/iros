@@ -48,6 +48,8 @@ private:
     void swap_buffers();
     void set_mouse_coordinates(int x, int y);
 
+    void draw_taskbar(Renderer& renderer);
+
     int m_fb { -1 };
     int m_mouse_x { 0 };
     int m_mouse_y { 0 };

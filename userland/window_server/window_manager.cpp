@@ -66,6 +66,25 @@ void WindowManager::remove_windows_of_client(int client_id) {
     });
 }
 
+void WindowManager::draw_taskbar(Renderer& renderer) {
+    constexpr int taskbar_height = 32;
+
+    int taskbar_top = renderer.pixels().height() - taskbar_height;
+    renderer.set_color(Color(0, 0, 0));
+    renderer.fill_rect(0, taskbar_top, renderer.pixels().width(), taskbar_height);
+
+    for (int x = 0; x < renderer.pixels().width(); x++) {
+        renderer.pixels().put_pixel(x, taskbar_top, Color(255, 255, 255));
+    }
+
+    time_t now = time(nullptr);
+    struct tm* tm = localtime(&now);
+    auto time_string = String::format("%2d:%02d:%02d %s", tm->tm_hour % 12, tm->tm_min, tm->tm_sec, tm->tm_hour > 12 ? "PM" : "AM");
+
+    renderer.set_color(Color(255, 255, 255));
+    renderer.render_text(2, taskbar_top + 2, time_string);
+}
+
 void WindowManager::draw() {
     Renderer renderer(*m_back_buffer);
 
@@ -99,6 +118,9 @@ void WindowManager::draw() {
 
     for_each_window(render_window);
 
+    draw_taskbar(renderer);
+
+    renderer.set_color(Color(255, 255, 255));
     for (int y = 0; y < cursor_height; y++) {
         for (int x = 0; x < cursor_width; x++) {
             if (cursor[y][x] != '.') {

@@ -92,11 +92,12 @@ void Server::start() {
         timespec current_time;
         clock_gettime(CLOCK_MONOTONIC, &current_time);
 
+        constexpr long min_delta_time = 1000 / 60;
+        remaining_time = min_delta_time;
         if (current_time.tv_sec - time_of_last_paint.tv_sec > 2) {
             m_manager->draw();
             did_draw = true;
         } else {
-            long min_delta_time = 1000 / 60;
             long delta_time =
                 (current_time.tv_sec - time_of_last_paint.tv_sec) * 1000 + (current_time.tv_nsec - time_of_last_paint.tv_nsec) / 1000000;
             if (delta_time >= min_delta_time) {
@@ -123,11 +124,14 @@ void Server::start() {
         });
 
         timespec timeout { .tv_sec = 0, .tv_nsec = remaining_time * 1000000 };
-        timespec* timeout_to_pass = did_draw ? nullptr : &timeout;
-        int ret = pselect(FD_SETSIZE, &set, nullptr, &exceptional, timeout_to_pass, nullptr);
+        int ret = pselect(FD_SETSIZE, &set, nullptr, &exceptional, &timeout, nullptr);
         if (ret < 0) {
             perror("select");
             exit(1);
+        }
+
+        if (ret == 0) {
+            continue;
         }
 
         m_clients.for_each_reverse([&](int client_fd) {
