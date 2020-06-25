@@ -3,9 +3,23 @@
 #include <stdlib.h>
 
 void Renderer::fill_rect(int x, int y, int width, int height) {
-    for (int i = x; i < x + width; i++) {
-        for (int j = y; j < y + height; j++) {
-            m_pixels.put_pixel(i, j, color());
+    auto& buffer = m_pixels;
+
+    auto y_start = LIIM::max(0, y);
+    auto y_end = LIIM::min(y + height, buffer.height());
+
+    auto x_start = LIIM::max(0, x);
+    auto x_end = LIIM::min(x + width, buffer.width());
+
+    if (y_end <= y_start || x_end <= x_start) {
+        return;
+    }
+
+    auto color = m_color.color();
+    for (int y = y_start; y < y_end; y++) {
+        auto* base = buffer.pixels() + (y * buffer.width());
+        for (int x = x_start; x < x_end; x++) {
+            base[x] = color;
         }
     }
 }
