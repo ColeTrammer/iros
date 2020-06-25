@@ -196,9 +196,9 @@ void WindowManager::swap_buffers() {
     memcpy(m_back_buffer->pixels(), m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
 }
 
-void WindowManager::notify_mouse_moved(int dx, int dy, bool scale) {
-    int computed_x = scale ? (m_mouse_x + dx * m_front_buffer->width() / 0xFFFF) : (m_mouse_x + dx);
-    int computed_y = scale ? (m_mouse_y - dy * m_front_buffer->height() / 0xFFFF) : (m_mouse_y - dy);
+void WindowManager::notify_mouse_moved(int dx, int dy, bool absolue) {
+    int computed_x = absolue ? (dx * m_front_buffer->width() / 0xFFFF) : (m_mouse_x + dx);
+    int computed_y = absolue ? (dy * m_front_buffer->height() / 0xFFFF) : (m_mouse_y - dy);
 
     int new_mouse_x = LIIM::clamp(computed_x, 0, m_front_buffer->width() - cursor_width);
     int new_mouse_y = LIIM::clamp(computed_y, 0, m_front_buffer->height() - cursor_height);

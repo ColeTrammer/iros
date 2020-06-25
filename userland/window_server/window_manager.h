@@ -33,7 +33,7 @@ public:
     Window* active_window() { return m_active_window.get(); }
     const Window* active_window() const { return m_active_window.get(); };
 
-    void notify_mouse_moved(int dx, int dy, bool scale);
+    void notify_mouse_moved(int dx, int dy, bool absolute);
     void notify_mouse_pressed(mouse_button_state left, mouse_button_state right);
 
     void set_active_window(SharedPtr<Window> window);

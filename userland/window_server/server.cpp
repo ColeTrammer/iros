@@ -192,7 +192,7 @@ void Server::start() {
             mouse_event event;
             while (read(m_mouse_fd, &event, sizeof(event)) == sizeof(event)) {
                 if (event.dx != 0 || event.dy != 0) {
-                    m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_RELATIVE);
+                    m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_ABSOLUTE);
                 }
 
                 if (event.left != MOUSE_NO_CHANGE || event.right != MOUSE_NO_CHANGE) {

@@ -22,8 +22,6 @@ static void disable_vmmouse(void) {
 }
 
 static struct mouse_event s_event;
-static int last_x;
-static int last_y;
 static bool left_is_down;
 static bool right_is_down;
 
@@ -44,10 +42,8 @@ struct mouse_event *vmmouse_read(void) {
     }
 
     struct vmware_registers regs = vmware_send_full(VMWARE_VMMOUSE_DATA, 4);
-    s_event.dx = regs.ebx - last_x;
-    s_event.dy = -(regs.ecx - last_y);
-    last_x = regs.ebx;
-    last_y = regs.ecx;
+    s_event.dx = regs.ebx;
+    s_event.dy = regs.ecx;
 
     if (regs.eax & 0x20) {
         if (left_is_down) {
@@ -82,7 +78,7 @@ struct mouse_event *vmmouse_read(void) {
     }
 
     s_event.scroll_state = regs.edx == 0xFFFFFFFF ? SCROLL_UP : regs.edx == 0x01 ? SCROLL_DOWN : SCROLL_NONE;
-    s_event.scale_mode = SCALE_RELATIVE;
+    s_event.scale_mode = SCALE_ABSOLUTE;
     return &s_event;
 }
 
