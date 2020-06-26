@@ -245,6 +245,22 @@ int WindowManager::find_window_intersecting_point(Point p) {
 }
 
 void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state) {
+    if (m_mouse_y >= m_back_buffer->height() - taskbar_height) {
+        for (auto& item : m_window_taskbar_items) {
+            if (item.rect.intersects({ m_mouse_x, m_mouse_y })) {
+                for (int i = 0; i < windows().size(); i++) {
+                    if (windows()[i] == item.window) {
+                        windows().rotate_left(i, windows().size());
+                        break;
+                    }
+                }
+                set_active_window(item.window);
+                break;
+            }
+        }
+        return;
+    }
+
     int index = find_window_intersecting_point({ m_mouse_x, m_mouse_y });
     if (index == -1) {
         return;
