@@ -497,6 +497,7 @@ constexpr const T& min(const T& a, const T& b) {
 
 }
 
+using LIIM::clamp;
 using LIIM::forward;
 using LIIM::in_place_index;
 using LIIM::in_place_index_t;
@@ -505,3 +506,4 @@ using LIIM::in_place_type_t;
 using LIIM::max;
 using LIIM::min;
 using LIIM::move;
+using LIIM::swap;
