@@ -37,9 +37,11 @@ void net_arp_recieve(const struct arp_packet *packet, size_t len) {
               packet->mac_sender.addr[5]);
 
     struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(packet->ip_sender);
-    assert(mapping);
-
-    mapping->mac = packet->mac_sender;
+    if (mapping) {
+        mapping->mac = packet->mac_sender;
+    } else {
+        net_create_ip_v4_to_mac_mapping(packet->ip_sender, packet->mac_sender);
+    }
 }
 
 void net_init_arp_packet(struct arp_packet *packet, uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip,
