@@ -32,6 +32,7 @@ if (NOT ${NATIVE_BUILD})
         mem/vm_object.c
         mem/vm_region.c
         net/arp.c
+        net/dhcp.c
         net/ethernet.c
         net/icmp.c
         net/inet_socket.c
