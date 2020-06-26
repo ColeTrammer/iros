@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -99,4 +100,6 @@ void init_cmos() {
     }
 
     global_realtime_clock.time.tv_sec = seconds_since_epoch;
+    // FIXME: seed a better RNG with this data
+    srand(seconds_since_epoch);
 }

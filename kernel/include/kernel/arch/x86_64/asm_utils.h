@@ -128,6 +128,14 @@ static inline void fninit(void) {
     asm volatile("fninit" : : : "memory");
 }
 
+#define CPUID_FEATURES 1
+
+#define CPUID_ECX_RDRAND (1 << 30)
+
+static inline void cpuid(int code, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d) {
+    asm volatile("cpuid" : "=a"(*a), "=b"(b), "=c"(*c), "=d"(*d) : "0"(code));
+}
+
 #define MSR_FS_BASE 0xC0000100U
 
 static inline uint64_t get_msr(uint32_t msr) {

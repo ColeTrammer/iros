@@ -1,11 +1,11 @@
 #include <sys/types.h>
+#include <kernel/hal/devices.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
-
-#include <kernel/hal/devices.h>
 #include <kernel/hal/ptmx.h>
 
+#include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
@@ -18,7 +18,20 @@
 #include <kernel/hal/x86_64/drivers/vmware_back_door.h>
 #include <kernel/hal/x86_64/gdt.h>
 
+static bool supports_rdrand;
+
+bool cpu_supports_rdrand(void) {
+    return supports_rdrand;
+}
+
+static void detect_cpu_features(void) {
+    uint32_t a, b, c, d;
+    cpuid(CPUID_FEATURES, &a, &b, &c, &d);
+    supports_rdrand = !!(c & CPUID_ECX_RDRAND);
+}
+
 void init_hal() {
+    detect_cpu_features();
     init_irqs();
 
     init_pic();

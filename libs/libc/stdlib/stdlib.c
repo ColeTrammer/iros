@@ -7,8 +7,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#ifndef __is_libk
-
 static unsigned int seed;
 
 void srand(unsigned int _seed) {
@@ -24,8 +22,6 @@ int rand_r(unsigned int *seedp) {
     *seedp = *seedp * 1103515245 + 12345;
     return (int) (*seedp % RAND_MAX);
 }
-
-#endif /* __is_libk */
 
 int abs(int n) {
     if (n < 0) {
@@ -92,6 +88,7 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *a, c
     }
 }
 
+#ifndef __is_libk
 int system(const char *cmd) {
     // We have to check whether or not /bin/sh exists, but it should always exist so just return true
     if (cmd == NULL) {
@@ -146,7 +143,6 @@ int system(const char *cmd) {
     return status;
 }
 
-#ifndef __is_libk
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/ioctl.h>

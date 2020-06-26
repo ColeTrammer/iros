@@ -59,6 +59,7 @@ if (NOT ${NATIVE_BUILD})
         time/timer.c
         util/hash_map.c
         util/mutex.c
+        util/random.c
         util/spinlock.c
         util/validators.c
     )

@@ -5,6 +5,7 @@
 -   1 - /dev/null
 -   2 - /dev/zero
 -   3 - /dev/full
+-   4 - /dev/urandom
 
 ## Pseudo Terminal Multiplexer (Major 2)
 

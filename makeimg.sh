@@ -34,6 +34,7 @@ mkdir mnt/dev
 mknod mnt/dev/null c 1 1 -m 666
 mknod mnt/dev/zero c 1 2 -m 666
 mknod mnt/dev/full c 1 3 -m 666
+mknod mnt/dev/urandom c 1 4 -m 666
 mknod mnt/dev/ptmx c 2 1 -m 666
 mknod mnt/dev/tty c 2 2 -m 666
 mknod mnt/dev/hdd0 b 5 0 -m 660
@@ -49,6 +50,7 @@ ln -s /proc/self/fd mnt/dev/fd
 ln -s /proc/self/fd/0 mnt/dev/stdin
 ln -s /proc/self/fd/1 mnt/dev/stdout
 ln -s /proc/self/fd/2 mnt/dev/stderr
+ln -s urandom mnt/dev/random
 
 umount /dev/loop100
 losetup -d /dev/loop100
