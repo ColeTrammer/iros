@@ -401,6 +401,10 @@ void TTY::on_char(char c) {
             if (m_row >= m_buffer.height()) {
                 m_above_rows.add(m_buffer.scroll_up());
                 m_row--;
+
+                if (m_above_rows.size() > 100) {
+                    m_above_rows.remove(0);
+                }
             }
             break;
         // Ascii BS (NOTE: not the backspace key)
