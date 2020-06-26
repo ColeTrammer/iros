@@ -14,9 +14,6 @@ Widget::Widget() {}
 Widget::~Widget() {}
 
 void Widget::render() {
-
-    fprintf(stderr, "Widget::render()\n");
-
 #ifdef WIDGET_DEBUG
     Renderer renderer(*window()->pixels());
     renderer.draw_rect(m_rect);

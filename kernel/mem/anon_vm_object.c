@@ -11,6 +11,8 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
 
+// #define ANON_VM_OBJECT_DEBUG
+
 static int anon_map(struct vm_object *self, struct vm_region *region) {
     struct anon_vm_object_data *data = self->private_data;
 
@@ -52,7 +54,10 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
     struct anon_vm_object_data *data = self->private_data;
 
     size_t page_index = offset_into_self / PAGE_SIZE;
-    assert(page_index < data->pages);
+    if (page_index >= data->pages) {
+        debug_log("fault in address outside anon object: [ %#.16lX, %lu, %lu ]\n", offset_into_self, page_index, data->pages);
+        assert(page_index < data->pages);
+    }
 
     spin_lock(&self->lock);
     if (data->phys_pages[page_index]) {
@@ -108,12 +113,15 @@ static int anon_extend(struct vm_object *self, size_t pages) {
 
     size_t old_num_pages = data->pages;
     size_t num_pages = old_num_pages + pages;
+#ifdef ANON_VM_OBJECT_DEBUG
+    debug_log("anon_extend: [ %lu, %lu ]\n", pages, num_pages);
+#endif /* ANON_VM_OBJECT_DEBUG */
     struct anon_vm_object_data *new_data = self->private_data =
         realloc(self->private_data, sizeof(struct anon_vm_object_data) + num_pages * sizeof(struct phys_page *));
     assert(new_data);
 
     new_data->pages = num_pages;
-    memset(new_data->phys_pages + old_num_pages, 0, (num_pages - old_num_pages) * sizeof(struct phys_page *));
+    memset(new_data->phys_pages + old_num_pages, 0, pages * sizeof(struct phys_page *));
     return 0;
 }
 
@@ -131,7 +139,7 @@ static struct vm_object *anon_clone(struct vm_object *self) {
 
     spin_lock(&self->lock);
 
-    struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + self_data->pages * sizeof(uintptr_t));
+    struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + self_data->pages * sizeof(struct phys_page *));
     data->pages = self_data->pages;
 
     for (size_t i = 0; i < self_data->pages; i++) {

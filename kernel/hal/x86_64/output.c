@@ -78,10 +78,10 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
     printf("\n\033[31m");
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
-    printf("( %d ): Assertion failed: %s in %s at %s, line %d", get_current_task()->process->pid, msg, func, file, line);
+    printf("( %d ): Assertion failed: %s in %s at %s, line %d\n", get_current_task()->process->pid, msg, func, file, line);
 
 #ifndef KERNEL_NO_DEBUG_COLORS
-    printf("\033[0m\n");
+    printf("\033[0m");
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
     if (should_panic) {

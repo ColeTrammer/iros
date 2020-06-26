@@ -183,7 +183,12 @@ void free(void *p) {
 #endif /* __is_libk && KERNEL_MALLOC_DEBUG */
 
     struct metadata *block = GET_BLOCK(p);
-    assert(block->magic == __MALLOC_MAGIG_CHECK);
+    if (block->magic != __MALLOC_MAGIG_CHECK) {
+#if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
+        debug_log("~Free detected invalid block: [ %p, %p ]\n", block, block + 1);
+#endif /* KERNEL_MALLOC_DEBUG && __is_libk */
+        assert(block->magic == __MALLOC_MAGIG_CHECK);
+    }
     assert(IS_ALLOCATED(block));
     __malloc_debug("free: [ %p, %lu ]\n", p, GET_SIZE(block));
     CLEAR_ALLOCATED(block);
