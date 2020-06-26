@@ -8,6 +8,11 @@
 #include <kernel/net/interface.h>
 
 void net_send_arp_request(struct network_interface *interface, struct ip_v4_address ip_address) {
+    if (interface->config_context.state != INITIALIZED) {
+        debug_log("Can't send ARP packet; interface uninitialized: [ %s ]\n", interface->name);
+        return;
+    }
+
     struct ethernet_packet *packet =
         net_create_ethernet_packet(MAC_BROADCAST, interface->ops->get_mac_address(interface), ETHERNET_TYPE_ARP, sizeof(struct arp_packet));
 
