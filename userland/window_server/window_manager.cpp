@@ -73,10 +73,7 @@ void WindowManager::draw_taskbar(Renderer& renderer) {
 
     int taskbar_top = renderer.pixels().height() - taskbar_height;
     renderer.fill_rect(0, taskbar_top, renderer.pixels().width(), taskbar_height, ColorValue::Black);
-
-    for (int x = 0; x < renderer.pixels().width(); x++) {
-        renderer.pixels().put_pixel(x, taskbar_top, ColorValue::White);
-    }
+    renderer.draw_line({ 0, taskbar_top }, { renderer.pixels().width() - 1, taskbar_top }, ColorValue::White);
 
     time_t now = time(nullptr);
     struct tm* tm = localtime(&now);
@@ -96,10 +93,8 @@ void WindowManager::draw() {
     auto render_window = [&](auto& window) {
         renderer.fill_rect(window->rect().x() + 1, window->rect().y(), window->rect().width() - 1, 21, ColorValue::Black);
         renderer.draw_rect(window->rect(), ColorValue::White);
-        for (int x = window->rect().x(); x < window->rect().x() + window->rect().width(); x++) {
-            m_back_buffer->put_pixel(x, window->rect().y() + 21, ColorValue::White);
-        }
-
+        renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },
+                           { window->rect().x() + window->rect().width() - 1, window->rect().y() + 21 }, ColorValue::White);
         renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title(), ColorValue::White);
         renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
 
