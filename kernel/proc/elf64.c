@@ -312,7 +312,7 @@ size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_
 
         uintptr_t current_rbp;
         asm("mov %%rbp, %0" : "=r"(current_rbp) : :);
-        uintptr_t rbp = main_task ? current_rbp : main_task->arch_task.task_state.cpu_state.rbp;
+        uintptr_t rbp = current == main_task ? current_rbp : main_task->arch_task.task_state.cpu_state.rbp;
         return do_stack_trace(rip, rbp, kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj,
                               kernel_stack_mapper, (void *) stack_phys_mapping, true);
     }

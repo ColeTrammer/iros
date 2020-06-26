@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
@@ -68,6 +69,8 @@ int debug_log_internal(const char *func, const char *format, ...) {
     return written;
 }
 
+static bool should_panic;
+
 void debug_log_assertion(const char *msg, const char *file, int line, const char *func) {
     disable_interrupts();
 
@@ -81,6 +84,20 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
     printf("\033[0m\n");
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
+    if (should_panic) {
+        abort();
+    }
+
+    // In case something else goes wrong, panic immediately without trying to dump a back trace
+    should_panic = true;
+
+    uintptr_t rbp;
+    asm("mov %%rbp, %0" : "=r"(rbp) : :);
+
+    struct task *current_task = get_current_task();
+    current_task->arch_task.task_state.cpu_state.rbp = rbp;
+    current_task->arch_task.task_state.stack_state.rip = (uintptr_t) &elf64_stack_trace;
+    elf64_stack_trace(current_task, true);
     abort();
 }
 
