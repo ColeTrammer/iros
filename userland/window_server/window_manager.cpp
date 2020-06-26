@@ -6,6 +6,11 @@
 
 // #define WM_DRAW_DEBUG
 
+constexpr int taskbar_height = 32;
+constexpr int taskbar_item_x_spacing = 8;
+constexpr int taskbar_item_y_spacing = 4;
+constexpr int taskbar_item_width = 128;
+
 constexpr int cursor_width = 12;
 constexpr int cursor_height = 12;
 
@@ -31,17 +36,41 @@ WindowManager::~WindowManager() {}
 
 void WindowManager::add_window(SharedPtr<Window> window) {
     windows().add(window);
+    if (m_window_taskbar_items.empty()) {
+        m_window_taskbar_items.add({ { taskbar_item_x_spacing, m_back_buffer->height() - taskbar_height + taskbar_item_y_spacing,
+                                       taskbar_item_width, taskbar_height - 2 * taskbar_item_y_spacing },
+                                     window });
+    } else {
+        auto& last_rect = m_window_taskbar_items.last();
+        m_window_taskbar_items.add({ { last_rect.rect.x() + last_rect.rect.width() + taskbar_item_x_spacing,
+                                       m_back_buffer->height() - taskbar_height + taskbar_item_y_spacing, taskbar_item_width,
+                                       taskbar_height - 2 * taskbar_item_y_spacing },
+                                     window });
+    }
     set_active_window(window);
 }
 
 void WindowManager::remove_window(wid_t wid) {
-    m_windows.remove_if([&](auto& window) {
-        if (window->id() == wid) {
-            m_dirty_rects.add(window->rect());
-            return true;
+    for (int i = 0; i < windows().size(); i++) {
+        auto& window = *windows()[i];
+        if (window.id() == wid) {
+            windows().remove(i);
+            m_dirty_rects.add(window.rect());
+            for (i = 0; i < m_window_taskbar_items.size(); i++) {
+                if (m_window_taskbar_items[i].window->id() != wid) {
+                    continue;
+                }
+
+                m_window_taskbar_items.remove(i);
+                for (; i < m_window_taskbar_items.size(); i++) {
+                    auto& rect_to_move_left = m_window_taskbar_items[i].rect;
+                    m_window_taskbar_items[i].rect.set_x(rect_to_move_left.x() - taskbar_item_x_spacing - taskbar_item_width);
+                }
+                break;
+            }
+            break;
         }
-        return false;
-    });
+    }
 
     if (m_active_window->id() == wid) {
         if (windows().size() == 0) {
@@ -69,17 +98,25 @@ void WindowManager::remove_windows_of_client(int client_id) {
 }
 
 void WindowManager::draw_taskbar(Renderer& renderer) {
-    constexpr int taskbar_height = 32;
 
     int taskbar_top = renderer.pixels().height() - taskbar_height;
     renderer.fill_rect(0, taskbar_top, renderer.pixels().width(), taskbar_height, ColorValue::Black);
     renderer.draw_line({ 0, taskbar_top }, { renderer.pixels().width() - 1, taskbar_top }, ColorValue::White);
 
+    for (int i = 0; i < m_window_taskbar_items.size(); i++) {
+        auto& item = m_window_taskbar_items[i];
+        auto& rect = item.rect;
+        auto& window = *item.window;
+        renderer.draw_rect(rect, ColorValue::White);
+        renderer.render_text(rect.x() + 4, rect.y() + 4, window.title(), ColorValue::White,
+                             &window == m_active_window.get() ? Font::bold_font() : Font::default_font());
+    }
+
     time_t now = time(nullptr);
     struct tm* tm = localtime(&now);
     auto time_string = String::format("%2d:%02d:%02d %s", tm->tm_hour % 12, tm->tm_min, tm->tm_sec, tm->tm_hour > 12 ? "PM" : "AM");
 
-    renderer.render_text(2, taskbar_top + 2, time_string, ColorValue::White);
+    renderer.render_text(m_back_buffer->width() - 100, taskbar_top + 4, time_string, ColorValue::White);
 }
 
 void WindowManager::draw() {

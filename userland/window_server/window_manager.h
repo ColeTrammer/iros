@@ -57,6 +57,13 @@ private:
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
     Vector<SharedPtr<Window>> m_windows;
+
+    struct TaskbarItem {
+        Rect rect;
+        SharedPtr<Window> window;
+    };
+    Vector<TaskbarItem> m_window_taskbar_items;
+
     SharedPtr<Window> m_active_window;
     SharedPtr<Window> m_window_to_move;
     Point m_window_move_initial_location;
