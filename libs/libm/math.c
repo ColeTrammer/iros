@@ -30,3 +30,15 @@ double ldexp(double x, int exp) {
         return 0;
     }
 }
+
+float froundf(float x) {
+    if (x < 0) {
+        return -froundf(-x);
+    }
+
+    // FIXME: this will only work for floats that can fit inside an int.
+    if (x - (int) x >= 0.5f) {
+        return ((int) x) + 1;
+    }
+    return (int) x;
+}

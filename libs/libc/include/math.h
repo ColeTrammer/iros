@@ -28,6 +28,8 @@ double sqrt(double x);
 double tan(double x);
 double tanh(double x);
 
+float froundf(float x);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
