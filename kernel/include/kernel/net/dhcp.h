@@ -15,8 +15,8 @@
 #define DHCP_MESSAGE_TYPE_OFFER    2
 #define DHCP_MESSAGE_TYPE_REQUEST  3
 #define DHCP_MESSAGE_TYPE_DECLINE  4
-#define DHCP_MESSAGE_TYPE_PACK     5
-#define DHCP_MESSAGE_TYPE_PNAK     6
+#define DHCP_MESSAGE_TYPE_ACK      5
+#define DHCP_MESSAGE_TYPE_NAK      6
 #define DHCP_MESSAGE_TYPE_RELEASE  7
 
 struct network_interface;
@@ -44,8 +44,14 @@ struct dhcp_packet {
 #define DHCP_OPTION_MAGIC_COOKIE_2 0x82
 #define DHCP_OPTION_MAGIC_COOKIE_3 0x53
 #define DHCP_OPTION_MAGIC_COOKIE_4 0x63
-#define DHCP_OPTION_MESSAGE_PAD    0
+#define DHCP_OPTION_PAD            0
+#define DHCP_OPTION_SUBNET_MASK    1
+#define DHCP_OPTION_ROUTER         3
+#define DHCP_OPTION_DNS_SERVERS    6
+#define DHCP_OPTION_REQUEST_IP     50
+#define DHCP_OPTION_IP_LEASE_TIME  51
 #define DHCP_OPTION_MESSAGE_TYPE   53
+#define DHCP_OPTION_SERVER_ID      54
 #define DHCP_OPTION_END            255
     uint8_t options[0];
 } __attribute__((packed));
@@ -54,5 +60,6 @@ _Static_assert(sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + sizeof(
                DHCP_MINIMUM_PACKET_SIZE);
 
 void net_configure_interface_with_dhcp(struct network_interface *interface);
+void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len);
 
 #endif /* _KERNEL_NET_DHCP_H */
