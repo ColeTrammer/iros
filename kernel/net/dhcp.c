@@ -219,9 +219,6 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
                       interface->address.addr[1], interface->address.addr[2], interface->address.addr[3]);
 
             net_create_ip_v4_to_mac_mapping(interface->address, our_mac_address);
-
-            // NOTE: this will be filled in by ARP code.
-            net_create_ip_v4_to_mac_mapping(interface->broadcast, MAC_ZEROES);
             net_send_arp_request(interface, interface->broadcast);
             break;
         default:
