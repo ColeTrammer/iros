@@ -61,13 +61,14 @@ void net_udp_recieve(const struct udp_packet *packet, size_t len) {
 
 void net_init_udp_packet(struct udp_packet *packet, uint16_t source_port, uint16_t dest_port, uint16_t len, const void *buf) {
     assert(packet);
-    assert(buf);
 
     packet->source_port = htons(source_port);
     packet->dest_port = htons(dest_port);
     packet->len = htons(sizeof(struct udp_packet) + len);
 
-    memcpy(packet->payload, buf, len);
+    if (buf) {
+        memcpy(packet->payload, buf, len);
+    }
 
     packet->checksum = 0;
 }

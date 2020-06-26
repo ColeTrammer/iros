@@ -7,7 +7,9 @@ struct ip_v4_address {
     uint8_t addr[4];
 } __attribute__((packed));
 
-#define IP_V4_LOOPBACK ((struct ip_v4_address) { { 127, 0, 0, 1 } })
+#define IP_V4_ZEROES    ((struct ip_v4_address) { { 0, 0, 0, 0 } })
+#define IP_V4_LOOPBACK  ((struct ip_v4_address) { { 127, 0, 0, 1 } })
+#define IP_V4_BROADCAST ((struct ip_v4_address) { { 255, 255, 255, 255 } })
 
 static inline uint32_t ip_v4_to_uint(struct ip_v4_address addr) {
     return addr.addr[0] | addr.addr[1] << 8 | addr.addr[2] << 16 | addr.addr[3] << 24;
