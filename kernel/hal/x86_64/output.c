@@ -93,11 +93,7 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
 
     uintptr_t rbp;
     asm("mov %%rbp, %0" : "=r"(rbp) : :);
-
-    struct task *current_task = get_current_task();
-    current_task->arch_task.task_state.cpu_state.rbp = rbp;
-    current_task->arch_task.task_state.stack_state.rip = (uintptr_t) &elf64_stack_trace;
-    elf64_stack_trace(current_task, true);
+    kernel_stack_trace((uintptr_t) &kernel_stack_trace, rbp);
     abort();
 }
 
