@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/net/dhcp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/interface.h>
@@ -49,6 +50,11 @@ void net_udp_recieve(const struct udp_packet *packet, size_t len) {
     uint16_t dest_port = ntohs(packet->dest_port);
     struct socket *socket = net_get_socket_from_port(dest_port);
     if (socket == NULL) {
+        if (dest_port == DHCP_CLIENT_PORT) {
+            net_dhcp_recieve((const struct dhcp_packet *) packet->payload, len - sizeof(struct udp_packet));
+            return;
+        }
+
         debug_log("UDP packet sent to unbound port: [ %u ]\n", dest_port);
         return;
     }

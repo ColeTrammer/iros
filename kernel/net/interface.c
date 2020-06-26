@@ -56,8 +56,20 @@ void net_for_each_interface(void (*func)(struct network_interface *interface)) {
     }
 }
 
+struct network_interface *net_find_interface(bool (*func)(struct network_interface *interface, void *closure), void *closure) {
+    struct network_interface *interface = interfaces;
+    while (interface) {
+        if (func(interface, closure)) {
+            return interface;
+        }
+        interface = interface->next;
+    }
+
+    return NULL;
+}
+
 struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data) {
-    struct network_interface *interface = malloc(sizeof(struct network_interface));
+    struct network_interface *interface = calloc(1, sizeof(struct network_interface));
     assert(interface);
 
     assert(name);
@@ -66,14 +78,11 @@ struct network_interface *net_create_network_interface(const char *name, int typ
     assert(type == NETWORK_INTERFACE_ETHERNET || type == NETWORK_INTERFACE_LOOPBACK);
     interface->type = type;
 
-    if (type == NETWORK_INTERFACE_ETHERNET) {
-        interface->address = (struct ip_v4_address) { { 10, 0, 2, 15 } };
-        interface->mask = (struct ip_v4_address) { { 255, 255, 255, 0 } };
-        interface->broadcast = (struct ip_v4_address) { { 10, 0, 2, 2 } };
-    } else {
+    if (type == NETWORK_INTERFACE_LOOPBACK) {
         interface->address = IP_V4_LOOPBACK;
-        interface->mask = (struct ip_v4_address) { { 255, 255, 255, 255 } };
+        interface->mask = IP_V4_BROADCAST;
         interface->broadcast = IP_V4_LOOPBACK;
+        interface->config_context.state = INITIALIZED;
     }
 
     assert(ops);
