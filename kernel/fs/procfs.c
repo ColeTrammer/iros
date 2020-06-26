@@ -20,9 +20,11 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/net/arp.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
+#include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
 #define PROCFS_ENSURE_ALIGNMENT __attribute__((optimize("align-functions=4")))
@@ -481,6 +483,41 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_meminfo(struct procfs
     return (struct procfs_buffer) { buffer, length };
 }
 
+static void arp_for_each(void *_mapping, void *_buf) {
+    struct ip_v4_to_mac_mapping *mapping = _mapping;
+    struct procfs_buffer *buf = _buf;
+    buf->size +=
+        snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0, "%u.%u.%u.%u => %02x:%02x:%02x:%02x:%02x:%02x\n",
+                 mapping->ip.addr[0], mapping->ip.addr[1], mapping->ip.addr[2], mapping->ip.addr[3], mapping->mac.addr[0],
+                 mapping->mac.addr[1], mapping->mac.addr[2], mapping->mac.addr[3], mapping->mac.addr[4], mapping->mac.addr[5]);
+}
+
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_arp(struct procfs_data *data __attribute__((unused)),
+                                                               struct process *process __attribute__((unused)), bool need_buffer) {
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+
+    struct procfs_buffer buf = { buffer, 0 };
+
+    struct hash_map *map = net_ip_v4_to_mac_table();
+    hash_for_each(map, arp_for_each, &buf);
+    return buf;
+}
+
+PROCFS_ENSURE_ALIGNMENT static void procfs_create_net_directory_structure(struct inode *parent,
+                                                                          struct process *process __attribute__((unused)), bool loaded) {
+    assert(parent);
+
+    if (!loaded) {
+        struct inode *arp_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_arp);
+        struct procfs_data *data = arp_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
+        spin_lock(&parent->lock);
+        fs_put_dirent_cache(parent->dirent_cache, arp_inode, "arp", strlen("arp"));
+        spin_unlock(&parent->lock);
+    }
+}
+
 PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struct inode *parent,
                                                                            struct process *process __attribute__((unused)), bool loaded) {
     assert(parent);
@@ -498,10 +535,14 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         data = meminfo_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *net_directory = procfs_create_inode(PROCFS_DIRECTORY_MODE, 0, 0, NULL, procfs_create_net_directory_structure);
+        net_directory->dirent_cache = fs_create_dirent_cache();
+
         spin_lock(&parent->lock);
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));
         fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
         fs_put_dirent_cache(parent->dirent_cache, meminfo_inode, "meminfo", strlen("meminfo"));
+        fs_put_dirent_cache(parent->dirent_cache, net_directory, "net", strlen("net"));
         spin_unlock(&parent->lock);
     }
 }

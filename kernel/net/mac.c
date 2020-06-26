@@ -26,6 +26,10 @@ static void *key(void *mapping) {
     return &((struct ip_v4_to_mac_mapping *) mapping)->ip;
 }
 
+struct hash_map *net_ip_v4_to_mac_table(void) {
+    return map;
+}
+
 struct ip_v4_to_mac_mapping *net_get_mac_from_ip_v4(struct ip_v4_address address) {
     return hash_get(map, &address);
 }
