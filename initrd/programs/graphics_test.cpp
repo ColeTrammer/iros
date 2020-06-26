@@ -17,7 +17,8 @@ public:
         renderer.draw_line({ 5, 75 }, { 75, 75 }, ColorValue::White);
         renderer.draw_line({ 35, 80 }, { 35, 200 }, ColorValue::White);
 
-        // renderer.draw_line({ 5, 350 }, { 205, 200 }, ColorValue::White);
+        renderer.draw_line({ 5, 350 }, { 205, 200 }, ColorValue::White);
+        renderer.draw_line({ 300, 50 }, { 350, 350 }, ColorValue::White);
 
         App::Window::render();
     }

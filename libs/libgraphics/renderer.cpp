@@ -37,36 +37,69 @@ void Renderer::draw_rect(int x, int y, int width, int height, Color color) {
 }
 
 void Renderer::draw_line(Point start, Point end, Color color) {
-    auto x_start = max(0, min(start.x(), end.x()));
-    auto x_end = min(m_pixels.width(), max(start.x(), end.x()));
+    auto x_start = clamp(start.x(), 0, m_pixels.width() - 1);
+    auto x_end = clamp(end.x(), 0, m_pixels.width() - 1);
 
-    auto y_start = max(0, min(start.y(), end.y()));
-    auto y_end = min(m_pixels.height(), max(start.y(), end.y()));
+    auto y_start = clamp(start.y(), 0, m_pixels.height() - 1);
+    auto y_end = clamp(end.y(), 0, m_pixels.height() - 1);
 
+    auto raw_color = color.color();
     if (x_start == x_end && y_start == y_end) {
+        m_pixels.put_pixel(x_start, y_start, raw_color);
         return;
     }
 
-    auto raw_color = color.color();
     if (y_start == y_end) {
+        if (x_start > x_end) {
+            swap(x_start, x_end);
+        }
+
         auto raw_pixels = m_pixels.pixels() + y_start * m_pixels.width();
-        for (auto x = x_start; x < x_end; x++) {
+
+        for (auto x = x_start; x <= x_end; x++) {
             raw_pixels[x] = raw_color;
         }
         return;
     }
 
     if (x_start == x_end) {
+        if (y_start > y_end) {
+            swap(y_start, y_end);
+        }
+
         auto raw_pixels = m_pixels.pixels() + x_start;
         auto raw_pixels_width = m_pixels.width();
         auto adjusted_y_end = y_end * raw_pixels_width;
-        for (auto y = y_start * raw_pixels_width; y < adjusted_y_end; y += raw_pixels_width) {
+        for (auto y = y_start * raw_pixels_width; y <= adjusted_y_end; y += raw_pixels_width) {
             raw_pixels[y] = raw_color;
         }
         return;
     }
 
-    assert(false);
+    if (abs(x_end - x_start) >= abs(y_end - y_start)) {
+        auto iterations = abs(x_end - x_start) + 1;
+        auto x_step = x_end > x_start ? 1 : -1;
+        auto y_step = static_cast<float>(y_end - y_start) / static_cast<float>(iterations);
+        auto x = x_start;
+        auto y = static_cast<float>(y_start);
+        for (auto i = 0; i < iterations; i++) {
+            m_pixels.put_pixel(x, froundf(y), raw_color);
+            x += x_step;
+            y += y_step;
+        }
+        return;
+    }
+
+    auto iterations = abs(y_end - y_start) + 1;
+    auto x_step = static_cast<float>(x_end - x_start) / static_cast<float>(iterations);
+    auto y_step = y_end > y_start ? 1 : -1;
+    auto x = static_cast<float>(x_start);
+    auto y = y_start;
+    for (auto i = 0; i < iterations; i++) {
+        m_pixels.put_pixel(froundf(x), y, raw_color);
+        x += x_step;
+        y += y_step;
+    }
 }
 
 void Renderer::fill_circle(int x, int y, int r, Color color) {
