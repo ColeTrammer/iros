@@ -6,12 +6,15 @@
 #include <liim/vector.h>
 #include <kernel/hal/input.h>
 
+#include "taskbar.h"
 #include "window.h"
 
 class Point;
 
 class WindowManager {
 public:
+    static WindowManager& the();
+
     WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer);
     ~WindowManager();
 
@@ -37,6 +40,7 @@ public:
     void notify_mouse_pressed(mouse_button_state left, mouse_button_state right);
 
     void set_active_window(SharedPtr<Window> window);
+    void move_to_front_and_make_active(SharedPtr<Window> window);
 
     int find_window_intersecting_point(Point p);
 
@@ -48,8 +52,6 @@ private:
     void swap_buffers();
     void set_mouse_coordinates(int x, int y);
 
-    void draw_taskbar(Renderer& renderer);
-
     int m_fb { -1 };
     int m_mouse_x { 0 };
     int m_mouse_y { 0 };
@@ -57,13 +59,7 @@ private:
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
     Vector<SharedPtr<Window>> m_windows;
-
-    struct TaskbarItem {
-        Rect rect;
-        SharedPtr<Window> window;
-    };
-    Vector<TaskbarItem> m_window_taskbar_items;
-
+    Taskbar m_taskbar;
     SharedPtr<Window> m_active_window;
     SharedPtr<Window> m_window_to_move;
     Point m_window_move_initial_location;

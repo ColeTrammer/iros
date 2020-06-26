@@ -6,11 +6,6 @@
 
 // #define WM_DRAW_DEBUG
 
-constexpr int taskbar_height = 32;
-constexpr int taskbar_item_x_spacing = 8;
-constexpr int taskbar_item_y_spacing = 4;
-constexpr int taskbar_item_width = 128;
-
 constexpr int cursor_width = 12;
 constexpr int cursor_height = 12;
 
@@ -29,24 +24,23 @@ constexpr char cursor[cursor_height][cursor_width + 1] = { "..XX........",
                                                            ".......XX..." };
 // clang-format on
 
+static WindowManager* s_the;
+
+WindowManager& WindowManager::the() {
+    assert(s_the);
+    return *s_the;
+}
+
 WindowManager::WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
-    : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer) {}
+    : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer), m_taskbar(back_buffer->width(), back_buffer->height()) {
+    s_the = this;
+}
 
 WindowManager::~WindowManager() {}
 
 void WindowManager::add_window(SharedPtr<Window> window) {
     windows().add(window);
-    if (m_window_taskbar_items.empty()) {
-        m_window_taskbar_items.add({ { taskbar_item_x_spacing, m_back_buffer->height() - taskbar_height + taskbar_item_y_spacing,
-                                       taskbar_item_width, taskbar_height - 2 * taskbar_item_y_spacing },
-                                     window });
-    } else {
-        auto& last_rect = m_window_taskbar_items.last();
-        m_window_taskbar_items.add({ { last_rect.rect.x() + last_rect.rect.width() + taskbar_item_x_spacing,
-                                       m_back_buffer->height() - taskbar_height + taskbar_item_y_spacing, taskbar_item_width,
-                                       taskbar_height - 2 * taskbar_item_y_spacing },
-                                     window });
-    }
+    m_taskbar.notify_window_added(window);
     set_active_window(window);
 }
 
@@ -54,20 +48,9 @@ void WindowManager::remove_window(wid_t wid) {
     for (int i = 0; i < windows().size(); i++) {
         auto& window = *windows()[i];
         if (window.id() == wid) {
-            windows().remove(i);
+            m_taskbar.notify_window_removed(window);
             m_dirty_rects.add(window.rect());
-            for (i = 0; i < m_window_taskbar_items.size(); i++) {
-                if (m_window_taskbar_items[i].window->id() != wid) {
-                    continue;
-                }
-
-                m_window_taskbar_items.remove(i);
-                for (; i < m_window_taskbar_items.size(); i++) {
-                    auto& rect_to_move_left = m_window_taskbar_items[i].rect;
-                    m_window_taskbar_items[i].rect.set_x(rect_to_move_left.x() - taskbar_item_x_spacing - taskbar_item_width);
-                }
-                break;
-            }
+            windows().remove(i);
             break;
         }
     }
@@ -95,28 +78,6 @@ void WindowManager::remove_windows_of_client(int client_id) {
             remove_window(window->id());
         }
     });
-}
-
-void WindowManager::draw_taskbar(Renderer& renderer) {
-
-    int taskbar_top = renderer.pixels().height() - taskbar_height;
-    renderer.fill_rect(0, taskbar_top, renderer.pixels().width(), taskbar_height, ColorValue::Black);
-    renderer.draw_line({ 0, taskbar_top }, { renderer.pixels().width() - 1, taskbar_top }, ColorValue::White);
-
-    for (int i = 0; i < m_window_taskbar_items.size(); i++) {
-        auto& item = m_window_taskbar_items[i];
-        auto& rect = item.rect;
-        auto& window = *item.window;
-        renderer.draw_rect(rect, ColorValue::White);
-        renderer.render_text(rect.x() + 4, rect.y() + 4, window.title(), ColorValue::White,
-                             &window == m_active_window.get() ? Font::bold_font() : Font::default_font());
-    }
-
-    time_t now = time(nullptr);
-    struct tm* tm = localtime(&now);
-    auto time_string = String::format("%2d:%02d:%02d %s", tm->tm_hour % 12, tm->tm_min, tm->tm_sec, tm->tm_hour > 12 ? "PM" : "AM");
-
-    renderer.render_text(m_back_buffer->width() - 100, taskbar_top + 4, time_string, ColorValue::White);
 }
 
 void WindowManager::draw() {
@@ -187,7 +148,7 @@ void WindowManager::draw() {
 
     for_each_window(render_window);
 
-    draw_taskbar(renderer);
+    m_taskbar.render(renderer);
 
     for (int y = 0; y < cursor_height; y++) {
         for (int x = 0; x < cursor_width; x++) {
@@ -234,6 +195,16 @@ void WindowManager::set_active_window(SharedPtr<Window> window) {
     m_active_window = move(window);
 }
 
+void WindowManager::move_to_front_and_make_active(SharedPtr<Window> window) {
+    for (int i = 0; i < windows().size(); i++) {
+        if (windows()[i] == window) {
+            windows().rotate_left(i, windows().size());
+            break;
+        }
+    }
+    set_active_window(window);
+}
+
 int WindowManager::find_window_intersecting_point(Point p) {
     for (int i = windows().size() - 1; i >= 0; i--) {
         if (windows()[i]->rect().intersects(p)) {
@@ -244,20 +215,8 @@ int WindowManager::find_window_intersecting_point(Point p) {
     return -1;
 }
 
-void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state) {
-    if (m_mouse_y >= m_back_buffer->height() - taskbar_height) {
-        for (auto& item : m_window_taskbar_items) {
-            if (item.rect.intersects({ m_mouse_x, m_mouse_y })) {
-                for (int i = 0; i < windows().size(); i++) {
-                    if (windows()[i] == item.window) {
-                        windows().rotate_left(i, windows().size());
-                        break;
-                    }
-                }
-                set_active_window(item.window);
-                break;
-            }
-        }
+void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state right) {
+    if (m_taskbar.notify_mouse_pressed(m_mouse_x, m_mouse_y, left, right)) {
         return;
     }
 
@@ -287,8 +246,7 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         m_window_to_move = nullptr;
     }
 
-    windows().rotate_left(index, windows().size());
-    set_active_window(windows().last());
+    move_to_front_and_make_active(windows()[index]);
 }
 
 void WindowManager::set_mouse_coordinates(int x, int y) {
