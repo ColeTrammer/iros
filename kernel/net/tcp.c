@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,11 +13,21 @@
 
 ssize_t net_send_tcp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port,
                      uint32_t sequence_number, uint32_t ack_num, union tcp_flags flags, uint16_t len, const void *payload) {
+    if (interface->config_context.state != INITIALIZED) {
+        debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
+        return -ENETDOWN;
+    }
+
+    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(interface->broadcast);
+    if (!router_mapping) {
+        debug_log("Can't send TCP packet; router mac to yet mapped\n");
+        return -ENETDOWN;
+    }
+
     size_t total_length = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + sizeof(struct tcp_packet) + len;
 
-    struct ethernet_packet *packet =
-        net_create_ethernet_packet(net_get_mac_from_ip_v4(interface->broadcast)->mac, interface->ops->get_mac_address(interface),
-                                   ETHERNET_TYPE_IPV4, total_length - sizeof(struct ethernet_packet));
+    struct ethernet_packet *packet = net_create_ethernet_packet(router_mapping->mac, interface->ops->get_mac_address(interface),
+                                                                ETHERNET_TYPE_IPV4, total_length - sizeof(struct ethernet_packet));
 
     struct ip_v4_packet *ip_packet = (struct ip_v4_packet *) packet->payload;
     net_init_ip_v4_packet(ip_packet, 1, IP_V4_PROTOCOL_TCP, interface->address, dest,

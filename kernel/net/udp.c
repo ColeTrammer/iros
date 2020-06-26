@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,17 @@
 
 ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
                      const void *buf) {
+    if (interface->config_context.state != INITIALIZED) {
+        debug_log("Can't send UDP packet; interface uninitialized: [ %s ]\n", interface->name);
+        return -ENETDOWN;
+    }
+
+    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(interface->broadcast);
+    if (!router_mapping) {
+        debug_log("Can't send UDP packet; router mac to yet mapped\n");
+        return -ENETDOWN;
+    }
+
     size_t total_length = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
 
     struct ethernet_packet *packet =
