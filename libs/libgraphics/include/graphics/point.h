@@ -2,17 +2,17 @@
 
 class Point {
 public:
-    Point() {}
+    constexpr Point() {}
+    constexpr Point(int x, int y) : m_x(x), m_y(y) {}
 
-    Point(int x, int y) : m_x(x), m_y(y) {}
+    constexpr int x() const { return m_x; }
+    constexpr int y() const { return m_y; }
 
-    ~Point() {}
+    constexpr void set_x(int x) { m_x = x; }
+    constexpr void set_y(int y) { m_y = y; }
 
-    int x() const { return m_x; }
-    int y() const { return m_y; }
-
-    void set_x(int x) { m_x = x; }
-    void set_y(int y) { m_y = y; }
+    constexpr bool operator==(const Point& other) const { return this->x() == other.x() && this->y() == other.y(); }
+    constexpr bool operator!=(const Point& other) const { return !(*this == other); }
 
 private:
     int m_x { 0 };

@@ -1,27 +1,48 @@
 #pragma once
 
 #include <graphics/point.h>
+#include <liim/utilities.h>
 
 class Rect {
 public:
-    Rect() {}
+    constexpr Rect() {}
+    constexpr Rect(int x, int y, int width, int height) : m_x(x), m_y(y), m_width(width), m_height(height) {}
 
-    Rect(int x, int y, int width, int height) : m_x(x), m_y(y), m_width(width), m_height(height) {}
+    constexpr int x() const { return m_x; }
+    constexpr int y() const { return m_y; }
+    constexpr int width() const { return m_width; }
+    constexpr int height() const { return m_height; }
 
-    int x() const { return m_x; }
-    int y() const { return m_y; }
-    int width() const { return m_width; }
-    int height() const { return m_height; }
+    constexpr void set_x(int x) { m_x = x; }
+    constexpr void set_y(int y) { m_y = y; }
+    constexpr void set_width(int width) { m_width = width; }
+    constexpr void set_height(int height) { m_height = height; }
 
-    void set_x(int x) { m_x = x; }
-    void set_y(int y) { m_y = y; }
-    void set_width(int width) { m_width = width; }
-    void set_height(int height) { m_height = height; }
+    constexpr Point top_left() const { return { x(), y() }; }
+    constexpr Point center() const { return Point(x() + width() / 2, y() + height() / 2); }
 
-    Point top_left() const { return { x(), y() }; }
-    Point center() const { return Point(x() + width() / 2, y() + height() / 2); }
+    constexpr bool intersects(Point p) const { return p.x() >= m_x && p.x() <= m_x + m_width && p.y() >= m_y && p.y() <= m_y + m_height; }
+    constexpr bool intersects(const Rect& other) const {
+        return !(this->x() >= other.x() + other.width() || this->x() + this->width() <= other.x() ||
+                 this->y() >= other.y() + other.height() || this->y() + this->height() <= other.y());
+    }
 
-    bool intersects(Point p) const { return p.x() >= m_x && p.x() <= m_x + m_width && p.y() >= m_y && p.y() <= m_y + m_height; }
+    constexpr Rect intersection_with(const Rect& other) const {
+        if (!intersects(other)) {
+            return {};
+        }
+
+        auto x = max(this->x(), other.x());
+        auto y = max(this->y(), other.y());
+        auto end_x = min(this->x() + this->width(), other.x() + other.width());
+        auto end_y = min(this->y() + this->width(), other.y() + other.height());
+        return { x, y, end_x - x, end_y - y };
+    }
+
+    constexpr bool operator==(const Rect& other) const {
+        return this->x() == other.x() && this->y() == other.y() && this->width() == other.width() && this->height() == other.height();
+    };
+    constexpr bool operator!=(const Rect& other) const { return !(*this == other); }
 
 private:
     int m_x { 0 };
@@ -29,3 +50,13 @@ private:
     int m_width { 0 };
     int m_height { 0 };
 };
+
+static_assert(Rect(10, 10, 500, 500).intersects(Point(15, 15)));
+static_assert(!Rect(10, 10, 500, 500).intersects(Rect()));
+static_assert(!Rect(10, 10, 500, 500).intersects(Rect(550, 50, 5, 5)));
+static_assert(Rect(10, 10, 500, 500).intersects(Rect(50, 50, 50, 50)));
+
+static_assert(Rect(50, 50, 50, 50).intersection_with(Rect(60, 60, 10, 10)) == Rect(60, 60, 10, 10));
+static_assert(Rect(100, 25, 50, 50).intersection_with(Rect(50, 35, 100, 10)) == Rect(100, 35, 50, 10));
+static_assert(Rect(0, 0, 500, 500).intersection_with(Rect(50, 50, 500, 500)) == Rect(50, 50, 450, 450));
+static_assert(Rect(50, 50, 50, 50).intersection_with(Rect(10, 10, 10, 10)) == Rect());
