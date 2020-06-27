@@ -188,16 +188,12 @@ void net_tcp_log(const struct tcp_packet *packet) {
               "               Win Size     [ %15u ]   Urg Point [ %15u ]\n"
               "               Source IP    [ %03u.%03u.%03u.%03u ]   Dest IP   [ %03u.%03u.%03u.%03u ]\n"
               "               Data Len     [ %15lu ]   Data off  [ %15u ]\n"
-              "               Flags        [ FIN=%u SYN=%u RST=%u PSH=%u ACK=%u URG=%u ECE=%u CWR=%u ]\n"
-              "               Data         [\n%s\n]\n",
+              "               Flags        [ FIN=%u SYN=%u RST=%u PSH=%u ACK=%u URG=%u ECE=%u CWR=%u ]\n",
               ntohs(packet->source_port), ntohs(packet->dest_port), ntohl(packet->sequence_number), ntohl(packet->ack_number),
               ntohs(packet->window_size), ntohs(packet->urg_pointer), ip_packet->source.addr[0], ip_packet->source.addr[1],
               ip_packet->source.addr[2], ip_packet->source.addr[3], ip_packet->destination.addr[0], ip_packet->destination.addr[1],
               ip_packet->destination.addr[2], ip_packet->destination.addr[3],
               ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset, packet->data_offset,
               packet->flags.bits.fin, packet->flags.bits.syn, packet->flags.bits.rst, packet->flags.bits.psh, packet->flags.bits.ack,
-              packet->flags.bits.urg, packet->flags.bits.ece, packet->flags.bits.cwr,
-              ntohs(ip_packet->length) > sizeof(uint32_t) * packet->data_offset + sizeof(struct ip_v4_packet)
-                  ? ((char *) packet) + sizeof(uint32_t) * packet->data_offset
-                  : "None");
+              packet->flags.bits.urg, packet->flags.bits.ece, packet->flags.bits.cwr);
 }
