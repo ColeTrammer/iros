@@ -2,6 +2,7 @@ set(SOURCES
     color.cpp
     font.cpp
     pixel_buffer.cpp
+    rect_set.cpp
     renderer.cpp
 )
 

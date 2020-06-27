@@ -7,7 +7,7 @@ class RectSet {
 public:
     RectSet() {}
 
-    void add(const Rect& rect) { m_rects.add(rect); }
+    void add(const Rect& rect);
 
     Vector<Rect>::Iterator begin() { return m_rects.begin(); }
     Vector<Rect>::Iterator end() { return m_rects.end(); }
