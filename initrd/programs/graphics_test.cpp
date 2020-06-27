@@ -25,10 +25,12 @@ public:
 };
 
 int main() {
+#ifdef __os_2__
     App::App app;
 
     auto window = TestWindow::create(nullptr, 50, 50, 400, 400, "Graphics Test");
     window->draw();
     app.enter();
     return 0;
+#endif /* __os_2__ */
 }
