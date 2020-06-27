@@ -97,6 +97,11 @@ void WindowManager::draw() {
         renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title(), ColorValue::White);
         renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
 
+        invalidate_rect({ window->rect().x(), window->rect().y(), window->rect().width(), 22 });
+        invalidate_rect({ window->rect().x(), window->rect().y() + 22, 1, window->rect().height() });
+        invalidate_rect({ window->rect().x(), window->rect().y() + window->rect().height() - 1, window->rect().width(), 1 });
+        invalidate_rect({ window->rect().x() + window->rect().width() - 1, window->rect().y() + 22, 1, window->rect().height() });
+
         for (auto& r : m_dirty_rects) {
             auto dest_rect = window->content_rect().intersection_with(r);
             if (dest_rect == Rect()) {
