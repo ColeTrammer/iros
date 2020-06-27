@@ -28,11 +28,7 @@ public:
     wid_t id() const { return m_id; }
     int client_id() const { return m_client_id; }
 
-    void swap() {
-        auto temp = m_back_buffer;
-        m_back_buffer = m_front_buffer;
-        m_front_buffer = temp;
-    }
+    void swap();
 
     const String& title() const { return m_title; }
 

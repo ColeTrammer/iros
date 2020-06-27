@@ -46,6 +46,8 @@ public:
 
     Point mouse_position_relative_to_window(const Window& window) const;
 
+    void invalidate_rect(const Rect& rect) { m_dirty_rects.add(rect); }
+
     Function<void(Window&)> on_window_close_button_pressed;
 
 private:

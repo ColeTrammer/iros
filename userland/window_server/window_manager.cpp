@@ -42,6 +42,7 @@ void WindowManager::add_window(SharedPtr<Window> window) {
     windows().add(window);
     m_taskbar.notify_window_added(window);
     set_active_window(window);
+    invalidate_rect(window->rect());
 }
 
 void WindowManager::remove_window(wid_t wid) {
@@ -49,7 +50,7 @@ void WindowManager::remove_window(wid_t wid) {
         auto& window = *windows()[i];
         if (window.id() == wid) {
             m_taskbar.notify_window_removed(window);
-            m_dirty_rects.add(window.rect());
+            invalidate_rect(window.rect());
             windows().remove(i);
             break;
         }
@@ -96,55 +97,58 @@ void WindowManager::draw() {
         renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title(), ColorValue::White);
         renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
 
-        auto& rect = window->content_rect();
-        auto& src = *window->buffer();
-        auto src_x_offset = rect.x();
-        auto src_y_offset = rect.y();
-        auto src_width = src.width();
-        auto src_height = src.height();
+        for (auto& r : m_dirty_rects) {
+            auto rect = window->content_rect().intersection_with(r);
+            if (rect == Rect()) {
+                continue;
+            }
 
-        auto& dest = *m_back_buffer;
-        auto dest_width = m_back_buffer->width();
-        auto dest_height = m_back_buffer->height();
+            auto& src = *window->buffer();
+            auto src_x_offset = window->content_rect().x();
+            auto src_y_offset = window->content_rect().y();
+            auto src_width = src.width();
 
-        auto src_x_start = 0;
-        auto src_x_end = src_width;
-        auto src_y_start = 0;
-        auto src_y_end = src_height;
+            auto& dest = *m_back_buffer;
+            auto dest_width = m_back_buffer->width();
+            auto dest_height = m_back_buffer->height();
 
-        if (src_x_offset + src_width <= 0 || src_x_offset >= dest_width || src_y_offset + src_height <= 0 || src_y_offset >= dest_height) {
-            return;
-        }
+            auto src_x_start = rect.x() - src_x_offset;
+            auto src_x_end = src_x_start + rect.width();
+            auto src_y_start = rect.y() - src_y_offset;
+            auto src_y_end = src_y_start + rect.height();
 
-        if (src_x_offset < 0) {
-            src_x_start += -src_x_offset;
-            src_x_offset = 0;
-        }
-        if (src_x_offset + src_width > dest_width) {
-            src_x_end = dest_width - src_x_offset;
-        }
+            if (rect.x() + rect.width() <= 0 || rect.x() >= dest_width || rect.y() + rect.height() <= 0 || rect.y() >= dest_height) {
+                return;
+            }
 
-        if (src_y_offset < 0) {
-            src_y_start += -src_y_offset;
-            src_y_offset = 0;
-        }
-        if (src_y_offset + src_height > dest_height) {
-            src_y_end = dest_height - src_y_offset;
-        }
+            if (rect.x() < 0) {
+                src_x_start += -rect.x();
+            }
+            if (src_x_offset + src_x_end > dest_width) {
+                src_x_end = dest_width - src_x_offset;
+            }
 
-        auto* src_buffer = src.pixels();
-        auto* dest_buffer = dest.pixels();
-        auto src_row_size_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
-        for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
-            auto dest_y = src_y + src_y_offset;
-            memcpy(dest_buffer + dest_y * dest_width + src_x_offset, src_buffer + src_y * src_width + src_x_start, src_row_size_in_bytes);
+            if (rect.y() < 0) {
+                src_y_start += -rect.y();
+            }
+            if (src_y_offset + src_y_end > dest_height) {
+                src_y_end = dest_height - src_y_offset;
+            }
+
+            auto* src_buffer = src.pixels();
+            auto* dest_buffer = dest.pixels();
+            auto src_row_size_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
+            for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
+                auto dest_y = src_y + src_y_offset;
+                memcpy(dest_buffer + dest_y * dest_width + src_x_offset + src_x_start, src_buffer + src_y * src_width + src_x_start,
+                       src_row_size_in_bytes);
+            }
         }
     };
 
     for (auto& rect : m_dirty_rects) {
         renderer.fill_rect(rect, ColorValue::Black);
     }
-    m_dirty_rects.clear();
 
     for_each_window(render_window);
 
@@ -160,6 +164,7 @@ void WindowManager::draw() {
     }
 
     swap_buffers();
+    m_dirty_rects.clear();
 
 #ifdef WM_DRAW_DEBUG
     timespec end;
@@ -254,7 +259,7 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
         return;
     }
 
-    m_dirty_rects.add({ m_mouse_x, m_mouse_y, cursor_width, cursor_height });
+    invalidate_rect({ m_mouse_x, m_mouse_y, cursor_width, cursor_height });
 
     m_mouse_x = x;
     m_mouse_y = y;
@@ -266,9 +271,9 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
             return;
         }
 
-        m_dirty_rects.add(m_window_to_move->rect());
+        invalidate_rect(m_window_to_move->rect());
         m_window_to_move->set_x(m_window_move_initial_location.x() + dx);
         m_window_to_move->set_y(m_window_move_initial_location.y() + dy);
-        m_dirty_rects.add(m_window_to_move->rect());
+        invalidate_rect(m_window_to_move->rect());
     }
 }

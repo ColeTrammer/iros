@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 
 #include "window.h"
+#include "window_manager.h"
 
 static wid_t get_next_id() {
     static wid_t next_wid = 1;
@@ -69,4 +70,12 @@ void Window::set_x(int x) {
 void Window::set_y(int y) {
     m_rect.set_y(y);
     m_content_rect.set_y(y + 22);
+}
+
+void Window::swap() {
+    auto temp = m_back_buffer;
+    m_back_buffer = m_front_buffer;
+    m_front_buffer = temp;
+
+    WindowManager::the().invalidate_rect(m_content_rect);
 }
