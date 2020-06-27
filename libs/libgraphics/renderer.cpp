@@ -1,5 +1,6 @@
 #include <graphics/font.h>
 #include <graphics/renderer.h>
+#include <math.h>
 #include <stdlib.h>
 
 void Renderer::fill_rect(int x, int y, int width, int height, Color color_object) {
@@ -83,7 +84,7 @@ void Renderer::draw_line(Point start, Point end, Color color) {
         auto x = x_start;
         auto y = static_cast<float>(y_start);
         for (auto i = 0; i < iterations; i++) {
-            m_pixels.put_pixel(x, froundf(y), raw_color);
+            m_pixels.put_pixel(x, roundf(y), raw_color);
             x += x_step;
             y += y_step;
         }
@@ -96,7 +97,7 @@ void Renderer::draw_line(Point start, Point end, Color color) {
     auto x = static_cast<float>(x_start);
     auto y = y_start;
     for (auto i = 0; i < iterations; i++) {
-        m_pixels.put_pixel(froundf(x), y, raw_color);
+        m_pixels.put_pixel(roundf(x), y, raw_color);
         x += x_step;
         y += y_step;
     }

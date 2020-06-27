@@ -31,9 +31,9 @@ double ldexp(double x, int exp) {
     }
 }
 
-float froundf(float x) {
+float roundf(float x) {
     if (x < 0) {
-        return -froundf(-x);
+        return -roundf(-x);
     }
 
     // FIXME: this will only work for floats that can fit inside an int.
