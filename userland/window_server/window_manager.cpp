@@ -98,51 +98,15 @@ void WindowManager::draw() {
         renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
 
         for (auto& r : m_dirty_rects) {
-            auto rect = window->content_rect().intersection_with(r);
-            if (rect == Rect()) {
+            auto dest_rect = window->content_rect().intersection_with(r);
+            if (dest_rect == Rect()) {
                 continue;
             }
 
-            auto& src = *window->buffer();
-            auto src_x_offset = window->content_rect().x();
-            auto src_y_offset = window->content_rect().y();
-            auto src_width = src.width();
-
-            auto& dest = *m_back_buffer;
-            auto dest_width = m_back_buffer->width();
-            auto dest_height = m_back_buffer->height();
-
-            auto src_x_start = rect.x() - src_x_offset;
-            auto src_x_end = src_x_start + rect.width();
-            auto src_y_start = rect.y() - src_y_offset;
-            auto src_y_end = src_y_start + rect.height();
-
-            if (rect.x() + rect.width() <= 0 || rect.x() >= dest_width || rect.y() + rect.height() <= 0 || rect.y() >= dest_height) {
-                return;
-            }
-
-            if (rect.x() < 0) {
-                src_x_start += -rect.x();
-            }
-            if (src_x_offset + src_x_end > dest_width) {
-                src_x_end = dest_width - src_x_offset;
-            }
-
-            if (rect.y() < 0) {
-                src_y_start += -rect.y();
-            }
-            if (src_y_offset + src_y_end > dest_height) {
-                src_y_end = dest_height - src_y_offset;
-            }
-
-            auto* src_buffer = src.pixels();
-            auto* dest_buffer = dest.pixels();
-            auto src_row_size_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
-            for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
-                auto dest_y = src_y + src_y_offset;
-                memcpy(dest_buffer + dest_y * dest_width + src_x_offset + src_x_start, src_buffer + src_y * src_width + src_x_start,
-                       src_row_size_in_bytes);
-            }
+            auto src_rect = dest_rect;
+            src_rect.set_x(src_rect.x() - window->content_rect().x());
+            src_rect.set_y(src_rect.y() - window->content_rect().y());
+            renderer.draw_bitmap(*window->buffer(), src_rect, dest_rect);
         }
     };
 
@@ -197,7 +161,12 @@ void WindowManager::notify_mouse_moved(int dx, int dy, bool absolue) {
 }
 
 void WindowManager::set_active_window(SharedPtr<Window> window) {
+    if (m_active_window == window) {
+        return;
+    }
+
     m_active_window = move(window);
+    invalidate_rect(m_active_window->rect());
 }
 
 void WindowManager::move_to_front_and_make_active(SharedPtr<Window> window) {

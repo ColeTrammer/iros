@@ -24,6 +24,8 @@ public:
 
     void render_text(int x, int y, const String& text, Color color, const Font& font = Font::default_font());
 
+    void draw_bitmap(const PixelBuffer& src, const Rect& src_rect, const Rect& dest_rect);
+
     PixelBuffer& pixels() { return m_pixels; }
     const PixelBuffer& pixels() const { return m_pixels; }
 

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <graphics/font.h>
 #include <graphics/renderer.h>
 #include <math.h>
@@ -128,6 +129,42 @@ void Renderer::draw_circle(int x, int y, int r, Color color) {
                 m_pixels.put_pixel(a, b, color);
             }
         }
+    }
+}
+
+void Renderer::draw_bitmap(const PixelBuffer& src, const Rect& src_rect_in, const Rect& dest_rect_in) {
+    assert(src_rect_in.width() == dest_rect_in.width());
+    assert(src_rect_in.height() == dest_rect_in.height());
+
+    auto dest_rect = dest_rect_in.intersection_with({ 0, 0, m_pixels.width(), m_pixels.height() });
+    if (dest_rect == Rect()) {
+        return;
+    }
+
+    auto src_rect = Rect {
+        src_rect_in.x() + dest_rect.x() - dest_rect_in.x(),
+        src_rect_in.y() + dest_rect.y() - dest_rect_in.y(),
+        src_rect_in.width() + dest_rect.width() - dest_rect_in.width(),
+        src_rect_in.height() + dest_rect.height() - dest_rect_in.height(),
+    };
+
+    auto x_offset = dest_rect.x() - src_rect.x();
+    auto y_offset = dest_rect.y() - src_rect.y();
+
+    auto src_x_start = src_rect.x();
+    auto src_x_end = src_x_start + src_rect.width();
+    auto src_y_start = src_rect.y();
+    auto src_y_end = src_y_start + src_rect.height();
+
+    auto src_width = src.width();
+    auto row_width_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
+    auto raw_src = src.pixels();
+
+    auto raw_dest = m_pixels.pixels();
+    auto dest_width = m_pixels.width();
+    for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
+        auto dest_y = y_offset + src_y;
+        memcpy(raw_dest + dest_y * dest_width + x_offset + src_x_start, raw_src + src_y * src_width + src_x_start, row_width_in_bytes);
     }
 }
 
