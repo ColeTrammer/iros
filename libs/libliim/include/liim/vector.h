@@ -278,6 +278,15 @@ public:
         return -1;
     }
 
+    void unstable_remove(int index) {
+        if (index != size() - 1) {
+            LIIM::swap(get(index), last());
+        }
+
+        last().~T();
+        m_size--;
+    }
+
     void remove(int index) {
         get(index).~T();
         if (index != size() - 1) {
