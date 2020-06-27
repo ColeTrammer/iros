@@ -35,7 +35,7 @@ public:
         auto x = max(this->x(), other.x());
         auto y = max(this->y(), other.y());
         auto end_x = min(this->x() + this->width(), other.x() + other.width());
-        auto end_y = min(this->y() + this->width(), other.y() + other.height());
+        auto end_y = min(this->y() + this->height(), other.y() + other.height());
         return { x, y, end_x - x, end_y - y };
     }
 
@@ -60,3 +60,5 @@ static_assert(Rect(50, 50, 50, 50).intersection_with(Rect(60, 60, 10, 10)) == Re
 static_assert(Rect(100, 25, 50, 50).intersection_with(Rect(50, 35, 100, 10)) == Rect(100, 35, 50, 10));
 static_assert(Rect(0, 0, 500, 500).intersection_with(Rect(50, 50, 500, 500)) == Rect(50, 50, 450, 450));
 static_assert(Rect(50, 50, 50, 50).intersection_with(Rect(10, 10, 10, 10)) == Rect());
+static_assert(Rect(25, 25, 450, 450).intersection_with(Rect(50, 50, 300, 300)) == Rect(50, 50, 300, 300));
+static_assert(Rect(40, 60, 10, 100).intersection_with(Rect(25, 25, 450, 450)) == Rect(40, 60, 10, 100));
