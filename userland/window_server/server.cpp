@@ -32,8 +32,19 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
 
     m_manager->on_window_close_button_pressed = [&](auto& window) {
         auto message = WindowServer::Message::WindowClosedEventMessage::create(window.id());
-        assert(write(window.client_id(), message.get(), message->total_size()) != -1);
+        if (write(window.client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window.client_id());
+            return;
+        }
         m_manager->remove_window(window.id());
+    };
+
+    m_manager->on_window_resized = [&](auto& window) {
+        auto message =
+            WindowServer::Message::ResizeWindowMessage::create(window.id(), window.content_rect().width(), window.content_rect().height());
+        if (write(window.client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window.client_id());
+        }
     };
 }
 
@@ -181,63 +192,6 @@ void Server::start() {
             while (read(m_kbd_fd, &event, sizeof(event)) == sizeof(event)) {
                 auto* active_window = m_manager->active_window();
                 if (active_window) {
-                    if (event.ascii == 'q') {
-                        active_window->relative_resize(5, 0);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-                    if (event.ascii == 'w') {
-                        active_window->relative_resize(-5, 0);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-                    if (event.ascii == 'e') {
-                        active_window->relative_resize(0, 5);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-                    if (event.ascii == 'r') {
-                        active_window->relative_resize(0, -5);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-                    if (event.ascii == 'z') {
-                        active_window->relative_resize(5, 5);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-                    if (event.ascii == 'x') {
-                        active_window->relative_resize(-5, 5);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-                    if (event.ascii == 'c') {
-                        active_window->relative_resize(5, -5);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-                    if (event.ascii == 'v') {
-                        active_window->relative_resize(-5, -5);
-                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
-                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
-                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                               static_cast<ssize_t>(to_send->total_size()));
-                    }
-
                     auto to_send = WindowServer::Message::KeyEventMessage::create(active_window->id(), event);
                     assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
                            static_cast<ssize_t>(to_send->total_size()));

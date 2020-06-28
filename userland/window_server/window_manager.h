@@ -15,6 +15,18 @@ class WindowManager {
 public:
     static WindowManager& the();
 
+    enum class ResizeMode {
+        Invalid,
+        TopLeft,
+        Top,
+        TopRight,
+        Right,
+        BottomRight,
+        Bottom,
+        BottomLeft,
+        Left,
+    };
+
     WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer);
     ~WindowManager();
 
@@ -43,12 +55,14 @@ public:
     void move_to_front_and_make_active(SharedPtr<Window> window);
 
     int find_window_intersecting_point(Point p);
+    int find_window_intersecting_rect(const Rect& r);
 
     Point mouse_position_relative_to_window(const Window& window) const;
 
     void invalidate_rect(const Rect& rect) { m_dirty_rects.add(rect); }
 
     Function<void(Window&)> on_window_close_button_pressed;
+    Function<void(Window&)> on_window_resized;
 
 private:
     void swap_buffers();
@@ -63,6 +77,10 @@ private:
     Vector<SharedPtr<Window>> m_windows;
     Taskbar m_taskbar;
     SharedPtr<Window> m_active_window;
+
+    SharedPtr<Window> m_window_to_resize;
+    ResizeMode m_window_resize_mode { ResizeMode::Invalid };
+
     SharedPtr<Window> m_window_to_move;
     Point m_window_move_initial_location;
     Point m_window_move_origin;

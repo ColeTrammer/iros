@@ -64,6 +64,11 @@ void WindowManager::remove_window(wid_t wid) {
         }
     }
 
+    if (m_window_to_resize && m_window_to_resize->id() == wid) {
+        m_window_to_resize = nullptr;
+        m_window_resize_mode = ResizeMode::Invalid;
+    }
+
     if (m_window_to_move && m_window_to_move->id() == wid) {
         m_window_to_move = nullptr;
     }
@@ -194,12 +199,23 @@ int WindowManager::find_window_intersecting_point(Point p) {
     return -1;
 }
 
+int WindowManager::find_window_intersecting_rect(const Rect& r) {
+    for (int i = windows().size() - 1; i >= 0; i--) {
+        if (windows()[i]->rect().intersects(r)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state right) {
     if (m_taskbar.notify_mouse_pressed(m_mouse_x, m_mouse_y, left, right)) {
         return;
     }
 
-    int index = find_window_intersecting_point({ m_mouse_x, m_mouse_y });
+    auto cursor_rect = Rect(m_mouse_x, m_mouse_y, cursor_width, cursor_height);
+    int index = find_window_intersecting_rect(cursor_rect);
     if (index == -1) {
         return;
     }
@@ -214,15 +230,43 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         return;
     }
 
-    if (left == MOUSE_DOWN && m_mouse_y <= window->rect().y() + 20) {
-        // Mouse down on window title bar
-        m_window_to_move = window;
-        m_window_move_initial_location = window->rect().top_left();
-        m_window_move_origin = { m_mouse_x, m_mouse_y };
+    if (left == MOUSE_DOWN) {
+        if (cursor_rect.intersects(window->rect().top_left())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::TopLeft;
+        } else if (cursor_rect.intersects(window->rect().top_right())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::TopRight;
+        } else if (cursor_rect.intersects(window->rect().bottom_right())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::BottomRight;
+        } else if (cursor_rect.intersects(window->rect().bottom_left())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::BottomLeft;
+        } else if (cursor_rect.intersects(window->rect().top_edge())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::Top;
+        } else if (cursor_rect.intersects(window->rect().right_edge())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::Right;
+        } else if (cursor_rect.intersects(window->rect().bottom_edge())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::Bottom;
+        } else if (cursor_rect.intersects(window->rect().left_edge())) {
+            m_window_to_resize = window;
+            m_window_resize_mode = ResizeMode::Left;
+        } else if (m_mouse_y <= window->rect().y() + 20) {
+            // Mouse down on window title bar
+            m_window_to_move = window;
+            m_window_move_initial_location = window->rect().top_left();
+            m_window_move_origin = { m_mouse_x, m_mouse_y };
+        }
     }
 
     if (left == MOUSE_UP) {
         m_window_to_move = nullptr;
+        m_window_to_resize = nullptr;
+        m_window_resize_mode = ResizeMode::Invalid;
     }
 
     move_to_front_and_make_active(windows()[index]);
@@ -235,8 +279,56 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
 
     invalidate_rect({ m_mouse_x, m_mouse_y, cursor_width, cursor_height });
 
+    auto mouse_dx = x - m_mouse_x;
+    auto mouse_dy = y - m_mouse_y;
+
     m_mouse_x = x;
     m_mouse_y = y;
+
+    if (m_window_to_resize) {
+        invalidate_rect(m_window_to_resize->rect());
+        switch (m_window_resize_mode) {
+            case ResizeMode::TopLeft:
+                m_window_to_resize->set_x(m_window_to_resize->rect().x() + mouse_dx);
+                m_window_to_resize->set_y(m_window_to_resize->rect().y() + mouse_dy);
+                mouse_dx *= -1;
+                mouse_dx *= -1;
+                break;
+            case ResizeMode::Top:
+                m_window_to_resize->set_y(m_window_to_resize->rect().y() + mouse_dy);
+                mouse_dx = 0;
+                mouse_dy *= -1;
+                break;
+            case ResizeMode::TopRight:
+                m_window_to_resize->set_y(m_window_to_resize->rect().y() + mouse_dy);
+                mouse_dy *= -1;
+                break;
+            case ResizeMode::Right:
+                mouse_dy = 0;
+                break;
+            case ResizeMode::BottomRight:
+                break;
+            case ResizeMode::Bottom:
+                mouse_dx = 0;
+                break;
+            case ResizeMode::BottomLeft:
+                m_window_to_resize->set_x(m_window_to_resize->rect().x() + mouse_dx);
+                mouse_dx *= -1;
+                break;
+            case ResizeMode::Left:
+                m_window_to_resize->set_x(m_window_to_resize->rect().x() + mouse_dx);
+                mouse_dx *= -1;
+                mouse_dy = 0;
+                break;
+            default:
+                assert(false);
+        }
+
+        m_window_to_resize->relative_resize(mouse_dx, mouse_dy);
+        if (on_window_resized) {
+            on_window_resized(*m_window_to_resize);
+        }
+    }
 
     if (m_window_to_move) {
         int dx = m_mouse_x - m_window_move_origin.x();
