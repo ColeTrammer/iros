@@ -60,6 +60,13 @@ void App::process_ws_message(UniquePtr<WindowServer::Message> message) {
                                move(make_unique<KeyEvent>(key_event.event.ascii, key_event.event.key, key_event.event.flags)));
             break;
         }
+        case WindowServer::Message::Type::ResizeWindowMessage: {
+            auto& resize_event = message->data.resize_window_message;
+            auto maybe_window = Window::find_by_wid(resize_event.wid);
+            assert(maybe_window.has_value());
+            m_loop.queue_event(maybe_window.value(), move(make_unique<ResizeEvent>(resize_event.new_width, resize_event.new_height)));
+            break;
+        }
         default:
             break;
     }

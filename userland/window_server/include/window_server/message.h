@@ -22,6 +22,7 @@ struct Message {
         SwapBufferRequest,
         KeyEventMessage,
         MouseEventMessage,
+        ResizeWindowMessage,
         WindowClosedEventMessage,
     };
 
@@ -141,6 +142,23 @@ struct Message {
         mouse_button_state right;
     };
 
+    struct ResizeWindowMessage {
+        static UniquePtr<Message> create(wid_t wid, int new_width, int new_height) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(ResizeWindowMessage));
+            message->type = Message::Type::ResizeWindowMessage;
+            message->data_len = sizeof(ResizeWindowMessage);
+            auto& data = message->data.resize_window_message;
+            data.wid = wid;
+            data.new_width = new_width;
+            data.new_height = new_height;
+            return UniquePtr<Message>(message);
+        }
+
+        wid_t wid;
+        int new_width;
+        int new_height;
+    };
+
     struct WindowClosedEventMessage {
         static UniquePtr<Message> create(wid_t wid) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(MouseEventMessage));
@@ -166,6 +184,7 @@ struct Message {
         SwapBufferRequest swap_buffer_request;
         KeyEventMessage key_event_message;
         MouseEventMessage mouse_event_message;
+        ResizeWindowMessage resize_window_message;
         WindowClosedEventMessage window_closed_event_messasge;
     } data;
 };

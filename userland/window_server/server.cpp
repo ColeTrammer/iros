@@ -181,6 +181,21 @@ void Server::start() {
             while (read(m_kbd_fd, &event, sizeof(event)) == sizeof(event)) {
                 auto* active_window = m_manager->active_window();
                 if (active_window) {
+                    if (event.ascii == 'q') {
+                        active_window->relative_resize(5);
+                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
+                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
+                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                               static_cast<ssize_t>(to_send->total_size()));
+                    }
+                    if (event.ascii == 'w') {
+                        active_window->relative_resize(-5);
+                        auto to_send = WindowServer::Message::ResizeWindowMessage::create(
+                            active_window->id(), active_window->content_rect().width(), active_window->content_rect().height());
+                        assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                               static_cast<ssize_t>(to_send->total_size()));
+                    }
+
                     auto to_send = WindowServer::Message::KeyEventMessage::create(active_window->id(), event);
                     assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
                            static_cast<ssize_t>(to_send->total_size()));

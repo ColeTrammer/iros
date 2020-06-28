@@ -29,6 +29,8 @@ public:
 
     const Rect& rect() const { return m_rect; }
 
+    void resize(int new_width, int new_height);
+
 private:
     friend class Connection;
 
@@ -42,6 +44,7 @@ private:
     SharedPtr<PixelBuffer> m_front;
     SharedPtr<PixelBuffer> m_back;
     wid_t m_wid;
+    String m_shm_path;
     Function<void(SharedPtr<PixelBuffer>&)> m_draw_callback;
     Connection& m_connection;
 };

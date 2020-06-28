@@ -28,6 +28,8 @@ public:
     wid_t id() const { return m_id; }
     int client_id() const { return m_client_id; }
 
+    void relative_resize(int delta);
+
     void swap();
 
     const String& title() const { return m_title; }
@@ -36,6 +38,8 @@ public:
     const SharedPtr<PixelBuffer>& buffer() const { return m_front_buffer; }
 
 private:
+    void map_buffers();
+
     String m_shm_path;
     Rect m_rect;
     Rect m_content_rect;
