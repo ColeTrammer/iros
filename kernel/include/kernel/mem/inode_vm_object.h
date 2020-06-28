@@ -8,6 +8,7 @@
 struct inode_vm_object_data {
     struct inode *inode;
     bool owned;
+    void *base;
     size_t pages;
     struct phys_page *phys_pages[];
 };

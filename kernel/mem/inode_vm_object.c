@@ -77,15 +77,21 @@ static int inode_kill(struct vm_object *self) {
     debug_log("Destroying inode_vm_object: [ %p, %lu, %llu ]\n", self, data->inode->fsid, data->inode->index);
 
     if (data->owned) {
-        for (size_t i = 0; i < data->pages; i++) {
-            if (data->phys_pages[i]) {
-                drop_phys_page(data->phys_pages[i]);
+        if (data->base) {
+            free(data->base);
+        } else {
+            for (size_t i = 0; i < data->pages; i++) {
+                if (data->phys_pages[i]) {
+                    drop_phys_page(data->phys_pages[i]);
+                }
             }
         }
     }
 
     spin_lock(&data->inode->lock);
-    data->inode->vm_object = NULL;
+    if (data->inode->vm_object == self) {
+        data->inode->vm_object = NULL;
+    }
     spin_unlock(&data->inode->lock);
     drop_inode_reference(data->inode);
 
@@ -105,6 +111,7 @@ struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags __at
     data->inode = inode;
     data->owned = true;
     data->pages = num_pages;
+    data->base = NULL;
     memset(data->phys_pages, 0, num_pages * sizeof(struct phys_page *));
 
     return vm_create_object(VM_INODE, &inode_ops, data);
@@ -118,6 +125,7 @@ struct vm_object *vm_create_direct_inode_object(struct inode *inode, void *base_
     data->inode = inode;
     data->owned = false;
     data->pages = num_pages;
+    data->base = base_buffer;
 
     char *buffer = base_buffer;
     for (size_t i = 0; i < num_pages; i++) {

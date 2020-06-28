@@ -268,6 +268,15 @@ int tmp_truncate(struct inode *inode, off_t len) {
     } else {
         inode->size = new_size;
         if (inode->size > data->max) {
+            bool tranferred_ownership = false;
+            if (inode->vm_object) {
+                struct inode_vm_object_data *object_data = inode->vm_object->private_data;
+                spin_lock(&inode->vm_object->lock);
+                object_data->owned = true;
+                spin_unlock(&inode->vm_object->lock);
+                inode->vm_object = NULL;
+            }
+
             data->max = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
             assert(data->max >= inode->size);
             char *save = data->contents;
@@ -275,7 +284,10 @@ int tmp_truncate(struct inode *inode, off_t len) {
             assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
             memcpy(data->contents, save, old_size);
             memset(data->contents + old_size, 0, new_size - old_size);
-            free(save);
+
+            if (!tranferred_ownership) {
+                free(save);
+            }
         }
     }
 
