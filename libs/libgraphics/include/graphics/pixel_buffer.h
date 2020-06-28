@@ -31,8 +31,8 @@ public:
     uint32_t* pixels() { return m_pixels; }
     const uint32_t* pixels() const { return m_pixels; }
 
-    void clear();
-    void clear_after_y(int y);
+    void clear(Color color = ColorValue::Black);
+    void clear_after_y(int y, Color color = ColorValue::Black);
     void shrink_width(int new_width);
     void adjust_for_size_change(int old_width, int old_height);
 

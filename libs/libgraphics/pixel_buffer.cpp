@@ -3,12 +3,17 @@
 #include <stdio.h>
 #include <string.h>
 
-void PixelBuffer::clear() {
-    memset(m_pixels, 0, sizeof(uint32_t) * width() * height());
+void PixelBuffer::clear(Color c) {
+    clear_after_y(0, c);
 }
 
-void PixelBuffer::clear_after_y(int y) {
-    memset(m_pixels + y * width(), 0, sizeof(uint32_t) * width() * (height() - y));
+void PixelBuffer::clear_after_y(int y_start, Color c) {
+    auto color = c.color();
+    for (auto y = y_start; y < height(); y++) {
+        for (auto x = 0; x < width(); x++) {
+            put_pixel(x, y, color);
+        }
+    }
 }
 
 void PixelBuffer::shrink_width(int new_width) {
