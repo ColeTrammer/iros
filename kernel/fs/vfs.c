@@ -1452,7 +1452,6 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
     }
 
     if (inode->i_op->mmap) {
-        bump_inode_reference(inode);
         return inode->i_op->mmap(addr, len, prot, flags, inode, offset);
     }
 

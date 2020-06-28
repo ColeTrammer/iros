@@ -108,7 +108,7 @@ struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags __at
 
     assert(inode->i_op->read);
 
-    data->inode = inode;
+    data->inode = bump_inode_reference(inode);
     data->owned = true;
     data->pages = num_pages;
     data->kernel_region = NULL;
@@ -122,7 +122,7 @@ struct vm_object *vm_create_direct_inode_object(struct inode *inode, struct vm_r
     struct inode_vm_object_data *data = malloc(sizeof(struct inode_vm_object_data) + num_pages * sizeof(uintptr_t));
     assert(data);
 
-    data->inode = inode;
+    data->inode = bump_inode_reference(inode);
     data->owned = false;
     data->pages = num_pages;
     data->kernel_region = kernel_region;
