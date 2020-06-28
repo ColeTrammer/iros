@@ -19,7 +19,15 @@ public:
     constexpr void set_height(int height) { m_height = height; }
 
     constexpr Point top_left() const { return { x(), y() }; }
+    constexpr Point top_right() const { return { x() + width(), y() }; }
+    constexpr Point bottom_left() const { return { x(), y() + height() }; }
+    constexpr Point bottom_right() const { return { x() + width(), y() + height() }; }
     constexpr Point center() const { return Point(x() + width() / 2, y() + height() / 2); }
+
+    constexpr Rect top_edge() const { return { x(), y(), width(), 1 }; }
+    constexpr Rect right_edge() const { return { x() + width() - 1, y(), 1, height() }; }
+    constexpr Rect bottom_edge() const { return { x(), y() + height() - 1, width(), 1 }; }
+    constexpr Rect left_edge() const { return { x(), y(), 1, height() }; }
 
     constexpr bool intersects(Point p) const { return p.x() >= m_x && p.x() <= m_x + m_width && p.y() >= m_y && p.y() <= m_y + m_height; }
     constexpr bool intersects(const Rect& other) const {
