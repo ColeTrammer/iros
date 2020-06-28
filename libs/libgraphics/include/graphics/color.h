@@ -43,7 +43,7 @@ public:
     uint8_t b() const { return m_color & 0x000000FFU; }
 
     bool operator==(const Color& other) const { return this->color() == other.color(); }
-    bool operator!=(const Color& other) const { return *this != other; }
+    bool operator!=(const Color& other) const { return !(*this == other); }
 
 private:
     uint32_t m_color { 0 };
