@@ -18,6 +18,9 @@ static void init_ip_v4_mappings(struct network_interface *interface) {
 
     if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
         net_configure_interface_with_dhcp(interface);
+    } else {
+        net_create_ip_v4_to_mac_mapping(interface->broadcast, interface->ops->get_mac_address(interface));
+        net_create_ip_v4_to_mac_mapping(interface->address, interface->ops->get_mac_address(interface));
     }
 }
 
