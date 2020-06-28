@@ -28,7 +28,7 @@ public:
     wid_t id() const { return m_id; }
     int client_id() const { return m_client_id; }
 
-    void relative_resize(int delta);
+    void relative_resize(int delta_x, int delta_y);
 
     void swap();
 

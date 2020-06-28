@@ -67,6 +67,7 @@ void Window::on_event(Event& event) {
             auto& resize_event = static_cast<ResizeEvent&>(event);
             m_ws_window->resize(resize_event.new_width(), resize_event.new_height());
             set_rect({ rect().x(), rect().y(), resize_event.new_width(), resize_event.new_height() });
+            pixels()->clear();
             draw();
             break;
         }

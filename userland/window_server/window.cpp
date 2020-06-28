@@ -19,6 +19,8 @@ Window::Window(String shm_path, const Rect& rect, String title, int client_id)
     m_rect.set_width(rect.width() + 2);
     m_rect.set_height(rect.height() + 23);
     map_buffers();
+    m_front_buffer->clear();
+    m_back_buffer->clear();
 }
 
 Window::~Window() {
@@ -44,8 +46,6 @@ void Window::map_buffers() {
         assert(memory != MAP_FAILED);
 
         m_front_buffer = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(memory), m_content_rect.width(), m_content_rect.height());
-        m_front_buffer->clear();
-
         close(fd);
     }
     {
@@ -60,36 +60,48 @@ void Window::map_buffers() {
         assert(memory != MAP_FAILED);
 
         m_back_buffer = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(memory), m_content_rect.width(), m_content_rect.height());
-        m_back_buffer->clear();
-
         close(fd);
     }
 }
 
-void Window::relative_resize(int delta) {
-    if (delta == 0) {
+void Window::relative_resize(int delta_x, int delta_y) {
+    if (delta_x == 0 && delta_y == 0) {
         return;
     }
 
+    auto old_width = m_content_rect.width();
+    auto old_height = m_content_rect.height();
+
+    WindowManager::the().invalidate_rect(m_rect);
+
+    m_content_rect.set_width(m_content_rect.width() + delta_x);
+    m_rect.set_width(m_rect.width() + delta_x);
+    m_content_rect.set_height(m_content_rect.height() + delta_y);
+    m_rect.set_height(m_rect.height() + delta_y);
+
+    WindowManager::the().invalidate_rect(m_rect);
+
     if (m_front_buffer) {
+        if (delta_x < 0) {
+            m_front_buffer->shrink_width(m_content_rect.width());
+        }
         munmap(m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
     }
     if (m_back_buffer) {
+        if (delta_x < 0) {
+            m_back_buffer->shrink_width(m_content_rect.width());
+        }
         munmap(m_back_buffer->pixels(), m_back_buffer->size_in_bytes());
     }
 
-    if (delta < 0) {
-        WindowManager::the().invalidate_rect(m_rect);
-    }
-
-    m_content_rect.set_width(m_content_rect.width() + delta);
-    m_rect.set_width(m_rect.width() + delta);
-
-    if (delta > 0) {
-        WindowManager::the().invalidate_rect(m_rect);
-    }
-
     map_buffers();
+    if (delta_x > 0) {
+        m_front_buffer->adjust_for_size_change(old_width, old_height);
+        m_back_buffer->adjust_for_size_change(old_width, old_height);
+    } else if (delta_y > 0) {
+        m_front_buffer->clear_after_y(old_height);
+        m_back_buffer->clear_after_y(old_height);
+    }
 }
 
 void Window::set_x(int x) {
