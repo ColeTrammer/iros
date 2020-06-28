@@ -30,8 +30,11 @@ struct vm_region {
 #define VM_INITRD         (4)
 #define VM_KERNEL_HEAP    (5)
 
+/* Defines non unique kernel regions */
+#define VM_KERNEL_ANON_MAPPING (6)
+
 /* Defines per process vm_regions */
-#define VM_KERNEL_STACK            (6)
+#define VM_KERNEL_STACK            (7)
 #define VM_PROCESS_TEXT            (16)
 #define VM_PROCESS_ROD             (17)
 #define VM_PROCESS_DATA            (18)

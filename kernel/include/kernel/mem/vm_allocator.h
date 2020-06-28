@@ -39,4 +39,7 @@ void dump_process_regions(struct process *process);
 struct vm_region *find_kernel_vm_region_by_addr(uintptr_t addr);
 bool vm_is_kernel_address(uintptr_t addr);
 
+struct vm_region *vm_allocate_kernel_region(size_t size);
+void vm_free_kernel_region(struct vm_region *region);
+
 #endif /* _KERNEL_MEM_VM_ALLOCATOR_H */

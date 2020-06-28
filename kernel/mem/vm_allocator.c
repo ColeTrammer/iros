@@ -638,3 +638,50 @@ void dump_process_regions(struct process *process) {
         region = region->next;
     }
 }
+
+struct vm_region *vm_allocate_kernel_region(size_t size) {
+    assert(size % PAGE_SIZE == 0);
+
+    struct vm_region *region = calloc(1, sizeof(struct vm_region));
+    spin_lock(&kernel_vm_lock);
+
+    struct vm_region *vm = kernel_vm_list;
+    while (vm->next) {
+        vm = vm->next;
+    }
+
+    // FIXME: use a better allocation strategy then sequential assignments
+    uintptr_t start = vm->type == VM_KERNEL_HEAP ? vm->end + 1073741824ULL / 2ULL : vm->end;
+
+    region->flags = VM_WRITE;
+    region->start = start;
+    region->end = region->start + size;
+    region->type = VM_KERNEL_ANON_MAPPING;
+    for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
+        map_page(s, region->flags, &initial_kernel_process);
+    }
+
+    vm->next = region;
+
+    spin_unlock(&kernel_vm_lock);
+    return region;
+}
+
+void vm_free_kernel_region(struct vm_region *region) {
+    spin_lock(&kernel_vm_lock);
+
+    struct vm_region *vm = kernel_vm_list;
+
+    // NOTE: region can never be first, since it must have been allocated with vm_allocate_kernel_region()
+    while (vm->next != region) {
+        vm = vm->next;
+    }
+    vm->next = region->next;
+
+    for (uintptr_t s = region->start; s < region->end; s += PAGE_SIZE) {
+        unmap_page(s, &initial_kernel_process);
+    }
+    free(region);
+
+    spin_unlock(&kernel_vm_lock);
+}
