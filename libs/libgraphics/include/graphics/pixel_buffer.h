@@ -32,6 +32,9 @@ public:
     const uint32_t* pixels() const { return m_pixels; }
 
     void clear();
+    void clear_after_y(int y);
+    void shrink_width(int new_width);
+    void adjust_for_size_change(int old_width, int old_height);
 
     void __attribute__((always_inline)) put_pixel(int x, int y, uint32_t p) {
         if (x < 0 || y < 0 || x >= width() || y >= height()) {
