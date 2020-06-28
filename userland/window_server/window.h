@@ -37,6 +37,12 @@ public:
     SharedPtr<PixelBuffer>& buffer() { return m_front_buffer; }
     const SharedPtr<PixelBuffer>& buffer() const { return m_front_buffer; }
 
+    Rect& resize_rect() { return m_resize_rect; }
+    const Rect& resize_rect() const { return m_resize_rect; }
+
+    void set_in_resize(bool b) { m_in_resize = b; }
+    bool in_resize() const { return m_in_resize; }
+
 private:
     void map_buffers();
 
@@ -46,6 +52,8 @@ private:
     const wid_t m_id;
     String m_title;
     const int m_client_id;
+    bool m_in_resize { false };
+    Rect m_resize_rect;
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
 };

@@ -313,6 +313,9 @@ int Application::run() {
                             continue;
                         }
                         break;
+                    case WindowServer::Message::Type::WindowDidResizeMessage:
+                        // FIXME: support terminal resizing
+                        break;
                     case WindowServer::Message::Type::WindowClosedEventMessage:
                         return 0;
                     default:

@@ -62,7 +62,11 @@ public:
     void invalidate_rect(const Rect& rect) { m_dirty_rects.add(rect); }
 
     Function<void(Window&)> on_window_close_button_pressed;
-    Function<void(Window&)> on_window_resized;
+    Function<void(Window&)> on_window_resize_start;
+
+    bool should_send_mouse_events(const Window& window) const {
+        return &window != m_window_to_move.get() && &window != m_window_to_resize.get();
+    }
 
 private:
     void swap_buffers();

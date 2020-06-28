@@ -39,11 +39,11 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
         m_manager->remove_window(window.id());
     };
 
-    m_manager->on_window_resized = [&](auto& window) {
-        auto message =
-            WindowServer::Message::ResizeWindowMessage::create(window.id(), window.content_rect().width(), window.content_rect().height());
+    m_manager->on_window_resize_start = [&](auto& window) {
+        auto message = WindowServer::Message::WindowDidResizeMessage::create(window.id());
         if (write(window.client_id(), message.get(), message->total_size()) == -1) {
             kill_client(window.client_id());
+            return;
         }
     };
 }
@@ -84,6 +84,37 @@ void Server::handle_swap_buffer_request(const WindowServer::Message& request, in
             window->swap();
         }
     });
+}
+
+void Server::handle_window_ready_to_resize_message(const WindowServer::Message& message, int client_id) {
+    wid_t wid = message.data.window_ready_to_resize_message.wid;
+    auto* window_ptr = m_manager->windows().first_match([&](const auto& window) -> bool {
+        return window->id() == wid;
+    });
+
+    if (!window_ptr) {
+        kill_client(client_id);
+        return;
+    }
+
+    auto& window = **window_ptr;
+    if (!window.in_resize()) {
+        kill_client(client_id);
+        return;
+    }
+
+    auto dw = window.resize_rect().width() - window.rect().width();
+    auto dh = window.resize_rect().height() - window.rect().height();
+    window.relative_resize(dw, dh);
+    window.set_x(window.resize_rect().x());
+    window.set_y(window.resize_rect().y());
+    window.set_in_resize(false);
+
+    auto response =
+        WindowServer::Message::WindowReadyToResizeResponse::create(wid, window.content_rect().width(), window.content_rect().height());
+    if (write(client_id, response.get(), response->total_size()) == -1) {
+        kill_client(client_id);
+    }
 }
 
 void Server::start() {
@@ -179,6 +210,10 @@ void Server::start() {
                     handle_swap_buffer_request(message, client_fd);
                     break;
                 }
+                case WindowServer::Message::Type::WindowReadyToResizeMessage: {
+                    handle_window_ready_to_resize_message(message, client_fd);
+                    break;
+                }
                 case WindowServer::Message::Type::Invalid:
                 default:
                     fprintf(stderr, "Recieved invalid window server message\n");
@@ -211,7 +246,7 @@ void Server::start() {
                 }
 
                 auto* active_window = m_manager->active_window();
-                if (active_window) {
+                if (active_window && m_manager->should_send_mouse_events(*active_window)) {
                     Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
                     auto to_send = WindowServer::Message::MouseEventMessage::create(
                         active_window->id(), relative_mouse.x(), relative_mouse.y(), event.scroll_state, event.left, event.right);

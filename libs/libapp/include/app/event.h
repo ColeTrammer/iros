@@ -28,6 +28,7 @@ public:
     enum class Type {
         Invalid,
         Close,
+        DidResize,
     };
 
     WindowEvent(Type type) : Event(Event::Type::Window), m_type(type) {}
@@ -77,18 +78,6 @@ private:
     char m_ascii;
     enum key m_key;
     int m_flags;
-};
-
-class ResizeEvent final : public Event {
-public:
-    ResizeEvent(int new_width, int new_height) : Event(Event::Type::Resize), m_new_width(new_width), m_new_height(new_height) {}
-
-    int new_width() const { return m_new_width; }
-    int new_height() const { return m_new_height; }
-
-private:
-    int m_new_width { 0 };
-    int m_new_height { 0 };
 };
 
 }

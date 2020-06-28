@@ -20,6 +20,7 @@ public:
     SharedPtr<Window> create_window(int x, int y, int width, int height, const String& name);
 
     void send_swap_buffer_request(wid_t wid);
+    UniquePtr<Message> send_window_ready_to_resize_message(wid_t wid);
 
     template<typename C>
     void set_draw_callback(SharedPtr<Window>& window, C callback) {

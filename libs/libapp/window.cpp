@@ -46,6 +46,22 @@ void Window::on_event(Event& event) {
                 App::the().main_event_loop().set_should_exit(true);
                 return;
             }
+            if (window_event.window_event_type() == WindowEvent::Type::DidResize) {
+                auto response = App::the().ws_connection().send_window_ready_to_resize_message(wid());
+                assert(response->type == WindowServer::Message::Type::WindowReadyToResizeResponse);
+                auto& data = response->data.window_ready_to_resize_response;
+                assert(data.wid == wid());
+
+                if (data.new_width == 0 && data.new_height == 0) {
+                    return;
+                }
+
+                m_ws_window->resize(data.new_width, data.new_height);
+                set_rect({ rect().x(), rect().y(), data.new_width, data.new_height });
+                pixels()->clear();
+                draw();
+                break;
+            }
             break;
         }
         case Event::Type::Mouse: {
@@ -61,14 +77,6 @@ void Window::on_event(Event& event) {
             auto& key_event = static_cast<KeyEvent&>(event);
             auto widget = focused_widget();
             widget->on_key_event(key_event);
-            break;
-        }
-        case Event::Type::Resize: {
-            auto& resize_event = static_cast<ResizeEvent&>(event);
-            m_ws_window->resize(resize_event.new_width(), resize_event.new_height());
-            set_rect({ rect().x(), rect().y(), resize_event.new_width(), resize_event.new_height() });
-            pixels()->clear();
-            draw();
             break;
         }
         default:

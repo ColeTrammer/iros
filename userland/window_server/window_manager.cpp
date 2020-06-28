@@ -286,21 +286,25 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
     m_mouse_y = y;
 
     if (m_window_to_resize) {
-        invalidate_rect(m_window_to_resize->rect());
+        bool was_already_resizing = m_window_to_resize->in_resize();
+        if (!was_already_resizing) {
+            m_window_to_resize->resize_rect() = m_window_to_resize->rect();
+        }
+
         switch (m_window_resize_mode) {
             case ResizeMode::TopLeft:
-                m_window_to_resize->set_x(m_window_to_resize->rect().x() + mouse_dx);
-                m_window_to_resize->set_y(m_window_to_resize->rect().y() + mouse_dy);
+                m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() + mouse_dx);
+                m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() + mouse_dy);
                 mouse_dx *= -1;
-                mouse_dx *= -1;
+                mouse_dy *= -1;
                 break;
             case ResizeMode::Top:
-                m_window_to_resize->set_y(m_window_to_resize->rect().y() + mouse_dy);
+                m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() + mouse_dy);
                 mouse_dx = 0;
                 mouse_dy *= -1;
                 break;
             case ResizeMode::TopRight:
-                m_window_to_resize->set_y(m_window_to_resize->rect().y() + mouse_dy);
+                m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() + mouse_dy);
                 mouse_dy *= -1;
                 break;
             case ResizeMode::Right:
@@ -312,11 +316,11 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
                 mouse_dx = 0;
                 break;
             case ResizeMode::BottomLeft:
-                m_window_to_resize->set_x(m_window_to_resize->rect().x() + mouse_dx);
+                m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() + mouse_dx);
                 mouse_dx *= -1;
                 break;
             case ResizeMode::Left:
-                m_window_to_resize->set_x(m_window_to_resize->rect().x() + mouse_dx);
+                m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() + mouse_dx);
                 mouse_dx *= -1;
                 mouse_dy = 0;
                 break;
@@ -324,9 +328,14 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
                 assert(false);
         }
 
-        m_window_to_resize->relative_resize(mouse_dx, mouse_dy);
-        if (on_window_resized) {
-            on_window_resized(*m_window_to_resize);
+        m_window_to_resize->resize_rect().set_width(m_window_to_resize->resize_rect().width() + mouse_dx);
+        m_window_to_resize->resize_rect().set_height(m_window_to_resize->resize_rect().height() + mouse_dy);
+
+        if (!was_already_resizing) {
+            m_window_to_resize->set_in_resize(true);
+            if (on_window_resize_start) {
+                on_window_resize_start(*m_window_to_resize);
+            }
         }
     }
 

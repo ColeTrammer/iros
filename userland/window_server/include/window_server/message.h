@@ -22,7 +22,9 @@ struct Message {
         SwapBufferRequest,
         KeyEventMessage,
         MouseEventMessage,
-        ResizeWindowMessage,
+        WindowDidResizeMessage,
+        WindowReadyToResizeMessage,
+        WindowReadyToResizeResponse,
         WindowClosedEventMessage,
     };
 
@@ -142,12 +144,38 @@ struct Message {
         mouse_button_state right;
     };
 
-    struct ResizeWindowMessage {
+    struct WindowDidResizeMessage {
+        static SharedPtr<Message> create(wid_t wid) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(WindowDidResizeMessage));
+            message->type = Message::Type::WindowDidResizeMessage;
+            message->data_len = sizeof(WindowDidResizeMessage);
+            auto& request = message->data.window_did_resize_message;
+            request.wid = wid;
+            return SharedPtr<Message>(message);
+        }
+
+        wid_t wid;
+    };
+
+    struct WindowReadyToResizeMessage {
+        static SharedPtr<Message> create(wid_t wid) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(WindowReadyToResizeMessage));
+            message->type = Message::Type::WindowReadyToResizeMessage;
+            message->data_len = sizeof(WindowReadyToResizeMessage);
+            auto& request = message->data.window_ready_to_resize_message;
+            request.wid = wid;
+            return SharedPtr<Message>(message);
+        }
+
+        wid_t wid;
+    };
+
+    struct WindowReadyToResizeResponse {
         static UniquePtr<Message> create(wid_t wid, int new_width, int new_height) {
-            auto* message = (Message*) malloc(sizeof(Message) + sizeof(ResizeWindowMessage));
-            message->type = Message::Type::ResizeWindowMessage;
-            message->data_len = sizeof(ResizeWindowMessage);
-            auto& data = message->data.resize_window_message;
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(WindowReadyToResizeResponse));
+            message->type = Message::Type::WindowReadyToResizeResponse;
+            message->data_len = sizeof(WindowReadyToResizeResponse);
+            auto& data = message->data.window_ready_to_resize_response;
             data.wid = wid;
             data.new_width = new_width;
             data.new_height = new_height;
@@ -184,7 +212,9 @@ struct Message {
         SwapBufferRequest swap_buffer_request;
         KeyEventMessage key_event_message;
         MouseEventMessage mouse_event_message;
-        ResizeWindowMessage resize_window_message;
+        WindowDidResizeMessage window_did_resize_message;
+        WindowReadyToResizeMessage window_ready_to_resize_message;
+        WindowReadyToResizeResponse window_ready_to_resize_response;
         WindowClosedEventMessage window_closed_event_messasge;
     } data;
 };

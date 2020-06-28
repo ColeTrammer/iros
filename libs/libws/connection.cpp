@@ -48,6 +48,12 @@ UniquePtr<Message> Connection::recieve_message() {
     return make_unique<Message>(*message);
 }
 
+UniquePtr<Message> Connection::send_window_ready_to_resize_message(wid_t wid) {
+    auto message = WindowServer::Message::WindowReadyToResizeMessage::create(wid);
+    assert(write(m_fd, message.get(), message->total_size()) != -1);
+    return recieve_message();
+}
+
 void Connection::send_swap_buffer_request(wid_t wid) {
     auto swap_buffer_request = WindowServer::Message::SwapBufferRequest::create(wid);
     assert(write(m_fd, swap_buffer_request.get(), swap_buffer_request->total_size()) != -1);

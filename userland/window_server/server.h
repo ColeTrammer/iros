@@ -17,9 +17,10 @@ public:
 private:
     void kill_client(int client_id);
 
-    void handle_create_window_request(const WindowServer::Message&, int client_id);
-    void handle_remove_window_request(const WindowServer::Message&, int client_id);
-    void handle_swap_buffer_request(const WindowServer::Message&, int client_id);
+    void handle_create_window_request(const WindowServer::Message& message, int client_id);
+    void handle_remove_window_request(const WindowServer::Message& message, int client_id);
+    void handle_swap_buffer_request(const WindowServer::Message& message, int client_id);
+    void handle_window_ready_to_resize_message(const WindowServer::Message& message, int client_id);
 
     UniquePtr<WindowManager> m_manager;
     int m_socket_fd;
