@@ -226,6 +226,8 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         return -EINVAL;
     }
 
+    spin_lock(&inode->lock);
+
     struct tmp_data *data = inode->private_data;
     if (!inode->vm_object) {
         inode->vm_object = vm_create_direct_inode_object(inode, data->contents);
@@ -239,6 +241,8 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     region->flags |= VM_SHARED;
 
     int ret = vm_map_region_with_object(region);
+
+    spin_unlock(&inode->lock);
     if (ret < 0) {
         return (intptr_t) ret;
     }
@@ -263,20 +267,12 @@ int tmp_truncate(struct inode *inode, off_t len) {
 
     struct tmp_data *data = inode->private_data;
 
+    spin_lock(&inode->lock);
     if (new_size < old_size) {
         inode->size = new_size;
     } else {
         inode->size = new_size;
         if (inode->size > data->max) {
-            bool tranferred_ownership = false;
-            if (inode->vm_object) {
-                struct inode_vm_object_data *object_data = inode->vm_object->private_data;
-                spin_lock(&inode->vm_object->lock);
-                object_data->owned = true;
-                spin_unlock(&inode->vm_object->lock);
-                inode->vm_object = NULL;
-            }
-
             data->max = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
             assert(data->max >= inode->size);
             char *save = data->contents;
@@ -285,13 +281,20 @@ int tmp_truncate(struct inode *inode, off_t len) {
             memcpy(data->contents, save, old_size);
             memset(data->contents + old_size, 0, new_size - old_size);
 
-            if (!tranferred_ownership) {
+            if (inode->vm_object) {
+                struct inode_vm_object_data *object_data = inode->vm_object->private_data;
+                spin_lock(&inode->vm_object->lock);
+                object_data->owned = true;
+                spin_unlock(&inode->vm_object->lock);
+                inode->vm_object = NULL;
+            } else {
                 free(save);
             }
         }
     }
 
     inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
+    spin_unlock(&inode->lock);
     return 0;
 }
 
