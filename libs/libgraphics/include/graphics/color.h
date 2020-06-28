@@ -7,6 +7,7 @@
 enum class ColorValue {
     White,
     Black,
+    DarkGray,
 };
 
 class Color {
@@ -23,6 +24,9 @@ public:
                 break;
             case ColorValue::Black:
                 set(0, 0, 0);
+                break;
+            case ColorValue::DarkGray:
+                set(33, 33, 33);
                 break;
         }
     }

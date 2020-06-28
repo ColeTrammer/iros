@@ -121,7 +121,7 @@ void WindowManager::draw() {
     };
 
     for (auto& rect : m_dirty_rects) {
-        renderer.fill_rect(rect, ColorValue::Black);
+        renderer.fill_rect(rect, ColorValue::DarkGray);
     }
 
     for_each_window(render_window);
