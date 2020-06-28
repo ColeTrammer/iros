@@ -14,6 +14,8 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
 
+// #define INODE_VM_OBJECT_DEBUG
+
 static int inode_map(struct vm_object *self, struct vm_region *region) {
     struct inode_vm_object_data *data = self->private_data;
 
@@ -74,7 +76,9 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
 static int inode_kill(struct vm_object *self) {
     struct inode_vm_object_data *data = self->private_data;
 
+#ifdef INODE_VM_OBJECT_DEBUG
     debug_log("Destroying inode_vm_object: [ %p, %lu, %llu ]\n", self, data->inode->fsid, data->inode->index);
+#endif /* INODE_VM_OBJECT_DEBUG */
 
     if (data->owned) {
         if (data->kernel_region) {

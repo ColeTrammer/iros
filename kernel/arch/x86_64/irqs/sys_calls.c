@@ -1375,8 +1375,6 @@ SYS_CALL(munmap) {
     SYS_PARAM1(void *, addr);
     SYS_PARAM2(size_t, length);
 
-    debug_log("munmap: [ %p, %#.16lX, %#.16lX ]\n", addr, length, (uintptr_t) addr + length);
-
     SYS_RETURN(unmap_range((uintptr_t) addr, length));
 }
 
