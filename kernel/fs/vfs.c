@@ -1218,6 +1218,7 @@ int fs_unlink(const char *path, bool ignore_permission_checks) {
     spin_unlock(&tnode->inode->lock);
 
     fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
+    drop_inode_reference(tnode->inode);
     drop_tnode(tnode);
     return 0;
 }
