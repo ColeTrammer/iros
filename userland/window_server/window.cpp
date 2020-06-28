@@ -82,16 +82,18 @@ void Window::relative_resize(int delta_x, int delta_y) {
     WindowManager::the().invalidate_rect(m_rect);
 
     if (m_front_buffer) {
+        size_t size_in_bytes = m_front_buffer->size_in_bytes();
         if (delta_x < 0) {
             m_front_buffer->shrink_width(m_content_rect.width());
         }
-        munmap(m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
+        munmap(m_front_buffer->pixels(), size_in_bytes);
     }
     if (m_back_buffer) {
+        size_t size_in_bytes = m_back_buffer->size_in_bytes();
         if (delta_x < 0) {
             m_back_buffer->shrink_width(m_content_rect.width());
         }
-        munmap(m_back_buffer->pixels(), m_back_buffer->size_in_bytes());
+        munmap(m_back_buffer->pixels(), size_in_bytes);
     }
 
     map_buffers();
