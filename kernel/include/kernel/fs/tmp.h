@@ -8,12 +8,6 @@
 
 #define TMP_MAX_FILE_NAME_LENGTH 255
 
-struct tmp_data {
-    void *contents;
-    size_t max;
-    pid_t owner;
-};
-
 struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, dev_t device, int *error);
 struct inode *tmp_lookup(struct inode *inode, const char *name);
 struct file *tmp_open(struct inode *inode, int flags, int *error);

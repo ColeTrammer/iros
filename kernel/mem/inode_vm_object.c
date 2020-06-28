@@ -77,8 +77,8 @@ static int inode_kill(struct vm_object *self) {
     debug_log("Destroying inode_vm_object: [ %p, %lu, %llu ]\n", self, data->inode->fsid, data->inode->index);
 
     if (data->owned) {
-        if (data->base) {
-            free(data->base);
+        if (data->kernel_region) {
+            vm_free_kernel_region(data->kernel_region);
         } else {
             for (size_t i = 0; i < data->pages; i++) {
                 if (data->phys_pages[i]) {
@@ -111,13 +111,13 @@ struct vm_object *vm_create_inode_object(struct inode *inode, int map_flags __at
     data->inode = inode;
     data->owned = true;
     data->pages = num_pages;
-    data->base = NULL;
+    data->kernel_region = NULL;
     memset(data->phys_pages, 0, num_pages * sizeof(struct phys_page *));
 
     return vm_create_object(VM_INODE, &inode_ops, data);
 }
 
-struct vm_object *vm_create_direct_inode_object(struct inode *inode, void *base_buffer) {
+struct vm_object *vm_create_direct_inode_object(struct inode *inode, struct vm_region *kernel_region) {
     size_t num_pages = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE);
     struct inode_vm_object_data *data = malloc(sizeof(struct inode_vm_object_data) + num_pages * sizeof(uintptr_t));
     assert(data);
@@ -125,9 +125,9 @@ struct vm_object *vm_create_direct_inode_object(struct inode *inode, void *base_
     data->inode = inode;
     data->owned = false;
     data->pages = num_pages;
-    data->base = base_buffer;
+    data->kernel_region = kernel_region;
 
-    char *buffer = base_buffer;
+    char *buffer = (char *) kernel_region->start;
     for (size_t i = 0; i < num_pages; i++) {
         data->phys_pages[i] = (void *) get_phys_addr((uintptr_t)(buffer + (i * PAGE_SIZE)));
     }

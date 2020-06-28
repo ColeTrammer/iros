@@ -73,11 +73,8 @@ struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, de
 
     debug_log("Tmp create: [ %s ]\n", name);
 
-    struct tmp_data *data = calloc(1, sizeof(struct tmp_data));
-    data->owner = get_current_task()->process->pid;
-
     struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->euid,
-                                          get_current_task()->process->egid, mode, 0, &tmp_i_op, data);
+                                          get_current_task()->process->egid, mode, 0, &tmp_i_op, NULL);
     if (inode == NULL) {
         *error = ENOMEM;
         return NULL;
@@ -108,9 +105,6 @@ ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    struct tmp_data *data = inode->private_data;
-    assert(data);
-
     spin_lock(&inode->lock);
     size_t to_read = MIN(len, inode->size - offset);
 
@@ -119,7 +113,9 @@ ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len) {
         return 0;
     }
 
-    memcpy(buffer, data->contents + offset, to_read);
+    struct vm_region *kernel_region = inode->private_data;
+    assert(kernel_region);
+    memcpy(buffer, (void *) (kernel_region->start + offset), to_read);
     offset += to_read;
 
     inode->access_time = time_read_clock(CLOCK_REALTIME);
@@ -136,30 +132,24 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    struct tmp_data *data = inode->private_data;
-    assert(data);
-
     spin_lock(&inode->lock);
-    if (data->contents == NULL) {
-        data->max = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        data->contents = aligned_alloc(PAGE_SIZE, data->max);
-        assert(data->contents);
-        assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
+    struct vm_region *kernel_region = inode->private_data;
+    if (!kernel_region) {
+        size_t size = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        inode->private_data = kernel_region = vm_allocate_kernel_region(size);
     }
 
     size_t old_size = inode->size;
     inode->size = MAX(inode->size, offset + len);
-    if (inode->size > data->max) {
-        data->max = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        assert(data->max >= inode->size);
-        char *save = data->contents;
-        data->contents = aligned_alloc(PAGE_SIZE, data->max);
-        assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
-        memcpy(data->contents, save, old_size);
-        free(save);
+    if (inode->size > kernel_region->end - kernel_region->start) {
+        size_t new_size = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        struct vm_region *save = kernel_region;
+        inode->private_data = kernel_region = vm_allocate_kernel_region(new_size);
+        memcpy((void *) kernel_region->start, (void *) save->start, old_size);
+        vm_free_kernel_region(save);
     }
 
-    memcpy(data->contents + offset, buffer, len);
+    memcpy((void *) (kernel_region->start + offset), buffer, len);
 
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
@@ -228,9 +218,9 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 
     spin_lock(&inode->lock);
 
-    struct tmp_data *data = inode->private_data;
+    struct vm_region *kernel_region = inode->private_data;
     if (!inode->vm_object) {
-        inode->vm_object = vm_create_direct_inode_object(inode, data->contents);
+        inode->vm_object = vm_create_direct_inode_object(inode, kernel_region);
     } else {
         bump_vm_object(inode->vm_object);
     }
@@ -251,44 +241,48 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 }
 
 int tmp_read_all(struct inode *inode, void *buffer) {
-    struct tmp_data *data = inode->private_data;
-
     spin_lock(&inode->lock);
-    memcpy(buffer, data->contents, inode->size);
-    inode->access_time = time_read_clock(CLOCK_REALTIME);
-    spin_unlock(&inode->lock);
 
+    struct vm_region *kernel_region = inode->private_data;
+    assert(kernel_region);
+
+    memcpy(buffer, (void *) kernel_region->start, inode->size);
+    inode->access_time = time_read_clock(CLOCK_REALTIME);
+
+    spin_unlock(&inode->lock);
     return 0;
 }
 
 int tmp_truncate(struct inode *inode, off_t len) {
     size_t new_size = (size_t) len;
-    size_t old_size = inode->size;
-
-    struct tmp_data *data = inode->private_data;
 
     spin_lock(&inode->lock);
+
+    size_t old_size = inode->size;
+    struct vm_region *kernel_region = inode->private_data;
     if (new_size < old_size) {
         inode->size = new_size;
     } else {
         inode->size = new_size;
-        if (inode->size > data->max) {
-            data->max = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-            assert(data->max >= inode->size);
-            char *save = data->contents;
-            data->contents = aligned_alloc(PAGE_SIZE, data->max);
-            assert(((uintptr_t) data->contents) % PAGE_SIZE == 0);
-            memcpy(data->contents, save, old_size);
-            memset(data->contents + old_size, 0, new_size - old_size);
+        size_t new_max_size = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        if (!kernel_region) {
+            inode->private_data = kernel_region = vm_allocate_kernel_region(new_max_size);
+            memset((void *) kernel_region->start, 0, new_size);
+        } else if (inode->size > kernel_region->end - kernel_region->start) {
+            struct vm_region *save = kernel_region;
+            inode->private_data = kernel_region = vm_allocate_kernel_region(new_max_size);
+            memcpy((void *) kernel_region->start, (void *) save->start, old_size);
+            memset((void *) (kernel_region->start + old_size), 0, new_size - old_size);
 
             if (inode->vm_object) {
                 struct inode_vm_object_data *object_data = inode->vm_object->private_data;
                 spin_lock(&inode->vm_object->lock);
                 object_data->owned = true;
+                assert(object_data->kernel_region == save);
                 spin_unlock(&inode->vm_object->lock);
                 inode->vm_object = NULL;
             } else {
-                free(save);
+                vm_free_kernel_region(save);
             }
         }
     }
@@ -299,10 +293,9 @@ int tmp_truncate(struct inode *inode, off_t len) {
 }
 
 void tmp_on_inode_destruction(struct inode *inode) {
-    struct tmp_data *data = inode->private_data;
-    if (data) {
-        free(data->contents);
-        free(data);
+    struct vm_region *kernel_region = inode->private_data;
+    if (kernel_region) {
+        vm_free_kernel_region(kernel_region);
     }
 }
 
