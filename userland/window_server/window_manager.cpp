@@ -214,6 +214,13 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         return;
     }
 
+    if (left == MOUSE_UP) {
+        m_window_to_move = nullptr;
+        m_window_to_resize = nullptr;
+        m_window_resize_mode = ResizeMode::Invalid;
+        return;
+    }
+
     auto cursor_rect = Rect(m_mouse_x, m_mouse_y, cursor_width, cursor_height);
     int index = find_window_intersecting_rect(cursor_rect);
     if (index == -1) {
@@ -263,12 +270,6 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         }
     }
 
-    if (left == MOUSE_UP) {
-        m_window_to_move = nullptr;
-        m_window_to_resize = nullptr;
-        m_window_resize_mode = ResizeMode::Invalid;
-    }
-
     move_to_front_and_make_active(windows()[index]);
 }
 
@@ -293,19 +294,27 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
 
         switch (m_window_resize_mode) {
             case ResizeMode::TopLeft:
-                m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() + mouse_dx);
-                m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() + mouse_dy);
                 mouse_dx *= -1;
                 mouse_dy *= -1;
+                if (m_window_to_resize->resize_rect().width() + mouse_dx > 200) {
+                    m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() - mouse_dx);
+                }
+                if (m_window_to_resize->resize_rect().height() + mouse_dy > 200) {
+                    m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() - mouse_dy);
+                }
                 break;
             case ResizeMode::Top:
-                m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() + mouse_dy);
                 mouse_dx = 0;
                 mouse_dy *= -1;
+                if (m_window_to_resize->resize_rect().height() + mouse_dy > 200) {
+                    m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() - mouse_dy);
+                }
                 break;
             case ResizeMode::TopRight:
-                m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() + mouse_dy);
                 mouse_dy *= -1;
+                if (m_window_to_resize->resize_rect().height() + mouse_dy > 200) {
+                    m_window_to_resize->resize_rect().set_y(m_window_to_resize->resize_rect().y() - mouse_dy);
+                }
                 break;
             case ResizeMode::Right:
                 mouse_dy = 0;
@@ -316,20 +325,24 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
                 mouse_dx = 0;
                 break;
             case ResizeMode::BottomLeft:
-                m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() + mouse_dx);
                 mouse_dx *= -1;
+                if (m_window_to_resize->resize_rect().width() + mouse_dx > 200) {
+                    m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() - mouse_dx);
+                }
                 break;
             case ResizeMode::Left:
-                m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() + mouse_dx);
                 mouse_dx *= -1;
                 mouse_dy = 0;
+                if (m_window_to_resize->resize_rect().width() + mouse_dx > 200) {
+                    m_window_to_resize->resize_rect().set_x(m_window_to_resize->resize_rect().x() - mouse_dx);
+                }
                 break;
             default:
                 assert(false);
         }
 
-        m_window_to_resize->resize_rect().set_width(m_window_to_resize->resize_rect().width() + mouse_dx);
-        m_window_to_resize->resize_rect().set_height(m_window_to_resize->resize_rect().height() + mouse_dy);
+        m_window_to_resize->resize_rect().set_width(max(200, m_window_to_resize->resize_rect().width() + mouse_dx));
+        m_window_to_resize->resize_rect().set_height(max(200, m_window_to_resize->resize_rect().height() + mouse_dy));
 
         if (!was_already_resizing) {
             m_window_to_resize->set_in_resize(true);
