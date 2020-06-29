@@ -61,9 +61,7 @@ void TTY::put_char(char c) {
 
     m_cursor_col++;
     if (m_cursor_col >= m_col_count) {
-        m_cursor_col = 0;
-        m_cursor_row++;
-        scroll_down_if_needed();
+        m_cursor_col--;
     }
 }
 
