@@ -145,6 +145,7 @@ int main(int argc, char** argv) {
         to_set.sa_flags = 0;
         to_set.sa_handler = SIG_IGN;
         sigaction(SIGTTOU, &to_set, NULL);
+        sigaction(SIGWINCH, &to_set, NULL);
 
         sigset_t sigset;
         sigemptyset(&sigset);
