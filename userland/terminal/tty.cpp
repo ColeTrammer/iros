@@ -57,10 +57,18 @@ void TTY::put_char(int row, int col, char c) {
 }
 
 void TTY::put_char(char c) {
+    if (m_x_overflow) {
+        m_cursor_row++;
+        scroll_down_if_needed();
+        m_cursor_col = 0;
+        m_x_overflow = false;
+    }
+
     put_char(m_cursor_row + m_row_offset, m_cursor_col, c);
 
     m_cursor_col++;
     if (m_cursor_col >= m_col_count) {
+        m_x_overflow = true;
         m_cursor_col--;
     }
 }
@@ -106,28 +114,33 @@ void TTY::handle_escape_sequence() {
                 break;
             }
             m_cursor_row -= args.get(0);
+            m_x_overflow = false;
             return;
         case 'B':
             if (args.size() != 1) {
                 break;
             }
             m_cursor_row += args.get(0);
+            m_x_overflow = false;
             return;
         case 'C':
             if (args.size() != 1) {
                 break;
             }
             m_cursor_col += args.get(0);
+            m_x_overflow = false;
             return;
         case 'D':
             if (args.size() != 1) {
                 break;
             }
             m_cursor_col -= args.get(0);
+            m_x_overflow = false;
             return;
         case 'H':
             m_cursor_row = args.get_or(0, 1) - 1;
             m_cursor_col = args.get_or(1, 1) - 1;
+            m_x_overflow = false;
             return;
         case 'J':
             if (args.get_or(0, 0) == 2) {
@@ -338,6 +351,7 @@ void TTY::scroll_down_if_needed() {
     if (m_cursor_row >= m_row_count) {
         m_row_offset++;
         m_cursor_row--;
+        m_x_overflow = false;
         invalidate_all();
         m_rows.add(Row());
         m_rows.last().resize(m_col_count);
@@ -375,16 +389,19 @@ void TTY::on_char(char c) {
             break;
         case '\r':
             m_cursor_col = 0;
+            m_x_overflow = false;
             break;
         case '\n':
             m_cursor_row++;
             scroll_down_if_needed();
+            m_x_overflow = false;
             break;
         // Ascii BS (NOTE: not the backspace key)
         case 8:
             if (m_cursor_col > 0) {
                 m_cursor_col--;
             }
+            m_x_overflow = false;
             break;
         // Ascii DEL (NOTE: not the delete key)
         case 127:
@@ -393,6 +410,7 @@ void TTY::on_char(char c) {
                 put_char(' ');
                 m_cursor_col--;
             }
+            m_x_overflow = false;
             break;
         case '\a':
             // Ignore alarm character for now

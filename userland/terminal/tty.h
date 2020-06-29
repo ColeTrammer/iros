@@ -88,6 +88,7 @@ private:
 
     bool m_cursor_hidden { false };
     bool m_in_escape { false };
+    bool m_x_overflow { false };
     int m_saved_cursor_row { 0 };
     int m_saved_cursor_col { 0 };
     int m_escape_index { 0 };
