@@ -35,7 +35,6 @@ static void update_panel_sizes() {
     assert(s_main_panel);
 
     fputs("\033[2J", stdout);
-    fflush(stdout);
 
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
