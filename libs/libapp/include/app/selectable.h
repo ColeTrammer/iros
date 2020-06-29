@@ -1,6 +1,7 @@
 #pragma once
 
 #include <app/object.h>
+#include <liim/function.h>
 
 namespace App {
 
@@ -33,6 +34,19 @@ private:
     int m_selected_events { 0 };
     int m_fd { -1 };
     bool m_notifications_enabled { false };
+};
+
+class FdWrapper final : public Selectable {
+public:
+    FdWrapper(int fd) { set_fd(fd); }
+
+    Function<void()> on_readable;
+
+    virtual void notify_readable() override {
+        if (on_readable) {
+            on_readable();
+        }
+    }
 };
 
 }

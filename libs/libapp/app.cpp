@@ -11,19 +11,6 @@ namespace App {
 static App* s_app;
 
 void App::setup_ws_connection_notifier() {
-    class FdWrapper final : public Selectable {
-    public:
-        FdWrapper(int fd) { set_fd(fd); }
-
-        Function<void()> on_readable;
-
-        virtual void notify_readable() override {
-            if (on_readable) {
-                on_readable();
-            }
-        }
-    };
-
     static FdWrapper* fd_wrapper = new FdWrapper(ws_connection().fd());
     fd_wrapper->set_selected_events(NotifyWhen::Readable);
     fd_wrapper->on_readable = [this] {
