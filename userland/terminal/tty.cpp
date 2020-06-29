@@ -8,25 +8,31 @@ void TTY::resize(int rows, int cols) {
     m_row_count = rows;
     m_col_count = cols;
 
+    m_row_offset = 0;
+
     m_rows.resize(rows);
     for (auto& row : m_rows) {
         row.resize(cols);
     }
 
-    for (auto& row : m_rows) {
-        for (auto& cell : row) {
-            cell.dirty = true;
-        }
-    }
+    invalidate_all();
 
     clamp_cursor();
     m_cursor_row = min(m_cursor_row, rows - 1);
     m_cursor_col = min(m_cursor_col, cols - 1);
 }
 
+void TTY::invalidate_all() {
+    for (auto& row : m_rows) {
+        for (auto& cell : row) {
+            cell.dirty = true;
+        }
+    }
+}
+
 void TTY::clear() {
     for (auto r = 0; r < m_row_count; r++) {
-        clear_row(r);
+        clear_row(r + m_row_offset);
     }
 }
 
@@ -51,12 +57,13 @@ void TTY::put_char(int row, int col, char c) {
 }
 
 void TTY::put_char(char c) {
-    put_char(m_cursor_row, m_cursor_col, c);
+    put_char(m_cursor_row + m_row_offset, m_cursor_col, c);
 
     m_cursor_col++;
     if (m_cursor_col >= m_col_count) {
         m_cursor_col = 0;
         m_cursor_row++;
+        scroll_down_if_needed();
     }
 }
 
@@ -129,18 +136,19 @@ void TTY::handle_escape_sequence() {
                 clear();
                 return;
             } else if (args.get_or(0, 0) == 3) {
-                // FIXME: clear scroll buffer
+                m_row_offset = 0;
+                m_rows.resize(m_row_count);
                 clear();
                 return;
             }
             break;
         case 'K':
             if (args.get_or(0, 0) == 0) {
-                clear_row_to_end(m_cursor_row, m_cursor_col);
+                clear_row_to_end(m_cursor_row + m_row_offset, m_cursor_col);
                 return;
             }
             if (args.get_or(0, 0) == 2) {
-                clear_row(m_cursor_row);
+                clear_row(m_cursor_row + m_row_offset);
                 return;
             }
             break;
@@ -310,6 +318,20 @@ void TTY::on_next_escape_char(char c) {
     }
 }
 
+void TTY::scroll_down_if_needed() {
+    if (m_cursor_row >= m_row_count) {
+        m_row_offset++;
+        m_cursor_row--;
+        invalidate_all();
+        m_rows.add(Row());
+        m_rows.last().resize(m_col_count);
+
+        if (m_rows.size() > m_row_count + 100) {
+            m_rows.remove(0);
+        }
+    }
+}
+
 void TTY::on_char(char c) {
     if (m_in_escape) {
         on_next_escape_char(c);
@@ -328,6 +350,7 @@ void TTY::on_char(char c) {
             break;
         case '\n':
             m_cursor_row++;
+            scroll_down_if_needed();
             break;
         // Ascii BS (NOTE: not the backspace key)
         case 8:

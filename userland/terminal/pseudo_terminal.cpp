@@ -14,6 +14,11 @@ PsuedoTerminal::PsuedoTerminal() {
         exit(1);
     }
 
+    winsize ws;
+    ws.ws_row = m_rows;
+    ws.ws_col = m_cols;
+    ioctl(m_master_fd, TIOCSWINSZ, &ws);
+
     m_child_pid = fork();
     if (m_child_pid < 0) {
         perror("terminal: fork");
@@ -43,6 +48,8 @@ PsuedoTerminal::PsuedoTerminal() {
         }
 
         signal(SIGTTOU, SIG_DFL);
+        signal(SIGTTIN, SIG_DFL);
+        signal(SIGWINCH, SIG_DFL);
 
         dup2(slave_fd, STDIN_FILENO);
         dup2(slave_fd, STDOUT_FILENO);
@@ -151,9 +158,9 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         case KEY_F6:
             send_vt_escape(17, modifiers);
             return;
-        // case KEY_F7:
-        //     send_vt_escape(18, modifiers);
-        //     return;
+        case KEY_F7:
+            send_vt_escape(18, modifiers);
+            return;
         case KEY_F8:
             send_vt_escape(19, modifiers);
             return;
@@ -186,4 +193,16 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
     }
 
     write(mfd, &ascii, 1);
+}
+
+void PsuedoTerminal::set_size(int rows, int cols) {
+    if (m_rows == rows && m_cols == cols) {
+        return;
+    }
+
+    winsize ws;
+    ws.ws_row = rows;
+    ws.ws_col = cols;
+    ioctl(m_master_fd, TIOCSWINSZ, &ws);
+    kill(m_child_pid, SIGWINCH);
 }

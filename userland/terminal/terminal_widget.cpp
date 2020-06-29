@@ -37,14 +37,14 @@ void TerminalWidget::render() {
     auto y_offset = rect().y();
 
     auto& rows = m_tty.rows();
-    for (auto r = 0; r < rows.size(); r++) {
+    for (auto r = m_tty.row_offset(); r < m_tty.row_offset() + m_tty.row_count(); r++) {
         auto& row = rows[r];
-        auto y = y_offset + r * cell_height;
+        auto y = y_offset + (r - m_tty.row_offset()) * cell_height;
         for (auto c = 0; c < row.size(); c++) {
             auto& cell = row[c];
             auto x = x_offset + c * cell_width;
 
-            bool at_cursor = r == m_tty.cursor_row() && c == m_tty.cursor_col() && !m_tty.cursor_hidden();
+            bool at_cursor = r - m_tty.row_offset() == m_tty.cursor_row() && c == m_tty.cursor_col() && !m_tty.cursor_hidden();
             if (!cell.dirty && !at_cursor) {
                 continue;
             }
@@ -68,7 +68,10 @@ void TerminalWidget::render() {
 }
 
 void TerminalWidget::on_resize() {
-    m_tty.resize(rect().height() / cell_height, rect().width() / cell_width);
+    int rows = rect().height() / cell_height;
+    int cols = rect().width() / cell_width;
+    m_tty.resize(rows, cols);
+    m_pseudo_terminal.set_size(rows, cols);
 }
 
 void TerminalWidget::on_key_event(App::KeyEvent& event) {

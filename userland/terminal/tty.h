@@ -20,8 +20,14 @@ public:
     int cursor_col() const { return m_cursor_col; }
     bool cursor_hidden() const { return m_cursor_hidden; }
 
+    int row_offset() const { return m_row_offset; }
+    int row_count() const { return m_row_count; }
+    int col_count() const { return m_col_count; }
+
     void resize(int rows, int cols);
     void on_char(char c);
+
+    void scroll_down_if_needed();
 
     const Vector<Row>& rows() const { return m_rows; }
 
@@ -38,6 +44,8 @@ private:
     void clear();
     void clear_row(int row);
     void clear_row_to_end(int row, int start_col);
+
+    void invalidate_all();
 
     void reset_bg() { m_bg = ColorValue::Black; }
     void reset_fg() { m_fg = ColorValue::White; }
@@ -67,6 +75,7 @@ private:
     int m_col_count { 0 };
     int m_cursor_row { 0 };
     int m_cursor_col { 0 };
+    int m_row_offset { 0 };
     bool m_inverted { false };
     bool m_bold { false };
     Color m_fg { ColorValue::White };
