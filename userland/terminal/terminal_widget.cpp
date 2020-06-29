@@ -1,3 +1,4 @@
+#include <app/event.h>
 #include <app/window.h>
 #include <graphics/renderer.h>
 #include <unistd.h>
@@ -43,12 +44,12 @@ void TerminalWidget::render() {
             auto& cell = row[c];
             auto x = x_offset + c * cell_width;
 
-            bool at_cursor = r == m_tty.cursor_row() && c == m_tty.cursor_col();
+            bool at_cursor = r == m_tty.cursor_row() && c == m_tty.cursor_col() && !m_tty.cursor_hidden();
             if (!cell.dirty && !at_cursor) {
                 continue;
             }
 
-            cell.dirty = false;
+            cell.dirty = at_cursor;
 
             auto fg = cell.fg;
             auto bg = cell.bg;
@@ -68,4 +69,8 @@ void TerminalWidget::render() {
 
 void TerminalWidget::on_resize() {
     m_tty.resize(rect().height() / cell_height, rect().width() / cell_width);
+}
+
+void TerminalWidget::on_key_event(App::KeyEvent& event) {
+    m_pseudo_terminal.handle_key_event(event.key(), event.flags(), event.ascii());
 }

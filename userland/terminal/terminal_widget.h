@@ -15,6 +15,7 @@ public:
 
     virtual void render() override;
     virtual void on_resize() override;
+    virtual void on_key_event(App::KeyEvent& event);
 
 private:
     TTY m_tty;

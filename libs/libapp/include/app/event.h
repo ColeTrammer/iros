@@ -67,6 +67,7 @@ public:
 
     char ascii() const { return m_ascii; }
     enum key key() const { return m_key; }
+    int flags() const { return m_flags; }
 
     bool key_up() const { return m_flags & KEY_UP; }
     bool key_down() const { return m_flags & KEY_DOWN; }
