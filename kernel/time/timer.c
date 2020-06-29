@@ -66,7 +66,7 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     to_add->clock = clock;
     to_add->task = get_current_task();
 
-    if (to_add->event_type == SIGEV_SIGNAL || to_add->event_type == SIGEV_SIGNAL) {
+    if (to_add->event_type == SIGEV_SIGNAL || to_add->event_type == SIGEV_THREAD) {
         to_add->signal = malloc(sizeof(struct queued_signal));
         if (!to_add->signal) {
             free(to_add);
