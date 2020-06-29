@@ -42,7 +42,7 @@ struct network_interface {
     void *private_data;
 };
 
-void net_for_each_interface(void (*func)(struct network_interface *interface));
+void net_for_each_interface(void (*func)(struct network_interface *interface, void *closure), void *closure);
 struct network_interface *net_find_interface(bool (*func)(struct network_interface *interface, void *closure), void *closure);
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address);
 struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data);

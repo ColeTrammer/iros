@@ -48,10 +48,10 @@ struct network_interface *net_get_interface_for_ip(struct ip_v4_address address)
     return interface;
 }
 
-void net_for_each_interface(void (*func)(struct network_interface *interface)) {
+void net_for_each_interface(void (*func)(struct network_interface *interface, void *closure), void *closure) {
     struct network_interface *interface = interfaces;
     while (interface) {
-        func(interface);
+        func(interface, closure);
         interface = interface->next;
     }
 }

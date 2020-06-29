@@ -13,7 +13,7 @@
 
 struct task *network_task;
 
-static void init_ip_v4_mappings(struct network_interface *interface) {
+static void init_ip_v4_mappings(struct network_interface *interface, void *closure __attribute__((unused))) {
     debug_log("Initializing interface: [ %s ]\n", interface->name);
 
     if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
@@ -35,5 +35,5 @@ void init_net() {
 
     sched_add_task(network_task);
 
-    net_for_each_interface(init_ip_v4_mappings);
+    net_for_each_interface(init_ip_v4_mappings, NULL);
 }
