@@ -37,14 +37,15 @@ void TerminalWidget::render() {
     auto y_offset = rect().y();
 
     auto& rows = m_tty.rows();
-    for (auto r = m_tty.row_offset(); r < m_tty.row_offset() + m_tty.row_count(); r++) {
+    for (auto r = m_tty.row_offset(); r < rows.size() && r < m_tty.row_offset() + m_tty.row_count(); r++) {
         auto& row = rows[r];
         auto y = y_offset + (r - m_tty.row_offset()) * cell_height;
         for (auto c = 0; c < row.size(); c++) {
             auto& cell = row[c];
             auto x = x_offset + c * cell_width;
 
-            bool at_cursor = r - m_tty.row_offset() == m_tty.cursor_row() && c == m_tty.cursor_col() && !m_tty.cursor_hidden();
+            bool at_cursor =
+                r - (rows.size() - m_tty.row_count()) == m_tty.cursor_row() && c == m_tty.cursor_col() && !m_tty.cursor_hidden();
             if (!cell.dirty && !at_cursor) {
                 continue;
             }
@@ -76,4 +77,14 @@ void TerminalWidget::on_resize() {
 
 void TerminalWidget::on_key_event(App::KeyEvent& event) {
     m_pseudo_terminal.handle_key_event(event.key(), event.flags(), event.ascii());
+}
+
+void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
+    if (event.scroll() == SCROLL_DOWN) {
+        m_tty.scroll_down();
+        window()->draw();
+    } else if (event.scroll() == SCROLL_UP) {
+        m_tty.scroll_up();
+        window()->draw();
+    }
 }

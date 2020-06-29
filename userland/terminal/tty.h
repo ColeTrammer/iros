@@ -20,6 +20,10 @@ public:
     int cursor_col() const { return m_cursor_col; }
     bool cursor_hidden() const { return m_cursor_hidden; }
 
+    void scroll_to_bottom();
+    void scroll_up();
+    void scroll_down();
+
     int row_offset() const { return m_row_offset; }
     int row_count() const { return m_row_count; }
     int col_count() const { return m_col_count; }
