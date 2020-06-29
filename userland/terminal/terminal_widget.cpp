@@ -5,6 +5,8 @@
 
 #include "terminal_widget.h"
 
+// #define TERMINAL_WIDGET_DEBUG
+
 constexpr int cell_width = 8;
 constexpr int cell_height = 16;
 
@@ -13,6 +15,11 @@ TerminalWidget::TerminalWidget() {
     m_pseudo_terminal_wrapper->set_selected_events(App::NotifyWhen::Readable);
     m_pseudo_terminal_wrapper->enable_notifications();
     m_pseudo_terminal_wrapper->on_readable = [this] {
+#ifdef TERMINAL_WIDGET_DEBUG
+        timespec start;
+        clock_gettime(CLOCK_MONOTONIC, &start);
+#endif /* TERMINAL_WIDGET_DEBUG */
+
         char buf[BUFSIZ];
         for (;;) {
             ssize_t ret = read(m_pseudo_terminal.master_fd(), buf, sizeof(buf));
@@ -27,11 +34,27 @@ TerminalWidget::TerminalWidget() {
                 m_tty.on_char(buf[i]);
             }
         }
+
+#ifdef TERMINAL_WIDGET_DEBUG
+        timespec end;
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        long delta_seconds = end.tv_sec - start.tv_sec;
+        long delta_nano_seconds = end.tv_nsec - start.tv_nsec;
+        time_t delta_milli_seconds = delta_seconds * 1000 + delta_nano_seconds / 1000000;
+        fprintf(stderr, "TerminalWidget: draining master fd took %lu ms\n", delta_milli_seconds);
+#endif /* TERMINAL_WIDGET_DEBUG */
+
         window()->draw();
     };
 }
 
 void TerminalWidget::render() {
+#ifdef TERMINAL_WIDGET_DEBUG
+    timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+#endif /* TERMINAL_WIDGET_DEBUG */
+
     Renderer renderer(*window()->pixels());
     auto x_offset = rect().x();
     auto y_offset = rect().y();
@@ -66,6 +89,16 @@ void TerminalWidget::render() {
             renderer.render_text(x, y, String(cell.ch), fg, cell.bold ? Font::bold_font() : Font::default_font());
         }
     }
+
+#ifdef TERMINAL_WIDGET_DEBUG
+    timespec end;
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    long delta_seconds = end.tv_sec - start.tv_sec;
+    long delta_nano_seconds = end.tv_nsec - start.tv_nsec;
+    time_t delta_milli_seconds = delta_seconds * 1000 + delta_nano_seconds / 1000000;
+    fprintf(stderr, "TerminalWidget::render() took %lu ms\n", delta_milli_seconds);
+#endif /* TERMINAL_WIDGET_DEBUG */
 }
 
 void TerminalWidget::on_resize() {
