@@ -332,7 +332,7 @@ void TerminalPanel::flush_row(int row) {
         print_char(info.ch, info.metadata);
     }
 
-    if (row != rows() - 1) {
+    if (row < rows() - 1) {
         fputc('\r', stdout);
         fputc('\n', stdout);
     }

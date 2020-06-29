@@ -204,5 +204,5 @@ void PsuedoTerminal::set_size(int rows, int cols) {
     ws.ws_row = rows;
     ws.ws_col = cols;
     ioctl(m_master_fd, TIOCSWINSZ, &ws);
-    kill(m_child_pid, SIGWINCH);
+    kill(tcgetpgrp(m_master_fd), SIGWINCH);
 }
