@@ -1,3 +1,4 @@
+#include <clipboard/connection.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
@@ -17,6 +18,15 @@ void VgaTerminal::on_mouse_event(mouse_event event) {
 }
 
 void VgaTerminal::on_key_event(key_event event) {
+    if ((event.flags & KEY_DOWN) && (event.flags & KEY_CONTROL_ON) && (event.flags & KEY_SHIFT_ON) && (event.key == KEY_V)) {
+        auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
+        if (!maybe_text.has_value()) {
+            return;
+        }
+        m_pseudo_terminal.send_clipboard_contents(maybe_text.value());
+        return;
+    }
+
     m_pseudo_terminal.handle_key_event(event.key, event.flags, event.ascii);
 }
 

@@ -8,4 +8,4 @@ set(SOURCES
 )
 
 add_os_executable(terminal bin)
-target_link_libraries(terminal libapp)
+target_link_libraries(terminal libapp libclipboard)

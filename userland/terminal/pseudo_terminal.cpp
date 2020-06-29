@@ -71,6 +71,11 @@ PsuedoTerminal::~PsuedoTerminal() {
     close(m_master_fd);
 }
 
+void PsuedoTerminal::send_clipboard_contents(const String& contents) {
+    // NOTE: this could do some fancy bracket escape sequence thing, if enabled.
+    write(m_master_fd, contents.string(), contents.size());
+}
+
 void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
     int mfd = master_fd();
 

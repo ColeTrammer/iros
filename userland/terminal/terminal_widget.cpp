@@ -1,5 +1,6 @@
 #include <app/event.h>
 #include <app/window.h>
+#include <clipboard/connection.h>
 #include <graphics/renderer.h>
 #include <unistd.h>
 
@@ -109,6 +110,15 @@ void TerminalWidget::on_resize() {
 }
 
 void TerminalWidget::on_key_event(App::KeyEvent& event) {
+    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_V) {
+        auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
+        if (!maybe_text.has_value()) {
+            return;
+        }
+        m_pseudo_terminal.send_clipboard_contents(maybe_text.value());
+        return;
+    }
+
     m_pseudo_terminal.handle_key_event(event.key(), event.flags(), event.ascii());
 }
 

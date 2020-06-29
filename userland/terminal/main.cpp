@@ -1,6 +1,7 @@
 #include <app/app.h>
 #include <app/box_layout.h>
 #include <app/window.h>
+#include <clipboard/connection.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/select.h>
@@ -38,6 +39,8 @@ int main(int argc, char** argv) {
     signal(SIGTTOU, SIG_IGN);
     signal(SIGTTIN, SIG_IGN);
     signal(SIGWINCH, SIG_IGN);
+
+    Clipboard::Connection::initialize();
 
     if (!graphics_mode) {
         VgaBuffer vga_buffer;

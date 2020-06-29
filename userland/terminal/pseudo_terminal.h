@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/string.h>
 #include <sys/types.h>
 #include <kernel/hal/input.h>
 
@@ -11,6 +12,7 @@ public:
     int master_fd() const { return m_master_fd; }
     pid_t child_pid() const { return m_child_pid; }
 
+    void send_clipboard_contents(const String& contents);
     void handle_key_event(key key, int flags, char ascii);
     void set_size(int rows, int cols);
 
