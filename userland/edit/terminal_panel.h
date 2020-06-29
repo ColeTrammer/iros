@@ -40,6 +40,7 @@ public:
     int row_offset() const { return m_row_offset; }
 
     virtual void do_open_prompt() override;
+    virtual void notify_now_is_a_good_time_to_draw_cursor() override;
 
 private:
     struct Info {

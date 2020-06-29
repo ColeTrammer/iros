@@ -127,6 +127,7 @@ void TerminalPanel::clear() {
     draw_cursor();
     m_screen_info.clear();
     m_screen_info.resize(m_rows * TerminalPanel::cols());
+    flush();
 }
 
 static int vga_color_to_number(vga_color color, bool background) {
@@ -285,7 +286,6 @@ void TerminalPanel::draw_status_message() {
            fill_chars.string(), status_rhs.string());
 
     fputs("\033[u", stdout);
-    fflush(stdout);
 }
 
 void TerminalPanel::send_status_message(String message) {
@@ -379,6 +379,7 @@ void TerminalPanel::flush() {
     fputs("\033[?25h", stdout);
     draw_status_message();
     draw_cursor();
+    fflush(stdout);
 }
 
 Maybe<KeyPress> TerminalPanel::read_key() {
@@ -649,6 +650,7 @@ String TerminalPanel::prompt(const String& prompt) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
     draw_cursor();
+    fflush(stdout);
     return result;
 }
 
@@ -705,6 +707,7 @@ void TerminalPanel::enter_search(String starting_text) {
         TerminalPanel::document()->display_if_needed();
 
         text_panel.draw_cursor();
+        fflush(stdout);
     }
 
     m_show_status_bar = true;
@@ -712,6 +715,11 @@ void TerminalPanel::enter_search(String starting_text) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
     draw_cursor();
+    fflush(stdout);
+}
+
+void TerminalPanel::notify_now_is_a_good_time_to_draw_cursor() {
+    fflush(stdout);
 }
 
 void TerminalPanel::set_clipboard_contents(String text, bool is_whole_line) {
