@@ -316,6 +316,24 @@ void TTY::on_next_escape_char(char c) {
     }
 }
 
+void TTY::scroll_up() {
+    if (m_row_offset == 0) {
+        return;
+    }
+
+    m_row_offset--;
+    invalidate_all();
+}
+
+void TTY::scroll_down() {
+    if (m_row_offset + m_row_count >= m_rows.size()) {
+        return;
+    }
+
+    m_row_offset++;
+    invalidate_all();
+}
+
 void TTY::scroll_down_if_needed() {
     if (m_cursor_row >= m_row_count) {
         m_row_offset++;
@@ -326,11 +344,23 @@ void TTY::scroll_down_if_needed() {
 
         if (m_rows.size() > m_row_count + 100) {
             m_rows.remove(0);
+            m_row_offset--;
         }
     }
 }
 
+void TTY::scroll_to_bottom() {
+    if (m_row_offset == m_rows.size() - m_row_count) {
+        return;
+    }
+
+    m_row_offset = m_rows.size() - m_row_count;
+    invalidate_all();
+}
+
 void TTY::on_char(char c) {
+    scroll_to_bottom();
+
     if (m_in_escape) {
         on_next_escape_char(c);
         clamp_cursor();
