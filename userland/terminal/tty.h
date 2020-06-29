@@ -1,57 +1,35 @@
 #pragma once
 
+#include <graphics/color.h>
 #include <liim/vector.h>
-
-#include "vga_buffer.h"
 
 class TTY {
 public:
-    TTY(VgaBuffer&, int fd);
-    ~TTY() {}
+    struct Cell {
+        Color fg { ColorValue::White };
+        Color bg { ColorValue::Black };
+        char ch { ' ' };
+        bool bold { false };
+        bool inverted { false };
+        mutable bool dirty { true };
+    };
 
-    void scroll_up();
-    void scroll_down();
+    using Row = Vector<Cell>;
 
-    void scroll_to_bottom();
-    void scroll_to_top();
+    int cursor_row() const { return m_cursor_row; }
+    int cursor_col() const { return m_cursor_col; }
 
-    void on_char(char);
+    void resize(int rows, int cols);
+    void on_char(char c);
 
-    void refresh() { m_buffer.refresh(); }
+    const Vector<Row>& rows() const { return m_rows; }
 
 private:
-    void save_pos() {
-        m_saved_row = m_row;
-        m_saved_col = m_col;
-    }
-    void restore_pos() {
-        m_row = m_saved_row;
-        m_col = m_saved_col;
-    }
+    void put_char(char c);
 
-    void write(const char* buffer, size_t length);
-
-    void draw(char);
-    void update_cursor();
-
-    void handle_escape_sequence();
-    void on_next_escape_char(char);
-
-    void clamp_cursor();
-
-    int m_row { 0 };
-    int m_col { 0 };
-
-    int m_saved_row { 0 };
-    int m_saved_col { 0 };
-
-    bool m_cursor_hidden { false };
-    bool m_in_escape { false };
-    int m_escape_index { 0 };
-    char m_escape_buffer[50] { 0 };
-
-    VgaBuffer& m_buffer;
-    Vector<VgaBuffer::Row> m_above_rows;
-    Vector<VgaBuffer::Row> m_below_rows;
-    int m_fd;
+    int m_row_count { 0 };
+    int m_col_count { 0 };
+    int m_cursor_row { 0 };
+    int m_cursor_col { 0 };
+    Vector<Row> m_rows;
 };
