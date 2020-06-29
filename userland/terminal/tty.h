@@ -6,7 +6,7 @@
 class TTY {
 public:
     struct Cell {
-        Color fg { ColorValue::White };
+        Color fg { ColorValue::LightGray };
         Color bg { ColorValue::Black };
         char ch { ' ' };
         bool bold { false };
@@ -52,7 +52,7 @@ private:
     void invalidate_all();
 
     void reset_bg() { m_bg = ColorValue::Black; }
-    void reset_fg() { m_fg = ColorValue::White; }
+    void reset_fg() { m_fg = ColorValue::LightGray; }
 
     void set_bg(Color c) { m_bg = c; }
     void set_fg(Color c) { m_fg = c; }
@@ -82,7 +82,7 @@ private:
     int m_row_offset { 0 };
     bool m_inverted { false };
     bool m_bold { false };
-    Color m_fg { ColorValue::White };
+    Color m_fg { ColorValue::LightGray };
     Color m_bg { ColorValue::Black };
     Vector<Row> m_rows;
 

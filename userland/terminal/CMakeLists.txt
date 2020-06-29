@@ -3,6 +3,8 @@ set(SOURCES
     pseudo_terminal.cpp
     terminal_widget.cpp
     tty.cpp
+    vga_buffer.cpp
+    vga_terminal.cpp
 )
 
 add_os_executable(terminal bin)

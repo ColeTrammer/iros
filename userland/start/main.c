@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     spawn_process(clipboard_server_args, 11, 11, false);
 
     if (!use_graphics) {
-        char *terminal_args[] = { "/bin/terminal-vga", NULL };
+        char *terminal_args[] = { "/bin/terminal", "-v", NULL };
         spawn_process(terminal_args, 100, 100, false);
     } else {
         char *window_server_args[] = { "/bin/window_server", NULL };
