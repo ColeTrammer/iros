@@ -158,9 +158,9 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         case KEY_F6:
             send_vt_escape(17, modifiers);
             return;
-        case KEY_F7:
-            send_vt_escape(18, modifiers);
-            return;
+        // case KEY_F7:
+        //     send_vt_escape(18, modifiers);
+        //     return;
         case KEY_F8:
             send_vt_escape(19, modifiers);
             return;
