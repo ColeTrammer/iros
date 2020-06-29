@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 int setvbuf(FILE *__restrict stream, char *__restrict buf, int mode, size_t size) {
-    if (mode != _IONBF && mode != _IOLBF && mode != _IONBF) {
+    if (mode != _IONBF && mode != _IOLBF && mode != _IOFBF) {
         return -1;
     }
 
