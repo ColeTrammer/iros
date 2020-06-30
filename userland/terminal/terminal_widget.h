@@ -21,6 +21,7 @@ public:
 private:
     void clear_selection();
     bool in_selection(int row, int col) const;
+    String selection_text() const;
 
     TTY m_tty;
     PsuedoTerminal m_pseudo_terminal;

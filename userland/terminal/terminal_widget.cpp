@@ -1,6 +1,7 @@
 #include <app/event.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
+#include <ctype.h>
 #include <graphics/renderer.h>
 #include <unistd.h>
 
@@ -119,7 +120,17 @@ void TerminalWidget::on_resize() {
 }
 
 void TerminalWidget::on_key_event(App::KeyEvent& event) {
-    clear_selection();
+    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_C) {
+        auto text = selection_text();
+        if (!text.is_empty()) {
+            Clipboard::Connection::the().set_clipboard_contents_to_text(text);
+        }
+        return;
+    }
+
+    if (event.ascii()) {
+        clear_selection();
+    }
 
     if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_V) {
         auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
@@ -157,7 +168,7 @@ bool TerminalWidget::in_selection(int row, int col) const {
         return false;
     }
 
-    if ((end_row == end_col && end_col < start_col) || end_row < start_row) {
+    if ((end_row == start_row && end_col < start_col) || end_row < start_row) {
         swap(start_row, end_row);
         swap(start_col, end_col);
     }
@@ -171,6 +182,47 @@ bool TerminalWidget::in_selection(int row, int col) const {
     }
 
     return row == end_row && col < end_col;
+}
+
+String TerminalWidget::selection_text() const {
+    int start_row = m_selection_start_row;
+    int start_col = m_selection_start_col;
+    int end_row = m_selection_end_row;
+    int end_col = m_selection_end_col;
+
+    if (start_row == -1 || start_col == -1 || end_row == -1 || end_col == -1) {
+        return "";
+    }
+
+    if (start_row == end_row && start_col == end_col) {
+        return "";
+    }
+
+    if ((end_row == start_row && end_col < start_col) || end_row < start_row) {
+        swap(start_row, end_row);
+        swap(start_col, end_col);
+    }
+
+    String text;
+    for (auto r = start_row; r <= end_row; r++) {
+        String row_text;
+        auto iter_start_col = r == start_row ? start_col : 0;
+        auto iter_end_col = r == end_row ? end_col : m_tty.col_count();
+
+        for (auto c = iter_start_col; c < iter_end_col; c++) {
+            row_text += String(m_tty.rows()[r][c].ch);
+        }
+
+        while (!row_text.is_empty() && isspace(row_text[row_text.size() - 1])) {
+            row_text.remove_index(row_text.size() - 1);
+        }
+
+        text += row_text;
+        if (iter_end_col == m_tty.col_count()) {
+            text += "\n";
+        }
+    }
+    return text;
 }
 
 void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
