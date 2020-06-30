@@ -52,13 +52,13 @@ void Window::on_event(Event& event) {
                 auto& data = response->data.window_ready_to_resize_response;
                 assert(data.wid == wid());
 
-                if (data.new_width == 0 && data.new_height == 0) {
+                if (data.new_width == m_ws_window->rect().width() && data.new_height == m_ws_window->rect().height()) {
                     return;
                 }
 
                 m_ws_window->resize(data.new_width, data.new_height);
-                set_rect({ rect().x(), rect().y(), data.new_width, data.new_height });
                 pixels()->clear();
+                set_rect({ rect().x(), rect().y(), data.new_width, data.new_height });
                 draw();
                 break;
             }
