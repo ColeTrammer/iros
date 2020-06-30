@@ -1014,7 +1014,7 @@ void Document::notify_key_pressed(KeyPress press) {
     }
 
     if (press.modifiers & KeyPress::Modifier::Control) {
-        switch (press.key) {
+        switch (toupper(press.key)) {
             case KeyPress::Key::LeftArrow:
                 move_cursor_left_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
                 break;

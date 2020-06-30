@@ -69,11 +69,11 @@ public:
     enum key key() const { return m_key; }
     int flags() const { return m_flags; }
 
-    bool key_up() const { return m_flags & KEY_UP; }
-    bool key_down() const { return m_flags & KEY_DOWN; }
-    bool control_down() const { return m_flags & KEY_CONTROL_ON; }
-    bool shift_down() const { return m_flags & KEY_SHIFT_ON; }
-    bool alt_down() const { return m_flags & KEY_ALT_ON; }
+    bool key_up() const { return !!(m_flags & KEY_UP); }
+    bool key_down() const { return !!(m_flags & KEY_DOWN); }
+    bool control_down() const { return !!(m_flags & KEY_CONTROL_ON); }
+    bool shift_down() const { return !!(m_flags & KEY_SHIFT_ON); }
+    bool alt_down() const { return !!(m_flags & KEY_ALT_ON); }
 
 private:
     char m_ascii;
