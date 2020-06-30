@@ -23,11 +23,7 @@ static String s_prompt_message;
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
 
-#ifndef __os_2__
     fputs("\033[?1049l", stdout);
-#else
-    fputs("\033[1;1H\033[2J", stdout);
-#endif /* __os_2__ */
     fflush(stdout);
 }
 
@@ -80,9 +76,7 @@ static void enable_raw_mode() {
 
     setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
 
-#ifndef __os_2__
     fputs("\033[?1049h", stdout);
-#endif /* __os_2__ */
 }
 
 constexpr int status_bar_height = 1;

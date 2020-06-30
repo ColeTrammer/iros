@@ -1,6 +1,7 @@
 #pragma once
 
 #include <graphics/color.h>
+#include <liim/pointers.h>
 #include <liim/vector.h>
 
 class TTY {
@@ -59,6 +60,7 @@ private:
 
     void set_inverted(bool b) { m_inverted = b; }
     void set_bold(bool b) { m_bold = b; }
+    void set_use_alternate_screen_buffer(bool b);
 
     void reset_attributes() {
         reset_bg();
@@ -85,7 +87,6 @@ private:
     Color m_fg { ColorValue::LightGray };
     Color m_bg { ColorValue::Black };
     Vector<Row> m_rows;
-
     bool m_cursor_hidden { false };
     bool m_in_escape { false };
     bool m_x_overflow { false };
@@ -93,4 +94,6 @@ private:
     int m_saved_cursor_col { 0 };
     int m_escape_index { 0 };
     char m_escape_buffer[50] { 0 };
+
+    SharedPtr<TTY> m_save_state;
 };

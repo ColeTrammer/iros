@@ -78,6 +78,45 @@ void TTY::clamp_cursor() {
     m_cursor_col = clamp(m_cursor_col, 0, m_col_count - 1);
 }
 
+void TTY::set_use_alternate_screen_buffer(bool b) {
+    if ((!b && !m_save_state) || (b && m_save_state)) {
+        return;
+    }
+
+    if (b) {
+        m_save_state = make_shared<TTY>(*this);
+        reset_attributes();
+        m_row_offset = 0;
+        m_x_overflow = false;
+        m_cursor_hidden = false;
+        m_cursor_row = m_cursor_col = m_saved_cursor_row = m_saved_cursor_col = 0;
+        m_rows.resize(m_row_count);
+        clear();
+    } else {
+        assert(m_save_state);
+        m_row_offset = m_save_state->m_row_offset;
+        m_cursor_row = m_save_state->m_cursor_row;
+        m_cursor_col = m_save_state->m_cursor_col;
+        m_saved_cursor_row = m_save_state->m_saved_cursor_row;
+        m_saved_cursor_col = m_save_state->m_saved_cursor_col;
+        m_bold = m_save_state->m_bold;
+        m_inverted = m_save_state->m_inverted;
+        m_bg = m_save_state->m_bg;
+        m_fg = m_save_state->m_fg;
+        m_x_overflow = m_save_state->m_x_overflow;
+        m_cursor_hidden = m_save_state->m_cursor_hidden;
+        m_rows = m_save_state->m_rows;
+
+        if (m_row_count != m_save_state->m_row_count || m_col_count != m_save_state->m_col_count) {
+            resize(m_row_count, m_col_count);
+        } else {
+            invalidate_all();
+        }
+
+        m_save_state = nullptr;
+    }
+}
+
 void TTY::handle_escape_sequence() {
     LIIM::Vector<int> args;
     bool starts_with_q = m_escape_buffer[1] == '?';
@@ -101,12 +140,31 @@ void TTY::handle_escape_sequence() {
     switch (m_escape_buffer[m_escape_index - 1]) {
         case 'l':
             if (starts_with_q) {
-                m_cursor_hidden = true;
+                switch (args.get_or(0, 0)) {
+                    case 25:
+                        m_cursor_hidden = true;
+                        break;
+                    case 1049:
+                        set_use_alternate_screen_buffer(false);
+                    default:
+                        break;
+                }
             }
             return;
         case 'h':
             if (starts_with_q) {
-                m_cursor_hidden = false;
+                if (starts_with_q) {
+                    switch (args.get_or(0, 0)) {
+                        case 25:
+                            m_cursor_hidden = false;
+                            break;
+                        case 1049:
+                            set_use_alternate_screen_buffer(true);
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
             return;
         case 'A':
