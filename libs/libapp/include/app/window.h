@@ -22,6 +22,7 @@ public:
     wid_t wid() const { return m_ws_window->wid(); }
 
     void set_focused_widget(Widget& widget);
+    SharedPtr<Widget> focused_widget();
 
 protected:
     Window(int x, int y, int width, int height, String name);
@@ -31,8 +32,6 @@ private:
     virtual bool is_window() const final { return true; }
 
     Widget& find_widget_at_point(Point p);
-
-    SharedPtr<Widget> focused_widget();
 
     static void register_window(Window& window);
     static void unregister_window(wid_t wid);

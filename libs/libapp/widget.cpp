@@ -22,7 +22,9 @@ void Widget::render() {
     for (auto& child : children()) {
         if (child->is_widget()) {
             auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));
-            widget.render();
+            if (!widget.hidden()) {
+                widget.render();
+            }
         }
     }
 }

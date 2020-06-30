@@ -115,6 +115,7 @@ Widget& Window::find_widget_at_point(Point p) {
 
 void Window::set_focused_widget(Widget& widget) {
     m_focused_widget = move(widget.weak_from_this());
+    widget.on_focused();
 }
 
 SharedPtr<Widget> Window::focused_widget() {

@@ -28,6 +28,7 @@ public:
     virtual void on_mouse_event(MouseEvent&) {}
     virtual void on_key_event(KeyEvent&) {}
     virtual void on_resize();
+    virtual void on_focused() {}
 
     void set_rect(const Rect& rect);
     const Rect& rect() const { return m_rect; }
