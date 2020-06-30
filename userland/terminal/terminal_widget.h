@@ -19,7 +19,15 @@ public:
     virtual void on_mouse_event(App::MouseEvent& event);
 
 private:
+    void clear_selection();
+    bool in_selection(int row, int col) const;
+
     TTY m_tty;
     PsuedoTerminal m_pseudo_terminal;
     UniquePtr<App::FdWrapper> m_pseudo_terminal_wrapper;
+    int m_selection_start_row { -1 };
+    int m_selection_start_col { -1 };
+    int m_selection_end_row { -1 };
+    int m_selection_end_col { -1 };
+    bool m_in_selection { false };
 };

@@ -70,15 +70,21 @@ void TerminalWidget::render() {
 
             bool at_cursor =
                 r - (rows.size() - m_tty.row_count()) == m_tty.cursor_row() && c == m_tty.cursor_col() && !m_tty.cursor_hidden();
-            if (!cell.dirty && !at_cursor) {
+            bool selected = in_selection(r, c);
+            if (!cell.dirty && !at_cursor && !selected) {
                 continue;
             }
 
-            cell.dirty = at_cursor;
+            cell.dirty = at_cursor || selected;
 
             auto fg = cell.fg;
             auto bg = cell.bg;
+
             if (at_cursor) {
+                swap(fg, bg);
+            }
+
+            if (selected) {
                 swap(fg, bg);
             }
 
@@ -103,6 +109,9 @@ void TerminalWidget::render() {
 }
 
 void TerminalWidget::on_resize() {
+    m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
+    m_in_selection = false;
+
     int rows = rect().height() / cell_height;
     int cols = rect().width() / cell_width;
     m_tty.resize(rows, cols);
@@ -110,6 +119,8 @@ void TerminalWidget::on_resize() {
 }
 
 void TerminalWidget::on_key_event(App::KeyEvent& event) {
+    clear_selection();
+
     if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_V) {
         auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
         if (!maybe_text.has_value()) {
@@ -122,12 +133,71 @@ void TerminalWidget::on_key_event(App::KeyEvent& event) {
     m_pseudo_terminal.handle_key_event(event.key(), event.flags(), event.ascii());
 }
 
+void TerminalWidget::clear_selection() {
+    m_in_selection = false;
+    if (m_selection_start_row == -1 || m_selection_start_col == -1 || m_selection_end_row == -1 || m_selection_end_col == -1) {
+        return;
+    }
+
+    m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
+    window()->draw();
+}
+
+bool TerminalWidget::in_selection(int row, int col) const {
+    int start_row = m_selection_start_row;
+    int start_col = m_selection_start_col;
+    int end_row = m_selection_end_row;
+    int end_col = m_selection_end_col;
+
+    if (start_row == -1 || start_col == -1 || end_row == -1 || end_col == -1) {
+        return false;
+    }
+
+    if (start_row == end_row && start_col == end_col) {
+        return false;
+    }
+
+    if ((end_row == end_col && end_col < start_col) || end_row < start_row) {
+        swap(start_row, end_row);
+        swap(start_col, end_col);
+    }
+
+    if (row > start_row && row < end_row) {
+        return true;
+    }
+
+    if (row == start_row) {
+        return col >= start_col && (row == end_row ? col < end_col : true);
+    }
+
+    return row == end_row && col < end_col;
+}
+
 void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     if (event.scroll() == SCROLL_DOWN) {
         m_tty.scroll_down();
         window()->draw();
     } else if (event.scroll() == SCROLL_UP) {
         m_tty.scroll_up();
+        window()->draw();
+    }
+
+    int row_at_cursor = event.y() / cell_height + m_tty.row_offset();
+    int col_at_cursor = event.x() / cell_width;
+    if (event.left() == MOUSE_DOWN) {
+        clear_selection();
+        m_in_selection = true;
+        m_selection_start_row = row_at_cursor;
+        m_selection_start_col = col_at_cursor;
+        return;
+    } else if (event.left() == MOUSE_UP) {
+        m_in_selection = false;
+        return;
+    }
+
+    if (m_in_selection && (m_selection_end_row != row_at_cursor || m_selection_end_col != col_at_cursor)) {
+        m_selection_end_row = row_at_cursor;
+        m_selection_end_col = col_at_cursor;
         window()->draw();
     }
 }
