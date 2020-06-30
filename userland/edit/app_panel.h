@@ -77,4 +77,7 @@ private:
     bool m_main_panel { false };
     Vector<CellData> m_cells;
     SharedPtr<AppPanel> m_search_panel;
+
+    mutable String m_prev_clipboard_contents;
+    mutable bool m_prev_clipboard_contents_were_whole_line { false };
 };

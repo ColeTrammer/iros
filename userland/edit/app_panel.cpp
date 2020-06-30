@@ -1,5 +1,6 @@
 #include <app/event.h>
 #include <app/window.h>
+#include <clipboard/connection.h>
 #include <graphics/pixel_buffer.h>
 #include <graphics/renderer.h>
 
@@ -78,10 +79,27 @@ void AppPanel::notify_now_is_a_good_time_to_draw_cursor() {
 
 void AppPanel::notify_line_count_changed() {}
 
-void AppPanel::set_clipboard_contents(String, bool) {}
+void AppPanel::set_clipboard_contents(String text, bool is_whole_line) {
+    m_prev_clipboard_contents = move(text);
+    m_prev_clipboard_contents_were_whole_line = is_whole_line;
+    Clipboard::Connection::the().set_clipboard_contents_to_text(m_prev_clipboard_contents);
+}
 
-String AppPanel::clipboard_contents(bool&) const {
-    return "";
+String AppPanel::clipboard_contents(bool& is_whole_line) const {
+    auto contents = Clipboard::Connection::the().get_clipboard_contents_as_text();
+    if (!contents.has_value()) {
+        is_whole_line = m_prev_clipboard_contents_were_whole_line;
+        return m_prev_clipboard_contents;
+    }
+
+    auto& ret = contents.value();
+    if (ret == m_prev_clipboard_contents) {
+        is_whole_line = m_prev_clipboard_contents_were_whole_line;
+    } else {
+        m_prev_clipboard_contents = "";
+        is_whole_line = m_prev_clipboard_contents_were_whole_line = false;
+    }
+    return move(ret);
 }
 
 void AppPanel::set_cursor(int row, int col) {
