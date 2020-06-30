@@ -98,8 +98,8 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
         if (data[0] == 1) {
             char *cmd_line = (char *) &data[2];
             debug_log("kernel command line: [ %s ]\n", cmd_line);
-            if (strcmp(cmd_line, "graphics=1") == 0) {
-                kernel_enable_graphics();
+            if (strcmp(cmd_line, "graphics=0") == 0) {
+                kernel_disable_graphics();
             }
         }
 

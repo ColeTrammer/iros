@@ -1,16 +1,17 @@
 #!/bin/sh
 
 print_usage_and_exit() {
-    printf "Usage: %s [-g]\n" "$0"
+    printf "Usage: %s [-gv]\n" "$0"
     unset OPTIND
     return 2
 }
 
 enable_graphics=
-while getopts :g opt
+while getopts :gv opt
 do
     case $opt in
         g)   enable_graphics='graphics=1';;
+        v)   enable_graphics='graphics=0';;
         ?)   print_usage_and_exit
              return $?
              ;;

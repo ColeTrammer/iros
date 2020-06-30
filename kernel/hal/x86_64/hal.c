@@ -65,11 +65,11 @@ void init_drivers() {
     debug_log("Finished Initializing Drivers\n");
 }
 
-static bool use_graphics;
+static bool use_graphics = true;
 
-void kernel_enable_graphics(void) {
-    use_graphics = true;
-    debug_log("kernel graphics enabled\n");
+void kernel_disable_graphics(void) {
+    use_graphics = false;
+    debug_log("kernel graphics disabled\n");
 }
 
 bool kernel_use_graphics(void) {

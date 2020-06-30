@@ -12,7 +12,7 @@
 void init_hal(void);
 void init_drivers(void);
 
-void kernel_enable_graphics(void);
+void kernel_disable_graphics(void);
 bool kernel_use_graphics(void);
 
 #endif /* _KERNEL_HAL_HAL_H */
