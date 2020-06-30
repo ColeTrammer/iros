@@ -7,19 +7,7 @@
 #include "document.h"
 #include "key_press.h"
 
-AppPanel::AppPanel(int x, int y, int width, int height) {
-    update_coordinates(x, y, width, height);
-}
-
-void AppPanel::update_coordinates(int x, int y, int width, int height) {
-    set_rect({ x, y, width, height });
-    m_rows = height / row_height();
-    m_cols = width / col_width();
-    clear();
-    if (document()) {
-        document()->notify_panel_size_changed();
-    }
-}
+AppPanel::AppPanel() {}
 
 AppPanel::~AppPanel() {}
 
@@ -224,5 +212,14 @@ void AppPanel::document_did_change() {
     if (document()) {
         notify_line_count_changed();
         document()->display();
+    }
+}
+
+void AppPanel::on_resize() {
+    m_rows = rect().height() / row_height();
+    m_cols = rect().width() / col_width();
+    clear();
+    if (document()) {
+        document()->notify_panel_size_changed();
     }
 }

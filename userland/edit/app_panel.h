@@ -46,6 +46,7 @@ public:
 
     virtual void render() override;
     virtual void on_key_event(App::KeyEvent& event) override;
+    virtual void on_resize() override;
 
 private:
     struct CellData {
@@ -54,7 +55,7 @@ private:
         CharacterMetadata metadata;
     };
 
-    AppPanel(int x, int y, int width, int height);
+    AppPanel();
 
     virtual void document_did_change() override;
 
@@ -62,7 +63,6 @@ private:
 
     void render_cursor(Renderer& renderer);
     void render_cell(Renderer& renderer, int x, int y, CellData& cell);
-    void update_coordinates(int x, int y, int width, int height);
 
     int m_rows { 0 };
     int m_cols { 0 };
