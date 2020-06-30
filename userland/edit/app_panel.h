@@ -47,6 +47,7 @@ public:
     virtual void render() override;
     virtual void on_key_event(App::KeyEvent& event) override;
     virtual void on_resize() override;
+    virtual void on_focused() override;
 
 private:
     struct CellData {
@@ -55,9 +56,11 @@ private:
         CharacterMetadata metadata;
     };
 
-    AppPanel();
+    AppPanel(bool m_main_panel = true);
 
     virtual void document_did_change() override;
+
+    AppPanel& ensure_search_panel();
 
     int index(int row, int col) const { return row * cols() + col; }
 
@@ -71,5 +74,7 @@ private:
     int m_cursor_col { 0 };
     int m_cursor_row { 0 };
     bool m_cursor_dirty { true };
+    bool m_main_panel { false };
     Vector<CellData> m_cells;
+    SharedPtr<AppPanel> m_search_panel;
 };

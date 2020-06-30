@@ -7,9 +7,17 @@
 #include "document.h"
 #include "key_press.h"
 
-AppPanel::AppPanel() {}
+AppPanel::AppPanel(bool main_panel) : m_main_panel(main_panel) {}
 
 AppPanel::~AppPanel() {}
+
+AppPanel& AppPanel::ensure_search_panel() {
+    assert(m_main_panel);
+    if (!m_search_panel) {
+        m_search_panel = AppPanel::create(shared_from_this(), false);
+    }
+    return *m_search_panel;
+}
 
 void AppPanel::clear() {
     m_cells.resize(m_rows * m_cols);
@@ -43,7 +51,24 @@ String AppPanel::prompt(const String&) {
     return "";
 }
 
-void AppPanel::enter_search(String) {}
+void AppPanel::enter_search(String starting_text) {
+    if (!m_main_panel) {
+        return;
+    }
+
+    ensure_search_panel().set_document(Document::create_single_line(ensure_search_panel(), move(starting_text)));
+    ensure_search_panel().document()->on_change = [this] {
+        if (!document()) {
+            return;
+        }
+
+        auto contents = ensure_search_panel().document()->content_string();
+        document()->set_search_text(move(contents));
+        document()->display_if_needed();
+    };
+
+    window()->set_focused_widget(ensure_search_panel());
+}
 
 void AppPanel::notify_now_is_a_good_time_to_draw_cursor() {
     if (m_cursor_dirty) {
@@ -66,16 +91,16 @@ void AppPanel::set_cursor(int row, int col) {
 
     m_cursor_row = row;
     m_cursor_col = col;
-    if (m_last_drawn_cursor_col != -1 && m_last_drawn_cursor_row != -1 &&
-        (m_last_drawn_cursor_col != m_cursor_col || m_last_drawn_cursor_row != m_cursor_row)) {
-        m_cells[index(m_last_drawn_cursor_row, m_last_drawn_cursor_col)].dirty = true;
-    }
     m_cursor_dirty = true;
 }
 
 void AppPanel::do_open_prompt() {}
 
 void AppPanel::render_cursor(Renderer& renderer) {
+    if (this != window()->focused_widget().get()) {
+        return;
+    }
+
     int cursor_x = rect().x() + m_cursor_col * col_width();
     int cursor_y = rect().y() + m_cursor_row * row_height();
     for (int y = cursor_y; y < cursor_y + row_height(); y++) {
@@ -103,7 +128,7 @@ void AppPanel::render() {
     for (int r = 0; r < rows(); r++) {
         for (int c = 0; c < cols(); c++) {
             auto& cell = m_cells[index(r, c)];
-            if (cell.dirty) {
+            if (cell.dirty || (r == m_last_drawn_cursor_row && c == m_last_drawn_cursor_col)) {
                 cell.dirty = false;
                 render_cell(renderer, rect().x() + c * col_width(), rect().y() + r * row_height(), cell);
             }
@@ -111,6 +136,7 @@ void AppPanel::render() {
     }
 
     render_cursor(renderer);
+    Widget::render();
 }
 
 void AppPanel::on_key_event(App::KeyEvent& event) {
@@ -222,4 +248,12 @@ void AppPanel::on_resize() {
     if (document()) {
         document()->notify_panel_size_changed();
     }
+
+    if (m_main_panel) {
+        ensure_search_panel().set_rect({ rect().x(), rect().y() + rect().height() - row_height(), rect().width(), row_height() });
+    }
+}
+
+void AppPanel::on_focused() {
+    window()->draw();
 }

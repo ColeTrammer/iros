@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
@@ -145,6 +146,8 @@ public:
     Line& last_line() { return m_lines.last(); }
     const Line& last_line() const { return m_lines.last(); }
 
+    Function<void()> on_change;
+
 private:
     int clamp_cursor_to_line_end();
     void update_selection_state_for_mode(MovementMode mode);
@@ -198,6 +201,10 @@ private:
             m_document_was_modified = true;
             update_search_results();
             update_syntax_highlighting();
+
+            if (on_change) {
+                on_change();
+            }
         }
     }
 

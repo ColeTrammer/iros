@@ -531,6 +531,10 @@ void Document::redo() {
 
     auto& command = *m_command_stack[m_command_stack_index++];
     command.redo();
+
+    if (on_change) {
+        on_change();
+    }
 }
 
 void Document::undo() {
@@ -542,6 +546,10 @@ void Document::undo() {
     command.undo();
     update_search_results();
     update_syntax_highlighting();
+
+    if (on_change) {
+        on_change();
+    }
 }
 
 Document::StateSnapshot Document::snapshot_state() const {
