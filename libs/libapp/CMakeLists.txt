@@ -7,6 +7,8 @@ set(SOURCES
     object.cpp
     selectable.cpp
     text_label.cpp
+    unix_socket.cpp
+    unix_socket_server.cpp
     widget.cpp
     window.cpp
 )
