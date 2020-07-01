@@ -1133,12 +1133,17 @@ void Document::notify_key_pressed(KeyPress press) {
         case KeyPress::Key::Enter:
             if (!single_line_mode()) {
                 split_line_at_cursor();
+            } else if (on_submit) {
+                on_submit();
             }
             break;
         case KeyPress::Key::Escape:
             m_search_text = "";
             clear_search_results();
             clear_selection();
+            if (on_escape_press) {
+                on_escape_press();
+            }
             break;
         default:
             if (isascii(press.key)) {

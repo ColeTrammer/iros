@@ -9,6 +9,23 @@
 
 class Renderer;
 
+class AppPanel;
+
+class SearchWidget final : public App::Widget {
+    APP_OBJECT(SearchWidget)
+
+public:
+    SearchWidget();
+    virtual ~SearchWidget();
+
+    virtual void render() override;
+
+    AppPanel& panel();
+
+private:
+    SharedPtr<AppPanel> m_panel;
+};
+
 class AppPanel final
     : public Panel
     , public App::Widget {
@@ -76,7 +93,7 @@ private:
     bool m_cursor_dirty { true };
     bool m_main_panel { false };
     Vector<CellData> m_cells;
-    SharedPtr<AppPanel> m_search_panel;
+    SharedPtr<SearchWidget> m_search_widget;
 
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };

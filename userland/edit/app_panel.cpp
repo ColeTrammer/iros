@@ -1,4 +1,6 @@
+#include <app/box_layout.h>
 #include <app/event.h>
+#include <app/text_label.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <graphics/pixel_buffer.h>
@@ -8,16 +10,39 @@
 #include "document.h"
 #include "key_press.h"
 
+SearchWidget::SearchWidget() {}
+
+SearchWidget::~SearchWidget() {}
+
+void SearchWidget::render() {
+    Widget::render();
+
+    Renderer renderer(*window()->pixels());
+    renderer.draw_rect(rect(), ColorValue::White);
+}
+
+AppPanel& SearchWidget::panel() {
+    if (!m_panel) {
+        auto& layout = set_layout<App::HorizontalBoxLayout>();
+        auto& label = layout.add<App::TextLabel>("Find:");
+        label.set_preferred_size({ 46, App::Size::Auto });
+
+        m_panel = layout.add<AppPanel>(false).shared_from_this();
+    }
+    return *m_panel;
+}
+
 AppPanel::AppPanel(bool main_panel) : m_main_panel(main_panel) {}
 
 AppPanel::~AppPanel() {}
 
 AppPanel& AppPanel::ensure_search_panel() {
     assert(m_main_panel);
-    if (!m_search_panel) {
-        m_search_panel = AppPanel::create(shared_from_this(), false);
+    if (!m_search_widget) {
+        m_search_widget = SearchWidget::create(shared_from_this());
+        m_search_widget->set_hidden(true);
     }
-    return *m_search_panel;
+    return m_search_widget->panel();
 }
 
 void AppPanel::clear() {
@@ -59,15 +84,23 @@ void AppPanel::enter_search(String starting_text) {
 
     ensure_search_panel().set_document(Document::create_single_line(ensure_search_panel(), move(starting_text)));
     ensure_search_panel().document()->on_change = [this] {
-        if (!document()) {
-            return;
-        }
-
         auto contents = ensure_search_panel().document()->content_string();
         document()->set_search_text(move(contents));
         document()->display_if_needed();
     };
+    ensure_search_panel().document()->on_submit = [this] {
+        document()->move_cursor_to_next_search_match();
+        document()->display_if_needed();
+    };
+    ensure_search_panel().document()->on_escape_press = [this] {
+        document()->set_search_text("");
+        if (document()->on_escape_press) {
+            document()->on_escape_press();
+        }
+        window()->set_focused_widget(*this);
+    };
 
+    m_search_widget->set_hidden(false);
     window()->set_focused_widget(ensure_search_panel());
 }
 
@@ -142,6 +175,13 @@ void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {
 
 void AppPanel::render() {
     Renderer renderer(*window()->pixels());
+
+    auto total_width = cols() * col_width();
+    auto total_height = rows() * row_height();
+    Rect bottom_extra_rect = { rect().x(), rect().y() + total_height, total_width, rect().height() - total_height };
+    Rect right_extra_rect = { rect().x() + total_width, rect().y(), rect().width() - total_width, rect().height() };
+    renderer.fill_rect(bottom_extra_rect, ColorValue::Black);
+    renderer.fill_rect(right_extra_rect, ColorValue::Black);
 
     for (int r = 0; r < rows(); r++) {
         for (int c = 0; c < cols(); c++) {
@@ -255,6 +295,25 @@ void AppPanel::on_key_event(App::KeyEvent& event) {
 void AppPanel::document_did_change() {
     if (document()) {
         notify_line_count_changed();
+
+        if (m_main_panel) {
+            document()->on_escape_press = [this] {
+                if (m_search_widget) {
+                    m_search_widget->set_hidden(true);
+                    for (auto r = 0; r < rows(); r++) {
+                        for (auto c = 0; c < cols(); c++) {
+                            auto& cell = m_cells[r * cols() + c];
+                            auto x = c * col_width();
+                            auto y = r * row_height();
+                            Rect cell_rect { x, y, col_width(), row_height() };
+                            if (m_search_widget->rect().intersects(cell_rect)) {
+                                cell.dirty = true;
+                            }
+                        }
+                    }
+                }
+            };
+        }
         document()->display();
     }
 }
@@ -268,7 +327,9 @@ void AppPanel::on_resize() {
     }
 
     if (m_main_panel) {
-        ensure_search_panel().set_rect({ rect().x(), rect().y() + rect().height() - row_height(), rect().width(), row_height() });
+        ensure_search_panel();
+        constexpr int panel_height = 28;
+        m_search_widget->set_rect({ rect().x(), rect().y() + rect().height() - panel_height, rect().width(), panel_height });
     }
 }
 

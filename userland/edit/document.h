@@ -147,6 +147,8 @@ public:
     const Line& last_line() const { return m_lines.last(); }
 
     Function<void()> on_change;
+    Function<void()> on_submit;
+    Function<void()> on_escape_press;
 
 private:
     int clamp_cursor_to_line_end();
