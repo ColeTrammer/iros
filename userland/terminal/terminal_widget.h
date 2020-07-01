@@ -25,7 +25,7 @@ private:
 
     TTY m_tty;
     PsuedoTerminal m_pseudo_terminal;
-    UniquePtr<App::FdWrapper> m_pseudo_terminal_wrapper;
+    SharedPtr<App::FdWrapper> m_pseudo_terminal_wrapper;
     int m_selection_start_row { -1 };
     int m_selection_start_col { -1 };
     int m_selection_end_row { -1 };

@@ -11,7 +11,7 @@ enum NotifyWhen {
     Exceptional = 4,
 };
 
-class Selectable : Object {
+class Selectable : public Object {
 public:
     virtual ~Selectable();
 
@@ -37,6 +37,8 @@ private:
 };
 
 class FdWrapper final : public Selectable {
+    APP_OBJECT(FdWrapper)
+
 public:
     FdWrapper(int fd) { set_fd(fd); }
 

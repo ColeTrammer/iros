@@ -11,7 +11,7 @@ namespace App {
 static App* s_app;
 
 void App::setup_ws_connection_notifier() {
-    static FdWrapper* fd_wrapper = new FdWrapper(ws_connection().fd());
+    static SharedPtr<FdWrapper> fd_wrapper = FdWrapper::create(nullptr, ws_connection().fd());
     fd_wrapper->set_selected_events(NotifyWhen::Readable);
     fd_wrapper->on_readable = [this] {
         auto message = m_connection.recieve_message();

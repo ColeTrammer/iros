@@ -13,7 +13,7 @@ constexpr int cell_width = 8;
 constexpr int cell_height = 16;
 
 TerminalWidget::TerminalWidget() {
-    m_pseudo_terminal_wrapper = make_unique<App::FdWrapper>(m_pseudo_terminal.master_fd());
+    m_pseudo_terminal_wrapper = App::FdWrapper::create(nullptr, m_pseudo_terminal.master_fd());
     m_pseudo_terminal_wrapper->set_selected_events(App::NotifyWhen::Readable);
     m_pseudo_terminal_wrapper->enable_notifications();
     m_pseudo_terminal_wrapper->on_readable = [this] {
