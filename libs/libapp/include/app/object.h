@@ -26,6 +26,7 @@ public:
     virtual ~Object();
 
     void add_child(SharedPtr<Object> child);
+    void remove_child(SharedPtr<Object> child);
 
     const Vector<SharedPtr<Object>> children() const { return m_children; }
 
