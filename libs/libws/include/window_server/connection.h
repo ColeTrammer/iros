@@ -25,21 +25,20 @@ public:
     template<typename C>
     void set_draw_callback(SharedPtr<Window>& window, C callback) {
         window->set_draw_callback(move(callback));
-        setup_timer();
     }
 
     int fd() const { return m_fd; }
 
     UniquePtr<Message> recieve_message();
+    void read_from_server();
 
 private:
     friend class Window;
 
     auto& windows() { return m_windows; }
 
-    void setup_timer();
-
     HashMap<wid_t, Window*> m_windows;
+    Vector<UniquePtr<Message>> m_messages;
     int m_fd;
 };
 

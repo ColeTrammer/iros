@@ -14,8 +14,10 @@ void App::setup_ws_connection_notifier() {
     static SharedPtr<FdWrapper> fd_wrapper = FdWrapper::create(nullptr, ws_connection().fd());
     fd_wrapper->set_selected_events(NotifyWhen::Readable);
     fd_wrapper->on_readable = [this] {
-        auto message = m_connection.recieve_message();
-        if (message) {
+        m_connection.read_from_server();
+
+        UniquePtr<WindowServer::Message> message;
+        while ((message = m_connection.recieve_message())) {
             process_ws_message(move(message));
         }
     };
