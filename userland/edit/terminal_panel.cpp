@@ -87,7 +87,6 @@ TerminalPanel::TerminalPanel() {
 
     if (!s_raw_mode_enabled) {
         enable_raw_mode();
-        Clipboard::Connection::initialize();
     }
 
     s_main_panel = this;

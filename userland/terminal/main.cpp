@@ -40,8 +40,6 @@ int main(int argc, char** argv) {
     signal(SIGTTIN, SIG_IGN);
     signal(SIGWINCH, SIG_IGN);
 
-    Clipboard::Connection::initialize();
-
     if (!graphics_mode) {
         VgaBuffer vga_buffer;
         VgaTerminal vga_terminal(vga_buffer);

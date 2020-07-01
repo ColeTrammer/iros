@@ -9,15 +9,7 @@
 
 namespace Clipboard {
 
-void Connection::initialize() {}
-
-Connection& Connection::the() {
-    static Connection* s_connection;
-    if (!s_connection) {
-        s_connection = new Connection;
-    }
-    return *s_connection;
-}
+static int s_fd = -1;
 
 static int open_connection() {
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -36,43 +28,49 @@ static int open_connection() {
     return fd;
 }
 
+static void initialize() {
+    s_fd = open_connection();
+}
+
+Connection& Connection::the() {
+    static Connection* s_connection;
+    if (!s_connection) {
+        s_connection = new Connection;
+        initialize();
+    }
+    return *s_connection;
+}
+
 bool Connection::set_clipboard_contents_to_text(const String& text) {
-    int fd = open_connection();
-    if (fd < 0) {
+    if (s_fd < 0) {
         return false;
     }
 
     auto request = ClipboardServer::Message::SetContentsRequest::create("text/plain", text.string(), text.size());
-    if (write(fd, request.get(), request->total_size()) != static_cast<ssize_t>(request->total_size())) {
-        close(fd);
+    if (write(s_fd, request.get(), request->total_size()) != static_cast<ssize_t>(request->total_size())) {
         return false;
     }
 
     char buf[2048];
-    if (read(fd, buf, sizeof(buf)) <= 0) {
-        close(fd);
+    if (read(s_fd, buf, sizeof(buf)) <= 0) {
         return false;
     }
 
-    close(fd);
     return reinterpret_cast<ClipboardServer::Message*>(buf)->data.set_contents_response.success;
 }
 
 Maybe<String> Connection::get_clipboard_contents_as_text() {
-    int fd = open_connection();
-    if (fd < 0) {
+    if (s_fd < 0) {
         return {};
     }
 
     auto request = ClipboardServer::Message::GetContentsRequest::create("text/plain");
-    if (write(fd, request.get(), request->total_size()) != static_cast<ssize_t>(request->total_size())) {
-        close(fd);
+    if (write(s_fd, request.get(), request->total_size()) != static_cast<ssize_t>(request->total_size())) {
         return {};
     }
 
     char buf[0x8000];
-    if (read(fd, buf, sizeof(buf)) <= 0) {
-        close(fd);
+    if (read(s_fd, buf, sizeof(buf)) <= 0) {
         return {};
     }
 
@@ -249,7 +247,7 @@ static void* x11_background_thread_start(void*) {
     return nullptr;
 }
 
-void Connection::initialize() {
+static void initialize() {
     s_display = XOpenDisplay(nullptr);
     assert(s_display);
     s_x_fd = XConnectionNumber(s_display);
@@ -275,6 +273,7 @@ Connection& Connection::the() {
     static Connection* s_connection;
     if (!s_connection) {
         s_connection = new Connection;
+        initialize();
     }
     return *s_connection;
 }

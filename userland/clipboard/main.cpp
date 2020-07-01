@@ -22,8 +22,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    Clipboard::Connection::initialize();
-
     if (text_to_set) {
         if (!Clipboard::Connection::the().set_clipboard_contents_to_text(String(text_to_set))) {
             fprintf(stderr, "clipboard: error setting clipboard\n");
