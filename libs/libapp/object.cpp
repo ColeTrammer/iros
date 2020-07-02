@@ -1,3 +1,5 @@
+#include <app/event.h>
+#include <app/event_loop.h>
 #include <app/object.h>
 
 namespace App {
@@ -15,5 +17,9 @@ void Object::remove_child(SharedPtr<Object> child) {
 Object::Object() {}
 
 Object::~Object() {}
+
+void Object::deferred_invoke(Function<void()> callback) {
+    EventLoop::queue_event(weak_from_this(), make_unique<CallbackEvent>(move(callback)));
+}
 
 }

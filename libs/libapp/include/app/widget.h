@@ -54,6 +54,9 @@ public:
     const Size& preferred_size() const { return m_preferred_size; }
     void set_preferred_size(const Size& size);
 
+    void invalidate() { invalidate(rect()); }
+    void invalidate(const Rect& rect);
+
 protected:
     Widget();
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/function.h>
 #include <kernel/hal/input.h>
 
 namespace App {
@@ -12,6 +13,7 @@ public:
         Mouse,
         Resize,
         Window,
+        Callback,
     };
 
     Event(Type type) : m_type(type) {};
@@ -81,4 +83,13 @@ private:
     int m_flags;
 };
 
+class CallbackEvent final : public Event {
+public:
+    CallbackEvent(Function<void()> callback) : Event(Event::Type::Callback), m_callback(move(callback)) {}
+
+    void invoke() { m_callback(); }
+
+private:
+    Function<void()> m_callback;
+};
 }

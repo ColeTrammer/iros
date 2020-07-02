@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
@@ -45,6 +46,8 @@ public:
 
     WeakPtr<Object> weak_from_this() { return m_weak_this; }
     WeakPtr<const Object> weak_from_this() const { return m_weak_this; }
+
+    void deferred_invoke(Function<void()> callback);
 
     void __set_weak_this(WeakPtr<Object> weak_this) {
         assert(m_weak_this.expired());

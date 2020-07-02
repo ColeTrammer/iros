@@ -29,7 +29,7 @@ public:
     virtual void on_mouse_event(App::MouseEvent& event) override {
         if (m_bitmap && event.left() == MOUSE_DOWN) {
             m_bitmap->flip(m_index);
-            window()->draw();
+            invalidate();
         }
 
         App::Widget::on_mouse_event(event);
@@ -49,6 +49,7 @@ public:
     void set_bitmap(Bitmap<uint8_t>* bitmap, char c) {
         m_bitmap = bitmap;
         m_info_label->set_text(String::format("Editing glyph %d (%c)", c, c));
+        invalidate();
     }
 
 private:
@@ -146,7 +147,6 @@ int main(int argc, char** argv) {
             button.set_font(font);
             button.on_click = [&, code_point]() {
                 glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(code_point)), code_point);
-                window->draw();
             };
         }
     }

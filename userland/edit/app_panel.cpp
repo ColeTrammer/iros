@@ -64,7 +64,7 @@ void AppPanel::set_text_at(int row, int col, char c, CharacterMetadata metadata)
 }
 
 void AppPanel::flush() {
-    window()->draw();
+    invalidate();
 }
 
 void AppPanel::enter() {
@@ -334,5 +334,5 @@ void AppPanel::on_resize() {
 }
 
 void AppPanel::on_focused() {
-    window()->draw();
+    invalidate();
 }

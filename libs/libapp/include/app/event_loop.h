@@ -18,10 +18,9 @@ public:
 
     static void register_selectable(Selectable& selectable);
     static void unregister_selectable(Selectable& selectable);
+    static void queue_event(WeakPtr<Object> target, UniquePtr<Event> event);
 
     void enter();
-    void queue_event(WeakPtr<Object> target, UniquePtr<Event> event);
-
     void set_should_exit(bool b) { m_should_exit = b; }
 
 private:

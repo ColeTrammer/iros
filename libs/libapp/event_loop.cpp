@@ -8,6 +8,7 @@
 
 namespace App {
 
+static EventLoop* s_the;
 static Vector<Selectable*> s_selectables;
 
 void EventLoop::register_selectable(Selectable& selectable) {
@@ -18,13 +19,15 @@ void EventLoop::unregister_selectable(Selectable& selectable) {
     s_selectables.remove_element(&selectable);
 }
 
-EventLoop::EventLoop() {}
+void EventLoop::queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
+    s_the->m_events.add({ move(target), move(event) });
+}
+
+EventLoop::EventLoop() {
+    s_the = this;
+}
 
 EventLoop::~EventLoop() {}
-
-void EventLoop::queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
-    m_events.add({ move(target), move(event) });
-}
 
 void EventLoop::do_select() {
     if (s_selectables.empty()) {
@@ -92,6 +95,11 @@ void EventLoop::do_event_dispatch() {
 
         for (auto& event : events) {
             if (auto target = event.target.lock()) {
+                if (event.event->type() == Event::Type::Callback) {
+                    static_cast<CallbackEvent&>(*event.event).invoke();
+                    continue;
+                }
+
                 target->on_event(*event.event);
             }
         }
@@ -99,13 +107,16 @@ void EventLoop::do_event_dispatch() {
 }
 
 void EventLoop::enter() {
+    if (m_should_exit) {
+        return;
+    }
+
     for (;;) {
+        do_event_dispatch();
         if (m_should_exit) {
             return;
         }
-
         do_select();
-        do_event_dispatch();
     }
 }
 

@@ -24,6 +24,8 @@ public:
     void set_focused_widget(Widget& widget);
     SharedPtr<Widget> focused_widget();
 
+    void invalidate_rect(const Rect& rect);
+
 protected:
     Window(int x, int y, int width, int height, String name);
     virtual void on_event(Event& event) override;
@@ -38,6 +40,7 @@ private:
 
     SharedPtr<WindowServer::Window> m_ws_window;
     WeakPtr<Widget> m_focused_widget;
+    bool m_will_draw_soon { false };
 };
 
 }

@@ -47,7 +47,7 @@ TerminalWidget::TerminalWidget() {
         fprintf(stderr, "TerminalWidget: draining master fd took %lu ms\n", delta_milli_seconds);
 #endif /* TERMINAL_WIDGET_DEBUG */
 
-        window()->draw();
+        invalidate();
     };
 }
 
@@ -151,7 +151,7 @@ void TerminalWidget::clear_selection() {
     }
 
     m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
-    window()->draw();
+    invalidate();
 }
 
 bool TerminalWidget::in_selection(int row, int col) const {
@@ -228,10 +228,10 @@ String TerminalWidget::selection_text() const {
 void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     if (event.scroll() == SCROLL_DOWN) {
         m_tty.scroll_down();
-        window()->draw();
+        invalidate();
     } else if (event.scroll() == SCROLL_UP) {
         m_tty.scroll_up();
-        window()->draw();
+        invalidate();
     }
 
     int row_at_cursor = event.y() / cell_height + m_tty.row_offset();
@@ -250,6 +250,5 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     if (m_in_selection && (m_selection_end_row != row_at_cursor || m_selection_end_col != col_at_cursor)) {
         m_selection_end_row = row_at_cursor;
         m_selection_end_col = col_at_cursor;
-        window()->draw();
     }
 }

@@ -72,4 +72,8 @@ Window* Widget::window() {
     return nullptr;
 }
 
+void Widget::invalidate(const Rect& rect) {
+    window()->invalidate_rect(rect);
+}
+
 }

@@ -30,30 +30,30 @@ void App::process_ws_message(UniquePtr<WindowServer::Message> message) {
         case WindowServer::Message::Type::WindowClosedEventMessage: {
             auto maybe_window = Window::find_by_wid(message->data.window_closed_event_messasge.wid);
             assert(maybe_window.has_value());
-            m_loop.queue_event(maybe_window.value(), move(make_unique<WindowEvent>(WindowEvent::Type::Close)));
+            EventLoop::queue_event(maybe_window.value(), move(make_unique<WindowEvent>(WindowEvent::Type::Close)));
             break;
         }
         case WindowServer::Message::Type::MouseEventMessage: {
             auto& mouse_event = message->data.mouse_event_message;
             auto maybe_window = Window::find_by_wid(mouse_event.wid);
             assert(maybe_window.has_value());
-            m_loop.queue_event(maybe_window.value(), move(make_unique<MouseEvent>(mouse_event.x, mouse_event.y, mouse_event.scroll,
-                                                                                  mouse_event.left, mouse_event.right)));
+            EventLoop::queue_event(maybe_window.value(), move(make_unique<MouseEvent>(mouse_event.x, mouse_event.y, mouse_event.scroll,
+                                                                                      mouse_event.left, mouse_event.right)));
             break;
         }
         case WindowServer::Message::Type::KeyEventMessage: {
             auto& key_event = message->data.key_event_message;
             auto maybe_window = Window::find_by_wid(key_event.wid);
             assert(maybe_window.has_value());
-            m_loop.queue_event(maybe_window.value(),
-                               move(make_unique<KeyEvent>(key_event.event.ascii, key_event.event.key, key_event.event.flags)));
+            EventLoop::queue_event(maybe_window.value(),
+                                   move(make_unique<KeyEvent>(key_event.event.ascii, key_event.event.key, key_event.event.flags)));
             break;
         }
         case WindowServer::Message::Type::WindowDidResizeMessage: {
             auto& resize_event = message->data.window_did_resize_message;
             auto maybe_window = Window::find_by_wid(resize_event.wid);
             assert(maybe_window.has_value());
-            m_loop.queue_event(maybe_window.value(), move(make_unique<WindowEvent>(WindowEvent::Type::DidResize)));
+            EventLoop::queue_event(maybe_window.value(), move(make_unique<WindowEvent>(WindowEvent::Type::DidResize)));
             break;
         }
         default:

@@ -127,4 +127,20 @@ SharedPtr<Widget> Window::focused_widget() {
     return move(ret);
 }
 
+void Window::invalidate_rect(const Rect& rect) {
+    if (rect.width() == 0 || rect.height() == 0) {
+        return;
+    }
+
+    if (m_will_draw_soon) {
+        return;
+    }
+
+    m_will_draw_soon = true;
+    deferred_invoke([this] {
+        draw();
+        m_will_draw_soon = false;
+    });
+}
+
 }
