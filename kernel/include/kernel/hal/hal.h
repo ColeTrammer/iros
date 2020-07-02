@@ -10,6 +10,7 @@
 #include HAL_ARCH_SPECIFIC(hal.h)
 
 void init_hal(void);
+void init_cpus(void);
 void init_drivers(void);
 
 void kernel_disable_graphics(void);
