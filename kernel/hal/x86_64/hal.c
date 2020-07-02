@@ -6,6 +6,7 @@
 #include <kernel/hal/ptmx.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/hal/x86_64/acpi.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
@@ -30,7 +31,7 @@ static void detect_cpu_features(void) {
     supports_rdrand = !!(c & CPUID_ECX_RDRAND);
 }
 
-void init_hal() {
+void init_hal(void) {
     detect_cpu_features();
     init_irqs();
 
@@ -45,7 +46,11 @@ void init_hal() {
     debug_log("Finished Initializing HAL\n");
 }
 
-void init_drivers() {
+void init_cpus(void) {
+    init_acpi();
+}
+
+void init_drivers(void) {
     init_keyboard();
     init_mouse();
     init_vmware_back_door();

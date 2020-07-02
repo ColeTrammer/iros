@@ -27,6 +27,9 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_page_frame_allocator(kernel_phys_start, kernel_phys_end, inintrd_phys_start, initrd_phys_end, multiboot_info);
     init_kernel_task();
     init_vm_allocator(inintrd_phys_start, initrd_phys_end);
+    init_cpus();
+    for (;;) {
+    }
     init_vfs();
     init_drivers();
     init_clocks();
