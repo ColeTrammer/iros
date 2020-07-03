@@ -9,6 +9,7 @@
 
 #include <kernel/fs/dev.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/ptmx.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/random.h>
 
@@ -98,4 +99,6 @@ void init_virtual_devices() {
     dev_register(&dev_zero);
     dev_register(&dev_full);
     dev_register(&dev_urandom);
+
+    init_ptmx();
 }
