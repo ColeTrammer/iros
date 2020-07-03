@@ -154,7 +154,7 @@ struct file *fs_create_file(struct inode *inode, int type, int abilities, int fl
         atomic_fetch_add(&file->inode->open_file_count, 1);
     }
 
-    init_spinlock(&file->lock);
+    init_mutex(&file->lock);
     file->ref_count = 1;
     file->open_flags = flags;
     file->flags = type;
@@ -191,7 +191,7 @@ struct inode *fs_create_inode_without_sb(dev_t fsid, ino_t id, uid_t uid, gid_t 
     inode->gid = gid;
     inode->i_op = ops;
     inode->index = id;
-    init_spinlock(&inode->lock);
+    init_mutex(&inode->lock);
     inode->mode = mode;
     inode->private_data = private;
     inode->readable = !!size;
@@ -657,7 +657,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
     assert(inode->i_op->lookup);
     inode->i_op->lookup(inode, NULL);
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
     struct cached_dirent *tnode = fs_lookup_in_cache_with_index(inode->dirent_cache, file->position - 2);
 
     if (!tnode) {
@@ -673,14 +673,14 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
                 entry->d_ino = mount->super_block->root->index;
                 strcpy(entry->d_name, mount->name);
 
-                spin_unlock(&inode->lock);
+                mutex_unlock(&inode->lock);
                 return (ssize_t) len;
             }
 
             mount = mount->next;
         }
 
-        spin_unlock(&inode->lock);
+        mutex_unlock(&inode->lock);
         return 0;
     }
 
@@ -689,7 +689,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
     entry->d_ino = tnode->inode->index;
     strcpy(entry->d_name, tnode->name);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
 
     return (ssize_t) len;
 }
@@ -1208,14 +1208,14 @@ int fs_unlink(const char *path, bool ignore_permission_checks) {
         return -EINVAL;
     }
 
-    spin_lock(&tnode->inode->lock);
+    mutex_lock(&tnode->inode->lock);
     ret = tnode->inode->i_op->unlink(tnode);
     if (ret != 0) {
-        spin_unlock(&tnode->inode->lock);
+        mutex_unlock(&tnode->inode->lock);
         drop_tnode(tnode);
         return ret;
     }
-    spin_unlock(&tnode->inode->lock);
+    mutex_unlock(&tnode->inode->lock);
 
     fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
     drop_inode_reference(tnode->inode);
@@ -1265,7 +1265,7 @@ int fs_rmdir(const char *path) {
         return -EINVAL;
     }
 
-    spin_lock(&tnode->inode->lock);
+    mutex_lock(&tnode->inode->lock);
 
     ret = tnode->inode->i_op->rmdir(tnode);
     if (ret != 0) {
@@ -1560,7 +1560,7 @@ int fs_rename(const char *old_path, const char *new_path) {
             return -EINVAL;
         }
 
-        spin_lock(&existing_tnode->inode->lock);
+        mutex_lock(&existing_tnode->inode->lock);
 
         int ret = 0;
         if (existing_tnode->inode->flags & FS_DIR) {
@@ -1568,6 +1568,8 @@ int fs_rename(const char *old_path, const char *new_path) {
         } else {
             ret = existing_tnode->inode->i_op->unlink(existing_tnode);
         }
+
+        mutex_unlock(&existing_tnode->inode->lock);
 
         if (ret != 0) {
             drop_tnode(old);

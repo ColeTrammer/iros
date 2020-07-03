@@ -10,7 +10,7 @@
 #include <kernel/fs/mount.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/tnode.h>
-#include <kernel/util/spinlock.h>
+#include <kernel/util/mutex.h>
 
 struct device;
 struct hash_map;
@@ -104,7 +104,7 @@ struct inode {
     // Should be lazily initialized
     struct vm_object *vm_object;
 
-    spinlock_t lock;
+    mutex_t lock;
 
     void *private_data;
 };

@@ -89,18 +89,18 @@ static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
 static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks, bool cache) {
     assert(sb);
     struct ext2_sb_data *data = sb->private_data;
-    spin_lock(&sb->super_block_lock);
-
     struct ext2_block *block = NULL;
+
+    mutex_lock(&sb->super_block_lock);
     if (cache && num_blocks == 1 && (block = hash_get(data->block_map, &block_offset))) {
         memcpy(buffer, block->block, sb->block_size);
-        spin_unlock(&sb->super_block_lock);
+        mutex_unlock(&sb->super_block_lock);
         return num_blocks;
     }
+    mutex_unlock(&sb->super_block_lock);
 
     if (sb->device->ops->read(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size) !=
         num_blocks * sb->block_size) {
-        spin_unlock(&sb->super_block_lock);
         return -EIO;
     }
 
@@ -109,10 +109,12 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
         block->index = block_offset;
         block->block = ext2_allocate_blocks(sb, 1);
         memcpy(block->block, buffer, sb->block_size);
+
+        mutex_lock(&sb->super_block_lock);
         hash_put(data->block_map, block);
+        mutex_unlock(&sb->super_block_lock);
     }
 
-    spin_unlock(&sb->super_block_lock);
     return num_blocks;
 }
 
@@ -123,22 +125,21 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
 /* Writes to blocks at a given offset from buffer */
 static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
     struct ext2_sb_data *data = sb->private_data;
-    spin_lock(&sb->super_block_lock);
 
     if (sb->device->ops->write(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size) !=
         num_blocks * sb->block_size) {
-        spin_unlock(&sb->super_block_lock);
         return -EIO;
     }
 
     if (num_blocks == 1) {
+        mutex_lock(&sb->super_block_lock);
         struct ext2_block *block = hash_get(data->block_map, &block_offset);
         if (block != NULL) {
             memcpy(block->block, buffer, sb->block_size);
         }
+        mutex_unlock(&sb->super_block_lock);
     }
 
-    spin_unlock(&sb->super_block_lock);
     return num_blocks;
 }
 
@@ -240,7 +241,7 @@ static void ext2_sync_raw_super_block_with_virtual_super_block(struct super_bloc
 /* Syncs super_block to disk */
 static int ext2_sync_super_block(struct super_block *sb) {
     struct ext2_sb_data *data = sb->private_data;
-    spin_lock(&sb->super_block_lock);
+    mutex_lock(&sb->super_block_lock);
 
     // Sync to os super_block structure, since we write to the
     // actual raw_super_block when accounting fields are updated.
@@ -248,7 +249,7 @@ static int ext2_sync_super_block(struct super_block *sb) {
 
     int ret = sb->device->ops->read(sb->device, EXT2_SUPER_BLOCK_OFFSET, data->sb, EXT2_SUPER_BLOCK_SIZE);
 
-    spin_unlock(&sb->super_block_lock);
+    mutex_unlock(&sb->super_block_lock);
     return ret == EXT2_SUPER_BLOCK_SIZE ? 0 : ret;
 }
 
@@ -525,12 +526,12 @@ static void ext2_update_tnode_list(struct inode *inode) {
         ext2_update_inode(inode, false);
     }
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
 
     if (inode->dirent_cache != NULL) {
         // NOTE: this prevents duplicate tnode's from being created.
         //       should eventually just not add duplicates instead though.
-        spin_unlock(&inode->lock);
+        mutex_unlock(&inode->lock);
         return;
     } else {
         inode->dirent_cache = fs_create_dirent_cache();
@@ -538,7 +539,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
 
     if (inode->size == 0) {
         debug_log("directory inode empty?: [ %llu ]\n", inode->index);
-        spin_unlock(&inode->lock);
+        mutex_unlock(&inode->lock);
         return;
     }
 
@@ -548,6 +549,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
     struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
     if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[0], 1) != 1) {
         debug_log("Ext2 Read Error: [ %llu ]\n", inode->index);
+        mutex_unlock(&inode->lock);
         return;
     }
 
@@ -584,7 +586,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
         inode_to_add->ref_count = 2; // One for the vfs and one for us
         inode_to_add->readable = !!inode->size;
         inode_to_add->writeable = !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK));
-        init_spinlock(&inode_to_add->lock);
+        init_mutex(&inode_to_add->lock);
 
         fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
 
@@ -613,7 +615,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
         }
     }
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
 
     ext2_free_blocks(raw_dirent_table);
 }
@@ -813,7 +815,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
             fs_bind_device_to_inode(inode, device);
         }
         inode->index = index;
-        init_spinlock(&inode->lock);
+        init_mutex(&inode->lock);
         inode->mode = mode;
         inode->uid = get_current_task()->process->euid;
         inode->gid = get_current_task()->process->egid;
@@ -1389,21 +1391,21 @@ ssize_t ext2_iread(struct inode *inode, void *buffer, size_t len, off_t offset) 
 
 ssize_t ext2_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_file_inode(file);
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
 
     ssize_t ret = __ext2_read(inode, offset, buffer, len);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     return ret;
 }
 
 ssize_t ext2_write(struct file *file, off_t offset, const void *buffer, size_t len) {
     struct inode *inode = fs_file_inode(file);
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
 
     ssize_t ret = __ext2_write(inode, offset, buffer, len);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     return ret;
 }
 
@@ -1732,16 +1734,16 @@ int ext2_rmdir(struct tnode *tnode) {
     struct raw_inode *parent_raw_inode = parent->private_data;
 
     /* Drop .. reference */
-    spin_lock(&parent->lock);
+    mutex_lock(&parent->lock);
     parent_raw_inode->link_count--;
     assert(parent_raw_inode->link_count > 0);
 
     int ret = ext2_sync_inode(parent);
     if (ret != 0) {
-        spin_unlock(&parent->lock);
+        mutex_unlock(&parent->lock);
         return ret;
     }
-    spin_unlock(&parent->lock);
+    mutex_unlock(&parent->lock);
 
     /* Drop . reference */
     raw_inode->link_count--;
@@ -1798,17 +1800,17 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
         struct raw_inode *parent_raw_inode = parent->private_data;
 
         /* Drop .. reference */
-        spin_lock(&tnode->parent->inode->lock);
+        mutex_lock(&tnode->parent->inode->lock);
         parent_raw_inode->link_count--;
         assert(parent_raw_inode->link_count > 0);
 
         parent->change_time = time_read_clock(CLOCK_REALTIME);
         int ret = ext2_sync_inode(parent);
         if (ret != 0) {
-            spin_unlock(&parent->lock);
+            mutex_unlock(&parent->lock);
             return ret;
         }
-        spin_unlock(&parent->lock);
+        mutex_unlock(&parent->lock);
     }
 
     return __ext2_unlink(tnode, false);
@@ -1824,7 +1826,7 @@ struct inode *ext2_mount(struct file_system *current_fs, struct device *device) 
     super_block->fsid = device->device_number;
     super_block->op = &s_op;
     super_block->root = root;
-    init_spinlock(&super_block->super_block_lock);
+    init_mutex(&super_block->super_block_lock);
     super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
     super_block->device = device;
     super_block->private_data = data;
@@ -1870,7 +1872,7 @@ struct inode *ext2_mount(struct file_system *current_fs, struct device *device) 
     root->flags = FS_DIR;
     root->i_op = &ext2_dir_i_op;
     root->index = EXT2_ROOT_INODE;
-    init_spinlock(&root->lock);
+    init_mutex(&root->lock);
     root->mode = S_IFDIR | 0777;
     root->mounts = NULL;
     root->private_data = NULL;

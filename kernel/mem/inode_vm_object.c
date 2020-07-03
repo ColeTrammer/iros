@@ -21,7 +21,7 @@ static int inode_map(struct vm_object *self, struct vm_region *region) {
 
     struct task *current_task = get_current_task();
 
-    spin_lock(&self->lock);
+    mutex_lock(&self->lock);
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         size_t page_index = (i + region->vm_object_offset - region->start) / PAGE_SIZE;
         assert(page_index < data->pages);
@@ -35,7 +35,7 @@ static int inode_map(struct vm_object *self, struct vm_region *region) {
         }
     }
 
-    spin_unlock(&self->lock);
+    mutex_unlock(&self->lock);
     return 0;
 }
 
@@ -45,14 +45,14 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     size_t page_index = offset_into_self / PAGE_SIZE;
     assert(page_index < data->pages);
 
-    spin_lock(&self->lock);
+    mutex_lock(&self->lock);
     if (!data->owned) {
         return (uintptr_t) data->phys_pages[page_index];
     }
 
     if (data->phys_pages[page_index]) {
         uintptr_t ret = data->phys_pages[page_index]->phys_addr;
-        spin_unlock(&self->lock);
+        mutex_unlock(&self->lock);
         return ret;
     }
 
@@ -69,7 +69,7 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     }
 
     memset(phys_page_mapping + read, 0, PAGE_SIZE - read);
-    spin_unlock(&self->lock);
+    mutex_unlock(&self->lock);
     return phys_addr;
 }
 
@@ -92,11 +92,11 @@ static int inode_kill(struct vm_object *self) {
         }
     }
 
-    spin_lock(&data->inode->lock);
+    mutex_lock(&data->inode->lock);
     if (data->inode->vm_object == self) {
         data->inode->vm_object = NULL;
     }
-    spin_unlock(&data->inode->lock);
+    mutex_unlock(&data->inode->lock);
     drop_inode_reference(data->inode);
 
     free(data);

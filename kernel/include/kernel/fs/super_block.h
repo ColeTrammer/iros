@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include <kernel/util/spinlock.h>
+#include <kernel/util/mutex.h>
 
 struct device;
 struct tnode;
@@ -30,7 +30,7 @@ struct super_block {
     int flags;
 
     struct device *device;
-    spinlock_t super_block_lock;
+    mutex_t super_block_lock;
 
     void *private_data;
 };

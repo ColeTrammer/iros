@@ -105,11 +105,11 @@ ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
     size_t to_read = MIN(len, inode->size - offset);
 
     if (to_read == 0) {
-        spin_unlock(&inode->lock);
+        mutex_unlock(&inode->lock);
         return 0;
     }
 
@@ -120,7 +120,7 @@ ssize_t tmp_read(struct file *file, off_t offset, void *buffer, size_t len) {
 
     inode->access_time = time_read_clock(CLOCK_REALTIME);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     return (ssize_t) to_read;
 }
 
@@ -132,7 +132,7 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
     struct vm_region *kernel_region = inode->private_data;
     if (!kernel_region) {
         size_t size = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
@@ -153,7 +153,7 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
 
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     return (ssize_t) len;
 }
 
@@ -216,7 +216,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         return -EINVAL;
     }
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
 
     struct vm_region *kernel_region = inode->private_data;
     if (!inode->vm_object) {
@@ -232,7 +232,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 
     int ret = vm_map_region_with_object(region);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     if (ret < 0) {
         return (intptr_t) ret;
     }
@@ -241,7 +241,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
 }
 
 int tmp_read_all(struct inode *inode, void *buffer) {
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
 
     struct vm_region *kernel_region = inode->private_data;
     assert(kernel_region);
@@ -249,14 +249,14 @@ int tmp_read_all(struct inode *inode, void *buffer) {
     memcpy(buffer, (void *) kernel_region->start, inode->size);
     inode->access_time = time_read_clock(CLOCK_REALTIME);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     return 0;
 }
 
 int tmp_truncate(struct inode *inode, off_t len) {
     size_t new_size = (size_t) len;
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
 
     size_t old_size = inode->size;
     struct vm_region *kernel_region = inode->private_data;
@@ -276,10 +276,10 @@ int tmp_truncate(struct inode *inode, off_t len) {
 
             if (inode->vm_object) {
                 struct inode_vm_object_data *object_data = inode->vm_object->private_data;
-                spin_lock(&inode->vm_object->lock);
+                mutex_lock(&inode->vm_object->lock);
                 object_data->owned = true;
                 assert(object_data->kernel_region == save);
-                spin_unlock(&inode->vm_object->lock);
+                mutex_unlock(&inode->vm_object->lock);
                 inode->vm_object = NULL;
             } else {
                 vm_free_kernel_region(save);
@@ -288,7 +288,7 @@ int tmp_truncate(struct inode *inode, off_t len) {
     }
 
     inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     return 0;
 }
 
@@ -308,7 +308,7 @@ struct inode *tmp_mount(struct file_system *current_fs, struct device *device) {
     sb->fsid = tmp_fs_id++;
     sb->op = &s_op;
     sb->private_data = NULL;
-    init_spinlock(&sb->super_block_lock);
+    init_mutex(&sb->super_block_lock);
 
     struct inode *root = fs_create_inode(sb, get_next_tmp_index(), 0, 0, S_IFDIR | 0777, 0, &tmp_dir_i_op, NULL);
 

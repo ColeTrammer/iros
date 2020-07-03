@@ -44,7 +44,7 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
     struct socket *connect_to = net_get_socket_by_id(new_data->connected_id);
     assert(connect_to);
 
-    spin_lock(&connect_to->lock);
+    mutex_lock(&connect_to->lock);
 
     assert(connect_to->private_data);
     struct unix_socket_data *connect_to_data = connect_to->private_data;
@@ -53,7 +53,7 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
     connect_to_data->connected_id = new_socket->id;
 
     connect_to->state = CONNECTED;
-    spin_unlock(&connect_to->lock);
+    mutex_unlock(&connect_to->lock);
 
     new_socket->state = CONNECTED;
     return fd;
@@ -161,9 +161,9 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
     struct socket *connect_to = net_get_socket_by_id(inode->socket_id);
     assert(connect_to);
 
-    spin_lock(&connect_to->lock);
+    mutex_lock(&connect_to->lock);
     if (connect_to->state != LISTENING || connect_to->num_pending >= connect_to->pending_length) {
-        spin_unlock(&connect_to->lock);
+        mutex_unlock(&connect_to->lock);
         return -ECONNREFUSED;
     }
 
@@ -178,15 +178,15 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
     connect_to->pending[connect_to->num_pending++] = connection;
     connect_to->readable = true;
 
-    spin_lock(&socket->lock);
-    spin_unlock(&connect_to->lock);
+    mutex_lock(&socket->lock);
+    mutex_unlock(&connect_to->lock);
 
     socket->private_data = calloc(1, sizeof(struct unix_socket_data));
     assert(socket->private_data);
 
     for (;;) {
         enum socket_state state = socket->state;
-        spin_unlock(&socket->lock);
+        mutex_unlock(&socket->lock);
         if (state == CONNECTED) {
             break;
         }
@@ -195,7 +195,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
         if (ret) {
             return ret;
         }
-        spin_lock(&socket->lock);
+        mutex_lock(&socket->lock);
     }
 
     return 0;

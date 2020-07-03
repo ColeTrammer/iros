@@ -176,9 +176,9 @@ static ssize_t ata_read_sectors_dma(struct ata_device_data *data, size_t offset,
     ata_set_command(data->port_info, ATA_COMMAND_READ_DMA);
     io_wait();
 
-    // Begin bus master
+    // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
+    disable_interrupts();
     outb(data->port_info->bus_mastering_base, 0x9);
-
     ata_wait_irq(data);
 
     memcpy(buffer, data->dma_page, data->sector_size * n);
@@ -252,9 +252,9 @@ static ssize_t ata_write_sectors_dma(struct ata_device_data *data, size_t offset
     ata_set_command(data->port_info, ATA_COMMAND_WRITE_DMA);
     io_wait();
 
-    // Start bus master
+    // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
+    disable_interrupts();
     outb(data->port_info->bus_mastering_base, 0x1);
-
     ata_wait_irq(data);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
@@ -339,7 +339,7 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t read = 0;
 
-        spin_lock(&device->lock);
+        mutex_lock(&device->lock);
 
         for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
             i = MIN(i, num_sectors_to_read);
@@ -361,7 +361,7 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
         }
 
     finsih_ata_read:
-        spin_unlock(&device->lock);
+        mutex_unlock(&device->lock);
         return read;
     }
 
@@ -376,7 +376,7 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
         ssize_t written = 0;
 
-        spin_lock(&device->lock);
+        mutex_lock(&device->lock);
 
         for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
             i = MIN(i, num_sectors_to_write);
@@ -398,7 +398,7 @@ static ssize_t ata_write(struct device *device, off_t offset, const void *buffer
         }
 
     finsih_ata_write:
-        spin_unlock(&device->lock);
+        mutex_unlock(&device->lock);
         return written;
     }
 
@@ -431,7 +431,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     device->device_number = 0x00500 + i;
     device->ops = &ata_ops;
     device->type = S_IFBLK;
-    init_spinlock(&device->lock);
+    init_mutex(&device->lock);
 
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));
     device->private = data;
