@@ -15,6 +15,7 @@ qemu-system-$ARCH \
     -cdrom os_2.iso \
     -d cpu_reset,guest_errors \
     -serial stdio \
+    -smp 2 \
     -device VGA,vgamem_mb=64 \
     -hda os_2.img \
     -boot d \
