@@ -54,8 +54,6 @@ void init_serial_ports() {
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_CONTROL_OFFSET), SERIAL_STOP_1_BIT | SERIAL_PARITY_NONE | SERIAL_8_BITS);
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_FIFO_OFFSET), 0xC7);
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_INTERRUPT_OFFSET), SERIAL_INTERRUPT_DATA | SERIAL_INTERRUPT_ERROR | SERIAL_INTERRUPT_STATUS);
-
-    register_irq_line_handler(&handle_serial_interrupt, SERIAL_13_IRQ_LINE, NULL, true);
     debug_log("Serial Port Initialized: [ %#.3X ]\n", SERIAL_COM1_PORT);
 }
 
@@ -74,6 +72,8 @@ struct device_ops serial_ops = { .write = &serial_write };
 void init_serial_port_device(dev_t port, size_t i) {
     /* Could be anything */
     assert(port == SERIAL_COM1_PORT);
+
+    register_irq_line_handler(&handle_serial_interrupt, SERIAL_13_IRQ_LINE, NULL, true);
 
     struct device *device = calloc(1, sizeof(struct device));
     device->device_number = 0x00800 + i;
