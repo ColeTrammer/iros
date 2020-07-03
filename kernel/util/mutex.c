@@ -25,7 +25,7 @@ static void __mutex_lock(mutex_t *mutex, struct task *task, const char *func) {
             return;
         }
 
-        __wait_queue_enqueue_task(&mutex->queue, task);
+        __wait_queue_enqueue_task(&mutex->queue, task, __func__);
         task->sched_state = WAITING;
 #ifdef MUTEX_DEBUG
         debug_log("Failed to aquire mutex: [ %p, %s ]\n", mutex, func);
@@ -57,7 +57,7 @@ static bool __mutex_trylock(mutex_t *mutex, const char *func) {
 static void __mutex_unlock(mutex_t *mutex, const char *func) {
     (void) func;
     assert(mutex->lock == 1);
-    __wake_up_n(&mutex->queue, 1);
+    __wake_up_n(&mutex->queue, 1, __func__);
     mutex->lock = 0;
 #ifdef MUTEX_DEBUG
     debug_log("Unlocked mutex: [ %p, %s ]\n", mutex, func);

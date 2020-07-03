@@ -98,7 +98,7 @@ void unlock_user_mutex(struct user_mutex *um) {
 }
 
 void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
-    __wait_queue_enqueue_task(&m->wait_queue, task);
+    __wait_queue_enqueue_task(&m->wait_queue, task, __func__);
 
 #ifdef USER_MUTEX_DEBUG
     debug_log("Adding to queue: [ %d:%d ]\n", task->process->pid, task->tid);
@@ -106,7 +106,7 @@ void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
 }
 
 void wake_user_mutex(struct user_mutex *m, int to_wake, int *to_place) {
-    __wake_up_n(&m->wait_queue, to_wake);
+    __wake_up_n(&m->wait_queue, to_wake, __func__);
 
     // This means there are no waiters left
     if (to_place && __wait_queue_is_empty(&m->wait_queue)) {
