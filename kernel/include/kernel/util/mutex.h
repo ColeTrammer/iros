@@ -13,10 +13,14 @@ typedef struct {
 #define MUTEX_INITIALIZER \
     { WAIT_QUEUE_INITIALIZER, 0 }
 
-void init_mutex(mutex_t *mutex);
+void init_mutex_internal(mutex_t *mutex, const char *func);
+void mutex_lock_internal(mutex_t *mutex, const char *func);
+bool mutex_trylock_internal(mutex_t *mutex, const char *func);
+void mutex_unlock_internal(mutex_t *mutex, const char *func);
 
-void mutex_lock(mutex_t *mutex);
-bool mutex_trylock(mutex_t *mutex);
-void mutex_unlock(mutex_t *mutex);
+#define init_mutex(m)    init_mutex_internal(m, __func__)
+#define mutex_lock(m)    mutex_lock_internal(m, __func__)
+#define mutex_trylock(m) mutex_trylock_internal(m, __func__)
+#define mutex_unlock(m)  mutex_unlock_internal(m, __func__)
 
 #endif /* _KERNEL_UTIL_MUTEX_H */
