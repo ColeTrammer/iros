@@ -79,7 +79,7 @@ static struct inode *procfs_create_inode(mode_t mode, uid_t uid, gid_t gid, stru
     inode->mode = mode;
     inode->i_op = S_ISDIR(mode) ? &procfs_dir_i_op : &procfs_i_op;
     inode->ref_count = 1;
-    init_spinlock(&inode->lock);
+    init_mutex(&inode->lock);
 
     spin_lock(&inode_counter_lock);
     inode->index = inode_counter++;
@@ -440,9 +440,9 @@ void procfs_register_process(struct process *process) {
     char pid_string[16];
     size_t length = snprintf(pid_string, sizeof(pid_string) - 1, "%d", process->pid);
 
-    spin_lock(&root->lock);
+    mutex_lock(&root->lock);
     fs_put_dirent_cache(root->dirent_cache, inode, pid_string, length);
-    spin_unlock(&root->lock);
+    mutex_unlock(&root->lock);
 }
 
 void procfs_unregister_process(struct process *process) {
@@ -541,10 +541,10 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_net_directory_structure(struct
         data = interfaces_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
-        spin_lock(&parent->lock);
+        mutex_lock(&parent->lock);
         fs_put_dirent_cache(parent->dirent_cache, arp_inode, "arp", strlen("arp"));
         fs_put_dirent_cache(parent->dirent_cache, interfaces_inode, "interfaces", strlen("interfaces"));
-        spin_unlock(&parent->lock);
+        mutex_unlock(&parent->lock);
     }
 }
 
@@ -568,12 +568,12 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         struct inode *net_directory = procfs_create_inode(PROCFS_DIRECTORY_MODE, 0, 0, NULL, procfs_create_net_directory_structure);
         net_directory->dirent_cache = fs_create_dirent_cache();
 
-        spin_lock(&parent->lock);
+        mutex_lock(&parent->lock);
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));
         fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
         fs_put_dirent_cache(parent->dirent_cache, meminfo_inode, "meminfo", strlen("meminfo"));
         fs_put_dirent_cache(parent->dirent_cache, net_directory, "net", strlen("net"));
-        spin_unlock(&parent->lock);
+        mutex_unlock(&parent->lock);
     }
 }
 

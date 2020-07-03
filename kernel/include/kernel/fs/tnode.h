@@ -2,13 +2,12 @@
 #define _KERNEL_FS_TNODE_H 1
 
 #include <kernel/fs/inode.h>
-#include <kernel/util/spinlock.h>
 
+// NOTE: tnodes are immutable, so there is no need for any locks
 struct tnode {
     char *name;
     struct inode *inode;
     struct tnode *parent;
-    spinlock_t lock;
     int ref_count;
 };
 

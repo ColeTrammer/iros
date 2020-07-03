@@ -91,7 +91,7 @@ struct vm_object *vm_create_object(enum vm_object_type type, struct vm_object_op
     object->ops = ops;
     object->private_data = private_data;
     object->ref_count = 1;
-    init_spinlock(&object->lock);
+    init_mutex(&object->lock);
 
     return object;
 }

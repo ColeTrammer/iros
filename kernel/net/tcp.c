@@ -93,18 +93,18 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
             connection->addr.in.sin_port = packet->source_port;
             connection->addr.in.sin_addr.s_addr = ip_v4_to_uint(ip_packet->source);
 
-            spin_lock(&socket->lock);
+            mutex_lock(&socket->lock);
             if (socket->num_pending >= socket->pending_length) {
                 debug_log("Socket has too many connections already: [ %lu, %d, %d ]\n", socket->id, socket->num_pending,
                           socket->pending_length);
-                spin_unlock(&socket->lock);
+                mutex_unlock(&socket->lock);
                 free(connection);
                 return;
             }
 
             socket->pending[socket->num_pending++] = connection;
             socket->readable = true;
-            spin_unlock(&socket->lock);
+            mutex_unlock(&socket->lock);
 
             debug_log("Recived a connection request to socket: [ %lu ]\n", socket->id);
             return;

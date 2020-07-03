@@ -10,7 +10,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/tnode.h>
-#include <kernel/util/spinlock.h>
+#include <kernel/util/mutex.h>
 
 struct device;
 struct vm_object;
@@ -39,7 +39,7 @@ struct device {
     bool exceptional;
     struct device_ops *ops;
     struct vm_object *vm_object;
-    spinlock_t lock;
+    mutex_t lock;
     void *private;
 };
 

@@ -5,7 +5,7 @@
 #include <sys/types.h>
 
 #include <kernel/fs/inode.h>
-#include <kernel/util/spinlock.h>
+#include <kernel/util/mutex.h>
 
 struct file;
 struct inode;
@@ -31,7 +31,7 @@ struct file {
     int abilities;
 
     int ref_count;
-    spinlock_t lock;
+    mutex_t lock;
 
     struct tnode *tnode;
     struct inode *inode;

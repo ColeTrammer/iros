@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include <kernel/util/spinlock.h>
+#include <kernel/util/mutex.h>
 
 struct vm_region;
 struct vm_object;
@@ -23,7 +23,7 @@ struct vm_object {
     enum vm_object_type type;
     int ref_count;
 
-    spinlock_t lock;
+    mutex_t lock;
 
     struct vm_object_operations *ops;
     void *private_data;

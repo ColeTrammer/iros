@@ -77,7 +77,7 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
 
 static struct device_ops vga_ops = { .ioctl = vga_ioctl, .mmap = vga_mmap };
 
-static struct device vga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &vga_ops, .lock = SPINLOCK_INITIALIZER };
+static struct device vga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &vga_ops, .lock = MUTEX_INITIALIZER };
 
 void vga_enable_cursor() {
     VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, (inb(VGA_DATA) & 0xC0) | VGA_CURSOR_Y_START);

@@ -6,6 +6,7 @@
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/mutex.h>
 
 #define EPHEMERAL_PORT_START 49152U
 #define PORT_MAX             65535U
@@ -23,19 +24,19 @@ struct socket *net_get_socket_from_port(uint16_t port) {
     return net_get_socket_by_id(p->socket_id);
 }
 
-static spinlock_t port_search_lock = SPINLOCK_INITIALIZER;
+static mutex_t port_search_lock = MUTEX_INITIALIZER;
 
 int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p) {
     struct port_to_socket_id *p = malloc(sizeof(struct port_to_socket_id));
     p->socket_id = socket_id;
 
-    spin_lock(&port_search_lock);
+    mutex_lock(&port_search_lock);
 
     for (uint16_t port = EPHEMERAL_PORT_START; port < PORT_MAX; port++) {
         if (!hash_get(map, &port)) {
             p->port = port;
             hash_put(map, p);
-            spin_unlock(&port_search_lock);
+            mutex_unlock(&port_search_lock);
 
             debug_log("Bound socket to ephemeral port: [ %lu, %u ]\n", socket_id, port);
 
@@ -44,7 +45,7 @@ int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p) {
         }
     }
 
-    spin_unlock(&port_search_lock);
+    mutex_unlock(&port_search_lock);
     return -EADDRINUSE;
 }
 
@@ -53,16 +54,16 @@ int net_bind_to_port(unsigned long socket_id, uint16_t port) {
     p->socket_id = socket_id;
     p->port = port;
 
-    spin_lock(&port_search_lock);
+    mutex_lock(&port_search_lock);
 
     if (!hash_get(map, &port)) {
         hash_put(map, p);
 
-        spin_unlock(&port_search_lock);
+        mutex_unlock(&port_search_lock);
         return 0;
     }
 
-    spin_unlock(&port_search_lock);
+    mutex_unlock(&port_search_lock);
     free(p);
     return -EADDRINUSE;
 }

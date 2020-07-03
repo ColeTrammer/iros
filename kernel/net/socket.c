@@ -47,7 +47,7 @@ static int socket_file_close(struct file *file) {
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    spin_lock(&socket->lock);
+    mutex_lock(&socket->lock);
 
 #ifdef SOCKET_DEBUG
     debug_log("Destroying socket: [ %lu ]\n", socket->id);
@@ -74,7 +74,7 @@ static int socket_file_close(struct file *file) {
 
     hash_del(map, &socket->id);
 
-    spin_unlock(&socket->lock);
+    mutex_unlock(&socket->lock);
 
     free(socket);
     free(file_data);
@@ -114,7 +114,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
             socket->writable = true;
             socket->readable = false;
             socket->exceptional = false;
-            init_spinlock(&socket->lock);
+            init_mutex(&socket->lock);
 
             hash_put(map, socket);
 
@@ -137,14 +137,14 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
     struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
 
     for (;;) {
-        spin_lock(&socket->lock);
+        mutex_lock(&socket->lock);
         data = socket->data_head;
 
         if (data != NULL) {
             break;
         }
 
-        spin_unlock(&socket->lock);
+        mutex_unlock(&socket->lock);
 
         switch (socket->domain) {
             case AF_UNIX: {
@@ -209,7 +209,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         }
     }
 
-    spin_unlock(&socket->lock);
+    mutex_unlock(&socket->lock);
 
     size_t to_copy = MIN(len, data->len);
     memcpy(buf, data->data, to_copy);
@@ -230,7 +230,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
 
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection) {
     for (;;) {
-        spin_lock(&socket->lock);
+        mutex_lock(&socket->lock);
         if (socket->pending[0] != NULL) {
             memcpy(connection, socket->pending[0], sizeof(struct socket_connection));
 
@@ -242,11 +242,11 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
                 socket->readable = false;
             }
 
-            spin_unlock(&socket->lock);
+            mutex_unlock(&socket->lock);
             break;
         }
 
-        spin_unlock(&socket->lock);
+        mutex_unlock(&socket->lock);
 
         if (socket->type & SOCK_NONBLOCK) {
             return -EAGAIN;
@@ -270,7 +270,7 @@ void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *dat
 }
 
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data) {
-    spin_lock(&to_send->lock);
+    mutex_lock(&to_send->lock);
     insque(socket_data, to_send->data_tail);
     if (!to_send->data_head) {
         to_send->data_head = to_send->data_tail = socket_data;
@@ -285,7 +285,7 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
 #endif /* SOCKET_DEBUG */
 
     ssize_t ret = socket_data->len;
-    spin_unlock(&to_send->lock);
+    mutex_unlock(&to_send->lock);
     return ret;
 }
 

@@ -9,7 +9,7 @@
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
-#include <kernel/util/spinlock.h>
+#include <kernel/util/mutex.h>
 
 enum socket_state { UNBOUND = 0, BOUND, LISTENING, CONNECTED, CLOSING, CLOSED };
 
@@ -52,7 +52,7 @@ struct socket {
     bool writable : 1;
     bool exceptional : 1;
 
-    spinlock_t lock;
+    mutex_t lock;
 
     struct socket_data *data_head;
     struct socket_data *data_tail;

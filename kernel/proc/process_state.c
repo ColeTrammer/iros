@@ -186,14 +186,12 @@ void proc_add_message(pid_t pid, struct proc_state_message *m) {
     }
 
     spin_lock(&queue->lock);
-
     if (queue->start == NULL) {
         queue->start = queue->end = m;
     } else {
         queue->end->next = m;
         queue->end = m;
     }
-
     spin_unlock(&queue->lock);
 
     // Also gen SIGCHLD for the parent process
@@ -209,13 +207,11 @@ int proc_num_messages(pid_t pid) {
     int count = 0;
 
     spin_lock(&queue->lock);
-
     struct proc_state_message *m = queue->start;
     while (m) {
         count++;
         m = m->next;
     }
-
     spin_unlock(&queue->lock);
 
     return count;
@@ -225,8 +221,8 @@ pid_t proc_consume_message(pid_t pid, struct proc_state_message *m) {
     struct proc_state_message_queue *queue = ensure_queue(pid);
     bool empty = true;
 
+    // FIXME: what if there's two processes waiting? One could free the queue before the other even takes the lock...
     spin_lock(&queue->lock);
-
     if (queue->start) {
         empty = false;
         memcpy(m, queue->start, sizeof(struct proc_state_message));
@@ -246,8 +242,8 @@ pid_t proc_consume_message(pid_t pid, struct proc_state_message *m) {
             return pid;
         }
     }
-
     spin_unlock(&queue->lock);
+
     return empty ? 0 : pid;
 }
 

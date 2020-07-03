@@ -23,7 +23,6 @@ struct tty_buffer_message {
 };
 
 struct slave_data {
-    spinlock_t lock;
     int ref_count;
     int index;
 
@@ -48,7 +47,6 @@ struct slave_data {
 };
 
 struct master_data {
-    spinlock_t lock;
     int index;
 
     char *output_buffer;

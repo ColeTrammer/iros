@@ -18,7 +18,7 @@ static int anon_map(struct vm_object *self, struct vm_region *region) {
 
     struct task *current_task = get_current_task();
 
-    spin_lock(&self->lock);
+    mutex_lock(&self->lock);
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         size_t page_index = (i + region->vm_object_offset - region->start) / PAGE_SIZE;
         assert(page_index < data->pages);
@@ -33,7 +33,7 @@ static int anon_map(struct vm_object *self, struct vm_region *region) {
         }
     }
 
-    spin_unlock(&self->lock);
+    mutex_unlock(&self->lock);
     return 0;
 }
 
@@ -59,10 +59,10 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
         assert(page_index < data->pages);
     }
 
-    spin_lock(&self->lock);
+    mutex_lock(&self->lock);
     if (data->phys_pages[page_index]) {
         uintptr_t ret = data->phys_pages[page_index]->phys_addr;
-        spin_unlock(&self->lock);
+        mutex_unlock(&self->lock);
         return ret;
     }
 
@@ -72,7 +72,7 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
     void *phys_addr_mapping = create_phys_addr_mapping(phys_addr);
     memset(phys_addr_mapping, 0, PAGE_SIZE);
 
-    spin_unlock(&self->lock);
+    mutex_unlock(&self->lock);
     return phys_addr;
 }
 
@@ -82,12 +82,12 @@ static uintptr_t anon_handle_cow_fault(struct vm_object *self, uintptr_t offset_
     size_t page_index = offset_into_self / PAGE_SIZE;
     assert(page_index < data->pages);
 
-    spin_lock(&self->lock);
+    mutex_lock(&self->lock);
     struct phys_page *old_page = data->phys_pages[page_index];
     assert(old_page);
 
     if (atomic_load(&old_page->ref_count) == 1) {
-        spin_unlock(&self->lock);
+        mutex_unlock(&self->lock);
         return old_page->phys_addr;
     }
 
@@ -103,7 +103,7 @@ static uintptr_t anon_handle_cow_fault(struct vm_object *self, uintptr_t offset_
     data->phys_pages[page_index] = new_page;
 
     drop_phys_page(old_page);
-    spin_unlock(&self->lock);
+    mutex_unlock(&self->lock);
 
     return new_phys_addr;
 }
@@ -137,7 +137,7 @@ static struct vm_object_operations anon_ops = { .map = &anon_map,
 static struct vm_object *anon_clone(struct vm_object *self) {
     struct anon_vm_object_data *self_data = self->private_data;
 
-    spin_lock(&self->lock);
+    mutex_lock(&self->lock);
 
     struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + self_data->pages * sizeof(struct phys_page *));
     data->pages = self_data->pages;
@@ -151,7 +151,7 @@ static struct vm_object *anon_clone(struct vm_object *self) {
         }
     }
 
-    spin_unlock(&self->lock);
+    mutex_unlock(&self->lock);
     return vm_create_object(VM_ANON, &anon_ops, data);
 }
 

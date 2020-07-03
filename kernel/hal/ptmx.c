@@ -20,7 +20,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
-#include <kernel/util/spinlock.h>
+#include <kernel/util/mutex.h>
 
 // #define PTMX_BLOCKING_DEBUG
 // #define PTMX_SIGNAL_DEBUG
@@ -41,15 +41,15 @@ static struct termios default_termios = { ICRNL | IXON,
 
 static struct device *slaves[PTMX_MAX] = { 0 };
 static struct device *masters[PTMX_MAX] = { 0 };
-static spinlock_t lock = SPINLOCK_INITIALIZER;
+static mutex_t lock = MUTEX_INITIALIZER;
 
 static void slave_on_open(struct device *device) {
     struct slave_data *data = device->private;
     assert(data);
 
-    spin_lock(&data->lock);
+    mutex_lock(&data->device->lock);
     data->ref_count++;
-    spin_unlock(&data->lock);
+    mutex_unlock(&data->device->lock);
 }
 
 static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t len) {
@@ -63,10 +63,10 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
         signal_process_group(get_current_task()->process->pgid, SIGTTIN);
     }
 
-    spin_lock(&data->lock);
+    mutex_lock(&data->device->lock);
     if (data->input_buffer == NULL) {
         while (data->messages == NULL) {
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
 
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Blocking on slave read: [ %d ]\n", data->index);
@@ -84,12 +84,12 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
                     return 0;
                 }
 
-                spin_lock(&data->lock);
+                mutex_lock(&data->device->lock);
                 // This is because multiple processes could be waiting for ptmx input, meaning
                 // a different one could have consumed the message, and since there is a timeout
                 // we don't want to block again.
                 if (data->messages == NULL) {
-                    spin_unlock(&data->lock);
+                    mutex_unlock(&data->device->lock);
                 }
                 break;
             } else {
@@ -98,7 +98,7 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
                     return ret;
                 }
             }
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
         }
 
         struct tty_buffer_message *message = data->messages;
@@ -132,7 +132,7 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
         }
     }
 
-    spin_unlock(&data->lock);
+    mutex_unlock(&data->device->lock);
 
     return (ssize_t) to_copy;
 }
@@ -163,7 +163,7 @@ static ssize_t slave_write(struct device *device, off_t offset, const void *buf,
     }
 
     struct master_data *mdata = masters[data->index]->private;
-    spin_lock(&mdata->lock);
+    mutex_lock(&mdata->device->lock);
 
     struct tty_buffer_message *message = mdata->messages;
 slave_write_again:
@@ -178,7 +178,7 @@ slave_write_again:
         if (message->max < message->len + len) {
             mdata->device->writeable = false;
             while (mdata->messages != NULL) {
-                spin_unlock(&mdata->lock);
+                mutex_unlock(&mdata->device->lock);
 #ifdef PTMX_BLOCKING_DEBUG
                 debug_log("Blocking until master is writable: [ %d ]\n", mdata->index);
 #endif /* PTMX_BLOCKING_DEBUG */
@@ -186,7 +186,7 @@ slave_write_again:
                 if (ret) {
                     return ret;
                 }
-                spin_lock(&mdata->lock);
+                mutex_lock(&mdata->device->lock);
             }
 
             message = mdata->messages;
@@ -210,7 +210,7 @@ slave_write_again:
 #endif /* PTMX_BLOCKING_DEBUG */
     mdata->device->readable = true;
 
-    spin_unlock(&mdata->lock);
+    mutex_unlock(&mdata->device->lock);
     return (ssize_t) save_len;
 }
 
@@ -218,21 +218,20 @@ static int slave_close(struct device *device) {
     struct slave_data *data = device->private;
     assert(data);
 
-    spin_lock(&data->lock);
+    mutex_lock(&data->device->lock);
     data->ref_count--;
     if (data->ref_count <= 0) {
-        // data->lock will be unlocked in remove callback
+        // data->device->lock will be unlocked in remove callback
         dev_unregister(device);
         return 0;
     }
 
-    spin_unlock(&data->lock);
+    mutex_unlock(&data->device->lock);
     return 0;
 }
 
 static void slave_add(struct device *device) {
     struct slave_data *data = calloc(1, sizeof(struct slave_data));
-    init_spinlock(&data->lock);
     data->ref_count = 1; // For the master
 
     data->cols = VGA_WIDTH;
@@ -259,7 +258,7 @@ static void slave_remove(struct device *device) {
     struct slave_data *data = device->private;
     assert(data);
 
-    spin_unlock(&data->lock);
+    mutex_unlock(&data->device->lock);
 
     slaves[data->index] = NULL;
 
@@ -303,10 +302,10 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
     switch (request) {
         case TIOCSWINSZ: {
             struct winsize *w = argp;
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             data->rows = w->ws_row;
             data->cols = w->ws_col;
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
         case TIOCGWINSZ: {
@@ -319,9 +318,9 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             return data->pgid;
         }
         case TIOCSPGRP: {
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             data->pgid = *((pid_t *) argp);
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
         case TCGETS: {
@@ -329,20 +328,20 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             return 0;
         }
         case TCSETSF: {
-            spin_lock(&mdata->lock);
+            mutex_lock(&mdata->device->lock);
             free(mdata->input_buffer);
             mdata->input_buffer = NULL;
             mdata->input_buffer_length = 0;
             mdata->input_buffer_max = 0;
-            spin_unlock(&mdata->lock);
+            mutex_unlock(&mdata->device->lock);
         } // Fall through
         case TCSETSW: {
             // Should flush output
         } // Fall through
         case TCSETS: {
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             memcpy(&data->config, argp, sizeof(struct termios));
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
         case TGETNUM: {
@@ -352,7 +351,7 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
         }
         case TIOSCTTY: {
             int ret = 0;
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             struct process *current = get_current_task()->process;
             if (current->sid != current->pid || current->pgid != current->pid) {
                 ret = -EPERM;
@@ -364,7 +363,7 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             data->sid = current->sid;
 
         finish_slave_ioctl_tiosctty:
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return ret;
         }
         case TIOCNOTTY: {
@@ -372,33 +371,33 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             return 0;
         }
         case TCIOFFI: {
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             data->input_enabled = false;
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
         case TCOOFFI: {
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             data->output_enabled = false;
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
         case TCIONI: {
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             data->input_enabled = true;
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
         case TCOONI: {
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             data->output_enabled = true;
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
         case TIOCGSID: {
-            spin_lock(&data->lock);
+            mutex_lock(&data->device->lock);
             pid_t ret = data->sid;
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return ret;
         }
         default: {
@@ -424,10 +423,10 @@ static ssize_t master_read(struct device *device, off_t offset, void *buf, size_
 
     struct master_data *data = device->private;
 
-    spin_lock(&data->lock);
+    mutex_lock(&data->device->lock);
     if (data->output_buffer == NULL) {
         if (data->messages == NULL) {
-            spin_unlock(&data->lock);
+            mutex_unlock(&data->device->lock);
             return 0;
         }
 
@@ -466,16 +465,16 @@ static ssize_t master_read(struct device *device, off_t offset, void *buf, size_
         }
     }
 
-    spin_unlock(&data->lock);
+    mutex_unlock(&data->device->lock);
 
     return (ssize_t) to_read;
 }
 
 static void tty_do_echo(struct master_data *data, struct slave_data *sdata, char c) {
     if (sdata->config.c_lflag & ECHO) {
-        spin_unlock(&data->lock);
+        mutex_unlock(&data->device->lock);
         slave_write(slaves[data->index], 0, &c, 1);
-        spin_lock(&data->lock);
+        mutex_lock(&data->device->lock);
     }
 }
 
@@ -507,7 +506,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
     struct master_data *data = device->private;
     struct slave_data *sdata = slaves[data->index]->private;
 
-    spin_lock(&data->lock);
+    mutex_lock(&data->device->lock);
 
     for (size_t i = 0; i < len; i++) {
         if ((sdata->config.c_lflag & ICANON) && data->input_buffer_length >= data->input_buffer_max) {
@@ -542,7 +541,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
         }
 
         if (!(sdata->config.c_lflag & ICANON)) {
-            spin_lock(&sdata->lock);
+            mutex_lock(&sdata->device->lock);
 
             if (sdata->messages == NULL) {
                 sdata->messages = calloc(1, sizeof(struct tty_buffer_message));
@@ -569,7 +568,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
             // The slave is readable now that we wrote to it.
             sdata->device->readable = true;
 
-            spin_unlock(&sdata->lock);
+            mutex_unlock(&sdata->device->lock);
             continue;
         }
 
@@ -578,7 +577,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
                 data->input_buffer[data->input_buffer_length++] = c;
             }
 
-            spin_lock(&sdata->lock);
+            mutex_lock(&sdata->device->lock);
 
             struct tty_buffer_message *message = calloc(1, sizeof(struct tty_buffer_message));
             message->len = message->max = data->input_buffer_length;
@@ -602,14 +601,14 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
             // The slave is readable now that we wrote to it.
             sdata->device->readable = true;
 
-            spin_unlock(&sdata->lock);
+            mutex_unlock(&sdata->device->lock);
             continue;
         }
 
         data->input_buffer[data->input_buffer_length++] = c;
     }
 
-    spin_unlock(&data->lock);
+    mutex_unlock(&data->device->lock);
     return (ssize_t) len;
 }
 
@@ -691,11 +690,11 @@ static struct inode_operations empty_ops = { .unlink = noop_unlink };
 static struct file *ptmx_open(struct device *device, int flags, int *error) {
     (void) device;
 
-    spin_lock(&lock);
+    mutex_lock(&lock);
     for (int i = 0; i < PTMX_MAX; i++) {
         if (slaves[i] == NULL && masters[i] == NULL) {
             slaves[i] = calloc(1, sizeof(struct device));
-            spin_unlock(&lock);
+            mutex_unlock(&lock);
 
             slaves[i]->device_number = 0x00300 + i;
             slaves[i]->ops = &slave_ops;
@@ -737,7 +736,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
         }
     }
 
-    spin_unlock(&lock);
+    mutex_unlock(&lock);
     *error = -ENOMEM;
     return NULL;
 }

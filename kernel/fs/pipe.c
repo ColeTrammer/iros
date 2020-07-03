@@ -49,7 +49,7 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     struct file *file = fs_create_file(inode, FS_FIFO, FS_FILE_CANT_SEEK, flags, &pipe_f_op, NULL);
 
     struct pipe_data *data = inode->pipe_data;
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
     if (!data) {
         data = malloc(sizeof(struct pipe_data));
         data->buffer = NULL;
@@ -80,12 +80,12 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
 
     if ((file->abilities & FS_FILE_CAN_WRITE) && data->read_count == 0) {
         if (flags & O_NONBLOCK) {
-            spin_unlock(&inode->lock);
+            mutex_unlock(&inode->lock);
             *error = -ENXIO;
             fs_close(file);
             return NULL;
         } else {
-            spin_unlock(&inode->lock);
+            mutex_unlock(&inode->lock);
 
             int ret = proc_block_until_pipe_has_readers(get_current_task(), data);
             if (ret) {
@@ -94,26 +94,26 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
                 return NULL;
             }
 
-            spin_lock(&inode->lock);
+            mutex_lock(&inode->lock);
         }
     }
 
     if ((file->abilities & FS_FILE_CAN_READ) && data->write_count == 0) {
         if (!(flags & O_NONBLOCK)) {
-            spin_unlock(&inode->lock);
+            mutex_unlock(&inode->lock);
 
             int ret = proc_block_until_pipe_has_writers(get_current_task(), data);
             if (ret) {
-                spin_unlock(&inode->lock);
+                mutex_unlock(&inode->lock);
                 *error = ret;
                 fs_close(file);
                 return NULL;
             }
 
-            spin_lock(&inode->lock);
+            mutex_lock(&inode->lock);
         }
     }
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
 
     *error = 0;
     return file;
@@ -138,7 +138,7 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
         len = MIN(_len, data->len - file->position);
     }
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
     memcpy(buffer, data->buffer + file->position, len);
     file->position += len;
 
@@ -146,7 +146,7 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
         inode->readable = false;
     }
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
     return len;
 }
 
@@ -160,10 +160,10 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
     assert(file->position == (off_t) data->len);
     assert(data);
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
 
     if (!is_pipe_read_end_open(data)) {
-        spin_unlock(&inode->lock);
+        mutex_unlock(&inode->lock);
         signal_task(get_current_task()->process->pid, get_current_task()->tid, SIGPIPE);
         return -EPIPE;
     }
@@ -183,7 +183,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
 
     return len;
 }
@@ -212,7 +212,7 @@ int pipe_close(struct file *file) {
 
     struct pipe_data *data = inode->pipe_data;
 
-    spin_lock(&inode->lock);
+    mutex_lock(&inode->lock);
     if (file->abilities & FS_FILE_CAN_WRITE) {
         if (data->write_count-- == 1) {
             // The writer disconnected, wake up anyone waiting to read from this pipe.
@@ -225,7 +225,7 @@ int pipe_close(struct file *file) {
             inode->excetional_activity = true;
         }
     }
-    spin_unlock(&inode->lock);
+    mutex_unlock(&inode->lock);
 
     return 0;
 }
