@@ -17,7 +17,11 @@ static void __mutex_lock(mutex_t *mutex, struct task *task) {
 
         __wait_queue_enqueue_task(&mutex->queue, task);
         spin_unlock(&mutex->queue.lock);
+
+        task->sched_state = WAITING;
         __kernel_yield();
+
+        spin_lock(&mutex->queue.lock);
     }
 }
 
@@ -32,6 +36,7 @@ static bool __mutex_trylock(mutex_t *mutex) {
 static void __mutex_unlock(mutex_t *mutex) {
     assert(mutex->lock == 1);
     __wake_up_n(&mutex->queue, 1);
+    mutex->lock = 0;
 }
 
 extern struct task *current_task;
