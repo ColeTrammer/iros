@@ -35,9 +35,6 @@
 void init_pic();
 void disable_pic(void);
 
-void pic_generic_handler_entry();
-
-bool is_irq_line_registered(unsigned int irq_line);
 void enable_irq_line(uint8_t irq_line);
 void disable_irq_line(uint8_t irq_line);
 
