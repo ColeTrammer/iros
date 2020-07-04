@@ -7,6 +7,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/e1000.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/interface.h>
@@ -142,7 +143,7 @@ static void e1000_recieve() {
     }
 }
 
-static void handle_interrupt(void *closure __attribute__((unused))) {
+static void handle_interrupt(struct irq_context *context __attribute__((unused))) {
     struct e1000_data *data = interface->private_data;
 
     debug_log("Recived a interrupt for E1000\n");
@@ -179,6 +180,8 @@ static struct mac_address get_mac_address(struct network_interface *this) {
 
 static struct network_interface_ops e1000_ops = { &e1000_send, NULL, NULL, &get_mac_address };
 
+static struct irq_handler e1000_handler = { .handler = &handle_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
+
 void init_intel_e1000(struct pci_configuration *config) {
     debug_log("Found intel e1000 netword card: [ %u ]\n", config->interrupt_line);
     pci_enable_bus_mastering(config);
@@ -204,7 +207,7 @@ void init_intel_e1000(struct pci_configuration *config) {
     write_command(data, E1000_CTRL_IMASK, 0xFF & ~4);
     read_command(data, 0xC0);
 
-    register_irq_line_handler(handle_interrupt, config->interrupt_line, NULL, true);
+    register_irq_handler(&e1000_handler, config->interrupt_line + PIC_IRQ_OFFSET);
 
     interface = net_create_network_interface("e1000", NETWORK_INTERFACE_ETHERNET, &e1000_ops, data);
 }

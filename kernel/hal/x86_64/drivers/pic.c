@@ -9,9 +9,6 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/proc/task.h>
 
-static void (*handlers[2 * PIC_IRQS])(void *) = { 0 };
-static void *closures[2 * PIC_IRQS];
-
 void sendEOI(unsigned int irq_line) {
     if (irq_line >= 8) {
         outb(PIC2_COMMAND, PIC_EOI);
@@ -84,41 +81,34 @@ static uint16_t get_isr() {
     return get_irq_reg(PIC_READ_ISR);
 }
 
-void pic_generic_handler() {
-    unsigned int irq_line = 0;
+static bool pic_is_valid_irq(struct irq_controller *self, int irq_num) {
+    (void) self;
+    int adjusted_irq = irq_num - PIC_IRQ_OFFSET;
     uint16_t isr = get_isr();
-
-    for (unsigned int i = 0; i < 2 * PIC_IRQS; i++) {
-        if (isr & (1 << i) && i != PIC_SLAVE_IRQ) {
-            irq_line = i;
-            break;
-        }
-    }
-    if (handlers[irq_line] != NULL) {
-        handlers[irq_line](closures[irq_line]);
-    } else {
-        debug_log("Recieved Interrupt on IRQ Line: [ %u ]\n", irq_line);
-    }
-
-    sendEOI(irq_line);
+    return !!(isr & (1 << adjusted_irq));
 }
 
-void register_irq_line_handler(void (*handler)(void *cls), unsigned int irq_line, void *closure, bool use_generic_handler) {
-    if (irq_line < 2 * PIC_IRQS) {
-        if (use_generic_handler) {
-            handlers[irq_line] = handler;
-            closures[irq_line] = closure;
-            register_irq_handler(create_irq_handler(pic_generic_handler, 0, NULL), irq_line + PIC_IRQ_OFFSET);
-        } else {
-            register_irq_handler(create_irq_handler(handler, IRQ_HANDLER_USE_TASK_STATE, NULL), irq_line + PIC_IRQ_OFFSET);
-        }
+static void pic_send_eoi(struct irq_controller *self, int irq_num) {
+    (void) self;
+    sendEOI(irq_num - PIC_IRQ_OFFSET);
+}
 
-        enable_irq_line(irq_line);
-        debug_log("Registered PIC IRQ Line Handler: [ %#.1X, %#.16lX ]\n", irq_line, (uintptr_t) handler);
+static void pic_set_irq_enabled(struct irq_controller *self, int irq_num, bool enabled) {
+    (void) self;
+
+    int adjusted_irq = irq_num - PIC_IRQ_OFFSET;
+    if (enabled) {
+        enable_irq_line(adjusted_irq);
     } else {
-        printf("Invalid IRQ Line Requested: %u\n", irq_line);
+        disable_irq_line(adjusted_irq);
     }
 }
+
+static struct irq_controller_ops pic_ops = { .is_valid_irq = &pic_is_valid_irq,
+                                             .send_eoi = &pic_send_eoi,
+                                             .set_irq_enabled = &pic_set_irq_enabled };
+
+static struct irq_controller pic = { .irq_start = PIC_IRQ_OFFSET, .irq_end = PIC_IRQ_OFFSET + 2 * PIC_IRQS - 1, .ops = &pic_ops };
 
 void init_pic() {
     remap(PIC_IRQ_OFFSET, PIC_IRQ_OFFSET + PIC_IRQS);
@@ -127,6 +117,8 @@ void init_pic() {
             disable_irq_line(i);
         }
     }
+
+    register_irq_controller(&pic);
 }
 
 void disable_pic(void) {

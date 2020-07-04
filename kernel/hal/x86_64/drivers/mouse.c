@@ -7,6 +7,7 @@
 #include <kernel/fs/file.h>
 #include <kernel/hal/input.h>
 #include <kernel/hal/output.h>
+#include <kernel/irqs/handlers.h>
 
 #include <kernel/hal/x86_64/drivers/mouse.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
@@ -94,7 +95,7 @@ static struct mouse_event s_event = { 0 };
 static bool left_is_down = false;
 static bool right_is_down = false;
 
-void on_interrupt(void *closure __attribute__((unused))) {
+void on_interrupt(struct irq_context *context __attribute__((unused))) {
     uint8_t status = inb(PS2_CONTROL_REGISTER);
     if (!(((status & 0x20) == 0x20) && (status & 0x1))) {
         return;
@@ -181,8 +182,10 @@ void on_interrupt(void *closure __attribute__((unused))) {
     data.index = 0;
 }
 
+static struct irq_handler mouse_handler = { .handler = &on_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
+
 void init_mouse() {
-    register_irq_line_handler(on_interrupt, MOUSE_IRQ_LINE_NUM, NULL, true);
+    register_irq_handler(&mouse_handler, MOUSE_IRQ_LINE_NUM + PIC_IRQ_OFFSET);
 
     mouse_wait_for_output();
     outb(PS2_CONTROL_REGISTER, 0xA8);

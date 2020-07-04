@@ -5,6 +5,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 
@@ -21,8 +22,8 @@ extern uint64_t idle_ticks;
 extern uint64_t user_ticks;
 extern uint64_t kernel_ticks;
 
-void handle_pit_interrupt(struct task_state *task_state) {
-    sendEOI(PIT_IRQ_LINE);
+void handle_pit_interrupt(struct irq_context *context) {
+    context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
 
     struct task *current = get_current_task();
     if (current == &initial_kernel_task) {
@@ -53,7 +54,7 @@ void handle_pit_interrupt(struct task_state *task_state) {
         sched_count++;
         if (sched_count >= sched_count_to) {
             sched_count = 0;
-            sched_callback(task_state);
+            sched_callback(context->task_state);
         }
     }
 }
@@ -74,8 +75,10 @@ void pit_set_rate(unsigned int rate) {
     outb(PIT_CHANNEL_0, PIT_GET_DIVISOR(rate) >> 8);
 }
 
+static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
+
 void init_pit() {
-    register_irq_line_handler((void (*)(void *)) & handle_pit_interrupt, PIT_IRQ_LINE, NULL, false);
+    register_irq_handler(&pit_handler, PIT_IRQ_LINE + PIC_IRQ_OFFSET);
 
     pit_set_rate(1);
 }

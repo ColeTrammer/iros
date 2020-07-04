@@ -16,6 +16,7 @@
 #include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/proc/task.h>
 
 #define DMA_BUFFER_PAGES 15
@@ -417,7 +418,9 @@ static blkcnt_t ata_block_count(struct device *device) {
 
 static struct device_ops ata_ops = { .read = ata_read, .write = ata_write, .block_size = &ata_block_size, .block_count = &ata_block_count };
 
-static void ata_handle_irq(struct ata_device_data *data) {
+static void ata_handle_irq(struct irq_context *context) {
+    struct ata_device_data *data = context->closure;
+
     uint8_t status = inb(data->port_info->io_base + ATA_STATUS_OFFSET);
     if (status & 1) {
         debug_log("ata error: [ %u ]\n", status);
@@ -449,7 +452,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
         data->port_info->use_dma = true;
         data->dma_page = aligned_alloc(PAGE_SIZE, DMA_BUFFER_PAGES * PAGE_SIZE);
 
-        register_irq_line_handler((void (*)(void *)) ata_handle_irq, info->irq, data, true);
+        register_irq_handler(create_irq_handler(ata_handle_irq, IRQ_HANDLER_EXTERNAL, data), info->irq + PIC_IRQ_OFFSET);
 
         debug_log("found pic for ata (so will use dma): [ %#.8X ]\n", base);
     }

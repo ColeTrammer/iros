@@ -17,13 +17,15 @@
 // #define PAGING_DEBUG
 // #define DEVICE_NOT_AVAILABLE_DEBUG
 
-static void handle_double_fault() {
+static void handle_double_fault(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Double Fault");
     abort();
 }
 
-static void handle_divide_by_zero(struct task_state *task_state) {
+static void handle_divide_by_zero(struct irq_context *context) {
+    struct task_state *task_state = context->task_state;
+
     struct task *current = get_current_task();
     debug_log("%d #DE: [ %#.16lX ]\n", current->process->pid, task_state->stack_state.rip);
 
@@ -41,7 +43,10 @@ static void handle_divide_by_zero(struct task_state *task_state) {
     abort();
 }
 
-static void handle_stack_fault(struct task_state *task_state, uint32_t error_code) {
+static void handle_stack_fault(struct irq_context *context) {
+    struct task_state *task_state = context->task_state;
+    uint32_t error_code = context->error_code;
+
     struct task *current = get_current_task();
     debug_log("%d #SF: [ %#.16lX, %u ]\n", current->process->pid, task_state->stack_state.rip, error_code);
 
@@ -59,7 +64,10 @@ static void handle_stack_fault(struct task_state *task_state, uint32_t error_cod
     abort();
 }
 
-static void handle_general_protection_fault(struct task_state *task_state, uint32_t error_code) {
+static void handle_general_protection_fault(struct irq_context *context) {
+    struct task_state *task_state = context->task_state;
+    uint32_t error_code = context->error_code;
+
     struct task *current = get_current_task();
     debug_log("%d #GP: [ %#.16lX, %u ]\n", current->process->pid, task_state->stack_state.rip, error_code);
 
@@ -82,7 +90,9 @@ static void handle_general_protection_fault(struct task_state *task_state, uint3
     abort();
 }
 
-static void handle_page_fault(struct task_state *task_state, uint32_t error_code) {
+static void handle_page_fault(struct irq_context *context) {
+    struct task_state *task_state = context->task_state;
+    uint32_t error_code = context->error_code;
     uintptr_t address = get_cr2();
 
     struct task *current = get_current_task();
@@ -153,19 +163,19 @@ static void handle_page_fault(struct task_state *task_state, uint32_t error_code
     abort();
 }
 
-static void handle_invalid_opcode() {
+static void handle_invalid_opcode(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Invalid Opcode");
     abort();
 }
 
-static void handle_fpu_exception() {
+static void handle_fpu_exception(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "FPU Exception");
     abort();
 }
 
-static void handle_device_not_available() {
+static void handle_device_not_available(struct irq_context *context __attribute__((unused))) {
 #ifdef DEVICE_NOT_AVAILABLE_DEBUG
     struct task *current = get_current_task();
     assert(current);
@@ -173,79 +183,79 @@ static void handle_device_not_available() {
 #endif /* DEVICE_NOT_AVAILABLE_DEBUG */
 }
 
-static void handle_debug() {
+static void handle_debug(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Debug");
     abort();
 }
 
-static void handle_non_maskable_interrupt() {
+static void handle_non_maskable_interrupt(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Non-maskable Interrupt");
     abort();
 }
 
-static void handle_breakpoint() {
+static void handle_breakpoint(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Breakpoint");
     abort();
 }
 
-static void handle_overflow() {
+static void handle_overflow(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Overflow");
     abort();
 }
 
-static void handle_bound_range_exceeded() {
+static void handle_bound_range_exceeded(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Bound Range Exceeded");
     abort();
 }
 
-static void handle_invalid_tss() {
+static void handle_invalid_tss(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Invalid TSS");
     abort();
 }
 
-static void handle_segment_not_present() {
+static void handle_segment_not_present(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Segment Not Present");
     abort();
 }
 
-static void handle_alignment_check() {
+static void handle_alignment_check(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Alignment Check");
     abort();
 }
 
-static void handle_machine_check() {
+static void handle_machine_check(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Machine Check");
     abort();
 }
 
-static void handle_simd_exception() {
+static void handle_simd_exception(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "SIMD Exception");
     abort();
 }
 
-static void handle_virtualization_exception() {
+static void handle_virtualization_exception(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Virtualization Exception");
     abort();
 }
 
-static void handle_security_exception() {
+static void handle_security_exception(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Security Exception");
     abort();
 }
 
-static struct irq_handler handle_divide_by_zero_irq = { .handler = &handle_divide_by_zero, .flags = IRQ_HANDLER_USE_TASK_STATE };
+static struct irq_handler handle_divide_by_zero_irq = { .handler = &handle_divide_by_zero };
 static struct irq_handler handle_debug_irq = { .handler = &handle_debug };
 static struct irq_handler handle_non_maskable_interrupt_irq = { .handler = &handle_non_maskable_interrupt };
 static struct irq_handler handle_breakpoint_irq = { .handler = &handle_breakpoint };
@@ -256,19 +266,16 @@ static struct irq_handler handle_device_not_available_irq = { .handler = &handle
 static struct irq_handler handle_double_fault_irq = { .handler = &handle_double_fault };
 static struct irq_handler handle_invalid_tss_irq = { .handler = &handle_invalid_tss };
 static struct irq_handler handle_segment_not_present_irq = { .handler = &handle_segment_not_present };
-static struct irq_handler handle_stack_fault_irq = { .handler = &handle_stack_fault,
-                                                     .flags = IRQ_HANDLER_USE_TASK_STATE | IRQ_HANDLER_USE_ERROR_CODE };
-static struct irq_handler handle_general_protection_fault_irq = { .handler = &handle_general_protection_fault,
-                                                                  .flags = IRQ_HANDLER_USE_TASK_STATE | IRQ_HANDLER_USE_ERROR_CODE };
-static struct irq_handler handle_page_fault_irq = { .handler = &handle_page_fault,
-                                                    .flags = IRQ_HANDLER_USE_TASK_STATE | IRQ_HANDLER_USE_ERROR_CODE };
+static struct irq_handler handle_stack_fault_irq = { .handler = &handle_stack_fault };
+static struct irq_handler handle_general_protection_fault_irq = { .handler = &handle_general_protection_fault };
+static struct irq_handler handle_page_fault_irq = { .handler = &handle_page_fault };
 static struct irq_handler handle_fpu_exception_irq = { .handler = &handle_fpu_exception };
 static struct irq_handler handle_alignment_check_irq = { .handler = &handle_alignment_check };
 static struct irq_handler handle_machine_check_irq = { .handler = &handle_machine_check };
 static struct irq_handler handle_simd_exception_irq = { .handler = &handle_simd_exception };
 static struct irq_handler handle_virtualization_exception_irq = { .handler = &handle_virtualization_exception };
 static struct irq_handler handle_security_exception_irq = { .handler = &handle_security_exception };
-static struct irq_handler sys_call_irq = { .handler = &arch_system_call_entry, .flags = IRQ_HANDLER_USE_TASK_STATE };
+static struct irq_handler sys_call_irq = { .handler = &arch_system_call_entry };
 
 void init_irq_handlers() {
     register_irq_handler(&handle_divide_by_zero_irq, 0);

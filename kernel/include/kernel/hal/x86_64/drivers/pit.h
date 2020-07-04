@@ -34,8 +34,6 @@
 
 struct task_state;
 
-void handle_pit_interrupt(struct task_state *task_state);
-
 void init_pit();
 
 void pit_set_rate(unsigned int rate);
