@@ -131,3 +131,11 @@ void init_pic() {
         }
     }
 }
+
+void disable_pic(void) {
+    // Remap the pic irqs out of the way, and then disable all irqs the PIC can generate.
+    remap(PIC_IRQ_OFFSET, PIC_IRQ_OFFSET + PIC_IRQS);
+    for (uint8_t i = 0; i < 2 * PIC_IRQS; i++) {
+        disable_irq_line(i);
+    }
+}

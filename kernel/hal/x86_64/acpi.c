@@ -54,6 +54,12 @@ uintptr_t find_table(struct acpi_rsdt *rsdt, char *table_name) {
     return -1;
 }
 
+static struct acpi_info s_acpi_info;
+
+struct acpi_info *acpi_get_info(void) {
+    return &s_acpi_info;
+}
+
 void init_acpi(void) {
     uintptr_t rsdp_addr = find_rsdp();
     if (rsdp_addr == (uintptr_t) -1) {
@@ -94,6 +100,8 @@ void init_acpi(void) {
     }
 
     debug_log("Local APIC Address: [ %#.8X ]\n", madt->local_apic_addr);
+    s_acpi_info.local_apic_address = madt->local_apic_addr;
+
     debug_log("MADT flags: [ %#.8X ]\n", madt->flags);
 
     for (size_t offset = 0; offset < madt->header.length - sizeof(struct acpi_madt);) {
@@ -120,6 +128,7 @@ void init_acpi(void) {
                 break;
             case ACPI_MADT_TYPE_LOCAL_APIC_ADDRESS_OVERRIDE:
                 debug_log("Local APIC Address Override: [ %#.16lX ]\n", entry->local_apic_address_override.local_apic_phys_addr);
+                s_acpi_info.local_apic_address = entry->local_apic_address_override.local_apic_phys_addr;
                 break;
         }
     }
