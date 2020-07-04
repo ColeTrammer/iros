@@ -83,6 +83,11 @@ struct acpi_madt {
     uint8_t entries[0];
 } __attribute__((packed));
 
+struct acpi_info {
+    uintptr_t local_apic_address;
+};
+
 void init_acpi(void);
+struct acpi_info *acpi_get_info(void);
 
 #endif /* _KERNEL_HAL_X86_64_ACPI_H */

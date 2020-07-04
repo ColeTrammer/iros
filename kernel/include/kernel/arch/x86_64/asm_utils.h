@@ -136,7 +136,8 @@ static inline void cpuid(int code, uint32_t *a, uint32_t *b, uint32_t *c, uint32
     asm volatile("cpuid" : "=a"(*a), "=b"(b), "=c"(*c), "=d"(*d) : "0"(code));
 }
 
-#define MSR_FS_BASE 0xC0000100U
+#define MSR_LOCAL_APIC_BASE 0x1BU
+#define MSR_FS_BASE         0xC0000100U
 
 static inline uint64_t get_msr(uint32_t msr) {
     uint32_t low;

@@ -33,6 +33,7 @@
 #define PIC_IRQ_OFFSET 0x20
 
 void init_pic();
+void disable_pic(void);
 
 void pic_generic_handler_entry();
 

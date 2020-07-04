@@ -6,6 +6,7 @@
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/acpi.h>
+#include <kernel/hal/x86_64/drivers/apic.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
