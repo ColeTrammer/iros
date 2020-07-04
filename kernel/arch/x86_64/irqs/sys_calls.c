@@ -2546,7 +2546,9 @@ SYS_CALL(invalid_system_call) {
     SYS_RETURN(-ENOSYS);
 }
 
-void arch_system_call_entry(struct task_state *task_state) {
+void arch_system_call_entry(struct irq_context *context) {
+    struct task_state *task_state = context->task_state;
+
 #ifdef SYSCALL_DEBUG
 #undef __ENUMERATE_SYSCALL
 #define __ENUMERATE_SYSCALL(x, y, a)    \

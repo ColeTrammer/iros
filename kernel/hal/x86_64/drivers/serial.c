@@ -10,12 +10,13 @@
 
 #include <kernel/fs/dev.h>
 #include <kernel/hal/output.h>
+#include <kernel/irqs/handlers.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 
-static void handle_serial_interrupt(void *closure __attribute__((unused))) {
+static void handle_serial_interrupt(struct irq_context *context __attribute__((unused))) {
     debug_log("Recieved Serial Port Interrupt: Status [ %#.2X ]\n", inb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_STATUS_OFFSET)));
 }
 
@@ -67,13 +68,15 @@ static ssize_t serial_write(struct device *device, off_t offset, const void *buf
     return (ssize_t) len;
 }
 
-struct device_ops serial_ops = { .write = &serial_write };
+static struct device_ops serial_ops = { .write = &serial_write };
+
+static struct irq_handler serial_handler = { .handler = &handle_serial_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
 void init_serial_port_device(dev_t port, size_t i) {
     /* Could be anything */
     assert(port == SERIAL_COM1_PORT);
 
-    register_irq_line_handler(&handle_serial_interrupt, SERIAL_13_IRQ_LINE, NULL, true);
+    register_irq_handler(&serial_handler, SERIAL_13_IRQ_LINE + PIC_IRQ_OFFSET);
 
     struct device *device = calloc(1, sizeof(struct device));
     device->device_number = 0x00800 + i;

@@ -14,6 +14,7 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -480,7 +481,7 @@ static unsigned int flags = 0;
 
 static struct key_event event;
 
-static void handle_keyboard_interrupt(void *closure __attribute__((unused))) {
+static void handle_keyboard_interrupt(struct irq_context *context __attribute__((unused))) {
     uint8_t scan_code = inb(KEYBOARD_DATA_PORT);
 
     if (scan_code == KEYBOARD_ACK) {
@@ -552,8 +553,10 @@ static void handle_keyboard_interrupt(void *closure __attribute__((unused))) {
     }
 }
 
+static struct irq_handler keyboard_handler = { .handler = &handle_keyboard_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
+
 void init_keyboard() {
-    register_irq_line_handler(&handle_keyboard_interrupt, KEYBOARD_IRQ_LINE, NULL, true);
+    register_irq_handler(&keyboard_handler, KEYBOARD_IRQ_LINE + PIC_IRQ_OFFSET);
 
     while (inb(0x60) & 0x1) {
         inb(KEYBOARD_DATA_PORT);
