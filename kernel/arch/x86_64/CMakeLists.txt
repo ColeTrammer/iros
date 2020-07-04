@@ -26,9 +26,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/drivers/keyboard.c
     ${KERNEL_HALDIR}/drivers/mouse.c
     ${KERNEL_HALDIR}/drivers/pci.c
-    ${KERNEL_HALDIR}/drivers/pic_handler.S
     ${KERNEL_HALDIR}/drivers/pic.c
-    ${KERNEL_HALDIR}/drivers/pit_handler.S
     ${KERNEL_HALDIR}/drivers/pit.c
     ${KERNEL_HALDIR}/drivers/serial.c
     ${KERNEL_HALDIR}/drivers/vga.c

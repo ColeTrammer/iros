@@ -1,58 +1,276 @@
 #ifndef _KERNEL_ARCH_X86_64_IRQS_ARCH_HANDLERS_H
 #define _KERNEL_ARCH_X86_64_IRQS_ARCH_HANDLERS_H 1
 
-#include <stdint.h>
+#include <stdbool.h>
 
-#include <kernel/proc/task.h>
+#define IRQ_USE_SEPARATE_STACK 1
+#define IRQ_USER_AVAILABLE     2
+#define IRQ_HAS_ERROR_CODE     4
 
-struct task_interrupt_state {
-    struct cpu_state cpu_state;
-    uint64_t error_code;
-    struct stack_state stack_state;
-} __attribute__((packed));
+#define __ENUMERATE_IRQS                                             \
+    __ENUMERATE_IRQ(0, 0)                                            \
+    __ENUMERATE_IRQ(1, 0)                                            \
+    __ENUMERATE_IRQ(2, 0)                                            \
+    __ENUMERATE_IRQ(3, 0)                                            \
+    __ENUMERATE_IRQ(4, 0)                                            \
+    __ENUMERATE_IRQ(5, 0)                                            \
+    __ENUMERATE_IRQ(6, 0)                                            \
+    __ENUMERATE_IRQ(7, IRQ_HAS_ERROR_CODE)                           \
+    __ENUMERATE_IRQ(8, IRQ_USE_SEPARATE_STACK)                       \
+    __ENUMERATE_IRQ(9, 0)                                            \
+    __ENUMERATE_IRQ(10, IRQ_HAS_ERROR_CODE)                          \
+    __ENUMERATE_IRQ(11, IRQ_HAS_ERROR_CODE)                          \
+    __ENUMERATE_IRQ(12, IRQ_USE_SEPARATE_STACK | IRQ_HAS_ERROR_CODE) \
+    __ENUMERATE_IRQ(13, IRQ_HAS_ERROR_CODE)                          \
+    __ENUMERATE_IRQ(14, IRQ_HAS_ERROR_CODE)                          \
+    __ENUMERATE_IRQ(15, 0)                                           \
+    __ENUMERATE_IRQ(16, 0)                                           \
+    __ENUMERATE_IRQ(17, IRQ_HAS_ERROR_CODE)                          \
+    __ENUMERATE_IRQ(18, 0)                                           \
+    __ENUMERATE_IRQ(19, 0)                                           \
+    __ENUMERATE_IRQ(20, 0)                                           \
+    __ENUMERATE_IRQ(21, 0)                                           \
+    __ENUMERATE_IRQ(22, 0)                                           \
+    __ENUMERATE_IRQ(23, 0)                                           \
+    __ENUMERATE_IRQ(24, 0)                                           \
+    __ENUMERATE_IRQ(25, 0)                                           \
+    __ENUMERATE_IRQ(26, 0)                                           \
+    __ENUMERATE_IRQ(27, 0)                                           \
+    __ENUMERATE_IRQ(28, 0)                                           \
+    __ENUMERATE_IRQ(29, 0)                                           \
+    __ENUMERATE_IRQ(30, 0)                                           \
+    __ENUMERATE_IRQ(31, 0)                                           \
+    __ENUMERATE_IRQ(32, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(33, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(34, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(35, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(36, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(37, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(38, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(39, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(40, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(41, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(42, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(43, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(44, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(45, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(46, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(47, IRQ_USE_SEPARATE_STACK)                      \
+    __ENUMERATE_IRQ(48, 0)                                           \
+    __ENUMERATE_IRQ(49, 0)                                           \
+    __ENUMERATE_IRQ(50, 0)                                           \
+    __ENUMERATE_IRQ(51, 0)                                           \
+    __ENUMERATE_IRQ(52, 0)                                           \
+    __ENUMERATE_IRQ(53, 0)                                           \
+    __ENUMERATE_IRQ(54, 0)                                           \
+    __ENUMERATE_IRQ(55, 0)                                           \
+    __ENUMERATE_IRQ(56, 0)                                           \
+    __ENUMERATE_IRQ(57, 0)                                           \
+    __ENUMERATE_IRQ(58, 0)                                           \
+    __ENUMERATE_IRQ(59, 0)                                           \
+    __ENUMERATE_IRQ(60, 0)                                           \
+    __ENUMERATE_IRQ(61, 0)                                           \
+    __ENUMERATE_IRQ(62, 0)                                           \
+    __ENUMERATE_IRQ(63, 0)                                           \
+    __ENUMERATE_IRQ(64, 0)                                           \
+    __ENUMERATE_IRQ(65, 0)                                           \
+    __ENUMERATE_IRQ(66, 0)                                           \
+    __ENUMERATE_IRQ(67, 0)                                           \
+    __ENUMERATE_IRQ(68, 0)                                           \
+    __ENUMERATE_IRQ(69, 0)                                           \
+    __ENUMERATE_IRQ(70, 0)                                           \
+    __ENUMERATE_IRQ(71, 0)                                           \
+    __ENUMERATE_IRQ(72, 0)                                           \
+    __ENUMERATE_IRQ(73, 0)                                           \
+    __ENUMERATE_IRQ(74, 0)                                           \
+    __ENUMERATE_IRQ(75, 0)                                           \
+    __ENUMERATE_IRQ(76, 0)                                           \
+    __ENUMERATE_IRQ(77, 0)                                           \
+    __ENUMERATE_IRQ(78, 0)                                           \
+    __ENUMERATE_IRQ(79, 0)                                           \
+    __ENUMERATE_IRQ(80, 0)                                           \
+    __ENUMERATE_IRQ(81, 0)                                           \
+    __ENUMERATE_IRQ(82, 0)                                           \
+    __ENUMERATE_IRQ(83, 0)                                           \
+    __ENUMERATE_IRQ(84, 0)                                           \
+    __ENUMERATE_IRQ(85, 0)                                           \
+    __ENUMERATE_IRQ(86, 0)                                           \
+    __ENUMERATE_IRQ(87, 0)                                           \
+    __ENUMERATE_IRQ(88, 0)                                           \
+    __ENUMERATE_IRQ(89, 0)                                           \
+    __ENUMERATE_IRQ(90, 0)                                           \
+    __ENUMERATE_IRQ(91, 0)                                           \
+    __ENUMERATE_IRQ(92, 0)                                           \
+    __ENUMERATE_IRQ(93, 0)                                           \
+    __ENUMERATE_IRQ(94, 0)                                           \
+    __ENUMERATE_IRQ(95, 0)                                           \
+    __ENUMERATE_IRQ(96, 0)                                           \
+    __ENUMERATE_IRQ(97, 0)                                           \
+    __ENUMERATE_IRQ(98, 0)                                           \
+    __ENUMERATE_IRQ(99, 0)                                           \
+    __ENUMERATE_IRQ(100, 0)                                          \
+    __ENUMERATE_IRQ(101, 0)                                          \
+    __ENUMERATE_IRQ(102, 0)                                          \
+    __ENUMERATE_IRQ(103, 0)                                          \
+    __ENUMERATE_IRQ(104, 0)                                          \
+    __ENUMERATE_IRQ(105, 0)                                          \
+    __ENUMERATE_IRQ(106, 0)                                          \
+    __ENUMERATE_IRQ(107, 0)                                          \
+    __ENUMERATE_IRQ(108, 0)                                          \
+    __ENUMERATE_IRQ(109, 0)                                          \
+    __ENUMERATE_IRQ(110, 0)                                          \
+    __ENUMERATE_IRQ(111, 0)                                          \
+    __ENUMERATE_IRQ(112, 0)                                          \
+    __ENUMERATE_IRQ(113, 0)                                          \
+    __ENUMERATE_IRQ(114, 0)                                          \
+    __ENUMERATE_IRQ(115, 0)                                          \
+    __ENUMERATE_IRQ(116, 0)                                          \
+    __ENUMERATE_IRQ(117, 0)                                          \
+    __ENUMERATE_IRQ(118, 0)                                          \
+    __ENUMERATE_IRQ(119, 0)                                          \
+    __ENUMERATE_IRQ(120, 0)                                          \
+    __ENUMERATE_IRQ(121, 0)                                          \
+    __ENUMERATE_IRQ(122, 0)                                          \
+    __ENUMERATE_IRQ(123, 0)                                          \
+    __ENUMERATE_IRQ(124, 0)                                          \
+    __ENUMERATE_IRQ(125, 0)                                          \
+    __ENUMERATE_IRQ(126, 0)                                          \
+    __ENUMERATE_IRQ(127, 0)                                          \
+    __ENUMERATE_IRQ(128, IRQ_USER_AVAILABLE)                         \
+    __ENUMERATE_IRQ(129, 0)                                          \
+    __ENUMERATE_IRQ(130, 0)                                          \
+    __ENUMERATE_IRQ(131, 0)                                          \
+    __ENUMERATE_IRQ(132, 0)                                          \
+    __ENUMERATE_IRQ(133, 0)                                          \
+    __ENUMERATE_IRQ(134, 0)                                          \
+    __ENUMERATE_IRQ(135, 0)                                          \
+    __ENUMERATE_IRQ(136, 0)                                          \
+    __ENUMERATE_IRQ(137, 0)                                          \
+    __ENUMERATE_IRQ(138, 0)                                          \
+    __ENUMERATE_IRQ(139, 0)                                          \
+    __ENUMERATE_IRQ(140, 0)                                          \
+    __ENUMERATE_IRQ(141, 0)                                          \
+    __ENUMERATE_IRQ(142, 0)                                          \
+    __ENUMERATE_IRQ(143, 0)                                          \
+    __ENUMERATE_IRQ(144, 0)                                          \
+    __ENUMERATE_IRQ(145, 0)                                          \
+    __ENUMERATE_IRQ(146, 0)                                          \
+    __ENUMERATE_IRQ(147, 0)                                          \
+    __ENUMERATE_IRQ(148, 0)                                          \
+    __ENUMERATE_IRQ(149, 0)                                          \
+    __ENUMERATE_IRQ(150, 0)                                          \
+    __ENUMERATE_IRQ(151, 0)                                          \
+    __ENUMERATE_IRQ(152, 0)                                          \
+    __ENUMERATE_IRQ(153, 0)                                          \
+    __ENUMERATE_IRQ(154, 0)                                          \
+    __ENUMERATE_IRQ(155, 0)                                          \
+    __ENUMERATE_IRQ(156, 0)                                          \
+    __ENUMERATE_IRQ(157, 0)                                          \
+    __ENUMERATE_IRQ(158, 0)                                          \
+    __ENUMERATE_IRQ(159, 0)                                          \
+    __ENUMERATE_IRQ(160, 0)                                          \
+    __ENUMERATE_IRQ(161, 0)                                          \
+    __ENUMERATE_IRQ(162, 0)                                          \
+    __ENUMERATE_IRQ(163, 0)                                          \
+    __ENUMERATE_IRQ(164, 0)                                          \
+    __ENUMERATE_IRQ(165, 0)                                          \
+    __ENUMERATE_IRQ(166, 0)                                          \
+    __ENUMERATE_IRQ(167, 0)                                          \
+    __ENUMERATE_IRQ(168, 0)                                          \
+    __ENUMERATE_IRQ(169, 0)                                          \
+    __ENUMERATE_IRQ(170, 0)                                          \
+    __ENUMERATE_IRQ(171, 0)                                          \
+    __ENUMERATE_IRQ(172, 0)                                          \
+    __ENUMERATE_IRQ(173, 0)                                          \
+    __ENUMERATE_IRQ(174, 0)                                          \
+    __ENUMERATE_IRQ(175, 0)                                          \
+    __ENUMERATE_IRQ(176, 0)                                          \
+    __ENUMERATE_IRQ(177, 0)                                          \
+    __ENUMERATE_IRQ(178, 0)                                          \
+    __ENUMERATE_IRQ(179, 0)                                          \
+    __ENUMERATE_IRQ(180, 0)                                          \
+    __ENUMERATE_IRQ(181, 0)                                          \
+    __ENUMERATE_IRQ(182, 0)                                          \
+    __ENUMERATE_IRQ(183, 0)                                          \
+    __ENUMERATE_IRQ(184, 0)                                          \
+    __ENUMERATE_IRQ(185, 0)                                          \
+    __ENUMERATE_IRQ(186, 0)                                          \
+    __ENUMERATE_IRQ(187, 0)                                          \
+    __ENUMERATE_IRQ(188, 0)                                          \
+    __ENUMERATE_IRQ(189, 0)                                          \
+    __ENUMERATE_IRQ(190, 0)                                          \
+    __ENUMERATE_IRQ(191, 0)                                          \
+    __ENUMERATE_IRQ(192, 0)                                          \
+    __ENUMERATE_IRQ(193, 0)                                          \
+    __ENUMERATE_IRQ(194, 0)                                          \
+    __ENUMERATE_IRQ(195, 0)                                          \
+    __ENUMERATE_IRQ(196, 0)                                          \
+    __ENUMERATE_IRQ(197, 0)                                          \
+    __ENUMERATE_IRQ(198, 0)                                          \
+    __ENUMERATE_IRQ(199, 0)                                          \
+    __ENUMERATE_IRQ(200, 0)                                          \
+    __ENUMERATE_IRQ(201, 0)                                          \
+    __ENUMERATE_IRQ(202, 0)                                          \
+    __ENUMERATE_IRQ(203, 0)                                          \
+    __ENUMERATE_IRQ(204, 0)                                          \
+    __ENUMERATE_IRQ(205, 0)                                          \
+    __ENUMERATE_IRQ(206, 0)                                          \
+    __ENUMERATE_IRQ(207, 0)                                          \
+    __ENUMERATE_IRQ(208, 0)                                          \
+    __ENUMERATE_IRQ(209, 0)                                          \
+    __ENUMERATE_IRQ(210, 0)                                          \
+    __ENUMERATE_IRQ(211, 0)                                          \
+    __ENUMERATE_IRQ(212, 0)                                          \
+    __ENUMERATE_IRQ(213, 0)                                          \
+    __ENUMERATE_IRQ(214, 0)                                          \
+    __ENUMERATE_IRQ(215, 0)                                          \
+    __ENUMERATE_IRQ(216, 0)                                          \
+    __ENUMERATE_IRQ(217, 0)                                          \
+    __ENUMERATE_IRQ(218, 0)                                          \
+    __ENUMERATE_IRQ(219, 0)                                          \
+    __ENUMERATE_IRQ(220, 0)                                          \
+    __ENUMERATE_IRQ(221, 0)                                          \
+    __ENUMERATE_IRQ(222, 0)                                          \
+    __ENUMERATE_IRQ(223, 0)                                          \
+    __ENUMERATE_IRQ(224, 0)                                          \
+    __ENUMERATE_IRQ(225, 0)                                          \
+    __ENUMERATE_IRQ(226, 0)                                          \
+    __ENUMERATE_IRQ(227, 0)                                          \
+    __ENUMERATE_IRQ(228, 0)                                          \
+    __ENUMERATE_IRQ(229, 0)                                          \
+    __ENUMERATE_IRQ(230, 0)                                          \
+    __ENUMERATE_IRQ(231, 0)                                          \
+    __ENUMERATE_IRQ(232, 0)                                          \
+    __ENUMERATE_IRQ(233, 0)                                          \
+    __ENUMERATE_IRQ(234, 0)                                          \
+    __ENUMERATE_IRQ(235, 0)                                          \
+    __ENUMERATE_IRQ(236, 0)                                          \
+    __ENUMERATE_IRQ(237, 0)                                          \
+    __ENUMERATE_IRQ(238, 0)                                          \
+    __ENUMERATE_IRQ(239, 0)                                          \
+    __ENUMERATE_IRQ(240, 0)                                          \
+    __ENUMERATE_IRQ(241, 0)                                          \
+    __ENUMERATE_IRQ(242, 0)                                          \
+    __ENUMERATE_IRQ(243, 0)                                          \
+    __ENUMERATE_IRQ(244, 0)                                          \
+    __ENUMERATE_IRQ(245, 0)                                          \
+    __ENUMERATE_IRQ(246, 0)                                          \
+    __ENUMERATE_IRQ(247, 0)                                          \
+    __ENUMERATE_IRQ(248, 0)                                          \
+    __ENUMERATE_IRQ(249, 0)                                          \
+    __ENUMERATE_IRQ(250, 0)                                          \
+    __ENUMERATE_IRQ(251, 0)                                          \
+    __ENUMERATE_IRQ(252, 0)                                          \
+    __ENUMERATE_IRQ(253, 0)                                          \
+    __ENUMERATE_IRQ(254, 0)                                          \
+    __ENUMERATE_IRQ(255, 0)
 
-void handle_divide_by_zero_entry();
-void handle_debug_entry();
-void handle_non_maskable_interrupt_entry();
-void handle_breakpoint_entry();
-void handle_overflow_entry();
-void handle_bound_range_exceeded_entry();
-void handle_invalid_opcode_entry();
-void handle_device_not_available_entry();
-void handle_double_fault_entry();
-void handle_invalid_tss_entry();
-void handle_segment_not_present_entry();
-void handle_stack_fault_entry();
-void handle_general_protection_fault_entry();
-void handle_page_fault_entry();
-void handle_fpu_exception_entry();
-void handle_alignment_check_entry();
-void handle_machine_check_entry();
-void handle_simd_exception_entry();
-void handle_virtualization_exception_entry();
-void handle_security_exception_entry();
+#undef __ENUMERATE_IRQ
+#define __ENUMERATE_IRQ(n, f) void interrupt_handler_##n(void);
+__ENUMERATE_IRQS
 
-void sys_call_entry();
-
-void handle_divide_by_zero(struct task_state *task_state);
-void handle_debug();
-void handle_non_maskable_interrupt();
-void handle_breakpoint();
-void handle_overflow();
-void handle_bound_range_exceeded();
-void handle_stack_fault();
-void handle_double_fault();
-void handle_general_protection_fault(struct task_interrupt_state *task_state);
-void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t address);
-void handle_invalid_opcode();
-void handle_invalid_tss();
-void handle_segment_not_present();
-void handle_fpu_exception();
-void handle_device_not_available();
-void handle_alignment_check();
-void handle_machine_check();
-void handle_simd_exception();
-void handle_virtualization_exception();
-void handle_security_exception();
+static inline bool irq_is_external(int n) {
+    return n >= 32 && n != 128;
+}
 
 #endif /* _KERNEL_ARCH_X86_64_IRQS_ARCH_HANDLERS_H */

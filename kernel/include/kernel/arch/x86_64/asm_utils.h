@@ -54,6 +54,16 @@ static inline void load_cr3(uintptr_t cr3) {
                  : "rdx");
 }
 
+static inline uint64_t get_cr2() {
+    uint64_t cr2;
+    asm volatile("mov %%cr2, %%rdx\n"
+                 "mov %%rdx, %0"
+                 : "=m"(cr2)
+                 :
+                 : "rdx");
+    return cr2;
+}
+
 static inline uint64_t get_cr3() {
     uint64_t cr3;
     asm volatile("mov %%cr3, %%rdx\n"

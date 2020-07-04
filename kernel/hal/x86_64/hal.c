@@ -60,8 +60,6 @@ void init_cpus(void) {
 }
 
 void init_drivers(void) {
-    init_pci();
-    init_pit();
 
     init_keyboard();
     init_mouse();
@@ -69,10 +67,13 @@ void init_drivers(void) {
     init_fdc();
     init_ata();
     init_serial_port_device(SERIAL_COM1_PORT, 0);
+    init_pit();
 
     if (!kernel_use_graphics()) {
         init_vga_device();
     }
+
+    init_pci();
 
     init_virtual_devices();
     debug_log("Finished Initializing Drivers\n");

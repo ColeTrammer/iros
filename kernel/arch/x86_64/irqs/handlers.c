@@ -15,45 +15,15 @@
 
 // #define PAGE_FAULT_DEBUG
 // #define PAGING_DEBUG
-#define DEVICE_NOT_AVAILABLE_DEBUG
+// #define DEVICE_NOT_AVAILABLE_DEBUG
 
-void init_irq_handlers() {
-    register_irq_handler(&handle_divide_by_zero, 0, false, false);
-    register_irq_handler(&handle_debug_entry, 1, false, false);
-    register_irq_handler(&handle_non_maskable_interrupt_entry, 2, false, false);
-    register_irq_handler(&handle_breakpoint_entry, 3, false, false);
-    register_irq_handler(&handle_overflow_entry, 4, false, false);
-    register_irq_handler(&handle_bound_range_exceeded_entry, 5, false, false);
-    register_irq_handler(&handle_invalid_opcode_entry, 6, false, false);
-    register_irq_handler(&handle_device_not_available_entry, 7, false, false);
-    register_irq_handler(&handle_double_fault_entry, 8, false, true);
-
-    register_irq_handler(&handle_invalid_tss_entry, 10, false, false);
-    register_irq_handler(&handle_segment_not_present_entry, 11, false, false);
-    register_irq_handler(&handle_stack_fault, 12, false, true);
-    register_irq_handler(&handle_general_protection_fault_entry, 13, false, false);
-    register_irq_handler(&handle_page_fault_entry, 14, false, false);
-
-    register_irq_handler(&handle_fpu_exception_entry, 16, false, false);
-    register_irq_handler(&handle_alignment_check_entry, 17, false, false);
-    register_irq_handler(&handle_machine_check_entry, 18, false, false);
-    register_irq_handler(&handle_simd_exception_entry, 19, false, false);
-    register_irq_handler(&handle_virtualization_exception, 20, false, false);
-
-    register_irq_handler(&handle_security_exception, 30, false, false);
-
-    register_irq_handler(&sys_call_entry, 128, true, false);
-
-    debug_log("Finished Initializing Handlers\n");
-}
-
-void handle_double_fault() {
+static void handle_double_fault() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Double Fault");
     abort();
 }
 
-void handle_divide_by_zero(struct task_state *task_state) {
+static void handle_divide_by_zero(struct task_state *task_state) {
     struct task *current = get_current_task();
     debug_log("%d #DE: [ %#.16lX ]\n", current->process->pid, task_state->stack_state.rip);
 
@@ -71,13 +41,12 @@ void handle_divide_by_zero(struct task_state *task_state) {
     abort();
 }
 
-void handle_stack_fault(struct task_interrupt_state *task_state) {
+static void handle_stack_fault(struct task_state *task_state, uint32_t error_code) {
     struct task *current = get_current_task();
-    debug_log("%d #SF: [ %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rip, task_state->error_code);
+    debug_log("%d #SF: [ %#.16lX, %u ]\n", current->process->pid, task_state->stack_state.rip, error_code);
 
     if (!current->in_kernel) {
-        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
-        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
@@ -86,20 +55,19 @@ void handle_stack_fault(struct task_interrupt_state *task_state) {
 
     // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
-    printf("\n\033[31m%s: Error: %lX\033[0m\n", "Stack Fault", task_state->error_code);
+    printf("\n\033[31m%s: Error: %X\033[0m\n", "Stack Fault", error_code);
     abort();
 }
 
-void handle_general_protection_fault(struct task_interrupt_state *task_state) {
+static void handle_general_protection_fault(struct task_state *task_state, uint32_t error_code) {
     struct task *current = get_current_task();
-    debug_log("%d #GP: [ %#.16lX, %lu ]\n", current->process->pid, task_state->stack_state.rip, task_state->error_code);
+    debug_log("%d #GP: [ %#.16lX, %u ]\n", current->process->pid, task_state->stack_state.rip, error_code);
 
     printf("\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (general protection fault)\033[0;37m: [ %#.16lX, "
            "%#.16lX ]\n",
            current->process->pid, current->tid, task_state->stack_state.rip, task_state->stack_state.rsp);
     if (!current->in_kernel) {
-        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
-        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
@@ -114,25 +82,26 @@ void handle_general_protection_fault(struct task_interrupt_state *task_state) {
     abort();
 }
 
-void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t address) {
+static void handle_page_fault(struct task_state *task_state, uint32_t error_code) {
+    uintptr_t address = get_cr2();
+
     struct task *current = get_current_task();
     // In this case we just need to map in a region that's allocation was put off by the kernel
     struct vm_region *vm_region = find_user_vm_region_by_addr(address);
 
 #ifdef PAGE_FAULT_DEBUG
-    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %lu, %p ]\n", current->process->pid, task_state->stack_state.rsp,
-              task_state->stack_state.rip, address, task_state->error_code, vm_region);
+    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %u, %p ]\n", current->process->pid, task_state->stack_state.rsp,
+              task_state->stack_state.rip, address, error_code, vm_region);
 #endif /* PAGE_FAULT_DEBUG */
 
-    if (vm_region && !(task_state->error_code & 1) && address != vm_region->end && !(vm_region->flags & VM_PROT_NONE) &&
-        !(vm_region->flags & VM_COW)) {
+    if (vm_region && !(error_code & 1) && address != vm_region->end && !(vm_region->flags & VM_PROT_NONE) && !(vm_region->flags & VM_COW)) {
         // Return if we can handle the fault
         if (!vm_handle_fault_in_region(vm_region, address)) {
             return;
         }
     }
 
-    if (vm_region && ((task_state->error_code & 3) == 3) && address != vm_region->end && is_virt_addr_cow(address) &&
+    if (vm_region && ((error_code & 3) == 3) && address != vm_region->end && is_virt_addr_cow(address) &&
         !(vm_region->flags & VM_PROT_NONE) && (vm_region->flags & VM_WRITE)) {
 #ifdef PAGE_FAULT_DEBUG
         debug_log("handling cow fault: [ %#.16lX ]\n", address);
@@ -148,30 +117,28 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     uint64_t pd_offset = (address >> 21) & 0x1FF;
     uint64_t pt_offset = (address >> 12) & 0x1FF;
 
-    uint64_t *pml4_entry = PML4_BASE + pml4_offset;
-    uint64_t *pdp_entry = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
-    uint64_t *pd_entry = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
-    uint64_t *pt_entry = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
+    uint64_t *pml4 = PML4_BASE + pml4_offset;
+    uint64_t *pdp = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
+    uint64_t *pd = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
+    uint64_t *pt = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
 
-    debug_log("*pml4_entry: [ %#.16lX ]\n", *pml4_entry);
-    if (*pml4_entry & 1) {
-        debug_log("*pdp_entry: [ %#.16lX ]\n", *pdp_entry);
-        if (*pdp_entry & 1) {
-            debug_log("*pd_entry: [ %#.16lX ]\n", *pd_entry);
-            if (*pd_entry & 1) {
-                debug_log("*pt_entry: [ %#.16lX ]\n", *pt_entry);
+    debug_log("*pml4: [ %#.16lX ]\n", *pml4);
+    if (*pml4 & 1) {
+        debug_log("*pdp: [ %#.16lX ]\n", *pdp);
+        if (*pdp & 1) {
+            debug_log("*pd: [ %#.16lX ]\n", *pd);
+            if (*pd & 1) {
+                debug_log("*pt: [ %#.16lX ]\n", *pt);
             }
         }
     }
 #endif /* PAGING_DEBUG */
 
     bool is_kernel = current->kernel_task || current->in_kernel;
-    printf(
-        "\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %lu ]\n",
-        current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, task_state->error_code);
+    printf("\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %u ]\n",
+           current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, error_code);
     if (!is_kernel) {
-        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
-        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
@@ -186,19 +153,19 @@ void handle_page_fault(struct task_interrupt_state *task_state, uintptr_t addres
     abort();
 }
 
-void handle_invalid_opcode() {
+static void handle_invalid_opcode() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Invalid Opcode");
     abort();
 }
 
-void handle_fpu_exception() {
+static void handle_fpu_exception() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "FPU Exception");
     abort();
 }
 
-void handle_device_not_available() {
+static void handle_device_not_available() {
 #ifdef DEVICE_NOT_AVAILABLE_DEBUG
     struct task *current = get_current_task();
     assert(current);
@@ -206,74 +173,129 @@ void handle_device_not_available() {
 #endif /* DEVICE_NOT_AVAILABLE_DEBUG */
 }
 
-void handle_debug() {
+static void handle_debug() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Debug");
     abort();
 }
 
-void handle_non_maskable_interrupt() {
+static void handle_non_maskable_interrupt() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Non-maskable Interrupt");
     abort();
 }
 
-void handle_breakpoint() {
+static void handle_breakpoint() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Breakpoint");
     abort();
 }
 
-void handle_overflow() {
+static void handle_overflow() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Overflow");
     abort();
 }
 
-void handle_bound_range_exceeded() {
+static void handle_bound_range_exceeded() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Bound Range Exceeded");
     abort();
 }
 
-void handle_invalid_tss() {
+static void handle_invalid_tss() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Invalid TSS");
     abort();
 }
 
-void handle_segment_not_present() {
+static void handle_segment_not_present() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Segment Not Present");
     abort();
 }
 
-void handle_alignment_check() {
+static void handle_alignment_check() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Alignment Check");
     abort();
 }
 
-void handle_machine_check() {
+static void handle_machine_check() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Machine Check");
     abort();
 }
 
-void handle_simd_exception() {
+static void handle_simd_exception() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "SIMD Exception");
     abort();
 }
 
-void handle_virtualization_exception() {
+static void handle_virtualization_exception() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Virtualization Exception");
     abort();
 }
 
-void handle_security_exception() {
+static void handle_security_exception() {
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "Security Exception");
     abort();
+}
+
+static struct irq_handler handle_divide_by_zero_irq = { .handler = &handle_divide_by_zero, .flags = IRQ_HANDLER_USE_TASK_STATE };
+static struct irq_handler handle_debug_irq = { .handler = &handle_debug };
+static struct irq_handler handle_non_maskable_interrupt_irq = { .handler = &handle_non_maskable_interrupt };
+static struct irq_handler handle_breakpoint_irq = { .handler = &handle_breakpoint };
+static struct irq_handler handle_overflow_irq = { .handler = &handle_overflow };
+static struct irq_handler handle_bound_range_exceeded_irq = { .handler = &handle_bound_range_exceeded };
+static struct irq_handler handle_invalid_opcode_irq = { .handler = &handle_invalid_opcode };
+static struct irq_handler handle_device_not_available_irq = { .handler = &handle_device_not_available };
+static struct irq_handler handle_double_fault_irq = { .handler = &handle_double_fault };
+static struct irq_handler handle_invalid_tss_irq = { .handler = &handle_invalid_tss };
+static struct irq_handler handle_segment_not_present_irq = { .handler = &handle_segment_not_present };
+static struct irq_handler handle_stack_fault_irq = { .handler = &handle_stack_fault,
+                                                     .flags = IRQ_HANDLER_USE_TASK_STATE | IRQ_HANDLER_USE_ERROR_CODE };
+static struct irq_handler handle_general_protection_fault_irq = { .handler = &handle_general_protection_fault,
+                                                                  .flags = IRQ_HANDLER_USE_TASK_STATE | IRQ_HANDLER_USE_ERROR_CODE };
+static struct irq_handler handle_page_fault_irq = { .handler = &handle_page_fault,
+                                                    .flags = IRQ_HANDLER_USE_TASK_STATE | IRQ_HANDLER_USE_ERROR_CODE };
+static struct irq_handler handle_fpu_exception_irq = { .handler = &handle_fpu_exception };
+static struct irq_handler handle_alignment_check_irq = { .handler = &handle_alignment_check };
+static struct irq_handler handle_machine_check_irq = { .handler = &handle_machine_check };
+static struct irq_handler handle_simd_exception_irq = { .handler = &handle_simd_exception };
+static struct irq_handler handle_virtualization_exception_irq = { .handler = &handle_virtualization_exception };
+static struct irq_handler handle_security_exception_irq = { .handler = &handle_security_exception };
+static struct irq_handler sys_call_irq = { .handler = &arch_system_call_entry, .flags = IRQ_HANDLER_USE_TASK_STATE };
+
+void init_irq_handlers() {
+    register_irq_handler(&handle_divide_by_zero_irq, 0);
+    register_irq_handler(&handle_debug_irq, 1);
+    register_irq_handler(&handle_non_maskable_interrupt_irq, 2);
+    register_irq_handler(&handle_breakpoint_irq, 3);
+    register_irq_handler(&handle_overflow_irq, 4);
+    register_irq_handler(&handle_bound_range_exceeded_irq, 5);
+    register_irq_handler(&handle_invalid_opcode_irq, 6);
+    register_irq_handler(&handle_device_not_available_irq, 7);
+    register_irq_handler(&handle_double_fault_irq, 8);
+
+    register_irq_handler(&handle_invalid_tss_irq, 10);
+    register_irq_handler(&handle_segment_not_present_irq, 11);
+    register_irq_handler(&handle_stack_fault_irq, 12);
+    register_irq_handler(&handle_general_protection_fault_irq, 13);
+    register_irq_handler(&handle_page_fault_irq, 14);
+
+    register_irq_handler(&handle_fpu_exception_irq, 16);
+    register_irq_handler(&handle_alignment_check_irq, 17);
+    register_irq_handler(&handle_machine_check_irq, 18);
+    register_irq_handler(&handle_simd_exception_irq, 19);
+    register_irq_handler(&handle_virtualization_exception_irq, 20);
+
+    register_irq_handler(&handle_security_exception_irq, 30);
+
+    register_irq_handler(&sys_call_irq, 128);
+
+    debug_log("Finished Initializing Handlers\n");
 }

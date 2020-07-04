@@ -6,6 +6,7 @@
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/proc/task.h>
 
 static void (*handlers[2 * PIC_IRQS])(void *) = { 0 };
@@ -102,18 +103,14 @@ void pic_generic_handler() {
     sendEOI(irq_line);
 }
 
-bool is_irq_line_registered(unsigned int irq_line) {
-    return is_irq_registered(irq_line + PIC_IRQ_OFFSET);
-}
-
 void register_irq_line_handler(void (*handler)(void *cls), unsigned int irq_line, void *closure, bool use_generic_handler) {
     if (irq_line < 2 * PIC_IRQS) {
         if (use_generic_handler) {
             handlers[irq_line] = handler;
             closures[irq_line] = closure;
-            register_irq_handler(&pic_generic_handler_entry, irq_line + PIC_IRQ_OFFSET, false, true);
+            register_irq_handler(create_irq_handler(pic_generic_handler, 0, NULL), irq_line + PIC_IRQ_OFFSET);
         } else {
-            register_irq_handler(handler, irq_line + PIC_IRQ_OFFSET, false, true);
+            register_irq_handler(create_irq_handler(handler, IRQ_HANDLER_USE_TASK_STATE, NULL), irq_line + PIC_IRQ_OFFSET);
         }
 
         enable_irq_line(irq_line);

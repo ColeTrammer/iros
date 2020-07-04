@@ -1,16 +1,20 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/x86_64/idt.h>
+#include <kernel/irqs/handlers.h>
 
-void add_idt_entry(struct idt_entry *idt, void *_handler, unsigned int irq, bool is_user, bool use_idt) {
+void add_idt_entry(struct idt_entry *idt, void *_handler, unsigned int irq, int flags) {
     uintptr_t handler = (uintptr_t) _handler;
     idt[irq].addr_low = (uint16_t) handler;
     idt[irq].target = CS_SELECTOR;
-    if (!is_user) {
-        idt[irq].flags = 0x8E00 | use_idt; // Present, CPL 0, Trap Handler
+    if (!(flags & IRQ_USER_AVAILABLE)) {
+        idt[irq].flags = 0x8E00 | !!(flags & IRQ_USE_SEPARATE_STACK); // Present, CPL 0, Trap Handler
     } else {
+        assert(!(flags & IRQ_USE_SEPARATE_STACK));
+        assert(irq == 128);
         idt[irq].flags = 0xEE00;
     }
     idt[irq].addr_mid = (uint16_t)(handler >> 16);

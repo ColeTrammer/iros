@@ -22,6 +22,7 @@ if (NOT ${NATIVE_BUILD})
         fs/vfs.c
         hal/devices.c
         hal/ptmx.c
+        irqs/irqs.c
         main/kernel.c
         mem/anon_vm_object.c
         mem/inode_vm_object.c
