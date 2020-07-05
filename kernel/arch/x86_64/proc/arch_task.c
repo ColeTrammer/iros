@@ -44,11 +44,9 @@ static void load_task_into_memory(struct task *task) {
     if (task->process->arch_process.cr3 != get_cr3()) {
         load_cr3(task->process->arch_process.cr3);
     }
-    if (!task->kernel_task) {
-        fxrstor(task->fpu.aligned_state);
-    }
 
     if (!task->kernel_task) {
+        fxrstor(task->fpu.aligned_state);
         set_msr(MSR_FS_BASE, (uint64_t) task->arch_task.user_thread_pointer);
     }
 }
