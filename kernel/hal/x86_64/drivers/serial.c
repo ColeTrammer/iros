@@ -76,7 +76,7 @@ void init_serial_port_device(dev_t port, size_t i) {
     /* Could be anything */
     assert(port == SERIAL_COM1_PORT);
 
-    register_irq_handler(&serial_handler, SERIAL_13_IRQ_LINE + PIC_IRQ_OFFSET);
+    register_irq_handler(&serial_handler, SERIAL_13_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     struct device *device = calloc(1, sizeof(struct device));
     device->device_number = 0x00800 + i;

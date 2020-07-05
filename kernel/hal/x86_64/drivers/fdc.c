@@ -22,5 +22,5 @@ static void handle_fdc_interrupt(struct irq_context *context __attribute__((unus
 static struct irq_handler fdc_handler = { .handler = &handle_fdc_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
 void init_fdc() {
-    register_irq_handler(&fdc_handler, FDC_IRQ_LINE + PIC_IRQ_OFFSET);
+    register_irq_handler(&fdc_handler, FDC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 }

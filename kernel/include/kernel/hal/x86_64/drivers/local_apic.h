@@ -45,6 +45,8 @@ struct local_apic {
 
 _Static_assert(sizeof(struct local_apic) == 0x400);
 
+void local_apic_send_eoi(void);
+
 void init_local_apic(void);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_LOCAL_APIC_H */

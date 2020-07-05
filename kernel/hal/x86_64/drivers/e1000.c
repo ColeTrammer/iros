@@ -207,7 +207,7 @@ void init_intel_e1000(struct pci_configuration *config) {
     write_command(data, E1000_CTRL_IMASK, 0xFF & ~4);
     read_command(data, 0xC0);
 
-    register_irq_handler(&e1000_handler, config->interrupt_line + PIC_IRQ_OFFSET);
+    register_irq_handler(&e1000_handler, config->interrupt_line + EXTERNAL_IRQ_OFFSET);
 
     interface = net_create_network_interface("e1000", NETWORK_INTERFACE_ETHERNET, &e1000_ops, data);
 }

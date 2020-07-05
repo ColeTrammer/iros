@@ -185,7 +185,7 @@ void on_interrupt(struct irq_context *context __attribute__((unused))) {
 static struct irq_handler mouse_handler = { .handler = &on_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
 void init_mouse() {
-    register_irq_handler(&mouse_handler, MOUSE_IRQ_LINE_NUM + PIC_IRQ_OFFSET);
+    register_irq_handler(&mouse_handler, MOUSE_IRQ_LINE_NUM + EXTERNAL_IRQ_OFFSET);
 
     mouse_wait_for_output();
     outb(PS2_CONTROL_REGISTER, 0xA8);
