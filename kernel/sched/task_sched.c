@@ -212,7 +212,7 @@ int signal_process_group(pid_t pgid, int signum) {
         struct task *current = get_current_task();
         task_do_sig(current, signum);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
-            yield_signal();
+            sched_run_next();
         }
         interrupts_restore(save);
     }
@@ -269,7 +269,7 @@ int signal_task(int tgid, int tid, int signum) {
         struct task *current = get_current_task();
         task_do_sig(current, signum);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
-            yield_signal();
+            sched_run_next();
         }
         interrupts_restore(save);
     }
@@ -305,7 +305,7 @@ int signal_process(pid_t pid, int signum) {
         struct task *current = get_current_task();
         task_do_sig(current, signum);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
-            yield_signal();
+            sched_run_next();
         }
         interrupts_restore(save);
     }
@@ -341,7 +341,7 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
         unsigned long save = disable_interrupts_save();
         task_do_sig(current, signum);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
-            yield_signal();
+            sched_run_next();
         }
         interrupts_restore(save);
     }

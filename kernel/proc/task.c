@@ -468,7 +468,7 @@ void task_yield_if_state_changed(struct task *task) {
         debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
 #endif /* TASK_SCHED_STATE_DEBUG */
         task->sched_state = EXITING;
-        sys_sched_run_next(&task->arch_task.task_state);
+        arch_sched_run_next(&task->arch_task.task_state);
     }
 }
 

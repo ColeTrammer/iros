@@ -15,8 +15,8 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/proc/run_task.S
     ${KERNEL_ARCHDIR}/proc/arch_task.c
     ${KERNEL_ARCHDIR}/proc/arch_process.c
+    ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
     ${KERNEL_ARCHDIR}/sched/arch_task_sched.c
-    ${KERNEL_ARCHDIR}/sched/sys_sched_run_next.S
     ${KERNEL_HALDIR}/drivers/local_apic.c
     ${KERNEL_HALDIR}/drivers/ata.c
     ${KERNEL_HALDIR}/drivers/bga.c

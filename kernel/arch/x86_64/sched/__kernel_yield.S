@@ -1,22 +1,4 @@
 .section .text
-.global sys_sched_run_next
-sys_sched_run_next:
-    # Switches Stack And Then calls arch_sched_run_next
-
-    movabsq $KERNEL_VM_STACK_START, %rsp
-    callq arch_sched_run_next
-
-    # Should Not Be Reached
-    jmp __halt
-
-.global yield_signal
-yield_signal:
-    movabsq $KERNEL_VM_STACK_START, %rsp
-    callq sched_run_next
-
-    # Should Not Be Reached
-    jmp __halt
-
 .global __kernel_yield
 .type __kernel_yield, @function
 __kernel_yield:
@@ -54,8 +36,6 @@ __kernel_yield:
     movq %rsp, %rdi
 
     cli
-    movabsq $KERNEL_VM_STACK_START, %rsp
-
     callq arch_sched_run_next
 
     # Should not be reached
