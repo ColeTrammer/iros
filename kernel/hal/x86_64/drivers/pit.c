@@ -23,7 +23,6 @@ extern uint64_t user_ticks;
 extern uint64_t kernel_ticks;
 
 void handle_pit_interrupt(struct irq_context *context) {
-    context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
 
     struct task *current = get_current_task();
     if (current == &initial_kernel_task) {
@@ -50,6 +49,7 @@ void handle_pit_interrupt(struct irq_context *context) {
         }
     }
 
+    context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
     if (sched_callback != NULL) {
         sched_count++;
         if (sched_count >= sched_count_to) {
@@ -78,7 +78,10 @@ void pit_set_rate(unsigned int rate) {
 static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
 void init_pit() {
-    register_irq_handler(&pit_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
-
+#ifdef USE_PIT
     pit_set_rate(1);
+#else
+    pit_set_rate(2);
+#endif /* USE_PIT */
+    register_irq_handler(&pit_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 }
