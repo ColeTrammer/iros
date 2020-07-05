@@ -43,6 +43,13 @@ struct acpi_rsdt {
 #define ACPI_MADT_TYPE_NON_MASKABLE_INTERRUPTS     4
 #define ACPI_MADT_TYPE_LOCAL_APIC_ADDRESS_OVERRIDE 5
 
+struct acpi_interrupt_source_override {
+    uint8_t bus_source;
+    uint8_t irq_source;
+    uint32_t global_system_interrupt;
+    uint16_t flags;
+} __attribute__((packed));
+
 struct acpi_madt_entry {
     uint8_t type;
     uint8_t length;
@@ -58,12 +65,7 @@ struct acpi_madt_entry {
             uint32_t io_apic_address;
             uint32_t global_system_interrupt_base;
         } __attribute__((packed)) io_apic;
-        struct {
-            uint8_t bus_source;
-            uint8_t irq_source;
-            uint32_t global_system_interrupt;
-            uint16_t flags;
-        } __attribute__((packed)) interrupt_source_override;
+        struct acpi_interrupt_source_override interrupt_source_override;
         struct {
             uint8_t acpi_processor_id;
             uint16_t flags;
@@ -85,6 +87,8 @@ struct acpi_madt {
 
 struct acpi_info {
     uintptr_t local_apic_address;
+    struct acpi_interrupt_source_override interrupt_source_override[16];
+    size_t interrupt_source_overrides_length;
 };
 
 void init_acpi(void);

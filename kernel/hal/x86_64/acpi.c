@@ -122,16 +122,11 @@ void init_acpi(void) {
 #endif /* KERNEL_USE_PIC */
                 break;
             case ACPI_MADT_TYPE_INTERRUPT_SOURCE_OVERRIDE:
-
                 debug_log("Interrupt Source Overrides: [ %u, %u, %u, %#.4X ]\n", entry->interrupt_source_override.bus_source,
                           entry->interrupt_source_override.irq_source, entry->interrupt_source_override.global_system_interrupt,
                           entry->interrupt_source_override.flags);
-#ifndef KERNEL_USE_PIC
-                // FIXME: is the bus source field really equivalent to the io_apic_id?
-                io_apic_add_interrupt_source_override(
-                    entry->interrupt_source_override.bus_source, entry->interrupt_source_override.irq_source,
-                    entry->interrupt_source_override.global_system_interrupt, entry->interrupt_source_override.flags);
-#endif /* KERNEL_USE_PIC */
+                assert(s_acpi_info.interrupt_source_overrides_length < 16);
+                s_acpi_info.interrupt_source_override[s_acpi_info.interrupt_source_overrides_length++] = entry->interrupt_source_override;
                 break;
             case ACPI_MADT_TYPE_NON_MASKABLE_INTERRUPTS:
                 debug_log("Non Maskable Interrupts: [ %u, %u, %u ]\n", entry->non_maskable_interrupts.acpi_processor_id,
