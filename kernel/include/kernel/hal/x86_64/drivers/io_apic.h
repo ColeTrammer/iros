@@ -46,6 +46,5 @@ struct io_apic {
 };
 
 void create_io_apic(uint8_t id, uintptr_t base_phys_memory, uint32_t irq_offset);
-void io_apic_add_interrupt_source_override(uint8_t io_apic_id, uint8_t irq_source, uint32_t mapped_irq, uint16_t flags);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_IO_APIC_H */

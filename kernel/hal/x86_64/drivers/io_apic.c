@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include <kernel/hal/x86_64/acpi.h>
 #include <kernel/hal/x86_64/drivers/io_apic.h>
 #include <kernel/hal/x86_64/drivers/local_apic.h>
 #include <kernel/irqs/handlers.h>
@@ -28,7 +29,7 @@ static void write_io_apic_entry(struct io_apic *io_apic, uint8_t irq, union io_a
     write_io_apic_register(io_apic, IO_APIC_REDIRECT_ENTIRES_BASE + 2 * irq + 1, (entry.raw_value >> 32U) & 0xFFFFFFFFU);
 }
 
-static bool io_apic_irq_is_valid(struct irq_controller *controller, int irq) {
+static bool io_apic_is_valid_irq(struct irq_controller *controller, int irq) {
     (void) controller;
     (void) irq;
 
@@ -61,7 +62,36 @@ static void io_apic_set_irq_enabled(struct irq_controller *controller, int irq_n
     debug_log("IO APIC does not have an entry for IRQ: [ %d ]\n", irq_num);
 }
 
-static struct irq_controller_ops io_apic_ops = { &io_apic_irq_is_valid, &io_apic_send_eoi, &io_apic_set_irq_enabled };
+static void io_apic_apply_interrupt_source_override(struct io_apic *io_apic, uint8_t mapped_irq, uint32_t irq_source, uint16_t flags) {
+    union io_apic_entry entry = read_io_apic_entry(io_apic, irq_source);
+    entry.value.generated_irq = mapped_irq + IO_APIC_IRQ_OFFSET;
+    entry.value.pin_polarity = !!(flags & 0b0010);
+    entry.value.trigger_mode = !!(flags & 0b1000);
+    write_io_apic_entry(io_apic, irq_source, entry);
+}
+
+static void io_apic_map_irq(struct irq_controller *controller, int irq_num) {
+    struct io_apic *io_apic = controller->private;
+
+    struct acpi_info *info = acpi_get_info();
+    for (size_t i = 0; i < info->interrupt_source_overrides_length; i++) {
+        // FIXME: does the interrupt source override `bus' field matter at all?
+        if ((int) info->interrupt_source_override[i].irq_source == irq_num - IO_APIC_IRQ_OFFSET) {
+            io_apic_apply_interrupt_source_override(io_apic, info->interrupt_source_override[i].irq_source,
+                                                    info->interrupt_source_override[i].global_system_interrupt,
+                                                    info->interrupt_source_override[i].flags);
+            return;
+        }
+    }
+
+    // Default mapping is 1 to 1, no flags set
+    io_apic_apply_interrupt_source_override(io_apic, irq_num - IO_APIC_IRQ_OFFSET, irq_num - IO_APIC_IRQ_OFFSET, 0);
+}
+
+static struct irq_controller_ops io_apic_ops = { .is_valid_irq = &io_apic_is_valid_irq,
+                                                 .send_eoi = &io_apic_send_eoi,
+                                                 .set_irq_enabled = &io_apic_set_irq_enabled,
+                                                 .map_irq = &io_apic_map_irq };
 
 void create_io_apic(uint8_t acpi_id, uintptr_t base_phys_addr, uint32_t irq_base) {
     struct io_apic *io_apic = malloc(sizeof(struct io_apic));
@@ -80,12 +110,10 @@ void create_io_apic(uint8_t acpi_id, uintptr_t base_phys_addr, uint32_t irq_base
     uint8_t max_irq_entry = (version_register & 0x00FF0000U) >> 16U;
     debug_log("IO APIC irqs: [ %u, %u ]\n", id, max_irq_entry + 1);
 
-    // Initialize all entries to have sane defaults and correct generated irq. The interrupt source overrides
-    // should modify this default configuration. IRQs start off masked and won't be generated until an IRQ handler
-    // is registered.
-    for (uint8_t irq = 1 /* SKIPPING ENTRY 0 IS A HACK TO MAKE THE PIR WORK */; irq <= max_irq_entry; irq++) {
+    // Initialize all entries to map to an ignored IRQ, be disabled, and to send IRQs to the processor with ID 0
+    for (uint8_t irq = 0; irq <= max_irq_entry; irq++) {
         union io_apic_entry entry = read_io_apic_entry(io_apic, irq);
-        entry.value.generated_irq = IO_APIC_IRQ_OFFSET + irq;
+        entry.value.generated_irq = 0xFF;
         entry.value.delivery_mode = 0;
         entry.value.destination_mode = 0;
         entry.value.pin_polarity = 0;
@@ -101,24 +129,4 @@ void create_io_apic(uint8_t acpi_id, uintptr_t base_phys_addr, uint32_t irq_base
 
     register_irq_controller(
         create_irq_controller(IO_APIC_IRQ_OFFSET + irq_base, IO_APIC_IRQ_OFFSET + irq_base + max_irq_entry, &io_apic_ops, io_apic));
-}
-
-void io_apic_add_interrupt_source_override(uint8_t io_apic_id, uint8_t mapped_irq, uint32_t irq_source, uint16_t flags) {
-    struct io_apic *io_apic = io_apics;
-    while (io_apic) {
-        if (io_apic->id == io_apic_id) {
-            break;
-        }
-    }
-
-    if (!io_apic) {
-        debug_log("Unkown ISO for bus: [ %u ]\n", io_apic_id);
-        return;
-    }
-
-    union io_apic_entry entry = read_io_apic_entry(io_apic, irq_source);
-    entry.value.generated_irq = mapped_irq + IO_APIC_IRQ_OFFSET;
-    entry.value.pin_polarity = !!(flags & 0b0010);
-    entry.value.trigger_mode = !!(flags & 0b1000);
-    write_io_apic_entry(io_apic, irq_source, entry);
 }

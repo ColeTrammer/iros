@@ -104,9 +104,16 @@ static void pic_set_irq_enabled(struct irq_controller *self, int irq_num, bool e
     }
 }
 
-static struct irq_controller_ops pic_ops = { .is_valid_irq = &pic_is_valid_irq,
-                                             .send_eoi = &pic_send_eoi,
-                                             .set_irq_enabled = &pic_set_irq_enabled };
+static void pic_map_irq(struct irq_controller *self, int irq_num) {
+    (void) self;
+    (void) irq_num;
+
+    // Do nothing, as there is no need to set up some sort of IRQ mapping like in the APIC.
+}
+
+static struct irq_controller_ops pic_ops = {
+    .is_valid_irq = &pic_is_valid_irq, .send_eoi = &pic_send_eoi, .set_irq_enabled = &pic_set_irq_enabled, .map_irq = &pic_map_irq
+};
 
 static struct irq_controller pic = { .irq_start = PIC_IRQ_OFFSET, .irq_end = PIC_IRQ_OFFSET + 2 * PIC_IRQS - 1, .ops = &pic_ops };
 
