@@ -6,11 +6,11 @@
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/acpi.h>
-#include <kernel/hal/x86_64/drivers/apic.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
+#include <kernel/hal/x86_64/drivers/local_apic.h>
 #include <kernel/hal/x86_64/drivers/mouse.h>
 #include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
@@ -55,12 +55,14 @@ void init_cpus(void) {
     // a TSS segment for each logical processor.
     init_gdt();
 
-    // This should really be the APIC
+#ifdef KERNEL_USE_PIC
     init_pic();
+#else
+    init_local_apic();
+#endif /* KERNEL_USE_PIC */
 }
 
 void init_drivers(void) {
-
     init_keyboard();
     init_mouse();
     init_vmware_back_door();

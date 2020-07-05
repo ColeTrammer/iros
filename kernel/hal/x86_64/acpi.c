@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <kernel/hal/x86_64/acpi.h>
+#include <kernel/hal/x86_64/drivers/io_apic.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 
@@ -116,11 +117,21 @@ void init_acpi(void) {
             case ACPI_MADT_TYPE_IO_APIC:
                 debug_log("IO APIC: [ %u, %#.8X, %#.8X ]\n", entry->io_apic.io_apic_id, entry->io_apic.io_apic_address,
                           entry->io_apic.global_system_interrupt_base);
+#ifndef KERNEL_USE_PIC
+                create_io_apic(entry->io_apic.io_apic_id, entry->io_apic.io_apic_address, entry->io_apic.global_system_interrupt_base);
+#endif /* KERNEL_USE_PIC */
                 break;
             case ACPI_MADT_TYPE_INTERRUPT_SOURCE_OVERRIDE:
+
                 debug_log("Interrupt Source Overrides: [ %u, %u, %u, %#.4X ]\n", entry->interrupt_source_override.bus_source,
                           entry->interrupt_source_override.irq_source, entry->interrupt_source_override.global_system_interrupt,
                           entry->interrupt_source_override.flags);
+#ifndef KERNEL_USE_PIC
+                // FIXME: is the bus source field really equivalent to the io_apic_id?
+                io_apic_add_interrupt_source_override(
+                    entry->interrupt_source_override.bus_source, entry->interrupt_source_override.irq_source,
+                    entry->interrupt_source_override.global_system_interrupt, entry->interrupt_source_override.flags);
+#endif /* KERNEL_USE_PIC */
                 break;
             case ACPI_MADT_TYPE_NON_MASKABLE_INTERRUPTS:
                 debug_log("Non Maskable Interrupts: [ %u, %u, %u ]\n", entry->non_maskable_interrupts.acpi_processor_id,

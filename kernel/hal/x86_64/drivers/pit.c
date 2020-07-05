@@ -78,7 +78,7 @@ void pit_set_rate(unsigned int rate) {
 static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
 void init_pit() {
-    register_irq_handler(&pit_handler, PIT_IRQ_LINE + PIC_IRQ_OFFSET);
+    register_irq_handler(&pit_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     pit_set_rate(1);
 }

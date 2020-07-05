@@ -556,7 +556,7 @@ static void handle_keyboard_interrupt(struct irq_context *context __attribute__(
 static struct irq_handler keyboard_handler = { .handler = &handle_keyboard_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
 void init_keyboard() {
-    register_irq_handler(&keyboard_handler, KEYBOARD_IRQ_LINE + PIC_IRQ_OFFSET);
+    register_irq_handler(&keyboard_handler, KEYBOARD_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     while (inb(0x60) & 0x1) {
         inb(KEYBOARD_DATA_PORT);

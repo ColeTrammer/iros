@@ -26,7 +26,7 @@ struct irq_controller {
     int irq_start;
     int irq_end;
     struct irq_controller_ops *ops;
-    void *private_data;
+    void *private;
 };
 
 struct irq_context {
@@ -48,6 +48,7 @@ struct irq_handler {
 
 void arch_system_call_entry(struct irq_context *irq_context);
 
+struct irq_controller *create_irq_controller(int irq_start, int irq_end, struct irq_controller_ops *ops, void *private);
 void register_irq_controller(struct irq_controller *controller);
 
 struct irq_handler *create_irq_handler(irq_function_t function, int flags, void *closure);

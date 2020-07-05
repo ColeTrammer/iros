@@ -19,9 +19,21 @@ static struct irq_controller *find_irq_controller(int irq) {
     return NULL;
 }
 
+struct irq_controller *create_irq_controller(int irq_start, int irq_end, struct irq_controller_ops *ops, void *private) {
+    struct irq_controller *controller = malloc(sizeof(struct irq_controller));
+    controller->next = NULL;
+    controller->irq_start = irq_start;
+    controller->irq_end = irq_end;
+    controller->ops = ops;
+    controller->private = private;
+    return controller;
+}
+
 void register_irq_controller(struct irq_controller *controller) {
     int new_start = controller->irq_start;
     int new_end = controller->irq_end;
+
+    debug_log("Registering IRQ controller: [ %d, %d ]\n", new_start, new_end);
 
     struct irq_controller **element = &controllers;
     while (*element) {
@@ -50,6 +62,10 @@ struct irq_handler *create_irq_handler(irq_function_t function, int flags, void 
 
 void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
     assert(irq_num >= 0 && irq_num <= 255);
+
+#ifdef GENERIC_IRQ_DEBUG
+    debug_log("Registering IRQ handler: [ %d, %#.8X ]\n", irq_num, irq_handler_object->flags);
+#endif /* GENERIC_IRQ_DEBUG */
 
     irq_handler_object->next = irq_handlers[irq_num];
     irq_handlers[irq_num] = irq_handler_object;

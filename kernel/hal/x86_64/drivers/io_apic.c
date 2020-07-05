@@ -1,0 +1,124 @@
+#include <stdlib.h>
+
+#include <kernel/hal/x86_64/drivers/io_apic.h>
+#include <kernel/hal/x86_64/drivers/local_apic.h>
+#include <kernel/irqs/handlers.h>
+#include <kernel/mem/vm_allocator.h>
+
+static struct io_apic *io_apics;
+
+static uint32_t read_io_apic_register(struct io_apic *io_apic, uint32_t reg) {
+    io_apic->memory->register_select = reg;
+    return io_apic->memory->register_value;
+}
+
+static void write_io_apic_register(struct io_apic *io_apic, uint32_t reg, uint32_t value) {
+    io_apic->memory->register_select = reg;
+    io_apic->memory->register_value = value;
+}
+
+static union io_apic_entry read_io_apic_entry(struct io_apic *io_apic, uint8_t irq) {
+    uint32_t low_bits = read_io_apic_register(io_apic, IO_APIC_REDIRECT_ENTIRES_BASE + 2 * irq);
+    uint32_t high_bits = read_io_apic_register(io_apic, IO_APIC_REDIRECT_ENTIRES_BASE + 2 * irq + 1);
+    return (union io_apic_entry) { .raw_value = ((uint64_t) high_bits << 32UL) | low_bits };
+}
+
+static void write_io_apic_entry(struct io_apic *io_apic, uint8_t irq, union io_apic_entry entry) {
+    write_io_apic_register(io_apic, IO_APIC_REDIRECT_ENTIRES_BASE + 2 * irq, entry.raw_value & 0xFFFFFFFFU);
+    write_io_apic_register(io_apic, IO_APIC_REDIRECT_ENTIRES_BASE + 2 * irq + 1, (entry.raw_value >> 32U) & 0xFFFFFFFFU);
+}
+
+static bool io_apic_irq_is_valid(struct irq_controller *controller, int irq) {
+    (void) controller;
+    (void) irq;
+
+    // Unlike the PIC, I don't believe there is any way to test if the requested IRQ is
+    // actually requested. It is up to individual devices to determine if their IRQ was
+    // valid.
+    return true;
+}
+
+static void io_apic_send_eoi(struct irq_controller *controller, int irq_num) {
+    (void) controller;
+    (void) irq_num;
+
+    // EOI requests go to the local APIC.
+    local_apic_send_eoi();
+}
+
+static void io_apic_set_irq_enabled(struct irq_controller *controller, int irq_num, bool enabled) {
+    struct io_apic *io_apic = controller->private;
+    int num_irqs = controller->irq_end - controller->irq_start + 1;
+    for (int i = 0; i < num_irqs; i++) {
+        union io_apic_entry entry = read_io_apic_entry(io_apic, i);
+        if (entry.value.generated_irq == irq_num) {
+            entry.value.mask_bit = !enabled;
+            write_io_apic_entry(io_apic, i, entry);
+            return;
+        }
+    }
+
+    debug_log("IO APIC does not have an entry for IRQ: [ %d ]\n", irq_num);
+}
+
+static struct irq_controller_ops io_apic_ops = { &io_apic_irq_is_valid, &io_apic_send_eoi, &io_apic_set_irq_enabled };
+
+void create_io_apic(uint8_t acpi_id, uintptr_t base_phys_addr, uint32_t irq_base) {
+    struct io_apic *io_apic = malloc(sizeof(struct io_apic));
+    io_apic->memory = create_phys_addr_mapping(base_phys_addr);
+    io_apic->id = acpi_id;
+
+    uint32_t id_register = read_io_apic_register(io_apic, IO_APIC_REGISTER_ID);
+    uint8_t id = (id_register & 0x00F00000U) >> 24U;
+    if (id_register != id) {
+        debug_log("IO APIC ids don't match: [ %u, %u ]\n", acpi_id, id);
+        free(io_apic);
+        return;
+    }
+
+    uint32_t version_register = read_io_apic_register(io_apic, IO_APIC_REGISTER_VERSION);
+    uint8_t max_irq_entry = (version_register & 0x00FF0000U) >> 16U;
+    debug_log("IO APIC irqs: [ %u, %u ]\n", id, max_irq_entry + 1);
+
+    // Initialize all entries to have sane defaults and correct generated irq. The interrupt source overrides
+    // should modify this default configuration. IRQs start off masked and won't be generated until an IRQ handler
+    // is registered.
+    for (uint8_t irq = 1 /* SKIPPING ENTRY 0 IS A HACK TO MAKE THE PIR WORK */; irq <= max_irq_entry; irq++) {
+        union io_apic_entry entry = read_io_apic_entry(io_apic, irq);
+        entry.value.generated_irq = IO_APIC_IRQ_OFFSET + irq;
+        entry.value.delivery_mode = 0;
+        entry.value.destination_mode = 0;
+        entry.value.pin_polarity = 0;
+        entry.value.trigger_mode = 0;
+        entry.value.mask_bit = 1;
+        // FIXME: the boot CPU might not have an id of 0?
+        entry.value.destination = 0;
+        write_io_apic_entry(io_apic, irq, entry);
+    }
+
+    io_apic->next = io_apics;
+    io_apics = io_apic;
+
+    register_irq_controller(
+        create_irq_controller(IO_APIC_IRQ_OFFSET + irq_base, IO_APIC_IRQ_OFFSET + irq_base + max_irq_entry, &io_apic_ops, io_apic));
+}
+
+void io_apic_add_interrupt_source_override(uint8_t io_apic_id, uint8_t mapped_irq, uint32_t irq_source, uint16_t flags) {
+    struct io_apic *io_apic = io_apics;
+    while (io_apic) {
+        if (io_apic->id == io_apic_id) {
+            break;
+        }
+    }
+
+    if (!io_apic) {
+        debug_log("Unkown ISO for bus: [ %u ]\n", io_apic_id);
+        return;
+    }
+
+    union io_apic_entry entry = read_io_apic_entry(io_apic, irq_source);
+    entry.value.generated_irq = mapped_irq + IO_APIC_IRQ_OFFSET;
+    entry.value.pin_polarity = !!(flags & 0b0010);
+    entry.value.trigger_mode = !!(flags & 0b1000);
+    write_io_apic_entry(io_apic, irq_source, entry);
+}
