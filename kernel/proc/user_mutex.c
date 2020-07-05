@@ -19,12 +19,12 @@ struct user_mutex *__create(uintptr_t *phys_addr_p) {
     m->phys_addr = *phys_addr_p;
 
     struct process *process = get_current_task()->process;
-    spin_lock(&process->lock);
+    spin_lock(&process->user_mutex_lock);
 
     m->next = process->used_user_mutexes;
     process->used_user_mutexes = m;
 
-    spin_unlock(&process->lock);
+    spin_unlock(&process->user_mutex_lock);
 
 #ifdef USER_MUTEX_DEBUG
     debug_log("Creating mutex: [ %#.16lX ]\n", *phys_addr_p);
@@ -66,7 +66,7 @@ struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsign
 #endif /* USER_MUTEX_DEBUG */
 
             struct process *process = get_current_task()->process;
-            spin_lock(&process->lock);
+            spin_lock(&process->user_mutex_lock);
 
             struct user_mutex *mu = process->used_user_mutexes;
             if (m == mu) {
@@ -79,7 +79,7 @@ struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsign
                 mu->next = m->next;
             }
 
-            spin_unlock(&process->lock);
+            spin_unlock(&process->user_mutex_lock);
 
             free(m);
             return NULL;

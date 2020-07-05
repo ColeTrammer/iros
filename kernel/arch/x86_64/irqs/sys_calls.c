@@ -342,7 +342,9 @@ SYS_CALL(fork) {
     child->tid = get_next_tid();
     child_process->pid = get_next_pid();
     child_process->main_tid = child->tid;
-    init_spinlock(&child_process->lock);
+    init_mutex(&child_process->lock);
+    init_spinlock(&child_process->user_mutex_lock);
+    init_spinlock(&child_process->main_tid_lock);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;
@@ -620,7 +622,9 @@ SYS_CALL(execve) {
     task->tid = current->tid;
     process->pid = current->process->pid;
     process->main_tid = task->tid;
-    init_spinlock(&process->lock);
+    init_mutex(&process->lock);
+    init_spinlock(&process->user_mutex_lock);
+    init_spinlock(&process->main_tid_lock);
     process->pgid = current->process->pgid;
     process->ppid = current->process->ppid;
     process->sid = current->process->sid;
@@ -1042,10 +1046,10 @@ SYS_CALL(setpgid) {
         SYS_RETURN(-ESRCH);
     }
 
-    spin_lock(&process->lock);
+    mutex_lock(&process->lock);
     process->pgid = pgid;
     proc_update_pgid(pid, pgid);
-    spin_unlock(&process->lock);
+    mutex_unlock(&process->lock);
 
     SYS_RETURN(0);
 }
@@ -1405,7 +1409,7 @@ SYS_CALL(alarm) {
     unsigned int ret = 0;
 
     struct process *process = get_current_task()->process;
-    spin_lock(&process->lock);
+    mutex_lock(&process->lock);
 
     if (process->alarm_timer) {
         ret = process->alarm_timer->spec.it_value.tv_sec + process->alarm_timer->spec.it_value.tv_nsec ? 1U : 0U;
@@ -1435,7 +1439,7 @@ SYS_CALL(alarm) {
     }
 
 finish_alarm:
-    spin_unlock(&process->lock);
+    mutex_unlock(&process->lock);
 
     SYS_RETURN(ret);
 }
@@ -2007,12 +2011,12 @@ SYS_CALL(umask) {
     SYS_PARAM1(mode_t, new_mask);
 
     struct process *current = get_current_task()->process;
-    spin_lock(&current->lock);
+    mutex_lock(&current->lock);
 
     mode_t old_mask = current->umask;
     current->umask = new_mask;
 
-    spin_unlock(&current->lock);
+    mutex_unlock(&current->lock);
     SYS_RETURN(old_mask);
 }
 
@@ -2052,7 +2056,7 @@ SYS_CALL(setsid) {
     int ret = 0;
 
     struct process *current = get_current_task()->process;
-    spin_lock(&current->lock);
+    mutex_lock(&current->lock);
 
     if (current->pgid == current->pid) {
         ret = -EPERM;
@@ -2064,7 +2068,7 @@ SYS_CALL(setsid) {
     current->pgid = current->pid;
 
 finish_setsid:
-    spin_unlock(&current->lock);
+    mutex_unlock(&current->lock);
     SYS_RETURN(ret);
 }
 

@@ -28,13 +28,13 @@ HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
 void proc_drop_process(struct process *process, pid_t tid, bool free_paging_structure) {
     // Reassign the main tid of the process if it exits early
-    spin_lock(&process->lock);
+    spin_lock(&process->main_tid_lock);
     if (process->main_tid == tid) {
         struct task *new_task = find_task_for_process(process->pid);
         process->main_tid = new_task ? new_task->tid : -1;
         assert(process->main_tid != tid);
     }
-    spin_unlock(&process->lock);
+    spin_unlock(&process->main_tid_lock);
 
     int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
 

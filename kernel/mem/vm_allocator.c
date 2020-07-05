@@ -217,7 +217,7 @@ int unmap_range(uintptr_t addr, size_t length) {
     length = ((length + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
 
     struct process *process = get_current_task()->process;
-    spin_lock(&process->lock);
+    mutex_lock(&process->lock);
 
     struct vm_region *r;
     while ((r = find_user_vm_region_in_range(addr, addr + length))) {
@@ -304,7 +304,7 @@ int unmap_range(uintptr_t addr, size_t length) {
         free(r);
     }
 
-    spin_unlock(&process->lock);
+    mutex_unlock(&process->lock);
     return 0;
 }
 
@@ -345,9 +345,9 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
         (prot & PROT_WRITE ? VM_WRITE : 0) | (prot & PROT_EXEC ? 0 : VM_NO_EXEC) | (type == VM_TASK_STACK ? VM_STACK : 0) | VM_USER;
 
     struct process *process = get_current_task()->process;
-    spin_lock(&process->lock);
+    mutex_lock(&process->lock);
     process->process_memory = add_vm_region(process->process_memory, to_add);
-    spin_unlock(&process->lock);
+    mutex_unlock(&process->lock);
 
 #ifdef MMAP_DEBUG
     debug_log("Mapping region: [ %#.16lX, %#.16lX ]\n", to_add->start, to_add->end);
@@ -369,7 +369,7 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
     int flags = prot == PROT_NONE ? VM_PROT_NONE : ((prot & PROT_WRITE ? VM_WRITE : 0) | VM_USER | (!(prot & PROT_EXEC) ? VM_NO_EXEC : 0));
 
     struct process *process = get_current_task()->process;
-    spin_lock(&process->lock);
+    mutex_lock(&process->lock);
 
     struct vm_region *r;
     while ((r = find_user_vm_region_in_range(addr, addr + length))) {
@@ -486,7 +486,7 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
         addr = r->end;
     }
 
-    spin_unlock(&process->lock);
+    mutex_unlock(&process->lock);
     return 0;
 }
 

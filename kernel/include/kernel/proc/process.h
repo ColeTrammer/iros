@@ -7,6 +7,7 @@
 #include <sys/types.h>
 
 #include <kernel/proc/user_mutex.h>
+#include <kernel/util/mutex.h>
 #include <kernel/util/spinlock.h>
 
 // clang-format off
@@ -34,6 +35,7 @@ struct process {
     struct vm_region *process_memory;
 
     struct user_mutex *used_user_mutexes;
+    spinlock_t user_mutex_lock;
 
     struct clock *process_clock;
     struct timer *timers;
@@ -45,7 +47,9 @@ struct process {
     pid_t pgid;
     pid_t ppid;
     pid_t sid;
+
     pid_t main_tid;
+    spinlock_t main_tid_lock;
 
     uid_t uid;
     uid_t euid;
@@ -78,7 +82,7 @@ struct process {
 
     struct sigaction sig_state[_NSIG];
     stack_t alt_stack;
-    spinlock_t lock;
+    mutex_t lock;
 };
 
 void proc_drop_process(struct process *process, pid_t tid, bool free_paging_structure);
