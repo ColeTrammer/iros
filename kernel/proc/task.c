@@ -183,6 +183,7 @@ void init_kernel_task() {
     initial_kernel_task.process->ppid = 1;
     initial_kernel_task.process->tty = -1;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
+    initial_kernel_task.kernel_stack = NULL;
 }
 
 struct task *load_kernel_task(uintptr_t entry, const char *name) {
@@ -200,11 +201,10 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->process->process_memory = NULL;
     task->kernel_task = true;
     task->sched_state = RUNNING_UNINTERRUPTIBLE;
-    task->process->cwd = malloc(2);
+    task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     task->process->tty = -1;
     task->tid = get_next_tid();
     task->process->main_tid = task->tid;
-    task->process->cwd = NULL;
     task->next = NULL;
     process->name = strdup(name);
     process->start_time = time_read_clock(CLOCK_REALTIME);
@@ -248,7 +248,9 @@ struct task *load_task(const char *file_name) {
     task->process->pgid = task->process->pid;
     task->process->sid = task->process->pid;
     task->process->ppid = initial_kernel_task.process->pid;
+    task->process->umask = 022;
     task->sched_state = RUNNING_INTERRUPTIBLE;
+    task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     task->process->tty = -1;
     task->process->cwd = bump_tnode(fs_root());
     task->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
@@ -305,6 +307,10 @@ void free_task(struct task *task, bool free_paging_structure) {
         struct queued_signal *next = si->next;
         free(si);
         si = next;
+    }
+
+    if (task->kernel_stack) {
+        vm_free_kernel_region(task->kernel_stack);
     }
 
     time_destroy_clock(task->task_clock);

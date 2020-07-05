@@ -202,7 +202,7 @@ void remove_vm_pages_end(size_t n, uint64_t type) {
 }
 
 bool vm_is_kernel_address(uintptr_t addr) {
-    return addr >= KERNEL_TASK_STACK_START;
+    return addr >= find_first_kernel_vm_region()->start;
 }
 
 int unmap_range(uintptr_t addr, size_t length) {

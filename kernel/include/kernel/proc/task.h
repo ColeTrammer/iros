@@ -59,6 +59,8 @@ struct task {
     // Inline list pointer used by wait_queue functions
     struct task *wait_queue_next;
 
+    struct vm_region *kernel_stack;
+
     enum sched_state sched_state;
 
     sigset_t sig_mask;

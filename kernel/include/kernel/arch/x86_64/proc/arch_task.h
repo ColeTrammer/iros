@@ -6,7 +6,7 @@
 
 #include <kernel/mem/page.h>
 
-#define KERNEL_TASK_STACK_START (((uintptr_t) PT_BASE) - PAGE_SIZE)
+#define KERNEL_STACK_SIZE PAGE_SIZE
 
 struct cpu_state {
     uint64_t r15;
@@ -42,10 +42,7 @@ struct task_state {
 struct arch_task {
     struct task_state task_state;
     struct task_state *user_task_state;
-    uint64_t kernel_stack;
-    struct virt_page_info *kernel_stack_info;
     void *user_thread_pointer;
-    bool setup_kernel_stack;
 };
 
 #define FPU_IMAGE_SIZE 512

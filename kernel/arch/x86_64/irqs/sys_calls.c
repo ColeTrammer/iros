@@ -356,8 +356,7 @@ SYS_CALL(fork) {
     memcpy(&child->arch_task.task_state, parent->arch_task.user_task_state, sizeof(struct task_state));
     child->arch_task.task_state.cpu_state.rax = 0;
     child_process->arch_process.cr3 = create_clone_process_paging_structure(child_process);
-    child->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
-    child->arch_task.setup_kernel_stack = true;
+    child->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     child->arch_task.user_thread_pointer = parent->arch_task.user_thread_pointer;
     child->process->tls_master_copy_start = parent->process->tls_master_copy_start;
     child->process->tls_master_copy_size = parent->process->tls_master_copy_size;
@@ -615,10 +614,6 @@ SYS_CALL(execve) {
     process->supplemental_gids = malloc(current->process->supplemental_gids_size * sizeof(gid_t));
     memcpy(process->supplemental_gids, current->process->supplemental_gids, current->process->supplemental_gids_size * sizeof(gid_t));
 
-    struct vm_region *__kernel_stack = get_vm_region(current->process->process_memory, VM_KERNEL_STACK);
-    struct vm_region *kernel_stack = calloc(1, sizeof(struct vm_region));
-    memcpy(kernel_stack, __kernel_stack, sizeof(struct vm_region));
-
     task->tid = current->tid;
     process->pid = current->process->pid;
     process->main_tid = task->tid;
@@ -629,7 +624,6 @@ SYS_CALL(execve) {
     process->ppid = current->process->ppid;
     process->sid = current->process->sid;
     process->umask = current->process->umask;
-    process->process_memory = kernel_stack;
     process->start_time = time_read_clock(CLOCK_REALTIME);
 
     task->kernel_task = false;
@@ -649,13 +643,6 @@ SYS_CALL(execve) {
     }
 
     process->arch_process.cr3 = get_cr3();
-    task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
-
-    struct virt_page_info *info = calloc(1, sizeof(struct virt_page_info));
-    memcpy(info, current->arch_task.kernel_stack_info, sizeof(struct virt_page_info));
-
-    task->arch_task.kernel_stack_info = info;
-    task->arch_task.setup_kernel_stack = false;
 
     task_align_fpu(task);
     memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
@@ -678,6 +665,10 @@ SYS_CALL(execve) {
     current_task = task;
     task->in_kernel = true;
     task->sched_state = RUNNING_UNINTERRUPTIBLE;
+
+    // Tranfer ownership of the current's kernel stack to avoid the need for additional allocation.
+    task->kernel_stack = current->kernel_stack;
+    current->kernel_stack = NULL;
 
     sched_remove_task(current);
     free_task(current, false);
@@ -1508,8 +1499,7 @@ SYS_CALL(create_task) {
     task_align_fpu(task);
     memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
 
-    task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
-    task->arch_task.setup_kernel_stack = true;
+    task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     task->arch_task.user_thread_pointer = args->thread_self_pointer;
 
     task->arch_task.task_state.stack_state.cs = current->arch_task.user_task_state->stack_state.cs;

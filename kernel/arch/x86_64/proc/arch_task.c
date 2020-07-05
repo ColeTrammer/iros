@@ -37,23 +37,15 @@ static void kernel_idle() {
 }
 
 static void load_task_into_memory(struct task *task) {
-    set_tss_stack_pointer(task->arch_task.kernel_stack);
+    if (task->kernel_stack) {
+        set_tss_stack_pointer(task->kernel_stack->end);
+    }
+
     if (task->process->arch_process.cr3 != get_cr3()) {
         load_cr3(task->process->arch_process.cr3);
     }
     if (!task->kernel_task) {
         fxrstor(task->fpu.aligned_state);
-    }
-
-    // Stack Set Up Occurs Here Because Sys Calls Use That Memory In Their Own Stack And We Can Only Write Pages When They Are Mapped In
-    // Currently
-    if (task->arch_task.setup_kernel_stack) {
-        struct vm_region *kernel_stack = get_vm_region(task->process->process_memory, VM_KERNEL_STACK);
-        do_unmap_page(kernel_stack->start, false, false, task->process);
-        task->arch_task.kernel_stack_info = map_page_with_info(kernel_stack->start, kernel_stack->flags, task->process);
-        task->arch_task.setup_kernel_stack = false;
-    } else if (task->arch_task.kernel_stack_info != NULL) {
-        map_page_info(task->arch_task.kernel_stack_info);
     }
 
     if (!task->kernel_task) {
@@ -76,7 +68,6 @@ void arch_init_kernel_task(struct task *kernel_task) {
     kernel_task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
     kernel_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
     kernel_task->arch_task.task_state.stack_state.rsp = __KERNEL_VM_STACK_START;
-    kernel_task->arch_task.setup_kernel_stack = false;
 
     task_align_fpu(kernel_task);
     fninit();
@@ -85,33 +76,18 @@ void arch_init_kernel_task(struct task *kernel_task) {
 
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     task->process->arch_process.cr3 = initial_kernel_task.process->arch_process.cr3;
-    task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
-    task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
+    task->arch_task.task_state.cpu_state.rbp = task->kernel_stack->end;
     task->arch_task.task_state.stack_state.rip = entry;
     task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
-    task->arch_task.task_state.stack_state.rsp = KERNEL_TASK_STACK_START;
+    task->arch_task.task_state.stack_state.rsp = task->kernel_stack->end;
     task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
-
-    struct vm_region *kernel_proc_stack = calloc(1, sizeof(struct vm_region));
-    kernel_proc_stack->flags = VM_WRITE | VM_NO_EXEC;
-    kernel_proc_stack->type = VM_KERNEL_STACK;
-    kernel_proc_stack->end = KERNEL_TASK_STACK_START;
-    kernel_proc_stack->start = kernel_proc_stack->end - PAGE_SIZE;
-    task->process->process_memory = add_vm_region(task->process->process_memory, kernel_proc_stack);
-
-    /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before
-     * Execution) */
-    task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags, task->process);
-    do_unmap_page(kernel_proc_stack->start, false, false, task->process);
-    task->arch_task.setup_kernel_stack = false;
     task->in_kernel = true;
 }
 
 void arch_load_task(struct task *task, uintptr_t entry) {
     task->process->arch_process.cr3 = get_cr3();
-    task->arch_task.kernel_stack = KERNEL_TASK_STACK_START;
-    task->arch_task.task_state.cpu_state.rbp = KERNEL_TASK_STACK_START;
+    task->arch_task.task_state.cpu_state.rbp = 0;
     task->arch_task.task_state.stack_state.rip = entry;
     task->arch_task.task_state.stack_state.cs = USER_CODE_SELECTOR;
     task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
@@ -122,20 +98,6 @@ void arch_load_task(struct task *task, uintptr_t entry) {
         map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, task->process->args_context);
 
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
-
-    struct vm_region *kernel_proc_stack = calloc(1, sizeof(struct vm_region));
-    kernel_proc_stack->flags = VM_WRITE | VM_NO_EXEC;
-    kernel_proc_stack->type = VM_KERNEL_STACK;
-    kernel_proc_stack->end = KERNEL_TASK_STACK_START;
-    kernel_proc_stack->start = kernel_proc_stack->end - PAGE_SIZE;
-    task->process->process_memory = add_vm_region(task->process->process_memory, kernel_proc_stack);
-    task->process->umask = 022;
-
-    /* Map Task Stack To Reserve Pages For It, But Then Unmap It So That Other Taskes Can Do The Same (Each Task Loads Its Own Stack Before
-     * Execution) */
-    task->arch_task.kernel_stack_info = map_page_with_info(kernel_proc_stack->start, kernel_proc_stack->flags, task->process);
-    do_unmap_page(kernel_proc_stack->start, false, false, task->process);
-    task->arch_task.setup_kernel_stack = false;
 
     task_align_fpu(task);
     memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
@@ -150,16 +112,8 @@ void arch_run_task(struct task *task) {
 
 /* Must be called from unpremptable context */
 void arch_free_task(struct task *task, bool free_paging_structure) {
-    if (free_paging_structure) {
-        map_page_info(task->arch_task.kernel_stack_info);
-
-        struct vm_region *kernel_stack = get_vm_region(task->process->process_memory, VM_KERNEL_STACK);
-        for (uintptr_t i = kernel_stack->start; i < kernel_stack->end; i += PAGE_SIZE) {
-            unmap_page(i, task->process);
-        }
-    }
-
-    free(task->arch_task.kernel_stack_info);
+    (void) task;
+    (void) free_paging_structure;
 }
 
 void task_interrupt_blocking(struct task *task, int ret) {

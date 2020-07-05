@@ -175,16 +175,14 @@ static size_t print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbo
 }
 
 static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, size_t symbols_size, char *string_table,
-                             size_t (*output)(void *closure, const char *string, ...), void *closure1,
-                             uintptr_t (*mapper)(void *closure, uintptr_t address), void *closure2, bool kernel) {
+                             size_t (*output)(void *closure, const char *string, ...), void *closure1, bool kernel) {
     size_t ret = print_symbol_at(rip, symbols, symbols_size, string_table, output, closure1, kernel);
 
-    struct stack_frame *frame = (struct stack_frame *) (mapper ? mapper(closure2, rbp) : rbp);
+    struct stack_frame *frame = (struct stack_frame *) rbp;
     int (*validate)(const void *addr, size_t size) = kernel ? &validate_kernel_read : &validate_read;
     while (!validate(frame, sizeof(struct stack_frame)) && frame) {
         struct stack_frame *old_frame = frame;
         frame = frame->next;
-        frame = (struct stack_frame *) (mapper ? mapper(closure2, (uintptr_t) frame) : (uintptr_t) frame);
         if (!old_frame->rip) {
             break;
         }
@@ -235,7 +233,7 @@ size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)
         debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
     }
 
-    size_t ret = do_stack_trace(rip, rbp, symbols, symbols_size, string_table, output, closure, NULL, NULL, false);
+    size_t ret = do_stack_trace(rip, rbp, symbols, symbols_size, string_table, output, closure, false);
 
     unmap_range((uintptr_t) buffer, ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
 
@@ -257,8 +255,8 @@ void elf64_stack_trace(struct task *task, bool extra_info) {
 }
 
 void kernel_stack_trace(uintptr_t instruction_pointer, uintptr_t frame_base) {
-    do_stack_trace(instruction_pointer, frame_base, kernel_symbols, kernel_symbols_size, kernel_string_table, debug_log_wrapper, NULL, NULL,
-                   NULL, true);
+    do_stack_trace(instruction_pointer, frame_base, kernel_symbols, kernel_symbols_size, kernel_string_table, debug_log_wrapper, NULL,
+                   true);
 
     struct task *current = get_current_task();
     if (current->in_kernel && !current->kernel_task) {
@@ -284,16 +282,6 @@ static size_t snprintf_wrapper(void *closure, const char *string, ...) {
     return ret;
 }
 
-static uintptr_t kernel_stack_mapper(void *closure, uintptr_t address) {
-    uintptr_t virt_base = (uintptr_t) closure;
-    uintptr_t mapped = address - KERNEL_TASK_STACK_START + virt_base + PAGE_SIZE;
-
-    if (mapped - virt_base > PAGE_SIZE) {
-        return 0;
-    }
-    return mapped;
-}
-
 size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_t buffer_max) {
     // Can't stack trace the idle task
     if (main_task->tid == 1) {
@@ -302,9 +290,6 @@ size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_
 
     struct snprintf_object obj = { .buffer = buffer, .max = buffer_max };
     if (main_task->kernel_task || main_task->in_kernel) {
-        uintptr_t stack_phys_mapping =
-            (uintptr_t) create_phys_addr_mapping(main_task->arch_task.kernel_stack_info->pt_entry & (~0xFFF ^ (1ULL << 63ULL)));
-
         struct task *current = get_current_task();
 
         uintptr_t rip =
@@ -313,8 +298,7 @@ size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_
         uintptr_t current_rbp;
         asm("mov %%rbp, %0" : "=r"(current_rbp) : :);
         uintptr_t rbp = current == main_task ? current_rbp : main_task->arch_task.task_state.cpu_state.rbp;
-        return do_stack_trace(rip, rbp, kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj,
-                              kernel_stack_mapper, (void *) stack_phys_mapping, true);
+        return do_stack_trace(rip, rbp, kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj, true);
     }
 
     return 0;
