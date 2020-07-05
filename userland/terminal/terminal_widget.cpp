@@ -228,10 +228,8 @@ String TerminalWidget::selection_text() const {
 void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     if (event.scroll() == SCROLL_DOWN) {
         m_tty.scroll_down();
-        invalidate();
     } else if (event.scroll() == SCROLL_UP) {
         m_tty.scroll_up();
-        invalidate();
     }
 
     int row_at_cursor = event.y() / cell_height + m_tty.row_offset();
@@ -251,4 +249,6 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
         m_selection_end_row = row_at_cursor;
         m_selection_end_col = col_at_cursor;
     }
+
+    invalidate();
 }
