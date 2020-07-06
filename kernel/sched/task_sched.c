@@ -38,17 +38,17 @@ void sched_add_task(struct task *task) {
 
     if (list_start == NULL) {
         list_start = list_end = task;
-        task->prev = task->next = task;
+        task->sched_prev = task->sched_next = task;
 
         spin_unlock(&task_list_lock);
         return;
     }
 
-    task->prev = list_end;
-    task->next = list_start;
+    task->sched_prev = list_end;
+    task->sched_next = list_start;
 
-    list_end->next = task;
-    list_start->prev = task;
+    list_end->sched_next = task;
+    list_start->sched_prev = task;
     list_end = task;
 
     spin_unlock(&task_list_lock);
@@ -64,20 +64,20 @@ void sched_remove_task(struct task *task) {
 
     struct task *current = list_start;
 
-    while (current->next != task) {
-        current = current->next;
+    while (current->sched_next != task) {
+        current = current->sched_next;
     }
 
     if (task == list_end) {
-        list_end = task->prev;
+        list_end = task->sched_prev;
     }
 
     if (task == list_start) {
-        list_start = task->next;
+        list_start = task->sched_next;
     }
 
-    current->next = current->next->next;
-    current->next->prev = current;
+    current->sched_next = current->sched_next->sched_next;
+    current->sched_next->sched_prev = current;
 
     spin_unlock(&task_list_lock);
 }
@@ -107,30 +107,30 @@ void sched_run_next() {
             task_do_sig(task, sig);
             current_task = current_save;
         }
-    } while ((task = task->next) != list_start);
+    } while ((task = task->sched_next) != list_start);
 
-    struct task *to_run = current->next;
+    struct task *to_run = current->sched_next;
     struct task *start = to_run;
     while (to_run->sched_state != RUNNING_INTERRUPTIBLE && to_run->sched_state != RUNNING_UNINTERRUPTIBLE) {
-        struct task *next = to_run->next;
+        struct task *next = to_run->sched_next;
         if (to_run->sched_state == EXITING) {
             struct task *to_remove = to_run;
 
             if (to_remove == list_end) {
-                list_end = to_remove->prev;
+                list_end = to_remove->sched_prev;
             }
 
             if (to_remove == list_start) {
-                list_start = to_remove->next;
+                list_start = to_remove->sched_next;
             }
 
             if (to_remove == start) {
-                start = to_remove->next;
+                start = to_remove->sched_next;
             }
 
-            struct task *prev_save = to_remove->prev;
-            prev_save->next = to_remove->next;
-            prev_save->next->prev = prev_save;
+            struct task *prev_save = to_remove->sched_prev;
+            prev_save->sched_next = to_remove->sched_next;
+            prev_save->sched_next->sched_prev = prev_save;
 
             free_task(to_remove, true);
         } else if (to_run->blocking && to_run->sched_state == WAITING) {
@@ -168,46 +168,38 @@ void sched_run_next() {
     run_task(to_run);
 }
 
-struct task *find_task_for_process(pid_t pid) {
-    spin_lock(&task_list_lock);
-    struct task *found = NULL;
-    struct task *task = list_start;
+struct signal_process_group_closure {
+    bool signalled_self;
+    bool signalled_anything;
+    int signum;
+};
 
-    do {
-        if (task->process->pid == pid) {
-            found = task;
-            break;
+static void signal_process_group_iter(struct process *process, void *_cls) {
+    struct signal_process_group_closure *cls = _cls;
+
+    spin_lock(&process->task_list_lock);
+
+    // FIXME: dispatch signals to a different task than the first if it makes sense.
+    struct task *task = process->task_list;
+    if (cls->signum != 0) {
+        debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(cls->signum));
+        task_enqueue_signal(task, cls->signum, NULL, false);
+
+        if (task == get_current_task() && !task_is_sig_blocked(task, cls->signum)) {
+            cls->signalled_self = true;
         }
-    } while ((task = task->next) != list_start);
+    }
+    cls->signalled_anything = true;
 
-    spin_unlock(&task_list_lock);
-    return found;
+    spin_unlock(&process->task_list_lock);
 }
 
 int signal_process_group(pid_t pgid, int signum) {
-    spin_lock(&task_list_lock);
+    struct signal_process_group_closure cls = { .signalled_anything = false, .signalled_self = false, .signum = signum };
 
-    bool signalled_self = false;
-    bool signalled_anything = false;
-    struct task *task = list_start;
-    do {
-        // FIXME: only signal 1 task per process
-        if (task->process->pgid == pgid) {
-            if (signum != 0) {
-                debug_log("Signaling: [ %d, %s ]\n", task->process->pid, strsignal(signum));
-                task_enqueue_signal(task, signum, NULL, false);
+    proc_for_each_with_pgid(pgid, signal_process_group_iter, &cls);
 
-                if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
-                    signalled_self = true;
-                }
-            }
-            signalled_anything = true;
-        }
-    } while ((task = task->next) != list_start);
-
-    spin_unlock(&task_list_lock);
-
-    if (signalled_self) {
+    if (cls.signalled_self) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
         task_do_sig(current, signum);
@@ -217,7 +209,7 @@ int signal_process_group(pid_t pgid, int signum) {
         interrupts_restore(save);
     }
 
-    return signalled_anything ? 0 : -ESRCH;
+    return cls.signalled_anything ? 0 : -ESRCH;
 }
 
 struct task *find_by_tid(int tgid, int tid) {
@@ -225,31 +217,37 @@ struct task *find_by_tid(int tgid, int tid) {
         return &initial_kernel_task;
     }
 
-    spin_lock(&task_list_lock);
+    struct process *process = find_by_pid(tgid);
+    if (!process) {
+        return NULL;
+    }
 
-    struct task *task = list_start;
-    do {
-        if (task->process->pid == tgid && task->tid == tid) {
-            spin_unlock(&task_list_lock);
+    spin_lock(&process->task_list_lock);
+    for (struct task *task = process->task_list; task; task = task->process_next) {
+        if (task->tid == tid) {
+            spin_unlock(&process->task_list_lock);
             return task;
-            break;
         }
-    } while ((task = task->next) != list_start);
+    }
+    spin_unlock(&process->task_list_lock);
 
-    spin_unlock(&task_list_lock);
     return NULL;
 }
 
 int signal_task(int tgid, int tid, int signum) {
-    spin_lock(&task_list_lock);
-
     bool signalled_self = false;
     bool signalled_anything = false;
-    struct task *task = list_start;
-    do {
-        if (task->process->pid == tgid && task->tid == tid) {
+
+    struct process *process = find_by_pid(tgid);
+    if (!process) {
+        return -ESRCH;
+    }
+
+    spin_lock(&process->task_list_lock);
+    for (struct task *task = process->task_list; task; task = task->process_next) {
+        if (task->tid == tid) {
             if (signum != 0) {
-                debug_log("Signaling: [ %d, %s ]\n", task->process->pid, strsignal(signum));
+                debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
                 task_enqueue_signal(task, signum, NULL, false);
 
                 if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
@@ -257,12 +255,11 @@ int signal_task(int tgid, int tid, int signum) {
                 }
             }
             signalled_anything = true;
-
             break;
         }
-    } while ((task = task->next) != list_start);
+    }
 
-    spin_unlock(&task_list_lock);
+    spin_unlock(&process->task_list_lock);
 
     if (signalled_self) {
         unsigned long save = disable_interrupts_save();
@@ -278,27 +275,29 @@ int signal_task(int tgid, int tid, int signum) {
 }
 
 int signal_process(pid_t pid, int signum) {
-    spin_lock(&task_list_lock);
-
     bool signalled_self = false;
     bool signalled_anything = false;
-    struct task *task = list_start;
-    do {
-        // Maybe should only do it once instead of in a loop
-        if (task->process->pid == pid) {
-            if (signum != 0) {
-                debug_log("Signaling: [ %d, %s ]\n", task->process->pid, strsignal(signum));
-                task_enqueue_signal(task, signum, NULL, false);
 
-                if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
-                    signalled_self = true;
-                }
-            }
-            signalled_anything = true;
+    struct process *process = find_by_pid(pid);
+    if (!process) {
+        return -ESRCH;
+    }
+
+    spin_lock(&process->task_list_lock);
+
+    // FIXME: dispatch signals to a different task than the first if it makes sense.
+    struct task *task = process->task_list;
+    if (signum != 0) {
+        debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
+        task_enqueue_signal(task, signum, NULL, false);
+
+        if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
+            signalled_self = true;
         }
-    } while ((task = task->next) != list_start);
+    }
+    signalled_anything = true;
 
-    spin_unlock(&task_list_lock);
+    spin_unlock(&process->task_list_lock);
 
     if (signalled_self) {
         unsigned long save = disable_interrupts_save();
@@ -314,27 +313,29 @@ int signal_process(pid_t pid, int signum) {
 }
 
 int queue_signal_process(pid_t pid, int signum, void *val) {
-    spin_lock(&task_list_lock);
-
     bool signalled_self = false;
     bool signalled_anything = false;
-    struct task *task = list_start;
-    do {
-        // Maybe should only do it once instead of in a loop
-        if (task->process->pid == pid) {
-            if (signum != 0) {
-                debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
-                task_enqueue_signal(task, signum, val, true);
 
-                if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
-                    signalled_self = true;
-                }
-            }
-            signalled_anything = true;
+    struct process *process = find_by_pid(pid);
+    if (!process) {
+        return -ESRCH;
+    }
+
+    spin_lock(&process->task_list_lock);
+
+    // FIXME: dispatch signals to a different task than the first if it makes sense.
+    struct task *task = process->task_list;
+    if (signum != 0) {
+        debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
+        task_enqueue_signal(task, signum, val, true);
+
+        if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
+            signalled_self = true;
         }
-    } while ((task = task->next) != list_start);
+    }
+    signalled_anything = true;
 
-    spin_unlock(&task_list_lock);
+    spin_unlock(&process->task_list_lock);
 
     if (signalled_self) {
         struct task *current = get_current_task();
@@ -350,40 +351,41 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
 }
 
 void exit_process(struct process *process) {
-    struct task *task = list_start;
+    // FIXME: this needs to be protected by a mutex instead of a spinlock because of userland validation
+    spin_lock(&process->task_list_lock);
+    struct task *task = process->task_list;
     do {
-        if (task->process == process) {
-            task_set_state_to_exiting(task);
+        task_set_state_to_exiting(task);
 
 #ifdef ROBUST_USER_MUTEX_DEBUG
-            debug_log("Locked robust mutex list head pointer: [ %p ]\n", task->locked_robust_mutex_list_head);
+        debug_log("Locked robust mutex list head pointer: [ %p ]\n", task->locked_robust_mutex_list_head);
 #endif /* ROBUST_USER_MUTEX_DEBUG */
-            if (!validate_read_or_null(task->locked_robust_mutex_list_head, sizeof(struct __locked_robust_mutex_node *))) {
-                struct __locked_robust_mutex_node *node = task->locked_robust_mutex_list_head ? *task->locked_robust_mutex_list_head : NULL;
+        if (!validate_read_or_null(task->locked_robust_mutex_list_head, sizeof(struct __locked_robust_mutex_node *))) {
+            struct __locked_robust_mutex_node *node = task->locked_robust_mutex_list_head ? *task->locked_robust_mutex_list_head : NULL;
 #ifdef ROBUST_USER_MUTEX_DEBUG
-                debug_log("Locked robust mutex list head: [ %p ]\n", node);
+            debug_log("Locked robust mutex list head: [ %p ]\n", node);
 #endif /* ROBUST_USER_MUTEX_DEBUG */
 
-                while (!validate_read(node, sizeof(struct __locked_robust_mutex_node))) {
+            while (!validate_read(node, sizeof(struct __locked_robust_mutex_node))) {
 #ifdef ROBUST_USER_MUTEX_DEBUG
-                    debug_log("Checking mutex: [ %p, %p, %d, %p, %p ]\n", node, node->__protected, node->__in_progress_flags, node->__prev,
-                              node->__next);
+                debug_log("Checking mutex: [ %p, %p, %d, %p, %p ]\n", node, node->__protected, node->__in_progress_flags, node->__prev,
+                          node->__next);
 #endif /* ROBUST_USER_MUTEX_DEBUG */
-                    if ((node->__in_progress_flags == 0) || (node->__in_progress_flags == ROBUST_MUTEX_IS_VALID_IF_VALUE &&
-                                                             *node->__protected == (unsigned int) node->__in_progress_value)) {
-                        struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(node->__protected, MUTEX_OWNER_DIED);
-                        if (um != NULL) {
-                            wake_user_mutex(um, 1, NULL);
-                            *node->__protected = MUTEX_OWNER_DIED;
-                            unlock_user_mutex(um);
-                        }
+                if ((node->__in_progress_flags == 0) || (node->__in_progress_flags == ROBUST_MUTEX_IS_VALID_IF_VALUE &&
+                                                         *node->__protected == (unsigned int) node->__in_progress_value)) {
+                    struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(node->__protected, MUTEX_OWNER_DIED);
+                    if (um != NULL) {
+                        wake_user_mutex(um, 1, NULL);
+                        *node->__protected = MUTEX_OWNER_DIED;
+                        unlock_user_mutex(um);
                     }
-
-                    node = node->__next;
                 }
+
+                node = node->__next;
             }
         }
-    } while ((task = task->next) != list_start);
+    } while ((task = task->process_next));
+    spin_unlock(&process->task_list_lock);
 }
 
 uint64_t idle_ticks;

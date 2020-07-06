@@ -344,12 +344,13 @@ SYS_CALL(fork) {
     child_process->main_tid = child->tid;
     init_mutex(&child_process->lock);
     init_spinlock(&child_process->user_mutex_lock);
-    init_spinlock(&child_process->main_tid_lock);
+    init_spinlock(&child_process->task_list_lock);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;
     child_process->process_memory = clone_process_vm();
     child_process->tty = parent->process->tty;
+    child_process->task_list = child;
 
     debug_log("Forking Task: [ %d ]\n", parent->process->pid);
 
@@ -617,9 +618,10 @@ SYS_CALL(execve) {
     task->tid = current->tid;
     process->pid = current->process->pid;
     process->main_tid = task->tid;
+    process->task_list = task;
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
-    init_spinlock(&process->main_tid_lock);
+    init_spinlock(&process->task_list_lock);
     process->pgid = current->process->pgid;
     process->ppid = current->process->ppid;
     process->sid = current->process->sid;
@@ -629,7 +631,6 @@ SYS_CALL(execve) {
     task->kernel_task = false;
     process->tty = current->process->tty;
     process->cwd = bump_tnode(current->process->cwd);
-    task->next = NULL;
     task->sig_mask = current->sig_mask;
     memcpy(&process->times, &current->process->times, sizeof(struct tms));
     process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
@@ -1511,6 +1512,20 @@ SYS_CALL(create_task) {
     task->arch_task.task_state.cpu_state.rdi = (uint64_t) args->arg;
 
     *args->tid_ptr = task->tid;
+
+    spin_lock(&task->process->task_list_lock);
+    struct task *prev = task->process->task_list;
+    if (prev != NULL) {
+        task->process_next = prev->process_next;
+        task->process_prev = prev;
+
+        if (task->process_next) {
+            task->process_next->process_prev = task;
+        }
+        prev->process_next = task;
+    }
+    spin_unlock(&task->process->task_list_lock);
+
     sched_add_task(task);
 
     SYS_RETURN(0);

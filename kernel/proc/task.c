@@ -175,14 +175,14 @@ void init_kernel_task() {
     initial_kernel_task.process->pid = 1;
     init_mutex(&initial_kernel_process.lock);
     init_spinlock(&initial_kernel_process.user_mutex_lock);
-    init_spinlock(&initial_kernel_process.main_tid_lock);
+    init_spinlock(&initial_kernel_process.task_list_lock);
     initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
-    initial_kernel_task.next = NULL;
     initial_kernel_task.process->main_tid = initial_kernel_task.tid;
     initial_kernel_task.process->pgid = 1;
     initial_kernel_task.process->ppid = 1;
     initial_kernel_task.process->tty = -1;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
+    initial_kernel_process.task_list = &initial_kernel_task;
     initial_kernel_task.kernel_stack = NULL;
 }
 
@@ -194,18 +194,18 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->process->pid = get_next_pid();
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
-    init_spinlock(&process->main_tid_lock);
+    init_spinlock(&process->task_list_lock);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->ppid = initial_kernel_task.process->pid;
     task->process->process_memory = NULL;
+    task->process->task_list = task;
     task->kernel_task = true;
     task->sched_state = RUNNING_UNINTERRUPTIBLE;
     task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     task->process->tty = -1;
     task->tid = get_next_tid();
     task->process->main_tid = task->tid;
-    task->next = NULL;
     process->name = strdup(name);
     process->start_time = time_read_clock(CLOCK_REALTIME);
 
@@ -234,30 +234,29 @@ struct task *load_task(const char *file_name) {
     char *buffer = (char *) fs_mmap(NULL, length, PROT_READ, MAP_SHARED, file, 0);
     assert(buffer != MAP_FAILED);
 
-    task->process->exe = bump_tnode(fs_get_tnode_for_file(file));
-
+    process->exe = bump_tnode(fs_get_tnode_for_file(file));
     process->name = strdup(process->exe->name);
 
     task->tid = get_next_tid();
-    task->process->pid = get_next_pid();
+    task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
+    task->sched_state = RUNNING_INTERRUPTIBLE;
+    task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
+
+    process->pid = get_next_pid();
     task->process->main_tid = task->tid;
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
-    init_spinlock(&process->main_tid_lock);
+    init_spinlock(&process->task_list_lock);
     proc_add_process(process);
-    task->process->pgid = task->process->pid;
-    task->process->sid = task->process->pid;
-    task->process->ppid = initial_kernel_task.process->pid;
-    task->process->umask = 022;
-    task->sched_state = RUNNING_INTERRUPTIBLE;
-    task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
-    task->process->tty = -1;
-    task->process->cwd = bump_tnode(fs_root());
-    task->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
-    task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
-    task->process->start_time = time_read_clock(CLOCK_REALTIME);
-
-    task->next = NULL;
+    process->pgid = task->process->pid;
+    process->sid = task->process->pid;
+    process->ppid = initial_kernel_task.process->pid;
+    process->umask = 022;
+    process->task_list = task;
+    process->tty = -1;
+    process->cwd = bump_tnode(fs_root());
+    process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
+    process->start_time = time_read_clock(CLOCK_REALTIME);
 
     task->kernel_task = true;
     assert(elf64_is_valid(buffer));
@@ -314,7 +313,7 @@ void free_task(struct task *task, bool free_paging_structure) {
     }
 
     time_destroy_clock(task->task_clock);
-    proc_drop_process(task->process, task->tid, free_paging_structure);
+    proc_drop_process(task->process, task, free_paging_structure);
     free(task);
     current_task = current_save;
 }
@@ -445,6 +444,8 @@ void task_do_sigs_if_needed(struct task *task) {
 }
 
 void task_set_state_to_exiting(struct task *task) {
+    debug_log("Setting state to exiting: [ %p, %p ]\n", get_current_task(), task);
+
     if (task->sched_state == EXITING) {
         return;
     }
@@ -464,7 +465,7 @@ void task_set_state_to_exiting(struct task *task) {
 
 void task_yield_if_state_changed(struct task *task) {
     if (task->should_exit) {
-#ifdef TASK_SCHED_STATE_DEBUG
+#ifndef TASK_SCHED_STATE_DEBUG
         debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
 #endif /* TASK_SCHED_STATE_DEBUG */
         task->sched_state = EXITING;

@@ -43,13 +43,14 @@ struct process {
 
     struct args_context *args_context;
 
+    struct task *task_list;
+    pid_t main_tid;
+    spinlock_t task_list_lock;
+
     pid_t pid;
     pid_t pgid;
     pid_t ppid;
     pid_t sid;
-
-    pid_t main_tid;
-    spinlock_t main_tid_lock;
 
     uid_t uid;
     uid_t euid;
@@ -85,12 +86,13 @@ struct process {
     mutex_t lock;
 };
 
-void proc_drop_process(struct process *process, pid_t tid, bool free_paging_structure);
+void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure);
 void proc_add_process(struct process *process);
 void proc_bump_process(struct process *process);
 uintptr_t proc_allocate_user_stack(struct process *process);
 struct process *find_by_pid(pid_t pid);
 void proc_set_sig_pending(struct process *process, int n);
+void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *process, void *closure), void *closure);
 
 int proc_getgroups(size_t size, gid_t *list);
 int proc_setgroups(size_t size, const gid_t *list);

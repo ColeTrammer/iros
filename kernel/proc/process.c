@@ -26,15 +26,31 @@ static struct hash_map *map;
 
 HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
-void proc_drop_process(struct process *process, pid_t tid, bool free_paging_structure) {
-    // Reassign the main tid of the process if it exits early
-    spin_lock(&process->main_tid_lock);
-    if (process->main_tid == tid) {
-        struct task *new_task = find_task_for_process(process->pid);
-        process->main_tid = new_task ? new_task->tid : -1;
-        assert(process->main_tid != tid);
+void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure) {
+    // Reassign the main tid of the process if it exits early, and delete tid from the task list
+    spin_lock(&process->task_list_lock);
+    if (process->task_list == task) {
+        process->task_list = task->process_next;
     }
-    spin_unlock(&process->main_tid_lock);
+
+    struct task *prev = task->process_prev;
+    struct task *next = task->process_next;
+    if (prev) {
+        prev->process_next = task->process_next;
+    }
+    if (next) {
+        next->process_prev = task->process_prev;
+    }
+
+    debug_log("process->task_list: [ %p, %p, %p ]\n", process->task_list, process->task_list ? process->task_list->process_next : NULL,
+              task);
+
+    if (process->main_tid == task->tid) {
+        struct task *new_task = process->task_list;
+        process->main_tid = new_task ? new_task->tid : -1;
+        assert(process->main_tid != task->tid);
+    }
+    spin_unlock(&process->task_list_lock);
 
     int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
 
@@ -171,8 +187,32 @@ struct process *find_by_pid(pid_t pid) {
     return hash_get(map, &pid);
 }
 
+struct proc_for_each_with_pgid_closure {
+    void (*callback)(struct process *process, void *closure);
+    void *closure;
+    pid_t pgid;
+};
+
+static void for_each_with_pgid_iter(void *_process, void *_cls) {
+    struct process *process = _process;
+    struct proc_for_each_with_pgid_closure *cls = _cls;
+    if (process->pgid == cls->pgid) {
+        cls->callback(process, cls->closure);
+    }
+}
+
+void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *process, void *closure), void *closure) {
+    struct proc_for_each_with_pgid_closure cls = { .callback = callback, .closure = closure, .pgid = pgid };
+    hash_for_each(map, for_each_with_pgid_iter, &cls);
+}
+
 void proc_set_sig_pending(struct process *process, int n) {
-    task_set_sig_pending(find_task_for_process(process->pid), n);
+    // FIXME: dispatch signals to a different task than the first if it makes sense.
+    spin_lock(&process->task_list_lock);
+    struct task *task_to_use = process->task_list;
+    spin_unlock(&process->task_list_lock);
+
+    task_set_sig_pending(task_to_use, n);
 }
 
 int proc_getgroups(size_t size, gid_t *list) {

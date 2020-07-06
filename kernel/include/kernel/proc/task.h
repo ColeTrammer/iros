@@ -53,8 +53,11 @@ struct queued_signal {
 struct task {
     struct arch_task arch_task;
 
-    struct task *next;
-    struct task *prev;
+    struct task *sched_next;
+    struct task *sched_prev;
+
+    struct task *process_next;
+    struct task *process_prev;
 
     // Inline list pointer used by wait_queue functions
     struct task *wait_queue_next;

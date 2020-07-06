@@ -16,7 +16,6 @@ struct task *find_by_tid(int tgid, int tid);
 void sched_add_task(struct task *task);
 void sched_remove_task(struct task *task);
 void sched_run_next(void);
-struct task *find_task_for_process(pid_t pid);
 int __kernel_yield(void);
 
 int signal_task(int tgid, int tid, int signum);
