@@ -52,6 +52,8 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     //       could be loaded sooner
     init_kernel_symbols();
 
+    init_smp();
+
     // Start Shell
     struct task *shell = load_task("/bin/start");
     sched_add_task(shell);

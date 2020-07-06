@@ -81,6 +81,10 @@ void init_drivers(void) {
     debug_log("Finished Initializing Drivers\n");
 }
 
+void init_smp(void) {
+    local_apic_start_aps();
+}
+
 static bool use_graphics = true;
 
 void kernel_disable_graphics(void) {
