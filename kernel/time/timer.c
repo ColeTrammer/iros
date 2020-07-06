@@ -84,7 +84,14 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
         to_add->proc_prev = NULL;
         process->timers = to_add;
     } else {
-        insque(&to_add->proc_next, &process->timers->proc_next);
+        struct timer *prev = process->timers;
+        to_add->proc_next = prev->proc_next;
+        to_add->proc_prev = prev;
+
+        if (to_add->proc_next) {
+            to_add->proc_next->proc_prev = to_add;
+        }
+        prev->proc_next = to_add;
     }
 
     hash_put(timer_map, to_add);
@@ -102,7 +109,15 @@ int time_delete_timer(struct timer *timer) {
     if (process->timers == timer) {
         process->timers = timer->next;
     }
-    remque(&timer->proc_next);
+
+    struct timer *prev = timer->proc_prev;
+    struct timer *next = timer->proc_next;
+    if (prev) {
+        prev->proc_next = timer->proc_next;
+    }
+    if (next) {
+        next->proc_prev = timer->proc_prev;
+    }
 
     hash_del(timer_map, &timer->id);
     free_timerid(timer->id);
