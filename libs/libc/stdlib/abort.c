@@ -7,6 +7,7 @@
 __attribute__((__noreturn__)) void abort() {
 #ifdef __is_libk
     printf("panic\n");
+    asm volatile("cli");
     while (1)
         ;
     __builtin_unreachable();
