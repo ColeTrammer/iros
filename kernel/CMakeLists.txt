@@ -21,6 +21,7 @@ if (NOT ${NATIVE_BUILD})
         fs/tnode.c
         fs/vfs.c
         hal/devices.c
+        hal/processor.c
         hal/ptmx.c
         irqs/irqs.c
         main/kernel.c

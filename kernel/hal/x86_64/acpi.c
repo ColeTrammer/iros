@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/acpi.h>
 #include <kernel/hal/x86_64/drivers/io_apic.h>
 #include <kernel/mem/page.h>
@@ -110,10 +111,15 @@ void init_acpi(void) {
         offset += entry->length;
 
         switch (entry->type) {
-            case ACPI_MADT_TYPE_LOCAL_APIC:
+            case ACPI_MADT_TYPE_LOCAL_APIC: {
                 debug_log("Local APIC: [ %u, %u, %#.8X ]\n", entry->local_apic.acpi_processor_id, entry->local_apic.apic_id,
                           entry->local_apic.flags);
+
+                struct processor *processor = create_processor(entry->local_apic.acpi_processor_id);
+                processor->arch_processor.local_apic_id = entry->local_apic.apic_id;
+                add_processor(processor);
                 break;
+            }
             case ACPI_MADT_TYPE_IO_APIC:
                 debug_log("IO APIC: [ %u, %#.8X, %#.8X ]\n", entry->io_apic.io_apic_id, entry->io_apic.io_apic_address,
                           entry->io_apic.global_system_interrupt_base);
