@@ -10,6 +10,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
+#include <kernel/proc/task_finalizer.h>
 #include <kernel/proc/user_mutex.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
@@ -132,7 +133,7 @@ void sched_run_next() {
             prev_save->sched_next = to_remove->sched_next;
             prev_save->sched_next->sched_prev = prev_save;
 
-            free_task(to_remove, true);
+            proc_schedule_task_for_destruction(to_remove);
         } else if (to_run->blocking && to_run->sched_state == WAITING) {
             struct task *current_save = current_task;
             current_task = to_run;

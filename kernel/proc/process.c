@@ -42,9 +42,6 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
         next->process_prev = task->process_prev;
     }
 
-    debug_log("process->task_list: [ %p, %p, %p ]\n", process->task_list, process->task_list ? process->task_list->process_next : NULL,
-              task);
-
     if (process->main_tid == task->tid) {
         struct task *new_task = process->task_list;
         process->main_tid = new_task ? new_task->tid : -1;
@@ -114,6 +111,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
 #ifdef PROC_REF_COUNT_DEBUG
         debug_log("Finished destroying process: [ %d ]\n", process->pid);
 #endif /* PROC_REF_COUNT_DEBUG */
+
         if (process->cwd) {
             drop_tnode(process->cwd);
         }

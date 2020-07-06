@@ -53,11 +53,16 @@ struct queued_signal {
 struct task {
     struct arch_task arch_task;
 
+    // Inline circular doubly-linked list used by the scheduler
     struct task *sched_next;
     struct task *sched_prev;
 
+    // Inline doublely-linked list connecting all tasks in a process
     struct task *process_next;
     struct task *process_prev;
+
+    // Inline list pointer used by process finializer
+    struct task *finialize_queue_next;
 
     // Inline list pointer used by wait_queue functions
     struct task *wait_queue_next;

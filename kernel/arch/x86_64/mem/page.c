@@ -409,8 +409,12 @@ void mark_region_as_cow(struct vm_region *region) {
     }
 }
 
-/* Must be called from unpremptable context */
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
+    // Disable interrupts since we have to change the value of CR3. This could potentially be avoided by
+    // freeing the memory in old CR3 by traversing the physical addresses directly instead of using a
+    // recursive page mapping.
+    uint64_t interrupts_save = disable_interrupts_save();
+
     uint64_t old_cr3 = get_cr3();
     if (old_cr3 == phys_addr) {
         old_cr3 = initial_kernel_task.process->arch_process.cr3;
@@ -422,6 +426,8 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
 
     load_cr3(old_cr3);
     free_phys_page(phys_addr, NULL);
+
+    interrupts_restore(interrupts_save);
 }
 
 void map_vm_region_flags(struct vm_region *region, struct process *process) {

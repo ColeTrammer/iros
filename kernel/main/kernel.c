@@ -16,6 +16,7 @@
 #include <kernel/net/net.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
+#include <kernel/proc/task_finalizer.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
@@ -33,6 +34,7 @@ void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr
     init_clocks();
     init_timers();
     init_task_sched();
+    init_task_finalizer();
     init_net();
 
     /* Mount hdd0 at / */

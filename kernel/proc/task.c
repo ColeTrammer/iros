@@ -292,11 +292,7 @@ struct task *get_current_task() {
     return current_task;
 }
 
-/* Must be called from unpremptable context */
 void free_task(struct task *task, bool free_paging_structure) {
-    struct task *current_save = task == current_task ? &initial_kernel_task : current_task;
-    current_task = task;
-
     debug_log("destroying: [ %d:%d ]\n", task->process->pid, task->tid);
 
     arch_free_task(task, free_paging_structure);
@@ -315,7 +311,6 @@ void free_task(struct task *task, bool free_paging_structure) {
     time_destroy_clock(task->task_clock);
     proc_drop_process(task->process, task, free_paging_structure);
     free(task);
-    current_task = current_save;
 }
 
 void task_set_sig_pending(struct task *task, int signum) {
@@ -444,8 +439,6 @@ void task_do_sigs_if_needed(struct task *task) {
 }
 
 void task_set_state_to_exiting(struct task *task) {
-    debug_log("Setting state to exiting: [ %p, %p ]\n", get_current_task(), task);
-
     if (task->sched_state == EXITING) {
         return;
     }
@@ -465,7 +458,7 @@ void task_set_state_to_exiting(struct task *task) {
 
 void task_yield_if_state_changed(struct task *task) {
     if (task->should_exit) {
-#ifndef TASK_SCHED_STATE_DEBUG
+#ifdef TASK_SCHED_STATE_DEBUG
         debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
 #endif /* TASK_SCHED_STATE_DEBUG */
         task->sched_state = EXITING;

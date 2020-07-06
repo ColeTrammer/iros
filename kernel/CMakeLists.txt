@@ -54,6 +54,7 @@ if (NOT ${NATIVE_BUILD})
         proc/process_state.c
         proc/process.c
         proc/task.c
+        proc/task_finalizer.c
         proc/user_mutex.c
         proc/wait_queue.c
         sched/task_sched.c
