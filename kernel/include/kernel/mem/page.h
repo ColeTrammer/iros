@@ -25,7 +25,7 @@ uintptr_t get_current_paging_structure();
 uintptr_t create_paging_structure(struct vm_region *list, bool deep_copy, struct process *process);
 uintptr_t create_clone_process_paging_structure(struct process *process);
 void load_paging_structure(uintptr_t phys_addr);
-void soft_remove_paging_structure(struct vm_region *list, struct process *process);
+void soft_remove_paging_structure(struct vm_region *list);
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list);
 
 void map_vm_region_flags(struct vm_region *region, struct process *process);

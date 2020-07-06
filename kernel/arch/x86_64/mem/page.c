@@ -370,25 +370,13 @@ void load_paging_structure(uintptr_t phys_addr) {
     load_cr3(phys_addr);
 }
 
-void soft_remove_paging_structure(struct vm_region *list, struct process *process) {
+void soft_remove_paging_structure(struct vm_region *list) {
     struct vm_region *region = list;
     while (region != NULL) {
         if (!(region->flags & VM_GLOBAL)) {
             for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-                if (region->type == VM_KERNEL_STACK) {
-                    // NOTE: This section should be removed separately, when an individual task
-                    //       ends. This is because each and every task gets its own kernel stack,
-                    //       but they share the rest of the memory. Since this method should only
-                    //       be called when all tasks are gone, unmapping the pages in the region
-                    //       would either do nothing or cause a page fault, and thus should be
-                    //       avoided.
-                    continue;
-                } else if (region->vm_object != NULL) {
-                    // NOTE: The vm object is responsible for unmapping the physical pages
-                    do_unmap_page(page, false, true, NULL);
-                } else {
-                    unmap_page(page, process);
-                }
+                // NOTE: The vm object is responsible for unmapping the physical pages
+                do_unmap_page(page, false, true, NULL);
             }
         }
         region = region->next;
@@ -422,7 +410,7 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
         load_cr3(phys_addr);
     }
 
-    soft_remove_paging_structure(list, get_current_task()->process);
+    soft_remove_paging_structure(list);
 
     load_cr3(old_cr3);
     free_phys_page(phys_addr, NULL);

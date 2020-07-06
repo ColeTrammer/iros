@@ -45,7 +45,6 @@ struct process {
 
     struct task *task_list;
     pid_t main_tid;
-    spinlock_t task_list_lock;
 
     pid_t pid;
     pid_t pgid;

@@ -175,7 +175,6 @@ void init_kernel_task() {
     initial_kernel_task.process->pid = 1;
     init_mutex(&initial_kernel_process.lock);
     init_spinlock(&initial_kernel_process.user_mutex_lock);
-    init_spinlock(&initial_kernel_process.task_list_lock);
     initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
     initial_kernel_task.process->main_tid = initial_kernel_task.tid;
     initial_kernel_task.process->pgid = 1;
@@ -194,7 +193,6 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->process->pid = get_next_pid();
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
-    init_spinlock(&process->task_list_lock);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->ppid = initial_kernel_task.process->pid;
@@ -246,7 +244,6 @@ struct task *load_task(const char *file_name) {
     task->process->main_tid = task->tid;
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
-    init_spinlock(&process->task_list_lock);
     proc_add_process(process);
     process->pgid = task->process->pid;
     process->sid = task->process->pid;

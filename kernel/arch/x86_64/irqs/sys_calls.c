@@ -344,7 +344,6 @@ SYS_CALL(fork) {
     child_process->main_tid = child->tid;
     init_mutex(&child_process->lock);
     init_spinlock(&child_process->user_mutex_lock);
-    init_spinlock(&child_process->task_list_lock);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;
@@ -621,7 +620,6 @@ SYS_CALL(execve) {
     process->task_list = task;
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
-    init_spinlock(&process->task_list_lock);
     process->pgid = current->process->pgid;
     process->ppid = current->process->ppid;
     process->sid = current->process->sid;
@@ -657,7 +655,7 @@ SYS_CALL(execve) {
     proc_clone_program_args(process, prepend_argv, argv, envp);
 
     /* Ensure File Name And Args Are Still Mapped */
-    soft_remove_paging_structure(current->process->process_memory, current->process);
+    soft_remove_paging_structure(current->process->process_memory);
 
     /* Disable Preemption So That Nothing Goes Wrong When Removing Ourselves (We Don't Want To Remove Ourselves From The List And Then Be
      * Interrupted) */
@@ -672,13 +670,17 @@ SYS_CALL(execve) {
     current->kernel_stack = NULL;
 
     sched_remove_task(current);
-    free_task(current, false);
     assert(get_current_task() == task);
     sched_add_task(task);
-    proc_add_process(process);
 
     // NOTE: once we re-enable interrupts we're effectively running as the new task inside a system call.
     interrupts_restore(save);
+
+    // Free the old task's resources now that we can block.
+    free_task(current, false);
+
+    // FIXME: adding the process now might be a bit prone to race conditions
+    proc_add_process(process);
 
     uintptr_t stack_end = proc_allocate_user_stack(process);
     task_state->stack_state.rsp = map_program_args(stack_end, process->args_context);
@@ -1513,7 +1515,7 @@ SYS_CALL(create_task) {
 
     *args->tid_ptr = task->tid;
 
-    spin_lock(&task->process->task_list_lock);
+    mutex_lock(&task->process->lock);
     struct task *prev = task->process->task_list;
     if (prev != NULL) {
         task->process_next = prev->process_next;
@@ -1524,7 +1526,7 @@ SYS_CALL(create_task) {
         }
         prev->process_next = task;
     }
-    spin_unlock(&task->process->task_list_lock);
+    mutex_unlock(&task->process->lock);
 
     sched_add_task(task);
 

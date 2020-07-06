@@ -28,7 +28,7 @@ HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
 void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure) {
     // Reassign the main tid of the process if it exits early, and delete tid from the task list
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
     if (process->task_list == task) {
         process->task_list = task->process_next;
     }
@@ -47,7 +47,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
         process->main_tid = new_task ? new_task->tid : -1;
         assert(process->main_tid != task->tid);
     }
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 
     int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
 
@@ -206,9 +206,9 @@ void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *proces
 
 void proc_set_sig_pending(struct process *process, int n) {
     // FIXME: dispatch signals to a different task than the first if it makes sense.
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
     struct task *task_to_use = process->task_list;
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 
     task_set_sig_pending(task_to_use, n);
 }

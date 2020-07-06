@@ -178,7 +178,7 @@ struct signal_process_group_closure {
 static void signal_process_group_iter(struct process *process, void *_cls) {
     struct signal_process_group_closure *cls = _cls;
 
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
 
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = process->task_list;
@@ -192,7 +192,7 @@ static void signal_process_group_iter(struct process *process, void *_cls) {
     }
     cls->signalled_anything = true;
 
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 }
 
 int signal_process_group(pid_t pgid, int signum) {
@@ -223,14 +223,14 @@ struct task *find_by_tid(int tgid, int tid) {
         return NULL;
     }
 
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
     for (struct task *task = process->task_list; task; task = task->process_next) {
         if (task->tid == tid) {
-            spin_unlock(&process->task_list_lock);
+            mutex_unlock(&process->lock);
             return task;
         }
     }
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 
     return NULL;
 }
@@ -244,7 +244,7 @@ int signal_task(int tgid, int tid, int signum) {
         return -ESRCH;
     }
 
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
     for (struct task *task = process->task_list; task; task = task->process_next) {
         if (task->tid == tid) {
             if (signum != 0) {
@@ -260,7 +260,7 @@ int signal_task(int tgid, int tid, int signum) {
         }
     }
 
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 
     if (signalled_self) {
         unsigned long save = disable_interrupts_save();
@@ -284,7 +284,7 @@ int signal_process(pid_t pid, int signum) {
         return -ESRCH;
     }
 
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
 
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = process->task_list;
@@ -298,7 +298,7 @@ int signal_process(pid_t pid, int signum) {
     }
     signalled_anything = true;
 
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 
     if (signalled_self) {
         unsigned long save = disable_interrupts_save();
@@ -322,7 +322,7 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
         return -ESRCH;
     }
 
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
 
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = process->task_list;
@@ -336,7 +336,7 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
     }
     signalled_anything = true;
 
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 
     if (signalled_self) {
         struct task *current = get_current_task();
@@ -352,8 +352,7 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
 }
 
 void exit_process(struct process *process) {
-    // FIXME: this needs to be protected by a mutex instead of a spinlock because of userland validation
-    spin_lock(&process->task_list_lock);
+    mutex_lock(&process->lock);
     struct task *task = process->task_list;
     do {
         task_set_state_to_exiting(task);
@@ -386,7 +385,7 @@ void exit_process(struct process *process) {
             }
         }
     } while ((task = task->process_next));
-    spin_unlock(&process->task_list_lock);
+    mutex_unlock(&process->lock);
 }
 
 uint64_t idle_ticks;
