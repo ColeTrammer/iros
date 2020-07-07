@@ -9,6 +9,7 @@ struct processor *create_processor(uint8_t id) {
     struct processor *processor = malloc(sizeof(struct processor));
     processor->next = NULL;
     processor->id = id;
+    processor->enabled = false;
     return processor;
 }
 

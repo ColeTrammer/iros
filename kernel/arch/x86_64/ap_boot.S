@@ -45,6 +45,7 @@ _trampoline_entry64:
     lgdt (_gdt - _trampoline_entry + TRAMPOLINE_PHYS_START)
     lidt (_idt - _trampoline_entry + TRAMPOLINE_PHYS_START)
     mov (_rsp - _trampoline_entry + TRAMPOLINE_PHYS_START), %rsp
+    mov (_processor - _trampoline_entry + TRAMPOLINE_PHYS_START), %rdi
 
     # Jump to the kernel
     movabs $init_ap, %rax
@@ -84,4 +85,6 @@ _gdt:
 _idt:
 .skip 8
 _rsp:
+.skip 8
+_processor:
 .skip 8

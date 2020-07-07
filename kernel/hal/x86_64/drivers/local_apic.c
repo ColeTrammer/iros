@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include <string.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
@@ -23,8 +24,11 @@ static void write_icr(volatile struct local_apic *local_apic, union local_apic_i
     local_apic->interrupt_command_register[0].value = command.raw_value & 0xFFFFFFFFU;
 }
 
-void init_ap(void) {
-    debug_log("\n===============================\nPROCESSOR MADE IT TO THE KERNEL\n===============================\n");
+void init_ap(struct processor *processor) {
+    debug_log("\n=================================\nPROCESSOR %u MADE IT TO THE KERNEL\n=================================\n",
+              processor->id);
+
+    atomic_store(&processor->enabled, true);
 
     for (;;) {
     }
@@ -35,6 +39,7 @@ struct ap_trampoline {
     uint64_t gdt;
     uint64_t idt;
     uint64_t rsp;
+    struct processor *processor;
 } __attribute__((packed));
 
 static void start_ap(volatile struct local_apic *local_apic, struct processor *processor) {
@@ -51,6 +56,7 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
     trampoline->gdt = (uintptr_t) get_gdt_descriptor();
     trampoline->idt = (uintptr_t) get_idt_descriptor();
     trampoline->rsp = ap_stack->end;
+    trampoline->processor = processor;
 
     union local_apic_icr command = { .raw_value = 0 };
     command.destination_mode = LOCAL_APIC_ICR_DEST_MODE_INIT;
@@ -70,7 +76,10 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
         io_wait_us(200);
     }
 
-    io_wait_us(25000000);
+    // FIXME: have a timeout mechanism
+    while (!atomic_load(&processor->enabled)) {
+        cpu_relax();
+    }
 
     vm_free_low_identity_map(code_trampoline);
     vm_free_kernel_region(ap_stack);

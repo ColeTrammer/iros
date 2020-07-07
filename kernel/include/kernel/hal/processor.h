@@ -1,6 +1,7 @@
 #ifndef _KERNEL_HAL_PROCESSOR_H
 #define _KERNEL_HAL_PROCESSOR_H 1
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <kernel/hal/arch.h>
 
@@ -9,6 +10,7 @@
 struct processor {
     struct processor *next;
     uint8_t id;
+    bool enabled;
 
     struct arch_processor arch_processor;
 };
