@@ -24,6 +24,8 @@ static inline void load_idt(struct idt_descriptor descriptor) {
     asm("lidtq %0" : : "m"(descriptor));
 }
 
+struct idt_descriptor *get_idt_descriptor(void);
+
 void add_idt_entry(struct idt_entry *idt, void *handler, unsigned int irq, int flags);
 void remove_idt_entry(struct idt_entry *idt, unsigned int irq);
 

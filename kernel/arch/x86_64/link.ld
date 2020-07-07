@@ -26,6 +26,9 @@ SECTIONS
     {
         PROVIDE(_kernel_entry32 = . - KERNEL_VMA + KERNEL_PHYS_START);
         *(.text.startup)
+        PROVIDE(_kernel_ap_trampoline_start = .);
+        *(.text.ap_boot)
+        PROVIDE(_kernel_ap_trampoline_end = .);
         *(.text .text.*)
     }
 

@@ -11,6 +11,10 @@ static struct gdt_descriptor gdt_descriptor;
 
 static struct tss tss;
 
+struct gdt_descriptor *get_gdt_descriptor(void) {
+    return &gdt_descriptor;
+}
+
 void init_gdt() {
     memset(&gdt, 0, GDT_ENTRIES * sizeof(struct gdt_entry));
     gdt[CS_OFFSET].type = 0b10011010;

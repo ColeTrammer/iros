@@ -17,3 +17,7 @@ void init_irqs() {
     idt_descriptor.limit = NUM_IRQS * sizeof(struct idt_entry) - 1;
     load_idt(idt_descriptor);
 }
+
+struct idt_descriptor *get_idt_descriptor(void) {
+    return &idt_descriptor;
+}

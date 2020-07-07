@@ -7,6 +7,7 @@ set(KERNEL_ARCHDIR arch/x86_64)
 set(KERNEL_HALDIR hal/x86_64)
 
 set(KERNEL_ARCH_SOURCES
+    ${KERNEL_ARCHDIR}/ap_boot.S
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
     ${KERNEL_ARCHDIR}/irqs/handlers.c
     ${KERNEL_ARCHDIR}/irqs/sys_calls.c
