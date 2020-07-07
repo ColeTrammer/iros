@@ -11,7 +11,7 @@
 
 struct process;
 
-void init_vm_allocator(uintptr_t initrd_phys_start, uintptr_t initrd_phys_end);
+void init_vm_allocator(void);
 
 void *add_vm_pages_end(size_t n, uint64_t type);
 void *add_vm_pages_start(size_t n, uint64_t type);

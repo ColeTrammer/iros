@@ -21,13 +21,12 @@
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 
-void kernel_main(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t inintrd_phys_start, uint64_t initrd_phys_end,
-                 uint32_t *multiboot_info) {
+void kernel_main(uint32_t *multiboot_info) {
     init_hal();
     init_irq_handlers();
-    init_page_frame_allocator(kernel_phys_start, kernel_phys_end, inintrd_phys_start, initrd_phys_end, multiboot_info);
+    init_page_frame_allocator(multiboot_info);
     init_kernel_task();
-    init_vm_allocator(inintrd_phys_start, initrd_phys_end);
+    init_vm_allocator();
     init_cpus();
     init_vfs();
     init_drivers();

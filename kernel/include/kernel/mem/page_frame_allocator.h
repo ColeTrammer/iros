@@ -9,8 +9,7 @@
 
 struct process;
 
-void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start,
-                               uintptr_t initrd_phys_end, uint32_t *multiboot_info);
+void init_page_frame_allocator(uint32_t *multiboot_info);
 void mark_used(uintptr_t phys_addr_start, uintptr_t length);
 uintptr_t get_next_phys_page(struct process *process);
 void free_phys_page(uintptr_t phys_addr, struct process *process);

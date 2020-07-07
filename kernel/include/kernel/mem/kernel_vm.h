@@ -15,6 +15,8 @@ extern void _data_start();
 extern void _data_end();
 extern void _bss_start();
 extern void _bss_end();
+extern void _kernel_phys_start();
+extern void _kernel_phys_end();
 
 extern void KERNEL_VM_STACK_START();
 
@@ -28,6 +30,8 @@ extern void KERNEL_VM_STACK_START();
 #define KERNEL_DATA_END   ((uintptr_t) &_data_end)
 #define KERNEL_BSS_START  ((uintptr_t) &_bss_start)
 #define KERNEL_BSS_END    ((uintptr_t) &_bss_end)
+#define KERNEL_PHYS_START ((uintptr_t) &_kernel_phys_start)
+#define KERNEL_PHYS_END   ((uintptr_t) &_kernel_phys_end)
 
 #define __KERNEL_VM_STACK_START ((uint64_t) &KERNEL_VM_STACK_START)
 
