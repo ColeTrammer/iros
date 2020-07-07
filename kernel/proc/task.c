@@ -132,7 +132,7 @@ uintptr_t map_program_args(uintptr_t start, struct args_context *context) {
 
     argv_start[-(context->prepend_argc + context->argc + 1)] = NULL;
 
-    args_start = (char *) ((((uintptr_t) args_start) & ~0x7) - 0x08);
+    args_start = (char *) ((((uintptr_t) args_start) & ~0xF) - 0x08);
 
     args_start -= sizeof(size_t);
     *((size_t *) args_start) = context->prepend_argc + context->argc - 1;
@@ -141,6 +141,7 @@ uintptr_t map_program_args(uintptr_t start, struct args_context *context) {
     args_start -= sizeof(char **);
     *((char ***) args_start) = argv_start - count;
 
+    assert((uintptr_t) args_start % 16 == 0);
     return (uintptr_t) args_start;
 }
 
