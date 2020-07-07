@@ -90,7 +90,6 @@ add_subdirectory(libs)
 add_subdirectory(gen)
 add_subdirectory(userland)
 add_subdirectory(initrd)
-add_subdirectory(boot)
 add_subdirectory(kernel)
 set(ALL_TARGETS ${LIBS_TARGETS} ${GEN_TARGETS} ${USERLAND_TARGETS} ${INITRD_TARGETS} ${BOOT_TARGETS} ${KERNEL_TARGETS})
 
@@ -114,21 +113,19 @@ if (NOT ${NATIVE_BUILD})
         BYPRODUCTS ${ROOT}/os_2.iso
         COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
         COMMAND /bin/mkdir -p ${ISODIR}/modules
-        COMMAND objcopy -S ${SYSROOT}/boot/boot ${ISODIR}/boot/boot
-        COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/modules/kernel
+        COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/boot/kernel
         COMMAND /bin/cp --preserve=timestamps ${SYSROOT}/boot/initrd.bin ${ISODIR}/modules/initrd.bin
         COMMAND /bin/echo "set menu_color_normal=white/black" >| ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set menu_color_highlight=black/light-gray" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "menuentry \"os_2\" {" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "    multiboot2 /boot/boot $$OS_2_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /bin/echo "    multiboot2 /boot/kernel $$OS_2_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "    module2 /modules/initrd.bin initrd" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "    module2 /modules/kernel kernel" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "}" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set timeout_style=menu" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set timeout=0" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/boot
+        COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/kernel
         COMMAND grub-mkrescue -o ${ROOT}/os_2.iso ${ISODIR}
         DEPENDS generate-initrd ${ALL_TARGETS} install-all
     )

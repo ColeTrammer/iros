@@ -6,6 +6,7 @@
 
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
+#include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/proc/task.h>
@@ -87,11 +88,14 @@ unsigned long get_max_phys_memory(void) {
     return phys_memory_max;
 }
 
-void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phys_end, uintptr_t initrd_phys_start,
-                               uintptr_t initrd_phys_end, uint32_t *multiboot_info) {
+uintptr_t initrd_phys_start;
+uintptr_t initrd_phys_end;
+
+void init_page_frame_allocator(uint32_t *multiboot_info) {
     mark_used(0, 0x100000); // assume none of this area is available
-    mark_used(kernel_phys_start, kernel_phys_end - kernel_phys_start);
-    mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);
+
+    debug_log("multiboot_info: [ %p ]\n", multiboot_info);
+    assert((uintptr_t) multiboot_info < 0x400000ULL);
 
     uint32_t *data = multiboot_info + 2;
     while (data < multiboot_info + multiboot_info[0] / sizeof(uint32_t)) {
@@ -114,12 +118,24 @@ void init_page_frame_allocator(uintptr_t kernel_phys_start, uintptr_t kernel_phy
                 mem += data[2] / sizeof(uintptr_t);
             }
         }
+
+        if (data[0] == 3) {
+            initrd_phys_start = data[2];
+            initrd_phys_end = data[3];
+            debug_log("kernel module: [ %s ]\n", (char *) &data[4]);
+        }
+
         data = (uint32_t *) ((uintptr_t) data + data[1]);
         if ((uintptr_t) data % 8 != 0) {
             data = (uint32_t *) (((uintptr_t) data & ~0x7) + 8);
         }
     }
 
+    mark_used(KERNEL_PHYS_START, KERNEL_PHYS_END - KERNEL_PHYS_START);
+    mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);
+
     debug_log("Finished Initializing Page Frame Allocator\n");
     debug_log("Max phys memory: [ %#lX ]\n", phys_memory_max);
+    debug_log("Kernel physical memory: [ %#.16lX, %#.16lX ]\n", KERNEL_PHYS_START, KERNEL_PHYS_END);
+    debug_log("Initrd physical memory: [ %#.16lX, %#.16lX ]\n", initrd_phys_start, initrd_phys_end);
 }

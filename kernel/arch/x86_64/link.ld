@@ -2,73 +2,82 @@ OUTPUT_FORMAT("elf64-x86-64")
 OUTPUT_ARCH(i386:x86-64)
 
 PROVIDE(KERNEL_VMA = 0xFFFFFF0000000000);
+PROVIDE(KERNEL_PHYS_START = 0x200000);
 
 /* Sets first thing to be executed to be start */
-ENTRY(_start)
+ENTRY(_start32)
 
 SECTIONS
 {
     PROVIDE (__executable_start = SEGMENT_START("text-segment", KERNEL_VMA)); 
     . = SEGMENT_START("text-segment", KERNEL_VMA) + SIZEOF_HEADERS;
 
-    .init : AT(ADDR(.init) - KERNEL_VMA)
+    .init : AT(ADDR(.init) - KERNEL_VMA + KERNEL_PHYS_START)
     {
+        PROVIDE(_kernel_phys_start = . - KERNEL_VMA + KERNEL_PHYS_START - SIZEOF_HEADERS);
+        PROVIDE(_multiboot_header_start_boot = . - KERNEL_VMA + KERNEL_PHYS_START);
+        *(.multiboot)
         PROVIDE(_text_start = .);
+        PROVIDE(_text_start_boot = . - KERNEL_VMA + KERNEL_PHYS_START);
         KEEP(*(SORT_NONE(.init)))
     }
 
-    .text : AT(ADDR(.text) - KERNEL_VMA)
+    .text : AT(ADDR(.text) - KERNEL_VMA + KERNEL_PHYS_START)
     {
+        PROVIDE(_kernel_entry32 = . - KERNEL_VMA + KERNEL_PHYS_START);
         *(.text.startup)
         *(.text .text.*)
     }
 
-    .fini : AT(ADDR(.fini) - KERNEL_VMA)
+    .fini : AT(ADDR(.fini) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         KEEP(*(SORT_NONE(.fini)))
         PROVIDE(_text_end = .);
     }
 
     /* Put read only data */
-    .rodata ALIGN(0x1000) : AT(ADDR(.rodata) - KERNEL_VMA)
+    .rodata ALIGN(0x1000) : AT(ADDR(.rodata) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         PROVIDE(_rod_start = .);
         *(.rodata .rodata.*)
     }
 
-    .ctors : AT(ADDR(.ctors) - KERNEL_VMA)
+    .ctors : AT(ADDR(.ctors) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         *(.ctors)
     }
 
-    .dtors : AT(ADDR(.dtors) - KERNEL_VMA)
+    .dtors : AT(ADDR(.dtors) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         *(.dtors)
     }
 
-    .eh_frame : AT(ADDR(.eh_frame) - KERNEL_VMA)
+    .eh_frame : AT(ADDR(.eh_frame) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         *(.eh_frame)
         PROVIDE(_rod_end = .);
     }
 
     /* Put data */
-    .data ALIGN(0x1000) : AT(ADDR(.data) - KERNEL_VMA)
+    .data ALIGN(0x1000) : AT(ADDR(.data) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         PROVIDE(_data_start = .);
         *(.data)
+        PROVIDE(_data_end_boot = . - KERNEL_VMA + KERNEL_PHYS_START);
         PROVIDE(_data_end = .);
     }
 
     /* Put uninitialized data */
-    .bss ALIGN(0x1000) : AT(ADDR(.bss) - KERNEL_VMA)
+    .bss ALIGN(0x1000) : AT(ADDR(.bss) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         PROVIDE(_bss_start = .);
         *(.bss.kernel_stack)
         *(.bss.reserved_pages)
         *(COMMON)
         *(.bss .bss.*)
+        PROVIDE(_bss_end_boot = . - KERNEL_VMA + KERNEL_PHYS_START);
         PROVIDE(_bss_end = .);
+        PROVIDE(_kernel_phys_end = . - KERNEL_VMA + KERNEL_PHYS_START);
     }
 
     /DISCARD/ : { *(.comment) }
