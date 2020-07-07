@@ -655,7 +655,7 @@ struct vm_region *vm_allocate_kernel_region(size_t size) {
     // FIXME: use a better allocation strategy then sequential assignments
     uintptr_t start = vm->type == VM_KERNEL_HEAP ? vm->end + 1073741824ULL / 2ULL : vm->end;
 
-    region->flags = VM_WRITE;
+    region->flags = VM_WRITE | VM_NO_EXEC;
     region->start = start;
     region->end = region->start + size;
     region->type = VM_KERNEL_ANON_MAPPING;
