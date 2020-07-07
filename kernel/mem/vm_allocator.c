@@ -687,3 +687,26 @@ void vm_free_kernel_region(struct vm_region *region) {
 
     spin_unlock(&kernel_vm_lock);
 }
+
+struct vm_region *vm_allocate_low_identity_map(uintptr_t start, uintptr_t size) {
+    assert(start + size <= 0x100000);
+
+    struct vm_region *region = calloc(1, sizeof(struct vm_region));
+    region->flags = VM_WRITE;
+    region->start = start & ~(PAGE_SIZE - 1);
+    region->end = ((start + size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    region->type = VM_KERNEL_ID_MAPPING;
+
+    for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
+        map_phys_page(s, s, region->flags, &initial_kernel_process);
+    }
+
+    return region;
+}
+
+void vm_free_low_identity_map(struct vm_region *region) {
+    for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
+        do_unmap_page(s, false, true, &initial_kernel_process);
+    }
+    free(region);
+}
