@@ -144,6 +144,16 @@ static inline void fninit(void) {
     asm volatile("fninit" : : : "memory");
 }
 
+static inline uint32_t get_mxcsr(void) {
+    uint32_t mxcsr;
+    asm volatile("stmxcsr %0" : "=m"(mxcsr) : : "memory");
+    return mxcsr;
+}
+
+static inline void set_mxcsr(uint32_t mxcsr) {
+    asm volatile("ldmxcsr %0" : : "m"(mxcsr) : "memory");
+}
+
 #define CPUID_FEATURES 1
 
 #define CPUID_ECX_RDRAND (1 << 30)

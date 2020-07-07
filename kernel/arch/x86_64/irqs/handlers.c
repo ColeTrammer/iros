@@ -27,11 +27,10 @@ static void handle_divide_by_zero(struct irq_context *context) {
     struct task_state *task_state = context->task_state;
 
     struct task *current = get_current_task();
-    debug_log("%d #DE: [ %#.16lX ]\n", current->process->pid, task_state->stack_state.rip);
+    debug_log("#DE: [ %#.16lX ]\n", task_state->stack_state.rip);
 
     if (!current->in_kernel) {
-        memcpy(&current->arch_task.task_state.cpu_state, &task_state->cpu_state, sizeof(struct cpu_state));
-        memcpy(&current->arch_task.task_state.stack_state, &task_state->stack_state, sizeof(struct stack_state));
+        memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         task_do_sig(current, SIGFPE); // You can't block this so we don't check
 
         // If we get here, the task that faulted was just sent a terminating signal
@@ -238,6 +237,19 @@ static void handle_machine_check(struct irq_context *context __attribute__((unus
 }
 
 static void handle_simd_exception(struct irq_context *context __attribute__((unused))) {
+    struct task_state *task_state = context->task_state;
+
+    struct task *current = get_current_task();
+    debug_log("#XF: [ %#.16lX, %#.8X ]\n", task_state->stack_state.rip, get_mxcsr());
+
+    if (!current->in_kernel) {
+        memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
+        task_do_sig(current, SIGFPE); // You can't block this so we don't check
+
+        // If we get here, the task that faulted was just sent a terminating signal
+        arch_sched_run_next(&current->arch_task.task_state);
+    }
+
     dump_registers_to_screen();
     printf("\n\033[31m%s\033[0m\n", "SIMD Exception");
     abort();

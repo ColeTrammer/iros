@@ -69,7 +69,7 @@ void arch_init_kernel_task(struct task *kernel_task) {
 
     task_align_fpu(kernel_task);
     fninit();
-    fxrstor(kernel_task->fpu.aligned_state);
+    fxsave(kernel_task->fpu.aligned_state);
 }
 
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
