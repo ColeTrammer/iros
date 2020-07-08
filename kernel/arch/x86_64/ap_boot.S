@@ -42,8 +42,10 @@ _trampoline_entry64:
     mov %ax, %ss
 
     # Use important values from the trampoline
-    lgdt (_gdt - _trampoline_entry + TRAMPOLINE_PHYS_START)
-    lidt (_idt - _trampoline_entry + TRAMPOLINE_PHYS_START)
+    mov (_gdt - _trampoline_entry + TRAMPOLINE_PHYS_START), %rax
+    lgdt (%rax)
+    mov (_idt - _trampoline_entry + TRAMPOLINE_PHYS_START), %rax
+    lidt (%rax)
     mov (_rsp - _trampoline_entry + TRAMPOLINE_PHYS_START), %rsp
     mov (_processor - _trampoline_entry + TRAMPOLINE_PHYS_START), %rdi
 
