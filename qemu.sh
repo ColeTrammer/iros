@@ -11,11 +11,17 @@ ARCH=${ARCH:-x86_64}
 [ -e os_2.img ] || die 'os_2.img not found - try running `sudo ./makeimg.sh'"'"
 [ -e os_2.iso ] || die 'os_2.iso not found - try making target `os_2.iso'"'"
 
+ENABLE_KVM=""
+if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+    ENABLE_KVM="-enable-kvm"
+fi
+
 qemu-system-$ARCH \
     -cdrom os_2.iso \
     -d guest_errors \
     -serial stdio \
     -smp 2 \
+    ${ENABLE_KVM} \
     -device VGA,vgamem_mb=64 \
     -drive file=os_2.img,format=raw,index=0,media=disk \
     -boot d \
