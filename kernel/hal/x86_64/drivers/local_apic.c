@@ -72,21 +72,26 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
 
     command.vector = 8;
     command.message_type = LOCAL_APIC_ICR_MESSAGE_TYPE_SIPI;
+
+    bool loaded = false;
     for (int i = 0; i < 2; i++) {
         debug_log("Sending SIPI to CPU: [ %u ]\n", processor->id);
         write_icr(local_apic, command);
         io_wait_us(200);
 
         if (atomic_load(&processor->enabled)) {
+            loaded = true;
             break;
         }
     }
 
-    debug_log("Waiting for CPU: [ %u ]\n", processor->id);
-
-    // FIXME: have a timeout mechanism
-    while (!atomic_load(&processor->enabled)) {
-        cpu_relax();
+    if (!loaded) {
+        for (int i = 0; i < 1000000; i++) {
+            if (atomic_load(&processor->enabled)) {
+                break;
+            }
+            io_wait();
+        }
     }
 
     vm_free_low_identity_map(code_trampoline);
