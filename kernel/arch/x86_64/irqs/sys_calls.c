@@ -23,6 +23,7 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/processor.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
@@ -176,7 +177,6 @@
         return;                                                  \
     } while (0)
 
-extern struct task initial_kernel_task;
 extern struct task *current_task;
 
 static int get_file(int fd, struct file **file) {
@@ -644,7 +644,7 @@ SYS_CALL(execve) {
     process->arch_process.cr3 = get_cr3();
 
     task_align_fpu(task);
-    memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
+    memcpy(task->fpu.aligned_state, get_idle_task()->fpu.aligned_state, FPU_IMAGE_SIZE);
 
     task->arch_task.user_task_state = task_state;
     task_state->stack_state.cs = USER_CODE_SELECTOR;
@@ -1500,7 +1500,7 @@ SYS_CALL(create_task) {
     task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 
     task_align_fpu(task);
-    memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
+    memcpy(task->fpu.aligned_state, get_idle_task()->fpu.aligned_state, FPU_IMAGE_SIZE);
 
     task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     task->arch_task.user_thread_pointer = args->thread_self_pointer;

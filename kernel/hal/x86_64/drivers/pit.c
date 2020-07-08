@@ -3,6 +3,7 @@
 #include <sys/types.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/irqs/handlers.h>
@@ -23,9 +24,8 @@ extern uint64_t user_ticks;
 extern uint64_t kernel_ticks;
 
 void handle_pit_interrupt(struct irq_context *context) {
-
     struct task *current = get_current_task();
-    if (current == &initial_kernel_task) {
+    if (current == get_idle_task()) {
         idle_ticks++;
     } else if (current->in_kernel) {
         current->process->times.tms_stime++;

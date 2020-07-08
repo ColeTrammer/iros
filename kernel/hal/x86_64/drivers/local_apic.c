@@ -11,6 +11,7 @@
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/proc/task.h>
 
 void local_apic_send_eoi(void) {
     struct acpi_info *info = acpi_get_info();
@@ -34,6 +35,7 @@ void init_ap(struct processor *processor) {
     set_msr(MSR_GS_BASE, 0);
     set_msr(MSR_KERNEL_GS_BASE, (uintptr_t) processor);
     swapgs();
+    init_idle_task(processor);
 
     for (;;) {
     }

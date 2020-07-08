@@ -83,7 +83,7 @@ void init_vm_allocator(void) {
     clear_initial_page_mappings();
 
     uintptr_t new_structure = create_paging_structure(kernel_vm_list, true, &initial_kernel_process);
-    load_paging_structure(new_structure);
+    load_paging_structure(new_structure, &initial_kernel_process);
 
 #if ARCH == X86_64
     create_phys_id_map();

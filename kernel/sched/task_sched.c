@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/timer.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/vm_allocator.h>
@@ -21,8 +22,8 @@
 
 static struct task *list_start = NULL;
 static struct task *list_end = NULL;
-extern struct task initial_kernel_task;
 extern struct task *current_task;
+extern struct process initial_kernel_process;
 static spinlock_t task_list_lock = SPINLOCK_INITIALIZER;
 
 void init_task_sched() {
@@ -86,7 +87,8 @@ void sched_remove_task(struct task *task) {
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct task *current = get_current_task();
-    if (current == &initial_kernel_task) {
+
+    if (current == get_idle_task()) {
         current = list_start;
     }
 
@@ -152,7 +154,7 @@ void sched_run_next() {
         if (to_run == start) {
             // This means we need to run the idle task
             if (to_run->sched_state != RUNNING_UNINTERRUPTIBLE && to_run->sched_state != RUNNING_INTERRUPTIBLE) {
-                to_run = &initial_kernel_task;
+                to_run = get_idle_task();
             }
 
             break;
@@ -160,9 +162,7 @@ void sched_run_next() {
     }
 
 #ifdef SCHED_DEBUG
-    if (to_run != &initial_kernel_task) {
-        debug_log("Running task: [ %d:%d ]\n", to_run->tid, to_run->process->pid);
-    }
+    debug_log("Running task: [ %d:%d ]\n", to_run->tid, to_run->process->pid);
 #endif /* SCHED_DEBUG */
 
     assert(to_run->sched_state != WAITING && to_run->sched_state != STOPPED && to_run->sched_state != EXITING);
@@ -214,11 +214,13 @@ int signal_process_group(pid_t pgid, int signum) {
 }
 
 struct task *find_by_tid(int tgid, int tid) {
-    if (tgid == 1 && tid == 1) {
-        return &initial_kernel_task;
+    struct process *process;
+    if (tgid == 1) {
+        process = &initial_kernel_process;
+    } else {
+        process = find_by_pid(tgid);
     }
 
-    struct process *process = find_by_pid(tgid);
     if (!process) {
         return NULL;
     }

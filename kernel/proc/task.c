@@ -12,6 +12,7 @@
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
@@ -28,7 +29,6 @@
 // #define TASK_SIGNAL_DEBUG
 
 struct task *current_task;
-struct task initial_kernel_task;
 struct process initial_kernel_process;
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp) {
@@ -165,25 +165,46 @@ int get_next_tid() {
     return tid;
 }
 
-void init_kernel_task() {
-    current_task = &initial_kernel_task;
-
-    current_task->process = &initial_kernel_process;
-    arch_init_kernel_task(current_task);
-
-    initial_kernel_task.tid = get_next_tid();
-    initial_kernel_task.kernel_task = true;
-    initial_kernel_task.process->pid = 1;
+void init_kernel_process(void) {
+    initial_kernel_process.pid = 1;
     init_mutex(&initial_kernel_process.lock);
     init_spinlock(&initial_kernel_process.user_mutex_lock);
-    initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
-    initial_kernel_task.process->main_tid = initial_kernel_task.tid;
-    initial_kernel_task.process->pgid = 1;
-    initial_kernel_task.process->ppid = 1;
-    initial_kernel_task.process->tty = -1;
+    initial_kernel_process.main_tid = 1;
+    initial_kernel_process.pgid = 1;
+    initial_kernel_process.ppid = 1;
+    initial_kernel_process.tty = -1;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
-    initial_kernel_process.task_list = &initial_kernel_task;
-    initial_kernel_task.kernel_stack = NULL;
+}
+
+void init_idle_task(struct processor *processor) {
+    struct task *task = calloc(1, sizeof(struct task));
+    task->process = &initial_kernel_process;
+
+    // NOTE: this would need locks if APs weren't initialized one at a time.
+    struct task *prev = initial_kernel_process.task_list;
+    if (prev != NULL) {
+        task->process_next = prev->process_next;
+        task->process_prev = prev;
+
+        if (task->process_next) {
+            task->process_next->process_prev = task;
+        }
+        prev->process_next = task;
+    } else {
+        initial_kernel_process.task_list = task;
+    }
+
+    task->tid = get_next_tid();
+    task->kernel_task = true;
+    task->sched_state = RUNNING_UNINTERRUPTIBLE;
+
+    arch_init_idle_task(task, processor);
+
+    if (!current_task) {
+        current_task = task;
+    }
+
+    processor->idle_task = task;
 }
 
 struct task *load_kernel_task(uintptr_t entry, const char *name) {
@@ -196,7 +217,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     init_spinlock(&process->user_mutex_lock);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
-    task->process->ppid = initial_kernel_task.process->pid;
+    task->process->ppid = initial_kernel_process.pid;
     task->process->process_memory = NULL;
     task->process->task_list = task;
     task->kernel_task = true;
@@ -225,9 +246,10 @@ struct task *load_task(const char *file_name) {
 
     uintptr_t old_paging_structure = get_current_paging_structure();
 
+    struct task *save = current_task;
     current_task = task;
-    uintptr_t structure = create_paging_structure(task->process->process_memory, false, task->process);
-    load_paging_structure(structure);
+    uintptr_t structure = create_paging_structure(process->process_memory, false, process);
+    load_paging_structure(structure, process);
 
     size_t length = fs_file_size(file);
     char *buffer = (char *) fs_mmap(NULL, length, PROT_READ, MAP_SHARED, file, 0);
@@ -248,7 +270,7 @@ struct task *load_task(const char *file_name) {
     proc_add_process(process);
     process->pgid = task->process->pid;
     process->sid = task->process->pid;
-    process->ppid = initial_kernel_task.process->pid;
+    process->ppid = initial_kernel_process.pid;
     process->umask = 022;
     process->task_list = task;
     process->tty = -1;
@@ -268,16 +290,16 @@ struct task *load_task(const char *file_name) {
     proc_allocate_user_stack(process);
     arch_load_task(task, entry);
 
-    current_task = &initial_kernel_task;
+    current_task = save;
     task->kernel_task = false;
 
-    load_paging_structure(old_paging_structure);
+    load_paging_structure(old_paging_structure, save->process);
 
-    task->process->files[0] = (struct file_descriptor) { fs_openat(NULL, "/dev/serial0", O_RDWR, 0, NULL), 0 };
-    task->process->files[1] = fs_dup(task->process->files[0]);
-    task->process->files[2] = fs_dup(task->process->files[0]);
+    process->files[0] = (struct file_descriptor) { fs_openat(NULL, "/dev/serial0", O_RDWR, 0, NULL), 0 };
+    process->files[1] = fs_dup(process->files[0]);
+    process->files[2] = fs_dup(process->files[0]);
 
-    debug_log("Loaded Task: [ %d, %s ]\n", task->process->pid, file_name);
+    debug_log("Loaded Task: [ %d:%d, %s ]\n", process->pid, task->tid, file_name);
     return task;
 }
 

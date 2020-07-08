@@ -27,6 +27,7 @@ enum sched_state {
 };
 
 struct clock;
+struct processor;
 
 struct args_context {
     size_t prepend_argc;
@@ -95,8 +96,10 @@ struct task {
     struct arch_fpu_state fpu;
 };
 
-void init_kernel_task();
-void arch_init_kernel_task(struct task *kernel_task);
+void init_kernel_process(void);
+
+void init_idle_task(struct processor *processor);
+void arch_init_idle_task(struct task *kernel_task, struct processor *processor);
 
 struct task *load_kernel_task(uintptr_t entry, const char *name);
 void arch_load_kernel_task(struct task *task, uintptr_t entry);

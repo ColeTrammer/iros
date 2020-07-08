@@ -10,6 +10,7 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/kernel_vm.h>
@@ -22,7 +23,7 @@
 
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
-extern struct task initial_kernel_task;
+extern struct process initial_kernel_process;
 extern struct task *current_task;
 
 /* Default Args And Envp Passed to First Program */
@@ -59,21 +60,20 @@ void task_align_fpu(struct task *task) {
            (uintptr_t) task->fpu.aligned_state <= (uintptr_t) task->fpu.raw_fpu_state.image);
 }
 
-void arch_init_kernel_task(struct task *kernel_task) {
-    /* Sets Up Kernel Task To Idle */
-    kernel_task->arch_task.task_state.stack_state.rip = (uint64_t) &kernel_idle;
-    kernel_task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
-    kernel_task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
-    kernel_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
-    kernel_task->arch_task.task_state.stack_state.rsp = 0;
+void arch_init_idle_task(struct task *idle_task, struct processor *processor) {
+    idle_task->arch_task.task_state.stack_state.rip = (uint64_t) &kernel_idle;
+    idle_task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
+    idle_task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
+    idle_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
+    idle_task->arch_task.task_state.stack_state.rsp = processor->kernel_stack->end;
 
-    task_align_fpu(kernel_task);
+    task_align_fpu(idle_task);
     fninit();
-    fxsave(kernel_task->fpu.aligned_state);
+    fxsave(idle_task->fpu.aligned_state);
 }
 
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
-    task->process->arch_process.cr3 = initial_kernel_task.process->arch_process.cr3;
+    task->process->arch_process.cr3 = initial_kernel_process.arch_process.cr3;
     task->arch_task.task_state.cpu_state.rbp = task->kernel_stack->end;
     task->arch_task.task_state.stack_state.rip = entry;
     task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
@@ -98,7 +98,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
     task_align_fpu(task);
-    memcpy(task->fpu.aligned_state, initial_kernel_task.fpu.aligned_state, FPU_IMAGE_SIZE);
+    memcpy(task->fpu.aligned_state, get_idle_task()->fpu.aligned_state, FPU_IMAGE_SIZE);
 }
 
 /* Must be called from unpremptable context */

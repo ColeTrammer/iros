@@ -96,7 +96,7 @@ void init_bsp(struct processor *processor) {
     set_msr(MSR_KERNEL_GS_BASE, (uint64_t) processor);
     swapgs();
 
-    initial_kernel_task.arch_task.task_state.stack_state.rsp = processor->kernel_stack->end;
+    init_idle_task(processor);
 }
 
 static bool use_graphics = true;

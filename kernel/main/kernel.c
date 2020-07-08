@@ -25,7 +25,7 @@ void kernel_main(uint32_t *multiboot_info) {
     init_hal();
     init_irq_handlers();
     init_page_frame_allocator(multiboot_info);
-    init_kernel_task();
+    init_kernel_process();
     init_vm_allocator();
     init_cpus();
     init_vfs();

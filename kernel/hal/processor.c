@@ -10,6 +10,7 @@ struct processor *create_processor() {
     struct processor *processor = malloc(sizeof(struct processor));
     processor->self = processor;
     processor->next = NULL;
+    processor->idle_task = NULL;
     processor->kernel_stack = NULL;
     processor->id = num_processors++;
     processor->enabled = false;
