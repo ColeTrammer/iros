@@ -55,9 +55,7 @@ static void ata_wait_irq(struct ata_device_data *data) {
         // time is not long enough. Not only that, but also errors will go
         // uncheck. There may be a way to poll this with the status register,
         // but it can't currently be determined b/c irqs as a whole are broken.
-        for (int i = 0; i < 10000; i++) {
-            io_wait();
-        }
+        io_wait_us(1000);
     }
 }
 
