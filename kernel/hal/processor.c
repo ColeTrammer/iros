@@ -8,6 +8,7 @@ static int num_processors;
 
 struct processor *create_processor() {
     struct processor *processor = malloc(sizeof(struct processor));
+    processor->self = processor;
     processor->next = NULL;
     processor->kernel_stack = NULL;
     processor->id = num_processors++;

@@ -10,6 +10,7 @@
 struct vm_region;
 
 struct processor {
+    struct processor *self;
     struct processor *next;
 
     struct vm_region *kernel_stack;

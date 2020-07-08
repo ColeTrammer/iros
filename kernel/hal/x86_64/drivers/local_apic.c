@@ -31,6 +31,9 @@ void init_ap(struct processor *processor) {
               processor->id);
 
     init_gdt(processor);
+    set_msr(MSR_GS_BASE, 0);
+    set_msr(MSR_KERNEL_GS_BASE, (uintptr_t) processor);
+    swapgs();
 
     for (;;) {
     }

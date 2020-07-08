@@ -92,6 +92,10 @@ void init_bsp(struct processor *processor) {
     processor->kernel_stack = vm_allocate_kernel_region(PAGE_SIZE);
     init_gdt(processor);
 
+    set_msr(MSR_GS_BASE, 0);
+    set_msr(MSR_KERNEL_GS_BASE, (uint64_t) processor);
+    swapgs();
+
     initial_kernel_task.arch_task.task_state.stack_state.rsp = processor->kernel_stack->end;
 }
 

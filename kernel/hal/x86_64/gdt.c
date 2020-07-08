@@ -39,11 +39,5 @@ void init_gdt(struct processor *processor) {
 
 /* Must be called from unpremptable context */
 void set_tss_stack_pointer(uintptr_t rsp) {
-    // FIXME: set the current processor's tss, not the BSP
-    struct processor *processor = get_processor_list();
-    while (processor && processor->id != 0) {
-        processor = processor->next;
-    }
-    assert(processor);
-    processor->arch_processor.tss.rsp0 = rsp;
+    get_current_processor()->arch_processor.tss.rsp0 = rsp;
 }

@@ -154,6 +154,10 @@ static inline void set_mxcsr(uint32_t mxcsr) {
     asm volatile("ldmxcsr %0" : : "m"(mxcsr) : "memory");
 }
 
+static inline void swapgs(void) {
+    asm volatile("swapgs" : : : "memory");
+}
+
 #define CPUID_FEATURES 1
 
 #define CPUID_ECX_RDRAND (1 << 30)
@@ -164,6 +168,8 @@ static inline void cpuid(int code, uint32_t *a, uint32_t *b, uint32_t *c, uint32
 
 #define MSR_LOCAL_APIC_BASE 0x1BU
 #define MSR_FS_BASE         0xC0000100U
+#define MSR_GS_BASE         0xC0000101U
+#define MSR_KERNEL_GS_BASE  0xC0000102U
 
 static inline uint64_t get_msr(uint32_t msr) {
     uint32_t low;
