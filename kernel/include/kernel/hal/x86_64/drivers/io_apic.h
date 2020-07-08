@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define IO_APIC_IRQ_OFFSET 48
+#define IO_APIC_IRQ_OFFSET 64
 
 #define IO_APIC_REGISTER_ID           0x00
 #define IO_APIC_REGISTER_VERSION      0x01

@@ -4,9 +4,6 @@
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
-#include <kernel/mem/page.h>
-#include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/task.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/acpi.h>
@@ -52,14 +49,15 @@ void init_hal(void) {
 }
 
 void init_cpus(void) {
-    // Parse the acpi tables now that dynamic memory allocation is available.
-    init_acpi();
-
 #ifdef KERNEL_USE_PIC
     init_pic();
 #else
-    init_local_apic();
+    disable_pic();
+    init_local_apic_irq_handlers();
 #endif /* KERNEL_USE_PIC */
+
+    // Parse the acpi tables now that dynamic memory allocation is available.
+    init_acpi();
 }
 
 void init_drivers(void) {
@@ -83,20 +81,6 @@ void init_drivers(void) {
 
 void init_smp(void) {
     local_apic_start_aps();
-}
-
-extern struct task initial_kernel_task;
-
-void init_bsp(struct processor *processor) {
-    processor->enabled = true;
-    processor->kernel_stack = vm_allocate_kernel_region(PAGE_SIZE);
-    init_gdt(processor);
-
-    set_msr(MSR_GS_BASE, 0);
-    set_msr(MSR_KERNEL_GS_BASE, (uint64_t) processor);
-    swapgs();
-
-    init_idle_task(processor);
 }
 
 static bool use_graphics = true;

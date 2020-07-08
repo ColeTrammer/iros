@@ -39,6 +39,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/idt.c
     ${KERNEL_HALDIR}/irqs.c
     ${KERNEL_HALDIR}/output.c
+    ${KERNEL_HALDIR}/processor.c
     ${KERNEL_HALDIR}/timer.c
     PARENT_SCOPE
 )

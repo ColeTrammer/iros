@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define IRQ_HANDLER_EXTERNAL 1
+#define IRQ_HANDLER_ALL_CPUS 2
 
 // clang-format off
 #include <kernel/arch/arch.h>

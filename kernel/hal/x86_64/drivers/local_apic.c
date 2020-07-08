@@ -8,6 +8,7 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/hal/x86_64/idt.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
@@ -31,12 +32,9 @@ void init_ap(struct processor *processor) {
     debug_log("\n=================================\nPROCESSOR %u MADE IT TO THE KERNEL\n=================================\n",
               processor->id);
 
-    init_gdt(processor);
-    set_msr(MSR_GS_BASE, 0);
-    set_msr(MSR_KERNEL_GS_BASE, (uintptr_t) processor);
-    swapgs();
-    init_idle_task(processor);
+    arch_init_processor(processor);
 
+    enable_interrupts();
     for (;;) {
     }
 }
@@ -118,13 +116,43 @@ void local_apic_start_aps(void) {
 }
 
 void init_local_apic(void) {
-    disable_pic();
-
     struct acpi_info *info = acpi_get_info();
     set_msr(MSR_LOCAL_APIC_BASE, info->local_apic_address | APIC_MSR_ENABLE_LOCAL);
 
     volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
     local_apic->spurious_interrupt_vector_register = 0x1FF;
+}
 
-    debug_log("Enabled local APIC\n");
+static void handle_ipi(struct irq_context *context) {
+    (void) context;
+
+    debug_log("GOT IPI\n");
+}
+
+static struct irq_handler ipi_handler = { .handler = handle_ipi, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
+
+static bool lapic_is_valid_irq(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused))) {
+    return true;
+}
+
+static void lapic_send_eoi(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused))) {
+    local_apic_send_eoi();
+}
+
+static void lapic_set_irq_enabled(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused)),
+                                  bool enabled __attribute__((unused))) {}
+
+static void lapic_map_irq(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused))) {}
+
+static struct irq_controller_ops local_apic_controller_ops = {
+    .is_valid_irq = &lapic_is_valid_irq, .send_eoi = &lapic_send_eoi, .set_irq_enabled = &lapic_set_irq_enabled, .map_irq = &lapic_map_irq
+};
+
+static struct irq_controller local_apic_controller = { .irq_start = LOCAL_APIC_IRQ_OFFSET,
+                                                       .irq_end = LOCAL_APIC_IRQ_END,
+                                                       .ops = &local_apic_controller_ops };
+
+void init_local_apic_irq_handlers(void) {
+    register_irq_controller(&local_apic_controller);
+    register_irq_handler(&ipi_handler, LOCAL_APIC_IPI_IRQ);
 }

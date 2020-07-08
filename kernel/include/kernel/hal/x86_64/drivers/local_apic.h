@@ -3,10 +3,14 @@
 
 #define APIC_MSR_ENABLE_LOCAL 0x800
 
+#define LOCAL_APIC_IRQ_OFFSET 48
+#define LOCAL_APIC_IPI_IRQ    48
+#define LOCAL_APIC_IRQ_END    63
+
 union local_apic_icr {
     struct {
         uint64_t vector : 8;
-#define LOCAL_APIC_ICR_MESSAGE_TYPE_NORMAL       0
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_FIXED        0
 #define LOCAL_APIC_ICR_MESSAGE_TYPE_LOW_PRIO     1
 #define LOCAL_APIC_ICR_MESSAGE_TYPE_SMI          2
 #define LOCAL_APIC_ICR_MESSAGE_TYPE_NMI          4
@@ -88,5 +92,6 @@ void local_apic_send_eoi(void);
 void local_apic_start_aps(void);
 
 void init_local_apic(void);
+void init_local_apic_irq_handlers(void);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_LOCAL_APIC_H */

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>

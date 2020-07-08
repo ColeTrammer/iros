@@ -30,6 +30,7 @@ struct processor *get_bsp(void);
 void add_processor(struct processor *processor);
 int processor_count(void);
 
+void arch_init_processor(struct processor *processor);
 void init_bsp(struct processor *processor);
 
 static inline struct task *get_idle_task(void) {
