@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 struct arch_processor {
+    uint8_t acpi_id;
     uint8_t local_apic_id;
 };
 

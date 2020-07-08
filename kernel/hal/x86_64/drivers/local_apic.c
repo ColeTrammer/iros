@@ -47,7 +47,7 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
     assert(get_phys_addr(0x8000) == 0x8000);
     assert(code_trampoline->end > 0x8000 + KERNEL_AP_TRAMPOLINE_END - KERNEL_AP_TRAMPOLINE_START);
 
-    struct vm_region *ap_stack = vm_allocate_kernel_region(PAGE_SIZE);
+    struct vm_region *ap_stack = processor->kernel_stack = vm_allocate_kernel_region(PAGE_SIZE);
     memcpy((void *) code_trampoline->start, (void *) KERNEL_AP_TRAMPOLINE_START, KERNEL_AP_TRAMPOLINE_END - KERNEL_AP_TRAMPOLINE_START);
 
     struct ap_trampoline *trampoline =
@@ -95,7 +95,6 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
     }
 
     vm_free_low_identity_map(code_trampoline);
-    vm_free_kernel_region(ap_stack);
 }
 
 void local_apic_start_aps(void) {

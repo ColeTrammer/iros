@@ -116,6 +116,7 @@ void init_acpi(void) {
                           entry->local_apic.flags);
 
                 struct processor *processor = create_processor(entry->local_apic.acpi_processor_id);
+                processor->arch_processor.acpi_id = entry->local_apic.acpi_processor_id;
                 processor->arch_processor.local_apic_id = entry->local_apic.apic_id;
                 add_processor(processor);
                 break;

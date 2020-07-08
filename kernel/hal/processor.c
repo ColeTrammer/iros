@@ -4,11 +4,13 @@
 #include <kernel/hal/processor.h>
 
 static struct processor *processor_list;
+static int num_processors;
 
-struct processor *create_processor(uint8_t id) {
+struct processor *create_processor() {
     struct processor *processor = malloc(sizeof(struct processor));
     processor->next = NULL;
-    processor->id = id;
+    processor->kernel_stack = NULL;
+    processor->id = num_processors++;
     processor->enabled = false;
     return processor;
 }
@@ -23,4 +25,8 @@ void add_processor(struct processor *processor) {
     processor_list = processor;
 
     debug_log("Processor detected: [ %u ]\n", processor->id);
+}
+
+int processor_count(void) {
+    return num_processors;
 }

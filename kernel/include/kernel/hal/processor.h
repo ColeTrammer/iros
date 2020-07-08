@@ -7,16 +7,22 @@
 
 #include HAL_ARCH_SPECIFIC(processor.h)
 
+struct vm_region;
+
 struct processor {
     struct processor *next;
-    uint8_t id;
+
+    struct vm_region *kernel_stack;
+
+    int id;
     bool enabled;
 
     struct arch_processor arch_processor;
 };
 
-struct processor *create_processor(uint8_t id);
+struct processor *create_processor();
 struct processor *get_processor_list(void);
 void add_processor(struct processor *processor);
+int processor_count(void);
 
 #endif /* _KERNEL_HAL_HAL_H */
