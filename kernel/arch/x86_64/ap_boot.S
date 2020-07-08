@@ -33,8 +33,8 @@ _trampoline_entry:
 
 .code64
 _trampoline_entry64:
-    # Make sure segment registers are at sane defaults
-    mov $0x10, %ax
+    # Clear segment registers
+    mov $0, %ax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %fs
