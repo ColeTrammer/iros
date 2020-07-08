@@ -25,6 +25,10 @@ void add_processor(struct processor *processor) {
     processor_list = processor;
 
     debug_log("Processor detected: [ %u ]\n", processor->id);
+
+    if (processor->id == 0) {
+        init_bsp(processor);
+    }
 }
 
 int processor_count(void) {

@@ -3,6 +3,10 @@
 #include <kernel/hal/hal.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
+#include <kernel/mem/page.h>
+#include <kernel/mem/vm_allocator.h>
+#include <kernel/proc/task.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/acpi.h>
@@ -51,10 +55,6 @@ void init_cpus(void) {
     // Parse the acpi tables now that dynamic memory allocation is available.
     init_acpi();
 
-    // The GDT should be initialized after the acpi tables have been parsed, as there may need to be
-    // a TSS segment for each logical processor.
-    init_gdt();
-
 #ifdef KERNEL_USE_PIC
     init_pic();
 #else
@@ -83,6 +83,16 @@ void init_drivers(void) {
 
 void init_smp(void) {
     local_apic_start_aps();
+}
+
+extern struct task initial_kernel_task;
+
+void init_bsp(struct processor *processor) {
+    processor->enabled = true;
+    processor->kernel_stack = vm_allocate_kernel_region(PAGE_SIZE);
+    init_gdt(processor);
+
+    initial_kernel_task.arch_task.task_state.stack_state.rsp = processor->kernel_stack->end;
 }
 
 static bool use_graphics = true;

@@ -19,6 +19,8 @@
 
 #define TSS_TYPE 0b10001001;
 
+struct processor;
+
 struct gdt_entry {
     uint16_t limit_low;
     uint16_t base_low;
@@ -66,8 +68,7 @@ static inline void load_tr(uint16_t selector) {
     asm("ltr %0" : : "m"(selector));
 }
 
-void init_gdt();
+void init_gdt(struct processor *processor);
 void set_tss_stack_pointer(uintptr_t rsp);
-struct gdt_descriptor *get_gdt_descriptor(void);
 
 #endif /* _KERNEL_HAL_X86_64_GDT_H */

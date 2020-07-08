@@ -65,7 +65,7 @@ void arch_init_kernel_task(struct task *kernel_task) {
     kernel_task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
     kernel_task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
     kernel_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
-    kernel_task->arch_task.task_state.stack_state.rsp = __KERNEL_VM_STACK_START;
+    kernel_task->arch_task.task_state.stack_state.rsp = 0;
 
     task_align_fpu(kernel_task);
     fninit();

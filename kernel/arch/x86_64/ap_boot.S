@@ -42,8 +42,6 @@ _trampoline_entry64:
     mov %ax, %ss
 
     # Use important values from the trampoline
-    mov (_gdt - _trampoline_entry + TRAMPOLINE_PHYS_START), %rax
-    lgdt (%rax)
     mov (_idt - _trampoline_entry + TRAMPOLINE_PHYS_START), %rax
     lidt (%rax)
     mov (_rsp - _trampoline_entry + TRAMPOLINE_PHYS_START), %rsp
@@ -81,8 +79,6 @@ _GDT_DESCRIPTOR:
     .long 0
 
 _cr3:
-.skip 8
-_gdt:
 .skip 8
 _idt:
 .skip 8

@@ -265,7 +265,7 @@ _entry64:
     jmp *%rax
 
 _kernel_start:
-    movabs $KERNEL_VM_STACK_START, %rax
+    movabs $BOOT_KERNEL_VM_STACK_START, %rax
     movq %rax, %rsp
 
     push %rdi
@@ -342,9 +342,8 @@ _PT2:
     .skip 0x1000
 
 .section .bss.kernel_stack
-.skip 0x4000
-.global KERNEL_VM_STACK_START
-KERNEL_VM_STACK_START:
+.skip 0x1000
+BOOT_KERNEL_VM_STACK_START:
 .section .bss.reserved_pages
 .global _temp_page
 _temp_page:

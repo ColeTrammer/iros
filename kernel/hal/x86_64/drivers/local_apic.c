@@ -25,10 +25,12 @@ static void write_icr(volatile struct local_apic *local_apic, union local_apic_i
 }
 
 void init_ap(struct processor *processor) {
+    atomic_store(&processor->enabled, true);
+
     debug_log("\n=================================\nPROCESSOR %u MADE IT TO THE KERNEL\n=================================\n",
               processor->id);
 
-    atomic_store(&processor->enabled, true);
+    init_gdt(processor);
 
     for (;;) {
     }
@@ -36,7 +38,6 @@ void init_ap(struct processor *processor) {
 
 struct ap_trampoline {
     uint64_t cr3;
-    uint64_t gdt;
     uint64_t idt;
     uint64_t rsp;
     struct processor *processor;
@@ -53,7 +54,6 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
     struct ap_trampoline *trampoline =
         (void *) (code_trampoline->start + KERNEL_AP_TRAMPOLINE_END - KERNEL_AP_TRAMPOLINE_START - sizeof(struct ap_trampoline));
     trampoline->cr3 = get_cr3();
-    trampoline->gdt = (uintptr_t) get_gdt_descriptor();
     trampoline->idt = (uintptr_t) get_idt_descriptor();
     trampoline->rsp = ap_stack->end;
     trampoline->processor = processor;

@@ -22,7 +22,10 @@ struct processor {
 
 struct processor *create_processor();
 struct processor *get_processor_list(void);
+struct processor *get_bsp(void);
 void add_processor(struct processor *processor);
 int processor_count(void);
+
+void init_bsp(struct processor *processor);
 
 #endif /* _KERNEL_HAL_HAL_H */
