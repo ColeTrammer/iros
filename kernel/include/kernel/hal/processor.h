@@ -33,6 +33,9 @@ int processor_count(void);
 void arch_init_processor(struct processor *processor);
 void init_bsp(struct processor *processor);
 
+void broadcast_panic(void);
+void arch_broadcast_panic(void);
+
 static inline struct task *get_idle_task(void) {
     return get_current_processor()->idle_task;
 }

@@ -36,3 +36,13 @@ void add_processor(struct processor *processor) {
 int processor_count(void) {
     return num_processors;
 }
+
+void broadcast_panic(void) {
+    struct processor *ps = get_processor_list();
+    // No APs, no need to do anything.
+    if (!ps || (ps->id == 0 && !ps->enabled)) {
+        return;
+    }
+
+    arch_broadcast_panic();
+}

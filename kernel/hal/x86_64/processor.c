@@ -15,8 +15,12 @@ void arch_init_processor(struct processor *processor) {
 }
 
 void init_bsp(struct processor *processor) {
-    processor->enabled = true;
     processor->kernel_stack = vm_allocate_kernel_region(PAGE_SIZE);
-
     arch_init_processor(processor);
+
+    processor->enabled = true;
+}
+
+void arch_broadcast_panic(void) {
+    local_apic_broadcast_ipi(LOCAL_APIC_PANIC_IRQ);
 }

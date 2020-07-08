@@ -26,6 +26,17 @@ static void write_icr(volatile struct local_apic *local_apic, union local_apic_i
     local_apic->interrupt_command_register[0].value = command.raw_value & 0xFFFFFFFFU;
 }
 
+void local_apic_broadcast_ipi(int vector) {
+    struct acpi_info *info = acpi_get_info();
+    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+
+    union local_apic_icr command = { .raw_value = 0 };
+    command.vector = vector;
+    command.trigger_mode = LOCAL_APIC_ICR_TRIGGER_MODE_EDGE;
+    command.destination_shorthand = LOCAL_APIC_ICR_DESTINATION_SHORTHAND_ALL_EXCEPT_SELF;
+    write_icr(local_apic, command);
+}
+
 void init_ap(struct processor *processor) {
     atomic_store(&processor->enabled, true);
 
@@ -129,7 +140,16 @@ static void handle_ipi(struct irq_context *context) {
     debug_log("GOT IPI\n");
 }
 
+static void handle_panic(struct irq_context *context) {
+    context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
+
+    disable_interrupts();
+    for (;;) {
+    }
+}
+
 static struct irq_handler ipi_handler = { .handler = handle_ipi, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
+static struct irq_handler panic_handler = { .handler = handle_panic, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
 
 static bool lapic_is_valid_irq(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused))) {
     return true;
@@ -155,4 +175,5 @@ static struct irq_controller local_apic_controller = { .irq_start = LOCAL_APIC_I
 void init_local_apic_irq_handlers(void) {
     register_irq_controller(&local_apic_controller);
     register_irq_handler(&ipi_handler, LOCAL_APIC_IPI_IRQ);
+    register_irq_handler(&panic_handler, LOCAL_APIC_PANIC_IRQ);
 }

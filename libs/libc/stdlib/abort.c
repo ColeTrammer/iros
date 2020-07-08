@@ -4,9 +4,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef __is_libk
+#include <kernel/hal/processor.h>
+#endif /* __is_libk */
+
 __attribute__((__noreturn__)) void abort() {
 #ifdef __is_libk
-    printf("panic\n");
+    debug_log("\npanic\n");
+
+    broadcast_panic();
+
     asm volatile("cli");
     while (1)
         ;
