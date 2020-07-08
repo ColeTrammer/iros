@@ -5,30 +5,36 @@
 
 union local_apic_icr {
     struct {
-        uint64_t irq_number : 8;
-#define LOCAL_APIC_ICR_DEST_MODE_NORMAL   0
-#define LOCAL_APIC_ICR_DEST_MODE_LOW_PRIO 1
-#define LOCAL_APIC_ICR_DEST_MODE_SMI      2
-#define LOCAL_APIC_ICR_DEST_MODE_NMI      4
-#define LOCAL_APIC_ICR_DEST_MODE_INIT     5
-#define LOCAL_APIC_ICR_DEST_MODE_SIPI     6
-        uint64_t destination_mode : 3;
-        uint64_t destination_is_logical : 1;
+        uint64_t vector : 8;
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_NORMAL       0
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_LOW_PRIO     1
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_SMI          2
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_NMI          4
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_INIT         5
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_SIPI         6
+#define LOCAL_APIC_ICR_MESSAGE_TYPE_EXTERNAL_IRQ 7
+        uint64_t message_type : 3;
+#define LOCAL_APIC_ICR_DESTINATION_MODE_PHYSICAL 0
+#define LOCAL_APIC_ICR_DESTINATION_MODE_LOGICAL  1
+        uint64_t destination_mode : 1;
         uint64_t delivery_status : 1;
         uint64_t reserved0 : 1;
-#define LOCAL_APIC_ICR_NO_DE_ASSERT 1
-#define LOCAL_APIC_ICR_DE_ASSERT    2
-        uint64_t init_level_de_assert : 2;
-        uint64_t reserved1 : 2;
-#define LOCAL_APIC_ICR_DEST_TYPE_TARGETED        0
-#define LOCAL_APIC_ICR_DEST_TYPE_SELF            1
-#define LOCAL_APIC_ICR_DEST_TYPE_ALL             2
-#define LOCAL_APIC_ICR_DEST_TYPE_ALL_EXCEPT_SELF 3
-        uint64_t destination_type : 2;
+#define LOCAL_APIC_ICR_LEVEL_DEASSERT 0
+#define LOCAL_APIC_ICR_LEVEL_ASSERT   1
+        uint64_t level : 1;
+#define LOCAL_APIC_ICR_TRIGGER_MODE_EDGE  0
+#define LOCAL_APIC_ICR_TRIGGER_MODE_LEVEL 1
+        uint64_t trigger_mode : 1;
+        uint64_t remote_read_address : 2;
+#define LOCAL_APIC_ICR_DESTINATION_SHORTHAND_TARGETED        0
+#define LOCAL_APIC_ICR_DESTINATION_SHORTHAND_SELF            1
+#define LOCAL_APIC_ICR_DESTINATION_SHORTHAND_ALL             2
+#define LOCAL_APIC_ICR_DESTINATION_SHORTHAND_ALL_EXCEPT_SELF 3
+        uint64_t destination_shorthand : 2;
         uint64_t resserved2 : 12;
 
         uint64_t reserved3 : 24;
-        uint64_t target_apic_id : 4;
+        uint64_t destination : 4;
         uint64_t reserved4 : 4;
     };
     uint64_t raw_value;

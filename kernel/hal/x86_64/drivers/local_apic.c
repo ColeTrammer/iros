@@ -59,22 +59,30 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
     trampoline->processor = processor;
 
     union local_apic_icr command = { .raw_value = 0 };
-    command.destination_mode = LOCAL_APIC_ICR_DEST_MODE_INIT;
-    command.init_level_de_assert = LOCAL_APIC_ICR_NO_DE_ASSERT;
-    command.destination_type = LOCAL_APIC_ICR_DEST_TYPE_TARGETED;
-    command.target_apic_id = processor->arch_processor.local_apic_id;
+    command.message_type = LOCAL_APIC_ICR_MESSAGE_TYPE_INIT;
+    command.destination_mode = LOCAL_APIC_ICR_DESTINATION_MODE_PHYSICAL;
+    command.level = LOCAL_APIC_ICR_LEVEL_ASSERT;
+    command.trigger_mode = LOCAL_APIC_ICR_TRIGGER_MODE_EDGE;
+    command.destination = processor->arch_processor.local_apic_id;
 
     debug_log("Sending INIT to CPU: [ %u, %#.16lX ]\n", processor->arch_processor.local_apic_id, trampoline->cr3);
     write_icr(local_apic, command);
 
     io_wait_us(10 * 1000);
 
-    command.irq_number = 8;
-    command.destination_mode = LOCAL_APIC_ICR_DEST_MODE_SIPI;
+    command.vector = 8;
+    command.message_type = LOCAL_APIC_ICR_MESSAGE_TYPE_SIPI;
     for (int i = 0; i < 2; i++) {
+        debug_log("Sending SIPI to CPU: [ %u ]\n", processor->id);
         write_icr(local_apic, command);
         io_wait_us(200);
+
+        if (atomic_load(&processor->enabled)) {
+            break;
+        }
     }
+
+    debug_log("Waiting for CPU: [ %u ]\n", processor->id);
 
     // FIXME: have a timeout mechanism
     while (!atomic_load(&processor->enabled)) {
