@@ -137,7 +137,7 @@ void init_local_apic(void) {
 static void handle_ipi(struct irq_context *context) {
     (void) context;
 
-    debug_log("GOT IPI\n");
+    handle_processor_messages();
 }
 
 static void handle_panic(struct irq_context *context) {

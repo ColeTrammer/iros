@@ -41,4 +41,6 @@ bool is_virt_addr_cow(uintptr_t virt_addr);
 
 uintptr_t get_phys_addr(uintptr_t virt_addr);
 
+void flush_tlb(uintptr_t addr);
+
 #endif /* _KERNEL_MEM_PAGE_H */

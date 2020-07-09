@@ -275,6 +275,8 @@
 #define __ENUMERATE_IRQ(n, f) void interrupt_handler_##n(void);
 __ENUMERATE_IRQS
 
+struct irq_context;
+
 static inline bool irq_is_external(int n) {
     return n >= 32 && n != 128;
 }

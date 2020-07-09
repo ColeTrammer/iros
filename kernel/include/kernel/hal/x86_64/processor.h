@@ -19,7 +19,11 @@ struct arch_processor {
 
 static inline struct processor *get_current_processor(void) {
     struct processor *processor;
-    asm volatile("mov %%gs:0, %%rax" : "=r"(processor) : : "memory");
+    asm volatile("mov %%gs:0, %%rax\n"
+                 "mov (%%rax), %0"
+                 : "=r"(processor)
+                 :
+                 : "memory");
     return processor;
 }
 
