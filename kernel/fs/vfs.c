@@ -24,6 +24,7 @@
 #include <kernel/fs/tmp.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>

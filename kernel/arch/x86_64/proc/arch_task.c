@@ -24,7 +24,6 @@
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
 extern struct process initial_kernel_process;
-extern struct task *current_task;
 
 /* Default Args And Envp Passed to First Program */
 static char first_arg[50];
@@ -104,7 +103,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
 /* Must be called from unpremptable context */
 void arch_run_task(struct task *task) {
     load_task_into_memory(task);
-    current_task = task;
+    set_current_task(task);
     __run_task(&task->arch_task);
 }
 
@@ -124,8 +123,6 @@ void task_interrupt_blocking(struct task *task, int ret) {
 bool proc_in_kernel(struct task *task) {
     return task->in_kernel;
 }
-
-extern struct task *current_task;
 
 void task_do_sig_handler(struct task *task, int signum) {
     assert(task->process->sig_state[signum].sa_handler != SIG_IGN);
@@ -231,7 +228,8 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     debug_log("Running pid: [ %p, %#.16lX, %d ]\n", save_state, task->arch_task.task_state.stack_state.rip, signum);
 
-    assert(current_task == task);
-    current_task->sched_state = RUNNING_INTERRUPTIBLE;
-    __run_task(&current_task->arch_task);
+    struct task *current = get_current_task();
+    assert(current == task);
+    current->sched_state = RUNNING_INTERRUPTIBLE;
+    __run_task(&current->arch_task);
 }

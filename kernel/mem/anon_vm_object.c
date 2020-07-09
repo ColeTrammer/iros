@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/hal/processor.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>

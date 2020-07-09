@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/hal/processor.h>
 #include <kernel/proc/pid.h>
 #include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>

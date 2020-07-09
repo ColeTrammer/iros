@@ -113,8 +113,6 @@ void arch_run_task(struct task *task);
 void free_task(struct task *task, bool free_paging_structure);
 void arch_free_task(struct task *task, bool free_paging_structure);
 
-struct task *get_current_task();
-
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp);
 uintptr_t map_program_args(uintptr_t start, struct args_context *context);
 void free_program_args(struct args_context *context);

@@ -5,6 +5,7 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/pipe.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/timer.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/blockers.h>

@@ -7,6 +7,7 @@
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>

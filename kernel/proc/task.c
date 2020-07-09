@@ -28,7 +28,6 @@
 // #define TASK_SCHED_STATE_DEBUG
 // #define TASK_SIGNAL_DEBUG
 
-struct task *current_task;
 struct process initial_kernel_process;
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp) {
@@ -200,8 +199,8 @@ void init_idle_task(struct processor *processor) {
 
     arch_init_idle_task(task, processor);
 
-    if (!current_task) {
-        current_task = task;
+    if (!get_current_task()) {
+        set_current_task(task);
     }
 
     processor->idle_task = task;
@@ -246,8 +245,8 @@ struct task *load_task(const char *file_name) {
 
     uintptr_t old_paging_structure = get_current_paging_structure();
 
-    struct task *save = current_task;
-    current_task = task;
+    struct task *save = get_current_task();
+    set_current_task(task);
     uintptr_t structure = create_paging_structure(process->process_memory, false, process);
     load_paging_structure(structure, process);
 
@@ -290,7 +289,7 @@ struct task *load_task(const char *file_name) {
     proc_allocate_user_stack(process);
     arch_load_task(task, entry);
 
-    current_task = save;
+    set_current_task(save);
     task->kernel_task = false;
 
     load_paging_structure(old_paging_structure, save->process);
@@ -306,10 +305,6 @@ struct task *load_task(const char *file_name) {
 /* Must be called from unpremptable context */
 void run_task(struct task *task) {
     arch_run_task(task);
-}
-
-struct task *get_current_task() {
-    return current_task;
 }
 
 void free_task(struct task *task, bool free_paging_structure) {
@@ -522,7 +517,7 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
 };
 
 void task_do_sig(struct task *task, int signum) {
-    assert(current_task == task);
+    assert(get_current_task() == task);
 
 #ifdef TASK_SIGNAL_DEBUG
     debug_log("Doing signal: [ %d, %s ]\n", task->process->pid, strsignal(signum));

@@ -7,6 +7,7 @@
 #include <sys/un.h>
 
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/processor.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/unix_socket.h>
 #include <kernel/proc/task.h>

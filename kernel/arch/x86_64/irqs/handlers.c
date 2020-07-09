@@ -6,6 +6,7 @@
 
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_object.h>

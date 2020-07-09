@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_object.h>
 #include <kernel/mem/vm_region.h>

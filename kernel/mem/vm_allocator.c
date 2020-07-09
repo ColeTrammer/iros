@@ -10,6 +10,7 @@
 
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>

@@ -13,6 +13,7 @@ struct processor *create_processor() {
     processor->next = NULL;
     processor->ipi_messages_head = processor->ipi_messages_tail = NULL;
     init_spinlock(&processor->ipi_messages_lock);
+    processor->current_task = processor->sched_list_start = processor->sched_list_end = NULL;
     processor->idle_task = NULL;
     processor->kernel_stack = NULL;
     processor->id = num_processors++;

@@ -37,6 +37,10 @@ struct processor {
     struct processor_ipi_message *ipi_messages_tail;
     spinlock_t ipi_messages_lock;
 
+    struct task *current_task;
+    struct task *sched_list_start;
+    struct task *sched_list_end;
+
     int id;
     bool enabled;
 
@@ -51,6 +55,7 @@ int processor_count(void);
 
 void arch_init_processor(struct processor *processor);
 void init_bsp(struct processor *processor);
+bool bsp_enabled(void);
 
 void broadcast_panic(void);
 void arch_broadcast_panic(void);
@@ -66,6 +71,16 @@ void handle_processor_messages(void);
 
 static inline struct task *get_idle_task(void) {
     return get_current_processor()->idle_task;
+}
+
+static inline struct task *get_current_task(void) {
+    return get_current_processor()->current_task;
+}
+
+static inline void set_current_task(struct task *task) {
+    // FIXME: assert interrupts are disabled.
+    get_current_processor()->current_task = task;
+    assert(get_current_task() == task);
 }
 
 #endif /* _KERNEL_HAL_HAL_H */

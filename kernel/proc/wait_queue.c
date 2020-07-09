@@ -1,4 +1,5 @@
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>

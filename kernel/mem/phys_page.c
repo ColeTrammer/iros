@@ -1,6 +1,7 @@
 #include <stdatomic.h>
 #include <stdlib.h>
 
+#include <kernel/hal/processor.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/phys_page.h>
 #include <kernel/proc/task.h>

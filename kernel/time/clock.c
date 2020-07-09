@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/timer.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>

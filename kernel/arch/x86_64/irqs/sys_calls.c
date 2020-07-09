@@ -177,8 +177,6 @@
         return;                                                  \
     } while (0)
 
-extern struct task *current_task;
-
 static int get_file(int fd, struct file **file) {
     if (fd < 0 || fd >= FOPEN_MAX) {
         return -EBADF;
@@ -661,7 +659,7 @@ SYS_CALL(execve) {
      * Interrupted) */
     uint64_t save = disable_interrupts_save();
 
-    current_task = task;
+    set_current_task(task);
     task->in_kernel = true;
     task->sched_state = RUNNING_UNINTERRUPTIBLE;
 

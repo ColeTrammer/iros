@@ -8,6 +8,7 @@
 #include <sys/param.h>
 
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/processor.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>

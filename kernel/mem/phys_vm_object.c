@@ -3,6 +3,7 @@
 
 #include <kernel/fs/dev.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/processor.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/phys_vm_object.h>
 #include <kernel/mem/vm_region.h>

@@ -12,6 +12,7 @@
 #include <kernel/fs/dev.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>

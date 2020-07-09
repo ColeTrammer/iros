@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <kernel/hal/processor.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>

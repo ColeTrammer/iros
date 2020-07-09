@@ -12,6 +12,7 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/timer.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/socket.h>

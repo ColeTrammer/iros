@@ -13,6 +13,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 
 void local_apic_send_eoi(void) {
     struct acpi_info *info = acpi_get_info();
@@ -40,14 +41,11 @@ void local_apic_broadcast_ipi(int vector) {
 void init_ap(struct processor *processor) {
     atomic_store(&processor->enabled, true);
 
-    debug_log("\n=================================\nPROCESSOR %u MADE IT TO THE KERNEL\n=================================\n",
+    debug_log("~\n=================================\nPROCESSOR %u MADE IT TO THE KERNEL\n=================================\n",
               processor->id);
 
     arch_init_processor(processor);
-
-    enable_interrupts();
-    for (;;) {
-    }
+    sched_run_next();
 }
 
 struct ap_trampoline {

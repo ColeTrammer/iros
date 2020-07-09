@@ -15,6 +15,7 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/ptmx.h>
 #include <kernel/hal/timer.h>
 #include <kernel/proc/task.h>

@@ -20,11 +20,7 @@
 // #define ROBUST_USER_MUTEX_DEBUG
 // #define SCHED_DEBUG
 
-static struct task *list_start = NULL;
-static struct task *list_end = NULL;
-extern struct task *current_task;
 extern struct process initial_kernel_process;
-static spinlock_t task_list_lock = SPINLOCK_INITIALIZER;
 
 void init_task_sched() {
     // This only becomes needed after scheduling is enabled
@@ -36,64 +32,74 @@ void init_task_sched() {
 }
 
 void sched_add_task(struct task *task) {
-    spin_lock(&task_list_lock);
+    uint64_t save = disable_interrupts_save();
 
-    if (list_start == NULL) {
-        list_start = list_end = task;
+    struct processor *processor = get_current_processor();
+
+    if (processor->sched_list_start == NULL) {
+        processor->sched_list_start = processor->sched_list_end = task;
         task->sched_prev = task->sched_next = task;
 
-        spin_unlock(&task_list_lock);
+        interrupts_restore(save);
         return;
     }
 
-    task->sched_prev = list_end;
-    task->sched_next = list_start;
+    task->sched_prev = processor->sched_list_end;
+    task->sched_next = processor->sched_list_start;
 
-    list_end->sched_next = task;
-    list_start->sched_prev = task;
-    list_end = task;
+    processor->sched_list_end->sched_next = task;
+    processor->sched_list_start->sched_prev = task;
+    processor->sched_list_end = task;
 
-    spin_unlock(&task_list_lock);
+    interrupts_restore(save);
 }
 
 void sched_remove_task(struct task *task) {
-    spin_lock(&task_list_lock);
+    uint64_t save = disable_interrupts_save();
 
-    if (list_start == NULL) {
-        spin_unlock(&task_list_lock);
+    struct processor *processor = get_current_processor();
+
+    if (processor->sched_list_start == NULL) {
+        interrupts_restore(save);
         return;
     }
 
-    struct task *current = list_start;
+    struct task *current = processor->sched_list_start;
 
     while (current->sched_next != task) {
         current = current->sched_next;
     }
 
-    if (task == list_end) {
-        list_end = task->sched_prev;
+    if (task == processor->sched_list_end) {
+        processor->sched_list_end = task->sched_prev;
     }
 
-    if (task == list_start) {
-        list_start = task->sched_next;
+    if (task == processor->sched_list_start) {
+        processor->sched_list_start = task->sched_next;
     }
 
     current->sched_next = current->sched_next->sched_next;
     current->sched_next->sched_prev = current;
 
-    spin_unlock(&task_list_lock);
+    interrupts_restore(save);
 }
 
 /* Must be called from unpremptable context */
 void sched_run_next() {
+    struct processor *processor = get_current_processor();
     struct task *current = get_current_task();
 
     if (current == get_idle_task()) {
-        current = list_start;
+        current = processor->sched_list_start;
+    }
+
+    // No tasks in queue
+    if (current == NULL) {
+        run_task(get_idle_task());
     }
 
     // Task signals
-    struct task *task = list_start;
+    struct task *task = processor->sched_list_start;
     do {
         // Don't send the signals if the task is running UNINTERRUPTABLY, or if it is just going to exit anyway
         // FIXME: what to do if the task is stopped? It might be unsafe to send a terminating signal, since it
@@ -106,11 +112,11 @@ void sched_run_next() {
         int sig;
         while ((sig = task_get_next_sig(task)) != -1) {
             struct task *current_save = current;
-            current_task = task;
+            processor->current_task = task;
             task_do_sig(task, sig);
-            current_task = current_save;
+            processor->current_task = current_save;
         }
-    } while ((task = task->sched_next) != list_start);
+    } while ((task = task->sched_next) != processor->sched_list_start);
 
     struct task *to_run = current->sched_next;
     struct task *start = to_run;
@@ -119,12 +125,12 @@ void sched_run_next() {
         if (to_run->sched_state == EXITING) {
             struct task *to_remove = to_run;
 
-            if (to_remove == list_end) {
-                list_end = to_remove->sched_prev;
+            if (to_remove == processor->sched_list_end) {
+                processor->sched_list_end = to_remove->sched_prev;
             }
 
-            if (to_remove == list_start) {
-                list_start = to_remove->sched_next;
+            if (to_remove == processor->sched_list_start) {
+                processor->sched_list_start = to_remove->sched_next;
             }
 
             if (to_remove == start) {
@@ -137,14 +143,14 @@ void sched_run_next() {
 
             proc_schedule_task_for_destruction(to_remove);
         } else if (to_run->blocking && to_run->sched_state == WAITING) {
-            struct task *current_save = current_task;
-            current_task = to_run;
+            struct task *current_save = processor->current_task;
+            processor->current_task = to_run;
             if (to_run->block_info.should_unblock(&to_run->block_info)) {
                 task_interrupt_blocking(to_run, 0);
-                current_task = current_save;
+                processor->current_task = current_save;
                 break;
             }
-            current_task = current_save;
+            processor->current_task = current_save;
         }
 
         // Skip taskes that are sleeping
@@ -162,7 +168,7 @@ void sched_run_next() {
     }
 
 #ifdef SCHED_DEBUG
-    debug_log("Running task: [ %d:%d ]\n", to_run->tid, to_run->process->pid);
+    debug_log("Running task: [ %d, %d:%d ]\n", processor->id, to_run->tid, to_run->process->pid);
 #endif /* SCHED_DEBUG */
 
     assert(to_run->sched_state != WAITING && to_run->sched_state != STOPPED && to_run->sched_state != EXITING);

@@ -13,6 +13,7 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/pipe.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/processor.h>
 #include <kernel/hal/timer.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>

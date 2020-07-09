@@ -1,5 +1,6 @@
 #include <stdatomic.h>
 
+#include <kernel/hal/processor.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/mutex.h>
 
@@ -64,11 +65,9 @@ static void __mutex_unlock(mutex_t *mutex, const char *func) {
 #endif /* MUTEX_DEBUG */
 }
 
-extern struct task *current_task;
-
 void mutex_lock_internal(mutex_t *mutex, const char *func) {
     spin_lock(&mutex->queue.lock);
-    __mutex_lock(mutex, current_task, func);
+    __mutex_lock(mutex, get_current_task(), func);
     spin_unlock(&mutex->queue.lock);
 }
 

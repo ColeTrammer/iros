@@ -7,6 +7,12 @@
 
 // #define PROCESSOR_IPI_DEBUG
 
+static bool s_bsp_enabled;
+
+bool bsp_enabled(void) {
+    return s_bsp_enabled;
+}
+
 void arch_init_processor(struct processor *processor) {
     set_msr(MSR_GS_BASE, 0);
     set_msr(MSR_KERNEL_GS_BASE, (uintptr_t) processor);
@@ -21,6 +27,7 @@ void init_bsp(struct processor *processor) {
     arch_init_processor(processor);
 
     processor->enabled = true;
+    s_bsp_enabled = true;
 }
 
 void arch_broadcast_panic(void) {

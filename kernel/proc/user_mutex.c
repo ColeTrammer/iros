@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/mem/page.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/user_mutex.h>
