@@ -41,7 +41,8 @@ void handle_pit_interrupt(struct irq_context *context) {
         time_inc_clock(current->process->process_clock, 1000000L);
     }
 
-    if (callback != NULL) {
+    // NOTE: only call the timer callback on one CPU (its used for the monotonic and realtime clocks)
+    if (callback != NULL && get_current_processor()->id == 0) {
         count++;
         if (count >= count_to) {
             count = 0;
@@ -75,7 +76,7 @@ void pit_set_rate(unsigned int rate) {
     outb(PIT_CHANNEL_0, PIT_GET_DIVISOR(rate) >> 8);
 }
 
-static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
+static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
 
 void init_pit() {
 #ifdef USE_PIT

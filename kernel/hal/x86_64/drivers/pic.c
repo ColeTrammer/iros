@@ -104,9 +104,10 @@ static void pic_set_irq_enabled(struct irq_controller *self, int irq_num, bool e
     }
 }
 
-static void pic_map_irq(struct irq_controller *self, int irq_num) {
+static void pic_map_irq(struct irq_controller *self, int irq_num, int flags) {
     (void) self;
     (void) irq_num;
+    (void) flags;
 
     // Do nothing, as there is no need to set up some sort of IRQ mapping like in the APIC.
 }

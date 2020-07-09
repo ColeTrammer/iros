@@ -160,7 +160,8 @@ static void lapic_send_eoi(struct irq_controller *self __attribute__((unused)), 
 static void lapic_set_irq_enabled(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused)),
                                   bool enabled __attribute__((unused))) {}
 
-static void lapic_map_irq(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused))) {}
+static void lapic_map_irq(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused)),
+                          int flags __attribute__((unused))) {}
 
 static struct irq_controller_ops local_apic_controller_ops = {
     .is_valid_irq = &lapic_is_valid_irq, .send_eoi = &lapic_send_eoi, .set_irq_enabled = &lapic_set_irq_enabled, .map_irq = &lapic_map_irq

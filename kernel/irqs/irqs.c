@@ -76,7 +76,7 @@ void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
         assert(irq_is_external(irq_num));
         assert(controller);
 
-        controller->ops->map_irq(controller, irq_num);
+        controller->ops->map_irq(controller, irq_num, irq_handler_object->flags);
         controller->ops->set_irq_enabled(controller, irq_num, true);
     } else {
         assert(!irq_is_external(irq_num));

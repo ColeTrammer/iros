@@ -20,7 +20,7 @@ struct irq_controller_ops {
     bool (*is_valid_irq)(struct irq_controller *self, int irq_num);
     void (*send_eoi)(struct irq_controller *self, int irq_num);
     void (*set_irq_enabled)(struct irq_controller *self, int irq_num, bool enabled);
-    void (*map_irq)(struct irq_controller *self, int irq_num);
+    void (*map_irq)(struct irq_controller *self, int irq_num, int flags);
 };
 
 struct irq_controller {
