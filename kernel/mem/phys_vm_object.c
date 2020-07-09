@@ -14,8 +14,10 @@ static int phys_map(struct vm_object *self, struct vm_region *region) {
     assert(((data->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE >= region->end - region->start);
 
     struct process *process = get_current_task()->process;
+    bool should_broadcast_flush_tlb = atomic_load(&process->ref_count) > 1;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
-        map_phys_page(region->vm_object_offset + (i - region->start) + data->phys_start, i, region->flags, process);
+        do_map_phys_page(region->vm_object_offset + (i - region->start) + data->phys_start, i, region->flags, should_broadcast_flush_tlb,
+                         process);
     }
 
     return 0;

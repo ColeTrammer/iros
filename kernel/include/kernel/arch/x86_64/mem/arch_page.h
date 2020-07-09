@@ -30,21 +30,8 @@ extern spinlock_t temp_page_lock;
 
 struct process;
 
-struct virt_page_info {
-    uint64_t pml4_index;
-    uint64_t pdp_index;
-    uint64_t pd_index;
-    uint64_t pt_index;
-    uintptr_t pml4_entry;
-    uintptr_t pdp_entry;
-    uintptr_t pd_entry;
-    uintptr_t pt_entry;
-};
-
-void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure, struct process *process);
-
-void map_page_info(struct virt_page_info *info);
-struct virt_page_info *map_page_with_info(uintptr_t virt_addr, uint64_t flags, struct process *process);
+void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, bool broadcast_flush_tlb, struct process *process);
+void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure, bool broadcast_tlb_flush, struct process *process);
 
 void create_phys_id_map();
 

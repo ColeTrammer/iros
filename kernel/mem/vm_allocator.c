@@ -222,6 +222,9 @@ int unmap_range(uintptr_t addr, size_t length) {
     struct process *process = get_current_task()->process;
     mutex_lock(&process->lock);
 
+    int thread_count = process->ref_count;
+    bool broadcast_tlb_flush = thread_count > 1;
+
     struct vm_region *r;
     while ((r = find_user_vm_region_in_range(addr, addr + length))) {
         if (r->start < addr && r->end > addr + length) {
@@ -230,7 +233,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 #endif /* MMAP_DEBUG */
 
             for (uintptr_t i = addr; i < addr + length; i += PAGE_SIZE) {
-                do_unmap_page(i, !r->vm_object, true, process);
+                do_unmap_page(i, !r->vm_object, true, broadcast_tlb_flush, process);
             }
 
             struct vm_region *to_add = calloc(1, sizeof(struct vm_region));
@@ -257,7 +260,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 
             while (r->end != addr) {
                 r->end -= PAGE_SIZE;
-                do_unmap_page(r->end, !r->vm_object, true, process);
+                do_unmap_page(r->end, !r->vm_object, true, broadcast_tlb_flush, process);
             }
 
             length -= (end_save - addr);
@@ -272,7 +275,7 @@ int unmap_range(uintptr_t addr, size_t length) {
 
             assert(r->start <= addr + length);
             while (r->start != addr + length) {
-                do_unmap_page(r->start, !r->vm_object, true, process);
+                do_unmap_page(r->start, !r->vm_object, broadcast_tlb_flush, true, process);
                 r->start += PAGE_SIZE;
                 r->vm_object_offset += PAGE_SIZE;
             }
@@ -290,7 +293,7 @@ int unmap_range(uintptr_t addr, size_t length) {
         }
 
         for (uintptr_t i = r->start; i < r->end; i += PAGE_SIZE) {
-            do_unmap_page(i, !r->vm_object, true, process);
+            do_unmap_page(i, !r->vm_object, true, broadcast_tlb_flush, process);
         }
 
         if (r == process->process_memory) {
@@ -707,7 +710,7 @@ struct vm_region *vm_allocate_low_identity_map(uintptr_t start, uintptr_t size) 
 
 void vm_free_low_identity_map(struct vm_region *region) {
     for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        do_unmap_page(s, false, true, &initial_kernel_process);
+        do_unmap_page(s, false, true, true, &initial_kernel_process);
     }
     free(region);
 }
