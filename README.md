@@ -2,18 +2,21 @@
 My second attempt to create an OS
 
 # Features
-* Multiboot 2 loading
-* x86_64
-* Memory management system
-* Preemptive scheduling
+* Multiboot2 boot loader compliant
+* Supports singularly x86_64
+* Memory management system (physical and virtual memory)
+* Preemptive scheduling with SMP support
 * fork and exec
 * vfs implementation
+* many unix system calls
+* IPV4 (UDP + TCP + ICMP) and Unix sockets
+* DHCP client
 * ext2 read/write support (for smaller files)
-* x86 pic devices (PS2 kbd/mouse, PIT, ATA, CMOS, serial ports)
+* x86 pic devices (PS2 kbd/mouse, PIT, ATA, CMOS, serial ports, local APIC, IO APIC)
 * pci devices (E1000 network card, BGA Device)
-* C standard library that's becoming fleshes out
-* Shell that supports job control and pipes and lists and globbing
-* Start of posix standard utilities
+* C standard library
+* Shell that supports the POSIX grammar, job control, word expansion, etc.
+* Some posix standard utilities
 
 # To build
 * You need to install various dependencies for gcc (look on osdev)
@@ -28,12 +31,6 @@ My second attempt to create an OS
 
 # TODO
 * Networking (TCP resending)
-* Graphics (windowing support)
 * configuration/startup files
-* SMP
 * pthreads like library (conditions, barriers, cancellation, rdwrlock, scheduling)
 * try to write in C++ instead of C
-
-# Current Issues
-* Unix permission support is extremely limited, nothing has uids or gids, and the
-  execute but is never respected.
