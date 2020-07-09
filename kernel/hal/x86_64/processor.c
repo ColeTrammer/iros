@@ -8,11 +8,11 @@
 // #define PROCESSOR_IPI_DEBUG
 
 void arch_init_processor(struct processor *processor) {
-    init_gdt(processor);
-    init_local_apic();
     set_msr(MSR_GS_BASE, 0);
     set_msr(MSR_KERNEL_GS_BASE, (uintptr_t) processor);
     swapgs();
+    init_local_apic();
+    init_gdt(processor);
     init_idle_task(processor);
 }
 
