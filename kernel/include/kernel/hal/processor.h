@@ -12,7 +12,7 @@
 struct task;
 struct vm_region;
 
-enum processor_ipi_message_type { PROCESSOR_IPI_FREED, PROCESSOR_IPI_FLUSH_TLB };
+enum processor_ipi_message_type { PROCESSOR_IPI_FREED, PROCESSOR_IPI_FLUSH_TLB, PROCESSOR_IPI_SCHEDULE_TASK };
 
 struct processor_ipi_message {
     struct processor_ipi_message *next;
@@ -24,6 +24,9 @@ struct processor_ipi_message {
             uintptr_t base;
             size_t pages;
         } flush_tlb;
+        struct {
+            struct task *task;
+        } schedule_task;
     };
 };
 struct processor {
@@ -60,7 +63,9 @@ bool bsp_enabled(void);
 void broadcast_panic(void);
 void arch_broadcast_panic(void);
 void arch_broadcast_ipi(void);
+void arch_send_ipi(struct processor *processor);
 void broadcast_flush_tlb(uintptr_t base, size_t pages);
+void schedule_task_on_processor(struct task *task, struct processor *processor);
 
 void init_processor_ipi_messages(void);
 struct processor_ipi_message *allocate_processor_ipi_message(void);

@@ -667,9 +667,9 @@ SYS_CALL(execve) {
     task->kernel_stack = current->kernel_stack;
     current->kernel_stack = NULL;
 
-    sched_remove_task(current);
+    local_sched_remove_task(current);
     assert(get_current_task() == task);
-    sched_add_task(task);
+    local_sched_add_task(task);
 
     // NOTE: once we re-enable interrupts we're effectively running as the new task inside a system call.
     interrupts_restore(save);

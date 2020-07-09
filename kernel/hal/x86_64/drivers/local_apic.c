@@ -38,11 +38,21 @@ void local_apic_broadcast_ipi(int vector) {
     write_icr(local_apic, command);
 }
 
+void local_apic_send_ipi(uint8_t apic_id, int vector) {
+    struct acpi_info *info = acpi_get_info();
+    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+
+    union local_apic_icr command = { .raw_value = 0 };
+    command.vector = vector;
+    command.trigger_mode = LOCAL_APIC_ICR_TRIGGER_MODE_EDGE;
+    command.destination = apic_id;
+    write_icr(local_apic, command);
+}
+
 void init_ap(struct processor *processor) {
     atomic_store(&processor->enabled, true);
 
-    debug_log("~\n=================================\nPROCESSOR %u MADE IT TO THE KERNEL\n=================================\n",
-              processor->id);
+    debug_log("~Processor %u successfully booted\n", processor->id);
 
     arch_init_processor(processor);
     sched_run_next();

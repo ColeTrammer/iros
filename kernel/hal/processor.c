@@ -3,6 +3,9 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
+#include <kernel/sched/task_sched.h>
+
+#define SCHED_DEBUG
 
 static struct processor *processor_list;
 static int num_processors;
@@ -107,6 +110,7 @@ void drop_processor_ipi_message(struct processor_ipi_message *message) {
 }
 
 void enqueue_processor_ipi_message(struct processor *processor, struct processor_ipi_message *message) {
+    assert(message->type != PROCESSOR_IPI_FREED);
     spin_lock(&processor->ipi_messages_lock);
     if (processor->ipi_messages_head == NULL) {
         processor->ipi_messages_head = processor->ipi_messages_tail = message;
@@ -115,6 +119,27 @@ void enqueue_processor_ipi_message(struct processor *processor, struct processor
     }
     processor->ipi_messages_tail = message;
     spin_unlock(&processor->ipi_messages_lock);
+}
+
+void schedule_task_on_processor(struct task *task, struct processor *processor) {
+#ifdef SCHED_DEBUG
+    debug_log("Scheduling task on processor: [ %d:%d, %d ]\n", task->tid, task->process->pid, processor->id);
+#endif /* SCHED_DEBUG */
+
+    if (processor == get_current_processor()) {
+        local_sched_add_task(task);
+        return;
+    }
+
+    struct processor_ipi_message *message = allocate_processor_ipi_message();
+    assert(message);
+    message->type = PROCESSOR_IPI_SCHEDULE_TASK;
+    message->schedule_task.task = task;
+
+    enqueue_processor_ipi_message(processor, message);
+    arch_send_ipi(processor);
+
+    // NOTE: the other processor will clean up the message
 }
 
 void broadcast_flush_tlb(uintptr_t base, size_t pages) {

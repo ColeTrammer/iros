@@ -31,7 +31,38 @@ void init_task_sched() {
     arch_init_task_sched();
 }
 
+static unsigned int next_cpu_id;
+
 void sched_add_task(struct task *task) {
+    int target_cpu_id = atomic_fetch_add(&next_cpu_id, 1) % processor_count();
+
+    struct processor *processor = get_processor_list();
+    while (processor) {
+        if (processor->id == target_cpu_id) {
+            if (!processor->enabled) {
+                processor = get_processor_list();
+                while (processor) {
+                    if (processor->enabled) {
+                        schedule_task_on_processor(task, processor);
+                        return;
+                    }
+                    processor = processor->next;
+                }
+                break;
+            }
+
+            schedule_task_on_processor(task, processor);
+            return;
+        }
+
+        processor = processor->next;
+    }
+
+    debug_log("All CPUS disabled?");
+    assert(false);
+}
+
+void local_sched_add_task(struct task *task) {
     uint64_t save = disable_interrupts_save();
 
     struct processor *processor = get_current_processor();
@@ -54,7 +85,7 @@ void sched_add_task(struct task *task) {
     interrupts_restore(save);
 }
 
-void sched_remove_task(struct task *task) {
+void local_sched_remove_task(struct task *task) {
     uint64_t save = disable_interrupts_save();
 
     struct processor *processor = get_current_processor();

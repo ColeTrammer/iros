@@ -92,6 +92,7 @@ _Static_assert(sizeof(struct local_apic) == 0x400);
 void local_apic_send_eoi(void);
 void local_apic_start_aps(void);
 void local_apic_broadcast_ipi(int irq);
+void local_apic_send_ipi(uint8_t apic_id, int irq);
 
 void init_local_apic(void);
 void init_local_apic_irq_handlers(void);

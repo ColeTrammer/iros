@@ -14,7 +14,9 @@ void arch_init_task_sched(void);
 struct task *find_by_tid(int tgid, int tid);
 
 void sched_add_task(struct task *task);
-void sched_remove_task(struct task *task);
+
+void local_sched_add_task(struct task *task);
+void local_sched_remove_task(struct task *task);
 void sched_run_next(void);
 int __kernel_yield(void);
 

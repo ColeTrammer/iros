@@ -72,7 +72,7 @@ int debug_log_internal(const char *func, const char *format, ...) {
 static bool should_panic;
 
 void debug_log_assertion(const char *msg, const char *file, int line, const char *func) {
-    disable_interrupts();
+    spin_lock(&debug_lock);
 
 #ifndef KERNEL_NO_DEBUG_COLORS
     printf("\n\033[31m");
@@ -95,6 +95,8 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
     asm("mov %%rbp, %0" : "=r"(rbp) : :);
     kernel_stack_trace((uintptr_t) &kernel_stack_trace, rbp);
     abort();
+
+    spin_unlock(&debug_lock);
 }
 
 void dump_registers_to_screen() {
