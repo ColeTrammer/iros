@@ -20,7 +20,7 @@
 
 static void handle_double_fault(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Double Fault");
+    debug_log("\n\033[31m%s\033[0m\n", "Double Fault");
     abort();
 }
 
@@ -39,7 +39,7 @@ static void handle_divide_by_zero(struct irq_context *context) {
     }
 
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Divide by Zero Error");
+    debug_log("\n\033[31m%s\033[0m\n", "Divide by Zero Error");
     abort();
 }
 
@@ -60,7 +60,7 @@ static void handle_stack_fault(struct irq_context *context) {
 
     // We shouldn't get here unless SIGSEGV is blocked???
     dump_registers_to_screen();
-    printf("\n\033[31m%s: Error: %X\033[0m\n", "Stack Fault", error_code);
+    debug_log("\n\033[31m%s: Error: %X\033[0m\n", "Stack Fault", error_code);
     abort();
 }
 
@@ -71,9 +71,9 @@ static void handle_general_protection_fault(struct irq_context *context) {
     struct task *current = get_current_task();
     debug_log("%d #GP: [ %#.16lX, %u ]\n", current->process->pid, task_state->stack_state.rip, error_code);
 
-    printf("\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (general protection fault)\033[0;37m: [ %#.16lX, "
-           "%#.16lX ]\n",
-           current->process->pid, current->tid, task_state->stack_state.rip, task_state->stack_state.rsp);
+    debug_log("\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (general protection fault)\033[0;37m: [ %#.16lX, "
+              "%#.16lX ]\n",
+              current->process->pid, current->tid, task_state->stack_state.rip, task_state->stack_state.rsp);
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
@@ -145,8 +145,9 @@ static void handle_page_fault(struct irq_context *context) {
 #endif /* PAGING_DEBUG */
 
     bool is_kernel = current->kernel_task || current->in_kernel;
-    printf("\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %u ]\n",
-           current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, error_code);
+    debug_log(
+        "\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %u ]\n",
+        current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, error_code);
     if (!is_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         task_do_sig(current, SIGSEGV); // You can't block this so we don't check
@@ -165,13 +166,13 @@ static void handle_page_fault(struct irq_context *context) {
 
 static void handle_invalid_opcode(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Invalid Opcode");
+    debug_log("\n\033[31m%s\033[0m\n", "Invalid Opcode");
     abort();
 }
 
 static void handle_fpu_exception(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "FPU Exception");
+    debug_log("\n\033[31m%s\033[0m\n", "FPU Exception");
     abort();
 }
 
@@ -185,55 +186,55 @@ static void handle_device_not_available(struct irq_context *context __attribute_
 
 static void handle_debug(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Debug");
+    debug_log("\n\033[31m%s\033[0m\n", "Debug");
     abort();
 }
 
 static void handle_non_maskable_interrupt(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Non-maskable Interrupt");
+    debug_log("\n\033[31m%s\033[0m\n", "Non-maskable Interrupt");
     abort();
 }
 
 static void handle_breakpoint(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Breakpoint");
+    debug_log("\n\033[31m%s\033[0m\n", "Breakpoint");
     abort();
 }
 
 static void handle_overflow(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Overflow");
+    debug_log("\n\033[31m%s\033[0m\n", "Overflow");
     abort();
 }
 
 static void handle_bound_range_exceeded(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Bound Range Exceeded");
+    debug_log("\n\033[31m%s\033[0m\n", "Bound Range Exceeded");
     abort();
 }
 
 static void handle_invalid_tss(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Invalid TSS");
+    debug_log("\n\033[31m%s\033[0m\n", "Invalid TSS");
     abort();
 }
 
 static void handle_segment_not_present(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Segment Not Present");
+    debug_log("\n\033[31m%s\033[0m\n", "Segment Not Present");
     abort();
 }
 
 static void handle_alignment_check(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Alignment Check");
+    debug_log("\n\033[31m%s\033[0m\n", "Alignment Check");
     abort();
 }
 
 static void handle_machine_check(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Machine Check");
+    debug_log("\n\033[31m%s\033[0m\n", "Machine Check");
     abort();
 }
 
@@ -252,19 +253,19 @@ static void handle_simd_exception(struct irq_context *context __attribute__((unu
     }
 
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "SIMD Exception");
+    debug_log("\n\033[31m%s\033[0m\n", "SIMD Exception");
     abort();
 }
 
 static void handle_virtualization_exception(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Virtualization Exception");
+    debug_log("\n\033[31m%s\033[0m\n", "Virtualization Exception");
     abort();
 }
 
 static void handle_security_exception(struct irq_context *context __attribute__((unused))) {
     dump_registers_to_screen();
-    printf("\n\033[31m%s\033[0m\n", "Security Exception");
+    debug_log("\n\033[31m%s\033[0m\n", "Security Exception");
     abort();
 }
 
