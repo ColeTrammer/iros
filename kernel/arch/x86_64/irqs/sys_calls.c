@@ -546,8 +546,6 @@ static int execve_helper(char **path, char *buffer, size_t buffer_length, struct
 SYS_CALL(execve) {
     SYS_BEGIN();
 
-    disable_interrupts();
-
     SYS_PARAM1_VALIDATE(char *, path, validate_path, -1);
     SYS_PARAM2_VALIDATE(char **, argv, validate_string_array, -1);
     SYS_PARAM3_VALIDATE(char **, envp, validate_string_array, -1);

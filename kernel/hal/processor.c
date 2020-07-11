@@ -168,6 +168,8 @@ void broadcast_flush_tlb(uintptr_t base, size_t pages) {
         return;
     }
 
+    uint64_t save = disable_interrupts_save();
+
     struct processor *current = get_current_processor();
     if (!current || !smp_enabled()) {
         return;
@@ -191,8 +193,15 @@ void broadcast_flush_tlb(uintptr_t base, size_t pages) {
         processor = processor->next;
     }
 
-    drop_processor_ipi_message(message);
     if (sent_message) {
         arch_broadcast_ipi();
     }
+
+    while (atomic_load(&message->ref_count) > 1) {
+        handle_processor_messages();
+        cpu_relax();
+    }
+    free_processor_ipi_message(message);
+
+    interrupts_restore(save);
 }

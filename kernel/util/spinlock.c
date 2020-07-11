@@ -1,8 +1,8 @@
-#include <kernel/util/spinlock.h>
-
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/proc/task.h>
+#include <kernel/util/spinlock.h>
 
 // #define SPINLOCK_DEBUG
 
@@ -24,7 +24,7 @@ void init_spinlock_internal(spinlock_t *lock, const char *func __attribute__((un
     lock->interrupts = 0;
 }
 
-void spin_lock_internal(spinlock_t *lock, const char *func __attribute__((unused))) {
+void spin_lock_internal(spinlock_t *lock, const char *func __attribute__((unused)), bool handle_messages) {
 #ifdef SPINLOCK_DEBUG
     __spinlock_log("~locking spinlock: [ %p, %s ]\n", lock, func);
 #endif /* SPINLOCK_DEBUG */
@@ -40,8 +40,12 @@ void spin_lock_internal(spinlock_t *lock, const char *func __attribute__((unused
         __spinlock_log("~faild to aquire lock: [ %p, %s ]\n", lock, func);
 #endif /* SPINLOCK_DEBUG */
 
-        while (lock->counter)
+        while (lock->counter) {
+            if (handle_messages) {
+                handle_processor_messages();
+            }
             cpu_relax();
+        }
     }
 }
 

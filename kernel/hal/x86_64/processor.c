@@ -47,7 +47,7 @@ void handle_processor_messages(void) {
     struct processor *processor = get_current_processor();
     assert(processor);
 
-    spin_lock(&processor->ipi_messages_lock);
+    spin_lock_internal(&processor->ipi_messages_lock, __func__, false);
     struct processor_ipi_message *message = processor->ipi_messages_head;
     while (message) {
         switch (message->type) {
