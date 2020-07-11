@@ -63,10 +63,9 @@ void local_apic_send_ipi(uint8_t apic_id, int vector) {
 
 void init_ap(struct processor *processor) {
     atomic_store(&processor->enabled, true);
+    arch_init_processor(processor);
 
     debug_log("~Processor %u successfully booted\n", processor->id);
-
-    arch_init_processor(processor);
     sched_run_next();
 }
 
