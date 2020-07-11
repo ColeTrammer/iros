@@ -95,6 +95,12 @@ void local_sched_remove_task(struct task *task) {
         return;
     }
 
+    if (task->sched_next == task) {
+        processor->sched_list_start = processor->sched_list_end = NULL;
+        interrupts_restore(save);
+        return;
+    }
+
     struct task *current = processor->sched_list_start;
 
     while (current->sched_next != task) {
@@ -118,15 +124,15 @@ void local_sched_remove_task(struct task *task) {
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct processor *processor = get_current_processor();
-    struct task *current = get_current_task();
+    struct task *current = processor->current_task;
 
-    if (current == get_idle_task()) {
+    if (current == processor->idle_task) {
         current = processor->sched_list_start;
     }
 
     // No tasks in queue
     if (current == NULL) {
-        run_task(get_idle_task());
+        run_task(processor->idle_task);
     }
 
     // Task signals
@@ -191,7 +197,7 @@ void sched_run_next() {
         if (to_run == start) {
             // This means we need to run the idle task
             if (to_run->sched_state != RUNNING_UNINTERRUPTIBLE && to_run->sched_state != RUNNING_INTERRUPTIBLE) {
-                to_run = get_idle_task();
+                to_run = processor->idle_task;
             }
 
             break;
