@@ -657,17 +657,16 @@ SYS_CALL(execve) {
      * Interrupted) */
     uint64_t save = disable_interrupts_save();
 
-    set_current_task(task);
-    task->in_kernel = true;
-    task->sched_state = RUNNING_UNINTERRUPTIBLE;
-
     // Tranfer ownership of the current's kernel stack to avoid the need for additional allocation.
     task->kernel_stack = current->kernel_stack;
     current->kernel_stack = NULL;
 
     local_sched_remove_task(current);
-    assert(get_current_task() == task);
     local_sched_add_task(task);
+
+    set_current_task(task);
+    task->in_kernel = true;
+    task->sched_state = RUNNING_UNINTERRUPTIBLE;
 
     // NOTE: once we re-enable interrupts we're effectively running as the new task inside a system call.
     interrupts_restore(save);
