@@ -484,6 +484,26 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_meminfo(struct procfs
     return (struct procfs_buffer) { buffer, length };
 }
 
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_cpus(struct procfs_data *data __attribute__((unused)),
+                                                                struct process *process __attribute__((unused)), bool need_buffer) {
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+    size_t length = 0;
+    struct processor *processor = get_processor_list();
+    while (processor) {
+        length += snprintf(buffer + length, need_buffer ? PAGE_SIZE - length : 0,
+                           "ID: %d\n"
+                           "LOCAL APIC ID: %u\n"
+                           "ACPI ID: %u\n"
+                           "ENABLED: %s\n"
+                           "IDLE TASK: %d:%d\n",
+                           processor->id, processor->arch_processor.local_apic_id, processor->arch_processor.acpi_id,
+                           processor->enabled ? "yes" : "no", processor->idle_task->process->pid, processor->idle_task->tid);
+        processor = processor->next;
+    }
+
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static void arp_for_each(void *_mapping, void *_buf) {
     struct ip_v4_to_mac_mapping *mapping = _mapping;
     struct procfs_buffer *buf = _buf;
@@ -566,10 +586,15 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         data = meminfo_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *cpus_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_cpus);
+        data = cpus_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
         struct inode *net_directory = procfs_create_inode(PROCFS_DIRECTORY_MODE, 0, 0, NULL, procfs_create_net_directory_structure);
         net_directory->dirent_cache = fs_create_dirent_cache();
 
         mutex_lock(&parent->lock);
+        fs_put_dirent_cache(parent->dirent_cache, cpus_inode, "cpus", strlen("cpus"));
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));
         fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
         fs_put_dirent_cache(parent->dirent_cache, meminfo_inode, "meminfo", strlen("meminfo"));
