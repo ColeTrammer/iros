@@ -2,6 +2,7 @@
 
 #include <app/widget.h>
 #include <liim/bitmap.h>
+#include <liim/function.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -43,10 +44,11 @@ public:
     virtual void clear() override;
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
     virtual void flush() override;
-    virtual void enter() override;
+    virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual String prompt(const String& message) override;
+    virtual Maybe<String> prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
+    virtual void quit() override;
 
     virtual void notify_now_is_a_good_time_to_draw_cursor() override;
     virtual void notify_line_count_changed() override;
@@ -65,6 +67,8 @@ public:
     virtual void on_key_event(App::KeyEvent& event) override;
     virtual void on_resize() override;
     virtual void on_focused() override;
+
+    Function<void()> on_quit;
 
 private:
     struct CellData {

@@ -18,11 +18,12 @@ public:
     virtual void clear() override;
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
     virtual void flush() override;
-    virtual void enter() override;
+    virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual String prompt(const String& message) override;
+    virtual Maybe<String> prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
     virtual void notify_line_count_changed() override;
+    virtual void quit() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
@@ -31,8 +32,6 @@ public:
 
     virtual int cursor_col() const { return m_cursor_col; }
     virtual int cursor_row() const { return m_cursor_row; }
-
-    void set_stop_on_enter(bool b) { m_stop_on_enter = b; }
 
     void set_coordinates(int row_offset, int col_offset, int rows, int cols);
 
@@ -64,7 +63,7 @@ private:
     void print_char(char c, CharacterMetadata metadata);
     void flush_row(int line);
 
-    String enter_prompt(const String& message, String starting_text = "");
+    Maybe<String> enter_prompt(const String& message, String starting_text = "");
 
     int index(int row, int col) const { return row * cols() + col; }
 
@@ -83,6 +82,7 @@ private:
     int m_row_offset { 0 };
     int m_col_offset { 0 };
     int m_cols_needed_for_line_numbers { 0 };
-    bool m_stop_on_enter { false };
+    int m_exit_code { 0 };
+    bool m_should_exit { false };
     bool m_show_status_bar { true };
 };

@@ -210,6 +210,11 @@ void TerminalPanel::document_did_change() {
     }
 }
 
+void TerminalPanel::quit() {
+    m_should_exit = true;
+    m_exit_code = 1;
+}
+
 void TerminalPanel::notify_line_count_changed() {
     int old_cols_needed_for_line_numbers = m_cols_needed_for_line_numbers;
     compute_cols_needed_for_line_numbers();
@@ -332,9 +337,13 @@ void TerminalPanel::flush_row(int row) {
 
 void TerminalPanel::do_open_prompt() {
     auto result = prompt("Open: ");
-    auto document = Document::create_from_file(result.string(), *this);
+    if (!result.has_value()) {
+        return;
+    }
+
+    auto document = Document::create_from_file(result.value().string(), *this);
     if (!document) {
-        send_status_message(String::format("Failed to open `%s'", result.string()));
+        send_status_message(String::format("Failed to open `%s'", result.value().string()));
         return;
     }
 
@@ -583,7 +592,7 @@ Maybe<KeyPress> TerminalPanel::read_key() {
     return { { 0, ch } };
 }
 
-void TerminalPanel::enter() {
+int TerminalPanel::enter() {
     fd_set set;
     for (;;) {
         FD_ZERO(&set);
@@ -604,19 +613,21 @@ void TerminalPanel::enter() {
         }
 
         auto& press = maybe_press.value();
-        if (press.key == KeyPress::Key::Enter && m_stop_on_enter) {
-            return;
-        }
-
         if (auto* document = Panel::document()) {
             document->notify_key_pressed(press);
         }
 
         draw_status_message();
+
+        if (m_should_exit) {
+            break;
+        }
     }
+
+    return m_exit_code;
 }
 
-String TerminalPanel::enter_prompt(const String& message, String staring_text) {
+Maybe<String> TerminalPanel::enter_prompt(const String& message, String staring_text) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
 
@@ -625,19 +636,25 @@ String TerminalPanel::enter_prompt(const String& message, String staring_text) {
     fflush(stdout);
 
     TerminalPanel text_panel(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
-    text_panel.set_stop_on_enter(true);
     s_prompt_panel = &text_panel;
     s_prompt_message = message;
 
     auto document = Document::create_single_line(text_panel, move(staring_text));
+    document->on_submit = [&] {
+        text_panel.m_exit_code = 0;
+        text_panel.m_should_exit = true;
+    };
     text_panel.set_document(move(document));
-    text_panel.enter();
+
+    if (text_panel.enter() != 0) {
+        return {};
+    }
 
     return text_panel.document()->content_string();
 }
 
-String TerminalPanel::prompt(const String& prompt) {
-    String result = enter_prompt(prompt);
+Maybe<String> TerminalPanel::prompt(const String& prompt) {
+    Maybe<String> result = enter_prompt(prompt);
 
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
@@ -688,7 +705,7 @@ void TerminalPanel::enter_search(String starting_text) {
             TerminalPanel::document()->move_cursor_to_next_search_match();
         }
 
-        if (press.key == KeyPress::Key::Escape) {
+        if (press.key == KeyPress::Key::Escape || ((press.modifiers & KeyPress::Modifier::Control) && press.key == 'Q')) {
             break;
         }
 

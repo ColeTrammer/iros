@@ -26,11 +26,12 @@ public:
     virtual void clear() = 0;
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) = 0;
     virtual void flush() = 0;
-    virtual void enter() = 0;
+    virtual int enter() = 0;
     virtual void send_status_message(LIIM::String message) = 0;
-    virtual LIIM::String prompt(const LIIM::String& message) = 0;
+    virtual Maybe<LIIM::String> prompt(const LIIM::String& message) = 0;
     virtual void enter_search(LIIM::String starting_text) = 0;
     virtual void do_open_prompt() = 0;
+    virtual void quit() = 0;
 
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
     virtual LIIM::String clipboard_contents(bool& is_whole_line) const = 0;

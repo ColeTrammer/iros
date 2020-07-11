@@ -67,14 +67,21 @@ void AppPanel::flush() {
     invalidate();
 }
 
-void AppPanel::enter() {
+int AppPanel::enter() {
     window()->set_focused_widget(*this);
-};
+    return 0;
+}
+
+void AppPanel::quit() {
+    if (on_quit) {
+        on_quit();
+    }
+}
 
 void AppPanel::send_status_message(String) {}
 
-String AppPanel::prompt(const String&) {
-    return "";
+Maybe<String> AppPanel::prompt(const String&) {
+    return {};
 }
 
 void AppPanel::enter_search(String starting_text) {
@@ -93,6 +100,13 @@ void AppPanel::enter_search(String starting_text) {
         document()->display_if_needed();
     };
     ensure_search_panel().document()->on_escape_press = [this] {
+        document()->set_search_text("");
+        if (document()->on_escape_press) {
+            document()->on_escape_press();
+        }
+        window()->set_focused_widget(*this);
+    };
+    ensure_search_panel().on_quit = [this] {
         document()->set_search_text("");
         if (document()->on_escape_press) {
             document()->on_escape_press();

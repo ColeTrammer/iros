@@ -71,6 +71,10 @@ int main(int argc, char** argv) {
         auto& panel = layout.add<AppPanel>();
         layout.set_margins({ 0, 0, 0, 0 });
 
+        panel.on_quit = [&] {
+            app.main_event_loop().set_should_exit(true);
+        };
+
         int ret = make_document(panel);
         if (ret) {
             return ret;

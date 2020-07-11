@@ -831,7 +831,12 @@ void Document::notify_panel_size_changed() {
 }
 
 void Document::go_to_line() {
-    auto result = m_panel.prompt("Go to line: ");
+    auto maybe_result = m_panel.prompt("Go to line: ");
+    if (!maybe_result.has_value()) {
+        return;
+    }
+
+    auto& result = maybe_result.value();
     char* end_ptr = result.string();
     long line_number = strtol(result.string(), &end_ptr, 10);
     if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
@@ -869,15 +874,19 @@ void Document::guess_type_from_name() {
 
 void Document::save() {
     if (m_name.is_empty()) {
-        String result = m_panel.prompt("Save as: ");
-        if (access(result.string(), F_OK) == 0) {
-            String ok = m_panel.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.string()));
-            if (ok != "y" && ok != "yes") {
+        auto result = m_panel.prompt("Save as: ");
+        if (!result.has_value()) {
+            return;
+        }
+
+        if (access(result.value().string(), F_OK) == 0) {
+            auto ok = m_panel.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.value().string()));
+            if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
                 return;
             }
         }
 
-        m_name = move(result);
+        m_name = move(result.value());
         guess_type_from_name();
     }
 
@@ -916,14 +925,14 @@ void Document::save() {
 }
 
 void Document::quit() {
-    if (m_document_was_modified) {
+    if (m_document_was_modified && !single_line_mode()) {
         auto result = m_panel.prompt("Quit without saving? ");
-        if (result != "y" && result != "yes") {
+        if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
             return;
         }
     }
 
-    exit(0);
+    m_panel.quit();
 }
 
 void Document::update_syntax_highlighting() {
