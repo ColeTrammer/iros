@@ -21,7 +21,7 @@ bool kprint(const char *str, size_t len) {
 
 int vdebug_log_internal(const char *func, const char *format, va_list parameters) {
     g_should_log = false;
-    spin_lock(&debug_lock);
+    spin_lock_internal(&debug_lock, __func__, false);
 
     if (*format == '~') {
         int written = 0;
@@ -72,7 +72,7 @@ int debug_log_internal(const char *func, const char *format, ...) {
 static bool should_panic;
 
 void debug_log_assertion(const char *msg, const char *file, int line, const char *func) {
-    spin_lock(&debug_lock);
+    spin_lock_internal(&debug_lock, __func__, false);
 
 #ifndef KERNEL_NO_DEBUG_COLORS
     printf("\n\033[31m");
@@ -123,6 +123,8 @@ void dump_registers_to_screen() {
         :
         : "rdx");
 
+    spin_lock_internal(&debug_lock, __func__, false);
+
 #ifndef KERNEL_NO_DEBUG_COLORS
     printf("\n\33[31m");
 #endif /* KERNEL_NO_DEBUG_COLORS */
@@ -139,4 +141,6 @@ void dump_registers_to_screen() {
 #ifndef KERNEL_NO_DEBUG_COLORS
     printf("CR3=%#.16lX\033[0m\n", cr3);
 #endif /* KERNEL_NO_DEBUG_COLORS */
+
+    spin_unlock(&debug_lock);
 }
