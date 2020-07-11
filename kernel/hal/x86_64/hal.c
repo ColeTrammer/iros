@@ -80,6 +80,8 @@ void init_drivers(void) {
 }
 
 void init_smp(void) {
+    init_processor_ipi_messages();
+    set_smp_enabled();
     local_apic_start_aps();
 }
 

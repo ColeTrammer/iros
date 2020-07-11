@@ -71,7 +71,7 @@ void handle_processor_messages(void) {
                 assert(false);
         }
 
-        struct processor_ipi_message *next = message->next;
+        struct processor_ipi_message *next = message->next[processor->id];
         drop_processor_ipi_message(message);
         message = next;
     }

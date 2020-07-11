@@ -15,11 +15,10 @@ struct vm_region;
 enum processor_ipi_message_type { PROCESSOR_IPI_FREED, PROCESSOR_IPI_FLUSH_TLB, PROCESSOR_IPI_SCHEDULE_TASK };
 
 struct processor_ipi_message {
-    struct processor_ipi_message *next;
     int ref_count;
-
     enum processor_ipi_message_type type;
     union {
+        struct processor_ipi_message *next_free;
         struct {
             uintptr_t base;
             size_t pages;
@@ -28,6 +27,8 @@ struct processor_ipi_message {
             struct task *task;
         } schedule_task;
     };
+
+    struct processor_ipi_message *next[0];
 };
 struct processor {
     struct processor *self;
@@ -59,6 +60,9 @@ int processor_count(void);
 void arch_init_processor(struct processor *processor);
 void init_bsp(struct processor *processor);
 bool bsp_enabled(void);
+
+void set_smp_enabled();
+bool smp_enabled(void);
 
 void broadcast_panic(void);
 void arch_broadcast_panic(void);

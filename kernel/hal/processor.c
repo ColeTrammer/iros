@@ -1,5 +1,6 @@
 #include <stdatomic.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
@@ -9,6 +10,15 @@
 
 static struct processor *processor_list;
 static int num_processors;
+static bool s_smp_enabled;
+
+void set_smp_enabled() {
+    s_smp_enabled = true;
+}
+
+bool smp_enabled(void) {
+    return s_smp_enabled;
+}
 
 struct processor *create_processor() {
     struct processor *processor = malloc(sizeof(struct processor));
@@ -36,7 +46,6 @@ void add_processor(struct processor *processor) {
     debug_log("Processor detected: [ %p, %u ]\n", processor, processor->id);
 
     if (processor->id == 0) {
-        init_processor_ipi_messages();
         init_bsp(processor);
     }
 }
@@ -51,7 +60,7 @@ void broadcast_panic(void) {
     }
 
     struct processor *current = get_current_processor();
-    if (!current || (current->id == 0 && !current->enabled)) {
+    if (!current || !smp_enabled()) {
         return;
     }
 
@@ -62,19 +71,31 @@ struct processor_ipi_message *ipi_message_pool_head;
 spinlock_t ipi_message_pool_lock = SPINLOCK_INITIALIZER;
 
 void init_processor_ipi_messages(void) {
-    ipi_message_pool_head = malloc(100 * sizeof(struct processor_ipi_message));
-    for (size_t i = 0; i < 100; i++) {
-        ipi_message_pool_head[i].type = PROCESSOR_IPI_FREED;
-        ipi_message_pool_head[i].next = &ipi_message_pool_head[i + 1];
+    if (processor_count() <= 1) {
+        return;
     }
-    ipi_message_pool_head[99].next = NULL;
+
+    ipi_message_pool_head =
+        malloc(100 * (sizeof(struct processor_ipi_message) + sizeof(struct processor_ipi_message *) * processor_count()));
+    for (size_t i = 0; i < 100; i++) {
+        struct processor_ipi_message *current =
+            (struct processor_ipi_message *) (((uint8_t *) ipi_message_pool_head) +
+                                              i * (sizeof(struct processor_ipi_message) +
+                                                   sizeof(struct processor_ipi_message *) * processor_count()));
+        struct processor_ipi_message *next =
+            (struct processor_ipi_message *) (((uint8_t *) ipi_message_pool_head) +
+                                              (i + 1) * (sizeof(struct processor_ipi_message) +
+                                                         sizeof(struct processor_ipi_message *) * processor_count()));
+        current->type = PROCESSOR_IPI_FREED;
+        current->next_free = i == 99 ? NULL : next;
+    }
 }
 
 struct processor_ipi_message *allocate_processor_ipi_message(void) {
     spin_lock(&ipi_message_pool_lock);
     struct processor_ipi_message *message = ipi_message_pool_head;
     if (message) {
-        ipi_message_pool_head = message->next;
+        ipi_message_pool_head = message->next_free;
     }
     spin_unlock(&ipi_message_pool_lock);
 
@@ -83,7 +104,7 @@ struct processor_ipi_message *allocate_processor_ipi_message(void) {
     }
 
     assert(message->type == PROCESSOR_IPI_FREED);
-    message->next = NULL;
+    memset(message->next, 0, sizeof(struct processor_ipi_message *) * processor_count());
     message->ref_count = 1;
 
     return message;
@@ -93,7 +114,7 @@ static void free_processor_ipi_message(struct processor_ipi_message *message) {
     message->type = PROCESSOR_IPI_FREED;
 
     spin_lock(&ipi_message_pool_lock);
-    message->next = ipi_message_pool_head;
+    message->next_free = ipi_message_pool_head;
     ipi_message_pool_head = message;
     spin_unlock(&ipi_message_pool_lock);
 }
@@ -115,7 +136,7 @@ void enqueue_processor_ipi_message(struct processor *processor, struct processor
     if (processor->ipi_messages_head == NULL) {
         processor->ipi_messages_head = processor->ipi_messages_tail = message;
     } else {
-        processor->ipi_messages_tail->next = message;
+        processor->ipi_messages_tail->next[processor->id] = message;
     }
     processor->ipi_messages_tail = message;
     spin_unlock(&processor->ipi_messages_lock);
@@ -148,7 +169,7 @@ void broadcast_flush_tlb(uintptr_t base, size_t pages) {
     }
 
     struct processor *current = get_current_processor();
-    if (!current || (current->id == 0 && !current->enabled)) {
+    if (!current || !smp_enabled()) {
         return;
     }
 
