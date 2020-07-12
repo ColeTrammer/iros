@@ -7,9 +7,9 @@
 namespace Ext {
 
 enum CompressionType {
-    None,
-    Fixed,
-    Dynamic,
+    None = 0,
+    Fixed = 1,
+    Dynamic = 2,
 };
 
 static uint8_t code_length_alphabet_order_mapping[19] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
