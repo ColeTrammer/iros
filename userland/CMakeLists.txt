@@ -23,6 +23,7 @@ set(TARGETS
     cp
     cut
     date
+    decompress
     dirname
     echo
     edit

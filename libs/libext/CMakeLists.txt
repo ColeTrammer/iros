@@ -16,6 +16,8 @@ add_custom_target(generate-mode-parser DEPENDS ${GENERATED_FILES})
 
 set(SOURCES
     ${GENERATED_FILES}
+    deflate.cpp
+    gzip.cpp
     parse_mode.cpp
 )
 
