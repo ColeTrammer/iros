@@ -77,13 +77,13 @@ Maybe<GZipData> read_gzip_path(const String& path) {
     Maybe<String> original_name;
     if (flags & GZipFlags::FNAME) {
         original_name = String((char*) &raw_data[offset]);
-        offset += original_name.value().size();
+        offset += original_name.value().size() + 1;
     }
 
     Maybe<String> comment;
     if (flags & GZipFlags::FCOMMENT) {
         comment = String((char*) &raw_data[offset]);
-        offset += comment.value().size();
+        offset += comment.value().size() + 1;
     }
 
     Maybe<uint16_t> crc16;
