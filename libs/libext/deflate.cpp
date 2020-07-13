@@ -38,8 +38,14 @@ struct TreeNode {
 static_assert(sizeof(TreeNode) == 4);
 
 static constexpr size_t max_bits = 15;
+static constexpr size_t hlit_offset = 257;
+static constexpr size_t hlit_max = 286;
+static constexpr size_t hdist_offset = 1;
+static constexpr size_t hdist_max = 32;
+static constexpr size_t hclen_offset = 4;
+static constexpr size_t hclen_max = 19;
 
-static uint8_t code_length_alphabet_order_mapping[19] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
+static uint8_t code_length_alphabet_order_mapping[hclen_max] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
 
 static Maybe<uint16_t> read_from_stream(uint8_t* compressed_data, size_t compressed_data_length, size_t num_bits, size_t& bit_offset) {
     uint16_t value = 0;
@@ -175,17 +181,18 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
     }
 
 #ifdef DEFLATE_DEBUG
-    fprintf(stderr, "hlit=%u hdist=%u hclen=%u\n", hlit.value() + 257, hdist.value() + 1, hclen.value() + 4);
+    fprintf(stderr, "hlit=%lu hdist=%lu hclen=%lu\n", hlit.value() + hlit_offset, hdist.value() + hdist_offset,
+            hclen.value() + hclen_offset);
 #endif /* DEFLATE_DEBUG */
 
-    FixedArray<Symbol, 19> code_length_symbols(19);
-    for (size_t i = 0; i < 19; i++) {
+    FixedArray<Symbol, hclen_max> code_length_symbols;
+    for (size_t i = 0; i < code_length_symbols.size(); i++) {
         code_length_symbols[i].encoded_length = 0;
         code_length_symbols[i].code = 0;
         code_length_symbols[i].symbol = i;
     }
 
-    for (size_t i = 0; i < hclen.value() + 4UL; i++) {
+    for (size_t i = 0; i < hclen.value() + hclen_offset; i++) {
         auto len = get(3);
         if (!len.has_value()) {
             return {};
@@ -197,12 +204,12 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
 
 #ifdef DEFLATE_DEBUG
     for (size_t i = 0; i < code_length_symbols.size(); i++) {
-        fprintf(stderr, "CLA: %2u:%u\n", code_length_symbols[i].symbol, code_length_symbols[i].encoded_length);
+        fprintf(stderr, "CLA: %3u:%u\n", code_length_symbols[i].symbol, code_length_symbols[i].encoded_length);
     }
 #endif /* DEFLATE_DEBUG */
 
     FixedArray<TreeNode, 128> length_codes_tree;
-    for (size_t i = 0; i < 128; i++) {
+    for (size_t i = 0; i < length_codes_tree.size(); i++) {
         length_codes_tree[i].left = 0;
         length_codes_tree[i].is_initialized = 0;
         length_codes_tree[i].right = 0;
@@ -210,15 +217,20 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
     }
     build_huffman_tree(code_length_symbols.array(), code_length_symbols.size(), length_codes_tree.array(), length_codes_tree.size());
 
-    FixedArray<Symbol, 286> literal_symbols(hlit.value() + 257);
+    FixedArray<Symbol, hlit_max + hdist_max> literal_and_distance_symbols(hlit.value() + hlit_offset + hdist.value() + hdist_offset);
+    for (size_t i = 0; i < hlit.value() + hlit_offset; i++) {
+        literal_and_distance_symbols[i].symbol = i;
+    }
+    for (size_t i = 0; i < hdist.value() + hdist_offset; i++) {
+        literal_and_distance_symbols[hlit.value() + hlit_offset + i].symbol = i;
+    }
+
     uint16_t prev_code_length = 0;
-    for (size_t i = 0; i < hlit.value() + 257UL;) {
+    for (size_t i = 0; i < literal_and_distance_symbols.size();) {
         auto value = decode(length_codes_tree.array());
         if (!value.has_value()) {
             return {};
         }
-
-        fprintf(stderr, "[%3lu] value: %u\n", i, value.value());
 
         assert(value.value() <= 18);
         if (value.value() == 16) {
@@ -228,9 +240,7 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
             }
 
             for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
-                literal_symbols[i].encoded_length = prev_code_length;
-                literal_symbols[i].symbol = i;
-                i++;
+                literal_and_distance_symbols[i++].encoded_length = prev_code_length;
             }
             continue;
         }
@@ -242,9 +252,7 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
             }
 
             for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
-                literal_symbols[i].encoded_length = 0;
-                literal_symbols[i].symbol = i;
-                i++;
+                literal_and_distance_symbols[i++].encoded_length = 0;
             }
             prev_code_length = 0;
             continue;
@@ -257,23 +265,23 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
             }
 
             for (size_t j = 0; j < repetitions.value() + 11UL; j++) {
-                literal_symbols[i].encoded_length = 0;
-                literal_symbols[i].symbol = i;
-                i++;
+                literal_and_distance_symbols[i++].encoded_length = 0;
             }
             prev_code_length = 0;
             continue;
         }
 
-        literal_symbols[i].encoded_length = value.value();
-        literal_symbols[i].symbol = i;
-        i++;
+        literal_and_distance_symbols[i++].encoded_length = value.value();
         prev_code_length = value.value();
     }
 
 #ifdef DEFLATE_DEBUG
-    for (size_t i = 0; i < hlit.value() + 257UL; i++) {
-        fprintf(stderr, "LLA: %3u:%u\n", literal_symbols[i].symbol, literal_symbols[i].encoded_length);
+    for (size_t i = 0; i < hlit.value() + hlit_offset; i++) {
+        fprintf(stderr, "LLA: %3u:%u\n", literal_and_distance_symbols[i].symbol, literal_and_distance_symbols[i].encoded_length);
+    }
+    for (size_t i = 0; i < hdist.value() + hdist_offset; i++) {
+        auto index = hlit.value() + hlit_offset + i;
+        fprintf(stderr, "DTA: %3u:%u\n", literal_and_distance_symbols[index].symbol, literal_and_distance_symbols[index].encoded_length);
     }
 #endif /* DEFLATE_DEBUG */
 
