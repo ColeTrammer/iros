@@ -408,6 +408,30 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
     assert(is_last_block.value());
 
     switch (compression_type.value()) {
+        case CompressionType::None: {
+            if (bit_offset % 8) {
+                bit_offset += 8 - (bit_offset % 8);
+            }
+
+            auto len = get(16);
+            if (!len.has_value()) {
+                return {};
+            }
+
+            auto nlen = get(16);
+            if (!nlen.has_value()) {
+                return {};
+            }
+
+            for (size_t i = 0; i < len.value(); i++) {
+                auto byte = get(8);
+                if (!byte.has_value()) {
+                    return {};
+                }
+                decompressed_data.add(byte.value());
+            }
+            break;
+        }
         case CompressionType::Fixed:
             if (!decompress_fixed_block()) {
                 return {};
@@ -419,7 +443,7 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
             }
             break;
         default:
-            assert(false);
+            return {};
     }
 
     return decompressed_data;
