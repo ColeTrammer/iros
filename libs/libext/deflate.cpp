@@ -2,7 +2,7 @@
 #include <liim/fixed_array.h>
 #include <limits.h>
 
-#define DEFLATE_DEBUG
+// #define DEFLATE_DEBUG
 
 namespace Ext {
 
@@ -10,6 +10,11 @@ enum CompressionType {
     None = 0,
     Fixed = 1,
     Dynamic = 2,
+};
+
+struct CompressedOffset {
+    uint16_t offset;
+    uint8_t extra_bits;
 };
 
 struct Symbol {
@@ -44,8 +49,22 @@ static constexpr size_t hdist_offset = 1;
 static constexpr size_t hdist_max = 32;
 static constexpr size_t hclen_offset = 4;
 static constexpr size_t hclen_max = 19;
+static constexpr uint16_t block_end_marker = 256;
 
 static uint8_t code_length_alphabet_order_mapping[hclen_max] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
+
+static CompressedOffset compressed_length_codes[hlit_max - hlit_offset] = {
+    { 3, 0 },  { 4, 0 },  { 5, 0 },  { 6, 0 },   { 7, 0 },   { 8, 0 },   { 9, 0 },   { 10, 0 },  { 11, 1 }, { 13, 1 },
+    { 15, 1 }, { 17, 1 }, { 19, 2 }, { 23, 2 },  { 27, 2 },  { 31, 2 },  { 35, 3 },  { 43, 3 },  { 51, 3 }, { 59, 3 },
+    { 67, 4 }, { 83, 4 }, { 99, 4 }, { 115, 4 }, { 131, 5 }, { 163, 5 }, { 195, 5 }, { 227, 5 }, { 258, 0 }
+};
+
+static CompressedOffset compressed_distance_codes[hdist_max] = { { 1, 0 },     { 2, 0 },     { 3, 0 },      { 4, 0 },      { 5, 1 },
+                                                                 { 7, 1 },     { 9, 2 },     { 13, 2 },     { 17, 3 },     { 25, 3 },
+                                                                 { 33, 4 },    { 49, 4 },    { 65, 5 },     { 97, 5 },     { 129, 6 },
+                                                                 { 193, 6 },   { 257, 7 },   { 385, 7 },    { 513, 8 },    { 769, 8 },
+                                                                 { 1025, 9 },  { 1537, 9 },  { 2049, 10 },  { 3073, 10 },  { 4097, 11 },
+                                                                 { 6145, 11 }, { 8193, 12 }, { 12289, 12 }, { 16385, 13 }, { 24577, 13 } };
 
 static Maybe<uint16_t> read_from_stream(uint8_t* compressed_data, size_t compressed_data_length, size_t num_bits, size_t& bit_offset) {
     uint16_t value = 0;
@@ -285,7 +304,83 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
     }
 #endif /* DEFLATE_DEBUG */
 
-    return {};
-}
+    FixedArray<TreeNode, 8192> literal_tree;
+    for (size_t i = 0; i < hlit.value() + hlit_offset; i++) {
+        literal_tree[i].left = 0;
+        literal_tree[i].is_initialized = 0;
+        literal_tree[i].right = 0;
+        literal_tree[i].is_symbol = 0;
+    }
+    build_huffman_tree(literal_and_distance_symbols.array(), hlit.value() + hlit_offset, literal_tree.array(), literal_tree.size());
 
+    FixedArray<TreeNode, 512> distance_tree;
+    for (size_t i = 0; i < hdist.value() + hdist_offset; i++) {
+        distance_tree[i].left = 0;
+        distance_tree[i].is_initialized = 0;
+        distance_tree[i].right = 0;
+        distance_tree[i].is_symbol = 0;
+    }
+    build_huffman_tree(literal_and_distance_symbols.array() + hlit.value() + hlit_offset, hdist.value() + hdist_offset,
+                       distance_tree.array(), distance_tree.size());
+
+    Vector<uint8_t> decompressed_data;
+    for (;;) {
+        auto value = decode(literal_tree.array());
+        if (!value.value()) {
+            return {};
+        }
+
+#ifdef DEFLATE_DEBUG
+        fprintf(stderr, "DECODE: %3u ('%c')\n", value.value(), value.value());
+#endif /* DEFLATE_DEBUG */
+        if (value.value() == block_end_marker) {
+            break;
+        }
+
+        if (value.value() > block_end_marker) {
+            auto length_code_index = value.value() - hlit_offset;
+            auto descriptor = compressed_length_codes[length_code_index];
+            auto extra_data = get(descriptor.extra_bits);
+            if (!extra_data.has_value()) {
+                return {};
+            }
+
+            uint16_t length = descriptor.offset + extra_data.value();
+
+            auto distance_code = decode(distance_tree.array());
+            if (!distance_code.has_value()) {
+                return {};
+            }
+
+#ifdef DEFLATE_DEBUG
+            fprintf(stderr, "DECODE: %3u (distance)\n", distance_code.value());
+#endif /* DEFLATE_DEBUG */
+
+            auto dst_descriptor = compressed_distance_codes[distance_code.value()];
+            auto extra_distance = get(dst_descriptor.extra_bits);
+            if (!extra_distance.has_value()) {
+                return {};
+            }
+
+            auto distance = dst_descriptor.offset + extra_distance.value();
+#ifdef DEFLATE_DEBUG
+            fprintf(stderr, "length=%u distance=%u data_len=%u\n", length, distance, decompressed_data.size());
+#endif /* DEFLATE_DEBUG */
+
+            size_t current_index = decompressed_data.size();
+            for (size_t i = 0; i < length; i++) {
+                auto byte = decompressed_data[current_index - distance + i];
+#ifdef DEFLATE_DEBUG
+                fprintf(stderr, "COPY:   %3u ('%c')\n", byte, byte);
+#endif /* DEFLATE_DEBUG */
+                decompressed_data.add(byte);
+            }
+            continue;
+        }
+
+        decompressed_data.add(value.value());
+    }
+
+    return decompressed_data;
+}
 }
