@@ -73,7 +73,7 @@ static Maybe<uint16_t> read_from_stream(uint8_t* compressed_data, size_t compres
         uint8_t byte = compressed_data[byte_offset];
         byte &= (1U << offset);
         if (byte) {
-            value += 1U << i;
+            value |= 1U << i;
         }
 
         if (++offset == CHAR_BIT) {
@@ -163,7 +163,26 @@ static constexpr FixedArray<TreeNode, 573> build_static_huffman_literals() {
     return tree;
 }
 
+static constexpr FixedArray<TreeNode, 63> build_static_huffman_distances() {
+    FixedArray<Symbol, hdist_max> distance_symbols;
+    for (size_t i = 0; i < distance_symbols.size(); i++) {
+        distance_symbols[i].code = 0;
+        distance_symbols[i].symbol = i;
+        distance_symbols[i].encoded_length = 5;
+    }
+
+    FixedArray<TreeNode, 63> tree;
+    for (size_t i = 0; i < tree.size(); i++) {
+        tree[i].m_left = 0;
+        tree[i].m_right = 0;
+    }
+
+    build_huffman_tree(distance_symbols.array(), distance_symbols.size(), tree.array(), tree.size());
+    return tree;
+}
+
 constexpr auto static_literal_table = build_static_huffman_literals();
+constexpr auto static_distance_table = build_static_huffman_distances();
 
 Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size_t compressed_data_length) {
     size_t bit_offset = 0;
@@ -192,7 +211,7 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
     auto decompress_block = [&](const TreeNode* literal_tree, const TreeNode* distance_tree) -> bool {
         for (;;) {
             auto value = decode(literal_tree);
-            if (!value.value()) {
+            if (!value.has_value()) {
                 return false;
             }
 
@@ -200,7 +219,7 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
             fprintf(stderr, "DECODE: %3u ('%c')\n", value.value(), value.value());
 #endif /* DEFLATE_DEBUG */
             if (value.value() == block_end_marker) {
-                break;
+                return true;
             }
 
             if (value.value() > block_end_marker) {
@@ -213,13 +232,7 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
 
                 uint16_t length = descriptor.offset + extra_data.value();
 
-                Maybe<uint16_t> distance_code;
-                if (!distance_tree) {
-                    distance_code = get(5);
-                } else {
-                    distance_code = decode(distance_tree);
-                }
-
+                auto distance_code = decode(distance_tree);
                 if (!distance_code.has_value()) {
                     return false;
                 }
@@ -252,12 +265,10 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
 
             decompressed_data.add(value.value());
         }
-
-        return true;
     };
 
     auto decompress_fixed_block = [&]() -> bool {
-        return decompress_block(static_literal_table.array(), nullptr);
+        return decompress_block(static_literal_table.array(), static_distance_table.array());
     };
 
     auto decompress_dynamic_block = [&]() -> bool {
@@ -396,54 +407,59 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
         return decompress_block(literal_tree.array(), distance_tree.array());
     };
 
-    auto is_last_block = get(1);
-    if (!is_last_block.value()) {
-        return {};
-    }
-    auto compression_type = get(2);
-    if (!compression_type.value()) {
-        return {};
-    }
+    for (;;) {
+        auto is_last_block = get(1);
+        if (!is_last_block.has_value()) {
+            return {};
+        }
 
-    assert(is_last_block.value());
+        auto compression_type = get(2);
+        if (!compression_type.has_value()) {
+            return {};
+        }
 
-    switch (compression_type.value()) {
-        case CompressionType::None: {
-            if (bit_offset % 8) {
-                bit_offset += 8 - (bit_offset % 8);
-            }
+        switch (compression_type.value()) {
+            case CompressionType::None: {
+                if (bit_offset % 8) {
+                    bit_offset += 8 - (bit_offset % 8);
+                }
 
-            auto len = get(16);
-            if (!len.has_value()) {
-                return {};
-            }
-
-            auto nlen = get(16);
-            if (!nlen.has_value()) {
-                return {};
-            }
-
-            for (size_t i = 0; i < len.value(); i++) {
-                auto byte = get(8);
-                if (!byte.has_value()) {
+                auto len = get(16);
+                if (!len.has_value()) {
                     return {};
                 }
-                decompressed_data.add(byte.value());
+
+                auto nlen = get(16);
+                if (!nlen.has_value()) {
+                    return {};
+                }
+
+                for (size_t i = 0; i < len.value(); i++) {
+                    auto byte = get(8);
+                    if (!byte.has_value()) {
+                        return {};
+                    }
+                    decompressed_data.add(byte.value());
+                }
+                break;
             }
+            case CompressionType::Fixed:
+                if (!decompress_fixed_block()) {
+                    return {};
+                }
+                break;
+            case CompressionType::Dynamic:
+                if (!decompress_dynamic_block()) {
+                    return {};
+                }
+                break;
+            default:
+                return {};
+        }
+
+        if (is_last_block.value()) {
             break;
         }
-        case CompressionType::Fixed:
-            if (!decompress_fixed_block()) {
-                return {};
-            }
-            break;
-        case CompressionType::Dynamic:
-            if (!decompress_dynamic_block()) {
-                return {};
-            }
-            break;
-        default:
-            return {};
     }
 
     return decompressed_data;
