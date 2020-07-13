@@ -5,7 +5,7 @@
 template<typename T, size_t max_elements>
 class FixedArray {
 public:
-    constexpr FixedArray(size_t size) : m_size(size) { assert(size <= max_elements); }
+    constexpr FixedArray(size_t size = max_elements) : m_size(size) { assert(size <= max_elements); }
 
     constexpr T& operator[](size_t index) {
         assert(index < m_size);

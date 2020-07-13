@@ -15,6 +15,7 @@ enum CompressionType {
 struct Symbol {
     uint16_t symbol;
     uint16_t encoded_length;
+    uint16_t code;
 };
 
 struct TreeNode {
@@ -35,6 +36,8 @@ struct TreeNode {
 };
 
 static_assert(sizeof(TreeNode) == 4);
+
+static constexpr size_t max_bits = 15;
 
 static uint8_t code_length_alphabet_order_mapping[19] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
 
@@ -66,14 +69,19 @@ static Maybe<uint16_t> read_from_stream(uint8_t* compressed_data, size_t compres
     return { value };
 }
 
-static constexpr void build_huffman_tree(Symbol* symbols, size_t num_symbols, uint8_t* bl_count, size_t bl_count_length,
-                                         uint16_t* next_code, size_t max_bits, uint16_t* codes, TreeNode* nodes, size_t max_nodes) {
+static constexpr void build_huffman_tree(Symbol* symbols, size_t num_symbols, TreeNode* nodes, size_t max_nodes) {
+    FixedArray<uint16_t, max_bits + 1> bl_count;
+    for (size_t i = 0; i < bl_count.size(); i++) {
+        bl_count[i] = 0;
+    }
+
     for (size_t i = 0; i < num_symbols; i++) {
         size_t index = symbols[i].encoded_length;
-        assert(index < bl_count_length);
+        assert(index <= max_bits);
         bl_count[index]++;
     }
 
+    FixedArray<uint16_t, max_bits + 1> next_code;
     uint16_t code = 0;
     bl_count[0] = 0;
     for (size_t bits = 1; bits <= max_bits; bits++) {
@@ -84,15 +92,15 @@ static constexpr void build_huffman_tree(Symbol* symbols, size_t num_symbols, ui
     for (size_t n = 0; n < num_symbols; n++) {
         size_t len = symbols[n].encoded_length;
         if (len != 0) {
-            codes[n] = next_code[len]++;
+            symbols[n].code = next_code[len]++;
         } else {
-            codes[n] = 0;
+            symbols[n].code = 0;
         }
     }
 
     size_t node_count = 1;
     for (size_t i = 0; i < num_symbols; i++) {
-        auto code = codes[i];
+        auto code = symbols[i].code;
         auto len = symbols[i].encoded_length;
         if (!len) {
             continue;
@@ -173,6 +181,7 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
     FixedArray<Symbol, 19> code_length_symbols(19);
     for (size_t i = 0; i < 19; i++) {
         code_length_symbols[i].encoded_length = 0;
+        code_length_symbols[i].code = 0;
         code_length_symbols[i].symbol = i;
     }
 
@@ -192,28 +201,14 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
     }
 #endif /* DEFLATE_DEBUG */
 
-    FixedArray<uint8_t, 8> bl_count_storage(8);
-    for (size_t i = 0; i < 8; i++) {
-        bl_count_storage[i] = 0;
-    }
-    FixedArray<uint16_t, 16> next_code_storage(16);
-    for (size_t i = 0; i < next_code_storage.size(); i++) {
-        next_code_storage[i] = 0;
-    }
-    FixedArray<uint16_t, 19> codes_storage(hclen.value() + 4UL);
-    for (size_t i = 0; i < codes_storage.size(); i++) {
-        codes_storage[i] = 0;
-    }
-    FixedArray<TreeNode, 128> length_codes_tree(128);
+    FixedArray<TreeNode, 128> length_codes_tree;
     for (size_t i = 0; i < 128; i++) {
         length_codes_tree[i].left = 0;
         length_codes_tree[i].is_initialized = 0;
         length_codes_tree[i].right = 0;
         length_codes_tree[i].is_symbol = 0;
     }
-    build_huffman_tree(code_length_symbols.array(), code_length_symbols.size(), bl_count_storage.array(), bl_count_storage.size(),
-                       next_code_storage.array(), next_code_storage.size(), codes_storage.array(), length_codes_tree.array(),
-                       length_codes_tree.size());
+    build_huffman_tree(code_length_symbols.array(), code_length_symbols.size(), length_codes_tree.array(), length_codes_tree.size());
 
     FixedArray<Symbol, 286> literal_symbols(hlit.value() + 257);
     uint16_t prev_code_length = 0;
