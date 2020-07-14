@@ -19,6 +19,7 @@ set(SOURCES
     deflate.cpp
     gzip.cpp
     parse_mode.cpp
+    zlib_stream.cpp
 )
 
 add_os_library(libext ext TRUE)
