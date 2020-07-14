@@ -1,9 +1,6 @@
 #include <ext/deflate.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <unistd.h>
+#include <ext/mapped_file.h>
+#include <stdio.h>
 
 namespace Ext {
 
@@ -16,42 +13,21 @@ enum GZipFlags {
 };
 
 Maybe<GZipData> read_gzip_path(const String& path) {
-    int fd = open(path.string(), O_RDONLY);
-    if (fd == -1) {
-        perror("open");
-        return {};
-    }
-
-    struct stat st;
-    if (fstat(fd, &st)) {
-        perror("fstat");
-        close(fd);
-        return {};
-    }
-
-    uint8_t* raw_data = (uint8_t*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    if (raw_data == MAP_FAILED) {
-        perror("mmap");
-        close(fd);
-        return {};
-    }
-
-    if (close(fd)) {
-        perror("close");
+    auto file_mapping = MappedFile::create(path);
+    if (!file_mapping) {
         return {};
     }
 
     size_t offset = 0;
+    auto* raw_data = file_mapping->data();
     if (raw_data[offset++] != 0x1F || raw_data[offset++] != 0x8B) {
         fprintf(stderr, "`%s' not gzip file\n", path.string());
-        munmap(raw_data, st.st_size);
         return {};
     }
 
     uint8_t compression_method = raw_data[offset++];
     if (compression_method != 8) {
         fprintf(stderr, "`%s' has unsupported compression method: %u\n", path.string(), compression_method);
-        munmap(raw_data, st.st_size);
         return {};
     }
 
@@ -92,17 +68,16 @@ Maybe<GZipData> read_gzip_path(const String& path) {
         offset += sizeof(uint16_t);
     }
 
-    uint32_t crc32 = *((uint32_t*) &raw_data[st.st_size - 2 * sizeof(uint32_t)]);
+    uint32_t crc32 = *((uint32_t*) &raw_data[file_mapping->size() - 2 * sizeof(uint32_t)]);
     (void) crc32;
-    uint32_t isize = *((uint32_t*) &raw_data[st.st_size - sizeof(uint32_t)]);
+    uint32_t isize = *((uint32_t*) &raw_data[file_mapping->size() - sizeof(uint32_t)]);
     (void) isize;
 
     uint8_t* compressed_data_start = &raw_data[offset];
-    size_t compressed_data_length = st.st_size - offset - 2 * sizeof(uint32_t);
+    size_t compressed_data_length = file_mapping->size() - offset - 2 * sizeof(uint32_t);
 
     DeflateDecoder decoder;
     auto result = decoder.stream_data(compressed_data_start, compressed_data_length);
-    munmap(raw_data, st.st_size);
     if (result != StreamResult::Success) {
         return {};
     }

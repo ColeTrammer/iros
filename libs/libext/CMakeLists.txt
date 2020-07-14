@@ -18,6 +18,7 @@ set(SOURCES
     ${GENERATED_FILES}
     deflate.cpp
     gzip.cpp
+    mapped_file.cpp
     parse_mode.cpp
     zlib_stream.cpp
 )
