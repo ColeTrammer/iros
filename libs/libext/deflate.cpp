@@ -17,95 +17,40 @@ struct CompressedOffset {
     uint8_t extra_bits;
 };
 
-struct Symbol {
-    uint16_t symbol;
-    uint16_t encoded_length;
-    uint16_t code;
-};
-
-struct TreeNode {
-    constexpr bool is_symbol() const { return m_left & 0x8000U; }
-    constexpr bool is_initialized() const { return m_right & 0x8000U; }
-
-    constexpr uint16_t left() const { return m_left & 0x7FFFU; }
-    constexpr uint16_t right() const { return m_right & 0x7FFFU; }
-
-    constexpr uint16_t symbol() const { return left(); }
-
-    uint16_t m_left;
-    uint16_t m_right;
-};
-
-static_assert(sizeof(TreeNode) == 4);
-
-static constexpr size_t max_bits = 15;
-static constexpr size_t hlit_offset = 257;
-static constexpr size_t hlit_max = 286;
-static constexpr size_t hdist_offset = 1;
-static constexpr size_t hdist_max = 32;
-static constexpr size_t hclen_offset = 4;
-static constexpr size_t hclen_max = 19;
 static constexpr uint16_t block_end_marker = 256;
 
-static uint8_t code_length_alphabet_order_mapping[hclen_max] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
+static uint8_t code_length_alphabet_order_mapping[DeflateDecoder::hclen_max] = { 16, 17, 18, 0, 8,  7, 9,  6, 10, 5,
+                                                                                 11, 4,  12, 3, 13, 2, 14, 1, 15 };
 
-static CompressedOffset compressed_length_codes[hlit_max - hlit_offset] = {
+static CompressedOffset compressed_length_codes[DeflateDecoder::hlit_max - DeflateDecoder::hlit_offset] = {
     { 3, 0 },  { 4, 0 },  { 5, 0 },  { 6, 0 },   { 7, 0 },   { 8, 0 },   { 9, 0 },   { 10, 0 },  { 11, 1 }, { 13, 1 },
     { 15, 1 }, { 17, 1 }, { 19, 2 }, { 23, 2 },  { 27, 2 },  { 31, 2 },  { 35, 3 },  { 43, 3 },  { 51, 3 }, { 59, 3 },
     { 67, 4 }, { 83, 4 }, { 99, 4 }, { 115, 4 }, { 131, 5 }, { 163, 5 }, { 195, 5 }, { 227, 5 }, { 258, 0 }
 };
 
-static CompressedOffset compressed_distance_codes[hdist_max] = { { 1, 0 },     { 2, 0 },     { 3, 0 },      { 4, 0 },      { 5, 1 },
-                                                                 { 7, 1 },     { 9, 2 },     { 13, 2 },     { 17, 3 },     { 25, 3 },
-                                                                 { 33, 4 },    { 49, 4 },    { 65, 5 },     { 97, 5 },     { 129, 6 },
-                                                                 { 193, 6 },   { 257, 7 },   { 385, 7 },    { 513, 8 },    { 769, 8 },
-                                                                 { 1025, 9 },  { 1537, 9 },  { 2049, 10 },  { 3073, 10 },  { 4097, 11 },
-                                                                 { 6145, 11 }, { 8193, 12 }, { 12289, 12 }, { 16385, 13 }, { 24577, 13 } };
-
-static Maybe<uint16_t> read_from_stream(uint8_t* compressed_data, size_t compressed_data_length, size_t num_bits, size_t& bit_offset) {
-    uint16_t value = 0;
-
-    size_t offset = bit_offset;
-    size_t byte_offset = bit_offset / CHAR_BIT;
-    offset -= byte_offset * CHAR_BIT;
-    size_t i = 0;
-    for (; byte_offset < compressed_data_length && i < num_bits; i++) {
-        uint8_t byte = compressed_data[byte_offset];
-        byte &= (1U << offset);
-        if (byte) {
-            value |= 1U << i;
-        }
-
-        if (++offset == CHAR_BIT) {
-            byte_offset++;
-            offset = 0;
-        }
-    }
-
-    if (i != num_bits) {
-        return {};
-    }
-
-    bit_offset += num_bits;
-    return { value };
-}
+static CompressedOffset compressed_distance_codes[DeflateDecoder::hdist_max] = {
+    { 1, 0 },     { 2, 0 },     { 3, 0 },     { 4, 0 },      { 5, 1 },      { 7, 1 },     { 9, 2 },     { 13, 2 },
+    { 17, 3 },    { 25, 3 },    { 33, 4 },    { 49, 4 },     { 65, 5 },     { 97, 5 },    { 129, 6 },   { 193, 6 },
+    { 257, 7 },   { 385, 7 },   { 513, 8 },   { 769, 8 },    { 1025, 9 },   { 1537, 9 },  { 2049, 10 }, { 3073, 10 },
+    { 4097, 11 }, { 6145, 11 }, { 8193, 12 }, { 12289, 12 }, { 16385, 13 }, { 24577, 13 }
+};
 
 static constexpr void build_huffman_tree(Symbol* symbols, size_t num_symbols, TreeNode* nodes, size_t max_nodes) {
-    FixedArray<uint16_t, max_bits + 1> bl_count;
+    FixedArray<uint16_t, DeflateDecoder::max_bits + 1> bl_count;
     for (size_t i = 0; i < bl_count.size(); i++) {
         bl_count[i] = 0;
     }
 
     for (size_t i = 0; i < num_symbols; i++) {
         size_t index = symbols[i].encoded_length;
-        assert(index <= max_bits);
+        assert(index <= DeflateDecoder::max_bits);
         bl_count[index]++;
     }
 
-    FixedArray<uint16_t, max_bits + 1> next_code;
+    FixedArray<uint16_t, DeflateDecoder::max_bits + 1> next_code;
     uint16_t code = 0;
     bl_count[0] = 0;
-    for (size_t bits = 1; bits <= max_bits; bits++) {
+    for (size_t bits = 1; bits <= DeflateDecoder::max_bits; bits++) {
         code = (code + bl_count[bits - 1]) << 1;
         next_code[bits] = code;
     }
@@ -145,8 +90,8 @@ static constexpr void build_huffman_tree(Symbol* symbols, size_t num_symbols, Tr
     }
 }
 
-static constexpr FixedArray<TreeNode, 573> build_static_huffman_literals() {
-    FixedArray<Symbol, hlit_max> literal_symbols;
+static constexpr decltype(auto) build_static_huffman_literals() {
+    FixedArray<Symbol, DeflateDecoder::hlit_max> literal_symbols;
     for (size_t i = 0; i < literal_symbols.size(); i++) {
         literal_symbols[i].code = 0;
         literal_symbols[i].symbol = i;
@@ -163,8 +108,8 @@ static constexpr FixedArray<TreeNode, 573> build_static_huffman_literals() {
     return tree;
 }
 
-static constexpr FixedArray<TreeNode, 63> build_static_huffman_distances() {
-    FixedArray<Symbol, hdist_max> distance_symbols;
+static constexpr decltype(auto) build_static_huffman_distances() {
+    FixedArray<Symbol, DeflateDecoder::hdist_max> distance_symbols;
     for (size_t i = 0; i < distance_symbols.size(); i++) {
         distance_symbols[i].code = 0;
         distance_symbols[i].symbol = i;
@@ -184,19 +129,42 @@ static constexpr FixedArray<TreeNode, 63> build_static_huffman_distances() {
 constexpr auto static_literal_table = build_static_huffman_literals();
 constexpr auto static_distance_table = build_static_huffman_distances();
 
-Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size_t compressed_data_length) {
-    size_t bit_offset = 0;
-    Vector<uint8_t> decompressed_data;
-
+StreamResult DeflateDecoder::stream_data(uint8_t* compressed_data, size_t compressed_data_length) {
     auto get = [&](auto bits) -> Maybe<uint16_t> {
-        return read_from_stream(compressed_data, compressed_data_length, bits, bit_offset);
+        if (!m_in_get) {
+            m_in_get = true;
+            m_bits_to_get = bits;
+            m_get_buffer = 0;
+        }
+
+        size_t byte_offset = m_bit_offset / CHAR_BIT;
+        for (; byte_offset < compressed_data_length && m_bits_to_get;) {
+            uint8_t byte = compressed_data[byte_offset];
+            byte &= (1U << (m_bit_offset % 8));
+            if (byte) {
+                m_get_buffer |= 1U << (bits - m_bits_to_get);
+            }
+
+            if (++m_bit_offset % 8 == 0) {
+                byte_offset++;
+            }
+            m_bits_to_get--;
+        }
+
+        if (m_bits_to_get) {
+            return {};
+        }
+
+        m_in_get = false;
+        return { m_get_buffer };
     };
 
     auto decode = [&](const TreeNode* tree) -> Maybe<uint16_t> {
-        size_t tree_index = 0;
         for (;;) {
-            if (tree[tree_index].is_symbol()) {
-                return tree[tree_index].symbol();
+            if (tree[m_tree_index].is_symbol()) {
+                auto ret = tree[m_tree_index].symbol();
+                m_tree_index = 0;
+                return ret;
             }
 
             auto bit = get(1);
@@ -204,265 +172,368 @@ Maybe<Vector<uint8_t>> decompress_deflate_payload(uint8_t* compressed_data, size
                 return {};
             }
 
-            tree_index = bit.value() ? tree[tree_index].left() : tree[tree_index].right();
+            m_tree_index = bit.value() ? tree[m_tree_index].left() : tree[m_tree_index].right();
         }
     };
 
-    auto decompress_block = [&](const TreeNode* literal_tree, const TreeNode* distance_tree) -> bool {
-        for (;;) {
-            auto value = decode(literal_tree);
-            if (!value.has_value()) {
-                return false;
-            }
-
-#ifdef DEFLATE_DEBUG
-            fprintf(stderr, "DECODE: %3u ('%c')\n", value.value(), value.value());
-#endif /* DEFLATE_DEBUG */
-            if (value.value() == block_end_marker) {
-                return true;
-            }
-
-            if (value.value() > block_end_marker) {
-                auto length_code_index = value.value() - hlit_offset;
-                auto descriptor = compressed_length_codes[length_code_index];
-                auto extra_data = get(descriptor.extra_bits);
-                if (!extra_data.has_value()) {
-                    return false;
-                }
-
-                uint16_t length = descriptor.offset + extra_data.value();
-
-                auto distance_code = decode(distance_tree);
-                if (!distance_code.has_value()) {
-                    return false;
-                }
-
-#ifdef DEFLATE_DEBUG
-                fprintf(stderr, "DECODE: %3u (distance)\n", distance_code.value());
-#endif /* DEFLATE_DEBUG */
-
-                auto dst_descriptor = compressed_distance_codes[distance_code.value()];
-                auto extra_distance = get(dst_descriptor.extra_bits);
-                if (!extra_distance.has_value()) {
-                    return false;
-                }
-
-                auto distance = dst_descriptor.offset + extra_distance.value();
-#ifdef DEFLATE_DEBUG
-                fprintf(stderr, "length=%u distance=%u data_len=%u\n", length, distance, decompressed_data.size());
-#endif /* DEFLATE_DEBUG */
-
-                size_t current_index = decompressed_data.size();
-                for (size_t i = 0; i < length; i++) {
-                    auto byte = decompressed_data[current_index - distance + i];
-#ifdef DEFLATE_DEBUG
-                    fprintf(stderr, "COPY:   %3u ('%c')\n", byte, byte);
-#endif /* DEFLATE_DEBUG */
-                    decompressed_data.add(byte);
-                }
-                continue;
-            }
-
-            decompressed_data.add(value.value());
-        }
-    };
-
-    auto decompress_fixed_block = [&]() -> bool {
-        return decompress_block(static_literal_table.array(), static_distance_table.array());
-    };
-
-    auto decompress_dynamic_block = [&]() -> bool {
-        auto hlit = get(5);
-        if (!hlit.has_value()) {
-            return false;
-        }
-        auto hdist = get(5);
-        if (!hdist.has_value()) {
-            return false;
-        }
-        auto hclen = get(4);
-        if (!hclen.has_value()) {
-            return false;
-        }
-
-#ifdef DEFLATE_DEBUG
-        fprintf(stderr, "hlit=%lu hdist=%lu hclen=%lu\n", hlit.value() + hlit_offset, hdist.value() + hdist_offset,
-                hclen.value() + hclen_offset);
-#endif /* DEFLATE_DEBUG */
-
-        FixedArray<Symbol, hclen_max> code_length_symbols;
-        for (size_t i = 0; i < code_length_symbols.size(); i++) {
-            code_length_symbols[i].encoded_length = 0;
-            code_length_symbols[i].code = 0;
-            code_length_symbols[i].symbol = i;
-        }
-
-        for (size_t i = 0; i < hclen.value() + hclen_offset; i++) {
-            auto len = get(3);
-            if (!len.has_value()) {
-                return false;
-            }
-
-            auto index = code_length_alphabet_order_mapping[i];
-            code_length_symbols[index].encoded_length = len.value();
-        }
-
-#ifdef DEFLATE_DEBUG
-        for (size_t i = 0; i < code_length_symbols.size(); i++) {
-            fprintf(stderr, "CLA: %3u:%u\n", code_length_symbols[i].symbol, code_length_symbols[i].encoded_length);
-        }
-#endif /* DEFLATE_DEBUG */
-
-        FixedArray<TreeNode, 128> length_codes_tree;
-        for (size_t i = 0; i < length_codes_tree.size(); i++) {
-            length_codes_tree[i].m_left = 0;
-            length_codes_tree[i].m_right = 0;
-        }
-        build_huffman_tree(code_length_symbols.array(), code_length_symbols.size(), length_codes_tree.array(), length_codes_tree.size());
-
-        FixedArray<Symbol, hlit_max + hdist_max> literal_and_distance_symbols(hlit.value() + hlit_offset + hdist.value() + hdist_offset);
-        for (size_t i = 0; i < hlit.value() + hlit_offset; i++) {
-            literal_and_distance_symbols[i].symbol = i;
-        }
-        for (size_t i = 0; i < hdist.value() + hdist_offset; i++) {
-            literal_and_distance_symbols[hlit.value() + hlit_offset + i].symbol = i;
-        }
-
-        uint16_t prev_code_length = 0;
-        for (size_t i = 0; i < literal_and_distance_symbols.size();) {
-            auto value = decode(length_codes_tree.array());
-            if (!value.has_value()) {
-                return false;
-            }
-
-            assert(value.value() <= 18);
-            if (value.value() == 16) {
-                auto repetitions = get(2);
-                if (!repetitions.has_value()) {
-                    return false;
-                }
-
-                for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
-                    literal_and_distance_symbols[i++].encoded_length = prev_code_length;
-                }
-                continue;
-            }
-
-            if (value.value() == 17) {
-                auto repetitions = get(3);
-                if (!repetitions.has_value()) {
-                    return false;
-                }
-
-                for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
-                    literal_and_distance_symbols[i++].encoded_length = 0;
-                }
-                prev_code_length = 0;
-                continue;
-            }
-
-            if (value.value() == 18) {
-                auto repetitions = get(7);
-                if (!repetitions.has_value()) {
-                    return false;
-                }
-
-                for (size_t j = 0; j < repetitions.value() + 11UL; j++) {
-                    literal_and_distance_symbols[i++].encoded_length = 0;
-                }
-                prev_code_length = 0;
-                continue;
-            }
-
-            literal_and_distance_symbols[i++].encoded_length = value.value();
-            prev_code_length = value.value();
-        }
-
-#ifdef DEFLATE_DEBUG
-        for (size_t i = 0; i < hlit.value() + hlit_offset; i++) {
-            fprintf(stderr, "LLA: %3u:%u\n", literal_and_distance_symbols[i].symbol, literal_and_distance_symbols[i].encoded_length);
-        }
-        for (size_t i = 0; i < hdist.value() + hdist_offset; i++) {
-            auto index = hlit.value() + hlit_offset + i;
-            fprintf(stderr, "DTA: %3u:%u\n", literal_and_distance_symbols[index].symbol,
-                    literal_and_distance_symbols[index].encoded_length);
-        }
-#endif /* DEFLATE_DEBUG */
-
-        FixedArray<TreeNode, 8192> literal_tree;
-        for (size_t i = 0; i < hlit.value() + hlit_offset; i++) {
-            literal_tree[i].m_left = 0;
-            literal_tree[i].m_right = 0;
-        }
-        build_huffman_tree(literal_and_distance_symbols.array(), hlit.value() + hlit_offset, literal_tree.array(), literal_tree.size());
-
-        FixedArray<TreeNode, 512> distance_tree;
-        for (size_t i = 0; i < hdist.value() + hdist_offset; i++) {
-            distance_tree[i].m_left = 0;
-            distance_tree[i].m_right = 0;
-        }
-        build_huffman_tree(literal_and_distance_symbols.array() + hlit.value() + hlit_offset, hdist.value() + hdist_offset,
-                           distance_tree.array(), distance_tree.size());
-
-        return decompress_block(literal_tree.array(), distance_tree.array());
-    };
-
-    for (;;) {
-        auto is_last_block = get(1);
-        if (!is_last_block.has_value()) {
-            return {};
-        }
-
-        auto compression_type = get(2);
-        if (!compression_type.has_value()) {
-            return {};
-        }
-
-        switch (compression_type.value()) {
-            case CompressionType::None: {
-                if (bit_offset % 8) {
-                    bit_offset += 8 - (bit_offset % 8);
-                }
-
-                auto len = get(16);
-                if (!len.has_value()) {
-                    return {};
-                }
-
-                auto nlen = get(16);
-                if (!nlen.has_value()) {
-                    return {};
-                }
-
-                for (size_t i = 0; i < len.value(); i++) {
-                    auto byte = get(8);
-                    if (!byte.has_value()) {
-                        return {};
-                    }
-                    decompressed_data.add(byte.value());
-                }
-                break;
-            }
-            case CompressionType::Fixed:
-                if (!decompress_fixed_block()) {
-                    return {};
-                }
-                break;
-            case CompressionType::Dynamic:
-                if (!decompress_dynamic_block()) {
-                    return {};
-                }
-                break;
-            default:
-                return {};
-        }
-
-        if (is_last_block.value()) {
-            break;
-        }
+    m_bit_offset = 0;
+    switch (m_state) {
+        case State::OnBlockIsLast:
+            goto GetBlockIsLast;
+        case State::OnBlockCompressionMethod:
+            goto GetBlockCompressionMethod;
+        case State::OnNoCompressionLen:
+            goto GetNoCompressionLen;
+        case State::OnNoCompressionNLen:
+            goto GetNoCompressionNLen;
+        case State::OnNoCompressionData:
+            goto GetNoCompressionData;
+        case State::OnLiteral:
+            goto GetLiteral;
+        case State::OnLengthExtraBits:
+            goto GetLengthExtraBits;
+        case State::OnDistanceCode:
+            goto GetDistanceCode;
+        case State::OnDistanceExtraBits:
+            goto GetDistanceExtraBits;
+        case State::OnHLit:
+            goto GetHLit;
+        case State::OnHDist:
+            goto GetHDist;
+        case State::OnHCLen:
+            goto GetHCLen;
+        case State::OnCodeLengthSymbol:
+            goto GetCodeLengthSymbol;
+        case State::OnLiteralAndDistanceSymbols:
+            goto GetLiteralAndDistanceSymbols;
+        case State::OnCodeLength16:
+            goto GetCodeLength16;
+        case State::OnCodeLength17:
+            goto GetCodeLength17;
+        case State::OnCodeLength18:
+            goto GetCodeLength18;
     }
 
-    return decompressed_data;
+GetBlockIsLast : {
+    if (m_is_last_block) {
+        return StreamResult::Success;
+    }
+
+    m_state = State::OnBlockIsLast;
+    auto is_last_block = get(1);
+    if (!is_last_block.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+    m_is_last_block = is_last_block.value();
 }
 
+GetBlockCompressionMethod : {
+    m_state = State::OnBlockCompressionMethod;
+    auto compression_type = get(2);
+    if (!compression_type.has_value()) {
+        return {};
+    }
+
+    switch (compression_type.value()) {
+        case CompressionType::None:
+            goto GetNoCompressionLen;
+        case CompressionType::Fixed:
+            m_literal_tree = static_literal_table.array();
+            m_distance_tree = static_distance_table.array();
+            goto GetLiteral;
+        case CompressionType::Dynamic:
+            goto GetHLit;
+        default:
+            return StreamResult::Error;
+    }
+}
+
+GetNoCompressionLen : {
+    m_state = State::OnNoCompressionLen;
+    if (m_bit_offset % 8) {
+        m_bit_offset += 8 - (m_bit_offset % 8);
+    }
+
+    auto len = get(16);
+    if (!len.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+    m_no_compression_len = len.value();
+}
+
+GetNoCompressionNLen : {
+    m_state = State::OnNoCompressionNLen;
+    auto nlen = get(16);
+    if (!nlen.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+}
+
+    m_i = 0;
+
+GetNoCompressionData : {
+    m_state = State::OnNoCompressionData;
+    for (; m_i < m_no_compression_len; m_i++) {
+        auto byte = get(8);
+        if (!byte.has_value()) {
+            return StreamResult::NeedsMoreData;
+        }
+        m_decompressed_data.add(byte.value());
+    }
+    goto GetBlockIsLast;
+}
+
+GetLiteral : {
+    m_state = State::OnLiteral;
+    auto value = decode(m_literal_tree);
+    if (!value.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+#ifdef DEFLATE_DEBUG
+    fprintf(stderr, "DECODE: %3u ('%c')\n", value.value(), value.value());
+#endif /* DEFLATE_DEBUG */
+
+    if (value.value() == block_end_marker) {
+        goto GetBlockIsLast;
+    }
+
+    if (value.value() < block_end_marker) {
+        m_decompressed_data.add(value.value());
+        goto GetLiteral;
+    }
+
+    m_length_code = value.value() - hlit_offset;
+}
+
+GetLengthExtraBits : {
+    m_state = State::OnLengthExtraBits;
+    auto descriptor = compressed_length_codes[m_length_code];
+    auto extra_data = get(descriptor.extra_bits);
+    if (!extra_data.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+    m_length = descriptor.offset + extra_data.value();
+}
+
+GetDistanceCode : {
+    m_state = State::OnDistanceCode;
+    auto distance_code = decode(m_distance_tree);
+    if (!distance_code.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+#ifdef DEFLATE_DEBUG
+    fprintf(stderr, "DECODE: %3u (distance)\n", distance_code.value());
+#endif /* DEFLATE_DEBUG */
+
+    m_distance_code = distance_code.value();
+}
+
+GetDistanceExtraBits : {
+    m_state = State::OnDistanceExtraBits;
+    auto dst_descriptor = compressed_distance_codes[m_distance_code];
+    auto extra_distance = get(dst_descriptor.extra_bits);
+    if (!extra_distance.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+    auto distance = dst_descriptor.offset + extra_distance.value();
+#ifdef DEFLATE_DEBUG
+    fprintf(stderr, "length=%u distance=%u data_len=%u\n", m_length, distance, m_decompressed_data.size());
+#endif /* DEFLATE_DEBUG */
+
+    size_t current_index = m_decompressed_data.size();
+    for (size_t i = 0; i < m_length; i++) {
+        auto byte = m_decompressed_data[current_index - distance + i];
+#ifdef DEFLATE_DEBUG
+        fprintf(stderr, "COPY:   %3u ('%c')\n", byte, byte);
+#endif /* DEFLATE_DEBUG */
+        m_decompressed_data.add(byte);
+    }
+    goto GetLiteral;
+}
+
+GetHLit : {
+    m_state = State::OnHLit;
+    auto hlit = get(5);
+    if (!hlit.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+    m_hlit = hlit.value();
+}
+
+GetHDist : {
+    m_state = State::OnHDist;
+    auto hdist = get(5);
+    if (!hdist.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+    m_hdist = hdist.value();
+}
+
+GetHCLen : {
+    m_state = State::OnHCLen;
+    auto hclen = get(4);
+    if (!hclen.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+    m_hclen = hclen.value();
+#ifdef DEFLATE_DEBUG
+    fprintf(stderr, "hlit=%lu hdist=%lu hclen=%lu\n", m_hlit + hlit_offset, m_hdist + hdist_offset, hclen.value() + hclen_offset);
+#endif /* DEFLATE_DEBUG */
+}
+
+    for (size_t i = 0; i < m_code_length_symbols.size(); i++) {
+        m_code_length_symbols[i].encoded_length = 0;
+        m_code_length_symbols[i].code = 0;
+        m_code_length_symbols[i].symbol = i;
+    }
+    m_i = 0;
+
+GetCodeLengthSymbol : {
+    m_state = State::OnCodeLengthSymbol;
+    for (; m_i < m_hclen + hclen_offset; m_i++) {
+        auto len = get(3);
+        if (!len.has_value()) {
+            return StreamResult::NeedsMoreData;
+        }
+
+        auto index = code_length_alphabet_order_mapping[m_i];
+        m_code_length_symbols[index].encoded_length = len.value();
+    }
+
+#ifdef DEFLATE_DEBUG
+    for (size_t i = 0; i < m_code_length_symbols.size(); i++) {
+        fprintf(stderr, "CLA: %3u:%u\n", m_code_length_symbols[i].symbol, m_code_length_symbols[i].encoded_length);
+    }
+#endif /* DEFLATE_DEBUG */
+
+    for (size_t i = 0; i < m_length_codes_tree.size(); i++) {
+        m_length_codes_tree[i].m_left = 0;
+        m_length_codes_tree[i].m_right = 0;
+    }
+    build_huffman_tree(m_code_length_symbols.array(), m_code_length_symbols.size(), m_length_codes_tree.array(),
+                       m_length_codes_tree.size());
+}
+
+    m_literal_and_distance_symbols.resize(m_hlit + hlit_offset + m_hdist + hdist_offset);
+    for (size_t i = 0; i < m_hlit + hlit_offset; i++) {
+        m_literal_and_distance_symbols[i].symbol = i;
+    }
+    for (size_t i = 0; i < m_hdist + hdist_offset; i++) {
+        m_literal_and_distance_symbols[m_hlit + hlit_offset + i].symbol = i;
+    }
+    m_i = 0;
+
+GetLiteralAndDistanceSymbols : {
+    m_state = State::OnLiteralAndDistanceSymbols;
+
+    if (m_i > m_literal_and_distance_symbols.size()) {
+        return StreamResult::Error;
+    }
+
+    if (m_i == m_literal_and_distance_symbols.size()) {
+#ifdef DEFLATE_DEBUG
+        for (size_t i = 0; i < m_hlit + hlit_offset; i++) {
+            fprintf(stderr, "LLA: %3u:%u\n", m_literal_and_distance_symbols[i].symbol, m_literal_and_distance_symbols[i].encoded_length);
+        }
+        for (size_t i = 0; i < m_hdist + hdist_offset; i++) {
+            auto index = m_hlit + hlit_offset + i;
+            fprintf(stderr, "DTA: %3u:%u\n", m_literal_and_distance_symbols[index].symbol,
+                    m_literal_and_distance_symbols[index].encoded_length);
+        }
+#endif /* DEFLATE_DEBUG */
+
+        for (size_t i = 0; i < m_hlit + hlit_offset; i++) {
+            m_dynamic_literal_tree[i].m_left = 0;
+            m_dynamic_literal_tree[i].m_right = 0;
+        }
+        build_huffman_tree(m_literal_and_distance_symbols.array(), m_hlit + hlit_offset, m_dynamic_literal_tree.array(),
+                           m_dynamic_literal_tree.size());
+
+        for (size_t i = 0; i < m_hdist + hdist_offset; i++) {
+            m_dynamic_distance_tree[i].m_left = 0;
+            m_dynamic_distance_tree[i].m_right = 0;
+        }
+        build_huffman_tree(m_literal_and_distance_symbols.array() + m_hlit + hlit_offset, m_hdist + hdist_offset,
+                           m_dynamic_distance_tree.array(), m_dynamic_distance_tree.size());
+
+        m_literal_tree = m_dynamic_literal_tree.array();
+        m_distance_tree = m_dynamic_distance_tree.array();
+        goto GetLiteral;
+    }
+
+    auto value = decode(m_length_codes_tree.array());
+    if (!value.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+#ifdef DEFLATE_DEBUG
+    fprintf(stderr, "DECODE: %3u (code length)\n", value.value());
+#endif /* DEFLATE_DEBUG */
+
+    if (value.value() > 18) {
+        return StreamResult::Error;
+    }
+
+    if (value.value() == 16) {
+        goto GetCodeLength16;
+    }
+
+    if (value.value() == 17) {
+        goto GetCodeLength17;
+    }
+
+    if (value.value() == 18) {
+        goto GetCodeLength18;
+    }
+
+    m_literal_and_distance_symbols[m_i++].encoded_length = value.value();
+    m_prev_code_length = value.value();
+    goto GetLiteralAndDistanceSymbols;
+}
+
+GetCodeLength16 : {
+    m_state = State::OnCodeLength16;
+    auto repetitions = get(2);
+    if (!repetitions.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+    for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
+        m_literal_and_distance_symbols[m_i++].encoded_length = m_prev_code_length;
+    }
+    goto GetLiteralAndDistanceSymbols;
+}
+
+GetCodeLength17 : {
+    m_state = State::OnCodeLength17;
+    auto repetitions = get(3);
+    if (!repetitions.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+    for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
+        m_literal_and_distance_symbols[m_i++].encoded_length = 0;
+    }
+    m_prev_code_length = 0;
+    goto GetLiteralAndDistanceSymbols;
+}
+
+GetCodeLength18 : {
+    m_state = State::OnCodeLength18;
+    auto repetitions = get(7);
+    if (!repetitions.has_value()) {
+        return StreamResult::NeedsMoreData;
+    }
+
+    for (size_t j = 0; j < repetitions.value() + 11UL; j++) {
+        m_literal_and_distance_symbols[m_i++].encoded_length = 0;
+    }
+    m_prev_code_length = 0;
+    goto GetLiteralAndDistanceSymbols;
+}
+}
 }

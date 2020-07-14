@@ -100,16 +100,15 @@ Maybe<GZipData> read_gzip_path(const String& path) {
     uint8_t* compressed_data_start = &raw_data[offset];
     size_t compressed_data_length = st.st_size - offset - 2 * sizeof(uint32_t);
 
-    auto decompressed_data = decompress_deflate_payload(compressed_data_start, compressed_data_length);
-    if (!decompressed_data.has_value()) {
-        munmap(raw_data, st.st_size);
+    DeflateDecoder decoder;
+    auto result = decoder.stream_data(compressed_data_start, compressed_data_length);
+    munmap(raw_data, st.st_size);
+    if (result != StreamResult::Success) {
         return {};
     }
-
-    munmap(raw_data, st.st_size);
     GZipData data;
     data.comment = move(comment);
-    data.decompressed_data = move(decompressed_data.value());
+    data.decompressed_data = move(decoder.decompressed_data());
     data.extra_data = move(extra_data);
     data.name = move(original_name);
     data.time_last_modified = time_last_modified;

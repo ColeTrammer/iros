@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <liim/utilities.h>
 
 template<typename T, size_t max_elements>
@@ -21,6 +22,11 @@ public:
 
     constexpr T* array() { return m_array; }
     constexpr const T* array() const { return m_array; }
+
+    constexpr void resize(size_t new_size) {
+        m_size = new_size;
+        assert(m_size <= max_elements);
+    }
 
 private:
     size_t m_size { 0 };
