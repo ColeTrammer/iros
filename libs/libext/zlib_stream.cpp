@@ -50,7 +50,7 @@ GetCMF : {
         return StreamResult::Error;
     }
 
-    if ((m_compression_method & 0xF0) != 0x70) {
+    if ((m_compression_method & 0xF0) > 0x70) {
         return StreamResult::Error;
     }
 }
