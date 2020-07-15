@@ -65,7 +65,7 @@ GetFLG : {
 }
 
     // FIXME: Check the FCHECK field
-    if (m_flags & 0x10U) {
+    if (m_flags & 0x20U) {
         goto GetDICTID;
     }
     goto GetDeflateData;
