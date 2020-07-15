@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#define PNG_DEBUG
+// #define PNG_DEBUG
 
 enum FilterType {
     None,
@@ -163,15 +163,16 @@ SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
     auto& decompressed_data = idat_decoder.decompressed_data();
     auto bytes_per_scanline = 1 + (width * bit_depth * 3 / CHAR_BIT);
     auto expected_size = bytes_per_scanline * height;
+#ifdef PNG_DEBUG
     fprintf(stderr, "bytes_per_scanline=%u expected_size=%u decompressed_size=%u", bytes_per_scanline, expected_size,
             decompressed_data.size());
+#endif /* PNG_DEBUG */
     if (decompressed_data.size() != expected_size) {
         return nullptr;
     }
 
     for (auto scanline_index = 0; scanline_index < height; scanline_index++) {
         auto filter_type = decompressed_data[scanline_index * bytes_per_scanline];
-        fprintf(stderr, "filter_type=%u\n", filter_type);
         switch (filter_type) {
             case FilterType::None:
                 break;
@@ -207,11 +208,11 @@ SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
                 break;
             }
             case FilterType::Paeth: {
-                auto paeth_predictor = [](uint8_t a, uint8_t b, uint8_t c) -> uint8_t {
-                    uint16_t p = a + b - c;
-                    uint16_t pa = abs(p - a);
-                    uint16_t pb = abs(p - b);
-                    uint16_t pc = abs(p - c);
+                auto paeth_predictor = [](int a, int b, int c) -> uint8_t {
+                    auto p = a + b - c;
+                    auto pa = abs(p - a);
+                    auto pb = abs(p - b);
+                    auto pc = abs(p - c);
                     if (pa <= pb && pa <= pc) {
                         return a;
                     }
