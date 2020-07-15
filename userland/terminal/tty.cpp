@@ -5,6 +5,8 @@
 #include "pseudo_terminal.h"
 #include "tty.h"
 
+// #define TERMINAL_DEBUG
+
 void TTY::resize(int rows, int cols) {
     m_row_count = rows;
     m_col_count = cols;
@@ -31,6 +33,20 @@ void TTY::invalidate_all() {
     }
 }
 
+void TTY::clear_below_cursor() {
+    clear_row_to_end(m_row_offset + m_cursor_row, m_cursor_col);
+    for (auto r = m_row_offset + m_cursor_row + 1; r < m_row_offset + m_row_count; r++) {
+        clear_row(r);
+    }
+}
+
+void TTY::clear_above_cursor() {
+    for (auto r = m_row_offset; r < m_row_offset + m_cursor_row - 1; r++) {
+        clear_row(r);
+    }
+    clear_row_until(m_row_offset + m_cursor_row, m_cursor_col);
+}
+
 void TTY::clear() {
     for (auto r = 0; r < m_row_count; r++) {
         clear_row(r + m_row_offset);
@@ -39,6 +55,12 @@ void TTY::clear() {
 
 void TTY::clear_row(int r) {
     clear_row_to_end(r, 0);
+}
+
+void TTY::clear_row_until(int r, int end_col) {
+    for (auto c = 0; c < end_col; c++) {
+        put_char(r, c, ' ');
+    }
 }
 
 void TTY::clear_row_to_end(int r, int start_col) {
@@ -212,10 +234,19 @@ void TTY::handle_escape_sequence() {
             m_x_overflow = false;
             return;
         case 'J':
+            if (args.get_or(0, 0) == 0) {
+                clear_below_cursor();
+                return;
+            }
+            if (args.get_or(0, 0) == 1) {
+                clear_above_cursor();
+                return;
+            }
             if (args.get_or(0, 0) == 2) {
                 clear();
                 return;
-            } else if (args.get_or(0, 0) == 3) {
+            }
+            if (args.get_or(0, 0) == 3) {
                 m_row_offset = 0;
                 m_rows.resize(m_row_count);
                 clear();
@@ -225,6 +256,10 @@ void TTY::handle_escape_sequence() {
         case 'K':
             if (args.get_or(0, 0) == 0) {
                 clear_row_to_end(m_cursor_row + m_row_offset, m_cursor_col);
+                return;
+            }
+            if (args.get_or(0, 0) == 1) {
+                clear_row_until(m_cursor_row + m_row_offset, m_cursor_col);
                 return;
             }
             if (args.get_or(0, 0) == 2) {

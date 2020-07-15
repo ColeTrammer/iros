@@ -52,8 +52,11 @@ private:
         m_cursor_col = m_saved_cursor_col;
     }
 
+    void clear_below_cursor();
+    void clear_above_cursor();
     void clear();
     void clear_row(int row);
+    void clear_row_until(int row, int end_col);
     void clear_row_to_end(int row, int start_col);
 
     void invalidate_all();
