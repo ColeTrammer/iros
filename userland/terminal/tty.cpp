@@ -33,39 +33,39 @@ void TTY::invalidate_all() {
     }
 }
 
-void TTY::clear_below_cursor() {
-    clear_row_to_end(m_row_offset + m_cursor_row, m_cursor_col);
+void TTY::clear_below_cursor(char ch) {
+    clear_row_to_end(m_row_offset + m_cursor_row, m_cursor_col, ch);
     for (auto r = m_row_offset + m_cursor_row + 1; r < m_row_offset + m_row_count; r++) {
-        clear_row(r);
+        clear_row(r, ch);
     }
 }
 
-void TTY::clear_above_cursor() {
+void TTY::clear_above_cursor(char ch) {
     for (auto r = m_row_offset; r < m_row_offset + m_cursor_row - 1; r++) {
-        clear_row(r);
+        clear_row(r, ch);
     }
-    clear_row_until(m_row_offset + m_cursor_row, m_cursor_col);
+    clear_row_until(m_row_offset + m_cursor_row, m_cursor_col, ch);
 }
 
-void TTY::clear() {
+void TTY::clear(char ch) {
     for (auto r = 0; r < m_row_count; r++) {
-        clear_row(r + m_row_offset);
+        clear_row(r + m_row_offset, ch);
     }
 }
 
-void TTY::clear_row(int r) {
-    clear_row_to_end(r, 0);
+void TTY::clear_row(int r, char ch) {
+    clear_row_to_end(r, 0, ch);
 }
 
-void TTY::clear_row_until(int r, int end_col) {
+void TTY::clear_row_until(int r, int end_col, char ch) {
     for (auto c = 0; c < end_col; c++) {
-        put_char(r, c, ' ');
+        put_char(r, c, ch);
     }
 }
 
-void TTY::clear_row_to_end(int r, int start_col) {
+void TTY::clear_row_to_end(int r, int start_col, char ch) {
     for (auto c = start_col; c < m_col_count; c++) {
-        put_char(r, c, ' ');
+        put_char(r, c, ch);
     }
 }
 
@@ -143,9 +143,10 @@ void TTY::set_use_alternate_screen_buffer(bool b) {
 void TTY::handle_escape_sequence() {
     LIIM::Vector<int> args;
     bool starts_with_q = m_escape_buffer[1] == '?';
+    bool starts_with_hashtag = m_escape_buffer[0] == '#';
 
 #ifdef TERMINAL_DEBUG
-    fprintf(stderr, "\033%s\n", m_escape_buffer);
+    fprintf(stderr, "^[[%s\n", &m_escape_buffer[1]);
 #endif /* TERMINAL_DEBUG */
 
     for (int i = starts_with_q ? 2 : 1; i < m_escape_index - 1;) {
@@ -164,240 +165,253 @@ void TTY::handle_escape_sequence() {
         }
     }
 
-    switch (m_escape_buffer[m_escape_index - 1]) {
-        case 'c':
-            if (args.get_or(0, 0) != 0) {
-                break;
+    if (starts_with_hashtag) {
+        if (args.size() == 1) {
+            switch (args.get(0)) {
+                case 8:
+                    clear('E');
+                    return;
             }
-            m_psuedo_terminal.write("\033[?1;0c");
-            return;
-        case 'l':
-            if (starts_with_q) {
-                switch (args.get_or(0, 0)) {
-                    case 25:
-                        m_cursor_hidden = true;
-                        break;
-                    case 1049:
-                        set_use_alternate_screen_buffer(false);
-                    default:
-                        break;
+        }
+    } else {
+        switch (m_escape_buffer[m_escape_index - 1]) {
+            case 'c':
+                if (args.get_or(0, 0) != 0) {
+                    break;
                 }
-            }
-            return;
-        case 'h':
-            if (starts_with_q) {
+                m_psuedo_terminal.write("\033[?1;0c");
+                return;
+            case 'l':
                 if (starts_with_q) {
                     switch (args.get_or(0, 0)) {
                         case 25:
-                            m_cursor_hidden = false;
+                            m_cursor_hidden = true;
                             break;
                         case 1049:
-                            set_use_alternate_screen_buffer(true);
+                            set_use_alternate_screen_buffer(false);
+                        default:
+                            break;
+                    }
+                }
+                return;
+            case 'h':
+                if (starts_with_q) {
+                    if (starts_with_q) {
+                        switch (args.get_or(0, 0)) {
+                            case 25:
+                                m_cursor_hidden = false;
+                                break;
+                            case 1049:
+                                set_use_alternate_screen_buffer(true);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+                return;
+            case 'A':
+                if (args.size() != 1) {
+                    break;
+                }
+                m_cursor_row -= min(1, args.get(0));
+                m_x_overflow = false;
+                return;
+            case 'B':
+                if (args.size() != 1) {
+                    break;
+                }
+                m_cursor_row += min(1, args.get(0));
+                m_x_overflow = false;
+                return;
+            case 'C':
+                if (args.size() != 1) {
+                    break;
+                }
+                m_cursor_col += min(1, args.get(0));
+                m_x_overflow = false;
+                return;
+            case 'D':
+                if (args.size() != 1) {
+                    break;
+                }
+                m_cursor_col -= min(1, args.get(0));
+                m_x_overflow = false;
+                return;
+            case 'H':
+            case 'f':
+                m_cursor_row = args.get_or(0, 1) - 1;
+                m_cursor_col = args.get_or(1, 1) - 1;
+                m_x_overflow = false;
+                return;
+            case 'J':
+                if (args.get_or(0, 0) == 0) {
+                    clear_below_cursor();
+                    return;
+                }
+                if (args.get_or(0, 0) == 1) {
+                    clear_above_cursor();
+                    return;
+                }
+                if (args.get_or(0, 0) == 2) {
+                    clear();
+                    return;
+                }
+                if (args.get_or(0, 0) == 3) {
+                    m_row_offset = 0;
+                    m_rows.resize(m_row_count);
+                    clear();
+                    return;
+                }
+                break;
+            case 'K':
+                if (args.get_or(0, 0) == 0) {
+                    clear_row_to_end(m_cursor_row + m_row_offset, m_cursor_col);
+                    return;
+                }
+                if (args.get_or(0, 0) == 1) {
+                    clear_row_until(m_cursor_row + m_row_offset, m_cursor_col);
+                    return;
+                }
+                if (args.get_or(0, 0) == 2) {
+                    clear_row(m_cursor_row + m_row_offset);
+                    return;
+                }
+                break;
+            case 'm':
+                if (args.size() == 0) {
+                    args.add(0);
+                }
+                for (int i = 0; i < args.size(); i++) {
+                    switch (args[i]) {
+                        case 0:
+                            reset_attributes();
+                            break;
+                        case 1:
+                            set_bold(true);
+                            break;
+                        case 7:
+                            set_inverted(true);
+                            break;
+                        case 30:
+                            set_fg(VGA_COLOR_BLACK);
+                            break;
+                        case 31:
+                            set_fg(VGA_COLOR_RED);
+                            break;
+                        case 32:
+                            set_fg(VGA_COLOR_GREEN);
+                            break;
+                        case 33:
+                            set_fg(VGA_COLOR_BROWN);
+                            break;
+                        case 34:
+                            set_fg(VGA_COLOR_BLUE);
+                            break;
+                        case 35:
+                            set_fg(VGA_COLOR_MAGENTA);
+                            break;
+                        case 36:
+                            set_fg(VGA_COLOR_CYAN);
+                            break;
+                        case 37:
+                            set_fg(VGA_COLOR_LIGHT_GREY);
+                            break;
+                        case 39:
+                            reset_fg();
+                            break;
+                        case 40:
+                            set_bg(VGA_COLOR_BLACK);
+                            break;
+                        case 41:
+                            set_bg(VGA_COLOR_RED);
+                            break;
+                        case 42:
+                            set_bg(VGA_COLOR_GREEN);
+                            break;
+                        case 43:
+                            set_bg(VGA_COLOR_BROWN);
+                            break;
+                        case 44:
+                            set_bg(VGA_COLOR_BLUE);
+                            break;
+                        case 45:
+                            set_bg(VGA_COLOR_MAGENTA);
+                            break;
+                        case 46:
+                            set_bg(VGA_COLOR_CYAN);
+                            break;
+                        case 47:
+                            set_bg(VGA_COLOR_LIGHT_GREY);
+                            break;
+                        case 49:
+                            reset_bg();
+                            break;
+                        case 90:
+                            set_fg(VGA_COLOR_DARK_GREY);
+                            break;
+                        case 91:
+                            set_fg(VGA_COLOR_LIGHT_RED);
+                            break;
+                        case 92:
+                            set_fg(VGA_COLOR_LIGHT_GREEN);
+                            break;
+                        case 93:
+                            set_fg(VGA_COLOR_YELLOW);
+                            break;
+                        case 94:
+                            set_fg(VGA_COLOR_LIGHT_BLUE);
+                            break;
+                        case 95:
+                            set_fg(VGA_COLOR_LIGHT_MAGENTA);
+                            break;
+                        case 96:
+                            set_fg(VGA_COLOR_LIGHT_CYAN);
+                            break;
+                        case 97:
+                            set_fg(VGA_COLOR_WHITE);
+                            break;
+                        case 100:
+                            set_bg(VGA_COLOR_DARK_GREY);
+                            break;
+                        case 101:
+                            set_bg(VGA_COLOR_LIGHT_RED);
+                            break;
+                        case 102:
+                            set_bg(VGA_COLOR_LIGHT_GREEN);
+                            break;
+                        case 103:
+                            set_bg(VGA_COLOR_YELLOW);
+                            break;
+                        case 104:
+                            set_bg(VGA_COLOR_LIGHT_BLUE);
+                            break;
+                        case 105:
+                            set_bg(VGA_COLOR_LIGHT_MAGENTA);
+                            break;
+                        case 106:
+                            set_bg(VGA_COLOR_LIGHT_CYAN);
+                            break;
+                        case 107:
+                            set_bg(VGA_COLOR_WHITE);
                             break;
                         default:
                             break;
                     }
                 }
-            }
-            return;
-        case 'A':
-            if (args.size() != 1) {
+                return;
+            case 's':
+                save_pos();
+                return;
+            case 'u':
+                restore_pos();
+                return;
+            default:
                 break;
-            }
-            m_cursor_row -= args.get(0);
-            m_x_overflow = false;
-            return;
-        case 'B':
-            if (args.size() != 1) {
-                break;
-            }
-            m_cursor_row += args.get(0);
-            m_x_overflow = false;
-            return;
-        case 'C':
-            if (args.size() != 1) {
-                break;
-            }
-            m_cursor_col += args.get(0);
-            m_x_overflow = false;
-            return;
-        case 'D':
-            if (args.size() != 1) {
-                break;
-            }
-            m_cursor_col -= args.get(0);
-            m_x_overflow = false;
-            return;
-        case 'H':
-            m_cursor_row = args.get_or(0, 1) - 1;
-            m_cursor_col = args.get_or(1, 1) - 1;
-            m_x_overflow = false;
-            return;
-        case 'J':
-            if (args.get_or(0, 0) == 0) {
-                clear_below_cursor();
-                return;
-            }
-            if (args.get_or(0, 0) == 1) {
-                clear_above_cursor();
-                return;
-            }
-            if (args.get_or(0, 0) == 2) {
-                clear();
-                return;
-            }
-            if (args.get_or(0, 0) == 3) {
-                m_row_offset = 0;
-                m_rows.resize(m_row_count);
-                clear();
-                return;
-            }
-            break;
-        case 'K':
-            if (args.get_or(0, 0) == 0) {
-                clear_row_to_end(m_cursor_row + m_row_offset, m_cursor_col);
-                return;
-            }
-            if (args.get_or(0, 0) == 1) {
-                clear_row_until(m_cursor_row + m_row_offset, m_cursor_col);
-                return;
-            }
-            if (args.get_or(0, 0) == 2) {
-                clear_row(m_cursor_row + m_row_offset);
-                return;
-            }
-            break;
-        case 'm':
-            if (args.size() == 0) {
-                args.add(0);
-            }
-            for (int i = 0; i < args.size(); i++) {
-                switch (args[i]) {
-                    case 0:
-                        reset_attributes();
-                        break;
-                    case 1:
-                        set_bold(true);
-                        break;
-                    case 7:
-                        set_inverted(true);
-                        break;
-                    case 30:
-                        set_fg(VGA_COLOR_BLACK);
-                        break;
-                    case 31:
-                        set_fg(VGA_COLOR_RED);
-                        break;
-                    case 32:
-                        set_fg(VGA_COLOR_GREEN);
-                        break;
-                    case 33:
-                        set_fg(VGA_COLOR_BROWN);
-                        break;
-                    case 34:
-                        set_fg(VGA_COLOR_BLUE);
-                        break;
-                    case 35:
-                        set_fg(VGA_COLOR_MAGENTA);
-                        break;
-                    case 36:
-                        set_fg(VGA_COLOR_CYAN);
-                        break;
-                    case 37:
-                        set_fg(VGA_COLOR_LIGHT_GREY);
-                        break;
-                    case 39:
-                        reset_fg();
-                        break;
-                    case 40:
-                        set_bg(VGA_COLOR_BLACK);
-                        break;
-                    case 41:
-                        set_bg(VGA_COLOR_RED);
-                        break;
-                    case 42:
-                        set_bg(VGA_COLOR_GREEN);
-                        break;
-                    case 43:
-                        set_bg(VGA_COLOR_BROWN);
-                        break;
-                    case 44:
-                        set_bg(VGA_COLOR_BLUE);
-                        break;
-                    case 45:
-                        set_bg(VGA_COLOR_MAGENTA);
-                        break;
-                    case 46:
-                        set_bg(VGA_COLOR_CYAN);
-                        break;
-                    case 47:
-                        set_bg(VGA_COLOR_LIGHT_GREY);
-                        break;
-                    case 49:
-                        reset_bg();
-                        break;
-                    case 90:
-                        set_fg(VGA_COLOR_DARK_GREY);
-                        break;
-                    case 91:
-                        set_fg(VGA_COLOR_LIGHT_RED);
-                        break;
-                    case 92:
-                        set_fg(VGA_COLOR_LIGHT_GREEN);
-                        break;
-                    case 93:
-                        set_fg(VGA_COLOR_YELLOW);
-                        break;
-                    case 94:
-                        set_fg(VGA_COLOR_LIGHT_BLUE);
-                        break;
-                    case 95:
-                        set_fg(VGA_COLOR_LIGHT_MAGENTA);
-                        break;
-                    case 96:
-                        set_fg(VGA_COLOR_LIGHT_CYAN);
-                        break;
-                    case 97:
-                        set_fg(VGA_COLOR_WHITE);
-                        break;
-                    case 100:
-                        set_bg(VGA_COLOR_DARK_GREY);
-                        break;
-                    case 101:
-                        set_bg(VGA_COLOR_LIGHT_RED);
-                        break;
-                    case 102:
-                        set_bg(VGA_COLOR_LIGHT_GREEN);
-                        break;
-                    case 103:
-                        set_bg(VGA_COLOR_YELLOW);
-                        break;
-                    case 104:
-                        set_bg(VGA_COLOR_LIGHT_BLUE);
-                        break;
-                    case 105:
-                        set_bg(VGA_COLOR_LIGHT_MAGENTA);
-                        break;
-                    case 106:
-                        set_bg(VGA_COLOR_LIGHT_CYAN);
-                        break;
-                    case 107:
-                        set_bg(VGA_COLOR_WHITE);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return;
-        case 's':
-            save_pos();
-            return;
-        case 'u':
-            restore_pos();
-            return;
-        default:
-            break;
+        }
     }
+
+    fprintf(stderr, "UNHANDLED ESCAPE: \033%s\n", m_escape_buffer);
 
     m_in_escape = false;
     int save_length = m_escape_index;
@@ -412,7 +426,7 @@ void TTY::handle_escape_sequence() {
 void TTY::on_next_escape_char(char c) {
     assert(m_in_escape);
 
-    if (m_escape_index == 0 && c != '[') {
+    if (m_escape_index == 0 && (c != '[' && c != '#')) {
         m_escape_index = 0;
         m_in_escape = false;
         return;
