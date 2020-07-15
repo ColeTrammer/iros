@@ -2,11 +2,21 @@
 #include <ext/deflate.h>
 #include <ext/mapped_file.h>
 #include <graphics/png.h>
+#include <limits.h>
+#include <stdlib.h>
 
 #define PNG_DEBUG
 
+enum FilterType {
+    None,
+    Sub,
+    Up,
+    Average,
+    Paeth,
+};
+
 SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
-    LIIM::size_t offset = 0;
+    size_t offset = 0;
     bool seen_ihdr = false;
     bool successfully_decoded_idat = false;
     bool seen_iend = false;
@@ -150,8 +160,92 @@ SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
         }
     }
 
+    auto& decompressed_data = idat_decoder.decompressed_data();
+    auto bytes_per_scanline = 1 + (width * bit_depth * 3 / CHAR_BIT);
+    auto expected_size = bytes_per_scanline * height;
+    fprintf(stderr, "bytes_per_scanline=%u expected_size=%u decompressed_size=%u", bytes_per_scanline, expected_size,
+            decompressed_data.size());
+    if (decompressed_data.size() != expected_size) {
+        return nullptr;
+    }
+
+    for (auto scanline_index = 0; scanline_index < height; scanline_index++) {
+        auto filter_type = decompressed_data[scanline_index * bytes_per_scanline];
+        fprintf(stderr, "filter_type=%u\n", filter_type);
+        switch (filter_type) {
+            case FilterType::None:
+                break;
+            case FilterType::Sub: {
+                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                auto bpp = 3;
+                for (int i = bpp; i < bytes_per_scanline - 1; i++) {
+                    raw_scanline[i] += raw_scanline[i - bpp];
+                }
+                break;
+            }
+            case FilterType::Up: {
+                if (scanline_index == 0) {
+                    continue;
+                }
+
+                auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
+                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                for (int i = 0; i < bytes_per_scanline - 1; i++) {
+                    raw_scanline[i] += prev_scanline[i];
+                }
+                break;
+            }
+            case FilterType::Average: {
+                auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
+                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                auto bpp = 3;
+                for (int i = 0; i < bytes_per_scanline - 1; i++) {
+                    auto left = i >= bpp ? raw_scanline[i - bpp] : 0;
+                    auto prev = scanline_index > 0 ? prev_scanline[i] : 0;
+                    raw_scanline[i] += (left + prev) / 2;
+                }
+                break;
+            }
+            case FilterType::Paeth: {
+                auto paeth_predictor = [](uint8_t a, uint8_t b, uint8_t c) -> uint8_t {
+                    uint16_t p = a + b - c;
+                    uint16_t pa = abs(p - a);
+                    uint16_t pb = abs(p - b);
+                    uint16_t pc = abs(p - c);
+                    if (pa <= pb && pa <= pc) {
+                        return a;
+                    }
+                    if (pb <= pc) {
+                        return b;
+                    }
+                    return c;
+                };
+                auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
+                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                auto bpp = 3;
+                for (int i = 0; i < bytes_per_scanline - 1; i++) {
+                    auto left = i >= bpp ? raw_scanline[i - bpp] : 0;
+                    auto above = scanline_index > 0 ? prev_scanline[i] : 0;
+                    auto upper_left = i >= bpp && scanline_index > 0 ? prev_scanline[i - bpp] : 0;
+                    raw_scanline[i] += paeth_predictor(left, above, upper_left);
+                }
+                break;
+            }
+            default:
+                return nullptr;
+        }
+    }
+
     auto bitmap = make_shared<PixelBuffer>(width, height);
-    bitmap->clear(ColorValue::White);
+    for (int y = 0; y < height; y++) {
+        auto* raw_scanline = &decompressed_data[y * bytes_per_scanline + 1];
+        for (int x = 0; x < width; x++) {
+            auto r = raw_scanline[3 * x];
+            auto g = raw_scanline[3 * x + 1];
+            auto b = raw_scanline[3 * x + 2];
+            bitmap->put_pixel(x, y, Color(r, g, b));
+        }
+    }
     return bitmap;
 }
 
