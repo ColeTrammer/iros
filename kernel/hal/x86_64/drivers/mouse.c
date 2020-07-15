@@ -28,7 +28,7 @@ static struct mouse_event_queue *start;
 static struct mouse_event_queue *end;
 static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
 
-static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len);
+static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking);
 
 static struct device_ops mouse_ops = { .read = mouse_f_read };
 
@@ -36,9 +36,10 @@ static struct mouse_data data = { false, 0, { 0 } };
 
 static struct device mouse = { .device_number = 0x00702, .type = S_IFCHR, .ops = &mouse_ops, .private = &data, .lock = MUTEX_INITIALIZER };
 
-static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len) {
+static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
+    (void) non_blocking;
 
     size_t read = 0;
 

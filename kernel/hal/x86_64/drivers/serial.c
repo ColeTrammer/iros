@@ -58,9 +58,10 @@ void init_serial_ports() {
     debug_log("Serial Port Initialized: [ %#.3X ]\n", SERIAL_COM1_PORT);
 }
 
-static ssize_t serial_write(struct device *device, off_t offset, const void *buffer, size_t len) {
+static ssize_t serial_write(struct device *device, off_t offset, const void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
+    (void) non_blocking;
 
     if (!serial_write_message(buffer, len)) {
         return -EIO;

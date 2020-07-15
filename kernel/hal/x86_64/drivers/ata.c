@@ -331,7 +331,8 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
     return true;
 }
 
-static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_t n) {
+static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_t n, bool non_blocking) {
+    (void) non_blocking;
     struct ata_device_data *data = device->private;
 
     if (n % data->sector_size == 0 && offset % data->sector_size == 0) {
@@ -368,7 +369,8 @@ static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_
     return -EINVAL;
 }
 
-static ssize_t ata_write(struct device *device, off_t offset, const void *buffer, size_t n) {
+static ssize_t ata_write(struct device *device, off_t offset, const void *buffer, size_t n, bool non_blocking) {
+    (void) non_blocking;
     struct ata_device_data *data = device->private;
 
     if (n % data->sector_size == 0 && offset % data->sector_size == 0) {

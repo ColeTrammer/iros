@@ -119,7 +119,7 @@ ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
 
     if (device->ops->read) {
         inode->access_time = time_read_clock(CLOCK_REALTIME);
-        return device->ops->read(device, offset, buffer, len);
+        return device->ops->read(device, offset, buffer, len, !!(file->open_flags & O_NONBLOCK));
     }
 
     debug_log("???: [ %#.16lX ]\n", device->device_number);
@@ -135,7 +135,7 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
 
     if (device->ops->write) {
         inode->modify_time = time_read_clock(CLOCK_REALTIME);
-        return device->ops->write(device, offset, buffer, len);
+        return device->ops->write(device, offset, buffer, len, !!(file->open_flags & O_NONBLOCK));
     }
 
     return -EINVAL;

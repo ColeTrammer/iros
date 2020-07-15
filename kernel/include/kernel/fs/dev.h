@@ -17,8 +17,8 @@ struct vm_object;
 
 struct device_ops {
     struct file *(*open)(struct device *device, int flags, int *error);
-    ssize_t (*read)(struct device *device, off_t offset, void *buffer, size_t len);
-    ssize_t (*write)(struct device *device, off_t offset, const void *buffer, size_t len);
+    ssize_t (*read)(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking);
+    ssize_t (*write)(struct device *device, off_t offset, const void *buffer, size_t len, bool non_blocking);
     int (*close)(struct device *device);
     void (*add)(struct device *device);
     void (*remove)(struct device *device);

@@ -100,7 +100,7 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
     }
     mutex_unlock(&sb->super_block_lock);
 
-    if (sb->device->ops->read(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size) !=
+    if (sb->device->ops->read(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size, false) !=
         num_blocks * sb->block_size) {
         return -EIO;
     }
@@ -127,7 +127,7 @@ static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t b
 static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
     struct ext2_sb_data *data = sb->private_data;
 
-    if (sb->device->ops->write(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size) !=
+    if (sb->device->ops->write(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size, false) !=
         num_blocks * sb->block_size) {
         return -EIO;
     }
@@ -248,7 +248,7 @@ static int ext2_sync_super_block(struct super_block *sb) {
     // actual raw_super_block when accounting fields are updated.
     ext2_sync_raw_super_block_with_virtual_super_block(sb);
 
-    int ret = sb->device->ops->read(sb->device, EXT2_SUPER_BLOCK_OFFSET, data->sb, EXT2_SUPER_BLOCK_SIZE);
+    int ret = sb->device->ops->read(sb->device, EXT2_SUPER_BLOCK_OFFSET, data->sb, EXT2_SUPER_BLOCK_SIZE, false);
 
     mutex_unlock(&sb->super_block_lock);
     return ret == EXT2_SUPER_BLOCK_SIZE ? 0 : ret;

@@ -13,52 +13,58 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/random.h>
 
-static ssize_t dev_null_read(struct device *device, off_t offset, void *buffer, size_t len) {
+static ssize_t dev_null_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buffer;
     (void) len;
+    (void) non_blocking;
 
     return 0;
 }
 
-static ssize_t dev_zero_read(struct device *device, off_t offset, void *buffer, size_t len) {
+static ssize_t dev_zero_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
+    (void) non_blocking;
 
     memset(buffer, 0, len);
     return len;
 }
 
-static ssize_t dev_ignore_write(struct device *device, off_t offset, const void *buffer, size_t len) {
+static ssize_t dev_ignore_write(struct device *device, off_t offset, const void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buffer;
+    (void) non_blocking;
 
     return len;
 }
 
-static ssize_t full_read(struct device *device, off_t offset, void *buf, size_t n) {
+static ssize_t full_read(struct device *device, off_t offset, void *buf, size_t n, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buf;
     (void) n;
+    (void) non_blocking;
 
     return -ENOSPC;
 }
 
-static ssize_t full_write(struct device *device, off_t offset, const void *buf, size_t n) {
+static ssize_t full_write(struct device *device, off_t offset, const void *buf, size_t n, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buf;
     (void) n;
+    (void) non_blocking;
 
     return -ENOSPC;
 }
 
-static ssize_t urandom_read(struct device *device, off_t offset, void *buf, size_t n) {
+static ssize_t urandom_read(struct device *device, off_t offset, void *buf, size_t n, bool non_blocking) {
     (void) device;
     (void) offset;
+    (void) non_blocking;
 
     uint8_t *buffer = buf;
     size_t i;

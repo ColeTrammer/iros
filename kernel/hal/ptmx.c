@@ -53,7 +53,7 @@ static void slave_on_open(struct device *device) {
     mutex_unlock(&data->device->lock);
 }
 
-static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t len) {
+static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
 
     struct slave_data *data = device->private;
@@ -68,6 +68,10 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
     if (data->input_buffer == NULL) {
         while (data->messages == NULL) {
             mutex_unlock(&data->device->lock);
+
+            if (non_blocking) {
+                return 0;
+            }
 
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Blocking on slave read: [ %d ]\n", data->index);
@@ -138,8 +142,9 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
     return (ssize_t) to_copy;
 }
 
-static ssize_t slave_write(struct device *device, off_t offset, const void *buf, size_t len) {
+static ssize_t slave_write(struct device *device, off_t offset, const void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
+    (void) non_blocking;
 
     if (len == 0) {
         return 0;
@@ -419,8 +424,9 @@ static void master_on_open(struct device *device) {
     device->cannot_open = true;
 }
 
-static ssize_t master_read(struct device *device, off_t offset, void *buf, size_t len) {
+static ssize_t master_read(struct device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
+    (void) non_blocking;
 
     struct master_data *data = device->private;
 
@@ -474,7 +480,7 @@ static ssize_t master_read(struct device *device, off_t offset, void *buf, size_
 static void tty_do_echo(struct master_data *data, struct slave_data *sdata, char c) {
     if (sdata->config.c_lflag & ECHO) {
         mutex_unlock(&data->device->lock);
-        slave_write(slaves[data->index], 0, &c, 1);
+        slave_write(slaves[data->index], 0, &c, 1, false);
         mutex_lock(&data->device->lock);
     }
 }
@@ -497,8 +503,9 @@ static bool tty_do_signals(struct slave_data *sdata, char c) {
     return true;
 }
 
-static ssize_t master_write(struct device *device, off_t offset, const void *buf, size_t len) {
+static ssize_t master_write(struct device *device, off_t offset, const void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
+    (void) non_blocking;
 
     if (len == 0) {
         return 0;
