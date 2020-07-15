@@ -16,6 +16,8 @@ public:
     void handle_key_event(key key, int flags, char ascii);
     void set_size(int rows, int cols);
 
+    void write(const String& message);
+
 private:
     int m_master_fd { -1 };
     int m_rows { 25 };

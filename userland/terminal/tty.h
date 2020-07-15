@@ -1,8 +1,12 @@
 #pragma once
 
 #include <graphics/color.h>
+#include <liim/function.h>
 #include <liim/pointers.h>
+#include <liim/string.h>
 #include <liim/vector.h>
+
+class PsuedoTerminal;
 
 class TTY {
 public:
@@ -16,6 +20,8 @@ public:
     };
 
     using Row = Vector<Cell>;
+
+    TTY(PsuedoTerminal& psuedo_terminal) : m_psuedo_terminal(psuedo_terminal) {}
 
     int cursor_row() const { return m_cursor_row; }
     int cursor_col() const { return m_cursor_col; }
@@ -94,6 +100,6 @@ private:
     int m_saved_cursor_col { 0 };
     int m_escape_index { 0 };
     char m_escape_buffer[50] { 0 };
-
+    PsuedoTerminal& m_psuedo_terminal;
     SharedPtr<TTY> m_save_state;
 };

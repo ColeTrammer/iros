@@ -23,8 +23,8 @@ private:
     bool in_selection(int row, int col) const;
     String selection_text() const;
 
-    TTY m_tty;
     PsuedoTerminal m_pseudo_terminal;
+    TTY m_tty;
     SharedPtr<App::FdWrapper> m_pseudo_terminal_wrapper;
     int m_selection_start_row { -1 };
     int m_selection_start_col { -1 };

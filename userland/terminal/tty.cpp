@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#include "pseudo_terminal.h"
 #include "tty.h"
 
 void TTY::resize(int rows, int cols) {
@@ -121,6 +122,10 @@ void TTY::handle_escape_sequence() {
     LIIM::Vector<int> args;
     bool starts_with_q = m_escape_buffer[1] == '?';
 
+#ifdef TERMINAL_DEBUG
+    fprintf(stderr, "\033%s\n", m_escape_buffer);
+#endif /* TERMINAL_DEBUG */
+
     for (int i = starts_with_q ? 2 : 1; i < m_escape_index - 1;) {
         char* next = nullptr;
         errno = 0;
@@ -138,6 +143,12 @@ void TTY::handle_escape_sequence() {
     }
 
     switch (m_escape_buffer[m_escape_index - 1]) {
+        case 'c':
+            if (args.get_or(0, 0) != 0) {
+                break;
+            }
+            m_psuedo_terminal.write("\033[?1;0c");
+            return;
         case 'l':
             if (starts_with_q) {
                 switch (args.get_or(0, 0)) {

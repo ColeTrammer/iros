@@ -5,7 +5,7 @@
 
 #include "vga_terminal.h"
 
-VgaTerminal::VgaTerminal(VgaBuffer& vga_buffer) : m_vga_buffer(vga_buffer) {
+VgaTerminal::VgaTerminal(VgaBuffer& vga_buffer) : m_tty(m_pseudo_terminal), m_vga_buffer(vga_buffer) {
     m_tty.resize(m_vga_buffer.height(), m_vga_buffer.width());
 }
 

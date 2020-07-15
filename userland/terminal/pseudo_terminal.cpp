@@ -73,12 +73,14 @@ PsuedoTerminal::~PsuedoTerminal() {
 
 void PsuedoTerminal::send_clipboard_contents(const String& contents) {
     // NOTE: this could do some fancy bracket escape sequence thing, if enabled.
-    write(m_master_fd, contents.string(), contents.size());
+    this->write(contents);
+}
+
+void PsuedoTerminal::write(const String& contents) {
+    ::write(m_master_fd, contents.string(), contents.size());
 }
 
 void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
-    int mfd = master_fd();
-
     if (!(flags & KEY_DOWN)) {
         return;
     }
@@ -101,7 +103,7 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         } else {
             seq = String::format("\033[1;%d%c", modifiers, ch);
         }
-        write(mfd, seq.string(), seq.size());
+        this->write(seq);
     };
 
     auto send_vt_escape = [&](int key_num, int modifiers) {
@@ -111,7 +113,7 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         } else {
             seq = String::format("\033[%d;%d~", key_num, modifiers);
         }
-        write(mfd, seq.string(), seq.size());
+        this->write(seq);
     };
 
     switch (key) {
@@ -197,7 +199,7 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         }
     }
 
-    write(mfd, &ascii, 1);
+    this->write(String(ascii));
 }
 
 void PsuedoTerminal::set_size(int rows, int cols) {
