@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PORT_NAME=vttest
-SRC_DIR='vttest-20190710'
+SRC_DIR='vttest-20200610'
 BUILD_DIR='build-vttest'
 
 download() {
@@ -18,7 +18,7 @@ patch() {
 }
 
 configure() {
-    ../vttest/configure --host=$HOST --prefix=/usr
+    ../$SRC_DIR/configure --host=$HOST --prefix=/usr
 }
 
 . ../.build_include.sh

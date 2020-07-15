@@ -1,5 +1,5 @@
 diff --git a/config.sub b/config.sub
-index a318a46..92b426c 100755
+index 0f2234c..2176b17 100755
 --- a/config.sub
 +++ b/config.sub
 @@ -1341,7 +1341,7 @@ case $os in
@@ -9,5 +9,5 @@ index a318a46..92b426c 100755
 -	     | sym* | kopensolaris* | plan9* \
 +	     | sym* | kopensolaris* | plan9* | os_2* \
  	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
- 	     | aos* | aros* | cloudabi* | sortix* \
+ 	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
  	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
