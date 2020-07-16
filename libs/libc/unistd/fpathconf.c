@@ -2,8 +2,8 @@
 #include <limits.h>
 #include <unistd.h>
 
-long pathconf(const char *path, int name) {
-    (void) path;
+long fpathconf(int fd, int name) {
+    (void) fd;
     switch (name) {
         case _PC_PATH_MAX:
             return PATH_MAX;

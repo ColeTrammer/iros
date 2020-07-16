@@ -264,6 +264,7 @@ else()
         unistd/fchown.c
         unistd/fchownat.c
         unistd/fork.c
+        unistd/fpathconf.c
         unistd/ftruncate.c
         unistd/getcwd.c
         unistd/getegid.c

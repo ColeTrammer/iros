@@ -65,5 +65,6 @@
 
 #define PATH_MAX 4096
 #define NAME_MAX 255
+#define PIPE_BUF 4096
 
 #endif /* _LIMITS_H */

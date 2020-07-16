@@ -29,6 +29,7 @@
 #define _SC_CLK_TCK   2
 
 #define _PC_PATH_MAX 1
+#define _PC_PIPE_BUF 2
 
 #define _POSIX_VDISABLE (__UINT8_MAX__ - 1)
 
@@ -71,6 +72,7 @@ int fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flag
 int pause(void);
 int sysconf(int name);
 long pathconf(const char *path, int name);
+long fpathconf(int fd, int name);
 int gethostname(char *name, size_t len);
 int getgroups(int size, gid_t list[]);
 
