@@ -58,7 +58,7 @@ void TTY::clear_row(int r, char ch) {
 }
 
 void TTY::clear_row_until(int r, int end_col, char ch) {
-    for (auto c = 0; c < end_col; c++) {
+    for (auto c = 0; c <= end_col; c++) {
         put_char(r, c, ch);
     }
 }
