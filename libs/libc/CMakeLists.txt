@@ -63,6 +63,7 @@ else()
         stdlib/conversions.c
         stdlib/malloc.c
         stdlib/stdlib.c
+        stdlib/wctomb.c
         string/memchr.c
         string/memcmp.c
         string/memcpy.c

@@ -65,6 +65,8 @@ char *ptsname(int fd);
 int ptsname_r(int fd, char *buf, size_t buflen);
 
 int mblen(const char *s, size_t n);
+int wctomb(char *s, wchar_t wc);
+
 char *mktemp(char *t);
 int mkstemp(char *t);
 
