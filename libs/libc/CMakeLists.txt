@@ -102,6 +102,7 @@ else()
         bits/__allocate_thread_control_block.c
         bits/__free_thread_control_block.c
         dirent/dirent.c
+        dirent/rewinddir.c
         fcntl/creat.c
         fcntl/fcntl.c
         fcntl/open.c

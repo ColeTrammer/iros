@@ -32,6 +32,8 @@ int alphasort(const struct dirent **a, const struct dirent **b);
 int scandir(const char *dirp, struct dirent ***list, int (*filter)(const struct dirent *d),
             int (*conpar)(const struct dirent **a, const struct dirent **b));
 
+void rewinddir(DIR *d);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
