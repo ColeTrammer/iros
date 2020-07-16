@@ -41,7 +41,7 @@ void TTY::clear_below_cursor(char ch) {
 }
 
 void TTY::clear_above_cursor(char ch) {
-    for (auto r = m_row_offset; r < m_row_offset + m_cursor_row - 1; r++) {
+    for (auto r = m_row_offset; r < m_row_offset + m_cursor_row; r++) {
         clear_row(r, ch);
     }
     clear_row_until(m_row_offset + m_cursor_row, m_cursor_col, ch);
@@ -146,10 +146,10 @@ void TTY::handle_escape_sequence() {
     bool starts_with_hashtag = m_escape_buffer[0] == '#';
 
 #ifdef TERMINAL_DEBUG
-    fprintf(stderr, "^[[%s\n", &m_escape_buffer[1]);
+    fprintf(stderr, "^[%s\n", m_escape_buffer);
 #endif /* TERMINAL_DEBUG */
 
-    for (int i = starts_with_q ? 2 : 1; i < m_escape_index - 1;) {
+    for (int i = starts_with_q ? 2 : 1; i < m_escape_index - !starts_with_hashtag;) {
         char* next = nullptr;
         errno = 0;
         long res = strtol(m_escape_buffer + i, &next, 10);
@@ -211,31 +211,19 @@ void TTY::handle_escape_sequence() {
                 }
                 return;
             case 'A':
-                if (args.size() != 1) {
-                    break;
-                }
-                m_cursor_row -= min(1, args.get(0));
+                m_cursor_row -= max(1, args.get_or(0, 1));
                 m_x_overflow = false;
                 return;
             case 'B':
-                if (args.size() != 1) {
-                    break;
-                }
-                m_cursor_row += min(1, args.get(0));
+                m_cursor_row += max(1, args.get_or(0, 1));
                 m_x_overflow = false;
                 return;
             case 'C':
-                if (args.size() != 1) {
-                    break;
-                }
-                m_cursor_col += min(1, args.get(0));
+                m_cursor_col += max(1, args.get_or(0, 1));
                 m_x_overflow = false;
                 return;
             case 'D':
-                if (args.size() != 1) {
-                    break;
-                }
-                m_cursor_col -= min(1, args.get(0));
+                m_cursor_col -= max(1, args.get_or(0, 1));
                 m_x_overflow = false;
                 return;
             case 'H':
@@ -411,7 +399,7 @@ void TTY::handle_escape_sequence() {
         }
     }
 
-    fprintf(stderr, "UNHANDLED ESCAPE: \033%s\n", m_escape_buffer);
+    fprintf(stderr, "UNHANDLED ESCAPE: ^[%s\n", m_escape_buffer);
 
     m_in_escape = false;
     int save_length = m_escape_index;
@@ -426,6 +414,29 @@ void TTY::handle_escape_sequence() {
 void TTY::on_next_escape_char(char c) {
     assert(m_in_escape);
 
+    if (m_escape_index == 0) {
+        switch (c) {
+            case 'D':
+                m_cursor_row++;
+                m_x_overflow = 0;
+                m_in_escape = false;
+                return;
+            case 'E':
+                m_cursor_row++;
+                m_cursor_col = 0;
+                m_x_overflow = false;
+                m_in_escape = false;
+                return;
+            case 'M':
+                m_cursor_row--;
+                m_x_overflow = false;
+                m_in_escape = false;
+                break;
+            default:
+                break;
+        }
+    }
+
     if (m_escape_index == 0 && (c != '[' && c != '#')) {
         m_escape_index = 0;
         m_in_escape = false;
@@ -439,7 +450,7 @@ void TTY::on_next_escape_char(char c) {
     }
 
     m_escape_buffer[m_escape_index++] = c;
-    if (isalpha(c)) {
+    if (isalpha(c) || (m_escape_buffer[0] == '#' && isdigit(c))) {
         m_escape_buffer[m_escape_index] = '\0';
         handle_escape_sequence();
         m_escape_index = 0;
