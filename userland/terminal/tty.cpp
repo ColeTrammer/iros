@@ -144,6 +144,7 @@ void TTY::handle_escape_sequence() {
     LIIM::Vector<int> args;
     bool starts_with_q = m_escape_buffer[1] == '?';
     bool starts_with_hashtag = m_escape_buffer[0] == '#';
+    bool starts_with_lparen = m_escape_buffer[0] == '(';
 
 #ifdef TERMINAL_DEBUG
     fprintf(stderr, "^[%s\n", m_escape_buffer);
@@ -163,6 +164,11 @@ void TTY::handle_escape_sequence() {
         } else {
             break;
         }
+    }
+
+    if (starts_with_lparen) {
+        // FIXME: actually deal with the charset things ESC ( deals with.
+        return;
     }
 
     if (starts_with_hashtag) {
@@ -466,7 +472,7 @@ void TTY::on_next_escape_char(char c) {
         }
     }
 
-    if (m_escape_index == 0 && (c != '[' && c != '#')) {
+    if (m_escape_index == 0 && (c != '[' && c != '#' && c != '(')) {
         m_escape_index = 0;
         m_in_escape = false;
         return;
@@ -532,6 +538,14 @@ void TTY::scroll_to_bottom() {
 
 void TTY::on_char(char c) {
     scroll_to_bottom();
+
+#if 0
+    if (c != '\033') {
+        fprintf(stderr, "on_char(%3d, '%c')\n", c, c);
+    } else {
+        fprintf(stderr, "on_char(%3d, <ESC>)\n", 033);
+    }
+#endif /* 0 */
 
     if (m_in_escape) {
         on_next_escape_char(c);
