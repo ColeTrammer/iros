@@ -301,6 +301,11 @@ void TTY::handle_escape_sequence() {
                     return;
                 }
                 break;
+            case 'X':
+                for (int i = 0; i < args.get_or(0, 1); i++) {
+                    put_char(' ');
+                }
+                return;
             case 'm':
                 if (args.size() == 0) {
                     args.add(0);
