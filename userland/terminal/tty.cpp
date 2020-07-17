@@ -227,6 +227,15 @@ void TTY::handle_escape_sequence() {
                     }
                 }
                 return;
+            case 'r': {
+                int region_start = args.get_or(0, 1) - 1;
+                int region_end = args.get_or(1, m_row_count) - 1;
+                fprintf(stderr, "Should set scrolling region to <%d, %d>\n", region_start, region_end);
+                return;
+            }
+            case 't':
+                fprintf(stderr, "Window controls %d;%d;%d\n", args.get_or(0, 0), args.get_or(1, 0), args.get_or(2, 0));
+                return;
             case 'A':
                 m_cursor_row -= max(1, args.get_or(0, 1));
                 m_x_overflow = false;
