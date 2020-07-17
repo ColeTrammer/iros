@@ -181,6 +181,9 @@ void TTY::handle_escape_sequence() {
                 }
                 m_psuedo_terminal.write("\033[?1;0c");
                 return;
+            case 'd':
+                m_cursor_row = args.get_or(0, 0) + 1;
+                return;
             case 'l':
                 if (starts_with_q) {
                     switch (args.get_or(0, 0)) {
@@ -231,6 +234,9 @@ void TTY::handle_escape_sequence() {
                 m_cursor_row = args.get_or(0, 1) - 1;
                 m_cursor_col = args.get_or(1, 1) - 1;
                 m_x_overflow = false;
+                return;
+            case 'G':
+                m_cursor_col = args.get_or(0, 0) + 1;
                 return;
             case 'J':
                 if (args.get_or(0, 0) == 0) {
