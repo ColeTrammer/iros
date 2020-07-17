@@ -175,6 +175,20 @@ void TTY::handle_escape_sequence() {
         }
     } else {
         switch (m_escape_buffer[m_escape_index - 1]) {
+            case 'b': {
+                char preceding_character = ' ';
+                if (m_cursor_col == 0) {
+                    if (m_cursor_row != 0) {
+                        preceding_character = m_rows[m_cursor_row + m_row_offset - 1][m_col_count - 1].ch;
+                    }
+                } else {
+                    preceding_character = m_rows[m_cursor_row + m_row_offset][m_cursor_col - 1].ch;
+                }
+                for (int i = 0; i < args.get_or(0, 0); i++) {
+                    put_char(preceding_character);
+                }
+                return;
+            }
             case 'c':
                 if (args.get_or(0, 0) != 0) {
                     break;
