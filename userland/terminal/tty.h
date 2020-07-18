@@ -31,7 +31,8 @@ public:
     void scroll_up();
     void scroll_down();
 
-    int row_offset() const { return m_row_offset; }
+    int total_rows() const { return m_rows_above.size() + m_rows.size() + m_rows_below.size(); }
+    int row_offset() const { return m_rows_above.size(); }
     int row_count() const { return m_row_count; }
     int col_count() const { return m_col_count; }
 
@@ -41,6 +42,7 @@ public:
     void scroll_down_if_needed();
 
     const Vector<Row>& rows() const { return m_rows; }
+    const Row& row_at_scroll_relative_offset(int offset) const;
 
 private:
     void save_pos() {
@@ -90,12 +92,13 @@ private:
     int m_col_count { 0 };
     int m_cursor_row { 0 };
     int m_cursor_col { 0 };
-    int m_row_offset { 0 };
     bool m_inverted { false };
     bool m_bold { false };
     Color m_fg { ColorValue::LightGray };
     Color m_bg { ColorValue::Black };
     Vector<Row> m_rows;
+    Vector<Row> m_rows_below;
+    Vector<Row> m_rows_above;
     bool m_cursor_hidden { false };
     bool m_in_escape { false };
     bool m_x_overflow { false };

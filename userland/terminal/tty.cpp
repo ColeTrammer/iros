@@ -11,10 +11,16 @@ void TTY::resize(int rows, int cols) {
     m_row_count = rows;
     m_col_count = cols;
 
-    m_row_offset = 0;
-
     m_rows.resize(rows);
     for (auto& row : m_rows) {
+        row.resize(cols);
+    }
+
+    for (auto& row : m_rows_above) {
+        row.resize(cols);
+    }
+
+    for (auto& row : m_rows_below) {
         row.resize(cols);
     }
 
@@ -34,22 +40,22 @@ void TTY::invalidate_all() {
 }
 
 void TTY::clear_below_cursor(char ch) {
-    clear_row_to_end(m_row_offset + m_cursor_row, m_cursor_col, ch);
-    for (auto r = m_row_offset + m_cursor_row + 1; r < m_row_offset + m_row_count; r++) {
+    clear_row_to_end(m_cursor_row, m_cursor_col, ch);
+    for (auto r = m_cursor_row + 1; r < m_row_count; r++) {
         clear_row(r, ch);
     }
 }
 
 void TTY::clear_above_cursor(char ch) {
-    for (auto r = m_row_offset; r < m_row_offset + m_cursor_row; r++) {
+    for (auto r = 0; r < m_cursor_row; r++) {
         clear_row(r, ch);
     }
-    clear_row_until(m_row_offset + m_cursor_row, m_cursor_col, ch);
+    clear_row_until(m_cursor_row, m_cursor_col, ch);
 }
 
 void TTY::clear(char ch) {
     for (auto r = 0; r < m_row_count; r++) {
-        clear_row(r + m_row_offset, ch);
+        clear_row(r, ch);
     }
 }
 
@@ -87,13 +93,23 @@ void TTY::put_char(char c) {
         m_x_overflow = false;
     }
 
-    put_char(m_cursor_row + m_row_offset, m_cursor_col, c);
+    put_char(m_cursor_row, m_cursor_col, c);
 
     m_cursor_col++;
     if (m_cursor_col >= m_col_count) {
         m_x_overflow = true;
         m_cursor_col--;
     }
+}
+
+const TTY::Row& TTY::row_at_scroll_relative_offset(int offset) const {
+    if (offset < m_rows_above.size()) {
+        return m_rows_above[offset];
+    }
+    if (offset < m_rows_above.size() + m_rows.size()) {
+        return m_rows[offset - m_rows_above.size()];
+    }
+    return m_rows_below[offset - m_rows.size() - m_rows_above.size()];
 }
 
 void TTY::clamp_cursor() {
@@ -109,15 +125,15 @@ void TTY::set_use_alternate_screen_buffer(bool b) {
     if (b) {
         m_save_state = make_shared<TTY>(*this);
         reset_attributes();
-        m_row_offset = 0;
         m_x_overflow = false;
         m_cursor_hidden = false;
         m_cursor_row = m_cursor_col = m_saved_cursor_row = m_saved_cursor_col = 0;
         m_rows.resize(m_row_count);
+        m_rows_above.clear();
+        m_rows_below.clear();
         clear();
     } else {
         assert(m_save_state);
-        m_row_offset = m_save_state->m_row_offset;
         m_cursor_row = m_save_state->m_cursor_row;
         m_cursor_col = m_save_state->m_cursor_col;
         m_saved_cursor_row = m_save_state->m_saved_cursor_row;
@@ -128,7 +144,9 @@ void TTY::set_use_alternate_screen_buffer(bool b) {
         m_fg = m_save_state->m_fg;
         m_x_overflow = m_save_state->m_x_overflow;
         m_cursor_hidden = m_save_state->m_cursor_hidden;
-        m_rows = m_save_state->m_rows;
+        m_rows = move(m_save_state->m_rows);
+        m_rows_above = move(m_save_state->m_rows_above);
+        m_rows_below = move(m_save_state->m_rows_below);
 
         if (m_row_count != m_save_state->m_row_count || m_col_count != m_save_state->m_col_count) {
             resize(m_row_count, m_col_count);
@@ -185,10 +203,10 @@ void TTY::handle_escape_sequence() {
                 char preceding_character = ' ';
                 if (m_cursor_col == 0) {
                     if (m_cursor_row != 0) {
-                        preceding_character = m_rows[m_cursor_row + m_row_offset - 1][m_col_count - 1].ch;
+                        preceding_character = m_rows[m_cursor_row - 1][m_col_count - 1].ch;
                     }
                 } else {
-                    preceding_character = m_rows[m_cursor_row + m_row_offset][m_cursor_col - 1].ch;
+                    preceding_character = m_rows[m_cursor_row][m_cursor_col - 1].ch;
                 }
                 for (int i = 0; i < args.get_or(0, 0); i++) {
                     put_char(preceding_character);
@@ -281,7 +299,8 @@ void TTY::handle_escape_sequence() {
                     return;
                 }
                 if (args.get_or(0, 0) == 3) {
-                    m_row_offset = 0;
+                    m_rows_above.clear();
+                    m_rows_below.clear();
                     m_rows.resize(m_row_count);
                     clear();
                     return;
@@ -289,15 +308,15 @@ void TTY::handle_escape_sequence() {
                 break;
             case 'K':
                 if (args.get_or(0, 0) == 0) {
-                    clear_row_to_end(m_cursor_row + m_row_offset, m_cursor_col);
+                    clear_row_to_end(m_cursor_row, m_cursor_col);
                     return;
                 }
                 if (args.get_or(0, 0) == 1) {
-                    clear_row_until(m_cursor_row + m_row_offset, m_cursor_col);
+                    clear_row_until(m_cursor_row, m_cursor_col);
                     return;
                 }
                 if (args.get_or(0, 0) == 2) {
-                    clear_row(m_cursor_row + m_row_offset);
+                    clear_row(m_cursor_row);
                     return;
                 }
                 break;
@@ -499,46 +518,50 @@ void TTY::on_next_escape_char(char c) {
 }
 
 void TTY::scroll_up() {
-    if (m_row_offset == 0) {
+    if (m_rows_above.empty()) {
         return;
     }
 
-    m_row_offset--;
+    m_rows.rotate_right(0, m_rows.size());
+    m_rows_below.add(move(m_rows.first()));
+    m_rows.first() = move(m_rows_above.last());
+    m_rows_above.remove_last();
     invalidate_all();
 }
 
 void TTY::scroll_down() {
-    if (m_row_offset + m_row_count >= m_rows.size()) {
+    if (m_rows_below.empty()) {
         return;
     }
 
-    m_row_offset++;
+    m_rows.rotate_left(0, m_rows.size());
+    m_rows_above.add(move(m_rows.last()));
+    m_rows.last() = move(m_rows_below.last());
+    m_rows_below.remove_last();
     invalidate_all();
 }
 
 void TTY::scroll_down_if_needed() {
-    if (m_cursor_row >= m_row_count) {
-        m_row_offset++;
+    while (m_cursor_row >= m_row_count) {
         m_cursor_row--;
         m_x_overflow = false;
         invalidate_all();
-        m_rows.add(Row());
+
+        m_rows.rotate_left(0, m_rows.size());
+        m_rows_above.add(move(m_rows.last()));
+        m_rows.last() = Row(m_col_count);
         m_rows.last().resize(m_col_count);
 
         if (m_rows.size() > m_row_count + 100) {
-            m_rows.remove(0);
-            m_row_offset--;
+            m_rows_above.remove(0);
         }
     }
 }
 
 void TTY::scroll_to_bottom() {
-    if (m_row_offset == m_rows.size() - m_row_count) {
-        return;
+    while (!m_rows_below.empty()) {
+        scroll_down();
     }
-
-    m_row_offset = m_rows.size() - m_row_count;
-    invalidate_all();
 }
 
 void TTY::on_char(char c) {

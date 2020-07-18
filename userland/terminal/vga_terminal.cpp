@@ -32,7 +32,7 @@ void VgaTerminal::on_key_event(key_event event) {
 
 void VgaTerminal::render() {
     auto& rows = m_tty.rows();
-    for (auto r = m_tty.row_offset(); r < rows.size() && r < m_tty.row_offset() + m_tty.row_count(); r++) {
+    for (auto r = 0; r < rows.size(); r++) {
         auto& row = rows[r];
         for (auto c = 0; c < row.size(); c++) {
             auto& cell = row[c];
@@ -43,11 +43,11 @@ void VgaTerminal::render() {
                 swap(bg, fg);
             }
 
-            m_vga_buffer.draw(r - m_tty.row_offset(), c, bg, fg, cell.ch);
+            m_vga_buffer.draw(r, c, bg, fg, cell.ch);
         }
     }
 
-    int cursor_row = m_tty.cursor_row() + ((rows.size() - m_tty.row_count()) - m_tty.row_offset());
+    int cursor_row = m_tty.cursor_row() + m_tty.total_rows() - m_tty.row_count() - m_tty.row_offset();
     int cursor_col = m_tty.cursor_col();
     if (m_tty.cursor_hidden() || cursor_row >= m_vga_buffer.height()) {
         m_vga_buffer.hide_cursor();

@@ -62,15 +62,15 @@ void TerminalWidget::render() {
     auto y_offset = rect().y();
 
     auto& rows = m_tty.rows();
-    for (auto r = m_tty.row_offset(); r < rows.size() && r < m_tty.row_offset() + m_tty.row_count(); r++) {
+    for (auto r = 0; r < rows.size(); r++) {
         auto& row = rows[r];
-        auto y = y_offset + (r - m_tty.row_offset()) * cell_height;
+        auto y = y_offset + r * cell_height;
         for (auto c = 0; c < row.size(); c++) {
             auto& cell = row[c];
             auto x = x_offset + c * cell_width;
 
-            bool at_cursor =
-                r - (rows.size() - m_tty.row_count()) == m_tty.cursor_row() && c == m_tty.cursor_col() && !m_tty.cursor_hidden();
+            bool at_cursor = m_tty.row_offset() + r == m_tty.cursor_row() + m_tty.total_rows() - m_tty.row_count() &&
+                             c == m_tty.cursor_col() && !m_tty.cursor_hidden();
             bool selected = in_selection(r, c);
             if (!cell.dirty && !at_cursor && !selected) {
                 continue;
@@ -154,7 +154,7 @@ void TerminalWidget::clear_selection() {
     invalidate();
 }
 
-bool TerminalWidget::in_selection(int row, int col) const {
+bool TerminalWidget::in_selection(int relative_row, int col) const {
     int start_row = m_selection_start_row;
     int start_col = m_selection_start_col;
     int end_row = m_selection_end_row;
@@ -173,6 +173,7 @@ bool TerminalWidget::in_selection(int row, int col) const {
         swap(start_col, end_col);
     }
 
+    auto row = relative_row + m_tty.row_offset();
     if (row > start_row && row < end_row) {
         return true;
     }
@@ -210,7 +211,7 @@ String TerminalWidget::selection_text() const {
         auto iter_end_col = r == end_row ? end_col : m_tty.col_count();
 
         for (auto c = iter_start_col; c < iter_end_col; c++) {
-            row_text += String(m_tty.rows()[r][c].ch);
+            row_text += String(m_tty.row_at_scroll_relative_offset(r)[c].ch);
         }
 
         while (!row_text.is_empty() && isspace(row_text[row_text.size() - 1])) {
