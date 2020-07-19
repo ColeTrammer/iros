@@ -31,6 +31,8 @@ public:
 
     void resize(int new_width, int new_height);
 
+    void set_title(const String& title);
+
 private:
     friend class Connection;
 

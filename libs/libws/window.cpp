@@ -61,6 +61,10 @@ void Window::draw() {
     swap_buffers();
 }
 
+void Window::set_title(const String& title) {
+    connection().send_window_rename_request(wid(), title);
+}
+
 SharedPtr<Window> Window::construct(const Rect& rect, Message::CreateWindowResponse& created_data, Connection& connection) {
     Window* window = new Window(rect, created_data, connection);
     connection.windows().put(window->wid(), window);

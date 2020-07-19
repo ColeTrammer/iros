@@ -33,6 +33,7 @@ public:
     void swap();
 
     const String& title() const { return m_title; }
+    void set_title(String title) { m_title = move(title); }
 
     SharedPtr<PixelBuffer>& buffer() { return m_front_buffer; }
     const SharedPtr<PixelBuffer>& buffer() const { return m_front_buffer; }

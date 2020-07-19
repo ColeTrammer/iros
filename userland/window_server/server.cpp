@@ -117,6 +117,15 @@ void Server::handle_window_ready_to_resize_message(const WindowServer::Message& 
     }
 }
 
+void Server::handle_window_rename_request(const WindowServer::Message& request, int) {
+    const WindowServer::Message::WindowRenameRequest& data = request.data.window_rename_request;
+    m_manager->windows().for_each([&](auto& window) {
+        if (window->id() == data.wid) {
+            window->set_title(String(data.name));
+        }
+    });
+}
+
 void Server::start() {
     assert(listen(m_socket_fd, 10) == 0);
 
@@ -212,6 +221,10 @@ void Server::start() {
                 }
                 case WindowServer::Message::Type::WindowReadyToResizeMessage: {
                     handle_window_ready_to_resize_message(message, client_fd);
+                    break;
+                }
+                case WindowServer::Message::Type::WindowRenameRequest: {
+                    handle_window_rename_request(message, client_fd);
                     break;
                 }
                 case WindowServer::Message::Type::Invalid:

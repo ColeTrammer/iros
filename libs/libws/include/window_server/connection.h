@@ -21,6 +21,7 @@ public:
 
     void send_swap_buffer_request(wid_t wid);
     UniquePtr<Message> send_window_ready_to_resize_message(wid_t wid);
+    void send_window_rename_request(wid_t wid, const String& name);
 
     template<typename C>
     void set_draw_callback(SharedPtr<Window>& window, C callback) {

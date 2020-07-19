@@ -96,4 +96,9 @@ void Connection::send_swap_buffer_request(wid_t wid) {
     assert(write(m_fd, swap_buffer_request.get(), swap_buffer_request->total_size()) != -1);
 }
 
+void Connection::send_window_rename_request(wid_t wid, const String& name) {
+    auto request = WindowServer::Message::WindowRenameRequest::create(wid, name);
+    assert(write(m_fd, request.get(), request->total_size()) != -1);
+}
+
 }
