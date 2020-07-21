@@ -7,11 +7,6 @@ to close(2).
 
 Unrelated code to system calls is for general purpose use:
 
-### fs_clone
-This method clones an existing file. Semantically, this creates a cloned file
-that points to a different address, but contains the same information as the
-cloned file.
-
 ### fs_dup
 This method duplicates an existing file. This simply bumps the ref count on
 the file object.
@@ -32,11 +27,9 @@ the cwd and the relative_path.
 ### get_tnode_path
 This method gets the canonical path of a given tnode in the file system.
 
-### drop_inode_reference and drop_inode_reference_unlocked
-These functions decrement the inode reference count and destoy the inode if
-necessary. The unlocked suffix means the vfs will not try to lock the inode
-before decrementing the reference count. This should only be used when the
-inode is already locked, so this may be a terrible name.
+### drop_inode_reference
+This function decrements the inode reference count and destoy the inode if
+necessary.
 
 ## file_system
 This object represents a given file system, independent on its mounts.
@@ -128,8 +121,6 @@ but should be taken into consideration. `O_APPEND` is pretty important...
 is stored.
 
 *ref_count* - field is the file's reference count.
-
-*lock* - used to lock the file
 
 *device* - backing device of the file
 
