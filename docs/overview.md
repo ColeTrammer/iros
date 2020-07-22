@@ -1,16 +1,11 @@
-# Boot
-Part of system that executes after the boot loader. It handles jumping
-into 64 bit mode and then jumps into kernel main. This also handles
-initialization of CPU flags, like enabling the FPU.
-
-# Initrd
-Contains a file that builds an Initialization RAMdisk from the files
-in the files/ directory, and single file c sources that are used to
-test the system. Now that ext2 read/write support exists in the operating
-system, this is fairly useless.
+# Gen
+Dedicated subdirectory that contains code which generates things.
+This includes the initrd builder as well as a yacc like parser
+generstor.
 
 # Kernel
-Contains code for processing, system calls, etc.
+Contains code for CPU initialization, scheduling, device drivers,
+system calls, etc.
 
 # Libc
 Custom implementation of the posix c standard library.
