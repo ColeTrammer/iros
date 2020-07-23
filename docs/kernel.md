@@ -99,9 +99,7 @@ lead to various concurrency issues).
 This is the basic scheduler implemention. It is the simplest possible
 method, a round robin queue with no priority levels at all. Also, it
 runs the idle task in this queue instead of only when no threads
-are asleep, which is inefficent. It also dispatches signals. To
-improve, the kernel needs to support features like poll(2) and select(2),
-which allows tasks to actually be asleep instead of always having to run.
+are asleep, which is inefficent. It also dispatches signals.
 
 # util
 This has general code necessary for the kernel to function. There
