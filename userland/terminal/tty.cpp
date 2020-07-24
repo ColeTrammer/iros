@@ -291,6 +291,18 @@ void TTY::handle_escape_sequence() {
                     }
                 }
                 return;
+            case 'n':
+                switch (args.get_or(0, 0)) {
+                    case 5:
+                        m_psuedo_terminal.write("\033[0n");
+                        break;
+                    case 6:
+                        m_psuedo_terminal.write(String::format("\033[%d;%dR", m_cursor_row + 1, m_cursor_col + 1));
+                        break;
+                    default:
+                        break;
+                }
+                return;
             case 'r': {
                 int new_scroll_start = args.get_or(0, 1) - 1;
                 int new_scroll_end = args.get_or(1, m_row_count) - 1;
