@@ -26,6 +26,8 @@ public:
     int cursor_row() const { return m_cursor_row; }
     int cursor_col() const { return m_cursor_col; }
     bool cursor_hidden() const { return m_cursor_hidden; }
+    bool should_display_cursor_at_position(int r, int c) const;
+    int scroll_relative_offset(int display_row) const;
 
     void scroll_to_bottom();
     void scroll_up();
@@ -105,6 +107,8 @@ private:
     int m_saved_cursor_row { 0 };
     int m_saved_cursor_col { 0 };
     int m_escape_index { 0 };
+    int m_scroll_start { 0 };
+    int m_scroll_end { 0 };
     char m_escape_buffer[50] { 0 };
     PsuedoTerminal& m_psuedo_terminal;
     SharedPtr<TTY> m_save_state;

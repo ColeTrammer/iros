@@ -69,8 +69,7 @@ void TerminalWidget::render() {
             auto& cell = row[c];
             auto x = x_offset + c * cell_width;
 
-            bool at_cursor = m_tty.row_offset() + r == m_tty.cursor_row() + m_tty.total_rows() - m_tty.row_count() &&
-                             c == m_tty.cursor_col() && !m_tty.cursor_hidden();
+            bool at_cursor = m_tty.should_display_cursor_at_position(r, c);
             bool selected = in_selection(r, c);
             if (!cell.dirty && !at_cursor && !selected) {
                 continue;
@@ -173,7 +172,7 @@ bool TerminalWidget::in_selection(int relative_row, int col) const {
         swap(start_col, end_col);
     }
 
-    auto row = relative_row + m_tty.row_offset();
+    auto row = m_tty.scroll_relative_offset(relative_row);
     if (row > start_row && row < end_row) {
         return true;
     }
@@ -233,7 +232,7 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
         m_tty.scroll_up();
     }
 
-    int row_at_cursor = event.y() / cell_height + m_tty.row_offset();
+    int row_at_cursor = m_tty.scroll_relative_offset(event.y() / cell_height);
     int col_at_cursor = event.x() / cell_width;
     if (event.left() == MOUSE_DOWN) {
         clear_selection();

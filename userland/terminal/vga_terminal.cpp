@@ -32,10 +32,19 @@ void VgaTerminal::on_key_event(key_event event) {
 
 void VgaTerminal::render() {
     auto& rows = m_tty.rows();
+    bool cursor_is_visible = false;
+    int cursor_row = -1;
+    int cursor_col = -1;
     for (auto r = 0; r < rows.size(); r++) {
         auto& row = rows[r];
         for (auto c = 0; c < row.size(); c++) {
             auto& cell = row[c];
+
+            if (m_tty.should_display_cursor_at_position(r, c)) {
+                cursor_is_visible = true;
+                cursor_row = r;
+                cursor_col = c;
+            }
 
             auto bg = cell.bg.to_vga_color().value();
             auto fg = cell.fg.to_vga_color().value();
@@ -47,9 +56,7 @@ void VgaTerminal::render() {
         }
     }
 
-    int cursor_row = m_tty.cursor_row() + m_tty.total_rows() - m_tty.row_count() - m_tty.row_offset();
-    int cursor_col = m_tty.cursor_col();
-    if (m_tty.cursor_hidden() || cursor_row >= m_vga_buffer.height()) {
+    if (!cursor_is_visible) {
         m_vga_buffer.hide_cursor();
     } else {
         m_vga_buffer.show_cursor(cursor_row, cursor_col);

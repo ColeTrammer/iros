@@ -11,6 +11,9 @@ void TTY::resize(int rows, int cols) {
     m_row_count = rows;
     m_col_count = cols;
 
+    m_scroll_start = 0;
+    m_scroll_end = rows - 1;
+
     m_rows.resize(rows);
     for (auto& row : m_rows) {
         row.resize(cols);
@@ -25,10 +28,7 @@ void TTY::resize(int rows, int cols) {
     }
 
     invalidate_all();
-
     clamp_cursor();
-    m_cursor_row = min(m_cursor_row, rows - 1);
-    m_cursor_col = min(m_cursor_col, cols - 1);
 }
 
 void TTY::invalidate_all() {
@@ -102,14 +102,45 @@ void TTY::put_char(char c) {
     }
 }
 
-const TTY::Row& TTY::row_at_scroll_relative_offset(int offset) const {
-    if (offset < m_rows_above.size()) {
-        return m_rows_above[offset];
+bool TTY::should_display_cursor_at_position(int r, int c) const {
+    if (m_cursor_hidden) {
+        return false;
     }
-    if (offset < m_rows_above.size() + m_rows.size()) {
+
+    if (c != m_cursor_col) {
+        return false;
+    }
+
+    if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end || r < m_scroll_start || r > m_scroll_end) {
+        return r == m_cursor_row;
+    }
+
+    return row_offset() + r == cursor_row() + total_rows() - row_count();
+}
+
+int TTY::scroll_relative_offset(int display_row) const {
+    if (display_row < m_scroll_start) {
+        return display_row;
+    } else if (display_row > m_scroll_end) {
+        return display_row + total_rows() - row_count();
+    }
+    return display_row + row_offset();
+}
+
+const TTY::Row& TTY::row_at_scroll_relative_offset(int offset) const {
+    if (offset < m_scroll_start) {
+        return m_rows[offset];
+    }
+    if (offset < m_scroll_start + m_rows_above.size()) {
+        return m_rows_above[offset - m_scroll_start];
+    }
+    if (offset < m_scroll_start + m_rows_above.size() + (m_scroll_end - m_scroll_start)) {
         return m_rows[offset - m_rows_above.size()];
     }
-    return m_rows_below[offset - m_rows.size() - m_rows_above.size()];
+    if (offset < m_scroll_start + m_rows_above.size() + (m_scroll_end - m_scroll_start) + m_rows_below.size()) {
+        return m_rows_below[offset - m_scroll_start - m_rows_above.size() - (m_scroll_end - m_scroll_start)];
+    }
+    return m_rows[offset - m_rows_above.size() - m_rows_below.size()];
 }
 
 void TTY::clamp_cursor() {
@@ -230,7 +261,9 @@ void TTY::handle_escape_sequence() {
                             break;
                         case 1049:
                             set_use_alternate_screen_buffer(false);
+                            break;
                         default:
+                            fprintf(stderr, "Unsupported DEC Reset %d\n", args.get_or(0, 0));
                             break;
                     }
                 }
@@ -246,15 +279,24 @@ void TTY::handle_escape_sequence() {
                                 set_use_alternate_screen_buffer(true);
                                 break;
                             default:
+                                fprintf(stderr, "Unsupported DEC Set %d\n", args.get_or(0, 0));
                                 break;
                         }
                     }
                 }
                 return;
             case 'r': {
-                int region_start = args.get_or(0, 1) - 1;
-                int region_end = args.get_or(1, m_row_count) - 1;
-                fprintf(stderr, "Should set scrolling region to <%d, %d>\n", region_start, region_end);
+                int new_scroll_start = args.get_or(0, 1) - 1;
+                int new_scroll_end = args.get_or(1, m_row_count) - 1;
+                if (new_scroll_end - new_scroll_start < 2) {
+                    return;
+                }
+                m_rows_above.clear();
+                m_rows_below.clear();
+                m_scroll_start = new_scroll_start;
+                m_scroll_end = new_scroll_end;
+                m_cursor_row = 0;
+                m_cursor_col = 0;
                 return;
             }
             case 't':
@@ -522,9 +564,9 @@ void TTY::scroll_up() {
         return;
     }
 
-    m_rows.rotate_right(0, m_rows.size());
-    m_rows_below.add(move(m_rows.first()));
-    m_rows.first() = move(m_rows_above.last());
+    m_rows.rotate_right(m_scroll_start, m_scroll_end + 1);
+    m_rows_below.add(move(m_rows[m_scroll_start]));
+    m_rows[m_scroll_start] = move(m_rows_above.last());
     m_rows_above.remove_last();
     invalidate_all();
 }
@@ -534,25 +576,25 @@ void TTY::scroll_down() {
         return;
     }
 
-    m_rows.rotate_left(0, m_rows.size());
-    m_rows_above.add(move(m_rows.last()));
-    m_rows.last() = move(m_rows_below.last());
+    m_rows.rotate_left(m_scroll_start, m_scroll_end + 1);
+    m_rows_above.add(move(m_rows[m_scroll_end]));
+    m_rows[m_scroll_end] = move(m_rows_below.last());
     m_rows_below.remove_last();
     invalidate_all();
 }
 
 void TTY::scroll_down_if_needed() {
-    while (m_cursor_row >= m_row_count) {
+    if (m_cursor_row == m_scroll_end + 1) {
         m_cursor_row--;
         m_x_overflow = false;
+
+        m_rows.rotate_left(m_scroll_start, m_scroll_end + 1);
+        m_rows_above.add(move(m_rows[m_scroll_end]));
+        m_rows[m_scroll_end] = Row(m_col_count);
+        m_rows[m_scroll_end].resize(m_col_count);
         invalidate_all();
 
-        m_rows.rotate_left(0, m_rows.size());
-        m_rows_above.add(move(m_rows.last()));
-        m_rows.last() = Row(m_col_count);
-        m_rows.last().resize(m_col_count);
-
-        if (m_rows.size() > m_row_count + 100) {
+        if (m_rows_above.size() > m_row_count + 100) {
             m_rows_above.remove(0);
         }
     }
