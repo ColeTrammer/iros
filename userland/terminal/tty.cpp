@@ -392,6 +392,19 @@ void TTY::handle_escape_sequence() {
                     return;
                 }
                 break;
+            case 'L': {
+                if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
+                    return;
+                }
+                int lines_to_insert = args.get_or(0, 1);
+                for (int i = 0; i < lines_to_insert; i++) {
+                    m_rows.rotate_right(m_cursor_row, m_scroll_end + 1);
+                    m_rows[m_cursor_row] = Row(m_col_count);
+                    m_rows[m_cursor_row].resize(m_col_count);
+                }
+                invalidate_all();
+                return;
+            }
             case 'P': {
                 int chars_to_delete = clamp(args.get_or(0, 1), 1, m_col_count - m_cursor_col);
                 for (int i = 0; i < chars_to_delete; i++) {
