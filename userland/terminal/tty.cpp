@@ -537,30 +537,33 @@ void TTY::on_next_escape_char(char c) {
             case 'D':
                 m_cursor_row++;
                 m_x_overflow = 0;
+                scroll_down_if_needed();
                 m_in_escape = false;
                 return;
             case 'E':
                 m_cursor_row++;
                 m_cursor_col = 0;
                 m_x_overflow = false;
+                scroll_down_if_needed();
                 m_in_escape = false;
                 return;
             case 'M':
                 m_cursor_row--;
                 m_x_overflow = false;
+                scroll_up_if_needed();
                 m_in_escape = false;
-                break;
+                return;
             case '7':
                 save_pos();
                 m_in_escape = false;
-                break;
+                return;
             case '8':
                 restore_pos();
                 m_in_escape = false;
-                break;
+                return;
             case '=':
                 m_in_escape = false;
-                break;
+                return;
             default:
                 break;
         }
@@ -611,10 +614,37 @@ void TTY::scroll_down() {
     invalidate_all();
 }
 
-void TTY::scroll_down_if_needed() {
-    if (m_cursor_row == m_scroll_end + 1) {
-        m_cursor_row--;
+void TTY::scroll_up_if_needed() {
+    if (m_cursor_row == m_scroll_start - 1 || m_cursor_row == m_scroll_end + 1) {
+        m_cursor_row = clamp(m_cursor_row, m_scroll_start, m_scroll_end);
         m_x_overflow = false;
+
+        if (!m_rows_above.empty()) {
+            scroll_up();
+            return;
+        }
+
+        m_rows.rotate_right(m_scroll_start, m_scroll_end + 1);
+        m_rows_below.add(move(m_rows[m_scroll_start]));
+        m_rows[m_scroll_start] = Row(m_col_count);
+        m_rows[m_scroll_start].resize(m_col_count);
+        invalidate_all();
+
+        if (total_rows() - m_rows.size() > m_row_count + 100) {
+            m_rows_below.remove(0);
+        }
+    }
+}
+
+void TTY::scroll_down_if_needed() {
+    if (m_cursor_row == m_scroll_start - 1 || m_cursor_row == m_scroll_end + 1) {
+        m_cursor_row = clamp(m_cursor_row, m_scroll_start, m_scroll_end);
+        m_x_overflow = false;
+
+        if (!m_rows_below.empty()) {
+            scroll_down();
+            return;
+        }
 
         m_rows.rotate_left(m_scroll_start, m_scroll_end + 1);
         m_rows_above.add(move(m_rows[m_scroll_end]));
@@ -622,7 +652,7 @@ void TTY::scroll_down_if_needed() {
         m_rows[m_scroll_end].resize(m_col_count);
         invalidate_all();
 
-        if (m_rows_above.size() > m_row_count + 100) {
+        if (total_rows() - m_rows.size() > m_row_count + 100) {
             m_rows_above.remove(0);
         }
     }
@@ -635,8 +665,6 @@ void TTY::scroll_to_bottom() {
 }
 
 void TTY::on_char(char c) {
-    scroll_to_bottom();
-
 #if 0
     if (c != '\033') {
         fprintf(stderr, "on_char(%3d, '%c')\n", c, c);

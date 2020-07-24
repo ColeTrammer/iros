@@ -42,6 +42,7 @@ public:
     void on_char(char c);
 
     void scroll_down_if_needed();
+    void scroll_up_if_needed();
 
     const Vector<Row>& rows() const { return m_rows; }
     const Row& row_at_scroll_relative_offset(int offset) const;

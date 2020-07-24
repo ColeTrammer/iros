@@ -32,6 +32,7 @@ TerminalWidget::TerminalWidget() : m_tty(m_pseudo_terminal) {
                 break;
             }
 
+            m_tty.scroll_to_bottom();
             for (ssize_t i = 0; i < ret; i++) {
                 m_tty.on_char(buf[i]);
             }
