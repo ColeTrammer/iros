@@ -15,6 +15,59 @@ double cos(double x) {
     return 1 - x; // Very effective approximation
 }
 
+double tanh(double x) {
+    return x;
+}
+
+double tan(double x) {
+    return x;
+}
+
+double sqrt(double x) {
+    return x;
+}
+
+double sinh(double x) {
+    return x;
+}
+
+double log10(double x) {
+    return x;
+}
+
+double log(double x) {
+    return x;
+}
+
+double exp(double x) {
+    return x;
+}
+
+double cosh(double x) {
+    return x;
+}
+
+double atan2(double y, double x) {
+    // FIXME: this is wrong.
+    return atan(y / x);
+}
+
+double atan(double x) {
+    return x;
+}
+
+double asin(double x) {
+    return x;
+}
+
+double acos(double x) {
+    return x;
+}
+
+double fmod(double x, double y) {
+    return (int) x % (int) y;
+}
+
 double ldexp(double x, int exp) {
     if (exp > 0) {
         for (int i = exp; i > 1; i--) {
