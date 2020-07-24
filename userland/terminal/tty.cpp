@@ -405,6 +405,20 @@ void TTY::handle_escape_sequence() {
                 invalidate_all();
                 return;
             }
+            case 'M': {
+                if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
+                    return;
+                }
+                int lines_to_delete = clamp(args.get_or(0, 1), 1, m_scroll_end - m_cursor_row);
+                for (int i = 0; i < lines_to_delete; i++) {
+                    m_rows.rotate_left(m_cursor_row, m_scroll_end + 1);
+                    m_rows[m_scroll_end] = Row(m_col_count);
+                    m_rows[m_scroll_end].resize(m_col_count);
+                }
+
+                invalidate_all();
+                return;
+            }
             case 'P': {
                 int chars_to_delete = clamp(args.get_or(0, 1), 1, m_col_count - m_cursor_col);
                 for (int i = 0; i < chars_to_delete; i++) {
