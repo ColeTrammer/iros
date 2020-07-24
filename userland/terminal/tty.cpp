@@ -430,11 +430,13 @@ void TTY::handle_escape_sequence() {
                 }
                 return;
             }
-            case 'X':
-                for (int i = 0; i < args.get_or(0, 1); i++) {
-                    put_char(' ');
+            case 'X': {
+                int chars_to_erase = max(1, args.get_or(0, 1));
+                for (int i = m_cursor_col; i < chars_to_erase && i < m_col_count; i++) {
+                    m_rows[m_cursor_row][i] = Cell();
                 }
                 return;
+            }
             case 'm':
                 if (args.size() == 0) {
                     args.add(0);
