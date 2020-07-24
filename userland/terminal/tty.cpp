@@ -256,6 +256,9 @@ void TTY::handle_escape_sequence() {
             case 'l':
                 if (starts_with_q) {
                     switch (args.get_or(0, 0)) {
+                        case 1:
+                            m_psuedo_terminal.set_application_cursor_keys(false);
+                            break;
                         case 12:
                             // Stop cursor blink
                             break;
@@ -275,6 +278,9 @@ void TTY::handle_escape_sequence() {
                 if (starts_with_q) {
                     if (starts_with_q) {
                         switch (args.get_or(0, 0)) {
+                            case 1:
+                                m_psuedo_terminal.set_application_cursor_keys(true);
+                                break;
                             case 12:
                                 // Start cursor blink
                                 break;

@@ -96,6 +96,16 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         modifiers += 1;
     }
 
+    auto send_application_escape = [&](char ch, int modifiers) {
+        String seq;
+        if (modifiers == 1) {
+            seq = String::format("\033O%c", ch);
+        } else {
+            seq = String::format("\033[1;%d%c", modifiers, ch);
+        }
+        this->write(seq);
+    };
+
     auto send_xterm_escape = [&](char ch, int modifiers) {
         String seq;
         if (modifiers == 1) {
@@ -118,22 +128,46 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
 
     switch (key) {
         case KEY_CURSOR_UP:
-            send_xterm_escape('A', modifiers);
+            if (m_application_cursor_keys) {
+                send_application_escape('A', modifiers);
+            } else {
+                send_xterm_escape('A', modifiers);
+            }
             return;
         case KEY_CURSOR_DOWN:
-            send_xterm_escape('B', modifiers);
+            if (m_application_cursor_keys) {
+                send_application_escape('B', modifiers);
+            } else {
+                send_xterm_escape('B', modifiers);
+            }
             return;
         case KEY_CURSOR_RIGHT:
-            send_xterm_escape('C', modifiers);
+            if (m_application_cursor_keys) {
+                send_application_escape('C', modifiers);
+            } else {
+                send_xterm_escape('C', modifiers);
+            }
             return;
         case KEY_CURSOR_LEFT:
-            send_xterm_escape('D', modifiers);
+            if (m_application_cursor_keys) {
+                send_application_escape('D', modifiers);
+            } else {
+                send_xterm_escape('D', modifiers);
+            }
             return;
         case KEY_END:
-            send_xterm_escape('F', modifiers);
+            if (m_application_cursor_keys) {
+                send_application_escape('F', modifiers);
+            } else {
+                send_xterm_escape('F', modifiers);
+            }
             return;
         case KEY_HOME:
-            send_xterm_escape('H', modifiers);
+            if (m_application_cursor_keys) {
+                send_application_escape('H', modifiers);
+            } else {
+                send_xterm_escape('H', modifiers);
+            }
             return;
         case KEY_INSERT:
             send_vt_escape(2, modifiers);
