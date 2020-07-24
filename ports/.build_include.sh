@@ -115,10 +115,10 @@ run() {
         configure)
             if [ ! -e $BUILD_DIR ]; then
                 mkdir -p $BUILD_DIR
-                pushd $BUILD_DIR
-                configure || die "configure failed"
-                popd
             fi
+            pushd $BUILD_DIR
+            configure || die "configure failed"
+            popd
             ;;
         *)
             die "unrecognized target:" $TARGET
