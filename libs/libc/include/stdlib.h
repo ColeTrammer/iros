@@ -63,6 +63,8 @@ int system(const char *command);
 int posix_openpt(int flags);
 char *ptsname(int fd);
 int ptsname_r(int fd, char *buf, size_t buflen);
+int grantpt(int fd);
+int unlockpt(int fd);
 
 int mblen(const char *s, size_t n);
 int wctomb(char *s, wchar_t wc);

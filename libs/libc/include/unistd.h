@@ -103,6 +103,7 @@ int faccessat(int dirfd, const char *pathname, int mode, int flags);
 ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t bufsiz);
 int symlink(const char *target, const char *linkpath);
 int link(const char *oldpath, const char *newpath);
+void sync(void);
 
 ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);

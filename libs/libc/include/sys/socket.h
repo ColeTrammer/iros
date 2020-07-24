@@ -31,6 +31,7 @@
 #define SOL_SOCKET 0
 
 #define SO_RCVTIMEO 1
+#define SO_ERROR    2
 
 #ifdef __cplusplus
 extern "C" {

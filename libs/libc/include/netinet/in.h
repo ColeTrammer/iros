@@ -28,6 +28,18 @@ struct sockaddr_in {
     char sin_zero[8];
 };
 
+struct in6_addr {
+    uint8_t s6_addr[16];
+};
+
+struct sockaddr_in6 {
+    sa_family_t sin6_family;
+    in_port_t sin6_port;
+    uint32_t sin6_flowinfo;
+    struct in6_addr sin6_addr;
+    uint32_t sin6_scope_id;
+};
+
 #ifdef _OS_2_SOURCE
 uint16_t in_compute_checksum_with_start(void *packet, size_t num_bytes, uint16_t start);
 uint16_t in_compute_checksum(void *data, size_t bytes);

@@ -199,8 +199,10 @@ else()
         stdlib/_Exit.c
         stdlib/atexit.c
         stdlib/env.c
+        stdlib/grantpt.c
         stdlib/init_env.c
         stdlib/realpath.c
+        stdlib/unlockpt.c
         string/strcoll.c
         string/strxfrm.c
         sys/ioctl/ioctl.c
@@ -305,6 +307,7 @@ else()
         unistd/setuid.c
         unistd/sleep.c
         unistd/symlink.c
+        unistd/sync.c
         unistd/sysconf.c
         unistd/tcgetpgrp.c
         unistd/tcsetpgrp.c
