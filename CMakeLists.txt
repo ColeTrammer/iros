@@ -44,7 +44,6 @@ else()
     include_directories(libs/libc/include)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-    set(CMAKE_SKIP_RPATH TRUE)
 endif()
 
 function(install_headers)
