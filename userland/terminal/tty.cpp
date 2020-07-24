@@ -268,6 +268,9 @@ void TTY::handle_escape_sequence() {
                         case 1049:
                             set_use_alternate_screen_buffer(false);
                             break;
+                        case 2004:
+                            m_psuedo_terminal.set_bracketed_paste(false);
+                            break;
                         default:
                             fprintf(stderr, "Unsupported DEC Reset %d\n", args.get_or(0, 0));
                             break;
@@ -289,6 +292,9 @@ void TTY::handle_escape_sequence() {
                                 break;
                             case 1049:
                                 set_use_alternate_screen_buffer(true);
+                                break;
+                            case 2004:
+                                m_psuedo_terminal.set_bracketed_paste(true);
                                 break;
                             default:
                                 fprintf(stderr, "Unsupported DEC Set %d\n", args.get_or(0, 0));

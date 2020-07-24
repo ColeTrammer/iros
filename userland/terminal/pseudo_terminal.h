@@ -19,6 +19,7 @@ public:
     void write(const String& message);
 
     void set_application_cursor_keys(bool b) { m_application_cursor_keys = b; }
+    void set_bracketed_paste(bool b) { m_bracketed_paste = b; }
 
 private:
     int m_master_fd { -1 };
@@ -26,4 +27,5 @@ private:
     int m_cols { 80 };
     pid_t m_child_pid { -1 };
     bool m_application_cursor_keys { false };
+    bool m_bracketed_paste { false };
 };

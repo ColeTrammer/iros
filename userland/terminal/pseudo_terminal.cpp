@@ -72,8 +72,11 @@ PsuedoTerminal::~PsuedoTerminal() {
 }
 
 void PsuedoTerminal::send_clipboard_contents(const String& contents) {
-    // NOTE: this could do some fancy bracket escape sequence thing, if enabled.
-    this->write(contents);
+    if (m_bracketed_paste) {
+        this->write(String::format("\033[200~%s\033[201~", contents.string()));
+    } else {
+        this->write(contents);
+    }
 }
 
 void PsuedoTerminal::write(const String& contents) {
