@@ -256,6 +256,9 @@ void TTY::handle_escape_sequence() {
             case 'l':
                 if (starts_with_q) {
                     switch (args.get_or(0, 0)) {
+                        case 12:
+                            // Stop cursor blink
+                            break;
                         case 25:
                             m_cursor_hidden = true;
                             break;
@@ -272,6 +275,9 @@ void TTY::handle_escape_sequence() {
                 if (starts_with_q) {
                     if (starts_with_q) {
                         switch (args.get_or(0, 0)) {
+                            case 12:
+                                // Start cursor blink
+                                break;
                             case 25:
                                 m_cursor_hidden = false;
                                 break;
@@ -362,6 +368,17 @@ void TTY::handle_escape_sequence() {
                     return;
                 }
                 break;
+            case 'P': {
+                int chars_to_delete = clamp(args.get_or(0, 1), 1, m_col_count - m_cursor_col);
+                for (int i = 0; i < chars_to_delete; i++) {
+                    m_rows[m_cursor_row].remove(m_cursor_col);
+                }
+                m_rows[m_cursor_row].resize(m_col_count);
+                for (int i = m_cursor_col; i < m_col_count; i++) {
+                    m_rows[m_cursor_row][i].dirty = true;
+                }
+                return;
+            }
             case 'X':
                 for (int i = 0; i < args.get_or(0, 1); i++) {
                     put_char(' ');
@@ -531,6 +548,17 @@ void TTY::on_next_escape_char(char c) {
             case 'M':
                 m_cursor_row--;
                 m_x_overflow = false;
+                m_in_escape = false;
+                break;
+            case '7':
+                save_pos();
+                m_in_escape = false;
+                break;
+            case '8':
+                restore_pos();
+                m_in_escape = false;
+                break;
+            case '=':
                 m_in_escape = false;
                 break;
             default:
