@@ -775,7 +775,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     }
                 }
 
-                if (c != '\b' && c != ('R' & 0x1F) && (iscntrl(c) || c == '\t')) {
+                if (c != saved_termios.c_cc[VERASE] && c != ('R' & 0x1F) && (iscntrl(c) || c == '\t')) {
                     need_input = false;
                     break;
                 }
@@ -786,7 +786,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 }
 
                 size_t search_index = history_length - 1;
-                if (c == '\b') {
+                if (c == saved_termios.c_cc[VERASE]) {
                     if (needle.size() > 1) {
                         needle.remove_last();
                         needle.last() = '\0';
@@ -1006,7 +1006,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
         }
 
         // Pressed back space
-        if (c == '\b') {
+        if (c == saved_termios.c_cc[VERASE]) {
             if (buffer_index > buffer_min_index) {
                 memmove(buffer + buffer_index - 1, buffer + buffer_index, buffer_length - buffer_index);
                 buffer[buffer_length - 1] = ' ';

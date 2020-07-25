@@ -37,7 +37,7 @@ static struct termios default_termios = { ICRNL | IXON,
                                           OPOST,
                                           CS8,
                                           ECHO | ICANON | IEXTEN | ISIG,
-                                          { CONTROL_KEY('d'), '\n', '#', CONTROL_KEY('c'), '@', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'),
+                                          { CONTROL_KEY('d'), '\n', '\b', CONTROL_KEY('c'), '\025', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'),
                                             CONTROL_KEY('s'), CONTROL_KEY('z'), 0 } };
 
 static struct device *slaves[PTMX_MAX] = { 0 };
@@ -528,7 +528,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
             c = '\n';
         }
 
-        if (c == '\b' && (sdata->config.c_lflag & ICANON)) {
+        if (c == sdata->config.c_cc[VERASE] && (sdata->config.c_lflag & ICANON)) {
             if (data->input_buffer_length == 0) {
                 continue;
             }

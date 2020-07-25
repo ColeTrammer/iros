@@ -566,7 +566,7 @@ Maybe<KeyPress> TerminalPanel::read_key() {
         }
     }
 
-    if (ch == '\b') {
+    if (ch == s_original_termios.c_cc[VERASE]) {
         return { { 0, KeyPress::Key::Backspace } };
     }
 
