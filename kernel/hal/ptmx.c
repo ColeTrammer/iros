@@ -528,7 +528,7 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
             c = '\n';
         }
 
-        if (c == 127 && (sdata->config.c_lflag & ICANON)) {
+        if (c == '\b' && (sdata->config.c_lflag & ICANON)) {
             if (data->input_buffer_length == 0) {
                 continue;
             }

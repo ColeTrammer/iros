@@ -566,7 +566,7 @@ Maybe<KeyPress> TerminalPanel::read_key() {
         }
     }
 
-    if (ch == 127) {
+    if (ch == '\b') {
         return { { 0, KeyPress::Key::Backspace } };
     }
 
