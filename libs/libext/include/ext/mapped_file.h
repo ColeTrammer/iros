@@ -9,7 +9,7 @@ namespace Ext {
 
 class MappedFile {
 public:
-    static UniquePtr<MappedFile> create(const String& path);
+    static UniquePtr<MappedFile> create(const String& path, int prot, int type);
 
     MappedFile(uint8_t* data, size_t size) : m_data(data), m_size(size) {}
     MappedFile(const MappedFile& other) = delete;

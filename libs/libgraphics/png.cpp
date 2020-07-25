@@ -4,6 +4,7 @@
 #include <graphics/png.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
 // #define PNG_DEBUG
 
@@ -251,7 +252,7 @@ SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
 }
 
 SharedPtr<PixelBuffer> decode_png_file(const String& path) {
-    auto mapped_file = Ext::MappedFile::create(path);
+    auto mapped_file = Ext::MappedFile::create(path, PROT_READ, MAP_SHARED);
     if (!mapped_file) {
         return nullptr;
     }

@@ -6,7 +6,7 @@
 
 namespace Ext {
 
-UniquePtr<MappedFile> MappedFile::create(const String& path) {
+UniquePtr<MappedFile> MappedFile::create(const String& path, int prot, int type) {
     int fd = open(path.string(), O_RDONLY);
     if (fd == -1) {
         perror("open");
@@ -20,7 +20,7 @@ UniquePtr<MappedFile> MappedFile::create(const String& path) {
         return nullptr;
     }
 
-    uint8_t* raw_data = (uint8_t*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    uint8_t* raw_data = (uint8_t*) mmap(nullptr, st.st_size, prot, type, fd, 0);
     if (raw_data == MAP_FAILED) {
         perror("mmap");
         close(fd);

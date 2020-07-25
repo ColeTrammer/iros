@@ -1,6 +1,7 @@
 #include <ext/deflate.h>
 #include <ext/mapped_file.h>
 #include <stdio.h>
+#include <sys/mman.h>
 
 namespace Ext {
 
@@ -13,7 +14,7 @@ enum GZipFlags {
 };
 
 Maybe<GZipData> read_gzip_path(const String& path) {
-    auto file_mapping = MappedFile::create(path);
+    auto file_mapping = MappedFile::create(path, PROT_READ, MAP_SHARED);
     if (!file_mapping) {
         return {};
     }
