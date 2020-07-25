@@ -30,11 +30,10 @@ static void try_load_symbols(void *buffer, Elf64_Sym **symbols, size_t *symbols_
 
     char *section_string_table = (char *) (((uintptr_t) buffer) + section_headers[elf_header->e_shstrndx].sh_offset);
     for (int i = 0; i < elf_header->e_shnum; i++) {
-        // Symbol table
-        if (section_headers[i].sh_type == 2) {
+        if (section_headers[i].sh_type == SHT_SYMTAB) {
             *symbols = (Elf64_Sym *) (((uintptr_t) buffer) + section_headers[i].sh_offset);
             *symbols_size = section_headers[i].sh_size;
-        } else if (section_headers[i].sh_type == 3 && strcmp(".strtab", section_string_table + section_headers[i].sh_name) == 0) {
+        } else if (section_headers[i].sh_type == SHT_STRTAB && strcmp(".strtab", section_string_table + section_headers[i].sh_name) == 0) {
             *string_table = (char *) (((uintptr_t) buffer) + section_headers[i].sh_offset);
         }
     }
@@ -68,7 +67,18 @@ bool elf64_is_valid(void *buffer) {
     /* Should Probably Also Check Sections And Architecture */
 
     Elf64_Ehdr *elf_header = buffer;
-    return strcmp((char *) elf_header->e_ident, ELF64_MAGIC) == 0;
+    if (elf_header->e_ident[EI_MAG0] != 0x7F || elf_header->e_ident[EI_MAG1] != 'E' || elf_header->e_ident[EI_MAG2] != 'L' ||
+        elf_header->e_ident[EI_MAG3] != 'F') {
+        return false;
+    }
+
+    if (elf_header->e_ident[EI_CLASS] != ELFCLASS64 || elf_header->e_ident[EI_DATA] != ELFDATA2LSB ||
+        elf_header->e_ident[EI_VERSION] != EV_CURRENT || elf_header->e_ident[EI_OSABI] != ELFOSABI_SYSV ||
+        elf_header->e_ident[EI_ABIVERSION] != 0) {
+        return false;
+    }
+
+    return true;
 }
 
 uintptr_t elf64_get_start(void *buffer) {
@@ -100,7 +110,7 @@ void elf64_load_program(void *buffer, size_t length, struct file *execuatable, s
             continue;
         }
 
-        if (program_headers[i].p_type == 7) {
+        if (program_headers[i].p_type == PT_TLS) {
             program_section_start = (elf64_get_start(buffer) - program_headers[i].p_memsz) & ~0xFFFULL;
             task->process->tls_master_copy_start = (void *) program_section_start;
             task->process->tls_master_copy_size = program_headers[i].p_memsz;
@@ -112,9 +122,9 @@ void elf64_load_program(void *buffer, size_t length, struct file *execuatable, s
         uintptr_t program_section_end = program_section_start + program_headers[i].p_memsz;
         uintptr_t aligned_start = program_section_start & ~0xFFFULL;
         uintptr_t aligned_end = ((program_section_end + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        int protections = program_headers[i].p_flags == 0x5 ? (PROT_READ | PROT_EXEC) : (PROT_READ | PROT_WRITE);
+        int protections = program_headers[i].p_flags == (PF_R | PF_X) ? (PROT_READ | PROT_EXEC) : (PROT_READ | PROT_WRITE);
         uint64_t type =
-            program_headers[i].p_type == 7 ? VM_PROCESS_TLS_MASTER_COPY : protections & PROT_EXEC ? VM_PROCESS_TEXT : VM_PROCESS_DATA;
+            program_headers[i].p_type == PT_TLS ? VM_PROCESS_TLS_MASTER_COPY : protections & PROT_EXEC ? VM_PROCESS_TEXT : VM_PROCESS_DATA;
 
         // This will be true for the text segment
         if (program_headers[i].p_memsz == program_headers[i].p_filesz && program_section_start % PAGE_SIZE == 0) {
