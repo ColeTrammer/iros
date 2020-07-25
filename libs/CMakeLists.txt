@@ -18,6 +18,7 @@ set(TARGETS
     libliim
     libprocinfo
     libsh
+    libsharedtest
     libws
 )
 
