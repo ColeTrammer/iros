@@ -87,16 +87,16 @@ typedef struct {
 #define SHT_REL      9
 #define SHT_SHLIB    10
 #define SHT_DYNSYM   11
-#define SHT_LOOS     0x6000_0000
-#define SHT_HIOS     0x6FFF_FFFF
-#define SHT_LOPROC   0x7000_0000
-#define SHT_HIPROC   0x7FFF_FFFF
+#define SHT_LOOS     0x60000000
+#define SHT_HIOS     0x6FFFFFFF
+#define SHT_LOPROC   0x70000000
+#define SHT_HIPROC   0x7FFFFFFF
     Elf64_Word sh_type; /* Section type */
 #define SHF_WRITE     0x1
 #define SHF_ALLOC     0x2
 #define SHF_EXECINSTR 0x4
-#define SHF_MASKOS    0x0F00_0000
-#define SHF_MASKPROC  0xF000_0000
+#define SHF_MASKOS    0x0F000000
+#define SHF_MASKPROC  0xF0000000
     Elf64_Xword sh_flags;     /* Section attributes */
     Elf64_Addr sh_addr;       /* Virtual address in memory */
     Elf64_Off sh_offset;      /* Offset in file */
@@ -135,8 +135,11 @@ typedef struct {
 typedef struct {
     Elf64_Addr r_offset; /* Address of reference */
 #define ELF64_R_SYM(i)     ((i) >> 32)
-#define ELF64_R_TYPE(i)    ((i) & (0xFFFF_FFFFL))
-#define ELF64_R_INFO(s, t) (((s) << 32) + ((t) & (0xFFFF_FFFFL)))
+#define ELF64_R_TYPE(i)    ((i) & (0xFFFFFFFFL))
+#define ELF64_R_INFO(s, t) (((s) << 32) + ((t) & (0xFFFFFFFFL)))
+
+#define R_X86_64_NONE 0
+#define R_X86_64_64   1
     Elf64_Xword r_info; /* Symbol index and type of relocation */
 } __attribute__((packed)) Elf64_Rel;
 
@@ -155,16 +158,16 @@ typedef struct {
 #define PT_SHLIB   5
 #define PT_PHDR    6
 #define PT_TLS     7
-#define PT_LOOS    0x6000_0000
-#define PT_HIOS    0x6FFF_FFFF
-#define PT_LOPROC  0x7000_0000
-#define PT_HIPROC  0x7FFF_FFFF
+#define PT_LOOS    0x60000000
+#define PT_HIOS    0x6FFFFFFF
+#define PT_LOPROC  0x70000000
+#define PT_HIPROC  0x7FFFFFFF
     Elf64_Word p_type; /* Type of segment */
 #define PF_X        0x1
 #define PF_W        0x2
 #define PF_R        0x4
-#define PF_MASKOS   0x00FF_0000
-#define PF_MASKPROC 0xFF00_0000
+#define PF_MASKOS   0x00FF0000
+#define PF_MASKPROC 0xFF000000
     Elf64_Word p_flags;   /* Segment attributes */
     Elf64_Off p_offset;   /* Offset in file */
     Elf64_Addr p_vaddr;   /* Virtual address in memory */
@@ -184,7 +187,7 @@ typedef struct {
 #define DT_SYMTAB       6
 #define DT_RELA         7
 #define DT_RELASZ       8
-#define DT_DELAENT      9
+#define DT_RELAENT      9
 #define DT_STRSZ        10
 #define DT_SYMENT       11
 #define DT_INIT         12
@@ -204,16 +207,32 @@ typedef struct {
 #define DT_FINI_ARRAY   26
 #define DT_INIT_ARRAYSZ 27
 #define DT_FINI_ARRAYSZ 28
-#define DT_LOOS         0x6000_0000
-#define DT_HIOS         0x6FFF_FFFF
-#define DT_LOPROC       0x7000_0000
-#define DT_HIPROC       0x7FFF_FFFF
+#define DT_LOOS         0x60000000
+#define DT_RELACOUNT    0x6FFFFFF9
+#define DT_RELCOUNT     0x6FFFFFFA
+#define DT_HIOS         0x6FFFFFFF
+#define DT_LOPROC       0x70000000
+#define DT_HIPROC       0x7FFFFFFF
     Elf64_Sxword d_tag;
     union {
         Elf64_Xword d_val;
         Elf64_Addr d_ptr;
     } d_un;
 } __attribute__((packed)) Elf64_Dyn;
+
+#define STN_UNDEF 0
+
+static inline unsigned long elf64_hash(const char *_name) {
+    const unsigned char *name = (const unsigned char *) _name;
+    unsigned long h = 0, g;
+    while (*name) {
+        h = (h << 4) + *name++;
+        if ((g = h & 0xF0000000))
+            h ^= g >> 24;
+        h &= 0x0FFFFFFF;
+    }
+    return h;
+}
 
 #ifdef __cplusplus
 }
