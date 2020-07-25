@@ -754,15 +754,6 @@ void TTY::on_char(char c) {
             }
             m_x_overflow = false;
             break;
-        // Ascii DEL (NOTE: not the delete key)
-        case 127:
-            if (m_cursor_col > 0) {
-                m_cursor_col--;
-                put_char(' ');
-                m_cursor_col--;
-            }
-            m_x_overflow = false;
-            break;
         case '\a':
             // Ignore alarm character for now
             break;
