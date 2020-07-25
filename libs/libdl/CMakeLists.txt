@@ -7,3 +7,5 @@ set(SOURCES
 )
 
 add_os_library(libdl dl FALSE)
+
+target_link_libraries(libdl PRIVATE libext)
