@@ -318,6 +318,8 @@ else()
         unistd/usleep.c
         unistd/write.c
         utime/utime.c
+        wctype/iswupper.c
+        wctype/towlower.c
         __cxa_atexit.c
         cxx.cpp
         init.c
