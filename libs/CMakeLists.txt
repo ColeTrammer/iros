@@ -1,5 +1,6 @@
 if (NOT ${NATIVE_BUILD})
     set(OS_LIBS
+        libdl
         libm
         libpthread
         librt
