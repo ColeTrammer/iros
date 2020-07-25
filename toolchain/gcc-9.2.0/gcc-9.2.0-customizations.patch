@@ -1,0 +1,37 @@
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index d7afa9b0b..d224c2b27 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -1493,7 +1493,7 @@ hppa*-*-openbsd*)
+ 	gnu_ld=yes
+ 	;;
+ i[34567]86-*-os_2*)
+-    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h os_2.h"
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h os_2.h"a
+     ;;
+ x86_64-*-os_2*)
+     tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h os_2.h"
+diff --git a/gcc/config/os_2.h b/gcc/config/os_2.h
+index 509f29e8d..7b91b3375 100644
+--- a/gcc/config/os_2.h
++++ b/gcc/config/os_2.h
+@@ -2,16 +2,16 @@
+ #define TARGET_OS_2 1
+ 
+ #undef LIB_SPEC
+-#define LIB_SPEC "-lc"
++#define LIB_SPEC "%{!shared:%{pthread:-lpthread} -lc}"
+ 
+ #undef STARTFILE_SPEC
+-#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
++#define STARTFILE_SPEC "%{!shared:crt0.o%s} crti.o%s crtbegin.o%s"
+ 
+ #undef ENDFILE_SPEC
+ #define ENDFILE_SPEC "crtend.o%s crtn.o%s"
+ 
+ #undef LINK_SPEC
+-#define LINK_SPEC "-z max-page-size=4096"
++#define LINK_SPEC "%{shared:-shared} %{static:-static} -z max-page-size=4096"
+ 
+ #undef TARGET_OS_CPP_BUILTINS
+ #define TARGET_OS_CPP_BUILTINS()        \

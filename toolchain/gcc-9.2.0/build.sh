@@ -21,6 +21,7 @@ if [ ! -e gcc-9.2.0 ]; then
     cd gcc-9.2.0
     git init
     git apply ../gcc-os_2-9.2.0.patch
+    git apply ../gcc-os_2-9.2.0-customization.patch
     cd ..
 
     # Run autoconf
