@@ -92,12 +92,19 @@ void arch_load_task(struct task *task, uintptr_t entry, struct initial_process_i
     strcpy(test_argv[1], kernel_use_graphics() ? "-g" : "-v");
     proc_clone_program_args(task->process, NULL, test_argv, test_envp);
     task->arch_task.task_state.stack_state.rsp =
-        map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, task->process->args_context, info);
+        map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, task->process->args_context, info, task);
 
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 
     task_align_fpu(task);
     memcpy(task->fpu.aligned_state, get_idle_task()->fpu.aligned_state, FPU_IMAGE_SIZE);
+}
+
+void arch_setup_program_args(struct task *task, struct initial_process_info *info, size_t argc, char **argv, char **envp) {
+    task->arch_task.user_task_state->cpu_state.rdi = (uint64_t) info;
+    task->arch_task.user_task_state->cpu_state.rsi = (uint64_t) argc;
+    task->arch_task.user_task_state->cpu_state.rdx = (uint64_t) argv;
+    task->arch_task.user_task_state->cpu_state.rcx = (uint64_t) envp;
 }
 
 /* Must be called from unpremptable context */

@@ -8,16 +8,17 @@ _start:
 	pushq %rbp
 	movq %rsp, %rbp
 
-    movq 16(%rsp), %rcx # ENVP
-    movq 24(%rsp), %rdx # ARGV
-    movq 32(%rsp), %rsi # ARGC
-    movq 40(%rsp), %rdi # Process info
+    push %rcx    # ENVP
+    push %rdx    # ARGV
+    push %rsi    # ARGC
+    sub $8, %rsp # Alignment
 
     callq initialize_standard_library
 
-    movq 16(%rsp), %rdx # ENVP
-    movq 24(%rsp), %rsi # ARGV
-    movq 32(%rsp), %rdi # ARGC
+    add $8, %rsp # Alignment
+    pop %rdi     # ARGC
+    pop %rsi     # ARGV
+    pop %rdx     # ENVP
 
     xorq %rax, %rax # Zero RAX
 

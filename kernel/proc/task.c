@@ -102,7 +102,7 @@ void proc_clone_program_args(struct process *process, char **prepend_argv, char 
 }
 
 /* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
-uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info) {
+uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info, struct task *task) {
     struct initial_process_info *info_location = (struct initial_process_info *) (start - sizeof(struct initial_process_info));
     *info_location = *info;
 
@@ -136,14 +136,8 @@ uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct
 
     args_start = (char *) ((((uintptr_t) args_start) & ~0xF));
 
-    args_start -= sizeof(struct initial_process_info *);
-    *((struct initial_process_info **) args_start) = info_location;
-    args_start -= sizeof(size_t);
-    *((size_t *) args_start) = context->prepend_argc + context->argc - 1;
-    args_start -= sizeof(char **);
-    *((char ***) args_start) = argv_start - context->prepend_argc - context->argc;
-    args_start -= sizeof(char **);
-    *((char ***) args_start) = argv_start - count;
+    arch_setup_program_args(task, info_location, context->prepend_argc + context->argc - 1,
+                            argv_start - context->prepend_argc - context->argc, argv_start - count);
 
     assert((uintptr_t) args_start % 16 == 0);
     return (uintptr_t) args_start;

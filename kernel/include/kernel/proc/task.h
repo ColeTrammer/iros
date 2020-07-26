@@ -114,7 +114,8 @@ void free_task(struct task *task, bool free_paging_structure);
 void arch_free_task(struct task *task, bool free_paging_structure);
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp);
-uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info);
+uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info, struct task *task);
+void arch_setup_program_args(struct task *task, struct initial_process_info *info, size_t argc, char **argv, char **envp);
 void free_program_args(struct args_context *context);
 
 int get_next_tid();

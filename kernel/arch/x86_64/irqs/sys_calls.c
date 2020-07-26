@@ -698,7 +698,7 @@ SYS_CALL(execve) {
     unmap_range((uintptr_t) buffer, length);
 
     uintptr_t stack_end = proc_allocate_user_stack(process, &info);
-    task_state->stack_state.rsp = map_program_args(stack_end, process->args_context, &info);
+    task_state->stack_state.rsp = map_program_args(stack_end, process->args_context, &info, task);
 
     for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
         free(prepend_argv[i]);
