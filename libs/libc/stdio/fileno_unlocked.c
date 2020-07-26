@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-int fileno(FILE *stream) {
+int fileno_unlocked(FILE *stream) {
     return stream->__fd;
 }
 
