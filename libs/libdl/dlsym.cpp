@@ -12,6 +12,6 @@ void* dlsym(void* __restrict _handle, const char* __restrict symbol) {
         return nullptr;
     }
 
-    return reinterpret_cast<void*>(handle->elf_file->data() + fetched_symbol->st_value);
+    return reinterpret_cast<void*>(handle->executable->base() + fetched_symbol->st_value);
 }
 }

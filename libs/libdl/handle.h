@@ -6,12 +6,13 @@
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <liim/variant.h>
+#include <limits.h>
 #include <sys/mman.h>
 
 class MappedElfFile {
 public:
     static Variant<UniquePtr<MappedElfFile>, String> create(const String& file) {
-        auto file_mapping = Ext::MappedFile::create(file, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE);
+        auto file_mapping = Ext::MappedFile::create(file, PROT_READ, MAP_SHARED);
         if (!file_mapping) {
             return String::format("failed to open `%s': %s", file.string(), strerror(errno));
         }
@@ -138,7 +139,7 @@ private:
 
 class DynamicElfObject {
 public:
-    DynamicElfObject(const MappedElfFile& elf_file) : m_raw_data(elf_file.data()) {
+    DynamicElfObject(const MappedElfFile& elf_file, uint8_t* base) : m_raw_data(base) {
         auto* dynamic_table = elf_file.dynamic_table();
         auto dynamic_count = elf_file.dynamic_count();
         for (size_t i = 0; i < dynamic_count; i++) {
@@ -225,6 +226,47 @@ public:
         return nullptr;
     }
 
+    void process_relocations() {
+        for (size_t i = 0; i < rela_count(); i++) {
+            auto* rela = rela_at(i);
+            auto type = ELF64_R_TYPE(rela->r_info);
+            auto symbol_index = ELF64_R_SYM(rela->r_info);
+            switch (type) {
+                    // A   - The addend used to compute the value of the relocatable field.
+                    // B   - The base address at which a shared object is loaded into memory during execution. Generally, a shared object
+                    // file
+                    //       is built with a base virtual address of 0. However, the execution address of the shared object is different.
+                    //       See Program Header.
+                    // G   - The offset into the global offset table at which the address of the relocation entry's symbol resides during
+                    //       execution.
+                    // GOT - The address of the global offset table.
+                    // L   - The section offset or address of the procedure linkage table entry for a symbol.
+                    // P   - The section offset or address of the storage unit being relocated, computed using r_offset.
+                    // S   - The value of the symbol whose index resides in the relocation entry.
+                    // Z   - The size of the symbol whose index resides in the relocation entry.
+                case R_X86_64_NONE:
+                    break;
+                case R_X86_64_64:
+                    fprintf(stderr, "R_X86_64_64 for symbol %s\n", symbol_name(symbol_index));
+                    break;
+                case R_X86_64_RELATIVE: {
+                    // B + A
+                    auto B = reinterpret_cast<uintptr_t>(base());
+                    auto A = rela->r_addend;
+                    auto* addr = reinterpret_cast<uint64_t*>(base() + rela->r_offset);
+                    *addr = B + A;
+                    break;
+                }
+                default:
+                    fprintf(stderr, "Unkown relocation type %ld\n", type);
+                    break;
+            }
+        }
+    }
+
+    uint8_t* base() { return m_raw_data; }
+    const uint8_t* base() const { return m_raw_data; }
+
 private:
     uintptr_t m_hash_table { 0 };
     uintptr_t m_string_table { 0 };
@@ -237,10 +279,61 @@ private:
     size_t m_so_name_offset { 0 };
     size_t m_string_table_size { 0 };
     size_t m_symbol_entry_size { 0 };
-    const uint8_t* m_raw_data { nullptr };
+    uint8_t* m_raw_data { nullptr };
+};
+
+class LoadedElfExecutable {
+public:
+    static Variant<UniquePtr<LoadedElfExecutable>, String> create(const MappedElfFile& elf_file) {
+        auto* first = elf_file.program_header_at(0);
+        auto* last = elf_file.program_header_at(0);
+        for (size_t i = 1; i < elf_file.program_header_count(); i++) {
+            auto* phdr = elf_file.program_header_at(i);
+            if (phdr->p_vaddr < first->p_vaddr) {
+                first = phdr;
+            }
+            if (phdr->p_vaddr + phdr->p_memsz > last->p_vaddr + last->p_memsz) {
+                last = phdr;
+            }
+        }
+        auto total_size = last->p_vaddr + last->p_memsz - first->p_vaddr;
+        total_size = ((total_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+        void* base = mmap(nullptr, total_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, 0, 0);
+        if (base == MAP_FAILED) {
+            return "Failed to allocate a suitable region";
+        }
+
+        for (size_t i = 0; i < elf_file.program_header_count(); i++) {
+            auto* phdr = elf_file.program_header_at(i);
+            auto size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+            auto* phdr_start = reinterpret_cast<void*>(phdr->p_vaddr - first->p_vaddr + reinterpret_cast<uintptr_t>(base));
+            memcpy(phdr_start, elf_file.data() + phdr->p_offset, phdr->p_filesz);
+            auto* phdr_page_start = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(phdr_start) & ~(PAGE_SIZE - 1));
+            int prot =
+                (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
+            // FIXME: make relocations work without this hack
+            prot |= PROT_WRITE;
+            mprotect(phdr_page_start, size, prot);
+        }
+
+        return make_unique<LoadedElfExecutable>(reinterpret_cast<uint8_t*>(base), total_size);
+    };
+
+    LoadedElfExecutable(uint8_t* base, size_t size) : m_base(base), m_size(size) {}
+    ~LoadedElfExecutable() { munmap(m_base, m_size); }
+
+    uint8_t* base() { return m_base; }
+    const uint8_t* base() const { return m_base; }
+
+    size_t size() const { return m_size; }
+
+private:
+    uint8_t* m_base { 0 };
+    size_t m_size { 0 };
 };
 
 struct Handle {
-    UniquePtr<MappedElfFile> elf_file;
+    UniquePtr<LoadedElfExecutable> executable;
     DynamicElfObject dynamic_object;
 };

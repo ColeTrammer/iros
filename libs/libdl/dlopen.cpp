@@ -37,42 +37,15 @@ void* dlopen(const char* file, int flags) {
         return nullptr;
     }
 
-    auto dynamic_object = DynamicElfObject(*elf_file);
-    for (size_t i = 0; i < dynamic_object.rela_count(); i++) {
-        auto* rela = dynamic_object.rela_at(i);
-        auto type = ELF64_R_TYPE(rela->r_info);
-        auto symbol_index = ELF64_R_SYM(rela->r_info);
-        switch (type) {
-                // A   - The addend used to compute the value of the relocatable field.
-                // B   - The base address at which a shared object is loaded into memory during execution. Generally, a shared object file
-                //       is built with a base virtual address of 0. However, the execution address of the shared object is different. See
-                //       Program Header.
-                // G   - The offset into the global offset table at which the address of the relocation entry's symbol resides during
-                //       execution.
-                // GOT - The address of the global offset table.
-                // L   - The section offset or address of the procedure linkage table entry for a symbol.
-                // P   - The section offset or address of the storage unit being relocated, computed using r_offset.
-                // S   - The value of the symbol whose index resides in the relocation entry.
-                // Z   - The size of the symbol whose index resides in the relocation entry.
-            case R_X86_64_NONE:
-                break;
-            case R_X86_64_64:
-                fprintf(stderr, "R_X86_64_64 for symbol %s\n", dynamic_object.symbol_name(symbol_index));
-                break;
-            case R_X86_64_RELATIVE: {
-                // B + A
-                auto B = reinterpret_cast<uintptr_t>(elf_file->data());
-                auto A = rela->r_addend;
-                auto* addr = reinterpret_cast<uint64_t*>(elf_file->data() + rela->r_offset);
-                *addr = B + A;
-                break;
-            }
-            default:
-                fprintf(stderr, "Unkown relocation type %ld\n", type);
-                break;
-        }
+    auto loaded_elf_result = LoadedElfExecutable::create(*elf_file);
+    if (loaded_elf_result.is<String>()) {
+        __dl_set_error("%s", loaded_elf_result.as<String>().string());
+        return nullptr;
     }
 
-    return new Handle { move(elf_file), dynamic_object };
+    auto loaded_elf = move(loaded_elf_result.get<0>());
+    auto dynamic_object = DynamicElfObject(*elf_file, loaded_elf->base());
+    dynamic_object.process_relocations();
+    return new Handle { move(loaded_elf), dynamic_object };
 }
 }

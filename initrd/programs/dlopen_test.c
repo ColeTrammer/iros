@@ -15,6 +15,8 @@ int main() {
     }
 
     printf("%d\n", test());
+    printf("%d\n", test());
+    printf("%d\n", test());
 
     if (dlclose(handle)) {
         fprintf(stderr, "%s\n", dlerror());
