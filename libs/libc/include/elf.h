@@ -138,9 +138,27 @@ typedef struct {
 #define ELF64_R_TYPE(i)    ((i) & (0xFFFFFFFFL))
 #define ELF64_R_INFO(s, t) (((s) << 32) + ((t) & (0xFFFFFFFFL)))
 
-#define R_X86_64_NONE     0
-#define R_X86_64_64       1
-#define R_X86_64_RELATIVE 8
+#define R_X86_64_NONE      0
+#define R_X86_64_64        1
+#define R_X86_64_PC32      2
+#define R_X86_64_GOT32     3
+#define R_X86_64_PLT32     4
+#define R_X86_64_COPY      5
+#define R_X86_64_GLOB_DAT  6
+#define R_X86_64_JUMP_SLOT 7
+#define R_X86_64_RELATIVE  8
+#define R_X86_64_GOTPCREL  9
+#define R_X86_64_32        10
+#define R_X86_64_32S       11
+#define R_X86_64_16        12
+#define R_X86_64_PC16      13
+#define R_X86_64_8         14
+#define R_X86_64_PC8       15
+#define R_X86_64_PC64      24
+#define R_X86_64_GOTOFF64  25
+#define R_X86_64_GOTPC32   26
+#define R_X86_64_SIZE32    32
+#define R_X86_64_SIZE64    33
     Elf64_Xword r_info; /* Symbol index and type of relocation */
 } __attribute__((packed)) Elf64_Rel;
 

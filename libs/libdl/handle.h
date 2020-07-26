@@ -249,6 +249,9 @@ public:
                 case R_X86_64_64:
                     fprintf(stderr, "R_X86_64_64 for symbol %s\n", symbol_name(symbol_index));
                     break;
+                case R_X86_64_GLOB_DAT:
+                    fprintf(stderr, "R_X86_64_GLOB_DATA for symbol %s\n", symbol_name(symbol_index));
+                    break;
                 case R_X86_64_RELATIVE: {
                     // B + A
                     auto B = reinterpret_cast<uintptr_t>(base());
