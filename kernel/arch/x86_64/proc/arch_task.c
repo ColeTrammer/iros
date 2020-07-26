@@ -82,7 +82,7 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     task->in_kernel = true;
 }
 
-void arch_load_task(struct task *task, uintptr_t entry) {
+void arch_load_task(struct task *task, uintptr_t entry, struct initial_process_info *info) {
     task->process->arch_process.cr3 = get_cr3();
     task->arch_task.task_state.cpu_state.rbp = 0;
     task->arch_task.task_state.stack_state.rip = entry;
@@ -92,7 +92,7 @@ void arch_load_task(struct task *task, uintptr_t entry) {
     strcpy(test_argv[1], kernel_use_graphics() ? "-g" : "-v");
     proc_clone_program_args(task->process, NULL, test_argv, test_envp);
     task->arch_task.task_state.stack_state.rsp =
-        map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, task->process->args_context);
+        map_program_args(get_vm_region(task->process->process_memory, VM_TASK_STACK)->end, task->process->args_context, info);
 
     task->arch_task.task_state.stack_state.ss = USER_DATA_SELECTOR;
 

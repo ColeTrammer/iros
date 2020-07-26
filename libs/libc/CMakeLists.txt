@@ -209,7 +209,6 @@ else()
         sys/mman/mman.c
         sys/os_2/create_task.c
         sys/os_2/exit_task.c
-        sys/os_2/get_initial_process_info.c
         sys/os_2/getcpuclockid.c
         sys/os_2/os_mutex.c
         sys/os_2/set_thread_self_pointer.c

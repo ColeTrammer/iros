@@ -154,7 +154,7 @@ void proc_bump_process(struct process *process) {
     assert(fetched_ref_count > 0);
 }
 
-uintptr_t proc_allocate_user_stack(struct process *process) {
+uintptr_t proc_allocate_user_stack(struct process *process, struct initial_process_info *info) {
     // Guard Pages: 0xFFFFFE7FFFDFE000 - 0xFFFFFE7FFFDFF000
     // Stack Pages: 0xFFFFFE7FFFDFF000 - 0xFFFFFE7FFFFFF000
 
@@ -178,6 +178,10 @@ uintptr_t proc_allocate_user_stack(struct process *process) {
     guard_page->vm_object = bump_vm_object(stack_object);
     guard_page->vm_object_offset = 0;
     process->process_memory = add_vm_region(process->process_memory, guard_page);
+
+    info->guard_size = PAGE_SIZE;
+    info->stack_size = 2 * 1024 * 1024;
+    info->stack_start = (void *) task_stack->start;
 
     return task_stack->end;
 }

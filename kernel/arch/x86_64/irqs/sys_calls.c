@@ -356,9 +356,6 @@ SYS_CALL(fork) {
     child_process->arch_process.cr3 = create_clone_process_paging_structure(child_process);
     child->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     child->arch_task.user_thread_pointer = parent->arch_task.user_thread_pointer;
-    child->process->tls_master_copy_start = parent->process->tls_master_copy_start;
-    child->process->tls_master_copy_size = parent->process->tls_master_copy_size;
-    child->process->tls_master_copy_alignment = parent->process->tls_master_copy_alignment;
     child_process->cwd = bump_tnode(parent->process->cwd);
     child_process->pgid = parent->process->pgid;
     child_process->ppid = parent->process->pid;
@@ -677,26 +674,36 @@ SYS_CALL(execve) {
     // FIXME: adding the process now might be a bit prone to race conditions
     proc_add_process(process);
 
-    uintptr_t stack_end = proc_allocate_user_stack(process);
-    task_state->stack_state.rsp = map_program_args(stack_end, process->args_context);
-
-    for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
-        free(prepend_argv[i]);
-    }
-    free(prepend_argv);
-
     char *buffer = (char *) fs_mmap(NULL, length, PROT_READ, MAP_SHARED, file, 0);
     // FIXME: this assert is very dangerous, but we can't return an error condition since
     //        we've already destroyed the old process's address space.
     assert(buffer != MAP_FAILED);
 
+    struct initial_process_info info = { 0 };
+    info.main_tid = task->tid;
+    info.isatty_mask = 0;
+    for (int i = 0; i <= 3; i++) {
+        struct file *file = task->process->files[i].file;
+        if (file && !fs_ioctl(file, TISATTY, NULL)) {
+            info.isatty_mask |= (1 << i);
+        }
+    }
+
     assert(elf64_is_valid(buffer));
-    elf64_load_program(buffer, length, file, task);
+    elf64_load_program(buffer, length, file, &info);
     elf64_map_heap(buffer, task);
     task_state->stack_state.rip = elf64_get_entry(buffer);
 
     fs_close(file);
     unmap_range((uintptr_t) buffer, length);
+
+    uintptr_t stack_end = proc_allocate_user_stack(process, &info);
+    task_state->stack_state.rsp = map_program_args(stack_end, process->args_context, &info);
+
+    for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
+        free(prepend_argv[i]);
+    }
+    free(prepend_argv);
 
     SYS_RETURN_NORETURN();
 }
@@ -1629,36 +1636,6 @@ SYS_CALL(tgkill) {
     }
 
     SYS_RETURN(signal_task(tgid, tid, signum));
-}
-
-SYS_CALL(get_initial_process_info) {
-    SYS_BEGIN();
-
-    SYS_PARAM1_VALIDATE(struct initial_process_info *, info, validate_write, sizeof(struct initial_process_info));
-    struct task *current = get_current_task();
-
-    info->tls_start = current->process->tls_master_copy_start;
-    info->tls_size = current->process->tls_master_copy_size;
-    info->tls_alignment = current->process->tls_master_copy_alignment;
-
-    struct vm_region *guard = get_vm_last_region(current->process->process_memory, VM_TASK_STACK_GUARD);
-    info->guard_size = guard->end - guard->start;
-    info->stack_start = (void *) guard->start;
-
-    struct vm_region *stack = get_vm_last_region(current->process->process_memory, VM_TASK_STACK);
-    info->stack_size = stack->end - stack->start;
-
-    info->main_tid = current->tid;
-
-    info->isatty_mask = 0;
-    for (int i = 0; i <= 3; i++) {
-        struct file *file = current->process->files[i].file;
-        if (file && !fs_ioctl(file, TISATTY, NULL)) {
-            info->isatty_mask |= (1 << i);
-        }
-    }
-
-    SYS_RETURN(0);
 }
 
 SYS_CALL(set_thread_self_pointer) {

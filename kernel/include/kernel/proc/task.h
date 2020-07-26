@@ -105,7 +105,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name);
 void arch_load_kernel_task(struct task *task, uintptr_t entry);
 
 struct task *load_task(const char *file_name);
-void arch_load_task(struct task *task, uintptr_t entry);
+void arch_load_task(struct task *task, uintptr_t entry, struct initial_process_info *info);
 
 void run_task(struct task *task);
 void arch_run_task(struct task *task);
@@ -114,7 +114,7 @@ void free_task(struct task *task, bool free_paging_structure);
 void arch_free_task(struct task *task, bool free_paging_structure);
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp);
-uintptr_t map_program_args(uintptr_t start, struct args_context *context);
+uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info);
 void free_program_args(struct args_context *context);
 
 int get_next_tid();

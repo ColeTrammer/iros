@@ -25,28 +25,28 @@ extern void _init(void);
 __thread int errno;
 char **environ;
 
-struct initial_process_info __initial_process_info;
+struct initial_process_info *__initial_process_info;
 struct thread_control_block *__threads;
 
-void initialize_standard_library(int argc, char *argv[], char *envp[]) {
+void initialize_standard_library(struct initial_process_info *initial_process_info, int argc, char *argv[], char *envp[]) {
     (void) argc;
     (void) argv;
 
     environ = envp;
+    __initial_process_info = initial_process_info;
 
-    get_initial_process_info(&__initial_process_info);
-    init_files(__initial_process_info.isatty_mask);
+    init_files(__initial_process_info->isatty_mask);
 
     // FIXME: __allocate_thread_control_block will call malloc which calls sbrk,
     //        which could set errno if it fails.
     //        This should be avoided as tls isn't enabled yet
     __threads = __allocate_thread_control_block();
-    __threads->attributes.__stack_start = __initial_process_info.stack_start;
-    __threads->attributes.__stack_len = __initial_process_info.stack_size;
+    __threads->attributes.__stack_start = __initial_process_info->stack_start;
+    __threads->attributes.__stack_len = __initial_process_info->stack_size;
     __threads->attributes.__sched_param.sched_priority = 0;
-    __threads->attributes.__guard_size = __initial_process_info.guard_size;
+    __threads->attributes.__guard_size = __initial_process_info->guard_size;
     __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER;
-    __threads->id = __initial_process_info.main_tid;
+    __threads->id = __initial_process_info->main_tid;
 
     set_thread_self_pointer(__threads, &__threads->locked_robust_mutex_node_list_head);
 

@@ -8,9 +8,10 @@ _start:
 	pushq %rbp
 	movq %rsp, %rbp
 
-    movq 16(%rsp), %rdx # ENVP
-    movq 24(%rsp), %rsi # ARGV
-    movq 32(%rsp), %rdi # ARGC
+    movq 16(%rsp), %rcx # ENVP
+    movq 24(%rsp), %rdx # ARGV
+    movq 32(%rsp), %rsi # ARGC
+    movq 40(%rsp), %rdi # Process info
 
     callq initialize_standard_library
 

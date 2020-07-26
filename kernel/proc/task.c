@@ -102,8 +102,11 @@ void proc_clone_program_args(struct process *process, char **prepend_argv, char 
 }
 
 /* Copying args and envp is necessary because they could be saved on the program stack we are about to overwrite */
-uintptr_t map_program_args(uintptr_t start, struct args_context *context) {
-    char **argv_start = (char **) (start - sizeof(char **));
+uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info) {
+    struct initial_process_info *info_location = (struct initial_process_info *) (start - sizeof(struct initial_process_info));
+    *info_location = *info;
+
+    char **argv_start = (char **) (((uintptr_t) info_location) - sizeof(char **));
 
     size_t count = context->prepend_argc + context->argc + context->envc;
     char *args_start = (char *) (argv_start - count);
@@ -131,8 +134,10 @@ uintptr_t map_program_args(uintptr_t start, struct args_context *context) {
 
     argv_start[-(context->prepend_argc + context->argc + 1)] = NULL;
 
-    args_start = (char *) ((((uintptr_t) args_start) & ~0xF) - 0x08);
+    args_start = (char *) ((((uintptr_t) args_start) & ~0xF));
 
+    args_start -= sizeof(struct initial_process_info *);
+    *((struct initial_process_info **) args_start) = info_location;
     args_start -= sizeof(size_t);
     *((size_t *) args_start) = context->prepend_argc + context->argc - 1;
     args_start -= sizeof(char **);
@@ -277,17 +282,20 @@ struct task *load_task(const char *file_name) {
     process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
     process->start_time = time_read_clock(CLOCK_REALTIME);
 
+    struct initial_process_info info = { 0 };
+    info.main_tid = process->main_tid;
+
     task->kernel_task = true;
     assert(elf64_is_valid(buffer));
-    elf64_load_program(buffer, length, file, task);
+    elf64_load_program(buffer, length, file, &info);
     elf64_map_heap(buffer, task);
     uintptr_t entry = elf64_get_entry(buffer);
 
     assert(fs_close(file) == 0);
     unmap_range((uintptr_t) buffer, length);
 
-    proc_allocate_user_stack(process);
-    arch_load_task(task, entry);
+    proc_allocate_user_stack(process, &info);
+    arch_load_task(task, entry, &info);
 
     set_current_task(save);
     task->kernel_task = false;

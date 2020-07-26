@@ -38,11 +38,12 @@ struct initial_process_info {
     unsigned long guard_size;
     int main_tid;
     int isatty_mask;
+    unsigned long program_entry;
+    int has_interpreter;
 };
 
 int create_task(struct create_task_args *create_task_args);
 void exit_task(void) __attribute__((__noreturn__));
-int get_initial_process_info(struct initial_process_info *info);
 int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int to_wake, unsigned int *to_wait);
 int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **list_head);
 int tgkill(int tgid, int tid, int signum);

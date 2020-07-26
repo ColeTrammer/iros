@@ -18,14 +18,14 @@
 struct args_context;
 struct clock;
 struct file;
+struct initial_process_info;
 struct timer;
+struct tnode;
 
 struct file_descriptor {
     struct file *file;
     int fd_flags;
 };
-
-struct tnode;
 
 struct process {
     struct tnode *cwd;
@@ -73,11 +73,6 @@ struct process {
 
     struct timespec start_time;
 
-    // TLS info
-    void *tls_master_copy_start;
-    size_t tls_master_copy_size;
-    size_t tls_master_copy_alignment;
-
     bool should_trace;
 
     struct sigaction sig_state[_NSIG];
@@ -88,7 +83,7 @@ struct process {
 void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure);
 void proc_add_process(struct process *process);
 void proc_bump_process(struct process *process);
-uintptr_t proc_allocate_user_stack(struct process *process);
+uintptr_t proc_allocate_user_stack(struct process *process, struct initial_process_info *info);
 struct process *find_by_pid(pid_t pid);
 void proc_set_sig_pending(struct process *process, int n);
 void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *process, void *closure), void *closure);

@@ -100,10 +100,11 @@ uint64_t elf64_get_size(void *buffer) {
     return program_headers[1].p_memsz + program_headers[0].p_filesz;
 }
 
-void elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct task *task) {
+void elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct initial_process_info *info) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
 
+    info->program_entry = elf_header->e_entry;
     for (int i = 0; i < elf_header->e_phnum; i++) {
         uintptr_t program_section_start = program_headers[i].p_vaddr;
         if (program_section_start == 0) {
@@ -112,9 +113,9 @@ void elf64_load_program(void *buffer, size_t length, struct file *execuatable, s
 
         if (program_headers[i].p_type == PT_TLS) {
             program_section_start = (elf64_get_start(buffer) - program_headers[i].p_memsz) & ~0xFFFULL;
-            task->process->tls_master_copy_start = (void *) program_section_start;
-            task->process->tls_master_copy_size = program_headers[i].p_memsz;
-            task->process->tls_master_copy_alignment = program_headers[i].p_align;
+            info->tls_start = (void *) program_section_start;
+            info->tls_size = program_headers[i].p_memsz;
+            info->tls_alignment = program_headers[i].p_align;
         }
 
         assert(program_section_start < ((uintptr_t) buffer) + length);

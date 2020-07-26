@@ -11,13 +11,13 @@
 #include <sys/param.h>
 
 struct thread_control_block *__allocate_thread_control_block() {
-    size_t align = MAX(__initial_process_info.tls_alignment, alignof(struct thread_control_block));
-    size_t size = ALIGN_UP(__initial_process_info.tls_size, align) + sizeof(struct thread_control_block);
+    size_t align = MAX(__initial_process_info->tls_alignment, alignof(struct thread_control_block));
+    size_t size = ALIGN_UP(__initial_process_info->tls_size, align) + sizeof(struct thread_control_block);
     uint8_t *pointer = aligned_alloc(align, size);
-    struct thread_control_block *block = (struct thread_control_block *) (pointer + ALIGN_UP(__initial_process_info.tls_size, align));
+    struct thread_control_block *block = (struct thread_control_block *) (pointer + ALIGN_UP(__initial_process_info->tls_size, align));
 
-    uint8_t *tls = ((uint8_t *) block) - ALIGN_UP(__initial_process_info.tls_size, __initial_process_info.tls_alignment);
-    memcpy(tls, __initial_process_info.tls_start, __initial_process_info.tls_size);
+    uint8_t *tls = ((uint8_t *) block) - ALIGN_UP(__initial_process_info->tls_size, __initial_process_info->tls_alignment);
+    memcpy(tls, __initial_process_info->tls_start, __initial_process_info->tls_size);
 
     block->self = block;
     block->next = NULL;
