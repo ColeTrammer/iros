@@ -160,6 +160,7 @@ void map_page_flags(uintptr_t virt_addr, uint64_t flags) {
 
     flags |= (flags & VM_PROT_NONE ? 0x01 : 0);
     flags &= (VM_WRITE | VM_USER | VM_GLOBAL | VM_NO_EXEC | VM_COW | VM_SHARED | VM_PROT_NONE);
+    *pt_entry &= ~0x8000000000000FFFULL;
     *pt_entry |= flags;
     flush_tlb(virt_addr);
 }
