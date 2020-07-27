@@ -110,6 +110,7 @@ void arch_run_task(struct task *task);
 void free_task(struct task *task, bool free_paging_structure);
 void arch_free_task(struct task *task, bool free_paging_structure);
 
+pid_t proc_fork(void);
 int proc_execve(char *path, char **argv, char **envp);
 void init_userland(void);
 
