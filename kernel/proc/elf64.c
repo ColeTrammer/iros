@@ -101,6 +101,8 @@ uint64_t elf64_get_size(void *buffer) {
 }
 
 uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct initial_process_info *info) {
+    (void) length;
+
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
 
@@ -108,68 +110,106 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
     if (info) {
         info->program_entry = entry;
     }
+
+    uintptr_t offset = 0;
+    const char *interpreter = NULL;
+    size_t tls_size = 0;
+    uintptr_t data_start = -1;
+    uintptr_t data_end = 0;
     for (int i = 0; i < elf_header->e_phnum; i++) {
-        uintptr_t program_section_start = program_headers[i].p_vaddr;
-        if (program_headers[i].p_type == PT_PHDR) {
-            // FIXME: should this be loaded?
-            continue;
+        switch (program_headers[i].p_type) {
+            case PT_PHDR:
+                continue;
+            case PT_INTERP:
+                interpreter = ((const char *) buffer) + program_headers[i].p_offset;
+                continue;
+            case PT_TLS:
+                tls_size = ((program_headers[i].p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+                continue;
+            case PT_DYNAMIC:
+            case PT_LOAD:
+                if (!(program_headers[i].p_flags & PF_X)) {
+                    data_start = MIN(data_start, program_headers[i].p_vaddr & ~(PAGE_SIZE - 1));
+                    data_end =
+                        MAX(data_end, ((program_headers[i].p_vaddr + program_headers[i].p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
+                }
+                continue;
+            default:
+                debug_log("Unkown program header type: [ %d ]\n", program_headers[i].p_type);
+                continue;
         }
+    }
 
-        if (program_headers[i].p_type == PT_TLS) {
-            assert(info);
-            program_section_start = (elf64_get_start(buffer) - program_headers[i].p_memsz) & ~0xFFFULL;
-            info->tls_start = (void *) program_section_start;
-            info->tls_size = program_headers[i].p_memsz;
-            info->tls_alignment = program_headers[i].p_align;
-        }
+    assert(offset % PAGE_SIZE == 0);
 
-        if (program_headers[i].p_type == PT_INTERP) {
-            assert(info);
-            const char *name = ((const char *) buffer) + program_headers[i].p_offset;
-            debug_log("loading interpreter: [ %s ]\n", name);
-            int error = 0;
-            struct file *file = fs_openat(fs_root(), name, O_RDONLY, 0, &error);
-            assert(error == 0);
-            size_t size = fs_file_size(file);
-            void *interp = (void *) fs_mmap(NULL, size, PROT_READ, MAP_SHARED, file, 0);
-            assert(interp != MAP_FAILED);
-            entry = elf64_load_program(interp, size, file, NULL);
-            unmap_range((uintptr_t) interp, ((size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
-            fs_close(file);
-            continue;
-        }
-
-        assert(program_section_start < ((uintptr_t) buffer) + length);
-
-        uintptr_t program_section_end = program_section_start + program_headers[i].p_memsz;
-        uintptr_t aligned_start = program_section_start & ~0xFFFULL;
-        uintptr_t aligned_end = ((program_section_end + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        int protections = program_headers[i].p_flags == (PF_R | PF_X) ? (PROT_READ | PROT_EXEC) : (PROT_READ | PROT_WRITE);
-        uint64_t type =
-            program_headers[i].p_type == PT_TLS ? VM_PROCESS_TLS_MASTER_COPY : protections & PROT_EXEC ? VM_PROCESS_TEXT : VM_PROCESS_DATA;
-
+    if (data_end >= data_start) {
 #ifdef ELF64_DEBUG
-        debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start, program_headers[i].p_offset,
-                  program_headers[i].p_filesz, program_headers[i].p_memsz, program_section_end);
+        debug_log("Creating data region: [ %#.16lX, %lu ]\n", data_start + offset, data_end - data_start);
 #endif /* ELF64_DEBUG */
+        struct vm_region *data_region =
+            map_region((void *) (data_start + offset), data_end - data_start, PROT_READ | PROT_WRITE, VM_PROCESS_DATA);
+        struct vm_object *object = vm_create_anon_object(data_end - data_start);
+        data_region->vm_object = object;
+        data_region->vm_object_offset = 0;
+        vm_map_region_with_object(data_region);
+    }
 
-        // This will be true for the text segment
-        if (program_headers[i].p_memsz == program_headers[i].p_filesz && program_section_start % PAGE_SIZE == 0) {
-            assert(fs_mmap((void *) aligned_start, program_headers[i].p_filesz, PROT_READ | PROT_EXEC, MAP_SHARED, execuatable,
-                           program_headers[i].p_offset) != (intptr_t) MAP_FAILED);
-        } else {
-            struct vm_region *added = map_region((void *) aligned_start, aligned_end - aligned_start, PROT_WRITE, type);
+    if (tls_size != 0) {
+#ifdef ELF64_DEBUG
+        debug_log("Creating tls region: [ %#.16lX, %lu ]\n", data_end + offset, tls_size);
+#endif /* ELF64_DEBUG */
+        struct vm_region *tls_region =
+            map_region((void *) (data_end + offset), tls_size, PROT_READ | PROT_WRITE, VM_PROCESS_TLS_MASTER_COPY);
+        struct vm_object *object = vm_create_anon_object(tls_size);
+        tls_region->vm_object = object;
+        tls_region->vm_object_offset = 0;
+        vm_map_region_with_object(tls_region);
+    }
 
-            struct vm_object *object = vm_create_anon_object(aligned_end - aligned_start);
-            added->vm_object = object;
-            added->vm_object_offset = 0;
-
-            vm_map_region_with_object(added);
-
-            // FIXME: check for the possibility of a read only section here, we would need to temporarily change protections
-            //        in that case.
-            memcpy((char *) program_section_start, ((char *) buffer) + program_headers[i].p_offset, program_headers[i].p_filesz);
+    for (int i = 0; i < elf_header->e_phnum; i++) {
+        switch (program_headers[i].p_type) {
+            case PT_PHDR:
+            case PT_INTERP:
+                continue;
+            case PT_TLS:
+                assert(info);
+                info->tls_alignment = program_headers[i].p_align;
+                info->tls_size = tls_size;
+                info->tls_start = (void *) (offset + data_end);
+                memcpy(info->tls_start, buffer + program_headers[i].p_offset, program_headers[i].p_filesz);
+                continue;
+            case PT_DYNAMIC:
+            case PT_LOAD:
+                if (program_headers[i].p_flags & PF_X) {
+#ifdef ELF64_DEBUG
+                    debug_log("Creating text region: [ %#.16lX, %lu ]\n", program_headers[i].p_vaddr + offset,
+                              ((program_headers[i].p_filesz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
+#endif /* ELF64_DEBUG */
+                    assert(fs_mmap((void *) (program_headers[i].p_vaddr + offset), program_headers[i].p_filesz, PROT_READ | PROT_EXEC,
+                                   MAP_SHARED, execuatable, program_headers[i].p_offset) != (intptr_t) MAP_FAILED);
+                } else {
+                    memcpy((void *) (program_headers[i].p_vaddr + offset), ((char *) buffer) + program_headers[i].p_offset,
+                           program_headers[i].p_filesz);
+                }
+                continue;
+            default:
+                debug_log("Unkown program header type: [ %d ]\n", program_headers[i].p_type);
+                continue;
         }
+    }
+
+    if (interpreter) {
+        assert(info);
+        debug_log("loading interpreter: [ %s ]\n", interpreter);
+        int error = 0;
+        struct file *file = fs_openat(fs_root(), interpreter, O_RDONLY, 0, &error);
+        assert(error == 0);
+        size_t size = fs_file_size(file);
+        void *interp = (void *) fs_mmap(NULL, size, PROT_READ, MAP_SHARED, file, 0);
+        assert(interp != MAP_FAILED);
+        entry = elf64_load_program(interp, size, file, NULL);
+        unmap_range((uintptr_t) interp, ((size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
+        fs_close(file);
     }
 
     return entry;
