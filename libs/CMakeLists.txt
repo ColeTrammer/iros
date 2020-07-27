@@ -4,6 +4,7 @@ if (NOT ${NATIVE_BUILD})
         libm
         libpthread
         librt
+        loader
     )
 endif()
 
