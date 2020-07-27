@@ -60,8 +60,16 @@ void spawn_process(char **argv, uid_t uid, gid_t gid, bool redirect) {
 }
 
 int main(int argc, char **argv) {
-    bool use_graphics = false;
+    putenv("PATH=/bin:/usr/bin:/initrd");
+    int serial_debug = open("/dev/serial0", O_RDWR);
+    if (serial_debug == -1) {
+        serial_debug = open("/dev/null", O_RDWR);
+        assert(serial_debug != -1);
+    }
+    dup2(serial_debug, STDOUT_FILENO);
+    dup2(serial_debug, STDERR_FILENO);
 
+    bool use_graphics = false;
     int opt;
     while ((opt = getopt(argc, argv, ":gv")) != -1) {
         switch (opt) {
