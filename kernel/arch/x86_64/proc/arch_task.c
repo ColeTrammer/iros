@@ -331,9 +331,8 @@ int proc_execve(char *path, char **argv, char **envp) {
     }
 
     assert(elf64_is_valid(buffer));
-    elf64_load_program(buffer, length, file, &info);
+    task->arch_task.user_task_state->stack_state.rip = elf64_load_program(buffer, length, file, &info);
     elf64_map_heap(buffer, task);
-    task->arch_task.user_task_state->stack_state.rip = elf64_get_entry(buffer);
 
     fs_close(file);
     unmap_range((uintptr_t) buffer, length);

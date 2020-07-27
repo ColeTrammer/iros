@@ -84,12 +84,12 @@ bool elf64_is_valid(void *buffer) {
 uintptr_t elf64_get_start(void *buffer) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_header = (Elf64_Phdr *) ((uintptr_t) buffer + elf_header->e_phoff);
-    return program_header->p_vaddr;
-}
-
-uintptr_t elf64_get_entry(void *buffer) {
-    Elf64_Ehdr *elf_header = buffer;
-    return elf_header->e_entry;
+    for (int i = 0; i < elf_header->e_phnum; i++) {
+        if (program_header[i].p_type == PT_LOAD) {
+            return program_header[i].p_vaddr;
+        }
+    }
+    return 0;
 }
 
 uint64_t elf64_get_size(void *buffer) {
@@ -100,22 +100,43 @@ uint64_t elf64_get_size(void *buffer) {
     return program_headers[1].p_memsz + program_headers[0].p_filesz;
 }
 
-void elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct initial_process_info *info) {
+uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct initial_process_info *info) {
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
 
-    info->program_entry = elf_header->e_entry;
+    uintptr_t entry = elf_header->e_entry;
+    if (info) {
+        info->program_entry = entry;
+    }
     for (int i = 0; i < elf_header->e_phnum; i++) {
         uintptr_t program_section_start = program_headers[i].p_vaddr;
-        if (program_section_start == 0) {
+        if (program_headers[i].p_type == PT_PHDR) {
+            // FIXME: should this be loaded?
             continue;
         }
 
         if (program_headers[i].p_type == PT_TLS) {
+            assert(info);
             program_section_start = (elf64_get_start(buffer) - program_headers[i].p_memsz) & ~0xFFFULL;
             info->tls_start = (void *) program_section_start;
             info->tls_size = program_headers[i].p_memsz;
             info->tls_alignment = program_headers[i].p_align;
+        }
+
+        if (program_headers[i].p_type == PT_INTERP) {
+            assert(info);
+            const char *name = ((const char *) buffer) + program_headers[i].p_offset;
+            debug_log("loading interpreter: [ %s ]\n", name);
+            int error = 0;
+            struct file *file = fs_openat(fs_root(), name, O_RDONLY, 0, &error);
+            assert(error == 0);
+            size_t size = fs_file_size(file);
+            void *interp = (void *) fs_mmap(NULL, size, PROT_READ, MAP_SHARED, file, 0);
+            assert(interp != MAP_FAILED);
+            entry = elf64_load_program(interp, size, file, NULL);
+            unmap_range((uintptr_t) interp, ((size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
+            fs_close(file);
+            continue;
         }
 
         assert(program_section_start < ((uintptr_t) buffer) + length);
@@ -126,6 +147,11 @@ void elf64_load_program(void *buffer, size_t length, struct file *execuatable, s
         int protections = program_headers[i].p_flags == (PF_R | PF_X) ? (PROT_READ | PROT_EXEC) : (PROT_READ | PROT_WRITE);
         uint64_t type =
             program_headers[i].p_type == PT_TLS ? VM_PROCESS_TLS_MASTER_COPY : protections & PROT_EXEC ? VM_PROCESS_TEXT : VM_PROCESS_DATA;
+
+#ifdef ELF64_DEBUG
+        debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start, program_headers[i].p_offset,
+                  program_headers[i].p_filesz, program_headers[i].p_memsz, program_section_end);
+#endif /* ELF64_DEBUG */
 
         // This will be true for the text segment
         if (program_headers[i].p_memsz == program_headers[i].p_filesz && program_section_start % PAGE_SIZE == 0) {
@@ -140,16 +166,13 @@ void elf64_load_program(void *buffer, size_t length, struct file *execuatable, s
 
             vm_map_region_with_object(added);
 
-#ifdef ELF64_DEBUG
-            debug_log("program section: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", program_section_start,
-                      program_headers[i].p_offset, program_headers[i].p_filesz, program_headers[i].p_memsz, program_section_end);
-#endif /* ELF64_DEBUG */
-
             // FIXME: check for the possibility of a read only section here, we would need to temporarily change protections
             //        in that case.
             memcpy((char *) program_section_start, ((char *) buffer) + program_headers[i].p_offset, program_headers[i].p_filesz);
         }
     }
+
+    return entry;
 }
 
 void elf64_map_heap(void *buffer, struct task *task) {
