@@ -8,9 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/irqs/handlers.h>
@@ -223,6 +225,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     task->process->tty = -1;
     task->tid = get_next_tid();
+    task->process->cwd = bump_tnode(fs_root());
     task->process->main_tid = task->tid;
     process->name = strdup(name);
     process->start_time = time_read_clock(CLOCK_REALTIME);
@@ -233,75 +236,36 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     return task;
 }
 
-struct task *load_task(const char *file_name) {
-    struct task *task = calloc(1, sizeof(struct task));
-    struct process *process = calloc(1, sizeof(struct process));
-    task->process = process;
+void start_userland(void) {
+    char *argv[3] = { argv[0] = "/bin/start", kernel_use_graphics() ? "-g" : "-v", NULL };
+    char *envp[1] = { NULL };
 
-    int error = 0;
-    struct file *file = fs_openat(NULL, file_name, O_RDONLY, 0, &error);
+    struct task_state task_state_save = { 0 };
+    struct task *current = get_current_task();
+    current->arch_task.user_task_state = &task_state_save;
+
+    int error;
+    struct file *dev_serial = fs_openat(fs_root(), "/dev/serial0", O_RDWR, 0, &error);
     assert(error == 0);
+    current->process->files[0] = (struct file_descriptor) { .file = dev_serial, .fd_flags = 0 };
+    current->process->files[1] = fs_dup(current->process->files[0]);
+    current->process->files[2] = fs_dup(current->process->files[0]);
 
-    uintptr_t old_paging_structure = get_current_paging_structure();
+    int ret = proc_execve("/bin/start", argv, envp);
+    if (ret) {
+        debug_log("Failed to exec /bin/start: [ %s ]\n", strerror(-ret));
+        abort();
+    }
 
-    struct task *save = get_current_task();
-    set_current_task(task);
-    uintptr_t structure = create_paging_structure(process->process_memory, false, process);
-    load_paging_structure(structure, process);
+    disable_interrupts();
+    current = get_current_task();
+    memcpy(&current->arch_task.task_state, &task_state_save, sizeof(struct task_state));
+    run_task(current);
+}
 
-    size_t length = fs_file_size(file);
-    char *buffer = (char *) fs_mmap(NULL, length, PROT_READ, MAP_SHARED, file, 0);
-    assert(buffer != MAP_FAILED);
-
-    process->exe = bump_tnode(fs_get_tnode_for_file(file));
-    process->name = strdup(process->exe->name);
-
-    task->tid = get_next_tid();
-    task->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
-    task->sched_state = RUNNING_INTERRUPTIBLE;
-    task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
-
-    process->pid = get_next_pid();
-    task->process->main_tid = task->tid;
-    init_mutex(&process->lock);
-    init_spinlock(&process->user_mutex_lock);
-    proc_add_process(process);
-    process->pgid = task->process->pid;
-    process->sid = task->process->pid;
-    process->ppid = initial_kernel_process.pid;
-    process->umask = 022;
-    process->task_list = task;
-    process->tty = -1;
-    process->cwd = bump_tnode(fs_root());
-    process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
-    process->start_time = time_read_clock(CLOCK_REALTIME);
-
-    struct initial_process_info info = { 0 };
-    info.main_tid = process->main_tid;
-
-    task->kernel_task = true;
-    assert(elf64_is_valid(buffer));
-    elf64_load_program(buffer, length, file, &info);
-    elf64_map_heap(buffer, task);
-    uintptr_t entry = elf64_get_entry(buffer);
-
-    assert(fs_close(file) == 0);
-    unmap_range((uintptr_t) buffer, length);
-
-    proc_allocate_user_stack(process, &info);
-    arch_load_task(task, entry, &info);
-
-    set_current_task(save);
-    task->kernel_task = false;
-
-    load_paging_structure(old_paging_structure, save->process);
-
-    process->files[0] = (struct file_descriptor) { fs_openat(NULL, "/dev/serial0", O_RDWR, 0, NULL), 0 };
-    process->files[1] = fs_dup(process->files[0]);
-    process->files[2] = fs_dup(process->files[0]);
-
-    debug_log("Loaded Task: [ %d:%d, %s ]\n", process->pid, task->tid, file_name);
-    return task;
+void init_userland(void) {
+    struct task *init = load_kernel_task((uintptr_t) start_userland, "init");
+    sched_add_task(init);
 }
 
 /* Must be called from unpremptable context */
@@ -325,7 +289,10 @@ void free_task(struct task *task, bool free_paging_structure) {
         vm_free_kernel_region(task->kernel_stack);
     }
 
-    time_destroy_clock(task->task_clock);
+    if (task->task_clock) {
+        time_destroy_clock(task->task_clock);
+    }
+
     proc_drop_process(task->process, task, free_paging_structure);
     free(task);
 }

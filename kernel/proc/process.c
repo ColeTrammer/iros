@@ -125,7 +125,10 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             free_program_args(process->args_context);
         }
 
-        time_destroy_clock(process->process_clock);
+        if (process->process_clock) {
+            time_destroy_clock(process->process_clock);
+        }
+
         free(process->name);
         free(process);
         return;

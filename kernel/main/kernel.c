@@ -51,9 +51,7 @@ void kernel_main(uint32_t *multiboot_info) {
     //       could be loaded sooner
     init_kernel_symbols();
 
-    // Start Shell
-    struct task *shell = load_task("/bin/start");
-    sched_add_task(shell);
+    init_userland();
 
     init_smp();
     sched_run_next();
