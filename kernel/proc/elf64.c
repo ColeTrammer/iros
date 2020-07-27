@@ -106,14 +106,11 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
     Elf64_Ehdr *elf_header = buffer;
     Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
 
-    uintptr_t entry = elf_header->e_entry;
-    if (info) {
-        info->program_entry = entry;
-    }
-
     uintptr_t offset = 0;
     const char *interpreter = NULL;
     size_t tls_size = 0;
+    uintptr_t text_start = -1;
+    uintptr_t text_end = 0;
     uintptr_t data_start = -1;
     uintptr_t data_end = 0;
     for (int i = 0; i < elf_header->e_phnum; i++) {
@@ -128,7 +125,10 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
                 continue;
             case PT_DYNAMIC:
             case PT_LOAD:
-                if (!(program_headers[i].p_flags & PF_X)) {
+                if (program_headers[i].p_flags & PF_X) {
+                    text_start = program_headers[i].p_vaddr & ~(PAGE_SIZE - 1);
+                    text_end = ((program_headers[i].p_vaddr + program_headers[i].p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+                } else {
                     data_start = MIN(data_start, program_headers[i].p_vaddr & ~(PAGE_SIZE - 1));
                     data_end =
                         MAX(data_end, ((program_headers[i].p_vaddr + program_headers[i].p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
@@ -140,7 +140,20 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
         }
     }
 
+    // Loading an interpreter
+    if (!info) {
+        size_t size = (text_start != (uintptr_t) -1 ? (text_end - text_start) : 0) + (data_end >= data_start ? (data_end - data_start) : 0);
+        struct vm_region *first = get_current_task()->process->process_memory;
+        assert(first->start - PAGE_SIZE >= size);
+        offset = first->start - size;
+    }
+
     assert(offset % PAGE_SIZE == 0);
+
+    uintptr_t entry = elf_header->e_entry;
+    if (info) {
+        info->program_entry = entry + offset;
+    }
 
     if (data_end >= data_start) {
 #ifdef ELF64_DEBUG
@@ -212,7 +225,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
         fs_close(file);
     }
 
-    return entry;
+    return entry + offset;
 }
 
 void elf64_map_heap(void *buffer, struct task *task) {
