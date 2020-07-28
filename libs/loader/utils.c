@@ -122,6 +122,20 @@ void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t offset) {
     return ret;
 }
 
+int mprotect(void *base, size_t size, int prot) {
+    int ret;
+    asm volatile("mov %1, %%rdi\n"
+                 "mov %2, %%rsi\n"
+                 "mov %3, %%rdx\n"
+                 "mov %4, %%ecx\n"
+                 "int $0x80\n"
+                 "mov %%eax, %0\n"
+                 : "=r"(ret)
+                 : "i"(SC_MPROTECT), "r"(base), "r"(size), "r"(prot)
+                 : "rdi", "rsi", "rdx", "rcx", "rax", "memory");
+    return ret;
+}
+
 int munmap(void *base, size_t size) {
     int ret;
     asm volatile("mov %1, %%rdi\n"
@@ -137,6 +151,7 @@ int munmap(void *base, size_t size) {
 
 #include "../libc/bits/lock/__lock.c"
 #include "../libc/bits/lock/__unlock.c"
+#include "../libc/search/queue.c"
 #include "../libc/string/memcmp.c"
 #include "../libc/string/memcpy.c"
 #include "../libc/string/memmove.c"

@@ -1,11 +1,14 @@
 #include <elf.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <unistd.h>
 
 #include "loader.h"
+
+static uintptr_t do_symbol_lookup(const char *s);
 
 struct mapped_elf_file {
     void *base;
@@ -195,6 +198,8 @@ static size_t dynamic_count(const struct mapped_elf_file *self) {
 }
 
 struct dynamic_elf_object {
+    struct dynamic_elf_object *next;
+    struct dynamic_elf_object *prev;
     uintptr_t hash_table;
     uintptr_t string_table;
     uintptr_t symbol_table;
@@ -211,14 +216,22 @@ struct dynamic_elf_object {
     size_t string_table_size;
     size_t symbol_entry_size;
     uint8_t *raw_data;
+    size_t raw_data_size;
+    uintptr_t relocation_offset;
     size_t *dependencies;
     size_t dependencies_size;
     size_t dependencies_max;
 };
 
-static struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base) {
+static struct dynamic_elf_object *dynamic_object_head;
+static struct dynamic_elf_object *dynamic_object_tail;
+
+static struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
+                                                          size_t relocation_offset) {
     struct dynamic_elf_object self = { 0 };
     self.raw_data = base;
+    self.raw_data_size = size;
+    self.relocation_offset = relocation_offset;
     for (size_t i = 0; i < dynamic_count; i++) {
         const Elf64_Dyn *entry = &dynamic_table[i];
         switch (entry->d_tag) {
@@ -295,8 +308,12 @@ static struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynam
     return self;
 }
 
+static void destroy_dynamic_elf_object(struct dynamic_elf_object *self) {
+    munmap(self->raw_data, self->raw_data_size);
+}
+
 static const char *dynamic_strings(const struct dynamic_elf_object *self) {
-    return (const char *) self->string_table;
+    return (const char *) (self->string_table + self->relocation_offset);
 }
 
 static const char *dynamic_string(const struct dynamic_elf_object *self, size_t i) {
@@ -304,19 +321,44 @@ static const char *dynamic_string(const struct dynamic_elf_object *self, size_t 
 }
 
 static size_t rela_count(const struct dynamic_elf_object *self) {
+    if (!self->rela_size || !self->rela_entry_size) {
+        return 0;
+    }
     return self->rela_size / self->rela_entry_size;
 }
 
 static const Elf64_Rela *rela_table(const struct dynamic_elf_object *self) {
-    return (const Elf64_Rela *) self->rela_addr;
+    return (const Elf64_Rela *) (self->rela_addr + self->relocation_offset);
 }
 
 static const Elf64_Rela *rela_at(const struct dynamic_elf_object *self, size_t i) {
     return &rela_table(self)[i];
 }
 
+static size_t plt_relocation_count(const struct dynamic_elf_object *self) {
+    size_t ent_size = self->plt_type == DT_RELA ? sizeof(Elf64_Rela) : sizeof(Elf64_Rel);
+
+    if (!self->plt_size) {
+        return 0;
+    }
+    return self->plt_size / ent_size;
+}
+
+static const void *plt_relocation_table(const struct dynamic_elf_object *self) {
+    return (void *) (self->plt_addr + self->relocation_offset);
+}
+
+static const void *plt_relocation_at(const struct dynamic_elf_object *self, size_t i) {
+    if (self->plt_type == DT_RELA) {
+        const Elf64_Rela *tbl = plt_relocation_table(self);
+        return &tbl[i];
+    }
+    const Elf64_Rel *tbl = plt_relocation_table(self);
+    return &tbl[i];
+}
+
 static const Elf64_Sym *symbol_table(const struct dynamic_elf_object *self) {
-    return (const Elf64_Sym *) self->symbol_table;
+    return (const Elf64_Sym *) (self->symbol_table + self->relocation_offset);
 }
 
 static const Elf64_Sym *symbol_at(const struct dynamic_elf_object *self, size_t i) {
@@ -328,7 +370,7 @@ static const char *symbol_name(const struct dynamic_elf_object *self, size_t i) 
 }
 
 static const Elf64_Word *hash_table(const struct dynamic_elf_object *self) {
-    return (const Elf64_Word *) self->hash_table;
+    return (const Elf64_Word *) (self->hash_table + self->relocation_offset);
 }
 
 static __attribute__((unused)) const Elf64_Sym *lookup_symbol(const struct dynamic_elf_object *self, const char *s) {
@@ -352,50 +394,150 @@ static __attribute__((unused)) const Elf64_Sym *lookup_symbol(const struct dynam
     return NULL;
 }
 
-static __attribute__((unused)) void process_relocations(const struct dynamic_elf_object *self) {
-    for (size_t i = 0; i < rela_count(self); i++) {
-        const Elf64_Rela *rela = rela_at(self, i);
-        size_t type = ELF64_R_TYPE(rela->r_info);
-        size_t symbol_index = ELF64_R_SYM(rela->r_info);
-        switch (type) {
-                // A   - The addend used to compute the value of the relocatable field.
-                // B   - The base address at which a shared object is loaded into memory during execution. Generally, a shared object
-                // file
-                //       is built with a base virtual address of 0. However, the execution address of the shared object is different.
-                //       See Program Header.
-                // G   - The offset into the global offset table at which the address of the relocation entry's symbol resides during
-                //       execution.
-                // GOT - The address of the global offset table.
-                // L   - The section offset or address of the procedure linkage table entry for a symbol.
-                // P   - The section offset or address of the storage unit being relocated, computed using r_offset.
-                // S   - The value of the symbol whose index resides in the relocation entry.
-                // Z   - The size of the symbol whose index resides in the relocation entry.
-            case R_X86_64_NONE:
-                break;
-            case R_X86_64_64:
-                loader_log("R_X86_64_64 for symbol %s\n", symbol_name(self, symbol_index));
-                break;
-            case R_X86_64_GLOB_DAT:
-                loader_log("R_X86_64_GLOB_DATA for symbol %s\n", symbol_name(self, symbol_index));
-                break;
-            case R_X86_64_RELATIVE: {
-                // B + A
-                uintptr_t B = (uintptr_t) self->raw_data;
-                uintptr_t A = rela->r_addend;
-                uint64_t *addr = (uint64_t *) (self->raw_data + rela->r_offset);
-                *addr = B + A;
-                break;
+static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela) {
+    size_t type = ELF64_R_TYPE(rela->r_info);
+    size_t symbol_index = ELF64_R_SYM(rela->r_info);
+    switch (type) {
+            // A   - The addend used to compute the value of the relocatable field.
+            // B   - The base address at which a shared object is loaded into memory during execution. Generally, a shared object
+            // file
+            //       is built with a base virtual address of 0. However, the execution address of the shared object is different.
+            //       See Program Header.
+            // G   - The offset into the global offset table at which the address of the relocation entry's symbol resides during
+            //       execution.
+            // GOT - The address of the global offset table.
+            // L   - The section offset or address of the procedure linkage table entry for a symbol.
+            // P   - The section offset or address of the storage unit being relocated, computed using r_offset.
+            // S   - The value of the symbol whose index resides in the relocation entry.
+            // Z   - The size of the symbol whose index resides in the relocation entry.
+        case R_X86_64_NONE:
+            break;
+        case R_X86_64_64:
+            loader_log("R_X86_64_64 for symbol %s", symbol_name(self, symbol_index));
+            break;
+        case R_X86_64_GLOB_DAT:
+        case R_X86_64_JUMP_SLOT: {
+            const char *to_lookup = symbol_name(self, symbol_index);
+            uintptr_t value = do_symbol_lookup(to_lookup);
+            if (!value) {
+                loader_log("Cannot resolve `%s'", to_lookup);
+                _exit(97);
             }
-            default:
-                loader_log("Unkown relocation type %ld\n", type);
-                break;
+            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
+            *addr = value;
+            break;
         }
+        case R_X86_64_RELATIVE: {
+            // B + A
+            uintptr_t B = (uintptr_t) self->relocation_offset;
+            uintptr_t A = rela->r_addend;
+            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
+            *addr = B + A;
+            break;
+        }
+        default:
+            loader_log("Unkown relocation type %ld", type);
+            break;
     }
 }
 
-void _entry(struct initial_process_info *info, int argc, char **argv, char **envp) {
-    struct dynamic_elf_object program = build_dynamic_elf_object(
-        (const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn), (uint8_t *) info->program_offset);
+static void process_relocations(const struct dynamic_elf_object *self) {
+    size_t count = rela_count(self);
+    for (size_t i = 0; i < count; i++) {
+        const Elf64_Rela *rela = rela_at(self, i);
+        do_rela(self, rela);
+    }
+
+    size_t plt_count = plt_relocation_count(self);
+    for (size_t i = 0; i < plt_count; i++) {
+        const Elf64_Rela *rela = plt_relocation_at(self, i);
+        do_rela(self, rela);
+    }
+}
+
+static struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
+    size_t count = program_header_count(file);
+    if (count == 0) {
+        return NULL;
+    }
+
+    const Elf64_Phdr *first = program_header_at(file, 0);
+    const Elf64_Phdr *last = program_header_at(file, 0);
+    for (size_t i = 1; i < count; i++) {
+        const Elf64_Phdr *phdr = program_header_at(file, i);
+        if (phdr->p_type != PT_LOAD) {
+            continue;
+        }
+
+        if (phdr->p_vaddr < first->p_vaddr) {
+            first = phdr;
+        }
+        if (phdr->p_vaddr + phdr->p_memsz > last->p_vaddr + last->p_memsz) {
+            last = phdr;
+        }
+    }
+
+    size_t total_size = last->p_vaddr + last->p_memsz - first->p_vaddr;
+    total_size = ((total_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    void *base = mmap(NULL, total_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, 0, 0);
+    if ((intptr_t) base < 0 && (intptr_t) base > -300) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        const Elf64_Phdr *phdr = program_header_at(file, i);
+        if (phdr->p_type != PT_LOAD) {
+            continue;
+        }
+
+        size_t size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        void *phdr_start = base + phdr->p_vaddr - first->p_vaddr;
+        memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);
+        void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
+        int prot =
+            (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
+        // FIXME: make relocations work without this hack
+        prot |= PROT_WRITE;
+        mprotect(phdr_page_start, size, prot);
+    }
+
+    size_t dyn_count = dynamic_count(file);
+    uintptr_t dyn_table_offset = dynamic_table_offset(file);
+
+    struct dynamic_elf_object *obj = loader_malloc(sizeof(struct dynamic_elf_object));
+    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base);
+    return obj;
+}
+
+static __attribute__((unused)) void free_dynamic_elf_object(struct dynamic_elf_object *self) {
+    destroy_dynamic_elf_object(self);
+    loader_free(self);
+}
+
+static uintptr_t do_symbol_lookup(const char *s) {
+    struct dynamic_elf_object *obj = dynamic_object_head;
+    while (obj) {
+        const Elf64_Sym *sym = lookup_symbol(obj, s);
+        if (sym && sym->st_shndx != STN_UNDEF) {
+            return obj->relocation_offset + sym->st_value;
+        }
+        obj = obj->next;
+    }
+    return 0;
+}
+
+static void add_dynamic_object(struct dynamic_elf_object *obj) {
+    insque(obj, dynamic_object_tail);
+    dynamic_object_tail = obj;
+}
+
+void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **argv, char **envp) {
+    struct dynamic_elf_object program =
+        build_dynamic_elf_object((const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn),
+                                 (uint8_t *) info->program_offset, info->program_size, 0);
+    dynamic_object_head = dynamic_object_tail = &program;
+
     for (size_t i = 0; i < program.dependencies_size; i++) {
         char path[256];
         strcpy(path, "/usr/lib/");
@@ -405,19 +547,22 @@ void _entry(struct initial_process_info *info, int argc, char **argv, char **env
         int error;
         struct mapped_elf_file lib = build_mapped_elf_file(path, &error);
         if (error) {
-            loader_log("Failed to load dependency\n");
+            loader_log("Failed to load dependency");
             _exit(98);
         }
 
-        size_t dyn_count = dynamic_count(&lib);
-        uintptr_t dyn_table_offset = dynamic_table_offset(&lib);
-        (void) dyn_count;
-        (void) dyn_table_offset;
+        struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib);
+        if (!loaded_lib) {
+            loader_log("Failed to map dependecy");
+            _exit(96);
+        }
 
+        add_dynamic_object(loaded_lib);
         destroy_mapped_elf_file(&lib);
     }
 
-    loader_log("running program");
+    process_relocations(&program);
+
     asm volatile("and $(~16), %%rsp\n"
                  "mov %0, %%rdi\n"
                  "mov %1, %%esi\n"

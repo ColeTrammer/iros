@@ -42,9 +42,11 @@ struct initial_process_info {
     unsigned long program_dynamic_start;
     unsigned long program_dynamic_size;
     unsigned long program_offset;
+    unsigned long program_size;
     unsigned long loader_dynamic_start;
     unsigned long loader_dynamic_size;
     unsigned long loader_offset;
+    unsigned long loader_size;
     int has_interpreter;
 };
 

@@ -51,8 +51,8 @@ void *sbrk(intptr_t increment) {
 #include <limits.h>
 #include <stdio.h>
 
-FILE *__serial_out;
-int __do_logging;
+static __attribute__((unused)) FILE *__serial_out;
+static __attribute__((unused)) int __do_logging;
 
 #ifndef __malloc_debug
 #define __malloc_debug(s, ...)                                     \
