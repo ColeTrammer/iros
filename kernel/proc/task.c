@@ -136,12 +136,12 @@ uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct
 
     argv_start[-(context->prepend_argc + context->argc + 1)] = NULL;
 
-    args_start = (char *) ((((uintptr_t) args_start) & ~0xF));
+    args_start = (char *) ((((uintptr_t) args_start) & ~0xF) - 8);
 
     arch_setup_program_args(task, info_location, context->prepend_argc + context->argc - 1,
                             argv_start - context->prepend_argc - context->argc, argv_start - count);
 
-    assert((uintptr_t) args_start % 16 == 0);
+    assert((uintptr_t) args_start % 16 == 8);
     return (uintptr_t) args_start;
 }
 

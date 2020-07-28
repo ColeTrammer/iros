@@ -11,17 +11,16 @@ _start:
     push %rcx    # ENVP
     push %rdx    # ARGV
     push %rsi    # ARGC
-    sub $8, %rsp # Alignment
 
     callq initialize_standard_library
 
-    add $8, %rsp # Alignment
     pop %rdi     # ARGC
     pop %rsi     # ARGV
     pop %rdx     # ENVP
 
     xorq %rax, %rax # Zero RAX
 
+    sub $8, %rsp # Alignment
     callq main
 
     movq %rax, %rdi
