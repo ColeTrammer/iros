@@ -1,7 +1,198 @@
 #include <elf.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <sys/mman.h>
 #include <sys/param.h>
+#include <unistd.h>
 
 #include "loader.h"
+
+struct mapped_elf_file {
+    void *base;
+    size_t size;
+};
+
+static int validate_elf_shared_library(void *base, size_t size) {
+    if (size < sizeof(Elf64_Ehdr)) {
+        return -1;
+    }
+
+    const Elf64_Ehdr *header = (const Elf64_Ehdr *) base;
+    if (header->e_ident[EI_MAG0] != 0x7F || header->e_ident[EI_MAG1] != 'E' || header->e_ident[EI_MAG2] != 'L' ||
+        header->e_ident[EI_MAG3] != 'F') {
+        return -1;
+    }
+
+    if (header->e_ident[EI_CLASS] != ELFCLASS64) {
+        return -1;
+    }
+
+    if (header->e_ident[EI_DATA] != ELFDATA2LSB) {
+        return -1;
+    }
+
+    if (header->e_ident[EI_VERSION] != EV_CURRENT) {
+        return -1;
+    }
+
+    if (header->e_ident[EI_OSABI] != ELFOSABI_SYSV || header->e_ident[EI_ABIVERSION] != 0) {
+        return -1;
+    }
+
+    if (header->e_type != ET_DYN) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static struct mapped_elf_file build_mapped_elf_file(const char *file, int *error) {
+    void *base = NULL;
+    int fd = open(file, O_RDONLY, 0);
+    if (fd < 0) {
+        *error = fd;
+        goto build_mapped_elf_file_fail;
+    }
+
+    struct stat st;
+    int ret = fstat(fd, &st);
+    if (ret < 0) {
+        *error = -1;
+        goto build_mapped_elf_file_fail;
+    }
+
+    size_t size = st.st_size;
+    base = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+    if ((intptr_t) base < 0 && (intptr_t) base > -300) {
+        base = NULL;
+        *error = -1;
+        goto build_mapped_elf_file_fail;
+    }
+
+    int validation_error = validate_elf_shared_library(base, size);
+    if (validation_error) {
+        *error = validation_error;
+        goto build_mapped_elf_file_fail;
+    }
+
+    ret = close(fd);
+    if (ret < 0) {
+        fd = -1;
+        *error = -1;
+        goto build_mapped_elf_file_fail;
+    }
+
+    *error = 0;
+    return (struct mapped_elf_file) { .base = base, .size = size };
+
+build_mapped_elf_file_fail:
+    if (fd >= 0) {
+        close(fd);
+    }
+
+    if (base) {
+        munmap(base, size);
+    }
+
+    return (struct mapped_elf_file) { .base = NULL, .size = 0 };
+}
+
+static void destroy_mapped_elf_file(struct mapped_elf_file *self) {
+    munmap(self->base, self->size);
+}
+
+static const Elf64_Ehdr *elf_header(const struct mapped_elf_file *self) {
+    return self->base;
+}
+
+static const Elf64_Shdr *section_table(const struct mapped_elf_file *self) {
+    const Elf64_Ehdr *header = elf_header(self);
+    return self->base + header->e_shoff;
+}
+
+static const Elf64_Shdr *section_at(const struct mapped_elf_file *self, size_t index) {
+    return &section_table(self)[index];
+}
+
+static size_t section_count(const struct mapped_elf_file *self) {
+    return elf_header(self)->e_shnum;
+}
+
+static const Elf64_Phdr *program_header_table(const struct mapped_elf_file *self) {
+    const Elf64_Ehdr *header = elf_header(self);
+    return self->base + header->e_phoff;
+}
+
+static const Elf64_Phdr *program_header_at(const struct mapped_elf_file *self, size_t index) {
+    return &program_header_table(self)[index];
+}
+
+static size_t program_header_count(const struct mapped_elf_file *self) {
+    return elf_header(self)->e_phnum;
+}
+
+static const char *section_strings(const struct mapped_elf_file *self) {
+    const Elf64_Ehdr *header = elf_header(self);
+    if (header->e_shstrndx == 0) {
+        return NULL;
+    }
+    const Elf64_Shdr *string_table = section_at(self, header->e_shstrndx);
+    return self->base + string_table->sh_offset;
+}
+
+static const char *section_string(const struct mapped_elf_file *self, size_t index) {
+    const char *strings = section_strings(self);
+    if (!strings) {
+        return NULL;
+    }
+    return &strings[index];
+}
+
+static const char *strings(const struct mapped_elf_file *self) {
+    size_t count = section_count(self);
+    for (size_t i = 0; i < count; i++) {
+        const Elf64_Shdr *section = section_at(self, i);
+        if (section->sh_type == SHT_STRTAB && strcmp(section_string(self, section->sh_name), ".strtab") == 0) {
+            return self->base + section->sh_offset;
+        }
+    }
+    return NULL;
+}
+
+static __attribute__((unused)) const char *string(const struct mapped_elf_file *self, size_t index) {
+    const char *strs = strings(self);
+    if (!strs) {
+        return NULL;
+    }
+    return &strs[index];
+}
+
+static const Elf64_Phdr *dynamic_program_header(const struct mapped_elf_file *self) {
+    size_t count = program_header_count(self);
+    for (size_t i = 0; i < count; i++) {
+        const Elf64_Phdr *phdr = program_header_at(self, i);
+        if (phdr->p_type == PT_DYNAMIC) {
+            return phdr;
+        }
+    }
+    return NULL;
+}
+
+static uintptr_t dynamic_table_offset(const struct mapped_elf_file *self) {
+    const Elf64_Phdr *phdr = dynamic_program_header(self);
+    if (!phdr) {
+        return -1;
+    }
+    return phdr->p_vaddr;
+}
+
+static size_t dynamic_count(const struct mapped_elf_file *self) {
+    const Elf64_Phdr *phdr = dynamic_program_header(self);
+    if (!phdr) {
+        return 0;
+    }
+    return phdr->p_filesz / sizeof(Elf64_Dyn);
+}
 
 struct dynamic_elf_object {
     uintptr_t hash_table;
@@ -206,9 +397,27 @@ void _entry(struct initial_process_info *info, int argc, char **argv, char **env
     struct dynamic_elf_object program = build_dynamic_elf_object(
         (const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn), (uint8_t *) info->program_offset);
     for (size_t i = 0; i < program.dependencies_size; i++) {
-        loader_log("NEEDS `%s'", dynamic_string(&program, program.dependencies[i]));
+        char path[256];
+        strcpy(path, "/usr/lib/");
+        strcpy(path + strlen("/usr/lib/"), dynamic_string(&program, program.dependencies[i]));
+        loader_log("Loading dependency of the `%s': `%s'", *argv, path);
+
+        int error;
+        struct mapped_elf_file lib = build_mapped_elf_file(path, &error);
+        if (error) {
+            loader_log("Failed to load dependency\n");
+            _exit(98);
+        }
+
+        size_t dyn_count = dynamic_count(&lib);
+        uintptr_t dyn_table_offset = dynamic_table_offset(&lib);
+        (void) dyn_count;
+        (void) dyn_table_offset;
+
+        destroy_mapped_elf_file(&lib);
     }
 
+    loader_log("running program");
     asm volatile("and $(~16), %%rsp\n"
                  "mov %0, %%rdi\n"
                  "mov %1, %%esi\n"

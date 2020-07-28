@@ -17,10 +17,17 @@
 extern "C" {
 #endif /* __cpluplus */
 
+struct stat;
+
 void _exit(int status) LOADER_PRIVATE __attribute__((noreturn));
 ssize_t write(int fd, const void *buffer, size_t len) LOADER_PRIVATE;
 void *sbrk(intptr_t increment) LOADER_PRIVATE;
 int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int to_wake, unsigned int *to_wait) LOADER_PRIVATE;
+int open(const char *path, int flags, ...) LOADER_PRIVATE;
+int fstat(int fd, struct stat *st) LOADER_PRIVATE;
+int close(int fd) LOADER_PRIVATE;
+void *mmap(void *base, size_t size, int prot, int flags, int fd, off_t offset) LOADER_PRIVATE;
+int munmap(void *base, size_t size) LOADER_PRIVATE;
 size_t strlen(const char *s) LOADER_PRIVATE;
 void *memmove(void *dst, const void *src, size_t n) LOADER_PRIVATE;
 int strcmp(const char *s1, const char *s2) LOADER_PRIVATE;
@@ -28,6 +35,7 @@ void *memset(void *s, int c, size_t n) LOADER_PRIVATE;
 char *strchr(const char *s, int c) LOADER_PRIVATE;
 int memcmp(const void *s1, const void *s2, size_t n) LOADER_PRIVATE;
 void *memcpy(void *__restrict dest, const void *__restrict src, size_t n) LOADER_PRIVATE;
+char *strcpy(char *__restrict dest, const char *__restrict src) LOADER_PRIVATE;
 
 int dprintf(int fd, const char *__restrict format, ...) LOADER_PRIVATE __attribute__((format(printf, 2, 3)));
 int vdprintf(int fd, const char *__restrict format, va_list args) LOADER_PRIVATE __attribute__((format(printf, 2, 0)));
