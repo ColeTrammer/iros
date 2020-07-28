@@ -1,5 +1,5 @@
 set(SOURCES
-    loader.cpp
+    loader.c
     malloc.c
     printf.c
     utils.c

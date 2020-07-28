@@ -25,6 +25,9 @@ size_t strlen(const char *s) LOADER_PRIVATE;
 void *memmove(void *dst, const void *src, size_t n) LOADER_PRIVATE;
 int strcmp(const char *s1, const char *s2) LOADER_PRIVATE;
 void *memset(void *s, int c, size_t n) LOADER_PRIVATE;
+char *strchr(const char *s, int c) LOADER_PRIVATE;
+int memcmp(const void *s1, const void *s2, size_t n) LOADER_PRIVATE;
+void *memcpy(void *__restrict dest, const void *__restrict src, size_t n) LOADER_PRIVATE;
 
 int dprintf(int fd, const char *__restrict format, ...) LOADER_PRIVATE __attribute__((format(printf, 2, 3)));
 int vdprintf(int fd, const char *__restrict format, va_list args) LOADER_PRIVATE __attribute__((format(printf, 2, 0)));
@@ -33,6 +36,7 @@ void __lock(unsigned int *lock) LOADER_PRIVATE;
 void __unlock(unsigned int *lock) LOADER_PRIVATE;
 
 void *loader_malloc(size_t n) LOADER_PRIVATE;
+void *loader_realloc(void *p, size_t n) LOADER_PRIVATE;
 void loader_free(void *p) LOADER_PRIVATE;
 
 #ifdef __cplusplus

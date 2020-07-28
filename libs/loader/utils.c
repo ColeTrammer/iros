@@ -57,6 +57,10 @@ int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int 
 
 #include "../libc/bits/lock/__lock.c"
 #include "../libc/bits/lock/__unlock.c"
+#include "../libc/string/memcmp.c"
+#include "../libc/string/memcpy.c"
 #include "../libc/string/memmove.c"
 #include "../libc/string/memset.c"
+#include "../libc/string/strchr.c"
+#include "../libc/string/strcmp.c"
 #include "../libc/string/strlen.c"
