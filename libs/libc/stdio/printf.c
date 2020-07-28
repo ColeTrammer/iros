@@ -10,8 +10,10 @@
 #include <string.h>
 #include <sys/param.h>
 
-int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *obj, const char *__restrict format, va_list parameters);
+static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *obj, const char *__restrict format,
+                           va_list parameters);
 
+#ifndef ONLY_DPRINTF
 #ifdef __is_libk
 #define stdout NULL
 
@@ -49,9 +51,10 @@ bool sprint(void *_info, const char *s, size_t len) {
     return true;
 }
 
+#endif /* ONLY_DPRINTF */
 #ifndef __is_libk
 
-bool dprint(void *_fd, const char *s, size_t len) {
+static bool dprint(void *_fd, const char *s, size_t len) {
     int fd = (int) (uintptr_t) _fd;
     return write(fd, s, len) == (ssize_t) len;
 }
@@ -84,6 +87,7 @@ static int parseInt(const char *num, size_t length) {
     return n;
 }
 
+#ifndef ONLY_DPRINTF
 int sprintf(char *__restrict s, const char *__restrict format, ...) {
     va_list parameters;
     va_start(parameters, format);
@@ -144,8 +148,10 @@ int vfprintf(FILE *stream, const char *__restrict format, va_list parameters) {
     __unlock(&stream->__lock);
     return ret;
 }
+#endif /* ONLY_DPRINTF */
 
-int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *obj, const char *__restrict format, va_list parameters) {
+static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *obj, const char *__restrict format,
+                           va_list parameters) {
     int written = 0;
 
     while (*format != '\0') {
@@ -852,11 +858,13 @@ int printf_internal(bool (*print)(void *obj, const char *s, size_t len), void *o
         }
     }
 
+#ifndef ONLY_DPRINTF
     if (print == sprint) {
         char zero = '\0';
         if (!print(obj, &zero, 1))
             return -1;
     }
+#endif /* ONLY_DPRINTF */
 
     return written;
 }

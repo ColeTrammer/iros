@@ -39,15 +39,23 @@ struct initial_process_info {
     int main_tid;
     int isatty_mask;
     unsigned long program_entry;
+    unsigned long program_dynamic_start;
+    unsigned long program_dynamic_size;
+    unsigned long program_offset;
+    unsigned long loader_dynamic_start;
+    unsigned long loader_dynamic_size;
+    unsigned long loader_offset;
     int has_interpreter;
 };
 
+#ifndef SYS_OS_2_NO_FUNCTIONS
 int create_task(struct create_task_args *create_task_args);
 void exit_task(void) __attribute__((__noreturn__));
 int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int to_wake, unsigned int *to_wait);
 int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **list_head);
 int tgkill(int tgid, int tid, int signum);
 int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
+#endif /* SYS_OS_2_NO_FUNCTIONS */
 
 #ifdef __cplusplus
 }

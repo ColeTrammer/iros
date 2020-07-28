@@ -54,6 +54,7 @@ void *sbrk(intptr_t increment) {
 FILE *__serial_out;
 int __do_logging;
 
+#ifndef __malloc_debug
 #define __malloc_debug(s, ...)                                     \
     do {                                                           \
         if (!__do_logging) {                                       \
@@ -72,6 +73,7 @@ int __do_logging;
             fprintf(__serial_out, s __VA_OPT__(, ) __VA_ARGS__);   \
         }                                                          \
     } while (0)
+#endif /* __malloc_debug */
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 0x1000
@@ -205,6 +207,7 @@ void free(void *p) {
     __unlock(&__malloc_lock);
 }
 
+#ifndef NO_ALIGNED_ALLOC
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
 #undef aligned_alloc
 void *aligned_alloc(size_t alignment, size_t n, int line, const char *func) {
@@ -343,6 +346,7 @@ void *aligned_alloc(size_t alignment, size_t n) {
     __malloc_debug("aligned_alloc: [ %lu, %lu, %p ]\n", alignment, n, new_block + 1);
     return new_block + 1;
 }
+#endif /* NO_ALIGNED_ALLOC */
 
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
 #include <kernel/hal/output.h>

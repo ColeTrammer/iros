@@ -78,7 +78,7 @@ bool elf64_is_valid(void *buffer) {
         return false;
     }
 
-    return true;
+    return elf_header->e_type == ET_EXEC;
 }
 
 uintptr_t elf64_get_start(void *buffer) {
@@ -115,6 +115,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
     uintptr_t data_end = 0;
     for (int i = 0; i < elf_header->e_phnum; i++) {
         switch (program_headers[i].p_type) {
+            case PT_DYNAMIC:
             case PT_PHDR:
                 continue;
             case PT_INTERP:
@@ -123,7 +124,6 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
             case PT_TLS:
                 tls_size = ((program_headers[i].p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
                 continue;
-            case PT_DYNAMIC:
             case PT_LOAD:
                 if (program_headers[i].p_flags & PF_X) {
                     text_start = program_headers[i].p_vaddr & ~(PAGE_SIZE - 1);
@@ -141,7 +141,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
     }
 
     // Loading an interpreter
-    if (!info) {
+    if (elf_header->e_type == ET_DYN) {
         size_t size = (text_start != (uintptr_t) -1 ? (text_end - text_start) : 0) + (data_end >= data_start ? (data_end - data_start) : 0);
         struct vm_region *first = get_current_task()->process->process_memory;
         assert(first->start - PAGE_SIZE >= size);
@@ -151,8 +151,9 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
     assert(offset % PAGE_SIZE == 0);
 
     uintptr_t entry = elf_header->e_entry;
-    if (info) {
+    if (elf_header->e_type == ET_EXEC) {
         info->program_entry = entry + offset;
+        info->program_offset = elf64_get_start(buffer);
     }
 
     if (data_end >= data_start) {
@@ -184,6 +185,16 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
             case PT_PHDR:
             case PT_INTERP:
                 continue;
+            case PT_DYNAMIC:
+                if (elf_header->e_type == ET_EXEC) {
+                    info->program_dynamic_start = program_headers[i].p_vaddr + offset;
+                    info->program_dynamic_size = program_headers[i].p_memsz;
+                } else if (elf_header->e_type == ET_DYN) {
+                    info->loader_dynamic_start = program_headers[i].p_vaddr + offset;
+                    info->loader_dynamic_size = program_headers[i].p_memsz;
+                    info->loader_offset = offset;
+                }
+                continue;
             case PT_TLS:
                 assert(info);
                 info->tls_alignment = program_headers[i].p_align;
@@ -191,7 +202,6 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
                 info->tls_start = (void *) (offset + data_end);
                 memcpy(info->tls_start, buffer + program_headers[i].p_offset, program_headers[i].p_filesz);
                 continue;
-            case PT_DYNAMIC:
             case PT_LOAD:
                 if (program_headers[i].p_flags & PF_X) {
 #ifdef ELF64_DEBUG
@@ -220,7 +230,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
         size_t size = fs_file_size(file);
         void *interp = (void *) fs_mmap(NULL, size, PROT_READ, MAP_SHARED, file, 0);
         assert(interp != MAP_FAILED);
-        entry = elf64_load_program(interp, size, file, NULL);
+        entry = elf64_load_program(interp, size, file, info);
         unmap_range((uintptr_t) interp, ((size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
         fs_close(file);
     }
