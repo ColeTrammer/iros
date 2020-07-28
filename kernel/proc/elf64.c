@@ -154,6 +154,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
     if (elf_header->e_type == ET_EXEC) {
         info->program_entry = entry + offset;
         info->program_offset = elf64_get_start(buffer);
+        info->program_size = data_end - info->program_offset + tls_size;
     }
 
     if (data_end >= data_start) {
@@ -193,6 +194,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
                     info->loader_dynamic_start = program_headers[i].p_vaddr + offset;
                     info->loader_dynamic_size = program_headers[i].p_memsz;
                     info->loader_offset = offset;
+                    info->loader_size = data_end - offset + tls_size;
                 }
                 continue;
             case PT_TLS:
