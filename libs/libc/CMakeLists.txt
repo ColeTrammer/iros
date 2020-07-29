@@ -330,18 +330,18 @@ else()
     add_os_library(libk k FALSE)
 
     set(SOURCES ${SOURCES} ${HOSTED_SOURCES})
+    add_os_static_library(libc_static c_static FALSE)
+    target_compile_definitions(libc_static PRIVATE __is_libc __is_static)
+    target_include_directories(libc_static PUBLIC include)
+    target_link_libraries(libc_static libwordexp libregex)
+    add_dependencies(libc_static crt0_object)
+
     add_os_library(libc c TRUE)
-    target_compile_definitions(libc PRIVATE __is_libc __is_static)
+    target_compile_definitions(libc PRIVATE __is_libc __is_shared)
     target_include_directories(libc PUBLIC include)
     target_link_libraries(libc libwordexp libregex)
+    target_link_options(libc PRIVATE -nostartfiles -nostdlib)
     add_dependencies(libc crt0_object)
-
-    add_os_shared_library(libc_shared c_shared FALSE)
-    target_compile_definitions(libc_shared PRIVATE __is_libc __is_shared)
-    target_include_directories(libc_shared PUBLIC include)
-    target_link_libraries(libc_shared libwordexp libregex)
-    target_link_options(libc_shared PRIVATE -nostartfiles -nostdlib)
-    add_dependencies(libc_shared crt0_object)
 
     target_compile_definitions(libk PRIVATE __is_libk)
     set_target_properties(libk PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
@@ -353,10 +353,9 @@ else()
     add_custom_target(
         install-libc
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libc/cmake_install.cmake > /dev/null
-        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libdl/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libm/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libpthread/cmake_install.cmake > /dev/null
-        DEPENDS libc libc_shared libk libdl libm libpthread
+        DEPENDS libc libc_static libk libm libpthread
     )
 
     install(FILES ${CRT0_PATH} DESTINATION usr/lib RENAME crt0.o)
