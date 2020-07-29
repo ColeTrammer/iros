@@ -21,14 +21,13 @@ if [ ! -e gcc-9.2.0 ]; then
     cd gcc-9.2.0
     git init
     git apply ../gcc-os_2-9.2.0.patch
-    git apply ../gcc-os_2-9.2.0-customization.patch
-    cd ..
 
-    # Run autoconf
-    cd gcc-9.2.0
     cd libstdc++-v3
     autoconf
-    cd ../..
+    cd ..
+
+    git apply ../gcc-os_2-9.2.0-customization.patch
+    cd ..
 fi
 
 if [ $ONLY_DOWNLOAD_AND_EXTRACT ]; then 

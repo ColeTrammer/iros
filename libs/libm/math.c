@@ -68,6 +68,16 @@ double fmod(double x, double y) {
     return (int) x % (int) y;
 }
 
+double frexp(double x, int *exp) {
+    (void) exp;
+    return x;
+}
+
+double modf(double x, double *iptr) {
+    (void) iptr;
+    return x;
+}
+
 double ldexp(double x, int exp) {
     if (exp > 0) {
         for (int i = exp; i > 1; i--) {
