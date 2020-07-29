@@ -86,13 +86,11 @@ int main(int argc, char **argv) {
         }
     }
 
-    char *nslookup_args[] = { "/bin/nslookup", "-s", NULL };
+    // char *nslookup_args[] = { "/bin/nslookup", "-s", NULL };
+    // spawn_process(nslookup_args, 12, 12, false);
 
-    spawn_process(nslookup_args, 12, 12, false);
-
-    char *clipboard_server_args[] = { "/bin/clipboard_server", NULL };
-
-    spawn_process(clipboard_server_args, 11, 11, false);
+    // char *clipboard_server_args[] = { "/bin/clipboard_server", NULL };
+    // spawn_process(clipboard_server_args, 11, 11, false);
 
     if (!use_graphics) {
         char *terminal_args[] = { "/bin/terminal", "-v", NULL };
