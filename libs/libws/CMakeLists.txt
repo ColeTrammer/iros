@@ -6,3 +6,7 @@ set(SOURCES
 add_os_library(libws ws TRUE)
 
 target_link_libraries(libws PUBLIC libliim libgraphics window_server_headers)
+
+if (${NATIVE_BUILD})
+    target_link_libraries(libws PUBLIC ${REALTIME_LIB})
+endif()
