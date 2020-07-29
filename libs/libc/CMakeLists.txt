@@ -327,7 +327,7 @@ else()
     )
 
     set(SOURCES ${FREE_SOURCES})
-    add_os_library(libk k FALSE)
+    add_os_static_library(libk k FALSE)
 
     set(SOURCES ${SOURCES} ${HOSTED_SOURCES})
     add_os_static_library(libc_static c_static FALSE)
