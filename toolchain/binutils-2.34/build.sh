@@ -34,13 +34,12 @@ fi
 if [ ! -d build-binutils ]; then
     mkdir -p build-binutils
     cd build-binutils
-    ../binutils-os_2-2.34/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --with-sysroot=$ROOT/sysroot --disable-werror
+    ../binutils-os_2-2.34/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --with-sysroot=$ROOT/sysroot --disable-werror --enable-shared
     cd ..
 fi
 
 
 cd build-binutils
-../binutils-os_2-2.34/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --with-sysroot=$ROOT/sysroot --disable-werror
 make -j5
 
 # Install

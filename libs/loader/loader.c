@@ -412,9 +412,17 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             // Z   - The size of the symbol whose index resides in the relocation entry.
         case R_X86_64_NONE:
             break;
-        case R_X86_64_64:
-            loader_log("R_X86_64_64 for symbol %s", symbol_name(self, symbol_index));
+        case R_X86_64_64: {
+            const char *to_lookup = symbol_name(self, symbol_index);
+            uintptr_t value = do_symbol_lookup(to_lookup);
+            if (!value) {
+                loader_log("Cannot resolve `%s'", to_lookup);
+                _exit(97);
+            }
+            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
+            *addr = value + rela->r_addend;
             break;
+        }
         case R_X86_64_GLOB_DAT:
         case R_X86_64_JUMP_SLOT: {
             const char *to_lookup = symbol_name(self, symbol_index);
@@ -561,7 +569,11 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
         destroy_mapped_elf_file(&lib);
     }
 
-    process_relocations(&program);
+    struct dynamic_elf_object *obj = dynamic_object_head;
+    while (obj) {
+        process_relocations(obj);
+        obj = obj->next;
+    }
 
     asm volatile("and $(~16), %%rsp\n"
                  "mov %0, %%rdi\n"

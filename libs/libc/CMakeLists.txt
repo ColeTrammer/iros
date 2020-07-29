@@ -5,6 +5,7 @@ set(WORDEXP_LIB_SOURCES
 )
 
 add_library(libwordexp OBJECT ${WORDEXP_LIB_SOURCES})
+set_property(TARGET libwordexp PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 set(REGEX_GENERATED_FILES
     regex/regex_token_type.h
@@ -38,6 +39,7 @@ add_library(libregex OBJECT ${REGEX_LIB_SOURCES})
 target_link_libraries(libregex PRIVATE libliim parser_headers)
 target_include_directories(libregex PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/regex)
 add_dependencies(libregex generate-regex-parser)
+set_property(TARGET libregex PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 if (${NATIVE_BUILD})
     target_compile_definitions(libregex PRIVATE USERLAND_NATIVE)
@@ -326,16 +328,24 @@ else()
 
     set(SOURCES ${FREE_SOURCES})
     add_os_library(libk k FALSE)
+
     set(SOURCES ${SOURCES} ${HOSTED_SOURCES})
     add_os_library(libc c TRUE)
+    target_compile_definitions(libc PRIVATE __is_libc __is_static)
+    target_include_directories(libc PUBLIC include)
+    target_link_libraries(libc libwordexp libregex)
+    add_dependencies(libc crt0_object)
+
+    add_os_shared_library(libc_shared c_shared FALSE)
+    target_compile_definitions(libc_shared PRIVATE __is_libc __is_shared)
+    target_include_directories(libc_shared PUBLIC include)
+    target_link_libraries(libc_shared libwordexp libregex)
+    target_link_options(libc_shared PRIVATE -nostartfiles -nostdlib)
+    add_dependencies(libc_shared crt0_object)
 
     target_compile_definitions(libk PRIVATE __is_libk)
     set_target_properties(libk PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
     target_link_libraries(libk PRIVATE kernel_headers)
-
-    target_compile_definitions(libc PRIVATE __is_libc)
-    target_link_libraries(libc PRIVATE libwordexp libregex)
-    add_dependencies(libc crt0_object)
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdinc++")
@@ -346,7 +356,7 @@ else()
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libdl/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libm/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libpthread/cmake_install.cmake > /dev/null
-        DEPENDS libc libk libdl libm libpthread
+        DEPENDS libc libc_shared libk libdl libm libpthread
     )
 
     install(FILES ${CRT0_PATH} DESTINATION usr/lib RENAME crt0.o)

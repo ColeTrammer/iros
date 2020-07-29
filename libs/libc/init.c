@@ -15,12 +15,18 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-extern void (*__preinit_array_start[])(int, char **, char **) __attribute__((visibility("hidden")));
-extern void (*__preinit_array_end[])(int, char **, char **) __attribute__((visibility("hidden")));
-extern void (*__init_array_start[])(int, char **, char **) __attribute__((visibility("hidden")));
-extern void (*__init_array_end[])(int, char **, char **) __attribute__((visibility("hidden")));
+#ifdef __is_static
+extern void (*__preinit_array_start[])(int, char **, char **);
+extern void (*__preinit_array_end[])(int, char **, char **);
+extern void (*__init_array_start[])(int, char **, char **);
+extern void (*__init_array_end[])(int, char **, char **);
 
 extern void _init(void);
+#endif /* __is_static */
+
+#ifdef __is_shared
+void __tls_get_addr(void) {}
+#endif /* __is_shared */
 
 __thread int errno;
 char **environ;
@@ -55,6 +61,8 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
     syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
 
     init_env();
+
+#ifdef __is_static
     const size_t preinit_size = __preinit_array_end - __preinit_array_start;
     for (size_t i = 0; i < preinit_size; i++) {
         (*__preinit_array_start[i])(argc, argv, envp);
@@ -66,4 +74,5 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
     for (size_t i = 0; i < size; i++) {
         (*__init_array_start[i])(argc, argv, envp);
     }
+#endif /* __is_static */
 }

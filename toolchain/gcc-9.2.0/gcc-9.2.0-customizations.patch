@@ -1,13 +1,13 @@
 diff --git a/gcc/config/os_2.h b/gcc/config/os_2.h
-index 509f29e8d..b55df8945 100644
+index 509f29e8d..f3f1b6133 100644
 --- a/gcc/config/os_2.h
 +++ b/gcc/config/os_2.h
-@@ -2,16 +2,18 @@
+@@ -2,16 +2,20 @@
  #define TARGET_OS_2 1
  
  #undef LIB_SPEC
 -#define LIB_SPEC "-lc"
-+#define LIB_SPEC "%{!shared:%{pthread:-lpthread} -lc}"
++#define LIB_SPEC "%{pthread:-lpthread} %{!shared:-lc}"
  
  #undef STARTFILE_SPEC
 -#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
@@ -21,7 +21,9 @@ index 509f29e8d..b55df8945 100644
  
  #undef LINK_SPEC
 -#define LINK_SPEC "-z max-page-size=4096"
-+#define LINK_SPEC "%{shared:-shared} %{static:-static} -z max-page-size=4096 %{!shared:%{!static:-dynamic-linker " DYNAMIC_LINKER "}}"
++#define LINK_SPEC                                                                                                         \
++    "%{shared:-shared} %{static:-static} -z max-page-size=4096 %{!shared:%{!static:-dynamic-linker " DYNAMIC_LINKER "}} " \
++    "%{!shared: %{!static: %{rdynamic:-export-dynamic}}}"
  
  #undef TARGET_OS_CPP_BUILTINS
  #define TARGET_OS_CPP_BUILTINS()        \
