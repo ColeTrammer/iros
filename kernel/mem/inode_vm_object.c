@@ -66,6 +66,7 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     struct inode *inode = data->inode;
     ssize_t read = inode->i_op->read(inode, phys_page_mapping, PAGE_SIZE, page_index * PAGE_SIZE);
     if (read == -1) {
+        debug_log("Failed to read from disk: [ %s ]\n", strerror(-read));
         read = 0;
     }
 

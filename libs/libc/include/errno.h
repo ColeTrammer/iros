@@ -89,7 +89,7 @@ extern "C" {
         return (val);           \
     } while (0)
 
-extern __thread int errno;
+extern int errno;
 #define errno errno
 
 #else

@@ -28,7 +28,7 @@ extern void _init(void);
 void __tls_get_addr(void) {}
 #endif /* __is_shared */
 
-__thread int errno;
+int errno;
 char **environ;
 
 struct initial_process_info *__initial_process_info;

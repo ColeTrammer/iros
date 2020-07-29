@@ -1,11 +1,10 @@
 set(SOURCES
-    time/timer_create.cpp
-    time/timer_delete.cpp
-    time/timer_getoverrun.cpp
-    time/timer_gettime.cpp
-    time/timer_settime.cpp
+    time/timer_create.c
+    time/timer_delete.c
+    time/timer_getoverrun.c
+    time/timer_gettime.c
+    time/timer_settime.c
 )
 
 add_os_library(librt rt FALSE)
-
 target_link_libraries(librt PUBLIC libpthread)

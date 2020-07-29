@@ -8,7 +8,16 @@
 
 #include "loader.h"
 
-static uintptr_t do_symbol_lookup(const char *s);
+struct dynamic_elf_object;
+
+struct symbol_lookup_result {
+    const Elf64_Sym *symbol;
+    const struct dynamic_elf_object *object;
+};
+
+#define SYMBOL_LOOKUP_NOT_CURRENT 1
+
+static struct symbol_lookup_result do_symbol_lookup(const char *s, const struct dynamic_elf_object *current_object, int flags);
 
 struct mapped_elf_file {
     void *base;
@@ -240,7 +249,7 @@ static struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynam
             case DT_NEEDED:
                 if (self.dependencies_size >= self.dependencies_max) {
                     self.dependencies_max = MAX(20, self.dependencies_max * 2);
-                    self.dependencies = loader_realloc(self.dependencies, self.dependencies_max);
+                    self.dependencies = loader_realloc(self.dependencies, self.dependencies_max * sizeof(size_t));
                 }
                 self.dependencies[self.dependencies_size++] = entry->d_un.d_val;
                 break;
@@ -414,25 +423,37 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             break;
         case R_X86_64_64: {
             const char *to_lookup = symbol_name(self, symbol_index);
-            uintptr_t value = do_symbol_lookup(to_lookup);
-            if (!value) {
+            struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
+            if (!result.symbol) {
                 loader_log("Cannot resolve `%s'", to_lookup);
                 _exit(97);
             }
             uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
-            *addr = value + rela->r_addend;
+            *addr = result.symbol->st_value + result.object->relocation_offset + rela->r_addend;
+            break;
+        }
+        case R_X86_64_COPY: {
+            const char *to_lookup = symbol_name(self, symbol_index);
+            struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, SYMBOL_LOOKUP_NOT_CURRENT);
+            if (!result.symbol) {
+                loader_log("Cannot resolve `%s'", to_lookup);
+                _exit(97);
+            }
+            void *dest = (void *) (self->relocation_offset + rela->r_offset);
+            const void *src = (const void *) (result.symbol->st_value + result.object->relocation_offset);
+            memcpy(dest, src, result.symbol->st_size);
             break;
         }
         case R_X86_64_GLOB_DAT:
         case R_X86_64_JUMP_SLOT: {
             const char *to_lookup = symbol_name(self, symbol_index);
-            uintptr_t value = do_symbol_lookup(to_lookup);
-            if (!value) {
+            struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
+            if (!result.symbol) {
                 loader_log("Cannot resolve `%s'", to_lookup);
                 _exit(97);
             }
             uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
-            *addr = value;
+            *addr = result.symbol->st_value + result.object->relocation_offset;
             break;
         }
         case R_X86_64_RELATIVE: {
@@ -485,10 +506,10 @@ static struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *f
         }
     }
 
-    size_t total_size = last->p_vaddr + last->p_memsz - first->p_vaddr;
+    size_t total_size = last->p_vaddr + last->p_memsz;
     total_size = ((total_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
 
-    void *base = mmap(NULL, total_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, 0, 0);
+    void *base = mmap(NULL, total_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, 0, 0);
     if ((intptr_t) base < 0 && (intptr_t) base > -300) {
         return NULL;
     }
@@ -499,15 +520,15 @@ static struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *f
             continue;
         }
 
-        size_t size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        void *phdr_start = base + phdr->p_vaddr - first->p_vaddr;
+        // size_t size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        void *phdr_start = base + phdr->p_vaddr;
         memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);
-        void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
+        // void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
         int prot =
             (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
         // FIXME: make relocations work without this hack
         prot |= PROT_WRITE;
-        mprotect(phdr_page_start, size, prot);
+        // mprotect(phdr_page_start, size, prot);
     }
 
     size_t dyn_count = dynamic_count(file);
@@ -523,16 +544,19 @@ static __attribute__((unused)) void free_dynamic_elf_object(struct dynamic_elf_o
     loader_free(self);
 }
 
-static uintptr_t do_symbol_lookup(const char *s) {
+static struct symbol_lookup_result do_symbol_lookup(const char *s, const struct dynamic_elf_object *current_object, int flags) {
     struct dynamic_elf_object *obj = dynamic_object_head;
+    loader_log("looking up `%s' for `%s'", s, dynamic_string(current_object, current_object->so_name_offset));
     while (obj) {
-        const Elf64_Sym *sym = lookup_symbol(obj, s);
-        if (sym && sym->st_shndx != STN_UNDEF) {
-            return obj->relocation_offset + sym->st_value;
+        if (!(flags & SYMBOL_LOOKUP_NOT_CURRENT) || (obj != current_object)) {
+            const Elf64_Sym *sym = lookup_symbol(obj, s);
+            if (sym && sym->st_shndx != STN_UNDEF) {
+                return (struct symbol_lookup_result) { .symbol = sym, .object = obj };
+            }
         }
         obj = obj->next;
     }
-    return 0;
+    return (struct symbol_lookup_result) { .symbol = NULL, .object = NULL };
 }
 
 static void add_dynamic_object(struct dynamic_elf_object *obj) {
@@ -550,7 +574,7 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
         char path[256];
         strcpy(path, "/usr/lib/");
         strcpy(path + strlen("/usr/lib/"), dynamic_string(&program, program.dependencies[i]));
-        loader_log("Loading dependency of the `%s': `%s'", *argv, path);
+        loader_log("Loading dependency of `%s': `%s'", *argv, path);
 
         int error;
         struct mapped_elf_file lib = build_mapped_elf_file(path, &error);
@@ -575,6 +599,7 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
         obj = obj->next;
     }
 
+    loader_log("starting program");
     asm volatile("and $(~16), %%rsp\n"
                  "mov %0, %%rdi\n"
                  "mov %1, %%esi\n"
