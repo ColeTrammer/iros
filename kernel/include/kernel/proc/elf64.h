@@ -11,10 +11,9 @@ struct file;
 
 bool elf64_is_valid(void *buffer);
 uintptr_t elf64_get_start(void *buffer);
-uint64_t elf64_get_size(void *buffer);
 
 uintptr_t elf64_load_program(void *buffer, size_t length, struct file *executable, struct initial_process_info *info);
-void elf64_map_heap(void *buffer, struct task *task);
+void elf64_map_heap(struct task *task, struct initial_process_info *info);
 struct vm_region *elf64_create_vm_region(void *buffer, uint64_t type);
 void elf64_stack_trace(struct task *task, bool extra_info);
 
