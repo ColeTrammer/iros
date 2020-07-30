@@ -20,7 +20,7 @@ set(SOURCES
     sh_lexer.cpp
 )
 
-add_os_library(libsh sh TRUE)
+add_os_static_library(libsh sh TRUE)
 target_link_libraries(libsh PUBLIC parser_headers libliim)
 target_include_directories(libsh PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 
