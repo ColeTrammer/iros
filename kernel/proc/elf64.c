@@ -92,14 +92,6 @@ uintptr_t elf64_get_start(void *buffer) {
     return 0;
 }
 
-uint64_t elf64_get_size(void *buffer) {
-    Elf64_Ehdr *elf_header = buffer;
-    Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
-
-    assert(elf_header->e_phnum >= 2);
-    return program_headers[1].p_memsz + program_headers[0].p_filesz;
-}
-
 uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct initial_process_info *info) {
     (void) length;
 
@@ -240,11 +232,11 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
     return entry + offset;
 }
 
-void elf64_map_heap(void *buffer, struct task *task) {
+void elf64_map_heap(struct task *task, struct initial_process_info *info) {
     struct vm_region *task_heap = calloc(1, sizeof(struct vm_region));
     task_heap->flags = VM_USER | VM_WRITE | VM_NO_EXEC;
     task_heap->type = VM_PROCESS_HEAP;
-    task_heap->start = ((elf64_get_start(buffer) + elf64_get_size(buffer)) & ~0xFFF) + 100 * PAGE_SIZE;
+    task_heap->start = ((info->program_offset + info->program_size) & ~0xFFF) + 100 * PAGE_SIZE;
 #ifdef ELF64_DEBUG
     debug_log("Heap start: [ %#.16lX ]\n", task_heap->start);
 #endif /* ELF64_DEBUG */
