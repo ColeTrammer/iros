@@ -12,14 +12,15 @@ index a52333b2a..490dc4db3 100755
      powerpc-*-eabi*    | \
      powerpc-*-rtems*   | \
 diff --git a/gcc/config.gcc b/gcc/config.gcc
-index d7afa9b0b..a5cf88a04 100644
+index d7afa9b0b..893c7a574 100644
 --- a/gcc/config.gcc
 +++ b/gcc/config.gcc
-@@ -1497,6 +1497,7 @@ i[34567]86-*-os_2*)
+@@ -1497,6 +1497,8 @@ i[34567]86-*-os_2*)
      ;;
  x86_64-*-os_2*)
      tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h os_2.h"
-+    extra_options="${extra_options} gnu-user.opt"
++    tmake_file="${tmake_file} t-slibgcc"
++	extra_options="${extra_options} gnu-user.opt"
      ;;
  hppa[12]*-*-hpux10*)
  	case ${target} in
@@ -53,7 +54,7 @@ index 509f29e8d..f3f1b6133 100644
  #undef TARGET_OS_CPP_BUILTINS
  #define TARGET_OS_CPP_BUILTINS()        \
 diff --git a/libgcc/config.host b/libgcc/config.host
-index 4d08bed67..5edf70004 100644
+index 4d08bed67..fad9d875b 100644
 --- a/libgcc/config.host
 +++ b/libgcc/config.host
 @@ -396,8 +396,8 @@ i[34567]86-*-os_2*)
@@ -63,7 +64,60 @@ index 4d08bed67..5edf70004 100644
 -	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
 -	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
 +	extra_parts="$extra_parts crti.o crtbegin.o crtbeginS.o crtend.o crtendS.o crtn.o"
-+	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic t-slibgcc-libgcc"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic t-slibgcc"
  	;;
  amdgcn*-*-amdhsa)
  	tmake_file="$tmake_file gcn/t-amdgcn"
+diff --git a/libstdc++-v3/configure b/libstdc++-v3/configure
+index 427b4b871..24ed8f0b7 100755
+--- a/libstdc++-v3/configure
++++ b/libstdc++-v3/configure
+@@ -6626,6 +6626,10 @@ gnu*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ haiku*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+@@ -11317,6 +11321,18 @@ solaris*)
+   postinstall_cmds='chmod +x $lib'
+   ;;
+ 
++os_2*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  dynamic_linker='os_2 loader.so'
++  ;;
++
+ sunos4*)
+   version_type=sunos
+   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${shared_ext}$versuffix'
+@@ -15001,6 +15017,18 @@ solaris*)
+   postinstall_cmds='chmod +x $lib'
+   ;;
+ 
++os_2*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  dynamic_linker='os_2 loader.so'
++  ;;
++
+ sunos4*)
+   version_type=sunos
+   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${shared_ext}$versuffix'
