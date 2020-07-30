@@ -583,16 +583,24 @@ static struct symbol_lookup_result do_symbol_lookup(const char *s, const struct 
 #ifdef LOADER_DEBUG
     loader_log("looking up `%s' for `%s'", s, dynamic_string(current_object, current_object->so_name_offset));
 #endif /* LOADER_DEBUG */
+    const Elf64_Sym *weak_symbol = NULL;
+    struct dynamic_elf_object *weak_symbol_object = NULL;
     while (obj) {
         if (!(flags & SYMBOL_LOOKUP_NOT_CURRENT) || (obj != current_object)) {
             const Elf64_Sym *sym = lookup_symbol(obj, s);
             if (sym && sym->st_shndx != STN_UNDEF) {
-                return (struct symbol_lookup_result) { .symbol = sym, .object = obj };
+                uint8_t visibility = sym->st_info >> 4;
+                if (visibility == STB_GLOBAL) {
+                    return (struct symbol_lookup_result) { .symbol = sym, .object = obj };
+                } else if (visibility == STB_WEAK && !weak_symbol) {
+                    weak_symbol = sym;
+                    weak_symbol_object = obj;
+                }
             }
         }
         obj = obj->next;
     }
-    return (struct symbol_lookup_result) { .symbol = NULL, .object = NULL };
+    return (struct symbol_lookup_result) { .symbol = weak_symbol, .object = weak_symbol_object };
 }
 
 static void add_dynamic_object(struct dynamic_elf_object *obj) {
