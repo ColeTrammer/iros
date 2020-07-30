@@ -533,6 +533,8 @@ LOADER_PRIVATE uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, si
     return resolved_value;
 }
 
+static bool bind_now;
+
 static void process_relocations(const struct dynamic_elf_object *self) {
     size_t count = rela_count(self);
     for (size_t i = 0; i < count; i++) {
@@ -540,19 +542,23 @@ static void process_relocations(const struct dynamic_elf_object *self) {
         do_rela(self, rela);
     }
 
-    if (self->got_addr) {
+    size_t plt_count = plt_relocation_count(self);
+    if (bind_now) {
+        for (size_t i = 0; i < plt_count; i++) {
+            const Elf64_Rela *rela = plt_relocation_at(self, i);
+            do_rela(self, rela);
+        }
+    } else if (self->got_addr) {
         uintptr_t *got = (uintptr_t *) (self->got_addr + self->relocation_offset);
         got[1] = (uintptr_t) self;
         got[2] = (uintptr_t) &got_resolver;
-    }
 
-#if 1
-    size_t plt_count = plt_relocation_count(self);
-    for (size_t i = 0; i < plt_count; i++) {
-        const Elf64_Rela *rela = plt_relocation_at(self, i);
-        do_rela(self, rela);
+        if (self->relocation_offset) {
+            for (size_t i = 0; i < plt_count; i++) {
+                got[3 + i] += self->relocation_offset;
+            }
+        }
     }
-#endif
 }
 
 static struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
