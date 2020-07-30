@@ -4,5 +4,24 @@
 #define calloc                 loader_calloc
 #define realloc                loader_realloc
 #define __malloc_debug(s, ...) ((void) s)
-#define NO_ALIGNED_ALLOC
 #include "../libc/stdlib/malloc.c"
+#undef free
+#undef malloc
+#undef calloc
+#undef realloc
+
+void *malloc(size_t size) {
+    return loader_malloc(size);
+}
+
+void *calloc(size_t n, size_t m) {
+    return loader_calloc(n, m);
+}
+
+void *realloc(void *p, size_t n) {
+    return loader_realloc(p, n);
+}
+
+void free(void *p) {
+    loader_free(p);
+}

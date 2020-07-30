@@ -703,6 +703,11 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
         destroy_mapped_elf_file(&lib);
     }
 
+    struct dynamic_elf_object loader =
+        build_dynamic_elf_object((const Elf64_Dyn *) info->loader_dynamic_start, info->loader_dynamic_size / sizeof(Elf64_Dyn),
+                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset);
+    add_dynamic_object(&loader);
+
     struct dynamic_elf_object *obj = dynamic_object_head;
     while (obj) {
         process_relocations(obj);
