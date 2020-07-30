@@ -795,7 +795,7 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
             }
             written += width;
         }
-#ifndef __is_libk
+#ifdef __SSE__
         else if (*format == 'g' || *format == 'f' || *format == 'G' || *format == 'F') {
             format++;
             double num = va_arg(parameters, double);
@@ -844,7 +844,7 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
 
             written += total_len;
         }
-#endif /* __is_libk */
+#endif /* __SSE__ */
         else {
             format = format_begun_at;
             size_t len = strlen(format);

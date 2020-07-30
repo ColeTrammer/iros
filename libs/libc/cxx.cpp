@@ -30,6 +30,10 @@ extern "C" void __cxa_pure_virtual() {
     assert(false);
 }
 
+extern "C" void __cxa_finalize() {
+    assert(false);
+}
+
 namespace __cxxabiv1 {
 /* guard variables */
 

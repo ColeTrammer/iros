@@ -330,7 +330,7 @@ else()
     add_os_static_library(libk k FALSE)
 
     set(SOURCES ${SOURCES} ${HOSTED_SOURCES})
-    add_os_static_library(libc_static c_static FALSE)
+    add_os_static_library(libc_static c FALSE)
     target_compile_definitions(libc_static PRIVATE __is_libc __is_static)
     target_include_directories(libc_static PUBLIC include)
     target_link_libraries(libc_static libwordexp libregex)

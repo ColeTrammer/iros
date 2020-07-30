@@ -344,7 +344,7 @@ static const Elf64_Rela *rela_at(const struct dynamic_elf_object *self, size_t i
     return &rela_table(self)[i];
 }
 
-static size_t plt_relocation_count(const struct dynamic_elf_object *self) {
+static __attribute__((used)) size_t plt_relocation_count(const struct dynamic_elf_object *self) {
     size_t ent_size = self->plt_type == DT_RELA ? sizeof(Elf64_Rela) : sizeof(Elf64_Rel);
 
     if (!self->plt_size) {
@@ -357,7 +357,7 @@ static const void *plt_relocation_table(const struct dynamic_elf_object *self) {
     return (void *) (self->plt_addr + self->relocation_offset);
 }
 
-static const void *plt_relocation_at(const struct dynamic_elf_object *self, size_t i) {
+static __attribute__((used)) const void *plt_relocation_at(const struct dynamic_elf_object *self, size_t i) {
     if (self->plt_type == DT_RELA) {
         const Elf64_Rela *tbl = plt_relocation_table(self);
         return &tbl[i];
@@ -470,6 +470,22 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
     }
 }
 
+extern void got_resolver(void) LOADER_PRIVATE;
+
+LOADER_PRIVATE uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, size_t plt_offset) {
+    const Elf64_Rela *relocation = plt_relocation_at(obj, plt_offset);
+    const char *to_lookup = symbol_name(obj, ELF64_R_SYM(relocation->r_info));
+    struct symbol_lookup_result result = do_symbol_lookup(to_lookup, obj, 0);
+    if (!result.symbol) {
+        loader_log("Cannot resolve `%s'", to_lookup);
+        _exit(96);
+    }
+    uint64_t *addr = (uint64_t *) (obj->relocation_offset + relocation->r_offset);
+    uintptr_t resolved_value = result.symbol->st_value + result.object->relocation_offset;
+    *addr = resolved_value;
+    return resolved_value;
+}
+
 static void process_relocations(const struct dynamic_elf_object *self) {
     size_t count = rela_count(self);
     for (size_t i = 0; i < count; i++) {
@@ -477,11 +493,19 @@ static void process_relocations(const struct dynamic_elf_object *self) {
         do_rela(self, rela);
     }
 
+    if (self->got_addr) {
+        uintptr_t *got = (uintptr_t *) (self->got_addr + self->relocation_offset);
+        got[1] = (uintptr_t) self;
+        got[2] = (uintptr_t) &got_resolver;
+    }
+
+#if 0
     size_t plt_count = plt_relocation_count(self);
     for (size_t i = 0; i < plt_count; i++) {
         const Elf64_Rela *rela = plt_relocation_at(self, i);
         do_rela(self, rela);
     }
+#endif
 }
 
 static struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
