@@ -27,6 +27,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
+// #define START_DEBUG
 // #define TASK_SCHED_STATE_DEBUG
 // #define TASK_SIGNAL_DEBUG
 
