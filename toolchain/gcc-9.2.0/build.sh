@@ -6,9 +6,9 @@ set -e
 export ROOT="${ROOT:-$PWD/../..}"
 export TARGET=`$ROOT/default-host.sh`
 
-CC=gcc
-CXX=g++
-AS=as
+unset CC
+unset CXX
+unset AS
 
 if [ ! -e gcc-9.2.0 ]; then
     # Download tar.gz
@@ -58,5 +58,7 @@ make all-target-libgcc CFLAGS_FOR_TARGET='-g -O2 -mcmodel=large -mno-red-zone' -
 # Install
 mkdir -p ../../cross
 make install-gcc install-target-libgcc 
+
+cp "$ROOT/toolchain/cross/$TARGET/lib/libgcc_s.so.1" "$ROOT/base/usr/lib"
 
 cd ..

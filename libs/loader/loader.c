@@ -422,14 +422,19 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
         case R_X86_64_NONE:
             break;
         case R_X86_64_64: {
+            const Elf64_Sym *symbol_to_lookup = symbol_at(self, symbol_index);
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
-            if (!result.symbol) {
+            uintptr_t symbol_value = 0;
+            if (result.symbol) {
+                symbol_value = result.symbol->st_value + result.object->relocation_offset;
+            } else if (!((symbol_to_lookup->st_info >> 4) & STB_WEAK)) {
                 loader_log("Cannot resolve `%s'", to_lookup);
                 _exit(97);
             }
-            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
-            *addr = result.symbol->st_value + result.object->relocation_offset + rela->r_addend;
+
+            uint64_t *addr = (uint64_t *) (rela->r_offset + self->relocation_offset);
+            *addr = symbol_value + rela->r_addend;
             break;
         }
         case R_X86_64_COPY: {
@@ -446,14 +451,19 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
         }
         case R_X86_64_GLOB_DAT:
         case R_X86_64_JUMP_SLOT: {
+            const Elf64_Sym *symbol_to_lookup = symbol_at(self, symbol_index);
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
-            if (!result.symbol) {
+            uintptr_t symbol_value = 0;
+            if (result.symbol) {
+                symbol_value = result.symbol->st_value + result.object->relocation_offset;
+            } else if (!((symbol_to_lookup->st_info >> 4) & STB_WEAK)) {
                 loader_log("Cannot resolve `%s'", to_lookup);
                 _exit(97);
             }
-            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
-            *addr = result.symbol->st_value + result.object->relocation_offset;
+
+            uint64_t *addr = (uint64_t *) (rela->r_offset + self->relocation_offset);
+            *addr = symbol_value;
             break;
         }
         case R_X86_64_RELATIVE: {
@@ -499,7 +509,7 @@ static void process_relocations(const struct dynamic_elf_object *self) {
         got[2] = (uintptr_t) &got_resolver;
     }
 
-#if 0
+#if 1
     size_t plt_count = plt_relocation_count(self);
     for (size_t i = 0; i < plt_count; i++) {
         const Elf64_Rela *rela = plt_relocation_at(self, i);
@@ -548,10 +558,10 @@ static struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *f
         void *phdr_start = base + phdr->p_vaddr;
         memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);
         // void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
-        int prot =
-            (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
+        // int prot =
+        // (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
         // FIXME: make relocations work without this hack
-        prot |= PROT_WRITE;
+        // prot |= PROT_WRITE;
         // mprotect(phdr_page_start, size, prot);
     }
 
@@ -570,7 +580,9 @@ static __attribute__((unused)) void free_dynamic_elf_object(struct dynamic_elf_o
 
 static struct symbol_lookup_result do_symbol_lookup(const char *s, const struct dynamic_elf_object *current_object, int flags) {
     struct dynamic_elf_object *obj = dynamic_object_head;
+#ifdef LOADER_DEBUG
     loader_log("looking up `%s' for `%s'", s, dynamic_string(current_object, current_object->so_name_offset));
+#endif /* LOADER_DEBUG */
     while (obj) {
         if (!(flags & SYMBOL_LOOKUP_NOT_CURRENT) || (obj != current_object)) {
             const Elf64_Sym *sym = lookup_symbol(obj, s);

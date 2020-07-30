@@ -244,6 +244,14 @@ void start_userland(void) {
     struct task *current = get_current_task();
     current->arch_task.user_task_state = &task_state_save;
 
+#ifdef START_DEBUG
+    int error = 0;
+    current->process->files[0] =
+        (struct file_descriptor) { .file = fs_openat(fs_root(), "/dev/serial0", O_RDWR, 0, &error), .fd_flags = 0 };
+    current->process->files[1] = fs_dup(current->process->files[0]);
+    current->process->files[2] = fs_dup(current->process->files[0]);
+#endif /* START_DEBUG */
+
     int ret = proc_execve("/bin/start", argv, envp);
     if (ret) {
         debug_log("Failed to exec /bin/start: [ %s ]\n", strerror(-ret));
