@@ -8,6 +8,9 @@
 
 #include "loader.h"
 
+#define LOADER_DEBUG
+// #define LOADER_SYMBOL_DEBUG
+
 struct dynamic_elf_object;
 
 struct symbol_lookup_result {
@@ -212,7 +215,13 @@ struct dynamic_elf_object {
     uintptr_t hash_table;
     uintptr_t string_table;
     uintptr_t symbol_table;
+    uintptr_t preinit_array;
+    size_t preinit_array_size;
     uintptr_t init_addr;
+    uintptr_t init_array;
+    uintptr_t init_array_size;
+    uintptr_t fini_array;
+    uintptr_t fini_array_size;
     uintptr_t fini_addr;
     uintptr_t rela_addr;
     uintptr_t plt_addr;
@@ -305,9 +314,37 @@ static struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynam
             case DT_JMPREL:
                 self.plt_addr = entry->d_un.d_ptr;
                 break;
+            case DT_INIT_ARRAY:
+                self.init_array = entry->d_un.d_ptr;
+                break;
+            case DT_FINI_ARRAY:
+                self.fini_array = entry->d_un.d_ptr;
+                break;
+            case DT_INIT_ARRAYSZ:
+                self.init_array_size = entry->d_un.d_val;
+                break;
+            case DT_FINI_ARRAYSZ:
+                self.fini_array_size = entry->d_un.d_val;
+                break;
+            case DT_PREINIT_ARRAY:
+                self.preinit_array = entry->d_un.d_ptr;
+                break;
+            case DT_PREINIT_ARRAY_SZ:
+                self.preinit_array_size = entry->d_un.d_val;
+                break;
+            case DT_VERSYM:
+                break;
             case DT_RELACOUNT:
                 break;
             case DT_RELCOUNT:
+                break;
+            case DT_VERDEF:
+                break;
+            case DT_VERDEFNUM:
+                break;
+            case DT_VERNEED:
+                break;
+            case DT_VERNEEDNUM:
                 break;
             default:
                 loader_log("Unkown DT_* value %ld", entry->d_tag);
@@ -580,9 +617,9 @@ static __attribute__((unused)) void free_dynamic_elf_object(struct dynamic_elf_o
 
 static struct symbol_lookup_result do_symbol_lookup(const char *s, const struct dynamic_elf_object *current_object, int flags) {
     struct dynamic_elf_object *obj = dynamic_object_head;
-#ifdef LOADER_DEBUG
+#ifdef LOADER_SYMBOL_DEBUG
     loader_log("looking up `%s' for `%s'", s, dynamic_string(current_object, current_object->so_name_offset));
-#endif /* LOADER_DEBUG */
+#endif /* LOADER_SYMBOL_DEBUG */
     const Elf64_Sym *weak_symbol = NULL;
     struct dynamic_elf_object *weak_symbol_object = NULL;
     while (obj) {
@@ -603,6 +640,33 @@ static struct symbol_lookup_result do_symbol_lookup(const char *s, const struct 
     return (struct symbol_lookup_result) { .symbol = weak_symbol, .object = weak_symbol_object };
 }
 
+typedef void (*init_function_t)(int argc, char **argv, char **envp);
+
+static void call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) {
+#ifdef LOADER_DEBUG
+    loader_log("doing init functions for `%s'", dynamic_string(obj, obj->so_name_offset));
+#endif /* LOADER_DEBUG */
+
+    if (obj->preinit_array_size) {
+        init_function_t *preinit = (init_function_t *) (obj->preinit_array + obj->relocation_offset);
+        for (size_t i = 0; i < obj->preinit_array_size / sizeof(init_function_t); i++) {
+            preinit[i](argc, argv, envp);
+        }
+    }
+
+    if (obj->init_addr) {
+        init_function_t init = (init_function_t)(obj->init_addr + obj->relocation_offset);
+        init(argc, argv, envp);
+    }
+
+    if (obj->init_array_size) {
+        init_function_t *init = (init_function_t *) (obj->init_array + obj->relocation_offset);
+        for (size_t i = 0; i < obj->init_array_size / sizeof(init_function_t); i++) {
+            init[i](argc, argv, envp);
+        }
+    }
+}
+
 static void add_dynamic_object(struct dynamic_elf_object *obj) {
     insque(obj, dynamic_object_tail);
     dynamic_object_tail = obj;
@@ -618,7 +682,9 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
         char path[256];
         strcpy(path, "/usr/lib/");
         strcpy(path + strlen("/usr/lib/"), dynamic_string(&program, program.dependencies[i]));
+#ifdef LOADER_DEBUG
         loader_log("Loading dependency of `%s': `%s'", *argv, path);
+#endif /* LOADER_DEBUG */
 
         int error;
         struct mapped_elf_file lib = build_mapped_elf_file(path, &error);
@@ -641,6 +707,12 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
     while (obj) {
         process_relocations(obj);
         obj = obj->next;
+    }
+
+    obj = dynamic_object_tail;
+    while (obj) {
+        call_init_functions(obj, argc, argv, envp);
+        obj = obj->prev;
     }
 
     loader_log("starting program");
