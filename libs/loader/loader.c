@@ -8,7 +8,7 @@
 
 #include "loader.h"
 
-#define LOADER_DEBUG
+// #define LOADER_DEBUG
 // #define LOADER_SYMBOL_DEBUG
 
 struct dynamic_elf_object;
@@ -720,8 +720,11 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
         obj = obj->prev;
     }
 
+#ifdef LOADER_DEBUG
     loader_log("starting program");
+#endif /* LOADER_DEBUG */
     asm volatile("and $(~16), %%rsp\n"
+                 "sub $8, %%rsp\n"
                  "mov %0, %%rdi\n"
                  "mov %1, %%esi\n"
                  "mov %2, %%rdx\n"
