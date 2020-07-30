@@ -461,4 +461,28 @@ void *malloc(size_t n) {
     __malloc_debug("malloc: [ %lu, %p ]\n", n, ret);
     return ret;
 }
+#else
+#include <stddef.h>
+__attribute__((weak)) void *malloc(size_t n) {
+    (void) n;
+    return NULL;
+}
+__attribute__((weak)) void free(void *p) {
+    (void) p;
+}
+__attribute__((weak)) void *realloc(void *p, size_t n) {
+    (void) p;
+    (void) n;
+    return NULL;
+}
+__attribute__((weak)) void *calloc(size_t n, size_t m) {
+    (void) n;
+    (void) m;
+    return NULL;
+}
+__attribute__((weak)) void *aligned_alloc(size_t a, size_t n) {
+    (void) a;
+    (void) n;
+    return NULL;
+}
 #endif /* __is_shared */
