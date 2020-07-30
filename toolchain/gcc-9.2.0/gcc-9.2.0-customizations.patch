@@ -25,10 +25,10 @@ index d7afa9b0b..893c7a574 100644
  hppa[12]*-*-hpux10*)
  	case ${target} in
 diff --git a/gcc/config/os_2.h b/gcc/config/os_2.h
-index 509f29e8d..164a990dc 100644
+index 509f29e8d..f3f1b6133 100644
 --- a/gcc/config/os_2.h
 +++ b/gcc/config/os_2.h
-@@ -2,16 +2,23 @@
+@@ -2,16 +2,20 @@
  #define TARGET_OS_2 1
  
  #undef LIB_SPEC
@@ -50,9 +50,6 @@ index 509f29e8d..164a990dc 100644
 +#define LINK_SPEC                                                                                                         \
 +    "%{shared:-shared} %{static:-static} -z max-page-size=4096 %{!shared:%{!static:-dynamic-linker " DYNAMIC_LINKER "}} " \
 +    "%{!shared: %{!static: %{rdynamic:-export-dynamic}}}"
-+
-+#undef USE_TM_CLONE_REGISTRY
-+#define USE_TM_CLONE_REGISTRY 0
  
  #undef TARGET_OS_CPP_BUILTINS
  #define TARGET_OS_CPP_BUILTINS()        \
@@ -72,6 +69,59 @@ index 4d08bed67..77da76555 100644
  	;;
  amdgcn*-*-amdhsa)
  	tmake_file="$tmake_file gcn/t-amdgcn"
+diff --git a/libitm/configure b/libitm/configure
+index fb742d79e..ac8cad442 100644
+--- a/libitm/configure
++++ b/libitm/configure
+@@ -6735,6 +6735,10 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ netbsd*)
+   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
+     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
+@@ -11507,6 +11511,18 @@ solaris*)
+   postinstall_cmds='chmod +x $lib'
+   ;;
+ 
++os_2*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  dynamic_linker='os_2 loader.so'
++  ;;
++
+ sunos4*)
+   version_type=sunos
+   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${shared_ext}$versuffix'
+@@ -15154,6 +15170,18 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  dynamic_linker='os_2 loader.so'
++  ;;
++
+ solaris*)
+   version_type=linux
+   need_lib_prefix=no
 diff --git a/libitm/configure.tgt b/libitm/configure.tgt
 index 4c0b60203..81c435588 100644
 --- a/libitm/configure.tgt
