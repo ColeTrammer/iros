@@ -1,3 +1,4 @@
+#ifndef __is_shared
 #ifdef USERLAND_NATIVE
 #define _DEFAULT_SOURCE
 #define _BITS_PTHREADTYPES_COMMON_H
@@ -460,3 +461,4 @@ void *malloc(size_t n) {
     __malloc_debug("malloc: [ %lu, %p ]\n", n, ret);
     return ret;
 }
+#endif /* __is_shared */
