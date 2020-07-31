@@ -46,7 +46,16 @@ if [ ! -d build-gcc ];
 then
     mkdir -p build-gcc
     cd build-gcc
-    ../gcc-9.2.0/configure --target=$TARGET --prefix=$ROOT/toolchain/cross --disable-nls --disable-lto --enable-shared --with-sysroot=$ROOT/sysroot --enable-languages=c,c++ --with-build-time-tools=$ROOT/toolchain/cross/bin
+    export gcc_cv_initfini_array=yes
+    ../gcc-9.2.0/configure \
+        --target="$TARGET" \
+        --prefix="$ROOT/toolchain/cross" \
+        --disable-nls \
+        --disable-lto \
+        --enable-shared \
+        --with-sysroot="$ROOT/sysroot" \
+        --enable-languages=c,c++ \
+        --with-build-time-tools=$ROOT/toolchain/cross/bin
     cd ..
 fi
 
