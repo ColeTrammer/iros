@@ -18,7 +18,7 @@ patch() {
 }
 
 configure() {
-    ../"$SRC_DIR"/configure --host=$HOST --prefix=/usr --with-termlib
+    ../"$SRC_DIR"/configure --host=$HOST --prefix=/usr --with-termlib --with-shared
 }
 
 . ../.build_include.sh

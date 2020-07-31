@@ -11,3 +11,19 @@ index 0f2234c..2176b17 100755
  	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
  	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
  	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
+diff --git a/configure b/configure
+index 06f344f..7255d62 100755
+--- a/configure
++++ b/configure
+@@ -5961,6 +5961,11 @@ echo "${ECHO_T}$cf_cv_ldflags_search_paths_first" >&6
+ 
+ 		MK_SHARED_LIB='${CC} ${LDFLAGS} ${CFLAGS} -shared -Wl,-soname,'$cf_cv_shared_soname',-stats,-lc -o $@'
+ 		;;
++  (os_2*)
++		CC_SHARED_OPTS="-fPIC"
++    cf_cv_shared_soname='`basename $@`'
++		MK_SHARED_LIB='${CC} ${LDFLAGS} ${CFLAGS} -shared -Wl,-soname,'$cf_cv_shared_soname',-lc -o $@'
++    ;;
+ 	(mingw*)
+ 		cf_cv_shlib_version=mingw
+ 		cf_cv_shlib_version_infix=mingw
