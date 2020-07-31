@@ -349,9 +349,3 @@ _temp_page:
 .skip 16
 .section .fini
 .skip 16
-.align 8
-.section .ctors
-.quad -1
-.skip 8
-.section .dtors
-.quad -1
