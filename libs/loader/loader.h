@@ -1,16 +1,20 @@
 #pragma once
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <sys/os_2.h>
 #include <sys/types.h>
+
+// #define LOADER_DEBUG
+// #define LOADER_SYMBOL_DEBUG
 
 #define _STRING_H 1
 #define _STDLIB_H 1
 #define _UNISTD_H 1
 
 #define NDEBUG
-#define LOADER_PRIVATE __attribute__((noplt)) __attribute__((visibility("internal")))
+#define LOADER_PRIVATE __attribute__((visibility("internal")))
 #ifndef loader_log
 #define loader_log(m, ...) dprintf(2, m "\n" __VA_OPT__(, ) __VA_ARGS__)
 #endif /* loader_log */
@@ -19,7 +23,16 @@
 extern "C" {
 #endif /* __cpluplus */
 
+struct dynamic_elf_object;
 struct stat;
+
+extern LOADER_PRIVATE const char *program_name;
+extern LOADER_PRIVATE bool bind_now;
+extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_head;
+extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_tail;
+
+typedef void (*init_function_t)(int argc, char **argv, char **envp);
+typedef void (*fini_function_t)(void);
 
 void _exit(int status) LOADER_PRIVATE __attribute__((noreturn));
 ssize_t write(int fd, const void *buffer, size_t len) LOADER_PRIVATE;

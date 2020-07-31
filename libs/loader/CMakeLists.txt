@@ -1,8 +1,12 @@
 set(SOURCES
+    dynamic_elf_object.c
     loader.c
     malloc.c
+    mapped_elf_file.c
     plt.S
     printf.c
+    relocations.c
+    symbols.c
     utils.c
 )
 
