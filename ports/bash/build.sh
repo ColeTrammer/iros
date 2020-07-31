@@ -19,10 +19,9 @@ patch() {
 }
 
 configure() {
+    export ac_cv_lib_dl_dlopen=no # Until it actually works
+    export bash_cv_getcwd_malloc=yes
     ../bash-5.0/configure --host=$HOST --disable-nls --without-bash-malloc --prefix=/usr
-
-    perl -p -i -e "s/#define CAN_REDEFINE_GETENV 1/\/* #undef CAN_REDEFINE_GETENV *\//" config.h
-    perl -p -i -e "s/#define GETCWD_BROKEN 1/\/* #undef GETCWD_BROKEN *\//" config.h
 }
 
 . ../.build_include.sh
