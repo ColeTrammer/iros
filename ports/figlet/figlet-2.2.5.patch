@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index 5a51d51..c8ad95e 100644
+index 5a51d51..ed2a817 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -19,17 +19,17 @@
@@ -10,13 +10,13 @@ index 5a51d51..c8ad95e 100644
 +CC	= x86_64-os_2-gcc
  CFLAGS	= -g -O2 -Wall
 -LD	= gcc
-+LD	= x86_64-os_2-gcc
++LD	= $(CC)
  LDFLAGS =
  
  # Feature flags:
  #   define TLF_FONTS to use TOIlet TLF fonts
 -XCFLAGS	= -DTLF_FONTS
-+XCFLAGS	= 
++XCFLAGS	=
  
  # Where to install files
 -prefix	= /usr/local
@@ -24,65 +24,3 @@ index 5a51d51..c8ad95e 100644
  
  # Where the executables should be put
  BINDIR	= $(prefix)/bin
-diff --git a/zipio.h b/zipio.h
-index 12289d6..6061dd0 100644
---- a/zipio.h
-+++ b/zipio.h
-@@ -73,32 +73,43 @@
- 
- #include <stdio.h>
- 
-+#ifdef USE_ZIPIO
-+
- typedef struct {
--  int            len;
--  unsigned char *ptr;
-+    int len;
-+    unsigned char *ptr;
- } ZFILE;
- 
--#define Zgetc(f)                   \
--  ((--((f)->len) >= 0)             \
--    ? (unsigned char)(*(f)->ptr++) \
--    : _Zgetc (f))
-+#define Zgetc(f) ((--((f)->len) >= 0) ? (unsigned char) (*(f)->ptr++) : _Zgetc(f))
- 
--#define Zungetc(c,f) \
--  ((f)->ptr--, (f)->len++, (c))
-+#define Zungetc(c, f) ((f)->ptr--, (f)->len++, (c))
- 
- #ifdef __cplusplus
- extern "C" {
- #endif
- 
--ZFILE  *Zopen(const char *path, const char *mode);
--int    _Zgetc(ZFILE *stream);
--size_t  Zread(void *ptr, size_t size, size_t n, ZFILE *stream);
--int     Zseek(ZFILE *stream, long offset, int whence);
--long    Ztell(ZFILE *stream);
--int     Zclose(ZFILE *stream);
-+ZFILE *Zopen(const char *path, const char *mode);
-+int _Zgetc(ZFILE *stream);
-+size_t Zread(void *ptr, size_t size, size_t n, ZFILE *stream);
-+int Zseek(ZFILE *stream, long offset, int whence);
-+long Ztell(ZFILE *stream);
-+int Zclose(ZFILE *stream);
- 
- #ifdef __cplusplus
- }
- #endif
- 
-+#else
-+
-+#define ZFILE             FILE
-+#define Zgetc(f)          getc(f)
-+#define Zungetc(c, f)     ungetc(c, f)
-+#define Zopen(p, m)       fopen(p, m)
-+#define Zread(p, s, b, f) fread(p, s, b, f)
-+#define Zseek(s, o, w)    fseek(s, o, w)
-+#define Ztell(s)          ftell(s)
-+#define Zclose(s)         fclose(s)
-+
-+#endif /* USE_ZIPIO */
-+
- #endif
