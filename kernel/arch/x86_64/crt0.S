@@ -268,13 +268,7 @@ _kernel_start:
     movabs $BOOT_KERNEL_VM_STACK_START, %rax
     movq %rax, %rsp
 
-    push %rdi
-    call _init
-    pop %rdi
-
     call kernel_main
-
-    call _fini
 
 .global __halt
 __halt:
@@ -348,3 +342,16 @@ BOOT_KERNEL_VM_STACK_START:
 .global _temp_page
 _temp_page:
 .skip 0x1000
+
+# Dummy .init, .fini, .ctors, .dtors so that the toolchain thinks the kernel executable is valid
+.align 16
+.section .init
+.skip 16
+.section .fini
+.skip 16
+.align 8
+.section .ctors
+.quad -1
+.skip 8
+.section .dtors
+.quad -1
