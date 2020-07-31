@@ -53,7 +53,7 @@ fi
 # Build
 cd build-gcc
 make all-gcc -j5
-make all-target-libgcc CFLAGS_FOR_TARGET='-g -O2 -mcmodel=large -mno-red-zone' -j5
+make all-target-libgcc -j5
 
 # Install
 mkdir -p ../../cross
