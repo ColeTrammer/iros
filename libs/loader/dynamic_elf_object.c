@@ -237,6 +237,22 @@ void call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, 
     }
 }
 
+void call_fini_functions(struct dynamic_elf_object *obj) {
+    if (obj->fini_array_size) {
+        fini_function_t *fini = (fini_function_t *) (obj->fini_array + obj->relocation_offset);
+        for (size_t i = 0; i < obj->fini_array_size / sizeof(fini_function_t); i++) {
+            fini[i]();
+        }
+    }
+
+    if (obj->fini_addr) {
+        fini_function_t fini = (fini_function_t)(obj->fini_addr + obj->relocation_offset);
+        fini();
+    }
+}
+
+extern void __loader_call_fini_functions(struct dynamic_elf_object *obj) LOADER_EXPORT("call_fini_functions");
+
 void add_dynamic_object(struct dynamic_elf_object *obj) {
     insque(obj, dynamic_object_tail);
     dynamic_object_tail = obj;
@@ -283,4 +299,8 @@ void load_dependencies(struct dynamic_elf_object *obj) {
         add_dynamic_object(loaded_lib);
         destroy_mapped_elf_file(&lib);
     }
+}
+
+__attribute__((weak)) struct dynamic_elf_object *__loader_get_dynamic_object_head(void) {
+    return dynamic_object_head;
 }

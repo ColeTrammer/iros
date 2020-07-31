@@ -16,6 +16,8 @@ void *dlopen(const char *path, int flags);
 void *dlsym(void *__restrict handle, const char *__restrict symbol);
 
 #ifdef __libc_internal
+struct dynamic_elf_object;
+
 extern int __dl_has_error;
 extern char __dl_error[256];
 
@@ -24,6 +26,9 @@ extern char __dl_error[256];
         snprintf(__dl_error, sizeof(__dl_error) - 1, __VA_ARGS__); \
         __dl_has_error = 1;                                        \
     } while (0)
+
+struct dynamic_elf_object *__loader_get_dynamic_object_head(void) __attribute__((weak));
+void __loader_call_fini_functions(struct dynamic_elf_object *object) __attribute__((weak));
 #endif /* __libc_internal */
 
 #ifdef __cplusplus

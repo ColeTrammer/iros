@@ -14,7 +14,8 @@
 #define _UNISTD_H 1
 
 #define NDEBUG
-#define LOADER_PRIVATE __attribute__((visibility("internal")))
+#define LOADER_PRIVATE      __attribute__((visibility("internal")))
+#define LOADER_EXPORT(name) __attribute__((alias(name))) __attribute__((weak))
 #ifndef loader_log
 #define loader_log(m, ...) dprintf(2, m "\n" __VA_OPT__(, ) __VA_ARGS__)
 #endif /* loader_log */

@@ -1,5 +1,7 @@
 #define __libc_internal
 
+#include <bits/dynamic_elf_object.h>
+#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,6 +23,10 @@ __attribute__((__noreturn__)) void exit(int status) {
     }
 
     _fini();
+#else
+    for (struct dynamic_elf_object *obj = __loader_get_dynamic_object_head(); obj; obj = obj->next) {
+        __loader_call_fini_functions(obj);
+    }
 #endif /* __is_static */
 
     fflush_unlocked(NULL);
