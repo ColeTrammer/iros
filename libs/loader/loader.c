@@ -747,10 +747,10 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
                                  (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset);
     add_dynamic_object(&loader);
 
-    struct dynamic_elf_object *obj = dynamic_object_head;
+    struct dynamic_elf_object *obj = dynamic_object_tail;
     while (obj) {
         process_relocations(obj);
-        obj = obj->next;
+        obj = obj->prev;
     }
 
     obj = dynamic_object_tail;
