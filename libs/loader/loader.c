@@ -708,7 +708,7 @@ static void load_dependencies(struct dynamic_elf_object *obj) {
         char path[256];
         strcpy(path, "/usr/lib/");
         strcpy(path + strlen("/usr/lib/"), lib_name);
-#ifndef LOADER_DEBUG
+#ifdef LOADER_DEBUG
         loader_log("Loading dependency of `%s': `%s'", object_name(obj), lib_name);
 #endif /* LOADER_DEBUG */
 
