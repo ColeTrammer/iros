@@ -62,7 +62,7 @@ key_create_end:
     return ret;
 }
 
-int pthread_key_destroy(pthread_key_t *key) {
+int pthread_key_delete(pthread_key_t *key) {
     if (key->__id == -1) {
         return EINVAL;
     }
