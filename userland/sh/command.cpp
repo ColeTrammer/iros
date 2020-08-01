@@ -702,27 +702,6 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
     for (i = 0; i < pipeline.commands.size(); i++) {
         ShValue::Command& command = pipeline.commands[i];
 
-        if (i != pipeline.commands.size() - 1) {
-            String output = String::format("%d", fds[i * 2 + 1]);
-            created_strings.add(output);
-            StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
-            switch (command.type) {
-                case ShValue::Command::Type::Compound:
-                    command.command.as<ShValue::CompoundCommand>().redirect_list.add(
-                        ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
-                    break;
-                case ShValue::Command::Type::Simple:
-                    command.command.as<ShValue::SimpleCommand>().redirect_info.add(
-                        ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
-                    break;
-                case ShValue::Command::Type::FunctionDefinition:
-                    break;
-                default:
-                    assert(false);
-                    break;
-            }
-        }
-
         if (i != 0) {
             String input = String::format("%d", fds[(i - 1) * 2]);
             created_strings.add(input);
@@ -735,6 +714,27 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
                 case ShValue::Command::Type::Simple:
                     command.command.as<ShValue::SimpleCommand>().redirect_info.add(
                         ShValue::IoRedirect { STDIN_FILENO, ShValue::IoRedirect::Type::InputFileDescriptor, view });
+                    break;
+                case ShValue::Command::Type::FunctionDefinition:
+                    break;
+                default:
+                    assert(false);
+                    break;
+            }
+        }
+
+        if (i != pipeline.commands.size() - 1) {
+            String output = String::format("%d", fds[i * 2 + 1]);
+            created_strings.add(output);
+            StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
+            switch (command.type) {
+                case ShValue::Command::Type::Compound:
+                    command.command.as<ShValue::CompoundCommand>().redirect_list.add(
+                        ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
+                    break;
+                case ShValue::Command::Type::Simple:
+                    command.command.as<ShValue::SimpleCommand>().redirect_info.add(
+                        ShValue::IoRedirect { STDOUT_FILENO, ShValue::IoRedirect::Type::OutputFileDescriptor, view });
                     break;
                 case ShValue::Command::Type::FunctionDefinition:
                     break;
