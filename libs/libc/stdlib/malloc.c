@@ -240,7 +240,7 @@ void *aligned_alloc(size_t alignment, size_t n, int line, const char *func) {
 
     n = MAX(n, 16);
 #else
-void *aligned_alloc(size_t alignment, size_t n) {
+__attribute__((weak)) void *aligned_alloc(size_t alignment, size_t n) {
     // Maybe this should error instead...
     if (alignment == 0) {
         return malloc(n);
@@ -463,26 +463,31 @@ void *malloc(size_t n) {
 }
 #else
 #include <stddef.h>
-__attribute__((weak)) void *malloc(size_t n) {
-    (void) n;
-    return NULL;
+
+void *__loader_malloc(size_t n) __attribute__((weak));
+void __loader_free(void *p) __attribute__((weak));
+void *__loader_calloc(size_t n, size_t m) __attribute__((weak));
+void *__loader_realloc(void *p, size_t n) __attribute__((weak));
+void *__loader_aligned_alloc(size_t a, size_t n) __attribute__((weak));
+
+void *malloc(size_t n) {
+    return __loader_malloc(n);
 }
-__attribute__((weak)) void free(void *p) {
-    (void) p;
+
+void free(void *p) {
+    __loader_free(p);
 }
-__attribute__((weak)) void *realloc(void *p, size_t n) {
-    (void) p;
-    (void) n;
-    return NULL;
+
+void *realloc(void *p, size_t n) {
+    return __loader_realloc(p, n);
 }
-__attribute__((weak)) void *calloc(size_t n, size_t m) {
-    (void) n;
-    (void) m;
-    return NULL;
+
+void *calloc(size_t n, size_t m) {
+    return __loader_calloc(n, m);
 }
-__attribute__((weak)) void *aligned_alloc(size_t a, size_t n) {
-    (void) a;
-    (void) n;
-    return NULL;
+
+void *aligned_alloc(size_t a, size_t n) {
+    return __loader_aligned_alloc(a, n);
 }
+
 #endif /* __is_shared */
