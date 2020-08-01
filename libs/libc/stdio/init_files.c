@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-FILE *stdout;
-FILE *stdin;
-FILE *stderr;
-
 static FILE files[3];
+
+FILE *stdout = &files[0];
+FILE *stdin = &files[1];
+FILE *stderr = &files[2];
 
 FILE *__file_list_head = files + 0;
 FILE *__file_list_tail = files + 2;
