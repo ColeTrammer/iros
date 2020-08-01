@@ -31,17 +31,33 @@ void __tls_get_addr(void) {}
 int errno;
 char **environ;
 
-struct initial_process_info *__initial_process_info;
 struct thread_control_block *__threads;
 
-void initialize_standard_library(struct initial_process_info *initial_process_info, int argc, char *argv[], char *envp[]) {
+#ifdef __is_shared
+static __attribute__((constructor)) void early_init(int argc, char **argv, char **envp) {
     (void) argc;
     (void) argv;
 
     environ = envp;
+
+    init_files(__initial_process_info->isatty_mask);
+    init_env();
+}
+#endif /* __is_shared */
+
+void initialize_standard_library(struct initial_process_info *initial_process_info, int argc, char **argv, char **envp) {
+    (void) initial_process_info;
+    (void) argc;
+    (void) argv;
+    (void) envp;
+
+#ifdef __is_static
+    environ = envp;
     __initial_process_info = initial_process_info;
 
     init_files(__initial_process_info->isatty_mask);
+    init_env();
+#endif /* #ifdef __is_static */
 
     // FIXME: __allocate_thread_control_block will call malloc which calls sbrk,
     //        which could set errno if it fails.
@@ -59,8 +75,6 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
     sigset_t set = { 0 };
     set |= (UINT64_C(1) << (__PTHREAD_CANCEL_SIGNAL - UINT64_C(1)));
     syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
-
-    init_env();
 
 #ifdef __is_static
     const size_t preinit_size = __preinit_array_end - __preinit_array_start;

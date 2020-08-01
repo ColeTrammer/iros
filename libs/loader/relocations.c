@@ -17,6 +17,10 @@ LOADER_PRIVATE uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, si
     uint64_t *addr = (uint64_t *) (obj->relocation_offset + relocation->r_offset);
     uintptr_t resolved_value = result.symbol->st_value + result.object->relocation_offset;
     *addr = resolved_value;
+
+#ifdef LOADER_SYMBOL_DEBUG
+    loader_log("Resolved `%s' in `%s' to %#.16lX", to_lookup, object_name(obj), resolved_value);
+#endif /* LOADER_SYMBOL_DEBUG */
     return resolved_value;
 }
 

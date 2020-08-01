@@ -25,12 +25,14 @@ extern "C" {
 #endif /* __cpluplus */
 
 struct dynamic_elf_object;
+struct initial_process_info;
 struct stat;
 
 extern LOADER_PRIVATE const char *program_name;
 extern LOADER_PRIVATE bool bind_now;
 extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_head;
 extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_tail;
+extern LOADER_PRIVATE struct initial_process_info *initial_process_info;
 
 typedef void (*init_function_t)(int argc, char **argv, char **envp);
 typedef void (*fini_function_t)(void);

@@ -193,7 +193,7 @@ struct thread_control_block {
     pthread_attr_t attributes;
 };
 
-extern struct initial_process_info *__initial_process_info;
+extern __attribute__((weak)) struct initial_process_info *__initial_process_info;
 extern struct thread_control_block *__threads;
 extern int __cancelation_setup;
 

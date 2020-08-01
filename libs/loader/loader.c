@@ -9,8 +9,11 @@ struct dynamic_elf_object *dynamic_object_head;
 struct dynamic_elf_object *dynamic_object_tail;
 const char *program_name;
 bool bind_now;
+__attribute__((nocommon)) struct initial_process_info *initial_process_info;
+LOADER_HIDDEN_EXPORT(initial_process_info, __initial_process_info);
 
 void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **argv, char **envp) {
+    initial_process_info = info;
     program_name = *argv;
 
     struct dynamic_elf_object program =
