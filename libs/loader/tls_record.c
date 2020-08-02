@@ -42,10 +42,10 @@ void remove_tls_record(struct tls_record *record) {
     (void) record;
 }
 
-struct tls_record *tls_record_at(size_t m) {
-    return tls_records[m];
+struct tls_record *tls_record_for(size_t m) {
+    return tls_records[m - 1];
 }
-LOADER_HIDDEN_EXPORT(tls_record_at, __loader_tls_record_at);
+LOADER_HIDDEN_EXPORT(tls_record_for, __loader_tls_record_for);
 
 size_t tls_num_records(void) {
     return tls_record_count;

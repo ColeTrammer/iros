@@ -80,7 +80,7 @@ void *pthread_getspecific(pthread_key_t key) {
         return NULL;
     }
 
-    return get_self()->pthread_specific_data[key.__id];
+    return __get_self()->pthread_specific_data[key.__id];
 }
 
 int pthread_setspecific(pthread_key_t key, const void *value) {
@@ -88,6 +88,6 @@ int pthread_setspecific(pthread_key_t key, const void *value) {
         return EINVAL;
     }
 
-    get_self()->pthread_specific_data[key.__id] = (void *) value;
+    __get_self()->pthread_specific_data[key.__id] = (void *) value;
     return 0;
 }

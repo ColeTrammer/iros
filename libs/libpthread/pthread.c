@@ -18,14 +18,6 @@ int __cancelation_setup = 0;
 
 static void pthread_exit_after_cleanup(void *value_ptr) __attribute__((__noreturn__));
 
-struct thread_control_block *get_self() {
-#if ARCH == X86_64
-    struct thread_control_block *ret;
-    asm("movq %%fs:0, %0" : "=r"(ret)::);
-    return ret;
-#endif /* ARCH == X86_64 */
-}
-
 static void __add_thread(struct thread_control_block *elem, struct thread_control_block *prev) {
     struct thread_control_block *to_add = elem;
     struct thread_control_block *ent = prev;
@@ -65,7 +57,7 @@ static void __remove_thread(struct thread_control_block *block) {
 }
 
 pthread_t pthread_self(void) {
-    return get_self()->id;
+    return __get_self()->id;
 }
 
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
@@ -136,7 +128,7 @@ int pthread_detach(pthread_t thread) {
     pthread_spin_lock(&threads_lock);
 
     if (thread == pthread_self()) {
-        struct thread_control_block *block = get_self();
+        struct thread_control_block *block = __get_self();
         if (block->joining_thread != 0 || block->attributes.__flags & PTHREAD_CREATE_DETACHED) {
             // Can't call on non joinable thread
             pthread_spin_unlock(&threads_lock);
@@ -256,7 +248,7 @@ __attribute__((__noreturn__)) void pthread_exit(void *value_ptr) {
 }
 
 __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value_ptr) {
-    struct thread_control_block *thread = get_self();
+    struct thread_control_block *thread = __get_self();
 
     pthread_specific_run_destructors(thread);
 
@@ -334,7 +326,7 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
 }
 
 int pthread_getconcurrency(void) {
-    return get_self()->concurrency;
+    return __get_self()->concurrency;
 }
 
 int pthread_getschedparam(pthread_t thread, int *__restrict policy, struct sched_param *__restrict param) {
@@ -344,7 +336,7 @@ int pthread_getschedparam(pthread_t thread, int *__restrict policy, struct sched
 
     struct thread_control_block *block = NULL;
     if (thread == pthread_self()) {
-        block = get_self();
+        block = __get_self();
     }
 
     pthread_spin_lock(&threads_lock);
@@ -371,7 +363,7 @@ int pthread_getschedparam(pthread_t thread, int *__restrict policy, struct sched
 }
 
 int pthread_setconcurrency(int new_level) {
-    get_self()->concurrency = new_level;
+    __get_self()->concurrency = new_level;
     return 0;
 }
 
@@ -382,7 +374,7 @@ int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param
 
     struct thread_control_block *block = NULL;
     if (thread == pthread_self()) {
-        block = get_self();
+        block = __get_self();
     }
 
     pthread_spin_lock(&threads_lock);
@@ -412,7 +404,7 @@ int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param
 int pthread_setschedprio(pthread_t thread, int prio) {
     struct thread_control_block *block = NULL;
     if (thread == pthread_self()) {
-        block = get_self();
+        block = __get_self();
     }
 
     pthread_spin_lock(&threads_lock);

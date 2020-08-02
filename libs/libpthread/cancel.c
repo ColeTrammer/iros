@@ -41,7 +41,7 @@ int pthread_setcancelstate(int state, int *oldstate) {
         return EINVAL;
     }
 
-    struct thread_control_block *block = get_self();
+    struct thread_control_block *block = __get_self();
     if (oldstate != NULL) {
         *oldstate = block->attributes.__flags & PTHREAD_CANCEL_DISABLE;
     }
@@ -71,7 +71,7 @@ int pthread_setcanceltype(int type, int *oldtype) {
         return EINVAL;
     }
 
-    struct thread_control_block *block = get_self();
+    struct thread_control_block *block = __get_self();
     if (oldtype != NULL) {
         *oldtype = block->attributes.__flags & PTHREAD_CANCEL_ASYNCHRONOUS;
     }

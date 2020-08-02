@@ -188,6 +188,7 @@ struct thread_control_block {
     int has_exited;
     int concurrency;
     void *exit_value;
+    void **dynamic_thread_vector;
     void **pthread_specific_data;
     struct __locked_robust_mutex_node *locked_robust_mutex_node_list_head;
     pthread_attr_t attributes;
@@ -197,10 +198,10 @@ extern __attribute__((weak)) struct initial_process_info *__initial_process_info
 extern struct thread_control_block *__threads;
 extern int __cancelation_setup;
 
-struct thread_control_block *__allocate_thread_control_block();
+struct thread_control_block *__allocate_thread_control_block(void);
 void __free_thread_control_block(struct thread_control_block *block);
 
-struct thread_control_block *get_self();
+struct thread_control_block *__get_self(void);
 
 void pthread_specific_run_destructors(struct thread_control_block *thread);
 

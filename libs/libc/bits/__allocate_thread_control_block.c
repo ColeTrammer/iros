@@ -11,7 +11,7 @@
 #include <sys/os_2.h>
 #include <sys/param.h>
 
-struct thread_control_block *__allocate_thread_control_block() {
+struct thread_control_block *__allocate_thread_control_block(void) {
 #ifdef __is_static
     size_t tls_alignment = __initial_process_info->tls_alignment;
     size_t tls_size = __initial_process_info->tls_size;
@@ -31,13 +31,18 @@ struct thread_control_block *__allocate_thread_control_block() {
     memcpy(tls, __initial_process_info->tls_start, tls_size);
 #else
     size_t tls_record_count = __loader_tls_num_records();
-    for (size_t i = 0; i < tls_record_count; i++) {
-        struct tls_record *record = __loader_tls_record_at(i);
+
+    block->dynamic_thread_vector = malloc((tls_record_count + 1) * sizeof(void *));
+    block->dynamic_thread_vector[0] = 0;
+
+    for (size_t i = 1; i <= tls_record_count; i++) {
+        struct tls_record *record = __loader_tls_record_for(i);
         if (!record) {
             continue;
         }
         uint8_t *tls = ((uint8_t *) block) - record->tls_offset;
         memcpy(tls, record->tls_image, record->tls_size);
+        block->dynamic_thread_vector[i] = tls;
     }
 #endif /* __is_static */
 

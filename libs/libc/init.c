@@ -24,10 +24,6 @@ extern void (*__init_array_end[])(int, char **, char **);
 extern void _init(void);
 #endif /* __is_static */
 
-#ifdef __is_shared
-void __tls_get_addr(void) {}
-#endif /* __is_shared */
-
 int errno;
 char **environ;
 

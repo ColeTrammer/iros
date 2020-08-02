@@ -41,7 +41,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
     struct __locked_robust_mutex_node *robust_mutex_node = NULL;
     struct thread_control_block *self = NULL;
     if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
-        self = get_self();
+        self = __get_self();
 
         robust_mutex_node = alloca(sizeof(struct __locked_robust_mutex_node));
         robust_mutex_node->__in_progress_flags = ROBUST_MUTEX_IS_VALID_IF_VALUE;
@@ -134,7 +134,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
     struct __locked_robust_mutex_node *robust_mutex_node = NULL;
     struct thread_control_block *self = NULL;
     if (mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) {
-        self = get_self();
+        self = __get_self();
 
         robust_mutex_node = alloca(sizeof(struct __locked_robust_mutex_node));
         robust_mutex_node->__in_progress_flags = ROBUST_MUTEX_IS_VALID_IF_VALUE;
@@ -216,7 +216,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
         }
 
         if (!node->__prev) {
-            get_self()->locked_robust_mutex_node_list_head = node;
+            __get_self()->locked_robust_mutex_node_list_head = node;
         } else {
             node->__prev->__next = node;
         }
@@ -235,7 +235,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
         }
 
         if (!node->__prev) {
-            get_self()->locked_robust_mutex_node_list_head = node->__next;
+            __get_self()->locked_robust_mutex_node_list_head = node->__next;
         } else {
             node->__prev->__next = node->__next;
         }
