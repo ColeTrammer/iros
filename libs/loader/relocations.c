@@ -152,13 +152,13 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
                 _exit(95);
             }
 
-#ifdef TLS_DEBUG
+#ifdef LOADER_TLS_DEBUG
             loader_log("Resolved @tpoff(`%s') to %#.16lX", to_lookup, result.object->tls_record->tls_offset - result.symbol->st_value);
-#endif /* TLS_DEBUG */
+#endif /* LOADER_TLS_DEBUG */
 
             // NOTE: for this to work, the symbol must be located in the initial thread local storage area.
             uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
-            *addr = result.object->tls_record->tls_offset - result.symbol->st_value;
+            *addr = -(result.object->tls_record->tls_offset - result.symbol->st_value);
             break;
         }
         default:
