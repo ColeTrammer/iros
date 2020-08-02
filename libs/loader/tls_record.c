@@ -14,8 +14,8 @@ struct tls_record *add_tls_record(void *tls_image, size_t tls_image_size, size_t
     record->tls_size = ALIGN_UP(tls_image_size, tls_align);
     record->tls_offset = ALIGN_UP(tls_initial_image_sz + tls_image_size, tls_align);
 
-    tls_initial_image_align = tls_align;
-    tls_initial_image_sz = record->tls_offset + record->tls_size;
+    tls_initial_image_align = MAX(tls_initial_image_align, tls_align);
+    tls_initial_image_sz = record->tls_offset;
 
     if (tls_record_max >= tls_record_count) {
         tls_record_max = MAX(20, tls_record_max * 2);
@@ -27,10 +27,11 @@ struct tls_record *add_tls_record(void *tls_image, size_t tls_image_size, size_t
         tls_record_count++;
     }
     tls_records[tls_record_count++] = record;
+    record->tls_module_id = tls_record_count;
 
 #ifdef LOADER_TLS_DEBUG
     loader_log("tls record input: { %lu, %lu }", tls_image_size, tls_align);
-    loader_log("tls record added: { %lu, %lu, %lu, %p }", record->tls_offset, record->tls_size, tls_record_count - 1, record->tls_image);
+    loader_log("tls record added: { %lu, %lu, %lu, %p }", record->tls_offset, record->tls_size, tls_record_count, record->tls_image);
 #endif /* LOADER_TLS_DEBUG */
 
     return record;

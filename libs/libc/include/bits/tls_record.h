@@ -11,6 +11,7 @@ struct tls_record {
     void *tls_image;
     size_t tls_size;
     size_t tls_offset;
+    size_t tls_module_id;
 };
 
 __attribute__((weak)) struct tls_record *__loader_tls_record_at(size_t m);

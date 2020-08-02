@@ -121,6 +121,8 @@ typedef struct {
 #define STT_FUNC    2
 #define STT_SECTION 3
 #define STT_FILE    4
+#define STT_COMMON  5
+#define STT_TLS     6
 #define STT_LOOS    10
 #define STT_HIOS    12
 #define STT_LOPROC  13
@@ -154,6 +156,14 @@ typedef struct {
 #define R_X86_64_PC16      13
 #define R_X86_64_8         14
 #define R_X86_64_PC8       15
+#define R_X86_64_DPTMOD64  16
+#define R_X86_64_DTPOFF64  17
+#define R_X86_64_TPOFF64   18
+#define R_X86_64_TLSGD     19
+#define R_X86_64_TLSLD     20
+#define R_X86_64_DTPOFF32  21
+#define R_X86_64_GOTTPOFF  22
+#define R_X86_64_TPOFF32   23
 #define R_X86_64_PC64      24
 #define R_X86_64_GOTOFF64  25
 #define R_X86_64_GOTPC32   26
