@@ -12,7 +12,7 @@ struct tls_record *add_tls_record(void *tls_image, size_t tls_image_size, size_t
     struct tls_record *record = loader_malloc(sizeof(struct tls_record));
     record->tls_image = tls_image;
     record->tls_size = ALIGN_UP(tls_image_size, tls_align);
-    record->tls_offset = ALIGN_UP(tls_initial_image_sz, tls_align);
+    record->tls_offset = ALIGN_UP(tls_initial_image_sz + tls_image_size, tls_align);
 
     tls_initial_image_align = tls_align;
     tls_initial_image_sz = record->tls_offset + record->tls_size;

@@ -2,9 +2,11 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/mman.h>
+#include <sys/param.h>
 
 #include "dynamic_elf_object.h"
 #include "mapped_elf_file.h"
+#include "tls_record.h"
 
 static int validate_elf_shared_library(void *base, size_t size) {
     if (size < sizeof(Elf64_Ehdr)) {
@@ -196,8 +198,16 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
 
     const Elf64_Phdr *first = program_header_at(file, 0);
     const Elf64_Phdr *last = program_header_at(file, 0);
+    size_t tls_size = 0;
+    size_t tls_align = 0;
     for (size_t i = 1; i < count; i++) {
         const Elf64_Phdr *phdr = program_header_at(file, i);
+        if (phdr->p_type == PT_TLS) {
+            tls_size = phdr->p_memsz;
+            tls_align = phdr->p_align;
+            continue;
+        }
+
         if (phdr->p_type != PT_LOAD) {
             continue;
         }
@@ -211,15 +221,26 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
     }
 
     size_t total_size = last->p_vaddr + last->p_memsz;
-    total_size = ((total_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    total_size = ALIGN_UP(total_size, PAGE_SIZE);
+    size_t tls_start = total_size;
+    total_size += tls_size;
+    total_size = ALIGN_UP(total_size, PAGE_SIZE);
 
     void *base = mmap(NULL, total_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, 0, 0);
     if ((intptr_t) base < 0 && (intptr_t) base > -300) {
         return NULL;
     }
 
+    void *tls_image = NULL;
     for (size_t i = 0; i < count; i++) {
         const Elf64_Phdr *phdr = program_header_at(file, i);
+        if (phdr->p_type == PT_TLS && tls_size) {
+            tls_image = base + tls_start;
+            memcpy(tls_image, file->base + phdr->p_offset, phdr->p_filesz);
+            // mprotect(tls_image, ROUND_UP(tls_size, PAGE_SIZE), PROT_READ);
+            continue;
+        }
+
         if (phdr->p_type != PT_LOAD) {
             continue;
         }
@@ -238,8 +259,13 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
     size_t dyn_count = dynamic_count(file);
     uintptr_t dyn_table_offset = dynamic_table_offset(file);
 
+    struct tls_record *tls_record = NULL;
+    if (tls_image) {
+        tls_record = add_tls_record(tls_image, tls_size, tls_align, 0);
+    }
+
     struct dynamic_elf_object *obj = loader_malloc(sizeof(struct dynamic_elf_object));
-    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, NULL);
+    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_record);
 
 #ifdef LOADER_DEBUG
     loader_log("loaded `%s' at %p", object_name(obj), base);
