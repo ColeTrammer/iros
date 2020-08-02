@@ -24,7 +24,7 @@ extern void (*__init_array_end[])(int, char **, char **);
 extern void _init(void);
 #endif /* __is_static */
 
-int errno;
+__thread int errno;
 char **environ;
 
 struct thread_control_block *__threads;
