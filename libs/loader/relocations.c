@@ -140,6 +140,27 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             *addr = result.symbol->st_value;
             break;
         }
+        case R_X86_64_TPOFF64: {
+            // @tpoff(s)
+            const char *to_lookup = symbol_name(self, symbol_index);
+            struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
+            if (!result.symbol) {
+                loader_log("Cannot resolve `%s'", to_lookup);
+                _exit(97);
+            } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
+                loader_log("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
+                _exit(95);
+            }
+
+#ifdef TLS_DEBUG
+            loader_log("Resolved @tpoff(`%s') to %#.16lX", to_lookup, result.object->tls_record->tls_offset - result.symbol->st_value);
+#endif /* TLS_DEBUG */
+
+            // NOTE: for this to work, the symbol must be located in the initial thread local storage area.
+            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
+            *addr = result.object->tls_record->tls_offset - result.symbol->st_value;
+            break;
+        }
         default:
             loader_log("Unkown relocation type %ld", type);
             break;
