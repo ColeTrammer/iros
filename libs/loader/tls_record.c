@@ -24,7 +24,7 @@ struct tls_record *add_tls_record(void *tls_image, size_t tls_image_size, size_t
 
     // The first tls record is reserved for the program executable even if it has no tls segment.
     if (tls_record_count == 0 && !(flags & TLS_RECORD_PROGRAM)) {
-        tls_record_count++;
+        tls_records[tls_record_count++] = NULL;
     }
     tls_records[tls_record_count++] = record;
     record->tls_module_id = tls_record_count;
