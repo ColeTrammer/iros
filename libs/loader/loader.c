@@ -4,6 +4,7 @@
 #include "loader.h"
 #include "mapped_elf_file.h"
 #include "relocations.h"
+#include "tls_record.h"
 
 struct dynamic_elf_object *dynamic_object_head;
 struct dynamic_elf_object *dynamic_object_tail;
@@ -16,9 +17,13 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
     initial_process_info = info;
     program_name = *argv;
 
+    struct tls_record *program_tls = NULL;
+    if (info->tls_size) {
+        program_tls = add_tls_record(info->tls_start, info->tls_size, info->tls_alignment, TLS_RECORD_PROGRAM);
+    }
     struct dynamic_elf_object program =
         build_dynamic_elf_object((const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->program_offset, info->program_size, 0);
+                                 (uint8_t *) info->program_offset, info->program_size, 0, program_tls);
     dynamic_object_head = dynamic_object_tail = &program;
 
     for (struct dynamic_elf_object *obj = &program; obj; obj = obj->next) {
@@ -27,7 +32,7 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
 
     struct dynamic_elf_object loader =
         build_dynamic_elf_object((const Elf64_Dyn *) info->loader_dynamic_start, info->loader_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset);
+                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, NULL);
     add_dynamic_object(&loader);
 
     struct dynamic_elf_object *obj = dynamic_object_tail;

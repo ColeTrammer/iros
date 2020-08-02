@@ -114,7 +114,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
                 interpreter = ((const char *) buffer) + program_headers[i].p_offset;
                 continue;
             case PT_TLS:
-                tls_size = ((program_headers[i].p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+                tls_size = program_headers[i].p_memsz;
                 continue;
             case PT_LOAD:
                 if (program_headers[i].p_flags & PF_X) {
@@ -147,6 +147,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
         info->program_entry = entry + offset;
         info->program_offset = elf64_get_start(buffer);
         info->program_size = data_end - info->program_offset + tls_size;
+        info->program_size = ((info->program_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
     }
 
     if (data_end >= data_start) {

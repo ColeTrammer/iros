@@ -7,6 +7,7 @@ set(SOURCES
     printf.c
     relocations.c
     symbols.c
+    tls_record.c
     utils.c
 )
 

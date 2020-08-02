@@ -3,10 +3,12 @@
 
 #include "dynamic_elf_object.h"
 #include "mapped_elf_file.h"
+#include "tls_record.h"
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
-                                                   size_t relocation_offset) {
+                                                   size_t relocation_offset, struct tls_record *tls_record) {
     struct dynamic_elf_object self = { 0 };
+    self.tls_record = tls_record;
     self.raw_data = base;
     self.raw_data_size = size;
     self.relocation_offset = relocation_offset;
@@ -115,6 +117,9 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
 }
 
 void destroy_dynamic_elf_object(struct dynamic_elf_object *self) {
+    if (self->tls_record) {
+        remove_tls_record(self->tls_record);
+    }
     munmap(self->raw_data, self->raw_data_size);
 }
 
@@ -148,7 +153,7 @@ const Elf64_Rela *rela_at(const struct dynamic_elf_object *self, size_t i) {
     return &rela_table(self)[i];
 }
 
-__attribute__((used)) size_t plt_relocation_count(const struct dynamic_elf_object *self) {
+size_t plt_relocation_count(const struct dynamic_elf_object *self) {
     size_t ent_size = self->plt_type == DT_RELA ? sizeof(Elf64_Rela) : sizeof(Elf64_Rel);
 
     if (!self->plt_size) {
@@ -161,7 +166,7 @@ const void *plt_relocation_table(const struct dynamic_elf_object *self) {
     return (void *) (self->plt_addr + self->relocation_offset);
 }
 
-__attribute__((used)) const void *plt_relocation_at(const struct dynamic_elf_object *self, size_t i) {
+const void *plt_relocation_at(const struct dynamic_elf_object *self, size_t i) {
     if (self->plt_type == DT_RELA) {
         const Elf64_Rela *tbl = plt_relocation_table(self);
         return &tbl[i];

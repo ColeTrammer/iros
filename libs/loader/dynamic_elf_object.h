@@ -11,9 +11,10 @@ struct Elf64_Dyn;
 struct Elf64_Rela;
 struct Elf64_Sym;
 struct Elf64_Word;
+struct tls_record;
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
-                                                   size_t relocation_offset) LOADER_PRIVATE;
+                                                   size_t relocation_offset, struct tls_record *tls_record) LOADER_PRIVATE;
 void destroy_dynamic_elf_object(struct dynamic_elf_object *self) LOADER_PRIVATE;
 const char *dynamic_strings(const struct dynamic_elf_object *self) LOADER_PRIVATE;
 const char *dynamic_string(const struct dynamic_elf_object *self, size_t i) LOADER_PRIVATE;

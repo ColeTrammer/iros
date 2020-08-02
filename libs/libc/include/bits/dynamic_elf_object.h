@@ -8,9 +8,12 @@
 extern "C" {
 #endif /* __cplusplus */
 
+struct tls_record;
+
 struct dynamic_elf_object {
     struct dynamic_elf_object *next;
     struct dynamic_elf_object *prev;
+    struct tls_record *tls_record;
     uintptr_t hash_table;
     uintptr_t string_table;
     uintptr_t symbol_table;
