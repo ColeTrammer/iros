@@ -38,6 +38,9 @@ extern LOADER_PRIVATE struct initial_process_info *initial_process_info;
 typedef void (*init_function_t)(int argc, char **argv, char **envp);
 typedef void (*fini_function_t)(void);
 
+void _entry(struct initial_process_info *info, int argc, char **argv, char **envp) LOADER_PRIVATE __attribute__((noreturn));
+void loader_exec(struct initial_process_info *info, int argc, char **argv, char **envp) LOADER_PRIVATE __attribute__((noreturn));
+
 void _exit(int status) LOADER_PRIVATE __attribute__((noreturn));
 ssize_t write(int fd, const void *buffer, size_t len) LOADER_PRIVATE;
 void *sbrk(intptr_t increment) LOADER_PRIVATE;

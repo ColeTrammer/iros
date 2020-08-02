@@ -13,7 +13,7 @@ bool bind_now;
 __attribute__((nocommon)) struct initial_process_info *initial_process_info;
 LOADER_HIDDEN_EXPORT(initial_process_info, __initial_process_info);
 
-void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **argv, char **envp) {
+__attribute__((noreturn)) void _entry(struct initial_process_info *info, int argc, char **argv, char **envp) {
     initial_process_info = info;
     program_name = *argv;
 
@@ -47,18 +47,5 @@ void LOADER_PRIVATE _entry(struct initial_process_info *info, int argc, char **a
         obj = obj->prev;
     }
 
-#ifdef LOADER_DEBUG
-    loader_log("starting program");
-#endif /* LOADER_DEBUG */
-    asm volatile("and $(~16), %%rsp\n"
-                 "sub $8, %%rsp\n"
-                 "mov %0, %%rdi\n"
-                 "mov %1, %%esi\n"
-                 "mov %2, %%rdx\n"
-                 "mov %3, %%rcx\n"
-                 "jmp *%4\n"
-                 :
-                 : "r"(info), "r"(argc), "r"(argv), "r"(envp), "r"(info->program_entry)
-                 : "rdi", "rsi", "rdx", "rcx", "memory");
-    _exit(99);
+    loader_exec(info, argc, argv, envp);
 }
