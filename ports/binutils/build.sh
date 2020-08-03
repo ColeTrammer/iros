@@ -10,7 +10,16 @@ download() {
 }
 
 configure() {
-    $ROOT/toolchain/binutils-2.34/binutils-os_2-2.34/configure --host=$HOST --disable-nls --prefix=/usr --target=$HOST --with-sysroot=/ --with-build-sysroot=$ROOt/sysroot --disable-werror --disable-gdb CFLAGS='-g -O2 -fno-omit-frame-pointer' CXXFLAGS='-g -O2 -fno-omit-frame-pointer'
+    $ROOT/toolchain/binutils-2.34/binutils-os_2-2.34/configure \
+        --host="$HOST" \
+        --disable-nls \
+        --prefix=/usr \
+        --target="$HOST" \
+        --with-sysroot=/ \
+        --with-build-sysroot="$ROOT/sysroot" \
+        --disable-werror \
+        --disable-gdb \
+        --enable-shared
 }
 
 . ../.build_include.sh

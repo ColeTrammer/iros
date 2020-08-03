@@ -18,16 +18,29 @@ download() {
 patch() {
     ./contrib/download_prerequisites
     git init
-    git apply ../gcc-os_2-9.2.0.patch
     git apply ../gcc-deps.patch
+    git apply ../../../toolchain/gcc-9.2.0/gcc-os_2-9.2.0.patch
 
     cd libstdc++-v3
     autoconf
     cd ..
+
+    git apply ../../../toolchain/gcc-9.2.0/gcc-9.2.0-customizations.patch
+
 }
 
 configure() {
-    ../gcc-9.2.0/configure --host=$HOST --target=$HOST --prefix=/usr --disable-nls --disable-lto --with-sysroot=/ --with-build-sysroot=$ROOT/sysroot --enable-languages=c,c++ CFLAGS='-g -O2 -fno-omit-frame-pointer' CXXFLAGS='-g -O2 -fno-omit-frame-pointer'
+    export gcc_cv_initfini_array=yes
+    ../gcc-9.2.0/configure \
+        --host="$HOST" \
+        --target="$HOST" \
+        --prefix=/usr \
+        --disable-nls \
+        --disable-lto \
+        --with-sysroot=/ \
+        --with-build-sysroot="$ROOT/sysroot" \
+        --enable-languages=c,c++ \
+        --enable-shared
 }
 
 build() {
