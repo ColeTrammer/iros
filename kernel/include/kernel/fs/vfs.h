@@ -15,6 +15,9 @@ struct iovec;
 struct statvfs;
 struct super_block;
 
+#define PATH_MAX 4096
+#define NAME_MAX 255
+
 #define INAME_DONT_FOLLOW_TRAILING_SYMLINK            1
 #define INAME_TAKE_OWNERSHIP_OF_PATH                  2
 #define INAME_CHECK_PERMISSIONS_WITH_REAL_UID_AND_GID 4

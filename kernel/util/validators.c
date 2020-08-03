@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdint.h>
 
+#include <kernel/fs/vfs.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/util/validators.h>
