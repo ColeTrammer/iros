@@ -74,10 +74,6 @@ function_exists install || install() {
     make ${INSTALL_COMMAND:-install} DESTDIR="$ROOT/sysroot" $MAKE_ARGS
 }
 
-pushd ../..
-rm -f sysroot/usr/include/dlfcn.h
-popd
-
 run() {
     case $TARGET in
         all)

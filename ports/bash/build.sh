@@ -16,10 +16,10 @@ download() {
 patch() {
     git init
     git apply ../bash-5.0.patch
+    git apply ../bash-5.0-loadables.patch
 }
 
 configure() {
-    export ac_cv_lib_dl_dlopen=no # Until it actually works
     export bash_cv_getcwd_malloc=yes
     ../bash-5.0/configure --host=$HOST --disable-nls --without-bash-malloc --prefix=/usr
 }
