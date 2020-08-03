@@ -11,6 +11,7 @@ struct dynamic_elf_object;
 struct mapped_elf_file {
     void *base;
     size_t size;
+    int fd;
 };
 
 struct mapped_elf_file build_mapped_elf_file(const char *file, int *error) LOADER_PRIVATE;

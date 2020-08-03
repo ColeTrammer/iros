@@ -71,15 +71,8 @@ struct mapped_elf_file build_mapped_elf_file(const char *file, int *error) {
         goto build_mapped_elf_file_fail;
     }
 
-    ret = close(fd);
-    if (ret < 0) {
-        fd = -1;
-        *error = -1;
-        goto build_mapped_elf_file_fail;
-    }
-
     *error = 0;
-    return (struct mapped_elf_file) { .base = base, .size = size };
+    return (struct mapped_elf_file) { .base = base, .size = size, .fd = fd };
 
 build_mapped_elf_file_fail:
     if (fd >= 0) {
@@ -95,6 +88,7 @@ build_mapped_elf_file_fail:
 
 void destroy_mapped_elf_file(struct mapped_elf_file *self) {
     munmap(self->base, self->size);
+    close(self->fd);
 }
 
 const Elf64_Ehdr *elf_header(const struct mapped_elf_file *self) {
@@ -246,18 +240,20 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
             continue;
         }
 
+        int prot =
+            (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
+
         size_t size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         void *phdr_start = base + phdr->p_vaddr;
         void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
-        mprotect(phdr_page_start, size, PROT_WRITE);
 
-        memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);
-
-        int prot =
-            (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
-        // FIXME: make relocations work without this hack
-        prot |= PROT_WRITE;
-        mprotect(phdr_page_start, size, prot);
+        if ((phdr->p_filesz == phdr->p_memsz) && !(prot & PROT_WRITE) && (phdr->p_align % PAGE_SIZE == 0)) {
+            mmap(phdr_start, size, prot, MAP_SHARED | MAP_FIXED, file->fd, phdr->p_offset);
+        } else {
+            mprotect(phdr_page_start, size, PROT_WRITE);
+            memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);
+            mprotect(phdr_page_start, size, prot);
+        }
     }
 
     size_t dyn_count = dynamic_count(file);
