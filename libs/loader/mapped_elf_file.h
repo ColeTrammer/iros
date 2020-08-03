@@ -1,18 +1,14 @@
 #ifndef _MAPPED_ELF_FILE_H
 #define _MAPPED_ELF_FILE_H 1
 
+#include <bits/mapped_elf_file.h>
+
 #include "loader.h"
 
 struct Elf64_Ehdr;
 struct Elf64_Phdr;
 struct Elf64_Shdr;
 struct dynamic_elf_object;
-
-struct mapped_elf_file {
-    void *base;
-    size_t size;
-    int fd;
-};
 
 struct mapped_elf_file build_mapped_elf_file(const char *file, int *error) LOADER_PRIVATE;
 void destroy_mapped_elf_file(struct mapped_elf_file *self) LOADER_PRIVATE;

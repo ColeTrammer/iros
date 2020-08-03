@@ -211,13 +211,15 @@ const Elf64_Sym *lookup_symbol(const struct dynamic_elf_object *self, const char
     }
     return NULL;
 }
+LOADER_HIDDEN_EXPORT(lookup_symbol, __loader_lookup_symbol);
 
 void free_dynamic_elf_object(struct dynamic_elf_object *self) {
     destroy_dynamic_elf_object(self);
     loader_free(self);
 }
+LOADER_HIDDEN_EXPORT(free_dynamic_elf_object, __loader_free_dynamic_elf_object);
 
-void call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) {
+static void do_call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) {
 #ifdef LOADER_DEBUG
     loader_log("doing init functions for `%s'", object_name(obj));
 #endif /* LOADER_DEBUG */
@@ -242,7 +244,17 @@ void call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, 
     }
 }
 
-void call_fini_functions(struct dynamic_elf_object *obj) {
+void call_init_functions(struct dynamic_elf_object *self, int argc, char **argv, char **envp) {
+    for (struct dynamic_elf_object *obj = dynamic_object_tail; obj; obj = obj->prev) {
+        do_call_init_functions(obj, argc, argv, envp);
+        if (obj == self) {
+            break;
+        }
+    }
+}
+LOADER_HIDDEN_EXPORT(call_init_functions, __loader_call_init_functions);
+
+static void do_call_fini_functions(struct dynamic_elf_object *obj) {
 #ifdef LOADER_DEBUG
     loader_log("doing fini functions for `%s'", object_name(obj));
 #endif /* LOADER_DEBUG */
@@ -259,12 +271,27 @@ void call_fini_functions(struct dynamic_elf_object *obj) {
         fini();
     }
 }
+
+void call_fini_functions(struct dynamic_elf_object *self) {
+    for (struct dynamic_elf_object *obj = self; obj; obj = obj->next) {
+        do_call_fini_functions(self);
+    }
+}
 LOADER_HIDDEN_EXPORT(call_fini_functions, __loader_call_fini_functions);
 
 void add_dynamic_object(struct dynamic_elf_object *obj) {
     insque(obj, dynamic_object_tail);
     dynamic_object_tail = obj;
 }
+LOADER_HIDDEN_EXPORT(add_dynamic_object, __loader_add_dynamic_object);
+
+void remove_dynamic_object(struct dynamic_elf_object *obj) {
+    if (dynamic_object_tail == obj) {
+        dynamic_object_tail = obj->prev;
+    }
+    remque(obj);
+}
+LOADER_HIDDEN_EXPORT(remove_dynamic_object, __loader_remove_dynamic_object);
 
 static bool already_loaded(const char *lib_name) {
     struct dynamic_elf_object *obj = dynamic_object_head;
@@ -277,7 +304,7 @@ static bool already_loaded(const char *lib_name) {
     return false;
 }
 
-void load_dependencies(struct dynamic_elf_object *obj) {
+static void do_load_dependencies(struct dynamic_elf_object *obj) {
     for (size_t i = 0; i < obj->dependencies_size; i++) {
         const char *lib_name = dynamic_string(obj, obj->dependencies[i]);
         if (already_loaded(lib_name)) {
@@ -308,6 +335,13 @@ void load_dependencies(struct dynamic_elf_object *obj) {
         destroy_mapped_elf_file(&lib);
     }
 }
+
+void load_dependencies(struct dynamic_elf_object *obj_head) {
+    for (struct dynamic_elf_object *obj = obj_head; obj; obj = obj->next) {
+        do_load_dependencies(obj);
+    }
+}
+LOADER_HIDDEN_EXPORT(load_dependencies, __loader_load_dependencies);
 
 struct dynamic_elf_object *get_dynamic_object_head(void) {
     return dynamic_object_head;

@@ -147,7 +147,7 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
     }
 }
 
-void process_relocations(const struct dynamic_elf_object *self) {
+void do_process_relocations(const struct dynamic_elf_object *self) {
     size_t count = rela_count(self);
     for (size_t i = 0; i < count; i++) {
         const Elf64_Rela *rela = rela_at(self, i);

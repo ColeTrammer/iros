@@ -4,7 +4,7 @@
 #include "relocations.h"
 #include "symbols.h"
 
-LOADER_PRIVATE uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, size_t plt_offset) {
+uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, size_t plt_offset) {
     const Elf64_Rela *relocation = plt_relocation_at(obj, plt_offset);
     const char *to_lookup = symbol_name(obj, ELF64_R_SYM(relocation->r_info));
     struct symbol_lookup_result result = do_symbol_lookup(to_lookup, obj, 0);
@@ -21,3 +21,13 @@ LOADER_PRIVATE uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, si
 #endif /* LOADER_SYMBOL_DEBUG */
     return resolved_value;
 }
+
+void process_relocations(const struct dynamic_elf_object *self) {
+    for (struct dynamic_elf_object *obj = dynamic_object_tail; obj; obj = obj->prev) {
+        do_process_relocations(obj);
+        if (obj == self) {
+            break;
+        }
+    }
+}
+LOADER_HIDDEN_EXPORT(process_relocations, __loader_process_relocations);

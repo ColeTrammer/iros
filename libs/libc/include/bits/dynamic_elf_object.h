@@ -1,6 +1,7 @@
 #ifndef _BITS_DYNAMIC_ELF_OBJECT_H
 #define _BITS_DYNAMIC_ELF_OBJECT_H 1
 
+#include <elf.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -42,6 +43,17 @@ struct dynamic_elf_object {
     size_t dependencies_size;
     size_t dependencies_max;
 };
+
+void __loader_call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) __attribute__((weak));
+void __loader_call_fini_functions(struct dynamic_elf_object *obj) __attribute__((weak));
+void __loader_process_relocations(const struct dynamic_elf_object *self) __attribute__((weak));
+void __loader_load_dependencies(struct dynamic_elf_object *obj_head) __attribute__((weak));
+const Elf64_Sym *__loader_lookup_symbol(const struct dynamic_elf_object *self, const char *s) __attribute__((weak));
+void __loader_add_dynamic_object(struct dynamic_elf_object *obj) __attribute__((weak));
+void __loader_remove_dynamic_object(struct dynamic_elf_object *obj) __attribute__((weak));
+void __loader_free_dynamic_elf_object(struct dynamic_elf_object *obj) __attribute__((weak));
+struct dynamic_elf_object *__loader_get_dynamic_object_head(void) __attribute__((weak));
+struct dynamic_elf_object *__loader_get_dynamic_object_tail(void) __attribute__((weak));
 
 #ifdef __cplusplus
 }

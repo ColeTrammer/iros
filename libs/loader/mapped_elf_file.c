@@ -83,13 +83,19 @@ build_mapped_elf_file_fail:
         munmap(base, size);
     }
 
-    return (struct mapped_elf_file) { .base = NULL, .size = 0 };
+    return (struct mapped_elf_file) { .base = NULL, .size = 0, .fd = -1 };
 }
+LOADER_HIDDEN_EXPORT(build_mapped_elf_file, __loader_build_mapped_elf_file);
 
 void destroy_mapped_elf_file(struct mapped_elf_file *self) {
-    munmap(self->base, self->size);
-    close(self->fd);
+    if (self->base) {
+        munmap(self->base, self->size);
+    }
+    if (self->fd != -1) {
+        close(self->fd);
+    }
 }
+LOADER_HIDDEN_EXPORT(destroy_mapped_elf_file, __loader_destroy_mapped_elf_file);
 
 const Elf64_Ehdr *elf_header(const struct mapped_elf_file *self) {
     return self->base;
@@ -273,3 +279,4 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
 
     return obj;
 }
+LOADER_HIDDEN_EXPORT(load_mapped_elf_file, __loader_load_mapped_elf_file);

@@ -23,9 +23,7 @@ __attribute__((__noreturn__)) void exit(int status) {
 
     _fini();
 #else
-    for (struct dynamic_elf_object *obj = __loader_get_dynamic_object_head(); obj; obj = obj->next) {
-        __loader_call_fini_functions(obj);
-    }
+    __loader_call_fini_functions(__loader_get_dynamic_object_head());
 #endif /* __is_static */
 
     __cxa_finalize(NULL);

@@ -2,15 +2,12 @@
 #define _DYNAMIC_ELF_OBJECT_H 1
 
 #include <bits/dynamic_elf_object.h>
+#include <elf.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "loader.h"
 
-struct Elf64_Dyn;
-struct Elf64_Rela;
-struct Elf64_Sym;
-struct Elf64_Word;
 struct tls_record;
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
@@ -34,6 +31,7 @@ void free_dynamic_elf_object(struct dynamic_elf_object *self) LOADER_PRIVATE;
 void call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) LOADER_PRIVATE;
 void call_fini_functions(struct dynamic_elf_object *obj) LOADER_PRIVATE;
 void add_dynamic_object(struct dynamic_elf_object *obj) LOADER_PRIVATE;
+void remove_dynamic_object(struct dynamic_elf_object *obj) LOADER_PRIVATE;
 void load_dependencies(struct dynamic_elf_object *obj) LOADER_PRIVATE;
 struct dynamic_elf_object *get_dynamic_object_head(void) LOADER_PRIVATE;
 struct dynamic_elf_object *get_dynamic_object_tail(void) LOADER_PRIVATE;
