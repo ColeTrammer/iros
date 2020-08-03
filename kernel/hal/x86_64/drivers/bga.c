@@ -72,7 +72,7 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
         bump_vm_object(device->vm_object);
     }
 
-    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
+    struct vm_region *region = map_region(addr, len, prot, flags, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     region->vm_object = device->vm_object;
     region->vm_object_offset = 0;
     region->flags |= VM_SHARED;

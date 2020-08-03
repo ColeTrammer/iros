@@ -208,20 +208,8 @@ bool vm_is_kernel_address(uintptr_t addr) {
     return addr >= find_first_kernel_vm_region()->start;
 }
 
-int unmap_range(uintptr_t addr, size_t length) {
-    if (addr % PAGE_SIZE != 0) {
-        return -EINVAL;
-    }
-
-    if (length == 0) {
-        return 0;
-    }
-
-    length = ((length + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-
+static int do_unmap_range(uintptr_t addr, size_t length) {
     struct process *process = get_current_task()->process;
-    mutex_lock(&process->lock);
-
     int thread_count = process->ref_count;
     bool broadcast_tlb_flush = thread_count > 1;
 
@@ -309,23 +297,41 @@ int unmap_range(uintptr_t addr, size_t length) {
 
         free(r);
     }
-
-    mutex_unlock(&process->lock);
     return 0;
 }
 
-struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
+int unmap_range(uintptr_t addr, size_t length) {
+    if (addr % PAGE_SIZE != 0) {
+        return -EINVAL;
+    }
+
+    if (length == 0) {
+        return 0;
+    }
+
+    length = ((length + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+
+    struct process *process = get_current_task()->process;
+    mutex_lock(&process->lock);
+
+    int ret = do_unmap_range(addr, length);
+
+    mutex_unlock(&process->lock);
+    return ret;
+}
+
+struct vm_region *map_region(void *addr, size_t len, int prot, int flags, uint64_t type) {
     len = ((len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
 
-    if (addr != NULL) {
+    if (addr != NULL && !(flags & MAP_FIXED)) {
         // Do not overwrite an already existing region
         if (find_user_vm_region_in_range((uintptr_t) addr, (uintptr_t) addr + len)) {
             addr = NULL;
         }
     }
 
-    if (addr == NULL) {
-        if (type == VM_TASK_STACK) {
+    if (addr == NULL && !(flags & MAP_FIXED)) {
+        if ((flags & MAP_STACK) || (type == VM_TASK_STACK)) {
             uintptr_t to_search = find_vm_region(VM_TASK_STACK)->start;
             struct vm_region *r;
             while ((r = find_user_vm_region_in_range(to_search - len, to_search))) {
@@ -352,6 +358,7 @@ struct vm_region *map_region(void *addr, size_t len, int prot, uint64_t type) {
 
     struct process *process = get_current_task()->process;
     mutex_lock(&process->lock);
+    do_unmap_range((uintptr_t) addr, len);
     process->process_memory = add_vm_region(process->process_memory, to_add);
     mutex_unlock(&process->lock);
 

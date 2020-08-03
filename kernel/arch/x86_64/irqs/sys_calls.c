@@ -1036,7 +1036,7 @@ SYS_CALL(mmap) {
     SYS_PARAM6(off_t, offset);
 
     if (flags & MAP_ANONYMOUS) {
-        struct vm_region *region = map_region(addr, length, prot, flags & MAP_STACK ? VM_TASK_STACK : VM_PROCESS_ANON_MAPPING);
+        struct vm_region *region = map_region(addr, length, prot, flags, flags & MAP_STACK ? VM_TASK_STACK : VM_PROCESS_ANON_MAPPING);
         if (region == NULL) {
             SYS_RETURN(-ENOMEM);
         }

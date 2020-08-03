@@ -226,7 +226,7 @@ intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
         bump_vm_object(inode->vm_object);
     }
 
-    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
+    struct vm_region *region = map_region(addr, len, prot, flags, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     region->vm_object = inode->vm_object;
     region->vm_object_offset = 0;
     region->flags |= VM_SHARED;

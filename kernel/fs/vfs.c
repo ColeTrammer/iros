@@ -1406,7 +1406,7 @@ intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct ino
         inode->i_op->lookup(inode, NULL);
     }
 
-    struct vm_region *region = map_region(addr, len, prot, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
+    struct vm_region *region = map_region(addr, len, prot, flags, VM_DEVICE_MEMORY_MAP_DONT_FREE_PHYS_PAGES);
     if (!region) {
         return -ENOMEM;
     }
