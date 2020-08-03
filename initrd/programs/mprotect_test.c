@@ -48,6 +48,13 @@ int main() {
     CHECK_SIGSEGV;
     assert(base[5 * ps] == 42);
 
+    if (mprotect(base + 5 * ps, 1 * ps, PROT_READ | PROT_WRITE)) {
+        perror("mprotect");
+        return 1;
+    }
+    base[5 * ps] = 43;
+    assert(base[5 * ps] == 43);
+
     if (mprotect(base + 1 * ps, 1 * ps, PROT_NONE)) {
         perror("mprotect");
         return 1;

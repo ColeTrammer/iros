@@ -431,7 +431,7 @@ int map_range_protections(uintptr_t addr, size_t length, int prot) {
             to_add->end = r->end;
             to_add->flags = (r->flags & VM_STACK) | flags;
             to_add->type = r->type;
-            to_add->vm_object_offset = r->vm_object_offset + (r->start - addr);
+            to_add->vm_object_offset = r->vm_object_offset + (addr - r->start);
             to_add->vm_object = r->vm_object;
             bump_vm_object(to_add->vm_object);
 
