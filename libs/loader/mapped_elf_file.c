@@ -226,7 +226,7 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
     total_size += tls_size;
     total_size = ALIGN_UP(total_size, PAGE_SIZE);
 
-    void *base = mmap(NULL, total_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, 0, 0);
+    void *base = mmap(NULL, total_size, PROT_NONE, MAP_PRIVATE | MAP_ANON, 0, 0);
     if ((intptr_t) base < 0 && (intptr_t) base > -300) {
         return NULL;
     }
@@ -236,8 +236,9 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
         const Elf64_Phdr *phdr = program_header_at(file, i);
         if (phdr->p_type == PT_TLS && tls_size) {
             tls_image = base + tls_start;
+            mprotect(tls_image, ALIGN_UP(tls_size, PAGE_SIZE), PROT_WRITE);
             memcpy(tls_image, file->base + phdr->p_offset, phdr->p_filesz);
-            // mprotect(tls_image, ROUND_UP(tls_size, PAGE_SIZE), PROT_READ);
+            mprotect(tls_image, ALIGN_UP(tls_size, PAGE_SIZE), PROT_READ);
             continue;
         }
 
@@ -245,15 +246,18 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
             continue;
         }
 
-        // size_t size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        size_t size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         void *phdr_start = base + phdr->p_vaddr;
+        void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
+        mprotect(phdr_page_start, size, PROT_WRITE);
+
         memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);
-        // void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
-        // int prot =
-        // (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
+
+        int prot =
+            (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
         // FIXME: make relocations work without this hack
-        // prot |= PROT_WRITE;
-        // mprotect(phdr_page_start, size, prot);
+        prot |= PROT_WRITE;
+        mprotect(phdr_page_start, size, prot);
     }
 
     size_t dyn_count = dynamic_count(file);
