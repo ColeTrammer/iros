@@ -92,7 +92,6 @@ double strtod(const char *__restrict str, char **__restrict endptr);
 int posix_memalign(void **memptr, size_t alignment, size_t size);
 
 #ifdef __libc_internal
-void __on_exit();
 void init_env();
 #endif /* __libc_internal */
 

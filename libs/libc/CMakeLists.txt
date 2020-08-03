@@ -105,6 +105,8 @@ else()
         bits/lock/__unlock.c
         bits/__allocate_thread_control_block.c
         bits/__free_thread_control_block.c
+        bits/__cxa_atexit.c
+        bits/__cxa_finalize.c
         dirent/dirent.c
         dirent/rewinddir.c
         fcntl/creat.c
@@ -197,7 +199,6 @@ else()
         stdio/setbuf.c
         stdio/setvbuf.c
         stdio/ungetc.c
-        stdlib/__on_exit.c
         stdlib/_Exit.c
         stdlib/atexit.c
         stdlib/env.c
@@ -321,7 +322,6 @@ else()
         utime/utime.c
         wctype/iswupper.c
         wctype/towlower.c
-        __cxa_atexit.c
         cxx.cpp
         init.c
     )

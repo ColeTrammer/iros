@@ -1,5 +1,6 @@
 #define __libc_internal
 
+#include <bits/cxx.h>
 #include <bits/dynamic_elf_object.h>
 #include <dlfcn.h>
 #include <stdio.h>
@@ -14,8 +15,6 @@ extern void _fini(void);
 #endif /* __is_static */
 
 __attribute__((__noreturn__)) void exit(int status) {
-    __on_exit();
-
 #ifdef __is_static
     size_t count = (__fini_array_end - __fini_array_start);
     for (size_t i = count; i > 0; i--) {
@@ -28,6 +27,8 @@ __attribute__((__noreturn__)) void exit(int status) {
         __loader_call_fini_functions(obj);
     }
 #endif /* __is_static */
+
+    __cxa_finalize(NULL);
 
     fflush_unlocked(NULL);
 
