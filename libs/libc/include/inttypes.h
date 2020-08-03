@@ -9,4 +9,9 @@
 #define PRIx64 "lx"
 #define PRIu64 "lu"
 
+#define PRIdMAX PRId64
+#define PRIiMAX PRIi64
+#define PRIxMAX PRIx64
+#define PRIuMAX PRIu64
+
 #endif /* _INTTYPES_H */
