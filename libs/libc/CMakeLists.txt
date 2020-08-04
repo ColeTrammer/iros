@@ -241,12 +241,17 @@ else()
         sys/uio/writev.c
         sys/utsname/utsname.c
         sys/wait/wait.c
+        syslog/closelog.c
+        syslog/openlog.c
+        syslog/setlogmask.c
+        syslog/syslog.c
         termios/termios.c
         time/clock_getcpuclockid.c
         time/clock_getres.c
         time/clock_gettime.c
         time/clock_nanosleep.c
         time/clock_settime.c
+        time/mktime.c
         time/nanosleep.c
         time/time.c
         ulimit/ulimit.c
