@@ -216,6 +216,7 @@ else()
         sys/os_2/os_mutex.c
         sys/os_2/set_thread_self_pointer.c
         sys/os_2/tgkill.c
+        sys/resource/getrlimit.c
         sys/socket/socket.c
         sys/select/select.c
         sys/stat/chmod.c
