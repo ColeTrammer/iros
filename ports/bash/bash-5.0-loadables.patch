@@ -18,7 +18,7 @@ index d31c9d7..d93fe9f 100644
  #if !defined (HAVE_GETPW_DECLS)
  extern struct passwd *getpwuid ();
  #endif
--extern struct group *getgrgid (gi);
+-extern struct group *getgrgid ();
  
  #include "shell.h"
  #include "builtins.h"
