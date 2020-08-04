@@ -28,7 +28,6 @@ void *dlopen(const char *file, int flags) {
         goto cleanup_mapped_file;
     }
 
-    __loader_add_dynamic_object(object);
     __loader_load_dependencies(object);
     __loader_process_relocations(object);
     __loader_call_init_functions(object, 0, NULL, NULL);

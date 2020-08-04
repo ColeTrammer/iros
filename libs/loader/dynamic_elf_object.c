@@ -214,6 +214,7 @@ const Elf64_Sym *lookup_symbol(const struct dynamic_elf_object *self, const char
 LOADER_HIDDEN_EXPORT(lookup_symbol, __loader_lookup_symbol);
 
 void free_dynamic_elf_object(struct dynamic_elf_object *self) {
+    remove_dynamic_object(self);
     destroy_dynamic_elf_object(self);
     loader_free(self);
 }
@@ -280,10 +281,13 @@ void call_fini_functions(struct dynamic_elf_object *self) {
 LOADER_HIDDEN_EXPORT(call_fini_functions, __loader_call_fini_functions);
 
 void add_dynamic_object(struct dynamic_elf_object *obj) {
-    insque(obj, dynamic_object_tail);
-    dynamic_object_tail = obj;
+    if (!dynamic_object_head) {
+        dynamic_object_head = dynamic_object_tail = obj;
+    } else {
+        insque(obj, dynamic_object_tail);
+        dynamic_object_tail = obj;
+    }
 }
-LOADER_HIDDEN_EXPORT(add_dynamic_object, __loader_add_dynamic_object);
 
 void remove_dynamic_object(struct dynamic_elf_object *obj) {
     if (dynamic_object_tail == obj) {
@@ -291,7 +295,6 @@ void remove_dynamic_object(struct dynamic_elf_object *obj) {
     }
     remque(obj);
 }
-LOADER_HIDDEN_EXPORT(remove_dynamic_object, __loader_remove_dynamic_object);
 
 static bool already_loaded(const char *lib_name) {
     struct dynamic_elf_object *obj = dynamic_object_head;
@@ -331,7 +334,6 @@ static void do_load_dependencies(struct dynamic_elf_object *obj) {
             _exit(96);
         }
 
-        add_dynamic_object(loaded_lib);
         destroy_mapped_elf_file(&lib);
     }
 }

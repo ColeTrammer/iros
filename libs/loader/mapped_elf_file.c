@@ -277,6 +277,7 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
     loader_log("loaded `%s' at %p", object_name(obj), base);
 #endif /* LOADER_DEBUG */
 
+    add_dynamic_object(obj);
     return obj;
 }
 LOADER_HIDDEN_EXPORT(load_mapped_elf_file, __loader_load_mapped_elf_file);

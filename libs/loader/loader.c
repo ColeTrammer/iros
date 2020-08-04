@@ -24,8 +24,7 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
     struct dynamic_elf_object program =
         build_dynamic_elf_object((const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn),
                                  (uint8_t *) info->program_offset, info->program_size, 0, program_tls);
-    dynamic_object_head = dynamic_object_tail = &program;
-
+    add_dynamic_object(&program);
     load_dependencies(&program);
 
     struct dynamic_elf_object loader =
