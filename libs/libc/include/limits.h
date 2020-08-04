@@ -37,10 +37,11 @@
 
 #define _POSIX_AIO_LISTIO_MAX               2
 #define _POSIX_AIO_MAX                      1
+#define _POSIX_AIO_PRIO_DELTA_MAX           0
 #define _POSIX_ARG_MAX                      4096
 #define _POSIX_CHILD_MAX                    25
 #define _POSIX_DELAYTIMER_MAX               32
-#define _POXIX_HOST_NAME_MAX                255
+#define _POSIX_HOST_NAME_MAX                255
 #define _POSIX_LINK_MAX                     8
 #define _POSIX_LOGIN_NAME_MAX               9
 #define _POSIX_MAX_CANON                    255
@@ -149,7 +150,6 @@
 #define NL_ARGMAX  9
 #define NL_LANGMAX 14
 #define NL_MSGMAX  32767
-#define NL_NMAX    255
 #define NL_SETMAX  255
 #define NL_TEXTMAX _POSIX2_LINE_MAX
 #define NZERO      20

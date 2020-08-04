@@ -256,6 +256,7 @@ else()
         unistd/chdir.c
         unistd/chown.c
         unistd/close.c
+        unistd/confstr.c
         unistd/dup.c
         unistd/dup2.c
         unistd/execl.c
