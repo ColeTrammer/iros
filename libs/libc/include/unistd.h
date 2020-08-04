@@ -26,7 +26,7 @@ extern "C" {
 #define _POSIX_CHOWN_RESTRICTED           1
 #define _POSIX_CLOCK_SELECTION            200809L
 #define _POSIX_CPUTIME                    200809L
-#define _POSIX_FSYNC                      -1
+#define _POSIX_FSYNC                      200809L
 #define _POSIX_IPV6                       -1
 #define _POSIX_JOB_CONTROL                1
 #define _POSIX_MAPPED_FILES               200809L
@@ -376,6 +376,7 @@ ssize_t readlink(const char *__restrict pathname, char *__restrict buf, size_t b
 int symlink(const char *target, const char *linkpath);
 int link(const char *oldpath, const char *newpath);
 void sync(void);
+int fsync(int fd);
 
 ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);

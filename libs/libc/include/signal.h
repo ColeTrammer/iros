@@ -45,6 +45,7 @@
 #endif /* __is_kernel */
 #define SIGRTMAX 64
 #define _NSIG    65
+#define NSIG     _NSIG
 
 #define SI_USER       0
 #define SI_QUEUE      1
