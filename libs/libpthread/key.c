@@ -62,16 +62,16 @@ key_create_end:
     return ret;
 }
 
-int pthread_key_delete(pthread_key_t *key) {
-    if (key->__id == -1) {
+int pthread_key_delete(pthread_key_t key) {
+    if (key.__id == -1) {
         return EINVAL;
     }
 
     // FIXME: does this need a lock/atomic store?
-    destructors[key->__id] = NULL;
-    allocated_keys_bitmap[key->__id / sizeof(unsigned long)] &= ~(1UL << (key->__id % sizeof(unsigned long)));
+    destructors[key.__id] = NULL;
+    allocated_keys_bitmap[key.__id / sizeof(unsigned long)] &= ~(1UL << (key.__id % sizeof(unsigned long)));
 
-    key->__id = -1;
+    key.__id = -1;
     return 0;
 }
 
