@@ -34,6 +34,7 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
         build_dynamic_elf_object((const Elf64_Dyn *) info->loader_dynamic_start, info->loader_dynamic_size / sizeof(Elf64_Dyn),
                                  (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, NULL, true);
     add_dynamic_object(&loader);
+    loader.dependencies_were_loaded = true; /* The loader cannot have any dependencies. */
 
     bool bind_now = false;
     if (process_relocations(&program, bind_now)) {

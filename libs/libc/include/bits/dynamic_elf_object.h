@@ -43,12 +43,16 @@ struct dynamic_elf_object {
     size_t *dependencies;
     size_t dependencies_size;
     size_t dependencies_max;
-    bool global;
+    bool global : 1;
+    bool dependencies_were_loaded : 1;
+    bool was_relocated : 1;
+    bool init_functions_called : 1;
+    bool fini_functions_called : 1;
 };
 
 void __loader_call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) __attribute__((weak));
 void __loader_call_fini_functions(struct dynamic_elf_object *obj) __attribute__((weak));
-int __loader_process_relocations(const struct dynamic_elf_object *self, bool bind_now) __attribute__((weak));
+int __loader_process_relocations(struct dynamic_elf_object *self, bool bind_now) __attribute__((weak));
 int __loader_load_dependencies(struct dynamic_elf_object *obj_head) __attribute__((weak));
 const Elf64_Sym *__loader_lookup_symbol(const struct dynamic_elf_object *self, const char *s) __attribute__((weak));
 void __loader_free_dynamic_elf_object(struct dynamic_elf_object *obj) __attribute__((weak));

@@ -222,6 +222,11 @@ void free_dynamic_elf_object(struct dynamic_elf_object *self) {
 LOADER_HIDDEN_EXPORT(free_dynamic_elf_object, __loader_free_dynamic_elf_object);
 
 static void do_call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) {
+    if (obj->init_functions_called) {
+        return;
+    }
+    obj->init_functions_called = true;
+
 #ifdef LOADER_DEBUG
     loader_log("doing init functions for `%s'", object_name(obj));
 #endif /* LOADER_DEBUG */
@@ -257,6 +262,11 @@ void call_init_functions(struct dynamic_elf_object *self, int argc, char **argv,
 LOADER_HIDDEN_EXPORT(call_init_functions, __loader_call_init_functions);
 
 static void do_call_fini_functions(struct dynamic_elf_object *obj) {
+    if (obj->fini_functions_called) {
+        return;
+    }
+    obj->fini_functions_called = true;
+
 #ifdef LOADER_DEBUG
     loader_log("doing fini functions for `%s'", object_name(obj));
 #endif /* LOADER_DEBUG */
@@ -309,6 +319,11 @@ static bool already_loaded(const char *lib_name) {
 }
 
 static int do_load_dependencies(struct dynamic_elf_object *obj) {
+    if (obj->dependencies_were_loaded) {
+        return 0;
+    }
+    obj->dependencies_were_loaded = true;
+
     for (size_t i = 0; i < obj->dependencies_size; i++) {
         const char *lib_name = dynamic_string(obj, obj->dependencies[i]);
         if (already_loaded(lib_name)) {
@@ -324,15 +339,18 @@ static int do_load_dependencies(struct dynamic_elf_object *obj) {
 
         struct mapped_elf_file lib = build_mapped_elf_file(path);
         if (lib.base == NULL) {
+            // Prevent the code from thinking the unloaded dependencies were loaded.
+            obj->dependencies_size = i;
             return -1;
         }
 
         struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib, path, obj->global);
+        destroy_mapped_elf_file(&lib);
+
         if (!loaded_lib) {
+            obj->dependencies_size = i;
             return -1;
         }
-
-        destroy_mapped_elf_file(&lib);
     }
     return 0;
 }
