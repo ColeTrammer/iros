@@ -52,4 +52,7 @@ uint16_t in_compute_checksum(void *data, size_t bytes);
 #define INADDR_NONE     ((in_addr_t) -1)
 #define INADDR_LOOPBACK ((in_addr_t)(127 | 0 | 0 | (1 << 24)))
 
+#define INET_ADDRSTRLEN  16
+#define INET6_ADDRSTRLEN 46
+
 #endif /* _NETINET_IN_H */

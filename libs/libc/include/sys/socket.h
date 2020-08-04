@@ -30,8 +30,10 @@
 
 #define SOL_SOCKET 0
 
-#define SO_RCVTIMEO 1
-#define SO_ERROR    2
+#define SO_RCVTIMEO  1
+#define SO_ERROR     2
+#define SO_KEEPALIVE 3
+#define SO_REUSEADDR 4
 
 #ifdef __cplusplus
 extern "C" {
