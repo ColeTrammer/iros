@@ -22,9 +22,9 @@ uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, size_t plt_offset
     return resolved_value;
 }
 
-int process_relocations(const struct dynamic_elf_object *self) {
+int process_relocations(const struct dynamic_elf_object *self, bool bind_now) {
     for (struct dynamic_elf_object *obj = dynamic_object_tail; obj; obj = obj->prev) {
-        if (do_process_relocations(obj)) {
+        if (do_process_relocations(obj, bind_now)) {
             return -1;
         }
 

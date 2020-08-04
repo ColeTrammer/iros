@@ -188,7 +188,7 @@ size_t dynamic_count(const struct mapped_elf_file *self) {
     return phdr->p_filesz / sizeof(Elf64_Dyn);
 }
 
-struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name) {
+struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name, bool global) {
     size_t count = program_header_count(file);
     if (count == 0) {
         loader_err("`%s' has no program headers", name);
@@ -271,7 +271,7 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
     }
 
     struct dynamic_elf_object *obj = loader_malloc(sizeof(struct dynamic_elf_object));
-    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_record);
+    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_record, global);
 
 #ifdef LOADER_DEBUG
     loader_log("loaded `%s' at %p", object_name(obj), base);

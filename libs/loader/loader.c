@@ -24,7 +24,7 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
     }
     struct dynamic_elf_object program =
         build_dynamic_elf_object((const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->program_offset, info->program_size, 0, program_tls);
+                                 (uint8_t *) info->program_offset, info->program_size, 0, program_tls, true);
     add_dynamic_object(&program);
     if (load_dependencies(&program)) {
         _exit(99);
@@ -32,10 +32,11 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
 
     struct dynamic_elf_object loader =
         build_dynamic_elf_object((const Elf64_Dyn *) info->loader_dynamic_start, info->loader_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, NULL);
+                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, NULL, true);
     add_dynamic_object(&loader);
 
-    if (process_relocations(&program)) {
+    bool bind_now = false;
+    if (process_relocations(&program, bind_now)) {
         _exit(98);
     }
     call_init_functions(&program, argc, argv, envp);

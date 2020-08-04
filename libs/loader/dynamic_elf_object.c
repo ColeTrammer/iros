@@ -6,12 +6,13 @@
 #include "tls_record.h"
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
-                                                   size_t relocation_offset, struct tls_record *tls_record) {
+                                                   size_t relocation_offset, struct tls_record *tls_record, bool global) {
     struct dynamic_elf_object self = { 0 };
     self.tls_record = tls_record;
     self.raw_data = base;
     self.raw_data_size = size;
     self.relocation_offset = relocation_offset;
+    self.global = global;
     for (size_t i = 0; i < dynamic_count; i++) {
         const Elf64_Dyn *entry = &dynamic_table[i];
         switch (entry->d_tag) {
@@ -326,7 +327,7 @@ static int do_load_dependencies(struct dynamic_elf_object *obj) {
             return -1;
         }
 
-        struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib, path);
+        struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib, path, obj->global);
         if (!loaded_lib) {
             return -1;
         }

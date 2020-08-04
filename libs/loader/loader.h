@@ -44,7 +44,6 @@ struct initial_process_info;
 struct stat;
 
 extern LOADER_PRIVATE const char *program_name;
-extern LOADER_PRIVATE bool bind_now;
 extern LOADER_PRIVATE bool ran_program;
 extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_head;
 extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_tail;
