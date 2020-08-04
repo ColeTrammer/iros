@@ -201,6 +201,7 @@ else()
         stdio/ungetc.c
         stdlib/_Exit.c
         stdlib/atexit.c
+        stdlib/bsearch.c
         stdlib/env.c
         stdlib/grantpt.c
         stdlib/init_env.c
