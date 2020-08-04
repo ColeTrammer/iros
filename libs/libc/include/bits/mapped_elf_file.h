@@ -13,9 +13,9 @@ struct mapped_elf_file {
     int fd;
 };
 
-struct mapped_elf_file __loader_build_mapped_elf_file(const char *file, int *error) __attribute__((weak));
+struct mapped_elf_file __loader_build_mapped_elf_file(const char *file) __attribute__((weak));
 void __loader_destroy_mapped_elf_file(struct mapped_elf_file *self) __attribute__((weak));
-struct dynamic_elf_object *__loader_load_mapped_elf_file(struct mapped_elf_file *file) __attribute__((weak));
+struct dynamic_elf_object *__loader_load_mapped_elf_file(struct mapped_elf_file *file, const char *name) __attribute__((weak));
 
 #ifdef __cplusplus
 }

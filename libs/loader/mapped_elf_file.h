@@ -10,7 +10,7 @@ struct Elf64_Phdr;
 struct Elf64_Shdr;
 struct dynamic_elf_object;
 
-struct mapped_elf_file build_mapped_elf_file(const char *file, int *error) LOADER_PRIVATE;
+struct mapped_elf_file build_mapped_elf_file(const char *file) LOADER_PRIVATE;
 void destroy_mapped_elf_file(struct mapped_elf_file *self) LOADER_PRIVATE;
 const Elf64_Ehdr *elf_header(const struct mapped_elf_file *self) LOADER_PRIVATE;
 const Elf64_Shdr *section_table(const struct mapped_elf_file *self) LOADER_PRIVATE;
@@ -26,6 +26,6 @@ const char *string(const struct mapped_elf_file *self, size_t index) LOADER_PRIV
 const Elf64_Phdr *dynamic_program_header(const struct mapped_elf_file *self) LOADER_PRIVATE;
 uintptr_t dynamic_table_offset(const struct mapped_elf_file *self) LOADER_PRIVATE;
 size_t dynamic_count(const struct mapped_elf_file *self) LOADER_PRIVATE;
-struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) LOADER_PRIVATE;
+struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name) LOADER_PRIVATE;
 
 #endif /* _MAPPED_ELF_FILE_H */

@@ -307,7 +307,7 @@ static bool already_loaded(const char *lib_name) {
     return false;
 }
 
-static void do_load_dependencies(struct dynamic_elf_object *obj) {
+static int do_load_dependencies(struct dynamic_elf_object *obj) {
     for (size_t i = 0; i < obj->dependencies_size; i++) {
         const char *lib_name = dynamic_string(obj, obj->dependencies[i]);
         if (already_loaded(lib_name)) {
@@ -321,27 +321,29 @@ static void do_load_dependencies(struct dynamic_elf_object *obj) {
         loader_log("Loading dependency of `%s': `%s'", object_name(obj), lib_name);
 #endif /* LOADER_DEBUG */
 
-        int error;
-        struct mapped_elf_file lib = build_mapped_elf_file(path, &error);
-        if (error) {
-            loader_log("Failed to load dependency");
-            _exit(98);
+        struct mapped_elf_file lib = build_mapped_elf_file(path);
+        if (lib.base == NULL) {
+            return -1;
         }
 
-        struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib);
+        struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib, path);
         if (!loaded_lib) {
-            loader_log("Failed to map dependecy");
-            _exit(96);
+            return -1;
         }
 
         destroy_mapped_elf_file(&lib);
     }
+    return 0;
 }
 
-void load_dependencies(struct dynamic_elf_object *obj_head) {
+int load_dependencies(struct dynamic_elf_object *obj_head) {
     for (struct dynamic_elf_object *obj = obj_head; obj; obj = obj->next) {
-        do_load_dependencies(obj);
+        int ret = do_load_dependencies(obj);
+        if (ret) {
+            return ret;
+        }
     }
+    return 0;
 }
 LOADER_HIDDEN_EXPORT(load_dependencies, __loader_load_dependencies);
 

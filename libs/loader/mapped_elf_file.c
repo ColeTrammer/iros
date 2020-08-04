@@ -42,18 +42,18 @@ static int validate_elf_shared_library(void *base, size_t size) {
     return 0;
 }
 
-struct mapped_elf_file build_mapped_elf_file(const char *file, int *error) {
+struct mapped_elf_file build_mapped_elf_file(const char *file) {
     void *base = NULL;
     int fd = open(file, O_RDONLY, 0);
     if (fd < 0) {
-        *error = fd;
+        loader_err("Could not open `%s'", file);
         goto build_mapped_elf_file_fail;
     }
 
     struct stat st;
     int ret = fstat(fd, &st);
     if (ret < 0) {
-        *error = -1;
+        loader_err("Could not stat `%s'", file);
         goto build_mapped_elf_file_fail;
     }
 
@@ -61,17 +61,15 @@ struct mapped_elf_file build_mapped_elf_file(const char *file, int *error) {
     base = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
     if ((intptr_t) base < 0 && (intptr_t) base > -300) {
         base = NULL;
-        *error = -1;
+        loader_err("Could not mmap `%s'", file);
         goto build_mapped_elf_file_fail;
     }
 
-    int validation_error = validate_elf_shared_library(base, size);
-    if (validation_error) {
-        *error = validation_error;
+    if (validate_elf_shared_library(base, size)) {
+        loader_err("`%s' is not a valid elf file", file);
         goto build_mapped_elf_file_fail;
     }
 
-    *error = 0;
     return (struct mapped_elf_file) { .base = base, .size = size, .fd = fd };
 
 build_mapped_elf_file_fail:
@@ -190,9 +188,10 @@ size_t dynamic_count(const struct mapped_elf_file *self) {
     return phdr->p_filesz / sizeof(Elf64_Dyn);
 }
 
-struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
+struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name) {
     size_t count = program_header_count(file);
     if (count == 0) {
+        loader_err("`%s' has no program headers", name);
         return NULL;
     }
 
@@ -228,6 +227,7 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file) {
 
     void *base = mmap(NULL, total_size, PROT_NONE, MAP_PRIVATE | MAP_ANON, 0, 0);
     if ((intptr_t) base < 0 && (intptr_t) base > -300) {
+        loader_err("Could not resserve space for `%s' with mmap", name);
         return NULL;
     }
 

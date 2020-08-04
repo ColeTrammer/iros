@@ -15,23 +15,31 @@ void *dlopen(const char *file, int flags) {
 
     struct dynamic_elf_object *ret = NULL;
 
-    int error = 0;
-    struct mapped_elf_file mapped_file = __loader_build_mapped_elf_file(file, &error);
-    if (error) {
-        __dl_set_error("Not dynamic elf object `%s'", file);
+    struct mapped_elf_file mapped_file = __loader_build_mapped_elf_file(file);
+    if (mapped_file.base == NULL) {
         return ret;
     }
 
-    struct dynamic_elf_object *object = __loader_load_mapped_elf_file(&mapped_file);
+    struct dynamic_elf_object *object = __loader_load_mapped_elf_file(&mapped_file, file);
     if (!object) {
-        __dl_set_error("Cannot load `%s'", file);
         goto cleanup_mapped_file;
     }
 
-    __loader_load_dependencies(object);
-    __loader_process_relocations(object);
+    if (__loader_load_dependencies(object)) {
+        goto cleanup_dynamic_object;
+    }
+
+    if (__loader_process_relocations(object)) {
+        goto cleanup_dynamic_object;
+    }
+
     __loader_call_init_functions(object, 0, NULL, NULL);
+
     ret = object;
+    goto cleanup_mapped_file;
+
+cleanup_dynamic_object:
+    __loader_free_dynamic_elf_object(object);
 
 cleanup_mapped_file:
     __loader_destroy_mapped_elf_file(&mapped_file);

@@ -1,8 +1,12 @@
 #pragma once
 
+#define __libc_internal
+
+#include <dlfcn.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/os_2.h>
 #include <sys/types.h>
 
@@ -20,6 +24,16 @@
 #ifndef loader_log
 #define loader_log(m, ...) dprintf(2, m "\n" __VA_OPT__(, ) __VA_ARGS__)
 #endif /* loader_log */
+#ifndef loader_err
+#define loader_err(m, ...)                                \
+    do {                                                  \
+        if (ran_program && &__dl_has_error != NULL) {     \
+            __dl_set_error(m __VA_OPT__(, ) __VA_ARGS__); \
+        } else {                                          \
+            loader_log(m __VA_OPT__(, ) __VA_ARGS__);     \
+        }                                                 \
+    } while (0)
+#endif /* loader_err */
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +45,7 @@ struct stat;
 
 extern LOADER_PRIVATE const char *program_name;
 extern LOADER_PRIVATE bool bind_now;
+extern LOADER_PRIVATE bool ran_program;
 extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_head;
 extern LOADER_PRIVATE struct dynamic_elf_object *dynamic_object_tail;
 extern LOADER_PRIVATE struct initial_process_info *initial_process_info;

@@ -5,7 +5,7 @@
 #include "../../symbols.h"
 #include "../../tls_record.h"
 
-static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela) {
+static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela) {
     size_t type = ELF64_R_TYPE(rela->r_info);
     size_t symbol_index = ELF64_R_SYM(rela->r_info);
     switch (type) {
@@ -44,8 +44,8 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             if (result.symbol) {
                 symbol_value = result.symbol->st_value + result.object->relocation_offset;
             } else if (!((symbol_to_lookup->st_info >> 4) & STB_WEAK)) {
-                loader_log("Cannot resolve `%s'", to_lookup);
-                _exit(97);
+                loader_err("Cannot resolve `%s'", to_lookup);
+                return -1;
             }
 
             uint64_t *addr = (uint64_t *) (rela->r_offset + self->relocation_offset);
@@ -56,8 +56,8 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, SYMBOL_LOOKUP_NOT_CURRENT);
             if (!result.symbol) {
-                loader_log("Cannot resolve `%s'", to_lookup);
-                _exit(97);
+                loader_err("Cannot resolve `%s'", to_lookup);
+                return -1;
             }
             void *dest = (void *) (self->relocation_offset + rela->r_offset);
             const void *src = (const void *) (result.symbol->st_value + result.object->relocation_offset);
@@ -74,8 +74,8 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             if (result.symbol) {
                 symbol_value = result.symbol->st_value + result.object->relocation_offset;
             } else if (!((symbol_to_lookup->st_info >> 4) & STB_WEAK)) {
-                loader_log("Cannot resolve `%s'", to_lookup);
-                _exit(97);
+                loader_err("Cannot resolve `%s'", to_lookup);
+                return -1;
             }
 
             uint64_t *addr = (uint64_t *) (rela->r_offset + self->relocation_offset);
@@ -95,11 +95,11 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
             if (!result.symbol) {
-                loader_log("Cannot resolve `%s'", to_lookup);
-                _exit(97);
+                loader_err("Cannot resolve `%s'", to_lookup);
+                return -1;
             } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
-                loader_log("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
-                _exit(95);
+                loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
+                return -1;
             }
             uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
             *addr = result.object->tls_record->tls_module_id;
@@ -110,11 +110,11 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
             if (!result.symbol) {
-                loader_log("Cannot resolve `%s'", to_lookup);
-                _exit(97);
+                loader_err("Cannot resolve `%s'", to_lookup);
+                return -1;
             } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
-                loader_log("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
-                _exit(95);
+                loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
+                return -1;
             }
             uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
             *addr = result.symbol->st_value;
@@ -125,11 +125,11 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
             if (!result.symbol) {
-                loader_log("Cannot resolve `%s'", to_lookup);
-                _exit(97);
+                loader_err("Cannot resolve `%s'", to_lookup);
+                return -1;
             } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
-                loader_log("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
-                _exit(95);
+                loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
+                return -1;
             }
 
 #ifdef LOADER_TLS_DEBUG
@@ -143,22 +143,28 @@ static void do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rel
         }
         default:
             loader_log("Unkown relocation type %ld", type);
-            break;
+            return -1;
     }
+
+    return 0;
 }
 
-void do_process_relocations(const struct dynamic_elf_object *self) {
+int do_process_relocations(const struct dynamic_elf_object *self) {
     size_t count = rela_count(self);
     for (size_t i = 0; i < count; i++) {
         const Elf64_Rela *rela = rela_at(self, i);
-        do_rela(self, rela);
+        if (do_rela(self, rela)) {
+            return -1;
+        }
     }
 
     size_t plt_count = plt_relocation_count(self);
     if (bind_now) {
         for (size_t i = 0; i < plt_count; i++) {
             const Elf64_Rela *rela = plt_relocation_at(self, i);
-            do_rela(self, rela);
+            if (do_rela(self, rela)) {
+                return -1;
+            }
         }
     } else if (self->got_addr) {
         uintptr_t *got = (uintptr_t *) (self->got_addr + self->relocation_offset);
@@ -171,4 +177,6 @@ void do_process_relocations(const struct dynamic_elf_object *self) {
             }
         }
     }
+
+    return 0;
 }

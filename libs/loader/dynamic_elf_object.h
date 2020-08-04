@@ -32,7 +32,7 @@ void call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, 
 void call_fini_functions(struct dynamic_elf_object *obj) LOADER_PRIVATE;
 void add_dynamic_object(struct dynamic_elf_object *obj) LOADER_PRIVATE;
 void remove_dynamic_object(struct dynamic_elf_object *obj) LOADER_PRIVATE;
-void load_dependencies(struct dynamic_elf_object *obj) LOADER_PRIVATE;
+int load_dependencies(struct dynamic_elf_object *obj) LOADER_PRIVATE;
 struct dynamic_elf_object *get_dynamic_object_head(void) LOADER_PRIVATE;
 struct dynamic_elf_object *get_dynamic_object_tail(void) LOADER_PRIVATE;
 

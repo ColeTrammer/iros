@@ -22,12 +22,17 @@ uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, size_t plt_offset
     return resolved_value;
 }
 
-void process_relocations(const struct dynamic_elf_object *self) {
+int process_relocations(const struct dynamic_elf_object *self) {
     for (struct dynamic_elf_object *obj = dynamic_object_tail; obj; obj = obj->prev) {
-        do_process_relocations(obj);
+        if (do_process_relocations(obj)) {
+            return -1;
+        }
+
         if (obj == self) {
             break;
         }
     }
+
+    return 0;
 }
 LOADER_HIDDEN_EXPORT(process_relocations, __loader_process_relocations);
