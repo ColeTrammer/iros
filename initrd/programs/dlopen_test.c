@@ -1,9 +1,20 @@
 #include <assert.h>
 #include <dlfcn.h>
+#include <pthread.h>
 #include <stdio.h>
+
+static void *handle;
+static int (*test)(void);
 
 int executable_symbol() {
     return 67;
+}
+
+static void *thread_start(void *arg __attribute__((unused))) {
+    fprintf(stderr, "THREAD 2: %d\n", test());
+    fprintf(stderr, "THREAD 2: %d\n", test());
+    fprintf(stderr, "THREAD 2: %d\n", test());
+    return NULL;
 }
 
 int main() {
@@ -17,13 +28,13 @@ int main() {
     assert(!dlopen("/xyz", RTLD_LAZY));
     fprintf(stderr, "%s\n", dlerror());
 
-    void *handle = dlopen("/usr/lib/libsharedtest2.so", RTLD_NOW | RTLD_GLOBAL);
+    handle = dlopen("/usr/lib/libsharedtest2.so", RTLD_NOW | RTLD_GLOBAL);
     if (!handle) {
         fprintf(stderr, "%s\n", dlerror());
         return 1;
     }
 
-    int (*test)(void) = dlsym(handle, "test");
+    test = dlsym(handle, "test");
     if (!test) {
         fprintf(stderr, "%s\n", dlerror());
         return 1;
@@ -55,6 +66,10 @@ int main() {
     printf("%d\n", test());
     printf("%d\n", test());
     printf("%d\n", test());
+
+    pthread_t new_thread;
+    assert(!pthread_create(&new_thread, NULL, thread_start, NULL));
+    assert(!pthread_join(new_thread, NULL));
 
     if (dlclose(handle)) {
         fprintf(stderr, "%s\n", dlerror());
