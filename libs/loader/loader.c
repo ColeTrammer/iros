@@ -18,13 +18,14 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
     initial_process_info = info;
     program_name = *argv;
 
-    struct tls_record *program_tls = NULL;
+    size_t program_tls_module_id = 0;
     if (info->tls_size) {
-        program_tls = add_tls_record(info->tls_start, info->tls_size, info->tls_alignment, TLS_RECORD_PROGRAM);
+        program_tls_module_id =
+            add_tls_record(info->tls_start, info->tls_size, info->tls_alignment, TLS_RECORD_PROGRAM | TLS_INITIAL_IMAGE);
     }
     struct dynamic_elf_object program =
         build_dynamic_elf_object((const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->program_offset, info->program_size, 0, program_tls, true);
+                                 (uint8_t *) info->program_offset, info->program_size, 0, program_tls_module_id, true);
     program.is_program = true; /* signals this object is the global handle used by dlopen(NULL). */
     add_dynamic_object(&program);
     if (load_dependencies(&program)) {
@@ -33,7 +34,7 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
 
     struct dynamic_elf_object loader =
         build_dynamic_elf_object((const Elf64_Dyn *) info->loader_dynamic_start, info->loader_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, NULL, true);
+                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, 0, true);
     add_dynamic_object(&loader);
     loader.dependencies_were_loaded = true; /* The loader cannot have any dependencies. */
 

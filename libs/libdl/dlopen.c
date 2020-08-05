@@ -41,7 +41,7 @@ void *dlopen(const char *file, int flags) {
         return ret;
     }
 
-    struct dynamic_elf_object *object = __loader_load_mapped_elf_file(&mapped_file, file, !!(flags & RTLD_GLOBAL));
+    struct dynamic_elf_object *object = __loader_load_mapped_elf_file(&mapped_file, file, !!(flags & RTLD_GLOBAL), false);
     if (!object) {
         goto cleanup_mapped_file;
     }

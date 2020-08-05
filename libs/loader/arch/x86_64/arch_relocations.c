@@ -92,17 +92,23 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
         }
         case R_X86_64_DPTMOD64: {
             // @dtpmod(s)
-            const char *to_lookup = symbol_name(self, symbol_index);
-            struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
-            if (!result.symbol) {
-                loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
-                return -1;
-            } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
-                loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
-                return -1;
-            }
             uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
-            *addr = result.object->tls_record->tls_module_id;
+            // Static tls variables don't need a symbol index for relocation, they only need their own tls module id.
+            if (symbol_index) {
+                const char *to_lookup = symbol_name(self, symbol_index);
+                struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
+                if (!result.symbol) {
+                    loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
+                    return -1;
+                } else if (!result.object->tls_module_id || (result.symbol->st_info & 0xF) != STT_TLS) {
+                    loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
+                    return -1;
+                }
+                *addr = result.object->tls_module_id;
+                break;
+            }
+
+            *addr = self->tls_module_id;
             break;
         }
         case R_X86_64_DTPOFF64: {
@@ -112,7 +118,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             if (!result.symbol) {
                 loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
-            } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
+            } else if (!result.object->tls_module_id || (result.symbol->st_info & 0xF) != STT_TLS) {
                 loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
                 return -1;
             }
@@ -127,7 +133,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             if (!result.symbol) {
                 loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
-            } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
+            } else if (!result.object->tls_module_id || (result.symbol->st_info & 0xF) != STT_TLS) {
                 loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
                 return -1;
             }
@@ -137,8 +143,9 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
 #endif /* LOADER_TLS_DEBUG */
 
             // NOTE: for this to work, the symbol must be located in the initial thread local storage area.
+            struct tls_record *record = &tls_records[result.object->tls_module_id - 1];
             uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
-            *addr = -(result.object->tls_record->tls_offset - result.symbol->st_value);
+            *addr = -(record->tls_offset - result.symbol->st_value);
             break;
         }
         default:

@@ -11,8 +11,6 @@ extern "C" {
 #endif /* __cplusplus */
 
 struct dynamic_elf_object;
-struct tls_record;
-
 union dynamic_elf_object_dependency {
     size_t string_table_offset;
     struct dynamic_elf_object *resolved_object;
@@ -22,7 +20,7 @@ struct dynamic_elf_object {
     struct dynamic_elf_object *next;
     struct dynamic_elf_object *prev;
     struct dynamic_elf_object *bfs_queue_next;
-    struct tls_record *tls_record;
+    size_t tls_module_id;
     uintptr_t hash_table;
     uintptr_t string_table;
     uintptr_t symbol_table;

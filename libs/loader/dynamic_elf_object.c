@@ -9,9 +9,9 @@
 static void do_call_fini_functions(struct dynamic_elf_object *obj);
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
-                                                   size_t relocation_offset, struct tls_record *tls_record, bool global) {
+                                                   size_t relocation_offset, size_t tls_module_id, bool global) {
     struct dynamic_elf_object self = { 0 };
-    self.tls_record = tls_record;
+    self.tls_module_id = tls_module_id;
     self.raw_data = base;
     self.raw_data_size = size;
     self.relocation_offset = relocation_offset;
@@ -135,8 +135,8 @@ void destroy_dynamic_elf_object(struct dynamic_elf_object *self) {
     }
     loader_free(self->dependencies);
 
-    if (self->tls_record) {
-        remove_tls_record(self->tls_record);
+    if (self->tls_module_id) {
+        remove_tls_record(self->tls_module_id);
     }
     munmap(self->raw_data, self->raw_data_size);
 }
@@ -347,7 +347,7 @@ static struct dynamic_elf_object *find_dynamic_object_by_name(const char *lib_na
     return NULL;
 }
 
-static int do_load_dependencies(struct dynamic_elf_object *obj) {
+static int do_load_dependencies(struct dynamic_elf_object *obj, bool use_initial_tls) {
     if (obj->dependencies_were_loaded) {
         return 0;
     }
@@ -375,7 +375,7 @@ static int do_load_dependencies(struct dynamic_elf_object *obj) {
             return -1;
         }
 
-        struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib, path, obj->global);
+        struct dynamic_elf_object *loaded_lib = load_mapped_elf_file(&lib, path, obj->global, use_initial_tls);
         destroy_mapped_elf_file(&lib);
 
         if (!loaded_lib) {
@@ -390,7 +390,7 @@ static int do_load_dependencies(struct dynamic_elf_object *obj) {
 
 int load_dependencies(struct dynamic_elf_object *obj_head) {
     for (struct dynamic_elf_object *obj = obj_head; obj; obj = obj->next) {
-        int ret = do_load_dependencies(obj);
+        int ret = do_load_dependencies(obj, obj_head->is_program);
         if (ret) {
             return ret;
         }

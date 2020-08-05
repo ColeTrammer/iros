@@ -4,12 +4,16 @@
 #include <limits.h>
 #include <pthread.h>
 #include <stdalign.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/os_2.h>
 #include <sys/param.h>
+
+// Reserve some space in the DTV to prevent reallocations.
+#define TLS_DTV_RESERVE 5
 
 struct thread_control_block *__allocate_thread_control_block(void) {
 #ifdef __is_static
@@ -32,18 +36,23 @@ struct thread_control_block *__allocate_thread_control_block(void) {
 #else
     size_t tls_record_count = __loader_tls_num_records();
 
-    block->dynamic_thread_vector = malloc((tls_record_count + 1) * sizeof(void *));
-    block->dynamic_thread_vector[0] = 0;
+    size_t dtv_max = tls_record_count + 1 + TLS_DTV_RESERVE;
+    block->dynamic_thread_vector = malloc(dtv_max * sizeof(block->dynamic_thread_vector[0]));
+    block->dynamic_thread_vector_max = dtv_max;
+    block->dynamic_thread_vector[0].number = atomic_load_explicit(&__loader_tls_generation_number, memory_order_relaxed);
 
-    for (size_t i = 1; i <= tls_record_count; i++) {
-        struct tls_record *record = __loader_tls_record_for(i);
-        if (!record) {
+    size_t initial_count = __loader_tls_initial_record_count();
+    struct tls_record *tls_records = __loader_tls_records;
+    for (size_t i = 1; i <= initial_count; i++) {
+        struct tls_record *record = &tls_records[i - 1];
+        if (!record->tls_image) {
             continue;
         }
         uint8_t *tls = ((uint8_t *) block) - record->tls_offset;
         memcpy(tls, record->tls_image, record->tls_size);
-        block->dynamic_thread_vector[i] = tls;
+        block->dynamic_thread_vector[i].pointer = tls;
     }
+    memset(&block->dynamic_thread_vector[initial_count + 1], 0, sizeof(block->dynamic_thread_vector[0]) * (dtv_max - initial_count - 1));
 #endif /* __is_static */
 
     block->self = block;

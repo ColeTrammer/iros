@@ -188,7 +188,11 @@ struct thread_control_block {
     int has_exited;
     int concurrency;
     void *exit_value;
-    void **dynamic_thread_vector;
+    union {
+        size_t number;
+        void *pointer;
+    } * dynamic_thread_vector;
+    size_t dynamic_thread_vector_max;
     void **pthread_specific_data;
     struct __locked_robust_mutex_node *locked_robust_mutex_node_list_head;
     pthread_attr_t attributes;

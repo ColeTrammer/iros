@@ -188,7 +188,7 @@ size_t dynamic_count(const struct mapped_elf_file *self) {
     return phdr->p_filesz / sizeof(Elf64_Dyn);
 }
 
-struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name, bool global) {
+struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name, bool global, bool use_initial_tls) {
     size_t count = program_header_count(file);
     if (count == 0) {
         loader_err("`%s' has no program headers", name);
@@ -265,13 +265,13 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
     size_t dyn_count = dynamic_count(file);
     uintptr_t dyn_table_offset = dynamic_table_offset(file);
 
-    struct tls_record *tls_record = NULL;
+    size_t tls_module_id = 0;
     if (tls_image) {
-        tls_record = add_tls_record(tls_image, tls_size, tls_align, 0);
+        tls_module_id = add_tls_record(tls_image, tls_size, tls_align, use_initial_tls ? TLS_INITIAL_IMAGE : 0);
     }
 
     struct dynamic_elf_object *obj = loader_malloc(sizeof(struct dynamic_elf_object));
-    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_record, global);
+    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_module_id, global);
 
 #ifdef LOADER_DEBUG
     loader_log("loaded `%s' at %p", object_name(obj), base);

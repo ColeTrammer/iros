@@ -11,7 +11,7 @@
 struct tls_record;
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
-                                                   size_t relocation_offset, struct tls_record *tls_record, bool global) LOADER_PRIVATE;
+                                                   size_t relocation_offset, size_t tls_module_id, bool global) LOADER_PRIVATE;
 void destroy_dynamic_elf_object(struct dynamic_elf_object *self) LOADER_PRIVATE;
 void drop_dynamic_elf_object(struct dynamic_elf_object *self) LOADER_PRIVATE;
 struct dynamic_elf_object *bump_dynamic_elf_object(struct dynamic_elf_object *self) LOADER_PRIVATE;

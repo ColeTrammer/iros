@@ -10,12 +10,18 @@ extern "C" {
 struct tls_record {
     void *tls_image;
     size_t tls_size;
-    size_t tls_offset;
-    size_t tls_module_id;
+    union {
+        size_t tls_offset; /* For records describing the initial tls image */
+        size_t tls_align;  /* For records describing dynamically loaded modules */
+    };
+    size_t tls_generation_number;
 };
 
-__attribute__((weak)) struct tls_record *__loader_tls_record_for(size_t m);
+extern __attribute__((weak)) size_t __loader_tls_generation_number;
+extern __attribute__((weak)) struct tls_record *__loader_tls_records;
+
 __attribute__((weak)) size_t __loader_tls_num_records(void);
+__attribute__((weak)) size_t __loader_tls_initial_record_count(void);
 __attribute__((weak)) size_t __loader_tls_initial_image_size(void);
 __attribute__((weak)) size_t __loader_tls_initial_image_alignment(void);
 

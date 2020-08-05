@@ -1,6 +1,6 @@
 #include <sharedtest/test.h>
 
-static int x = 42;
+static __thread int x = 42;
 
 int test(void) {
     return x++;
