@@ -8,7 +8,12 @@ int dlclose(void* handle) {
         return 0;
     }
 
-    __loader_call_fini_functions(handle);
-    __loader_free_dynamic_elf_object(handle);
+    struct dynamic_elf_object* obj = handle;
+    if (obj->is_program) {
+        return 0;
+    }
+
+    __loader_call_fini_functions(obj);
+    __loader_free_dynamic_elf_object(obj);
     return 0;
 }

@@ -40,3 +40,4 @@ struct symbol_lookup_result do_symbol_lookup(const char *s, const struct dynamic
     }
     return (struct symbol_lookup_result) { .symbol = NULL, .object = NULL };
 }
+LOADER_HIDDEN_EXPORT(do_symbol_lookup, __loader_do_symbol_lookup);

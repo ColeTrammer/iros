@@ -9,6 +9,14 @@ void *dlsym(void *__restrict _handle, const char *__restrict symbol) {
     struct dynamic_elf_object *queue_head = _handle;
     struct dynamic_elf_object *queue_tail = _handle;
 
+    if (queue_head->is_program) {
+        struct symbol_lookup_result result = __loader_do_symbol_lookup(symbol, queue_head, 0);
+        if (result.symbol == NULL) {
+            goto error;
+        }
+        return (void *) (result.symbol->st_value + result.object->relocation_offset);
+    }
+
     while (queue_head) {
         struct dynamic_elf_object *obj = queue_head;
         assert(obj->dependencies_were_loaded);
@@ -32,6 +40,7 @@ void *dlsym(void *__restrict _handle, const char *__restrict symbol) {
         }
     }
 
+error:
     __dl_set_error("could not find symbol `%s'", symbol);
     return NULL;
 }

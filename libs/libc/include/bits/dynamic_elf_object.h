@@ -55,6 +55,12 @@ struct dynamic_elf_object {
     bool was_relocated : 1;
     bool init_functions_called : 1;
     bool fini_functions_called : 1;
+    bool is_program : 1;
+};
+
+struct symbol_lookup_result {
+    const Elf64_Sym *symbol;
+    const struct dynamic_elf_object *object;
 };
 
 void __loader_call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) __attribute__((weak));
@@ -63,6 +69,8 @@ int __loader_process_relocations(struct dynamic_elf_object *self, bool bind_now)
 int __loader_load_dependencies(struct dynamic_elf_object *obj_head) __attribute__((weak));
 const Elf64_Sym *__loader_lookup_symbol(const struct dynamic_elf_object *self, const char *s) __attribute__((weak));
 void __loader_free_dynamic_elf_object(struct dynamic_elf_object *obj) __attribute__((weak));
+struct symbol_lookup_result __loader_do_symbol_lookup(const char *s, const struct dynamic_elf_object *current_object, int flags)
+    __attribute__((weak));
 struct dynamic_elf_object *__loader_get_dynamic_object_head(void) __attribute__((weak));
 struct dynamic_elf_object *__loader_get_dynamic_object_tail(void) __attribute__((weak));
 

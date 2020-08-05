@@ -1,15 +1,11 @@
 #ifndef _SYMBOLS_H
 #define _SYMBOLS_H 1
 
+#include <bits/dynamic_elf_object.h>
+
 #include "loader.h"
 
 struct Elf64_Sym;
-struct dynamic_elf_object;
-
-struct symbol_lookup_result {
-    const Elf64_Sym *symbol;
-    const struct dynamic_elf_object *object;
-};
 
 #define SYMBOL_LOOKUP_NOT_CURRENT 1
 

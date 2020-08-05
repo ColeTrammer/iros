@@ -1,4 +1,5 @@
 #define __libc_internal
+#include <assert.h>
 #include <bits/dynamic_elf_object.h>
 #include <bits/mapped_elf_file.h>
 #include <dlfcn.h>
@@ -7,6 +8,12 @@
 #define DL_LOG
 
 void *dlopen(const char *file, int flags) {
+    if (!file) {
+        struct dynamic_elf_object *global_handle = __loader_get_dynamic_object_head();
+        assert(global_handle->is_program);
+        return global_handle;
+    }
+
 #ifdef DL_LOG
     fprintf(stderr, "opening file `%s' <LAZY=%d NOW=%d GLOBAL=%d LOCAL=%d>\n", file, !!(flags & RTLD_LAZY), !!(flags & RTLD_NOW),
             !!(flags & RTLD_GLOBAL), !!(flags & RTLD_LOCAL));
