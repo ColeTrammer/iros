@@ -21,6 +21,7 @@ union dynamic_elf_object_dependency {
 struct dynamic_elf_object {
     struct dynamic_elf_object *next;
     struct dynamic_elf_object *prev;
+    struct dynamic_elf_object *bfs_queue_next;
     struct tls_record *tls_record;
     uintptr_t hash_table;
     uintptr_t string_table;
