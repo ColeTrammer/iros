@@ -21,9 +21,10 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
             case DT_NEEDED:
                 if (self.dependencies_size >= self.dependencies_max) {
                     self.dependencies_max = MAX(20, self.dependencies_max * 2);
-                    self.dependencies = loader_realloc(self.dependencies, self.dependencies_max * sizeof(size_t));
+                    self.dependencies =
+                        loader_realloc(self.dependencies, self.dependencies_max * sizeof(union dynamic_elf_object_dependency));
                 }
-                self.dependencies[self.dependencies_size++] = entry->d_un.d_val;
+                self.dependencies[self.dependencies_size++].string_table_offset = entry->d_un.d_val;
                 break;
             case DT_PLTRELSZ:
                 self.plt_size = entry->d_un.d_val;
@@ -307,15 +308,15 @@ void remove_dynamic_object(struct dynamic_elf_object *obj) {
     remque(obj);
 }
 
-static bool already_loaded(const char *lib_name) {
+static struct dynamic_elf_object *find_dynamic_object_by_name(const char *lib_name) {
     struct dynamic_elf_object *obj = dynamic_object_head;
     while (obj) {
         if (strcmp(object_name(obj), lib_name) == 0) {
-            return true;
+            return obj;
         }
         obj = obj->next;
     }
-    return false;
+    return NULL;
 }
 
 static int do_load_dependencies(struct dynamic_elf_object *obj) {
@@ -325,8 +326,10 @@ static int do_load_dependencies(struct dynamic_elf_object *obj) {
     obj->dependencies_were_loaded = true;
 
     for (size_t i = 0; i < obj->dependencies_size; i++) {
-        const char *lib_name = dynamic_string(obj, obj->dependencies[i]);
-        if (already_loaded(lib_name)) {
+        const char *lib_name = dynamic_string(obj, obj->dependencies[i].string_table_offset);
+        struct dynamic_elf_object *existing = find_dynamic_object_by_name(lib_name);
+        if (existing) {
+            obj->dependencies[i].resolved_object = existing;
             continue;
         }
 
@@ -351,6 +354,8 @@ static int do_load_dependencies(struct dynamic_elf_object *obj) {
             obj->dependencies_size = i;
             return -1;
         }
+
+        obj->dependencies[i].resolved_object = loaded_lib;
     }
     return 0;
 }

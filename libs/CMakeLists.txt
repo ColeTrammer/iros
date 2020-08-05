@@ -20,6 +20,7 @@ set(TARGETS
     libprocinfo
     libsh
     libsharedtest
+    libsharedtest2
     libws
 )
 

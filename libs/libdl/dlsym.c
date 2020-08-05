@@ -7,7 +7,7 @@
 void* dlsym(void* __restrict _handle, const char* __restrict symbol) {
     struct dynamic_elf_object* handle = _handle;
     const Elf64_Sym* sym = __loader_lookup_symbol(handle, symbol);
-    if (!sym) {
+    if (!sym || sym->st_shndx == SHN_UNDEF || (sym->st_info >> 4 != STB_GLOBAL && sym->st_info >> 4 != STB_WEAK)) {
         __dl_set_error("could not find symbol `%s'", symbol);
         return NULL;
     }

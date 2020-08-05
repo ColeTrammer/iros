@@ -44,7 +44,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             if (result.symbol) {
                 symbol_value = result.symbol->st_value + result.object->relocation_offset;
             } else if (!((symbol_to_lookup->st_info >> 4) & STB_WEAK)) {
-                loader_err("Cannot resolve `%s'", to_lookup);
+                loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
             }
 
@@ -56,7 +56,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, SYMBOL_LOOKUP_NOT_CURRENT);
             if (!result.symbol) {
-                loader_err("Cannot resolve `%s'", to_lookup);
+                loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
             }
             void *dest = (void *) (self->relocation_offset + rela->r_offset);
@@ -74,7 +74,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             if (result.symbol) {
                 symbol_value = result.symbol->st_value + result.object->relocation_offset;
             } else if (!((symbol_to_lookup->st_info >> 4) & STB_WEAK)) {
-                loader_err("Cannot resolve `%s'", to_lookup);
+                loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
             }
 
@@ -95,7 +95,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
             if (!result.symbol) {
-                loader_err("Cannot resolve `%s'", to_lookup);
+                loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
             } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
                 loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
@@ -110,7 +110,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
             if (!result.symbol) {
-                loader_err("Cannot resolve `%s'", to_lookup);
+                loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
             } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
                 loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
@@ -125,7 +125,7 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             const char *to_lookup = symbol_name(self, symbol_index);
             struct symbol_lookup_result result = do_symbol_lookup(to_lookup, self, 0);
             if (!result.symbol) {
-                loader_err("Cannot resolve `%s'", to_lookup);
+                loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
             } else if (!result.object->tls_record || (result.symbol->st_info & 0xF) != STT_TLS) {
                 loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));

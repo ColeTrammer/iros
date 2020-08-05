@@ -4,16 +4,16 @@
 
 int main() {
     // Test error conditions
-    assert(!dlopen("/usr/lib/libsharedtest.so", RTLD_NOW | RTLD_LAZY));
+    assert(!dlopen("/usr/lib/libsharedtest2.so", RTLD_NOW | RTLD_LAZY));
     fprintf(stderr, "%s\n", dlerror());
-    assert(!dlopen("/usr/lib/libsharedtest.so", 0));
+    assert(!dlopen("/usr/lib/libsharedtest2.so", 0));
     fprintf(stderr, "%s\n", dlerror());
-    assert(!dlopen("/usr/lib/libsharedtest.so", ~(RTLD_LAZY)));
+    assert(!dlopen("/usr/lib/libsharedtest2.so", ~(RTLD_LAZY)));
     fprintf(stderr, "%s\n", dlerror());
     assert(!dlopen("/xyz", RTLD_LAZY));
     fprintf(stderr, "%s\n", dlerror());
 
-    void *handle = dlopen("/usr/lib/libsharedtest.so", RTLD_NOW | RTLD_GLOBAL);
+    void *handle = dlopen("/usr/lib/libsharedtest2.so", RTLD_NOW | RTLD_LOCAL);
     if (!handle) {
         fprintf(stderr, "%s\n", dlerror());
         return 1;

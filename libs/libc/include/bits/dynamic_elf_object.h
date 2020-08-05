@@ -10,7 +10,13 @@
 extern "C" {
 #endif /* __cplusplus */
 
+struct dynamic_elf_object;
 struct tls_record;
+
+union dynamic_elf_object_dependency {
+    size_t string_table_offset;
+    struct dynamic_elf_object *resolved_object;
+};
 
 struct dynamic_elf_object {
     struct dynamic_elf_object *next;
@@ -40,7 +46,7 @@ struct dynamic_elf_object {
     uint8_t *raw_data;
     size_t raw_data_size;
     uintptr_t relocation_offset;
-    size_t *dependencies;
+    union dynamic_elf_object_dependency *dependencies;
     size_t dependencies_size;
     size_t dependencies_max;
     bool global : 1;
