@@ -1,9 +1,12 @@
 #include <elf.h>
+#include <stdatomic.h>
 #include <sys/param.h>
 
 #include "dynamic_elf_object.h"
 #include "mapped_elf_file.h"
 #include "tls_record.h"
+
+static void do_call_fini_functions(struct dynamic_elf_object *obj);
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
                                                    size_t relocation_offset, struct tls_record *tls_record, bool global) {
@@ -13,6 +16,7 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
     self.raw_data_size = size;
     self.relocation_offset = relocation_offset;
     self.global = global;
+    self.ref_count = 1;
     for (size_t i = 0; i < dynamic_count; i++) {
         const Elf64_Dyn *entry = &dynamic_table[i];
         switch (entry->d_tag) {
@@ -119,6 +123,18 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
 }
 
 void destroy_dynamic_elf_object(struct dynamic_elf_object *self) {
+#ifdef LOADER_DEBUG
+    loader_log("destroying `%s'", object_name(self));
+#endif /* LOADER_DEBUG */
+
+    do_call_fini_functions(self);
+    if (self->dependencies_were_loaded) {
+        for (size_t i = 0; i < self->dependencies_size; i++) {
+            drop_dynamic_elf_object(self->dependencies[i].resolved_object);
+        }
+    }
+    loader_free(self->dependencies);
+
     if (self->tls_record) {
         remove_tls_record(self->tls_record);
     }
@@ -220,7 +236,19 @@ void free_dynamic_elf_object(struct dynamic_elf_object *self) {
     destroy_dynamic_elf_object(self);
     loader_free(self);
 }
-LOADER_HIDDEN_EXPORT(free_dynamic_elf_object, __loader_free_dynamic_elf_object);
+
+void drop_dynamic_elf_object(struct dynamic_elf_object *self) {
+    int ref_count = atomic_fetch_sub(&self->ref_count, 1);
+    if (ref_count == 1) {
+        free_dynamic_elf_object(self);
+    }
+}
+LOADER_HIDDEN_EXPORT(drop_dynamic_elf_object, __loader_drop_dynamic_elf_object);
+
+struct dynamic_elf_object *bump_dynamic_elf_object(struct dynamic_elf_object *self) {
+    atomic_fetch_add(&self->ref_count, 1);
+    return self;
+}
 
 static void do_call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) {
     if (obj->init_functions_called) {
@@ -287,7 +315,7 @@ static void do_call_fini_functions(struct dynamic_elf_object *obj) {
 
 void call_fini_functions(struct dynamic_elf_object *self) {
     for (struct dynamic_elf_object *obj = self; obj; obj = obj->next) {
-        do_call_fini_functions(self);
+        do_call_fini_functions(obj);
     }
 }
 LOADER_HIDDEN_EXPORT(call_fini_functions, __loader_call_fini_functions);
@@ -329,7 +357,7 @@ static int do_load_dependencies(struct dynamic_elf_object *obj) {
         const char *lib_name = dynamic_string(obj, obj->dependencies[i].string_table_offset);
         struct dynamic_elf_object *existing = find_dynamic_object_by_name(lib_name);
         if (existing) {
-            obj->dependencies[i].resolved_object = existing;
+            obj->dependencies[i].resolved_object = bump_dynamic_elf_object(existing);
             continue;
         }
 

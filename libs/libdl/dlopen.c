@@ -60,7 +60,7 @@ void *dlopen(const char *file, int flags) {
     goto cleanup_mapped_file;
 
 cleanup_dynamic_object:
-    __loader_free_dynamic_elf_object(object);
+    __loader_drop_dynamic_elf_object(object);
 
 cleanup_mapped_file:
     __loader_destroy_mapped_elf_file(&mapped_file);

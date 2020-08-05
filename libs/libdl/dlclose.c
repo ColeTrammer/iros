@@ -13,7 +13,6 @@ int dlclose(void* handle) {
         return 0;
     }
 
-    __loader_call_fini_functions(obj);
-    __loader_free_dynamic_elf_object(obj);
+    __loader_drop_dynamic_elf_object(obj);
     return 0;
 }
