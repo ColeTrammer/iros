@@ -40,7 +40,7 @@ static int inode_map(struct vm_object *self, struct vm_region *region) {
     return 0;
 }
 
-static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_into_self) {
+static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_into_self, bool *is_cow) {
     struct inode_vm_object_data *data = self->private_data;
 
     size_t page_index = offset_into_self / PAGE_SIZE;
@@ -72,6 +72,8 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
 
     memset(phys_page_mapping + read, 0, PAGE_SIZE - read);
     mutex_unlock(&self->lock);
+
+    *is_cow = false;
     return phys_addr;
 }
 

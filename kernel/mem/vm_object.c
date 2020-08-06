@@ -77,8 +77,13 @@ int vm_handle_fault_in_region(struct vm_region *region, uintptr_t address) {
         return 1;
     }
 
-    uintptr_t phys_address_to_map = object->ops->handle_fault(object, offset_in_object);
-    map_phys_page(phys_address_to_map, address, region->flags, process);
+    bool is_cow = false;
+    uintptr_t phys_address_to_map = object->ops->handle_fault(object, offset_in_object, &is_cow);
+    if (is_cow) {
+        map_phys_page(phys_address_to_map, address, (region->flags & ~VM_WRITE) | VM_COW, process);
+    } else {
+        map_phys_page(phys_address_to_map, address, region->flags, process);
+    }
     return 0;
 }
 

@@ -50,7 +50,7 @@ static int anon_kill(struct vm_object *self) {
     return 0;
 }
 
-static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into_self) {
+static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into_self, bool *is_cow) {
     mutex_lock(&self->lock);
     struct anon_vm_object_data *data = self->private_data;
 
@@ -61,8 +61,10 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
     }
 
     if (data->phys_pages[page_index]) {
+        bool should_cow = atomic_load(&data->phys_pages[page_index]->ref_count) > 1;
         uintptr_t ret = data->phys_pages[page_index]->phys_addr;
         mutex_unlock(&self->lock);
+        *is_cow = should_cow;
         return ret;
     }
 
@@ -73,6 +75,7 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
     memset(phys_addr_mapping, 0, PAGE_SIZE);
 
     mutex_unlock(&self->lock);
+    *is_cow = false;
     return phys_addr;
 }
 

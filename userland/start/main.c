@@ -11,8 +11,6 @@
 #include <unistd.h>
 
 void spawn_process(char **argv, uid_t uid, gid_t gid, bool redirect, bool synchronize) {
-    usleep(100000);
-
     int fd[2];
     if (synchronize) {
         if (pipe(fd)) {

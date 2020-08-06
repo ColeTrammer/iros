@@ -1,6 +1,7 @@
 #ifndef _KERNEL_MEM_VM_OBJECT_H
 #define _KERNEL_MEM_VM_OBJECT_H 1
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include <kernel/util/mutex.h>
@@ -12,7 +13,7 @@ enum vm_object_type { VM_INODE, VM_ANON, VM_PHYS };
 
 struct vm_object_operations {
     int (*map)(struct vm_object *self, struct vm_region *region);
-    uintptr_t (*handle_fault)(struct vm_object *self, uintptr_t offset_into_self);
+    uintptr_t (*handle_fault)(struct vm_object *self, uintptr_t offset_into_self, bool *is_cow);
     uintptr_t (*handle_cow_fault)(struct vm_object *self, uintptr_t offset_into_self);
     int (*kill)(struct vm_object *self);
     int (*extend)(struct vm_object *self, size_t pages);
