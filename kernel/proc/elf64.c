@@ -167,7 +167,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
         debug_log("Creating tls region: [ %#.16lX, %lu ]\n", data_end + offset, tls_size);
 #endif /* ELF64_DEBUG */
         struct vm_region *tls_region =
-            map_region((void *) (data_end + offset), tls_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, VM_PROCESS_TLS_MASTER_COPY);
+            map_region((void *) (data_end + offset), tls_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, VM_PROCESS_TLS_MASTER_COPY);
         struct vm_object *object = vm_create_anon_object(tls_size);
         tls_region->vm_object = object;
         tls_region->vm_object_offset = 0;
