@@ -129,6 +129,14 @@ void Server::handle_window_rename_request(const WindowServer::Message& request, 
 void Server::start() {
     assert(listen(m_socket_fd, 10) == 0);
 
+    char* synchronize = getenv("__SYNCHRONIZE");
+    if (synchronize) {
+        int fd = atoi(synchronize);
+        char c = '\0';
+        write(fd, &c, 1);
+        close(fd);
+    }
+
     sockaddr_un client_addr;
     socklen_t client_addr_len = sizeof(sockaddr_un);
 
