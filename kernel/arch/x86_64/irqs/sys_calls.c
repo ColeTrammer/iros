@@ -438,7 +438,7 @@ SYS_CALL(waitpid) {
 #ifdef WAIT_PID_DEBUG
                 debug_log("Wait found nothing: [ %d ]\n", pid);
 #endif /* WAIT_PID_DEBUG */
-                SYS_RETURN(-ECHILD);
+                SYS_RETURN(0);
             } else {
                 int ret = proc_block_waitpid(current, pid);
                 if (ret) {
