@@ -132,7 +132,7 @@ static int anon_extend(struct vm_object *self, size_t pages) {
     return 0;
 }
 
-static struct vm_object *anon_clone(struct vm_object *self);
+static struct vm_object *anon_clone(struct vm_object *self, uintptr_t start, size_t size);
 
 static struct vm_object_operations anon_ops = { .map = &anon_map,
                                                 .handle_fault = &anon_handle_fault,
@@ -141,19 +141,25 @@ static struct vm_object_operations anon_ops = { .map = &anon_map,
                                                 .extend = &anon_extend,
                                                 .clone = &anon_clone };
 
-static struct vm_object *anon_clone(struct vm_object *self) {
+static struct vm_object *anon_clone(struct vm_object *self, uintptr_t start, size_t size) {
+    assert(start % PAGE_SIZE == 0);
+    assert(size % PAGE_SIZE == 0);
+    start /= PAGE_SIZE;
+    size /= PAGE_SIZE;
+
     mutex_lock(&self->lock);
     struct anon_vm_object_data *self_data = self->private_data;
 
-    struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + self_data->pages * sizeof(struct phys_page *));
-    data->pages = self_data->pages;
+    struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + size * sizeof(struct phys_page *));
+    data->pages = size;
 
-    for (size_t i = 0; i < self_data->pages; i++) {
+    assert(start + size <= self_data->pages);
+    for (size_t i = start; i < start + size; i++) {
         struct phys_page *page_value = self_data->phys_pages[i];
         if (!page_value) {
-            data->phys_pages[i] = page_value;
+            data->phys_pages[i - start] = page_value;
         } else {
-            data->phys_pages[i] = bump_phys_page(page_value);
+            data->phys_pages[i - start] = bump_phys_page(page_value);
         }
     }
 

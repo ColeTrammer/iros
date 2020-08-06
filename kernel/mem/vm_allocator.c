@@ -633,7 +633,8 @@ struct vm_region *clone_process_vm() {
                 bump_vm_object(to_add->vm_object);
             } else {
                 mark_region_as_cow(region);
-                to_add->vm_object = vm_clone_object(to_add->vm_object);
+                to_add->vm_object = vm_clone_object(to_add->vm_object, to_add->vm_object_offset, to_add->end - to_add->start);
+                to_add->vm_object_offset = 0;
             }
         }
 

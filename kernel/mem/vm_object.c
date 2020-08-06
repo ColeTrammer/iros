@@ -102,7 +102,7 @@ struct vm_object *vm_create_object(enum vm_object_type type, struct vm_object_op
     return object;
 }
 
-struct vm_object *vm_clone_object(struct vm_object *obj) {
+struct vm_object *vm_clone_object(struct vm_object *obj, uintptr_t start, size_t size) {
     assert(obj->ops->clone);
-    return obj->ops->clone(obj);
+    return obj->ops->clone(obj, start, size);
 }
