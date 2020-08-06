@@ -226,7 +226,7 @@ static void signal_process_group_iter(struct process *process, void *_cls) {
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = process->task_list;
     if (cls->signum != 0) {
-        debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(cls->signum));
+        debug_log("Signaling queue: [ %d:%d, %s ]\n", task->process->pid, task->tid, strsignal(cls->signum));
         task_enqueue_signal(task, cls->signum, NULL, false);
 
         if (task == get_current_task() && !task_is_sig_blocked(task, cls->signum)) {

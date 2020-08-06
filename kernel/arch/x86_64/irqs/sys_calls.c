@@ -419,7 +419,7 @@ SYS_CALL(waitpid) {
     }
 
 #ifdef WAIT_PID_DEBUG
-    debug_log("Waiting on pid: [ %d ]\n", pid);
+    debug_log("Waiting on pid: [ %d, %d ]\n", pid, flags);
 #endif /* WAIT_PID_DEBUG */
 
     struct proc_state_message m;

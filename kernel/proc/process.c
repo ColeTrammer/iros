@@ -29,6 +29,7 @@ HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
 void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure) {
     // Reassign the main tid of the process if it exits early, and delete tid from the task list
+    bool no_remaining_tasks = false;
     mutex_lock(&process->lock);
     if (process->task_list == task) {
         process->task_list = task->process_next;
@@ -46,25 +47,21 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
     if (process->main_tid == task->tid) {
         struct task *new_task = process->task_list;
         process->main_tid = new_task ? new_task->tid : -1;
+        no_remaining_tasks = !new_task;
         assert(process->main_tid != task->tid);
     }
     mutex_unlock(&process->lock);
 
-    int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
-
-#ifdef PROC_REF_COUNT_DEBUG
-    debug_log("Process ref count: [ %d, %d ]\n", process->pid, fetched_ref_count - 1);
-#endif /* PROC_REF_COUNT_DEBUG */
-
-    assert(fetched_ref_count > 0);
-    if (fetched_ref_count == 1) {
+    if (no_remaining_tasks) {
 #ifdef PROCESSES_DEBUG
         debug_log("Destroying process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
-        hash_del(map, &process->pid);
-        procfs_unregister_process(process);
+
+        // The process is now a zombie, so free as much resources now as possible.
+        process->zombie = true;
 
         proc_kill_arch_process(process, free_paging_structure);
+
 #ifdef PROCESSES_DEBUG
         debug_log("Destroyed arch process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
@@ -84,6 +81,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             free(region);
             region = temp;
         }
+        process->process_memory = NULL;
 
         for (size_t i = 0; i < FOPEN_MAX; i++) {
             if (process->files[i].file != NULL) {
@@ -98,6 +96,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             free(user_mutex);
             user_mutex = next;
         }
+        process->used_user_mutexes = NULL;
 
         struct timer *timer = process->timers;
         while (timer) {
@@ -106,12 +105,28 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             time_delete_timer(timer);
             timer = next;
         }
+        process->timers = NULL;
+
+        if (process->process_clock) {
+            time_destroy_clock(process->process_clock);
+            process->process_clock = NULL;
+        }
 
         free(process->supplemental_gids);
+        process->supplemental_gids = NULL;
+    }
+
+    int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
 
 #ifdef PROC_REF_COUNT_DEBUG
-        debug_log("Finished destroying process: [ %d ]\n", process->pid);
+    debug_log("Process ref count: [ %d, %d ]\n", process->pid, fetched_ref_count - 1);
 #endif /* PROC_REF_COUNT_DEBUG */
+
+    assert(fetched_ref_count > 0);
+    if (fetched_ref_count == 1) {
+        // Finish cleanup now that there are no outstanding references.
+        hash_del(map, &process->pid);
+        procfs_unregister_process(process);
 
         if (process->cwd) {
             drop_tnode(process->cwd);
@@ -125,12 +140,12 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             free_program_args(process->args_context);
         }
 
-        if (process->process_clock) {
-            time_destroy_clock(process->process_clock);
-        }
-
         free(process->name);
         free(process);
+
+#ifdef PROC_REF_COUNT_DEBUG
+        debug_log("Finished destroying process: [ %d ]\n", process->pid);
+#endif /* PROC_REF_COUNT_DEBUG */
         return;
     }
 }

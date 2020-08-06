@@ -73,7 +73,8 @@ struct process {
 
     struct timespec start_time;
 
-    bool should_trace;
+    bool should_trace : 1;
+    bool zombie : 1;
 
     struct sigaction sig_state[_NSIG];
     stack_t alt_stack;
