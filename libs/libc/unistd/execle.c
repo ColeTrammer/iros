@@ -9,9 +9,9 @@ int execle(const char *path, const char *arg, ...) {
     va_list args;
     va_start(args, arg);
 
-    char **arg_list = malloc(50 * sizeof(char *));
+    size_t max = 50;
+    char **arg_list = malloc(max * sizeof(char *));
     size_t i = 1;
-    size_t max = 0;
 
     char *a;
     while ((a = va_arg(args, char *))) {
