@@ -356,6 +356,7 @@ void mark_region_as_cow(struct vm_region *region) {
 
         *pt_entry |= VM_COW;
         *pt_entry &= ~VM_WRITE;
+        flush_tlb(addr);
     }
 }
 

@@ -15,11 +15,10 @@
 // #define ANON_VM_OBJECT_DEBUG
 
 static int anon_map(struct vm_object *self, struct vm_region *region) {
-    struct anon_vm_object_data *data = self->private_data;
-
     struct task *current_task = get_current_task();
 
     mutex_lock(&self->lock);
+    struct anon_vm_object_data *data = self->private_data;
     for (uintptr_t i = region->start; i < region->end; i += PAGE_SIZE) {
         size_t page_index = (i + region->vm_object_offset - region->start) / PAGE_SIZE;
         assert(page_index < data->pages);
@@ -52,6 +51,7 @@ static int anon_kill(struct vm_object *self) {
 }
 
 static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into_self) {
+    mutex_lock(&self->lock);
     struct anon_vm_object_data *data = self->private_data;
 
     size_t page_index = offset_into_self / PAGE_SIZE;
@@ -60,7 +60,6 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
         assert(page_index < data->pages);
     }
 
-    mutex_lock(&self->lock);
     if (data->phys_pages[page_index]) {
         uintptr_t ret = data->phys_pages[page_index]->phys_addr;
         mutex_unlock(&self->lock);
@@ -78,16 +77,18 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
 }
 
 static uintptr_t anon_handle_cow_fault(struct vm_object *self, uintptr_t offset_into_self) {
-    struct anon_vm_object_data *data = self->private_data;
-
     size_t page_index = offset_into_self / PAGE_SIZE;
-    assert(page_index < data->pages);
 
     mutex_lock(&self->lock);
+
+    struct anon_vm_object_data *data = self->private_data;
+    assert(page_index < data->pages);
+
     struct phys_page *old_page = data->phys_pages[page_index];
     assert(old_page);
 
-    if (atomic_load(&old_page->ref_count) == 1) {
+    int old_ref_count = atomic_load(&old_page->ref_count);
+    if (old_ref_count == 1) {
         mutex_unlock(&self->lock);
         return old_page->phys_addr;
     }
@@ -110,6 +111,7 @@ static uintptr_t anon_handle_cow_fault(struct vm_object *self, uintptr_t offset_
 }
 
 static int anon_extend(struct vm_object *self, size_t pages) {
+    mutex_lock(&self->lock);
     struct anon_vm_object_data *data = self->private_data;
 
     size_t old_num_pages = data->pages;
@@ -123,6 +125,7 @@ static int anon_extend(struct vm_object *self, size_t pages) {
 
     new_data->pages = num_pages;
     memset(new_data->phys_pages + old_num_pages, 0, pages * sizeof(struct phys_page *));
+    mutex_unlock(&self->lock);
     return 0;
 }
 
@@ -136,9 +139,8 @@ static struct vm_object_operations anon_ops = { .map = &anon_map,
                                                 .clone = &anon_clone };
 
 static struct vm_object *anon_clone(struct vm_object *self) {
-    struct anon_vm_object_data *self_data = self->private_data;
-
     mutex_lock(&self->lock);
+    struct anon_vm_object_data *self_data = self->private_data;
 
     struct anon_vm_object_data *data = malloc(sizeof(struct anon_vm_object_data) + self_data->pages * sizeof(struct phys_page *));
     data->pages = self_data->pages;
