@@ -6,8 +6,8 @@
 
 static FILE files[3];
 
-FILE *stdout = &files[0];
-FILE *stdin = &files[1];
+FILE *stdin = &files[0];
+FILE *stdout = &files[1];
 FILE *stderr = &files[2];
 
 FILE *__file_list_head = files + 0;
@@ -22,40 +22,37 @@ int __should_log;
 
 void init_files(int isatty_mask) {
     /* stdin */
-    files[0].__fd = 0;
-    files[0].__position = 0;
-    files[0].__flags |= (isatty_mask & (1 << 0)) ? _IONBF : _IOFBF;
-    files[0].__buffer = static_file_buffer;
-    files[0].__buffer_length = 0;
-    files[0].__buffer_max = BUFSIZ;
-    files[0].__flags |= __STDIO_READABLE | __STDIO_WRITABLE;
-    files[0].__prev = NULL;
-    files[0].__next = files + 1;
-    stdin = files + 0;
+    stdin->__fd = 0;
+    stdin->__position = 0;
+    stdin->__flags |= (isatty_mask & (1 << 0)) ? _IONBF : _IOFBF;
+    stdin->__buffer = static_file_buffer;
+    stdin->__buffer_length = 0;
+    stdin->__buffer_max = BUFSIZ;
+    stdin->__flags |= __STDIO_READABLE | __STDIO_WRITABLE;
+    stdin->__prev = NULL;
+    stdin->__next = stdout;
 
     /* stdout */
-    files[1].__fd = 1;
-    files[1].__flags |= (isatty_mask & (1 << 1)) ? _IOLBF : _IOFBF;
-    files[1].__buffer = static_file_buffer + BUFSIZ;
-    files[1].__buffer_max = BUFSIZ;
-    files[1].__buffer_length = 0;
-    files[1].__flags |= __STDIO_READABLE | __STDIO_WRITABLE;
-    files[1].__position = 0;
-    files[1].__prev = files + 0;
-    files[1].__next = files + 2;
-    stdout = files + 1;
+    stdout->__fd = 1;
+    stdout->__flags |= (isatty_mask & (1 << 1)) ? _IOLBF : _IOFBF;
+    stdout->__buffer = static_file_buffer + BUFSIZ;
+    stdout->__buffer_max = BUFSIZ;
+    stdout->__buffer_length = 0;
+    stdout->__flags |= __STDIO_READABLE | __STDIO_WRITABLE;
+    stdout->__position = 0;
+    stdout->__prev = stdin;
+    stdout->__next = stderr;
 
     /* stderr */
-    files[2].__fd = 2;
-    files[2].__flags |= _IONBF;
-    files[2].__position = 0;
-    files[2].__buffer = NULL;
-    files[2].__buffer_length = 0;
-    files[2].__buffer_max = 0;
-    files[2].__flags |= __STDIO_OWNED | __STDIO_READABLE | __STDIO_WRITABLE;
-    files[2].__prev = files + 1;
-    files[2].__next = NULL;
-    stderr = files + 2;
+    stderr->__fd = 2;
+    stderr->__flags |= _IONBF;
+    stderr->__position = 0;
+    stderr->__buffer = NULL;
+    stderr->__buffer_length = 0;
+    stderr->__buffer_max = 0;
+    stderr->__flags |= __STDIO_OWNED | __STDIO_READABLE | __STDIO_WRITABLE;
+    stderr->__prev = stdout;
+    stderr->__next = NULL;
 
 #ifndef NDEBUG
     __should_log = getenv("STDIO_DEBUG") ? 1 : 0;
