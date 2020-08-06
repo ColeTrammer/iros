@@ -153,8 +153,7 @@ static ssize_t slave_write(struct device *device, off_t offset, const void *buf,
     struct slave_data *data = device->private;
     if (get_current_task()->process->pgid != data->pgid && (data->config.c_lflag & TOSTOP)) {
 #ifdef PTMX_SIGNAL_DEBUG
-        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->process->pgid, get_current_task()->process->pgid,
-                  get_current_task()->process->pid);
+        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->pgid, get_current_task()->process->pgid, get_current_task()->process->pid);
 #endif /* PTMX_SIGNAL_DEBUG */
         signal_process_group(get_current_task()->process->pgid, SIGTTOU);
     }
@@ -295,11 +294,20 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
 
     struct slave_data *data = device->private;
 
-    if (get_current_task()->process->pgid != data->pgid) {
+    switch (request) {
+        case TCSETSF:
+        case TCSETSW:
+        case TCSETS:
+            if (get_current_task()->process->pgid != data->pgid) {
 #ifdef PTMX_SIGNAL_DEBUG
-        debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->pgid, get_current_task()->pgid, get_current_task()->pid);
+                debug_log("Sending SIGTTOU: [ %d, %d, %d ]\n", data->pgid, get_current_task()->process->pgid,
+                          get_current_task()->process->pid);
 #endif /* PTMX_SIGNAL_DEBUG */
-        signal_process_group(get_current_task()->process->pgid, SIGTTOU);
+                signal_process_group(get_current_task()->process->pgid, SIGTTOU);
+            }
+            break;
+        default:
+            break;
     }
 
     struct device *master = masters[data->index];
