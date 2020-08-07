@@ -1,4 +1,3 @@
-#ifndef __is_shared
 #ifdef USERLAND_NATIVE
 #define _DEFAULT_SOURCE
 #define _BITS_PTHREADTYPES_COMMON_H
@@ -208,7 +207,6 @@ void free(void *p) {
     __unlock(&__malloc_lock);
 }
 
-#ifndef NO_ALIGNED_ALLOC
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
 #undef aligned_alloc
 void *aligned_alloc(size_t alignment, size_t n, int line, const char *func) {
@@ -347,7 +345,6 @@ __attribute__((weak)) void *aligned_alloc(size_t alignment, size_t n) {
     __malloc_debug("aligned_alloc: [ %lu, %lu, %p ]\n", alignment, n, new_block + 1);
     return new_block + 1;
 }
-#endif /* NO_ALIGNED_ALLOC */
 
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)
 #include <kernel/hal/output.h>
@@ -461,33 +458,3 @@ void *malloc(size_t n) {
     __malloc_debug("malloc: [ %lu, %p ]\n", n, ret);
     return ret;
 }
-#else
-#include <stddef.h>
-
-void *__loader_malloc(size_t n) __attribute__((weak));
-void __loader_free(void *p) __attribute__((weak));
-void *__loader_calloc(size_t n, size_t m) __attribute__((weak));
-void *__loader_realloc(void *p, size_t n) __attribute__((weak));
-void *__loader_aligned_alloc(size_t a, size_t n) __attribute__((weak));
-
-void *malloc(size_t n) {
-    return __loader_malloc(n);
-}
-
-void free(void *p) {
-    __loader_free(p);
-}
-
-void *realloc(void *p, size_t n) {
-    return __loader_realloc(p, n);
-}
-
-void *calloc(size_t n, size_t m) {
-    return __loader_calloc(n, m);
-}
-
-void *aligned_alloc(size_t a, size_t n) {
-    return __loader_aligned_alloc(a, n);
-}
-
-#endif /* __is_shared */
