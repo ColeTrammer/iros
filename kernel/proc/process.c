@@ -241,10 +241,27 @@ void proc_consume_wait_info(struct process *parent, struct process *child, enum 
 }
 
 void proc_set_process_state(struct process *process, enum process_state state, int info, bool terminated_bc_signal) {
+    struct process *parent = proc_get_parent(process);
+    struct sigaction parent_signal_disposition = parent->sig_state[SIGCHLD];
+
+    if ((parent_signal_disposition.sa_flags & SA_NOCLDWAIT) && (state == PS_TERMINATED)) {
+        proc_consume_wait_info(parent, process, PS_TERMINATED);
+        proc_drop_parent(parent);
+        return;
+    }
+
+    if ((parent_signal_disposition.sa_flags & SA_NOCLDSTOP) && (state == PS_STOPPED || state == PS_CONTINUED)) {
+        proc_consume_wait_info(parent, process, state);
+        return;
+    }
+
     // FIXME: synchronize this somehow
     process->state = state;
     process->exit_code = info;
     process->terminated_bc_signal = terminated_bc_signal;
+
+    proc_notify_parent(parent);
+    proc_drop_parent(parent);
 }
 
 uintptr_t proc_allocate_user_stack(struct process *process, struct initial_process_info *info) {

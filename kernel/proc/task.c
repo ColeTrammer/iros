@@ -488,12 +488,8 @@ int task_get_next_sig(struct task *task) {
     return -1;
 }
 
-void proc_notify_parent(struct process *child) {
-    struct process *parent = proc_get_parent(child);
-    assert(parent);
-
+void proc_notify_parent(struct process *parent) {
     proc_set_sig_pending(parent, SIGCHLD);
-    proc_drop_parent(parent);
 }
 
 void task_do_sigs_if_needed(struct task *task) {
