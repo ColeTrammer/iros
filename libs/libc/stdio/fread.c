@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 
@@ -9,5 +7,3 @@ size_t fread(void *__restrict buf, size_t size, size_t nmemb, FILE *__restrict s
     __unlock(&stream->__lock);
     return ret;
 }
-
-#endif /* OLD_STDIO */

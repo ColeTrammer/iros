@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <fcntl.h>
 #include <search.h>
@@ -67,5 +65,3 @@ FILE *__stdio_allocate_stream(int fd, int flags) {
 
     return stream;
 }
-
-#endif /* OLD_STDIO */

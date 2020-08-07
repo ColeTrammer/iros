@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <stdio.h>
 #include <string.h>
 #include <sys/uio.h>
@@ -117,5 +115,3 @@ size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__r
     bytes_read += stream->__buffer_length;
     return bytes_read / size;
 }
-
-#endif /* OLD_STDIO */

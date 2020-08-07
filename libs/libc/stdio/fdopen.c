@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -23,5 +21,3 @@ FILE *fdopen(int fd, const char *mode) {
 
     return __stdio_allocate_stream(fd, flags.__stream_flags);
 }
-
-#endif /* OLD_STDIO */

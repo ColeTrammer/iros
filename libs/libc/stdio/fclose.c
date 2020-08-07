@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <search.h>
 #include <stdio.h>
@@ -37,5 +35,3 @@ int fclose(FILE *stream) {
     }
     return (ret1 == -1 || ret2 == -1) ? -1 : 0;
 }
-
-#endif /* OLD_STDIO */

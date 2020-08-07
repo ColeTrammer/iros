@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 
@@ -16,5 +14,3 @@ __attribute__((deprecated)) char *gets(char *s) {
     __unlock(&stdin->__lock);
     return (index == 0 || error_set) ? NULL : (s[index + 1] = '\0', s);
 }
-
-#endif /* OLD_STDIO */

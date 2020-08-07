@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 
@@ -19,5 +17,3 @@ int ungetc(int c, FILE *stream) {
     __unlock(&stream->__lock);
     return ret;
 }
-
-#endif /* OLD_STDIO */

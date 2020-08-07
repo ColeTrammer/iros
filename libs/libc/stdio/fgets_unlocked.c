@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 
@@ -25,5 +23,3 @@ char *fgets_unlocked(char *__restrict buf, int size, FILE *__restrict stream) {
     buf[i] = '\0';
     return buf;
 }
-
-#endif /* OLD_STDIO */

@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 
@@ -8,5 +6,3 @@ void clearerr(FILE *stream) {
     clearerr_unlocked(stream);
     __unlock(&stream->__lock);
 }
-
-#endif /* OLD_STDIO */

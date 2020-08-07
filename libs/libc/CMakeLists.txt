@@ -163,7 +163,6 @@ else()
         stdio/fgets.c
         stdio/fileno_unlocked.c
         stdio/fileno.c
-        stdio/files.c
         stdio/flockfile.c
         stdio/fopen_internal.c
         stdio/fopen.c
@@ -190,14 +189,20 @@ else()
         stdio/getline.c
         stdio/gets.c
         stdio/init_files.c
+        stdio/pclose.c
+        stdio/perror.c
+        stdio/popen.c
         stdio/putc_unlocked.c
         stdio/putc.c
         stdio/putchar_unlocked.c
         stdio/putchar.c
         stdio/puts.c
+        stdio/remove.c
         stdio/rewind.c
         stdio/setbuf.c
         stdio/setvbuf.c
+        stdio/tmpfile.c
+        stdio/tmpnam.c
         stdio/ungetc.c
         stdlib/_Exit.c
         stdlib/atexit.c

@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <stdio.h>
 #include <unistd.h>
 
@@ -46,5 +44,3 @@ int fputc_unlocked(int a, FILE *stream) {
 
     return (int) c;
 }
-
-#endif /* OLD_STDIO */

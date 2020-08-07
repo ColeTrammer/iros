@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -73,5 +71,3 @@ freopen_fail:
     }
     return NULL;
 }
-
-#endif /* OLD_STDIO */

@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <stdio.h>
 #include <unistd.h>
 
@@ -57,5 +55,3 @@ int fgetc_unlocked(FILE *stream) {
         }
     }
 }
-
-#endif /* OLD_STDIO */

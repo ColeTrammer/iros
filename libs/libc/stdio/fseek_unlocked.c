@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -36,5 +34,3 @@ fseek_end:
     stream->__flags &= ~__STDIO_EOF;
     return 0;
 }
-
-#endif /* OLD_STDIO */

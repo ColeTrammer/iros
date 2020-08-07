@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,5 +30,3 @@ int setvbuf(FILE *__restrict stream, char *__restrict buf, int mode, size_t size
     stream->__flags |= mode;
     return 0;
 }
-
-#endif /* OLD_STDIO */

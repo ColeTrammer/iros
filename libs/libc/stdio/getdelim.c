@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <errno.h>
 #include <stdio.h>
@@ -55,5 +53,3 @@ ssize_t getdelim(char **__restrict line_ptr, size_t *__restrict n, int delim, FI
 
     return (ssize_t) pos;
 }
-
-#endif /* OLD_STDIO */

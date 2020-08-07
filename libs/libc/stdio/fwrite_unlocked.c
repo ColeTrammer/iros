@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 #include <string.h>
@@ -83,5 +81,3 @@ size_t fwrite_unlocked(const void *__restrict buf, size_t size, size_t nmemb, FI
     stream->__position = stream->__buffer_length = to_write;
     return max_written / size;
 }
-
-#endif /* OLD_STDIO */

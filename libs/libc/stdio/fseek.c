@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 
@@ -9,5 +7,3 @@ int fseek(FILE *stream, long offset, int whence) {
     __unlock(&stream->__lock);
     return ret;
 }
-
-#endif /* OLD_STDIO */

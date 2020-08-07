@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -58,5 +56,3 @@ void init_files(int isatty_mask) {
     __should_log = getenv("STDIO_DEBUG") ? 1 : 0;
 #endif /* NDEBUG */
 }
-
-#endif /* OLD_STDIO */

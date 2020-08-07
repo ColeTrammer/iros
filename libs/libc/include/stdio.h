@@ -25,28 +25,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#ifdef OLD_STDIO
-
-typedef long fpos_t;
-
-typedef struct {
-    char *buffer;
-    fpos_t pos;
-    off_t length;
-
-    int fd;
-    int flags;
-    int eof;
-    int error;
-
-    int buf_type;
-    unsigned char pushed_back_char;
-
-    /* Needs lock for threads eventually */
-} FILE;
-
-#else
-
 typedef long fpos_t;
 
 #define __STDIO_OWNED                 4
@@ -83,6 +61,7 @@ typedef struct __file FILE;
 extern FILE *__file_list_head;
 extern FILE *__file_list_tail;
 extern unsigned int __file_list_lock;
+extern int __p_child_pid;
 
 struct __stdio_flags __stdio_parse_mode_string(const char *s);
 FILE *__stdio_allocate_stream(int fd, int flags);
@@ -99,7 +78,6 @@ extern int __should_log;
         }                                                  \
     } while (0)
 #endif /* NDEBUG */
-#endif /* OLD_STDIO */
 
 #ifndef __is_libk
 

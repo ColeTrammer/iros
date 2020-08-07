@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <assert.h>
 #include <bits/lock.h>
 #include <stdbool.h>
@@ -59,5 +57,3 @@ int fflush_unlocked(FILE *stream) {
 
     return 0;
 }
-
-#endif /* OLD_STDIO */

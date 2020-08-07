@@ -1,5 +1,3 @@
-#ifndef OLD_STDIO
-
 #include <bits/lock.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -16,5 +14,3 @@ int fgetpos(FILE *__restrict stream, fpos_t *__restrict pos) {
 
     return -1;
 }
-
-#endif /* OLD_STDIO */
