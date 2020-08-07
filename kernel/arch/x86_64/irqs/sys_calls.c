@@ -30,7 +30,6 @@
 #include <kernel/net/socket.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
-#include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
@@ -296,14 +295,14 @@ static int get_timer(timer_t id, struct timer **timerp) {
 SYS_CALL(exit) {
     SYS_BEGIN();
 
+    SYS_PARAM1(int, exit_code);
+
     /* Disable Interrups To Prevent Premature Task Removal, Since Sched State Is Set */
     disable_interrupts();
 
     struct task *task = get_current_task();
     exit_process(task->process);
 
-    int exit_code = (int) task_state->cpu_state.rsi;
-    proc_add_message(task->process->pid, proc_create_message(STATE_EXITED, exit_code));
     debug_log("Process Exited: [ %d, %d ]\n", task->process->pid, exit_code);
 
     SYS_RETURN_NORETURN();
@@ -412,69 +411,7 @@ SYS_CALL(waitpid) {
     SYS_PARAM2_VALIDATE(int *, status, validate_write_or_null, sizeof(int));
     SYS_PARAM3(int, flags);
 
-    struct task *current = get_current_task();
-
-    if (pid == 0) {
-        pid = -current->process->pgid;
-    }
-
-#ifdef WAIT_PID_DEBUG
-    debug_log("Waiting on pid: [ %d, %d ]\n", pid, flags);
-#endif /* WAIT_PID_DEBUG */
-
-    struct proc_state_message m;
-    pid_t found_pid;
-    for (;;) {
-        if (pid < -1) {
-            found_pid = proc_consume_message_by_pg(-pid, &m);
-        } else if (pid == -1) {
-            found_pid = proc_consume_message_by_parent(current->process->pid, &m);
-        } else {
-            found_pid = proc_consume_message(pid, &m);
-        }
-
-        if (found_pid == 0) {
-            if (flags & WNOHANG) {
-#ifdef WAIT_PID_DEBUG
-                debug_log("Wait found nothing: [ %d ]\n", pid);
-#endif /* WAIT_PID_DEBUG */
-                SYS_RETURN(0);
-            } else {
-                int ret = proc_block_waitpid(current, pid);
-                if (ret) {
-                    SYS_RETURN(ret);
-                }
-            }
-        } else {
-            if ((m.type == STATE_STOPPED && !(flags & WUNTRACED)) || (m.type == STATE_CONTINUED && !(flags & WCONTINUED))) {
-                continue;
-            }
-            break;
-        }
-    }
-
-#ifdef WAIT_PID_DEBUG
-    debug_log("Waited out pid: [ %d, %d ]\n", found_pid, m.type);
-#endif /* WAIT_PID_DEBUG */
-
-    if (!status) {
-        SYS_RETURN(found_pid);
-    }
-
-    if (m.type == STATE_EXITED) {
-        *status = (m.data & 0xFF) << 8;
-    } else if (m.type == STATE_STOPPED) {
-        *status = 0x80 | ((m.data & 0xFF) << 8);
-    } else if (m.type == STATE_INTERRUPTED) {
-        *status = m.data;
-    } else if (m.type == STATE_CONTINUED) {
-        *status = 0xFFFF;
-    } else {
-        assert(false);
-    }
-
-    // Indicated Success
-    SYS_RETURN(found_pid);
+    SYS_RETURN(proc_waitpid(pid, status, flags));
 }
 
 SYS_CALL(getpid) {
@@ -741,7 +678,6 @@ SYS_CALL(setpgid) {
 
     mutex_lock(&process->lock);
     process->pgid = pgid;
-    proc_update_pgid(pid, pgid);
     mutex_unlock(&process->lock);
 
     SYS_RETURN(0);
@@ -862,10 +798,11 @@ SYS_CALL(getpgid) {
 
     SYS_PARAM1_VALIDATE(pid_t, pid, validate_positive, 1);
     if (pid == 0) {
-        pid = get_current_task()->process->pid;
+        SYS_RETURN(get_current_task()->process->pgid);
     }
 
-    SYS_RETURN(proc_get_pgid(pid));
+    struct process *process = find_by_pid(pid);
+    SYS_RETURN(process->pgid);
 }
 
 SYS_CALL(faccessat) {
@@ -1139,8 +1076,7 @@ finish_alarm:
 
 SYS_CALL(getppid) {
     SYS_BEGIN();
-
-    SYS_RETURN(get_current_task()->process->ppid);
+    SYS_RETURN(proc_getppid(get_current_process()));
 }
 
 SYS_CALL(sigsuspend) {
@@ -1741,7 +1677,6 @@ SYS_CALL(setsid) {
     }
 
     current->sid = current->pid;
-    proc_update_pgid(current->pid, current->pgid);
     current->pgid = current->pid;
 
 finish_setsid:

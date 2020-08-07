@@ -18,8 +18,8 @@
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
 
-// #define PROC_REF_COUNT_DEBUG
-// #define PROCESSES_DEBUG
+#define PROC_REF_COUNT_DEBUG
+#define PROCESSES_DEBUG
 
 extern struct process initial_kernel_process;
 
@@ -27,93 +27,99 @@ static struct hash_map *map;
 
 HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
 
+struct process *get_current_process(void) {
+    return get_current_task()->process;
+}
+
 void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure) {
-    // Reassign the main tid of the process if it exits early, and delete tid from the task list
-    bool no_remaining_tasks = false;
-    mutex_lock(&process->lock);
-    if (process->task_list == task) {
-        process->task_list = task->process_next;
-    }
+    if (task) {
+        // Reassign the main tid of the process if it exits early, and delete tid from the task list
+        bool no_remaining_tasks = false;
+        mutex_lock(&process->lock);
+        if (process->task_list == task) {
+            process->task_list = task->process_next;
+        }
 
-    struct task *prev = task->process_prev;
-    struct task *next = task->process_next;
-    if (prev) {
-        prev->process_next = task->process_next;
-    }
-    if (next) {
-        next->process_prev = task->process_prev;
-    }
+        struct task *prev = task->process_prev;
+        struct task *next = task->process_next;
+        if (prev) {
+            prev->process_next = task->process_next;
+        }
+        if (next) {
+            next->process_prev = task->process_prev;
+        }
 
-    if (process->main_tid == task->tid) {
-        struct task *new_task = process->task_list;
-        process->main_tid = new_task ? new_task->tid : -1;
-        no_remaining_tasks = !new_task;
-        assert(process->main_tid != task->tid);
-    }
-    mutex_unlock(&process->lock);
+        if (process->main_tid == task->tid) {
+            struct task *new_task = process->task_list;
+            process->main_tid = new_task ? new_task->tid : -1;
+            no_remaining_tasks = !new_task;
+            assert(process->main_tid != task->tid);
+        }
+        mutex_unlock(&process->lock);
 
-    if (no_remaining_tasks) {
+        if (no_remaining_tasks) {
 #ifdef PROCESSES_DEBUG
-        debug_log("Destroying process: [ %d ]\n", process->pid);
+            debug_log("Destroying process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
 
-        // The process is now a zombie, so free as much resources now as possible.
-        process->zombie = true;
+            // The process is now a zombie, so free as much resources now as possible.
+            process->zombie = true;
 
-        proc_kill_arch_process(process, free_paging_structure);
+            proc_kill_arch_process(process, free_paging_structure);
 
 #ifdef PROCESSES_DEBUG
-        debug_log("Destroyed arch process: [ %d ]\n", process->pid);
+            debug_log("Destroyed arch process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
 
-        struct vm_region *region = process->process_memory;
-        while (region != NULL) {
-            if (region->vm_object) {
-                drop_vm_object(region->vm_object);
+            struct vm_region *region = process->process_memory;
+            while (region != NULL) {
+                if (region->vm_object) {
+                    drop_vm_object(region->vm_object);
+                }
+
+                region = region->next;
             }
 
-            region = region->next;
-        }
-
-        region = process->process_memory;
-        while (region != NULL) {
-            struct vm_region *temp = region->next;
-            free(region);
-            region = temp;
-        }
-        process->process_memory = NULL;
-
-        for (size_t i = 0; i < FOPEN_MAX; i++) {
-            if (process->files[i].file != NULL) {
-                fs_close(process->files[i].file);
-                process->files[i].file = NULL;
+            region = process->process_memory;
+            while (region != NULL) {
+                struct vm_region *temp = region->next;
+                free(region);
+                region = temp;
             }
-        }
+            process->process_memory = NULL;
 
-        struct user_mutex *user_mutex = process->used_user_mutexes;
-        while (user_mutex != NULL) {
-            struct user_mutex *next = user_mutex->next;
-            free(user_mutex);
-            user_mutex = next;
-        }
-        process->used_user_mutexes = NULL;
+            for (size_t i = 0; i < FOPEN_MAX; i++) {
+                if (process->files[i].file != NULL) {
+                    fs_close(process->files[i].file);
+                    process->files[i].file = NULL;
+                }
+            }
 
-        struct timer *timer = process->timers;
-        while (timer) {
-            debug_log("Destroying timer: [ %p ]\n", timer);
-            struct timer *next = timer->proc_next;
-            time_delete_timer(timer);
-            timer = next;
-        }
-        process->timers = NULL;
+            struct user_mutex *user_mutex = process->used_user_mutexes;
+            while (user_mutex != NULL) {
+                struct user_mutex *next = user_mutex->next;
+                free(user_mutex);
+                user_mutex = next;
+            }
+            process->used_user_mutexes = NULL;
 
-        if (process->process_clock) {
-            time_destroy_clock(process->process_clock);
-            process->process_clock = NULL;
-        }
+            struct timer *timer = process->timers;
+            while (timer) {
+                debug_log("Destroying timer: [ %p ]\n", timer);
+                struct timer *next = timer->proc_next;
+                time_delete_timer(timer);
+                timer = next;
+            }
+            process->timers = NULL;
 
-        free(process->supplemental_gids);
-        process->supplemental_gids = NULL;
+            if (process->process_clock) {
+                time_destroy_clock(process->process_clock);
+                process->process_clock = NULL;
+            }
+
+            free(process->supplemental_gids);
+            process->supplemental_gids = NULL;
+        }
     }
 
     int fetched_ref_count = atomic_fetch_sub(&process->ref_count, 1);
@@ -124,6 +130,8 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
 
     assert(fetched_ref_count > 0);
     if (fetched_ref_count == 1) {
+        assert(process->zombie);
+
         // Finish cleanup now that there are no outstanding references.
         hash_del(map, &process->pid);
         procfs_unregister_process(process);
@@ -141,11 +149,12 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
         }
 
         free(process->name);
-        free(process);
 
 #ifdef PROC_REF_COUNT_DEBUG
         debug_log("Finished destroying process: [ %d ]\n", process->pid);
 #endif /* PROC_REF_COUNT_DEBUG */
+
+        free(process);
         return;
     }
 }
@@ -163,13 +172,49 @@ void proc_add_process(struct process *process) {
     procfs_register_process(process);
 }
 
-void proc_bump_process(struct process *process) {
+struct process *proc_bump_process(struct process *process) {
     int fetched_ref_count = atomic_fetch_add(&process->ref_count, 1);
     (void) fetched_ref_count;
 #ifdef PROC_REF_COUNT_DEBUG
     debug_log("Process ref count: [ %d, %d ]\n", process->pid, fetched_ref_count + 1);
 #endif /* PROC_REF_COUNT_DEBUG */
     assert(fetched_ref_count > 0);
+    return process;
+}
+
+void proc_add_child(struct process *parent, struct process *child) {
+    spin_lock(&parent->children_lock);
+    child->sibling_next = parent->children;
+    child->sibling_prev = NULL;
+    if (parent->children) {
+        parent->children->sibling_prev = child;
+    }
+    parent->children = child;
+    spin_unlock(&parent->children_lock);
+}
+
+int proc_get_waitable_process(struct process *parent, pid_t wait_spec, struct process **process_out) {
+    if (wait_spec == 0) {
+        wait_spec = -get_current_process()->pgid;
+    }
+
+    bool any_waitable = false;
+    spin_lock(&parent->children_lock);
+    for (struct process *child = parent->children; child; child = child->sibling_next) {
+        if (wait_spec == -1 || (wait_spec < 0 && child->pgid == -wait_spec) || child->pid == wait_spec) {
+            any_waitable = true;
+            if (child->state != PS_NONE) {
+                *process_out = child;
+                goto get_waitable_process_end;
+            }
+        }
+    }
+
+    *process_out = NULL;
+
+get_waitable_process_end:
+    spin_unlock(&parent->children_lock);
+    return any_waitable ? 0 : -ECHILD;
 }
 
 uintptr_t proc_allocate_user_stack(struct process *process, struct initial_process_info *info) {

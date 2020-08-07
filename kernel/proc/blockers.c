@@ -9,7 +9,6 @@
 #include <kernel/hal/timer.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/blockers.h>
-#include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
@@ -378,16 +377,14 @@ int proc_block_poll_timeout(struct task *current, nfds_t nfds, struct pollfd *fd
 
 static bool waitpid_blocker(struct block_info *info) {
     assert(info->type == WAITPID);
-
     pid_t pid = info->waitpid_info.pid;
-
-    if (pid < -1) {
-        return proc_num_messages_by_pg(-pid) != 0;
-    } else if (pid == -1) {
-        return proc_num_messages_by_parent(get_current_task()->process->pid) != 0;
-    } else {
-        return proc_num_messages(pid) != 0;
+    struct process *waitable_process = NULL;
+    int error = proc_get_waitable_process(get_current_process(), pid, &waitable_process);
+    if (error) {
+        return true;
     }
+
+    return !!waitable_process;
 }
 
 int proc_block_waitpid(struct task *current, pid_t pid) {

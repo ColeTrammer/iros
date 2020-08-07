@@ -9,7 +9,6 @@
 #include <kernel/hal/timer.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/task_finalizer.h>
 #include <kernel/proc/user_mutex.h>
@@ -24,7 +23,6 @@ extern struct process initial_kernel_process;
 
 void init_task_sched() {
     // This only becomes needed after scheduling is enabled
-    init_proc_state();
     init_processes();
     init_user_mutexes();
 

@@ -231,7 +231,7 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_status(struct procfs_
                              "START_TIME.tv_sec: %lu\n"
                              "START_TIME.tv_nsec: %lu\n",
                              process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)",
-                             process->uid, process->gid, process->ppid, process->umask, process->euid, process->egid, process->pgid,
+                             process->uid, process->gid, proc_getppid(process), process->umask, process->euid, process->egid, process->pgid,
                              process->sid, tty_string, 20, 0, vm_compute_total_virtual_memory(process), process->resident_memory,
                              process->start_time.tv_sec, process->start_time.tv_nsec);
     return (struct procfs_buffer) { buffer, length };

@@ -45,11 +45,15 @@ pid_t proc_fork(void) {
     struct process *child_process = calloc(1, sizeof(struct process));
     child->process = child_process;
 
+    mutex_lock(&parent->process->lock);
+
     child->tid = get_next_tid();
     child_process->pid = get_next_pid();
     child_process->main_tid = child->tid;
     init_mutex(&child_process->lock);
     init_spinlock(&child_process->user_mutex_lock);
+    init_spinlock(&child_process->children_lock);
+    init_spinlock(&child_process->parent_lock);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;
@@ -66,13 +70,15 @@ pid_t proc_fork(void) {
     child->arch_task.user_thread_pointer = parent->arch_task.user_thread_pointer;
     child_process->cwd = bump_tnode(parent->process->cwd);
     child_process->pgid = parent->process->pgid;
-    child_process->ppid = parent->process->pid;
     child->process->uid = parent->process->uid;
     child->process->euid = parent->process->euid;
     child->process->gid = parent->process->gid;
     child->process->egid = parent->process->egid;
     child->process->sid = parent->process->sid;
     child->process->umask = parent->process->umask;
+    child->process->parent = parent->process;
+    proc_add_child(parent->process, child->process);
+    proc_bump_process(child_process);
     child->process->start_time = time_read_clock(CLOCK_REALTIME);
     child->sig_pending = 0;
     child->sig_mask = parent->sig_mask;
@@ -94,6 +100,8 @@ pid_t proc_fork(void) {
             child_process->files[i] = fs_dup_accross_fork(parent->process->files[i]);
         }
     }
+
+    mutex_unlock(&parent->process->lock);
 
     disable_interrupts();
     sched_add_task(child);
@@ -254,8 +262,9 @@ int proc_execve(char *path, char **argv, char **envp) {
     process->task_list = task;
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
+    init_spinlock(&process->children_lock);
+    init_spinlock(&process->parent_lock);
     process->pgid = current->process->pgid;
-    process->ppid = current->process->ppid;
     process->sid = current->process->sid;
     process->umask = current->process->umask;
     process->start_time = time_read_clock(CLOCK_REALTIME);
@@ -309,11 +318,56 @@ int proc_execve(char *path, char **argv, char **envp) {
     // NOTE: once we re-enable interrupts we're effectively running as the new task inside a system call.
     interrupts_restore(save);
 
+    // Transfer over the old process's parent, children, and siblings.
+    // We have to aquire the parent's lock here because it protects
+    // the sibling linked list.
+    // FIXME: This code could potentially be a lot simpler if we reuse the
+    //        process that called execve() instead of creating a new one.
+    struct process *parent = proc_get_parent(current->process);
+    spin_lock(&parent->children_lock);
+
+    // The official parent must be loaded here, while we have a lock preventing the parent from changing.
+    process->parent = current->process->parent;
+    if (process->parent != parent) {
+        // The old parent exited before we aquired the lock. The parent is now pid 1, and can never change again.
+        // Replace the old parent with the new one.
+        assert(process->parent == &initial_kernel_process);
+        spin_unlock(&parent->children_lock);
+        proc_drop_parent(parent);
+        parent = proc_get_parent(process);
+        spin_lock(&parent->children_lock);
+    }
+
+    if ((process->sibling_next = current->process->sibling_next)) {
+        process->sibling_next->sibling_prev = process;
+    }
+
+    if ((process->sibling_prev = current->process->sibling_prev)) {
+        process->sibling_prev->sibling_next = process;
+    }
+
+    if (parent->children == current->process) {
+        parent->children = process;
+    }
+
+    spin_unlock(&parent->children_lock);
+    proc_drop_parent(parent);
+
+    // Drop the old process once it's been removed from the list of siblings.
+    proc_drop_process(current->process, NULL, false);
+
+    // This is a rare case, and is probably more complicated then the proper
+    // solution which is just to not change the process on execve().
+    assert(!current->process->children);
+
     // Free the old task's resources now that we can block.
     free_task(current, false);
 
     // FIXME: adding the process now might be a bit prone to race conditions
     proc_add_process(process);
+
+    // Reference for the parent process
+    proc_bump_process(process);
 
     char *buffer = (char *) fs_mmap(NULL, length, PROT_READ, MAP_SHARED, file, 0);
     // FIXME: this assert is very dangerous, but we can't return an error condition since

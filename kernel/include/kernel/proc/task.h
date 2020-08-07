@@ -27,6 +27,7 @@ enum sched_state {
 };
 
 struct clock;
+struct process;
 struct processor;
 
 struct args_context {
@@ -112,6 +113,8 @@ void arch_free_task(struct task *task, bool free_paging_structure);
 
 pid_t proc_fork(void);
 int proc_execve(char *path, char **argv, char **envp);
+int proc_waitpid(pid_t pid, int *status, int flags);
+pid_t proc_getppid(struct process *process);
 void init_userland(void);
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp);
@@ -128,7 +131,7 @@ int task_get_next_sig(struct task *task);
 void task_do_sig(struct task *task, int signum);
 void task_do_sig_handler(struct task *task, int signum);
 bool task_is_sig_blocked(struct task *task, int signum);
-void proc_notify_parent(pid_t child_pid);
+void proc_notify_parent(struct process *child);
 void task_enqueue_signal(struct task *task, int signum, void *val, bool was_sigqueue);
 void task_enqueue_signal_object(struct task *task, struct queued_signal *sig);
 void task_dequeue_signal(struct task *task);

@@ -21,7 +21,6 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
-#include <kernel/proc/process_state.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/user_mutex.h>
 #include <kernel/sched/task_sched.h>
@@ -170,9 +169,10 @@ void init_kernel_process(void) {
     initial_kernel_process.pid = 1;
     init_mutex(&initial_kernel_process.lock);
     init_spinlock(&initial_kernel_process.user_mutex_lock);
+    init_spinlock(&initial_kernel_process.children_lock);
+    init_spinlock(&initial_kernel_process.parent_lock);
     initial_kernel_process.main_tid = 1;
     initial_kernel_process.pgid = 1;
-    initial_kernel_process.ppid = 1;
     initial_kernel_process.tty = -1;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
 }
@@ -216,9 +216,10 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->process->pid = get_next_pid();
     init_mutex(&process->lock);
     init_spinlock(&process->user_mutex_lock);
+    init_spinlock(&process->children_lock);
+    init_spinlock(&process->parent_lock);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
-    task->process->ppid = initial_kernel_process.pid;
     task->process->process_memory = NULL;
     task->process->task_list = task;
     task->kernel_task = true;
@@ -230,6 +231,9 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     task->process->main_tid = task->tid;
     process->name = strdup(name);
     process->start_time = time_read_clock(CLOCK_REALTIME);
+    process->parent = &initial_kernel_process;
+    proc_bump_process(process);
+    proc_add_child(&initial_kernel_process, process);
 
     arch_load_kernel_task(task, entry);
 
@@ -268,6 +272,77 @@ void start_userland(void) {
 void init_userland(void) {
     struct task *init = load_kernel_task((uintptr_t) start_userland, "init");
     sched_add_task(init);
+}
+
+int proc_waitpid(pid_t pid, int *status, int flags) {
+    if (flags & ~(WUNTRACED | WNOHANG | WCONTINUED)) {
+        return -EINVAL;
+    }
+
+    struct process *parent = get_current_process();
+    for (;;) {
+        struct process *child = NULL;
+        int ret = proc_get_waitable_process(parent, pid, &child);
+        if (ret < 0) {
+            return ret;
+        }
+
+        if (child) {
+            switch (child->state) {
+                case PS_CONTINUED:
+                    if (!(flags & WCONTINUED)) {
+                        continue;
+                    }
+                    break;
+                case PS_STOPPED:
+                    if (!(flags & WUNTRACED)) {
+                        continue;
+                    }
+                    break;
+                case PS_TERMINATED:
+                    break;
+                default:
+                    assert(false);
+            }
+
+            if (status) {
+                switch (child->state) {
+                    case PS_CONTINUED:
+                        *status = 0xFFFF;
+                        break;
+                    case PS_STOPPED:
+                        *status = 0x80 | (child->stop_signal << 8);
+                        break;
+                    case PS_TERMINATED:
+                        if (child->terminated_bc_signal) {
+                            *status = child->terminating_signal;
+                        } else {
+                            *status = child->exit_code << 8;
+                        }
+                        break;
+                    default:
+                        assert(false);
+                }
+            }
+            return child->pid;
+        }
+
+        if (flags & WNOHANG) {
+            return 0;
+        }
+
+        ret = proc_block_waitpid(get_current_task(), pid);
+        if (ret) {
+            return ret;
+        }
+    }
+}
+
+pid_t proc_getppid(struct process *process) {
+    struct process *parent = proc_get_parent(process);
+    pid_t ppid = parent->pid;
+    proc_drop_parent(parent);
+    return ppid;
 }
 
 /* Must be called from unpremptable context */
@@ -401,15 +476,12 @@ int task_get_next_sig(struct task *task) {
     return -1;
 }
 
-void proc_notify_parent(pid_t child_pid) {
-    struct process *child = find_by_pid(child_pid);
-    struct process *parent = find_by_pid(child->ppid);
-
-    if (parent == NULL) {
-        parent = &initial_kernel_process;
-    }
+void proc_notify_parent(struct process *child) {
+    struct process *parent = proc_get_parent(child);
+    assert(parent);
 
     proc_set_sig_pending(parent, SIGCHLD);
+    proc_drop_parent(parent);
 }
 
 void task_do_sigs_if_needed(struct task *task) {
@@ -515,21 +587,18 @@ void task_do_sig(struct task *task, int signum) {
                 break;
             }
             exit_process(task->process);
-            proc_add_message(task->process->pid, proc_create_message(STATE_INTERRUPTED, signum));
             break;
         case STOP:
             if (task->sched_state == STOPPED) {
                 break;
             }
             task->sched_state = STOPPED;
-            proc_add_message(task->process->pid, proc_create_message(STATE_STOPPED, signum));
             break;
         case CONTINUE:
             if (task->sched_state != STOPPED) {
                 break;
             }
             task->sched_state = task->blocking ? WAITING : task->in_kernel ? RUNNING_UNINTERRUPTIBLE : RUNNING_INTERRUPTIBLE;
-            proc_add_message(task->process->pid, proc_create_message(STATE_CONTINUED, signum));
             break;
         case IGNORE:
             break;

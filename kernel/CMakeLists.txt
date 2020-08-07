@@ -52,7 +52,6 @@ if (NOT ${NATIVE_BUILD})
         proc/blockers.c
         proc/elf64.c
         proc/pid.c
-        proc/process_state.c
         proc/process.c
         proc/task.c
         proc/task_finalizer.c

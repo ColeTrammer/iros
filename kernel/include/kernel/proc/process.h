@@ -19,6 +19,7 @@ struct args_context;
 struct clock;
 struct file;
 struct initial_process_info;
+struct queued_signal;
 struct timer;
 struct tnode;
 
@@ -27,7 +28,22 @@ struct file_descriptor {
     int fd_flags;
 };
 
+enum process_state { PS_NONE, PS_STOPPED, PS_CONTINUED, PS_TERMINATED };
+
 struct process {
+    struct process *sibling_next;
+    struct process *sibling_prev;
+    struct process *children;
+    // This lock protects the children pointer of the current process and the
+    // sibling fields of all the process's children.
+    spinlock_t children_lock;
+
+    // Serialized by the spinlock to ensure that the parent pointer is always valid.
+    // Accessing the parent requires calling proc_get_parent(), and must be ended with
+    // a call to proc_drop_parent().
+    struct process *parent;
+    spinlock_t parent_lock;
+
     struct tnode *cwd;
     struct tnode *exe;
     struct file_descriptor files[FOPEN_MAX];
@@ -48,7 +64,6 @@ struct process {
 
     pid_t pid;
     pid_t pgid;
-    pid_t ppid;
     pid_t sid;
 
     uid_t uid;
@@ -75,15 +90,26 @@ struct process {
 
     bool should_trace : 1;
     bool zombie : 1;
+    bool terminated_bc_signal : 1;
+
+    enum process_state state;
+    union {
+        int exit_code;
+        int terminating_signal;
+        int stop_signal;
+    };
+    struct queued_signal *signal_for_parent;
 
     struct sigaction sig_state[_NSIG];
     stack_t alt_stack;
     mutex_t lock;
 };
 
+struct process *get_current_process(void);
+
 void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure);
 void proc_add_process(struct process *process);
-void proc_bump_process(struct process *process);
+struct process *proc_bump_process(struct process *process);
 uintptr_t proc_allocate_user_stack(struct process *process, struct initial_process_info *info);
 struct process *find_by_pid(pid_t pid);
 void proc_set_sig_pending(struct process *process, int n);
@@ -93,6 +119,20 @@ int proc_getgroups(size_t size, gid_t *list);
 int proc_setgroups(size_t size, const gid_t *list);
 bool proc_in_group(struct process *process, gid_t group);
 
+void proc_add_child(struct process *parent, struct process *child);
+int proc_get_waitable_process(struct process *parent, pid_t wait_spec, struct process **process);
+
 void init_processes();
+
+static inline struct process *proc_get_parent(struct process *process) {
+    spin_lock(&process->parent_lock);
+    struct process *parent = proc_bump_process(process->parent);
+    spin_unlock(&process->parent_lock);
+    return parent;
+}
+
+static inline void proc_drop_parent(struct process *parent) {
+    proc_drop_process(parent, NULL, false);
+}
 
 #endif /* _KERNEL_PROC_PROCESS_H */
