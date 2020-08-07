@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <search.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,8 +19,8 @@
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
 
-#define PROC_REF_COUNT_DEBUG
-#define PROCESSES_DEBUG
+// #define PROC_REF_COUNT_DEBUG
+// #define PROCESSES_DEBUG
 
 extern struct process initial_kernel_process;
 
@@ -215,6 +216,35 @@ int proc_get_waitable_process(struct process *parent, pid_t wait_spec, struct pr
 get_waitable_process_end:
     spin_unlock(&parent->children_lock);
     return any_waitable ? 0 : -ECHILD;
+}
+
+void proc_consume_wait_info(struct process *parent, struct process *child, enum process_state state) {
+    switch (state) {
+        case PS_TERMINATED: {
+            spin_lock(&parent->children_lock);
+            if (parent->children == child) {
+                parent->children = child->sibling_next;
+            }
+            remque(child);
+            spin_unlock(&parent->children_lock);
+            proc_drop_process(child, NULL, false);
+            break;
+        }
+        case PS_CONTINUED:
+        case PS_STOPPED:
+            child->state = PS_NONE;
+            break;
+        default:
+            assert(false);
+            break;
+    }
+}
+
+void proc_set_process_state(struct process *process, enum process_state state, int info, bool terminated_bc_signal) {
+    // FIXME: synchronize this somehow
+    process->state = state;
+    process->exit_code = info;
+    process->terminated_bc_signal = terminated_bc_signal;
 }
 
 uintptr_t proc_allocate_user_stack(struct process *process, struct initial_process_info *info) {

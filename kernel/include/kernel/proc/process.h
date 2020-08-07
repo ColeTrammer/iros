@@ -121,6 +121,8 @@ bool proc_in_group(struct process *process, gid_t group);
 
 void proc_add_child(struct process *parent, struct process *child);
 int proc_get_waitable_process(struct process *parent, pid_t wait_spec, struct process **process);
+void proc_consume_wait_info(struct process *parent, struct process *child, enum process_state state);
+void proc_set_process_state(struct process *process, enum process_state state, int info, bool terminated_bc_signal);
 
 void init_processes();
 

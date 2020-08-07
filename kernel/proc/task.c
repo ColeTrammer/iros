@@ -288,6 +288,7 @@ int proc_waitpid(pid_t pid, int *status, int flags) {
         }
 
         if (child) {
+            proc_consume_wait_info(parent, child, child->state);
             switch (child->state) {
                 case PS_CONTINUED:
                     if (!(flags & WCONTINUED)) {
@@ -339,6 +340,11 @@ int proc_waitpid(pid_t pid, int *status, int flags) {
 }
 
 pid_t proc_getppid(struct process *process) {
+    // Pid 1 has no parent.
+    if (process->pid == 1) {
+        return 0;
+    }
+
     struct process *parent = proc_get_parent(process);
     pid_t ppid = parent->pid;
     proc_drop_parent(parent);
@@ -587,18 +593,21 @@ void task_do_sig(struct task *task, int signum) {
                 break;
             }
             exit_process(task->process);
+            proc_set_process_state(task->process, PS_TERMINATED, signum, true);
             break;
         case STOP:
             if (task->sched_state == STOPPED) {
                 break;
             }
             task->sched_state = STOPPED;
+            proc_set_process_state(task->process, PS_STOPPED, signum, false);
             break;
         case CONTINUE:
             if (task->sched_state != STOPPED) {
                 break;
             }
             task->sched_state = task->blocking ? WAITING : task->in_kernel ? RUNNING_UNINTERRUPTIBLE : RUNNING_INTERRUPTIBLE;
+            proc_set_process_state(task->process, PS_CONTINUED, 0, false);
             break;
         case IGNORE:
             break;

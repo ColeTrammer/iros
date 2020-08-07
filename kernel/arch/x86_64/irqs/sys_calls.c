@@ -300,10 +300,11 @@ SYS_CALL(exit) {
     /* Disable Interrups To Prevent Premature Task Removal, Since Sched State Is Set */
     disable_interrupts();
 
-    struct task *task = get_current_task();
-    exit_process(task->process);
+    struct process *process = get_current_process();
+    exit_process(process);
+    proc_set_process_state(process, PS_TERMINATED, exit_code, false);
 
-    debug_log("Process Exited: [ %d, %d ]\n", task->process->pid, exit_code);
+    debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 
     SYS_RETURN_NORETURN();
 }
