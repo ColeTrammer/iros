@@ -546,6 +546,40 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
             continue;
         }
 
+        if ((c == sdata->config.c_cc[VEOL] || c == sdata->config.c_cc[VEOF]) && (sdata->config.c_lflag & ICANON)) {
+            if (c == sdata->config.c_cc[VEOL]) {
+                tty_do_echo(data, sdata, c);
+                data->input_buffer[data->input_buffer_length++] = c;
+            }
+
+            mutex_lock(&sdata->device->lock);
+
+            struct tty_buffer_message *message = calloc(1, sizeof(struct tty_buffer_message));
+            message->len = message->max = data->input_buffer_length;
+            message->buf = malloc(message->len);
+            memcpy(message->buf, data->input_buffer, message->len);
+
+            if (sdata->messages == NULL) {
+                sdata->messages = message->next = message->prev = message;
+            } else {
+                insque(message, sdata->messages->prev);
+            }
+
+            free(data->input_buffer);
+            data->input_buffer = NULL;
+            data->input_buffer_length = data->input_buffer_max = 0;
+
+#ifdef PTMX_BLOCKING_DEBUG
+            debug_log("Making slave readable: [ %d ]\n", sdata->index);
+#endif /* PTMX_BLOCKING_DEBUG */
+
+            // The slave is readable now that we wrote to it.
+            sdata->device->readable = true;
+
+            mutex_unlock(&sdata->device->lock);
+            continue;
+        }
+
         tty_do_echo(data, sdata, c);
 
         if (tty_do_signals(sdata, c)) {
@@ -576,39 +610,6 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
 
                 m->buf[m->len++] = c;
             }
-
-#ifdef PTMX_BLOCKING_DEBUG
-            debug_log("Making slave readable: [ %d ]\n", sdata->index);
-#endif /* PTMX_BLOCKING_DEBUG */
-
-            // The slave is readable now that we wrote to it.
-            sdata->device->readable = true;
-
-            mutex_unlock(&sdata->device->lock);
-            continue;
-        }
-
-        if (c == sdata->config.c_cc[VEOL] || c == sdata->config.c_cc[VEOF]) {
-            if (c == sdata->config.c_cc[VEOL]) {
-                data->input_buffer[data->input_buffer_length++] = c;
-            }
-
-            mutex_lock(&sdata->device->lock);
-
-            struct tty_buffer_message *message = calloc(1, sizeof(struct tty_buffer_message));
-            message->len = message->max = data->input_buffer_length;
-            message->buf = malloc(message->len);
-            memcpy(message->buf, data->input_buffer, message->len);
-
-            if (sdata->messages == NULL) {
-                sdata->messages = message->next = message->prev = message;
-            } else {
-                insque(message, sdata->messages->prev);
-            }
-
-            free(data->input_buffer);
-            data->input_buffer = NULL;
-            data->input_buffer_length = data->input_buffer_max = 0;
 
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Making slave readable: [ %d ]\n", sdata->index);
