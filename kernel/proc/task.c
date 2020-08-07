@@ -288,8 +288,13 @@ int proc_waitpid(pid_t pid, int *status, int flags) {
         }
 
         if (child) {
-            proc_consume_wait_info(parent, child, child->state);
-            switch (child->state) {
+            enum process_state state = child->state;
+            int info = child->exit_code;
+            bool terminated_bc_signal = child->terminated_bc_signal;
+            pid_t pid = child->pid;
+
+            proc_consume_wait_info(parent, child, state);
+            switch (state) {
                 case PS_CONTINUED:
                     if (!(flags & WCONTINUED)) {
                         continue;
@@ -304,28 +309,29 @@ int proc_waitpid(pid_t pid, int *status, int flags) {
                     break;
                 default:
                     assert(false);
+                    break;
             }
 
             if (status) {
-                switch (child->state) {
+                switch (state) {
                     case PS_CONTINUED:
                         *status = 0xFFFF;
                         break;
                     case PS_STOPPED:
-                        *status = 0x80 | (child->stop_signal << 8);
+                        *status = 0x80 | (info << 8);
                         break;
                     case PS_TERMINATED:
-                        if (child->terminated_bc_signal) {
-                            *status = child->terminating_signal;
+                        if (terminated_bc_signal) {
+                            *status = info;
                         } else {
-                            *status = child->exit_code << 8;
+                            *status = info << 8;
                         }
                         break;
                     default:
                         assert(false);
                 }
             }
-            return child->pid;
+            return pid;
         }
 
         if (flags & WNOHANG) {
