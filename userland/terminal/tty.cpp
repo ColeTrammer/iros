@@ -86,6 +86,12 @@ void TTY::put_char(int row, int col, char c) {
 }
 
 void TTY::put_char(char c) {
+    if (iscntrl(c)) {
+        put_char('^');
+        put_char(c | 0x40);
+        return;
+    }
+
     if (m_x_overflow) {
         m_cursor_row++;
         scroll_down_if_needed();
