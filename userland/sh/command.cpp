@@ -806,11 +806,9 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
                 int ret;
                 do {
                     ret = waitpid(-pgid, &wstatus, WUNTRACED);
-                } while ((errno != EINTR && ret != -1) && !WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) && !WIFSTOPPED(wstatus));
+                } while ((ret == -1 && errno == EINTR) || (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus) && !WIFSTOPPED(wstatus)));
 
-                if (ret == -1) {
-                    return -1;
-                }
+                assert(ret != -1);
 
                 if (WIFSTOPPED(wstatus)) {
                     killpg(pgid, SIGSTOP);
