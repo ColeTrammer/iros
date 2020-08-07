@@ -94,6 +94,9 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
             case DT_FINI_ARRAYSZ:
                 self.fini_array_size = entry->d_un.d_val;
                 break;
+            case DT_FLAGS:
+                self.dt_flags = entry->d_un.d_val;
+                break;
             case DT_PREINIT_ARRAY:
                 self.preinit_array = entry->d_un.d_ptr;
                 break;
@@ -380,6 +383,13 @@ static int do_load_dependencies(struct dynamic_elf_object *obj, bool use_initial
 
         if (!loaded_lib) {
             obj->dependencies_size = i;
+            return -1;
+        }
+
+        if ((loaded_lib->dt_flags & DF_STATIC_TLS) && !use_initial_tls) {
+            loader_err("`%s' wants to use static tls, but is being dynamically loaded", object_name(loaded_lib));
+            obj->dependencies_size = i;
+            free_dynamic_elf_object(loaded_lib);
             return -1;
         }
 

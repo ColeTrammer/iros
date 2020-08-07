@@ -39,6 +39,7 @@ struct dynamic_elf_object {
     uintptr_t got_addr;
     size_t rela_size;
     size_t rela_entry_size;
+    size_t dt_flags;
     size_t so_name_offset;
     size_t string_table_size;
     size_t symbol_entry_size;
