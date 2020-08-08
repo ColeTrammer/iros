@@ -274,13 +274,15 @@ void proc_set_process_state(struct process *process, enum process_state state, i
     struct process *parent = proc_get_parent(process);
     struct sigaction parent_signal_disposition = parent->sig_state[SIGCHLD];
 
-    if ((parent_signal_disposition.sa_flags & SA_NOCLDWAIT) && (state == PS_TERMINATED)) {
+    if (((parent_signal_disposition.sa_flags & SA_NOCLDWAIT) || parent_signal_disposition.sa_handler == SIG_IGN) &&
+        (state == PS_TERMINATED)) {
         proc_consume_wait_info(parent, process, PS_TERMINATED);
         proc_drop_parent(parent);
         return;
     }
 
-    if ((parent_signal_disposition.sa_flags & SA_NOCLDSTOP) && (state == PS_STOPPED || state == PS_CONTINUED)) {
+    if (((parent_signal_disposition.sa_flags & SA_NOCLDSTOP) || parent_signal_disposition.sa_handler == SIG_IGN) &&
+        (state == PS_STOPPED || state == PS_CONTINUED)) {
         proc_consume_wait_info(parent, process, state);
         return;
     }
