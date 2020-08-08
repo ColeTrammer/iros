@@ -176,7 +176,9 @@ void WindowManager::set_active_window(SharedPtr<Window> window) {
     }
 
     m_active_window = move(window);
-    invalidate_rect(m_active_window->rect());
+    if (m_active_window) {
+        invalidate_rect(m_active_window->rect());
+    }
 }
 
 void WindowManager::move_to_front_and_make_active(SharedPtr<Window> window) {
