@@ -3,6 +3,5 @@
 #include <unistd.h>
 
 pid_t getppid(void) {
-    pid_t ret = (pid_t) syscall(SC_GETPID);
-    __SYSCALL_TO_ERRNO(ret);
+    return (pid_t) syscall(SC_GETPPID);
 }
