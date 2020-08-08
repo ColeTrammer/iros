@@ -48,6 +48,29 @@ int main(int argc, char** argv) {
         int mouse_fd = open("/dev/mouse", O_RDONLY);
         int kfd = open("/dev/keyboard", O_RDONLY);
 
+        sigset_t mask;
+        sigprocmask(0, nullptr, &mask);
+        sigaddset(&mask, SIGCHLD);
+        sigprocmask(SIG_SETMASK, &mask, nullptr);
+        sigdelset(&mask, SIGCHLD);
+
+        struct sigaction act;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        act.sa_handler = [](int) {
+            for (;;) {
+                int status;
+                pid_t pid = waitpid(-1, &status, WNOHANG);
+                if (pid <= 0) {
+                    break;
+                }
+
+                assert(WIFEXITED(status) || WIFSIGNALED(status));
+                exit(0);
+            }
+        };
+        sigaction(SIGCHLD, &act, nullptr);
+
         fd_set set;
         mouse_event mouse_event;
         key_event key_event;
@@ -57,7 +80,7 @@ int main(int argc, char** argv) {
             FD_SET(mouse_fd, &set);
             FD_SET(kfd, &set);
 
-            int ret = select(FD_SETSIZE, &set, nullptr, nullptr, nullptr);
+            int ret = pselect(FD_SETSIZE, &set, nullptr, nullptr, nullptr, &mask);
             if (ret == -1) {
                 if (errno == EINTR) {
                     continue;
@@ -90,6 +113,18 @@ int main(int argc, char** argv) {
     }
 
     App::App app;
+    App::EventLoop::register_signal_handler(SIGCHLD, [] {
+        for (;;) {
+            int status;
+            pid_t pid = waitpid(-1, &status, WNOHANG);
+            if (pid <= 0) {
+                break;
+            }
+
+            assert(WIFEXITED(status) || WIFSIGNALED(status));
+            exit(0);
+        }
+    });
 
     auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal");
     auto& layout = window->set_layout<App::VerticalBoxLayout>();
