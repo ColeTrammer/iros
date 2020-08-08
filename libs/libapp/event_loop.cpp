@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <liim/hash_map.h>
 #include <liim/vector.h>
+#include <signal.h>
 #include <sys/select.h>
 
 namespace App {

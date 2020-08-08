@@ -1,3 +1,4 @@
+#define __is_libc
 #include <fcntl.h>
 #include <stdalign.h>
 #include <stdlib.h>
@@ -16,6 +17,49 @@
 
 #define ONLY_DPRINTF
 #include "../libc/stdio/printf.c"
+
+void _exit(int status) {
+    syscall(SC_EXIT, status);
+    __builtin_unreachable();
+}
+
+ssize_t write(int fd, const void *buffer, size_t len) {
+    return (ssize_t) syscall(SC_WRITE, fd, buffer, len);
+}
+
+int open(const char *path, int flags, ...) {
+    va_list parameters;
+    va_start(parameters, flags);
+    int ret;
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        mode = va_arg(parameters, mode_t);
+    }
+    ret = (int) syscall(SC_OPENAT, AT_FDCWD, path, flags, mode);
+    va_end(parameters);
+    return ret;
+}
+
+int fstat(int fd, struct stat *st) {
+    char empty[] = "";
+    return (int) syscall(SC_FSTATAT, fd, empty, st, AT_EMPTY_PATH);
+}
+
+int close(int fd) {
+    return (int) syscall(SC_CLOSE, fd);
+}
+
+void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t offset) {
+    return (void *) syscall(SC_MMAP, addr, size, prot, flags, fd, offset);
+}
+
+int mprotect(void *base, size_t size, int prot) {
+    return (int) syscall(SC_MPROTECT, base, size, prot);
+}
+
+int munmap(void *base, size_t size) {
+    return (int) syscall(SC_MUNMAP, base, size);
+}
 
 LOADER_PRIVATE void *fake_heap_end = NULL;
 

@@ -72,26 +72,26 @@
         }                                              \
     } while (0)
 
-#define SYS_PARAM1(t, n) SYS_PARAM(t, n, rsi)
-#define SYS_PARAM2(t, n) SYS_PARAM(t, n, rdx)
-#define SYS_PARAM3(t, n) SYS_PARAM(t, n, rcx)
-#define SYS_PARAM4(t, n) SYS_PARAM(t, n, r8)
-#define SYS_PARAM5(t, n) SYS_PARAM(t, n, r9)
-#define SYS_PARAM6(t, n) SYS_PARAM(t, n, r10)
+#define SYS_PARAM1(t, n) SYS_PARAM(t, n, rdi)
+#define SYS_PARAM2(t, n) SYS_PARAM(t, n, rsi)
+#define SYS_PARAM3(t, n) SYS_PARAM(t, n, rdx)
+#define SYS_PARAM4(t, n) SYS_PARAM(t, n, rcx)
+#define SYS_PARAM5(t, n) SYS_PARAM(t, n, r8)
+#define SYS_PARAM6(t, n) SYS_PARAM(t, n, r9)
 
-#define SYS_PARAM1_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rsi, f, a)
-#define SYS_PARAM2_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rdx, f, a)
-#define SYS_PARAM3_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rcx, f, a)
-#define SYS_PARAM4_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r8, f, a)
-#define SYS_PARAM5_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r9, f, a)
-#define SYS_PARAM6_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r10, f, a)
+#define SYS_PARAM1_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rdi, f, a)
+#define SYS_PARAM2_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rsi, f, a)
+#define SYS_PARAM3_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rdx, f, a)
+#define SYS_PARAM4_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rcx, f, a)
+#define SYS_PARAM5_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r8, f, a)
+#define SYS_PARAM6_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r9, f, a)
 
-#define SYS_PARAM1_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rsi, f)
-#define SYS_PARAM2_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rdx, f)
-#define SYS_PARAM3_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rcx, f)
-#define SYS_PARAM4_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r8, f)
-#define SYS_PARAM5_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r9, f)
-#define SYS_PARAM6_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r10, f)
+#define SYS_PARAM1_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rdi, f)
+#define SYS_PARAM2_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rsi, f)
+#define SYS_PARAM3_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rdx, f)
+#define SYS_PARAM4_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rcx, f)
+#define SYS_PARAM5_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r8, f)
+#define SYS_PARAM6_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r9, f)
 
 #define SYS_BEGIN()                                                            \
     do {                                                                       \
@@ -2173,10 +2173,10 @@ void arch_system_call_entry(struct irq_context *context) {
         debug_log("syscall: %s\n", #y); \
         break;
     if (get_current_task()->process->should_trace) {
-        switch ((enum sc_number) task_state->cpu_state.rdi) {
+        switch ((enum sc_number) task_state->cpu_state.rax) {
             ENUMERATE_SYSCALLS
             default:
-                debug_log("unknown syscall: [ %d ]\n", (enum sc_number) task_state->cpu_state.rdi);
+                debug_log("unknown syscall: [ %d ]\n", (enum sc_number) task_state->cpu_state.rax);
                 break;
         }
     }
@@ -2188,7 +2188,7 @@ void arch_system_call_entry(struct irq_context *context) {
         arch_sys_##y(task_state);    \
         break;
 
-    switch ((enum sc_number) task_state->cpu_state.rdi) {
+    switch ((enum sc_number) task_state->cpu_state.rax) {
         ENUMERATE_SYSCALLS
         default:
             arch_sys_invalid_system_call(task_state);

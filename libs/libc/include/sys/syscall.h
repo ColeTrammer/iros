@@ -119,18 +119,126 @@ enum sc_number {
     ENUMERATE_SYSCALLS SC_NUM
 };
 
+#ifdef __is_libc
+#if ARCH == X86_64
+#define __SC_TYPE(name)   __typeof__((name) - (name))
+#define __SC_CAST(name)   ((__SC_TYPE(name))(name))
+#define __SC_CLOBBER_LIST "cc"
+
+#define __syscall0(sc)                                                                   \
+    ({                                                                                   \
+        long ret;                                                                        \
+        asm volatile("int $0x80\n" : "=a"(ret) : "0"(sc) : "memory", __SC_CLOBBER_LIST); \
+        ret;                                                                             \
+    })
+
+#define __syscall1(sc, a1)                                                                          \
+    ({                                                                                              \
+        long ret;                                                                                   \
+        __SC_TYPE(a1) __a1_ = __SC_CAST(a1);                                                        \
+        register __SC_TYPE(a1) __a1 asm("rdi") = __a1_;                                             \
+        asm volatile("int $0x80\n" : "=a"(ret) : "0"(sc), "r"(__a1) : "memory", __SC_CLOBBER_LIST); \
+        ret;                                                                                        \
+    })
+
+#define __syscall2(sc, a1, a2)                                                                                 \
+    ({                                                                                                         \
+        long ret;                                                                                              \
+        __SC_TYPE(a1) __a1_ = __SC_CAST(a1);                                                                   \
+        __SC_TYPE(a2) __a2_ = __SC_CAST(a2);                                                                   \
+        register __SC_TYPE(a1) __a1 asm("rdi") = __a1_;                                                        \
+        register __SC_TYPE(a2) __a2 asm("rsi") = __a2_;                                                        \
+        asm volatile("int $0x80\n" : "=a"(ret) : "0"(sc), "r"(__a1), "r"(__a2) : "memory", __SC_CLOBBER_LIST); \
+        ret;                                                                                                   \
+    })
+
+#define __syscall3(sc, a1, a2, a3)                                                                                        \
+    ({                                                                                                                    \
+        long ret;                                                                                                         \
+        __SC_TYPE(a1) __a1_ = __SC_CAST(a1);                                                                              \
+        __SC_TYPE(a2) __a2_ = __SC_CAST(a2);                                                                              \
+        __SC_TYPE(a3) __a3_ = __SC_CAST(a3);                                                                              \
+        register __SC_TYPE(a1) __a1 asm("rdi") = __a1_;                                                                   \
+        register __SC_TYPE(a2) __a2 asm("rsi") = __a2_;                                                                   \
+        register __SC_TYPE(a3) __a3 asm("rdx") = __a3_;                                                                   \
+        asm volatile("int $0x80\n" : "=a"(ret) : "0"(sc), "r"(__a1), "r"(__a2), "r"(__a3) : "memory", __SC_CLOBBER_LIST); \
+        ret;                                                                                                              \
+    })
+
+#define __syscall4(sc, a1, a2, a3, a4)                                                                                               \
+    ({                                                                                                                               \
+        long ret;                                                                                                                    \
+        __SC_TYPE(a1) __a1_ = __SC_CAST(a1);                                                                                         \
+        __SC_TYPE(a2) __a2_ = __SC_CAST(a2);                                                                                         \
+        __SC_TYPE(a3) __a3_ = __SC_CAST(a3);                                                                                         \
+        __SC_TYPE(a4) __a4_ = __SC_CAST(a4);                                                                                         \
+        register __SC_TYPE(a1) __a1 asm("rdi") = __a1_;                                                                              \
+        register __SC_TYPE(a2) __a2 asm("rsi") = __a2_;                                                                              \
+        register __SC_TYPE(a3) __a3 asm("rdx") = __a3_;                                                                              \
+        register __SC_TYPE(a4) __a4 asm("rcx") = __a4_;                                                                              \
+        asm volatile("int $0x80\n" : "=a"(ret) : "0"(sc), "r"(__a1), "r"(__a2), "r"(__a3), "r"(__a4) : "memory", __SC_CLOBBER_LIST); \
+        ret;                                                                                                                         \
+    })
+
+#define __syscall5(sc, a1, a2, a3, a4, a5)                                            \
+    ({                                                                                \
+        long ret;                                                                     \
+        __SC_TYPE(a1) __a1_ = __SC_CAST(a1);                                          \
+        __SC_TYPE(a2) __a2_ = __SC_CAST(a2);                                          \
+        __SC_TYPE(a3) __a3_ = __SC_CAST(a3);                                          \
+        __SC_TYPE(a4) __a4_ = __SC_CAST(a4);                                          \
+        __SC_TYPE(a5) __a5_ = __SC_CAST(a5);                                          \
+        register __SC_TYPE(a1) __a1 asm("rdi") = __a1_;                               \
+        register __SC_TYPE(a2) __a2 asm("rsi") = __a2_;                               \
+        register __SC_TYPE(a3) __a3 asm("rdx") = __a3_;                               \
+        register __SC_TYPE(a4) __a4 asm("rcx") = __a4_;                               \
+        register __SC_TYPE(a5) __a5 asm("r8") = __a5_;                                \
+        asm volatile("int $0x80\n"                                                    \
+                     : "=a"(ret)                                                      \
+                     : "0"(sc), "r"(__a1), "r"(__a2), "r"(__a3), "r"(__a4), "r"(__a5) \
+                     : "memory", __SC_CLOBBER_LIST);                                  \
+        ret;                                                                          \
+    })
+
+#define __syscall6(sc, a1, a2, a3, a4, a5, a6)                                                   \
+    ({                                                                                           \
+        long ret;                                                                                \
+        __SC_TYPE(a1) __a1_ = __SC_CAST(a1);                                                     \
+        __SC_TYPE(a2) __a2_ = __SC_CAST(a2);                                                     \
+        __SC_TYPE(a3) __a3_ = __SC_CAST(a3);                                                     \
+        __SC_TYPE(a4) __a4_ = __SC_CAST(a4);                                                     \
+        __SC_TYPE(a5) __a5_ = __SC_CAST(a5);                                                     \
+        __SC_TYPE(a6) __a6_ = __SC_CAST(a6);                                                     \
+        register __SC_TYPE(a1) __a1 asm("rdi") = __a1_;                                          \
+        register __SC_TYPE(a2) __a2 asm("rsi") = __a2_;                                          \
+        register __SC_TYPE(a3) __a3 asm("rdx") = __a3_;                                          \
+        register __SC_TYPE(a4) __a4 asm("rcx") = __a4_;                                          \
+        register __SC_TYPE(a5) __a5 asm("r8") = __a5_;                                           \
+        register __SC_TYPE(a6) __a6 asm("r9") = __a6_;                                           \
+        asm volatile("int $0x80\n"                                                               \
+                     : "=a"(ret)                                                                 \
+                     : "0"(sc), "r"(__a1), "r"(__a2), "r"(__a3), "r"(__a4), "r"(__a5), "r"(__a6) \
+                     : "memory", __SC_CLOBBER_LIST);                                             \
+        ret;                                                                                     \
+    })
+#else
+#erro "Unsupported architecture"
+#endif /* ARCH */
+#else
 long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5, unsigned long a6);
 
-#define __syscall0(n)             __do_syscall(n, 0, 0, 0, 0, 0, 0)
-#define __syscall1(n, a)          __do_syscall(n, (unsigned long) (a), 0, 0, 0, 0, 0)
-#define __syscall2(n, a, b)       __do_syscall(n, (unsigned long) (a), (unsigned long) (b), 0, 0, 0, 0)
-#define __syscall3(n, a, b, c)    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), 0, 0, 0)
-#define __syscall4(n, a, b, c, d) __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), 0, 0)
+#define __syscall0(n)          __do_syscall(n, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL)
+#define __syscall1(n, a)       __do_syscall(n, (unsigned long) (a), 0UL, 0UL, 0UL, 0UL, 0UL)
+#define __syscall2(n, a, b)    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), 0UL, 0UL, 0UL, 0UL)
+#define __syscall3(n, a, b, c) __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), 0UL, 0UL, 0UL)
+#define __syscall4(n, a, b, c, d) \
+    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), 0UL, 0UL)
 #define __syscall5(n, a, b, c, d, e) \
-    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), (unsigned long) (e), 0)
+    __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), (unsigned long) (e), 0UL)
 #define __syscall6(n, a, b, c, d, e, f)                                                                                      \
     __do_syscall(n, (unsigned long) (a), (unsigned long) (b), (unsigned long) (c), (unsigned long) (d), (unsigned long) (e), \
                  (unsigned long) (f))
+#endif /* __is_libc */
 
 #define __COUNT_ARGS(...)                               __COUNT_ARGS_(, ##__VA_ARGS__, 7, 6, 5, 4, 3, 2, 1, 0)
 #define __COUNT_ARGS_(z, a, b, c, d, e, f, g, cnt, ...) cnt
