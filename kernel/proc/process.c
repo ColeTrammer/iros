@@ -32,6 +32,57 @@ struct process *get_current_process(void) {
     return get_current_task()->process;
 }
 
+static void free_process_vm(struct process *process) {
+    struct vm_region *region = process->process_memory;
+    while (region != NULL) {
+        if (region->vm_object) {
+            drop_vm_object(region->vm_object);
+        }
+
+        region = region->next;
+    }
+
+    region = process->process_memory;
+    while (region != NULL) {
+        struct vm_region *temp = region->next;
+        free(region);
+        region = temp;
+    }
+    process->process_memory = NULL;
+
+    struct user_mutex *user_mutex = process->used_user_mutexes;
+    while (user_mutex != NULL) {
+        struct user_mutex *next = user_mutex->next;
+        free(user_mutex);
+        user_mutex = next;
+    }
+    process->used_user_mutexes = NULL;
+
+    struct timer *timer = process->timers;
+    while (timer) {
+        debug_log("Destroying timer: [ %p ]\n", timer);
+        struct timer *next = timer->proc_next;
+        time_delete_timer(timer);
+        timer = next;
+    }
+    process->timers = NULL;
+}
+
+static void free_process_name_info(struct process *process) {
+    if (process->exe) {
+        drop_tnode(process->exe);
+    }
+    process->exe = NULL;
+
+    free(process->name);
+    process->name = NULL;
+}
+
+void proc_reset_for_execve(struct process *process) {
+    free_process_name_info(process);
+    free_process_vm(process);
+}
+
 void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure) {
     if (task) {
         // Reassign the main tid of the process if it exits early, and delete tid from the task list
@@ -102,22 +153,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             debug_log("Destroyed arch process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
 
-            struct vm_region *region = process->process_memory;
-            while (region != NULL) {
-                if (region->vm_object) {
-                    drop_vm_object(region->vm_object);
-                }
-
-                region = region->next;
-            }
-
-            region = process->process_memory;
-            while (region != NULL) {
-                struct vm_region *temp = region->next;
-                free(region);
-                region = temp;
-            }
-            process->process_memory = NULL;
+            free_process_vm(process);
 
             for (size_t i = 0; i < FOPEN_MAX; i++) {
                 if (process->files[i].file != NULL) {
@@ -126,27 +162,20 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
                 }
             }
 
-            struct user_mutex *user_mutex = process->used_user_mutexes;
-            while (user_mutex != NULL) {
-                struct user_mutex *next = user_mutex->next;
-                free(user_mutex);
-                user_mutex = next;
-            }
-            process->used_user_mutexes = NULL;
-
-            struct timer *timer = process->timers;
-            while (timer) {
-                debug_log("Destroying timer: [ %p ]\n", timer);
-                struct timer *next = timer->proc_next;
-                time_delete_timer(timer);
-                timer = next;
-            }
-            process->timers = NULL;
-
             if (process->process_clock) {
                 time_destroy_clock(process->process_clock);
                 process->process_clock = NULL;
             }
+
+            if (process->args_context) {
+                free_program_args(process->args_context);
+            }
+            process->args_context = NULL;
+
+            if (process->cwd) {
+                drop_tnode(process->cwd);
+            }
+            process->cwd = NULL;
 
             free(process->supplemental_gids);
             process->supplemental_gids = NULL;
@@ -167,19 +196,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
         hash_del(map, &process->pid);
         procfs_unregister_process(process);
 
-        if (process->cwd) {
-            drop_tnode(process->cwd);
-        }
-
-        if (process->exe) {
-            drop_tnode(process->exe);
-        }
-
-        if (process->args_context) {
-            free_program_args(process->args_context);
-        }
-
-        free(process->name);
+        free_process_name_info(process);
 
 #ifdef PROC_REF_COUNT_DEBUG
         debug_log("Finished destroying process: [ %d ]\n", process->pid);

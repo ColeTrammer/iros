@@ -107,6 +107,7 @@ struct process {
 
 struct process *get_current_process(void);
 
+void proc_reset_for_execve(struct process *process);
 void proc_drop_process(struct process *process, struct task *task, bool free_paging_structure);
 void proc_add_process(struct process *process);
 struct process *proc_bump_process(struct process *process);

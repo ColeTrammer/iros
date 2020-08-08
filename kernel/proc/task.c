@@ -242,13 +242,27 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     return task;
 }
 
+static void task_switch_from_kernel_to_user_mode(struct task *current) {
+    uint64_t save = disable_interrupts_save();
+    current->in_kernel = true;
+    current->kernel_task = false;
+    task_align_fpu(current);
+    current->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
+    current->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
+    interrupts_restore(save);
+}
+
 void start_userland(void) {
     char *argv[3] = { argv[0] = "/bin/start", kernel_use_graphics() ? "-g" : "-v", NULL };
     char *envp[1] = { NULL };
 
     struct task_state task_state_save = { 0 };
+    task_setup_user_state(&task_state_save);
+
     struct task *current = get_current_task();
     current->arch_task.user_task_state = &task_state_save;
+
+    task_switch_from_kernel_to_user_mode(current);
 
 #ifdef START_DEBUG
     int error = 0;
@@ -265,7 +279,6 @@ void start_userland(void) {
     }
 
     disable_interrupts();
-    current = get_current_task();
     memcpy(&current->arch_task.task_state, &task_state_save, sizeof(struct task_state));
     run_task(current);
 }

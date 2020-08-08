@@ -51,6 +51,7 @@ if (NOT ${NATIVE_BUILD})
         net/unix_socket.c
         proc/blockers.c
         proc/elf64.c
+        proc/exec.c
         proc/pid.c
         proc/process.c
         proc/task.c

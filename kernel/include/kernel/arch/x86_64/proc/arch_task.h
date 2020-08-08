@@ -62,7 +62,16 @@ struct arch_fpu_state {
 struct task;
 
 void task_align_fpu(struct task *task);
+void task_setup_user_state(struct task_state *task_state);
 
 extern void __run_task(struct arch_task *state);
+
+static inline void task_set_ip(struct task_state *task_state, uintptr_t ip) {
+    task_state->stack_state.rip = ip;
+}
+
+static inline void task_set_sp(struct task_state *task_state, uintptr_t sp) {
+    task_state->stack_state.rsp = sp;
+}
 
 #endif /* _KERNEL_ARCH_X86_64_ARCH_PROC_TASK_H */
