@@ -175,6 +175,7 @@ void init_kernel_process(void) {
     initial_kernel_process.pgid = 1;
     initial_kernel_process.tty = -1;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
+    initial_kernel_process.sig_state[SIGCHLD].sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
 }
 
 void init_idle_task(struct processor *processor) {

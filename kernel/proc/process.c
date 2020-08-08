@@ -66,6 +66,36 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             // The process is now a zombie, so free as much resources now as possible.
             process->zombie = true;
 
+            // Make sure that any orphaned children won't attempt to report anything to us.
+            process->sig_state[SIGCHLD].sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
+            spin_lock(&process->children_lock);
+            if (process->children) {
+                // First move over the orphaned children to the initial kernel process.
+                spin_lock(&initial_kernel_process.children_lock);
+                struct process *first_child = process->children;
+                struct process *last_child;
+                for (last_child = first_child; last_child->sibling_next; last_child = last_child->sibling_next)
+                    ;
+                last_child->sibling_next = initial_kernel_process.children;
+                if (last_child->sibling_next) {
+                    last_child->sibling_next->sibling_prev = last_child;
+                }
+                initial_kernel_process.children = first_child;
+                spin_unlock(&initial_kernel_process.children_lock);
+
+                // Now switch the parent pointer to the correct value.
+                for (struct process *child = first_child;; child = child->sibling_next) {
+                    spin_lock(&child->parent_lock);
+                    child->parent = &initial_kernel_process;
+                    spin_unlock(&child->parent_lock);
+
+                    if (child == last_child) {
+                        break;
+                    }
+                }
+            }
+            spin_unlock(&process->children_lock);
+
             proc_kill_arch_process(process, free_paging_structure);
 
 #ifdef PROCESSES_DEBUG
