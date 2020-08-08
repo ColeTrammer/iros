@@ -3,6 +3,7 @@
 #include <app/selectable.h>
 #include <assert.h>
 #include <errno.h>
+#include <liim/hash_map.h>
 #include <liim/vector.h>
 #include <sys/select.h>
 
@@ -10,6 +11,12 @@ namespace App {
 
 static EventLoop* s_the;
 static Vector<Selectable*> s_selectables;
+static HashMap<int, Function<void()>> s_watched_signals;
+static volatile sig_atomic_t s_signal_number;
+
+static void private_signal_handler(int signum) {
+    s_signal_number = signum;
+}
 
 void EventLoop::register_selectable(Selectable& selectable) {
     s_selectables.add(&selectable);
@@ -17,6 +24,12 @@ void EventLoop::register_selectable(Selectable& selectable) {
 
 void EventLoop::unregister_selectable(Selectable& selectable) {
     s_selectables.remove_element(&selectable);
+}
+
+void EventLoop::register_signal_handler(int signum, Function<void()> callback) {
+    // FIXME: allow multiple handlers for the same signal.
+    assert(!s_watched_signals.get(signum));
+    s_watched_signals.put(signum, move(callback));
 }
 
 void EventLoop::queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
@@ -57,10 +70,24 @@ void EventLoop::do_select() {
         }
     }
 
+    sigset_t sigset;
+    sigprocmask(0, nullptr, &sigset);
+    s_watched_signals.for_each_key([&](int signum) {
+        sigdelset(&sigset, signum);
+    });
+
     for (;;) {
-        int ret = select(FD_SETSIZE, &rd_set, &wr_set, &ex_set, nullptr);
+        int ret = pselect(FD_SETSIZE, &rd_set, &wr_set, &ex_set, nullptr, &sigset);
         if (ret == -1) {
             if (errno == EINTR) {
+                if (s_signal_number) {
+                    int signo = s_signal_number;
+                    s_signal_number = 0;
+
+                    auto* handler = s_watched_signals.get(signo);
+                    assert(handler);
+                    (*handler)();
+                }
                 continue;
             }
             assert(false);
@@ -106,10 +133,27 @@ void EventLoop::do_event_dispatch() {
     }
 }
 
+void EventLoop::setup_signal_handlers() {
+    struct sigaction act;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+    act.sa_handler = &private_signal_handler;
+
+    sigset_t set;
+    sigemptyset(&set);
+    s_watched_signals.for_each_key([&](int signum) {
+        sigaddset(&set, signum);
+        sigaction(signum, &act, nullptr);
+    });
+    sigprocmask(SIG_BLOCK, &set, nullptr);
+}
+
 void EventLoop::enter() {
     if (m_should_exit) {
         return;
     }
+
+    setup_signal_handlers();
 
     for (;;) {
         do_event_dispatch();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
@@ -18,6 +19,7 @@ public:
 
     static void register_selectable(Selectable& selectable);
     static void unregister_selectable(Selectable& selectable);
+    static void register_signal_handler(int signum, Function<void()> callback);
     static void queue_event(WeakPtr<Object> target, UniquePtr<Event> event);
 
     void enter();
@@ -26,6 +28,7 @@ public:
 private:
     void do_select();
     void do_event_dispatch();
+    void setup_signal_handlers();
 
     struct QueuedEvent {
         WeakPtr<Object> target;
