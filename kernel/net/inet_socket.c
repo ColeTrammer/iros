@@ -79,8 +79,6 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
     assert(socket);
     assert(socket->state == LISTENING);
     assert(socket->private_data);
-    assert(addr);
-    assert(addrlen);
 
     if (socket->protocol != IPPROTO_TCP) {
         return -EPROTONOSUPPORT;
@@ -92,8 +90,11 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
         return ret;
     }
 
-    memcpy(addr, &connection.addr, MIN(*addrlen, connection.addrlen));
-    *addrlen = connection.addrlen;
+    if (addr) {
+        assert(addrlen);
+        memcpy(addr, &connection.addr, MIN(*addrlen, connection.addrlen));
+        *addrlen = connection.addrlen;
+    }
 
     debug_log("Creating connection: [ %lu ]\n", socket->id);
 

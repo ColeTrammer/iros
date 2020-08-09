@@ -17,8 +17,6 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
     assert(socket->domain == AF_UNIX);
     assert(socket->state == LISTENING);
     assert(socket->private_data);
-    assert(addr);
-    assert(addrlen);
 
     struct socket_connection connection;
     int ret = net_get_next_connection(socket, &connection);
@@ -34,8 +32,11 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
         return fd;
     }
 
-    memcpy(addr, &connection.addr, *addrlen);
-    *addrlen = connection.addrlen;
+    if (addr) {
+        assert(addrlen);
+        memcpy(addr, &connection.addr, *addrlen);
+        *addrlen = connection.addrlen;
+    }
 
     struct unix_socket_data *new_data = calloc(1, sizeof(struct unix_socket_data));
     new_socket->private_data = new_data;

@@ -829,11 +829,18 @@ SYS_CALL(accept4) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct file *, file, int, get_socket);
-    SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
-    SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, *addrlen);
+    SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write_or_null, sizeof(socklen_t));
     SYS_PARAM4(int, flags);
-
-    SYS_RETURN(net_accept(file, addr, addrlen, flags));
+    if (addrlen) {
+        SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, *addrlen);
+        SYS_RETURN(net_accept(file, addr, addrlen, flags));
+    } else {
+        SYS_PARAM2(struct sockaddr *, addr);
+        if (addr) {
+            SYS_RETURN(-EINVAL);
+        }
+        SYS_RETURN(net_accept(file, addr, addrlen, flags));
+    }
 }
 
 SYS_CALL(bind) {
