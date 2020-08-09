@@ -24,9 +24,9 @@ int main(int argc, char **argv) {
     }
 
     int opt;
-    while ((opt = getopt(argc, argv, "s")) != -1) {
+    while ((opt = getopt(argc, argv, "d")) != -1) {
         switch (opt) {
-            case 's':
+            case 'd':
                 return start_server();
             default:
                 print_usage(argv);

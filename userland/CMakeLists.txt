@@ -25,6 +25,7 @@ set(TARGETS
     date
     decompress
     dirname
+    dns
     echo
     edit
     env
@@ -41,7 +42,6 @@ set(TARGETS
     mkfifo
     mknod
     mv
-    nslookup
     paste
     ps
     pwd

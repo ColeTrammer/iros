@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    char *nslookup_args[] = { "/bin/nslookup", "-s", NULL };
+    char *nslookup_args[] = { "/bin/dns", "-d", NULL };
     spawn_process(nslookup_args, 12, 12, false, false);
 
     char *clipboard_server_args[] = { "/bin/clipboard_server", NULL };

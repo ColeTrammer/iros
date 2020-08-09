@@ -5,4 +5,4 @@ set(SOURCES
     server.c
 )
 
-add_os_executable(nslookup bin)
+add_os_executable(dns bin)
