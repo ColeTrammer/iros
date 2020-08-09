@@ -10,6 +10,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/processor.h>
 #include <kernel/mem/anon_vm_object.h>
+#include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
@@ -205,6 +206,9 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
 #endif /* ELF64_DEBUG */
                     assert(fs_mmap((void *) (program_headers[i].p_vaddr + offset), program_headers[i].p_filesz, PROT_READ | PROT_EXEC,
                                    MAP_SHARED, execuatable, program_headers[i].p_offset) != (intptr_t) MAP_FAILED);
+                    if (!offset) {
+                        find_user_vm_region_by_addr(program_headers[i].p_vaddr + offset)->type = VM_PROCESS_TEXT;
+                    }
                 } else {
                     memcpy((void *) (program_headers[i].p_vaddr + offset), ((char *) buffer) + program_headers[i].p_offset,
                            program_headers[i].p_filesz);
@@ -254,17 +258,35 @@ struct stack_frame {
 
 static size_t print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbols_size, const char *string_table,
                               size_t (*output)(void *closure, const char *string, ...), void *closure1, bool kernel) {
-    for (int i = 0; symbols && string_table && (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
-        if (symbols[i].st_name != 0 && symbols[i].st_size != 0) {
-            if (rip >= symbols[i].st_value && rip <= symbols[i].st_value + symbols[i].st_size) {
-                return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, symbols[i].st_value,
-                              string_table + symbols[i].st_name);
+    if (kernel) {
+        for (int i = 0; symbols && string_table && (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
+            if (symbols[i].st_name != 0 && symbols[i].st_size != 0) {
+                if (rip >= symbols[i].st_value && rip <= symbols[i].st_value + symbols[i].st_size) {
+                    return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, symbols[i].st_value,
+                                  string_table + symbols[i].st_name);
+                }
             }
         }
+
+        // We didn't find a matching symbol
+        return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s ]\n", "K", rip, 0UL, "??");
     }
 
-    // We didn't find a matching symbol
-    return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, 0UL, "??");
+    // Each instruction pointer may be in a different shared object.
+    // Find the vm_region it is associated with, and then use it to get the desired offset.
+    struct vm_region *region = find_user_vm_region_by_addr(rip);
+    assert(region); /* Else it shouldn't have passed validation. */
+    if (!region->vm_object || region->vm_object->type != VM_INODE) {
+        return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s, %ld, %ld ]\n", "U", rip, 0UL, "??", 0, 0);
+    }
+
+    if (region->type != VM_PROCESS_TEXT) {
+        rip -= region->start;
+    }
+    struct inode *inode = ((struct inode_vm_object_data *) region->vm_object->private_data)->inode;
+    ino_t id = inode->index;
+    dev_t dev = inode->fsid;
+    return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s, %ld, %ld ]\n", "U", rip, 0UL, "??", dev, id);
 }
 
 static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, size_t symbols_size, char *string_table,
@@ -287,9 +309,6 @@ static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, s
 
 // NOTE: this must be called from within a task's address space
 size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)(void *closure, const char *string, ...), void *closure) {
-    // NOTE: rsp, rbp, and rip must be fetched before call try_load_symbols, as that function reads from disk and thus can block.
-    //       if it blocks, the fields on task will be overwritten if this function was called from a fault handler where we make no
-    //       effort to properly recover the task (in this case the kernel tramples the saved information).
     uintptr_t rsp = task->in_kernel ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
     uintptr_t rbp = task->in_kernel ? task->arch_task.user_task_state->cpu_state.rbp : task->arch_task.task_state.cpu_state.rbp;
     uintptr_t rip = task->in_kernel ? task->arch_task.user_task_state->stack_state.rip : task->arch_task.task_state.stack_state.rip;
@@ -298,37 +317,11 @@ size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)
         dump_process_regions(task->process);
     }
 
-    struct inode *inode = task->process->exe->inode;
-
-    assert(inode->i_op->mmap);
-    void *buffer = (void *) inode->i_op->mmap(NULL, inode->size, PROT_READ, MAP_SHARED, inode, 0);
-    if (buffer == MAP_FAILED) {
-        debug_log("Failed to read the task's inode: [ %d ]\n", task->process->pid);
-        return 0;
-    }
-
-    if (!elf64_is_valid(buffer)) {
-        debug_log("The task is not elf64: [ %d ]\n", task->process->pid);
-        return 0;
-    }
-
-    Elf64_Sym *symbols = NULL;
-    char *string_table = NULL;
-    size_t symbols_size = 0;
-
-    try_load_symbols(buffer, &symbols, &symbols_size, &string_table);
-
-    if (!symbols || !string_table) {
-        debug_log("No symbols or string table (probably stripped binary)\n");
-    }
-
     if (extra_info) {
         debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
     }
 
-    size_t ret = do_stack_trace(rip, rbp, symbols, symbols_size, string_table, output, closure, false);
-
-    unmap_range((uintptr_t) buffer, ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
+    size_t ret = do_stack_trace(rip, rbp, NULL, 0, NULL, output, closure, false);
 
     return ret;
 }
