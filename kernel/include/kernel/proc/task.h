@@ -81,6 +81,9 @@ struct task {
 
     int tid;
 
+    // Used to restart interrupted signals.
+    int last_system_call;
+
     bool kernel_task : 1;
     bool in_kernel : 1;
     bool in_sigsuspend : 1;

@@ -269,9 +269,10 @@ void task_do_sig_handler(struct task *task, int signum) {
             task->in_kernel = false;
         } else if ((act->sa_flags & SA_RESTART) && (task->arch_task.user_task_state->cpu_state.rax == (uint64_t) -EINTR)) {
             // Decrement %rip by the sizeof of the iretq instruction so that
-            // the program will automatically execute int $0x80, restarting
-            // the sys call in the easy way possible
+            // the program will automatically execute syscall or int $0x80, restarting
+            // the sys call in the easist way possible.
             save_state->uc_mcontext.__stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
+            save_state->uc_mcontext.__cpu_state.rax = task->last_system_call;
         }
     }
 

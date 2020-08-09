@@ -93,38 +93,42 @@
 #define SYS_PARAM5_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r9, f)
 #define SYS_PARAM6_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r10, f)
 
-#define SYS_BEGIN()                                                            \
-    do {                                                                       \
-        get_current_task()->arch_task.user_task_state = (task_state);          \
-        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
-        get_current_task()->in_kernel = true;                                  \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;             \
-        enable_interrupts();                                                   \
+#define SYS_BEGIN()                                                                                          \
+    do {                                                                                                     \
+        get_current_task()->arch_task.user_task_state = (task_state);                                        \
+        get_current_task()->last_system_call = get_current_task()->arch_task.user_task_state->cpu_state.rax; \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR;                               \
+        get_current_task()->in_kernel = true;                                                                \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                           \
+        enable_interrupts();                                                                                 \
     } while (0)
 
-#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS()                                 \
-    do {                                                                  \
-        get_current_task()->arch_task.user_task_state = (task_state);     \
-        get_current_task()->in_kernel = true;                             \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;        \
-        get_current_task()->arch_task.user_task_state->cpu_state.rax = 0; \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS()                                                                    \
+    do {                                                                                                     \
+        get_current_task()->arch_task.user_task_state = (task_state);                                        \
+        get_current_task()->last_system_call = get_current_task()->arch_task.user_task_state->cpu_state.rax; \
+        get_current_task()->in_kernel = true;                                                                \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                           \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = 0;                                    \
     } while (0)
 
-#define SYS_BEGIN_SIGSUSPEND()                                                 \
-    do {                                                                       \
-        get_current_task()->arch_task.user_task_state = (task_state);          \
-        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;             \
-        get_current_task()->in_kernel = true;                                  \
-        get_current_task()->in_sigsuspend = true;                              \
+#define SYS_BEGIN_SIGSUSPEND()                                                                               \
+    do {                                                                                                     \
+        get_current_task()->arch_task.user_task_state = (task_state);                                        \
+        get_current_task()->last_system_call = get_current_task()->arch_task.user_task_state->cpu_state.rax; \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR;                               \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                           \
+        get_current_task()->in_kernel = true;                                                                \
+        get_current_task()->in_sigsuspend = true;                                                            \
     } while (0)
 
-#define SYS_BEGIN_PSELECT()                                                    \
-    do {                                                                       \
-        get_current_task()->arch_task.user_task_state = (task_state);          \
-        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR; \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;             \
-        get_current_task()->in_kernel = true;                                  \
+#define SYS_BEGIN_PSELECT()                                                                                  \
+    do {                                                                                                     \
+        get_current_task()->arch_task.user_task_state = (task_state);                                        \
+        get_current_task()->last_system_call = get_current_task()->arch_task.user_task_state->cpu_state.rax; \
+        get_current_task()->arch_task.user_task_state->cpu_state.rax = -EINTR;                               \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                           \
+        get_current_task()->in_kernel = true;                                                                \
     } while (0)
 
 #define SYS_RETURN(val)                                          \
