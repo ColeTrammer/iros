@@ -1,4 +1,5 @@
 #define __libc_internal
+#define __is_libc
 
 #include <assert.h>
 #include <errno.h>
@@ -294,18 +295,9 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
         size_t guard_len = thread->attributes.__guard_size;
 
         __free_thread_control_block(thread);
-#if ARCH == X86_64
-        // Call munmap and task_exit
-        asm volatile("movq %0, %%rdi\n"
-                     "movq %1, %%rsi\n"
-                     "movq %2, %%rdx\n"
-                     "int $0x80\n"
-                     "movq %3, %%rdi\n"
-                     "int $0x80"
-                     :
-                     : "i"(SC_MUNMAP), "r"(stack_start), "r"(stack_len + guard_len), "i"(SC_EXIT_TASK)
-                     : "rdi", "rsi", "rdx", "rax", "memory");
-#endif /* ARCH == X86_64 */
+        // NOTE: if this isn't properly inlined by the compiler, it could use the stack that was just unmapped.
+        syscall(SC_MUNMAP, stack_start, stack_len + guard_len);
+        syscall(SC_EXIT_TASK);
         __builtin_unreachable();
     }
 

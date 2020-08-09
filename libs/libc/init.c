@@ -63,7 +63,7 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
     __threads->attributes.__stack_len = __initial_process_info->stack_size;
     __threads->attributes.__sched_param.sched_priority = 0;
     __threads->attributes.__guard_size = __initial_process_info->guard_size;
-    __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER;
+    __threads->attributes.__flags = PTHREAD_CREATE_JOINABLE | PTHREAD_INHERIT_SCHED | SCHED_OTHER | __PTHREAD_MAUALLY_ALLOCATED_STACK;
     __threads->id = __initial_process_info->main_tid;
 
     set_thread_self_pointer(__threads, &__threads->locked_robust_mutex_node_list_head);
