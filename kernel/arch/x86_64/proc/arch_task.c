@@ -54,6 +54,7 @@ pid_t proc_fork(void) {
     init_spinlock(&child_process->user_mutex_lock);
     init_spinlock(&child_process->children_lock);
     init_spinlock(&child_process->parent_lock);
+    init_wait_queue(&child_process->one_task_left_queue);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;

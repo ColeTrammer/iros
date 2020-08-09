@@ -171,6 +171,7 @@ void init_kernel_process(void) {
     init_spinlock(&initial_kernel_process.user_mutex_lock);
     init_spinlock(&initial_kernel_process.children_lock);
     init_spinlock(&initial_kernel_process.parent_lock);
+    init_wait_queue(&initial_kernel_process.one_task_left_queue);
     initial_kernel_process.main_tid = 1;
     initial_kernel_process.pgid = 1;
     initial_kernel_process.tty = -1;
@@ -219,6 +220,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     init_spinlock(&process->user_mutex_lock);
     init_spinlock(&process->children_lock);
     init_spinlock(&process->parent_lock);
+    init_wait_queue(&process->one_task_left_queue);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->process_memory = NULL;
@@ -608,8 +610,10 @@ void task_do_sig(struct task *task, int signum) {
             if (task->sched_state == EXITING) {
                 break;
             }
-            exit_process(task->process);
+            mutex_lock(&task->process->lock);
+            exit_process(task->process, NULL);
             proc_set_process_state(task->process, PS_TERMINATED, signum, true);
+            mutex_unlock(&task->process->lock);
             break;
         case STOP:
             if (task->sched_state == STOPPED) {

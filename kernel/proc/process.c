@@ -101,6 +101,11 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             next->process_prev = task->process_prev;
         }
 
+        // There's only one task left, notify anyone who cares (execve does).
+        if (process->task_list && !process->task_list->process_next && !process->task_list->process_prev) {
+            wake_up_all(&process->one_task_left_queue);
+        }
+
         if (process->main_tid == task->tid) {
             struct task *new_task = process->task_list;
             process->main_tid = new_task ? new_task->tid : -1;

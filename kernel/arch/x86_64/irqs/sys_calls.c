@@ -301,8 +301,16 @@ SYS_CALL(exit) {
     disable_interrupts();
 
     struct process *process = get_current_process();
-    exit_process(process);
+    mutex_lock(&process->lock);
+    // Some other thread exited first, we shouldn't overwrite their exit code.
+    if (get_current_task()->should_exit) {
+        mutex_unlock(&process->lock);
+        SYS_RETURN_NORETURN();
+    }
+
+    exit_process(process, NULL);
     proc_set_process_state(process, PS_TERMINATED, exit_code, false);
+    mutex_unlock(&process->lock);
 
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
 

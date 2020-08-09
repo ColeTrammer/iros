@@ -394,11 +394,12 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
     return signalled_anything ? 0 : -ESRCH;
 }
 
-void exit_process(struct process *process) {
-    mutex_lock(&process->lock);
+void exit_process(struct process *process, struct task *exclude) {
     struct task *task = process->task_list;
     do {
-        task_set_state_to_exiting(task);
+        if (task != exclude) {
+            task_set_state_to_exiting(task);
+        }
 
 #ifdef ROBUST_USER_MUTEX_DEBUG
         debug_log("Locked robust mutex list head pointer: [ %p ]\n", task->locked_robust_mutex_list_head);
@@ -428,7 +429,6 @@ void exit_process(struct process *process) {
             }
         }
     } while ((task = task->process_next));
-    mutex_unlock(&process->lock);
 }
 
 uint64_t idle_ticks;

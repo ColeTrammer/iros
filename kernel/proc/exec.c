@@ -12,6 +12,7 @@
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
 static int execve_helper(char **path, char *buffer, size_t buffer_length, struct file **file, char ***prepend_argv,
@@ -123,6 +124,34 @@ int proc_execve(char *path, char **argv, char **envp) {
         free(prepend_argv);
         return error;
     }
+
+    mutex_lock(&process->lock);
+    // Some other thread called exit/execve before this one told them to exit.
+    if (current->should_exit) {
+        mutex_unlock(&process->lock);
+        fs_close(file);
+        for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
+            free(prepend_argv[i]);
+        }
+        free(prepend_argv);
+        return 0;
+    }
+
+    // Tell other threads to die.
+    exit_process(process, current);
+
+    for (;;) {
+        // Check if all the other threads have been removed.
+        if (process->main_tid == current->tid && current->process_next == NULL && current->process_prev == NULL) {
+            break;
+        }
+
+        // FIXME: this is clearly a racy
+        mutex_unlock(&process->lock);
+        wait_on(&process->one_task_left_queue);
+        mutex_lock(&process->lock);
+    }
+    mutex_unlock(&process->lock);
 
     char *program_name = prepend_argv != NULL ? argv[0] : strdup(argv[0]);
 

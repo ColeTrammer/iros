@@ -25,7 +25,7 @@ int signal_process_group(pid_t pgid, int signum);
 int signal_process(pid_t pid, int signum);
 int queue_signal_process(pid_t pid, int signum, void *val);
 
-void exit_process(struct process *process);
+void exit_process(struct process *process, struct task *exclude);
 
 uint64_t sched_idle_ticks(void);
 uint64_t sched_user_ticks(void);
