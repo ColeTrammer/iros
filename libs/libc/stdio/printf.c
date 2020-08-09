@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <bits/lock.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -155,6 +156,10 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
                            va_list parameters) {
     int written = 0;
 
+#if !defined(__is_libk) && !defined(__is_loader)
+    int saved_errno = errno;
+#endif /* !defined(__is_libk) && !defined(__is_loader) */
+
     while (*format != '\0') {
         size_t maxrem = INT_MAX - written;
 
@@ -279,9 +284,22 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
                 }
             }
             written += width;
-        } else if (*format == 's') {
+        } else if (*format == 's'
+#if !defined(__is_libk) && !defined(__is_loader)
+                   || *format == 'm'
+#endif /* !defined(__is_libk) && !defined(__is_loader) */
+        ) {
+            const char *str;
+            if (*format == 's') {
+                str = va_arg(parameters, const char *);
+            }
+#if !defined(__is_libk) && !defined(__is_loader)
+            else {
+                str = strerror(saved_errno);
+            }
+#endif /* !defined(__is_libk) && !defined(__is_loader) */
+
             format++;
-            const char *str = va_arg(parameters, const char *);
             size_t len = strlen(str);
             if (len > (unsigned int) width)
                 width = len;
