@@ -24,10 +24,7 @@ UnixSocketServer::UnixSocketServer(const String& bind_path) {
 }
 
 SharedPtr<UnixSocket> UnixSocketServer::accept() {
-    sockaddr_un addr;
-    socklen_t len;
-
-    int fd = accept4(this->fd(), (sockaddr*) &addr, &len, SOCK_CLOEXEC | SOCK_NONBLOCK);
+    int fd = accept4(this->fd(), nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
     if (fd < 0) {
         return nullptr;
     }
