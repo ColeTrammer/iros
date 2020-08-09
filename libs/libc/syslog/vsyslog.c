@@ -41,6 +41,7 @@ void do_vsyslog(FILE *file, int prio, const char *format, va_list args, int save
     errno = saved_errno;
     vfprintf(file, format, args);
     fputc('\n', file);
+    fflush(file);
 }
 
 void vsyslog(int prio, const char *format, va_list args) {
