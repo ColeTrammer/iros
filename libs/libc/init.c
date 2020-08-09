@@ -91,5 +91,7 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
     __program_name = strrchr(argv[0], '/');
     if (!__program_name) {
         __program_name = argv[0];
+    } else {
+        __program_name++;
     }
 }
