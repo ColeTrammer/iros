@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "dns.h"
@@ -16,7 +17,7 @@ int start_server() {
 
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd == -1) {
-        perror("socket");
+        syslog(LOG_ERR, "Failed to create socket: %m");
         return 1;
     }
 
@@ -28,13 +29,13 @@ int start_server() {
 
     mode_t mask = umask(0002);
     if (bind(fd, (const struct sockaddr *) &addr, sizeof(struct sockaddr_un)) == -1) {
-        perror("bind");
+        syslog(LOG_ERR, "Failed to bind: %m");
         return 1;
     }
     umask(mask);
 
     if (listen(fd, 5) == -1) {
-        perror("listen");
+        syslog(LOG_ERR, "Failed to start listening: %m");
         return 1;
     }
 
@@ -44,19 +45,19 @@ int start_server() {
         socklen_t addrlen = sizeof(struct sockaddr_un);
         int client_fd = accept(fd, (struct sockaddr *) &addr, &addrlen);
         if (client_fd == -1) {
-            perror("accept");
+            syslog(LOG_ERR, "Accept failed: %m");
             return 1;
         }
 
         ssize_t ret = read(client_fd, &buf, 2048);
         if (ret == -1) {
-            perror("read");
+            syslog(LOG_ERR, "Read from client failed: %m");
             return 1;
         } else if (ret == 0) {
             continue;
         }
 
-        fprintf(stderr, "Looking up: %s\n", buf);
+        syslog(LOG_INFO, "Looking up: %s", buf);
 
         struct host_mapping *mapping = NULL;
 
@@ -84,11 +85,11 @@ int start_server() {
 
         if (mapping == NULL) {
             write(client_fd, "FAILED", 7);
-            fprintf(stderr, "Mapping failed\n");
+            syslog(LOG_INFO, "Mapping failed");
         } else {
             char *ip = inet_ntoa(mapping->ip);
             write(client_fd, ip, strlen(ip) + 1);
-            fprintf(stderr, "Mapping succeeded: %s\n", ip);
+            syslog(LOG_INFO, "Mapping succeeded: %s", ip);
         }
 
         if (!was_known) {
