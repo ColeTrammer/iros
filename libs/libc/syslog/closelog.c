@@ -1,3 +1,9 @@
 #include <syslog.h>
 
-void closelog(void) {}
+#include "syslog_internal.h"
+
+void closelog(void) {
+    if (log_file) {
+        fclose(log_file);
+    }
+}

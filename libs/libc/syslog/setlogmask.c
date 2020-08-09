@@ -1,5 +1,9 @@
 #include <syslog.h>
 
-void setlogmask(int mask) {
-    (void) mask;
+#include "syslog_internal.h"
+
+int setlogmask(int mask) {
+    int ret = log_mask;
+    log_mask = mask;
+    return ret;
 }

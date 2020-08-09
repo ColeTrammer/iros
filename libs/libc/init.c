@@ -1,5 +1,6 @@
 #define __libc_internal
 
+#include <bits/program_name.h>
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
@@ -26,6 +27,7 @@ extern void _init(void);
 
 __thread int errno;
 char **environ;
+const char *__program_name = NULL;
 
 struct thread_control_block *__threads;
 
@@ -85,4 +87,9 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
         (*__init_array_start[i])(argc, argv, envp);
     }
 #endif /* __is_static */
+
+    __program_name = strrchr(argv[0], '/');
+    if (!__program_name) {
+        __program_name = argv[0];
+    }
 }

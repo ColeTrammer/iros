@@ -250,9 +250,12 @@ else()
         sys/utsname/utsname.c
         sys/wait/wait.c
         syslog/closelog.c
+        syslog/logmask.c
         syslog/openlog.c
         syslog/setlogmask.c
         syslog/syslog.c
+        syslog/syslog_internal.c
+        syslog/vsyslog.c
         termios/termios.c
         time/clock_getcpuclockid.c
         time/clock_getres.c
