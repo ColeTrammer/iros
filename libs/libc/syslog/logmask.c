@@ -2,4 +2,4 @@
 
 #include "syslog_internal.h"
 
-int log_mask = LOG_MASK(LOG_DEBUG);
+int log_mask = 0xFF;

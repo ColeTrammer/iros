@@ -10,6 +10,8 @@ const char *log_identity = NULL;
 FILE *log_file = NULL;
 
 void do_openlog(void) {
-    log_file = fopen("/dev/serial0", "w");
-    assert(log_file);
+    if (!log_file) {
+        log_file = fopen("/dev/serial0", "w");
+        assert(log_file);
+    }
 }
