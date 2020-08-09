@@ -1,4 +1,4 @@
-file (GLOB INITRD_PROGRAMS "programs/*.c*")
+file (GLOB INITRD_PROGRAMS "programs/*.c*" "programs/*.S")
 
 foreach (SOURCE ${INITRD_PROGRAMS})
     get_filename_component(PROGRAM_NAME ${SOURCE} NAME_WE)

@@ -12,6 +12,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
     ${KERNEL_ARCHDIR}/irqs/handlers.c
     ${KERNEL_ARCHDIR}/irqs/sys_calls.c
+    ${KERNEL_ARCHDIR}/irqs/syscall_sysret_entry.S
     ${KERNEL_ARCHDIR}/mem/page.c
     ${KERNEL_ARCHDIR}/mem/arch_vm_allocator.c
     ${KERNEL_ARCHDIR}/proc/run_task.S

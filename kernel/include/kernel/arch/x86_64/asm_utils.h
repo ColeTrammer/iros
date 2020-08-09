@@ -167,6 +167,10 @@ static inline void cpuid(int code, uint32_t *a, uint32_t *b, uint32_t *c, uint32
 }
 
 #define MSR_LOCAL_APIC_BASE 0x1BU
+#define MSR_STAR            0xC0000081U
+#define MSR_LSTAR           0xC0000082U
+#define MSR_CSTAR           0xC0000083U
+#define MSR_SFMASK          0xC0000084U
 #define MSR_FS_BASE         0xC0000100U
 #define MSR_GS_BASE         0xC0000101U
 #define MSR_KERNEL_GS_BASE  0xC0000102U

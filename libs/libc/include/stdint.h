@@ -5,6 +5,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#ifndef __ASSEMBLER__
+
 typedef __UINT64_TYPE__ uint64_t;
 typedef __UINT32_TYPE__ uint32_t;
 typedef __UINT16_TYPE__ uint16_t;
@@ -40,6 +42,8 @@ typedef __INTPTR_TYPE__ intptr_t;
 
 typedef __UINTMAX_TYPE__ uintmax_t;
 typedef __INTMAX_TYPE__ intmax_t;
+
+#endif /* __ASSEMBLY__ */
 
 #ifdef __cplusplus
 }
@@ -112,4 +116,4 @@ typedef __INTMAX_TYPE__ intmax_t;
 
 #define SIZE_MAX ((size_t) -1)
 
-#endif /* _STDINT_H */
+#endif /* __ASSEMBLER__ */

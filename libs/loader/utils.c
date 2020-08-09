@@ -41,8 +41,7 @@ int open(const char *path, int flags, ...) {
 }
 
 int fstat(int fd, struct stat *st) {
-    char empty[] = "";
-    return (int) syscall(SC_FSTATAT, fd, empty, st, AT_EMPTY_PATH);
+    return (int) syscall(SC_FSTATAT, fd, "", st, AT_EMPTY_PATH);
 }
 
 int close(int fd) {

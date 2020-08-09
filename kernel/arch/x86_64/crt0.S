@@ -210,10 +210,10 @@ _add_page_table_entry_2:
     or $(1 << 5 | 1 << 7 | 1 << 9 | 1 << 10), %eax
     mov %eax, %cr4
 
-    # Set EFER.LME and EFER.NXE
+    # Set EFER.SCS, EFER.LME and EFER.NXE
     mov $0xC0000080, %ecx
     rdmsr
-    or $(1 << 8 | 1 << 11), %eax
+    or $(1 << 0 | 1 << 8 | 1 << 11), %eax
     wrmsr
 
     # Set cr3

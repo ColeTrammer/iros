@@ -34,6 +34,8 @@ struct processor {
     struct processor *self;
     struct processor *next;
 
+    struct arch_processor arch_processor;
+
     struct task *idle_task;
     struct vm_region *kernel_stack;
 
@@ -47,8 +49,6 @@ struct processor {
 
     int id;
     bool enabled;
-
-    struct arch_processor arch_processor;
 };
 
 struct processor *create_processor();

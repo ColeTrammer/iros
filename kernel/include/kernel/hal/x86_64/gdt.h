@@ -3,21 +3,28 @@
 
 #include <stdint.h>
 
-#define GDT_ENTRIES 7
+#define GDT_ENTRIES 8UL
 
-#define CS_OFFSET        1
-#define DATA_OFFSET      2
-#define USER_CODE_OFFSET 3
-#define USER_DATA_OFFSET 4
-#define TSS_OFFSET       5
+#define CS_OFFSET          1UL
+#define DATA_OFFSET        2UL
+#define USER_CODE32_OFFSET 3UL
+#define USER_DATA_OFFSET   4UL
+#define USER_CODE_OFFSET   5UL
+#define GDT_TSS_OFFSET     6UL
 
-#define CS_SELECTOR        (CS_OFFSET * 8)
-#define DATA_SELECTOR      (DATA_OFFSET * 8)
-#define USER_CODE_SELECTOR ((USER_CODE_OFFSET * 8) | 0b11)
-#define USER_DATA_SELECTOR ((USER_DATA_OFFSET * 8) | 0b11)
-#define TSS_SELECTOR       (TSS_OFFSET * 8)
+#define CS_SELECTOR          (CS_OFFSET * 8UL)
+#define DATA_SELECTOR        (DATA_OFFSET * 8UL)
+#define USER_CODE32_SELECTOR ((USER_CODE32_OFFSET * 8UL) | 0b11)
+#define USER_DATA_SELECTOR   ((USER_DATA_OFFSET * 8UL) | 0b11)
+#define USER_CODE_SELECTOR   ((USER_CODE_OFFSET * 8UL) | 0b11)
+#define TSS_SELECTOR         (GDT_TSS_OFFSET * 8UL)
 
 #define TSS_TYPE 0b10001001;
+
+#define TSS_RSP0_OFFSET 4
+#define TSS_RSP1_OFFSET 12
+
+#ifndef __ASSEMBLER__
 
 struct processor;
 
@@ -70,5 +77,7 @@ static inline void load_tr(uint16_t selector) {
 
 void init_gdt(struct processor *processor);
 void set_tss_stack_pointer(uintptr_t rsp);
+
+#endif /* __ASSEMBLER__ */
 
 #endif /* _KERNEL_HAL_X86_64_GDT_H */

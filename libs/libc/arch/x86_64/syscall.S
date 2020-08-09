@@ -5,10 +5,7 @@ __do_syscall:
     mov %rdi, %rax
     mov %rsi, %rdi
     mov %rdx, %rsi
-    mov %rcx, %rdx
-    mov %r8, %rcx
-    mov %r9, %r8
-    movq 8(%rsp), %r9
-    int $0x80
+    movq 8(%rsp), %r10
+    syscall
     retq
 .size __do_syscall, . - __do_syscall

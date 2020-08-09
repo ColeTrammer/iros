@@ -3,12 +3,6 @@ add_os_headers(kernel_headers)
 if (NOT ${NATIVE_BUILD})
     add_subdirectory("arch/${ARCH}")
 
-    add_library(kernel_startfiles OBJECT
-        arch/${ARCH}/crt0.S
-        arch/${ARCH}/crti.S
-        arch/${ARCH}/crtn.S
-    )
-
     set(SOURCES
         ${KERNEL_ARCH_SOURCES}
         fs/cached_dirent.c
@@ -75,7 +69,6 @@ if (NOT ${NATIVE_BUILD})
 
     target_compile_definitions(kernel PRIVATE __is_kernel)
 
-    add_dependencies(kernel kernel_startfiles)
     target_link_libraries(kernel libk kernel_headers)
 
     install(TARGETS kernel RUNTIME DESTINATION boot)
