@@ -340,7 +340,7 @@ uintptr_t proc_allocate_user_stack(struct process *process, struct initial_proce
 
     info->guard_size = PAGE_SIZE;
     info->stack_size = 2 * 1024 * 1024;
-    info->stack_start = (void *) task_stack->start;
+    info->stack_start = (void *) task_stack->start - PAGE_SIZE;
 
     return task_stack->end;
 }
