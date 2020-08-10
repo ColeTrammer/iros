@@ -30,22 +30,24 @@ void proc_record_profile_stack(void) {
     ev->type = PEV_STACK_TRACE;
     ev->count = 0;
 
-again:
-    if (ev->count < PROFILE_MAX_STACK_FRAMES) {
-        ev->frames[ev->count++] = rip;
-    }
-    struct stack_frame *frame = (struct stack_frame *) rbp;
-    while (!stack_frame_validate(frame, in_kernel) && frame && frame->rip && ev->count < PROFILE_MAX_STACK_FRAMES) {
-        ev->frames[ev->count++] = frame->rip;
-        frame = frame->next;
-    }
+    for (;;) {
+        if (ev->count < PROFILE_MAX_STACK_FRAMES) {
+            ev->frames[ev->count++] = rip;
+        }
+        struct stack_frame *frame = (struct stack_frame *) rbp;
+        while (!stack_frame_validate(frame, in_kernel) && frame && frame->rip && ev->count < PROFILE_MAX_STACK_FRAMES) {
+            ev->frames[ev->count++] = frame->rip;
+            frame = frame->next;
+        }
 
-    if (in_kernel) {
+        if (!in_kernel) {
+            break;
+        }
+
         // Switch over to the user stack.
         in_kernel = false;
         rip = current->arch_task.user_task_state->stack_state.rip;
         rbp = current->arch_task.user_task_state->cpu_state.rbp;
-        goto again;
     }
 
     proc_write_profile_buffer(process, raw_buffer, PEV_STACK_TRACE_SIZE(ev));
