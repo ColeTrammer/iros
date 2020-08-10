@@ -203,6 +203,11 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
 
         free_process_name_info(process);
 
+        if (process->profile_buffer) {
+            vm_free_kernel_region(process->profile_buffer);
+        }
+        process->profile_buffer = NULL;
+
 #ifdef PROC_REF_COUNT_DEBUG
         debug_log("Finished destroying process: [ %d ]\n", process->pid);
 #endif /* PROC_REF_COUNT_DEBUG */

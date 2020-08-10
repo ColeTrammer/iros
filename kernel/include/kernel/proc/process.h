@@ -91,6 +91,11 @@ struct process {
 
     struct timespec start_time;
 
+    int should_profile;
+    struct vm_region *profile_buffer;
+    size_t profile_buffer_size;
+    spinlock_t profile_buffer_lock;
+
     bool should_trace : 1;
     bool zombie : 1;
     bool terminated_bc_signal : 1;

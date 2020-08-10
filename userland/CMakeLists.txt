@@ -2,6 +2,7 @@ if (NOT ${NATIVE_BUILD})
     set(OS_TARGETS
         about
         ping
+        profile
         psfedit
         stat
         terminal

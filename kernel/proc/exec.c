@@ -151,6 +151,11 @@ int proc_execve(char *path, char **argv, char **envp) {
         wait_on(&process->one_task_left_queue);
         mutex_lock(&process->lock);
     }
+
+    // Clear the profile buffer. This is means that code that sets up profiling need not worry about collecting data
+    // before the execve() occurs. However, this would cause issues when trying to profile a process like /bin/sh, who
+    // may have a legitimate reason to call execve().
+    process->profile_buffer_size = 0;
     mutex_unlock(&process->lock);
 
     char *program_name = prepend_argv != NULL ? argv[0] : strdup(argv[0]);

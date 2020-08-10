@@ -102,7 +102,10 @@
     __ENUMERATE_SYSCALL(GETGROUPS, getgroups, 2)                             \
     __ENUMERATE_SYSCALL(SETGROUPS, setgroups, 2)                             \
     __ENUMERATE_SYSCALL(MKNOD, mknod, 3)                                     \
-    __ENUMERATE_SYSCALL(PPOLL, ppoll, 4)
+    __ENUMERATE_SYSCALL(PPOLL, ppoll, 4)                                     \
+    __ENUMERATE_SYSCALL(ENABLE_PROFILING, enable_profiling, 1)               \
+    __ENUMERATE_SYSCALL(READ_PROFILE, read_profile, 3)                       \
+    __ENUMERATE_SYSCALL(DISABLE_PROFILING, disable_profiling, 1)
 
 #ifdef __ASSEMBLER__
 #define SC_SIGRETURN 27

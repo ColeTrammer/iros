@@ -15,6 +15,9 @@
 
 #define ROBUST_MUTEX_IS_VALID_IF_VALUE 1
 
+#define PROFILE_BUFFER_MAX       1024 * 4096
+#define PROFILE_MAX_STACK_FRAMES 35
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -50,6 +53,16 @@ struct initial_process_info {
     int has_interpreter;
 };
 
+enum profile_event_type { PEV_STACK_TRACE };
+
+struct profile_event_stack_trace {
+    uint8_t type;
+    uint8_t count;
+    uintptr_t frames[0];
+} __attribute__((packed));
+
+#define PEV_STACK_TRACE_SIZE(pev) (sizeof(struct profile_event_stack_trace) + ((pev)->count) * sizeof(pev->frames[0]))
+
 #ifndef SYS_OS_2_NO_FUNCTIONS
 int create_task(struct create_task_args *create_task_args);
 void exit_task(void) __attribute__((__noreturn__));
@@ -57,6 +70,9 @@ int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int 
 int set_thread_self_pointer(void *p, struct __locked_robust_mutex_node **list_head);
 int tgkill(int tgid, int tid, int signum);
 int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
+int enable_profiling(pid_t pid);
+ssize_t read_profile(pid_t pid, void *buffer, size_t size);
+int disable_profiling(pid_t pid);
 #endif /* SYS_OS_2_NO_FUNCTIONS */
 
 #ifdef __cplusplus

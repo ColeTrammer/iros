@@ -7,6 +7,7 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/irqs/handlers.h>
+#include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 
@@ -39,6 +40,16 @@ void handle_pit_interrupt(struct irq_context *context) {
         time_inc_clock(current->task_clock, 1000000L);
         // NOTE: we can't simply inc the process clock if we were doing SMP
         time_inc_clock(current->process->process_clock, 1000000L);
+    }
+
+    if (atomic_load(&current->process->should_profile)) {
+        // To seriously support profiling multiple threads, the buffer and lock should be per-thread and not per-process.
+        spin_lock(&current->process->profile_buffer_lock);
+        // Make sure not to write into a stale buffer.
+        if (current->process->profile_buffer) {
+            proc_record_profile_stack();
+        }
+        spin_unlock(&current->process->profile_buffer_lock);
     }
 
     // NOTE: only call the timer callback on one CPU (its used for the monotonic and realtime clocks)

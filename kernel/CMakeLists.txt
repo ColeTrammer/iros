@@ -48,6 +48,7 @@ if (NOT ${NATIVE_BUILD})
         proc/exec.c
         proc/pid.c
         proc/process.c
+        proc/profile.c
         proc/task.c
         proc/task_finalizer.c
         proc/user_mutex.c

@@ -30,6 +30,7 @@
 #include <kernel/net/socket.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
+#include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
@@ -2175,6 +2176,32 @@ ppoll_return:
     }
 
     SYS_RETURN(count);
+}
+
+SYS_CALL(enable_profiling) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(pid_t, pid);
+
+    SYS_RETURN(proc_enable_profiling(pid));
+}
+
+SYS_CALL(read_profile) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(pid_t, pid);
+    SYS_PARAM3(size_t, len);
+    SYS_PARAM2_VALIDATE(void *, buffer, validate_write, len);
+
+    SYS_RETURN(proc_read_profile(pid, buffer, len));
+}
+
+SYS_CALL(disable_profiling) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(pid_t, pid);
+
+    SYS_RETURN(proc_disable_profiling(pid));
 }
 
 SYS_CALL(invalid_system_call) {
