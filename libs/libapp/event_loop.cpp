@@ -44,9 +44,7 @@ EventLoop::EventLoop() {
 EventLoop::~EventLoop() {}
 
 void EventLoop::do_select() {
-    if (s_selectables.empty()) {
-        return;
-    }
+    assert(!s_selectables.empty() || !s_watched_signals.empty());
 
     fd_set rd_set;
     fd_set wr_set;
