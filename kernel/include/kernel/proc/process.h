@@ -98,6 +98,7 @@ struct process {
 
     bool should_trace : 1;
     bool zombie : 1;
+    bool in_execve : 1;
     bool terminated_bc_signal : 1;
 
     enum process_state state;

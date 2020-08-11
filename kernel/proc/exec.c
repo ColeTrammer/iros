@@ -139,6 +139,7 @@ int proc_execve(char *path, char **argv, char **envp) {
 
     // Tell other threads to die.
     exit_process(process, current);
+    process->in_execve = true;
 
     for (;;) {
         // Check if all the other threads have been removed.
@@ -233,6 +234,8 @@ int proc_execve(char *path, char **argv, char **envp) {
     free(prepend_argv);
 
     disable_interrupts();
+    process->in_execve = false;
+
     // Clear this now while interrupts are disabled to ensure the initial value will be 0 (as POSIX says).
     memset(&current->task_clock->time, 0, sizeof(current->task_clock->time));
 

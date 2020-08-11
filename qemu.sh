@@ -20,6 +20,7 @@ qemu-system-$ARCH \
     -cdrom os_2.iso \
     -d guest_errors \
     -serial stdio \
+    -smp 2 \
     ${ENABLE_KVM} \
     -device VGA,vgamem_mb=64 \
     -drive file=os_2.img,format=raw,index=0,media=disk \

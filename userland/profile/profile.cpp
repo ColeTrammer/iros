@@ -50,6 +50,11 @@ UniquePtr<Profile> Profile::create(const String& path) {
     SharedPtr<ElfFile> kernel_object = ElfFile::create("/boot/kernel");
 
     MemoryMap current_memory_map;
+    auto add_kernel_object = [&] {
+        current_memory_map.add({ 0xFFFFFF0000000000, 0xFFFFFFFFFFFFFFFF, kernel_object });
+    };
+    add_kernel_object();
+
     auto process_stack_trace = [&](const profile_event_stack_trace* ev) {
         for (size_t i = 0; i < ev->count; i++) {
             auto addr = ev->frames[i];
@@ -78,7 +83,7 @@ UniquePtr<Profile> Profile::create(const String& path) {
             current_memory_map.add(
                 { raw_object.start, raw_object.end, ElfFile::find_or_create({ raw_object.inode_id, raw_object.fs_id }) });
         }
-        current_memory_map.add({ 0xFFFFFF0000000000, 0xFFFFFFFFFFFFFFFF, kernel_object });
+        add_kernel_object();
     };
 
     size_t offset = sizeof(size_t) + exec_name_length;

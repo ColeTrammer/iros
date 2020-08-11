@@ -54,7 +54,7 @@ void proc_record_profile_stack(struct task_state *task_state) {
             frame = frame->next;
         }
 
-        if (!in_kernel) {
+        if (!in_kernel || process->in_execve) {
             break;
         }
 
