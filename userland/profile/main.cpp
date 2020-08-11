@@ -50,12 +50,12 @@ int main(int argc, char** argv) {
     App::EventLoop loop;
     App::EventLoop::register_signal_handler(SIGCHLD, [&] {
         char name_buffer[PATH_MAX];
+        memset(name_buffer, 0, sizeof(name_buffer));
         ssize_t ret = readlink(String::format("/proc/%d/exe", pid).string(), name_buffer, sizeof(name_buffer) - 1);
         if (ret < 0) {
             fprintf(stderr, "profile: readlink: %m\n");
             exit(1);
         }
-        name_buffer[ret] = '\0';
         size_t name_size = ALIGN_UP(ret + 1, sizeof(size_t));
 
         ret = read_profile(pid, buffer, PROFILE_BUFFER_MAX);
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
             exit(1);
         }
 
-        if (fprintf(output_file, "%s%c", name_buffer, '\0') <= 0) {
+        if (fwrite(name_buffer, 1, name_size, output_file) != name_size) {
             fprintf(stderr, "profile: fprintf: %m\n");
             exit(1);
         }
