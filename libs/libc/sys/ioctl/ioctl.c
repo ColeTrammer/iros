@@ -25,7 +25,7 @@ int ioctl(int fd, unsigned long request, ...) {
             break;
     }
 
-    int ret = (int) syscall(SC_IOCTL, fd, request, argp);
+    int ret = (int) syscall(SYS_IOCTL, fd, request, argp);
     va_end(parameters);
     __SYSCALL_TO_ERRNO(ret);
 }

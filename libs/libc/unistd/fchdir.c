@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int fchdir(int fd) {
-    int ret = (int) syscall(SC_FCHDIR, fd);
+    int ret = (int) syscall(SYS_FCHDIR, fd);
     __SYSCALL_TO_ERRNO(ret);
 }

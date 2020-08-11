@@ -3,5 +3,5 @@
 #include <sys/syscall.h>
 
 mode_t umask(mode_t mask) {
-    return (mode_t) syscall(SC_UMASK, mask);
+    return (mode_t) syscall(SYS_UMASK, mask);
 }

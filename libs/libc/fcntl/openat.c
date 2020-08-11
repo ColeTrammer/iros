@@ -7,7 +7,7 @@ int openat(int dirfd, const char *pathname, int flags, ...) {
     va_list parameters;
     va_start(parameters, flags);
     mode_t mode = flags & O_CREAT ? va_arg(parameters, mode_t) : 0;
-    int ret = (int) syscall(SC_OPENAT, dirfd, pathname, flags, mode);
+    int ret = (int) syscall(SYS_OPENAT, dirfd, pathname, flags, mode);
     va_end(parameters);
     __SYSCALL_TO_ERRNO(ret);
 }

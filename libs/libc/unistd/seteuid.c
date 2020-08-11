@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int seteuid(uid_t uid) {
-    int ret = (int) syscall(SC_SETEUID, uid);
+    int ret = (int) syscall(SYS_SETEUID, uid);
     __SYSCALL_TO_ERRNO(ret);
 }

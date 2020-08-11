@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int unlink(const char *pathname) {
-    int ret = (int) syscall(SC_UNLINK, pathname);
+    int ret = (int) syscall(SYS_UNLINK, pathname);
     __SYSCALL_TO_ERRNO(ret);
 }

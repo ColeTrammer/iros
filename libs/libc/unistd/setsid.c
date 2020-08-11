@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 pid_t setsid(void) {
-    pid_t ret = (pid_t) syscall(SC_SETSID);
+    pid_t ret = (pid_t) syscall(SYS_SETSID);
     __SYSCALL_TO_ERRNO(ret);
 }

@@ -11,7 +11,7 @@ char *realpath(const char *__restrict path, char *__restrict resolved_path) {
         }
     }
 
-    int ret = (int) syscall(SC_REALPATH, path, resolved_path, PATH_MAX);
+    int ret = (int) syscall(SYS_REALPATH, path, resolved_path, PATH_MAX);
     if (ret < 0) {
         errno = -ret;
         return NULL;

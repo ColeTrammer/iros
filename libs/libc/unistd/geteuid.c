@@ -2,5 +2,5 @@
 #include <unistd.h>
 
 uid_t geteuid(void) {
-    return (uid_t) syscall(SC_GETEUID);
+    return (uid_t) syscall(SYS_GETEUID);
 }

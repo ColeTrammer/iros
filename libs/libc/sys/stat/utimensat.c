@@ -3,6 +3,6 @@
 #include <sys/syscall.h>
 
 int utimensat(int fd, const char *path, const struct timespec times[2], int flags) {
-    int ret = (int) syscall(SC_UTIMENSAT, fd, path, times, flags);
+    int ret = (int) syscall(SYS_UTIMENSAT, fd, path, times, flags);
     __SYSCALL_TO_ERRNO(ret);
 }

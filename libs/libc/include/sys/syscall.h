@@ -108,7 +108,7 @@
     __ENUMERATE_SYSCALL(DISABLE_PROFILING, disable_profiling, 1)
 
 #ifdef __ASSEMBLER__
-#define SC_SIGRETURN 27
+#define SYS_SIGRETURN 27
 #else
 
 #ifdef __cplusplus
@@ -117,9 +117,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 enum sc_number {
-#define __ENUMERATE_SYSCALL(x, y, v) SC_##x,
-    SC_START,
-    ENUMERATE_SYSCALLS SC_NUM
+#define __ENUMERATE_SYSCALL(x, y, v) SYS_##x,
+    __SYS_START,
+    ENUMERATE_SYSCALLS __SYS_NUM
 };
 
 #ifdef __is_libc
@@ -250,7 +250,7 @@ long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, 
 #define __SYSCALL_WITH_ARG_COUNT_(...) __syscall##__VA_ARGS__
 
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(x, y, v) __SC_##x##_ARG_COUNT = v,
+#define __ENUMERATE_SYSCALL(x, y, v) __SYS_##x##_ARG_COUNT = v,
 enum __sc_arg_count { ENUMERATE_SYSCALLS __INVALID };
 
 #ifdef __is_libc

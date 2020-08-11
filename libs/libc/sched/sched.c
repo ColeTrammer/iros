@@ -2,6 +2,6 @@
 #include <sys/syscall.h>
 
 int sched_yield(void) {
-    int ret = (int) syscall(SC_YIELD);
+    int ret = (int) syscall(SYS_YIELD);
     __SYSCALL_TO_ERRNO(ret);
 }

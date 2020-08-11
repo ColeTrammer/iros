@@ -8,6 +8,6 @@ int sigaction(int signum, const struct sigaction *_act, struct sigaction *old_ac
         act = *_act;
         act.sa_restorer = &__sigreturn;
     }
-    int ret = (int) syscall(SC_SIGACTION, signum, _act ? &act : NULL, old_act);
+    int ret = (int) syscall(SYS_SIGACTION, signum, _act ? &act : NULL, old_act);
     __SYSCALL_TO_ERRNO(ret);
 }

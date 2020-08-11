@@ -2216,7 +2216,7 @@ void do_syscall(struct task_state *task_state) {
 #ifdef SYSCALL_DEBUG
 #undef __ENUMERATE_SYSCALL
 #define __ENUMERATE_SYSCALL(x, y, a)    \
-    case SC_##x:                        \
+    case SYS_##x:                       \
         debug_log("syscall: %s\n", #y); \
         break;
     if (get_current_task()->process->should_trace) {
@@ -2231,7 +2231,7 @@ void do_syscall(struct task_state *task_state) {
 
 #undef __ENUMERATE_SYSCALL
 #define __ENUMERATE_SYSCALL(x, y, a) \
-    case SC_##x:                     \
+    case SYS_##x:                    \
         arch_sys_##y(task_state);    \
         break;
 

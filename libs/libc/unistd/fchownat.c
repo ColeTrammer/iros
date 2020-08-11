@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
-    int ret = (int) syscall(SC_FCHOWNAT, dirfd, pathname, owner, group, flags);
+    int ret = (int) syscall(SYS_FCHOWNAT, dirfd, pathname, owner, group, flags);
     __SYSCALL_TO_ERRNO(ret);
 }

@@ -2,5 +2,5 @@
 #include <sys/syscall.h>
 
 int tgkill(int tgid, int tid, int signum) {
-    return syscall(SC_TGKILL, tgid, tid, signum);
+    return syscall(SYS_TGKILL, tgid, tid, signum);
 }

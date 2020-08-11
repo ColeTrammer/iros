@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 void *sbrk(intptr_t increment) {
-    void *ret = (void *) syscall(SC_SBRK, increment);
+    void *ret = (void *) syscall(SYS_SBRK, increment);
     if (ret == (void *) -1) {
         errno = ENOMEM;
     }

@@ -9,7 +9,7 @@
 #define SHM_PREFIX "/dev/shm"
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
-    void *ret = (void *) syscall(SC_MMAP, addr, length, prot, flags, fd, offset);
+    void *ret = (void *) syscall(SYS_MMAP, addr, length, prot, flags, fd, offset);
     if ((long) ret < 0 && (long) ret > -EMAXERRNO) {
         errno = -((long) ret);
         return MAP_FAILED;
@@ -19,12 +19,12 @@ void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 }
 
 int munmap(void *addr, size_t length) {
-    int ret = (int) syscall(SC_MUNMAP, addr, length);
+    int ret = (int) syscall(SYS_MUNMAP, addr, length);
     __SYSCALL_TO_ERRNO(ret);
 }
 
 int mprotect(void *addr, size_t length, int prot) {
-    int ret = (int) syscall(SC_MPROTECT, addr, length, prot);
+    int ret = (int) syscall(SYS_MPROTECT, addr, length, prot);
     __SYSCALL_TO_ERRNO(ret);
 }
 

@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int dup(int oldfd) {
-    int ret = (int) syscall(SC_DUP, oldfd);
+    int ret = (int) syscall(SYS_DUP, oldfd);
     __SYSCALL_TO_ERRNO(ret);
 }

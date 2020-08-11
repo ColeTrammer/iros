@@ -3,6 +3,6 @@
 #include <time.h>
 
 int clock_gettime(clockid_t id, struct timespec *tp) {
-    int ret = (int) syscall(SC_CLOCK_GETTIME, id, tp);
+    int ret = (int) syscall(SYS_CLOCK_GETTIME, id, tp);
     __SYSCALL_TO_ERRNO(ret);
 }

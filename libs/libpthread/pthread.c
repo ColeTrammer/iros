@@ -296,8 +296,8 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
 
         __free_thread_control_block(thread);
         // NOTE: if this isn't properly inlined by the compiler, it could use the stack that was just unmapped.
-        syscall(SC_MUNMAP, stack_start, stack_len + guard_len);
-        syscall(SC_EXIT_TASK);
+        syscall(SYS_MUNMAP, stack_start, stack_len + guard_len);
+        syscall(SYS_EXIT_TASK);
         __builtin_unreachable();
     }
 

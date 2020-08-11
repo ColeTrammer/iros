@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int setgid(gid_t gid) {
-    int ret = (int) syscall(SC_SETGID, gid);
+    int ret = (int) syscall(SYS_SETGID, gid);
     __SYSCALL_TO_ERRNO(ret);
 }

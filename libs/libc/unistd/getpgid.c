@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 pid_t getpgid(pid_t pid) {
-    pid_t ret = (pid_t) syscall(SC_GETPGID, pid);
+    pid_t ret = (pid_t) syscall(SYS_GETPGID, pid);
     __SYSCALL_TO_ERRNO(ret);
 }

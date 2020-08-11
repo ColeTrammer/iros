@@ -72,7 +72,7 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
 
     sigset_t set = { 0 };
     set |= (UINT64_C(1) << (__PTHREAD_CANCEL_SIGNAL - UINT64_C(1)));
-    syscall(SC_SIGPROCMASK, SIG_BLOCK, &set, NULL);
+    syscall(SYS_SIGPROCMASK, SIG_BLOCK, &set, NULL);
 
 #ifdef __is_static
     const size_t preinit_size = __preinit_array_end - __preinit_array_start;
