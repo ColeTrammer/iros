@@ -17,13 +17,22 @@ static int stack_frame_validate(struct stack_frame *frame, bool kernel) {
     return validate_read(frame, sizeof(struct stack_frame));
 }
 
-void proc_record_profile_stack(void) {
+void proc_record_profile_stack(struct task_state *task_state) {
     struct task *current = get_current_task();
     struct process *process = current->process;
 
     bool in_kernel = current->in_kernel;
-    uintptr_t rip = current->arch_task.task_state.stack_state.rip;
-    uintptr_t rbp = current->arch_task.task_state.cpu_state.rbp;
+
+    uintptr_t rip;
+    uintptr_t rbp;
+    if (task_state) {
+        rip = task_state->stack_state.rip;
+        rbp = task_state->cpu_state.rbp;
+    } else {
+        assert(in_kernel);
+        rip = (uintptr_t) proc_record_profile_stack;
+        asm volatile("mov %%rbp, %0" : "=r"(rbp) : : "memory");
+    }
 
     char raw_buffer[sizeof(struct profile_event_stack_trace) + PROFILE_MAX_STACK_FRAMES * sizeof(uintptr_t)];
     struct profile_event_stack_trace *ev = (void *) raw_buffer;

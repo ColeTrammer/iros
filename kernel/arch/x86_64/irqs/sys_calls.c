@@ -312,7 +312,7 @@ SYS_CALL(exit) {
 
     if (process->should_profile) {
         spin_lock(&process->profile_buffer_lock);
-        proc_record_profile_stack();
+        proc_record_profile_stack(NULL);
         spin_unlock(&process->profile_buffer_lock);
     }
 

@@ -6,8 +6,9 @@
 #include <sys/types.h>
 
 struct process;
+struct task_state;
 
-void proc_record_profile_stack(void);
+void proc_record_profile_stack(struct task_state *task_state);
 void proc_record_memory_map(struct process *process);
 void proc_write_profile_buffer(struct process *process, const void *buffer, size_t size);
 

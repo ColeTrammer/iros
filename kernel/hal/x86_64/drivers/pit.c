@@ -47,7 +47,7 @@ void handle_pit_interrupt(struct irq_context *context) {
         spin_lock(&current->process->profile_buffer_lock);
         // Make sure not to write into a stale buffer.
         if (current->process->profile_buffer) {
-            proc_record_profile_stack();
+            proc_record_profile_stack(context->task_state);
         }
         spin_unlock(&current->process->profile_buffer_lock);
     }

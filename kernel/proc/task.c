@@ -608,7 +608,7 @@ void task_do_sig(struct task *task, int signum) {
             elf64_stack_trace(task, true);
             if (task == get_current_task() && atomic_load(&task->process->should_profile)) {
                 spin_lock(&task->process->profile_buffer_lock);
-                proc_record_profile_stack();
+                proc_record_profile_stack(NULL);
                 spin_unlock(&task->process->profile_buffer_lock);
             }
             // Fall through

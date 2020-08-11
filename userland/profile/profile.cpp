@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/os_2.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include "elf_file.h"
@@ -41,6 +42,12 @@ UniquePtr<Profile> Profile::create(const String& path) {
         return nullptr;
     }
 
+    SharedPtr<ElfFile> kernel_object;
+    struct stat st;
+    if (stat("/boot/kernel", &st) == 0) {
+        kernel_object = ElfFile::create({ st.st_ino, st.st_dev }, "/boot/kernel");
+    }
+
     MemoryMap current_memory_map;
     auto process_stack_trace = [&](const profile_event_stack_trace* ev) {
         for (size_t i = 0; i < ev->count; i++) {
@@ -70,6 +77,7 @@ UniquePtr<Profile> Profile::create(const String& path) {
             current_memory_map.add(
                 { raw_object.start, raw_object.end, ElfFile::find_or_create({ raw_object.inode_id, raw_object.fs_id }) });
         }
+        current_memory_map.add({ 0xFFFFFF0000000000, -1, kernel_object });
     };
 
     size_t offset = 0;
