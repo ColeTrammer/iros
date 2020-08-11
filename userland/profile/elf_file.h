@@ -26,6 +26,7 @@ class ElfFile {
 public:
     static SharedPtr<ElfFile> find_or_create(FileId id);
     static SharedPtr<ElfFile> create(FileId id, const String& path);
+    static SharedPtr<ElfFile> create(const String& path);
 
     ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file, String path);
     ~ElfFile();

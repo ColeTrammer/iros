@@ -1,9 +1,11 @@
 #include <app/event_loop.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/os_2.h>
+#include <sys/param.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -31,7 +33,7 @@ int main(int argc, char** argv) {
             fprintf(stderr, "profile: start_profiling: %m\n");
             _exit(1);
         }
-        execv(argv[optind], argv + optind);
+        execvp(argv[optind], argv + optind);
         fprintf(stderr, "profile: execv: %m\n");
         _exit(127);
     } else if (pid < 0) {
@@ -47,7 +49,16 @@ int main(int argc, char** argv) {
 
     App::EventLoop loop;
     App::EventLoop::register_signal_handler(SIGCHLD, [&] {
-        ssize_t ret = read_profile(pid, buffer, PROFILE_BUFFER_MAX);
+        char name_buffer[PATH_MAX];
+        ssize_t ret = readlink(String::format("/proc/%d/exe", pid).string(), name_buffer, sizeof(name_buffer) - 1);
+        if (ret < 0) {
+            fprintf(stderr, "profile: readlink: %m\n");
+            exit(1);
+        }
+        name_buffer[ret] = '\0';
+        size_t name_size = ALIGN_UP(ret + 1, sizeof(size_t));
+
+        ret = read_profile(pid, buffer, PROFILE_BUFFER_MAX);
         if (ret < 0) {
             fprintf(stderr, "profile: read_profile: %m\n");
             exit(1);
@@ -56,6 +67,16 @@ int main(int argc, char** argv) {
         FILE* output_file = fopen("profile.data", "w");
         if (!output_file) {
             fprintf(stderr, "profile: fopen: %m\n");
+            exit(1);
+        }
+
+        if (fwrite(&name_size, sizeof(size_t), 1, output_file) != 1) {
+            fprintf(stderr, "profile: fwrite: %m\n");
+            exit(1);
+        }
+
+        if (fprintf(output_file, "%s%c", name_buffer, '\0') <= 0) {
+            fprintf(stderr, "profile: fprintf: %m\n");
             exit(1);
         }
 

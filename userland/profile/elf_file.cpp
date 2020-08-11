@@ -13,7 +13,7 @@ SharedPtr<ElfFile> ElfFile::find_or_create(FileId id) {
         return (*ret)->shared_from_this();
     }
 
-    const char* search_paths[] = { ".", "/usr/lib", "/lib" };
+    const char* search_paths[] = { "/usr/lib", "/lib" };
     for (auto* path : search_paths) {
         DIR* d = opendir(path);
         if (!d) {
@@ -86,6 +86,14 @@ SharedPtr<ElfFile> ElfFile::create(FileId file_id, const String& path) {
     ret->__set_weak_this(ret);
     s_elf_file_map.put(file_id, ret.get());
     return ret;
+}
+
+SharedPtr<ElfFile> ElfFile::create(const String& path) {
+    struct stat st;
+    if (stat(path.string(), &st) < 0) {
+        return nullptr;
+    }
+    return ElfFile::create({ st.st_ino, st.st_dev }, path);
 }
 
 ElfFile::ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file, String path)

@@ -45,11 +45,9 @@ UniquePtr<Profile> Profile::create(const String& path) {
         return nullptr;
     }
 
-    SharedPtr<ElfFile> kernel_object;
-    struct stat st;
-    if (stat("/boot/kernel", &st) == 0) {
-        kernel_object = ElfFile::create({ st.st_ino, st.st_dev }, "/boot/kernel");
-    }
+    size_t exec_name_length = *((size_t*) file->data());
+    SharedPtr<ElfFile> executable = ElfFile::create((char*) (file->data() + sizeof(size_t)));
+    SharedPtr<ElfFile> kernel_object = ElfFile::create("/boot/kernel");
 
     MemoryMap current_memory_map;
     auto process_stack_trace = [&](const profile_event_stack_trace* ev) {
@@ -83,7 +81,7 @@ UniquePtr<Profile> Profile::create(const String& path) {
         current_memory_map.add({ 0xFFFFFF0000000000, 0xFFFFFFFFFFFFFFFF, kernel_object });
     };
 
-    size_t offset = 0;
+    size_t offset = sizeof(size_t) + exec_name_length;
     while (offset < file->size()) {
         auto* pev = PEV_AT_OFFSET(file->data(), offset);
         switch (pev->type) {
