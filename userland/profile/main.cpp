@@ -12,19 +12,33 @@
 #include "profile.h"
 
 void print_usage_and_exit(const char* s) {
-    fprintf(stderr, "Usage: %s <args...>\n", s);
+    fprintf(stderr, "Usage: %s [-o output] [-v file] <args...>\n", s);
     exit(2);
 }
 
 int main(int argc, char** argv) {
+    const char* output_path = "profile.data";
+    const char* to_view = nullptr;
+
     int opt;
-    while ((opt = getopt(argc, argv, ":")) != -1) {
+    while ((opt = getopt(argc, argv, ":o:v:")) != -1) {
         switch (opt) {
+            case 'o':
+                output_path = optarg;
+                break;
+            case 'v':
+                to_view = optarg;
+                break;
             case ':':
             case '?':
                 print_usage_and_exit(*argv);
                 break;
         }
+    }
+
+    if (to_view) {
+        view_profile(to_view);
+        return 0;
     }
 
     pid_t pid = fork();
@@ -64,7 +78,7 @@ int main(int argc, char** argv) {
             exit(1);
         }
 
-        FILE* output_file = fopen("profile.data", "w");
+        FILE* output_file = fopen(output_path, "w");
         if (!output_file) {
             fprintf(stderr, "profile: fopen: %m\n");
             exit(1);
@@ -98,7 +112,7 @@ int main(int argc, char** argv) {
         }
 
         assert(wait_result == pid);
-        view_profile("profile.data");
+        view_profile(output_path);
     });
 
     loop.enter();

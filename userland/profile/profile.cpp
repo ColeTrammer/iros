@@ -66,9 +66,9 @@ UniquePtr<Profile> Profile::create(const String& path) {
                     symbol_name = result.value();
                 }
             }
-            fprintf(stderr, "Symbol: [ %#.16lX, %s ]\n", addr, symbol_name.string());
+            printf("Symbol: [ %#.16lX, %s ]\n", addr, symbol_name.string());
         }
-        fprintf(stderr, "\n");
+        printf("\n");
     };
 
     auto process_memory_map = [&](const profile_event_memory_map* ev) {
