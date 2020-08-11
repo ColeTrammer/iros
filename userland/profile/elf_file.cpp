@@ -33,6 +33,7 @@ SharedPtr<ElfFile> ElfFile::find_or_create(FileId id) {
 
             auto result = ElfFile::create(id, String::format("%s/%s", path, ent->d_name));
             if (result) {
+                closedir(d);
                 return result;
             }
         }
