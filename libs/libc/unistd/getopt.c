@@ -30,6 +30,11 @@ int getopt(int argc, char *const argv[], const char *optstring) {
     }
 
     while (optind < argc) {
+        if (strcmp(argv[optind], "--") == 0) {
+            optind++;
+            break;
+        }
+
         if (is_opt(argv[optind])) {
             nextchar = nextchar ? nextchar : (argv[optind] + 1);
             char first = *nextchar;
