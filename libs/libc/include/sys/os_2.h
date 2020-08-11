@@ -17,6 +17,7 @@
 
 #define PROFILE_BUFFER_MAX       1024 * 4096
 #define PROFILE_MAX_STACK_FRAMES 35
+#define PROFILE_MAX_MEMORY_MAP   30
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +54,7 @@ struct initial_process_info {
     int has_interpreter;
 };
 
-enum profile_event_type { PEV_STACK_TRACE };
+enum profile_event_type { PEV_STACK_TRACE, PEV_MEMORY_MAP };
 
 struct profile_event_stack_trace {
     uint8_t type;
@@ -62,6 +63,26 @@ struct profile_event_stack_trace {
 } __attribute__((packed));
 
 #define PEV_STACK_TRACE_SIZE(pev) (sizeof(struct profile_event_stack_trace) + ((pev)->count) * sizeof(pev->frames[0]))
+
+struct profile_event_memory_object {
+    uintptr_t start;
+    uintptr_t end;
+    ino_t inode_id;
+    dev_t fs_id;
+} __attribute__((packed));
+
+struct profile_event_memory_map {
+    uint8_t type;
+    uint8_t count;
+    struct profile_event_memory_object mem[0];
+} __attribute__((packed));
+
+struct profile_event {
+    uint8_t type;
+    uint8_t data[0];
+} __attribute__((packed));
+
+#define PEV_MEMORY_MAP_SIZE(pev) (sizeof(struct profile_event_memory_map) + ((pev)->count) * sizeof(pev->mem[0]))
 
 #ifndef SYS_OS_2_NO_FUNCTIONS
 int create_task(struct create_task_args *create_task_args);

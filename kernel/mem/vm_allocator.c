@@ -18,6 +18,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_object.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
@@ -276,6 +277,7 @@ static int do_unmap_range(uintptr_t addr, size_t length) {
         debug_log("Removing region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", r->start, r->end, addr, length);
 #endif /* MMAP_DEBUG */
 
+        bool region_important_to_profiler = !(r->flags & VM_NO_EXEC) && r->vm_object && r->vm_object->type == VM_INODE;
         if (r->vm_object) {
             drop_vm_object(r->vm_object);
         }
@@ -296,6 +298,10 @@ static int do_unmap_range(uintptr_t addr, size_t length) {
         }
 
         free(r);
+
+        if (region_important_to_profiler && atomic_load(&process->should_profile)) {
+            proc_record_memory_map(process);
+        }
     }
     return 0;
 }

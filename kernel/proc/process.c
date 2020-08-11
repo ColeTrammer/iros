@@ -13,6 +13,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/process.h>
+#include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>

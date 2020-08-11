@@ -302,15 +302,18 @@ SYS_CALL(exit) {
 
     SYS_PARAM1(int, exit_code);
 
-    /* Disable Interrups To Prevent Premature Task Removal, Since Sched State Is Set */
-    disable_interrupts();
-
     struct process *process = get_current_process();
     mutex_lock(&process->lock);
     // Some other thread exited first, we shouldn't overwrite their exit code.
     if (get_current_task()->should_exit) {
         mutex_unlock(&process->lock);
         SYS_RETURN_NORETURN();
+    }
+
+    if (process->should_profile) {
+        spin_lock(&process->profile_buffer_lock);
+        proc_record_profile_stack();
+        spin_unlock(&process->profile_buffer_lock);
     }
 
     exit_process(process, NULL);

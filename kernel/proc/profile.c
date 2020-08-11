@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/profile.h>
@@ -13,6 +14,28 @@ void proc_write_profile_buffer(struct process *process, const void *buffer, size
     sz = MIN(sz, process->profile_buffer->end - process->profile_buffer->start - process->profile_buffer_size);
     memcpy((void *) process->profile_buffer->start + process->profile_buffer_size, buffer, sz);
     process->profile_buffer_size += sz;
+}
+
+void proc_record_memory_map(struct process *process) {
+    spin_lock(&process->profile_buffer_lock);
+    char raw_buffer[sizeof(struct profile_event_memory_map) + PROFILE_MAX_MEMORY_MAP * sizeof(struct profile_event_memory_object)];
+    struct profile_event_memory_map *pev = (void *) raw_buffer;
+    pev->type = PEV_MEMORY_MAP;
+    pev->count = 0;
+
+    for (struct vm_region *region = process->process_memory; region && pev->count < PROFILE_MAX_MEMORY_MAP; region = region->next) {
+        if (region->vm_object && region->vm_object->type == VM_INODE && !(region->flags & VM_NO_EXEC)) {
+            struct profile_event_memory_object *obj = &pev->mem[pev->count++];
+            obj->start = region->start;
+            obj->end = region->end;
+            struct inode *inode = ((struct inode_vm_object_data *) region->vm_object->private_data)->inode;
+            obj->inode_id = inode->index;
+            obj->fs_id = inode->fsid;
+        }
+    }
+
+    proc_write_profile_buffer(process, raw_buffer, PEV_MEMORY_MAP_SIZE(pev));
+    spin_unlock(&process->profile_buffer_lock);
 }
 
 int proc_enable_profiling(pid_t pid) {

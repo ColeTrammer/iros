@@ -1,9 +1,12 @@
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/process.h>
+#include <kernel/proc/profile.h>
 
 // #define VM_REGION_DEBUG
 
@@ -134,6 +137,14 @@ int vm_map_region_with_object(struct vm_region *self) {
     assert(self->vm_object);
     assert(self->vm_object->ops);
     assert(self->vm_object->ops->map);
+    struct process *process = get_current_process();
+    if (!(self->flags & VM_NO_EXEC) && self->vm_object->type == VM_INODE) {
+        if (atomic_load(&process->should_profile)) {
+            // The profiler records the executable memory mapped regions so that the symbol information
+            // of said reasons can be reconstructed in userspace.
+            proc_record_memory_map(process);
+        }
+    }
     return self->vm_object->ops->map(self->vm_object, self);
 }
 

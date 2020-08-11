@@ -8,6 +8,7 @@
 struct process;
 
 void proc_record_profile_stack(void);
+void proc_record_memory_map(struct process *process);
 void proc_write_profile_buffer(struct process *process, const void *buffer, size_t size);
 
 int proc_enable_profiling(pid_t pid);
