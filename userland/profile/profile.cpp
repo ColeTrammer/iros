@@ -51,7 +51,7 @@ UniquePtr<Profile> Profile::create(const String& path) {
     auto exec_name = String((char*) (file->data() + sizeof(size_t)));
     SharedPtr<ElfFile> executable = ElfFile::create(exec_name);
     SharedPtr<ElfFile> kernel_object = ElfFile::create("/boot/kernel");
-    ProfileNode root(exec_name, 0);
+    ProfileNode root(exec_name, exec_name, 0);
 
     MemoryMap current_memory_map;
     auto add_kernel_object = [&] {
@@ -69,6 +69,7 @@ UniquePtr<Profile> Profile::create(const String& path) {
             auto addr = ev->frames[i - 1];
 
             String symbol_name = "??";
+            String object_path = "??";
             auto* memory_object = current_memory_map.find_by_addr(addr);
             if (memory_object && memory_object->file) {
                 uintptr_t offset = addr;
@@ -79,10 +80,11 @@ UniquePtr<Profile> Profile::create(const String& path) {
                 if (result.has_value()) {
                     symbol_name = result.value().name;
                     addr -= result.value().offset;
+                    object_path = memory_object->file->path();
                 }
             }
 
-            current_node = current_node->link(symbol_name, addr);
+            current_node = current_node->link(symbol_name, object_path, addr);
 
 #ifdef PROFILE_DEBUG
             printf("Symbol: [ %#.16lX, %s ]\n", addr, symbol_name.string());
@@ -137,15 +139,15 @@ UniquePtr<Profile> Profile::create(const String& path) {
     return make_unique<Profile>(move(root));
 }
 
-ProfileNode* ProfileNode::link(const String& name, uintptr_t address) {
+ProfileNode* ProfileNode::link(const String& name, const String& object_path, uintptr_t address) {
     bump_total_count();
 
     auto* node = m_nodes.first_match([&](auto& n) {
-        return n.name() == name && n.address() == address;
+        return n.name() == name && n.address() == address && n.object_path() == object_path;
     });
 
     if (!node) {
-        m_nodes.add(ProfileNode(name, address));
+        m_nodes.add(ProfileNode(name, object_path, address));
         node = &m_nodes.last();
     }
 
