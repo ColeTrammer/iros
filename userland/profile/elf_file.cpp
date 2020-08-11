@@ -113,7 +113,7 @@ ElfFile::~ElfFile() {
     s_elf_file_map.remove(m_file_id);
 }
 
-Maybe<String> ElfFile::lookup_symbol(uintptr_t addr) const {
+Maybe<ElfFile::LookupResult> ElfFile::lookup_symbol(uintptr_t addr) const {
     if (!m_string_table || !m_symbol_table) {
         return {};
     }
@@ -123,7 +123,7 @@ Maybe<String> ElfFile::lookup_symbol(uintptr_t addr) const {
     for (size_t i = 0; i < symbol_count; i++) {
         auto& sym = symbols[i];
         if (sym.st_size && sym.st_value <= addr && addr <= sym.st_value + sym.st_size) {
-            return { string_at(sym.st_name) };
+            return { { string_at(sym.st_name), addr - sym.st_value } };
         }
     }
 

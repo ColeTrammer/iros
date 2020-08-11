@@ -113,6 +113,7 @@ int main(int argc, char** argv) {
 
         assert(wait_result == pid);
         view_profile(output_path);
+        loop.set_should_exit(true);
     });
 
     loop.enter();

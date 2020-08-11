@@ -62,7 +62,12 @@ public:
     size_t shdr_count() const { return elf_header()->e_shnum; }
     const Elf64_Shdr* shdr_at(size_t i) { return (const Elf64_Shdr*) offset_in_memory(elf_header()->e_shoff + shdr_size() * i); }
 
-    Maybe<String> lookup_symbol(uintptr_t offset) const;
+    struct LookupResult {
+        String name;
+        uintptr_t offset;
+    };
+
+    Maybe<LookupResult> lookup_symbol(uintptr_t offset) const;
     bool relocatable() const { return elf_header()->e_type == ET_DYN; }
 
     const String& path() const { return m_path; }

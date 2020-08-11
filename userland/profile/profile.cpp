@@ -10,6 +10,8 @@
 #include "elf_file.h"
 #include "profile.h"
 
+// #define PROFILE_DEBUG
+
 #define PEV_AT_OFFSET(buffer, o) ((const profile_event*) (((uint8_t*) (buffer)) + (o)))
 
 class MemoryMap {
@@ -46,8 +48,10 @@ UniquePtr<Profile> Profile::create(const String& path) {
     }
 
     size_t exec_name_length = *((size_t*) file->data());
-    SharedPtr<ElfFile> executable = ElfFile::create((char*) (file->data() + sizeof(size_t)));
+    auto exec_name = String((char*) (file->data() + sizeof(size_t)));
+    SharedPtr<ElfFile> executable = ElfFile::create(exec_name);
     SharedPtr<ElfFile> kernel_object = ElfFile::create("/boot/kernel");
+    ProfileNode root(exec_name, 0);
 
     MemoryMap current_memory_map;
     auto add_kernel_object = [&] {
@@ -56,8 +60,13 @@ UniquePtr<Profile> Profile::create(const String& path) {
     add_kernel_object();
 
     auto process_stack_trace = [&](const profile_event_stack_trace* ev) {
-        for (size_t i = 0; i < ev->count; i++) {
-            auto addr = ev->frames[i];
+        if (ev->count == 0) {
+            return;
+        }
+
+        auto* current_node = &root;
+        for (size_t i = ev->count; i > 0; i--) {
+            auto addr = ev->frames[i - 1];
 
             String symbol_name = "??";
             auto* memory_object = current_memory_map.find_by_addr(addr);
@@ -68,21 +77,32 @@ UniquePtr<Profile> Profile::create(const String& path) {
                 }
                 auto result = memory_object->file->lookup_symbol(offset);
                 if (result.has_value()) {
-                    symbol_name = result.value();
+                    symbol_name = result.value().name;
+                    addr -= result.value().offset;
                 }
             }
+
+            current_node = current_node->link(symbol_name, addr);
+
+#ifdef PROFILE_DEBUG
             printf("Symbol: [ %#.16lX, %s ]\n", addr, symbol_name.string());
+#endif /* PROFILE_DEBUG */
         }
+
+        current_node->bump_self_count();
+
+#ifdef PROFILE_DEBUG
         printf("\n");
+#endif /* PROFILE_DEBUG */
     };
 
     auto process_memory_map = [&](const profile_event_memory_map* ev) {
-        current_memory_map.clear();
+        MemoryMap new_memory_map;
         for (size_t i = 0; i < ev->count; i++) {
             auto& raw_object = ev->mem[i];
-            current_memory_map.add(
-                { raw_object.start, raw_object.end, ElfFile::find_or_create({ raw_object.inode_id, raw_object.fs_id }) });
+            new_memory_map.add({ raw_object.start, raw_object.end, ElfFile::find_or_create({ raw_object.inode_id, raw_object.fs_id }) });
         }
+        current_memory_map.objects() = move(new_memory_map.objects());
         add_kernel_object();
     };
 
@@ -114,7 +134,33 @@ UniquePtr<Profile> Profile::create(const String& path) {
     }
 #endif /* PROFILE_DEBUG */
 
-    return nullptr;
+    return make_unique<Profile>(move(root));
+}
+
+ProfileNode* ProfileNode::link(const String& name, uintptr_t address) {
+    bump_total_count();
+
+    auto* node = m_nodes.first_match([&](auto& n) {
+        return n.name() == name && n.address() == address;
+    });
+
+    if (!node) {
+        m_nodes.add(ProfileNode(name, address));
+        node = &m_nodes.last();
+    }
+
+    return node;
+}
+
+void ProfileNode::dump(int level) const {
+    printf("%*s ( %lu / %lu )\n", static_cast<int>(m_name.size()) + level, m_name.string(), m_self_count, m_total_count);
+    for (auto& child : m_nodes) {
+        child.dump(level + 1);
+    }
+}
+
+void Profile::dump() const {
+    m_root.dump(0);
 }
 
 void view_profile(const String& path) {
@@ -123,4 +169,6 @@ void view_profile(const String& path) {
         fprintf(stderr, "profile: failed to read profile file `%s'\n", path.string());
         exit(1);
     }
+
+    profile->dump();
 }
