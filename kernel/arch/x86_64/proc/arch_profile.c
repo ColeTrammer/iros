@@ -26,10 +26,15 @@ void proc_record_profile_stack(struct task_state *task_state) {
     uintptr_t rip;
     uintptr_t rbp;
     if (task_state) {
+        // Called from IRQ context (preemption)
         rip = task_state->stack_state.rip;
         rbp = task_state->cpu_state.rbp;
+    } else if (!in_kernel) {
+        // Called from CPU fault context (#GP or #PF)
+        rip = current->arch_task.task_state.stack_state.rip;
+        rbp = current->arch_task.task_state.cpu_state.rbp;
     } else {
-        assert(in_kernel);
+        // Called at program exit time
         rip = (uintptr_t) proc_record_profile_stack;
         asm volatile("mov %%rbp, %0" : "=r"(rbp) : : "memory");
     }
