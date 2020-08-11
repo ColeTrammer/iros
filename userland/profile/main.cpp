@@ -7,6 +7,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "profile.h"
+
 void print_usage_and_exit(const char* s) {
     fprintf(stderr, "Usage: %s <args...>\n", s);
     exit(2);
@@ -75,7 +77,7 @@ int main(int argc, char** argv) {
         }
 
         assert(wait_result == pid);
-        exit(0);
+        view_profile("profile.data");
     });
 
     loop.enter();
