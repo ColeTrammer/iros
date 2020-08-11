@@ -86,6 +86,7 @@ void EventLoop::do_select() {
                     auto* handler = s_watched_signals.get(signo);
                     assert(handler);
                     (*handler)();
+                    return;
                 }
                 continue;
             }
