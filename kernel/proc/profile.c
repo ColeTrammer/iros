@@ -59,6 +59,7 @@ int proc_enable_profiling(pid_t pid) {
 
         process->profile_buffer = profile_buffer;
         atomic_store(&process->should_profile, 1);
+        proc_record_memory_map(process);
     }
     mutex_unlock(&process->lock);
 
