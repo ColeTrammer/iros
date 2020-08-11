@@ -23,6 +23,9 @@ public:
     void add(MemoryObject object) { m_objects.add(move(object)); }
     void clear() { m_objects.clear(); }
 
+    Vector<MemoryObject>& objects() { return m_objects; }
+    const Vector<MemoryObject>& objects() const { return m_objects; }
+
     const MemoryObject* find_by_addr(uintptr_t addr) const {
         for (auto& object : m_objects) {
             if (object.start <= addr && addr < object.end) {
@@ -77,7 +80,7 @@ UniquePtr<Profile> Profile::create(const String& path) {
             current_memory_map.add(
                 { raw_object.start, raw_object.end, ElfFile::find_or_create({ raw_object.inode_id, raw_object.fs_id }) });
         }
-        current_memory_map.add({ 0xFFFFFF0000000000, -1, kernel_object });
+        current_memory_map.add({ 0xFFFFFF0000000000, 0xFFFFFFFFFFFFFFFF, kernel_object });
     };
 
     size_t offset = 0;
@@ -101,6 +104,12 @@ UniquePtr<Profile> Profile::create(const String& path) {
                 return nullptr;
         }
     }
+
+#ifdef PROFILE_DEBUG
+    for (auto& object : current_memory_map.objects()) {
+        fprintf(stderr, "Object: [ %#.16lX, %#.16lX, %s ]\n", object.start, object.end, object.file ? object.file->path().string() : "??");
+    }
+#endif /* PROFILE_DEBUG */
 
     return nullptr;
 }

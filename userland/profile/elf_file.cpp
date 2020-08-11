@@ -13,7 +13,7 @@ SharedPtr<ElfFile> ElfFile::find_or_create(FileId id) {
         return (*ret)->shared_from_this();
     }
 
-    const char* search_paths[] = { ".", "/usr/lib" };
+    const char* search_paths[] = { ".", "/usr/lib", "/lib" };
     for (auto* path : search_paths) {
         DIR* d = opendir(path);
         if (!d) {
@@ -82,13 +82,14 @@ SharedPtr<ElfFile> ElfFile::create(FileId file_id, const String& path) {
         return nullptr;
     }
 
-    auto ret = make_shared<ElfFile>(file_id, move(mapped_file));
+    auto ret = make_shared<ElfFile>(file_id, move(mapped_file), path);
     ret->__set_weak_this(ret);
     s_elf_file_map.put(file_id, ret.get());
     return ret;
 }
 
-ElfFile::ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file) : m_file_id(file_id), m_file(move(file)) {
+ElfFile::ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file, String path)
+    : m_file_id(file_id), m_file(move(file)), m_path(move(path)) {
     for (size_t i = 0; i < shdr_count(); i++) {
         auto& shdr = *shdr_at(i);
         if (shdr.sh_type == SHT_STRTAB && i != elf_header()->e_shstrndx) {
@@ -112,7 +113,7 @@ Maybe<String> ElfFile::lookup_symbol(uintptr_t addr) const {
     auto* symbols = (const Elf64_Sym*) offset_in_memory(m_symbol_table->sh_offset);
     for (size_t i = 0; i < symbol_count; i++) {
         auto& sym = symbols[i];
-        if (sym.st_value <= addr && addr < sym.st_value + sym.st_size) {
+        if (sym.st_size && sym.st_value <= addr && addr <= sym.st_value + sym.st_size) {
             return { string_at(sym.st_name) };
         }
     }

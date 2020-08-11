@@ -27,7 +27,7 @@ public:
     static SharedPtr<ElfFile> find_or_create(FileId id);
     static SharedPtr<ElfFile> create(FileId id, const String& path);
 
-    ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file);
+    ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file, String path);
     ~ElfFile();
 
     SharedPtr<ElfFile> shared_from_this() { return m_weak_this.lock(); }
@@ -64,9 +64,12 @@ public:
     Maybe<String> lookup_symbol(uintptr_t offset) const;
     bool relocatable() const { return elf_header()->e_type == ET_DYN; }
 
+    const String& path() const { return m_path; }
+
 private:
     FileId m_file_id { 0, 0 };
     UniquePtr<Ext::MappedFile> m_file;
+    String m_path;
     const Elf64_Shdr* m_string_table { nullptr };
     const Elf64_Shdr* m_symbol_table { nullptr };
     mutable WeakPtr<ElfFile> m_weak_this;
