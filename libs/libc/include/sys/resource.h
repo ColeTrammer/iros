@@ -11,13 +11,14 @@
 #define RUSAGE_SELF     0
 #define RUSAGE_CHILDREN 1
 
-#define RLIMIT_CORE   0
-#define RLIMIT_CPU    1
-#define RLIMIT_DATA   2
-#define RLIMIT_FSIZE  3
-#define RLIMIT_NOFILE 4
-#define RLIMIT_STACK  5
-#define RLIMIT_AS     6
+#define RLIMIT_CORE    0
+#define RLIMIT_CPU     1
+#define RLIMIT_DATA    2
+#define RLIMIT_FSIZE   3
+#define RLIMIT_NOFILE  4
+#define RLIMIT_STACK   5
+#define RLIMIT_AS      6
+#define RLIMIT_NLIMITS 7
 
 #ifdef __cplusplus
 extern "C" {

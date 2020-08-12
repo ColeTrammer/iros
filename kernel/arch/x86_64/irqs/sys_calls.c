@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/os_2.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/statvfs.h>
 #include <sys/syscall.h>
@@ -2206,6 +2207,24 @@ SYS_CALL(disable_profiling) {
     SYS_PARAM1(pid_t, pid);
 
     SYS_RETURN(proc_disable_profiling(pid));
+}
+
+SYS_CALL(getrlimit) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, what);
+    SYS_PARAM2_VALIDATE(struct rlimit *, limit, validate_write, sizeof(struct rlimit));
+
+    SYS_RETURN(proc_getrlimit(get_current_process(), what, limit));
+}
+
+SYS_CALL(setrlimit) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, what);
+    SYS_PARAM2_VALIDATE(const struct rlimit *, limit, validate_read, sizeof(const struct rlimit));
+
+    SYS_RETURN(proc_setrlimit(get_current_process(), what, limit));
 }
 
 SYS_CALL(invalid_system_call) {

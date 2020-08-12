@@ -3,6 +3,7 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <sys/resource.h>
 #include <sys/times.h>
 #include <sys/types.h>
 
@@ -91,6 +92,8 @@ struct process {
 
     struct timespec start_time;
 
+    struct rlimit limits[RLIMIT_NLIMITS];
+
     int should_profile;
     struct vm_region *profile_buffer;
     size_t profile_buffer_size;
@@ -124,6 +127,9 @@ uintptr_t proc_allocate_user_stack(struct process *process, struct initial_proce
 struct process *find_by_pid(pid_t pid);
 void proc_set_sig_pending(struct process *process, int n);
 void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *process, void *closure), void *closure);
+
+int proc_getrlimit(struct process *process, int what, struct rlimit *limit);
+int proc_setrlimit(struct process *process, int what, const struct rlimit *limit);
 
 int proc_getgroups(size_t size, gid_t *list);
 int proc_setgroups(size_t size, const gid_t *list);

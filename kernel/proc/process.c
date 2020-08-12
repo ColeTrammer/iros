@@ -429,6 +429,44 @@ bool proc_in_group(struct process *process, gid_t group) {
     return false;
 }
 
+int proc_getrlimit(struct process *process, int what, struct rlimit *limit) {
+    if (what < 0 || what >= RLIMIT_NLIMITS) {
+        return -EINVAL;
+    }
+
+    mutex_lock(&process->lock);
+    memcpy(limit, &process->limits[what], sizeof(struct rlimit));
+    mutex_unlock(&process->lock);
+    return 0;
+}
+
+int proc_setrlimit(struct process *process, int what, const struct rlimit *user_limit) {
+    if (what < 0 || what >= RLIMIT_NLIMITS) {
+        return -EINVAL;
+    }
+
+    struct rlimit new_limit;
+    memcpy(&new_limit, user_limit, sizeof(struct rlimit));
+    if (new_limit.rlim_cur > new_limit.rlim_max) {
+        return -EINVAL;
+    }
+
+    int ret = 0;
+    mutex_lock(&process->lock);
+    if (process->euid == 0) {
+        process->limits[what] = new_limit;
+    } else {
+        struct rlimit *current_limit = &process->limits[what];
+        if ((new_limit.rlim_max > current_limit->rlim_max) || (new_limit.rlim_cur > current_limit->rlim_max)) {
+            ret = -EPERM;
+        } else {
+            process->limits[what] = new_limit;
+        }
+    }
+    mutex_unlock(&process->lock);
+    return ret;
+}
+
 void init_processes() {
     debug_log("Initializing processes\n");
     map = hash_create_hash_map(process_hash, process_equals, process_key);

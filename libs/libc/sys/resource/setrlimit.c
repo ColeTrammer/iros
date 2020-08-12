@@ -1,10 +1,8 @@
 #include <errno.h>
 #include <sys/resource.h>
+#include <sys/syscall.h>
 
-int setrlimit(int resource, const struct rlimit *rlim) {
-    (void) resource;
-    (void) rlim;
-
-    errno = EPERM;
-    return -1;
+int setrlimit(int what, const struct rlimit *res) {
+    int ret = (int) syscall(SYS_SETRLIMIT, what, res);
+    __SYSCALL_TO_ERRNO(ret);
 }
