@@ -8,10 +8,17 @@
 extern "C" {
 #endif /* __cplusplus */
 
-uint32_t htonl(uint32_t);
-uint16_t htons(uint16_t);
-uint32_t ntohl(uint32_t);
-uint16_t ntohs(uint16_t);
+#if BTYE_ORDER == LITTLE_ENDIAN
+#define ntohs(x) __builtin_bswap16(x)
+#define htons(x) __builtin_bswap16(x)
+#define ntohl(x) __builtin_bswap32(x)
+#define htonl(x) __builtin_bswap32(x)
+#else
+#define ntohs(x) x
+#define htons(x) x
+#define ntohl(x) x
+#define htonl(x) x
+#endif /* BTYE_ORDER==LITTLE_ENDIAN */
 
 in_addr_t inet_addr(const char *cp);
 char *inet_ntoa(struct in_addr);
