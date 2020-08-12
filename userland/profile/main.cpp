@@ -12,10 +12,10 @@
 #include "profile.h"
 
 enum Flags {
-    Disable,
-    Wait,
-    Invert,
-    Quiet,
+    Disable = 1,
+    Wait = 2,
+    Invert = 4,
+    Quiet = 8,
 };
 
 static void build_and_view_profile(pid_t pid, const char* output_path, int flags) {
@@ -104,8 +104,10 @@ int main(int argc, char** argv) {
     pid_t pid_to_profile = 0;
     int flags = Flags::Wait;
 
+    signal(SIGWINCH, SIG_IGN);
+
     int opt;
-    while ((opt = getopt(argc, argv, ":io:pq:v:")) != -1) {
+    while ((opt = getopt(argc, argv, ":io:p:qv:")) != -1) {
         switch (opt) {
             case 'i':
                 flags |= Flags::Invert;
