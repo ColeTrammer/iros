@@ -2,5 +2,5 @@
 #include <stdio.h>
 
 void funlockfile(FILE *stream) {
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
 }

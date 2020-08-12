@@ -14,7 +14,7 @@ ssize_t getdelim(char **__restrict line_ptr, size_t *__restrict n, int delim, FI
         *line_ptr = malloc(*n);
     }
 
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
 
     size_t pos = 0;
     for (;;) {
@@ -22,7 +22,7 @@ ssize_t getdelim(char **__restrict line_ptr, size_t *__restrict n, int delim, FI
 
         /* Indicate IO error or out of lines */
         if (c == EOF && (ferror_unlocked(stream) || pos == 0)) {
-            __unlock(&stream->__lock);
+            __unlock_recursive(&stream->__lock);
             return -1;
         }
 
@@ -43,13 +43,13 @@ ssize_t getdelim(char **__restrict line_ptr, size_t *__restrict n, int delim, FI
             *n *= 2;
             *line_ptr = realloc(*line_ptr, *n);
             if (!*line_ptr) {
-                __unlock(&stream->__lock);
+                __unlock_recursive(&stream->__lock);
                 return -1;
             }
         }
     }
 
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
 
     return (ssize_t) pos;
 }

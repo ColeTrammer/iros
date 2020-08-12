@@ -111,7 +111,7 @@ static spinlock_t __malloc_lock;
 #define __unlock spin_unlock
 #else
 #include <bits/lock.h>
-static unsigned int __malloc_lock;
+static struct __lock __malloc_lock;
 #endif /* __is_libk */
 
 #if defined(__is_libk) && defined(KERNEL_MALLOC_DEBUG)

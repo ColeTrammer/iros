@@ -1,6 +1,7 @@
 #ifndef _STDIO_H
 #define _STDIO_H 1
 
+#include <bits/lock.h>
 #include <bits/off_t.h>
 #include <bits/seek_constants.h>
 #include <bits/ssize_t.h>
@@ -26,6 +27,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef long fpos_t;
+
+#ifndef __is_libk
 
 #define __STDIO_OWNED                 4
 #define __STDIO_READABLE              8
@@ -53,14 +56,14 @@ struct __file {
     int __fd;
     int __flags;
     int __ungetc_character;
-    unsigned int __lock;
+    struct __recursive_lock __lock;
 };
 
 typedef struct __file FILE;
 
 extern FILE *__file_list_head;
 extern FILE *__file_list_tail;
-extern unsigned int __file_list_lock;
+extern struct __lock __file_list_lock;
 extern int __p_child_pid;
 
 struct __stdio_flags __stdio_parse_mode_string(const char *s);
@@ -79,8 +82,6 @@ extern int __should_log;
     } while (0)
 #endif /* NDEBUG */
 
-#ifndef __is_libk
-
 extern FILE *stdout;
 #define stdout stdout
 
@@ -90,6 +91,9 @@ extern FILE *stdin;
 extern FILE *stderr;
 #define stderr stderr
 
+#else
+typedef struct {
+} FILE;
 #endif /* __is_libk */
 
 int fclose(FILE *stream);

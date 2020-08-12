@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 int getc(FILE *stream) {
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
     int ret = getc_unlocked(stream);
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     return ret;
 }

@@ -8,7 +8,7 @@ int fclose(FILE *stream) {
     // This lock order is important to prevent deadlock
     // when someone calls fflush(NULL)
     __lock(&__file_list_lock);
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
 
     __stdio_log(NULL, "fclose: %d", stream->__fd);
 
@@ -28,7 +28,7 @@ int fclose(FILE *stream) {
         free(stream->__buffer);
     }
 
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
 
     if (stream->__flags & __STDIO_DYNAMICALLY_ALLOCATED) {
         free(stream);

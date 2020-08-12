@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 int fseek(FILE *stream, long offset, int whence) {
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
     int ret = fseek_unlocked(stream, offset, whence);
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     return ret;
 }

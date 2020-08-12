@@ -7,7 +7,7 @@ int puts(const char *s) {
     int ret = 1;
     size_t len = strlen(s);
 
-    __lock(&stdout->__lock);
+    __lock_recursive(&stdout->__lock);
 
     if (stdout->__flags & __STDIO_ERROR) {
         return EOF;
@@ -56,6 +56,6 @@ int puts(const char *s) {
     ret = fputc_unlocked('\n', stdout);
 
 finish_puts:
-    __unlock(&stdout->__lock);
+    __unlock_recursive(&stdout->__lock);
     return ret;
 }

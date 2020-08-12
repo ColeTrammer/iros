@@ -51,7 +51,8 @@ FILE *__stdio_allocate_stream(int fd, int flags) {
     stream->__position = 0;
     stream->__fd = fd;
     stream->__flags = flags | _IOFBF | __STDIO_DYNAMICALLY_ALLOCATED | __STDIO_OWNED;
-    stream->__lock = 0;
+    stream->__lock.__lock = 0;
+    stream->__lock.__count = 0;
     stream->__ungetc_character = 0;
 
     __lock(&__file_list_lock);

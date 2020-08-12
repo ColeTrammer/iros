@@ -101,8 +101,11 @@ else()
         ${ARCH_HOSTED_SOURCES}
         assert/assert.c
         bits/lock/__lock.c
+        bits/lock/__lock_recursive.c
         bits/lock/__trylock.c
+        bits/lock/__trylock_recursive.c
         bits/lock/__unlock.c
+        bits/lock/__unlock_recursive.c
         bits/__allocate_thread_control_block.c
         bits/__free_thread_control_block.c
         bits/__cxa_atexit.c

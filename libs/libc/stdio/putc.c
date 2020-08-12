@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 int putc(int c, FILE *stream) {
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
     int ret = putc_unlocked(c, stream);
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     return ret;
 }

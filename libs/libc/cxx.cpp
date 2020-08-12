@@ -37,7 +37,7 @@ namespace __cxxabiv1 {
 __extension__ typedef int __guard __attribute__((mode(__DI__)));
 
 extern "C" int __cxa_guard_acquire(__guard *g) {
-    return __trylock((unsigned int *) g);
+    return __trylock((struct __lock *) g);
 }
 
 extern "C" void __cxa_guard_release(__guard *) {}

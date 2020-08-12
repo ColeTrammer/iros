@@ -2,5 +2,5 @@
 #include <stdio.h>
 
 int ftrylockfile(FILE *stream) {
-    return !__trylock(&stream->__lock);
+    return !__trylock_recursive(&stream->__lock);
 }

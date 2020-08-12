@@ -14,7 +14,7 @@ FILE *freopen(const char *__restrict path, const char *__restrict mode, FILE *__
 
     // We need to take this lock in case freopen fails, and we need to remove the file from the list
     __lock(&__file_list_lock);
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
     __stdio_log(NULL, "freopen: %s %s %d", path, mode, stream->__fd);
 
     fflush_unlocked(stream);
@@ -43,7 +43,7 @@ FILE *freopen(const char *__restrict path, const char *__restrict mode, FILE *__
     stream->__flags |= flags.__stream_flags;
 
 freopen_success:
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     __unlock(&__file_list_lock);
     return stream;
 
@@ -64,7 +64,7 @@ freopen_fail:
         free(stream->__buffer);
     }
 
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
 
     if (stream->__flags & __STDIO_DYNAMICALLY_ALLOCATED) {
         free(stream);

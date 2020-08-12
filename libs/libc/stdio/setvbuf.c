@@ -8,7 +8,7 @@ int setvbuf(FILE *__restrict stream, char *__restrict buf, int mode, size_t size
     }
 
     int ret = 0;
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
     __stdio_log(stream, "setvbuf: [ %d, %p, %d, %lu ]\n", stream->__fd, buf, mode, size);
 
     fflush_unlocked(stream);
@@ -41,6 +41,6 @@ int setvbuf(FILE *__restrict stream, char *__restrict buf, int mode, size_t size
 update_flags:
     stream->__flags &= ~(_IOFBF | _IONBF | _IOLBF);
     stream->__flags |= mode;
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     return ret;
 }

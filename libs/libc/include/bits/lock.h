@@ -7,9 +7,22 @@
 extern "C" {
 #endif /* __cplusplus */
 
-void __lock(unsigned int *lock);
-int __trylock(unsigned int *lock);
-void __unlock(unsigned int *lock);
+struct __lock {
+    unsigned int __lock;
+};
+
+struct __recursive_lock {
+    unsigned int __lock;
+    unsigned int __count;
+};
+
+void __lock(struct __lock *lock);
+int __trylock(struct __lock *lock);
+void __unlock(struct __lock *lock);
+
+void __lock_recursive(struct __recursive_lock *lock);
+int __trylock_recursive(struct __recursive_lock *lock);
+void __unlock_recursive(struct __recursive_lock *lock);
 
 #ifdef __cplusplus
 }

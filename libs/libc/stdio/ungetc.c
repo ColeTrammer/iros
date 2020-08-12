@@ -3,7 +3,7 @@
 
 int ungetc(int c, FILE *stream) {
     int ret = c;
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
 
     __stdio_log(stream, "ungetc: %d %c", stream->__fd, c);
 
@@ -14,6 +14,6 @@ int ungetc(int c, FILE *stream) {
         stream->__flags &= ~__STDIO_EOF;
         stream->__ungetc_character = c;
     }
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     return ret;
 }

@@ -10,7 +10,7 @@ FILE *stderr = &files[2];
 
 FILE *__file_list_head = files + 0;
 FILE *__file_list_tail = files + 2;
-unsigned int __file_list_lock;
+struct __lock __file_list_lock = { 0 };
 
 static char static_file_buffer[2 * BUFSIZ];
 

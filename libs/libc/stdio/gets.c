@@ -1,8 +1,8 @@
 #include <bits/lock.h>
 #include <stdio.h>
 
-__attribute__((deprecated)) char *gets(char *s) {
-    __lock(&stdin->__lock);
+char *gets(char *s) {
+    __lock_recursive(&stdin->__lock);
 
     size_t index = 0;
     int c;
@@ -11,6 +11,6 @@ __attribute__((deprecated)) char *gets(char *s) {
     }
 
     int error_set = stdin->__flags & __STDIO_ERROR;
-    __unlock(&stdin->__lock);
+    __unlock_recursive(&stdin->__lock);
     return (index == 0 || error_set) ? NULL : (s[index + 1] = '\0', s);
 }

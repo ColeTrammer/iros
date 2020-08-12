@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 long ftell(FILE *stream) {
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
 
     off_t ret = 0;
     if (stream->__flags & __STDIO_LAST_OP_WRITE) {
@@ -33,6 +33,6 @@ long ftell(FILE *stream) {
         ret = lseek(stream->__fd, 0, SEEK_CUR);
     }
 
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     return ret;
 }

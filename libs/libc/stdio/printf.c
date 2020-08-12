@@ -19,8 +19,8 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
 #ifdef __is_libk
 #define stdout NULL
 
-#define __lock(l)   ((void) 0)
-#define __unlock(l) ((void) 0)
+#define __lock_recursive(l)   ((void) 0)
+#define __unlock_recursive(l) ((void) 0)
 
 bool kprint(const char *, size_t);
 bool fprint(void *stream, const char *s, size_t len) {
@@ -145,9 +145,9 @@ int fprintf(FILE *stream, const char *__restrict format, ...) {
 }
 
 int vfprintf(FILE *stream, const char *__restrict format, va_list parameters) {
-    __lock(&stream->__lock);
+    __lock_recursive(&stream->__lock);
     int ret = printf_internal(fprint, stream, format, parameters);
-    __unlock(&stream->__lock);
+    __unlock_recursive(&stream->__lock);
     return ret;
 }
 #endif /* ONLY_DPRINTF */
