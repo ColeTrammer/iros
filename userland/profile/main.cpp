@@ -181,6 +181,12 @@ int main(int argc, char** argv) {
         build_and_view_profile(pid, output_path, flags);
         loop.set_should_exit(true);
     });
+    App::EventLoop::register_signal_handler(SIGINT, [&] {
+        flags &= ~Flags::Wait;
+        flags |= Flags::Disable | Flags::Quiet;
+        build_and_view_profile(pid, output_path, flags);
+        loop.set_should_exit(true);
+    });
 
     loop.enter();
     return 0;
