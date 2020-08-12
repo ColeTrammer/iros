@@ -8,6 +8,7 @@ export INSTALL_COMMAND=${INSTALL_COMMAND:-'install'}
 export ac_cv_fread_reads_directories=no
 export ac_cv_snprintf_returns_bogus=no
 
+export CFLAGS='-O2 -Wall -fno-omit-frame-pointer'
 export HAVE_DEV_TTY=Yes
 export NO_GETPAGESIZE=Yes
 export NO_TCLTK=Yes
@@ -22,12 +23,11 @@ patch() {
 
 configure() {
     autoconf
-    ./configure --host=$HOST --prefix=/usr --without-openssl --without-curl
+    ./configure --host=$HOST --prefix=/usr --without-openssl --without-curl --with-editor=edit --with-pager=cat
 }
 
 build() {
     make -j5
-    make strip
 }
 
 . ../.build_include.sh
