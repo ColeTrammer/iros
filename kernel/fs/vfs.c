@@ -34,6 +34,7 @@
 
 // #define INAME_DEBUG
 // #define INODE_REF_COUNT_DEBUG
+// #define VFS_DEBUG
 
 static struct file_system *file_systems;
 static struct mount *root;
@@ -142,7 +143,9 @@ int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct
     }
 
     assert(inode);
+#ifdef VFS_DEBUG
     debug_log("reading from: [ %s ]\n", path);
+#endif /* VFS_DEBUG */
     return fs_read_all_inode(inode, buffer, buffer_len);
 }
 
@@ -478,7 +481,9 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
     bool created_file = false;
     if (ret == -ENOENT) {
         if (flags & O_CREAT) {
+#ifdef VFS_DEBUG
             debug_log("Creating file: [ %s ]\n", file_name);
+#endif /* VFS_DEBUG */
 
             ret = 0;
             tnode = fs_mknod(file_name, (mode & 07777) | S_IFREG, 0, &ret);
@@ -489,7 +494,9 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
             created_file = true;
             assert(tnode);
         } else {
+#ifdef VFS_DEBUG
             debug_log("File Not Found: [ %s ]\n", file_name);
+#endif /* VFS_DEBUG */
             *error = ret;
             return NULL;
         }
@@ -1056,7 +1063,9 @@ struct tnode *fs_mkdir(const char *_path, mode_t mode, int *error) {
         return NULL;
     }
 
+#ifdef VFS_DEBUG
     debug_log("Adding dir to: [ %s ]\n", tparent->name);
+#endif /* VFS_DEBUG */
 
     struct inode *inode = tparent->inode->i_op->mkdir(tparent, last_slash + 1, mode | S_IFDIR, error);
     if (inode == NULL) {
@@ -1148,7 +1157,9 @@ struct tnode *fs_mknod(const char *_path, mode_t mode, dev_t device, int *error)
         return NULL;
     }
 
-    debug_log("Adding device to: [ %s, %#.5lX ]\n", tparent->name, device);
+#ifdef VFS_DEBUG
+    debug_log("Adding node to: [ %s, %#.5lX ]\n", tparent->name, device);
+#endif /* VFS_DEBUG */
 
     struct inode *inode = tparent->inode->i_op->mknod(tparent, last_slash + 1, mode, device, error);
     if (inode == NULL) {
@@ -1184,7 +1195,9 @@ int fs_create_pipe(struct file *pipe_files[2]) {
 int fs_unlink(const char *path, bool ignore_permission_checks) {
     assert(path);
 
+#ifdef VFS_DEBUG
     debug_log("Unlinking: [ %s ]\n", path);
+#endif /* VFS_DEBUG */
 
     struct tnode *tnode;
     int ret = iname(path, INAME_DONT_FOLLOW_TRAILING_SYMLINK, &tnode);
@@ -1468,7 +1481,9 @@ int fs_rename(const char *old_path, const char *new_path) {
     assert(old_path);
     assert(new_path);
 
+#ifdef VFS_DEBUG
     debug_log("Rename: [ %s, %s ]\n", old_path, new_path);
+#endif /* VFS_DEBUG */
 
     struct tnode *old;
     int ret = iname(old_path, 0, &old);
@@ -1965,7 +1980,9 @@ int fs_symlink(const char *target, const char *linkpath) {
         return -EINVAL;
     }
 
+#ifdef VFS_DEBUG
     debug_log("Adding symlink to: [ %s ]\n", tparent->name);
+#endif /* VFS_DEBUG */
 
     int error = 0;
     struct inode *inode = tparent->inode->i_op->symlink(tparent, last_slash + 1, target, &error);
@@ -2044,7 +2061,9 @@ int fs_link(const char *oldpath, const char *newpath) {
         return -EINVAL;
     }
 
+#ifdef VFS_DEBUG
     debug_log("Adding hard link to: [ %s ]\n", tparent->name);
+#endif /* VFS_DEBUG */
 
     ret = tparent->inode->i_op->link(tparent, last_slash + 1, target);
     if (ret < 0) {
