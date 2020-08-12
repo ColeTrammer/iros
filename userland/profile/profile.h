@@ -26,6 +26,7 @@ public:
 
     ProfileNode* link(const String& name, const String& object_path, uintptr_t address);
     void dump(int level) const;
+    void sort();
 
 private:
     Vector<ProfileNode> m_nodes;

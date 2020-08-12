@@ -147,6 +147,8 @@ UniquePtr<Profile> Profile::create(const String& path, bool invert_profile) {
     }
 #endif /* PROFILE_DEBUG */
 
+    root.sort();
+
     return make_unique<Profile>(move(root));
 }
 
@@ -167,6 +169,18 @@ void ProfileNode::dump(int level) const {
     printf("%*s ( %lu / %lu )\n", static_cast<int>(m_name.size()) + level, m_name.string(), m_self_count, m_total_count);
     for (auto& child : m_nodes) {
         child.dump(level + 1);
+    }
+}
+
+void ProfileNode::sort() {
+    qsort(m_nodes.vector(), m_nodes.size(), sizeof(ProfileNode), [](const void* k1, const void* k2) {
+        int a = ((const ProfileNode*) k1)->total_count();
+        int b = ((const ProfileNode*) k2)->total_count();
+        return a < b ? 1 : a == b ? 0 : -1;
+    });
+
+    for (auto& node : m_nodes) {
+        node.sort();
     }
 }
 
