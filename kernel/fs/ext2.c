@@ -28,6 +28,8 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
+// #define EXT2_DEBUG
+
 static struct file_system fs = {
     .name = "ext2",
     .mount = &ext2_mount,
@@ -357,7 +359,9 @@ static uint32_t ext2_find_open_block(struct super_block *sb, size_t blk_grp_inde
     }
 
     ret += data->sb->num_blocks_in_block_group * blk_grp_index + 1;
+#ifdef EXT2_DEBUG
     debug_log("Allocated block index: [ %ld ]\n", ret);
+#endif /* EXT2_DEBUG */
     return (uint32_t) ret;
 }
 
@@ -489,7 +493,9 @@ static uint32_t ext2_find_open_inode(struct super_block *sb, size_t blk_grp_inde
     }
 
     ret += data->sb->num_inodes_in_block_group * blk_grp_index + 1;
+#ifdef EXT2_DEBUG
     debug_log("Allocated inode index: [ %ld ]\n", ret);
+#endif /* EXT2_DEBUG */
     return (uint32_t) ret;
 }
 
@@ -910,7 +916,9 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         }
     }
 
+#ifdef EXT2_DEBUG
     debug_log("Adding inode to dir: [ %u, %s ]\n", index, tparent->name);
+#endif /* EXT2_DEBUG */
 
     /* We have found the right dirent */
     dirent->ino = index;
@@ -1088,7 +1096,9 @@ static ssize_t __ext2_read(struct inode *inode, off_t offset, void *buffer, size
 }
 
 static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffer, size_t len) {
+#ifdef EXT2_DEBUG
     debug_log("Writing file: [ %lu, %lu ]\n", offset, len);
+#endif /* EXT2_DEBUG */
 
     struct raw_inode *raw_inode = inode->private_data;
     ssize_t ret = 0;
@@ -1207,8 +1217,10 @@ int ext2_truncate(struct inode *inode, off_t size) {
                 if (indirect_block == NULL) {
                     indirect_block = ext2_allocate_blocks(inode->super_block, 1);
                     ssize_t _ret;
+#ifdef EXT2_DEBUG
                     debug_log("Indirect block: [ %u ]\n",
                               ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX]);
+#endif /* EXT2_DEBUG */
                     if ((_ret = ext2_read_blocks(inode->super_block, indirect_block,
                                                  ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX], 1)) !=
                         1) {
@@ -1234,7 +1246,9 @@ int ext2_truncate(struct inode *inode, off_t size) {
             }
 
             if (block_index * inode->super_block->block_size <= inode->size) {
+#ifdef EXT2_DEBUG
                 debug_log("Freeing block: [ %lu ]\n", block_no);
+#endif /* EXT2_DEBUG */
                 int ret = ext2_free_block(inode->super_block, block_no, false);
                 if (ret != 0) {
                     return ret;
@@ -1605,7 +1619,9 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
         }
     }
 
+#ifdef EXT2_DEBUG
     debug_log("Removing inode to from: [ %llu, %s ]\n", inode->index, tnode->parent->name);
+#endif /* EXT2_DEBUG */
 
     /* We have found the right dirent, now delete it */
     uint16_t size_save = dirent->size;
@@ -1623,7 +1639,9 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
 
     if (drop_reference) {
         if (--raw_inode->link_count <= 0) {
+#ifdef EXT2_DEBUG
             debug_log("Destroying raw ext2 inode: [ %llu ]\n", inode->index);
+#endif /* EXT2_DEBUG */
 
             /* Actually free inode from disk */
             ext2_free_inode(inode->super_block, inode->index, false);
@@ -1642,8 +1660,10 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
                         if (indirect_block == NULL) {
                             indirect_block = ext2_allocate_blocks(inode->super_block, 1);
                             ssize_t _ret;
+#ifdef EXT2_DEBUG
                             debug_log("Indirect block: [ %u ]\n",
                                       ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX]);
+#endif /* EXT2_DEBUG                                                                                                                  */
                             if ((_ret = ext2_read_blocks(
                                      inode->super_block, indirect_block,
                                      ((struct raw_inode *) inode->private_data)->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX], 1)) != 1) {
@@ -1668,7 +1688,9 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
                         break;
                     }
 
+#ifdef EXT2_DEBUG
                     debug_log("Freeing block: [ %lu ]\n", block_no);
+#endif /* EXT2_DEBUG                                                                */
                     int ret = ext2_free_block(inode->super_block, block_no, false);
                     if (ret != 0) {
                         return ret;
