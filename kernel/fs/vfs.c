@@ -475,6 +475,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
 
     struct tnode *tnode;
     int ret = iname_with_base(base, file_name, flags & O_NOFOLLOW ? INAME_DONT_FOLLOW_TRAILING_SYMLINK : 0, &tnode);
+    bool created_file = false;
     if (ret == -ENOENT) {
         if (flags & O_CREAT) {
             debug_log("Creating file: [ %s ]\n", file_name);
@@ -485,6 +486,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
                 *error = ret;
                 return NULL;
             }
+            created_file = true;
             assert(tnode);
         } else {
             debug_log("File Not Found: [ %s ]\n", file_name);
@@ -529,23 +531,26 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
         tnode->inode->i_op->lookup(tnode->inode, NULL);
     }
 
-    if (flags & O_RDWR) {
-        if (!fs_can_read_inode(tnode->inode) || !fs_can_write_inode(tnode->inode)) {
-            drop_tnode(tnode);
-            *error = -EACCES;
-            return NULL;
-        }
-    } else if (flags & O_RDONLY) {
-        if (!fs_can_read_inode(tnode->inode)) {
-            drop_tnode(tnode);
-            *error = -EACCES;
-            return NULL;
-        }
-    } else if (flags & O_WRONLY) {
-        if (!fs_can_write_inode(tnode->inode)) {
-            drop_tnode(tnode);
-            *error = -EACCES;
-            return NULL;
+    // Permission checks are ignored if the file was just created.
+    if (!created_file) {
+        if (flags & O_RDWR) {
+            if (!fs_can_read_inode(tnode->inode) || !fs_can_write_inode(tnode->inode)) {
+                drop_tnode(tnode);
+                *error = -EACCES;
+                return NULL;
+            }
+        } else if (flags & O_RDONLY) {
+            if (!fs_can_read_inode(tnode->inode)) {
+                drop_tnode(tnode);
+                *error = -EACCES;
+                return NULL;
+            }
+        } else if (flags & O_WRONLY) {
+            if (!fs_can_write_inode(tnode->inode)) {
+                drop_tnode(tnode);
+                *error = -EACCES;
+                return NULL;
+            }
         }
     }
 
