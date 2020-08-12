@@ -85,7 +85,8 @@ pid_t proc_fork(void) {
     child->sig_mask = parent->sig_mask;
     child_process->exe = bump_tnode(parent->process->exe);
     child_process->name = strdup(parent->process->name);
-    memcpy(&child_process->sig_state, &parent->process->sig_state, sizeof(struct sigaction) * _NSIG);
+    memcpy(child_process->limits, parent->process->limits, sizeof(child_process->limits));
+    memcpy(child_process->sig_state, parent->process->sig_state, sizeof(child_process->sig_state));
     child_process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
     child->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
 

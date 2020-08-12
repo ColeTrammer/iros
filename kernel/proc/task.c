@@ -252,6 +252,13 @@ static void task_switch_from_kernel_to_user_mode(struct task *current) {
     task_align_fpu(current);
     current->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
     current->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
+    current->process->limits[RLIMIT_CORE] = (struct rlimit) { .rlim_cur = 0, .rlim_max = 0 };
+    current->process->limits[RLIMIT_CPU] = (struct rlimit) { .rlim_cur = RLIM_INFINITY, .rlim_max = RLIM_INFINITY };
+    current->process->limits[RLIMIT_DATA] = (struct rlimit) { .rlim_cur = RLIM_INFINITY, .rlim_max = RLIM_INFINITY };
+    current->process->limits[RLIMIT_FSIZE] = (struct rlimit) { .rlim_cur = RLIM_INFINITY, .rlim_max = RLIM_INFINITY };
+    current->process->limits[RLIMIT_NOFILE] = (struct rlimit) { .rlim_cur = FOPEN_MAX, .rlim_max = FOPEN_MAX };
+    current->process->limits[RLIMIT_STACK] = (struct rlimit) { .rlim_cur = 2 * 1024 * 1024, .rlim_max = 2 * 1024 * 1024 };
+    current->process->limits[RLIMIT_AS] = (struct rlimit) { .rlim_cur = RLIM_INFINITY, .rlim_max = RLIM_INFINITY };
     interrupts_restore(save);
 }
 
