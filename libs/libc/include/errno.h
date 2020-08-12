@@ -85,7 +85,6 @@ extern "C" {
             errno = -(val);     \
             return -1;          \
         }                       \
-        errno = 0;              \
         return (val);           \
     } while (0)
 
