@@ -111,6 +111,7 @@
         get_current_task()->in_kernel = true;                                                                \
         get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                           \
         get_current_task()->arch_task.user_task_state->cpu_state.rax = 0;                                    \
+        enable_interrupts();                                                                                 \
     } while (0)
 
 #define SYS_BEGIN_SIGSUSPEND()                                                                               \
