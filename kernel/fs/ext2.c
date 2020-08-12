@@ -812,7 +812,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->fsid = parent->fsid;
         inode->flags = fs_mode_to_flags(mode);
         inode->i_op = S_ISDIR(mode) ? &ext2_dir_i_op : &ext2_i_op;
-        if (mode & S_IFCHR || mode & S_IFBLK) {
+        if (S_ISCHR(mode) || S_ISBLK(mode)) {
             fs_bind_device_to_inode(inode, device);
         }
         inode->index = index;
