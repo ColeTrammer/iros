@@ -275,8 +275,7 @@ static size_t print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbo
     // Each instruction pointer may be in a different shared object.
     // Find the vm_region it is associated with, and then use it to get the desired offset.
     struct vm_region *region = find_user_vm_region_by_addr(rip);
-    assert(region); /* Else it shouldn't have passed validation. */
-    if (!region->vm_object || region->vm_object->type != VM_INODE) {
+    if (!region || !region->vm_object || region->vm_object->type != VM_INODE) {
         return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s, %ld, %ld ]\n", "U", rip, 0UL, "??", 0, 0);
     }
 
