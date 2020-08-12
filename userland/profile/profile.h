@@ -38,7 +38,7 @@ private:
 
 class Profile {
 public:
-    static UniquePtr<Profile> create(const String& path);
+    static UniquePtr<Profile> create(const String& path, bool invert_profile);
 
     Profile(ProfileNode root) : m_root(move(root)) {}
 
@@ -48,4 +48,4 @@ private:
     ProfileNode m_root;
 };
 
-void view_profile(const String& path);
+void view_profile(const String& path, bool invert_profile);

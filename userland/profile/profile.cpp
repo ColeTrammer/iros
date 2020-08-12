@@ -41,7 +41,7 @@ private:
     Vector<MemoryObject> m_objects;
 };
 
-UniquePtr<Profile> Profile::create(const String& path) {
+UniquePtr<Profile> Profile::create(const String& path, bool invert_profile) {
     auto file = Ext::MappedFile::create(path, PROT_READ, MAP_SHARED);
     if (!file) {
         return nullptr;
@@ -65,7 +65,7 @@ UniquePtr<Profile> Profile::create(const String& path) {
         }
 
         auto* current_node = &root;
-        for (size_t i = ev->count; i > 0; i--) {
+        for (size_t i = invert_profile ? 1 : ev->count; invert_profile ? i <= ev->count : i > 0; invert_profile ? i++ : i--) {
             auto addr = ev->frames[i - 1];
 
             String symbol_name = "??";
@@ -84,14 +84,25 @@ UniquePtr<Profile> Profile::create(const String& path) {
                 }
             }
 
+            if (!invert_profile || i != 2) {
+                current_node->bump_total_count();
+            }
+
             current_node = current_node->link(symbol_name, object_path, addr);
+            if (invert_profile && i == 1) {
+                current_node->bump_self_count();
+            }
 
 #ifdef PROFILE_DEBUG
             printf("Symbol: [ %#.16lX, %s ]\n", addr, symbol_name.string());
 #endif /* PROFILE_DEBUG */
         }
 
-        current_node->bump_self_count();
+        if (!invert_profile) {
+            current_node->bump_self_count();
+        } else {
+            current_node->bump_total_count();
+        }
 
 #ifdef PROFILE_DEBUG
         printf("\n");
@@ -140,8 +151,6 @@ UniquePtr<Profile> Profile::create(const String& path) {
 }
 
 ProfileNode* ProfileNode::link(const String& name, const String& object_path, uintptr_t address) {
-    bump_total_count();
-
     auto* node = m_nodes.first_match([&](auto& n) {
         return n.name() == name && n.address() == address && n.object_path() == object_path;
     });
@@ -165,8 +174,8 @@ void Profile::dump() const {
     m_root.dump(0);
 }
 
-void view_profile(const String& path) {
-    auto profile = Profile::create(path);
+void view_profile(const String& path, bool invert_profile) {
+    auto profile = Profile::create(path, invert_profile);
     if (!profile) {
         fprintf(stderr, "profile: failed to read profile file `%s'\n", path.string());
         exit(1);

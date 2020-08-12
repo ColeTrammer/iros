@@ -14,6 +14,8 @@
 enum Flags {
     Disable,
     Wait,
+    Invert,
+    Quiet,
 };
 
 static void build_and_view_profile(pid_t pid, const char* output_path, int flags) {
@@ -73,6 +75,8 @@ static void build_and_view_profile(pid_t pid, const char* output_path, int flags
 
     printf("Wrote profile of `%s' to `%s'\n", name_buffer, output_path);
 
+    munmap(buffer, PROFILE_BUFFER_MAX);
+
     if (flags & Flags::Wait) {
         pid_t wait_result = waitpid(pid, NULL, WNOHANG);
         if (wait_result < 0) {
@@ -84,12 +88,13 @@ static void build_and_view_profile(pid_t pid, const char* output_path, int flags
         assert(wait_result == pid);
     }
 
-    view_profile(output_path);
-    munmap(buffer, PROFILE_BUFFER_MAX);
+    if (!(flags & Flags::Quiet)) {
+        view_profile(output_path, !!(flags & Flags::Invert));
+    }
 }
 
 void print_usage_and_exit(const char* s) {
-    fprintf(stderr, "Usage: %s [-o output] [-p pid]] [-v file] <args...>\n", s);
+    fprintf(stderr, "Usage: %s [-i] [-o output] [-p pid] [-q] [-v file] [command...]\n", s);
     exit(2);
 }
 
@@ -97,10 +102,14 @@ int main(int argc, char** argv) {
     const char* output_path = "profile.data";
     const char* to_view = nullptr;
     pid_t pid_to_profile = 0;
+    int flags = Flags::Wait;
 
     int opt;
-    while ((opt = getopt(argc, argv, ":o:p:v:")) != -1) {
+    while ((opt = getopt(argc, argv, ":io:pq:v:")) != -1) {
         switch (opt) {
+            case 'i':
+                flags |= Flags::Invert;
+                break;
             case 'o':
                 output_path = optarg;
                 break;
@@ -110,10 +119,16 @@ int main(int argc, char** argv) {
                 if (!end || *end || pid_to_profile <= 0) {
                     print_usage_and_exit(*argv);
                 }
+                flags &= ~Flags::Wait;
+                flags |= Flags::Disable;
                 break;
             }
+            case 'q':
+                flags |= Flags::Quiet;
+                break;
             case 'v':
                 to_view = optarg;
+                flags &= ~Flags::Wait;
                 break;
             case ':':
             case '?':
@@ -123,7 +138,7 @@ int main(int argc, char** argv) {
     }
 
     if (to_view) {
-        view_profile(to_view);
+        view_profile(to_view, !!(flags & Flags::Invert));
         return 0;
     }
 
@@ -137,7 +152,7 @@ int main(int argc, char** argv) {
         fflush(stdout);
         fgetc(stdin);
 
-        build_and_view_profile(pid_to_profile, output_path, Flags::Disable);
+        build_and_view_profile(pid_to_profile, output_path, flags);
         return 0;
     }
 
@@ -161,7 +176,7 @@ int main(int argc, char** argv) {
 
     App::EventLoop loop;
     App::EventLoop::register_signal_handler(SIGCHLD, [&] {
-        build_and_view_profile(pid, output_path, Flags::Wait);
+        build_and_view_profile(pid, output_path, flags);
         loop.set_should_exit(true);
     });
 
