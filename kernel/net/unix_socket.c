@@ -13,6 +13,8 @@
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
+// #define UNIX_DEBUG
+
 int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen, int flags) {
     assert(socket->domain == AF_UNIX);
     assert(socket->state == LISTENING);
@@ -24,7 +26,9 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
         return ret;
     }
 
+#ifdef UNIX_DEBUG
     debug_log("Creating connection: [ %lu, %lu ]\n", socket->id, connection.connect_to_id);
+#endif /* UNIX_DEBUG */
 
     int fd = 0;
     struct socket *new_socket = net_create_socket(socket->domain, (socket->type & SOCK_TYPE_MASK) | flags, socket->protocol, &fd);
@@ -169,7 +173,9 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
         return -ECONNREFUSED;
     }
 
+#ifdef UNIX_DEBUG
     debug_log("Connecting to socket: [ %lu ]\n", connect_to->id);
+#endif /* UNIX_DEBUG */
 
     struct socket_connection *connection = calloc(1, sizeof(struct socket_connection));
     connection->addr.un.sun_family = AF_UNIX;

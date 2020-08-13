@@ -102,7 +102,9 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
     }
 #endif /* KERNEL_E1000_DEBUG */
 
+#ifdef KERNEL_E1000_DEBUG
     debug_log("Sending over: %d\n", data->current_tx);
+#endif /* KERNEL_E1000_DEBUG */
 
     memcpy(data->tx_virt_addrs[data->current_tx], raw, len);
 
@@ -115,12 +117,9 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
 
     write_command(data, E1000_TX_DESC_TAIL, data->current_tx);
 
-    debug_log("Starting transmission: [ %d, %d ]\n", save_current_tx, read_command(data, E1000_TX_DESC_HEAD));
-
     while (!data->tx_descs[save_current_tx].status)
         ;
 
-    debug_log("Finished transmitting: [ %d ]\n", save_current_tx);
     return len;
 }
 
@@ -130,8 +129,6 @@ static void e1000_recieve() {
     while (data->rx_descs[data->current_rx].status & 0x1) {
         uint8_t *buf = data->rx_virt_addrs[data->current_rx];
         uint16_t len = data->rx_descs[data->current_rx].length;
-
-        debug_log("Recieving packet\n");
 
         interface->ops->recieve(interface, buf, len);
 
@@ -145,8 +142,6 @@ static void e1000_recieve() {
 
 static void handle_interrupt(struct irq_context *context __attribute__((unused))) {
     struct e1000_data *data = interface->private_data;
-
-    debug_log("Recived a interrupt for E1000\n");
 
     write_command(data, E1000_CTRL_IMASK, 1);
 

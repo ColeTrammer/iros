@@ -18,6 +18,7 @@
 
 // #define ROBUST_USER_MUTEX_DEBUG
 // #define SCHED_DEBUG
+// #define SIGNAL_DEBUG
 
 extern struct process initial_kernel_process;
 
@@ -224,7 +225,9 @@ static void signal_process_group_iter(struct process *process, void *_cls) {
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = process->task_list;
     if (cls->signum != 0) {
+#ifdef SIGNAL_DEBUG
         debug_log("Signaling queue: [ %d:%d, %s ]\n", task->process->pid, task->tid, strsignal(cls->signum));
+#endif /* SIGNAL_DEBUG */
         task_enqueue_signal(task, cls->signum, NULL, false);
 
         if (task == get_current_task() && !task_is_sig_blocked(task, cls->signum)) {
@@ -291,7 +294,9 @@ int signal_task(int tgid, int tid, int signum) {
     for (struct task *task = process->task_list; task; task = task->process_next) {
         if (task->tid == tid) {
             if (signum != 0) {
+#ifdef SIGNAL_DEBUG
                 debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
+#endif /* SIGNAL_DEBUG */
                 task_enqueue_signal(task, signum, NULL, false);
 
                 if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
@@ -332,7 +337,9 @@ int signal_process(pid_t pid, int signum) {
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = process->task_list;
     if (signum != 0) {
+#ifdef SIGNAL_DEBUG
         debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
+#endif /* SIGNAL_DEBUG */
         task_enqueue_signal(task, signum, NULL, false);
 
         if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {
@@ -370,7 +377,9 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = process->task_list;
     if (signum != 0) {
+#ifdef SIGNAL_DEBUG
         debug_log("Signaling queue: [ %d, %s ]\n", task->process->pid, strsignal(signum));
+#endif /* SIGNAL_DEBUG */
         task_enqueue_signal(task, signum, val, true);
 
         if (task == get_current_task() && !task_is_sig_blocked(task, signum)) {

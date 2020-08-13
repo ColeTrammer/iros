@@ -42,7 +42,9 @@ struct inode *pipe_new_inode() {
     struct inode *inode = fs_create_inode_without_sb(PIPE_DEVICE, id, get_current_task()->process->euid, get_current_task()->process->egid,
                                                      0777 | S_IFIFO, 0, &pipe_i_op, NULL);
 
+#ifdef PIPE_DEBUG
     debug_log("Created pipe: [ %llu ]\n", inode->index);
+#endif /* PIPE_DEBUG */
     return inode;
 }
 
@@ -123,7 +125,9 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
 ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     assert(offset == 0);
 
+#ifdef PIPE_DEBUG
     debug_log("Reading from pipe: [ %lu, %lu ]\n", _len, file->position);
+#endif /* PIPE_DEBUG */
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
@@ -153,7 +157,9 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 
 ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t len) {
     assert(offset == 0);
+#ifdef PIPE_DEBUG
     debug_log("Writing to pipe: [ %lu, %lu ]\n", len, file->position);
+#endif /* PIPE_DEBUG */
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
@@ -190,7 +196,9 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 }
 
 static void free_pipe_data(struct inode *inode) {
+#ifdef PIPE_DEBUG
     debug_log("Destroying pipe: [ %llu ]\n", inode->index);
+#endif /* PIPE_DEBUG */
 
     struct pipe_data *data = inode->pipe_data;
     inode->pipe_data = NULL;

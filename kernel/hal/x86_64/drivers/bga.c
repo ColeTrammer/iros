@@ -64,8 +64,6 @@ static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot
     }
 
     size_t total_size = sizeof(uint32_t) * (size_t) data.x_res * (size_t) data.y_res * (size_t) 2;
-    debug_log("Framebuffer total size: [ %lu ]\n", total_size);
-
     if (!device->vm_object) {
         device->vm_object = vm_create_phys_object(data.frame_buffer, total_size, device_on_kill, device);
     } else {

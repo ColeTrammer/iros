@@ -28,6 +28,8 @@
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 
+// #define FORK_DEBUG
+
 #define STACK_TRACE_ON_ANY_SIGSEGV
 
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
@@ -62,7 +64,9 @@ pid_t proc_fork(void) {
     child_process->tty = parent->process->tty;
     child_process->task_list = child;
 
+#ifdef FORK_DEBUG
     debug_log("Forking Task: [ %d ]\n", parent->process->pid);
+#endif /* FORK_DEBUG */
 
     memcpy(&child->arch_task.task_state, parent->arch_task.user_task_state, sizeof(struct task_state));
     child->arch_task.task_state.cpu_state.rax = 0;

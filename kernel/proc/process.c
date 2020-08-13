@@ -12,6 +12,7 @@
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/pid.h>
 #include <kernel/proc/process.h>
 #include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
@@ -201,6 +202,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
         // Finish cleanup now that there are no outstanding references.
         hash_del(map, &process->pid);
         procfs_unregister_process(process);
+        free_pid(process->pid);
 
         free_process_name_info(process);
 

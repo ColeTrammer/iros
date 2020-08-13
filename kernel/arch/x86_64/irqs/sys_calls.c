@@ -608,7 +608,6 @@ SYS_CALL(pipe) {
     int j = 0;
     for (int i = 0; j < 2 && i < FOPEN_MAX; i++) {
         if (task->process->files[i].file == NULL) {
-            debug_log("Allocating pipe to: [ %d, %d ]\n", i, j);
             task->process->files[i] = (struct file_descriptor) { pipe_files[j], 0 };
             pipefd[j] = i;
             j++;
@@ -736,7 +735,9 @@ SYS_CALL(sigreturn) {
     siginfo_t *info = (siginfo_t *) (((uint64_t *) task_state->stack_state.rsp) + 1);
     ucontext_t *context = (ucontext_t *) (info + 1);
     uint8_t *saved_fpu_state = (uint8_t *) (context + 1);
+#ifdef SIGRETURN_DEBUG
     debug_log("Sig return: [ %p ]\n", context);
+#endif /* SIGRETURN_DEBUG */
 
     memcpy(task->fpu.aligned_state, saved_fpu_state, FPU_IMAGE_SIZE);
     memcpy(&task->arch_task.task_state, &context->uc_mcontext, sizeof(struct task_state));

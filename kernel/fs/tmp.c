@@ -26,6 +26,8 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
+// #define TMP_DEBUG
+
 static struct file_system fs;
 
 static spinlock_t inode_count_lock = SPINLOCK_INITIALIZER;
@@ -72,7 +74,9 @@ struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, de
     assert(tparent->inode->flags & FS_DIR);
     assert(name);
 
+#ifdef TMP_DEBUG
     debug_log("Tmp create: [ %s ]\n", name);
+#endif /* TMP_DEBUG */
 
     struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->euid,
                                           get_current_task()->process->egid, mode, 0, &tmp_i_op, NULL);

@@ -34,8 +34,6 @@ void net_arp_recieve(const struct arp_packet *packet, size_t len) {
         return;
     }
 
-    debug_log("Recieved ARP packet\n");
-
     debug_log("Updating IPV4 to MAC mapping: [ %u.%u.%u.%u, %02x:%02x:%02x:%02x:%02x:%02x ]\n", packet->ip_sender.addr[0],
               packet->ip_sender.addr[1], packet->ip_sender.addr[2], packet->ip_sender.addr[3], packet->mac_sender.addr[0],
               packet->mac_sender.addr[1], packet->mac_sender.addr[2], packet->mac_sender.addr[3], packet->mac_sender.addr[4],
