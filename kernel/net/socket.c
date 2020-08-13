@@ -93,7 +93,7 @@ static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_
     return net_sendto(file, buf, len, 0, NULL, 0);
 }
 
-struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
+struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, int *fd, void *private_data) {
     struct task *current = get_current_task();
 
     for (int i = 0; i < FOPEN_MAX; i++) {
@@ -115,6 +115,10 @@ struct socket *net_create_socket(int domain, int type, int protocol, int *fd) {
             socket->writable = true;
             socket->readable = false;
             socket->exceptional = false;
+            socket->has_host_address = false;
+            socket->has_peer_address = false;
+            socket->op = op;
+            socket->private_data = private_data;
             init_mutex(&socket->lock);
 
             hash_put(map, socket);
@@ -325,14 +329,11 @@ int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int
         return -EOPNOTSUPP;
     }
 
-    switch (socket->domain) {
-        case AF_INET:
-            return net_inet_accept(socket, (struct sockaddr_in *) addr, addrlen, flags);
-        case AF_UNIX:
-            return net_unix_accept(socket, (struct sockaddr_un *) addr, addrlen, flags);
-        default:
-            return -EAFNOSUPPORT;
+    if (!socket->op->accept) {
+        return -EINVAL;
     }
+
+    return socket->op->accept(socket, addr, addrlen, flags);
 }
 
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
@@ -343,14 +344,11 @@ int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) 
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    switch (socket->domain) {
-        case AF_INET:
-            return net_inet_bind(socket, (const struct sockaddr_in *) addr, addrlen);
-        case AF_UNIX:
-            return net_unix_bind(socket, (const struct sockaddr_un *) addr, addrlen);
-        default:
-            return -EAFNOSUPPORT;
+    if (!socket->op->bind) {
+        return -EINVAL;
     }
+
+    return socket->op->bind(socket, addr, addrlen);
 }
 
 int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
@@ -361,14 +359,11 @@ int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrle
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    switch (socket->domain) {
-        case AF_INET:
-            return net_inet_connect(socket, (const struct sockaddr_in *) addr, addrlen);
-        case AF_UNIX:
-            return net_unix_connect(socket, (const struct sockaddr_un *) addr, addrlen);
-        default:
-            return -EAFNOSUPPORT;
+    if (!socket->op->connect) {
+        return -EINVAL;
     }
+
+    return socket->op->connect(socket, addr, addrlen);
 }
 
 int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
@@ -379,14 +374,11 @@ int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    switch (socket->domain) {
-        case AF_UNIX:
-            return net_unix_getpeername(socket, (struct sockaddr_un *) addr, addrlen);
-        case AF_INET:
-            return net_inet_getpeername(socket, (struct sockaddr_in *) addr, addrlen);
-        default:
-            return -EAFNOSUPPORT;
+    if (!socket->op->getpeername) {
+        return -EINVAL;
     }
+
+    return socket->op->getpeername(socket, addr, addrlen);
 }
 
 int net_listen(struct file *file, int backlog) {
@@ -475,14 +467,11 @@ ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, co
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    switch (socket->domain) {
-        case AF_UNIX:
-            return net_unix_sendto(socket, buf, len, flags, (const struct sockaddr_un *) dest, addrlen);
-        case AF_INET:
-            return net_inet_sendto(socket, buf, len, flags, (const struct sockaddr_in *) dest, addrlen);
-        default:
-            return -EAFNOSUPPORT;
+    if (!socket->op->sendto) {
+        return -EINVAL;
     }
+
+    return socket->op->sendto(socket, buf, len, flags, dest, addrlen);
 }
 
 ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
@@ -493,14 +482,11 @@ ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct
     struct socket *socket = hash_get(map, &file_data->socket_id);
     assert(socket);
 
-    switch (socket->domain) {
-        case AF_UNIX:
-            return net_unix_recvfrom(socket, buf, len, flags, (struct sockaddr_un *) source, addrlen);
-        case AF_INET:
-            return net_inet_recvfrom(socket, buf, len, flags, (struct sockaddr_in *) source, addrlen);
-        default:
-            return -EAFNOSUPPORT;
+    if (!socket->op->recvfrom) {
+        return -EINVAL;
     }
+
+    return socket->op->recvfrom(socket, buf, len, flags, source, addrlen);
 }
 
 void init_net_sockets() {

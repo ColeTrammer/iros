@@ -39,16 +39,16 @@ struct inet_socket_data {
 struct socket_data *net_inet_create_socket_data(const struct ip_v4_packet *packet, uint16_t port_network_ordered, const void *buf,
                                                 size_t len);
 
-int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen, int flags);
-int net_inet_bind(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen);
+int net_inet_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
+int net_inet_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 int net_inet_close(struct socket *socket);
-int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen);
+int net_inet_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 int net_inet_listen(struct socket *socket);
-int net_inet_getpeername(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen);
+int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 int net_inet_socket(int domain, int type, int protocol);
 
-ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr_in *dest, socklen_t addrlen);
-ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr_in *source, socklen_t *addrlen);
+ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
+ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
 
 struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple);
 struct socket *net_get_tcp_socket_server_by_ip_v4_and_port(struct ip_v4_and_port tuple);

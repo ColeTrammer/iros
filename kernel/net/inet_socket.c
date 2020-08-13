@@ -20,6 +20,16 @@
 static struct hash_map *map;
 static struct hash_map *server_map;
 
+static struct socket_ops inet_ops = {
+    .accept = net_inet_accept,
+    .bind = net_inet_bind,
+    .close = net_inet_close,
+    .connect = net_inet_connect,
+    .getpeername = net_inet_getpeername,
+    .sendto = net_inet_sendto,
+    .recvfrom = net_inet_recvfrom,
+};
+
 static unsigned int ip_v4_and_port_hash(void *i, int num_buckets) {
     struct ip_v4_and_port *a = i;
     return (a->ip.addr[0] + a->ip.addr[1] + a->ip.addr[2] + a->ip.addr[2] + a->port) % num_buckets;
@@ -72,7 +82,7 @@ struct socket_data *net_inet_create_socket_data(const struct ip_v4_packet *packe
     return data;
 }
 
-int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen, int flags) {
+int net_inet_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
     assert(socket);
     assert(socket->state == LISTENING);
     assert(socket->private_data);
@@ -96,7 +106,7 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
     debug_log("Creating connection: [ %lu ]\n", socket->id);
 
     int fd;
-    struct socket *new_socket = net_create_socket(AF_INET, (SOCK_STREAM & SOCK_TYPE_MASK) | flags, IPPROTO_TCP, &fd);
+    struct socket *new_socket = net_create_socket(AF_INET, (SOCK_STREAM & SOCK_TYPE_MASK) | flags, IPPROTO_TCP, &inet_ops, &fd, NULL);
     if (new_socket == NULL) {
         return fd;
     }
@@ -130,10 +140,10 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
     return fd;
 }
 
-int net_inet_bind(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen) {
+int net_inet_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
     assert(socket);
 
-    if (addr->sin_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
+    if (addr->sa_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
         return -EINVAL;
     }
 
@@ -154,7 +164,7 @@ int net_inet_bind(struct socket *socket, const struct sockaddr_in *addr, socklen
     }
 
     struct sockaddr_in host_address = {
-        .sin_family = AF_INET, .sin_port = htons(source_port), .sin_addr = addr->sin_addr, .sin_zero = { 0 }
+        .sin_family = AF_INET, .sin_port = htons(source_port), .sin_addr = { ip_v4_to_uint(IP_V4_FROM_SOCKADDR(addr)) }, .sin_zero = { 0 }
     };
     net_set_host_address(socket, &host_address, sizeof(host_address));
 
@@ -206,20 +216,20 @@ int net_inet_close(struct socket *socket) {
     return 0;
 }
 
-int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen) {
+int net_inet_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
     assert(socket);
 
     if (socket->type != SOCK_STREAM || socket->protocol != IPPROTO_TCP || addrlen > sizeof(struct sockaddr_in)) {
         return -EINVAL;
     }
 
-    if (addr->sin_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
+    if (addr->sa_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
         return -EAFNOSUPPORT;
     }
 
     if (socket->state != BOUND) {
         struct sockaddr_in to_bind = { AF_INET, 0, { 0 }, { 0 } };
-        int ret = net_inet_bind(socket, &to_bind, sizeof(struct sockaddr_in));
+        int ret = net_inet_bind(socket, (struct sockaddr *) &to_bind, sizeof(struct sockaddr_in));
         if (ret < 0) {
             return ret;
         }
@@ -274,7 +284,7 @@ int net_inet_listen(struct socket *socket) {
     return 0;
 }
 
-int net_inet_getpeername(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen) {
+int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen) {
     int ret = 0;
 
     mutex_lock(&socket->lock);
@@ -304,13 +314,13 @@ int net_inet_socket(int domain, int type, int protocol) {
     }
 
     int fd;
-    struct socket *socket = net_create_socket(domain, type, protocol, &fd);
+    struct socket *socket = net_create_socket(domain, type, protocol, &inet_ops, &fd, NULL);
     (void) socket;
 
     return fd;
 }
 
-ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr_in *dest, socklen_t addrlen) {
+ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
     (void) flags;
 
     assert(socket);
@@ -322,7 +332,7 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     }
 
     if (!dest) {
-        dest = (const struct sockaddr_in *) &socket->peer_address;
+        dest = (const struct sockaddr *) &socket->peer_address;
     }
 
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
@@ -344,7 +354,7 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     }
 
     assert(dest);
-    if (dest->sin_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
+    if (dest->sa_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
         return -EINVAL;
     }
 
@@ -358,7 +368,7 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     assert(socket->type == SOCK_DGRAM && socket->protocol == IPPROTO_UDP);
     if (socket->state != BOUND) {
         struct sockaddr_in to_bind = { AF_INET, 0, { 0 }, { 0 } };
-        int ret = net_inet_bind(socket, &to_bind, sizeof(struct sockaddr_in));
+        int ret = net_inet_bind(socket, (struct sockaddr *) &to_bind, sizeof(struct sockaddr_in));
         if (ret < 0) {
             return ret;
         }
@@ -371,10 +381,10 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     return net_send_udp(interface, dest_ip, source_port, dest_port, len, buf);
 }
 
-ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr_in *source, socklen_t *addrlen) {
+ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
     (void) flags;
 
-    return net_generic_recieve_from(socket, buf, len, (struct sockaddr *) source, addrlen);
+    return net_generic_recieve_from(socket, buf, len, source, addrlen);
 }
 
 struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple) {

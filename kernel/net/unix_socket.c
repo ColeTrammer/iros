@@ -17,7 +17,17 @@
 
 #define PATH_FROM_SOCKADDR(s) (((struct sockaddr_un *) (s))->sun_path)
 
-int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen, int flags) {
+static struct socket_ops unix_ops = {
+    .accept = net_unix_accept,
+    .bind = net_unix_bind,
+    .close = net_unix_close,
+    .connect = net_unix_connect,
+    .getpeername = net_unix_getpeername,
+    .recvfrom = net_unix_recvfrom,
+    .sendto = net_unix_sendto,
+};
+
+int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
     assert(socket->domain == AF_UNIX);
     assert(socket->state == LISTENING);
     assert(socket->private_data);
@@ -33,7 +43,8 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
 #endif /* UNIX_DEBUG */
 
     int fd = 0;
-    struct socket *new_socket = net_create_socket(socket->domain, (socket->type & SOCK_TYPE_MASK) | flags, socket->protocol, &fd);
+    struct socket *new_socket =
+        net_create_socket(socket->domain, (socket->type & SOCK_TYPE_MASK) | flags, socket->protocol, &unix_ops, &fd, NULL);
     if (new_socket == NULL) {
         return fd;
     }
@@ -65,15 +76,16 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
     return fd;
 }
 
-int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen_t addrlen) {
+int net_unix_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
     assert(socket->domain == AF_UNIX);
     assert(addr);
 
-    if (addr->sun_family != AF_UNIX) {
+    if (addr->sa_family != AF_UNIX) {
         return -EINVAL;
     }
 
-    if (addrlen <= offsetof(struct sockaddr_un, sun_path) || addr->sun_path[0] != '/' || addrlen > sizeof(struct sockaddr_storage)) {
+    if (addrlen <= offsetof(struct sockaddr_un, sun_path) || PATH_FROM_SOCKADDR(addr)[0] != '/' ||
+        addrlen > sizeof(struct sockaddr_storage)) {
         return -EINVAL;
     }
 
@@ -133,12 +145,12 @@ int net_unix_close(struct socket *socket) {
     return 0;
 }
 
-int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, socklen_t addrlen) {
+int net_unix_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
     assert(socket);
     assert(socket->domain == AF_UNIX);
     assert(addr);
 
-    if (addr->sun_family != AF_UNIX) {
+    if (addr->sa_family != AF_UNIX) {
         return -EAFNOSUPPORT;
     }
 
@@ -146,12 +158,13 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
         return -EISCONN;
     }
 
-    if (addrlen <= offsetof(struct sockaddr_un, sun_path) || addr->sun_path[0] != '/') {
+    const char *path = PATH_FROM_SOCKADDR(addr);
+    if (addrlen <= offsetof(struct sockaddr_un, sun_path) || path[0] != '/') {
         return -EINVAL;
     }
 
     struct tnode *tnode = NULL;
-    int ret = iname(addr->sun_path, 0, &tnode);
+    int ret = iname(path, 0, &tnode);
     if (ret < 0) {
         return ret;
     }
@@ -183,7 +196,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
 
     struct socket_connection *connection = calloc(1, sizeof(struct socket_connection));
     connection->addr.un.sun_family = AF_UNIX;
-    memcpy(connection->addr.un.sun_path, addr->sun_path, addrlen - offsetof(struct sockaddr_un, sun_path));
+    memcpy(connection->addr.un.sun_path, path, addrlen - offsetof(struct sockaddr_un, sun_path));
     connection->addrlen = addrlen;
     connection->connect_to_id = socket->id;
 
@@ -213,7 +226,7 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
     return 0;
 }
 
-int net_unix_getpeername(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen) {
+int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen) {
     int ret = 0;
 
     mutex_lock(&socket->lock);
@@ -235,22 +248,22 @@ int net_unix_socket(int domain, int type, int protocol) {
     }
 
     int fd;
-    struct socket *socket = net_create_socket(domain, type, protocol, &fd);
+    struct socket *socket = net_create_socket(domain, type, protocol, &unix_ops, &fd, NULL);
     (void) socket;
 
     return fd;
 }
 
-ssize_t net_unix_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr_un *source, socklen_t *addrlen) {
+ssize_t net_unix_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
     assert(socket->domain == AF_UNIX);
     assert(buf);
 
     (void) flags;
 
-    return net_generic_recieve_from(socket, buf, len, (struct sockaddr *) source, addrlen);
+    return net_generic_recieve_from(socket, buf, len, source, addrlen);
 }
 
-ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr_un *dest, socklen_t addrlen) {
+ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
     assert(socket);
     assert(socket->domain == AF_UNIX);
     assert(buf);

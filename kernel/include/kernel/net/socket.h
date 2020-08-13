@@ -13,6 +13,18 @@
 
 enum socket_state { UNBOUND = 0, BOUND, LISTENING, CONNECTED, CLOSING, CLOSED };
 
+struct socket;
+
+struct socket_ops {
+    int (*accept)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
+    int (*bind)(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
+    int (*close)(struct socket *socket);
+    int (*connect)(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
+    int (*getpeername)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
+    ssize_t (*sendto)(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
+    ssize_t (*recvfrom)(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
+};
+
 struct socket_connection {
     union {
         struct sockaddr_un un;
@@ -62,6 +74,7 @@ struct socket {
     struct socket_data *data_head;
     struct socket_data *data_tail;
 
+    struct socket_ops *op;
     void *private_data;
 };
 
@@ -69,7 +82,7 @@ struct socket_file_data {
     unsigned long socket_id;
 };
 
-struct socket *net_create_socket(int domain, int type, int protocol, int *fd);
+struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, int *fd, void *private_data);
 ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
 struct socket *net_get_socket_by_id(unsigned long id);
