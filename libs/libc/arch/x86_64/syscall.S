@@ -5,6 +5,7 @@ __do_syscall:
     mov %rdi, %rax
     mov %rsi, %rdi
     mov %rdx, %rsi
+    mov %rcx, %rdx
     movq 8(%rsp), %r10
     syscall
     retq
