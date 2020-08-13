@@ -57,12 +57,11 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     to_add->overuns = 0;
     to_add->event_type = sevp->sigev_notify;
     to_add->id = allocate_timerid();
-    to_add->next = NULL;
-    to_add->prev = NULL;
     to_add->spec.it_interval.tv_sec = 0;
     to_add->spec.it_interval.tv_nsec = 0;
     to_add->spec.it_value.tv_sec = 0;
     to_add->spec.it_value.tv_nsec = 0;
+    init_list(&to_add->clock_list);
 
     // NOTE: don't add the timer to the clock until it is armed.
     //       this way we don't update the timer when its not

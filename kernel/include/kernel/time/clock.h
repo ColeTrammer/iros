@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include <kernel/util/list.h>
 #include <kernel/util/spinlock.h>
 
 struct timer;
@@ -13,7 +14,7 @@ struct clock {
     spinlock_t lock;
     struct timespec resolution;
     struct timespec time;
-    struct timer *timers;
+    struct list_node timer_list;
 };
 
 struct clock *time_create_clock(clockid_t id);
@@ -22,7 +23,7 @@ void time_destroy_clock(struct clock *clock);
 struct clock *time_get_clock(clockid_t id);
 struct timespec time_read_clock(clockid_t id);
 
-void time_inc_clock_timers(struct timer *timers_list, long nanoseconds);
+void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds);
 void time_add_timer_to_clock(struct clock *clock, struct timer *timer);
 void time_remove_timer_from_clock(struct clock *clock, struct timer *timer);
 
@@ -35,7 +36,7 @@ static inline __attribute__((always_inline)) void time_inc_clock(struct clock *c
         clock->time.tv_sec++;
     }
 
-    time_inc_clock_timers(clock->timers, nanoseconds);
+    time_inc_clock_timers(&clock->timer_list, nanoseconds);
 }
 
 static inline __attribute__((always_inline)) long time_compare(struct timespec t1, struct timespec t2) {

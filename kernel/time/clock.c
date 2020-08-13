@@ -12,8 +12,8 @@
 
 // #define CLOCKID_ALLOCATION_DEBUG
 
-struct clock global_monotonic_clock = { CLOCK_MONOTONIC, SPINLOCK_INITIALIZER, { 0 }, { 0 }, NULL };
-struct clock global_realtime_clock = { CLOCK_REALTIME, SPINLOCK_INITIALIZER, { 0 }, { 0 }, NULL };
+struct clock global_monotonic_clock = { CLOCK_MONOTONIC, SPINLOCK_INITIALIZER, { 0 }, { 0 }, INIT_LIST(global_monotonic_clock.timer_list) };
+struct clock global_realtime_clock = { CLOCK_REALTIME, SPINLOCK_INITIALIZER, { 0 }, { 0 }, INIT_LIST(global_realtime_clock.timer_list) };
 
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 static clockid_t id_start = 10; // Start at 10 since CLOCK_MONOTONIC etc. are reserved
@@ -51,7 +51,7 @@ struct clock *time_create_clock(clockid_t id) {
             clock->id = real_id;
             clock->resolution = get_time_resolution();
             clock->time = (struct timespec) { 0 };
-            clock->timers = NULL;
+            init_list(&clock->timer_list);
             init_spinlock(&clock->lock);
             break;
         }
@@ -91,29 +91,19 @@ struct timespec time_read_clock(clockid_t id) {
     return clock->time;
 }
 
-void time_inc_clock_timers(struct timer *timers_list, long nanoseconds) {
-    while (timers_list) {
-        time_tick_timer(timers_list, nanoseconds);
-        timers_list = timers_list->next;
-    }
+void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds) {
+    list_for_each_entry(timer_list, timer, struct timer, clock_list) { time_tick_timer(timer, nanoseconds); }
 }
 
 void time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
     spin_lock(&clock->lock);
-    if (!clock->timers) {
-        clock->timers = timer;
-    } else {
-        insque(timer, clock->timers);
-    }
+    list_append(&clock->timer_list, &timer->clock_list);
     spin_unlock(&clock->lock);
 }
 
 void time_remove_timer_from_clock(struct clock *clock, struct timer *timer) {
     spin_lock(&clock->lock);
-    if (clock->timers == timer) {
-        clock->timers = timer->next;
-    }
-    remque(timer);
+    list_remove(&timer->clock_list);
     spin_unlock(&clock->lock);
 }
 

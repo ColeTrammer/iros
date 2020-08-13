@@ -13,8 +13,7 @@ struct task;
 
 struct timer {
     // Linked list between timers waiting on same clock
-    struct timer *next;
-    struct timer *prev;
+    struct list_node clock_list;
 
     // Linked list between timers of same process
     struct list_node proc_list;
