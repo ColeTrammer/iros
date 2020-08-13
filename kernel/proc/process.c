@@ -60,10 +60,7 @@ static void free_process_vm(struct process *process) {
     }
     process->used_user_mutexes = NULL;
 
-    list_for_each_entry_safe(&process->timer_list, timer, struct timer, proc_list) {
-        debug_log("Destroying timer: [ %p ]\n", timer);
-        time_delete_timer(timer);
-    }
+    list_for_each_entry_safe(&process->timer_list, timer, struct timer, proc_list) { time_delete_timer(timer); }
     list_clear(&process->timer_list);
 }
 

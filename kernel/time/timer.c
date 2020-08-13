@@ -12,6 +12,9 @@
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
+// #define TIMER_DEBUG
+// #define TIMER_T_ALLOCATION_DEBUG
+
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 static timer_t id_start = 0;
 
@@ -83,12 +86,19 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     list_append(&process->timer_list, &to_add->proc_list);
 
     hash_put(timer_map, to_add);
+#ifdef TIMER_DEBUG
+    debug_log("Created timer: [ %ld ]\n", to_add->id);
+#endif /* TIMER_DEBUG */
 
     *timerid = to_add->id;
     return 0;
 }
 
 int time_delete_timer(struct timer *timer) {
+#ifdef TIMER_DEBUG
+    debug_log("Removing timer: [ %ld ]\n", timer->id);
+#endif /* TIMER_DEBUG */
+
     if (time_is_timer_armed(timer)) {
         time_remove_timer_from_clock(timer->clock, timer);
     }
