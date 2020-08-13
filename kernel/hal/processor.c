@@ -6,7 +6,7 @@
 #include <kernel/hal/processor.h>
 #include <kernel/sched/task_sched.h>
 
-#define SCHED_DEBUG
+// #define SCHED_DEBUG
 
 static struct processor *processor_list;
 static int num_processors;

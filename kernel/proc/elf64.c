@@ -222,7 +222,9 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
 
     if (interpreter) {
         assert(info);
+#ifdef ELF64_DEBUG
         debug_log("loading interpreter: [ %s ]\n", interpreter);
+#endif /* ELF64_DEBUG */
         int error = 0;
         struct file *file = fs_openat(fs_root(), interpreter, O_RDONLY, 0, &error);
         assert(error == 0);

@@ -44,6 +44,7 @@
 #include <kernel/hal/x86_64/gdt.h>
 
 // #define DUP_DEBUG
+// #define EXIT_DEBUG
 // #define SET_PGID_DEBUG
 // #define SIGACTION_DEBUG
 // #define SIGPROCMASK_DEBUG
@@ -322,7 +323,9 @@ SYS_CALL(exit) {
     proc_set_process_state(process, PS_TERMINATED, exit_code, false);
     mutex_unlock(&process->lock);
 
+#ifdef EXIT_DEBUG
     debug_log("Process Exited: [ %d, %d ]\n", process->pid, exit_code);
+#endif /* EXIT_DEBUG */
 
     SYS_RETURN_NORETURN();
 }

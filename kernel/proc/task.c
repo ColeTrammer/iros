@@ -28,6 +28,7 @@
 #include <kernel/time/clock.h>
 
 // #define START_DEBUG
+// #define TASK_DEBUG
 // #define TASK_SCHED_STATE_DEBUG
 // #define TASK_SIGNAL_DEBUG
 
@@ -388,7 +389,9 @@ void run_task(struct task *task) {
 }
 
 void free_task(struct task *task, bool free_paging_structure) {
+#ifdef TASK_DEBUG
     debug_log("destroying: [ %d:%d ]\n", task->process->pid, task->tid);
+#endif /* TASK_DEBUG */
 
     arch_free_task(task, free_paging_structure);
 
