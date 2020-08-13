@@ -10,6 +10,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/tcp.h>
+#include <kernel/util/macros.h>
 
 ssize_t net_send_tcp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port,
                      uint32_t sequence_number, uint32_t ack_num, union tcp_flags flags, uint16_t len, const void *payload) {
@@ -61,7 +62,7 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
 
     net_tcp_log(packet);
 
-    const struct ip_v4_packet *ip_packet = ((const struct ip_v4_packet *) packet) - 1;
+    const struct ip_v4_packet *ip_packet = container_of(packet, const struct ip_v4_packet, payload);
     struct socket *socket = net_get_tcp_socket_by_ip_v4_and_port((struct ip_v4_and_port) { ntohs(packet->source_port), ip_packet->source });
     if (socket == NULL) {
         debug_log("No socket listening for port and ip: [ %u, %u.%u.%u.%u ]\n", ntohs(packet->source_port), ip_packet->source.addr[0],
@@ -180,7 +181,7 @@ void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16
 }
 
 void net_tcp_log(const struct tcp_packet *packet) {
-    const struct ip_v4_packet *ip_packet = ((const struct ip_v4_packet *) packet) - 1;
+    const struct ip_v4_packet *ip_packet = container_of(packet, const struct ip_v4_packet, payload);
 
     debug_log("TCP Packet:\n"
               "               Source Port  [ %15u ]   Dest Port [ %15u ]\n"

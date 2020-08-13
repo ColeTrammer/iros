@@ -13,6 +13,7 @@
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/udp.h>
+#include <kernel/util/macros.h>
 
 ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
                      const void *buf) {
@@ -71,7 +72,7 @@ void net_udp_recieve(const struct udp_packet *packet, size_t len) {
         return;
     }
 
-    const struct ip_v4_packet *ip_packet = ((const struct ip_v4_packet *) packet) - 1;
+    const struct ip_v4_packet *ip_packet = container_of(packet, const struct ip_v4_packet, payload);
     struct socket_data *data =
         net_inet_create_socket_data(ip_packet, packet->source_port, (void *) packet->payload, len - sizeof(struct udp_packet));
     net_send_to_socket(socket, data);

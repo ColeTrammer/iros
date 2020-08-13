@@ -9,6 +9,7 @@
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/socket.h>
+#include <kernel/util/macros.h>
 
 static void icmp_for_each(struct socket *socket, void *_packet) {
     struct ip_v4_packet *packet = _packet;
@@ -26,13 +27,13 @@ void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
     }
 
     if (packet->type == ICMP_TYPE_ECHO_REPLY) {
-        net_for_each_socket(icmp_for_each, ((struct ip_v4_packet *) packet) - 1);
+        net_for_each_socket(icmp_for_each, container_of(packet, struct ip_v4_packet, payload));
         return;
     }
 
     assert(packet->type == ICMP_TYPE_ECHO_REQUEST);
 
-    const struct ip_v4_packet *ip_packet = ((const struct ip_v4_packet *) packet) - 1;
+    const struct ip_v4_packet *ip_packet = container_of(packet, const struct ip_v4_packet, payload);
     size_t to_send_length = ip_packet->length - sizeof(struct ip_v4_packet);
 
     struct icmp_packet *to_send = malloc(to_send_length);
