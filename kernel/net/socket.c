@@ -198,10 +198,11 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
         struct inet_socket_data *data = socket->private_data;
         assert(data);
         if (data->tcb->should_send_ack) {
-            struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
+            struct network_interface *interface = net_get_interface_for_ip(IP_V4_FROM_SOCKADDR(&socket->peer_address));
 
-            net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num,
-                         data->tcb->current_ack_num, (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
+            net_send_tcp(interface, IP_V4_FROM_SOCKADDR(&socket->peer_address), PORT_FROM_SOCKADDR(&socket->host_address),
+                         PORT_FROM_SOCKADDR(&socket->peer_address), data->tcb->current_sequence_num, data->tcb->current_ack_num,
+                         (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
             data->tcb->should_send_ack = false;
 
             if (socket->state == CLOSING) {
@@ -288,6 +289,24 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
     ssize_t ret = socket_data->len;
     mutex_unlock(&to_send->lock);
     return ret;
+}
+
+void net_set_host_address(struct socket *socket, const void *addr, socklen_t addrlen) {
+    assert(addrlen <= sizeof(struct sockaddr_storage));
+    memcpy(&socket->host_address, addr, addrlen);
+    socket->has_host_address = true;
+}
+
+void net_set_peer_address(struct socket *socket, const void *addr, socklen_t addrlen) {
+    assert(addrlen <= sizeof(struct sockaddr_storage));
+    memcpy(&socket->peer_address, addr, addrlen);
+    socket->has_peer_address = true;
+}
+
+void net_copy_sockaddr_to_user(const void *addr, size_t addrlen, void *user_addr, socklen_t *user_addrlen) {
+    size_t len_to_copy = MIN(*user_addrlen, addrlen);
+    memcpy(user_addr, addr, len_to_copy);
+    *user_addrlen = addrlen;
 }
 
 int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags) {

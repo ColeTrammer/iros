@@ -4,7 +4,6 @@
 #include <kernel/net/socket.h>
 
 struct unix_socket_data {
-    char bound_path[UNIX_PATH_MAX];
     int connected_id;
 };
 

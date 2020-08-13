@@ -51,6 +51,11 @@ struct socket {
     bool readable : 1;
     bool writable : 1;
     bool exceptional : 1;
+    bool has_peer_address : 1;
+    bool has_host_address : 1;
+
+    struct sockaddr_storage peer_address;
+    struct sockaddr_storage host_address;
 
     mutex_t lock;
 
@@ -70,6 +75,10 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
 struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data);
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data);
+
+void net_set_host_address(struct socket *socket, const void *addr, socklen_t addrlen);
+void net_set_peer_address(struct socket *socket, const void *addr, socklen_t addrlen);
+void net_copy_sockaddr_to_user(const void *addr, size_t addrlen, void *user_addr, socklen_t *user_addrlen);
 
 int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags);
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen);

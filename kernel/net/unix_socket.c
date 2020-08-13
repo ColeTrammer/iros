@@ -15,6 +15,8 @@
 
 // #define UNIX_DEBUG
 
+#define PATH_FROM_SOCKADDR(s) (((struct sockaddr_un *) (s))->sun_path)
+
 int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen, int flags) {
     assert(socket->domain == AF_UNIX);
     assert(socket->state == LISTENING);
@@ -44,7 +46,7 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
 
     struct unix_socket_data *new_data = calloc(1, sizeof(struct unix_socket_data));
     new_socket->private_data = new_data;
-    memcpy(new_data->bound_path, connection.addr.un.sun_path, connection.addrlen - offsetof(struct sockaddr_un, sun_path));
+    net_set_host_address(new_socket, &socket->host_address, sizeof(struct sockaddr_un));
     new_data->connected_id = connection.connect_to_id;
 
     struct socket *connect_to = net_get_socket_by_id(new_data->connected_id);
@@ -54,10 +56,8 @@ int net_unix_accept(struct socket *socket, struct sockaddr_un *addr, socklen_t *
 
     assert(connect_to->private_data);
     struct unix_socket_data *connect_to_data = connect_to->private_data;
-    memcpy(connect_to_data->bound_path, ((struct unix_socket_data *) socket->private_data)->bound_path,
-           sizeof(connect_to_data->bound_path));
     connect_to_data->connected_id = new_socket->id;
-
+    net_set_peer_address(new_socket, &socket->host_address, sizeof(struct sockaddr_un));
     connect_to->state = CONNECTED;
     mutex_unlock(&connect_to->lock);
 
@@ -73,20 +73,24 @@ int net_unix_bind(struct socket *socket, const struct sockaddr_un *addr, socklen
         return -EINVAL;
     }
 
-    if (addrlen <= offsetof(struct sockaddr_un, sun_path) || addr->sun_path[0] != '/') {
+    if (addrlen <= offsetof(struct sockaddr_un, sun_path) || addr->sun_path[0] != '/' || addrlen > sizeof(struct sockaddr_storage)) {
         return -EINVAL;
     }
 
     struct unix_socket_data *data = calloc(1, sizeof(struct unix_socket_data));
-    strncpy(data->bound_path, addr->sun_path, UNIX_PATH_MAX);
+    net_set_host_address(socket, addr, addrlen);
+    char *path = PATH_FROM_SOCKADDR(&socket->host_address);
 
-    if (iname(data->bound_path, 0, NULL) == 0) {
+    // Ensure null termination, so that the iname call will be bounded.
+    path[UNIX_PATH_MAX - 1] = '\0';
+
+    if (iname(path, 0, NULL) == 0) {
         free(data);
         return -EADDRINUSE;
     }
 
     int ret = 0;
-    struct tnode *tnode = fs_mknod(data->bound_path, S_IFSOCK | 0666, 0, &ret);
+    struct tnode *tnode = fs_mknod(path, S_IFSOCK | 0666, 0, &ret);
     if (ret < 0) {
         free(data);
         return ret;
@@ -111,7 +115,7 @@ int net_unix_close(struct socket *socket) {
         assert(data);
 
         struct tnode *tnode;
-        assert(iname(data->bound_path, 0, &tnode) == 0);
+        assert(iname(PATH_FROM_SOCKADDR(&socket->host_address), 0, &tnode) == 0);
         assert(tnode);
 
         tnode->inode->socket_id = 0;
@@ -210,32 +214,17 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
 }
 
 int net_unix_getpeername(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen) {
-    struct socket *peer = NULL;
-    int ret = -ENOTCONN;
+    int ret = 0;
 
     mutex_lock(&socket->lock);
-    struct unix_socket_data *data = socket->private_data;
-    if (socket->state == CONNECTED) {
-        ret = 0;
-        peer = net_get_socket_by_id(data->connected_id);
+    if (socket->has_peer_address) {
+        struct sockaddr_un *peer_address = (struct sockaddr_un *) &socket->peer_address;
+        size_t peer_address_length = offsetof(struct sockaddr_un, sun_path) + strlen(peer_address->sun_path) + 1;
+        net_copy_sockaddr_to_user(peer_address, peer_address_length, addr, addrlen);
+    } else {
+        ret = -ENOTCONN;
     }
     mutex_unlock(&socket->lock);
-
-    if (!peer) {
-        return ret;
-    }
-
-    struct sockaddr_un peer_address = (struct sockaddr_un) { .sun_family = AF_UNIX };
-
-    mutex_lock(&peer->lock);
-    struct unix_socket_data *peer_data = peer->private_data;
-    // FIXME: this only makes sense if the peer was previously bound to a path, but only one side should be.
-    memcpy(peer_address.sun_path, peer_data->bound_path, sizeof(peer_data->bound_path));
-    size_t peer_address_size = offsetof(struct sockaddr_un, sun_path) + strnlen(peer_address.sun_path, UNIX_PATH_MAX);
-    mutex_unlock(&peer->lock);
-
-    memcpy(addr, &peer_address, MIN(*addrlen, peer_address_size));
-    *addrlen = peer_address_size;
 
     return ret;
 }
@@ -290,9 +279,11 @@ ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int 
         return -ECONNABORTED;
     }
 
-    socket_data->from.addrlen = offsetof(struct sockaddr_un, sun_path) + strlen(data->bound_path) + 1;
-    memcpy(&socket_data->from.addr, data->bound_path, socket_data->from.addrlen - offsetof(struct sockaddr_un, sun_path));
-    socket_data->from.addr.un.sun_family = AF_UNIX;
+    if (socket->has_host_address) {
+        const char *path = PATH_FROM_SOCKADDR(&socket->host_address);
+        socket_data->from.addrlen = offsetof(struct sockaddr_un, sun_path) + strnlen(path, UNIX_PATH_MAX) + 1;
+        memcpy(&socket_data->from.addr.un, &socket->host_address, socket_data->from.addrlen);
+    }
 
     return net_send_to_socket(to_send, socket_data);
 }

@@ -1,6 +1,7 @@
 #ifndef _KERNEL_NET_INET_SOCKET_H
 #define _KERNEL_NET_INET_SOCKET_H 1
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 
 #include <kernel/net/ip.h>
@@ -32,10 +33,6 @@ struct tcp_packet_data {
 };
 
 struct inet_socket_data {
-    uint16_t source_port;
-    uint16_t dest_port;
-    struct ip_v4_address source_ip;
-    struct ip_v4_address dest_ip;
     struct tcp_control_block *tcb;
 };
 
@@ -57,5 +54,8 @@ struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple)
 struct socket *net_get_tcp_socket_server_by_ip_v4_and_port(struct ip_v4_and_port tuple);
 
 void init_inet_sockets();
+
+#define PORT_FROM_SOCKADDR(s)  ntohs(((struct sockaddr_in *) (s))->sin_port)
+#define IP_V4_FROM_SOCKADDR(s) ip_v4_from_uint(((struct sockaddr_in *) (s))->sin_addr.s_addr)
 
 #endif /* _KERNEL_NET_INET_SOCKET_H */

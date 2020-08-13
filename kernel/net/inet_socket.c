@@ -36,26 +36,23 @@ static void *ip_v4_and_port_key(void *m) {
 HASH_DEFINE_FUNCTIONS(tcp_data, struct tcp_packet, uint32_t, sequence_number)
 
 static void create_tcp_socket_mapping(struct socket *socket) {
-    assert(socket->private_data);
-
-    struct inet_socket_data *data = socket->private_data;
     struct tcp_socket_mapping *mapping = calloc(1, sizeof(struct tcp_socket_mapping));
-    mapping->key = (struct ip_v4_and_port) { data->dest_port, data->dest_ip };
+    mapping->key = (struct ip_v4_and_port) { PORT_FROM_SOCKADDR(&socket->peer_address), IP_V4_FROM_SOCKADDR(&socket->peer_address) };
     mapping->socket_id = socket->id;
 
     hash_put(map, mapping);
 }
 
 static void create_tcp_socket_mapping_for_source(struct socket *socket) {
-    assert(socket->private_data);
+    uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
+    struct ip_v4_address source_ip = IP_V4_FROM_SOCKADDR(&socket->host_address);
 
-    struct inet_socket_data *data = socket->private_data;
     struct tcp_socket_mapping *mapping = calloc(1, sizeof(struct tcp_socket_mapping));
-    mapping->key = (struct ip_v4_and_port) { data->source_port, data->source_ip };
+    mapping->key = (struct ip_v4_and_port) { source_port, source_ip };
     mapping->socket_id = socket->id;
 
-    debug_log("Created a tcp mapping: [ %u, %u.%u.%u.%u ]\n", data->source_port, data->source_ip.addr[0], data->source_ip.addr[1],
-              data->source_ip.addr[2], data->source_ip.addr[3]);
+    debug_log("Created a tcp mapping: [ %u, %u.%u.%u.%u ]\n", source_port, source_ip.addr[0], source_ip.addr[1], source_ip.addr[2],
+              source_ip.addr[3]);
 
     hash_put(server_map, mapping);
 }
@@ -104,14 +101,10 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
         return fd;
     }
 
-    struct inet_socket_data *data = socket->private_data;
-
     new_socket->private_data = calloc(1, sizeof(struct inet_socket_data));
     struct inet_socket_data *new_data = new_socket->private_data;
-    new_data->source_port = data->source_port;
-    new_data->source_ip = data->source_ip;
-    new_data->dest_port = htons(connection.addr.in.sin_port);
-    new_data->dest_ip = ip_v4_from_uint(connection.addr.in.sin_addr.s_addr);
+    net_set_host_address(new_socket, &socket->host_address, sizeof(socket->host_address));
+    net_set_peer_address(new_socket, &connection.addr.in, sizeof(connection.addr.in));
 
     struct tcp_control_block *tcb = calloc(1, sizeof(struct tcp_control_block));
     assert(tcb);
@@ -124,8 +117,11 @@ int net_inet_accept(struct socket *socket, struct sockaddr_in *addr, socklen_t *
 
     create_tcp_socket_mapping(new_socket);
 
-    struct network_interface *interface = net_get_interface_for_ip(new_data->dest_ip);
-    net_send_tcp(interface, new_data->dest_ip, new_data->source_port, new_data->dest_port, tcb->current_sequence_num, tcb->current_ack_num,
+    uint16_t source_port = PORT_FROM_SOCKADDR(&new_socket->host_address);
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&new_socket->peer_address);
+    uint16_t dest_port = PORT_FROM_SOCKADDR(&new_socket->peer_address);
+    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
+    net_send_tcp(interface, dest_ip, source_port, dest_port, tcb->current_sequence_num, tcb->current_ack_num,
                  (union tcp_flags) { .bits.syn = 1, .bits.ack = 1 }, 0, NULL);
 
     // FIXME: we should wait for an ack
@@ -144,21 +140,24 @@ int net_inet_bind(struct socket *socket, const struct sockaddr_in *addr, socklen
     struct inet_socket_data *data = calloc(1, sizeof(struct inet_socket_data));
     socket->private_data = data;
 
-    if (addr->sin_port == 0) {
-        int ret = net_bind_to_ephemeral_port(socket->id, &data->source_port);
+    uint16_t source_port = PORT_FROM_SOCKADDR(addr);
+    if (source_port == 0) {
+        int ret = net_bind_to_ephemeral_port(socket->id, &source_port);
         if (ret < 0) {
             return ret;
         }
     } else {
-        int ret = net_bind_to_port(socket->id, ntohs(addr->sin_port));
+        int ret = net_bind_to_port(socket->id, source_port);
         if (ret < 0) {
             return ret;
         }
-
-        data->source_port = ntohs(addr->sin_port);
     }
 
-    data->source_ip = ip_v4_from_uint(addr->sin_addr.s_addr);
+    struct sockaddr_in host_address = {
+        .sin_family = AF_INET, .sin_port = htons(source_port), .sin_addr = addr->sin_addr, .sin_zero = { 0 }
+    };
+    net_set_host_address(socket, &host_address, sizeof(host_address));
+
     socket->state = BOUND;
     return 0;
 }
@@ -173,23 +172,26 @@ int net_inet_close(struct socket *socket) {
 
     struct inet_socket_data *data = socket->private_data;
     if (data) {
-        net_unbind_port(data->source_port);
+        struct ip_v4_address source_ip = IP_V4_FROM_SOCKADDR(&socket->host_address);
+        uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
+        struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
+        uint16_t dest_port = PORT_FROM_SOCKADDR(&socket->peer_address);
+        net_unbind_port(source_port);
         if (socket->protocol == IPPROTO_TCP) {
             if (socket->state != LISTENING) {
-                struct ip_v4_and_port key = { data->dest_port, data->dest_ip };
+                struct ip_v4_and_port key = { dest_port, dest_ip };
                 free(hash_del(map, &key));
             } else {
-                struct ip_v4_and_port key = { data->source_port, data->source_ip };
+                struct ip_v4_and_port key = { source_port, source_ip };
                 free(hash_del(server_map, &key));
             }
 
             if (data->tcb) {
                 assert(data->tcb->sent_packets);
                 if (socket->state != CLOSED) {
-                    struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
-                    net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num,
-                                 data->tcb->current_ack_num, (union tcp_flags) { .bits.fin = 1, .bits.ack = data->tcb->should_send_ack }, 0,
-                                 NULL);
+                    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
+                    net_send_tcp(interface, dest_ip, source_port, dest_port, data->tcb->current_sequence_num, data->tcb->current_ack_num,
+                                 (union tcp_flags) { .bits.fin = 1, .bits.ack = data->tcb->should_send_ack }, 0, NULL);
                 }
 
                 hash_for_each(data->tcb->sent_packets, __kill_tcp_data, NULL);
@@ -207,7 +209,7 @@ int net_inet_close(struct socket *socket) {
 int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, socklen_t addrlen) {
     assert(socket);
 
-    if (socket->type != SOCK_STREAM || socket->protocol != IPPROTO_TCP) {
+    if (socket->type != SOCK_STREAM || socket->protocol != IPPROTO_TCP || addrlen > sizeof(struct sockaddr_in)) {
         return -EINVAL;
     }
 
@@ -223,16 +225,16 @@ int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, sock
         }
     }
 
-    struct inet_socket_data *data = socket->private_data;
-    struct ip_v4_address dest_ip = ip_v4_from_uint(addr->sin_addr.s_addr);
+    net_set_peer_address(socket, addr, addrlen);
+
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(addr);
+    uint16_t dest_port = PORT_FROM_SOCKADDR(addr);
     struct network_interface *interface = net_get_interface_for_ip(dest_ip);
 
-    data->dest_ip = dest_ip;
-    data->dest_port = ntohs(addr->sin_port);
-
     create_tcp_socket_mapping(socket);
-    assert(net_get_tcp_socket_by_ip_v4_and_port((struct ip_v4_and_port) { data->dest_port, data->dest_ip }) != NULL);
+    assert(net_get_tcp_socket_by_ip_v4_and_port((struct ip_v4_and_port) { dest_port, dest_ip }) != NULL);
 
+    struct inet_socket_data *data = socket->private_data;
     data->tcb = calloc(1, sizeof(struct tcp_control_block));
     assert(data->tcb);
 
@@ -242,7 +244,8 @@ int net_inet_connect(struct socket *socket, const struct sockaddr_in *addr, sock
     data->tcb->sent_packets = hash_create_hash_map(tcp_data_hash, tcp_data_equals, tcp_data_key);
     assert(data->tcb->sent_packets);
 
-    net_send_tcp(interface, dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num++, data->tcb->current_ack_num,
+    uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
+    net_send_tcp(interface, dest_ip, source_port, dest_port, data->tcb->current_sequence_num++, data->tcb->current_ack_num,
                  (union tcp_flags) { .raw_flags = TCP_FLAGS_SYN }, 0, NULL);
 
     for (;;) {
@@ -273,26 +276,16 @@ int net_inet_listen(struct socket *socket) {
 
 int net_inet_getpeername(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen) {
     int ret = 0;
-    struct sockaddr_in peer_address = (struct sockaddr_in) { .sin_family = AF_INET, .sin_zero = { 0 } };
-    size_t peer_address_length = sizeof(struct sockaddr_in);
 
     mutex_lock(&socket->lock);
-    if (socket->state == CONNECTED) {
-        struct inet_socket_data *data = socket->private_data;
-        peer_address.sin_port = data->dest_port;
-        peer_address.sin_addr.s_addr = ip_v4_to_uint(data->dest_ip);
+    if (socket->has_peer_address) {
+        net_copy_sockaddr_to_user(&socket->peer_address, sizeof(struct sockaddr_in), addr, addrlen);
     } else {
         ret = -ENOTCONN;
     }
     mutex_unlock(&socket->lock);
 
-    if (ret) {
-        return ret;
-    }
-
-    memcpy(addr, &peer_address, MIN(*addrlen, peer_address_length));
-    *addrlen = peer_address_length;
-    return 0;
+    return ret;
 }
 
 int net_inet_socket(int domain, int type, int protocol) {
@@ -324,19 +317,26 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     assert((socket->type & SOCK_TYPE_MASK) == SOCK_RAW || (socket->type & SOCK_TYPE_MASK) == SOCK_DGRAM ||
            (socket->type & SOCK_TYPE_MASK) == SOCK_STREAM);
 
-    if (socket->protocol == IPPROTO_TCP) {
-        if (dest) {
-            return -EINVAL;
-        }
+    if (dest && socket->type == SOCK_STREAM) {
+        return -EINVAL;
+    }
 
+    if (!dest) {
+        dest = (const struct sockaddr_in *) &socket->peer_address;
+    }
+
+    uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(dest);
+    uint16_t dest_port = PORT_FROM_SOCKADDR(dest);
+
+    if (socket->protocol == IPPROTO_TCP) {
         assert(socket->state == CONNECTED);
         assert(socket->private_data);
 
         struct inet_socket_data *data = socket->private_data;
-        struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
+        struct network_interface *interface = net_get_interface_for_ip(dest_ip);
 
-        net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port, data->tcb->current_sequence_num,
-                     data->tcb->current_ack_num,
+        net_send_tcp(interface, dest_ip, source_port, dest_port, data->tcb->current_sequence_num, data->tcb->current_ack_num,
                      (union tcp_flags) { .bits.ack = data->tcb->should_send_ack, .bits.fin = socket->state == CLOSING }, len, buf);
 
         data->tcb->should_send_ack = false;
@@ -348,11 +348,11 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
         return -EINVAL;
     }
 
-    struct network_interface *interface = net_get_interface_for_ip(ip_v4_from_uint(dest->sin_addr.s_addr));
+    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
     assert(interface);
 
     if ((socket->type & SOCK_TYPE_MASK) == SOCK_RAW) {
-        return net_send_ip_v4(interface, socket->protocol, ip_v4_from_uint(dest->sin_addr.s_addr), buf, len);
+        return net_send_ip_v4(interface, socket->protocol, dest_ip, buf, len);
     }
 
     assert(socket->type == SOCK_DGRAM && socket->protocol == IPPROTO_UDP);
@@ -368,9 +368,7 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
         return -EINVAL;
     }
 
-    struct inet_socket_data *data = socket->private_data;
-    struct ip_v4_address dest_ip = ip_v4_from_uint(dest->sin_addr.s_addr);
-    return net_send_udp(interface, dest_ip, data->source_port, ntohs(dest->sin_port), len, buf);
+    return net_send_udp(interface, dest_ip, source_port, dest_port, len, buf);
 }
 
 ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr_in *source, socklen_t *addrlen) {
