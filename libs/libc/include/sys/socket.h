@@ -21,19 +21,35 @@
 #define AF_LOCAL  AF_UNIX
 
 #define PF_UNSPEC AF_UNSPEC
+#define PF_INET   AF_INET
+#define PF_INET6  AF_INET6
 #define PF_UNIX   AF_UNIX
 #define PF_LOCAL  PF_UNIX
 
-#define SHUT_RD   1
+#define SHUT_RD   0
+#define SHUT_WR   1
 #define SHUT_RDWR 2
-#define SHUT_WR   3
 
 #define SOL_SOCKET 0
 
-#define SO_RCVTIMEO  1
-#define SO_ERROR     2
-#define SO_KEEPALIVE 3
-#define SO_REUSEADDR 4
+#define SO_ACCEPTCONN 1
+#define SO_BROADCAST  2
+#define SO_DEBUG      3
+#define SO_DONTROUTE  4
+#define SO_ERROR      5
+#define SO_KEEPALIVE  6
+#define SO_LINGER     7
+#define SO_OOBINLINE  8
+#define SO_RCVBUF     9
+#define SO_RCVLOWAT   10
+#define SO_RCVTIMEO   11
+#define SO_REUSEADDR  12
+#define SO_SNDBUF     13
+#define SO_SNDLOWAT   14
+#define SO_SNDTIMEO   15
+#define SO_TYPE       16
+
+#define SOMAXCONN 4096
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,19 +64,27 @@ struct sockaddr {
     char sa_data[14];
 };
 
+struct sockaddr_storage {
+    sa_family_t ss_family;
+    char __ss_pad[108]; /* UNIX_PATH_MAX == 108 */
+};
+
+struct linger {
+    int l_onoff;
+    int l_linger;
+};
+
 int accept(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen);
 int accept4(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen, int flags);
 int bind(int fd, const struct sockaddr *addr, socklen_t addrlen);
 int connect(int fd, const struct sockaddr *addr, socklen_t addrlen);
-int listen(int fd, int backlog);
-int socket(int domain, int type, int protocol);
-int shutdown(int fd, int how);
-
-int getsockopt(int fd, int level, int optname, void *__restrict optval, socklen_t *__restrict optlen);
-int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
-
 int getpeername(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen);
 int getsockname(int fd, struct sockaddr *__restrict addr, socklen_t *__restrict addrlen);
+int getsockopt(int fd, int level, int optname, void *__restrict optval, socklen_t *__restrict optlen);
+int listen(int fd, int backlog);
+int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
+int shutdown(int fd, int how);
+int socket(int domain, int type, int protocol);
 
 ssize_t send(int fd, const void *buf, size_t len, int flags);
 ssize_t sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
