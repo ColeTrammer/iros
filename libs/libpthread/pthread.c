@@ -1,5 +1,4 @@
 #define __libc_internal
-#define __is_libc
 
 #include <assert.h>
 #include <errno.h>

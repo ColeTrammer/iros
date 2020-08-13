@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/syscall.h>
 #include <time.h>
 

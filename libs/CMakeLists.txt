@@ -26,3 +26,4 @@ set(TARGETS
 
 add_all_targets()
 set(LIBS_TARGETS ${TARGETS} PARENT_SCOPE)
+target_compile_definitions(loader PRIVATE __is_libc)

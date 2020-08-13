@@ -1,4 +1,3 @@
-#define __is_libc
 #include <fcntl.h>
 #include <stdalign.h>
 #include <stdlib.h>
