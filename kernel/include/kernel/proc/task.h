@@ -12,6 +12,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/blockers.h>
 #include <kernel/proc/process.h>
+#include <kernel/util/list.h>
 
 // clang-format off
 #include <kernel/arch/arch.h>
@@ -60,8 +61,7 @@ struct task {
     struct task *sched_prev;
 
     // Inline doublely-linked list connecting all tasks in a process
-    struct task *process_next;
-    struct task *process_prev;
+    struct list_node process_list;
 
     // Inline list pointer used by process finializer
     struct task *finialize_queue_next;

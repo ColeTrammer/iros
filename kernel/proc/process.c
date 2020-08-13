@@ -60,14 +60,11 @@ static void free_process_vm(struct process *process) {
     }
     process->used_user_mutexes = NULL;
 
-    struct timer *timer = process->timers;
-    while (timer) {
+    list_for_each_entry_safe(&process->timer_list, timer, struct timer, proc_list) {
         debug_log("Destroying timer: [ %p ]\n", timer);
-        struct timer *next = timer->proc_next;
         time_delete_timer(timer);
-        timer = next;
     }
-    process->timers = NULL;
+    list_clear(&process->timer_list);
 }
 
 static void free_process_name_info(struct process *process) {
@@ -90,26 +87,15 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
         // Reassign the main tid of the process if it exits early, and delete tid from the task list
         bool no_remaining_tasks = false;
         mutex_lock(&process->lock);
-        if (process->task_list == task) {
-            process->task_list = task->process_next;
-        }
-
-        struct task *prev = task->process_prev;
-        struct task *next = task->process_next;
-        if (prev) {
-            prev->process_next = task->process_next;
-        }
-        if (next) {
-            next->process_prev = task->process_prev;
-        }
+        list_remove(&task->process_list);
 
         // There's only one task left, notify anyone who cares (execve does).
-        if (process->task_list && !process->task_list->process_next && !process->task_list->process_prev) {
+        if (list_is_singular(&process->task_list)) {
             wake_up_all(&process->one_task_left_queue);
         }
 
         if (process->main_tid == task->tid) {
-            struct task *new_task = process->task_list;
+            struct task *new_task = list_first_entry(&process->task_list, struct task, process_list);
             process->main_tid = new_task ? new_task->tid : -1;
             no_remaining_tasks = !new_task;
             assert(process->main_tid != task->tid);
@@ -384,7 +370,7 @@ void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *proces
 void proc_set_sig_pending(struct process *process, int n) {
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     mutex_lock(&process->lock);
-    struct task *task_to_use = process->task_list;
+    struct task *task_to_use = list_first_entry(&process->task_list, struct task, process_list);
     mutex_unlock(&process->lock);
 
     task_set_sig_pending(task_to_use, n);

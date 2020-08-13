@@ -1,6 +1,8 @@
 #ifndef _KERNEL_UTIL_MACROS_H
 #define _KERNEL_UTIL_MACROS_H 1
 
+#include <stdalign.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/param.h>
 

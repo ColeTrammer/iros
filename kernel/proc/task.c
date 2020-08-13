@@ -174,6 +174,8 @@ void init_kernel_process(void) {
     init_spinlock(&initial_kernel_process.children_lock);
     init_spinlock(&initial_kernel_process.parent_lock);
     init_wait_queue(&initial_kernel_process.one_task_left_queue);
+    init_list(&initial_kernel_process.task_list);
+    init_list(&initial_kernel_process.timer_list);
     initial_kernel_process.main_tid = 1;
     initial_kernel_process.pgid = 1;
     initial_kernel_process.tty = -1;
@@ -186,18 +188,7 @@ void init_idle_task(struct processor *processor) {
     task->process = &initial_kernel_process;
 
     // NOTE: this would need locks if APs weren't initialized one at a time.
-    struct task *prev = initial_kernel_process.task_list;
-    if (prev != NULL) {
-        task->process_next = prev->process_next;
-        task->process_prev = prev;
-
-        if (task->process_next) {
-            task->process_next->process_prev = task;
-        }
-        prev->process_next = task;
-    } else {
-        initial_kernel_process.task_list = task;
-    }
+    list_append(&initial_kernel_process.task_list, &task->process_list);
 
     task->tid = get_next_tid();
     task->kernel_task = true;
@@ -223,10 +214,12 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     init_spinlock(&process->children_lock);
     init_spinlock(&process->parent_lock);
     init_wait_queue(&process->one_task_left_queue);
+    init_list(&process->task_list);
+    init_list(&process->timer_list);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->process_memory = NULL;
-    task->process->task_list = task;
+    list_append(&process->task_list, &task->process_list);
     task->kernel_task = true;
     task->sched_state = RUNNING_UNINTERRUPTIBLE;
     task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);

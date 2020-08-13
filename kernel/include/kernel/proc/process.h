@@ -9,6 +9,7 @@
 
 #include <kernel/proc/user_mutex.h>
 #include <kernel/proc/wait_queue.h>
+#include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 #include <kernel/util/spinlock.h>
 
@@ -58,12 +59,12 @@ struct process {
     struct wait_queue one_task_left_queue;
 
     struct clock *process_clock;
-    struct timer *timers;
+    struct list_node timer_list;
     struct timer *alarm_timer;
 
     struct args_context *args_context;
 
-    struct task *task_list;
+    struct list_node task_list;
     pid_t main_tid;
 
     pid_t pid;

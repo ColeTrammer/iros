@@ -20,6 +20,7 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
+#include <kernel/util/list.h>
 
 void kernel_main(uint32_t *multiboot_info) {
     init_hal();

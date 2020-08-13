@@ -143,7 +143,7 @@ int proc_execve(char *path, char **argv, char **envp) {
 
     for (;;) {
         // Check if all the other threads have been removed.
-        if (process->main_tid == current->tid && current->process_next == NULL && current->process_prev == NULL) {
+        if (process->main_tid == current->tid && list_is_singular(&process->task_list)) {
             break;
         }
 
@@ -192,7 +192,7 @@ int proc_execve(char *path, char **argv, char **envp) {
         }
     }
     assert(process->main_tid == current->tid);
-    assert(process->task_list == current);
+    assert(list_first_entry(&process->task_list, struct task, process_list) == current);
 
     // Reset signals that have actual handlers.
     for (int i = 0; i < _NSIG; i++) {

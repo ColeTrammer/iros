@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include <kernel/util/list.h>
+
 struct clock;
 struct queued_signal;
 struct task;
@@ -15,8 +17,7 @@ struct timer {
     struct timer *prev;
 
     // Linked list between timers of same process
-    struct timer *proc_next;
-    struct timer *proc_prev;
+    struct list_node proc_list;
 
     struct clock *clock;
 

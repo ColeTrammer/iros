@@ -80,20 +80,7 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     }
 
     struct process *process = to_add->task->process;
-    if (!process->timers) {
-        to_add->proc_next = NULL;
-        to_add->proc_prev = NULL;
-        process->timers = to_add;
-    } else {
-        struct timer *prev = process->timers;
-        to_add->proc_next = prev->proc_next;
-        to_add->proc_prev = prev;
-
-        if (to_add->proc_next) {
-            to_add->proc_next->proc_prev = to_add;
-        }
-        prev->proc_next = to_add;
-    }
+    list_append(&process->timer_list, &to_add->proc_list);
 
     hash_put(timer_map, to_add);
 
@@ -106,19 +93,7 @@ int time_delete_timer(struct timer *timer) {
         time_remove_timer_from_clock(timer->clock, timer);
     }
 
-    struct process *process = timer->task->process;
-    if (process->timers == timer) {
-        process->timers = timer->next;
-    }
-
-    struct timer *prev = timer->proc_prev;
-    struct timer *next = timer->proc_next;
-    if (prev) {
-        prev->proc_next = timer->proc_next;
-    }
-    if (next) {
-        next->proc_prev = timer->proc_prev;
-    }
+    list_remove(&timer->proc_list);
 
     hash_del(timer_map, &timer->id);
     free_timerid(timer->id);

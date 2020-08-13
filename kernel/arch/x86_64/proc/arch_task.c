@@ -56,13 +56,15 @@ pid_t proc_fork(void) {
     init_spinlock(&child_process->user_mutex_lock);
     init_spinlock(&child_process->children_lock);
     init_spinlock(&child_process->parent_lock);
+    init_list(&child_process->task_list);
+    init_list(&child_process->timer_list);
     init_wait_queue(&child_process->one_task_left_queue);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;
     child_process->process_memory = clone_process_vm();
     child_process->tty = parent->process->tty;
-    child_process->task_list = child;
+    list_append(&child_process->task_list, &child->process_list);
 
 #ifdef FORK_DEBUG
     debug_log("Forking Task: [ %d ]\n", parent->process->pid);

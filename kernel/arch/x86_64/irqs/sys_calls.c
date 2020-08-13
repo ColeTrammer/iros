@@ -1178,16 +1178,7 @@ SYS_CALL(create_task) {
     *args->tid_ptr = task->tid;
 
     mutex_lock(&task->process->lock);
-    struct task *prev = task->process->task_list;
-    if (prev != NULL) {
-        task->process_next = prev->process_next;
-        task->process_prev = prev;
-
-        if (task->process_next) {
-            task->process_next->process_prev = task;
-        }
-        prev->process_next = task;
-    }
+    list_append(&task->process->task_list, &task->process_list);
     mutex_unlock(&task->process->lock);
 
     sched_add_task(task);
