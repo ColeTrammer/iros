@@ -271,6 +271,30 @@ int net_inet_listen(struct socket *socket) {
     return 0;
 }
 
+int net_inet_getpeername(struct socket *socket, struct sockaddr_in *addr, socklen_t *addrlen) {
+    int ret = 0;
+    struct sockaddr_in peer_address = (struct sockaddr_in) { .sin_family = AF_INET, .sin_zero = { 0 } };
+    size_t peer_address_length = sizeof(struct sockaddr_in);
+
+    mutex_lock(&socket->lock);
+    if (socket->state == CONNECTED) {
+        struct inet_socket_data *data = socket->private_data;
+        peer_address.sin_port = data->dest_port;
+        peer_address.sin_addr.s_addr = ip_v4_to_uint(data->dest_ip);
+    } else {
+        ret = -ENOTCONN;
+    }
+    mutex_unlock(&socket->lock);
+
+    if (ret) {
+        return ret;
+    }
+
+    memcpy(addr, &peer_address, MIN(*addrlen, peer_address_length));
+    *addrlen = peer_address_length;
+    return 0;
+}
+
 int net_inet_socket(int domain, int type, int protocol) {
     assert(domain == AF_INET);
 

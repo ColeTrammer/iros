@@ -209,6 +209,37 @@ int net_unix_connect(struct socket *socket, const struct sockaddr_un *addr, sock
     return 0;
 }
 
+int net_unix_getpeername(struct socket *socket, struct sockaddr_un *addr, socklen_t *addrlen) {
+    struct socket *peer = NULL;
+    int ret = -ENOTCONN;
+
+    mutex_lock(&socket->lock);
+    struct unix_socket_data *data = socket->private_data;
+    if (socket->state == CONNECTED) {
+        ret = 0;
+        peer = net_get_socket_by_id(data->connected_id);
+    }
+    mutex_unlock(&socket->lock);
+
+    if (!peer) {
+        return ret;
+    }
+
+    struct sockaddr_un peer_address = (struct sockaddr_un) { .sun_family = AF_UNIX };
+
+    mutex_lock(&peer->lock);
+    struct unix_socket_data *peer_data = peer->private_data;
+    // FIXME: this only makes sense if the peer was previously bound to a path, but only one side should be.
+    memcpy(peer_address.sun_path, peer_data->bound_path, sizeof(peer_data->bound_path));
+    size_t peer_address_size = offsetof(struct sockaddr_un, sun_path) + strnlen(peer_address.sun_path, UNIX_PATH_MAX);
+    mutex_unlock(&peer->lock);
+
+    memcpy(addr, &peer_address, MIN(*addrlen, peer_address_size));
+    *addrlen = peer_address_size;
+
+    return ret;
+}
+
 int net_unix_socket(int domain, int type, int protocol) {
     if ((type & SOCK_TYPE_MASK) != SOCK_STREAM || protocol != 0) {
         return -EPROTONOSUPPORT;

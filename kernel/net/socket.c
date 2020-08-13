@@ -352,6 +352,24 @@ int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrle
     }
 }
 
+int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
+    assert(file);
+    assert(file->private_data);
+
+    struct socket_file_data *file_data = file->private_data;
+    struct socket *socket = hash_get(map, &file_data->socket_id);
+    assert(socket);
+
+    switch (socket->domain) {
+        case AF_UNIX:
+            return net_unix_getpeername(socket, (struct sockaddr_un *) addr, addrlen);
+        case AF_INET:
+            return net_inet_getpeername(socket, (struct sockaddr_in *) addr, addrlen);
+        default:
+            return -EAFNOSUPPORT;
+    }
+}
+
 int net_listen(struct file *file, int backlog) {
     assert(file);
     assert(file->private_data);

@@ -945,11 +945,7 @@ SYS_CALL(getpeername) {
     SYS_PARAM3_VALIDATE(socklen_t *, addrlen, validate_write, sizeof(socklen_t));
     SYS_PARAM2_VALIDATE(struct sockaddr *, addr, validate_write, *addrlen);
 
-    (void) file;
-    (void) addr;
-    (void) addrlen;
-
-    SYS_RETURN(-ENOSYS);
+    SYS_RETURN(net_getpeername(file, addr, addrlen));
 }
 
 SYS_CALL(getsockname) {
