@@ -5,6 +5,7 @@
 
 #include <kernel/net/ip_address.h>
 #include <kernel/net/mac.h>
+#include <kernel/util/list.h>
 
 struct network_interface;
 
@@ -23,8 +24,7 @@ struct network_configuration_context {
 };
 
 struct network_interface {
-    struct network_interface *next;
-    struct network_interface *prev;
+    struct list_node interface_list;
 
     char name[8];
 #define NETWORK_INTERFACE_ETHERNET 1
@@ -42,9 +42,10 @@ struct network_interface {
     void *private_data;
 };
 
-void net_for_each_interface(void (*func)(struct network_interface *interface, void *closure), void *closure);
-struct network_interface *net_find_interface(bool (*func)(struct network_interface *interface, void *closure), void *closure);
+struct list_node *net_get_interface_list(void);
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address);
 struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data);
+
+#define net_for_each_interface(name) list_for_each_entry(net_get_interface_list(), name, struct network_interface, interface_list)
 
 #endif /* _KERNEL_NET_INTERFACE_H */

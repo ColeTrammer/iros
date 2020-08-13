@@ -13,17 +13,6 @@
 
 struct task *network_task;
 
-static void init_ip_v4_mappings(struct network_interface *interface, void *closure __attribute__((unused))) {
-    debug_log("Initializing interface: [ %s ]\n", interface->name);
-
-    if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
-        net_configure_interface_with_dhcp(interface);
-    } else {
-        net_create_ip_v4_to_mac_mapping(interface->broadcast, interface->ops->get_mac_address(interface));
-        net_create_ip_v4_to_mac_mapping(interface->address, interface->ops->get_mac_address(interface));
-    }
-}
-
 void init_net() {
     init_loopback();
     init_net_sockets();
@@ -35,5 +24,14 @@ void init_net() {
 
     sched_add_task(network_task);
 
-    net_for_each_interface(init_ip_v4_mappings, NULL);
+    net_for_each_interface(interface) {
+        debug_log("Initializing interface: [ %s ]\n", interface->name);
+
+        if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
+            net_configure_interface_with_dhcp(interface);
+        } else {
+            net_create_ip_v4_to_mac_mapping(interface->broadcast, interface->ops->get_mac_address(interface));
+            net_create_ip_v4_to_mac_mapping(interface->address, interface->ops->get_mac_address(interface));
+        }
+    }
 }

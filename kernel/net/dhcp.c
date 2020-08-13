@@ -81,11 +81,6 @@ void net_configure_interface_with_dhcp(struct network_interface *interface) {
     net_send_dhcp(interface, DHCP_MESSAGE_TYPE_DISCOVER, our_mac_address, IP_V4_ZEROES, IP_V4_ZEROES);
 }
 
-static bool by_xid(struct network_interface *interface, void *closure) {
-    const struct dhcp_packet *packet = closure;
-    return interface->config_context.state != INITIALIZED && interface->config_context.xid == ntohl(packet->xid);
-}
-
 void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
     if (len < DHCP_MINIMUM_PACKET_SIZE - sizeof(struct udp_packet) - sizeof(struct ip_v4_packet)) {
         debug_log("dhcp packet too small: [ %lu ]\n", len);
@@ -99,7 +94,13 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
         return;
     }
 
-    struct network_interface *interface = net_find_interface(by_xid, (void *) packet);
+    struct network_interface *interface = NULL;
+    net_for_each_interface(iter) {
+        if (iter->config_context.state != INITIALIZED && iter->config_context.xid == ntohl(packet->xid)) {
+            interface = iter;
+            break;
+        }
+    }
     if (!interface) {
         debug_log("DHCP packet has no matching interface\n");
         return;

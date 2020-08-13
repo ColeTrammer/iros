@@ -524,28 +524,25 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_arp(struct procfs_dat
     return buf;
 }
 
-static void interfaces_for_each(struct network_interface *interface, void *closure) {
-    struct procfs_buffer *buf = closure;
-    struct mac_address mac_address = interface->ops->get_mac_address(interface);
-    buf->size += snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0,
-                          "NAME: %s\n"
-                          "INTERFACE IP: %d.%d.%d.%d\n"
-                          "ROUTER IP: %d.%d.%d.%d\n"
-                          "SUBNET MASK: %d.%d.%d.%d\n"
-                          "MAC ADDRESS: %02x:%02x:%02x:%02x:%02x:%02x\n",
-                          interface->name, interface->address.addr[0], interface->address.addr[1], interface->address.addr[2],
-                          interface->address.addr[3], interface->broadcast.addr[0], interface->broadcast.addr[1],
-                          interface->broadcast.addr[2], interface->broadcast.addr[3], interface->mask.addr[0], interface->mask.addr[1],
-                          interface->mask.addr[2], interface->mask.addr[3], mac_address.addr[0], mac_address.addr[1], mac_address.addr[2],
-                          mac_address.addr[3], mac_address.addr[4], mac_address.addr[5]);
-}
-
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_interfaces(struct procfs_data *data __attribute__((unused)),
                                                                       struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
 
     struct procfs_buffer buf = { buffer, 0 };
-    net_for_each_interface(interfaces_for_each, &buf);
+    net_for_each_interface(interface) {
+        struct mac_address mac_address = interface->ops->get_mac_address(interface);
+        buf.size += snprintf(buf.buffer + buf.size, buf.buffer ? PAGE_SIZE - buf.size : 0,
+                             "NAME: %s\n"
+                             "INTERFACE IP: %d.%d.%d.%d\n"
+                             "ROUTER IP: %d.%d.%d.%d\n"
+                             "SUBNET MASK: %d.%d.%d.%d\n"
+                             "MAC ADDRESS: %02x:%02x:%02x:%02x:%02x:%02x\n",
+                             interface->name, interface->address.addr[0], interface->address.addr[1], interface->address.addr[2],
+                             interface->address.addr[3], interface->broadcast.addr[0], interface->broadcast.addr[1],
+                             interface->broadcast.addr[2], interface->broadcast.addr[3], interface->mask.addr[0], interface->mask.addr[1],
+                             interface->mask.addr[2], interface->mask.addr[3], mac_address.addr[0], mac_address.addr[1],
+                             mac_address.addr[2], mac_address.addr[3], mac_address.addr[4], mac_address.addr[5]);
+    }
     return buf;
 }
 

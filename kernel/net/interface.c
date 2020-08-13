@@ -11,14 +11,10 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
 
-static struct network_interface *interfaces = NULL;
+static struct list_node interface_list = INIT_LIST(interface_list);
 
 static void add_interface(struct network_interface *interface) {
-    insque(interface, interfaces);
-
-    if (interfaces == NULL) {
-        interfaces = interface;
-    }
+    list_append(&interface_list, &interface->interface_list);
 }
 
 static void generic_recieve(struct network_interface *interface, const void *data, size_t len) {
@@ -33,39 +29,29 @@ static void generic_recieve_sync(struct network_interface *interface, const void
     net_on_incoming_packet_sync(data, len);
 }
 
+struct list_node *net_get_interface_list(void) {
+    return &interface_list;
+}
+
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address) {
     struct ip_v4_address loopback = IP_V4_LOOPBACK;
-    struct network_interface *interface = interfaces;
     bool use_loopback = memcmp(&address, &loopback, sizeof(struct ip_v4_address)) == 0;
 
-    while (use_loopback ? interface->type != NETWORK_INTERFACE_LOOPBACK : interface->type != NETWORK_INTERFACE_ETHERNET) {
-        interface = interface->next;
+    struct network_interface *interface = NULL;
+    net_for_each_interface(iter) {
+        if (iter->type == NETWORK_INTERFACE_LOOPBACK && use_loopback) {
+            interface = iter;
+            break;
+        } else if (iter->type == NETWORK_INTERFACE_ETHERNET && !use_loopback) {
+            interface = iter;
+            break;
+        }
     }
 
     assert(interface);
 
     debug_log("Got interface: [ %s, %u.%u.%u.%u ]\n", interface->name, address.addr[0], address.addr[1], address.addr[2], address.addr[3]);
     return interface;
-}
-
-void net_for_each_interface(void (*func)(struct network_interface *interface, void *closure), void *closure) {
-    struct network_interface *interface = interfaces;
-    while (interface) {
-        func(interface, closure);
-        interface = interface->next;
-    }
-}
-
-struct network_interface *net_find_interface(bool (*func)(struct network_interface *interface, void *closure), void *closure) {
-    struct network_interface *interface = interfaces;
-    while (interface) {
-        if (func(interface, closure)) {
-            return interface;
-        }
-        interface = interface->next;
-    }
-
-    return NULL;
 }
 
 struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data) {
