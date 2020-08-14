@@ -141,7 +141,6 @@ void Server::start() {
     socklen_t client_addr_len = sizeof(sockaddr_un);
 
     fd_set set;
-    fd_set exceptional;
     uint8_t buffer[BUFSIZ];
 
     timespec time_of_last_paint { 0, 0 };
@@ -173,19 +172,17 @@ void Server::start() {
         }
 
         FD_ZERO(&set);
-        FD_ZERO(&exceptional);
         FD_SET(m_socket_fd, &set);
         FD_SET(m_kbd_fd, &set);
         FD_SET(m_mouse_fd, &set);
         m_clients.for_each([&](int fd) {
             FD_SET(fd, &set);
-            FD_SET(fd, &exceptional);
         });
 
         timespec fps_timeout { .tv_sec = 0, .tv_nsec = remaining_time * 1000000 };
         timespec max_timeout { .tv_sec = 1, .tv_nsec = 0 };
         timespec* timeout_to_pass = did_draw ? &max_timeout : &fps_timeout;
-        int ret = pselect(FD_SETSIZE, &set, nullptr, &exceptional, timeout_to_pass, nullptr);
+        int ret = pselect(FD_SETSIZE, &set, nullptr, nullptr, timeout_to_pass, nullptr);
         if (ret < 0) {
             perror("select");
             exit(1);
@@ -196,13 +193,6 @@ void Server::start() {
         }
 
         m_clients.for_each_reverse([&](int client_fd) {
-            if (FD_ISSET(client_fd, &exceptional)) {
-                // At this point, just assume the client disconnected.
-                // There's probably no other way this will be set.
-                kill_client(client_fd);
-                return;
-            }
-
             if (!FD_ISSET(client_fd, &set)) {
                 return;
             }
