@@ -94,6 +94,10 @@ int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int
 
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
     struct socket *socket = socket_from_file(file);
+    if (addr->sa_family != socket->domain || addrlen > sizeof(struct sockaddr_storage)) {
+        return -EINVAL;
+    }
+
     if (!socket->op->bind) {
         return -EINVAL;
     }
@@ -102,7 +106,16 @@ int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) 
 }
 
 int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
+    if (addrlen > sizeof(struct sockaddr_storage)) {
+        return -EINVAL;
+    }
+
     struct socket *socket = socket_from_file(file);
+
+    if (addr->sa_family != socket->domain) {
+        return -EAFNOSUPPORT;
+    }
+
     if (!socket->op->connect) {
         return -EINVAL;
     }
@@ -121,12 +134,12 @@ int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen
 
 int net_listen(struct file *file, int backlog) {
     struct socket *socket = socket_from_file(file);
-    if (backlog <= 0 || socket->state != BOUND) {
+    if (backlog <= 0 || backlog > SOMAXCONN || socket->state != BOUND) {
         return -EINVAL;
     }
 
     if (!socket->op->listen) {
-        return -EINVAL;
+        return -EOPNOTSUPP;
     }
 
     return socket->op->listen(socket, backlog);
@@ -171,7 +184,19 @@ int net_socket(int domain, int type, int protocol) {
 }
 
 ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
+    if (!dest && !!addrlen) {
+        return -EINVAL;
+    }
+
+    if (!!dest && addrlen > sizeof(struct sockaddr_storage)) {
+        return -EINVAL;
+    }
+
     struct socket *socket = socket_from_file(file);
+    if (!!dest && dest->sa_family != socket->domain) {
+        return -EINVAL;
+    }
+
     if (!socket->op->sendto) {
         return -EINVAL;
     }
@@ -180,6 +205,10 @@ ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, co
 }
 
 ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
+    if ((!!source && !addrlen) || (!source && !!addrlen)) {
+        return -EINVAL;
+    }
+
     struct socket *socket = socket_from_file(file);
     if (!socket->op->recvfrom) {
         return -EINVAL;

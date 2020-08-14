@@ -32,9 +32,6 @@ static int net_icmp_socket(int domain, int type, int protocol) {
 static ssize_t net_icmp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,
                                socklen_t addrlen) {
     (void) flags;
-    if (addrlen < sizeof(struct sockaddr_in)) {
-        return -EINVAL;
-    }
 
     ssize_t ret = 0;
     mutex_lock(&socket->lock);
@@ -44,6 +41,9 @@ static ssize_t net_icmp_sendto(struct socket *socket, const void *buf, size_t le
             goto done;
         }
         addr = (struct sockaddr *) &socket->peer_address;
+    } else if (addrlen < sizeof(struct sockaddr_in)) {
+        ret = -EINVAL;
+        goto done;
     }
 
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(addr);

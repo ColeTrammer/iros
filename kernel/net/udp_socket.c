@@ -36,9 +36,6 @@ static int net_udp_socket(int domain, int type, int protocol) {
 static ssize_t net_udp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,
                               socklen_t addrlen) {
     (void) flags;
-    if (addrlen < sizeof(struct sockaddr_in)) {
-        return -EINVAL;
-    }
 
     ssize_t ret = 0;
     mutex_lock(&socket->lock);
@@ -48,6 +45,9 @@ static ssize_t net_udp_sendto(struct socket *socket, const void *buf, size_t len
             goto done;
         }
         addr = (struct sockaddr *) &socket->peer_address;
+    } else if (addrlen < sizeof(struct sockaddr_in)) {
+        ret = -EINVAL;
+        goto done;
     }
 
     if (socket->state != BOUND) {

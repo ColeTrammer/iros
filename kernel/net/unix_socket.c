@@ -30,10 +30,6 @@ static struct socket_ops unix_ops = {
 };
 
 int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
-    assert(socket->domain == AF_UNIX);
-    assert(socket->state == LISTENING);
-    assert(socket->private_data);
-
     struct socket_connection connection;
     int ret = net_get_next_connection(socket, &connection);
     if (ret != 0) {
@@ -52,9 +48,7 @@ int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *add
     }
 
     if (addr) {
-        assert(addrlen);
-        memcpy(addr, &connection.addr, *addrlen);
-        *addrlen = connection.addrlen;
+        net_copy_sockaddr_to_user(&connection.addr.un, sizeof(struct sockaddr_un), addr, addrlen);
     }
 
     struct unix_socket_data *new_data = calloc(1, sizeof(struct unix_socket_data));
@@ -79,13 +73,6 @@ int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *add
 }
 
 int net_unix_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
-    assert(socket->domain == AF_UNIX);
-    assert(addr);
-
-    if (addr->sa_family != AF_UNIX) {
-        return -EINVAL;
-    }
-
     if (addrlen <= offsetof(struct sockaddr_un, sun_path) || PATH_FROM_SOCKADDR(addr)[0] != '/' ||
         addrlen > sizeof(struct sockaddr_storage)) {
         return -EINVAL;
@@ -148,10 +135,6 @@ int net_unix_close(struct socket *socket) {
 }
 
 int net_unix_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
-    assert(socket);
-    assert(socket->domain == AF_UNIX);
-    assert(addr);
-
     if (addr->sa_family != AF_UNIX) {
         return -EAFNOSUPPORT;
     }
@@ -251,10 +234,6 @@ int net_unix_socket(int domain, int type, int protocol) {
 }
 
 ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
-    assert(socket);
-    assert(socket->domain == AF_UNIX);
-    assert(buf);
-
     (void) flags;
 
     if (dest) {
