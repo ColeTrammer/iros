@@ -10,6 +10,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/tcp.h>
+#include <kernel/net/tcp_socket.h>
 #include <kernel/util/macros.h>
 
 ssize_t net_send_tcp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port,
@@ -113,20 +114,19 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
         return;
     }
 
-    struct inet_socket_data *data = socket->private_data;
-    assert(data);
-    assert(data->tcb);
+    struct tcp_control_block *tcb = socket->private_data;
+    assert(tcb);
 
     // expect this to be a SYN ACK
     if (socket->state != CONNECTED) {
         if (packet->flags.bits.syn && packet->flags.bits.ack) {
-            if (data->tcb->current_sequence_num != ntohl(packet->ack_number)) {
-                debug_log("Recieved incorrect sequence num: [ %u, %u ]\n", data->tcb->current_sequence_num, ntohl(packet->ack_number));
+            if (tcb->current_sequence_num != ntohl(packet->ack_number)) {
+                debug_log("Recieved incorrect sequence num: [ %u, %u ]\n", tcb->current_sequence_num, ntohl(packet->ack_number));
             }
 
             debug_log("Setting ack num to: [ %u ]\n", ntohl(packet->sequence_number) + 1);
-            data->tcb->current_ack_num = ntohl(packet->sequence_number) + 1;
-            data->tcb->should_send_ack = true;
+            tcb->current_ack_num = ntohl(packet->sequence_number) + 1;
+            tcb->should_send_ack = true;
             // struct network_interface *interface = net_get_interface_for_ip(data->dest_ip);
             // net_send_tcp(interface, data->dest_ip, data->source_port, data->dest_port,
             //     data->tcb->current_sequence_num, data->tcb->current_ack_num, (union tcp_flags) { .bits.ack=1 }, 0, NULL);
@@ -141,21 +141,21 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
     assert(socket->state == CONNECTED);
 
     if (packet->flags.bits.ack) {
-        data->tcb->current_sequence_num = ntohl(packet->ack_number);
+        tcb->current_sequence_num = ntohl(packet->ack_number);
     }
 
     if (packet->flags.bits.fin) {
         socket->state = CLOSING;
-        data->tcb->current_ack_num++;
-        data->tcb->should_send_ack = true;
+        tcb->current_ack_num++;
+        tcb->should_send_ack = true;
     }
 
     size_t message_length = ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset;
     char *message = ((char *) packet) + sizeof(uint32_t) * packet->data_offset;
 
     if (message_length > 0) {
-        data->tcb->current_ack_num += message_length;
-        data->tcb->should_send_ack = true;
+        tcb->current_ack_num += message_length;
+        tcb->should_send_ack = true;
         struct socket_data *socket_data = net_inet_create_socket_data(ip_packet, packet->source_port, message, message_length);
         net_send_to_socket(socket, socket_data);
     }

@@ -5,7 +5,6 @@
 #include <kernel/net/socket_syscalls.h>
 #include <kernel/net/udp.h>
 
-static int net_udp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 static int net_udp_socket(int domain, int type, int protocol);
 static ssize_t net_udp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,
                               socklen_t addrlen);
@@ -13,7 +12,7 @@ static ssize_t net_udp_sendto(struct socket *socket, const void *buf, size_t len
 static struct socket_ops udp_ops = {
     .bind = net_inet_bind,
     .close = net_inet_close,
-    .connect = net_udp_connect,
+    .connect = net_inet_connect,
     .getpeername = net_inet_getpeername,
     .recvfrom = net_generic_recieve_from,
     .sendto = net_udp_sendto,
@@ -27,14 +26,6 @@ static struct socket_protocol udp_protocol = {
     .name = "IPv4 UDP",
     .create_socket = net_udp_socket,
 };
-
-static int net_udp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
-    if (addrlen < sizeof(struct sockaddr_in)) {
-        return -EINVAL;
-    }
-    net_set_peer_address(socket, addr, addrlen);
-    return 0;
-}
 
 static int net_udp_socket(int domain, int type, int protocol) {
     int fd;

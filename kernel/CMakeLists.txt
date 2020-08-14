@@ -43,6 +43,7 @@ if (NOT ${NATIVE_BUILD})
         net/socket.c
         net/socket_syscalls.c
         net/tcp.c
+        net/tcp_socket.c
         net/udp.c
         net/udp_socket.c
         net/unix_socket.c

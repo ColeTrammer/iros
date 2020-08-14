@@ -4,13 +4,12 @@
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/socket_syscalls.h>
 
-static int net_icmp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 static int net_icmp_socket(int domain, int type, int protocol);
 static ssize_t net_icmp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,
                                socklen_t addrlen);
 
 static struct socket_ops icmp_ops = {
-    .connect = net_icmp_connect,
+    .connect = net_inet_connect,
     .recvfrom = net_generic_recieve_from,
     .sendto = net_icmp_sendto,
 };
@@ -23,14 +22,6 @@ static struct socket_protocol icmp_protocol = {
     .name = "IPv4 ICMP",
     .create_socket = net_icmp_socket,
 };
-
-static int net_icmp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
-    if (addrlen < sizeof(struct sockaddr_in)) {
-        return -EINVAL;
-    }
-    net_set_peer_address(socket, addr, addrlen);
-    return 0;
-}
 
 static int net_icmp_socket(int domain, int type, int protocol) {
     int fd;

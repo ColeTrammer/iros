@@ -17,6 +17,7 @@
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
+#include <kernel/net/tcp_socket.h>
 #include <kernel/net/unix_socket.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
@@ -143,15 +144,15 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, i
     }
 
     if (socket->protocol == IPPROTO_TCP) {
-        struct inet_socket_data *data = socket->private_data;
+        struct tcp_control_block *tcb = socket->private_data;
         assert(data);
-        if (data->tcb->should_send_ack) {
+        if (tcb->should_send_ack) {
             struct network_interface *interface = net_get_interface_for_ip(IP_V4_FROM_SOCKADDR(&socket->peer_address));
 
             net_send_tcp(interface, IP_V4_FROM_SOCKADDR(&socket->peer_address), PORT_FROM_SOCKADDR(&socket->host_address),
-                         PORT_FROM_SOCKADDR(&socket->peer_address), data->tcb->current_sequence_num, data->tcb->current_ack_num,
+                         PORT_FROM_SOCKADDR(&socket->peer_address), tcb->current_sequence_num, tcb->current_ack_num,
                          (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
-            data->tcb->should_send_ack = false;
+            tcb->should_send_ack = false;
 
             if (socket->state == CLOSING) {
                 socket->state = CLOSED;
