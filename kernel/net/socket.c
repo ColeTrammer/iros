@@ -33,6 +33,8 @@ static int socket_file_close(struct file *file);
 static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len);
 static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len);
 
+static struct list_node protocol_list = INIT_LIST(protocol_list);
+
 static struct file_operations socket_file_ops = { .close = socket_file_close, .read = net_read, .write = net_write };
 
 static struct hash_map *map;
@@ -446,17 +448,21 @@ int net_setsockopt(struct file *file, int level, int optname, const void *optval
 
 int net_socket(int domain, int type, int protocol) {
     if (type == SOCK_RAW && get_current_task()->process->euid != 0) {
-        return -EPERM;
+        return -EACCES;
     }
 
-    switch (domain) {
-        case AF_UNIX:
-            return net_unix_socket(domain, type, protocol);
-        case AF_INET:
-            return net_inet_socket(domain, type, protocol);
-        default:
-            return -EAFNOSUPPORT;
+    bool saw_af_family = false;
+    list_for_each_entry(&protocol_list, iter, struct socket_protocol, list) {
+        if (iter->domain == domain) {
+            if (iter->type == (type & SOCK_TYPE_MASK) && (iter->protocol == protocol || (protocol == 0 && iter->is_default_protocol))) {
+                return iter->create_socket(domain, type, iter->protocol);
+            }
+
+            saw_af_family = true;
+        }
     }
+
+    return saw_af_family ? -EPROTONOSUPPORT : -EAFNOSUPPORT;
 }
 
 ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
@@ -489,7 +495,13 @@ ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct
     return socket->op->recvfrom(socket, buf, len, flags, source, addrlen);
 }
 
+void net_register_protocol(struct socket_protocol *protocol) {
+    list_append(&protocol_list, &protocol->list);
+    debug_log("Registered socket protocol: [ %s ]\n", protocol->name);
+}
+
 void init_net_sockets() {
     map = hash_create_hash_map(socket_hash, socket_equals, socket_key);
+    init_unix_sockets();
     init_inet_sockets();
 }

@@ -300,3 +300,16 @@ ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int 
 
     return net_send_to_socket(to_send, socket_data);
 }
+
+static struct socket_protocol unix_stream_protocol = {
+    .domain = AF_UNIX,
+    .type = SOCK_STREAM,
+    .protocol = 0,
+    .is_default_protocol = true,
+    .name = "Unix Stream",
+    .create_socket = net_unix_socket,
+};
+
+void init_unix_sockets(void) {
+    net_register_protocol(&unix_stream_protocol);
+}

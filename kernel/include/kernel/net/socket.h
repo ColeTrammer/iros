@@ -9,6 +9,7 @@
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
+#include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
 enum socket_state { UNBOUND = 0, BOUND, LISTENING, CONNECTED, CLOSING, CLOSED };
@@ -23,6 +24,16 @@ struct socket_ops {
     int (*getpeername)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
     ssize_t (*sendto)(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
     ssize_t (*recvfrom)(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
+};
+
+struct socket_protocol {
+    int domain;
+    int type;
+    int protocol;
+    bool is_default_protocol;
+    const char *name;
+    int (*create_socket)(int domain, int type, int protocol);
+    struct list_node list;
 };
 
 struct socket_connection {
@@ -103,6 +114,8 @@ int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen
 
 ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
 ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
+
+void net_register_protocol(struct socket_protocol *protocol);
 
 void init_net_sockets();
 

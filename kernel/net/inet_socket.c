@@ -405,10 +405,41 @@ struct socket *net_get_tcp_socket_server_by_ip_v4_and_port(struct ip_v4_and_port
     return net_get_socket_by_id(mapping->socket_id);
 }
 
+static struct socket_protocol tcp_protocol = {
+    .domain = AF_INET,
+    .type = SOCK_STREAM,
+    .protocol = IPPROTO_TCP,
+    .is_default_protocol = true,
+    .name = "IPv4 TCP",
+    .create_socket = net_inet_socket,
+};
+
+static struct socket_protocol udp_protocol = {
+    .domain = AF_INET,
+    .type = SOCK_DGRAM,
+    .protocol = IPPROTO_UDP,
+    .is_default_protocol = true,
+    .name = "IPv4 UDP",
+    .create_socket = net_inet_socket,
+};
+
+static struct socket_protocol icmp_protocol = {
+    .domain = AF_INET,
+    .type = SOCK_RAW,
+    .protocol = IPPROTO_ICMP,
+    .is_default_protocol = false,
+    .name = "IPv4 ICMP",
+    .create_socket = net_inet_socket,
+};
+
 void init_inet_sockets() {
     map = hash_create_hash_map(ip_v4_and_port_hash, ip_v4_and_port_equals, ip_v4_and_port_key);
     assert(map);
 
     server_map = hash_create_hash_map(ip_v4_and_port_hash, ip_v4_and_port_equals, ip_v4_and_port_key);
     assert(server_map);
+
+    net_register_protocol(&tcp_protocol);
+    net_register_protocol(&udp_protocol);
+    net_register_protocol(&icmp_protocol);
 }
