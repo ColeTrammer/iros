@@ -94,6 +94,20 @@ int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t
     return ret;
 }
 
+int net_inet_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen) {
+    int ret = 0;
+
+    mutex_lock(&socket->lock);
+    if (socket->has_host_address) {
+        net_copy_sockaddr_to_user(&socket->host_address, sizeof(struct sockaddr_in), addr, addrlen);
+    } else {
+        ret = -ENOTCONN;
+    }
+    mutex_unlock(&socket->lock);
+
+    return ret;
+}
+
 void init_inet_sockets() {
     init_udp_sockets();
     init_tcp_sockets();

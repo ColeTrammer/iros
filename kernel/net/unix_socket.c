@@ -18,18 +18,29 @@
 
 #define PATH_FROM_SOCKADDR(s) (((struct sockaddr_un *) (s))->sun_path)
 
+static int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
+static int net_unix_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
+static int net_unix_close(struct socket *socket);
+static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
+static int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
+static int net_unix_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
+static int net_unix_socket(int domain, int type, int protocol);
+static ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest,
+                               socklen_t addrlen);
+
 static struct socket_ops unix_ops = {
     .accept = net_unix_accept,
     .bind = net_unix_bind,
     .close = net_unix_close,
     .connect = net_unix_connect,
     .getpeername = net_unix_getpeername,
+    .getsockname = net_unix_getsockname,
     .listen = net_generic_listen,
     .recvfrom = net_generic_recieve_from,
     .sendto = net_unix_sendto,
 };
 
-int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
+static int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
     struct socket_connection connection;
     int ret = net_get_next_connection(socket, &connection);
     if (ret != 0) {
@@ -72,7 +83,7 @@ int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *add
     return fd;
 }
 
-int net_unix_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
+static int net_unix_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
     if (addrlen <= offsetof(struct sockaddr_un, sun_path) || PATH_FROM_SOCKADDR(addr)[0] != '/' ||
         addrlen > sizeof(struct sockaddr_storage)) {
         return -EINVAL;
@@ -110,7 +121,7 @@ int net_unix_bind(struct socket *socket, const struct sockaddr *addr, socklen_t 
     return 0;
 }
 
-int net_unix_close(struct socket *socket) {
+static int net_unix_close(struct socket *socket) {
     struct unix_socket_data *data = socket->private_data;
     if (socket->state == BOUND || socket->state == LISTENING) {
         assert(data);
@@ -135,11 +146,7 @@ int net_unix_close(struct socket *socket) {
     return 0;
 }
 
-int net_unix_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
-    if (addr->sa_family != AF_UNIX) {
-        return -EAFNOSUPPORT;
-    }
-
+static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
     if (socket->state == CONNECTED) {
         return -EISCONN;
     }
@@ -212,13 +219,13 @@ int net_unix_connect(struct socket *socket, const struct sockaddr *addr, socklen
     return 0;
 }
 
-int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen) {
+static int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen) {
     int ret = 0;
 
     mutex_lock(&socket->lock);
     if (socket->has_peer_address) {
         struct sockaddr_un *peer_address = (struct sockaddr_un *) &socket->peer_address;
-        size_t peer_address_length = offsetof(struct sockaddr_un, sun_path) + strlen(peer_address->sun_path) + 1;
+        size_t peer_address_length = offsetof(struct sockaddr_un, sun_path) + strnlen(peer_address->sun_path, UNIX_PATH_MAX - 1) + 1;
         net_copy_sockaddr_to_user(peer_address, peer_address_length, addr, addrlen);
     } else {
         ret = -ENOTCONN;
@@ -228,13 +235,30 @@ int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t
     return ret;
 }
 
-int net_unix_socket(int domain, int type, int protocol) {
+static int net_unix_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen) {
+    int ret = 0;
+
+    mutex_lock(&socket->lock);
+    if (socket->has_host_address) {
+        struct sockaddr_un *host_address = (struct sockaddr_un *) &socket->host_address;
+        size_t host_address_length = offsetof(struct sockaddr_un, sun_path) + strnlen(host_address->sun_path, UNIX_PATH_MAX - 1) + 1;
+        net_copy_sockaddr_to_user(host_address, host_address_length, addr, addrlen);
+    } else {
+        ret = -ENOTCONN;
+    }
+    mutex_unlock(&socket->lock);
+
+    return ret;
+}
+
+static int net_unix_socket(int domain, int type, int protocol) {
     int fd;
     net_create_socket_fd(domain, type, protocol, &unix_ops, &fd, NULL);
     return fd;
 }
 
-ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
+static ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest,
+                               socklen_t addrlen) {
     (void) flags;
 
     if (dest) {

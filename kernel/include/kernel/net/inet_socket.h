@@ -16,6 +16,7 @@ int net_inet_bind(struct socket *socket, const struct sockaddr *addr, socklen_t 
 int net_inet_close(struct socket *socket);
 int net_inet_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
+int net_inet_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 
 void init_inet_sockets();
 

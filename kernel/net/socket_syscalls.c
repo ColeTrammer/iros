@@ -132,6 +132,15 @@ int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen
     return socket->op->getpeername(socket, addr, addrlen);
 }
 
+int net_getsockname(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
+    struct socket *socket = socket_from_file(file);
+    if (!socket->op->getsockname) {
+        return -EINVAL;
+    }
+
+    return socket->op->getsockname(socket, addr, addrlen);
+}
+
 int net_listen(struct file *file, int backlog) {
     struct socket *socket = socket_from_file(file);
     if (backlog <= 0 || backlog > SOMAXCONN || socket->state != BOUND) {

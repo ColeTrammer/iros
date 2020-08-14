@@ -26,6 +26,7 @@ static struct socket_ops tcp_ops = {
     .close = net_tcp_close,
     .connect = net_tcp_connect,
     .getpeername = net_inet_getpeername,
+    .getsockname = net_inet_getsockname,
     .listen = net_tcp_listen,
     .sendto = net_tcp_sendto,
     .recvfrom = net_tcp_recvfrom,

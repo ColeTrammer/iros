@@ -22,6 +22,7 @@ struct socket_ops {
     int (*close)(struct socket *socket);
     int (*connect)(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
     int (*getpeername)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
+    int (*getsockname)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
     int (*listen)(struct socket *socket, int backlog);
     ssize_t (*sendto)(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
     ssize_t (*recvfrom)(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
