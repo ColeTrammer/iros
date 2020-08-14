@@ -22,6 +22,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/net/arp.h>
+#include <kernel/net/socket.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
@@ -546,6 +547,24 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_interfaces(struct pro
     return buf;
 }
 
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_protocols(struct procfs_data *data __attribute__((unused)),
+                                                                     struct process *process __attribute__((unused)), bool need_buffer) {
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+
+    struct procfs_buffer buf = { buffer, 0 };
+    net_for_each_protocol(protocol) {
+        buf.size +=
+            snprintf(buf.buffer + buf.size, buf.buffer ? PAGE_SIZE - buf.size : 0,
+                     "NAME: %s\n"
+                     "DOMAIN: %d\n"
+                     "TYPE: %d\n"
+                     "PROTOCOL: %d\n"
+                     "DEFAULT: %s\n",
+                     protocol->name, protocol->domain, protocol->type, protocol->protocol, protocol->is_default_protocol ? "YES" : "NO");
+    }
+    return buf;
+}
+
 PROCFS_ENSURE_ALIGNMENT static void procfs_create_net_directory_structure(struct inode *parent,
                                                                           struct process *process __attribute__((unused)), bool loaded) {
     assert(parent);
@@ -559,9 +578,14 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_net_directory_structure(struct
         data = interfaces_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *protocols_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_protocols);
+        data = protocols_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
         mutex_lock(&parent->lock);
         fs_put_dirent_cache(parent->dirent_cache, arp_inode, "arp", strlen("arp"));
         fs_put_dirent_cache(parent->dirent_cache, interfaces_inode, "interfaces", strlen("interfaces"));
+        fs_put_dirent_cache(parent->dirent_cache, protocols_inode, "protocols", strlen("protocols"));
         mutex_unlock(&parent->lock);
     }
 }
