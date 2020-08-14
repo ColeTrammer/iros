@@ -22,6 +22,7 @@ struct socket_ops {
     int (*close)(struct socket *socket);
     int (*connect)(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
     int (*getpeername)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
+    int (*listen)(struct socket *socket, int backlog);
     ssize_t (*sendto)(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
     ssize_t (*recvfrom)(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
 };
@@ -95,6 +96,7 @@ struct socket_file_data {
 
 struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, int *fd, void *private_data);
 ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen);
+int net_generic_listen(struct socket *socket, int backlog);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
 struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data);

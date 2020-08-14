@@ -236,6 +236,19 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, s
     return (ssize_t) to_copy;
 }
 
+int net_generic_listen(struct socket *socket, int backlog) {
+    socket->pending = calloc(backlog, sizeof(struct socket_connection *));
+    socket->pending_length = backlog;
+    socket->num_pending = 0;
+
+#ifdef SOCKET_DEBUG
+    debug_log("Set socket to listening: [ %lu, %d ]\n", socket->id, socket->pending_length);
+#endif /* SOCKET_DEBUG */
+
+    socket->state = LISTENING;
+    return 0;
+}
+
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection) {
     for (;;) {
         mutex_lock(&socket->lock);
@@ -395,30 +408,11 @@ int net_listen(struct file *file, int backlog) {
         return -EINVAL;
     }
 
-    switch (socket->domain) {
-        case AF_INET: {
-            int ret = net_inet_listen(socket);
-            if (ret < 0) {
-                return ret;
-            }
-            break;
-        }
-        case AF_UNIX:
-            break;
-        default:
-            return -EAFNOSUPPORT;
+    if (!socket->op->listen) {
+        return -EINVAL;
     }
 
-    socket->pending = calloc(backlog, sizeof(struct socket_connection *));
-    socket->pending_length = backlog;
-    socket->num_pending = 0;
-
-#ifdef SOCKET_DEBUG
-    debug_log("Set socket to listening: [ %lu, %d ]\n", socket->id, socket->pending_length);
-#endif /* SOCKET_DEBUG */
-
-    socket->state = LISTENING;
-    return 0;
+    return socket->op->listen(socket, backlog);
 }
 
 int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen) {

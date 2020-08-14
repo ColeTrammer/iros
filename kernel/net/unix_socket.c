@@ -23,6 +23,7 @@ static struct socket_ops unix_ops = {
     .close = net_unix_close,
     .connect = net_unix_connect,
     .getpeername = net_unix_getpeername,
+    .listen = net_generic_listen,
     .recvfrom = net_unix_recvfrom,
     .sendto = net_unix_sendto,
 };

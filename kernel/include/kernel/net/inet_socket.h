@@ -43,7 +43,7 @@ int net_inet_accept(struct socket *socket, struct sockaddr *addr, socklen_t *add
 int net_inet_bind(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 int net_inet_close(struct socket *socket);
 int net_inet_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
-int net_inet_listen(struct socket *socket);
+int net_inet_listen(struct socket *socket, int backlog);
 int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 int net_inet_socket(int domain, int type, int protocol);
 

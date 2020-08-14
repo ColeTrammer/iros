@@ -26,6 +26,7 @@ static struct socket_ops inet_ops = {
     .close = net_inet_close,
     .connect = net_inet_connect,
     .getpeername = net_inet_getpeername,
+    .listen = net_inet_listen,
     .sendto = net_inet_sendto,
     .recvfrom = net_inet_recvfrom,
 };
@@ -273,7 +274,7 @@ int net_inet_connect(struct socket *socket, const struct sockaddr *addr, socklen
     return -ETIMEDOUT;
 }
 
-int net_inet_listen(struct socket *socket) {
+int net_inet_listen(struct socket *socket, int backlog) {
     assert(socket);
     if (socket->protocol != IPPROTO_TCP) {
         return -EPROTONOSUPPORT;
@@ -281,7 +282,7 @@ int net_inet_listen(struct socket *socket) {
 
     create_tcp_socket_mapping_for_source(socket);
 
-    return 0;
+    return net_generic_listen(socket, backlog);
 }
 
 int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen) {
