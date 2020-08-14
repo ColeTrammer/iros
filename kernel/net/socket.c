@@ -94,21 +94,11 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, i
             break;
         }
 
+        bool connection_terminated = socket->state == CLOSED;
         mutex_unlock(&socket->lock);
 
-        switch (socket->domain) {
-            case AF_UNIX: {
-                struct unix_socket_data *d = socket->private_data;
-                if (!net_get_socket_by_id(d->connected_id)) {
-#ifdef SOCKET_DEBUG
-                    debug_log("Connection terminated: [ %lu ]\n", socket->id);
-#endif /* SOCKET_DEBUG */
-                    return 0;
-                }
-                break;
-            }
-            default:
-                break;
+        if (connection_terminated) {
+            return -ECONNRESET;
         }
 
         if (socket->type & SOCK_NONBLOCK) {

@@ -126,7 +126,8 @@ int net_unix_close(struct socket *socket) {
         struct socket *connected_to = net_get_socket_by_id(data->connected_id);
         if (connected_to) {
             // We terminated the connection
-            connected_to->exceptional = true;
+            connected_to->readable = true;
+            connected_to->state = CLOSED;
         }
     }
 
