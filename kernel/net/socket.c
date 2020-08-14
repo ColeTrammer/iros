@@ -45,7 +45,8 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
     socket->type = type;
     socket->protocol = protocol;
     socket->id = socket_id;
-    socket->timeout = (struct timeval) { 10, 0 };
+    socket->recv_timeout = (struct timeval) { 10, 0 };
+    socket->send_timeout = (struct timeval) { 10, 0 };
     socket->writable = true;
     socket->readable = false;
     socket->exceptional = false;
@@ -107,8 +108,8 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
             return NULL;
         }
 
-        if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
-            struct timespec timeout = time_from_timeval(socket->timeout);
+        if (socket->recv_timeout.tv_sec != 0 || socket->recv_timeout.tv_usec != 0) {
+            struct timespec timeout = time_from_timeval(socket->recv_timeout);
             int ret = proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
             if (ret) {
                 *error = ret;
@@ -177,6 +178,134 @@ int net_generic_listen(struct socket *socket, int backlog) {
 
     socket->state = LISTENING;
     return 0;
+}
+
+int net_generic_setsockopt(struct socket *socket, int level, int optname, const void *optval, socklen_t optlen) {
+    if (level != SOL_SOCKET) {
+        return -ENOPROTOOPT;
+    }
+
+    switch (optname) {
+        case SO_ACCEPTCONN:
+            return -ENOPROTOOPT;
+        case SO_BROADCAST: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->broadcast = !!value;
+            return 0;
+        }
+        case SO_DEBUG: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->debug = !!value;
+            return 0;
+        }
+        case SO_DONTROUTE: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->dont_route = !!value;
+            return 0;
+        }
+        case SO_ERROR:
+            return -ENOPROTOOPT;
+        case SO_KEEPALIVE: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->keepalive = !!value;
+            return 0;
+        }
+        case SO_LINGER: {
+            struct linger value = NET_READ_SOCKOPT(struct linger, optval, optlen);
+            socket->linger = value;
+            return 0;
+        }
+        case SO_OOBINLINE: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->oob_inline = !!value;
+            return 0;
+        }
+        case SO_RCVBUF: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->recv_buffer_max = value;
+            return 0;
+        }
+        case SO_RCVLOWAT: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->recv_low_water_mark = value;
+            return 0;
+        }
+        case SO_RCVTIMEO: {
+            struct timeval value = NET_READ_SOCKOPT(struct timeval, optval, optlen);
+            socket->recv_timeout = value;
+            return 0;
+        }
+        case SO_REUSEADDR: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->reuse_addr = !!value;
+            return 0;
+        }
+        case SO_SNDBUF: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->send_buffer_max = value;
+            return 0;
+        }
+        case SO_SNDLOWAT: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->send_low_water_mark = value;
+            return 0;
+        }
+        case SO_SNDTIMEO: {
+            struct timeval value = NET_READ_SOCKOPT(struct timeval, optval, optlen);
+            socket->send_timeout = value;
+            return 0;
+        }
+        case SO_TYPE:
+            return -ENOPROTOOPT;
+        default:
+            return -ENOPROTOOPT;
+    }
+}
+
+int net_generic_getsockopt(struct socket *socket, int level, int optname, void *optval, socklen_t *optlen) {
+    if (level != SOL_SOCKET) {
+        return -ENOPROTOOPT;
+    }
+
+    switch (optname) {
+        case SO_ACCEPTCONN:
+            return NET_WRITE_SOCKOPT(socket->state == LISTENING, int, optval, optlen);
+        case SO_BROADCAST:
+            return NET_WRITE_SOCKOPT(socket->broadcast, int, optval, optlen);
+        case SO_DEBUG:
+            return NET_WRITE_SOCKOPT(socket->debug, int, optval, optlen);
+        case SO_DONTROUTE:
+            return NET_WRITE_SOCKOPT(socket->dont_route, int, optval, optlen);
+        case SO_ERROR: {
+            int error = socket->error;
+            socket->error = 0;
+            return NET_WRITE_SOCKOPT(error, int, optval, optlen);
+        }
+        case SO_KEEPALIVE:
+            return NET_WRITE_SOCKOPT(socket->keepalive, int, optval, optlen);
+        case SO_LINGER:
+            return NET_WRITE_SOCKOPT(socket->linger, struct linger, optval, optlen);
+        case SO_OOBINLINE:
+            return NET_WRITE_SOCKOPT(socket->oob_inline, int, optval, optlen);
+        case SO_RCVBUF:
+            return NET_WRITE_SOCKOPT(socket->recv_buffer_max, int, optval, optlen);
+        case SO_RCVLOWAT:
+            return NET_WRITE_SOCKOPT(socket->recv_low_water_mark, int, optval, optlen);
+        case SO_RCVTIMEO:
+            return NET_WRITE_SOCKOPT(socket->recv_timeout, struct timeval, optval, optlen);
+        case SO_REUSEADDR:
+            return NET_WRITE_SOCKOPT(socket->reuse_addr, int, optval, optlen);
+        case SO_SNDBUF:
+            return NET_WRITE_SOCKOPT(socket->send_buffer_max, int, optval, optlen);
+        case SO_SNDLOWAT:
+            return NET_WRITE_SOCKOPT(socket->send_low_water_mark, int, optval, optlen);
+        case SO_SNDTIMEO:
+            return NET_WRITE_SOCKOPT(socket->send_timeout, struct timeval, optval, optlen);
+        case SO_TYPE:
+            return NET_WRITE_SOCKOPT(socket->type, int, optval, optlen);
+        default:
+            return -ENOPROTOOPT;
+    }
 }
 
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection) {

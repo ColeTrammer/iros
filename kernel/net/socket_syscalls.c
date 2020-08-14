@@ -154,23 +154,22 @@ int net_listen(struct file *file, int backlog) {
     return socket->op->listen(socket, backlog);
 }
 
-int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen) {
+int net_getsockopt(struct file *file, int level, int optname, void *optval, socklen_t *optlen) {
     struct socket *socket = socket_from_file(file);
-    if (level != SOL_SOCKET) {
-        return -ENOPROTOOPT;
-    }
-
-    if (optname != SO_RCVTIMEO) {
-        return -ENOPROTOOPT;
-    }
-
-    if (optlen != sizeof(struct timeval)) {
+    if (!socket->op->getsockopt) {
         return -EINVAL;
     }
 
-    socket->timeout = *((const struct timeval *) optval);
+    return socket->op->getsockopt(socket, level, optname, optval, optlen);
+}
 
-    return 0;
+int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen) {
+    struct socket *socket = socket_from_file(file);
+    if (!socket->op->setsockopt) {
+        return -EINVAL;
+    }
+
+    return socket->op->setsockopt(socket, level, optname, optval, optlen);
 }
 
 int net_socket(int domain, int type, int protocol) {

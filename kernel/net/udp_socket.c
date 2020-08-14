@@ -15,6 +15,8 @@ static struct socket_ops udp_ops = {
     .connect = net_inet_connect,
     .getpeername = net_inet_getpeername,
     .getsockname = net_inet_getsockname,
+    .getsockopt = net_generic_getsockopt,
+    .setsockopt = net_generic_setsockopt,
     .recvfrom = net_generic_recieve_from,
     .sendto = net_udp_sendto,
 };

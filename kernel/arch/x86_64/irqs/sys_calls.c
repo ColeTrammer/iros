@@ -918,13 +918,7 @@ SYS_CALL(getsockopt) {
     SYS_PARAM5_VALIDATE(socklen_t *, optlen, validate_write, sizeof(socklen_t));
     SYS_PARAM4_VALIDATE(void *, optval, validate_write, *optlen);
 
-    (void) file;
-    (void) level;
-    (void) optname;
-    (void) optval;
-    (void) optlen;
-
-    SYS_RETURN(-ENOSYS);
+    SYS_RETURN(net_getsockopt(file, level, optname, optlen, optval));
 }
 
 SYS_CALL(setsockopt) {

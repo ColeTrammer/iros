@@ -14,6 +14,7 @@ int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int
 int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
 int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
 int net_listen(struct file *file, int backlog);
+int net_getsockopt(struct file *file, int level, int optname, void *optval, socklen_t *optlen);
 int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen);
 int net_socket(int domain, int type, int protocol);
 int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen);

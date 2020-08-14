@@ -10,6 +10,9 @@ static ssize_t net_icmp_sendto(struct socket *socket, const void *buf, size_t le
 
 static struct socket_ops icmp_ops = {
     .connect = net_inet_connect,
+    .getpeername = net_inet_getpeername,
+    .getsockopt = net_generic_getsockopt,
+    .setsockopt = net_generic_setsockopt,
     .recvfrom = net_generic_recieve_from,
     .sendto = net_icmp_sendto,
 };
