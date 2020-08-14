@@ -30,7 +30,10 @@ static int socket_file_close(struct file *file) {
     debug_log("Destroying socket: [ %lu ]\n", socket->id);
 #endif /* SOCKET_DEBUG */
 
-    int ret = socket->op->close(socket);
+    int ret = 0;
+    if (socket->op->close) {
+        socket->op->close(socket);
+    }
     net_destroy_socket(socket);
     return ret;
 }

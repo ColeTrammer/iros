@@ -31,6 +31,7 @@ if (NOT ${NATIVE_BUILD})
         net/dhcp.c
         net/ethernet.c
         net/icmp.c
+        net/icmp_socket.c
         net/inet_socket.c
         net/interface.c
         net/ip.c

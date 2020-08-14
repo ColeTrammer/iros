@@ -29,6 +29,9 @@ static struct socket_protocol udp_protocol = {
 };
 
 static int net_udp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
+    if (addrlen < sizeof(struct sockaddr_in)) {
+        return -EINVAL;
+    }
     net_set_peer_address(socket, addr, addrlen);
     return 0;
 }

@@ -7,6 +7,7 @@
 #include <kernel/hal/processor.h>
 #include <kernel/hal/timer.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/net/icmp_socket.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
@@ -304,7 +305,7 @@ int net_inet_socket(int domain, int type, int protocol) {
 ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
     (void) flags;
 
-    if (dest && socket->type == SOCK_STREAM) {
+    if ((!!dest || !!addrlen) && socket->type == SOCK_STREAM) {
         return -EINVAL;
     }
 
@@ -330,17 +331,6 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
         return (ssize_t) len;
     }
 
-    assert(dest);
-    if (dest->sa_family != AF_INET || addrlen < sizeof(struct sockaddr_in)) {
-        return -EINVAL;
-    }
-
-    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
-    assert(interface);
-
-    if ((socket->type & SOCK_TYPE_MASK) == SOCK_RAW) {
-        return net_send_ip_v4(interface, socket->protocol, dest_ip, buf, len);
-    }
     assert(false);
     return -EINVAL;
 }
@@ -372,15 +362,6 @@ static struct socket_protocol tcp_protocol = {
     .create_socket = net_inet_socket,
 };
 
-static struct socket_protocol icmp_protocol = {
-    .domain = AF_INET,
-    .type = SOCK_RAW,
-    .protocol = IPPROTO_ICMP,
-    .is_default_protocol = false,
-    .name = "IPv4 ICMP",
-    .create_socket = net_inet_socket,
-};
-
 void init_inet_sockets() {
     map = hash_create_hash_map(ip_v4_and_port_hash, ip_v4_and_port_equals, ip_v4_and_port_key);
     assert(map);
@@ -389,7 +370,6 @@ void init_inet_sockets() {
     assert(server_map);
 
     net_register_protocol(&tcp_protocol);
-    net_register_protocol(&icmp_protocol);
-
     init_udp_sockets();
+    init_icmp_sockets();
 }
