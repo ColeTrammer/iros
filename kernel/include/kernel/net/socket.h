@@ -98,6 +98,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
 void net_destroy_socket(struct socket *socket);
 ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen);
 int net_generic_listen(struct socket *socket, int backlog);
+struct socket_data *net_get_next_message(struct socket *socket, int *error);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
 struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data);

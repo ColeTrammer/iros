@@ -16,6 +16,7 @@ static int net_tcp_close(struct socket *socket);
 static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 static int net_tcp_listen(struct socket *socket, int backlog);
 static int net_tcp_socket(int domain, int type, int protocol);
+static ssize_t net_tcp_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen);
 static ssize_t net_tcp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,
                               socklen_t addrlen);
 
@@ -27,7 +28,7 @@ static struct socket_ops tcp_ops = {
     .getpeername = net_inet_getpeername,
     .listen = net_tcp_listen,
     .sendto = net_tcp_sendto,
-    .recvfrom = net_generic_recieve_from,
+    .recvfrom = net_tcp_recvfrom,
 };
 
 static struct socket_protocol tcp_protocol = {
@@ -236,6 +237,40 @@ static int net_tcp_socket(int domain, int type, int protocol) {
     int fd;
     net_create_socket_fd(domain, type, protocol, &tcp_ops, &fd, NULL);
     return fd;
+}
+
+static ssize_t net_tcp_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
+    (void) flags;
+
+    int error = 0;
+    struct socket_data *data = net_get_next_message(socket, &error);
+    if (error) {
+        return error;
+    }
+
+    struct tcp_control_block *tcb = socket->private_data;
+    if (tcb->should_send_ack) {
+        struct network_interface *interface = net_get_interface_for_ip(IP_V4_FROM_SOCKADDR(&socket->peer_address));
+
+        net_send_tcp(interface, IP_V4_FROM_SOCKADDR(&socket->peer_address), PORT_FROM_SOCKADDR(&socket->host_address),
+                     PORT_FROM_SOCKADDR(&socket->peer_address), tcb->current_sequence_num, tcb->current_ack_num,
+                     (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
+        tcb->should_send_ack = false;
+
+        if (socket->state == CLOSING) {
+            socket->state = CLOSED;
+        }
+    }
+
+    size_t to_copy = MIN(len, data->len);
+    memcpy(buf, data->data, to_copy);
+
+    if (addr && addrlen) {
+        net_copy_sockaddr_to_user(&data->from.addr, data->from.addrlen, addr, addrlen);
+    }
+
+    free(data);
+    return (ssize_t) to_copy;
 }
 
 static ssize_t net_tcp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,

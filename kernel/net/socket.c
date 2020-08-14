@@ -76,10 +76,10 @@ void net_destroy_socket(struct socket *socket) {
     free(socket);
 }
 
-ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
-    (void) flags;
+struct socket_data *net_get_next_message(struct socket *socket, int *error) {
     if (socket->state != CONNECTED && socket->type == SOCK_STREAM) {
-        return -ENOTCONN;
+        *error = -ENOTCONN;
+        return NULL;
     }
 
     struct socket_data *data;
@@ -98,23 +98,27 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, i
         mutex_unlock(&socket->lock);
 
         if (connection_terminated) {
-            return -ECONNRESET;
+            *error = -ECONNRESET;
+            return NULL;
         }
 
         if (socket->type & SOCK_NONBLOCK) {
-            return -EAGAIN;
+            *error = -EAGAIN;
+            return NULL;
         }
 
         if (socket->timeout.tv_sec != 0 || socket->timeout.tv_usec != 0) {
             struct timespec timeout = time_from_timeval(socket->timeout);
             int ret = proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
             if (ret) {
-                return ret;
+                *error = ret;
+                return NULL;
             }
 
             // We timed out
             if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
-                return -EAGAIN;
+                *error = -EAGAIN;
+                return NULL;
             }
 
             continue;
@@ -122,7 +126,8 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, i
 
         int ret = proc_block_until_socket_is_readable(get_current_task(), socket);
         if (ret) {
-            return ret;
+            *error = ret;
+            return NULL;
         }
     }
 
@@ -133,32 +138,24 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, i
         socket->readable = false;
     }
 
-    if (socket->protocol == IPPROTO_TCP) {
-        struct tcp_control_block *tcb = socket->private_data;
-        assert(data);
-        if (tcb->should_send_ack) {
-            struct network_interface *interface = net_get_interface_for_ip(IP_V4_FROM_SOCKADDR(&socket->peer_address));
-
-            net_send_tcp(interface, IP_V4_FROM_SOCKADDR(&socket->peer_address), PORT_FROM_SOCKADDR(&socket->host_address),
-                         PORT_FROM_SOCKADDR(&socket->peer_address), tcb->current_sequence_num, tcb->current_ack_num,
-                         (union tcp_flags) { .bits.ack = 1, .bits.fin = socket->state == CLOSING }, 0, NULL);
-            tcb->should_send_ack = false;
-
-            if (socket->state == CLOSING) {
-                socket->state = CLOSED;
-            }
-        }
-    }
-
     mutex_unlock(&socket->lock);
+    return data;
+}
+
+ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
+    (void) flags;
+
+    int error = 0;
+    struct socket_data *data = net_get_next_message(socket, &error);
+    if (error) {
+        return error;
+    }
 
     size_t to_copy = MIN(len, data->len);
     memcpy(buf, data->data, to_copy);
 
     if (addr && addrlen) {
-        size_t len = MIN(data->from.addrlen, *addrlen);
-        memcpy(addr, &data->from.addr, len);
-        *addrlen = len;
+        net_copy_sockaddr_to_user(&data->from.addr, data->from.addrlen, addr, addrlen);
     }
 
 #ifdef SOCKET_DEBUG
