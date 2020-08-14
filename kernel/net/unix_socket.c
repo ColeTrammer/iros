@@ -9,6 +9,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/processor.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/socket_syscalls.h>
 #include <kernel/net/unix_socket.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
@@ -45,7 +46,7 @@ int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen_t *add
 
     int fd = 0;
     struct socket *new_socket =
-        net_create_socket(socket->domain, (socket->type & SOCK_TYPE_MASK) | flags, socket->protocol, &unix_ops, &fd, NULL);
+        net_create_socket_fd(socket->domain, (socket->type & SOCK_TYPE_MASK) | flags, socket->protocol, &unix_ops, &fd, NULL);
     if (new_socket == NULL) {
         return fd;
     }
@@ -249,7 +250,7 @@ int net_unix_socket(int domain, int type, int protocol) {
     }
 
     int fd;
-    struct socket *socket = net_create_socket(domain, type, protocol, &unix_ops, &fd, NULL);
+    struct socket *socket = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd, NULL);
     (void) socket;
 
     return fd;

@@ -29,6 +29,7 @@
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/socket_syscalls.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/pid.h>
 #include <kernel/proc/profile.h>

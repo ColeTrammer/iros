@@ -29,44 +29,40 @@
 static unsigned long socket_id_next = 1;
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 
-static int socket_file_close(struct file *file);
-static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len);
-static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len);
-
 static struct list_node protocol_list = INIT_LIST(protocol_list);
 
-static struct file_operations socket_file_ops = { .close = socket_file_close, .read = net_read, .write = net_write };
-
 static struct hash_map *map;
-
 HASH_DEFINE_FUNCTIONS(socket, struct socket, unsigned long, id)
 
-static int socket_file_close(struct file *file) {
-    assert(file);
+struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data) {
+    spin_lock(&id_lock);
+    unsigned long socket_id = socket_id_next++;
+    spin_unlock(&id_lock);
 
-    struct socket_file_data *file_data = file->private_data;
-    assert(file_data);
+    struct socket *socket = calloc(1, sizeof(struct socket));
+    socket->domain = domain;
+    socket->type = type;
+    socket->protocol = protocol;
+    socket->id = socket_id;
+    socket->timeout = (struct timeval) { 10, 0 };
+    socket->writable = true;
+    socket->readable = false;
+    socket->exceptional = false;
+    socket->has_host_address = false;
+    socket->has_peer_address = false;
+    socket->op = op;
+    socket->private_data = private_data;
+    init_mutex(&socket->lock);
 
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
+    hash_put(map, socket);
+    return socket;
+}
 
-    mutex_lock(&socket->lock);
-
-#ifdef SOCKET_DEBUG
-    debug_log("Destroying socket: [ %lu ]\n", socket->id);
-#endif /* SOCKET_DEBUG */
-
-    int ret = 0;
-    switch (socket->domain) {
-        case AF_INET:
-            ret = net_inet_close(socket);
-            break;
-        case AF_UNIX:
-            ret = net_unix_close(socket);
-            break;
-        default:
-            break;
+void net_destroy_socket(struct socket *socket) {
+    for (int i = 0; i < socket->num_pending; i++) {
+        free(socket->pending[i]);
     }
+    free(socket->pending);
 
     struct socket_data *to_remove = socket->data_head;
     while (to_remove != NULL) {
@@ -76,62 +72,7 @@ static int socket_file_close(struct file *file) {
     }
 
     hash_del(map, &socket->id);
-
-    mutex_unlock(&socket->lock);
-
     free(socket);
-    free(file_data);
-
-    return ret;
-}
-
-static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len) {
-    assert(offset == 0);
-    return net_recvfrom(file, buf, len, 0, NULL, NULL);
-}
-
-static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len) {
-    assert(offset == 0);
-    return net_sendto(file, buf, len, 0, NULL, 0);
-}
-
-struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, int *fd, void *private_data) {
-    struct task *current = get_current_task();
-
-    for (int i = 0; i < FOPEN_MAX; i++) {
-        if (current->process->files[i].file == NULL) {
-            struct socket_file_data *file_data = malloc(sizeof(struct socket_file_data));
-            current->process->files[i].file = fs_create_file(NULL, FS_SOCKET, FS_FILE_CANT_SEEK, O_RDWR, &socket_file_ops, file_data);
-            current->process->files[i].fd_flags = (type & SOCK_CLOEXEC) ? FD_CLOEXEC : 0;
-
-            spin_lock(&id_lock);
-            file_data->socket_id = socket_id_next++;
-            spin_unlock(&id_lock);
-
-            struct socket *socket = calloc(1, sizeof(struct socket));
-            socket->domain = domain;
-            socket->type = type;
-            socket->protocol = protocol;
-            socket->id = file_data->socket_id;
-            socket->timeout = (struct timeval) { 10, 0 };
-            socket->writable = true;
-            socket->readable = false;
-            socket->exceptional = false;
-            socket->has_host_address = false;
-            socket->has_peer_address = false;
-            socket->op = op;
-            socket->private_data = private_data;
-            init_mutex(&socket->lock);
-
-            hash_put(map, socket);
-
-            *fd = i;
-            return socket;
-        }
-    }
-
-    *fd = -EMFILE;
-    return NULL;
 }
 
 ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen) {
@@ -328,165 +269,8 @@ void net_copy_sockaddr_to_user(const void *addr, size_t addrlen, void *user_addr
     *user_addrlen = addrlen;
 }
 
-int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (socket->state != LISTENING) {
-        return -EINVAL;
-    }
-
-    if ((socket->type & SOCK_TYPE_MASK) != SOCK_STREAM) {
-        return -EOPNOTSUPP;
-    }
-
-    if (!socket->op->accept) {
-        return -EINVAL;
-    }
-
-    return socket->op->accept(socket, addr, addrlen, flags);
-}
-
-int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (!socket->op->bind) {
-        return -EINVAL;
-    }
-
-    return socket->op->bind(socket, addr, addrlen);
-}
-
-int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (!socket->op->connect) {
-        return -EINVAL;
-    }
-
-    return socket->op->connect(socket, addr, addrlen);
-}
-
-int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (!socket->op->getpeername) {
-        return -EINVAL;
-    }
-
-    return socket->op->getpeername(socket, addr, addrlen);
-}
-
-int net_listen(struct file *file, int backlog) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (backlog <= 0 || socket->state != BOUND) {
-        return -EINVAL;
-    }
-
-    if (!socket->op->listen) {
-        return -EINVAL;
-    }
-
-    return socket->op->listen(socket, backlog);
-}
-
-int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (level != SOL_SOCKET) {
-        return -ENOPROTOOPT;
-    }
-
-    if (optname != SO_RCVTIMEO) {
-        return -ENOPROTOOPT;
-    }
-
-    if (optlen != sizeof(struct timeval)) {
-        return -EINVAL;
-    }
-
-    socket->timeout = *((const struct timeval *) optval);
-
-    return 0;
-}
-
-int net_socket(int domain, int type, int protocol) {
-    if (type == SOCK_RAW && get_current_task()->process->euid != 0) {
-        return -EACCES;
-    }
-
-    bool saw_af_family = false;
-    list_for_each_entry(&protocol_list, iter, struct socket_protocol, list) {
-        if (iter->domain == domain) {
-            if (iter->type == (type & SOCK_TYPE_MASK) && (iter->protocol == protocol || (protocol == 0 && iter->is_default_protocol))) {
-                return iter->create_socket(domain, type, iter->protocol);
-            }
-
-            saw_af_family = true;
-        }
-    }
-
-    return saw_af_family ? -EPROTONOSUPPORT : -EAFNOSUPPORT;
-}
-
-ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (!socket->op->sendto) {
-        return -EINVAL;
-    }
-
-    return socket->op->sendto(socket, buf, len, flags, dest, addrlen);
-}
-
-ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
-    assert(file);
-    assert(file->private_data);
-
-    struct socket_file_data *file_data = file->private_data;
-    struct socket *socket = hash_get(map, &file_data->socket_id);
-    assert(socket);
-
-    if (!socket->op->recvfrom) {
-        return -EINVAL;
-    }
-
-    return socket->op->recvfrom(socket, buf, len, flags, source, addrlen);
+struct list_node *net_get_protocol_list(void) {
+    return &protocol_list;
 }
 
 void net_register_protocol(struct socket_protocol *protocol) {

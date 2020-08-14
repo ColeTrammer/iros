@@ -94,7 +94,8 @@ struct socket_file_data {
     unsigned long socket_id;
 };
 
-struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, int *fd, void *private_data);
+struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data);
+void net_destroy_socket(struct socket *socket);
 ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen);
 int net_generic_listen(struct socket *socket, int backlog);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
@@ -106,19 +107,11 @@ void net_set_host_address(struct socket *socket, const void *addr, socklen_t add
 void net_set_peer_address(struct socket *socket, const void *addr, socklen_t addrlen);
 void net_copy_sockaddr_to_user(const void *addr, size_t addrlen, void *user_addr, socklen_t *user_addrlen);
 
-int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags);
-int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
-int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen);
-int net_listen(struct file *file, int backlog);
-int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen);
-int net_socket(int domain, int type, int protocol);
-int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen);
-
-ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
-ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
-
+struct list_node *net_get_protocol_list(void);
 void net_register_protocol(struct socket_protocol *protocol);
 
 void init_net_sockets();
+
+#define net_for_each_protocol(name) list_for_each_entry(net_get_protocol_list(), name, struct socket_protocol, list)
 
 #endif /* _KERNEL_NET_SOCKET_H */

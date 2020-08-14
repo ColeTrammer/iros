@@ -12,6 +12,7 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/socket_syscalls.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
 #include <kernel/sched/task_sched.h>
@@ -107,7 +108,7 @@ int net_inet_accept(struct socket *socket, struct sockaddr *addr, socklen_t *add
     debug_log("Creating connection: [ %lu ]\n", socket->id);
 
     int fd;
-    struct socket *new_socket = net_create_socket(AF_INET, (SOCK_STREAM & SOCK_TYPE_MASK) | flags, IPPROTO_TCP, &inet_ops, &fd, NULL);
+    struct socket *new_socket = net_create_socket_fd(AF_INET, (SOCK_STREAM & SOCK_TYPE_MASK) | flags, IPPROTO_TCP, &inet_ops, &fd, NULL);
     if (new_socket == NULL) {
         return fd;
     }
@@ -315,7 +316,7 @@ int net_inet_socket(int domain, int type, int protocol) {
     }
 
     int fd;
-    struct socket *socket = net_create_socket(domain, type, protocol, &inet_ops, &fd, NULL);
+    struct socket *socket = net_create_socket_fd(domain, type, protocol, &inet_ops, &fd, NULL);
     (void) socket;
 
     return fd;

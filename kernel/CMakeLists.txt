@@ -40,6 +40,7 @@ if (NOT ${NATIVE_BUILD})
         net/network_task.c
         net/port.c
         net/socket.c
+        net/socket_syscalls.c
         net/tcp.c
         net/udp.c
         net/unix_socket.c

@@ -1,0 +1,186 @@
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+
+#include <kernel/fs/vfs.h>
+#include <kernel/hal/processor.h>
+#include <kernel/net/socket.h>
+#include <kernel/net/socket_syscalls.h>
+#include <kernel/proc/process.h>
+#include <kernel/proc/task.h>
+
+static int socket_file_close(struct file *file);
+static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len);
+static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len);
+
+static struct file_operations socket_file_ops = { .close = socket_file_close, .read = net_read, .write = net_write };
+
+static struct socket *socket_from_file(struct file *file) {
+    struct socket_file_data *data = file->private_data;
+    assert(data);
+    struct socket *socket = net_get_socket_by_id(data->socket_id);
+    assert(socket);
+    return socket;
+}
+
+static int socket_file_close(struct file *file) {
+    struct socket *socket = socket_from_file(file);
+
+#ifdef SOCKET_DEBUG
+    debug_log("Destroying socket: [ %lu ]\n", socket->id);
+#endif /* SOCKET_DEBUG */
+
+    int ret = socket->op->close(socket);
+    net_destroy_socket(socket);
+    return ret;
+}
+
+static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len) {
+    assert(offset == 0);
+    return net_recvfrom(file, buf, len, 0, NULL, NULL);
+}
+
+static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len) {
+    assert(offset == 0);
+    return net_sendto(file, buf, len, 0, NULL, 0);
+}
+
+struct socket *net_create_socket_fd(int domain, int type, int protocol, struct socket_ops *op, int *fd, void *private_data) {
+    struct task *current = get_current_task();
+
+    struct socket *socket = net_create_socket(domain, type, protocol, op, private_data);
+    if (!socket) {
+        *fd = -ENOMEM;
+        return NULL;
+    }
+
+    for (int i = 0; i < FOPEN_MAX; i++) {
+        if (current->process->files[i].file == NULL) {
+            struct socket_file_data *file_data = malloc(sizeof(struct socket_file_data));
+            current->process->files[i].file = fs_create_file(NULL, FS_SOCKET, FS_FILE_CANT_SEEK, O_RDWR, &socket_file_ops, file_data);
+            current->process->files[i].fd_flags = (type & SOCK_CLOEXEC) ? FD_CLOEXEC : 0;
+
+            file_data->socket_id = socket->id;
+
+            *fd = i;
+            return socket;
+        }
+    }
+
+    net_destroy_socket(socket);
+    *fd = -EMFILE;
+    return NULL;
+}
+
+int net_accept(struct file *file, struct sockaddr *addr, socklen_t *addrlen, int flags) {
+    struct socket *socket = socket_from_file(file);
+    if (socket->state != LISTENING) {
+        return -EINVAL;
+    }
+
+    if ((socket->type & SOCK_TYPE_MASK) != SOCK_STREAM) {
+        return -EOPNOTSUPP;
+    }
+
+    if (!socket->op->accept) {
+        return -EINVAL;
+    }
+
+    return socket->op->accept(socket, addr, addrlen, flags);
+}
+
+int net_bind(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
+    struct socket *socket = socket_from_file(file);
+    if (!socket->op->bind) {
+        return -EINVAL;
+    }
+
+    return socket->op->bind(socket, addr, addrlen);
+}
+
+int net_connect(struct file *file, const struct sockaddr *addr, socklen_t addrlen) {
+    struct socket *socket = socket_from_file(file);
+    if (!socket->op->connect) {
+        return -EINVAL;
+    }
+
+    return socket->op->connect(socket, addr, addrlen);
+}
+
+int net_getpeername(struct file *file, struct sockaddr *addr, socklen_t *addrlen) {
+    struct socket *socket = socket_from_file(file);
+    if (!socket->op->getpeername) {
+        return -EINVAL;
+    }
+
+    return socket->op->getpeername(socket, addr, addrlen);
+}
+
+int net_listen(struct file *file, int backlog) {
+    struct socket *socket = socket_from_file(file);
+    if (backlog <= 0 || socket->state != BOUND) {
+        return -EINVAL;
+    }
+
+    if (!socket->op->listen) {
+        return -EINVAL;
+    }
+
+    return socket->op->listen(socket, backlog);
+}
+
+int net_setsockopt(struct file *file, int level, int optname, const void *optval, socklen_t optlen) {
+    struct socket *socket = socket_from_file(file);
+    if (level != SOL_SOCKET) {
+        return -ENOPROTOOPT;
+    }
+
+    if (optname != SO_RCVTIMEO) {
+        return -ENOPROTOOPT;
+    }
+
+    if (optlen != sizeof(struct timeval)) {
+        return -EINVAL;
+    }
+
+    socket->timeout = *((const struct timeval *) optval);
+
+    return 0;
+}
+
+int net_socket(int domain, int type, int protocol) {
+    if (type == SOCK_RAW && get_current_process()->euid != 0) {
+        return -EACCES;
+    }
+
+    bool saw_af_family = false;
+    net_for_each_protocol(iter) {
+        if (iter->domain == domain) {
+            if (iter->type == (type & SOCK_TYPE_MASK) && (iter->protocol == protocol || (protocol == 0 && iter->is_default_protocol))) {
+                return iter->create_socket(domain, type, iter->protocol);
+            }
+
+            saw_af_family = true;
+        }
+    }
+
+    return saw_af_family ? -EPROTONOSUPPORT : -EAFNOSUPPORT;
+}
+
+ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
+    struct socket *socket = socket_from_file(file);
+    if (!socket->op->sendto) {
+        return -EINVAL;
+    }
+
+    return socket->op->sendto(socket, buf, len, flags, dest, addrlen);
+}
+
+ssize_t net_recvfrom(struct file *file, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
+    struct socket *socket = socket_from_file(file);
+    if (!socket->op->recvfrom) {
+        return -EINVAL;
+    }
+
+    return socket->op->recvfrom(socket, buf, len, flags, source, addrlen);
+}
