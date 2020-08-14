@@ -25,7 +25,7 @@ static struct socket_ops unix_ops = {
     .connect = net_unix_connect,
     .getpeername = net_unix_getpeername,
     .listen = net_generic_listen,
-    .recvfrom = net_unix_recvfrom,
+    .recvfrom = net_generic_recieve_from,
     .sendto = net_unix_sendto,
 };
 
@@ -245,24 +245,9 @@ int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t
 }
 
 int net_unix_socket(int domain, int type, int protocol) {
-    if ((type & SOCK_TYPE_MASK) != SOCK_STREAM || protocol != 0) {
-        return -EPROTONOSUPPORT;
-    }
-
     int fd;
-    struct socket *socket = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd, NULL);
-    (void) socket;
-
+    net_create_socket_fd(domain, type, protocol, &unix_ops, &fd, NULL);
     return fd;
-}
-
-ssize_t net_unix_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
-    assert(socket->domain == AF_UNIX);
-    assert(buf);
-
-    (void) flags;
-
-    return net_generic_recieve_from(socket, buf, len, source, addrlen);
 }
 
 ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {

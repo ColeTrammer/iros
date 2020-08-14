@@ -14,7 +14,6 @@ int net_unix_connect(struct socket *socket, const struct sockaddr *addr, socklen
 int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 int net_unix_socket(int domain, int type, int protocol);
 
-ssize_t net_unix_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen);
 ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
 
 void init_unix_sockets(void);

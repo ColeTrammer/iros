@@ -15,6 +15,21 @@
 #include <kernel/net/udp.h>
 #include <kernel/util/macros.h>
 
+ssize_t net_send_udp_through_socket(struct socket *socket, const void *buf, size_t len, const struct sockaddr *dest) {
+    uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(dest);
+    uint16_t dest_port = PORT_FROM_SOCKADDR(dest);
+
+    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
+    assert(interface);
+
+    if (len > UINT16_MAX) {
+        return -EMSGSIZE;
+    }
+
+    return net_send_udp(interface, dest_ip, source_port, dest_port, len, buf);
+}
+
 ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
                      const void *buf) {
     if (interface->config_context.state != INITIALIZED) {

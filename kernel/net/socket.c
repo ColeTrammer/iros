@@ -75,7 +75,8 @@ void net_destroy_socket(struct socket *socket) {
     free(socket);
 }
 
-ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen) {
+ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
+    (void) flags;
     if (socket->state != CONNECTED && socket->type == SOCK_STREAM) {
         return -ENOTCONN;
     }

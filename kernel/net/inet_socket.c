@@ -15,6 +15,7 @@
 #include <kernel/net/socket_syscalls.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
+#include <kernel/net/udp_socket.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/hash_map.h>
 
@@ -29,7 +30,7 @@ static struct socket_ops inet_ops = {
     .getpeername = net_inet_getpeername,
     .listen = net_inet_listen,
     .sendto = net_inet_sendto,
-    .recvfrom = net_inet_recvfrom,
+    .recvfrom = net_generic_recieve_from,
 };
 
 static unsigned int ip_v4_and_port_hash(void *i, int num_buckets) {
@@ -276,13 +277,7 @@ int net_inet_connect(struct socket *socket, const struct sockaddr *addr, socklen
 }
 
 int net_inet_listen(struct socket *socket, int backlog) {
-    assert(socket);
-    if (socket->protocol != IPPROTO_TCP) {
-        return -EPROTONOSUPPORT;
-    }
-
     create_tcp_socket_mapping_for_source(socket);
-
     return net_generic_listen(socket, backlog);
 }
 
@@ -301,33 +296,13 @@ int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t
 }
 
 int net_inet_socket(int domain, int type, int protocol) {
-    assert(domain == AF_INET);
-
-    if (protocol == 0 && (type & SOCK_TYPE_MASK) == SOCK_DGRAM) {
-        protocol = IPPROTO_UDP;
-    }
-
-    if (protocol == 0 && (type & SOCK_TYPE_MASK) == SOCK_STREAM) {
-        protocol = IPPROTO_TCP;
-    }
-
-    if (protocol != IPPROTO_ICMP && protocol != IPPROTO_UDP && protocol != IPPROTO_TCP) {
-        return -EPROTONOSUPPORT;
-    }
-
     int fd;
-    struct socket *socket = net_create_socket_fd(domain, type, protocol, &inet_ops, &fd, NULL);
-    (void) socket;
-
+    net_create_socket_fd(domain, type, protocol, &inet_ops, &fd, NULL);
     return fd;
 }
 
 ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
     (void) flags;
-
-    assert(socket);
-    assert((socket->type & SOCK_TYPE_MASK) == SOCK_RAW || (socket->type & SOCK_TYPE_MASK) == SOCK_DGRAM ||
-           (socket->type & SOCK_TYPE_MASK) == SOCK_STREAM);
 
     if (dest && socket->type == SOCK_STREAM) {
         return -EINVAL;
@@ -366,27 +341,8 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     if ((socket->type & SOCK_TYPE_MASK) == SOCK_RAW) {
         return net_send_ip_v4(interface, socket->protocol, dest_ip, buf, len);
     }
-
-    assert(socket->type == SOCK_DGRAM && socket->protocol == IPPROTO_UDP);
-    if (socket->state != BOUND) {
-        struct sockaddr_in to_bind = { AF_INET, 0, { 0 }, { 0 } };
-        int ret = net_inet_bind(socket, (struct sockaddr *) &to_bind, sizeof(struct sockaddr_in));
-        if (ret < 0) {
-            return ret;
-        }
-    }
-
-    if (dest == NULL) {
-        return -EINVAL;
-    }
-
-    return net_send_udp(interface, dest_ip, source_port, dest_port, len, buf);
-}
-
-ssize_t net_inet_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *source, socklen_t *addrlen) {
-    (void) flags;
-
-    return net_generic_recieve_from(socket, buf, len, source, addrlen);
+    assert(false);
+    return -EINVAL;
 }
 
 struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple) {
@@ -416,15 +372,6 @@ static struct socket_protocol tcp_protocol = {
     .create_socket = net_inet_socket,
 };
 
-static struct socket_protocol udp_protocol = {
-    .domain = AF_INET,
-    .type = SOCK_DGRAM,
-    .protocol = IPPROTO_UDP,
-    .is_default_protocol = true,
-    .name = "IPv4 UDP",
-    .create_socket = net_inet_socket,
-};
-
 static struct socket_protocol icmp_protocol = {
     .domain = AF_INET,
     .type = SOCK_RAW,
@@ -442,6 +389,7 @@ void init_inet_sockets() {
     assert(server_map);
 
     net_register_protocol(&tcp_protocol);
-    net_register_protocol(&udp_protocol);
     net_register_protocol(&icmp_protocol);
+
+    init_udp_sockets();
 }

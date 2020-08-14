@@ -96,7 +96,7 @@ struct socket_file_data {
 
 struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data);
 void net_destroy_socket(struct socket *socket);
-ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, struct sockaddr *addr, socklen_t *addrlen);
+ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen);
 int net_generic_listen(struct socket *socket, int backlog);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
 struct socket *net_get_socket_by_id(unsigned long id);

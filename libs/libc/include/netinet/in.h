@@ -50,6 +50,7 @@ uint16_t in_compute_checksum(void *data, size_t bytes);
 #endif /* __cplusplus */
 
 #define INADDR_NONE     ((in_addr_t) -1)
+#define INADDR_ANY      ((in_addr_t) 0)
 #define INADDR_LOOPBACK ((in_addr_t)(127 | 0 | 0 | (1 << 24)))
 
 #define INET_ADDRSTRLEN  16
