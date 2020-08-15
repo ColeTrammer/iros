@@ -11,7 +11,7 @@ static void test_hosts(void) {
     struct hostent *host;
     sethostent(1);
     while ((host = gethostent())) {
-        printf("[host]: %s |%d, %d| (", host->h_name, host->h_addrtype, host->h_length);
+        printf("[host]: '%s' |%d, %d| (", host->h_name, host->h_addrtype, host->h_length);
         char *iter;
         size_t i = 0;
         while ((iter = host->h_aliases[i++])) {

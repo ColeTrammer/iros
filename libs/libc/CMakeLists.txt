@@ -107,9 +107,10 @@ else()
         bits/lock/__unlock.c
         bits/lock/__unlock_recursive.c
         bits/__allocate_thread_control_block.c
-        bits/__free_thread_control_block.c
         bits/__cxa_atexit.c
         bits/__cxa_finalize.c
+        bits/__free_thread_control_block.c
+        bits/__parse_fields.c
         dirent/dirent.c
         dirent/rewinddir.c
         fcntl/creat.c
