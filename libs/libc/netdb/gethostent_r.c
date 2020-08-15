@@ -18,14 +18,14 @@ static struct field_descriptor hostent_fields[3] = {
     {
         .type = FIELD_STRING_ARRAY,
         .offset1 = offsetof(struct hostent, h_aliases),
-        .arg1 = ' ',                           /* Space separated */
-        .flags = FIELD_DEFAULT_IF_NOT_PRESENT, /* Empty if not present */
+        .arg1_s = " \t",                                          /* Space separated */
+        .flags = FIELD_DEFAULT_IF_NOT_PRESENT | FIELD_DONT_SPLIT, /* Empty if not present, don't split on top level separator */
     },
 };
 
 static struct field_parser_info hostent_field_info = {
     .field_count = 3,
-    .separator = ' ',
+    .separator = " \t",
     .fields = hostent_fields,
 };
 

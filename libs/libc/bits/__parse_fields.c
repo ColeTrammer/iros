@@ -39,28 +39,32 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
             return -1;
         }
 
-        // Ignore empty lines.
-        if (!*line) {
-            continue;
-        }
-
         size_t buffer_index = 0;
         size_t line_index = 0;
         int field_index = 0;
-        char *field = line;
-        for (;;) {
-            // Ignore comments
-            if (line[line_index] == '#') {
-                break;
-            } else if (line[line_index] != info->separator && line[line_index] != '\n' && line[line_index] != '\0') {
+        char *field = NULL;
+        for (; field_index < info->field_count;) {
+            struct field_descriptor *field_desc = &info->fields[field_index];
+
+            bool done_with_line = line[line_index] == '\n' || line[line_index] == '\0' || line[line_index] == '#';
+            bool is_separator = !!strchr(info->separator, line[line_index]) && !(field_desc->flags & FIELD_DONT_SPLIT);
+            if (!is_separator && !done_with_line) {
+                if (!field) {
+                    field = &line[line_index];
+                }
                 line_index++;
                 continue;
             }
 
-            char *next_field = (line[line_index] == '\0' || line[line_index] == '\n') ? NULL : &line[line_index + 1];
+            if (!field) {
+                if (done_with_line) {
+                    break;
+                }
+                continue;
+            }
+
             line[line_index++] = '\0';
 
-            struct field_descriptor *field_desc = &info->fields[field_index];
             switch (field_desc->type) {
                 case FIELD_STRING: {
                     char *string = TRY_WRITE_STRING(field, buffer, buffer_index, buffer_max);
@@ -68,6 +72,51 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     break;
                 }
                 case FIELD_STRING_ARRAY: {
+                    char *separator = field_desc->arg1_s;
+
+                    // Count the number of array elements.
+                    size_t count = 0;
+                    bool started_field = false;
+                    for (size_t i = 0;; i++) {
+                        bool is_terminator = field[i] == '\0' || field[i] == '#';
+                        bool is_separator = !!strchr(separator, field[i]) || is_terminator;
+                        if (is_separator && started_field) {
+                            started_field = false;
+                            count++;
+                        } else if (!is_separator && !started_field) {
+                            started_field = true;
+                        }
+
+                        if (is_terminator) {
+                            break;
+                        }
+                    }
+
+                    // Reserve space for the array (including terminating NULL)
+                    char **array = TRY_WRITE_BUF(NULL, buffer, buffer_index, buffer_max);
+                    for (size_t i = 0; i < count; i++) {
+                        TRY_WRITE_BUF(NULL, buffer, buffer_index, buffer_max);
+                    }
+
+                    char *element = NULL;
+                    size_t array_index = 0;
+                    for (size_t i = 0;; i++) {
+                        bool is_terminator = field[i] == '\0' || field[i] == '#';
+                        bool is_separator = !!strchr(separator, field[i]) || is_terminator;
+                        if (!is_separator && !element) {
+                            element = &field[i];
+                            continue;
+                        } else if (is_separator && !!element) {
+                            field[i] = '\0';
+                            array[array_index++] = TRY_WRITE_STRING(element, buffer, buffer_index, buffer_max);
+                            element = NULL;
+                        }
+
+                        if (is_terminator) {
+                            break;
+                        }
+                    }
+                    WRITE_STRUCTURE(object, field_desc->offset1, array);
                     break;
                 }
                 case FIELD_IP_ADDRESS: {
@@ -92,17 +141,8 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     break;
             }
 
-            while (next_field && *next_field && *next_field == info->separator) {
-                next_field++;
-                line_index++;
-            }
-
             field_index++;
-            if (!next_field || !*next_field || field_index >= info->field_count) {
-                break;
-            }
-
-            field = next_field;
+            field = NULL;
         }
 
         // No fields were read, try the next line.
