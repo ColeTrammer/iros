@@ -118,9 +118,16 @@ else()
         fcntl/open.c
         fcntl/openat.c
         ftw/ftw.c
+        grp/endgrent.c
+        grp/getgrent.c
+        grp/getgrent_r.c
+        grp/getgrgid.c
+        grp/getgrgid_r.c
+        grp/getgrnam.c
+        grp/getgrnam_r.c
         grp/getgrouplist.c
-        grp/grp.c
         grp/initgroups.c
+        grp/setgrent.c
         grp/setgroups.c
         libgen/basename.c
         libgen/dirname.c

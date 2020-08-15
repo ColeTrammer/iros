@@ -1,5 +1,4 @@
 #include <pwd.h>
-#include <stddef.h>
 
 extern struct passwd __static_passwd_buffer;
 extern char __static_passwd_string_buffer[1024];
