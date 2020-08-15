@@ -35,6 +35,8 @@ struct field_descriptor {
 struct field_parser_info {
     struct field_descriptor *fields;
     int field_count;
+#define FIELD_PARSER_NO_COMMENTS 1
+    int flags;
     char *separator;
 };
 

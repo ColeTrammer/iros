@@ -61,6 +61,7 @@
     } while (0)
 
 int __parse_fields(struct field_parser_info *info, void *object, void *buffer, size_t buffer_max, FILE *file) {
+    bool allow_comments = !(info->flags & FIELD_PARSER_NO_COMMENTS);
     for (;;) {
         char line_buffer[_POSIX2_LINE_MAX];
         char *line = fgets(line_buffer, sizeof(line_buffer), file);
@@ -75,7 +76,7 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
         for (; field_index < info->field_count;) {
             struct field_descriptor *field_desc = &info->fields[field_index];
 
-            bool done_with_line = line[line_index] == '\n' || line[line_index] == '\0' || line[line_index] == '#';
+            bool done_with_line = line[line_index] == '\n' || line[line_index] == '\0' || (line[line_index] == '#' && allow_comments);
             bool is_separator = !!strchr(info->separator, line[line_index]) && !(field_desc->flags & FIELD_DONT_SPLIT);
             if (!is_separator && !done_with_line) {
                 if (!field) {
@@ -112,7 +113,7 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     size_t count = 0;
                     bool started_field = false;
                     for (size_t i = 0;; i++) {
-                        bool is_terminator = field[i] == '\0' || field[i] == '#';
+                        bool is_terminator = field[i] == '\0' || (field[i] == '#' && allow_comments);
                         bool is_separator = !!strchr(separator, field[i]) || is_terminator;
                         if (is_separator && started_field) {
                             started_field = false;
@@ -135,7 +136,7 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     char *element = NULL;
                     size_t array_index = 0;
                     for (size_t i = 0;; i++) {
-                        bool is_terminator = field[i] == '\0' || field[i] == '#';
+                        bool is_terminator = field[i] == '\0' || (field[i] == '#' && allow_comments);
                         bool is_separator = !!strchr(separator, field[i]) || is_terminator;
                         if (!is_separator && !element) {
                             element = &field[i];
