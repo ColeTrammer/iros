@@ -219,6 +219,11 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
     net_send_tcp(interface, dest_ip, source_port, dest_port, tcb->current_sequence_num++, tcb->current_ack_num,
                  (union tcp_flags) { .raw_flags = TCP_FLAGS_SYN }, 0, NULL);
 
+    // Can't block since the other side may be running on the same thread.
+    if (interface->type == NETWORK_INTERFACE_LOOPBACK) {
+        return 0;
+    }
+
     for (;;) {
         if (socket->state == CONNECTED) {
             debug_log("Successfully connected socket: [ %lu ]\n", socket->id);
