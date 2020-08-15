@@ -136,6 +136,7 @@ else()
         locale/locale.c
         netdb/endhostent.c
         netdb/endprotoent.c
+        netdb/gethostbyname.c
         netdb/gethostent.c
         netdb/gethostent_r.c
         netdb/getprotobyname.c

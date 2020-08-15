@@ -6,27 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TRY_WRITE_BUF(data, buffer, i, max)              \
-    ({                                                   \
-        if ((i) + sizeof(data) > (max)) {                \
-            return -1;                                   \
-        }                                                \
-        *(__typeof__(data) *) ((buffer) + (i)) = (data); \
-        (i) += sizeof(data);                             \
-        (buffer) + (i - sizeof(data));                   \
-    })
-
-#define TRY_WRITE_STRING(s, buffer, i, max) \
-    ({                                      \
-        size_t __slen = strlen(s) + 1;      \
-        if ((i) + __slen > (max)) {         \
-            return -1;                      \
-        }                                   \
-        memcpy((buffer) + (i), s, __slen);  \
-        (i) += __slen;                      \
-        (buffer) + ((i) -__slen);           \
-    })
-
 #define WRITE_STRUCTURE(object, offset, value)                             \
     do {                                                                   \
         *(__typeof__(value) *) (((void *) (object)) + (offset)) = (value); \

@@ -26,6 +26,18 @@ static void test_hosts(void) {
         printf("}\n");
     }
     endhostent();
+
+    host = gethostbyname("google.com");
+    assert(host);
+    printf("[host]: '%s' |%d, %d| (", host->h_name, host->h_addrtype, host->h_length);
+    for (size_t i = 0; host->h_aliases[i]; i++) {
+        printf("%s,", host->h_aliases[i]);
+    }
+    printf(") => {");
+    for (size_t i = 0; host->h_addr_list[i]; i++) {
+        printf("%s,", inet_ntoa(*(struct in_addr *) host->h_addr_list[i]));
+    }
+    printf("}\n");
 }
 
 static void test_protocols(void) {

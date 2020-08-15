@@ -43,4 +43,25 @@ struct field_parser_info {
 // Returns the number of fields read (like scanf), and -1 on read errors.
 int __parse_fields(struct field_parser_info *info, void *object, void *buffer, size_t buffer_max, FILE *file);
 
+#define TRY_WRITE_BUF(data, buffer, i, max)              \
+    ({                                                   \
+        if ((i) + sizeof(data) > (max)) {                \
+            return -1;                                   \
+        }                                                \
+        *(__typeof__(data) *) ((buffer) + (i)) = (data); \
+        (i) += sizeof(data);                             \
+        (void *) (buffer) + (i - sizeof(data));          \
+    })
+
+#define TRY_WRITE_STRING(s, buffer, i, max) \
+    ({                                      \
+        size_t __slen = strlen(s) + 1;      \
+        if ((i) + __slen > (max)) {         \
+            return -1;                      \
+        }                                   \
+        memcpy((buffer) + (i), s, __slen);  \
+        (i) += __slen;                      \
+        (char *) (buffer) + ((i) -__slen);  \
+    })
+
 #endif /* _BITS_FIELD_PARSER_H */
