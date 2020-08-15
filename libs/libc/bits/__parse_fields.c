@@ -155,14 +155,14 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     break;
                 }
                 case FIELD_IP_ADDRESS: {
-                    in_addr_t addr = inet_addr(field);
-                    int type = AF_INET;
-                    int addrlen = sizeof(in_addr_t);
-                    if (addr == INADDR_NONE) {
+                    struct in_addr addr;
+                    if (inet_aton(field, &addr) == 0) {
                         return -1;
                     }
+                    int type = AF_INET;
+                    int addrlen = sizeof(in_addr_t);
 
-                    char *addr_p = TRY_WRITE_BUF(addr, buffer, buffer_index, buffer_max);
+                    char *addr_p = TRY_WRITE_BUF(addr.s_addr, buffer, buffer_index, buffer_max);
                     char **addresses = TRY_WRITE_BUF(addr_p, buffer, buffer_index, buffer_max);
                     TRY_WRITE_BUF(NULL, buffer, buffer_index, buffer_max);
 

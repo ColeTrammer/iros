@@ -60,8 +60,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service, con
         return EAI_SYSTEM;
     }
     struct in_addr in_addr;
-    in_addr.s_addr = inet_addr(buf);
-    if (in_addr.s_addr == INADDR_NONE) {
+    if (inet_aton(buf, &in_addr) == 0) {
         free(result);
         free(found);
         close(fd);

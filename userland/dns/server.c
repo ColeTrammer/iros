@@ -72,11 +72,10 @@ int start_server() {
 
         // try and see if the url is an ip address
         struct in_addr a;
-        a.s_addr = inet_addr(buf);
-        if (a.s_addr != INADDR_NONE) {
+        if (inet_aton(buf, &a) == 1) {
             mapping = calloc(1, sizeof(struct host_mapping));
             mapping->name = strdup(buf);
-            mapping->ip.s_addr = inet_addr(buf);
+            mapping->ip = a;
         }
 
         if (mapping == NULL) {

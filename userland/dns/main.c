@@ -39,8 +39,7 @@ int main(int argc, char **argv) {
 
     // try and see if the url is an ip address
     struct in_addr a;
-    a.s_addr = inet_addr(host);
-    if (a.s_addr != INADDR_NONE) {
+    if (inet_aton(host, &a) == 1) {
         printf("%s\n", host);
         return 0;
     }

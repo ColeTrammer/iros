@@ -56,7 +56,9 @@ else()
 
     set(FREE_SOURCES
         ${ARCH_FREE_SOURCES}
-        arpa/inet/inet.c
+        arpa/inet/inet_addr.c
+        arpa/inet/inet_aton.c
+        arpa/inet/inet_ntoa.c
         ctype/ctype.c
         netinet/in.c
         search/queue.c
