@@ -20,7 +20,7 @@ struct host_mapping *get_known_hosts() {
     char ip_buf[16];
     while (getline(&line, &line_max, file) != -1) {
 
-        if (sscanf(line, "%2048s %16s", name_buf, ip_buf) != 2) {
+        if (sscanf(line, "%16s %2048s", ip_buf, name_buf) != 2) {
             fprintf(stderr, "Invalid line in /etc/hosts: %s", line);
             exit(1);
         }
