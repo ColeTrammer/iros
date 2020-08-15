@@ -1,7 +1,7 @@
 #include <netdb.h>
 #include <stdio.h>
 
-extern FILE *__hostent_file;
+FILE *__hostent_file = NULL;
 
 void sethostent(int keepopen) {
     (void) keepopen;

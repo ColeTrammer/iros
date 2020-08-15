@@ -2,7 +2,7 @@
 #include <netdb.h>
 #include <stdio.h>
 
-FILE *__hostent_file = NULL;
+extern FILE *__hostent_file;
 
 static struct field_descriptor hostent_fields[3] = {
     {
@@ -31,7 +31,7 @@ static struct field_parser_info hostent_field_info = {
 
 int gethostent_r(struct hostent *hostent, char *buf, size_t buflen, struct hostent **result, int *h_errnop) {
     if (!__hostent_file) {
-        __hostent_file = fopen("/etc/hosts", "r");
+        sethostent(0);
         if (!__hostent_file) {
             *h_errnop = NO_DATA;
             *result = NULL;

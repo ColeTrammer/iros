@@ -97,8 +97,9 @@ void setnetent(int stayopen);
 
 void endprotoent(void);
 struct protoent *getprotobyname(const char *name);
-struct protoent *getprotobynumber(int port);
+struct protoent *getprotobynumber(int protocol);
 struct protoent *getprotoent(void);
+int getprotoent_r(struct protoent *proto, char *buf, size_t buflen, struct protoent **result);
 void setprotoent(int stayopen);
 
 void endservent(void);

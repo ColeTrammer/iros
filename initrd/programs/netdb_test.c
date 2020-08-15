@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <assert.h>
 #include <netdb.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -27,20 +28,53 @@ static void test_hosts(void) {
     endhostent();
 }
 
+static void test_protocols(void) {
+    struct protoent *proto;
+    setprotoent(1);
+    while ((proto = getprotoent())) {
+        printf("[protocol]: '%s' |%d| (", proto->p_name, proto->p_proto);
+        char *iter;
+        size_t i = 0;
+        while ((iter = proto->p_aliases[i++])) {
+            printf("%s,", iter);
+        }
+        printf(")\n");
+    }
+
+    assert(getprotobynumber(IPPROTO_ICMP));
+    assert(getprotobynumber(IPPROTO_IP));
+    assert(getprotobynumber(IPPROTO_TCP));
+    assert(getprotobynumber(IPPROTO_UDP));
+    assert(getprotobynumber(IPPROTO_IPV6));
+
+    assert(getprotobyname("icmp"));
+    assert(getprotobyname("ip"));
+    assert(getprotobyname("ipv6"));
+    assert(getprotobyname("tcp"));
+    assert(getprotobyname("udp"));
+
+    endprotoent();
+}
+
 static void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-h]\n", s);
+    fprintf(stderr, "Usage: %s [-hp]\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     bool all = true;
     bool test_h = false;
+    bool test_p = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, ":h")) != -1) {
+    while ((opt = getopt(argc, argv, ":hp")) != -1) {
         switch (opt) {
             case 'h':
                 test_h = true;
+                all = false;
+                break;
+            case 'p':
+                test_p = true;
                 all = false;
                 break;
             case ':':
@@ -56,6 +90,10 @@ int main(int argc, char **argv) {
 
     if (all || test_h) {
         test_hosts();
+    }
+
+    if (all || test_p) {
+        test_protocols();
     }
 
     return any_failed;
