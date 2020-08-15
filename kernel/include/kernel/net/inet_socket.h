@@ -17,6 +17,7 @@ int net_inet_close(struct socket *socket);
 int net_inet_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
 int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 int net_inet_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
+ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr, socklen_t addrlen);
 
 void init_inet_sockets();
 

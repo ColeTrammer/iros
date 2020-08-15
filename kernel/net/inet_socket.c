@@ -108,6 +108,32 @@ int net_inet_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t
     return ret;
 }
 
+ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr, socklen_t addrlen) {
+    (void) flags;
+
+    ssize_t ret = 0;
+    mutex_lock(&socket->lock);
+    if (!addr) {
+        if (!socket->has_peer_address) {
+            ret = -EDESTADDRREQ;
+            goto done;
+        }
+        addr = (struct sockaddr *) &socket->peer_address;
+    } else if (addrlen < sizeof(struct sockaddr_in)) {
+        ret = -EINVAL;
+        goto done;
+    }
+
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(addr);
+    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
+    assert(interface);
+    ret = net_send_ip_v4(interface, socket->protocol, dest_ip, buf, len);
+
+done:
+    mutex_unlock(&socket->lock);
+    return ret;
+}
+
 void init_inet_sockets() {
     init_udp_sockets();
     init_tcp_sockets();
