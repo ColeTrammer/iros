@@ -24,16 +24,17 @@ static struct field_descriptor hostent_fields[3] = {
 };
 
 static struct field_parser_info hostent_field_info = {
-    .field_count = 3,
+    .field_count = sizeof(hostent_fields) / sizeof(hostent_fields[0]),
     .separator = " \t",
     .fields = hostent_fields,
 };
 
 int gethostent_r(struct hostent *hostent, char *buf, size_t buflen, struct hostent **result, int *h_errnop) {
     if (!__hostent_file) {
-        __hostent_file = fopen("/etc/hosts", "w");
+        __hostent_file = fopen("/etc/hosts", "r");
         if (!__hostent_file) {
             *h_errnop = NO_DATA;
+            *result = NULL;
             return -1;
         }
     }
@@ -41,6 +42,7 @@ int gethostent_r(struct hostent *hostent, char *buf, size_t buflen, struct hoste
     int ret = __parse_fields(&hostent_field_info, hostent, buf, buflen, __hostent_file);
     if (ret < hostent_field_info.field_count) {
         *h_errnop = NO_DATA;
+        *result = NULL;
         return -1;
     }
 

@@ -133,7 +133,14 @@ else()
         netdb/sethostent.c
         poll/poll.c
         poll/ppoll.c
-        pwd/pwd.c
+        pwd/endpwent.c
+        pwd/getpwent.c
+        pwd/getpwent_r.c
+        pwd/getpwnam.c
+        pwd/getpwnam_r.c
+        pwd/getpwuid.c
+        pwd/getpwuid_r.c
+        pwd/setpwent.c
         setjmp/__sigsetjmp.c
         setjmp/siglongjmp.c
         signal/kill.c

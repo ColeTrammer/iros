@@ -7,18 +7,21 @@
     STRING: no extra info
     STRING_ARRAY: arg1 = separator string for array
     IP_ADDRESS: offset2 = type (ipv4 or ipv6), offset3 = address length
+    NUMBER: arg1 = sizeof(number)
 */
 
 enum field_type {
     FIELD_STRING,
     FIELD_STRING_ARRAY,
     FIELD_IP_ADDRESS,
+    FIELD_NUMBER,
 };
 
 struct field_descriptor {
     enum field_type type;
 #define FIELD_DEFAULT_IF_NOT_PRESENT 1
 #define FIELD_DONT_SPLIT             2
+#define FIELD_ALLOW_EMPTY            4
     int flags;
     int offset1;
     int offset2;

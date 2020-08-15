@@ -3,6 +3,7 @@
 #include <bits/field_parser.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define TRY_WRITE_BUF(data, buffer, i, max)              \
@@ -31,6 +32,34 @@
         *(__typeof__(value) *) (((void *) (object)) + (offset)) = (value); \
     } while (0)
 
+#define WRITE_STRUCTURE_NUMBER(object, offset, value, number_size) \
+    do {                                                           \
+        switch (number_size) {                                     \
+            case sizeof(uint8_t): {                                \
+                uint8_t number = (uint8_t) value;                  \
+                WRITE_STRUCTURE(object, offset, number);           \
+                break;                                             \
+            }                                                      \
+            case sizeof(uint16_t): {                               \
+                uint16_t number = (uint16_t) value;                \
+                WRITE_STRUCTURE(object, offset, number);           \
+                break;                                             \
+            }                                                      \
+            case sizeof(uint32_t): {                               \
+                uint32_t number = (uint32_t) value;                \
+                WRITE_STRUCTURE(object, offset, number);           \
+                break;                                             \
+            }                                                      \
+            case sizeof(uint64_t): {                               \
+                uint64_t number = (uint64_t) value;                \
+                WRITE_STRUCTURE(object, offset, number);           \
+                break;                                             \
+            }                                                      \
+            default:                                               \
+                assert(false);                                     \
+        }                                                          \
+    } while (0)
+
 int __parse_fields(struct field_parser_info *info, void *object, void *buffer, size_t buffer_max, FILE *file) {
     for (;;) {
         char line_buffer[_POSIX2_LINE_MAX];
@@ -56,10 +85,15 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                 continue;
             }
 
+            if (!field && !!(field_desc->flags & FIELD_ALLOW_EMPTY)) {
+                field = "";
+            }
+
             if (!field) {
                 if (done_with_line) {
                     break;
                 }
+                line_index++;
                 continue;
             }
 
@@ -136,6 +170,15 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     WRITE_STRUCTURE(object, field_desc->offset3, addrlen);
                     break;
                 }
+                case FIELD_NUMBER: {
+                    char *end;
+                    long value = strtol(field, &end, 10);
+                    if (!end || !!*end) {
+                        return -1;
+                    }
+                    WRITE_STRUCTURE_NUMBER(object, field_desc->offset1, value, field_desc->arg1_l);
+                    break;
+                }
                 default:
                     assert(false);
                     break;
@@ -143,6 +186,10 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
 
             field_index++;
             field = NULL;
+
+            if (done_with_line) {
+                break;
+            }
         }
 
         // No fields were read, try the next line.
@@ -153,7 +200,7 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
         // Give fields a default value if requested.
         for (; field_index < info->field_count; field_index++) {
             struct field_descriptor *field_desc = &info->fields[field_index];
-            if (!field_desc->flags & FIELD_DEFAULT_IF_NOT_PRESENT) {
+            if (!(field_desc->flags & FIELD_DEFAULT_IF_NOT_PRESENT)) {
                 break;
             }
 
@@ -175,6 +222,10 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     WRITE_STRUCTURE(object, field_desc->offset1, empty_array);
                     WRITE_STRUCTURE(object, field_desc->offset2, type);
                     WRITE_STRUCTURE(object, field_desc->offset3, len);
+                    break;
+                }
+                case FIELD_NUMBER: {
+                    WRITE_STRUCTURE_NUMBER(object, field_desc->offset1, 0, field_desc->arg1_l);
                     break;
                 }
                 default:
