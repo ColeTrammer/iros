@@ -85,6 +85,7 @@ struct socket {
     bool keepalive : 1;
     bool oob_inline : 1;
     bool reuse_addr : 1;
+    bool tcp_nodelay : 1;
 
     int error;
     struct linger linger;

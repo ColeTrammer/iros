@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <netinet/tcp.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,6 +15,8 @@
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
 static int net_tcp_close(struct socket *socket);
 static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
+static int net_tcp_getsockopt(struct socket *socket, int level, int optname, void *optval, socklen_t *optlen);
+static int net_tcp_setsockopt(struct socket *socket, int level, int optname, const void *optval, socklen_t optlen);
 static int net_tcp_listen(struct socket *socket, int backlog);
 static int net_tcp_socket(int domain, int type, int protocol);
 static ssize_t net_tcp_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen);
@@ -27,8 +30,8 @@ static struct socket_ops tcp_ops = {
     .connect = net_tcp_connect,
     .getpeername = net_inet_getpeername,
     .getsockname = net_inet_getsockname,
-    .getsockopt = net_generic_getsockopt,
-    .setsockopt = net_generic_setsockopt,
+    .getsockopt = net_tcp_getsockopt,
+    .setsockopt = net_tcp_setsockopt,
     .listen = net_tcp_listen,
     .sendto = net_tcp_sendto,
     .recvfrom = net_tcp_recvfrom,
@@ -229,6 +232,35 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
     }
 
     return -ETIMEDOUT;
+}
+
+static int net_tcp_getsockopt(struct socket *socket, int level, int optname, void *optval, socklen_t *optlen) {
+    if (level != IPPROTO_TCP) {
+        return net_generic_getsockopt(socket, level, optname, optval, optlen);
+    }
+
+    switch (optname) {
+        case TCP_NODELAY:
+            return NET_WRITE_SOCKOPT(socket->tcp_nodelay, int, optval, optlen);
+        default:
+            return -ENOPROTOOPT;
+    }
+}
+
+static int net_tcp_setsockopt(struct socket *socket, int level, int optname, const void *optval, socklen_t optlen) {
+    if (level != IPPROTO_TCP) {
+        return net_generic_setsockopt(socket, level, optname, optval, optlen);
+    }
+
+    switch (optname) {
+        case TCP_NODELAY: {
+            int value = NET_READ_SOCKOPT(int, optval, optlen);
+            socket->tcp_nodelay = !!value;
+            return 0;
+        }
+        default:
+            return -ENOPROTOOPT;
+    }
 }
 
 static int net_tcp_listen(struct socket *socket, int backlog) {
