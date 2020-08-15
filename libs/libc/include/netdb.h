@@ -34,9 +34,39 @@
 #define NO_RECOVERY    -3
 #define TRY_AGAIN      -4
 
+#define IPPORT_RESERVED 1024
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+
+struct hostent {
+    char *h_name;
+    char **h_aliases;
+    int h_addrtype;
+    int h_length;
+    char **h_addr_list;
+};
+
+struct netent {
+    char *n_name;
+    char **n_aliases;
+    int n_addrtype;
+    uint32_t n_net;
+};
+
+struct protoent {
+    char *p_name;
+    char **p_aliases;
+    int p_proto;
+};
+
+struct servent {
+    char *s_name;
+    char **s_aliases;
+    int s_port;
+    char *s_proto;
+};
 
 struct addrinfo {
     int ai_flags;
@@ -49,14 +79,38 @@ struct addrinfo {
     struct addrinfo *ai_next;
 };
 
+extern int h_errno;
+
+void endhostent(void);
+struct hostent *gethostbyaddr(const void *addr, socklen_t addrlen, int type);
+struct hostent *gethostbyname(const char *name);
+struct hostent *gethostent(void);
+void sethostent(int stayopen);
+
+void endnetent(void);
+struct netent *getnetbyaddr(uint32_t net, int type);
+struct netent *getnetbyname(const char *name);
+struct netent *getnetent(void);
+void setnetent(int stayopen);
+
+void endprotoent(void);
+struct protoent *getprotobyname(const char *name);
+struct protoent *getprotobynumber(int port);
+struct protoent *getprotoent(void);
+void setprotoent(int stayopen);
+
+void endservent(void);
+struct servent *getservbyname(const char *name, const char *proto);
+struct servent *getservbyport(int port, const char *proto);
+struct servent *getservent(void);
+void setservent(int stayopen);
+
+void freeaddrinfo(struct addrinfo *res);
+const char *gai_strerror(int err);
 int getaddrinfo(const char *__restrict node, const char *__restrict service, const struct addrinfo *__restrict hints,
                 struct addrinfo **__restrict res);
-void freeaddrinfo(struct addrinfo *res);
-
 int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addrlen, char *__restrict host, socklen_t hostlen, char *__restrict serv,
                 socklen_t servlen, int flags);
-
-const char *gai_strerror(int err);
 
 #ifdef __cplusplus
 }
