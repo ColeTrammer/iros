@@ -46,6 +46,7 @@ struct hostent {
     int h_addrtype;
     int h_length;
     char **h_addr_list;
+#define h_addr h_addr_list[0]
 };
 
 struct netent {
@@ -85,6 +86,7 @@ void endhostent(void);
 struct hostent *gethostbyaddr(const void *addr, socklen_t addrlen, int type);
 struct hostent *gethostbyname(const char *name);
 struct hostent *gethostent(void);
+int gethostent_r(struct hostent *ret, char *buf, size_t buflen, struct hostent **result, int *h_errnop);
 void sethostent(int stayopen);
 
 void endnetent(void);

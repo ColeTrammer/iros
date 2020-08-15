@@ -124,7 +124,12 @@ else()
         libgen/basename.c
         libgen/dirname.c
         locale/locale.c
+        netdb/endhostent.c
+        netdb/gethostent.c
+        netdb/gethostent_r.c
+        netdb/h_errno.c
         netdb/netdb.c
+        netdb/sethostent.c
         poll/poll.c
         poll/ppoll.c
         pwd/pwd.c
