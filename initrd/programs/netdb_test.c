@@ -86,19 +86,43 @@ void test_networks(void) {
     endnetent();
 }
 
+void test_services(void) {
+    struct servent *service;
+    setservent(1);
+    while ((service = getservent())) {
+        printf("[service]: '%s' |%d| {'%s'} (", service->s_name, ntohl(service->s_port), service->s_proto);
+        for (size_t i = 0; service->s_aliases[i]; i++) {
+            printf("%s,", service->s_aliases[i]);
+        }
+        printf(")\n");
+    }
+
+    assert(getservbyname("domain", "udp"));
+    assert(getservbyname("http", "tcp"));
+    assert(getservbyname("www", NULL));
+    assert(getservbyname("https", "tcp"));
+
+    assert(getservbyport(htonl(53), "udp"));
+    assert(getservbyport(htonl(80), NULL));
+    assert(getservbyport(htonl(443), "tcp"));
+
+    endservent();
+}
+
 static void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-hnp]\n", s);
+    fprintf(stderr, "Usage: %s [-hnps]\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     bool all = true;
     bool test_h = false;
-    bool test_p = false;
     bool test_n = false;
+    bool test_p = false;
+    bool test_s = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, ":hnp")) != -1) {
+    while ((opt = getopt(argc, argv, ":hnps")) != -1) {
         switch (opt) {
             case 'h':
                 test_h = true;
@@ -110,6 +134,10 @@ int main(int argc, char **argv) {
                 break;
             case 'p':
                 test_p = true;
+                all = false;
+                break;
+            case 's':
+                test_s = true;
                 all = false;
                 break;
             case ':':
@@ -127,12 +155,16 @@ int main(int argc, char **argv) {
         test_hosts();
     }
 
+    if (all || test_n) {
+        test_networks();
+    }
+
     if (all || test_p) {
         test_protocols();
     }
 
-    if (all || test_n) {
-        test_networks();
+    if (all || test_s) {
+        test_services();
     }
 
     return any_failed;

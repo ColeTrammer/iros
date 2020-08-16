@@ -28,9 +28,10 @@ struct field_descriptor {
     int offset1;
     int offset2;
     int offset3;
+    const char *separator_override;
     union {
         long arg1_l;
-        char *arg1_s;
+        const char *arg1_s;
     };
 };
 
@@ -39,7 +40,7 @@ struct field_parser_info {
     int field_count;
 #define FIELD_PARSER_NO_COMMENTS 1
     int flags;
-    char *separator;
+    const char *separator;
 };
 
 // Returns the number of fields read (like scanf), and -1 on read errors.

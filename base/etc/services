@@ -1,0 +1,3 @@
+domain  53/udp
+http    80/tcp www
+https  443/tcp

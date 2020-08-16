@@ -137,6 +137,7 @@ else()
         netdb/endhostent.c
         netdb/endnetent.c
         netdb/endprotoent.c
+        netdb/endservent.c
         netdb/gethostbyname.c
         netdb/gethostent.c
         netdb/gethostent_r.c
@@ -148,11 +149,16 @@ else()
         netdb/getprotobynumber.c
         netdb/getprotoent.c
         netdb/getprotoent_r.c
+        netdb/getservbyname.c
+        netdb/getservbyport.c
+        netdb/getservent.c
+        netdb/getservent_r.c
         netdb/h_errno.c
         netdb/netdb.c
         netdb/sethostent.c
         netdb/setnetent.c
         netdb/setprotoent.c
+        netdb/setservent.c
         poll/poll.c
         poll/ppoll.c
         pwd/endpwent.c

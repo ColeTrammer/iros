@@ -54,9 +54,10 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
         char *field = NULL;
         for (; field_index < info->field_count;) {
             struct field_descriptor *field_desc = &info->fields[field_index];
+            const char *separator = field_desc->separator_override ? field_desc->separator_override : info->separator;
 
             bool done_with_line = line[line_index] == '\n' || line[line_index] == '\0' || (line[line_index] == '#' && allow_comments);
-            bool is_separator = !!strchr(info->separator, line[line_index]) && !(field_desc->flags & FIELD_DONT_SPLIT);
+            bool is_separator = !!strchr(separator, line[line_index]) && !(field_desc->flags & FIELD_DONT_SPLIT);
             if (!is_separator && !done_with_line) {
                 if (!field) {
                     field = &line[line_index];
@@ -86,7 +87,7 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     break;
                 }
                 case FIELD_STRING_ARRAY: {
-                    char *separator = field_desc->arg1_s;
+                    const char *separator = field_desc->arg1_s;
 
                     // Count the number of array elements.
                     size_t count = 0;

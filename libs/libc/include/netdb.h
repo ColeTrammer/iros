@@ -107,6 +107,7 @@ void endservent(void);
 struct servent *getservbyname(const char *name, const char *proto);
 struct servent *getservbyport(int port, const char *proto);
 struct servent *getservent(void);
+int getservent_r(struct servent *service, char *buf, size_t buflen, struct servent **result);
 void setservent(int stayopen);
 
 void freeaddrinfo(struct addrinfo *res);
