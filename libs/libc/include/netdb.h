@@ -93,6 +93,7 @@ void endnetent(void);
 struct netent *getnetbyaddr(uint32_t net, int type);
 struct netent *getnetbyname(const char *name);
 struct netent *getnetent(void);
+int getnetent_r(struct netent *net, char *buf, size_t buflen, struct netent **result);
 void setnetent(int stayopen);
 
 void endprotoent(void);

@@ -8,6 +8,7 @@
     STRING_ARRAY: arg1 = separator string for array
     IP_ADDRESS: offset2 = type (ipv4 or ipv6), offset3 = address length
     NUMBER: arg1 = sizeof(number)
+    IP_V4_NETWORK: offset1 = ip address, offset2 = address type
 */
 
 enum field_type {
@@ -15,6 +16,7 @@ enum field_type {
     FIELD_STRING_ARRAY,
     FIELD_IP_ADDRESS,
     FIELD_NUMBER,
+    FIELD_IP_V4_NETWORK,
 };
 
 struct field_descriptor {

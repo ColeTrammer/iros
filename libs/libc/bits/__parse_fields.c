@@ -159,6 +159,17 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                     WRITE_STRUCTURE_NUMBER(object, field_desc->offset1, value, field_desc->arg1_l);
                     break;
                 }
+                case FIELD_IP_V4_NETWORK: {
+                    struct in_addr addr;
+                    if (inet_aton(field, &addr) == 0) {
+                        return -1;
+                    }
+                    int type = AF_INET;
+
+                    WRITE_STRUCTURE(object, field_desc->offset1, ntohl(addr.s_addr));
+                    WRITE_STRUCTURE(object, field_desc->offset2, type);
+                    break;
+                }
                 default:
                     assert(false);
                     break;
@@ -206,6 +217,13 @@ int __parse_fields(struct field_parser_info *info, void *object, void *buffer, s
                 }
                 case FIELD_NUMBER: {
                     WRITE_STRUCTURE_NUMBER(object, field_desc->offset1, 0, field_desc->arg1_l);
+                    break;
+                }
+                case FIELD_IP_V4_NETWORK: {
+                    struct in_addr addr = { .s_addr = INADDR_NONE };
+                    int type = AF_INET;
+                    WRITE_STRUCTURE(object, field_desc->offset1, ntohl(addr.s_addr));
+                    WRITE_STRUCTURE(object, field_desc->offset2, type);
                     break;
                 }
                 default:

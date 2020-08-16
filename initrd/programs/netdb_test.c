@@ -68,8 +68,26 @@ static void test_protocols(void) {
     endprotoent();
 }
 
+void test_networks(void) {
+    struct netent *net;
+    setnetent(1);
+    while ((net = getnetent())) {
+        printf("[network]: '%s' |%d| (", net->n_name, net->n_addrtype);
+        for (size_t i = 0; net->n_aliases[i]; i++) {
+            printf("%s,", net->n_aliases[i]);
+        }
+        struct in_addr addr = { .s_addr = htonl(net->n_net) };
+        printf(") => '%s'\n", inet_ntoa(addr));
+    }
+
+    assert(getnetbyaddr(ntohl(inet_addr("169.254.0.0")), AF_INET));
+    assert(getnetbyname("link-local"));
+
+    endnetent();
+}
+
 static void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-hp]\n", s);
+    fprintf(stderr, "Usage: %s [-hnp]\n", s);
     exit(2);
 }
 
@@ -77,12 +95,17 @@ int main(int argc, char **argv) {
     bool all = true;
     bool test_h = false;
     bool test_p = false;
+    bool test_n = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, ":hp")) != -1) {
+    while ((opt = getopt(argc, argv, ":hnp")) != -1) {
         switch (opt) {
             case 'h':
                 test_h = true;
+                all = false;
+                break;
+            case 'n':
+                test_n = true;
                 all = false;
                 break;
             case 'p':
@@ -106,6 +129,10 @@ int main(int argc, char **argv) {
 
     if (all || test_p) {
         test_protocols();
+    }
+
+    if (all || test_n) {
+        test_networks();
     }
 
     return any_failed;

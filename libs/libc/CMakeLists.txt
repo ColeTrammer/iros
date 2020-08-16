@@ -135,10 +135,15 @@ else()
         libgen/dirname.c
         locale/locale.c
         netdb/endhostent.c
+        netdb/endnetent.c
         netdb/endprotoent.c
         netdb/gethostbyname.c
         netdb/gethostent.c
         netdb/gethostent_r.c
+        netdb/getnetbyaddr.c
+        netdb/getnetbyname.c
+        netdb/getnetent.c
+        netdb/getnetent_r.c
         netdb/getprotobyname.c
         netdb/getprotobynumber.c
         netdb/getprotoent.c
@@ -146,6 +151,7 @@ else()
         netdb/h_errno.c
         netdb/netdb.c
         netdb/sethostent.c
+        netdb/setnetent.c
         netdb/setprotoent.c
         poll/poll.c
         poll/ppoll.c
