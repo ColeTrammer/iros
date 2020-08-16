@@ -12,6 +12,7 @@
 
 #include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/dev.h>
+#include <kernel/fs/disk_sync.h>
 #include <kernel/fs/ext2.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/file_system.h>
@@ -37,6 +38,7 @@ static struct file_system fs = {
 
 static struct super_block_operations s_op = {
     .rename = &ext2_rename,
+    .sync = &ext2_sync_super_block,
 };
 
 static struct inode_operations ext2_i_op = {
@@ -52,6 +54,7 @@ static struct inode_operations ext2_i_op = {
     .read = &ext2_iread,
     .on_inode_destruction = &ext2_on_inode_destruction,
     .truncate = &ext2_truncate,
+    .sync = &ext2_sync_inode,
 };
 
 static struct inode_operations ext2_dir_i_op = {
@@ -67,6 +70,7 @@ static struct inode_operations ext2_dir_i_op = {
     .link = &ext2_link,
     .utimes = &ext2_utimes,
     .on_inode_destruction = &ext2_on_inode_destruction,
+    .sync = &ext2_sync_inode,
 };
 
 static struct file_operations ext2_f_op = {
@@ -234,9 +238,8 @@ static void ext2_sync_raw_super_block_with_virtual_super_block(struct super_bloc
 }
 
 /* Syncs super_block to disk */
-static int ext2_sync_super_block(struct super_block *sb) {
+int ext2_sync_super_block(struct super_block *sb) {
     struct ext2_sb_data *data = sb->private_data;
-    mutex_lock(&sb->super_block_lock);
 
     // Sync to os super_block structure, since we write to the
     // actual raw_super_block when accounting fields are updated.
@@ -244,7 +247,6 @@ static int ext2_sync_super_block(struct super_block *sb) {
 
     int ret = sb->device->ops->read(sb->device, EXT2_SUPER_BLOCK_OFFSET, data->sb, EXT2_SUPER_BLOCK_SIZE, false);
 
-    mutex_unlock(&sb->super_block_lock);
     return ret == EXT2_SUPER_BLOCK_SIZE ? 0 : ret;
 }
 
@@ -287,7 +289,8 @@ static int ext2_set_block_allocated(struct super_block *super_block, uint32_t in
     }
 
     data->sb->num_unallocated_blocks--;
-    return ext2_sync_super_block(super_block);
+    fs_mark_super_block_as_dirty(super_block);
+    return 0;
 }
 
 /* Frees a block from block bitmap */
@@ -321,7 +324,7 @@ static int ext2_free_block(struct super_block *super_block, uint32_t index, bool
         }
 
         data->sb->num_unallocated_blocks--;
-        return ext2_sync_super_block(super_block);
+        fs_mark_super_block_as_dirty(super_block);
     }
 
     return 0;
@@ -422,7 +425,8 @@ static int ext2_set_inode_allocated(struct super_block *super_block, uint32_t in
 
     struct ext2_sb_data *sb_data = super_block->private_data;
     sb_data->sb->num_unallocated_inodes--;
-    return ext2_sync_super_block(super_block);
+    fs_mark_super_block_as_dirty(super_block);
+    return 0;
 }
 
 /* Frees an inode index in the inode bitmap */
@@ -455,7 +459,7 @@ static int ext2_free_inode(struct super_block *super_block, uint32_t index, bool
 
         struct ext2_sb_data *sb_data = super_block->private_data;
         sb_data->sb->num_unallocated_inodes--;
-        return ext2_sync_super_block(super_block);
+        fs_mark_super_block_as_dirty(super_block);
     }
 
     return 0;
@@ -650,7 +654,7 @@ static void ext2_update_inode(struct inode *inode, bool update_tnodes) {
 }
 
 /* Syncs raw_inode to disk */
-static int ext2_sync_inode(struct inode *inode) {
+int ext2_sync_inode(struct inode *inode) {
     struct ext2_sb_data *sb_data = inode->super_block->private_data;
 
     size_t inode_table_index = ext2_get_inode_table_index(inode->super_block, inode->index);
@@ -781,7 +785,8 @@ static int ext2_write_inode(struct inode *inode) {
     raw_inode->faddr = 0;
     memset(raw_inode->os_specific_2, 0, 12 * sizeof(uint8_t));
 
-    return ext2_sync_inode(inode);
+    fs_mark_inode_as_dirty(inode);
+    return 0;
 }
 
 struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode, int *error, ino_t inode_id, dev_t device) {
@@ -880,7 +885,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
                 parent->size += parent->super_block->block_size;
                 ext2_set_block_allocated(parent->super_block, block_index);
                 parent->modify_time = time_read_clock(CLOCK_REALTIME);
-                ext2_sync_inode(parent);
+                fs_mark_inode_as_dirty(parent);
             }
         }
 
@@ -1180,11 +1185,7 @@ static ssize_t __ext2_write(struct inode *inode, off_t offset, const void *buffe
 
     inode->size = MAX(inode->size, offset + len);
     inode->modify_time = time_read_clock(CLOCK_REALTIME);
-    ret = ext2_sync_inode(inode);
-    if (ret != 0) {
-        return ret;
-    }
-
+    fs_mark_inode_as_dirty(inode);
     return (ssize_t) len_save;
 }
 
@@ -1272,18 +1273,11 @@ int ext2_truncate(struct inode *inode, off_t size) {
         sb_data->sb->num_unallocated_blocks += num_blocks_freed;
         sb_data->sb->num_unallocated_inodes++;
 
-        ret = ext2_sync_super_block(inode->super_block);
-        if (ret != 0) {
-            return ret;
-        }
+        fs_mark_super_block_as_dirty(inode->super_block);
 
         inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
         inode->size = new_size;
-        ret = ext2_sync_inode(inode);
-        if (ret != 0) {
-            return 0;
-        }
-
+        fs_mark_inode_as_dirty(inode);
         return 0;
     }
 
@@ -1365,11 +1359,7 @@ int ext2_truncate(struct inode *inode, off_t size) {
 
     inode->size = new_size;
     inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
-    int ret = ext2_sync_inode(inode);
-    if (ret != 0) {
-        return ret;
-    }
-
+    fs_mark_inode_as_dirty(inode);
     return 0;
 }
 
@@ -1441,7 +1431,8 @@ int ext2_link(struct tnode *tparent, const char *name, const struct tnode *targe
     }
 
     raw_inode->link_count++;
-    return ext2_sync_inode(target->inode);
+    fs_mark_inode_as_dirty(target->inode);
+    return 0;
 }
 
 struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *target, int *error) {
@@ -1456,13 +1447,7 @@ struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *
         memcpy(raw_inode->block, target, target_len);
 
         inode->size = target_len;
-
-        *error = ext2_sync_inode(inode);
-        if (*error < 0) {
-            free(inode);
-            return NULL;
-        }
-
+        fs_mark_inode_as_dirty(inode);
         return inode;
     }
 
@@ -1488,11 +1473,7 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
 
     struct raw_inode *parent_raw_inode = tparent->inode->private_data;
     parent_raw_inode->link_count++;
-    *error = ext2_sync_inode(tparent->inode);
-    if (*error != 0) {
-        free(inode);
-        return NULL;
-    }
+    fs_mark_inode_as_dirty(tparent->inode);
 
     struct raw_inode *raw_inode = inode->private_data;
     struct raw_dirent *dirents_start = ext2_allocate_blocks(inode->super_block, 1);
@@ -1520,12 +1501,7 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
         }
 
         inode->size = inode->super_block->block_size;
-        *error = ext2_sync_inode(inode);
-        if (*error != 0) {
-            ext2_free_blocks(dirents_start);
-            free(inode);
-            return NULL;
-        }
+        fs_mark_inode_as_dirty(inode);
     }
 
     ssize_t ret = ext2_write_blocks(inode->super_block, dirents_start, raw_inode->block[0], 1);
@@ -1704,10 +1680,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
             sb_data->sb->num_unallocated_blocks += num_blocks;
             sb_data->sb->num_unallocated_inodes++;
 
-            ret = ext2_sync_super_block(inode->super_block);
-            if (ret != 0) {
-                return ret;
-            }
+            fs_mark_super_block_as_dirty(inode->super_block);
 
             // NOTE: it's fine to call drop_inode_reference with the lock here
             //       because the tnode still has a reference and therefore the
@@ -1716,8 +1689,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
             return 0;
         }
 
-        /* Sync new link_count to disk */
-        return ext2_sync_inode(inode);
+        fs_mark_inode_as_dirty(inode);
     }
 
     return 0;
@@ -1744,11 +1716,7 @@ int ext2_rmdir(struct tnode *tnode) {
     parent_raw_inode->link_count--;
     assert(parent_raw_inode->link_count > 0);
 
-    int ret = ext2_sync_inode(parent);
-    if (ret != 0) {
-        mutex_unlock(&parent->lock);
-        return ret;
-    }
+    fs_mark_inode_as_dirty(parent);
     mutex_unlock(&parent->lock);
 
     /* Drop . reference */
@@ -1764,7 +1732,8 @@ int ext2_chown(struct inode *inode, uid_t uid, gid_t gid) {
     inode->uid = uid;
     inode->gid = gid;
     inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
-    return ext2_sync_inode(inode);
+    fs_mark_inode_as_dirty(inode);
+    return 0;
 }
 
 int ext2_chmod(struct inode *inode, mode_t mode) {
@@ -1774,7 +1743,8 @@ int ext2_chmod(struct inode *inode, mode_t mode) {
 
     inode->mode = mode;
     inode->change_time = inode->modify_time = time_read_clock(CLOCK_REALTIME);
-    return ext2_sync_inode(inode);
+    fs_mark_inode_as_dirty(inode);
+    return 0;
 }
 
 int ext2_utimes(struct inode *inode, const struct timespec *times) {
@@ -1790,7 +1760,8 @@ int ext2_utimes(struct inode *inode, const struct timespec *times) {
         inode->modify_time = times[1];
     }
 
-    return ext2_sync_inode(inode);
+    fs_mark_inode_as_dirty(inode);
+    return 0;
 }
 
 int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_name) {
@@ -1811,11 +1782,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
         assert(parent_raw_inode->link_count > 0);
 
         parent->change_time = time_read_clock(CLOCK_REALTIME);
-        int ret = ext2_sync_inode(parent);
-        if (ret != 0) {
-            mutex_unlock(&parent->lock);
-            return ret;
-        }
+        fs_mark_inode_as_dirty(parent);
         mutex_unlock(&parent->lock);
     }
 

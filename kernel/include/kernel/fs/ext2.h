@@ -190,6 +190,8 @@ int ext2_link(struct tnode *tnode, const char *name, const struct tnode *target)
 int ext2_truncate(struct inode *inode, off_t length);
 int ext2_read_all(struct inode *inode, void *buffer);
 void ext2_on_inode_destruction(struct inode *inode);
+int ext2_sync_inode(struct inode *inode);
+int ext2_sync_super_block(struct super_block *sb);
 
 void init_ext2();
 

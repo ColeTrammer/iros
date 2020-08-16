@@ -7,10 +7,11 @@
 #include <kernel/hal/output.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/wait_queue.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
-#define DISK_SYNC_DEBUG
+// #define DISK_SYNC_DEBUG
 
 static mutex_t queue_lock = MUTEX_INITIALIZER;
 static struct wait_queue wait_queue = WAIT_QUEUE_INITIALIZER;
@@ -78,6 +79,7 @@ static void do_disk_sync(void) {
 
             mutex_lock(&sb_to_sync->super_block_lock);
             if (sb_to_sync->dirty) {
+                sb_to_sync->dirty = false;
                 int ret = sb_to_sync->op->sync(sb_to_sync);
                 if (ret) {
                     debug_log("ERROR: failed to sync super block: [ %ld, %s ]\n", sb_to_sync->fsid, strerror(-ret));
@@ -105,5 +107,5 @@ static void do_disk_sync(void) {
 }
 
 void init_disk_sync_task(void) {
-    load_kernel_task((uintptr_t) &do_disk_sync, "disk_sync");
+    sched_add_task(load_kernel_task((uintptr_t) &do_disk_sync, "disk_sync"));
 }
