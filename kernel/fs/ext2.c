@@ -94,13 +94,10 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
     struct ext2_sb_data *data = sb->private_data;
     struct ext2_block *block = NULL;
 
-    mutex_lock(&sb->super_block_lock);
     if (cache && num_blocks == 1 && (block = hash_get(data->block_map, &block_offset))) {
         memcpy(buffer, block->block, sb->block_size);
-        mutex_unlock(&sb->super_block_lock);
         return num_blocks;
     }
-    mutex_unlock(&sb->super_block_lock);
 
     if (sb->device->ops->read(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size, false) !=
         num_blocks * sb->block_size) {
@@ -112,10 +109,7 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
         block->index = block_offset;
         block->block = ext2_allocate_blocks(sb, 1);
         memcpy(block->block, buffer, sb->block_size);
-
-        mutex_lock(&sb->super_block_lock);
         hash_put(data->block_map, block);
-        mutex_unlock(&sb->super_block_lock);
     }
 
     return num_blocks;
@@ -135,12 +129,10 @@ static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uin
     }
 
     if (num_blocks == 1) {
-        mutex_lock(&sb->super_block_lock);
         struct ext2_block *block = hash_get(data->block_map, &block_offset);
         if (block != NULL) {
             memcpy(block->block, buffer, sb->block_size);
         }
-        mutex_unlock(&sb->super_block_lock);
     }
 
     return num_blocks;
@@ -1436,10 +1428,6 @@ int ext2_stat(struct inode *inode, struct stat *stat_struct) {
 }
 
 int ext2_link(struct tnode *tparent, const char *name, const struct tnode *target) {
-    if (!(tparent->inode->mode & S_IWUSR)) {
-        return -EPERM;
-    }
-
     int error = 0;
     __ext2_create(tparent, name, tparent->inode->mode, &error, target->inode->index, 0);
     if (error < 0) {
@@ -1457,11 +1445,6 @@ int ext2_link(struct tnode *tparent, const char *name, const struct tnode *targe
 }
 
 struct inode *ext2_symlink(struct tnode *tparent, const char *name, const char *target, int *error) {
-    if (!(tparent->inode->mode & S_IWUSR)) {
-        *error = -EPERM;
-        return NULL;
-    }
-
     struct inode *inode = __ext2_create(tparent, name, S_IFLNK | 0777, error, 0, 0);
     if (inode == NULL) {
         return NULL;
