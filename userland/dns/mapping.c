@@ -1,46 +1,52 @@
-#include <arpa/inet.h>
-#include <search.h>
-#include <stdio.h>
+#include <assert.h>
+#include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "mapping.h"
 
 struct host_mapping *get_known_hosts() {
-    FILE *file = fopen("/etc/hosts", "r");
-    if (!file) {
-        fprintf(stderr, "Cannot open /etc/hosts\n");
-        exit(1);
+    struct host_mapping *hosts = NULL;
+
+    struct hostent *ent;
+    while ((ent = gethostent())) {
+        assert(ent->h_addrtype == AF_INET);
+        assert(ent->h_length == sizeof(struct in_addr));
+
+        struct host_mapping *new_host = malloc(sizeof(struct host_mapping));
+        new_host->next = hosts;
+        new_host->prev = NULL;
+        new_host->ip = *(struct in_addr *) ent->h_addr_list[0];
+        new_host->name = strdup(ent->h_name);
+
+        size_t aliases_length = 0;
+        while (ent->h_aliases[aliases_length]) {
+            aliases_length++;
+        }
+        new_host->aliases = malloc((aliases_length + 1) * sizeof(char *));
+        for (size_t i = 0; i < aliases_length; i++) {
+            new_host->aliases[i] = strdup(ent->h_aliases[i]);
+        }
+        new_host->aliases[aliases_length] = NULL;
+
+        hosts = new_host;
     }
 
-    struct host_mapping *known_hosts = NULL;
-    char *line = NULL;
-    size_t line_max = 0;
-    char name_buf[2048];
-    char ip_buf[16];
-    while (getline(&line, &line_max, file) != -1) {
+    endhostent();
+    return hosts;
+}
 
-        if (sscanf(line, "%16s %2048s", ip_buf, name_buf) != 2) {
-            fprintf(stderr, "Invalid line in /etc/hosts: %s", line);
-            exit(1);
+struct host_mapping *lookup_host_in_mapping(struct host_mapping *list, const char *name) {
+    for (struct host_mapping *iter = list; iter; iter = iter->next) {
+        if (strcmp(iter->name, name) == 0) {
+            return iter;
         }
-
-        struct host_mapping *to_add = calloc(1, sizeof(struct host_mapping));
-        to_add->ip.s_addr = inet_addr(ip_buf);
-        if (to_add->ip.s_addr == INADDR_NONE) {
-            fprintf(stderr, "Invalid ip address in /etc/hosts: %s\n", ip_buf);
-            exit(1);
-        }
-
-        to_add->name = strdup(name_buf);
-        if (known_hosts == NULL) {
-            known_hosts = to_add->prev = to_add->next = to_add;
-        } else {
-            insque(to_add, known_hosts->prev);
+        for (size_t i = 0; iter->aliases[i]; i++) {
+            if (strcmp(iter->aliases[i], name) == 0) {
+                return iter;
+            }
         }
     }
 
-    free(line);
-    fclose(file);
-    return known_hosts;
+    return NULL;
 }

@@ -45,13 +45,11 @@ int main(int argc, char **argv) {
     }
 
     struct host_mapping *known_hosts = get_known_hosts();
-    struct host_mapping *m = known_hosts;
-    do {
-        if (strcmp(host, m->name) == 0) {
-            printf("%s\n", inet_ntoa(m->ip));
-            return 0;
-        }
-    } while ((m = m->next) != known_hosts);
+    struct host_mapping *local_mapping = lookup_host_in_mapping(known_hosts, host);
+    if (local_mapping) {
+        printf("%s\n", inet_ntoa(local_mapping->ip));
+        return 0;
+    }
 
     struct host_mapping *result = lookup_host(host);
     if (result == NULL) {

@@ -61,14 +61,8 @@ int start_server() {
 
         struct host_mapping *mapping = NULL;
 
-        bool was_known = false;
-        struct host_mapping *m = known_hosts;
-        do {
-            if (strcmp(buf, m->name) == 0) {
-                mapping = m;
-                was_known = true;
-            }
-        } while ((m = m->next) != known_hosts);
+        mapping = lookup_host_in_mapping(known_hosts, buf);
+        bool was_known = !!mapping;
 
         // try and see if the url is an ip address
         struct in_addr a;
