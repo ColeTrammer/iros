@@ -43,5 +43,6 @@ struct dns_record {
 } __attribute__((packed));
 
 struct host_mapping *lookup_host(char *host);
+struct host_mapping *lookup_address(uint32_t ip_address);
 
 #endif /* _DNS_H */

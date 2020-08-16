@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <search.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,20 +19,44 @@
 static void print_usage(char **argv);
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        print_usage(argv);
-        return 0;
-    }
+    bool reverse_lookup = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, "d")) != -1) {
+    while ((opt = getopt(argc, argv, ":dr")) != -1) {
         switch (opt) {
             case 'd':
                 return start_server();
+            case 'r':
+                reverse_lookup = true;
+                break;
             default:
                 print_usage(argv);
-                return 0;
+                return 2;
         }
+    }
+
+    if (optind + 1 != argc) {
+        print_usage(argv);
+        return 2;
+    }
+
+    if (reverse_lookup) {
+        char *address_string = argv[optind];
+        fprintf(stderr, "Looking up %s\n", address_string);
+        struct in_addr addr;
+        if (inet_aton(address_string, &addr) == 0) {
+            printf("Not address: %s\n", address_string);
+            return 1;
+        }
+
+        struct host_mapping *result = lookup_address(ntohl(addr.s_addr));
+        if (!result) {
+            printf("Failed to lookup: %s\n", address_string);
+            return 1;
+        }
+
+        printf("Resolved to %s\n", result->name);
+        return 0;
     }
 
     char *host = argv[optind];
