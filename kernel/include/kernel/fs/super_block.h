@@ -4,13 +4,16 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
 struct device;
+struct super_block;
 struct tnode;
 
 struct super_block_operations {
     int (*rename)(struct tnode *tnode, struct tnode *new_parent, const char *new_name);
+    int (*sync)(struct super_block *sb);
 };
 
 struct super_block {
@@ -27,7 +30,10 @@ struct super_block {
     fsfilcnt_t free_inodes;
     fsfilcnt_t available_inodes;
 
+    struct list_node dirty_super_blocks;
+
     int flags;
+    bool dirty : 1;
 
     struct device *device;
     mutex_t super_block_lock;

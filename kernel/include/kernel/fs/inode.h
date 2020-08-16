@@ -10,6 +10,7 @@
 #include <kernel/fs/mount.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/tnode.h>
+#include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
 struct device;
@@ -37,6 +38,7 @@ struct inode_operations {
     void (*on_inode_destruction)(struct inode *inode);
     ssize_t (*read)(struct inode *inode, void *buffer, size_t size, off_t offset);
     int (*truncate)(struct inode *inode, off_t length);
+    int (*sync)(struct inode *inode);
 };
 
 struct inode {
@@ -89,6 +91,9 @@ struct inode {
     bool writeable : 1;
     bool excetional_activity : 1;
 
+    // Marker of whether the inode's metadata is differnet from what is saved on disk.
+    bool dirty : 1;
+
     // Delete inode when count is 0 (only applies to pipes right now)
     // Should be atomic
     int ref_count;
@@ -103,6 +108,9 @@ struct inode {
     // Underlying vm_object (used for mmap)
     // Should be lazily initialized
     struct vm_object *vm_object;
+
+    // Linked list of "dirty" inodes whose metadata must be written to disk
+    struct list_node dirty_inodes;
 
     mutex_t lock;
 

@@ -36,7 +36,7 @@ static dev_t tmp_fs_id = 0x210;
 
 static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
 
-static struct super_block_operations s_op = { &tmp_rename };
+static struct super_block_operations s_op = { .rename = &tmp_rename };
 
 static struct inode_operations tmp_i_op = { .lookup = &tmp_lookup,
                                             .open = &tmp_open,

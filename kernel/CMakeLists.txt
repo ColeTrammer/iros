@@ -7,6 +7,7 @@ if (NOT ${NATIVE_BUILD})
         ${KERNEL_ARCH_SOURCES}
         fs/cached_dirent.c
         fs/dev.c
+        fs/disk_sync.c
         fs/ext2.c
         fs/initrd.c
         fs/pipe.c

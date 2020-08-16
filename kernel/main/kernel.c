@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <kernel/fs/dev.h>
+#include <kernel/fs/disk_sync.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
@@ -36,6 +37,7 @@ void kernel_main(uint32_t *multiboot_info) {
     init_task_sched();
     init_task_finalizer();
     init_net();
+    init_disk_sync_task();
 
     /* Mount hdd0 at / */
     struct device *hdd0 = dev_get_device(0x00500);
