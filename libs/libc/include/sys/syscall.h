@@ -107,7 +107,8 @@
     __ENUMERATE_SYSCALL(READ_PROFILE, read_profile, 3)                       \
     __ENUMERATE_SYSCALL(DISABLE_PROFILING, disable_profiling, 1)             \
     __ENUMERATE_SYSCALL(GETRLIMIT, getrlimit, 2)                             \
-    __ENUMERATE_SYSCALL(SETRLIMIT, setrlimit, 2)
+    __ENUMERATE_SYSCALL(SETRLIMIT, setrlimit, 2)                             \
+    __ENUMERATE_SYSCALL(SOCKETPAIR, socketpair, 4)
 
 #ifdef __ASSEMBLER__
 #define SYS_SIGRETURN 27

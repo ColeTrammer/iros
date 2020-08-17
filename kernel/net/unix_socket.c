@@ -25,6 +25,7 @@ static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, 
 static int net_unix_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 static int net_unix_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 static int net_unix_socket(int domain, int type, int protocol);
+static int net_unix_socketpair(int domain, int type, int protocol, int *fds);
 static ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest,
                                socklen_t addrlen);
 
@@ -259,6 +260,40 @@ static int net_unix_socket(int domain, int type, int protocol) {
     return fd;
 }
 
+static int net_unix_socketpair(int domain, int type, int protocol, int *fds) {
+    struct unix_socket_data *d1 = calloc(1, sizeof(struct unix_socket_data));
+    struct unix_socket_data *d2 = calloc(1, sizeof(struct unix_socket_data));
+    if (!d1 || !d2) {
+        free(d1);
+        free(d2);
+        return -ENOMEM;
+    }
+
+    int fd1;
+    struct socket *s1 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd1, d1);
+    if (!s1) {
+        return fd1;
+    }
+
+    int fd2;
+    struct socket *s2 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd2, d2);
+    if (!s2) {
+        fs_close(get_current_process()->files[fd1].file);
+        get_current_process()->files[fd1].file = NULL;
+        return fd2;
+    }
+
+    s1->state = CONNECTED;
+    s2->state = CONNECTED;
+
+    d1->connected_id = s2->id;
+    d2->connected_id = s1->id;
+
+    fds[0] = fd1;
+    fds[1] = fd2;
+    return 0;
+}
+
 static ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *dest,
                                socklen_t addrlen) {
     (void) flags;
@@ -301,6 +336,7 @@ static struct socket_protocol unix_stream_protocol = {
     .is_default_protocol = true,
     .name = "Unix Stream",
     .create_socket = net_unix_socket,
+    .create_socket_pair = net_unix_socketpair,
 };
 
 void init_unix_sockets(void) {

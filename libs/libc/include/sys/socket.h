@@ -85,6 +85,7 @@ int listen(int fd, int backlog);
 int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
 int shutdown(int fd, int how);
 int socket(int domain, int type, int protocol);
+int socketpair(int domain, int type, int protoco, int sv[2]);
 
 ssize_t send(int fd, const void *buf, size_t len, int flags);
 ssize_t sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);

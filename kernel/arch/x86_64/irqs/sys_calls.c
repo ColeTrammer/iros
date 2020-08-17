@@ -2209,6 +2209,17 @@ SYS_CALL(setrlimit) {
     SYS_RETURN(proc_setrlimit(get_current_process(), what, limit));
 }
 
+SYS_CALL(socketpair) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, domain);
+    SYS_PARAM2(int, type);
+    SYS_PARAM3(int, protocol);
+    SYS_PARAM4_VALIDATE(int *, fds, validate_write, 2 * sizeof(int));
+
+    SYS_RETURN(net_socketpair(domain, type, protocol, fds));
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);

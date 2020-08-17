@@ -38,6 +38,7 @@ struct socket_protocol {
     bool is_default_protocol;
     const char *name;
     int (*create_socket)(int domain, int type, int protocol);
+    int (*create_socket_pair)(int domain, int type, int protocol, int *fds);
     struct list_node list;
 };
 

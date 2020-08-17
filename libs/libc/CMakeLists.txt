@@ -273,6 +273,7 @@ else()
         sys/resource/getrlimit.c
         sys/resource/setrlimit.c
         sys/socket/socket.c
+        sys/socket/socketpair.c
         sys/select/select.c
         sys/stat/chmod.c
         sys/stat/fchmod.c

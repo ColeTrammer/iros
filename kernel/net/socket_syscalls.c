@@ -191,6 +191,24 @@ int net_socket(int domain, int type, int protocol) {
     return saw_af_family ? -EPROTONOSUPPORT : -EAFNOSUPPORT;
 }
 
+int net_socketpair(int domain, int type, int protocol, int *fds) {
+    bool saw_af_family = false;
+    net_for_each_protocol(iter) {
+        if (iter->domain == domain) {
+            if (iter->type == (type & SOCK_TYPE_MASK) && (iter->protocol == protocol || (protocol == 0 && iter->is_default_protocol))) {
+                if (!iter->create_socket_pair) {
+                    return -EOPNOTSUPP;
+                }
+                return iter->create_socket_pair(domain, type, iter->protocol, fds);
+            }
+
+            saw_af_family = true;
+        }
+    }
+
+    return saw_af_family ? -EPROTONOSUPPORT : -EAFNOSUPPORT;
+}
+
 ssize_t net_sendto(struct file *file, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen) {
     if (!dest && !!addrlen) {
         return -EINVAL;
