@@ -595,6 +595,13 @@ void task_do_sig(struct task *task, int signum) {
     debug_log("Doing signal: [ %d, %s ]\n", task->process->pid, strsignal(signum));
 #endif /* TASK_SIGNAL_DEBUG */
 
+    if (task->blocking) {
+        // Defer running the signal handler until after the blocking code
+        // has a chance to clean up.
+        task_interrupt_blocking(task, -EINTR);
+        return;
+    }
+
     if (task->process->sig_state[signum].sa_handler == SIG_IGN) {
         task_unset_sig_pending(task, signum);
         return;
