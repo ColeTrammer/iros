@@ -50,7 +50,7 @@ int getservent_r(struct servent *servent, char *buf, size_t buflen, struct serve
     }
 
     // Return the port in netork byte order.
-    servent->s_port = htonl(servent->s_port);
+    servent->s_port = htons(servent->s_port);
     *result = servent;
     return 0;
 }

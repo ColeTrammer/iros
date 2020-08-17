@@ -29,6 +29,20 @@ static void test_hosts(void) {
 
     host = gethostbyname("google.com");
     assert(host);
+
+    printf("[host]: '%s' |%d, %d| (", host->h_name, host->h_addrtype, host->h_length);
+    for (size_t i = 0; host->h_aliases[i]; i++) {
+        printf("%s,", host->h_aliases[i]);
+    }
+    printf(") => {");
+    for (size_t i = 0; host->h_addr_list[i]; i++) {
+        printf("%s,", inet_ntoa(*(struct in_addr *) host->h_addr_list[i]));
+    }
+    printf("}\n");
+
+    host = gethostbyaddr(host->h_addr_list[0], host->h_length, host->h_addrtype);
+    assert(host);
+
     printf("[host]: '%s' |%d, %d| (", host->h_name, host->h_addrtype, host->h_length);
     for (size_t i = 0; host->h_aliases[i]; i++) {
         printf("%s,", host->h_aliases[i]);
@@ -90,7 +104,7 @@ void test_services(void) {
     struct servent *service;
     setservent(1);
     while ((service = getservent())) {
-        printf("[service]: '%s' |%d| {'%s'} (", service->s_name, ntohl(service->s_port), service->s_proto);
+        printf("[service]: '%s' |%d| {'%s'} (", service->s_name, ntohs(service->s_port), service->s_proto);
         for (size_t i = 0; service->s_aliases[i]; i++) {
             printf("%s,", service->s_aliases[i]);
         }
@@ -102,9 +116,9 @@ void test_services(void) {
     assert(getservbyname("www", NULL));
     assert(getservbyname("https", "tcp"));
 
-    assert(getservbyport(htonl(53), "udp"));
-    assert(getservbyport(htonl(80), NULL));
-    assert(getservbyport(htonl(443), "tcp"));
+    assert(getservbyport(htons(53), "udp"));
+    assert(getservbyport(htons(80), NULL));
+    assert(getservbyport(htons(443), "tcp"));
 
     endservent();
 }

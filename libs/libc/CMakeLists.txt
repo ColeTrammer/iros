@@ -138,6 +138,7 @@ else()
         netdb/endnetent.c
         netdb/endprotoent.c
         netdb/endservent.c
+        netdb/gethostbyaddr.c
         netdb/gethostbyname.c
         netdb/gethostent.c
         netdb/gethostent_r.c
