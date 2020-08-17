@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <dns_service/message.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdlib.h>
@@ -44,30 +45,43 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service, con
         return EAI_SYSTEM;
     }
 
-    size_t name_length = strlen(node);
-    if (write(fd, node, name_length + 1) == -1) {
-        free(result);
-        free(found);
-        close(fd);
-        return EAI_SYSTEM;
-    }
-
-    char buf[16];
-    if (read(fd, buf, 16) <= 0) {
-        free(result);
-        free(found);
-        close(fd);
-        return EAI_SYSTEM;
-    }
-    struct in_addr in_addr;
-    if (inet_aton(buf, &in_addr) == 0) {
+    size_t name_length = strlen(node) + 1;
+    if (name_length > 1024) {
         free(result);
         free(found);
         close(fd);
         return EAI_NONAME;
     }
 
-    found->sin_addr = in_addr;
+    char send_buffer[sizeof(struct dns_request) + name_length + 1];
+    struct dns_request *request = (struct dns_request *) send_buffer;
+    request->type = DNS_REQUEST_LOOKUP;
+    memcpy(request->request, node, name_length);
+
+    if (write(fd, send_buffer, sizeof(send_buffer)) == -1) {
+        free(result);
+        free(found);
+        close(fd);
+        return EAI_SYSTEM;
+    }
+
+    char buf[32];
+    if (read(fd, buf, 32) <= 0) {
+        free(result);
+        free(found);
+        close(fd);
+        return EAI_SYSTEM;
+    }
+
+    struct dns_response *response = (struct dns_response *) buf;
+    if (!response->success) {
+        free(result);
+        free(found);
+        close(fd);
+        return EAI_NONAME;
+    }
+
+    found->sin_addr.s_addr = *((in_addr_t *) response->response);
 
     close(fd);
     return 0;

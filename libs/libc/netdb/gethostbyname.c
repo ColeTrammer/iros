@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <bits/field_parser.h>
+#include <dns_service/message.h>
 #include <netdb.h>
 #include <stddef.h>
 #include <string.h>
@@ -42,25 +43,39 @@ struct hostent *gethostbyname(const char *name) {
         return NULL;
     }
 
-    size_t name_length = strlen(name);
-    if (write(fd, name, name_length + 1) == -1) {
+    size_t name_length = strlen(name) + 1;
+    if (name_length > 1024) {
+        close(fd);
+        h_errno = HOST_NOT_FOUND;
+        return NULL;
+    }
+
+    char send_buffer[sizeof(struct dns_request) + name_length];
+    struct dns_request *request = (struct dns_request *) send_buffer;
+    request->type = DNS_REQUEST_LOOKUP;
+    memcpy(request->request, name, name_length);
+
+    if (write(fd, send_buffer, sizeof(send_buffer)) == -1) {
         close(fd);
         h_errno = NO_RECOVERY;
         return NULL;
     }
 
-    char buf[16];
-    if (read(fd, buf, 16) <= 0) {
+    char buf[32];
+    if (read(fd, buf, 32) <= 0) {
         close(fd);
         h_errno = NO_RECOVERY;
         return NULL;
     }
+
     struct in_addr in_addr;
-    if (inet_aton(buf, &in_addr) == 0) {
+    struct dns_response *response = (struct dns_response *) buf;
+    if (!response->success) {
         close(fd);
         h_errno = HOST_NOT_FOUND;
         return NULL;
     }
+    in_addr.s_addr = *((in_addr_t *) response->response);
 
     close(fd);
 
