@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <kernel/net/ip.h>
+#include <kernel/util/hash_map.h>
 
 struct ip_v4_and_port {
     uint16_t port;
@@ -12,6 +13,7 @@ struct ip_v4_and_port {
 
 struct tcp_socket_mapping {
     struct ip_v4_and_port key;
+    struct hash_entry hash;
     unsigned long socket_id;
 };
 
@@ -19,7 +21,6 @@ struct tcp_control_block {
     uint32_t current_sequence_num;
     uint32_t current_ack_num;
     bool should_send_ack;
-    struct hash_map *sent_packets;
 };
 
 struct tcp_packet_data {

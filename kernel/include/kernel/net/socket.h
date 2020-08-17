@@ -10,6 +10,7 @@
 #include <sys/un.h>
 
 #include <kernel/fs/file.h>
+#include <kernel/util/hash_map.h>
 #include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
@@ -70,6 +71,7 @@ struct socket {
     enum socket_state state;
 
     unsigned long id;
+    struct hash_entry hash;
 
     struct socket_connection **pending;
     int pending_length;
@@ -117,7 +119,7 @@ struct socket_file_data {
 struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data);
 void net_destroy_socket(struct socket *socket);
 struct socket *net_get_socket_by_id(unsigned long id);
-void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data);
+void net_for_each_socket(void (*f)(struct hash_entry *socket, void *data), void *data);
 
 int net_generic_setsockopt(struct socket *socket, int level, int optname, const void *optval, socklen_t optlen);
 int net_generic_getsockopt(struct socket *socket, int level, int optname, void *optval, socklen_t *optlen);

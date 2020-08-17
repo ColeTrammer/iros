@@ -16,7 +16,7 @@ static struct hash_map *map;
 HASH_DEFINE_FUNCTIONS(port, struct port_to_socket_id, uint16_t, port)
 
 struct socket *net_get_socket_from_port(uint16_t port) {
-    struct port_to_socket_id *p = hash_get(map, &port);
+    struct port_to_socket_id *p = hash_get_entry(map, &port, struct port_to_socket_id);
     if (p == NULL) {
         return NULL;
     }
@@ -35,7 +35,7 @@ int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p) {
     for (uint16_t port = EPHEMERAL_PORT_START; port < PORT_MAX; port++) {
         if (!hash_get(map, &port)) {
             p->port = port;
-            hash_put(map, p);
+            hash_put(map, &p->hash);
             mutex_unlock(&port_search_lock);
 
             debug_log("Bound socket to ephemeral port: [ %lu, %u ]\n", socket_id, port);
@@ -57,7 +57,7 @@ int net_bind_to_port(unsigned long socket_id, uint16_t port) {
     mutex_lock(&port_search_lock);
 
     if (!hash_get(map, &port)) {
-        hash_put(map, p);
+        hash_put(map, &p->hash);
 
         mutex_unlock(&port_search_lock);
         return 0;
@@ -69,7 +69,7 @@ int net_bind_to_port(unsigned long socket_id, uint16_t port) {
 }
 
 void net_unbind_port(uint16_t port) {
-    struct port_to_socket_id *p = hash_del(map, &port);
+    struct port_to_socket_id *p = hash_del_entry(map, &port, struct port_to_socket_id);
     free(p);
 }
 

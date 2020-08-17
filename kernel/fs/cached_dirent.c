@@ -24,8 +24,8 @@ static int cached_dirent_equals(void *a, void *b) {
     return strcmp(a, b) == 0;
 }
 
-static void *cached_dirent_key(void *d) {
-    return ((struct cached_dirent *) d)->name;
+static void *cached_dirent_key(struct hash_entry *d) {
+    return hash_table_entry(d, struct cached_dirent)->name;
 }
 
 struct hash_map *fs_create_dirent_cache(void) {
@@ -34,7 +34,7 @@ struct hash_map *fs_create_dirent_cache(void) {
 
 struct inode *fs_lookup_in_cache(struct hash_map *map, const char *name) {
     assert(map);
-    struct cached_dirent *result = hash_get(map, (void *) name);
+    struct cached_dirent *result = hash_get_entry(map, (void *) name, struct cached_dirent);
     if (result) {
         return result->inode;
     }
@@ -54,11 +54,11 @@ void fs_put_dirent_cache(struct hash_map *map, struct inode *inode, const char *
 #endif /* DIRENT_CACHE_DEBUG */
 
     assert(!fs_lookup_in_cache(map, to_add->name));
-    hash_put(map, to_add);
+    hash_put(map, &to_add->hash);
 }
 
-static void do_destroy_dirent(void *_dirent, void *_ __attribute__((unused))) {
-    struct cached_dirent *dirent = _dirent;
+static void do_destroy_dirent(struct hash_entry *_dirent, void *_ __attribute__((unused))) {
+    struct cached_dirent *dirent = hash_table_entry(_dirent, struct cached_dirent);
     struct inode *inode = dirent->inode;
 
 #ifdef DIRENT_CACHE_DEBUG
@@ -71,9 +71,9 @@ static void do_destroy_dirent(void *_dirent, void *_ __attribute__((unused))) {
 }
 
 void fs_del_dirent_cache(struct hash_map *map, const char *name) {
-    struct cached_dirent *dirent = hash_del(map, (void *) name);
+    struct cached_dirent *dirent = hash_del_entry(map, (void *) name, struct cached_dirent);
     if (dirent) {
-        do_destroy_dirent(dirent, NULL);
+        do_destroy_dirent(&dirent->hash, NULL);
     }
 }
 
@@ -84,7 +84,7 @@ void fs_destroy_dirent_cache(struct hash_map *map) {
 
 struct cached_dirent *fs_lookup_in_cache_with_index(struct hash_map *map, off_t position) {
     assert(map);
-    return hash_get_at_index(map, position);
+    return hash_get_entry_at_index(map, position, struct cached_dirent);
 }
 
 int fs_get_dirent_cache_size(struct hash_map *map) {
@@ -92,7 +92,7 @@ int fs_get_dirent_cache_size(struct hash_map *map) {
     return hash_size(map);
 }
 
-void fs_dirent_cache_for_each(struct hash_map *map, void (*f)(void *o, void *d), void *d) {
+void fs_dirent_cache_for_each(struct hash_map *map, void (*f)(struct hash_entry *o, void *d), void *d) {
     assert(map);
     return hash_for_each(map, f, d);
 }

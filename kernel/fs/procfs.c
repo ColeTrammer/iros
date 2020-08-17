@@ -417,8 +417,8 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_process_directory_structure(st
 
 static void procfs_destroy_process_directory_structure(struct inode *parent);
 
-static void procfs_do_destroy_directory(void *cached_dirent, void *parent __attribute__((unused))) {
-    struct cached_dirent *dirent = cached_dirent;
+static void procfs_do_destroy_directory(struct hash_entry *cached_dirent, void *parent __attribute__((unused))) {
+    struct cached_dirent *dirent = hash_table_entry(cached_dirent, struct cached_dirent);
     struct inode *inode = dirent->inode;
 
     if (inode->flags & FS_DIR) {
@@ -505,8 +505,8 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_cpus(struct procfs_da
     return (struct procfs_buffer) { buffer, length };
 }
 
-static void arp_for_each(void *_mapping, void *_buf) {
-    struct ip_v4_to_mac_mapping *mapping = _mapping;
+static void arp_for_each(struct hash_entry *_mapping, void *_buf) {
+    struct ip_v4_to_mac_mapping *mapping = hash_table_entry(_mapping, struct ip_v4_to_mac_mapping);
     struct procfs_buffer *buf = _buf;
     buf->size +=
         snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0, "%u.%u.%u.%u => %02x:%02x:%02x:%02x:%02x:%02x\n",

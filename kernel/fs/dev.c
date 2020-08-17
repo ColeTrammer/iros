@@ -32,7 +32,7 @@ void dev_register(struct device *device) {
     }
 
     assert(!hash_get(device_map, &device->device_number));
-    hash_put(device_map, device);
+    hash_put(device_map, &device->hash);
 }
 
 void dev_unregister(struct device *device) {
@@ -46,7 +46,7 @@ void dev_unregister(struct device *device) {
 }
 
 struct device *dev_get_device(dev_t device_number) {
-    return hash_get(device_map, &device_number);
+    return hash_get_entry(device_map, &device_number, struct device);
 }
 
 static struct file_operations dev_f_op = { .close = &dev_close, .read = &dev_read, .write = &dev_write };

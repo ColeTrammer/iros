@@ -12,8 +12,12 @@
 
 // #define CLOCKID_ALLOCATION_DEBUG
 
-struct clock global_monotonic_clock = { CLOCK_MONOTONIC, SPINLOCK_INITIALIZER, { 0 }, { 0 }, INIT_LIST(global_monotonic_clock.timer_list) };
-struct clock global_realtime_clock = { CLOCK_REALTIME, SPINLOCK_INITIALIZER, { 0 }, { 0 }, INIT_LIST(global_realtime_clock.timer_list) };
+struct clock global_monotonic_clock = {
+    CLOCK_MONOTONIC, SPINLOCK_INITIALIZER, { 0 }, { 0 }, INIT_LIST(global_monotonic_clock.timer_list), { 0 },
+};
+struct clock global_realtime_clock = {
+    CLOCK_REALTIME, SPINLOCK_INITIALIZER, { 0 }, { 0 }, INIT_LIST(global_realtime_clock.timer_list), { 0 },
+};
 
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
 static clockid_t id_start = 10; // Start at 10 since CLOCK_MONOTONIC etc. are reserved
@@ -59,7 +63,7 @@ struct clock *time_create_clock(clockid_t id) {
             return NULL;
     }
 
-    hash_put(clock_map, clock);
+    hash_put(clock_map, &clock->hash);
     return clock;
 }
 
@@ -82,7 +86,7 @@ struct clock *time_get_clock(clockid_t id) {
         default:
             break;
     }
-    return hash_get(clock_map, &id);
+    return hash_get_entry(clock_map, &id, struct clock);
 }
 
 struct timespec time_read_clock(clockid_t id) {

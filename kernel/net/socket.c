@@ -56,7 +56,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
     socket->private_data = private_data;
     init_mutex(&socket->lock);
 
-    hash_put(map, socket);
+    hash_put(map, &socket->hash);
     return socket;
 }
 
@@ -342,11 +342,11 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
 }
 
 struct socket *net_get_socket_by_id(unsigned long id) {
-    return hash_get(map, &id);
+    return hash_get_entry(map, &id, struct socket);
 }
 
-void net_for_each_socket(void (*f)(struct socket *socket, void *data), void *data) {
-    hash_for_each(map, (void (*)(void *, void *)) f, data);
+void net_for_each_socket(void (*f)(struct hash_entry *socket, void *data), void *data) {
+    hash_for_each(map, (void (*)(struct hash_entry *, void *)) f, data);
 }
 
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data) {

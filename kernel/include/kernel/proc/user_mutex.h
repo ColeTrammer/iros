@@ -4,11 +4,13 @@
 #include <stdint.h>
 
 #include <kernel/proc/wait_queue.h>
+#include <kernel/util/hash_map.h>
 
 struct user_mutex {
     struct user_mutex *next;
     uintptr_t phys_addr;
     struct wait_queue wait_queue;
+    struct hash_entry hash;
 };
 
 struct user_mutex *get_user_mutex_locked(unsigned int *addr);

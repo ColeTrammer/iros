@@ -218,7 +218,7 @@ void proc_add_process(struct process *process) {
     debug_log("Adding process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
     process->ref_count = 1;
-    hash_put(map, process);
+    hash_put(map, &process->hash);
 
     procfs_register_process(process);
 }
@@ -349,7 +349,7 @@ uintptr_t proc_allocate_user_stack(struct process *process, struct initial_proce
 }
 
 struct process *find_by_pid(pid_t pid) {
-    return hash_get(map, &pid);
+    return hash_get_entry(map, &pid, struct process);
 }
 
 struct proc_for_each_with_pgid_closure {
@@ -358,8 +358,8 @@ struct proc_for_each_with_pgid_closure {
     pid_t pgid;
 };
 
-static void for_each_with_pgid_iter(void *_process, void *_cls) {
-    struct process *process = _process;
+static void for_each_with_pgid_iter(struct hash_entry *_process, void *_cls) {
+    struct process *process = hash_table_entry(_process, struct process);
     struct proc_for_each_with_pgid_closure *cls = _cls;
     if (process->pgid == cls->pgid) {
         cls->callback(process, cls->closure);

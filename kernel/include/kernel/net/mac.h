@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <kernel/net/ip_address.h>
+#include <kernel/util/hash_map.h>
 
 #define MAC_ZEROES    ((struct mac_address) { 0 })
 #define MAC_BROADCAST ((struct mac_address) { { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } })
@@ -17,6 +18,7 @@ struct mac_address {
 struct ip_v4_to_mac_mapping {
     struct ip_v4_address ip;
     struct mac_address mac;
+    struct hash_entry hash;
 };
 
 struct hash_map *net_ip_v4_to_mac_table(void);

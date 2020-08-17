@@ -10,6 +10,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/tnode.h>
+#include <kernel/util/hash_map.h>
 #include <kernel/util/mutex.h>
 
 struct device;
@@ -40,6 +41,7 @@ struct device {
     struct device_ops *ops;
     struct vm_object *vm_object;
     mutex_t lock;
+    struct hash_entry hash;
     void *private;
 };
 

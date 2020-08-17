@@ -21,7 +21,7 @@ static void __hash_resize_if_needed(struct hash_map *map) {
             while (entry != NULL) {
                 struct hash_entry *next = entry->next;
 
-                size_t new_hash = map->hash(entry->key, new_num_buckets);
+                size_t new_hash = map->hash(map->key(entry), new_num_buckets);
                 entry->next = new_buckets[new_hash];
                 new_buckets[new_hash] = entry;
 
@@ -36,7 +36,7 @@ static void __hash_resize_if_needed(struct hash_map *map) {
 }
 
 struct hash_map *hash_create_hash_map_with_size(unsigned int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id),
-                                                void *(*key)(void *ptr), size_t num_buckets) {
+                                                void *(*key)(struct hash_entry *ptr), size_t num_buckets) {
     struct hash_map *map = malloc(sizeof(struct hash_map));
     map->hash = hash;
     map->equals = equals;
@@ -49,15 +49,15 @@ struct hash_map *hash_create_hash_map_with_size(unsigned int (*hash)(void *ptr, 
 }
 
 struct hash_map *hash_create_hash_map(unsigned int (*hash)(void *ptr, int hash_size), int (*equals)(void *ptr, void *id),
-                                      void *(*key)(void *ptr)) {
+                                      void *(*key)(struct hash_entry *ptr)) {
     return hash_create_hash_map_with_size(hash, equals, key, HASH_DEFAULT_NUM_BUCKETS);
 }
 
-void *hash_get(struct hash_map *map, void *key) {
+struct hash_entry *hash_get(struct hash_map *map, void *key) {
     return hash_get_or_else_do(map, key, NULL, NULL);
 }
 
-void *hash_get_at_index(struct hash_map *map, size_t index) {
+struct hash_entry *hash_get_at_index(struct hash_map *map, size_t index) {
     if (index >= hash_size(map)) {
         return NULL;
     }
@@ -67,7 +67,7 @@ void *hash_get_at_index(struct hash_map *map, size_t index) {
         struct hash_entry *entry = map->entries[b];
         while (entry != NULL) {
             if (i++ == index) {
-                return entry->data;
+                return entry;
             }
             entry = entry->next;
         }
@@ -76,17 +76,16 @@ void *hash_get_at_index(struct hash_map *map, size_t index) {
     return NULL;
 }
 
-void *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *), void *arg) {
+struct hash_entry *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *), void *arg) {
     spin_lock(&map->lock);
     size_t i = map->hash(key, map->num_buckets);
 
     struct hash_entry *entry = map->entries[i];
     while (entry != NULL) {
         assert(entry);
-        assert(entry->key);
-        if (map->equals(entry->key, key)) {
+        if (map->equals(map->key(entry), key)) {
             spin_unlock(&map->lock);
-            return entry->data;
+            return entry;
         }
 
         entry = entry->next;
@@ -100,89 +99,65 @@ void *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *), vo
     return NULL;
 }
 
-void *hash_put_if_not_present(struct hash_map *map, void *key, void *(*make_data)(void *key)) {
+struct hash_entry *hash_put_if_not_present(struct hash_map *map, void *key, struct hash_entry *(*make_data)(void *key)) {
     spin_lock(&map->lock);
     size_t i = map->hash(key, map->num_buckets);
 
     struct hash_entry **entry = &map->entries[i];
     while (*entry != NULL) {
-        if (map->equals((*entry)->key, key)) {
+        void *key_iter = map->key(*entry);
+        if (map->equals(key_iter, key)) {
             spin_unlock(&map->lock);
-            return (*entry)->data;
+            return *entry;
         }
 
         entry = &(*entry)->next;
     }
 
-    *entry = calloc(1, sizeof(struct hash_entry));
-    (*entry)->next = NULL;
-    (*entry)->data = make_data(key);
-    (*entry)->key = map->key((*entry)->data);
+    *entry = make_data(key);
     map->size++;
     __hash_resize_if_needed(map);
 
     spin_unlock(&map->lock);
-    return (*entry)->data;
+    return *entry;
 }
 
-void hash_put(struct hash_map *map, void *data) {
+void hash_put(struct hash_map *map, struct hash_entry *data) {
     spin_lock(&map->lock);
     size_t i = map->hash(map->key(data), map->num_buckets);
 
     struct hash_entry **entry = &map->entries[i];
     while (*entry != NULL) {
-        if (map->equals((*entry)->key, map->key(data))) {
-            (*entry)->data = data;
-
+        void *key_iter = map->key(*entry);
+        if (map->equals(key_iter, map->key(data))) {
+            data->next = (*entry)->next;
+            *entry = data;
             spin_unlock(&map->lock);
+            debug_log("HASH PUT DUPLICATE\n");
             return;
         }
 
         entry = &(*entry)->next;
     }
 
-    *entry = calloc(1, sizeof(struct hash_entry));
-    (*entry)->key = map->key(data);
-    assert((*entry)->key);
+    *entry = data;
     (*entry)->next = NULL;
-    (*entry)->data = data;
     map->size++;
     __hash_resize_if_needed(map);
 
     spin_unlock(&map->lock);
 }
 
-void hash_set(struct hash_map *map, void *data) {
-    spin_lock(&map->lock);
-    size_t i = map->hash(map->key(data), map->num_buckets);
-
-    struct hash_entry *entry = map->entries[i];
-    while (entry != NULL) {
-        if (map->equals(entry->key, map->key(data))) {
-            entry->data = data;
-
-            spin_unlock(&map->lock);
-            return;
-        }
-
-        entry = entry->next;
-    }
-
-    spin_unlock(&map->lock);
-
-    debug_log("Hash Map tried to set non existent entry\n");
-}
-
-void *hash_del(struct hash_map *map, void *key) {
+struct hash_entry *hash_del(struct hash_map *map, void *key) {
     spin_lock(&map->lock);
     size_t i = map->hash(key, map->num_buckets);
 
     struct hash_entry **entry = &map->entries[i];
     while (*entry != NULL) {
-        if (map->equals((*entry)->key, key)) {
-            void *data_removed = (*entry)->data;
+        void *key_iter = map->key(*entry);
+        if (map->equals(key_iter, key)) {
+            struct hash_entry *data_removed = *entry;
             struct hash_entry *next = (*entry)->next;
-            free(*entry);
             *entry = next;
             map->size--;
 
@@ -198,28 +173,19 @@ void *hash_del(struct hash_map *map, void *key) {
 }
 
 void hash_free_hash_map(struct hash_map *map) {
-    spin_lock(&map->lock);
-
-    for (size_t i = 0; i < map->num_buckets; i++) {
-        struct hash_entry *entry = map->entries[i];
-        while (entry != NULL) {
-            struct hash_entry *temp = entry->next;
-            free(entry);
-            entry = temp;
-        }
-    }
-
-    spin_unlock(&map->lock);
+    free(map->entries);
+    free(map);
 }
 
-void hash_for_each(struct hash_map *map, void (*f)(void *o, void *d), void *d) {
+void hash_for_each(struct hash_map *map, void (*f)(struct hash_entry *o, void *d), void *d) {
     spin_lock(&map->lock);
 
     for (size_t i = 0; i < map->num_buckets; i++) {
         struct hash_entry *entry = map->entries[i];
         while (entry != NULL) {
-            f(entry->data, d);
-            entry = entry->next;
+            struct hash_entry *next = entry->next;
+            f(entry, d);
+            entry = next;
         }
     }
 

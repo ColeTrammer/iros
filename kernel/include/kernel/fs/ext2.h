@@ -162,11 +162,13 @@ struct ext2_block_group {
     struct raw_block_group_descriptor *blk_desc;
     struct ext2_block_bitmap block_bitmap;
     struct ext2_inode_bitmap inode_bitmap;
+    struct hash_entry hash;
 };
 
 struct ext2_block {
     uint32_t index;
     char *block;
+    struct hash_entry hash;
 };
 
 struct inode *ext2_lookup(struct inode *inode, const char *name);

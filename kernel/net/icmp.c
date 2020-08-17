@@ -11,7 +11,8 @@
 #include <kernel/net/socket.h>
 #include <kernel/util/macros.h>
 
-static void icmp_for_each(struct socket *socket, void *_packet) {
+static void icmp_for_each(struct hash_entry *_socket, void *_packet) {
+    struct socket *socket = hash_table_entry(_socket, struct socket);
     struct ip_v4_packet *packet = _packet;
     if (socket->protocol == IPPROTO_ICMP) {
         size_t data_len = packet->length - sizeof(struct ip_v4_packet);

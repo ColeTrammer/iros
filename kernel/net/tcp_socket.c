@@ -58,18 +58,16 @@ static int ip_v4_and_port_equals(void *i1, void *i2) {
     return memcmp(i1, i2, sizeof(struct ip_v4_and_port)) == 0;
 }
 
-static void *ip_v4_and_port_key(void *m) {
-    return &((struct tcp_socket_mapping *) m)->key;
+static void *ip_v4_and_port_key(struct hash_entry *m) {
+    return &hash_table_entry(m, struct tcp_socket_mapping)->key;
 }
-
-HASH_DEFINE_FUNCTIONS(tcp_data, struct tcp_packet, uint32_t, sequence_number)
 
 static void create_tcp_socket_mapping(struct socket *socket) {
     struct tcp_socket_mapping *mapping = calloc(1, sizeof(struct tcp_socket_mapping));
     mapping->key = (struct ip_v4_and_port) { PORT_FROM_SOCKADDR(&socket->peer_address), IP_V4_FROM_SOCKADDR(&socket->peer_address) };
     mapping->socket_id = socket->id;
 
-    hash_put(tcp_sender_map, mapping);
+    hash_put(tcp_sender_map, &mapping->hash);
 }
 
 static void create_tcp_socket_mapping_for_source(struct socket *socket) {
@@ -83,11 +81,11 @@ static void create_tcp_socket_mapping_for_source(struct socket *socket) {
     debug_log("Created a tcp mapping: [ %u, %u.%u.%u.%u ]\n", source_port, source_ip.addr[0], source_ip.addr[1], source_ip.addr[2],
               source_ip.addr[3]);
 
-    hash_put(tcp_server_map, mapping);
+    hash_put(tcp_server_map, &mapping->hash);
 }
 
 struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple) {
-    struct tcp_socket_mapping *mapping = hash_get(tcp_sender_map, &tuple);
+    struct tcp_socket_mapping *mapping = hash_get_entry(tcp_sender_map, &tuple, struct tcp_socket_mapping);
     if (mapping == NULL) {
         return NULL;
     }
@@ -96,7 +94,7 @@ struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple)
 }
 
 struct socket *net_get_tcp_socket_server_by_ip_v4_and_port(struct ip_v4_and_port tuple) {
-    struct tcp_socket_mapping *mapping = hash_get(tcp_server_map, &tuple);
+    struct tcp_socket_mapping *mapping = hash_get_entry(tcp_server_map, &tuple, struct tcp_socket_mapping);
     if (mapping == NULL) {
         return NULL;
     }
@@ -131,8 +129,6 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
     tcb->should_send_ack = false;
     tcb->current_sequence_num = 0;
     tcb->current_ack_num = connection.ack_num + 1;
-    tcb->sent_packets = hash_create_hash_map(tcp_data_hash, tcp_data_equals, tcp_data_key);
-    assert(tcb->sent_packets);
 
     create_tcp_socket_mapping(new_socket);
 
@@ -149,11 +145,6 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
     return fd;
 }
 
-static void __kill_tcp_data(void *a, void *i) {
-    (void) i;
-    free(a);
-}
-
 static int net_tcp_close(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
     if (tcb) {
@@ -163,21 +154,18 @@ static int net_tcp_close(struct socket *socket) {
         uint16_t dest_port = PORT_FROM_SOCKADDR(&socket->peer_address);
         if (socket->state != LISTENING) {
             struct ip_v4_and_port key = { dest_port, dest_ip };
-            free(hash_del(tcp_sender_map, &key));
+            free(hash_del_entry(tcp_sender_map, &key, struct tcp_socket_mapping));
         } else {
             struct ip_v4_and_port key = { source_port, source_ip };
-            free(hash_del(tcp_server_map, &key));
+            free(hash_del_entry(tcp_server_map, &key, struct tcp_socket_mapping));
         }
 
-        assert(tcb->sent_packets);
         if (socket->state != CLOSED) {
             struct network_interface *interface = net_get_interface_for_ip(dest_ip);
             net_send_tcp(interface, dest_ip, source_port, dest_port, tcb->current_sequence_num, tcb->current_ack_num,
                          (union tcp_flags) { .bits.fin = 1, .bits.ack = tcb->should_send_ack }, 0, NULL);
         }
 
-        hash_for_each(tcb->sent_packets, __kill_tcp_data, NULL);
-        hash_free_hash_map(tcb->sent_packets);
         free(tcb);
     }
 
@@ -211,9 +199,6 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
 
     tcb->current_sequence_num = 0;
     tcb->current_ack_num = 0;
-
-    tcb->sent_packets = hash_create_hash_map(tcp_data_hash, tcp_data_equals, tcp_data_key);
-    assert(tcb->sent_packets);
 
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
     net_send_tcp(interface, dest_ip, source_port, dest_port, tcb->current_sequence_num++, tcb->current_ack_num,

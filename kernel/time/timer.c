@@ -41,7 +41,7 @@ static void free_timerid(timer_t __attribute__((unused)) id) {
 }
 
 struct timer *time_get_timer(timer_t id) {
-    return hash_get(timer_map, &id);
+    return hash_get_entry(timer_map, &id, struct timer);
 }
 
 bool time_is_timer_armed(struct timer *timer) {
@@ -84,7 +84,7 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     struct process *process = to_add->task->process;
     list_append(&process->timer_list, &to_add->proc_list);
 
-    hash_put(timer_map, to_add);
+    hash_put(timer_map, &to_add->hash);
 #ifdef TIMER_DEBUG
     debug_log("Created timer: [ %ld ]\n", to_add->id);
 #endif /* TIMER_DEBUG */

@@ -14,7 +14,8 @@ static struct hash_map *map;
 
 HASH_DEFINE_FUNCTIONS(_, struct user_mutex, uintptr_t, phys_addr)
 
-struct user_mutex *__create(uintptr_t *phys_addr_p) {
+struct hash_entry *__create(void *_phys_addr_p) {
+    uintptr_t *phys_addr_p = _phys_addr_p;
     struct user_mutex *m = malloc(sizeof(struct user_mutex));
     init_wait_queue(&m->wait_queue);
     m->phys_addr = *phys_addr_p;
@@ -30,12 +31,12 @@ struct user_mutex *__create(uintptr_t *phys_addr_p) {
 #ifdef USER_MUTEX_DEBUG
     debug_log("Creating mutex: [ %#.16lX ]\n", *phys_addr_p);
 #endif /* USER_MUTEX_DEBUG */
-    return m;
+    return &m->hash;
 }
 
 struct user_mutex *get_user_mutex_locked(unsigned int *addr) {
     uintptr_t phys_addr = get_phys_addr((uintptr_t) addr);
-    struct user_mutex *m = hash_put_if_not_present(map, &phys_addr, (void *(*) (void *) ) __create);
+    struct user_mutex *m = hash_table_entry(hash_put_if_not_present(map, &phys_addr, __create), struct user_mutex);
 
     spin_lock(&m->wait_queue.lock);
     return m;
@@ -54,8 +55,9 @@ struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsign
     uintptr_t phys_addr = get_phys_addr((uintptr_t) addr);
 
     struct __write_value_args args = { addr, (unsigned int) value };
-    struct user_mutex *m = hash_get_or_else_do(map, &phys_addr, (void (*)(void *)) __write_value, &args);
-    if (m) {
+    struct hash_entry *_m = hash_get_or_else_do(map, &phys_addr, (void (*)(void *)) __write_value, &args);
+    if (_m) {
+        struct user_mutex *m = hash_table_entry(_m, struct user_mutex);
         spin_lock(&m->wait_queue.lock);
         if (__wait_queue_is_empty(&m->wait_queue)) {
             __write_value(&args);
@@ -91,7 +93,7 @@ struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsign
         debug_log("Failed to find mutex: [ %#.16lX ]\n", phys_addr);
     }
 #endif /* USER_MUTEX_DEBUG */
-    return m;
+    return _m ? hash_table_entry(_m, struct user_mutex) : NULL;
 }
 
 void unlock_user_mutex(struct user_mutex *um) {

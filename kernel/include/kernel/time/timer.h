@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include <kernel/util/hash_map.h>
 #include <kernel/util/list.h>
 
 struct clock;
@@ -17,6 +18,8 @@ struct timer {
 
     // Linked list between timers of same process
     struct list_node proc_list;
+
+    struct hash_entry hash;
 
     struct clock *clock;
 

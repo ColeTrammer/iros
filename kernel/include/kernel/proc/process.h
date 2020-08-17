@@ -9,6 +9,7 @@
 
 #include <kernel/proc/user_mutex.h>
 #include <kernel/proc/wait_queue.h>
+#include <kernel/util/hash_map.h>
 #include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 #include <kernel/util/spinlock.h>
@@ -57,6 +58,8 @@ struct process {
     spinlock_t user_mutex_lock;
 
     struct wait_queue one_task_left_queue;
+
+    struct hash_entry hash;
 
     struct clock *process_clock;
     struct list_node timer_list;

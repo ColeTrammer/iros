@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include <kernel/util/hash_map.h>
 #include <kernel/util/list.h>
 #include <kernel/util/spinlock.h>
 
@@ -15,6 +16,7 @@ struct clock {
     struct timespec resolution;
     struct timespec time;
     struct list_node timer_list;
+    struct hash_entry hash;
 };
 
 struct clock *time_create_clock(clockid_t id);

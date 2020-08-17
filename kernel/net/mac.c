@@ -22,8 +22,8 @@ static int equals(void *i1, void *i2) {
     return memcmp(i1, i2, sizeof(struct ip_v4_address)) == 0;
 }
 
-static void *key(void *mapping) {
-    return &((struct ip_v4_to_mac_mapping *) mapping)->ip;
+static void *key(struct hash_entry *mapping) {
+    return &hash_table_entry(mapping, struct ip_v4_to_mac_mapping)->ip;
 }
 
 struct hash_map *net_ip_v4_to_mac_table(void) {
@@ -31,7 +31,7 @@ struct hash_map *net_ip_v4_to_mac_table(void) {
 }
 
 struct ip_v4_to_mac_mapping *net_get_mac_from_ip_v4(struct ip_v4_address address) {
-    return hash_get(map, &address);
+    return hash_get_entry(map, &address, struct ip_v4_to_mac_mapping);
 }
 
 void net_create_ip_v4_to_mac_mapping(struct ip_v4_address ip_address, struct mac_address mac_address) {
@@ -39,7 +39,7 @@ void net_create_ip_v4_to_mac_mapping(struct ip_v4_address ip_address, struct mac
     m->ip = ip_address;
     m->mac = mac_address;
 
-    hash_put(map, m);
+    hash_put(map, &m->hash);
 }
 
 void init_mac() {

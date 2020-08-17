@@ -98,7 +98,7 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
     struct ext2_sb_data *data = sb->private_data;
     struct ext2_block *block = NULL;
 
-    if (cache && num_blocks == 1 && (block = hash_get(data->block_map, &block_offset))) {
+    if (cache && num_blocks == 1 && (block = hash_get_entry(data->block_map, &block_offset, struct ext2_block))) {
         memcpy(buffer, block->block, sb->block_size);
         return num_blocks;
     }
@@ -113,7 +113,7 @@ static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t
         block->index = block_offset;
         block->block = ext2_allocate_blocks(sb, 1);
         memcpy(block->block, buffer, sb->block_size);
-        hash_put(data->block_map, block);
+        hash_put(data->block_map, &block->hash);
     }
 
     return num_blocks;
@@ -133,7 +133,7 @@ static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uin
     }
 
     if (num_blocks == 1) {
-        struct ext2_block *block = hash_get(data->block_map, &block_offset);
+        struct ext2_block *block = hash_get_entry(data->block_map, &block_offset, struct ext2_block);
         if (block != NULL) {
             memcpy(block->block, buffer, sb->block_size);
         }
@@ -162,12 +162,12 @@ static size_t ext2_get_inode_table_index(struct super_block *sb, uint32_t inode_
 /* Gets block group object for a given block group index */
 static struct ext2_block_group *ext2_get_block_group(struct super_block *super_block, size_t index) {
     struct ext2_sb_data *data = super_block->private_data;
-    struct ext2_block_group *group = hash_get(data->block_group_map, &index);
+    struct ext2_block_group *group = hash_get_entry(data->block_group_map, &index, struct ext2_block_group);
     if (!group) {
         group = calloc(1, sizeof(struct ext2_block_group));
         group->index = index;
         group->blk_desc = data->blk_desc_table + index;
-        hash_put(data->block_group_map, group);
+        hash_put(data->block_group_map, &group->hash);
     }
 
     return group;

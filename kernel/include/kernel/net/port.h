@@ -3,9 +3,12 @@
 
 #include <stdint.h>
 
+#include <kernel/util/hash_map.h>
+
 struct port_to_socket_id {
     unsigned long socket_id;
     uint16_t port;
+    struct hash_entry hash;
 };
 
 struct socket *net_get_socket_from_port(uint16_t port);
