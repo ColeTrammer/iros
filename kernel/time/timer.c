@@ -70,7 +70,7 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     to_add->task = get_current_task();
 
     if (to_add->event_type == SIGEV_SIGNAL || to_add->event_type == SIGEV_THREAD) {
-        to_add->signal = malloc(sizeof(struct queued_signal));
+        to_add->signal = calloc(1, sizeof(struct queued_signal));
         if (!to_add->signal) {
             free(to_add);
             return -EAGAIN;
@@ -183,7 +183,7 @@ void time_tick_timer(struct timer *timer, long nanoseconds) {
             } while (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0));
         } else {
             time_fire_timer(timer);
-            time_remove_timer_from_clock(timer->clock, timer);
+            __time_remove_timer_from_clock(timer->clock, timer);
         }
     }
 }

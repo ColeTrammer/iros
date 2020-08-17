@@ -92,7 +92,7 @@ struct timespec time_read_clock(clockid_t id) {
 }
 
 void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds) {
-    list_for_each_entry(timer_list, timer, struct timer, clock_list) { time_tick_timer(timer, nanoseconds); }
+    list_for_each_entry_safe(timer_list, timer, struct timer, clock_list) { time_tick_timer(timer, nanoseconds); }
 }
 
 void time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
@@ -101,9 +101,13 @@ void time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
     spin_unlock(&clock->lock);
 }
 
+void __time_remove_timer_from_clock(struct clock *clock __attribute__((unused)), struct timer *timer) {
+    list_remove(&timer->clock_list);
+}
+
 void time_remove_timer_from_clock(struct clock *clock, struct timer *timer) {
     spin_lock(&clock->lock);
-    list_remove(&timer->clock_list);
+    __time_remove_timer_from_clock(clock, timer);
     spin_unlock(&clock->lock);
 }
 

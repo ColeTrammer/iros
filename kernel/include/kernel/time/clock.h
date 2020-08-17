@@ -25,11 +25,13 @@ struct timespec time_read_clock(clockid_t id);
 
 void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds);
 void time_add_timer_to_clock(struct clock *clock, struct timer *timer);
+void __time_remove_timer_from_clock(struct clock *clock, struct timer *timer);
 void time_remove_timer_from_clock(struct clock *clock, struct timer *timer);
 
 void init_clocks();
 
 static inline __attribute__((always_inline)) void time_inc_clock(struct clock *clock, long nanoseconds) {
+    spin_lock(&clock->lock);
     clock->time.tv_nsec += nanoseconds;
     if (clock->time.tv_nsec >= 1000000000L) {
         clock->time.tv_nsec %= 1000000000L;
@@ -37,6 +39,7 @@ static inline __attribute__((always_inline)) void time_inc_clock(struct clock *c
     }
 
     time_inc_clock_timers(&clock->timer_list, nanoseconds);
+    spin_unlock(&clock->lock);
 }
 
 static inline __attribute__((always_inline)) long time_compare(struct timespec t1, struct timespec t2) {

@@ -60,8 +60,11 @@ static void free_process_vm(struct process *process) {
     }
     process->used_user_mutexes = NULL;
 
-    list_for_each_entry_safe(&process->timer_list, timer, struct timer, proc_list) { time_delete_timer(timer); }
-    list_clear(&process->timer_list);
+    list_for_each_entry_safe(&process->timer_list, timer, struct timer, proc_list) {
+        if (timer != process->alarm_timer) {
+            time_delete_timer(timer);
+        }
+    }
 }
 
 static void free_process_name_info(struct process *process) {
@@ -155,6 +158,10 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
             if (process->process_clock) {
                 time_destroy_clock(process->process_clock);
                 process->process_clock = NULL;
+            }
+
+            if (process->alarm_timer) {
+                time_delete_timer(process->alarm_timer);
             }
 
             if (process->args_context) {
