@@ -2072,7 +2072,7 @@ SYS_CALL(ppoll) {
     SYS_BEGIN_PSELECT();
 
     SYS_PARAM2(nfds_t, nfds);
-    SYS_PARAM1_VALIDATE(struct pollfd *, fds, validate_write, nfds * sizeof(struct pollfd));
+    SYS_PARAM1_VALIDATE(struct pollfd *, user_fds, validate_write, nfds * sizeof(struct pollfd));
     SYS_PARAM3_VALIDATE(const struct timespec *, timeout, validate_read_or_null, sizeof(struct timespec));
     SYS_PARAM4_VALIDATE(const sigset_t *, sigmask, validate_read_or_null, sizeof(sigset_t));
 
@@ -2090,6 +2090,9 @@ SYS_CALL(ppoll) {
         goto ppoll_return;
     }
 
+    struct pollfd fds[FOPEN_MAX];
+    memcpy(fds, user_fds, nfds * sizeof(struct pollfd));
+
     struct timespec start = time_read_clock(CLOCK_MONOTONIC);
 
     // NOTE: don't need to take process lock since its undefined behavior to close
@@ -2102,7 +2105,7 @@ SYS_CALL(ppoll) {
                 continue;
             }
 
-            struct file *file = current->process->files[i].file;
+            struct file *file = current->process->files[current_fd].file;
             if (!file) {
                 pfd->revents = POLLNVAL;
                 count++;
@@ -2111,15 +2114,15 @@ SYS_CALL(ppoll) {
 
             pfd->revents = 0;
             bool found = false;
-            if ((pfd->events & POLLIN) && fs_is_readable(file)) {
+            if (!!(pfd->events & POLLIN) && fs_is_readable(file)) {
                 pfd->revents |= POLLIN;
                 found = true;
             }
-            if ((pfd->events & POLLPRI) && fs_is_exceptional(file)) {
+            if (!!(pfd->events & POLLPRI) && fs_is_exceptional(file)) {
                 pfd->revents |= POLLPRI;
                 found = true;
             }
-            if ((pfd->events & POLLOUT) && fs_is_writable(file)) {
+            if (!!(pfd->events & POLLOUT) && fs_is_writable(file)) {
                 pfd->revents |= POLLOUT;
                 found = true;
             }
@@ -2158,6 +2161,8 @@ SYS_CALL(ppoll) {
     }
 
 ppoll_return:
+    memcpy(user_fds, fds, nfds * sizeof(struct pollfd));
+
     if (current->in_sigsuspend) {
         SYS_RETURN_RESTORE_SIGMASK(count);
     }

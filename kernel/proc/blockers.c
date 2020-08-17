@@ -317,18 +317,18 @@ static bool poll_blocker_helper(nfds_t nfds, struct pollfd *fds) {
             continue;
         }
 
-        struct file *file = current->process->files[i].file;
+        struct file *file = current->process->files[current_fd].file;
         if (!file) {
             return true;
         }
 
-        if ((pfd->events & POLLIN) && fs_is_readable(file)) {
+        if (!!(pfd->events & POLLIN) && fs_is_readable(file)) {
             return true;
         }
-        if ((pfd->events & POLLPRI) && fs_is_exceptional(file)) {
+        if (!!(pfd->events & POLLPRI) && fs_is_exceptional(file)) {
             return true;
         }
-        if ((pfd->events & POLLOUT) && fs_is_writable(file)) {
+        if (!!(pfd->events & POLLOUT) && fs_is_writable(file)) {
             return true;
         }
     }
