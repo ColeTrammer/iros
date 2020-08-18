@@ -420,9 +420,12 @@ else()
     add_custom_target(
         install-libc
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libc/cmake_install.cmake > /dev/null
+        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libdl/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libm/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libpthread/cmake_install.cmake > /dev/null
-        DEPENDS libc libc_static libk libm libpthread
+        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/librt/cmake_install.cmake > /dev/null
+        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/loader/cmake_install.cmake > /dev/null
+        DEPENDS libc libc_static libdl libk libm libpthread librt loader
     )
 
     install(FILES ${CRT0_PATH} DESTINATION usr/lib RENAME crt0.o)
