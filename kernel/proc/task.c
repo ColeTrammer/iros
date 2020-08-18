@@ -595,13 +595,6 @@ void task_do_sig(struct task *task, int signum) {
     debug_log("Doing signal: [ %d, %s ]\n", task->process->pid, strsignal(signum));
 #endif /* TASK_SIGNAL_DEBUG */
 
-    if (task->blocking) {
-        // Defer running the signal handler until after the blocking code
-        // has a chance to clean up.
-        task_interrupt_blocking(task, -EINTR);
-        return;
-    }
-
     if (task->process->sig_state[signum].sa_handler == SIG_IGN) {
         task_unset_sig_pending(task, signum);
         return;
@@ -613,6 +606,21 @@ void task_do_sig(struct task *task, int signum) {
     }
 
     enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
+    switch (behavior) {
+        case TERMINATE_AND_DUMP:
+        case TERMINATE:
+        case CONTINUE:
+            if (task->blocking) {
+                // Defer running the signal handler until after the blocking code
+                // has a chance to clean up.
+                task_interrupt_blocking(task, -EINTR);
+                return;
+            }
+            break;
+        default:
+            break;
+    }
+
     task_unset_sig_pending(task, signum);
     switch (behavior) {
         case TERMINATE_AND_DUMP:
