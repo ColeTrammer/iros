@@ -143,7 +143,6 @@ struct ext2_sb_data {
     struct ext2_raw_super_block *sb;
     struct raw_block_group_descriptor *blk_desc_table;
     struct hash_map *block_group_map;
-    struct hash_map *block_map;
     size_t num_block_groups;
 };
 
@@ -162,12 +161,6 @@ struct ext2_block_group {
     struct raw_block_group_descriptor *blk_desc;
     struct ext2_block_bitmap block_bitmap;
     struct ext2_inode_bitmap inode_bitmap;
-    struct hash_entry hash;
-};
-
-struct ext2_block {
-    uint32_t index;
-    char *block;
     struct hash_entry hash;
 };
 

@@ -3,7 +3,10 @@
 
 #include <sys/types.h>
 
+#include <kernel/util/list.h>
+
 struct block_device;
+struct hash_map;
 struct phys_page;
 
 struct block_device_ops {
@@ -16,6 +19,8 @@ struct block_device_ops {
 struct block_device {
     blkcnt_t block_count;
     blksize_t block_size;
+    struct hash_map *block_hash_map;
+    struct list_node lru_list;
     struct block_device_ops *op;
     void *private_data;
 };

@@ -3,7 +3,12 @@
 
 #include <stdint.h>
 
+#include <kernel/util/hash_map.h>
+#include <kernel/util/list.h>
+
 struct phys_page {
+    struct list_node lru_list;
+    struct hash_entry hash;
     uintptr_t phys_addr;
     int ref_count;
     off_t block_offset;

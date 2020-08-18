@@ -20,9 +20,34 @@ static struct device_ops block_device_ops = {
     .block_size = block_block_size,
 };
 
+HASH_DEFINE_FUNCTIONS(page, struct phys_page, off_t, block_offset)
+
 static struct phys_page *block_find_page(struct block_device *block_device, off_t block_offset) {
     assert(block_offset * block_device->block_size % PAGE_SIZE == 0);
-    return NULL;
+    struct phys_page *page = hash_get_entry(block_device->block_hash_map, &block_offset, struct phys_page);
+    if (!page) {
+        return NULL;
+    }
+    // Move the page to the front of the LRU list.
+    list_remove(&page->lru_list);
+    list_prepend(&block_device->lru_list, &page->lru_list);
+    return bump_phys_page(page);
+}
+
+static struct phys_page *block_put_cache(struct block_device *block_device, struct phys_page *page) {
+    size_t num_blocks_cached = hash_size(block_device->block_hash_map);
+    // FIXME: instead of using an arbitrary cap, the kernel should only do this when it needs to reclaim
+    //        physical memory.
+    if (num_blocks_cached >= 10000) {
+        struct phys_page *to_remove = list_last_entry(&block_device->lru_list, struct phys_page, lru_list);
+        hash_del(block_device->block_hash_map, &to_remove->block_offset);
+        list_remove(&to_remove->lru_list);
+        drop_phys_page(to_remove);
+    }
+
+    list_prepend(&block_device->lru_list, &page->lru_list);
+    hash_put(block_device->block_hash_map, &page->hash);
+    return bump_phys_page(page);
 }
 
 static struct phys_page *block_find_or_read_page(struct block_device *block_device, off_t block_offset) {
@@ -31,7 +56,11 @@ static struct phys_page *block_find_or_read_page(struct block_device *block_devi
         return page;
     }
 
-    return block_device->op->read_page(block_device, block_offset);
+    page = block_device->op->read_page(block_device, block_offset);
+    if (!page) {
+        return NULL;
+    }
+    return block_put_cache(block_device, page);
 }
 
 static struct phys_page *block_find_or_empty_page(struct block_device *block_device, off_t block_offset) {
@@ -45,7 +74,7 @@ static struct phys_page *block_find_or_empty_page(struct block_device *block_dev
         return NULL;
     }
     page->block_offset = block_offset;
-    return page;
+    return block_put_cache(block_device, page);
 }
 
 static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t size, bool non_block) {
@@ -83,6 +112,7 @@ static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t
 
         void *mapped_page = create_phys_addr_mapping(page->phys_addr);
         memcpy(buf + (block - block_offset) * block_size, mapped_page + (page_block_offset * block_size), blocks_to_read * block_size);
+        drop_phys_page(page);
 
         block += blocks_to_read;
     }
@@ -140,7 +170,9 @@ static ssize_t block_write(struct device *device, off_t offset, const void *buf,
         memcpy(mapped_page + (page_block_offset * block_size), buf + (block - block_offset) * block_size, blocks_to_write * block_size);
 
         // This should eventually be made asynchronous.
-        if (block_device->op->sync_page(block_device, page)) {
+        int ret = block_device->op->sync_page(block_device, page);
+        drop_phys_page(page);
+        if (ret) {
             break;
         }
 
@@ -196,6 +228,8 @@ struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_s
     struct block_device *block_device = malloc(sizeof(struct block_device));
     block_device->block_count = block_count;
     block_device->block_size = block_size;
+    block_device->block_hash_map = hash_create_hash_map(page_hash, page_equals, page_key);
+    init_list(&block_device->lru_list);
     block_device->op = op;
     block_device->private_data = private_data;
     return block_device;
