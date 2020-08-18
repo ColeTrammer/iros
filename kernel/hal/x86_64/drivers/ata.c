@@ -19,6 +19,8 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/irqs/handlers.h>
+#include <kernel/mem/phys_page.h>
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
 
 #define DMA_BUFFER_PAGES 1
@@ -225,6 +227,44 @@ static ssize_t ata_read_sectors(struct block_device *self, void *buffer, blkcnt_
     return n * self->block_size;
 }
 
+static struct phys_page *ata_read_page_dma(struct block_device *self, off_t sector_offset) {
+    struct ata_device_data *data = self->private_data;
+    blkcnt_t sectors = PAGE_SIZE / self->block_size;
+
+    struct phys_page *page = allocate_phys_page();
+    if (!page) {
+        return NULL;
+    }
+    page->block_offset = sector_offset;
+
+    // Read directly into the phys_page
+    data->prdt[0].phys_addr = page->phys_addr;
+    data->prdt[0].size = PAGE_SIZE;
+
+    // DMA bus mastering specifc
+    outb(data->port_info->bus_mastering_base, 0);
+    outl(data->port_info->bus_mastering_base + 4, (uint32_t) get_phys_addr((uintptr_t) data->prdt));
+    outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
+    outb(data->port_info->bus_mastering_base, 0x8);
+
+    ata_wait_not_busy(data->port_info);
+
+    ata_setup_registers_dma(data->port_info, sector_offset, sectors);
+
+    ata_full_wait(data->port_info);
+
+    ata_set_command(data->port_info, ATA_COMMAND_READ_DMA);
+    io_wait();
+
+    // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
+    disable_interrupts();
+    outb(data->port_info->bus_mastering_base, 0x9);
+    ata_wait_irq(data);
+
+    outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
+    return page;
+}
+
 static ssize_t ata_write_sectors_dma(struct block_device *self, const void *buffer, blkcnt_t n, off_t sector_offset) {
     struct ata_device_data *data = self->private_data;
     size_t sectors = n;
@@ -312,6 +352,38 @@ static ssize_t ata_write_sectors(struct block_device *self, const void *buffer, 
     return n * self->block_size;
 }
 
+static int ata_sync_page_dma(struct block_device *self, struct phys_page *page) {
+    struct ata_device_data *data = self->private_data;
+    blkcnt_t sectors = PAGE_SIZE / self->block_size;
+
+    // Write directly from the physical page.
+    data->prdt[0].phys_addr = page->phys_addr;
+    data->prdt[0].size = PAGE_SIZE;
+
+    // DMA bus mastering specifc
+    outb(data->port_info->bus_mastering_base, 0);
+    outl(data->port_info->bus_mastering_base + 4, (uint32_t) get_phys_addr((uintptr_t) data->prdt));
+    outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
+    outb(data->port_info->bus_mastering_base, 0x8);
+
+    ata_wait_not_busy(data->port_info);
+
+    ata_setup_registers_dma(data->port_info, page->block_offset, sectors);
+
+    ata_full_wait(data->port_info);
+
+    ata_set_command(data->port_info, ATA_COMMAND_WRITE_DMA);
+    io_wait();
+
+    // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
+    disable_interrupts();
+    outb(data->port_info->bus_mastering_base, 0x1);
+    ata_wait_irq(data);
+
+    outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
+    return 0;
+}
+
 static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
     if (ata_read_status(info) == 0xFF) {
         return false;
@@ -339,11 +411,15 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
 static struct block_device_ops ata_ops = {
     .read = ata_read_sectors,
     .write = ata_write_sectors,
+    .read_page = ata_read_page_dma,
+    .sync_page = ata_sync_page_dma,
 };
 
 static struct block_device_ops ata_dma_ops = {
     .read = ata_read_sectors_dma,
     .write = ata_write_sectors_dma,
+    .read_page = block_generic_read_page,
+    .sync_page = block_generic_sync_page,
 };
 
 static void ata_handle_irq(struct irq_context *context) {

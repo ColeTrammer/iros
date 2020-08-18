@@ -1,9 +1,12 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <kernel/fs/dev.h>
 #include <kernel/hal/block.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/phys_page.h>
+#include <kernel/mem/vm_allocator.h>
 
 static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t size, bool non_block);
 static ssize_t block_write(struct device *device, off_t offset, const void *buf, size_t size, bool non_block);
@@ -16,6 +19,34 @@ static struct device_ops block_device_ops = {
     .block_count = block_block_count,
     .block_size = block_block_size,
 };
+
+static struct phys_page *block_find_page(struct block_device *block_device, off_t block_offset) {
+    assert(block_offset * block_device->block_size % PAGE_SIZE == 0);
+    return NULL;
+}
+
+static struct phys_page *block_find_or_read_page(struct block_device *block_device, off_t block_offset) {
+    struct phys_page *page = block_find_page(block_device, block_offset);
+    if (page) {
+        return page;
+    }
+
+    return block_device->op->read_page(block_device, block_offset);
+}
+
+static struct phys_page *block_find_or_empty_page(struct block_device *block_device, off_t block_offset) {
+    struct phys_page *page = block_find_page(block_device, block_offset);
+    if (page) {
+        return page;
+    }
+
+    page = allocate_phys_page();
+    if (!page) {
+        return NULL;
+    }
+    page->block_offset = block_offset;
+    return page;
+}
 
 static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t size, bool non_block) {
     (void) non_block;
@@ -35,19 +66,25 @@ static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t
         return -ENXIO;
     }
 
-    // Write out blocks in page size multiples. This could be improved, but at least allows for efficent DMA use.
     blkcnt_t block_step = PAGE_SIZE / block_size;
     off_t block_end = block_offset + block_count;
     off_t block;
 
     mutex_lock(&device->lock);
     for (block = block_offset; block < block_end;) {
-        blkcnt_t blocks_to_write = block_end - block < block_step ? block_end - block : block_step;
-        blkcnt_t blocks_written = block_device->op->read(block_device, buf + (block - block_offset) * block_size, blocks_to_write, block);
-        block += blocks_written;
-        if (blocks_written != blocks_to_write) {
+        // This could only be non-zero on the first read, subsequent reads will be page aligned.
+        blkcnt_t page_block_offset = block % block_step;
+        blkcnt_t blocks_to_read = MIN(block - page_block_offset + block_step, block_end) - block;
+
+        struct phys_page *page = block_find_or_read_page(block_device, block - page_block_offset);
+        if (!page) {
             break;
         }
+
+        void *mapped_page = create_phys_addr_mapping(page->phys_addr);
+        memcpy(buf + (block - block_offset) * block_size, mapped_page + (page_block_offset * block_size), blocks_to_read * block_size);
+
+        block += blocks_to_read;
     }
     mutex_unlock(&device->lock);
 
@@ -83,12 +120,31 @@ static ssize_t block_write(struct device *device, off_t offset, const void *buf,
 
     mutex_lock(&device->lock);
     for (block = block_offset; block < block_end;) {
-        blkcnt_t blocks_to_write = block_end - block < block_step ? block_end - block : block_step;
-        blkcnt_t blocks_written = block_device->op->write(block_device, buf + (block - block_offset) * block_size, blocks_to_write, block);
-        block += blocks_written;
-        if (blocks_written != blocks_to_write) {
+        // This could only be non-zero on the first write, subsequent writes will be page aligned.
+        blkcnt_t page_block_offset = block % block_step;
+        blkcnt_t blocks_to_write = MIN(block - page_block_offset + block_step, block_end) - block;
+
+        struct phys_page *page;
+        if (page_block_offset == 0 && blocks_to_write == block_step) {
+            // There"s no reason to read in the page if the entire thing will be overwritten.
+            page = block_find_or_empty_page(block_device, block - page_block_offset);
+        } else {
+            page = block_find_or_read_page(block_device, block - page_block_offset);
+        }
+
+        if (!page) {
             break;
         }
+
+        void *mapped_page = create_phys_addr_mapping(page->phys_addr);
+        memcpy(mapped_page + (page_block_offset * block_size), buf + (block - block_offset) * block_size, blocks_to_write * block_size);
+
+        // This should eventually be made asynchronous.
+        if (block_device->op->sync_page(block_device, page)) {
+            break;
+        }
+
+        block += blocks_to_write;
     }
     mutex_unlock(&device->lock);
 
@@ -107,6 +163,33 @@ static blkcnt_t block_block_count(struct device *device) {
 static blksize_t block_block_size(struct device *device) {
     struct block_device *block_device = device->private;
     return block_device->block_size;
+}
+
+struct phys_page *block_generic_read_page(struct block_device *self, off_t block_offset) {
+    struct phys_page *page = allocate_phys_page();
+    if (!page) {
+        return NULL;
+    }
+    page->block_offset = block_offset;
+
+    void *buffer = create_phys_addr_mapping(page->phys_addr);
+    blkcnt_t blocks_to_read = PAGE_SIZE / self->block_size;
+    if (self->op->read(self, buffer, blocks_to_read, block_offset) != blocks_to_read) {
+        drop_phys_page(page);
+        return NULL;
+    }
+
+    return page;
+}
+
+int block_generic_sync_page(struct block_device *self, struct phys_page *page) {
+    void *buffer = create_phys_addr_mapping(page->phys_addr);
+    blkcnt_t blocks_to_write = PAGE_SIZE / self->block_size;
+    if (self->op->write(self, buffer, blocks_to_write, page->block_offset) != blocks_to_write) {
+        return -EIO;
+    }
+
+    return 0;
 }
 
 struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_size, struct block_device_ops *op, void *private_data) {

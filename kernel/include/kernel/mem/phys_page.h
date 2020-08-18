@@ -6,6 +6,7 @@
 struct phys_page {
     uintptr_t phys_addr;
     int ref_count;
+    off_t block_offset;
 };
 
 struct phys_page *allocate_phys_page(void);
