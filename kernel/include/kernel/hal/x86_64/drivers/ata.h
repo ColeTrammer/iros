@@ -83,8 +83,6 @@ struct ata_device_data {
     struct ata_port_info *port_info;
     struct ata_physical_range_descriptor prdt[1];
     uint8_t *dma_page;
-    size_t sector_size;
-    size_t num_sectors;
     struct wait_queue wait_queue;
 };
 

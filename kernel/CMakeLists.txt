@@ -15,6 +15,7 @@ if (NOT ${NATIVE_BUILD})
         fs/tmp.c
         fs/tnode.c
         fs/vfs.c
+        hal/block.c
         hal/devices.c
         hal/processor.c
         hal/ptmx.c

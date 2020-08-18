@@ -10,6 +10,7 @@
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/fs/dev.h>
+#include <kernel/hal/block.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
@@ -20,7 +21,7 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/proc/task.h>
 
-#define DMA_BUFFER_PAGES 15
+#define DMA_BUFFER_PAGES 1
 
 static void ata_wait(struct ata_port_info *info) {
     for (size_t i = 0; i < 4; i++) {
@@ -148,18 +149,19 @@ static bool ata_indentify(struct ata_port_info *info, uint16_t *buf) {
     return true;
 }
 
-static ssize_t ata_read_sectors_dma(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {
+static ssize_t ata_read_sectors_dma(struct block_device *self, void *buffer, blkcnt_t n, off_t sector_offset) {
+    struct ata_device_data *data = self->private_data;
     size_t sectors = n;
     if (n == 0) {
         return 0;
-    } else if (n == 16 * PAGE_SIZE / data->sector_size) {
+    } else if (n == 16 * PAGE_SIZE / self->block_size) {
         sectors = 0;
-    } else if (n > 16 * PAGE_SIZE / data->sector_size) {
+    } else if (n > 16 * PAGE_SIZE / self->block_size) {
         return -EINVAL;
     }
 
     data->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) data->dma_page);
-    data->prdt[0].size = (uint16_t)(data->sector_size * sectors);
+    data->prdt[0].size = (uint16_t)(self->block_size * sectors);
 
     // DMA bus mastering specifc
     outb(data->port_info->bus_mastering_base, 0);
@@ -169,7 +171,7 @@ static ssize_t ata_read_sectors_dma(struct ata_device_data *data, size_t offset,
 
     ata_wait_not_busy(data->port_info);
 
-    ata_setup_registers_dma(data->port_info, offset, sectors);
+    ata_setup_registers_dma(data->port_info, sector_offset, sectors);
 
     ata_full_wait(data->port_info);
 
@@ -181,13 +183,14 @@ static ssize_t ata_read_sectors_dma(struct ata_device_data *data, size_t offset,
     outb(data->port_info->bus_mastering_base, 0x9);
     ata_wait_irq(data);
 
-    memcpy(buffer, data->dma_page, data->sector_size * n);
+    memcpy(buffer, data->dma_page, self->block_size * n);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
-    return data->sector_size * n;
+    return n;
 }
 
-static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, void *buffer, size_t n) {
+static ssize_t ata_read_sectors(struct block_device *self, void *buffer, blkcnt_t n, off_t sector_offset) {
+    struct ata_device_data *data = self->private_data;
     if (n == 0) {
         return 0;
     } else if (n > 255) {
@@ -198,7 +201,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
 
     ata_wait_not_busy(data->port_info);
 
-    ata_setup_registers_pio(data->port_info, offset, n);
+    ata_setup_registers_pio(data->port_info, sector_offset, n);
     io_wait();
 
     ata_wait_ready(data->port_info);
@@ -206,7 +209,7 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
 
     uint16_t *buf = (uint16_t *) buffer;
 
-    for (size_t j = 0; j < n; j++) {
+    for (blkcnt_t j = 0; j < n; j++) {
         ata_wait(data->port_info);
         ata_wait_not_busy(data->port_info);
 
@@ -214,28 +217,29 @@ static ssize_t ata_read_sectors(struct ata_device_data *data, size_t offset, voi
             return -EIO;
         }
 
-        for (size_t i = 0; i < data->sector_size / sizeof(uint16_t); i++) {
-            buf[j * data->sector_size / sizeof(uint16_t) + i] = ata_read_word(data->port_info);
+        for (size_t i = 0; i < self->block_size / sizeof(uint16_t); i++) {
+            buf[j * self->block_size / sizeof(uint16_t) + i] = ata_read_word(data->port_info);
         }
     }
 
-    return n * data->sector_size;
+    return n * self->block_size;
 }
 
-static ssize_t ata_write_sectors_dma(struct ata_device_data *data, size_t offset, const void *buffer, size_t n) {
+static ssize_t ata_write_sectors_dma(struct block_device *self, const void *buffer, blkcnt_t n, off_t sector_offset) {
+    struct ata_device_data *data = self->private_data;
     size_t sectors = n;
     if (n == 0) {
         return 0;
-    } else if (n == 16 * PAGE_SIZE / data->sector_size) {
+    } else if (n == 16 * PAGE_SIZE / self->block_size) {
         sectors = 0;
-    } else if (n > 16 * PAGE_SIZE / data->sector_size) {
+    } else if (n > 16 * PAGE_SIZE / self->block_size) {
         return -EINVAL;
     }
 
     data->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) data->dma_page);
-    data->prdt[0].size = (uint16_t)(data->sector_size * sectors);
+    data->prdt[0].size = (uint16_t)(self->block_size * sectors);
 
-    memcpy(data->dma_page, buffer, n * data->sector_size);
+    memcpy(data->dma_page, buffer, n * self->block_size);
 
     // DMA bus mastering specifc
     outb(data->port_info->bus_mastering_base, 0);
@@ -245,7 +249,7 @@ static ssize_t ata_write_sectors_dma(struct ata_device_data *data, size_t offset
 
     ata_wait_not_busy(data->port_info);
 
-    ata_setup_registers_dma(data->port_info, offset, n);
+    ata_setup_registers_dma(data->port_info, sector_offset, n);
 
     ata_full_wait(data->port_info);
 
@@ -258,10 +262,11 @@ static ssize_t ata_write_sectors_dma(struct ata_device_data *data, size_t offset
     ata_wait_irq(data);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
-    return n * data->sector_size;
+    return n;
 }
 
-static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, const void *buffer, size_t n) {
+static ssize_t ata_write_sectors(struct block_device *self, const void *buffer, blkcnt_t n, off_t sector_offset) {
+    struct ata_device_data *data = self->private_data;
     if (n == 0) {
         return 0;
     } else if (n > 255) {
@@ -272,7 +277,7 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
 
     ata_wait_not_busy(data->port_info);
 
-    ata_setup_registers_pio(data->port_info, offset, n);
+    ata_setup_registers_pio(data->port_info, sector_offset, n);
     io_wait();
 
     ata_wait_ready(data->port_info);
@@ -280,7 +285,7 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
 
     const uint16_t *buf = (const uint16_t *) buffer;
 
-    for (size_t j = 0; j < n; j++) {
+    for (blkcnt_t j = 0; j < n; j++) {
         ata_wait(data->port_info);
         ata_wait_not_busy(data->port_info);
 
@@ -289,8 +294,8 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
             return -EIO;
         }
 
-        for (size_t i = 0; i < data->sector_size / sizeof(uint16_t); i++) {
-            ata_write_word(data->port_info, buf[j * data->sector_size / sizeof(uint16_t) + i]);
+        for (size_t i = 0; i < self->block_size / sizeof(uint16_t); i++) {
+            ata_write_word(data->port_info, buf[j * self->block_size / sizeof(uint16_t) + i]);
         }
     }
 
@@ -304,7 +309,7 @@ static ssize_t ata_write_sectors(struct ata_device_data *data, size_t offset, co
         return -EIO;
     }
 
-    return n * data->sector_size;
+    return n * self->block_size;
 }
 
 static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
@@ -331,93 +336,15 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
     return true;
 }
 
-static ssize_t ata_read(struct device *device, off_t offset, void *buffer, size_t n, bool non_blocking) {
-    (void) non_blocking;
-    struct ata_device_data *data = device->private;
+static struct block_device_ops ata_ops = {
+    .read = ata_read_sectors,
+    .write = ata_write_sectors,
+};
 
-    if (n % data->sector_size == 0 && offset % data->sector_size == 0) {
-        size_t num_sectors_to_read = n / data->sector_size;
-        size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
-        ssize_t read = 0;
-
-        mutex_lock(&device->lock);
-
-        for (size_t i = 0; i < num_sectors_to_read; i += num_sectors) {
-            i = MIN(i, num_sectors_to_read);
-            size_t to_read = MIN(num_sectors, num_sectors_to_read - i);
-            ssize_t ret = (data->port_info->use_dma ? ata_read_sectors_dma : ata_read_sectors)(
-                data, (offset / data->sector_size), (void *) (((uintptr_t) buffer) + (i * data->sector_size)), to_read);
-            if (ret != (ssize_t)(to_read * data->sector_size)) {
-                if (ret < 0) {
-                    read = ret;
-                    goto finsih_ata_read;
-                }
-
-                offset += ret;
-                goto finsih_ata_read;
-            }
-
-            read += ret;
-            offset += ret;
-        }
-
-    finsih_ata_read:
-        mutex_unlock(&device->lock);
-        return read;
-    }
-
-    return -EINVAL;
-}
-
-static ssize_t ata_write(struct device *device, off_t offset, const void *buffer, size_t n, bool non_blocking) {
-    (void) non_blocking;
-    struct ata_device_data *data = device->private;
-
-    if (n % data->sector_size == 0 && offset % data->sector_size == 0) {
-        size_t num_sectors_to_write = n / data->sector_size;
-        size_t num_sectors = DMA_BUFFER_PAGES * PAGE_SIZE / data->sector_size;
-        ssize_t written = 0;
-
-        mutex_lock(&device->lock);
-
-        for (size_t i = 0; i < num_sectors_to_write; i += num_sectors) {
-            i = MIN(i, num_sectors_to_write);
-            size_t to_write = MIN(num_sectors, num_sectors_to_write - i);
-            ssize_t ret = (data->port_info->use_dma ? ata_write_sectors_dma : ata_write_sectors)(
-                data, (offset / data->sector_size), (const void *) (((uintptr_t) buffer) + (i * data->sector_size)), to_write);
-            if (ret != (ssize_t)(to_write * data->sector_size)) {
-                if (ret < 0) {
-                    written = ret;
-                    goto finsih_ata_write;
-                }
-
-                offset += ret;
-                goto finsih_ata_write;
-            }
-
-            written += ret;
-            offset += ret;
-        }
-
-    finsih_ata_write:
-        mutex_unlock(&device->lock);
-        return written;
-    }
-
-    return -EINVAL;
-}
-
-static blksize_t ata_block_size(struct device *device) {
-    struct ata_device_data *data = device->private;
-    return (blksize_t) data->sector_size;
-}
-
-static blkcnt_t ata_block_count(struct device *device) {
-    struct ata_device_data *data = device->private;
-    return data->num_sectors;
-}
-
-static struct device_ops ata_ops = { .read = ata_read, .write = ata_write, .block_size = &ata_block_size, .block_count = &ata_block_count };
+static struct block_device_ops ata_dma_ops = {
+    .read = ata_read_sectors_dma,
+    .write = ata_write_sectors_dma,
+};
 
 static void ata_handle_irq(struct irq_context *context) {
     struct ata_device_data *data = context->closure;
@@ -431,19 +358,14 @@ static void ata_handle_irq(struct irq_context *context) {
 }
 
 static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {
-    struct device *device = calloc(1, sizeof(struct device));
-    device->device_number = 0x00500 + i;
-    device->ops = &ata_ops;
-    device->type = S_IFBLK;
-    init_mutex(&device->lock);
-
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));
-    device->private = data;
     data->port_info = info;
-    data->sector_size = ATA_SECTOR_SIZE;
-    data->num_sectors = identity[60] | (identity[61] << 16);
-    device->private = data;
     init_wait_queue(&data->wait_queue);
+
+    dev_t device_number = 0x00500 + i;
+    blksize_t block_size = ATA_SECTOR_SIZE;
+    blkcnt_t block_count = identity[60] | (identity[61] << 16);
+    struct block_device_ops *op = &ata_ops;
 
     struct pci_configuration pci_config;
     if (pci_config_for_class(PCI_CLASS_MASS_STORAGE, PCI_SUBCLASS_IDE_CONTROLLER, &pci_config)) {
@@ -452,13 +374,15 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
         data->port_info->bus_mastering_base = base;
         data->port_info->use_dma = true;
         data->dma_page = aligned_alloc(PAGE_SIZE, DMA_BUFFER_PAGES * PAGE_SIZE);
+        op = &ata_dma_ops;
 
         register_irq_handler(create_irq_handler(ata_handle_irq, IRQ_HANDLER_EXTERNAL, data), info->irq + EXTERNAL_IRQ_OFFSET);
 
         debug_log("found pic for ata (so will use dma): [ %#.8X ]\n", base);
     }
 
-    dev_register(device);
+    struct block_device *block_device = create_block_device(block_count, block_size, op, data);
+    block_register_device(block_device, device_number);
 }
 
 #define NUM_POSSIBLE_ATA_DEVICES 8
