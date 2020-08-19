@@ -1,0 +1,1073 @@
+diff --git a/gmp-6.1.0/aclocal.m4 b/gmp-6.1.0/aclocal.m4
+index 32cc8eef8..83f7f69c0 100644
+--- a/gmp-6.1.0/aclocal.m4
++++ b/gmp-6.1.0/aclocal.m4
+@@ -2998,6 +2998,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -3594,6 +3605,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+diff --git a/gmp-6.1.0/configure b/gmp-6.1.0/configure
+index 375355bb3..ebff4e748 100755
+--- a/gmp-6.1.0/configure
++++ b/gmp-6.1.0/configure
+@@ -809,6 +809,7 @@ infodir
+ docdir
+ oldincludedir
+ includedir
++runstatedir
+ localstatedir
+ sharedstatedir
+ sysconfdir
+@@ -912,6 +913,7 @@ datadir='${datarootdir}'
+ sysconfdir='${prefix}/etc'
+ sharedstatedir='${prefix}/com'
+ localstatedir='${prefix}/var'
++runstatedir='${localstatedir}/run'
+ includedir='${prefix}/include'
+ oldincludedir='/usr/include'
+ docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+@@ -1164,6 +1166,15 @@ do
+   | -silent | --silent | --silen | --sile | --sil)
+     silent=yes ;;
+ 
++  -runstatedir | --runstatedir | --runstatedi | --runstated \
++  | --runstate | --runstat | --runsta | --runst | --runs \
++  | --run | --ru | --r)
++    ac_prev=runstatedir ;;
++  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
++  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
++  | --run=* | --ru=* | --r=*)
++    runstatedir=$ac_optarg ;;
++
+   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
+     ac_prev=sbindir ;;
+   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
+@@ -1301,7 +1312,7 @@ fi
+ for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
+ 		datadir sysconfdir sharedstatedir localstatedir includedir \
+ 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
+-		libdir localedir mandir
++		libdir localedir mandir runstatedir
+ do
+   eval ac_val=\$$ac_var
+   # Remove trailing slashes.
+@@ -1454,6 +1465,7 @@ Fine tuning of the installation directories:
+   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
+   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
+   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
++  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
+   --libdir=DIR            object code libraries [EPREFIX/lib]
+   --includedir=DIR        C header files [PREFIX/include]
+   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
+@@ -13258,6 +13270,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+@@ -18937,6 +18953,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -22899,6 +22926,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+diff --git a/isl-0.18/configure b/isl-0.18/configure
+index 13c6b4dd7..7852b37f2 100755
+--- a/isl-0.18/configure
++++ b/isl-0.18/configure
+@@ -7193,6 +7193,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+@@ -13035,6 +13039,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -17012,6 +17027,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+diff --git a/isl-0.18/m4/libtool.m4 b/isl-0.18/m4/libtool.m4
+index 10ab2844c..2b4aa8393 100644
+--- a/isl-0.18/m4/libtool.m4
++++ b/isl-0.18/m4/libtool.m4
+@@ -2996,6 +2996,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -3592,6 +3603,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+diff --git a/mpc-1.0.3/configure b/mpc-1.0.3/configure
+index 0f1ac7318..fc4ec7424 100755
+--- a/mpc-1.0.3/configure
++++ b/mpc-1.0.3/configure
+@@ -740,6 +740,7 @@ infodir
+ docdir
+ oldincludedir
+ includedir
++runstatedir
+ localstatedir
+ sharedstatedir
+ sysconfdir
+@@ -830,6 +831,7 @@ datadir='${datarootdir}'
+ sysconfdir='${prefix}/etc'
+ sharedstatedir='${prefix}/com'
+ localstatedir='${prefix}/var'
++runstatedir='${localstatedir}/run'
+ includedir='${prefix}/include'
+ oldincludedir='/usr/include'
+ docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+@@ -1082,6 +1084,15 @@ do
+   | -silent | --silent | --silen | --sile | --sil)
+     silent=yes ;;
+ 
++  -runstatedir | --runstatedir | --runstatedi | --runstated \
++  | --runstate | --runstat | --runsta | --runst | --runs \
++  | --run | --ru | --r)
++    ac_prev=runstatedir ;;
++  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
++  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
++  | --run=* | --ru=* | --r=*)
++    runstatedir=$ac_optarg ;;
++
+   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
+     ac_prev=sbindir ;;
+   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
+@@ -1219,7 +1230,7 @@ fi
+ for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
+ 		datadir sysconfdir sharedstatedir localstatedir includedir \
+ 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
+-		libdir localedir mandir
++		libdir localedir mandir runstatedir
+ do
+   eval ac_val=\$$ac_var
+   # Remove trailing slashes.
+@@ -1372,6 +1383,7 @@ Fine tuning of the installation directories:
+   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
+   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
+   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
++  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
+   --libdir=DIR            object code libraries [EPREFIX/lib]
+   --includedir=DIR        C header files [PREFIX/include]
+   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
+@@ -5784,6 +5796,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+@@ -11599,6 +11615,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -14555,7 +14582,7 @@ fi
+ 
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for current git version" >&5
+ $as_echo_n "checking for current git version... " >&6; }
+-         GITVERSION=337053c
++         GITVERSION=322978832
+ 
+ 
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GITVERSION" >&5
+diff --git a/mpc-1.0.3/m4/libtool.m4 b/mpc-1.0.3/m4/libtool.m4
+index f796d7bcd..0482b933d 100644
+--- a/mpc-1.0.3/m4/libtool.m4
++++ b/mpc-1.0.3/m4/libtool.m4
+@@ -2983,6 +2983,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -3575,6 +3586,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+diff --git a/mpfr-3.1.4/configure b/mpfr-3.1.4/configure
+index 92b70c353..90944791e 100755
+--- a/mpfr-3.1.4/configure
++++ b/mpfr-3.1.4/configure
+@@ -1900,7 +1900,7 @@ else
+ /* end confdefs.h.  */
+ $5
+ int
+-main (void)
++main ()
+ {
+ static $2 ac_aggr;
+ if (ac_aggr.$3)
+@@ -1916,7 +1916,7 @@ else
+ /* end confdefs.h.  */
+ $5
+ int
+-main (void)
++main ()
+ {
+ static $2 ac_aggr;
+ if (sizeof ac_aggr.$3)
+@@ -1958,7 +1958,7 @@ else
+ /* end confdefs.h.  */
+ $4
+ int
+-main (void)
++main ()
+ {
+ if (sizeof ($2))
+ 	 return 0;
+@@ -1971,7 +1971,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
+ /* end confdefs.h.  */
+ $4
+ int
+-main (void)
++main ()
+ {
+ if (sizeof (($2)))
+ 	    return 0;
+@@ -2040,7 +2040,7 @@ choke me
+ #endif
+ 
+ int
+-main (void)
++main ()
+ {
+ return $2 ();
+   ;
+@@ -2076,7 +2076,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ $4
+ int
+-main (void)
++main ()
+ {
+ static int test_array [1 - 2 * !(($2) >= 0)];
+ test_array [0] = 0;
+@@ -2093,7 +2093,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
+ /* end confdefs.h.  */
+ $4
+ int
+-main (void)
++main ()
+ {
+ static int test_array [1 - 2 * !(($2) <= $ac_mid)];
+ test_array [0] = 0;
+@@ -2120,7 +2120,7 @@ else
+ /* end confdefs.h.  */
+ $4
+ int
+-main (void)
++main ()
+ {
+ static int test_array [1 - 2 * !(($2) < 0)];
+ test_array [0] = 0;
+@@ -2137,7 +2137,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
+ /* end confdefs.h.  */
+ $4
+ int
+-main (void)
++main ()
+ {
+ static int test_array [1 - 2 * !(($2) >= $ac_mid)];
+ test_array [0] = 0;
+@@ -2172,7 +2172,7 @@ while test "x$ac_lo" != "x$ac_hi"; do
+ /* end confdefs.h.  */
+ $4
+ int
+-main (void)
++main ()
+ {
+ static int test_array [1 - 2 * !(($2) <= $ac_mid)];
+ test_array [0] = 0;
+@@ -2202,7 +2202,7 @@ static unsigned long int ulongval () { return $2; }
+ #include <stdio.h>
+ #include <stdlib.h>
+ int
+-main (void)
++main ()
+ {
+ 
+   FILE *f = fopen ("conftest.val", "w");
+@@ -4131,7 +4131,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -4271,7 +4271,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ #include <stdio.h>
+ int
+-main (void)
++main ()
+ {
+ FILE *f = fopen ("conftest.out", "w");
+  return ferror (f) || fclose (f) != 0;
+@@ -4335,7 +4335,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -4386,7 +4386,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ #ifndef __GNUC__
+        choke me
+@@ -4427,7 +4427,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -4442,7 +4442,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -4458,7 +4458,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -4544,7 +4544,7 @@ int pairnames (int, char **, FILE *(*)(struct buf *, struct stat *, int), int, i
+ int argc;
+ char **argv;
+ int
+-main (void)
++main ()
+ {
+ return f (e, argv, 0) != argv[0]  ||  f (e, argv, 1) != argv[1];
+   ;
+@@ -4602,7 +4602,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -5167,7 +5167,7 @@ $as_echo_n "checking if compiler knows _Decimal64... " >&6; }
+ /* end confdefs.h.  */
+ _Decimal64 x;
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -5223,7 +5223,7 @@ else
+ #include <stdlib.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+ volatile _Decimal64 x = 1;
+@@ -5283,7 +5283,7 @@ error
+ #endif
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -5315,7 +5315,7 @@ error
+ #endif
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -5353,7 +5353,7 @@ $as_echo_n "checking if the compiler understands -Wl,-search_paths_first... " >&
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -5384,7 +5384,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+ #ifndef __cplusplus
+@@ -5465,7 +5465,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+ volatile int x;
+@@ -5513,7 +5513,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ 
+ 
+ int
+-main (void)
++main ()
+ {
+ return main ();
+   ;
+@@ -5547,7 +5547,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ 
+ 
+ int
+-main (void)
++main ()
+ {
+ return main ();
+   ;
+@@ -5590,7 +5590,7 @@ extern "C"
+ #endif
+ char _mwvalidcheckl ();
+ int
+-main (void)
++main ()
+ {
+ return _mwvalidcheckl ();
+   ;
+@@ -5624,7 +5624,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ 
+ 
+ int
+-main (void)
++main ()
+ {
+ return main ();
+   ;
+@@ -5660,7 +5660,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ 
+ 
+ int
+-main (void)
++main ()
+ {
+ return main ();
+   ;
+@@ -5697,7 +5697,7 @@ else
+ #include <time.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ if ((struct tm *) 0)
+ return 0;
+@@ -5734,7 +5734,7 @@ else
+ #include <float.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -5983,7 +5983,7 @@ else
+ /* end confdefs.h.  */
+ #include <alloca.h>
+ int
+-main (void)
++main ()
+ {
+ char *p = (char *) alloca (2 * sizeof (int));
+ 			  if (p) return 0;
+@@ -6036,7 +6036,7 @@ void *alloca (size_t);
+ #endif
+ 
+ int
+-main (void)
++main ()
+ {
+ char *p = (char *) alloca (1);
+ 				    if (p) return 0;
+@@ -6223,7 +6223,7 @@ fi
+             extern unsigned long foo;
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -6266,7 +6266,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ #include <stdarg.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+    va_list ap1, ap2;
+@@ -6290,7 +6290,7 @@ else
+ #include <stdarg.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+    va_list ap1, ap2;
+@@ -6346,7 +6346,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -6401,7 +6401,7 @@ else
+ /* end confdefs.h.  */
+ #include "mpfr-intmax.h"
+ int
+-main (void)
++main ()
+ {
+ intmax_t x = INTMAX_MAX; (void) x;
+ 
+@@ -6452,7 +6452,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ #include <fenv.h>
+ int
+-main (void)
++main ()
+ {
+ fesetround(FE_TONEAREST);
+   ;
+@@ -6735,7 +6735,7 @@ char *lower  = "abcdefghijklmnopqrstuvwxyz";
+ char *upper  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+  int i;
+@@ -6779,7 +6779,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ static int f (double (*func)(double)) { return 0; }
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+  return f(round);
+@@ -6812,7 +6812,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ static int f (double (*func)(double)) { return 0; }
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+  return f(trunc);
+@@ -6845,7 +6845,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ static int f (double (*func)(double)) { return 0; }
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+  return f(floor);
+@@ -6878,7 +6878,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ static int f (double (*func)(double)) { return 0; }
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+  return f(ceil);
+@@ -6911,7 +6911,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ static int f (double (*func)(double)) { return 0; }
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+  return f(nearbyint);
+@@ -7418,7 +7418,7 @@ extern "C"
+ #endif
+ char clock_gettime ();
+ int
+-main (void)
++main ()
+ {
+ return clock_gettime ();
+   ;
+@@ -8626,6 +8626,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+@@ -8973,7 +8977,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -9920,7 +9924,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -10644,7 +10648,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -12820,7 +12824,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -12873,7 +12877,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -14332,7 +14336,7 @@ else
+ /* end confdefs.h.  */
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -14487,6 +14491,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -14798,7 +14813,7 @@ extern "C"
+ #endif
+ char dlopen ();
+ int
+-main (void)
++main ()
+ {
+ return dlopen ();
+   ;
+@@ -14859,7 +14874,7 @@ extern "C"
+ #endif
+ char shl_load ();
+ int
+-main (void)
++main ()
+ {
+ return shl_load ();
+   ;
+@@ -14902,7 +14917,7 @@ extern "C"
+ #endif
+ char dlopen ();
+ int
+-main (void)
++main ()
+ {
+ return dlopen ();
+   ;
+@@ -14941,7 +14956,7 @@ extern "C"
+ #endif
+ char dlopen ();
+ int
+-main (void)
++main ()
+ {
+ return dlopen ();
+   ;
+@@ -14980,7 +14995,7 @@ extern "C"
+ #endif
+ char dld_link ();
+ int
+-main (void)
++main ()
+ {
+ return dld_link ();
+   ;
+@@ -15414,7 +15429,7 @@ error
+ #endif
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -15442,7 +15457,7 @@ error
+ #endif
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -15474,7 +15489,7 @@ else
+ /* end confdefs.h.  */
+ typedef int SItype __attribute__ ((mode (SI)));
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -15532,7 +15547,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ #include "gmp.h"
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   ;
+@@ -15596,7 +15611,7 @@ else
+ #include "gmp.h"
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   if (GMP_NUMB_BITS == sizeof(mp_limb_t) * CHAR_BIT)
+@@ -15646,7 +15661,7 @@ extern "C"
+ #endif
+ char __gmpz_init ();
+ int
+-main (void)
++main ()
+ {
+ return __gmpz_init ();
+   ;
+@@ -15690,7 +15705,7 @@ else
+ #include "gmp.h"
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   char buffer[100];
+@@ -15729,7 +15744,7 @@ else
+ #include <gmp.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   fprintf (stderr, "GMP_NAIL_BITS     = %d\n", (int) GMP_NAIL_BITS);
+@@ -15792,7 +15807,7 @@ else
+ #include <gmp.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   double d;
+@@ -15860,7 +15875,7 @@ else
+ #include <gmp.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   char s[256];
+@@ -15910,7 +15925,7 @@ else
+ #include <gmp.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   char s[256];
+@@ -15959,7 +15974,7 @@ else
+ #include <gmp.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   char s[256];
+@@ -16008,7 +16023,7 @@ else
+ #include <gmp.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   char s[256];
+@@ -16062,7 +16077,7 @@ else
+ #include <gmp.h>
+ 
+ int
+-main (void)
++main ()
+ {
+ 
+   char s[256];
+diff --git a/mpfr-3.1.4/m4/libtool.m4 b/mpfr-3.1.4/m4/libtool.m4
+index 7b7e69cfd..72f685785 100644
+--- a/mpfr-3.1.4/m4/libtool.m4
++++ b/mpfr-3.1.4/m4/libtool.m4
+@@ -2996,6 +2996,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
++  soname_spec='$libname$release$shared_ext$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -3592,6 +3603,10 @@ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;

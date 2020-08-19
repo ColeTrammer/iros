@@ -21,11 +21,6 @@ if [ ! -e gcc-9.2.0 ]; then
     cd gcc-9.2.0
     git init
     git apply ../gcc-os_2-9.2.0.patch
-
-    cd libstdc++-v3
-    autoconf
-    cd ..
-
     git apply ../gcc-os_2-9.2.0-customization.patch
     cd ..
 fi

@@ -3,9 +3,11 @@
 export PORT_NAME=gcc
 export SRC_DIR='gcc-9.2.0'
 export BUILD_DIR='build-gcc'
-export INSTALL_COMMAND="${INSTALL_COMMAND:-install-strip-gcc install-strip-target-libgcc install-strip-target-libstdc++-v3}"
+export INSTALL_COMMAND="${INSTALL_COMMAND:-install-gcc install-target-libgcc install-target-libstdc++-v3}"
 export AUTO_CONF_OPTS='ac_cv_c_bigendian=no'
 export MAKE_ARGS="$AUTO_CONF_OPTS"
+export CFLAGS='-O2 -fno-omit-frame-pointer'
+export CXXFLAGS='-O2 -fno-omit-frame-pointer'
 
 download() {
     # Download tar.gz
@@ -16,17 +18,13 @@ download() {
 }
 
 patch() {
-    ./contrib/download_prerequisites
     git init
-    git apply ../gcc-deps.patch
     git apply ../../../toolchain/gcc-9.2.0/gcc-os_2-9.2.0.patch
-
-    cd libstdc++-v3
-    autoconf
-    cd ..
-
     git apply ../../../toolchain/gcc-9.2.0/gcc-9.2.0-customizations.patch
 
+    ./contrib/download_prerequisites
+    git apply ../gcc-deps.patch
+    git apply ../gcc-deps-libtool.patch
 }
 
 configure() {
@@ -40,7 +38,9 @@ configure() {
         --with-sysroot=/ \
         --with-build-sysroot="$ROOT/sysroot" \
         --enable-languages=c,c++ \
-        --enable-shared
+        --enable-shared \
+        --enable-host-shared \
+        --with-system-zlib
 }
 
 build() {
