@@ -43,12 +43,12 @@ int net_inet_bind(struct socket *socket, const struct sockaddr *addr, socklen_t 
 
     uint16_t source_port = PORT_FROM_SOCKADDR(addr);
     if (source_port == 0) {
-        int ret = net_bind_to_ephemeral_port(socket->id, &source_port);
+        int ret = net_bind_to_ephemeral_port(socket, &source_port);
         if (ret < 0) {
             return ret;
         }
     } else {
-        int ret = net_bind_to_port(socket->id, source_port);
+        int ret = net_bind_to_port(socket, source_port);
         if (ret < 0) {
             return ret;
         }

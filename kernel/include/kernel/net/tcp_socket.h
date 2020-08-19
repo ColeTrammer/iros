@@ -14,7 +14,7 @@ struct ip_v4_and_port {
 struct tcp_socket_mapping {
     struct ip_v4_and_port key;
     struct hash_entry hash;
-    unsigned long socket_id;
+    struct socket *socket;
 };
 
 struct tcp_control_block {

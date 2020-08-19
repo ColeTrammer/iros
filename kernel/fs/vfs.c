@@ -1206,7 +1206,7 @@ int fs_unlink(const char *path, bool ignore_permission_checks) {
     }
 
     // Can't remove a unix socket that is being currently being used
-    if (tnode->inode->socket_id != 0) {
+    if (tnode->inode->socket != NULL) {
         drop_tnode(tnode);
         return -EBUSY;
     }
@@ -2083,9 +2083,9 @@ int fs_link(const char *oldpath, const char *newpath) {
 // NOTE: we don't have to write out to disk, because we only loose info
 //       stored on the inode after rebooting, and at that point, the binding
 //       task will no longer exist.
-int fs_bind_socket_to_inode(struct inode *inode, unsigned long socket_id) {
+int fs_bind_socket_to_inode(struct inode *inode, struct socket *socket) {
     assert(inode->flags & FS_SOCKET && S_ISSOCK(inode->mode));
-    inode->socket_id = socket_id;
+    inode->socket = socket;
 
     return 0;
 }
@@ -2185,10 +2185,7 @@ char *get_tnode_path(struct tnode *tnode) {
 
 bool fs_is_readable(struct file *file) {
     if (file->flags & FS_SOCKET) {
-        struct socket_file_data *file_data = file->private_data;
-        struct socket *socket = net_get_socket_by_id(file_data->socket_id);
-        assert(socket);
-
+        struct socket *socket = file->private_data;
         return socket->readable;
     }
 
@@ -2207,8 +2204,7 @@ bool fs_is_readable(struct file *file) {
 
 bool fs_is_writable(struct file *file) {
     if (file->flags & FS_SOCKET) {
-        struct socket_file_data *file_data = file->private_data;
-        struct socket *socket = net_get_socket_by_id(file_data->socket_id);
+        struct socket *socket = file->private_data;
         assert(socket);
 
         return socket->writable;
@@ -2229,8 +2225,7 @@ bool fs_is_writable(struct file *file) {
 
 bool fs_is_exceptional(struct file *file) {
     if (file->flags & FS_SOCKET) {
-        struct socket_file_data *file_data = file->private_data;
-        struct socket *socket = net_get_socket_by_id(file_data->socket_id);
+        struct socket *socket = file->private_data;
         assert(socket);
 
         return socket->exceptional;

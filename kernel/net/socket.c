@@ -27,24 +27,18 @@
 
 // #define SOCKET_DEBUG
 
-static unsigned long socket_id_next = 1;
-static spinlock_t id_lock = SPINLOCK_INITIALIZER;
-
 static struct list_node protocol_list = INIT_LIST(protocol_list);
+static struct list_node socket_list = INIT_LIST(socket_list);
 
-static struct hash_map *map;
-HASH_DEFINE_FUNCTIONS(socket, struct socket, unsigned long, id)
+struct list_node *net_get_socket_list(void) {
+    return &socket_list;
+}
 
 struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data) {
-    spin_lock(&id_lock);
-    unsigned long socket_id = socket_id_next++;
-    spin_unlock(&id_lock);
-
     struct socket *socket = calloc(1, sizeof(struct socket));
     socket->domain = domain;
     socket->type = type;
     socket->protocol = protocol;
-    socket->id = socket_id;
     socket->recv_timeout = (struct timeval) { 10, 0 };
     socket->send_timeout = (struct timeval) { 10, 0 };
     socket->writable = true;
@@ -55,8 +49,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
     socket->op = op;
     socket->private_data = private_data;
     init_mutex(&socket->lock);
-
-    hash_put(map, &socket->hash);
+    list_append(&socket_list, &socket->socket_list);
     return socket;
 }
 
@@ -73,7 +66,7 @@ void net_destroy_socket(struct socket *socket) {
         to_remove = next;
     }
 
-    hash_del(map, &socket->id);
+    list_remove(&socket->socket_list);
     free(socket);
 }
 
@@ -341,14 +334,6 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
     return 0;
 }
 
-struct socket *net_get_socket_by_id(unsigned long id) {
-    return hash_get_entry(map, &id, struct socket);
-}
-
-void net_for_each_socket(void (*f)(struct hash_entry *socket, void *data), void *data) {
-    hash_for_each(map, (void (*)(struct hash_entry *, void *)) f, data);
-}
-
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data) {
     mutex_lock(&to_send->lock);
     insque(socket_data, to_send->data_tail);
@@ -397,7 +382,6 @@ void net_register_protocol(struct socket_protocol *protocol) {
 }
 
 void init_net_sockets() {
-    map = hash_create_hash_map(socket_hash, socket_equals, socket_key);
     init_unix_sockets();
     init_inet_sockets();
 }

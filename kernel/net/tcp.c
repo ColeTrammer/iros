@@ -97,8 +97,7 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
 
             mutex_lock(&socket->lock);
             if (socket->num_pending >= socket->pending_length) {
-                debug_log("Socket has too many connections already: [ %lu, %d, %d ]\n", socket->id, socket->num_pending,
-                          socket->pending_length);
+                debug_log("Socket has too many connections already: [ %p, %d, %d ]\n", socket, socket->num_pending, socket->pending_length);
                 mutex_unlock(&socket->lock);
                 free(connection);
                 return;
@@ -108,7 +107,7 @@ void net_tcp_recieve(const struct tcp_packet *packet, size_t len) {
             socket->readable = true;
             mutex_unlock(&socket->lock);
 
-            debug_log("Recived a connection request to socket: [ %lu ]\n", socket->id);
+            debug_log("Recived a connection request to socket: [ %p ]\n", socket);
             return;
         }
         return;

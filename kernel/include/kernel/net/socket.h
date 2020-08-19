@@ -49,7 +49,7 @@ struct socket_connection {
         struct sockaddr_in in;
     } addr;
     socklen_t addrlen;
-    unsigned long connect_to_id;
+    struct socket *connect_to;
     uint32_t ack_num;
 };
 
@@ -70,8 +70,7 @@ struct socket {
 
     enum socket_state state;
 
-    unsigned long id;
-    struct hash_entry hash;
+    struct list_node socket_list;
 
     struct socket_connection **pending;
     int pending_length;
@@ -112,10 +111,7 @@ struct socket {
     void *private_data;
 };
 
-struct socket_file_data {
-    unsigned long socket_id;
-};
-
+struct list_node *net_get_socket_list(void);
 struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data);
 void net_destroy_socket(struct socket *socket);
 struct socket *net_get_socket_by_id(unsigned long id);
@@ -139,6 +135,8 @@ void net_register_protocol(struct socket_protocol *protocol);
 void init_net_sockets();
 
 #define net_for_each_protocol(name) list_for_each_entry(net_get_protocol_list(), name, struct socket_protocol, list)
+
+#define net_for_each_socket(name) list_for_each_entry(net_get_socket_list(), name, struct socket, socket_list)
 
 #define NET_READ_SOCKOPT(type, optval, optlen) \
     ({                                         \

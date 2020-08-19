@@ -65,7 +65,7 @@ static void *ip_v4_and_port_key(struct hash_entry *m) {
 static void create_tcp_socket_mapping(struct socket *socket) {
     struct tcp_socket_mapping *mapping = calloc(1, sizeof(struct tcp_socket_mapping));
     mapping->key = (struct ip_v4_and_port) { PORT_FROM_SOCKADDR(&socket->peer_address), IP_V4_FROM_SOCKADDR(&socket->peer_address) };
-    mapping->socket_id = socket->id;
+    mapping->socket = socket;
 
     hash_put(tcp_sender_map, &mapping->hash);
 }
@@ -76,7 +76,7 @@ static void create_tcp_socket_mapping_for_source(struct socket *socket) {
 
     struct tcp_socket_mapping *mapping = calloc(1, sizeof(struct tcp_socket_mapping));
     mapping->key = (struct ip_v4_and_port) { source_port, source_ip };
-    mapping->socket_id = socket->id;
+    mapping->socket = socket;
 
     debug_log("Created a tcp mapping: [ %u, %u.%u.%u.%u ]\n", source_port, source_ip.addr[0], source_ip.addr[1], source_ip.addr[2],
               source_ip.addr[3]);
@@ -90,7 +90,7 @@ struct socket *net_get_tcp_socket_by_ip_v4_and_port(struct ip_v4_and_port tuple)
         return NULL;
     }
 
-    return net_get_socket_by_id(mapping->socket_id);
+    return mapping->socket;
 }
 
 struct socket *net_get_tcp_socket_server_by_ip_v4_and_port(struct ip_v4_and_port tuple) {
@@ -99,7 +99,7 @@ struct socket *net_get_tcp_socket_server_by_ip_v4_and_port(struct ip_v4_and_port
         return NULL;
     }
 
-    return net_get_socket_by_id(mapping->socket_id);
+    return mapping->socket;
 }
 
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
@@ -113,7 +113,7 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
         net_copy_sockaddr_to_user(&connection.addr.in, sizeof(struct sockaddr_in), addr, addrlen);
     }
 
-    debug_log("Creating connection: [ %lu ]\n", socket->id);
+    debug_log("Creating connection: [ %p ]\n", socket);
 
     int fd;
     struct socket *new_socket = net_create_socket_fd(AF_INET, (SOCK_STREAM & SOCK_TYPE_MASK) | flags, IPPROTO_TCP, &tcp_ops, &fd, NULL);
@@ -211,7 +211,7 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
 
     for (;;) {
         if (socket->state == CONNECTED) {
-            debug_log("Successfully connected socket: [ %lu ]\n", socket->id);
+            debug_log("Successfully connected socket: [ %p ]\n", socket);
             return 0;
         }
 

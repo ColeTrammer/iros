@@ -11,16 +11,6 @@
 #include <kernel/net/socket.h>
 #include <kernel/util/macros.h>
 
-static void icmp_for_each(struct hash_entry *_socket, void *_packet) {
-    struct socket *socket = hash_table_entry(_socket, struct socket);
-    struct ip_v4_packet *packet = _packet;
-    if (socket->protocol == IPPROTO_ICMP) {
-        size_t data_len = packet->length - sizeof(struct ip_v4_packet);
-        struct socket_data *data = net_inet_create_socket_data(packet, 0, (void *) packet->payload, data_len);
-        net_send_to_socket(socket, data);
-    }
-}
-
 void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
     if (len < sizeof(struct icmp_packet)) {
         debug_log("ICMP packet too small\n");
@@ -28,7 +18,14 @@ void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
     }
 
     if (packet->type == ICMP_TYPE_ECHO_REPLY) {
-        net_for_each_socket(icmp_for_each, container_of(packet, struct ip_v4_packet, payload));
+        net_for_each_socket(socket) {
+            struct ip_v4_packet *ip_packet = container_of(packet, struct ip_v4_packet, payload);
+            if (socket->protocol == IPPROTO_ICMP) {
+                size_t data_len = ip_packet->length - sizeof(struct ip_v4_packet);
+                struct socket_data *data = net_inet_create_socket_data(ip_packet, 0, packet, data_len);
+                net_send_to_socket(socket, data);
+            }
+        }
         return;
     }
 

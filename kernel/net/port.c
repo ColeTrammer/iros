@@ -13,22 +13,22 @@
 
 static struct hash_map *map;
 
-HASH_DEFINE_FUNCTIONS(port, struct port_to_socket_id, uint16_t, port)
+HASH_DEFINE_FUNCTIONS(port, struct port_to_socket, uint16_t, port)
 
 struct socket *net_get_socket_from_port(uint16_t port) {
-    struct port_to_socket_id *p = hash_get_entry(map, &port, struct port_to_socket_id);
+    struct port_to_socket *p = hash_get_entry(map, &port, struct port_to_socket);
     if (p == NULL) {
         return NULL;
     }
 
-    return net_get_socket_by_id(p->socket_id);
+    return p->socket;
 }
 
 static mutex_t port_search_lock = MUTEX_INITIALIZER;
 
-int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p) {
-    struct port_to_socket_id *p = malloc(sizeof(struct port_to_socket_id));
-    p->socket_id = socket_id;
+int net_bind_to_ephemeral_port(struct socket *socket, uint16_t *port_p) {
+    struct port_to_socket *p = malloc(sizeof(struct port_to_socket));
+    p->socket = socket;
 
     mutex_lock(&port_search_lock);
 
@@ -38,7 +38,7 @@ int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p) {
             hash_put(map, &p->hash);
             mutex_unlock(&port_search_lock);
 
-            debug_log("Bound socket to ephemeral port: [ %lu, %u ]\n", socket_id, port);
+            debug_log("Bound socket to ephemeral port: [ %p, %u ]\n", socket, port);
 
             *port_p = port;
             return 0;
@@ -49,9 +49,9 @@ int net_bind_to_ephemeral_port(unsigned long socket_id, uint16_t *port_p) {
     return -EADDRINUSE;
 }
 
-int net_bind_to_port(unsigned long socket_id, uint16_t port) {
-    struct port_to_socket_id *p = malloc(sizeof(struct port_to_socket_id));
-    p->socket_id = socket_id;
+int net_bind_to_port(struct socket *socket, uint16_t port) {
+    struct port_to_socket *p = malloc(sizeof(struct port_to_socket));
+    p->socket = socket;
     p->port = port;
 
     mutex_lock(&port_search_lock);
@@ -69,7 +69,7 @@ int net_bind_to_port(unsigned long socket_id, uint16_t port) {
 }
 
 void net_unbind_port(uint16_t port) {
-    struct port_to_socket_id *p = hash_del_entry(map, &port, struct port_to_socket_id);
+    struct port_to_socket *p = hash_del_entry(map, &port, struct port_to_socket);
     free(p);
 }
 

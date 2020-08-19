@@ -16,11 +16,7 @@ static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_
 static struct file_operations socket_file_ops = { .close = socket_file_close, .read = net_read, .write = net_write };
 
 static struct socket *socket_from_file(struct file *file) {
-    struct socket_file_data *data = file->private_data;
-    assert(data);
-    struct socket *socket = net_get_socket_by_id(data->socket_id);
-    assert(socket);
-    return socket;
+    return file->private_data;
 }
 
 static int socket_file_close(struct file *file) {
@@ -59,11 +55,8 @@ struct socket *net_create_socket_fd(int domain, int type, int protocol, struct s
 
     for (int i = 0; i < FOPEN_MAX; i++) {
         if (current->process->files[i].file == NULL) {
-            struct socket_file_data *file_data = malloc(sizeof(struct socket_file_data));
-            current->process->files[i].file = fs_create_file(NULL, FS_SOCKET, FS_FILE_CANT_SEEK, O_RDWR, &socket_file_ops, file_data);
+            current->process->files[i].file = fs_create_file(NULL, FS_SOCKET, FS_FILE_CANT_SEEK, O_RDWR, &socket_file_ops, socket);
             current->process->files[i].fd_flags = (type & SOCK_CLOEXEC) ? FD_CLOEXEC : 0;
-
-            file_data->socket_id = socket->id;
 
             *fd = i;
             return socket;

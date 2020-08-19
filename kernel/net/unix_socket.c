@@ -65,19 +65,14 @@ static int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen
         net_copy_sockaddr_to_user(&connection.addr.un, sizeof(struct sockaddr_un), addr, addrlen);
     }
 
-    struct unix_socket_data *new_data = calloc(1, sizeof(struct unix_socket_data));
-    new_socket->private_data = new_data;
     net_set_host_address(new_socket, &socket->host_address, sizeof(struct sockaddr_un));
-    new_data->connected_id = connection.connect_to_id;
 
-    struct socket *connect_to = net_get_socket_by_id(new_data->connected_id);
+    struct socket *connect_to = connection.connect_to;
     assert(connect_to);
+    new_socket->private_data = connect_to;
 
     mutex_lock(&connect_to->lock);
-
-    assert(connect_to->private_data);
-    struct unix_socket_data *connect_to_data = connect_to->private_data;
-    connect_to_data->connected_id = new_socket->id;
+    connect_to->private_data = new_socket;
     net_set_peer_address(new_socket, &socket->host_address, sizeof(struct sockaddr_un));
     connect_to->state = CONNECTED;
     mutex_unlock(&connect_to->lock);
@@ -92,7 +87,6 @@ static int net_unix_bind(struct socket *socket, const struct sockaddr *addr, soc
         return -EINVAL;
     }
 
-    struct unix_socket_data *data = calloc(1, sizeof(struct unix_socket_data));
     net_set_host_address(socket, addr, addrlen);
     char *path = PATH_FROM_SOCKADDR(&socket->host_address);
 
@@ -100,52 +94,45 @@ static int net_unix_bind(struct socket *socket, const struct sockaddr *addr, soc
     path[UNIX_PATH_MAX - 1] = '\0';
 
     if (iname(path, 0, NULL) == 0) {
-        free(data);
         return -EADDRINUSE;
     }
 
     int ret = 0;
     struct tnode *tnode = fs_mknod(path, S_IFSOCK | 0666, 0, &ret);
     if (ret < 0) {
-        free(data);
         return ret;
     }
 
     struct inode *inode = tnode->inode;
     drop_tnode(tnode);
-    ret = fs_bind_socket_to_inode(inode, socket->id);
+    ret = fs_bind_socket_to_inode(inode, socket);
     if (ret == -1) {
-        free(data);
         return ret;
     }
 
     socket->state = BOUND;
-    socket->private_data = data;
     return 0;
 }
 
 static int net_unix_close(struct socket *socket) {
-    struct unix_socket_data *data = socket->private_data;
     if (socket->state == BOUND || socket->state == LISTENING) {
-        assert(data);
-
         struct tnode *tnode;
         assert(iname(PATH_FROM_SOCKADDR(&socket->host_address), 0, &tnode) == 0);
         assert(tnode);
 
-        tnode->inode->socket_id = 0;
+        tnode->inode->socket = NULL;
     }
 
     if (socket->state == CONNECTED) {
-        struct socket *connected_to = net_get_socket_by_id(data->connected_id);
+        struct socket *connected_to = socket->private_data;
         if (connected_to) {
             // We terminated the connection
             connected_to->readable = true;
             connected_to->state = CLOSED;
+            connected_to->private_data = NULL;
         }
     }
 
-    free(data);
     return 0;
 }
 
@@ -172,12 +159,12 @@ static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, 
         return -EACCES;
     }
 
-    if (inode->socket_id == 0) {
+    if (inode->socket == NULL) {
         // There is no socket bound to this inode
         return -ECONNREFUSED;
     }
 
-    struct socket *connect_to = net_get_socket_by_id(inode->socket_id);
+    struct socket *connect_to = inode->socket;
     assert(connect_to);
 
     mutex_lock(&connect_to->lock);
@@ -194,16 +181,13 @@ static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, 
     connection->addr.un.sun_family = AF_UNIX;
     memcpy(connection->addr.un.sun_path, path, addrlen - offsetof(struct sockaddr_un, sun_path));
     connection->addrlen = addrlen;
-    connection->connect_to_id = socket->id;
+    connection->connect_to = socket;
 
     connect_to->pending[connect_to->num_pending++] = connection;
     connect_to->readable = true;
 
     mutex_lock(&socket->lock);
     mutex_unlock(&connect_to->lock);
-
-    socket->private_data = calloc(1, sizeof(struct unix_socket_data));
-    assert(socket->private_data);
 
     for (;;) {
         enum socket_state state = socket->state;
@@ -261,33 +245,23 @@ static int net_unix_socket(int domain, int type, int protocol) {
 }
 
 static int net_unix_socketpair(int domain, int type, int protocol, int *fds) {
-    struct unix_socket_data *d1 = calloc(1, sizeof(struct unix_socket_data));
-    struct unix_socket_data *d2 = calloc(1, sizeof(struct unix_socket_data));
-    if (!d1 || !d2) {
-        free(d1);
-        free(d2);
-        return -ENOMEM;
-    }
-
     int fd1;
-    struct socket *s1 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd1, d1);
+    struct socket *s1 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd1, NULL);
     if (!s1) {
         return fd1;
     }
 
     int fd2;
-    struct socket *s2 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd2, d2);
+    struct socket *s2 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd2, s1);
     if (!s2) {
         fs_close(get_current_process()->files[fd1].file);
         get_current_process()->files[fd1].file = NULL;
         return fd2;
     }
+    s2->private_data = s1;
 
     s1->state = CONNECTED;
     s2->state = CONNECTED;
-
-    d1->connected_id = s2->id;
-    d2->connected_id = s1->id;
 
     fds[0] = fd1;
     fds[1] = fd2;
@@ -311,10 +285,7 @@ static ssize_t net_unix_sendto(struct socket *socket, const void *buf, size_t le
     socket_data->len = len;
 
     // FIXME: this seems very prone to data races when connections close
-    struct unix_socket_data *data = socket->private_data;
-    assert(data);
-
-    struct socket *to_send = net_get_socket_by_id(data->connected_id);
+    struct socket *to_send = socket->private_data;
     if (to_send == NULL) {
         free(socket_data);
         return -ECONNABORTED;
