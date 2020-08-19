@@ -34,6 +34,7 @@ typedef int pthread_t;
 #include <kernel/hal/output.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/stats.h>
 
 int errno = 0;
 
@@ -196,6 +197,10 @@ void free(void *p) {
     CLEAR_ALLOCATED(block);
     last_allocated = NULL;
 
+#ifdef __is_libk
+    g_kmalloc_stats.free_count++;
+#endif /* __is_libk */
+
 #ifdef MALLOC_SCRUB_FREE
     memset(block + 1, FREE_SCRUB_BITS, GET_SIZE(block));
 #endif /* MALLOC_SCRUB_FREE */
@@ -283,6 +288,10 @@ __attribute__((weak)) void *aligned_alloc(size_t alignment, size_t n) {
                 if (GET_SIZE(block) >= n) {
                     SET_ALLOCATED(block);
 
+#ifdef __is_libk
+                    g_kmalloc_stats.alloc_count++;
+#endif /* __is_libk */
+
                     __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
@@ -340,6 +349,10 @@ __attribute__((weak)) void *aligned_alloc(size_t alignment, size_t n) {
     debug_log("~Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(new_block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
+#ifdef __is_libk
+    g_kmalloc_stats.alloc_count++;
+#endif /* __is_libk */
+
     __unlock(&__malloc_lock);
 
     __malloc_debug("aligned_alloc: [ %lu, %lu, %p ]\n", alignment, n, new_block + 1);
@@ -394,6 +407,10 @@ void *malloc(size_t n) {
         start->magic = __MALLOC_MAGIG_CHECK;
         start = PREV_BLOCK(start);
 
+#ifdef __is_libk
+        g_kmalloc_stats.alloc_count++;
+#endif /* __is_libk */
+
         __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
@@ -415,6 +432,10 @@ void *malloc(size_t n) {
         if (!IS_ALLOCATED(block) && GET_SIZE(block) >= n && ((uintptr_t)(block + 1)) % PAGE_SIZE != 0) {
             SET_ALLOCATED(block);
             last_allocated = block;
+
+#ifdef __is_libk
+            g_kmalloc_stats.alloc_count++;
+#endif /* __is_libk */
 
             __unlock(&__malloc_lock);
 
@@ -448,6 +469,10 @@ void *malloc(size_t n) {
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
     debug_log("~Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t)(block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
+
+#ifdef __is_libk
+    g_kmalloc_stats.alloc_count++;
+#endif /* __is_libk */
 
     __unlock(&__malloc_lock);
 

@@ -24,6 +24,7 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/elf64.h>
+#include <kernel/proc/stats.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/hash_map.h>
@@ -505,6 +506,18 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_cpus(struct procfs_da
     return (struct procfs_buffer) { buffer, length };
 }
 
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_kheap(struct procfs_data *data __attribute((unused)),
+                                                                 struct process *process __attribute__((unused)), bool need_buffer) {
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+    size_t length =
+        snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
+                 "ALLOC: %lu\n"
+                 "FREE: %lu\n"
+                 "DELTA: %lu\n",
+                 g_kmalloc_stats.alloc_count, g_kmalloc_stats.free_count, g_kmalloc_stats.alloc_count - g_kmalloc_stats.free_count);
+    return (struct procfs_buffer) { buffer, length };
+}
+
 static void arp_for_each(struct hash_entry *_mapping, void *_buf) {
     struct ip_v4_to_mac_mapping *mapping = hash_table_entry(_mapping, struct ip_v4_to_mac_mapping);
     struct procfs_buffer *buf = _buf;
@@ -611,6 +624,10 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         data = cpus_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *kheap_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_kheap);
+        data = kheap_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
         struct inode *net_directory = procfs_create_inode(PROCFS_DIRECTORY_MODE, 0, 0, NULL, procfs_create_net_directory_structure);
         net_directory->dirent_cache = fs_create_dirent_cache();
 
@@ -618,6 +635,7 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         fs_put_dirent_cache(parent->dirent_cache, cpus_inode, "cpus", strlen("cpus"));
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));
         fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
+        fs_put_dirent_cache(parent->dirent_cache, kheap_inode, "kheap", strlen("kheap"));
         fs_put_dirent_cache(parent->dirent_cache, meminfo_inode, "meminfo", strlen("meminfo"));
         fs_put_dirent_cache(parent->dirent_cache, net_directory, "net", strlen("net"));
         mutex_unlock(&parent->lock);
