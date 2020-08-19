@@ -26,12 +26,8 @@ static int socket_file_close(struct file *file) {
     debug_log("Destroying socket: [ %lu ]\n", socket->id);
 #endif /* SOCKET_DEBUG */
 
-    int ret = 0;
-    if (socket->op->close) {
-        socket->op->close(socket);
-    }
-    net_destroy_socket(socket);
-    return ret;
+    net_drop_socket(socket);
+    return 0;
 }
 
 static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len) {
@@ -63,7 +59,7 @@ struct socket *net_create_socket_fd(int domain, int type, int protocol, struct s
         }
     }
 
-    net_destroy_socket(socket);
+    net_drop_socket(socket);
     *fd = -EMFILE;
     return NULL;
 }

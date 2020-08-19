@@ -39,6 +39,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
     socket->domain = domain;
     socket->type = type;
     socket->protocol = protocol;
+    socket->ref_count = 1;
     socket->recv_timeout = (struct timeval) { 10, 0 };
     socket->send_timeout = (struct timeval) { 10, 0 };
     socket->writable = true;
@@ -53,7 +54,11 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
     return socket;
 }
 
-void net_destroy_socket(struct socket *socket) {
+static void net_destroy_socket(struct socket *socket) {
+    if (socket->op->close) {
+        socket->op->close(socket);
+    }
+
     for (int i = 0; i < socket->num_pending; i++) {
         free(socket->pending[i]);
     }
@@ -68,6 +73,18 @@ void net_destroy_socket(struct socket *socket) {
 
     list_remove(&socket->socket_list);
     free(socket);
+}
+
+struct socket *net_bump_socket(struct socket *socket) {
+    atomic_fetch_add(&socket->ref_count, 1);
+    return socket;
+}
+
+void net_drop_socket(struct socket *socket) {
+    int fetched_ref_count = atomic_fetch_sub(&socket->ref_count, 1);
+    if (fetched_ref_count == 1) {
+        net_destroy_socket(socket);
+    }
 }
 
 struct socket_data *net_get_next_message(struct socket *socket, int *error) {

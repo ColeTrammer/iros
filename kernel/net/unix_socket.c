@@ -69,10 +69,10 @@ static int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen
 
     struct socket *connect_to = connection.connect_to;
     assert(connect_to);
-    new_socket->private_data = connect_to;
+    new_socket->private_data = net_bump_socket(connect_to);
 
     mutex_lock(&connect_to->lock);
-    connect_to->private_data = new_socket;
+    connect_to->private_data = net_bump_socket(new_socket);
     net_set_peer_address(new_socket, &socket->host_address, sizeof(struct sockaddr_un));
     connect_to->state = CONNECTED;
     mutex_unlock(&connect_to->lock);
@@ -129,7 +129,7 @@ static int net_unix_close(struct socket *socket) {
             // We terminated the connection
             connected_to->readable = true;
             connected_to->state = CLOSED;
-            connected_to->private_data = NULL;
+            net_drop_socket(connected_to);
         }
     }
 
@@ -252,13 +252,14 @@ static int net_unix_socketpair(int domain, int type, int protocol, int *fds) {
     }
 
     int fd2;
-    struct socket *s2 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd2, s1);
+    struct socket *s2 = net_create_socket_fd(domain, type, protocol, &unix_ops, &fd2, net_bump_socket(s1));
     if (!s2) {
+        net_drop_socket(s2);
         fs_close(get_current_process()->files[fd1].file);
         get_current_process()->files[fd1].file = NULL;
         return fd2;
     }
-    s2->private_data = s1;
+    s2->private_data = net_bump_socket(s1);
 
     s1->state = CONNECTED;
     s2->state = CONNECTED;

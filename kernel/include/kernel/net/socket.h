@@ -67,6 +67,7 @@ struct socket {
     int domain;
     int type;
     int protocol;
+    int ref_count;
 
     enum socket_state state;
 
@@ -113,7 +114,8 @@ struct socket {
 
 struct list_node *net_get_socket_list(void);
 struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data);
-void net_destroy_socket(struct socket *socket);
+struct socket *net_bump_socket(struct socket *socket);
+void net_drop_socket(struct socket *socket);
 struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct hash_entry *socket, void *data), void *data);
 
