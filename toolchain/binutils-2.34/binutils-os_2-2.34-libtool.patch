@@ -1,0 +1,33 @@
+diff --git a/libtool.m4 b/libtool.m4
+index 43453005..95fe306d 100644
+--- a/libtool.m4
++++ b/libtool.m4
+@@ -2581,6 +2581,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux
+   need_lib_prefix=no
+@@ -3123,6 +3134,10 @@ osf3* | osf4* | osf5*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ rdos*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;

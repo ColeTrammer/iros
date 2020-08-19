@@ -24,6 +24,7 @@ if [ ! -e binutils-os_2-2.34 ]; then
     cd binutils-os_2-2.34
     git init
     git apply ../binutils-os_2-2.34.patch
+    git apply ../binutils-os_2-2.34-libtool.patch
     cd ..
 fi
 

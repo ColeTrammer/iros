@@ -19,7 +19,9 @@ configure() {
         --with-build-sysroot="$ROOT/sysroot" \
         --disable-werror \
         --disable-gdb \
-        --enable-shared
+        --enable-shared \
+        --enable-host-shared \
+        --with-system-zlib
 }
 
 . ../.build_include.sh
