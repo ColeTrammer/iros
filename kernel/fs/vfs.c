@@ -1182,8 +1182,12 @@ int fs_create_pipe(struct file *pipe_files[2]) {
     if (error != 0) {
         return error;
     }
+    // Passing O_NONBLOCK to open is a hack to make sure that the opening of the pipe does not
+    // block until the otherside is open (which it would do it were a named FIFO), since the
+    // other end of the pipe is about to be created.
+    pipe_files[0]->open_flags &= ~O_NONBLOCK;
 
-    pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY | O_NONBLOCK, &error);
+    pipe_files[1] = pipe_inode->i_op->open(pipe_inode, O_WRONLY, &error);
     if (error != 0) {
         fs_close(pipe_files[0]);
         return error;

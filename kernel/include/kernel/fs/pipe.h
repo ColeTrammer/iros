@@ -10,8 +10,10 @@
 
 struct pipe_data {
     char *buffer;
-    size_t len;
+    size_t head;
+    size_t tail;
     size_t max;
+    bool full;
 
     int read_count;
     int write_count;

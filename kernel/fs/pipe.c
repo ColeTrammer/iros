@@ -19,6 +19,8 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 
+// #define PIPE_DEBUG
+
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
@@ -56,10 +58,11 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     if (!data) {
         data = malloc(sizeof(struct pipe_data));
         data->buffer = NULL;
-        data->len = 0;
+        data->head = data->tail = 0;
         data->max = PIPE_DEFAULT_BUFFER_SIZE;
         data->read_count = 0;
         data->write_count = 0;
+        data->full = false;
         inode->pipe_data = data;
     }
 
@@ -122,11 +125,21 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     return file;
 }
 
+static size_t pipe_buffer_size(struct pipe_data *data) {
+    if (data->full) {
+        return data->max;
+    }
+    if (data->tail < data->head) {
+        return data->tail + data->max - data->head;
+    }
+    return data->tail - data->head;
+}
+
 ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     assert(offset == 0);
 
 #ifdef PIPE_DEBUG
-    debug_log("Reading from pipe: [ %lu, %lu ]\n", _len, file->position);
+    debug_log("Reading from pipe: [ %lu ]\n", _len);
 #endif /* PIPE_DEBUG */
 
     struct inode *inode = fs_file_inode(file);
@@ -134,20 +147,31 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     struct pipe_data *data = inode->pipe_data;
     assert(data);
 
-    size_t len = MIN(_len, data->len - file->position);
+again:
+    mutex_lock(&inode->lock);
+    size_t len = MIN(_len, pipe_buffer_size(data));
     if (len == 0 && (is_pipe_write_end_open(data) || inode->fsid != PIPE_DEVICE)) {
+        mutex_unlock(&inode->lock);
         int ret = proc_block_until_inode_is_readable(get_current_task(), inode);
         if (ret) {
             return ret;
         }
-        len = MIN(_len, data->len - file->position);
+        goto again;
     }
 
-    mutex_lock(&inode->lock);
-    memcpy(buffer, data->buffer + file->position, len);
-    file->position += len;
+    if (data->head + len > data->max) {
+        size_t length_to_end = data->max - data->head;
+        memcpy(buffer, data->buffer + data->head, length_to_end);
+        memcpy(buffer + length_to_end, data->buffer, len - length_to_end);
+    } else {
+        memcpy(buffer, data->buffer + data->head, len);
+    }
 
-    if (file->position == (off_t) data->len) {
+    data->head += len;
+    data->head %= data->max;
+    data->full = false;
+    inode->writeable = true;
+    if (data->head == data->tail) {
         inode->readable = false;
     }
 
@@ -157,14 +181,14 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 
 ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t len) {
     assert(offset == 0);
+
 #ifdef PIPE_DEBUG
-    debug_log("Writing to pipe: [ %lu, %lu ]\n", len, file->position);
+    debug_log("Writing to pipe: [ %lu ]\n", len);
 #endif /* PIPE_DEBUG */
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
     struct pipe_data *data = inode->pipe_data;
-    assert(file->position == (off_t) data->len);
     assert(data);
 
     mutex_lock(&inode->lock);
@@ -175,24 +199,43 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
         return -EPIPE;
     }
 
-    if (data->max < file->position + len) {
-        data->max = MAX(data->max * 2, file->position + len);
-        data->buffer = realloc(data->buffer, data->max);
+    size_t buffer_index = 0;
+    while (buffer_index < len) {
+        size_t space_available = data->max - pipe_buffer_size(data);
+        if (!space_available) {
+            if (file->open_flags & O_NONBLOCK) {
+                mutex_unlock(&inode->lock);
+                return buffer_index == 0 ? -EAGAIN : (ssize_t) buffer_index;
+            }
+            mutex_unlock(&inode->lock);
+            int ret = proc_block_until_inode_is_writable(get_current_task(), inode);
+            if (ret) {
+                return ret;
+            }
+            mutex_lock(&inode->lock);
+            continue;
+        }
+
+        size_t amount_to_write = MIN(space_available, len - buffer_index);
+        if (data->tail + amount_to_write > data->max) {
+            size_t length_to_end = data->max - data->tail;
+            memcpy(data->buffer + data->tail, buffer + buffer_index, length_to_end);
+            memcpy(data->buffer, buffer + buffer_index + length_to_end, amount_to_write - length_to_end);
+        } else {
+            memcpy(data->buffer + data->tail, buffer + buffer_index, amount_to_write);
+        }
+
+        buffer_index += amount_to_write;
+        data->tail += amount_to_write;
+        data->tail %= data->max;
+        data->full = data->head == data->tail;
+        inode->readable = true;
+        inode->writeable = !data->full;
+        inode->modify_time = time_read_clock(CLOCK_REALTIME);
     }
 
-    // Now there is something to read from
-    inode->readable = true;
-
-    memcpy(data->buffer + file->position, buffer, len);
-
-    data->len += len;
-    file->position += len;
-
-    inode->modify_time = time_read_clock(CLOCK_REALTIME);
-
     mutex_unlock(&inode->lock);
-
-    return len;
+    return buffer_index;
 }
 
 static void free_pipe_data(struct inode *inode) {
