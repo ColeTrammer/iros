@@ -57,18 +57,15 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     mutex_lock(&inode->lock);
     if (!data) {
         data = malloc(sizeof(struct pipe_data));
-        data->buffer = NULL;
-        data->head = data->tail = 0;
-        data->max = PIPE_DEFAULT_BUFFER_SIZE;
+        init_ring_buffer(&data->buffer, PIPE_DEFAULT_BUFFER_SIZE);
         data->read_count = 0;
         data->write_count = 0;
-        data->full = false;
         inode->pipe_data = data;
     }
 
     if (file->abilities & FS_FILE_CAN_WRITE) {
-        if (data->buffer == NULL) {
-            data->buffer = malloc(data->max);
+        if (ring_buffer_dead(&data->buffer)) {
+            init_ring_buffer(&data->buffer, PIPE_DEFAULT_BUFFER_SIZE);
         }
 
         if (data->write_count++ == 0) {
@@ -125,16 +122,6 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     return file;
 }
 
-static size_t pipe_buffer_size(struct pipe_data *data) {
-    if (data->full) {
-        return data->max;
-    }
-    if (data->tail < data->head) {
-        return data->tail + data->max - data->head;
-    }
-    return data->tail - data->head;
-}
-
 ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
     assert(offset == 0);
 
@@ -149,7 +136,7 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 
 again:
     mutex_lock(&inode->lock);
-    size_t len = MIN(_len, pipe_buffer_size(data));
+    size_t len = MIN(_len, ring_buffer_size(&data->buffer));
     if (len == 0 && (is_pipe_write_end_open(data) || inode->fsid != PIPE_DEVICE)) {
         mutex_unlock(&inode->lock);
         int ret = proc_block_until_inode_is_readable(get_current_task(), inode);
@@ -159,19 +146,10 @@ again:
         goto again;
     }
 
-    if (data->head + len > data->max) {
-        size_t length_to_end = data->max - data->head;
-        memcpy(buffer, data->buffer + data->head, length_to_end);
-        memcpy(buffer + length_to_end, data->buffer, len - length_to_end);
-    } else {
-        memcpy(buffer, data->buffer + data->head, len);
-    }
+    ring_buffer_user_read(&data->buffer, buffer, len);
 
-    data->head += len;
-    data->head %= data->max;
-    data->full = false;
     inode->writeable = true;
-    if (data->head == data->tail) {
+    if (ring_buffer_empty(&data->buffer)) {
         inode->readable = false;
     }
 
@@ -201,7 +179,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
 
     size_t buffer_index = 0;
     while (buffer_index < len) {
-        size_t space_available = data->max - pipe_buffer_size(data);
+        size_t space_available = ring_buffer_space(&data->buffer);
         if (!space_available) {
             if (file->open_flags & O_NONBLOCK) {
                 mutex_unlock(&inode->lock);
@@ -217,20 +195,10 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
         }
 
         size_t amount_to_write = MIN(space_available, len - buffer_index);
-        if (data->tail + amount_to_write > data->max) {
-            size_t length_to_end = data->max - data->tail;
-            memcpy(data->buffer + data->tail, buffer + buffer_index, length_to_end);
-            memcpy(data->buffer, buffer + buffer_index + length_to_end, amount_to_write - length_to_end);
-        } else {
-            memcpy(data->buffer + data->tail, buffer + buffer_index, amount_to_write);
-        }
-
+        ring_buffer_user_write(&data->buffer, buffer + buffer_index, amount_to_write);
         buffer_index += amount_to_write;
-        data->tail += amount_to_write;
-        data->tail %= data->max;
-        data->full = data->head == data->tail;
         inode->readable = true;
-        inode->writeable = !data->full;
+        inode->writeable = !ring_buffer_full(&data->buffer);
         inode->modify_time = time_read_clock(CLOCK_REALTIME);
     }
 
@@ -247,7 +215,7 @@ static void free_pipe_data(struct inode *inode) {
     inode->pipe_data = NULL;
 
     if (data) {
-        free(data->buffer);
+        kill_ring_buffer(&data->buffer);
         free(data);
     }
 }

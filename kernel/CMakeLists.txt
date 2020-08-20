@@ -66,6 +66,7 @@ if (NOT ${NATIVE_BUILD})
         util/hash_map.c
         util/mutex.c
         util/random.c
+        util/ring_buffer.c
         util/spinlock.c
         util/validators.c
     )

@@ -4,17 +4,13 @@
 #include <sys/types.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
+#include <kernel/util/ring_buffer.h>
 
 #define PIPE_DEFAULT_BUFFER_SIZE 0x1000
 #define PIPE_DEVICE              3
 
 struct pipe_data {
-    char *buffer;
-    size_t head;
-    size_t tail;
-    size_t max;
-    bool full;
-
+    struct ring_buffer buffer;
     int read_count;
     int write_count;
 };
