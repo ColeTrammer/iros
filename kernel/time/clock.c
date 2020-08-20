@@ -99,9 +99,13 @@ void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds) {
     list_for_each_entry_safe(timer_list, timer, struct timer, clock_list) { time_tick_timer(timer, nanoseconds); }
 }
 
+void __time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
+    list_append(&clock->timer_list, &timer->clock_list);
+}
+
 void time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
     spin_lock(&clock->lock);
-    list_append(&clock->timer_list, &timer->clock_list);
+    __time_add_timer_to_clock(clock, timer);
     spin_unlock(&clock->lock);
 }
 

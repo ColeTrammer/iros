@@ -23,6 +23,9 @@ struct timer {
 
     struct clock *clock;
 
+    void (*kernel_callback)(struct timer *timer, void *closure);
+    void *kernel_callback_closure;
+
     struct itimerspec spec;
     int event_type;
     int overuns;
@@ -40,6 +43,11 @@ int time_delete_timer(struct timer *timer);
 int time_get_timer_overrun(struct timer *timer);
 int time_get_timer_value(struct timer *timer, struct itimerspec *valp);
 int time_set_timer(struct timer *timer, int flags, const struct itimerspec *new_spec, struct itimerspec *old);
+
+struct timer *time_register_kernel_callback(struct timespec *delay, void (*callback)(struct timer *timer, void *closure), void *closure);
+void __time_reset_kernel_callback(struct timer *timer, struct timespec *new_delay);
+void time_reset_kernel_callback(struct timer *timer, struct timespec *new_delay);
+void time_cancel_kernel_callback(struct timer *timer);
 
 void time_fire_timer(struct timer *timer);
 void time_tick_timer(struct timer *timer, long nanoseconds);

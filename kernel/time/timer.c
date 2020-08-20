@@ -102,10 +102,14 @@ int time_delete_timer(struct timer *timer) {
         time_remove_timer_from_clock(timer->clock, timer);
     }
 
-    list_remove(&timer->proc_list);
+    // Kernel timers don't have an ID, and instead of being own by a process, are managed by
+    // dedicated kernel data structures.
+    if (timer->id) {
+        list_remove(&timer->proc_list);
+        hash_del(timer_map, &timer->id);
+        free_timerid(timer->id);
+    }
 
-    hash_del(timer_map, &timer->id);
-    free_timerid(timer->id);
     free(timer);
     return 0;
 }
@@ -146,6 +150,33 @@ int time_set_timer(struct timer *timer, int flags, const struct itimerspec *new_
     return 0;
 }
 
+struct timer *time_register_kernel_callback(struct timespec *delay, void (*callback)(struct timer *timer, void *closure), void *closure) {
+    struct timer *timer = calloc(1, sizeof(struct timer));
+    timer->event_type = SIGEV_KERNEL;
+    timer->clock = time_get_clock(CLOCK_MONOTONIC);
+    timer->spec.it_value = *delay;
+    timer->kernel_callback = callback;
+    timer->kernel_callback_closure = closure;
+    time_add_timer_to_clock(timer->clock, timer);
+    return timer;
+}
+
+// This function is intended to be called from within the timer callback, when the corresponding
+// timer's clock's lock is already held.
+void __time_reset_kernel_callback(struct timer *timer, struct timespec *new_delay) {
+    timer->spec.it_value = *new_delay;
+    __time_add_timer_to_clock(timer->clock, timer);
+}
+
+void time_reset_kernel_callback(struct timer *timer, struct timespec *new_delay) {
+    struct itimerspec spec = { .it_value = *new_delay, .it_interval = { 0 } };
+    time_set_timer(timer, 0, &spec, NULL);
+}
+
+void time_cancel_kernel_callback(struct timer *timer) {
+    time_delete_timer(timer);
+}
+
 void time_fire_timer(struct timer *timer) {
     switch (timer->event_type) {
         case SIGEV_SIGNAL:
@@ -161,6 +192,8 @@ void time_fire_timer(struct timer *timer) {
             }
             break;
         case SIGEV_KERNEL:
+            assert(timer->kernel_callback);
+            timer->kernel_callback(timer, timer->kernel_callback_closure);
             break;
         case SIGEV_NONE:
             break;
@@ -176,14 +209,15 @@ void time_tick_timer(struct timer *timer, long nanoseconds) {
 
     // This means timer expired
     if (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0)) {
+        timer->spec.it_value.tv_sec = timer->spec.it_value.tv_nsec = 0;
         if (timer->spec.it_interval.tv_sec != 0 || timer->spec.it_interval.tv_nsec != 0) {
             do {
                 time_fire_timer(timer);
                 timer->spec.it_value = time_add(timer->spec.it_value, timer->spec.it_interval);
             } while (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0));
         } else {
-            time_fire_timer(timer);
             __time_remove_timer_from_clock(timer->clock, timer);
+            time_fire_timer(timer);
         }
     }
 }
