@@ -13,10 +13,8 @@
 static void net_send_dhcp(struct network_interface *interface, uint8_t message_type, struct mac_address our_mac_address,
                           struct ip_v4_address client_ip, struct ip_v4_address server_ip) {
     size_t dhcp_length = DHCP_MINIMUM_PACKET_SIZE;
-    struct ethernet_packet *packet = net_create_ethernet_packet(our_mac_address, MAC_BROADCAST, ETHERNET_TYPE_IPV4, dhcp_length);
-
-    struct ip_v4_packet *ip_packet = (struct ip_v4_packet *) packet->payload;
-    net_init_ip_v4_packet(ip_packet, 1, IP_V4_PROTOCOL_UDP, IP_V4_ZEROES, IP_V4_BROADCAST, dhcp_length - sizeof(struct ip_v4_packet));
+    struct ip_v4_packet *ip_packet =
+        net_create_ip_v4_packet(1, IP_V4_PROTOCOL_UDP, IP_V4_ZEROES, IP_V4_BROADCAST, NULL, dhcp_length - sizeof(struct ip_v4_packet));
 
     size_t udp_packet_length = dhcp_length - sizeof(struct ip_v4_packet);
     struct udp_packet *udp_packet = (struct udp_packet *) ip_packet->payload;
@@ -72,8 +70,8 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
 
     debug_log("Sending DHCP DISCOVER packet: [ %u ]\n", interface->config_context.xid);
 
-    assert(interface->ops->send(interface, packet, dhcp_length + sizeof(struct ethernet_packet)) > 0);
-    free(packet);
+    assert(interface->ops->send_ip_v4(interface, NULL, ip_packet, dhcp_length) == 0);
+    free(ip_packet);
 }
 
 void net_configure_interface_with_dhcp(struct network_interface *interface) {

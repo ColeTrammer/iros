@@ -10,6 +10,16 @@
 
 static struct hash_map *route_cache;
 
+static struct route_cache_entry loopback_route = {
+    .route_path = {
+        .local_ip_address = IP_V4_LOOPBACK,
+        .dest_ip_address = IP_V4_LOOPBACK,
+    },
+    .next_hop_address = IP_V4_LOOPBACK,
+    .hash = { 0 },
+    .ref_count = 1,
+};
+
 static unsigned int route_cache_entry_hash(void *_path, int num_buckets) {
     struct route_path *path = _path;
     return (path->local_ip_address.addr[0] + path->local_ip_address.addr[1] + path->local_ip_address.addr[2] +
@@ -44,6 +54,10 @@ struct ip_v4_address next_hop_for(struct network_interface *interface, struct ip
 }
 
 struct route_cache_entry *net_find_next_hop_gateway(struct network_interface *interface, struct ip_v4_address dest_address) {
+    if (interface->type == NETWORK_INTERFACE_LOOPBACK) {
+        return net_bump_route_cache_entry(&loopback_route);
+    }
+
     struct route_path path = { .local_ip_address = interface->address, .dest_ip_address = dest_address };
     struct route_cache_entry *entry = hash_get_entry(route_cache, &path, struct route_cache_entry);
     if (entry) {

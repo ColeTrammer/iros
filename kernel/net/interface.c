@@ -17,16 +17,14 @@ static void add_interface(struct network_interface *interface) {
     list_append(&interface_list, &interface->interface_list);
 }
 
-static void generic_recieve(struct network_interface *interface, const void *data, size_t len) {
+static void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len) {
     (void) interface;
-
-    net_on_incoming_packet(data, len);
+    net_on_incoming_ethernet_frame(frame, len);
 }
 
-static void generic_recieve_sync(struct network_interface *interface, const void *data, size_t len) {
+static void net_recieve_ip_v4_sync(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len) {
     (void) interface;
-
-    net_on_incoming_packet_sync(data, len);
+    net_ip_v4_recieve(packet, len);
 }
 
 struct list_node *net_get_interface_list(void) {
@@ -72,10 +70,10 @@ struct network_interface *net_create_network_interface(const char *name, int typ
     }
 
     assert(ops);
-    assert(!ops->recieve);
-    assert(!ops->recieve_sync);
-    ops->recieve = generic_recieve;
-    ops->recieve_sync = generic_recieve_sync;
+    assert(!ops->recieve_ethernet);
+    assert(!ops->recieve_ip_v4_sync);
+    ops->recieve_ethernet = net_recieve_ethernet;
+    ops->recieve_ip_v4_sync = net_recieve_ip_v4_sync;
 
     interface->ops = ops;
     interface->private_data = data;

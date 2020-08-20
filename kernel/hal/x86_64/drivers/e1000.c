@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,9 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/route_cache.h>
 
 static struct network_interface *interface = NULL;
 
@@ -92,9 +95,9 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
     return (uint16_t)((val >> 16) & 0xFFFF);
 }
 
-static ssize_t e1000_send(struct network_interface *this, const void *raw, size_t len) {
-    struct e1000_data *data = this->private_data;
-    assert(len < 8192);
+static int e1000_send(struct network_interface *self, struct mac_address dest_mac, uint16_t mac_type, const void *raw, size_t len) {
+    struct e1000_data *data = self->private_data;
+    assert(sizeof(struct ethernet_frame) + len < 8192);
 
 #ifdef KERNEL_E1000_DEBUG
     for (size_t i = 0; i < len; i++) {
@@ -106,9 +109,9 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
     debug_log("Sending over: %d\n", data->current_tx);
 #endif /* KERNEL_E1000_DEBUG */
 
-    memcpy(data->tx_virt_addrs[data->current_tx], raw, len);
+    net_init_ethernet_frame(data->tx_virt_addrs[data->current_tx], dest_mac, self->ops->get_mac_address(self), mac_type, raw, len);
 
-    data->tx_descs[data->current_tx].length = len;
+    data->tx_descs[data->current_tx].length = sizeof(struct ethernet_frame) + len;
     data->tx_descs[data->current_tx].status = 0;
     data->tx_descs[data->current_tx].cmd = E1000_CMD_EOP | E1000_CMD_IFCS | E1000_CMD_RS;
 
@@ -120,7 +123,28 @@ static ssize_t e1000_send(struct network_interface *this, const void *raw, size_
     while (!data->tx_descs[save_current_tx].status)
         ;
 
-    return len;
+    return 0;
+}
+
+static int e1000_send_arp(struct network_interface *self, struct mac_address dest_mac, const struct arp_packet *packet,
+                          size_t packet_length) {
+    return e1000_send(self, dest_mac, ETHERNET_TYPE_ARP, packet, packet_length);
+}
+
+static int e1000_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, const struct ip_v4_packet *packet,
+                            size_t packet_length) {
+    struct mac_address dest_mac = MAC_BROADCAST;
+    if (route) {
+        struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(route->next_hop_address);
+        if (!mapping) {
+            debug_log("No mac address found for ip: [ %d.%d.%d.%d ]\n", route->next_hop_address.addr[0], route->next_hop_address.addr[1],
+                      route->next_hop_address.addr[2], route->next_hop_address.addr[3]);
+            return -EHOSTUNREACH;
+        }
+        dest_mac = mapping->mac;
+    }
+
+    return e1000_send(self, dest_mac, ETHERNET_TYPE_IPV4, packet, packet_length);
 }
 
 static void e1000_recieve() {
@@ -130,7 +154,7 @@ static void e1000_recieve() {
         uint8_t *buf = data->rx_virt_addrs[data->current_rx];
         uint16_t len = data->rx_descs[data->current_rx].length;
 
-        interface->ops->recieve(interface, buf, len);
+        interface->ops->recieve_ethernet(interface, (const struct ethernet_frame *) buf, len);
 
         data->rx_descs[data->current_rx].status = 0;
 
@@ -173,7 +197,11 @@ static struct mac_address get_mac_address(struct network_interface *this) {
     return addr;
 }
 
-static struct network_interface_ops e1000_ops = { &e1000_send, NULL, NULL, &get_mac_address };
+static struct network_interface_ops e1000_ops = {
+    .send_arp = e1000_send_arp,
+    .send_ip_v4 = e1000_send_ip_v4,
+    .get_mac_address = get_mac_address,
+};
 
 static struct irq_handler e1000_handler = { .handler = &handle_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 

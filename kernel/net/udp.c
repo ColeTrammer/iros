@@ -16,7 +16,7 @@
 #include <kernel/net/udp.h>
 #include <kernel/util/macros.h>
 
-ssize_t net_send_udp_through_socket(struct socket *socket, const void *buf, size_t len, const struct sockaddr *dest) {
+int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t len, const struct sockaddr *dest) {
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(dest);
     uint16_t dest_port = PORT_FROM_SOCKADDR(dest);
@@ -31,30 +31,18 @@ ssize_t net_send_udp_through_socket(struct socket *socket, const void *buf, size
     return net_send_udp(interface, dest_ip, source_port, dest_port, len, buf);
 }
 
-ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
-                     const void *buf) {
+int net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
+                 const void *buf) {
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send UDP packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
     }
 
     struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
-    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(route->next_hop_address);
-    if (!router_mapping) {
-        debug_log("Can't send UDP packet; router mac to yet mapped\n");
-        net_drop_route_cache_entry(route);
-        return -ENETDOWN;
-    }
+    size_t total_length = sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
 
-    size_t total_length = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
-
-    struct ethernet_packet *packet = net_create_ethernet_packet(router_mapping->mac, interface->ops->get_mac_address(interface),
-                                                                ETHERNET_TYPE_IPV4, total_length - sizeof(struct ethernet_packet));
-    net_drop_route_cache_entry(route);
-
-    struct ip_v4_packet *ip_packet = (struct ip_v4_packet *) packet->payload;
-    net_init_ip_v4_packet(ip_packet, 1, IP_V4_PROTOCOL_UDP, interface->address, dest,
-                          total_length - sizeof(struct ethernet_packet) - sizeof(struct ip_v4_packet));
+    struct ip_v4_packet *ip_packet =
+        net_create_ip_v4_packet(1, IP_V4_PROTOCOL_UDP, interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
 
     struct udp_packet *udp_packet = (struct udp_packet *) ip_packet->payload;
     net_init_udp_packet(udp_packet, source_port, dest_port, len, buf);
@@ -66,10 +54,11 @@ ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address d
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
-    ssize_t ret = interface->ops->send(interface, packet, total_length);
+    int ret = interface->ops->send_ip_v4(interface, route, ip_packet, total_length);
+    free(ip_packet);
 
-    free(packet);
-    return ret < 0 ? ret : ret - (ssize_t) sizeof(struct ethernet_packet) - (ssize_t) sizeof(struct ip_v4_packet);
+    net_drop_route_cache_entry(route);
+    return ret;
 }
 
 void net_udp_recieve(const struct udp_packet *packet, size_t len) {

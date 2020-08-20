@@ -111,7 +111,7 @@ int net_inet_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t
 ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr, socklen_t addrlen) {
     (void) flags;
 
-    ssize_t ret = 0;
+    int ret = 0;
     mutex_lock(&socket->lock);
     if (!addr) {
         if (!socket->has_peer_address) {
@@ -131,7 +131,7 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
 
 done:
     mutex_unlock(&socket->lock);
-    return ret;
+    return ret ? ret : (ssize_t) len;
 }
 
 void init_inet_sockets() {

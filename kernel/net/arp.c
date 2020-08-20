@@ -13,15 +13,12 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
         return;
     }
 
-    struct ethernet_packet *packet =
-        net_create_ethernet_packet(MAC_BROADCAST, interface->ops->get_mac_address(interface), ETHERNET_TYPE_ARP, sizeof(struct arp_packet));
-
-    net_init_arp_packet((struct arp_packet *) packet->payload, ARP_OPERATION_REQUEST, interface->ops->get_mac_address(interface),
-                        interface->address, MAC_BROADCAST, ip_address);
+    struct arp_packet *packet = net_create_arp_packet(ARP_OPERATION_REQUEST, interface->ops->get_mac_address(interface), interface->address,
+                                                      MAC_BROADCAST, ip_address);
 
     debug_log("Sending ARP packet for: [ %u.%u.%u.%u ]\n", ip_address.addr[0], ip_address.addr[1], ip_address.addr[2], ip_address.addr[3]);
 
-    interface->ops->send(interface, packet, sizeof(struct ethernet_packet) + sizeof(struct arp_packet));
+    interface->ops->send_arp(interface, MAC_BROADCAST, packet, sizeof(struct arp_packet));
 
     free(packet);
 }
@@ -47,10 +44,15 @@ void net_arp_recieve(const struct arp_packet *packet, size_t len) {
     }
 }
 
+struct arp_packet *net_create_arp_packet(uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip, struct mac_address t_mac,
+                                         struct ip_v4_address t_ip) {
+    struct arp_packet *packet = malloc(sizeof(struct arp_packet));
+    net_init_arp_packet(packet, op, s_mac, s_ip, t_mac, t_ip);
+    return packet;
+}
+
 void net_init_arp_packet(struct arp_packet *packet, uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip,
                          struct mac_address t_mac, struct ip_v4_address t_ip) {
-    assert(packet);
-
     packet->hardware_type = htons(ARP_PROTOCOL_TYPE_ETHERNET);
     packet->protocol_type = htons(ARP_PROTOCOL_TYPE_IP_V4);
     packet->hardware_addr_len = sizeof(struct mac_address);

@@ -15,37 +15,24 @@
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
 
-ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len) {
+int net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len) {
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send IP V4 packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
     }
 
     struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
-    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(route->next_hop_address);
-    if (!router_mapping) {
-        debug_log("Can't send IP V4 packet; router mac to yet mapped\n");
-        net_drop_route_cache_entry(route);
-        return -ENETDOWN;
-    }
-
-    size_t total_size = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + len;
-
-    struct ethernet_packet *packet = net_create_ethernet_packet(router_mapping->mac, interface->ops->get_mac_address(interface),
-                                                                ETHERNET_TYPE_IPV4, total_size - sizeof(struct ethernet_packet));
-    net_drop_route_cache_entry(route);
+    size_t total_size = sizeof(struct ip_v4_packet) + len;
 
     struct ip_v4_address d = dest;
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
 
-    struct ip_v4_packet *ip_packet = (struct ip_v4_packet *) packet->payload;
-    net_init_ip_v4_packet(ip_packet, 1, protocol, interface->address, dest, len);
-    memcpy(ip_packet->payload, buf, len);
+    struct ip_v4_packet *ip_packet = net_create_ip_v4_packet(1, protocol, interface->address, dest, buf, len);
+    int ret = interface->ops->send_ip_v4(interface, route, ip_packet, total_size);
+    free(ip_packet);
 
-    ssize_t ret = interface->ops->send(interface, packet, total_size);
-
-    free(packet);
-    return ret <= 0 ? ret : ret - (ssize_t) sizeof(struct ethernet_packet) - (ssize_t) sizeof(struct ip_v4_packet);
+    net_drop_route_cache_entry(route);
+    return ret;
 }
 
 void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
@@ -75,10 +62,15 @@ void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
     debug_log("Ignored packet\n");
 }
 
-void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
-                           struct ip_v4_address dest, uint16_t payload_length) {
-    assert(packet);
+struct ip_v4_packet *net_create_ip_v4_packet(uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest,
+                                             const void *payload, uint16_t payload_length) {
+    struct ip_v4_packet *packet = malloc(sizeof(struct ip_v4_packet) + payload_length);
+    net_init_ip_v4_packet(packet, ident, protocol, source, dest, payload, payload_length);
+    return packet;
+}
 
+void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
+                           struct ip_v4_address dest, const void *payload, uint16_t payload_length) {
     packet->version_and_ihl = (IP_V4_VERSION << 4) | IP_V4_BYTES_TO_WORDS(sizeof(struct ip_v4_packet));
     packet->dscp_and_ecn = 0;
     packet->length = htons(sizeof(struct ip_v4_packet) + payload_length);
@@ -90,4 +82,7 @@ void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t 
     packet->destination = dest;
     packet->checksum = 0;
     packet->checksum = htons(in_compute_checksum(packet, sizeof(struct ip_v4_packet)));
+    if (payload) {
+        memcpy(packet->payload, payload, payload_length);
+    }
 }

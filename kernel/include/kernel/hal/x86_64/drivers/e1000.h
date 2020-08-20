@@ -107,14 +107,14 @@ struct e1000_data {
     uintptr_t mem_io_phys_base;
     uint16_t io_port_base;
 
-    uint8_t *rx_descs_unaligned;
-    uint8_t *tx_descs_unaligned;
+    void *rx_descs_unaligned;
+    void *tx_descs_unaligned;
 
     struct e1000_recieve_desc *rx_descs;
     struct e1000_transmit_desc *tx_descs;
 
-    uint8_t *rx_virt_addrs[E1000_NUM_RECIEVE_DESCS];
-    uint8_t *tx_virt_addrs[E1000_NUM_TRANSMIT_DESCS];
+    void *rx_virt_addrs[E1000_NUM_RECIEVE_DESCS];
+    void *tx_virt_addrs[E1000_NUM_TRANSMIT_DESCS];
 
     int current_rx;
     int current_tx;

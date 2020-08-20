@@ -31,8 +31,6 @@ void init_net() {
 
         if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
             net_configure_interface_with_dhcp(interface);
-        } else {
-            net_create_ip_v4_to_mac_mapping(interface->default_gateway, interface->ops->get_mac_address(interface));
         }
     }
 }

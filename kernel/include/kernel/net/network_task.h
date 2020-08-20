@@ -3,15 +3,16 @@
 
 #include <stdint.h>
 
+struct ethernet_frame;
+
 struct network_data {
     struct network_data *next;
     struct network_data *prev;
     size_t len;
-    const void *buf;
+    const struct ethernet_frame *frame;
 };
 
-void net_on_incoming_packet(const void *buf, size_t len);
-void net_on_incoming_packet_sync(const void *buf, size_t len);
+void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t len);
 
 void net_network_task_start();
 

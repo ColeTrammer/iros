@@ -7,12 +7,17 @@
 #include <kernel/net/mac.h>
 #include <kernel/util/list.h>
 
+struct arp_packet;
+struct ethernet_frame;
+struct ip_v4_packet;
 struct network_interface;
+struct route_cache_entry;
 
 struct network_interface_ops {
-    ssize_t (*send)(struct network_interface *interface, const void *data, size_t len);
-    void (*recieve)(struct network_interface *interface, const void *data, size_t len);
-    void (*recieve_sync)(struct network_interface *interface, const void *data, size_t len);
+    int (*send_arp)(struct network_interface *interface, struct mac_address dest, const struct arp_packet *data, size_t len);
+    int (*send_ip_v4)(struct network_interface *interface, struct route_cache_entry *route, const struct ip_v4_packet *data, size_t len);
+    void (*recieve_ethernet)(struct network_interface *interface, const struct ethernet_frame *frame, size_t len);
+    void (*recieve_ip_v4_sync)(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len);
     struct mac_address (*get_mac_address)(struct network_interface *interface);
 };
 
