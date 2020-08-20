@@ -64,6 +64,8 @@
 
 #define ATA_PRD_END 0x8000U
 
+struct vm_region;
+
 struct ata_port_info {
     uint16_t io_base;
     uint16_t control_base;
@@ -82,7 +84,7 @@ struct ata_physical_range_descriptor {
 struct ata_device_data {
     struct ata_port_info *port_info;
     struct ata_physical_range_descriptor prdt[1];
-    uint8_t *dma_page;
+    struct vm_region *dma_region;
     struct wait_queue wait_queue;
 };
 

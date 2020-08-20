@@ -162,7 +162,7 @@ static ssize_t ata_read_sectors_dma(struct block_device *self, void *buffer, blk
         return -EINVAL;
     }
 
-    data->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) data->dma_page);
+    data->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) data->dma_region->start);
     data->prdt[0].size = (uint16_t)(self->block_size * sectors);
 
     // DMA bus mastering specifc
@@ -185,7 +185,7 @@ static ssize_t ata_read_sectors_dma(struct block_device *self, void *buffer, blk
     outb(data->port_info->bus_mastering_base, 0x9);
     ata_wait_irq(data);
 
-    memcpy(buffer, data->dma_page, self->block_size * n);
+    memcpy(buffer, (void *) data->dma_region->start, self->block_size * n);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
     return n;
@@ -276,10 +276,10 @@ static ssize_t ata_write_sectors_dma(struct block_device *self, const void *buff
         return -EINVAL;
     }
 
-    data->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) data->dma_page);
+    data->prdt[0].phys_addr = (uint32_t) get_phys_addr(data->dma_region->start);
     data->prdt[0].size = (uint16_t)(self->block_size * sectors);
 
-    memcpy(data->dma_page, buffer, n * self->block_size);
+    memcpy((void *) data->dma_region->start, buffer, n * self->block_size);
 
     // DMA bus mastering specifc
     outb(data->port_info->bus_mastering_base, 0);
@@ -449,7 +449,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
         uint32_t base = pci_config.bar[4] & 0xFFFC;
         data->port_info->bus_mastering_base = base;
         data->port_info->use_dma = true;
-        data->dma_page = aligned_alloc(PAGE_SIZE, DMA_BUFFER_PAGES * PAGE_SIZE);
+        data->dma_region = vm_allocate_dma_region(PAGE_SIZE * DMA_BUFFER_PAGES);
         op = &ata_dma_ops;
 
         register_irq_handler(create_irq_handler(ata_handle_irq, IRQ_HANDLER_EXTERNAL, data), info->irq + EXTERNAL_IRQ_OFFSET);

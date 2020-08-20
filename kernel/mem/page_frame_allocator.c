@@ -62,6 +62,37 @@ uintptr_t get_next_phys_page(struct process *process) {
     return 0; // indicates there are no available physical pages
 }
 
+uintptr_t get_contiguous_pages(size_t pages) {
+    uintptr_t ret = 0;
+    spin_lock(&bitmap_lock);
+
+try_again:
+    for (size_t i = 0; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
+        if (~page_bitmap[i]) {
+            uintptr_t bit_index = i * 8 * sizeof(uintptr_t);
+            while (get_bit(bit_index)) {
+                bit_index++;
+            }
+
+            bit_index++;
+            for (size_t consecutive_pages = 1; consecutive_pages < pages; consecutive_pages++) {
+                if (get_bit(bit_index++)) {
+                    goto try_again;
+                }
+            }
+
+            for (size_t i = bit_index - pages; i < bit_index; i++) {
+                set_bit(i, true);
+            }
+            ret = (bit_index - pages) * PAGE_SIZE;
+            break;
+        }
+    }
+
+    spin_unlock(&bitmap_lock);
+    return ret;
+}
+
 void free_phys_page(uintptr_t phys_addr, struct process *process) {
 #ifdef PAGE_FRAME_ALLOCATOR_DEBUG
     debug_log("freed: [ %#.16lX ]\n", phys_addr);

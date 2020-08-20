@@ -660,9 +660,7 @@ void dump_process_regions(struct process *process) {
     }
 }
 
-struct vm_region *vm_allocate_kernel_region(size_t size) {
-    assert(size % PAGE_SIZE == 0);
-
+static struct vm_region *make_kernel_region(size_t size, uint64_t type) {
     struct vm_region *region = calloc(1, sizeof(struct vm_region));
     spin_lock(&kernel_vm_lock);
 
@@ -677,14 +675,20 @@ struct vm_region *vm_allocate_kernel_region(size_t size) {
     region->flags = VM_WRITE | VM_NO_EXEC;
     region->start = start;
     region->end = region->start + size;
-    region->type = VM_KERNEL_ANON_MAPPING;
-    for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        map_page(s, region->flags, &initial_kernel_process);
-    }
-
+    region->type = type;
     vm->next = region;
 
     spin_unlock(&kernel_vm_lock);
+    return region;
+}
+
+struct vm_region *vm_allocate_kernel_region(size_t size) {
+    assert(size % PAGE_SIZE == 0);
+
+    struct vm_region *region = make_kernel_region(size, VM_KERNEL_ANON_MAPPING);
+    for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
+        map_page(s, region->flags, &initial_kernel_process);
+    }
     return region;
 }
 
@@ -728,4 +732,19 @@ void vm_free_low_identity_map(struct vm_region *region) {
         do_unmap_page(s, false, true, true, &initial_kernel_process);
     }
     free(region);
+}
+
+struct vm_region *vm_allocate_dma_region(size_t size) {
+    assert(size % PAGE_SIZE == 0);
+
+    struct vm_region *region = make_kernel_region(size, VM_KERNEL_DMA_MAPPING);
+    uint64_t phys_base = get_contiguous_pages(size / PAGE_SIZE);
+    for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
+        map_phys_page(phys_base + s - region->start, s, region->flags, &initial_kernel_process);
+    }
+    return region;
+}
+
+void vm_free_dma_region(struct vm_region *region) {
+    vm_free_kernel_region(region);
 }

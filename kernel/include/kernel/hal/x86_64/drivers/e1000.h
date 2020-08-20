@@ -83,6 +83,8 @@
 
 #define E1000_DESC_MIN_ALIGN 16
 
+struct vm_region;
+
 // Declared volatile b/c it this is accessed directly by the card
 struct e1000_recieve_desc {
     volatile uint64_t addr;
@@ -107,14 +109,13 @@ struct e1000_data {
     uintptr_t mem_io_phys_base;
     uint16_t io_port_base;
 
-    void *rx_descs_unaligned;
-    void *tx_descs_unaligned;
+    struct vm_region *descs_region;
 
     struct e1000_recieve_desc *rx_descs;
     struct e1000_transmit_desc *tx_descs;
 
-    void *rx_virt_addrs[E1000_NUM_RECIEVE_DESCS];
-    void *tx_virt_addrs[E1000_NUM_TRANSMIT_DESCS];
+    struct vm_region *rx_virt_regions[E1000_NUM_RECIEVE_DESCS];
+    struct vm_region *tx_virt_regions[E1000_NUM_TRANSMIT_DESCS];
 
     int current_rx;
     int current_tx;

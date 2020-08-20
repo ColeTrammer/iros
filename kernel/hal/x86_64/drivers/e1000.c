@@ -38,14 +38,9 @@ static bool has_eeprom(struct e1000_data *data) {
 }
 
 static void init_recieve_descriptors(struct e1000_data *data) {
-    data->rx_descs_unaligned = calloc(E1000_NUM_RECIEVE_DESCS, sizeof(struct e1000_recieve_desc) + E1000_DESC_MIN_ALIGN);
-    data->rx_descs = (struct e1000_recieve_desc *) (data->rx_descs_unaligned + E1000_DESC_MIN_ALIGN -
-                                                    (((uintptr_t) data->rx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
-    assert(((uintptr_t) data->rx_descs) % E1000_DESC_MIN_ALIGN == 0);
-
     for (int i = 0; i < E1000_NUM_RECIEVE_DESCS; i++) {
-        data->rx_virt_addrs[i] = malloc(8192 + 16);
-        data->rx_descs[i].addr = get_phys_addr((uintptr_t) data->rx_virt_addrs[i]);
+        data->rx_virt_regions[i] = vm_allocate_dma_region(8192);
+        data->rx_descs[i].addr = get_phys_addr(data->rx_virt_regions[i]->start);
         data->rx_descs[i].status = 0;
     }
 
@@ -62,14 +57,9 @@ static void init_recieve_descriptors(struct e1000_data *data) {
 }
 
 static void init_transmit_descriptors(struct e1000_data *data) {
-    data->tx_descs_unaligned = calloc(E1000_NUM_TRANSMIT_DESCS, sizeof(struct e1000_transmit_desc) + E1000_DESC_MIN_ALIGN);
-    data->tx_descs = (struct e1000_transmit_desc *) (data->tx_descs_unaligned + E1000_DESC_MIN_ALIGN -
-                                                     (((uintptr_t) data->tx_descs_unaligned) % E1000_DESC_MIN_ALIGN));
-    assert(((uintptr_t) data->tx_descs) % E1000_DESC_MIN_ALIGN == 0);
-
     for (int i = 0; i < E1000_NUM_TRANSMIT_DESCS; i++) {
-        data->tx_virt_addrs[i] = malloc(8192 + 16);
-        data->tx_descs[i].addr = get_phys_addr((uintptr_t) data->tx_virt_addrs[i]);
+        data->tx_virt_regions[i] = vm_allocate_dma_region(8192);
+        data->tx_descs[i].addr = get_phys_addr((uintptr_t) data->tx_virt_regions[i]->start);
         data->tx_descs[i].cmd = 0;
         data->tx_descs[i].status = E1000_TSTA_DD;
     }
@@ -109,7 +99,8 @@ static int e1000_send(struct network_interface *self, struct mac_address dest_ma
     debug_log("Sending over: %d\n", data->current_tx);
 #endif /* KERNEL_E1000_DEBUG */
 
-    net_init_ethernet_frame(data->tx_virt_addrs[data->current_tx], dest_mac, self->ops->get_mac_address(self), mac_type, raw, len);
+    net_init_ethernet_frame((void *) data->tx_virt_regions[data->current_tx]->start, dest_mac, self->ops->get_mac_address(self), mac_type,
+                            raw, len);
 
     data->tx_descs[data->current_tx].length = sizeof(struct ethernet_frame) + len;
     data->tx_descs[data->current_tx].status = 0;
@@ -151,7 +142,7 @@ static void e1000_recieve() {
     struct e1000_data *data = interface->private_data;
 
     while (data->rx_descs[data->current_rx].status & 0x1) {
-        uint8_t *buf = data->rx_virt_addrs[data->current_rx];
+        uint8_t *buf = (uint8_t *) data->rx_virt_regions[data->current_rx]->start;
         uint16_t len = data->rx_descs[data->current_rx].length;
 
         interface->ops->recieve_ethernet(interface, (const struct ethernet_frame *) buf, len);
@@ -223,6 +214,12 @@ void init_intel_e1000(struct pci_configuration *config) {
 
     write_command(data, E1000_CTRL_REG, read_command(data, E1000_CTRL_REG) | E1000_ECTRL_SLU);
 
+    data->descs_region = vm_allocate_dma_region(ALIGN_UP(E1000_NUM_RECIEVE_DESCS * sizeof(struct e1000_recieve_desc) +
+                                                             E1000_NUM_TRANSMIT_DESCS * sizeof(struct e1000_transmit_desc),
+                                                         PAGE_SIZE));
+    data->rx_descs = (void *) data->descs_region->start;
+    data->tx_descs =
+        (void *) data->descs_region->start + ALIGN_UP(E1000_NUM_RECIEVE_DESCS * sizeof(struct e1000_recieve_desc), E1000_DESC_MIN_ALIGN);
     init_recieve_descriptors(data);
     init_transmit_descriptors(data);
 
