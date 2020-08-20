@@ -153,10 +153,10 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
                     debug_log("DHCP router list has invalid length: [ %hhu ]\n", option_length);
                     return;
                 }
-                interface->broadcast.addr[0] = option_data[0];
-                interface->broadcast.addr[1] = option_data[1];
-                interface->broadcast.addr[2] = option_data[2];
-                interface->broadcast.addr[3] = option_data[3];
+                interface->default_gateway.addr[0] = option_data[0];
+                interface->default_gateway.addr[1] = option_data[1];
+                interface->default_gateway.addr[2] = option_data[2];
+                interface->default_gateway.addr[3] = option_data[3];
                 debug_log("DHCP router detected: [ %u.%u.%u.%u ]\n", option_data[0], option_data[1], option_data[2], option_data[3]);
                 break;
             case DHCP_OPTION_DNS_SERVERS:
@@ -220,7 +220,7 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
                       interface->address.addr[1], interface->address.addr[2], interface->address.addr[3]);
 
             net_create_ip_v4_to_mac_mapping(interface->address, our_mac_address);
-            net_send_arp_request(interface, interface->broadcast);
+            net_send_arp_request(interface, interface->default_gateway);
             break;
         default:
             debug_log("ignoring DHCP message type: [ %d ]\n", dhcp_message_type);

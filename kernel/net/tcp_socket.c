@@ -51,7 +51,7 @@ static struct hash_map *tcp_server_map;
 
 static unsigned int ip_v4_and_port_hash(void *i, int num_buckets) {
     struct ip_v4_and_port *a = i;
-    return (a->ip.addr[0] + a->ip.addr[1] + a->ip.addr[2] + a->ip.addr[2] + a->port) % num_buckets;
+    return (a->ip.addr[0] + a->ip.addr[1] + a->ip.addr[2] + a->ip.addr[3] + a->port) % num_buckets;
 }
 
 static int ip_v4_and_port_equals(void *i1, void *i2) {

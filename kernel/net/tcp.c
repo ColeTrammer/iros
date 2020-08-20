@@ -20,7 +20,7 @@ ssize_t net_send_tcp(struct network_interface *interface, struct ip_v4_address d
         return -ENETDOWN;
     }
 
-    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(interface->broadcast);
+    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(interface->default_gateway);
     if (!router_mapping) {
         debug_log("Can't send TCP packet; router mac to yet mapped\n");
         return -ENETDOWN;

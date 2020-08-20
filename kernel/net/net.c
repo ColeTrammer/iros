@@ -7,6 +7,7 @@
 #include <kernel/net/net.h>
 #include <kernel/net/network_task.h>
 #include <kernel/net/port.h>
+#include <kernel/net/route_cache.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
@@ -18,6 +19,7 @@ void init_net() {
     init_net_sockets();
     init_mac();
     init_ports();
+    init_route_cache();
 
     network_task = load_kernel_task((uintptr_t) net_network_task_start, "net");
     assert(network_task);
@@ -30,7 +32,7 @@ void init_net() {
         if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
             net_configure_interface_with_dhcp(interface);
         } else {
-            net_create_ip_v4_to_mac_mapping(interface->broadcast, interface->ops->get_mac_address(interface));
+            net_create_ip_v4_to_mac_mapping(interface->default_gateway, interface->ops->get_mac_address(interface));
         }
     }
 }

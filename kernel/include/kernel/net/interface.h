@@ -33,7 +33,7 @@ struct network_interface {
 
     struct ip_v4_address address;
     struct ip_v4_address mask;
-    struct ip_v4_address broadcast;
+    struct ip_v4_address default_gateway;
 
     struct network_configuration_context config_context;
 

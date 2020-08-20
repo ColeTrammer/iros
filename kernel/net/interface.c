@@ -67,7 +67,7 @@ struct network_interface *net_create_network_interface(const char *name, int typ
     if (type == NETWORK_INTERFACE_LOOPBACK) {
         interface->address = IP_V4_LOOPBACK;
         interface->mask = IP_V4_BROADCAST;
-        interface->broadcast = IP_V4_LOOPBACK;
+        interface->default_gateway = IP_V4_LOOPBACK;
         interface->config_context.state = INITIALIZED;
     }
 

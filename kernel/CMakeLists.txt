@@ -42,6 +42,7 @@ if (NOT ${NATIVE_BUILD})
         net/net.c
         net/network_task.c
         net/port.c
+        net/route_cache.c
         net/socket.c
         net/socket_syscalls.c
         net/tcp.c

@@ -10,6 +10,7 @@
 #include <kernel/net/icmp.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/route_cache.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
@@ -20,9 +21,11 @@ ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, st
         return -ENETDOWN;
     }
 
-    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(interface->broadcast);
+    struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
+    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(route->next_hop_address);
     if (!router_mapping) {
         debug_log("Can't send IP V4 packet; router mac to yet mapped\n");
+        net_drop_route_cache_entry(route);
         return -ENETDOWN;
     }
 
@@ -30,6 +33,7 @@ ssize_t net_send_ip_v4(struct network_interface *interface, uint8_t protocol, st
 
     struct ethernet_packet *packet = net_create_ethernet_packet(router_mapping->mac, interface->ops->get_mac_address(interface),
                                                                 ETHERNET_TYPE_IPV4, total_size - sizeof(struct ethernet_packet));
+    net_drop_route_cache_entry(route);
 
     struct ip_v4_address d = dest;
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);

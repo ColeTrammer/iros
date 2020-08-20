@@ -11,6 +11,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/port.h>
+#include <kernel/net/route_cache.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/udp.h>
 #include <kernel/util/macros.h>
@@ -37,17 +38,19 @@ ssize_t net_send_udp(struct network_interface *interface, struct ip_v4_address d
         return -ENETDOWN;
     }
 
-    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(interface->broadcast);
+    struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
+    struct ip_v4_to_mac_mapping *router_mapping = net_get_mac_from_ip_v4(route->next_hop_address);
     if (!router_mapping) {
         debug_log("Can't send UDP packet; router mac to yet mapped\n");
+        net_drop_route_cache_entry(route);
         return -ENETDOWN;
     }
 
     size_t total_length = sizeof(struct ethernet_packet) + sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
 
-    struct ethernet_packet *packet =
-        net_create_ethernet_packet(net_get_mac_from_ip_v4(interface->broadcast)->mac, interface->ops->get_mac_address(interface),
-                                   ETHERNET_TYPE_IPV4, total_length - sizeof(struct ethernet_packet));
+    struct ethernet_packet *packet = net_create_ethernet_packet(router_mapping->mac, interface->ops->get_mac_address(interface),
+                                                                ETHERNET_TYPE_IPV4, total_length - sizeof(struct ethernet_packet));
+    net_drop_route_cache_entry(route);
 
     struct ip_v4_packet *ip_packet = (struct ip_v4_packet *) packet->payload;
     net_init_ip_v4_packet(ip_packet, 1, IP_V4_PROTOCOL_UDP, interface->address, dest,
