@@ -116,22 +116,24 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     if (!addr) {
         if (!socket->has_peer_address) {
             ret = -EDESTADDRREQ;
-            goto done;
+            goto fail;
         }
         addr = (struct sockaddr *) &socket->peer_address;
     } else if (addrlen < sizeof(struct sockaddr_in)) {
         ret = -EINVAL;
-        goto done;
+        goto fail;
     }
 
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(addr);
     struct network_interface *interface = net_get_interface_for_ip(dest_ip);
-    assert(interface);
-    ret = net_send_ip_v4(interface, socket->protocol, dest_ip, buf, len);
-
-done:
     mutex_unlock(&socket->lock);
+
+    ret = net_send_ip_v4(interface, socket->protocol, dest_ip, buf, len);
     return ret ? ret : (ssize_t) len;
+
+fail:
+    mutex_unlock(&socket->lock);
+    return ret;
 }
 
 void init_inet_sockets() {
