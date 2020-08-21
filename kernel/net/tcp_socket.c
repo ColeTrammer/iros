@@ -10,6 +10,8 @@
 #include <kernel/net/tcp_socket.h>
 #include <kernel/proc/blockers.h>
 #include <kernel/proc/task.h>
+#include <kernel/time/clock.h>
+#include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
 
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
@@ -103,15 +105,67 @@ struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info 
 static struct tcp_control_block *tcp_allocate_control_block(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data = calloc(1, sizeof(struct tcp_control_block));
     tcb->state = TCP_CLOSED;
-    tcb->send_unacknowledged = tcb->send_next = 10000; /* Initial sequence number */
-    tcb->recv_window = 8192;
+    tcb->send_unacknowledged = tcb->send_next = 10000;                           // Initial sequence number
+    tcb->recv_window = 8192;                                                     // Hard coded value
+    tcb->segment_size = 1500;                                                    // MTU for ethernet
+    tcb->retransmission_delay = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 }; // Start retransmit timer out at 1 second.
+    init_ring_buffer(&tcb->send_buffer, 8192);
+    init_ring_buffer(&tcb->recv_buffer, tcb->recv_window);
     return tcb;
 }
 
 void net_free_tcp_control_block(struct socket *socket) {
+    struct tcp_control_block *tcb = socket->private_data;
     net_remove_tcp_socket_mapping(socket);
+    if (tcb->retransmission_timer) {
+        time_delete_timer(tcb->retransmission_timer);
+    }
+    kill_ring_buffer(&tcb->send_buffer);
+    kill_ring_buffer(&tcb->recv_buffer);
     free(socket->private_data);
     socket->private_data = NULL;
+}
+
+static void tcp_do_retransmit(struct timer *timer, void *_socket) {
+    struct socket *socket = _socket;
+    struct tcp_control_block *tcb = socket->private_data;
+
+    net_send_tcp_from_socket(socket);
+
+    // Exponential back off by doubling the next timeout.
+    tcb->retransmission_delay = time_add(tcb->retransmission_delay, tcb->retransmission_delay);
+    __time_reset_kernel_callback(timer, &tcb->retransmission_delay);
+}
+
+static void tcp_setup_retransmission_timer(struct socket *socket) {
+    struct tcp_control_block *tcb = socket->private_data;
+    if (tcb->send_unacknowledged == tcb->send_next) {
+        return;
+    }
+
+    assert(!tcb->retransmission_timer);
+    tcb->retransmission_timer = time_register_kernel_callback(&tcb->retransmission_delay, tcp_do_retransmit, socket);
+}
+
+static int tcp_send_segment(struct socket *socket, union tcp_flags flags) {
+    struct tcp_control_block *tcb = socket->private_data;
+    tcb->pending_syn = flags.bits.syn;
+    tcb->pending_fin = flags.bits.fin;
+
+    size_t data_to_send = MIN(ring_buffer_size(&tcb->send_buffer), tcb->segment_size);
+    tcb->send_next += flags.bits.syn + flags.bits.fin + data_to_send;
+    int ret = net_send_tcp_from_socket(socket);
+    tcp_setup_retransmission_timer(socket);
+    return ret;
+}
+
+static int tcp_maybe_send_segment(struct socket *socket) {
+    struct tcp_control_block *tcb = socket->private_data;
+    if (tcb->retransmission_timer) {
+        return 0;
+    }
+
+    return tcp_send_segment(socket, (union tcp_flags) { .bits = { .ack = 1 } });
 }
 
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
@@ -168,8 +222,7 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
 
     create_tcp_socket_mapping(socket);
 
-    tcb->send_next++;
-    int ret = net_send_tcp_from_socket(socket, (union tcp_flags) { .bits = { .syn = 1 } }, NULL, 0);
+    int ret = tcp_send_segment(socket, (union tcp_flags) { .bits = { .syn = 1 } });
     if (ret) {
         net_free_tcp_control_block(socket);
         return ret;
@@ -240,7 +293,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buf, size_t len, in
     return -ENETDOWN;
 }
 
-static ssize_t net_tcp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,
+static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t len, int flags, const struct sockaddr *addr,
                               socklen_t addrlen) {
     (void) flags;
 
@@ -248,29 +301,51 @@ static ssize_t net_tcp_sendto(struct socket *socket, const void *buf, size_t len
         return -EINVAL;
     }
 
-    struct tcp_control_block *tcb = socket->private_data;
-    for (;;) {
-        switch (tcb->state) {
-            case TCP_SYN_SENT:
-            case TCP_SYN_RECIEVED: {
-                int ret = proc_block_until_socket_is_connected(get_current_task(), socket);
-                if (ret) {
-                    return ret;
-                }
-                continue;
-            }
-            case TCP_ESTABLISHED:
-            case TCP_CLOSE_WAIT:
-                break;
-            default:
-                return -ENOTCONN;
-        }
-        break;
-    }
+    size_t buffer_index = 0;
+    int error = 0;
 
-    tcb->send_next += len;
-    int ret = net_send_tcp_from_socket(socket, (union tcp_flags) { .bits = { .ack = 1, .psh = 1 } }, buf, len);
-    return ret ? ret : (ssize_t) len;
+    struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
+    mutex_lock(&socket->lock);
+    while (buffer_index < len) {
+        struct tcp_control_block *tcb = socket->private_data;
+        switch (tcb->state) {
+            case TCP_FIN_WAIT_1:
+            case TCP_FIN_WAIT_2:
+            case TCP_CLOSING:
+            case TCP_LAST_ACK:
+            case TCP_TIME_WAIT:
+                error = -ENOTCONN;
+                goto done;
+            default:
+                break;
+        }
+
+        size_t space_available = ring_buffer_space(&tcb->send_buffer);
+        if (!space_available) {
+            mutex_unlock(&socket->lock);
+            int ret = net_block_until_socket_is_writable(socket, start_time);
+            if (ret) {
+                error = ret;
+                break;
+            }
+            mutex_lock(&socket->lock);
+            continue;
+        }
+
+        size_t amount_to_write = MIN(space_available, len - buffer_index);
+        ring_buffer_user_write(&tcb->send_buffer, buffer + buffer_index, amount_to_write);
+        buffer_index += amount_to_write;
+        socket->writable = !ring_buffer_full(&tcb->send_buffer);
+
+        error = tcp_maybe_send_segment(socket);
+        if (error) {
+            break;
+        }
+    }
+done:
+    mutex_unlock(&socket->lock);
+
+    return buffer_index ? (ssize_t) buffer_index : error;
 }
 
 void init_tcp_sockets(void) {

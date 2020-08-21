@@ -12,6 +12,8 @@
 #define TCP_FlAGS_ECE 64U
 #define TCP_FLAGS_CWR 128U
 
+struct ring_buffer;
+
 union tcp_flags {
     struct {
         uint8_t fin : 1;
@@ -45,12 +47,12 @@ struct tcp_packet {
     uint8_t options_and_payload[0];
 } __attribute__((packed));
 
-int net_send_tcp_from_socket(struct socket *socket, union tcp_flags flags, const void *data, size_t data_len);
+int net_send_tcp_from_socket(struct socket *socket);
 int net_send_tcp(struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint32_t sequence_number, uint32_t ack_num,
-                 uint16_t window, union tcp_flags flags, uint16_t len, const void *payload);
+                 uint16_t window, union tcp_flags flags, uint16_t len, struct ring_buffer *rb);
 void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet, size_t len);
 void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16_t dest_port, uint32_t sequence, uint32_t ack_num,
-                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, const void *payload);
+                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, struct ring_buffer *rb);
 
 void net_tcp_log(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet);
 

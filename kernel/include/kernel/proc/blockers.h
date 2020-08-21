@@ -21,6 +21,8 @@ enum block_type {
     UNTIL_INODE_IS_WRITABLE,
     UNTIL_SOCKET_IS_READABLE,
     UNTIL_SOCKET_IS_READABLE_WITH_TIMEOUT,
+    UNTIL_SOCKET_IS_WRITABLE,
+    UNTIL_SOCKET_IS_WRITABLE_WITH_TIMEOUT,
     UNTIL_DEVICE_IS_READABLE,
     UNTIL_DEVICE_IS_WRITEABLE,
     UNTIL_DEVICE_IS_READABLE_OR_TIMEOUT,
@@ -30,7 +32,7 @@ enum block_type {
     SELECT_TIMEOUT,
     POLL,
     POLL_TIMEOUT,
-    WAITPID
+    WAITPID,
 };
 
 struct block_info {
@@ -61,6 +63,13 @@ struct block_info {
             struct socket *socket;
             struct timespec end_time;
         } until_socket_is_readable_with_timeout_info;
+        struct {
+            struct socket *socket;
+        } until_socket_is_writable_info;
+        struct {
+            struct socket *socket;
+            struct timespec end_time;
+        } until_socket_is_writable_with_timeout_info;
         struct {
             struct device *device;
         } until_device_is_readable_info;
@@ -110,6 +119,8 @@ struct block_info {
 #define until_inode_is_writable_info               __info.until_inode_is_writable_info
 #define until_socket_is_readable_info              __info.until_socket_is_readable_info
 #define until_socket_is_readable_with_timeout_info __info.until_socket_is_readable_with_timeout_info
+#define until_socket_is_writable_info              __info.until_socket_is_writable_info
+#define until_socket_is_writable_with_timeout_info __info.until_socket_is_writable_with_timeout_info
 #define until_device_is_readable_info              __info.until_device_is_readable_info
 #define until_device_is_writeable_info             __info.until_device_is_writeable_info
 #define until_device_is_readable_or_timeout_info   __info.until_device_is_readable_or_timeout_info
@@ -130,6 +141,9 @@ __attribute__((warn_unused_result)) int proc_block_until_inode_is_readable_or_ti
 __attribute__((warn_unused_result)) int proc_block_until_inode_is_writable(struct task *current, struct inode *inode);
 __attribute__((warn_unused_result)) int proc_block_until_socket_is_readable(struct task *current, struct socket *socket);
 __attribute__((warn_unused_result)) int proc_block_until_socket_is_readable_with_timeout(struct task *current, struct socket *socket,
+                                                                                         struct timespec end_time);
+__attribute__((warn_unused_result)) int proc_block_until_socket_is_writable(struct task *current, struct socket *socket);
+__attribute__((warn_unused_result)) int proc_block_until_socket_is_writable_with_timeout(struct task *current, struct socket *socket,
                                                                                          struct timespec end_time);
 __attribute__((warn_unused_result)) int proc_block_until_device_is_readable(struct task *current, struct device *device);
 __attribute__((warn_unused_result)) int proc_block_until_device_is_writeable(struct task *current, struct device *device);
