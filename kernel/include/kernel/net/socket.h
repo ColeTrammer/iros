@@ -121,6 +121,8 @@ void net_drop_socket(struct socket *socket);
 struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct hash_entry *socket, void *data), void *data);
 
+int net_block_until_socket_is_writable(struct socket *socket, struct timespec start_time);
+
 int net_generic_setsockopt(struct socket *socket, int level, int optname, const void *optval, socklen_t optlen);
 int net_generic_getsockopt(struct socket *socket, int level, int optname, void *optval, socklen_t *optlen);
 int net_generic_listen(struct socket *socket, int backlog);

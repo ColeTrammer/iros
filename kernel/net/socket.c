@@ -87,6 +87,30 @@ void net_drop_socket(struct socket *socket) {
     }
 }
 
+int net_block_until_socket_is_writable(struct socket *socket, struct timespec start_time) {
+    if (socket->send_timeout.tv_sec != 0 || socket->send_timeout.tv_usec != 0) {
+        struct timespec timeout = time_from_timeval(socket->send_timeout);
+        int ret = proc_block_until_socket_is_writable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
+        if (ret) {
+            return ret;
+        }
+
+        // We timed out
+        if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
+            return -EAGAIN;
+        }
+
+        return 0;
+    }
+
+    int ret = proc_block_until_socket_is_writable(get_current_task(), socket);
+    if (ret) {
+        return ret;
+    }
+
+    return 0;
+}
+
 struct socket_data *net_get_next_message(struct socket *socket, int *error) {
     if (socket->state != CONNECTED && socket->type == SOCK_STREAM) {
         *error = -ENOTCONN;

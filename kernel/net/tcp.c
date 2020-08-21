@@ -12,17 +12,22 @@
 #include <kernel/net/route_cache.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/tcp_socket.h>
+#include <kernel/time/timer.h>
 #include <kernel/util/macros.h>
 
-int net_send_tcp_from_socket(struct socket *socket, union tcp_flags flags, const void *data, size_t data_len) {
+int net_send_tcp_from_socket(struct socket *socket) {
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
     uint16_t dest_port = PORT_FROM_SOCKADDR(&socket->peer_address);
 
     struct tcp_control_block *tcb = socket->private_data;
 
+    size_t data_to_send = MIN(ring_buffer_size(&tcb->send_buffer), tcb->segment_size);
+
     int ret =
-        net_send_tcp(dest_ip, source_port, dest_port, tcb->send_unacknowledged, tcb->recv_next, tcb->recv_window, flags, data_len, data);
+        net_send_tcp(dest_ip, source_port, dest_port, tcb->send_unacknowledged, tcb->recv_next, tcb->recv_window,
+                     (union tcp_flags) { .bits = { .ack = tcb->state != TCP_SYN_SENT, .syn = tcb->pending_syn, .fin = tcb->pending_fin } },
+                     data_to_send, &tcb->send_buffer);
     if (ret) {
         return ret;
     }
@@ -31,7 +36,7 @@ int net_send_tcp_from_socket(struct socket *socket, union tcp_flags flags, const
 }
 
 int net_send_tcp(struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint32_t sequence_number, uint32_t ack_num,
-                 uint16_t window, union tcp_flags flags, uint16_t len, const void *payload) {
+                 uint16_t window, union tcp_flags flags, uint16_t len, struct ring_buffer *rb) {
     struct network_interface *interface = net_get_interface_for_ip(dest);
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
@@ -45,7 +50,7 @@ int net_send_tcp(struct ip_v4_address dest, uint16_t source_port, uint16_t dest_
         net_create_ip_v4_packet(1, IP_V4_PROTOCOL_TCP, interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
 
     struct tcp_packet *tcp_packet = (struct tcp_packet *) ip_packet->payload;
-    net_init_tcp_packet(tcp_packet, source_port, dest_port, sequence_number, ack_num, flags, window, len, payload);
+    net_init_tcp_packet(tcp_packet, source_port, dest_port, sequence_number, ack_num, flags, window, len, rb);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_TCP, htons(len + sizeof(struct tcp_packet)) };
 
@@ -68,6 +73,10 @@ static size_t tcp_segment_length(const struct ip_v4_packet *ip_packet, const str
     return ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset;
 }
 
+static const void *tcp_data_start(const struct tcp_packet *packet) {
+    return (const void *) packet + sizeof(uint32_t) * packet->data_offset;
+}
+
 static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
     if (packet->flags.bits.rst) {
         return;
@@ -80,6 +89,145 @@ static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tc
         net_send_tcp(ip_packet->source, htons(packet->dest_port), htons(packet->source_port), 0,
                      htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet), 0,
                      (union tcp_flags) { .bits = { .ack = 1, .rst = 1 } }, 0, NULL);
+    }
+}
+
+static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+    if (packet->flags.bits.rst) {
+        return;
+    }
+
+    struct tcp_control_block *tcb = socket->private_data;
+
+    net_send_tcp(ip_packet->source, htons(packet->dest_port), htons(packet->source_port), tcb->send_next, tcb->recv_next, tcb->recv_window,
+                 (union tcp_flags) { .bits = { .ack = 1 } }, 0, NULL);
+}
+
+static bool tcp_segment_acceptable(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+    struct tcp_control_block *tcb = socket->private_data;
+    size_t recv_window = tcb->recv_window;
+    size_t recv_next = tcb->recv_next;
+    size_t segment_length = tcp_segment_length(ip_packet, packet);
+    uint32_t seq_num = htonl(packet->sequence_number);
+
+    if (segment_length == 0 && recv_window == 0) {
+        return seq_num == recv_next;
+    }
+    if (segment_length == 0 && recv_window > 0) {
+        return recv_next <= seq_num && seq_num < recv_next + recv_window;
+    }
+    if (segment_length > 0 && recv_window == 0) {
+        return false;
+    }
+    return (recv_next <= seq_num && seq_num < recv_next + recv_window) ||
+           (recv_next <= seq_num + segment_length && seq_num + segment_length < recv_next + recv_window);
+}
+
+static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
+    struct tcp_control_block *tcb = socket->private_data;
+    uint32_t amount_to_advance = ack_number - tcb->send_unacknowledged;
+
+    if (tcb->pending_syn) {
+        tcb->pending_syn = false;
+        amount_to_advance--;
+    }
+
+    size_t total_pending_data = ring_buffer_size(&tcb->send_buffer);
+    size_t data_acknowledged = MIN(amount_to_advance, total_pending_data);
+    ring_buffer_advance(&tcb->send_buffer, data_acknowledged);
+    amount_to_advance -= data_acknowledged;
+
+    if (tcb->pending_fin && amount_to_advance > 0) {
+        tcb->pending_fin = false;
+        amount_to_advance--;
+    }
+
+    // Otherwise, the ACK should have been ingored as invalid.
+    assert(amount_to_advance == 0);
+
+    tcb->send_unacknowledged = ack_number;
+    if (tcb->send_unacknowledged == tcb->send_next) {
+        struct timer *retransmission_timer = tcb->retransmission_timer;
+        tcb->retransmission_timer = NULL;
+        time_cancel_kernel_callback(retransmission_timer);
+    }
+
+    socket->writable = true;
+}
+
+static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+    struct tcp_control_block *tcb = socket->private_data;
+    switch (tcb->state) {
+        case TCP_SYN_RECIEVED:
+        case TCP_ESTABLISHED:
+        case TCP_FIN_WAIT_1:
+        case TCP_FIN_WAIT_2: {
+            size_t segment_length = tcp_segment_length(ip_packet, packet);
+            size_t offset = 0;
+
+            // Packet sent out of order, it would be best to remember it, but not for now.
+            if (htonl(packet->sequence_number) > tcb->recv_next) {
+                return;
+            }
+
+            offset = tcb->recv_next - htonl(packet->sequence_number);
+            offset += packet->flags.bits.syn;
+            segment_length -= offset;
+
+            size_t available_space = ring_buffer_space(&tcb->recv_buffer);
+            segment_length = MIN(available_space, segment_length);
+            segment_length -= packet->flags.bits.fin;
+            if (segment_length == 0) {
+                break;
+            }
+
+            ring_buffer_write(&tcb->recv_buffer, tcp_data_start(packet) + offset, segment_length);
+            socket->readable = true;
+            tcb->recv_next += segment_length;
+            tcb->recv_window -= segment_length;
+            break;
+        }
+        case TCP_CLOSE_WAIT:
+        case TCP_CLOSING:
+        case TCP_LAST_ACK:
+        case TCP_TIME_WAIT:
+            return;
+        default:
+            assert(false);
+    }
+
+    if (packet->flags.bits.fin) {
+        if (tcb->recv_next != htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet)) {
+            return;
+        }
+
+        net_send_tcp_from_socket(socket);
+
+        // All outstanding data has been recieved.
+        tcb->recv_next++;
+        tcb->state = CLOSING;
+        switch (tcb->state) {
+            case TCP_SYN_RECIEVED:
+            case TCP_ESTABLISHED:
+                tcb->state = TCP_CLOSE_WAIT;
+                break;
+            case TCP_FIN_WAIT_1:
+                assert(!tcb->pending_fin);
+                tcb->state = CLOSING;
+                break;
+            case TCP_FIN_WAIT_2:
+                tcb->state = TCP_TIME_WAIT;
+                break;
+            case TCP_CLOSE_WAIT:
+            case TCP_CLOSING:
+            case TCP_LAST_ACK:
+                break;
+            case TCP_TIME_WAIT:
+                // FIXME: restart the 2 MSL timeout
+                break;
+            default:
+                assert(false);
+        }
     }
 }
 
@@ -100,7 +248,7 @@ static void tcp_recv_in_listen(struct socket *socket, const struct ip_v4_packet 
 static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
     if (packet->flags.bits.ack) {
-        if (htonl(packet->ack_number) != tcb->send_next) {
+        if (htonl(packet->ack_number) <= tcb->send_unacknowledged || htonl(packet->ack_number) > tcb->send_next) {
             tcp_send_reset(ip_packet, packet);
             return;
         }
@@ -122,17 +270,134 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     tcb->recv_next = htonl(packet->sequence_number) + 1;
     tcb->send_window = htons(packet->window_size);
     if (packet->flags.bits.ack) {
-        tcb->send_unacknowledged = htonl(packet->ack_number);
+        tcp_advance_ack_number(socket, htonl(packet->ack_number));
         tcb->state = TCP_ESTABLISHED;
-        net_send_tcp_from_socket(socket, (union tcp_flags) { .bits = { .ack = 1 } }, NULL, 0);
-        // FIXME: handle the case where there is data in this segment.
+        net_send_tcp_from_socket(socket);
+        tcp_process_segment(socket, ip_packet, packet);
         return;
     }
 
     tcb->state = TCP_SYN_RECIEVED;
-    net_send_tcp_from_socket(socket, (union tcp_flags) { .bits = { .ack = 1, .syn = 1 } }, NULL, 0);
-    // FIXME: handle the case where there is data in this segment.
+    net_send_tcp_from_socket(socket);
+    tcp_process_segment(socket, ip_packet, packet);
     return;
+}
+
+static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+    struct tcp_control_block *tcb = socket->private_data;
+    if (!tcp_segment_acceptable(socket, ip_packet, packet)) {
+        tcp_send_empty_ack(socket, ip_packet, packet);
+        return;
+    }
+
+    if (packet->flags.bits.rst) {
+        switch (tcb->state) {
+            case TCP_SYN_RECIEVED: {
+                if (tcb->is_passive) {
+                    tcb->state = TCP_LITSEN;
+                    return;
+                }
+                socket->error = ECONNREFUSED;
+                socket->state = CLOSED;
+                net_free_tcp_control_block(socket);
+                return;
+            }
+            case TCP_ESTABLISHED:
+            case TCP_FIN_WAIT_1:
+            case TCP_FIN_WAIT_2:
+            case TCP_CLOSE_WAIT:
+                socket->error = ECONNRESET;
+                socket->state = CLOSED;
+                net_free_tcp_control_block(socket);
+                return;
+            case TCP_CLOSING:
+            case TCP_LAST_ACK:
+            case TCP_TIME_WAIT:
+                net_free_tcp_control_block(socket);
+                return;
+            default:
+                assert(false);
+        }
+    }
+
+    if (packet->flags.bits.syn) {
+        tcp_send_reset(ip_packet, packet);
+        socket->error = ECONNRESET;
+        socket->state = CLOSED;
+        net_free_tcp_control_block(socket);
+        return;
+    }
+
+    if (!packet->flags.bits.ack) {
+        return;
+    }
+
+    switch (tcb->state) {
+        case TCP_SYN_RECIEVED:
+            if (tcb->send_unacknowledged > htonl(packet->ack_number) || htonl(packet->ack_number) > tcb->send_next) {
+                tcp_send_reset(ip_packet, packet);
+                break;
+            }
+            tcb->state = TCP_ESTABLISHED;
+            // Fall-through
+        case TCP_ESTABLISHED:
+        case TCP_FIN_WAIT_1:
+        case TCP_FIN_WAIT_2:
+        case TCP_CLOSE_WAIT:
+        case TCP_CLOSING:
+        case TCP_LAST_ACK:
+        case TCP_TIME_WAIT:
+            if (htonl(packet->ack_number) <= tcb->send_unacknowledged) {
+                break;
+            } else if (htonl(packet->ack_number) > tcb->send_next) {
+                tcp_send_empty_ack(socket, ip_packet, packet);
+                return;
+            }
+
+            tcp_advance_ack_number(socket, htonl(packet->ack_number));
+            if (tcb->send_wl1 < htonl(packet->sequence_number) ||
+                (tcb->send_wl1 == htonl(packet->sequence_number) && tcb->send_wl2 <= htonl(packet->ack_number))) {
+                tcb->send_window = htons(packet->window_size);
+                tcb->send_wl1 = htonl(packet->sequence_number);
+                tcb->send_wl2 = htonl(packet->ack_number);
+            }
+
+            switch (tcb->state) {
+                case TCP_FIN_WAIT_1:
+                    if (tcb->pending_fin) {
+                        break;
+                    }
+                    tcb->state = TCP_FIN_WAIT_2;
+                    // Fall-through
+                case TCP_FIN_WAIT_2:
+                    socket->state = CLOSING;
+                    break;
+                case TCP_CLOSE_WAIT:
+                    break;
+                case TCP_CLOSING:
+                    if (tcb->pending_fin) {
+                        return;
+                    }
+                    tcb->state = TCP_TIME_WAIT;
+                    break;
+                case TCP_LAST_ACK:
+                    assert(!tcb->pending_fin);
+                    socket->state = CLOSED;
+                    net_free_tcp_control_block(socket);
+                    break;
+                case TCP_TIME_WAIT:
+                    tcp_send_empty_ack(socket, ip_packet, packet);
+                    // FIXME: restart the 2 MSL timeout.
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            assert(false);
+    }
+
+    tcp_process_segment(socket, ip_packet, packet);
 }
 
 static void tcp_recv_on_socket(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
@@ -143,6 +408,16 @@ static void tcp_recv_on_socket(struct socket *socket, const struct ip_v4_packet 
             return;
         case TCP_SYN_SENT:
             tcp_recv_in_syn_sent(socket, ip_packet, packet);
+            return;
+        case TCP_SYN_RECIEVED:
+        case TCP_ESTABLISHED:
+        case TCP_FIN_WAIT_1:
+        case TCP_FIN_WAIT_2:
+        case TCP_CLOSE_WAIT:
+        case TCP_CLOSING:
+        case TCP_LAST_ACK:
+        case TCP_TIME_WAIT:
+            tcp_recv_data(socket, ip_packet, packet);
             return;
         default:
             assert(false);
@@ -181,7 +456,7 @@ void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_pack
 }
 
 void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16_t dest_port, uint32_t sequence, uint32_t ack_num,
-                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, const void *payload) {
+                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, struct ring_buffer *rb) {
     packet->source_port = htons(source_port);
     packet->dest_port = htons(dest_port);
     packet->sequence_number = htonl(sequence);
@@ -194,8 +469,8 @@ void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16
     packet->check_sum = 0;
     packet->urg_pointer = 0;
 
-    if (payload_length > 0 && payload != NULL) {
-        memcpy(packet->options_and_payload, payload, payload_length);
+    if (payload_length > 0 && rb != NULL) {
+        ring_buffer_copy(rb, packet->options_and_payload, payload_length);
     }
 }
 

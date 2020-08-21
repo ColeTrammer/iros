@@ -5,6 +5,9 @@
 
 #include <kernel/net/ip.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/ring_buffer.h>
+
+struct timer;
 
 enum tcp_state {
     TCP_CLOSED,
@@ -41,7 +44,15 @@ struct tcp_control_block {
     uint32_t send_wl2;
     uint32_t recv_next;
     uint32_t recv_window;
+    uint32_t segment_size;
+    struct ring_buffer send_buffer;
+    struct ring_buffer recv_buffer;
+    struct timer *retransmission_timer;
+    struct timespec retransmission_delay;
     enum tcp_state state;
+    bool pending_syn : 1;
+    bool pending_fin : 1;
+    bool is_passive : 1;
 };
 
 struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info *info);
