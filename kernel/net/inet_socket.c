@@ -66,7 +66,9 @@ int net_inet_bind(struct socket *socket, const struct sockaddr *addr, socklen_t 
 int net_inet_close(struct socket *socket) {
     if (socket->has_host_address) {
         uint16_t port = PORT_FROM_SOCKADDR(&socket->host_address);
-        net_unbind_port(port);
+        if (net_get_socket_from_port(port) == socket) {
+            net_unbind_port(port);
+        }
     }
     return 0;
 }
