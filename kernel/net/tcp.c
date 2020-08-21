@@ -170,8 +170,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
                 return;
             }
 
-            offset = tcb->recv_next - htonl(packet->sequence_number);
-            offset += packet->flags.bits.syn;
+            offset = tcb->recv_next - htonl(packet->sequence_number) - packet->flags.bits.syn;
             segment_length -= offset;
 
             size_t available_space = ring_buffer_space(&tcb->recv_buffer);
@@ -201,11 +200,11 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
             return;
         }
 
-        net_send_tcp_from_socket(socket);
-
         // All outstanding data has been recieved.
         tcb->recv_next++;
         tcb->state = CLOSING;
+
+        net_send_tcp_from_socket(socket);
         switch (tcb->state) {
             case TCP_SYN_RECIEVED:
             case TCP_ESTABLISHED:
@@ -269,10 +268,11 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     // Valid SYN was sent.
     tcb->recv_next = htonl(packet->sequence_number) + 1;
     tcb->send_window = htons(packet->window_size);
+    socket->readable = true;
     if (packet->flags.bits.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));
         tcb->state = TCP_ESTABLISHED;
-        net_send_tcp_from_socket(socket);
+        // net_send_tcp_from_socket(socket);
         tcp_process_segment(socket, ip_packet, packet);
         return;
     }
