@@ -164,6 +164,8 @@ const char *vm_type_to_string(uint64_t type) {
             return "kernel=>heap";
         case VM_KERNEL_ANON_MAPPING:
             return "kernel=>anonymous mapping";
+        case VM_KERNEL_DMA_MAPPING:
+            return "kernel=>dma mapping";
         case VM_KERNEL_STACK:
             return "kernel=>stack";
         case VM_PROCESS_TEXT:

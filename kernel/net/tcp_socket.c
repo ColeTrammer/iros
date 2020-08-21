@@ -283,14 +283,75 @@ static int net_tcp_socket(int domain, int type, int protocol) {
     return fd;
 }
 
-static ssize_t net_tcp_recvfrom(struct socket *socket, void *buf, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
-    (void) socket;
-    (void) buf;
-    (void) len;
+static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
     (void) flags;
     (void) addr;
     (void) addrlen;
-    return -ENETDOWN;
+
+    mutex_lock(&socket->lock);
+    if (addr) {
+        net_copy_sockaddr_to_user(&socket->peer_address, sizeof(struct sockaddr_in), addr, addrlen);
+    }
+
+    size_t buffer_index = 0;
+    int error = 0;
+
+    struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
+    while (buffer_index < len) {
+        struct tcp_control_block *tcb = socket->private_data;
+        if (!tcb) {
+            error = socket->error;
+            break;
+        }
+
+        int ret = tcp_maybe_send_segment(socket);
+        if (ret) {
+            error = ret;
+            goto done;
+        }
+
+        switch (tcb->state) {
+            case TCP_CLOSING:
+            case TCP_LAST_ACK:
+            case TCP_TIME_WAIT:
+                error = -ENOTCONN;
+                goto done;
+            default:
+                break;
+        }
+
+        size_t amount_readable = ring_buffer_size(&tcb->recv_buffer);
+        if (!amount_readable) {
+            if (tcb->state == TCP_CLOSE_WAIT) {
+                break;
+            }
+
+            socket->readable = false;
+            mutex_unlock(&socket->lock);
+            int ret = net_block_until_socket_is_readable(socket, start_time);
+            if (ret) {
+                error = ret;
+                break;
+            }
+            mutex_lock(&socket->lock);
+            continue;
+        }
+
+        size_t amount_to_read = MIN(amount_readable, len - buffer_index);
+        ring_buffer_user_read(buffer + buffer_index, &tcb->recv_buffer, amount_to_read);
+        buffer_index += amount_to_read;
+        tcb->recv_window += amount_to_read;
+        socket->readable = !ring_buffer_empty(&tcb->recv_buffer);
+
+        error = tcp_maybe_send_segment(socket);
+        if (error) {
+            break;
+        }
+    }
+done:
+    mutex_unlock(&socket->lock);
+
+    return buffer_index ? (ssize_t) buffer_index : error;
 }
 
 static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t len, int flags, const struct sockaddr *addr,
@@ -308,6 +369,11 @@ static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t 
     mutex_lock(&socket->lock);
     while (buffer_index < len) {
         struct tcp_control_block *tcb = socket->private_data;
+        if (!tcb) {
+            error = socket->error;
+            break;
+        }
+
         switch (tcb->state) {
             case TCP_FIN_WAIT_1:
             case TCP_FIN_WAIT_2:
