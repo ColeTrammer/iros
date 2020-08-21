@@ -51,7 +51,7 @@ void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
             return;
         }
         case IP_V4_PROTOCOL_TCP: {
-            net_tcp_recieve((const struct tcp_packet *) packet->payload, len - sizeof(struct ip_v4_packet));
+            net_tcp_recieve(packet, (const struct tcp_packet *) packet->payload, len - sizeof(struct ip_v4_packet));
             return;
         }
         default: {

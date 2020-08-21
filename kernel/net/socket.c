@@ -42,7 +42,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
     socket->ref_count = 1;
     socket->recv_timeout = (struct timeval) { 10, 0 };
     socket->send_timeout = (struct timeval) { 10, 0 };
-    socket->writable = true;
+    socket->writable = type == SOCK_DGRAM || type == SOCK_RAW;
     socket->readable = false;
     socket->exceptional = false;
     socket->has_host_address = false;
