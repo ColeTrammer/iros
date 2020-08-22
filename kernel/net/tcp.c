@@ -214,7 +214,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
                 break;
             case TCP_FIN_WAIT_1:
                 assert(!tcb->pending_fin);
-                tcb->state = CLOSING;
+                tcb->state = TCP_CLOSING;
                 break;
             case TCP_FIN_WAIT_2:
                 tcb->state = TCP_TIME_WAIT;
@@ -269,11 +269,13 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
 
     // Valid SYN was sent.
     tcb->recv_next = htonl(packet->sequence_number);
-    tcb->send_window = htons(packet->window_size);
     socket->readable = true;
     if (packet->flags.bits.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));
         tcb->state = TCP_ESTABLISHED;
+        tcb->send_window = htons(packet->window_size);
+        tcb->send_wl1 = htonl(packet->sequence_number);
+        tcb->send_wl2 = htonl(packet->ack_number);
         net_tcp_send_segment(socket);
         tcp_process_segment(socket, ip_packet, packet);
         return;
@@ -340,6 +342,9 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                 tcp_send_reset(ip_packet, packet);
                 break;
             }
+            tcb->send_window = htonl(packet->window_size);
+            tcb->send_wl1 = htonl(packet->sequence_number);
+            tcb->send_wl2 = htonl(packet->ack_number);
             tcb->state = TCP_ESTABLISHED;
             // Fall-through
         case TCP_ESTABLISHED:

@@ -118,14 +118,15 @@ static struct tcp_control_block *tcp_allocate_control_block(struct socket *socke
 
 void net_free_tcp_control_block(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
+    socket->private_data = NULL;
+
     net_remove_tcp_socket_mapping(socket);
     if (tcb->retransmission_timer) {
         time_delete_timer(tcb->retransmission_timer);
     }
     kill_ring_buffer(&tcb->send_buffer);
     kill_ring_buffer(&tcb->recv_buffer);
-    free(socket->private_data);
-    socket->private_data = NULL;
+    free(tcb);
 }
 
 static void tcp_do_retransmit(struct timer *timer, void *_socket) {
@@ -232,7 +233,7 @@ static int net_tcp_close(struct socket *socket) {
             break;
         case TCP_CLOSE_WAIT:
             tcb->pending_fin = true;
-            tcb->state = TCP_CLOSING;
+            tcb->state = TCP_LAST_ACK;
             ret = tcp_maybe_send_segment(socket);
             break;
         case TCP_CLOSING:
