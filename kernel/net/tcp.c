@@ -70,7 +70,8 @@ int net_send_tcp(struct ip_v4_address dest, uint16_t source_port, uint16_t dest_
 }
 
 static size_t tcp_segment_length(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
-    return ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset;
+    return ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset + packet->flags.bits.syn +
+           packet->flags.bits.fin;
 }
 
 static const void *tcp_data_start(const struct tcp_packet *packet) {
@@ -170,12 +171,12 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
                 return;
             }
 
-            offset = tcb->recv_next - htonl(packet->sequence_number) - packet->flags.bits.syn;
-            segment_length -= offset;
+            offset = tcb->recv_next - htonl(packet->sequence_number);
+            segment_length -= offset + packet->flags.bits.syn + packet->flags.bits.fin;
+            tcb->recv_next += packet->flags.bits.syn;
 
             size_t available_space = ring_buffer_space(&tcb->recv_buffer);
             segment_length = MIN(available_space, segment_length);
-            segment_length -= packet->flags.bits.fin;
             if (segment_length == 0) {
                 break;
             }
@@ -196,13 +197,14 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
     }
 
     if (packet->flags.bits.fin) {
-        if (tcb->recv_next != htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet)) {
+        if (tcb->recv_next != htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet) - 1) {
             return;
         }
 
         // All outstanding data has been recieved.
         tcb->recv_next++;
         tcb->state = CLOSING;
+        socket->readable = true;
 
         net_send_tcp_from_socket(socket);
         switch (tcb->state) {
@@ -266,7 +268,7 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     }
 
     // Valid SYN was sent.
-    tcb->recv_next = htonl(packet->sequence_number) + 1;
+    tcb->recv_next = htonl(packet->sequence_number);
     tcb->send_window = htons(packet->window_size);
     socket->readable = true;
     if (packet->flags.bits.ack) {

@@ -322,11 +322,11 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
 
         size_t amount_readable = ring_buffer_size(&tcb->recv_buffer);
         if (!amount_readable) {
+            socket->readable = false;
             if (tcb->state == TCP_CLOSE_WAIT) {
                 break;
             }
 
-            socket->readable = false;
             mutex_unlock(&socket->lock);
             int ret = net_block_until_socket_is_readable(socket, start_time);
             if (ret) {
@@ -338,7 +338,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         }
 
         size_t amount_to_read = MIN(amount_readable, len - buffer_index);
-        ring_buffer_user_read(buffer + buffer_index, &tcb->recv_buffer, amount_to_read);
+        ring_buffer_user_read(&tcb->recv_buffer, buffer + buffer_index, amount_to_read);
         buffer_index += amount_to_read;
         tcb->recv_window += amount_to_read;
         socket->readable = !ring_buffer_empty(&tcb->recv_buffer);
