@@ -26,8 +26,13 @@ static int socket_file_close(struct file *file) {
     debug_log("Destroying socket: [ %lu ]\n", socket->id);
 #endif /* SOCKET_DEBUG */
 
+    int ret = 0;
+    if (socket->op->close) {
+        ret = socket->op->close(socket);
+    }
+
     net_drop_socket(socket);
-    return 0;
+    return ret;
 }
 
 static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len) {
