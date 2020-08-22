@@ -17,6 +17,7 @@
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
 static int net_tcp_close(struct socket *socket);
 static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
+static int net_tcp_destroy(struct socket *socket);
 static int net_tcp_getsockopt(struct socket *socket, int level, int optname, void *optval, socklen_t *optlen);
 static int net_tcp_setsockopt(struct socket *socket, int level, int optname, const void *optval, socklen_t optlen);
 static int net_tcp_listen(struct socket *socket, int backlog);
@@ -30,6 +31,7 @@ static struct socket_ops tcp_ops = {
     .bind = net_inet_bind,
     .close = net_tcp_close,
     .connect = net_tcp_connect,
+    .destroy = net_tcp_destroy,
     .getpeername = net_inet_getpeername,
     .getsockname = net_inet_getsockname,
     .getsockopt = net_tcp_getsockopt,
@@ -194,12 +196,45 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
 }
 
 static int net_tcp_close(struct socket *socket) {
+    int ret = 0;
+    mutex_lock(&socket->lock);
     struct tcp_control_block *tcb = socket->private_data;
-    if (tcb) {
-        net_free_tcp_control_block(socket);
+    if (!tcb) {
+        mutex_unlock(&socket->lock);
+        return 0;
     }
 
-    return net_inet_close(socket);
+    switch (tcb->state) {
+        case TCP_LITSEN:
+            net_free_tcp_control_block(socket);
+            break;
+        case TCP_SYN_SENT:
+            net_free_tcp_control_block(socket);
+            break;
+        case TCP_SYN_RECIEVED:
+            assert(false);
+            break;
+        case TCP_ESTABLISHED:
+            assert(false);
+            break;
+        case TCP_FIN_WAIT_1:
+        case TCP_FIN_WAIT_2:
+            break;
+        case TCP_CLOSE_WAIT:
+            tcp_send_segment(socket, (union tcp_flags) { .bits = { .ack = 1, .fin = 1 } });
+            tcb->state = CLOSING;
+            break;
+        case TCP_CLOSING:
+        case TCP_LAST_ACK:
+        case TCP_TIME_WAIT:
+            ret = ENOTCONN;
+            break;
+        default:
+            assert(false);
+    }
+
+    mutex_unlock(&socket->lock);
+    return ret;
 }
 
 static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen) {
@@ -226,6 +261,15 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
     if (ret) {
         net_free_tcp_control_block(socket);
         return ret;
+    }
+
+    return 0;
+}
+
+static int net_tcp_destroy(struct socket *socket) {
+    struct tcp_control_block *tcb = socket->private_data;
+    if (tcb) {
+        net_free_tcp_control_block(socket);
     }
 
     return 0;
@@ -285,8 +329,6 @@ static int net_tcp_socket(int domain, int type, int protocol) {
 
 static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
     (void) flags;
-    (void) addr;
-    (void) addrlen;
 
     mutex_lock(&socket->lock);
     if (addr) {

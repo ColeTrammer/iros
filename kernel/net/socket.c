@@ -55,8 +55,8 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
 }
 
 static void net_destroy_socket(struct socket *socket) {
-    if (socket->op->close) {
-        socket->op->close(socket);
+    if (socket->op->destroy) {
+        socket->op->destroy(socket);
     }
 
     for (int i = 0; i < socket->num_pending; i++) {

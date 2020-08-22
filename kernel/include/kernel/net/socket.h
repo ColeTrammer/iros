@@ -24,6 +24,7 @@ struct socket_ops {
     int (*accept)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
     int (*bind)(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
     int (*close)(struct socket *socket);
+    int (*destroy)(struct socket *socket);
     int (*connect)(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
     int (*getpeername)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
     int (*getsockname)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
