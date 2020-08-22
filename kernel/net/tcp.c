@@ -391,7 +391,7 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                     assert(!tcb->pending_fin);
                     socket->state = CLOSED;
                     net_free_tcp_control_block(socket);
-                    break;
+                    return;
                 case TCP_TIME_WAIT:
                     tcp_send_empty_ack(socket, ip_packet, packet);
                     // FIXME: restart the 2 MSL timeout.
@@ -457,9 +457,11 @@ void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_pack
         return;
     }
 
+    net_bump_socket(socket);
     mutex_lock(&socket->lock);
     tcp_recv_on_socket(socket, ip_packet, packet);
     mutex_unlock(&socket->lock);
+    net_drop_socket(socket);
 }
 
 void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16_t dest_port, uint32_t sequence, uint32_t ack_num,
