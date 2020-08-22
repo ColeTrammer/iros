@@ -149,13 +149,10 @@ static void tcp_setup_retransmission_timer(struct socket *socket) {
     tcb->retransmission_timer = time_register_kernel_callback(&tcb->retransmission_delay, tcp_do_retransmit, socket);
 }
 
-static int tcp_send_segment(struct socket *socket, union tcp_flags flags) {
+int net_tcp_send_segment(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
-    tcb->pending_syn = flags.bits.syn;
-    tcb->pending_fin = flags.bits.fin;
-
-    size_t data_to_send = MIN(ring_buffer_size(&tcb->send_buffer), tcb->segment_size);
-    tcb->send_next += flags.bits.syn + flags.bits.fin + data_to_send;
+    size_t data_to_send = MIN(tcb->send_window, MIN(ring_buffer_size(&tcb->send_buffer), tcb->segment_size));
+    tcb->send_next = tcb->send_unacknowledged + tcb->pending_syn + tcb->pending_fin + data_to_send;
     int ret = net_send_tcp_from_socket(socket);
     tcp_setup_retransmission_timer(socket);
     return ret;
@@ -167,7 +164,11 @@ static int tcp_maybe_send_segment(struct socket *socket) {
         return 0;
     }
 
-    return tcp_send_segment(socket, (union tcp_flags) { .bits = { .ack = 1 } });
+    if (ring_buffer_empty(&tcb->send_buffer) && !tcb->pending_syn && !tcb->pending_fin) {
+        return 0;
+    }
+
+    return net_tcp_send_segment(socket);
 }
 
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
@@ -212,17 +213,27 @@ static int net_tcp_close(struct socket *socket) {
             net_free_tcp_control_block(socket);
             break;
         case TCP_SYN_RECIEVED:
-            assert(false);
+            // No data has been sent yet.
+            if (tcb->send_unacknowledged == tcb->send_next - 1) {
+                tcb->pending_fin = true;
+                tcb->state = TCP_FIN_WAIT_1;
+                ret = net_tcp_send_segment(socket);
+            } else {
+                tcb->pending_fin = true;
+            }
             break;
         case TCP_ESTABLISHED:
-            assert(false);
+            tcb->pending_fin = true;
+            tcb->state = TCP_FIN_WAIT_1;
+            ret = tcp_maybe_send_segment(socket);
             break;
         case TCP_FIN_WAIT_1:
         case TCP_FIN_WAIT_2:
             break;
         case TCP_CLOSE_WAIT:
-            tcp_send_segment(socket, (union tcp_flags) { .bits = { .ack = 1, .fin = 1 } });
-            tcb->state = CLOSING;
+            tcb->pending_fin = true;
+            tcb->state = TCP_CLOSING;
+            ret = tcp_maybe_send_segment(socket);
             break;
         case TCP_CLOSING:
         case TCP_LAST_ACK:
@@ -257,7 +268,8 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
 
     create_tcp_socket_mapping(socket);
 
-    int ret = tcp_send_segment(socket, (union tcp_flags) { .bits = { .syn = 1 } });
+    tcb->pending_syn = true;
+    int ret = net_tcp_send_segment(socket);
     if (ret) {
         net_free_tcp_control_block(socket);
         return ret;
