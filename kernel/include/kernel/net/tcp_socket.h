@@ -57,6 +57,7 @@ struct tcp_control_block {
 
 struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info *info);
 
+int net_tcp_send_segment(struct socket *socket);
 void net_free_tcp_control_block(struct socket *socket);
 
 void init_tcp_sockets(void);

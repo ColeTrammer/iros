@@ -22,7 +22,7 @@ int net_send_tcp_from_socket(struct socket *socket) {
 
     struct tcp_control_block *tcb = socket->private_data;
 
-    size_t data_to_send = MIN(ring_buffer_size(&tcb->send_buffer), tcb->segment_size);
+    size_t data_to_send = tcb->send_next - tcb->send_unacknowledged - tcb->pending_syn - tcb->pending_fin;
 
     int ret =
         net_send_tcp(dest_ip, source_port, dest_port, tcb->send_unacknowledged, tcb->recv_next, tcb->recv_window,
@@ -206,7 +206,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
         tcb->state = CLOSING;
         socket->readable = true;
 
-        net_send_tcp_from_socket(socket);
+        net_tcp_send_segment(socket);
         switch (tcb->state) {
             case TCP_SYN_RECIEVED:
             case TCP_ESTABLISHED:
@@ -274,13 +274,13 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     if (packet->flags.bits.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));
         tcb->state = TCP_ESTABLISHED;
-        // net_send_tcp_from_socket(socket);
+        net_tcp_send_segment(socket);
         tcp_process_segment(socket, ip_packet, packet);
         return;
     }
 
     tcb->state = TCP_SYN_RECIEVED;
-    net_send_tcp_from_socket(socket);
+    net_tcp_send_segment(socket);
     tcp_process_segment(socket, ip_packet, packet);
     return;
 }
