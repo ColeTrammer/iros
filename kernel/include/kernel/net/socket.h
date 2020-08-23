@@ -19,6 +19,7 @@ enum socket_state { UNBOUND = 0, BOUND, LISTENING, CONNECTED, CLOSING, CLOSED };
 struct network_interface;
 struct route_cache_entry;
 struct socket;
+struct tcp_control_block;
 
 struct socket_ops {
     int (*accept)(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
@@ -52,8 +53,10 @@ struct socket_connection {
         struct sockaddr_in in;
     } addr;
     socklen_t addrlen;
-    struct socket *connect_to;
-    uint32_t ack_num;
+    union {
+        struct socket *connect_to;             // Unix
+        struct tcp_control_block *connect_tcb; // TCP
+    };
 };
 
 struct socket_data {

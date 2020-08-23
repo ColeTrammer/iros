@@ -240,8 +240,42 @@ static void tcp_recv_in_listen(struct socket *socket, const struct ip_v4_packet 
         tcp_send_reset(ip_packet, packet);
         return;
     } else if (packet->flags.bits.syn) {
-        (void) tcb;
-        debug_log("Got SYN\n");
+        if (socket->num_pending >= socket->pending_length) {
+            // There are too many pending connections, so refuse this one.
+            tcp_send_reset(ip_packet, packet);
+            return;
+        }
+
+        for (int i = 0; i < socket->num_pending; i++) {
+            struct socket_connection *connection = socket->pending[i];
+            if (connection->addr.in.sin_addr.s_addr == ip_v4_to_uint(ip_packet->source) &&
+                connection->addr.in.sin_port == packet->source_port) {
+                // This was a retransmitted SYN, no need to queue again.
+                return;
+            }
+        }
+
+        // Queue the connection
+        struct socket_connection *connection = calloc(1, sizeof(struct socket_connection));
+        connection->addr.in = (struct sockaddr_in) {
+            .sin_family = AF_INET,
+            .sin_port = packet->source_port,
+            .sin_addr = { .s_addr = ip_v4_to_uint(ip_packet->source) },
+            .sin_zero = { 0 },
+        };
+        connection->addrlen = sizeof(struct sockaddr_in);
+        connection->connect_tcb = tcb;
+        socket->pending[socket->num_pending++] = connection;
+
+        // Update the TCB
+        tcb->recv_next = htonl(packet->sequence_number);
+        tcb->state = TCP_SYN_RECIEVED;
+        tcp_process_segment(socket, ip_packet, packet);
+
+        // Replace the TCB with a new one, for the next incoming connection
+        struct tcp_control_block *new_tcb = net_allocate_tcp_control_block(socket);
+        new_tcb->is_passive = true;
+        new_tcb->state = TCP_LITSEN;
         return;
     }
 }
@@ -377,6 +411,7 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                     tcb->state = TCP_FIN_WAIT_2;
                     // Fall-through
                 case TCP_FIN_WAIT_2:
+                    tcp_send_empty_ack(socket, ip_packet, packet);
                     socket->state = CLOSING;
                     break;
                 case TCP_CLOSE_WAIT:
@@ -442,7 +477,7 @@ void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_pack
     net_tcp_log(ip_packet, packet);
 
     struct tcp_connection_info info = {
-        .source_ip = IP_V4_BROADCAST,
+        .source_ip = IP_V4_ZEROES,
         .source_port = ntohs(packet->dest_port),
         .dest_ip = ip_packet->source,
         .dest_port = ntohs(packet->source_port),
@@ -450,9 +485,18 @@ void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_pack
 
     struct socket *socket = net_get_tcp_socket_by_connection_info(&info);
     if (!socket) {
-        debug_log("TCP socket mapping not found: [ %d.%d.%d.%d, %u, %d.%d.%d.%d, %u ]\n", info.source_ip.addr[0], info.source_ip.addr[0],
-                  info.source_ip.addr[0], info.source_ip.addr[0], info.source_port, info.dest_ip.addr[0], info.dest_ip.addr[0],
-                  info.dest_ip.addr[0], info.dest_ip.addr[0], info.dest_port);
+        // Check for a passive socket that doesn't know its own destination.
+        info.dest_ip = IP_V4_ZEROES;
+        info.dest_port = 0;
+        socket = net_get_tcp_socket_by_connection_info(&info);
+    }
+
+    if (!socket) {
+        info.dest_ip = ip_packet->source;
+        info.dest_port = ntohs(packet->source_port);
+        debug_log("TCP socket mapping not found: [ %d.%d.%d.%d, %u, %d.%d.%d.%d, %u ]\n", info.source_ip.addr[1], info.source_ip.addr[2],
+                  info.source_ip.addr[3], info.source_ip.addr[0], info.source_port, info.dest_ip.addr[0], info.dest_ip.addr[1],
+                  info.dest_ip.addr[2], info.dest_ip.addr[3], info.dest_port);
         tcp_send_reset(ip_packet, packet);
         return;
     }
