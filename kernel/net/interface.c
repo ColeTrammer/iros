@@ -71,9 +71,9 @@ struct network_interface *net_create_network_interface(const char *name, int typ
 
     assert(ops);
     assert(!ops->recieve_ethernet);
-    assert(!ops->recieve_ip_v4_sync);
+    assert(!ops->recieve_ip_v4);
     ops->recieve_ethernet = net_recieve_ethernet;
-    ops->recieve_ip_v4_sync = net_recieve_ip_v4_sync;
+    ops->recieve_ip_v4 = net_recieve_ip_v4;
 
     interface->ops = ops;
     interface->private_data = data;

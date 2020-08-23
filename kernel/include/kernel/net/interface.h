@@ -17,7 +17,7 @@ struct network_interface_ops {
     int (*send_arp)(struct network_interface *interface, struct mac_address dest, const struct arp_packet *data, size_t len);
     int (*send_ip_v4)(struct network_interface *interface, struct route_cache_entry *route, const struct ip_v4_packet *data, size_t len);
     void (*recieve_ethernet)(struct network_interface *interface, const struct ethernet_frame *frame, size_t len);
-    void (*recieve_ip_v4_sync)(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len);
+    void (*recieve_ip_v4)(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len);
     struct mac_address (*get_mac_address)(struct network_interface *interface);
 };
 
