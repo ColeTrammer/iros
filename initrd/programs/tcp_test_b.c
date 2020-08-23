@@ -70,5 +70,10 @@ int main() {
         return 1;
     }
 
+    if (close(s3) < 0) {
+        perror("tcp_test_b: close");
+        return 1;
+    }
+
     return 0;
 }

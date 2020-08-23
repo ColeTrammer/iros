@@ -131,6 +131,9 @@ void net_free_tcp_control_block(struct socket *socket) {
     socket->private_data = NULL;
 
     net_remove_tcp_socket_mapping(socket);
+    if (tcb->time_wait_timer) {
+        time_delete_timer(tcb->time_wait_timer);
+    }
     if (tcb->retransmission_timer) {
         time_delete_timer(tcb->retransmission_timer);
     }
