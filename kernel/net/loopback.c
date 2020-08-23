@@ -11,7 +11,7 @@ static int loop_send_ip_v4(struct network_interface *interface, struct route_cac
 
     debug_log("Sending data via loopback\n");
 
-    interface->ops->recieve_ip_v4_sync(interface, packet, len);
+    interface->ops->recieve_ip_v4(interface, packet, len);
     return 0;
 }
 

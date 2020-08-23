@@ -40,24 +40,49 @@ static struct network_data *consume() {
     return data;
 }
 
-void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t len) {
-    struct network_data *new_data = calloc(1, sizeof(struct network_data));
-    assert(new_data);
-    new_data->frame = frame;
-    new_data->len = len;
-
+static void enqueue_packet(struct network_data *data) {
     spin_lock(&lock);
 
-    insque(new_data, tail);
+    insque(data, tail);
     if (head == NULL) {
-        head = tail = new_data;
+        head = tail = data;
     } else {
-        tail = new_data;
+        tail = data;
     }
 
     // Unblock ourselves once we have data
     wake_up_all(&net_wait_queue);
     spin_unlock(&lock);
+}
+
+void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t len) {
+    struct network_data *new_data = malloc(sizeof(struct network_data));
+    assert(new_data);
+
+    // For now just store a dangling pointer to the ethernet frame. Ethernet drivers
+    // have their own persistent buffers for incoming packets. This is far from ideal
+    // since the frame's lifetime is not communicated in any way (the space should be
+    // marked unusable to prevent the device from overwriting its data).
+    new_data->ethernet_frame = frame;
+    new_data->len = len;
+    new_data->type = NETWORK_DATA_ETHERNET;
+
+    enqueue_packet(new_data);
+}
+
+void net_on_incoming_ip_v4_packet(const struct ip_v4_packet *packet, size_t len) {
+    struct network_data *new_data = malloc(sizeof(struct network_data) + len);
+    assert(new_data);
+
+    // In this case, the incoming packet must be copied. This function is used by
+    // the loopback device, meaning that there is not persistent recieve buffer
+    // (only the temporary storage allocated by whoever tries to send a packet).
+    new_data->ip_v4_packet = (const struct ip_v4_packet *) (new_data + 1);
+    memcpy(new_data + 1, packet, len);
+    new_data->len = len;
+    new_data->type = NETWORK_DATA_IP_V4;
+
+    enqueue_packet(new_data);
 }
 
 void net_network_task_start() {
@@ -73,7 +98,17 @@ void net_network_task_start() {
             continue;
         }
 
-        net_ethernet_recieve(data->frame, data->len);
+        switch (data->type) {
+            case NETWORK_DATA_ETHERNET:
+                net_ethernet_recieve(data->ethernet_frame, data->len);
+                break;
+            case NETWORK_DATA_IP_V4:
+                net_ip_v4_recieve(data->ip_v4_packet, data->len);
+                break;
+            default:
+                assert(false);
+                break;
+        }
         free(data);
     }
 }
