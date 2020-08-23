@@ -15,6 +15,9 @@
 #include <kernel/time/timer.h>
 #include <kernel/util/macros.h>
 
+// 2 * MSL (which is 2 * 2 minutes)
+static struct timespec time_wait_timeout = { .tv_sec = 240, .tv_nsec = 0 };
+
 int net_send_tcp_from_socket(struct socket *socket) {
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
@@ -76,6 +79,10 @@ static size_t tcp_segment_length(const struct ip_v4_packet *ip_packet, const str
 
 static const void *tcp_data_start(const struct tcp_packet *packet) {
     return (const void *) packet + sizeof(uint32_t) * packet->data_offset;
+}
+
+static void tcp_time_wait_expiration(struct timer *timer __attribute__((unused)), void *socket) {
+    net_free_tcp_control_block(socket);
 }
 
 static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
@@ -203,7 +210,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
 
         // All outstanding data has been recieved.
         tcb->recv_next++;
-        tcb->state = CLOSING;
+        socket->state = CLOSING;
         socket->readable = true;
 
         net_tcp_send_segment(socket);
@@ -213,18 +220,19 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
                 tcb->state = TCP_CLOSE_WAIT;
                 break;
             case TCP_FIN_WAIT_1:
-                assert(!tcb->pending_fin);
+                assert(tcb->pending_fin);
                 tcb->state = TCP_CLOSING;
                 break;
             case TCP_FIN_WAIT_2:
                 tcb->state = TCP_TIME_WAIT;
+                tcb->time_wait_timer = time_register_kernel_callback(&time_wait_timeout, tcp_time_wait_expiration, socket);
                 break;
             case TCP_CLOSE_WAIT:
             case TCP_CLOSING:
             case TCP_LAST_ACK:
                 break;
             case TCP_TIME_WAIT:
-                // FIXME: restart the 2 MSL timeout
+                time_reset_kernel_callback(tcb->time_wait_timer, &time_wait_timeout);
                 break;
             default:
                 assert(false);
@@ -266,6 +274,7 @@ static void tcp_recv_in_listen(struct socket *socket, const struct ip_v4_packet 
         connection->addrlen = sizeof(struct sockaddr_in);
         connection->connect_tcb = tcb;
         socket->pending[socket->num_pending++] = connection;
+        socket->readable = true;
 
         // Update the TCB
         tcb->recv_next = htonl(packet->sequence_number);
@@ -411,7 +420,6 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                     tcb->state = TCP_FIN_WAIT_2;
                     // Fall-through
                 case TCP_FIN_WAIT_2:
-                    tcp_send_empty_ack(socket, ip_packet, packet);
                     socket->state = CLOSING;
                     break;
                 case TCP_CLOSE_WAIT:
@@ -421,6 +429,7 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                         return;
                     }
                     tcb->state = TCP_TIME_WAIT;
+                    tcb->time_wait_timer = time_register_kernel_callback(&time_wait_timeout, tcp_time_wait_expiration, socket);
                     break;
                 case TCP_LAST_ACK:
                     assert(!tcb->pending_fin);
@@ -429,7 +438,7 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                     return;
                 case TCP_TIME_WAIT:
                     tcp_send_empty_ack(socket, ip_packet, packet);
-                    // FIXME: restart the 2 MSL timeout.
+                    time_reset_kernel_callback(tcb->time_wait_timer, &time_wait_timeout);
                     break;
                 default:
                     break;

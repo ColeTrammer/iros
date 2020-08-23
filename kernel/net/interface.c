@@ -22,9 +22,9 @@ static void net_recieve_ethernet(struct network_interface *interface, const stru
     net_on_incoming_ethernet_frame(frame, len);
 }
 
-static void net_recieve_ip_v4_sync(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len) {
+static void net_recieve_ip_v4(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len) {
     (void) interface;
-    net_ip_v4_recieve(packet, len);
+    net_on_incoming_ip_v4_packet(packet, len);
 }
 
 struct list_node *net_get_interface_list(void) {

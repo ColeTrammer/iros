@@ -47,6 +47,7 @@ struct tcp_control_block {
     uint32_t segment_size;
     struct ring_buffer send_buffer;
     struct ring_buffer recv_buffer;
+    struct timer *time_wait_timer;
     struct timer *retransmission_timer;
     struct timespec retransmission_delay;
     enum tcp_state state;
