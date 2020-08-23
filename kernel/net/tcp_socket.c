@@ -78,8 +78,12 @@ static void create_tcp_socket_mapping(struct socket *socket) {
         .dest_port = PORT_FROM_SOCKADDR(&socket->peer_address),
     };
     mapping->socket = net_bump_socket(socket);
-
     hash_put(tcp_connection_map, &mapping->hash);
+
+    debug_log("Made TCP socket mapping: [ %d.%d.%d.%d, %u, %d.%d.%d.%d, %u ]\n", mapping->key.source_ip.addr[0],
+              mapping->key.source_ip.addr[1], mapping->key.source_ip.addr[2], mapping->key.source_ip.addr[3], mapping->key.source_port,
+              mapping->key.dest_ip.addr[0], mapping->key.dest_ip.addr[1], mapping->key.dest_ip.addr[2], mapping->key.dest_ip.addr[3],
+              mapping->key.dest_port);
 }
 
 void net_remove_tcp_socket_mapping(struct socket *socket) {
@@ -91,6 +95,12 @@ void net_remove_tcp_socket_mapping(struct socket *socket) {
     };
 
     struct tcp_socket_mapping *mapping = hash_del_entry(tcp_connection_map, &info, struct tcp_socket_mapping);
+
+    debug_log("Removed TCP socket mapping: [ %d.%d.%d.%d, %u, %d.%d.%d.%d, %u ]\n", mapping->key.source_ip.addr[0],
+              mapping->key.source_ip.addr[1], mapping->key.source_ip.addr[2], mapping->key.source_ip.addr[3], mapping->key.source_port,
+              mapping->key.dest_ip.addr[0], mapping->key.dest_ip.addr[1], mapping->key.dest_ip.addr[2], mapping->key.dest_ip.addr[3],
+              mapping->key.dest_port);
+
     net_drop_socket(mapping->socket);
     free(mapping);
 }
@@ -104,7 +114,7 @@ struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info 
     return mapping->socket;
 }
 
-static struct tcp_control_block *tcp_allocate_control_block(struct socket *socket) {
+struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data = calloc(1, sizeof(struct tcp_control_block));
     tcb->state = TCP_CLOSED;
     tcb->send_unacknowledged = tcb->send_next = 10000;                           // Initial sequence number
@@ -194,6 +204,13 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
     net_set_peer_address(new_socket, &connection.addr.in, sizeof(connection.addr.in));
     net_set_host_address(new_socket, &socket->host_address, sizeof(socket->host_address));
 
+    struct tcp_control_block *tcb = new_socket->private_data = connection.connect_tcb;
+    create_tcp_socket_mapping(new_socket);
+
+    // Send a SYN-ACK
+    tcb->pending_syn = true;
+    net_tcp_send_segment(new_socket);
+
     return fd;
 }
 
@@ -255,7 +272,7 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
     }
 
     if (socket->state != BOUND) {
-        struct sockaddr_in to_bind = { AF_INET, 0, { INADDR_NONE }, { 0 } };
+        struct sockaddr_in to_bind = { .sin_family = AF_INET, .sin_port = 0, .sin_addr = { .s_addr = INADDR_ANY }, .sin_zero = { 0 } };
         int ret = tcp_ops.bind(socket, (struct sockaddr *) &to_bind, sizeof(struct sockaddr_in));
         if (ret < 0) {
             return ret;
@@ -264,7 +281,7 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
 
     net_set_peer_address(socket, addr, addrlen);
 
-    struct tcp_control_block *tcb = tcp_allocate_control_block(socket);
+    struct tcp_control_block *tcb = net_allocate_tcp_control_block(socket);
     tcb->state = TCP_SYN_SENT;
 
     create_tcp_socket_mapping(socket);
@@ -319,15 +336,16 @@ static int net_tcp_setsockopt(struct socket *socket, int level, int optname, con
 
 static int net_tcp_listen(struct socket *socket, int backlog) {
     if (socket->state != BOUND) {
-        struct sockaddr_in addr = { .sin_family = AF_INET, .sin_port = 0, .sin_addr = { .s_addr = INADDR_NONE }, .sin_zero = { 0 } };
+        struct sockaddr_in addr = { .sin_family = AF_INET, .sin_port = 0, .sin_addr = { .s_addr = INADDR_ANY }, .sin_zero = { 0 } };
         int ret = tcp_ops.bind(socket, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
         if (ret) {
             return ret;
         }
     }
 
-    struct tcp_control_block *tcb = tcp_allocate_control_block(socket);
+    struct tcp_control_block *tcb = net_allocate_tcp_control_block(socket);
     tcb->state = TCP_LITSEN;
+    tcb->is_passive = true;
 
     create_tcp_socket_mapping(socket);
 
@@ -402,6 +420,9 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         if (error) {
             break;
         }
+
+        // Instead of always breaking here, it is probably more correct to only do so if the PSH flag was set.
+        break;
     }
 done:
     mutex_unlock(&socket->lock);
