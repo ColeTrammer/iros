@@ -21,18 +21,19 @@ void ring_buffer_advance(struct ring_buffer *rb, size_t amount) {
     rb->full = false;
 }
 
-void ring_buffer_copy(struct ring_buffer *rb, void *buffer, size_t amount) {
-    if (rb->head + amount > rb->max) {
-        size_t length_to_end = rb->max - rb->head;
-        memcpy(buffer, rb->buffer + rb->head, length_to_end);
+void ring_buffer_copy(struct ring_buffer *rb, size_t offset, void *buffer, size_t amount) {
+    size_t head = (rb->head + offset) % rb->max;
+    if (head + amount > rb->max) {
+        size_t length_to_end = rb->max - head;
+        memcpy(buffer, rb->buffer + head, length_to_end);
         memcpy(buffer + length_to_end, rb->buffer, amount - length_to_end);
     } else {
-        memcpy(buffer, rb->buffer + rb->head, amount);
+        memcpy(buffer, rb->buffer + head, amount);
     }
 }
 
 void ring_buffer_user_read(struct ring_buffer *rb, void *buffer, size_t amount) {
-    ring_buffer_copy(rb, buffer, amount);
+    ring_buffer_copy(rb, 0, buffer, amount);
     ring_buffer_advance(rb, amount);
 }
 

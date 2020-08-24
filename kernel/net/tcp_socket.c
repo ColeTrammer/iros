@@ -117,10 +117,10 @@ struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info 
 struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data = calloc(1, sizeof(struct tcp_control_block));
     tcb->state = TCP_CLOSED;
-    tcb->send_unacknowledged = tcb->send_next = 10000;                           // Initial sequence number
-    tcb->recv_window = 8192;                                                     // Hard coded value
-    tcb->segment_size = 1500;                                                    // MTU for ethernet
-    tcb->retransmission_delay = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 }; // Start retransmit timer out at 1 second.
+    tcb->send_unacknowledged = tcb->send_next = 10000;                                  // Initial sequence number
+    tcb->recv_window = 8192;                                                            // Hard coded value
+    tcb->segment_size = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Default MSS minus headers
+    tcb->retransmission_delay = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };        // Start retransmit timer out at 1 second.
     init_ring_buffer(&tcb->send_buffer, 8192);
     init_ring_buffer(&tcb->recv_buffer, tcb->recv_window);
     return tcb;
@@ -146,7 +146,7 @@ static void tcp_do_retransmit(struct timer *timer, void *_socket) {
     struct socket *socket = _socket;
     struct tcp_control_block *tcb = socket->private_data;
 
-    net_send_tcp_from_socket(socket);
+    net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_next);
 
     // Exponential back off by doubling the next timeout.
     tcb->retransmission_delay = time_add(tcb->retransmission_delay, tcb->retransmission_delay);
@@ -167,7 +167,7 @@ int net_tcp_send_segment(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
     size_t data_to_send = MIN(tcb->send_window, MIN(ring_buffer_size(&tcb->send_buffer), tcb->segment_size));
     tcb->send_next = tcb->send_unacknowledged + tcb->pending_syn + tcb->pending_fin + data_to_send;
-    int ret = net_send_tcp_from_socket(socket);
+    int ret = net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_next);
     tcp_setup_retransmission_timer(socket);
     return ret;
 }
