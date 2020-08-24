@@ -117,6 +117,7 @@ struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info 
 struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data = calloc(1, sizeof(struct tcp_control_block));
     tcb->state = TCP_CLOSED;
+    tcb->send_window = 1;
     tcb->send_unacknowledged = tcb->send_next = 10000;                              // Initial sequence number
     tcb->recv_window = 8192;                                                        // Hard coded value
     tcb->recv_mss = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Default MSS minus headers
@@ -149,7 +150,10 @@ static void tcp_do_retransmit(struct timer *timer, void *_socket) {
     struct socket *socket = _socket;
     struct tcp_control_block *tcb = socket->private_data;
 
-    net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_next);
+    // FIXME: should more than one segment be sent?
+    size_t max_data_to_retransmit = tcb->send_mss - sizeof(struct tcp_packet) - sizeof(struct ip_v4_packet);
+    size_t data_to_retransmit = MIN(tcb->send_next - tcb->send_unacknowledged, max_data_to_retransmit);
+    net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_unacknowledged + data_to_retransmit);
 
     // Exponential back off by doubling the next timeout.
     tcb->retransmission_delay = time_add(tcb->retransmission_delay, tcb->retransmission_delay);
@@ -166,7 +170,7 @@ static void tcp_setup_retransmission_timer(struct socket *socket) {
     tcb->retransmission_timer = time_register_kernel_callback(&tcb->retransmission_delay, tcp_do_retransmit, socket);
 }
 
-bool net_tcp_update_window(struct socket *socket) {
+bool tcp_update_recv_window(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
     uint16_t window_max = ring_buffer_max(&tcb->recv_buffer);
     uint16_t actual_window_size = ring_buffer_space(&tcb->recv_buffer);
@@ -186,27 +190,48 @@ bool net_tcp_update_window(struct socket *socket) {
     return changed;
 }
 
-int net_tcp_send_segment(struct socket *socket) {
+int tcp_send_segments(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
     size_t segment_size = tcb->send_mss - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet);
-    size_t data_to_send = MIN(tcb->send_window, MIN(ring_buffer_size(&tcb->send_buffer), segment_size));
-    tcb->send_next = tcb->send_unacknowledged + tcb->pending_syn + tcb->pending_fin + data_to_send;
-    int ret = net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_next);
-    tcp_setup_retransmission_timer(socket);
+    bool push_data = true; // Assume all data should have the PSH bit set.
+    bool sent_data = false;
+
+    int ret = 0;
+    while (ret == 0) {
+        uint32_t usable_window = tcb->send_unacknowledged + tcb->send_window - tcb->send_next;
+        uint32_t data_available = ring_buffer_size(&tcb->send_buffer) + tcb->pending_syn + tcb->pending_fin;
+        uint32_t data_queued = data_available - (tcb->send_next - tcb->send_unacknowledged);
+
+        uint32_t data_to_send = 0;
+        if (MIN(usable_window, data_queued) >= segment_size) {
+            data_to_send = MIN(usable_window, data_queued);
+        } else if ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) && push_data && data_queued <= usable_window) {
+            data_to_send = data_queued;
+        } else if ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) &&
+                   MIN(usable_window, data_queued) >= tcb->send_window_max / 2) {
+            data_to_send = tcb->send_window_max / 2;
+        } else if (push_data && data_queued != 0) {
+            // FIXME: Set up a timer to send the data in ~0.5s
+            break;
+        }
+
+        if (data_to_send == 0) {
+            break;
+        }
+
+        tcb->send_next += data_to_send;
+#ifdef TCP_DEBUG
+        debug_log("Sending TCP segment: [ %u, %u, %u, %u ]\n", tcb->send_unacknowledged, tcb->send_next - data_to_send, tcb->send_next,
+                  usable_window);
+#endif /* TCP_DEBUG */
+        ret = net_send_tcp_from_socket(socket, tcb->send_next - data_to_send, tcb->send_next);
+        sent_data = true;
+    }
+
+    if (sent_data) {
+        tcp_setup_retransmission_timer(socket);
+    }
     return ret;
-}
-
-static int tcp_maybe_send_segment(struct socket *socket) {
-    struct tcp_control_block *tcb = socket->private_data;
-    if (tcb->retransmission_timer) {
-        return 0;
-    }
-
-    if (ring_buffer_empty(&tcb->send_buffer) && !tcb->pending_syn && !tcb->pending_fin) {
-        return 0;
-    }
-
-    return net_tcp_send_segment(socket);
 }
 
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags) {
@@ -236,7 +261,7 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
 
     // Send a SYN-ACK
     tcb->pending_syn = true;
-    net_tcp_send_segment(new_socket);
+    tcp_send_segments(new_socket);
 
     return fd;
 }
@@ -262,7 +287,7 @@ static int net_tcp_close(struct socket *socket) {
             if (tcb->send_unacknowledged == tcb->send_next - 1) {
                 tcb->pending_fin = true;
                 tcb->state = TCP_FIN_WAIT_1;
-                ret = net_tcp_send_segment(socket);
+                ret = tcp_send_segments(socket);
             } else {
                 tcb->pending_fin = true;
             }
@@ -270,7 +295,7 @@ static int net_tcp_close(struct socket *socket) {
         case TCP_ESTABLISHED:
             tcb->pending_fin = true;
             tcb->state = TCP_FIN_WAIT_1;
-            ret = tcp_maybe_send_segment(socket);
+            ret = tcp_send_segments(socket);
             break;
         case TCP_FIN_WAIT_1:
         case TCP_FIN_WAIT_2:
@@ -278,7 +303,7 @@ static int net_tcp_close(struct socket *socket) {
         case TCP_CLOSE_WAIT:
             tcb->pending_fin = true;
             tcb->state = TCP_LAST_ACK;
-            ret = tcp_maybe_send_segment(socket);
+            ret = tcp_send_segments(socket);
             break;
         case TCP_CLOSING:
         case TCP_LAST_ACK:
@@ -314,7 +339,7 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
     create_tcp_socket_mapping(socket);
 
     tcb->pending_syn = true;
-    int ret = net_tcp_send_segment(socket);
+    int ret = tcp_send_segments(socket);
     if (ret) {
         net_free_tcp_control_block(socket);
         return ret;
@@ -404,12 +429,6 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
             break;
         }
 
-        int ret = tcp_maybe_send_segment(socket);
-        if (ret) {
-            error = ret;
-            goto done;
-        }
-
         switch (tcb->state) {
             case TCP_CLOSING:
             case TCP_LAST_ACK:
@@ -439,13 +458,8 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         size_t amount_to_read = MIN(amount_readable, len - buffer_index);
         ring_buffer_user_read(&tcb->recv_buffer, buffer + buffer_index, amount_to_read);
         buffer_index += amount_to_read;
-        net_tcp_update_window(socket);
+        tcp_update_recv_window(socket);
         socket->readable = !ring_buffer_empty(&tcb->recv_buffer);
-
-        error = tcp_maybe_send_segment(socket);
-        if (error) {
-            break;
-        }
 
         // Instead of always breaking here, it is probably more correct to only do so if the PSH flag was set.
         break;
@@ -505,9 +519,12 @@ static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t 
         buffer_index += amount_to_write;
         socket->writable = !ring_buffer_full(&tcb->send_buffer);
 
-        error = tcp_maybe_send_segment(socket);
-        if (error) {
-            break;
+        // Only send the data once the ESTABLISHED state is reached.
+        if (tcb->state != TCP_SYN_RECIEVED && tcb->state != TCP_SYN_SENT) {
+            error = tcp_send_segments(socket);
+            if (error) {
+                break;
+            }
         }
     }
 done:

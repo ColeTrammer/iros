@@ -47,21 +47,17 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
         .window = tcb->recv_window,
         .mss = tcb->recv_mss,
         .tcp_flags = {
-            .ack = tcb->state != TCP_SYN_SENT,
+            .ack = tcb->state != TCP_SYN_SENT, // The only segment that doesn't have ACK set is the initial SYN.
+            .psh = !send_syn && !send_fin,     // Pretend all data segments are pushed for now.
             .syn = send_syn,
             .fin = send_fin,
         },
         .data_offset = sequence_start - tcb->send_unacknowledged,
         .data_length = data_to_send,
-        .data_rb = &tcb->recv_buffer,
+        .data_rb = &tcb->send_buffer,
     };
 
-    int ret = net_send_tcp(dest_ip, &opts);
-    if (ret) {
-        return ret;
-    }
-
-    return 0;
+    return net_send_tcp(dest_ip, &opts);
 }
 
 int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts) {
@@ -240,6 +236,14 @@ static bool tcp_segment_acceptable(struct socket *socket, const struct ip_v4_pac
            (recv_next <= seq_num + segment_length && seq_num + segment_length < recv_next + recv_window);
 }
 
+static void tcp_update_send_window(struct socket *socket, const struct tcp_packet *packet) {
+    struct tcp_control_block *tcb = socket->private_data;
+    tcb->send_window = htons(packet->window_size);
+    tcb->send_window_max = MAX(tcb->send_window_max, tcb->send_window);
+    tcb->send_wl1 = htonl(packet->sequence_number);
+    tcb->send_wl2 = htonl(packet->ack_number);
+}
+
 static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
     struct tcp_control_block *tcb = socket->private_data;
     uint32_t amount_to_advance = ack_number - tcb->send_unacknowledged;
@@ -307,7 +311,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
                 socket->readable = true;
             }
 
-            bool window_changed = net_tcp_update_window(socket);
+            bool window_changed = tcp_update_recv_window(socket);
 
             if (packet->flags.psh || window_changed) {
                 tcp_send_empty_ack(socket, ip_packet, packet);
@@ -434,10 +438,9 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     if (packet->flags.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));
         tcb->state = TCP_ESTABLISHED;
-        tcb->send_window = htons(packet->window_size);
-        tcb->send_wl1 = htonl(packet->sequence_number);
-        tcb->send_wl2 = htonl(packet->ack_number);
+        tcp_update_send_window(socket, packet);
         tcp_process_segment(socket, ip_packet, packet);
+        tcp_send_segments(socket);
         return;
     }
 
@@ -501,10 +504,9 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                 tcp_send_reset(ip_packet, packet);
                 break;
             }
-            tcb->send_window = htonl(packet->window_size);
-            tcb->send_wl1 = htonl(packet->sequence_number);
-            tcb->send_wl2 = htonl(packet->ack_number);
             tcb->state = TCP_ESTABLISHED;
+            tcp_update_send_window(socket, packet);
+            tcp_send_segments(socket);
             // Fall-through
         case TCP_ESTABLISHED:
         case TCP_FIN_WAIT_1:
@@ -523,9 +525,7 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
             tcp_advance_ack_number(socket, htonl(packet->ack_number));
             if (tcb->send_wl1 < htonl(packet->sequence_number) ||
                 (tcb->send_wl1 == htonl(packet->sequence_number) && tcb->send_wl2 <= htonl(packet->ack_number))) {
-                tcb->send_window = htons(packet->window_size);
-                tcb->send_wl1 = htonl(packet->sequence_number);
-                tcb->send_wl2 = htonl(packet->ack_number);
+                tcp_update_send_window(socket, packet);
             }
 
             switch (tcb->state) {

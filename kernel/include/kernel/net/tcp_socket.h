@@ -40,6 +40,7 @@ struct tcp_control_block {
     uint32_t send_unacknowledged;
     uint32_t send_next;
     uint32_t send_window;
+    uint32_t send_window_max;
     uint32_t send_wl1;
     uint32_t send_wl2;
     uint32_t send_mss;
@@ -60,8 +61,8 @@ struct tcp_control_block {
 
 struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info *info);
 
-bool net_tcp_update_window(struct socket *socket);
-int net_tcp_send_segment(struct socket *socket);
+bool tcp_update_recv_window(struct socket *socket);
+int tcp_send_segments(struct socket *socket);
 struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket);
 void net_free_tcp_control_block(struct socket *socket);
 
