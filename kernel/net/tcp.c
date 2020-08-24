@@ -18,19 +18,21 @@
 // 2 * MSL (which is 2 * 2 minutes)
 static struct timespec time_wait_timeout = { .tv_sec = 240, .tv_nsec = 0 };
 
-int net_send_tcp_from_socket(struct socket *socket) {
+int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end) {
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
     uint16_t dest_port = PORT_FROM_SOCKADDR(&socket->peer_address);
 
     struct tcp_control_block *tcb = socket->private_data;
 
-    size_t data_to_send = tcb->send_next - tcb->send_unacknowledged - tcb->pending_syn - tcb->pending_fin;
+    // Always send a pending SYN, only send a FIN if this is the last segment.
+    bool send_syn = tcb->pending_syn;
+    bool send_fin = tcb->pending_fin && sequence_end == tcb->send_next;
+    size_t data_to_send = sequence_end - sequence_start - send_syn - send_fin;
 
-    int ret =
-        net_send_tcp(dest_ip, source_port, dest_port, tcb->send_unacknowledged, tcb->recv_next, tcb->recv_window,
-                     (union tcp_flags) { .bits = { .ack = tcb->state != TCP_SYN_SENT, .syn = tcb->pending_syn, .fin = tcb->pending_fin } },
-                     data_to_send, &tcb->send_buffer);
+    int ret = net_send_tcp(dest_ip, source_port, dest_port, tcb->send_unacknowledged, tcb->recv_next, tcb->recv_window,
+                           (union tcp_flags) { .bits = { .ack = tcb->state != TCP_SYN_SENT, .syn = send_syn, .fin = send_fin } },
+                           data_to_send, sequence_start - tcb->send_unacknowledged, &tcb->send_buffer);
     if (ret) {
         return ret;
     }
@@ -39,7 +41,7 @@ int net_send_tcp_from_socket(struct socket *socket) {
 }
 
 int net_send_tcp(struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint32_t sequence_number, uint32_t ack_num,
-                 uint16_t window, union tcp_flags flags, uint16_t len, struct ring_buffer *rb) {
+                 uint16_t window, union tcp_flags flags, uint16_t len, uint32_t offset, struct ring_buffer *rb) {
     struct network_interface *interface = net_get_interface_for_ip(dest);
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
@@ -53,7 +55,7 @@ int net_send_tcp(struct ip_v4_address dest, uint16_t source_port, uint16_t dest_
         net_create_ip_v4_packet(1, IP_V4_PROTOCOL_TCP, interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
 
     struct tcp_packet *tcp_packet = (struct tcp_packet *) ip_packet->payload;
-    net_init_tcp_packet(tcp_packet, source_port, dest_port, sequence_number, ack_num, flags, window, len, rb);
+    net_init_tcp_packet(tcp_packet, source_port, dest_port, sequence_number, ack_num, flags, window, len, offset, rb);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_TCP, htons(len + sizeof(struct tcp_packet)) };
 
@@ -92,11 +94,11 @@ static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tc
 
     if (packet->flags.bits.ack) {
         net_send_tcp(ip_packet->source, htons(packet->dest_port), htons(packet->source_port), htonl(packet->ack_number), 0, 0,
-                     (union tcp_flags) { .bits = { .rst = 1 } }, 0, NULL);
+                     (union tcp_flags) { .bits = { .rst = 1 } }, 0, 0, NULL);
     } else {
         net_send_tcp(ip_packet->source, htons(packet->dest_port), htons(packet->source_port), 0,
                      htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet), 0,
-                     (union tcp_flags) { .bits = { .ack = 1, .rst = 1 } }, 0, NULL);
+                     (union tcp_flags) { .bits = { .ack = 1, .rst = 1 } }, 0, 0, NULL);
     }
 }
 
@@ -108,7 +110,7 @@ static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet 
     struct tcp_control_block *tcb = socket->private_data;
 
     net_send_tcp(ip_packet->source, htons(packet->dest_port), htons(packet->source_port), tcb->send_next, tcb->recv_next, tcb->recv_window,
-                 (union tcp_flags) { .bits = { .ack = 1 } }, 0, NULL);
+                 (union tcp_flags) { .bits = { .ack = 1 } }, 0, 0, NULL);
 }
 
 static bool tcp_segment_acceptable(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
@@ -518,7 +520,7 @@ void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_pack
 }
 
 void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16_t dest_port, uint32_t sequence, uint32_t ack_num,
-                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, struct ring_buffer *rb) {
+                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, uint32_t offset, struct ring_buffer *rb) {
     packet->source_port = htons(source_port);
     packet->dest_port = htons(dest_port);
     packet->sequence_number = htonl(sequence);
@@ -532,7 +534,7 @@ void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16
     packet->urg_pointer = 0;
 
     if (payload_length > 0 && rb != NULL) {
-        ring_buffer_copy(rb, packet->options_and_payload, payload_length);
+        ring_buffer_copy(rb, offset, packet->options_and_payload, payload_length);
     }
 }
 
