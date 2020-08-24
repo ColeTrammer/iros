@@ -132,10 +132,13 @@ void net_free_tcp_control_block(struct socket *socket) {
 
     net_remove_tcp_socket_mapping(socket);
     if (tcb->time_wait_timer) {
-        time_delete_timer(tcb->time_wait_timer);
+        time_cancel_kernel_callback(tcb->time_wait_timer);
     }
     if (tcb->retransmission_timer) {
-        time_delete_timer(tcb->retransmission_timer);
+        time_cancel_kernel_callback(tcb->retransmission_timer);
+    }
+    if (tcb->send_ack_timer) {
+        time_cancel_kernel_callback(tcb->send_ack_timer);
     }
     kill_ring_buffer(&tcb->send_buffer);
     kill_ring_buffer(&tcb->recv_buffer);
@@ -161,6 +164,26 @@ static void tcp_setup_retransmission_timer(struct socket *socket) {
 
     assert(!tcb->retransmission_timer);
     tcb->retransmission_timer = time_register_kernel_callback(&tcb->retransmission_delay, tcp_do_retransmit, socket);
+}
+
+bool net_tcp_update_window(struct socket *socket) {
+    struct tcp_control_block *tcb = socket->private_data;
+    uint16_t window_max = ring_buffer_max(&tcb->recv_buffer);
+    uint16_t actual_window_size = ring_buffer_space(&tcb->recv_buffer);
+
+    uint16_t new_size;
+    // Only update the window size when the halfway mark is reached to avoid SWS.
+    if (actual_window_size == 0) {
+        new_size = 0;
+    } else if (actual_window_size < window_max / 2) {
+        new_size = window_max / 2;
+    } else {
+        new_size = window_max;
+    }
+
+    bool changed = tcb->recv_window != new_size;
+    tcb->recv_window = new_size;
+    return changed;
 }
 
 int net_tcp_send_segment(struct socket *socket) {
@@ -416,7 +439,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         size_t amount_to_read = MIN(amount_readable, len - buffer_index);
         ring_buffer_user_read(&tcb->recv_buffer, buffer + buffer_index, amount_to_read);
         buffer_index += amount_to_read;
-        tcb->recv_window += amount_to_read;
+        net_tcp_update_window(socket);
         socket->readable = !ring_buffer_empty(&tcb->recv_buffer);
 
         error = tcp_maybe_send_segment(socket);

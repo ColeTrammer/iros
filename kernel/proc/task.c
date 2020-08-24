@@ -624,7 +624,7 @@ void task_do_sig(struct task *task, int signum) {
     task_unset_sig_pending(task, signum);
     switch (behavior) {
         case TERMINATE_AND_DUMP:
-            elf64_stack_trace(task, true);
+            elf64_stack_trace(task, false);
             if (task == get_current_task() && atomic_load(&task->process->should_profile)) {
                 spin_lock(&task->process->profile_buffer_lock);
                 proc_record_profile_stack(NULL);

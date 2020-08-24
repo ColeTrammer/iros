@@ -18,12 +18,21 @@
 // 2 * MSL (which is 2 * 2 minutes)
 static struct timespec time_wait_timeout = { .tv_sec = 240, .tv_nsec = 0 };
 
+// Hardcoded to 300 ms, should probably be based on round trip time.
+static struct timespec ack_timeout = { .tv_sec = 0, .tv_nsec = 300 * 1000000 };
+
 int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end) {
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
     uint16_t dest_port = PORT_FROM_SOCKADDR(&socket->peer_address);
 
     struct tcp_control_block *tcb = socket->private_data;
+
+    // No need to send an ACK later, this segment counts as an acknowledgement.
+    if (tcb->send_ack_timer) {
+        time_cancel_kernel_callback(tcb->send_ack_timer);
+        tcb->send_ack_timer = NULL;
+    }
 
     // Always send a pending SYN, only send a FIN if this is the last segment.
     bool send_syn = tcb->pending_syn;
@@ -83,10 +92,6 @@ static const void *tcp_data_start(const struct tcp_packet *packet) {
     return (const void *) packet + sizeof(uint32_t) * packet->data_offset;
 }
 
-static void tcp_time_wait_expiration(struct timer *timer __attribute__((unused)), void *socket) {
-    net_free_tcp_control_block(socket);
-}
-
 static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
     if (packet->flags.bits.rst) {
         return;
@@ -111,6 +116,25 @@ static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet 
 
     net_send_tcp(ip_packet->source, htons(packet->dest_port), htons(packet->source_port), tcb->send_next, tcb->recv_next, tcb->recv_window,
                  (union tcp_flags) { .bits = { .ack = 1 } }, 0, 0, NULL);
+}
+
+static void tcp_time_wait_expiration(struct timer *timer __attribute__((unused)), void *socket) {
+    net_free_tcp_control_block(socket);
+}
+
+static void tcp_on_ack_timeout(struct timer *timer, void *_socket) {
+    struct socket *socket = _socket;
+    struct tcp_control_block *tcb = socket->private_data;
+
+    uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
+    uint16_t dest_port = PORT_FROM_SOCKADDR(&socket->peer_address);
+
+    net_send_tcp(dest_ip, source_port, dest_port, tcb->send_next, tcb->recv_next, tcb->recv_window,
+                 (union tcp_flags) { .bits = { .ack = 1 } }, 0, 0, NULL);
+
+    time_delete_timer(timer);
+    tcb->send_ack_timer = NULL;
 }
 
 static bool tcp_segment_acceptable(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
@@ -173,6 +197,10 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
         case TCP_FIN_WAIT_1:
         case TCP_FIN_WAIT_2: {
             size_t segment_length = tcp_segment_length(ip_packet, packet);
+            if (segment_length == 0) {
+                return;
+            }
+
             size_t offset = 0;
 
             // Packet sent out of order, it would be best to remember it, but not for now.
@@ -182,18 +210,24 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
 
             offset = tcb->recv_next - htonl(packet->sequence_number);
             segment_length -= offset + packet->flags.bits.syn + packet->flags.bits.fin;
-            tcb->recv_next += packet->flags.bits.syn;
 
             size_t available_space = ring_buffer_space(&tcb->recv_buffer);
             segment_length = MIN(available_space, segment_length);
-            if (segment_length == 0) {
-                break;
+
+            tcb->recv_next += packet->flags.bits.syn + packet->flags.bits.fin + segment_length;
+
+            if (segment_length != 0) {
+                ring_buffer_write(&tcb->recv_buffer, tcp_data_start(packet) + offset, segment_length);
+                socket->readable = true;
             }
 
-            ring_buffer_write(&tcb->recv_buffer, tcp_data_start(packet) + offset, segment_length);
-            socket->readable = true;
-            tcb->recv_next += segment_length;
-            tcb->recv_window -= segment_length;
+            bool window_changed = net_tcp_update_window(socket);
+
+            if (packet->flags.bits.psh || window_changed) {
+                tcp_send_empty_ack(socket, ip_packet, packet);
+            } else {
+                tcb->send_ack_timer = time_register_kernel_callback(&ack_timeout, tcp_on_ack_timeout, socket);
+            }
             break;
         }
         case TCP_CLOSE_WAIT:
@@ -206,16 +240,14 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
     }
 
     if (packet->flags.bits.fin) {
-        if (tcb->recv_next != htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet) - 1) {
+        if (tcb->recv_next != htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet)) {
             return;
         }
 
         // All outstanding data has been recieved.
-        tcb->recv_next++;
         socket->state = CLOSING;
         socket->readable = true;
 
-        net_tcp_send_segment(socket);
         switch (tcb->state) {
             case TCP_SYN_RECIEVED:
             case TCP_ESTABLISHED:
@@ -321,13 +353,11 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
         tcb->send_window = htons(packet->window_size);
         tcb->send_wl1 = htonl(packet->sequence_number);
         tcb->send_wl2 = htonl(packet->ack_number);
-        net_tcp_send_segment(socket);
         tcp_process_segment(socket, ip_packet, packet);
         return;
     }
 
     tcb->state = TCP_SYN_RECIEVED;
-    net_tcp_send_segment(socket);
     tcp_process_segment(socket, ip_packet, packet);
     return;
 }
