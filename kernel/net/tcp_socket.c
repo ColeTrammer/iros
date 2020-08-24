@@ -430,8 +430,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
             mutex_unlock(&socket->lock);
             int ret = net_block_until_socket_is_readable(socket, start_time);
             if (ret) {
-                error = ret;
-                break;
+                return ret;
             }
             mutex_lock(&socket->lock);
             continue;
@@ -495,7 +494,7 @@ static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t 
             int ret = net_block_until_socket_is_writable(socket, start_time);
             if (ret) {
                 error = ret;
-                break;
+                return ret;
             }
             mutex_lock(&socket->lock);
             continue;
