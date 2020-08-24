@@ -92,6 +92,37 @@ static const void *tcp_data_start(const struct tcp_packet *packet) {
     return (const void *) packet + sizeof(uint32_t) * packet->data_offset;
 }
 
+static uint16_t tcp_mss(const struct tcp_packet *packet) {
+    size_t offset = 0;
+    size_t end = sizeof(uint32_t) * packet->data_offset - sizeof(struct tcp_packet);
+    const uint8_t *raw_options = (uint8_t *) (packet + 1);
+    while (offset < end) {
+        switch (raw_options[offset]) {
+            case TCP_OPTION_END:
+                break;
+            case TCP_OPTION_PAD:
+                offset++;
+                continue;
+            case TCP_OPTION_MSS: {
+                const struct tcp_option_mss *mss_option = (const struct tcp_option_mss *) raw_options;
+                return ntohs(mss_option->mss);
+            }
+            default: {
+                const struct tcp_option *option = (const struct tcp_option *) raw_options;
+                debug_log("Unknown TCP option type: [ %u ]\n", option->type);
+                if (option->length < 2) {
+                    break;
+                }
+                offset += option->length;
+                continue;
+            }
+        }
+        break;
+    }
+
+    return TCP_DEFAULT_MSS;
+}
+
 static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
     if (packet->flags.bits.rst) {
         return;
@@ -201,14 +232,17 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
                 return;
             }
 
-            size_t offset = 0;
+            if (packet->flags.bits.syn) {
+                tcb->recv_next = htonl(packet->sequence_number);
+                tcb->send_mss = tcp_mss(packet);
+            }
 
             // Packet sent out of order, it would be best to remember it, but not for now.
             if (htonl(packet->sequence_number) > tcb->recv_next) {
                 return;
             }
 
-            offset = tcb->recv_next - htonl(packet->sequence_number);
+            size_t offset = tcb->recv_next - htonl(packet->sequence_number);
             segment_length -= offset + packet->flags.bits.syn + packet->flags.bits.fin;
 
             size_t available_space = ring_buffer_space(&tcb->recv_buffer);
@@ -311,7 +345,6 @@ static void tcp_recv_in_listen(struct socket *socket, const struct ip_v4_packet 
         socket->readable = true;
 
         // Update the TCB
-        tcb->recv_next = htonl(packet->sequence_number);
         tcb->state = TCP_SYN_RECIEVED;
         tcp_process_segment(socket, ip_packet, packet);
 
@@ -345,7 +378,6 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     }
 
     // Valid SYN was sent.
-    tcb->recv_next = htonl(packet->sequence_number);
     socket->readable = true;
     if (packet->flags.bits.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));

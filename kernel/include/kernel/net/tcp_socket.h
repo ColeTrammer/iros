@@ -42,9 +42,10 @@ struct tcp_control_block {
     uint32_t send_window;
     uint32_t send_wl1;
     uint32_t send_wl2;
+    uint32_t send_mss;
     uint32_t recv_next;
     uint32_t recv_window;
-    uint32_t segment_size;
+    uint32_t recv_mss;
     struct ring_buffer send_buffer;
     struct ring_buffer recv_buffer;
     struct timer *time_wait_timer;
