@@ -9,8 +9,6 @@ static int loop_send_ip_v4(struct network_interface *interface, struct route_cac
                            size_t len) {
     (void) route;
 
-    debug_log("Sending data via loopback\n");
-
     interface->ops->recieve_ip_v4(interface, packet, len);
     return 0;
 }

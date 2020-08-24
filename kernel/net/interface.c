@@ -48,7 +48,9 @@ struct network_interface *net_get_interface_for_ip(struct ip_v4_address address)
 
     assert(interface);
 
+#ifdef INTERFACE_DEBUG
     debug_log("Got interface: [ %s, %u.%u.%u.%u ]\n", interface->name, address.addr[0], address.addr[1], address.addr[2], address.addr[3]);
+#endif /* INTERFACE_DEBUG */
     return interface;
 }
 
