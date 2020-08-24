@@ -20,18 +20,15 @@
 
 struct ring_buffer;
 
-union tcp_flags {
-    struct {
-        uint8_t fin : 1;
-        uint8_t syn : 1;
-        uint8_t rst : 1;
-        uint8_t psh : 1;
-        uint8_t ack : 1;
-        uint8_t urg : 1;
-        uint8_t ece : 1;
-        uint8_t cwr : 1;
-    } bits;
-    uint8_t raw_flags;
+struct tcp_flags {
+    uint8_t fin : 1;
+    uint8_t syn : 1;
+    uint8_t rst : 1;
+    uint8_t psh : 1;
+    uint8_t ack : 1;
+    uint8_t urg : 1;
+    uint8_t ece : 1;
+    uint8_t cwr : 1;
 } __attribute__((packed));
 
 struct tcp_packet {
@@ -44,7 +41,7 @@ struct tcp_packet {
     uint8_t zero : 3;
     uint8_t data_offset : 4;
 
-    union tcp_flags flags;
+    struct tcp_flags flags;
 
     uint16_t window_size;
     uint16_t check_sum;
@@ -65,12 +62,23 @@ struct tcp_option_mss {
     uint16_t mss;
 } __attribute__((packed));
 
+struct tcp_packet_options {
+    uint16_t source_port;
+    uint16_t dest_port;
+    uint32_t sequence_number;
+    uint32_t ack_number;
+    struct tcp_flags tcp_flags;
+    uint16_t window;
+    uint16_t mss;
+    uint32_t data_offset;
+    uint16_t data_length;
+    struct ring_buffer *data_rb;
+};
+
 int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end);
-int net_send_tcp(struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint32_t sequence_number, uint32_t ack_num,
-                 uint16_t window, union tcp_flags flags, uint16_t len, uint32_t offset, struct ring_buffer *rb);
+int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts);
 void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet, size_t len);
-void net_init_tcp_packet(struct tcp_packet *packet, uint16_t source_port, uint16_t dest_port, uint32_t sequence, uint32_t ack_num,
-                         union tcp_flags flags, uint16_t win_size, uint16_t payload_length, uint32_t offset, struct ring_buffer *rb);
+void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *opts);
 
 void net_tcp_log(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet);
 
