@@ -38,7 +38,7 @@ static inline bool ring_buffer_empty(struct ring_buffer *rb) {
     return rb->head == rb->tail && !rb->full;
 }
 
-static inline bool ring_buffer_max(struct ring_buffer *rb) {
+static inline size_t ring_buffer_max(struct ring_buffer *rb) {
     return rb->max;
 }
 

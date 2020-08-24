@@ -49,6 +49,7 @@ struct tcp_control_block {
     struct ring_buffer recv_buffer;
     struct timer *time_wait_timer;
     struct timer *retransmission_timer;
+    struct timer *send_ack_timer;
     struct timespec retransmission_delay;
     enum tcp_state state;
     bool pending_syn : 1;
@@ -58,6 +59,7 @@ struct tcp_control_block {
 
 struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info *info);
 
+bool net_tcp_update_window(struct socket *socket);
 int net_tcp_send_segment(struct socket *socket);
 struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket);
 void net_free_tcp_control_block(struct socket *socket);
