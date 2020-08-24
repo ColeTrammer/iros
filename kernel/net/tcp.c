@@ -166,6 +166,10 @@ static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet 
     }
 
     struct tcp_control_block *tcb = socket->private_data;
+    if (tcb->send_ack_timer) {
+        time_cancel_kernel_callback(tcb->send_ack_timer);
+        tcb->send_ack_timer = NULL;
+    }
 
     struct tcp_packet_options opts = {
         .source_port = htons(packet->dest_port),
@@ -210,10 +214,10 @@ static void tcp_on_ack_timeout(struct timer *timer, void *_socket) {
         .data_rb = NULL,
     };
 
-    net_send_tcp(dest_ip, &opts);
-
     time_delete_timer(timer);
     tcb->send_ack_timer = NULL;
+
+    net_send_tcp(dest_ip, &opts);
 }
 
 static bool tcp_segment_acceptable(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
@@ -313,7 +317,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
 
             bool window_changed = tcp_update_recv_window(socket);
 
-            if (packet->flags.psh || window_changed) {
+            if (packet->flags.psh || packet->flags.fin || window_changed) {
                 tcp_send_empty_ack(socket, ip_packet, packet);
             } else {
                 tcb->send_ack_timer = time_register_kernel_callback(&ack_timeout, tcp_on_ack_timeout, socket);
