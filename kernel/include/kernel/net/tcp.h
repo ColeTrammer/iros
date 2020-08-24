@@ -12,6 +12,12 @@
 #define TCP_FlAGS_ECE 64U
 #define TCP_FLAGS_CWR 128U
 
+#define TCP_DEFAULT_MSS 536
+
+#define TCP_OPTION_END 0
+#define TCP_OPTION_PAD 1
+#define TCP_OPTION_MSS 2
+
 struct ring_buffer;
 
 union tcp_flags {
@@ -45,6 +51,18 @@ struct tcp_packet {
     uint16_t urg_pointer;
 
     uint8_t options_and_payload[0];
+} __attribute__((packed));
+
+struct tcp_option {
+    uint8_t type;
+    uint8_t length;
+    uint8_t data[0];
+} __attribute__((packed));
+
+struct tcp_option_mss {
+    uint8_t type;
+    uint8_t length;
+    uint16_t mss;
 } __attribute__((packed));
 
 int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end);
