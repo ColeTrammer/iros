@@ -38,28 +38,42 @@ static int execve_helper(char **path, char *buffer, size_t buffer_length, struct
 
     if (!elf64_is_valid(buffer)) {
         if (memcmp(buffer, "#!", 2) == 0) {
-            debug_log("Encoutered #!\n");
             bool first = *prepend_argv_length == 0;
 
             char *path_save = NULL;
             if (first) {
                 path_save = strdup(*path);
             }
-            size_t path_len = strcspn(buffer + 2, " \n");
-            char restore = buffer[2 + path_len];
-            buffer[2 + path_len] = '\0';
+
+            char *buffer_save = buffer;
+            buffer += 2;
+
+            // Skip leading spaces after #!
+            while (*buffer == ' ') {
+                buffer++;
+            }
+
+            size_t path_len = strcspn(buffer, " \n");
+            if (path_len == 0) {
+                free(path_save);
+                fs_close(*file);
+                return -ENOEXEC;
+            }
+
+            char restore = buffer[path_len];
+            buffer[path_len] = '\0';
             free(*path);
-            *path = strdup(buffer + 2);
+            *path = strdup(buffer);
             debug_log("#!: [ %s ]\n", *path);
-            buffer[2 + path_len] = restore;
+            buffer[path_len] = restore;
             bool has_extra_arg = false;
             size_t extra_arg_start = 0;
 
             size_t i;
-            for (i = 0; buffer[2 + path_len + i] != '\n' && buffer[2 + path_len + i] != '\0'; i++) {
-                if (!extra_arg_start && !isspace(buffer[2 + path_len + i])) {
+            for (i = 0; buffer[path_len + i] != '\n' && buffer[path_len + i] != '\0'; i++) {
+                if (!extra_arg_start && !isspace(buffer[path_len + i])) {
                     has_extra_arg = true;
-                    extra_arg_start = 2 + path_len + i;
+                    extra_arg_start = path_len + i;
                     break;
                 }
             }
@@ -74,15 +88,15 @@ static int execve_helper(char **path, char *buffer, size_t buffer_length, struct
 
             *prepend_argv = realloc(*prepend_argv, *prepend_argv_length * sizeof(char *));
             if (has_extra_arg) {
-                buffer[2 + path_len] = '\0';
-                *prepend_argv[*prepend_argv_length - 3] = strdup(buffer + 2);
-                buffer[2 + path_len] = restore;
-                buffer[2 + path_len + i] = '\0';
+                buffer[path_len] = '\0';
+                *prepend_argv[*prepend_argv_length - 3] = strdup(buffer);
+                buffer[path_len] = restore;
+                buffer[path_len + i] = '\0';
                 *prepend_argv[*prepend_argv_length - 2] = strdup(buffer + extra_arg_start);
             } else {
-                buffer[2 + path_len] = '\0';
-                *prepend_argv[*prepend_argv_length - 2] = strdup(buffer + 2);
-                buffer[2 + path_len] = restore;
+                buffer[path_len] = '\0';
+                *prepend_argv[*prepend_argv_length - 2] = strdup(buffer);
+                buffer[path_len] = restore;
             }
 
             (*prepend_argv)[*prepend_argv_length - 1] = NULL;
@@ -92,7 +106,7 @@ static int execve_helper(char **path, char *buffer, size_t buffer_length, struct
             }
 
             (*depth)++;
-            return execve_helper(path, buffer, buffer_length, file, prepend_argv, prepend_argv_length, depth, argv);
+            return execve_helper(path, buffer_save, buffer_length, file, prepend_argv, prepend_argv_length, depth, argv);
         }
 
         fs_close(*file);
