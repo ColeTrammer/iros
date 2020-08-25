@@ -259,16 +259,10 @@ static bool tcp_segment_acceptable(struct socket *socket, const struct ip_v4_pac
 
 static void tcp_update_send_window(struct socket *socket, const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
-    bool window_increased = tcb->send_window < htons(packet->window_size);
     tcb->send_window = htons(packet->window_size);
     tcb->send_window_max = MAX(tcb->send_window_max, tcb->send_window);
     tcb->send_wl1 = htonl(packet->sequence_number);
     tcb->send_wl2 = htonl(packet->ack_number);
-
-    // Try to send segments now that the window has opened up.
-    if (window_increased) {
-        tcp_send_segments(socket);
-    }
 }
 
 static void tcp_enter_established_state(struct socket *socket, const struct tcp_packet *packet) {
@@ -333,6 +327,11 @@ static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
     }
 
     tcb->send_unacknowledged = ack_number;
+
+    if (tcb->state >= TCP_ESTABLISHED) {
+        tcp_send_segments(socket);
+    }
+
     if (tcb->send_unacknowledged == tcb->send_next) {
         struct timer *rto_timer = tcb->rto_timer;
         tcb->rto_timer = NULL;
