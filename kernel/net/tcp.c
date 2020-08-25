@@ -66,6 +66,7 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
     // and the acknowledgement could not have already been sent.
     if (!tcb->time_first_sent_valid && !is_retransmission && sequence_start != sequence_end && sequence_end == tcb->send_next) {
         send_time_ptr = &tcb->time_first_sent;
+        tcb->time_first_sent_sequence_number = sequence_start;
         tcb->time_first_sent_valid = true;
     }
 
@@ -327,7 +328,7 @@ static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
     // Otherwise, the ACK should have been ingored as invalid.
     assert(amount_to_advance == 0);
 
-    if (tcb->time_first_sent_valid) {
+    if (tcb->time_first_sent_valid && ack_number > tcb->time_first_sent_sequence_number) {
         tcp_sample_round_trip_time(socket);
     }
 
