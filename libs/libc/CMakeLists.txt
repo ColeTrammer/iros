@@ -260,6 +260,7 @@ else()
         string/strcoll.c
         string/strxfrm.c
         sys/ioctl/ioctl.c
+        sys/mman/mlock.c
         sys/mman/mman.c
         sys/os_2/create_task.c
         sys/os_2/disable_profiling.c
