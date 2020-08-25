@@ -12,8 +12,11 @@
 #include <kernel/net/route_cache.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/tcp_socket.h>
+#include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/macros.h>
+
+// #define TCP_DEBUG
 
 // 2 * MSL (which is 2 * 2 minutes)
 static struct timespec time_wait_timeout = { .tv_sec = 240, .tv_nsec = 0 };
@@ -21,7 +24,7 @@ static struct timespec time_wait_timeout = { .tv_sec = 240, .tv_nsec = 0 };
 // Hardcoded to 300 ms, should probably be based on round trip time.
 static struct timespec ack_timeout = { .tv_sec = 0, .tv_nsec = 300 * 1000000 };
 
-int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end) {
+int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end, bool is_retransmission) {
     uint16_t source_port = PORT_FROM_SOCKADDR(&socket->host_address);
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
     uint16_t dest_port = PORT_FROM_SOCKADDR(&socket->peer_address);
@@ -57,10 +60,19 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
         .data_rb = &tcb->send_buffer,
     };
 
-    return net_send_tcp(dest_ip, &opts);
+    struct timespec *send_time_ptr = NULL;
+
+    // The round trip time can only be sampled if its not already being sampled, this packet requires acknowledgement,
+    // and the acknowledgement could not have already been sent.
+    if (!tcb->time_first_sent_valid && !is_retransmission && sequence_start != sequence_end && sequence_end == tcb->send_next) {
+        send_time_ptr = &tcb->time_first_sent;
+        tcb->time_first_sent_valid = true;
+    }
+
+    return net_send_tcp(dest_ip, &opts, send_time_ptr);
 }
 
-int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts) {
+int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr) {
     struct network_interface *interface = net_get_interface_for_ip(dest);
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
@@ -86,6 +98,10 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts) {
     }
 
     int ret = interface->ops->send_ip_v4(interface, route, ip_packet, total_length);
+    if (send_time_ptr) {
+        *send_time_ptr = time_read_clock(CLOCK_MONOTONIC);
+    }
+
     free(ip_packet);
 
     net_drop_route_cache_entry(route);
@@ -157,7 +173,7 @@ static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tc
         opts.ack_number = htonl(packet->sequence_number) + tcp_segment_length(ip_packet, packet);
         opts.tcp_flags.ack = true;
     }
-    net_send_tcp(ip_packet->source, &opts);
+    net_send_tcp(ip_packet->source, &opts, NULL);
 }
 
 static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
@@ -185,7 +201,7 @@ static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet 
         .data_rb = NULL,
     };
 
-    net_send_tcp(ip_packet->source, &opts);
+    net_send_tcp(ip_packet->source, &opts, NULL);
 }
 
 static void tcp_time_wait_expiration(struct timer *timer __attribute__((unused)), void *socket) {
@@ -217,7 +233,7 @@ static void tcp_on_ack_timeout(struct timer *timer, void *_socket) {
     time_delete_timer(timer);
     tcb->send_ack_timer = NULL;
 
-    net_send_tcp(dest_ip, &opts);
+    net_send_tcp(dest_ip, &opts, NULL);
 }
 
 static bool tcp_segment_acceptable(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
@@ -258,6 +274,28 @@ static void tcp_enter_established_state(struct socket *socket, const struct tcp_
     tcp_send_segments(socket);
 }
 
+static void tcp_sample_round_trip_time(struct socket *socket) {
+    struct tcp_control_block *tcb = socket->private_data;
+    struct timespec measured_rtt = time_sub(time_read_clock(CLOCK_MONOTONIC), tcb->time_first_sent);
+    time_t rtt = measured_rtt.tv_sec * 1000 + measured_rtt.tv_nsec / 1000000;
+    if (tcb->first_rtt_sample) {
+        tcb->smoothed_rtt = rtt;
+        tcb->rtt_variation = rtt / 2;
+        tcb->first_rtt_sample = false;
+    } else {
+        tcb->rtt_variation = tcb->rtt_variation * 3 / 4 + labs(tcb->smoothed_rtt - rtt) / 4;
+        tcb->smoothed_rtt = tcb->smoothed_rtt * 7 / 8 + rtt / 8;
+    }
+    time_t new_rto_ms = MAX(1000, tcb->smoothed_rtt + MAX(TCP_RTO_GRANULARITY, 4 * tcb->rtt_variation));
+    tcb->rto.tv_sec = new_rto_ms / 1000;
+    tcb->rto.tv_nsec = new_rto_ms * 1000000;
+    tcb->time_first_sent_valid = false;
+
+#ifdef TCP_DEBUG
+    debug_log("Took RTT sample: [ %ld, %ld, %ld, %ld ]\n", rtt, tcb->smoothed_rtt, tcb->rtt_variation, new_rto_ms);
+#endif /* TCP_DEBUG */
+}
+
 static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
     struct tcp_control_block *tcb = socket->private_data;
     uint32_t amount_to_advance = ack_number - tcb->send_unacknowledged;
@@ -282,6 +320,10 @@ static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
 
     // Otherwise, the ACK should have been ingored as invalid.
     assert(amount_to_advance == 0);
+
+    if (tcb->time_first_sent_valid) {
+        tcp_sample_round_trip_time(socket);
+    }
 
     tcb->send_unacknowledged = ack_number;
     if (tcb->send_unacknowledged == tcb->send_next) {

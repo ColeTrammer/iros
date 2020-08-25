@@ -12,7 +12,8 @@
 #define TCP_FlAGS_ECE 64U
 #define TCP_FLAGS_CWR 128U
 
-#define TCP_DEFAULT_MSS 536
+#define TCP_DEFAULT_MSS     536
+#define TCP_RTO_GRANULARITY 100
 
 #define TCP_OPTION_END 0
 #define TCP_OPTION_PAD 1
@@ -75,8 +76,8 @@ struct tcp_packet_options {
     struct ring_buffer *data_rb;
 };
 
-int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end);
-int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts);
+int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end, bool is_retransmission);
+int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr);
 void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet, size_t len);
 void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *opts);
 
