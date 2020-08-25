@@ -72,6 +72,9 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
             case DT_RPATH:
                 // ignored for now
                 break;
+            case DT_SYMBOLIC:
+                // meaningless during dynamic linking
+                break;
             case DT_PLTREL:
                 self.plt_type = entry->d_un.d_val;
                 break;
