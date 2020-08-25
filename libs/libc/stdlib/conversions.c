@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -46,6 +47,16 @@ unsigned long strtoul(const char *__restrict str, char **__restrict endptr, int 
     return (unsigned long) strtoull(str, endptr, base);
 }
 
+long long strtoll(const char *__restrict str, char **__restrict endptr, int base) {
+    /* Should be different for 128 bit intmax_t */
+    return (long long) strtoimax(str, endptr, base);
+}
+
+unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base) {
+    /* Should be different for 128 bit uintmax_t */
+    return (unsigned long long) strtoumax(str, endptr, base);
+}
+
 /* Determines the validity of any character for the given base (goes from digits to letters) (max base is 36) */
 static bool is_valid_char_for_base(char c, int base) {
     if (isdigit(c)) {
@@ -66,7 +77,7 @@ static unsigned long long get_value_from_char(char c) {
     return tolower(c) - 'a' + 10;
 }
 
-long long strtoll(const char *__restrict str, char **__restrict endptr, int base) {
+intmax_t strtoimax(const char *__restrict str, char **__restrict endptr, int base) {
     if (str == NULL) {
         return 0;
     }
@@ -79,7 +90,7 @@ long long strtoll(const char *__restrict str, char **__restrict endptr, int base
     }
 
     /* Look at optional sign character */
-    long long sign = 1LL;
+    intmax_t sign = 1LL;
     if (str[str_off] == '-' || str[str_off] == '+') {
         if (str[str_off] == '-') {
             sign = -1LL;
@@ -115,14 +126,14 @@ long long strtoll(const char *__restrict str, char **__restrict endptr, int base
             break;
     }
 
-    unsigned long long value = 0;
-    long long ret = 0;
+    uintmax_t value = 0;
+    intmax_t ret = 0;
     for (; is_valid_char_for_base(str[str_off], base); str_off++) {
         /* Computer value of the digit */
-        unsigned long long digit_value = get_value_from_char(str[str_off]);
+        uintmax_t digit_value = get_value_from_char(str[str_off]);
 
         /* Detect overflow */
-        if (value > ((sign == 1LL ? ((unsigned long long) LLONG_MAX) : (unsigned long long) LLONG_MIN) - digit_value) / base) {
+        if (value > ((sign == 1LL ? ((uintmax_t) INTMAX_MAX) : (uintmax_t) INTMAX_MIN) - digit_value) / base) {
             /* Read the rest of the characters but ignore them */
             while (is_valid_char_for_base(str[++str_off], base))
                 ;
@@ -146,7 +157,7 @@ finish:
     return ret;
 }
 
-unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base) {
+uintmax_t strtoumax(const char *__restrict str, char **__restrict endptr, int base) {
     if (str == NULL) {
         return 0;
     }
@@ -186,10 +197,10 @@ unsigned long long strtoull(const char *__restrict str, char **__restrict endptr
             break;
     }
 
-    unsigned long long value = 0;
+    uintmax_t value = 0;
     for (; is_valid_char_for_base(str[str_off], base); str_off++) {
         /* Computer value of the digit */
-        unsigned long long digit_value = get_value_from_char(str[str_off]);
+        uintmax_t digit_value = get_value_from_char(str[str_off]);
 
         /* Detect overflow */
         if (value > (ULLONG_MAX - digit_value) / base) {

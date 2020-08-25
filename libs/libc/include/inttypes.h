@@ -196,4 +196,7 @@
 #define SCNuPTR __SCN64 "u"
 #define SCNxPTR __SCN64 "x"
 
+intmax_t strtoimax(const char *__restrict str, char **__restrict endptr, int base);
+uintmax_t strtoumax(const char *__restrict str, char **__restrict endptr, int base);
+
 #endif /* _INTTYPES_H */
