@@ -14,6 +14,8 @@
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
 
+// #define TCP_DEBUG
+
 static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen, int flags);
 static int net_tcp_close(struct socket *socket);
 static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, socklen_t addrlen);
@@ -122,6 +124,7 @@ struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) 
     tcb->recv_window = 8192;                                                        // Hard coded value
     tcb->recv_mss = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Default MSS minus headers
     tcb->rto = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };                     // RTO starts at 1 second.
+    tcb->first_rtt_sample = true;
     init_ring_buffer(&tcb->send_buffer, 8192);
     init_ring_buffer(&tcb->recv_buffer, tcb->recv_window);
     return tcb;
@@ -153,7 +156,7 @@ static void tcp_do_retransmit(struct timer *timer, void *_socket) {
     // Retransmit the earliest segment not acknowledged by the sender.
     size_t max_data_to_retransmit = tcb->send_mss - sizeof(struct tcp_packet) - sizeof(struct ip_v4_packet);
     size_t data_to_retransmit = MIN(tcb->send_next - tcb->send_unacknowledged, max_data_to_retransmit);
-    net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_unacknowledged + data_to_retransmit);
+    net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_unacknowledged + data_to_retransmit, true);
 
     // Exponential back off by doubling the next timeout.
     tcb->rto = time_add(tcb->rto, tcb->rto);
@@ -163,6 +166,9 @@ static void tcp_do_retransmit(struct timer *timer, void *_socket) {
         // Since the initial SYN segment was lost, RTO must be initialized to 3 seconds later.
         tcb->reset_rto_once_established = true;
     }
+
+    // The round trip time can't be measured now that a segment has been retransmitted.
+    tcb->time_first_sent_valid = false;
 }
 
 static void tcp_setup_retransmission_timer(struct socket *socket) {
@@ -231,7 +237,7 @@ int tcp_send_segments(struct socket *socket) {
         debug_log("Sending TCP segment: [ %u, %u, %u, %u ]\n", tcb->send_unacknowledged, tcb->send_next - data_to_send, tcb->send_next,
                   usable_window);
 #endif /* TCP_DEBUG */
-        ret = net_send_tcp_from_socket(socket, tcb->send_next - data_to_send, tcb->send_next);
+        ret = net_send_tcp_from_socket(socket, tcb->send_next - data_to_send, tcb->send_next, false);
         tcp_setup_retransmission_timer(socket);
     }
 

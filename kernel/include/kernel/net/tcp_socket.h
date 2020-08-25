@@ -53,11 +53,16 @@ struct tcp_control_block {
     struct timer *rto_timer;
     struct timer *send_ack_timer;
     struct timespec rto;
+    struct timespec time_first_sent;
+    time_t smoothed_rtt;
+    time_t rtt_variation;
     enum tcp_state state;
     bool pending_syn : 1;
     bool pending_fin : 1;
     bool is_passive : 1;
     bool reset_rto_once_established : 1;
+    bool time_first_sent_valid : 1;
+    bool first_rtt_sample : 1;
 };
 
 struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info *info);
