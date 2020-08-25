@@ -1,0 +1,40 @@
+diff --git a/Configurations/10-main.conf b/Configurations/10-main.conf
+index d7580bf3..24c74437 100644
+--- a/Configurations/10-main.conf
++++ b/Configurations/10-main.conf
+@@ -970,6 +970,22 @@ my %targets = (
+         ranlib           => "true",
+     },
+ 
++    "os_2-x86_64" => {
++        inherit_from     => [ "BASE_unix" ],
++        CC               => "x86_64-os_2-gcc",
++        cflags           => threads("-pthread"),
++        lib_cppflags     => add("-DL_ENDIAN"),
++        ex_libs          => add("-ldl"),
++        bn_ops           => "SIXTY_FOUR_BIT_LONG",
++        thread_scheme    => "pthreads",
++        dso_scheme       => "dlfcn",
++        shared_target    => "linux-shared",
++        asm_arch         => 'x86_64',
++        perlasm_scheme   => "elf",
++        shared_cflag     => "-fPIC",
++        shared_ldflag    => "-lc",
++    },
++
+ #### *BSD
+     "BSD-generic32" => {
+         # As for thread cflag. Idea is to maintain "collective" set of
+diff --git a/crypto/dso/dso_dlfcn.c b/crypto/dso/dso_dlfcn.c
+index b8bbed87..a5a819b4 100644
+--- a/crypto/dso/dso_dlfcn.c
++++ b/crypto/dso/dso_dlfcn.c
+@@ -32,7 +32,7 @@ DEFINE_STACK_OF(void)
+ #  if defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
+      (defined(__osf__) && !defined(RTLD_NEXT))     || \
+      (defined(__OpenBSD__) && !defined(RTLD_SELF)) || \
+-        defined(__ANDROID__)
++        defined(__os_2__) || defined(__ANDROID__)
+ #   undef HAVE_DLINFO
+ #  endif
+ # endif
