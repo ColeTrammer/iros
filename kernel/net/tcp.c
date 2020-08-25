@@ -248,9 +248,22 @@ static void tcp_update_send_window(struct socket *socket, const struct tcp_packe
     tcb->send_wl2 = htonl(packet->ack_number);
 }
 
+static void tcp_enter_established_state(struct socket *socket, const struct tcp_packet *packet) {
+    struct tcp_control_block *tcb = socket->private_data;
+    tcb->state = TCP_ESTABLISHED;
+    if (tcb->reset_rto_once_established && tcb->rto.tv_sec < 3) {
+        tcb->rto = (struct timespec) { .tv_sec = 3, .tv_nsec = 0 };
+    }
+    tcp_update_send_window(socket, packet);
+    tcp_send_segments(socket);
+}
+
 static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
     struct tcp_control_block *tcb = socket->private_data;
     uint32_t amount_to_advance = ack_number - tcb->send_unacknowledged;
+    if (!amount_to_advance) {
+        return;
+    }
 
     if (tcb->pending_syn) {
         tcb->pending_syn = false;
@@ -272,9 +285,11 @@ static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
 
     tcb->send_unacknowledged = ack_number;
     if (tcb->send_unacknowledged == tcb->send_next) {
-        struct timer *retransmission_timer = tcb->retransmission_timer;
-        tcb->retransmission_timer = NULL;
-        time_cancel_kernel_callback(retransmission_timer);
+        struct timer *rto_timer = tcb->rto_timer;
+        tcb->rto_timer = NULL;
+        time_cancel_kernel_callback(rto_timer);
+    } else {
+        time_reset_kernel_callback(tcb->rto_timer, &tcb->rto);
     }
 
     socket->writable = true;
@@ -283,6 +298,7 @@ static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
 static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
     switch (tcb->state) {
+        case TCP_SYN_SENT:
         case TCP_SYN_RECIEVED:
         case TCP_ESTABLISHED:
         case TCP_FIN_WAIT_1:
@@ -343,6 +359,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
         socket->readable = true;
 
         switch (tcb->state) {
+            case TCP_SYN_SENT:
             case TCP_SYN_RECIEVED:
             case TCP_ESTABLISHED:
                 tcb->state = TCP_CLOSE_WAIT;
@@ -441,10 +458,8 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     socket->readable = true;
     if (packet->flags.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));
-        tcb->state = TCP_ESTABLISHED;
-        tcp_update_send_window(socket, packet);
         tcp_process_segment(socket, ip_packet, packet);
-        tcp_send_segments(socket);
+        tcp_enter_established_state(socket, packet);
         return;
     }
 
@@ -508,10 +523,10 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                 tcp_send_reset(ip_packet, packet);
                 break;
             }
-            tcb->state = TCP_ESTABLISHED;
-            tcp_update_send_window(socket, packet);
-            tcp_send_segments(socket);
-            // Fall-through
+            tcp_advance_ack_number(socket, htonl(packet->ack_number));
+            tcp_process_segment(socket, ip_packet, packet);
+            tcp_enter_established_state(socket, packet);
+            return;
         case TCP_ESTABLISHED:
         case TCP_FIN_WAIT_1:
         case TCP_FIN_WAIT_2:

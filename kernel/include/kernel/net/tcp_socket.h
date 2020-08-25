@@ -50,13 +50,14 @@ struct tcp_control_block {
     struct ring_buffer send_buffer;
     struct ring_buffer recv_buffer;
     struct timer *time_wait_timer;
-    struct timer *retransmission_timer;
+    struct timer *rto_timer;
     struct timer *send_ack_timer;
-    struct timespec retransmission_delay;
+    struct timespec rto;
     enum tcp_state state;
     bool pending_syn : 1;
     bool pending_fin : 1;
     bool is_passive : 1;
+    bool reset_rto_once_established : 1;
 };
 
 struct socket *net_get_tcp_socket_by_connection_info(struct tcp_connection_info *info);
