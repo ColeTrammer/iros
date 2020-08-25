@@ -211,12 +211,16 @@ int tcp_send_segments(struct socket *socket) {
 
     int ret = 0;
     while (ret == 0) {
-        uint32_t usable_window = tcb->send_unacknowledged + tcb->send_window - tcb->send_next;
+        ssize_t usable_window = (ssize_t) tcb->send_unacknowledged + (ssize_t) tcb->send_window - (ssize_t) tcb->send_next;
+        if (usable_window < 0) {
+            break;
+        }
+
         uint32_t data_available = ring_buffer_size(&tcb->send_buffer) + tcb->pending_syn + tcb->pending_fin;
         uint32_t data_queued = data_available - (tcb->send_next - tcb->send_unacknowledged);
 
         uint32_t data_to_send = 0;
-        if (MIN(usable_window, data_queued) >= segment_size) {
+        if (MIN(usable_window, data_queued) >= (ssize_t) segment_size) {
             data_to_send = MIN(usable_window, data_queued);
         } else if ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) && push_data && data_queued <= usable_window) {
             data_to_send = data_queued;
