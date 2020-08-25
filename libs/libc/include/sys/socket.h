@@ -51,6 +51,15 @@
 
 #define SOMAXCONN 4096
 
+#define MSG_CTRUNC    1
+#define MSG_DONTROUTE 2
+#define MSG_EOR       4
+#define MSG_OOB       8
+#define MSG_NOSIGNAL  16
+#define MSG_PEEK      32
+#define MSG_TRUNC     64
+#define MSG_WAITALL   128
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
