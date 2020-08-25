@@ -121,7 +121,7 @@ struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) 
     tcb->send_unacknowledged = tcb->send_next = 10000;                              // Initial sequence number
     tcb->recv_window = 8192;                                                        // Hard coded value
     tcb->recv_mss = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Default MSS minus headers
-    tcb->retransmission_delay = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };    // Start retransmit timer out at 1 second.
+    tcb->rto = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };                     // RTO starts at 1 second.
     init_ring_buffer(&tcb->send_buffer, 8192);
     init_ring_buffer(&tcb->recv_buffer, tcb->recv_window);
     return tcb;
@@ -135,8 +135,8 @@ void net_free_tcp_control_block(struct socket *socket) {
     if (tcb->time_wait_timer) {
         time_cancel_kernel_callback(tcb->time_wait_timer);
     }
-    if (tcb->retransmission_timer) {
-        time_cancel_kernel_callback(tcb->retransmission_timer);
+    if (tcb->rto_timer) {
+        time_cancel_kernel_callback(tcb->rto_timer);
     }
     if (tcb->send_ack_timer) {
         time_cancel_kernel_callback(tcb->send_ack_timer);
@@ -150,14 +150,19 @@ static void tcp_do_retransmit(struct timer *timer, void *_socket) {
     struct socket *socket = _socket;
     struct tcp_control_block *tcb = socket->private_data;
 
-    // FIXME: should more than one segment be sent?
+    // Retransmit the earliest segment not acknowledged by the sender.
     size_t max_data_to_retransmit = tcb->send_mss - sizeof(struct tcp_packet) - sizeof(struct ip_v4_packet);
     size_t data_to_retransmit = MIN(tcb->send_next - tcb->send_unacknowledged, max_data_to_retransmit);
     net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_unacknowledged + data_to_retransmit);
 
     // Exponential back off by doubling the next timeout.
-    tcb->retransmission_delay = time_add(tcb->retransmission_delay, tcb->retransmission_delay);
-    __time_reset_kernel_callback(timer, &tcb->retransmission_delay);
+    tcb->rto = time_add(tcb->rto, tcb->rto);
+    __time_reset_kernel_callback(timer, &tcb->rto);
+
+    if (tcb->pending_syn) {
+        // Since the initial SYN segment was lost, RTO must be initialized to 3 seconds later.
+        tcb->reset_rto_once_established = true;
+    }
 }
 
 static void tcp_setup_retransmission_timer(struct socket *socket) {
@@ -166,8 +171,11 @@ static void tcp_setup_retransmission_timer(struct socket *socket) {
         return;
     }
 
-    assert(!tcb->retransmission_timer);
-    tcb->retransmission_timer = time_register_kernel_callback(&tcb->retransmission_delay, tcp_do_retransmit, socket);
+    if (!tcb->rto_timer) {
+        tcb->rto_timer = time_register_kernel_callback(&tcb->rto, tcp_do_retransmit, socket);
+    } else {
+        time_reset_kernel_callback(tcb->rto_timer, &tcb->rto);
+    }
 }
 
 bool tcp_update_recv_window(struct socket *socket) {
@@ -194,7 +202,6 @@ int tcp_send_segments(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
     size_t segment_size = tcb->send_mss - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet);
     bool push_data = true; // Assume all data should have the PSH bit set.
-    bool sent_data = false;
 
     int ret = 0;
     while (ret == 0) {
@@ -225,12 +232,9 @@ int tcp_send_segments(struct socket *socket) {
                   usable_window);
 #endif /* TCP_DEBUG */
         ret = net_send_tcp_from_socket(socket, tcb->send_next - data_to_send, tcb->send_next);
-        sent_data = true;
-    }
-
-    if (sent_data) {
         tcp_setup_retransmission_timer(socket);
     }
+
     return ret;
 }
 
