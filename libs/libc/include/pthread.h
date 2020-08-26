@@ -9,6 +9,8 @@
 #include <bits/pthread_key_t.h>
 #include <bits/pthread_mutex_t.h>
 #include <bits/pthread_once_t.h>
+#include <bits/pthread_rwlock_t.h>
+#include <bits/pthread_rwlockattr_t.h>
 #include <bits/pthread_spinlock_t.h>
 #include <bits/pthread_t.h>
 
@@ -50,6 +52,9 @@
     {                                                                                                                               \
         0, 0, { 0 }, { 0, 0, (unsigned int *) 0, (struct __locked_robust_mutex_node *) 0, (struct __locked_robust_mutex_node *) 0 } \
     }
+
+#define PTHREAD_RWLOCK_INITIALIZER \
+    { 0 }
 
 #ifdef __cplusplus
 extern "C" {

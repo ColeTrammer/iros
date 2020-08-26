@@ -27,6 +27,10 @@
 #define SSRES    0x1005
 #define SSWAPBUF 0x1006
 
+#define FIONBIO  0x2000
+#define FIOCLEX  0x2001
+#define FIONCLEX 0x2001
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

@@ -11,6 +11,7 @@
 #include <bits/gid_t.h>
 #include <bits/id_t.h>
 #include <bits/ino_t.h>
+#include <bits/key_t.h>
 #include <bits/mode_t.h>
 #include <bits/nlink_t.h>
 #include <bits/off_t.h>
@@ -20,6 +21,8 @@
 #include <bits/pthread_key_t.h>
 #include <bits/pthread_mutex_t.h>
 #include <bits/pthread_once_t.h>
+#include <bits/pthread_rwlock_t.h>
+#include <bits/pthread_rwlockattr_t.h>
 #include <bits/pthread_spinlock_t.h>
 #include <bits/pthread_t.h>
 #include <bits/size_t.h>

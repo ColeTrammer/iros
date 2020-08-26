@@ -5,6 +5,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define isfinite(x) __builtin_isfinite(x)
+
 double acos(double x);
 double asin(double x);
 double atan(double x);
