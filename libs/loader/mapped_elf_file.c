@@ -249,16 +249,16 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
         int prot =
             (phdr->p_flags & PF_R ? PROT_READ : 0) | (phdr->p_flags & PF_W ? PROT_WRITE : 0) | (phdr->p_flags & PF_X ? PROT_EXEC : 0);
 
-        size_t size = ((phdr->p_memsz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
         void *phdr_start = base + phdr->p_vaddr;
+        void *phdr_end = (void *) ALIGN_UP((uintptr_t) phdr_start + phdr->p_memsz, PAGE_SIZE);
         void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
 
         if ((phdr->p_filesz == phdr->p_memsz) && !(prot & PROT_WRITE) && (phdr->p_align % PAGE_SIZE == 0)) {
-            mmap(phdr_start, size, prot, MAP_SHARED | MAP_FIXED, file->fd, phdr->p_offset);
+            mmap(phdr_start, phdr_end - phdr_start, prot, MAP_SHARED | MAP_FIXED, file->fd, phdr->p_offset);
         } else {
-            mprotect(phdr_page_start, size, PROT_WRITE);
+            mprotect(phdr_page_start, phdr_end - phdr_start, PROT_WRITE);
             memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);
-            mprotect(phdr_page_start, size, prot);
+            mprotect(phdr_page_start, phdr_end - phdr_start, prot);
         }
     }
 
