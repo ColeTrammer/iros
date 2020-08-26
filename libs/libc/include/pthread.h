@@ -3,8 +3,11 @@
 
 // sched.h comes first for clockid_t (needed by pthread_condattr_t)
 #include <sched.h>
+#include <time.h>
 
 #include <bits/pthread_attr_t.h>
+#include <bits/pthread_barrier_t.h>
+#include <bits/pthread_barrierattr_t.h>
 #include <bits/pthread_cond_t.h>
 #include <bits/pthread_key_t.h>
 #include <bits/pthread_mutex_t.h>
@@ -13,6 +16,8 @@
 #include <bits/pthread_rwlockattr_t.h>
 #include <bits/pthread_spinlock_t.h>
 #include <bits/pthread_t.h>
+
+#define PTHREAD_BARRIER_SERIAL_THREAD 1
 
 #define PTHREAD_CANCEL_ASYNCHRONOUS 4
 #define PTHREAD_CANCEL_DEFERRED     0
@@ -62,6 +67,15 @@ extern "C" {
 
 int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(void));
 
+int pthread_barrierattr_destroy(pthread_barrierattr_t *barrierattr);
+int pthread_barrierattr_init(pthread_barrierattr_t *barrierattr);
+int pthread_barrierattr_getpshared(const pthread_barrierattr_t *__restrict barrierattr, int *__restrict pshared);
+int pthread_barrierattr_setpshared(pthread_barrierattr_t *barrierattr, int pshared);
+
+int pthread_barrier_destroy(pthread_barrier_t *barrier);
+int pthread_barrier_init(pthread_barrier_t *__restrict barrier, const pthread_barrierattr_t *__restrict attr, unsigned int count);
+int pthread_barrier_wait(pthread_barrier_t(barrier));
+
 pthread_t pthread_self(void);
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
                    void *__restrict arg);
@@ -69,7 +83,6 @@ int pthread_detach(pthread_t thread);
 int pthread_equal(pthread_t t1, pthread_t t2);
 void pthread_exit(void *value_ptr) __attribute__((__noreturn__));
 int pthread_join(pthread_t thread, void **value_ptr);
-int pthread_kill(pthread_t thread, int sig);
 
 int pthread_getcpuclockid(pthread_t thread, clockid_t *clock_id);
 int pthread_getconcurrency(void);
@@ -91,6 +104,7 @@ int pthread_cond_broadcast(pthread_cond_t *cond);
 int pthread_cond_destroy(pthread_cond_t *cond);
 int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict attr);
 int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex, const struct timespec *__restrict timeout);
 int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex);
 
 int pthread_spin_destroy(pthread_spinlock_t *lock);
@@ -112,6 +126,7 @@ int pthread_mutex_consistent(pthread_mutex_t *mutex);
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex, const pthread_mutexattr_t *__restrict mutexattr);
 int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_timedlock(pthread_mutex_t *__restrict mutex, const struct timespec *__restrict timeout);
 int pthread_mutex_trylock(pthread_mutex_t *mutex);
 int pthread_mutex_unlock(pthread_mutex_t *mutex);
 
@@ -119,6 +134,21 @@ int pthread_key_create(pthread_key_t *key, void (*destructor)(void *k));
 int pthread_key_delete(pthread_key_t key);
 void *pthread_getspecific(pthread_key_t key);
 int pthread_setspecific(pthread_key_t key, const void *value);
+
+int pthread_rwlockattr_destroy(pthread_rwlockattr_t *rwlockattr);
+int pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__restrict rwlockattr, int *__restrict pshared);
+int pthread_rwlockattr_init(pthread_rwlockattr_t *rwlockattr);
+int pthread_rwlockattr_setpshared(pthread_rwlockattr_t *rwlockattr, int pshared);
+
+int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
+int pthread_rwlock_init(pthread_rwlock_t *__restrict rwlock, const pthread_rwlockattr_t *__restrict rwlockattr);
+int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_timedrdlock(pthread_rwlock_t *__restrict rwlock, const struct timespec *__restrict timeout);
+int pthread_rwlock_timedwrlock(pthread_rwlock_t *__restrict rwlock, const struct timespec *__restrict timeout);
+int pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
 
 int pthread_cancel(pthread_t thread);
 int pthread_setcancelstate(int state, int *oldstate);

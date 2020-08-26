@@ -17,6 +17,8 @@
 #include <bits/off_t.h>
 #include <bits/pid_t.h>
 #include <bits/pthread_attr_t.h>
+#include <bits/pthread_barrier_t.h>
+#include <bits/pthread_barrierattr_t.h>
 #include <bits/pthread_cond_t.h>
 #include <bits/pthread_key_t.h>
 #include <bits/pthread_mutex_t.h>
