@@ -17,10 +17,10 @@
 #define IPC_STAT 3
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif /* __cplusplus */
 
-    struct ipc_perm {
+struct ipc_perm {
     uid_t uid;
     gid_t gid;
     uid_t cuid;

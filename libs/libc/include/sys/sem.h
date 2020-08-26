@@ -17,10 +17,10 @@
 #define SETALL  7
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif /* __cplusplus */
 
-    struct semid_ds {
+struct semid_ds {
     struct ipc_perm sem_perm;
     unsigned short sem_nsems;
     time_t sem_otime;
