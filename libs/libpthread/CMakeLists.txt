@@ -1,6 +1,7 @@
 set(SOURCES
     atfork.c
     attr.c
+    barrierattr.c
     cancel.c
     cond.c
     condattr.c
@@ -10,6 +11,7 @@ set(SOURCES
     mutexattr.c
     once.c
     pthread.c
+    rwlockattr.c
     spinlock.c
 )
 

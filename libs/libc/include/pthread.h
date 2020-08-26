@@ -136,7 +136,7 @@ void *pthread_getspecific(pthread_key_t key);
 int pthread_setspecific(pthread_key_t key, const void *value);
 
 int pthread_rwlockattr_destroy(pthread_rwlockattr_t *rwlockattr);
-int pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__restrict rwlockattr, int *__restrict pshared);
+int pthread_rwlockattr_getpshared(const pthread_rwlockattr_t *__restrict rwlockattr, int *__restrict pshared);
 int pthread_rwlockattr_init(pthread_rwlockattr_t *rwlockattr);
 int pthread_rwlockattr_setpshared(pthread_rwlockattr_t *rwlockattr, int pshared);
 

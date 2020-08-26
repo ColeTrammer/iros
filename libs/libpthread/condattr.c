@@ -7,8 +7,7 @@ int pthread_condattr_init(pthread_condattr_t *condattr) {
         return EINVAL;
     }
 
-    // FIXME: choose a sensible clockid default
-    condattr->__clockid = 0;
+    condattr->__clockid = CLOCK_MONOTONIC;
     condattr->__flags = 0;
     return 0;
 }
@@ -41,8 +40,7 @@ int pthread_condattr_getpshared(pthread_condattr_t *__restrict condattr, int *__
 }
 
 int pthread_condattr_setclock(pthread_condattr_t *condattr, clockid_t clock) {
-    // FIXME: check to see if the clockid_t is valid
-    if (condattr == NULL || condattr->__flags == -1) {
+    if (condattr == NULL || condattr->__flags == -1 || (clock != CLOCK_MONOTONIC && clock != CLOCK_REALTIME)) {
         return EINVAL;
     }
 
