@@ -6,6 +6,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef struct {
+    int __x;
 } pthread_barrier_t;
 
 #ifdef __cplusplus

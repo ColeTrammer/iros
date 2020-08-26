@@ -6,6 +6,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef struct {
+    int __lock;
 } pthread_rwlock_t;
 
 #ifdef __cplusplus

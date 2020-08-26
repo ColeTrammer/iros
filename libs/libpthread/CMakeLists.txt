@@ -11,6 +11,7 @@ set(SOURCES
     mutexattr.c
     once.c
     pthread.c
+    rwlock.c
     rwlockattr.c
     spinlock.c
 )

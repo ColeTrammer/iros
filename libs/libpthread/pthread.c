@@ -57,6 +57,13 @@ static void __remove_thread(struct thread_control_block *block) {
 }
 
 pthread_t pthread_self(void) {
+    // If __threads is NULL, that means the thread self pointer hasn't been initialized yet. In this case, the current
+    // tid can be found in the initial process info. Early pthread_self() calls are a result of libgcc_s protecting
+    // against concurrent library initialization. It may make more sense to have the dynamic loader initialize the
+    // thread self pointer before running any other code (since it may expect things like TLS to be operational).
+    if (!__threads) {
+        return __initial_process_info->main_tid;
+    }
     return __get_self()->id;
 }
 
