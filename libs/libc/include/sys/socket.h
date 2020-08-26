@@ -60,6 +60,8 @@
 #define MSG_TRUNC     64
 #define MSG_WAITALL   128
 
+#define SCM_RIGHTS 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -75,8 +77,33 @@ struct sockaddr {
 
 struct sockaddr_storage {
     sa_family_t ss_family;
-    char __ss_pad[108]; /* UNIX_PATH_MAX == 108 */
+    char __ss_pad1[sizeof(long long) - sizeof(sa_family_t)];
+    long long __ss_align;
+    char __ss_pad2[108 - 2 * sizeof(long long)]; /* UNIX_PATH_MAX == 108 */
 };
+
+struct msghdr {
+    void *msg_name;
+    socklen_t msg_namelen;
+    struct iovec msg_iov;
+    int msg_iovlen;
+    void *msg_control;
+    socklen_t msg_controllen;
+    int msg_flags;
+};
+
+struct cmsghdr {
+    socklen_t cmsg_len;
+    int cmsg_level;
+    int cmsg_type;
+};
+
+#define CMSG_DATA(cmsg) ((unsigned char *) ((struct cmsghdr *) (cmsg) + 1))
+#define CMSG_NXTHDR(mhdr, cmsg)                                                                                       \
+    (((unsigned char *) (cmsg) - (unsigned char *) ((mhdr)->msg_control) + (cmsg)->cmsg_len) > (mhdr)->msg_controllen \
+         ? NULL                                                                                                       \
+         : ((struct cmsghdr *) (unsigned char *) (cmsg) + ((cmsg)->cmsg_len)))
+#define CMSG_FIRSTHDR(mhdr) ((size_t)(mhdr)->msg_controllen < sizeof(struct cmsghdr) ? NULL : (struct cmsghdr *) ((mhdr)->msg_control))
 
 struct linger {
     int l_onoff;
@@ -93,14 +120,17 @@ int getsockopt(int fd, int level, int optname, void *__restrict optval, socklen_
 int listen(int fd, int backlog);
 int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
 int shutdown(int fd, int how);
+int sockatmark(int fd);
 int socket(int domain, int type, int protocol);
 int socketpair(int domain, int type, int protoco, int sv[2]);
 
 ssize_t send(int fd, const void *buf, size_t len, int flags);
 ssize_t sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *dest, socklen_t addrlen);
+ssize_t sendmsg(int fd, const struct msghdr *message, int flags);
 
 ssize_t recv(int fd, void *buf, size_t len, int flags);
 ssize_t recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *__restrict src_addr, socklen_t *__restrict addrlen);
+ssize_t recvmsg(int fd, struct msghdr *message, int flags);
 
 #ifdef __cplusplus
 }

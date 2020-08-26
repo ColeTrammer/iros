@@ -3,13 +3,13 @@
 
 #include <netinet/in.h>
 
-#define AI_PASSIVE      1
-#define AI_CANONNAME    2
-#define AI_NUMERIC_HOST 4
-#define AI_NUMERICSERV  8
-#define AI_V4MAPPED     16
-#define AI_ALL          32
-#define AI_ADDRCONFIG   64
+#define AI_PASSIVE     1
+#define AI_CANONNAME   2
+#define AI_NUMERICHOST 4
+#define AI_NUMERICSERV 8
+#define AI_V4MAPPED    16
+#define AI_ALL         32
+#define AI_ADDRCONFIG  64
 
 #define NI_NOFQDN       1
 #define NI_NUMERICHOST  2
