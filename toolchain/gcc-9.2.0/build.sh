@@ -21,7 +21,8 @@ if [ ! -e gcc-9.2.0 ]; then
     cd gcc-9.2.0
     git init
     git apply ../gcc-os_2-9.2.0.patch
-    git apply ../gcc-os_2-9.2.0-customization.patch
+    git apply ../gcc-os_2-9.2.0-customizations.patch
+    git apply ../gcc-os_2-9.2.0-shlib.patch
     cd ..
 fi
 
@@ -50,6 +51,7 @@ then
         --enable-shared \
         --with-sysroot="$ROOT/sysroot" \
         --enable-languages=c,c++ \
+        --enable-threads=posix \
         --with-build-time-tools=$ROOT/toolchain/cross/bin
     cd ..
 fi
