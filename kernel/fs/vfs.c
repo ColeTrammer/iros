@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -962,8 +963,31 @@ int fs_fstatat(struct tnode *base, const char *file_name, struct stat *stat_stru
     return do_stat(inode, stat_struct);
 }
 
-int fs_ioctl(struct file *file, unsigned long request, void *argp) {
-    struct inode *inode = fs_file_inode(file);
+int fs_ioctl(struct file_descriptor *desc, unsigned long request, void *argp) {
+    switch (request) {
+        case FIONBIO: {
+            if (validate_read(argp, sizeof(int))) {
+                return -EFAULT;
+            }
+            int value = *(int *) argp;
+            if (!value) {
+                desc->file->open_flags &= ~O_NONBLOCK;
+            } else {
+                desc->file->open_flags |= O_NONBLOCK;
+            }
+            return 0;
+        }
+        case FIOCLEX:
+            desc->fd_flags |= FD_CLOEXEC;
+            return 0;
+        case FIONCLEX:
+            desc->fd_flags &= ~FD_CLOEXEC;
+            return 0;
+        default:
+            break;
+    }
+
+    struct inode *inode = fs_file_inode(desc->file);
     if (!inode) {
         return -ENOTTY;
     }

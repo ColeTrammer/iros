@@ -49,7 +49,7 @@ ssize_t fs_writev(struct file *file, const struct iovec *vec, int item_count);
 off_t fs_seek(struct file *file, off_t offset, int whence);
 long fs_tell(struct file *file);
 int fs_fstatat(struct tnode *base, const char *file_name, struct stat *stat_struct, int flags);
-int fs_ioctl(struct file *file, unsigned long request, void *argp);
+int fs_ioctl(struct file_descriptor *desc, unsigned long request, void *argp);
 int fs_truncate(const char *path, off_t length);
 int fs_ftruncate(struct file *file, off_t length);
 struct tnode *fs_mkdir(const char *path, mode_t mode, int *error);

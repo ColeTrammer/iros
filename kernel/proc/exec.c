@@ -227,7 +227,7 @@ int proc_execve(char *path, char **argv, char **envp) {
     info.isatty_mask = 0;
     for (int i = 0; i <= 3; i++) {
         struct file *file = process->files[i].file;
-        if (file && !fs_ioctl(file, TISATTY, NULL)) {
+        if (file && !fs_ioctl(&process->files[i], TISATTY, NULL)) {
             info.isatty_mask |= (1 << i);
         }
     }

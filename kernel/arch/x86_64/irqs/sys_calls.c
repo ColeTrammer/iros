@@ -516,11 +516,11 @@ SYS_CALL(lseek) {
 SYS_CALL(ioctl) {
     SYS_BEGIN();
 
-    SYS_PARAM1_TRANSFORM(struct file *, file, int, get_file);
+    SYS_PARAM1_TRANSFORM(struct file_descriptor *, desc, int, get_file_desc);
     SYS_PARAM2(unsigned long, request);
     SYS_PARAM3(void *, argp);
 
-    SYS_RETURN(fs_ioctl(file, request, argp));
+    SYS_RETURN(fs_ioctl(desc, request, argp));
 }
 
 SYS_CALL(ftruncate) {

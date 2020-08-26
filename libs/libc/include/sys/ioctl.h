@@ -29,7 +29,7 @@
 
 #define FIONBIO  0x2000
 #define FIOCLEX  0x2001
-#define FIONCLEX 0x2001
+#define FIONCLEX 0x2002
 
 #ifdef __cplusplus
 extern "C" {

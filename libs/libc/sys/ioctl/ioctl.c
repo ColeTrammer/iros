@@ -18,6 +18,8 @@ int ioctl(int fd, unsigned long request, ...) {
         case TCOONI:
         case SECURSOR:
         case SDCURSOR:
+        case FIOCLEX:
+        case FIONCLEX:
             argp = NULL;
             break;
         default:
