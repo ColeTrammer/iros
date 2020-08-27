@@ -94,6 +94,10 @@ double ldexp(double x, int exp) {
     }
 }
 
+double ceil(double x) {
+    return x;
+}
+
 float roundf(float x) {
     if (x < 0) {
         return -roundf(-x);
