@@ -41,6 +41,11 @@ static void cond_wait_cleanup(pthread_mutex_t *mutex) {
     pthread_mutex_lock(mutex);
 }
 
+int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex, const struct timespec *__restrict timeout) {
+    (void) timeout;
+    return pthread_cond_wait(cond, mutex);
+}
+
 int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex) {
     pthread_cleanup_push((void (*)(void *)) cond_wait_cleanup, mutex);
     os_mutex(&mutex->__lock, MUTEX_RELEASE_AND_WAIT, 0, 0, 1, &cond->__lock);

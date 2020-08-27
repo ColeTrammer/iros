@@ -34,15 +34,13 @@ int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock) {
 }
 
 int pthread_rwlock_timedrdlock(pthread_rwlock_t *__restrict rwlock, const struct timespec *__restrict timeout) {
-    (void) rwlock;
     (void) timeout;
-    return 0;
+    return pthread_rwlock_rdlock(rwlock);
 }
 
 int pthread_rwlock_timedwrlock(pthread_rwlock_t *__restrict rwlock, const struct timespec *__restrict timeout) {
-    (void) rwlock;
     (void) timeout;
-    return 0;
+    return pthread_rwlock_wrlock(rwlock);
 }
 
 int pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock) {

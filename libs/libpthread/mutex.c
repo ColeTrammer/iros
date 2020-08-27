@@ -34,6 +34,11 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex, const pthread_mutexatt
     return 0;
 }
 
+int pthread_mutex_timedlock(pthread_mutex_t *__restrict mutex, const struct timespec *__restrict timeout) {
+    (void) timeout;
+    return pthread_mutex_lock(mutex);
+}
+
 int pthread_mutex_lock(pthread_mutex_t *mutex) {
     int expected = 0;
     pthread_t tid = pthread_self();
