@@ -19,6 +19,8 @@ static void (*callback)(void) = NULL;
 static unsigned int count = 0;
 static unsigned int count_to = 0;
 
+static struct timespec time_per_clock_tick;
+
 extern struct task initial_kernel_task;
 extern uint64_t idle_ticks;
 extern uint64_t user_ticks;
@@ -29,10 +31,12 @@ void handle_pit_interrupt(struct irq_context *context) {
     if (current == get_idle_task()) {
         idle_ticks++;
     } else if (current->in_kernel) {
-        current->process->times.tms_stime++;
+        current->process->rusage_self.ru_stime =
+            time_add_timeval(current->process->rusage_self.ru_stime, timeval_from_time(time_per_clock_tick));
         kernel_ticks++;
     } else {
-        current->process->times.tms_utime++;
+        current->process->rusage_self.ru_utime =
+            time_add_timeval(current->process->rusage_self.ru_utime, timeval_from_time(time_per_clock_tick));
         user_ticks++;
     }
     // Check for NULL b/c kernel tasks don't have a clock
@@ -84,6 +88,9 @@ void pit_set_rate(unsigned int rate) {
     PIT_SET_MODE(0, PIT_ACCESS_LOHI, PIT_MODE_SQUARE_WAVE);
     outb(PIT_CHANNEL_0, PIT_GET_DIVISOR(rate) & 0xFF);
     outb(PIT_CHANNEL_0, PIT_GET_DIVISOR(rate) >> 8);
+
+    time_per_clock_tick.tv_sec = rate / 1000;
+    time_per_clock_tick.tv_nsec = rate * 1000;
 }
 
 static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };

@@ -64,6 +64,17 @@ static inline __attribute__((always_inline)) struct timespec time_add(struct tim
     return t1;
 }
 
+static inline __attribute__((always_inline)) struct timeval time_add_timeval(struct timeval t1, struct timeval t2) {
+    t1.tv_sec += t2.tv_sec;
+    t1.tv_usec += t2.tv_usec;
+    if (t1.tv_usec >= 1000000L) {
+        t1.tv_usec %= 1000000L;
+        t1.tv_sec++;
+    }
+
+    return t1;
+}
+
 static inline __attribute__((always_inline)) struct timespec time_sub(struct timespec t1, struct timespec t2) {
     t1.tv_sec -= t2.tv_sec;
     t1.tv_nsec -= t2.tv_nsec;
@@ -77,6 +88,10 @@ static inline __attribute__((always_inline)) struct timespec time_sub(struct tim
 
 static inline __attribute__((always_inline)) struct timespec time_from_timeval(struct timeval v) {
     return (struct timespec) { .tv_sec = v.tv_sec, .tv_nsec = v.tv_usec * 1000 };
+}
+
+static inline __attribute__((always_inline)) struct timeval timeval_from_time(struct timespec s) {
+    return (struct timeval) { .tv_sec = s.tv_sec, .tv_usec = s.tv_nsec / 1000 };
 }
 
 extern struct clock global_monotonic_clock;

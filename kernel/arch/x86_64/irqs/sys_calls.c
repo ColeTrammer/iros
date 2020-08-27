@@ -1117,11 +1117,13 @@ SYS_CALL(times) {
 
     struct task *current = get_current_task();
 
-    // Divide by 10 b/c things are measured in (1 / 100) seconds, not (1 / 1000)
-    tms->tms_utime = current->process->times.tms_utime / 10;
-    tms->tms_stime = current->process->times.tms_stime / 10;
-    tms->tms_cutime = current->process->times.tms_cutime / 10;
-    tms->tms_cstime = current->process->times.tms_cstime / 10;
+    // Times values are measured in units of 1/100 seconds
+    spin_lock(&current->process->children_lock);
+    tms->tms_utime = current->process->rusage_self.ru_utime.tv_usec * 100 + current->process->rusage_self.ru_utime.tv_usec / 10000;
+    tms->tms_stime = current->process->rusage_self.ru_stime.tv_usec * 100 + current->process->rusage_self.ru_stime.tv_usec / 10000;
+    tms->tms_cutime = current->process->rusage_children.ru_utime.tv_usec * 100 + current->process->rusage_children.ru_utime.tv_usec / 10000;
+    tms->tms_cstime = current->process->rusage_children.ru_stime.tv_usec * 100 + current->process->rusage_children.ru_stime.tv_usec / 10000;
+    spin_unlock(&current->process->children_lock);
 
     struct timespec now = time_read_clock(CLOCK_MONOTONIC);
     SYS_RETURN(now.tv_sec * 100 + now.tv_nsec / 10000000L);
@@ -2223,6 +2225,15 @@ SYS_CALL(socketpair) {
     SYS_PARAM4_VALIDATE(int *, fds, validate_write, 2 * sizeof(int));
 
     SYS_RETURN(net_socketpair(domain, type, protocol, fds));
+}
+
+SYS_CALL(getrusage) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, who);
+    SYS_PARAM2_VALIDATE(struct rusage *, rusage, validate_write, sizeof(struct rusage));
+
+    SYS_RETURN(proc_getrusage(who, rusage));
 }
 
 SYS_CALL(invalid_system_call) {

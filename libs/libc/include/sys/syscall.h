@@ -109,7 +109,8 @@
     __ENUMERATE_SYSCALL(GETRLIMIT, getrlimit, 2)                             \
     __ENUMERATE_SYSCALL(SETRLIMIT, setrlimit, 2)                             \
     __ENUMERATE_SYSCALL(SOCKETPAIR, socketpair, 4)                           \
-    __ENUMERATE_SYSCALL(SCHED_YIELD, sched_yield, 0)
+    __ENUMERATE_SYSCALL(SCHED_YIELD, sched_yield, 0)                         \
+    __ENUMERATE_SYSCALL(GETRUSAGE, getrusage, 2)
 
 #ifdef __ASSEMBLER__
 #define SYS_SIGRETURN 27

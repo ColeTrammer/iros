@@ -268,6 +268,21 @@ get_waitable_process_end:
     return any_waitable ? 0 : -ECHILD;
 }
 
+static void proc_update_rusage(struct process *parent, struct process *child) {
+    parent->rusage_children.ru_utime =
+        time_add_timeval(parent->rusage_children.ru_utime, time_add_timeval(child->rusage_self.ru_utime, child->rusage_children.ru_utime));
+    parent->rusage_children.ru_stime =
+        time_add_timeval(parent->rusage_children.ru_stime, time_add_timeval(child->rusage_self.ru_stime, child->rusage_children.ru_stime));
+    parent->rusage_children.ru_maxrss =
+        MAX(parent->rusage_children.ru_maxrss, MAX(parent->rusage_self.ru_maxrss, parent->rusage_children.ru_maxrss));
+    parent->rusage_children.ru_minflt += child->rusage_self.ru_minflt + child->rusage_children.ru_minflt;
+    parent->rusage_children.ru_majflt += child->rusage_self.ru_majflt + child->rusage_children.ru_majflt;
+    parent->rusage_children.ru_inblock += child->rusage_self.ru_inblock + child->rusage_children.ru_inblock;
+    parent->rusage_children.ru_oublock += child->rusage_self.ru_oublock + child->rusage_children.ru_oublock;
+    parent->rusage_children.ru_nvcsw += child->rusage_self.ru_nvcsw + child->rusage_children.ru_nvcsw;
+    parent->rusage_children.ru_nivcsw += child->rusage_self.ru_nivcsw + child->rusage_children.ru_nivcsw;
+}
+
 void proc_consume_wait_info(struct process *parent, struct process *child, enum process_state state) {
     switch (state) {
         case PS_TERMINATED: {
@@ -276,6 +291,7 @@ void proc_consume_wait_info(struct process *parent, struct process *child, enum 
                 parent->children = child->sibling_next;
             }
             remque(child);
+            proc_update_rusage(parent, child);
             spin_unlock(&parent->children_lock);
             proc_drop_process(child, NULL, false);
             break;
@@ -419,6 +435,26 @@ bool proc_in_group(struct process *process, gid_t group) {
     }
 
     return false;
+}
+
+int proc_getrusage(int who, struct rusage *rusage) {
+    struct process *process = get_current_process();
+    struct rusage *to_copy;
+    switch (who) {
+        case RUSAGE_SELF:
+            to_copy = &process->rusage_self;
+            break;
+        case RUSAGE_CHILDREN:
+            to_copy = &process->rusage_children;
+            break;
+        default:
+            return -EINVAL;
+    }
+
+    spin_lock(&process->children_lock);
+    memcpy(rusage, to_copy, sizeof(struct rusage));
+    spin_unlock(&process->children_lock);
+    return 0;
 }
 
 int proc_getrlimit(struct process *process, int what, struct rlimit *limit) {

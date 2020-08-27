@@ -92,9 +92,10 @@ struct process {
 
     struct arch_process arch_process;
 
-    struct tms times;
-
     struct timespec start_time;
+
+    struct rusage rusage_self;
+    struct rusage rusage_children;
 
     struct rlimit limits[RLIMIT_NLIMITS];
 
@@ -132,6 +133,7 @@ struct process *find_by_pid(pid_t pid);
 void proc_set_sig_pending(struct process *process, int n);
 void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *process, void *closure), void *closure);
 
+int proc_getrusage(int who, struct rusage *rusage);
 int proc_getrlimit(struct process *process, int what, struct rlimit *limit);
 int proc_setrlimit(struct process *process, int what, const struct rlimit *limit);
 

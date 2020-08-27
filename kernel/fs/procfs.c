@@ -329,7 +329,8 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_pid_sched(struct proc
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
                              "USER_TICKS: %lu\n"
                              "KERNEL_TICKS: %lu\n",
-                             process->times.tms_utime, process->times.tms_stime);
+                             process->rusage_self.ru_utime.tv_sec * 1000 + process->rusage_self.ru_utime.tv_usec / 1000,
+                             process->rusage_self.ru_stime.tv_sec * 1000 + process->rusage_self.ru_stime.tv_usec / 1000);
     return (struct procfs_buffer) { buffer, length };
 }
 

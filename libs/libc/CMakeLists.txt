@@ -276,6 +276,7 @@ else()
         sys/os_2/set_thread_self_pointer.c
         sys/os_2/tgkill.c
         sys/resource/getrlimit.c
+        sys/resource/getrusage.c
         sys/resource/setrlimit.c
         sys/socket/socket.c
         sys/socket/socketpair.c
