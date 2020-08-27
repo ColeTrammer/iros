@@ -31,32 +31,7 @@ const char *__program_name = NULL;
 
 struct thread_control_block *__threads;
 
-#ifdef __is_shared
-static __attribute__((constructor)) void early_init(int argc, char **argv, char **envp) {
-    (void) argc;
-    (void) argv;
-
-    environ = envp;
-
-    init_files(__initial_process_info->isatty_mask);
-    init_env();
-}
-#endif /* __is_shared */
-
-void initialize_standard_library(struct initial_process_info *initial_process_info, int argc, char **argv, char **envp) {
-    (void) initial_process_info;
-    (void) argc;
-    (void) argv;
-    (void) envp;
-
-#ifdef __is_static
-    environ = envp;
-    __initial_process_info = initial_process_info;
-
-    init_files(__initial_process_info->isatty_mask);
-    init_env();
-#endif /* #ifdef __is_static */
-
+void init_threads(void) {
     // FIXME: __allocate_thread_control_block will call malloc which calls sbrk,
     //        which could set errno if it fails.
     //        This should be avoided as tls isn't enabled yet
@@ -73,8 +48,49 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
     sigset_t set = { 0 };
     set |= (UINT64_C(1) << (__PTHREAD_CANCEL_SIGNAL - UINT64_C(1)));
     syscall(SYS_SIGPROCMASK, SIG_BLOCK, &set, NULL);
+}
+
+void init_program_name(char **argv) {
+    __program_name = strrchr(argv[0], '/');
+    if (!__program_name) {
+        __program_name = argv[0];
+    } else {
+        __program_name++;
+    }
+}
+
+#ifdef __is_shared
+static __attribute__((constructor)) void early_init(int argc, char **argv, char **envp) {
+    (void) argc;
+    (void) argv;
+
+    environ = envp;
+
+    // It would be best to try and call this function event earlier (although it would be difficult to get
+    // other constructor functions to be called before this once (since libc is linked in last by default)).
+    init_threads();
+
+    init_files(__initial_process_info->isatty_mask);
+    init_env();
+    init_program_name(argv);
+}
+#endif /* __is_shared */
+
+void initialize_standard_library(struct initial_process_info *initial_process_info, int argc, char **argv, char **envp) {
+    (void) initial_process_info;
+    (void) argc;
+    (void) argv;
+    (void) envp;
 
 #ifdef __is_static
+    environ = envp;
+    __initial_process_info = initial_process_info;
+
+    init_threads();
+    init_files(__initial_process_info->isatty_mask);
+    init_env();
+    init_program_name(argv);
+
     const size_t preinit_size = __preinit_array_end - __preinit_array_start;
     for (size_t i = 0; i < preinit_size; i++) {
         (*__preinit_array_start[i])(argc, argv, envp);
@@ -87,11 +103,4 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
         (*__init_array_start[i])(argc, argv, envp);
     }
 #endif /* __is_static */
-
-    __program_name = strrchr(argv[0], '/');
-    if (!__program_name) {
-        __program_name = argv[0];
-    } else {
-        __program_name++;
-    }
 }
