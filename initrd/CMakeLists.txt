@@ -9,6 +9,7 @@ endforeach()
 
 set(INITRD_TARGETS ${PRIVATE_INITRD_TARGETS} PARENT_SCOPE)
 
+target_link_libraries(barrier_test ${PTHREAD_LIB})
 target_link_libraries(cancel_test ${PTHREAD_LIB})
 target_link_libraries(cleanup_handler_test ${PTHREAD_LIB})
 target_link_libraries(cond_test ${PTHREAD_LIB})

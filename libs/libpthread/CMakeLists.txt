@@ -1,6 +1,7 @@
 set(SOURCES
     atfork.c
     attr.c
+    barrier.c
     barrierattr.c
     cancel.c
     cond.c

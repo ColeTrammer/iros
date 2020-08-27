@@ -74,7 +74,7 @@ int pthread_barrierattr_setpshared(pthread_barrierattr_t *barrierattr, int pshar
 
 int pthread_barrier_destroy(pthread_barrier_t *barrier);
 int pthread_barrier_init(pthread_barrier_t *__restrict barrier, const pthread_barrierattr_t *__restrict attr, unsigned int count);
-int pthread_barrier_wait(pthread_barrier_t(barrier));
+int pthread_barrier_wait(pthread_barrier_t *barrier);
 
 pthread_t pthread_self(void);
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attr, void *(*start_routine)(void *arg),
