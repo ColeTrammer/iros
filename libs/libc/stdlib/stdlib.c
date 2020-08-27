@@ -229,6 +229,26 @@ int mkstemp(char *t) {
     return -1;
 }
 
+char *mkdtemp(char *t) {
+    errno = 0;
+    for (int i = 0; i < 100; i++) {
+        mktemp_impl(t, i == 0);
+        if (errno != 0) {
+            return NULL;
+        }
+
+        int ret = mkdir(t, 0700);
+        if (ret) {
+            continue;
+        }
+
+        return t;
+    }
+
+    errno = EEXIST;
+    return NULL;
+}
+
 size_t mbstowcs(wchar_t *dest, const char *src, size_t n) {
     size_t i;
     for (i = 0; src[i] != '\0' && i < n; i++) {

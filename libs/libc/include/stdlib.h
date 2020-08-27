@@ -73,6 +73,7 @@ size_t wcstombs(char *dest, const wchar_t *src, size_t n);
 
 char *mktemp(char *t);
 int mkstemp(char *t);
+char *mkdtemp(char *t);
 
 int abs(int n);
 long labs(long n);
