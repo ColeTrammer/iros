@@ -278,6 +278,8 @@ else()
         sys/resource/getrlimit.c
         sys/resource/getrusage.c
         sys/resource/setrlimit.c
+        sys/socket/recvmsg.c
+        sys/socket/sendmsg.c
         sys/socket/socket.c
         sys/socket/socketpair.c
         sys/select/select.c
