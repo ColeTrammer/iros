@@ -1,5 +1,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
+#include <net/if.h>
 #include <search.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +12,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/util/validators.h>
 
 static struct list_node interface_list = INIT_LIST(interface_list);
 
@@ -83,4 +86,36 @@ struct network_interface *net_create_network_interface(const char *name, int typ
     add_interface(interface);
 
     return interface;
+}
+
+int net_ioctl_interface_index_for_name(struct ifreq *req) {
+    if (validate_write(req, sizeof(*req))) {
+        return -EFAULT;
+    }
+
+    int index = 1;
+    net_for_each_interface(interface) {
+        if (strcmp(interface->name, req->ifr_name) == 0) {
+            req->ifr_ifindex = index;
+            return 0;
+        }
+        index++;
+    }
+    return -ENODEV;
+}
+
+int net_ioctl_interface_name_for_index(struct ifreq *req) {
+    if (validate_write(req, sizeof(*req))) {
+        return -EFAULT;
+    }
+
+    int index = 1;
+    net_for_each_interface(interface) {
+        if (index == req->ifr_ifindex) {
+            strcpy(req->ifr_name, interface->name);
+            return 0;
+        }
+        index++;
+    }
+    return -ENXIO;
 }

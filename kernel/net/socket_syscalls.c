@@ -1,9 +1,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/processor.h>
+#include <kernel/net/interface.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/socket_syscalls.h>
 #include <kernel/proc/process.h>
@@ -133,6 +135,18 @@ int net_getsockname(struct file *file, struct sockaddr *addr, socklen_t *addrlen
     }
 
     return socket->op->getsockname(socket, addr, addrlen);
+}
+
+int net_socket_ioctl(struct file *file, unsigned long request, void *argp) {
+    (void) file;
+    switch (request) {
+        case SIOCGIFINDEX:
+            return net_ioctl_interface_index_for_name(argp);
+        case SIOCGIFNAME:
+            return net_ioctl_interface_name_for_index(argp);
+        default:
+            return -ENOTTY;
+    }
 }
 
 int net_listen(struct file *file, int backlog) {

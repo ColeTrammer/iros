@@ -29,6 +29,7 @@
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/socket_syscalls.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/validators.h>
@@ -985,6 +986,10 @@ int fs_ioctl(struct file_descriptor *desc, unsigned long request, void *argp) {
             return 0;
         default:
             break;
+    }
+
+    if (desc->file->flags & FS_SOCKET) {
+        return net_socket_ioctl(desc->file, request, argp);
     }
 
     struct inode *inode = fs_file_inode(desc->file);

@@ -9,6 +9,7 @@
 
 struct arp_packet;
 struct ethernet_frame;
+struct ifreq;
 struct ip_v4_packet;
 struct network_interface;
 struct route_cache_entry;
@@ -50,6 +51,9 @@ struct network_interface {
 struct list_node *net_get_interface_list(void);
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address);
 struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data);
+
+int net_ioctl_interface_index_for_name(struct ifreq *req);
+int net_ioctl_interface_name_for_index(struct ifreq *req);
 
 #define net_for_each_interface(name) list_for_each_entry(net_get_interface_list(), name, struct network_interface, interface_list)
 
