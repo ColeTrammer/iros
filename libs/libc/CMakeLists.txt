@@ -173,6 +173,7 @@ else()
         pwd/getpwuid.c
         pwd/getpwuid_r.c
         pwd/setpwent.c
+        sched/sched_yield.c
         setjmp/__sigsetjmp.c
         setjmp/siglongjmp.c
         signal/kill.c

@@ -1517,7 +1517,7 @@ pselect_return:
     SYS_RETURN(count);
 }
 
-SYS_CALL(yield) {
+SYS_CALL(sched_yield) {
     SYS_BEGIN();
 
     __kernel_yield();
