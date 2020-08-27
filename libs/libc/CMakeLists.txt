@@ -67,7 +67,9 @@ else()
         stdlib/abort.c
         stdlib/conversions.c
         stdlib/malloc.c
+        stdlib/mbtowc.c
         stdlib/stdlib.c
+        stdlib/wcstombs.c
         stdlib/wctomb.c
         string/memchr.c
         string/memcmp.c
@@ -388,6 +390,9 @@ else()
         unistd/usleep.c
         unistd/write.c
         utime/utime.c
+        wchar/wcschr.c
+        wchar/wcscpy.c
+        wchar/wcslen.c
         wctype/iswupper.c
         wctype/towlower.c
         cxx.cpp

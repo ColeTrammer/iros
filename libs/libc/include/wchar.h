@@ -16,6 +16,10 @@ extern "C" {
 typedef wchar_t wint_t;
 typedef wchar_t wctype_t;
 
+size_t wcslen(const wchar_t *s);
+wchar_t *wcscpy(wchar_t *__restrict dest, const wchar_t *__restrict src);
+wchar_t *wcschr(const wchar_t *wcs, wchar_t wc);
+
 #ifdef __cplusplus
 }
 #endif /* __plusplus */
