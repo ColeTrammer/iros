@@ -53,7 +53,7 @@ struct itimerspec {
 
 time_t time(time_t *tloc);
 clock_t clock(void);
-double difftime(time_t t1, time_t t2);
+double difftime(time_t t1, time_t t0);
 time_t mktime(struct tm *tm);
 
 char *asctime(const struct tm *tm);

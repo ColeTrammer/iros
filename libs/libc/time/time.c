@@ -12,6 +12,12 @@ char *tzname[2] = { "pst", "pdt" };
 long timezone = 8 * 60 * 60;
 int daylight = 1;
 
+void tzset(void) {}
+
+double difftime(time_t t1, time_t t0) {
+    return (double) (t1 - t0);
+}
+
 time_t time(time_t *t_loc) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
