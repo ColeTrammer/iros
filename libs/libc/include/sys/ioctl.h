@@ -31,6 +31,9 @@
 #define FIOCLEX  0x2001
 #define FIONCLEX 0x2002
 
+#define SIOCGIFNAME  0x3000
+#define SIOCGIFINDEX 0x3001
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

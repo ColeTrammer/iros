@@ -136,6 +136,10 @@ else()
         libgen/basename.c
         libgen/dirname.c
         locale/locale.c
+        net/if/if_freenameindex.c
+        net/if/if_indextoname.c
+        net/if/if_nameindex.c
+        net/if/if_nametoindex.c
         netdb/endhostent.c
         netdb/endnetent.c
         netdb/endprotoent.c
