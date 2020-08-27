@@ -150,6 +150,8 @@ int tcflush(int fd, int how);
 pid_t tcgetsid(int fd);
 int tcsendbreak(int fd, int duration);
 
+void cfmakeraw(struct termios *termios_p);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

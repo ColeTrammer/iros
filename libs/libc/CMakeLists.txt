@@ -309,6 +309,7 @@ else()
         syslog/syslog_internal.c
         syslog/vsyslog.c
         termios/termios.c
+        termios/cfmakeraw.c
         time/clock_getcpuclockid.c
         time/clock_getres.c
         time/clock_gettime.c
