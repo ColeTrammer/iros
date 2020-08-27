@@ -115,6 +115,7 @@ struct hash_entry *hash_put_if_not_present(struct hash_map *map, void *key, stru
     }
 
     *entry = make_data(key);
+    (*entry)->next = NULL;
     map->size++;
     __hash_resize_if_needed(map);
 

@@ -51,6 +51,11 @@ static void __write_value(struct __write_value_args *args) {
     *(args->addr) = args->value;
 }
 
+void free_user_mutex(struct user_mutex *m) {
+    hash_del(map, &m->phys_addr);
+    free(m);
+}
+
 struct user_mutex *get_user_mutex_locked_with_waiters_or_else_write_value(unsigned int *addr, int value) {
     uintptr_t phys_addr = get_phys_addr((uintptr_t) addr);
 

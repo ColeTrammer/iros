@@ -1225,7 +1225,7 @@ SYS_CALL(os_mutex) {
                 unlock_user_mutex(to_unlock);
             }
             unlock_user_mutex(um);
-            user_mutex_wait_on(um);
+            __kernel_yield();
             SYS_RETURN(0);
         }
         case MUTEX_WAKE_AND_SET: {

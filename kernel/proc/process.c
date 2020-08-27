@@ -55,7 +55,7 @@ static void free_process_vm(struct process *process) {
     struct user_mutex *user_mutex = process->used_user_mutexes;
     while (user_mutex != NULL) {
         struct user_mutex *next = user_mutex->next;
-        free(user_mutex);
+        free_user_mutex(user_mutex);
         user_mutex = next;
     }
     process->used_user_mutexes = NULL;
