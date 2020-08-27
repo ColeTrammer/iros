@@ -16,6 +16,14 @@
 #include <bits/nlink_t.h>
 #include <bits/off_t.h>
 #include <bits/pid_t.h>
+#include <bits/size_t.h>
+#include <bits/ssize_t.h>
+#include <bits/suseconds_t.h>
+#include <bits/time_t.h>
+#include <bits/timer_t.h>
+#include <bits/uid_t.h>
+
+#if !defined(__is_libk) && !defined(__is_kernel)
 #include <bits/pthread_attr_t.h>
 #include <bits/pthread_barrier_t.h>
 #include <bits/pthread_barrierattr_t.h>
@@ -27,12 +35,7 @@
 #include <bits/pthread_rwlockattr_t.h>
 #include <bits/pthread_spinlock_t.h>
 #include <bits/pthread_t.h>
-#include <bits/size_t.h>
-#include <bits/ssize_t.h>
-#include <bits/suseconds_t.h>
-#include <bits/time_t.h>
-#include <bits/timer_t.h>
-#include <bits/uid_t.h>
+#endif /* !defined(__is_libk) && !defined(__is_kernel) */
 
 #ifdef __cplusplus
 extern "C" {

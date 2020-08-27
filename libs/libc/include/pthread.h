@@ -59,7 +59,9 @@
     }
 
 #define PTHREAD_RWLOCK_INITIALIZER \
-    { 0 }
+    {                              \
+        { 0 }, { 0 }, 0, 0, { 0 }  \
+    }
 
 #ifdef __cplusplus
 extern "C" {
