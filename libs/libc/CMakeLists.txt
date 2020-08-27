@@ -162,6 +162,7 @@ else()
         netdb/setnetent.c
         netdb/setprotoent.c
         netdb/setservent.c
+        netinet/in6_addr.c
         poll/poll.c
         poll/ppoll.c
         pwd/endpwent.c

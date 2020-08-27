@@ -104,6 +104,9 @@ struct cmsghdr {
          ? NULL                                                                                                       \
          : ((struct cmsghdr *) (unsigned char *) (cmsg) + ((cmsg)->cmsg_len)))
 #define CMSG_FIRSTHDR(mhdr) ((size_t)(mhdr)->msg_controllen < sizeof(struct cmsghdr) ? NULL : (struct cmsghdr *) ((mhdr)->msg_control))
+#define CMSG_ALIGN(len)     ((((len) + sizeof(size_t) - 1) / sizeof(size_t)) * sizeof(size_t))
+#define CMSG_SPACE(len)     (CMSG_ALIGN(len) + CMSG_ALIGN(sizeof(struct cmsghdr)))
+#define CMSG_LEN(len)       (CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))
 
 struct linger {
     int l_onoff;
