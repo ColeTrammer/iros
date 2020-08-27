@@ -351,6 +351,7 @@ else()
         unistd/getlogin_r.c
         unistd/getlogin.c
         unistd/getopt.c
+        unistd/getpagesize.c
         unistd/getpgid.c
         unistd/getpgrp.c
         unistd/getpid.c
