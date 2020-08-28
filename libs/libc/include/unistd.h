@@ -558,6 +558,7 @@ int fsync(int fd);
 ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 
+int nice(int inc);
 unsigned int alarm(unsigned int seconds);
 char *ttyname(int fd);
 int ttyname_r(int fd, char *buf, size_t buflen);

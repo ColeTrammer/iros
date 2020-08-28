@@ -387,6 +387,25 @@ void proc_for_each_with_pgid(pid_t pgid, void (*callback)(struct process *proces
     hash_for_each(map, for_each_with_pgid_iter, &cls);
 }
 
+struct proc_for_each_with_euid_closure {
+    void (*callback)(struct process *process, void *closure);
+    void *closure;
+    uid_t euid;
+};
+
+static void for_each_with_euid_iter(struct hash_entry *_process, void *_cls) {
+    struct process *process = hash_table_entry(_process, struct process);
+    struct proc_for_each_with_euid_closure *cls = _cls;
+    if (process->euid == cls->euid) {
+        cls->callback(process, cls->closure);
+    }
+}
+
+void proc_for_each_with_euid(uid_t euid, void (*callback)(struct process *process, void *closure), void *closure) {
+    struct proc_for_each_with_euid_closure cls = { .callback = callback, .closure = closure, .euid = euid };
+    hash_for_each(map, for_each_with_euid_iter, &cls);
+}
+
 void proc_set_sig_pending(struct process *process, int n) {
     // FIXME: dispatch signals to a different task than the first if it makes sense.
     mutex_lock(&process->lock);
@@ -493,6 +512,149 @@ int proc_setrlimit(struct process *process, int what, const struct rlimit *user_
     }
     mutex_unlock(&process->lock);
     return ret;
+}
+
+int proc_nice(int inc) {
+    struct process *process = get_current_process();
+    if (inc < 0 && process->euid != 0) {
+        return -EPERM;
+    }
+
+    mutex_lock(&process->lock);
+    int ret = process->priority + inc;
+    ret = MAX(0, ret);
+    ret = MIN(ret, PROCESS_MAX_PRIORITY);
+    process->priority = ret;
+    mutex_unlock(&process->lock);
+
+    return ret;
+}
+
+struct prio_iter_data {
+    int value;
+    int get_or_set;
+    int found;
+};
+
+static int set_priority(struct process *process, int value) {
+    struct process *current = get_current_process();
+    if (current->euid != 0 && current->euid != process->euid) {
+        return -EPERM;
+    }
+
+    int old_value = process->priority;
+    if (current->euid != 0 && old_value > value) {
+        return -EPERM;
+    }
+
+    process->priority = value;
+    return 0;
+}
+
+static void prio_iter(struct process *process, void *closure) {
+    struct prio_iter_data *data = closure;
+    data->found = 1;
+    mutex_lock(&process->lock);
+    if (data->get_or_set) {
+        if (data->value < 0) {
+            data->value = process->priority;
+        } else {
+            data->value = MIN(data->value, process->priority);
+        }
+    } else if (data->value >= 0) {
+        int ret = set_priority(process, data->value);
+        if (ret) {
+            data->value = ret;
+        }
+    }
+    mutex_unlock(&process->lock);
+}
+
+int proc_getpriority(int which, id_t who) {
+    struct process *current = get_current_process();
+    switch (which) {
+        case PRIO_PROCESS: {
+            struct process *process = current;
+            if (who) {
+                process = find_by_pid(who);
+            }
+
+            if (!process) {
+                return -ESRCH;
+            }
+
+            return process->priority;
+        }
+        case PRIO_PGRP: {
+            pid_t pgid = current->pgid;
+            if (who) {
+                pgid = who;
+            }
+
+            struct prio_iter_data data = { .value = -ESRCH, .get_or_set = 1 };
+            proc_for_each_with_pgid(pgid, prio_iter, &data);
+            return data.value;
+        }
+        case PRIO_USER: {
+            uid_t uid = current->euid;
+            if (who) {
+                uid = who;
+            }
+
+            struct prio_iter_data data = { .value = -ESRCH, .get_or_set = 1 };
+            proc_for_each_with_euid(uid, prio_iter, &data);
+            return data.value;
+        }
+        default:
+            return -EINVAL;
+    }
+}
+
+int proc_setpriority(int which, id_t who, int value) {
+    if (value < 0 || value > PROCESS_MAX_PRIORITY) {
+        return -EINVAL;
+    }
+
+    struct process *current = get_current_process();
+    switch (which) {
+        case PRIO_PROCESS: {
+            struct process *process = current;
+            if (who) {
+                process = find_by_pid(who);
+            }
+
+            if (!process) {
+                return -ESRCH;
+            }
+
+            mutex_lock(&process->lock);
+            int ret = set_priority(process, value);
+            mutex_unlock(&process->lock);
+            return ret;
+        }
+        case PRIO_PGRP: {
+            pid_t pgid = current->pgid;
+            if (who) {
+                pgid = who;
+            }
+
+            struct prio_iter_data data = { .value = value, .get_or_set = 0 };
+            proc_for_each_with_pgid(pgid, prio_iter, &data);
+            return data.found ? data.value : -ESRCH;
+        }
+        case PRIO_USER: {
+            uid_t uid = current->euid;
+            if (who) {
+                uid = who;
+            }
+
+            struct prio_iter_data data = { .value = value, .get_or_set = 0 };
+            proc_for_each_with_euid(uid, prio_iter, &data);
+            return data.found ? data.value : -ESRCH;
+        }
+        default:
+            return -EINVAL;
+    }
 }
 
 void init_processes() {

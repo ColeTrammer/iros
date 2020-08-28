@@ -110,7 +110,10 @@
     __ENUMERATE_SYSCALL(setrlimit, 2)               \
     __ENUMERATE_SYSCALL(socketpair, 4)              \
     __ENUMERATE_SYSCALL(sched_yield, 0)             \
-    __ENUMERATE_SYSCALL(getrusage, 2)
+    __ENUMERATE_SYSCALL(getrusage, 2)               \
+    __ENUMERATE_SYSCALL(nice, 1)                    \
+    __ENUMERATE_SYSCALL(getpriority, 2)             \
+    __ENUMERATE_SYSCALL(setprioity, 3)
 
 #ifdef __ASSEMBLER__
 #define SYS_SIGRETURN 27

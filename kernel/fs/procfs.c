@@ -213,29 +213,30 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_status(struct procfs_
     }
 
     struct task *main_task = find_by_tid(process->pgid, process->main_tid);
-    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
-                             "NAME: %s\n"
-                             "PID: %d\n"
-                             "STATE: %s\n"
-                             "UID: %hu\n"
-                             "GID: %hu\n"
-                             "PPID: %d\n"
-                             "UMASK: %04o\n"
-                             "EUID: %hu\n"
-                             "EGID: %hu\n"
-                             "PGID: %d\n"
-                             "SID: %d\n"
-                             "TTY: %s\n"
-                             "PRIORITY: %d\n"
-                             "NICE: %d\n"
-                             "VIRTUAL_MEMORY: %lu\n"
-                             "RESIDENT_MEMORY: %lu\n"
-                             "START_TIME.tv_sec: %lu\n"
-                             "START_TIME.tv_nsec: %lu\n",
-                             process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)",
-                             process->uid, process->gid, proc_getppid(process), process->umask, process->euid, process->egid, process->pgid,
-                             process->sid, tty_string, 20, 0, vm_compute_total_virtual_memory(process), process->resident_memory,
-                             process->start_time.tv_sec, process->start_time.tv_nsec);
+    size_t length =
+        snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
+                 "NAME: %s\n"
+                 "PID: %d\n"
+                 "STATE: %s\n"
+                 "UID: %hu\n"
+                 "GID: %hu\n"
+                 "PPID: %d\n"
+                 "UMASK: %04o\n"
+                 "EUID: %hu\n"
+                 "EGID: %hu\n"
+                 "PGID: %d\n"
+                 "SID: %d\n"
+                 "TTY: %s\n"
+                 "PRIORITY: %d\n"
+                 "NICE: %d\n"
+                 "VIRTUAL_MEMORY: %lu\n"
+                 "RESIDENT_MEMORY: %lu\n"
+                 "START_TIME.tv_sec: %lu\n"
+                 "START_TIME.tv_nsec: %lu\n",
+                 process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)", process->uid,
+                 process->gid, proc_getppid(process), process->umask, process->euid, process->egid, process->pgid, process->sid, tty_string,
+                 process->priority, process->priority - PROCESS_DEFAULT_PRIORITY, vm_compute_total_virtual_memory(process),
+                 process->resident_memory, process->start_time.tv_sec, process->start_time.tv_nsec);
     return (struct procfs_buffer) { buffer, length };
 }
 

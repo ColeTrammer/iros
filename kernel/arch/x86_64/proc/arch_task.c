@@ -83,6 +83,7 @@ pid_t proc_fork(void) {
     child->process->egid = parent->process->egid;
     child->process->sid = parent->process->sid;
     child->process->umask = parent->process->umask;
+    child_process->priority = parent->process->priority;
     child->process->parent = parent->process;
     proc_add_child(parent->process, child->process);
     proc_bump_process(child_process);

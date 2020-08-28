@@ -179,6 +179,7 @@ void init_kernel_process(void) {
     initial_kernel_process.main_tid = 1;
     initial_kernel_process.pgid = 1;
     initial_kernel_process.tty = -1;
+    initial_kernel_process.priority = 2 * PROCESS_DEFAULT_PRIORITY;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
     initial_kernel_process.sig_state[SIGCHLD].sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
 }
@@ -230,6 +231,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     process->name = strdup(name);
     process->start_time = time_read_clock(CLOCK_REALTIME);
     process->parent = &initial_kernel_process;
+    process->priority = PROCESS_DEFAULT_PRIORITY;
     proc_bump_process(process);
     proc_add_child(&initial_kernel_process, process);
 

@@ -280,8 +280,10 @@ else()
         sys/os_2/read_profile.c
         sys/os_2/set_thread_self_pointer.c
         sys/os_2/tgkill.c
+        sys/resource/getpriority.c
         sys/resource/getrlimit.c
         sys/resource/getrusage.c
+        sys/resource/setpriority.c
         sys/resource/setrlimit.c
         sys/socket/recvmsg.c
         sys/socket/sendmsg.c
@@ -373,6 +375,7 @@ else()
         unistd/lchown.c
         unistd/link.c
         unistd/lseek.c
+        unistd/nice.c
         unistd/pathconf.c
         unistd/pause.c
         unistd/pipe.c

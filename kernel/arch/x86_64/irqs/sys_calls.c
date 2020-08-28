@@ -2237,6 +2237,33 @@ SYS_CALL(getrusage) {
     SYS_RETURN(proc_getrusage(who, rusage));
 }
 
+SYS_CALL(nice) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, inc);
+
+    SYS_RETURN(proc_nice(inc));
+}
+
+SYS_CALL(getpriority) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, which);
+    SYS_PARAM2(id_t, who);
+
+    SYS_RETURN(proc_getpriority(which, who));
+}
+
+SYS_CALL(setprioity) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, which);
+    SYS_PARAM2(id_t, who);
+    SYS_PARAM3(int, value);
+
+    SYS_RETURN(proc_setpriority(which, who, value));
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);
