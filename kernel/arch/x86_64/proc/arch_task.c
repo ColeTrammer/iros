@@ -235,7 +235,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     ucontext_t *save_state = ((ucontext_t *) fpu_save_state) - 1;
     siginfo_t *info = ((siginfo_t *) save_state) - 1;
     if (act->sa_flags & SA_SIGINFO) {
-        if (task->queued_signals->info.si_signo == signum) {
+        if (task->queued_signals && task->queued_signals->info.si_signo == signum) {
             memcpy(info, &task->queued_signals->info, sizeof(siginfo_t));
             task_dequeue_signal(task);
         } else {
