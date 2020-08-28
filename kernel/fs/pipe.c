@@ -139,6 +139,10 @@ again:
     size_t len = MIN(_len, ring_buffer_size(&data->buffer));
     if (len == 0 && (is_pipe_write_end_open(data) || inode->fsid != PIPE_DEVICE)) {
         mutex_unlock(&inode->lock);
+        if (file->open_flags & O_NONBLOCK) {
+            return -EAGAIN;
+        }
+
         int ret = proc_block_until_inode_is_readable(get_current_task(), inode);
         if (ret) {
             return ret;
@@ -146,11 +150,13 @@ again:
         goto again;
     }
 
-    ring_buffer_user_read(&data->buffer, buffer, len);
+    if (len != 0) {
+        ring_buffer_user_read(&data->buffer, buffer, len);
 
-    inode->writeable = true;
-    if (ring_buffer_empty(&data->buffer)) {
-        inode->readable = false;
+        inode->writeable = true;
+        if (ring_buffer_empty(&data->buffer)) {
+            inode->readable = false;
+        }
     }
 
     mutex_unlock(&inode->lock);
@@ -236,13 +242,13 @@ int pipe_close(struct file *file) {
     if (file->abilities & FS_FILE_CAN_WRITE) {
         if (data->write_count-- == 1) {
             // The writer disconnected, wake up anyone waiting to read from this pipe.
-            inode->excetional_activity = true;
+            inode->readable = true;
         }
     }
     if (file->abilities & FS_FILE_CAN_READ) {
         if (data->read_count-- == 1) {
             // The reader disconnected, wake up anyone waiting to write to this pipe.
-            inode->excetional_activity = true;
+            inode->writeable = true;
         }
     }
     mutex_unlock(&inode->lock);
