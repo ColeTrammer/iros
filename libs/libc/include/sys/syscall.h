@@ -1,116 +1,116 @@
 #ifndef _SYS_SYSCALL_H
 #define _SYS_SYSCALL_H 1
 
-#define ENUMERATE_SYSCALLS                                                   \
-    __ENUMERATE_SYSCALL(EXIT, exit, 1)                                       \
-    __ENUMERATE_SYSCALL(SBRK, sbrk, 1)                                       \
-    __ENUMERATE_SYSCALL(FORK, fork, 0)                                       \
-    __ENUMERATE_SYSCALL(OPENAT, openat, 4)                                   \
-    __ENUMERATE_SYSCALL(READ, read, 3)                                       \
-    __ENUMERATE_SYSCALL(WRITE, write, 3)                                     \
-    __ENUMERATE_SYSCALL(CLOSE, close, 1)                                     \
-    __ENUMERATE_SYSCALL(EXECVE, execve, 3)                                   \
-    __ENUMERATE_SYSCALL(WAITPID, waitpid, 3)                                 \
-    __ENUMERATE_SYSCALL(GETPID, getpid, 0)                                   \
-    __ENUMERATE_SYSCALL(GETCWD, getcwd, 2)                                   \
-    __ENUMERATE_SYSCALL(CHDIR, chdir, 1)                                     \
-    __ENUMERATE_SYSCALL(FSTATAT, fstatat, 4)                                 \
-    __ENUMERATE_SYSCALL(LSEEK, lseek, 3)                                     \
-    __ENUMERATE_SYSCALL(IOCTL, ioctl, 3)                                     \
-    __ENUMERATE_SYSCALL(FTRUNCATE, ftruncate, 2)                             \
-    __ENUMERATE_SYSCALL(GETTIMEOFDAY, gettimeofday, 2)                       \
-    __ENUMERATE_SYSCALL(MKDIR, mkdir, 2)                                     \
-    __ENUMERATE_SYSCALL(DUP2, dup2, 2)                                       \
-    __ENUMERATE_SYSCALL(PIPE, pipe, 1)                                       \
-    __ENUMERATE_SYSCALL(UNLINK, unlink, 1)                                   \
-    __ENUMERATE_SYSCALL(RMDIR, rmdir, 1)                                     \
-    __ENUMERATE_SYSCALL(FCHMODAT, fchmodat, 4)                               \
-    __ENUMERATE_SYSCALL(KILL, kill, 2)                                       \
-    __ENUMERATE_SYSCALL(SETPGID, setpgid, 2)                                 \
-    __ENUMERATE_SYSCALL(SIGACTION, sigaction, 3)                             \
-    __ENUMERATE_SYSCALL(SIGRETURN, sigreturn, 0)                             \
-    __ENUMERATE_SYSCALL(SIGPROCMASK, sigprocmask, 3)                         \
-    __ENUMERATE_SYSCALL(DUP, dup, 1)                                         \
-    __ENUMERATE_SYSCALL(GETPGID, getpgid, 1)                                 \
-    __ENUMERATE_SYSCALL(FACCESSAT, faccessat, 4)                             \
-    __ENUMERATE_SYSCALL(ACCEPT4, accept4, 4)                                 \
-    __ENUMERATE_SYSCALL(BIND, bind, 3)                                       \
-    __ENUMERATE_SYSCALL(CONNECT, connect, 3)                                 \
-    __ENUMERATE_SYSCALL(LISTEN, listen, 2)                                   \
-    __ENUMERATE_SYSCALL(SOCKET, socket, 3)                                   \
-    __ENUMERATE_SYSCALL(SHUTDOWN, shutdown, 2)                               \
-    __ENUMERATE_SYSCALL(GETSOCKOPT, getsockopt, 5)                           \
-    __ENUMERATE_SYSCALL(SETSOCKOPT, setsockopt, 5)                           \
-    __ENUMERATE_SYSCALL(GETPEERNAME, getpeername, 3)                         \
-    __ENUMERATE_SYSCALL(GETSOCKNAME, getsockname, 3)                         \
-    __ENUMERATE_SYSCALL(SENDTO, sendto, 6)                                   \
-    __ENUMERATE_SYSCALL(RECVFROM, recvfrom, 6)                               \
-    __ENUMERATE_SYSCALL(MMAP, mmap, 6)                                       \
-    __ENUMERATE_SYSCALL(MUNMAP, munmap, 2)                                   \
-    __ENUMERATE_SYSCALL(RENAME, rename, 2)                                   \
-    __ENUMERATE_SYSCALL(FCNTL, fcntl, 3)                                     \
-    __ENUMERATE_SYSCALL(ALARM, alarm, 1)                                     \
-    __ENUMERATE_SYSCALL(GETPPID, getppid, 0)                                 \
-    __ENUMERATE_SYSCALL(SIGSUSPEND, sigsuspend, 1)                           \
-    __ENUMERATE_SYSCALL(TIMES, times, 1)                                     \
-    __ENUMERATE_SYSCALL(CREATE_TASK, create_task, 1)                         \
-    __ENUMERATE_SYSCALL(EXIT_TASK, exit_task, 0)                             \
-    __ENUMERATE_SYSCALL(OS_MUTEX, os_mutex, 6)                               \
-    __ENUMERATE_SYSCALL(TGKILL, tgkill, 3)                                   \
-    __ENUMERATE_SYSCALL(SET_THREAD_SELF_POINTER, set_thread_self_pointer, 2) \
-    __ENUMERATE_SYSCALL(MPROTECT, mprotect, 3)                               \
-    __ENUMERATE_SYSCALL(SIGPENDING, sigpending, 1)                           \
-    __ENUMERATE_SYSCALL(SIGALTSTACK, sigaltstack, 2)                         \
-    __ENUMERATE_SYSCALL(PSELECT, pselect, 6)                                 \
-    __ENUMERATE_SYSCALL(SETUID, setuid, 1)                                   \
-    __ENUMERATE_SYSCALL(SETEUID, seteuid, 1)                                 \
-    __ENUMERATE_SYSCALL(SETGID, setgid, 1)                                   \
-    __ENUMERATE_SYSCALL(SETEGID, setegid, 1)                                 \
-    __ENUMERATE_SYSCALL(GETUID, getuid, 0)                                   \
-    __ENUMERATE_SYSCALL(GETEUID, geteuid, 0)                                 \
-    __ENUMERATE_SYSCALL(GETGID, getgid, 0)                                   \
-    __ENUMERATE_SYSCALL(GETEGID, getegid, 0)                                 \
-    __ENUMERATE_SYSCALL(UMASK, umask, 1)                                     \
-    __ENUMERATE_SYSCALL(UNAME, uname, 1)                                     \
-    __ENUMERATE_SYSCALL(GETSID, getsid, 1)                                   \
-    __ENUMERATE_SYSCALL(SETSID, setsid, 0)                                   \
-    __ENUMERATE_SYSCALL(READLINK, readlink, 3)                               \
-    __ENUMERATE_SYSCALL(SYMLINK, symlink, 2)                                 \
-    __ENUMERATE_SYSCALL(LINK, link, 2)                                       \
-    __ENUMERATE_SYSCALL(FCHOWNAT, fchownat, 5)                               \
-    __ENUMERATE_SYSCALL(UTIMENSAT, utimensat, 4)                             \
-    __ENUMERATE_SYSCALL(PREAD, pread, 4)                                     \
-    __ENUMERATE_SYSCALL(PWRITE, pwrite, 4)                                   \
-    __ENUMERATE_SYSCALL(READV, readv, 3)                                     \
-    __ENUMERATE_SYSCALL(WRITEV, writev, 3)                                   \
-    __ENUMERATE_SYSCALL(REALPATH, realpath, 3)                               \
-    __ENUMERATE_SYSCALL(CLOCK_NANOSLEEP, clock_nanosleep, 4)                 \
-    __ENUMERATE_SYSCALL(CLOCK_GETRES, clock_getres, 2)                       \
-    __ENUMERATE_SYSCALL(CLOCK_GETTIME, clock_gettime, 2)                     \
-    __ENUMERATE_SYSCALL(CLOCK_SETTIME, clock_settime, 2)                     \
-    __ENUMERATE_SYSCALL(GETCPUCLOCKID, getcpuclockid, 3)                     \
-    __ENUMERATE_SYSCALL(SIGQUEUE, sigqueue, 3)                               \
-    __ENUMERATE_SYSCALL(TIMER_CREATE, timer_create, 3)                       \
-    __ENUMERATE_SYSCALL(TIMER_DELETE, timer_delete, 1)                       \
-    __ENUMERATE_SYSCALL(TIMER_GETOVERRUN, timer_getoverrun, 1)               \
-    __ENUMERATE_SYSCALL(TIMER_GETTIME, timer_gettime, 2)                     \
-    __ENUMERATE_SYSCALL(TIMER_SETTIME, timer_settime, 4)                     \
-    __ENUMERATE_SYSCALL(FSTATVFS, fstatvfs, 2)                               \
-    __ENUMERATE_SYSCALL(STATVFS, statvfs, 2)                                 \
-    __ENUMERATE_SYSCALL(FCHDIR, fchdir, 1)                                   \
-    __ENUMERATE_SYSCALL(TRUNCATE, truncate, 2)                               \
-    __ENUMERATE_SYSCALL(GETGROUPS, getgroups, 2)                             \
-    __ENUMERATE_SYSCALL(SETGROUPS, setgroups, 2)                             \
-    __ENUMERATE_SYSCALL(MKNOD, mknod, 3)                                     \
-    __ENUMERATE_SYSCALL(PPOLL, ppoll, 4)                                     \
-    __ENUMERATE_SYSCALL(ENABLE_PROFILING, enable_profiling, 1)               \
-    __ENUMERATE_SYSCALL(READ_PROFILE, read_profile, 3)                       \
-    __ENUMERATE_SYSCALL(DISABLE_PROFILING, disable_profiling, 1)             \
-    __ENUMERATE_SYSCALL(GETRLIMIT, getrlimit, 2)                             \
-    __ENUMERATE_SYSCALL(SETRLIMIT, setrlimit, 2)                             \
-    __ENUMERATE_SYSCALL(SOCKETPAIR, socketpair, 4)                           \
-    __ENUMERATE_SYSCALL(SCHED_YIELD, sched_yield, 0)                         \
-    __ENUMERATE_SYSCALL(GETRUSAGE, getrusage, 2)
+#define ENUMERATE_SYSCALLS                          \
+    __ENUMERATE_SYSCALL(exit, 1)                    \
+    __ENUMERATE_SYSCALL(sbrk, 1)                    \
+    __ENUMERATE_SYSCALL(fork, 0)                    \
+    __ENUMERATE_SYSCALL(openat, 4)                  \
+    __ENUMERATE_SYSCALL(read, 3)                    \
+    __ENUMERATE_SYSCALL(write, 3)                   \
+    __ENUMERATE_SYSCALL(close, 1)                   \
+    __ENUMERATE_SYSCALL(execve, 3)                  \
+    __ENUMERATE_SYSCALL(waitpid, 3)                 \
+    __ENUMERATE_SYSCALL(getpid, 0)                  \
+    __ENUMERATE_SYSCALL(getcwd, 2)                  \
+    __ENUMERATE_SYSCALL(chdir, 1)                   \
+    __ENUMERATE_SYSCALL(fstatat, 4)                 \
+    __ENUMERATE_SYSCALL(lseek, 3)                   \
+    __ENUMERATE_SYSCALL(ioctl, 3)                   \
+    __ENUMERATE_SYSCALL(ftruncate, 2)               \
+    __ENUMERATE_SYSCALL(gettimeofday, 2)            \
+    __ENUMERATE_SYSCALL(mkdir, 2)                   \
+    __ENUMERATE_SYSCALL(dup2, 2)                    \
+    __ENUMERATE_SYSCALL(pipe, 1)                    \
+    __ENUMERATE_SYSCALL(unlink, 1)                  \
+    __ENUMERATE_SYSCALL(rmdir, 1)                   \
+    __ENUMERATE_SYSCALL(fchmodat, 4)                \
+    __ENUMERATE_SYSCALL(kill, 2)                    \
+    __ENUMERATE_SYSCALL(setpgid, 2)                 \
+    __ENUMERATE_SYSCALL(sigaction, 3)               \
+    __ENUMERATE_SYSCALL(sigreturn, 0)               \
+    __ENUMERATE_SYSCALL(sigprocmask, 3)             \
+    __ENUMERATE_SYSCALL(dup, 1)                     \
+    __ENUMERATE_SYSCALL(getpgid, 1)                 \
+    __ENUMERATE_SYSCALL(faccessat, 4)               \
+    __ENUMERATE_SYSCALL(accept4, 4)                 \
+    __ENUMERATE_SYSCALL(bind, 3)                    \
+    __ENUMERATE_SYSCALL(connect, 3)                 \
+    __ENUMERATE_SYSCALL(listen, 2)                  \
+    __ENUMERATE_SYSCALL(socket, 3)                  \
+    __ENUMERATE_SYSCALL(shutdown, 2)                \
+    __ENUMERATE_SYSCALL(getsockopt, 5)              \
+    __ENUMERATE_SYSCALL(setsockopt, 5)              \
+    __ENUMERATE_SYSCALL(getpeername, 3)             \
+    __ENUMERATE_SYSCALL(getsockname, 3)             \
+    __ENUMERATE_SYSCALL(sendto, 6)                  \
+    __ENUMERATE_SYSCALL(recvfrom, 6)                \
+    __ENUMERATE_SYSCALL(mmap, 6)                    \
+    __ENUMERATE_SYSCALL(munmap, 2)                  \
+    __ENUMERATE_SYSCALL(rename, 2)                  \
+    __ENUMERATE_SYSCALL(fcntl, 3)                   \
+    __ENUMERATE_SYSCALL(alarm, 1)                   \
+    __ENUMERATE_SYSCALL(getppid, 0)                 \
+    __ENUMERATE_SYSCALL(sigsuspend, 1)              \
+    __ENUMERATE_SYSCALL(times, 1)                   \
+    __ENUMERATE_SYSCALL(create_task, 1)             \
+    __ENUMERATE_SYSCALL(exit_task, 0)               \
+    __ENUMERATE_SYSCALL(os_mutex, 6)                \
+    __ENUMERATE_SYSCALL(tgkill, 3)                  \
+    __ENUMERATE_SYSCALL(set_thread_self_pointer, 2) \
+    __ENUMERATE_SYSCALL(mprotect, 3)                \
+    __ENUMERATE_SYSCALL(sigpending, 1)              \
+    __ENUMERATE_SYSCALL(sigaltstack, 2)             \
+    __ENUMERATE_SYSCALL(pselect, 6)                 \
+    __ENUMERATE_SYSCALL(setuid, 1)                  \
+    __ENUMERATE_SYSCALL(seteuid, 1)                 \
+    __ENUMERATE_SYSCALL(setgid, 1)                  \
+    __ENUMERATE_SYSCALL(setegid, 1)                 \
+    __ENUMERATE_SYSCALL(getuid, 0)                  \
+    __ENUMERATE_SYSCALL(geteuid, 0)                 \
+    __ENUMERATE_SYSCALL(getgid, 0)                  \
+    __ENUMERATE_SYSCALL(getegid, 0)                 \
+    __ENUMERATE_SYSCALL(umask, 1)                   \
+    __ENUMERATE_SYSCALL(uname, 1)                   \
+    __ENUMERATE_SYSCALL(getsid, 1)                  \
+    __ENUMERATE_SYSCALL(setsid, 0)                  \
+    __ENUMERATE_SYSCALL(readlink, 3)                \
+    __ENUMERATE_SYSCALL(symlink, 2)                 \
+    __ENUMERATE_SYSCALL(link, 2)                    \
+    __ENUMERATE_SYSCALL(fchownat, 5)                \
+    __ENUMERATE_SYSCALL(utimensat, 4)               \
+    __ENUMERATE_SYSCALL(pread, 4)                   \
+    __ENUMERATE_SYSCALL(pwrite, 4)                  \
+    __ENUMERATE_SYSCALL(readv, 3)                   \
+    __ENUMERATE_SYSCALL(writev, 3)                  \
+    __ENUMERATE_SYSCALL(realpath, 3)                \
+    __ENUMERATE_SYSCALL(clock_nanosleep, 4)         \
+    __ENUMERATE_SYSCALL(clock_getres, 2)            \
+    __ENUMERATE_SYSCALL(clock_gettime, 2)           \
+    __ENUMERATE_SYSCALL(clock_settime, 2)           \
+    __ENUMERATE_SYSCALL(getcpuclockid, 3)           \
+    __ENUMERATE_SYSCALL(sigqueue, 3)                \
+    __ENUMERATE_SYSCALL(timer_create, 3)            \
+    __ENUMERATE_SYSCALL(timer_delete, 1)            \
+    __ENUMERATE_SYSCALL(timer_getoverrun, 1)        \
+    __ENUMERATE_SYSCALL(timer_gettime, 2)           \
+    __ENUMERATE_SYSCALL(timer_settime, 4)           \
+    __ENUMERATE_SYSCALL(fstatvfs, 2)                \
+    __ENUMERATE_SYSCALL(statvfs, 2)                 \
+    __ENUMERATE_SYSCALL(fchdir, 1)                  \
+    __ENUMERATE_SYSCALL(truncate, 2)                \
+    __ENUMERATE_SYSCALL(getgroups, 2)               \
+    __ENUMERATE_SYSCALL(setgroups, 2)               \
+    __ENUMERATE_SYSCALL(mknod, 3)                   \
+    __ENUMERATE_SYSCALL(ppoll, 4)                   \
+    __ENUMERATE_SYSCALL(enable_profiling, 1)        \
+    __ENUMERATE_SYSCALL(read_profile, 3)            \
+    __ENUMERATE_SYSCALL(disable_profiling, 1)       \
+    __ENUMERATE_SYSCALL(getrlimit, 2)               \
+    __ENUMERATE_SYSCALL(setrlimit, 2)               \
+    __ENUMERATE_SYSCALL(socketpair, 4)              \
+    __ENUMERATE_SYSCALL(sched_yield, 0)             \
+    __ENUMERATE_SYSCALL(getrusage, 2)
 
 #ifdef __ASSEMBLER__
 #define SYS_SIGRETURN 27
@@ -122,7 +122,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 enum sc_number {
-#define __ENUMERATE_SYSCALL(x, y, v) SYS_##x,
+#define __ENUMERATE_SYSCALL(x, v) SYS_##x,
     __SYS_START,
     ENUMERATE_SYSCALLS __SYS_NUM
 };
@@ -255,7 +255,7 @@ long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, 
 #define __SYSCALL_WITH_ARG_COUNT_(...) __syscall##__VA_ARGS__
 
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(x, y, v) __SYS_##x##_ARG_COUNT = v,
+#define __ENUMERATE_SYSCALL(x, v) __SYS_##x##_ARG_COUNT = v,
 enum __sc_arg_count { ENUMERATE_SYSCALLS __INVALID };
 
 #ifdef __is_libc

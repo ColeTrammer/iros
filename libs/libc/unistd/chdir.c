@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int chdir(const char *path) {
-    int ret = (int) syscall(SYS_CHDIR, path);
+    int ret = (int) syscall(SYS_chdir, path);
     __SYSCALL_TO_ERRNO(ret);
 }

@@ -34,7 +34,7 @@ static void do_child_handlers() {
 pid_t fork() {
     do_prepare_handlers();
 
-    pid_t ret = (pid_t) syscall(SYS_FORK);
+    pid_t ret = (pid_t) syscall(SYS_fork);
     if (ret < 0) {
         return ret;
     }

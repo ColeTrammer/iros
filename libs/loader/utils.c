@@ -19,12 +19,12 @@
 #include "../libc/stdio/printf.c"
 
 void _exit(int status) {
-    syscall(SYS_EXIT, status);
+    syscall(SYS_exit, status);
     __builtin_unreachable();
 }
 
 ssize_t write(int fd, const void *buffer, size_t len) {
-    return (ssize_t) syscall(SYS_WRITE, fd, buffer, len);
+    return (ssize_t) syscall(SYS_write, fd, buffer, len);
 }
 
 int open(const char *path, int flags, ...) {
@@ -35,29 +35,29 @@ int open(const char *path, int flags, ...) {
     if (flags & O_CREAT) {
         mode = va_arg(parameters, mode_t);
     }
-    ret = (int) syscall(SYS_OPENAT, AT_FDCWD, path, flags, mode);
+    ret = (int) syscall(SYS_openat, AT_FDCWD, path, flags, mode);
     va_end(parameters);
     return ret;
 }
 
 int fstat(int fd, struct stat *st) {
-    return (int) syscall(SYS_FSTATAT, fd, "", st, AT_EMPTY_PATH);
+    return (int) syscall(SYS_fstatat, fd, "", st, AT_EMPTY_PATH);
 }
 
 int close(int fd) {
-    return (int) syscall(SYS_CLOSE, fd);
+    return (int) syscall(SYS_close, fd);
 }
 
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t offset) {
-    return (void *) syscall(SYS_MMAP, addr, size, prot, flags, fd, offset);
+    return (void *) syscall(SYS_mmap, addr, size, prot, flags, fd, offset);
 }
 
 int mprotect(void *base, size_t size, int prot) {
-    return (int) syscall(SYS_MPROTECT, base, size, prot);
+    return (int) syscall(SYS_mprotect, base, size, prot);
 }
 
 int munmap(void *base, size_t size) {
-    return (int) syscall(SYS_MUNMAP, base, size);
+    return (int) syscall(SYS_munmap, base, size);
 }
 
 LOADER_PRIVATE void *fake_heap_end = NULL;

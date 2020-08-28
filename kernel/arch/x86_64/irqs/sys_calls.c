@@ -2245,9 +2245,9 @@ SYS_CALL(invalid_system_call) {
 void do_syscall(struct task_state *task_state) {
 #ifdef SYSCALL_DEBUG
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(x, y, a)    \
+#define __ENUMERATE_SYSCALL(x, a)       \
     case SYS_##x:                       \
-        debug_log("syscall: %s\n", #y); \
+        debug_log("syscall: %s\n", #x); \
         break;
     if (get_current_task()->process->should_trace) {
         switch ((enum sc_number) task_state->cpu_state.rax) {
@@ -2260,9 +2260,9 @@ void do_syscall(struct task_state *task_state) {
 #endif /* SYSCALL_DEBUG */
 
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(x, y, a) \
-    case SYS_##x:                    \
-        arch_sys_##y(task_state);    \
+#define __ENUMERATE_SYSCALL(x, a) \
+    case SYS_##x:                 \
+        arch_sys_##x(task_state); \
         break;
 
     switch ((enum sc_number) task_state->cpu_state.rax) {

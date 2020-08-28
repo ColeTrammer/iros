@@ -7,6 +7,6 @@ pid_t wait(int *wstatus) {
 }
 
 pid_t waitpid(pid_t pid, int *wstatus, int options) {
-    pid_t ret = (pid_t) syscall(SYS_WAITPID, pid, wstatus, options);
+    pid_t ret = (pid_t) syscall(SYS_waitpid, pid, wstatus, options);
     __SYSCALL_TO_ERRNO(ret);
 }

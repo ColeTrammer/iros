@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int truncate(const char *path, off_t length) {
-    int ret = (int) syscall(SYS_TRUNCATE, path, length);
+    int ret = (int) syscall(SYS_truncate, path, length);
     return ret;
 }

@@ -3,6 +3,6 @@
 #include <unistd.h>
 
 int link(const char *newpath, const char *oldpath) {
-    int ret = (int) syscall(SYS_LINK, newpath, oldpath);
+    int ret = (int) syscall(SYS_link, newpath, oldpath);
     __SYSCALL_TO_ERRNO(ret);
 }

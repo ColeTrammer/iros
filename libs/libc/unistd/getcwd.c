@@ -11,7 +11,7 @@ char *getcwd(char *buf, size_t size) {
         buf = malloc(size);
     }
 
-    char *ret = (char *) syscall(SYS_GETCWD, buf, size);
+    char *ret = (char *) syscall(SYS_getcwd, buf, size);
     if (ret == NULL) {
         errno = ERANGE;
     }

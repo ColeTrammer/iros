@@ -3,6 +3,6 @@
 #include <sys/syscall.h>
 
 int fstatvfs(int fd, struct statvfs *stat_buf) {
-    int ret = (int) syscall(SYS_FSTATVFS, fd, stat_buf);
+    int ret = (int) syscall(SYS_fstatvfs, fd, stat_buf);
     __SYSCALL_TO_ERRNO(ret);
 }

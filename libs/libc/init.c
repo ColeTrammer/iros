@@ -47,7 +47,7 @@ void init_threads(void) {
 
     sigset_t set = { 0 };
     set |= (UINT64_C(1) << (__PTHREAD_CANCEL_SIGNAL - UINT64_C(1)));
-    syscall(SYS_SIGPROCMASK, SIG_BLOCK, &set, NULL);
+    syscall(SYS_sigprocmask, SIG_BLOCK, &set, NULL);
 }
 
 void init_program_name(char **argv) {
