@@ -230,7 +230,15 @@ double atof(const char *s) {
     return strtod(s, NULL);
 }
 
+float strtof(const char *__restrict str, char **__restrict endptr) {
+    return strtod(str, endptr);
+}
+
 double strtod(const char *__restrict str, char **__restrict endptr) {
+    return strtold(str, endptr);
+}
+
+long double strtold(const char *__restrict str, char **__restrict endptr) {
     if (str == NULL) {
         return 0;
     }

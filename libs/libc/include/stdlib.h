@@ -33,21 +33,26 @@ int putenv(char *string);
 
 int atexit(void (*f)(void));
 
-char *realpath(const char *__restrict path, char *resolved_path);
+char *realpath(const char *__restrict path, char *__restrict resolved_path);
 
 int system(const char *cmd);
 
 #endif /* __is_libk */
 
-typedef struct div_t {
+typedef struct {
     int quot;
     int rem;
 } div_t;
 
-typedef struct ldiv_t {
+typedef struct {
     long quot;
     long rem;
 } ldiv_t;
+
+typedef struct {
+    long long quot;
+    long long rem;
+} lldiv_t;
 
 void abort(void) __attribute__((__noreturn__));
 
@@ -78,9 +83,11 @@ char *mkdtemp(char *t);
 
 int abs(int n);
 long labs(long n);
+long long llabs(long long n);
 
 div_t div(int num, int den);
 ldiv_t ldiv(long num, long den);
+lldiv_t lldiv(long long num, long long den);
 
 int atoi(const char *s);
 long atol(const char *s);
@@ -92,6 +99,8 @@ long long strtoll(const char *__restrict str, char **__restrict endptr, int base
 unsigned long strtoul(const char *__restrict str, char **__restrict endptr, int base);
 unsigned long long strtoull(const char *__restrict str, char **__restrict endptr, int base);
 double strtod(const char *__restrict str, char **__restrict endptr);
+long double strtold(const char *__restrict str, char **__restrict endptr);
+float strtof(const char *__restrict str, char **__restrict endptr);
 
 int posix_memalign(void **memptr, size_t alignment, size_t size);
 

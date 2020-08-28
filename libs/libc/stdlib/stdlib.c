@@ -39,12 +39,24 @@ long labs(long n) {
     return n;
 }
 
+long long llabs(long long n) {
+    if (n < 0) {
+        return -n;
+    }
+
+    return n;
+}
+
 div_t div(int a, int b) {
     return (div_t) { a / b, a % b };
 }
 
 ldiv_t ldiv(long a, long b) {
     return (ldiv_t) { a / b, a % b };
+}
+
+lldiv_t lldiv(long long a, long long b) {
+    return (lldiv_t) { a / b, a % b };
 }
 
 #define QSORT_AT(p, in, size) ((void *) (((uintptr_t)(p)) + (in) * (size)))
