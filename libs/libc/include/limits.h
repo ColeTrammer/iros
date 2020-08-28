@@ -107,9 +107,9 @@
 #define PTHREAD_STACK_MIN             (PAGE_SIZE * 4)
 #define PTHREAD_THREADS_MAX           _POSIX_THREAD_THREADS_MAX
 /* #undef RE_DUP_MAX */
-#define RTSIG_MAX 30
-/* #undef SEM_NSEMS_MAX */
-/* #undef SEM_VALUE_MAX */
+#define RTSIG_MAX     30
+#define SEM_NSEMS_MAX _POSIX_SEM_NSEMS_MAX
+#define SEM_VALUE_MAX INT_MAX
 /* #undef SIGQUEUE_MAX */
 /* #undef SS_REPL_MAX */
 #define STREAM_MAX  OPEN_MAX

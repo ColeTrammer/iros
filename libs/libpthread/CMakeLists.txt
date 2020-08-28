@@ -1,4 +1,15 @@
 set(SOURCES
+    semaphore/__sem_wait.c
+    semaphore/sem_close.c
+    semaphore/sem_destroy.c
+    semaphore/sem_getvalue.c
+    semaphore/sem_init.c
+    semaphore/sem_open.c
+    semaphore/sem_post.c
+    semaphore/sem_timedwait.c
+    semaphore/sem_trywait.c
+    semaphore/sem_unlink.c
+    semaphore/sem_wait.c
     atfork.c
     attr.c
     barrier.c

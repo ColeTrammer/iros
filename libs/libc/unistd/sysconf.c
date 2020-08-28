@@ -131,9 +131,9 @@ int sysconf(int name) {
         case _SC_SAVED_IDS:
             return _POSIX_SAVED_IDS;
         case _SC_SEM_NSEMS_MAX:
-            return _POSIX_SEM_NSEMS_MAX;
+            return SEM_NSEMS_MAX;
         case _SC_SEM_VALUE_MAX:
-            return _POSIX_SEM_VALUE_MAX;
+            return SEM_VALUE_MAX;
         case _SC_SEMAPHORES:
             return _POSIX_SEMAPHORES;
         case _SC_SHARED_MEMORY_OBJECTS:

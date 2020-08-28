@@ -1,6 +1,7 @@
 #ifndef _SEMAPHORE_H
 #define _SEMAPHORE_H 1
 
+#include <bits/lock.h>
 #include <fcntl.h>
 #include <time.h>
 
@@ -8,7 +9,28 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef int sem_t;
+struct __sem {
+    struct __sem *__sem_open_next;
+    struct __sem *__sem_open_prev;
+    int *__sem_value;
+    int __sem_ref_count;
+#define __SEM_ANON    1
+#define __SEM_PSHARED 2
+    int __sem_flags;
+    union {
+        int __sem_value_storage;
+        char __sem_open_name[0];
+    };
+};
+
+#ifdef __libc_internal
+__attribute__((visibility("internal"))) struct __lock __sem_open_lock;
+__attribute__((visibility("internal"))) struct __sem *__sem_open_head;
+__attribute__((visibility("internal"))) struct __sem *__sem_open_tail;
+__attribute__((visibility("internal"))) int __sem_wait(struct __sem *__restrict s, const struct timespec *__restrict timeout, int try_only);
+#endif /* __libc_internal */
+
+typedef struct __sem sem_t;
 
 int sem_close(sem_t *s);
 int sem_destroy(sem_t *s);

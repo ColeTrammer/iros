@@ -43,7 +43,7 @@ extern "C" {
 #define _POSIX_REALTIME_SIGNALS           200809L
 #define _POSIX_REGEXP                     1
 #define _POSIX_SAVED_IDS                  1
-#define _POSIX_SEMAPHORES                 -1
+#define _POSIX_SEMAPHORES                 200809L
 #define _POSIX_SHARED_MEMORY_OBJECTS      200809L
 #define _POSIX_SHELL                      200809L
 #define _POSIX_SPAWN                      -1
