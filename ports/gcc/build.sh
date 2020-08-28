@@ -21,7 +21,9 @@ patch() {
     git init
     git apply ../../../toolchain/gcc-9.2.0/gcc-os_2-9.2.0.patch
     git apply ../../../toolchain/gcc-9.2.0/gcc-9.2.0-customizations.patch
-    git apply ../../../toolchain/gcc-9.2.0/gcc-os_2-9.2.0-shlib.patch
+    git apply ../../../toolchain/gcc-9.2.0/gcc-9.2.0-shlib.patch
+    git apply ../../../toolchain/gcc-9.2.0/gcc-9.2.0-libstdc++.patch
+
 
     ./contrib/download_prerequisites
     git apply ../gcc-deps.patch

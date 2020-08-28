@@ -1,6 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -24,6 +25,8 @@ int main() {
         printf("T2\n");
     }
     t.join();
+
+    std::cout << std::stoi("10") << std::endl;
 
     std::cout << ints.at(4) << std::endl;
 
