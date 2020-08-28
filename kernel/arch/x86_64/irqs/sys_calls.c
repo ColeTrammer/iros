@@ -1221,14 +1221,15 @@ SYS_CALL(os_mutex) {
                 SYS_RETURN(0);
             }
 
+            disable_interrupts();
             add_to_user_mutex_queue(um, current);
             current->sched_state = WAITING;
+            current->wait_interruptible = 1;
             if (to_unlock) {
                 unlock_user_mutex(to_unlock);
             }
             unlock_user_mutex(um);
-            __kernel_yield();
-            SYS_RETURN(0);
+            SYS_RETURN(__kernel_yield());
         }
         case MUTEX_WAKE_AND_SET: {
             struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place & ~MUTEX_WAITERS);

@@ -89,6 +89,7 @@ struct task {
     bool in_sigsuspend : 1;
     bool blocking : 1;
     bool should_exit : 1;
+    bool wait_interruptible : 1;
 
     struct block_info block_info;
 

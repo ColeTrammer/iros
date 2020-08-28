@@ -35,6 +35,7 @@ bool __wake_up(struct wait_queue *queue, const char *func) {
     struct task *to_wake = queue->waiters_head;
     if (to_wake) {
         assert(to_wake->sched_state != EXITING);
+        to_wake->wait_interruptible = false;
         to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
 #ifdef WAIT_QUEUE_DEBUG
         debug_log("waking up task: [ %p, %d:%d, %s ]\n", queue, to_wake->process->pid, to_wake->tid, func);

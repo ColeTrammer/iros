@@ -610,7 +610,7 @@ void task_do_sig(struct task *task, int signum) {
         case TERMINATE_AND_DUMP:
         case TERMINATE:
         case CONTINUE:
-            if (task->blocking) {
+            if (task->blocking || task->wait_interruptible) {
                 // Defer running the signal handler until after the blocking code
                 // has a chance to clean up.
                 task_interrupt_blocking(task, -EINTR);
