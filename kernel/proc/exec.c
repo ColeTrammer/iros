@@ -225,6 +225,7 @@ int proc_execve(char *path, char **argv, char **envp) {
     struct initial_process_info info = { 0 };
     info.main_tid = current->tid;
     info.isatty_mask = 0;
+    info.num_processors = processor_count();
     for (int i = 0; i <= 3; i++) {
         struct file *file = process->files[i].file;
         if (file && !fs_ioctl(&process->files[i], TISATTY, NULL)) {

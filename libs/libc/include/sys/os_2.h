@@ -52,6 +52,7 @@ struct initial_process_info {
     unsigned long loader_offset;
     unsigned long loader_size;
     int has_interpreter;
+    int num_processors;
 };
 
 enum profile_event_type { PEV_STACK_TRACE, PEV_MEMORY_MAP };

@@ -1,5 +1,9 @@
+#define __libc_internal
+
 #include <errno.h>
 #include <limits.h>
+#include <pthread.h>
+#include <sys/os_2.h>
 #include <unistd.h>
 
 int sysconf(int name) {
@@ -252,6 +256,8 @@ int sysconf(int name) {
             return _XOPEN_UUCP;
         case _SC_XOPEN_VERSION:
             return _XOPEN_VERSION;
+        case _SC_NPROCESSORS_ONLN:
+            return __initial_process_info->num_processors;
         default:
             errno = EINVAL;
             return -1;
