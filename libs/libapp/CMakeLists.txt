@@ -6,6 +6,7 @@ set(SOURCES
     layout.cpp
     object.cpp
     selectable.cpp
+    table_view.cpp
     text_label.cpp
     unix_socket.cpp
     unix_socket_server.cpp
