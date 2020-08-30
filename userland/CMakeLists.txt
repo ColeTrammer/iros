@@ -5,6 +5,7 @@ if (NOT ${NATIVE_BUILD})
         profile
         psfedit
         stat
+        system_monitor
         terminal
         top
     )
