@@ -27,6 +27,14 @@ public:
         return v;
     }
 
+    static Vector wrap_dynamic_array(T* array, size_t len) {
+        Vector v;
+        v.m_vector = array;
+        v.m_capacity = len;
+        v.m_size = len;
+        return v;
+    }
+
     explicit Vector(int capacity = 20) : m_capacity(capacity) {}
 
     Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()), m_size(to_copy.size()) {
