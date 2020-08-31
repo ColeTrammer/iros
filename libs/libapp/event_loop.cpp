@@ -8,6 +8,8 @@
 #include <signal.h>
 #include <sys/select.h>
 
+#define TIMER_SIGNAL SIGRTMIN + 10
+
 #ifdef __linux__
 namespace LIIM {
 

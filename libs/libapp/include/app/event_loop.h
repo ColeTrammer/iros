@@ -5,8 +5,6 @@
 #include <liim/vector.h>
 #include <time.h>
 
-#define TIMER_SIGNAL 42
-
 namespace App {
 
 class Event;
