@@ -3,6 +3,9 @@
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
+#include <time.h>
+
+#define TIMER_SIGNAL 42
 
 namespace App {
 
@@ -20,7 +23,11 @@ public:
     static void register_selectable(Selectable& selectable);
     static void unregister_selectable(Selectable& selectable);
     static void register_signal_handler(int signum, Function<void()> callback);
+    static void register_timer_callback(timer_t id, Function<void()> callback);
+    static void unregister_timer_callback(timer_t id);
     static void queue_event(WeakPtr<Object> target, UniquePtr<Event> event);
+
+    static void setup_timer_sigevent(sigevent& ev, timer_t* id);
 
     void enter();
     void set_should_exit(bool b) { m_should_exit = b; }

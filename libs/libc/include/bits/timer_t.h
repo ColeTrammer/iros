@@ -5,7 +5,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef long timer_t;
+typedef int timer_t;
 
 #ifdef __cplusplus
 }

@@ -8,6 +8,7 @@ set(SOURCES
     selectable.cpp
     table_view.cpp
     text_label.cpp
+    timer.cpp
     unix_socket.cpp
     unix_socket_server.cpp
     widget.cpp
@@ -16,4 +17,4 @@ set(SOURCES
 
 add_os_library(libapp app TRUE)
 
-target_link_libraries(libapp PUBLIC libliim libgraphics libws kernel_headers)
+target_link_libraries(libapp PUBLIC libliim libgraphics libws ${REALTIME_LIB} kernel_headers)

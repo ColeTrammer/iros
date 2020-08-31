@@ -8,15 +8,35 @@
 #include <signal.h>
 #include <sys/select.h>
 
+#ifdef __linux__
+namespace LIIM {
+
+template<>
+struct Traits<timer_t> {
+    static constexpr bool is_simple() { return true; }
+    static unsigned int hash(const timer_t& obj) {
+        return static_cast<unsigned int>((uintptr_t) obj) + static_cast<unsigned int>((uintptr_t) obj >> 32);
+    };
+};
+
+}
+#endif /* __linux__ */
+
 namespace App {
 
 static EventLoop* s_the;
 static Vector<Selectable*> s_selectables;
 static HashMap<int, Function<void()>> s_watched_signals;
+static HashMap<timer_t, Function<void()>> s_timer_callbacks;
 static volatile sig_atomic_t s_signal_number;
+static volatile timer_t* s_timer_fired_id;
 
 static void private_signal_handler(int signum) {
     s_signal_number = signum;
+}
+
+static void timer_signal_handler(int, siginfo_t* info, void*) {
+    s_timer_fired_id = (timer_t*) info->si_value.sival_ptr;
 }
 
 void EventLoop::register_selectable(Selectable& selectable) {
@@ -33,6 +53,20 @@ void EventLoop::register_signal_handler(int signum, Function<void()> callback) {
     s_watched_signals.put(signum, move(callback));
 }
 
+void EventLoop::register_timer_callback(timer_t id, Function<void()> callback) {
+    s_timer_callbacks.put(id, move(callback));
+}
+
+void EventLoop::unregister_timer_callback(timer_t id) {
+    s_timer_callbacks.remove(id);
+}
+
+void EventLoop::setup_timer_sigevent(sigevent& ev, timer_t* id) {
+    ev.sigev_notify = SIGEV_SIGNAL;
+    ev.sigev_signo = TIMER_SIGNAL;
+    ev.sigev_value.sival_ptr = id;
+}
+
 void EventLoop::queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
     s_the->m_events.add({ move(target), move(event) });
 }
@@ -44,7 +78,7 @@ EventLoop::EventLoop() {
 EventLoop::~EventLoop() {}
 
 void EventLoop::do_select() {
-    assert(!s_selectables.empty() || !s_watched_signals.empty());
+    assert(!s_selectables.empty() || !s_watched_signals.empty() || !s_timer_callbacks.empty());
 
     fd_set rd_set;
     fd_set wr_set;
@@ -71,6 +105,7 @@ void EventLoop::do_select() {
 
     sigset_t sigset;
     sigprocmask(0, nullptr, &sigset);
+    sigdelset(&sigset, TIMER_SIGNAL);
     s_watched_signals.for_each_key([&](int signum) {
         sigdelset(&sigset, signum);
     });
@@ -86,6 +121,18 @@ void EventLoop::do_select() {
                     auto* handler = s_watched_signals.get(signo);
                     assert(handler);
                     (*handler)();
+                    return;
+                } else if (s_timer_fired_id) {
+                    timer_t timer_id = *s_timer_fired_id;
+                    s_timer_fired_id = nullptr;
+
+                    int extra_times_expired = timer_getoverrun(timer_id);
+                    assert(extra_times_expired >= 0);
+                    auto* handler = s_timer_callbacks.get(timer_id);
+                    assert(handler);
+                    for (int i = 0; i < extra_times_expired + 1; i++) {
+                        (*handler)();
+                    }
                     return;
                 }
                 continue;
@@ -135,12 +182,18 @@ void EventLoop::do_event_dispatch() {
 
 void EventLoop::setup_signal_handlers() {
     struct sigaction act;
+    sigfillset(&act.sa_mask);
+
+    act.sa_flags = SA_SIGINFO;
+    act.sa_sigaction = &timer_signal_handler;
+    sigaction(TIMER_SIGNAL, &act, nullptr);
+
     act.sa_flags = 0;
-    sigemptyset(&act.sa_mask);
     act.sa_handler = &private_signal_handler;
 
     sigset_t set;
     sigemptyset(&set);
+    sigaddset(&set, TIMER_SIGNAL);
     s_watched_signals.for_each_key([&](int signum) {
         sigaddset(&set, signum);
         sigaction(signum, &act, nullptr);
@@ -163,5 +216,4 @@ void EventLoop::enter() {
         do_select();
     }
 }
-
 }
