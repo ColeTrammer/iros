@@ -87,6 +87,8 @@ void WindowManager::remove_windows_of_client(int client_id) {
 }
 
 void WindowManager::draw() {
+    m_drawing = true;
+
 #ifdef WM_DRAW_DEBUG
     timespec start;
     clock_gettime(CLOCK_MONOTONIC, &start);
@@ -149,6 +151,8 @@ void WindowManager::draw() {
     time_t delta_milli_seconds = delta_seconds * 1000 + delta_nano_seconds / 1000000;
     fprintf(stderr, "WindowManager::draw() took %lu ms\n", delta_milli_seconds);
 #endif /* WM_DRAW_DEBUG */
+
+    m_drawing = false;
 }
 
 void WindowManager::swap_buffers() {
@@ -365,5 +369,12 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
         m_window_to_move->set_x(m_window_move_initial_location.x() + dx);
         m_window_to_move->set_y(m_window_move_initial_location.y() + dy);
         invalidate_rect(m_window_to_move->rect());
+    }
+}
+
+void WindowManager::invalidate_rect(const Rect& rect) {
+    m_dirty_rects.add(rect);
+    if (on_rect_invaliadted) {
+        on_rect_invaliadted();
     }
 }

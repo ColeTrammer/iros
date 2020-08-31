@@ -12,5 +12,5 @@ if (NOT ${NATIVE_BUILD})
 
     add_os_executable(window_server bin)
 
-    target_link_libraries(window_server window_server_headers libliim libgraphics)
+    target_link_libraries(window_server window_server_headers libapp)
 endif()

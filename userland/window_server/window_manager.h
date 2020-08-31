@@ -59,14 +59,17 @@ public:
 
     Point mouse_position_relative_to_window(const Window& window) const;
 
-    void invalidate_rect(const Rect& rect) { m_dirty_rects.add(rect); }
+    void invalidate_rect(const Rect& rect);
 
     Function<void(Window&)> on_window_close_button_pressed;
     Function<void(Window&)> on_window_resize_start;
+    Function<void()> on_rect_invaliadted;
 
     bool should_send_mouse_events(const Window& window) const {
         return &window != m_window_to_move.get() && &window != m_window_to_resize.get();
     }
+
+    bool drawing() const { return m_drawing; }
 
 private:
     void swap_buffers();
@@ -88,4 +91,6 @@ private:
     SharedPtr<Window> m_window_to_move;
     Point m_window_move_initial_location;
     Point m_window_move_origin;
+
+    bool m_drawing { false };
 };

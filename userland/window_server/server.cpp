@@ -1,3 +1,4 @@
+#include <app/event_loop.h>
 #include <assert.h>
 #include <errno.h>
 #include <graphics/pixel_buffer.h>
@@ -14,23 +15,105 @@
 #include "window.h"
 #include "window_manager.h"
 
+constexpr time_t draw_timer_rate = 1000 / 60;
+
 Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
     : m_manager(make_unique<WindowManager>(fb, front_buffer, back_buffer)) {
-    m_kbd_fd = open("/dev/keyboard", O_RDONLY);
-    assert(m_kbd_fd != -1);
+    m_keyboard = App::SelectableFile::create(nullptr, "/dev/keyboard", O_RDONLY);
+    assert(m_keyboard->valid());
 
-    m_mouse_fd = open("/dev/mouse", O_RDONLY);
-    assert(m_mouse_fd != -1);
+    m_keyboard->on_readable = [this] {
+        key_event event;
+        while (read(m_keyboard->fd(), &event, sizeof(event)) == sizeof(event)) {
+            auto* active_window = m_manager->active_window();
+            if (active_window) {
+                auto to_send = WindowServer::Message::KeyEventMessage::create(active_window->id(), event);
+                assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                       static_cast<ssize_t>(to_send->total_size()));
+            }
+        }
+    };
 
-    m_socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
-    assert(m_socket_fd != -1);
+    m_mouse = App::SelectableFile::create(nullptr, "/dev/mouse", O_RDONLY);
+    assert(m_mouse->valid());
 
-    sockaddr_un addr;
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, "/tmp/.window_server.socket");
-    assert(bind(m_socket_fd, (const sockaddr*) &addr, sizeof(sockaddr_un)) == 0);
+    m_mouse->on_readable = [this] {
+        mouse_event event;
+        while (read(m_mouse->fd(), &event, sizeof(event)) == sizeof(event)) {
+            if (event.dx != 0 || event.dy != 0) {
+                m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_ABSOLUTE);
+            }
 
-    m_manager->on_window_close_button_pressed = [&](auto& window) {
+            if (event.left != MOUSE_NO_CHANGE || event.right != MOUSE_NO_CHANGE) {
+                m_manager->notify_mouse_pressed(event.left, event.right);
+            }
+
+            auto* active_window = m_manager->active_window();
+            if (active_window && m_manager->should_send_mouse_events(*active_window)) {
+                Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
+                auto to_send = WindowServer::Message::MouseEventMessage::create(active_window->id(), relative_mouse.x(), relative_mouse.y(),
+                                                                                event.scroll_state, event.left, event.right);
+                if (write(active_window->client_id(), to_send.get(), to_send->total_size()) !=
+                    static_cast<ssize_t>(to_send->total_size())) {
+                    perror("write");
+                    exit(1);
+                }
+            }
+        }
+    };
+
+    m_socket_server = App::UnixSocketServer::create(nullptr, "/tmp/.window_server.socket");
+    assert(m_socket_server->valid());
+
+    m_socket_server->on_ready_to_accept = [this] {
+        SharedPtr<App::UnixSocket> client;
+        while ((client = m_socket_server->accept())) {
+            m_clients.add(client);
+            client->on_disconnect = [this](auto& client) {
+                kill_client(client.fd());
+            };
+            client->on_ready_to_read = [this](auto& client) {
+                int client_fd = client.fd();
+                char buffer[BUFSIZ];
+                ssize_t data_len = read(client_fd, buffer, sizeof(buffer));
+                if (data_len <= 0) {
+                    kill_client(client_fd);
+                    return;
+                }
+
+                WindowServer::Message& message = *reinterpret_cast<WindowServer::Message*>(buffer);
+                switch (message.type) {
+                    case WindowServer::Message::Type::CreateWindowRequest: {
+                        handle_create_window_request(message, client_fd);
+                        break;
+                    }
+                    case WindowServer::Message::Type::RemoveWindowRequest: {
+                        handle_remove_window_request(message, client_fd);
+                        break;
+                    }
+                    case WindowServer::Message::Type::SwapBufferRequest: {
+                        handle_swap_buffer_request(message, client_fd);
+                        break;
+                    }
+                    case WindowServer::Message::Type::WindowReadyToResizeMessage: {
+                        handle_window_ready_to_resize_message(message, client_fd);
+                        break;
+                    }
+                    case WindowServer::Message::Type::WindowRenameRequest: {
+                        handle_window_rename_request(message, client_fd);
+                        break;
+                    }
+                    case WindowServer::Message::Type::Invalid:
+                    default:
+                        fprintf(stderr, "Recieved invalid window server message\n");
+                        kill_client(client_fd);
+                        break;
+                }
+            };
+        }
+    };
+
+    m_manager->on_window_close_button_pressed = [this](auto& window) {
         auto message = WindowServer::Message::WindowClosedEventMessage::create(window.id());
         if (write(window.client_id(), message.get(), message->total_size()) == -1) {
             kill_client(window.client_id());
@@ -39,19 +122,40 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
         m_manager->remove_window(window.id());
     };
 
-    m_manager->on_window_resize_start = [&](auto& window) {
+    m_manager->on_window_resize_start = [this](auto& window) {
         auto message = WindowServer::Message::WindowDidResizeMessage::create(window.id());
         if (write(window.client_id(), message.get(), message->total_size()) == -1) {
             kill_client(window.client_id());
             return;
         }
     };
+
+    m_manager->on_rect_invaliadted = [this] {
+        update_draw_timer();
+    };
+
+    m_draw_timer = App::Timer::create_single_shot_timer(
+        nullptr,
+        [this](int) {
+            m_manager->draw();
+        },
+        draw_timer_rate);
 }
 
 void Server::kill_client(int client_id) {
-    close(client_id);
-    m_clients.remove_element(client_id);
+    auto* client = m_clients.first_match([client_id](auto& client) {
+        return client->fd() == client_id;
+    });
+    assert(client);
     m_manager->remove_windows_of_client(client_id);
+    m_socket_server->remove_child(*client);
+    m_clients.remove_element(*client);
+}
+
+void Server::update_draw_timer() {
+    if (!m_manager->drawing() && m_draw_timer->expired()) {
+        m_draw_timer->set_timeout(draw_timer_rate);
+    }
 }
 
 void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd) {
@@ -127,8 +231,6 @@ void Server::handle_window_rename_request(const WindowServer::Message& request, 
 }
 
 void Server::start() {
-    assert(listen(m_socket_fd, 10) == 0);
-
     char* synchronize = getenv("__SYNCHRONIZE");
     if (synchronize) {
         int fd = atoi(synchronize);
@@ -137,153 +239,8 @@ void Server::start() {
         close(fd);
     }
 
-    sockaddr_un client_addr;
-    socklen_t client_addr_len = sizeof(sockaddr_un);
-
-    fd_set set;
-    uint8_t buffer[BUFSIZ];
-
-    timespec time_of_last_paint { 0, 0 };
-    bool did_draw = false;
-    long remaining_time = 0;
-    for (;;) {
-        timespec current_time;
-        clock_gettime(CLOCK_MONOTONIC, &current_time);
-
-        constexpr long min_delta_time = 1000 / 60;
-        remaining_time = min_delta_time;
-        if (current_time.tv_sec - time_of_last_paint.tv_sec > 2) {
-            m_manager->draw();
-            did_draw = true;
-        } else {
-            long delta_time =
-                (current_time.tv_sec - time_of_last_paint.tv_sec) * 1000 + (current_time.tv_nsec - time_of_last_paint.tv_nsec) / 1000000;
-            if (delta_time >= min_delta_time) {
-                m_manager->draw();
-                did_draw = true;
-            } else {
-                remaining_time = delta_time - min_delta_time;
-                did_draw = false;
-            }
-        }
-
-        if (did_draw) {
-            time_of_last_paint = current_time;
-        }
-
-        FD_ZERO(&set);
-        FD_SET(m_socket_fd, &set);
-        FD_SET(m_kbd_fd, &set);
-        FD_SET(m_mouse_fd, &set);
-        m_clients.for_each([&](int fd) {
-            FD_SET(fd, &set);
-        });
-
-        timespec fps_timeout { .tv_sec = 0, .tv_nsec = remaining_time * 1000000 };
-        timespec max_timeout { .tv_sec = 1, .tv_nsec = 0 };
-        timespec* timeout_to_pass = did_draw ? &max_timeout : &fps_timeout;
-        int ret = pselect(FD_SETSIZE, &set, nullptr, nullptr, timeout_to_pass, nullptr);
-        if (ret < 0) {
-            perror("select");
-            exit(1);
-        }
-
-        if (ret == 0) {
-            continue;
-        }
-
-        m_clients.for_each_reverse([&](int client_fd) {
-            if (!FD_ISSET(client_fd, &set)) {
-                return;
-            }
-
-            ssize_t data_len = read(client_fd, buffer, sizeof(buffer));
-            if (data_len <= 0) {
-                kill_client(client_fd);
-                return;
-            }
-
-            WindowServer::Message& message = *reinterpret_cast<WindowServer::Message*>(buffer);
-            switch (message.type) {
-                case WindowServer::Message::Type::CreateWindowRequest: {
-                    handle_create_window_request(message, client_fd);
-                    break;
-                }
-                case WindowServer::Message::Type::RemoveWindowRequest: {
-                    handle_remove_window_request(message, client_fd);
-                    break;
-                }
-                case WindowServer::Message::Type::SwapBufferRequest: {
-                    handle_swap_buffer_request(message, client_fd);
-                    break;
-                }
-                case WindowServer::Message::Type::WindowReadyToResizeMessage: {
-                    handle_window_ready_to_resize_message(message, client_fd);
-                    break;
-                }
-                case WindowServer::Message::Type::WindowRenameRequest: {
-                    handle_window_rename_request(message, client_fd);
-                    break;
-                }
-                case WindowServer::Message::Type::Invalid:
-                default:
-                    fprintf(stderr, "Recieved invalid window server message\n");
-                    kill_client(client_fd);
-                    break;
-            }
-        });
-
-        if (FD_ISSET(m_kbd_fd, &set)) {
-            key_event event;
-            while (read(m_kbd_fd, &event, sizeof(event)) == sizeof(event)) {
-                auto* active_window = m_manager->active_window();
-                if (active_window) {
-                    auto to_send = WindowServer::Message::KeyEventMessage::create(active_window->id(), event);
-                    assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                           static_cast<ssize_t>(to_send->total_size()));
-                }
-            }
-        }
-
-        if (FD_ISSET(m_mouse_fd, &set)) {
-            mouse_event event;
-            while (read(m_mouse_fd, &event, sizeof(event)) == sizeof(event)) {
-                if (event.dx != 0 || event.dy != 0) {
-                    m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_ABSOLUTE);
-                }
-
-                if (event.left != MOUSE_NO_CHANGE || event.right != MOUSE_NO_CHANGE) {
-                    m_manager->notify_mouse_pressed(event.left, event.right);
-                }
-
-                auto* active_window = m_manager->active_window();
-                if (active_window && m_manager->should_send_mouse_events(*active_window)) {
-                    Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
-                    auto to_send = WindowServer::Message::MouseEventMessage::create(
-                        active_window->id(), relative_mouse.x(), relative_mouse.y(), event.scroll_state, event.left, event.right);
-                    if (write(active_window->client_id(), to_send.get(), to_send->total_size()) !=
-                        static_cast<ssize_t>(to_send->total_size())) {
-                        perror("write");
-                        exit(1);
-                    }
-                }
-            }
-        }
-
-        if (FD_ISSET(m_socket_fd, &set)) {
-            int client_fd = accept4(m_socket_fd, (sockaddr*) &client_addr, &client_addr_len, SOCK_NONBLOCK);
-            if (client_fd == -1 && errno != EAGAIN) {
-                perror("accept");
-                exit(1);
-            } else if (client_fd == -1) {
-                continue;
-            }
-
-            m_clients.add(client_fd);
-        }
-    }
+    App::EventLoop loop;
+    loop.enter();
 }
 
-Server::~Server() {
-    close(m_socket_fd);
-}
+Server::~Server() {}
