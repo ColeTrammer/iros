@@ -9,7 +9,7 @@ int main() {
     int count = 0;
     auto timer = App::Timer::create_interval_timer(
         nullptr,
-        [&] {
+        [&](int) {
             printf("Timer Fired\n");
             if (++count == 10) {
                 exit(0);

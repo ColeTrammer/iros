@@ -5,7 +5,7 @@
 ProcessModel::ProcessModel() {
     m_timer = App::Timer::create_interval_timer(
         nullptr,
-        [this] {
+        [this](int) {
             load_data();
         },
         1000);

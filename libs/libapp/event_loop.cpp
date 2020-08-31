@@ -29,7 +29,7 @@ namespace App {
 static EventLoop* s_the;
 static Vector<Selectable*> s_selectables;
 static HashMap<int, Function<void()>> s_watched_signals;
-static HashMap<timer_t, Function<void()>> s_timer_callbacks;
+static HashMap<timer_t, WeakPtr<Object>> s_timer_objects;
 static volatile sig_atomic_t s_signal_number;
 static volatile timer_t* s_timer_fired_id;
 
@@ -55,12 +55,12 @@ void EventLoop::register_signal_handler(int signum, Function<void()> callback) {
     s_watched_signals.put(signum, move(callback));
 }
 
-void EventLoop::register_timer_callback(timer_t id, Function<void()> callback) {
-    s_timer_callbacks.put(id, move(callback));
+void EventLoop::register_timer_callback(timer_t id, WeakPtr<Object> target) {
+    s_timer_objects.put(id, move(target));
 }
 
 void EventLoop::unregister_timer_callback(timer_t id) {
-    s_timer_callbacks.remove(id);
+    s_timer_objects.remove(id);
 }
 
 void EventLoop::setup_timer_sigevent(sigevent& ev, timer_t* id) {
@@ -80,7 +80,7 @@ EventLoop::EventLoop() {
 EventLoop::~EventLoop() {}
 
 void EventLoop::do_select() {
-    assert(!s_selectables.empty() || !s_watched_signals.empty() || !s_timer_callbacks.empty());
+    assert(!s_selectables.empty() || !s_watched_signals.empty() || !s_timer_objects.empty());
 
     fd_set rd_set;
     fd_set wr_set;
@@ -130,11 +130,9 @@ void EventLoop::do_select() {
 
                     int extra_times_expired = timer_getoverrun(timer_id);
                     assert(extra_times_expired >= 0);
-                    auto* handler = s_timer_callbacks.get(timer_id);
-                    assert(handler);
-                    for (int i = 0; i < extra_times_expired + 1; i++) {
-                        (*handler)();
-                    }
+                    auto* target = s_timer_objects.get(timer_id);
+                    assert(target);
+                    EventLoop::queue_event(*target, make_unique<TimerEvent>(1 + extra_times_expired));
                     return;
                 }
                 continue;

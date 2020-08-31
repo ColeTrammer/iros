@@ -14,6 +14,7 @@ public:
         Resize,
         Window,
         Callback,
+        Timer,
     };
 
     Event(Type type) : m_type(type) {};
@@ -92,4 +93,15 @@ public:
 private:
     Function<void()> m_callback;
 };
+
+class TimerEvent final : public Event {
+public:
+    TimerEvent(int times_expired) : Event(Event::Type::Timer), m_times_expired(times_expired) {}
+
+    int times_expired() const { return m_times_expired; }
+
+private:
+    int m_times_expired;
+};
+
 }
