@@ -8,6 +8,16 @@ constexpr int taskbar_item_x_spacing = 8;
 constexpr int taskbar_item_y_spacing = 4;
 constexpr int taskbar_item_width = 128;
 
+Taskbar::Taskbar(int display_width, int display_height) : m_display_width(display_width), m_display_height(display_height) {
+    m_time_timer = App::Timer::create_interval_timer(
+        nullptr,
+        [this](int) {
+            auto screen_rect = WindowManager::the().screen_rect();
+            WindowManager::the().invalidate_rect({ 0, screen_rect.height() - taskbar_height, screen_rect.width(), taskbar_height });
+        },
+        1000);
+}
+
 void Taskbar::notify_window_added(SharedPtr<Window> window) {
     if (m_items.empty()) {
         m_items.add({ { taskbar_item_x_spacing, m_display_height - taskbar_height + taskbar_item_y_spacing, taskbar_item_width,

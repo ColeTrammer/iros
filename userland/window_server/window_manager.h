@@ -71,6 +71,8 @@ public:
 
     bool drawing() const { return m_drawing; }
 
+    Rect screen_rect() const { return { 0, 0, m_front_buffer->width(), m_front_buffer->height() }; }
+
 private:
     void swap_buffers();
     void set_mouse_coordinates(int x, int y);

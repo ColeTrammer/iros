@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/timer.h>
 #include <graphics/rect.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
@@ -11,7 +12,7 @@ class Renderer;
 
 class Taskbar {
 public:
-    Taskbar(int display_width, int display_height) : m_display_width(display_width), m_display_height(display_height) {}
+    Taskbar(int display_width, int display_height);
 
     void render(Renderer&);
 
@@ -26,6 +27,7 @@ private:
     };
 
     Vector<TaskbarItem> m_items;
+    SharedPtr<App::Timer> m_time_timer;
     int m_display_width;
     int m_display_height;
 };
