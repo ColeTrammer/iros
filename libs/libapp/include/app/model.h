@@ -7,6 +7,8 @@
 
 namespace App {
 
+class View;
+
 class ModelIndex {
 public:
     ModelIndex(int r, int c) : m_row(r), m_col(c) {}
@@ -30,8 +32,14 @@ public:
     virtual ModelData data(const ModelIndex& index) const = 0;
     virtual ModelData header_data(int col) const = 0;
 
+    void register_view(View* view);
+    void unregister_view(View* view);
+
 protected:
-    Model() {}
+    void did_update();
+
+private:
+    Vector<View*> m_views;
 };
 
 }

@@ -28,21 +28,22 @@ void TableView::render_data(Renderer& renderer, int rx, int ry, const ModelData&
 }
 
 void TableView::render() {
-    if (!m_model) {
+    if (!model()) {
         return;
     }
 
     Renderer renderer(*window()->pixels());
+    renderer.fill_rect(rect(), ColorValue::Black);
 
-    auto row_count = m_model->row_count();
-    auto col_count = m_model->col_count();
+    auto row_count = model()->row_count();
+    auto col_count = model()->col_count();
 
     Vector<int> col_widths(col_count);
     col_widths.resize(col_count);
     for (auto c = 0; c < col_count; c++) {
-        int col_width = width_of(m_model->header_data(c));
+        int col_width = width_of(model()->header_data(c));
         for (auto r = 0; r < row_count; r++) {
-            col_width = max(col_width, width_of(m_model->data({ r, c })));
+            col_width = max(col_width, width_of(model()->data({ r, c })));
         }
         col_widths[c] = col_width;
     }
@@ -50,7 +51,7 @@ void TableView::render() {
     int rx = 0;
     int ry = 0;
     for (auto c = 0; c < col_count; c++) {
-        auto data = m_model->header_data(c);
+        auto data = model()->header_data(c);
         render_data(renderer, rx, ry, data);
         rx += col_widths[c];
     }
@@ -59,15 +60,10 @@ void TableView::render() {
         rx = 0;
         ry += 20;
         for (auto c = 0; c < col_count; c++) {
-            render_data(renderer, rx, ry, m_model->data({ r, c }));
+            render_data(renderer, rx, ry, model()->data({ r, c }));
             rx += col_widths[c];
         }
     }
-}
-
-void TableView::set_model(SharedPtr<Model> model) {
-    m_model = model;
-    invalidate();
 }
 
 }

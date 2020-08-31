@@ -4,6 +4,7 @@ set(SOURCES
     button.cpp
     event_loop.cpp
     layout.cpp
+    model.cpp
     object.cpp
     selectable.cpp
     table_view.cpp
@@ -11,6 +12,7 @@ set(SOURCES
     timer.cpp
     unix_socket.cpp
     unix_socket_server.cpp
+    view.cpp
     widget.cpp
     window.cpp
 )
