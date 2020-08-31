@@ -29,6 +29,7 @@
 #include <kernel/time/timer.h>
 
 // #define FORK_DEBUG
+// #define SIGNAL_DEBUG
 
 #define STACK_TRACE_ON_ANY_SIGSEGV
 
@@ -304,7 +305,9 @@ void task_do_sig_handler(struct task *task, int signum) {
         act->sa_handler = SIG_DFL;
     }
 
+#ifdef SIGNAL_DEBUG
     debug_log("Running pid: [ %p, %#.16lX, %d ]\n", save_state, task->arch_task.task_state.stack_state.rip, signum);
+#endif /* SIGNAL_DEBUG */
 
     struct task *current = get_current_task();
     assert(current == task);

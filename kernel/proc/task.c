@@ -393,7 +393,7 @@ void free_task(struct task *task, bool free_paging_structure) {
     struct queued_signal *si = task->queued_signals;
     while (si) {
         struct queued_signal *next = si->next;
-        free(si);
+        task_free_queued_signal(si);
         si = next;
     }
 
@@ -481,18 +481,22 @@ task_enqueue_signal_end:
     interrupts_restore(save);
 }
 
+void task_free_queued_signal(struct queued_signal *queued_signal) {
+    if (queued_signal->flags & QUEUED_SIGNAL_DONT_FREE_FLAG) {
+        queued_signal->flags &= ~QUEUED_SIGNAL_DONT_FREE_FLAG;
+        queued_signal->next = NULL;
+    } else {
+        free(queued_signal);
+    }
+}
+
 void task_dequeue_signal(struct task *task) {
     struct queued_signal *next = task->queued_signals->next;
     if (!next || next->info.si_signo != task->queued_signals->info.si_signo) {
         task_unset_sig_pending(task, task->queued_signals->info.si_signo);
     }
 
-    if (task->queued_signals->flags & QUEUED_SIGNAL_DONT_FREE_FLAG) {
-        task->queued_signals->flags &= ~QUEUED_SIGNAL_DONT_FREE_FLAG;
-        task->queued_signals->next = NULL;
-    } else {
-        free(task->queued_signals);
-    }
+    task_free_queued_signal(task->queued_signals);
     task->queued_signals = next;
 }
 

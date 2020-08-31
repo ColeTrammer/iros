@@ -16,7 +16,7 @@
 // #define TIMER_T_ALLOCATION_DEBUG
 
 static spinlock_t id_lock = SPINLOCK_INITIALIZER;
-static timer_t id_start = 0;
+static timer_t id_start = 1;
 
 static struct hash_map *timer_map;
 
@@ -106,6 +106,12 @@ int time_delete_timer(struct timer *timer) {
 
     if (time_is_timer_armed(timer)) {
         time_remove_timer_from_clock(timer->clock, timer);
+    }
+
+    if (timer->signal) {
+        assert(!(timer->signal->flags & QUEUED_SIGNAL_DONT_FREE_FLAG));
+        task_free_queued_signal(timer->signal);
+        timer->signal = NULL;
     }
 
     // Kernel timers don't have an ID, and instead of being own by a process, are managed by

@@ -139,6 +139,7 @@ void proc_notify_parent(struct process *child);
 void task_enqueue_signal(struct task *task, int signum, void *val, bool was_sigqueue);
 void task_enqueue_signal_object(struct task *task, struct queued_signal *sig);
 void task_dequeue_signal(struct task *task);
+void task_free_queued_signal(struct queued_signal *queued_signal);
 
 void task_yield_if_state_changed(struct task *task);
 void task_do_sigs_if_needed(struct task *task);
