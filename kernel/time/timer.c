@@ -55,7 +55,7 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
     }
 
     to_add->overuns = 0;
-    to_add->event_type = sevp->sigev_notify;
+    to_add->event_type = sevp ? sevp->sigev_notify : SIGEV_SIGNAL;
     to_add->id = allocate_timerid();
     to_add->spec.it_interval.tv_sec = 0;
     to_add->spec.it_interval.tv_nsec = 0;
@@ -76,9 +76,15 @@ int time_create_timer(struct clock *clock, struct sigevent *sevp, timer_t *timer
             return -EAGAIN;
         }
 
-        to_add->signal->info.si_value = sevp->sigev_value;
         to_add->signal->info.si_code = SI_TIMER;
-        to_add->signal->info.si_signo = sevp->sigev_signo;
+
+        if (sevp) {
+            to_add->signal->info.si_value = sevp->sigev_value;
+            to_add->signal->info.si_signo = sevp->sigev_signo;
+        } else {
+            to_add->signal->info.si_value.sival_int = to_add->id;
+            to_add->signal->info.si_signo = SIGALRM;
+        }
     }
 
     struct process *process = to_add->task->process;

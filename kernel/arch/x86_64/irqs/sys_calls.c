@@ -1948,7 +1948,7 @@ SYS_CALL(timer_create) {
     SYS_BEGIN();
 
     SYS_PARAM1_TRANSFORM(struct clock *, clock, clockid_t, get_clock);
-    SYS_PARAM2_VALIDATE(struct sigevent *, sevp, validate_read, sizeof(struct sigevent));
+    SYS_PARAM2_VALIDATE(struct sigevent *, sevp, validate_read_or_null, sizeof(struct sigevent));
     SYS_PARAM3_VALIDATE(timer_t *, timerid, validate_write, sizeof(timer_t));
 
     SYS_RETURN(time_create_timer(clock, sevp, timerid));
