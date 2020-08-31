@@ -153,6 +153,7 @@ void free_program_args(struct args_context *context) {
     free(context->envp_copy);
     free(context->prepend_args_buffer);
     free(context->env_buffer);
+    free(context);
 }
 
 static spinlock_t tid_lock;
