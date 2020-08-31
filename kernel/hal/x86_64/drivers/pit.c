@@ -90,7 +90,7 @@ void pit_set_rate(unsigned int rate) {
     outb(PIT_CHANNEL_0, PIT_GET_DIVISOR(rate) >> 8);
 
     time_per_clock_tick.tv_sec = rate / 1000;
-    time_per_clock_tick.tv_nsec = rate * 1000;
+    time_per_clock_tick.tv_nsec = rate * 1000000;
 }
 
 static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
