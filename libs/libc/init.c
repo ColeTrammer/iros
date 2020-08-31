@@ -23,6 +23,8 @@ extern void (*__init_array_start[])(int, char **, char **);
 extern void (*__init_array_end[])(int, char **, char **);
 
 extern void _init(void);
+
+struct initial_process_info *__initial_process_info = NULL;
 #endif /* __is_static */
 
 __thread int errno;

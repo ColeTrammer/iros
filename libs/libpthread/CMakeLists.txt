@@ -30,3 +30,6 @@ set(SOURCES
 
 add_os_library(libpthread pthread FALSE)
 target_compile_definitions(libpthread PRIVATE __is_libc)
+
+add_os_static_library(libpthread_static pthread FALSE)
+target_compile_definitions(libpthread PRIVATE __is_libc)
