@@ -1,6 +1,7 @@
 #pragma once
 
 #include <app/model.h>
+#include <app/timer.h>
 #include <liim/vector.h>
 #include <procinfo.h>
 
@@ -14,6 +15,7 @@ public:
         Name,
         Memory,
         Priority,
+        RunningTime,
         __Count,
     };
 
@@ -22,6 +24,9 @@ public:
     virtual App::ModelData data(const App::ModelIndex& index) const override;
     virtual App::ModelData header_data(int col) const override;
 
+    void load_data();
+
 private:
     Vector<proc_info> m_processes;
+    SharedPtr<App::Timer> m_timer;
 };
