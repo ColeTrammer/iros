@@ -36,15 +36,13 @@ int main() {
             client->on_ready_to_read = [&clients, &clipboard_contents, &clipboard_contents_size, &clipboard_type, &server](auto& client) {
                 char buf[0x4000];
                 ssize_t ret = read(client.fd(), buf, sizeof(buf));
-                if (ret < 0) {
-                    perror("clipboard_server: read");
+                if (ret <= 0) {
+                    if (ret < 0) {
+                        perror("clipboard_server: read");
+                    }
                     auto ptr = client.shared_from_this();
                     clients.remove_element(ptr);
                     server->remove_child(ptr);
-                    return;
-                }
-
-                if (ret == 0) {
                     return;
                 }
 

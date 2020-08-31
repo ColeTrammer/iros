@@ -22,6 +22,7 @@ public:
     void disable_notifications();
 
     int fd() const { return m_fd; }
+    bool valid() const { return m_fd != -1; }
 
     virtual void notify_readable() {}
     virtual void notify_writeable() {}

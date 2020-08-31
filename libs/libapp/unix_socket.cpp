@@ -30,7 +30,7 @@ SharedPtr<UnixSocket> UnixSocket::create_connection(SharedPtr<Object> parent, co
 
 UnixSocket::UnixSocket(int fd) {
     set_fd(fd);
-    set_selected_events(NotifyWhen::Readable | NotifyWhen::Exceptional);
+    set_selected_events(NotifyWhen::Readable);
     enable_notifications();
 }
 
@@ -38,7 +38,7 @@ UnixSocket::~UnixSocket() {
     close(fd());
 }
 
-void UnixSocket::notify_exceptional() {
+void UnixSocket::disconnect() {
     if (on_disconnect) {
         on_disconnect(*this);
     }

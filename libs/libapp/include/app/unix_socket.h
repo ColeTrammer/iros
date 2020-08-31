@@ -14,6 +14,8 @@ public:
 
     ~UnixSocket();
 
+    void disconnect();
+
     Function<void(UnixSocket& self)> on_ready_to_read;
     Function<void(UnixSocket& self)> on_disconnect;
 
@@ -21,7 +23,6 @@ private:
     UnixSocket(int fd);
 
     virtual void notify_readable() override;
-    virtual void notify_exceptional() override;
 };
 
 }
