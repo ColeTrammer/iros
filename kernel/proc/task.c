@@ -485,7 +485,6 @@ void task_dequeue_signal(struct task *task) {
     struct queued_signal *next = task->queued_signals->next;
     if (!next || next->info.si_signo != task->queued_signals->info.si_signo) {
         task_unset_sig_pending(task, task->queued_signals->info.si_signo);
-        debug_log("task_unset_sig_pending: [ %d ]\n", task->queued_signals->info.si_signo);
     }
 
     if (task->queued_signals->flags & QUEUED_SIGNAL_DONT_FREE_FLAG) {

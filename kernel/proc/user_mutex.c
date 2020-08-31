@@ -8,7 +8,7 @@
 #include <kernel/proc/user_mutex.h>
 #include <kernel/util/hash_map.h>
 
-#define USER_MUTEX_DEBUG
+// #define USER_MUTEX_DEBUG
 
 static struct hash_map *map;
 
