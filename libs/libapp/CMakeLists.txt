@@ -7,6 +7,7 @@ set(SOURCES
     model.cpp
     object.cpp
     selectable.cpp
+    selectable_file.cpp
     table_view.cpp
     text_label.cpp
     timer.cpp
