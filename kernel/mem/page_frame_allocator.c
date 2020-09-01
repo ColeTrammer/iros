@@ -1,9 +1,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/hal/block.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/kernel_vm.h>
@@ -37,9 +39,16 @@ void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
     }
 }
 
-uintptr_t get_next_phys_page(struct process *process) {
-    spin_lock(&bitmap_lock);
+void mark_available(uintptr_t phys_addr_start, uintptr_t length) {
+    uintptr_t num_pages = NUM_PAGES(phys_addr_start, phys_addr_start + length);
+    uintptr_t bit_index_base = phys_addr_start / PAGE_SIZE;
+    for (uintptr_t i = 0; i < num_pages; i++) {
+        set_bit(bit_index_base + i, false);
+    }
+}
 
+static uintptr_t try_get_next_phys_page(struct process *process) {
+    spin_lock(&bitmap_lock);
     for (uintptr_t i = 0; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
         if (~page_bitmap[i]) {
             uintptr_t bit_index = i * 8 * sizeof(uintptr_t);
@@ -57,9 +66,27 @@ uintptr_t get_next_phys_page(struct process *process) {
             return bit_index * PAGE_SIZE;
         }
     }
-
     spin_unlock(&bitmap_lock);
-    return 0; // indicates there are no available physical pages
+    return 0;
+}
+
+uintptr_t get_next_phys_page(struct process *process) {
+    uintptr_t try_1 = try_get_next_phys_page(process);
+    if (try_1) {
+        return try_1;
+    }
+
+    // The block cache will hopefully have unused pages it can release.
+    block_trim_cache();
+
+    uintptr_t try_2 = try_get_next_phys_page(process);
+    if (try_2) {
+        return try_2;
+    }
+
+    debug_log("Out of Physical Memory\n");
+    abort();
+    return 0;
 }
 
 uintptr_t get_contiguous_pages(size_t pages) {
@@ -123,7 +150,8 @@ uintptr_t initrd_phys_start;
 uintptr_t initrd_phys_end;
 
 void init_page_frame_allocator(uint32_t *multiboot_info) {
-    mark_used(0, 0x100000); // assume none of this area is available
+    // Everything starts off allocated (reserved). Only usable segments (according to the bootloader) are made available.
+    memset(page_bitmap, 0xFF, sizeof(page_bitmap));
 
     debug_log("multiboot_info: [ %p ]\n", multiboot_info);
     assert((uintptr_t) multiboot_info < 0x400000ULL);
@@ -141,11 +169,12 @@ void init_page_frame_allocator(uint32_t *multiboot_info) {
         if (data[0] == 6) {
             uintptr_t *mem = (uintptr_t *) (data + 4);
             while ((uint32_t *) mem < data + data[1] / sizeof(uint32_t)) {
-                if ((uint32_t) mem[2] == 2) {
-                    mark_used(mem[0] & ~0xFFF, mem[1]);
+                debug_log("Physical memory range: [ %#.16lX, %#.16lX, %u ]\n", mem[0] & ~0xFFF, mem[1], (uint32_t) mem[2]);
+                if ((uint32_t) mem[2] == 1) {
+                    mark_available(mem[0] & ~0xFFF, mem[1]);
                     phys_memory_total += mem[1] - (mem[0] & ~0xFFF);
-                    phys_memory_max = MAX((mem[0] & ~0xFFF) + mem[1], phys_memory_max);
                 }
+                phys_memory_max = MAX((mem[0] & ~0xFFF) + mem[1], phys_memory_max);
                 mem += data[2] / sizeof(uintptr_t);
             }
         }
@@ -162,11 +191,15 @@ void init_page_frame_allocator(uint32_t *multiboot_info) {
         }
     }
 
+    mark_used(0, 0x100000); // assume none of this area is available for general purpose allocations, as device drivers might need it.
     mark_used(KERNEL_PHYS_START, KERNEL_PHYS_END - KERNEL_PHYS_START);
     mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);
 
     debug_log("Finished Initializing Page Frame Allocator\n");
     debug_log("Max phys memory: [ %#lX ]\n", phys_memory_max);
-    debug_log("Kernel physical memory: [ %#.16lX, %#.16lX ]\n", KERNEL_PHYS_START, KERNEL_PHYS_END);
-    debug_log("Initrd physical memory: [ %#.16lX, %#.16lX ]\n", initrd_phys_start, initrd_phys_end);
+    debug_log("Total available memory: [ %#lX ]\n", phys_memory_total);
+    debug_log("Kernel physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", KERNEL_PHYS_START, KERNEL_PHYS_END,
+              KERNEL_PHYS_END - KERNEL_PHYS_START);
+    debug_log("Initrd physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", initrd_phys_start, initrd_phys_end,
+              initrd_phys_end - initrd_phys_start);
 }

@@ -28,6 +28,8 @@ struct block_device {
 struct phys_page *block_generic_read_page(struct block_device *self, off_t block_offset);
 int block_generic_sync_page(struct block_device *self, struct phys_page *page);
 
+void block_trim_cache(void);
+struct phys_page *block_allocate_phys_page(struct block_device *block_device);
 struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_size, struct block_device_ops *op, void *private_data);
 void block_register_device(struct block_device *block_device, dev_t device_number);
 

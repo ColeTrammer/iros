@@ -35,19 +35,16 @@ static struct phys_page *block_find_page(struct block_device *block_device, off_
 }
 
 static struct phys_page *block_put_cache(struct block_device *block_device, struct phys_page *page) {
-    size_t num_blocks_cached = hash_size(block_device->block_hash_map);
-    // FIXME: instead of using an arbitrary cap, the kernel should only do this when it needs to reclaim
-    //        physical memory.
-    if (num_blocks_cached >= 10000) {
-        struct phys_page *to_remove = list_last_entry(&block_device->lru_list, struct phys_page, lru_list);
-        hash_del(block_device->block_hash_map, &to_remove->block_offset);
-        list_remove(&to_remove->lru_list);
-        drop_phys_page(to_remove);
-    }
-
     list_prepend(&block_device->lru_list, &page->lru_list);
     hash_put(block_device->block_hash_map, &page->hash);
     return bump_phys_page(page);
+}
+
+static void block_shrink_cache(struct block_device *block_device) {
+    struct phys_page *to_remove = list_last_entry(&block_device->lru_list, struct phys_page, lru_list);
+    hash_del(block_device->block_hash_map, &to_remove->block_offset);
+    list_remove(&to_remove->lru_list);
+    drop_phys_page(to_remove);
 }
 
 static struct phys_page *block_find_or_read_page(struct block_device *block_device, off_t block_offset) {
@@ -69,7 +66,7 @@ static struct phys_page *block_find_or_empty_page(struct block_device *block_dev
         return page;
     }
 
-    page = allocate_phys_page();
+    page = block_allocate_phys_page(block_device);
     if (!page) {
         return NULL;
     }
@@ -244,4 +241,41 @@ void block_register_device(struct block_device *block_device, dev_t device_numbe
     device->ops = &block_device_ops;
     device->private = block_device;
     dev_register(device);
+}
+
+struct phys_page *block_allocate_phys_page(struct block_device *block_device) {
+    struct device *device = container_of(block_device, struct device, private);
+
+    // The device must not be locked when allocate_phys_page() is called, since in an effort to reclaim
+    // physical memory, the page frame allocator may ask the device to trim its cache. This procedure must
+    // aquire the device lock before doing so, and thus it cannot already be locked.
+    mutex_unlock(&device->lock);
+    struct phys_page *ret = allocate_phys_page();
+    mutex_lock(&device->lock);
+
+    return ret;
+}
+
+static void do_block_trim_cache(struct hash_entry *_device, void *closure __attribute__((unused))) {
+    struct device *device = hash_table_entry(_device, struct device);
+    if (device->type != S_IFBLK) {
+        return;
+    }
+
+    // Since this is called by the page frame allocator, which is synchronized by a spin lock, mutex_lock()
+    // cannot be used.
+    if (!mutex_trylock(&device->lock)) {
+        return;
+    }
+
+    struct block_device *block_device = device->private;
+    for (size_t i = 0; i < 100 && !list_is_empty(&block_device->lru_list); i++) {
+        block_shrink_cache(block_device);
+    }
+    mutex_unlock(&device->lock);
+}
+
+void block_trim_cache(void) {
+    debug_log("Trimming block cache\n");
+    hash_for_each(dev_device_hash_map(), do_block_trim_cache, NULL);
 }

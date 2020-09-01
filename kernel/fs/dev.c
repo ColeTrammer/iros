@@ -26,6 +26,10 @@ static struct hash_map *device_map;
 
 HASH_DEFINE_FUNCTIONS(device, struct device, dev_t, device_number)
 
+struct hash_map *dev_device_hash_map(void) {
+    return device_map;
+}
+
 void dev_register(struct device *device) {
     if (device->ops->add) {
         device->ops->add(device);

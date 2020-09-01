@@ -45,6 +45,7 @@ struct device {
     void *private;
 };
 
+struct hash_map *dev_device_hash_map(void);
 void dev_register(struct device *device);
 void dev_unregister(struct device *device);
 

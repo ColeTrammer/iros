@@ -231,7 +231,7 @@ static struct phys_page *ata_read_page_dma(struct block_device *self, off_t sect
     struct ata_device_data *data = self->private_data;
     blkcnt_t sectors = PAGE_SIZE / self->block_size;
 
-    struct phys_page *page = allocate_phys_page();
+    struct phys_page *page = block_allocate_phys_page(self);
     if (!page) {
         return NULL;
     }
