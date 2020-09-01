@@ -328,7 +328,7 @@ void create_phys_id_map() {
     debug_log("Mapping physical address identity map: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
     uintptr_t stride = 2 * 1024 * 1024;
     if (cpu_supports_1gb_pages()) {
-        stride *= 1024;
+        stride *= 512;
     }
 
     for (uintptr_t phys_addr = 0; phys_addr < g_phys_page_stats.phys_memory_max; phys_addr += stride) {
