@@ -37,7 +37,9 @@ struct proc_info {
 };
 
 struct proc_global_info {
+    uintptr_t allocated_memory;
     uintptr_t total_memory;
+    uintptr_t max_memory;
     uint64_t idle_ticks;
     uint64_t user_ticks;
     uint64_t kernel_ticks;
