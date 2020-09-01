@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/mem/kernel_vm.h>
@@ -325,9 +326,45 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
 void create_phys_id_map() {
     // Map entries at PML4_MAX - 3 to a replica of phys memory
     debug_log("Mapping physical address identity map: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
-    for (uintptr_t i = 0; i < g_phys_page_stats.phys_memory_max; i += PAGE_SIZE) {
-        map_phys_page(i, VIRT_ADDR(MAX_PML4_ENTRIES - 3UL, 0, 0, 0) + i, VM_WRITE | VM_GLOBAL | VM_NO_EXEC, &initial_kernel_process);
+    uintptr_t stride = 2 * 1024 * 1024;
+    if (cpu_supports_1gb_pages()) {
+        stride *= 1024;
     }
+
+    for (uintptr_t phys_addr = 0; phys_addr < g_phys_page_stats.phys_memory_max; phys_addr += stride) {
+        uintptr_t virt_addr = VIRT_ADDR(MAX_PML4_ENTRIES - 3UL, 0, 0, 0) + phys_addr;
+
+        uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
+        uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
+        uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
+
+        uint64_t *pml4_entry = PML4_BASE + pml4_offset;
+        uint64_t *pdp_entry = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
+        uint64_t *pd_entry = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
+
+        uint64_t mapping_flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC | 0x01;
+        if (!(*pml4_entry & 1)) {
+            *pml4_entry = get_next_phys_page(&initial_kernel_process) | mapping_flags;
+            invlpg((uintptr_t) pdp_entry);
+            memset(pdp_entry - pdp_offset, 0, PAGE_SIZE);
+        }
+
+        if (cpu_supports_1gb_pages()) {
+            *pdp_entry = phys_addr | mapping_flags | (1 << 7);
+            continue;
+        }
+
+        if (!(*pdp_entry & 1)) {
+            *pdp_entry = get_next_phys_page(&initial_kernel_process) | mapping_flags;
+            invlpg((uintptr_t) pd_entry);
+            memset(pd_entry - pd_offset, 0, PAGE_SIZE);
+        }
+
+        *pd_entry = phys_addr | mapping_flags | (1 << 7);
+    }
+
+    // Flush thte entire TLB to ensure the new mappings take effect.
+    load_cr3(get_cr3());
 }
 
 void load_paging_structure(uintptr_t phys_addr, struct process *process) {

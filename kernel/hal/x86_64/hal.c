@@ -22,15 +22,23 @@
 #include <kernel/hal/x86_64/gdt.h>
 
 static bool supports_rdrand;
+static bool supports_1gb_pages;
 
 bool cpu_supports_rdrand(void) {
     return supports_rdrand;
+}
+
+bool cpu_supports_1gb_pages(void) {
+    return supports_1gb_pages;
 }
 
 static void detect_cpu_features(void) {
     uint32_t a, b, c, d;
     cpuid(CPUID_FEATURES, &a, &b, &c, &d);
     supports_rdrand = !!(c & CPUID_ECX_RDRAND);
+
+    cpuid(CPUID_EXTENDED_FEATURES, &a, &b, &c, &d);
+    supports_1gb_pages = !!(d & CPUID_EDX_1GB_PAGES);
 }
 
 void init_hal(void) {
