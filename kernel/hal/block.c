@@ -7,6 +7,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/phys_page.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/proc/stats.h>
 
 static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t size, bool non_block);
 static ssize_t block_write(struct device *device, off_t offset, const void *buf, size_t size, bool non_block);
@@ -34,17 +35,22 @@ static struct phys_page *block_find_page(struct block_device *block_device, off_
     return bump_phys_page(page);
 }
 
-static struct phys_page *block_put_cache(struct block_device *block_device, struct phys_page *page) {
-    list_prepend(&block_device->lru_list, &page->lru_list);
-    hash_put(block_device->block_hash_map, &page->hash);
-    return bump_phys_page(page);
-}
-
 static void block_shrink_cache(struct block_device *block_device) {
     struct phys_page *to_remove = list_last_entry(&block_device->lru_list, struct phys_page, lru_list);
     hash_del(block_device->block_hash_map, &to_remove->block_offset);
     list_remove(&to_remove->lru_list);
     drop_phys_page(to_remove);
+}
+
+static struct phys_page *block_put_cache(struct block_device *block_device, struct phys_page *page) {
+    // If less than 10% of memory is available, don't add new cache items (by removing old ones).
+    if (g_phys_page_stats.phys_memory_total - g_phys_page_stats.phys_memory_allocated < g_phys_page_stats.phys_memory_total / 10) {
+        block_shrink_cache(block_device);
+    }
+
+    list_prepend(&block_device->lru_list, &page->lru_list);
+    hash_put(block_device->block_hash_map, &page->hash);
+    return bump_phys_page(page);
 }
 
 static struct phys_page *block_find_or_read_page(struct block_device *block_device, off_t block_offset) {

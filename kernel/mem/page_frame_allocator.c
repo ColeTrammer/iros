@@ -11,6 +11,7 @@
 #include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
+#include <kernel/proc/stats.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
@@ -18,6 +19,8 @@
 
 static uintptr_t page_bitmap[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
 static spinlock_t bitmap_lock = SPINLOCK_INITIALIZER;
+
+struct phys_page_stats g_phys_page_stats = { 0 };
 
 static bool get_bit(uintptr_t bit_index) {
     return page_bitmap[bit_index / (8 * sizeof(uintptr_t))] & (1UL << (bit_index % (8 * sizeof(uintptr_t))));
@@ -56,6 +59,8 @@ static uintptr_t try_get_next_phys_page(struct process *process) {
                 bit_index++;
             }
             set_bit(bit_index, true);
+
+            g_phys_page_stats.phys_memory_allocated += PAGE_SIZE;
 
             spin_unlock(&bitmap_lock);
 
@@ -112,6 +117,8 @@ try_again:
                 set_bit(i, true);
             }
             ret = (bit_index - pages) * PAGE_SIZE;
+
+            g_phys_page_stats.phys_memory_allocated += pages * PAGE_SIZE;
             break;
         }
     }
@@ -132,18 +139,8 @@ void free_phys_page(uintptr_t phys_addr, struct process *process) {
         process->resident_memory -= PAGE_SIZE;
     }
 
+    g_phys_page_stats.phys_memory_allocated -= PAGE_SIZE;
     spin_unlock(&bitmap_lock);
-}
-
-static unsigned long phys_memory_total = 0;
-static unsigned long phys_memory_max = 0;
-
-unsigned long get_total_phys_memory(void) {
-    return phys_memory_total;
-}
-
-unsigned long get_max_phys_memory(void) {
-    return phys_memory_max;
 }
 
 uintptr_t initrd_phys_start;
@@ -171,10 +168,16 @@ void init_page_frame_allocator(uint32_t *multiboot_info) {
             while ((uint32_t *) mem < data + data[1] / sizeof(uint32_t)) {
                 debug_log("Physical memory range: [ %#.16lX, %#.16lX, %u ]\n", mem[0] & ~0xFFF, mem[1], (uint32_t) mem[2]);
                 if ((uint32_t) mem[2] == 1) {
+                    // Memory below 0x100000 is reserved, and accounted as allocated.
+                    if (mem[0] < 0x100000) {
+                        g_phys_page_stats.phys_memory_allocated +=
+                            ALIGN_UP(MIN(ALIGN_UP((mem[0] & ~0xFFF) + mem[1], PAGE_SIZE), 0x100000) - (mem[0] & ~0xFFF), PAGE_SIZE);
+                    }
+
                     mark_available(mem[0] & ~0xFFF, mem[1]);
-                    phys_memory_total += mem[1] - (mem[0] & ~0xFFF);
+                    g_phys_page_stats.phys_memory_total += mem[1] - (mem[0] & ~0xFFF);
                 }
-                phys_memory_max = MAX((mem[0] & ~0xFFF) + mem[1], phys_memory_max);
+                g_phys_page_stats.phys_memory_max = MAX(ALIGN_UP((mem[0] & ~0xFFF) + mem[1], PAGE_SIZE), g_phys_page_stats.phys_memory_max);
                 mem += data[2] / sizeof(uintptr_t);
             }
         }
@@ -192,12 +195,13 @@ void init_page_frame_allocator(uint32_t *multiboot_info) {
     }
 
     mark_used(0, 0x100000); // assume none of this area is available for general purpose allocations, as device drivers might need it.
+    g_phys_page_stats.phys_memory_allocated += ALIGN_UP(KERNEL_PHYS_END - KERNEL_PHYS_START, PAGE_SIZE);
     mark_used(KERNEL_PHYS_START, KERNEL_PHYS_END - KERNEL_PHYS_START);
+    g_phys_page_stats.phys_memory_allocated += ALIGN_UP(initrd_phys_end - initrd_phys_start, PAGE_SIZE);
     mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);
 
-    debug_log("Finished Initializing Page Frame Allocator\n");
-    debug_log("Max phys memory: [ %#lX ]\n", phys_memory_max);
-    debug_log("Total available memory: [ %#lX ]\n", phys_memory_total);
+    debug_log("Max phys memory: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
+    debug_log("Total available memory: [ %#lX ]\n", g_phys_page_stats.phys_memory_total);
     debug_log("Kernel physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", KERNEL_PHYS_START, KERNEL_PHYS_END,
               KERNEL_PHYS_END - KERNEL_PHYS_START);
     debug_log("Initrd physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", initrd_phys_start, initrd_phys_end,

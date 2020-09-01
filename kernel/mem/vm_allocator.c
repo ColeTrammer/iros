@@ -19,6 +19,7 @@
 #include <kernel/mem/vm_object.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/profile.h>
+#include <kernel/proc/stats.h>
 #include <kernel/proc/task.h>
 #include <kernel/util/spinlock.h>
 
@@ -42,7 +43,7 @@ extern uintptr_t initrd_phys_end;
 void init_vm_allocator(void) {
 #if ARCH == X86_64
     kernel_phys_id.start = VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0);
-    kernel_phys_id.end = kernel_phys_id.start + get_max_phys_memory();
+    kernel_phys_id.end = kernel_phys_id.start + g_phys_page_stats.phys_memory_max;
     kernel_phys_id.flags = VM_NO_EXEC | VM_GLOBAL | VM_WRITE;
     kernel_phys_id.type = VM_KERNEL_PHYS_ID;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_phys_id);

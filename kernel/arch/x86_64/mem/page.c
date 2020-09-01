@@ -11,6 +11,7 @@
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/stats.h>
 #include <kernel/proc/task.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
@@ -323,8 +324,8 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
 
 void create_phys_id_map() {
     // Map entries at PML4_MAX - 3 to a replica of phys memory
-    debug_log("Mapping physical address identity map: [ %#lX ]\n", get_max_phys_memory());
-    for (uintptr_t i = 0; i < get_max_phys_memory(); i += PAGE_SIZE) {
+    debug_log("Mapping physical address identity map: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
+    for (uintptr_t i = 0; i < g_phys_page_stats.phys_memory_max; i += PAGE_SIZE) {
         map_phys_page(i, VIRT_ADDR(MAX_PML4_ENTRIES - 3UL, 0, 0, 0) + i, VM_WRITE | VM_GLOBAL | VM_NO_EXEC, &initial_kernel_process);
     }
 }

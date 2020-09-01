@@ -484,7 +484,12 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_sched(struct procfs_d
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_meminfo(struct procfs_data *data __attribute__((unused)),
                                                                    struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
-    size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0, "TOTAL_MEMORY: %lu\n", get_total_phys_memory());
+    size_t length =
+        snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
+                 "ALLOCATED_MEMORY: %lu\n"
+                 "TOTAL_MEMORY: %lu\n"
+                 "MAX_MEMORY: %lu\n",
+                 g_phys_page_stats.phys_memory_allocated, g_phys_page_stats.phys_memory_total, g_phys_page_stats.phys_memory_max);
     return (struct procfs_buffer) { buffer, length };
 }
 
