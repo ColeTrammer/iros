@@ -79,12 +79,12 @@
 
 #define FORMAT_STRING_HEADER                                                                                                             \
     "%" PID_FLAGS "*.*s %" USER_FLAGS "*.*s %" VIRTUAL_MEM_FLAGS "*.*s %" PRIORITY_FLAGS "*.*s %" NICE_FLAGS "*.*s %" RESIDENT_MEM_FLAGS \
-    "*.*s %" STATUS_FLAGS "*.*s %" CPU_FLAGS "*.*s %" MEM_FLAGS "*.*s %" TIME_FLAGS "*.*s %" NAME_FLAGS "*.*s\n"
+    "*.*s %" STATUS_FLAGS "*.*s %" CPU_FLAGS "*.*s %" MEM_FLAGS "*.*s %" TIME_FLAGS "*.*s %" NAME_FLAGS "*.*s\033[0K\n"
 #define FORMAT_STRING_ROW                                                                                                               \
     "%" PID_FLAGS "*.*" PID_SPECIFIER " %" USER_FLAGS "*.*" USER_SPECIFIER " %" PRIORITY_FLAGS "*.*" PRIORITY_SPECIFIER " %" NICE_FLAGS \
     "*.*" NICE_SPECIFIER " %" VIRTUAL_MEM_FLAGS "*.*" VIRTUAL_MEM_SPECIFIER " %" RESIDENT_MEM_FLAGS "*.*" RESIDENT_MEM_SPECIFIER        \
     " %" STATUS_FLAGS "*.*" STATUS_SPECIFIER " %" CPU_FLAGS "*.*" CPU_SPECIFIER " %" MEM_FLAGS "*.*" MEM_SPECIFIER " %" TIME_FLAGS      \
-    "*.*" TIME_SPECIFIER " %" NAME_FLAGS "*.*" NAME_SPECIFIER "\n"
+    "*.*" TIME_SPECIFIER " %" NAME_FLAGS "*.*" NAME_SPECIFIER "\033[0K\n"
 
 struct proc_summary {
     int tasks_total;
@@ -113,16 +113,21 @@ static void disable_cursor() {
 }
 
 static size_t display_header(struct proc_summary *summary) {
-    int written = printf("Tasks: \033[1;97m%3d\033[0m total, \033[1;97m%3d\033[0m running, \033[1;97m%3d\033[0m sleeping",
-                         summary->tasks_total, summary->tasks_running, summary->tasks_sleeping);
-    printf("%*s\n", win_size.ws_col - written, "");
+    printf("Tasks: \033[1;97m%3d\033[0m total, \033[1;97m%3d\033[0m running, \033[1;97m%3d\033[0m sleeping", summary->tasks_total,
+           summary->tasks_running, summary->tasks_sleeping);
+    printf("\033[0K\n");
+
+    printf("Mem: \033[1;97m%lu\033[0m bytes total, \033[1;97m%lu\033[0m bytes allocated, \033[1;97m%.1f\033[0m%% used",
+           current_global_info.total_memory, current_global_info.allocated_memory,
+           (double) current_global_info.allocated_memory / (double) current_global_info.total_memory * 100.0);
+    printf("\033[0K\n");
 
     printf("%*s\n", win_size.ws_col, "");
     printf("\033[7m" FORMAT_STRING_HEADER "\033[0m", PID_WIDTH, PID_WIDTH, PID_STRING, USER_WIDTH, USER_WIDTH, USER_STRING, PRIORITY_WIDTH,
            PRIORITY_WIDTH, PRIORITY_STRING, NICE_WIDTH, NICE_WIDTH, NICE_STRING, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_WIDTH, VIRTUAL_MEM_STRING,
            RESIDENT_MEM_WIDTH, RESIDENT_MEM_WIDTH, RESIDENT_MEM_STRING, STATUS_WIDTH, STATUS_WIDTH, STATUS_STRING, CPU_WIDTH, CPU_WIDTH,
            CPU_STRING, MEM_WIDTH, MEM_WIDTH, MEM_STRING, TIME_WIDTH, TIME_WIDTH, TIME_STRING, NAME_WIDTH, NAME_WIDTH, NAME_STRING);
-    return 3;
+    return 4;
 }
 
 static int prev_process_ticks(pid_t pid, uint64_t *out_ticks) {
