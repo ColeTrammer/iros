@@ -135,7 +135,7 @@ void free_phys_page(uintptr_t phys_addr, struct process *process) {
     spin_lock(&bitmap_lock);
 
     set_bit(phys_addr / PAGE_SIZE, false);
-    if (process) {
+    if (process && process->resident_memory >= PAGE_SIZE) {
         process->resident_memory -= PAGE_SIZE;
     }
 
