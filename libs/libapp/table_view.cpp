@@ -15,7 +15,7 @@ int TableView::width_of(const ModelData& data) const {
     } else if (data.is<String>()) {
         width = data.as<String>().size() * 8;
     }
-    return 2 + 2 + max(width, 20);
+    return 2 * cell_padding() + max(width, 20);
 }
 
 void TableView::render_data(Renderer& renderer, int rx, int ry, const ModelData& data) {
@@ -23,7 +23,7 @@ void TableView::render_data(Renderer& renderer, int rx, int ry, const ModelData&
         return;
     } else if (data.is<String>()) {
         auto& string = data.as<String>();
-        renderer.render_text(rect().x() + rx + 2, rect().y() + ry + 2, string, ColorValue::White);
+        renderer.render_text(rect().x() + rx + cell_padding(), rect().y() + ry + cell_padding(), string, ColorValue::White);
     }
 }
 
@@ -48,21 +48,33 @@ void TableView::render() {
         col_widths[c] = col_width;
     }
 
-    int rx = 0;
-    int ry = 0;
+    int rx = 1;
+    int ry = 1;
     for (auto c = 0; c < col_count; c++) {
         auto data = model()->header_data(c);
         render_data(renderer, rx, ry, data);
-        rx += col_widths[c];
+        rx += col_widths[c] + 1;
     }
 
     for (auto r = 0; r < row_count; r++) {
-        rx = 0;
-        ry += 20;
+        rx = 1;
+        ry += 21;
         for (auto c = 0; c < col_count; c++) {
             render_data(renderer, rx, ry, model()->data({ r, c }));
-            rx += col_widths[c];
+            rx += col_widths[c] + 1;
         }
+    }
+
+    ry = 0;
+    for (int i = 0; i <= row_count; i++) {
+        renderer.draw_line({ rect().x(), ry }, { rect().x() + rect().width(), ry }, ColorValue::White);
+        ry += 21;
+    }
+
+    rx = 0;
+    for (int i = 0; i <= col_count; i++) {
+        renderer.draw_line({ rx, rect().y() }, { rx, rect().y() + rect().height() }, ColorValue::White);
+        rx += col_widths.get_or(i, 0) + 1;
     }
 }
 
