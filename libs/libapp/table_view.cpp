@@ -60,6 +60,11 @@ void TableView::render() {
     for (auto r = 0; r < row_count; r++) {
         rx = 1;
         ry += 21;
+
+        if (hovered_index().row() == r) {
+            renderer.fill_rect({ rect().x(), rect().y() + ry, rect().width(), 21 }, ColorValue::LightGray);
+        }
+
         for (auto c = 0; c < col_count; c++) {
             render_data(renderer, rx, ry, model()->data({ r, c }));
             rx += col_widths[c] + 1;
@@ -69,8 +74,43 @@ void TableView::render() {
     ry = 0;
     for (int i = 0; i < row_count; i++) {
         ry += 21;
-        renderer.draw_line({ rect().x(), rect().y() + ry }, { rect().x() + rect().width(), rect().y() + ry }, ColorValue::White);
+        renderer.draw_line({ rect().x(), rect().y() + ry }, { rect().x() + rect().width() - 1, rect().y() + ry }, ColorValue::White);
     }
+}
+
+ModelIndex TableView::index_at_position(int wx, int wy) {
+    if (!model()) {
+        return {};
+    }
+
+    auto row_count = model()->row_count();
+    auto col_count = model()->col_count();
+
+    Vector<int> col_widths(col_count);
+    col_widths.resize(col_count);
+    for (auto c = 0; c < col_count; c++) {
+        int col_width = width_of(model()->header_data(c));
+        for (auto r = 0; r < row_count; r++) {
+            col_width = max(col_width, width_of(model()->data({ r, c })));
+        }
+        col_widths[c] = col_width;
+    }
+
+    int col = -1;
+    int x = 0;
+    for (int i = 0; i < col_count; i++) {
+        if (wx <= x) {
+            col = i;
+        }
+        x += col_widths[i] + 1;
+    }
+
+    int row = (wy - 21) / 21;
+    if (row < 0 || row >= row_count) {
+        return {};
+    }
+
+    return { row, col };
 }
 
 }

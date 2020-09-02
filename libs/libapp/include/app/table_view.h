@@ -22,6 +22,8 @@ protected:
     int width_of(const ModelData& data) const;
     void render_data(Renderer& renderer, int rx, int ry, const ModelData& data);
 
+    virtual ModelIndex index_at_position(int, int) override;
+
 private:
     int m_cell_padding { 2 };
 };

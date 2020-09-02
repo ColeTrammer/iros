@@ -1,6 +1,7 @@
 #pragma once
 
 #include <app/model_data.h>
+#include <app/model_index.h>
 #include <app/object.h>
 #include <liim/string.h>
 #include <liim/variant.h>
@@ -8,18 +9,6 @@
 namespace App {
 
 class View;
-
-class ModelIndex {
-public:
-    ModelIndex(int r, int c) : m_row(r), m_col(c) {}
-
-    int row() const { return m_row; }
-    int col() const { return m_col; }
-
-private:
-    int m_row { -1 };
-    int m_col { -1 };
-};
 
 class Model : public Object {
     APP_OBJECT(Model)
