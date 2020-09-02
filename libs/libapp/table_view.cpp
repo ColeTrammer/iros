@@ -67,13 +67,13 @@ void TableView::render() {
 
     ry = 0;
     for (int i = 0; i <= row_count; i++) {
-        renderer.draw_line({ rect().x(), ry }, { rect().x() + rect().width(), ry }, ColorValue::White);
+        renderer.draw_line({ rect().x(), rect().y() + ry }, { rect().x() + rect().width(), rect().y() + ry }, ColorValue::White);
         ry += 21;
     }
 
     rx = 0;
     for (int i = 0; i <= col_count; i++) {
-        renderer.draw_line({ rx, rect().y() }, { rx, rect().y() + rect().height() }, ColorValue::White);
+        renderer.draw_line({ rect().x() + rx, rect().y() }, { rect().x() + rx, rect().y() + rect().height() }, ColorValue::White);
         rx += col_widths.get_or(i, 0) + 1;
     }
 }
