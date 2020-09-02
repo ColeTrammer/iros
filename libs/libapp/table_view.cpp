@@ -34,6 +34,7 @@ void TableView::render() {
 
     Renderer renderer(*window()->pixels());
     renderer.fill_rect(rect(), ColorValue::Black);
+    renderer.draw_rect(rect(), ColorValue::White);
 
     auto row_count = model()->row_count();
     auto col_count = model()->col_count();
@@ -66,15 +67,9 @@ void TableView::render() {
     }
 
     ry = 0;
-    for (int i = 0; i <= row_count; i++) {
-        renderer.draw_line({ rect().x(), rect().y() + ry }, { rect().x() + rect().width(), rect().y() + ry }, ColorValue::White);
+    for (int i = 0; i < row_count; i++) {
         ry += 21;
-    }
-
-    rx = 0;
-    for (int i = 0; i <= col_count; i++) {
-        renderer.draw_line({ rect().x() + rx, rect().y() }, { rect().x() + rx, rect().y() + rect().height() }, ColorValue::White);
-        rx += col_widths.get_or(i, 0) + 1;
+        renderer.draw_line({ rect().x(), rect().y() + ry }, { rect().x() + rect().width(), rect().y() + ry }, ColorValue::White);
     }
 }
 
