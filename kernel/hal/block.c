@@ -5,6 +5,7 @@
 #include <kernel/fs/dev.h>
 #include <kernel/hal/block.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/phys_page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/stats.h>
@@ -201,7 +202,7 @@ static blksize_t block_block_size(struct device *device) {
 }
 
 struct phys_page *block_generic_read_page(struct block_device *self, off_t block_offset) {
-    struct phys_page *page = allocate_phys_page();
+    struct phys_page *page = block_allocate_phys_page(self);
     if (!page) {
         return NULL;
     }
@@ -246,11 +247,12 @@ void block_register_device(struct block_device *block_device, dev_t device_numbe
     init_mutex(&device->lock);
     device->ops = &block_device_ops;
     device->private = block_device;
+    block_device->device = device;
     dev_register(device);
 }
 
 struct phys_page *block_allocate_phys_page(struct block_device *block_device) {
-    struct device *device = container_of(block_device, struct device, private);
+    struct device *device = block_device->device;
 
     // The device must not be locked when allocate_phys_page() is called, since in an effort to reclaim
     // physical memory, the page frame allocator may ask the device to trim its cache. This procedure must
