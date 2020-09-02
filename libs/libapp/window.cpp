@@ -67,16 +67,32 @@ void Window::on_event(Event& event) {
         case Event::Type::Mouse: {
             auto& mouse_event = static_cast<MouseEvent&>(event);
             Widget* widget = nullptr;
-            if (mouse_event.left() == MOUSE_NO_CHANGE && mouse_event.right() == MOUSE_NO_CHANGE) {
-                if (!focused_widget())
+            if (mouse_event.left() == MOUSE_DOWN) {
+                m_left_down = true;
+            } else if (mouse_event.left() == MOUSE_UP) {
+                m_left_down = false;
+            }
+
+            if (mouse_event.right() == MOUSE_DOWN) {
+                m_right_down = true;
+            } else if (mouse_event.right() == MOUSE_UP) {
+                m_right_down = false;
+            }
+
+            if (mouse_event.left() == MOUSE_NO_CHANGE && mouse_event.right() == MOUSE_NO_CHANGE && m_right_down && m_left_down) {
+                if (!focused_widget()) {
                     return;
+                }
                 widget = focused_widget().get();
             } else {
                 widget = &find_widget_at_point({ mouse_event.x(), mouse_event.y() });
+                if (focused_widget().get() != widget) {
+                    focused_widget()->on_leave();
+                }
+                set_focused_widget(*widget);
             }
             mouse_event.set_x(mouse_event.x() - widget->rect().x());
             mouse_event.set_y(mouse_event.y() - widget->rect().y());
-            set_focused_widget(*widget);
             widget->on_mouse_event(mouse_event);
             break;
         }

@@ -29,6 +29,7 @@ public:
     virtual void on_key_event(KeyEvent&) {}
     virtual void on_resize();
     virtual void on_focused() {}
+    virtual void on_leave() {}
 
     void set_rect(const Rect& rect);
     const Rect& rect() const { return m_rect; }

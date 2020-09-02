@@ -41,6 +41,8 @@ private:
     SharedPtr<WindowServer::Window> m_ws_window;
     WeakPtr<Widget> m_focused_widget;
     bool m_will_draw_soon { false };
+    bool m_left_down { false };
+    bool m_right_down { false };
 };
 
 }
