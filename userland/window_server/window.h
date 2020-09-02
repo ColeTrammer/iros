@@ -3,6 +3,7 @@
 #include <graphics/rect.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
+#include <sys/mman.h>
 
 class PixelBuffer;
 
@@ -10,7 +11,7 @@ typedef uint64_t wid_t;
 
 class Window {
 public:
-    Window(String shm_path, const Rect& rect, String title, int client_id);
+    Window(const Rect& rect, String title, int client_id);
     ~Window();
 
     Window(const Window& other) = delete;
@@ -27,6 +28,8 @@ public:
 
     wid_t id() const { return m_id; }
     int client_id() const { return m_client_id; }
+
+    const String& shm_path() const { return m_shm_path; }
 
     void relative_resize(int delta_x, int delta_y);
 
@@ -57,4 +60,6 @@ private:
     Rect m_resize_rect;
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
+    void* m_raw_buffer { MAP_FAILED };
+    size_t m_raw_buffer_size { 0 };
 };

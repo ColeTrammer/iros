@@ -159,15 +159,12 @@ void Server::update_draw_timer() {
 }
 
 void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd) {
-    char s[50];
-    s[49] = '\0';
-    snprintf(s, 49, "/window_server_%d", 2 * client_fd);
-
     const WindowServer::Message::CreateWindowRequest& data = request.data.create_window_request;
-    auto window = make_shared<Window>(s, Rect(data.x, data.y, data.width, data.height), String(data.name), client_fd);
+    auto window = make_shared<Window>(Rect(data.x, data.y, data.width, data.height), String(data.name), client_fd);
     m_manager->add_window(window);
 
-    auto to_send = WindowServer::Message::CreateWindowResponse::create(window->id(), window->buffer()->size_in_bytes(), s);
+    auto to_send =
+        WindowServer::Message::CreateWindowResponse::create(window->id(), window->buffer()->size_in_bytes(), window->shm_path().string());
     assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
 }
 

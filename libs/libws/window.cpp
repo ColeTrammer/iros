@@ -15,30 +15,21 @@ Window::Window(const Rect& rect, Message::CreateWindowResponse& created_data, Co
 }
 
 void Window::resize(int new_width, int new_height) {
-    if (m_front) {
-        munmap(m_front->pixels(), m_front->size_in_bytes());
-    }
-    if (m_back) {
-        munmap(m_back->pixels(), m_back->size_in_bytes());
+    if (m_raw_pixels != MAP_FAILED) {
+        munmap(m_raw_pixels, m_raw_pixels_size);
+        m_raw_pixels = MAP_FAILED;
     }
 
-    auto path = m_shm_path;
-    int shm_front = shm_open(path.string(), O_RDWR, 0);
-    path[path.size() - 1]++;
-    int shm_back = shm_open(path.string(), O_RDWR, 0);
-    assert(shm_front != -1);
-    assert(shm_back != -1);
+    int shm = shm_open(m_shm_path.string(), O_RDWR, 0);
+    assert(shm != -1);
 
-    void* front_raw_memory = mmap(nullptr, new_width * new_height * sizeof(uint32_t), PROT_WRITE | PROT_READ, MAP_SHARED, shm_front, 0);
-    void* back_raw_memory = mmap(nullptr, new_width * new_height * sizeof(uint32_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_back, 0);
-    assert(front_raw_memory != MAP_FAILED);
-    assert(back_raw_memory != MAP_FAILED);
+    m_raw_pixels_size = 2 * new_width * new_height * sizeof(uint32_t);
+    m_raw_pixels = mmap(nullptr, m_raw_pixels_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm, 0);
+    assert(m_raw_pixels != MAP_FAILED);
+    close(shm);
 
-    close(shm_front);
-    close(shm_back);
-
-    m_front = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(front_raw_memory), new_width, new_height);
-    m_back = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(back_raw_memory), new_width, new_height);
+    m_front = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels), new_width, new_height);
+    m_back = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels) + m_raw_pixels_size / 2 / sizeof(uint32_t), new_width, new_height);
 
     m_rect.set_width(new_width);
     m_rect.set_height(new_height);
