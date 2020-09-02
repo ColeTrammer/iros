@@ -59,8 +59,8 @@ void TerminalWidget::render() {
 #endif /* TERMINAL_WIDGET_DEBUG */
 
     Renderer renderer(*window()->pixels());
-    auto x_offset = rect().x();
-    auto y_offset = rect().y();
+    auto x_offset = rect().x() + 5;
+    auto y_offset = rect().y() + 5;
 
     auto& rows = m_tty.rows();
     for (auto r = 0; r < rows.size(); r++) {
@@ -113,8 +113,8 @@ void TerminalWidget::on_resize() {
     m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
     m_in_selection = false;
 
-    int rows = rect().height() / cell_height;
-    int cols = rect().width() / cell_width;
+    int rows = (rect().height() - 10) / cell_height;
+    int cols = (rect().width() - 10) / cell_width;
     m_tty.resize(rows, cols);
     m_pseudo_terminal.set_size(rows, cols);
 }

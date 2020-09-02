@@ -32,10 +32,19 @@ Window::~Window() {
 Window::Window(int x, int y, int width, int height, String name) {
     m_ws_window = App::the().ws_connection().create_window(x, y, width, height, move(name));
     m_ws_window->set_draw_callback([this](auto&) {
-        render();
+        if (m_main_widget) {
+            m_main_widget->render();
+        }
     });
     set_rect({ 0, 0, width, height });
     register_window(*this);
+}
+
+void Window::set_rect(const Rect& rect) {
+    m_rect = rect;
+    if (m_main_widget) {
+        m_main_widget->set_rect(rect);
+    }
 }
 
 void Window::on_event(Event& event) {
@@ -58,8 +67,8 @@ void Window::on_event(Event& event) {
 
                 m_ws_window->resize(data.new_width, data.new_height);
                 pixels()->clear();
-                set_rect({ rect().x(), rect().y(), data.new_width, data.new_height });
-                draw();
+                set_rect({ 0, 0, data.new_width, data.new_height });
+                invalidate_rect(rect());
                 break;
             }
             break;
@@ -85,15 +94,18 @@ void Window::on_event(Event& event) {
                 }
                 widget = focused_widget().get();
             } else {
-                widget = &find_widget_at_point({ mouse_event.x(), mouse_event.y() });
+                widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
                 if (focused_widget().get() != widget) {
                     focused_widget()->on_leave();
                 }
-                set_focused_widget(*widget);
+                set_focused_widget(widget);
             }
-            mouse_event.set_x(mouse_event.x() - widget->rect().x());
-            mouse_event.set_y(mouse_event.y() - widget->rect().y());
-            widget->on_mouse_event(mouse_event);
+
+            if (widget) {
+                mouse_event.set_x(mouse_event.x() - widget->rect().x());
+                mouse_event.set_y(mouse_event.y() - widget->rect().y());
+                widget->on_mouse_event(mouse_event);
+            }
             break;
         }
         case Event::Type::Key: {
@@ -107,9 +119,9 @@ void Window::on_event(Event& event) {
     }
 }
 
-Widget& Window::find_widget_at_point(Point p) {
-    Widget* parent = this;
-    while (!parent->children().empty()) {
+Widget* Window::find_widget_at_point(Point p) {
+    Widget* parent = m_main_widget.get();
+    while (parent && !parent->children().empty()) {
         bool found = false;
         for (auto& child : parent->children()) {
             if (child->is_widget()) {
@@ -126,21 +138,29 @@ Widget& Window::find_widget_at_point(Point p) {
             break;
         }
     }
-    return *parent;
+    return parent;
 }
 
-void Window::set_focused_widget(Widget& widget) {
-    m_focused_widget = move(widget.weak_from_this());
-    widget.on_focused();
+void Window::set_focused_widget(Widget* widget) {
+    if (!widget) {
+        m_focused_widget.reset();
+        return;
+    }
+
+    m_focused_widget = widget->weak_from_this();
+    widget->on_focused();
 }
 
 SharedPtr<Widget> Window::focused_widget() {
     auto ret = m_focused_widget.lock();
     if (!ret) {
-        set_focused_widget(*this);
-        return shared_from_this();
+        set_focused_widget(nullptr);
     }
-    return move(ret);
+    return ret;
+}
+
+void Window::draw() {
+    m_ws_window->draw();
 }
 
 void Window::invalidate_rect(const Rect& rect) {

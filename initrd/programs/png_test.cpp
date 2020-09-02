@@ -1,4 +1,5 @@
 #include <app/app.h>
+#include <app/widget.h>
 #include <app/window.h>
 #include <graphics/png.h>
 #include <graphics/renderer.h>
@@ -6,21 +7,19 @@
 
 static SharedPtr<PixelBuffer> s_bitmap;
 
-class TestWindow final : public App::Window {
-    APP_OBJECT(TestWindow)
+class TestWidget final : public App::Widget {
+    APP_OBJECT(TestWidget)
 
 public:
-    using App::Window::Window;
-
     virtual void render() override {
-        Renderer renderer(*pixels());
+        Renderer renderer(*window()->pixels());
 
         auto w = s_bitmap->width();
         auto h = s_bitmap->height();
         auto rect = Rect { 0, 0, w, h };
         renderer.draw_bitmap(*s_bitmap, rect, rect);
 
-        App::Window::render();
+        App::Widget::render();
     }
 };
 
@@ -42,8 +41,8 @@ int main(int argc, char **argv) {
 
     App::App app;
 
-    auto window = TestWindow::create(nullptr, 50, 50, 400, 400, "Graphics Test");
-    window->draw();
+    auto window = App::Window::create(nullptr, 50, 50, 400, 400, "Graphics Test");
+    window->set_main_widget<TestWidget>();
     app.enter();
     return 0;
 #endif /* __os_2__ */

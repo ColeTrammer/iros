@@ -127,8 +127,9 @@ int main(int argc, char** argv) {
     App::App app;
 
     auto window = App::Window::create(nullptr, 250, 150, 500, 600, "PSF Edit");
+    auto& main_widget = window->set_main_widget<App::Widget>();
 
-    auto& layout = window->set_layout<App::VerticalBoxLayout>();
+    auto& layout = main_widget.set_layout<App::VerticalBoxLayout>();
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
     glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(0)), 0);
 
@@ -159,7 +160,6 @@ int main(int argc, char** argv) {
         }
     };
 
-    window->draw();
     app.enter();
     return 0;
 }

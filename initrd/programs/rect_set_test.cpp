@@ -1,16 +1,15 @@
 #include <app/app.h>
+#include <app/widget.h>
 #include <app/window.h>
 #include <graphics/rect_set.h>
 #include <graphics/renderer.h>
 
-class TestWindow final : public App::Window {
-    APP_OBJECT(TestWindow)
+class TestWidget final : public App::Widget {
+    APP_OBJECT(TestWidget)
 
 public:
-    using App::Window::Window;
-
     virtual void render() override {
-        Renderer renderer(*pixels());
+        Renderer renderer(*window()->pixels());
 
         RectSet s;
         s.add({ 50, 50, 300, 300 });
@@ -27,7 +26,7 @@ public:
             fprintf(stderr, "x=%d y=%d w=%d h=%d\n", r.x(), r.y(), r.width(), r.height());
         }
 
-        App::Window::render();
+        App::Widget::render();
     }
 };
 
@@ -35,8 +34,8 @@ int main() {
 #ifdef __os_2__
     App::App app;
 
-    auto window = TestWindow::create(nullptr, 50, 50, 600, 600, "Rect Set Test");
-    window->draw();
+    auto window = App::Window::create(nullptr, 50, 50, 600, 600, "Rect Set Test");
+    window->set_main_widget<TestWidget>();
     app.enter();
     return 0;
 #endif /* __os_2__ */

@@ -1,16 +1,15 @@
 #include <app/app.h>
+#include <app/widget.h>
 #include <app/window.h>
 #include <graphics/renderer.h>
 #include <liim/string.h>
 
-class TestWindow final : public App::Window {
-    APP_OBJECT(TestWindow)
+class TestWidget final : public App::Widget {
+    APP_OBJECT(TestWidget)
 
 public:
-    using App::Window::Window;
-
     virtual void render() override {
-        Renderer renderer(*pixels());
+        Renderer renderer(*window()->pixels());
         renderer.fill_rect(5, 5, 50, 50, ColorValue::White);
         renderer.render_text(60, 5, "Hello, World!", ColorValue::White);
 
@@ -20,7 +19,7 @@ public:
         renderer.draw_line({ 5, 350 }, { 205, 200 }, ColorValue::White);
         renderer.draw_line({ 300, 50 }, { 350, 350 }, ColorValue::White);
 
-        App::Window::render();
+        App::Widget::render();
     }
 };
 
@@ -28,8 +27,8 @@ int main() {
 #ifdef __os_2__
     App::App app;
 
-    auto window = TestWindow::create(nullptr, 50, 50, 400, 400, "Graphics Test");
-    window->draw();
+    auto window = App::Window::create(nullptr, 50, 50, 400, 400, "Graphics Test");
+    window->set_main_widget<TestWidget>();
     app.enter();
     return 0;
 #endif /* __os_2__ */

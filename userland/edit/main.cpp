@@ -66,10 +66,7 @@ int main(int argc, char** argv) {
         App::App app;
 
         auto window = App::Window::create(nullptr, 250, 250, 400, 400, "Edit");
-
-        auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
-        auto& panel = layout.add<AppPanel>();
-        layout.set_margins({ 0, 0, 0, 0 });
+        auto& panel = window->set_main_widget<AppPanel>();
 
         panel.on_quit = [&] {
             app.main_event_loop().set_should_exit(true);

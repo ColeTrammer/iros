@@ -24,8 +24,9 @@ int main() {
     App::App app;
 
     auto window = App::Window::create(nullptr, 300, 300, 250, 250, "About");
+    auto& main_widget = window->set_main_widget<App::Widget>();
 
-    auto& layout = window->set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
+    auto& layout = main_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
     layout.add<App::TextLabel>("Hello World!");
     layout.add<App::Widget>();
     layout.add<TestWidget>();
@@ -33,8 +34,6 @@ int main() {
     button.on_click = [] {
         printf("clicked!\n");
     };
-
-    window->draw();
 
     app.enter();
     return 0;
