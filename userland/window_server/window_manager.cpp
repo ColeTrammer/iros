@@ -63,7 +63,7 @@ void WindowManager::set_window_visibility(SharedPtr<Window> window, bool visible
 }
 
 void WindowManager::cleanup_active_window_state(wid_t wid) {
-    if (m_active_window->id() == wid) {
+    if (m_active_window && m_active_window->id() == wid) {
         set_active_window(nullptr);
     }
 

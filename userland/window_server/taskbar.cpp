@@ -19,6 +19,10 @@ Taskbar::Taskbar(int display_width, int display_height) : m_display_width(displa
 }
 
 void Taskbar::add_item(SharedPtr<Window> window) {
+    if (window->type() != WindowServer::WindowType::Application) {
+        return;
+    }
+
     if (m_items.empty()) {
         m_items.add({ { taskbar_item_x_spacing, m_display_height - taskbar_height + taskbar_item_y_spacing, taskbar_item_width,
                         taskbar_height - 2 * taskbar_item_y_spacing },
