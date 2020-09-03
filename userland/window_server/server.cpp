@@ -113,19 +113,19 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
         }
     };
 
-    m_manager->on_window_close_button_pressed = [this](auto& window) {
-        auto message = WindowServer::Message::WindowClosedEventMessage::create(window.id());
-        if (write(window.client_id(), message.get(), message->total_size()) == -1) {
-            kill_client(window.client_id());
+    m_manager->on_window_close_button_pressed = [this](auto window) {
+        auto message = WindowServer::Message::WindowClosedEventMessage::create(window->id());
+        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window->client_id());
             return;
         }
-        m_manager->remove_window(window.id());
+        m_manager->remove_window(window);
     };
 
-    m_manager->on_window_resize_start = [this](auto& window) {
-        auto message = WindowServer::Message::WindowDidResizeMessage::create(window.id());
-        if (write(window.client_id(), message.get(), message->total_size()) == -1) {
-            kill_client(window.client_id());
+    m_manager->on_window_resize_start = [this](auto window) {
+        auto message = WindowServer::Message::WindowDidResizeMessage::create(window->id());
+        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window->client_id());
             return;
         }
     };
@@ -170,7 +170,13 @@ void Server::handle_create_window_request(const WindowServer::Message& request, 
 
 void Server::handle_remove_window_request(const WindowServer::Message& request, int client_fd) {
     wid_t wid = request.data.remove_window_request.wid;
-    m_manager->remove_window(wid);
+    auto window = m_manager->find_by_wid(wid);
+    if (window) {
+        kill_client(client_fd);
+        return;
+    }
+
+    m_manager->remove_window(window);
 
     auto to_send = WindowServer::Message::RemoveWindowResponse::create(true);
     assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
@@ -195,25 +201,24 @@ void Server::handle_swap_buffer_request(const WindowServer::Message& request, in
     (void) client_id;
 
     const WindowServer::Message::SwapBufferRequest& data = request.data.swap_buffer_request;
-    m_manager->windows().for_each([&](auto& window) {
-        if (window->id() == data.wid) {
-            window->swap();
-        }
-    });
+    auto window = m_manager->find_by_wid(data.wid);
+    if (!window) {
+        kill_client(client_id);
+        return;
+    }
+
+    window->swap();
 }
 
 void Server::handle_window_ready_to_resize_message(const WindowServer::Message& message, int client_id) {
     wid_t wid = message.data.window_ready_to_resize_message.wid;
-    auto* window_ptr = m_manager->windows().first_match([&](const auto& window) -> bool {
-        return window->id() == wid;
-    });
-
+    auto window_ptr = m_manager->find_by_wid(wid);
     if (!window_ptr) {
         kill_client(client_id);
         return;
     }
 
-    auto& window = **window_ptr;
+    auto& window = *window_ptr;
     if (!window.in_resize()) {
         kill_client(client_id);
         return;
@@ -233,13 +238,14 @@ void Server::handle_window_ready_to_resize_message(const WindowServer::Message& 
     }
 }
 
-void Server::handle_window_rename_request(const WindowServer::Message& request, int) {
+void Server::handle_window_rename_request(const WindowServer::Message& request, int client_fd) {
     const WindowServer::Message::WindowRenameRequest& data = request.data.window_rename_request;
-    m_manager->windows().for_each([&](auto& window) {
-        if (window->id() == data.wid) {
-            window->set_title(String(data.name));
-        }
-    });
+    auto window = m_manager->find_by_wid(data.wid);
+    if (!window) {
+        kill_client(client_fd);
+        return;
+    }
+    window->set_title(String(data.name));
 }
 
 void Server::start() {

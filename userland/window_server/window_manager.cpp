@@ -39,7 +39,8 @@ WindowManager::WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, Shared
 WindowManager::~WindowManager() {}
 
 void WindowManager::add_window(SharedPtr<Window> window) {
-    windows().add(window);
+    m_window_stack.add(window);
+    m_window_map.put(window->id(), window);
     m_taskbar.notify_window_added(window);
     if (window->visible()) {
         set_active_window(window);
@@ -77,18 +78,14 @@ void WindowManager::cleanup_active_window_state(wid_t wid) {
     }
 }
 
-void WindowManager::remove_window(wid_t wid) {
-    for (int i = 0; i < windows().size(); i++) {
-        auto& window = *windows()[i];
-        if (window.id() == wid) {
-            m_taskbar.notify_window_removed(window);
-            invalidate_rect(window.rect());
-            windows().remove(i);
-            break;
-        }
-    }
+void WindowManager::remove_window(SharedPtr<Window> window) {
+    m_window_map.remove(window->id());
+    m_window_stack.remove_element(window);
 
-    cleanup_active_window_state(wid);
+    m_taskbar.notify_window_removed(*window);
+    invalidate_rect(window->rect());
+
+    cleanup_active_window_state(window->id());
 }
 
 Point WindowManager::mouse_position_relative_to_window(const Window& window) const {
@@ -96,11 +93,15 @@ Point WindowManager::mouse_position_relative_to_window(const Window& window) con
 }
 
 void WindowManager::remove_windows_of_client(int client_id) {
-    m_windows.for_each_reverse([&](auto& window) {
+    Vector<SharedPtr<Window>> windows_to_remove;
+    m_window_map.for_each([&](auto& window) {
         if (window->client_id() == client_id) {
-            remove_window(window->id());
+            windows_to_remove.add(window);
         }
     });
+    for (auto& window : windows_to_remove) {
+        remove_window(window);
+    }
 }
 
 void WindowManager::draw() {
@@ -149,7 +150,9 @@ void WindowManager::draw() {
         renderer.fill_rect(rect, ColorValue::DarkGray);
     }
 
-    for_each_window(render_window);
+    for (auto& window : m_window_stack) {
+        render_window(window);
+    }
 
     m_taskbar.render(renderer);
 
@@ -188,9 +191,7 @@ void WindowManager::swap_buffers() {
 }
 
 SharedPtr<Window> WindowManager::find_by_wid(wid_t id) {
-    auto* ret = m_windows.first_match([&](auto& window) {
-        return window->id() == id;
-    });
+    auto* ret = m_window_map.get(id);
     return ret ? *ret : nullptr;
 }
 
@@ -216,35 +217,35 @@ void WindowManager::set_active_window(SharedPtr<Window> window) {
 }
 
 void WindowManager::move_to_front_and_make_active(SharedPtr<Window> window) {
-    for (int i = 0; i < windows().size(); i++) {
-        if (windows()[i] == window) {
-            windows().rotate_left(i, windows().size());
+    for (int i = 0; i < m_window_stack.size(); i++) {
+        if (m_window_stack[i] == window) {
+            m_window_stack.rotate_left(i, m_window_stack.size());
             break;
         }
     }
     set_active_window(window);
 }
 
-int WindowManager::find_window_intersecting_point(Point p) {
-    for (int i = windows().size() - 1; i >= 0; i--) {
-        auto& window = windows()[i];
+SharedPtr<Window> WindowManager::find_window_intersecting_point(Point p) {
+    for (int i = m_window_stack.size() - 1; i >= 0; i--) {
+        auto& window = m_window_stack[i];
         if (window->visible() && window->rect().intersects(p)) {
-            return i;
+            return window;
         }
     }
 
-    return -1;
+    return nullptr;
 }
 
-int WindowManager::find_window_intersecting_rect(const Rect& r) {
-    for (int i = windows().size() - 1; i >= 0; i--) {
-        auto& window = windows()[i];
+SharedPtr<Window> WindowManager::find_window_intersecting_rect(const Rect& r) {
+    for (int i = m_window_stack.size() - 1; i >= 0; i--) {
+        auto& window = m_window_stack[i];
         if (window->visible() && window->rect().intersects(r)) {
-            return i;
+            return window;
         }
     }
 
-    return -1;
+    return nullptr;
 }
 
 void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state right) {
@@ -260,18 +261,17 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
     }
 
     auto cursor_rect = Rect(m_mouse_x, m_mouse_y, cursor_width, cursor_height);
-    int index = find_window_intersecting_rect(cursor_rect);
-    if (index == -1) {
+    auto window = find_window_intersecting_rect(cursor_rect);
+    if (!window) {
         return;
     }
 
-    auto& window = windows()[index];
     int dx = m_mouse_x - window->close_button_x();
     int dy = m_mouse_y - window->close_button_y();
     if (window->type() == WindowServer::WindowType::Application &&
         dx * dx + dy * dy <= window->close_button_radius() * window->close_button_radius()) {
         if (on_window_close_button_pressed) {
-            on_window_close_button_pressed(*window);
+            on_window_close_button_pressed(window);
         }
         return;
     }
@@ -386,7 +386,7 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
         if (!was_already_resizing) {
             m_window_to_resize->set_in_resize(true);
             if (on_window_resize_start) {
-                on_window_resize_start(*m_window_to_resize);
+                on_window_resize_start(m_window_to_resize);
             }
         }
     }
