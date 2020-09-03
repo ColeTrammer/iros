@@ -35,6 +35,10 @@ public:
 
     void set_title(const String& title);
 
+    bool removed() const { return m_removed; }
+    void set_removed(bool b) { m_removed = b; }
+    void remove();
+
 private:
     friend class Connection;
 
@@ -53,6 +57,7 @@ private:
     String m_shm_path;
     Function<void(SharedPtr<PixelBuffer>&)> m_draw_callback;
     Connection& m_connection;
+    bool m_removed { false };
 };
 
 }

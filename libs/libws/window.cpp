@@ -35,8 +35,15 @@ void Window::resize(int new_width, int new_height) {
     m_rect.set_height(new_height);
 }
 
+void Window::remove() {
+    connection().send_remove_window_request(wid());
+    m_removed = true;
+}
+
 Window::~Window() {
-    connection().windows().remove(wid());
+    if (!removed()) {
+        remove();
+    }
 }
 
 void Window::swap_buffers() {
@@ -62,7 +69,6 @@ void Window::set_visibility(bool visible) {
 
 SharedPtr<Window> Window::construct(const Rect& rect, Message::CreateWindowResponse& created_data, Connection& connection) {
     Window* window = new Window(rect, created_data, connection);
-    connection.windows().put(window->wid(), window);
     return SharedPtr<Window>(window);
 }
 

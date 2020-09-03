@@ -91,6 +91,10 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
                         handle_remove_window_request(message, client_fd);
                         break;
                     }
+                    case WindowServer::Message::Type::ChangeWindowVisibilityRequest: {
+                        handle_change_window_visibility_request(message, client_fd);
+                        break;
+                    }
                     case WindowServer::Message::Type::SwapBufferRequest: {
                         handle_swap_buffer_request(message, client_fd);
                         break;
@@ -114,12 +118,13 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
     };
 
     m_manager->on_window_close_button_pressed = [this](auto window) {
+        m_manager->remove_window(window);
+
         auto message = WindowServer::Message::WindowClosedEventMessage::create(window->id());
         if (write(window->client_id(), message.get(), message->total_size()) == -1) {
             kill_client(window->client_id());
             return;
         }
-        m_manager->remove_window(window);
     };
 
     m_manager->on_window_resize_start = [this](auto window) {

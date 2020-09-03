@@ -108,6 +108,23 @@ void Connection::send_change_window_visibility_request(wid_t wid, bool visible) 
     }
 }
 
+void Connection::send_remove_window_request(wid_t wid) {
+    auto message = WindowServer::Message::RemoveWindowRequest::create(wid);
+    assert(write(m_fd, message.get(), message->total_size()) != -1);
+
+    for (;;) {
+        read_from_server();
+
+        for (int i = 0; i < m_messages.size(); i++) {
+            auto& message = m_messages[i];
+            if (message->type == WindowServer::Message::Type::RemoveWindowResponse) {
+                m_messages.remove(i);
+                return;
+            }
+        }
+    }
+}
+
 void Connection::send_swap_buffer_request(wid_t wid) {
     auto swap_buffer_request = WindowServer::Message::SwapBufferRequest::create(wid);
     assert(write(m_fd, swap_buffer_request.get(), swap_buffer_request->total_size()) != -1);

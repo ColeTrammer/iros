@@ -70,6 +70,7 @@ void Window::on_event(Event& event) {
         case Event::Type::Window: {
             auto& window_event = static_cast<WindowEvent&>(event);
             if (window_event.window_event_type() == WindowEvent::Type::Close) {
+                m_ws_window->set_removed(true);
                 App::the().main_event_loop().set_should_exit(true);
                 return;
             }
