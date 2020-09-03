@@ -39,8 +39,11 @@ public:
     const Rect& rect() const { return m_rect; }
     void set_rect(const Rect& rect);
 
+    void hide();
+    void show();
+
 protected:
-    Window(int x, int y, int width, int height, String name);
+    Window(int x, int y, int width, int height, String name, WindowServer::WindowType window_type = WindowServer::WindowType::Application);
     virtual void on_event(Event& event) override;
 
 private:
@@ -59,6 +62,7 @@ private:
     bool m_will_draw_soon { false };
     bool m_left_down { false };
     bool m_right_down { false };
+    bool m_visible { false };
 };
 
 }

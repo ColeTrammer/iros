@@ -17,11 +17,12 @@ public:
     Connection();
     ~Connection();
 
-    SharedPtr<Window> create_window(int x, int y, int width, int height, const String& name);
+    SharedPtr<Window> create_window(int x, int y, int width, int height, const String& name, WindowType type);
 
     void send_swap_buffer_request(wid_t wid);
     UniquePtr<Message> send_window_ready_to_resize_message(wid_t wid);
     void send_window_rename_request(wid_t wid, const String& name);
+    void send_change_window_visibility_request(wid_t wid, bool visible);
 
     template<typename C>
     void set_draw_callback(SharedPtr<Window>& window, C callback) {

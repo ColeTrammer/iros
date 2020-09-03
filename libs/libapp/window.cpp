@@ -29,8 +29,9 @@ Window::~Window() {
     unregister_window(wid());
 }
 
-Window::Window(int x, int y, int width, int height, String name) {
-    m_ws_window = App::the().ws_connection().create_window(x, y, width, height, move(name));
+Window::Window(int x, int y, int width, int height, String name, WindowServer::WindowType type)
+    : m_visible(type == WindowServer::WindowType::Application) {
+    m_ws_window = App::the().ws_connection().create_window(x, y, width, height, move(name), type);
     m_ws_window->set_draw_callback([this](auto&) {
         if (m_main_widget) {
             m_main_widget->render();
@@ -45,6 +46,24 @@ void Window::set_rect(const Rect& rect) {
     if (m_main_widget) {
         m_main_widget->set_rect(rect);
     }
+}
+
+void Window::hide() {
+    if (!m_visible) {
+        return;
+    }
+
+    m_visible = false;
+    m_ws_window->set_visibility(false);
+}
+
+void Window::show() {
+    if (m_visible) {
+        return;
+    }
+
+    m_visible = true;
+    m_ws_window->set_visibility(true);
 }
 
 void Window::on_event(Event& event) {

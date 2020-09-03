@@ -24,6 +24,8 @@ struct Message {
         CreateWindowResponse,
         RemoveWindowRequest,
         RemoveWindowResponse,
+        ChangeWindowVisibilityRequest,
+        ChangeWindowVisibilityResponse,
         SwapBufferRequest,
         KeyEventMessage,
         MouseEventMessage,
@@ -99,6 +101,36 @@ struct Message {
         }
 
         bool success;
+    };
+
+    struct ChangeWindowVisibilityRequeset {
+        static SharedPtr<Message> create(wid_t wid, bool visible) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(ChangeWindowVisibilityRequeset));
+            message->type = Message::Type::ChangeWindowVisibilityRequest;
+            message->data_len = sizeof(ChangeWindowVisibilityRequeset);
+            auto& request = message->data.change_window_visibility_request;
+            request.wid = wid;
+            request.visible = visible;
+            return SharedPtr<Message>(message);
+        }
+
+        wid_t wid;
+        bool visible;
+    };
+
+    struct ChangeWindowVisibilityResponse {
+        static SharedPtr<Message> create(wid_t wid, bool visible) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(ChangeWindowVisibilityResponse));
+            message->type = Message::Type::ChangeWindowVisibilityResponse;
+            message->data_len = sizeof(ChangeWindowVisibilityResponse);
+            auto& response = message->data.change_window_visibility_response;
+            response.wid = wid;
+            response.visible = visible;
+            return SharedPtr<Message>(message);
+        }
+
+        wid_t wid;
+        bool visible;
     };
 
     struct SwapBufferRequest {
@@ -232,6 +264,8 @@ struct Message {
         CreateWindowResponse create_window_response;
         RemoveWindowRequest remove_window_request;
         RemoveWindowResponse remove_window_response;
+        ChangeWindowVisibilityRequeset change_window_visibility_request;
+        ChangeWindowVisibilityResponse change_window_visibility_response;
         SwapBufferRequest swap_buffer_request;
         KeyEventMessage key_event_message;
         MouseEventMessage mouse_event_message;

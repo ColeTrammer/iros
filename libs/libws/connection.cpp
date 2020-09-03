@@ -26,8 +26,8 @@ Connection::~Connection() {
     close(m_fd);
 }
 
-SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name) {
-    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name, WindowType::Application);
+SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name, WindowType type) {
+    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name, type);
     assert(write(m_fd, create_message.get(), create_message->total_size()) != -1);
 
     for (;;) {
@@ -86,6 +86,23 @@ UniquePtr<Message> Connection::send_window_ready_to_resize_message(wid_t wid) {
                 auto ret = move(message);
                 m_messages.remove(i);
                 return ret;
+            }
+        }
+    }
+}
+
+void Connection::send_change_window_visibility_request(wid_t wid, bool visible) {
+    auto message = WindowServer::Message::ChangeWindowVisibilityRequeset::create(wid, visible);
+    assert(write(m_fd, message.get(), message->total_size()) != -1);
+
+    for (;;) {
+        read_from_server();
+
+        for (int i = 0; i < m_messages.size(); i++) {
+            auto& message = m_messages[i];
+            if (message->type == WindowServer::Message::Type::ChangeWindowVisibilityResponse) {
+                m_messages.remove(i);
+                return;
             }
         }
     }

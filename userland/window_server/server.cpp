@@ -176,6 +176,21 @@ void Server::handle_remove_window_request(const WindowServer::Message& request, 
     assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
 }
 
+void Server::handle_change_window_visibility_request(const WindowServer::Message& request, int client_fd) {
+    wid_t wid = request.data.change_window_visibility_request.wid;
+    auto window = m_manager->find_by_wid(wid);
+    if (!window) {
+        kill_client(client_fd);
+        return;
+    }
+
+    bool visible = request.data.change_window_visibility_request.visible;
+    m_manager->set_window_visibility(window, visible);
+
+    auto to_send = WindowServer::Message::ChangeWindowVisibilityResponse::create(wid, visible);
+    assert(write(client_fd, to_send.get(), to_send->total_size()) != -1);
+}
+
 void Server::handle_swap_buffer_request(const WindowServer::Message& request, int client_id) {
     (void) client_id;
 

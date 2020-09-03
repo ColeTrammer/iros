@@ -52,6 +52,9 @@ public:
     void set_in_resize(bool b) { m_in_resize = b; }
     bool in_resize() const { return m_in_resize; }
 
+    bool visible() const { return m_visible; }
+    void set_visible(bool b) { m_visible = b; }
+
     bool resizable() const { return type() == WindowServer::WindowType::Application; }
     bool movable() const { return type() == WindowServer::WindowType::Application; }
 
@@ -65,6 +68,7 @@ private:
     String m_title;
     const int m_client_id;
     WindowServer::WindowType m_type;
+    bool m_visible { false };
     bool m_in_resize { false };
     Rect m_resize_rect;
     SharedPtr<PixelBuffer> m_front_buffer;

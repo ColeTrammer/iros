@@ -34,6 +34,7 @@ public:
     const Vector<SharedPtr<Window>>& windows() const { return m_windows; }
 
     void add_window(SharedPtr<Window> window);
+    void set_window_visibility(SharedPtr<Window> window, bool visible);
 
     template<typename C>
     void for_each_window(C callback) {
@@ -59,11 +60,9 @@ public:
 
     Point mouse_position_relative_to_window(const Window& window) const;
 
-    void invalidate_rect(const Rect& rect);
+    SharedPtr<Window> find_by_wid(wid_t wid);
 
-    Function<void(Window&)> on_window_close_button_pressed;
-    Function<void(Window&)> on_window_resize_start;
-    Function<void()> on_rect_invaliadted;
+    void invalidate_rect(const Rect& rect);
 
     bool should_send_mouse_events(const Window& window) const {
         return &window != m_window_to_move.get() && &window != m_window_to_resize.get();
@@ -73,7 +72,13 @@ public:
 
     Rect screen_rect() const { return { 0, 0, m_front_buffer->width(), m_front_buffer->height() }; }
 
+    Function<void(Window&)> on_window_close_button_pressed;
+    Function<void(Window&)> on_window_resize_start;
+    Function<void()> on_rect_invaliadted;
+
 private:
+    void cleanup_active_window_state(wid_t wid);
+
     void swap_buffers();
     void set_mouse_coordinates(int x, int y);
 
