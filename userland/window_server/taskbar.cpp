@@ -19,7 +19,7 @@ Taskbar::Taskbar(int display_width, int display_height) : m_display_width(displa
 }
 
 void Taskbar::add_item(SharedPtr<Window> window) {
-    if (window->type() != WindowServer::WindowType::Application) {
+    if (window->type() != WindowServer::WindowType::Application || window->parent()) {
         return;
     }
 

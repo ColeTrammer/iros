@@ -44,7 +44,8 @@ public:
     bool visible() const { return m_visible; }
 
 protected:
-    Window(int x, int y, int width, int height, String name, WindowServer::WindowType window_type = WindowServer::WindowType::Application);
+    Window(int x, int y, int width, int height, String name, WindowServer::WindowType window_type = WindowServer::WindowType::Application,
+           wid_t parent_id = 0);
     virtual void on_event(Event& event) override;
 
 private:

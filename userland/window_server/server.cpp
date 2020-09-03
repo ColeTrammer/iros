@@ -160,7 +160,26 @@ void Server::update_draw_timer() {
 
 void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd) {
     const WindowServer::Message::CreateWindowRequest& data = request.data.create_window_request;
-    auto window = make_shared<Window>(Rect(data.x, data.y, data.width, data.height), String(data.name), client_fd, data.type);
+    SharedPtr<Window> parent;
+    if (data.parent_id) {
+        parent = m_manager->find_by_wid(data.parent_id);
+        if (!parent) {
+            kill_client(client_fd);
+            return;
+        }
+    }
+
+    Rect rect(data.x, data.y, data.width, data.height);
+    if (parent) {
+        rect.set_x(rect.x() + parent->content_rect().x());
+        rect.set_y(rect.y() + parent->content_rect().y());
+    }
+
+    auto window = make_shared<Window>(rect, String(data.name), client_fd, data.type);
+    if (parent) {
+        Window::set_parent(window, parent);
+    }
+
     m_manager->add_window(window);
 
     auto to_send =
@@ -227,8 +246,7 @@ void Server::handle_window_ready_to_resize_message(const WindowServer::Message& 
     auto dw = window.resize_rect().width() - window.rect().width();
     auto dh = window.resize_rect().height() - window.rect().height();
     window.relative_resize(dw, dh);
-    window.set_x(window.resize_rect().x());
-    window.set_y(window.resize_rect().y());
+    window.set_position(window.resize_rect().x(), window.resize_rect().y());
     window.set_in_resize(false);
 
     auto response =

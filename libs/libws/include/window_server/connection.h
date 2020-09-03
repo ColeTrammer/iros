@@ -17,7 +17,7 @@ public:
     Connection();
     ~Connection();
 
-    SharedPtr<Window> create_window(int x, int y, int width, int height, const String& name, WindowType type);
+    SharedPtr<Window> create_window(int x, int y, int width, int height, const String& name, WindowType type, wid_t parent_id);
 
     void send_swap_buffer_request(wid_t wid);
     UniquePtr<Message> send_window_ready_to_resize_message(wid_t wid);

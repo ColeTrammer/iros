@@ -26,8 +26,8 @@ Connection::~Connection() {
     close(m_fd);
 }
 
-SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name, WindowType type) {
-    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name, type);
+SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name, WindowType type, wid_t parent_id) {
+    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name, type, parent_id);
     assert(write(m_fd, create_message.get(), create_message->total_size()) != -1);
 
     for (;;) {

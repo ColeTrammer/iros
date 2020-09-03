@@ -3,6 +3,7 @@
 #include <graphics/rect.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
+#include <liim/vector.h>
 #include <sys/mman.h>
 #include <window_server/message.h>
 
@@ -12,6 +13,10 @@ typedef uint64_t wid_t;
 
 class Window {
 public:
+    static SharedPtr<Window> find_window_intersecting_point(SharedPtr<Window> window, const Point& p);
+    static SharedPtr<Window> find_window_intersecting_rect(SharedPtr<Window> window, const Rect& r);
+    static void set_parent(SharedPtr<Window> child, SharedPtr<Window> parent);
+
     Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type);
     ~Window();
 
@@ -20,8 +25,7 @@ public:
     const Rect& rect() const { return m_rect; }
     const Rect& content_rect() const { return m_content_rect; }
 
-    void set_x(int x);
-    void set_y(int y);
+    void set_position(int x, int y);
 
     int close_button_x() const { return rect().x() + rect().width() - 13; }
     int close_button_y() const { return rect().y() + 10; }
@@ -58,6 +62,22 @@ public:
     bool resizable() const { return type() == WindowServer::WindowType::Application; }
     bool movable() const { return type() == WindowServer::WindowType::Application; }
 
+    Vector<SharedPtr<Window>>& children() { return m_children; }
+    const Vector<SharedPtr<Window>>& children() const { return m_children; }
+
+    Window* parent() { return m_parent; }
+    const Window* parent() const { return m_parent; }
+
+    Window* root() {
+        if (!parent()) {
+            return this;
+        }
+        return parent()->root();
+    }
+    const Window* root() const { return const_cast<Window&>(*this).root(); }
+
+    void did_remove();
+
 private:
     void map_buffers();
 
@@ -71,6 +91,8 @@ private:
     bool m_visible { true };
     bool m_in_resize { false };
     Rect m_resize_rect;
+    Vector<SharedPtr<Window>> m_children;
+    Window* m_parent { nullptr };
     SharedPtr<PixelBuffer> m_front_buffer;
     SharedPtr<PixelBuffer> m_back_buffer;
     void* m_raw_buffer { MAP_FAILED };

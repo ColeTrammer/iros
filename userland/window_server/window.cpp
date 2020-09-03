@@ -12,6 +12,33 @@ static wid_t get_next_id() {
     return next_wid++;
 }
 
+SharedPtr<Window> Window::find_window_intersecting_point(SharedPtr<Window> window, const Point& p) {
+    for (auto& child : window->children()) {
+        auto result = Window::find_window_intersecting_point(child, p);
+        if (result) {
+            return result;
+        }
+    }
+
+    return (window->visible() && window->rect().intersects(p)) ? window : nullptr;
+}
+
+SharedPtr<Window> Window::find_window_intersecting_rect(SharedPtr<Window> window, const Rect& r) {
+    for (auto& child : window->children()) {
+        auto result = Window::find_window_intersecting_rect(child, r);
+        if (result) {
+            return result;
+        }
+    }
+
+    return (window->visible() && window->rect().intersects(r)) ? window : nullptr;
+}
+
+void Window::set_parent(SharedPtr<Window> child, SharedPtr<Window> parent) {
+    child->m_parent = parent.get();
+    parent->m_children.add(move(child));
+}
+
 Window::Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type)
     : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id), m_type(type) {
     m_shm_path = String::format("/window_server_%lu", m_id);
@@ -56,14 +83,19 @@ void Window::update_content_from_rect() {
     }
 }
 
-void Window::set_x(int x) {
-    m_rect.set_x(x);
-    update_content_from_rect();
-}
+void Window::set_position(int x, int y) {
+    int dx = x - m_rect.x();
+    int dy = y - m_rect.y();
 
-void Window::set_y(int y) {
+    m_rect.set_x(x);
     m_rect.set_y(y);
     update_content_from_rect();
+
+    for (auto& child : m_children) {
+        int child_x = child->rect().x() + dx;
+        int child_y = child->rect().y() + dy;
+        child->set_position(child_x, child_y);
+    }
 }
 
 void Window::map_buffers() {
@@ -121,6 +153,18 @@ void Window::relative_resize(int delta_x, int delta_y) {
     } else if (delta_y > 0) {
         m_front_buffer->clear_after_y(old_height);
     }
+}
+
+void Window::did_remove() {
+    if (m_parent) {
+        m_parent->children().remove_if([this](auto& window) {
+            return window.get() == this;
+        });
+    }
+
+    m_children.for_each_reverse([this](auto& child) {
+        WindowManager::the().remove_window(child);
+    });
 }
 
 void Window::swap() {

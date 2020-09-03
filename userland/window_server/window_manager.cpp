@@ -39,13 +39,19 @@ WindowManager::WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, Shared
 WindowManager::~WindowManager() {}
 
 void WindowManager::add_window(SharedPtr<Window> window) {
-    m_window_stack.add(window);
     m_window_map.put(window->id(), window);
-    m_taskbar.notify_window_added(window);
+
     if (window->visible()) {
-        set_active_window(window);
+        if (!window->parent()) {
+            m_window_stack.add(window);
+            set_active_window(window);
+        } else {
+            move_to_front_and_make_active(window);
+        }
         invalidate_rect(window->rect());
     }
+
+    m_taskbar.notify_window_added(window);
 }
 
 void WindowManager::set_window_visibility(SharedPtr<Window> window, bool visible) {
@@ -54,10 +60,18 @@ void WindowManager::set_window_visibility(SharedPtr<Window> window, bool visible
     }
 
     window->set_visible(visible);
+    invalidate_rect(window->rect());
     if (visible) {
-        set_active_window(window);
-        invalidate_rect(window->rect());
+        if (!window->parent()) {
+            m_window_stack.add(window);
+            set_active_window(window);
+        } else {
+            move_to_front_and_make_active(window);
+        }
     } else {
+        if (!window->parent()) {
+            m_window_stack.remove_element(window);
+        }
         cleanup_active_window_state(window->id());
     }
     m_taskbar.notify_window_visibility_changed(move(window));
@@ -86,6 +100,7 @@ void WindowManager::remove_window(SharedPtr<Window> window) {
     invalidate_rect(window->rect());
 
     cleanup_active_window_state(window->id());
+    window->did_remove();
 }
 
 Point WindowManager::mouse_position_relative_to_window(const Window& window) const {
@@ -114,7 +129,7 @@ void WindowManager::draw() {
 
     Renderer renderer(*m_back_buffer);
 
-    auto render_window = [&](auto& window) {
+    Function<void(SharedPtr<Window>&)> render_window = [&](auto& window) {
         if (!window->visible()) {
             return;
         }
@@ -143,6 +158,10 @@ void WindowManager::draw() {
             src_rect.set_x(src_rect.x() - window->content_rect().x());
             src_rect.set_y(src_rect.y() - window->content_rect().y());
             renderer.draw_bitmap(*window->buffer(), src_rect, dest_rect);
+        }
+
+        for (auto& child : window->children()) {
+            render_window(child);
         }
     };
 
@@ -217,8 +236,9 @@ void WindowManager::set_active_window(SharedPtr<Window> window) {
 }
 
 void WindowManager::move_to_front_and_make_active(SharedPtr<Window> window) {
+    auto* root_window = window->root();
     for (int i = 0; i < m_window_stack.size(); i++) {
-        if (m_window_stack[i] == window) {
+        if (m_window_stack[i].get() == root_window) {
             m_window_stack.rotate_left(i, m_window_stack.size());
             break;
         }
@@ -228,9 +248,9 @@ void WindowManager::move_to_front_and_make_active(SharedPtr<Window> window) {
 
 SharedPtr<Window> WindowManager::find_window_intersecting_point(Point p) {
     for (int i = m_window_stack.size() - 1; i >= 0; i--) {
-        auto& window = m_window_stack[i];
-        if (window->visible() && window->rect().intersects(p)) {
-            return window;
+        auto result = Window::find_window_intersecting_point(m_window_stack[i], p);
+        if (result) {
+            return result;
         }
     }
 
@@ -239,9 +259,9 @@ SharedPtr<Window> WindowManager::find_window_intersecting_point(Point p) {
 
 SharedPtr<Window> WindowManager::find_window_intersecting_rect(const Rect& r) {
     for (int i = m_window_stack.size() - 1; i >= 0; i--) {
-        auto& window = m_window_stack[i];
-        if (window->visible() && window->rect().intersects(r)) {
-            return window;
+        auto result = Window::find_window_intersecting_rect(m_window_stack[i], r);
+        if (result) {
+            return result;
         }
     }
 
@@ -399,8 +419,7 @@ void WindowManager::set_mouse_coordinates(int x, int y) {
         }
 
         invalidate_rect(m_window_to_move->rect());
-        m_window_to_move->set_x(m_window_move_initial_location.x() + dx);
-        m_window_to_move->set_y(m_window_move_initial_location.y() + dy);
+        m_window_to_move->set_position(m_window_move_initial_location.x() + dx, m_window_move_initial_location.y() + dy);
         invalidate_rect(m_window_to_move->rect());
     }
 }

@@ -15,7 +15,7 @@
 
 int main() {
     WindowServer::Connection connection;
-    auto window = connection.create_window(100, 100, 250, 250, "Window Server Test", WindowServer::WindowType::Application);
+    auto window = connection.create_window(100, 100, 250, 250, "Window Server Test", WindowServer::WindowType::Application, 0);
 
     int cnt = 0;
     connection.set_draw_callback(window, [&](auto& pixels) {
