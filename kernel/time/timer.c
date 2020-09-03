@@ -109,7 +109,6 @@ int time_delete_timer(struct timer *timer) {
     }
 
     if (timer->signal) {
-        assert(!(timer->signal->flags & QUEUED_SIGNAL_DONT_FREE_FLAG));
         task_free_queued_signal(timer->signal);
         timer->signal = NULL;
     }
