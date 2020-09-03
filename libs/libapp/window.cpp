@@ -114,7 +114,7 @@ void Window::on_event(Event& event) {
                 widget = focused_widget().get();
             } else {
                 widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
-                if (focused_widget().get() != widget) {
+                if (focused_widget() && focused_widget().get() != widget) {
                     focused_widget()->on_leave();
                 }
                 set_focused_widget(widget);
@@ -130,7 +130,9 @@ void Window::on_event(Event& event) {
         case Event::Type::Key: {
             auto& key_event = static_cast<KeyEvent&>(event);
             auto widget = focused_widget();
-            widget->on_key_event(key_event);
+            if (widget) {
+                widget->on_key_event(key_event);
+            }
             break;
         }
         default:
