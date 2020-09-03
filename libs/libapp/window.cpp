@@ -29,8 +29,7 @@ Window::~Window() {
     unregister_window(wid());
 }
 
-Window::Window(int x, int y, int width, int height, String name, WindowServer::WindowType type)
-    : m_visible(type == WindowServer::WindowType::Application) {
+Window::Window(int x, int y, int width, int height, String name, WindowServer::WindowType type) {
     m_ws_window = App::the().ws_connection().create_window(x, y, width, height, move(name), type);
     m_ws_window->set_draw_callback([this](auto&) {
         if (m_main_widget) {

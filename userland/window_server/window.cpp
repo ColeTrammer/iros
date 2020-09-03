@@ -13,12 +13,7 @@ static wid_t get_next_id() {
 }
 
 Window::Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type)
-    : m_content_rect(rect)
-    , m_id(get_next_id())
-    , m_title(title)
-    , m_client_id(client_id)
-    , m_type(type)
-    , m_visible(type == WindowServer::WindowType::Application) {
+    : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id), m_type(type) {
     m_shm_path = String::format("/window_server_%lu", m_id);
     update_rect_from_content();
     map_buffers();

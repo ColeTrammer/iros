@@ -41,6 +41,7 @@ public:
 
     void hide();
     void show();
+    bool visible() const { return m_visible; }
 
 protected:
     Window(int x, int y, int width, int height, String name, WindowServer::WindowType window_type = WindowServer::WindowType::Application);
@@ -62,7 +63,7 @@ private:
     bool m_will_draw_soon { false };
     bool m_left_down { false };
     bool m_right_down { false };
-    bool m_visible { false };
+    bool m_visible { true };
 };
 
 }

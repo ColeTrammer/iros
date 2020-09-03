@@ -68,7 +68,7 @@ private:
     String m_title;
     const int m_client_id;
     WindowServer::WindowType m_type;
-    bool m_visible { false };
+    bool m_visible { true };
     bool m_in_resize { false };
     Rect m_resize_rect;
     SharedPtr<PixelBuffer> m_front_buffer;
