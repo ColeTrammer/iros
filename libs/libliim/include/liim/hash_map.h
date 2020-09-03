@@ -156,9 +156,9 @@ public:
     void remove(const K& key) {
         int bucket = Traits<K>::hash(key) % m_buckets.size();
         m_buckets[bucket].remove_if([&](const auto& obj) -> bool {
-            m_size--;
             return obj.m_key == key;
         });
+        m_size--;
     }
 
     template<typename C>
