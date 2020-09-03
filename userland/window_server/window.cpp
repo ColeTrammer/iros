@@ -12,13 +12,10 @@ static wid_t get_next_id() {
     return next_wid++;
 }
 
-Window::Window(const Rect& rect, String title, int client_id)
-    : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id) {
+Window::Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type)
+    : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id), m_type(type) {
     m_shm_path = String::format("/window_server_%lu", m_id);
-    m_rect.set_x(rect.x() - 1);
-    m_rect.set_y(rect.y() - 22);
-    m_rect.set_width(rect.width() + 2);
-    m_rect.set_height(rect.height() + 23);
+    update_rect_from_content();
     map_buffers();
     m_front_buffer->clear();
     m_back_buffer->clear();
@@ -29,6 +26,44 @@ Window::~Window() {
         munmap(m_raw_buffer, m_raw_buffer_size);
         shm_unlink(m_shm_path.string());
     }
+}
+
+void Window::update_rect_from_content() {
+    switch (m_type) {
+        case WindowServer::WindowType::Application:
+            m_rect.set_x(m_content_rect.x() - 1);
+            m_rect.set_y(m_content_rect.y() - 22);
+            m_rect.set_width(m_content_rect.width() + 2);
+            m_rect.set_height(m_content_rect.height() + 23);
+            break;
+        case WindowServer::WindowType::Frameless:
+            m_rect = m_content_rect;
+            break;
+    }
+}
+
+void Window::update_content_from_rect() {
+    switch (m_type) {
+        case WindowServer::WindowType::Application:
+            m_content_rect.set_x(m_rect.x() + 1);
+            m_content_rect.set_y(m_rect.y() + 22);
+            m_content_rect.set_width(m_rect.width() - 2);
+            m_content_rect.set_height(m_rect.height() - 23);
+            break;
+        case WindowServer::WindowType::Frameless:
+            m_content_rect = m_rect;
+            break;
+    }
+}
+
+void Window::set_x(int x) {
+    m_rect.set_x(x);
+    update_content_from_rect();
+}
+
+void Window::set_y(int y) {
+    m_rect.set_y(y);
+    update_content_from_rect();
 }
 
 void Window::map_buffers() {
@@ -58,10 +93,9 @@ void Window::relative_resize(int delta_x, int delta_y) {
 
     WindowManager::the().invalidate_rect(m_rect);
 
-    m_content_rect.set_width(m_content_rect.width() + delta_x);
     m_rect.set_width(m_rect.width() + delta_x);
-    m_content_rect.set_height(m_content_rect.height() + delta_y);
     m_rect.set_height(m_rect.height() + delta_y);
+    update_content_from_rect();
 
     WindowManager::the().invalidate_rect(m_rect);
 
@@ -87,16 +121,6 @@ void Window::relative_resize(int delta_x, int delta_y) {
     } else if (delta_y > 0) {
         m_front_buffer->clear_after_y(old_height);
     }
-}
-
-void Window::set_x(int x) {
-    m_rect.set_x(x);
-    m_content_rect.set_x(x + 1);
-}
-
-void Window::set_y(int y) {
-    m_rect.set_y(y);
-    m_content_rect.set_y(y + 22);
 }
 
 void Window::swap() {

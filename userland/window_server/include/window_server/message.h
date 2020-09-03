@@ -12,6 +12,11 @@ typedef uint64_t wid_t;
 
 namespace WindowServer {
 
+enum class WindowType {
+    Application,
+    Frameless,
+};
+
 struct Message {
     enum class Type {
         Invalid,
@@ -30,7 +35,7 @@ struct Message {
     };
 
     struct CreateWindowRequest {
-        static SharedPtr<Message> create(int x, int y, int width, int height, const String& name) {
+        static SharedPtr<Message> create(int x, int y, int width, int height, const String& name, WindowType type) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(CreateWindowRequest) + name.size() + 1);
             message->type = Message::Type::CreateWindowRequest;
             message->data_len = sizeof(CreateWindowRequest) + name.size() + 1;
@@ -39,6 +44,7 @@ struct Message {
             request.y = y;
             request.width = width;
             request.height = height;
+            request.type = type;
             strcpy(request.name, name.string());
             return SharedPtr<Message>(message);
         }
@@ -47,6 +53,7 @@ struct Message {
         int y;
         int width;
         int height;
+        WindowType type;
         char name[0];
     };
 

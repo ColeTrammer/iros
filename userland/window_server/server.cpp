@@ -160,7 +160,7 @@ void Server::update_draw_timer() {
 
 void Server::handle_create_window_request(const WindowServer::Message& request, int client_fd) {
     const WindowServer::Message::CreateWindowRequest& data = request.data.create_window_request;
-    auto window = make_shared<Window>(Rect(data.x, data.y, data.width, data.height), String(data.name), client_fd);
+    auto window = make_shared<Window>(Rect(data.x, data.y, data.width, data.height), String(data.name), client_fd, data.type);
     m_manager->add_window(window);
 
     auto to_send =

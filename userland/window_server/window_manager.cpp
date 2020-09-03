@@ -97,17 +97,19 @@ void WindowManager::draw() {
     Renderer renderer(*m_back_buffer);
 
     auto render_window = [&](auto& window) {
-        renderer.fill_rect(window->rect().x() + 1, window->rect().y(), window->rect().width() - 1, 21, ColorValue::Black);
-        renderer.draw_rect(window->rect(), ColorValue::White);
-        renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },
-                           { window->rect().x() + window->rect().width() - 1, window->rect().y() + 21 }, ColorValue::White);
-        renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title(), ColorValue::White);
-        renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
+        if (window->type() == WindowServer::WindowType::Application) {
+            renderer.fill_rect(window->rect().x() + 1, window->rect().y(), window->rect().width() - 1, 21, ColorValue::Black);
+            renderer.draw_rect(window->rect(), ColorValue::White);
+            renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },
+                               { window->rect().x() + window->rect().width() - 1, window->rect().y() + 21 }, ColorValue::White);
+            renderer.render_text(window->rect().x() + 5, window->rect().y() + 3, window->title(), ColorValue::White);
+            renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
 
-        invalidate_rect({ window->rect().x(), window->rect().y(), window->rect().width(), 22 });
-        invalidate_rect({ window->rect().x(), window->rect().y() + 22, 1, window->rect().height() });
-        invalidate_rect({ window->rect().x(), window->rect().y() + window->rect().height() - 1, window->rect().width(), 1 });
-        invalidate_rect({ window->rect().x() + window->rect().width() - 1, window->rect().y() + 22, 1, window->rect().height() });
+            invalidate_rect({ window->rect().x(), window->rect().y(), window->rect().width(), 22 });
+            invalidate_rect({ window->rect().x(), window->rect().y() + 22, 1, window->rect().height() });
+            invalidate_rect({ window->rect().x(), window->rect().y() + window->rect().height() - 1, window->rect().width(), 1 });
+            invalidate_rect({ window->rect().x() + window->rect().width() - 1, window->rect().y() + 22, 1, window->rect().height() });
+        }
 
         for (auto& r : m_dirty_rects) {
             auto dest_rect = window->content_rect().intersection_with(r);
@@ -236,7 +238,8 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
     auto& window = windows()[index];
     int dx = m_mouse_x - window->close_button_x();
     int dy = m_mouse_y - window->close_button_y();
-    if (dx * dx + dy * dy <= window->close_button_radius() * window->close_button_radius()) {
+    if (window->type() == WindowServer::WindowType::Application &&
+        dx * dx + dy * dy <= window->close_button_radius() * window->close_button_radius()) {
         if (on_window_close_button_pressed) {
             on_window_close_button_pressed(*window);
         }
@@ -244,31 +247,31 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
     }
 
     if (left == MOUSE_DOWN) {
-        if (cursor_rect.intersects(window->rect().top_left())) {
+        if (window->resizable() && cursor_rect.intersects(window->rect().top_left())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::TopLeft;
-        } else if (cursor_rect.intersects(window->rect().top_right())) {
+        } else if (window->resizable() && cursor_rect.intersects(window->rect().top_right())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::TopRight;
-        } else if (cursor_rect.intersects(window->rect().bottom_right())) {
+        } else if (window->resizable() && cursor_rect.intersects(window->rect().bottom_right())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::BottomRight;
-        } else if (cursor_rect.intersects(window->rect().bottom_left())) {
+        } else if (window->resizable() && cursor_rect.intersects(window->rect().bottom_left())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::BottomLeft;
-        } else if (cursor_rect.intersects(window->rect().top_edge())) {
+        } else if (window->resizable() && cursor_rect.intersects(window->rect().top_edge())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::Top;
-        } else if (cursor_rect.intersects(window->rect().right_edge())) {
+        } else if (window->resizable() && cursor_rect.intersects(window->rect().right_edge())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::Right;
-        } else if (cursor_rect.intersects(window->rect().bottom_edge())) {
+        } else if (window->resizable() && cursor_rect.intersects(window->rect().bottom_edge())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::Bottom;
-        } else if (cursor_rect.intersects(window->rect().left_edge())) {
+        } else if (window->resizable() && cursor_rect.intersects(window->rect().left_edge())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::Left;
-        } else if (m_mouse_y <= window->rect().y() + 20) {
+        } else if (window->movable() && m_mouse_y <= window->rect().y() + 20) {
             // Mouse down on window title bar
             m_window_to_move = window;
             m_window_move_initial_location = window->rect().top_left();
@@ -276,7 +279,7 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         }
     }
 
-    move_to_front_and_make_active(windows()[index]);
+    move_to_front_and_make_active(window);
 }
 
 void WindowManager::set_mouse_coordinates(int x, int y) {

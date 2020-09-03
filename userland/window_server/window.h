@@ -4,6 +4,7 @@
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <sys/mman.h>
+#include <window_server/message.h>
 
 class PixelBuffer;
 
@@ -11,7 +12,7 @@ typedef uint64_t wid_t;
 
 class Window {
 public:
-    Window(const Rect& rect, String title, int client_id);
+    Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type);
     ~Window();
 
     Window(const Window& other) = delete;
@@ -31,6 +32,10 @@ public:
 
     const String& shm_path() const { return m_shm_path; }
 
+    WindowServer::WindowType type() const { return m_type; }
+
+    void update_content_from_rect();
+    void update_rect_from_content();
     void relative_resize(int delta_x, int delta_y);
 
     void swap();
@@ -47,6 +52,9 @@ public:
     void set_in_resize(bool b) { m_in_resize = b; }
     bool in_resize() const { return m_in_resize; }
 
+    bool resizable() const { return type() == WindowServer::WindowType::Application; }
+    bool movable() const { return type() == WindowServer::WindowType::Application; }
+
 private:
     void map_buffers();
 
@@ -56,6 +64,7 @@ private:
     const wid_t m_id;
     String m_title;
     const int m_client_id;
+    WindowServer::WindowType m_type;
     bool m_in_resize { false };
     Rect m_resize_rect;
     SharedPtr<PixelBuffer> m_front_buffer;

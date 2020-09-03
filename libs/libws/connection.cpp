@@ -27,7 +27,7 @@ Connection::~Connection() {
 }
 
 SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name) {
-    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name);
+    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name, WindowType::Application);
     assert(write(m_fd, create_message.get(), create_message->total_size()) != -1);
 
     for (;;) {
