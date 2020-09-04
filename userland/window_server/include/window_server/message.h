@@ -34,6 +34,7 @@ struct Message {
         WindowReadyToResizeResponse,
         WindowClosedEventMessage,
         WindowRenameRequest,
+        WindowStateChangeMessage,
     };
 
     struct CreateWindowRequest {
@@ -261,6 +262,21 @@ struct Message {
         char name[0];
     };
 
+    struct WindowStateChangeMessage {
+        static SharedPtr<Message> create(wid_t wid, bool active) {
+            auto* message = (Message*) malloc(sizeof(Message) + sizeof(WindowStateChangeMessage));
+            message->type = Message::Type::WindowStateChangeMessage;
+            message->data_len = sizeof(WindowStateChangeMessage);
+            auto& data = message->data.window_state_change_message;
+            data.wid = wid;
+            data.active = active;
+            return SharedPtr<Message>(message);
+        }
+
+        wid_t wid;
+        bool active;
+    };
+
     size_t total_size() const { return sizeof(Message) + data_len; };
 
     Type type { Type::Invalid };
@@ -280,6 +296,7 @@ struct Message {
         WindowReadyToResizeResponse window_ready_to_resize_response;
         WindowClosedEventMessage window_closed_event_messasge;
         WindowRenameRequest window_rename_request;
+        WindowStateChangeMessage window_state_change_message;
     } data;
 };
 

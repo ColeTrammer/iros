@@ -13,6 +13,7 @@ public:
         Mouse,
         Resize,
         Window,
+        WindowState,
         Callback,
         Timer,
     };
@@ -40,6 +41,17 @@ public:
 
 private:
     Type m_type { Type::Invalid };
+};
+
+class WindowStateEvent final : public Event {
+public:
+    WindowStateEvent(bool active) : Event(Event::Type::WindowState), m_active(active) {}
+
+    bool active() const { return m_active; }
+    void set_active(bool b) { m_active = b; }
+
+private:
+    bool m_active;
 };
 
 class MouseEvent final : public Event {

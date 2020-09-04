@@ -3,8 +3,26 @@
 #include <app/context_menu.h>
 #include <app/window.h>
 #include <graphics/point.h>
+#include <liim/function.h>
 
 namespace App {
+
+class ContextMenuWindow final : public Window {
+    APP_OBJECT(ContextMenuWindow)
+
+public:
+    ContextMenuWindow(Point p, ContextMenu& menu)
+        : Window(p.x(), p.y(), 150, menu.menu_items().size() * 25, "Context Menu", WindowServer::WindowType::Frameless,
+                 menu.parent_window()->wid())
+        , m_context_menu(menu) {}
+
+private:
+    virtual void did_become_inactive() override { m_context_menu.hide(); }
+
+    ContextMenu& m_context_menu;
+};
+
+ContextMenu::ContextMenu(SharedPtr<Window> parent_window) : m_parent_window(parent_window) {}
 
 ContextMenu::~ContextMenu() {}
 
@@ -14,8 +32,7 @@ void ContextMenu::add_menu_item(String name, Function<void()> hook) {
 
 Window& ContextMenu::ensure_window(Point p) {
     if (!m_window) {
-        m_window = Window::create(shared_from_this(), p.x(), p.y(), 150, m_menu_items.size() * 25, "Context Menu",
-                                  WindowServer::WindowType::Frameless, m_parent_window->wid());
+        m_window = ContextMenuWindow::create(shared_from_this(), p, *this);
         auto& main_widget = m_window->set_main_widget<App::Widget>();
         auto& layout = main_widget.set_layout<App::VerticalBoxLayout>();
         layout.set_margins({ 0, 0, 0, 0 });

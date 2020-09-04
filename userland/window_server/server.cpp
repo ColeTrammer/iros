@@ -135,6 +135,14 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
         }
     };
 
+    m_manager->on_window_state_change = [this](auto window, bool active) {
+        auto message = WindowServer::Message::WindowStateChangeMessage::create(window->id(), active);
+        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window->client_id());
+            return;
+        }
+    };
+
     m_manager->on_rect_invaliadted = [this] {
         update_draw_timer();
     };

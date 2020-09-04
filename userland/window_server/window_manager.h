@@ -67,6 +67,7 @@ public:
 
     Function<void(SharedPtr<Window>)> on_window_close_button_pressed;
     Function<void(SharedPtr<Window>)> on_window_resize_start;
+    Function<void(SharedPtr<Window>, bool active)> on_window_state_change;
     Function<void()> on_rect_invaliadted;
 
 private:

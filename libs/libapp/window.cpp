@@ -66,6 +66,13 @@ void Window::show(int x, int y) {
     m_ws_window->set_visibility(x, y, true);
 }
 
+void Window::hide_current_context_menu() {
+    auto maybe_context_menu = m_current_context_menu.lock();
+    if (maybe_context_menu) {
+        maybe_context_menu->hide();
+    }
+}
+
 void Window::on_event(Event& event) {
     switch (event.type()) {
         case Event::Type::Window: {
@@ -89,16 +96,25 @@ void Window::on_event(Event& event) {
                 pixels()->clear();
                 set_rect({ 0, 0, data.new_width, data.new_height });
                 invalidate_rect(rect());
-                break;
+                return;
             }
             break;
         }
-        case Event::Type::Mouse: {
-            auto maybe_context_menu = m_current_context_menu.lock();
-            if (maybe_context_menu) {
-                maybe_context_menu->hide();
+        case Event::Type::WindowState: {
+            auto& state_event = static_cast<WindowStateEvent&>(event);
+            if (state_event.active() == active()) {
+                return;
             }
 
+            if (!state_event.active()) {
+                did_become_inactive();
+            } else {
+                did_become_active();
+            }
+            m_active = state_event.active();
+            return;
+        }
+        case Event::Type::Mouse: {
             auto& mouse_event = static_cast<MouseEvent&>(event);
             Widget* widget = nullptr;
             if (mouse_event.left() == MOUSE_DOWN) {
@@ -113,6 +129,7 @@ void Window::on_event(Event& event) {
                 m_right_down = false;
             }
 
+            hide_current_context_menu();
             if (mouse_event.left() == MOUSE_NO_CHANGE && mouse_event.right() == MOUSE_NO_CHANGE && m_right_down && m_left_down) {
                 if (!focused_widget()) {
                     return;
@@ -131,7 +148,7 @@ void Window::on_event(Event& event) {
                 mouse_event.set_y(mouse_event.y() - widget->rect().y());
                 widget->on_mouse_event(mouse_event);
             }
-            break;
+            return;
         }
         case Event::Type::Key: {
             auto& key_event = static_cast<KeyEvent&>(event);
@@ -139,11 +156,13 @@ void Window::on_event(Event& event) {
             if (widget) {
                 widget->on_key_event(key_event);
             }
-            break;
+            return;
         }
         default:
             break;
     }
+
+    Object::on_event(event);
 }
 
 Widget* Window::find_widget_at_point(Point p) {

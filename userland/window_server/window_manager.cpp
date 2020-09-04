@@ -229,8 +229,17 @@ void WindowManager::set_active_window(SharedPtr<Window> window) {
         return;
     }
 
+    if (m_active_window) {
+        if (on_window_state_change) {
+            on_window_state_change(m_active_window, false);
+        }
+    }
+
     m_active_window = move(window);
     if (m_active_window) {
+        if (on_window_state_change) {
+            on_window_state_change(m_active_window, true);
+        }
         invalidate_rect(m_active_window->rect());
     }
 }
