@@ -338,7 +338,9 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         }
     }
 
-    move_to_front_and_make_active(window);
+    if (left == MOUSE_DOWN || right == MOUSE_DOWN) {
+        move_to_front_and_make_active(window);
+    }
 }
 
 void WindowManager::set_mouse_coordinates(int x, int y) {
