@@ -72,22 +72,27 @@ void WindowManager::set_window_visibility(SharedPtr<Window> window, bool visible
         if (!window->parent()) {
             m_window_stack.remove_element(window);
         }
-        cleanup_active_window_state(window->id());
+        cleanup_active_window_state(window);
     }
     m_taskbar.notify_window_visibility_changed(move(window));
 }
 
-void WindowManager::cleanup_active_window_state(wid_t wid) {
-    if (m_active_window && m_active_window->id() == wid) {
-        set_active_window(nullptr);
+void WindowManager::cleanup_active_window_state(SharedPtr<Window> window) {
+    if (m_active_window == window) {
+        auto* parent = window->parent();
+        if (parent && parent->visible()) {
+            set_active_window(find_by_wid(parent->id()));
+        } else {
+            set_active_window(nullptr);
+        }
     }
 
-    if (m_window_to_resize && m_window_to_resize->id() == wid) {
+    if (m_window_to_resize == window) {
         m_window_to_resize = nullptr;
         m_window_resize_mode = ResizeMode::Invalid;
     }
 
-    if (m_window_to_move && m_window_to_move->id() == wid) {
+    if (m_window_to_move == window) {
         m_window_to_move = nullptr;
     }
 }
@@ -99,7 +104,7 @@ void WindowManager::remove_window(SharedPtr<Window> window) {
     m_taskbar.notify_window_removed(*window);
     invalidate_rect(window->rect());
 
-    cleanup_active_window_state(window->id());
+    cleanup_active_window_state(window);
     window->did_remove();
 }
 

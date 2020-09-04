@@ -71,7 +71,7 @@ public:
     Function<void()> on_rect_invaliadted;
 
 private:
-    void cleanup_active_window_state(wid_t wid);
+    void cleanup_active_window_state(SharedPtr<Window> window);
 
     void swap_buffers();
     void set_mouse_coordinates(int x, int y);
