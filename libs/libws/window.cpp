@@ -63,8 +63,8 @@ void Window::set_title(const String& title) {
     connection().send_window_rename_request(wid(), title);
 }
 
-void Window::set_visibility(bool visible) {
-    connection().send_change_window_visibility_request(wid(), visible);
+void Window::set_visibility(int x, int y, bool visible) {
+    connection().send_change_window_visibility_request(wid(), x, y, visible);
 }
 
 SharedPtr<Window> Window::construct(const Rect& rect, Message::CreateWindowResponse& created_data, Connection& connection) {

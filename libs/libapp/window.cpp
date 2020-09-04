@@ -1,4 +1,5 @@
 #include <app/app.h>
+#include <app/context_menu.h>
 #include <app/event.h>
 #include <app/widget.h>
 #include <app/window.h>
@@ -53,16 +54,16 @@ void Window::hide() {
     }
 
     m_visible = false;
-    m_ws_window->set_visibility(false);
+    m_ws_window->set_visibility(0, 0, false);
 }
 
-void Window::show() {
+void Window::show(int x, int y) {
     if (m_visible) {
         return;
     }
 
     m_visible = true;
-    m_ws_window->set_visibility(true);
+    m_ws_window->set_visibility(x, y, true);
 }
 
 void Window::on_event(Event& event) {
@@ -93,6 +94,11 @@ void Window::on_event(Event& event) {
             break;
         }
         case Event::Type::Mouse: {
+            auto maybe_context_menu = m_current_context_menu.lock();
+            if (maybe_context_menu) {
+                maybe_context_menu->hide();
+            }
+
             auto& mouse_event = static_cast<MouseEvent&>(event);
             Widget* widget = nullptr;
             if (mouse_event.left() == MOUSE_DOWN) {
@@ -178,6 +184,14 @@ SharedPtr<Widget> Window::focused_widget() {
         set_focused_widget(nullptr);
     }
     return ret;
+}
+
+void Window::clear_current_context_menu() {
+    m_current_context_menu.reset();
+}
+
+void Window::set_current_context_menu(ContextMenu* menu) {
+    m_current_context_menu = menu->weak_from_this();
 }
 
 void Window::draw() {

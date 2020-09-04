@@ -91,8 +91,8 @@ UniquePtr<Message> Connection::send_window_ready_to_resize_message(wid_t wid) {
     }
 }
 
-void Connection::send_change_window_visibility_request(wid_t wid, bool visible) {
-    auto message = WindowServer::Message::ChangeWindowVisibilityRequeset::create(wid, visible);
+void Connection::send_change_window_visibility_request(wid_t wid, int x, int y, bool visible) {
+    auto message = WindowServer::Message::ChangeWindowVisibilityRequeset::create(wid, x, y, visible);
     assert(write(m_fd, message.get(), message->total_size()) != -1);
 
     for (;;) {

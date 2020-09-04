@@ -207,14 +207,18 @@ void Server::handle_remove_window_request(const WindowServer::Message& request, 
 }
 
 void Server::handle_change_window_visibility_request(const WindowServer::Message& request, int client_fd) {
-    wid_t wid = request.data.change_window_visibility_request.wid;
+    auto& data = request.data.change_window_visibility_request;
+    wid_t wid = data.wid;
     auto window = m_manager->find_by_wid(wid);
     if (!window) {
         kill_client(client_fd);
         return;
     }
 
-    bool visible = request.data.change_window_visibility_request.visible;
+    bool visible = data.visible;
+    if (visible) {
+        window->set_position_relative_to_parent(data.x, data.y);
+    }
     m_manager->set_window_visibility(window, visible);
 
     auto to_send = WindowServer::Message::ChangeWindowVisibilityResponse::create(wid, visible);

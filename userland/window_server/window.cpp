@@ -83,6 +83,14 @@ void Window::update_content_from_rect() {
     }
 }
 
+void Window::set_position_relative_to_parent(int x, int y) {
+    if (m_parent) {
+        x += m_parent->content_rect().x();
+        y += m_parent->content_rect().y();
+    }
+    set_position(x, y);
+}
+
 void Window::set_position(int x, int y) {
     int dx = x - m_rect.x();
     int dy = y - m_rect.y();

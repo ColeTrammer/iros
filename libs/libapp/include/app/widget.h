@@ -6,6 +6,7 @@
 
 namespace App {
 
+class ContextMenu;
 class Layout;
 class KeyEvent;
 class MouseEvent;
@@ -25,7 +26,7 @@ public:
     virtual ~Widget() override;
 
     virtual void render();
-    virtual void on_mouse_event(MouseEvent&) {}
+    virtual void on_mouse_event(MouseEvent&);
     virtual void on_key_event(KeyEvent&) {}
     virtual void on_resize();
     virtual void on_focused() {}
@@ -58,6 +59,8 @@ public:
     void invalidate() { invalidate(rect()); }
     void invalidate(const Rect& rect);
 
+    void set_context_menu(SharedPtr<ContextMenu> menu);
+
 protected:
     Widget();
 
@@ -68,6 +71,7 @@ private:
     Font m_font { Font::default_font() };
     Size m_preferred_size { Size::Auto, Size::Auto };
     UniquePtr<Layout> m_layout;
+    SharedPtr<ContextMenu> m_context_menu;
     bool m_hidden { false };
 };
 

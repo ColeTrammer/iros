@@ -1,3 +1,5 @@
+#include <app/context_menu.h>
+#include <app/event.h>
 #include <app/layout.h>
 #include <app/widget.h>
 #include <app/window.h>
@@ -74,6 +76,20 @@ Window* Widget::window() {
 
 void Widget::invalidate(const Rect& rect) {
     window()->invalidate_rect(rect);
+}
+
+void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
+    m_context_menu = move(menu);
+}
+
+void Widget::on_mouse_event(MouseEvent& event) {
+    if (m_context_menu) {
+        if (event.right() == MOUSE_DOWN && !m_context_menu->visible()) {
+            m_context_menu->show({ rect().x() + event.x(), rect().x() + event.y() });
+        } else if (m_context_menu->visible()) {
+            m_context_menu->hide();
+        }
+    }
 }
 
 }

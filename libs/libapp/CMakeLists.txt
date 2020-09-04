@@ -2,6 +2,7 @@ set(SOURCES
     app.cpp
     box_layout.cpp
     button.cpp
+    context_menu.cpp
     event_loop.cpp
     layout.cpp
     model.cpp

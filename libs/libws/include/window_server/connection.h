@@ -22,7 +22,7 @@ public:
     void send_swap_buffer_request(wid_t wid);
     UniquePtr<Message> send_window_ready_to_resize_message(wid_t wid);
     void send_window_rename_request(wid_t wid, const String& name);
-    void send_change_window_visibility_request(wid_t wid, bool visible);
+    void send_change_window_visibility_request(wid_t wid, int x, int y, bool visible);
     void send_remove_window_request(wid_t wid);
 
     template<typename C>

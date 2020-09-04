@@ -1,6 +1,7 @@
 #include <app/app.h>
 #include <app/box_layout.h>
 #include <app/button.h>
+#include <app/context_menu.h>
 #include <app/event.h>
 #include <app/object.h>
 #include <app/text_label.h>
@@ -27,13 +28,25 @@ int main() {
     auto& main_widget = window->set_main_widget<App::Widget>();
 
     auto& layout = main_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
-    layout.add<App::TextLabel>("Hello World!");
+    auto& label = layout.add<App::TextLabel>("Hello World!");
     layout.add<App::Widget>();
     layout.add<TestWidget>();
     auto& button = layout.add<App::Button>("Click Me!");
     button.on_click = [] {
         printf("clicked!\n");
     };
+
+    auto context_menu = App::ContextMenu::create(window, window);
+    context_menu->add_menu_item("A", [] {
+        printf("A Pressed\n");
+    });
+    context_menu->add_menu_item("B", [] {
+        printf("B Pressed\n");
+    });
+    context_menu->add_menu_item("C", [] {
+        printf("C Pressed\n");
+    });
+    label.set_context_menu(context_menu);
 
     app.enter();
     return 0;

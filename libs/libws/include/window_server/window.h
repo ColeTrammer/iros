@@ -16,7 +16,7 @@ public:
     ~Window();
 
     void swap_buffers();
-    void set_visibility(bool visible);
+    void set_visibility(int x, int y, bool visible);
 
     wid_t wid() const { return m_wid; }
 

@@ -7,6 +7,7 @@
 
 namespace App {
 
+class ContextMenu;
 class Widget;
 
 class Window : public Object {
@@ -39,8 +40,11 @@ public:
     const Rect& rect() const { return m_rect; }
     void set_rect(const Rect& rect);
 
+    void set_current_context_menu(ContextMenu* menu);
+    void clear_current_context_menu();
+
     void hide();
-    void show();
+    void show(int x, int y);
     bool visible() const { return m_visible; }
 
 protected:
@@ -59,6 +63,7 @@ private:
 
     SharedPtr<WindowServer::Window> m_ws_window;
     WeakPtr<Widget> m_focused_widget;
+    WeakPtr<ContextMenu> m_current_context_menu;
     SharedPtr<Widget> m_main_widget;
     Rect m_rect;
     bool m_will_draw_soon { false };

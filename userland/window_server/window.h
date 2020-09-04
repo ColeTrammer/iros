@@ -25,6 +25,7 @@ public:
     const Rect& rect() const { return m_rect; }
     const Rect& content_rect() const { return m_content_rect; }
 
+    void set_position_relative_to_parent(int x, int y);
     void set_position(int x, int y);
 
     int close_button_x() const { return rect().x() + rect().width() - 13; }

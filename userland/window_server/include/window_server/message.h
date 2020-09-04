@@ -106,17 +106,21 @@ struct Message {
     };
 
     struct ChangeWindowVisibilityRequeset {
-        static SharedPtr<Message> create(wid_t wid, bool visible) {
+        static SharedPtr<Message> create(wid_t wid, int x, int y, bool visible) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(ChangeWindowVisibilityRequeset));
             message->type = Message::Type::ChangeWindowVisibilityRequest;
             message->data_len = sizeof(ChangeWindowVisibilityRequeset);
             auto& request = message->data.change_window_visibility_request;
             request.wid = wid;
+            request.x = x;
+            request.y = y;
             request.visible = visible;
             return SharedPtr<Message>(message);
         }
 
         wid_t wid;
+        int x;
+        int y;
         bool visible;
     };
 
