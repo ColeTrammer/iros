@@ -19,7 +19,39 @@ constexpr time_t draw_timer_rate = 1000 / 60;
 
 Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
     : m_manager(make_unique<WindowManager>(fb, front_buffer, back_buffer)) {
-    m_keyboard = App::SelectableFile::create(nullptr, "/dev/keyboard", O_RDONLY);
+    m_manager->on_window_close_button_pressed = [this](auto window) {
+        m_manager->remove_window(window);
+
+        auto message = WindowServer::Message::WindowClosedEventMessage::create(window->id());
+        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window->client_id());
+            return;
+        }
+    };
+
+    m_manager->on_window_resize_start = [this](auto window) {
+        auto message = WindowServer::Message::WindowDidResizeMessage::create(window->id());
+        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window->client_id());
+            return;
+        }
+    };
+
+    m_manager->on_window_state_change = [this](auto window, bool active) {
+        auto message = WindowServer::Message::WindowStateChangeMessage::create(window->id(), active);
+        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
+            kill_client(window->client_id());
+            return;
+        }
+    };
+
+    m_manager->on_rect_invaliadted = [this] {
+        update_draw_timer();
+    };
+}
+
+void Server::initialize() {
+    m_keyboard = App::SelectableFile::create(shared_from_this(), "/dev/keyboard", O_RDONLY);
     assert(m_keyboard->valid());
 
     m_keyboard->on_readable = [this] {
@@ -34,7 +66,7 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
         }
     };
 
-    m_mouse = App::SelectableFile::create(nullptr, "/dev/mouse", O_RDONLY);
+    m_mouse = App::SelectableFile::create(shared_from_this(), "/dev/mouse", O_RDONLY);
     assert(m_mouse->valid());
 
     m_mouse->on_readable = [this] {
@@ -62,7 +94,7 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
         }
     };
 
-    m_socket_server = App::UnixSocketServer::create(nullptr, "/tmp/.window_server.socket");
+    m_socket_server = App::UnixSocketServer::create(shared_from_this(), "/tmp/.window_server.socket");
     assert(m_socket_server->valid());
 
     m_socket_server->on_ready_to_accept = [this] {
@@ -117,38 +149,8 @@ Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffe
         }
     };
 
-    m_manager->on_window_close_button_pressed = [this](auto window) {
-        m_manager->remove_window(window);
-
-        auto message = WindowServer::Message::WindowClosedEventMessage::create(window->id());
-        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
-            kill_client(window->client_id());
-            return;
-        }
-    };
-
-    m_manager->on_window_resize_start = [this](auto window) {
-        auto message = WindowServer::Message::WindowDidResizeMessage::create(window->id());
-        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
-            kill_client(window->client_id());
-            return;
-        }
-    };
-
-    m_manager->on_window_state_change = [this](auto window, bool active) {
-        auto message = WindowServer::Message::WindowStateChangeMessage::create(window->id(), active);
-        if (write(window->client_id(), message.get(), message->total_size()) == -1) {
-            kill_client(window->client_id());
-            return;
-        }
-    };
-
-    m_manager->on_rect_invaliadted = [this] {
-        update_draw_timer();
-    };
-
     m_draw_timer = App::Timer::create_single_shot_timer(
-        nullptr,
+        shared_from_this(),
         [this](int) {
             m_manager->draw();
         },

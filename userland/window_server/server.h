@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/object.h>
 #include <app/selectable_file.h>
 #include <app/timer.h>
 #include <app/unix_socket.h>
@@ -11,10 +12,14 @@
 class PixelBuffer;
 class WindowManager;
 
-class Server {
+class Server final : public App::Object {
+    APP_OBJECT(Server)
+
 public:
     Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer);
     ~Server();
+
+    virtual void initialize() override;
 
     void start();
 

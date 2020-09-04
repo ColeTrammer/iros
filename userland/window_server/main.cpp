@@ -41,8 +41,8 @@ int main() {
     auto back_buffer = PixelBuffer::wrap(raw_pixels + sz.x * sz.y, sz.x, sz.y);
     back_buffer->clear(ColorValue::DarkGray);
 
-    Server server(fb, front_buffer, back_buffer);
-    server.start();
+    auto server = Server::create(nullptr, fb, front_buffer, back_buffer);
+    server->start();
 
     return 0;
 }
