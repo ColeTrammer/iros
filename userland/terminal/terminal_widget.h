@@ -12,6 +12,7 @@ class TerminalWidget final : public App::Widget {
 
 public:
     TerminalWidget();
+    virtual void initialize() override;
 
     virtual void render() override;
     virtual void on_resize() override;
@@ -22,6 +23,9 @@ private:
     void clear_selection();
     bool in_selection(int row, int col) const;
     String selection_text() const;
+
+    void copy_selection();
+    void paste_text();
 
     PsuedoTerminal m_pseudo_terminal;
     TTY m_tty;

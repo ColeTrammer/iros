@@ -1,3 +1,4 @@
+#include <app/context_menu.h>
 #include <app/event.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
@@ -12,8 +13,19 @@
 constexpr int cell_width = 8;
 constexpr int cell_height = 16;
 
-TerminalWidget::TerminalWidget() : m_tty(m_pseudo_terminal) {
-    m_pseudo_terminal_wrapper = App::FdWrapper::create(nullptr, m_pseudo_terminal.master_fd());
+TerminalWidget::TerminalWidget() : m_tty(m_pseudo_terminal) {}
+
+void TerminalWidget::initialize() {
+    auto context_menu = App::ContextMenu::create(window()->shared_from_this(), window()->shared_from_this());
+    context_menu->add_menu_item("Copy", [this] {
+        this->copy_selection();
+    });
+    context_menu->add_menu_item("Paste", [this] {
+        this->paste_text();
+    });
+    set_context_menu(move(context_menu));
+
+    m_pseudo_terminal_wrapper = App::FdWrapper::create(shared_from_this(), m_pseudo_terminal.master_fd());
     m_pseudo_terminal_wrapper->set_selected_events(App::NotifyWhen::Readable);
     m_pseudo_terminal_wrapper->enable_notifications();
     m_pseudo_terminal_wrapper->on_readable = [this] {
@@ -119,12 +131,24 @@ void TerminalWidget::on_resize() {
     m_pseudo_terminal.set_size(rows, cols);
 }
 
+void TerminalWidget::copy_selection() {
+    auto text = selection_text();
+    if (!text.is_empty()) {
+        Clipboard::Connection::the().set_clipboard_contents_to_text(text);
+    }
+}
+
+void TerminalWidget::paste_text() {
+    auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
+    if (!maybe_text.has_value()) {
+        return;
+    }
+    m_pseudo_terminal.send_clipboard_contents(maybe_text.value());
+}
+
 void TerminalWidget::on_key_event(App::KeyEvent& event) {
     if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_C) {
-        auto text = selection_text();
-        if (!text.is_empty()) {
-            Clipboard::Connection::the().set_clipboard_contents_to_text(text);
-        }
+        copy_selection();
         return;
     }
 
@@ -133,11 +157,7 @@ void TerminalWidget::on_key_event(App::KeyEvent& event) {
     }
 
     if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_V) {
-        auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
-        if (!maybe_text.has_value()) {
-            return;
-        }
-        m_pseudo_terminal.send_clipboard_contents(maybe_text.value());
+        paste_text();
         return;
     }
 
@@ -229,8 +249,14 @@ String TerminalWidget::selection_text() const {
 void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     if (event.scroll() == SCROLL_DOWN) {
         m_tty.scroll_down();
-    } else if (event.scroll() == SCROLL_UP) {
+        invalidate();
+        return;
+    }
+
+    if (event.scroll() == SCROLL_UP) {
         m_tty.scroll_up();
+        invalidate();
+        return;
     }
 
     int row_at_cursor = m_tty.scroll_relative_offset(event.y() / cell_height);
@@ -241,7 +267,9 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
         m_selection_start_row = row_at_cursor;
         m_selection_start_col = col_at_cursor;
         return;
-    } else if (event.left() == MOUSE_UP) {
+    }
+
+    if (event.left() == MOUSE_UP) {
         m_in_selection = false;
         return;
     }
@@ -249,7 +277,9 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     if (m_in_selection && (m_selection_end_row != row_at_cursor || m_selection_end_col != col_at_cursor)) {
         m_selection_end_row = row_at_cursor;
         m_selection_end_col = col_at_cursor;
+        invalidate();
+        return;
     }
 
-    invalidate();
+    Widget::on_mouse_event(event);
 }
