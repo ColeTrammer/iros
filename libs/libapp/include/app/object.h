@@ -13,6 +13,7 @@ public:                                                                       \
         if (parent) {                                                         \
             parent->add_child(ret);                                           \
         }                                                                     \
+        ret->initialize();                                                    \
         return ret;                                                           \
     }                                                                         \
                                                                               \
@@ -25,6 +26,8 @@ class Event;
 class Object {
 public:
     virtual ~Object();
+
+    virtual void initialize() {}
 
     void add_child(SharedPtr<Object> child);
     void remove_child(SharedPtr<Object> child);
