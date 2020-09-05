@@ -1,19 +1,20 @@
 #include <app/model.h>
+#include <app/model_client.h>
 #include <app/view.h>
 
 namespace App {
 
-void Model::register_view(View* view) {
-    m_views.add(view);
+void Model::register_client(ModelClient* client) {
+    m_clients.add(client);
 }
 
-void Model::unregister_view(View* view) {
-    m_views.remove_element(view);
+void Model::unregister_client(ModelClient* client) {
+    m_clients.remove_element(client);
 }
 
 void Model::did_update() {
-    for (auto* view : m_views) {
-        view->invalidate();
+    for (auto* client : m_clients) {
+        client->model_did_update();
     }
 }
 

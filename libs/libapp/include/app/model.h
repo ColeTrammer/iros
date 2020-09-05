@@ -8,7 +8,7 @@
 
 namespace App {
 
-class View;
+class ModelClient;
 
 class Model : public Object {
     APP_OBJECT(Model)
@@ -21,14 +21,14 @@ public:
     virtual ModelData data(const ModelIndex& index) const = 0;
     virtual ModelData header_data(int col) const = 0;
 
-    void register_view(View* view);
-    void unregister_view(View* view);
+    void register_client(ModelClient* view);
+    void unregister_client(ModelClient* view);
 
 protected:
     void did_update();
 
 private:
-    Vector<View*> m_views;
+    Vector<ModelClient*> m_clients;
 };
 
 }

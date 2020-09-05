@@ -10,12 +10,12 @@ void View::set_model(SharedPtr<Model> model) {
     }
 
     if (m_model) {
-        m_model->unregister_view(this);
+        m_model->unregister_client(this);
     }
 
     m_model = model;
     if (m_model) {
-        m_model->register_view(this);
+        m_model->register_client(this);
     }
 
     m_hovered_index.clear();
