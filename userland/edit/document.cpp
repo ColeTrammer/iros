@@ -8,6 +8,7 @@
 #include "command.h"
 #include "document.h"
 #include "key_press.h"
+#include "mouse_event.h"
 #include "panel.h"
 
 UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
@@ -135,6 +136,10 @@ Line& Document::line_at_cursor() {
 char Document::char_at_cursor() const {
     auto& line = line_at_cursor();
     return line.char_at(line.index_of_col_position(cursor_col_position()));
+}
+
+int Document::index_of_line_at_position(int position) const {
+    return position + m_row_offset;
 }
 
 int Document::line_index_at_cursor() const {
@@ -1007,6 +1012,20 @@ void Document::enter_interactive_search() {
 
 void Document::swap_lines_at_cursor(SwapDirection direction) {
     push_command<SwapLinesCommand>(direction);
+}
+
+void Document::notify_mouse_event(MouseEvent event) {
+    if (event.left == MouseEvent::Press::Down) {
+        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+    } else if (event.down & MouseEvent::Button::Left) {
+        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Select);
+    }
+
+    if (needs_display()) {
+        display();
+    } else {
+        m_panel.notify_now_is_a_good_time_to_draw_cursor();
+    }
 }
 
 void Document::notify_key_pressed(KeyPress press) {

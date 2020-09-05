@@ -9,6 +9,7 @@
 #include "app_panel.h"
 #include "document.h"
 #include "key_press.h"
+#include "mouse_event.h"
 
 SearchWidget::SearchWidget() {}
 
@@ -209,6 +210,53 @@ void AppPanel::render() {
 
     render_cursor(renderer);
     Widget::render();
+}
+
+int AppPanel::index_into_line_at_position(int wx, int wy) const {
+    wx /= col_width();
+    wy /= row_height();
+
+    int index_of_line = clamp(document()->index_of_line_at_position(wy), 0, document()->num_lines() - 1);
+
+    auto& line = document()->line_at_index(index_of_line);
+    return line.index_of_col_position(wx);
+}
+
+int AppPanel::index_of_line_at_position(int, int wy) const {
+    wy /= row_height();
+
+    int index_of_line = document()->index_of_line_at_position(wy);
+    return clamp(index_of_line, 0, document()->num_lines() - 1);
+}
+
+void AppPanel::on_mouse_event(App::MouseEvent& event) {
+    if (event.left() == MOUSE_DOWN) {
+        m_mouse_left_down = true;
+    } else if (event.left() == MOUSE_UP) {
+        m_mouse_left_down = false;
+    }
+
+    if (event.right() == MOUSE_DOWN) {
+        m_mouse_right_down = true;
+    } else if (event.right() == MOUSE_UP) {
+        m_mouse_right_down = false;
+    }
+
+    if (!document()) {
+        return;
+    }
+
+    MouseEvent ev;
+    ev.index_into_line = index_into_line_at_position(event.x(), event.y());
+    ev.index_of_line = index_of_line_at_position(event.x(), event.y());
+    ev.z = event.scroll() == SCROLL_UP ? -1 : event.scroll() == SCROLL_DOWN ? 1 : 0;
+    ev.left =
+        event.left() == MOUSE_DOWN ? MouseEvent::Press::Down : event.left() == MOUSE_UP ? MouseEvent::Press::Up : MouseEvent::Press::None;
+    ev.right =
+        event.right() == MOUSE_DOWN ? MouseEvent::Press::Down : event.right() == MOUSE_UP ? MouseEvent::Press::Up : MouseEvent::Press::None;
+    ev.down = (m_mouse_left_down ? MouseEvent::Button::Left : 0) | (m_mouse_right_down ? MouseEvent::Button::Right : 0);
+
+    document()->notify_mouse_event(ev);
 }
 
 void AppPanel::on_key_event(App::KeyEvent& event) {

@@ -10,6 +10,7 @@
 
 class Command;
 struct KeyPress;
+struct MouseEvent;
 class Panel;
 
 enum class UpdateMaxCursorCol { No, Yes };
@@ -54,6 +55,7 @@ public:
     const Panel& panel() const { return m_panel; }
 
     void notify_key_pressed(KeyPress press);
+    void notify_mouse_event(MouseEvent event);
     void notify_panel_size_changed();
 
     void save();
@@ -98,6 +100,7 @@ public:
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int line_index_at_cursor() const;
+    int index_of_line_at_position(int positoin) const;
     char char_at_cursor() const;
     int num_lines() const { return m_lines.size(); }
 

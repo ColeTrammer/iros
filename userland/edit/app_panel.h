@@ -65,6 +65,7 @@ public:
 
     virtual void render() override;
     virtual void on_key_event(App::KeyEvent& event) override;
+    virtual void on_mouse_event(App::MouseEvent& event) override;
     virtual void on_resize() override;
     virtual void on_focused() override;
 
@@ -88,6 +89,9 @@ private:
     void render_cursor(Renderer& renderer);
     void render_cell(Renderer& renderer, int x, int y, CellData& cell);
 
+    int index_into_line_at_position(int wx, int wy) const;
+    int index_of_line_at_position(int wx, int wy) const;
+
     int m_rows { 0 };
     int m_cols { 0 };
     int m_last_drawn_cursor_col { -1 };
@@ -96,6 +100,8 @@ private:
     int m_cursor_row { 0 };
     bool m_cursor_dirty { true };
     bool m_main_panel { false };
+    bool m_mouse_left_down { false };
+    bool m_mouse_right_down { false };
     Vector<CellData> m_cells;
     SharedPtr<SearchWidget> m_search_widget;
 
