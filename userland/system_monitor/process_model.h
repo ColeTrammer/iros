@@ -3,7 +3,27 @@
 #include <app/model.h>
 #include <app/timer.h>
 #include <liim/vector.h>
-#include <procinfo.h>
+
+struct proc_info;
+
+class ProcessInfo {
+public:
+    ProcessInfo(const proc_info& info);
+    void update(const proc_info& info);
+
+    const String& name() const { return m_name; }
+    size_t resident_memory() const { return m_resident_memory; }
+    int priority() const { return m_priority; }
+    pid_t pid() const { return m_pid; }
+    const timespec& running_time() const { return m_running_time; }
+
+private:
+    String m_name;
+    size_t m_resident_memory { 0 };
+    int m_priority { 0 };
+    pid_t m_pid { 0 };
+    timespec m_running_time { 0, 0 };
+};
 
 class ProcessModel final : public App::Model {
     APP_OBJECT(ProcessModel)
@@ -12,6 +32,7 @@ public:
     ProcessModel();
 
     enum Column {
+        Pid,
         Name,
         Memory,
         Priority,
@@ -27,6 +48,6 @@ public:
     void load_data();
 
 private:
-    Vector<proc_info> m_processes;
+    Vector<ProcessInfo> m_processes;
     SharedPtr<App::Timer> m_timer;
 };
