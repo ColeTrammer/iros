@@ -90,4 +90,13 @@ void Widget::on_mouse_event(MouseEvent& event) {
     }
 }
 
+void Widget::set_hidden(bool b) {
+    if (m_hidden == b) {
+        return;
+    }
+
+    m_hidden = b;
+    invalidate(rect());
+}
+
 }

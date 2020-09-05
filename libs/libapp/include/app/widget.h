@@ -48,7 +48,7 @@ public:
     }
 
     bool hidden() const { return m_hidden; }
-    void set_hidden(bool b) { m_hidden = b; }
+    void set_hidden(bool b);
 
     const Font& font() const { return m_font; }
     void set_font(Font font) { m_font = move(font); }

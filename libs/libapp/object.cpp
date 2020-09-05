@@ -7,11 +7,13 @@ namespace App {
 void Object::add_child(SharedPtr<Object> child) {
     child->set_parent(this);
     m_children.add(move(child));
+    did_add_child(child);
 }
 
 void Object::remove_child(SharedPtr<Object> child) {
     child->set_parent(nullptr);
     m_children.remove_element(child);
+    did_remove_child(child);
 }
 
 Object::Object() {}

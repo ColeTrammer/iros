@@ -9,6 +9,7 @@ set(SOURCES
     object.cpp
     selectable.cpp
     selectable_file.cpp
+    tab_widget.cpp
     table_view.cpp
     text_label.cpp
     timer.cpp

@@ -60,6 +60,9 @@ public:
 protected:
     Object();
 
+    virtual void did_add_child(SharedPtr<Object>) {}
+    virtual void did_remove_child(SharedPtr<Object>) {}
+
 private:
     Vector<SharedPtr<Object>> m_children;
     Object* m_parent;

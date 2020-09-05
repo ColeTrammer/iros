@@ -33,7 +33,7 @@ Window::~Window() {
 Window::Window(int x, int y, int width, int height, String name, WindowServer::WindowType type, wid_t parent_id) {
     m_ws_window = App::the().ws_connection().create_window(x, y, width, height, move(name), type, parent_id);
     m_ws_window->set_draw_callback([this](auto&) {
-        if (m_main_widget) {
+        if (m_main_widget && !m_main_widget->hidden()) {
             m_main_widget->render();
         }
     });
@@ -172,7 +172,7 @@ Widget* Window::find_widget_at_point(Point p) {
         for (auto& child : parent->children()) {
             if (child->is_widget()) {
                 auto& widget_child = const_cast<Widget&>(static_cast<const Widget&>(*child));
-                if (widget_child.rect().intersects(p)) {
+                if (!widget_child.hidden() && widget_child.rect().intersects(p)) {
                     parent = &widget_child;
                     found = true;
                     break;
