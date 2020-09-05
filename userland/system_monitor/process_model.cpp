@@ -3,16 +3,6 @@
 
 #include "process_model.h"
 
-ProcessModel::ProcessModel() {
-    m_timer = App::Timer::create_interval_timer(
-        nullptr,
-        [this](int) {
-            load_data();
-        },
-        1000);
-    load_data();
-}
-
 ProcessInfo::ProcessInfo(const proc_info& info) {
     update(info);
 }
@@ -28,7 +18,36 @@ void ProcessInfo::update(const proc_info& info) {
     m_running_time = { .tv_sec = now.tv_sec - info.start_time.tv_sec, .tv_nsec = now.tv_nsec - info.start_time.tv_nsec };
 }
 
+void GlobalProcessInfo::update(const proc_global_info& info) {
+    m_allocated_memory = info.allocated_memory;
+    m_total_memory = info.total_memory;
+    m_max_memory = info.max_memory;
+    m_delta_idle_ticks = info.idle_ticks - m_idle_ticks;
+    m_delta_user_ticks = info.user_ticks - m_user_ticks;
+    m_delta_kernel_ticks = info.kernel_ticks - m_kernel_ticks;
+    m_idle_ticks = info.idle_ticks;
+    m_user_ticks = info.user_ticks;
+    m_kernel_ticks = info.kernel_ticks;
+}
+
+ProcessModel::ProcessModel() {
+    m_timer = App::Timer::create_interval_timer(
+        nullptr,
+        [this](int) {
+            load_data();
+        },
+        1000);
+    load_data();
+}
+
 void ProcessModel::load_data() {
+    proc_global_info global_info;
+    if (read_procfs_global_info(&global_info, READ_PROCFS_GLOBAL_MEMINFO | READ_PROCFS_GLOBAL_SCHED)) {
+        perror("system_monitor: read_procfs_global_info");
+        exit(1);
+    }
+    m_global_process_info.update(global_info);
+
     proc_info* info;
     size_t num_processes;
     if (read_procfs_info(&info, &num_processes, READ_PROCFS_SCHED)) {

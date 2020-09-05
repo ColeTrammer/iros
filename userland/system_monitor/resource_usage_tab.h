@@ -19,9 +19,12 @@ public:
     virtual void initialize() override;
     virtual ~ResourceUsageTab() override;
 
-    virtual void model_did_update() override;
+    virtual void model_did_update() override { update_display(); }
+
+    void update_display();
 
 private:
     SharedPtr<ProcessModel> m_model;
     SharedPtr<App::TextLabel> m_cpu_label;
+    SharedPtr<App::TextLabel> m_memory_label;
 };
