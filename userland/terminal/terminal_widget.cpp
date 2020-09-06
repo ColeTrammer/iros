@@ -268,9 +268,37 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     if (event.left() == MOUSE_DOWN) {
         clear_selection();
         m_in_selection = true;
-        m_selection_start_row = row_at_cursor;
-        m_selection_start_col = col_at_cursor;
-        return;
+        switch (event.mouse_event_type()) {
+            case App::MouseEventType::Down:
+                m_selection_start_row = m_selection_end_row = row_at_cursor;
+                m_selection_start_col = m_selection_end_col = col_at_cursor;
+                invalidate();
+                return;
+            case App::MouseEventType::Double: {
+                m_selection_start_row = m_selection_end_row = row_at_cursor;
+                m_selection_start_col = m_selection_end_col = col_at_cursor;
+
+                auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
+                bool connect_spaces = isspace(row[col_at_cursor].ch);
+                while (m_selection_start_col > 0 && isspace(row[m_selection_start_col - 1].ch) == connect_spaces) {
+                    m_selection_start_col--;
+                }
+                while (m_selection_end_col < m_tty.col_count() - 1 && isspace(row[m_selection_end_col + 1].ch) == connect_spaces) {
+                    m_selection_end_col++;
+                }
+                m_selection_end_col++;
+                invalidate();
+                return;
+            }
+            case App::MouseEventType::Triple:
+                m_selection_start_row = m_selection_end_row = row_at_cursor;
+                m_selection_start_col = 0;
+                m_selection_end_col = m_tty.col_count();
+                invalidate();
+                return;
+            default:
+                break;
+        }
     }
 
     if (event.left() == MOUSE_UP) {
