@@ -277,10 +277,7 @@ bool PsuedoTerminal::handle_mouse_event(mouse_button_state left, mouse_button_st
             }
             break;
         case MouseTrackingMode::Cell:
-            if ((!m_mouse_left_down && !m_mouse_right_down) && scroll_state == SCROLL_NONE) {
-                return false;
-            }
-            if (!mouse_moved && !mouse_down && !mouse_moved && scroll_state == SCROLL_NONE) {
+            if (!m_mouse_left_down && !m_mouse_right_down && mouse_moved && scroll_state == SCROLL_NONE) {
                 return false;
             }
             // Fall through
@@ -301,7 +298,7 @@ bool PsuedoTerminal::handle_mouse_event(mouse_button_state left, mouse_button_st
             break;
         case MouseReportingMode::SGR: {
             int cb = scroll_state == SCROLL_UP ? 64 : scroll_state == SCROLL_DOWN ? 65 : 0;
-            if (mouse_moved) {
+            if (mouse_moved && !cb) {
                 cb = m_mouse_left_down ? 32 : 34;
             }
             if (mouse_down || mouse_up) {
