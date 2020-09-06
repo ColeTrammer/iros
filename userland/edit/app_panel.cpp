@@ -1,4 +1,5 @@
 #include <app/box_layout.h>
+#include <app/context_menu.h>
 #include <app/event.h>
 #include <app/text_label.h>
 #include <app/window.h>
@@ -34,6 +35,27 @@ AppPanel& SearchWidget::panel() {
 }
 
 AppPanel::AppPanel(bool main_panel) : m_main_panel(main_panel) {}
+
+void AppPanel::initialize() {
+    auto w = window()->shared_from_this();
+    auto context_menu = App::ContextMenu::create(w, w);
+    context_menu->add_menu_item("Copy", [this] {
+        if (auto* doc = document()) {
+            doc->copy();
+        }
+    });
+    context_menu->add_menu_item("Cut", [this] {
+        if (auto* doc = document()) {
+            doc->cut();
+        }
+    });
+    context_menu->add_menu_item("Paste", [this] {
+        if (auto* doc = document()) {
+            doc->paste();
+        }
+    });
+    set_context_menu(context_menu);
+}
 
 AppPanel::~AppPanel() {}
 
@@ -255,7 +277,11 @@ void AppPanel::on_mouse_event(App::MouseEvent& event) {
         event.right() == MOUSE_DOWN ? MouseEvent::Press::Down : event.right() == MOUSE_UP ? MouseEvent::Press::Up : MouseEvent::Press::None;
     ev.down = (m_mouse_left_down ? MouseEvent::Button::Left : 0) | (m_mouse_right_down ? MouseEvent::Button::Right : 0);
 
-    document()->notify_mouse_event(ev);
+    if (document()->notify_mouse_event(ev)) {
+        return;
+    }
+
+    Widget::on_mouse_event(event);
 }
 
 void AppPanel::on_key_event(App::KeyEvent& event) {

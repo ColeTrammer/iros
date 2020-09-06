@@ -33,6 +33,7 @@ class AppPanel final
     APP_OBJECT(AppPanel)
 
 public:
+    virtual void initialize() override;
     virtual ~AppPanel() override;
 
     virtual int rows() const override { return m_rows; }

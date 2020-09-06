@@ -1018,11 +1018,14 @@ void Document::swap_lines_at_cursor(SwapDirection direction) {
     push_command<SwapLinesCommand>(direction);
 }
 
-void Document::notify_mouse_event(MouseEvent event) {
+bool Document::notify_mouse_event(MouseEvent event) {
+    bool handled = false;
     if (event.left == MouseEvent::Press::Down) {
         move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+        handled = true;
     } else if (event.down & MouseEvent::Button::Left) {
         move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Select);
+        handled = true;
     }
 
     if (needs_display()) {
@@ -1030,6 +1033,7 @@ void Document::notify_mouse_event(MouseEvent event) {
     } else {
         m_panel.notify_now_is_a_good_time_to_draw_cursor();
     }
+    return handled;
 }
 
 void Document::notify_key_pressed(KeyPress press) {

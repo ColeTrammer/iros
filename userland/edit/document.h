@@ -55,7 +55,7 @@ public:
     const Panel& panel() const { return m_panel; }
 
     void notify_key_pressed(KeyPress press);
-    void notify_mouse_event(MouseEvent event);
+    bool notify_mouse_event(MouseEvent event);
     void notify_panel_size_changed();
 
     void save();
@@ -129,6 +129,13 @@ public:
     void clear_selection();
     String selection_text() const;
 
+    void redo();
+    void undo();
+
+    void copy();
+    void paste();
+    void cut();
+
     void move_cursor_to(int line_index, int index_into_line, MovementMode mode = MovementMode::Move);
     void insert_text_at_cursor(const String& string);
 
@@ -169,13 +176,6 @@ private:
     void insert_char(char c);
     void delete_char(DeleteCharMode mode);
     void delete_word(DeleteCharMode mode);
-
-    void redo();
-    void undo();
-
-    void copy();
-    void paste();
-    void cut();
 
     void go_to_line();
 
