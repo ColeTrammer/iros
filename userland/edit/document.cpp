@@ -11,6 +11,10 @@
 #include "mouse_event.h"
 #include "panel.h"
 
+static inline int isword(int c) {
+    return isalnum(c) || c == '_';
+}
+
 UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
     Vector<Line> lines;
     char* line = nullptr;
@@ -232,11 +236,11 @@ void Document::move_cursor_right_by_word(MovementMode mode) {
     move_cursor_right(mode);
 
     auto& line = line_at_cursor();
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isalnum(char_at_cursor())) {
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isword(char_at_cursor())) {
         move_cursor_right(mode);
     }
 
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && isalnum(char_at_cursor())) {
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && isword(char_at_cursor())) {
         move_cursor_right(mode);
     }
 }
@@ -244,17 +248,17 @@ void Document::move_cursor_right_by_word(MovementMode mode) {
 void Document::move_cursor_left_by_word(MovementMode mode) {
     move_cursor_left(mode);
 
-    while (cursor_col_position() > 0 && !isalnum(char_at_cursor())) {
+    while (cursor_col_position() > 0 && !isword(char_at_cursor())) {
         move_cursor_left(mode);
     }
 
     bool found_word = false;
-    while (cursor_col_position() > 0 && isalnum(char_at_cursor())) {
+    while (cursor_col_position() > 0 && isword(char_at_cursor())) {
         move_cursor_left(mode);
         found_word = true;
     }
 
-    if (found_word && !isalpha(char_at_cursor())) {
+    if (found_word && !isword(char_at_cursor())) {
         move_cursor_right(mode);
     }
 }
@@ -1024,10 +1028,10 @@ void Document::swap_lines_at_cursor(SwapDirection direction) {
 
 void Document::select_word_at_cursor() {
     bool was_space = isspace(char_at_cursor());
-    bool was_alnum = isalnum(char_at_cursor());
+    bool was_word = isword(char_at_cursor());
     while (line_index_at_cursor() > 0) {
         move_cursor_left(MovementMode::Move);
-        if (isspace(char_at_cursor()) != was_space || isalnum(char_at_cursor()) != was_alnum) {
+        if (isspace(char_at_cursor()) != was_space || isword(char_at_cursor()) != was_word) {
             move_cursor_right(MovementMode::Move);
             break;
         }
@@ -1035,7 +1039,7 @@ void Document::select_word_at_cursor() {
 
     while (line_index_at_cursor() < line_at_cursor().length()) {
         move_cursor_right(MovementMode::Select);
-        if (isspace(char_at_cursor()) != was_space || isalnum(char_at_cursor()) != was_alnum) {
+        if (isspace(char_at_cursor()) != was_space || isword(char_at_cursor()) != was_word) {
             break;
         }
     }
