@@ -24,7 +24,7 @@ static String s_prompt_message;
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
 
-    fputs("\033[?1049l\033[?1002l\033[?1006l", stdout);
+    fputs("\033[?1049l\033[?1002l\033[?1006l\033[?25h", stdout);
     fflush(stdout);
 }
 
