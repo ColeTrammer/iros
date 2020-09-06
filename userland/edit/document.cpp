@@ -138,6 +138,10 @@ char Document::char_at_cursor() const {
     return line.char_at(line.index_of_col_position(cursor_col_position()));
 }
 
+int Document::index_of_line_at_cursor() const {
+    return cursor_row_position();
+}
+
 int Document::index_of_line_at_position(int position) const {
     return position + m_row_offset;
 }
@@ -1018,10 +1022,42 @@ void Document::swap_lines_at_cursor(SwapDirection direction) {
     push_command<SwapLinesCommand>(direction);
 }
 
+void Document::select_word_at_cursor() {
+    bool was_space = isspace(char_at_cursor());
+    bool was_alnum = isalnum(char_at_cursor());
+    while (line_index_at_cursor() > 0) {
+        move_cursor_left(MovementMode::Move);
+        if (isspace(char_at_cursor()) != was_space || isalnum(char_at_cursor()) != was_alnum) {
+            move_cursor_right(MovementMode::Move);
+            break;
+        }
+    }
+
+    while (line_index_at_cursor() < line_at_cursor().length()) {
+        move_cursor_right(MovementMode::Select);
+        if (isspace(char_at_cursor()) != was_space || isalnum(char_at_cursor()) != was_alnum) {
+            break;
+        }
+    }
+}
+
+void Document::select_line_at_cursor() {
+    move_cursor_to_line_start(MovementMode::Move);
+    move_cursor_down(MovementMode::Select);
+}
+
 bool Document::notify_mouse_event(MouseEvent event) {
     bool handled = false;
     if (event.left == MouseEvent::Press::Down) {
         move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+        handled = true;
+    } else if (event.left == MouseEvent::Press::Double) {
+        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+        select_word_at_cursor();
+        handled = true;
+    } else if (event.left == MouseEvent::Press::Triple) {
+        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+        select_line_at_cursor();
         handled = true;
     } else if (event.down & MouseEvent::Button::Left) {
         move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Select);

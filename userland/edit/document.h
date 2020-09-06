@@ -101,6 +101,7 @@ public:
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int line_index_at_cursor() const;
     int index_into_line(int index_of_line, int position) const;
+    int index_of_line_at_cursor() const;
     int index_of_line_at_position(int position) const;
     char char_at_cursor() const;
     int num_lines() const { return m_lines.size(); }
@@ -128,6 +129,9 @@ public:
     void delete_selection();
     void clear_selection();
     String selection_text() const;
+
+    void select_line_at_cursor();
+    void select_word_at_cursor();
 
     void redo();
     void undo();
