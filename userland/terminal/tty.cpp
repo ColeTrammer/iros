@@ -265,11 +265,41 @@ void TTY::handle_escape_sequence() {
                         case 1:
                             m_psuedo_terminal.set_application_cursor_keys(false);
                             break;
+                        case 9:
+                            m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X10);
+                            break;
                         case 12:
                             // Stop cursor blink
                             break;
                         case 25:
                             m_cursor_hidden = true;
+                            break;
+                        case 1000:
+                            m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X11);
+                            break;
+                        case 1001:
+                            m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::Hilite);
+                            break;
+                        case 1002:
+                            m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::Cell);
+                            break;
+                        case 1003:
+                            m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::All);
+                            break;
+                        case 1005:
+                            if (m_psuedo_terminal.mouse_reporting_mode() == MouseReportingMode::UTF8) {
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+                            }
+                            break;
+                        case 1006:
+                            if (m_psuedo_terminal.mouse_reporting_mode() == MouseReportingMode::SGR) {
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+                            }
+                            break;
+                        case 1015:
+                            if (m_psuedo_terminal.mouse_reporting_mode() == MouseReportingMode::URXVT) {
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+                            }
                             break;
                         case 1049:
                             set_use_alternate_screen_buffer(false);
@@ -290,11 +320,52 @@ void TTY::handle_escape_sequence() {
                             case 1:
                                 m_psuedo_terminal.set_application_cursor_keys(true);
                                 break;
+                            case 9:
+                                m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X10);
+                                break;
                             case 12:
                                 // Start cursor blink
                                 break;
                             case 25:
                                 m_cursor_hidden = false;
+                                break;
+                            case 1000:
+                                m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X10);
+                                break;
+                            case 1001:
+                                m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X11);
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+                                break;
+                            case 1002:
+                                m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::Cell);
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+                                break;
+                            case 1003:
+                                m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::All);
+                                m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+                                break;
+                            case 1005:
+                                if (m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::X11 ||
+                                    m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::Cell ||
+                                    m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::All) {
+                                    m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::UTF8);
+                                }
+                                break;
+                            case 1006:
+                                if (m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::X11 ||
+                                    m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::Cell ||
+                                    m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::All) {
+                                    m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::SGR);
+                                }
+                                break;
+                            case 1015:
+                                if (m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::X11 ||
+                                    m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::Cell ||
+                                    m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::All) {
+                                    m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::URXVT);
+                                }
                                 break;
                             case 1049:
                                 set_use_alternate_screen_buffer(true);

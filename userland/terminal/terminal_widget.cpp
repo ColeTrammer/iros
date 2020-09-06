@@ -261,6 +261,10 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
 
     int row_at_cursor = m_tty.scroll_relative_offset(event.y() / cell_height);
     int col_at_cursor = event.x() / cell_width;
+    if (m_pseudo_terminal.handle_mouse_event(event.left(), event.right(), row_at_cursor, col_at_cursor, event.scroll())) {
+        return;
+    }
+
     if (event.left() == MOUSE_DOWN) {
         clear_selection();
         m_in_selection = true;

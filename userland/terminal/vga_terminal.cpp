@@ -15,6 +15,8 @@ void VgaTerminal::on_mouse_event(mouse_event event) {
     } else if (event.scroll_state == SCROLL_UP) {
         m_tty.scroll_up();
     }
+
+    m_pseudo_terminal.handle_mouse_event(event.left, event.right, 1, 1, event.scroll_state);
 }
 
 void VgaTerminal::on_key_event(key_event event) {
