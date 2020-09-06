@@ -253,7 +253,11 @@ int TerminalPanel::cols() const {
 }
 
 void TerminalPanel::draw_cursor() {
-    printf("\033[%d;%dH", m_row_offset + m_cursor_row + 1, m_col_offset + m_cursor_col + m_cols_needed_for_line_numbers + 1);
+    if (m_cursor_row >= 0 && m_cursor_row < rows() && m_cursor_col >= 0 && m_cursor_col < cols()) {
+        printf("\033[%d;%dH\033[?25h", m_row_offset + m_cursor_row + 1, m_col_offset + m_cursor_col + m_cols_needed_for_line_numbers + 1);
+    } else {
+        printf("\033[?25l");
+    }
     fflush(stdout);
 }
 
@@ -378,7 +382,6 @@ void TerminalPanel::flush() {
     m_last_metadata_rendered = CharacterMetadata();
     fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
 
-    fputs("\033[?25h", stdout);
     draw_status_message();
     draw_cursor();
     fflush(stdout);

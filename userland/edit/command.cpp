@@ -14,7 +14,7 @@ DeltaBackedCommand::~DeltaBackedCommand() {}
 
 void DeltaBackedCommand::redo() {
     document().restore_state(state_snapshot());
-    execute();
+    document().execute_command(*this);
 }
 
 SnapshotBackedCommand::SnapshotBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot()) {}
@@ -27,7 +27,7 @@ void SnapshotBackedCommand::undo() {
 
 void SnapshotBackedCommand::redo() {
     document().restore_state(snapshot().state);
-    execute();
+    document().execute_command(*this);
 }
 
 InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}

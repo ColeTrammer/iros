@@ -31,10 +31,8 @@ public:
     static UniquePtr<Document> create_single_line(Panel& panel, String text = "");
 
     struct StateSnapshot {
-        int row_offset { 0 };
-        int col_offset { 0 };
-        int cursor_row { 0 };
-        int cursor_col { 0 };
+        int absolute_cursor_row { 0 };
+        int absolute_cursor_col { 0 };
         int max_cursor_col { 0 };
         bool document_was_modified { false };
         Selection selection;
@@ -96,6 +94,13 @@ public:
     void move_cursor_to_document_end(MovementMode mode = MovementMode::Move);
     void move_cursor_page_up(MovementMode mode = MovementMode::Move);
     void move_cursor_page_down(MovementMode mode = MovementMode::Move);
+
+    void scroll(int z);
+    void scroll_up(int times = 1);
+    void scroll_down(int times = 1);
+    void scroll_left(int times = 1);
+    void scroll_right(int times = 1);
+    void scroll_cursor_into_view();
 
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
@@ -161,6 +166,8 @@ public:
     Line& last_line() { return m_lines.last(); }
     const Line& last_line() const { return m_lines.last(); }
 
+    bool execute_command(Command& command);
+
     Function<void()> on_change;
     Function<void()> on_submit;
     Function<void()> on_escape_press;
@@ -204,7 +211,7 @@ private:
         }
 
         auto command = make_unique<C>(*this, forward<Args>(args)...);
-        bool did_modify = command->execute();
+        bool did_modify = execute_command(*command);
         if (did_modify) {
             m_command_stack.add(move(command));
             m_command_stack_index++;
