@@ -6,6 +6,7 @@ set(SOURCES
     event_loop.cpp
     layout.cpp
     model.cpp
+    mouse_press_tracker.cpp
     object.cpp
     selectable.cpp
     selectable_file.cpp

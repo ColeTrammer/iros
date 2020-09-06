@@ -54,6 +54,22 @@ private:
     bool m_active;
 };
 
+enum class MouseEventType {
+    Down,
+    Double,
+    Triple,
+    Move,
+    Up,
+};
+
+namespace MouseButton {
+    enum {
+        Left = 1,
+        Middle = 2,
+        Right = 4,
+    };
+}
+
 class MouseEvent final : public Event {
 public:
     MouseEvent(int x, int y, scroll_state scroll, mouse_button_state left, mouse_button_state right)
