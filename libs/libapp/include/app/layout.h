@@ -30,9 +30,11 @@ public:
     void set_margins(const Margins& m) { m_margins = m; }
     const Margins& margins() const { return m_margins; }
 
+    SharedPtr<Widget> widget_pointer();
+
     template<typename WidgetClass, typename... Args>
     WidgetClass& add(Args&&... args) {
-        auto ret = WidgetClass::create(nullptr, forward<Args>(args)...);
+        auto ret = WidgetClass::create(widget_pointer(), forward<Args>(args)...);
         do_add(ret);
         return *ret;
     }
