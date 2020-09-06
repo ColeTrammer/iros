@@ -218,8 +218,7 @@ int AppPanel::index_into_line_at_position(int wx, int wy) const {
 
     int index_of_line = clamp(document()->index_of_line_at_position(wy), 0, document()->num_lines() - 1);
 
-    auto& line = document()->line_at_index(index_of_line);
-    return line.index_of_col_position(wx);
+    return document()->index_into_line(index_of_line, wx);
 }
 
 int AppPanel::index_of_line_at_position(int, int wy) const {

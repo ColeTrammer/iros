@@ -146,6 +146,10 @@ int Document::line_index_at_cursor() const {
     return line_at_cursor().index_of_col_position(cursor_col_position());
 }
 
+int Document::index_into_line(int index_of_line, int position) const {
+    return line_at_index(index_of_line).index_of_col_position(position + m_col_offset);
+}
+
 int Document::cursor_col_position() const {
     return m_panel.cursor_col() + m_col_offset;
 }

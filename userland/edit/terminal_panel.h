@@ -2,6 +2,7 @@
 
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
+#include <liim/variant.h>
 #include <liim/vector.h>
 #include <time.h>
 
@@ -51,7 +52,7 @@ private:
 
     virtual void document_did_change() override;
 
-    Maybe<KeyPress> read_key();
+    Vector<Variant<KeyPress, MouseEvent>> read_input();
 
     void draw_cursor();
     void draw_status_message();
@@ -74,6 +75,8 @@ private:
     String m_prompt_buffer;
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
+    bool m_mouse_left_down { false };
+    bool m_mouse_right_down { false };
     CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };

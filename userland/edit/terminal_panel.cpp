@@ -11,6 +11,7 @@
 #include "document.h"
 #include "document_type.h"
 #include "key_press.h"
+#include "mouse_event.h"
 #include "terminal_panel.h"
 
 static termios s_original_termios;
@@ -23,7 +24,7 @@ static String s_prompt_message;
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
 
-    fputs("\033[?1049l", stdout);
+    fputs("\033[?1049l\033[?1002l\033[?1006l", stdout);
     fflush(stdout);
 }
 
@@ -76,7 +77,7 @@ static void enable_raw_mode() {
 
     setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
 
-    fputs("\033[?1049h", stdout);
+    fputs("\033[?1049h\033[?1002h\033[?1006h", stdout);
 }
 
 constexpr int status_bar_height = 1;
@@ -383,7 +384,12 @@ void TerminalPanel::flush() {
     fflush(stdout);
 }
 
-Maybe<KeyPress> TerminalPanel::read_key() {
+Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
+    using K = KeyPress;
+    using M = MouseEvent;
+    using T = Variant<K, M>;
+    using R = Vector<T>;
+
     char ch;
     ssize_t ret = read(STDIN_FILENO, &ch, 1);
     assert(ret >= 0);
@@ -392,16 +398,16 @@ Maybe<KeyPress> TerminalPanel::read_key() {
     }
 
     if (ch == '\033') {
-        char escape_buffer[40];
+        char escape_buffer[64];
         ret = read(STDIN_FILENO, escape_buffer, 1);
         assert(ret >= 0);
 
         if (ret == 0) {
-            return { { 0, KeyPress::Key::Escape } };
+            return R::create_from_single_element(T { K { 0, KeyPress::Key::Escape } });
         }
 
         if (escape_buffer[0] != '[' && escape_buffer[0] != 'O') {
-            return { { KeyPress::Modifier::Alt, escape_buffer[0] } };
+            return R::create_from_single_element(T { K { KeyPress::Modifier::Alt, escape_buffer[0] } });
         } else {
             // Information from https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
             auto modifiers_from_digit = [](char digit) -> int {
@@ -411,93 +417,93 @@ Maybe<KeyPress> TerminalPanel::read_key() {
                 return digit - 1;
             };
 
-            auto xterm_sequence_to_key = [](char ch, int modifiers) -> KeyPress {
+            auto xterm_sequence_to_key = [](char ch, int modifiers) -> R {
                 switch (ch) {
                     case 'A':
-                        return { modifiers, KeyPress::Key::UpArrow };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::UpArrow } });
                     case 'B':
-                        return { modifiers, KeyPress::Key::DownArrow };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::DownArrow } });
                     case 'C':
-                        return { modifiers, KeyPress::Key::RightArrow };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::RightArrow } });
                     case 'D':
-                        return { modifiers, KeyPress::Key::LeftArrow };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::LeftArrow } });
                     case 'F':
-                        return { modifiers, KeyPress::Key::End };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::End } });
                     case 'H':
-                        return { modifiers, KeyPress::Key::Home };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Home } });
                     case 'P':
-                        return { modifiers, KeyPress::Key::F1 };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F1 } });
                     case 'Q':
-                        return { modifiers, KeyPress::Key::F2 };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F2 } });
                     case 'R':
-                        return { modifiers, KeyPress::Key::F3 };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F3 } });
                     case 'S':
-                        return { modifiers, KeyPress::Key::F4 };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F4 } });
                     default:
-                        return { modifiers, ch };
+                        return R::create_from_single_element(T { K { modifiers, ch } });
                 }
             };
 
-            auto vt_sequence_to_key = [](int num, int modifiers) -> Maybe<KeyPress> {
+            auto vt_sequence_to_key = [](int num, int modifiers) -> R {
                 switch (num) {
                     case 1:
-                        return { { modifiers, KeyPress::Key::Home } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Home } });
                     case 2:
-                        return { { modifiers, KeyPress::Key::Insert } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Insert } });
                     case 3:
-                        return { { modifiers, KeyPress::Key::Delete } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Delete } });
                     case 4:
-                        return { { modifiers, KeyPress::Key::End } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::End } });
                     case 5:
-                        return { { modifiers, KeyPress::Key::PageUp } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::PageUp } });
                     case 6:
-                        return { { modifiers, KeyPress::Key::PageDown } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::PageDown } });
                     case 7:
-                        return { { modifiers, KeyPress::Key::Home } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Home } });
                     case 8:
-                        return { { modifiers, KeyPress::Key::End } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::End } });
                     case 10:
-                        return { { modifiers, KeyPress::Key::F0 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F0 } });
                     case 11:
-                        return { { modifiers, KeyPress::Key::F1 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F1 } });
                     case 12:
-                        return { { modifiers, KeyPress::Key::F2 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F2 } });
                     case 13:
-                        return { { modifiers, KeyPress::Key::F3 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F3 } });
                     case 14:
-                        return { { modifiers, KeyPress::Key::F4 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F4 } });
                     case 15:
-                        return { { modifiers, KeyPress::Key::F5 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F5 } });
                     case 17:
-                        return { { modifiers, KeyPress::Key::F6 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F6 } });
                     case 18:
-                        return { { modifiers, KeyPress::Key::F7 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F7 } });
                     case 19:
-                        return { { modifiers, KeyPress::Key::F8 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F8 } });
                     case 20:
-                        return { { modifiers, KeyPress::Key::F9 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F9 } });
                     case 21:
-                        return { { modifiers, KeyPress::Key::F10 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F10 } });
                     case 23:
-                        return { { modifiers, KeyPress::Key::F11 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F11 } });
                     case 24:
-                        return { { modifiers, KeyPress::Key::F12 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F12 } });
                     case 25:
-                        return { { modifiers, KeyPress::Key::F13 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F13 } });
                     case 26:
-                        return { { modifiers, KeyPress::Key::F14 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F14 } });
                     case 28:
-                        return { { modifiers, KeyPress::Key::F15 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F15 } });
                     case 29:
-                        return { { modifiers, KeyPress::Key::F16 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F16 } });
                     case 31:
-                        return { { modifiers, KeyPress::Key::F17 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F17 } });
                     case 32:
-                        return { { modifiers, KeyPress::Key::F18 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F18 } });
                     case 33:
-                        return { { modifiers, KeyPress::Key::F19 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F19 } });
                     case 34:
-                        return { { modifiers, KeyPress::Key::F20 } };
+                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F20 } });
                     default:
                         return {};
                 }
@@ -507,7 +513,81 @@ Maybe<KeyPress> TerminalPanel::read_key() {
             assert(ret >= 0);
 
             if (ret == 0) {
-                return { { KeyPress::Modifier::Alt, KeyPress::Key::Escape } };
+                return R::create_from_single_element(T { K { KeyPress::Modifier::Alt, KeyPress::Key::Escape } });
+            }
+
+            if (escape_buffer[1] == '<') {
+                // SGR encoded mouse events (enabled with DECSET 1006)
+                // Information from https://github.com/chromium/hterm/blob/master/doc/ControlSequences.md#sgr
+                size_t escape_buffer_length = 2;
+                for (;;) {
+                    ret = read(STDIN_FILENO, &escape_buffer[escape_buffer_length++], 1);
+                    if (escape_buffer[escape_buffer_length - 1] == 'M' || escape_buffer[escape_buffer_length - 1] == 'm') {
+                        break;
+                    }
+                    if (ret <= 0) {
+                        return {};
+                    }
+                }
+
+                int cb;
+                int cx;
+                int cy;
+                if (sscanf(escape_buffer, "[<%d;%d;%d", &cb, &cx, &cy) != 3) {
+                    return {};
+                }
+                bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
+
+                auto left = MouseEvent::Press::None;
+                auto right = MouseEvent::Press::None;
+                int z = 0;
+                switch (cb & ~0b11100 /* ignore modifiers for now */) {
+                    case 0:
+                        // Left mouse button
+                        if (mouse_down) {
+                            left = MouseEvent::Press::Down;
+                            m_mouse_left_down = true;
+                        } else {
+                            left = MouseEvent::Press::Up;
+                            m_mouse_left_down = false;
+                        }
+                        break;
+                    case 1:
+                        // Middle mouse button (ignored for now)
+                        break;
+                    case 2:
+                        // Right mouse button
+                        if (mouse_down) {
+                            right = MouseEvent::Press::Down;
+                            m_mouse_right_down = true;
+                        } else {
+                            right = MouseEvent::Press::Up;
+                            m_mouse_right_down = false;
+                        }
+                        break;
+                    case 32:
+                    case 33:
+                    case 34:
+                        // Mouse move.
+                        break;
+                    case 64:
+                        // Scroll up
+                        z = -1;
+                        break;
+                    case 65:
+                        // Scroll down
+                        z = 1;
+                        break;
+                }
+
+                MouseEvent ev;
+                ev.left = left;
+                ev.right = right;
+                ev.index_of_line = clamp(document()->index_of_line_at_position(cy - 1), 0, document()->num_lines() - 1);
+                ev.index_into_line = document()->index_into_line(ev.index_of_line, cx - 1);
+                ev.z = z;
+                ev.down = (m_mouse_left_down ? MouseEvent::Button::Left : 0) | (m_mouse_right_down ? MouseEvent::Button::Right : 0);
+                return R::create_from_single_element(T { ev });
             }
 
             if (isalpha(escape_buffer[1])) {
@@ -567,29 +647,29 @@ Maybe<KeyPress> TerminalPanel::read_key() {
     }
 
     if (ch == s_original_termios.c_cc[VERASE]) {
-        return { { 0, KeyPress::Key::Backspace } };
+        return R::create_from_single_element(T { K { 0, KeyPress::Key::Backspace } });
     }
 
     if (ch == '\r') {
-        return { { 0, KeyPress::Key::Enter } };
+        return R::create_from_single_element(T { K { 0, KeyPress::Key::Enter } });
     }
 
     if (ch == '\t') {
         // \t is not a control key
-        return { { 0, '\t' } };
+        return R::create_from_single_element(T { K { 0, '\t' } });
     }
 
     if (ch == ('w' & 0x1F)) {
         // control backspace unfortunately binds to control w, but control backspace
         // takes prcedence.
-        return { { KeyPress::Modifier::Control, KeyPress::Key::Backspace } };
+        return R::create_from_single_element(T { K { KeyPress::Modifier::Control, KeyPress::Key::Backspace } });
     }
 
     if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
-        return { { KeyPress::Modifier::Control, ch | 0b1000000 } };
+        return R::create_from_single_element(T { K { KeyPress::Modifier::Control, ch | 0b1000000 } });
     }
 
-    return { { 0, ch } };
+    return R::create_from_single_element(T { K { 0, ch } });
 }
 
 int TerminalPanel::enter() {
@@ -607,14 +687,19 @@ int TerminalPanel::enter() {
             continue;
         }
 
-        auto maybe_press = read_key();
-        if (!maybe_press.has_value()) {
+        auto input = read_input();
+        if (input.empty()) {
             continue;
         }
 
-        auto& press = maybe_press.value();
         if (auto* document = Panel::document()) {
-            document->notify_key_pressed(press);
+            for (auto& ev : input) {
+                if (ev.is<KeyPress>()) {
+                    document->notify_key_pressed(ev.as<KeyPress>());
+                } else {
+                    document->notify_mouse_event(ev.as<MouseEvent>());
+                }
+            }
         }
 
         draw_status_message();
@@ -695,21 +780,29 @@ void TerminalPanel::enter_search(String starting_text) {
             continue;
         }
 
-        auto maybe_press = read_key();
-        if (!maybe_press.has_value()) {
+        auto input = read_input();
+        if (input.empty()) {
             continue;
         }
 
-        auto& press = maybe_press.value();
-        if (press.key == KeyPress::Key::Enter) {
-            TerminalPanel::document()->move_cursor_to_next_search_match();
-        }
+        if (auto* document = Panel::document()) {
+            for (auto& ev : input) {
+                if (ev.is<KeyPress>()) {
+                    auto& press = ev.as<KeyPress>();
+                    if (press.key == KeyPress::Key::Enter) {
+                        TerminalPanel::document()->move_cursor_to_next_search_match();
+                    }
 
-        if (press.key == KeyPress::Key::Escape || ((press.modifiers & KeyPress::Modifier::Control) && press.key == 'Q')) {
-            break;
-        }
+                    if (press.key == KeyPress::Key::Escape || ((press.modifiers & KeyPress::Modifier::Control) && press.key == 'Q')) {
+                        break;
+                    }
 
-        text_panel.document()->notify_key_pressed(press);
+                    text_panel.document()->notify_key_pressed(press);
+                } else {
+                    document->notify_mouse_event(ev.as<MouseEvent>());
+                }
+            }
+        }
 
         auto search_text = text_panel.document()->content_string();
         TerminalPanel::document()->set_search_text(search_text);
