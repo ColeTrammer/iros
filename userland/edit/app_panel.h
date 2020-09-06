@@ -101,8 +101,6 @@ private:
     int m_cursor_row { 0 };
     bool m_cursor_dirty { true };
     bool m_main_panel { false };
-    bool m_mouse_left_down { false };
-    bool m_mouse_right_down { false };
     Vector<CellData> m_cells;
     SharedPtr<SearchWidget> m_search_widget;
 

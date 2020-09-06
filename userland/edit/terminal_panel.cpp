@@ -538,18 +538,16 @@ Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
                 }
                 bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
 
-                auto left = MouseEvent::Press::None;
-                auto right = MouseEvent::Press::None;
-                int z = 0;
+                auto left = MOUSE_NO_CHANGE;
+                auto right = MOUSE_NO_CHANGE;
+                auto scroll_state = SCROLL_NONE;
                 switch (cb & ~0b11100 /* ignore modifiers for now */) {
                     case 0:
                         // Left mouse button
                         if (mouse_down) {
-                            left = MouseEvent::Press::Down;
-                            m_mouse_left_down = true;
+                            left = MOUSE_DOWN;
                         } else {
-                            left = MouseEvent::Press::Up;
-                            m_mouse_left_down = false;
+                            left = MOUSE_UP;
                         }
                         break;
                     case 1:
@@ -558,11 +556,9 @@ Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
                     case 2:
                         // Right mouse button
                         if (mouse_down) {
-                            right = MouseEvent::Press::Down;
-                            m_mouse_right_down = true;
+                            right = MOUSE_DOWN;
                         } else {
-                            right = MouseEvent::Press::Up;
-                            m_mouse_right_down = false;
+                            right = MOUSE_UP;
                         }
                         break;
                     case 32:
@@ -572,21 +568,23 @@ Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
                         break;
                     case 64:
                         // Scroll up
-                        z = -1;
+                        scroll_state = SCROLL_UP;
                         break;
                     case 65:
                         // Scroll down
-                        z = 1;
+                        scroll_state = SCROLL_DOWN;
                         break;
                 }
 
+                auto type = m_mouse_press_tracker.notify_mouse_event(left, right, cx - 1, cy - 1, scroll_state);
+
                 MouseEvent ev;
-                ev.left = left;
-                ev.right = right;
+                ev.left = left != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
+                ev.right = right != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
                 ev.index_of_line = clamp(document()->index_of_line_at_position(cy - 1), 0, document()->num_lines() - 1);
                 ev.index_into_line = document()->index_into_line(ev.index_of_line, cx - 1);
-                ev.z = z;
-                ev.down = (m_mouse_left_down ? MouseEvent::Button::Left : 0) | (m_mouse_right_down ? MouseEvent::Button::Right : 0);
+                ev.z = scroll_state == SCROLL_UP ? -1 : scroll_state == SCROLL_DOWN ? 1 : 0;
+                ev.down = m_mouse_press_tracker.buttons_down();
                 return R::create_from_single_element(T { ev });
             }
 

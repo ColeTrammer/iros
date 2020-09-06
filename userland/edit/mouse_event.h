@@ -2,14 +2,17 @@
 
 struct MouseEvent {
     enum Press {
-        None,
         Down,
+        Double,
+        Triple,
+        None,
         Up,
     };
 
     enum Button {
         Left = 1,
-        Right = 2,
+        Middle = 2,
+        Right = 4,
     };
 
     Press left;

@@ -251,18 +251,6 @@ int AppPanel::index_of_line_at_position(int, int wy) const {
 }
 
 void AppPanel::on_mouse_event(App::MouseEvent& event) {
-    if (event.left() == MOUSE_DOWN) {
-        m_mouse_left_down = true;
-    } else if (event.left() == MOUSE_UP) {
-        m_mouse_left_down = false;
-    }
-
-    if (event.right() == MOUSE_DOWN) {
-        m_mouse_right_down = true;
-    } else if (event.right() == MOUSE_UP) {
-        m_mouse_right_down = false;
-    }
-
     if (!document()) {
         return;
     }
@@ -271,11 +259,9 @@ void AppPanel::on_mouse_event(App::MouseEvent& event) {
     ev.index_into_line = index_into_line_at_position(event.x(), event.y());
     ev.index_of_line = index_of_line_at_position(event.x(), event.y());
     ev.z = event.scroll() == SCROLL_UP ? -1 : event.scroll() == SCROLL_DOWN ? 1 : 0;
-    ev.left =
-        event.left() == MOUSE_DOWN ? MouseEvent::Press::Down : event.left() == MOUSE_UP ? MouseEvent::Press::Up : MouseEvent::Press::None;
-    ev.right =
-        event.right() == MOUSE_DOWN ? MouseEvent::Press::Down : event.right() == MOUSE_UP ? MouseEvent::Press::Up : MouseEvent::Press::None;
-    ev.down = (m_mouse_left_down ? MouseEvent::Button::Left : 0) | (m_mouse_right_down ? MouseEvent::Button::Right : 0);
+    ev.left = event.left() != MOUSE_NO_CHANGE ? (MouseEvent::Press) event.mouse_event_type() : MouseEvent::Press::None;
+    ev.right = event.right() != MOUSE_NO_CHANGE ? (MouseEvent::Press) event.mouse_event_type() : MouseEvent::Press::None;
+    ev.down = event.buttons_down();
 
     if (document()->notify_mouse_event(ev)) {
         return;

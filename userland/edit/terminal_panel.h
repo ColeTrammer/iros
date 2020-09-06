@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/mouse_press_tracker.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/variant.h>
@@ -75,8 +76,7 @@ private:
     String m_prompt_buffer;
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
-    bool m_mouse_left_down { false };
-    bool m_mouse_right_down { false };
+    App::MousePressTracker m_mouse_press_tracker;
     CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };
