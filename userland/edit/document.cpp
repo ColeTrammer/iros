@@ -375,7 +375,7 @@ void Document::move_cursor_to_line_start(MovementMode mode) {
         set_needs_display();
     }
 
-    m_panel.set_cursor_col(0);
+    m_panel.set_cursor_col(-m_col_offset);
     m_max_cursor_col = 0;
 }
 
