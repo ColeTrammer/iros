@@ -95,7 +95,7 @@ public:
     void move_cursor_page_up(MovementMode mode = MovementMode::Move);
     void move_cursor_page_down(MovementMode mode = MovementMode::Move);
 
-    void scroll(int z);
+    void scroll(int vertical, int horizontal);
     void scroll_up(int times = 1);
     void scroll_down(int times = 1);
     void scroll_left(int times = 1);

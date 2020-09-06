@@ -185,9 +185,38 @@ void Document::update_selection_state_for_mode(MovementMode mode) {
     }
 }
 
-void Document::move_cursor_right(MovementMode mode) {
-    scroll_cursor_into_view();
+void Document::move_cursor_right_by_word(MovementMode mode) {
+    move_cursor_right(mode);
 
+    auto& line = line_at_cursor();
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isword(char_at_cursor())) {
+        move_cursor_right(mode);
+    }
+
+    while (line.index_of_col_position(cursor_col_position()) < line.length() && isword(char_at_cursor())) {
+        move_cursor_right(mode);
+    }
+}
+
+void Document::move_cursor_left_by_word(MovementMode mode) {
+    move_cursor_left(mode);
+
+    while (cursor_col_position() > 0 && !isword(char_at_cursor())) {
+        move_cursor_left(mode);
+    }
+
+    bool found_word = false;
+    while (cursor_col_position() > 0 && isword(char_at_cursor())) {
+        move_cursor_left(mode);
+        found_word = true;
+    }
+
+    if (found_word && !isword(char_at_cursor())) {
+        move_cursor_right(mode);
+    }
+}
+
+void Document::move_cursor_right(MovementMode mode) {
     auto& line = line_at_cursor();
     int index_into_line = line_index_at_cursor();
     if (index_into_line == line.length()) {
@@ -223,51 +252,10 @@ void Document::move_cursor_right(MovementMode mode) {
         set_needs_display();
     }
 
-    int cursor_col = m_panel.cursor_col();
-    if (cursor_col + cols_to_advance >= m_panel.cols()) {
-        m_col_offset += cursor_col + cols_to_advance - m_panel.cols() + 1;
-        m_panel.set_cursor_col(m_panel.cols() - 1);
-        set_needs_display();
-        return;
-    }
-
     m_panel.set_cursor_col(m_panel.cursor_col() + cols_to_advance);
 }
 
-void Document::move_cursor_right_by_word(MovementMode mode) {
-    move_cursor_right(mode);
-
-    auto& line = line_at_cursor();
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isword(char_at_cursor())) {
-        move_cursor_right(mode);
-    }
-
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && isword(char_at_cursor())) {
-        move_cursor_right(mode);
-    }
-}
-
-void Document::move_cursor_left_by_word(MovementMode mode) {
-    move_cursor_left(mode);
-
-    while (cursor_col_position() > 0 && !isword(char_at_cursor())) {
-        move_cursor_left(mode);
-    }
-
-    bool found_word = false;
-    while (cursor_col_position() > 0 && isword(char_at_cursor())) {
-        move_cursor_left(mode);
-        found_word = true;
-    }
-
-    if (found_word && !isword(char_at_cursor())) {
-        move_cursor_right(mode);
-    }
-}
-
 void Document::move_cursor_left(MovementMode mode) {
-    scroll_cursor_into_view();
-
     auto& line = line_at_cursor();
     int index_into_line = line_index_at_cursor();
     if (index_into_line == 0) {
@@ -303,20 +291,10 @@ void Document::move_cursor_left(MovementMode mode) {
         set_needs_display();
     }
 
-    int cursor_col = m_panel.cursor_col();
-    if (cursor_col - cols_to_recede < 0) {
-        m_col_offset += cursor_col - cols_to_recede;
-        m_panel.set_cursor_col(0);
-        set_needs_display();
-        return;
-    }
-
     m_panel.set_cursor_col(m_panel.cursor_col() - cols_to_recede);
 }
 
 void Document::move_cursor_down(MovementMode mode) {
-    scroll_cursor_into_view();
-
     int cursor_row = m_panel.cursor_row();
     if (cursor_row + m_row_offset == m_lines.size() - 1) {
         move_cursor_to_line_end(mode);
@@ -327,12 +305,7 @@ void Document::move_cursor_down(MovementMode mode) {
     int prev_line_index = line_index_at_cursor();
     update_selection_state_for_mode(mode);
 
-    if (cursor_row == m_panel.rows() - 1) {
-        m_row_offset++;
-        set_needs_display();
-    } else {
-        m_panel.set_cursor_row(cursor_row + 1);
-    }
+    m_panel.set_cursor_row(cursor_row + 1);
 
     int new_line_index = clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
@@ -346,8 +319,6 @@ void Document::move_cursor_down(MovementMode mode) {
 }
 
 void Document::move_cursor_up(MovementMode mode) {
-    scroll_cursor_into_view();
-
     int cursor_row = m_panel.cursor_row();
     if (cursor_row == 0 && m_row_offset == 0) {
         move_cursor_to_line_start(mode);
@@ -358,12 +329,7 @@ void Document::move_cursor_up(MovementMode mode) {
     int prev_line_index = line_index_at_cursor();
     update_selection_state_for_mode(mode);
 
-    if (cursor_row == 0) {
-        m_row_offset--;
-        set_needs_display();
-    } else {
-        m_panel.set_cursor_row(cursor_row - 1);
-    }
+    m_panel.set_cursor_row(cursor_row - 1);
 
     int new_line_index = clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
@@ -385,33 +351,14 @@ int Document::clamp_cursor_to_line_end() {
     }
 
     if (current_col > max_col) {
-        if (max_col >= m_panel.cols()) {
-            m_col_offset = max_col - m_panel.cols() + 1;
-            m_panel.set_cursor_col(m_panel.cols() - 1);
-            set_needs_display();
-            return line.length();
-        }
-
-        m_panel.set_cursor_col(max_col);
-
-        if (m_col_offset != 0) {
-            m_col_offset = 0;
-            set_needs_display();
-        }
+        m_panel.set_cursor_col(max_col - m_col_offset);
         return line.length();
     }
 
     if (m_max_cursor_col > current_col) {
         int new_line_index = line.index_of_col_position(m_max_cursor_col);
         int new_cursor_col = line.col_position_of_index(new_line_index);
-        if (new_cursor_col >= m_panel.cols()) {
-            m_col_offset = new_cursor_col - m_panel.cols() + 1;
-            m_panel.set_cursor_col(m_panel.cols() - 1);
-            set_needs_display();
-            return new_line_index;
-        }
-
-        m_panel.set_cursor_col(new_cursor_col);
+        m_panel.set_cursor_col(new_cursor_col - m_col_offset);
         return new_line_index;
     }
 
@@ -419,8 +366,6 @@ int Document::clamp_cursor_to_line_end() {
 }
 
 void Document::move_cursor_to_line_start(MovementMode mode) {
-    scroll_cursor_into_view();
-
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {
         auto& line = line_at_cursor();
@@ -431,16 +376,10 @@ void Document::move_cursor_to_line_start(MovementMode mode) {
     }
 
     m_panel.set_cursor_col(0);
-    if (m_col_offset != 0) {
-        m_col_offset = 0;
-        set_needs_display();
-    }
     m_max_cursor_col = 0;
 }
 
 void Document::move_cursor_to_line_end(MovementMode mode) {
-    scroll_cursor_into_view();
-
     auto& line = line_at_cursor();
     int new_col_position = line.col_position_of_index(line.length());
 
@@ -454,19 +393,7 @@ void Document::move_cursor_to_line_end(MovementMode mode) {
         set_needs_display();
     }
 
-    if (new_col_position >= m_panel.cols()) {
-        m_col_offset = new_col_position - m_panel.cols() + 1;
-        m_panel.set_cursor_col(m_panel.cols() - 1);
-        set_needs_display();
-        return;
-    }
-
     m_panel.set_cursor_col(new_col_position);
-
-    if (m_col_offset != 0) {
-        m_col_offset = 0;
-        set_needs_display();
-    }
 }
 
 void Document::move_cursor_to_document_start(MovementMode mode) {
@@ -479,11 +406,17 @@ void Document::move_cursor_to_document_end(MovementMode mode) {
     move_cursor_to(last_line_index, last_line.length(), mode);
 }
 
-void Document::scroll(int z) {
-    if (z < 0) {
-        scroll_up(-z);
-    } else if (z > 0) {
-        scroll_down(z);
+void Document::scroll(int vertical, int horizontal) {
+    if (vertical < 0) {
+        scroll_up(-vertical);
+    } else if (vertical > 0) {
+        scroll_down(vertical);
+    }
+
+    if (horizontal < 0) {
+        scroll_left(-horizontal);
+    } else if (horizontal > 0) {
+        scroll_right(horizontal);
     }
 }
 
@@ -533,9 +466,9 @@ void Document::scroll_cursor_into_view() {
     }
 
     if (m_panel.cursor_col() < 0) {
-        scroll_right(-m_panel.cursor_col());
+        scroll_left(-m_panel.cursor_col());
     } else if (m_panel.cursor_col() >= m_panel.cols()) {
-        scroll_left(m_panel.cursor_col() - m_panel.cols() + 1);
+        scroll_right(m_panel.cursor_col() - m_panel.cols() + 1);
     }
 }
 
@@ -1140,7 +1073,7 @@ bool Document::notify_mouse_event(MouseEvent event) {
         move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Select);
         handled = true;
     } else if (event.z != 0) {
-        scroll(2 * event.z);
+        scroll(2 * event.z, 0);
         handled = true;
     }
 
@@ -1177,21 +1110,27 @@ void Document::notify_key_pressed(KeyPress press) {
         switch (toupper(press.key)) {
             case KeyPress::Key::LeftArrow:
                 move_cursor_left_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::RightArrow:
                 move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::DownArrow:
                 move_cursor_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::UpArrow:
                 move_cursor_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::Home:
                 move_cursor_to_document_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::End:
                 move_cursor_to_document_end(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::Backspace:
                 delete_word(DeleteCharMode::Backspace);
@@ -1254,27 +1193,35 @@ void Document::notify_key_pressed(KeyPress press) {
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
             move_cursor_left(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::RightArrow:
             move_cursor_right(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::DownArrow:
             move_cursor_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::UpArrow:
             move_cursor_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::Home:
             move_cursor_to_line_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::End:
             move_cursor_to_line_end(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::PageUp:
             move_cursor_page_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::PageDown:
             move_cursor_page_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            scroll_cursor_into_view();
             break;
         case KeyPress::Key::Backspace:
             delete_char(DeleteCharMode::Backspace);
