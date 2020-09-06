@@ -1056,6 +1056,16 @@ void Document::select_line_at_cursor() {
     move_cursor_down(MovementMode::Select);
 }
 
+void Document::select_all() {
+    int save_row_offset = m_row_offset;
+    int save_col_offset = m_col_offset;
+
+    move_cursor_to_document_start(MovementMode::Move);
+    move_cursor_to_document_end(MovementMode::Select);
+
+    scroll(save_row_offset - m_row_offset, save_col_offset - m_col_offset);
+}
+
 bool Document::notify_mouse_event(MouseEvent event) {
     bool handled = false;
     if (event.left == MouseEvent::Press::Down) {
@@ -1137,6 +1147,9 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
             case KeyPress::Key::Delete:
                 delete_word(DeleteCharMode::Delete);
+                break;
+            case 'A':
+                select_all();
                 break;
             case 'C':
                 copy();

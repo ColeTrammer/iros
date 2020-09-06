@@ -137,6 +137,7 @@ public:
 
     void select_line_at_cursor();
     void select_word_at_cursor();
+    void select_all();
 
     void redo();
     void undo();
