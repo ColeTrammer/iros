@@ -1,6 +1,7 @@
 #pragma once
 
 #include <app/event_loop.h>
+#include <app/mouse_press_tracker.h>
 #include <window_server/connection.h>
 
 namespace App {
@@ -21,6 +22,7 @@ private:
 
     EventLoop m_loop;
     WindowServer::Connection m_connection;
+    MousePressTracker m_mouse_tracker;
 };
 
 }

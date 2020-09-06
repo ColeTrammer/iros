@@ -72,8 +72,16 @@ namespace MouseButton {
 
 class MouseEvent final : public Event {
 public:
-    MouseEvent(int x, int y, scroll_state scroll, mouse_button_state left, mouse_button_state right)
-        : Event(Event::Type::Mouse), m_x(x), m_y(y), m_scroll(scroll), m_left(left), m_right(right) {}
+    MouseEvent(MouseEventType mouse_event_type, int buttons_down, int x, int y, scroll_state scroll, mouse_button_state left,
+               mouse_button_state right)
+        : Event(Event::Type::Mouse)
+        , m_x(x)
+        , m_y(y)
+        , m_buttons_down(buttons_down)
+        , m_scroll(scroll)
+        , m_left(left)
+        , m_right(right)
+        , m_mouse_event_type(mouse_event_type) {}
 
     int x() const { return m_x; }
     int y() const { return m_y; }
@@ -84,12 +92,17 @@ public:
     void set_x(int x) { m_x = x; }
     void set_y(int y) { m_y = y; }
 
+    MouseEventType mouse_event_type() const { return m_mouse_event_type; }
+    int buttons_down() const { return m_buttons_down; };
+
 private:
     int m_x { 0 };
     int m_y { 0 };
+    int m_buttons_down { 0 };
     scroll_state m_scroll { SCROLL_NONE };
     mouse_button_state m_left { MOUSE_NO_CHANGE };
     mouse_button_state m_right { MOUSE_NO_CHANGE };
+    MouseEventType m_mouse_event_type { MouseEventType::Move };
 };
 
 class KeyEvent final : public Event {
