@@ -206,6 +206,7 @@ String TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {
 
 void TerminalPanel::document_did_change() {
     if (document()) {
+        clear();
         notify_line_count_changed();
         document()->display();
     }

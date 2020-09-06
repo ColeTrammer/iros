@@ -367,6 +367,7 @@ void AppPanel::on_key_event(App::KeyEvent& event) {
 
 void AppPanel::document_did_change() {
     if (document()) {
+        clear();
         notify_line_count_changed();
 
         if (m_main_panel) {
