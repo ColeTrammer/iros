@@ -460,6 +460,15 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
                 break;
             }
 
+            if (socket->error != 0) {
+                // Only clear socket->error if the error will actually be returned.
+                error = socket->error;
+                if (buffer_index != 0) {
+                    socket->error = 0;
+                }
+                goto done;
+            }
+
             mutex_unlock(&socket->lock);
             int ret = net_block_until_socket_is_readable(socket, start_time);
             if (ret) {

@@ -144,6 +144,13 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
             break;
         }
 
+        if (socket->error != 0) {
+            int ret = socket->error;
+            socket->error = 0;
+            mutex_unlock(&socket->lock);
+            return ret;
+        }
+
         bool connection_terminated = socket->state == CLOSED;
         mutex_unlock(&socket->lock);
 
