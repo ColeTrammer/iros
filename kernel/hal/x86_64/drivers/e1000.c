@@ -99,8 +99,8 @@ static int e1000_send(struct network_interface *self, struct mac_address dest_ma
     debug_log("Sending over: %d\n", data->current_tx);
 #endif /* KERNEL_E1000_DEBUG */
 
-    net_init_ethernet_frame((void *) data->tx_virt_regions[data->current_tx]->start, dest_mac, self->ops->get_mac_address(self), mac_type,
-                            raw, len);
+    net_init_ethernet_frame((void *) data->tx_virt_regions[data->current_tx]->start, dest_mac,
+                            net_link_layer_address_to_mac(self->ops->get_link_layer_address(self)), mac_type, raw, len);
 
     data->tx_descs[data->current_tx].length = sizeof(struct ethernet_frame) + len;
     data->tx_descs[data->current_tx].status = 0;
@@ -151,7 +151,7 @@ static void handle_interrupt(struct irq_context *context __attribute__((unused))
     }
 }
 
-static struct mac_address get_mac_address(struct network_interface *this) {
+static struct link_layer_address e1000_get_link_layer_address(struct network_interface *this) {
     struct mac_address addr;
 
     uint32_t val = read_eeprom(this->private_data, 0);
@@ -164,14 +164,14 @@ static struct mac_address get_mac_address(struct network_interface *this) {
     addr.addr[4] = val & 0xFF;
     addr.addr[5] = val >> 8;
 
-    return addr;
+    return net_mac_to_link_layer_address(addr);
 }
 
 static struct network_interface_ops e1000_ops = {
     .send_ethernet = e1000_send,
     .send_arp = net_ethernet_interface_send_arp,
     .send_ip_v4 = net_ethernet_interface_send_ip_v4,
-    .get_mac_address = get_mac_address,
+    .get_link_layer_address = e1000_get_link_layer_address,
 };
 
 static struct irq_handler e1000_handler = { .handler = &handle_interrupt, .flags = IRQ_HANDLER_EXTERNAL };

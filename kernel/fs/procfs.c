@@ -551,7 +551,8 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_interfaces(struct pro
 
     struct procfs_buffer buf = { buffer, 0 };
     net_for_each_interface(interface) {
-        struct mac_address mac_address = interface->ops->get_mac_address ? interface->ops->get_mac_address(interface) : MAC_ZEROES;
+        struct link_layer_address mac_address =
+            interface->ops->get_link_layer_address ? interface->ops->get_link_layer_address(interface) : (struct link_layer_address) { 0 };
         buf.size += snprintf(buf.buffer + buf.size, buf.buffer ? PAGE_SIZE - buf.size : 0,
                              "NAME: %s\n"
                              "INTERFACE IP: %d.%d.%d.%d\n"

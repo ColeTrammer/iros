@@ -21,8 +21,8 @@ static void add_interface(struct network_interface *interface) {
     list_append(&interface_list, &interface->interface_list);
 }
 
-int net_ethernet_interface_send_arp(struct network_interface *self, struct mac_address dest_mac, struct network_data *data) {
-    int ret = self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_ARP, data->arp_packet, data->len);
+int net_ethernet_interface_send_arp(struct network_interface *self, struct link_layer_address dest_mac, struct network_data *data) {
+    int ret = self->ops->send_ethernet(self, net_link_layer_address_to_mac(dest_mac), ETHERNET_TYPE_ARP, data->arp_packet, data->len);
     free(data);
     return ret;
 }

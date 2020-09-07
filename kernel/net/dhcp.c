@@ -11,7 +11,7 @@
 #include <kernel/net/network_task.h>
 #include <kernel/util/random.h>
 
-static void net_send_dhcp(struct network_interface *interface, uint8_t message_type, struct mac_address our_mac_address,
+static void net_send_dhcp(struct network_interface *interface, uint8_t message_type, struct link_layer_address our_address,
                           struct ip_v4_address client_ip, struct ip_v4_address server_ip) {
     size_t dhcp_length = DHCP_MINIMUM_PACKET_SIZE;
     struct network_data *network_data =
@@ -24,7 +24,7 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
     struct dhcp_packet *data = (struct dhcp_packet *) udp_packet->payload;
     data->op = DHCP_OP_REQUEST;
     data->htype = DHCP_HTYPE_ETHERNET;
-    data->hlen = sizeof(struct mac_address);
+    data->hlen = our_address.length;
     data->hops = 0;
     data->xid = htonl(interface->config_context.xid = get_random_bytes());
     data->secs = htons(0);
@@ -33,7 +33,7 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
     data->yiaddr = IP_V4_ZEROES;
     data->siaddr = server_ip;
     data->giaddr = IP_V4_ZEROES;
-    memcpy(data->chaddr, &our_mac_address, sizeof(our_mac_address));
+    memcpy(data->chaddr, &our_address.addr, our_address.length);
     memset(data->sname, 0, sizeof(data->sname));
     memset(data->file, 0, sizeof(data->file));
 
@@ -75,8 +75,8 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
 }
 
 void net_configure_interface_with_dhcp(struct network_interface *interface) {
-    struct mac_address our_mac_address = interface->ops->get_mac_address(interface);
-    net_send_dhcp(interface, DHCP_MESSAGE_TYPE_DISCOVER, our_mac_address, IP_V4_ZEROES, IP_V4_ZEROES);
+    struct link_layer_address our_address = interface->ops->get_link_layer_address(interface);
+    net_send_dhcp(interface, DHCP_MESSAGE_TYPE_DISCOVER, our_address, IP_V4_ZEROES, IP_V4_ZEROES);
 }
 
 void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
@@ -209,7 +209,7 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
     struct mac_address our_mac_address = *((struct mac_address *) packet->chaddr);
     switch (dhcp_message_type) {
         case DHCP_MESSAGE_TYPE_OFFER:
-            net_send_dhcp(interface, DHCP_MESSAGE_TYPE_REQUEST, our_mac_address, packet->yiaddr, server_ip);
+            net_send_dhcp(interface, DHCP_MESSAGE_TYPE_REQUEST, net_mac_to_link_layer_address(our_mac_address), packet->yiaddr, server_ip);
             break;
         case DHCP_MESSAGE_TYPE_ACK:
             interface->address = packet->yiaddr;

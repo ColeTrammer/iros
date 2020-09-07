@@ -14,12 +14,12 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
         return;
     }
 
-    struct network_data *data = net_create_arp_packet(ARP_OPERATION_REQUEST, interface->ops->get_mac_address(interface), interface->address,
-                                                      MAC_BROADCAST, ip_address);
+    struct network_data *data = net_create_arp_packet(ARP_OPERATION_REQUEST, interface->ops->get_link_layer_address(interface),
+                                                      interface->address, net_mac_to_link_layer_address(MAC_BROADCAST), ip_address);
 
     debug_log("Sending ARP packet for: [ %u.%u.%u.%u ]\n", ip_address.addr[0], ip_address.addr[1], ip_address.addr[2], ip_address.addr[3]);
 
-    interface->ops->send_arp(interface, MAC_BROADCAST, data);
+    interface->ops->send_arp(interface, net_mac_to_link_layer_address(MAC_BROADCAST), data);
 }
 
 void net_arp_recieve(const struct arp_packet *packet, size_t len) {
@@ -30,38 +30,41 @@ void net_arp_recieve(const struct arp_packet *packet, size_t len) {
         return;
     }
 
-    debug_log("Updating IPV4 to MAC mapping: [ %u.%u.%u.%u, %02x:%02x:%02x:%02x:%02x:%02x ]\n", packet->ip_sender.addr[0],
-              packet->ip_sender.addr[1], packet->ip_sender.addr[2], packet->ip_sender.addr[3], packet->mac_sender.addr[0],
-              packet->mac_sender.addr[1], packet->mac_sender.addr[2], packet->mac_sender.addr[3], packet->mac_sender.addr[4],
-              packet->mac_sender.addr[5]);
+    struct ip_v4_address *ip_sender = (struct ip_v4_address *) ARP_SENDER_PROTO_ADDR(packet);
+    struct mac_address *mac_sender = (struct mac_address *) ARP_SENDER_HW_ADDR(packet);
+    debug_log("Updating IPV4 to MAC mapping: [ %u.%u.%u.%u, %02x:%02x:%02x:%02x:%02x:%02x ]\n", ip_sender->addr[0], ip_sender->addr[1],
+              ip_sender->addr[2], ip_sender->addr[3], mac_sender->addr[0], mac_sender->addr[1], mac_sender->addr[2], mac_sender->addr[3],
+              mac_sender->addr[4], mac_sender->addr[5]);
 
-    struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(packet->ip_sender);
+    struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(*ip_sender);
     if (mapping) {
-        mapping->mac = packet->mac_sender;
+        mapping->mac = *mac_sender;
     } else {
-        net_create_ip_v4_to_mac_mapping(packet->ip_sender, packet->mac_sender);
+        net_create_ip_v4_to_mac_mapping(*ip_sender, *mac_sender);
     }
 }
 
-struct network_data *net_create_arp_packet(uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip, struct mac_address t_mac,
-                                           struct ip_v4_address t_ip) {
-    struct network_data *data = malloc(sizeof(struct network_data) + sizeof(struct arp_packet));
+struct network_data *net_create_arp_packet(uint16_t op, struct link_layer_address s_addr, struct ip_v4_address s_ip,
+                                           struct link_layer_address t_addr, struct ip_v4_address t_ip) {
+    size_t arp_length = sizeof(struct arp_packet) + 2 * sizeof(struct ip_v4_address) + 2 * s_addr.length;
+    struct network_data *data = malloc(sizeof(struct network_data) + arp_length);
     data->type = NETWORK_DATA_ARP;
-    data->len = sizeof(struct arp_packet);
+    data->len = sizeof(struct arp_packet) + arp_length;
     data->arp_packet = (struct arp_packet *) (data + 1);
-    net_init_arp_packet(data->arp_packet, op, s_mac, s_ip, t_mac, t_ip);
+    net_init_arp_packet(data->arp_packet, op, s_addr, s_ip, t_addr, t_ip);
     return data;
 }
 
-void net_init_arp_packet(struct arp_packet *packet, uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip,
-                         struct mac_address t_mac, struct ip_v4_address t_ip) {
+void net_init_arp_packet(struct arp_packet *packet, uint16_t op, struct link_layer_address s_addr, struct ip_v4_address s_ip,
+                         struct link_layer_address t_addr, struct ip_v4_address t_ip) {
+    // FIXME: choose the hardware type properly.
     packet->hardware_type = htons(ARP_PROTOCOL_TYPE_ETHERNET);
     packet->protocol_type = htons(ARP_PROTOCOL_TYPE_IP_V4);
-    packet->hardware_addr_len = sizeof(struct mac_address);
+    packet->hardware_addr_len = s_addr.length;
     packet->protocol_addr_len = sizeof(struct ip_v4_address);
     packet->operation = htons(op);
-    packet->mac_sender = s_mac;
-    packet->ip_sender = s_ip;
-    packet->mac_target = t_mac;
-    packet->ip_target = t_ip;
+    memcpy(ARP_SENDER_HW_ADDR(packet), s_addr.addr, s_addr.length);
+    memcpy(ARP_SENDER_PROTO_ADDR(packet), s_ip.addr, sizeof(struct ip_v4_address));
+    memcpy(ARP_TARGET_HW_ADDR(packet), t_addr.addr, t_addr.length);
+    memcpy(ARP_TARGET_PROTO_ADDR(packet), t_ip.addr, sizeof(struct ip_v4_address));
 }
