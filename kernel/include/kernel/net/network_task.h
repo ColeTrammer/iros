@@ -8,6 +8,7 @@
 struct arp_packet;
 struct ethernet_frame;
 struct ip_v4_packet;
+struct socket;
 
 enum network_data_type {
     NETWORK_DATA_ETHERNET,
@@ -17,6 +18,7 @@ enum network_data_type {
 
 struct network_data {
     struct list_node list;
+    struct socket *socket;
     size_t len;
     enum network_data_type type;
     union {
@@ -25,6 +27,8 @@ struct network_data {
         struct ip_v4_packet *ip_v4_packet;
     };
 };
+
+void net_free_network_data(struct network_data *data);
 
 void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t len);
 void net_on_incoming_network_data(struct network_data *data);

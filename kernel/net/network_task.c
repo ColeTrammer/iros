@@ -8,6 +8,7 @@
 #include <kernel/net/ethernet.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/socket.h>
 #include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
@@ -43,6 +44,13 @@ static void enqueue_packet(struct network_data *data) {
     spin_unlock(&lock);
 }
 
+void net_free_network_data(struct network_data *data) {
+    if (data->socket) {
+        net_drop_socket(data->socket);
+    }
+    free(data);
+}
+
 void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t len) {
     struct network_data *new_data = malloc(sizeof(struct network_data));
     assert(new_data);
@@ -51,6 +59,7 @@ void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t l
     // have their own persistent buffers for incoming packets. This is far from ideal
     // since the frame's lifetime is not communicated in any way (the space should be
     // marked unusable to prevent the device from overwriting its data).
+    new_data->socket = NULL;
     new_data->ethernet_frame = (struct ethernet_frame *) frame;
     new_data->len = len;
     new_data->type = NETWORK_DATA_ETHERNET;
@@ -60,7 +69,12 @@ void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t l
 
 void net_on_incoming_network_data(struct network_data *data) {
     // In this case, the incoming packet was sent via the loopback interface, and
-    // can be put into the recieve queue without any modification.
+    // can be put into the recieve queue without any modification (except to remove
+    // its reference to its sending socket).
+    if (data->socket) {
+        net_drop_socket(data->socket);
+        data->socket = NULL;
+    }
     enqueue_packet(data);
 }
 
@@ -88,6 +102,6 @@ void net_network_task_start() {
                 assert(false);
                 break;
         }
-        free(data);
+        net_free_network_data(data);
     }
 }

@@ -59,6 +59,7 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
         .data_offset = sequence_start - tcb->send_unacknowledged,
         .data_length = data_to_send,
         .data_rb = &tcb->send_buffer,
+        .socket = socket,
     };
 
     struct timespec *send_time_ptr = NULL;
@@ -84,7 +85,7 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
     struct destination_cache_entry *destination = net_lookup_destination(interface, dest);
     size_t tcp_length = sizeof(struct tcp_packet) + opts->tcp_flags.syn * sizeof(struct tcp_option_mss) + opts->data_length;
 
-    struct network_data *data = net_create_ip_v4_packet(1, IP_V4_PROTOCOL_TCP, interface->address, dest, NULL, tcp_length);
+    struct network_data *data = net_create_ip_v4_packet(opts->socket, 1, IP_V4_PROTOCOL_TCP, interface->address, dest, NULL, tcp_length);
     struct ip_v4_packet *ip_packet = data->ip_v4_packet;
 
     struct tcp_packet *tcp_packet = (struct tcp_packet *) ip_packet->payload;
@@ -165,6 +166,7 @@ static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tc
         .data_offset = 0,
         .data_length = 0,
         .data_rb = NULL,
+        .socket = NULL,
     };
 
     if (packet->flags.ack) {
@@ -199,6 +201,7 @@ static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet 
         .data_offset = 0,
         .data_length = 0,
         .data_rb = NULL,
+        .socket = NULL,
     };
 
     net_send_tcp(ip_packet->source, &opts, NULL);

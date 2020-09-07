@@ -20,6 +20,7 @@
 #define TCP_OPTION_MSS 2
 
 struct ring_buffer;
+struct socket;
 
 struct tcp_flags {
     uint8_t fin : 1;
@@ -74,6 +75,7 @@ struct tcp_packet_options {
     uint32_t data_offset;
     uint16_t data_length;
     struct ring_buffer *data_rb;
+    struct socket *socket;
 };
 
 int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end, bool is_retransmission);

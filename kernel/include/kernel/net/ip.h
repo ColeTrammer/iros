@@ -19,6 +19,8 @@
 #define IP_V4_PROTOCOL_TCP  0x06
 #define IP_V4_PROTOCOL_UDP  0x11
 
+struct socket;
+
 struct ip_v4_packet {
     uint8_t version_and_ihl;
     uint8_t dscp_and_ecn;
@@ -43,11 +45,12 @@ struct ip_v4_pseudo_header {
     uint16_t length;
 } __attribute__((packed));
 
-int net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len);
+int net_send_ip_v4(struct socket *socket, struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf,
+                   size_t len);
 void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len);
 
-struct network_data *net_create_ip_v4_packet(uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest,
-                                             const void *payload, uint16_t payload_length);
+struct network_data *net_create_ip_v4_packet(struct socket *socket, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
+                                             struct ip_v4_address dest, const void *payload, uint16_t payload_length);
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
                            struct ip_v4_address dest, const void *payload, uint16_t payload_length);
 

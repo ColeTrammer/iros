@@ -16,7 +16,8 @@
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
 
-int net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf, size_t len) {
+int net_send_ip_v4(struct socket *socket, struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf,
+                   size_t len) {
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send IP V4 packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
@@ -27,7 +28,7 @@ int net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct
     struct ip_v4_address d = dest;
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
 
-    struct network_data *ip_packet = net_create_ip_v4_packet(1, protocol, interface->address, dest, buf, len);
+    struct network_data *ip_packet = net_create_ip_v4_packet(socket, 1, protocol, interface->address, dest, buf, len);
     int ret = interface->ops->send_ip_v4(interface, destination, ip_packet);
 
     net_drop_destination_cache_entry(destination);
@@ -61,9 +62,10 @@ void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
     debug_log("Ignored packet\n");
 }
 
-struct network_data *net_create_ip_v4_packet(uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest,
-                                             const void *payload, uint16_t payload_length) {
+struct network_data *net_create_ip_v4_packet(struct socket *socket, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
+                                             struct ip_v4_address dest, const void *payload, uint16_t payload_length) {
     struct network_data *data = malloc(sizeof(struct network_data) + sizeof(struct ip_v4_packet) + payload_length);
+    data->socket = socket ? net_bump_socket(socket) : NULL;
     data->type = NETWORK_DATA_IP_V4;
     data->len = sizeof(struct ip_v4_packet) + payload_length;
     data->ip_v4_packet = (struct ip_v4_packet *) (data + 1);

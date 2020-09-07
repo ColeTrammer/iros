@@ -30,7 +30,7 @@ int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct des
     }
 
     int ret = self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_IPV4, data->ip_v4_packet, data->len);
-    free(data);
+    net_free_network_data(data);
     return ret;
 }
 

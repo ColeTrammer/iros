@@ -18,8 +18,8 @@ struct udp_packet {
 } __attribute__((packed));
 
 int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t len, const struct sockaddr *dest);
-int net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
-                 const void *buf);
+int net_send_udp(struct socket *socket, struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port,
+                 uint16_t dest_port, uint16_t len, const void *buf);
 void net_udp_recieve(const struct udp_packet *packet, size_t len);
 void net_init_udp_packet(struct udp_packet *packet, uint16_t source_port, uint16_t dest_port, uint16_t len, const void *buf);
 

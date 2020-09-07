@@ -38,7 +38,7 @@ void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
     net_init_icmp_packet(to_send, ICMP_TYPE_ECHO_REPLY, ntohs(packet->identifier), ntohs(packet->sequence_number), (void *) packet->payload,
                          to_send_length - sizeof(struct icmp_packet));
 
-    net_send_ip_v4(net_get_interface_for_ip(ip_packet->source), IP_V4_PROTOCOL_ICMP, ip_packet->source, to_send, to_send_length);
+    net_send_ip_v4(NULL, net_get_interface_for_ip(ip_packet->source), IP_V4_PROTOCOL_ICMP, ip_packet->source, to_send, to_send_length);
     free(to_send);
 }
 

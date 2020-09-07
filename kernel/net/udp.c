@@ -29,11 +29,11 @@ int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t l
         return -EMSGSIZE;
     }
 
-    return net_send_udp(interface, dest_ip, source_port, dest_port, len, buf);
+    return net_send_udp(socket, interface, dest_ip, source_port, dest_port, len, buf);
 }
 
-int net_send_udp(struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port, uint16_t dest_port, uint16_t len,
-                 const void *buf) {
+int net_send_udp(struct socket *socket, struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port,
+                 uint16_t dest_port, uint16_t len, const void *buf) {
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send UDP packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
@@ -43,7 +43,7 @@ int net_send_udp(struct network_interface *interface, struct ip_v4_address dest,
     size_t total_length = sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
 
     struct network_data *data =
-        net_create_ip_v4_packet(1, IP_V4_PROTOCOL_UDP, interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
+        net_create_ip_v4_packet(socket, 1, IP_V4_PROTOCOL_UDP, interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
 
     struct udp_packet *udp_packet = (struct udp_packet *) data->ip_v4_packet->payload;
     net_init_udp_packet(udp_packet, source_port, dest_port, len, buf);
