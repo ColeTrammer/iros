@@ -1,6 +1,5 @@
 #include <arpa/inet.h>
 #include <assert.h>
-#include <search.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -15,8 +14,7 @@
 
 extern struct task *network_task;
 
-static struct network_data *head = NULL;
-static struct network_data *tail = NULL;
+static struct list_node recv_list = INIT_LIST(recv_list);
 static spinlock_t lock = SPINLOCK_INITIALIZER;
 
 static struct wait_queue net_wait_queue = WAIT_QUEUE_INITIALIZER;
@@ -24,18 +22,13 @@ static struct wait_queue net_wait_queue = WAIT_QUEUE_INITIALIZER;
 static struct network_data *consume() {
     spin_lock(&lock);
 
-    if (head == NULL) {
+    if (list_is_empty(&recv_list)) {
         spin_unlock(&lock);
         return NULL;
     }
 
-    struct network_data *data = head;
-    head = head->next;
-    remque((void *) data);
-    if (head == NULL) {
-        tail = NULL;
-    }
-
+    struct network_data *data = list_first_entry(&recv_list, struct network_data, list);
+    list_remove(&data->list);
     spin_unlock(&lock);
     return data;
 }
@@ -43,12 +36,7 @@ static struct network_data *consume() {
 static void enqueue_packet(struct network_data *data) {
     spin_lock(&lock);
 
-    insque(data, tail);
-    if (head == NULL) {
-        head = tail = data;
-    } else {
-        tail = data;
-    }
+    list_append(&recv_list, &data->list);
 
     // Unblock ourselves once we have data
     wake_up_all(&net_wait_queue);
@@ -63,26 +51,17 @@ void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t l
     // have their own persistent buffers for incoming packets. This is far from ideal
     // since the frame's lifetime is not communicated in any way (the space should be
     // marked unusable to prevent the device from overwriting its data).
-    new_data->ethernet_frame = frame;
+    new_data->ethernet_frame = (struct ethernet_frame *) frame;
     new_data->len = len;
     new_data->type = NETWORK_DATA_ETHERNET;
 
     enqueue_packet(new_data);
 }
 
-void net_on_incoming_ip_v4_packet(const struct ip_v4_packet *packet, size_t len) {
-    struct network_data *new_data = malloc(sizeof(struct network_data) + len);
-    assert(new_data);
-
-    // In this case, the incoming packet must be copied. This function is used by
-    // the loopback device, meaning that there is not persistent recieve buffer
-    // (only the temporary storage allocated by whoever tries to send a packet).
-    new_data->ip_v4_packet = (const struct ip_v4_packet *) (new_data + 1);
-    memcpy(new_data + 1, packet, len);
-    new_data->len = len;
-    new_data->type = NETWORK_DATA_IP_V4;
-
-    enqueue_packet(new_data);
+void net_on_incoming_network_data(struct network_data *data) {
+    // In this case, the incoming packet was sent via the loopback interface, and
+    // can be put into the recieve queue without any modification.
+    enqueue_packet(data);
 }
 
 void net_network_task_start() {

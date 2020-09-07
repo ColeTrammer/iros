@@ -8,16 +8,17 @@
 #include <kernel/net/dhcp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/network_task.h>
 #include <kernel/util/random.h>
 
 static void net_send_dhcp(struct network_interface *interface, uint8_t message_type, struct mac_address our_mac_address,
                           struct ip_v4_address client_ip, struct ip_v4_address server_ip) {
     size_t dhcp_length = DHCP_MINIMUM_PACKET_SIZE;
-    struct ip_v4_packet *ip_packet =
+    struct network_data *network_data =
         net_create_ip_v4_packet(1, IP_V4_PROTOCOL_UDP, IP_V4_ZEROES, IP_V4_BROADCAST, NULL, dhcp_length - sizeof(struct ip_v4_packet));
 
     size_t udp_packet_length = dhcp_length - sizeof(struct ip_v4_packet);
-    struct udp_packet *udp_packet = (struct udp_packet *) ip_packet->payload;
+    struct udp_packet *udp_packet = (struct udp_packet *) network_data->ip_v4_packet->payload;
     net_init_udp_packet(udp_packet, DHCP_CLIENT_PORT, DHCP_SERVER_PORT, udp_packet_length - sizeof(struct udp_packet), NULL);
 
     struct dhcp_packet *data = (struct dhcp_packet *) udp_packet->payload;
@@ -70,8 +71,7 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
 
     debug_log("Sending DHCP DISCOVER packet: [ %u ]\n", interface->config_context.xid);
 
-    assert(interface->ops->send_ip_v4(interface, NULL, ip_packet, dhcp_length) == 0);
-    free(ip_packet);
+    assert(interface->ops->send_ip_v4(interface, NULL, network_data) == 0);
 }
 
 void net_configure_interface_with_dhcp(struct network_interface *interface) {

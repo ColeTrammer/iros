@@ -6,6 +6,7 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/network_task.h>
 
 void net_send_arp_request(struct network_interface *interface, struct ip_v4_address ip_address) {
     if (interface->config_context.state != INITIALIZED) {
@@ -13,14 +14,12 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
         return;
     }
 
-    struct arp_packet *packet = net_create_arp_packet(ARP_OPERATION_REQUEST, interface->ops->get_mac_address(interface), interface->address,
+    struct network_data *data = net_create_arp_packet(ARP_OPERATION_REQUEST, interface->ops->get_mac_address(interface), interface->address,
                                                       MAC_BROADCAST, ip_address);
 
     debug_log("Sending ARP packet for: [ %u.%u.%u.%u ]\n", ip_address.addr[0], ip_address.addr[1], ip_address.addr[2], ip_address.addr[3]);
 
-    interface->ops->send_arp(interface, MAC_BROADCAST, packet, sizeof(struct arp_packet));
-
-    free(packet);
+    interface->ops->send_arp(interface, MAC_BROADCAST, data);
 }
 
 void net_arp_recieve(const struct arp_packet *packet, size_t len) {
@@ -44,11 +43,14 @@ void net_arp_recieve(const struct arp_packet *packet, size_t len) {
     }
 }
 
-struct arp_packet *net_create_arp_packet(uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip, struct mac_address t_mac,
-                                         struct ip_v4_address t_ip) {
-    struct arp_packet *packet = malloc(sizeof(struct arp_packet));
-    net_init_arp_packet(packet, op, s_mac, s_ip, t_mac, t_ip);
-    return packet;
+struct network_data *net_create_arp_packet(uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip, struct mac_address t_mac,
+                                           struct ip_v4_address t_ip) {
+    struct network_data *data = malloc(sizeof(struct network_data) + sizeof(struct arp_packet));
+    data->type = NETWORK_DATA_ARP;
+    data->len = sizeof(struct arp_packet);
+    data->arp_packet = (struct arp_packet *) (data + 1);
+    net_init_arp_packet(data->arp_packet, op, s_mac, s_ip, t_mac, t_ip);
+    return data;
 }
 
 void net_init_arp_packet(struct arp_packet *packet, uint16_t op, struct mac_address s_mac, struct ip_v4_address s_ip,

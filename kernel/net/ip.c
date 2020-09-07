@@ -10,6 +10,7 @@
 #include <kernel/net/icmp.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/network_task.h>
 #include <kernel/net/route_cache.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
@@ -22,14 +23,12 @@ int net_send_ip_v4(struct network_interface *interface, uint8_t protocol, struct
     }
 
     struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
-    size_t total_size = sizeof(struct ip_v4_packet) + len;
 
     struct ip_v4_address d = dest;
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
 
-    struct ip_v4_packet *ip_packet = net_create_ip_v4_packet(1, protocol, interface->address, dest, buf, len);
-    int ret = interface->ops->send_ip_v4(interface, route, ip_packet, total_size);
-    free(ip_packet);
+    struct network_data *ip_packet = net_create_ip_v4_packet(1, protocol, interface->address, dest, buf, len);
+    int ret = interface->ops->send_ip_v4(interface, route, ip_packet);
 
     net_drop_route_cache_entry(route);
     return ret;
@@ -62,11 +61,14 @@ void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
     debug_log("Ignored packet\n");
 }
 
-struct ip_v4_packet *net_create_ip_v4_packet(uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest,
+struct network_data *net_create_ip_v4_packet(uint16_t ident, uint8_t protocol, struct ip_v4_address source, struct ip_v4_address dest,
                                              const void *payload, uint16_t payload_length) {
-    struct ip_v4_packet *packet = malloc(sizeof(struct ip_v4_packet) + payload_length);
-    net_init_ip_v4_packet(packet, ident, protocol, source, dest, payload, payload_length);
-    return packet;
+    struct network_data *data = malloc(sizeof(struct network_data) + sizeof(struct ip_v4_packet) + payload_length);
+    data->type = NETWORK_DATA_IP_V4;
+    data->len = sizeof(struct ip_v4_packet) + payload_length;
+    data->ip_v4_packet = (struct ip_v4_packet *) (data + 1);
+    net_init_ip_v4_packet(data->ip_v4_packet, ident, protocol, source, dest, payload, payload_length);
+    return data;
 }
 
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,

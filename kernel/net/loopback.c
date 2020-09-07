@@ -5,11 +5,10 @@
 #include <kernel/net/loopback.h>
 #include <kernel/net/mac.h>
 
-static int loop_send_ip_v4(struct network_interface *interface, struct route_cache_entry *route, const struct ip_v4_packet *packet,
-                           size_t len) {
+static int loop_send_ip_v4(struct network_interface *interface, struct route_cache_entry *route, struct network_data *data) {
     (void) route;
 
-    net_recieve_ip_v4(interface, packet, len);
+    net_recieve_network_data(interface, data);
     return 0;
 }
 

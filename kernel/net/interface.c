@@ -21,13 +21,13 @@ static void add_interface(struct network_interface *interface) {
     list_append(&interface_list, &interface->interface_list);
 }
 
-int net_ethernet_interface_send_arp(struct network_interface *self, struct mac_address dest_mac, const struct arp_packet *packet,
-                                    size_t packet_length) {
-    return self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_ARP, packet, packet_length);
+int net_ethernet_interface_send_arp(struct network_interface *self, struct mac_address dest_mac, struct network_data *data) {
+    int ret = self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_ARP, data->arp_packet, data->len);
+    free(data);
+    return ret;
 }
 
-int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, const struct ip_v4_packet *packet,
-                                      size_t packet_length) {
+int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, struct network_data *data) {
     struct mac_address dest_mac = MAC_BROADCAST;
     if (route) {
         struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(route->next_hop_address);
@@ -39,7 +39,9 @@ int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct rou
         dest_mac = mapping->mac;
     }
 
-    return self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_IPV4, packet, packet_length);
+    int ret = self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_IPV4, data->ip_v4_packet, data->len);
+    free(data);
+    return ret;
 }
 
 void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len) {
@@ -47,9 +49,9 @@ void net_recieve_ethernet(struct network_interface *interface, const struct ethe
     net_on_incoming_ethernet_frame(frame, len);
 }
 
-void net_recieve_ip_v4(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len) {
+void net_recieve_network_data(struct network_interface *interface, struct network_data *data) {
     (void) interface;
-    net_on_incoming_ip_v4_packet(packet, len);
+    net_on_incoming_network_data(data);
 }
 
 struct list_node *net_get_interface_list(void) {

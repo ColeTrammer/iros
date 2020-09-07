@@ -10,6 +10,7 @@
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/network_task.h>
 #include <kernel/net/port.h>
 #include <kernel/net/route_cache.h>
 #include <kernel/net/socket.h>
@@ -41,10 +42,10 @@ int net_send_udp(struct network_interface *interface, struct ip_v4_address dest,
     struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
     size_t total_length = sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
 
-    struct ip_v4_packet *ip_packet =
+    struct network_data *data =
         net_create_ip_v4_packet(1, IP_V4_PROTOCOL_UDP, interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
 
-    struct udp_packet *udp_packet = (struct udp_packet *) ip_packet->payload;
+    struct udp_packet *udp_packet = (struct udp_packet *) data->ip_v4_packet->payload;
     net_init_udp_packet(udp_packet, source_port, dest_port, len, buf);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_UDP, htons(len + sizeof(struct udp_packet)) };
@@ -54,8 +55,7 @@ int net_send_udp(struct network_interface *interface, struct ip_v4_address dest,
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
-    int ret = interface->ops->send_ip_v4(interface, route, ip_packet, total_length);
-    free(ip_packet);
+    int ret = interface->ops->send_ip_v4(interface, route, data);
 
     net_drop_route_cache_entry(route);
     return ret;
