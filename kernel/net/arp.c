@@ -60,7 +60,7 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
     }
 
     struct link_layer_address broadcast_address = interface->ops->get_link_layer_broadcast_address(interface);
-    struct network_data *data = net_create_arp_packet(ARP_OPERATION_REQUEST, interface->ops->get_link_layer_address(interface),
+    struct network_data *data = net_create_arp_packet(interface, ARP_OPERATION_REQUEST, interface->ops->get_link_layer_address(interface),
                                                       interface->address, broadcast_address, ip_address);
 
     debug_log("Sending ARP packet for: [ %u.%u.%u.%u ]\n", ip_address.addr[0], ip_address.addr[1], ip_address.addr[2], ip_address.addr[3]);
@@ -84,10 +84,12 @@ void net_arp_recieve(const struct arp_packet *packet, size_t len) {
     net_drop_neighbor_cache_entry(neighbor);
 }
 
-struct network_data *net_create_arp_packet(uint16_t op, struct link_layer_address s_addr, struct ip_v4_address s_ip,
-                                           struct link_layer_address t_addr, struct ip_v4_address t_ip) {
+struct network_data *net_create_arp_packet(struct network_interface *interface, uint16_t op, struct link_layer_address s_addr,
+                                           struct ip_v4_address s_ip, struct link_layer_address t_addr, struct ip_v4_address t_ip) {
     size_t arp_length = sizeof(struct arp_packet) + 2 * sizeof(struct ip_v4_address) + 2 * s_addr.length;
     struct network_data *data = malloc(sizeof(struct network_data) + arp_length);
+    data->interface = interface;
+    data->socket = NULL;
     data->type = NETWORK_DATA_ARP;
     data->len = sizeof(struct arp_packet) + arp_length;
     data->arp_packet = (struct arp_packet *) (data + 1);

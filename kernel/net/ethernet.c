@@ -3,35 +3,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/hal/output.h>
 #include <kernel/net/arp.h>
-#include <kernel/net/destination_cache.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/ip.h>
-#include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
 
-int net_ethernet_interface_send_arp(struct network_interface *self, struct link_layer_address dest_mac, struct network_data *data) {
-    int ret = self->ops->send_ethernet(self, net_link_layer_address_to_mac(dest_mac), ETHERNET_TYPE_ARP, data->arp_packet, data->len);
-    free(data);
-    return ret;
-}
-
-int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination,
-                                      struct network_data *data) {
-    struct mac_address dest_mac = MAC_BROADCAST;
-    if (destination) {
-        if (destination->next_hop->state != NS_REACHABLE) {
-            debug_log("No mac address found for ip: [ %d.%d.%d.%d ]\n", destination->next_hop->ip_v4_address.addr[0],
-                      destination->next_hop->ip_v4_address.addr[1], destination->next_hop->ip_v4_address.addr[2],
-                      destination->next_hop->ip_v4_address.addr[3]);
-            return -EHOSTUNREACH;
-        }
-        dest_mac = net_link_layer_address_to_mac(destination->next_hop->link_layer_address);
+uint16_t net_network_data_to_ether_type(enum network_data_type type) {
+    switch (type) {
+        case NETWORK_DATA_ARP:
+            return ETHERNET_TYPE_ARP;
+        case NETWORK_DATA_IP_V4:
+            return ETHERNET_TYPE_IPV4;
+        default:
+            debug_log("Unkown conversion requested from network data type to ether type: [ %d ]\n", type);
+            return 0;
     }
-
-    int ret = self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_IPV4, data->ip_v4_packet, data->len);
-    net_free_network_data(data);
-    return ret;
 }
 
 struct link_layer_address net_ethernet_interface_get_link_layer_broadcast_address(struct network_interface *self) {
@@ -41,7 +28,7 @@ struct link_layer_address net_ethernet_interface_get_link_layer_broadcast_addres
 
 void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len) {
     (void) interface;
-    net_on_incoming_ethernet_frame(frame, len);
+    net_on_incoming_ethernet_frame(frame, interface, len);
 }
 
 void net_ethernet_recieve(const struct ethernet_frame *frame, size_t len) {

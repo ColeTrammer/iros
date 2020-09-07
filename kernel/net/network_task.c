@@ -51,7 +51,7 @@ void net_free_network_data(struct network_data *data) {
     free(data);
 }
 
-void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t len) {
+void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, struct network_interface *interface, size_t len) {
     struct network_data *new_data = malloc(sizeof(struct network_data));
     assert(new_data);
 
@@ -59,6 +59,7 @@ void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, size_t l
     // have their own persistent buffers for incoming packets. This is far from ideal
     // since the frame's lifetime is not communicated in any way (the space should be
     // marked unusable to prevent the device from overwriting its data).
+    new_data->interface = interface;
     new_data->socket = NULL;
     new_data->ethernet_frame = (struct ethernet_frame *) frame;
     new_data->len = len;

@@ -14,6 +14,7 @@
 #include <kernel/net/destination_cache.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/network_task.h>
 
 static struct network_interface *interface = NULL;
 
@@ -85,24 +86,19 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
     return (uint16_t)((val >> 16) & 0xFFFF);
 }
 
-static int e1000_send(struct network_interface *self, struct mac_address dest_mac, uint16_t mac_type, const void *raw, uint16_t len) {
+static int e1000_send(struct network_interface *self, struct link_layer_address dest, const struct network_data *network_data) {
     struct e1000_data *data = self->private_data;
-    assert(sizeof(struct ethernet_frame) + len < 8192);
-
-#ifdef KERNEL_E1000_DEBUG
-    for (size_t i = 0; i < len; i++) {
-        debug_log("TX Byte: [ %lu, %#2X ]\n", i, ((uint8_t *) raw)[i]);
-    }
-#endif /* KERNEL_E1000_DEBUG */
+    assert(sizeof(struct ethernet_frame) + network_data->len < 8192);
 
 #ifdef KERNEL_E1000_DEBUG
     debug_log("Sending over: %d\n", data->current_tx);
 #endif /* KERNEL_E1000_DEBUG */
 
-    net_init_ethernet_frame((void *) data->tx_virt_regions[data->current_tx]->start, dest_mac,
-                            net_link_layer_address_to_mac(self->ops->get_link_layer_address(self)), mac_type, raw, len);
+    net_init_ethernet_frame((void *) data->tx_virt_regions[data->current_tx]->start, net_link_layer_address_to_mac(dest),
+                            net_link_layer_address_to_mac(self->ops->get_link_layer_address(self)),
+                            net_network_data_to_ether_type(network_data->type), network_data->raw_packet, network_data->len);
 
-    data->tx_descs[data->current_tx].length = sizeof(struct ethernet_frame) + len;
+    data->tx_descs[data->current_tx].length = sizeof(struct ethernet_frame) + network_data->len;
     data->tx_descs[data->current_tx].status = 0;
     data->tx_descs[data->current_tx].cmd = E1000_CMD_EOP | E1000_CMD_IFCS | E1000_CMD_RS;
 
@@ -168,9 +164,9 @@ static struct link_layer_address e1000_get_link_layer_address(struct network_int
 }
 
 static struct network_interface_ops e1000_ops = {
-    .send_ethernet = e1000_send,
-    .send_arp = net_ethernet_interface_send_arp,
-    .send_ip_v4 = net_ethernet_interface_send_ip_v4,
+    .send = e1000_send,
+    .send_arp = net_interface_send_arp,
+    .send_ip_v4 = net_interface_send_ip_v4,
     .get_link_layer_address = e1000_get_link_layer_address,
     .get_link_layer_broadcast_address = net_ethernet_interface_get_link_layer_broadcast_address,
 };

@@ -9,6 +9,8 @@
 #define ETHERNET_TYPE_IPV4 0x0800
 #define ETHERNET_TYPE_ARP  0x0806
 
+enum network_data_type;
+
 struct network_data;
 struct network_interface;
 struct destination_cache_entry;
@@ -20,9 +22,8 @@ struct ethernet_frame {
     uint8_t payload[0];
 } __attribute__((packed));
 
-int net_ethernet_interface_send_arp(struct network_interface *self, struct link_layer_address addr, struct network_data *data);
-int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination,
-                                      struct network_data *data);
+uint16_t net_network_data_to_ether_type(enum network_data_type type);
+
 struct link_layer_address net_ethernet_interface_get_link_layer_broadcast_address(struct network_interface *self);
 void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len);
 

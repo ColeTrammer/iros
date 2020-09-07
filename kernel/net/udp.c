@@ -42,8 +42,8 @@ int net_send_udp(struct socket *socket, struct network_interface *interface, str
     struct destination_cache_entry *destination = net_lookup_destination(interface, dest);
     size_t total_length = sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
 
-    struct network_data *data =
-        net_create_ip_v4_packet(socket, 1, IP_V4_PROTOCOL_UDP, interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
+    struct network_data *data = net_create_ip_v4_packet(interface, socket, 1, IP_V4_PROTOCOL_UDP, interface->address, dest, NULL,
+                                                        total_length - sizeof(struct ip_v4_packet));
 
     struct udp_packet *udp_packet = (struct udp_packet *) data->ip_v4_packet->payload;
     net_init_udp_packet(udp_packet, source_port, dest_port, len, buf);

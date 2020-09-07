@@ -33,7 +33,7 @@ static enum ll_address_type net_dhcp_hw_to_ll_type(uint8_t type) {
 static void net_send_dhcp(struct network_interface *interface, uint8_t message_type, struct link_layer_address our_address,
                           struct ip_v4_address client_ip, struct ip_v4_address server_ip) {
     size_t dhcp_length = DHCP_MINIMUM_PACKET_SIZE;
-    struct network_data *network_data = net_create_ip_v4_packet(NULL, 1, IP_V4_PROTOCOL_UDP, IP_V4_ZEROES, IP_V4_BROADCAST, NULL,
+    struct network_data *network_data = net_create_ip_v4_packet(interface, NULL, 1, IP_V4_PROTOCOL_UDP, IP_V4_ZEROES, IP_V4_BROADCAST, NULL,
                                                                 dhcp_length - sizeof(struct ip_v4_packet));
 
     size_t udp_packet_length = dhcp_length - sizeof(struct ip_v4_packet);

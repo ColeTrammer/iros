@@ -145,10 +145,10 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
         }
 
         if (socket->error != 0) {
-            int ret = socket->error;
+            *error = socket->error;
             socket->error = 0;
             mutex_unlock(&socket->lock);
-            return ret;
+            return NULL;
         }
 
         bool connection_terminated = socket->state == CLOSED;
