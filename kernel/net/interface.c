@@ -8,10 +8,10 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/net/arp.h>
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
-#include <kernel/net/route_cache.h>
 #include <kernel/util/validators.h>
 
 static struct list_node interface_list = INIT_LIST(interface_list);

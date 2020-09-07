@@ -17,7 +17,7 @@
 enum socket_state { UNBOUND = 0, BOUND, LISTENING, CONNECTED, CLOSING, CLOSED };
 
 struct network_interface;
-struct route_cache_entry;
+struct destination_cache_entry;
 struct socket;
 struct tcp_control_block;
 

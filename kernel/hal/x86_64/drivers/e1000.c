@@ -11,9 +11,9 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
-#include <kernel/net/route_cache.h>
 
 static struct network_interface *interface = NULL;
 

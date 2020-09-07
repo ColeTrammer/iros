@@ -6,6 +6,7 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
 
 static uint16_t net_ll_to_arp_hw_type(enum ll_address_type type) {
@@ -77,17 +78,10 @@ void net_arp_recieve(const struct arp_packet *packet, size_t len) {
 
     struct ip_v4_address ip_sender = net_arp_sender_proto_addr(packet);
     struct link_layer_address hw_sender = net_arp_sender_hw_addr(packet);
-    struct mac_address mac_sender = net_link_layer_address_to_mac(hw_sender);
-    debug_log("Updating IPV4 to MAC mapping: [ %u.%u.%u.%u, %02x:%02x:%02x:%02x:%02x:%02x ]\n", ip_sender.addr[0], ip_sender.addr[1],
-              ip_sender.addr[2], ip_sender.addr[3], mac_sender.addr[0], mac_sender.addr[1], mac_sender.addr[2], mac_sender.addr[3],
-              mac_sender.addr[4], mac_sender.addr[5]);
 
-    struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(ip_sender);
-    if (mapping) {
-        mapping->mac = mac_sender;
-    } else {
-        net_create_ip_v4_to_mac_mapping(ip_sender, mac_sender);
-    }
+    struct neighbor_cache_entry *neighbor = net_lookup_neighbor(ip_sender);
+    net_update_neighbor(neighbor, hw_sender);
+    net_drop_neighbor_cache_entry(neighbor);
 }
 
 struct network_data *net_create_arp_packet(uint16_t op, struct link_layer_address s_addr, struct ip_v4_address s_ip,

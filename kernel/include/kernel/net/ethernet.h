@@ -11,7 +11,7 @@
 
 struct network_data;
 struct network_interface;
-struct route_cache_entry;
+struct destination_cache_entry;
 
 struct ethernet_frame {
     struct mac_address mac_destination;
@@ -21,7 +21,8 @@ struct ethernet_frame {
 } __attribute__((packed));
 
 int net_ethernet_interface_send_arp(struct network_interface *self, struct link_layer_address addr, struct network_data *data);
-int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, struct network_data *data);
+int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination,
+                                      struct network_data *data);
 struct link_layer_address net_ethernet_interface_get_link_layer_broadcast_address(struct network_interface *self);
 void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len);
 

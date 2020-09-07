@@ -4,10 +4,11 @@
 #include <string.h>
 
 #include <kernel/net/arp.h>
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
-#include <kernel/net/route_cache.h>
 
 int net_ethernet_interface_send_arp(struct network_interface *self, struct link_layer_address dest_mac, struct network_data *data) {
     int ret = self->ops->send_ethernet(self, net_link_layer_address_to_mac(dest_mac), ETHERNET_TYPE_ARP, data->arp_packet, data->len);
@@ -15,16 +16,17 @@ int net_ethernet_interface_send_arp(struct network_interface *self, struct link_
     return ret;
 }
 
-int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, struct network_data *data) {
+int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination,
+                                      struct network_data *data) {
     struct mac_address dest_mac = MAC_BROADCAST;
-    if (route) {
-        struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(route->next_hop_address);
-        if (!mapping) {
-            debug_log("No mac address found for ip: [ %d.%d.%d.%d ]\n", route->next_hop_address.addr[0], route->next_hop_address.addr[1],
-                      route->next_hop_address.addr[2], route->next_hop_address.addr[3]);
+    if (destination) {
+        if (destination->next_hop->state != NS_REACHABLE) {
+            debug_log("No mac address found for ip: [ %d.%d.%d.%d ]\n", destination->next_hop->ip_v4_address.addr[0],
+                      destination->next_hop->ip_v4_address.addr[1], destination->next_hop->ip_v4_address.addr[2],
+                      destination->next_hop->ip_v4_address.addr[3]);
             return -EHOSTUNREACH;
         }
-        dest_mac = mapping->mac;
+        dest_mac = net_link_layer_address_to_mac(destination->next_hop->link_layer_address);
     }
 
     int ret = self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_IPV4, data->ip_v4_packet, data->len);

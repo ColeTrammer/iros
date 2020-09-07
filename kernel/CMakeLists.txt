@@ -38,11 +38,11 @@ if (NOT ${NATIVE_BUILD})
         net/interface.c
         net/ip.c
         net/loopback.c
-        net/mac.c
+        net/neighbor_cache.c
         net/net.c
         net/network_task.c
         net/port.c
-        net/route_cache.c
+        net/destination_cache.c
         net/socket.c
         net/socket_syscalls.c
         net/tcp.c

@@ -23,6 +23,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/net/arp.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/neighbor_cache.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/stats.h>
@@ -526,13 +527,14 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_kheap(struct procfs_d
     return (struct procfs_buffer) { buffer, length };
 }
 
-static void arp_for_each(struct hash_entry *_mapping, void *_buf) {
-    struct ip_v4_to_mac_mapping *mapping = hash_table_entry(_mapping, struct ip_v4_to_mac_mapping);
+static void arp_for_each(struct hash_entry *_neighbor, void *_buf) {
+    struct neighbor_cache_entry *neighbor = hash_table_entry(_neighbor, struct neighbor_cache_entry);
     struct procfs_buffer *buf = _buf;
-    buf->size +=
-        snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0, "%u.%u.%u.%u => %02x:%02x:%02x:%02x:%02x:%02x\n",
-                 mapping->ip.addr[0], mapping->ip.addr[1], mapping->ip.addr[2], mapping->ip.addr[3], mapping->mac.addr[0],
-                 mapping->mac.addr[1], mapping->mac.addr[2], mapping->mac.addr[3], mapping->mac.addr[4], mapping->mac.addr[5]);
+    buf->size += snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0,
+                          "%u.%u.%u.%u => %02x:%02x:%02x:%02x:%02x:%02x\n", neighbor->ip_v4_address.addr[0],
+                          neighbor->ip_v4_address.addr[1], neighbor->ip_v4_address.addr[2], neighbor->ip_v4_address.addr[3],
+                          neighbor->link_layer_address.addr[0], neighbor->link_layer_address.addr[1], neighbor->link_layer_address.addr[2],
+                          neighbor->link_layer_address.addr[3], neighbor->link_layer_address.addr[4], neighbor->link_layer_address.addr[5]);
 }
 
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_arp(struct procfs_data *data __attribute__((unused)),
@@ -541,7 +543,7 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_arp(struct procfs_dat
 
     struct procfs_buffer buf = { buffer, 0 };
 
-    struct hash_map *map = net_ip_v4_to_mac_table();
+    struct hash_map *map = net_neighbor_cache();
     hash_for_each(map, arp_for_each, &buf);
     return buf;
 }

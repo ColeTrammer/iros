@@ -242,8 +242,6 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
             interface->config_context.state = INITIALIZED;
             debug_log("DHCP bound interface to ip: [ %s, %u.%u.%u.%u ]\n", interface->name, interface->address.addr[0],
                       interface->address.addr[1], interface->address.addr[2], interface->address.addr[3]);
-
-            net_create_ip_v4_to_mac_mapping(interface->address, net_link_layer_address_to_mac(our_address));
             net_send_arp_request(interface, interface->default_gateway);
             break;
         default:

@@ -6,7 +6,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip_address.h>
 
-struct route_cache_entry;
+struct destination_cache_entry;
 struct socket;
 
 struct udp_packet {

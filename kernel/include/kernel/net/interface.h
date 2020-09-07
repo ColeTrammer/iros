@@ -12,13 +12,13 @@ struct ifreq;
 struct ip_v4_packet;
 struct network_data;
 struct network_interface;
-struct route_cache_entry;
+struct destination_cache_entry;
 
 struct network_interface_ops {
     int (*send_ethernet)(struct network_interface *interface, struct mac_address dest, uint16_t ether_type, const void *data,
                          uint16_t data_len);
     int (*send_arp)(struct network_interface *interface, struct link_layer_address dest, struct network_data *data);
-    int (*send_ip_v4)(struct network_interface *interface, struct route_cache_entry *route, struct network_data *data);
+    int (*send_ip_v4)(struct network_interface *interface, struct destination_cache_entry *destination, struct network_data *data);
     struct link_layer_address (*get_link_layer_address)(struct network_interface *interface);
     struct link_layer_address (*get_link_layer_broadcast_address)(struct network_interface *interface);
 };

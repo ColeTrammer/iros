@@ -5,12 +5,12 @@
 #include <string.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
-#include <kernel/net/route_cache.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/tcp_socket.h>
 #include <kernel/time/clock.h>
@@ -81,7 +81,7 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
         return -ENETDOWN;
     }
 
-    struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
+    struct destination_cache_entry *destination = net_lookup_destination(interface, dest);
     size_t tcp_length = sizeof(struct tcp_packet) + opts->tcp_flags.syn * sizeof(struct tcp_option_mss) + opts->data_length;
 
     struct network_data *data = net_create_ip_v4_packet(1, IP_V4_PROTOCOL_TCP, interface->address, dest, NULL, tcp_length);
@@ -99,12 +99,12 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
         net_tcp_log(ip_packet, tcp_packet);
     }
 
-    int ret = interface->ops->send_ip_v4(interface, route, data);
+    int ret = interface->ops->send_ip_v4(interface, destination, data);
     if (send_time_ptr) {
         *send_time_ptr = time_read_clock(CLOCK_MONOTONIC);
     }
 
-    net_drop_route_cache_entry(route);
+    net_drop_destination_cache_entry(destination);
     return ret;
 }
 

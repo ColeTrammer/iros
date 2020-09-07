@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/dhcp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/inet_socket.h>
@@ -12,7 +13,6 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
 #include <kernel/net/port.h>
-#include <kernel/net/route_cache.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/udp.h>
 #include <kernel/util/macros.h>
@@ -39,7 +39,7 @@ int net_send_udp(struct network_interface *interface, struct ip_v4_address dest,
         return -ENETDOWN;
     }
 
-    struct route_cache_entry *route = net_find_next_hop_gateway(interface, dest);
+    struct destination_cache_entry *destination = net_lookup_destination(interface, dest);
     size_t total_length = sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
 
     struct network_data *data =
@@ -55,9 +55,9 @@ int net_send_udp(struct network_interface *interface, struct ip_v4_address dest,
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
-    int ret = interface->ops->send_ip_v4(interface, route, data);
+    int ret = interface->ops->send_ip_v4(interface, destination, data);
 
-    net_drop_route_cache_entry(route);
+    net_drop_destination_cache_entry(destination);
     return ret;
 }
 
