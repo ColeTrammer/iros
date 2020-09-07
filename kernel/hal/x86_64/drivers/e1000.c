@@ -85,7 +85,7 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
     return (uint16_t)((val >> 16) & 0xFFFF);
 }
 
-static int e1000_send(struct network_interface *self, struct mac_address dest_mac, uint16_t mac_type, const void *raw, size_t len) {
+static int e1000_send(struct network_interface *self, struct mac_address dest_mac, uint16_t mac_type, const void *raw, uint16_t len) {
     struct e1000_data *data = self->private_data;
     assert(sizeof(struct ethernet_frame) + len < 8192);
 
@@ -117,27 +117,6 @@ static int e1000_send(struct network_interface *self, struct mac_address dest_ma
     return 0;
 }
 
-static int e1000_send_arp(struct network_interface *self, struct mac_address dest_mac, const struct arp_packet *packet,
-                          size_t packet_length) {
-    return e1000_send(self, dest_mac, ETHERNET_TYPE_ARP, packet, packet_length);
-}
-
-static int e1000_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, const struct ip_v4_packet *packet,
-                            size_t packet_length) {
-    struct mac_address dest_mac = MAC_BROADCAST;
-    if (route) {
-        struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(route->next_hop_address);
-        if (!mapping) {
-            debug_log("No mac address found for ip: [ %d.%d.%d.%d ]\n", route->next_hop_address.addr[0], route->next_hop_address.addr[1],
-                      route->next_hop_address.addr[2], route->next_hop_address.addr[3]);
-            return -EHOSTUNREACH;
-        }
-        dest_mac = mapping->mac;
-    }
-
-    return e1000_send(self, dest_mac, ETHERNET_TYPE_IPV4, packet, packet_length);
-}
-
 static void e1000_recieve() {
     struct e1000_data *data = interface->private_data;
 
@@ -145,7 +124,7 @@ static void e1000_recieve() {
         uint8_t *buf = (uint8_t *) data->rx_virt_regions[data->current_rx]->start;
         uint16_t len = data->rx_descs[data->current_rx].length;
 
-        interface->ops->recieve_ethernet(interface, (const struct ethernet_frame *) buf, len);
+        net_recieve_ethernet(interface, (const struct ethernet_frame *) buf, len);
 
         data->rx_descs[data->current_rx].status = 0;
 
@@ -189,8 +168,9 @@ static struct mac_address get_mac_address(struct network_interface *this) {
 }
 
 static struct network_interface_ops e1000_ops = {
-    .send_arp = e1000_send_arp,
-    .send_ip_v4 = e1000_send_ip_v4,
+    .send_ethernet = e1000_send,
+    .send_arp = net_ethernet_interface_send_arp,
+    .send_ip_v4 = net_ethernet_interface_send_ip_v4,
     .get_mac_address = get_mac_address,
 };
 

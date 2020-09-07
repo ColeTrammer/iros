@@ -9,7 +9,7 @@ static int loop_send_ip_v4(struct network_interface *interface, struct route_cac
                            size_t len) {
     (void) route;
 
-    interface->ops->recieve_ip_v4(interface, packet, len);
+    net_recieve_ip_v4(interface, packet, len);
     return 0;
 }
 

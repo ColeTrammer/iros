@@ -12,6 +12,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/route_cache.h>
 #include <kernel/util/validators.h>
 
 static struct list_node interface_list = INIT_LIST(interface_list);
@@ -20,12 +21,33 @@ static void add_interface(struct network_interface *interface) {
     list_append(&interface_list, &interface->interface_list);
 }
 
-static void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len) {
+int net_ethernet_interface_send_arp(struct network_interface *self, struct mac_address dest_mac, const struct arp_packet *packet,
+                                    size_t packet_length) {
+    return self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_ARP, packet, packet_length);
+}
+
+int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, const struct ip_v4_packet *packet,
+                                      size_t packet_length) {
+    struct mac_address dest_mac = MAC_BROADCAST;
+    if (route) {
+        struct ip_v4_to_mac_mapping *mapping = net_get_mac_from_ip_v4(route->next_hop_address);
+        if (!mapping) {
+            debug_log("No mac address found for ip: [ %d.%d.%d.%d ]\n", route->next_hop_address.addr[0], route->next_hop_address.addr[1],
+                      route->next_hop_address.addr[2], route->next_hop_address.addr[3]);
+            return -EHOSTUNREACH;
+        }
+        dest_mac = mapping->mac;
+    }
+
+    return self->ops->send_ethernet(self, dest_mac, ETHERNET_TYPE_IPV4, packet, packet_length);
+}
+
+void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len) {
     (void) interface;
     net_on_incoming_ethernet_frame(frame, len);
 }
 
-static void net_recieve_ip_v4(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len) {
+void net_recieve_ip_v4(struct network_interface *interface, const struct ip_v4_packet *packet, size_t len) {
     (void) interface;
     net_on_incoming_ip_v4_packet(packet, len);
 }
@@ -75,11 +97,6 @@ struct network_interface *net_create_network_interface(const char *name, int typ
     }
 
     assert(ops);
-    assert(!ops->recieve_ethernet);
-    assert(!ops->recieve_ip_v4);
-    ops->recieve_ethernet = net_recieve_ethernet;
-    ops->recieve_ip_v4 = net_recieve_ip_v4;
-
     interface->ops = ops;
     interface->private_data = data;
 
