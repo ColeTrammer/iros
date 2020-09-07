@@ -8,7 +8,6 @@
 #include <kernel/net/link_layer_address.h>
 #include <kernel/util/hash_map.h>
 
-#define MAC_ZEROES    ((struct mac_address) { 0 })
 #define MAC_BROADCAST ((struct mac_address) { { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } })
 
 struct hash_map;
@@ -37,6 +36,7 @@ static inline struct mac_address net_link_layer_address_to_mac(struct link_layer
 
 static inline struct link_layer_address net_mac_to_link_layer_address(struct mac_address address) {
     struct link_layer_address ret;
+    ret.type = LL_TYPE_ETHERNET;
     ret.length = sizeof(struct mac_address);
     memcpy(ret.addr, address.addr, sizeof(struct mac_address));
     return ret;

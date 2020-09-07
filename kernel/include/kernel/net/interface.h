@@ -8,7 +8,6 @@
 #include <kernel/util/list.h>
 
 struct arp_packet;
-struct ethernet_frame;
 struct ifreq;
 struct ip_v4_packet;
 struct network_data;
@@ -21,6 +20,7 @@ struct network_interface_ops {
     int (*send_arp)(struct network_interface *interface, struct link_layer_address dest, struct network_data *data);
     int (*send_ip_v4)(struct network_interface *interface, struct route_cache_entry *route, struct network_data *data);
     struct link_layer_address (*get_link_layer_address)(struct network_interface *interface);
+    struct link_layer_address (*get_link_layer_broadcast_address)(struct network_interface *interface);
 };
 
 enum network_configuration_state { UNINITALIZED = 0, INITIALIZED };
@@ -53,10 +53,6 @@ struct list_node *net_get_interface_list(void);
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address);
 struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data);
 
-int net_ethernet_interface_send_arp(struct network_interface *self, struct link_layer_address addr, struct network_data *data);
-int net_ethernet_interface_send_ip_v4(struct network_interface *self, struct route_cache_entry *route, struct network_data *data);
-
-void net_recieve_ethernet(struct network_interface *interface, const struct ethernet_frame *frame, size_t len);
 void net_recieve_network_data(struct network_interface *interface, struct network_data *data);
 
 int net_ioctl_interface_index_for_name(struct ifreq *req);

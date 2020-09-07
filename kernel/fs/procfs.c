@@ -22,6 +22,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/net/arp.h>
+#include <kernel/net/interface.h>
 #include <kernel/net/socket.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/stats.h>

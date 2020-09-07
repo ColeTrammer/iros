@@ -1,10 +1,8 @@
 #ifndef _KERNEL_NET_ARP_H
 #define _KERNEL_NET_ARP_H 1
 
-#include <stdint.h>
-
 #include <kernel/net/ip_address.h>
-#include <kernel/net/mac.h>
+#include <kernel/net/link_layer_address.h>
 
 #define ARP_PROTOCOL_TYPE_ETHERNET 1
 #define ARP_PROTOCOL_TYPE_IP_V4    0x0800
@@ -12,8 +10,7 @@
 #define ARP_OPERATION_REQUEST 1
 #define ARP_OPERATION_REPLY   2
 
-#include <kernel/net/arp.h>
-#include <kernel/net/interface.h>
+struct network_interface;
 
 struct arp_packet {
     uint16_t hardware_type;

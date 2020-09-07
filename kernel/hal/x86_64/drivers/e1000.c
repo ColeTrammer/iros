@@ -172,6 +172,7 @@ static struct network_interface_ops e1000_ops = {
     .send_arp = net_ethernet_interface_send_arp,
     .send_ip_v4 = net_ethernet_interface_send_ip_v4,
     .get_link_layer_address = e1000_get_link_layer_address,
+    .get_link_layer_broadcast_address = net_ethernet_interface_get_link_layer_broadcast_address,
 };
 
 static struct irq_handler e1000_handler = { .handler = &handle_interrupt, .flags = IRQ_HANDLER_EXTERNAL };

@@ -11,6 +11,25 @@
 #include <kernel/net/network_task.h>
 #include <kernel/util/random.h>
 
+static uint8_t net_ll_to_dhcp_hw_type(enum ll_address_type type) {
+    switch (type) {
+        case LL_TYPE_ETHERNET:
+            return DHCP_HTYPE_ETHERNET;
+        default:
+            assert(false);
+            return 0;
+    }
+}
+
+static enum ll_address_type net_dhcp_hw_to_ll_type(uint8_t type) {
+    switch (type) {
+        case DHCP_HTYPE_ETHERNET:
+            return LL_TYPE_ETHERNET;
+        default:
+            return LL_TYPE_NONE;
+    }
+}
+
 static void net_send_dhcp(struct network_interface *interface, uint8_t message_type, struct link_layer_address our_address,
                           struct ip_v4_address client_ip, struct ip_v4_address server_ip) {
     size_t dhcp_length = DHCP_MINIMUM_PACKET_SIZE;
@@ -23,7 +42,7 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
 
     struct dhcp_packet *data = (struct dhcp_packet *) udp_packet->payload;
     data->op = DHCP_OP_REQUEST;
-    data->htype = DHCP_HTYPE_ETHERNET;
+    data->htype = net_ll_to_dhcp_hw_type(our_address.type);
     data->hlen = our_address.length;
     data->hops = 0;
     data->xid = htonl(interface->config_context.xid = get_random_bytes());
@@ -206,10 +225,17 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
         return;
     }
 
-    struct mac_address our_mac_address = *((struct mac_address *) packet->chaddr);
+    struct link_layer_address our_address = interface->ops->get_link_layer_address(interface);
+    struct link_layer_address chaddr = { .type = net_dhcp_hw_to_ll_type(packet->htype), .length = packet->hlen };
+    memcpy(chaddr.addr, packet->chaddr, sizeof(packet->chaddr));
+    if (!net_link_layer_address_equals(our_address, chaddr)) {
+        debug_log("DHCP packet has wrong hard ware address\n");
+        return;
+    }
+
     switch (dhcp_message_type) {
         case DHCP_MESSAGE_TYPE_OFFER:
-            net_send_dhcp(interface, DHCP_MESSAGE_TYPE_REQUEST, net_mac_to_link_layer_address(our_mac_address), packet->yiaddr, server_ip);
+            net_send_dhcp(interface, DHCP_MESSAGE_TYPE_REQUEST, our_address, packet->yiaddr, server_ip);
             break;
         case DHCP_MESSAGE_TYPE_ACK:
             interface->address = packet->yiaddr;
@@ -217,7 +243,7 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
             debug_log("DHCP bound interface to ip: [ %s, %u.%u.%u.%u ]\n", interface->name, interface->address.addr[0],
                       interface->address.addr[1], interface->address.addr[2], interface->address.addr[3]);
 
-            net_create_ip_v4_to_mac_mapping(interface->address, our_mac_address);
+            net_create_ip_v4_to_mac_mapping(interface->address, net_link_layer_address_to_mac(our_address));
             net_send_arp_request(interface, interface->default_gateway);
             break;
         default:
