@@ -1002,7 +1002,7 @@ void Document::set_search_text(String text) {
 }
 
 void Document::move_cursor_to_next_search_match() {
-    if (m_search_result_count <= 1) {
+    if (m_search_result_count == 0) {
         return;
     }
 
@@ -1018,9 +1018,10 @@ void Document::move_cursor_to_next_search_match() {
             for (size_t i = 0; i < m_search_text.size(); i++) {
                 move_cursor_right(MovementMode::Select);
             }
-            return;
+            break;
         }
     }
+    scroll_cursor_into_view();
 }
 
 void Document::enter_interactive_search() {

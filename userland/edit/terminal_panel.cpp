@@ -585,8 +585,8 @@ Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
                 MouseEvent ev;
                 ev.left = left != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
                 ev.right = right != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
-                ev.index_of_line = clamp(document()->index_of_line_at_position(cy - 1), 0, document()->num_lines() - 1);
-                ev.index_into_line = document()->index_into_line(ev.index_of_line, cx - 1);
+                ev.index_of_line = clamp(document()->index_of_line_at_position(cy - m_row_offset - 1), 0, document()->num_lines() - 1);
+                ev.index_into_line = document()->index_into_line(ev.index_of_line, cx - m_col_offset - m_cols_needed_for_line_numbers - 1);
                 ev.z = scroll_state == SCROLL_UP ? -1 : scroll_state == SCROLL_DOWN ? 1 : 0;
                 ev.down = m_mouse_press_tracker.buttons_down();
                 return R::create_from_single_element(T { ev });
@@ -782,27 +782,25 @@ void TerminalPanel::enter_search(String starting_text) {
             continue;
         }
 
-        auto input = read_input();
+        auto input = text_panel.read_input();
         if (input.empty()) {
             continue;
         }
 
-        if (auto* document = Panel::document()) {
-            for (auto& ev : input) {
-                if (ev.is<KeyPress>()) {
-                    auto& press = ev.as<KeyPress>();
-                    if (press.key == KeyPress::Key::Enter) {
-                        TerminalPanel::document()->move_cursor_to_next_search_match();
-                    }
-
-                    if (press.key == KeyPress::Key::Escape || ((press.modifiers & KeyPress::Modifier::Control) && press.key == 'Q')) {
-                        break;
-                    }
-
-                    text_panel.document()->notify_key_pressed(press);
-                } else {
-                    document->notify_mouse_event(ev.as<MouseEvent>());
+        for (auto& ev : input) {
+            if (ev.is<KeyPress>()) {
+                auto& press = ev.as<KeyPress>();
+                if (press.key == KeyPress::Key::Enter) {
+                    TerminalPanel::document()->move_cursor_to_next_search_match();
                 }
+
+                if (press.key == KeyPress::Key::Escape || ((press.modifiers & KeyPress::Modifier::Control) && press.key == 'Q')) {
+                    goto exit_search;
+                }
+
+                text_panel.document()->notify_key_pressed(press);
+            } else {
+                text_panel.document()->notify_mouse_event(ev.as<MouseEvent>());
             }
         }
 
@@ -814,6 +812,7 @@ void TerminalPanel::enter_search(String starting_text) {
         fflush(stdout);
     }
 
+exit_search:
     m_show_status_bar = true;
 
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
