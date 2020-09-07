@@ -155,6 +155,8 @@ public:
     int row_offset() const { return m_row_offset; }
     int col_offset() const { return m_col_offset; }
 
+    void clear_search();
+
     DocumentType type() const { return m_type; }
     void set_type(DocumentType type);
 

@@ -981,6 +981,12 @@ void Document::update_search_results() {
     }
 }
 
+void Document::clear_search() {
+    clear_search_results();
+    m_search_text = "";
+    m_search_result_count = 0;
+}
+
 void Document::clear_search_results() {
     if (m_search_result_count == 0) {
         return;
@@ -1251,8 +1257,7 @@ void Document::notify_key_pressed(KeyPress press) {
             }
             break;
         case KeyPress::Key::Escape:
-            m_search_text = "";
-            clear_search_results();
+            clear_search();
             clear_selection();
             if (on_escape_press) {
                 on_escape_press();
