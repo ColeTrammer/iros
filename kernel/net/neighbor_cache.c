@@ -49,7 +49,6 @@ struct neighbor_cache_entry *net_bump_neighbor_cache_entry(struct neighbor_cache
 
 void net_drop_neighbor_cache_entry(struct neighbor_cache_entry *neighbor) {
     if (atomic_fetch_sub(&neighbor->ref_count, 1) == 1) {
-        hash_del(neighbor_cache, &neighbor->ip_v4_address);
         if (neighbor->update_timer) {
             time_cancel_kernel_callback(neighbor->update_timer);
             neighbor->update_timer = NULL;
@@ -73,6 +72,7 @@ static void neighbor_lookup_failed(struct timer *timer __attribute__((unused)), 
         list_remove(&data->list);
         net_free_network_data(data);
     }
+    neighbor->state = NS_UNREACHABLE;
     spin_unlock(&neighbor->lock);
 
     net_remove_neighbor(neighbor);
@@ -81,6 +81,14 @@ static void neighbor_lookup_failed(struct timer *timer __attribute__((unused)), 
 int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct network_data *data) {
     int ret = 0;
     spin_lock(&neighbor->lock);
+    if (neighbor->state == NS_UNREACHABLE) {
+        // This host has proven to be unreachable. No new connections will use this neighbor cache entry, but old
+        // ones might still be holding on it, and should be terminated.
+        ret = -EHOSTUNREACH;
+        net_free_network_data(data);
+        goto done;
+    }
+
     if (neighbor->state != NS_INCOMPLETE) {
         // In this case, no link layer address lookup needs to be performed, and as such, the data
         // can be sent right away.
@@ -156,6 +164,7 @@ void net_remove_neighbor(struct neighbor_cache_entry *neighbor) {
               neighbor->ip_v4_address.addr[2], neighbor->ip_v4_address.addr[3]);
 #endif /* NEIGHBOR_CACHE_DEBUG */
 
+    hash_del(neighbor_cache, &neighbor->ip_v4_address);
     net_drop_neighbor_cache_entry(neighbor);
     hash_for_each(net_destination_cache(), remove_stale_destinations, neighbor);
 }

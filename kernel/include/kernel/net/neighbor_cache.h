@@ -13,6 +13,7 @@ struct timer;
 enum neighbor_status {
     NS_INCOMPLETE,
     NS_REACHABLE,
+    NS_UNREACHABLE,
 };
 
 struct neighbor_cache_entry {
