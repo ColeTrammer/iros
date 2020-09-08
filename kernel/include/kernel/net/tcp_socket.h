@@ -7,6 +7,8 @@
 #include <kernel/util/hash_map.h>
 #include <kernel/util/ring_buffer.h>
 
+struct destination_cache_entry;
+struct network_interface;
 struct timer;
 
 enum tcp_state {
@@ -50,6 +52,8 @@ struct tcp_control_block {
     uint32_t time_first_sent_sequence_number;
     struct ring_buffer send_buffer;
     struct ring_buffer recv_buffer;
+    struct destination_cache_entry *destination;
+    struct network_interface *interface;
     struct timer *time_wait_timer;
     struct timer *rto_timer;
     struct timer *send_ack_timer;

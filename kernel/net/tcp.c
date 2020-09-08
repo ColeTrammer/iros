@@ -60,6 +60,8 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
         .data_length = data_to_send,
         .data_rb = &tcb->send_buffer,
         .socket = socket,
+        .interface = tcb->interface,
+        .destination = tcb->destination,
     };
 
     struct timespec *send_time_ptr = NULL;
@@ -76,13 +78,13 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
 }
 
 int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr) {
-    struct network_interface *interface = net_get_interface_for_ip(dest);
+    struct network_interface *interface = opts->interface ? opts->interface : net_get_interface_for_ip(dest);
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
     }
 
-    struct destination_cache_entry *destination = net_lookup_destination(interface, dest);
+    struct destination_cache_entry *destination = opts->destination ? opts->destination : net_lookup_destination(interface, dest);
     size_t tcp_length = sizeof(struct tcp_packet) + opts->tcp_flags.syn * sizeof(struct tcp_option_mss) + opts->data_length;
 
     struct network_data *data =
@@ -106,7 +108,9 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
         *send_time_ptr = time_read_clock(CLOCK_MONOTONIC);
     }
 
-    net_drop_destination_cache_entry(destination);
+    if (!opts->destination) {
+        net_drop_destination_cache_entry(destination);
+    }
     return ret;
 }
 
@@ -168,6 +172,8 @@ static void tcp_send_reset(const struct ip_v4_packet *ip_packet, const struct tc
         .data_length = 0,
         .data_rb = NULL,
         .socket = NULL,
+        .interface = NULL,
+        .destination = NULL,
     };
 
     if (packet->flags.ack) {
@@ -203,6 +209,8 @@ static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet 
         .data_length = 0,
         .data_rb = NULL,
         .socket = NULL,
+        .interface = tcb->interface,
+        .destination = tcb->destination,
     };
 
     net_send_tcp(ip_packet->source, &opts, NULL);
@@ -232,6 +240,9 @@ static void tcp_on_ack_timeout(struct timer *timer, void *_socket) {
         .data_offset = 0,
         .data_length = 0,
         .data_rb = NULL,
+        .socket = socket,
+        .interface = tcb->interface,
+        .destination = tcb->destination,
     };
 
     time_delete_timer(timer);

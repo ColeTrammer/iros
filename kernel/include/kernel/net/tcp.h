@@ -19,6 +19,8 @@
 #define TCP_OPTION_PAD 1
 #define TCP_OPTION_MSS 2
 
+struct destination_cache_entry;
+struct networK_interface;
 struct ring_buffer;
 struct socket;
 
@@ -76,6 +78,8 @@ struct tcp_packet_options {
     uint16_t data_length;
     struct ring_buffer *data_rb;
     struct socket *socket;
+    struct network_interface *interface;
+    struct destination_cache_entry *destination;
 };
 
 int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end, bool is_retransmission);

@@ -4,7 +4,9 @@
 #include <string.h>
 
 #include <kernel/hal/processor.h>
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/inet_socket.h>
+#include <kernel/net/interface.h>
 #include <kernel/net/socket_syscalls.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/tcp_socket.h>
@@ -144,6 +146,9 @@ void net_free_tcp_control_block(struct socket *socket) {
     if (tcb->send_ack_timer) {
         time_cancel_kernel_callback(tcb->send_ack_timer);
     }
+    if (tcb->destination) {
+        net_drop_destination_cache_entry(tcb->destination);
+    }
     kill_ring_buffer(&tcb->send_buffer);
     kill_ring_buffer(&tcb->recv_buffer);
     free(tcb);
@@ -273,6 +278,10 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
     struct tcp_control_block *tcb = new_socket->private_data = connection.connect_tcb;
     create_tcp_socket_mapping(new_socket);
 
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&new_socket->peer_address);
+    tcb->interface = net_get_interface_for_ip(dest_ip);
+    tcb->destination = net_lookup_destination(tcb->interface, dest_ip);
+
     // Send a SYN-ACK
     tcb->pending_syn = true;
     tcp_send_segments(new_socket);
@@ -351,6 +360,10 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
     tcb->state = TCP_SYN_SENT;
 
     create_tcp_socket_mapping(socket);
+
+    struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
+    tcb->interface = net_get_interface_for_ip(dest_ip);
+    tcb->destination = net_lookup_destination(tcb->interface, dest_ip);
 
     tcb->pending_syn = true;
     int ret = tcp_send_segments(socket);
