@@ -135,6 +135,7 @@ ssize_t net_generic_recieve_from(struct socket *socket, void *buf, size_t len, i
 struct socket_data *net_get_next_message(struct socket *socket, int *error);
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection);
 ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_data);
+void net_socket_set_error(struct socket *socket, int error);
 
 void net_set_host_address(struct socket *socket, const void *addr, socklen_t addrlen);
 void net_set_peer_address(struct socket *socket, const void *addr, socklen_t addrlen);

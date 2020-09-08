@@ -63,14 +63,15 @@ static void neighbor_lookup_failed(struct timer *timer __attribute__((unused)), 
     struct neighbor_cache_entry *neighbor = _neighbor;
 
     spin_lock(&neighbor->lock);
-    net_remove_neighbor(neighbor);
     time_cancel_kernel_callback(neighbor->update_timer);
     neighbor->update_timer = NULL;
 
     list_for_each_entry_safe(&neighbor->queued_packets, data, struct network_data, list) {
         if (data->socket) {
-            data->socket->error = -EHOSTUNREACH;
+            net_socket_set_error(data->socket, -EHOSTUNREACH);
         }
+        list_remove(&data->list);
+        net_free_network_data(data);
     }
     spin_unlock(&neighbor->lock);
 
@@ -133,9 +134,10 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
     list_for_each_entry_safe(&neighbor->queued_packets, data, struct network_data, list) {
         int ret = data->interface->ops->send(data->interface, neighbor->link_layer_address, data);
         if (!!ret && !!data->socket) {
-            data->socket->error = ret;
+            net_socket_set_error(data->socket, ret);
         }
         list_remove(&data->list);
+        net_free_network_data(data);
     }
 
     spin_unlock(&neighbor->lock);
@@ -144,7 +146,7 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
 static void remove_stale_destinations(struct hash_entry *hash, void *neighbor) {
     struct destination_cache_entry *destination = hash_table_entry(hash, struct destination_cache_entry);
     if (destination->next_hop == neighbor) {
-        net_remove_destination(destination);
+        __net_remove_destination(destination);
     }
 }
 
@@ -154,9 +156,8 @@ void net_remove_neighbor(struct neighbor_cache_entry *neighbor) {
               neighbor->ip_v4_address.addr[2], neighbor->ip_v4_address.addr[3]);
 #endif /* NEIGHBOR_CACHE_DEBUG */
 
-    hash_for_each(net_destination_cache(), remove_stale_destinations, neighbor);
-
     net_drop_neighbor_cache_entry(neighbor);
+    hash_for_each(net_destination_cache(), remove_stale_destinations, neighbor);
 }
 
 struct hash_map *net_neighbor_cache(void) {

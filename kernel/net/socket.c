@@ -409,6 +409,11 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
     return ret;
 }
 
+void net_socket_set_error(struct socket *socket, int error) {
+    socket->error = error;
+    socket->readable = true;
+}
+
 void net_set_host_address(struct socket *socket, const void *addr, socklen_t addrlen) {
     assert(addrlen <= sizeof(struct sockaddr_storage));
     memcpy(&socket->host_address, addr, addrlen);

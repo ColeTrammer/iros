@@ -20,4 +20,16 @@ static inline struct ip_v4_address ip_v4_from_uint(uint32_t uint) {
                                       (uint & 0xFF000000) >> 24 } };
 }
 
+static inline struct ip_v4_address net_ip_v4_mask(struct ip_v4_address address, struct ip_v4_address mask) {
+    address.addr[0] &= mask.addr[0];
+    address.addr[1] &= mask.addr[1];
+    address.addr[2] &= mask.addr[2];
+    address.addr[3] &= mask.addr[3];
+    return address;
+}
+
+static inline int net_ip_v4_equals(struct ip_v4_address a, struct ip_v4_address b) {
+    return a.addr[0] == b.addr[0] && a.addr[0] == b.addr[0] && a.addr[1] == b.addr[1] && a.addr[2] == b.addr[2] && a.addr[3] == b.addr[3];
+}
+
 #endif /* _KERNEL_NET_IP_ADDRESS_H */

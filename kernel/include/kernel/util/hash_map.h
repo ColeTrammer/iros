@@ -33,6 +33,7 @@ struct hash_entry *hash_get_at_index(struct hash_map *map, size_t index);
 struct hash_entry *hash_get_or_else_do(struct hash_map *map, void *key, void (*f)(void *arg), void *arg);
 struct hash_entry *hash_put_if_not_present(struct hash_map *map, void *key, struct hash_entry *(*make_data)(void *key));
 void hash_put(struct hash_map *map, struct hash_entry *ptr);
+struct hash_entry *__hash_del(struct hash_map *map, void *key);
 struct hash_entry *hash_del(struct hash_map *map, void *key);
 void hash_free_hash_map(struct hash_map *map);
 

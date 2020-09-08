@@ -149,8 +149,7 @@ void hash_put(struct hash_map *map, struct hash_entry *data) {
     spin_unlock(&map->lock);
 }
 
-struct hash_entry *hash_del(struct hash_map *map, void *key) {
-    spin_lock(&map->lock);
+struct hash_entry *__hash_del(struct hash_map *map, void *key) {
     size_t i = map->hash(key, map->num_buckets);
 
     struct hash_entry **entry = &map->entries[i];
@@ -162,15 +161,20 @@ struct hash_entry *hash_del(struct hash_map *map, void *key) {
             *entry = next;
             map->size--;
 
-            spin_unlock(&map->lock);
             return data_removed;
         }
 
         entry = &(*entry)->next;
     }
 
-    spin_unlock(&map->lock);
     return NULL;
+}
+
+struct hash_entry *hash_del(struct hash_map *map, void *key) {
+    spin_lock(&map->lock);
+    struct hash_entry *ret = __hash_del(map, key);
+    spin_unlock(&map->lock);
+    return ret;
 }
 
 void hash_free_hash_map(struct hash_map *map) {

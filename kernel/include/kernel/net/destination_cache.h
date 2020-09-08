@@ -23,6 +23,7 @@ struct destination_cache_entry *net_bump_destination_cache_entry(struct destinat
 void net_drop_destination_cache_entry(struct destination_cache_entry *entry);
 
 struct destination_cache_entry *net_lookup_destination(struct network_interface *interface, struct ip_v4_address dest_address);
+void __net_remove_destination(struct destination_cache_entry *entry);
 void net_remove_destination(struct destination_cache_entry *entry);
 
 struct hash_map *net_destination_cache(void);
