@@ -18,12 +18,14 @@ int TableView::width_of(const ModelData& data) const {
     return 2 * cell_padding() + max(width, 20);
 }
 
-void TableView::render_data(Renderer& renderer, int rx, int ry, const ModelData& data) {
+void TableView::render_data(Renderer& renderer, int rx, int ry, int width, const ModelData& data) {
     if (data.is<Monostate>()) {
         return;
     } else if (data.is<String>()) {
         auto& string = data.as<String>();
-        renderer.render_text(rect().x() + rx + cell_padding(), rect().y() + ry + cell_padding(), string, ColorValue::White);
+        auto cell_rect = Rect { rect().x() + rx + cell_padding(), rect().y() + ry + cell_padding(), width - 2 * cell_padding(),
+                                20 - 2 * cell_padding() };
+        renderer.render_text(string, cell_rect, ColorValue::White);
     }
 }
 
@@ -53,7 +55,7 @@ void TableView::render() {
     int ry = 1;
     for (auto c = 0; c < col_count; c++) {
         auto data = model()->header_data(c);
-        render_data(renderer, rx, ry, data);
+        render_data(renderer, rx, ry, col_widths[c], data);
         rx += col_widths[c] + 1;
     }
 
@@ -66,7 +68,7 @@ void TableView::render() {
         }
 
         for (auto c = 0; c < col_count; c++) {
-            render_data(renderer, rx, ry, model()->data({ r, c }));
+            render_data(renderer, rx, ry, col_widths[c], model()->data({ r, c }));
             rx += col_widths[c] + 1;
         }
     }

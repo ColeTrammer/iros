@@ -20,7 +20,7 @@ public:
 
 protected:
     int width_of(const ModelData& data) const;
-    void render_data(Renderer& renderer, int rx, int ry, const ModelData& data);
+    void render_data(Renderer& renderer, int rx, int ry, int width, const ModelData& data);
 
     virtual ModelIndex index_at_position(int, int) override;
 

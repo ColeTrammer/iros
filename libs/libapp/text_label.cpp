@@ -8,7 +8,7 @@ void TextLabel::render() {
     Renderer renderer(*window()->pixels());
 
     renderer.fill_rect(rect(), ColorValue::Black);
-    renderer.render_text(rect().x(), rect().y(), text(), ColorValue::White, font());
+    renderer.render_text(text(), rect(), ColorValue::White, text_align(), font());
 
     Widget::render();
 }

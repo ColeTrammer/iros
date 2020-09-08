@@ -86,7 +86,8 @@ bool Taskbar::notify_mouse_pressed(int mouse_x, int mouse_y, mouse_button_state,
 
 void Taskbar::render(Renderer& renderer) {
     int taskbar_top = renderer.pixels().height() - taskbar_height;
-    renderer.fill_rect(0, taskbar_top, renderer.pixels().width(), taskbar_height, ColorValue::Black);
+    auto taskbar_rect = Rect { 0, taskbar_top, renderer.pixels().width(), taskbar_height };
+    renderer.fill_rect(taskbar_rect, ColorValue::Black);
     renderer.draw_line({ 0, taskbar_top }, { renderer.pixels().width() - 1, taskbar_top }, ColorValue::White);
 
     for (int i = 0; i < m_items.size(); i++) {
@@ -94,7 +95,9 @@ void Taskbar::render(Renderer& renderer) {
         auto& rect = item.rect;
         auto& window = *item.window;
         renderer.draw_rect(rect, ColorValue::White);
-        renderer.render_text(rect.x() + 4, rect.y() + 4, window.title(), ColorValue::White,
+        auto text_rect = rect;
+        text_rect.set_x(text_rect.x() + 4);
+        renderer.render_text(window.title(), text_rect, ColorValue::White, TextAlign::CenterLeft,
                              &window == WindowManager::the().active_window() ? Font::bold_font() : Font::default_font());
     }
 
@@ -102,5 +105,5 @@ void Taskbar::render(Renderer& renderer) {
     struct tm* tm = localtime(&now);
     auto time_string = String::format("%2d:%02d:%02d %s", tm->tm_hour % 12, tm->tm_min, tm->tm_sec, tm->tm_hour > 12 ? "PM" : "AM");
 
-    renderer.render_text(m_display_width - 100, taskbar_top + 4, time_string, ColorValue::White);
+    renderer.render_text(time_string, taskbar_rect, ColorValue::White, TextAlign::CenterRight);
 }

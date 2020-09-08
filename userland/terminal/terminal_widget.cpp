@@ -105,8 +105,9 @@ void TerminalWidget::render() {
                 swap(fg, bg);
             }
 
-            renderer.fill_rect({ x, y, cell_width, cell_height }, bg);
-            renderer.render_text(x, y, String(cell.ch), fg, cell.bold ? Font::bold_font() : Font::default_font());
+            auto cell_rect = Rect { x, y, cell_width, cell_height };
+            renderer.fill_rect(cell_rect, bg);
+            renderer.render_text(String(cell.ch), cell_rect, fg, TextAlign::Center, cell.bold ? Font::bold_font() : Font::default_font());
         }
     }
 
