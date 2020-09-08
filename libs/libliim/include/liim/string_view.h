@@ -3,6 +3,7 @@
 #include <liim/maybe.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
+#include <liim/vector.h>
 #include <string.h>
 
 namespace LIIM {
@@ -61,6 +62,30 @@ public:
 
         return memcmp(other.start(), this->start(), this->size()) == 0;
     }
+
+    Vector<StringView> split(char c) const {
+        Vector<StringView> ret;
+        if (empty()) {
+            return ret;
+        }
+
+        const char* word_start = m_start;
+        const char* word_end = m_start;
+        while (word_end < m_end) {
+            if (*word_end == c) {
+                ret.add({ word_start, word_end - 1 });
+                word_start = ++word_end;
+            }
+            word_end++;
+        }
+
+        if (word_start != word_end) {
+            ret.add({ word_start, word_end - 1 });
+        }
+        return ret;
+    }
+
+    const char& operator[](size_t index) const { return m_start[index]; }
 
     bool operator!=(const StringView& other) const { return !(*this == other); }
 
