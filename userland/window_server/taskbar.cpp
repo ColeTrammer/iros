@@ -95,9 +95,7 @@ void Taskbar::render(Renderer& renderer) {
         auto& rect = item.rect;
         auto& window = *item.window;
         renderer.draw_rect(rect, ColorValue::White);
-        auto text_rect = rect;
-        text_rect.set_x(text_rect.x() + 4);
-        renderer.render_text(window.title(), text_rect, ColorValue::White, TextAlign::CenterLeft,
+        renderer.render_text(window.title(), rect.adjusted(-4), ColorValue::White, TextAlign::CenterLeft,
                              &window == WindowManager::the().active_window() ? Font::bold_font() : Font::default_font());
     }
 

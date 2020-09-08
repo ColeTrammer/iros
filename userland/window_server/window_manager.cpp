@@ -140,10 +140,9 @@ void WindowManager::draw() {
         }
 
         if (window->type() == WindowServer::WindowType::Application) {
-            auto title_bar_rect = Rect { window->rect().x() + 1, window->rect().y(), window->rect().width() - 1, 21 };
+            auto title_bar_rect = Rect { window->rect().x() + 1, window->rect().y() + 1, window->rect().width() - 1, 20 };
             renderer.fill_rect(title_bar_rect, ColorValue::Black);
-            title_bar_rect.set_x(title_bar_rect.x() + 5);
-            renderer.render_text(window->title(), title_bar_rect, ColorValue::White);
+            renderer.render_text(window->title(), title_bar_rect.adjusted(-4, 0), ColorValue::White);
 
             renderer.draw_rect(window->rect(), ColorValue::White);
             renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },

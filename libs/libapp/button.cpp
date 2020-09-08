@@ -10,9 +10,7 @@ void Button::render() {
 
     renderer.fill_rect(rect(), ColorValue::Black);
     renderer.draw_rect(rect(), ColorValue::White);
-    auto text_rect = rect();
-    text_rect.set_x(text_rect.x() + 2);
-    renderer.render_text(label(), text_rect, ColorValue::White, TextAlign::CenterLeft, font());
+    renderer.render_text(label(), rect().adjusted(-2), ColorValue::White, TextAlign::CenterLeft, font());
 }
 
 void Button::on_mouse_event(MouseEvent& mouse_event) {

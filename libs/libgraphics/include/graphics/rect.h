@@ -47,6 +47,9 @@ public:
         return { x, y, end_x - x, end_y - y };
     }
 
+    constexpr Rect adjusted(int d) const { return adjusted(d, d); }
+    constexpr Rect adjusted(int dx, int dy) const { return { x() - dx, y() - dy, width() + 2 * dx, height() + 2 * dy }; }
+
     constexpr bool operator==(const Rect& other) const {
         return this->x() == other.x() && this->y() == other.y() && this->width() == other.width() && this->height() == other.height();
     };
