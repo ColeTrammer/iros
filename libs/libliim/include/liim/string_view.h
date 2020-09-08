@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/maybe.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
 #include <string.h>
@@ -23,19 +24,20 @@ public:
         return *this;
     }
 
-    int size() const { return m_end - m_start; }
+    size_t size() const { return static_cast<size_t>(m_end - m_start); }
+    bool empty() const { return size() == 0; }
 
     const char* start() const { return m_start; }
     const char* end() const { return m_end - 1; }
 
-    int index_of(char c) const {
-        for (int i = 0; i < size(); i++) {
+    Maybe<size_t> index_of(char c) const {
+        for (size_t i = 0; i < size(); i++) {
             if (start()[i] == c) {
-                return i;
+                return { i };
             }
         }
 
-        return -1;
+        return {};
     }
 
     bool starts_with(const StringView& other) const {
@@ -43,7 +45,7 @@ public:
             return false;
         }
 
-        for (int i = 0; i < other.size(); i++) {
+        for (size_t i = 0; i < other.size(); i++) {
             if (this->start()[i] != other.start()[i]) {
                 return false;
             }
@@ -72,7 +74,7 @@ struct Traits<StringView> {
     static constexpr bool is_simple() { return false; }
     static unsigned int hash(const StringView& s) {
         unsigned int v = 0;
-        for (int i = 0; i < s.size(); i++) {
+        for (size_t i = 0; i < s.size(); i++) {
             v += ~s.start()[i];
             v ^= s.start()[i];
         }

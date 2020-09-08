@@ -222,7 +222,7 @@ public:
     const Vector<CPPToken>& tokens() const { return m_tokens; }
 
 private:
-    int characters_remaining() const { return static_cast<int>(m_length - m_index); }
+    size_t characters_remaining() const { return m_length - m_index; }
 
     bool input_starts_with(const StringView& view) const {
         if (characters_remaining() < view.size()) {

@@ -153,7 +153,7 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
 
             if (desc.here_document_type == ShValue::IoRedirect::HereDocumentType::RemoveLeadingTabs) {
                 Vector<char> chars(desc.rhs.size() + 1);
-                for (int i = 0; i < desc.rhs.size(); i++) {
+                for (size_t i = 0; i < desc.rhs.size(); i++) {
                     while (i < desc.rhs.size() && desc.rhs.start()[i] == '\t') {
                         i++;
                     }

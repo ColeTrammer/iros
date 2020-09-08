@@ -44,7 +44,7 @@ public:
                 bool prev_was_dollar = false;
                 bool found_equal = false;
                 int param_expansion_count = 0;
-                for (int i = 0; !found_equal && i < text.size(); i++) {
+                for (size_t i = 0; !found_equal && i < text.size(); i++) {
                     char current = text.start()[i];
                     switch (current) {
                         case '\\':

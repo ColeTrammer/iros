@@ -101,7 +101,7 @@
 
 static inline String literal_to_token(const StringView& literal) {
     String translated = "";
-    for (int i = 0; i < literal.size(); i++) {
+    for (size_t i = 0; i < literal.size(); i++) {
 #undef __ENUMERATE_LITERALS
 #define __ENUMERATE_LITERALS(c, n) \
     if (literal.start()[i] == c)   \
@@ -113,7 +113,7 @@ static inline String literal_to_token(const StringView& literal) {
 
 static inline String token_to_literal(const StringView& name) {
     String output = "";
-    for (int i = 0; i < name.size();) {
+    for (size_t i = 0; i < name.size();) {
         StringView next = StringView(&name.start()[i], name.end());
 #undef __ENUMERATE_LITERALS
 #define __ENUMERATE_LITERALS(c, n)          \
