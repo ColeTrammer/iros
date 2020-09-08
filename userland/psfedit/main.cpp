@@ -53,20 +53,21 @@ public:
     }
 
 private:
-    GlyphEditorWidget(int width, int height, Font font) {
+    GlyphEditorWidget(int width, int height, Font font) : m_width(width), m_height(height) { set_font(font); }
+    virtual void initialize() override {
         auto& layout = set_layout<App::HorizontalBoxLayout>();
         auto& left_container = layout.add<App::Widget>();
 
         auto& row_layout = left_container.set_layout<App::VerticalBoxLayout>();
         row_layout.set_spacing(0);
-        for (int i = 0; i < height; i++) {
+        for (int i = 0; i < m_height; i++) {
             auto& row_widget = row_layout.add<App::Widget>();
             auto& col_layout = row_widget.set_layout<App::HorizontalBoxLayout>();
             col_layout.set_margins({ 0, 0, 0, 0 });
             col_layout.set_spacing(0);
 
-            for (int j = 0; j < width; j++) {
-                int index = i * width + width - j - 1;
+            for (int j = 0; j < m_width; j++) {
+                int index = i * m_width + m_width - j - 1;
                 col_layout.add<GlyphEditorWidgetCell>(m_bitmap, index);
             }
         }
@@ -80,10 +81,12 @@ private:
                                                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
                                                            "1234567890`~!@#$%^&*()-=_+\n"
                                                            "[]{}\\|;:'\",.<>/?");
-        demo_label.set_font(font);
+        demo_label.set_font(font());
     }
 
     Bitmap<uint8_t>* m_bitmap { nullptr };
+    int m_width { 0 };
+    int m_height { 0 };
     SharedPtr<App::TextLabel> m_info_label;
 };
 
