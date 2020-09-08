@@ -195,3 +195,78 @@ void Renderer::render_text(int x, int y, const String& text, Color color, const 
         }
     }
 }
+
+void Renderer::render_text(const String& text, const Rect& rect, Color color, TextAlign align, const Font& font) {
+    auto lines = text.split_view('\n');
+    int text_height = lines.size() * 16;
+
+    int start_y = rect.y();
+    if (text_height < rect.height()) {
+        switch (align) {
+            case TextAlign::TopLeft:
+            case TextAlign::TopCenter:
+            case TextAlign::TopRight:
+                start_y += 0;
+                break;
+            case TextAlign::CenterLeft:
+            case TextAlign::Center:
+            case TextAlign::CenterRight:
+                start_y += (rect.height() - text_height) / 2;
+                break;
+            case TextAlign::BottomLeft:
+            case TextAlign::BottomCenter:
+            case TextAlign::BottomRight:
+                start_y += rect.height() - text_height;
+                break;
+        }
+    }
+
+    auto color_value = color.color();
+    int lines_to_render = min(lines.size(), rect.height() / 16);
+    for (int l = 0; l < lines_to_render; l++) {
+        auto& line_text = lines[l];
+        int text_width = line_text.size() * 8;
+
+        int start_x = rect.x();
+        if (text_width < rect.width()) {
+            switch (align) {
+                case TextAlign::TopLeft:
+                case TextAlign::CenterLeft:
+                case TextAlign::BottomLeft:
+                    start_x += 0;
+                    break;
+                case TextAlign::TopCenter:
+                case TextAlign::Center:
+                case TextAlign::BottomCenter:
+                    start_x += (rect.width() - text_width) / 2;
+                    break;
+                case TextAlign::TopRight:
+                case TextAlign::CenterRight:
+                case TextAlign::BottomRight:
+                    start_x += rect.width() - text_width;
+                    break;
+            }
+        }
+
+        auto chars_to_render = min(line_text.size(), static_cast<size_t>(rect.width() / 8));
+        for (size_t k = 0; k < chars_to_render; k++) {
+            char c = line_text[k];
+            auto* bitmap = font.get_for_character(c);
+            if (!bitmap) {
+                bitmap = font.get_for_character('?');
+                assert(bitmap);
+            }
+            for (int i = 0; i < 16; i++) {
+                for (int j = 0; j < 8; j++) {
+                    if (bitmap->get(i * 8 + j)) {
+                        m_pixels.put_pixel(start_x - j + 7, start_y + i, color_value);
+                    }
+                }
+            }
+
+            start_x += 8;
+        }
+
+        start_y += 16;
+    }
+}
