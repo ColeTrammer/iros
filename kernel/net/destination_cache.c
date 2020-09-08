@@ -44,6 +44,7 @@ struct destination_cache_entry *net_bump_destination_cache_entry(struct destinat
 
 void net_drop_destination_cache_entry(struct destination_cache_entry *entry) {
     if (atomic_fetch_sub(&entry->ref_count, 1) == 1) {
+        hash_del(destination_cache, &entry->destination_path);
         if (entry->next_hop) {
             net_drop_neighbor_cache_entry(entry->next_hop);
         }
@@ -83,6 +84,23 @@ struct destination_cache_entry *net_lookup_destination(struct network_interface 
               entry->next_hop->ip_v4_address.addr[3]);
 #endif /* DESTINATION_CACHE_DEBUG */
     return net_bump_destination_cache_entry(entry);
+}
+
+void net_remove_destination(struct destination_cache_entry *entry) {
+#ifdef DESTINATION_CACHE_DEBUG
+    debug_log("Removed destination cache entry: [ %d.%d.%d.%d, %d.%d.%d.%d, %d.%d.%d.%d ]\n",
+              entry->destination_path.local_ip_address.addr[0], entry->destination_path.local_ip_address.addr[1],
+              entry->destination_path.local_ip_address.addr[2], entry->destination_path.local_ip_address.addr[3],
+              entry->destination_path.dest_ip_address.addr[0], entry->destination_path.dest_ip_address.addr[1],
+              entry->destination_path.dest_ip_address.addr[2], entry->destination_path.dest_ip_address.addr[3],
+              entry->next_hop->ip_v4_address.addr[0], entry->next_hop->ip_v4_address.addr[1], entry->next_hop->ip_v4_address.addr[2],
+              entry->next_hop->ip_v4_address.addr[3]);
+#endif /* DESTINATION_CACHE_DEBUG */
+    net_drop_destination_cache_entry(entry);
+}
+
+struct hash_map *net_destination_cache(void) {
+    return destination_cache;
 }
 
 void init_destination_cache(void) {

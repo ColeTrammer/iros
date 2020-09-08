@@ -28,20 +28,14 @@ int net_interface_send_arp(struct network_interface *self, struct link_layer_add
 }
 
 int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct network_data *data) {
-    struct link_layer_address dest = self->ops->get_link_layer_broadcast_address(self);
-    if (destination) {
-        if (destination->next_hop->state != NS_REACHABLE) {
-            debug_log("No mac address found for ip: [ %d.%d.%d.%d ]\n", destination->next_hop->ip_v4_address.addr[0],
-                      destination->next_hop->ip_v4_address.addr[1], destination->next_hop->ip_v4_address.addr[2],
-                      destination->next_hop->ip_v4_address.addr[3]);
-            return -EHOSTUNREACH;
-        }
-        dest = destination->next_hop->link_layer_address;
+    if (!destination) {
+        struct link_layer_address dest = self->ops->get_link_layer_broadcast_address(self);
+        int ret = self->ops->send(self, dest, data);
+        net_free_network_data(data);
+        return ret;
     }
 
-    int ret = self->ops->send(self, dest, data);
-    net_free_network_data(data);
-    return ret;
+    return net_queue_packet_for_neighbor(destination->next_hop, data);
 }
 
 void net_recieve_network_data(struct network_interface *interface, struct network_data *data) {

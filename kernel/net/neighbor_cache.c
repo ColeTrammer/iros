@@ -1,10 +1,16 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/net/arp.h>
+#include <kernel/net/destination_cache.h>
+#include <kernel/net/interface.h>
 #include <kernel/net/neighbor_cache.h>
+#include <kernel/net/network_task.h>
+#include <kernel/net/socket.h>
 #include <kernel/time/timer.h>
 
 #define NEIGHBOR_CACHE_DEBUG
@@ -46,10 +52,56 @@ void net_drop_neighbor_cache_entry(struct neighbor_cache_entry *neighbor) {
         hash_del(neighbor_cache, &neighbor->ip_v4_address);
         if (neighbor->update_timer) {
             time_cancel_kernel_callback(neighbor->update_timer);
+            neighbor->update_timer = NULL;
         }
         assert(list_is_empty(&neighbor->queued_packets));
         free(neighbor);
     }
+}
+
+static void neighbor_lookup_failed(struct timer *timer __attribute__((unused)), void *_neighbor) {
+    struct neighbor_cache_entry *neighbor = _neighbor;
+
+    spin_lock(&neighbor->lock);
+    net_remove_neighbor(neighbor);
+    time_cancel_kernel_callback(neighbor->update_timer);
+    neighbor->update_timer = NULL;
+
+    list_for_each_entry_safe(&neighbor->queued_packets, data, struct network_data, list) {
+        if (data->socket) {
+            data->socket->error = -EHOSTUNREACH;
+        }
+    }
+    spin_unlock(&neighbor->lock);
+
+    net_remove_neighbor(neighbor);
+}
+
+int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct network_data *data) {
+    int ret = 0;
+    spin_lock(&neighbor->lock);
+    if (neighbor->state != NS_INCOMPLETE) {
+        // In this case, no link layer address lookup needs to be performed, and as such, the data
+        // can be sent right away.
+        ret = data->interface->ops->send(data->interface, neighbor->link_layer_address, data);
+        net_free_network_data(data);
+        goto done;
+    }
+
+    if (!neighbor->update_timer) {
+        // There is no update timer specified, which means no ARP request has been sent yet. Time to make an ARP request and then start
+        // a timeout.
+        struct timespec delay = { .tv_sec = 0, .tv_nsec = 500000000 };
+        neighbor->update_timer = time_register_kernel_callback(&delay, neighbor_lookup_failed, neighbor);
+        net_send_arp_request(data->interface, neighbor->ip_v4_address);
+    }
+
+    // Queue the packet for later processing. This should probably enforce a limit on the number of packets queued.
+    list_append(&neighbor->queued_packets, &data->list);
+
+done:
+    spin_unlock(&neighbor->lock);
+    return ret;
 }
 
 struct neighbor_cache_entry *net_lookup_neighbor(struct ip_v4_address address) {
@@ -63,6 +115,11 @@ struct neighbor_cache_entry *net_lookup_neighbor(struct ip_v4_address address) {
 
 void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_layer_address confirmed_address) {
     spin_lock(&neighbor->lock);
+    if (neighbor->update_timer) {
+        time_cancel_kernel_callback(neighbor->update_timer);
+        neighbor->update_timer = NULL;
+    }
+
     neighbor->state = NS_REACHABLE;
     neighbor->link_layer_address = confirmed_address;
 
@@ -72,7 +129,34 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
               neighbor->link_layer_address.addr[0], neighbor->link_layer_address.addr[1], neighbor->link_layer_address.addr[2],
               neighbor->link_layer_address.addr[3], neighbor->link_layer_address.addr[4], neighbor->link_layer_address.addr[5]);
 #endif /* NEIGHBOR_CACHE_DEBUG */
+
+    list_for_each_entry_safe(&neighbor->queued_packets, data, struct network_data, list) {
+        int ret = data->interface->ops->send(data->interface, neighbor->link_layer_address, data);
+        if (!!ret && !!data->socket) {
+            data->socket->error = ret;
+        }
+        list_remove(&data->list);
+    }
+
     spin_unlock(&neighbor->lock);
+}
+
+static void remove_stale_destinations(struct hash_entry *hash, void *neighbor) {
+    struct destination_cache_entry *destination = hash_table_entry(hash, struct destination_cache_entry);
+    if (destination->next_hop == neighbor) {
+        net_remove_destination(destination);
+    }
+}
+
+void net_remove_neighbor(struct neighbor_cache_entry *neighbor) {
+#ifdef NEIGHBOR_CACHE_DEBUG
+    debug_log("Removing neighbor cache entry: [ %d.%d.%d.%d ]\n", neighbor->ip_v4_address.addr[0], neighbor->ip_v4_address.addr[1],
+              neighbor->ip_v4_address.addr[2], neighbor->ip_v4_address.addr[3]);
+#endif /* NEIGHBOR_CACHE_DEBUG */
+
+    hash_for_each(net_destination_cache(), remove_stale_destinations, neighbor);
+
+    net_drop_neighbor_cache_entry(neighbor);
 }
 
 struct hash_map *net_neighbor_cache(void) {
