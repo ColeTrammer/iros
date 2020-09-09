@@ -106,7 +106,7 @@ static void gc_fragment(struct hash_entry *entry, void *_now) {
 static void gc_fragments(struct timer *timer, void *closure __attribute__((unused))) {
     struct timespec now = time_read_clock(CLOCK_MONOTONIC);
     hash_for_each(fragment_store, gc_fragment, &now);
-    time_reset_kernel_callback(timer, &fragment_max_lifetime);
+    __time_reset_kernel_callback(timer, &fragment_max_lifetime);
 }
 
 static struct hash_entry *create_fragment_desc(void *_id) {
