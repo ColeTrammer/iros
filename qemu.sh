@@ -27,5 +27,5 @@ qemu-system-$ARCH \
     -boot d \
     -no-reboot \
     -no-shutdown \
-    -netdev user,id=breh,hostfwd=tcp:127.0.0.1:8888-10.0.2.15:8888,hostfwd=tcp:127.0.0.1:8823-10.0.2.15:23 \
+    -netdev user,id=breh,hostfwd=udp:127.0.0.1:8888-10.0.2.15:8888,hostfwd=tcp:127.0.0.1:8823-10.0.2.15:23 \
     -device e1000,netdev=breh
