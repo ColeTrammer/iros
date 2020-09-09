@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
             .sin_zero = { 0 },
         };
 
-        char buffer[500] = "Hello, World";
+        char buffer[4000] = "Hello, World";
         if (sendto(fd, buffer, sizeof(buffer), 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) != sizeof(buffer)) {
             perror("vm_internet_test: sendto");
             return 1;

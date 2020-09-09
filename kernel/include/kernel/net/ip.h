@@ -19,6 +19,8 @@
 #define IP_V4_PROTOCOL_TCP  0x06
 #define IP_V4_PROTOCOL_UDP  0x11
 
+#define IP_V4_MAX_PACKET_LENGTH 65535U
+
 struct socket;
 
 struct ip_v4_packet {
@@ -28,10 +30,12 @@ struct ip_v4_packet {
     uint8_t dscp : 6;
     uint16_t length;
     uint16_t identification;
-    uint16_t fragment_offset : 13;
-    uint16_t more_fragments : 1;
-    uint16_t dont_fragment : 1;
-    uint16_t reserved_flag : 1;
+    uint8_t fragment_offset_high : 5;
+    uint8_t more_fragments : 1;
+    uint8_t dont_fragment : 1;
+    uint8_t reserved_flag : 1;
+    uint8_t fragment_offset_low;
+#define IP_V4_FRAGMENT_OFFSET(packet) (((((packet)->fragment_offset_high << 8) + (packet)->fragment_offset_low)) << 3)
     uint8_t ttl;
     uint8_t protocol;
     uint16_t checksum;
@@ -62,5 +66,6 @@ struct network_data *net_create_ip_v4_packet(struct network_interface *interface
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
                            struct ip_v4_address dest, const void *payload, uint16_t payload_length);
 void net_ip_v4_log(const struct ip_v4_packet *packet);
+void init_ip_v4(void);
 
 #endif /* _KERNEL_NET_IP_H */

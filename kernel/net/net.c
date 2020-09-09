@@ -3,6 +3,7 @@
 #include <kernel/net/destination_cache.h>
 #include <kernel/net/dhcp.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/ip.h>
 #include <kernel/net/loopback.h>
 #include <kernel/net/mac.h>
 #include <kernel/net/neighbor_cache.h>
@@ -19,6 +20,7 @@ void init_net() {
     init_loopback();
     init_net_sockets();
     init_ports();
+    init_ip_v4();
     init_neighbor_cache();
     init_destination_cache();
 
