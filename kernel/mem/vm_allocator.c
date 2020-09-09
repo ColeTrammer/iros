@@ -693,6 +693,16 @@ struct vm_region *vm_allocate_kernel_region(size_t size) {
     return region;
 }
 
+struct vm_region *vm_reallocate_kernel_region(struct vm_region *kernel_region, size_t new_size) {
+    struct vm_region *save = kernel_region;
+    kernel_region = vm_allocate_kernel_region(new_size);
+    if (save) {
+        memcpy((void *) kernel_region->start, (void *) save->start, MIN(new_size, save->end - save->start));
+        vm_free_kernel_region(save);
+    }
+    return kernel_region;
+}
+
 void vm_free_kernel_region(struct vm_region *region) {
     spin_lock(&kernel_vm_lock);
 

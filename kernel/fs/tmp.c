@@ -144,14 +144,10 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
         inode->private_data = kernel_region = vm_allocate_kernel_region(size);
     }
 
-    size_t old_size = inode->size;
     inode->size = MAX(inode->size, offset + len);
     if (inode->size > kernel_region->end - kernel_region->start) {
         size_t new_size = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        struct vm_region *save = kernel_region;
-        inode->private_data = kernel_region = vm_allocate_kernel_region(new_size);
-        memcpy((void *) kernel_region->start, (void *) save->start, old_size);
-        vm_free_kernel_region(save);
+        inode->private_data = kernel_region = vm_reallocate_kernel_region(kernel_region, new_size);
     }
 
     memcpy((void *) (kernel_region->start + offset), buffer, len);
