@@ -78,11 +78,16 @@ struct network_data *net_create_ip_v4_packet(struct network_interface *interface
 
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
                            struct ip_v4_address dest, const void *payload, uint16_t payload_length) {
-    packet->version_and_ihl = (IP_V4_VERSION << 4) | IP_V4_BYTES_TO_WORDS(sizeof(struct ip_v4_packet));
-    packet->dscp_and_ecn = 0;
+    packet->version = IP_V4_VERSION;
+    packet->ihl = IP_V4_BYTES_TO_WORDS(sizeof(struct ip_v4_packet));
+    packet->dscp = 0;
+    packet->ecn = 0;
     packet->length = htons(sizeof(struct ip_v4_packet) + payload_length);
     packet->identification = htons(ident);
-    packet->flags_and_fragment_offset = htons(0);
+    packet->reserved_flag = 0;
+    packet->dont_fragment = 0;
+    packet->more_fragments = 0;
+    packet->fragment_offset = htons(0);
     packet->ttl = 64;
     packet->protocol = protocol;
     packet->source = source;

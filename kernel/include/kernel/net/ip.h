@@ -22,11 +22,16 @@
 struct socket;
 
 struct ip_v4_packet {
-    uint8_t version_and_ihl;
-    uint8_t dscp_and_ecn;
+    uint8_t ihl : 4;
+    uint8_t version : 4;
+    uint8_t ecn : 2;
+    uint8_t dscp : 6;
     uint16_t length;
     uint16_t identification;
-    uint16_t flags_and_fragment_offset;
+    uint16_t fragment_offset : 13;
+    uint16_t more_fragments : 1;
+    uint16_t dont_fragment : 1;
+    uint16_t reserved_flag : 1;
     uint8_t ttl;
     uint8_t protocol;
     uint16_t checksum;
@@ -36,6 +41,8 @@ struct ip_v4_packet {
 
     uint8_t payload[0];
 } __attribute__((packed));
+
+_Static_assert(sizeof(struct ip_v4_packet) == 20);
 
 struct ip_v4_pseudo_header {
     struct ip_v4_address source;
