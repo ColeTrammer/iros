@@ -15,6 +15,7 @@
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/random.h>
 
 // #define TCP_DEBUG
 
@@ -122,7 +123,7 @@ struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) 
     struct tcp_control_block *tcb = socket->private_data = calloc(1, sizeof(struct tcp_control_block));
     tcb->state = TCP_CLOSED;
     tcb->send_window = 1;
-    tcb->send_unacknowledged = tcb->send_next = 10000;                              // Initial sequence number
+    tcb->send_unacknowledged = tcb->send_next = get_random_bytes() & 0xFFFFF;       // Initial sequence number
     tcb->recv_window = 8192;                                                        // Hard coded value
     tcb->recv_mss = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Default MSS minus headers
     tcb->rto = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };                     // RTO starts at 1 second.
