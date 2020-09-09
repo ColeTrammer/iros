@@ -48,8 +48,8 @@ struct ip_v4_fragment_desc {
     uint16_t hole_list;
 };
 
-#define GET_HOLE(buffer, offset)      (offset != 0 ? ((struct ip_v4_fragment_hole *) ((buffer) + (offset))) : NULL)
-#define GET_HOLE_NUMBER(buffer, hole) ((uintptr_t) hole - (uintptr_t) buffer)
+#define GET_HOLE(buffer, offset)      ((offset) != 0 ? ((struct ip_v4_fragment_hole *) ((buffer) + (offset))) : NULL)
+#define GET_HOLE_NUMBER(buffer, hole) ((uintptr_t)(hole) - (uintptr_t)(buffer))
 #define MAKE_HOLE(buffer, new_first, new_last, new_next)                                                             \
     ({                                                                                                               \
         uint16_t __new_hole_first = (new_first);                                                                     \

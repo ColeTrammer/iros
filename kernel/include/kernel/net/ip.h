@@ -12,9 +12,6 @@
 
 #define IP_V4_BYTES_TO_WORDS(bytes) ((bytes) / sizeof(uint32_t))
 
-#define IP_V4_DONT_FRAGMENT  (1U << 1U)
-#define IP_V4_MORE_FRAGMENTS (1U << 2U)
-
 #define IP_V4_PROTOCOL_ICMP 0x01
 #define IP_V4_PROTOCOL_TCP  0x06
 #define IP_V4_PROTOCOL_UDP  0x11
@@ -35,7 +32,7 @@ struct ip_v4_packet {
     uint8_t dont_fragment : 1;
     uint8_t reserved_flag : 1;
     uint8_t fragment_offset_low;
-#define IP_V4_FRAGMENT_OFFSET(packet) (((((packet)->fragment_offset_high << 8) + (packet)->fragment_offset_low)) << 3)
+#define IP_V4_FRAGMENT_OFFSET(packet) ((((packet)->fragment_offset_high << 8) + ((packet)->fragment_offset_low)) << 3)
     uint8_t ttl;
     uint8_t protocol;
     uint16_t checksum;
