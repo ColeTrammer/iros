@@ -28,7 +28,8 @@ int net_send_ip_v4(struct socket *socket, struct network_interface *interface, u
     struct ip_v4_address d = dest;
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
 
-    struct network_data *ip_packet = net_create_ip_v4_packet(interface, socket, 1, protocol, interface->address, dest, buf, len);
+    struct network_data *ip_packet =
+        net_create_ip_v4_packet(interface, socket, destination->next_packet_id++, protocol, interface->address, dest, buf, len);
     int ret = interface->ops->send_ip_v4(interface, destination, ip_packet);
 
     net_drop_destination_cache_entry(destination);

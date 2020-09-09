@@ -17,6 +17,7 @@ struct destination_cache_entry {
     struct neighbor_cache_entry *next_hop;
     struct destination_path destination_path;
     int ref_count;
+    uint16_t next_packet_id;
 };
 
 struct destination_cache_entry *net_bump_destination_cache_entry(struct destination_cache_entry *entry);

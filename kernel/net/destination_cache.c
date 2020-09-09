@@ -6,6 +6,7 @@
 #include <kernel/net/destination_cache.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/neighbor_cache.h>
+#include <kernel/util/random.h>
 
 #define DESTINATION_CACHE_DEBUG
 
@@ -74,6 +75,7 @@ struct destination_cache_entry *net_lookup_destination(struct network_interface 
     entry->ref_count = 1;
     entry->destination_path = path;
     entry->next_hop = next_hop_for(interface, dest_address);
+    entry->next_packet_id = get_random_bytes() & 0xFFFF;
     hash_put(destination_cache, &entry->hash);
 #ifdef DESTINATION_CACHE_DEBUG
     debug_log("Added destination cache entry: [ %d.%d.%d.%d, %d.%d.%d.%d, %d.%d.%d.%d ]\n",
