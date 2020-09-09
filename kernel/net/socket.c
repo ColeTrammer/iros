@@ -95,7 +95,8 @@ int net_block_until_socket_is_readable(struct socket *socket, struct timespec st
     }
 
     // We timed out
-    if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
+    struct timespec now = time_read_clock(CLOCK_MONOTONIC);
+    if (time_compare(now, time_add(start_time, timeout)) >= 0) {
         return -EAGAIN;
     }
 
@@ -111,7 +112,8 @@ int net_block_until_socket_is_writable(struct socket *socket, struct timespec st
         }
 
         // We timed out
-        if (time_compare(start_time, time_add(start_time, timeout)) >= 0) {
+        struct timespec now = time_read_clock(CLOCK_MONOTONIC);
+        if (time_compare(now, time_add(start_time, timeout)) >= 0) {
             return -EAGAIN;
         }
 
