@@ -16,6 +16,8 @@
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
 
+// #define IP_V4_DEBUG
+
 int net_send_ip_v4(struct socket *socket, struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf,
                    size_t len) {
     if (interface->config_context.state != INITIALIZED) {
@@ -39,6 +41,15 @@ int net_send_ip_v4(struct socket *socket, struct network_interface *interface, u
 void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
     if (len < sizeof(struct ip_v4_packet)) {
         debug_log("IP V4 packet too small\n");
+        return;
+    }
+
+#ifdef IP_V4_DEBUG
+    net_ip_v4_log(packet);
+#endif /* IP_V4_DEBUG */
+
+    if (packet->more_fragments || packet->fragment_offset > 0) {
+        debug_log("IP V4 packet is fragmented\n");
         return;
     }
 
@@ -97,4 +108,21 @@ void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t 
     if (payload) {
         memcpy(packet->payload, payload, payload_length);
     }
+}
+
+void net_ip_v4_log(const struct ip_v4_packet *ip_packet) {
+    debug_log("IP v4 Packet:\n"
+              "               Header Len   [ %15u ]   Version   [ %15u ]\n"
+              "               DSCP         [ %15u ]   ECN       [ %15u ]\n"
+              "               Length       [ %15u ]   ID        [ %15u ]\n"
+              "               Flags        [ DF=%u MF=%u       ]   Frag Off  [ %15u ]\n"
+              "               TTL          [ %15u ]   Protocol  [ %15u ]\n"
+              "               Source IP    [ %03u.%03u.%03u.%03u ]   Dest IP   [ %03u.%03u.%03u.%03u ]\n"
+              "               Data Len     [ %15u ]   Data off  [ %15u ]\n",
+              ip_packet->ihl, ip_packet->version, ip_packet->dscp, ip_packet->ecn, ntohs(ip_packet->length),
+              ntohs(ip_packet->identification), ip_packet->dont_fragment, ip_packet->more_fragments, ntohs(ip_packet->fragment_offset),
+              ip_packet->ttl, ip_packet->protocol, ip_packet->source.addr[0], ip_packet->source.addr[1], ip_packet->source.addr[2],
+              ip_packet->source.addr[3], ip_packet->destination.addr[0], ip_packet->destination.addr[1], ip_packet->destination.addr[2],
+              ip_packet->destination.addr[3], ntohs(ip_packet->length) - ip_packet->ihl * (uint32_t) sizeof(uint32_t),
+              ip_packet->ihl * (uint32_t) sizeof(uint32_t));
 }
