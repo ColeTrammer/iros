@@ -8,25 +8,35 @@
 #include <unistd.h>
 
 static void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-h|-g] [-p port]\n", s);
+    fprintf(stderr, "Usage: %s [-r|-s] [-i ip-address] [-p port]\n", s);
     exit(2);
 }
 
 int main(int argc, char **argv) {
     int opt;
 
-    uint16_t port = 8888;
-    bool host_mode = false;
-    while ((opt = getopt(argc, argv, ":hgp:")) != -1) {
+    uint16_t port;
+    struct in_addr in_addr;
+    bool use_default_port = true;
+    bool use_default_addr = true;
+    bool send = false;
+    while ((opt = getopt(argc, argv, ":i:p:rs")) != -1) {
         switch (opt) {
-            case 'h':
-                host_mode = true;
-                break;
-            case 'g':
-                host_mode = false;
+            case 'i':
+                if (inet_aton(optarg, &in_addr) == 0) {
+                    print_usage_and_exit(*argv);
+                }
+                use_default_addr = false;
                 break;
             case 'p':
                 port = atoi(optarg);
+                use_default_port = false;
+                break;
+            case 'r':
+                send = false;
+                break;
+            case 's':
+                send = true;
                 break;
             case ':':
             case '?':
@@ -35,17 +45,25 @@ int main(int argc, char **argv) {
         }
     }
 
+    if (use_default_port) {
+        port = 8888;
+    }
+
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (fd < 0) {
         perror("vm_internet_test: socket");
         return 1;
     }
 
-    if (host_mode) {
+    if (send) {
+        if (use_default_addr) {
+            in_addr.s_addr = htonl(INADDR_LOOPBACK);
+        }
+
         struct sockaddr_in addr = {
             .sin_family = AF_INET,
             .sin_port = ntohs(port),
-            .sin_addr = { .s_addr = ntohl(INADDR_LOOPBACK) },
+            .sin_addr = in_addr,
             .sin_zero = { 0 },
         };
 
@@ -55,13 +73,18 @@ int main(int argc, char **argv) {
             return 1;
         }
 
+        printf("Sent %lu bytes to %s:%u\n", sizeof(buffer), inet_ntoa(in_addr), port);
         return 0;
+    }
+
+    if (use_default_addr) {
+        in_addr.s_addr = htonl(INADDR_ANY);
     }
 
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
         .sin_port = ntohs(port),
-        .sin_addr = { .s_addr = htonl(INADDR_ANY) },
+        .sin_addr = in_addr,
         .sin_zero = { 0 },
     };
 
