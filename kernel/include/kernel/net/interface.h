@@ -16,6 +16,7 @@ struct packet;
 
 struct network_interface_ops {
     int (*send)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
+    int (*send_ip_v4)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
     int (*route_ip_v4)(struct network_interface *interface, struct destination_cache_entry *destination, struct packet *packet);
     struct link_layer_address (*get_link_layer_broadcast_address)(struct network_interface *interface);
 };

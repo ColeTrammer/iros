@@ -174,6 +174,7 @@ static struct link_layer_address e1000_get_link_layer_address(struct e1000_data 
 
 static struct network_interface_ops e1000_ops = {
     .send = e1000_send,
+    .send_ip_v4 = net_interface_send_ip_v4,
     .route_ip_v4 = net_interface_route_ip_v4,
     .get_link_layer_broadcast_address = net_ethernet_interface_get_link_layer_broadcast_address,
 };

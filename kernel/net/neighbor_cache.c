@@ -93,7 +93,7 @@ int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct 
     if (neighbor->state != NS_INCOMPLETE) {
         // In this case, no link layer address lookup needs to be performed, and as such, the data
         // can be sent right away.
-        ret = packet->interface->ops->send(packet->interface, neighbor->link_layer_address, packet);
+        ret = packet->interface->ops->send_ip_v4(packet->interface, neighbor->link_layer_address, packet);
         goto done;
     }
 
@@ -143,7 +143,7 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
         list_remove(&packet->queue);
 
         struct socket *socket = packet->socket;
-        int ret = packet->interface->ops->send(packet->interface, neighbor->link_layer_address, packet);
+        int ret = packet->interface->ops->send_ip_v4(packet->interface, neighbor->link_layer_address, packet);
         if (!!ret && !!socket) {
             net_socket_set_error(socket, ret);
         }
