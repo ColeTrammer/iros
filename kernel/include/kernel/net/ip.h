@@ -58,7 +58,7 @@ struct ip_v4_pseudo_header {
 
 uint8_t net_packet_header_to_ip_v4_type(enum packet_header_type type);
 enum packet_header_type net_inet_protocol_to_packet_header_type(uint8_t protocol);
-int net_interface_route_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct packet *packet);
+int net_interface_route_ip_v4(struct network_interface *self, struct packet *packet);
 int net_interface_send_ip_v4(struct network_interface *self, struct link_layer_address ll_dest, struct packet *packet);
 int net_send_ip_v4(struct socket *socket, struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf,
                    size_t len);

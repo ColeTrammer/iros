@@ -248,21 +248,16 @@ int net_interface_send_ip_v4(struct network_interface *self, struct link_layer_a
     struct packet_header *outer_header = net_packet_outer_header(packet);
 
     struct ip_v4_packet ip_packet;
-    net_init_ip_v4_packet(&ip_packet, destination ? destination->next_packet_id++ : 0, net_packet_header_to_ip_v4_type(outer_header->type),
-                          packet->interface->address, destination ? destination->destination_path.dest_ip_address : IP_V4_BROADCAST, NULL,
-                          packet->total_length);
+    net_init_ip_v4_packet(&ip_packet, destination->next_packet_id++, net_packet_header_to_ip_v4_type(outer_header->type),
+                          packet->interface->address, destination->destination_path.dest_ip_address, NULL, packet->total_length);
     net_init_packet_header(packet, net_packet_header_index(packet, outer_header) - 1, PH_IP_V4, &ip_packet, sizeof(struct ip_v4_packet));
 
     return self->ops->send(self, ll_dest, packet);
 }
 
-int net_interface_route_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct packet *packet) {
-    if (!destination) {
-        struct link_layer_address dest = self->ops->get_link_layer_broadcast_address(self);
-        return self->ops->send_ip_v4(self, dest, packet);
-    }
-
-    return net_queue_packet_for_neighbor(destination->next_hop, packet);
+int net_interface_route_ip_v4(struct network_interface *self, struct packet *packet) {
+    (void) self;
+    return net_queue_packet_for_neighbor(packet->destination->next_hop, packet);
 }
 
 int net_send_ip_v4(struct socket *socket, struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf,
@@ -280,14 +275,13 @@ int net_send_ip_v4(struct socket *socket, struct network_interface *interface, u
     struct packet *packet = net_create_packet(interface, socket, destination, len);
     packet->header_count = interface->link_layer_overhead + 2;
 
+    net_drop_destination_cache_entry(destination);
+
     struct packet_header *raw_data = net_init_packet_header(packet, interface->link_layer_overhead + 1,
                                                             net_inet_protocol_to_packet_header_type(protocol), packet->inline_data, len);
     memcpy(raw_data->raw_header, buf, len);
 
-    int ret = interface->ops->route_ip_v4(interface, destination, packet);
-
-    net_drop_destination_cache_entry(destination);
-    return ret;
+    return interface->ops->route_ip_v4(interface, packet);
 }
 
 void net_ip_v4_recieve(struct packet *packet) {

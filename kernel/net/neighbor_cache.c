@@ -8,6 +8,7 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/destination_cache.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/mac.h>
 #include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
 #include <kernel/net/packet.h>
@@ -38,8 +39,15 @@ static struct neighbor_cache_entry *create_neighbor_cache_entry(struct ip_v4_add
     neighbor->ref_count = 1;
     init_spinlock(&neighbor->lock);
     neighbor->ip_v4_address = address;
-    neighbor->state = NS_INCOMPLETE;
-    neighbor->link_layer_address = LINK_LAYER_ADDRESS_NONE;
+    if (net_ip_v4_equals(address, IP_V4_BROADCAST)) {
+        // FIXME: make the neighbor cache a per interface thing, and then the broadcast
+        //        address can be fetched from the interface.
+        neighbor->state = NS_REACHABLE;
+        neighbor->link_layer_address = net_mac_to_link_layer_address(MAC_BROADCAST);
+    } else {
+        neighbor->state = NS_INCOMPLETE;
+        neighbor->link_layer_address = LINK_LAYER_ADDRESS_NONE;
+    }
     return neighbor;
 }
 

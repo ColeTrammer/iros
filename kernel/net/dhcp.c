@@ -5,6 +5,7 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/net/arp.h>
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/dhcp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
@@ -37,8 +38,10 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
     size_t udp_length = total_length - sizeof(struct ip_v4_packet);
     size_t dhcp_length = udp_length - sizeof(struct udp_packet);
 
-    struct packet *packet = net_create_packet(interface, NULL, NULL, udp_length);
+    struct destination_cache_entry *destination = net_lookup_destination(interface, IP_V4_BROADCAST);
+    struct packet *packet = net_create_packet(interface, NULL, destination, udp_length);
     packet->header_count = interface->link_layer_overhead + 3;
+    net_drop_destination_cache_entry(destination);
 
     struct packet_header *udp_header =
         net_init_packet_header(packet, interface->link_layer_overhead + 1, PH_UDP, packet->inline_data, sizeof(struct udp_packet));
@@ -97,7 +100,7 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
 
     debug_log("Sending DHCP DISCOVER packet: [ %u ]\n", interface->config_context.xid);
 
-    assert(interface->ops->route_ip_v4(interface, NULL, packet) == 0);
+    assert(interface->ops->route_ip_v4(interface, packet) == 0);
 }
 
 void net_configure_interface_with_dhcp(struct network_interface *interface) {

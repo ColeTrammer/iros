@@ -46,6 +46,8 @@ int net_send_udp(struct socket *socket, struct network_interface *interface, str
     struct packet *packet = net_create_packet(interface, socket, destination, udp_length);
     packet->header_count = interface->link_layer_overhead + 2;
 
+    net_drop_destination_cache_entry(destination);
+
     struct packet_header *udp_header =
         net_init_packet_header(packet, interface->link_layer_overhead + 1, PH_UDP, packet->inline_data, udp_length);
     struct udp_packet *udp_packet = udp_header->raw_header;
@@ -57,10 +59,7 @@ int net_send_udp(struct socket *socket, struct network_interface *interface, str
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
-    int ret = interface->ops->route_ip_v4(interface, destination, packet);
-
-    net_drop_destination_cache_entry(destination);
-    return ret;
+    return interface->ops->route_ip_v4(interface, packet);
 }
 
 void net_udp_recieve(struct packet *net_packet) {
