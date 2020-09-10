@@ -729,10 +729,10 @@ void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *o
 
     if (opts->tcp_flags.syn) {
         // Send an MSS option.
-        struct tcp_option_mss *opts = (struct tcp_option_mss *) packet->options_and_payload;
-        opts->type = TCP_OPTION_MSS;
-        opts->length = sizeof(struct tcp_option_mss);
-        opts->mss = htons(opts->mss);
+        struct tcp_option_mss *opt = (struct tcp_option_mss *) packet->options_and_payload;
+        opt->type = TCP_OPTION_MSS;
+        opt->length = sizeof(struct tcp_option_mss);
+        opt->mss = htons(opts->mss);
     }
 
     if (opts->data_length > 0 && opts->data_rb != NULL) {
