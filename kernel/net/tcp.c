@@ -391,7 +391,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
 
             bool window_changed = tcp_update_recv_window(socket);
 
-            if (packet->flags.psh || packet->flags.fin || window_changed) {
+            if (packet->flags.psh || (packet->flags.syn && packet->flags.ack) || packet->flags.fin || window_changed) {
                 tcp_send_empty_ack(socket, ip_packet, packet);
             } else {
                 tcb->send_ack_timer = time_register_kernel_callback(&ack_timeout, tcp_on_ack_timeout, socket);
