@@ -70,7 +70,10 @@ void net_udp_recieve(struct packet *net_packet) {
         return;
     }
 
-    struct ip_v4_packet *ip_packet = net_packet->headers[net_packet->header_count - 2].raw_header;
+    struct packet_header *ip_header = net_packet_innermost_header_of_type(net_packet, PH_IP_V4);
+    assert(ip_header);
+
+    struct ip_v4_packet *ip_packet = ip_header->raw_header;
     struct udp_packet *packet = udp_header->raw_header;
 
     struct packet_header *next_header = net_packet_add_header(net_packet, sizeof(struct udp_packet));

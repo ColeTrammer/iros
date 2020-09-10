@@ -19,8 +19,10 @@ void net_icmp_recieve(struct packet *net_packet) {
         return;
     }
 
+    struct packet_header *ip_header = net_packet_innermost_header_of_type(net_packet, PH_IP_V4);
+    assert(ip_header);
+
     struct icmp_packet *packet = icmp_header->raw_header;
-    struct packet_header *ip_header = &net_packet->headers[net_packet_header_index(net_packet, icmp_header) - 1];
     struct ip_v4_packet *ip_packet = ip_header->raw_header;
 
     if (packet->type == ICMP_TYPE_ECHO_REPLY) {

@@ -56,8 +56,18 @@ static inline struct packet_header *net_packet_inner_header(struct packet *packe
     return &packet->headers[packet->header_count - 1];
 }
 
+static inline struct packet_header *net_packet_innermost_header_of_type(struct packet *packet, enum packet_header_type type) {
+    for (uint32_t i = packet->header_count; i > 0; i--) {
+        struct packet_header *header = &packet->headers[i - 1];
+        if (header->type == type) {
+            return header;
+        }
+    }
+    return NULL;
+}
+
 static inline struct packet_header *net_packet_outer_header(struct packet *packet) {
-    for (size_t i = 0; i < packet->header_count; i++) {
+    for (uint32_t i = 0; i < packet->header_count; i++) {
         struct packet_header *header = &packet->headers[i];
         if (header->flags & PHF_INITIALIZED) {
             return header;

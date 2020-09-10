@@ -679,7 +679,10 @@ void net_tcp_recieve(struct packet *net_packet) {
 
     net_tcp_log(net_packet);
 
-    struct ip_v4_packet *ip_packet = net_packet->headers[net_packet->header_count - 2].raw_header;
+    struct packet_header *ip_header = net_packet_innermost_header_of_type(net_packet, PH_IP_V4);
+    assert(ip_header);
+
+    struct ip_v4_packet *ip_packet = ip_header->raw_header;
     struct tcp_connection_info info = {
         .source_ip = IP_V4_ZEROES,
         .source_port = ntohs(packet->dest_port),
