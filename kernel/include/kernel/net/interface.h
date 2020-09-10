@@ -4,7 +4,7 @@
 #include <sys/types.h>
 
 #include <kernel/net/ip_address.h>
-#include <kernel/net/mac.h>
+#include <kernel/net/link_layer_address.h>
 #include <kernel/util/list.h>
 
 struct arp_packet;
@@ -18,7 +18,6 @@ struct network_interface_ops {
     int (*send)(struct network_interface *interface, struct link_layer_address dest, const struct network_data *data);
     int (*send_arp)(struct network_interface *interface, struct link_layer_address dest, struct network_data *data);
     int (*send_ip_v4)(struct network_interface *interface, struct destination_cache_entry *destination, struct network_data *data);
-    struct link_layer_address (*get_link_layer_address)(struct network_interface *interface);
     struct link_layer_address (*get_link_layer_broadcast_address)(struct network_interface *interface);
 };
 
@@ -41,6 +40,8 @@ struct network_interface {
     struct ip_v4_address mask;
     struct ip_v4_address default_gateway;
 
+    struct link_layer_address link_layer_address;
+
     struct network_configuration_context config_context;
 
     struct network_interface_ops *ops;
@@ -50,7 +51,8 @@ struct network_interface {
 
 struct list_node *net_get_interface_list(void);
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address);
-struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data);
+struct network_interface *net_create_network_interface(const char *name, int type, struct link_layer_address link_layer_address,
+                                                       struct network_interface_ops *ops, void *data);
 
 void net_recieve_network_data(struct network_interface *interface, struct network_data *data);
 

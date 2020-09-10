@@ -70,7 +70,8 @@ struct network_interface *net_get_interface_for_ip(struct ip_v4_address address)
     return interface;
 }
 
-struct network_interface *net_create_network_interface(const char *name, int type, struct network_interface_ops *ops, void *data) {
+struct network_interface *net_create_network_interface(const char *name, int type, struct link_layer_address link_layer_address,
+                                                       struct network_interface_ops *ops, void *data) {
     struct network_interface *interface = calloc(1, sizeof(struct network_interface));
     assert(interface);
 
@@ -86,6 +87,8 @@ struct network_interface *net_create_network_interface(const char *name, int typ
         interface->default_gateway = IP_V4_LOOPBACK;
         interface->config_context.state = INITIALIZED;
     }
+
+    interface->link_layer_address = link_layer_address;
 
     assert(ops);
     interface->ops = ops;

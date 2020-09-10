@@ -95,8 +95,8 @@ static int e1000_send(struct network_interface *self, struct link_layer_address 
 #endif /* KERNEL_E1000_DEBUG */
 
     net_init_ethernet_frame((void *) data->tx_virt_regions[data->current_tx]->start, net_link_layer_address_to_mac(dest),
-                            net_link_layer_address_to_mac(self->ops->get_link_layer_address(self)),
-                            net_network_data_to_ether_type(network_data->type), network_data->raw_packet, network_data->len);
+                            net_link_layer_address_to_mac(self->link_layer_address), net_network_data_to_ether_type(network_data->type),
+                            network_data->raw_packet, network_data->len);
 
     data->tx_descs[data->current_tx].length = sizeof(struct ethernet_frame) + network_data->len;
     data->tx_descs[data->current_tx].status = 0;
@@ -147,16 +147,16 @@ static void handle_interrupt(struct irq_context *context __attribute__((unused))
     }
 }
 
-static struct link_layer_address e1000_get_link_layer_address(struct network_interface *this) {
+static struct link_layer_address e1000_get_link_layer_address(struct e1000_data *data) {
     struct mac_address addr;
 
-    uint32_t val = read_eeprom(this->private_data, 0);
+    uint32_t val = read_eeprom(data, 0);
     addr.addr[0] = val & 0xFF;
     addr.addr[1] = val >> 8;
-    val = read_eeprom(this->private_data, 1);
+    val = read_eeprom(data, 1);
     addr.addr[2] = val & 0xFF;
     addr.addr[3] = val >> 8;
-    val = read_eeprom(this->private_data, 2);
+    val = read_eeprom(data, 2);
     addr.addr[4] = val & 0xFF;
     addr.addr[5] = val >> 8;
 
@@ -167,7 +167,6 @@ static struct network_interface_ops e1000_ops = {
     .send = e1000_send,
     .send_arp = net_interface_send_arp,
     .send_ip_v4 = net_interface_send_ip_v4,
-    .get_link_layer_address = e1000_get_link_layer_address,
     .get_link_layer_broadcast_address = net_ethernet_interface_get_link_layer_broadcast_address,
 };
 
@@ -206,5 +205,5 @@ void init_intel_e1000(struct pci_configuration *config) {
 
     register_irq_handler(&e1000_handler, config->interrupt_line + EXTERNAL_IRQ_OFFSET);
 
-    interface = net_create_network_interface("e1000", NETWORK_INTERFACE_ETHERNET, &e1000_ops, data);
+    interface = net_create_network_interface("e1000", NETWORK_INTERFACE_ETHERNET, e1000_get_link_layer_address(data), &e1000_ops, data);
 }

@@ -15,5 +15,5 @@ static int loop_send_ip_v4(struct network_interface *interface, struct destinati
 static struct network_interface_ops ops = { .send_ip_v4 = loop_send_ip_v4 };
 
 void init_loopback() {
-    net_create_network_interface("lo", NETWORK_INTERFACE_LOOPBACK, &ops, NULL);
+    net_create_network_interface("lo", NETWORK_INTERFACE_LOOPBACK, LINK_LAYER_ADDRESS_NONE, &ops, NULL);
 }

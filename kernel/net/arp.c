@@ -60,8 +60,8 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
     }
 
     struct link_layer_address broadcast_address = interface->ops->get_link_layer_broadcast_address(interface);
-    struct network_data *data = net_create_arp_packet(interface, ARP_OPERATION_REQUEST, interface->ops->get_link_layer_address(interface),
-                                                      interface->address, broadcast_address, ip_address);
+    struct network_data *data = net_create_arp_packet(interface, ARP_OPERATION_REQUEST, interface->link_layer_address, interface->address,
+                                                      broadcast_address, ip_address);
 
     debug_log("Sending ARP packet for: [ %u.%u.%u.%u ]\n", ip_address.addr[0], ip_address.addr[1], ip_address.addr[2], ip_address.addr[3]);
 

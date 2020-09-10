@@ -94,7 +94,7 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
 }
 
 void net_configure_interface_with_dhcp(struct network_interface *interface) {
-    struct link_layer_address our_address = interface->ops->get_link_layer_address(interface);
+    struct link_layer_address our_address = interface->link_layer_address;
     net_send_dhcp(interface, DHCP_MESSAGE_TYPE_DISCOVER, our_address, IP_V4_ZEROES, IP_V4_ZEROES);
 }
 
@@ -225,7 +225,7 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
         return;
     }
 
-    struct link_layer_address our_address = interface->ops->get_link_layer_address(interface);
+    struct link_layer_address our_address = interface->link_layer_address;
     struct link_layer_address chaddr = { .type = net_dhcp_hw_to_ll_type(packet->htype), .length = packet->hlen };
     memcpy(chaddr.addr, packet->chaddr, sizeof(packet->chaddr));
     if (!net_link_layer_address_equals(our_address, chaddr)) {
