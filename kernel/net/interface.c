@@ -71,8 +71,10 @@ struct network_interface *net_create_network_interface(const char *name, int typ
         interface->default_gateway = IP_V4_LOOPBACK;
         interface->config_context.state = INITIALIZED;
         interface->link_layer_overhead = 0;
+        interface->mtu = UINT16_MAX;
     } else if (type == NETWORK_INTERFACE_ETHERNET) {
         interface->link_layer_overhead = 1;
+        interface->mtu = 1500;
     }
 
     interface->link_layer_address = link_layer_address;

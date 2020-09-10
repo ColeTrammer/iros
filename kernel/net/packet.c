@@ -17,6 +17,10 @@ void net_packet_write_headers(void *buffer, struct packet *packet, uint32_t star
 }
 
 void net_free_packet(struct packet *packet) {
+    if (packet->flags & PKT_DONT_FREE) {
+        return;
+    }
+
     if (packet->socket) {
         net_drop_socket(packet->socket);
         packet->socket = NULL;

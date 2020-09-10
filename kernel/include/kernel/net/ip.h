@@ -36,6 +36,12 @@ struct ip_v4_packet {
     uint8_t reserved_flag : 1;
     uint8_t fragment_offset_low;
 #define IP_V4_FRAGMENT_OFFSET(packet) ((((packet)->fragment_offset_high << 8) + ((packet)->fragment_offset_low)) << 3)
+#define SET_IP_V4_FRAGMENT_OFFSET(packet, value)         \
+    ({                                                   \
+        uint16_t __offset = (value) >> 3;                \
+        (packet)->fragment_offset_low = __offset & 0xFF; \
+        (packet)->fragment_offset_high = __offset >> 8;  \
+    })
     uint8_t ttl;
     uint8_t protocol;
     uint16_t checksum;

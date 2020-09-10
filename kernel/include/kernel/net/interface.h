@@ -37,6 +37,7 @@ struct network_interface {
     int type;
 
     uint32_t link_layer_overhead;
+    uint16_t mtu;
 
     struct ip_v4_address address;
     struct ip_v4_address mask;

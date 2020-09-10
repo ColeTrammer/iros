@@ -212,7 +212,12 @@ void handle_fragment(struct network_interface *interface, const struct ip_v4_pac
 #ifdef IP_V4_FRAGMENT_DEBUG
         debug_log("Successfully reassembled packet: [ %p ]\n", desc);
 #endif /* IP_V4_FRAGMENT_DEBUG */
-        struct packet fake_packet = { .interface = interface, .header_count = 1, .total_length = htons(reassembled_packet->length) };
+        struct packet fake_packet = {
+            .interface = interface,
+            .flags = PKT_DONT_FREE,
+            .header_count = 1,
+            .total_length = htons(reassembled_packet->length),
+        };
         net_init_packet_header(&fake_packet, 0, PH_IP_V4, reassembled_packet, fake_packet.total_length);
 
         net_ip_v4_recieve(&fake_packet);
@@ -246,13 +251,91 @@ enum packet_header_type net_inet_protocol_to_packet_header_type(uint8_t protocol
     }
 }
 
+static int net_interface_send_ip_v4_fragmented(struct network_interface *self, struct link_layer_address ll_dest,
+                                               struct packet *net_packet) {
+    int ret = 0;
+    struct packet packet = *net_packet;
+    packet.flags |= PKT_DONT_FREE;
+
+    struct packet_header *outer_header = net_packet_outer_header(&packet);
+
+    struct ip_v4_packet ip_packet;
+    net_init_ip_v4_packet(&ip_packet, packet.destination->next_packet_id++, net_packet_header_to_ip_v4_type(outer_header->type),
+                          self->address, packet.destination->destination_path.dest_ip_address, NULL, packet.total_length);
+    net_init_packet_header(&packet, net_packet_header_index(&packet, outer_header) - 1, PH_IP_V4, &ip_packet, sizeof(struct ip_v4_packet));
+
+    uint16_t total_length = packet.total_length - sizeof(struct ip_v4_packet);
+    uint16_t offset = 0;
+    uint16_t data_mtu = self->mtu - sizeof(struct ip_v4_packet);
+    uint16_t header_index = net_packet_header_index(&packet, outer_header);
+    for (;;) {
+        uint16_t old_header_count = packet.header_count;
+        uint16_t old_header_index = header_index;
+        uint16_t old_header_length = 0;
+        uint16_t data_advanced = 0;
+
+        // Figure out the last header that will be part of the message.
+        for (; header_index < packet.header_count; header_index++) {
+            struct packet_header *header = &packet.headers[header_index];
+            if (data_advanced + header->length > data_mtu) {
+                // This header needs to be fragmented. Adjust its length so that it will be partially sent,
+                // and modify the packet so that any later headers won't be sent.
+                old_header_length = header->length;
+                header->length = data_mtu - data_advanced;
+                packet.header_count = header_index + 1;
+                data_advanced = data_mtu;
+                break;
+            }
+            data_advanced += header->length;
+        }
+
+        // Adjust the ip header to match the fragment.
+        ip_packet.more_fragments = data_advanced + offset < total_length;
+        ip_packet.length = htons(sizeof(struct ip_v4_packet) + data_advanced);
+        SET_IP_V4_FRAGMENT_OFFSET(&ip_packet, offset);
+        ip_packet.checksum = 0;
+        ip_packet.checksum = htons(in_compute_checksum(&ip_packet, sizeof(struct ip_v4_packet)));
+
+        struct packet copy = packet;
+        if ((ret = self->ops->send(self, ll_dest, &copy))) {
+            break;
+        }
+
+        offset += data_advanced;
+        if (offset >= total_length) {
+            break;
+        }
+
+        // Slice the fragmented header so that its raw data is advanced by the amount sent, and
+        // its length is appropriately updated.
+        struct packet_header *header_to_fragment = &packet.headers[header_index];
+        header_to_fragment->raw_header += header_to_fragment->length;
+        header_to_fragment->length = old_header_length - header_to_fragment->length;
+
+        // Remove any header's that were completely sent in the last fragment.
+        if (old_header_index != header_index) {
+            memmove(&packet.headers[old_header_index], &packet.headers[header_index],
+                    (old_header_count - header_index + 1) * sizeof(struct packet_header));
+            packet.header_count = old_header_count - (header_index - old_header_index);
+            header_index = old_header_index;
+        }
+    }
+
+    net_free_packet(net_packet);
+    return ret;
+}
+
 int net_interface_send_ip_v4(struct network_interface *self, struct link_layer_address ll_dest, struct packet *packet) {
+    if (sizeof(struct ip_v4_packet) + packet->total_length > self->mtu) {
+        return net_interface_send_ip_v4_fragmented(self, ll_dest, packet);
+    }
+
     struct destination_cache_entry *destination = packet->destination;
     struct packet_header *outer_header = net_packet_outer_header(packet);
 
     struct ip_v4_packet ip_packet;
-    net_init_ip_v4_packet(&ip_packet, destination->next_packet_id++, net_packet_header_to_ip_v4_type(outer_header->type),
-                          packet->interface->address, destination->destination_path.dest_ip_address, NULL, packet->total_length);
+    net_init_ip_v4_packet(&ip_packet, destination->next_packet_id++, net_packet_header_to_ip_v4_type(outer_header->type), self->address,
+                          destination->destination_path.dest_ip_address, NULL, packet->total_length);
     net_init_packet_header(packet, net_packet_header_index(packet, outer_header) - 1, PH_IP_V4, &ip_packet, sizeof(struct ip_v4_packet));
 
     return self->ops->send(self, ll_dest, packet);
