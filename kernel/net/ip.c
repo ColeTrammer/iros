@@ -90,7 +90,7 @@ static void free_ip_v4_fragment_desc(struct ip_v4_fragment_desc *desc) {
 }
 
 static void remove_ip_v4_fragment_desc(struct ip_v4_fragment_desc *desc) {
-    hash_del(fragment_store, &desc->hash);
+    hash_del(fragment_store, &desc->id);
     free_ip_v4_fragment_desc(desc);
 }
 
