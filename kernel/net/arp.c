@@ -85,7 +85,7 @@ void net_arp_recieve(struct packet *packet) {
     struct ip_v4_address ip_sender = net_arp_sender_proto_addr(arp_packet);
     struct link_layer_address hw_sender = net_arp_sender_hw_addr(arp_packet);
 
-    struct neighbor_cache_entry *neighbor = net_lookup_neighbor(ip_sender);
+    struct neighbor_cache_entry *neighbor = net_lookup_neighbor(packet->interface, ip_sender);
     net_update_neighbor(neighbor, hw_sender);
     net_drop_neighbor_cache_entry(neighbor);
 }

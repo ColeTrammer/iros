@@ -54,10 +54,10 @@ void net_drop_destination_cache_entry(struct destination_cache_entry *entry) {
 
 static struct neighbor_cache_entry *next_hop_for(struct network_interface *interface, struct ip_v4_address dest_address) {
     if (net_ip_v4_equals(net_ip_v4_mask(interface->address, interface->mask), net_ip_v4_mask(dest_address, interface->mask))) {
-        return net_lookup_neighbor(dest_address);
+        return net_lookup_neighbor(interface, dest_address);
     }
 
-    return net_lookup_neighbor(interface->default_gateway);
+    return net_lookup_neighbor(interface, interface->default_gateway);
 }
 
 struct destination_cache_entry *net_lookup_destination(struct network_interface *interface, struct ip_v4_address dest_address) {
@@ -83,8 +83,8 @@ struct destination_cache_entry *net_lookup_destination(struct network_interface 
               entry->destination_path.local_ip_address.addr[2], entry->destination_path.local_ip_address.addr[3],
               entry->destination_path.dest_ip_address.addr[0], entry->destination_path.dest_ip_address.addr[1],
               entry->destination_path.dest_ip_address.addr[2], entry->destination_path.dest_ip_address.addr[3],
-              entry->next_hop->ip_v4_address.addr[0], entry->next_hop->ip_v4_address.addr[1], entry->next_hop->ip_v4_address.addr[2],
-              entry->next_hop->ip_v4_address.addr[3]);
+              entry->next_hop->key.ip_v4_address.addr[0], entry->next_hop->key.ip_v4_address.addr[1],
+              entry->next_hop->key.ip_v4_address.addr[2], entry->next_hop->key.ip_v4_address.addr[3]);
 #endif /* DESTINATION_CACHE_DEBUG */
     return net_bump_destination_cache_entry(entry);
 }
@@ -96,8 +96,8 @@ void __net_remove_destination(struct destination_cache_entry *entry) {
               entry->destination_path.local_ip_address.addr[2], entry->destination_path.local_ip_address.addr[3],
               entry->destination_path.dest_ip_address.addr[0], entry->destination_path.dest_ip_address.addr[1],
               entry->destination_path.dest_ip_address.addr[2], entry->destination_path.dest_ip_address.addr[3],
-              entry->next_hop->ip_v4_address.addr[0], entry->next_hop->ip_v4_address.addr[1], entry->next_hop->ip_v4_address.addr[2],
-              entry->next_hop->ip_v4_address.addr[3]);
+              entry->next_hop->key.ip_v4_address.addr[0], entry->next_hop->key.ip_v4_address.addr[1],
+              entry->next_hop->key.ip_v4_address.addr[2], entry->next_hop->key.ip_v4_address.addr[3]);
 #endif /* DESTINATION_CACHE_DEBUG */
     __hash_del(destination_cache, &entry->destination_path);
     net_drop_destination_cache_entry(entry);

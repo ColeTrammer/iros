@@ -8,7 +8,6 @@
 #include <kernel/net/arp.h>
 #include <kernel/net/destination_cache.h>
 #include <kernel/net/interface.h>
-#include <kernel/net/mac.h>
 #include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
 #include <kernel/net/packet.h>
@@ -19,31 +18,33 @@
 
 static struct hash_map *neighbor_cache;
 
-static unsigned int neighbor_cache_entry_hash(void *_ip_address, int num_buckets) {
-    struct ip_v4_address *ip_address = _ip_address;
-    return (ip_address->addr[0] + ip_address->addr[1] + ip_address->addr[2] + ip_address->addr[3]) % num_buckets;
+static unsigned int neighbor_cache_entry_hash(void *_key, int num_buckets) {
+    struct neighbor_cache_key *key = _key;
+    return (key->ip_v4_address.addr[0] + key->ip_v4_address.addr[1] + key->ip_v4_address.addr[2] + key->ip_v4_address.addr[3] +
+            ((uintptr_t) key->interface >> 32) + ((uintptr_t) key->interface & 0xFFFFFFFF)) %
+           num_buckets;
 }
 
 static int neighbor_cache_entry_equals(void *i1, void *i2) {
-    return memcmp(i1, i2, sizeof(struct ip_v4_address)) == 0;
+    struct neighbor_cache_key *a = i1;
+    struct neighbor_cache_key *b = i2;
+    return a->interface == b->interface && net_ip_v4_equals(a->ip_v4_address, b->ip_v4_address);
 }
 
 static void *neighbor_cache_entry_key(struct hash_entry *m) {
-    return &hash_table_entry(m, struct neighbor_cache_entry)->ip_v4_address;
+    return &hash_table_entry(m, struct neighbor_cache_entry)->key;
 }
 
-static struct neighbor_cache_entry *create_neighbor_cache_entry(struct ip_v4_address address) {
+static struct neighbor_cache_entry *create_neighbor_cache_entry(struct neighbor_cache_key key) {
     struct neighbor_cache_entry *neighbor = malloc(sizeof(struct neighbor_cache_entry));
     init_list(&neighbor->queued_packets);
     neighbor->update_timer = NULL;
     neighbor->ref_count = 1;
     init_spinlock(&neighbor->lock);
-    neighbor->ip_v4_address = address;
-    if (net_ip_v4_equals(address, IP_V4_BROADCAST)) {
-        // FIXME: make the neighbor cache a per interface thing, and then the broadcast
-        //        address can be fetched from the interface.
+    neighbor->key = key;
+    if (net_ip_v4_equals(key.ip_v4_address, IP_V4_BROADCAST)) {
         neighbor->state = NS_REACHABLE;
-        neighbor->link_layer_address = net_mac_to_link_layer_address(MAC_BROADCAST);
+        neighbor->link_layer_address = key.interface->ops->get_link_layer_broadcast_address(key.interface);
     } else {
         neighbor->state = NS_INCOMPLETE;
         neighbor->link_layer_address = LINK_LAYER_ADDRESS_NONE;
@@ -110,7 +111,7 @@ int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct 
         // a timeout.
         struct timespec delay = { .tv_sec = 0, .tv_nsec = 500000000 };
         neighbor->update_timer = time_register_kernel_callback(&delay, neighbor_lookup_failed, neighbor);
-        net_send_arp_request(packet->interface, neighbor->ip_v4_address);
+        net_send_arp_request(packet->interface, neighbor->key.ip_v4_address);
     }
 
     // Queue the packet for later processing. This should probably enforce a limit on the number of packets queued.
@@ -121,10 +122,11 @@ done:
     return ret;
 }
 
-struct neighbor_cache_entry *net_lookup_neighbor(struct ip_v4_address address) {
-    struct neighbor_cache_entry *neighbor = hash_get_entry(neighbor_cache, &address, struct neighbor_cache_entry);
+struct neighbor_cache_entry *net_lookup_neighbor(struct network_interface *interface, struct ip_v4_address address) {
+    struct neighbor_cache_key key = { .interface = interface, .ip_v4_address = address };
+    struct neighbor_cache_entry *neighbor = hash_get_entry(neighbor_cache, &key, struct neighbor_cache_entry);
     if (!neighbor) {
-        neighbor = create_neighbor_cache_entry(address);
+        neighbor = create_neighbor_cache_entry(key);
         hash_put(neighbor_cache, &neighbor->hash);
     }
     return net_bump_neighbor_cache_entry(neighbor);
@@ -141,10 +143,11 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
     neighbor->link_layer_address = confirmed_address;
 
 #ifdef NEIGHBOR_CACHE_DEBUG
-    debug_log("Confirmed link layer address of neighbor: [ %d.%d.%d.%d, %02x:%02x:%02x:%02x:%02x:%02x ]\n", neighbor->ip_v4_address.addr[0],
-              neighbor->ip_v4_address.addr[1], neighbor->ip_v4_address.addr[2], neighbor->ip_v4_address.addr[3],
-              neighbor->link_layer_address.addr[0], neighbor->link_layer_address.addr[1], neighbor->link_layer_address.addr[2],
-              neighbor->link_layer_address.addr[3], neighbor->link_layer_address.addr[4], neighbor->link_layer_address.addr[5]);
+    debug_log("Confirmed link layer address of neighbor: [ %d.%d.%d.%d, %02x:%02x:%02x:%02x:%02x:%02x ]\n",
+              neighbor->key.ip_v4_address.addr[0], neighbor->key.ip_v4_address.addr[1], neighbor->key.ip_v4_address.addr[2],
+              neighbor->key.ip_v4_address.addr[3], neighbor->link_layer_address.addr[0], neighbor->link_layer_address.addr[1],
+              neighbor->link_layer_address.addr[2], neighbor->link_layer_address.addr[3], neighbor->link_layer_address.addr[4],
+              neighbor->link_layer_address.addr[5]);
 #endif /* NEIGHBOR_CACHE_DEBUG */
 
     list_for_each_entry_safe(&neighbor->queued_packets, packet, struct packet, queue) {
@@ -169,11 +172,11 @@ static void remove_stale_destinations(struct hash_entry *hash, void *neighbor) {
 
 void net_remove_neighbor(struct neighbor_cache_entry *neighbor) {
 #ifdef NEIGHBOR_CACHE_DEBUG
-    debug_log("Removing neighbor cache entry: [ %d.%d.%d.%d ]\n", neighbor->ip_v4_address.addr[0], neighbor->ip_v4_address.addr[1],
-              neighbor->ip_v4_address.addr[2], neighbor->ip_v4_address.addr[3]);
+    debug_log("Removing neighbor cache entry: [ %d.%d.%d.%d ]\n", neighbor->key.ip_v4_address.addr[0], neighbor->key.ip_v4_address.addr[1],
+              neighbor->key.ip_v4_address.addr[2], neighbor->key.ip_v4_address.addr[3]);
 #endif /* NEIGHBOR_CACHE_DEBUG */
 
-    hash_del(neighbor_cache, &neighbor->ip_v4_address);
+    hash_del(neighbor_cache, &neighbor->key);
     net_drop_neighbor_cache_entry(neighbor);
     hash_for_each(net_destination_cache(), remove_stale_destinations, neighbor);
 }

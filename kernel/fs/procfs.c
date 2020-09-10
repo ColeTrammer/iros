@@ -530,11 +530,12 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_kheap(struct procfs_d
 static void arp_for_each(struct hash_entry *_neighbor, void *_buf) {
     struct neighbor_cache_entry *neighbor = hash_table_entry(_neighbor, struct neighbor_cache_entry);
     struct procfs_buffer *buf = _buf;
-    buf->size += snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0,
-                          "%u.%u.%u.%u => %02x:%02x:%02x:%02x:%02x:%02x\n", neighbor->ip_v4_address.addr[0],
-                          neighbor->ip_v4_address.addr[1], neighbor->ip_v4_address.addr[2], neighbor->ip_v4_address.addr[3],
-                          neighbor->link_layer_address.addr[0], neighbor->link_layer_address.addr[1], neighbor->link_layer_address.addr[2],
-                          neighbor->link_layer_address.addr[3], neighbor->link_layer_address.addr[4], neighbor->link_layer_address.addr[5]);
+    buf->size +=
+        snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0, "[%s]: %u.%u.%u.%u => %02x:%02x:%02x:%02x:%02x:%02x\n",
+                 neighbor->key.interface->name, neighbor->key.ip_v4_address.addr[0], neighbor->key.ip_v4_address.addr[1],
+                 neighbor->key.ip_v4_address.addr[2], neighbor->key.ip_v4_address.addr[3], neighbor->link_layer_address.addr[0],
+                 neighbor->link_layer_address.addr[1], neighbor->link_layer_address.addr[2], neighbor->link_layer_address.addr[3],
+                 neighbor->link_layer_address.addr[4], neighbor->link_layer_address.addr[5]);
 }
 
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_arp(struct procfs_data *data __attribute__((unused)),
