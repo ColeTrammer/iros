@@ -123,7 +123,7 @@ static struct hash_entry *create_fragment_desc(void *_id) {
     return &desc->hash;
 }
 
-void handle_fragment(const struct ip_v4_packet *packet) {
+void handle_fragment(struct network_interface *interface, const struct ip_v4_packet *packet) {
     struct ip_v4_fragment_id fragment_id = {
         .source = packet->source,
         .dest = packet->destination,
@@ -212,7 +212,10 @@ void handle_fragment(const struct ip_v4_packet *packet) {
 #ifdef IP_V4_FRAGMENT_DEBUG
         debug_log("Successfully reassembled packet: [ %p ]\n", desc);
 #endif /* IP_V4_FRAGMENT_DEBUG */
-        // net_ip_v4_recieve(reassembled_packet, htons(reassembled_packet->length));
+        struct packet fake_packet = { .interface = interface, .header_count = 1, .total_length = htons(reassembled_packet->length) };
+        net_init_packet_header(&fake_packet, 0, PH_IP_V4, reassembled_packet, fake_packet.total_length);
+
+        net_ip_v4_recieve(&fake_packet);
         remove_ip_v4_fragment_desc(desc);
     }
 }
@@ -298,7 +301,7 @@ void net_ip_v4_recieve(struct packet *packet) {
 #endif /* IP_V4_DEBUG */
 
     if (ip_packet->more_fragments || IP_V4_FRAGMENT_OFFSET(ip_packet) > 0) {
-        // handle_fragment(ip_packet);
+        handle_fragment(packet->interface, ip_packet);
         return;
     }
 
