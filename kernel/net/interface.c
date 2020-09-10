@@ -22,12 +22,6 @@ static void add_interface(struct network_interface *interface) {
     list_append(&interface_list, &interface->interface_list);
 }
 
-int net_interface_send_arp(struct network_interface *self, struct link_layer_address dest, struct packet *packet) {
-    int ret = self->ops->send(self, dest, packet);
-    net_free_packet(packet);
-    return ret;
-}
-
 int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct packet *packet) {
     struct packet_header *outer_header = net_packet_outer_header(packet);
 
@@ -42,9 +36,7 @@ int net_interface_send_ip_v4(struct network_interface *self, struct destination_
 
     if (!destination) {
         struct link_layer_address dest = self->ops->get_link_layer_broadcast_address(self);
-        int ret = self->ops->send(self, dest, packet);
-        net_free_packet(packet);
-        return ret;
+        return self->ops->send(self, dest, packet);
     }
 
     return net_queue_packet_for_neighbor(destination->next_hop, packet);

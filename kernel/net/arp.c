@@ -66,7 +66,7 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
 
     debug_log("Sending ARP packet for: [ %u.%u.%u.%u ]\n", ip_address.addr[0], ip_address.addr[1], ip_address.addr[2], ip_address.addr[3]);
 
-    interface->ops->send_arp(interface, broadcast_address, packet);
+    interface->ops->send(interface, broadcast_address, packet);
 }
 
 void net_arp_recieve(struct packet *packet) {

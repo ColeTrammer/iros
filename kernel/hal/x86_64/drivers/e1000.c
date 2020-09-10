@@ -117,6 +117,7 @@ static int e1000_send(struct network_interface *self, struct link_layer_address 
     while (!data->tx_descs[save_current_tx].status)
         ;
 
+    net_free_packet(packet);
     return 0;
 }
 
@@ -172,7 +173,6 @@ static struct link_layer_address e1000_get_link_layer_address(struct e1000_data 
 
 static struct network_interface_ops e1000_ops = {
     .send = e1000_send,
-    .send_arp = net_interface_send_arp,
     .send_ip_v4 = net_interface_send_ip_v4,
     .get_link_layer_broadcast_address = net_ethernet_interface_get_link_layer_broadcast_address,
 };

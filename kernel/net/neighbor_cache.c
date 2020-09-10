@@ -94,7 +94,6 @@ int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct 
         // In this case, no link layer address lookup needs to be performed, and as such, the data
         // can be sent right away.
         ret = packet->interface->ops->send(packet->interface, neighbor->link_layer_address, packet);
-        net_free_packet(packet);
         goto done;
     }
 
@@ -141,12 +140,13 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
 #endif /* NEIGHBOR_CACHE_DEBUG */
 
     list_for_each_entry_safe(&neighbor->queued_packets, packet, struct packet, queue) {
-        int ret = packet->interface->ops->send(packet->interface, neighbor->link_layer_address, packet);
-        if (!!ret && !!packet->socket) {
-            net_socket_set_error(packet->socket, ret);
-        }
         list_remove(&packet->queue);
-        net_free_packet(packet);
+
+        struct socket *socket = packet->socket;
+        int ret = packet->interface->ops->send(packet->interface, neighbor->link_layer_address, packet);
+        if (!!ret && !!socket) {
+            net_socket_set_error(socket, ret);
+        }
     }
 
     spin_unlock(&neighbor->lock);

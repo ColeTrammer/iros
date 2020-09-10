@@ -16,7 +16,6 @@ struct packet;
 
 struct network_interface_ops {
     int (*send)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
-    int (*send_arp)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
     int (*send_ip_v4)(struct network_interface *interface, struct destination_cache_entry *destination, struct packet *packet);
     struct link_layer_address (*get_link_layer_broadcast_address)(struct network_interface *interface);
 };
@@ -58,7 +57,6 @@ struct network_interface *net_create_network_interface(const char *name, int typ
 
 void net_recieve_packet(struct network_interface *interface, struct packet *packet);
 
-int net_interface_send_arp(struct network_interface *self, struct link_layer_address dest, struct packet *packet);
 int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct packet *packet);
 
 int net_ioctl_interface_index_for_name(struct ifreq *req);
