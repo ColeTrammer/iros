@@ -38,13 +38,15 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
     size_t dhcp_length = udp_length - sizeof(struct udp_packet);
 
     struct packet *packet = net_create_packet(interface, NULL, NULL, udp_length);
-    packet->header_count = 4;
+    packet->header_count = interface->link_layer_overhead + 3;
 
-    struct packet_header *udp_header = net_init_packet_header(packet, 2, PH_UDP, packet->inline_data, sizeof(struct udp_packet));
+    struct packet_header *udp_header =
+        net_init_packet_header(packet, interface->link_layer_overhead + 1, PH_UDP, packet->inline_data, sizeof(struct udp_packet));
     struct udp_packet *udp_packet = udp_header->raw_header;
     net_init_udp_packet(udp_packet, DHCP_CLIENT_PORT, DHCP_SERVER_PORT, dhcp_length, NULL);
 
-    struct packet_header *dhcp_header = net_init_packet_header(packet, 3, PH_RAW_DATA, udp_packet->payload, dhcp_length);
+    struct packet_header *dhcp_header =
+        net_init_packet_header(packet, interface->link_layer_overhead + 2, PH_RAW_DATA, udp_packet->payload, dhcp_length);
     struct dhcp_packet *data = dhcp_header->raw_header;
     data->op = DHCP_OP_REQUEST;
     data->htype = net_ll_to_dhcp_hw_type(our_address.type);

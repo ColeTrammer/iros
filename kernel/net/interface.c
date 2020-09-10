@@ -98,6 +98,9 @@ struct network_interface *net_create_network_interface(const char *name, int typ
         interface->mask = IP_V4_BROADCAST;
         interface->default_gateway = IP_V4_LOOPBACK;
         interface->config_context.state = INITIALIZED;
+        interface->link_layer_overhead = 0;
+    } else if (type == NETWORK_INTERFACE_ETHERNET) {
+        interface->link_layer_overhead = 1;
     }
 
     interface->link_layer_address = link_layer_address;

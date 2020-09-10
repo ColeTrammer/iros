@@ -94,9 +94,9 @@ struct packet *net_create_arp_packet(struct network_interface *interface, uint16
                                      struct ip_v4_address s_ip, struct link_layer_address t_addr, struct ip_v4_address t_ip) {
     size_t arp_length = sizeof(struct arp_packet) + 2 * sizeof(struct ip_v4_address) + 2 * s_addr.length;
     struct packet *packet = net_create_packet(interface, NULL, NULL, arp_length);
-    packet->header_count = 2;
+    packet->header_count = interface->link_layer_overhead + 1;
 
-    struct packet_header *header = net_init_packet_header(packet, 1, PH_ARP, packet->inline_data, arp_length);
+    struct packet_header *header = net_init_packet_header(packet, interface->link_layer_overhead, PH_ARP, packet->inline_data, arp_length);
     net_init_arp_packet(header->raw_header, op, s_addr, s_ip, t_addr, t_ip);
     return packet;
 }

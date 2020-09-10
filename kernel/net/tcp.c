@@ -89,9 +89,10 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
     size_t tcp_length = sizeof(struct tcp_packet) + opts->tcp_flags.syn * sizeof(struct tcp_option_mss) + opts->data_length;
 
     struct packet *packet = net_create_packet(interface, opts->socket, destination, tcp_length);
-    packet->header_count = 3;
+    packet->header_count = interface->link_layer_overhead + 2;
 
-    struct packet_header *tcp_header = net_init_packet_header(packet, 2, PH_TCP, packet->inline_data, tcp_length);
+    struct packet_header *tcp_header =
+        net_init_packet_header(packet, interface->link_layer_overhead + 1, PH_TCP, packet->inline_data, tcp_length);
     struct tcp_packet *tcp_packet = tcp_header->raw_header;
     net_init_tcp_packet(tcp_packet, opts);
 

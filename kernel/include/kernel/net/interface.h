@@ -36,6 +36,8 @@ struct network_interface {
 #define NETWORK_INTERFACE_LOOPBACK 2
     int type;
 
+    uint32_t link_layer_overhead;
+
     struct ip_v4_address address;
     struct ip_v4_address mask;
     struct ip_v4_address default_gateway;

@@ -255,10 +255,10 @@ int net_send_ip_v4(struct socket *socket, struct network_interface *interface, u
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
 
     struct packet *packet = net_create_packet(interface, socket, destination, len);
-    packet->header_count = 3;
+    packet->header_count = interface->link_layer_overhead + 2;
 
-    struct packet_header *raw_data =
-        net_init_packet_header(packet, 2, net_inet_protocol_to_packet_header_type(protocol), packet->inline_data, len);
+    struct packet_header *raw_data = net_init_packet_header(packet, interface->link_layer_overhead + 1,
+                                                            net_inet_protocol_to_packet_header_type(protocol), packet->inline_data, len);
     memcpy(raw_data->raw_header, buf, len);
 
     int ret = interface->ops->send_ip_v4(interface, destination, packet);
