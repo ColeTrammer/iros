@@ -68,7 +68,7 @@ static ssize_t net_udp_sendto(struct socket *socket, const void *buf, size_t len
 
 done:
     mutex_unlock(&socket->lock);
-    return ret;
+    return ret ? ret : (ssize_t) len;
 }
 
 void init_udp_sockets(void) {
