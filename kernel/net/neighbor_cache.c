@@ -10,6 +10,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 #include <kernel/net/socket.h>
 #include <kernel/time/timer.h>
 
@@ -65,12 +66,12 @@ static void neighbor_lookup_failed(struct timer *timer __attribute__((unused)), 
     time_cancel_kernel_callback(neighbor->update_timer);
     neighbor->update_timer = NULL;
 
-    list_for_each_entry_safe(&neighbor->queued_packets, data, struct network_data, list) {
-        if (data->socket) {
-            net_socket_set_error(data->socket, -EHOSTUNREACH);
+    list_for_each_entry_safe(&neighbor->queued_packets, packet, struct packet, queue) {
+        if (packet->socket) {
+            net_socket_set_error(packet->socket, -EHOSTUNREACH);
         }
-        list_remove(&data->list);
-        net_free_network_data(data);
+        list_remove(&packet->queue);
+        net_free_packet(packet);
     }
     neighbor->state = NS_UNREACHABLE;
     spin_unlock(&neighbor->lock);
@@ -78,22 +79,22 @@ static void neighbor_lookup_failed(struct timer *timer __attribute__((unused)), 
     net_remove_neighbor(neighbor);
 }
 
-int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct network_data *data) {
+int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct packet *packet) {
     int ret = 0;
     spin_lock(&neighbor->lock);
     if (neighbor->state == NS_UNREACHABLE) {
         // This host has proven to be unreachable. No new connections will use this neighbor cache entry, but old
         // ones might still be holding on it, and should be terminated.
         ret = -EHOSTUNREACH;
-        net_free_network_data(data);
+        net_free_packet(packet);
         goto done;
     }
 
     if (neighbor->state != NS_INCOMPLETE) {
         // In this case, no link layer address lookup needs to be performed, and as such, the data
         // can be sent right away.
-        ret = data->interface->ops->send(data->interface, neighbor->link_layer_address, data);
-        net_free_network_data(data);
+        ret = packet->interface->ops->send(packet->interface, neighbor->link_layer_address, packet);
+        net_free_packet(packet);
         goto done;
     }
 
@@ -102,11 +103,11 @@ int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct 
         // a timeout.
         struct timespec delay = { .tv_sec = 0, .tv_nsec = 500000000 };
         neighbor->update_timer = time_register_kernel_callback(&delay, neighbor_lookup_failed, neighbor);
-        net_send_arp_request(data->interface, neighbor->ip_v4_address);
+        net_send_arp_request(packet->interface, neighbor->ip_v4_address);
     }
 
     // Queue the packet for later processing. This should probably enforce a limit on the number of packets queued.
-    list_append(&neighbor->queued_packets, &data->list);
+    list_append(&neighbor->queued_packets, &packet->queue);
 
 done:
     spin_unlock(&neighbor->lock);
@@ -139,13 +140,13 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
               neighbor->link_layer_address.addr[3], neighbor->link_layer_address.addr[4], neighbor->link_layer_address.addr[5]);
 #endif /* NEIGHBOR_CACHE_DEBUG */
 
-    list_for_each_entry_safe(&neighbor->queued_packets, data, struct network_data, list) {
-        int ret = data->interface->ops->send(data->interface, neighbor->link_layer_address, data);
-        if (!!ret && !!data->socket) {
-            net_socket_set_error(data->socket, ret);
+    list_for_each_entry_safe(&neighbor->queued_packets, packet, struct packet, queue) {
+        int ret = packet->interface->ops->send(packet->interface, neighbor->link_layer_address, packet);
+        if (!!ret && !!packet->socket) {
+            net_socket_set_error(packet->socket, ret);
         }
-        list_remove(&data->list);
-        net_free_network_data(data);
+        list_remove(&packet->queue);
+        net_free_packet(packet);
     }
 
     spin_unlock(&neighbor->lock);

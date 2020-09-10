@@ -15,6 +15,7 @@
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 
 static struct network_interface *interface = NULL;
 
@@ -86,19 +87,25 @@ static uint32_t read_eeprom(struct e1000_data *data, uint8_t addr) {
     return (uint16_t)((val >> 16) & 0xFFFF);
 }
 
-static int e1000_send(struct network_interface *self, struct link_layer_address dest, const struct network_data *network_data) {
+static int e1000_send(struct network_interface *self, struct link_layer_address dest, struct packet *packet) {
     struct e1000_data *data = self->private_data;
-    assert(sizeof(struct ethernet_frame) + network_data->len < 8192);
+    assert(sizeof(struct ethernet_frame) + packet->total_length < 8192);
+    assert(packet->header_count >= 2);
 
 #ifdef KERNEL_E1000_DEBUG
     debug_log("Sending over: %d\n", data->current_tx);
 #endif /* KERNEL_E1000_DEBUG */
 
-    net_init_ethernet_frame((void *) data->tx_virt_regions[data->current_tx]->start, net_link_layer_address_to_mac(dest),
-                            net_link_layer_address_to_mac(self->link_layer_address), net_network_data_to_ether_type(network_data->type),
-                            network_data->raw_packet, network_data->len);
+    void *send_buffer = (void *) data->tx_virt_regions[data->current_tx]->start;
 
-    data->tx_descs[data->current_tx].length = sizeof(struct ethernet_frame) + network_data->len;
+    struct packet_header *layer2_header = net_packet_outer_header(packet);
+    struct packet_header *ethernet_header = net_init_packet_header(packet, 0, PH_ETHERNET, send_buffer, sizeof(struct ethernet_frame));
+    net_init_ethernet_frame(ethernet_header->raw_header, net_link_layer_address_to_mac(dest),
+                            net_link_layer_address_to_mac(self->link_layer_address), net_packet_header_to_ether_type(layer2_header->type));
+
+    net_packet_write_headers(send_buffer, packet, 1);
+
+    data->tx_descs[data->current_tx].length = packet->total_length;
     data->tx_descs[data->current_tx].status = 0;
     data->tx_descs[data->current_tx].cmd = E1000_CMD_EOP | E1000_CMD_IFCS | E1000_CMD_RS;
 

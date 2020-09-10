@@ -15,6 +15,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
@@ -121,7 +122,7 @@ static struct hash_entry *create_fragment_desc(void *_id) {
     return &desc->hash;
 }
 
-static void handle_fragment(const struct ip_v4_packet *packet) {
+void handle_fragment(const struct ip_v4_packet *packet) {
     struct ip_v4_fragment_id fragment_id = {
         .source = packet->source,
         .dest = packet->destination,
@@ -210,8 +211,34 @@ static void handle_fragment(const struct ip_v4_packet *packet) {
 #ifdef IP_V4_FRAGMENT_DEBUG
         debug_log("Successfully reassembled packet: [ %p ]\n", desc);
 #endif /* IP_V4_FRAGMENT_DEBUG */
-        net_ip_v4_recieve(reassembled_packet, htons(reassembled_packet->length));
+        // net_ip_v4_recieve(reassembled_packet, htons(reassembled_packet->length));
         remove_ip_v4_fragment_desc(desc);
+    }
+}
+
+uint8_t net_packet_header_to_ip_v4_type(enum packet_header_type type) {
+    switch (type) {
+        case PH_ICMP:
+            return IP_V4_PROTOCOL_ICMP;
+        case PH_UDP:
+            return IP_V4_PROTOCOL_UDP;
+        case PH_TCP:
+            return IP_V4_PROTOCOL_TCP;
+        default:
+            return 0;
+    }
+}
+
+enum packet_header_type net_inet_protocol_to_packet_header_type(uint8_t protocol) {
+    switch (protocol) {
+        case IPPROTO_ICMP:
+            return PH_ICMP;
+        case IPPROTO_UDP:
+            return PH_UDP;
+        case IPPROTO_TCP:
+            return PH_TCP;
+        default:
+            return PH_RAW_DATA;
     }
 }
 
@@ -227,40 +254,52 @@ int net_send_ip_v4(struct socket *socket, struct network_interface *interface, u
     struct ip_v4_address d = dest;
     debug_log("Sending raw IPV4 to: [ %u.%u.%u.%u ]\n", d.addr[0], d.addr[1], d.addr[2], d.addr[3]);
 
-    struct network_data *ip_packet =
-        net_create_ip_v4_packet(interface, socket, destination->next_packet_id++, protocol, interface->address, dest, buf, len);
-    int ret = interface->ops->send_ip_v4(interface, destination, ip_packet);
+    struct packet *packet = net_create_packet(interface, socket, destination, len);
+    packet->header_count = 3;
+
+    struct packet_header *raw_data =
+        net_init_packet_header(packet, 2, net_inet_protocol_to_packet_header_type(protocol), packet->inline_data, len);
+    memcpy(raw_data->raw_header, buf, len);
+
+    int ret = interface->ops->send_ip_v4(interface, destination, packet);
 
     net_drop_destination_cache_entry(destination);
     return ret;
 }
 
-void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
-    if (len < sizeof(struct ip_v4_packet)) {
+void net_ip_v4_recieve(struct packet *packet) {
+    struct packet_header *header = net_packet_inner_header(packet);
+    if (header->length < sizeof(struct ip_v4_packet)) {
         debug_log("IP V4 packet too small\n");
         return;
     }
 
+    struct ip_v4_packet *ip_packet = header->raw_header;
+
 #ifdef IP_V4_DEBUG
-    net_ip_v4_log(packet);
+    net_ip_v4_log(ip_packet);
 #endif /* IP_V4_DEBUG */
 
-    if (packet->more_fragments || IP_V4_FRAGMENT_OFFSET(packet) > 0) {
-        handle_fragment(packet);
+    if (ip_packet->more_fragments || IP_V4_FRAGMENT_OFFSET(ip_packet) > 0) {
+        // handle_fragment(ip_packet);
         return;
     }
 
-    switch (packet->protocol) {
+    struct packet_header *next_header = net_packet_add_header(packet, sizeof(struct ip_v4_packet));
+    switch (ip_packet->protocol) {
         case IP_V4_PROTOCOL_ICMP: {
-            net_icmp_recieve((const struct icmp_packet *) packet->payload, len - sizeof(struct ip_v4_packet));
+            next_header->type = PH_ICMP;
+            net_icmp_recieve(packet);
             return;
         }
         case IP_V4_PROTOCOL_UDP: {
-            net_udp_recieve((const struct udp_packet *) packet->payload, len - sizeof(struct ip_v4_packet));
+            next_header->type = PH_UDP;
+            net_udp_recieve(packet);
             return;
         }
         case IP_V4_PROTOCOL_TCP: {
-            net_tcp_recieve(packet, (const struct tcp_packet *) packet->payload, len - sizeof(struct ip_v4_packet));
+            next_header->type = PH_TCP;
+            net_tcp_recieve(packet);
             return;
         }
         default: {
@@ -269,19 +308,6 @@ void net_ip_v4_recieve(const struct ip_v4_packet *packet, size_t len) {
     }
 
     debug_log("Ignored packet\n");
-}
-
-struct network_data *net_create_ip_v4_packet(struct network_interface *interface, struct socket *socket, uint16_t ident, uint8_t protocol,
-                                             struct ip_v4_address source, struct ip_v4_address dest, const void *payload,
-                                             uint16_t payload_length) {
-    struct network_data *data = malloc(sizeof(struct network_data) + sizeof(struct ip_v4_packet) + payload_length);
-    data->interface = interface;
-    data->socket = socket ? net_bump_socket(socket) : NULL;
-    data->type = NETWORK_DATA_IP_V4;
-    data->len = sizeof(struct ip_v4_packet) + payload_length;
-    data->ip_v4_packet = (struct ip_v4_packet *) (data + 1);
-    net_init_ip_v4_packet(data->ip_v4_packet, ident, protocol, source, dest, payload, payload_length);
-    return data;
 }
 
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,

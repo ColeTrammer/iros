@@ -21,6 +21,7 @@
 
 struct destination_cache_entry;
 struct networK_interface;
+struct packet;
 struct ring_buffer;
 struct socket;
 
@@ -84,9 +85,9 @@ struct tcp_packet_options {
 
 int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end, bool is_retransmission);
 int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr);
-void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet, size_t len);
+void net_tcp_recieve(struct packet *packet);
 void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *opts);
 
-void net_tcp_log(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet);
+void net_tcp_log(struct packet *packet);
 
 #endif /* _KERNEL_NET_TCP_H */

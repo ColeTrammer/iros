@@ -8,16 +8,16 @@
 #include <kernel/util/list.h>
 
 struct arp_packet;
+struct destination_cache_entry;
 struct ifreq;
 struct ip_v4_packet;
-struct network_data;
 struct network_interface;
-struct destination_cache_entry;
+struct packet;
 
 struct network_interface_ops {
-    int (*send)(struct network_interface *interface, struct link_layer_address dest, const struct network_data *data);
-    int (*send_arp)(struct network_interface *interface, struct link_layer_address dest, struct network_data *data);
-    int (*send_ip_v4)(struct network_interface *interface, struct destination_cache_entry *destination, struct network_data *data);
+    int (*send)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
+    int (*send_arp)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
+    int (*send_ip_v4)(struct network_interface *interface, struct destination_cache_entry *destination, struct packet *packet);
     struct link_layer_address (*get_link_layer_broadcast_address)(struct network_interface *interface);
 };
 
@@ -54,10 +54,10 @@ struct network_interface *net_get_interface_for_ip(struct ip_v4_address address)
 struct network_interface *net_create_network_interface(const char *name, int type, struct link_layer_address link_layer_address,
                                                        struct network_interface_ops *ops, void *data);
 
-void net_recieve_network_data(struct network_interface *interface, struct network_data *data);
+void net_recieve_packet(struct network_interface *interface, struct packet *packet);
 
-int net_interface_send_arp(struct network_interface *self, struct link_layer_address dest, struct network_data *data);
-int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct network_data *data);
+int net_interface_send_arp(struct network_interface *self, struct link_layer_address dest, struct packet *packet);
+int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct packet *packet);
 
 int net_ioctl_interface_index_for_name(struct ifreq *req);
 int net_ioctl_interface_name_for_index(struct ifreq *req);

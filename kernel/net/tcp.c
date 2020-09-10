@@ -11,6 +11,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/tcp_socket.h>
 #include <kernel/time/clock.h>
@@ -87,23 +88,17 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
     struct destination_cache_entry *destination = opts->destination ? opts->destination : net_lookup_destination(interface, dest);
     size_t tcp_length = sizeof(struct tcp_packet) + opts->tcp_flags.syn * sizeof(struct tcp_option_mss) + opts->data_length;
 
-    struct network_data *data = net_create_ip_v4_packet(interface, opts->socket, destination->next_packet_id++, IP_V4_PROTOCOL_TCP,
-                                                        interface->address, dest, NULL, tcp_length);
-    struct ip_v4_packet *ip_packet = data->ip_v4_packet;
+    struct packet *packet = net_create_packet(interface, opts->socket, destination, tcp_length);
+    packet->header_count = 3;
 
-    struct tcp_packet *tcp_packet = (struct tcp_packet *) ip_packet->payload;
+    struct packet_header *tcp_header = net_init_packet_header(packet, 2, PH_TCP, packet->inline_data, tcp_length);
+    struct tcp_packet *tcp_packet = tcp_header->raw_header;
     net_init_tcp_packet(tcp_packet, opts);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_TCP, htons(tcp_length) };
-
     tcp_packet->check_sum = ntohs(in_compute_checksum_with_start(tcp_packet, tcp_length, in_compute_checksum(&header, sizeof(header))));
 
-    if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
-        debug_log("Sending TCP packet\n");
-        net_tcp_log(ip_packet, tcp_packet);
-    }
-
-    int ret = interface->ops->send_ip_v4(interface, destination, data);
+    int ret = interface->ops->send_ip_v4(interface, destination, packet);
     if (send_time_ptr) {
         *send_time_ptr = time_read_clock(CLOCK_MONOTONIC);
     }
@@ -673,15 +668,17 @@ static void tcp_recv_on_socket(struct socket *socket, const struct ip_v4_packet 
     }
 }
 
-void net_tcp_recieve(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet, size_t len) {
-    assert(packet);
-    if (len < sizeof(struct tcp_packet)) {
+void net_tcp_recieve(struct packet *net_packet) {
+    struct packet_header *tcp_header = net_packet_inner_header(net_packet);
+    struct tcp_packet *packet = tcp_header->raw_header;
+    if (tcp_header->length < sizeof(struct tcp_packet)) {
         debug_log("TCP Packet to small\n");
         return;
     }
 
-    net_tcp_log(ip_packet, packet);
+    net_tcp_log(net_packet);
 
+    struct ip_v4_packet *ip_packet = net_packet->headers[net_packet->header_count - 2].raw_header;
     struct tcp_connection_info info = {
         .source_ip = IP_V4_ZEROES,
         .source_port = ntohs(packet->dest_port),
@@ -740,7 +737,9 @@ void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *o
     }
 }
 
-void net_tcp_log(const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+void net_tcp_log(struct packet *net_packet) {
+    struct tcp_packet *packet = net_packet->headers[net_packet->header_count - 1].raw_header;
+    struct ip_v4_packet *ip_packet = net_packet->headers[net_packet->header_count - 2].raw_header;
     debug_log("TCP Packet:\n"
               "               Source Port  [ %15u ]   Dest Port [ %15u ]\n"
               "               Sequence     [ %15u ]   Ack Num   [ %15u ]\n"

@@ -6,6 +6,8 @@
 #define ICMP_TYPE_ECHO_REPLY   0
 #define ICMP_TYPE_ECHO_REQUEST 8
 
+struct packet;
+
 struct icmp_packet {
     uint8_t type;
     uint8_t code;
@@ -16,7 +18,7 @@ struct icmp_packet {
     uint8_t payload[0];
 } __attribute__((packed));
 
-void net_icmp_recieve(const struct icmp_packet *packet, size_t len);
+void net_icmp_recieve(struct packet *packet);
 
 void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t identifier, uint16_t sequence, void *payload,
                           uint16_t payload_size);

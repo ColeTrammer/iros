@@ -7,7 +7,7 @@
 #include <kernel/util/list.h>
 #include <kernel/util/spinlock.h>
 
-struct network_data;
+struct packet;
 struct timer;
 
 enum neighbor_status {
@@ -30,7 +30,7 @@ struct neighbor_cache_entry {
 struct neighbor_cache_entry *net_bump_neighbor_cache_entry(struct neighbor_cache_entry *neighbor);
 void net_drop_neighbor_cache_entry(struct neighbor_cache_entry *neighbor);
 
-int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct network_data *data);
+int net_queue_packet_for_neighbor(struct neighbor_cache_entry *neighbor, struct packet *packet);
 struct neighbor_cache_entry *net_lookup_neighbor(struct ip_v4_address address);
 void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_layer_address confirmed_address);
 void net_remove_neighbor(struct neighbor_cache_entry *neighbor);

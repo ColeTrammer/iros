@@ -20,6 +20,7 @@
 #define DHCP_MESSAGE_TYPE_RELEASE  7
 
 struct network_interface;
+struct packet;
 
 struct dhcp_packet {
 #define DHCP_OP_REQUEST 1
@@ -60,6 +61,6 @@ _Static_assert(sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + sizeof(
                DHCP_MINIMUM_PACKET_SIZE);
 
 void net_configure_interface_with_dhcp(struct network_interface *interface);
-void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len);
+void net_dhcp_recieve(struct packet *packet);
 
 #endif /* _KERNEL_NET_DHCP_H */

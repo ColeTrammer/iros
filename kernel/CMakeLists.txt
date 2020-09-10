@@ -41,6 +41,7 @@ if (NOT ${NATIVE_BUILD})
         net/neighbor_cache.c
         net/net.c
         net/network_task.c
+        net/packet.c
         net/port.c
         net/destination_cache.c
         net/socket.c

@@ -6,9 +6,13 @@
 #include <kernel/hal/output.h>
 #include <kernel/net/arp.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/net/icmp.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 #include <kernel/net/socket.h>
+#include <kernel/net/tcp.h>
+#include <kernel/net/udp.h>
 #include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
@@ -20,7 +24,7 @@ static spinlock_t lock = SPINLOCK_INITIALIZER;
 
 static struct wait_queue net_wait_queue = WAIT_QUEUE_INITIALIZER;
 
-static struct network_data *consume() {
+static struct packet *consume() {
     spin_lock(&lock);
 
     if (list_is_empty(&recv_list)) {
@@ -28,81 +32,86 @@ static struct network_data *consume() {
         return NULL;
     }
 
-    struct network_data *data = list_first_entry(&recv_list, struct network_data, list);
-    list_remove(&data->list);
+    struct packet *packet = list_first_entry(&recv_list, struct packet, queue);
+    list_remove(&packet->queue);
     spin_unlock(&lock);
-    return data;
+    return packet;
 }
 
-static void enqueue_packet(struct network_data *data) {
+static void enqueue_packet(struct packet *packet) {
     spin_lock(&lock);
 
-    list_append(&recv_list, &data->list);
+    list_append(&recv_list, &packet->queue);
 
     // Unblock ourselves once we have data
     wake_up_all(&net_wait_queue);
     spin_unlock(&lock);
 }
 
-void net_free_network_data(struct network_data *data) {
-    if (data->socket) {
-        net_drop_socket(data->socket);
-    }
-    free(data);
-}
-
 void net_on_incoming_ethernet_frame(const struct ethernet_frame *frame, struct network_interface *interface, size_t len) {
-    struct network_data *new_data = malloc(sizeof(struct network_data));
-    assert(new_data);
+    struct packet *packet = net_create_packet(interface, NULL, NULL, 0);
+    assert(packet);
+
+    packet->header_count = 1;
+    packet->total_length = len;
+
+    struct packet_header *ethernet_header = &packet->headers[0];
+    ethernet_header->flags |= PHF_INITIALIZED;
+    ethernet_header->length = len;
+    ethernet_header->type = PH_ETHERNET;
 
     // For now just store a dangling pointer to the ethernet frame. Ethernet drivers
     // have their own persistent buffers for incoming packets. This is far from ideal
     // since the frame's lifetime is not communicated in any way (the space should be
     // marked unusable to prevent the device from overwriting its data).
-    new_data->interface = interface;
-    new_data->socket = NULL;
-    new_data->ethernet_frame = (struct ethernet_frame *) frame;
-    new_data->len = len;
-    new_data->type = NETWORK_DATA_ETHERNET;
+    ethernet_header->raw_header = (void *) frame;
 
-    enqueue_packet(new_data);
+    enqueue_packet(packet);
 }
 
-void net_on_incoming_network_data(struct network_data *data) {
+void net_on_incoming_packet(struct packet *packet) {
     // In this case, the incoming packet was sent via the loopback interface, and
     // can be put into the recieve queue without any modification (except to remove
     // its reference to its sending socket).
-    if (data->socket) {
-        net_drop_socket(data->socket);
-        data->socket = NULL;
+    if (packet->socket) {
+        net_drop_socket(packet->socket);
+        packet->socket = NULL;
     }
-    enqueue_packet(data);
+    enqueue_packet(packet);
 }
 
 void net_network_task_start() {
     for (;;) {
-        struct network_data *data = consume();
-        if (data == NULL) {
+        struct packet *packet = consume();
+        if (packet == NULL) {
             wait_on(&net_wait_queue);
             continue;
         }
 
-        if (data->len <= sizeof(struct ethernet_frame)) {
-            debug_log("Packet was too small\n");
-            continue;
-        }
-
-        switch (data->type) {
-            case NETWORK_DATA_ETHERNET:
-                net_ethernet_recieve(data->ethernet_frame, data->len);
+        struct packet_header *header = net_packet_inner_header(packet);
+        switch (header->type) {
+            case PH_ETHERNET:
+                net_ethernet_recieve(packet);
                 break;
-            case NETWORK_DATA_IP_V4:
-                net_ip_v4_recieve(data->ip_v4_packet, data->len);
+            case PH_IP_V4:
+                net_ip_v4_recieve(packet);
+                break;
+            case PH_ARP:
+                net_arp_recieve(packet);
+                break;
+            case PH_ICMP:
+                net_icmp_recieve(packet);
+                break;
+            case PH_UDP:
+                net_udp_recieve(packet);
+                break;
+            case PH_TCP:
+                net_tcp_recieve(packet);
                 break;
             default:
-                assert(false);
+                debug_log("Bad packet header type: [ %s ]\n", net_packet_header_type_to_string(header->type));
                 break;
         }
-        net_free_network_data(data);
+        net_free_packet(packet);
     }
 }

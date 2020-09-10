@@ -9,6 +9,7 @@
 #include <kernel/net/ethernet.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 #include <kernel/util/random.h>
 
 static uint8_t net_ll_to_dhcp_hw_type(enum ll_address_type type) {
@@ -32,15 +33,19 @@ static enum ll_address_type net_dhcp_hw_to_ll_type(uint8_t type) {
 
 static void net_send_dhcp(struct network_interface *interface, uint8_t message_type, struct link_layer_address our_address,
                           struct ip_v4_address client_ip, struct ip_v4_address server_ip) {
-    size_t dhcp_length = DHCP_MINIMUM_PACKET_SIZE;
-    struct network_data *network_data = net_create_ip_v4_packet(interface, NULL, 1, IP_V4_PROTOCOL_UDP, IP_V4_ZEROES, IP_V4_BROADCAST, NULL,
-                                                                dhcp_length - sizeof(struct ip_v4_packet));
+    size_t total_length = DHCP_MINIMUM_PACKET_SIZE;
+    size_t udp_length = total_length - sizeof(struct ip_v4_packet);
+    size_t dhcp_length = udp_length - sizeof(struct udp_packet);
 
-    size_t udp_packet_length = dhcp_length - sizeof(struct ip_v4_packet);
-    struct udp_packet *udp_packet = (struct udp_packet *) network_data->ip_v4_packet->payload;
-    net_init_udp_packet(udp_packet, DHCP_CLIENT_PORT, DHCP_SERVER_PORT, udp_packet_length - sizeof(struct udp_packet), NULL);
+    struct packet *packet = net_create_packet(interface, NULL, NULL, udp_length);
+    packet->header_count = 4;
 
-    struct dhcp_packet *data = (struct dhcp_packet *) udp_packet->payload;
+    struct packet_header *udp_header = net_init_packet_header(packet, 2, PH_UDP, packet->inline_data, sizeof(struct udp_packet));
+    struct udp_packet *udp_packet = udp_header->raw_header;
+    net_init_udp_packet(udp_packet, DHCP_CLIENT_PORT, DHCP_SERVER_PORT, dhcp_length, NULL);
+
+    struct packet_header *dhcp_header = net_init_packet_header(packet, 3, PH_RAW_DATA, udp_packet->payload, dhcp_length);
+    struct dhcp_packet *data = dhcp_header->raw_header;
     data->op = DHCP_OP_REQUEST;
     data->htype = net_ll_to_dhcp_hw_type(our_address.type);
     data->hlen = our_address.length;
@@ -84,13 +89,13 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
     }
     data->options[opt_start] = DHCP_OPTION_END;
 
-    struct ip_v4_pseudo_header header = { IP_V4_ZEROES, IP_V4_BROADCAST, 0, IP_V4_PROTOCOL_UDP, htons(udp_packet_length) };
-    udp_packet->checksum = ntohs(
-        in_compute_checksum_with_start(udp_packet, udp_packet_length, in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
+    struct ip_v4_pseudo_header header = { IP_V4_ZEROES, IP_V4_BROADCAST, 0, IP_V4_PROTOCOL_UDP, htons(udp_length) };
+    udp_packet->checksum =
+        ntohs(in_compute_checksum_with_start(udp_packet, udp_length, in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
 
     debug_log("Sending DHCP DISCOVER packet: [ %u ]\n", interface->config_context.xid);
 
-    assert(interface->ops->send_ip_v4(interface, NULL, network_data) == 0);
+    assert(interface->ops->send_ip_v4(interface, NULL, packet) == 0);
 }
 
 void net_configure_interface_with_dhcp(struct network_interface *interface) {
@@ -98,12 +103,14 @@ void net_configure_interface_with_dhcp(struct network_interface *interface) {
     net_send_dhcp(interface, DHCP_MESSAGE_TYPE_DISCOVER, our_address, IP_V4_ZEROES, IP_V4_ZEROES);
 }
 
-void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
-    if (len < DHCP_MINIMUM_PACKET_SIZE - sizeof(struct udp_packet) - sizeof(struct ip_v4_packet)) {
-        debug_log("dhcp packet too small: [ %lu ]\n", len);
+void net_dhcp_recieve(struct packet *net_packet) {
+    struct packet_header *dhcp_header = net_packet_inner_header(net_packet);
+    if (dhcp_header->length < DHCP_MINIMUM_PACKET_SIZE - sizeof(struct udp_packet) - sizeof(struct ip_v4_packet)) {
+        debug_log("dhcp packet too small: [ %u ]\n", dhcp_header->length);
         return;
     }
 
+    struct dhcp_packet *packet = dhcp_header->raw_header;
     debug_log("recieved DHCP packet: [ %u ]\n", ntohl(packet->xid));
 
     if (packet->op != DHCP_OP_REPLY) {
@@ -144,7 +151,7 @@ void net_dhcp_recieve(const struct dhcp_packet *packet, size_t len) {
     struct ip_v4_address server_ip;
 
     size_t i = 4;
-    while (i < sizeof(struct dhcp_packet) + len && packet->options[i] != DHCP_OPTION_END) {
+    while (i < sizeof(struct dhcp_packet) + dhcp_header->length && packet->options[i] != DHCP_OPTION_END) {
         if (packet->options[i] == DHCP_OPTION_PAD) {
             i++;
             continue;

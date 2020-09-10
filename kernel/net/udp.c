@@ -12,6 +12,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/udp.h>
@@ -40,38 +41,45 @@ int net_send_udp(struct socket *socket, struct network_interface *interface, str
     }
 
     struct destination_cache_entry *destination = net_lookup_destination(interface, dest);
-    size_t total_length = sizeof(struct ip_v4_packet) + sizeof(struct udp_packet) + len;
+    size_t udp_length = sizeof(struct udp_packet) + len;
 
-    struct network_data *data = net_create_ip_v4_packet(interface, socket, destination->next_packet_id++, IP_V4_PROTOCOL_UDP,
-                                                        interface->address, dest, NULL, total_length - sizeof(struct ip_v4_packet));
+    struct packet *packet = net_create_packet(interface, socket, destination, udp_length);
+    packet->header_count = 3;
 
-    struct udp_packet *udp_packet = (struct udp_packet *) data->ip_v4_packet->payload;
+    struct packet_header *udp_header = net_init_packet_header(packet, 2, PH_UDP, packet->inline_data, udp_length);
+    struct udp_packet *udp_packet = udp_header->raw_header;
     net_init_udp_packet(udp_packet, source_port, dest_port, len, buf);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_UDP, htons(len + sizeof(struct udp_packet)) };
-
     udp_packet->checksum = ntohs(in_compute_checksum_with_start(udp_packet, sizeof(struct udp_packet) + len,
                                                                 in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
-    int ret = interface->ops->send_ip_v4(interface, destination, data);
+    int ret = interface->ops->send_ip_v4(interface, destination, packet);
 
     net_drop_destination_cache_entry(destination);
     return ret;
 }
 
-void net_udp_recieve(const struct udp_packet *packet, size_t len) {
-    if (len < sizeof(struct udp_packet)) {
+void net_udp_recieve(struct packet *net_packet) {
+    struct packet_header *udp_header = net_packet_inner_header(net_packet);
+    if (udp_header->length < sizeof(struct udp_packet)) {
         debug_log("UDP Packet to small\n");
         return;
     }
+
+    struct ip_v4_packet *ip_packet = net_packet->headers[net_packet->header_count - 2].raw_header;
+    struct udp_packet *packet = udp_header->raw_header;
+
+    struct packet_header *next_header = net_packet_add_header(net_packet, sizeof(struct udp_packet));
+    next_header->type = PH_RAW_DATA;
 
     uint16_t dest_port = ntohs(packet->dest_port);
     struct socket *socket = net_get_socket_from_port(dest_port);
     if (socket == NULL) {
         if (dest_port == DHCP_CLIENT_PORT) {
-            net_dhcp_recieve((const struct dhcp_packet *) packet->payload, len - sizeof(struct udp_packet));
+            net_dhcp_recieve(net_packet);
             return;
         }
 
@@ -79,9 +87,7 @@ void net_udp_recieve(const struct udp_packet *packet, size_t len) {
         return;
     }
 
-    const struct ip_v4_packet *ip_packet = container_of(packet, const struct ip_v4_packet, payload);
-    struct socket_data *data =
-        net_inet_create_socket_data(ip_packet, packet->source_port, (void *) packet->payload, len - sizeof(struct udp_packet));
+    struct socket_data *data = net_inet_create_socket_data(ip_packet, packet->source_port, next_header->raw_header, next_header->length);
     net_send_to_socket(socket, data);
 }
 

@@ -8,6 +8,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 
 static uint16_t net_ll_to_arp_hw_type(enum ll_address_type type) {
     switch (type) {
@@ -60,41 +61,44 @@ void net_send_arp_request(struct network_interface *interface, struct ip_v4_addr
     }
 
     struct link_layer_address broadcast_address = interface->ops->get_link_layer_broadcast_address(interface);
-    struct network_data *data = net_create_arp_packet(interface, ARP_OPERATION_REQUEST, interface->link_layer_address, interface->address,
-                                                      broadcast_address, ip_address);
+    struct packet *packet = net_create_arp_packet(interface, ARP_OPERATION_REQUEST, interface->link_layer_address, interface->address,
+                                                  broadcast_address, ip_address);
 
     debug_log("Sending ARP packet for: [ %u.%u.%u.%u ]\n", ip_address.addr[0], ip_address.addr[1], ip_address.addr[2], ip_address.addr[3]);
 
-    interface->ops->send_arp(interface, broadcast_address, data);
+    interface->ops->send_arp(interface, broadcast_address, packet);
 }
 
-void net_arp_recieve(const struct arp_packet *packet, size_t len) {
-    assert(ntohs(packet->operation) == ARP_OPERATION_REPLY);
-
-    if (len < sizeof(struct arp_packet)) {
+void net_arp_recieve(struct packet *packet) {
+    struct packet_header *header = net_packet_inner_header(packet);
+    if (header->length < sizeof(struct arp_packet)) {
         debug_log("ARP packet too small\n");
         return;
     }
 
-    struct ip_v4_address ip_sender = net_arp_sender_proto_addr(packet);
-    struct link_layer_address hw_sender = net_arp_sender_hw_addr(packet);
+    struct arp_packet *arp_packet = header->raw_header;
+    if (ntohs(arp_packet->operation) != ARP_OPERATION_REPLY) {
+        debug_log("Unsupported ARP operation: [ %u ]\n", ntohs(arp_packet->operation));
+        return;
+    }
+
+    struct ip_v4_address ip_sender = net_arp_sender_proto_addr(arp_packet);
+    struct link_layer_address hw_sender = net_arp_sender_hw_addr(arp_packet);
 
     struct neighbor_cache_entry *neighbor = net_lookup_neighbor(ip_sender);
     net_update_neighbor(neighbor, hw_sender);
     net_drop_neighbor_cache_entry(neighbor);
 }
 
-struct network_data *net_create_arp_packet(struct network_interface *interface, uint16_t op, struct link_layer_address s_addr,
-                                           struct ip_v4_address s_ip, struct link_layer_address t_addr, struct ip_v4_address t_ip) {
+struct packet *net_create_arp_packet(struct network_interface *interface, uint16_t op, struct link_layer_address s_addr,
+                                     struct ip_v4_address s_ip, struct link_layer_address t_addr, struct ip_v4_address t_ip) {
     size_t arp_length = sizeof(struct arp_packet) + 2 * sizeof(struct ip_v4_address) + 2 * s_addr.length;
-    struct network_data *data = malloc(sizeof(struct network_data) + arp_length);
-    data->interface = interface;
-    data->socket = NULL;
-    data->type = NETWORK_DATA_ARP;
-    data->len = sizeof(struct arp_packet) + arp_length;
-    data->arp_packet = (struct arp_packet *) (data + 1);
-    net_init_arp_packet(data->arp_packet, op, s_addr, s_ip, t_addr, t_ip);
-    return data;
+    struct packet *packet = net_create_packet(interface, NULL, NULL, arp_length);
+    packet->header_count = 2;
+
+    struct packet_header *header = net_init_packet_header(packet, 1, PH_ARP, packet->inline_data, arp_length);
+    net_init_arp_packet(header->raw_header, op, s_addr, s_ip, t_addr, t_ip);
+    return packet;
 }
 
 void net_init_arp_packet(struct arp_packet *packet, uint16_t op, struct link_layer_address s_addr, struct ip_v4_address s_ip,

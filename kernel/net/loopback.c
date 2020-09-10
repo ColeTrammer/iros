@@ -1,14 +1,25 @@
-#include <stddef.h>
+#include <stdlib.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/net/destination_cache.h>
 #include <kernel/net/interface.h>
+#include <kernel/net/ip.h>
 #include <kernel/net/loopback.h>
-#include <kernel/net/mac.h>
+#include <kernel/net/packet.h>
 
-static int loop_send_ip_v4(struct network_interface *interface, struct destination_cache_entry *route, struct network_data *data) {
-    (void) route;
+static int loop_send_ip_v4(struct network_interface *interface, struct destination_cache_entry *destination, struct packet *packet) {
+    struct packet_header *outer_header = net_packet_outer_header(packet);
 
-    net_recieve_network_data(interface, data);
+    struct ip_v4_packet *ip_packet = malloc(sizeof(struct ip_v4_packet));
+    net_init_ip_v4_packet(ip_packet, destination ? destination->next_packet_id++ : 0, net_packet_header_to_ip_v4_type(outer_header->type),
+                          packet->interface->address, destination ? destination->destination_path.dest_ip_address : IP_V4_BROADCAST, NULL,
+                          packet->total_length);
+
+    struct packet_header *ip_header =
+        net_init_packet_header(packet, net_packet_header_index(packet, outer_header) - 1, PH_IP_V4, ip_packet, sizeof(struct ip_v4_packet));
+    ip_header->flags |= PHF_DYNAMICALLY_ALLOCATED;
+
+    net_recieve_packet(interface, packet);
     return 0;
 }
 

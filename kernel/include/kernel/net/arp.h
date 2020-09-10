@@ -11,6 +11,7 @@
 #define ARP_OPERATION_REPLY   2
 
 struct network_interface;
+struct packet;
 
 struct arp_packet {
     uint16_t hardware_type;
@@ -28,10 +29,10 @@ struct arp_packet {
 
 void net_send_arp_request(struct network_interface *interface, struct ip_v4_address ip_address);
 
-void net_arp_recieve(const struct arp_packet *packet, size_t len);
+void net_arp_recieve(struct packet *packet);
 
-struct network_data *net_create_arp_packet(struct network_interface *interface, uint16_t op, struct link_layer_address s_addr,
-                                           struct ip_v4_address s_ip, struct link_layer_address t_addr, struct ip_v4_address t_ip);
+struct packet *net_create_arp_packet(struct network_interface *interface, uint16_t op, struct link_layer_address s_addr,
+                                     struct ip_v4_address s_ip, struct link_layer_address t_addr, struct ip_v4_address t_ip);
 void net_init_arp_packet(struct arp_packet *buf, uint16_t op, struct link_layer_address s_addr, struct ip_v4_address s_ip,
                          struct link_layer_address t_addr, struct ip_v4_address t_ip);
 

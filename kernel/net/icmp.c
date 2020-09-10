@@ -8,20 +8,25 @@
 #include <kernel/net/icmp.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/ip.h>
+#include <kernel/net/packet.h>
 #include <kernel/net/socket.h>
 #include <kernel/util/macros.h>
 
-void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
-    if (len < sizeof(struct icmp_packet)) {
+void net_icmp_recieve(struct packet *net_packet) {
+    struct packet_header *icmp_header = net_packet_inner_header(net_packet);
+    if (icmp_header->length < sizeof(struct icmp_packet)) {
         debug_log("ICMP packet too small\n");
         return;
     }
 
+    struct icmp_packet *packet = icmp_header->raw_header;
+    struct packet_header *ip_header = &net_packet->headers[net_packet_header_index(net_packet, icmp_header) - 1];
+    struct ip_v4_packet *ip_packet = ip_header->raw_header;
+
     if (packet->type == ICMP_TYPE_ECHO_REPLY) {
         net_for_each_socket(socket) {
-            struct ip_v4_packet *ip_packet = container_of(packet, struct ip_v4_packet, payload);
             if (socket->protocol == IPPROTO_ICMP) {
-                size_t data_len = ip_packet->length - sizeof(struct ip_v4_packet);
+                size_t data_len = icmp_header->length;
                 struct socket_data *data = net_inet_create_socket_data(ip_packet, 0, packet, data_len);
                 net_send_to_socket(socket, data);
             }
@@ -29,11 +34,12 @@ void net_icmp_recieve(const struct icmp_packet *packet, size_t len) {
         return;
     }
 
-    assert(packet->type == ICMP_TYPE_ECHO_REQUEST);
+    if (packet->type != ICMP_TYPE_ECHO_REQUEST) {
+        debug_log("Unkown ICMP type: [ %u ]\n", packet->type);
+        return;
+    }
 
-    const struct ip_v4_packet *ip_packet = container_of(packet, const struct ip_v4_packet, payload);
-    size_t to_send_length = ip_packet->length - sizeof(struct ip_v4_packet);
-
+    size_t to_send_length = icmp_header->length;
     struct icmp_packet *to_send = malloc(to_send_length);
     net_init_icmp_packet(to_send, ICMP_TYPE_ECHO_REPLY, ntohs(packet->identifier), ntohs(packet->sequence_number), (void *) packet->payload,
                          to_send_length - sizeof(struct icmp_packet));

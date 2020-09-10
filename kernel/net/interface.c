@@ -13,6 +13,7 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
+#include <kernel/net/packet.h>
 #include <kernel/util/validators.h>
 
 static struct list_node interface_list = INIT_LIST(interface_list);
@@ -21,26 +22,37 @@ static void add_interface(struct network_interface *interface) {
     list_append(&interface_list, &interface->interface_list);
 }
 
-int net_interface_send_arp(struct network_interface *self, struct link_layer_address dest, struct network_data *data) {
-    int ret = self->ops->send(self, dest, data);
-    net_free_network_data(data);
+int net_interface_send_arp(struct network_interface *self, struct link_layer_address dest, struct packet *packet) {
+    int ret = self->ops->send(self, dest, packet);
+    net_free_packet(packet);
     return ret;
 }
 
-int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct network_data *data) {
+int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct packet *packet) {
+    struct packet_header *outer_header = net_packet_outer_header(packet);
+
+    struct ip_v4_packet *ip_packet = malloc(sizeof(struct ip_v4_packet));
+    net_init_ip_v4_packet(ip_packet, destination ? destination->next_packet_id++ : 0, net_packet_header_to_ip_v4_type(outer_header->type),
+                          packet->interface->address, destination ? destination->destination_path.dest_ip_address : IP_V4_BROADCAST, NULL,
+                          packet->total_length);
+
+    struct packet_header *ip_header =
+        net_init_packet_header(packet, net_packet_header_index(packet, outer_header) - 1, PH_IP_V4, ip_packet, sizeof(struct ip_v4_packet));
+    ip_header->flags |= PHF_DYNAMICALLY_ALLOCATED;
+
     if (!destination) {
         struct link_layer_address dest = self->ops->get_link_layer_broadcast_address(self);
-        int ret = self->ops->send(self, dest, data);
-        net_free_network_data(data);
+        int ret = self->ops->send(self, dest, packet);
+        net_free_packet(packet);
         return ret;
     }
 
-    return net_queue_packet_for_neighbor(destination->next_hop, data);
+    return net_queue_packet_for_neighbor(destination->next_hop, packet);
 }
 
-void net_recieve_network_data(struct network_interface *interface, struct network_data *data) {
+void net_recieve_packet(struct network_interface *interface, struct packet *packet) {
     (void) interface;
-    net_on_incoming_network_data(data);
+    net_on_incoming_packet(packet);
 }
 
 struct list_node *net_get_interface_list(void) {
