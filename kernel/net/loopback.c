@@ -7,7 +7,7 @@
 #include <kernel/net/loopback.h>
 #include <kernel/net/packet.h>
 
-static int loop_send_ip_v4(struct network_interface *interface, struct destination_cache_entry *destination, struct packet *packet) {
+static int loop_route_ip_v4(struct network_interface *interface, struct destination_cache_entry *destination, struct packet *packet) {
     struct packet_header *outer_header = net_packet_outer_header(packet);
 
     struct ip_v4_packet *ip_packet = malloc(sizeof(struct ip_v4_packet));
@@ -23,7 +23,7 @@ static int loop_send_ip_v4(struct network_interface *interface, struct destinati
     return 0;
 }
 
-static struct network_interface_ops ops = { .send_ip_v4 = loop_send_ip_v4 };
+static struct network_interface_ops ops = { .route_ip_v4 = loop_route_ip_v4 };
 
 void init_loopback() {
     net_create_network_interface("lo", NETWORK_INTERFACE_LOOPBACK, LINK_LAYER_ADDRESS_NONE, &ops, NULL);

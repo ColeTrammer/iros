@@ -99,7 +99,7 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_TCP, htons(tcp_length) };
     tcp_packet->check_sum = ntohs(in_compute_checksum_with_start(tcp_packet, tcp_length, in_compute_checksum(&header, sizeof(header))));
 
-    int ret = interface->ops->send_ip_v4(interface, destination, packet);
+    int ret = interface->ops->route_ip_v4(interface, destination, packet);
     if (send_time_ptr) {
         *send_time_ptr = time_read_clock(CLOCK_MONOTONIC);
     }

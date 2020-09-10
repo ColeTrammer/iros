@@ -97,7 +97,7 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
 
     debug_log("Sending DHCP DISCOVER packet: [ %u ]\n", interface->config_context.xid);
 
-    assert(interface->ops->send_ip_v4(interface, NULL, packet) == 0);
+    assert(interface->ops->route_ip_v4(interface, NULL, packet) == 0);
 }
 
 void net_configure_interface_with_dhcp(struct network_interface *interface) {

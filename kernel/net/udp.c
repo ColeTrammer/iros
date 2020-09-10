@@ -57,7 +57,7 @@ int net_send_udp(struct socket *socket, struct network_interface *interface, str
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 
-    int ret = interface->ops->send_ip_v4(interface, destination, packet);
+    int ret = interface->ops->route_ip_v4(interface, destination, packet);
 
     net_drop_destination_cache_entry(destination);
     return ret;

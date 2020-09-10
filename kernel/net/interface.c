@@ -22,26 +22,6 @@ static void add_interface(struct network_interface *interface) {
     list_append(&interface_list, &interface->interface_list);
 }
 
-int net_interface_send_ip_v4(struct network_interface *self, struct destination_cache_entry *destination, struct packet *packet) {
-    struct packet_header *outer_header = net_packet_outer_header(packet);
-
-    struct ip_v4_packet *ip_packet = malloc(sizeof(struct ip_v4_packet));
-    net_init_ip_v4_packet(ip_packet, destination ? destination->next_packet_id++ : 0, net_packet_header_to_ip_v4_type(outer_header->type),
-                          packet->interface->address, destination ? destination->destination_path.dest_ip_address : IP_V4_BROADCAST, NULL,
-                          packet->total_length);
-
-    struct packet_header *ip_header =
-        net_init_packet_header(packet, net_packet_header_index(packet, outer_header) - 1, PH_IP_V4, ip_packet, sizeof(struct ip_v4_packet));
-    ip_header->flags |= PHF_DYNAMICALLY_ALLOCATED;
-
-    if (!destination) {
-        struct link_layer_address dest = self->ops->get_link_layer_broadcast_address(self);
-        return self->ops->send(self, dest, packet);
-    }
-
-    return net_queue_packet_for_neighbor(destination->next_hop, packet);
-}
-
 void net_recieve_packet(struct network_interface *interface, struct packet *packet) {
     (void) interface;
     net_on_incoming_packet(packet);
