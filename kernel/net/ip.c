@@ -266,7 +266,7 @@ static int net_interface_send_ip_v4_fragmented(struct network_interface *self, s
 
     uint16_t total_length = packet.total_length - sizeof(struct ip_v4_packet);
     uint16_t offset = 0;
-    uint16_t data_mtu = self->mtu - sizeof(struct ip_v4_packet);
+    uint16_t data_mtu = ALIGN_DOWN(self->mtu - sizeof(struct ip_v4_packet), 8);
     uint16_t header_index = net_packet_header_index(&packet, outer_header);
     for (;;) {
         uint16_t old_header_count = packet.header_count;
