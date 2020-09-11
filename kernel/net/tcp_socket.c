@@ -123,11 +123,10 @@ struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) 
     struct tcp_control_block *tcb = socket->private_data = calloc(1, sizeof(struct tcp_control_block));
     tcb->state = TCP_CLOSED;
     tcb->send_window = 1;
-    tcb->send_unacknowledged = tcb->send_next = get_random_bytes() & 0xFFFFF;       // Initial sequence number
-    tcb->recv_window = 8192;                                                        // Hard coded value
-    tcb->recv_mss = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Choose a higher than default but safe MSS
-    tcb->send_mss = TCP_DEFAULT_MSS;                                                // Default MSS (can be overridden by the MSS option)
-    tcb->rto = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };                     // RTO starts at 1 second.
+    tcb->send_unacknowledged = tcb->send_next = get_random_bytes() & 0xFFFFF; // Initial sequence number
+    tcb->recv_window = 8192;                                                  // Hard coded value
+    tcb->send_mss = TCP_DEFAULT_MSS;                                          // Default MSS (can be overridden by the MSS option)
+    tcb->rto = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };               // RTO starts at 1 second.
     tcb->first_rtt_sample = true;
     init_ring_buffer(&tcb->send_buffer, 8192);
     init_ring_buffer(&tcb->recv_buffer, tcb->recv_window);
@@ -281,6 +280,7 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&new_socket->peer_address);
     tcb->interface = net_get_interface_for_ip(dest_ip);
     tcb->destination = net_lookup_destination(tcb->interface, dest_ip);
+    tcb->recv_mss = tcb->interface->mtu - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet);
 
     // Send a SYN-ACK
     tcb->pending_syn = true;
@@ -372,6 +372,7 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
     tcb->interface = net_get_interface_for_ip(dest_ip);
     tcb->destination = net_lookup_destination(tcb->interface, dest_ip);
+    tcb->recv_mss = tcb->interface->mtu - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet);
 
     tcb->pending_syn = true;
     int ret = tcp_send_segments(socket);
