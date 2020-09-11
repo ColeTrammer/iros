@@ -47,7 +47,7 @@ int proc_block_until_inode_is_readable(struct task *current, struct inode *inode
 static bool until_socket_is_connected_blocker(struct block_info *info) {
     assert(info->type == UNTIL_SOCKET_IS_CONNECTED);
 
-    return info->until_socket_is_connected_info.socket->state == CONNECTED;
+    return info->until_socket_is_connected_info.socket->state >= CONNECTED;
 }
 
 int proc_block_until_socket_is_connected(struct task *current, struct socket *socket) {

@@ -381,7 +381,7 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
         return ret;
     }
 
-    return 0;
+    return proc_block_until_socket_is_connected(get_current_task(), socket);
 }
 
 static int net_tcp_destroy(struct socket *socket) {

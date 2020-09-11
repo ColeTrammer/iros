@@ -294,6 +294,7 @@ static void tcp_enter_established_state(struct socket *socket, const struct tcp_
     if (tcb->reset_rto_once_established && tcb->rto.tv_sec < 3) {
         tcb->rto = (struct timespec) { .tv_sec = 3, .tv_nsec = 0 };
     }
+    socket->state = CONNECTED;
     tcp_update_send_window(socket, packet);
     tcp_send_segments(socket);
 }
