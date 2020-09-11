@@ -447,8 +447,6 @@ static int net_tcp_socket(int domain, int type, int protocol) {
 }
 
 static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len, int flags, struct sockaddr *addr, socklen_t *addrlen) {
-    (void) flags;
-
     mutex_lock(&socket->lock);
     if (addr) {
         net_copy_sockaddr_to_user(&socket->peer_address, sizeof(struct sockaddr_in), addr, addrlen);
@@ -506,7 +504,9 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         tcp_update_recv_window(socket);
         socket->readable = !ring_buffer_empty(&tcb->recv_buffer);
 
-        // Instead of always breaking here, it is probably more correct to only do so if the PSH flag was set.
+        if (flags & MSG_WAITALL) {
+            continue;
+        }
         break;
     }
 done:
