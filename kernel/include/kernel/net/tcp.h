@@ -83,7 +83,7 @@ struct tcp_packet_options {
     struct destination_cache_entry *destination;
 };
 
-int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end, bool is_retransmission);
+int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uint32_t sequence_end, bool send_rst, bool is_retransmission);
 int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr);
 void net_tcp_recieve(struct packet *packet);
 void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *opts);

@@ -147,7 +147,7 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
         }
 
         if (socket->error != 0) {
-            *error = socket->error;
+            *error = -socket->error;
             socket->error = 0;
             mutex_unlock(&socket->lock);
             return NULL;

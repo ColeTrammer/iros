@@ -162,7 +162,7 @@ static void tcp_do_retransmit(struct timer *timer, void *_socket) {
     // Retransmit the earliest segment not acknowledged by the sender.
     size_t max_data_to_retransmit = tcb->send_mss - sizeof(struct tcp_packet) - sizeof(struct ip_v4_packet);
     size_t data_to_retransmit = MIN(tcb->send_next - tcb->send_unacknowledged, max_data_to_retransmit);
-    net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_unacknowledged + data_to_retransmit, true);
+    net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_unacknowledged + data_to_retransmit, false, true);
 
     // Exponential back off by doubling the next timeout.
     tcb->rto = time_add(tcb->rto, tcb->rto);
@@ -247,7 +247,7 @@ int tcp_send_segments(struct socket *socket) {
         debug_log("Sending TCP segment: [ %u, %u, %u, %u ]\n", tcb->send_unacknowledged, tcb->send_next - data_to_send, tcb->send_next,
                   usable_window);
 #endif /* TCP_DEBUG */
-        ret = net_send_tcp_from_socket(socket, tcb->send_next - data_to_send, tcb->send_next, false);
+        ret = net_send_tcp_from_socket(socket, tcb->send_next - data_to_send, tcb->send_next, false, false);
         tcp_setup_retransmission_timer(socket);
     }
 
@@ -297,6 +297,14 @@ static int net_tcp_close(struct socket *socket) {
     if (!tcb) {
         mutex_unlock(&socket->lock);
         return 0;
+    }
+
+    // If there is data the application hasn't read, a RST segment should be sent to show that data has been lost.
+    if (!ring_buffer_empty(&tcb->recv_buffer)) {
+        net_send_tcp_from_socket(socket, tcb->send_next, tcb->send_next, true, false);
+        net_free_tcp_control_block(socket);
+        mutex_unlock(&socket->lock);
+        return -ECONNRESET;
     }
 
     switch (tcb->state) {
@@ -476,7 +484,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
 
             if (socket->error != 0) {
                 // Only clear socket->error if the error will actually be returned.
-                error = socket->error;
+                error = -socket->error;
                 if (buffer_index != 0) {
                     socket->error = 0;
                 }

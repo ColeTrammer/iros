@@ -77,7 +77,7 @@ static void neighbor_lookup_failed(struct timer *timer __attribute__((unused)), 
 
     list_for_each_entry_safe(&neighbor->queued_packets, packet, struct packet, queue) {
         if (packet->socket) {
-            net_socket_set_error(packet->socket, -EHOSTUNREACH);
+            net_socket_set_error(packet->socket, EHOSTUNREACH);
         }
         list_remove(&packet->queue);
         net_free_packet(packet);
@@ -156,7 +156,7 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
         struct socket *socket = packet->socket;
         int ret = packet->interface->ops->send_ip_v4(packet->interface, neighbor->link_layer_address, packet);
         if (!!ret && !!socket) {
-            net_socket_set_error(socket, ret);
+            net_socket_set_error(socket, -ret);
         }
     }
 
