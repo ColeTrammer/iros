@@ -44,6 +44,12 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
     bool send_fin = tcb->pending_fin && sequence_end == tcb->send_next;
     size_t data_to_send = sequence_end - sequence_start - send_syn - send_fin;
 
+    // The only segment that doesn't have ACK set is the initial SYN.
+    bool send_ack = tcb->state != TCP_SYN_SENT;
+
+    // Only the last bit of queued data should be sent with the PSH flag sent.
+    bool send_psh = data_to_send > 0 && (sequence_end - tcb->send_unacknowledged) >= ring_buffer_size(&tcb->send_buffer);
+
     struct tcp_packet_options opts = {
         .source_port = source_port,
         .dest_port = dest_port,
@@ -52,8 +58,8 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
         .window = tcb->recv_window,
         .mss = tcb->recv_mss,
         .tcp_flags = {
-            .ack = tcb->state != TCP_SYN_SENT, // The only segment that doesn't have ACK set is the initial SYN.
-            .psh = !send_syn && !send_fin,     // Pretend all data segments are pushed for now.
+            .ack = send_ack,
+            .psh = send_psh,
             .rst = send_rst,
             .syn = send_syn,
             .fin = send_fin,
