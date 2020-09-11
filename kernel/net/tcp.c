@@ -37,6 +37,7 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
     if (tcb->send_ack_timer) {
         time_cancel_kernel_callback(tcb->send_ack_timer);
         tcb->send_ack_timer = NULL;
+        tcb->last_segment_unacknowledged = false;
     }
 
     // Only send a SYN if this is the first pending segment, only send a FIN if this is the last pending segment.
@@ -209,6 +210,7 @@ static void tcp_send_empty_ack(struct socket *socket, const struct ip_v4_packet 
     if (tcb->send_ack_timer) {
         time_cancel_kernel_callback(tcb->send_ack_timer);
         tcb->send_ack_timer = NULL;
+        tcb->last_segment_unacknowledged = false;
     }
 
     struct tcp_packet_options opts = {
@@ -262,6 +264,7 @@ static void tcp_on_ack_timeout(struct timer *timer, void *_socket) {
 
     time_cancel_kernel_callback(timer);
     tcb->send_ack_timer = NULL;
+    tcb->last_segment_unacknowledged = false;
 
     net_send_tcp(dest_ip, &opts, NULL);
 }
@@ -418,10 +421,13 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
 
             bool window_changed = tcp_update_recv_window(socket);
 
-            if (packet->flags.psh || (packet->flags.syn && packet->flags.ack) || packet->flags.fin || window_changed) {
+            if (packet->flags.psh || (packet->flags.syn && packet->flags.ack) || packet->flags.fin || window_changed ||
+                tcb->last_segment_unacknowledged) {
                 tcp_send_empty_ack(socket, ip_packet, packet);
-            } else if (!tcb->send_ack_timer) {
+                tcb->last_segment_unacknowledged = false;
+            } else if (!packet->flags.syn && !tcb->send_ack_timer) {
                 tcb->send_ack_timer = time_register_kernel_callback(&ack_timeout, tcp_on_ack_timeout, socket);
+                tcb->last_segment_unacknowledged = true;
             }
             break;
         }

@@ -64,6 +64,7 @@ struct tcp_control_block {
     enum tcp_state state;
     bool pending_syn : 1;
     bool pending_fin : 1;
+    bool last_segment_unacknowledged : 1;
     bool is_passive : 1;
     bool reset_rto_once_established : 1;
     bool time_first_sent_valid : 1;
