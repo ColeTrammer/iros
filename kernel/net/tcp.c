@@ -100,6 +100,10 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_TCP, htons(tcp_length) };
     tcp_packet->check_sum = ntohs(in_compute_checksum_with_start(tcp_packet, tcp_length, in_compute_checksum(&header, sizeof(header))));
 
+#ifdef TCP_DEBUG
+    net_tcp_log(interface->address, dest, packet);
+#endif /* TCP_DEBUG */
+
     int ret = interface->ops->route_ip_v4(interface, packet);
     if (send_time_ptr) {
         *send_time_ptr = time_read_clock(CLOCK_MONOTONIC);
@@ -250,7 +254,7 @@ static void tcp_on_ack_timeout(struct timer *timer, void *_socket) {
         .destination = tcb->destination,
     };
 
-    time_delete_timer(timer);
+    time_cancel_kernel_callback(timer);
     tcb->send_ack_timer = NULL;
 
     net_send_tcp(dest_ip, &opts, NULL);
@@ -409,7 +413,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
 
             if (packet->flags.psh || (packet->flags.syn && packet->flags.ack) || packet->flags.fin || window_changed) {
                 tcp_send_empty_ack(socket, ip_packet, packet);
-            } else {
+            } else if (!tcb->send_ack_timer) {
                 tcb->send_ack_timer = time_register_kernel_callback(&ack_timeout, tcp_on_ack_timeout, socket);
             }
             break;
@@ -648,7 +652,7 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
                 case TCP_TIME_WAIT:
                     tcp_send_empty_ack(socket, ip_packet, packet);
                     time_reset_kernel_callback(tcb->time_wait_timer, &time_wait_timeout);
-                    break;
+                    return;
                 default:
                     break;
             }
@@ -693,12 +697,14 @@ void net_tcp_recieve(struct packet *net_packet) {
         return;
     }
 
-    net_tcp_log(net_packet);
-
     struct packet_header *ip_header = net_packet_innermost_header_of_type(net_packet, PH_IP_V4);
     assert(ip_header);
-
     struct ip_v4_packet *ip_packet = ip_header->raw_header;
+
+#ifdef TCP_DEBUG
+    net_tcp_log(ip_packet->source, ip_packet->destination, net_packet);
+#endif /* TCP_DEBUG */
+
     struct tcp_connection_info info = {
         .source_ip = IP_V4_ZEROES,
         .source_port = ntohs(packet->dest_port),
@@ -757,21 +763,19 @@ void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *o
     }
 }
 
-void net_tcp_log(struct packet *net_packet) {
-    struct tcp_packet *packet = net_packet->headers[net_packet->header_count - 1].raw_header;
-    struct ip_v4_packet *ip_packet = net_packet->headers[net_packet->header_count - 2].raw_header;
+void net_tcp_log(struct ip_v4_address source, struct ip_v4_address destination, struct packet *net_packet) {
+    struct packet_header *header = net_packet_inner_header(net_packet);
+    struct tcp_packet *packet = header->raw_header;
     debug_log("TCP Packet:\n"
+              "               Source IP    [ %03u.%03u.%03u.%03u ]   Dest IP   [ %03u.%03u.%03u.%03u ]\n"
               "               Source Port  [ %15u ]   Dest Port [ %15u ]\n"
               "               Sequence     [ %15u ]   Ack Num   [ %15u ]\n"
               "               Win Size     [ %15u ]   Urg Point [ %15u ]\n"
-              "               Source IP    [ %03u.%03u.%03u.%03u ]   Dest IP   [ %03u.%03u.%03u.%03u ]\n"
               "               Data Len     [ %15lu ]   Data off  [ %15u ]\n"
               "               Flags        [ FIN=%u SYN=%u RST=%u PSH=%u ACK=%u URG=%u ECE=%u CWR=%u ]\n",
-              ntohs(packet->source_port), ntohs(packet->dest_port), ntohl(packet->sequence_number), ntohl(packet->ack_number),
-              ntohs(packet->window_size), ntohs(packet->urg_pointer), ip_packet->source.addr[0], ip_packet->source.addr[1],
-              ip_packet->source.addr[2], ip_packet->source.addr[3], ip_packet->destination.addr[0], ip_packet->destination.addr[1],
-              ip_packet->destination.addr[2], ip_packet->destination.addr[3],
-              ntohs(ip_packet->length) - sizeof(struct ip_v4_packet) - sizeof(uint32_t) * packet->data_offset, packet->data_offset,
-              packet->flags.fin, packet->flags.syn, packet->flags.rst, packet->flags.psh, packet->flags.ack, packet->flags.urg,
-              packet->flags.ece, packet->flags.cwr);
+              source.addr[0], source.addr[1], source.addr[2], source.addr[3], destination.addr[0], destination.addr[1], destination.addr[2],
+              destination.addr[3], ntohs(packet->source_port), ntohs(packet->dest_port), ntohl(packet->sequence_number),
+              ntohl(packet->ack_number), ntohs(packet->window_size), ntohs(packet->urg_pointer),
+              header->length - sizeof(uint32_t) * packet->data_offset, packet->data_offset, packet->flags.fin, packet->flags.syn,
+              packet->flags.rst, packet->flags.psh, packet->flags.ack, packet->flags.urg, packet->flags.ece, packet->flags.cwr);
 }

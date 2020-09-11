@@ -88,6 +88,6 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
 void net_tcp_recieve(struct packet *packet);
 void net_init_tcp_packet(struct tcp_packet *packet, struct tcp_packet_options *opts);
 
-void net_tcp_log(struct packet *packet);
+void net_tcp_log(struct ip_v4_address source, struct ip_v4_address destination, struct packet *net_packet);
 
 #endif /* _KERNEL_NET_TCP_H */
