@@ -125,7 +125,8 @@ struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) 
     tcb->send_window = 1;
     tcb->send_unacknowledged = tcb->send_next = get_random_bytes() & 0xFFFFF;       // Initial sequence number
     tcb->recv_window = 8192;                                                        // Hard coded value
-    tcb->recv_mss = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Default MSS minus headers
+    tcb->recv_mss = 1024 - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet); // Choose a higher than default but safe MSS
+    tcb->send_mss = TCP_DEFAULT_MSS;                                                // Default MSS (can be overridden by the MSS option)
     tcb->rto = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };                     // RTO starts at 1 second.
     tcb->first_rtt_sample = true;
     init_ring_buffer(&tcb->send_buffer, 8192);
@@ -160,7 +161,7 @@ static void tcp_do_retransmit(struct timer *timer, void *_socket) {
     struct tcp_control_block *tcb = socket->private_data;
 
     // Retransmit the earliest segment not acknowledged by the sender.
-    size_t max_data_to_retransmit = tcb->send_mss - sizeof(struct tcp_packet) - sizeof(struct ip_v4_packet);
+    size_t max_data_to_retransmit = tcb->send_mss;
     size_t data_to_retransmit = MIN(tcb->send_next - tcb->send_unacknowledged, max_data_to_retransmit);
     net_send_tcp_from_socket(socket, tcb->send_unacknowledged, tcb->send_unacknowledged + data_to_retransmit, false, true);
 
@@ -212,7 +213,7 @@ bool tcp_update_recv_window(struct socket *socket) {
 
 int tcp_send_segments(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
-    size_t segment_size = tcb->send_mss - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet);
+    size_t segment_size = tcb->send_mss;
     bool push_data = true; // Assume all data should have the PSH bit set.
 
     int ret = 0;
@@ -226,13 +227,11 @@ int tcp_send_segments(struct socket *socket) {
         uint32_t data_queued = data_available - (tcb->send_next - tcb->send_unacknowledged);
 
         uint32_t data_to_send = 0;
-        if (MIN(usable_window, data_queued) >= (ssize_t) segment_size) {
-            data_to_send = MIN(usable_window, data_queued);
-        } else if ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) && push_data && data_queued <= usable_window) {
-            data_to_send = data_queued;
-        } else if ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) &&
-                   MIN(usable_window, data_queued) >= tcb->send_window_max / 2) {
-            data_to_send = tcb->send_window_max / 2;
+        if ((MIN(usable_window, data_queued) >= (ssize_t) segment_size) ||
+            ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) && push_data && data_queued <= usable_window) ||
+            ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) &&
+             MIN(usable_window, data_queued) >= tcb->send_window_max / 2)) {
+            data_to_send = MIN(MIN(data_queued, segment_size), (size_t) usable_window);
         } else if (push_data && data_queued != 0) {
             // FIXME: Set up a timer to send the data in ~0.5s
             break;
