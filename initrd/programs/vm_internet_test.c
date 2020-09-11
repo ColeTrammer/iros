@@ -25,6 +25,12 @@ static int do_tcp(void) {
         return 1;
     }
 
+    int bufmax = 16384;
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufmax, sizeof(bufmax)) < 0) {
+        perror("vm_internet_test: setsockopt(SO_RECVBUF)");
+        return 1;
+    }
+
     if (do_send) {
         if (use_default_addr) {
             in_addr.s_addr = htonl(INADDR_LOOPBACK);

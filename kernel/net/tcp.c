@@ -419,14 +419,21 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
                 socket->readable = true;
             }
 
-            bool window_changed = tcp_update_recv_window(socket);
+            tcb->recv_window -= segment_length;
+            bool window_advanced = tcp_update_recv_window(socket);
 
-            if (packet->flags.psh || (packet->flags.syn && packet->flags.ack) || packet->flags.fin || window_changed ||
+            if (packet->flags.psh || (packet->flags.syn && packet->flags.ack) || packet->flags.fin || window_advanced ||
                 tcb->last_segment_unacknowledged) {
                 tcp_send_empty_ack(socket, ip_packet, packet);
                 tcb->last_segment_unacknowledged = false;
             } else if (!packet->flags.syn && !tcb->send_ack_timer) {
                 tcb->send_ack_timer = time_register_kernel_callback(&ack_timeout, tcp_on_ack_timeout, socket);
+                tcb->last_segment_unacknowledged = true;
+            }
+
+            // Ensure that the first segment sent gets acked immediately. This ensures that connections using slow-start
+            // will ramp up quickly.
+            if (packet->flags.syn) {
                 tcb->last_segment_unacknowledged = true;
             }
             break;

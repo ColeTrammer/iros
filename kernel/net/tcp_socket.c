@@ -124,11 +124,11 @@ struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket) 
     tcb->state = TCP_CLOSED;
     tcb->send_window = 1;
     tcb->send_unacknowledged = tcb->send_next = get_random_bytes() & 0xFFFFF; // Initial sequence number
-    tcb->recv_window = 8192;                                                  // Hard coded value
+    tcb->recv_window = 16384;                                                 // Hard coded value
     tcb->send_mss = TCP_DEFAULT_MSS;                                          // Default MSS (can be overridden by the MSS option)
     tcb->rto = (struct timespec) { .tv_sec = 1, .tv_nsec = 0 };               // RTO starts at 1 second.
     tcb->first_rtt_sample = true;
-    init_ring_buffer(&tcb->send_buffer, 8192);
+    init_ring_buffer(&tcb->send_buffer, 16384);
     init_ring_buffer(&tcb->recv_buffer, tcb->recv_window);
     return tcb;
 }
@@ -192,22 +192,15 @@ static void tcp_setup_retransmission_timer(struct socket *socket) {
 
 bool tcp_update_recv_window(struct socket *socket) {
     struct tcp_control_block *tcb = socket->private_data;
-    uint16_t window_max = ring_buffer_max(&tcb->recv_buffer);
-    uint16_t actual_window_size = ring_buffer_space(&tcb->recv_buffer);
+    uint16_t recv_buffer = ring_buffer_max(&tcb->recv_buffer);
+    uint16_t recv_user = ring_buffer_size(&tcb->recv_buffer);
 
-    uint16_t new_size;
-    // Only update the window size when the halfway mark is reached to avoid SWS.
-    if (actual_window_size == 0) {
-        new_size = 0;
-    } else if (actual_window_size < window_max / 2) {
-        new_size = window_max / 2;
-    } else {
-        new_size = window_max;
+    if (recv_buffer - recv_user - tcb->recv_window >= MIN(recv_buffer / 2, tcb->send_mss)) {
+        tcb->recv_window = recv_buffer - recv_user;
+        return true;
     }
 
-    bool changed = tcb->recv_window != new_size;
-    tcb->recv_window = new_size;
-    return changed;
+    return false;
 }
 
 int tcp_send_segments(struct socket *socket) {
