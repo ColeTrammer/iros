@@ -494,7 +494,9 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         size_t amount_to_read = MIN(amount_readable, len - buffer_index);
         ring_buffer_user_read(&tcb->recv_buffer, buffer + buffer_index, amount_to_read);
         buffer_index += amount_to_read;
-        tcp_update_recv_window(socket);
+        if (tcp_update_recv_window(socket)) {
+            net_send_tcp_from_socket(socket, tcb->send_next, tcb->send_next, false, false);
+        }
         socket->readable = !ring_buffer_empty(&tcb->recv_buffer);
 
         if (flags & MSG_WAITALL) {
