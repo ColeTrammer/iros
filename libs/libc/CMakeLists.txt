@@ -311,7 +311,9 @@ else()
         sys/statvfs/fstatvfs.c
         sys/statvfs/statvfs.c
         sys/syscall/syscall_to_string.c
+        sys/time/getitimer.c
         sys/time/gettimeofday.c
+        sys/time/setitimer.c
         sys/time/utimes.c
         sys/times/times.c
         sys/uio/readv.c
