@@ -139,8 +139,10 @@ size_t fwrite(const void *buf, size_t size, size_t nmemb, FILE *stream);
 
 int fgetpos(FILE *__restrict stream, fpos_t *__restrict pos);
 int fseek(FILE *stream, long offset, int whence);
+int fseeko(FILE *stream, off_t offset, int whence);
 int fsetpos(FILE *__restrict stream, const fpos_t *__restrict pos);
 long ftell(FILE *stream);
+off_t ftello(FILE *stream);
 void rewind(FILE *stream);
 
 void clearerr(FILE *stream);
@@ -164,6 +166,9 @@ int getchar_unlocked(void);
 int putc_unlocked(int c, FILE *stream);
 int putchar_unlocked(int c);
 int fseek_unlocked(FILE *stream, long offset, int whence);
+int fseeko_unlocked(FILE *stream, off_t offset, int whence);
+long ftell_unlocked(FILE *stream);
+off_t ftello_unlocked(FILE *stream);
 
 void flockfile(FILE *stream);
 int ftrylockfile(FILE *stream);

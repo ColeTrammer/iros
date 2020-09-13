@@ -229,8 +229,13 @@ else()
         stdio/freopen.c
         stdio/fseek_unlocked.c
         stdio/fseek.c
+        stdio/fseeko_unlocked.c
+        stdio/fseeko.c
         stdio/fsetpos.c
+        stdio/ftell_unlocked.c
         stdio/ftell.c
+        stdio/ftello_unlocked.c
+        stdio/ftello.c
         stdio/ftrylockfile.c
         stdio/funlockfile.c
         stdio/fwrite_unlocked.c
