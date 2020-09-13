@@ -33,10 +33,10 @@ index 0000000..635f333
 +
 +include(Platform/UnixPaths)
 diff --git a/Source/CTest/cmCTestTestHandler.cxx b/Source/CTest/cmCTestTestHandler.cxx
-index 70e84ee..f4dc67e 100644
+index 4d1a589..1b2479e 100644
 --- a/Source/CTest/cmCTestTestHandler.cxx
 +++ b/Source/CTest/cmCTestTestHandler.cxx
-@@ -580,7 +580,7 @@ void cmCTestTestHandler::LogTestSummary(const std::vector<std::string>& passed,
+@@ -581,7 +581,7 @@ void cmCTestTestHandler::LogTestSummary(const std::vector<std::string>& passed,
    }
    cmCTestLog(this->CTest, HANDLER_OUTPUT,
               std::endl
@@ -45,107 +45,72 @@ index 70e84ee..f4dc67e 100644
                 << this->CTest->GetColorCode(cmCTest::Color::CLEAR_COLOR)
                 << ", " << failedColorCode << failed.size() << " tests failed"
                 << this->CTest->GetColorCode(cmCTest::Color::CLEAR_COLOR)
-diff --git a/Source/LexerParser/cmCTestResourceGroupsLexer.cxx b/Source/LexerParser/cmCTestResourceGroupsLexer.cxx
-index de07c46..2450870 100644
---- a/Source/LexerParser/cmCTestResourceGroupsLexer.cxx
-+++ b/Source/LexerParser/cmCTestResourceGroupsLexer.cxx
-@@ -665,7 +665,23 @@ Modify cmCTestResourceGroupsLexer.cxx:
+diff --git a/Source/cmCMakePath.cxx b/Source/cmCMakePath.cxx
+index b8215df..2dd5324 100644
+--- a/Source/cmCMakePath.cxx
++++ b/Source/cmCMakePath.cxx
+@@ -123,6 +123,7 @@ void cmCMakePath::GetNativePath(std::string& path) const
  
- #include <string>
- 
--#include <cstddef>
-+#ifdef __os_2__
-+namespace std {
-+
-+long stoll(const std::string& str, std::size_t* pos = 0, int base = 10)
-+{
-+  char* end;
-+  long ret = strtol(str.c_str(), &end, base);
-+  if (pos) {
-+    *pos = end - str.c_str();
-+  }
-+  return ret;
-+}
-+
-+}
+   path = tmp.string();
+ }
++#if 0
+ void cmCMakePath::GetNativePath(std::wstring& path) const
+ {
+   cm::filesystem::path tmp(this->Path);
+@@ -144,3 +145,4 @@ void cmCMakePath::GetNativePath(std::wstring& path) const
+   }
+ #endif
+ }
 +#endif
-+
-+#  include <cstddef>
+diff --git a/Source/cmCMakePath.h b/Source/cmCMakePath.h
+index 15aa30c..15fd2a8 100644
+--- a/Source/cmCMakePath.h
++++ b/Source/cmCMakePath.h
+@@ -296,7 +296,9 @@ public:
  
- /*--------------------------------------------------------------------------*/
+   // Observers
+   std::string String() const { return this->Path.string(); }
++#if 0
+   std::wstring WString() const { return this->Path.wstring(); }
++#endif
  
-diff --git a/Source/LexerParser/cmExprLexer.cxx b/Source/LexerParser/cmExprLexer.cxx
-index 72e59b6..6b743e0 100644
---- a/Source/LexerParser/cmExprLexer.cxx
-+++ b/Source/LexerParser/cmExprLexer.cxx
-@@ -992,11 +992,11 @@ YY_RULE_SETUP
- 	YY_BREAK
- case 2:
- YY_RULE_SETUP
--{ yylvalp->Number = std::stoll(yytext, nullptr, 10); return exp_NUMBER; }
-+{ yylvalp->Number = strtoll(yytext, nullptr, 10); return exp_NUMBER; }
- 	YY_BREAK
- case 3:
- YY_RULE_SETUP
--{  yylvalp->Number = std::stoll(yytext, nullptr, 16); return exp_NUMBER; }
-+{  yylvalp->Number = strtoll(yytext, nullptr, 16); return exp_NUMBER; }
- 	YY_BREAK
- case 4:
- YY_RULE_SETUP
-diff --git a/Source/cmELF.cxx b/Source/cmELF.cxx
-index a8d81f7..825a71a 100644
---- a/Source/cmELF.cxx
-+++ b/Source/cmELF.cxx
-@@ -201,15 +201,15 @@ protected:
+   string_type Native() const
+   {
+@@ -312,6 +314,7 @@ public:
+ 
+     return path;
+   }
++#if 0
+   std::wstring NativeWString() const
+   {
+     std::wstring path;
+@@ -319,8 +322,11 @@ public:
+ 
+     return path;
+   }
++#endif
+   std::string GenericString() const { return this->Path.generic_string(); }
++#if 0
+   std::wstring GenericWString() const { return this->Path.generic_wstring(); }
++#endif
+ 
+   // Decomposition
+   cmCMakePath GetRootName() const { return this->Path.root_name(); }
+@@ -449,7 +455,9 @@ private:
+   }
+ 
+   void GetNativePath(std::string& path) const;
++#if 0
+   void GetNativePath(std::wstring& path) const;
++#endif
+ 
+   cm::filesystem::path Path;
  };
- 
- // Configure the implementation template for 32-bit ELF files.
--struct cmELFTypes32
--{
--  using ELF_Ehdr = Elf32_Ehdr;
--  using ELF_Shdr = Elf32_Shdr;
--  using ELF_Dyn = Elf32_Dyn;
--  using ELF_Half = Elf32_Half;
--  using tagtype = ::uint32_t;
--  static const char* GetName() { return "32-bit"; }
--};
-+// struct cmELFTypes32
-+// {
-+//   using ELF_Ehdr = Elf32_Ehdr;
-+//   using ELF_Shdr = Elf32_Shdr;
-+//   using ELF_Dyn = Elf32_Dyn;
-+//   using ELF_Half = Elf32_Half;
-+//   using tagtype = ::uint32_t;
-+//   static const char* GetName() { return "32-bit"; }
-+// };
- 
- // Configure the implementation template for 64-bit ELF files.
- #ifndef _SCO_DS
-@@ -724,13 +724,13 @@ cmELF::cmELF(const char* fname)
- 
-   // Check the class of the file and construct the corresponding
-   // parser implementation.
--  if (ident[EI_CLASS] == ELFCLASS32) {
--    // 32-bit ELF
--    this->Internal = cm::make_unique<cmELFInternalImpl<cmELFTypes32>>(
--      this, std::move(fin), order);
--  }
-+  // if (ident[EI_CLASS] == ELFCLASS32) {
-+  //   // 32-bit ELF
-+  //   this->Internal = cm::make_unique<cmELFInternalImpl<cmELFTypes32>>(
-+  //     this, std::move(fin), order);
-+  // }
- #ifndef _SCO_DS
--  else if (ident[EI_CLASS] == ELFCLASS64) {
-+  if (ident[EI_CLASS] == ELFCLASS64) {
-     // 64-bit ELF
-     this->Internal = cm::make_unique<cmELFInternalImpl<cmELFTypes64>>(
-       this, std::move(fin), order);
 diff --git a/Source/cmFileCommand.cxx b/Source/cmFileCommand.cxx
-index 550ad6e..41bac44 100644
+index 84639a7..0b170aa 100644
 --- a/Source/cmFileCommand.cxx
 +++ b/Source/cmFileCommand.cxx
-@@ -1453,7 +1453,7 @@ public:
+@@ -1500,7 +1500,7 @@ public:
      long OldPercentage = this->CurrentPercentage;
  
      if (total > 0.0) {
@@ -154,141 +119,57 @@ index 550ad6e..41bac44 100644
        if (this->CurrentPercentage > 100) {
          // Avoid extra progress reports for unexpected data beyond total.
          this->CurrentPercentage = 100;
-diff --git a/Source/cmForEachCommand.cxx b/Source/cmForEachCommand.cxx
-index 3b82e0a..cd289ec 100644
---- a/Source/cmForEachCommand.cxx
-+++ b/Source/cmForEachCommand.cxx
-@@ -358,7 +358,7 @@ bool HandleInMode(std::vector<std::string> const& args,
- bool TryParseInteger(cmExecutionStatus& status, const std::string& str, int& i)
- {
-   try {
--    i = std::stoi(str);
-+    i = std::atoi(str.c_str());
-   } catch (std::invalid_argument&) {
-     std::ostringstream e;
-     e << "Invalid integer: '" << str << "'";
-diff --git a/Source/cmListCommand.cxx b/Source/cmListCommand.cxx
-index edec613..e9d4e3b 100644
---- a/Source/cmListCommand.cxx
-+++ b/Source/cmListCommand.cxx
-@@ -33,6 +33,22 @@
- #include "cmSubcommandTable.h"
- #include "cmSystemTools.h"
- 
-+#ifdef __os_2__
-+namespace std {
-+
-+int stoi(const std::string& str, std::size_t* pos = 0, int base = 10)
-+{
-+    char* end;
-+    int ret = strtol(str.c_str(), &end, base);
-+    if (pos) {
-+        *pos = end - str.c_str();
-+    }
-+    return ret;
-+}
-+
-+}
-+#endif
-+
- namespace {
- 
- bool FilterRegex(std::vector<std::string> const& args, bool includeMatches,
-@@ -749,7 +765,7 @@ bool HandleTransformCommand(std::vector<std::string> const& args,
-     {
-     }
- 
--    operator const std::string&() const { return Name; }
-+    operator const std::string &() const { return Name; }
- 
-     std::string Name;
-     int Arity = 0;
-diff --git a/Source/cmStandardLevelResolver.cxx b/Source/cmStandardLevelResolver.cxx
-index 6dbab98..1111345 100644
---- a/Source/cmStandardLevelResolver.cxx
-+++ b/Source/cmStandardLevelResolver.cxx
-@@ -117,8 +117,8 @@ struct StanardLevelComputer
-     int standardValue = -1;
-     int defaultValue = -1;
-     try {
--      standardValue = std::stoi(standardStr);
--      defaultValue = std::stoi(defaultStd);
-+      standardValue = std::atoi(standardStr.c_str());
-+      defaultValue = std::atoi(defaultStd);
-     } catch (std::invalid_argument&) {
-       // fall through as we want an error
-       // when we can't find the bad value in the `stds` vector
-@@ -196,7 +196,7 @@ struct StanardLevelComputer
-     if (existingStandard) {
-       existingLevelIter =
-         std::find(cm::cbegin(this->Levels), cm::cend(this->Levels),
--                  std::stoi(*existingStandard));
-+                  std::atoi((*existingStandard).c_str()));
-       if (existingLevelIter == cm::cend(this->Levels)) {
-         const std::string e =
-           cmStrCat("The ", this->Language, "_STANDARD property on target \"",
-@@ -241,7 +241,8 @@ struct StanardLevelComputer
-     }
-     // convert defaultStandard to an integer
-     if (std::find(cm::cbegin(this->Levels), cm::cend(this->Levels),
--                  std::stoi(*defaultStandard)) == cm::cend(this->Levels)) {
-+                  std::atoi((*defaultStandard).c_str())) ==
-+        cm::cend(this->Levels)) {
-       const std::string e = cmStrCat("The CMAKE_", this->Language,
-                                      "_STANDARD_DEFAULT variable contains an "
-                                      "invalid value: \"",
-@@ -258,7 +259,7 @@ struct StanardLevelComputer
- 
-     auto existingLevelIter =
-       std::find(cm::cbegin(this->Levels), cm::cend(this->Levels),
--                std::stoi(*existingStandard));
-+                std::atoi((*existingStandard).c_str()));
-     if (existingLevelIter == cm::cend(this->Levels)) {
-       const std::string e =
-         cmStrCat("The ", this->Language, "_STANDARD property on target \"",
-@@ -305,8 +306,8 @@ struct StanardLevelComputer
-   std::vector<std::string> LevelsAsStrings;
- };
- 
--std::unordered_map<std::string, StanardLevelComputer> StandardComputerMapping =
--  {
-+std::unordered_map<std::string, StanardLevelComputer>
-+  StandardComputerMapping = {
-     { "C",
-       StanardLevelComputer{ "C", std::vector<int>{ 90, 99, 11 },
-                             std::vector<std::string>{ "90", "99", "11" } } },
-@@ -532,7 +533,8 @@ bool cmStandardLevelResolver::IsLaterStandard(std::string const& lang,
- {
-   auto mapping = StandardComputerMapping.find(lang);
-   if (mapping != cm::cend(StandardComputerMapping)) {
--    return mapping->second.IsLaterStandard(std::stoi(lhs), std::stoi(rhs));
-+    return mapping->second.IsLaterStandard(std::atoi(lhs.c_str()),
-+                                           std::atoi(rhs.c_str()));
+diff --git a/Tests/CMakeLib/testCMFilesystemPath.cxx b/Tests/CMakeLib/testCMFilesystemPath.cxx
+index 1e84520..0eb9b97 100644
+--- a/Tests/CMakeLib/testCMFilesystemPath.cxx
++++ b/Tests/CMakeLib/testCMFilesystemPath.cxx
+@@ -67,6 +67,7 @@ bool testConstructors()
+ #endif
    }
-   return false;
- }
-diff --git a/Source/kwsys/SystemInformation.cxx b/Source/kwsys/SystemInformation.cxx
-index 9c34a56..14fcd3c 100644
---- a/Source/kwsys/SystemInformation.cxx
-+++ b/Source/kwsys/SystemInformation.cxx
-@@ -3635,7 +3635,7 @@ long long SystemInformationImplementation::GetHostMemoryAvailable(
-   if (hostLimitEnvVarName) {
-     const char* hostLimitEnvVarValue = getenv(hostLimitEnvVarName);
-     if (hostLimitEnvVarValue) {
--      long long hostLimit = std::atoll(hostLimitEnvVarValue);
-+      long long hostLimit = atoll(hostLimitEnvVarValue);
-       if (hostLimit > 0) {
-         memTotal = min(hostLimit, memTotal);
-       }
-@@ -3659,7 +3659,7 @@ long long SystemInformationImplementation::GetProcMemoryAvailable(
-   if (procLimitEnvVarName) {
-     const char* procLimitEnvVarValue = getenv(procLimitEnvVarName);
-     if (procLimitEnvVarValue) {
--      long long procLimit = std::atoll(procLimitEnvVarValue);
-+      long long procLimit = atoll(procLimitEnvVarValue);
-       if (procLimit > 0) {
-         memAvail = min(procLimit, memAvail);
-       }
+   {
++#if 0
+     std::wstring s(L"/a/b/c");
+     fs::path p1(s);
+     fs::path p2(s.begin(), s.end());
+@@ -76,6 +77,7 @@ bool testConstructors()
+     if (p1.wstring() != s || p2.wstring() != s) {
+       result = false;
+     }
++#endif
+ #if CM_FILESYSTEM_SOURCE_TRAITS_ITERATOR
+     std::wstring s2(s);
+     s2 += L'\0';
+@@ -277,24 +279,28 @@ bool testObservers()
+   }
+   {
+     std::string s("a//b//c");
++#if 0
+     std::wstring ws(L"a//b//c");
++#endif
+     fs::path p(s);
+-    if (p.string() != s || p.wstring() != ws) {
++    if (p.string() != s/* || p.wstring() != ws */) {
+       result = false;
+     }
+   }
+   {
+     std::string s("a/b/c");
++#if 0
+     std::wstring ws;
+     for (auto c : s) {
+       ws += static_cast<std::wstring::value_type>(c);
+     }
++#endif
+     std::string ns(s);
+     std::replace(
+       ns.begin(), ns.end(), '/',
+       static_cast<std::string::value_type>(fs::path::preferred_separator));
+     fs::path p(ns);
+-    if (p.generic_string() != s || p.generic_wstring() != ws) {
++    if (p.generic_string() != s/* || p.generic_wstring() != ws */) {
+       result = false;
+     }
+   }
 diff --git a/Utilities/cmjsoncpp/src/lib_json/json_writer.cpp b/Utilities/cmjsoncpp/src/lib_json/json_writer.cpp
 index fc86505..e90a977 100644
 --- a/Utilities/cmjsoncpp/src/lib_json/json_writer.cpp
@@ -326,37 +207,8 @@ index 7625cf6..dbf1da9 100644
  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
    list(APPEND uv_libraries
      kvm
-diff --git a/Utilities/cmlibuv/include/uv.h b/Utilities/cmlibuv/include/uv.h
-index 6f32b48..fd5c4e6 100644
---- a/Utilities/cmlibuv/include/uv.h
-+++ b/Utilities/cmlibuv/include/uv.h
-@@ -1223,8 +1223,10 @@ UV_EXTERN uv_pid_t uv_os_getppid(void);
- # define UV_PRIORITY_HIGHEST -20
- #endif
- 
-+#ifndef __os_2__
- UV_EXTERN int uv_os_getpriority(uv_pid_t pid, int* priority);
- UV_EXTERN int uv_os_setpriority(uv_pid_t pid, int priority);
-+#endif
- 
- UV_EXTERN int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count);
- UV_EXTERN void uv_free_cpu_info(uv_cpu_info_t* cpu_infos, int count);
-@@ -1719,11 +1721,13 @@ UV_EXTERN void uv_rwlock_wrlock(uv_rwlock_t* rwlock);
- UV_EXTERN int uv_rwlock_trywrlock(uv_rwlock_t* rwlock);
- UV_EXTERN void uv_rwlock_wrunlock(uv_rwlock_t* rwlock);
- 
-+#if 0
- UV_EXTERN int uv_sem_init(uv_sem_t* sem, unsigned int value);
- UV_EXTERN void uv_sem_destroy(uv_sem_t* sem);
- UV_EXTERN void uv_sem_post(uv_sem_t* sem);
- UV_EXTERN void uv_sem_wait(uv_sem_t* sem);
- UV_EXTERN int uv_sem_trywait(uv_sem_t* sem);
-+#endif
- 
- UV_EXTERN int uv_cond_init(uv_cond_t* cond);
- UV_EXTERN void uv_cond_destroy(uv_cond_t* cond);
 diff --git a/Utilities/cmlibuv/include/uv/unix.h b/Utilities/cmlibuv/include/uv/unix.h
-index f30562e..2d9e202 100644
+index f30562e..d81642b 100644
 --- a/Utilities/cmlibuv/include/uv/unix.h
 +++ b/Utilities/cmlibuv/include/uv/unix.h
 @@ -76,6 +76,8 @@
@@ -368,36 +220,6 @@ index f30562e..2d9e202 100644
  #endif
  
  #ifndef NI_MAXHOST
-@@ -108,6 +110,7 @@ struct uv__io_s {
-   UV_IO_PRIVATE_PLATFORM_FIELDS
- };
- 
-+#define UV_PLATFORM_SEM_T long
- #ifndef UV_PLATFORM_SEM_T
- # define UV_PLATFORM_SEM_T sem_t
- #endif
-diff --git a/Utilities/cmlibuv/src/unix/core.c b/Utilities/cmlibuv/src/unix/core.c
-index 7b80ed5..7411654 100644
---- a/Utilities/cmlibuv/src/unix/core.c
-+++ b/Utilities/cmlibuv/src/unix/core.c
-@@ -1410,7 +1410,7 @@ uv_pid_t uv_os_getppid(void) {
-   return getppid();
- }
- 
--
-+#ifndef __os_2__
- int uv_os_getpriority(uv_pid_t pid, int* priority) {
-   int r;
- 
-@@ -1437,7 +1437,7 @@ int uv_os_setpriority(uv_pid_t pid, int priority) {
- 
-   return 0;
- }
--
-+#endif
- 
- int uv_os_uname(uv_utsname_t* buffer) {
-   struct utsname buf;
 diff --git a/Utilities/cmlibuv/src/unix/fs.c b/Utilities/cmlibuv/src/unix/fs.c
 index f37749c..e99bc30 100644
 --- a/Utilities/cmlibuv/src/unix/fs.c
@@ -433,19 +255,6 @@ index f37749c..e99bc30 100644
    stat_fs->f_type = 0;  /* f_type is not supported. */
  #else
    stat_fs->f_type = buf.f_type;
-diff --git a/Utilities/cmlibuv/src/unix/thread.c b/Utilities/cmlibuv/src/unix/thread.c
-index f93aa53..813f16c 100644
---- a/Utilities/cmlibuv/src/unix/thread.c
-+++ b/Utilities/cmlibuv/src/unix/thread.c
-@@ -501,7 +501,7 @@ static void glibc_version_check(void) {
-       atoi(version + 2) < 21;
- }
- 
--#elif defined(__MVS__)
-+#elif defined(__MVS__) || defined(__os_2__)
- 
- #define platform_needs_custom_semaphore 1
- 
 diff --git a/Utilities/cmlibuv/src/unix/udp.c b/Utilities/cmlibuv/src/unix/udp.c
 index 21b922f..955946f 100644
 --- a/Utilities/cmlibuv/src/unix/udp.c
@@ -468,3 +277,15 @@ index 21b922f..955946f 100644
    int err;
    struct sockaddr_storage mcast_addr;
    struct sockaddr_in* mcast_addr4;
+diff --git a/Utilities/std/cm/filesystem b/Utilities/std/cm/filesystem
+index 6cbdea9..cde568d 100644
+--- a/Utilities/std/cm/filesystem
++++ b/Utilities/std/cm/filesystem
+@@ -7,6 +7,7 @@
+ 
+ #include "cmSTL.hxx" // IWYU pragma: keep
+ 
++#define CMake_HAVE_CXX_FILESYSTEM
+ #if defined(CMake_HAVE_CXX_FILESYSTEM)
+ 
+ #  include <filesystem> // IWYU pragma: export

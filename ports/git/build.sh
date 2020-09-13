@@ -22,6 +22,7 @@ patch() {
 }
 
 configure() {
+    export LDFLAGS="-lcurl"
     autoconf
     ./configure --host=$HOST --prefix=/usr --without-openssl --without-curl --with-editor=edit --with-pager=cat
 }

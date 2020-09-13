@@ -3,13 +3,10 @@
 export PORT_NAME=kilo
 export SRC_DIR=kilo
 export BUILD_DIR=kilo
+export CC=x86_64-os_2-gcc
 
 download() {
     git clone https://github.com/antirez/kilo.git
-}
-
-patch() {
-    git apply ../kilo.patch
 }
 
 install() {
