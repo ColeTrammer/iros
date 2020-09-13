@@ -44,6 +44,21 @@ int main() {
     printf("%d\n", test());
     printf("%d\n", test());
 
+    Dl_info info;
+    assert(dladdr(test, &info) != 0);
+    printf("OBJ PATH: %s\n", info.dli_fname);
+    printf("FUN NAME: %s\n", info.dli_sname);
+    assert(info.dli_saddr == test);
+
+    assert(dladdr(test - 1, &info) != 0);
+    printf("OBJ PATH: %s\n", info.dli_fname);
+    assert(!info.dli_sname);
+
+    assert(dladdr(test + 1, &info) != 0);
+    assert(info.dli_fname);
+    assert(info.dli_sname);
+    assert(info.dli_saddr == test);
+
     void *global_handle = dlopen(NULL, 0);
     assert(global_handle);
 

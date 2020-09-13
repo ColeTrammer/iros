@@ -41,3 +41,18 @@ struct symbol_lookup_result do_symbol_lookup(const char *s, const struct dynamic
     return (struct symbol_lookup_result) { .symbol = NULL, .object = NULL };
 }
 LOADER_HIDDEN_EXPORT(do_symbol_lookup, __loader_do_symbol_lookup);
+
+struct symbol_lookup_result do_addr_lookup(void *_addr) {
+    struct dynamic_elf_object *obj = dynamic_object_head;
+    uintptr_t addr = (uintptr_t) _addr;
+    while (obj) {
+        if (addr >= obj->relocation_offset && addr < obj->relocation_offset + obj->raw_data_size) {
+            struct symbol_lookup_result result = (struct symbol_lookup_result) { .symbol = NULL, .object = obj };
+            result.symbol = lookup_addr(obj, addr);
+            return result;
+        }
+        obj = obj->next;
+    }
+    return (struct symbol_lookup_result) { .symbol = NULL, .object = NULL };
+}
+LOADER_HIDDEN_EXPORT(do_addr_lookup, __loader_do_addr_lookup);

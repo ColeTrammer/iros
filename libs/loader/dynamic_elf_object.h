@@ -29,6 +29,7 @@ const Elf64_Sym *symbol_at(const struct dynamic_elf_object *self, size_t i) LOAD
 const char *symbol_name(const struct dynamic_elf_object *self, size_t i) LOADER_PRIVATE;
 const Elf64_Word *hash_table(const struct dynamic_elf_object *self) LOADER_PRIVATE;
 const Elf64_Sym *lookup_symbol(const struct dynamic_elf_object *self, const char *s) LOADER_PRIVATE;
+const Elf64_Sym *lookup_addr(const struct dynamic_elf_object *self, uintptr_t addr) LOADER_PRIVATE;
 void free_dynamic_elf_object(struct dynamic_elf_object *self) LOADER_PRIVATE;
 void call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) LOADER_PRIVATE;
 void call_fini_functions(struct dynamic_elf_object *obj) LOADER_PRIVATE;

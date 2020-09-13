@@ -154,6 +154,7 @@ const char *dynamic_strings(const struct dynamic_elf_object *self) {
 const char *dynamic_string(const struct dynamic_elf_object *self, size_t i) {
     return &dynamic_strings(self)[i];
 }
+LOADER_HIDDEN_EXPORT(dynamic_string, __loader_dynamic_string);
 
 const char *object_name(const struct dynamic_elf_object *self) {
     if (self->so_name_offset) {
@@ -161,6 +162,7 @@ const char *object_name(const struct dynamic_elf_object *self) {
     }
     return program_name;
 }
+LOADER_HIDDEN_EXPORT(object_name, __loader_object_name);
 
 size_t rela_count(const struct dynamic_elf_object *self) {
     if (!self->rela_size || !self->rela_entry_size) {
@@ -236,6 +238,22 @@ const Elf64_Sym *lookup_symbol(const struct dynamic_elf_object *self, const char
     return NULL;
 }
 LOADER_HIDDEN_EXPORT(lookup_symbol, __loader_lookup_symbol);
+
+const Elf64_Sym *lookup_addr(const struct dynamic_elf_object *self, uintptr_t addr) {
+    addr -= self->relocation_offset;
+
+    const Elf64_Word *ht = hash_table(self);
+    Elf64_Word nbucket = ht[0];
+    Elf64_Word nchain = ht[1];
+    size_t num_symbols = nbucket + nchain;
+    for (size_t i = 0; i < num_symbols; i++) {
+        const Elf64_Sym *sym = symbol_at(self, i);
+        if (addr >= sym->st_value && addr < sym->st_value + MAX(1, sym->st_size)) {
+            return sym;
+        }
+    }
+    return NULL;
+}
 
 void free_dynamic_elf_object(struct dynamic_elf_object *self) {
     remove_dynamic_object(self);

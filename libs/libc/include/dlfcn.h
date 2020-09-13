@@ -10,6 +10,14 @@
 extern "C" {
 #endif /* __cplusplus */
 
+typedef struct {
+    const char *dli_fname;
+    void *dli_fbase;
+    const char *dli_sname;
+    void *dli_saddr;
+} Dl_info;
+
+int dladdr(void *addr, Dl_info *info);
 int dlclose(void *handle);
 char *dlerror(void);
 void *dlopen(const char *path, int flags);
