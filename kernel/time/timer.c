@@ -214,7 +214,11 @@ void time_fire_timer(struct timer *timer) {
     }
 }
 
-void time_tick_timer(struct timer *timer, long nanoseconds) {
+void time_tick_timer(struct timer *timer, long nanoseconds, bool kernel_time) {
+    if (timer->ignore_kernel_ticks && kernel_time) {
+        return;
+    }
+
     struct timespec to_sub = { .tv_sec = nanoseconds / INT64_C(1000000000), .tv_nsec = nanoseconds % INT64_C(1000000000) };
     timer->spec.it_value = time_sub(timer->spec.it_value, to_sub);
 
@@ -316,6 +320,7 @@ int time_setitimer(int which, const struct itimerval *nvalp, struct itimerval *o
             goto done;
         }
         *timerp = time_get_timer(id);
+        (*timerp)->ignore_kernel_ticks = which == ITIMER_VIRTUAL;
     }
 
     struct timer *timer = *timerp;

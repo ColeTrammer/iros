@@ -41,8 +41,8 @@ void handle_pit_interrupt(struct irq_context *context) {
     }
     // Check for NULL b/c kernel tasks don't have a clock
     if (current->task_clock) {
-        time_inc_clock(current->task_clock, 1000000L);
-        time_inc_clock(current->process->process_clock, 1000000L);
+        time_inc_clock(current->task_clock, 1000000L, current->in_kernel);
+        time_inc_clock(current->process->process_clock, 1000000L, current->in_kernel);
     }
 
     if (atomic_load(&current->process->should_profile)) {

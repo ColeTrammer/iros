@@ -33,6 +33,7 @@ struct timer {
     timer_t id;
     struct queued_signal *signal;
     struct task *task;
+    bool ignore_kernel_ticks : 1;
 };
 
 struct timer *time_get_timer(timer_t id);
@@ -54,7 +55,7 @@ void time_reset_kernel_callback(struct timer *timer, struct timespec *new_delay)
 void time_cancel_kernel_callback(struct timer *timer);
 
 void time_fire_timer(struct timer *timer);
-void time_tick_timer(struct timer *timer, long nanoseconds);
+void time_tick_timer(struct timer *timer, long nanoseconds, bool kernel_time);
 
 void init_timers();
 

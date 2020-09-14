@@ -95,8 +95,8 @@ struct timespec time_read_clock(clockid_t id) {
     return clock->time;
 }
 
-void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds) {
-    list_for_each_entry_safe(timer_list, timer, struct timer, clock_list) { time_tick_timer(timer, nanoseconds); }
+void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds, bool kernel_time) {
+    list_for_each_entry_safe(timer_list, timer, struct timer, clock_list) { time_tick_timer(timer, nanoseconds, kernel_time); }
 }
 
 void __time_add_timer_to_clock(struct clock *clock, struct timer *timer) {
@@ -120,8 +120,8 @@ void time_remove_timer_from_clock(struct clock *clock, struct timer *timer) {
 }
 
 static void __inc_global_clocks() {
-    time_inc_clock(&global_monotonic_clock, 1000000);
-    time_inc_clock(&global_realtime_clock, 1000000);
+    time_inc_clock(&global_monotonic_clock, 1000000, false);
+    time_inc_clock(&global_realtime_clock, 1000000, false);
 }
 
 void init_clocks() {
