@@ -59,6 +59,7 @@ pid_t proc_fork(void) {
     init_spinlock(&child_process->parent_lock);
     init_list(&child_process->task_list);
     init_list(&child_process->timer_list);
+    init_list(&child->queued_signals);
     init_wait_queue(&child_process->one_task_left_queue);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
@@ -237,17 +238,20 @@ void task_do_sig_handler(struct task *task, int signum) {
     uint8_t *fpu_save_state = (uint8_t *) ((save_rsp - 128) & ~0xF) - FPU_IMAGE_SIZE; // Sub 128 to enforce red-zone
     ucontext_t *save_state = ((ucontext_t *) fpu_save_state) - 1;
     siginfo_t *info = ((siginfo_t *) save_state) - 1;
+    struct queued_signal *queued_signal = task_first_queued_signal(task);
     if (act->sa_flags & SA_SIGINFO) {
-        if (task->queued_signals && task->queued_signals->info.si_signo == signum) {
-            memcpy(info, &task->queued_signals->info, sizeof(siginfo_t));
-            task_dequeue_signal(task);
+        if (queued_signal) {
+            memcpy(info, &queued_signal->info, sizeof(siginfo_t));
         } else {
             // NOTE: this probably shouldn't happen, but for now means that the
             //       signal was sent by kill instead of sigqueue.
             //       We probably should allocate a struct in this case
             info->si_code = SI_USER;
-            task_unset_sig_pending(task, signum);
         }
+    }
+
+    if (queued_signal) {
+        task_dequeue_signal(task, queued_signal);
     } else {
         task_unset_sig_pending(task, signum);
     }

@@ -1105,6 +1105,7 @@ SYS_CALL(create_task) {
     task->process = current->process;
     task->sig_mask = current->sig_mask;
     task->sig_pending = 0;
+    init_list(&task->queued_signals);
     task->sched_state = RUNNING_INTERRUPTIBLE;
     task->tid = get_next_tid();
     task->locked_robust_mutex_list_head = args->locked_robust_mutex_list_head;

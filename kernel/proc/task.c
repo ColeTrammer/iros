@@ -195,6 +195,7 @@ void init_idle_task(struct processor *processor) {
     task->tid = get_next_tid();
     task->kernel_task = true;
     task->sched_state = RUNNING_UNINTERRUPTIBLE;
+    init_list(&task->queued_signals);
 
     arch_init_idle_task(task, processor);
 
@@ -218,6 +219,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     init_wait_queue(&process->one_task_left_queue);
     init_list(&process->task_list);
     init_list(&process->timer_list);
+    init_list(&task->queued_signals);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->process_memory = NULL;
@@ -385,17 +387,15 @@ void run_task(struct task *task) {
 }
 
 void free_task(struct task *task, bool free_paging_structure) {
-#ifdef TASK_DEBUG
+#ifndef TASK_DEBUG
     debug_log("destroying: [ %d:%d ]\n", task->process->pid, task->tid);
 #endif /* TASK_DEBUG */
 
     arch_free_task(task, free_paging_structure);
 
-    struct queued_signal *si = task->queued_signals;
-    while (si) {
-        struct queued_signal *next = si->next;
-        task_free_queued_signal(si);
-        si = next;
+    list_for_each_entry_safe(&task->queued_signals, queued_signal, struct queued_signal, queue) {
+        list_remove(&queued_signal->queue);
+        task_free_queued_signal(queued_signal);
     }
 
     if (task->kernel_stack) {
@@ -427,27 +427,16 @@ void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add)
 
     int signum = to_add->info.si_signo;
 
-    struct queued_signal *tail = NULL;
-    if (task->queued_signals && task->queued_signals->info.si_signo <= signum) {
-        tail = task->queued_signals;
-        for (;; tail = tail->next) {
-            if (!tail->next || tail->next->info.si_signo > signum) {
-                break;
-            }
+    list_for_each_entry(&task->queued_signals, queued_signal, struct queued_signal, queue) {
+        if (queued_signal->info.si_signo > signum) {
+            list_prepend(&queued_signal->queue, &to_add->queue);
+            goto finish;
         }
-
-        assert(tail);
-        to_add->next = tail->next;
-    } else {
-        to_add->next = task->queued_signals;
     }
 
-    if (!tail) {
-        task->queued_signals = to_add;
-    } else {
-        tail->next = to_add;
-    }
+    list_append(&task->queued_signals, &to_add->queue);
 
+finish:
     task_set_sig_pending(task, signum);
     interrupts_restore(save);
 }
@@ -485,20 +474,28 @@ task_enqueue_signal_end:
 void task_free_queued_signal(struct queued_signal *queued_signal) {
     if (queued_signal->flags & QUEUED_SIGNAL_DONT_FREE_FLAG) {
         queued_signal->flags &= ~QUEUED_SIGNAL_DONT_FREE_FLAG;
-        queued_signal->next = NULL;
     } else {
         free(queued_signal);
     }
 }
 
-void task_dequeue_signal(struct task *task) {
-    struct queued_signal *next = task->queued_signals->next;
-    if (!next || next->info.si_signo != task->queued_signals->info.si_signo) {
-        task_unset_sig_pending(task, task->queued_signals->info.si_signo);
+void task_dequeue_signal(struct task *task, struct queued_signal *queued_signal) {
+    struct queued_signal *next = list_next_entry(&task->queued_signals, &queued_signal->queue, struct queued_signal, queue);
+    if (!next || next->info.si_signo != queued_signal->info.si_signo) {
+        task_unset_sig_pending(task, queued_signal->info.si_signo);
     }
 
-    task_free_queued_signal(task->queued_signals);
-    task->queued_signals = next;
+    list_remove(&queued_signal->queue);
+    task_free_queued_signal(queued_signal);
+}
+
+struct queued_signal *task_first_queued_signal(struct task *task) {
+    list_for_each_entry(&task->queued_signals, queued_signal, struct queued_signal, queue) {
+        if (!task_is_sig_blocked(task, queued_signal->info.si_signo)) {
+            return queued_signal;
+        }
+    }
+    return NULL;
 }
 
 int task_get_next_sig(struct task *task) {

@@ -60,4 +60,6 @@ static inline void list_clear(struct list_node *head) {
 #define list_first_entry(head, type, member) (list_is_empty(head) ? NULL : container_of((head)->next, type, member))
 #define list_last_entry(head, type, member)  (list_is_empty(head) ? NULL : container_of((head)->prev, type, member))
 
+#define list_next_entry(head, node, type, member) ((head) != (node)->next ? list_entry((node)->next, type, member) : NULL)
+
 #endif /* _KERNEL_UTIL_LIST_H */

@@ -48,7 +48,7 @@ struct args_context {
 #define QUEUED_SIGNAL_DONT_FREE_FLAG 1
 
 struct queued_signal {
-    struct queued_signal *next;
+    struct list_node queue;
     int flags;
     siginfo_t info;
 };
@@ -77,7 +77,7 @@ struct task {
     sigset_t saved_sig_mask;
     sigset_t sig_pending;
 
-    struct queued_signal *queued_signals;
+    struct list_node queued_signals;
 
     int tid;
 
@@ -138,8 +138,9 @@ bool task_is_sig_blocked(struct task *task, int signum);
 void proc_notify_parent(struct process *child);
 void task_enqueue_signal(struct task *task, int signum, void *val, bool was_sigqueue);
 void task_enqueue_signal_object(struct task *task, struct queued_signal *sig);
-void task_dequeue_signal(struct task *task);
+void task_dequeue_signal(struct task *task, struct queued_signal *signal);
 void task_free_queued_signal(struct queued_signal *queued_signal);
+struct queued_signal *task_first_queued_signal(struct task *task);
 
 void task_yield_if_state_changed(struct task *task);
 void task_do_sigs_if_needed(struct task *task);
