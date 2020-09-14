@@ -61,7 +61,7 @@ static void free_process_vm(struct process *process) {
     process->used_user_mutexes = NULL;
 
     list_for_each_entry_safe(&process->timer_list, timer, struct timer, proc_list) {
-        if (timer != process->alarm_timer) {
+        if (timer != process->alarm_timer && timer != process->profile_timer && timer != process->virtual_timer) {
             time_delete_timer(timer);
         }
     }
@@ -162,6 +162,14 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
 
             if (process->alarm_timer) {
                 time_delete_timer(process->alarm_timer);
+            }
+
+            if (process->profile_timer) {
+                time_delete_timer(process->profile_timer);
+            }
+
+            if (process->virtual_timer) {
+                time_delete_timer(process->virtual_timer);
             }
 
             if (process->args_context) {

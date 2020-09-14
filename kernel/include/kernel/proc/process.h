@@ -67,6 +67,8 @@ struct process {
     struct clock *process_clock;
     struct list_node timer_list;
     struct timer *alarm_timer;
+    struct timer *profile_timer;
+    struct timer *virtual_timer;
 
     struct args_context *args_context;
 
