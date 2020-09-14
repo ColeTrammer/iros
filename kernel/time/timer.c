@@ -220,17 +220,117 @@ void time_tick_timer(struct timer *timer, long nanoseconds) {
 
     // This means timer expired
     if (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0)) {
-        timer->spec.it_value.tv_sec = timer->spec.it_value.tv_nsec = 0;
         if (timer->spec.it_interval.tv_sec != 0 || timer->spec.it_interval.tv_nsec != 0) {
             do {
                 time_fire_timer(timer);
                 timer->spec.it_value = time_add(timer->spec.it_value, timer->spec.it_interval);
             } while (timer->spec.it_value.tv_sec < 0 || (timer->spec.it_value.tv_sec == 0 && timer->spec.it_value.tv_nsec == 0));
         } else {
+            timer->spec.it_value.tv_sec = timer->spec.it_value.tv_nsec = 0;
             __time_remove_timer_from_clock(timer->clock, timer);
             time_fire_timer(timer);
         }
     }
+}
+
+int time_getitimer(int which, struct itimerval *valp) {
+    int ret = 0;
+    struct timer *timer = NULL;
+    struct process *current = get_current_process();
+
+    mutex_lock(&current->lock);
+    switch (which) {
+        case ITIMER_REAL:
+            timer = current->alarm_timer;
+            break;
+        case ITIMER_PROF:
+            timer = current->profile_timer;
+            break;
+        case ITIMER_VIRTUAL:
+            timer = current->virtual_timer;
+            break;
+        default:
+            ret = -EINVAL;
+            goto done;
+    }
+
+    struct itimerval val = { 0 };
+    if (timer) {
+        struct itimerspec valspec;
+        if ((ret = time_get_timer_value(timer, &valspec))) {
+            goto done;
+        }
+        val = itimerval_from_itimerspec(valspec);
+    }
+    *valp = val;
+
+done:
+    mutex_unlock(&current->lock);
+    return ret;
+}
+
+int time_setitimer(int which, const struct itimerval *nvalp, struct itimerval *ovalp) {
+    if (!nvalp && !ovalp) {
+        return -EINVAL;
+    }
+
+    int ret = 0;
+    struct timer **timerp;
+    struct process *current = get_current_process();
+
+    switch (which) {
+        case ITIMER_REAL:
+            timerp = &current->alarm_timer;
+            break;
+        case ITIMER_PROF:
+            timerp = &current->profile_timer;
+            break;
+        case ITIMER_VIRTUAL:
+            timerp = &current->virtual_timer;
+            break;
+        default:
+            return -EINVAL;
+    }
+
+    mutex_lock(&current->lock);
+    if (!*timerp) {
+        struct clock *clock;
+        struct sigevent sev = { .sigev_notify = SIGEV_SIGNAL };
+        switch (which) {
+            case ITIMER_REAL:
+                clock = time_get_clock(CLOCK_REALTIME);
+                sev.sigev_signo = SIGALRM;
+                break;
+            case ITIMER_PROF:
+                clock = current->process_clock;
+                sev.sigev_signo = SIGPROF;
+                break;
+            case ITIMER_VIRTUAL:
+                clock = current->process_clock;
+                sev.sigev_signo = SIGVTALRM;
+                break;
+        }
+
+        timer_t id;
+        if ((ret = time_create_timer(clock, &sev, &id))) {
+            goto done;
+        }
+        *timerp = time_get_timer(id);
+    }
+
+    struct timer *timer = *timerp;
+    if (ovalp) {
+        *ovalp = itimerval_from_itimerspec(timer->spec);
+    }
+
+    if (nvalp) {
+        struct itimerspec spec = itimerspec_from_itimerval(*nvalp);
+        ret = time_set_timer(timer, 0, &spec, NULL);
+    }
+
+done:
+    mutex_unlock(&current->lock);
+    return ret;
 }
 
 void init_timers() {

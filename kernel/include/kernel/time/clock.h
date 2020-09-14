@@ -94,6 +94,14 @@ static inline __attribute__((always_inline)) struct timeval timeval_from_time(st
     return (struct timeval) { .tv_sec = s.tv_sec, .tv_usec = s.tv_nsec / 1000 };
 }
 
+static inline __attribute__((always_inline)) struct itimerspec itimerspec_from_itimerval(struct itimerval v) {
+    return (struct itimerspec) { .it_value = time_from_timeval(v.it_value), .it_interval = time_from_timeval(v.it_interval) };
+}
+
+static inline __attribute__((always_inline)) struct itimerval itimerval_from_itimerspec(struct itimerspec s) {
+    return (struct itimerval) { .it_value = timeval_from_time(s.it_value), .it_interval = timeval_from_time(s.it_interval) };
+}
+
 extern struct clock global_monotonic_clock;
 extern struct clock global_realtime_clock;
 

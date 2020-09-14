@@ -24,7 +24,11 @@
 #include <kernel/fs/file.h>
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/hal.h>
+#include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
+#include <kernel/hal/timer.h>
+#include <kernel/hal/x86_64/gdt.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
@@ -38,11 +42,6 @@
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/validators.h>
-
-#include <kernel/hal/hal.h>
-#include <kernel/hal/output.h>
-#include <kernel/hal/timer.h>
-#include <kernel/hal/x86_64/gdt.h>
 
 // #define DUP_DEBUG
 // #define EXIT_DEBUG
@@ -2220,6 +2219,25 @@ SYS_CALL(setprioity) {
     SYS_PARAM3(int, value);
 
     SYS_RETURN(proc_setpriority(which, who, value));
+}
+
+SYS_CALL(getitimer) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, which);
+    SYS_PARAM2_VALIDATE(struct itimerval *, value, validate_write, sizeof(struct itimerval));
+
+    SYS_RETURN(time_getitimer(which, value));
+}
+
+SYS_CALL(setitimer) {
+    SYS_BEGIN();
+
+    SYS_PARAM1(int, which);
+    SYS_PARAM2_VALIDATE(struct itimerval *, nvalp, validate_read_or_null, sizeof(struct itimerval));
+    SYS_PARAM3_VALIDATE(struct itimerval *, ovalp, validate_write_or_null, sizeof(struct itimerval));
+
+    SYS_RETURN(time_setitimer(which, nvalp, ovalp));
 }
 
 SYS_CALL(invalid_system_call) {

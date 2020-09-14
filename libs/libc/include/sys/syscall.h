@@ -112,7 +112,9 @@
     __ENUMERATE_SYSCALL(getrusage, 2)               \
     __ENUMERATE_SYSCALL(nice, 1)                    \
     __ENUMERATE_SYSCALL(getpriority, 2)             \
-    __ENUMERATE_SYSCALL(setprioity, 3)
+    __ENUMERATE_SYSCALL(setprioity, 3)              \
+    __ENUMERATE_SYSCALL(getitimer, 2)               \
+    __ENUMERATE_SYSCALL(setitimer, 3)
 
 #ifdef __ASSEMBLER__
 #define SYS_SIGRETURN 27

@@ -3,6 +3,7 @@
 
 #include <signal.h>
 #include <stdbool.h>
+#include <sys/time.h>
 #include <time.h>
 
 #include <kernel/util/hash_map.h>
@@ -43,6 +44,9 @@ int time_delete_timer(struct timer *timer);
 int time_get_timer_overrun(struct timer *timer);
 int time_get_timer_value(struct timer *timer, struct itimerspec *valp);
 int time_set_timer(struct timer *timer, int flags, const struct itimerspec *new_spec, struct itimerspec *old);
+
+int time_getitimer(int which, struct itimerval *valp);
+int time_setitimer(int which, const struct itimerval *nvalp, struct itimerval *ovalp);
 
 struct timer *time_register_kernel_callback(struct timespec *delay, void (*callback)(struct timer *timer, void *closure), void *closure);
 void __time_reset_kernel_callback(struct timer *timer, struct timespec *new_delay);

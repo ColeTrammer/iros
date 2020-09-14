@@ -155,11 +155,6 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
                 }
             }
 
-            if (process->process_clock) {
-                time_destroy_clock(process->process_clock);
-                process->process_clock = NULL;
-            }
-
             if (process->alarm_timer) {
                 time_delete_timer(process->alarm_timer);
             }
@@ -170,6 +165,11 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
 
             if (process->virtual_timer) {
                 time_delete_timer(process->virtual_timer);
+            }
+
+            if (process->process_clock) {
+                time_destroy_clock(process->process_clock);
+                process->process_clock = NULL;
             }
 
             if (process->args_context) {
