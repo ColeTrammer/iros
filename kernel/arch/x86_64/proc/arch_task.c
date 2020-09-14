@@ -316,5 +316,6 @@ void task_do_sig_handler(struct task *task, int signum) {
     struct task *current = get_current_task();
     assert(current == task);
     current->sched_state = RUNNING_INTERRUPTIBLE;
+    current->in_kernel = false;
     __run_task(&current->arch_task);
 }
