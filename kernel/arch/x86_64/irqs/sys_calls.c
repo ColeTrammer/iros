@@ -1048,49 +1048,6 @@ SYS_CALL(fcntl) {
     SYS_RETURN(fs_fcntl(desc, command, arg));
 }
 
-SYS_CALL(alarm) {
-    SYS_BEGIN();
-
-    SYS_PARAM1(unsigned int, seconds);
-
-    unsigned int ret = 0;
-
-    struct process *process = get_current_task()->process;
-    mutex_lock(&process->lock);
-
-    if (process->alarm_timer) {
-        ret = process->alarm_timer->spec.it_value.tv_sec + process->alarm_timer->spec.it_value.tv_nsec ? 1U : 0U;
-    }
-
-    if (seconds == 0) {
-        if (process->alarm_timer) {
-            time_delete_timer(process->alarm_timer);
-            process->alarm_timer = NULL;
-        }
-    } else {
-        if (!process->alarm_timer) {
-            struct clock *clock = time_get_clock(CLOCK_MONOTONIC);
-            struct sigevent evp;
-            evp.sigev_notify = SIGEV_SIGNAL;
-            evp.sigev_signo = SIGALRM;
-            timer_t id;
-            if (time_create_timer(clock, &evp, &id)) {
-                goto finish_alarm;
-            }
-            process->alarm_timer = time_get_timer(id);
-        }
-
-        struct itimerspec timer_spec = { 0 };
-        timer_spec.it_value.tv_sec = seconds;
-        time_set_timer(process->alarm_timer, 0, &timer_spec, NULL);
-    }
-
-finish_alarm:
-    mutex_unlock(&process->lock);
-
-    SYS_RETURN(ret);
-}
-
 SYS_CALL(getppid) {
     SYS_BEGIN();
     SYS_RETURN(proc_getppid(get_current_process()));

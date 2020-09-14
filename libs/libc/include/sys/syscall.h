@@ -49,7 +49,6 @@
     __ENUMERATE_SYSCALL(munmap, 2)                  \
     __ENUMERATE_SYSCALL(rename, 2)                  \
     __ENUMERATE_SYSCALL(fcntl, 3)                   \
-    __ENUMERATE_SYSCALL(alarm, 1)                   \
     __ENUMERATE_SYSCALL(getppid, 0)                 \
     __ENUMERATE_SYSCALL(sigsuspend, 1)              \
     __ENUMERATE_SYSCALL(times, 1)                   \
