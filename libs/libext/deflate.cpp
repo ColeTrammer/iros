@@ -91,14 +91,14 @@ static constexpr void build_huffman_tree(Symbol* symbols, size_t num_symbols, Tr
 }
 
 static constexpr decltype(auto) build_static_huffman_literals() {
-    FixedArray<Symbol, DeflateDecoder::hlit_max> literal_symbols;
+    FixedArray<Symbol, DeflateDecoder::hlit_max + 2> literal_symbols;
     for (size_t i = 0; i < literal_symbols.size(); i++) {
         literal_symbols[i].code = 0;
         literal_symbols[i].symbol = i;
         literal_symbols[i].encoded_length = i <= 143 ? 8 : i <= 255 ? 9 : i <= 279 ? 7 : 8;
     }
 
-    FixedArray<TreeNode, 573> tree;
+    FixedArray<TreeNode, 575> tree;
     for (size_t i = 0; i < tree.size(); i++) {
         tree[i].m_left = 0;
         tree[i].m_right = 0;
@@ -236,12 +236,21 @@ GetBlockCompressionMethod : {
 
     switch (compression_type.value()) {
         case CompressionType::None:
+#ifdef DEFLATE_DEBUG
+            fprintf(stderr, "No compression block\n");
+#endif /* DEFLATE_DEBUG */
             goto GetNoCompressionLen;
         case CompressionType::Fixed:
             m_literal_tree = static_literal_table.array();
             m_distance_tree = static_distance_table.array();
+#ifdef DEFLATE_DEBUG
+            fprintf(stderr, "Fixed compression block\n");
+#endif /* DEFLATE_DEBUG */
             goto GetLiteral;
         case CompressionType::Dynamic:
+#ifdef DEFLATE_DEBUG
+            fprintf(stderr, "Dynamic compression block\n");
+#endif /* DEFLATE_DEBUG */
             goto GetHLit;
         default:
             return StreamResult::Error;
@@ -345,6 +354,9 @@ GetDistanceExtraBits : {
 #endif /* DEFLATE_DEBUG */
 
     size_t current_index = m_decompressed_data.size();
+    if (current_index < static_cast<size_t>(distance)) {
+        return StreamResult::Error;
+    }
     for (size_t i = 0; i < m_length; i++) {
         auto byte = m_decompressed_data[current_index - distance + i];
 #ifdef DEFLATE_DEBUG

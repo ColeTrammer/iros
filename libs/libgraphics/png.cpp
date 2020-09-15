@@ -165,7 +165,7 @@ SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
     auto bytes_per_scanline = 1 + (width * bit_depth * 3 / CHAR_BIT);
     auto expected_size = bytes_per_scanline * height;
 #ifdef PNG_DEBUG
-    fprintf(stderr, "bytes_per_scanline=%u expected_size=%u decompressed_size=%u", bytes_per_scanline, expected_size,
+    fprintf(stderr, "bytes_per_scanline=%u expected_size=%u decompressed_size=%u\n", bytes_per_scanline, expected_size,
             decompressed_data.size());
 #endif /* PNG_DEBUG */
     if (decompressed_data.size() != expected_size) {
