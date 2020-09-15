@@ -17,7 +17,7 @@ public:
     virtual void render() {
         Renderer renderer(*window()->pixels());
         auto c = ColorValue::White;
-        if (m_bitmap && m_bitmap->get(m_index)) {
+        if (m_bitset && m_bitset->get(m_index)) {
             c = ColorValue::Black;
         }
 
@@ -27,8 +27,8 @@ public:
     }
 
     virtual void on_mouse_event(App::MouseEvent& event) override {
-        if (m_bitmap && event.left() == MOUSE_DOWN) {
-            m_bitmap->flip(m_index);
+        if (m_bitset && event.left() == MOUSE_DOWN) {
+            m_bitset->flip(m_index);
             invalidate();
         }
 
@@ -36,9 +36,9 @@ public:
     }
 
 private:
-    GlyphEditorWidgetCell(Bitmap<uint8_t>*& bitmap, int index) : m_bitmap(bitmap), m_index(index) {}
+    GlyphEditorWidgetCell(Bitset<uint8_t>*& bitset, int index) : m_bitset(bitset), m_index(index) {}
 
-    Bitmap<uint8_t>*& m_bitmap;
+    Bitset<uint8_t>*& m_bitset;
     int m_index { 0 };
 };
 
@@ -46,8 +46,8 @@ class GlyphEditorWidget final : public App::Widget {
     APP_OBJECT(GlyphEditorWidget)
 
 public:
-    void set_bitmap(Bitmap<uint8_t>* bitmap, char c) {
-        m_bitmap = bitmap;
+    void set_bitset(Bitset<uint8_t>* bitset, char c) {
+        m_bitset = bitset;
         m_info_label->set_text(String::format("Editing glyph %d (%c)", c, c));
         invalidate();
     }
@@ -68,7 +68,7 @@ private:
 
             for (int j = 0; j < m_width; j++) {
                 int index = i * m_width + m_width - j - 1;
-                col_layout.add<GlyphEditorWidgetCell>(m_bitmap, index);
+                col_layout.add<GlyphEditorWidgetCell>(m_bitset, index);
             }
         }
 
@@ -84,7 +84,7 @@ private:
         demo_label.set_font(font());
     }
 
-    Bitmap<uint8_t>* m_bitmap { nullptr };
+    Bitset<uint8_t>* m_bitset { nullptr };
     int m_width { 0 };
     int m_height { 0 };
     SharedPtr<App::TextLabel> m_info_label;
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 
     auto& layout = main_widget.set_layout<App::VerticalBoxLayout>();
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
-    glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(0)), 0);
+    glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font.get_for_character(0)), 0);
 
     auto& glyph_widget = layout.add<App::Widget>();
     auto& row_layout = glyph_widget.set_layout<App::VerticalBoxLayout>();
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
             button.set_font(font);
             button.on_click = [&, code_point]() {
-                glyph_editor.set_bitmap(const_cast<Bitmap<uint8_t>*>(font.get_for_character(code_point)), code_point);
+                glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font.get_for_character(code_point)), code_point);
             };
         }
     }

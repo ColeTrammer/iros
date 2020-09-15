@@ -11,9 +11,9 @@ FontImpl::FontImpl(const char* path) {
     uint8_t b[16];
     int i = 0;
     while (read(font_file, b, 16) == 16) {
-        auto bitmap = Bitmap<uint8_t>(16 * 8);
-        memcpy(bitmap.bitmap(), b, 16);
-        m_font_map.put(i++, move(bitmap));
+        auto bitset = Bitset<uint8_t>(16 * 8);
+        memcpy(bitset.bitset(), b, 16);
+        m_font_map.put(i++, move(bitset));
     }
 
     close(font_file);
@@ -21,15 +21,15 @@ FontImpl::FontImpl(const char* path) {
 
 FontImpl::FontImpl(int num_chars) {
     for (int i = 0; i < num_chars; i++) {
-        auto empty_bitmap = Bitmap<uint8_t>(16 * 8);
-        memset(empty_bitmap.bitmap(), 0, 16);
-        m_font_map.put(i, move(empty_bitmap));
+        auto empty_bitset = Bitset<uint8_t>(16 * 8);
+        memset(empty_bitset.bitset(), 0, 16);
+        m_font_map.put(i, move(empty_bitset));
     }
 }
 
 FontImpl::~FontImpl() {}
 
-const Bitmap<uint8_t>* FontImpl::get_for_character(int c) const {
+const Bitset<uint8_t>* FontImpl::get_for_character(int c) const {
     return m_font_map.get(c);
 }
 
@@ -46,12 +46,12 @@ bool FontImpl::save_to_file(const String& path) const {
     fputc(16, file);
 
     for (int i = 0; i < 256; i++) {
-        auto* bitmap = get_for_character(i);
-        if (!bitmap) {
+        auto* bitset = get_for_character(i);
+        if (!bitset) {
             break;
         }
 
-        bitmap->for_each_storage_part([&](uint8_t byte) {
+        bitset->for_each_storage_part([&](uint8_t byte) {
             fputc(byte, file);
         });
     }

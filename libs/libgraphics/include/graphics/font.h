@@ -1,7 +1,7 @@
 #pragma once
 
 #include <fcntl.h>
-#include <liim/bitmap.h>
+#include <liim/bitset.h>
 #include <liim/hash_map.h>
 #include <liim/string.h>
 #include <stdint.h>
@@ -14,11 +14,11 @@ public:
     FontImpl(int num_chars);
     ~FontImpl();
 
-    const Bitmap<uint8_t>* get_for_character(int c) const;
+    const Bitset<uint8_t>* get_for_character(int c) const;
     bool save_to_file(const String& path) const;
 
 private:
-    HashMap<int, Bitmap<uint8_t>> m_font_map;
+    HashMap<int, Bitset<uint8_t>> m_font_map;
 };
 
 class Font {
@@ -43,7 +43,7 @@ public:
 
     Font(const char* path) : m_impl(make_shared<FontImpl>(path)) {}
 
-    const Bitmap<uint8_t>* get_for_character(int c) const { return m_impl->get_for_character(c); }
+    const Bitset<uint8_t>* get_for_character(int c) const { return m_impl->get_for_character(c); }
     bool save_to_file(const String& path) const { return m_impl->save_to_file(path); }
 
 private:

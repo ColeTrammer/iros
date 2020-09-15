@@ -7,26 +7,26 @@
 namespace LIIM {
 
 template<typename T>
-class Bitmap {
+class Bitset {
 public:
-    Bitmap(size_t num_bits) : m_bit_count(num_bits) { m_bits = new T[(num_bits + sizeof(T) * CHAR_BIT - 1) / (sizeof(T) * CHAR_BIT)]; }
+    Bitset(size_t num_bits) : m_bit_count(num_bits) { m_bits = new T[(num_bits + sizeof(T) * CHAR_BIT - 1) / (sizeof(T) * CHAR_BIT)]; }
 
-    Bitmap(Bitmap&& other) : m_should_deallocate(other.m_should_deallocate), m_bits(other.m_bits), m_bit_count(other.m_bit_count) {
+    Bitset(Bitset&& other) : m_should_deallocate(other.m_should_deallocate), m_bits(other.m_bits), m_bit_count(other.m_bit_count) {
         other.m_should_deallocate = false;
         other.m_bits = nullptr;
         other.m_bit_count = 0;
     }
 
     template<typename U>
-    static SharedPtr<Bitmap<U>> wrap(U* bits, size_t num_bits) {
-        auto bitmap = make_shared<Bitmap<U>>();
-        bitmap->m_should_deallocate = false;
-        bitmap->m_bits = bits;
-        bitmap->m_bit_count = num_bits;
-        return bitmap;
+    static SharedPtr<Bitset<U>> wrap(U* bits, size_t num_bits) {
+        auto bitset = make_shared<Bitset<U>>();
+        bitset->m_should_deallocate = false;
+        bitset->m_bits = bits;
+        bitset->m_bit_count = num_bits;
+        return bitset;
     }
 
-    ~Bitmap() {
+    ~Bitset() {
         if (m_should_deallocate) {
             delete[] m_bits;
         }
@@ -56,8 +56,8 @@ public:
         m_bits[long_index] ^= (1UL << bit_index);
     }
 
-    T* bitmap() { return m_bits; }
-    const T* bitmap() const { return m_bits; }
+    T* bitset() { return m_bits; }
+    const T* bitset() const { return m_bits; }
 
     size_t bit_count() const { return m_bit_count; }
 
@@ -75,7 +75,7 @@ public:
         }
     }
 
-    Bitmap() {}
+    Bitset() {}
 
 private:
     bool m_should_deallocate { true };
@@ -85,4 +85,4 @@ private:
 
 }
 
-using LIIM::Bitmap;
+using LIIM::Bitset;
