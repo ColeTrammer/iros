@@ -6,7 +6,7 @@
 #include <window_server/message.h>
 #include <window_server/window.h>
 
-class PixelBuffer;
+class Bitmap;
 
 namespace WindowServer {
 

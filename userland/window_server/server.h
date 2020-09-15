@@ -9,14 +9,14 @@
 #include <liim/vector.h>
 #include <window_server/message.h>
 
-class PixelBuffer;
+class Bitmap;
 class WindowManager;
 
 class Server final : public App::Object {
     APP_OBJECT(Server)
 
 public:
-    Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer);
+    Server(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer);
     ~Server();
 
     virtual void initialize() override;

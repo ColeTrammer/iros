@@ -1,7 +1,6 @@
 #pragma once
 
 #include <app/widget.h>
-#include <liim/bitmap.h>
 #include <liim/function.h>
 #include <liim/string.h>
 #include <liim/vector.h>

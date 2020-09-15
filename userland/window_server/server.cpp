@@ -1,7 +1,7 @@
 #include <app/event_loop.h>
 #include <assert.h>
 #include <errno.h>
-#include <graphics/pixel_buffer.h>
+#include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 #include <liim/pointers.h>
 #include <stdio.h>
@@ -17,7 +17,7 @@
 
 constexpr time_t draw_timer_rate = 1000 / 60;
 
-Server::Server(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
+Server::Server(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer)
     : m_manager(make_unique<WindowManager>(fb, front_buffer, back_buffer)) {
     m_manager->on_window_close_button_pressed = [this](auto window) {
         m_manager->remove_window(window);

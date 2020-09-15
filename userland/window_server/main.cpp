@@ -1,6 +1,6 @@
 #include <fcntl.h>
+#include <graphics/bitmap.h>
 #include <graphics/font.h>
-#include <graphics/pixel_buffer.h>
 #include <graphics/renderer.h>
 #include <liim/pointers.h>
 #include <stdio.h>
@@ -35,10 +35,10 @@ int main() {
         return 1;
     }
 
-    auto front_buffer = PixelBuffer::wrap(raw_pixels, sz.x, sz.y);
+    auto front_buffer = Bitmap::wrap(raw_pixels, sz.x, sz.y);
     front_buffer->clear(ColorValue::DarkGray);
 
-    auto back_buffer = PixelBuffer::wrap(raw_pixels + sz.x * sz.y, sz.x, sz.y);
+    auto back_buffer = Bitmap::wrap(raw_pixels + sz.x * sz.y, sz.x, sz.y);
     back_buffer->clear(ColorValue::DarkGray);
 
     auto server = Server::create(nullptr, fb, front_buffer, back_buffer);

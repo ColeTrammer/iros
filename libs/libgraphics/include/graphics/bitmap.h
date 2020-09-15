@@ -7,22 +7,22 @@
 #include <stdint.h>
 #include <stdio.h>
 
-class PixelBuffer {
+class Bitmap {
 public:
-    PixelBuffer() { m_should_deallocate = false; }
+    Bitmap() { m_should_deallocate = false; }
 
-    PixelBuffer(int width, int height) : PixelBuffer(new uint32_t[width * height], width, height) { m_should_deallocate = true; }
+    Bitmap(int width, int height) : Bitmap(new uint32_t[width * height], width, height) { m_should_deallocate = true; }
 
-    PixelBuffer(const Rect& rect) : PixelBuffer(rect.width(), rect.height()) {}
+    Bitmap(const Rect& rect) : Bitmap(rect.width(), rect.height()) {}
 
-    ~PixelBuffer() {
+    ~Bitmap() {
         if (m_should_deallocate && m_pixels) {
             delete[] m_pixels;
             m_pixels = nullptr;
         }
     }
 
-    static SharedPtr<PixelBuffer> wrap(uint32_t* pixels, int width, int height) { return make_shared<PixelBuffer>(pixels, width, height); }
+    static SharedPtr<Bitmap> wrap(uint32_t* pixels, int width, int height) { return make_shared<Bitmap>(pixels, width, height); }
 
     int width() const { return m_width; }
     int height() const { return m_height; }
@@ -49,7 +49,7 @@ public:
         return m_pixels[y * m_width + x];
     }
 
-    PixelBuffer(uint32_t* pixels, int width, int height) : m_width(width), m_height(height), m_pixels(pixels) {}
+    Bitmap(uint32_t* pixels, int width, int height) : m_width(width), m_height(height), m_pixels(pixels) {}
 
 private:
     bool m_should_deallocate { false };

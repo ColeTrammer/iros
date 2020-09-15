@@ -5,7 +5,7 @@
 #include <graphics/renderer.h>
 #include <liim/string.h>
 
-static SharedPtr<PixelBuffer> s_bitmap;
+static SharedPtr<Bitmap> s_bitmap;
 
 class TestWidget final : public App::Widget {
     APP_OBJECT(TestWidget)

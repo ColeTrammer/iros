@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <graphics/png.h>
 #include <grp.h>
 #include <pwd.h>
 #include <sys/stat.h>

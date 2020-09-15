@@ -4,7 +4,7 @@
 #include <app/text_label.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
-#include <graphics/pixel_buffer.h>
+#include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 
 #include "app_panel.h"

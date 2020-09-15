@@ -1,4 +1,4 @@
-#include <graphics/pixel_buffer.h>
+#include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 #include <sys/ioctl.h>
 
@@ -31,7 +31,7 @@ WindowManager& WindowManager::the() {
     return *s_the;
 }
 
-WindowManager::WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer)
+WindowManager::WindowManager(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer)
     : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer), m_taskbar(back_buffer->width(), back_buffer->height()) {
     s_the = this;
 }

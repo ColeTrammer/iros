@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
-#include <graphics/pixel_buffer.h>
+#include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 #include <stdio.h>
 #include <string.h>

@@ -18,7 +18,7 @@ public:
 
     virtual ~Window();
 
-    SharedPtr<PixelBuffer>& pixels() { return m_ws_window->pixels(); }
+    SharedPtr<Bitmap>& pixels() { return m_ws_window->pixels(); }
 
     wid_t wid() const { return m_ws_window->wid(); }
 

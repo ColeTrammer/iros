@@ -195,7 +195,7 @@ static_assert(alpha_blend(Color(255, 255, 255, 0), ColorValue::Black) == ColorVa
 static_assert(alpha_blend(Color(255, 255, 255, 200), ColorValue::Black).a() == 255);
 static_assert(alpha_blend(Color(140, 0, 0, 200), ColorValue::Black) == Color(109, 0, 0, 255));
 
-void Renderer::draw_bitmap(const PixelBuffer& src, const Rect& src_rect_in, const Rect& dest_rect_in) {
+void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rect& dest_rect_in) {
     assert(src_rect_in.width() == dest_rect_in.width());
     assert(src_rect_in.height() == dest_rect_in.height());
 

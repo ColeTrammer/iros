@@ -1,9 +1,9 @@
 #pragma once
 
 #include <assert.h>
+#include <graphics/bitmap.h>
 #include <graphics/color.h>
 #include <graphics/font.h>
-#include <graphics/pixel_buffer.h>
 #include <graphics/rect.h>
 #include <graphics/text_align.h>
 #include <liim/pointers.h>
@@ -11,7 +11,7 @@
 
 class Renderer {
 public:
-    Renderer(PixelBuffer& buffer) : m_pixels(buffer) {}
+    Renderer(Bitmap& buffer) : m_pixels(buffer) {}
 
     void fill_rect(int x, int y, int width, int height, Color color);
     void draw_rect(int x, int y, int width, int height, Color color);
@@ -29,11 +29,11 @@ public:
     void render_text(const String& text, const Rect& rect, Color color, TextAlign text_align = TextAlign::CenterLeft,
                      const Font& font = Font::default_font());
 
-    void draw_bitmap(const PixelBuffer& src, const Rect& src_rect, const Rect& dest_rect);
+    void draw_bitmap(const Bitmap& src, const Rect& src_rect, const Rect& dest_rect);
 
-    PixelBuffer& pixels() { return m_pixels; }
-    const PixelBuffer& pixels() const { return m_pixels; }
+    Bitmap& pixels() { return m_pixels; }
+    const Bitmap& pixels() const { return m_pixels; }
 
 private:
-    PixelBuffer& m_pixels;
+    Bitmap& m_pixels;
 };

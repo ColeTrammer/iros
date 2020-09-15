@@ -1,7 +1,7 @@
 set(SOURCES
     color.cpp
     font.cpp
-    pixel_buffer.cpp
+    bitmap.cpp
     png.cpp
     rect_set.cpp
     renderer.cpp

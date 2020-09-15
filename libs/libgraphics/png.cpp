@@ -16,7 +16,7 @@ enum FilterType {
     Paeth,
 };
 
-SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
+SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
     size_t offset = 0;
     bool seen_ihdr = false;
     bool successfully_decoded_idat = false;
@@ -238,7 +238,7 @@ SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
         }
     }
 
-    auto bitmap = make_shared<PixelBuffer>(width, height);
+    auto bitmap = make_shared<Bitmap>(width, height);
     for (int y = 0; y < height; y++) {
         auto* raw_scanline = &decompressed_data[y * bytes_per_scanline + 1];
         for (int x = 0; x < width; x++) {
@@ -251,7 +251,7 @@ SharedPtr<PixelBuffer> decode_png_image(uint8_t* data, size_t size) {
     return bitmap;
 }
 
-SharedPtr<PixelBuffer> decode_png_file(const String& path) {
+SharedPtr<Bitmap> decode_png_file(const String& path) {
     auto mapped_file = Ext::MappedFile::create(path, PROT_READ, MAP_SHARED);
     if (!mapped_file) {
         return nullptr;

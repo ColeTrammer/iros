@@ -1,6 +1,6 @@
 #pragma once
 
-#include <graphics/pixel_buffer.h>
+#include <graphics/bitmap.h>
 #include <graphics/rect.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
@@ -27,7 +27,7 @@ public:
 
     void draw();
 
-    SharedPtr<PixelBuffer>& pixels() { return m_back; }
+    SharedPtr<Bitmap>& pixels() { return m_back; }
 
     const Rect& rect() const { return m_rect; }
 
@@ -49,13 +49,13 @@ private:
     Window(const Rect& rect, Message::CreateWindowResponse& message, Connection& connection);
 
     Rect m_rect;
-    SharedPtr<PixelBuffer> m_front;
-    SharedPtr<PixelBuffer> m_back;
+    SharedPtr<Bitmap> m_front;
+    SharedPtr<Bitmap> m_back;
     void* m_raw_pixels { MAP_FAILED };
     size_t m_raw_pixels_size { 0 };
     wid_t m_wid;
     String m_shm_path;
-    Function<void(SharedPtr<PixelBuffer>&)> m_draw_callback;
+    Function<void(SharedPtr<Bitmap>&)> m_draw_callback;
     Connection& m_connection;
     bool m_removed { false };
 };

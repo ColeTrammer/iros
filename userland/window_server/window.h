@@ -7,7 +7,7 @@
 #include <sys/mman.h>
 #include <window_server/message.h>
 
-class PixelBuffer;
+class Bitmap;
 
 typedef uint64_t wid_t;
 
@@ -48,8 +48,8 @@ public:
     const String& title() const { return m_title; }
     void set_title(String title) { m_title = move(title); }
 
-    SharedPtr<PixelBuffer>& buffer() { return m_front_buffer; }
-    const SharedPtr<PixelBuffer>& buffer() const { return m_front_buffer; }
+    SharedPtr<Bitmap>& buffer() { return m_front_buffer; }
+    const SharedPtr<Bitmap>& buffer() const { return m_front_buffer; }
 
     Rect& resize_rect() { return m_resize_rect; }
     const Rect& resize_rect() const { return m_resize_rect; }
@@ -94,8 +94,8 @@ private:
     Rect m_resize_rect;
     Vector<SharedPtr<Window>> m_children;
     Window* m_parent { nullptr };
-    SharedPtr<PixelBuffer> m_front_buffer;
-    SharedPtr<PixelBuffer> m_back_buffer;
+    SharedPtr<Bitmap> m_front_buffer;
+    SharedPtr<Bitmap> m_back_buffer;
     void* m_raw_buffer { MAP_FAILED };
     size_t m_raw_buffer_size { 0 };
 };

@@ -28,8 +28,8 @@ void Window::resize(int new_width, int new_height) {
     assert(m_raw_pixels != MAP_FAILED);
     close(shm);
 
-    m_front = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels), new_width, new_height);
-    m_back = PixelBuffer::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels) + m_raw_pixels_size / 2 / sizeof(uint32_t), new_width, new_height);
+    m_front = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels), new_width, new_height);
+    m_back = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels) + m_raw_pixels_size / 2 / sizeof(uint32_t), new_width, new_height);
 
     m_rect.set_width(new_width);
     m_rect.set_height(new_height);

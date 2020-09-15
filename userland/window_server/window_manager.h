@@ -28,7 +28,7 @@ public:
         Left,
     };
 
-    WindowManager(int fb, SharedPtr<PixelBuffer> front_buffer, SharedPtr<PixelBuffer> back_buffer);
+    WindowManager(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer);
     ~WindowManager();
 
     void add_window(SharedPtr<Window> window);
@@ -80,8 +80,8 @@ private:
     int m_mouse_x { 0 };
     int m_mouse_y { 0 };
     RectSet m_dirty_rects;
-    SharedPtr<PixelBuffer> m_front_buffer;
-    SharedPtr<PixelBuffer> m_back_buffer;
+    SharedPtr<Bitmap> m_front_buffer;
+    SharedPtr<Bitmap> m_back_buffer;
     Vector<SharedPtr<Window>> m_window_stack;
     HashMap<wid_t, SharedPtr<Window>> m_window_map;
     Taskbar m_taskbar;

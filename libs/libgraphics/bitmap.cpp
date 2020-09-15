@@ -1,13 +1,13 @@
+#include <graphics/bitmap.h>
 #include <graphics/color.h>
-#include <graphics/pixel_buffer.h>
 #include <stdio.h>
 #include <string.h>
 
-void PixelBuffer::clear(Color c) {
+void Bitmap::clear(Color c) {
     clear_after_y(0, c);
 }
 
-void PixelBuffer::clear_after_y(int y_start, Color c) {
+void Bitmap::clear_after_y(int y_start, Color c) {
     auto color = c.color();
     for (auto y = y_start; y < height(); y++) {
         for (auto x = 0; x < width(); x++) {
@@ -16,7 +16,7 @@ void PixelBuffer::clear_after_y(int y_start, Color c) {
     }
 }
 
-void PixelBuffer::shrink_width(int new_width) {
+void Bitmap::shrink_width(int new_width) {
     auto* pixels = this->pixels();
     for (auto y = 1; y < height(); y++) {
         for (auto x = 0; x < new_width; x++) {
@@ -27,7 +27,7 @@ void PixelBuffer::shrink_width(int new_width) {
     m_width = new_width;
 }
 
-void PixelBuffer::adjust_for_size_change(int old_width, int old_height) {
+void Bitmap::adjust_for_size_change(int old_width, int old_height) {
     auto background_color = Color(ColorValue::Black).color();
     for (auto yi = height(); yi > 0; yi--) {
         auto new_y = yi - 1;
