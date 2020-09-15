@@ -13,6 +13,7 @@ class TestWidget final : public App::Widget {
 public:
     virtual void render() override {
         Renderer renderer(*window()->pixels());
+        renderer.fill_rect(rect(), ColorValue::Black);
 
         auto w = s_bitmap->width();
         auto h = s_bitmap->height();

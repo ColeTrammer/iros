@@ -9,11 +9,19 @@
 // #define PNG_DEBUG
 
 enum FilterType {
-    None,
-    Sub,
-    Up,
-    Average,
-    Paeth,
+    None = 0,
+    Sub = 1,
+    Up = 2,
+    Average = 3,
+    Paeth = 4,
+};
+
+enum ColorType {
+    Grayscale = 0,
+    RGB = 2,
+    Palette = 3,
+    GrayscaleAlpha = 4,
+    RGBA = 6,
 };
 
 SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
@@ -82,7 +90,12 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
         }
 
         if (header->interlace_method != 0) {
-            fprintf(stderr, "Unsupported PNG interlace method; %u\n", header->interlace_method);
+            fprintf(stderr, "Unsupported PNG interlace method: %u\n", header->interlace_method);
+            return false;
+        }
+
+        if (color_type != ColorType::RGB && color_type != ColorType::RGBA) {
+            fprintf(stderr, "Unsupported PNG color type: %u\n", color_type);
             return false;
         }
 
@@ -162,7 +175,9 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
     }
 
     auto& decompressed_data = idat_decoder.decompressed_data();
-    auto bytes_per_scanline = 1 + (width * bit_depth * 3 / CHAR_BIT);
+    auto channels = color_type == ColorType::RGBA ? 4 : 3;
+    auto bpp = max(1, channels * bit_depth / CHAR_BIT);
+    auto bytes_per_scanline = 1 + (width * bit_depth * channels / CHAR_BIT);
     auto expected_size = bytes_per_scanline * height;
 #ifdef PNG_DEBUG
     fprintf(stderr, "bytes_per_scanline=%u expected_size=%u decompressed_size=%u\n", bytes_per_scanline, expected_size,
@@ -179,7 +194,6 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
                 break;
             case FilterType::Sub: {
                 auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
-                auto bpp = 3;
                 for (int i = bpp; i < bytes_per_scanline - 1; i++) {
                     raw_scanline[i] += raw_scanline[i - bpp];
                 }
@@ -200,7 +214,6 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
             case FilterType::Average: {
                 auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
                 auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
-                auto bpp = 3;
                 for (int i = 0; i < bytes_per_scanline - 1; i++) {
                     auto left = i >= bpp ? raw_scanline[i - bpp] : 0;
                     auto prev = scanline_index > 0 ? prev_scanline[i] : 0;
@@ -224,7 +237,6 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
                 };
                 auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
                 auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
-                auto bpp = 3;
                 for (int i = 0; i < bytes_per_scanline - 1; i++) {
                     auto left = i >= bpp ? raw_scanline[i - bpp] : 0;
                     auto above = scanline_index > 0 ? prev_scanline[i] : 0;
@@ -238,14 +250,15 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
         }
     }
 
-    auto bitmap = make_shared<Bitmap>(width, height, false);
+    auto bitmap = make_shared<Bitmap>(width, height, color_type == ColorType::RGBA);
     for (int y = 0; y < height; y++) {
         auto* raw_scanline = &decompressed_data[y * bytes_per_scanline + 1];
         for (int x = 0; x < width; x++) {
-            auto r = raw_scanline[3 * x];
-            auto g = raw_scanline[3 * x + 1];
-            auto b = raw_scanline[3 * x + 2];
-            bitmap->put_pixel(x, y, Color(r, g, b));
+            auto r = raw_scanline[channels * x];
+            auto g = raw_scanline[channels * x + 1];
+            auto b = raw_scanline[channels * x + 2];
+            auto a = color_type == ColorType::RGBA ? raw_scanline[channels * x + 3] : 0xFF;
+            bitmap->put_pixel(x, y, Color(r, g, b, a));
         }
     }
     return bitmap;
