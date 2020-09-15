@@ -9,11 +9,13 @@
 
 class Bitmap {
 public:
-    Bitmap() { m_should_deallocate = false; }
+    Bitmap(bool has_alpha) : m_should_deallocate(false), m_has_alpha(has_alpha) {}
 
-    Bitmap(int width, int height) : Bitmap(new uint32_t[width * height], width, height) { m_should_deallocate = true; }
+    Bitmap(int width, int height, bool has_alpha) : Bitmap(new uint32_t[width * height], width, height, has_alpha) {
+        m_should_deallocate = true;
+    }
 
-    Bitmap(const Rect& rect) : Bitmap(rect.width(), rect.height()) {}
+    Bitmap(const Rect& rect, bool has_alpha) : Bitmap(rect.width(), rect.height(), has_alpha) {}
 
     ~Bitmap() {
         if (m_should_deallocate && m_pixels) {
@@ -22,7 +24,9 @@ public:
         }
     }
 
-    static SharedPtr<Bitmap> wrap(uint32_t* pixels, int width, int height) { return make_shared<Bitmap>(pixels, width, height); }
+    static SharedPtr<Bitmap> wrap(uint32_t* pixels, int width, int height, bool has_alpha) {
+        return make_shared<Bitmap>(pixels, width, height, has_alpha);
+    }
 
     int width() const { return m_width; }
     int height() const { return m_height; }
@@ -49,10 +53,14 @@ public:
         return m_pixels[y * m_width + x];
     }
 
-    Bitmap(uint32_t* pixels, int width, int height) : m_width(width), m_height(height), m_pixels(pixels) {}
+    bool has_alpha() const { return m_has_alpha; }
+
+    Bitmap(uint32_t* pixels, int width, int height, bool has_alpha)
+        : m_has_alpha(has_alpha), m_width(width), m_height(height), m_pixels(pixels) {}
 
 private:
     bool m_should_deallocate { false };
+    bool m_has_alpha { false };
     int m_width { 0 };
     int m_height { 0 };
     uint32_t* m_pixels { nullptr };

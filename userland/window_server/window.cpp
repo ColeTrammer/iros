@@ -117,9 +117,9 @@ void Window::map_buffers() {
     assert(m_raw_buffer != MAP_FAILED);
     m_raw_buffer_size = len;
 
-    m_front_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_buffer), m_content_rect.width(), m_content_rect.height());
+    m_front_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_buffer), m_content_rect.width(), m_content_rect.height(), false);
     m_back_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_buffer) + m_front_buffer->size_in_bytes() / sizeof(uint32_t),
-                                 m_content_rect.width(), m_content_rect.height());
+                                 m_content_rect.width(), m_content_rect.height(), false);
     close(fd);
 }
 

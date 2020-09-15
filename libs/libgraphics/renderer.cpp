@@ -194,6 +194,7 @@ static_assert(alpha_blend(ColorValue::Black, ColorValue::Black) == ColorValue::B
 static_assert(alpha_blend(Color(255, 255, 255, 0), ColorValue::Black) == ColorValue::Black);
 static_assert(alpha_blend(Color(255, 255, 255, 200), ColorValue::Black).a() == 255);
 static_assert(alpha_blend(Color(140, 0, 0, 200), ColorValue::Black) == Color(109, 0, 0, 255));
+static_assert(alpha_blend(ColorValue::Clear, ColorValue::Clear) == ColorValue::Clear);
 
 void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rect& dest_rect_in) {
     assert(src_rect_in.width() == dest_rect_in.width());
@@ -225,6 +226,14 @@ void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rec
     auto raw_dest = m_pixels.pixels();
     auto dest_width = m_pixels.width();
 
+    if (!src.has_alpha()) {
+        auto row_width_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
+        for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
+            auto dest_y = y_offset + src_y;
+            memcpy(raw_dest + dest_y * dest_width + x_offset + src_x_start, raw_src + src_y * src_width + src_x_start, row_width_in_bytes);
+        }
+    }
+
     for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
         auto dest_y = y_offset + src_y;
         for (auto src_x = src_x_start; src_x < src_x_end; src_x++) {
@@ -234,13 +243,6 @@ void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rec
             background = alpha_blend(foreground, background).color();
         }
     }
-#if 0
-    auto row_width_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
-    for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
-        auto dest_y = y_offset + src_y;
-        memcpy(raw_dest + dest_y * dest_width + x_offset + src_x_start, raw_src + src_y * src_width + src_x_start, row_width_in_bytes);
-    }
-#endif
 }
 
 void Renderer::render_text(int x, int y, const String& text, Color color, const Font& font) {

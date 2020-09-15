@@ -238,7 +238,7 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
         }
     }
 
-    auto bitmap = make_shared<Bitmap>(width, height);
+    auto bitmap = make_shared<Bitmap>(width, height, false);
     for (int y = 0; y < height; y++) {
         auto* raw_scanline = &decompressed_data[y * bytes_per_scanline + 1];
         for (int x = 0; x < width; x++) {
