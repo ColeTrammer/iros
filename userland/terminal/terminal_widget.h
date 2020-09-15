@@ -11,7 +11,7 @@ class TerminalWidget final : public App::Widget {
     APP_OBJECT(TerminalWidget)
 
 public:
-    TerminalWidget();
+    TerminalWidget(double opacity);
     virtual void initialize() override;
 
     virtual void render() override;
@@ -34,5 +34,6 @@ private:
     int m_selection_start_col { -1 };
     int m_selection_end_row { -1 };
     int m_selection_end_col { -1 };
+    uint8_t m_background_alpha { 255 };
     bool m_in_selection { false };
 };

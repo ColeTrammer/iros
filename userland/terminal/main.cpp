@@ -126,8 +126,9 @@ int main(int argc, char** argv) {
         }
     });
 
-    auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal");
-    window->set_main_widget<TerminalWidget>();
+    double opacity = 0.90;
+    auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal", opacity != 1.0);
+    window->set_main_widget<TerminalWidget>(opacity);
     app.enter();
     return 0;
 }

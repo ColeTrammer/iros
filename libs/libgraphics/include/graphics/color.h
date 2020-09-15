@@ -44,6 +44,7 @@ public:
 
     constexpr uint32_t color() const { return m_color; }
 
+    constexpr void set_alpha(uint8_t a) { set(r(), g(), b(), a); }
     constexpr void set(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF) { m_color = a << 24 | r << 16 | g << 8 | b; }
 
     constexpr uint8_t a() const { return (m_color & 0xFF000000U) >> 24; }

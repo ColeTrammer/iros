@@ -13,7 +13,7 @@
 constexpr int cell_width = 8;
 constexpr int cell_height = 16;
 
-TerminalWidget::TerminalWidget() : m_tty(m_pseudo_terminal) {}
+TerminalWidget::TerminalWidget(double opacity) : m_tty(m_pseudo_terminal), m_background_alpha(static_cast<uint8_t>(opacity * 255)) {}
 
 void TerminalWidget::initialize() {
     auto context_menu = App::ContextMenu::create(window()->shared_from_this(), window()->shared_from_this());
@@ -74,6 +74,18 @@ void TerminalWidget::render() {
     auto x_offset = rect().x() + 5;
     auto y_offset = rect().y() + 5;
 
+    Rect left_rect = { rect().x(), rect().y(), 5, rect().height() };
+    Rect right_rect = { rect().x() + 5 + cell_width * m_tty.col_count(), rect().y(), 5, rect().height() };
+    Rect top_rect = { rect().x() + 5, rect().y(), rect().width() - 10, 5 };
+    Rect bottom_rect = { rect().x() + 5, rect().y() + 5 + cell_height * m_tty.row_count(), rect().width() - 10, 5 };
+
+    Color default_bg = ColorValue::Black;
+    default_bg.set_alpha(m_background_alpha);
+    renderer.clear_rect(left_rect, default_bg);
+    renderer.clear_rect(right_rect, default_bg);
+    renderer.clear_rect(top_rect, default_bg);
+    renderer.clear_rect(bottom_rect, default_bg);
+
     auto& rows = m_tty.rows();
     for (auto r = 0; r < rows.size(); r++) {
         auto& row = rows[r];
@@ -106,6 +118,7 @@ void TerminalWidget::render() {
             }
 
             auto cell_rect = Rect { x, y, cell_width, cell_height };
+            bg.set_alpha(m_background_alpha);
             renderer.fill_rect(cell_rect, bg);
             renderer.render_text(String(cell.ch), cell_rect, fg, TextAlign::Center, cell.bold ? Font::bold_font() : Font::default_font());
         }
