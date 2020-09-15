@@ -10,12 +10,13 @@ enum class ColorValue {
     Black,
     DarkGray,
     LightGray,
+    Clear,
 };
 
 class Color {
 public:
     constexpr Color() : Color(0xFF, 0xFF, 0xFF) {}
-    constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0x00) : m_color(a << 24 | r << 16 | g << 8 | b) {}
+    constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF) { set(r, g, b, a); }
     constexpr Color(uint32_t value) : m_color(value) {}
     Color(enum vga_color color);
 
@@ -33,6 +34,9 @@ public:
             case ColorValue::LightGray:
                 set(170, 170, 170);
                 break;
+            case ColorValue::Clear:
+                set(0, 0, 0, 0);
+                break;
         }
     }
 
@@ -40,7 +44,7 @@ public:
 
     constexpr uint32_t color() const { return m_color; }
 
-    constexpr void set(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0x00) { m_color = a << 24 | r << 16 | g << 8 | b; }
+    constexpr void set(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF) { m_color = a << 24 | r << 16 | g << 8 | b; }
 
     constexpr uint8_t a() const { return (m_color & 0xFF000000U) >> 24; }
     constexpr uint8_t r() const { return (m_color & 0x00FF0000U) >> 16; }

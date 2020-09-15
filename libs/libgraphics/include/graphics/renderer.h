@@ -15,8 +15,10 @@ public:
 
     void fill_rect(int x, int y, int width, int height, Color color);
     void draw_rect(int x, int y, int width, int height, Color color);
+    void clear_rect(int x, int y, int width, int height, Color color);
     void fill_rect(const Rect& rect, Color color) { fill_rect(rect.x(), rect.y(), rect.width(), rect.height(), color); }
     void draw_rect(const Rect& rect, Color color) { draw_rect(rect.x(), rect.y(), rect.width(), rect.height(), color); }
+    void clear_rect(const Rect& rect, Color color) { clear_rect(rect.x(), rect.y(), rect.width(), rect.height(), color); }
 
     void draw_line(Point start, Point end, Color color);
 

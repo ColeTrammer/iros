@@ -19,6 +19,7 @@ public:
         renderer.draw_line({ 5, 350 }, { 205, 200 }, ColorValue::White);
         renderer.draw_line({ 300, 50 }, { 350, 350 }, ColorValue::White);
 
+        renderer.clear_rect({ 100, 100, 200, 200 }, Color(255, 255, 255, 123));
         App::Widget::render();
     }
 };

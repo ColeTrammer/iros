@@ -38,6 +38,28 @@ void Renderer::draw_rect(int x, int y, int width, int height, Color color) {
     }
 }
 
+void Renderer::clear_rect(int x, int y, int width, int height, Color color_object) {
+    auto& buffer = m_pixels;
+
+    auto y_start = LIIM::max(0, y);
+    auto y_end = LIIM::min(y + height, buffer.height());
+
+    auto x_start = LIIM::max(0, x);
+    auto x_end = LIIM::min(x + width, buffer.width());
+
+    if (y_end <= y_start || x_end <= x_start) {
+        return;
+    }
+
+    auto color = color_object.color();
+    for (int y = y_start; y < y_end; y++) {
+        auto* base = buffer.pixels() + (y * buffer.width());
+        for (int x = x_start; x < x_end; x++) {
+            base[x] = color;
+        }
+    }
+}
+
 void Renderer::draw_line(Point start, Point end, Color color) {
     auto x_start = clamp(start.x(), 0, m_pixels.width() - 1);
     auto x_end = clamp(end.x(), 0, m_pixels.width() - 1);
@@ -132,6 +154,47 @@ void Renderer::draw_circle(int x, int y, int r, Color color) {
     }
 }
 
+static constexpr Color alpha_blend(Color foreground, Color background) {
+    auto alpha_a = foreground.a();
+    auto alpha_b = background.a();
+
+    if (alpha_a == 0) {
+        return background;
+    } else if (alpha_a == 0xFF || alpha_b == 0) {
+        return foreground;
+    }
+
+    auto a_out = alpha_a + alpha_b * (255U - alpha_a) / 255U;
+    if (!a_out) {
+        return ColorValue::Clear;
+    }
+
+    auto r_a = foreground.r();
+    auto r_b = background.r();
+    auto scaled_r_a = r_a * alpha_a / 255U;
+    auto scaled_r_b = r_b * alpha_b / 255U * (255U - alpha_a) / 255U;
+
+    auto g_a = foreground.g();
+    auto g_b = background.g();
+    auto scaled_g_a = g_a * alpha_a / 255U;
+    auto scaled_g_b = g_b * alpha_b / 255U * (255U - alpha_a) / 255U;
+
+    auto b_a = foreground.b();
+    auto b_b = background.b();
+    auto scaled_b_a = b_a * alpha_a / 255U;
+    auto scaled_b_b = b_b * alpha_b / 255U * (255U - alpha_a) / 255U;
+
+    auto r_out = (scaled_r_a + scaled_r_b) * 255U / (a_out);
+    auto g_out = (scaled_g_a + scaled_g_b) * 255U / (a_out);
+    auto b_out = (scaled_b_a + scaled_b_b) * 255U / (a_out);
+    return Color(r_out, g_out, b_out, a_out);
+}
+
+static_assert(alpha_blend(ColorValue::Black, ColorValue::Black) == ColorValue::Black);
+static_assert(alpha_blend(Color(255, 255, 255, 0), ColorValue::Black) == ColorValue::Black);
+static_assert(alpha_blend(Color(255, 255, 255, 200), ColorValue::Black).a() == 255);
+static_assert(alpha_blend(Color(140, 0, 0, 200), ColorValue::Black) == Color(109, 0, 0, 255));
+
 void Renderer::draw_bitmap(const PixelBuffer& src, const Rect& src_rect_in, const Rect& dest_rect_in) {
     assert(src_rect_in.width() == dest_rect_in.width());
     assert(src_rect_in.height() == dest_rect_in.height());
@@ -157,15 +220,27 @@ void Renderer::draw_bitmap(const PixelBuffer& src, const Rect& src_rect_in, cons
     auto src_y_end = src_y_start + src_rect.height();
 
     auto src_width = src.width();
-    auto row_width_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
     auto raw_src = src.pixels();
 
     auto raw_dest = m_pixels.pixels();
     auto dest_width = m_pixels.width();
+
+    for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
+        auto dest_y = y_offset + src_y;
+        for (auto src_x = src_x_start; src_x < src_x_end; src_x++) {
+            auto dest_x = x_offset + src_x;
+            auto& background = raw_dest[dest_y * dest_width + dest_x];
+            auto foreground = raw_src[src_y * src_width + dest_x - x_offset];
+            background = alpha_blend(foreground, background).color();
+        }
+    }
+#if 0
+    auto row_width_in_bytes = (src_x_end - src_x_start) * sizeof(uint32_t);
     for (auto src_y = src_y_start; src_y < src_y_end; src_y++) {
         auto dest_y = y_offset + src_y;
         memcpy(raw_dest + dest_y * dest_width + x_offset + src_x_start, raw_src + src_y * src_width + src_x_start, row_width_in_bytes);
     }
+#endif
 }
 
 void Renderer::render_text(int x, int y, const String& text, Color color, const Font& font) {
