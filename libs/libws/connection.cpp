@@ -26,8 +26,9 @@ Connection::~Connection() {
     close(m_fd);
 }
 
-SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name, WindowType type, wid_t parent_id) {
-    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name, type, parent_id);
+SharedPtr<Window> Connection::create_window(int x, int y, int width, int height, const String& name, bool has_alpha, WindowType type,
+                                            wid_t parent_id) {
+    auto create_message = WindowServer::Message::CreateWindowRequest::create(x, y, width, height, name, type, parent_id, has_alpha);
     assert(write(m_fd, create_message.get(), create_message->total_size()) != -1);
 
     for (;;) {
@@ -38,7 +39,7 @@ SharedPtr<Window> Connection::create_window(int x, int y, int width, int height,
 
         if (response) {
             Message::CreateWindowResponse& created_data = (*response)->data.create_window_response;
-            auto ret = Window::construct(Rect(x, y, width, height), created_data, *this);
+            auto ret = Window::construct(Rect(x, y, width, height), has_alpha, created_data, *this);
             m_messages.remove_element(*response);
             return ret;
         }

@@ -39,8 +39,8 @@ void Window::set_parent(SharedPtr<Window> child, SharedPtr<Window> parent) {
     parent->m_children.add(move(child));
 }
 
-Window::Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type)
-    : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id), m_type(type) {
+Window::Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type, bool has_alpha)
+    : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id), m_type(type), m_has_alpha(has_alpha) {
     m_shm_path = String::format("/window_server_%lu", m_id);
     update_rect_from_content();
     map_buffers();
@@ -117,9 +117,9 @@ void Window::map_buffers() {
     assert(m_raw_buffer != MAP_FAILED);
     m_raw_buffer_size = len;
 
-    m_front_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_buffer), m_content_rect.width(), m_content_rect.height(), false);
+    m_front_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_buffer), m_content_rect.width(), m_content_rect.height(), has_alpha());
     m_back_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_buffer) + m_front_buffer->size_in_bytes() / sizeof(uint32_t),
-                                 m_content_rect.width(), m_content_rect.height(), false);
+                                 m_content_rect.width(), m_content_rect.height(), has_alpha());
     close(fd);
 }
 

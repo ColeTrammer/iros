@@ -12,7 +12,7 @@ class ContextMenuWindow final : public Window {
 
 public:
     ContextMenuWindow(Point p, ContextMenu& menu)
-        : Window(p.x(), p.y(), 150, menu.menu_items().size() * 25, "Context Menu", WindowServer::WindowType::Frameless,
+        : Window(p.x(), p.y(), 150, menu.menu_items().size() * 25, "Context Menu", false, WindowServer::WindowType::Frameless,
                  menu.parent_window()->wid())
         , m_context_menu(menu) {}
 

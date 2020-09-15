@@ -49,8 +49,8 @@ public:
     bool active() const { return m_active; }
 
 protected:
-    Window(int x, int y, int width, int height, String name, WindowServer::WindowType window_type = WindowServer::WindowType::Application,
-           wid_t parent_id = 0);
+    Window(int x, int y, int width, int height, String name, bool has_alpha = false,
+           WindowServer::WindowType window_type = WindowServer::WindowType::Application, wid_t parent_id = 0);
     virtual void on_event(Event& event) override;
 
     virtual void did_become_active() {}

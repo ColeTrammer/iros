@@ -190,7 +190,7 @@ void Server::handle_create_window_request(const WindowServer::Message& request, 
         rect.set_y(rect.y() + parent->content_rect().y());
     }
 
-    auto window = make_shared<Window>(rect, String(data.name), client_fd, data.type);
+    auto window = make_shared<Window>(rect, String(data.name), client_fd, data.type, data.has_alpha);
     if (parent) {
         Window::set_parent(window, parent);
     }

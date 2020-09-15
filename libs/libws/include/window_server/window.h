@@ -39,14 +39,16 @@ public:
     void set_removed(bool b) { m_removed = b; }
     void remove();
 
+    bool has_alpha() const { return m_has_alpha; }
+
 private:
     friend class Connection;
 
-    static SharedPtr<Window> construct(const Rect& rect, Message::CreateWindowResponse& message, Connection& connection);
+    static SharedPtr<Window> construct(const Rect& rect, bool has_alpha, Message::CreateWindowResponse& message, Connection& connection);
 
     Connection& connection() { return m_connection; }
 
-    Window(const Rect& rect, Message::CreateWindowResponse& message, Connection& connection);
+    Window(const Rect& rect, bool has_alpha, Message::CreateWindowResponse& message, Connection& connection);
 
     Rect m_rect;
     SharedPtr<Bitmap> m_front;
@@ -58,6 +60,7 @@ private:
     Function<void(SharedPtr<Bitmap>&)> m_draw_callback;
     Connection& m_connection;
     bool m_removed { false };
+    bool m_has_alpha { false };
 };
 
 }

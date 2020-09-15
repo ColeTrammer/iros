@@ -17,7 +17,7 @@ public:
     static SharedPtr<Window> find_window_intersecting_rect(SharedPtr<Window> window, const Rect& r);
     static void set_parent(SharedPtr<Window> child, SharedPtr<Window> parent);
 
-    Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type);
+    Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type, bool has_alpha);
     ~Window();
 
     Window(const Window& other) = delete;
@@ -63,6 +63,8 @@ public:
     bool resizable() const { return type() == WindowServer::WindowType::Application; }
     bool movable() const { return type() == WindowServer::WindowType::Application; }
 
+    bool has_alpha() const { return m_has_alpha; }
+
     Vector<SharedPtr<Window>>& children() { return m_children; }
     const Vector<SharedPtr<Window>>& children() const { return m_children; }
 
@@ -91,6 +93,7 @@ private:
     WindowServer::WindowType m_type;
     bool m_visible { true };
     bool m_in_resize { false };
+    bool m_has_alpha { false };
     Rect m_resize_rect;
     Vector<SharedPtr<Window>> m_children;
     Window* m_parent { nullptr };

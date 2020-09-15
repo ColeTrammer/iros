@@ -38,7 +38,8 @@ struct Message {
     };
 
     struct CreateWindowRequest {
-        static SharedPtr<Message> create(int x, int y, int width, int height, const String& name, WindowType type, wid_t parent_id) {
+        static SharedPtr<Message> create(int x, int y, int width, int height, const String& name, WindowType type, wid_t parent_id,
+                                         bool has_alpha) {
             auto* message = (Message*) malloc(sizeof(Message) + sizeof(CreateWindowRequest) + name.size() + 1);
             message->type = Message::Type::CreateWindowRequest;
             message->data_len = sizeof(CreateWindowRequest) + name.size() + 1;
@@ -49,6 +50,7 @@ struct Message {
             request.height = height;
             request.type = type;
             request.parent_id = parent_id;
+            request.has_alpha = has_alpha;
             strcpy(request.name, name.string());
             return SharedPtr<Message>(message);
         }
@@ -59,6 +61,7 @@ struct Message {
         int height;
         WindowType type;
         wid_t parent_id;
+        bool has_alpha;
         char name[0];
     };
 

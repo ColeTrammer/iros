@@ -9,8 +9,12 @@
 
 namespace WindowServer {
 
-Window::Window(const Rect& rect, Message::CreateWindowResponse& created_data, Connection& connection)
-    : m_rect(rect), m_wid(created_data.window_id), m_shm_path(created_data.shared_buffer_path), m_connection(connection) {
+Window::Window(const Rect& rect, bool has_alpha, Message::CreateWindowResponse& created_data, Connection& connection)
+    : m_rect(rect)
+    , m_wid(created_data.window_id)
+    , m_shm_path(created_data.shared_buffer_path)
+    , m_connection(connection)
+    , m_has_alpha(has_alpha) {
     resize(rect.width(), rect.height());
 }
 
@@ -28,9 +32,9 @@ void Window::resize(int new_width, int new_height) {
     assert(m_raw_pixels != MAP_FAILED);
     close(shm);
 
-    m_front = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels), new_width, new_height, false);
-    m_back =
-        Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels) + m_raw_pixels_size / 2 / sizeof(uint32_t), new_width, new_height, false);
+    m_front = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels), new_width, new_height, has_alpha());
+    m_back = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels) + m_raw_pixels_size / 2 / sizeof(uint32_t), new_width, new_height,
+                          has_alpha());
 
     m_rect.set_width(new_width);
     m_rect.set_height(new_height);
@@ -68,8 +72,8 @@ void Window::set_visibility(int x, int y, bool visible) {
     connection().send_change_window_visibility_request(wid(), x, y, visible);
 }
 
-SharedPtr<Window> Window::construct(const Rect& rect, Message::CreateWindowResponse& created_data, Connection& connection) {
-    Window* window = new Window(rect, created_data, connection);
+SharedPtr<Window> Window::construct(const Rect& rect, bool has_alpha, Message::CreateWindowResponse& created_data, Connection& connection) {
+    Window* window = new Window(rect, has_alpha, created_data, connection);
     return SharedPtr<Window>(window);
 }
 
