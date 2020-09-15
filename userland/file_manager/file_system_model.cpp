@@ -7,6 +7,8 @@
 #include "file_system_model.h"
 
 FileSystemModel::FileSystemModel(String base_path) : m_base_path(move(base_path)) {
+    m_text_file_icon = decode_png_file("/usr/share/text-file-16.png");
+    assert(m_text_file_icon);
     load_data();
 }
 
@@ -18,6 +20,8 @@ App::ModelData FileSystemModel::data(const App::ModelIndex& index) const {
 
     auto& object = m_objects[row];
     switch (index.col()) {
+        case Column::Icon:
+            return m_text_file_icon;
         case Column::Name:
             return object.name;
         case Column::Owner:
@@ -33,6 +37,8 @@ App::ModelData FileSystemModel::data(const App::ModelIndex& index) const {
 
 App::ModelData FileSystemModel::header_data(int col) const {
     switch (col) {
+        case Column::Icon:
+            return {};
         case Column::Name:
             return "Name";
         case Column::Owner:

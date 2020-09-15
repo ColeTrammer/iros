@@ -31,6 +31,7 @@ public:
     int width() const { return m_width; }
     int height() const { return m_height; }
     int size_in_bytes() const { return m_width * m_height * sizeof(uint32_t); }
+    Rect rect() const { return { 0, 0, width(), height() }; }
 
     uint32_t* pixels() { return m_pixels; }
     const uint32_t* pixels() const { return m_pixels; }

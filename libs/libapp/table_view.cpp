@@ -14,18 +14,25 @@ int TableView::width_of(const ModelData& data) const {
         width = 0;
     } else if (data.is<String>()) {
         width = data.as<String>().size() * 8;
+    } else if (data.is<SharedPtr<Bitmap>>()) {
+        width = data.as<SharedPtr<Bitmap>>()->width();
     }
     return 2 * cell_padding() + max(width, 20);
 }
 
 void TableView::render_data(Renderer& renderer, int rx, int ry, int width, const ModelData& data) {
+    auto cell_rect =
+        Rect { rect().x() + rx + cell_padding(), rect().y() + ry + cell_padding(), width - 2 * cell_padding(), 20 - 2 * cell_padding() };
     if (data.is<Monostate>()) {
         return;
     } else if (data.is<String>()) {
         auto& string = data.as<String>();
-        auto cell_rect = Rect { rect().x() + rx + cell_padding(), rect().y() + ry + cell_padding(), width - 2 * cell_padding(),
-                                20 - 2 * cell_padding() };
         renderer.render_text(string, cell_rect, ColorValue::White);
+    } else if (data.is<SharedPtr<Bitmap>>()) {
+        auto& bitmap = *data.as<SharedPtr<Bitmap>>();
+        int dw = cell_rect.width() - bitmap.width();
+        int dh = cell_rect.height() - bitmap.height();
+        renderer.draw_bitmap(bitmap, bitmap.rect(), cell_rect.adjusted(-dw / 2, -dh / 2));
     }
 }
 

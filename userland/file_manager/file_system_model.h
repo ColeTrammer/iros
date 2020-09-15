@@ -19,6 +19,7 @@ public:
     FileSystemModel(String base_path);
 
     enum Column {
+        Icon,
         Name,
         Owner,
         Group,
@@ -38,4 +39,5 @@ private:
 
     String m_base_path;
     Vector<FileSystemObject> m_objects;
+    SharedPtr<Bitmap> m_text_file_icon;
 };
