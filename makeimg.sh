@@ -8,13 +8,11 @@ then
     exit 1
 fi
 
-dd if=/dev/zero of=os_2.img bs=516096c count=400
-
-losetup -o0 /dev/loop100 os_2.img
-mke2fs /dev/loop100
+qemu-img create os_2.img 200m
+mke2fs os_2.img
 
 mkdir -p mnt
-mount -text2 /dev/loop100 mnt
+mount -text2 os_2.img mnt
 
 cp -r --preserve=mode base/* mnt
 cp -r --preserve=mode sysroot/* mnt
@@ -52,7 +50,6 @@ ln -s /proc/self/fd/1 mnt/dev/stdout
 ln -s /proc/self/fd/2 mnt/dev/stderr
 ln -s urandom mnt/dev/random
 
-umount /dev/loop100
-losetup -d /dev/loop100
+umount os_2.img
 
 chmod 777 os_2.img
