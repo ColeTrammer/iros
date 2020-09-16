@@ -2,6 +2,7 @@
 
 #include <app/model_data.h>
 #include <app/view.h>
+#include <liim/function.h>
 
 class Renderer;
 
@@ -20,7 +21,7 @@ public:
 
 protected:
     int width_of(const ModelData& data) const;
-    void render_data(Renderer& renderer, int rx, int ry, int width, const ModelData& data);
+    void render_data(Renderer& renderer, int rx, int ry, int width, Function<ModelData(int)> getter);
 
     virtual ModelIndex index_at_position(int, int) override;
 

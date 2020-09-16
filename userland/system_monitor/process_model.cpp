@@ -93,51 +93,74 @@ void ProcessModel::load_data() {
     did_update();
 }
 
-App::ModelData ProcessModel::data(const App::ModelIndex& index) const {
+App::ModelData ProcessModel::data(const App::ModelIndex& index, int role) const {
     int row = index.row();
     if (row < 0 || row >= m_processes.size()) {
         return {};
     }
 
     auto& process = m_processes[row];
-    switch (index.col()) {
-        case Column::Pid:
-            return String::format("%d", process.pid());
-        case Column::Name:
-            return process.name();
-        case Column::Memory:
-            return String::format("%lu", process.resident_memory());
-        case Column::Priority:
-            return String::format("%d", process.priority());
-        case Column::RunningTime: {
-            double seconds = process.running_time().tv_sec + process.running_time().tv_nsec / 1000000000.0;
-            long int_seconds = (int) seconds;
-            seconds -= int_seconds;
-            seconds *= 100;
+    if (role == Role::Display) {
+        switch (index.col()) {
+            case Column::Pid:
+                return String::format("%d", process.pid());
+            case Column::Name:
+                return process.name();
+            case Column::Memory:
+                return String::format("%lu", process.resident_memory());
+            case Column::Priority:
+                return String::format("%d", process.priority());
+            case Column::RunningTime: {
+                double seconds = process.running_time().tv_sec + process.running_time().tv_nsec / 1000000000.0;
+                long int_seconds = (int) seconds;
+                seconds -= int_seconds;
+                seconds *= 100;
 
-            long minutes = int_seconds / 60;
-            int_seconds %= 60;
+                long minutes = int_seconds / 60;
+                int_seconds %= 60;
 
-            return String::format("%ld:%02ld.%02d", minutes, int_seconds, (int) seconds);
+                return String::format("%ld:%02ld.%02d", minutes, int_seconds, (int) seconds);
+            }
+            default:
+                return {};
         }
-        default:
-            return {};
     }
+
+    if (role == Role::TextAlignment) {
+        switch (index.col()) {
+            case Column::Pid:
+            case Column::Name:
+                return TextAlign::CenterLeft;
+            case Column::Memory:
+            case Column::Priority:
+            case Column::RunningTime: {
+                return TextAlign::CenterRight;
+            }
+            default:
+                return {};
+        }
+    }
+
+    return {};
 }
 
-App::ModelData ProcessModel::header_data(int col) const {
-    switch (col) {
-        case Column::Pid:
-            return "PID";
-        case Column::Name:
-            return "Name";
-        case Column::Memory:
-            return "Memory";
-        case Column::Priority:
-            return "Priority";
-        case Column::RunningTime:
-            return "Running Time";
-        default:
-            return {};
+App::ModelData ProcessModel::header_data(int col, int role) const {
+    if (role == Role::Display) {
+        switch (col) {
+            case Column::Pid:
+                return "PID";
+            case Column::Name:
+                return "Name";
+            case Column::Memory:
+                return "Memory";
+            case Column::Priority:
+                return "Priority";
+            case Column::RunningTime:
+                return "Running Time";
+            default:
+                return {};
+        }
     }
+
+    return {};
 }

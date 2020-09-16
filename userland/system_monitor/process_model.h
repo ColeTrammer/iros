@@ -68,8 +68,8 @@ public:
 
     virtual int row_count() const override { return m_processes.size(); }
     virtual int col_count() const override { return Column::__Count; }
-    virtual App::ModelData data(const App::ModelIndex& index) const override;
-    virtual App::ModelData header_data(int col) const override;
+    virtual App::ModelData data(const App::ModelIndex& index, int role) const override;
+    virtual App::ModelData header_data(int col, int role) const override;
 
     void load_data();
 

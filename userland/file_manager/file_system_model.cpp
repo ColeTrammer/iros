@@ -12,44 +12,70 @@ FileSystemModel::FileSystemModel(String base_path) : m_base_path(move(base_path)
     load_data();
 }
 
-App::ModelData FileSystemModel::data(const App::ModelIndex& index) const {
+App::ModelData FileSystemModel::data(const App::ModelIndex& index, int role) const {
     int row = index.row();
     if (row < 0 || row >= m_objects.size()) {
         return {};
     }
 
     auto& object = m_objects[row];
-    switch (index.col()) {
-        case Column::Icon:
-            return m_text_file_icon;
-        case Column::Name:
-            return object.name;
-        case Column::Owner:
-            return object.owner;
-        case Column::Group:
-            return object.group;
-        case Column::Size:
-            return String::format("%lu", object.size);
-        default:
-            return {};
+    if (role == Role::Display) {
+        switch (index.col()) {
+            case Column::Icon:
+                return m_text_file_icon;
+            case Column::Name:
+                return object.name;
+            case Column::Owner:
+                return object.owner;
+            case Column::Group:
+                return object.group;
+            case Column::Size:
+                return String::format("%lu", object.size);
+            default:
+                return {};
+        }
     }
+
+    if (role == Role::Icon) {
+        return m_text_file_icon;
+    }
+
+    if (role == Role::TextAlignment) {
+        switch (index.col()) {
+            case Column::Icon:
+                return {};
+            case Column::Name:
+            case Column::Owner:
+            case Column::Group:
+                return TextAlign::CenterLeft;
+            case Column::Size:
+                return TextAlign::CenterRight;
+            default:
+                return {};
+        }
+    }
+
+    return {};
 }
 
-App::ModelData FileSystemModel::header_data(int col) const {
-    switch (col) {
-        case Column::Icon:
-            return {};
-        case Column::Name:
-            return "Name";
-        case Column::Owner:
-            return "Owner";
-        case Column::Group:
-            return "Group";
-        case Column::Size:
-            return "Size";
-        default:
-            return {};
+App::ModelData FileSystemModel::header_data(int col, int role) const {
+    if (role == Role::Display) {
+        switch (col) {
+            case Column::Icon:
+                return {};
+            case Column::Name:
+                return "Name";
+            case Column::Owner:
+                return "Owner";
+            case Column::Group:
+                return "Group";
+            case Column::Size:
+                return "Size";
+            default:
+                return {};
+        }
     }
+    return {};
 }
 
 static int ignore_dots(const dirent* a) {

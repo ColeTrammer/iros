@@ -20,14 +20,16 @@ int TableView::width_of(const ModelData& data) const {
     return 2 * cell_padding() + max(width, 20);
 }
 
-void TableView::render_data(Renderer& renderer, int rx, int ry, int width, const ModelData& data) {
+void TableView::render_data(Renderer& renderer, int rx, int ry, int width, Function<ModelData(int)> getter) {
     auto cell_rect =
         Rect { rect().x() + rx + cell_padding(), rect().y() + ry + cell_padding(), width - 2 * cell_padding(), 20 - 2 * cell_padding() };
+    auto data = getter(Model::Role::Display);
     if (data.is<Monostate>()) {
         return;
     } else if (data.is<String>()) {
         auto& string = data.as<String>();
-        renderer.render_text(string, cell_rect, ColorValue::White);
+        auto text_align = getter(Model::Role::TextAlignment);
+        renderer.render_text(string, cell_rect, ColorValue::White, text_align.get_or<TextAlign>(TextAlign::CenterLeft));
     } else if (data.is<SharedPtr<Bitmap>>()) {
         auto& bitmap = *data.as<SharedPtr<Bitmap>>();
         int dw = cell_rect.width() - bitmap.width();
@@ -51,9 +53,9 @@ void TableView::render() {
     Vector<int> col_widths(col_count);
     col_widths.resize(col_count);
     for (auto c = 0; c < col_count; c++) {
-        int col_width = width_of(model()->header_data(c));
+        int col_width = width_of(model()->header_data(c, Model::Role::Display));
         for (auto r = 0; r < row_count; r++) {
-            col_width = max(col_width, width_of(model()->data({ r, c })));
+            col_width = max(col_width, width_of(model()->data({ r, c }, Model::Role::Display)));
         }
         col_widths[c] = col_width;
     }
@@ -61,8 +63,10 @@ void TableView::render() {
     int rx = 1;
     int ry = 1;
     for (auto c = 0; c < col_count; c++) {
-        auto data = model()->header_data(c);
-        render_data(renderer, rx, ry, col_widths[c], data);
+        auto data = model()->header_data(c, Model::Role::Display);
+        render_data(renderer, rx, ry, col_widths[c], [&](auto role) {
+            return model()->header_data(c, role);
+        });
         rx += col_widths[c] + 1;
     }
 
@@ -75,7 +79,9 @@ void TableView::render() {
         }
 
         for (auto c = 0; c < col_count; c++) {
-            render_data(renderer, rx, ry, col_widths[c], model()->data({ r, c }));
+            render_data(renderer, rx, ry, col_widths[c], [&](auto role) {
+                return model()->data({ r, c }, role);
+            });
             rx += col_widths[c] + 1;
         }
     }
@@ -98,9 +104,9 @@ ModelIndex TableView::index_at_position(int wx, int wy) {
     Vector<int> col_widths(col_count);
     col_widths.resize(col_count);
     for (auto c = 0; c < col_count; c++) {
-        int col_width = width_of(model()->header_data(c));
+        int col_width = width_of(model()->header_data(c, Model::Role::Display));
         for (auto r = 0; r < row_count; r++) {
-            col_width = max(col_width, width_of(model()->data({ r, c })));
+            col_width = max(col_width, width_of(model()->data({ r, c }, Model::Role::Display)));
         }
         col_widths[c] = col_width;
     }

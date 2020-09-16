@@ -14,12 +14,16 @@ class Model : public Object {
     APP_OBJECT(Model)
 
 public:
-    virtual ~Model() {}
+    enum Role {
+        Display,
+        TextAlignment,
+        Icon,
+    };
 
     virtual int row_count() const = 0;
     virtual int col_count() const = 0;
-    virtual ModelData data(const ModelIndex& index) const = 0;
-    virtual ModelData header_data(int col) const = 0;
+    virtual ModelData data(const ModelIndex& index, int role) const = 0;
+    virtual ModelData header_data(int col, int role) const = 0;
 
     void register_client(ModelClient* view);
     void unregister_client(ModelClient* view);
