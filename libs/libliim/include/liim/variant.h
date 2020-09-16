@@ -290,6 +290,16 @@ public:
         return &this->get<index>();
     }
 
+    template<typename T>
+    constexpr T get_or(T value) {
+        constexpr size_t index = TypeList::Index<T, Types...>::value;
+        static_assert(index != -1);
+        if (m_value_index != index) {
+            return value;
+        }
+        return this->get<index>();
+    }
+
     template<size_t index>
     constexpr typename TypeList::TypeAtIndex<index, Types...>::type& get(in_place_index_t<index>) {
         return this->get<index>();
