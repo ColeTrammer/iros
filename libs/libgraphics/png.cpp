@@ -142,15 +142,20 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
             return nullptr;
         }
 
-        if (chunk_type.value() == (('I' << 24) | ('H' << 16) | ('D' << 8) | 'R')) {
+        String type;
+        type.insert(static_cast<char>(chunk_type.value() >> 24), type.size());
+        type.insert(static_cast<char>(chunk_type.value() >> 16), type.size());
+        type.insert(static_cast<char>(chunk_type.value() >> 8), type.size());
+        type.insert(static_cast<char>(chunk_type.value()), type.size());
+        if (type == "IHDR") {
             if (!decode_ihdr(chunk_length.value())) {
                 return nullptr;
             }
-        } else if (chunk_type.value() == (('I' << 24) | ('D' << 16) | ('A' << 8) | 'T')) {
+        } else if (type == "IDAT") {
             if (!decode_idat(chunk_length.value())) {
                 return nullptr;
             }
-        } else if (chunk_type.value() == (('I' << 24) | ('E' << 16) | ('N' << 8) | 'D')) {
+        } else if (type == "IEND") {
             if (!seen_ihdr || !successfully_decoded_idat) {
                 return nullptr;
             }
@@ -159,11 +164,6 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
             }
             seen_iend = true;
         } else {
-            String type;
-            type.insert(static_cast<char>(chunk_type.value() >> 24), type.size());
-            type.insert(static_cast<char>(chunk_type.value() >> 16), type.size());
-            type.insert(static_cast<char>(chunk_type.value() >> 8), type.size());
-            type.insert(static_cast<char>(chunk_type.value()), type.size());
 #ifdef PNG_DEBUG
             fprintf(stderr, "Unkown chunk type '%s'\n", type.string());
 #endif /* PNG_DEBUG */
@@ -177,7 +177,8 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
 
         auto check = compute_crc32_checksum(&data[checksum_offset], 4 + chunk_length.value());
         if (check != static_cast<uint32_t>(crc.value())) {
-            fprintf(stderr, "PNG checksum failed: %#.8X != %#.8X\n", check, static_cast<uint32_t>(crc.value()));
+            fprintf(stderr, "PNG checksum failed for `%s' (%lu) failed: %#.8X != %#.8X\n", type.string(), chunk_length.value(), check,
+                    static_cast<uint32_t>(crc.value()));
             return nullptr;
         }
     }

@@ -3,8 +3,8 @@
 #include <limits.h>
 
 static constexpr decltype(auto) build_crc32_table(uint32_t polynomial) {
-    FixedArray<uint32_t, UINT8_MAX> table;
-    for (uint8_t i = 0; i < table.size(); i++) {
+    FixedArray<uint32_t, UINT8_MAX + 1> table;
+    for (uint16_t i = 0; i < table.size(); i++) {
         uint32_t value = i;
         for (int k = 0; k < CHAR_BIT; k++) {
             if (value & 1) {
@@ -29,7 +29,7 @@ uint32_t compute_partial_crc32_checksum(void* data, size_t num_bytes, uint32_t s
     uint32_t sum = ~start;
     for (size_t i = 0; i < num_bytes; i++) {
         uint8_t index = (sum ^ ((uint8_t*) data)[i]) & 0xFF;
-        sum = (sum >> 8) ^ crc32_table.array()[index];
+        sum = (sum >> 8) ^ crc32_table[index];
     }
     return ~sum;
 }
