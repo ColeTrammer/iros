@@ -10,8 +10,8 @@ fi
 
 qemu-img create os_2.img 200m
 parted -s -- os_2.img \
-    mklabel msdos \
-    mkpart primary ext2 1Mib -1s
+    mklabel gpt \
+    mkpart P1 ext2 1Mib -34s
 
 LOOP_DEV=$(losetup -o 1048576 -f os_2.img --show)
 mke2fs "$LOOP_DEV"
