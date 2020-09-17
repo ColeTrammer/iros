@@ -438,7 +438,7 @@ static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size
     data->port_info = info;
     init_wait_queue(&data->wait_queue);
 
-    dev_t device_number = 0x00500 + i;
+    dev_t device_number = 0x00500 + 16 * i;
     blksize_t block_size = ATA_SECTOR_SIZE;
     blkcnt_t block_count = identity[60] | (identity[61] << 16);
     struct block_device_ops *op = &ata_ops;

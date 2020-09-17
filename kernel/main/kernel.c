@@ -39,11 +39,11 @@ void kernel_main(uint32_t *multiboot_info) {
     init_net();
     init_disk_sync_task();
 
-    /* Mount hdd0 at / */
-    struct device *hdd0 = dev_get_device(0x00500);
-    assert(hdd0);
+    /* Mount sda1 at / */
+    struct device *sda1 = dev_get_device(0x00501);
+    assert(sda1);
     int error = 0;
-    error = fs_mount(hdd0, "/", "ext2");
+    error = fs_mount(sda1, "/", "ext2");
     assert(error == 0);
 
     // Mount tmpfs at /dev/shm

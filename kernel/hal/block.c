@@ -4,6 +4,7 @@
 
 #include <kernel/fs/dev.h>
 #include <kernel/hal/block.h>
+#include <kernel/hal/partition.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/phys_page.h>
@@ -25,6 +26,7 @@ static struct device_ops block_device_ops = {
 HASH_DEFINE_FUNCTIONS(page, struct phys_page, off_t, block_offset)
 
 static struct phys_page *block_find_page(struct block_device *block_device, off_t block_offset) {
+    block_offset += block_device->partition_offset;
     assert(block_offset * block_device->block_size % PAGE_SIZE == 0);
     struct phys_page *page = hash_get_entry(block_device->block_hash_map, &block_offset, struct phys_page);
     if (!page) {
@@ -232,6 +234,8 @@ struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_s
     struct block_device *block_device = malloc(sizeof(struct block_device));
     block_device->block_count = block_count;
     block_device->block_size = block_size;
+    block_device->partition_offset = 0;
+    block_device->partition_number = 0;
     block_device->block_hash_map = hash_create_hash_map(page_hash, page_equals, page_key);
     init_list(&block_device->lru_list);
     block_device->op = op;
@@ -249,6 +253,10 @@ void block_register_device(struct block_device *block_device, dev_t device_numbe
     device->private = block_device;
     block_device->device = device;
     dev_register(device);
+
+    if (block_is_root_device(block_device)) {
+        block_partition_device(block_device);
+    }
 }
 
 struct phys_page *block_allocate_phys_page(struct block_device *block_device) {

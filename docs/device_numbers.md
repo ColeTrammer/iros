@@ -20,9 +20,15 @@
 
 -   N - /dev/ttyN
 
-## Hdd Block Devices (Major 5)
+## Block Devices (Major 5)
 
--   N - /dev/hddN
+-   0 - /dev/sda
+-   N - /dev/sdaN
+-   16 - /dev/sdb
+-   N - /dev/sdb{N - 16}
+-   32 - /dev/sdc
+-   N - /dev/sdc{N - 32}
+    ...
 
 ## Frame Buffer Devices (Major 6)
 

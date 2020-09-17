@@ -9,10 +9,15 @@ then
 fi
 
 qemu-img create os_2.img 200m
-mke2fs os_2.img
+parted -s -- os_2.img \
+    mklabel msdos \
+    mkpart primary ext2 1Mib -1s
+
+LOOP_DEV=$(losetup -o 1048576 -f os_2.img --show)
+mke2fs "$LOOP_DEV"
 
 mkdir -p mnt
-mount -text2 os_2.img mnt
+mount -text2 "$LOOP_DEV" mnt
 
 cp -r --preserve=mode base/* mnt
 cp -r --preserve=mode sysroot/* mnt
@@ -35,7 +40,8 @@ mknod mnt/dev/full c 1 3 -m 666
 mknod mnt/dev/urandom c 1 4 -m 666
 mknod mnt/dev/ptmx c 2 1 -m 666
 mknod mnt/dev/tty c 2 2 -m 666
-mknod mnt/dev/hdd0 b 5 0 -m 660
+mknod mnt/dev/sda b 5 0 -m 660
+mknod mnt/dev/sda1 b 5 1 -m 660
 mknod mnt/dev/fb0 c 6 0 -m 660
 mknod mnt/dev/keyboard c 7 1 -m 440
 mknod mnt/dev/mouse c 7 2 -m 440
@@ -50,6 +56,7 @@ ln -s /proc/self/fd/1 mnt/dev/stdout
 ln -s /proc/self/fd/2 mnt/dev/stderr
 ln -s urandom mnt/dev/random
 
-umount os_2.img
+umount "$LOOP_DEV"
+losetup -d "$LOOP_DEV"
 
 chmod 777 os_2.img
