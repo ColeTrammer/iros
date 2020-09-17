@@ -1,7 +1,7 @@
 #pragma once
 
 #include <assert.h>
-#include <liim/utilities.h>
+#include <stddef.h>
 
 template<typename T, size_t max_elements>
 class FixedArray {

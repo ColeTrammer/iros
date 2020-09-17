@@ -451,7 +451,7 @@ private:
 };
 
 template<typename T>
-ReferenceWrapper(T&)->ReferenceWrapper<T>;
+ReferenceWrapper(T&) -> ReferenceWrapper<T>;
 
 template<class T>
 struct in_place_type_t {

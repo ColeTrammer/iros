@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <ext/checksum.h>
 #include <ext/deflate.h>
 #include <ext/mapped_file.h>
 #include <graphics/png.h>
@@ -135,6 +136,7 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
             return nullptr;
         }
 
+        auto checksum_offset = offset;
         auto chunk_type = get(4);
         if (!chunk_type.has_value()) {
             return nullptr;
@@ -170,6 +172,12 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
 
         auto crc = get(4);
         if (!crc.has_value()) {
+            return nullptr;
+        }
+
+        auto check = compute_crc32_checksum(&data[checksum_offset], 4 + chunk_length.value());
+        if (check != static_cast<uint32_t>(crc.value())) {
+            fprintf(stderr, "PNG checksum failed: %#.8X != %#.8X\n", check, static_cast<uint32_t>(crc.value()));
             return nullptr;
         }
     }

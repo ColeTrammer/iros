@@ -421,6 +421,7 @@ else()
     )
 
     set(SOURCES
+        ../libext/checksum_crc32.cpp
         ../libext/checksum_internet.cpp
         ${FREE_SOURCES}
     )
@@ -443,7 +444,7 @@ else()
     target_compile_definitions(libk PRIVATE __is_libk)
     set_target_properties(libk PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
     target_link_libraries(libk PRIVATE kernel_headers)
-    target_include_directories(libk PUBLIC ../libext/include)
+    target_include_directories(libk PUBLIC ../libext/include ../libliim/include)
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdinc++")
