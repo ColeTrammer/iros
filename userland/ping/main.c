@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
+#include <ext/checksum.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/ip_icmp.h>
@@ -90,7 +91,7 @@ int main(int argc, char **argv) {
     for (;;) {
         ping_message.header.checksum = 0;
         ping_message.header.un.echo.sequence = htons(sequence++);
-        ping_message.header.checksum = htons(in_compute_checksum(&ping_message, sizeof(struct ping_message)));
+        ping_message.header.checksum = htons(compute_internet_checksum(&ping_message, sizeof(struct ping_message)));
         if (sendto(fd, &ping_message, sizeof(struct ping_message), 0, (const struct sockaddr *) &addr, sizeof(struct sockaddr_in)) == -1) {
             perror("sendto");
             return 1;

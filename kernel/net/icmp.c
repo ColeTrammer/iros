@@ -10,6 +10,7 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/packet.h>
 #include <kernel/net/socket.h>
+#include <kernel/util/checksum.h>
 #include <kernel/util/macros.h>
 
 void net_icmp_recieve(struct packet *net_packet) {
@@ -61,5 +62,5 @@ void net_init_icmp_packet(struct icmp_packet *packet, uint8_t type, uint16_t ide
     memcpy(packet->payload, payload, payload_size);
 
     packet->checksum = 0;
-    packet->checksum = htons(in_compute_checksum(packet, sizeof(struct icmp_packet) + payload_size));
+    packet->checksum = htons(compute_internet_checksum(packet, sizeof(struct icmp_packet) + payload_size));
 }

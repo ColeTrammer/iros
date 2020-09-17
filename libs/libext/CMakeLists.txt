@@ -16,6 +16,7 @@ add_custom_target(generate-mode-parser DEPENDS ${GENERATED_FILES})
 
 set(SOURCES
     ${GENERATED_FILES}
+    checksum_internet.cpp
     deflate.cpp
     gzip.cpp
     mapped_file.cpp

@@ -2,7 +2,6 @@ if (NOT ${NATIVE_BUILD})
     set(OS_TARGETS
         about
         file_manager
-        ping
         profile
         psfedit
         stat
@@ -46,6 +45,7 @@ set(TARGETS
     mknod
     mv
     paste
+    ping
     ps
     pwd
     readlink

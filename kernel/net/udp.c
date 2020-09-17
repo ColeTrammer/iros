@@ -16,6 +16,7 @@
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/udp.h>
+#include <kernel/util/checksum.h>
 #include <kernel/util/macros.h>
 
 int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t len, const struct sockaddr *dest) {
@@ -54,8 +55,8 @@ int net_send_udp(struct socket *socket, struct network_interface *interface, str
     net_init_udp_packet(udp_packet, source_port, dest_port, len, buf);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_UDP, htons(len + sizeof(struct udp_packet)) };
-    udp_packet->checksum = ntohs(in_compute_checksum_with_start(udp_packet, sizeof(struct udp_packet) + len,
-                                                                in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
+    udp_packet->checksum = ntohs(compute_partial_internet_checksum(udp_packet, sizeof(struct udp_packet) + len,
+                                                                   compute_internet_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
 
     debug_log("Sending UDP packet to: [ %u.%u.%u.%u, %u ]\n", dest.addr[0], dest.addr[1], dest.addr[2], dest.addr[3], dest_port);
 

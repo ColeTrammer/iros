@@ -16,6 +16,7 @@
 #include <kernel/net/tcp_socket.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
+#include <kernel/util/checksum.h>
 #include <kernel/util/macros.h>
 
 // #define TCP_DEBUG
@@ -105,7 +106,8 @@ int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, str
     net_init_tcp_packet(tcp_packet, opts);
 
     struct ip_v4_pseudo_header header = { interface->address, dest, 0, IP_V4_PROTOCOL_TCP, htons(tcp_length) };
-    tcp_packet->check_sum = ntohs(in_compute_checksum_with_start(tcp_packet, tcp_length, in_compute_checksum(&header, sizeof(header))));
+    tcp_packet->check_sum =
+        ntohs(compute_partial_internet_checksum(tcp_packet, tcp_length, compute_internet_checksum(&header, sizeof(header))));
 
 #ifdef TCP_DEBUG
     net_tcp_log(interface->address, dest, packet);

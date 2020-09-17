@@ -22,6 +22,7 @@
 #include <kernel/net/udp.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
+#include <kernel/util/checksum.h>
 #include <kernel/util/hash_map.h>
 
 // #define IP_V4_DEBUG
@@ -294,7 +295,7 @@ static int net_interface_send_ip_v4_fragmented(struct network_interface *self, s
         ip_packet.length = htons(sizeof(struct ip_v4_packet) + data_advanced);
         SET_IP_V4_FRAGMENT_OFFSET(&ip_packet, offset);
         ip_packet.checksum = 0;
-        ip_packet.checksum = htons(in_compute_checksum(&ip_packet, sizeof(struct ip_v4_packet)));
+        ip_packet.checksum = htons(compute_internet_checksum(&ip_packet, sizeof(struct ip_v4_packet)));
 
         struct packet copy = packet;
         if ((ret = self->ops->send(self, ll_dest, &copy))) {
@@ -431,7 +432,7 @@ void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t 
     packet->source = source;
     packet->destination = dest;
     packet->checksum = 0;
-    packet->checksum = htons(in_compute_checksum(packet, sizeof(struct ip_v4_packet)));
+    packet->checksum = htons(compute_internet_checksum(packet, sizeof(struct ip_v4_packet)));
     if (payload) {
         memcpy(packet->payload, payload, payload_length);
     }

@@ -1,7 +1,8 @@
 #include <arpa/inet.h>
-#include <netinet/in.h>
+#include <ext/checksum.h>
 
-uint16_t in_compute_checksum_with_start(void *packet, size_t num_bytes, uint16_t start) {
+extern "C" {
+uint16_t compute_partial_internet_checksum(void *packet, size_t num_bytes, uint16_t start) {
     uint16_t *raw_data = (uint16_t *) packet;
     uint32_t sum = ~start & 0xFFFF;
 
@@ -28,6 +29,7 @@ uint16_t in_compute_checksum_with_start(void *packet, size_t num_bytes, uint16_t
     return (uint16_t)(~sum & 0xFFFF);
 }
 
-uint16_t in_compute_checksum(void *packet, size_t num_bytes) {
-    return in_compute_checksum_with_start(packet, num_bytes, ~0U & 0xFFFF);
+uint16_t compute_internet_checksum(void *packet, size_t num_bytes) {
+    return compute_partial_internet_checksum(packet, num_bytes, ~0U & 0xFFFF);
+}
 }

@@ -60,7 +60,6 @@ else()
         arpa/inet/inet_aton.c
         arpa/inet/inet_ntoa.c
         ctype/ctype.c
-        netinet/in.c
         search/queue.c
         stdio/printf.c
         stdio/scanf.c
@@ -421,10 +420,13 @@ else()
         init.c
     )
 
-    set(SOURCES ${FREE_SOURCES})
+    set(SOURCES
+        ../libext/checksum_internet.cpp
+        ${FREE_SOURCES}
+    )
     add_os_static_library(libk k FALSE)
 
-    set(SOURCES ${SOURCES} ${HOSTED_SOURCES})
+    set(SOURCES ${FREE_SOURCES} ${HOSTED_SOURCES})
     add_os_static_library(libc_static c FALSE)
     target_compile_definitions(libc_static PRIVATE __is_libc)
     target_include_directories(libc_static PUBLIC include)
@@ -441,6 +443,7 @@ else()
     target_compile_definitions(libk PRIVATE __is_libk)
     set_target_properties(libk PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
     target_link_libraries(libk PRIVATE kernel_headers)
+    target_include_directories(libk PUBLIC ../libext/include)
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdinc++")

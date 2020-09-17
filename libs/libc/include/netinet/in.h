@@ -71,11 +71,6 @@ struct ipv6_mreq {
 extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
 
-#ifdef _OS_2_SOURCE
-uint16_t in_compute_checksum_with_start(void *packet, size_t num_bytes, uint16_t start);
-uint16_t in_compute_checksum(void *data, size_t bytes);
-#endif /* _OS_2_SOURCE */
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -11,6 +11,7 @@
 #include <kernel/net/interface.h>
 #include <kernel/net/network_task.h>
 #include <kernel/net/packet.h>
+#include <kernel/util/checksum.h>
 #include <kernel/util/random.h>
 
 static uint8_t net_ll_to_dhcp_hw_type(enum ll_address_type type) {
@@ -95,8 +96,8 @@ static void net_send_dhcp(struct network_interface *interface, uint8_t message_t
     data->options[opt_start] = DHCP_OPTION_END;
 
     struct ip_v4_pseudo_header header = { IP_V4_ZEROES, IP_V4_BROADCAST, 0, IP_V4_PROTOCOL_UDP, htons(udp_length) };
-    udp_packet->checksum =
-        ntohs(in_compute_checksum_with_start(udp_packet, udp_length, in_compute_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
+    udp_packet->checksum = ntohs(
+        compute_partial_internet_checksum(udp_packet, udp_length, compute_internet_checksum(&header, sizeof(struct ip_v4_pseudo_header))));
 
     debug_log("Sending DHCP DISCOVER packet: [ %u ]\n", interface->config_context.xid);
 
