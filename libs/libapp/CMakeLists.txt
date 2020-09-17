@@ -4,6 +4,7 @@ set(SOURCES
     button.cpp
     context_menu.cpp
     event_loop.cpp
+    icon_view.cpp
     layout.cpp
     model.cpp
     mouse_press_tracker.cpp

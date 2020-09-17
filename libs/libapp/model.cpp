@@ -6,6 +6,7 @@ namespace App {
 
 void Model::register_client(ModelClient* client) {
     m_clients.add(client);
+    client->model_did_update();
 }
 
 void Model::unregister_client(ModelClient* client) {

@@ -7,7 +7,7 @@
 #include "file_system_model.h"
 
 FileSystemModel::FileSystemModel(String base_path) : m_base_path(move(base_path)) {
-    m_text_file_icon = decode_png_file("/usr/share/text-file-16.png");
+    m_text_file_icon = decode_png_file("/usr/share/text-file-32.png");
     assert(m_text_file_icon);
     load_data();
 }

@@ -14,6 +14,8 @@ class View
     APP_OBJECT(View)
 
 public:
+    virtual ~View() override;
+
     Model* model() { return m_model.get(); }
     const Model* model() const { return m_model.get(); }
 

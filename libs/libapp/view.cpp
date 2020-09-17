@@ -4,6 +4,8 @@
 
 namespace App {
 
+View::~View() {}
+
 void View::set_model(SharedPtr<Model> model) {
     if (m_model == model) {
         return;
