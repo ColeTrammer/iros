@@ -30,6 +30,8 @@ private:
     int m_name_column { 0 };
     int m_icon_width { 32 };
     int m_icon_height { 32 };
+    int m_icon_padding_x { 28 };
+    int m_icon_padding_y { 8 };
 };
 
 }

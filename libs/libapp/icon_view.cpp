@@ -9,12 +9,13 @@ void IconView::render() {
     Renderer renderer(*window()->pixels());
     for (auto& item : m_items) {
         if (auto bitmap = item.icon) {
-            Rect icon_rect = { rect().x() + item.rect.x(), rect().y() + item.rect.y(), m_icon_width, m_icon_height };
+            Rect icon_rect = { rect().x() + item.rect.x() + m_icon_padding_x, rect().y() + item.rect.y() + m_icon_padding_y, m_icon_width,
+                               m_icon_height };
             renderer.draw_bitmap(*bitmap, bitmap->rect(), icon_rect);
         }
         if (!item.name.is_empty()) {
-            Rect text_rect = { rect().x() + item.rect.x(), rect().y() + item.rect.y() + m_icon_height, item.rect.width(),
-                               item.rect.height() - m_icon_height };
+            Rect text_rect = { rect().x() + item.rect.x(), rect().y() + item.rect.y() + m_icon_height + 2 * m_icon_padding_y,
+                               item.rect.width(), item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
             renderer.render_text(item.name, text_rect, ColorValue::White, TextAlign::Center, font());
         }
     }
@@ -26,8 +27,8 @@ void IconView::model_did_update() {
 
     int x = 0;
     int y = 0;
-    int w = m_icon_width;
-    int h = m_icon_height + 16;
+    int w = m_icon_width + 2 * m_icon_padding_x;
+    int h = m_icon_height + 2 * m_icon_padding_y + 16;
     for (int r = 0; r < model()->row_count(); r++) {
         m_items.add({
             model()->data({ r, m_name_column }, Model::Role::Icon).get_or<SharedPtr<Bitmap>>(nullptr),
