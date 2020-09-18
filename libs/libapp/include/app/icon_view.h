@@ -12,12 +12,15 @@ class IconView : public View {
 
 public:
     virtual void render() override;
+    virtual void on_resize() override;
     virtual void model_did_update() override;
 
     void set_name_column(int col) { m_name_column = col; }
 
 private:
     virtual ModelIndex index_at_position(int, int) override;
+
+    void compute_layout();
 
     struct Item {
         SharedPtr<Bitmap> icon;

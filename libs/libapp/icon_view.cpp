@@ -22,28 +22,40 @@ void IconView::render() {
     Widget::render();
 }
 
+void IconView::on_resize() {
+    compute_layout();
+    invalidate();
+}
+
 void IconView::model_did_update() {
     m_items.clear();
 
-    int x = 0;
-    int y = 0;
-    int w = m_icon_width + 2 * m_icon_padding_x;
-    int h = m_icon_height + 2 * m_icon_padding_y + 16;
     for (int r = 0; r < model()->row_count(); r++) {
         m_items.add({
             model()->data({ r, m_name_column }, Model::Role::Icon).get_or<SharedPtr<Bitmap>>(nullptr),
             model()->data({ r, m_name_column }, Model::Role::Display).get_or<String>(""),
-            Rect { x, y, w, h },
+            {},
             { r, m_name_column },
         });
+    }
+
+    compute_layout();
+    View::model_did_update();
+}
+
+void IconView::compute_layout() {
+    int x = 0;
+    int y = 0;
+    int w = m_icon_width + 2 * m_icon_padding_x;
+    int h = m_icon_height + 2 * m_icon_padding_y + 16;
+    for (auto& item : m_items) {
+        item.rect = { x, y, w, h };
         x += w;
         if (x + w >= rect().width()) {
             x = 0;
             y += h;
         }
     }
-
-    View::model_did_update();
 }
 
 ModelIndex IconView::index_at_position(int x, int y) {
