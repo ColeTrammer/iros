@@ -305,6 +305,63 @@ static void do_call_init_functions(struct dynamic_elf_object *obj, int argc, cha
 }
 
 void call_init_functions(struct dynamic_elf_object *self, int argc, char **argv, char **envp) {
+    // Before the init functions can be called, the objects must be sorted such that objects
+    // are initialized after all of their dependencies. If cycles occur, this is impossible,
+    // and such code must not rely on a well defined global constructor order. This sorting is
+    // necessary in cases where a shared object has dependencies not found in the initial object.
+    // For instance:
+    //   /bin/git
+    //     libz.so
+    //     libcurl.so
+    //       libcrypto.so
+    //         libc.so
+    //     libc.so
+    // Without sorting, objects will be loaded in a DFS manner: /bin/git, libz.so, libcurl.so, libc.so, libcrypto.so
+    // but since libcrypto attempts to call getenv(), libcrypto must be reordered to appear before libc.so.
+    struct dynamic_elf_object *cycle_start = NULL;
+    for (struct dynamic_elf_object *obj = dynamic_object_tail; obj != self;) {
+    again:
+        // This means that there is a cyclic dependency.
+        if (obj == cycle_start) {
+            obj = obj->prev;
+            cycle_start = NULL;
+            continue;
+        }
+
+        // Iterate through the object's dependencies, and any of these dependencies were loaded
+        // before this object. If so, move this object before said dependency, so that its
+        // constructor will be called in the proper order. To prevent cycles from looping forever,
+        // the start of such a cycle is remembered, so that this loop is only one once per each
+        // object per each "iteration" (denoted by reducing the number of objects looked at).
+        for (size_t i = 0; i < obj->dependencies_size; i++) {
+            struct dynamic_elf_object *dependency = obj->dependencies[i].resolved_object;
+            for (struct dynamic_elf_object *o = self; o != obj; o = o->next) {
+                if (o == dependency) {
+                    if (!cycle_start) {
+                        cycle_start = obj;
+                    }
+                    struct dynamic_elf_object *obj_prev = obj->prev;
+                    obj_prev->next = obj->next;
+                    if (obj_prev->next) {
+                        obj_prev->next->prev = obj_prev;
+                    }
+
+                    dependency->prev->next = obj;
+                    obj->prev = dependency->prev;
+                    obj->next = dependency;
+                    dependency->prev = obj;
+
+                    obj = obj_prev;
+                    goto again;
+                }
+            }
+        }
+
+        obj = obj->prev;
+        cycle_start = NULL;
+        continue;
+    }
+
     for (struct dynamic_elf_object *obj = dynamic_object_tail; obj; obj = obj->prev) {
         do_call_init_functions(obj, argc, argv, envp);
         if (obj == self) {
