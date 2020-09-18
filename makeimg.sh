@@ -16,11 +16,17 @@ parted -s -- os_2.img \
 LOOP_DEV=$(losetup -o 1048576 -f os_2.img --show)
 mke2fs "$LOOP_DEV"
 
+cleanup() {
+    umount "$LOOP_DEV"
+    losetup -d "$LOOP_DEV"
+}
+trap cleanup EXIT
+
 mkdir -p mnt
 mount -text2 "$LOOP_DEV" mnt
 
-cp -r --preserve=mode base/* mnt
-cp -r --preserve=mode sysroot/* mnt
+cp -r --preserve=mode,links base/* mnt
+cp -r --preserve=mode,links sysroot/* mnt
 chown -R 50:50 mnt/home/test
 chown -R 100:100 mnt/home/eloc
 
@@ -55,8 +61,5 @@ ln -s /proc/self/fd/0 mnt/dev/stdin
 ln -s /proc/self/fd/1 mnt/dev/stdout
 ln -s /proc/self/fd/2 mnt/dev/stderr
 ln -s urandom mnt/dev/random
-
-umount "$LOOP_DEV"
-losetup -d "$LOOP_DEV"
 
 chmod 777 os_2.img
