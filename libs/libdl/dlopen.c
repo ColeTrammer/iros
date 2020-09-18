@@ -4,6 +4,7 @@
 #include <bits/mapped_elf_file.h>
 #include <dlfcn.h>
 #include <stdio.h>
+#include <string.h>
 
 #define DL_LOG
 
@@ -41,9 +42,26 @@ void *dlopen(const char *file, int flags) {
         return ret;
     }
 
+    // Check for an object that was already loaded with this exact path.
+    for (struct dynamic_elf_object *obj = __loader_get_dynamic_object_head()->next; obj; obj = obj->next) {
+        if (strcmp(obj->full_path, file) == 0) {
+            ret = __loader_bump_dynamic_elf_object(obj);
+            goto cleanup_mapped_file;
+        }
+    }
+
     struct dynamic_elf_object *object = __loader_load_mapped_elf_file(&mapped_file, file, !!(flags & RTLD_GLOBAL), false);
     if (!object) {
         goto cleanup_mapped_file;
+    }
+
+    // Check for an object with the same so name value.
+    const char *so_name = __loader_object_name(object);
+    for (struct dynamic_elf_object *obj = __loader_get_dynamic_object_head()->next; obj && obj != object; obj = obj->next) {
+        if (strcmp(__loader_object_name(obj), so_name) == 0) {
+            ret = __loader_bump_dynamic_elf_object(obj);
+            goto cleanup_dynamic_object;
+        }
     }
 
     if (__loader_load_dependencies(object)) {

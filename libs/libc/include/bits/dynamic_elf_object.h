@@ -71,6 +71,7 @@ int __loader_load_dependencies(struct dynamic_elf_object *obj_head) __attribute_
 const char *__loader_dynamic_string(const struct dynamic_elf_object *obj, size_t i) __attribute__((weak));
 const char *__loader_object_name(const struct dynamic_elf_object *obj) __attribute__((weak));
 const Elf64_Sym *__loader_lookup_symbol(const struct dynamic_elf_object *obj, const char *s) __attribute__((weak));
+struct dynamic_elf_object *__loader_bump_dynamic_elf_object(struct dynamic_elf_object *obj) __attribute__((weak));
 void __loader_drop_dynamic_elf_object(struct dynamic_elf_object *obj) __attribute__((weak));
 struct symbol_lookup_result __loader_do_symbol_lookup(const char *s, const struct dynamic_elf_object *current_object, int flags)
     __attribute__((weak));

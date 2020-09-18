@@ -34,6 +34,10 @@ int main() {
         return 1;
     }
 
+    void *handle2 = dlopen("/usr/lib/libsharedtest2.so", RTLD_NOW | RTLD_GLOBAL);
+    assert(handle == handle2);
+    dlclose(handle2);
+
     test = dlsym(handle, "test");
     if (!test) {
         fprintf(stderr, "%s\n", dlerror());

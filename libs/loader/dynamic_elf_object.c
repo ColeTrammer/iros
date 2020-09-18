@@ -135,7 +135,9 @@ void destroy_dynamic_elf_object(struct dynamic_elf_object *self) {
     loader_log("destroying `%s'", object_name(self));
 #endif /* LOADER_DEBUG */
 
-    do_call_fini_functions(self);
+    if (self->init_functions_called) {
+        do_call_fini_functions(self);
+    }
     if (self->dependencies_were_loaded) {
         for (size_t i = 0; i < self->dependencies_size; i++) {
             drop_dynamic_elf_object(self->dependencies[i].resolved_object);
@@ -164,7 +166,7 @@ const char *object_name(const struct dynamic_elf_object *self) {
     if (self->so_name_offset) {
         return dynamic_string(self, self->so_name_offset);
     }
-    return program_name;
+    return self->full_path;
 }
 LOADER_HIDDEN_EXPORT(object_name, __loader_object_name);
 
@@ -277,6 +279,7 @@ struct dynamic_elf_object *bump_dynamic_elf_object(struct dynamic_elf_object *se
     atomic_fetch_add(&self->ref_count, 1);
     return self;
 }
+LOADER_HIDDEN_EXPORT(bump_dynamic_elf_object, __loader_bump_dynamic_elf_object);
 
 static void do_call_init_functions(struct dynamic_elf_object *obj, int argc, char **argv, char **envp) {
     if (obj->init_functions_called) {
