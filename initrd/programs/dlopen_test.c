@@ -59,7 +59,7 @@ int main() {
     assert(info.dli_sname);
     assert(info.dli_saddr == test);
 
-    void *global_handle = dlopen(NULL, 0);
+    void *global_handle = dlopen(NULL, RTLD_LAZY);
     assert(global_handle);
 
     int (*sym)(void) = dlsym(global_handle, "executable_symbol");

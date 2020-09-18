@@ -25,7 +25,7 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
     }
     struct dynamic_elf_object program =
         build_dynamic_elf_object((const Elf64_Dyn *) info->program_dynamic_start, info->program_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->program_offset, info->program_size, 0, program_tls_module_id, true);
+                                 (uint8_t *) info->program_offset, info->program_size, 0, program_tls_module_id, argv[0], true);
     program.is_program = true; /* signals this object is the global handle used by dlopen(NULL). */
     add_dynamic_object(&program);
     if (load_dependencies(&program)) {
@@ -34,7 +34,7 @@ __attribute__((noreturn)) void _entry(struct initial_process_info *info, int arg
 
     struct dynamic_elf_object loader =
         build_dynamic_elf_object((const Elf64_Dyn *) info->loader_dynamic_start, info->loader_dynamic_size / sizeof(Elf64_Dyn),
-                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, 0, true);
+                                 (uint8_t *) info->loader_offset, info->loader_size, info->loader_offset, 0, "/lib/loader.so", true);
     add_dynamic_object(&loader);
     loader.dependencies_were_loaded = true; /* The loader cannot have any dependencies. */
 

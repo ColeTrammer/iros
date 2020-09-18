@@ -188,10 +188,10 @@ size_t dynamic_count(const struct mapped_elf_file *self) {
     return phdr->p_filesz / sizeof(Elf64_Dyn);
 }
 
-struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name, bool global, bool use_initial_tls) {
+struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *full_path, bool global, bool use_initial_tls) {
     size_t count = program_header_count(file);
     if (count == 0) {
-        loader_err("`%s' has no program headers", name);
+        loader_err("`%s' has no program headers", full_path);
         return NULL;
     }
 
@@ -227,7 +227,7 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
 
     void *base = mmap(NULL, total_size, PROT_NONE, MAP_PRIVATE | MAP_ANON, 0, 0);
     if ((intptr_t) base < 0 && (intptr_t) base > -300) {
-        loader_err("Could not resserve space for `%s' with mmap", name);
+        loader_err("Could not resserve space for `%s' with mmap", full_path);
         return NULL;
     }
 
@@ -271,7 +271,8 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
     }
 
     struct dynamic_elf_object *obj = loader_malloc(sizeof(struct dynamic_elf_object));
-    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_module_id, global);
+    *obj =
+        build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_module_id, full_path, global);
 
 #ifdef LOADER_DEBUG
     loader_log("loaded `%s' at %p", object_name(obj), base);

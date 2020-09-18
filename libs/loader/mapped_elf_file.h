@@ -26,7 +26,7 @@ const char *string(const struct mapped_elf_file *self, size_t index) LOADER_PRIV
 const Elf64_Phdr *dynamic_program_header(const struct mapped_elf_file *self) LOADER_PRIVATE;
 uintptr_t dynamic_table_offset(const struct mapped_elf_file *self) LOADER_PRIVATE;
 size_t dynamic_count(const struct mapped_elf_file *self) LOADER_PRIVATE;
-struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *name, bool global,
+struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *full_path, bool global,
                                                 bool use_initial_tls) LOADER_PRIVATE;
 
 #endif /* _MAPPED_ELF_FILE_H */

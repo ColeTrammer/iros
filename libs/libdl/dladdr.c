@@ -7,7 +7,7 @@ int dladdr(void *addr, Dl_info *info) {
         return 0;
     }
 
-    info->dli_fname = __loader_object_name(result.object);
+    info->dli_fname = result.object->full_path;
     info->dli_fbase = (void *) result.object->relocation_offset;
 
     if (result.symbol) {

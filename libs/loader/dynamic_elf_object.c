@@ -9,8 +9,10 @@
 static void do_call_fini_functions(struct dynamic_elf_object *obj);
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
-                                                   size_t relocation_offset, size_t tls_module_id, bool global) {
+                                                   size_t relocation_offset, size_t tls_module_id, const char *full_path, bool global) {
     struct dynamic_elf_object self = { 0 };
+    self.full_path = loader_malloc(strlen(full_path) + 1);
+    strcpy(self.full_path, full_path);
     self.tls_module_id = tls_module_id;
     self.raw_data = base;
     self.raw_data_size = size;
@@ -140,6 +142,8 @@ void destroy_dynamic_elf_object(struct dynamic_elf_object *self) {
         }
     }
     loader_free(self->dependencies);
+
+    loader_free(self->full_path);
 
     if (self->tls_module_id) {
         remove_tls_record(self->tls_module_id);

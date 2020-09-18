@@ -20,6 +20,7 @@ struct dynamic_elf_object {
     struct dynamic_elf_object *next;
     struct dynamic_elf_object *prev;
     struct dynamic_elf_object *bfs_queue_next;
+    char *full_path;
     size_t tls_module_id;
     uintptr_t hash_table;
     uintptr_t string_table;
