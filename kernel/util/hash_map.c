@@ -135,6 +135,7 @@ void hash_put(struct hash_map *map, struct hash_entry *data) {
             *entry = data;
             spin_unlock(&map->lock);
             debug_log("HASH PUT DUPLICATE\n");
+            assert(false);
             return;
         }
 
