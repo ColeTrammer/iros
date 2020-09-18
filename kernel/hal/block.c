@@ -79,7 +79,7 @@ static struct phys_page *block_find_or_empty_page(struct block_device *block_dev
     if (!page) {
         return NULL;
     }
-    page->block_offset = block_offset;
+    page->block_offset = block_offset + block_device->partition_offset;
     return block_put_cache(block_device, page);
 }
 
