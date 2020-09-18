@@ -90,13 +90,12 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
 
     // In case something else goes wrong, panic immediately without trying to dump a back trace
     should_panic = true;
+    spin_unlock(&debug_lock);
 
     uintptr_t rbp;
     asm("mov %%rbp, %0" : "=r"(rbp) : :);
     kernel_stack_trace((uintptr_t) &kernel_stack_trace, rbp);
     abort();
-
-    spin_unlock(&debug_lock);
 }
 
 void dump_registers_to_screen() {
