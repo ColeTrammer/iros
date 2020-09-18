@@ -1789,6 +1789,9 @@ struct inode *ext2_mount(struct file_system *current_fs, struct device *device) 
         (raw_super_block->num_blocks + raw_super_block->num_blocks_in_block_group - 1) / raw_super_block->num_blocks_in_block_group;
     super_block->block_size = 1024 << raw_super_block->shifted_blck_size;
 
+    char uuid_string[UUID_STRING_MAX];
+    uuid_to_string(raw_super_block->fs_uuid, uuid_string, sizeof(uuid_string));
+    debug_log("Ext2 UUID: [ %s ]\n", uuid_string);
     debug_log("Ext2 Num Inodes in Block Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
     debug_log("Ext2 Num Blocks: [ %u ]\n", raw_super_block->num_blocks);
     debug_log("Ext2 Num Inodes: [ %u ]\n", raw_super_block->num_inodes);

@@ -8,6 +8,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/tnode.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/uuid.h>
 
 #define EXT2_SUPER_BLOCK_OFFSET 1024
 #define EXT2_SUPER_BLOCK_SIZE   1024
@@ -71,7 +72,7 @@ struct ext2_raw_super_block {
 #define EXT2_64_BIT_FILE_SIZE                         2
 #define EXT2_BINARY_TREE_DIRECTORIES                  4
     uint32_t required_features_for_write;
-    uint8_t fs_id[16];
+    struct uuid fs_uuid;
     uint8_t volumne_name[16];
     uint8_t path_of_last_mount[64];
     uint32_t compression_algorithm;
