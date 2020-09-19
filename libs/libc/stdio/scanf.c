@@ -539,7 +539,88 @@ int scanf_internal(int (*get_character)(void *state), void *__restrict state, co
                 break;
             }
 
-            /* Currently %f, %e, %g, %a will go here because supporting floats is hard */
+            /* Floating point */
+#ifdef __SSE__
+            case 'a':
+            case 'e':
+            case 'E':
+            case 'f':
+            case 'g':
+            case 'G': {
+                int ret = 0;
+
+                /* Ignore initial whitespace */
+                while (isspace(c)) {
+                    ret = get_character(state);
+                    if (ret == EOF) {
+                        goto finish;
+                    }
+                    c = (char) ret;
+                }
+
+                /* Should be maximum number of chars a long double can be */
+                char buffer[SCANF_NUMBER_BUFFER_MAX];
+                int buffer_index = 0;
+
+                if (!is_valid_char_for_base(c, 16) && c != '.' && c != '-' && c != '+') {
+                    goto finish;
+                }
+
+                buffer[buffer_index++] = c;
+
+                /* Copy str character by character into buffer */
+                bool seen_decimal = c == '.';
+                while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 &&
+                       (is_valid_char_for_base(ret = get_character(state), 16) || (!seen_decimal && ret == '.') ||
+                        (buffer_index == 1 && (ret == 'x' || ret == 'X')))) {
+                    if (ret == EOF) {
+                        done = true;
+                        break;
+                    }
+                    buffer[buffer_index++] = (char) ret;
+                    seen_decimal = ret == '.';
+                }
+                if (ret != EOF && buffer_index < specifier.width) {
+                    c = (char) ret;
+                } else {
+                    c = '\0';
+                }
+                buffer[buffer_index] = '\0';
+
+                /* Read in the largest value and cast it down later since we don't care about overflows in this function */
+                long double value = strtold(buffer, NULL);
+
+                /* Don't save it if there is was a `*` */
+                if (specifier.star) {
+                    format_off++;
+                    break;
+                }
+
+                /* Convert to right length */
+                switch (specifier.length) {
+                    case SCANF_LENGTH_LONG: {
+                        double *place_here = va_arg(parameters, double *);
+                        *place_here = (double) value;
+                        break;
+                    }
+                    case SCANF_LENGTH_LONG_DOUBLE: {
+                        long double *place_here = va_arg(parameters, long double *);
+                        *place_here = (long double) value;
+                        break;
+                    }
+                    default: {
+                        float *place_here = va_arg(parameters, float *);
+                        *place_here = (float) value;
+                        break;
+                    }
+                }
+
+                num_read++;
+                format_off++;
+                break;
+            }
+#endif /* __SSE__ */
+
             default:
 #ifdef __is_libk
                 debug_log("Unsupported specifier: %s\n", specifier.specifier);
