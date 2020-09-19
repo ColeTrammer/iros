@@ -4,7 +4,56 @@
 #include <math.h>
 #include <stdlib.h>
 
+static constexpr Color alpha_blend(Color foreground, Color background, bool bg_opaque = false) {
+    auto alpha_a = foreground.a();
+
+    if (alpha_a == 0) {
+        return background;
+    } else if (alpha_a == 0xFF) {
+        return foreground;
+    }
+
+    if (bg_opaque) {
+        auto r_out = ((foreground.r() * alpha_a) + background.r() * (255U - alpha_a)) / 255U;
+        auto g_out = ((foreground.g() * alpha_a) + background.g() * (255U - alpha_a)) / 255U;
+        auto b_out = ((foreground.b() * alpha_a) + background.b() * (255U - alpha_a)) / 255U;
+        return Color(r_out, g_out, b_out, 255U);
+    }
+
+    auto alpha_b = background.a();
+    auto a_out = alpha_a + alpha_b * (255U - alpha_a) / 255U;
+
+    auto scaled_r_a = foreground.r() * alpha_a;
+    auto scaled_r_b = background.r() * alpha_b * (255U - alpha_a) / 255U;
+    auto r_out = (scaled_r_a + scaled_r_b) / (a_out);
+
+    auto scaled_g_a = foreground.g() * alpha_a;
+    auto scaled_g_b = background.g() * alpha_b * (255U - alpha_a) / 255U;
+    auto g_out = (scaled_g_a + scaled_g_b) / (a_out);
+
+    auto scaled_b_a = foreground.b() * alpha_a;
+    auto scaled_b_b = background.b() * alpha_b * (255U - alpha_a) / 255U;
+    auto b_out = (scaled_b_a + scaled_b_b) / (a_out);
+
+    return Color(r_out, g_out, b_out, a_out);
+}
+
+static_assert(alpha_blend(ColorValue::Black, ColorValue::Black) == ColorValue::Black);
+static_assert(alpha_blend(Color(255, 255, 255, 0), ColorValue::Black) == ColorValue::Black);
+static_assert(alpha_blend(Color(255, 255, 255, 200), ColorValue::Black).a() == 255);
+static_assert(alpha_blend(Color(140, 0, 0, 200), ColorValue::Black) == Color(109, 0, 0, 255));
+static_assert(alpha_blend(Color(120, 0, 0, 160), Color(39, 0, 0, 40)) == Color(113, 0, 0, 174));
+static_assert(alpha_blend(ColorValue::Clear, ColorValue::Clear) == ColorValue::Clear);
+
 void Renderer::fill_rect(int x, int y, int width, int height, Color color_object) {
+    if (color_object.a() == 0) {
+        return;
+    }
+    if (color_object.a() == 0xFF) {
+        clear_rect(x, y, width, height, color_object);
+        return;
+    }
+
     auto& buffer = m_pixels;
 
     auto y_start = LIIM::max(0, y);
@@ -17,11 +66,11 @@ void Renderer::fill_rect(int x, int y, int width, int height, Color color_object
         return;
     }
 
-    auto color = color_object.color();
+    bool bg_opaque = !buffer.has_alpha();
     for (int y = y_start; y < y_end; y++) {
         auto* base = buffer.pixels() + (y * buffer.width());
         for (int x = x_start; x < x_end; x++) {
-            base[x] = color;
+            base[x] = alpha_blend(color_object, base[x], bg_opaque).color();
         }
     }
 }
@@ -153,47 +202,6 @@ void Renderer::draw_circle(int x, int y, int r, Color color) {
         }
     }
 }
-
-static constexpr Color alpha_blend(Color foreground, Color background, bool bg_opaque = false) {
-    auto alpha_a = foreground.a();
-
-    if (alpha_a == 0) {
-        return background;
-    } else if (alpha_a == 0xFF) {
-        return foreground;
-    }
-
-    if (bg_opaque) {
-        auto r_out = ((foreground.r() * alpha_a) + background.r() * (255U - alpha_a)) / 255U;
-        auto g_out = ((foreground.g() * alpha_a) + background.g() * (255U - alpha_a)) / 255U;
-        auto b_out = ((foreground.b() * alpha_a) + background.b() * (255U - alpha_a)) / 255U;
-        return Color(r_out, g_out, b_out, 255U);
-    }
-
-    auto alpha_b = background.a();
-    auto a_out = alpha_a + alpha_b * (255U - alpha_a) / 255U;
-
-    auto scaled_r_a = foreground.r() * alpha_a;
-    auto scaled_r_b = background.r() * alpha_b * (255U - alpha_a) / 255U;
-    auto r_out = (scaled_r_a + scaled_r_b) / (a_out);
-
-    auto scaled_g_a = foreground.g() * alpha_a;
-    auto scaled_g_b = background.g() * alpha_b * (255U - alpha_a) / 255U;
-    auto g_out = (scaled_g_a + scaled_g_b) / (a_out);
-
-    auto scaled_b_a = foreground.b() * alpha_a;
-    auto scaled_b_b = background.b() * alpha_b * (255U - alpha_a) / 255U;
-    auto b_out = (scaled_b_a + scaled_b_b) / (a_out);
-
-    return Color(r_out, g_out, b_out, a_out);
-}
-
-static_assert(alpha_blend(ColorValue::Black, ColorValue::Black) == ColorValue::Black);
-static_assert(alpha_blend(Color(255, 255, 255, 0), ColorValue::Black) == ColorValue::Black);
-static_assert(alpha_blend(Color(255, 255, 255, 200), ColorValue::Black).a() == 255);
-static_assert(alpha_blend(Color(140, 0, 0, 200), ColorValue::Black) == Color(109, 0, 0, 255));
-static_assert(alpha_blend(Color(120, 0, 0, 160), Color(39, 0, 0, 40)) == Color(113, 0, 0, 174));
-static_assert(alpha_blend(ColorValue::Clear, ColorValue::Clear) == ColorValue::Clear);
 
 void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rect& dest_rect_in) {
     assert(src_rect_in.width() == dest_rect_in.width());

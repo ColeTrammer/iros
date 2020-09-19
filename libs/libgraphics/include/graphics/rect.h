@@ -7,6 +7,8 @@ class Rect {
 public:
     constexpr Rect() {}
     constexpr Rect(int x, int y, int width, int height) : m_x(x), m_y(y), m_width(width), m_height(height) {}
+    constexpr Rect(const Point& a, const Point& b)
+        : m_x(min(a.x(), b.x())), m_y(min(a.y(), b.y())), m_width(abs(a.x() - b.x())), m_height(abs(a.y() - b.y())) {}
 
     constexpr int x() const { return m_x; }
     constexpr int y() const { return m_y; }

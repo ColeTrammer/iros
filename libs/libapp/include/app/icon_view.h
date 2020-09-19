@@ -12,6 +12,7 @@ class IconView : public View {
 
 public:
     virtual void render() override;
+    virtual void on_mouse_event(MouseEvent& event);
     virtual void on_resize() override;
     virtual void model_did_update() override;
 
@@ -30,6 +31,9 @@ private:
     };
 
     Vector<Item> m_items;
+    Point m_selection_start;
+    Point m_selection_end;
+    bool m_in_selection { false };
     int m_name_column { 0 };
     int m_icon_width { 32 };
     int m_icon_height { 32 };

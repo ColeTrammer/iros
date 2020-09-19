@@ -1,3 +1,4 @@
+#include <app/event.h>
 #include <app/icon_view.h>
 #include <app/model.h>
 #include <app/window.h>
@@ -7,6 +8,8 @@ namespace App {
 
 void IconView::render() {
     Renderer renderer(*window()->pixels());
+    renderer.clear_rect(rect(), ColorValue::Black);
+
     for (auto& item : m_items) {
         if (auto bitmap = item.icon) {
             Rect icon_rect = { rect().x() + item.rect.x() + m_icon_padding_x, rect().y() + item.rect.y() + m_icon_padding_y, m_icon_width,
@@ -19,7 +22,40 @@ void IconView::render() {
             renderer.render_text(item.name, text_rect, ColorValue::White, TextAlign::Center, font());
         }
     }
+
+    if (m_in_selection) {
+        Rect selection_rect = { m_selection_start, m_selection_end };
+        selection_rect.set_x(selection_rect.x() + rect().x());
+        selection_rect.set_y(selection_rect.y() + rect().y());
+        renderer.fill_rect(selection_rect, Color(106, 126, 200, 200));
+        renderer.draw_rect(selection_rect, Color(76, 96, 200, 255));
+    }
+
     Widget::render();
+}
+
+void IconView::on_mouse_event(MouseEvent& event) {
+    if (event.mouse_event_type() == MouseEventType::Down) {
+        if (event.left() == MOUSE_DOWN) {
+            m_in_selection = true;
+            m_selection_start = { event.x(), event.y() };
+            return;
+        }
+    } else if (event.mouse_event_type() == MouseEventType::Move) {
+        if (m_in_selection) {
+            m_selection_end = { event.x(), event.y() };
+            invalidate();
+            return;
+        }
+    } else if (event.mouse_event_type() == MouseEventType::Up) {
+        if (m_in_selection) {
+            m_in_selection = false;
+            invalidate();
+            return;
+        }
+    }
+
+    return Widget::on_mouse_event(event);
 }
 
 void IconView::on_resize() {
