@@ -10,7 +10,8 @@ void IconView::render() {
     Renderer renderer(*window()->pixels());
     renderer.clear_rect(rect(), ColorValue::Black);
 
-    for (auto& item : m_items) {
+    for (int r = 0; r < m_items.size(); r++) {
+        auto& item = m_items[r];
         if (auto bitmap = item.icon) {
             Rect icon_rect = { rect().x() + item.rect.x() + m_icon_padding_x, rect().y() + item.rect.y() + m_icon_padding_y, m_icon_width,
                                m_icon_height };
@@ -20,6 +21,9 @@ void IconView::render() {
             Rect text_rect = { rect().x() + item.rect.x(), rect().y() + item.rect.y() + m_icon_height + 2 * m_icon_padding_y,
                                item.rect.width(), item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
             renderer.render_text(item.name, text_rect, ColorValue::White, TextAlign::Center, font());
+        }
+        if (hovered_index() == ModelIndex { r, m_name_column }) {
+            renderer.draw_rect(item.rect, ColorValue::White);
         }
     }
 
@@ -55,7 +59,7 @@ void IconView::on_mouse_event(MouseEvent& event) {
         }
     }
 
-    return Widget::on_mouse_event(event);
+    return View::on_mouse_event(event);
 }
 
 void IconView::on_resize() {
