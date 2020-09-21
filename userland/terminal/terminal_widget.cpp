@@ -119,7 +119,7 @@ void TerminalWidget::render() {
 
             auto cell_rect = Rect { x, y, cell_width, cell_height };
             bg.set_alpha(m_background_alpha);
-            renderer.fill_rect(cell_rect, bg);
+            renderer.clear_rect(cell_rect, bg);
             renderer.render_text(String(cell.ch), cell_rect, fg, TextAlign::Center, cell.bold ? Font::bold_font() : Font::default_font());
         }
     }
