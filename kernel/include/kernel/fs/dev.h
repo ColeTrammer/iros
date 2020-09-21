@@ -38,6 +38,7 @@ struct device {
     bool readable;
     bool writeable;
     bool exceptional;
+    int ref_count;
     struct device_ops *ops;
     struct vm_object *vm_object;
     mutex_t lock;
@@ -48,7 +49,8 @@ struct device {
 struct hash_map *dev_device_hash_map(void);
 void dev_register(struct device *device);
 void dev_unregister(struct device *device);
-
+struct device *dev_bump_device(struct device *device);
+void dev_drop_device(struct device *device);
 struct device *dev_get_device(dev_t device_number);
 
 void init_dev();

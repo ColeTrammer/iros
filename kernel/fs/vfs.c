@@ -70,6 +70,10 @@ void drop_inode_reference(struct inode *inode) {
             inode->i_op->on_inode_destruction(inode);
         }
 
+        if (inode->device) {
+            dev_drop_device(inode->device);
+        }
+
         if (inode->dirent_cache) {
             fs_destroy_dirent_cache(inode->dirent_cache);
         }

@@ -45,6 +45,7 @@ void kernel_main(uint32_t *multiboot_info) {
     int error = 0;
     error = fs_mount(sda1, "/", "ext2");
     assert(error == 0);
+    dev_drop_device(sda1);
 
     // Mount tmpfs at /dev/shm
     error = fs_mount(NULL, "/dev/shm", "tmpfs");

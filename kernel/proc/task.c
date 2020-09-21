@@ -387,7 +387,7 @@ void run_task(struct task *task) {
 }
 
 void free_task(struct task *task, bool free_paging_structure) {
-#ifndef TASK_DEBUG
+#ifdef TASK_DEBUG
     debug_log("destroying: [ %d:%d ]\n", task->process->pid, task->tid);
 #endif /* TASK_DEBUG */
 

@@ -30,7 +30,23 @@ struct hash_map *dev_device_hash_map(void) {
     return device_map;
 }
 
+struct device *dev_bump_device(struct device *device) {
+    atomic_fetch_add(&device->ref_count, 1);
+    return device;
+}
+
+void dev_drop_device(struct device *device) {
+    if (atomic_fetch_sub(&device->ref_count, 1) == 1) {
+        if (device->ops->remove) {
+            device->ops->remove(device);
+        }
+
+        free(device);
+    }
+}
+
 void dev_register(struct device *device) {
+    dev_bump_device(device);
     if (device->ops->add) {
         device->ops->add(device);
     }
@@ -41,16 +57,15 @@ void dev_register(struct device *device) {
 
 void dev_unregister(struct device *device) {
     hash_del(device_map, &device->device_number);
-
-    if (device->ops->remove) {
-        device->ops->remove(device);
-    }
-
-    free(device);
+    dev_drop_device(device);
 }
 
 struct device *dev_get_device(dev_t device_number) {
-    return hash_get_entry(device_map, &device_number, struct device);
+    struct device *device = hash_get_entry(device_map, &device_number, struct device);
+    if (device) {
+        dev_bump_device(device);
+    }
+    return device;
 }
 
 static struct file_operations dev_f_op = { .close = &dev_close, .read = &dev_read, .write = &dev_write };
