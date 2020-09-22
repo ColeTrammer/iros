@@ -9,6 +9,9 @@
 #define PS2_IO_STATUS  0x64 // Reads
 #define PS2_IO_COMMAND 0x64 // Writes
 
+#define PS2_IRQ0 1
+#define PS2_IRQ1 12
+
 #define PS2_COMMAND_READ_CONFIG       0x20
 #define PS2_COMMAND_WRITE_CONFIG      0x60
 #define PS2_COMMAND_DISABLE_PORT1     0xA7

@@ -1,9 +1,11 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/ps2.h>
+#include <kernel/irqs/handlers.h>
 
 static int ps2_read(uint8_t *byte) {
     int us_timeout = 300;
@@ -66,10 +68,39 @@ static int ps2_send_device_command(uint8_t byte, int port) {
     return 0;
 }
 
-static struct ps2_driver *ps2_find_driver(struct ps2_controller *controller, int port) {
-    (void) controller;
-    debug_log("Can't find PS/2 device driver for port: [ %d ]\n", port);
+static struct list_node ps2_drivers = INIT_LIST(ps2_drivers);
+
+static struct ps2_driver *ps2_find_driver(struct ps2_controller *controller, int port_number) {
+    struct ps2_port *port = &controller->ports[port_number];
+    if (ps2_send_device_command(PS2_DEVICE_COMMAND_ID, port_number)) {
+        debug_log("Failed to send PS/2 device id command for port: [ %d ]\n", port_number);
+        return NULL;
+    }
+
+    ps2_read(&port->id.byte0);
+    ps2_read(&port->id.byte0);
+
+    list_for_each_entry(&ps2_drivers, driver, struct ps2_driver, list) {
+        for (size_t i = 0; i < driver->device_id_count; i++) {
+            struct ps2_device_id id = driver->device_id_list[i];
+            if (memcmp(&port->id, &id, sizeof(id)) == 0) {
+                return driver;
+            }
+        }
+    }
+
+    debug_log("Can't find PS/2 device driver for port: [ %d, %u, %u ]\n", port_number, port->id.byte0, port->id.byte1);
     return NULL;
+}
+
+void ps2_register_driver(struct ps2_driver *driver) {
+    debug_log("Registering PS/2 driver: [ %s ]\n", driver->name);
+    list_append(&ps2_drivers, &driver->list);
+}
+
+void ps2_unregister_driver(struct ps2_driver *driver) {
+    debug_log("Unregistering PS/2 driver: [ %s ]\n", driver->name);
+    list_remove(&driver->list);
 }
 
 void init_ps2_controller(void) {
@@ -146,6 +177,10 @@ void init_ps2_controller(void) {
     controller->read_byte = ps2_read;
     controller->send_byte = ps2_send;
     controller->send_command = ps2_send_device_command;
+    controller->ports[0].port_number = 0;
+    controller->ports[0].irq = PS2_IRQ0 + EXTERNAL_IRQ_OFFSET;
+    controller->ports[1].port_number = 1;
+    controller->ports[1].irq = PS2_IRQ1 + EXTERNAL_IRQ_OFFSET;
 
     // Enable ports, reset devices, and locate drivers
     struct ps2_driver *driver0 = NULL;
