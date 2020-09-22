@@ -13,49 +13,57 @@
 #include <kernel/hal/input.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
-#include <kernel/hal/x86_64/drivers/pic.h>
+#include <kernel/hal/x86_64/drivers/ps2.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
-static struct keyboard_event_queue *start;
-static struct keyboard_event_queue *end;
-static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
-static struct device *device;
+struct kbd_data {
+    struct keyboard_event_queue *start;
+    struct keyboard_event_queue *end;
+    struct ps2_controller *controller;
+    struct ps2_port *port;
+    struct device *device;
+    struct irq_handler irq_handler;
+    struct key_event event;
+    spinlock_t queue_lock;
+    unsigned int flags;
+    bool extended_key_code;
+};
 
 static ssize_t kbd_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
-    (void) device;
     (void) offset;
     (void) non_blocking;
 
     size_t read = 0;
 
+    struct kbd_data *data = device->private;
     while (read <= len - sizeof(struct key_event)) {
-        if (start == NULL) {
+        if (data->start == NULL) {
             return read;
         }
 
-        assert(start);
-        while (read <= len - sizeof(struct key_event) && start != NULL) {
-            memcpy(((uint8_t *) buffer) + read, &start->entry, sizeof(struct key_event));
+        assert(data->start);
+        while (read <= len - sizeof(struct key_event) && data->start != NULL) {
+            memcpy(((uint8_t *) buffer) + read, &data->start->entry, sizeof(struct key_event));
 
             read += sizeof(struct key_event);
 
-            if (start->next == NULL) {
-                end = NULL;
+            if (data->start->next == NULL) {
+                data->end = NULL;
             }
 
-            spin_lock(&queue_lock);
+            spin_lock(&data->queue_lock);
 
-            struct keyboard_event_queue *save = start->next;
-            free(start);
-            start = save;
+            struct keyboard_event_queue *save = data->start->next;
+            free(data->start);
+            data->start = save;
 
-            if (start == NULL) {
+            if (data->start == NULL) {
                 device->readable = false;
             }
 
-            spin_unlock(&queue_lock);
+            spin_unlock(&data->queue_lock);
         }
     }
 
@@ -64,23 +72,23 @@ static ssize_t kbd_read(struct device *device, off_t offset, void *buffer, size_
 
 static struct device_ops kbd_ops = { .read = kbd_read };
 
-static void add_keyboard_event(struct key_event *event) {
+static void add_keyboard_event(struct kbd_data *data, struct key_event *event) {
     struct keyboard_event_queue *e = malloc(sizeof(struct keyboard_event_queue));
     memcpy(&e->entry, event, sizeof(struct key_event));
     e->next = NULL;
 
-    spin_lock(&queue_lock);
+    spin_lock(&data->queue_lock);
 
-    if (start == NULL) {
-        start = e;
-        end = e;
+    if (data->start == NULL) {
+        data->start = e;
+        data->end = e;
     } else {
-        end->next = e;
-        end = e;
+        data->end->next = e;
+        data->end = e;
     }
 
-    device->readable = true;
-    spin_unlock(&queue_lock);
+    data->device->readable = true;
+    spin_unlock(&data->queue_lock);
 }
 
 static struct key_code_entry map[KEYBOARD_NUM_KEYCODES] = { { KEY_NULL, '\0' },
@@ -472,30 +480,26 @@ static struct key_code_entry shift_map[KEYBOARD_RELEASED_OFFSET] = {
     { KEY_NULL, '\0' },
 };
 
-struct keyboard_task {
-    uint8_t command;
-    struct keyboard_task *next;
-};
+static void handle_keyboard_interrupt(struct irq_context *context) {
+    struct device *device = context->closure;
+    struct kbd_data *data = device->private;
 
-static bool extended_key_code = false;
-static unsigned int flags = 0;
-
-static struct key_event event;
-
-static void handle_keyboard_interrupt(struct irq_context *context __attribute__((unused))) {
-    uint8_t scan_code = inb(KEYBOARD_DATA_PORT);
+    uint8_t scan_code;
+    if (data->controller->read_byte(&scan_code)) {
+        return;
+    }
 
     if (scan_code == KEYBOARD_ACK) {
-
+        return;
     } else if (scan_code == KEYBOARD_EXTENDED) {
-        extended_key_code = true;
+        data->extended_key_code = true;
     } else if (scan_code < KEYBOARD_RELEASED_OFFSET) {
         struct key_code_entry entry;
-        if (extended_key_code) {
-            extended_key_code = false;
+        if (data->extended_key_code) {
+            data->extended_key_code = false;
             entry = map[scan_code + KEYBOARD_RELEASED_OFFSET];
         } else {
-            if (flags & KEY_SHIFT_ON) {
+            if (data->flags & KEY_SHIFT_ON) {
                 entry = shift_map[scan_code];
             } else {
                 entry = map[scan_code];
@@ -503,70 +507,91 @@ static void handle_keyboard_interrupt(struct irq_context *context __attribute__(
         }
 
         if (entry.key == KEY_LEFT_CONTROL || entry.key == KEY_RIGHT_CONTROL) {
-            flags |= KEY_CONTROL_ON;
+            data->flags |= KEY_CONTROL_ON;
         }
 
         if (entry.key == KEY_LEFT_ALT || entry.key == KEY_RIGHT_ALT) {
-            flags |= KEY_ALT_ON;
+            data->flags |= KEY_ALT_ON;
         }
 
         if (entry.key == KEY_LEFT_SHIFT || entry.key == KEY_RIGHT_SHIFT) {
-            flags |= KEY_SHIFT_ON;
+            data->flags |= KEY_SHIFT_ON;
         }
 
-        flags |= KEY_DOWN;
-        flags &= ~KEY_UP;
+        data->flags |= KEY_DOWN;
+        data->flags &= ~KEY_UP;
 
-        event.ascii = entry.ascii;
-        event.flags = flags;
-        event.key = entry.key;
+        data->event.ascii = entry.ascii;
+        data->event.flags = data->flags;
+        data->event.key = entry.key;
 
-        add_keyboard_event(&event);
+        add_keyboard_event(data, &data->event);
     } else {
         struct key_code_entry entry;
-        if (extended_key_code) {
-            extended_key_code = false;
+        if (data->extended_key_code) {
+            data->extended_key_code = false;
             entry = map[scan_code];
         } else {
             entry = map[scan_code - KEYBOARD_RELEASED_OFFSET];
         }
 
         if (entry.key == KEY_LEFT_CONTROL || entry.key == KEY_RIGHT_CONTROL) {
-            flags &= ~KEY_CONTROL_ON;
+            data->flags &= ~KEY_CONTROL_ON;
         }
 
         if (entry.key == KEY_LEFT_ALT || entry.key == KEY_RIGHT_ALT) {
-            flags &= ~KEY_ALT_ON;
+            data->flags &= ~KEY_ALT_ON;
         }
 
         if (entry.key == KEY_LEFT_SHIFT || entry.key == KEY_RIGHT_SHIFT) {
-            flags &= ~KEY_SHIFT_ON;
+            data->flags &= ~KEY_SHIFT_ON;
         }
 
-        flags &= ~KEY_DOWN;
-        flags |= KEY_UP;
+        data->flags &= ~KEY_DOWN;
+        data->flags |= KEY_UP;
 
-        event.ascii = '\0';
-        event.flags = flags;
-        event.key = entry.key;
+        data->event.ascii = '\0';
+        data->event.flags = data->flags;
+        data->event.key = entry.key;
 
-        add_keyboard_event(&event);
+        add_keyboard_event(data, &data->event);
     }
 }
 
-static struct irq_handler keyboard_handler = { .handler = &handle_keyboard_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
-
-void init_keyboard() {
-    register_irq_handler(&keyboard_handler, KEYBOARD_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
-
-    while (inb(0x60) & 0x1) {
-        inb(KEYBOARD_DATA_PORT);
-    }
-
-    device = calloc(1, sizeof(struct device));
+static void kbd_create(struct ps2_controller *controller, struct ps2_port *port) {
+    struct device *device = calloc(1, sizeof(struct device) + sizeof(struct kbd_data));
+    struct kbd_data *data = device->private = device + 1;
     device->device_number = 0x00701;
     device->ops = &kbd_ops;
-    device->private = NULL;
     device->type = S_IFCHR;
     dev_register(device);
+
+    init_spinlock(&data->queue_lock);
+    data->controller = controller;
+    data->port = port;
+    data->device = device;
+    data->irq_handler.closure = device;
+    data->irq_handler.flags = IRQ_HANDLER_EXTERNAL;
+    data->irq_handler.handler = handle_keyboard_interrupt;
+    register_irq_handler(&data->irq_handler, port->irq);
+
+    controller->send_command(PS2_DEVICE_COMMAND_ENABLE_SCANNING, port->port_number);
+}
+
+static struct ps2_device_id kbd_ids[] = {
+    { 0x83, 0x00 },
+    { 0xAB, 0x41 },
+    { 0xAB, 0xC1 },
+    { 0xAB, 0x83 },
+};
+
+static struct ps2_driver kbd_driver = {
+    .name = "PS/2 Keyboard",
+    .device_id_list = kbd_ids,
+    .device_id_count = sizeof(kbd_ids) / sizeof(struct ps2_device_id),
+    .create = kbd_create,
+};
+
+void init_keyboard() {
+    ps2_register_driver(&kbd_driver);
 }

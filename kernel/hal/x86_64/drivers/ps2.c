@@ -215,19 +215,6 @@ void init_ps2_controller(void) {
         return;
     }
 
-    // Enable IRQs
-    if (ps2_command(PS2_COMMAND_READ_CONFIG) || ps2_read(&config)) {
-        debug_log("PS/2 controller can't read config byte\n");
-        free(controller);
-        return;
-    }
-    config |= (has_port0 ? PS2_CONFIG_IRQ0_ENABLED : 0) | (has_port1 ? PS2_CONFIG_IRQ1_ENABLED : 0);
-    if (ps2_write_config(config)) {
-        debug_log("PS/2 controller can't write config byte\n");
-        free(controller);
-        return;
-    }
-
     // Start the device drivers
     if (driver0) {
         driver0->create(controller, &controller->ports[0]);
@@ -235,4 +222,10 @@ void init_ps2_controller(void) {
     if (driver1) {
         driver1->create(controller, &controller->ports[1]);
     }
+
+    // Enable IRQs
+    ps2_command(PS2_COMMAND_READ_CONFIG);
+    ps2_read(&config);
+    config |= (has_port0 ? PS2_CONFIG_IRQ0_ENABLED : 0) | (has_port1 ? PS2_CONFIG_IRQ1_ENABLED : 0);
+    ps2_write_config(config);
 }
