@@ -1,0 +1,179 @@
+#include <errno.h>
+#include <stdlib.h>
+
+#include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/hal/x86_64/drivers/ps2.h>
+
+static int ps2_read(uint8_t *byte) {
+    int us_timeout = 300;
+    for (int i = 0; i < us_timeout; i++) {
+        if (inb(PS2_IO_STATUS) & PS2_STATUS_OUTPUT_FULL) {
+            *byte = inb(PS2_IO_DATA);
+            return 0;
+        }
+    }
+
+    return -ETIMEDOUT;
+}
+
+static int ps2_port0_out(uint8_t byte) {
+    int us_timeout = 300;
+    for (int i = 0; i < us_timeout; i++) {
+        if (!(inb(PS2_IO_STATUS) & PS2_STATUS_INPUT_FULL)) {
+            outb(PS2_IO_DATA, byte);
+            return 0;
+        }
+    }
+
+    return -ETIMEDOUT;
+}
+
+static int ps2_port1_out(uint8_t byte) {
+    outb(PS2_IO_COMMAND, PS2_COMMAND_WRITE_PORT1);
+    return ps2_port0_out(byte);
+}
+
+static int ps2_send(uint8_t byte, int port) {
+    if (port == 1) {
+        return ps2_port1_out(byte);
+    }
+    return ps2_port0_out(byte);
+}
+
+static int ps2_send_device_command(uint8_t byte, int port) {
+    uint8_t result;
+    if (ps2_send(byte, port) || ps2_read(&result) || result != PS2_ACK) {
+        return -EIO;
+    }
+    return 0;
+}
+
+static struct ps2_driver *ps2_find_driver(struct ps2_controller *controller, int port) {
+    (void) controller;
+    debug_log("Can't find PS/2 device driver for port: [ %d ]\n", port);
+    return NULL;
+}
+
+void init_ps2_controller(void) {
+    // Disable PS/2 ports
+    outb(PS2_IO_COMMAND, PS2_COMMAND_DISABLE_PORT0);
+    outb(PS2_IO_COMMAND, PS2_COMMAND_DISABLE_PORT1);
+
+    // Discard any pending data
+    inb(PS2_IO_DATA);
+
+    // Modify the config register so that IRQs are disabled.
+    uint8_t config;
+    outb(PS2_IO_COMMAND, PS2_COMMAND_READ_CONFIG);
+    if (ps2_read(&config)) {
+        debug_log("PS/2 controller can't read config byte\n");
+        return;
+    }
+    bool no_port1 = !(config & PS2_CONFIG_CLOCK1_DISABLED);
+    config &= ~(PS2_CONFIG_IRQ0_ENABLED | PS2_CONFIG_IRQ1_ENABLED | PS2_CONFIG_TRANLATE);
+    outb(PS2_IO_COMMAND, PS2_COMMAND_WRITE_CONFIG);
+    outb(PS2_IO_DATA, config);
+
+    // Do PS/2 self test
+    uint8_t result;
+    outb(PS2_IO_COMMAND, PS2_COMMAND_TEST_CONTROLLER);
+    if (ps2_read(&result) || result != PS2_CONTROLLER_SELF_TEST_SUCCESS) {
+        debug_log("PS/2 controller self test failed\n");
+        return;
+    }
+    outb(PS2_IO_COMMAND, PS2_COMMAND_WRITE_CONFIG);
+    outb(PS2_IO_DATA, config);
+
+    // Check for the second PS/2 port
+    bool has_port1 = false;
+    if (!no_port1) {
+        outb(PS2_IO_COMMAND, PS2_COMMAND_ENABLE_PORT1);
+        if (ps2_read(&config)) {
+            debug_log("PS/2 controller can't read config byte\n");
+            return;
+        }
+
+        if (!(config & PS2_CONFIG_CLOCK1_DISABLED)) {
+            has_port1 = true;
+            outb(PS2_IO_COMMAND, PS2_COMMAND_DISABLE_PORT1);
+        }
+    }
+
+    // Check if the ports work
+    bool has_port0 = true;
+    outb(PS2_IO_COMMAND, PS2_COMMAND_TEST_PORT0);
+    if (ps2_read(&result) || result != 0x00) {
+        debug_log("PS/2 port 0 is broken\n");
+        has_port0 = false;
+    }
+    if (has_port1) {
+        outb(PS2_IO_COMMAND, PS2_COMMAND_TEST_PORT1);
+        if (ps2_read(&result) || result != 0x00) {
+            debug_log("PS/2 port 1 is broken\n");
+            has_port1 = false;
+        }
+    }
+    if (!has_port0 && !has_port1) {
+        debug_log("PS/2 controller has no working ports\n");
+        return;
+    }
+
+    struct ps2_controller *controller = calloc(1, sizeof(struct ps2_controller));
+    controller->read_byte = ps2_read;
+    controller->send_byte = ps2_send;
+    controller->send_command = ps2_send_device_command;
+
+    // Enable ports, reset devices, and locate drivers
+    struct ps2_driver *driver0 = NULL;
+    struct ps2_driver *driver1 = NULL;
+    if (has_port0) {
+        outb(PS2_IO_COMMAND, PS2_COMMAND_ENABLE_PORT0);
+        if (ps2_send_device_command(PS2_DEVICE_COMMAND_SELF_TEST, 0) || ps2_read(&result) || result != PS2_DEVICE_SELF_TEST_SUCCESS ||
+            ps2_send_device_command(PS2_DEVICE_COMMAND_DISABLE_SCANNING, 0)) {
+            debug_log("PS/2 device on port 0 is broken\n");
+            has_port0 = false;
+            outb(PS2_IO_COMMAND, PS2_COMMAND_DISABLE_PORT0);
+        }
+
+        if (!(driver0 = ps2_find_driver(controller, 0))) {
+            has_port0 = false;
+            outb(PS2_IO_COMMAND, PS2_COMMAND_DISABLE_PORT0);
+        }
+    }
+    if (has_port1) {
+        outb(PS2_IO_COMMAND, PS2_COMMAND_ENABLE_PORT1);
+        if (ps2_send_device_command(PS2_DEVICE_COMMAND_SELF_TEST, 1) || ps2_read(&result) || result != PS2_DEVICE_SELF_TEST_SUCCESS ||
+            ps2_send_device_command(PS2_DEVICE_COMMAND_DISABLE_SCANNING, 1)) {
+            debug_log("PS/2 device on port 1 is broken\n");
+            outb(PS2_IO_COMMAND, PS2_COMMAND_DISABLE_PORT1);
+            has_port1 = false;
+        }
+
+        if (!(driver1 = ps2_find_driver(controller, 1))) {
+            has_port1 = false;
+            outb(PS2_IO_COMMAND, PS2_COMMAND_DISABLE_PORT1);
+        }
+    }
+
+    if (!has_port0 && !has_port1) {
+        return;
+    }
+
+    // Enable IRQs
+    outb(PS2_IO_COMMAND, PS2_COMMAND_READ_CONFIG);
+    if (ps2_read(&config)) {
+        debug_log("PS/2 controller can't read config byte\n");
+        return;
+    }
+    config |= (has_port0 ? PS2_CONFIG_IRQ0_ENABLED : 0) | (has_port1 ? PS2_CONFIG_IRQ1_ENABLED : 0);
+    outb(PS2_IO_COMMAND, PS2_COMMAND_WRITE_CONFIG);
+    outb(PS2_IO_DATA, config);
+
+    // Start the device drivers
+    if (driver0) {
+        driver0->create(controller, &controller->ports[0]);
+    }
+    if (driver1) {
+        driver1->create(controller, &controller->ports[1]);
+    }
+}
