@@ -71,7 +71,7 @@ void init_cpus(void) {
 
 void init_drivers(void) {
     init_keyboard();
-    // init_mouse();
+    init_mouse();
     init_ps2_controller();
     init_vmware_back_door();
     init_fdc();

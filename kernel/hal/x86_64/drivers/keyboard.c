@@ -489,7 +489,7 @@ static void handle_keyboard_interrupt(struct irq_context *context) {
         return;
     }
 
-    if (scan_code == KEYBOARD_ACK) {
+    if (scan_code == PS2_ACK) {
         return;
     } else if (scan_code == KEYBOARD_EXTENDED) {
         data->extended_key_code = true;

@@ -49,13 +49,16 @@
 #define PS2_OUTPUT_DATA0           (1U << 7U)
 
 #define PS2_DEVICE_COMMAND_ID               0xF2
+#define PS2_DEVICE_COMMAND_SET_SAMPLE_RATE  0xF3
 #define PS2_DEVICE_COMMAND_ENABLE_SCANNING  0xF4
 #define PS2_DEVICE_COMMAND_DISABLE_SCANNING 0xF5
+#define PS2_DEVICE_COMMAND_SET_DEFAULTS     0xF6
 #define PS2_DEVICE_COMMAND_SELF_TEST        0xFF
 
 #define PS2_CONTROLLER_SELF_TEST_SUCCESS 0x55
 #define PS2_DEVICE_SELF_TEST_SUCCESS     0xAA
 #define PS2_ACK                          0xFA
+#define PS2_RESEND                       0xFE
 
 struct device;
 
