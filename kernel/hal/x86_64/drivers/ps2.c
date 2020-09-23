@@ -120,7 +120,8 @@ void init_ps2_controller(void) {
         return;
     }
     bool no_port1 = !(config & PS2_CONFIG_CLOCK1_DISABLED);
-    config &= ~(PS2_CONFIG_IRQ0_ENABLED | PS2_CONFIG_IRQ1_ENABLED | PS2_CONFIG_TRANLATE);
+    config &= ~(PS2_CONFIG_IRQ0_ENABLED | PS2_CONFIG_IRQ1_ENABLED);
+    config |= PS2_CONFIG_TRANLATE;
     if (ps2_write_config(config)) {
         debug_log("PS/2 controller can't write config byte\n");
         return;

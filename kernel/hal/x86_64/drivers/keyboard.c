@@ -579,10 +579,7 @@ static void kbd_create(struct ps2_controller *controller, struct ps2_port *port)
 }
 
 static struct ps2_device_id kbd_ids[] = {
-    { 0x83, 0x00 },
-    { 0xAB, 0x41 },
-    { 0xAB, 0xC1 },
-    { 0xAB, 0x83 },
+    { 0x41, 0x00 }, { 0x83, 0x00 }, { 0xAB, 0x41 }, { 0xAB, 0xC1 }, { 0xAB, 0x83 },
 };
 
 static struct ps2_driver kbd_driver = {
