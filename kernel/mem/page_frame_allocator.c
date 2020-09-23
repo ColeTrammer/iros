@@ -98,8 +98,9 @@ uintptr_t get_contiguous_pages(size_t pages) {
     uintptr_t ret = 0;
     spin_lock(&bitmap_lock);
 
+    size_t start = 0;
 try_again:
-    for (size_t i = 0; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
+    for (size_t i = start; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
         if (~page_bitmap[i]) {
             uintptr_t bit_index = i * 8 * sizeof(uintptr_t);
             while (get_bit(bit_index)) {
@@ -109,6 +110,7 @@ try_again:
             bit_index++;
             for (size_t consecutive_pages = 1; consecutive_pages < pages; consecutive_pages++) {
                 if (get_bit(bit_index++)) {
+                    start = i + 1;
                     goto try_again;
                 }
             }
