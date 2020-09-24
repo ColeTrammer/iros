@@ -15,9 +15,10 @@
 #include <kernel/net/udp.h>
 #include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
-extern struct task *network_task;
+static struct task *network_task;
 
 static struct list_node recv_list = INIT_LIST(recv_list);
 static spinlock_t lock = SPINLOCK_INITIALIZER;
@@ -115,3 +116,11 @@ void net_network_task_start() {
         net_free_packet(packet);
     }
 }
+
+static void init_network_task(void) {
+    network_task = load_kernel_task((uintptr_t) net_network_task_start, "net");
+    assert(network_task);
+
+    sched_add_task(network_task);
+}
+INIT_FUNCTION(init_network_task, net);

@@ -19,6 +19,4 @@ int net_bind_to_ephemeral_port(struct socket *socket, uint16_t *port_p);
 int net_bind_to_port(struct socket *socket, uint16_t port);
 void net_unbind_port(uint16_t port);
 
-void init_ports();
-
 #endif /* _KERNEL_NET_PORT_H */

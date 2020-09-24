@@ -144,8 +144,6 @@ void net_copy_sockaddr_to_user(const void *addr, size_t addrlen, void *user_addr
 struct list_node *net_get_protocol_list(void);
 void net_register_protocol(struct socket_protocol *protocol);
 
-void init_net_sockets();
-
 #define net_for_each_protocol(name) list_for_each_entry(net_get_protocol_list(), name, struct socket_protocol, list)
 
 #define net_for_each_socket(name) list_for_each_entry(net_get_socket_list(), name, struct socket, socket_list)

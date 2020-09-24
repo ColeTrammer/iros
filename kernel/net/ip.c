@@ -24,6 +24,7 @@
 #include <kernel/time/timer.h>
 #include <kernel/util/checksum.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/init.h>
 
 // #define IP_V4_DEBUG
 #define IP_V4_FRAGMENT_DEBUG
@@ -455,7 +456,8 @@ void net_ip_v4_log(const struct ip_v4_packet *ip_packet) {
               ntohs(ip_packet->length) - ip_packet->ihl * (uint32_t) sizeof(uint32_t), ip_packet->ihl * (uint32_t) sizeof(uint32_t));
 }
 
-void init_ip_v4(void) {
+static void init_ip_v4(void) {
     fragment_store = hash_create_hash_map(fragment_desc_hash, fragment_desc_equals, fragment_desc_key);
     fragment_gc_timer = time_register_kernel_callback(&fragment_max_lifetime, gc_fragments, NULL);
 }
+INIT_FUNCTION(init_ip_v4, net);

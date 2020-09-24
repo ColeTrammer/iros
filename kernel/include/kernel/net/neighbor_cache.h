@@ -42,6 +42,5 @@ void net_update_neighbor(struct neighbor_cache_entry *neighbor, struct link_laye
 void net_remove_neighbor(struct neighbor_cache_entry *neighbor);
 
 struct hash_map *net_neighbor_cache(void);
-void init_neighbor_cache(void);
 
 #endif /* _KERNEL_NET_NEIGHBOR_CACHE_H */

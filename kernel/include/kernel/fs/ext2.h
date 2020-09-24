@@ -189,6 +189,4 @@ void ext2_on_inode_destruction(struct inode *inode);
 int ext2_sync_inode(struct inode *inode);
 int ext2_sync_super_block(struct super_block *sb);
 
-void init_ext2();
-
 #endif /* _KERNEL_FS_EXT2_H */

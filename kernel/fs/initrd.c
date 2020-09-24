@@ -20,6 +20,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/time/clock.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
 static struct file_system fs;
@@ -127,6 +128,7 @@ struct inode *initrd_mount(struct file_system *current_fs, struct device *device
     return root;
 }
 
-void init_initrd() {
+static void init_initrd() {
     load_fs(&fs);
 }
+INIT_FUNCTION(init_initrd, fs);

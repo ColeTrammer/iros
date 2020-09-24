@@ -53,8 +53,6 @@ struct device *dev_bump_device(struct device *device);
 void dev_drop_device(struct device *device);
 struct device *dev_get_device(dev_t device_number);
 
-void init_dev();
-
 struct inode *dev_lookup(struct inode *inode, const char *name);
 struct file *dev_open(struct inode *inode, int flags, int *error);
 int dev_close(struct file *file);

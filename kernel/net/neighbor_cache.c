@@ -13,6 +13,7 @@
 #include <kernel/net/packet.h>
 #include <kernel/net/socket.h>
 #include <kernel/time/timer.h>
+#include <kernel/util/init.h>
 
 #define NEIGHBOR_CACHE_DEBUG
 
@@ -185,6 +186,7 @@ struct hash_map *net_neighbor_cache(void) {
     return neighbor_cache;
 }
 
-void init_neighbor_cache(void) {
+static void init_neighbor_cache(void) {
     neighbor_cache = hash_create_hash_map(neighbor_cache_entry_hash, neighbor_cache_entry_equals, neighbor_cache_entry_key);
 }
+INIT_FUNCTION(init_neighbor_cache, net);

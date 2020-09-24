@@ -14,8 +14,6 @@ struct initrd_file_entry {
     uint32_t length;
 } __attribute__((packed));
 
-void init_initrd();
-
 struct inode *initrd_lookup(struct inode *inode, const char *name);
 struct file *initrd_open(struct inode *inode, int flags, int *error);
 ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t len);

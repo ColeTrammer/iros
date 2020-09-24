@@ -6,6 +6,7 @@
 #include <kernel/net/port.h>
 #include <kernel/net/socket.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/init.h>
 #include <kernel/util/mutex.h>
 
 #define EPHEMERAL_PORT_START 49152U
@@ -73,6 +74,7 @@ void net_unbind_port(uint16_t port) {
     free(p);
 }
 
-void init_ports() {
+static void init_ports() {
     map = hash_create_hash_map(port_hash, port_equals, port_key);
 }
+INIT_FUNCTION(init_ports, net);

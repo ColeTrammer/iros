@@ -13,6 +13,7 @@
 #include <kernel/net/unix_socket.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/util/init.h>
 
 // #define UNIX_DEBUG
 
@@ -311,6 +312,7 @@ static struct socket_protocol unix_stream_protocol = {
     .create_socket_pair = net_unix_socketpair,
 };
 
-void init_unix_sockets(void) {
+static void init_unix_sockets(void) {
     net_register_protocol(&unix_stream_protocol);
 }
+INIT_FUNCTION(init_unix_sockets, net);

@@ -30,6 +30,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
 #define PROCFS_ENSURE_ALIGNMENT __attribute__((optimize("align-functions=4")))
@@ -671,6 +672,7 @@ struct inode *procfs_mount(struct file_system *current_fs, struct device *device
     return root;
 }
 
-void init_procfs() {
+static void init_procfs() {
     load_fs(&fs);
 }
+INIT_FUNCTION(init_procfs, fs);

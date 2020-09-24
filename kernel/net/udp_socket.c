@@ -4,6 +4,7 @@
 #include <kernel/net/port.h>
 #include <kernel/net/socket_syscalls.h>
 #include <kernel/net/udp.h>
+#include <kernel/util/init.h>
 
 static int net_udp_socket(int domain, int type, int protocol);
 static ssize_t net_udp_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr,
@@ -71,6 +72,7 @@ done:
     return ret ? ret : (ssize_t) len;
 }
 
-void init_udp_sockets(void) {
+static void init_udp_sockets(void) {
     net_register_protocol(&udp_protocol);
 }
+INIT_FUNCTION(init_udp_sockets, net);

@@ -15,6 +15,7 @@
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/init.h>
 #include <kernel/util/random.h>
 
 // #define TCP_DEBUG
@@ -573,9 +574,10 @@ done:
     return buffer_index ? (ssize_t) buffer_index : error;
 }
 
-void init_tcp_sockets(void) {
+static void init_tcp_sockets(void) {
     tcp_connection_map = hash_create_hash_map(tcp_connection_info_hash, tcp_connection_info_equals, tcp_connection_info_key);
     assert(tcp_connection_map);
 
     net_register_protocol(&tcp_protocol);
 }
+INIT_FUNCTION(init_tcp_sockets, net);

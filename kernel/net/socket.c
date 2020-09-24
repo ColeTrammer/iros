@@ -442,8 +442,3 @@ void net_register_protocol(struct socket_protocol *protocol) {
     list_append(&protocol_list, &protocol->list);
     debug_log("Registered socket protocol: [ %s ]\n", protocol->name);
 }
-
-void init_net_sockets() {
-    init_unix_sockets();
-    init_inet_sockets();
-}

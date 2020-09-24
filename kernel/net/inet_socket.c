@@ -137,9 +137,3 @@ fail:
     mutex_unlock(&socket->lock);
     return ret;
 }
-
-void init_inet_sockets() {
-    init_udp_sockets();
-    init_tcp_sockets();
-    init_icmp_sockets();
-}

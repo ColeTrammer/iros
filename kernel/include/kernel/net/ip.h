@@ -73,6 +73,5 @@ void net_ip_v4_recieve(struct packet *packet);
 void net_init_ip_v4_packet(struct ip_v4_packet *packet, uint16_t ident, uint8_t protocol, struct ip_v4_address source,
                            struct ip_v4_address dest, const void *payload, uint16_t payload_length);
 void net_ip_v4_log(const struct ip_v4_packet *packet);
-void init_ip_v4(void);
 
 #endif /* _KERNEL_NET_IP_H */

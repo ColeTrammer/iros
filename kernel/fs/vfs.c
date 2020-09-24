@@ -16,13 +16,9 @@
 
 #include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/dev.h>
-#include <kernel/fs/ext2.h>
 #include <kernel/fs/file_system.h>
-#include <kernel/fs/initrd.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/pipe.h>
-#include <kernel/fs/procfs.h>
-#include <kernel/fs/tmp.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
@@ -2165,16 +2161,6 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc) {
 
     return (struct file_descriptor) { desc.file, desc.fd_flags };
 }
-
-static void init_vfs(void) {
-    init_initrd();
-    init_dev();
-    init_ext2();
-    init_pipe();
-    init_tmpfs();
-    init_procfs();
-}
-INIT_FUNCTION(init_vfs, fs);
 
 char *get_tnode_path(struct tnode *tnode) {
     /* Check if root */

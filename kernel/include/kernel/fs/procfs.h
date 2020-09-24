@@ -34,6 +34,4 @@ struct inode *procfs_mount(struct file_system *fs, struct device *device);
 void procfs_register_process(struct process *process);
 void procfs_unregister_process(struct process *process);
 
-void init_procfs();
-
 #endif /* _KERNEL_FS_PROCFS_H */

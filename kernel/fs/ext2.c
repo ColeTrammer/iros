@@ -27,6 +27,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
 // #define EXT2_DEBUG
@@ -1834,6 +1835,7 @@ struct inode *ext2_mount(struct file_system *current_fs, struct device *device) 
     return root;
 }
 
-void init_ext2() {
+static void init_ext2() {
     load_fs(&fs);
 }
+INIT_FUNCTION(init_ext2, fs);

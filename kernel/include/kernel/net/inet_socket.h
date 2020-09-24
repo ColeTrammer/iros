@@ -19,8 +19,6 @@ int net_inet_getpeername(struct socket *socket, struct sockaddr *addr, socklen_t
 int net_inet_getsockname(struct socket *socket, struct sockaddr *addr, socklen_t *addrlen);
 ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int flags, const struct sockaddr *addr, socklen_t addrlen);
 
-void init_inet_sockets();
-
 #define PORT_FROM_SOCKADDR(s)  ntohs(((struct sockaddr_in *) (s))->sin_port)
 #define IP_V4_FROM_SOCKADDR(s) ip_v4_from_uint(((struct sockaddr_in *) (s))->sin_addr.s_addr)
 

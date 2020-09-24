@@ -20,6 +20,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
 static struct hash_map *device_map;
@@ -194,6 +195,7 @@ blkcnt_t dev_block_count(struct device *device) {
     return device->ops->block_count(device);
 }
 
-void init_dev() {
+static void init_dev() {
     device_map = hash_create_hash_map(device_hash, device_equals, device_key);
 }
+INIT_FUNCTION(init_dev, fs);

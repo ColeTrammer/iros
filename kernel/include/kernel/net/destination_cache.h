@@ -28,6 +28,5 @@ void __net_remove_destination(struct destination_cache_entry *entry);
 void net_remove_destination(struct destination_cache_entry *entry);
 
 struct hash_map *net_destination_cache(void);
-void init_destination_cache(void);
 
 #endif /* _KERNEL_NET_DESTINATION_CACHE_H */

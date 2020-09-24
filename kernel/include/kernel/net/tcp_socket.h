@@ -78,6 +78,4 @@ int tcp_send_segments(struct socket *socket);
 struct tcp_control_block *net_allocate_tcp_control_block(struct socket *socket);
 void net_free_tcp_control_block(struct socket *socket);
 
-void init_tcp_sockets(void);
-
 #endif /* _KERNEL_NET_TCP_SOCKET_H */

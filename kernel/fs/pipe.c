@@ -266,5 +266,3 @@ void pipe_all_files_closed(struct inode *inode) {
         drop_inode_reference(inode);
     }
 }
-
-void init_pipe() {}

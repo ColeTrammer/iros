@@ -26,6 +26,4 @@ int tmp_read_all(struct inode *inode, void *buffer);
 int tmp_truncate(struct inode *inode, off_t len);
 void tmp_on_inode_destruction(struct inode *inode);
 
-void init_tmpfs();
-
 #endif /* _KERNEL_FS_TMP_H */

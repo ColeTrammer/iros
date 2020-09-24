@@ -6,6 +6,7 @@
 #include <kernel/net/destination_cache.h>
 #include <kernel/net/interface.h>
 #include <kernel/net/neighbor_cache.h>
+#include <kernel/util/init.h>
 #include <kernel/util/random.h>
 
 #define DESTINATION_CACHE_DEBUG
@@ -113,6 +114,7 @@ struct hash_map *net_destination_cache(void) {
     return destination_cache;
 }
 
-void init_destination_cache(void) {
+static void init_destination_cache(void) {
     destination_cache = hash_create_hash_map(&destination_cache_entry_hash, &destination_cache_entry_equals, &destination_cache_entry_key);
 }
+INIT_FUNCTION(init_destination_cache, net);

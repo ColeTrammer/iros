@@ -3,6 +3,7 @@
 #include <kernel/net/icmp_socket.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/socket_syscalls.h>
+#include <kernel/util/init.h>
 
 static int net_icmp_socket(int domain, int type, int protocol);
 
@@ -30,6 +31,7 @@ static int net_icmp_socket(int domain, int type, int protocol) {
     return fd;
 }
 
-void init_icmp_sockets(void) {
+static void init_icmp_sockets(void) {
     net_register_protocol(&icmp_protocol);
 }
+INIT_FUNCTION(init_icmp_sockets, net);

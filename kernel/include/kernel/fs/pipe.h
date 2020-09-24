@@ -27,6 +27,4 @@ int pipe_close(struct file *file);
 void pipe_clone(struct file *file);
 void pipe_all_files_closed(struct inode *inode);
 
-void init_pipe();
-
 #endif /* _KERNEL_FS_PIPE_H */

@@ -6,6 +6,7 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/loopback.h>
 #include <kernel/net/packet.h>
+#include <kernel/util/init.h>
 
 static int loop_route_ip_v4(struct network_interface *interface, struct packet *packet) {
     struct packet_header *outer_header = net_packet_outer_header(packet);
@@ -26,6 +27,7 @@ static int loop_route_ip_v4(struct network_interface *interface, struct packet *
 
 static struct network_interface_ops ops = { .route_ip_v4 = loop_route_ip_v4 };
 
-void init_loopback() {
+static void init_loopback() {
     net_create_network_interface("lo", NETWORK_INTERFACE_LOOPBACK, LINK_LAYER_ADDRESS_NONE, &ops, NULL);
 }
+INIT_FUNCTION(init_loopback, net);
