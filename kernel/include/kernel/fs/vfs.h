@@ -101,8 +101,6 @@ char *get_tnode_path(struct tnode *tnode);
 
 struct tnode *fs_get_tnode_for_file(struct file *file);
 
-void init_vfs();
-
 static inline int fs_mode_to_flags(mode_t mode) {
     if (S_ISREG(mode)) {
         return FS_FILE;

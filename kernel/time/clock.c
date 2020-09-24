@@ -8,6 +8,7 @@
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
 // #define CLOCKID_ALLOCATION_DEBUG
@@ -124,10 +125,11 @@ static void __inc_global_clocks() {
     time_inc_clock(&global_realtime_clock, 1000000, false);
 }
 
-void init_clocks() {
+static void init_clocks() {
     clock_map = hash_create_hash_map(clock_hash, clock_equals, clock_key);
     global_monotonic_clock.resolution = get_time_resolution();
     global_realtime_clock.resolution = get_time_resolution();
 
     register_callback(__inc_global_clocks, 1);
 }
+INIT_FUNCTION(init_clocks, time);

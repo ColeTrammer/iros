@@ -13,10 +13,11 @@
 #include <kernel/net/socket.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/util/init.h>
 
 struct task *network_task;
 
-void init_net() {
+static void init_net() {
     init_loopback();
     init_net_sockets();
     init_ports();
@@ -37,3 +38,4 @@ void init_net() {
         }
     }
 }
+INIT_FUNCTION(init_net, net);

@@ -4,6 +4,7 @@
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
+#include <kernel/util/init.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86_64/acpi.h>
@@ -69,7 +70,7 @@ void init_cpus(void) {
     init_acpi();
 }
 
-void init_drivers(void) {
+static void init_drivers(void) {
     init_keyboard();
     init_mouse();
     init_ps2_controller();
@@ -88,6 +89,7 @@ void init_drivers(void) {
     init_virtual_devices();
     debug_log("Finished Initializing Drivers\n");
 }
+INIT_FUNCTION(init_drivers, driver);
 
 void init_smp(void) {
     init_processor_ipi_messages();

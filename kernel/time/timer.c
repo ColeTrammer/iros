@@ -10,6 +10,7 @@
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
 // #define TIMER_DEBUG
@@ -338,6 +339,7 @@ done:
     return ret;
 }
 
-void init_timers() {
+static void init_timers() {
     timer_map = hash_create_hash_map(timer_hash, timer_equals, timer_key);
 }
+INIT_FUNCTION(init_timers, time);

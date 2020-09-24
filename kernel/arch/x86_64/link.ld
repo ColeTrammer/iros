@@ -20,6 +20,22 @@ SECTIONS
         PROVIDE(_text_start = .);
         PROVIDE(_text_start_boot = . - KERNEL_VMA + KERNEL_PHYS_START);
         KEEP(*(SORT_NONE(.init)))
+
+        PROVIDE(__init_level_fs_start = .);
+        KEEP(*(SORT_NONE(.init.level.fs)))
+        PROVIDE(__init_level_fs_end = .);
+
+        PROVIDE(__init_level_time_start = .);
+        KEEP(*(SORT_NONE(.init.level.time)))
+        PROVIDE(__init_level_time_end = .);
+
+        PROVIDE(__init_level_driver_start = .);
+        KEEP(*(SORT_NONE(.init.level.driver)))
+        PROVIDE(__init_level_driver_end = .);
+
+        PROVIDE(__init_level_net_start = .);
+        KEEP(*(SORT_NONE(.init.level.net)))
+        PROVIDE(__init_level_net_end = .);
     }
 
     .text : AT(ADDR(.text) - KERNEL_VMA + KERNEL_PHYS_START)

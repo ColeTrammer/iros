@@ -32,6 +32,7 @@
 #include <kernel/net/socket_syscalls.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
+#include <kernel/util/init.h>
 #include <kernel/util/validators.h>
 
 // #define INAME_DEBUG
@@ -2165,25 +2166,15 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc) {
     return (struct file_descriptor) { desc.file, desc.fd_flags };
 }
 
-void init_vfs() {
+static void init_vfs(void) {
     init_initrd();
     init_dev();
     init_ext2();
     init_pipe();
     init_tmpfs();
     init_procfs();
-
-    /* Mount INITRD as root */
-    int error = fs_mount(NULL, "/", "initrd");
-    assert(error == 0);
-
-    // Mount tmpfs at /tmp
-    error = fs_mount(NULL, "/tmp", "tmpfs");
-    assert(error == 0);
-
-    error = fs_mount(NULL, "/proc", "procfs");
-    assert(error == 0);
 }
+INIT_FUNCTION(init_vfs, fs);
 
 char *get_tnode_path(struct tnode *tnode) {
     /* Check if root */
