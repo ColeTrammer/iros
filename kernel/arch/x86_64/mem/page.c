@@ -41,7 +41,15 @@ uintptr_t get_phys_addr(uintptr_t virt_addr) {
 
     assert(pml4[pml4_offset] & 1);
     assert(pdp[pdp_offset] & 1);
+    if (cpu_supports_1gb_pages() && (pdp[pdp_offset] & (1 << 7))) {
+        return (pdp[pdp_offset] & 0x0000FFFFFFE00000ULL) + (virt_addr & 0x1FFFFF);
+    }
+
     assert(pd[pd_offset] & 1);
+    if (pd[pd_offset] & (1 << 7)) {
+        return (pd[pd_offset] & 0x000FFFFC0000000ULL) + (virt_addr & 0x3FFFFFFF);
+    }
+
     assert(pt[pt_offset] & 1);
 
     uint64_t *pt_entry = pt + pt_offset;
