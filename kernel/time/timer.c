@@ -343,23 +343,25 @@ done:
     return ret;
 }
 
-int time_wakeup_after(int clockid, struct timespec delta) {
+int time_wakeup_after(int clockid, struct timespec *delta) {
     struct timer timer = {
         .clock = time_get_clock(clockid),
         .event_type = SIGEV_WAKEUP,
-        .spec = { .it_value = delta },
+        .spec = { .it_value = *delta },
         .task = get_current_task(),
     };
 
     uint64_t save = disable_interrupts_save();
     time_add_timer_to_clock(timer.clock, &timer);
     timer.task->sched_state = WAITING;
+    timer.task->wait_interruptible = true;
     int ret = __kernel_yield();
 
-    interrupts_restore(save);
     if (time_is_timer_armed(&timer)) {
         time_remove_timer_from_clock(timer.clock, &timer);
     }
+    *delta = timer.spec.it_value;
+    interrupts_restore(save);
     return ret;
 }
 

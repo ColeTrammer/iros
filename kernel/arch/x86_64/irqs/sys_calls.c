@@ -1801,14 +1801,9 @@ SYS_CALL(clock_nanosleep) {
         delta_time = *amt;
     }
 
-    int ret = time_wakeup_after(clock->id, delta_time);
-    if (!ret) {
-        struct timespec after = clock->time;
-        if (time_compare(after, time_add(start, delta_time)) < 0) {
-            if (!absolute && rem) {
-                *rem = time_sub(time_add(start, delta_time), after);
-            }
-        }
+    int ret = time_wakeup_after(clock->id, &delta_time);
+    if (!ret && !absolute && !!ret) {
+        *rem = delta_time;
     }
 
     SYS_RETURN(ret);
