@@ -209,8 +209,7 @@ void time_fire_timer(struct timer *timer) {
             timer->kernel_callback(timer, timer->kernel_callback_closure);
             break;
         case SIGEV_WAKEUP:
-            timer->task->arch_task.task_state.cpu_state.rax = 0;
-            timer->task->sched_state = RUNNING_UNINTERRUPTIBLE;
+            task_unblock(timer->task, 0);
             break;
         case SIGEV_NONE:
             break;

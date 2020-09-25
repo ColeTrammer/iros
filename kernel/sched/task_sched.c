@@ -182,7 +182,7 @@ void sched_run_next() {
             struct task *current_save = processor->current_task;
             processor->current_task = to_run;
             if (to_run->block_info.should_unblock(&to_run->block_info)) {
-                task_interrupt_blocking(to_run, 0);
+                task_unblock(to_run, 0);
                 processor->current_task = current_save;
                 break;
             }

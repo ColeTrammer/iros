@@ -145,7 +145,7 @@ struct queued_signal *task_first_queued_signal(struct task *task);
 void task_yield_if_state_changed(struct task *task);
 void task_do_sigs_if_needed(struct task *task);
 
-void task_interrupt_blocking(struct task *task, int ret);
+void task_unblock(struct task *task, int ret);
 void task_set_state_to_exiting(struct task *task);
 
 const char *task_state_to_string(enum sched_state state);

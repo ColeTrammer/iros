@@ -191,8 +191,8 @@ void arch_free_task(struct task *task, bool free_paging_structure) {
     (void) free_paging_structure;
 }
 
-void task_interrupt_blocking(struct task *task, int ret) {
-    assert(task->blocking || task->wait_interruptible);
+void task_unblock(struct task *task, int ret) {
+    assert(task->sched_state == WAITING);
     task->arch_task.task_state.cpu_state.rax = (uint64_t) ret;
     task->blocking = false;
     task->wait_interruptible = false;
@@ -210,7 +210,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     if (task->blocking || task->wait_interruptible) {
         // Defer running the signal handler until after the blocking code
         // has a chance to clean up.
-        task_interrupt_blocking(task, -EINTR);
+        task_unblock(task, -EINTR);
         return;
     }
 

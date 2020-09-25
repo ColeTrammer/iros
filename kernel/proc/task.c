@@ -536,7 +536,7 @@ void task_set_state_to_exiting(struct task *task) {
     if (task->blocking) {
         // Defer exit state change until after the blocking code has a chance
         // to clean up
-        task_interrupt_blocking(task, -EINTR);
+        task_unblock(task, -EINTR);
     }
 
     if (task->in_kernel) {
@@ -616,7 +616,7 @@ void task_do_sig(struct task *task, int signum) {
             if (task->blocking || task->wait_interruptible) {
                 // Defer running the signal handler until after the blocking code
                 // has a chance to clean up.
-                task_interrupt_blocking(task, -EINTR);
+                task_unblock(task, -EINTR);
                 return;
             }
             break;
