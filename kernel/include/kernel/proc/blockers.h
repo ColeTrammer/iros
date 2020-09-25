@@ -14,7 +14,6 @@ struct socket;
 struct task;
 
 enum block_type {
-    SLEEP,
     UNTIL_INODE_IS_READABLE,
     UNTIL_SOCKET_IS_CONNECTED,
     UNTIL_INODE_IS_READABLE_OR_TIMEOUT,
@@ -112,7 +111,6 @@ struct block_info {
             pid_t pid;
         } waitpid_info;
     } __info;
-#define sleep_info                                 __info.sleep_info
 #define until_inode_is_readable_info               __info.until_inode_is_readable_info
 #define until_socket_is_connected_info             __info.until_socket_is_connected_info
 #define until_inode_is_readable_or_timeout_info    __info.until_inode_is_readable_or_timeout_info
@@ -133,7 +131,6 @@ struct block_info {
 #define waitpid_info                               __info.waitpid_info
 };
 
-__attribute__((warn_unused_result)) int proc_block_sleep(struct task *current, clockid_t clock, struct timespec end_time);
 __attribute__((warn_unused_result)) int proc_block_until_inode_is_readable(struct task *current, struct inode *inode);
 __attribute__((warn_unused_result)) int proc_block_until_socket_is_connected(struct task *current, struct socket *socket);
 __attribute__((warn_unused_result)) int proc_block_until_inode_is_readable_or_timeout(struct task *current, struct inode *inode,

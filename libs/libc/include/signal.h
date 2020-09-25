@@ -230,6 +230,7 @@ int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
 #define SIGEV_THREAD 2
 #ifdef __is_kernel
 #define SIGEV_KERNEL 3
+#define SIGEV_WAKEUP 4
 #endif /* __is_kernel */
 
 #define SA_NOCLDSTOP 1

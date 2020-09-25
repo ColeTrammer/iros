@@ -13,22 +13,6 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
-static bool sleep_blocker(struct block_info *info) {
-    assert(info->type == SLEEP);
-    return time_compare(time_read_clock(info->sleep_info.id), info->sleep_info.end_time) >= 0;
-}
-
-int proc_block_sleep(struct task *current, clockid_t id, struct timespec end_time) {
-    disable_interrupts();
-    current->block_info.sleep_info.id = id;
-    current->block_info.sleep_info.end_time = end_time;
-    current->block_info.type = SLEEP;
-    current->block_info.should_unblock = &sleep_blocker;
-    current->blocking = true;
-    current->sched_state = WAITING;
-    return __kernel_yield();
-}
-
 static bool until_inode_is_readable_blocker(struct block_info *info) {
     assert(info->type == UNTIL_INODE_IS_READABLE);
     return info->until_inode_is_readable_info.inode->readable || info->until_inode_is_readable_info.inode->excetional_activity;

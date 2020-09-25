@@ -7,6 +7,7 @@
 
 #include <kernel/hal/processor.h>
 #include <kernel/proc/task.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
@@ -207,6 +208,10 @@ void time_fire_timer(struct timer *timer) {
             assert(timer->kernel_callback);
             timer->kernel_callback(timer, timer->kernel_callback_closure);
             break;
+        case SIGEV_WAKEUP:
+            timer->task->arch_task.task_state.cpu_state.rax = 0;
+            timer->task->sched_state = RUNNING_UNINTERRUPTIBLE;
+            break;
         case SIGEV_NONE:
             break;
         default:
@@ -336,6 +341,26 @@ int time_setitimer(int which, const struct itimerval *nvalp, struct itimerval *o
 
 done:
     mutex_unlock(&current->lock);
+    return ret;
+}
+
+int time_wakeup_after(int clockid, struct timespec delta) {
+    struct timer timer = {
+        .clock = time_get_clock(clockid),
+        .event_type = SIGEV_WAKEUP,
+        .spec = { .it_value = delta },
+        .task = get_current_task(),
+    };
+
+    uint64_t save = disable_interrupts_save();
+    time_add_timer_to_clock(timer.clock, &timer);
+    timer.task->sched_state = WAITING;
+    int ret = __kernel_yield();
+
+    interrupts_restore(save);
+    if (time_is_timer_armed(&timer)) {
+        time_remove_timer_from_clock(timer.clock, &timer);
+    }
     return ret;
 }
 

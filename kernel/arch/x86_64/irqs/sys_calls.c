@@ -1791,21 +1791,22 @@ SYS_CALL(clock_nanosleep) {
         SYS_RETURN(-EINVAL);
     }
 
-    struct timespec end_time;
+    struct timespec start = clock->time;
+    struct timespec delta_time;
 
     bool absolute = flags == TIMER_ABSTIME;
     if (absolute) {
-        end_time = *amt;
+        delta_time = time_sub(start, *amt);
     } else {
-        end_time = time_add(clock->time, *amt);
+        delta_time = *amt;
     }
 
-    int ret = proc_block_sleep(get_current_task(), clock->id, end_time);
+    int ret = time_wakeup_after(clock->id, delta_time);
     if (!ret) {
         struct timespec after = clock->time;
-        if (time_compare(after, end_time) < 0) {
+        if (time_compare(after, time_add(start, delta_time)) < 0) {
             if (!absolute && rem) {
-                *rem = time_sub(end_time, after);
+                *rem = time_sub(time_add(start, delta_time), after);
             }
         }
     }
