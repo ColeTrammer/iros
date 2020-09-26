@@ -7,11 +7,6 @@
 
 #define PAGE_SIZE 4096
 
-#define RECURSIVE_PML4_BASE ((uint64_t *) 0xFFFFFFFFFFFFF000)
-#define RECURSIVE_PDP_BASE  ((uint64_t *) 0xFFFFFFFFFFE00000)
-#define RECURSIVE_PD_BASE   ((uint64_t *) 0xFFFFFFFFC0000000)
-#define RECURSIVE_PT_BASE   ((uint64_t *) 0xFFFFFF8000000000)
-
 #define MAX_PML4_ENTRIES (PAGE_SIZE / sizeof(uint64_t))
 #define MAX_PDP_ENTRIES  (MAX_PML4_ENTRIES)
 #define MAX_PD_ENTRIES   (MAX_PML4_ENTRIES)
@@ -24,6 +19,11 @@
 #define VIRT_ADDR(pml4_offset, pdp_offset, pd_offset, pt_offset)                                                              \
     ((((pml4_offset) &0x100UL) ? 0xFFFFUL << 48 : 0UL) | (((pml4_offset) &0x1FFUL) << 39) | (((pdp_offset) &0x1FFUL) << 30) | \
      (((pd_offset) &0x1FFUL) << 21) | (((pt_offset) &0x1FFUL) << 12))
+
+#define RECURSIVE_PML4_BASE ((uint64_t *) VIRT_ADDR(PML4_RECURSIVE_INDEX, PML4_RECURSIVE_INDEX, PML4_RECURSIVE_INDEX, PML4_RECURSIVE_INDEX))
+#define RECURSIVE_PDP_BASE  ((uint64_t *) VIRT_ADDR(PML4_RECURSIVE_INDEX, PML4_RECURSIVE_INDEX, PML4_RECURSIVE_INDEX, 0))
+#define RECURSIVE_PD_BASE   ((uint64_t *) VIRT_ADDR(PML4_RECURSIVE_INDEX, PML4_RECURSIVE_INDEX, 0, 0))
+#define RECURSIVE_PT_BASE   ((uint64_t *) VIRT_ADDR(PML4_RECURSIVE_INDEX, 0, 0, 0))
 
 struct process;
 
