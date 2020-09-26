@@ -318,6 +318,7 @@ early_stack_bottom:
 early_stack_top:
 
 .align 0x1000
+_KERNEL_PAGE_TABLE_START:
 _PML4:
     .skip 0x1000
 _PDP0:
@@ -334,14 +335,12 @@ _PT1:
     .skip 0x1000
 _PT2:
     .skip 0x1000
+_KERNEL_PAGE_TABLE_END:
 
 .section .bss.kernel_stack
 .skip 0x1000
 BOOT_KERNEL_VM_STACK_START:
 .section .bss.reserved_pages
-.global _temp_page
-_temp_page:
-.skip 0x1000
 
 # Dummy .init, .fini, .ctors, .dtors so that the toolchain thinks the kernel executable is valid
 .align 16

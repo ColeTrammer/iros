@@ -73,9 +73,6 @@ void init_vm_allocator(void) {
     initrd.flags = VM_GLOBAL | VM_NO_EXEC;
     initrd.type = VM_INITRD;
     kernel_vm_list = add_vm_region(kernel_vm_list, &initrd);
-    for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
-        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags, &initial_kernel_process);
-    }
 
     kernel_heap.start = initrd.end;
     kernel_heap.end = kernel_heap.start;
@@ -83,14 +80,20 @@ void init_vm_allocator(void) {
     kernel_heap.type = VM_KERNEL_HEAP;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
 
-    clear_initial_page_mappings();
-
-    uintptr_t new_structure = create_paging_structure(kernel_vm_list, true, &initial_kernel_process);
-    load_paging_structure(new_structure, &initial_kernel_process);
-
 #if ARCH == X86_64
     create_phys_id_map();
 #endif /* ARCH==X86_64 */
+
+    clear_initial_page_mappings();
+    for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
+        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags, &initial_kernel_process);
+    }
+
+    for (struct vm_region *region = kernel_vm_list; region; region = region->next) {
+        if (region->type != VM_KERNEL_PHYS_ID && region->type != VM_INITRD) {
+            map_vm_region_flags(region, &initial_kernel_process);
+        }
+    }
 
     initial_kernel_process.process_memory = kernel_vm_list;
     debug_log("Finished Initializing VM Allocator\n");

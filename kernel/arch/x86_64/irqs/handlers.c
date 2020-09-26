@@ -121,29 +121,6 @@ static void handle_page_fault(struct irq_context *context) {
         }
     }
 
-#ifdef PAGING_DEBUG
-    uint64_t pml4_offset = (address >> 39) & 0x1FF;
-    uint64_t pdp_offset = (address >> 30) & 0x1FF;
-    uint64_t pd_offset = (address >> 21) & 0x1FF;
-    uint64_t pt_offset = (address >> 12) & 0x1FF;
-
-    uint64_t *pml4 = PML4_BASE + pml4_offset;
-    uint64_t *pdp = PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
-    uint64_t *pd = PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
-    uint64_t *pt = PT_BASE + (0x40000000 * pml4_offset + 0x200000 * pdp_offset + 0x1000 * pd_offset) / sizeof(uint64_t) + pt_offset;
-
-    debug_log("*pml4: [ %#.16lX ]\n", *pml4);
-    if (*pml4 & 1) {
-        debug_log("*pdp: [ %#.16lX ]\n", *pdp);
-        if (*pdp & 1) {
-            debug_log("*pd: [ %#.16lX ]\n", *pd);
-            if (*pd & 1) {
-                debug_log("*pt: [ %#.16lX ]\n", *pt);
-            }
-        }
-    }
-#endif /* PAGING_DEBUG */
-
     bool is_kernel = current->kernel_task || current->in_kernel;
     debug_log(
         "\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %u ]\n",
