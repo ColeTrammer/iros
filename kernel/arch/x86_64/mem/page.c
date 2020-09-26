@@ -40,13 +40,13 @@ uintptr_t get_phys_addr(uintptr_t virt_addr) {
 
     uint64_t *pdp = create_phys_addr_mapping(pml4[pml4_offset] & 0x0000FFFFFFFFF000ULL);
     assert(pdp[pdp_offset] & 1);
-    if (cpu_supports_1gb_pages() && (pdp[pdp_offset] & (1 << 7))) {
+    if (cpu_supports_1gb_pages() && (pdp[pdp_offset] & VM_HUGE)) {
         return (pdp[pdp_offset] & 0x0000FFFFFFE00000ULL) + (virt_addr & 0x1FFFFF);
     }
 
     uint64_t *pd = create_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
     assert(pd[pd_offset] & 1);
-    if (pd[pd_offset] & (1 << 7)) {
+    if (pd[pd_offset] & VM_HUGE) {
         return (pd[pd_offset] & 0x000FFFFC0000000ULL) + (virt_addr & 0x3FFFFFFF);
     }
 
@@ -246,10 +246,13 @@ void clear_initial_page_mappings() {
     uint64_t cr3 = get_cr3();
     initial_kernel_process.arch_process.cr3 = cr3;
 
-    uint64_t *pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = create_phys_addr_mapping(cr3 & 0x0000FFFFFFFFF000ULL);
+    pml4[0] = 0;
     pml4[PML4_RECURSIVE_INDEX] = 0;
 
-    for (uintptr_t i = 0; i < 0x400000; i += PAGE_SIZE) {
+    uintptr_t kernel_vm_end = ALIGN_UP(KERNEL_VM_END, PAGE_SIZE);
+    uintptr_t kernel_vm_mapping_end = ALIGN_UP(kernel_vm_end, 2 * 1024 * 1024);
+    for (uintptr_t i = kernel_vm_end; i < kernel_vm_mapping_end; i += PAGE_SIZE) {
         do_unmap_page(i, false, true, false, &initial_kernel_process);
     }
     load_cr3(cr3);
@@ -277,8 +280,7 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
     uint64_t *old_pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
 
     // Only clone the kernel entries in this table.
-    memset(pml4, 0, (MAX_PML4_ENTRIES - 3) * sizeof(uint64_t));
-    pml4[MAX_PML4_ENTRIES - 3] = old_pml4[MAX_PML4_ENTRIES - 3];
+    memset(pml4, 0, (MAX_PML4_ENTRIES - 2) * sizeof(uint64_t));
     pml4[MAX_PML4_ENTRIES - 2] = old_pml4[MAX_PML4_ENTRIES - 2];
     pml4[MAX_PML4_ENTRIES - 1] = old_pml4[MAX_PML4_ENTRIES - 1];
 
@@ -301,7 +303,6 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
 }
 
 void create_phys_id_map() {
-    // Map entries at PML4_MAX - 3 to a replica of phys memory
     debug_log("Mapping physical address identity map: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
     uintptr_t stride = 2 * 1024 * 1024;
     if (cpu_supports_1gb_pages()) {
@@ -309,7 +310,7 @@ void create_phys_id_map() {
     }
 
     for (uintptr_t phys_addr = 0; phys_addr < g_phys_page_stats.phys_memory_max; phys_addr += stride) {
-        uintptr_t virt_addr = VIRT_ADDR(MAX_PML4_ENTRIES - 3UL, 0, 0, 0) + phys_addr;
+        uintptr_t virt_addr = PHYS_ID_START + phys_addr;
 
         uint64_t pml4_offset = (virt_addr >> 39) & 0x1FF;
         uint64_t pdp_offset = (virt_addr >> 30) & 0x1FF;
@@ -329,7 +330,7 @@ void create_phys_id_map() {
         }
 
         if (cpu_supports_1gb_pages()) {
-            *pdp_entry = phys_addr | mapping_flags | (1 << 7);
+            *pdp_entry = phys_addr | mapping_flags | VM_HUGE;
             continue;
         }
 
@@ -339,7 +340,7 @@ void create_phys_id_map() {
             memset(pd_entry - pd_offset, 0, PAGE_SIZE);
         }
 
-        *pd_entry = phys_addr | mapping_flags | (1 << 7);
+        *pd_entry = phys_addr | mapping_flags | VM_HUGE;
     }
 
     // Flush thte entire TLB to ensure the new mappings take effect.

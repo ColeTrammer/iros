@@ -1,6 +1,17 @@
 #ifndef _KERNEL_MEM_VM_REGION_H
 #define _KERNEL_MEM_VM_REGION_H
 
+#define VM_WRITE     (1UL << 1)
+#define VM_USER      (1UL << 2)
+#define VM_HUGE      (1UL << 7)
+#define VM_GLOBAL    (1UL << 8)
+#define VM_COW       (1UL << 9)
+#define VM_PROT_NONE (1UL << 10)
+#define VM_SHARED    (1UL << 11)
+#define VM_STACK     (1UL << 62)
+#define VM_NO_EXEC   (1UL << 63)
+
+#ifndef __ASSEMBLER__
 #include <stddef.h>
 #include <stdint.h>
 
@@ -12,14 +23,6 @@ struct vm_region {
     uintptr_t start;
     uintptr_t end;
 
-#define VM_WRITE     (1UL << 1)
-#define VM_USER      (1UL << 2)
-#define VM_GLOBAL    (1UL << 8)
-#define VM_COW       (1UL << 9)
-#define VM_PROT_NONE (1UL << 10)
-#define VM_SHARED    (1UL << 11)
-#define VM_STACK     (1UL << 62)
-#define VM_NO_EXEC   (1UL << 63)
     uint64_t flags;
 
 /* Defines global vm_regions */
@@ -70,5 +73,7 @@ int contract_vm_region_start(struct vm_region *list, uint64_t type, size_t num_p
 int vm_map_region_with_object(struct vm_region *region);
 
 const char *vm_type_to_string(uint64_t type);
+
+#endif /* __ASSEMBLER__ */
 
 #endif /* _KERNEL_MEM_VM_REGION_H */

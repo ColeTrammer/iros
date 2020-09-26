@@ -1,6 +1,6 @@
 
 
-set(KERNEL_ARCH_CFLAGS -mno-red-zone -mcmodel=large -mno-mmx -mno-sse -mno-sse2 PARENT_SCOPE)
+set(KERNEL_ARCH_CFLAGS -mno-red-zone -mcmodel=kernel -mno-mmx -mno-sse -mno-sse2 PARENT_SCOPE)
 set(KERNEL_ARCH_LDFLAGS -T ${CMAKE_CURRENT_SOURCE_DIR}/link.ld PARENT_SCOPE)
 
 set(KERNEL_ARCHDIR arch/x86_64)

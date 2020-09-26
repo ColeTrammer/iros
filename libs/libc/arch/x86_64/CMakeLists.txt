@@ -1,5 +1,5 @@
 set(ARCH_CFLAGS PARENT_SCOPE)
-set(KERNEL_ARCH_CFLAGS -mno-red-zone -mcmodel=large -mno-mmx -mno-sse -mno-sse2 PARENT_SCOPE)
+set(KERNEL_ARCH_CFLAGS -mno-red-zone -mcmodel=kernel -mno-mmx -mno-sse -mno-sse2 PARENT_SCOPE)
 
 set(ARCHDIR arch/x86_64)
 

@@ -42,7 +42,7 @@ extern uintptr_t initrd_phys_end;
 
 void init_vm_allocator(void) {
 #if ARCH == X86_64
-    kernel_phys_id.start = VIRT_ADDR(MAX_PML4_ENTRIES - 3, 0, 0, 0);
+    kernel_phys_id.start = PHYS_ID_START;
     kernel_phys_id.end = kernel_phys_id.start + g_phys_page_stats.phys_memory_max;
     kernel_phys_id.flags = VM_NO_EXEC | VM_GLOBAL | VM_WRITE;
     kernel_phys_id.type = VM_KERNEL_PHYS_ID;
@@ -68,7 +68,7 @@ void init_vm_allocator(void) {
     kernel_data.type = VM_KERNEL_DATA;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_data);
 
-    initrd.start = kernel_data.end;
+    initrd.start = KERNEL_HEAP_START;
     initrd.end = ((initrd.start + initrd_phys_end - initrd_phys_start) & ~0xFFF) + PAGE_SIZE;
     initrd.flags = VM_GLOBAL | VM_NO_EXEC;
     initrd.type = VM_INITRD;
@@ -668,8 +668,8 @@ static struct vm_region *make_kernel_region(size_t size, uint64_t type) {
     struct vm_region *region = calloc(1, sizeof(struct vm_region));
     spin_lock(&kernel_vm_lock);
 
-    struct vm_region *vm = kernel_vm_list;
-    while (vm->next) {
+    struct vm_region *vm = get_vm_region(kernel_vm_list, VM_KERNEL_HEAP);
+    while (vm->next && vm->next->type != VM_KERNEL_TEXT) {
         vm = vm->next;
     }
 

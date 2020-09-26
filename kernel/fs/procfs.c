@@ -258,11 +258,11 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_stack(struct procfs_d
 
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_vm(struct procfs_data *data __attribute__((unused)), struct process *process,
                                                               bool need_buffer) {
-    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+    char *buffer = need_buffer ? malloc(2 * PAGE_SIZE) : NULL;
     size_t length = 0;
     struct vm_region *vm = process->process_memory;
     while (vm) {
-        length += snprintf(buffer + length, need_buffer ? PAGE_SIZE - length : 0,
+        length += snprintf(buffer + length, need_buffer ? 2 * PAGE_SIZE - length : 0,
                            "START: %p END: %p TYPE: %s\n"
                            "PERM: %c%c%c%c BACKED: %s\n",
                            (void *) vm->start, (void *) vm->end, vm_type_to_string(vm->type), (vm->flags & VM_PROT_NONE) ? ' ' : 'r',

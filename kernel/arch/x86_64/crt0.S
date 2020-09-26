@@ -60,6 +60,8 @@ MULTIBOOT_HEADER_END:
 .set VGA_WIDTH, 80
 .set VGA_HEIGHT, 25
 
+#include <kernel/arch/x86_64/mem/arch_page.h>
+
 .section .text.startup
 .global _start32
 .code32
@@ -132,78 +134,53 @@ _longmode_yes:
     # Long mode is available, time to actually boot up.
     # Step 1 is to create a valid 64 bit page table.
 
-    # Write PDP0 to the PML4
-    mov $(_PDP0 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
+    # Write PDP_LOW to the PML4
+    mov $(_PDP_LOW - _start32 + _kernel_entry32), %eax
+    or $PAGE_STRUCTURE_FLAGS, %eax
     mov %eax, (_PML4 - _start32 + _kernel_entry32)
 
-    # Write PDP1 to PML4
-    mov $(_PDP1 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
-    mov %eax, (_PML4 - _start32 + _kernel_entry32 + 510 * 8)
+    # Write PDP_HIGH to PML4
+    mov $(_PDP_HIGH - _start32 + _kernel_entry32), %eax
+    or $PAGE_STRUCTURE_FLAGS, %eax
+    mov %eax, (_PML4 - _start32 + _kernel_entry32 + KERNEL_PML4_INDEX * 8)
 
     # Write recursive mapping for PML4
     mov $(_PML4 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
-    mov %eax, (_PML4 - _start32 + _kernel_entry32 + 511 * 8)
+    or $PAGE_STRUCTURE_FLAGS, %eax
+    mov %eax, (_PML4 - _start32 + _kernel_entry32 + PML4_RECURSIVE_INDEX * 8)
 
-    # Write PD0 to PDP0
-    mov $(_PD0 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
-    mov %eax, (_PDP0 - _start32 + _kernel_entry32)
+    # Write PD_LOW to PDP_LOW
+    mov $(_PD_LOW - _start32 + _kernel_entry32), %eax
+    or $PAGE_STRUCTURE_FLAGS, %eax
+    mov %eax, (_PDP_LOW - _start32 + _kernel_entry32)
 
-    # Write PD1 to PDP1
-    mov $(_PD1 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
-    mov %eax, (_PDP1 - _start32 + _kernel_entry32)
+    # Write PD_HIGH to PDP_HIGH
+    mov $(_PD_HIGH - _start32 + _kernel_entry32), %eax
+    or $PAGE_STRUCTURE_FLAGS, %eax
+    mov %eax, (_PDP_HIGH - _start32 + _kernel_entry32 + KERNEL_PDP_INDEX * 8)
 
-    # Write PT0 to PD0
-    mov $(_PT0 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
-    mov %eax, (_PD0 - _start32 + _kernel_entry32)
+    # Write PT_HIGH to PD_HIGH
+    mov $(_PT_HIGH - _start32 + _kernel_entry32), %eax
+    or $PAGE_STRUCTURE_FLAGS, %eax
+    mov %eax, (_PD_HIGH - _start32 + _kernel_entry32)
 
-    # Write PT1 to PD0
-    mov $(_PT1 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
-    mov %eax, (_PD0 - _start32 + _kernel_entry32 + 1 * 8)
 
-    # Write PT2 to PD1
-    mov $(_PT2 - _start32 + _kernel_entry32), %eax
-    or $0x03, %eax
-    mov %eax, (_PD1 - _start32 + _kernel_entry32)
+    # Write identity map from 0x000000 to 0x400000
+    mov $(PAGE_STRUCTURE_FLAGS | VM_HUGE), %eax
+    mov %eax, (_PD_LOW - _start32 + _kernel_entry32)
+    add $0x200000, %eax
+    mov %eax, (_PD_LOW - _start32 + _kernel_entry32 + 1 * 8)
 
-    mov $(_PT0 - _start32 + _kernel_entry32), %eax
-    mov $0x03, %edx
+    # Write higher half map at -2 GiB
+    mov $(_PT_HIGH - _start32 + _kernel_entry32), %eax
+    mov $(0x200000 | PAGE_STRUCTURE_FLAGS), %edx
     mov $512, %ecx
 
-_add_page_table_entry_0:
-    # Writes identity mapping to throughout page table 0 (0x000000 - 0x200000)
+_add_page_table_high:
     mov %edx, (%eax)
     add $0x1000, %edx
     add $0x08, %eax
-    loop _add_page_table_entry_0
-
-    mov $(_PT1 - _start32 + _kernel_entry32), %eax
-    mov $0x200003, %edx
-    mov $512, %ecx
-
-_add_page_table_entry_1:
-    # Writes identity mapping to throughout page table 1 (0x200000 - 0x400000)
-    mov %edx, (%eax)
-    add $0x1000, %edx
-    add $0x08, %eax
-    loop _add_page_table_entry_1
-
-    mov $(_PT2 - _start32 + _kernel_entry32), %eax
-    mov $0x200003, %edx
-    mov $512, %ecx
-
-_add_page_table_entry_2:
-    # Writes identity mapping to throughout page table 2 (upper address space)
-    mov %edx, (%eax)
-    add $0x1000, %edx
-    add $0x08, %eax
-    loop _add_page_table_entry_2
+    loop _add_page_table_high
 
     # Enable cr4.PAE and cr4.PGE and cr4.OSFXSR and cr4.OSXMMEEXCPT
     mov %cr4, %eax
@@ -321,19 +298,15 @@ early_stack_top:
 _KERNEL_PAGE_TABLE_START:
 _PML4:
     .skip 0x1000
-_PDP0:
+_PDP_LOW:
     .skip 0x1000
-_PDP1:
+_PDP_HIGH:
     .skip 0x1000
-_PD0:
+_PD_LOW:
     .skip 0x1000
-_PD1:
+_PD_HIGH:
     .skip 0x1000
-_PT0:
-    .skip 0x1000
-_PT1:
-    .skip 0x1000
-_PT2:
+_PT_HIGH:
     .skip 0x1000
 _KERNEL_PAGE_TABLE_END:
 

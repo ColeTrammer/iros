@@ -32,6 +32,7 @@ extern void KERNEL_VM_STACK_START();
 #define KERNEL_DATA_END            ((uintptr_t) &_data_end)
 #define KERNEL_BSS_START           ((uintptr_t) &_bss_start)
 #define KERNEL_BSS_END             ((uintptr_t) &_bss_end)
+#define KERNEL_VM_END              KERNEL_BSS_END
 #define KERNEL_PHYS_START          ((uintptr_t) &_kernel_phys_start)
 #define KERNEL_PHYS_END            ((uintptr_t) &_kernel_phys_end)
 #define KERNEL_AP_TRAMPOLINE_START ((uintptr_t) &_kernel_ap_trampoline_start)
