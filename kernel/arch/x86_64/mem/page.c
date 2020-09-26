@@ -250,7 +250,7 @@ void clear_initial_page_mappings() {
     pml4[PML4_RECURSIVE_INDEX] = 0;
 
     for (uintptr_t i = 0; i < 0x400000; i += PAGE_SIZE) {
-        do_unmap_page(i, false, false, false, &initial_kernel_process);
+        do_unmap_page(i, false, true, false, &initial_kernel_process);
     }
     load_cr3(cr3);
 }
