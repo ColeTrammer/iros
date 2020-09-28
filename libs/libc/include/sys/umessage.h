@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+enum umessage_category_number {
+    UMESSAGE_INTERFACE,
+    UMESSAGE_NUM_CATEGORIES,
+};
+
 struct umessage {
     uint32_t length;
     uint16_t category;

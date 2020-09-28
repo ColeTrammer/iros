@@ -10,15 +10,26 @@
 #include <kernel/util/init.h>
 #include <kernel/util/mutex.h>
 
-static mutex_t queue_list_lock = MUTEX_INITIALIZER;
-static struct list_node queue_list = INIT_LIST(queue_list);
+struct umessage_queue_list {
+    mutex_t lock;
+    struct list_node list;
+    struct umessage_category *descriptor;
+};
+
+static struct umessage_queue_list category_queues[UMESSAGE_NUM_CATEGORIES];
 
 static struct umessage_queue *create_umessage_queue(struct socket *socket) {
-    struct umessage_queue *ret = socket->private_data = malloc(sizeof(struct umessage_queue));
+    struct umessage_category *desc = category_queues[socket->protocol].descriptor;
+    struct umessage_queue *ret = socket->private_data = malloc(sizeof(struct umessage_queue) + desc->private_data_size);
     ret->socket = socket;
+    ret->desc = desc;
     init_list(&ret->list);
     init_ring_buffer(&ret->recv_queue, UMESSAGE_QUEUE_MAX * sizeof(struct umessage_queue *));
     init_spinlock(&ret->recv_queue_lock);
+
+    if (desc->init) {
+        desc->init(ret);
+    }
     return ret;
 }
 
@@ -29,19 +40,22 @@ static void free_umessage_queue(struct umessage_queue *queue) {
         net_drop_umessage(message);
     }
     kill_ring_buffer(&queue->recv_queue);
+    if (queue->desc->kill) {
+        queue->desc->kill(queue);
+    }
     free(queue);
 }
 
 static void register_umessage_queue(struct umessage_queue *queue) {
-    mutex_lock(&queue_list_lock);
-    list_append(&queue_list, &queue->list);
-    mutex_unlock(&queue_list_lock);
+    mutex_lock(&category_queues[queue->category].lock);
+    list_append(&category_queues[queue->category].list, &queue->list);
+    mutex_unlock(&category_queues[queue->category].lock);
 }
 
 static void unregister_umessage_queue(struct umessage_queue *queue) {
-    mutex_lock(&queue_list_lock);
-    list_remove(&queue->list);
-    mutex_unlock(&queue_list_lock);
+    mutex_lock(&category_queues[queue->category].lock);
+    list_remove(&category_queues[queue->category].list);
+    mutex_unlock(&category_queues[queue->category].lock);
 }
 
 struct queued_umessage *net_create_umessage(uint16_t category, uint16_t type, int flags, uint32_t length, const void *data) {
@@ -69,8 +83,8 @@ void net_drop_umessage(struct queued_umessage *umessage) {
 }
 
 void net_post_umessage(struct queued_umessage *umessage) {
-    mutex_lock(&queue_list_lock);
-    list_for_each_entry(&queue_list, queue, struct umessage_queue, list) {
+    mutex_lock(&category_queues[umessage->message.category].lock);
+    list_for_each_entry(&category_queues[umessage->message.category].list, queue, struct umessage_queue, list) {
         spin_lock(&queue->recv_queue_lock);
         if (!ring_buffer_full(&queue->recv_queue)) {
             queue->socket->readable = true;
@@ -78,7 +92,7 @@ void net_post_umessage(struct queued_umessage *umessage) {
         }
         spin_unlock(&queue->recv_queue_lock);
     }
-    mutex_unlock(&queue_list_lock);
+    mutex_unlock(&category_queues[umessage->message.category].lock);
 }
 
 static int umessage_close(struct socket *socket) {
@@ -104,6 +118,9 @@ static ssize_t umessage_recvfrom(struct socket *socket, void *buffer, size_t len
         if (!ring_buffer_empty(&queue->recv_queue)) {
             ring_buffer_read(&queue->recv_queue, &umessage, sizeof(umessage));
         }
+        if (ring_buffer_empty(&queue->recv_queue)) {
+            socket->readable = false;
+        }
         spin_unlock(&queue->recv_queue_lock);
 
         if (umessage) {
@@ -124,12 +141,39 @@ static ssize_t umessage_recvfrom(struct socket *socket, void *buffer, size_t len
     }
 }
 
+static ssize_t umessage_sendto(struct socket *socket, const void *buffer, size_t len, int flags, const struct sockaddr *addr,
+                               socklen_t addrlen) {
+    (void) flags;
+    (void) addr;
+    (void) addrlen;
+
+    const struct umessage *umessage = buffer;
+    if (umessage->length != len) {
+        return -EINVAL;
+    }
+
+    struct umessage_queue *queue = socket->private_data;
+    if (umessage->category != queue->category) {
+        return -EINVAL;
+    }
+
+    if (umessage->type >= queue->desc->type_count) {
+        return -EINVAL;
+    }
+
+    if (!queue->desc->recv) {
+        return -EINVAL;
+    }
+
+    return queue->desc->recv(queue, umessage);
+}
+
 static struct socket_ops umessage_ops = {
     .close = umessage_close,
     .getsockopt = net_generic_getsockopt,
     .setsockopt = net_generic_setsockopt,
     .recvfrom = umessage_recvfrom,
-    .sendto = NULL,
+    .sendto = umessage_sendto,
 };
 
 static int umessage_socket(int domain, int type, int protocol) {
@@ -140,16 +184,16 @@ static int umessage_socket(int domain, int type, int protocol) {
     return fd;
 }
 
-static struct socket_protocol umessage_protocol = {
-    .domain = AF_UMESSAGE,
-    .type = SOCK_DGRAM,
-    .protocol = 0,
-    .is_default_protocol = true,
-    .name = "UMessage",
-    .create_socket = umessage_socket,
-};
+void net_register_umessage_category(struct umessage_category *category) {
+    category_queues[category->category].descriptor = category;
+    init_mutex(&category_queues[category->category].lock);
+    init_list(&category_queues[category->category].list);
 
-static void init_umessage(void) {
-    net_register_protocol(&umessage_protocol);
+    struct socket_protocol *protcol = category->protocol = malloc(sizeof(struct socket_protocol));
+    protcol->domain = AF_UMESSAGE;
+    protcol->type = SOCK_DGRAM;
+    protcol->protocol = category->category;
+    protcol->name = category->name;
+    protcol->create_socket = umessage_socket;
+    net_register_protocol(protcol);
 }
-INIT_FUNCTION(init_umessage, net);
