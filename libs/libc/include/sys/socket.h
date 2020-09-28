@@ -14,17 +14,19 @@
 #define SOCK_NONBLOCK  0x100
 #define SOCK_CLOEXEC   0x200
 
-#define AF_UNSPEC 0
-#define AF_INET   1
-#define AF_INET6  2
-#define AF_UNIX   3
-#define AF_LOCAL  AF_UNIX
+#define AF_UNSPEC   0
+#define AF_INET     1
+#define AF_INET6    2
+#define AF_UNIX     3
+#define AF_LOCAL    AF_UNIX
+#define AF_UMESSAGE 4
 
-#define PF_UNSPEC AF_UNSPEC
-#define PF_INET   AF_INET
-#define PF_INET6  AF_INET6
-#define PF_UNIX   AF_UNIX
-#define PF_LOCAL  PF_UNIX
+#define PF_UNSPEC   AF_UNSPEC
+#define PF_INET     AF_INET
+#define PF_INET6    AF_INET6
+#define PF_UNIX     AF_UNIX
+#define PF_LOCAL    PF_UNIX
+#define PF_UMESSAGE AF_UMESSAGE
 
 #define SHUT_RD   0
 #define SHUT_WR   1

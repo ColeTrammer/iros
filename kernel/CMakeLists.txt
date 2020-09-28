@@ -35,8 +35,8 @@ if (NOT ${NATIVE_BUILD})
         net/arp.c
         net/dhcp.c
         net/ethernet.c
-        net/icmp.c
         net/icmp_socket.c
+        net/icmp.c
         net/inet_socket.c
         net/interface.c
         net/ip.c
@@ -48,10 +48,11 @@ if (NOT ${NATIVE_BUILD})
         net/destination_cache.c
         net/socket.c
         net/socket_syscalls.c
-        net/tcp.c
         net/tcp_socket.c
-        net/udp.c
+        net/tcp.c
         net/udp_socket.c
+        net/udp.c
+        net/umessage.c
         net/unix_socket.c
         proc/blockers.c
         proc/elf64.c
