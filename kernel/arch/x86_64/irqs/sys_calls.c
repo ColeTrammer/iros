@@ -1802,7 +1802,7 @@ SYS_CALL(clock_nanosleep) {
     }
 
     int ret = time_wakeup_after(clock->id, &delta_time);
-    if (!ret && !absolute && !!ret) {
+    if (!ret && !absolute && !!rem) {
         *rem = delta_time;
     }
 
