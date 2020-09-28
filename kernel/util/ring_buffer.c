@@ -32,6 +32,10 @@ void ring_buffer_copy(struct ring_buffer *rb, size_t offset, void *buffer, size_
     }
 }
 
+void ring_buffer_read(struct ring_buffer *rb, void *data, size_t amount) {
+    ring_buffer_user_read(rb, data, amount);
+}
+
 void ring_buffer_user_read(struct ring_buffer *rb, void *buffer, size_t amount) {
     ring_buffer_copy(rb, 0, buffer, amount);
     ring_buffer_advance(rb, amount);

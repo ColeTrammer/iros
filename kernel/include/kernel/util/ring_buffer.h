@@ -16,6 +16,7 @@ void kill_ring_buffer(struct ring_buffer *rb);
 
 void ring_buffer_advance(struct ring_buffer *rb, size_t amount);
 void ring_buffer_copy(struct ring_buffer *rb, size_t offset, void *data, size_t amount);
+void ring_buffer_read(struct ring_buffer *rb, void *data, size_t amount);
 void ring_buffer_user_read(struct ring_buffer *rb, void *data, size_t amount);
 void ring_buffer_write(struct ring_buffer *rb, const void *buffer, size_t amount);
 void ring_buffer_user_write(struct ring_buffer *rb, const void *data, size_t amount);
