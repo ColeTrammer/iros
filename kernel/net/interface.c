@@ -14,6 +14,8 @@
 #include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
 #include <kernel/net/packet.h>
+#include <kernel/net/umessage.h>
+#include <kernel/util/init.h>
 #include <kernel/util/validators.h>
 
 static struct list_node interface_list = INIT_LIST(interface_list);
@@ -119,3 +121,47 @@ int net_ioctl_interface_name_for_index(struct ifreq *req) {
     }
     return -ENXIO;
 }
+
+static int umessage_interface_recv(struct umessage_queue *queue, const struct umessage *umessage) {
+    switch (umessage->type) {
+        case UMESSAGE_INTERFACE_LIST_REQUEST:
+            if (!UMESSAGE_INTERFACE_LIST_REQUEST_VALID(umessage, umessage->length)) {
+                return -EINVAL;
+            }
+
+            size_t interface_count = 0;
+            net_for_each_interface(interface) {
+                (void) interface;
+                interface_count++;
+            }
+
+            struct queued_umessage *to_post =
+                net_create_umessage(UMESSAGE_INTERFACE, UMESSAGE_INTERFACE_LIST, 0, UMESSAGE_INTERFACE_LIST_LENGTH(interface_count), NULL);
+            struct umessage_interface_list *list = (void *) &to_post->message;
+            list->interface_count = interface_count;
+            int i = 0;
+            net_for_each_interface(interface) {
+                strcpy(list->interface_list[i].name, interface->name);
+                list->interface_list[i].index = i + 1;
+                i++;
+            }
+
+            net_post_umessage_to(queue, to_post);
+            net_drop_umessage(to_post);
+            return 0;
+        default:
+            return -EINVAL;
+    }
+}
+
+static struct umessage_category umessage_interface = {
+    .category = UMESSAGE_INTERFACE,
+    .request_type_count = UMESSAGE_INTERFACE_NUM_REQUESTS,
+    .name = "UMessage Interface",
+    .recv = umessage_interface_recv,
+};
+
+static void init_umessage_interface(void) {
+    net_register_umessage_category(&umessage_interface);
+}
+INIT_FUNCTION(init_umessage_interface, net);

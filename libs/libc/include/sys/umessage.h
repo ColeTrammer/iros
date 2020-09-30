@@ -21,7 +21,8 @@ enum umessage_interface_request_type {
     UMESSAGE_INTERFACE_LIST_REQUEST,
     UMESSAGE_INTERFACE_NUM_REQUESTS,
 };
-#define UMESSAGE_INTERFACE_REQUEST_VALID(u, len) ((u)->category == UMESSAGE_INTERFACE && (u)->type < UMESSAGE_INTERFACE_NUM_REQUESTS)
+#define UMESSAGE_INTERFACE_REQUEST_VALID(u, len) \
+    (UMESSAGE_VALID(u, len) && (u)->category == UMESSAGE_INTERFACE && (u)->type < UMESSAGE_INTERFACE_NUM_REQUESTS)
 
 enum umessage_interface_message_type {
     UMESSAGE_INTERFACE_LIST,
@@ -33,7 +34,7 @@ enum umessage_interface_message_type {
 struct umessage_interface_list_request {
     struct umessage base;
 };
-#define UMESSAFE_INTERFACE_LIST_REQUEST_VALID(u, len)                                                       \
+#define UMESSAGE_INTERFACE_LIST_REQUEST_VALID(u, len)                                                       \
     (UMESSAGE_INTERFACE_REQUEST_VALID(u, len) && (len) >= sizeof(struct umessage_interface_list_request) && \
      (u)->type == UMESSAGE_INTERFACE_LIST_REQUEST)
 

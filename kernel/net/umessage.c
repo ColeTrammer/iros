@@ -23,6 +23,7 @@ static struct umessage_queue *create_umessage_queue(struct socket *socket) {
     struct umessage_queue *ret = socket->private_data = malloc(sizeof(struct umessage_queue) + desc->private_data_size);
     ret->socket = socket;
     ret->desc = desc;
+    ret->category = socket->protocol;
     init_list(&ret->list);
     init_ring_buffer(&ret->recv_queue, UMESSAGE_QUEUE_MAX * sizeof(struct umessage_queue *));
     init_spinlock(&ret->recv_queue_lock);
@@ -85,14 +86,19 @@ void net_drop_umessage(struct queued_umessage *umessage) {
 void net_post_umessage(struct queued_umessage *umessage) {
     mutex_lock(&category_queues[umessage->message.category].lock);
     list_for_each_entry(&category_queues[umessage->message.category].list, queue, struct umessage_queue, list) {
-        spin_lock(&queue->recv_queue_lock);
-        if (!ring_buffer_full(&queue->recv_queue)) {
-            queue->socket->readable = true;
-            ring_buffer_write(&queue->recv_queue, net_bump_umessage(umessage), sizeof(umessage));
-        }
-        spin_unlock(&queue->recv_queue_lock);
+        net_post_umessage_to(queue, umessage);
     }
     mutex_unlock(&category_queues[umessage->message.category].lock);
+}
+
+void net_post_umessage_to(struct umessage_queue *queue, struct queued_umessage *umessage) {
+    spin_lock(&queue->recv_queue_lock);
+    if (!ring_buffer_full(&queue->recv_queue)) {
+        queue->socket->readable = true;
+        net_bump_umessage(umessage);
+        ring_buffer_write(&queue->recv_queue, &umessage, sizeof(umessage));
+    }
+    spin_unlock(&queue->recv_queue_lock);
 }
 
 static int umessage_close(struct socket *socket) {
@@ -157,7 +163,7 @@ static ssize_t umessage_sendto(struct socket *socket, const void *buffer, size_t
         return -EINVAL;
     }
 
-    if (umessage->type >= queue->desc->type_count) {
+    if (umessage->type >= queue->desc->request_type_count) {
         return -EINVAL;
     }
 

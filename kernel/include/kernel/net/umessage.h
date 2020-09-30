@@ -21,7 +21,7 @@ struct queued_umessage {
 
 struct umessage_category {
     uint16_t category;
-    uint16_t type_count;
+    uint16_t request_type_count;
     const char *name;
     size_t private_data_size;
     int (*recv)(struct umessage_queue *queue, const struct umessage *umessage);
@@ -50,6 +50,7 @@ struct queued_umessage *net_create_umessage(uint16_t category, uint16_t type, in
 struct queued_umessage *net_bump_umessage(struct queued_umessage *umessage);
 void net_drop_umessage(struct queued_umessage *umessage);
 void net_post_umessage(struct queued_umessage *umessage);
+void net_post_umessage_to(struct umessage_queue *queue, struct queued_umessage *umessage);
 
 void net_register_umessage_category(struct umessage_category *category);
 

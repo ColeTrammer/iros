@@ -14,9 +14,9 @@
 
 struct if_nameindex *if_nameindex(void) {
 #ifdef __os_2__
-    int fd = socket(AF_UMESSAGE, SOCK_DGRAM, UMESSAGE_INTERFACE);
+    int fd = socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, UMESSAGE_INTERFACE);
 #else
-    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    int fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 #endif /* __os_2__ */
     if (fd < 0) {
         return NULL;
@@ -48,7 +48,7 @@ struct if_nameindex *if_nameindex(void) {
         goto error;
     }
     struct umessage_interface_list *list = (void *) buffer;
-    for (size_t i = 0; i < list->interface_count; i++) {
+    for (; i < list->interface_count; i++) {
         char *new_name = strdup(list->interface_list[i].name);
         int new_index = list->interface_list[i].index;
 #else
