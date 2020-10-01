@@ -2,6 +2,8 @@
 #define _SYS_UMESSAGE_H 1
 
 #include <net/if.h>
+#include <netinet/in.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 enum umessage_category_number {
@@ -19,6 +21,7 @@ struct umessage {
 
 enum umessage_interface_request_type {
     UMESSAGE_INTERFACE_LIST_REQUEST,
+    UMESSAGE_INTERFACE_SET_STATE_REQUEST,
     UMESSAGE_INTERFACE_NUM_REQUESTS,
 };
 #define UMESSAGE_INTERFACE_REQUEST_VALID(u, len) \
@@ -37,6 +40,20 @@ struct umessage_interface_list_request {
 #define UMESSAGE_INTERFACE_LIST_REQUEST_VALID(u, len)                                                       \
     (UMESSAGE_INTERFACE_REQUEST_VALID(u, len) && (len) >= sizeof(struct umessage_interface_list_request) && \
      (u)->type == UMESSAGE_INTERFACE_LIST_REQUEST)
+
+struct umessage_interface_set_state_request {
+    struct umessage base;
+    int interface_index;
+    bool set_default_gateway;
+    bool set_address;
+    bool set_subnet_mask;
+    struct in_addr default_gateway;
+    struct in_addr address;
+    struct in_addr subnet_mask;
+};
+#define UMESSAGE_INTERFACE_SET_STATE_REQUEST_VALID(u, len)                                                       \
+    (UMESSAGE_INTERFACE_REQUEST_VALID(u, len) && (len) >= sizeof(struct umessage_interface_set_state_request) && \
+     (u)->type == UMESSAGE_INTERFACE_SET_STATE_REQUEST)
 
 struct umessage_interface_desc {
     char name[IF_NAMESIZE];
