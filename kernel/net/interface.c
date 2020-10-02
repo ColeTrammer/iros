@@ -142,6 +142,7 @@ static int umessage_interface_recv(struct umessage_queue *queue, const struct um
             int i = 0;
             net_for_each_interface(interface) {
                 strcpy(list->interface_list[i].name, interface->name);
+                list->interface_list[i].link_layer_address = interface->link_layer_address;
                 list->interface_list[i].index = i + 1;
                 i++;
             }

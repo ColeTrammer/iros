@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <kernel/net/link_layer_address.h>
+
 enum umessage_category_number {
     UMESSAGE_INTERFACE,
     UMESSAGE_NUM_CATEGORIES,
@@ -57,6 +59,7 @@ struct umessage_interface_set_state_request {
 
 struct umessage_interface_desc {
     char name[IF_NAMESIZE];
+    struct link_layer_address link_layer_address;
     int index;
 };
 
