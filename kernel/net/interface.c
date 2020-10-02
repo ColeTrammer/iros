@@ -124,7 +124,7 @@ int net_ioctl_interface_name_for_index(struct ifreq *req) {
 
 static int umessage_interface_recv(struct umessage_queue *queue, const struct umessage *umessage) {
     switch (umessage->type) {
-        case UMESSAGE_INTERFACE_LIST_REQUEST:
+        case UMESSAGE_INTERFACE_LIST_REQUEST: {
             if (!UMESSAGE_INTERFACE_LIST_REQUEST_VALID(umessage, umessage->length)) {
                 return -EINVAL;
             }
@@ -149,6 +149,37 @@ static int umessage_interface_recv(struct umessage_queue *queue, const struct um
             net_post_umessage_to(queue, to_post);
             net_drop_umessage(to_post);
             return 0;
+        }
+        case UMESSAGE_INTERFACE_SET_STATE_REQUEST: {
+            if (!UMESSAGE_INTERFACE_SET_STATE_REQUEST_VALID(umessage, umessage->length)) {
+                return -EINVAL;
+            }
+            struct umessage_interface_set_state_request *req = (void *) umessage;
+
+            int i = 0;
+            struct network_interface *interface = NULL;
+            net_for_each_interface(iter) {
+                if (++i == req->interface_index) {
+                    interface = iter;
+                    break;
+                }
+            }
+
+            if (!interface) {
+                return -ENXIO;
+            }
+
+            if (req->set_subnet_mask) {
+                interface->mask = ip_v4_from_uint(req->subnet_mask.s_addr);
+            }
+            if (req->set_default_gateway) {
+                interface->default_gateway = ip_v4_from_uint(req->default_gateway.s_addr);
+            }
+            if (req->set_address) {
+                interface->address = ip_v4_from_uint(req->address.s_addr);
+            }
+            return 0;
+        }
         default:
             return -EINVAL;
     }
