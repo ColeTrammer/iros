@@ -10,6 +10,7 @@
 
 enum umessage_category_number {
     UMESSAGE_INTERFACE,
+    UMESSAGE_INPUT,
     UMESSAGE_NUM_CATEGORIES,
 };
 
@@ -49,9 +50,11 @@ struct umessage_interface_set_state_request {
     bool set_default_gateway;
     bool set_address;
     bool set_subnet_mask;
+    bool set_flags;
     struct in_addr default_gateway;
     struct in_addr address;
     struct in_addr subnet_mask;
+    int flags;
 };
 #define UMESSAGE_INTERFACE_SET_STATE_REQUEST_VALID(u, len)                                                       \
     (UMESSAGE_INTERFACE_REQUEST_VALID(u, len) && (len) >= sizeof(struct umessage_interface_set_state_request) && \
@@ -61,6 +64,7 @@ struct umessage_interface_desc {
     char name[IF_NAMESIZE];
     struct link_layer_address link_layer_address;
     int index;
+    int flags;
 };
 
 struct umessage_interface_list {

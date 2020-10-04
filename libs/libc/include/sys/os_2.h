@@ -5,7 +5,6 @@
 #include <bits/clockid_t.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <sys/umessage.h>
 #include <time.h>
 
 #define MUTEX_AQUIRE           1

@@ -34,6 +34,7 @@ struct network_interface {
 #define NETWORK_INTERFACE_ETHERNET 1
 #define NETWORK_INTERFACE_LOOPBACK 2
     int type;
+    int flags;
 
     uint32_t link_layer_overhead;
     uint16_t mtu;

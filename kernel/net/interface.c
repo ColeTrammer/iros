@@ -82,9 +82,11 @@ struct network_interface *net_create_network_interface(const char *name, int typ
         interface->config_context.state = INITIALIZED;
         interface->link_layer_overhead = 0;
         interface->mtu = UINT16_MAX;
+        interface->flags = IFF_UP | IFF_RUNNING | IFF_LOOPBACK;
     } else if (type == NETWORK_INTERFACE_ETHERNET) {
         interface->link_layer_overhead = 1;
         interface->mtu = 1500;
+        interface->flags = IFF_RUNNING | IFF_BROADCAST;
     }
 
     interface->link_layer_address = link_layer_address;
@@ -186,6 +188,9 @@ static int umessage_interface_recv(struct umessage_queue *queue, const struct um
             }
             if (req->set_address) {
                 interface->address = ip_v4_from_uint(req->address.s_addr);
+            }
+            if (req->set_flags) {
+                interface->flags = req->flags;
             }
             return 0;
         }
