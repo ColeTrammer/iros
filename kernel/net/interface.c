@@ -14,6 +14,7 @@
 #include <kernel/net/neighbor_cache.h>
 #include <kernel/net/network_task.h>
 #include <kernel/net/packet.h>
+#include <kernel/net/socket.h>
 #include <kernel/net/umessage.h>
 #include <kernel/util/init.h>
 #include <kernel/util/validators.h>
@@ -54,6 +55,13 @@ struct network_interface *net_get_interface_for_ip(struct ip_v4_address address)
     debug_log("Got interface: [ %s, %u.%u.%u.%u ]\n", interface->name, address.addr[0], address.addr[1], address.addr[2], address.addr[3]);
 #endif /* INTERFACE_DEBUG */
     return interface;
+}
+
+struct network_interface *net_get_interface_for_socket(struct socket *socket, struct ip_v4_address destination) {
+    if (socket->bound_interface) {
+        return socket->bound_interface;
+    }
+    return net_get_interface_for_ip(destination);
 }
 
 struct network_interface *net_create_network_interface(const char *name, int type, struct link_layer_address link_layer_address,

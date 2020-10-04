@@ -105,6 +105,7 @@ struct socket {
     int send_low_water_mark;
     struct timeval recv_timeout;
     struct timeval send_timeout;
+    struct network_interface *bound_interface;
 
     struct sockaddr_storage peer_address;
     struct sockaddr_storage host_address;

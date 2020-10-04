@@ -88,7 +88,7 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
 }
 
 int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr) {
-    struct network_interface *interface = opts->interface ? opts->interface : net_get_interface_for_ip(dest);
+    struct network_interface *interface = opts->interface;
     if (interface->config_context.state != INITIALIZED) {
         debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
@@ -164,7 +164,8 @@ static uint16_t tcp_mss(const struct tcp_packet *packet) {
     return TCP_DEFAULT_MSS;
 }
 
-static void tcp_send_reset(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+static void tcp_send_reset(struct socket *socket, struct network_interface *interface, const struct ip_v4_packet *ip_packet,
+                           const struct tcp_packet *packet) {
     if (packet->flags.rst) {
         return;
     }
@@ -182,7 +183,7 @@ static void tcp_send_reset(struct socket *socket, const struct ip_v4_packet *ip_
         .data_length = 0,
         .data_rb = NULL,
         .socket = NULL,
-        .interface = NULL,
+        .interface = interface,
         .destination = NULL,
     };
 
@@ -378,7 +379,8 @@ static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
     socket->writable = true;
 }
 
-static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+static void tcp_process_segment(struct socket *socket, struct network_interface *interface, const struct ip_v4_packet *ip_packet,
+                                const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
     switch (tcb->state) {
         case TCP_SYN_SENT:
@@ -412,7 +414,7 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
             if (segment_length != 0) {
                 // The socket has already been closed, send a reset since there's nowhere for the recieved data to go.
                 if (socket->state >= CLOSING) {
-                    tcp_send_reset(socket, ip_packet, packet);
+                    tcp_send_reset(socket, interface, ip_packet, packet);
                     net_free_tcp_control_block(socket);
                     return;
                 }
@@ -485,17 +487,18 @@ static void tcp_process_segment(struct socket *socket, const struct ip_v4_packet
     }
 }
 
-static void tcp_recv_in_listen(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+static void tcp_recv_in_listen(struct socket *socket, struct network_interface *interface, const struct ip_v4_packet *ip_packet,
+                               const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
     if (packet->flags.rst) {
         return;
     } else if (packet->flags.ack) {
-        tcp_send_reset(socket, ip_packet, packet);
+        tcp_send_reset(socket, interface, ip_packet, packet);
         return;
     } else if (packet->flags.syn) {
         if (socket->num_pending >= socket->pending_length) {
             // There are too many pending connections, so refuse this one.
-            tcp_send_reset(socket, ip_packet, packet);
+            tcp_send_reset(socket, interface, ip_packet, packet);
             return;
         }
 
@@ -523,7 +526,7 @@ static void tcp_recv_in_listen(struct socket *socket, const struct ip_v4_packet 
 
         // Update the TCB
         tcb->state = TCP_SYN_RECIEVED;
-        tcp_process_segment(socket, ip_packet, packet);
+        tcp_process_segment(socket, interface, ip_packet, packet);
 
         // Replace the TCB with a new one, for the next incoming connection
         struct tcp_control_block *new_tcb = net_allocate_tcp_control_block(socket);
@@ -533,11 +536,12 @@ static void tcp_recv_in_listen(struct socket *socket, const struct ip_v4_packet 
     }
 }
 
-static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+static void tcp_recv_in_syn_sent(struct socket *socket, struct network_interface *interface, const struct ip_v4_packet *ip_packet,
+                                 const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
     if (packet->flags.ack) {
         if (htonl(packet->ack_number) <= tcb->send_unacknowledged || htonl(packet->ack_number) > tcb->send_next) {
-            tcp_send_reset(socket, ip_packet, packet);
+            tcp_send_reset(socket, interface, ip_packet, packet);
             return;
         }
         if (packet->flags.rst) {
@@ -558,17 +562,18 @@ static void tcp_recv_in_syn_sent(struct socket *socket, const struct ip_v4_packe
     socket->readable = true;
     if (packet->flags.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));
-        tcp_process_segment(socket, ip_packet, packet);
+        tcp_process_segment(socket, interface, ip_packet, packet);
         tcp_enter_established_state(socket, packet);
         return;
     }
 
     tcb->state = TCP_SYN_RECIEVED;
-    tcp_process_segment(socket, ip_packet, packet);
+    tcp_process_segment(socket, interface, ip_packet, packet);
     return;
 }
 
-static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+static void tcp_recv_data(struct socket *socket, struct network_interface *interface, const struct ip_v4_packet *ip_packet,
+                          const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
     if (!tcp_segment_acceptable(socket, ip_packet, packet)) {
         tcp_send_empty_ack(socket, ip_packet, packet);
@@ -606,7 +611,7 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
     }
 
     if (packet->flags.syn) {
-        tcp_send_reset(socket, ip_packet, packet);
+        tcp_send_reset(socket, interface, ip_packet, packet);
         socket->error = ECONNRESET;
         socket->state = CLOSED;
         net_free_tcp_control_block(socket);
@@ -620,11 +625,11 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
     switch (tcb->state) {
         case TCP_SYN_RECIEVED:
             if (tcb->send_unacknowledged > htonl(packet->ack_number) || htonl(packet->ack_number) > tcb->send_next) {
-                tcp_send_reset(socket, ip_packet, packet);
+                tcp_send_reset(socket, interface, ip_packet, packet);
                 break;
             }
             tcp_advance_ack_number(socket, htonl(packet->ack_number));
-            tcp_process_segment(socket, ip_packet, packet);
+            tcp_process_segment(socket, interface, ip_packet, packet);
             tcp_enter_established_state(socket, packet);
             return;
         case TCP_ESTABLISHED:
@@ -683,17 +688,18 @@ static void tcp_recv_data(struct socket *socket, const struct ip_v4_packet *ip_p
             assert(false);
     }
 
-    tcp_process_segment(socket, ip_packet, packet);
+    tcp_process_segment(socket, interface, ip_packet, packet);
 }
 
-static void tcp_recv_on_socket(struct socket *socket, const struct ip_v4_packet *ip_packet, const struct tcp_packet *packet) {
+static void tcp_recv_on_socket(struct socket *socket, struct network_interface *interface, const struct ip_v4_packet *ip_packet,
+                               const struct tcp_packet *packet) {
     struct tcp_control_block *tcb = socket->private_data;
     switch (tcb->state) {
         case TCP_LITSEN:
-            tcp_recv_in_listen(socket, ip_packet, packet);
+            tcp_recv_in_listen(socket, interface, ip_packet, packet);
             return;
         case TCP_SYN_SENT:
-            tcp_recv_in_syn_sent(socket, ip_packet, packet);
+            tcp_recv_in_syn_sent(socket, interface, ip_packet, packet);
             return;
         case TCP_SYN_RECIEVED:
         case TCP_ESTABLISHED:
@@ -703,7 +709,7 @@ static void tcp_recv_on_socket(struct socket *socket, const struct ip_v4_packet 
         case TCP_CLOSING:
         case TCP_LAST_ACK:
         case TCP_TIME_WAIT:
-            tcp_recv_data(socket, ip_packet, packet);
+            tcp_recv_data(socket, interface, ip_packet, packet);
             return;
         default:
             assert(false);
@@ -748,13 +754,13 @@ void net_tcp_recieve(struct packet *net_packet) {
         debug_log("TCP socket mapping not found: [ %d.%d.%d.%d, %u, %d.%d.%d.%d, %u ]\n", info.source_ip.addr[1], info.source_ip.addr[2],
                   info.source_ip.addr[3], info.source_ip.addr[0], info.source_port, info.dest_ip.addr[0], info.dest_ip.addr[1],
                   info.dest_ip.addr[2], info.dest_ip.addr[3], info.dest_port);
-        tcp_send_reset(NULL, ip_packet, packet);
+        tcp_send_reset(NULL, net_packet->interface, ip_packet, packet);
         return;
     }
 
     net_bump_socket(socket);
     mutex_lock(&socket->lock);
-    tcp_recv_on_socket(socket, ip_packet, packet);
+    tcp_recv_on_socket(socket, net_packet->interface, ip_packet, packet);
     mutex_unlock(&socket->lock);
     net_drop_socket(socket);
 }

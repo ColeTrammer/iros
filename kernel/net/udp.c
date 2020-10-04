@@ -24,7 +24,7 @@ int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t l
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(dest);
     uint16_t dest_port = PORT_FROM_SOCKADDR(dest);
 
-    struct network_interface *interface = net_get_interface_for_ip(dest_ip);
+    struct network_interface *interface = net_get_interface_for_socket(socket, dest_ip);
     assert(interface);
 
     if (len > UINT16_MAX) {

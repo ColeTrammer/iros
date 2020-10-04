@@ -34,22 +34,23 @@
 
 #define SOL_SOCKET 0
 
-#define SO_ACCEPTCONN 1
-#define SO_BROADCAST  2
-#define SO_DEBUG      3
-#define SO_DONTROUTE  4
-#define SO_ERROR      5
-#define SO_KEEPALIVE  6
-#define SO_LINGER     7
-#define SO_OOBINLINE  8
-#define SO_RCVBUF     9
-#define SO_RCVLOWAT   10
-#define SO_RCVTIMEO   11
-#define SO_REUSEADDR  12
-#define SO_SNDBUF     13
-#define SO_SNDLOWAT   14
-#define SO_SNDTIMEO   15
-#define SO_TYPE       16
+#define SO_ACCEPTCONN   1
+#define SO_BROADCAST    2
+#define SO_DEBUG        3
+#define SO_DONTROUTE    4
+#define SO_ERROR        5
+#define SO_KEEPALIVE    6
+#define SO_LINGER       7
+#define SO_OOBINLINE    8
+#define SO_RCVBUF       9
+#define SO_RCVLOWAT     10
+#define SO_RCVTIMEO     11
+#define SO_REUSEADDR    12
+#define SO_SNDBUF       13
+#define SO_SNDLOWAT     14
+#define SO_SNDTIMEO     15
+#define SO_TYPE         16
+#define SO_BINDTODEVICE 17
 
 #define SOMAXCONN 4096
 

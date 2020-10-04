@@ -307,6 +307,17 @@ int net_generic_setsockopt(struct socket *socket, int level, int optname, const 
         }
         case SO_TYPE:
             return -ENOPROTOOPT;
+        case SO_BINDTODEVICE: {
+            char name[IF_NAMESIZE] = { 0 };
+            memcpy(name, optval, MIN(optlen, IF_NAMESIZE) - 1);
+            net_for_each_interface(interface) {
+                if (strcmp(interface->name, name) == 0) {
+                    socket->bound_interface = interface;
+                    return 0;
+                }
+            }
+            return -ENODEV;
+        }
         default:
             return -ENOPROTOOPT;
     }
@@ -353,6 +364,13 @@ int net_generic_getsockopt(struct socket *socket, int level, int optname, void *
             return NET_WRITE_SOCKOPT(socket->send_timeout, struct timeval, optval, optlen);
         case SO_TYPE:
             return NET_WRITE_SOCKOPT(socket->type, int, optval, optlen);
+        case SO_BINDTODEVICE:
+            if (!socket->bound_interface) {
+                return -EINVAL;
+            }
+            *optlen = MIN(strlen(socket->bound_interface->name) + 1, *optlen);
+            memcpy(optval, socket->bound_interface->name, *optlen);
+            return 0;
         default:
             return -ENOPROTOOPT;
     }

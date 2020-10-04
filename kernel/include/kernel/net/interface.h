@@ -7,12 +7,11 @@
 #include <kernel/net/link_layer_address.h>
 #include <kernel/util/list.h>
 
-struct arp_packet;
 struct destination_cache_entry;
 struct ifreq;
-struct ip_v4_packet;
 struct network_interface;
 struct packet;
+struct socket;
 
 struct network_interface_ops {
     int (*send)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
@@ -54,6 +53,7 @@ struct network_interface {
 
 struct list_node *net_get_interface_list(void);
 struct network_interface *net_get_interface_for_ip(struct ip_v4_address address);
+struct network_interface *net_get_interface_for_socket(struct socket *socket, struct ip_v4_address destination);
 struct network_interface *net_create_network_interface(const char *name, int type, struct link_layer_address link_layer_address,
                                                        struct network_interface_ops *ops, void *data);
 
