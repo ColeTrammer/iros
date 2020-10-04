@@ -151,6 +151,9 @@ void sched_run_next() {
             processor->current_task = task;
             task_do_sig(task, sig);
             processor->current_task = current_save;
+            if (task->sched_state == RUNNING_UNINTERRUPTIBLE || task->sched_state == EXITING) {
+                break;
+            }
         }
     } while ((task = task->sched_next) != processor->sched_list_start);
 
