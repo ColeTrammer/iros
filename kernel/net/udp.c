@@ -36,7 +36,7 @@ int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t l
 
 int net_send_udp(struct socket *socket, struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port,
                  uint16_t dest_port, uint16_t len, const void *buf) {
-    if (interface->config_context.state != INITIALIZED) {
+    if (!net_interface_ready(interface)) {
         debug_log("Can't send UDP packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
     }

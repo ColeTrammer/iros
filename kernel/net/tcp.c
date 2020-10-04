@@ -89,7 +89,7 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
 
 int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr) {
     struct network_interface *interface = opts->interface;
-    if (interface->config_context.state != INITIALIZED) {
+    if (!net_interface_ready(interface)) {
         debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
     }

@@ -350,7 +350,7 @@ int net_interface_route_ip_v4(struct network_interface *self, struct packet *pac
 
 int net_send_ip_v4(struct socket *socket, struct network_interface *interface, uint8_t protocol, struct ip_v4_address dest, const void *buf,
                    size_t len) {
-    if (interface->config_context.state != INITIALIZED) {
+    if (!net_interface_ready(interface)) {
         debug_log("Can't send IP V4 packet; interface uninitialized: [ %s ]\n", interface->name);
         return -ENETDOWN;
     }

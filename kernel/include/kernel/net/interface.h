@@ -63,6 +63,10 @@ void net_recieve_packet(struct network_interface *interface, struct packet *pack
 int net_ioctl_interface_index_for_name(struct ifreq *req);
 int net_ioctl_interface_name_for_index(struct ifreq *req);
 
+static inline bool net_interface_ready(struct network_interface *interface) {
+    return interface->config_context.state == INITIALIZED;
+}
+
 #define net_for_each_interface(name) list_for_each_entry(net_get_interface_list(), name, struct network_interface, interface_list)
 
 #endif /* _KERNEL_NET_INTERFACE_H */

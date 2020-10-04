@@ -55,7 +55,7 @@ static __attribute__((unused)) struct ip_v4_address net_arp_target_proto_addr(co
 }
 
 void net_send_arp_request(struct network_interface *interface, struct ip_v4_address ip_address) {
-    if (interface->config_context.state != INITIALIZED) {
+    if (!net_interface_ready(interface)) {
         debug_log("Can't send ARP packet; interface uninitialized: [ %s ]\n", interface->name);
         return;
     }
