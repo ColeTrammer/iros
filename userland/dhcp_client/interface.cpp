@@ -5,7 +5,7 @@
 
 #include "interface.h"
 
-UniquePtr<Interface> Interface::create(const umessage_interface_desc &desc, uint32_t dhcp_xid) {
+SharedPtr<Interface> Interface::create(const umessage_interface_desc& desc, uint32_t dhcp_xid) {
     auto socket = App::UdpSocket::create(nullptr);
     if (!socket->bind_to_device(desc.name) || !socket->enable_broadcast() || !socket->enable_reuse_addr()) {
         return nullptr;
@@ -13,7 +13,7 @@ UniquePtr<Interface> Interface::create(const umessage_interface_desc &desc, uint
 
     sockaddr_in addr = {
         .sin_family = AF_INET,
-        .sin_port = DHCP_CLIENT_PORT,
+        .sin_port = htons(DHCP_CLIENT_PORT),
         .sin_addr = { .s_addr = INADDR_ANY },
         .sin_zero = { 0 },
     };
@@ -21,10 +21,32 @@ UniquePtr<Interface> Interface::create(const umessage_interface_desc &desc, uint
         return nullptr;
     }
 
-    return make_unique<Interface>(desc, dhcp_xid, move(socket));
+    auto interface = make_shared<Interface>(desc, dhcp_xid, socket);
+
+    socket->set_selected_events(App::NotifyWhen::Readable);
+    socket->enable_notifications();
+    socket->on_ready_to_recieve = [socket, interface] {
+        dhcp_packet packet;
+        while (const_cast<App::UdpSocket&>(*socket).recvfrom((uint8_t*) &packet, sizeof(packet)) > 0) {
+            if (packet.op != DHCP_OP_REPLY) {
+                syslog(LOG_INFO, "Ignoring DHCP packet with wrong DHCP op `%u'", packet.op);
+                return;
+            }
+
+            auto xid = htonl(packet.xid);
+            if (interface->m_dhcp_xid != ntohl(packet.xid)) {
+                syslog(LOG_INFO, "Ignoring DHCP packet with wrong xid: `%#.8X'", xid);
+                return;
+            }
+
+            const_cast<Interface&>(*interface).handle_dhcp_response(packet);
+        }
+    };
+
+    return interface;
 }
 
-Interface::Interface(const umessage_interface_desc &desc, uint32_t dhcp_xid, SharedPtr<App::UdpSocket> socket)
+Interface::Interface(const umessage_interface_desc& desc, uint32_t dhcp_xid, SharedPtr<App::UdpSocket> socket)
     : m_link_layer_address(desc.link_layer_address), m_dhcp_socket(socket), m_name(desc.name), m_dhcp_xid(dhcp_xid) {
     m_state.base.length = sizeof(m_state);
     m_state.base.category = UMESSAGE_INTERFACE;
@@ -35,6 +57,7 @@ Interface::Interface(const umessage_interface_desc &desc, uint32_t dhcp_xid, Sha
     m_state.set_subnet_mask = false;
     m_state.set_flags = false;
     m_state.address.s_addr = INADDR_ANY;
+    m_state.flags = desc.flags;
 }
 
 bool Interface::send_dhcp(uint8_t message_type, in_addr_t server_ip) {
@@ -66,28 +89,28 @@ bool Interface::send_dhcp(uint8_t message_type, in_addr_t server_ip) {
     if (m_state.address.s_addr != INADDR_ANY) {
         data.options[opt_start++] = DHCP_OPTION_REQUEST_IP;
         data.options[opt_start++] = sizeof(in_addr);
-        *(in_addr *) &data.options[opt_start] = m_state.address;
+        *(in_addr*) &data.options[opt_start] = m_state.address;
         opt_start += sizeof(in_addr);
     }
 
     if (server_ip != INADDR_ANY) {
         data.options[opt_start++] = DHCP_OPTION_SERVER_ID;
         data.options[opt_start++] = sizeof(in_addr);
-        *(in_addr_t *) &data.options[opt_start] = server_ip;
+        *(in_addr_t*) &data.options[opt_start] = server_ip;
         opt_start += sizeof(in_addr);
     }
     data.options[opt_start] = DHCP_OPTION_END;
 
     sockaddr_in dest = {
         .sin_family = AF_INET,
-        .sin_port = DHCP_SERVER_PORT,
-        .sin_addr = { .s_addr = server_ip },
+        .sin_port = htons(DHCP_SERVER_PORT),
+        .sin_addr = { .s_addr = INADDR_NONE },
         .sin_zero = { 0 },
     };
-    return m_dhcp_socket->sendto((uint8_t *) &data, sizeof(data), dest) == sizeof(data);
+    return m_dhcp_socket->sendto((uint8_t*) &data, sizeof(data), dest) == sizeof(data);
 }
 
-void Interface::handle_dhcp_response(const dhcp_packet &packet) {
+void Interface::handle_dhcp_response(const dhcp_packet& packet) {
     syslog(LOG_INFO, "DHCP packet is for interface `%s'", m_name.string());
     syslog(LOG_INFO, "DHCP packet ciaddr is `%s'", inet_ntoa(packet.ciaddr));
     syslog(LOG_INFO, "DHCP packet yiaddr is `%s'", inet_ntoa(packet.yiaddr));
@@ -119,14 +142,14 @@ void Interface::handle_dhcp_response(const dhcp_packet &packet) {
 
         uint8_t option_type = packet.options[i];
         uint8_t option_length = packet.options[i + 1];
-        const uint8_t *option_data = &packet.options[i + 2];
+        const uint8_t* option_data = &packet.options[i + 2];
         switch (option_type) {
             case DHCP_OPTION_SUBNET_MASK:
                 if (option_length != 4) {
                     syslog(LOG_INFO, "DHCP subnet mask has invalid length of `%hhu'", option_length);
                     return;
                 }
-                m_state.subnet_mask = *(const in_addr *) option_data;
+                m_state.subnet_mask = *(const in_addr*) option_data;
                 m_state.set_subnet_mask = true;
                 syslog(LOG_INFO, "DHCP subnet mask is `%s'", inet_ntoa(m_state.subnet_mask));
                 break;
@@ -135,7 +158,7 @@ void Interface::handle_dhcp_response(const dhcp_packet &packet) {
                     syslog(LOG_INFO, "DHCP router list has invalid length of `%hhu'", option_length);
                     return;
                 }
-                m_state.default_gateway = *(const in_addr *) option_data;
+                m_state.default_gateway = *(const in_addr*) option_data;
                 m_state.set_default_gateway = true;
                 syslog(LOG_INFO, "DHCP router is `%s'", inet_ntoa(m_state.default_gateway));
                 break;
@@ -144,14 +167,14 @@ void Interface::handle_dhcp_response(const dhcp_packet &packet) {
                     syslog(LOG_INFO, "DHCP dns server list has invalid length of `%hhu'", option_length);
                     return;
                 }
-                syslog(LOG_INFO, "DHCP dns server detected (but will be ignored) of `%s'", inet_ntoa(*(const in_addr *) option_data));
+                syslog(LOG_INFO, "DHCP dns server detected (but will be ignored) of `%s'", inet_ntoa(*(const in_addr*) option_data));
                 break;
             case DHCP_OPTION_IP_LEASE_TIME: {
                 if (option_length != 4) {
                     syslog(LOG_INFO, "DHCP IP address lease time has invalid length of `%hhu'", option_length);
                     return;
                 }
-                uint32_t lease_time = ntohl(*((uint32_t *) option_data));
+                uint32_t lease_time = ntohl(*((uint32_t*) option_data));
                 syslog(LOG_INFO, "DHCP IP address has lease time of %u seconds", lease_time);
                 break;
             }
@@ -167,7 +190,7 @@ void Interface::handle_dhcp_response(const dhcp_packet &packet) {
                     syslog(LOG_INFO, "DHCP server id has invalid length of `%huu'", option_length);
                     return;
                 }
-                server_ip = *(const in_addr *) option_data;
+                server_ip = *(const in_addr*) option_data;
                 syslog(LOG_INFO, "DHCP server ip address is `%s'", inet_ntoa(server_ip));
                 break;
             default:
@@ -188,7 +211,6 @@ void Interface::handle_dhcp_response(const dhcp_packet &packet) {
 
     switch (dhcp_message_type) {
         case DHCP_MESSAGE_TYPE_OFFER:
-            on_configured(*this);
             if (!send_dhcp(DHCP_MESSAGE_TYPE_REQUEST, server_ip.s_addr)) {
                 syslog(LOG_WARNING, "Failed to send DHCP request packet");
             }

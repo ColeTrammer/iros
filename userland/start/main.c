@@ -107,6 +107,9 @@ int main(int argc, char **argv) {
         }
     }
 
+    char *dhcp_client_args[] = { "/bin/dhcp_client", NULL };
+    spawn_process(dhcp_client_args, 0, 0, false, false);
+
     char *nslookup_args[] = { "/bin/dns", "-d", NULL };
     spawn_process(nslookup_args, 12, 12, false, false);
 

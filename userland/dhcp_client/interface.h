@@ -8,7 +8,7 @@
 
 class Interface {
 public:
-    static UniquePtr<Interface> create(const umessage_interface_desc& desc, uint32_t dhcp_xid);
+    static SharedPtr<Interface> create(const umessage_interface_desc& desc, uint32_t dhcp_xid);
     Interface(const umessage_interface_desc& desc, uint32_t dhcp_xid, SharedPtr<App::UdpSocket> socket);
 
     bool send_dhcp(uint8_t message_type, in_addr_t server_ip = INADDR_NONE);

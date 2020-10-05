@@ -37,23 +37,6 @@ int main(int argc, char** argv) {
         print_usage_and_exit(*argv);
     }
 
-    auto recv_socket = App::UdpSocket::create(nullptr);
-    if (!recv_socket->enable_reuse_addr()) {
-        syslog(LOG_ERR, "Cannot setup dhcp recieve socket: %h");
-        return 1;
-    }
-
-    sockaddr_in bind_addr = {
-        .sin_family = AF_INET,
-        .sin_port = DHCP_CLIENT_PORT,
-        .sin_addr = { .s_addr = INADDR_ANY },
-        .sin_zero = { 0 },
-    };
-    if (!recv_socket->bind(bind_addr)) {
-        syslog(LOG_ERR, "Cannot bind dhcp recieve socket: %h");
-        return 1;
-    }
-
     int fd = socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK, UMESSAGE_INTERFACE);
     if (fd < 0) {
         syslog(LOG_ERR, "Cannot create umessage socket: %h");
@@ -75,7 +58,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    HashMap<uint32_t, UniquePtr<Interface>> interfaces;
+    HashMap<uint32_t, SharedPtr<Interface>> interfaces;
 
     if (!UMESSAGE_INTERFACE_LIST_VALID((umessage*) buffer, (size_t) length)) {
         syslog(LOG_ERR, "Interface list is invalid");
@@ -84,7 +67,7 @@ int main(int argc, char** argv) {
     auto& list = *reinterpret_cast<umessage_interface_list*>(buffer);
     for (size_t i = 0; i < list.interface_count; i++) {
         auto& interface = list.interface_list[i];
-        if ((interface.flags & IFF_RUNNING) && !(interface.flags & IFF_LOOPBACK)) {
+        if (!!(interface.flags & IFF_RUNNING) && !(interface.flags & IFF_LOOPBACK)) {
             uint32_t xid;
             do {
                 xid = (rand() << 16) | rand();
@@ -96,7 +79,7 @@ int main(int argc, char** argv) {
                 continue;
             }
 
-            if (!object->send_dhcp(DHCP_MESSAGE_TYPE_REQUEST)) {
+            if (!object->send_dhcp(DHCP_MESSAGE_TYPE_DISCOVER)) {
                 syslog(LOG_WARNING, "Cannot send dhcp over interface `%s': %h", interface.name);
                 continue;
             }
@@ -107,33 +90,16 @@ int main(int argc, char** argv) {
                 }
             };
             interfaces.put(xid, move(object));
+            syslog(LOG_INFO, "Sent DHCP request for interface `%s'", interface.name);
+            continue;
         }
+
+        syslog(LOG_INFO, "Ignoring interface `%s'", interface.name);
     }
 
     if (interfaces.empty()) {
         return 0;
     }
-
-    recv_socket->set_selected_events(App::NotifyWhen::Readable);
-    recv_socket->enable_notifications();
-    recv_socket->on_ready_to_recieve = [&] {
-        dhcp_packet packet;
-        while (recv_socket->recvfrom((uint8_t*) &packet, sizeof(packet)) > 0) {
-            if (packet.op != DHCP_OP_REPLY) {
-                syslog(LOG_INFO, "Ignoring DHCP packet with wrong DHCP op `%u'", packet.op);
-                return;
-            }
-
-            auto xid = htonl(packet.xid);
-            auto* interface = interfaces.get(xid);
-            if (!interface) {
-                syslog(LOG_INFO, "Ignoring DHCP packet with unknown xid: `%#.8X'", xid);
-                return;
-            }
-
-            (*interface)->handle_dhcp_response(packet);
-        }
-    };
 
     App::EventLoop loop;
     loop.enter();

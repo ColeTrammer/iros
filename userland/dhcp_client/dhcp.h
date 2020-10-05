@@ -53,7 +53,7 @@ struct dhcp_packet {
 #define DHCP_OPTION_MESSAGE_TYPE   53
 #define DHCP_OPTION_SERVER_ID      54
 #define DHCP_OPTION_END            255
-    uint8_t options[];
+    uint8_t options[312];
 } __attribute__((packed));
 
 static inline uint8_t net_ll_to_dhcp_hw_type(ll_address_type type) {
