@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include <kernel/net/destination_cache.h>
-#include <kernel/net/dhcp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/inet_socket.h>
 #include <kernel/net/interface.h>
@@ -25,7 +24,9 @@ int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t l
     uint16_t dest_port = PORT_FROM_SOCKADDR(dest);
 
     struct network_interface *interface = net_get_interface_for_socket(socket, dest_ip);
-    assert(interface);
+    if (!interface) {
+        return -ENXIO;
+    }
 
     if (len > UINT16_MAX) {
         return -EMSGSIZE;
@@ -36,11 +37,6 @@ int net_send_udp_through_socket(struct socket *socket, const void *buf, size_t l
 
 int net_send_udp(struct socket *socket, struct network_interface *interface, struct ip_v4_address dest, uint16_t source_port,
                  uint16_t dest_port, uint16_t len, const void *buf) {
-    if (!net_interface_ready(interface)) {
-        debug_log("Can't send UDP packet; interface uninitialized: [ %s ]\n", interface->name);
-        return -ENETDOWN;
-    }
-
     struct destination_cache_entry *destination = net_lookup_destination(interface, dest);
     size_t udp_length = sizeof(struct udp_packet) + len;
 
@@ -82,12 +78,12 @@ void net_udp_recieve(struct packet *net_packet) {
     uint16_t dest_port = ntohs(packet->dest_port);
     struct socket *socket = net_get_socket_from_port(dest_port);
     if (socket == NULL) {
-        if (dest_port == DHCP_CLIENT_PORT) {
-            net_dhcp_recieve(net_packet);
-            return;
-        }
-
         debug_log("UDP packet sent to unbound port: [ %u ]\n", dest_port);
+        return;
+    }
+
+    if (socket->bound_interface && socket->bound_interface != net_packet->interface) {
+        debug_log("UDP packet send from the wrong interface\n");
         return;
     }
 

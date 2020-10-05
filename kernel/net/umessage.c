@@ -67,7 +67,7 @@ struct queued_umessage *net_create_umessage(uint16_t category, uint16_t type, in
     message->message.category = category;
     message->message.type = type;
     if (data) {
-        memcpy(message->message.data, data, length - sizeof(struct umessage));
+        memcpy(UMESSAGE_DATA(&message->message), data, length - sizeof(struct umessage));
     }
     return message;
 }

@@ -55,11 +55,6 @@ static __attribute__((unused)) struct ip_v4_address net_arp_target_proto_addr(co
 }
 
 void net_send_arp_request(struct network_interface *interface, struct ip_v4_address ip_address) {
-    if (!net_interface_ready(interface)) {
-        debug_log("Can't send ARP packet; interface uninitialized: [ %s ]\n", interface->name);
-        return;
-    }
-
     struct link_layer_address broadcast_address = interface->ops->get_link_layer_broadcast_address(interface);
     struct packet *packet = net_create_arp_packet(interface, ARP_OPERATION_REQUEST, interface->link_layer_address, interface->address,
                                                   broadcast_address, ip_address);

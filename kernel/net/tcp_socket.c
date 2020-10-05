@@ -272,7 +272,7 @@ static int net_tcp_accept(struct socket *socket, struct sockaddr *addr, socklen_
     create_tcp_socket_mapping(new_socket);
 
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&new_socket->peer_address);
-    tcb->interface = net_get_interface_for_socket(socket, dest_ip);
+    assert(tcb->interface = net_get_interface_for_socket(socket, dest_ip));
     tcb->destination = net_lookup_destination(tcb->interface, dest_ip);
     tcb->recv_mss = tcb->interface->mtu - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet);
 
@@ -365,6 +365,11 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
 
     struct ip_v4_address dest_ip = IP_V4_FROM_SOCKADDR(&socket->peer_address);
     tcb->interface = net_get_interface_for_socket(socket, dest_ip);
+    if (!tcb->interface) {
+        net_free_tcp_control_block(socket);
+        return -ENXIO;
+    }
+
     tcb->destination = net_lookup_destination(tcb->interface, dest_ip);
     tcb->recv_mss = tcb->interface->mtu - sizeof(struct ip_v4_packet) - sizeof(struct tcp_packet);
 

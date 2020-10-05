@@ -14,7 +14,6 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/net/dhcp.h>
 #include <kernel/net/interface.h>
 #include <kernel/proc/elf64.h>
 #include <kernel/proc/task.h>
@@ -46,14 +45,6 @@ void kernel_main(uint32_t *multiboot_info) {
     init_task_finalizer();
     INIT_DO_LEVEL(net);
     init_disk_sync_task();
-
-    net_for_each_interface(interface) {
-        debug_log("Initializing interface: [ %s ]\n", interface->name);
-
-        if (interface->type != NETWORK_INTERFACE_LOOPBACK) {
-            net_configure_interface_with_dhcp(interface);
-        }
-    }
 
     // Mount tmpfs at /tmp
     error = fs_mount(NULL, "/tmp", "tmpfs");

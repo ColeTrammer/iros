@@ -1,6 +1,7 @@
 #ifndef _KERNEL_NET_INTERFACE_H
 #define _KERNEL_NET_INTERFACE_H 1
 
+#include <net/if.h>
 #include <sys/types.h>
 
 #include <kernel/net/ip_address.h>
@@ -18,13 +19,6 @@ struct network_interface_ops {
     int (*send_ip_v4)(struct network_interface *interface, struct link_layer_address dest, struct packet *packet);
     int (*route_ip_v4)(struct network_interface *interface, struct packet *packet);
     struct link_layer_address (*get_link_layer_broadcast_address)(struct network_interface *interface);
-};
-
-enum network_configuration_state { UNINITALIZED = 0, INITIALIZED };
-
-struct network_configuration_context {
-    uint32_t xid;
-    enum network_configuration_state state;
 };
 
 struct network_interface {
@@ -45,8 +39,6 @@ struct network_interface {
 
     struct link_layer_address link_layer_address;
 
-    struct network_configuration_context config_context;
-
     struct network_interface_ops *ops;
 
     void *private_data;
@@ -64,7 +56,7 @@ int net_ioctl_interface_index_for_name(struct ifreq *req);
 int net_ioctl_interface_name_for_index(struct ifreq *req);
 
 static inline bool net_interface_ready(struct network_interface *interface) {
-    return interface->config_context.state == INITIALIZED;
+    return !!(interface->flags & IFF_UP) && !!(interface->flags & IFF_RUNNING);
 }
 
 #define net_for_each_interface(name) list_for_each_entry(net_get_interface_list(), name, struct network_interface, interface_list)

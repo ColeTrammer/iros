@@ -130,6 +130,10 @@ ssize_t net_inet_sendto(struct socket *socket, const void *buf, size_t len, int 
     struct network_interface *interface = net_get_interface_for_socket(socket, dest_ip);
     mutex_unlock(&socket->lock);
 
+    if (!interface) {
+        return -ENXIO;
+    }
+
     ret = net_send_ip_v4(socket, interface, socket->protocol, dest_ip, buf, len);
     return ret ? ret : (ssize_t) len;
 

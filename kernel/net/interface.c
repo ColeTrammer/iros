@@ -40,19 +40,20 @@ struct network_interface *net_get_interface_for_ip(struct ip_v4_address address)
 
     struct network_interface *interface = NULL;
     net_for_each_interface(iter) {
-        if (iter->type == NETWORK_INTERFACE_LOOPBACK && use_loopback) {
+        if (iter->type == NETWORK_INTERFACE_LOOPBACK && use_loopback && net_interface_ready(iter)) {
             interface = iter;
             break;
-        } else if (iter->type == NETWORK_INTERFACE_ETHERNET && !use_loopback) {
+        } else if (iter->type == NETWORK_INTERFACE_ETHERNET && !use_loopback && net_interface_ready(iter)) {
             interface = iter;
             break;
         }
     }
 
-    assert(interface);
-
 #ifdef INTERFACE_DEBUG
-    debug_log("Got interface: [ %s, %u.%u.%u.%u ]\n", interface->name, address.addr[0], address.addr[1], address.addr[2], address.addr[3]);
+    if (interface) {
+        debug_log("Got interface: [ %s, %u.%u.%u.%u ]\n", interface->name, address.addr[0], address.addr[1], address.addr[2],
+                  address.addr[3]);
+    }
 #endif /* INTERFACE_DEBUG */
     return interface;
 }
@@ -79,11 +80,11 @@ struct network_interface *net_create_network_interface(const char *name, int typ
         interface->address = IP_V4_LOOPBACK;
         interface->mask = IP_V4_BROADCAST;
         interface->default_gateway = IP_V4_LOOPBACK;
-        interface->config_context.state = INITIALIZED;
         interface->link_layer_overhead = 0;
         interface->mtu = UINT16_MAX;
         interface->flags = IFF_UP | IFF_RUNNING | IFF_LOOPBACK;
     } else if (type == NETWORK_INTERFACE_ETHERNET) {
+        interface->mask = (struct ip_v4_address) { { 255, 255, 255, 0 } };
         interface->link_layer_overhead = 1;
         interface->mtu = 1500;
         interface->flags = IFF_RUNNING | IFF_BROADCAST;
@@ -154,6 +155,7 @@ static int umessage_interface_recv(struct umessage_queue *queue, const struct um
                 strcpy(list->interface_list[i].name, interface->name);
                 list->interface_list[i].link_layer_address = interface->link_layer_address;
                 list->interface_list[i].index = i + 1;
+                list->interface_list[i].flags = interface->flags;
                 i++;
             }
 

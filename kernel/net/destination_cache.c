@@ -54,7 +54,8 @@ void net_drop_destination_cache_entry(struct destination_cache_entry *entry) {
 }
 
 static struct neighbor_cache_entry *next_hop_for(struct network_interface *interface, struct ip_v4_address dest_address) {
-    if (net_ip_v4_equals(net_ip_v4_mask(interface->address, interface->mask), net_ip_v4_mask(dest_address, interface->mask))) {
+    if (net_ip_v4_equals(dest_address, IP_V4_BROADCAST) ||
+        net_ip_v4_equals(net_ip_v4_mask(interface->address, interface->mask), net_ip_v4_mask(dest_address, interface->mask))) {
         return net_lookup_neighbor(interface, dest_address);
     }
 

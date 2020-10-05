@@ -89,10 +89,7 @@ int net_send_tcp_from_socket(struct socket *socket, uint32_t sequence_start, uin
 
 int net_send_tcp(struct ip_v4_address dest, struct tcp_packet_options *opts, struct timespec *send_time_ptr) {
     struct network_interface *interface = opts->interface;
-    if (!net_interface_ready(interface)) {
-        debug_log("Can't send TCP packet; interface uninitialized: [ %s ]\n", interface->name);
-        return -ENETDOWN;
-    }
+    assert(interface);
 
     struct destination_cache_entry *destination = opts->destination ? opts->destination : net_lookup_destination(interface, dest);
     size_t tcp_length = sizeof(struct tcp_packet) + opts->tcp_flags.syn * sizeof(struct tcp_option_mss) + opts->data_length;
