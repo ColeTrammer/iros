@@ -1,6 +1,7 @@
 if (NOT ${NATIVE_BUILD})
     set(OS_TARGETS
         about
+        dhcp_client
         file_manager
         profile
         psfedit
