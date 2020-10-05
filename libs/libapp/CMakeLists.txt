@@ -15,6 +15,7 @@ set(SOURCES
     table_view.cpp
     text_label.cpp
     timer.cpp
+    udp_socket.cpp
     unix_socket.cpp
     unix_socket_server.cpp
     view.cpp
