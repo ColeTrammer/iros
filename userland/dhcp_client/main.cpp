@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 
     int fd = socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK, UMESSAGE_INTERFACE);
     if (fd < 0) {
-        syslog(LOG_ERR, "Cannot create umessage socket: %h");
+        syslog(LOG_ERR, "Cannot create umessage socket: %m");
         return 1;
     }
 
@@ -47,14 +47,14 @@ int main(int argc, char** argv) {
         .base = { .length = sizeof(list_req), .category = UMESSAGE_INTERFACE, .type = UMESSAGE_INTERFACE_LIST_REQUEST }
     };
     if (write(fd, &list_req, sizeof(list_req)) < 0) {
-        syslog(LOG_ERR, "Failed to request the interface list: %h");
+        syslog(LOG_ERR, "Failed to request the interface list: %m");
         return 1;
     }
 
     char buffer[4096];
     ssize_t length;
     if ((length = read(fd, buffer, sizeof(buffer))) < 0) {
-        syslog(LOG_ERR, "Failed to read interface list: %h");
+        syslog(LOG_ERR, "Failed to read interface list: %m");
         return 1;
     }
 
@@ -75,18 +75,18 @@ int main(int argc, char** argv) {
 
             auto object = Interface::create(interface, xid);
             if (!object) {
-                syslog(LOG_WARNING, "Cannot setup dhcp over interface `%s': %h", interface.name);
+                syslog(LOG_WARNING, "Cannot setup dhcp over interface `%s': %m", interface.name);
                 continue;
             }
 
             if (!object->send_dhcp(DHCP_MESSAGE_TYPE_DISCOVER)) {
-                syslog(LOG_WARNING, "Cannot send dhcp over interface `%s': %h", interface.name);
+                syslog(LOG_WARNING, "Cannot send dhcp over interface `%s': %m", interface.name);
                 continue;
             }
 
             object->on_configured = [fd](auto& o) {
                 if (write(fd, (const void*) &o.state(), o.state().base.length) < 0) {
-                    syslog(LOG_WARNING, "Failed to set state for interface `%s': %h", o.name().string());
+                    syslog(LOG_WARNING, "Failed to set state for interface `%s': %m", o.name().string());
                 }
             };
             interfaces.put(xid, move(object));
