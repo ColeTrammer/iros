@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/umessage.h>
 #include <sys/un.h>
 #include <unistd.h>
 #include <window_server/message.h>
@@ -51,44 +52,42 @@ Server::Server(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_bu
 }
 
 void Server::initialize() {
-    m_keyboard = App::SelectableFile::create(shared_from_this(), "/dev/keyboard", O_RDONLY);
-    assert(m_keyboard->valid());
+    m_input_socket = App::FdWrapper::create(shared_from_this(), socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK, UMESSAGE_INPUT));
+    assert(m_input_socket->valid());
+    m_input_socket->set_selected_events(App::NotifyWhen::Readable);
+    m_input_socket->enable_notifications();
+    m_input_socket->on_readable = [this] {
+        char buffer[400];
+        ssize_t ret;
+        while ((ret = read(m_input_socket->fd(), buffer, sizeof(buffer))) > 0) {
+            if (UMESSAGE_INPUT_KEY_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
+                auto& event = *(umessage_input_key_event*) buffer;
+                auto* active_window = m_manager->active_window();
+                if (active_window) {
+                    auto to_send = WindowServer::Message::KeyEventMessage::create(active_window->id(), event.event);
+                    assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
+                           static_cast<ssize_t>(to_send->total_size()));
+                }
+            } else if (UMESSAGE_INPUT_MOUSE_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
+                auto& event = ((umessage_input_mouse_event*) buffer)->event;
+                if (event.dx != 0 || event.dy != 0) {
+                    m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_ABSOLUTE);
+                }
 
-    m_keyboard->on_readable = [this] {
-        key_event event;
-        while (read(m_keyboard->fd(), &event, sizeof(event)) == sizeof(event)) {
-            auto* active_window = m_manager->active_window();
-            if (active_window) {
-                auto to_send = WindowServer::Message::KeyEventMessage::create(active_window->id(), event);
-                assert(write(active_window->client_id(), to_send.get(), to_send->total_size()) ==
-                       static_cast<ssize_t>(to_send->total_size()));
-            }
-        }
-    };
+                if (event.left != MOUSE_NO_CHANGE || event.right != MOUSE_NO_CHANGE) {
+                    m_manager->notify_mouse_pressed(event.left, event.right);
+                }
 
-    m_mouse = App::SelectableFile::create(shared_from_this(), "/dev/mouse", O_RDONLY);
-    assert(m_mouse->valid());
-
-    m_mouse->on_readable = [this] {
-        mouse_event event;
-        while (read(m_mouse->fd(), &event, sizeof(event)) == sizeof(event)) {
-            if (event.dx != 0 || event.dy != 0) {
-                m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_ABSOLUTE);
-            }
-
-            if (event.left != MOUSE_NO_CHANGE || event.right != MOUSE_NO_CHANGE) {
-                m_manager->notify_mouse_pressed(event.left, event.right);
-            }
-
-            auto* active_window = m_manager->active_window();
-            if (active_window && m_manager->should_send_mouse_events(*active_window)) {
-                Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
-                auto to_send = WindowServer::Message::MouseEventMessage::create(active_window->id(), relative_mouse.x(), relative_mouse.y(),
-                                                                                event.scroll_state, event.left, event.right);
-                if (write(active_window->client_id(), to_send.get(), to_send->total_size()) !=
-                    static_cast<ssize_t>(to_send->total_size())) {
-                    perror("write");
-                    exit(1);
+                auto* active_window = m_manager->active_window();
+                if (active_window && m_manager->should_send_mouse_events(*active_window)) {
+                    Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
+                    auto to_send = WindowServer::Message::MouseEventMessage::create(
+                        active_window->id(), relative_mouse.x(), relative_mouse.y(), event.scroll_state, event.left, event.right);
+                    if (write(active_window->client_id(), to_send.get(), to_send->total_size()) !=
+                        static_cast<ssize_t>(to_send->total_size())) {
+                        perror("write");
+                        exit(1);
+                    }
                 }
             }
         }
@@ -298,4 +297,8 @@ void Server::start() {
     loop.enter();
 }
 
-Server::~Server() {}
+Server::~Server() {
+    if (m_input_socket && m_input_socket->fd() >= 0) {
+        close(m_input_socket->fd());
+    }
+}

@@ -46,8 +46,15 @@ void dev_drop_device(struct device *device) {
     }
 }
 
+static struct device_ops null_ops;
+
 void dev_register(struct device *device) {
     dev_bump_device(device);
+
+    if (!device->ops) {
+        device->ops = &null_ops;
+    }
+
     if (device->ops->add) {
         device->ops->add(device);
     }

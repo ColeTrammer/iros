@@ -37,8 +37,7 @@ private:
 
     UniquePtr<WindowManager> m_manager;
     SharedPtr<App::UnixSocketServer> m_socket_server;
-    SharedPtr<App::SelectableFile> m_keyboard;
-    SharedPtr<App::SelectableFile> m_mouse;
+    SharedPtr<App::FdWrapper> m_input_socket;
     SharedPtr<App::Timer> m_draw_timer;
     Vector<SharedPtr<App::UnixSocket>> m_clients;
 };

@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <kernel/hal/input.h>
 #include <kernel/net/link_layer_address.h>
 
 #ifdef __cplusplus
@@ -85,6 +86,32 @@ struct umessage_interface_list {
     (UMESSAGE_INTERFACE_MESSAGE_VALID(u, len) && (len) >= sizeof(struct umessage_interface_list) && \
      (u)->type == UMESSAGE_INTERFACE_LIST &&                                                        \
      ((struct umessage_interface_list*) (u))->interface_count == UMESSAGE_INTERFACE_LIST_COUNT(len))
+
+enum umessage_input_request_type {
+    UMESSAGE_INPUT_NUM_REQUESTS,
+};
+
+enum umessage_input_message_type {
+    UMESSAGE_INPUT_KEY_EVENT,
+    UMESSAGE_INPUT_MOUSE_EVENT,
+    UMESSAGE_INPUT_NUM_EVENTS,
+};
+#define UMESSAGE_INPUT_MESSAGE_VALID(u, len) \
+    (UMESSAGE_VALID(u, len) && (u)->category == UMESSAGE_INPUT && (u)->type < UMESSAGE_INPUT_NUM_EVENTS)
+
+struct umessage_input_key_event {
+    struct umessage base;
+    struct key_event event;
+};
+#define UMESSAGE_INPUT_KEY_EVENT_VALID(u, len) \
+    (UMESSAGE_INPUT_MESSAGE_VALID(u, len) && (u)->type == UMESSAGE_INPUT_KEY_EVENT && (len) >= sizeof(struct umessage_input_key_event))
+
+struct umessage_input_mouse_event {
+    struct umessage base;
+    struct mouse_event event;
+};
+#define UMESSAGE_INPUT_MOUSE_EVENT_VALID(u, len) \
+    (UMESSAGE_INPUT_MESSAGE_VALID(u, len) && (u)->type == UMESSAGE_INPUT_MOUSE_EVENT && (len) >= sizeof(struct umessage_input_mouse_event))
 
 #ifdef __cplusplus
 }

@@ -8,15 +8,11 @@
 #include <kernel/hal/input.h>
 #include <kernel/hal/output.h>
 #include <kernel/irqs/handlers.h>
+#include <kernel/net/umessage.h>
 
 #include <kernel/hal/x86_64/drivers/mouse.h>
 #include <kernel/hal/x86_64/drivers/ps2.h>
 #include <kernel/hal/x86_64/drivers/vmware_back_door.h>
-
-struct mouse_event_queue {
-    struct mouse_event entry;
-    struct mouse_event_queue *next;
-};
 
 struct mouse_data {
     struct mouse_event_queue *start;
@@ -34,64 +30,12 @@ struct mouse_data {
     uint8_t buffer[4];
 };
 
-static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking);
-
-static struct device_ops mouse_ops = { .read = mouse_f_read };
-
-static ssize_t mouse_f_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
-    (void) offset;
-    (void) non_blocking;
-
-    size_t read = 0;
-
-    struct mouse_data *data = device->private;
-
-    while (read <= len - sizeof(struct mouse_event)) {
-        if (data->start == NULL) {
-            return read;
-        }
-
-        assert(data->start);
-        while (read <= len - sizeof(struct mouse_event) && data->start != NULL) {
-            memcpy(((uint8_t *) buffer) + read, &data->start->entry, sizeof(struct mouse_event));
-
-            read += sizeof(struct mouse_event);
-
-            if (data->start->next == NULL) {
-                data->end = NULL;
-            }
-
-            spin_lock(&data->queue_lock);
-
-            struct mouse_event_queue *save = data->start->next;
-            free(data->start);
-            data->start = save;
-
-            device->readable = false;
-            spin_unlock(&data->queue_lock);
-        }
-    }
-
-    return (ssize_t) read;
-}
-
 static void add_mouse_event(struct mouse_data *data, struct mouse_event *event) {
-    struct mouse_event_queue *e = malloc(sizeof(struct mouse_event_queue));
-    memcpy(&e->entry, event, sizeof(struct mouse_event));
-    e->next = NULL;
-
-    spin_lock(&data->queue_lock);
-
-    if (data->start == NULL) {
-        data->start = e;
-        data->end = e;
-    } else {
-        data->end->next = e;
-        data->end = e;
-    }
-
-    data->device->readable = true;
-    spin_unlock(&data->queue_lock);
+    (void) data;
+    struct queued_umessage *umessage =
+        net_create_umessage(UMESSAGE_INPUT, UMESSAGE_INPUT_MOUSE_EVENT, 0, sizeof(struct umessage_input_mouse_event), event);
+    net_post_umessage(umessage);
+    net_drop_umessage(umessage);
 }
 
 void on_interrupt(struct irq_context *context) {
@@ -187,7 +131,6 @@ static void mouse_create(struct ps2_controller *controller, struct ps2_port *por
     struct device *device = calloc(1, sizeof(struct device) + sizeof(struct mouse_data));
     struct mouse_data *data = device->private = device + 1;
     device->device_number = 0x00702;
-    device->ops = &mouse_ops;
     device->type = S_IFCHR;
     dev_register(device);
 

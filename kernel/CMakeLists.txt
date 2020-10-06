@@ -18,6 +18,7 @@ if (NOT ${NATIVE_BUILD})
         hal/block.c
         hal/devices.c
         hal/gpt.c
+        hal/input.c
         hal/mbr.c
         hal/partition.c
         hal/processor.c

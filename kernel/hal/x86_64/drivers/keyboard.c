@@ -15,6 +15,7 @@
 #include <kernel/hal/x86_64/drivers/keyboard.h>
 #include <kernel/hal/x86_64/drivers/ps2.h>
 #include <kernel/irqs/handlers.h>
+#include <kernel/net/umessage.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/spinlock.h>
 
@@ -31,64 +32,12 @@ struct kbd_data {
     bool extended_key_code;
 };
 
-static ssize_t kbd_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
-    (void) offset;
-    (void) non_blocking;
-
-    size_t read = 0;
-
-    struct kbd_data *data = device->private;
-    while (read <= len - sizeof(struct key_event)) {
-        if (data->start == NULL) {
-            return read;
-        }
-
-        assert(data->start);
-        while (read <= len - sizeof(struct key_event) && data->start != NULL) {
-            memcpy(((uint8_t *) buffer) + read, &data->start->entry, sizeof(struct key_event));
-
-            read += sizeof(struct key_event);
-
-            if (data->start->next == NULL) {
-                data->end = NULL;
-            }
-
-            spin_lock(&data->queue_lock);
-
-            struct keyboard_event_queue *save = data->start->next;
-            free(data->start);
-            data->start = save;
-
-            if (data->start == NULL) {
-                device->readable = false;
-            }
-
-            spin_unlock(&data->queue_lock);
-        }
-    }
-
-    return (ssize_t) read;
-}
-
-static struct device_ops kbd_ops = { .read = kbd_read };
-
 static void add_keyboard_event(struct kbd_data *data, struct key_event *event) {
-    struct keyboard_event_queue *e = malloc(sizeof(struct keyboard_event_queue));
-    memcpy(&e->entry, event, sizeof(struct key_event));
-    e->next = NULL;
-
-    spin_lock(&data->queue_lock);
-
-    if (data->start == NULL) {
-        data->start = e;
-        data->end = e;
-    } else {
-        data->end->next = e;
-        data->end = e;
-    }
-
-    data->device->readable = true;
-    spin_unlock(&data->queue_lock);
+    (void) data;
+    struct queued_umessage *umessage =
+        net_create_umessage(UMESSAGE_INPUT, UMESSAGE_INPUT_KEY_EVENT, 0, sizeof(struct umessage_input_key_event), event);
+    net_post_umessage(umessage);
+    net_drop_umessage(umessage);
 }
 
 static struct key_code_entry map[KEYBOARD_NUM_KEYCODES] = { { KEY_NULL, '\0' },
@@ -562,7 +511,6 @@ static void kbd_create(struct ps2_controller *controller, struct ps2_port *port)
     struct device *device = calloc(1, sizeof(struct device) + sizeof(struct kbd_data));
     struct kbd_data *data = device->private = device + 1;
     device->device_number = 0x00701;
-    device->ops = &kbd_ops;
     device->type = S_IFCHR;
     dev_register(device);
 

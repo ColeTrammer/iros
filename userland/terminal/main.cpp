@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/umessage.h>
 #include <unistd.h>
 
 #include "terminal_widget.h"
@@ -45,8 +47,7 @@ int main(int argc, char** argv) {
         VgaTerminal vga_terminal(vga_buffer);
 
         int mfd = vga_terminal.master_fd();
-        int mouse_fd = open("/dev/mouse", O_RDONLY);
-        int kfd = open("/dev/keyboard", O_RDONLY);
+        int ifd = socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK, UMESSAGE_INPUT);
 
         sigset_t mask;
         sigprocmask(0, nullptr, &mask);
@@ -72,13 +73,10 @@ int main(int argc, char** argv) {
         sigaction(SIGCHLD, &act, nullptr);
 
         fd_set set;
-        mouse_event mouse_event;
-        key_event key_event;
         for (;;) {
             FD_ZERO(&set);
             FD_SET(mfd, &set);
-            FD_SET(mouse_fd, &set);
-            FD_SET(kfd, &set);
+            FD_SET(ifd, &set);
 
             int ret = pselect(FD_SETSIZE, &set, nullptr, nullptr, nullptr, &mask);
             if (ret == -1) {
@@ -90,15 +88,17 @@ int main(int argc, char** argv) {
                 return 1;
             }
 
-            if (FD_ISSET(mouse_fd, &set)) {
-                while (read(mouse_fd, &mouse_event, sizeof(mouse_event)) == sizeof(mouse_event)) {
-                    vga_terminal.on_mouse_event(mouse_event);
-                }
-            }
-
-            if (FD_ISSET(kfd, &set)) {
-                while (read(kfd, &key_event, sizeof(key_event)) == sizeof(key_event)) {
-                    vga_terminal.on_key_event(key_event);
+            if (FD_ISSET(ifd, &set)) {
+                char buffer[400];
+                ssize_t ret;
+                while ((ret = read(ifd, buffer, sizeof(buffer))) > 0) {
+                    if (UMESSAGE_INPUT_KEY_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
+                        auto& event = ((umessage_input_key_event*) buffer)->event;
+                        vga_terminal.on_key_event(event);
+                    } else if (UMESSAGE_INPUT_MOUSE_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
+                        auto& event = ((umessage_input_mouse_event*) buffer)->event;
+                        vga_terminal.on_mouse_event(event);
+                    }
                 }
             }
 
