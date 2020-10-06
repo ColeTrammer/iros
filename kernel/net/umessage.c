@@ -195,7 +195,7 @@ void net_register_umessage_category(struct umessage_category *category) {
     init_mutex(&category_queues[category->category].lock);
     init_list(&category_queues[category->category].list);
 
-    struct socket_protocol *protcol = category->protocol = malloc(sizeof(struct socket_protocol));
+    struct socket_protocol *protcol = category->protocol = calloc(1, sizeof(struct socket_protocol));
     protcol->domain = AF_UMESSAGE;
     protcol->type = SOCK_DGRAM;
     protcol->protocol = category->category;
