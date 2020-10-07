@@ -13,7 +13,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/random.h>
 
-static ssize_t dev_null_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
+static ssize_t dev_null_read(struct fs_device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buffer;
@@ -23,7 +23,7 @@ static ssize_t dev_null_read(struct device *device, off_t offset, void *buffer, 
     return 0;
 }
 
-static ssize_t dev_zero_read(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
+static ssize_t dev_zero_read(struct fs_device *device, off_t offset, void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) non_blocking;
@@ -32,7 +32,7 @@ static ssize_t dev_zero_read(struct device *device, off_t offset, void *buffer, 
     return len;
 }
 
-static ssize_t dev_ignore_write(struct device *device, off_t offset, const void *buffer, size_t len, bool non_blocking) {
+static ssize_t dev_ignore_write(struct fs_device *device, off_t offset, const void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buffer;
@@ -41,7 +41,7 @@ static ssize_t dev_ignore_write(struct device *device, off_t offset, const void 
     return len;
 }
 
-static ssize_t full_read(struct device *device, off_t offset, void *buf, size_t n, bool non_blocking) {
+static ssize_t full_read(struct fs_device *device, off_t offset, void *buf, size_t n, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buf;
@@ -51,7 +51,7 @@ static ssize_t full_read(struct device *device, off_t offset, void *buf, size_t 
     return -ENOSPC;
 }
 
-static ssize_t full_write(struct device *device, off_t offset, const void *buf, size_t n, bool non_blocking) {
+static ssize_t full_write(struct fs_device *device, off_t offset, const void *buf, size_t n, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) buf;
@@ -61,7 +61,7 @@ static ssize_t full_write(struct device *device, off_t offset, const void *buf, 
     return -ENOSPC;
 }
 
-static ssize_t urandom_read(struct device *device, off_t offset, void *buf, size_t n, bool non_blocking) {
+static ssize_t urandom_read(struct fs_device *device, off_t offset, void *buf, size_t n, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) non_blocking;
@@ -84,21 +84,21 @@ static ssize_t urandom_read(struct device *device, off_t offset, void *buf, size
     return n;
 }
 
-static struct device_ops dev_null_ops = { .read = &dev_null_read, .write = &dev_ignore_write };
+static struct fs_device_ops dev_null_ops = { .read = &dev_null_read, .write = &dev_ignore_write };
 
-static struct device dev_null = { .device_number = 0x00101, .type = S_IFCHR, .ops = &dev_null_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_null = { .device_number = 0x00101, .type = S_IFCHR, .ops = &dev_null_ops, .lock = MUTEX_INITIALIZER };
 
-static struct device_ops dev_zero_ops = { .read = &dev_zero_read, .write = &dev_ignore_write };
+static struct fs_device_ops dev_zero_ops = { .read = &dev_zero_read, .write = &dev_ignore_write };
 
-static struct device dev_zero = { .device_number = 0x00102, .type = S_IFCHR, .ops = &dev_zero_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_zero = { .device_number = 0x00102, .type = S_IFCHR, .ops = &dev_zero_ops, .lock = MUTEX_INITIALIZER };
 
-static struct device_ops dev_full_ops = { .read = &full_read, .write = &full_write };
+static struct fs_device_ops dev_full_ops = { .read = &full_read, .write = &full_write };
 
-static struct device dev_full = { .device_number = 0x00103, .type = S_IFCHR, .ops = &dev_full_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_full = { .device_number = 0x00103, .type = S_IFCHR, .ops = &dev_full_ops, .lock = MUTEX_INITIALIZER };
 
-static struct device_ops dev_urandom_ops = { .read = &urandom_read, .write = dev_ignore_write };
+static struct fs_device_ops dev_urandom_ops = { .read = &urandom_read, .write = dev_ignore_write };
 
-static struct device dev_urandom = { .device_number = 0x00104, .type = S_IFCHR, .ops = &dev_urandom_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_urandom = { .device_number = 0x00104, .type = S_IFCHR, .ops = &dev_urandom_ops, .lock = MUTEX_INITIALIZER };
 
 void init_virtual_devices() {
     dev_register(&dev_null);

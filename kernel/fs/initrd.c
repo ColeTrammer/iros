@@ -100,7 +100,7 @@ int initrd_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
-struct inode *initrd_mount(struct file_system *current_fs, struct device *device) {
+struct inode *initrd_mount(struct file_system *current_fs, struct fs_device *device) {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
     assert(!device);

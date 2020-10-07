@@ -1692,7 +1692,7 @@ int fs_statvfs(const char *path, struct statvfs *buf) {
     return do_statvfs(inode->super_block, buf);
 }
 
-int fs_mount(struct device *device, const char *path, const char *type) {
+int fs_mount(struct fs_device *device, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 
     struct file_system *file_system = file_systems;
@@ -2129,7 +2129,7 @@ int fs_bind_socket_to_inode(struct inode *inode, struct socket *socket) {
 int fs_bind_device_to_inode(struct inode *inode, dev_t device_number) {
     inode->device_id = device_number;
 
-    struct device *device = dev_get_device(device_number);
+    struct fs_device *device = dev_get_device(device_number);
     if (!device) {
         debug_log("Failed to find device with id: [ %lu ]\n", device_number);
         return -EINVAL;
@@ -2207,7 +2207,7 @@ bool fs_is_readable(struct file *file) {
     assert(inode);
 
     if (file->flags & FS_DEVICE) {
-        struct device *device = inode->device;
+        struct fs_device *device = inode->device;
         assert(device);
 
         return device->readable;
@@ -2228,7 +2228,7 @@ bool fs_is_writable(struct file *file) {
     assert(inode);
 
     if (file->flags & FS_DEVICE) {
-        struct device *device = inode->device;
+        struct fs_device *device = inode->device;
         assert(device);
 
         return device->writeable;
@@ -2249,7 +2249,7 @@ bool fs_is_exceptional(struct file *file) {
     assert(inode);
 
     if (file->flags & FS_DEVICE) {
-        struct device *device = inode->device;
+        struct fs_device *device = inode->device;
         assert(device);
 
         return device->exceptional;

@@ -11,12 +11,12 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/stats.h>
 
-static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t size, bool non_block);
-static ssize_t block_write(struct device *device, off_t offset, const void *buf, size_t size, bool non_block);
-static blkcnt_t block_block_count(struct device *device);
-static blksize_t block_block_size(struct device *device);
+static ssize_t block_read(struct fs_device *device, off_t offset, void *buf, size_t size, bool non_block);
+static ssize_t block_write(struct fs_device *device, off_t offset, const void *buf, size_t size, bool non_block);
+static blkcnt_t block_block_count(struct fs_device *device);
+static blksize_t block_block_size(struct fs_device *device);
 
-static struct device_ops block_device_ops = {
+static struct fs_device_ops block_device_ops = {
     .read = block_read,
     .write = block_write,
     .block_count = block_block_count,
@@ -83,7 +83,7 @@ static struct phys_page *block_find_or_empty_page(struct block_device *block_dev
     return block_put_cache(block_device, page);
 }
 
-static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t size, bool non_block) {
+static ssize_t block_read(struct fs_device *device, off_t offset, void *buf, size_t size, bool non_block) {
     (void) non_block;
     if (offset < 0) {
         return -EINVAL;
@@ -131,7 +131,7 @@ static ssize_t block_read(struct device *device, off_t offset, void *buf, size_t
     return ret;
 }
 
-static ssize_t block_write(struct device *device, off_t offset, const void *buf, size_t size, bool non_block) {
+static ssize_t block_write(struct fs_device *device, off_t offset, const void *buf, size_t size, bool non_block) {
     (void) non_block;
     if (offset < 0) {
         return -EINVAL;
@@ -193,12 +193,12 @@ static ssize_t block_write(struct device *device, off_t offset, const void *buf,
     return ret;
 }
 
-static blkcnt_t block_block_count(struct device *device) {
+static blkcnt_t block_block_count(struct fs_device *device) {
     struct block_device *block_device = device->private;
     return block_device->block_count;
 }
 
-static blksize_t block_block_size(struct device *device) {
+static blksize_t block_block_size(struct fs_device *device) {
     struct block_device *block_device = device->private;
     return block_device->block_size;
 }
@@ -244,7 +244,7 @@ struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_s
 }
 
 void block_register_device(struct block_device *block_device, dev_t device_number) {
-    struct device *device = calloc(1, sizeof(struct device));
+    struct fs_device *device = calloc(1, sizeof(struct fs_device));
     device->device_number = device_number;
     device->type = S_IFBLK;
     device->readable = device->writeable = true;
@@ -260,7 +260,7 @@ void block_register_device(struct block_device *block_device, dev_t device_numbe
 }
 
 struct phys_page *block_allocate_phys_page(struct block_device *block_device) {
-    struct device *device = block_device->device;
+    struct fs_device *device = block_device->device;
 
     // The device must not be locked when allocate_phys_page() is called, since in an effort to reclaim
     // physical memory, the page frame allocator may ask the device to trim its cache. This procedure must
@@ -273,7 +273,7 @@ struct phys_page *block_allocate_phys_page(struct block_device *block_device) {
 }
 
 static void do_block_trim_cache(struct hash_entry *_device, void *closure __attribute__((unused))) {
-    struct device *device = hash_table_entry(_device, struct device);
+    struct fs_device *device = hash_table_entry(_device, struct fs_device);
     if (device->type != S_IFBLK) {
         return;
     }

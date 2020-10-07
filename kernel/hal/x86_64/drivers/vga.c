@@ -19,7 +19,7 @@ static uint16_t *vga_buffer = (uint16_t *) VGA_PHYS_ADDR;
 static enum vga_color fg = VGA_COLOR_LIGHT_GREY;
 static enum vga_color bg = VGA_COLOR_BLACK;
 
-static int vga_ioctl(struct device *device, unsigned long request, void *argp) {
+static int vga_ioctl(struct fs_device *device, unsigned long request, void *argp) {
     assert(device);
 
     switch (request) {
@@ -51,7 +51,7 @@ static int vga_ioctl(struct device *device, unsigned long request, void *argp) {
     }
 }
 
-static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset) {
+static intptr_t vga_mmap(struct fs_device *device, void *addr, size_t len, int prot, int flags, off_t offset) {
     if (offset != 0 || len != sizeof(uint16_t) * VGA_HEIGHT * VGA_WIDTH || !(flags & MAP_SHARED)) {
         return -ENODEV;
     }
@@ -75,9 +75,9 @@ static intptr_t vga_mmap(struct device *device, void *addr, size_t len, int prot
     return (intptr_t) region->start;
 }
 
-static struct device_ops vga_ops = { .ioctl = vga_ioctl, .mmap = vga_mmap };
+static struct fs_device_ops vga_ops = { .ioctl = vga_ioctl, .mmap = vga_mmap };
 
-static struct device vga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &vga_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device vga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &vga_ops, .lock = MUTEX_INITIALIZER };
 
 void vga_enable_cursor() {
     VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, (inb(VGA_DATA) & 0xC0) | VGA_CURSOR_Y_START);

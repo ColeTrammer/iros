@@ -7,7 +7,7 @@
 #include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
-struct device;
+struct fs_device;
 struct super_block;
 struct tnode;
 
@@ -35,7 +35,7 @@ struct super_block {
     int flags;
     bool dirty : 1;
 
-    struct device *device;
+    struct fs_device *device;
     mutex_t super_block_lock;
 
     void *private_data;

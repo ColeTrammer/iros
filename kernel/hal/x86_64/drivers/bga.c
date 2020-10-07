@@ -19,16 +19,16 @@ struct bga_data {
     uint16_t y_res;
 };
 
-static int bga_ioctl(struct device *device, unsigned long request, void *argp);
-static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset);
+static int bga_ioctl(struct fs_device *device, unsigned long request, void *argp);
+static intptr_t bga_mmap(struct fs_device *device, void *addr, size_t len, int prot, int flags, off_t offset);
 
 static struct bga_data data = { 0 };
 
-struct device_ops bga_ops = { .ioctl = bga_ioctl, .mmap = bga_mmap };
+struct fs_device_ops bga_ops = { .ioctl = bga_ioctl, .mmap = bga_mmap };
 
-struct device bga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &bga_ops, .private = &data, .lock = MUTEX_INITIALIZER };
+struct fs_device bga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &bga_ops, .private = &data, .lock = MUTEX_INITIALIZER };
 
-static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
+static int bga_ioctl(struct fs_device *device, unsigned long request, void *argp) {
     assert(device);
 
     switch (request) {
@@ -58,7 +58,7 @@ static int bga_ioctl(struct device *device, unsigned long request, void *argp) {
     }
 }
 
-static intptr_t bga_mmap(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset) {
+static intptr_t bga_mmap(struct fs_device *device, void *addr, size_t len, int prot, int flags, off_t offset) {
     if (offset != 0 || len != sizeof(uint32_t) * data.x_res * data.y_res * 2 || !(flags & MAP_SHARED)) {
         return -ENODEV;
     }

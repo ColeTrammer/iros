@@ -301,7 +301,7 @@ void tmp_on_inode_destruction(struct inode *inode) {
     }
 }
 
-struct inode *tmp_mount(struct file_system *current_fs, struct device *device) {
+struct inode *tmp_mount(struct file_system *current_fs, struct fs_device *device) {
     assert(current_fs != NULL);
     assert(!device);
 

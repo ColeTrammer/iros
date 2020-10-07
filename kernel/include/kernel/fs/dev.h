@@ -11,35 +11,36 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/tnode.h>
 #include <kernel/util/hash_map.h>
+#include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
-struct device;
+struct fs_device;
 struct vm_object;
 
-struct device_ops {
-    struct file *(*open)(struct device *device, int flags, int *error);
-    ssize_t (*read)(struct device *device, off_t offset, void *buffer, size_t len, bool non_blocking);
-    ssize_t (*write)(struct device *device, off_t offset, const void *buffer, size_t len, bool non_blocking);
-    int (*close)(struct device *device);
-    void (*add)(struct device *device);
-    void (*remove)(struct device *device);
-    int (*ioctl)(struct device *device, unsigned long request, void *argp);
-    void (*on_open)(struct device *device);
-    intptr_t (*mmap)(struct device *device, void *addr, size_t len, int prot, int flags, off_t offset);
-    int (*read_all)(struct device *device, void *buf);
-    blksize_t (*block_size)(struct device *device);
-    blkcnt_t (*block_count)(struct device *device);
+struct fs_device_ops {
+    struct file *(*open)(struct fs_device *device, int flags, int *error);
+    ssize_t (*read)(struct fs_device *device, off_t offset, void *buffer, size_t len, bool non_blocking);
+    ssize_t (*write)(struct fs_device *device, off_t offset, const void *buffer, size_t len, bool non_blocking);
+    int (*close)(struct fs_device *device);
+    void (*add)(struct fs_device *device);
+    void (*remove)(struct fs_device *device);
+    int (*ioctl)(struct fs_device *device, unsigned long request, void *argp);
+    void (*on_open)(struct fs_device *device);
+    intptr_t (*mmap)(struct fs_device *device, void *addr, size_t len, int prot, int flags, off_t offset);
+    int (*read_all)(struct fs_device *device, void *buf);
+    blksize_t (*block_size)(struct fs_device *device);
+    blkcnt_t (*block_count)(struct fs_device *device);
 };
 
-struct device {
+struct fs_device {
     dev_t device_number;
     mode_t type;
-    bool cannot_open;
-    bool readable;
-    bool writeable;
-    bool exceptional;
+    bool cannot_open : 1;
+    bool readable : 1;
+    bool writeable : 1;
+    bool exceptional : 1;
     int ref_count;
-    struct device_ops *ops;
+    struct fs_device_ops *ops;
     struct vm_object *vm_object;
     mutex_t lock;
     struct hash_entry hash;
@@ -47,11 +48,11 @@ struct device {
 };
 
 struct hash_map *dev_device_hash_map(void);
-void dev_register(struct device *device);
-void dev_unregister(struct device *device);
-struct device *dev_bump_device(struct device *device);
-void dev_drop_device(struct device *device);
-struct device *dev_get_device(dev_t device_number);
+void dev_register(struct fs_device *device);
+void dev_unregister(struct fs_device *device);
+struct fs_device *dev_bump_device(struct fs_device *device);
+void dev_drop_device(struct fs_device *device);
+struct fs_device *dev_get_device(dev_t device_number);
 
 struct inode *dev_lookup(struct inode *inode, const char *name);
 struct file *dev_open(struct inode *inode, int flags, int *error);
@@ -61,8 +62,8 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 int dev_read_all(struct inode *inode, void *buf);
-blksize_t dev_block_size(struct device *device);
-blkcnt_t dev_block_count(struct device *device);
+blksize_t dev_block_size(struct fs_device *device);
+blkcnt_t dev_block_count(struct fs_device *device);
 struct inode *dev_mount(struct file_system *fs, char *device_path);
 
 #endif /* _KERNEL_FS_DEV_H */

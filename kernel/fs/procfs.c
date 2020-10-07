@@ -654,7 +654,7 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
     }
 }
 
-struct inode *procfs_mount(struct file_system *current_fs, struct device *device) {
+struct inode *procfs_mount(struct file_system *current_fs, struct fs_device *device) {
     assert(current_fs != NULL);
     assert(!device);
 

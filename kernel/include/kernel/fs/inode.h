@@ -13,7 +13,7 @@
 #include <kernel/util/list.h>
 #include <kernel/util/mutex.h>
 
-struct device;
+struct fs_device;
 struct hash_map;
 struct inode;
 struct pipe_data;
@@ -71,7 +71,7 @@ struct inode {
     dev_t device_id;
 
     // Null if the inode is not a device or the device does not exist
-    struct device *device;
+    struct fs_device *device;
 
     // Only present for FIFO inodes that are currently opened.
     struct pipe_data *pipe_data;

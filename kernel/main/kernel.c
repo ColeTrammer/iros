@@ -51,7 +51,7 @@ void kernel_main(uint32_t *multiboot_info) {
     assert(error == 0);
 
     /* Mount sda1 at / */
-    struct device *sda1 = dev_get_device(0x00501);
+    struct fs_device *sda1 = dev_get_device(0x00501);
     assert(sda1);
     error = 0;
     error = fs_mount(sda1, "/", "ext2");

@@ -1761,7 +1761,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
     return __ext2_unlink(tnode, false);
 }
 
-struct inode *ext2_mount(struct file_system *current_fs, struct device *device) {
+struct inode *ext2_mount(struct file_system *current_fs, struct fs_device *device) {
     assert(device);
 
     struct inode *root = calloc(1, sizeof(struct inode));

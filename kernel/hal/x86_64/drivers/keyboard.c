@@ -24,7 +24,7 @@ struct kbd_data {
     struct keyboard_event_queue *end;
     struct ps2_controller *controller;
     struct ps2_port *port;
-    struct device *device;
+    struct fs_device *device;
     struct irq_handler irq_handler;
     struct key_event event;
     spinlock_t queue_lock;
@@ -430,7 +430,7 @@ static struct key_code_entry shift_map[KEYBOARD_RELEASED_OFFSET] = {
 };
 
 static void handle_keyboard_interrupt(struct irq_context *context) {
-    struct device *device = context->closure;
+    struct fs_device *device = context->closure;
     struct kbd_data *data = device->private;
 
     uint8_t scan_code;
@@ -508,7 +508,7 @@ static void handle_keyboard_interrupt(struct irq_context *context) {
 }
 
 static void kbd_create(struct ps2_controller *controller, struct ps2_port *port) {
-    struct device *device = calloc(1, sizeof(struct device) + sizeof(struct kbd_data));
+    struct fs_device *device = calloc(1, sizeof(struct fs_device) + sizeof(struct kbd_data));
     struct kbd_data *data = device->private = device + 1;
     device->device_number = 0x00701;
     device->type = S_IFCHR;

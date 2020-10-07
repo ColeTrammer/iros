@@ -6,7 +6,7 @@
 #include <kernel/util/list.h>
 
 struct block_device;
-struct device;
+struct fs_device;
 struct hash_map;
 struct phys_page;
 
@@ -18,7 +18,7 @@ struct block_device_ops {
 };
 
 struct block_device {
-    struct device *device;
+    struct fs_device *device;
     blkcnt_t block_count;
     blksize_t block_size;
     off_t partition_offset;

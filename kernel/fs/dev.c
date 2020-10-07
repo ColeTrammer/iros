@@ -25,18 +25,18 @@
 
 static struct hash_map *device_map;
 
-HASH_DEFINE_FUNCTIONS(device, struct device, dev_t, device_number)
+HASH_DEFINE_FUNCTIONS(device, struct fs_device, dev_t, device_number)
 
 struct hash_map *dev_device_hash_map(void) {
     return device_map;
 }
 
-struct device *dev_bump_device(struct device *device) {
+struct fs_device *dev_bump_device(struct fs_device *device) {
     atomic_fetch_add(&device->ref_count, 1);
     return device;
 }
 
-void dev_drop_device(struct device *device) {
+void dev_drop_device(struct fs_device *device) {
     if (atomic_fetch_sub(&device->ref_count, 1) == 1) {
         if (device->ops->remove) {
             device->ops->remove(device);
@@ -46,9 +46,9 @@ void dev_drop_device(struct device *device) {
     }
 }
 
-static struct device_ops null_ops;
+static struct fs_device_ops null_ops;
 
-void dev_register(struct device *device) {
+void dev_register(struct fs_device *device) {
     dev_bump_device(device);
 
     if (!device->ops) {
@@ -63,13 +63,13 @@ void dev_register(struct device *device) {
     hash_put(device_map, &device->hash);
 }
 
-void dev_unregister(struct device *device) {
+void dev_unregister(struct fs_device *device) {
     hash_del(device_map, &device->device_number);
     dev_drop_device(device);
 }
 
-struct device *dev_get_device(dev_t device_number) {
-    struct device *device = hash_get_entry(device_map, &device_number, struct device);
+struct fs_device *dev_get_device(dev_t device_number) {
+    struct fs_device *device = hash_get_entry(device_map, &device_number, struct fs_device);
     if (device) {
         dev_bump_device(device);
     }
@@ -87,7 +87,7 @@ struct inode *dev_lookup(struct inode *inode, const char *name) {
 }
 
 int dev_read_all(struct inode *inode, void *buf) {
-    struct device *device = inode->device;
+    struct fs_device *device = inode->device;
     assert(device);
 
     if (device->ops->read_all) {
@@ -98,7 +98,7 @@ int dev_read_all(struct inode *inode, void *buf) {
 }
 
 struct file *dev_open(struct inode *inode, int flags, int *error) {
-    struct device *device = inode->device;
+    struct fs_device *device = inode->device;
     assert(device);
 
     if (device->cannot_open) {
@@ -122,7 +122,7 @@ int dev_close(struct file *file) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    struct device *device = inode->device;
+    struct fs_device *device = inode->device;
     assert(device);
 
     int error = 0;
@@ -141,7 +141,7 @@ ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    struct device *device = inode->device;
+    struct fs_device *device = inode->device;
     assert(device);
 
     if (device->ops->read) {
@@ -157,7 +157,7 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    struct device *device = inode->device;
+    struct fs_device *device = inode->device;
     assert(device);
 
     if (device->ops->write) {
@@ -169,7 +169,7 @@ ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t le
 }
 
 int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
-    struct device *device = inode->device;
+    struct fs_device *device = inode->device;
     assert(device);
 
     if (device->ops->ioctl) {
@@ -180,7 +180,7 @@ int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
 }
 
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
-    struct device *device = inode->device;
+    struct fs_device *device = inode->device;
     assert(device);
 
     if (device->ops->mmap) {
@@ -190,13 +190,13 @@ intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *ino
     return -ENODEV;
 }
 
-blksize_t dev_block_size(struct device *device) {
+blksize_t dev_block_size(struct fs_device *device) {
     assert(device->type == S_IFBLK);
     assert(device->ops->block_size);
     return device->ops->block_size(device);
 }
 
-blkcnt_t dev_block_count(struct device *device) {
+blkcnt_t dev_block_count(struct fs_device *device) {
     assert(device->type == S_IFBLK);
     assert(device->ops->block_count);
     return device->ops->block_count(device);

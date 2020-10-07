@@ -40,11 +40,11 @@ static struct termios default_termios = { ICRNL | IXON,
                                           { CONTROL_KEY('d'), '\n', '\b', CONTROL_KEY('c'), '\025', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'),
                                             CONTROL_KEY('s'), CONTROL_KEY('z'), 0 } };
 
-static struct device *slaves[PTMX_MAX] = { 0 };
-static struct device *masters[PTMX_MAX] = { 0 };
+static struct fs_device *slaves[PTMX_MAX] = { 0 };
+static struct fs_device *masters[PTMX_MAX] = { 0 };
 static mutex_t lock = MUTEX_INITIALIZER;
 
-static void slave_on_open(struct device *device) {
+static void slave_on_open(struct fs_device *device) {
     struct slave_data *data = device->private;
     assert(data);
 
@@ -53,7 +53,7 @@ static void slave_on_open(struct device *device) {
     mutex_unlock(&data->device->lock);
 }
 
-static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
+static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
 
     struct slave_data *data = device->private;
@@ -142,7 +142,7 @@ static ssize_t slave_read(struct device *device, off_t offset, void *buf, size_t
     return (ssize_t) to_copy;
 }
 
-static ssize_t slave_write(struct device *device, off_t offset, const void *buf, size_t len, bool non_blocking) {
+static ssize_t slave_write(struct fs_device *device, off_t offset, const void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
     (void) non_blocking;
 
@@ -219,7 +219,7 @@ slave_write_again:
     return (ssize_t) save_len;
 }
 
-static int slave_close(struct device *device) {
+static int slave_close(struct fs_device *device) {
     struct slave_data *data = device->private;
     assert(data);
 
@@ -235,7 +235,7 @@ static int slave_close(struct device *device) {
     return 0;
 }
 
-static void slave_add(struct device *device) {
+static void slave_add(struct fs_device *device) {
     struct slave_data *data = calloc(1, sizeof(struct slave_data));
     data->ref_count = 1; // For the master
 
@@ -259,7 +259,7 @@ static void slave_add(struct device *device) {
     data->device = device;
 }
 
-static void slave_remove(struct device *device) {
+static void slave_remove(struct fs_device *device) {
     struct slave_data *data = device->private;
     assert(data);
 
@@ -287,7 +287,7 @@ static void slave_remove(struct device *device) {
     assert(fs_unlink(path, true) == 0);
 }
 
-static int slave_ioctl(struct device *device, unsigned long request, void *argp) {
+static int slave_ioctl(struct fs_device *device, unsigned long request, void *argp) {
     if (request == TISATTY) {
         return 0;
     }
@@ -310,7 +310,7 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
             break;
     }
 
-    struct device *master = masters[data->index];
+    struct fs_device *master = masters[data->index];
     struct master_data *mdata = master->private;
 
     switch (request) {
@@ -420,19 +420,19 @@ static int slave_ioctl(struct device *device, unsigned long request, void *argp)
     }
 }
 
-static struct device_ops slave_ops = { .read = slave_read,
-                                       .write = slave_write,
-                                       .close = slave_close,
-                                       .add = slave_add,
-                                       .remove = slave_remove,
-                                       .ioctl = slave_ioctl,
-                                       .on_open = slave_on_open };
+static struct fs_device_ops slave_ops = { .read = slave_read,
+                                          .write = slave_write,
+                                          .close = slave_close,
+                                          .add = slave_add,
+                                          .remove = slave_remove,
+                                          .ioctl = slave_ioctl,
+                                          .on_open = slave_on_open };
 
-static void master_on_open(struct device *device) {
+static void master_on_open(struct fs_device *device) {
     device->cannot_open = true;
 }
 
-static ssize_t master_read(struct device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
+static ssize_t master_read(struct fs_device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
     (void) non_blocking;
 
@@ -511,7 +511,7 @@ static bool tty_do_signals(struct slave_data *sdata, char c) {
     return true;
 }
 
-static ssize_t master_write(struct device *device, off_t offset, const void *buf, size_t len, bool non_blocking) {
+static ssize_t master_write(struct fs_device *device, off_t offset, const void *buf, size_t len, bool non_blocking) {
     assert(offset == 0);
     (void) non_blocking;
 
@@ -629,12 +629,12 @@ static ssize_t master_write(struct device *device, off_t offset, const void *buf
     return (ssize_t) len;
 }
 
-static int master_close(struct device *device) {
+static int master_close(struct fs_device *device) {
     dev_unregister(device);
     return 0;
 }
 
-static void master_add(struct device *device) {
+static void master_add(struct fs_device *device) {
     struct master_data *data = calloc(1, sizeof(struct master_data));
     for (int i = 0; i < PTMX_MAX; i++) {
         if (device == masters[i]) {
@@ -649,7 +649,7 @@ static void master_add(struct device *device) {
     data->device = device;
 }
 
-static void master_remove(struct device *device) {
+static void master_remove(struct fs_device *device) {
     struct master_data *data = device->private;
     assert(data);
 
@@ -678,24 +678,24 @@ static void master_remove(struct device *device) {
     assert(fs_unlink(path, true) == 0);
 }
 
-static int master_ioctl(struct device *device, unsigned long request, void *argp) {
+static int master_ioctl(struct fs_device *device, unsigned long request, void *argp) {
     // We're not a real termial, just a controller of one
     if (request == TISATTY) {
         return -ENOTTY;
     }
 
     struct master_data *data = device->private;
-    struct device *slave = slaves[data->index];
+    struct fs_device *slave = slaves[data->index];
     return slave_ioctl(slave, request, argp);
 }
 
-static struct device_ops master_ops = { .read = master_read,
-                                        .write = master_write,
-                                        .close = master_close,
-                                        .add = master_add,
-                                        .remove = master_remove,
-                                        .ioctl = master_ioctl,
-                                        .on_open = master_on_open };
+static struct fs_device_ops master_ops = { .read = master_read,
+                                           .write = master_write,
+                                           .close = master_close,
+                                           .add = master_add,
+                                           .remove = master_remove,
+                                           .ioctl = master_ioctl,
+                                           .on_open = master_on_open };
 
 static int noop_unlink(struct tnode *tnode) {
     (void) tnode;
@@ -704,13 +704,13 @@ static int noop_unlink(struct tnode *tnode) {
 
 static struct inode_operations empty_ops = { .unlink = noop_unlink };
 
-static struct file *ptmx_open(struct device *device, int flags, int *error) {
+static struct file *ptmx_open(struct fs_device *device, int flags, int *error) {
     (void) device;
 
     mutex_lock(&lock);
     for (int i = 0; i < PTMX_MAX; i++) {
         if (slaves[i] == NULL && masters[i] == NULL) {
-            slaves[i] = calloc(1, sizeof(struct device));
+            slaves[i] = calloc(1, sizeof(struct fs_device));
             mutex_unlock(&lock);
 
             slaves[i]->device_number = 0x00300 + i;
@@ -718,7 +718,7 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
             slaves[i]->type = S_IFCHR;
             slaves[i]->private = NULL;
 
-            struct device *master = calloc(1, sizeof(struct device));
+            struct fs_device *master = calloc(1, sizeof(struct fs_device));
             master->device_number = 0x00400 + i;
             master->ops = &master_ops;
             master->type = S_IFCHR;
@@ -758,9 +758,9 @@ static struct file *ptmx_open(struct device *device, int flags, int *error) {
     return NULL;
 }
 
-struct device_ops ptmx_ops = { .open = ptmx_open };
+struct fs_device_ops ptmx_ops = { .open = ptmx_open };
 
-static struct file *tty_open(struct device *device, int flags, int *error) {
+static struct file *tty_open(struct fs_device *device, int flags, int *error) {
     (void) device;
 
     int tty_num = get_current_task()->process->tty;
@@ -775,10 +775,10 @@ static struct file *tty_open(struct device *device, int flags, int *error) {
     return fs_openat(NULL, path, flags, 0, error);
 }
 
-struct device_ops tty_ops = { .open = tty_open };
+struct fs_device_ops tty_ops = { .open = tty_open };
 
 void init_ptmx() {
-    struct device *ptmx_device = calloc(1, sizeof(struct device));
+    struct fs_device *ptmx_device = calloc(1, sizeof(struct fs_device));
     ptmx_device->device_number = 0x00201;
     ptmx_device->ops = &ptmx_ops;
     ptmx_device->private = NULL;
@@ -786,7 +786,7 @@ void init_ptmx() {
 
     dev_register(ptmx_device);
 
-    struct device *tty_device = calloc(1, sizeof(struct device));
+    struct fs_device *tty_device = calloc(1, sizeof(struct fs_device));
     tty_device->device_number = 0x00202;
     tty_device->ops = &tty_ops;
     tty_device->private = NULL;

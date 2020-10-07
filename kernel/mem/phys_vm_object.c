@@ -57,7 +57,7 @@ int inode_on_kill(void *_inode) {
 }
 
 int device_on_kill(void *_device) {
-    struct device *device = _device;
+    struct fs_device *device = _device;
     device->vm_object = NULL;
     return 0;
 }

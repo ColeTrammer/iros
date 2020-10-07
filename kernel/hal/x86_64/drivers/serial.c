@@ -58,7 +58,7 @@ void init_serial_ports() {
     debug_log("Serial Port Initialized: [ %#.3X ]\n", SERIAL_COM1_PORT);
 }
 
-static ssize_t serial_write(struct device *device, off_t offset, const void *buffer, size_t len, bool non_blocking) {
+static ssize_t serial_write(struct fs_device *device, off_t offset, const void *buffer, size_t len, bool non_blocking) {
     (void) device;
     (void) offset;
     (void) non_blocking;
@@ -69,7 +69,7 @@ static ssize_t serial_write(struct device *device, off_t offset, const void *buf
     return (ssize_t) len;
 }
 
-static struct device_ops serial_ops = { .write = &serial_write };
+static struct fs_device_ops serial_ops = { .write = &serial_write };
 
 static struct irq_handler serial_handler = { .handler = &handle_serial_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
@@ -79,7 +79,7 @@ void init_serial_port_device(dev_t port, size_t i) {
 
     register_irq_handler(&serial_handler, SERIAL_13_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
-    struct device *device = calloc(1, sizeof(struct device));
+    struct fs_device *device = calloc(1, sizeof(struct fs_device));
     device->device_number = 0x00800 + i;
     device->ops = &serial_ops;
     device->type = S_IFCHR;

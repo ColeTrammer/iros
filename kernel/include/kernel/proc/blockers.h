@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct device;
+struct fs_device;
 struct inode;
 struct pipe_data;
 struct socket;
@@ -70,13 +70,13 @@ struct block_info {
             struct timespec end_time;
         } until_socket_is_writable_with_timeout_info;
         struct {
-            struct device *device;
+            struct fs_device *device;
         } until_device_is_readable_info;
         struct {
-            struct device *device;
+            struct fs_device *device;
         } until_device_is_writeable_info;
         struct {
-            struct device *device;
+            struct fs_device *device;
             struct timespec end_time;
         } until_device_is_readable_or_timeout_info;
         struct {
@@ -142,9 +142,9 @@ __attribute__((warn_unused_result)) int proc_block_until_socket_is_readable_with
 __attribute__((warn_unused_result)) int proc_block_until_socket_is_writable(struct task *current, struct socket *socket);
 __attribute__((warn_unused_result)) int proc_block_until_socket_is_writable_with_timeout(struct task *current, struct socket *socket,
                                                                                          struct timespec end_time);
-__attribute__((warn_unused_result)) int proc_block_until_device_is_readable(struct task *current, struct device *device);
-__attribute__((warn_unused_result)) int proc_block_until_device_is_writeable(struct task *current, struct device *device);
-__attribute__((warn_unused_result)) int proc_block_until_device_is_readable_or_timeout(struct task *current, struct device *device,
+__attribute__((warn_unused_result)) int proc_block_until_device_is_readable(struct task *current, struct fs_device *device);
+__attribute__((warn_unused_result)) int proc_block_until_device_is_writeable(struct task *current, struct fs_device *device);
+__attribute__((warn_unused_result)) int proc_block_until_device_is_readable_or_timeout(struct task *current, struct fs_device *device,
                                                                                        struct timespec end_time);
 __attribute__((warn_unused_result)) int proc_block_until_pipe_has_readers(struct task *current, struct pipe_data *pipe_data);
 __attribute__((warn_unused_result)) int proc_block_until_pipe_has_writers(struct task *current, struct pipe_data *pipe_data);

@@ -154,7 +154,7 @@ static bool until_device_is_readable_blocker(struct block_info *info) {
     return info->until_device_is_readable_info.device->readable;
 }
 
-int proc_block_until_device_is_readable(struct task *current, struct device *device) {
+int proc_block_until_device_is_readable(struct task *current, struct fs_device *device) {
     disable_interrupts();
     current->block_info.until_device_is_readable_info.device = device;
     current->block_info.type = UNTIL_DEVICE_IS_READABLE;
@@ -170,7 +170,7 @@ static bool until_device_is_writeable_blocker(struct block_info *info) {
     return info->until_device_is_writeable_info.device->writeable;
 }
 
-int proc_block_until_device_is_writeable(struct task *current, struct device *device) {
+int proc_block_until_device_is_writeable(struct task *current, struct fs_device *device) {
     disable_interrupts();
     current->block_info.until_device_is_writeable_info.device = device;
     current->block_info.type = UNTIL_DEVICE_IS_WRITEABLE;
@@ -187,7 +187,7 @@ static bool until_device_is_readable_or_timeout_blocker(struct block_info *info)
            info->until_device_is_readable_or_timeout_info.device->readable;
 }
 
-int proc_block_until_device_is_readable_or_timeout(struct task *current, struct device *device, struct timespec end_time) {
+int proc_block_until_device_is_readable_or_timeout(struct task *current, struct fs_device *device, struct timespec end_time) {
     disable_interrupts();
     current->block_info.until_device_is_readable_or_timeout_info.device = device;
     current->block_info.until_device_is_readable_or_timeout_info.end_time = end_time;

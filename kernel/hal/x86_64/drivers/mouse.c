@@ -20,7 +20,7 @@ struct mouse_data {
     spinlock_t queue_lock;
     struct ps2_controller *controller;
     struct ps2_port *port;
-    struct device *device;
+    struct fs_device *device;
     struct irq_handler irq_handler;
     struct mouse_event event;
     bool left_is_down;
@@ -39,7 +39,7 @@ static void add_mouse_event(struct mouse_data *data, struct mouse_event *event) 
 }
 
 void on_interrupt(struct irq_context *context) {
-    struct device *device = context->closure;
+    struct fs_device *device = context->closure;
     struct mouse_data *data = device->private;
 
     uint8_t mouse_data;
@@ -128,7 +128,7 @@ void on_interrupt(struct irq_context *context) {
 }
 
 static void mouse_create(struct ps2_controller *controller, struct ps2_port *port) {
-    struct device *device = calloc(1, sizeof(struct device) + sizeof(struct mouse_data));
+    struct fs_device *device = calloc(1, sizeof(struct fs_device) + sizeof(struct mouse_data));
     struct mouse_data *data = device->private = device + 1;
     device->device_number = 0x00702;
     device->type = S_IFCHR;

@@ -60,7 +60,7 @@
 #define PS2_ACK                          0xFA
 #define PS2_RESEND                       0xFE
 
-struct device;
+struct fs_device;
 
 struct ps2_device_id {
     uint8_t byte0;
