@@ -6,6 +6,12 @@
 
 struct fs_device;
 
+enum hw_device_status {
+    HW_STATUS_DETECTED,
+    HW_STATUS_ACTIVE,
+    HW_STATUS_REMOVED,
+};
+
 struct hw_device {
     char name[16];
 
@@ -15,6 +21,7 @@ struct hw_device {
     spinlock_t tree_lock;
 
     int ref_count;
+    enum hw_device_status status;
 
     struct fs_device *fs_device;
     void (*destructor)(struct hw_device *self);
@@ -24,6 +31,7 @@ struct hw_device *create_hw_device(const char *name, struct hw_device *parent, s
 void init_hw_device(struct hw_device *device, const char *name, struct hw_device *parent, struct fs_device *fs_device,
                     void (*destructor)(struct hw_device *device));
 void drop_hw_device(struct hw_device *device);
+void remove_hw_device(struct hw_device *device);
 struct hw_device *bump_hw_device(struct hw_device *device);
 struct hw_device *root_hw_device(void);
 

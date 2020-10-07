@@ -28,6 +28,7 @@ void init_hw_device(struct hw_device *device, const char *name, struct hw_device
     init_spinlock(&device->tree_lock);
 
     device->ref_count = 1;
+    device->status = HW_STATUS_DETECTED;
 
     device->fs_device = fs_device;
     device->destructor = destructor;
@@ -41,26 +42,6 @@ static void kill_hw_device(struct hw_device *device) {
 #ifdef HW_DEVICE_DEBUG
     debug_log("Destroying hw device: [ %s ]\n", device->name);
 #endif /* HW_DEVICE_DEBUG */
-
-    struct hw_device *parent = device->parent;
-    if (parent) {
-        spin_lock(&parent->tree_lock);
-        list_remove(&device->siblings);
-        spin_unlock(&parent->tree_lock);
-    }
-
-    struct list_node *children = &device->children;
-    list_for_each_entry(children, child, struct hw_device, siblings) {
-        // Setting the parent to NULL will cause race conditions. This needs to be revisited.
-        child->parent = NULL;
-        drop_hw_device(child);
-        list_remove(&child->siblings);
-    }
-
-    struct fs_device *fs_device = device->fs_device;
-    if (fs_device) {
-        dev_unregister(fs_device);
-    }
 
     void (*destructor)(struct hw_device * self) = device->destructor;
     if (destructor) {
@@ -77,4 +58,41 @@ void drop_hw_device(struct hw_device *device) {
 struct hw_device *bump_hw_device(struct hw_device *device) {
     atomic_fetch_add(&device->ref_count, 1);
     return device;
+}
+
+static void remove_hw_device_without_parent(struct hw_device *device) {
+    atomic_store(&device->status, HW_STATUS_REMOVED);
+
+#ifdef HW_DEVICE_DEBUG
+    debug_log("Removing hw device: [ %s ]\n", device->name);
+#endif /* HW_DEVICE_DEBUG */
+
+    device->parent = NULL;
+
+    spin_lock(&device->tree_lock);
+    struct list_node *children = &device->children;
+    list_for_each_entry_safe(children, child, struct hw_device, siblings) {
+        remove_hw_device_without_parent(child);
+        list_remove(&child->siblings);
+    }
+    spin_unlock(&device->tree_lock);
+
+    struct fs_device *fs_device = device->fs_device;
+    if (fs_device) {
+        dev_unregister(fs_device);
+        device->fs_device = NULL;
+    }
+
+    drop_hw_device(device);
+}
+
+void remove_hw_device(struct hw_device *device) {
+    struct hw_device *parent = device->parent;
+    if (parent) {
+        spin_lock(&parent->tree_lock);
+        list_remove(&device->siblings);
+        spin_unlock(&parent->tree_lock);
+    }
+
+    remove_hw_device_without_parent(device);
 }
