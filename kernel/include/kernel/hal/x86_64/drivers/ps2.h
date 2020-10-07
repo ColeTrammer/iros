@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include <kernel/hal/hw_device.h>
 #include <kernel/util/list.h>
 
 #define PS2_IO_DATA    0x60
@@ -61,11 +62,6 @@
 #define PS2_RESEND                       0xFE
 
 struct fs_device;
-
-struct ps2_device_id {
-    uint8_t byte0;
-    uint8_t byte1;
-};
 
 struct ps2_port {
     struct ps2_device_id id;

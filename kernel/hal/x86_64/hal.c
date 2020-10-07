@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <kernel/hal/devices.h>
 #include <kernel/hal/hal.h>
+#include <kernel/hal/hw_device.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
@@ -106,4 +107,17 @@ void kernel_disable_graphics(void) {
 
 bool kernel_use_graphics(void) {
     return use_graphics;
+}
+
+static struct hw_device s_root_device = {
+    .name = "x86 Motherboard",
+    .children = INIT_LIST(s_root_device.children),
+    .tree_lock = SPINLOCK_INITIALIZER,
+    .ref_count = 1,
+    .status = HW_STATUS_ACTIVE,
+    .id = { .type = HW_TYPE_NONE },
+};
+
+struct hw_device *root_hw_device(void) {
+    return &s_root_device;
 }

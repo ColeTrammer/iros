@@ -12,14 +12,14 @@ static void default_hw_device_destructor(struct hw_device *device) {
     free(device);
 }
 
-struct hw_device *create_hw_device(const char *name, struct hw_device *parent, struct fs_device *fs_device) {
+struct hw_device *create_hw_device(const char *name, struct hw_device *parent, struct hw_device_id id, struct fs_device *fs_device) {
     struct hw_device *device = malloc(sizeof(*device));
-    init_hw_device(device, name, parent, fs_device, default_hw_device_destructor);
+    init_hw_device(device, name, parent, id, fs_device, default_hw_device_destructor);
     return device;
 }
 
-void init_hw_device(struct hw_device *device, const char *name, struct hw_device *parent, struct fs_device *fs_device,
-                    void (*destructor)(struct hw_device *device)) {
+void init_hw_device(struct hw_device *device, const char *name, struct hw_device *parent, struct hw_device_id id,
+                    struct fs_device *fs_device, void (*destructor)(struct hw_device *device)) {
     strncpy(device->name, name, sizeof(device->name) - 1);
     device->name[sizeof(device->name) - 1] = '\0';
 
@@ -29,12 +29,19 @@ void init_hw_device(struct hw_device *device, const char *name, struct hw_device
 
     device->ref_count = 1;
     device->status = HW_STATUS_DETECTED;
+    device->id = id;
 
     device->fs_device = fs_device;
     device->destructor = destructor;
 
     if (fs_device) {
         dev_register(fs_device);
+    }
+
+    if (parent) {
+        spin_lock(&parent->tree_lock);
+        list_append(&parent->children, &device->siblings);
+        spin_unlock(&parent->tree_lock);
     }
 }
 
@@ -95,4 +102,37 @@ void remove_hw_device(struct hw_device *device) {
     }
 
     remove_hw_device_without_parent(device);
+}
+
+int show_hw_device(struct hw_device *device, char *buffer, size_t buffer_length) {
+    return snprintf(buffer, buffer_length, "%s (%s) [%s]", device->name, hw_type_to_string(device->id.type),
+                    hw_status_to_string(device->status));
+}
+
+const char *hw_type_to_string(enum hw_device_type type) {
+    switch (type) {
+        case HW_TYPE_NONE:
+            return "None";
+        case HW_TYPE_ISA:
+            return "ISA";
+        case HW_TYPE_PS2:
+            return "PS/2";
+        case HW_TYPE_PCI:
+            return "PCI";
+        default:
+            return "Invalid";
+    }
+}
+
+const char *hw_status_to_string(enum hw_device_status status) {
+    switch (status) {
+        case HW_STATUS_ACTIVE:
+            return "Active";
+        case HW_STATUS_DETECTED:
+            return "Detected";
+        case HW_STATUS_REMOVED:
+            return "Removed";
+        default:
+            return "Invalid";
+    }
 }
