@@ -17,7 +17,6 @@
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
-#include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/hal/x86_64/gdt.h>
 
 static bool supports_rdrand;
@@ -71,15 +70,6 @@ static void init_drivers(void) {
     init_ata();
     init_serial_port_device(SERIAL_COM1_PORT, 0);
     init_pit();
-
-    if (!kernel_use_graphics()) {
-        init_vga_device();
-    }
-
-    init_pci();
-
-    init_virtual_devices();
-    debug_log("Finished Initializing Drivers\n");
 }
 INIT_FUNCTION(init_drivers, driver);
 
@@ -102,6 +92,8 @@ bool kernel_use_graphics(void) {
 
 void enumerate_devices(void) {
     enumerate_isa_devices();
+    init_pci();
+    init_virtual_devices();
 }
 
 static struct hw_device s_root_device = {

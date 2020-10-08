@@ -4,16 +4,19 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
+#include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/fs/dev.h>
+#include <kernel/hal/hal.h>
+#include <kernel/hal/hw_device.h>
+#include <kernel/hal/isa_driver.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/phys_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/task.h>
-
-#include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/hal/x86_64/drivers/vga.h>
+#include <kernel/util/init.h>
 
 static uint16_t *vga_buffer = (uint16_t *) VGA_PHYS_ADDR;
 static enum vga_color fg = VGA_COLOR_LIGHT_GREY;
@@ -129,6 +132,19 @@ void set_vga_cursor(size_t row, size_t col) {
     VGA_RUN_COMMAND(VGA_SET_CURSOR_HIGH, (uint8_t)((pos >> 8) & 0xFF));
 }
 
-void init_vga_device() {
-    dev_register(&vga_device);
+static void detect_vga_device(struct hw_device *parent) {
+    struct hw_device *device = create_hw_device("VGA Graphics", parent, hw_device_id_isa(), &vga_device);
+    device->status = HW_STATUS_ACTIVE;
 }
+
+static struct isa_driver vga_driver = {
+    .name = "x86 VGA Driver",
+    .detect_devices = detect_vga_device,
+};
+
+static void init_vga_device(void) {
+    if (!kernel_use_graphics()) {
+        register_isa_driver(&vga_driver);
+    }
+}
+INIT_FUNCTION(init_vga_device, driver);
