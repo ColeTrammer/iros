@@ -41,7 +41,7 @@ struct hw_device_id {
 };
 
 struct hw_device {
-    char name[16];
+    char name[64];
 
     struct list_node siblings;
     struct list_node children;
@@ -67,5 +67,21 @@ int show_hw_device(struct hw_device *device, char *buffer, size_t buffer_length)
 void remove_hw_device(struct hw_device *device);
 struct hw_device *bump_hw_device(struct hw_device *device);
 struct hw_device *root_hw_device(void);
+
+static inline struct hw_device_id hw_device_id_none(void) {
+    return (struct hw_device_id) { .type = HW_TYPE_NONE };
+}
+
+static inline struct hw_device_id hw_device_id_isa(void) {
+    return (struct hw_device_id) { .type = HW_TYPE_ISA };
+}
+
+static inline struct hw_device_id hw_device_id_ps2(struct ps2_device_id id) {
+    return (struct hw_device_id) { .type = HW_TYPE_PS2, .ps2_id = id };
+}
+
+static inline struct hw_device_id hw_device_id_pci(struct pci_device_id id) {
+    return (struct hw_device_id) { .type = HW_TYPE_PCI, .pci_id = id };
+}
 
 #endif /* _KERNEL_HAL_HW_DEVICE_H */

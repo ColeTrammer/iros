@@ -184,7 +184,7 @@ static void detect_ps2_controller(struct hw_device *parent) {
     controller->ports[0].irq = PS2_IRQ0 + EXTERNAL_IRQ_OFFSET;
     controller->ports[1].port_number = 1;
     controller->ports[1].irq = PS2_IRQ1 + EXTERNAL_IRQ_OFFSET;
-    init_hw_device(&controller->hw_device, "PS/2 Controller", parent, (struct hw_device_id) { .type = HW_TYPE_ISA }, NULL, NULL);
+    init_hw_device(&controller->hw_device, "PS/2 Controller", parent, hw_device_id_isa(), NULL, NULL);
     controller->hw_device.status = HW_STATUS_ACTIVE;
 
     // Enable ports, reset devices, and locate drivers
@@ -198,7 +198,6 @@ static void detect_ps2_controller(struct hw_device *parent) {
             has_port0 = false;
             ps2_command(PS2_COMMAND_DISABLE_PORT0);
         } else if (!(driver0 = ps2_find_driver(controller, 0))) {
-            has_port0 = false;
             ps2_command(PS2_COMMAND_DISABLE_PORT0);
         }
     }
@@ -210,28 +209,26 @@ static void detect_ps2_controller(struct hw_device *parent) {
             ps2_command(PS2_COMMAND_DISABLE_PORT1);
             has_port1 = false;
         } else if (!(driver1 = ps2_find_driver(controller, 1))) {
-            has_port1 = false;
             ps2_command(PS2_COMMAND_DISABLE_PORT1);
         }
-    }
-
-    if (!has_port0 && !has_port1) {
-        free(controller);
-        return;
     }
 
     // Start the device drivers
     if (driver0) {
         driver0->create(controller, &controller->ports[0]);
+    } else if (has_port0) {
+        create_hw_device("Driverless PS/2 Device <Port 1>", &controller->hw_device, hw_device_id_ps2(controller->ports[0].id), NULL);
     }
     if (driver1) {
         driver1->create(controller, &controller->ports[1]);
+    } else if (has_port1) {
+        create_hw_device("Driverless PS/2 Device <Port 2>", &controller->hw_device, hw_device_id_ps2(controller->ports[1].id), NULL);
     }
 
     // Enable IRQs
     ps2_command(PS2_COMMAND_READ_CONFIG);
     ps2_read(&config);
-    config |= (has_port0 ? PS2_CONFIG_IRQ0_ENABLED : 0) | (has_port1 ? PS2_CONFIG_IRQ1_ENABLED : 0);
+    config |= (driver0 ? PS2_CONFIG_IRQ0_ENABLED : 0) | (driver1 ? PS2_CONFIG_IRQ1_ENABLED : 0);
     ps2_write_config(config);
 }
 

@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <kernel/fs/dev.h>
-#include <kernel/fs/file.h>
 #include <kernel/hal/input.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/mouse.h>
@@ -15,12 +13,12 @@
 #include <kernel/util/init.h>
 
 struct mouse_data {
+    struct hw_device hw_device;
     struct mouse_event_queue *start;
     struct mouse_event_queue *end;
     spinlock_t queue_lock;
     struct ps2_controller *controller;
     struct ps2_port *port;
-    struct fs_device *device;
     struct irq_handler irq_handler;
     struct mouse_event event;
     bool left_is_down;
@@ -39,8 +37,7 @@ static void add_mouse_event(struct mouse_data *data, struct mouse_event *event) 
 }
 
 void on_interrupt(struct irq_context *context) {
-    struct fs_device *device = context->closure;
-    struct mouse_data *data = device->private;
+    struct mouse_data *data = context->closure;
 
     uint8_t mouse_data;
     if (data->controller->read_byte(&mouse_data)) {
@@ -128,17 +125,13 @@ void on_interrupt(struct irq_context *context) {
 }
 
 static void mouse_create(struct ps2_controller *controller, struct ps2_port *port) {
-    struct fs_device *device = calloc(1, sizeof(struct fs_device) + sizeof(struct mouse_data));
-    struct mouse_data *data = device->private = device + 1;
-    device->device_number = 0x00702;
-    device->type = S_IFCHR;
-    dev_register(device);
-
+    struct mouse_data *data = calloc(1, sizeof(struct mouse_data));
+    init_hw_device(&data->hw_device, "PS/2 Mouse", &controller->hw_device, hw_device_id_ps2(port->id), NULL, NULL);
+    data->hw_device.status = HW_STATUS_ACTIVE;
     init_spinlock(&data->queue_lock);
     data->controller = controller;
     data->port = port;
-    data->device = device;
-    data->irq_handler.closure = device;
+    data->irq_handler.closure = data;
     data->irq_handler.flags = IRQ_HANDLER_EXTERNAL;
     data->irq_handler.handler = on_interrupt;
     register_irq_handler(&data->irq_handler, port->irq);

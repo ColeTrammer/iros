@@ -9,7 +9,6 @@
 #include <sys/types.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/fs/dev.h>
 #include <kernel/hal/input.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/keyboard.h>
@@ -21,11 +20,11 @@
 #include <kernel/util/spinlock.h>
 
 struct kbd_data {
+    struct hw_device hw_device;
     struct keyboard_event_queue *start;
     struct keyboard_event_queue *end;
     struct ps2_controller *controller;
     struct ps2_port *port;
-    struct fs_device *device;
     struct irq_handler irq_handler;
     struct key_event event;
     spinlock_t queue_lock;
@@ -431,8 +430,7 @@ static struct key_code_entry shift_map[KEYBOARD_RELEASED_OFFSET] = {
 };
 
 static void handle_keyboard_interrupt(struct irq_context *context) {
-    struct fs_device *device = context->closure;
-    struct kbd_data *data = device->private;
+    struct kbd_data *data = context->closure;
 
     uint8_t scan_code;
     if (data->controller->read_byte(&scan_code)) {
@@ -509,17 +507,13 @@ static void handle_keyboard_interrupt(struct irq_context *context) {
 }
 
 static void kbd_create(struct ps2_controller *controller, struct ps2_port *port) {
-    struct fs_device *device = calloc(1, sizeof(struct fs_device) + sizeof(struct kbd_data));
-    struct kbd_data *data = device->private = device + 1;
-    device->device_number = 0x00701;
-    device->type = S_IFCHR;
-    dev_register(device);
-
+    struct kbd_data *data = calloc(1, sizeof(struct kbd_data));
+    init_hw_device(&data->hw_device, "PS/2 Keyboard", &controller->hw_device, hw_device_id_ps2(port->id), NULL, NULL);
+    data->hw_device.status = HW_STATUS_ACTIVE;
     init_spinlock(&data->queue_lock);
     data->controller = controller;
     data->port = port;
-    data->device = device;
-    data->irq_handler.closure = device;
+    data->irq_handler.closure = data;
     data->irq_handler.flags = IRQ_HANDLER_EXTERNAL;
     data->irq_handler.handler = handle_keyboard_interrupt;
     register_irq_handler(&data->irq_handler, port->irq);

@@ -34,11 +34,6 @@
 
 -   N - /dev/fbN
 
-## Input Peripherals (Major 7)
-
--   1 - /dev/keyboard
--   2 - /dev/mouse
-
 ## Serial Output (Major 8)
 
 -   N - /dev/serialN
