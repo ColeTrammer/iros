@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include <kernel/hal/hw_device.h>
+#include <kernel/hal/isa_driver.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
@@ -10,6 +12,7 @@
 #include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
+#include <kernel/util/init.h>
 
 static void (*sched_callback)(struct task_state *) = NULL;
 static unsigned int sched_count = 0;
@@ -95,7 +98,19 @@ void pit_set_rate(unsigned int rate) {
 
 static struct irq_handler pit_handler = { .handler = &handle_pit_interrupt, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
 
-void init_pit() {
+static void detect_pit(struct hw_device *parent) {
+    struct hw_device *device = create_hw_device("PIT", parent, hw_device_id_isa(), NULL);
+    device->status = HW_STATUS_ACTIVE;
     pit_set_rate(1);
     register_irq_handler(&pit_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 }
+
+static struct isa_driver pit_driver = {
+    .name = "x86 PIT",
+    .detect_devices = detect_pit,
+};
+
+static void init_pit(void) {
+    register_isa_driver(&pit_driver);
+}
+INIT_FUNCTION(init_pit, driver);

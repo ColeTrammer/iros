@@ -14,7 +14,6 @@
 #include <kernel/hal/x86_64/drivers/local_apic.h>
 #include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
-#include <kernel/hal/x86_64/drivers/pit.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/hal/x86_64/gdt.h>
 
@@ -67,7 +66,6 @@ void init_cpus(void) {
 
 static void init_drivers(void) {
     init_serial_port_device(SERIAL_COM1_PORT, 0);
-    init_pit();
 }
 INIT_FUNCTION(init_drivers, driver);
 

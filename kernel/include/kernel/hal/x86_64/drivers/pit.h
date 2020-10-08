@@ -34,8 +34,6 @@
 
 struct task_state;
 
-void init_pit();
-
 void pit_set_rate(unsigned int rate);
 void pit_set_sched_callback(void (*callback)(struct task_state *), unsigned int ms);
 void pit_register_callback(void (*callback)(), unsigned int ms);
