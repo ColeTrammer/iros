@@ -1,6 +1,9 @@
+#include <kernel/hal/hw_device.h>
 #include <kernel/hal/input.h>
+#include <kernel/hal/isa_driver.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/vmware_back_door.h>
+#include <kernel/util/init.h>
 
 static bool is_enabled;
 static bool is_vmmouse_enabled;
@@ -98,7 +101,7 @@ bool vmware_back_door_is_enabled(void) {
     return is_enabled;
 }
 
-void init_vmware_back_door(void) {
+static void detect_vmware_back_door(struct hw_device *parent) {
     uint32_t result = vmware_send(VMWARE_GET_VERSION, ~VMWARE_MAGIC);
     if (result == 0xFFFFFFFF) {
         debug_log("vmware back door not detected\n");
@@ -106,7 +109,19 @@ void init_vmware_back_door(void) {
     }
 
     debug_log("initializing vmware back door\n");
+    struct hw_device *device = create_hw_device("VMWare Backdoor", parent, hw_device_id_isa(), NULL);
+    device->status = HW_STATUS_ACTIVE;
     init_vmmouse();
 
     is_enabled = true;
 }
+
+static struct isa_driver vmware_back_door_driver = {
+    .name = "VMWare Backdoor",
+    .detect_devices = detect_vmware_back_door,
+};
+
+static void init_vmware_back_door(void) {
+    register_isa_driver(&vmware_back_door_driver);
+}
+INIT_FUNCTION(init_vmware_back_door, driver);

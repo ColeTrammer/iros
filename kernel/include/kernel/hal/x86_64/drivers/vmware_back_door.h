@@ -44,7 +44,6 @@ struct mouse_event *vmmouse_read(void);
 bool vmmouse_is_enabled(void);
 
 bool vmware_back_door_is_enabled(void);
-void init_vmware_back_door(void);
 
 static inline __attribute__((always_inline)) uint32_t vmware_send(uint32_t command, uint32_t arg) {
     uint32_t ret;
