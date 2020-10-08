@@ -70,6 +70,7 @@ struct ps2_port {
 };
 
 struct ps2_controller {
+    struct hw_device hw_device;
     int (*send_byte)(uint8_t byte, int port_number);
     int (*send_command)(uint8_t command, int port_number);
     int (*read_byte)(uint8_t *bytep);
@@ -86,7 +87,5 @@ struct ps2_driver {
 
 void ps2_register_driver(struct ps2_driver *driver);
 void ps2_unregister_driver(struct ps2_driver *driver);
-
-void init_ps2_controller(void);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PS2_H */

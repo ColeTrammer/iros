@@ -5,6 +5,4 @@
 #define MOUSE_COMMAND_SET_COMPAQ    0x60
 #define MOUSE_COMMAND_GET_COMPAQ    0x20
 
-void init_mouse();
-
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_MOUSE_H */

@@ -8,17 +8,15 @@
 #include <kernel/util/init.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/hal/isa_driver.h>
 #include <kernel/hal/x86_64/acpi.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/fdc.h>
-#include <kernel/hal/x86_64/drivers/keyboard.h>
 #include <kernel/hal/x86_64/drivers/local_apic.h>
-#include <kernel/hal/x86_64/drivers/mouse.h>
 #include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/pit.h>
-#include <kernel/hal/x86_64/drivers/ps2.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/hal/x86_64/drivers/vga.h>
 #include <kernel/hal/x86_64/drivers/vmware_back_door.h>
@@ -72,9 +70,6 @@ void init_cpus(void) {
 }
 
 static void init_drivers(void) {
-    init_keyboard();
-    init_mouse();
-    init_ps2_controller();
     init_vmware_back_door();
     init_fdc();
     init_ata();
@@ -107,6 +102,10 @@ void kernel_disable_graphics(void) {
 
 bool kernel_use_graphics(void) {
     return use_graphics;
+}
+
+void enumerate_devices(void) {
+    enumerate_isa_devices();
 }
 
 static struct hw_device s_root_device = {

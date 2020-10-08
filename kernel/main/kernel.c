@@ -31,6 +31,7 @@ void kernel_main(uint32_t *multiboot_info) {
     init_cpus();
     INIT_DO_LEVEL(fs);
     INIT_DO_LEVEL(driver);
+    enumerate_devices();
     INIT_DO_LEVEL(time);
 
     /* Mount INITRD as root */

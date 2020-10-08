@@ -10,6 +10,7 @@ void register_isa_driver(struct isa_driver *driver) {
 #ifdef ISA_DRIVER_DEBUG
     debug_log("Registering ISA driver: [ %s ]\n", driver->name);
 #endif /* ISA_DRIVER_DEBUG */
+    list_append(&isa_drivers, &driver->list);
 }
 
 void enumerate_isa_devices(void) {

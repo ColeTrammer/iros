@@ -7,12 +7,12 @@
 #include <kernel/fs/file.h>
 #include <kernel/hal/input.h>
 #include <kernel/hal/output.h>
-#include <kernel/irqs/handlers.h>
-#include <kernel/net/umessage.h>
-
 #include <kernel/hal/x86_64/drivers/mouse.h>
 #include <kernel/hal/x86_64/drivers/ps2.h>
 #include <kernel/hal/x86_64/drivers/vmware_back_door.h>
+#include <kernel/irqs/handlers.h>
+#include <kernel/net/umessage.h>
+#include <kernel/util/init.h>
 
 struct mouse_data {
     struct mouse_event_queue *start;
@@ -180,6 +180,7 @@ static struct ps2_driver mouse_driver = {
     .create = mouse_create,
 };
 
-void init_mouse() {
+static void init_mouse() {
     ps2_register_driver(&mouse_driver);
 }
+INIT_FUNCTION(init_mouse, driver);

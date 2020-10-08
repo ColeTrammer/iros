@@ -28,6 +28,4 @@ struct keyboard_event_queue {
     struct keyboard_event_queue *next;
 };
 
-void init_keyboard();
-
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_KEYBOARD_H */

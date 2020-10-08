@@ -17,6 +17,7 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/net/umessage.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
 struct kbd_data {
@@ -537,6 +538,7 @@ static struct ps2_driver kbd_driver = {
     .create = kbd_create,
 };
 
-void init_keyboard() {
+static void init_keyboard() {
     ps2_register_driver(&kbd_driver);
 }
+INIT_FUNCTION(init_keyboard, driver);

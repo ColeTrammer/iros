@@ -3,9 +3,11 @@
 #include <string.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/hal/isa_driver.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/ps2.h>
 #include <kernel/irqs/handlers.h>
+#include <kernel/util/init.h>
 
 static int ps2_read(uint8_t *byte) {
     int us_timeout = 300;
@@ -103,7 +105,7 @@ void ps2_unregister_driver(struct ps2_driver *driver) {
     list_remove(&driver->list);
 }
 
-void init_ps2_controller(void) {
+static void detect_ps2_controller(struct hw_device *parent) {
     // Disable PS/2 ports
     if (ps2_command(PS2_COMMAND_DISABLE_PORT0) || ps2_command(PS2_COMMAND_DISABLE_PORT1)) {
         debug_log("PS/2 controller is broken\n");
@@ -182,6 +184,8 @@ void init_ps2_controller(void) {
     controller->ports[0].irq = PS2_IRQ0 + EXTERNAL_IRQ_OFFSET;
     controller->ports[1].port_number = 1;
     controller->ports[1].irq = PS2_IRQ1 + EXTERNAL_IRQ_OFFSET;
+    init_hw_device(&controller->hw_device, "PS/2 Controller", parent, (struct hw_device_id) { .type = HW_TYPE_ISA }, NULL, NULL);
+    controller->hw_device.status = HW_STATUS_ACTIVE;
 
     // Enable ports, reset devices, and locate drivers
     struct ps2_driver *driver0 = NULL;
@@ -230,3 +234,13 @@ void init_ps2_controller(void) {
     config |= (has_port0 ? PS2_CONFIG_IRQ0_ENABLED : 0) | (has_port1 ? PS2_CONFIG_IRQ1_ENABLED : 0);
     ps2_write_config(config);
 }
+
+static struct isa_driver ps2_controller_driver = {
+    .name = "x86 PS/2 Controller",
+    .detect_devices = detect_ps2_controller,
+};
+
+static void init_ps2_controller_driver(void) {
+    register_isa_driver(&ps2_controller_driver);
+}
+INIT_FUNCTION(init_ps2_controller_driver, driver);
