@@ -8,13 +8,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <kernel/fs/dev.h>
-#include <kernel/hal/output.h>
-#include <kernel/irqs/handlers.h>
-
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/fs/dev.h>
+#include <kernel/hal/hw_device.h>
+#include <kernel/hal/isa_driver.h>
+#include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
+#include <kernel/irqs/handlers.h>
+#include <kernel/util/init.h>
 
 static void handle_serial_interrupt(struct irq_context *context __attribute__((unused))) {
     debug_log("Recieved Serial Port Interrupt: Status [ %#.2X ]\n", inb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_STATUS_OFFSET)));
@@ -73,7 +75,7 @@ static struct fs_device_ops serial_ops = { .write = &serial_write };
 
 static struct irq_handler serial_handler = { .handler = &handle_serial_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
 
-void init_serial_port_device(dev_t port, size_t i) {
+static void init_serial_port_device(struct hw_device *parent, dev_t port, size_t i) {
     /* Could be anything */
     assert(port == SERIAL_COM1_PORT);
 
@@ -85,5 +87,20 @@ void init_serial_port_device(dev_t port, size_t i) {
     device->type = S_IFCHR;
     device->private = NULL;
 
-    dev_register(device);
+    struct hw_device *hw = create_hw_device("Serial Port", parent, hw_device_id_isa(), device);
+    hw->status = HW_STATUS_ACTIVE;
 }
+
+static void detect_serial_ports(struct hw_device *parent) {
+    init_serial_port_device(parent, SERIAL_COM1_PORT, 0);
+}
+
+static struct isa_driver serial_port_driver = {
+    .name = "x86 Serial Port",
+    .detect_devices = detect_serial_ports,
+};
+
+static void init_serial_port_driver(void) {
+    register_isa_driver(&serial_port_driver);
+}
+INIT_FUNCTION(init_serial_port_driver, driver);

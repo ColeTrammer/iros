@@ -58,8 +58,6 @@
 #define SERIAL_IMPENDING_ERROR          (1 << 7)
 
 void init_serial_ports();
-void init_serial_port_device(dev_t port, size_t i);
-
 bool serial_write_message(const char *s, size_t n);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_SERIAL_H */

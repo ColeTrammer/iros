@@ -64,11 +64,6 @@ void init_cpus(void) {
     init_acpi();
 }
 
-static void init_drivers(void) {
-    init_serial_port_device(SERIAL_COM1_PORT, 0);
-}
-INIT_FUNCTION(init_drivers, driver);
-
 void init_smp(void) {
     init_processor_ipi_messages();
     set_smp_enabled();
