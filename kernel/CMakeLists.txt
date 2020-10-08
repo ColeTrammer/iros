@@ -20,6 +20,7 @@ if (NOT ${NATIVE_BUILD})
         hal/gpt.c
         hal/hw_device.c
         hal/input.c
+        hal/isa_driver.c
         hal/mbr.c
         hal/partition.c
         hal/processor.c

@@ -22,10 +22,6 @@ enum hw_device_status {
     HW_STATUS_REMOVED,
 };
 
-struct isa_device_id {
-    uint16_t io_port_base;
-};
-
 struct ps2_device_id {
     uint8_t byte0;
     uint8_t byte1;
@@ -39,7 +35,6 @@ struct pci_device_id {
 struct hw_device_id {
     enum hw_device_type type;
     union {
-        struct isa_device_id isa_id;
         struct ps2_device_id ps2_id;
         struct pci_device_id pci_id;
     };
