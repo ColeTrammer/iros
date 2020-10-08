@@ -1,6 +1,7 @@
 #ifndef _KERNEL_HAL_X86_64_DRIVERS_ATA_PIO_H
 #define _KERNEL_HAL_X86_64_DRIVERS_ATA_PIO_H 1
 
+#include <kernel/hal/hw_device.h>
 #include <kernel/proc/wait_queue.h>
 
 #define ATA1_IO_BASE      0x1F0
@@ -82,12 +83,11 @@ struct ata_physical_range_descriptor {
 } __attribute__((packed));
 
 struct ata_device_data {
+    struct hw_device hw_device;
     struct ata_port_info *port_info;
     struct ata_physical_range_descriptor prdt[1];
     struct vm_region *dma_region;
     struct wait_queue wait_queue;
 };
-
-void init_ata();
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_ATA_PIO_H */

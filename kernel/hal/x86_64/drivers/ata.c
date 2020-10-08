@@ -12,6 +12,7 @@
 #include <kernel/fs/dev.h>
 #include <kernel/hal/block.h>
 #include <kernel/hal/hal.h>
+#include <kernel/hal/isa_driver.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
@@ -22,6 +23,7 @@
 #include <kernel/mem/phys_page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
+#include <kernel/util/init.h>
 
 #define DMA_BUFFER_PAGES 1
 
@@ -433,8 +435,10 @@ static void ata_handle_irq(struct irq_context *context) {
     wake_up_all(&data->wait_queue);
 }
 
-static void ata_init_device(struct ata_port_info *info, uint16_t *identity, size_t i) {
+static void ata_init_device(struct hw_device *parent, struct ata_port_info *info, uint16_t *identity, size_t i) {
     struct ata_device_data *data = malloc(sizeof(struct ata_device_data));
+    init_hw_device(&data->hw_device, "PATA Drive", parent, hw_device_id_isa(), NULL, NULL);
+    data->hw_device.status = HW_STATUS_ACTIVE;
     data->port_info = info;
     init_wait_queue(&data->wait_queue);
 
@@ -470,7 +474,7 @@ static struct ata_port_info possible_ata_devices[NUM_POSSIBLE_ATA_DEVICES] = {
     { ATA4_IO_BASE, ATA4_CONTROL_BASE, ATA4_IRQ, 0, false, false }, { ATA4_IO_BASE, ATA4_CONTROL_BASE, 0, ATA4_IRQ, true, false },
 };
 
-void init_ata() {
+static void detect_ata(struct hw_device *parent) {
     for (size_t i = 0; i < NUM_POSSIBLE_ATA_DEVICES; i++) {
         uint16_t buf[ATA_SECTOR_SIZE / sizeof(uint16_t)];
         if (ata_device_exists(&possible_ata_devices[i], buf)) {
@@ -478,7 +482,17 @@ void init_ata() {
                       possible_ata_devices[i].control_base, possible_ata_devices[i].irq,
                       possible_ata_devices[i].is_slave ? "true" : "false");
 
-            ata_init_device(&possible_ata_devices[i], buf, i);
+            ata_init_device(parent, &possible_ata_devices[i], buf, i);
         }
     }
 }
+
+static struct isa_driver ata_driver = {
+    .name = "x86 PATA IDE",
+    .detect_devices = detect_ata,
+};
+
+static void init_ata(void) {
+    register_isa_driver(&ata_driver);
+}
+INIT_FUNCTION(init_ata, driver);

@@ -10,7 +10,6 @@
 #include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/isa_driver.h>
 #include <kernel/hal/x86_64/acpi.h>
-#include <kernel/hal/x86_64/drivers/ata.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/local_apic.h>
 #include <kernel/hal/x86_64/drivers/pci.h>
@@ -67,7 +66,6 @@ void init_cpus(void) {
 }
 
 static void init_drivers(void) {
-    init_ata();
     init_serial_port_device(SERIAL_COM1_PORT, 0);
     init_pit();
 }
