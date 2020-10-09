@@ -185,9 +185,8 @@ void init_kernel_process(void) {
     initial_kernel_process.main_tid = 1;
     initial_kernel_process.pgid = 1;
     initial_kernel_process.tty = -1;
-    initial_kernel_process.priority = 2 * PROCESS_DEFAULT_PRIORITY;
+    initial_kernel_process.priority = PROCESS_DEFAULT_PRIORITY;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
-    initial_kernel_process.sig_state[SIGCHLD].sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
 
     initial_kernel_task.process = &initial_kernel_process;
     init_list(&initial_kernel_task.queued_signals);
