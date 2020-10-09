@@ -32,7 +32,12 @@
 // #define TASK_SCHED_STATE_DEBUG
 // #define TASK_SIGNAL_DEBUG
 
+struct task initial_kernel_task;
 struct process initial_kernel_process;
+struct process idle_kernel_process = {
+    .task_list = INIT_LIST(idle_kernel_process.task_list),
+    .main_tid = 1,
+};
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp) {
     struct args_context *context = process->args_context = malloc(sizeof(struct args_context));
@@ -183,14 +188,24 @@ void init_kernel_process(void) {
     initial_kernel_process.priority = 2 * PROCESS_DEFAULT_PRIORITY;
     initial_kernel_process.start_time = time_read_clock(CLOCK_REALTIME);
     initial_kernel_process.sig_state[SIGCHLD].sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
+
+    initial_kernel_task.process = &initial_kernel_process;
+    init_list(&initial_kernel_task.queued_signals);
+    list_append(&initial_kernel_process.task_list, &initial_kernel_task.process_list);
+    initial_kernel_task.kernel_task = true;
+    initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
+    initial_kernel_task.process->tty = -1;
+    initial_kernel_task.tid = 1;
+
+    arch_load_kernel_task(&initial_kernel_task, 0);
 }
 
 void init_idle_task(struct processor *processor) {
     struct task *task = calloc(1, sizeof(struct task));
-    task->process = &initial_kernel_process;
+    task->process = &idle_kernel_process;
 
     // NOTE: this would need locks if APs weren't initialized one at a time.
-    list_append(&initial_kernel_process.task_list, &task->process_list);
+    list_append(&idle_kernel_process.task_list, &task->process_list);
 
     task->tid = get_next_tid();
     task->kernel_task = true;
@@ -246,6 +261,9 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
 
 static void task_switch_from_kernel_to_user_mode(struct task *current) {
     uint64_t save = disable_interrupts_save();
+    if (!current->process->cwd) {
+        current->process->cwd = bump_tnode(fs_root());
+    }
     current->in_kernel = true;
     current->kernel_task = false;
     task_align_fpu(current);

@@ -27,6 +27,10 @@ void init_bsp(struct processor *processor) {
     processor->kernel_stack = vm_allocate_kernel_region(PAGE_SIZE);
     arch_init_processor(processor);
 
+    processor->current_task = &initial_kernel_task;
+    local_sched_add_task(&initial_kernel_task);
+    initial_kernel_task.kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
+
     processor->enabled = true;
     s_bsp_enabled = true;
 }

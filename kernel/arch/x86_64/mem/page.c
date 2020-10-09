@@ -13,6 +13,7 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
+#include <kernel/proc/process.h>
 #include <kernel/proc/stats.h>
 #include <kernel/proc/task.h>
 
@@ -22,7 +23,6 @@
 // #define MAP_VM_REGION_DEBUG
 
 spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
-extern struct process initial_kernel_process;
 
 void flush_tlb(uintptr_t addr) {
     invlpg(addr);
@@ -245,6 +245,7 @@ void clear_initial_page_mappings() {
 
     uint64_t cr3 = get_cr3();
     initial_kernel_process.arch_process.cr3 = cr3;
+    idle_kernel_process.arch_process.cr3 = cr3;
 
     uint64_t *pml4 = create_phys_addr_mapping(cr3 & 0x0000FFFFFFFFF000ULL);
     pml4[0] = 0;
@@ -253,7 +254,7 @@ void clear_initial_page_mappings() {
     uintptr_t kernel_vm_end = ALIGN_UP(KERNEL_VM_END, PAGE_SIZE);
     uintptr_t kernel_vm_mapping_end = ALIGN_UP(kernel_vm_end, 2 * 1024 * 1024);
     for (uintptr_t i = kernel_vm_end; i < kernel_vm_mapping_end; i += PAGE_SIZE) {
-        do_unmap_page(i, false, true, false, &initial_kernel_process);
+        do_unmap_page(i, false, true, false, &idle_kernel_process);
     }
     load_cr3(cr3);
 }
@@ -324,7 +325,7 @@ void create_phys_id_map() {
 
         uint64_t mapping_flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC | 0x01;
         if (!(*pml4_entry & 1)) {
-            *pml4_entry = get_next_phys_page(&initial_kernel_process) | mapping_flags;
+            *pml4_entry = get_next_phys_page(&idle_kernel_process) | mapping_flags;
             invlpg((uintptr_t) pdp_entry);
             memset(pdp_entry - pdp_offset, 0, PAGE_SIZE);
         }
@@ -335,7 +336,7 @@ void create_phys_id_map() {
         }
 
         if (!(*pdp_entry & 1)) {
-            *pdp_entry = get_next_phys_page(&initial_kernel_process) | mapping_flags;
+            *pdp_entry = get_next_phys_page(&idle_kernel_process) | mapping_flags;
             invlpg((uintptr_t) pd_entry);
             memset(pd_entry - pd_offset, 0, PAGE_SIZE);
         }
@@ -386,7 +387,7 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
 
     uint64_t old_cr3 = get_cr3();
     if (old_cr3 == phys_addr) {
-        old_cr3 = initial_kernel_process.arch_process.cr3;
+        old_cr3 = idle_kernel_process.arch_process.cr3;
     } else {
         load_cr3(phys_addr);
     }

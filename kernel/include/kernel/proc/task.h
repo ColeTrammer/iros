@@ -119,7 +119,7 @@ pid_t proc_fork(void);
 int proc_execve(char *path, char **argv, char **envp);
 int proc_waitpid(pid_t pid, int *status, int flags);
 pid_t proc_getppid(struct process *process);
-void init_userland(void);
+void start_userland(void);
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp);
 uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info, struct task *task);
@@ -150,5 +150,7 @@ void task_set_state_to_exiting(struct task *task);
 
 const char *task_state_to_string(enum sched_state state);
 bool task_in_kernel(struct task *task);
+
+extern struct task initial_kernel_task;
 
 #endif /* _KERNEL_PROC_TASK_H */

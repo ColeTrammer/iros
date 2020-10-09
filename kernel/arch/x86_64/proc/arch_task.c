@@ -35,8 +35,6 @@
 
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
-extern struct process initial_kernel_process;
-
 static void kernel_idle() {
     for (;;)
         ;
@@ -161,7 +159,7 @@ void arch_init_idle_task(struct task *idle_task, struct processor *processor) {
 }
 
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
-    task->process->arch_process.cr3 = initial_kernel_process.arch_process.cr3;
+    task->process->arch_process.cr3 = idle_kernel_process.arch_process.cr3;
     task->arch_task.task_state.cpu_state.rbp = task->kernel_stack->end;
     task->arch_task.task_state.stack_state.rip = entry;
     task->arch_task.task_state.stack_state.cs = CS_SELECTOR;

@@ -20,8 +20,6 @@
 // #define SCHED_DEBUG
 // #define SIGNAL_DEBUG
 
-extern struct process initial_kernel_process;
-
 void init_task_sched() {
     // This only becomes needed after scheduling is enabled
     init_processes();
@@ -261,12 +259,7 @@ int signal_process_group(pid_t pgid, int signum) {
 }
 
 struct task *find_by_tid(int tgid, int tid) {
-    struct process *process;
-    if (tgid == 1) {
-        process = &initial_kernel_process;
-    } else {
-        process = find_by_pid(tgid);
-    }
+    struct process *process = find_by_pid(tgid);
 
     if (!process) {
         return NULL;

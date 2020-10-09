@@ -29,6 +29,8 @@ void kernel_main(uint32_t *multiboot_info) {
     init_kernel_process();
     init_vm_allocator();
     init_cpus();
+
+    enable_interrupts();
     INIT_DO_LEVEL(fs);
     INIT_DO_LEVEL(driver);
     enumerate_devices();
@@ -67,10 +69,8 @@ void kernel_main(uint32_t *multiboot_info) {
     //       could be loaded sooner
     init_kernel_symbols();
 
-    init_userland();
-
     init_smp();
-    sched_run_next();
+    start_userland();
 
     while (1)
         ;

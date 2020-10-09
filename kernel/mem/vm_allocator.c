@@ -36,7 +36,6 @@ static struct vm_region kernel_heap;
 static struct vm_region initrd;
 static spinlock_t kernel_vm_lock = SPINLOCK_INITIALIZER;
 
-extern struct process initial_kernel_process;
 extern uintptr_t initrd_phys_start;
 extern uintptr_t initrd_phys_end;
 
@@ -86,16 +85,16 @@ void init_vm_allocator(void) {
 
     clear_initial_page_mappings();
     for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
-        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags, &initial_kernel_process);
+        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags, &idle_kernel_process);
     }
 
     for (struct vm_region *region = kernel_vm_list; region; region = region->next) {
         if (region->type != VM_KERNEL_PHYS_ID && region->type != VM_INITRD) {
-            map_vm_region_flags(region, &initial_kernel_process);
+            map_vm_region_flags(region, &idle_kernel_process);
         }
     }
 
-    initial_kernel_process.process_memory = kernel_vm_list;
+    idle_kernel_process.process_memory = kernel_vm_list;
     debug_log("Finished Initializing VM Allocator\n");
 }
 
@@ -133,8 +132,7 @@ void *add_vm_pages_end(size_t n, uint64_t type) {
         }
     } else {
         for (size_t i = 0; i < n; i++) {
-            map_page(old_end + i * PAGE_SIZE, region->flags,
-                     list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
+            map_page(old_end + i * PAGE_SIZE, region->flags, list == kernel_vm_list ? &idle_kernel_process : get_current_task()->process);
         }
 
         memset((void *) old_end, 0, n * PAGE_SIZE);
@@ -174,7 +172,7 @@ void *add_vm_pages_start(size_t n, uint64_t type) {
         return NULL; // indicate there is no room
     }
     for (size_t i = 1; i <= n; i++) {
-        map_page(old_start - i * PAGE_SIZE, region->flags, list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
+        map_page(old_start - i * PAGE_SIZE, region->flags, list == kernel_vm_list ? &idle_kernel_process : get_current_task()->process);
     }
 
     if (type <= VM_KERNEL_HEAP) {
@@ -205,7 +203,7 @@ void remove_vm_pages_end(size_t n, uint64_t type) {
     }
 
     for (size_t i = 1; i <= n; i++) {
-        unmap_page(old_end - i * PAGE_SIZE, list == kernel_vm_list ? &initial_kernel_process : get_current_task()->process);
+        unmap_page(old_end - i * PAGE_SIZE, list == kernel_vm_list ? &idle_kernel_process : get_current_task()->process);
     }
 }
 
@@ -691,7 +689,7 @@ struct vm_region *vm_allocate_kernel_region(size_t size) {
 
     struct vm_region *region = make_kernel_region(size, VM_KERNEL_ANON_MAPPING);
     for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        map_page(s, region->flags, &initial_kernel_process);
+        map_page(s, region->flags, &idle_kernel_process);
     }
     return region;
 }
@@ -718,7 +716,7 @@ void vm_free_kernel_region(struct vm_region *region) {
     vm->next = region->next;
 
     for (uintptr_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        unmap_page(s, &initial_kernel_process);
+        unmap_page(s, &idle_kernel_process);
     }
     free(region);
 
@@ -735,7 +733,7 @@ struct vm_region *vm_allocate_low_identity_map(uintptr_t start, uintptr_t size) 
     region->type = VM_KERNEL_ID_MAPPING;
 
     for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        map_phys_page(s, s, region->flags, &initial_kernel_process);
+        map_phys_page(s, s, region->flags, &idle_kernel_process);
     }
 
     return region;
@@ -743,7 +741,7 @@ struct vm_region *vm_allocate_low_identity_map(uintptr_t start, uintptr_t size) 
 
 void vm_free_low_identity_map(struct vm_region *region) {
     for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        do_unmap_page(s, false, true, true, &initial_kernel_process);
+        do_unmap_page(s, false, true, true, &idle_kernel_process);
     }
     free(region);
 }
@@ -754,7 +752,7 @@ struct vm_region *vm_allocate_dma_region(size_t size) {
     struct vm_region *region = make_kernel_region(size, VM_KERNEL_DMA_MAPPING);
     uint64_t phys_base = get_contiguous_pages(size / PAGE_SIZE);
     for (size_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        map_phys_page(phys_base + s - region->start, s, region->flags, &initial_kernel_process);
+        map_phys_page(phys_base + s - region->start, s, region->flags, &idle_kernel_process);
     }
     return region;
 }

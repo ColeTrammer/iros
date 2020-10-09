@@ -169,4 +169,7 @@ static inline void proc_drop_parent(struct process *parent) {
     proc_drop_process(parent, NULL, false);
 }
 
+extern struct process initial_kernel_process;
+extern struct process idle_kernel_process;
+
 #endif /* _KERNEL_PROC_PROCESS_H */

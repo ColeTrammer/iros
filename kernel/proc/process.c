@@ -24,8 +24,6 @@
 // #define PROC_REF_COUNT_DEBUG
 // #define PROCESSES_DEBUG
 
-extern struct process initial_kernel_process;
-
 static struct hash_map *map;
 
 HASH_DEFINE_FUNCTIONS(process, struct process, pid_t, pid)
