@@ -36,8 +36,15 @@
 #define SIZEOF_IRETQ_INSTRUCTION 2 // bytes
 
 static void kernel_idle() {
-    for (;;)
-        ;
+    for (;;) {
+        asm volatile("sti\n"
+                     "hlt\n"
+                     "cli\n"
+                     :
+                     :
+                     : "memory");
+        __kernel_yield();
+    }
 }
 
 pid_t proc_fork(void) {
