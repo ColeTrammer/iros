@@ -12,7 +12,6 @@
 #include <kernel/hal/x86_64/acpi.h>
 #include <kernel/hal/x86_64/drivers/cmos.h>
 #include <kernel/hal/x86_64/drivers/local_apic.h>
-#include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/hal/x86_64/gdt.h>
@@ -83,7 +82,6 @@ bool kernel_use_graphics(void) {
 
 void enumerate_devices(void) {
     enumerate_isa_devices();
-    init_pci();
     init_virtual_devices();
 }
 

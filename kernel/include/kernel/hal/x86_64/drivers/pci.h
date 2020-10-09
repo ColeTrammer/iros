@@ -120,6 +120,5 @@ static inline void pci_enable_bus_mastering(struct pci_configuration *config) {
 }
 
 bool pci_config_for_class(uint8_t class_code, uint8_t subclass, struct pci_configuration *config);
-void init_pci();
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PCI_H */
