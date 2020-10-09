@@ -413,15 +413,15 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
 static struct block_device_ops ata_ops = {
     .read = ata_read_sectors,
     .write = ata_write_sectors,
-    .read_page = ata_read_page_dma,
-    .sync_page = ata_sync_page_dma,
+    .read_page = block_generic_read_page,
+    .sync_page = block_generic_sync_page,
 };
 
 static struct block_device_ops ata_dma_ops = {
     .read = ata_read_sectors_dma,
     .write = ata_write_sectors_dma,
-    .read_page = block_generic_read_page,
-    .sync_page = block_generic_sync_page,
+    .read_page = ata_read_page_dma,
+    .sync_page = ata_sync_page_dma,
 };
 
 static void ata_handle_irq(struct irq_context *context) {
