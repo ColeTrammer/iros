@@ -52,17 +52,7 @@ static void ata_wait_ready(struct ata_port_info *info) {
 }
 
 static void ata_wait_irq(struct ata_device_data *data) {
-    struct task *current = get_current_task();
-    if (current && !current->kernel_task) {
-        wait_on(&data->wait_queue);
-    } else {
-        // Terrible hack b/c we can't wait on irq's before scheduling starts.
-        // This is seriously the worst, as it is entirely possible this wait
-        // time is not long enough. Not only that, but also errors will go
-        // uncheck. There may be a way to poll this with the status register,
-        // but it can't currently be determined b/c irqs as a whole are broken.
-        io_wait_us(1000);
-    }
+    wait_on(&data->wait_queue);
 }
 
 static uint8_t ata_read_status(struct ata_port_info *info) {
