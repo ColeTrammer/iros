@@ -193,6 +193,7 @@ static ssize_t ata_read_sectors(struct block_device *self, void *buffer, blkcnt_
         n = 0;
     }
 
+    uint64_t save = disable_interrupts_save();
     ata_wait_not_busy(data->port_info);
 
     ata_setup_registers_pio(data->port_info, sector_offset, n);
@@ -216,7 +217,8 @@ static ssize_t ata_read_sectors(struct block_device *self, void *buffer, blkcnt_
         }
     }
 
-    return n * self->block_size;
+    interrupts_restore(save);
+    return n;
 }
 
 static struct phys_page *ata_read_page_dma(struct block_device *self, off_t sector_offset) {
@@ -307,6 +309,7 @@ static ssize_t ata_write_sectors(struct block_device *self, const void *buffer, 
         n = 0;
     }
 
+    uint64_t save = disable_interrupts_save();
     ata_wait_not_busy(data->port_info);
 
     ata_setup_registers_pio(data->port_info, sector_offset, n);
@@ -341,7 +344,8 @@ static ssize_t ata_write_sectors(struct block_device *self, const void *buffer, 
         return -EIO;
     }
 
-    return n * self->block_size;
+    interrupts_restore(save);
+    return n;
 }
 
 static int ata_sync_page_dma(struct block_device *self, struct phys_page *page) {
