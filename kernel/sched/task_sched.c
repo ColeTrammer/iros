@@ -223,19 +223,20 @@ static void signal_process_group_iter(struct process *process, void *_cls) {
 
     mutex_lock(&process->lock);
 
-    // FIXME: dispatch signals to a different task than the first if it makes sense.
     struct task *task = list_first_entry(&process->task_list, struct task, process_list);
-    if (cls->signum != 0) {
+    if (task) {
+        if (cls->signum != 0) {
 #ifdef SIGNAL_DEBUG
-        debug_log("Signaling queue: [ %d:%d, %s ]\n", task->process->pid, task->tid, strsignal(cls->signum));
+            debug_log("Signaling queue: [ %d:%d, %s ]\n", task->process->pid, task->tid, strsignal(cls->signum));
 #endif /* SIGNAL_DEBUG */
-        task_enqueue_signal(task, cls->signum, NULL, false);
+            task_enqueue_signal(task, cls->signum, NULL, false);
 
-        if (task == get_current_task() && !task_is_sig_blocked(task, cls->signum)) {
-            cls->signalled_self = true;
+            if (task == get_current_task() && !task_is_sig_blocked(task, cls->signum)) {
+                cls->signalled_self = true;
+            }
         }
+        cls->signalled_anything = true;
     }
-    cls->signalled_anything = true;
 
     mutex_unlock(&process->lock);
 }
