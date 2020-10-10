@@ -8,6 +8,8 @@ struct block_device;
 struct mbr_partition {
     uint8_t drive_attributes;
     uint8_t chs_start[3];
+#define MBR_EBR_CHS 0x05
+#define MBR_EBR_LBA 0x0F
     uint8_t partition_type;
     uint8_t chs_last[3];
     uint32_t lba_start;
@@ -26,6 +28,7 @@ struct mbr_table {
     uint16_t zero2;
 #define MBR_MAX_PARTITIONS 4
     struct mbr_partition partitions[MBR_MAX_PARTITIONS];
+#define MBR_SIGNATURE 0xAA55
     uint16_t boot_signature;
 };
 
