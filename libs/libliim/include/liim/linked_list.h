@@ -133,8 +133,9 @@ public:
     }
 
     template<typename C>
-    void remove_if(C test) {
+    bool remove_if(C test) {
         auto** iter = &m_head;
+        bool removed = false;
         while (*iter) {
             if (test((*iter)->m_val)) {
                 if (*iter) {
@@ -144,10 +145,12 @@ public:
                 }
 
                 m_size--;
+                removed = true;
                 continue;
             }
             iter = &(*iter)->m_next;
         }
+        return removed;
     }
 
     T& head() {

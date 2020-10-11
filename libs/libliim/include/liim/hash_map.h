@@ -1,139 +1,50 @@
 #pragma once
 
-#include <liim/linked_list.h>
-#include <liim/traits.h>
-#include <liim/utilities.h>
-#include <liim/vector.h>
+#include <liim/hash_set.h>
 
 namespace LIIM {
 
-#ifdef __cpp_concepts
-template<typename T>
-concept Hashable = requires(T a, T b) {
-    Traits<T>::hash(a);
-    a == b;
-};
-#endif /* __cpp_concepts */
-
-template<typename K, typename V>
+template<Hashable K, typename V>
 struct HashMapObj {
-    HashMapObj(const K& key, const V& val) : m_key(key), m_value(val) {}
-    HashMapObj(const K& key, V&& val) : m_key(key), m_value(move(val)) {}
-
-    ~HashMapObj() {}
-
-    HashMapObj(const HashMapObj& other) : HashMapObj(other.m_key, other.m_value) {}
-    HashMapObj(HashMapObj&& other) : HashMapObj(move(other.m_key), move(other.m_value)) {}
+    bool operator==(const HashMapObj& other) const { return this->m_key == other.m_key; }
+    bool operator==(const K& key) const { return this->m_key == key; }
+    bool operator!=(const HashMapObj& other) const { return this->m_key != other.m_key; }
+    bool operator!=(const K& key) const { return this->m_key != key; }
 
     K m_key;
     V m_value;
 };
 
-template<typename K, typename V>
-#ifdef __cpp_concepts
-requires Hashable<K> class HashMap {
-#else
+template<Hashable K, typename V>
+struct Traits<HashMapObj<K, V>> {
+    static constexpr bool is_simple() { return false; }
+    static unsigned int hash(const HashMapObj<K, V>& obj) { return Traits<K>::hash(obj.m_key); };
+};
+
+template<Hashable K, typename V>
 class HashMap {
-#endif
 public:
-    explicit HashMap(int num_buckets = 20) : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(num_buckets)) {}
+    explicit HashMap(int num_buckets = 20) : m_set(num_buckets) {}
 
-    HashMap(const HashMap<K, V>& other) : m_buckets(Vector<LinkedList<HashMapObj<K, V>>>(other.m_buckets.capacity())) {
-        other.for_each_key([&](auto& key) {
-            this->put(key, *other.get(key));
-        });
-    }
+    void clear() { m_set.clear(); }
 
-    HashMap(HashMap<K, V>&& other) : m_buckets(other.m_buckets), m_size(other.size()) {
-        other.m_buckets.clear();
-        other.m_size = 0;
-    }
-
-    ~HashMap() {}
-
-    void clear() {
-        m_buckets.for_each([&](auto& l) {
-            l.clear();
-        });
-    }
-
-    HashMap<K, V>& operator=(const HashMap<K, V>& other) {
-        if (this != &other) {
-            HashMap<K, V> temp(other);
-            swap(temp);
-        }
-
-        return *this;
-    }
-
-    HashMap<K, V>& operator=(HashMap<K, V>&& other) {
-        if (this != &other) {
-            HashMap<K, V> temp(other);
-            swap(temp);
-        }
-
-        return *this;
-    }
-
-    void put(const K& key, const V& val) {
-        if (m_buckets.size() == 0) {
-            for (int i = 0; i < m_buckets.capacity(); i++) {
-                m_buckets.add(LinkedList<HashMapObj<K, V>>());
-            }
-        }
-
-        V* slot = get(key);
-        if (slot) {
-            slot->~V();
-            new (slot) V(val);
-            return;
-        }
-
-        int bucket = Traits<K>::hash(key) % m_buckets.size();
-        m_buckets[bucket].prepend(HashMapObj(key, val));
-        if (++m_size >= m_buckets.capacity() * 2) {
-            resize(m_buckets.capacity() * 4);
-        }
-    }
-
-    void put(const K& key, V&& val) {
-        if (m_buckets.size() == 0) {
-            for (int i = 0; i < m_buckets.capacity(); i++) {
-                m_buckets.add(LinkedList<HashMapObj<K, V>>());
-            }
-        }
-
-        V* slot = get(key);
-        if (slot) {
-            slot->~V();
-            new (slot) V(LIIM::move(val));
-            return;
-        }
-
-        int bucket = Traits<K>::hash(key) % m_buckets.size();
-        m_buckets[bucket].prepend(HashMapObj(key, move(val)));
-        if (++m_size >= m_buckets.capacity() * 2) {
-            resize(m_buckets.capacity() * 4);
-        }
-    }
+    void put(const K& key, const V& val) { m_set.put({ key, val }); }
+    void put(const K& key, V&& val) { m_set.put({ key, move(val) }); }
 
     V* get(const K& key) {
-        if (m_buckets.size() == 0) {
-            return nullptr;
+        auto* obj = m_set.get(key);
+        if (obj) {
+            return &obj->m_value;
         }
-
-        int bucket = Traits<K>::hash(key) % m_buckets.size();
-        V* val = nullptr;
-        m_buckets[bucket].for_each([&](auto& obj) {
-            if (obj.m_key == key) {
-                val = &obj.m_value;
-            }
-        });
-
-        return val;
+        return nullptr;
     }
-
-    const V* get(const K& key) const { return const_cast<HashMap<K, V>&>(*this).get(key); }
+    const V* get(const K& key) const {
+        auto* obj = m_set.get(key);
+        if (obj) {
+            return &obj->m_value;
+        }
+        return nullptr;
+    }
 
     V& get_or(const K& key, V& val) {
         V* res = get(key);
@@ -153,71 +64,36 @@ public:
         }
     }
 
-    void remove(const K& key) {
-        int bucket = Traits<K>::hash(key) % m_buckets.size();
-        m_buckets[bucket].remove_if([&](const auto& obj) -> bool {
-            return obj.m_key == key;
-        });
-        m_size--;
-    }
+    void remove(const K& key) { m_set.remove(key); }
 
     template<typename C>
     void for_each(C callback) const {
-        m_buckets.for_each([&](auto& list) {
-            list.for_each([&](auto& obj) {
-                callback(obj.m_value);
-            });
+        m_set.for_each([&](auto& obj) {
+            callback(obj.m_value);
         });
     }
 
     template<typename C>
     void for_each_key(C callback) const {
-        m_buckets.for_each([&](const auto& list) {
-            list.for_each([&](const auto& obj) {
-                callback(obj.m_key);
-            });
+        m_set.for_each([&](auto& obj) {
+            callback(obj.m_key);
         });
     }
 
-    int size() const { return m_size; }
+    int size() const { return m_set.size(); }
+    bool empty() const { return m_set.empty(); };
 
-    bool empty() const { return size() == 0; };
+    bool operator==(const HashMap<K, V>& other) const { return m_set == other.m_set; }
 
-    bool operator==(const HashMap<K, V>& other) const {
-        if (this->size() != other.size()) {
-            return false;
-        }
+    void resize(int new_capacity) { m_set.resize(new_capacity); }
 
-        bool equal = true;
-        this->for_each_key([&](auto& key) {
-            if (!other.get(key) || *this->get(key) != *other.get(key)) {
-                equal = false;
-            }
-        });
-        return equal;
-    }
-
-    void resize(int new_capacity) {
-        HashMap<K, V> temp(new_capacity);
-
-        for_each_key([&](const auto& key) {
-            temp.put(key, move(*get(key)));
-        });
-
-        swap(temp);
-    }
-
-    void swap(HashMap<K, V>& other) {
-        LIIM::swap(this->m_buckets, other.m_buckets);
-        LIIM::swap(this->m_size, other.m_size);
-    }
+    void swap(HashMap<K, V>& other) { LIIM::swap(this->m_set, other.m_set); }
 
 private:
-    Vector<LinkedList<HashMapObj<K, V>>> m_buckets;
-    int m_size { 0 };
+    HashSet<HashMapObj<K, V>> m_set;
 };
 
-template<typename K, typename V>
+template<Hashable K, typename V>
 void swap(HashMap<K, V>& a, HashMap<K, V> b) {
     a.swap(b);
 }

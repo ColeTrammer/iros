@@ -474,6 +474,13 @@ void swap(T& a, T& b) {
     b = move(temp);
 }
 
+template<typename T, typename U = T>
+constexpr T exchange(T& object, U&& new_value) {
+    auto temp = move(object);
+    object = forward<U>(new_value);
+    return temp;
+}
+
 template<typename T>
 constexpr const T& clamp(const T& t, const T& min, const T& max) {
     if (t < min) {
@@ -498,6 +505,7 @@ constexpr const T& min(const T& a, const T& b) {
 }
 
 using LIIM::clamp;
+using LIIM::exchange;
 using LIIM::forward;
 using LIIM::in_place_index;
 using LIIM::in_place_index_t;

@@ -56,6 +56,7 @@ struct Action {
     int number;
 
     bool operator==(const Action& other) const { return this->type == other.type && this->number == other.number; }
+    bool operator!=(const Action& other) const { return !(*this == other); }
 
     String stringify() const {
         switch (type) {

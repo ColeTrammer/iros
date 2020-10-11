@@ -210,10 +210,6 @@ void ExtendedGrammar::compute_follow_sets() {
 
             if (last_processed[i] == m_rules[i].components().size() - 1) {
             add_self:
-#ifdef FOLLOW_SET_DEBUG
-                fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
-                        self.stringify().string());
-#endif /* FOLLOW_SET_DEBUG */
                 if (!to_add.get(info)->includes(self) && info != self) {
                     to_add.get(info)->add(self);
                 }
@@ -232,10 +228,6 @@ void ExtendedGrammar::compute_follow_sets() {
                     (*m_follow_sets.get(info))->remove("__Empty");
                     continue;
                 }
-#ifdef FOLLOW_SET_DEBUG
-                fprintf(stderr, "%s [%d of %d] finished with %s\n", info.stringify().string(), *done.get(info), *rule_count.get(info),
-                        next.stringify().string());
-#endif /* FOLLOW_SET_DEBUG */
                 break;
             }
         }
