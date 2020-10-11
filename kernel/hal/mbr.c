@@ -20,6 +20,8 @@ void mbr_partition_device(struct block_device *block_device) {
     }
 
     debug_log("Drive has MBR: [ %lu ]\n", block_device->device->device_number);
+    block_device->info.disk_id = block_device_id_mbr(mbr->disk_signature);
+
     int ebr_index = -1;
     int i;
     for (i = 0; i < MBR_MAX_PARTITIONS; i++) {
@@ -51,7 +53,13 @@ void mbr_partition_device(struct block_device *block_device) {
 
         debug_log("MBR partition: [ %d, %u, %u, %u, %u ]\n", i + 1, partition->drive_attributes, partition->partition_type,
                   partition->lba_start, partition->sector_count);
-        create_and_register_partition_device(block_device, partition->sector_count, partition->lba_start, i + 1);
+        struct block_device_info info = {
+            .type = BLOCK_TYPE_PARTITION,
+            .disk_id = block_device->info.disk_id,
+            .partition_id = block_device_id_mbr(i + 1),
+            .filesystem_type_id = block_device_id_mbr(partition->partition_type),
+        };
+        create_and_register_partition_device(block_device, partition->sector_count, partition->lba_start, i + 1, info);
     }
 
     if (ebr_index != -1) {
@@ -84,7 +92,13 @@ void mbr_partition_device(struct block_device *block_device) {
                 goto done;
             }
 
-            create_and_register_partition_device(block_device, logical_lba_end - logical_lba_start, logical_lba_start, ++i);
+            struct block_device_info info = {
+                .type = BLOCK_TYPE_PARTITION,
+                .disk_id = block_device->info.disk_id,
+                .partition_id = block_device_id_mbr(++i),
+                .filesystem_type_id = block_device_id_mbr(logical_partition->partition_type),
+            };
+            create_and_register_partition_device(block_device, logical_lba_end - logical_lba_start, logical_lba_start, i, info);
             debug_log("MBR logical partition: [ %d, %u, %u, %lu, %lu ]\n", i, logical_partition->drive_attributes,
                       logical_partition->partition_type, logical_lba_start, logical_lba_end - logical_lba_start);
 

@@ -23,6 +23,7 @@ void gpt_partition_device(struct block_device *block_device) {
     uuid_to_string(gpt->disk_uuid, uuid_string, sizeof(uuid_string));
     debug_log("Drive has GPT: [ %s, %lu, %u, %u ]\n", uuid_string, gpt->partition_entry_start, gpt->parittion_entry_count,
               gpt->partition_entry_size);
+    block_device->info.disk_id = block_device_id_uuid(gpt->disk_uuid);
 
     if (PAGE_SIZE % gpt->partition_entry_size != 0) {
         debug_log("GPT partition size is wrong, should be 128 bytes\n");
@@ -52,8 +53,15 @@ void gpt_partition_device(struct block_device *block_device) {
             uuid_to_string(gpt_partition->type_uuid, uuid_type_string, sizeof(uuid_type_string));
             uuid_to_string(gpt_partition->partition_uuid, uuid_string, sizeof(uuid_string));
             debug_log("GPT partition: [ %s, %s, %lu, %lu ]\n", uuid_type_string, uuid_string, gpt_partition->start, gpt_partition->end);
+
+            struct block_device_info info = {
+                .type = BLOCK_TYPE_PARTITION,
+                .disk_id = block_device->info.disk_id,
+                .partition_id = block_device_id_uuid(gpt_partition->partition_uuid),
+                .filesystem_type_id = block_device_id_uuid(gpt_partition->type_uuid),
+            };
             create_and_register_partition_device(block_device, gpt_partition->end - gpt_partition->start + 1, gpt_partition->start,
-                                                 partition_number++);
+                                                 partition_number++, info);
         }
         offset += gpt->partition_entry_size;
     }

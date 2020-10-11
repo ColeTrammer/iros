@@ -23,6 +23,8 @@ static struct fs_device_ops block_device_ops = {
     .block_size = block_block_size,
 };
 
+static struct list_node block_devices = INIT_LIST(block_devices);
+
 HASH_DEFINE_FUNCTIONS(page, struct phys_page, off_t, block_offset)
 
 static struct phys_page *block_find_page(struct block_device *block_device, off_t block_offset) {
@@ -230,7 +232,8 @@ int block_generic_sync_page(struct block_device *self, struct phys_page *page) {
     return 0;
 }
 
-struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_size, struct block_device_ops *op, void *private_data) {
+struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_size, struct block_device_info info,
+                                         struct block_device_ops *op, void *private_data) {
     struct block_device *block_device = malloc(sizeof(struct block_device));
     block_device->block_count = block_count;
     block_device->block_size = block_size;
@@ -240,6 +243,7 @@ struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_s
     init_list(&block_device->lru_list);
     block_device->op = op;
     block_device->private_data = private_data;
+    block_device->info = info;
     return block_device;
 }
 
@@ -252,6 +256,7 @@ void block_register_device(struct block_device *block_device, dev_t device_numbe
     device->ops = &block_device_ops;
     device->private = block_device;
     block_device->device = device;
+    list_append(&block_devices, &block_device->list);
     dev_register(device);
 
     if (block_is_root_device(block_device)) {
@@ -294,4 +299,54 @@ static void do_block_trim_cache(struct hash_entry *_device, void *closure __attr
 void block_trim_cache(void) {
     debug_log("Trimming block cache\n");
     hash_for_each(dev_device_hash_map(), do_block_trim_cache, NULL);
+}
+
+struct list_node *block_device_list(void) {
+    return &block_devices;
+}
+
+int block_show_device(struct block_device *block_device, char *buffer, size_t _buffer_length) {
+    int position = 0;
+    int buffer_length = _buffer_length;
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "BLOCK_SIZE: %lu\n", block_device->block_size);
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "BLOCK_COUNT: %lu\n", block_device->block_count);
+    position +=
+        snprintf(buffer + position, MAX(buffer_length - position, 0), "TYPE: %s\n", block_device_type_to_string(block_device->info.type));
+
+    char aux_buffer[128];
+    block_show_device_id(block_device->info.disk_id, aux_buffer, sizeof(aux_buffer));
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "DISK_ID: %s\n", aux_buffer);
+    block_show_device_id(block_device->info.partition_id, aux_buffer, sizeof(aux_buffer));
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "PARTITION_ID: %s\n", aux_buffer);
+    block_show_device_id(block_device->info.filesystem_type_id, aux_buffer, sizeof(aux_buffer));
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "FS_TYPE_ID: %s\n", aux_buffer);
+    block_show_device_id(block_device->info.filesystem_id, aux_buffer, sizeof(aux_buffer));
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "FS_ID: %s\n", aux_buffer);
+
+    return position;
+}
+
+int block_show_device_id(struct block_device_id id, char *buffer, size_t buffer_length) {
+    switch (id.type) {
+        case BLOCK_ID_TYPE_MBR:
+            return snprintf(buffer, buffer_length, "[MBR] %#X", id.mbr_id);
+        case BLOCK_ID_TYPE_UUID: {
+            char uuid_buffer[UUID_STRING_MAX];
+            uuid_to_string(id.uuid, uuid_buffer, sizeof(uuid_buffer));
+            return snprintf(buffer, buffer_length, "[UUID] %s", uuid_buffer);
+        }
+        default:
+            return snprintf(buffer, buffer_length, "None");
+    }
+}
+
+const char *block_device_type_to_string(enum block_device_type type) {
+    switch (type) {
+        case BLOCK_TYPE_DISK:
+            return "Disk";
+        case BLOCK_TYPE_PARTITION:
+            return "Partition";
+        default:
+            return "Invalid";
+    }
 }

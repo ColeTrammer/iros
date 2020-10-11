@@ -455,7 +455,7 @@ static void ata_init_device(struct hw_device *parent, struct ata_port_info *info
         debug_log("found pic for ata (so will use dma): [ %#.8X ]\n", base);
     }
 
-    struct block_device *block_device = create_block_device(block_count, block_size, op, data);
+    struct block_device *block_device = create_block_device(block_count, block_size, block_device_info_none(BLOCK_TYPE_DISK), op, data);
     block_register_device(block_device, device_number);
 }
 

@@ -15,6 +15,7 @@
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/hal/block.h>
 #include <kernel/hal/hw_device.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
@@ -497,6 +498,18 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_devtree(struct procfs
     return buffer;
 }
 
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_blockdev(struct procfs_data *data __attribute__((unused)),
+                                                                    struct process *process __attribute__((unused)), bool need_buffer) {
+    struct procfs_buffer buffer = { .buffer = need_buffer ? malloc(PAGE_SIZE) : NULL, .size = 0 };
+    char aux_buffer[256];
+    block_for_each_device(block_device) {
+        block_show_device(block_device, aux_buffer, sizeof(aux_buffer));
+        buffer.size +=
+            snprintf(buffer.buffer ? buffer.buffer + buffer.size : NULL, buffer.buffer ? PAGE_SIZE - buffer.size : 0, "%s\n", aux_buffer);
+    }
+    return buffer;
+}
+
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_sched(struct procfs_data *data __attribute((unused)),
                                                                  struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
@@ -652,6 +665,10 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         data = devtree_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *blockdev_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_blockdev);
+        data = blockdev_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
         struct inode *sched_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_sched);
         data = self_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
@@ -672,6 +689,7 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         net_directory->dirent_cache = fs_create_dirent_cache();
 
         mutex_lock(&parent->lock);
+        fs_put_dirent_cache(parent->dirent_cache, blockdev_inode, "blockdev", strlen("blockdev"));
         fs_put_dirent_cache(parent->dirent_cache, cpus_inode, "cpus", strlen("cpus"));
         fs_put_dirent_cache(parent->dirent_cache, devtree_inode, "devtree", strlen("devtree"));
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));

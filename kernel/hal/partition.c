@@ -44,8 +44,8 @@ static struct block_device_ops partition_ops = {
 };
 
 struct block_device *create_and_register_partition_device(struct block_device *root_device, blkcnt_t block_count, off_t partition_offset,
-                                                          int partition_number) {
-    struct block_device *block_device = create_block_device(block_count, root_device->block_size, &partition_ops, root_device);
+                                                          int partition_number, struct block_device_info info) {
+    struct block_device *block_device = create_block_device(block_count, root_device->block_size, info, &partition_ops, root_device);
     block_device->partition_offset = partition_offset;
     block_device->partition_number = partition_number;
     block_register_device(block_device, root_device->device->device_number + partition_number);
