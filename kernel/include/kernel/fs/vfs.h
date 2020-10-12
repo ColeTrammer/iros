@@ -22,6 +22,20 @@ struct super_block;
 #define INAME_TAKE_OWNERSHIP_OF_PATH                  2
 #define INAME_CHECK_PERMISSIONS_WITH_REAL_UID_AND_GID 4
 
+enum fs_root_desc_type {
+    FS_ROOT_TYPE_FS_NAME,
+    FS_ROOT_TYPE_PARTITION_ID,
+    FS_ROOT_TYPE_FS_ID,
+};
+
+struct fs_root_desc {
+    enum fs_root_desc_type type;
+    union {
+        const char *fs_name;
+        struct block_device_id id;
+    };
+};
+
 struct inode *bump_inode_reference(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
 int iname(const char *path, int flags, struct tnode **result);
@@ -96,6 +110,9 @@ bool fs_can_write_inode(struct inode *inode);
 bool fs_can_execute_inode(struct inode *inode);
 
 void load_fs(struct file_system *fs);
+int fs_mount_initrd(void);
+int fs_mount_root(struct fs_root_desc desc);
+struct file_system *fs_file_system_from_name(const char *s);
 
 size_t fs_file_size(struct file *file);
 char *get_tnode_path(struct tnode *tnode);

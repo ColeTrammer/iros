@@ -21,4 +21,13 @@ struct file_system {
 
 int fs_show_file_system(struct file_system *fs, char *buffer, size_t buffer_length);
 
+static inline bool fs_id_matches_file_system(struct block_device_id id, struct file_system *fs) {
+    for (size_t i = 0; i < fs->id_count; i++) {
+        if (block_device_id_equals(fs->id_table[i], id)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 #endif /* _KERNEL_FS_FILE_SYSTEM_H */

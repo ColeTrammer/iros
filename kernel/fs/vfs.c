@@ -2281,3 +2281,84 @@ int fs_show_file_system(struct file_system *fs, char *buffer, size_t _buffer_len
 
     return position;
 }
+
+struct file_system *fs_file_system_from_name(const char *name) {
+    fs_for_each_file_system(fs) {
+        if (!strcmp(fs->name, name)) {
+            return fs;
+        }
+    }
+    return NULL;
+}
+
+int fs_mount_initrd(void) {
+    int ret = fs_mount(NULL, "/", "initrd");
+    if (ret) {
+        debug_log("Fatal Error: Cannot mount initrd: [ %s ]\n", strerror(-ret));
+    }
+    return ret;
+}
+
+int fs_mount_root(struct fs_root_desc desc) {
+    struct block_device *device = NULL;
+    struct file_system *fs = NULL;
+    switch (desc.type) {
+        case FS_ROOT_TYPE_FS_NAME: {
+            fs = fs_file_system_from_name(desc.fs_name);
+            if (!fs) {
+                debug_log("Fatal Error: Cannot find root file system type: [ %s ]\n", desc.fs_name);
+                return -ENODEV;
+            }
+            block_for_each_device(iter) {
+                if (fs_id_matches_file_system(iter->info.filesystem_type_id, fs)) {
+                    device = iter;
+                    break;
+                }
+            }
+            break;
+        }
+        case FS_ROOT_TYPE_PARTITION_ID: {
+            block_for_each_device(iter) {
+                if (block_device_id_equals(iter->info.partition_id, desc.id)) {
+                    device = iter;
+                    break;
+                }
+            }
+            break;
+        }
+        case FS_ROOT_TYPE_FS_ID: {
+            block_for_each_device(iter) {
+                if (block_device_id_equals(iter->info.filesystem_id, desc.id)) {
+                    device = iter;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+
+    if (!device) {
+        debug_log("Fatal Error: Could not find root device\n");
+        return -ENODEV;
+    }
+
+    if (fs) {
+        int ret = fs_mount(device->device, "/", fs->name);
+        if (ret) {
+            debug_log("Fatal Error: Cannot mount root file system: [ %s ]\n", strerror(-ret));
+        }
+        return ret;
+    }
+
+    fs_for_each_file_system(iter) {
+        if (fs_id_matches_file_system(device->info.filesystem_type_id, iter)) {
+            int ret = fs_mount(device->device, "/", iter->name);
+            if (!ret) {
+                return 0;
+            }
+        }
+    }
+
+    debug_log("Fatal Error: Cannot mount root file system\n");
+    return -EIO;
+}

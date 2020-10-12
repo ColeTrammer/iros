@@ -32,11 +32,7 @@ void kernel_main(uint32_t *multiboot_info) {
 
     enable_interrupts();
     INIT_DO_LEVEL(fs);
-
-    /* Mount INITRD as root */
-    int error = fs_mount(NULL, "/", "initrd");
-    assert(error == 0);
-
+    assert(!fs_mount_initrd());
     INIT_DO_LEVEL(driver);
     enumerate_devices();
     INIT_DO_LEVEL(time);
@@ -46,29 +42,20 @@ void kernel_main(uint32_t *multiboot_info) {
     INIT_DO_LEVEL(net);
     init_disk_sync_task();
 
-    /* Mount sda1 at / */
-    struct fs_device *sda1 = dev_get_device(0x00501);
-    assert(sda1);
-    error = 0;
-    error = fs_mount(sda1, "/", "ext2");
-    assert(error == 0);
-    dev_drop_device(sda1);
+    struct fs_root_desc root_desc = {
+        .type = FS_ROOT_TYPE_FS_NAME,
+        .fs_name = "ext2",
+    };
+    assert(!fs_mount_root(root_desc));
 
     // NOTE: if we put these symbols on the initrd instead of in /boot/os_2.o, thse symbols
     //       could be loaded sooner
     init_kernel_symbols();
     init_smp();
 
-    // Mount procfs at /proc
-    error = fs_mount(NULL, "/proc", "procfs");
-    assert(error == 0);
+    assert(!fs_mount(NULL, "/proc", "procfs"));
+    assert(!fs_mount(NULL, "/tmp", "tmpfs"));
+    assert(!fs_mount(NULL, "/dev/shm", "tmpfs"));
 
-    // Mount tmpfs at /tmp
-    error = fs_mount(NULL, "/tmp", "tmpfs");
-    assert(error == 0);
-
-    // Mount tmpfs at /dev/shm
-    error = fs_mount(NULL, "/dev/shm", "tmpfs");
-    assert(error == 0);
     start_userland();
 }
