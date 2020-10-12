@@ -705,11 +705,6 @@ struct inode *procfs_mount(struct file_system *current_fs, struct fs_device *dev
     assert(current_fs != NULL);
     assert(!device);
 
-    root = procfs_create_inode(PROCFS_DIRECTORY_MODE, 0, 0, NULL, procfs_create_base_directory_structure);
-    root->dirent_cache = fs_create_dirent_cache();
-    struct procfs_data *root_data = root->private_data;
-    PROCFS_MAKE_DYNAMIC(root_data);
-
     super_block.fsid = root->fsid;
     super_block.op = NULL;
     super_block.root = root;
@@ -720,6 +715,11 @@ struct inode *procfs_mount(struct file_system *current_fs, struct fs_device *dev
 }
 
 static void init_procfs() {
+    root = procfs_create_inode(PROCFS_DIRECTORY_MODE, 0, 0, NULL, procfs_create_base_directory_structure);
+    root->dirent_cache = fs_create_dirent_cache();
+    struct procfs_data *root_data = root->private_data;
+    PROCFS_MAKE_DYNAMIC(root_data);
+
     load_fs(&fs);
 }
 INIT_FUNCTION(init_procfs, fs);

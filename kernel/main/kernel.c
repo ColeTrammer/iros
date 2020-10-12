@@ -32,26 +32,19 @@ void kernel_main(uint32_t *multiboot_info) {
 
     enable_interrupts();
     INIT_DO_LEVEL(fs);
-    INIT_DO_LEVEL(driver);
-    enumerate_devices();
-    INIT_DO_LEVEL(time);
 
     /* Mount INITRD as root */
     int error = fs_mount(NULL, "/", "initrd");
     assert(error == 0);
 
-    // FIXME: make procfs_register_process work even when the procfs isn't mounted, so that this can be mounted later (and in userspace).
-    error = fs_mount(NULL, "/proc", "procfs");
-    assert(error == 0);
+    INIT_DO_LEVEL(driver);
+    enumerate_devices();
+    INIT_DO_LEVEL(time);
 
     init_task_sched();
     init_task_finalizer();
     INIT_DO_LEVEL(net);
     init_disk_sync_task();
-
-    // Mount tmpfs at /tmp
-    error = fs_mount(NULL, "/tmp", "tmpfs");
-    assert(error == 0);
 
     /* Mount sda1 at / */
     struct fs_device *sda1 = dev_get_device(0x00501);
@@ -61,17 +54,21 @@ void kernel_main(uint32_t *multiboot_info) {
     assert(error == 0);
     dev_drop_device(sda1);
 
-    // Mount tmpfs at /dev/shm
-    error = fs_mount(NULL, "/dev/shm", "tmpfs");
-    assert(error == 0);
-
     // NOTE: if we put these symbols on the initrd instead of in /boot/os_2.o, thse symbols
     //       could be loaded sooner
     init_kernel_symbols();
-
     init_smp();
-    start_userland();
 
-    while (1)
-        ;
+    // Mount procfs at /proc
+    error = fs_mount(NULL, "/proc", "procfs");
+    assert(error == 0);
+
+    // Mount tmpfs at /tmp
+    error = fs_mount(NULL, "/tmp", "tmpfs");
+    assert(error == 0);
+
+    // Mount tmpfs at /dev/shm
+    error = fs_mount(NULL, "/dev/shm", "tmpfs");
+    assert(error == 0);
+    start_userland();
 }
