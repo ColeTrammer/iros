@@ -67,10 +67,6 @@ void drop_inode_reference(struct inode *inode) {
             inode->i_op->on_inode_destruction(inode);
         }
 
-        if (inode->device) {
-            dev_drop_device(inode->device);
-        }
-
         if (inode->dirent_cache) {
             fs_destroy_dirent_cache(inode->dirent_cache);
         }
@@ -572,12 +568,7 @@ struct file *fs_openat(struct tnode *base, const char *file_name, int flags, mod
 
     struct file *file = NULL;
     if (tnode->inode->flags & FS_DEVICE) {
-        if (!tnode->inode->device) {
-            // This means the inode corresponds to a bogus device number
-            *error = -ENXIO;
-        } else {
-            file = dev_open(tnode->inode, flags, error);
-        }
+        file = dev_open(tnode->inode, flags, error);
     } else if (tnode->inode->flags & FS_FIFO) {
         file = pipe_open(tnode->inode, flags, error);
     } else {
@@ -906,13 +897,6 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
         inode->i_op->lookup(inode, NULL);
     }
 
-    if (inode->i_op->stat) {
-        int ret = inode->i_op->stat(inode, stat_struct);
-        if (ret < 0) {
-            return ret;
-        }
-    }
-
     stat_struct->st_dev = inode->fsid;
     stat_struct->st_rdev = inode->device_id;
     stat_struct->st_ino = inode->index;
@@ -925,15 +909,19 @@ static int do_stat(struct inode *inode, struct stat *stat_struct) {
     stat_struct->st_mtim = inode->change_time;
 
     // There's no super block for some generated inode, like dynamic master/slave pseudo terminals
-    if (inode->device && (inode->device->type == S_IFBLK)) {
-        stat_struct->st_blksize = dev_block_size(inode->device);
-        stat_struct->st_blocks = dev_block_count(inode->device);
-    } else if (inode->super_block) {
+    if (inode->super_block) {
         stat_struct->st_blksize = inode->super_block->block_size;
         stat_struct->st_blocks = (inode->size + inode->super_block->block_size - 1) / inode->super_block->block_size;
     } else {
         stat_struct->st_blksize = PAGE_SIZE;
         stat_struct->st_blocks = 0;
+    }
+
+    if (inode->i_op->stat) {
+        int ret = inode->i_op->stat(inode, stat_struct);
+        if (ret < 0) {
+            return ret;
+        }
     }
 
     return 0;
@@ -997,7 +985,7 @@ int fs_ioctl(struct file_descriptor *desc, unsigned long request, void *argp) {
     }
 
     if (inode->flags & FS_DEVICE) {
-        return dev_ioctl(inode, request, argp);
+        return dev_ioctl(desc->file, request, argp);
     }
 
     if (inode->i_op->ioctl) {
@@ -1496,10 +1484,9 @@ intptr_t fs_mmap(void *addr, size_t len, int prot, int flags, struct file *file,
 
     struct inode *inode = fs_file_inode(file);
     assert(inode);
-
     if (inode->flags & FS_DEVICE) {
         bump_inode_reference(inode);
-        return dev_mmap(addr, len, prot, flags, inode, offset);
+        return dev_mmap(addr, len, prot, flags, file, offset);
     }
 
     if (inode->i_op->mmap) {
@@ -2123,21 +2110,6 @@ int fs_bind_socket_to_inode(struct inode *inode, struct socket *socket) {
     return 0;
 }
 
-// NOTE: this function should be called by file systems that support devices (ext2), to
-//       direct all future interaction with the file to a device.
-int fs_bind_device_to_inode(struct inode *inode, dev_t device_number) {
-    inode->device_id = device_number;
-
-    struct fs_device *device = dev_get_device(device_number);
-    if (!device) {
-        debug_log("Failed to find device with id: [ %lu ]\n", device_number);
-        return -EINVAL;
-    }
-
-    inode->device = device;
-    return 0;
-}
-
 struct file_descriptor fs_dup(struct file_descriptor desc) {
     if (desc.file == NULL) {
         return (struct file_descriptor) { NULL, 0 };
@@ -2206,7 +2178,7 @@ bool fs_is_readable(struct file *file) {
     assert(inode);
 
     if (file->flags & FS_DEVICE) {
-        struct fs_device *device = inode->device;
+        struct fs_device *device = file->private_data;
         assert(device);
 
         return device->readable;
@@ -2227,7 +2199,7 @@ bool fs_is_writable(struct file *file) {
     assert(inode);
 
     if (file->flags & FS_DEVICE) {
-        struct fs_device *device = inode->device;
+        struct fs_device *device = file->private_data;
         assert(device);
 
         return device->writeable;
@@ -2248,7 +2220,7 @@ bool fs_is_exceptional(struct file *file) {
     assert(inode);
 
     if (file->flags & FS_DEVICE) {
-        struct fs_device *device = inode->device;
+        struct fs_device *device = file->private_data;
         assert(device);
 
         return device->exceptional;

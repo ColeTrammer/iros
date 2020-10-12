@@ -98,10 +98,7 @@ struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, de
         return NULL;
     }
 
-    if (inode->flags & FS_DEVICE) {
-        fs_bind_device_to_inode(inode, device);
-    }
-
+    inode->device_id = device;
     tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
     return inode;
 }

@@ -70,9 +70,6 @@ struct inode {
     // Device id associated with the file
     dev_t device_id;
 
-    // Null if the inode is not a device or the device does not exist
-    struct fs_device *device;
-
     // Only present for FIFO inodes that are currently opened.
     struct pipe_data *pipe_data;
 

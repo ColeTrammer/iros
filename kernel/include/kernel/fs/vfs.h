@@ -95,7 +95,6 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc);
 ssize_t fs_do_read(char *buf, off_t offset, size_t n, const char *source, size_t source_max);
 
 int fs_bind_socket_to_inode(struct inode *inode, struct socket *socket);
-int fs_bind_device_to_inode(struct inode *inode, dev_t device);
 
 bool fs_is_readable(struct file *file);
 bool fs_is_writable(struct file *file);

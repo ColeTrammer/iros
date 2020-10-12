@@ -736,14 +736,14 @@ static struct file *ptmx_open(struct fs_device *device, int flags, int *error) {
 
             struct inode *master_inode = fs_create_inode_without_sb(tnode->inode->fsid, i, get_current_task()->process->euid,
                                                                     get_current_task()->process->egid, S_IFCHR | 0777, 0, &empty_ops, NULL);
-            fs_bind_device_to_inode(master_inode, master->device_number);
+            master_inode->device_id = master->device_number;
 
             char slave_name[16];
             size_t slave_length = snprintf(slave_name, sizeof(slave_name) - 1, "tty%d", i);
 
             struct inode *slave_inode = fs_create_inode_without_sb(tnode->inode->fsid, PTMX_MAX + i, get_current_task()->process->euid,
                                                                    get_current_task()->process->egid, S_IFCHR | 0777, 0, &empty_ops, NULL);
-            fs_bind_device_to_inode(slave_inode, slaves[i]->device_number);
+            slave_inode->device_id = slaves[i]->device_number;
 
             fs_put_dirent_cache(tnode->inode->dirent_cache, master_inode, master_name, master_length);
             fs_put_dirent_cache(tnode->inode->dirent_cache, slave_inode, slave_name, slave_length);

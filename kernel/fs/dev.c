@@ -86,20 +86,12 @@ struct inode *dev_lookup(struct inode *inode, const char *name) {
     return fs_lookup_in_cache(inode->dirent_cache, name);
 }
 
-int dev_read_all(struct inode *inode, void *buf) {
-    struct fs_device *device = inode->device;
-    assert(device);
-
-    if (device->ops->read_all) {
-        return device->ops->read_all(device, buf);
-    }
-
-    return -EOPNOTSUPP;
-}
-
 struct file *dev_open(struct inode *inode, int flags, int *error) {
-    struct fs_device *device = inode->device;
-    assert(device);
+    struct fs_device *device = dev_get_device(inode->device_id);
+    if (!device) {
+        *error = -ENXIO;
+        return NULL;
+    }
 
     if (device->cannot_open) {
         *error = -EPERM;
@@ -110,7 +102,8 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
         return device->ops->open(device, flags, error);
     }
 
-    struct file *file = fs_create_file(inode, inode->flags, !S_ISBLK(device->type) ? FS_FILE_CANT_SEEK : 0, flags, &dev_f_op, NULL);
+    struct file *file =
+        fs_create_file(inode, inode->flags, !S_ISBLK(device->type) ? FS_FILE_CANT_SEEK : 0, flags, &dev_f_op, dev_bump_device(device));
     if (device->ops->on_open) {
         device->ops->on_open(device);
     }
@@ -119,10 +112,7 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
 }
 
 int dev_close(struct file *file) {
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    struct fs_device *device = inode->device;
+    struct fs_device *device = file->private_data;
     assert(device);
 
     int error = 0;
@@ -130,46 +120,34 @@ int dev_close(struct file *file) {
         error = device->ops->close(device);
     }
 
+    dev_drop_device(device);
     return error;
 }
 
 ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len) {
-    if (file->flags & FS_DIR) {
-        return -EISDIR;
-    }
-
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    struct fs_device *device = inode->device;
+    struct fs_device *device = file->private_data;
     assert(device);
 
     if (device->ops->read) {
-        inode->access_time = time_read_clock(CLOCK_REALTIME);
         return device->ops->read(device, offset, buffer, len, !!(file->open_flags & O_NONBLOCK));
     }
 
-    debug_log("???: [ %#.16lX ]\n", device->device_number);
     return -EINVAL;
 }
 
 ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t len) {
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    struct fs_device *device = inode->device;
+    struct fs_device *device = file->private_data;
     assert(device);
 
     if (device->ops->write) {
-        inode->modify_time = time_read_clock(CLOCK_REALTIME);
         return device->ops->write(device, offset, buffer, len, !!(file->open_flags & O_NONBLOCK));
     }
 
     return -EINVAL;
 }
 
-int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
-    struct fs_device *device = inode->device;
+int dev_ioctl(struct file *file, unsigned long request, void *argp) {
+    struct fs_device *device = file->private_data;
     assert(device);
 
     if (device->ops->ioctl) {
@@ -179,8 +157,8 @@ int dev_ioctl(struct inode *inode, unsigned long request, void *argp) {
     return -ENOTTY;
 }
 
-intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset) {
-    struct fs_device *device = inode->device;
+intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset) {
+    struct fs_device *device = file->private_data;
     assert(device);
 
     if (device->ops->mmap) {
