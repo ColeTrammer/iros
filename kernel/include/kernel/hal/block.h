@@ -42,6 +42,10 @@ static inline struct block_device_id block_device_id_uuid(struct uuid uuid) {
     return (struct block_device_id) { .type = BLOCK_ID_TYPE_UUID, .uuid = uuid };
 }
 
+static inline bool block_device_id_equals(struct block_device_id a, struct block_device_id b) {
+    return memcmp(&a, &b, sizeof(a)) == 0;
+}
+
 struct block_device_info {
     enum block_device_type type;
     struct block_device_id disk_id;

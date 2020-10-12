@@ -1,4 +1,5 @@
 #include <kernel/fs/dev.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/hal/block.h>
 #include <kernel/hal/mbr.h>
 #include <kernel/hal/partition.h>
@@ -49,6 +50,20 @@ struct block_device *create_and_register_partition_device(struct block_device *r
     block_device->partition_offset = partition_offset;
     block_device->partition_number = partition_number;
     block_register_device(block_device, root_device->device->device_number + partition_number);
+
+    mutex_unlock(&root_device->device->lock);
+    fs_for_each_file_system(fs) {
+        for (size_t i = 0; i < fs->id_count; i++) {
+            if (block_device_id_equals(fs->id_table[i], info.filesystem_type_id)) {
+                if (!fs->determine_fsid(fs, block_device, &block_device->info.filesystem_id)) {
+                    goto done;
+                }
+            }
+        }
+    }
+
+done:
+    mutex_lock(&root_device->device->lock);
     return block_device;
 }
 
