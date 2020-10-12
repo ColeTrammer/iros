@@ -19,4 +19,6 @@ struct file_system {
     size_t id_count;
 };
 
+int fs_show_file_system(struct file_system *fs, char *buffer, size_t buffer_length);
+
 #endif /* _KERNEL_FS_FILE_SYSTEM_H */

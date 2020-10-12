@@ -2267,3 +2267,17 @@ ssize_t fs_do_read(char *buf, off_t offset, size_t n, const char *source, size_t
     memcpy(buf, source + offset, to_read);
     return to_read;
 }
+
+int fs_show_file_system(struct file_system *fs, char *buffer, size_t _buffer_length) {
+    int position = 0;
+    int buffer_length = _buffer_length;
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "NAME: %s\n", fs->name);
+
+    char aux_buffer[128];
+    for (size_t i = 0; i < fs->id_count; i++) {
+        block_show_device_id(fs->id_table[i], aux_buffer, sizeof(aux_buffer));
+        position += snprintf(buffer + position, MAX(buffer_length - position, 0), "ID[%lu]: %s\n", i, aux_buffer);
+    }
+
+    return position;
+}
