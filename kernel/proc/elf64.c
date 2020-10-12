@@ -59,8 +59,6 @@ void init_kernel_symbols(void) {
         debug_log("failed to load kernel symbols\n");
         free(kernel_buffer);
         kernel_buffer = NULL;
-    } else {
-        debug_log("successfully loaded kernel symbols\n");
     }
 }
 

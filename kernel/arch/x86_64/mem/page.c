@@ -304,7 +304,6 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
 }
 
 void create_phys_id_map() {
-    debug_log("Mapping physical address identity map: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
     uintptr_t stride = 2 * 1024 * 1024;
     if (cpu_supports_1gb_pages()) {
         stride *= 512;

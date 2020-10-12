@@ -93,7 +93,6 @@ static void init_vmmouse(void) {
         return;
     }
 
-    debug_log("initializing vmmouse\n");
     enable_vmmouse();
 }
 
@@ -108,7 +107,6 @@ static void detect_vmware_back_door(struct hw_device *parent) {
         return;
     }
 
-    debug_log("initializing vmware back door\n");
     struct hw_device *device = create_hw_device("VMWare Backdoor", parent, hw_device_id_isa(), NULL);
     device->status = HW_STATUS_ACTIVE;
     init_vmmouse();

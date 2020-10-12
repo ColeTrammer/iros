@@ -109,7 +109,7 @@ bool fs_can_read_inode(struct inode *inode);
 bool fs_can_write_inode(struct inode *inode);
 bool fs_can_execute_inode(struct inode *inode);
 
-void load_fs(struct file_system *fs);
+void register_fs(struct file_system *fs);
 int fs_mount_initrd(void);
 int fs_mount_root(struct fs_root_desc desc);
 struct file_system *fs_file_system_from_name(const char *s);

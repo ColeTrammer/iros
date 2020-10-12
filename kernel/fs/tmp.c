@@ -331,6 +331,6 @@ struct super_block *tmp_mount(struct file_system *current_fs, struct fs_device *
 }
 
 static void init_tmpfs() {
-    load_fs(&fs);
+    register_fs(&fs);
 }
 INIT_FUNCTION(init_tmpfs, fs);

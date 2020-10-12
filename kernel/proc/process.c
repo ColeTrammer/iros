@@ -664,7 +664,6 @@ int proc_setpriority(int which, id_t who, int value) {
 }
 
 void init_processes() {
-    debug_log("Initializing processes\n");
     map = hash_create_hash_map(process_hash, process_equals, process_key);
     assert(map);
     proc_add_process(&initial_kernel_process);

@@ -747,6 +747,6 @@ static void init_procfs() {
     struct procfs_data *root_data = root->private_data;
     PROCFS_MAKE_DYNAMIC(root_data);
 
-    load_fs(&fs);
+    register_fs(&fs);
 }
 INIT_FUNCTION(init_procfs, fs);

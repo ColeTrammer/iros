@@ -93,8 +93,6 @@ void vga_disable_cursor() {
 
 void update_vga_buffer() {
     vga_buffer = create_phys_addr_mapping(VGA_PHYS_ADDR);
-    debug_log("VGA Buffer Updated: [ %#.16lX ]\n", (uintptr_t) vga_buffer);
-
     vga_enable_cursor();
 }
 

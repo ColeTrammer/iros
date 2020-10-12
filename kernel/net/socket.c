@@ -458,6 +458,6 @@ struct list_node *net_get_protocol_list(void) {
 }
 
 void net_register_protocol(struct socket_protocol *protocol) {
+    debug_log("Registering socket protocol: [ %s ]\n", protocol->name);
     list_append(&protocol_list, &protocol->list);
-    debug_log("Registered socket protocol: [ %s ]\n", protocol->name);
 }

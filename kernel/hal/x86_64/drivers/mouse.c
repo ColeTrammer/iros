@@ -154,7 +154,6 @@ static void mouse_create(struct ps2_controller *controller, struct ps2_port *por
     controller->read_byte(&mouse_id);
     controller->read_byte(&scratch);
     controller->read_byte(&scratch);
-    debug_log("Mouse id: [ %u ]\n", mouse_id);
 
     data->has_scroll_wheel = mouse_id == 3;
     controller->send_command(PS2_DEVICE_COMMAND_ENABLE_SCANNING, port->port_number);

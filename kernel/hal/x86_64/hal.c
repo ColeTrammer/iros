@@ -47,8 +47,6 @@ void init_hal(void) {
 
     // Read cmos now so that kernel time is initialized ASAP
     init_cmos();
-
-    debug_log("Finished Initializing HAL\n");
 }
 
 void init_cpus(void) {

@@ -294,6 +294,4 @@ void init_irq_handlers() {
     register_irq_handler(&handle_security_exception_irq, 30);
 
     register_irq_handler(&sys_call_irq, 128);
-
-    debug_log("Finished Initializing Handlers\n");
 }

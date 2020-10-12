@@ -1867,6 +1867,6 @@ struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device 
 }
 
 static void init_ext2() {
-    load_fs(&fs);
+    register_fs(&fs);
 }
 INIT_FUNCTION(init_ext2, fs);

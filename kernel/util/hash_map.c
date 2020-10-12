@@ -5,7 +5,7 @@
 #include <kernel/util/hash_map.h>
 #include <kernel/util/spinlock.h>
 
-#define HASH_MAP_RESIZE_DEBUG
+// #define HASH_MAP_RESIZE_DEBUG
 
 static void __hash_resize_if_needed(struct hash_map *map) {
     if (map->size > 4 * map->num_buckets) {

@@ -254,7 +254,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
 
     arch_load_kernel_task(task, entry);
 
-    debug_log("Loaded Kernel Task: [ %d ]\n", task->process->pid);
+    debug_log("Loaded Kernel Task: [ %s ]\n", process->name);
     return task;
 }
 

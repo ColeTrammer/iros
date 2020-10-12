@@ -129,6 +129,6 @@ struct super_block *initrd_mount(struct file_system *current_fs, struct fs_devic
 }
 
 static void init_initrd() {
-    load_fs(&fs);
+    register_fs(&fs);
 }
 INIT_FUNCTION(init_initrd, fs);

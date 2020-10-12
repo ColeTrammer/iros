@@ -891,10 +891,10 @@ size_t fs_file_size(struct file *file) {
     return inode->size;
 }
 
-void load_fs(struct file_system *fs) {
+void register_fs(struct file_system *fs) {
     assert(fs);
 
-    debug_log("Loading fs: [ %s ]\n", fs->name);
+    debug_log("Registering file system: [ %s ]\n", fs->name);
     list_append(&file_systems, &fs->list);
 }
 

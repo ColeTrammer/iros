@@ -95,7 +95,6 @@ void init_vm_allocator(void) {
     }
 
     idle_kernel_process.process_memory = kernel_vm_list;
-    debug_log("Finished Initializing VM Allocator\n");
 }
 
 void dump_kernel_regions(uintptr_t addr) {
