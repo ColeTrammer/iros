@@ -1,6 +1,7 @@
 # Kernel
 
 # arch
+
 This directory contains all the architecture specific code
 Currently, this includes parsing sys call input, handling
 irqs, save context state, using virtual memory, and the
@@ -11,9 +12,10 @@ to be added very easily. Other achitectures would be much
 more difficult.
 
 # fs
+
 This directory contains all code related to the file
 system. The general segments are the inode_start.c, which
-is a hash map that stores inodes by device and ino_t, 
+is a hash map that stores inodes by device and ino_t,
 tnode.c, which provides methods for dealing with tnodes
 (store name of an inode in list form (the list is the directory)),
 and vfs.c, which is the generic virtual file system implementation.
@@ -30,6 +32,7 @@ upgraded to have more advanced features in later revisions of the file
 system.
 
 # hal
+
 The hardware abstraction layer provides device drivers and a
 kernel level abstraction over different devices. This includes
 the code for generic devices (like /dev/null and /dev/zero (/dev/random
@@ -47,10 +50,12 @@ APIC is probably the most important, but USB support is also
 important.
 
 # main
+
 This contains one source file, kernel.c which does initialization
 of the system and not much else.
 
 # mem
+
 Subsystem for dealing with memory allocation. The most robust and
 functional part of this code is the page frame allocator, which
 keeps track of physical pages being used in a large bitmap.
@@ -61,6 +66,7 @@ of the process address space, but there's no way to add things
 once a program is already loaded (that's the main idea).
 
 # net
+
 The network implementation. Supports AF_UNIX and AF_INET. AF_UNIX
 only works with SOCK_STREAM, but why would anyone use SOCK_DATAGRAM
 anyway, right... Anyway, the inet code supports raw sockets (at
@@ -74,6 +80,7 @@ congestion control in TCP which makes clients wait like 100-500ms
 before sending anything.
 
 # proc
+
 Code for dealing with tasks and processes. Supports loading
 elf64 execuatables and performing some form of a simple stack
 trace (it just reads everything on the stack, it doesn't read
@@ -96,12 +103,14 @@ tasks properly share process information (although this may
 lead to various concurrency issues).
 
 # sched
+
 This is the basic scheduler implemention. It is the simplest possible
 method, a round robin queue with no priority levels at all. Also, it
 runs the idle task in this queue instead of only when no threads
 are asleep, which is inefficent. It also dispatches signals.
 
 # util
+
 This has general code necessary for the kernel to function. There
 is currently only two things in here: spinlock and hash_map, both
 of which are crucial for the code. Spinlocks should definately be
