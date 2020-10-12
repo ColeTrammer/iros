@@ -176,7 +176,8 @@ struct inode *ext2_mkdir(struct tnode *tparent, const char *name, mode_t mode, i
 struct inode *ext2_mknod(struct tnode *tparent, const char *name, mode_t mode, dev_t device, int *error);
 int ext2_unlink(struct tnode *tnode);
 int ext2_rmdir(struct tnode *tnode);
-struct inode *ext2_mount(struct file_system *fs, struct fs_device *device);
+struct super_block *ext2_mount(struct file_system *fs, struct fs_device *device);
+int ext2_determine_fsid(struct file_system *fs, struct block_device *block_device, struct block_device_id *result);
 int ext2_chmod(struct inode *inode, mode_t mode);
 int ext2_chown(struct inode *inode, uid_t uid, gid_t gid);
 int ext2_utimes(struct inode *inode, const struct timespec *times);

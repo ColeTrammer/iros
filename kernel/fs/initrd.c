@@ -100,7 +100,8 @@ int initrd_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
-struct inode *initrd_mount(struct file_system *current_fs, struct fs_device *device) {
+struct super_block *initrd_mount(struct file_system *current_fs, struct fs_device *device) {
+    (void) current_fs;
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
     assert(!device);
@@ -116,7 +117,6 @@ struct inode *initrd_mount(struct file_system *current_fs, struct fs_device *dev
     struct inode *root =
         fs_create_inode(&super_block, inode_count++, 0, 0, S_IFDIR | 0777, initrd->end - initrd->start, &initrd_dir_i_op, NULL);
 
-    current_fs->super_block = &super_block;
     super_block.root = root;
 
     struct initrd_file_entry *entry = file_list;
@@ -125,7 +125,7 @@ struct inode *initrd_mount(struct file_system *current_fs, struct fs_device *dev
         fs_put_dirent_cache(root->dirent_cache, inode, entry[i].name, strlen(entry[i].name));
     }
 
-    return root;
+    return &super_block;
 }
 
 static void init_initrd() {

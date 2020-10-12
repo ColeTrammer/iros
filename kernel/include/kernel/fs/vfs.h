@@ -70,6 +70,7 @@ int fs_utimensat(struct tnode *base, const char *path, const struct timespec *ti
 int fs_fstatvfs(struct file *file, struct statvfs *buf);
 int fs_statvfs(const char *path, struct statvfs *buf);
 int fs_mount(struct fs_device *device, const char *path, const char *type);
+struct list_node *fs_file_system_list(void);
 
 intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 
@@ -122,5 +123,7 @@ static inline int fs_mode_to_flags(mode_t mode) {
 static inline struct inode *fs_file_inode(struct file *file) {
     return file->inode;
 }
+
+#define fs_for_each_file_system(name) list_for_each_entry(fs_file_system_list(), name, struct file_system, list)
 
 #endif /* _KERNEL_FS_VFS_H */

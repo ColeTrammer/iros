@@ -29,7 +29,7 @@ struct inode *procfs_lookup(struct inode *inode, const char *name);
 struct file *procfs_open(struct inode *inode, int flags, int *error);
 int procfs_read_all(struct inode *inode, void *buffer);
 ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len);
-struct inode *procfs_mount(struct file_system *fs, struct fs_device *device);
+struct super_block *procfs_mount(struct file_system *fs, struct fs_device *device);
 
 void procfs_register_process(struct process *process);
 void procfs_unregister_process(struct process *process);

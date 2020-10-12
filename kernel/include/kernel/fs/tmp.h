@@ -17,7 +17,7 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
 int tmp_unlink(struct tnode *tnode);
 int tmp_rmdir(struct tnode *tnode);
 intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
-struct inode *tmp_mount(struct file_system *fs, struct fs_device *device);
+struct super_block *tmp_mount(struct file_system *fs, struct fs_device *device);
 int tmp_chmod(struct inode *inode, mode_t mode);
 int tmp_chown(struct inode *inode, uid_t uid, gid_t gid);
 int tmp_utimes(struct inode *inode, const struct timespec *times);

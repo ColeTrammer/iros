@@ -24,6 +24,7 @@
 #include <kernel/hal/timer.h>
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/page.h>
+#include <kernel/mem/phys_page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
@@ -32,9 +33,23 @@
 
 // #define EXT2_DEBUG
 
+static struct block_device_id ext2_fs_ids[] = {
+    {
+        .type = BLOCK_ID_TYPE_MBR,
+        .mbr_id = 0x83,
+    },
+    {
+        .type = BLOCK_ID_TYPE_UUID,
+        .uuid = { .raw = { 0xAF, 0x3D, 0xC6, 0x0F, 0x83, 0x84, 0x72, 0x47, 0x8E, 0x79, 0x3D, 0x69, 0xD8, 0x47, 0x7D, 0xE4 } },
+    },
+};
+
 static struct file_system fs = {
     .name = "ext2",
     .mount = &ext2_mount,
+    .determine_fsid = &ext2_determine_fsid,
+    .id_table = ext2_fs_ids,
+    .id_count = sizeof(ext2_fs_ids) / sizeof(ext2_fs_ids[0]),
 };
 
 static struct super_block_operations s_op = {
@@ -1761,7 +1776,25 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
     return __ext2_unlink(tnode, false);
 }
 
-struct inode *ext2_mount(struct file_system *current_fs, struct fs_device *device) {
+int ext2_determine_fsid(struct file_system *fs, struct block_device *block_device, struct block_device_id *result) {
+    (void) fs;
+
+    mutex_lock(&block_device->device->lock);
+    struct phys_page *page = block_device->op->read_page(block_device, 0);
+    mutex_unlock(&block_device->device->lock);
+
+    if (!page) {
+        return -EIO;
+    }
+
+    struct ext2_raw_super_block *raw_sb = create_phys_addr_mapping(page->phys_addr) + EXT2_SUPER_BLOCK_OFFSET;
+    *result = block_device_id_uuid(raw_sb->fs_uuid);
+    drop_phys_page(page);
+    return 0;
+}
+
+struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device *device) {
+    (void) current_fs;
     assert(device);
 
     struct inode *root = calloc(1, sizeof(struct inode));
@@ -1830,9 +1863,7 @@ struct inode *ext2_mount(struct file_system *current_fs, struct fs_device *devic
     root->writeable = true;
 
     ext2_sync_raw_super_block_with_virtual_super_block(super_block);
-    current_fs->super_block = super_block;
-
-    return root;
+    return super_block;
 }
 
 static void init_ext2() {

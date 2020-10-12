@@ -35,33 +35,45 @@ static spinlock_t inode_count_lock = SPINLOCK_INITIALIZER;
 static ino_t inode_counter = 1;
 static dev_t tmp_fs_id = 0x210;
 
-static struct file_system fs = { "tmpfs", 0, &tmp_mount, NULL, NULL };
+static struct file_system fs = {
+    .name = "tmpfs",
+    .mount = &tmp_mount,
+};
 
-static struct super_block_operations s_op = { .rename = &tmp_rename };
+static struct super_block_operations s_op = {
+    .rename = &tmp_rename,
+};
 
-static struct inode_operations tmp_i_op = { .lookup = &tmp_lookup,
-                                            .open = &tmp_open,
-                                            .unlink = &tmp_unlink,
-                                            .chmod = &tmp_chmod,
-                                            .chown = &tmp_chown,
-                                            .mmap = &tmp_mmap,
-                                            .read_all = &tmp_read_all,
-                                            .utimes = &tmp_utimes,
-                                            .on_inode_destruction = &tmp_on_inode_destruction,
-                                            .truncate = &tmp_truncate };
+static struct inode_operations tmp_i_op = {
+    .lookup = &tmp_lookup,
+    .open = &tmp_open,
+    .unlink = &tmp_unlink,
+    .chmod = &tmp_chmod,
+    .chown = &tmp_chown,
+    .mmap = &tmp_mmap,
+    .read_all = &tmp_read_all,
+    .utimes = &tmp_utimes,
+    .on_inode_destruction = &tmp_on_inode_destruction,
+    .truncate = &tmp_truncate,
+};
 
-static struct inode_operations tmp_dir_i_op = { .mknod = &tmp_mknod,
-                                                .lookup = &tmp_lookup,
-                                                .open = &tmp_open,
-                                                .mkdir = &tmp_mkdir,
-                                                .rmdir = &tmp_rmdir,
-                                                .chmod = &tmp_chmod,
-                                                .chown = &tmp_chown,
-                                                .utimes = &tmp_utimes };
+static struct inode_operations tmp_dir_i_op = {
+    .mknod = &tmp_mknod,
+    .lookup = &tmp_lookup,
+    .open = &tmp_open,
+    .mkdir = &tmp_mkdir,
+    .rmdir = &tmp_rmdir,
+    .chmod = &tmp_chmod,
+    .chown = &tmp_chown,
+    .utimes = &tmp_utimes,
+};
 
-static struct file_operations tmp_f_op = { .read = &tmp_read, .write = &tmp_write };
+static struct file_operations tmp_f_op = {
+    .read = &tmp_read,
+    .write = &tmp_write,
+};
 
-static struct file_operations tmp_dir_f_op = { 0 };
+static struct file_operations tmp_dir_f_op;
 
 static ino_t get_next_tmp_index() {
     spin_lock(&inode_count_lock);
@@ -301,7 +313,7 @@ void tmp_on_inode_destruction(struct inode *inode) {
     }
 }
 
-struct inode *tmp_mount(struct file_system *current_fs, struct fs_device *device) {
+struct super_block *tmp_mount(struct file_system *current_fs, struct fs_device *device) {
     assert(current_fs != NULL);
     assert(!device);
 
@@ -315,9 +327,7 @@ struct inode *tmp_mount(struct file_system *current_fs, struct fs_device *device
     struct inode *root = fs_create_inode(sb, get_next_tmp_index(), 0, 0, S_IFDIR | 0777, 0, &tmp_dir_i_op, NULL);
 
     sb->root = root;
-    current_fs->super_block = sb;
-
-    return root;
+    return sb;
 }
 
 static void init_tmpfs() {

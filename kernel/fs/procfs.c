@@ -66,15 +66,27 @@ static ino_t inode_counter = 1;
 
 static struct inode *root;
 
-static struct file_system fs = { "procfs", 0, &procfs_mount, NULL, NULL };
+static struct file_system fs = {
+    .name = "procfs",
+    .mount = &procfs_mount,
+};
 
-static struct inode_operations procfs_i_op = { .lookup = &procfs_lookup, .open = &procfs_open, .read_all = &procfs_read_all };
+static struct inode_operations procfs_i_op = {
+    .lookup = &procfs_lookup,
+    .open = &procfs_open,
+    .read_all = &procfs_read_all,
+};
 
-static struct inode_operations procfs_dir_i_op = { .lookup = &procfs_lookup, .open = &procfs_open };
+static struct inode_operations procfs_dir_i_op = {
+    .lookup = &procfs_lookup,
+    .open = &procfs_open,
+};
 
-static struct file_operations procfs_f_op = { .read = &procfs_read };
+static struct file_operations procfs_f_op = {
+    .read = &procfs_read,
+};
 
-static struct file_operations procfs_dir_f_op = { 0 };
+static struct file_operations procfs_dir_f_op;
 
 static struct inode *procfs_create_inode(mode_t mode, uid_t uid, gid_t gid, struct process *process, void *function) {
     struct inode *inode = calloc(1, sizeof(struct inode) + sizeof(struct procfs_data));
@@ -701,7 +713,7 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
     }
 }
 
-struct inode *procfs_mount(struct file_system *current_fs, struct fs_device *device) {
+struct super_block *procfs_mount(struct file_system *current_fs, struct fs_device *device) {
     assert(current_fs != NULL);
     assert(!device);
 
@@ -709,9 +721,7 @@ struct inode *procfs_mount(struct file_system *current_fs, struct fs_device *dev
     super_block.op = NULL;
     super_block.root = root;
     super_block.block_size = PAGE_SIZE;
-
-    current_fs->super_block = &super_block;
-    return root;
+    return &super_block;
 }
 
 static void init_procfs() {

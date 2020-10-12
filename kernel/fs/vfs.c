@@ -35,7 +35,7 @@
 // #define INODE_REF_COUNT_DEBUG
 // #define VFS_DEBUG
 
-static struct file_system *file_systems;
+static struct list_node file_systems = INIT_LIST(file_systems);
 static struct mount *root;
 
 struct inode *bump_inode_reference(struct inode *inode) {
@@ -895,9 +895,7 @@ void load_fs(struct file_system *fs) {
     assert(fs);
 
     debug_log("Loading fs: [ %s ]\n", fs->name);
-
-    fs->next = file_systems;
-    file_systems = fs;
+    list_append(&file_systems, &fs->list);
 }
 
 static int do_stat(struct inode *inode, struct stat *stat_struct) {
@@ -1692,11 +1690,14 @@ int fs_statvfs(const char *path, struct statvfs *buf) {
     return do_statvfs(inode->super_block, buf);
 }
 
+struct list_node *fs_file_system_list(void) {
+    return &file_systems;
+}
+
 int fs_mount(struct fs_device *device, const char *path, const char *type) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, path);
 
-    struct file_system *file_system = file_systems;
-    while (file_system != NULL) {
+    fs_for_each_file_system(file_system) {
         if (strcmp(file_system->name, type) == 0) {
             struct mount *mount = malloc(sizeof(struct mount));
             if (strcmp(path, "/") == 0) {
@@ -1704,8 +1705,8 @@ int fs_mount(struct fs_device *device, const char *path, const char *type) {
                 mount->next = NULL;
                 mount->device = device;
                 mount->fs = file_system;
-                file_system->mount(file_system, mount->device);
-                mount->super_block = file_system->super_block;
+                mount->super_block = file_system->mount(file_system, mount->device);
+                assert(mount->super_block);
 
                 /* For now, when mounting as / when there is already something mounted,
                    we will just move things around instead of unmounting what was
@@ -1771,15 +1772,13 @@ int fs_mount(struct fs_device *device, const char *path, const char *type) {
             mount->fs = file_system;
             mount->next = NULL;
             mount->device = device;
-            assert(file_system->mount(file_system, mount->device));
-            mount->super_block = file_system->super_block;
+            mount->super_block = file_system->mount(file_system, mount->device);
+            assert(mount->super_block);
 
             free(path_copy);
             drop_tnode(mount_on);
             return 0;
         }
-
-        file_system = file_system->next;
     }
 
     /* Should instead error because fs type is not found */
