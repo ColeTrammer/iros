@@ -247,10 +247,11 @@ struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_s
     return block_device;
 }
 
-void block_register_device(struct block_device *block_device, dev_t device_number) {
+void block_register_device(struct block_device *block_device, const char *name, dev_t device_number) {
     struct fs_device *device = calloc(1, sizeof(struct fs_device));
+    strcpy(device->name, name);
     device->device_number = device_number;
-    device->type = S_IFBLK;
+    device->mode = S_IFBLK | 0600;
     device->readable = device->writeable = true;
     init_mutex(&device->lock);
     device->ops = &block_device_ops;
@@ -279,7 +280,7 @@ struct phys_page *block_allocate_phys_page(struct block_device *block_device) {
 
 static void do_block_trim_cache(struct hash_entry *_device, void *closure __attribute__((unused))) {
     struct fs_device *device = hash_table_entry(_device, struct fs_device);
-    if (device->type != S_IFBLK) {
+    if (!(device->mode & S_IFBLK)) {
         return;
     }
 

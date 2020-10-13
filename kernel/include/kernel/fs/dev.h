@@ -33,8 +33,9 @@ struct fs_device_ops {
 };
 
 struct fs_device {
+    char name[16];
     dev_t device_number;
-    mode_t type;
+    mode_t mode;
     bool cannot_open : 1;
     bool readable : 1;
     bool writeable : 1;
@@ -48,7 +49,7 @@ struct fs_device {
 };
 
 struct hash_map *dev_device_hash_map(void);
-void dev_register(struct fs_device *device);
+struct inode *dev_register(struct fs_device *device);
 void dev_unregister(struct fs_device *device);
 struct fs_device *dev_bump_device(struct fs_device *device);
 void dev_drop_device(struct fs_device *device);
@@ -63,6 +64,6 @@ int dev_ioctl(struct file *file, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset);
 blksize_t dev_block_size(struct fs_device *device);
 blkcnt_t dev_block_count(struct fs_device *device);
-struct inode *dev_mount(struct file_system *fs, char *device_path);
+struct super_block *dev_mount(struct file_system *fs, struct fs_device *device);
 
 #endif /* _KERNEL_FS_DEV_H */

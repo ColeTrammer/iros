@@ -33,12 +33,25 @@
 #define CONTROL_MASK   0x1F
 #define CONTROL_KEY(c) ((c) &CONTROL_MASK)
 
-static struct termios default_termios = { ICRNL | IXON,
-                                          OPOST,
-                                          CS8,
-                                          ECHO | ICANON | IEXTEN | ISIG,
-                                          { CONTROL_KEY('d'), '\n', '\b', CONTROL_KEY('c'), '\025', 1, CONTROL_KEY('\\'), CONTROL_KEY('q'),
-                                            CONTROL_KEY('s'), CONTROL_KEY('z'), 0 } };
+static struct termios default_termios = {
+    ICRNL | IXON,
+    OPOST,
+    CS8,
+    ECHO | ICANON | IEXTEN | ISIG,
+    {
+        CONTROL_KEY('d'),
+        '\n',
+        '\b',
+        CONTROL_KEY('c'),
+        '\025',
+        1,
+        CONTROL_KEY('\\'),
+        CONTROL_KEY('q'),
+        CONTROL_KEY('s'),
+        CONTROL_KEY('z'),
+        0,
+    },
+};
 
 static struct fs_device *slaves[PTMX_MAX] = { 0 };
 static struct fs_device *masters[PTMX_MAX] = { 0 };
@@ -420,13 +433,15 @@ static int slave_ioctl(struct fs_device *device, unsigned long request, void *ar
     }
 }
 
-static struct fs_device_ops slave_ops = { .read = slave_read,
-                                          .write = slave_write,
-                                          .close = slave_close,
-                                          .add = slave_add,
-                                          .remove = slave_remove,
-                                          .ioctl = slave_ioctl,
-                                          .on_open = slave_on_open };
+static struct fs_device_ops slave_ops = {
+    .read = slave_read,
+    .write = slave_write,
+    .close = slave_close,
+    .add = slave_add,
+    .remove = slave_remove,
+    .ioctl = slave_ioctl,
+    .on_open = slave_on_open,
+};
 
 static void master_on_open(struct fs_device *device) {
     device->cannot_open = true;
@@ -689,20 +704,15 @@ static int master_ioctl(struct fs_device *device, unsigned long request, void *a
     return slave_ioctl(slave, request, argp);
 }
 
-static struct fs_device_ops master_ops = { .read = master_read,
-                                           .write = master_write,
-                                           .close = master_close,
-                                           .add = master_add,
-                                           .remove = master_remove,
-                                           .ioctl = master_ioctl,
-                                           .on_open = master_on_open };
-
-static int noop_unlink(struct tnode *tnode) {
-    (void) tnode;
-    return 0;
-}
-
-static struct inode_operations empty_ops = { .unlink = noop_unlink };
+static struct fs_device_ops master_ops = {
+    .read = master_read,
+    .write = master_write,
+    .close = master_close,
+    .add = master_add,
+    .remove = master_remove,
+    .ioctl = master_ioctl,
+    .on_open = master_on_open,
+};
 
 static struct file *ptmx_open(struct fs_device *device, int flags, int *error) {
     (void) device;
@@ -715,39 +725,20 @@ static struct file *ptmx_open(struct fs_device *device, int flags, int *error) {
 
             slaves[i]->device_number = 0x00300 + i;
             slaves[i]->ops = &slave_ops;
-            slaves[i]->type = S_IFCHR;
+            slaves[i]->mode = S_IFCHR | 0666;
             slaves[i]->private = NULL;
+            snprintf(slaves[i]->name, sizeof(slaves[i]->name) - 1, "tty%d", i);
 
             struct fs_device *master = calloc(1, sizeof(struct fs_device));
             master->device_number = 0x00400 + i;
             master->ops = &master_ops;
-            master->type = S_IFCHR;
+            master->mode = S_IFCHR | 0666;
             master->private = NULL;
             masters[i] = master;
+            snprintf(master->name, sizeof(master->name) - 1, "mtty%d", i);
 
-            dev_register(masters[i]);
+            struct inode *master_inode = dev_register(masters[i]);
             dev_register(slaves[i]);
-
-            char master_name[16];
-            size_t master_length = snprintf(master_name, sizeof(master_name) - 1, "mtty%d", i);
-
-            struct tnode *tnode;
-            assert(iname("/dev", 0, &tnode) == 0);
-
-            struct inode *master_inode = fs_create_inode_without_sb(tnode->inode->fsid, i, get_current_task()->process->euid,
-                                                                    get_current_task()->process->egid, S_IFCHR | 0777, 0, &empty_ops, NULL);
-            master_inode->device_id = master->device_number;
-
-            char slave_name[16];
-            size_t slave_length = snprintf(slave_name, sizeof(slave_name) - 1, "tty%d", i);
-
-            struct inode *slave_inode = fs_create_inode_without_sb(tnode->inode->fsid, PTMX_MAX + i, get_current_task()->process->euid,
-                                                                   get_current_task()->process->egid, S_IFCHR | 0777, 0, &empty_ops, NULL);
-            slave_inode->device_id = slaves[i]->device_number;
-
-            fs_put_dirent_cache(tnode->inode->dirent_cache, master_inode, master_name, master_length);
-            fs_put_dirent_cache(tnode->inode->dirent_cache, slave_inode, slave_name, slave_length);
-            drop_tnode(tnode);
 
             return dev_open(master_inode, flags, error);
         }
@@ -782,7 +773,8 @@ void init_ptmx() {
     ptmx_device->device_number = 0x00201;
     ptmx_device->ops = &ptmx_ops;
     ptmx_device->private = NULL;
-    ptmx_device->type = S_IFCHR;
+    ptmx_device->mode = S_IFCHR | 0666;
+    strcpy(ptmx_device->name, "ptmx");
 
     dev_register(ptmx_device);
 
@@ -790,7 +782,8 @@ void init_ptmx() {
     tty_device->device_number = 0x00202;
     tty_device->ops = &tty_ops;
     tty_device->private = NULL;
-    tty_device->type = S_IFCHR;
+    tty_device->mode = S_IFCHR | 0666;
+    strcpy(tty_device->name, "tty");
 
     dev_register(tty_device);
 }

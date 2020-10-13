@@ -107,6 +107,15 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Device setup should be done via a separate program.
+    symlink("/proc/self/fd", "/dev/fd");
+    symlink("/proc/self/fd/0", "/dev/stdin");
+    symlink("/proc/self/fd/1", "/dev/stdout");
+    symlink("/proc/self/fd/2", "/dev/stderr");
+    symlink("urandom", "/dev/random");
+    chown("/dev/fb0", 0, 14);
+    chmod("dev/fb0", 0660);
+
     char *dhcp_client_args[] = { "/bin/dhcp_client", NULL };
     spawn_process(dhcp_client_args, 0, 0, false, false);
 

@@ -84,21 +84,57 @@ static ssize_t urandom_read(struct fs_device *device, off_t offset, void *buf, s
     return n;
 }
 
-static struct fs_device_ops dev_null_ops = { .read = &dev_null_read, .write = &dev_ignore_write };
+static struct fs_device_ops dev_null_ops = {
+    .read = &dev_null_read,
+    .write = &dev_ignore_write,
+};
 
-static struct fs_device dev_null = { .device_number = 0x00101, .type = S_IFCHR, .ops = &dev_null_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_null = {
+    .name = "null",
+    .device_number = 0x00101,
+    .mode = S_IFCHR | 0666,
+    .ops = &dev_null_ops,
+    .lock = MUTEX_INITIALIZER,
+};
 
-static struct fs_device_ops dev_zero_ops = { .read = &dev_zero_read, .write = &dev_ignore_write };
+static struct fs_device_ops dev_zero_ops = {
+    .read = &dev_zero_read,
+    .write = &dev_ignore_write,
+};
 
-static struct fs_device dev_zero = { .device_number = 0x00102, .type = S_IFCHR, .ops = &dev_zero_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_zero = {
+    .name = "zero",
+    .device_number = 0x00102,
+    .mode = S_IFCHR | 0666,
+    .ops = &dev_zero_ops,
+    .lock = MUTEX_INITIALIZER,
+};
 
-static struct fs_device_ops dev_full_ops = { .read = &full_read, .write = &full_write };
+static struct fs_device_ops dev_full_ops = {
+    .read = &full_read,
+    .write = &full_write,
+};
 
-static struct fs_device dev_full = { .device_number = 0x00103, .type = S_IFCHR, .ops = &dev_full_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_full = {
+    .name = "full",
+    .device_number = 0x00103,
+    .mode = S_IFCHR | 0666,
+    .ops = &dev_full_ops,
+    .lock = MUTEX_INITIALIZER,
+};
 
-static struct fs_device_ops dev_urandom_ops = { .read = &urandom_read, .write = dev_ignore_write };
+static struct fs_device_ops dev_urandom_ops = {
+    .read = &urandom_read,
+    .write = dev_ignore_write,
+};
 
-static struct fs_device dev_urandom = { .device_number = 0x00104, .type = S_IFCHR, .ops = &dev_urandom_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device dev_urandom = {
+    .name = "urandom",
+    .device_number = 0x00104,
+    .mode = S_IFCHR | 0666,
+    .ops = &dev_urandom_ops,
+    .lock = MUTEX_INITIALIZER,
+};
 
 void init_virtual_devices() {
     dev_register(&dev_null);

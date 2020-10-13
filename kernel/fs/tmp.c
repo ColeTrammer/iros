@@ -44,7 +44,7 @@ static struct super_block_operations s_op = {
     .rename = &tmp_rename,
 };
 
-static struct inode_operations tmp_i_op = {
+struct inode_operations tmp_i_op = {
     .lookup = &tmp_lookup,
     .open = &tmp_open,
     .unlink = &tmp_unlink,
@@ -61,6 +61,7 @@ static struct inode_operations tmp_dir_i_op = {
     .mknod = &tmp_mknod,
     .lookup = &tmp_lookup,
     .open = &tmp_open,
+    .symlink = &tmp_symlink,
     .mkdir = &tmp_mkdir,
     .rmdir = &tmp_rmdir,
     .chmod = &tmp_chmod,
@@ -75,11 +76,33 @@ static struct file_operations tmp_f_op = {
 
 static struct file_operations tmp_dir_f_op;
 
-static ino_t get_next_tmp_index() {
+ino_t tmp_get_next_index(void) {
     spin_lock(&inode_count_lock);
     ino_t next = inode_counter++;
     spin_unlock(&inode_count_lock);
     return next;
+}
+
+static ssize_t tmp_do_write(struct inode *inode, off_t offset, const void *buffer, size_t len) {
+    mutex_lock(&inode->lock);
+    struct vm_region *kernel_region = inode->private_data;
+    if (!kernel_region) {
+        size_t size = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        inode->private_data = kernel_region = vm_allocate_kernel_region(size);
+    }
+
+    inode->size = MAX(inode->size, offset + len);
+    if (inode->size > kernel_region->end - kernel_region->start) {
+        size_t new_size = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+        inode->private_data = kernel_region = vm_reallocate_kernel_region(kernel_region, new_size);
+    }
+
+    memcpy((void *) (kernel_region->start + offset), buffer, len);
+
+    inode->modify_time = time_read_clock(CLOCK_REALTIME);
+
+    mutex_unlock(&inode->lock);
+    return (ssize_t) len;
 }
 
 struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, dev_t device, int *error) {
@@ -91,7 +114,7 @@ struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, de
     debug_log("Tmp create: [ %s ]\n", name);
 #endif /* TMP_DEBUG */
 
-    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->euid,
+    struct inode *inode = fs_create_inode(tparent->inode->super_block, tmp_get_next_index(), get_current_task()->process->euid,
                                           get_current_task()->process->egid, mode, 0, &tmp_i_op, NULL);
     if (inode == NULL) {
         *error = ENOMEM;
@@ -100,6 +123,21 @@ struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, de
 
     inode->device_id = device;
     tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
+    return inode;
+}
+
+struct inode *tmp_symlink(struct tnode *tnode, const char *name, const char *target, int *error) {
+    struct inode *inode = tmp_mknod(tnode, name, S_IFLNK | 0666, 0, error);
+    if (!inode) {
+        return NULL;
+    }
+
+    ssize_t ret = tmp_do_write(inode, 0, target, strlen(target));
+    if (ret < 0) {
+        drop_inode_reference(inode);
+        *error = ret;
+        return NULL;
+    }
     return inode;
 }
 
@@ -147,31 +185,13 @@ ssize_t tmp_write(struct file *file, off_t offset, const void *buffer, size_t le
     struct inode *inode = fs_file_inode(file);
     assert(inode);
 
-    mutex_lock(&inode->lock);
-    struct vm_region *kernel_region = inode->private_data;
-    if (!kernel_region) {
-        size_t size = ((offset + len + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        inode->private_data = kernel_region = vm_allocate_kernel_region(size);
-    }
-
-    inode->size = MAX(inode->size, offset + len);
-    if (inode->size > kernel_region->end - kernel_region->start) {
-        size_t new_size = ((inode->size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-        inode->private_data = kernel_region = vm_reallocate_kernel_region(kernel_region, new_size);
-    }
-
-    memcpy((void *) (kernel_region->start + offset), buffer, len);
-
-    inode->modify_time = time_read_clock(CLOCK_REALTIME);
-
-    mutex_unlock(&inode->lock);
-    return (ssize_t) len;
+    return tmp_do_write(inode, offset, buffer, len);
 }
 
 struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, int *error) {
     assert(name);
 
-    struct inode *inode = fs_create_inode(tparent->inode->super_block, get_next_tmp_index(), get_current_task()->process->euid,
+    struct inode *inode = fs_create_inode(tparent->inode->super_block, tmp_get_next_index(), get_current_task()->process->euid,
                                           get_current_task()->process->egid, mode, 0, &tmp_dir_i_op, NULL);
     tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
 
@@ -321,7 +341,7 @@ struct super_block *tmp_mount(struct file_system *current_fs, struct fs_device *
     sb->private_data = NULL;
     init_mutex(&sb->super_block_lock);
 
-    struct inode *root = fs_create_inode(sb, get_next_tmp_index(), 0, 0, S_IFDIR | 0777, 0, &tmp_dir_i_op, NULL);
+    struct inode *root = fs_create_inode(sb, tmp_get_next_index(), 0, 0, S_IFDIR | 0777, 0, &tmp_dir_i_op, NULL);
 
     sb->root = root;
     return sb;

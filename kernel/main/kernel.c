@@ -53,6 +53,7 @@ void kernel_main(uint32_t *multiboot_info) {
     init_kernel_symbols();
     init_smp();
 
+    assert(!fs_mount(NULL, "/dev", "devfs"));
     assert(!fs_mount(NULL, "/proc", "procfs"));
     assert(!fs_mount(NULL, "/tmp", "tmpfs"));
     assert(!fs_mount(NULL, "/dev/shm", "tmpfs"));

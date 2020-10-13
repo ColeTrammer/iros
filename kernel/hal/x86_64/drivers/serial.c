@@ -84,8 +84,9 @@ static void init_serial_port_device(struct hw_device *parent, dev_t port, size_t
     struct fs_device *device = calloc(1, sizeof(struct fs_device));
     device->device_number = 0x00800 + i;
     device->ops = &serial_ops;
-    device->type = S_IFCHR;
+    device->mode = S_IFCHR | 0666;
     device->private = NULL;
+    snprintf(device->name, sizeof(device->name) - 1, "serial%lu", i);
 
     struct hw_device *hw = create_hw_device("Serial Port", parent, hw_device_id_isa(), device);
     hw->status = HW_STATUS_ACTIVE;

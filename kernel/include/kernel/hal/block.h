@@ -86,7 +86,7 @@ void block_trim_cache(void);
 struct phys_page *block_allocate_phys_page(struct block_device *block_device);
 struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_size, struct block_device_info info,
                                          struct block_device_ops *op, void *private_data);
-void block_register_device(struct block_device *block_device, dev_t device_number);
+void block_register_device(struct block_device *block_device, const char *name, dev_t device_number);
 struct list_node *block_device_list(void);
 int block_show_device_id(struct block_device_id id, char *buffer, size_t buffer_length);
 int block_show_device(struct block_device *block_device, char *buffer, size_t buffer_length);

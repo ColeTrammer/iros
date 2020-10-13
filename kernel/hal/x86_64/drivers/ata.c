@@ -456,7 +456,9 @@ static void ata_init_device(struct hw_device *parent, struct ata_port_info *info
     }
 
     struct block_device *block_device = create_block_device(block_count, block_size, block_device_info_none(BLOCK_TYPE_DISK), op, data);
-    block_register_device(block_device, device_number);
+    char name[16];
+    snprintf(name, sizeof(name), "sd%c", 'a' + (char) i);
+    block_register_device(block_device, name, device_number);
 }
 
 #define NUM_POSSIBLE_ATA_DEVICES 8

@@ -26,7 +26,14 @@ static struct bga_data data = { 0 };
 
 struct fs_device_ops bga_ops = { .ioctl = bga_ioctl, .mmap = bga_mmap };
 
-struct fs_device bga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &bga_ops, .private = &data, .lock = MUTEX_INITIALIZER };
+struct fs_device bga_device = {
+    .name = "fb0",
+    .device_number = 0x00600,
+    .mode = S_IFCHR | 0600,
+    .ops = &bga_ops,
+    .private = &data,
+    .lock = MUTEX_INITIALIZER,
+};
 
 static int bga_ioctl(struct fs_device *device, unsigned long request, void *argp) {
     assert(device);

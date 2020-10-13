@@ -49,7 +49,10 @@ struct block_device *create_and_register_partition_device(struct block_device *r
     struct block_device *block_device = create_block_device(block_count, root_device->block_size, info, &partition_ops, root_device);
     block_device->partition_offset = partition_offset;
     block_device->partition_number = partition_number;
-    block_register_device(block_device, root_device->device->device_number + partition_number);
+
+    char name[16];
+    snprintf(name, sizeof(name) - 1, "%s%d", root_device->device->name, partition_number - 1);
+    block_register_device(block_device, name, root_device->device->device_number + partition_number);
 
     mutex_unlock(&root_device->device->lock);
     fs_for_each_file_system(fs) {

@@ -80,7 +80,13 @@ static intptr_t vga_mmap(struct fs_device *device, void *addr, size_t len, int p
 
 static struct fs_device_ops vga_ops = { .ioctl = vga_ioctl, .mmap = vga_mmap };
 
-static struct fs_device vga_device = { .device_number = 0x00600, .type = S_IFCHR, .ops = &vga_ops, .lock = MUTEX_INITIALIZER };
+static struct fs_device vga_device = {
+    .name = "fb0",
+    .device_number = 0x00600,
+    .mode = S_IFCHR | 0600,
+    .ops = &vga_ops,
+    .lock = MUTEX_INITIALIZER,
+};
 
 void vga_enable_cursor() {
     VGA_RUN_COMMAND(VGA_ENABLE_CURSOR_START, (inb(VGA_DATA) & 0xC0) | VGA_CURSOR_Y_START);

@@ -12,6 +12,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 #include <kernel/fs/super_block.h>
+#include <kernel/fs/tmp.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/timer.h>
@@ -23,6 +24,7 @@
 #include <kernel/util/init.h>
 #include <kernel/util/spinlock.h>
 
+static struct super_block *devfs_super_block;
 static struct hash_map *device_map;
 
 HASH_DEFINE_FUNCTIONS(device, struct fs_device, dev_t, device_number)
@@ -48,7 +50,7 @@ void dev_drop_device(struct fs_device *device) {
 
 static struct fs_device_ops null_ops;
 
-void dev_register(struct fs_device *device) {
+struct inode *dev_register(struct fs_device *device) {
     dev_bump_device(device);
 
     if (!device->ops) {
@@ -61,6 +63,13 @@ void dev_register(struct fs_device *device) {
 
     assert(!hash_get(device_map, &device->device_number));
     hash_put(device_map, &device->hash);
+
+    struct inode *new_inode = fs_create_inode(devfs_super_block, tmp_get_next_index(), 0, 0, device->mode, 0, &tmp_i_op, NULL);
+    new_inode->device_id = device->device_number;
+    mutex_lock(&devfs_super_block->root->lock);
+    fs_put_dirent_cache(devfs_super_block->root->dirent_cache, new_inode, device->name, strlen(device->name));
+    mutex_unlock(&devfs_super_block->root->lock);
+    return new_inode;
 }
 
 void dev_unregister(struct fs_device *device) {
@@ -103,7 +112,7 @@ struct file *dev_open(struct inode *inode, int flags, int *error) {
     }
 
     struct file *file =
-        fs_create_file(inode, inode->flags, !S_ISBLK(device->type) ? FS_FILE_CANT_SEEK : 0, flags, &dev_f_op, dev_bump_device(device));
+        fs_create_file(inode, inode->flags, !S_ISBLK(device->mode) ? FS_FILE_CANT_SEEK : 0, flags, &dev_f_op, dev_bump_device(device));
     if (device->ops->on_open) {
         device->ops->on_open(device);
     }
@@ -169,18 +178,31 @@ intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct file *file
 }
 
 blksize_t dev_block_size(struct fs_device *device) {
-    assert(device->type == S_IFBLK);
+    assert(device->mode & S_IFBLK);
     assert(device->ops->block_size);
     return device->ops->block_size(device);
 }
 
 blkcnt_t dev_block_count(struct fs_device *device) {
-    assert(device->type == S_IFBLK);
+    assert(device->mode & S_IFBLK);
     assert(device->ops->block_count);
     return device->ops->block_count(device);
 }
 
+struct super_block *dev_mount(struct file_system *fs, struct fs_device *device) {
+    (void) fs;
+    (void) device;
+    return devfs_super_block;
+}
+
+static struct file_system devfs = {
+    .name = "devfs",
+    .mount = dev_mount,
+};
+
 static void init_dev() {
     device_map = hash_create_hash_map(device_hash, device_equals, device_key);
+    devfs_super_block = tmp_mount(&devfs, NULL);
+    register_fs(&devfs);
 }
 INIT_FUNCTION(init_dev, fs);
