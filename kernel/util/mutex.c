@@ -1,6 +1,7 @@
 #include <stdatomic.h>
 
 #include <kernel/hal/processor.h>
+#include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/mutex.h>
 

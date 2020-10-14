@@ -13,6 +13,7 @@
 #include <kernel/net/socket.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/udp.h>
+#include <kernel/proc/task.h>
 #include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/util/init.h>

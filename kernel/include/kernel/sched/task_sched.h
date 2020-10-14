@@ -1,12 +1,12 @@
 #ifndef _KERNEL_task_SCHED_H
 #define _KERNEL_task_SCHED_H
 
-#include <kernel/proc/task.h>
-
 // clang-format off
 #include <kernel/arch/arch.h>
 #include ARCH_SPECIFIC(sched/arch_task_sched.h)
 // clang-format on
+
+struct process;
 
 void init_task_sched(void);
 void arch_init_task_sched(void);

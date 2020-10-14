@@ -12,6 +12,7 @@
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/blockers.h>
 #include <kernel/proc/process.h>
+#include <kernel/sched/task_sched.h>
 #include <kernel/util/list.h>
 
 // clang-format off
@@ -152,5 +153,48 @@ const char *task_state_to_string(enum sched_state state);
 bool task_in_kernel(struct task *task);
 
 extern struct task initial_kernel_task;
+
+static inline void __wait_prepare(struct task *task, uint64_t *interrupts_save, bool interruptible) {
+    *interrupts_save = disable_interrupts_save();
+    task->wait_interruptible = interruptible;
+    task->sched_state = WAITING;
+}
+
+static inline int __wait_do(uint64_t *interrupts_save) {
+    int ret = __kernel_yield();
+    interrupts_restore(*interrupts_save);
+    return ret;
+}
+
+#define wait_prepare(task, save)               __wait_prepare(task, save, false)
+#define wait_prepare_interruptible(task, save) __wait_prepare(task, save, true)
+#define wait_do(task, save)                    __wait_do(save)
+
+#define __wait_for(task, cond, begin_wait, end_wait, interruptible) \
+    ({                                                              \
+        int __ret = 0;                                              \
+        uint64_t __save;                                            \
+        for (;;) {                                                  \
+            if (cond) {                                             \
+                break;                                              \
+            }                                                       \
+            __wait_prepare(task, &save, interruptible);             \
+            begin_wait;                                             \
+            __ret = wait_do(task, &save);                           \
+            if (__ret) {                                            \
+                break;                                              \
+            }                                                       \
+            end_wait;                                               \
+        }                                                           \
+        __ret;                                                      \
+    })
+
+#define wait_with_blocker(task)                    \
+    ({                                             \
+        uint64_t __save;                           \
+        task->blocking = true;                     \
+        wait_prepare_interruptible(task, &__save); \
+        wait_do(task, &__save);                    \
+    })
 
 #endif /* _KERNEL_PROC_TASK_H */
