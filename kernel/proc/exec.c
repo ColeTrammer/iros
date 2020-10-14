@@ -155,17 +155,9 @@ int proc_execve(char *path, char **argv, char **envp) {
     exit_process(process, current);
     process->in_execve = true;
 
-    for (;;) {
-        // Check if all the other threads have been removed.
-        if (process->main_tid == current->tid && list_is_singular(&process->task_list)) {
-            break;
-        }
-
-        // FIXME: this is clearly a racy
-        mutex_unlock(&process->lock);
-        wait_on(&process->one_task_left_queue);
-        mutex_lock(&process->lock);
-    }
+    // Wait for all the other threads to be removed.
+    wait_for_with_mutex(current, process->main_tid == current->tid && list_is_singular(&process->task_list), &process->one_task_left_queue,
+                        &process->lock);
 
     // Clear the profile buffer. This is means that code that sets up profiling need not worry about collecting data
     // before the execve() occurs. However, this would cause issues when trying to profile a process like /bin/sh, who

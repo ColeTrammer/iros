@@ -5,6 +5,7 @@
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/wait_queue.h>
 #include <kernel/sched/task_sched.h>
@@ -59,6 +60,10 @@ static void do_disk_sync(void) {
         struct inode *inode_to_sync = NULL;
 
         mutex_lock(&queue_lock);
+
+        wait_for_with_mutex(get_current_task(), !list_is_empty(&super_block_queue) || !list_is_empty(&inode_queue), &wait_queue,
+                            &queue_lock);
+
         if (!list_is_empty(&super_block_queue)) {
             sb_to_sync = list_first_entry(&super_block_queue, struct super_block, dirty_super_blocks);
             list_remove(&sb_to_sync->dirty_super_blocks);
@@ -66,9 +71,7 @@ static void do_disk_sync(void) {
             inode_to_sync = list_first_entry(&inode_queue, struct inode, dirty_inodes);
             list_remove(&inode_to_sync->dirty_inodes);
         } else {
-            mutex_unlock(&queue_lock);
-            wait_on(&wait_queue);
-            continue;
+            assert(false);
         }
         mutex_unlock(&queue_lock);
 

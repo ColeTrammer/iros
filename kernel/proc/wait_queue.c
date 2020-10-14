@@ -1,3 +1,5 @@
+#include <limits.h>
+
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/proc/task.h>
@@ -84,17 +86,6 @@ void wake_up_internal(struct wait_queue *queue, const char *func) {
 void wake_up_all_internal(struct wait_queue *queue, const char *func) {
     (void) func;
     spin_lock(&queue->lock);
-
-    struct task *to_wake = queue->waiters_head;
-    while (to_wake) {
-        to_wake->sched_state = RUNNING_UNINTERRUPTIBLE;
-#ifdef WAIT_QUEUE_DEBUG
-        debug_log("waking up task: [ %p, %d:%d, %s ]\n", queue, to_wake->process->pid, to_wake->tid, func);
-#endif /* WAIT_QUEUE_DEBUG */
-        to_wake = to_wake->wait_queue_next;
-    }
-
-    queue->waiters_head = queue->waiters_tail = NULL;
-
+    __wake_up_n(queue, INT_MAX, func);
     spin_unlock(&queue->lock);
 }

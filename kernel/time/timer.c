@@ -353,9 +353,9 @@ int time_wakeup_after(int clockid, struct timespec *delta) {
 
     uint64_t save = disable_interrupts_save();
     time_add_timer_to_clock(timer.clock, &timer);
-    timer.task->sched_state = WAITING;
-    timer.task->wait_interruptible = true;
-    int ret = __kernel_yield();
+    uint64_t __save;
+    wait_prepare_interruptible(timer.task, &__save);
+    int ret = wait_do(timer.task, &__save);
 
     if (time_is_timer_armed(&timer)) {
         time_remove_timer_from_clock(timer.clock, &timer);

@@ -18,26 +18,13 @@ void init_mutex_internal(mutex_t *mutex, const char *func) {
 
 static void __mutex_lock(mutex_t *mutex, struct task *task, const char *func) {
     (void) func;
-    for (;;) {
-        if (mutex->lock == 0) {
-            mutex->lock = 1;
+
+    __wait_for(task, mutex->lock == 0, &mutex->queue, spin_unlock(&mutex->queue.lock), spin_lock(&mutex->queue.lock), false, false);
+
+    mutex->lock = 1;
 #ifdef MUTEX_DEBUG
-            debug_log("Aquired mutex: [ %p, %s ]\n", mutex, func);
+    debug_log("Aquired mutex: [ %p, %s ]\n", mutex, func);
 #endif /* MUTEX_DEBUG */
-            return;
-        }
-
-        __wait_queue_enqueue_task(&mutex->queue, task, __func__);
-        task->sched_state = WAITING;
-#ifdef MUTEX_DEBUG
-        debug_log("Failed to aquire mutex: [ %p, %s ]\n", mutex, func);
-#endif /* MUTEX_DEBUG */
-        spin_unlock(&mutex->queue.lock);
-
-        __kernel_yield();
-
-        spin_lock(&mutex->queue.lock);
-    }
 }
 
 static bool __mutex_trylock(mutex_t *mutex, const char *func) {

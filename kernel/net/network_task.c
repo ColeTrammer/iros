@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/processor.h>
 #include <kernel/net/arp.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/icmp.h>
@@ -29,10 +30,7 @@ static struct wait_queue net_wait_queue = WAIT_QUEUE_INITIALIZER;
 static struct packet *consume() {
     spin_lock(&lock);
 
-    if (list_is_empty(&recv_list)) {
-        spin_unlock(&lock);
-        return NULL;
-    }
+    wait_for_with_spinlock(get_current_task(), !list_is_empty(&recv_list), &net_wait_queue, &lock);
 
     struct packet *packet = list_first_entry(&recv_list, struct packet, queue);
     list_remove(&packet->queue);
@@ -85,10 +83,7 @@ void net_on_incoming_packet(struct packet *packet) {
 void net_network_task_start() {
     for (;;) {
         struct packet *packet = consume();
-        if (packet == NULL) {
-            wait_on(&net_wait_queue);
-            continue;
-        }
+        assert(packet);
 
         struct packet_header *header = net_packet_inner_header(packet);
         switch (header->type) {

@@ -1,3 +1,4 @@
+#include <kernel/hal/processor.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/task_finalizer.h>
 #include <kernel/proc/wait_queue.h>
@@ -10,22 +11,17 @@ static struct wait_queue wait_queue = WAIT_QUEUE_INITIALIZER;
 
 static struct task *take_from_queue(void) {
     spin_lock(&queue_lock);
+    wait_for_with_spinlock(get_current_task(), !!queue, &wait_queue, &queue_lock);
     struct task *ret = queue;
-    if (ret) {
-        queue = ret->finialize_queue_next;
-    }
+    assert(ret);
+    queue = ret->finialize_queue_next;
     spin_unlock(&queue_lock);
     return ret;
 }
 
 static void finalizer_task_entry() {
     for (;;) {
-        struct task *task;
-        while ((task = take_from_queue())) {
-            free_task(task, true);
-        }
-
-        wait_on(&wait_queue);
+        free_task(take_from_queue(), true);
     }
 }
 
