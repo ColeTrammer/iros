@@ -14,8 +14,8 @@
 
 // #define DISK_SYNC_DEBUG
 
-static mutex_t queue_lock = MUTEX_INITIALIZER;
-static struct wait_queue wait_queue = WAIT_QUEUE_INITIALIZER;
+static mutex_t queue_lock = MUTEX_INITIALIZER(queue_lock);
+static struct wait_queue wait_queue = WAIT_QUEUE_INITIALIZER(wait_queue);
 static struct list_node inode_queue = INIT_LIST(inode_queue);
 static struct list_node super_block_queue = INIT_LIST(super_block_queue);
 

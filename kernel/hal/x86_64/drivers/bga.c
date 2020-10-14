@@ -32,7 +32,7 @@ struct fs_device bga_device = {
     .mode = S_IFCHR | 0600,
     .ops = &bga_ops,
     .private = &data,
-    .lock = MUTEX_INITIALIZER,
+    .lock = MUTEX_INITIALIZER(bga_device.lock),
 };
 
 static int bga_ioctl(struct fs_device *device, unsigned long request, void *argp) {

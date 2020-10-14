@@ -11,7 +11,7 @@
 void init_wait_queue_internal(struct wait_queue *queue, const char *func) {
     (void) func;
     init_spinlock(&queue->lock);
-    queue->waiters_head = queue->waiters_tail = NULL;
+    init_list(&queue->list);
 #ifdef WAIT_QUEUE_DEBUG
     debug_log("Initialized wait queue: [ %p, %s ]\n", queue, func);
 #endif /* WAIT_QUEUE_DEBUG */
@@ -19,13 +19,7 @@ void init_wait_queue_internal(struct wait_queue *queue, const char *func) {
 
 void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task, const char *func) {
     (void) func;
-    assert(task->wait_queue_next == NULL);
-    if (!queue->waiters_head) {
-        queue->waiters_head = queue->waiters_tail = task;
-    } else {
-        queue->waiters_tail->wait_queue_next = task;
-        queue->waiters_tail = task;
-    }
+    list_append(&queue->list, &task->wait_queue_list);
 
 #ifdef WAIT_QUEUE_DEBUG
     debug_log("enqueuing task: [ %p, %d:%d, %s ]\n", queue, task->process->pid, task->tid, func);
@@ -34,14 +28,9 @@ void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task, cons
 
 bool __wake_up(struct wait_queue *queue, const char *func) {
     (void) func;
-    struct task *to_wake = queue->waiters_head;
+    struct task *to_wake = list_first_entry(&queue->list, struct task, wait_queue_list);
     if (to_wake) {
-        queue->waiters_head = to_wake->wait_queue_next;
-        to_wake->wait_queue_next = NULL;
-
-        if (queue->waiters_tail == to_wake) {
-            queue->waiters_tail = NULL;
-        }
+        list_remove(&to_wake->wait_queue_list);
 
 #ifdef WAIT_QUEUE_DEBUG
         debug_log("waking up task: [ %p, %d:%d, %s ]\n", queue, to_wake->process->pid, to_wake->tid, func);
@@ -62,9 +51,20 @@ void __wake_up_n(struct wait_queue *queue, int n, const char *func) {
     }
 }
 
+void __wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const char *func) {
+    (void) func;
+    (void) queue;
+    list_remove(&task->wait_queue_list);
+}
+
+void wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const char *func) {
+    spin_lock(&queue->lock);
+    wait_queue_dequeue_task(queue, task, func);
+    spin_unlock(&queue->lock);
+}
+
 void wait_on_internal(struct wait_queue *queue, const char *func) {
     struct task *task = get_current_task();
-    task->wait_queue_next = NULL;
 
     spin_lock(&queue->lock);
     __wait_queue_enqueue_task(queue, task, func);

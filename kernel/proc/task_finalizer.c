@@ -7,7 +7,7 @@
 
 static struct task *queue;
 static spinlock_t queue_lock = SPINLOCK_INITIALIZER;
-static struct wait_queue wait_queue = WAIT_QUEUE_INITIALIZER;
+static struct wait_queue wait_queue = WAIT_QUEUE_INITIALIZER(wait_queue);
 
 static struct task *take_from_queue(void) {
     spin_lock(&queue_lock);

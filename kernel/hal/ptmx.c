@@ -55,7 +55,7 @@ static struct termios default_termios = {
 
 static struct fs_device *slaves[PTMX_MAX] = { 0 };
 static struct fs_device *masters[PTMX_MAX] = { 0 };
-static mutex_t lock = MUTEX_INITIALIZER;
+static mutex_t lock = MUTEX_INITIALIZER(lock);
 
 static void slave_on_open(struct fs_device *device) {
     struct slave_data *data = device->private;
@@ -727,6 +727,7 @@ static struct file *ptmx_open(struct fs_device *device, int flags, int *error) {
             slaves[i]->ops = &slave_ops;
             slaves[i]->mode = S_IFCHR | 0666;
             slaves[i]->private = NULL;
+            init_mutex(&slaves[i]->lock);
             snprintf(slaves[i]->name, sizeof(slaves[i]->name) - 1, "tty%d", i);
 
             struct fs_device *master = calloc(1, sizeof(struct fs_device));
@@ -734,6 +735,7 @@ static struct file *ptmx_open(struct fs_device *device, int flags, int *error) {
             master->ops = &master_ops;
             master->mode = S_IFCHR | 0666;
             master->private = NULL;
+            init_mutex(&master->lock);
             masters[i] = master;
             snprintf(master->name, sizeof(master->name) - 1, "mtty%d", i);
 
@@ -774,6 +776,7 @@ void init_ptmx() {
     ptmx_device->ops = &ptmx_ops;
     ptmx_device->private = NULL;
     ptmx_device->mode = S_IFCHR | 0666;
+    init_mutex(&ptmx_device->lock);
     strcpy(ptmx_device->name, "ptmx");
 
     dev_register(ptmx_device);
@@ -783,6 +786,7 @@ void init_ptmx() {
     tty_device->ops = &tty_ops;
     tty_device->private = NULL;
     tty_device->mode = S_IFCHR | 0666;
+    init_mutex(&ptmx_device->lock);
     strcpy(tty_device->name, "tty");
 
     dev_register(tty_device);

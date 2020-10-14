@@ -94,7 +94,7 @@ static struct fs_device dev_null = {
     .device_number = 0x00101,
     .mode = S_IFCHR | 0666,
     .ops = &dev_null_ops,
-    .lock = MUTEX_INITIALIZER,
+    .lock = MUTEX_INITIALIZER(dev_null.lock),
 };
 
 static struct fs_device_ops dev_zero_ops = {
@@ -107,7 +107,7 @@ static struct fs_device dev_zero = {
     .device_number = 0x00102,
     .mode = S_IFCHR | 0666,
     .ops = &dev_zero_ops,
-    .lock = MUTEX_INITIALIZER,
+    .lock = MUTEX_INITIALIZER(dev_zero.lock),
 };
 
 static struct fs_device_ops dev_full_ops = {
@@ -120,7 +120,7 @@ static struct fs_device dev_full = {
     .device_number = 0x00103,
     .mode = S_IFCHR | 0666,
     .ops = &dev_full_ops,
-    .lock = MUTEX_INITIALIZER,
+    .lock = MUTEX_INITIALIZER(dev_full.lock),
 };
 
 static struct fs_device_ops dev_urandom_ops = {
@@ -133,7 +133,7 @@ static struct fs_device dev_urandom = {
     .device_number = 0x00104,
     .mode = S_IFCHR | 0666,
     .ops = &dev_urandom_ops,
-    .lock = MUTEX_INITIALIZER,
+    .lock = MUTEX_INITIALIZER(dev_urandom.lock),
 };
 
 void init_virtual_devices() {

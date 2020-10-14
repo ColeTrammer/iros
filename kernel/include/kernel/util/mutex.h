@@ -10,8 +10,8 @@ typedef struct {
     int lock;
 } mutex_t;
 
-#define MUTEX_INITIALIZER \
-    { WAIT_QUEUE_INITIALIZER, 0 }
+#define MUTEX_INITIALIZER(m) \
+    { WAIT_QUEUE_INITIALIZER((m).queue), 0 }
 
 void init_mutex_internal(mutex_t *mutex, const char *func);
 void mutex_lock_internal(mutex_t *mutex, const char *func);

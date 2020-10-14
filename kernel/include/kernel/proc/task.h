@@ -70,7 +70,7 @@ struct task {
     struct task *finialize_queue_next;
 
     // Inline list pointer used by wait_queue functions
-    struct task *wait_queue_next;
+    struct list_node wait_queue_list;
 
     struct vm_region *kernel_stack;
 
@@ -191,6 +191,7 @@ static inline int __wait_do(uint64_t *interrupts_save) {
             }                                                                    \
             __ret = wait_do(task, &__save);                                      \
             if (__ret) {                                                         \
+                wait_queue_dequeue_task(wq, task, __func__);                     \
                 break;                                                           \
             }                                                                    \
             end_wait;                                                            \

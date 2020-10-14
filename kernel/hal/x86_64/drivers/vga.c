@@ -85,7 +85,7 @@ static struct fs_device vga_device = {
     .device_number = 0x00600,
     .mode = S_IFCHR | 0600,
     .ops = &vga_ops,
-    .lock = MUTEX_INITIALIZER,
+    .lock = MUTEX_INITIALIZER(vga_device.lock),
 };
 
 void vga_enable_cursor() {

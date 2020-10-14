@@ -25,7 +25,7 @@ static struct task *network_task;
 static struct list_node recv_list = INIT_LIST(recv_list);
 static spinlock_t lock = SPINLOCK_INITIALIZER;
 
-static struct wait_queue net_wait_queue = WAIT_QUEUE_INITIALIZER;
+static struct wait_queue net_wait_queue = WAIT_QUEUE_INITIALIZER(net_wait_queue);
 
 static struct packet *consume() {
     spin_lock(&lock);

@@ -25,7 +25,7 @@ struct socket *net_get_socket_from_port(uint16_t port) {
     return p->socket;
 }
 
-static mutex_t port_search_lock = MUTEX_INITIALIZER;
+static mutex_t port_search_lock = MUTEX_INITIALIZER(port_search_lock);
 
 int net_bind_to_ephemeral_port(struct socket *socket, uint16_t *port_p) {
     struct port_to_socket *p = malloc(sizeof(struct port_to_socket));
