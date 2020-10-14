@@ -44,7 +44,6 @@ enum sig_default_behavior {
     TERMINATE_AND_DUMP,
     IGNORE,
     STOP,
-    CONTINUE,
     INVAL,
 };
 
@@ -56,7 +55,7 @@ static enum sig_default_behavior sig_defaults[_NSIG] = {
     TERMINATE_AND_DUMP, // SIGBUS
     TERMINATE_AND_DUMP, // SIGTRAP
     TERMINATE_AND_DUMP, // SIGABRT
-    CONTINUE,           // SIGCONT
+    IGNORE,             // SIGCONT
     TERMINATE_AND_DUMP, // SIGFPE
     TERMINATE,          // SIGKILL
     STOP,               // SIGTTIN
@@ -472,7 +471,7 @@ void free_task(struct task *task, bool free_paging_structure) {
 void task_set_sig_pending(struct task *task, int signum) {
     task->sig_pending |= (UINT64_C(1) << (signum - UINT64_C(1)));
 
-    if (task->sched_state == WAITING && (task->blocking || task->wait_interruptible)) {
+    if (task->sched_state == WAITING && (task->blocking || task->wait_interruptible) && !(task_is_sig_blocked(task, signum))) {
         task_unblock(task, -EINTR);
     }
 }
@@ -485,10 +484,35 @@ bool task_is_sig_pending(struct task *task, int signum) {
     return task->sig_pending & (UINT64_C(1) << (signum - UINT64_C(1))) ? 1 : 0;
 }
 
+void task_do_sig_cont(struct task *task, int signum) {
+    if (signum != SIGCONT) {
+        return;
+    }
+
+    if (task->sched_state == STOPPED) {
+        list_for_each_entry_safe(&task->queued_signals, sig, struct queued_signal, queue) {
+            enum sig_default_behavior behavior = sig->info.si_signo >= SIGRTMIN ? TERMINATE : sig_defaults[sig->info.si_signo];
+            if (behavior == STOP) {
+                list_remove(&sig->queue);
+                task_free_queued_signal(sig);
+            }
+        }
+
+        task_unset_sig_pending(task, SIGTSTP);
+        task_unset_sig_pending(task, SIGSTOP);
+        task_unset_sig_pending(task, SIGTTOU);
+        task_unset_sig_pending(task, SIGTTIN);
+
+        task->sched_state = task->in_kernel ? RUNNING_UNINTERRUPTIBLE : RUNNING_INTERRUPTIBLE;
+        proc_set_process_state(task->process, PS_CONTINUED, 0, false);
+    }
+}
+
 void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add) {
     unsigned long save = disable_interrupts_save();
 
     int signum = to_add->info.si_signo;
+    task_do_sig_cont(task, signum);
 
     enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
     if (task->process->sig_state[signum].sa_handler == SIG_IGN ||
@@ -513,6 +537,8 @@ finish:
 
 void task_enqueue_signal(struct task *task, int signum, void *val, bool is_sigqueue) {
     unsigned long save = disable_interrupts_save();
+
+    task_do_sig_cont(task, signum);
 
     enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
     if (task->process->sig_state[signum].sa_handler == SIG_IGN ||
@@ -623,16 +649,6 @@ void task_set_state_to_exiting(struct task *task) {
     }
 }
 
-void task_yield_if_state_changed(struct task *task) {
-    if (task->should_exit) {
-#ifdef TASK_SCHED_STATE_DEBUG
-        debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
-#endif /* TASK_SCHED_STATE_DEBUG */
-        task->sched_state = EXITING;
-        arch_sched_run_next(&task->arch_task.task_state);
-    }
-}
-
 void task_do_sig(struct task *task, int signum) {
     assert(get_current_task() == task);
 
@@ -676,13 +692,6 @@ void task_do_sig(struct task *task, int signum) {
             }
             task->sched_state = STOPPED;
             proc_set_process_state(task->process, PS_STOPPED, signum, false);
-            break;
-        case CONTINUE:
-            if (task->sched_state != STOPPED) {
-                break;
-            }
-            task->sched_state = task->blocking ? WAITING : task->in_kernel ? RUNNING_UNINTERRUPTIBLE : RUNNING_INTERRUPTIBLE;
-            proc_set_process_state(task->process, PS_CONTINUED, 0, false);
             break;
         case IGNORE:
             break;

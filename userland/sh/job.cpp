@@ -128,7 +128,7 @@ int job_run(struct job_id id) {
         }
 
         pid_t ret;
-        while (!(ret = waitpid(-job->pgid, &status, WUNTRACED)) && errno != EINTR)
+        while ((ret = waitpid(-job->pgid, &status, WUNTRACED)) < 0 && errno == EINTR)
             ;
 
         if (ret == -1) {
