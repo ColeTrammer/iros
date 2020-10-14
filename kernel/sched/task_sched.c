@@ -120,6 +120,7 @@ void local_sched_remove_task(struct task *task) {
 
 /* Must be called from unpremptable context */
 void sched_run_next() {
+try_again:;
     struct processor *processor = get_current_processor();
     struct task *current = processor->current_task;
 
@@ -131,29 +132,6 @@ void sched_run_next() {
     if (current == NULL) {
         run_task(processor->idle_task);
     }
-
-    // Task signals
-    struct task *task = processor->sched_list_start;
-    do {
-        // Don't send the signals if the task is running UNINTERRUPTABLY, or if it is just going to exit anyway
-        // FIXME: what to do if the task is stopped? It might be unsafe to send a terminating signal, since it
-        //        might leak resources.
-        if (task->sched_state == RUNNING_UNINTERRUPTIBLE || task->sched_state == EXITING ||
-            (task->sched_state == WAITING && !task->blocking && !task->in_sigsuspend && !task->wait_interruptible)) {
-            continue;
-        }
-
-        int sig;
-        while ((sig = task_get_next_sig(task)) != -1) {
-            struct task *current_save = current;
-            processor->current_task = task;
-            task_do_sig(task, sig);
-            processor->current_task = current_save;
-            if (task->sched_state == RUNNING_UNINTERRUPTIBLE || task->sched_state == EXITING) {
-                break;
-            }
-        }
-    } while ((task = task->sched_next) != processor->sched_list_start);
 
     struct task *to_run = current->sched_next;
     struct task *start = to_run;
@@ -205,10 +183,21 @@ void sched_run_next() {
     }
 
 #ifdef SCHED_DEBUG
-    debug_log("Running task: [ %d, %d:%d ]\n", processor->id, to_run->tid, to_run->process->pid);
+    if (to_run->process->pid) {
+        debug_log("Running task: [ %d, %d:%d ]\n", processor->id, to_run->tid, to_run->process->pid);
+    }
 #endif /* SCHED_DEBUG */
 
     assert(to_run->sched_state != WAITING && to_run->sched_state != STOPPED && to_run->sched_state != EXITING);
+    int sig;
+    while (to_run->sched_state == RUNNING_INTERRUPTIBLE && (sig = task_get_next_sig(to_run)) != -1) {
+        processor->current_task = to_run;
+        task_do_sig(to_run, sig);
+    }
+
+    if (to_run->sched_state != RUNNING_INTERRUPTIBLE && to_run->sched_state != RUNNING_UNINTERRUPTIBLE) {
+        goto try_again;
+    }
     run_task(to_run);
 }
 

@@ -49,7 +49,7 @@ void spin_lock_internal(spinlock_t *lock, const char *func __attribute__((unused
     }
 }
 
-void spin_unlock_internal(spinlock_t *lock, const char *func __attribute__((unused))) {
+void spin_unlock_internal(spinlock_t *lock, const char *func __attribute__((unused)), bool no_irq_restore) {
 #ifdef SPINLOCK_DEBUG
     __spinlock_log("~unlocking spinlock: [ %p, %s ]\n", lock, func);
 #endif /* SPINLOCK_DEBUG */
@@ -57,5 +57,7 @@ void spin_unlock_internal(spinlock_t *lock, const char *func __attribute__((unus
     unsigned long interrupts = lock->interrupts;
     barrier();
     lock->counter = 0;
-    interrupts_restore(interrupts);
+    if (!no_irq_restore) {
+        interrupts_restore(interrupts);
+    }
 }

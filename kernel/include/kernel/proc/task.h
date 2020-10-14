@@ -1,6 +1,7 @@
 #ifndef _KERNEL_PROC_TASK_H
 #define _KERNEL_PROC_TASK_H 1
 
+#include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -156,10 +157,15 @@ bool task_in_kernel(struct task *task);
 
 extern struct task initial_kernel_task;
 
-static inline void __wait_prepare(struct task *task, uint64_t *interrupts_save, bool interruptible) {
+static inline int __wait_prepare(struct task *task, uint64_t *interrupts_save, bool interruptible) {
     *interrupts_save = disable_interrupts_save();
     task->wait_interruptible = interruptible;
     task->sched_state = WAITING;
+
+    if (interruptible && task_get_next_sig(task) != -1) {
+        return -EINTR;
+    }
+    return 0;
 }
 
 static inline int __wait_do(uint64_t *interrupts_save) {
@@ -180,14 +186,18 @@ static inline int __wait_do(uint64_t *interrupts_save) {
             if (cond) {                                                          \
                 break;                                                           \
             }                                                                    \
-            __wait_prepare(task, &__save, interruptible);                        \
+            __ret = __wait_prepare(task, &__save, interruptible);                \
+            if (__ret) {                                                         \
+                begin_wait;                                                      \
+                break;                                                           \
+            }                                                                    \
             if (lock_wq) {                                                       \
                 spin_lock(&(wq)->lock);                                          \
             }                                                                    \
             __wait_queue_enqueue_task(wq, task, __func__);                       \
             begin_wait;                                                          \
             if (lock_wq) {                                                       \
-                spin_unlock(&(wq)->lock);                                        \
+                spin_unlock_no_irq_restore(&(wq)->lock);                         \
             }                                                                    \
             __ret = wait_do(task, &__save);                                      \
             if (__ret) {                                                         \
@@ -202,19 +212,23 @@ static inline int __wait_do(uint64_t *interrupts_save) {
 #define wait_for(task, cond, wq, begin_wait, end_wait)               __wait_for(task, cond, wq, begin_wait, end_wait, false, true)
 #define wait_for_interruptible(task, cond, wq, begin_wait, end_wait) __wait_for(task, cond, wq, begin_wait, end_wait, true, true)
 
-#define wait_for_with_spinlock(task, cond, wq, lock) __wait_for(task, cond, wq, spin_unlock(lock), spin_lock(lock), false, true)
+#define wait_for_with_spinlock(task, cond, wq, lock) \
+    __wait_for(task, cond, wq, spin_unlock_no_irq_restore(lock), spin_lock(lock), false, true)
 #define wait_for_with_spinlock_interruptible(task, cond, wq, lock) \
-    __wait_for(task, cond, wq, spin_unlock(lock), spin_lock(lock), true, true)
+    __wait_for(task, cond, wq, spin_unlock_no_irq_restore(lock), spin_lock(lock), true, true)
 
 #define wait_for_with_mutex(task, cond, wq, lock)               __wait_for(task, cond, wq, mutex_unlock(lock), mutex_lock(lock), false, true)
 #define wait_for_with_mutex_interruptible(task, cond, wq, lock) __wait_for(task, cond, wq, mutex_unlock(lock), mutex_lock(lock), true, true)
 
-#define wait_with_blocker(task)                    \
-    ({                                             \
-        uint64_t __save;                           \
-        (task)->blocking = true;                   \
-        wait_prepare_interruptible(task, &__save); \
-        wait_do(task, &__save);                    \
+#define wait_with_blocker(task)                                \
+    ({                                                         \
+        uint64_t __save;                                       \
+        (task)->blocking = true;                               \
+        int __ret = wait_prepare_interruptible(task, &__save); \
+        if (!__ret) {                                          \
+            __ret = wait_do(task, &__save);                    \
+        }                                                      \
+        __ret;                                                 \
     })
 
 #endif /* _KERNEL_PROC_TASK_H */

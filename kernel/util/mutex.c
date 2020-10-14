@@ -19,7 +19,8 @@ void init_mutex_internal(mutex_t *mutex, const char *func) {
 static void __mutex_lock(mutex_t *mutex, struct task *task, const char *func) {
     (void) func;
 
-    __wait_for(task, mutex->lock == 0, &mutex->queue, spin_unlock(&mutex->queue.lock), spin_lock(&mutex->queue.lock), false, false);
+    __wait_for(task, mutex->lock == 0, &mutex->queue, spin_unlock_no_irq_restore(&mutex->queue.lock), spin_lock(&mutex->queue.lock), false,
+               false);
 
     mutex->lock = 1;
 #ifdef MUTEX_DEBUG

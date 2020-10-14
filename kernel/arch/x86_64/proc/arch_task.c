@@ -212,13 +212,6 @@ void task_do_sig_handler(struct task *task, int signum) {
     assert(task->process->sig_state[signum].sa_handler != SIG_IGN);
     assert(task->process->sig_state[signum].sa_handler != SIG_DFL);
 
-    if (task->blocking || task->wait_interruptible) {
-        // Defer running the signal handler until after the blocking code
-        // has a chance to clean up.
-        task_unblock(task, -EINTR);
-        return;
-    }
-
     // For debugging purposes (bash will catch SIGSEGV and try to cleanup)
 #ifdef STACK_TRACE_ON_ANY_SIGSEGV
     if (signum == SIGSEGV) {

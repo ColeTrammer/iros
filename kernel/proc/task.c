@@ -39,6 +39,48 @@ struct process idle_kernel_process = {
     .main_tid = 1,
 };
 
+enum sig_default_behavior {
+    TERMINATE,
+    TERMINATE_AND_DUMP,
+    IGNORE,
+    STOP,
+    CONTINUE,
+    INVAL,
+};
+
+static enum sig_default_behavior sig_defaults[_NSIG] = {
+    INVAL,              // INVAL
+    TERMINATE,          // SIGHUP
+    TERMINATE,          // SIGINT
+    TERMINATE_AND_DUMP, // SIGQUIT
+    TERMINATE_AND_DUMP, // SIGBUS
+    TERMINATE_AND_DUMP, // SIGTRAP
+    TERMINATE_AND_DUMP, // SIGABRT
+    CONTINUE,           // SIGCONT
+    TERMINATE_AND_DUMP, // SIGFPE
+    TERMINATE,          // SIGKILL
+    STOP,               // SIGTTIN
+    STOP,               // SIGTTOU
+    TERMINATE,          // SIGILL
+    TERMINATE,          // SIGPIPE
+    TERMINATE,          // SIGALRM
+    TERMINATE,          // SIGTERM
+    TERMINATE_AND_DUMP, // SIGSEGV
+    STOP,               // SIGSTOP
+    STOP,               // SIGTSTP
+    TERMINATE,          // SIGUSR1
+    TERMINATE,          // SIGUSR2
+    TERMINATE,          // SIGPOLL
+    TERMINATE,          // SIGPROF
+    TERMINATE_AND_DUMP, // SIGSYS
+    IGNORE,             // SIGURG
+    TERMINATE,          // SIGVTALRM
+    TERMINATE_AND_DUMP, // SIGXCPU
+    TERMINATE_AND_DUMP, // SIGXFSZ
+    IGNORE,             // SIGCHLD
+    IGNORE,             // SIGWINCH
+};
+
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp) {
     struct args_context *context = process->args_context = malloc(sizeof(struct args_context));
 
@@ -429,6 +471,10 @@ void free_task(struct task *task, bool free_paging_structure) {
 
 void task_set_sig_pending(struct task *task, int signum) {
     task->sig_pending |= (UINT64_C(1) << (signum - UINT64_C(1)));
+
+    if (task->sched_state == WAITING && (task->blocking || task->wait_interruptible)) {
+        task_unblock(task, -EINTR);
+    }
 }
 
 void task_unset_sig_pending(struct task *task, int signum) {
@@ -443,6 +489,13 @@ void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add)
     unsigned long save = disable_interrupts_save();
 
     int signum = to_add->info.si_signo;
+
+    enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
+    if (task->process->sig_state[signum].sa_handler == SIG_IGN ||
+        (task->process->sig_state[signum].sa_handler == SIG_DFL && behavior == IGNORE)) {
+        task_free_queued_signal(to_add);
+        goto finish;
+    }
 
     list_for_each_entry(&task->queued_signals, queued_signal, struct queued_signal, queue) {
         if (queued_signal->info.si_signo > signum) {
@@ -460,6 +513,12 @@ finish:
 
 void task_enqueue_signal(struct task *task, int signum, void *val, bool is_sigqueue) {
     unsigned long save = disable_interrupts_save();
+
+    enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
+    if (task->process->sig_state[signum].sa_handler == SIG_IGN ||
+        (task->process->sig_state[signum].sa_handler == SIG_DFL && behavior == IGNORE)) {
+        goto task_enqueue_signal_end;
+    }
 
     if (signum < SIGRTMIN && task_is_sig_pending(task, signum)) {
         goto task_enqueue_signal_end;
@@ -550,10 +609,11 @@ void task_set_state_to_exiting(struct task *task) {
         return;
     }
 
-    if (task->blocking) {
+    if (task->sched_state == WAITING && (task->blocking || task->wait_interruptible)) {
         // Defer exit state change until after the blocking code has a chance
         // to clean up
         task_unblock(task, -EINTR);
+        return;
     }
 
     if (task->in_kernel) {
@@ -573,41 +633,6 @@ void task_yield_if_state_changed(struct task *task) {
     }
 }
 
-enum sig_default_behavior { TERMINATE, TERMINATE_AND_DUMP, IGNORE, STOP, CONTINUE, INVAL };
-
-static enum sig_default_behavior sig_defaults[_NSIG] = {
-    INVAL,              // INVAL
-    TERMINATE,          // SIGHUP
-    TERMINATE,          // SIGINT
-    TERMINATE_AND_DUMP, // SIGQUIT
-    TERMINATE_AND_DUMP, // SIGBUS
-    TERMINATE_AND_DUMP, // SIGTRAP
-    TERMINATE_AND_DUMP, // SIGABRT
-    CONTINUE,           // SIGCONT
-    TERMINATE_AND_DUMP, // SIGFPE
-    TERMINATE,          // SIGKILL
-    STOP,               // SIGTTIN
-    STOP,               // SIGTTOU
-    TERMINATE,          // SIGILL
-    TERMINATE,          // SIGPIPE
-    TERMINATE,          // SIGALRM
-    TERMINATE,          // SIGTERM
-    TERMINATE_AND_DUMP, // SIGSEGV
-    STOP,               // SIGSTOP
-    STOP,               // SIGTSTP
-    TERMINATE,          // SIGUSR1
-    TERMINATE,          // SIGUSR2
-    TERMINATE,          // SIGPOLL
-    TERMINATE,          // SIGPROF
-    TERMINATE_AND_DUMP, // SIGSYS
-    IGNORE,             // SIGURG
-    TERMINATE,          // SIGVTALRM
-    TERMINATE_AND_DUMP, // SIGXCPU
-    TERMINATE_AND_DUMP, // SIGXFSZ
-    IGNORE,             // SIGCHLD
-    TERMINATE           // SIGWINCH
-};
-
 void task_do_sig(struct task *task, int signum) {
     assert(get_current_task() == task);
 
@@ -626,21 +651,6 @@ void task_do_sig(struct task *task, int signum) {
     }
 
     enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
-    switch (behavior) {
-        case TERMINATE_AND_DUMP:
-        case TERMINATE:
-        case CONTINUE:
-            if (task->blocking || task->wait_interruptible) {
-                // Defer running the signal handler until after the blocking code
-                // has a chance to clean up.
-                task_unblock(task, -EINTR);
-                return;
-            }
-            break;
-        default:
-            break;
-    }
-
     task_unset_sig_pending(task, signum);
     switch (behavior) {
         case TERMINATE_AND_DUMP:
