@@ -16,6 +16,7 @@ set(TARGETS
     libclipboard
     libext
     libgraphics
+    libipc
     libliim
     libprocinfo
     libsh
