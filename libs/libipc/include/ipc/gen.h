@@ -1,6 +1,7 @@
 #pragma once
 
-#pragma once
+#include <ipc/stream.h>
+#include <stdint.h>
 
 #define __PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
 
@@ -63,30 +64,54 @@
     __IF(__IS_PAREN(__FIRST(__VA_ARGS__))) \
     (__EVAL_(op __FIRST(__VA_ARGS__)) __OBSTRUCT(__RECURSIVE_ITER__INDIRECT)()(op, __NEXT(__VA_ARGS__)), __VA_ARGS__)
 
-#define __MESSAGE_FIELD_DECL(type, name)       type name;
-#define __MESSAGE_FIELD_SERIALIZER(type, name) stream << name;
-#define __MESSAGE_FIELD_PARSER(type, name)     stream >> name;
+#define __MESSAGE_FIELD_DECL(type, name)               type name;
+#define __MESSAGE_FIELD_SERIALIZATION_SIZE(type, name) ret += IPC::Serializer<type>::serialization_size(name);
+#define __MESSAGE_FIELD_SERIALIZER(type, name)         stream << name;
+#define __MESSAGE_FIELD_DESERIALIZER(type, name)       stream >> name;
 
-#define __MESSAGE_DECL(...)            __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DECL __VA_OPT__(, ) __VA_ARGS__))
-#define __MESSAGE_SERIALIZER_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZER __VA_OPT__(, ) __VA_ARGS__))
-#define __MESSAGE_SERIALIZER(n, ...)                          \
-    Ipc::Stream& serialize(Ipc::Stream& stream) {             \
-        stream << Type::n;                                    \
-        __MESSAGE_SERIALIZER_BODY(__VA_ARGS__) return stream; \
+#define __MESSAGE_DECL(...)                    __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DECL __VA_OPT__(, ) __VA_ARGS__))
+#define __MESSAGE_SERIALIZATION_SIZE_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZATION_SIZE __VA_OPT__(, ) __VA_ARGS__))
+#define __MESSAGE_SERIALIZER_BODY(...)         __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZER __VA_OPT__(, ) __VA_ARGS__))
+#define __MESSAGE_SERIALIZER(n, ...)                   \
+    uint32_t serialization_size() const {              \
+        uint32_t ret = 2 * sizeof(uint32_t);           \
+        __MESSAGE_SERIALIZATION_SIZE_BODY(__VA_ARGS__) \
+        return ret;                                    \
+    }                                                  \
+    bool serialize(IPC::Stream& stream) {              \
+        stream << serialization_size();                \
+        stream << static_cast<uint32_t>(Type::n);      \
+        __MESSAGE_SERIALIZER_BODY(__VA_ARGS__)         \
+        return !stream.error();                        \
     }
-#define __MESSAGE_PARSER_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_PARSER __VA_OPT__(, ) __VA_ARGS__))
-#define __MESSAGE_PARSER(...) \
-    Ipc::Stream& parse(Ipc::Stream& stream) { __MESSAGE_PARSER_BODY(__VA_ARGS__) return stream; }
 
-#define __MESSAGE_BEGIN(n)     struct n {
-#define __MESSAGE_BODY(n, ...) __MESSAGE_DECL(__VA_ARGS__) __MESSAGE_SERIALIZER(n __VA_OPT__(, ) __VA_ARGS__) __MESSAGE_PARSER(__VA_ARGS__)
-#define __MESSAGE_END(n)       }
+#define __MESSAGE_DESERIALIZER_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DESERIALIZER __VA_OPT__(, ) __VA_ARGS__))
+#define __MESSAGE_DESERIALIZER(n, ...)                \
+    bool deserialize(IPC::Stream& stream) {           \
+        uint32_t size;                                \
+        uint32_t type;                                \
+        stream >> size;                               \
+        stream >> type;                               \
+        if (type != static_cast<uint32_t>(Type::n)) { \
+            return false;                             \
+        }                                             \
+        __MESSAGE_DESERIALIZER_BODY(__VA_ARGS__)      \
+        if (size != serialization_size()) {           \
+            return false;                             \
+        }                                             \
+        return !stream.error();                       \
+    }
+
+#define __MESSAGE_BEGIN(n) struct n {
+#define __MESSAGE_BODY(n, ...) \
+    __MESSAGE_DECL(__VA_ARGS__) __MESSAGE_SERIALIZER(n __VA_OPT__(, ) __VA_ARGS__) __MESSAGE_DESERIALIZER(n __VA_OPT__(, ) __VA_ARGS__)
+#define __MESSAGE_END(n) }
 
 #define __MESSAGE_TYPE(n, ...) n,
 #define __MESSAGE(n, ...)      __MESSAGE_BEGIN(n) __MESSAGE_BODY(n, __VA_ARGS__) __MESSAGE_END(n);
 
 #define __IPC_MESSAGE_TYPES(...)                                                             \
-    enum class Type {                                                                        \
+    enum class Type : uint32_t {                                                             \
         __EVAL__(__RECURSIVE_ITER_(__MESSAGE_TYPE __VA_OPT__(, ) __VA_ARGS__)) MessageCount, \
     };
 #define __IPC_MESSAGES(...) __EVAL__(__RECURSIVE_ITER_(__MESSAGE __VA_OPT__(, ) __VA_ARGS__))
