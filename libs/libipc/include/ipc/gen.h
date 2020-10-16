@@ -104,13 +104,21 @@
         return !stream.error();                       \
     }
 
-#define __MESSAGE_BEGIN(n) struct n {
+#define __MESSAGE_BEGIN(n) \
+    struct n {             \
+        static constexpr Type message_type() { return Type::n; }
 #define __MESSAGE_BODY(n, ...) \
     __MESSAGE_DECL(__VA_ARGS__) __MESSAGE_SERIALIZER(n __VA_OPT__(, ) __VA_ARGS__) __MESSAGE_DESERIALIZER(n __VA_OPT__(, ) __VA_ARGS__)
-#define __MESSAGE_END(n) }
+#define __MESSAGE_END(n) \
+    }                    \
+    ;                    \
+    static_assert(IPC::ConcreteMessage<n>);
 
 #define __MESSAGE_TYPE(n, ...) n,
-#define __MESSAGE(n, ...)      __MESSAGE_BEGIN(n) __MESSAGE_BODY(n, __VA_ARGS__) __MESSAGE_END(n);
+#define __MESSAGE(n, ...)          \
+    __MESSAGE_BEGIN(n)             \
+    __MESSAGE_BODY(n, __VA_ARGS__) \
+    __MESSAGE_END(n)
 
 #define __DISPATCHER_DECL(n, ...) virtual void handle(const n&) = 0;
 #define __DISPATCHER(n, ...)            \

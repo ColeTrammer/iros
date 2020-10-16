@@ -4,6 +4,8 @@
 
 namespace IPC {
 
+class Stream;
+
 struct Message {
     uint32_t size;
     uint32_t type;
@@ -11,9 +13,11 @@ struct Message {
 };
 
 template<typename T>
-concept ConcreteMessage = requires(T a) {
-    a.serialize();
-    a.seriialization_size();
+concept ConcreteMessage = requires(T a, Stream& s) {
+    a.serialize(s);
+    a.deserialize(s);
+    a.serialization_size();
+    T::message_type();
 };
 
 }

@@ -3,7 +3,7 @@
 #include <app/unix_socket.h>
 #include <ipc/message.h>
 #include <ipc/message_dispatcher.h>
-#include <unistd.h>
+#include <liim/maybe.h>
 
 namespace IPC {
 
@@ -24,12 +24,28 @@ public:
         if (!val.serialize(stream)) {
             return false;
         }
-        int fd = m_socket ? m_socket->fd() : -1;
-        return write(fd, buffer, stream.buffer_size()) == stream.buffer_size();
+        return send_impl(*reinterpret_cast<const Message*>(buffer));
+    }
+
+    template<ConcreteMessage T>
+    Maybe<T> wait_for_response() {
+        auto message = wait_for_response_impl(static_cast<uint32_t>(T::message_type()));
+        if (!message) {
+            return {};
+        }
+        Stream stream(reinterpret_cast<char*>(message.get()), message->size);
+        T val;
+        if (!val.deserialize(stream)) {
+            return {};
+        }
+        return { move(val) };
     }
 
 private:
     void handle_messages();
+    void read_from_socket();
+    bool send_impl(const Message& message);
+    UniquePtr<Message> wait_for_response_impl(uint32_t type);
 
     SharedPtr<App::UnixSocket> m_socket;
     SharedPtr<MessageDispatcher> m_dispatcher;

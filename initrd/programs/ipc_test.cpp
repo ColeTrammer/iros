@@ -25,4 +25,8 @@ int main() {
     assert(y.z == 1);
     assert(y.x == 2);
     assert(y.s == "asdf");
+
+    IPC::Endpoint endpoint("/tmp/.ipc_test.socket");
+    endpoint.wait_for_response<Test::M1>();
+    endpoint.send<Test::M1>({ .z = 1, .x = 2, .s = "qwer" });
 }
