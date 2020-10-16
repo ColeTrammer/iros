@@ -80,7 +80,7 @@
         __MESSAGE_SERIALIZATION_SIZE_BODY(__VA_ARGS__) \
         return ret;                                    \
     }                                                  \
-    bool serialize(IPC::Stream& stream) {              \
+    bool serialize(IPC::Stream& stream) const {        \
         stream << serialization_size();                \
         stream << static_cast<uint32_t>(Type::n);      \
         __MESSAGE_SERIALIZER_BODY(__VA_ARGS__)         \
@@ -128,7 +128,7 @@
         __EVAL__(__RECURSIVE_ITER_(__MESSAGE_TYPE __VA_OPT__(, ) __VA_ARGS__)) MessageCount, \
     };
 #define __IPC_MESSAGES(...) __EVAL__(__RECURSIVE_ITER_(__MESSAGE __VA_OPT__(, ) __VA_ARGS__))
-#define __IPC_ENDPOINT(...)                                                          \
+#define __IPC_DISPATCHER(...)                                                        \
     class MessageDispatcher : IPC::MessageDispatcher {                               \
     public:                                                                          \
         __EVAL__(__RECURSIVE_ITER_(__DISPATCHER_DECL __VA_OPT__(, ) __VA_ARGS__))    \
@@ -162,5 +162,5 @@
     namespace n {                    \
     __IPC_MESSAGE_TYPES(__VA_ARGS__) \
     __IPC_MESSAGES(__VA_ARGS__)      \
-    __IPC_ENDPOINT(__VA_ARGS__)      \
+    __IPC_DISPATCHER(__VA_ARGS__)    \
     }

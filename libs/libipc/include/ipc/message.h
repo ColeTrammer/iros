@@ -10,4 +10,10 @@ struct Message {
     uint8_t data[];
 };
 
+template<typename T>
+concept ConcreteMessage = requires(T a) {
+    a.serialize();
+    a.seriialization_size();
+};
+
 }
