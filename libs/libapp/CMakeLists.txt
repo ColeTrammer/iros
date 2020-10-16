@@ -3,21 +3,13 @@ set(SOURCES
     box_layout.cpp
     button.cpp
     context_menu.cpp
-    event_loop.cpp
     icon_view.cpp
     layout.cpp
     model.cpp
     mouse_press_tracker.cpp
-    object.cpp
-    selectable.cpp
-    selectable_file.cpp
     tab_widget.cpp
     table_view.cpp
     text_label.cpp
-    timer.cpp
-    udp_socket.cpp
-    unix_socket.cpp
-    unix_socket_server.cpp
     view.cpp
     widget.cpp
     window.cpp
@@ -25,4 +17,4 @@ set(SOURCES
 
 add_os_library(libapp app TRUE)
 
-target_link_libraries(libapp PUBLIC libliim libgraphics libws ${REALTIME_LIB} kernel_headers)
+target_link_libraries(libapp PUBLIC libeventloop libgraphics libws)

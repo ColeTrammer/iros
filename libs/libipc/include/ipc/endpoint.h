@@ -1,6 +1,6 @@
 #pragma once
 
-#include <app/unix_socket.h>
+#include <eventloop/unix_socket.h>
 #include <ipc/message.h>
 #include <ipc/message_dispatcher.h>
 #include <liim/maybe.h>
@@ -8,11 +8,11 @@
 namespace IPC {
 
 class Endpoint : public App::Object {
-public:
-    Endpoint(String path) : m_path(move(path)) {}
-    virtual void initialize() override;
+    APP_OBJECT(Endpoint)
 
+public:
     void set_dispatcher(SharedPtr<MessageDispatcher> dispatcher) { m_dispatcher = move(dispatcher); }
+    void set_socket(SharedPtr<App::UnixSocket> socket) { m_socket = move(socket); }
 
     template<ConcreteMessage T>
     bool send(const T& val) {

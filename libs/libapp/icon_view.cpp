@@ -1,7 +1,7 @@
-#include <app/event.h>
 #include <app/icon_view.h>
 #include <app/model.h>
 #include <app/window.h>
+#include <eventloop/event.h>
 #include <graphics/renderer.h>
 
 namespace App {

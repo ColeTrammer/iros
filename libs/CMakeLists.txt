@@ -15,6 +15,7 @@ set(TARGETS
     libclanguage
     libclipboard
     libext
+    libeventloop
     libgraphics
     libipc
     libliim

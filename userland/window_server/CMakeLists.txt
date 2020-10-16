@@ -1,5 +1,5 @@
 add_os_headers(window_server_headers)
-target_link_libraries(window_server_headers INTERFACE kernel_headers)
+target_link_libraries(window_server_headers INTERFACE kernel_headers libipc)
 
 if (NOT ${NATIVE_BUILD})
     set(SOURCES
@@ -12,5 +12,5 @@ if (NOT ${NATIVE_BUILD})
 
     add_os_executable(window_server bin)
 
-    target_link_libraries(window_server window_server_headers libapp)
+    target_link_libraries(window_server window_server_headers libipc libgraphics)
 endif()

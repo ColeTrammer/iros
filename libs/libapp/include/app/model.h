@@ -2,7 +2,7 @@
 
 #include <app/model_data.h>
 #include <app/model_index.h>
-#include <app/object.h>
+#include <eventloop/object.h>
 #include <liim/string.h>
 #include <liim/variant.h>
 

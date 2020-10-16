@@ -1,6 +1,6 @@
 #pragma once
 
-#include <app/object.h>
+#include <eventloop/object.h>
 #include <liim/function.h>
 
 namespace App {

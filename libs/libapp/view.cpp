@@ -1,6 +1,6 @@
-#include <app/event.h>
 #include <app/model.h>
 #include <app/view.h>
+#include <eventloop/event.h>
 
 namespace App {
 

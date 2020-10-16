@@ -4,4 +4,4 @@ set(SOURCES
 
 add_os_library(libipc ipc TRUE)
 
-target_link_libraries(libipc PUBLIC libapp)
+target_link_libraries(libipc PUBLIC libeventloop)

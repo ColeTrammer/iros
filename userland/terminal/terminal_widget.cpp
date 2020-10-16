@@ -1,8 +1,8 @@
 #include <app/context_menu.h>
-#include <app/event.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <ctype.h>
+#include <eventloop/event.h>
 #include <graphics/renderer.h>
 #include <unistd.h>
 

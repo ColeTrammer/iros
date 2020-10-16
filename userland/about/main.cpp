@@ -2,12 +2,12 @@
 #include <app/box_layout.h>
 #include <app/button.h>
 #include <app/context_menu.h>
-#include <app/event.h>
-#include <app/object.h>
 #include <app/text_label.h>
 #include <app/widget.h>
 #include <app/window.h>
 #include <assert.h>
+#include <eventloop/event.h>
+#include <eventloop/object.h>
 #include <unistd.h>
 
 class TestWidget : public App::Widget {

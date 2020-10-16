@@ -6,14 +6,6 @@
 
 namespace IPC {
 
-void Endpoint::initialize() {
-    m_socket = App::UnixSocket::create_connection(shared_from_this(), m_path);
-    m_socket->on_ready_to_read = [this](auto&) {
-        read_from_socket();
-        handle_messages();
-    };
-}
-
 void Endpoint::read_from_socket() {
     char buffer[BUFSIZ];
     while (ssize_t ret = read(m_socket->fd(), buffer, sizeof(buffer)) > 0) {

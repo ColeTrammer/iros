@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ipc/gen.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <stddef.h>

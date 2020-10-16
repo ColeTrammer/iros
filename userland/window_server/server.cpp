@@ -1,6 +1,6 @@
-#include <app/event_loop.h>
 #include <assert.h>
 #include <errno.h>
+#include <eventloop/event_loop.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 #include <liim/pointers.h>

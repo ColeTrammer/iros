@@ -5,4 +5,4 @@ set(SOURCES
 )
 
 add_os_executable(clipboard_server bin)
-target_link_libraries(clipboard_server clipboard_server_headers libapp)
+target_link_libraries(clipboard_server clipboard_server_headers libipc)

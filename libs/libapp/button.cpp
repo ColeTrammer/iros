@@ -1,6 +1,6 @@
 #include <app/button.h>
-#include <app/event.h>
 #include <app/window.h>
+#include <eventloop/event.h>
 #include <graphics/renderer.h>
 
 namespace App {

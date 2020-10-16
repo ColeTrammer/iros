@@ -1,8 +1,8 @@
 #include <app/app.h>
 #include <app/context_menu.h>
-#include <app/event.h>
 #include <app/widget.h>
 #include <app/window.h>
+#include <eventloop/event.h>
 #include <liim/hash_map.h>
 #include <window_server/connection.h>
 

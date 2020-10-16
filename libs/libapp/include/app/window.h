@@ -1,6 +1,6 @@
 #pragma once
 
-#include <app/object.h>
+#include <eventloop/object.h>
 #include <liim/maybe.h>
 #include <liim/string.h>
 #include <window_server/window.h>

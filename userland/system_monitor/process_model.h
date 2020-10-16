@@ -1,7 +1,7 @@
 #pragma once
 
 #include <app/model.h>
-#include <app/timer.h>
+#include <eventloop/timer.h>
 #include <liim/vector.h>
 
 struct proc_info;

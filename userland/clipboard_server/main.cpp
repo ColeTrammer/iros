@@ -1,8 +1,8 @@
-#include <app/event_loop.h>
-#include <app/unix_socket.h>
-#include <app/unix_socket_server.h>
 #include <assert.h>
 #include <clipboard_server/message.h>
+#include <eventloop/event_loop.h>
+#include <eventloop/unix_socket.h>
+#include <eventloop/unix_socket_server.h>
 #include <liim/string.h>
 #include <string.h>
 #include <sys/socket.h>

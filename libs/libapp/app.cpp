@@ -1,8 +1,8 @@
 #include <app/app.h>
-#include <app/event.h>
-#include <app/selectable.h>
 #include <app/window.h>
 #include <assert.h>
+#include <eventloop/event.h>
+#include <eventloop/selectable.h>
 #include <liim/function.h>
 #include <window_server/message.h>
 

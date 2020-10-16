@@ -1,10 +1,10 @@
 #pragma once
 
-#include <app/object.h>
-#include <app/selectable_file.h>
-#include <app/timer.h>
-#include <app/unix_socket.h>
-#include <app/unix_socket_server.h>
+#include <eventloop/object.h>
+#include <eventloop/selectable_file.h>
+#include <eventloop/timer.h>
+#include <eventloop/unix_socket.h>
+#include <eventloop/unix_socket_server.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 #include <window_server/message.h>

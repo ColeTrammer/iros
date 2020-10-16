@@ -1,6 +1,6 @@
 #pragma once
 
-#include <app/object.h>
+#include <eventloop/object.h>
 #include <graphics/font.h>
 #include <graphics/rect.h>
 

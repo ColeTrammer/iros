@@ -1,9 +1,9 @@
 #include <app/box_layout.h>
 #include <app/context_menu.h>
-#include <app/event.h>
 #include <app/text_label.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
+#include <eventloop/event.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 

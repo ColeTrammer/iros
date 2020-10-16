@@ -1,7 +1,7 @@
 #pragma once
 
-#include <app/selectable.h>
 #include <app/widget.h>
+#include <eventloop/selectable.h>
 #include <liim/pointers.h>
 
 #include "pseudo_terminal.h"
