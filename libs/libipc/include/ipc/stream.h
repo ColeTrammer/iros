@@ -26,6 +26,7 @@ public:
 
     const char* buffer() const { return m_buffer; }
     size_t buffer_size() const { return m_buffer_index; }
+    size_t buffer_max() const { return m_buffer_max; }
     bool error() const { return m_error; }
     void set_error() { m_error = true; }
     void rewind() {

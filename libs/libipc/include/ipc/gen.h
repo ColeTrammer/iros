@@ -1,7 +1,9 @@
 #pragma once
 
+#include <ipc/endpoint.h>
+#include <ipc/message.h>
+#include <ipc/message_dispatcher.h>
 #include <ipc/stream.h>
-#include <stdint.h>
 
 #define __PRIMITIVE_CAT(a, ...) a##__VA_ARGS__
 
@@ -110,14 +112,55 @@
 #define __MESSAGE_TYPE(n, ...) n,
 #define __MESSAGE(n, ...)      __MESSAGE_BEGIN(n) __MESSAGE_BODY(n, __VA_ARGS__) __MESSAGE_END(n);
 
+#define __DISPATCHER_DECL(n, ...) virtual void handle(const n&) = 0;
+#define __DISPATCHER(n, ...)            \
+    case Type::n: {                     \
+        n val;                          \
+        if (!val.deserialize(stream)) { \
+            handle_error();             \
+            return;                     \
+        }                               \
+        handle(val);                    \
+    }
+
 #define __IPC_MESSAGE_TYPES(...)                                                             \
     enum class Type : uint32_t {                                                             \
         __EVAL__(__RECURSIVE_ITER_(__MESSAGE_TYPE __VA_OPT__(, ) __VA_ARGS__)) MessageCount, \
     };
 #define __IPC_MESSAGES(...) __EVAL__(__RECURSIVE_ITER_(__MESSAGE __VA_OPT__(, ) __VA_ARGS__))
+#define __IPC_ENDPOINT(...)                                                          \
+    class MessageDispatcher : IPC::MessageDispatcher {                               \
+    public:                                                                          \
+        __EVAL__(__RECURSIVE_ITER_(__DISPATCHER_DECL __VA_OPT__(, ) __VA_ARGS__))    \
+        virtual void handle_incoming_data(IPC::Stream& stream) override {            \
+            uint32_t size;                                                           \
+            uint32_t type;                                                           \
+            stream >> size;                                                          \
+            stream >> type;                                                          \
+            if (stream.error()) {                                                    \
+                handle_error();                                                      \
+                return;                                                              \
+            }                                                                        \
+            if (size != stream.buffer_max()) {                                       \
+                handle_error();                                                      \
+                return;                                                              \
+            }                                                                        \
+            if (type >= static_cast<uint32_t>(Type::MessageCount)) {                 \
+                handle_error();                                                      \
+                return;                                                              \
+            }                                                                        \
+            stream.rewind();                                                         \
+            switch (static_cast<Type>(type)) {                                       \
+                __EVAL__(__RECURSIVE_ITER_(__DISPATCHER __VA_OPT__(, ) __VA_ARGS__)) \
+                default:                                                             \
+                    return;                                                          \
+            }                                                                        \
+        }                                                                            \
+    };
 
 #define IPC_MESSAGES(n, ...)         \
     namespace n {                    \
     __IPC_MESSAGE_TYPES(__VA_ARGS__) \
     __IPC_MESSAGES(__VA_ARGS__)      \
+    __IPC_ENDPOINT(__VA_ARGS__)      \
     }
