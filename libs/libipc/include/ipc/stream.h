@@ -2,6 +2,7 @@
 
 #include <liim/string.h>
 #include <liim/traits.h>
+#include <liim/vector.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -18,6 +19,17 @@ struct Serializer {
 template<>
 struct Serializer<String> {
     static uint32_t serialization_size(const String& val) { return sizeof(val.size()) + val.size(); }
+};
+
+template<typename T>
+struct Serializer<Vector<T>> {
+    static uint32_t serialization_size(const Vector<T>& val) {
+        uint32_t ret = sizeof(val.size());
+        for (auto& v : val) {
+            ret += Serializer<T>::serialization_size(v);
+        }
+        return ret;
+    }
 };
 
 class Stream {
@@ -78,6 +90,29 @@ public:
             char c;
             *this >> c;
             string.insert(c, string.size());
+        }
+        return *this;
+    }
+
+    template<typename T>
+    Stream& operator<<(const Vector<T>& val) {
+        *this << val.size();
+        for (auto& v : val) {
+            *this << v;
+        }
+        return *this;
+    }
+
+    template<typename T>
+    Stream& operator>>(Vector<T>& val) {
+        val = {};
+
+        int size;
+        *this >> size;
+        for (int i = 0; !error() && i < size; i++) {
+            T v;
+            *this >> v;
+            val.add(move(v));
         }
         return *this;
     }
