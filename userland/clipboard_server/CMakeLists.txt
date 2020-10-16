@@ -1,4 +1,5 @@
 add_os_headers(clipboard_server_headers)
+target_link_libraries(clipboard_server_headers INTERFACE libipc)
 
 set(SOURCES
     main.cpp
