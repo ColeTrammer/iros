@@ -12,10 +12,10 @@ class Endpoint : public App::Object {
     APP_OBJECT(Endpoint)
 
 public:
-    virtual ~Endpoint();
+    virtual ~Endpoint() override;
 
     void set_dispatcher(SharedPtr<MessageDispatcher> dispatcher) { m_dispatcher = move(dispatcher); }
-    void set_socket(SharedPtr<App::UnixSocket> socket) { m_socket = move(socket); }
+    void set_socket(SharedPtr<App::UnixSocket> socket);
 
     template<ConcreteMessage T>
     bool send(const T& val) {

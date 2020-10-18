@@ -1,5 +1,6 @@
 set(SOURCES
     endpoint.cpp
+    server.cpp
 )
 
 add_os_library(libipc ipc TRUE)
