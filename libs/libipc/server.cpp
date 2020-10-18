@@ -5,7 +5,7 @@
 
 namespace IPC {
 
-Server::Server(String path) : m_path(move(path)) {}
+Server::Server(String path, SharedPtr<MessageDispatcher> dispatcher) : m_path(move(path)), m_dispatcher(move(dispatcher)) {}
 
 void Server::initialize() {
     m_socket = App::UnixSocketServer::create(shared_from_this(), m_path);
@@ -14,10 +14,13 @@ void Server::initialize() {
         while (client_socket = m_socket->accept()) {
             auto client = Endpoint::create(shared_from_this());
             client->set_socket(move(client_socket));
+            client->set_dispatcher(m_dispatcher);
             m_clients.add(move(client));
         }
     };
 }
+
+Server::~Server() {}
 
 void Server::kill_client(Endpoint& client) {
     auto ptr = client.shared_from_this();
