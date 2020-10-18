@@ -1,10 +1,14 @@
 #include <assert.h>
 #include <ipc/endpoint.h>
+#include <ipc/message_dispatcher.h>
+#include <ipc/stream.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 namespace IPC {
+
+Endpoint::~Endpoint() {}
 
 void Endpoint::read_from_socket() {
     char buffer[BUFSIZ];
@@ -43,7 +47,7 @@ void Endpoint::handle_messages() {
 
     for (auto& message : m_messages) {
         Stream stream(reinterpret_cast<char*>(message.get()), message->size);
-        m_dispatcher->handle_incoming_data(stream);
+        m_dispatcher->handle_incoming_data(*this, stream);
     }
     m_messages.clear();
 }

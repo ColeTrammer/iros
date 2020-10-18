@@ -2,15 +2,18 @@
 
 #include <eventloop/unix_socket.h>
 #include <ipc/message.h>
-#include <ipc/message_dispatcher.h>
 #include <liim/maybe.h>
 
 namespace IPC {
+
+class MessageDispatcher;
 
 class Endpoint : public App::Object {
     APP_OBJECT(Endpoint)
 
 public:
+    virtual ~Endpoint();
+
     void set_dispatcher(SharedPtr<MessageDispatcher> dispatcher) { m_dispatcher = move(dispatcher); }
     void set_socket(SharedPtr<App::UnixSocket> socket) { m_socket = move(socket); }
 
