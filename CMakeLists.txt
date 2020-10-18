@@ -159,6 +159,7 @@ if (NOT ${NATIVE_BUILD})
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND sudo ./makeimg.sh
         USES_TERMINAL
+        DEPENDS install-all
     )
 
     add_custom_target(
@@ -166,5 +167,13 @@ if (NOT ${NATIVE_BUILD})
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ./qemu.sh
         USES_TERMINAL
+    )
+
+    add_custom_target(
+        frun
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ./qemu.sh
+        USES_TERMINAL
+        DEPENDS os_2.iso os_2.img
     )
 endif()
