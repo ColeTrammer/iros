@@ -3,87 +3,49 @@
 #include <assert.h>
 #include <clipboard/connection.h>
 #include <clipboard_server/message.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
 
 namespace Clipboard {
 
-static int s_fd = -1;
-
-static int open_connection() {
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0) {
-        return -1;
+static IPC::Endpoint& endpoint() {
+    static SharedPtr<IPC::Endpoint> endpoint;
+    if (!endpoint) {
+        endpoint = IPC::Endpoint::create(nullptr);
+        endpoint->set_socket(App::UnixSocket::create_connection(endpoint, "/tmp/.clipboard_server.socket"));
     }
-
-    sockaddr_un addr;
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, "/tmp/.clipboard_server.socket");
-    if (connect(fd, (sockaddr*) &addr, sizeof(sockaddr_un)) < 0) {
-        close(fd);
-        return -1;
-    }
-
-    return fd;
-}
-
-static void initialize() {
-    s_fd = open_connection();
+    return *endpoint;
 }
 
 Connection& Connection::the() {
-    static Connection* s_connection;
-    if (!s_connection) {
-        s_connection = new Connection;
-        initialize();
-    }
-    return *s_connection;
+    static Connection s_connection;
+    return s_connection;
 }
 
 bool Connection::set_clipboard_contents_to_text(const String& text) {
-    if (s_fd < 0) {
+    Vector<char> raw_data(text.size());
+    for (auto c : text) {
+        raw_data.add(c);
+    }
+
+    if (!endpoint().send<ClipboardServer::Client::SetContentsRequest>({ .type = "text/plain", .data = move(raw_data) })) {
         return false;
     }
 
-    auto request = ClipboardServer::Message::SetContentsRequest::create("text/plain", text.string(), text.size());
-    if (write(s_fd, request.get(), request->total_size()) != static_cast<ssize_t>(request->total_size())) {
-        return false;
-    }
-
-    char buf[2048];
-    if (read(s_fd, buf, sizeof(buf)) <= 0) {
-        return false;
-    }
-
-    return reinterpret_cast<ClipboardServer::Message*>(buf)->data.set_contents_response.success;
+    auto response = endpoint().wait_for_response<ClipboardServer::Server::SetContentsResponse>();
+    return response.has_value() && response.value().success;
 }
 
 Maybe<String> Connection::get_clipboard_contents_as_text() {
-    if (s_fd < 0) {
+    if (!endpoint().send<ClipboardServer::Client::GetContentsRequest>({ .type = "text/plain" })) {
         return {};
     }
 
-    auto request = ClipboardServer::Message::GetContentsRequest::create("text/plain");
-    if (write(s_fd, request.get(), request->total_size()) != static_cast<ssize_t>(request->total_size())) {
+    auto response = endpoint().wait_for_response<ClipboardServer::Server::GetContentsResponse>();
+    if (!response.has_value()) {
         return {};
     }
 
-    char buf[0x8000];
-    if (read(s_fd, buf, sizeof(buf)) <= 0) {
-        return {};
-    }
-
-    auto& response_message = *reinterpret_cast<ClipboardServer::Message*>(buf);
-    auto& response = response_message.data.get_contents_response;
-    if (!response.success) {
-        return {};
-    }
-
-    return { String(
-        StringView(response.data, response.data + response_message.data_len - sizeof(ClipboardServer::Message::GetContentsRequest) - 1)) };
+    return { String(StringView(response.value().data.vector(), response.value().data.vector() + response.value().data.size() - 1)) };
 }
-
 }
 
 #else
