@@ -231,6 +231,8 @@ void init_kernel_process(void) {
 
     initial_kernel_task.process = &initial_kernel_process;
     init_list(&initial_kernel_task.queued_signals);
+    init_spinlock(&initial_kernel_task.sig_lock);
+    init_spinlock(&initial_kernel_task.unblock_lock);
     list_append(&initial_kernel_process.task_list, &initial_kernel_task.process_list);
     initial_kernel_task.kernel_task = true;
     initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
@@ -251,6 +253,8 @@ void init_idle_task(struct processor *processor) {
     task->kernel_task = true;
     task->sched_state = RUNNING_UNINTERRUPTIBLE;
     init_list(&task->queued_signals);
+    init_spinlock(&task->sig_lock);
+    init_spinlock(&task->unblock_lock);
 
     arch_init_idle_task(task, processor);
 
@@ -275,6 +279,8 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     init_list(&process->task_list);
     init_list(&process->timer_list);
     init_list(&task->queued_signals);
+    init_spinlock(&task->sig_lock);
+    init_spinlock(&task->unblock_lock);
     proc_add_process(process);
     task->process->pgid = task->process->pid;
     task->process->process_memory = NULL;

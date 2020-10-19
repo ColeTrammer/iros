@@ -77,11 +77,12 @@ struct task {
 
     enum sched_state sched_state;
 
-    sigset_t sig_mask;
     sigset_t saved_sig_mask;
-    sigset_t sig_pending;
 
+    sigset_t sig_mask;
+    sigset_t sig_pending;
     struct list_node queued_signals;
+    spinlock_t sig_lock;
 
     int tid;
 
@@ -91,11 +92,13 @@ struct task {
     bool kernel_task : 1;
     bool in_kernel : 1;
     bool in_sigsuspend : 1;
+
+    struct block_info block_info;
+    int unblock_result;
+    spinlock_t unblock_lock;
     bool blocking : 1;
     bool should_exit : 1;
     bool wait_interruptible : 1;
-
-    struct block_info block_info;
 
     struct clock *task_clock;
 

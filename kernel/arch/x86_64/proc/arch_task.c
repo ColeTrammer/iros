@@ -64,6 +64,8 @@ pid_t proc_fork(void) {
     init_spinlock(&child_process->parent_lock);
     init_list(&child_process->task_list);
     init_list(&child_process->timer_list);
+    init_spinlock(&child->sig_lock);
+    init_spinlock(&child->unblock_lock);
     init_list(&child->queued_signals);
     init_wait_queue(&child_process->one_task_left_queue);
     proc_add_process(child_process);
