@@ -24,11 +24,11 @@ UnixSocketServer::UnixSocketServer(const String& bind_path) {
 }
 
 SharedPtr<UnixSocket> UnixSocketServer::accept() {
-    int fd = accept4(this->fd(), nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
+    int fd = accept4(this->fd(), nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK | SOCK_CLOEXEC);
     if (fd < 0) {
         return nullptr;
     }
-    return UnixSocket::create_from_fd(shared_from_this(), fd);
+    return UnixSocket::create_from_fd(shared_from_this(), fd, true);
 }
 
 UnixSocketServer::~UnixSocketServer() {

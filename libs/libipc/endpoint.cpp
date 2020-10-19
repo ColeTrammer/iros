@@ -22,8 +22,11 @@ void Endpoint::set_socket(SharedPtr<App::UnixSocket> socket) {
 
 void Endpoint::read_from_socket() {
     char buffer[BUFSIZ];
+    bool again = true;
     ssize_t ret;
-    while ((ret = read(m_socket->fd(), buffer, sizeof(buffer))) > 0) {
+    while (again && (ret = read(m_socket->fd(), buffer, sizeof(buffer))) >= static_cast<ssize_t>(sizeof(Message))) {
+        again = m_socket->nonblocking();
+
         auto* raw_message = reinterpret_cast<Message*>(buffer);
         if (raw_message->size != static_cast<size_t>(ret)) {
             continue;
@@ -36,9 +39,12 @@ void Endpoint::read_from_socket() {
 }
 
 UniquePtr<Message> Endpoint::wait_for_response_impl(uint32_t type) {
+    assert(m_socket);
+    m_socket->set_nonblocking(false);
     for (;;) {
         for (int i = 0; i < m_messages.size(); i++) {
             if (m_messages[i]->type == type) {
+                m_socket->set_nonblocking(true);
                 auto ret = move(m_messages[i]);
                 m_messages.remove(i);
                 handle_messages();
@@ -55,9 +61,8 @@ bool Endpoint::send_impl(const Message& message) {
 }
 
 void Endpoint::handle_messages() {
-    assert(m_dispatcher);
-
     for (auto& message : m_messages) {
+        assert(m_dispatcher);
         Stream stream(reinterpret_cast<char*>(message.get()), message->size);
         m_dispatcher->handle_incoming_data(*this, stream);
     }

@@ -1,17 +1,18 @@
 #include <assert.h>
 #include <eventloop/unix_socket.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
 namespace App {
 
-SharedPtr<UnixSocket> UnixSocket::create_from_fd(SharedPtr<Object> parent, int fd) {
-    return UnixSocket::create(move(parent), fd);
+SharedPtr<UnixSocket> UnixSocket::create_from_fd(SharedPtr<Object> parent, int fd, bool nonblocking) {
+    return UnixSocket::create(move(parent), fd, nonblocking);
 }
 
 SharedPtr<UnixSocket> UnixSocket::create_connection(SharedPtr<Object> parent, const String& path) {
-    int fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+    int fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (fd < 0) {
         return nullptr;
     }
@@ -25,10 +26,10 @@ SharedPtr<UnixSocket> UnixSocket::create_connection(SharedPtr<Object> parent, co
         return nullptr;
     }
 
-    return create_from_fd(parent, fd);
+    return UnixSocket::create(move(parent), fd, true);
 }
 
-UnixSocket::UnixSocket(int fd) {
+UnixSocket::UnixSocket(int fd, bool nonblocking) : m_nonblocking(nonblocking) {
     set_fd(fd);
     set_selected_events(NotifyWhen::Readable);
     enable_notifications();
@@ -36,6 +37,19 @@ UnixSocket::UnixSocket(int fd) {
 
 UnixSocket::~UnixSocket() {
     close(fd());
+}
+
+void UnixSocket::set_nonblocking(bool b) {
+    if (b == m_nonblocking) {
+        return;
+    }
+
+    m_nonblocking = b;
+    int flags = fcntl(fd(), F_GETFL);
+    if (flags != -1) {
+        flags ^= O_NONBLOCK;
+        fcntl(fd(), F_SETFL, flags);
+    }
 }
 
 void UnixSocket::disconnect() {
