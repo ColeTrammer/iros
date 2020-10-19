@@ -22,7 +22,8 @@ void Endpoint::set_socket(SharedPtr<App::UnixSocket> socket) {
 
 void Endpoint::read_from_socket() {
     char buffer[BUFSIZ];
-    while (ssize_t ret = read(m_socket->fd(), buffer, sizeof(buffer)) > 0) {
+    ssize_t ret;
+    while ((ret = read(m_socket->fd(), buffer, sizeof(buffer))) > 0) {
         auto* raw_message = reinterpret_cast<Message*>(buffer);
         if (raw_message->size != static_cast<size_t>(ret)) {
             continue;

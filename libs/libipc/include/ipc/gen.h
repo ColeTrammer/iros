@@ -67,9 +67,9 @@
     (__EVAL_(op __FIRST(__VA_ARGS__)) __OBSTRUCT(__RECURSIVE_ITER__INDIRECT)()(op, __NEXT(__VA_ARGS__)), __VA_ARGS__)
 
 #define __MESSAGE_FIELD_DECL(type, name)               type name;
-#define __MESSAGE_FIELD_SERIALIZATION_SIZE(type, name) ret += IPC::Serializer<type>::serialization_size(name);
-#define __MESSAGE_FIELD_SERIALIZER(type, name)         stream << name;
-#define __MESSAGE_FIELD_DESERIALIZER(type, name)       stream >> name;
+#define __MESSAGE_FIELD_SERIALIZATION_SIZE(type, name) ret += IPC::Serializer<type>::serialization_size(this->name);
+#define __MESSAGE_FIELD_SERIALIZER(type, name)         stream << this->name;
+#define __MESSAGE_FIELD_DESERIALIZER(type, name)       stream >> this->name;
 
 #define __MESSAGE_DECL(...)                    __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DECL __VA_OPT__(, ) __VA_ARGS__))
 #define __MESSAGE_SERIALIZATION_SIZE_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZATION_SIZE __VA_OPT__(, ) __VA_ARGS__))
@@ -125,10 +125,11 @@
     case Type::n: {                     \
         n val;                          \
         if (!val.deserialize(stream)) { \
-            handle_error();             \
+            handle_error(endpoint);     \
             return;                     \
         }                               \
         handle(endpoint, val);          \
+        break;                          \
     }
 
 #define __IPC_MESSAGE_TYPES(...)                                                             \
@@ -146,21 +147,18 @@
             stream >> size;                                                                     \
             stream >> type;                                                                     \
             if (stream.error()) {                                                               \
-                handle_error();                                                                 \
+                handle_error(endpoint);                                                         \
                 return;                                                                         \
             }                                                                                   \
             if (size != stream.buffer_max()) {                                                  \
-                handle_error();                                                                 \
-                return;                                                                         \
-            }                                                                                   \
-            if (type >= static_cast<uint32_t>(Type::MessageCount)) {                            \
-                handle_error();                                                                 \
+                handle_error(endpoint);                                                         \
                 return;                                                                         \
             }                                                                                   \
             stream.rewind();                                                                    \
             switch (static_cast<Type>(type)) {                                                  \
                 __EVAL__(__RECURSIVE_ITER_(__DISPATCHER __VA_OPT__(, ) __VA_ARGS__))            \
                 default:                                                                        \
+                    handle_error(endpoint);                                                     \
                     return;                                                                     \
             }                                                                                   \
         }                                                                                       \

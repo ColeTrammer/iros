@@ -3,7 +3,9 @@
 #include <eventloop/event_loop.h>
 #include <eventloop/unix_socket.h>
 #include <eventloop/unix_socket_server.h>
+#include <ipc/server.h>
 #include <liim/string.h>
+#include <liim/vector.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>

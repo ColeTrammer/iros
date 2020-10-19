@@ -8,7 +8,9 @@ namespace IPC {
 Server::Server(String path, SharedPtr<MessageDispatcher> dispatcher) : m_path(move(path)), m_dispatcher(move(dispatcher)) {}
 
 void Server::initialize() {
+    mode_t mode = umask(0002);
     m_socket = App::UnixSocketServer::create(shared_from_this(), m_path);
+    umask(mode);
     m_socket->on_ready_to_accept = [this] {
         SharedPtr<App::UnixSocket> client_socket;
         while (client_socket = m_socket->accept()) {

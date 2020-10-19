@@ -1,3 +1,5 @@
+#pragma once
+
 #include <eventloop/selectable.h>
 #include <eventloop/unix_socket.h>
 #include <liim/function.h>
