@@ -173,9 +173,10 @@ static ssize_t ata_read_sectors_dma(struct block_device *self, void *buffer, blk
     io_wait();
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
-    disable_interrupts();
+    uint64_t save = disable_interrupts_save();
     outb(data->port_info->bus_mastering_base, 0x9);
     ata_wait_irq(data);
+    interrupts_restore(save);
 
     memcpy(buffer, (void *) data->dma_region->start, self->block_size * n);
 
@@ -251,9 +252,10 @@ static struct phys_page *ata_read_page_dma(struct block_device *self, off_t sect
     io_wait();
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
-    disable_interrupts();
+    uint64_t save = disable_interrupts_save();
     outb(data->port_info->bus_mastering_base, 0x9);
     ata_wait_irq(data);
+    interrupts_restore(save);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
     return page;
@@ -291,9 +293,10 @@ static ssize_t ata_write_sectors_dma(struct block_device *self, const void *buff
     io_wait();
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
-    disable_interrupts();
+    uint64_t save = disable_interrupts_save();
     outb(data->port_info->bus_mastering_base, 0x1);
     ata_wait_irq(data);
+    interrupts_restore(save);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
     return n;
@@ -372,9 +375,10 @@ static int ata_sync_page_dma(struct block_device *self, struct phys_page *page) 
     io_wait();
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
-    disable_interrupts();
+    uint64_t save = disable_interrupts_save();
     outb(data->port_info->bus_mastering_base, 0x1);
     ata_wait_irq(data);
+    interrupts_restore(save);
 
     outb(data->port_info->bus_mastering_base + 2, inb(data->port_info->bus_mastering_base + 2) | 0x06);
     return 0;
