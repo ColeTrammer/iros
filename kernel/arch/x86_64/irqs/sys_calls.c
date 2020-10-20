@@ -1196,7 +1196,7 @@ SYS_CALL(os_mutex) {
                 unlock_user_mutex(to_unlock);
             }
             unlock_user_mutex(um);
-            SYS_RETURN(__kernel_yield());
+            SYS_RETURN(kernel_yield());
         }
         case MUTEX_WAKE_AND_SET: {
             struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place & ~MUTEX_WAITERS);
@@ -1490,7 +1490,7 @@ pselect_return:
 SYS_CALL(sched_yield) {
     SYS_BEGIN();
 
-    __kernel_yield();
+    kernel_yield();
     SYS_RETURN(0);
 }
 

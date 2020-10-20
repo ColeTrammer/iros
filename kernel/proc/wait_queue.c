@@ -72,7 +72,7 @@ void wait_on_internal(struct wait_queue *queue, const char *func) {
     task->sched_state = WAITING;
     spin_unlock(&queue->lock);
 
-    __kernel_yield();
+    kernel_yield();
 }
 
 void wake_up_internal(struct wait_queue *queue, const char *func) {

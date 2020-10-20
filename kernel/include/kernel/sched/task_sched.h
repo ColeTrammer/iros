@@ -18,7 +18,8 @@ void sched_add_task(struct task *task);
 void local_sched_add_task(struct task *task);
 void local_sched_remove_task(struct task *task);
 void sched_run_next(void);
-int __kernel_yield(void);
+void __kernel_yield(void);
+int kernel_yield(void);
 
 int signal_task(int tgid, int tid, int signum);
 int signal_process_group(pid_t pgid, int signum);

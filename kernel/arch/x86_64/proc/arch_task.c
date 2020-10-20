@@ -43,7 +43,7 @@ static void kernel_idle() {
                      :
                      :
                      : "memory");
-        __kernel_yield();
+        kernel_yield();
     }
 }
 
@@ -198,28 +198,20 @@ void arch_free_task(struct task *task, bool free_paging_structure) {
     (void) free_paging_structure;
 }
 
-void task_unblock(struct task *task, int ret) {
-    assert(task->sched_state == WAITING);
-    task->arch_task.task_state.cpu_state.rax = (uint64_t) ret;
-    task->blocking = false;
-    task->wait_interruptible = false;
-    task->sched_state = RUNNING_UNINTERRUPTIBLE;
-}
-
 void task_yield_if_state_changed(struct task *task) {
     if (task->should_exit) {
 #ifdef TASK_SCHED_STATE_DEBUG
         debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
 #endif /* TASK_SCHED_STATE_DEBUG */
         task->sched_state = EXITING;
-        __kernel_yield();
+        kernel_yield();
     }
 
     if (task->sched_state == STOPPED) {
         // Restart the system call so that when the task is resumed, it will begin gracefully.
         task->arch_task.user_task_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
         task->arch_task.user_task_state->cpu_state.rax = task->last_system_call;
-        __kernel_yield();
+        kernel_yield();
     }
 }
 

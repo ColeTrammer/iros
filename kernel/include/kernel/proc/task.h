@@ -172,7 +172,7 @@ static inline int __wait_prepare(struct task *task, uint64_t *interrupts_save, b
 }
 
 static inline int __wait_do(uint64_t *interrupts_save) {
-    int ret = __kernel_yield();
+    int ret = kernel_yield();
     interrupts_restore(*interrupts_save);
     return ret;
 }
