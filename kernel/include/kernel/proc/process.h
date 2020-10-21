@@ -61,6 +61,7 @@ struct process {
     spinlock_t user_mutex_lock;
 
     struct wait_queue one_task_left_queue;
+    struct wait_queue child_wait_queue;
 
     struct hash_entry hash;
 

@@ -221,6 +221,7 @@ void init_kernel_process(void) {
     init_spinlock(&initial_kernel_process.children_lock);
     init_spinlock(&initial_kernel_process.parent_lock);
     init_wait_queue(&initial_kernel_process.one_task_left_queue);
+    init_wait_queue(&initial_kernel_process.child_wait_queue);
     init_list(&initial_kernel_process.task_list);
     init_list(&initial_kernel_process.timer_list);
     initial_kernel_process.main_tid = 1;
@@ -276,6 +277,7 @@ struct task *load_kernel_task(uintptr_t entry, const char *name) {
     init_spinlock(&process->children_lock);
     init_spinlock(&process->parent_lock);
     init_wait_queue(&process->one_task_left_queue);
+    init_wait_queue(&process->child_wait_queue);
     init_list(&process->task_list);
     init_list(&process->timer_list);
     init_list(&task->queued_signals);
@@ -362,16 +364,20 @@ void init_userland(void) {
     sched_add_task(init);
 }
 
-int proc_waitpid(pid_t pid, int *status, int flags) {
+int proc_waitpid(pid_t waitspec, int *status, int flags) {
     if (flags & ~(WUNTRACED | WNOHANG | WCONTINUED)) {
         return -EINVAL;
     }
 
     struct process *parent = get_current_process();
+    struct process *child = NULL;
+    pid_t pid;
+    spin_lock(&parent->children_lock);
     for (;;) {
-        struct process *child = NULL;
-        int ret = proc_get_waitable_process(parent, pid, &child);
-        if (ret < 0) {
+        int ret = wait_for_with_spinlock_interruptible(
+            get_current_task(), (pid = proc_get_waitable_process(parent, waitspec, &child)) != 0 || !!(flags & WNOHANG),
+            &parent->child_wait_queue, &parent->children_lock);
+        if (ret) {
             return ret;
         }
 
@@ -379,7 +385,6 @@ int proc_waitpid(pid_t pid, int *status, int flags) {
             enum process_state state = child->state;
             int info = child->exit_code;
             bool terminated_bc_signal = child->terminated_bc_signal;
-            pid_t pid = child->pid;
 
             proc_consume_wait_info(parent, child, state);
             switch (state) {
@@ -419,17 +424,9 @@ int proc_waitpid(pid_t pid, int *status, int flags) {
                         assert(false);
                 }
             }
-            return pid;
         }
-
-        if (flags & WNOHANG) {
-            return 0;
-        }
-
-        ret = proc_block_waitpid(get_current_task(), pid);
-        if (ret) {
-            return ret;
-        }
+        spin_unlock(&parent->children_lock);
+        return pid;
     }
 }
 

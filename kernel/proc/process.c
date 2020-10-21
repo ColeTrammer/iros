@@ -254,23 +254,18 @@ int proc_get_waitable_process(struct process *parent, pid_t wait_spec, struct pr
     if (wait_spec == 0) {
         wait_spec = -get_current_process()->pgid;
     }
-
     bool any_waitable = false;
-    spin_lock(&parent->children_lock);
     for (struct process *child = parent->children; child; child = child->sibling_next) {
         if (wait_spec == -1 || (wait_spec < 0 && child->pgid == -wait_spec) || child->pid == wait_spec) {
             any_waitable = true;
             if (child->state != PS_NONE) {
                 *process_out = child;
-                goto get_waitable_process_end;
+                return child->pid;
             }
         }
     }
 
     *process_out = NULL;
-
-get_waitable_process_end:
-    spin_unlock(&parent->children_lock);
     return any_waitable ? 0 : -ECHILD;
 }
 
@@ -292,13 +287,11 @@ static void proc_update_rusage(struct process *parent, struct process *child) {
 void proc_consume_wait_info(struct process *parent, struct process *child, enum process_state state) {
     switch (state) {
         case PS_TERMINATED: {
-            spin_lock(&parent->children_lock);
             if (parent->children == child) {
                 parent->children = child->sibling_next;
             }
             remque(child);
             proc_update_rusage(parent, child);
-            spin_unlock(&parent->children_lock);
             proc_drop_process(child, NULL, false);
             break;
         }
@@ -319,14 +312,13 @@ void proc_set_process_state(struct process *process, enum process_state state, i
     if (((parent_signal_disposition.sa_flags & SA_NOCLDWAIT) || parent_signal_disposition.sa_handler == SIG_IGN) &&
         (state == PS_TERMINATED)) {
         proc_consume_wait_info(parent, process, PS_TERMINATED);
-        proc_drop_parent(parent);
-        return;
+        goto done;
     }
 
     if (((parent_signal_disposition.sa_flags & SA_NOCLDSTOP) || parent_signal_disposition.sa_handler == SIG_IGN) &&
         (state == PS_STOPPED || state == PS_CONTINUED)) {
         proc_consume_wait_info(parent, process, state);
-        return;
+        goto done;
     }
 
     // FIXME: synchronize this somehow
@@ -335,6 +327,9 @@ void proc_set_process_state(struct process *process, enum process_state state, i
     process->terminated_bc_signal = terminated_bc_signal;
 
     proc_notify_parent(parent);
+    wake_up_all(&parent->child_wait_queue);
+
+done:
     proc_drop_parent(parent);
 }
 
@@ -418,7 +413,7 @@ void proc_set_sig_pending(struct process *process, int n) {
     struct task *task_to_use = list_first_entry(&process->task_list, struct task, process_list);
     mutex_unlock(&process->lock);
 
-    task_set_sig_pending(task_to_use, n);
+    task_enqueue_signal(task_to_use, n, NULL, false);
 }
 
 int proc_getgroups(size_t size, gid_t *list) {

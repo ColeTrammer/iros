@@ -342,22 +342,3 @@ int proc_block_poll_timeout(struct task *current, nfds_t nfds, struct pollfd *fd
     current->block_info.should_unblock = &poll_timeout_blocker;
     return wait_with_blocker(current);
 }
-
-static bool waitpid_blocker(struct block_info *info) {
-    assert(info->type == WAITPID);
-    pid_t pid = info->waitpid_info.pid;
-    struct process *waitable_process = NULL;
-    int error = proc_get_waitable_process(get_current_process(), pid, &waitable_process);
-    if (error) {
-        return true;
-    }
-
-    return !!waitable_process;
-}
-
-int proc_block_waitpid(struct task *current, pid_t pid) {
-    current->block_info.waitpid_info.pid = pid;
-    current->block_info.type = WAITPID;
-    current->block_info.should_unblock = &waitpid_blocker;
-    return wait_with_blocker(current);
-}

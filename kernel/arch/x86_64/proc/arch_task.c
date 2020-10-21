@@ -68,6 +68,7 @@ pid_t proc_fork(void) {
     init_spinlock(&child->unblock_lock);
     init_list(&child->queued_signals);
     init_wait_queue(&child_process->one_task_left_queue);
+    init_wait_queue(&child_process->child_wait_queue);
     proc_add_process(child_process);
     child->sched_state = RUNNING_INTERRUPTIBLE;
     child->kernel_task = false;

@@ -31,7 +31,6 @@ enum block_type {
     SELECT_TIMEOUT,
     POLL,
     POLL_TIMEOUT,
-    WAITPID,
 };
 
 struct block_info {
@@ -107,9 +106,6 @@ struct block_info {
             struct pollfd *fds;
             struct timespec end_time;
         } poll_timeout_info;
-        struct {
-            pid_t pid;
-        } waitpid_info;
     } __info;
 #define until_inode_is_readable_info               __info.until_inode_is_readable_info
 #define until_socket_is_connected_info             __info.until_socket_is_connected_info
@@ -128,7 +124,6 @@ struct block_info {
 #define select_timeout_info                        __info.select_timeout_info
 #define poll_info                                  __info.poll_info
 #define poll_timeout_info                          __info.poll_timeout_info
-#define waitpid_info                               __info.waitpid_info
 };
 
 __attribute__((warn_unused_result)) int proc_block_until_inode_is_readable(struct task *current, struct inode *inode);
@@ -155,6 +150,5 @@ __attribute__((warn_unused_result)) int proc_block_select_timeout(struct task *c
 __attribute__((warn_unused_result)) int proc_block_poll(struct task *current, nfds_t nfds, struct pollfd *fds);
 __attribute__((warn_unused_result)) int proc_block_poll_timeout(struct task *current, nfds_t nfds, struct pollfd *fds,
                                                                 struct timespec end_time);
-__attribute__((warn_unused_result)) int proc_block_waitpid(struct task *current, pid_t pid);
 
 #endif /* _KERNEL_PROC_BLOCKERS_H */

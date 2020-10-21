@@ -59,7 +59,7 @@ void __wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, cons
 
 void wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const char *func) {
     spin_lock(&queue->lock);
-    wait_queue_dequeue_task(queue, task, func);
+    __wait_queue_dequeue_task(queue, task, func);
     spin_unlock(&queue->lock);
 }
 
