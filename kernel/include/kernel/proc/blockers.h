@@ -79,12 +79,6 @@ struct block_info {
             struct timespec end_time;
         } until_device_is_readable_or_timeout_info;
         struct {
-            struct pipe_data *pipe_data;
-        } until_pipe_has_readers_info;
-        struct {
-            struct pipe_data *pipe_data;
-        } until_pipe_has_writers_info;
-        struct {
             int nfds;
             uint8_t *readfds;
             uint8_t *writefds;
@@ -118,8 +112,6 @@ struct block_info {
 #define until_device_is_readable_info              __info.until_device_is_readable_info
 #define until_device_is_writeable_info             __info.until_device_is_writeable_info
 #define until_device_is_readable_or_timeout_info   __info.until_device_is_readable_or_timeout_info
-#define until_pipe_has_readers_info                __info.until_pipe_has_readers_info
-#define until_pipe_has_writers_info                __info.until_pipe_has_writers_info
 #define select_info                                __info.select_info
 #define select_timeout_info                        __info.select_timeout_info
 #define poll_info                                  __info.poll_info
@@ -141,8 +133,6 @@ __attribute__((warn_unused_result)) int proc_block_until_device_is_readable(stru
 __attribute__((warn_unused_result)) int proc_block_until_device_is_writeable(struct task *current, struct fs_device *device);
 __attribute__((warn_unused_result)) int proc_block_until_device_is_readable_or_timeout(struct task *current, struct fs_device *device,
                                                                                        struct timespec end_time);
-__attribute__((warn_unused_result)) int proc_block_until_pipe_has_readers(struct task *current, struct pipe_data *pipe_data);
-__attribute__((warn_unused_result)) int proc_block_until_pipe_has_writers(struct task *current, struct pipe_data *pipe_data);
 __attribute__((warn_unused_result)) int proc_block_select(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds,
                                                           uint8_t *exceptfds);
 __attribute__((warn_unused_result)) int proc_block_select_timeout(struct task *current, int nfds, uint8_t *readfds, uint8_t *writefds,

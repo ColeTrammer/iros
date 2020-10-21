@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <kernel/fs/file.h>
 #include <kernel/fs/inode.h>
+#include <kernel/proc/wait_queue.h>
 #include <kernel/util/ring_buffer.h>
 
 #define PIPE_DEFAULT_BUFFER_SIZE 0x1000
@@ -11,6 +12,8 @@
 
 struct pipe_data {
     struct ring_buffer buffer;
+    struct wait_queue readers_queue;
+    struct wait_queue writers_queue;
     int read_count;
     int write_count;
 };

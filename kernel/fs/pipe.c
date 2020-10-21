@@ -58,6 +58,8 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
     if (!data) {
         data = malloc(sizeof(struct pipe_data));
         init_ring_buffer(&data->buffer, PIPE_DEFAULT_BUFFER_SIZE);
+        init_wait_queue(&data->readers_queue);
+        init_wait_queue(&data->writers_queue);
         data->read_count = 0;
         data->write_count = 0;
         inode->pipe_data = data;
@@ -69,15 +71,15 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
         }
 
         if (data->write_count++ == 0) {
-            // Clear the exceptional_activity flag once another writer is opened.
-            inode->excetional_activity = false;
+            inode->readable = !ring_buffer_empty(&data->buffer);
+            wake_up_all(&data->writers_queue);
         }
     }
 
     if (file->abilities & FS_FILE_CAN_READ) {
         if (data->read_count++ == 0) {
-            // Clear the exceptional_activity flag once another reader is opened.
-            inode->excetional_activity = false;
+            inode->writeable = !ring_buffer_full(&data->buffer);
+            wake_up_all(&data->readers_queue);
         }
     }
 
@@ -88,32 +90,23 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
             fs_close(file);
             return NULL;
         } else {
-            mutex_unlock(&inode->lock);
-
-            int ret = proc_block_until_pipe_has_readers(get_current_task(), data);
+            int ret = wait_for_with_mutex_interruptible(get_current_task(), data->read_count > 0, &data->readers_queue, &inode->lock);
             if (ret) {
                 *error = ret;
                 fs_close(file);
                 return NULL;
             }
-
-            mutex_lock(&inode->lock);
         }
     }
 
     if ((file->abilities & FS_FILE_CAN_READ) && data->write_count == 0) {
         if (!(flags & O_NONBLOCK)) {
-            mutex_unlock(&inode->lock);
-
-            int ret = proc_block_until_pipe_has_writers(get_current_task(), data);
+            int ret = wait_for_with_mutex_interruptible(get_current_task(), data->write_count > 0, &data->writers_queue, &inode->lock);
             if (ret) {
-                mutex_unlock(&inode->lock);
                 *error = ret;
                 fs_close(file);
                 return NULL;
             }
-
-            mutex_lock(&inode->lock);
         }
     }
     mutex_unlock(&inode->lock);
@@ -137,7 +130,7 @@ ssize_t pipe_read(struct file *file, off_t offset, void *buffer, size_t _len) {
 again:
     mutex_lock(&inode->lock);
     size_t len = MIN(_len, ring_buffer_size(&data->buffer));
-    if (len == 0 && (is_pipe_write_end_open(data) || inode->fsid != PIPE_DEVICE)) {
+    if (len == 0 && is_pipe_write_end_open(data)) {
         mutex_unlock(&inode->lock);
         if (file->open_flags & O_NONBLOCK) {
             return -EAGAIN;
