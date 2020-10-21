@@ -124,7 +124,7 @@ void wake_user_mutex(struct user_mutex *m, int to_wake, int *to_place) {
 }
 
 void user_mutex_wait_on(struct user_mutex *m) {
-    wait_on(&m->wait_queue);
+    wait_simple(get_current_task(), &m->wait_queue);
 }
 
 void init_user_mutexes() {

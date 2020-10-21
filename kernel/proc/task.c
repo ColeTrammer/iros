@@ -471,15 +471,18 @@ void free_task(struct task *task, bool free_paging_structure) {
     free(task);
 }
 
-void task_unblock(struct task *task, int ret) {
+bool task_unblock(struct task *task, int result) {
+    bool ret = false;
     spin_lock(&task->unblock_lock);
     if (task->sched_state == WAITING) {
-        task->unblock_result = ret;
+        task->unblock_result = result;
         task->blocking = false;
         task->wait_interruptible = false;
         task->sched_state = RUNNING_UNINTERRUPTIBLE;
+        ret = false;
     }
     spin_unlock(&task->unblock_lock);
+    return ret;
 }
 
 void task_set_sig_pending(struct task *task, int signum) {

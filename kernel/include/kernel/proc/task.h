@@ -152,7 +152,7 @@ struct queued_signal *task_first_queued_signal(struct task *task);
 void task_yield_if_state_changed(struct task *task);
 void task_do_sigs_if_needed(struct task *task);
 
-void task_unblock(struct task *task, int ret);
+bool task_unblock(struct task *task, int ret);
 void task_set_state_to_exiting(struct task *task);
 
 const char *task_state_to_string(enum sched_state state);
@@ -160,12 +160,19 @@ bool task_in_kernel(struct task *task);
 
 extern struct task initial_kernel_task;
 
+static inline void __wait_cancel(struct task *task, uint64_t *interrupts_save) {
+    task->wait_interruptible = false;
+    task->sched_state = RUNNING_UNINTERRUPTIBLE;
+    interrupts_restore(*interrupts_save);
+}
+
 static inline int __wait_prepare(struct task *task, uint64_t *interrupts_save, bool interruptible) {
     *interrupts_save = disable_interrupts_save();
     task->wait_interruptible = interruptible;
     task->sched_state = WAITING;
 
     if (interruptible && task_get_next_sig(task) != -1) {
+        __wait_cancel(task, interrupts_save);
         return -EINTR;
     }
     return 0;
@@ -185,29 +192,39 @@ static inline int __wait_do(uint64_t *interrupts_save) {
     ({                                                                           \
         int __ret = 0;                                                           \
         uint64_t __save;                                                         \
-        for (;;) {                                                               \
-            if (cond) {                                                          \
-                break;                                                           \
-            }                                                                    \
-            __ret = __wait_prepare(task, &__save, interruptible);                \
-            if (__ret) {                                                         \
+        bool __queue_task = true;                                                \
+        if (!(cond)) {                                                           \
+            for (;;) {                                                           \
+                __ret = __wait_prepare(task, &__save, interruptible);            \
+                if (__ret) {                                                     \
+                    begin_wait;                                                  \
+                    break;                                                       \
+                }                                                                \
+                if (cond) {                                                      \
+                    __wait_cancel(task, &__save);                                \
+                    begin_wait;                                                  \
+                    break;                                                       \
+                }                                                                \
+                if (__queue_task && lock_wq) {                                   \
+                    spin_lock(&(wq)->lock);                                      \
+                }                                                                \
+                if (__queue_task) {                                              \
+                    __wait_queue_enqueue_task(wq, task, __func__);               \
+                }                                                                \
                 begin_wait;                                                      \
-                break;                                                           \
+                if (__queue_task && lock_wq) {                                   \
+                    spin_unlock_no_irq_restore(&(wq)->lock);                     \
+                }                                                                \
+                __queue_task = false;                                            \
+                __ret = wait_do(task, &__save);                                  \
+                if (__ret) {                                                     \
+                    break;                                                       \
+                }                                                                \
+                end_wait;                                                        \
             }                                                                    \
-            if (lock_wq) {                                                       \
-                spin_lock(&(wq)->lock);                                          \
-            }                                                                    \
-            __wait_queue_enqueue_task(wq, task, __func__);                       \
-            begin_wait;                                                          \
-            if (lock_wq) {                                                       \
-                spin_unlock_no_irq_restore(&(wq)->lock);                         \
-            }                                                                    \
-            __ret = wait_do(task, &__save);                                      \
-            if (__ret) {                                                         \
+            if (!__queue_task) {                                                 \
                 wait_queue_dequeue_task(wq, task, __func__);                     \
-                break;                                                           \
             }                                                                    \
-            end_wait;                                                            \
         }                                                                        \
         __ret;                                                                   \
     })
@@ -222,6 +239,18 @@ static inline int __wait_do(uint64_t *interrupts_save) {
 
 #define wait_for_with_mutex(task, cond, wq, lock)               __wait_for(task, cond, wq, mutex_unlock(lock), mutex_lock(lock), false, true)
 #define wait_for_with_mutex_interruptible(task, cond, wq, lock) __wait_for(task, cond, wq, mutex_unlock(lock), mutex_lock(lock), true, true)
+
+#define wait_simple(task, wq)                          \
+    ({                                                 \
+        uint64_t __save;                               \
+        wait_prepare(task, &__save);                   \
+        spin_lock(&(wq)->lock);                        \
+        __wait_queue_enqueue_task(wq, task, __func__); \
+        spin_unlock_no_irq_restore(&(wq)->lock);       \
+        int __ret = wait_do(task, &__save);            \
+        wait_queue_dequeue_task(wq, task, __func__);   \
+        __ret;                                         \
+    })
 
 #define wait_with_blocker(task)                                \
     ({                                                         \

@@ -26,27 +26,17 @@ void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task, cons
 #endif /* WAIT_QUEUE_DEBUG */
 }
 
-bool __wake_up(struct wait_queue *queue, const char *func) {
-    (void) func;
-    struct task *to_wake = list_first_entry(&queue->list, struct task, wait_queue_list);
-    if (to_wake) {
-        list_remove(&to_wake->wait_queue_list);
-
-#ifdef WAIT_QUEUE_DEBUG
-        debug_log("waking up task: [ %p, %d:%d, %s ]\n", queue, to_wake->process->pid, to_wake->tid, func);
-#endif /* WAIT_QUEUE_DEBUG */
-        task_unblock(to_wake, 0);
-
-        return true;
-    }
-
-    return false;
-}
-
 void __wake_up_n(struct wait_queue *queue, int n, const char *func) {
-    for (int i = 0; i < n; i++) {
-        if (!__wake_up(queue, func)) {
+    (void) func;
+
+    int i = 0;
+    list_for_each_entry(&queue->list, task, struct task, wait_queue_list) {
+        if (i >= n) {
             break;
+        }
+
+        if (task_unblock(task, 0)) {
+            i++;
         }
     }
 }
@@ -63,22 +53,10 @@ void wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const 
     spin_unlock(&queue->lock);
 }
 
-void wait_on_internal(struct wait_queue *queue, const char *func) {
-    struct task *task = get_current_task();
-
-    spin_lock(&queue->lock);
-    __wait_queue_enqueue_task(queue, task, func);
-
-    task->sched_state = WAITING;
-    spin_unlock(&queue->lock);
-
-    kernel_yield();
-}
-
 void wake_up_internal(struct wait_queue *queue, const char *func) {
     spin_lock(&queue->lock);
 
-    __wake_up(queue, func);
+    __wake_up_n(queue, 1, func);
 
     spin_unlock(&queue->lock);
 }

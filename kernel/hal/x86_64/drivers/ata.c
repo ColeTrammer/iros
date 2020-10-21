@@ -52,7 +52,7 @@ static void ata_wait_ready(struct ata_port_info *info) {
 }
 
 static void ata_wait_irq(struct ata_device_data *data) {
-    wait_on(&data->wait_queue);
+    wait_simple(get_current_task(), &data->wait_queue);
 }
 
 static uint8_t ata_read_status(struct ata_port_info *info) {
