@@ -17,12 +17,13 @@ void init_wait_queue_internal(struct wait_queue *queue, const char *func) {
 #endif /* WAIT_QUEUE_DEBUG */
 }
 
-void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task, const char *func) {
+void __wait_queue_enqueue_entry(struct wait_queue *queue, struct wait_queue_entry *wait_queue_entry, const char *func) {
     (void) func;
-    list_append(&queue->list, &task->wait_queue_list);
+    list_append(&queue->list, &wait_queue_entry->list);
 
 #ifdef WAIT_QUEUE_DEBUG
-    debug_log("enqueuing task: [ %p, %d:%d, %s ]\n", queue, task->process->pid, task->tid, func);
+    debug_log("enqueuing wait_queue_entry: [ %p, %d:%d, %s ]\n", queue, wait_queue_entry->task->process->pid, wait_queue_entry->task->tid,
+              func);
 #endif /* WAIT_QUEUE_DEBUG */
 }
 
@@ -30,26 +31,26 @@ void __wake_up_n(struct wait_queue *queue, int n, const char *func) {
     (void) func;
 
     int i = 0;
-    list_for_each_entry(&queue->list, task, struct task, wait_queue_list) {
+    list_for_each_entry(&queue->list, wait_queue_entry, struct wait_queue_entry, list) {
         if (i >= n) {
             break;
         }
 
-        if (task_unblock(task, 0)) {
+        if (task_unblock(wait_queue_entry->task, 0)) {
             i++;
         }
     }
 }
 
-void __wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const char *func) {
+void __wait_queue_dequeue_entry(struct wait_queue *queue, struct wait_queue_entry *wait_queue_entry, const char *func) {
     (void) func;
     (void) queue;
-    list_remove(&task->wait_queue_list);
+    list_remove(&wait_queue_entry->list);
 }
 
-void wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const char *func) {
+void wait_queue_dequeue_entry(struct wait_queue *queue, struct wait_queue_entry *wait_queue_entry, const char *func) {
     spin_lock(&queue->lock);
-    __wait_queue_dequeue_task(queue, task, func);
+    __wait_queue_dequeue_entry(queue, wait_queue_entry, func);
     spin_unlock(&queue->lock);
 }
 

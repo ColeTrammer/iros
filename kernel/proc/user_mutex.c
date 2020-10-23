@@ -106,7 +106,8 @@ void unlock_user_mutex(struct user_mutex *um) {
 }
 
 void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
-    __wait_queue_enqueue_task(&m->wait_queue, task, __func__);
+    struct wait_queue_entry entry = { .task = task };
+    __wait_queue_enqueue_entry(&m->wait_queue, &entry, __func__);
 
 #ifdef USER_MUTEX_DEBUG
     debug_log("Adding to queue: [ %d:%d ]\n", task->process->pid, task->tid);

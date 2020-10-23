@@ -4,7 +4,10 @@
 #include <kernel/util/list.h>
 #include <kernel/util/spinlock.h>
 
-struct task;
+struct wait_queue_entry {
+    struct list_node list;
+    struct task *task;
+};
 
 struct wait_queue {
     spinlock_t lock;
@@ -14,11 +17,11 @@ struct wait_queue {
 #define WAIT_QUEUE_INITIALIZER(wq) \
     { SPINLOCK_INITIALIZER, INIT_LIST((wq).list) }
 
-void __wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const char *func);
-void __wait_queue_enqueue_task(struct wait_queue *queue, struct task *task, const char *func);
+void __wait_queue_dequeue_entry(struct wait_queue *queue, struct wait_queue_entry *wait_queue_entry, const char *func);
+void __wait_queue_enqueue_entry(struct wait_queue *queue, struct wait_queue_entry *wait_queue_entry, const char *func);
 void __wake_up_n(struct wait_queue *queue, int n, const char *func);
 
-void wait_queue_dequeue_task(struct wait_queue *queue, struct task *task, const char *func);
+void wait_queue_dequeue_entry(struct wait_queue *queue, struct wait_queue_entry *wait_queue_entry, const char *func);
 void init_wait_queue_internal(struct wait_queue *queue, const char *func);
 void wake_up_internal(struct wait_queue *queue, const char *func);
 void wake_up_all_internal(struct wait_queue *queue, const char *func);
