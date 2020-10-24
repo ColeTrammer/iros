@@ -82,10 +82,7 @@ struct inode {
     /* Listens file systems mounted directly below this inode */
     struct mount *mounts;
 
-    // flags for things like pselect and blocking
-    bool readable : 1;
-    bool writeable : 1;
-    bool excetional_activity : 1;
+    struct file_state file_state;
 
     // Marker of whether the inode's metadata is differnet from what is saved on disk.
     bool dirty : 1;

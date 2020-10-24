@@ -4,17 +4,45 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include <kernel/fs/inode.h>
+#include <kernel/proc/wait_queue.h>
 #include <kernel/util/mutex.h>
 
 struct file;
 struct inode;
 struct tnode;
 
+struct file_state {
+    int poll_flags;
+    struct wait_queue queue;
+};
+
+static inline void init_file_state(struct file_state *state, bool readable, bool writeable) {
+    state->poll_flags = (readable ? POLL_IN : 0) | (writeable ? POLL_OUT : 0);
+    init_wait_queue(&state->queue);
+}
+
+static inline void fs_set_state(struct file_state *state, int flags) {
+    if (state->poll_flags == flags) {
+        return;
+    }
+
+    state->poll_flags = flags;
+    wake_up_all(&state->queue);
+}
+
+static inline void fs_trigger_state(struct file_state *state, int flags) {
+    fs_set_state(state, state->poll_flags | flags);
+}
+
+static inline void fs_detrigger_state(struct file_state *state, int flags) {
+    fs_set_state(state, state->poll_flags & ~flags);
+}
+
 struct file_operations {
     int (*close)(struct file *file);
     ssize_t (*read)(struct file *file, off_t offset, void *buffer, size_t len);
     ssize_t (*write)(struct file *file, off_t offset, const void *buffer, size_t len);
+    int (*poll)(struct file *file, struct wait_queue_entry *entry, int mask);
 };
 
 struct file {

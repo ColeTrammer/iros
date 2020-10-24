@@ -71,14 +71,18 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
         }
 
         if (data->write_count++ == 0) {
-            inode->readable = !ring_buffer_empty(&data->buffer);
+            if (!ring_buffer_empty(&data->buffer)) {
+                fs_trigger_state(&inode->file_state, POLL_IN);
+            }
             wake_up_all(&data->writers_queue);
         }
     }
 
     if (file->abilities & FS_FILE_CAN_READ) {
         if (data->read_count++ == 0) {
-            inode->writeable = !ring_buffer_full(&data->buffer);
+            if (!ring_buffer_full(&data->buffer)) {
+                fs_trigger_state(&inode->file_state, POLL_OUT);
+            }
             wake_up_all(&data->readers_queue);
         }
     }
@@ -146,9 +150,9 @@ again:
     if (len != 0) {
         ring_buffer_user_read(&data->buffer, buffer, len);
 
-        inode->writeable = true;
+        fs_trigger_state(&inode->file_state, POLL_OUT);
         if (ring_buffer_empty(&data->buffer)) {
-            inode->readable = false;
+            fs_detrigger_state(&inode->file_state, POLL_IN);
         }
     }
 
@@ -196,8 +200,10 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
         size_t amount_to_write = MIN(space_available, len - buffer_index);
         ring_buffer_user_write(&data->buffer, buffer + buffer_index, amount_to_write);
         buffer_index += amount_to_write;
-        inode->readable = true;
-        inode->writeable = !ring_buffer_full(&data->buffer);
+        fs_trigger_state(&inode->file_state, POLL_IN);
+        if (!ring_buffer_full(&data->buffer)) {
+            fs_trigger_state(&inode->file_state, POLL_OUT);
+        }
         inode->modify_time = time_read_clock(CLOCK_REALTIME);
     }
 
@@ -235,13 +241,13 @@ int pipe_close(struct file *file) {
     if (file->abilities & FS_FILE_CAN_WRITE) {
         if (data->write_count-- == 1) {
             // The writer disconnected, wake up anyone waiting to read from this pipe.
-            inode->readable = true;
+            fs_trigger_state(&inode->file_state, POLL_IN);
         }
     }
     if (file->abilities & FS_FILE_CAN_READ) {
         if (data->read_count-- == 1) {
             // The reader disconnected, wake up anyone waiting to write to this pipe.
-            inode->writeable = true;
+            fs_trigger_state(&inode->file_state, POLL_OUT);
         }
     }
     mutex_unlock(&inode->lock);
@@ -252,7 +258,7 @@ int pipe_close(struct file *file) {
 void pipe_all_files_closed(struct inode *inode) {
     free_pipe_data(inode);
 
-    inode->readable = inode->writeable = inode->excetional_activity = false;
+    fs_set_state(&inode->file_state, 0);
 
     // Drop our inode reference so that the anonymous pipe inode is automatically deleted.
     if (inode->fsid == PIPE_DEVICE) {

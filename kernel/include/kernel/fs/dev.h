@@ -37,9 +37,7 @@ struct fs_device {
     dev_t device_number;
     mode_t mode;
     bool cannot_open : 1;
-    bool readable : 1;
-    bool writeable : 1;
-    bool exceptional : 1;
+    struct file_state file_state;
     int ref_count;
     struct fs_device_ops *ops;
     struct vm_object *vm_object;

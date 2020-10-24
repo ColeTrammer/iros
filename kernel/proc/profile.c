@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/fs/inode.h>
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/process.h>

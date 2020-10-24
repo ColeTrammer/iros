@@ -179,7 +179,7 @@ struct inode *fs_create_inode(struct super_block *sb, ino_t id, uid_t uid, gid_t
                               struct inode_operations *ops, void *private) {
     struct inode *inode = fs_create_inode_without_sb(sb->fsid, id, uid, gid, mode, size, ops, private);
     inode->super_block = sb;
-    inode->writeable = !(sb->flags & ST_RDONLY);
+    inode->file_state.poll_flags &= ~(!!(sb->flags & ST_RDONLY) ? POLL_OUT : 0);
     return inode;
 }
 
@@ -197,11 +197,10 @@ struct inode *fs_create_inode_without_sb(dev_t fsid, ino_t id, uid_t uid, gid_t 
     init_mutex(&inode->lock);
     inode->mode = mode;
     inode->private_data = private;
-    inode->readable = !!size;
     inode->ref_count = 1;
     inode->size = size;
     inode->uid = uid;
-    inode->writeable = true;
+    init_file_state(&inode->file_state, !!size, true);
 
     if (inode->flags & FS_DIR) {
         inode->dirent_cache = fs_create_dirent_cache();
@@ -2166,67 +2165,6 @@ char *get_tnode_path(struct tnode *tnode) {
 
     free(name_buffer);
     return ret;
-}
-
-bool fs_is_readable(struct file *file) {
-    if (file->flags & FS_SOCKET) {
-        struct socket *socket = file->private_data;
-        return socket->readable;
-    }
-
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    if (file->flags & FS_DEVICE) {
-        struct fs_device *device = file->private_data;
-        assert(device);
-
-        return device->readable;
-    }
-
-    return inode->readable;
-}
-
-bool fs_is_writable(struct file *file) {
-    if (file->flags & FS_SOCKET) {
-        struct socket *socket = file->private_data;
-        assert(socket);
-
-        return socket->writable;
-    }
-
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    if (file->flags & FS_DEVICE) {
-        struct fs_device *device = file->private_data;
-        assert(device);
-
-        return device->writeable;
-    }
-
-    return inode->writeable;
-}
-
-bool fs_is_exceptional(struct file *file) {
-    if (file->flags & FS_SOCKET) {
-        struct socket *socket = file->private_data;
-        assert(socket);
-
-        return socket->exceptional;
-    }
-
-    struct inode *inode = fs_file_inode(file);
-    assert(inode);
-
-    if (file->flags & FS_DEVICE) {
-        struct fs_device *device = file->private_data;
-        assert(device);
-
-        return device->exceptional;
-    }
-
-    return inode->excetional_activity;
 }
 
 struct tnode *fs_get_tnode_for_file(struct file *file) {
