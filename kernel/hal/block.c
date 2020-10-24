@@ -252,7 +252,7 @@ void block_register_device(struct block_device *block_device, const char *name, 
     strcpy(device->name, name);
     device->device_number = device_number;
     device->mode = S_IFBLK | 0600;
-    device->readable = device->writeable = true;
+    init_file_state(&device->file_state, true, true);
     init_mutex(&device->lock);
     device->ops = &block_device_ops;
     device->private = block_device;

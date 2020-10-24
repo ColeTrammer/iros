@@ -56,7 +56,6 @@ if (NOT ${NATIVE_BUILD})
         net/udp.c
         net/umessage.c
         net/unix_socket.c
-        proc/blockers.c
         proc/elf64.c
         proc/exec.c
         proc/pid.c

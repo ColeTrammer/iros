@@ -83,9 +83,8 @@ struct socket {
     int pending_length;
     int num_pending;
 
-    bool readable : 1;
-    bool writable : 1;
-    bool exceptional : 1;
+    struct file_state file_state;
+
     bool has_peer_address : 1;
     bool has_host_address : 1;
     bool broadcast : 1;

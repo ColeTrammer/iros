@@ -563,19 +563,15 @@ static void ext2_update_tnode_list(struct inode *inode) {
         inode_to_add->index = dirent->ino;
         inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
         inode_to_add->super_block = inode->super_block;
-        inode_to_add->flags =
-            dirent->type == EXT2_DIRENT_TYPE_REGULAR
-                ? FS_FILE
-                : dirent->type == EXT2_DIRENT_TYPE_SOCKET
-                      ? FS_SOCKET
-                      : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK
-                            ? FS_LINK
-                            : (dirent->type == EXT2_DIRENT_TYPE_BLOCK || dirent->type == EXT2_DIRENT_TYPE_CHARACTER_DEVICE)
-                                  ? FS_DEVICE
-                                  : dirent->type == EXT2_DIRENT_TYPE_FIFO ? FS_FIFO : FS_DIR;
+        inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR                                                        ? FS_FILE
+                              : dirent->type == EXT2_DIRENT_TYPE_SOCKET                                                       ? FS_SOCKET
+                              : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK                                                ? FS_LINK
+                              : (dirent->type == EXT2_DIRENT_TYPE_BLOCK || dirent->type == EXT2_DIRENT_TYPE_CHARACTER_DEVICE) ? FS_DEVICE
+                              : dirent->type == EXT2_DIRENT_TYPE_FIFO                                                         ? FS_FIFO
+                                                                                                                              : FS_DIR;
         inode_to_add->ref_count = 2; // One for the vfs and one for us
-        inode_to_add->readable = !!inode->size;
-        inode_to_add->writeable = !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK));
+        init_file_state(&inode_to_add->file_state, !!inode->size,
+                        !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK)));
         init_mutex(&inode_to_add->lock);
 
         fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
@@ -747,8 +743,9 @@ static int ext2_write_inode(struct inode *inode) {
     raw_inode->sectors = 0;
     raw_inode->flags = 0;
     raw_inode->os_specific_1 = 0;
-    ssize_t to_preallocate = S_ISREG(inode->mode) ? data->sb->num_blocks_to_preallocate_for_files
-                                                  : S_ISDIR(inode->mode) ? data->sb->num_blocks_to_preallocate_for_directories : 0;
+    ssize_t to_preallocate = S_ISREG(inode->mode)   ? data->sb->num_blocks_to_preallocate_for_files
+                             : S_ISDIR(inode->mode) ? data->sb->num_blocks_to_preallocate_for_directories
+                                                    : 0;
     if (to_preallocate != 0) {
         void *zeroes = ext2_allocate_blocks(inode->super_block, 1);
         memset(zeroes, 0, inode->super_block->block_size);
@@ -813,8 +810,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->ref_count = 2; // One for the vfs and one for us
         inode->size = 0;
         inode->super_block = parent->super_block;
-        inode->readable = !!inode->size;
-        inode->writeable = true;
+        init_file_state(&inode->file_state, !!inode->size, true);
         inode->change_time = inode->modify_time = inode->access_time = time_read_clock(CLOCK_REALTIME);
 
         *error = ext2_write_inode(inode);
@@ -907,13 +903,13 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
     memcpy(dirent->name, name, strlen(name));
     dirent->name_length = strlen(name);
     dirent->size = parent->super_block->block_size - ((uintptr_t) dirent - (uintptr_t) raw_dirent_table);
-    dirent->type = S_ISREG(mode) ? EXT2_DIRENT_TYPE_REGULAR
-                                 : S_ISDIR(mode) ? EXT2_DIRENT_TYPE_DIRECTORY
-                                                 : S_ISLNK(mode) ? EXT2_DIRENT_TYPE_SYMBOLIC_LINK
-                                                                 : S_ISBLK(mode) ? EXT2_DIRENT_TYPE_BLOCK
-                                                                                 : S_ISCHR(mode) ? EXT2_DIRENT_TYPE_CHARACTER_DEVICE
-                                                                                                 : S_ISFIFO(mode) ? EXT2_DIRENT_TYPE_FIFO
-                                                                                                                  : EXT2_DIRENT_TYPE_SOCKET;
+    dirent->type = S_ISREG(mode)    ? EXT2_DIRENT_TYPE_REGULAR
+                   : S_ISDIR(mode)  ? EXT2_DIRENT_TYPE_DIRECTORY
+                   : S_ISLNK(mode)  ? EXT2_DIRENT_TYPE_SYMBOLIC_LINK
+                   : S_ISBLK(mode)  ? EXT2_DIRENT_TYPE_BLOCK
+                   : S_ISCHR(mode)  ? EXT2_DIRENT_TYPE_CHARACTER_DEVICE
+                   : S_ISFIFO(mode) ? EXT2_DIRENT_TYPE_FIFO
+                                    : EXT2_DIRENT_TYPE_SOCKET;
     memset((void *) (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length), 0,
            parent->super_block->block_size -
                (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length - (uintptr_t) raw_dirent_table));
@@ -1857,8 +1853,7 @@ struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device 
     root->ref_count = 2;
     root->size = 0;
     root->super_block = super_block;
-    root->readable = true;
-    root->writeable = true;
+    init_file_state(&root->file_state, true, true);
 
     ext2_sync_raw_super_block_with_virtual_super_block(super_block);
     return super_block;

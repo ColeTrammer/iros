@@ -1339,147 +1339,14 @@ SYS_CALL(pselect) {
         current->in_sigsuspend = true;
     }
 
-    int count = 0;
-    uint8_t *read_fds_found = NULL;
-    uint8_t *write_fds_found = NULL;
-    uint8_t *except_fds_found = NULL;
+    int count = -ENOSYS;
 
     if (nfds > FOPEN_MAX) {
         count = -EINVAL;
         goto pselect_return;
     }
 
-    struct timespec start = time_read_clock(CLOCK_MONOTONIC);
-
-    if (readfds) {
-        read_fds_found = alloca(fd_set_size);
-        memcpy(read_fds_found, readfds, fd_set_size);
-    }
-
-    if (writefds) {
-        write_fds_found = alloca(fd_set_size);
-        memcpy(write_fds_found, writefds, fd_set_size);
-    }
-
-    if (exceptfds) {
-        except_fds_found = alloca(fd_set_size);
-        memcpy(except_fds_found, exceptfds, fd_set_size);
-    }
-
-    // NOTE: don't need to take process lock since its undefined behavior to close
-    //       a file while another thread is selecting on it
-    for (;;) {
-        if (read_fds_found) {
-            for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
-                if (read_fds_found[i]) {
-                    for (size_t j = 0;
-                         read_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
-                        if (read_fds_found[i] & (1U << j)) {
-                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
-                            if (!to_check) {
-                                count = EBADF;
-                                goto pselect_return;
-                            }
-                            if (fs_is_readable(to_check)) {
-                                read_fds_found[i] ^= (1U << j);
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (write_fds_found) {
-            for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
-                if (write_fds_found[i]) {
-                    for (size_t j = 0;
-                         write_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
-                        if (write_fds_found[i] & (1U << j)) {
-                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
-                            if (!to_check) {
-                                count = EBADF;
-                                goto pselect_return;
-                            }
-                            if (fs_is_writable(to_check)) {
-                                write_fds_found[i] ^= (1U << j);
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (except_fds_found) {
-            for (size_t i = 0; i < fd_set_size / sizeof(uint8_t); i++) {
-                if (except_fds_found[i]) {
-                    for (size_t j = 0;
-                         except_fds_found[i] && i * sizeof(uint8_t) * CHAR_BIT + j < (size_t) nfds && j < sizeof(uint8_t) * CHAR_BIT; j++) {
-                        if (except_fds_found[i] & (1U << j)) {
-                            struct file *to_check = current->process->files[i * sizeof(uint8_t) * CHAR_BIT + j].file;
-                            if (!to_check) {
-                                count = EBADF;
-                                goto pselect_return;
-                            }
-                            if (fs_is_exceptional(to_check)) {
-                                except_fds_found[i] ^= (1U << j);
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (count > 0) {
-            break;
-        }
-
-        if (timeout) {
-            if (timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
-                break;
-            }
-
-            struct timespec end_time = { .tv_sec = start.tv_sec + timeout->tv_sec, .tv_nsec = start.tv_nsec + timeout->tv_nsec };
-            int ret = proc_block_select_timeout(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
-                                                create_phys_addr_mapping_from_virt_addr(write_fds_found),
-                                                create_phys_addr_mapping_from_virt_addr(except_fds_found), end_time);
-            if (ret) {
-                count = ret;
-                break;
-            }
-
-            struct timespec after = time_read_clock(CLOCK_MONOTONIC);
-            if (time_compare(after, end_time) >= 0) {
-                break;
-            }
-
-            continue;
-        }
-
-        int ret = proc_block_select(current, nfds, create_phys_addr_mapping_from_virt_addr(read_fds_found),
-                                    create_phys_addr_mapping_from_virt_addr(write_fds_found),
-                                    create_phys_addr_mapping_from_virt_addr(except_fds_found));
-        if (ret) {
-            count = ret;
-            break;
-        }
-    }
-
 pselect_return:
-    for (size_t i = 0; i < fd_set_size; i++) {
-        if (readfds) {
-            readfds[i] ^= read_fds_found[i];
-        }
-        if (writefds) {
-            writefds[i] ^= write_fds_found[i];
-        }
-        if (exceptfds) {
-            exceptfds[i] ^= except_fds_found[i];
-        }
-    }
-
     if (current->in_sigsuspend) {
         SYS_RETURN_RESTORE_SIGMASK(count);
     }
@@ -2050,85 +1917,13 @@ SYS_CALL(ppoll) {
         current->in_sigsuspend = true;
     }
 
-    int count = 0;
+    int count = -ENOSYS;
     if (nfds > FOPEN_MAX) {
         count = -EINVAL;
         goto ppoll_return;
     }
 
-    struct pollfd fds[FOPEN_MAX];
-    memcpy(fds, user_fds, nfds * sizeof(struct pollfd));
-
-    struct timespec start = time_read_clock(CLOCK_MONOTONIC);
-
-    // NOTE: don't need to take process lock since its undefined behavior to close
-    //       a file while another thread is selecting on it
-    for (;;) {
-        for (nfds_t i = 0; i < nfds; i++) {
-            struct pollfd *pfd = &fds[i];
-            int current_fd = pfd->fd;
-            if (current_fd < 0) {
-                continue;
-            }
-
-            struct file *file = current->process->files[current_fd].file;
-            if (!file) {
-                pfd->revents = POLLNVAL;
-                count++;
-                continue;
-            }
-
-            pfd->revents = 0;
-            bool found = false;
-            if (!!(pfd->events & POLLIN) && fs_is_readable(file)) {
-                pfd->revents |= POLLIN;
-                found = true;
-            }
-            if (!!(pfd->events & POLLPRI) && fs_is_exceptional(file)) {
-                pfd->revents |= POLLPRI;
-                found = true;
-            }
-            if (!!(pfd->events & POLLOUT) && fs_is_writable(file)) {
-                pfd->revents |= POLLOUT;
-                found = true;
-            }
-            count += found;
-        }
-
-        if (count > 0) {
-            break;
-        }
-
-        if (timeout) {
-            if (timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
-                break;
-            }
-
-            struct timespec end_time = { .tv_sec = start.tv_sec + timeout->tv_sec, .tv_nsec = start.tv_nsec + timeout->tv_nsec };
-            int ret = proc_block_poll_timeout(current, nfds, fds, end_time);
-            if (ret) {
-                count = ret;
-                break;
-            }
-
-            struct timespec after = time_read_clock(CLOCK_MONOTONIC);
-            if (time_compare(after, end_time) >= 0) {
-                break;
-            }
-
-            continue;
-        }
-
-        int ret = proc_block_poll(current, nfds, fds);
-        if (ret) {
-            count = ret;
-            break;
-        }
-    }
-
 ppoll_return:
-    memcpy(user_fds, fds, nfds * sizeof(struct pollfd));
-
     if (current->in_sigsuspend) {
         SYS_RETURN_RESTORE_SIGMASK(count);
     }

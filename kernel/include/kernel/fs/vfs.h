@@ -7,6 +7,7 @@
 
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
+#include <kernel/proc/wait_queue.h>
 
 struct file_descriptor;
 struct file_operations;
@@ -96,10 +97,6 @@ ssize_t fs_do_read(char *buf, off_t offset, size_t n, const char *source, size_t
 
 int fs_bind_socket_to_inode(struct inode *inode, struct socket *socket);
 
-bool fs_is_readable(struct file *file);
-bool fs_is_writable(struct file *file);
-bool fs_is_exceptional(struct file *file);
-
 bool fs_can_read_inode_impl(struct inode *inode, uid_t uid, gid_t gid);
 bool fs_can_write_inode_impl(struct inode *inode, uid_t uid, gid_t gid);
 bool fs_can_execute_inode_impl(struct inode *inode, uid_t uid, gid_t gid);
@@ -138,6 +135,19 @@ static inline int fs_mode_to_flags(mode_t mode) {
 
 static inline struct inode *fs_file_inode(struct file *file) {
     return file->inode;
+}
+
+static inline int fs_do_poll(struct wait_queue_entry *entry, int mask, struct file_state *state) {
+    int result = state->poll_flags & mask;
+    if (result != 0) {
+        return result;
+    }
+    if (entry) {
+        spin_lock(&state->queue.lock);
+        __wait_queue_enqueue_entry(&state->queue, entry, __func__);
+        spin_unlock(&state->queue.lock);
+    }
+    return 0;
 }
 
 #define fs_for_each_file_system(name) list_for_each_entry(fs_file_system_list(), name, struct file_system, list)

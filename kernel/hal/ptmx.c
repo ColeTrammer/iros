@@ -146,7 +146,7 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Setting readable flag on slave to false: [ %d ]\n", data->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-            device->readable = false;
+            fs_detrigger_state(&device->file_state, POLL_IN);
         }
     }
 
@@ -194,7 +194,7 @@ slave_write_again:
         mdata->messages = message;
     } else {
         if (message->max < message->len + len) {
-            mdata->device->writeable = false;
+            fs_detrigger_state(&mdata->device->file_state, POLL_OUT);
             while (mdata->messages != NULL) {
                 mutex_unlock(&mdata->device->lock);
 #ifdef PTMX_BLOCKING_DEBUG
@@ -226,7 +226,7 @@ slave_write_again:
 #ifdef PTMX_BLOCKING_DEBUG
     debug_log("Setting master to readable: [ %d ]\n", mdata->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-    mdata->device->readable = true;
+    fs_trigger_state(&mdata->device->file_state, POLL_IN);
 
     mutex_unlock(&mdata->device->lock);
     return (ssize_t) save_len;
@@ -266,7 +266,7 @@ static void slave_add(struct fs_device *device) {
         }
     }
 
-    device->readable = false;
+    init_file_state(&device->file_state, false, false);
 
     device->private = data;
     data->device = device;
@@ -490,8 +490,8 @@ static ssize_t master_read(struct fs_device *device, off_t offset, void *buf, si
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Resetting master flags: [ %d ]\n", data->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-            device->writeable = true;
-            device->readable = false;
+            fs_trigger_state(&device->file_state, POLL_OUT);
+            fs_detrigger_state(&device->file_state, POLL_IN);
         }
     }
 
@@ -589,7 +589,7 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
 #endif /* PTMX_BLOCKING_DEBUG */
 
             // The slave is readable now that we wrote to it.
-            sdata->device->readable = true;
+            fs_trigger_state(&sdata->device->file_state, POLL_IN);
 
             mutex_unlock(&sdata->device->lock);
             continue;
@@ -631,7 +631,7 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
 #endif /* PTMX_BLOCKING_DEBUG */
 
             // The slave is readable now that we wrote to it.
-            sdata->device->readable = true;
+            fs_trigger_state(&sdata->device->file_state, POLL_IN);
 
             mutex_unlock(&sdata->device->lock);
             continue;
@@ -658,7 +658,7 @@ static void master_add(struct fs_device *device) {
         }
     }
 
-    device->readable = false;
+    init_file_state(&device->file_state, false, false);
 
     device->private = data;
     data->device = device;
