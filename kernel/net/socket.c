@@ -43,9 +43,7 @@ struct socket *net_create_socket(int domain, int type, int protocol, struct sock
     socket->ref_count = 1;
     socket->recv_timeout = (struct timeval) { 10, 0 };
     socket->send_timeout = (struct timeval) { 10, 0 };
-    socket->writable = type == SOCK_DGRAM || type == SOCK_RAW;
-    socket->readable = false;
-    socket->exceptional = false;
+    init_file_state(&socket->file_state, false, type == SOCK_DGRAM || type == SOCK_RAW);
     socket->has_host_address = false;
     socket->has_peer_address = false;
     socket->op = op;
@@ -88,45 +86,42 @@ void net_drop_socket(struct socket *socket) {
     }
 }
 
-int net_block_until_socket_is_readable(struct socket *socket, struct timespec start_time) {
-    struct timespec timeout = time_from_timeval(socket->recv_timeout);
-    int ret = proc_block_until_socket_is_readable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
-    if (ret) {
-        return ret;
-    }
-
-    // We timed out
-    struct timespec now = time_read_clock(CLOCK_MONOTONIC);
-    if (time_compare(now, time_add(start_time, timeout)) >= 0) {
-        return -EAGAIN;
-    }
-
-    return 0;
-}
-
-int net_block_until_socket_is_writable(struct socket *socket, struct timespec start_time) {
-    if (socket->send_timeout.tv_sec != 0 || socket->send_timeout.tv_usec != 0) {
-        struct timespec timeout = time_from_timeval(socket->send_timeout);
-        int ret = proc_block_until_socket_is_writable_with_timeout(get_current_task(), socket, time_add(timeout, start_time));
+int net_block_until_socket_is_readable(struct socket *socket) {
+    if (socket->recv_timeout.tv_sec != 0 || socket->recv_timeout.tv_usec != 0) {
+        struct timespec timeout = time_from_timeval(socket->recv_timeout);
+        int ret = net_poll_wait(socket, POLL_IN | POLL_ERR, &timeout);
         if (ret) {
             return ret;
         }
 
-        // We timed out
-        struct timespec now = time_read_clock(CLOCK_MONOTONIC);
-        if (time_compare(now, time_add(start_time, timeout)) >= 0) {
+        if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
+            mutex_unlock(&socket->lock);
             return -EAGAIN;
         }
 
         return 0;
     }
 
-    int ret = proc_block_until_socket_is_writable(get_current_task(), socket);
-    if (ret) {
-        return ret;
+    return net_poll_wait(socket, POLL_IN | POLL_ERR, NULL);
+}
+
+int net_block_until_socket_is_writable(struct socket *socket) {
+    if (socket->send_timeout.tv_sec != 0 || socket->send_timeout.tv_usec != 0) {
+        struct timespec timeout = time_from_timeval(socket->send_timeout);
+        int ret = net_poll_wait(socket, POLL_OUT, &timeout);
+        if (ret) {
+            return ret;
+        }
+
+        if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
+            mutex_unlock(&socket->lock);
+            return -EAGAIN;
+        }
+
+        return 0;
     }
 
-    return 0;
+    return net_poll_wait(socket, POLL_OUT, NULL);
 }
 
 struct socket_data *net_get_next_message(struct socket *socket, int *error) {
@@ -136,11 +131,8 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
     }
 
     struct socket_data *data;
-
-    struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
-
+    mutex_lock(&socket->lock);
     for (;;) {
-        mutex_lock(&socket->lock);
         data = socket->data_head;
 
         if (data != NULL) {
@@ -155,28 +147,19 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
         }
 
         bool connection_terminated = socket->state == CLOSED;
-        mutex_unlock(&socket->lock);
-
         if (connection_terminated) {
+            mutex_unlock(&socket->lock);
             *error = -ECONNRESET;
             return NULL;
         }
 
         if (socket->type & SOCK_NONBLOCK) {
+            mutex_unlock(&socket->lock);
             *error = -EAGAIN;
             return NULL;
         }
 
-        if (socket->recv_timeout.tv_sec != 0 || socket->recv_timeout.tv_usec != 0) {
-            int ret = net_block_until_socket_is_readable(socket, start_time);
-            if (ret) {
-                *error = ret;
-                return NULL;
-            }
-            continue;
-        }
-
-        int ret = proc_block_until_socket_is_readable(get_current_task(), socket);
+        int ret = net_block_until_socket_is_readable(socket);
         if (ret) {
             *error = ret;
             return NULL;
@@ -187,7 +170,7 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
     remque(data);
     if (socket->data_head == NULL) {
         socket->data_tail = NULL;
-        socket->readable = false;
+        fs_detrigger_state(&socket->file_state, POLL_IN);
     }
 
     mutex_unlock(&socket->lock);
@@ -378,8 +361,8 @@ int net_generic_getsockopt(struct socket *socket, int level, int optname, void *
 }
 
 int net_get_next_connection(struct socket *socket, struct socket_connection *connection) {
+    mutex_lock(&socket->lock);
     for (;;) {
-        mutex_lock(&socket->lock);
         if (socket->pending[0] != NULL) {
             memcpy(connection, socket->pending[0], sizeof(struct socket_connection));
 
@@ -388,20 +371,19 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             socket->pending[--socket->num_pending] = NULL;
 
             if (socket->num_pending == 0) {
-                socket->readable = false;
+                fs_detrigger_state(&socket->file_state, POLL_IN);
             }
 
             mutex_unlock(&socket->lock);
             break;
         }
 
-        mutex_unlock(&socket->lock);
-
         if (socket->type & SOCK_NONBLOCK) {
+            mutex_unlock(&socket->lock);
             return -EAGAIN;
         }
 
-        int ret = proc_block_until_socket_is_readable(get_current_task(), socket);
+        int ret = net_block_until_socket_is_readable(socket);
         if (ret) {
             return ret;
         }
@@ -419,7 +401,7 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
         to_send->data_tail = socket_data;
     }
 
-    to_send->readable = true;
+    fs_trigger_state(&to_send->file_state, POLL_IN);
 
 #ifdef SOCKET_DEBUG
     debug_log("Sent message to: [ %lu ]\n", to_send->id);
@@ -432,7 +414,7 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
 
 void net_socket_set_error(struct socket *socket, int error) {
     socket->error = error;
-    socket->readable = true;
+    fs_trigger_state(&socket->file_state, POLL_ERR);
 }
 
 void net_set_host_address(struct socket *socket, const void *addr, socklen_t addrlen) {

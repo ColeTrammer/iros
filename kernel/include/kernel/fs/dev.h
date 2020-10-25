@@ -64,4 +64,6 @@ blksize_t dev_block_size(struct fs_device *device);
 blkcnt_t dev_block_count(struct fs_device *device);
 struct super_block *dev_mount(struct file_system *fs, struct fs_device *device);
 
+#define dev_poll_wait(dev, flags, timeout) fs_poll_wait(&(dev)->file_state, &(dev)->lock, flags, timeout)
+
 #endif /* _KERNEL_FS_DEV_H */

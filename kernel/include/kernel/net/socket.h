@@ -125,8 +125,8 @@ void net_drop_socket(struct socket *socket);
 struct socket *net_get_socket_by_id(unsigned long id);
 void net_for_each_socket(void (*f)(struct hash_entry *socket, void *data), void *data);
 
-int net_block_until_socket_is_readable(struct socket *socket, struct timespec start_time);
-int net_block_until_socket_is_writable(struct socket *socket, struct timespec start_time);
+int net_block_until_socket_is_readable(struct socket *socket);
+int net_block_until_socket_is_writable(struct socket *socket);
 
 int net_generic_setsockopt(struct socket *socket, int level, int optname, const void *optval, socklen_t optlen);
 int net_generic_getsockopt(struct socket *socket, int level, int optname, void *optval, socklen_t *optlen);
@@ -147,6 +147,8 @@ void net_register_protocol(struct socket_protocol *protocol);
 #define net_for_each_protocol(name) list_for_each_entry(net_get_protocol_list(), name, struct socket_protocol, list)
 
 #define net_for_each_socket(name) list_for_each_entry(net_get_socket_list(), name, struct socket, socket_list)
+
+#define net_poll_wait(socket, flags, timeout) fs_poll_wait(&(socket)->file_state, &(socket)->lock, flags, timeout)
 
 #define NET_READ_SOCKOPT(type, optval, optlen) \
     ({                                         \

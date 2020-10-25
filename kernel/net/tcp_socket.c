@@ -10,7 +10,6 @@
 #include <kernel/net/socket_syscalls.h>
 #include <kernel/net/tcp.h>
 #include <kernel/net/tcp_socket.h>
-#include <kernel/proc/blockers.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
@@ -380,7 +379,12 @@ static int net_tcp_connect(struct socket *socket, const struct sockaddr *addr, s
         return ret;
     }
 
-    return proc_block_until_socket_is_connected(get_current_task(), socket);
+    mutex_lock(&socket->lock);
+    ret = net_block_until_socket_is_readable(socket);
+    if (!ret) {
+        mutex_unlock(&socket->lock);
+    }
+    return ret;
 }
 
 static int net_tcp_destroy(struct socket *socket) {
@@ -454,7 +458,6 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
     size_t buffer_index = 0;
     int error = 0;
 
-    struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
     while (buffer_index < len) {
         struct tcp_control_block *tcb = socket->private_data;
         if (!tcb) {
@@ -474,7 +477,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
 
         size_t amount_readable = ring_buffer_size(&tcb->recv_buffer);
         if (!amount_readable) {
-            socket->readable = false;
+            fs_detrigger_state(&socket->file_state, POLL_IN);
             if (tcb->state == TCP_CLOSE_WAIT) {
                 break;
             }
@@ -488,12 +491,10 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
                 goto done;
             }
 
-            mutex_unlock(&socket->lock);
-            int ret = net_block_until_socket_is_readable(socket, start_time);
+            int ret = net_block_until_socket_is_readable(socket);
             if (ret) {
                 return ret;
             }
-            mutex_lock(&socket->lock);
             continue;
         }
 
@@ -503,7 +504,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         if (tcp_update_recv_window(socket)) {
             net_send_tcp_from_socket(socket, tcb->send_next, tcb->send_next, false, false);
         }
-        socket->readable = !ring_buffer_empty(&tcb->recv_buffer);
+        fs_set_state_bit(&socket->file_state, POLL_IN, !ring_buffer_empty(&tcb->send_buffer));
 
         if (flags & MSG_WAITALL) {
             continue;
@@ -527,7 +528,6 @@ static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t 
     size_t buffer_index = 0;
     int error = 0;
 
-    struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
     mutex_lock(&socket->lock);
     while (buffer_index < len) {
         struct tcp_control_block *tcb = socket->private_data;
@@ -550,20 +550,18 @@ static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t 
 
         size_t space_available = ring_buffer_space(&tcb->send_buffer);
         if (!space_available) {
-            mutex_unlock(&socket->lock);
-            int ret = net_block_until_socket_is_writable(socket, start_time);
+            int ret = net_block_until_socket_is_writable(socket);
             if (ret) {
                 error = ret;
                 return ret;
             }
-            mutex_lock(&socket->lock);
             continue;
         }
 
         size_t amount_to_write = MIN(space_available, len - buffer_index);
         ring_buffer_user_write(&tcb->send_buffer, buffer + buffer_index, amount_to_write);
         buffer_index += amount_to_write;
-        socket->writable = !ring_buffer_full(&tcb->send_buffer);
+        fs_set_state_bit(&socket->file_state, POLL_OUT, !ring_buffer_full(&tcb->send_buffer));
 
         // Only send the data once the ESTABLISHED state is reached.
         if (tcb->state != TCP_SYN_RECIEVED && tcb->state != TCP_SYN_SENT) {

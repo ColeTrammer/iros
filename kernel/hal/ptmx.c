@@ -80,9 +80,8 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
     mutex_lock(&data->device->lock);
     if (data->input_buffer == NULL) {
         while (data->messages == NULL) {
-            mutex_unlock(&data->device->lock);
-
             if (non_blocking) {
+                mutex_unlock(&data->device->lock);
                 return 0;
             }
 
@@ -91,32 +90,24 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
 #endif /* PTMX_BLOCKING_DEBUG */
 
             if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
-                time_t end_time_ms = data->config.c_cc[VTIME] * 100;
-                struct timespec end_time = { .tv_sec = end_time_ms / 1000, .tv_nsec = (end_time_ms % 1000) * 1000000 };
-                int ret = proc_block_until_device_is_readable_or_timeout(get_current_task(), device, end_time);
+                time_t timeout_ms = data->config.c_cc[VTIME] * 100;
+                struct timespec timeout = { .tv_sec = timeout_ms / 1000, .tv_nsec = (timeout_ms % 1000) * 1000000 };
+                int ret = dev_poll_wait(data->device, POLL_OUT, &timeout);
                 if (ret) {
                     return ret;
                 }
 
-                if (time_compare(time_read_clock(CLOCK_MONOTONIC), end_time) >= 0) {
-                    return 0;
-                }
-
-                mutex_lock(&data->device->lock);
-                // This is because multiple processes could be waiting for ptmx input, meaning
-                // a different one could have consumed the message, and since there is a timeout
-                // we don't want to block again.
-                if (data->messages == NULL) {
+                if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
                     mutex_unlock(&data->device->lock);
+                    return 0;
                 }
                 break;
             } else {
-                int ret = proc_block_until_device_is_readable(get_current_task(), device);
+                int ret = dev_poll_wait(data->device, POLL_OUT, NULL);
                 if (ret) {
                     return ret;
                 }
             }
-            mutex_lock(&data->device->lock);
         }
 
         struct tty_buffer_message *message = data->messages;
@@ -196,15 +187,10 @@ slave_write_again:
         if (message->max < message->len + len) {
             fs_detrigger_state(&mdata->device->file_state, POLL_OUT);
             while (mdata->messages != NULL) {
-                mutex_unlock(&mdata->device->lock);
-#ifdef PTMX_BLOCKING_DEBUG
-                debug_log("Blocking until master is writable: [ %d ]\n", mdata->index);
-#endif /* PTMX_BLOCKING_DEBUG */
-                int ret = proc_block_until_device_is_writeable(get_current_task(), mdata->device);
+                int ret = dev_poll_wait(mdata->device, POLL_OUT, NULL);
                 if (ret) {
                     return ret;
                 }
-                mutex_lock(&mdata->device->lock);
             }
 
             message = mdata->messages;

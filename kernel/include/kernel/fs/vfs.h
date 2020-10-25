@@ -8,6 +8,7 @@
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/inode.h>
 #include <kernel/proc/wait_queue.h>
+#include <kernel/time/timer.h>
 
 struct file_descriptor;
 struct file_operations;
@@ -94,6 +95,8 @@ struct file_descriptor fs_dup(struct file_descriptor desc);
 struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc);
 
 ssize_t fs_do_read(char *buf, off_t offset, size_t n, const char *source, size_t source_max);
+
+int fs_poll_wait(struct file_state *state, mutex_t *lock, int mask, struct timespec *timeout);
 
 int fs_bind_socket_to_inode(struct inode *inode, struct socket *socket);
 

@@ -476,7 +476,6 @@ bool task_unblock(struct task *task, int result) {
     spin_lock(&task->unblock_lock);
     if (task->sched_state == WAITING) {
         task->unblock_result = result;
-        task->blocking = false;
         task->wait_interruptible = false;
         task->sched_state = RUNNING_UNINTERRUPTIBLE;
         ret = false;
@@ -488,7 +487,7 @@ bool task_unblock(struct task *task, int result) {
 void task_set_sig_pending(struct task *task, int signum) {
     task->sig_pending |= (UINT64_C(1) << (signum - UINT64_C(1)));
 
-    if (task->sched_state == WAITING && (task->blocking || task->wait_interruptible) && !(task_is_sig_blocked(task, signum))) {
+    if (task->sched_state == WAITING && task->wait_interruptible && !(task_is_sig_blocked(task, signum))) {
         task_unblock(task, -EINTR);
     }
 }
@@ -652,7 +651,7 @@ void task_set_state_to_exiting(struct task *task) {
         return;
     }
 
-    if (task->sched_state == WAITING && (task->blocking || task->wait_interruptible)) {
+    if (task->sched_state == WAITING && task->wait_interruptible) {
         // Defer exit state change until after the blocking code has a chance
         // to clean up
         task_unblock(task, -EINTR);

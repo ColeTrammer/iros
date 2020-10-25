@@ -94,7 +94,7 @@ void net_post_umessage(struct queued_umessage *umessage) {
 void net_post_umessage_to(struct umessage_queue *queue, struct queued_umessage *umessage) {
     spin_lock(&queue->recv_queue_lock);
     if (!ring_buffer_full(&queue->recv_queue)) {
-        queue->socket->readable = true;
+        fs_trigger_state(&queue->socket->file_state, POLL_IN);
         net_bump_umessage(umessage);
         ring_buffer_write(&queue->recv_queue, &umessage, sizeof(umessage));
     }
@@ -115,21 +115,23 @@ static ssize_t umessage_recvfrom(struct socket *socket, void *buffer, size_t len
     (void) addr;
     (void) addrlen;
 
-    struct timespec start_time = time_read_clock(CLOCK_MONOTONIC);
+    struct queued_umessage *umessage = NULL;
+
+    mutex_lock(&socket->lock);
     struct umessage_queue *queue = socket->private_data;
 
-    struct queued_umessage *umessage = NULL;
     for (;;) {
         spin_lock(&queue->recv_queue_lock);
         if (!ring_buffer_empty(&queue->recv_queue)) {
             ring_buffer_read(&queue->recv_queue, &umessage, sizeof(umessage));
         }
         if (ring_buffer_empty(&queue->recv_queue)) {
-            socket->readable = false;
+            fs_detrigger_state(&socket->file_state, POLL_IN);
         }
         spin_unlock(&queue->recv_queue_lock);
 
         if (umessage) {
+            mutex_unlock(&socket->lock);
             ssize_t ret = MIN(umessage->message.length, len);
             memcpy(buffer, &umessage->message, ret);
             net_drop_umessage(umessage);
@@ -137,10 +139,11 @@ static ssize_t umessage_recvfrom(struct socket *socket, void *buffer, size_t len
         }
 
         if (socket->type & SOCK_NONBLOCK) {
+            mutex_unlock(&socket->lock);
             return -EAGAIN;
         }
 
-        int ret = net_block_until_socket_is_readable(socket, start_time);
+        int ret = net_block_until_socket_is_readable(socket);
         if (ret) {
             return ret;
         }
