@@ -38,6 +38,14 @@ static inline void fs_detrigger_state(struct file_state *state, int flags) {
     fs_set_state(state, state->poll_flags & ~flags);
 }
 
+static inline void fs_set_state_bit(struct file_state *state, int bit, bool val) {
+    if (val) {
+        fs_trigger_state(state, bit);
+    } else {
+        fs_detrigger_state(state, bit);
+    }
+}
+
 struct file_operations {
     int (*close)(struct file *file);
     ssize_t (*read)(struct file *file, off_t offset, void *buffer, size_t len);

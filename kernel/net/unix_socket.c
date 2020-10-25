@@ -192,18 +192,17 @@ static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, 
 
     for (;;) {
         enum socket_state state = socket->state;
-        mutex_unlock(&socket->lock);
         if (state == CONNECTED) {
             break;
         }
 
-        int ret = proc_block_until_socket_is_connected(get_current_task(), socket);
+        int ret = net_poll_wait(socket, POLL_IN, NULL);
         if (ret) {
             return ret;
         }
-        mutex_lock(&socket->lock);
     }
 
+    mutex_unlock(&socket->lock);
     return 0;
 }
 

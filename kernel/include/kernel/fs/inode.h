@@ -110,4 +110,6 @@ struct inode {
     void *private_data;
 };
 
+#define inode_poll_wait(inode, flags, timeout) fs_poll_wait(&(inode)->file_state, &(inode)->lock, flags, timeout)
+
 #endif /* _KERNEL_FS_INODE_H */

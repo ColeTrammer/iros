@@ -157,15 +157,6 @@ try_again:;
             prev_save->sched_next->sched_prev = prev_save;
 
             proc_schedule_task_for_destruction(to_remove);
-        } else if (to_run->blocking && to_run->sched_state == WAITING) {
-            struct task *current_save = processor->current_task;
-            processor->current_task = to_run;
-            if (to_run->block_info.should_unblock(&to_run->block_info)) {
-                task_unblock(to_run, 0);
-                processor->current_task = current_save;
-                break;
-            }
-            processor->current_task = current_save;
         }
 
         // Skip taskes that are sleeping
