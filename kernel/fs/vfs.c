@@ -2113,6 +2113,127 @@ int fs_poll_wait(struct file_state *state, mutex_t *lock, int mask, struct times
                        mutex_unlock(lock), mutex_lock(lock), time_wakeup_after(CLOCK_MONOTONIC, timeout), true, true);
 }
 
+struct poll_entry {
+    struct wait_queue_entry wq_entry;
+    struct file *file;
+    int mask;
+    int events;
+    int fd;
+    bool wq_valid : 1;
+    bool rdset : 1;
+    bool wrset : 1;
+    bool exset : 1;
+};
+
+static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct timespec *user_timeout) {}
+
+int fs_poll(struct pollfd *fds, nfds_t nfds, const struct timespec *user_timeout) {
+    if (nfds > FOPEN_MAX) {
+        return -EINVAL;
+    }
+
+    struct poll_entry entries[FOPEN_MAX] = { 0 };
+    struct process *process = get_current_process();
+
+    mutex_lock(&process->lock);
+    for (nfds_t i = 0; i < nfds; i++) {
+        struct pollfd pollfd = fds[i];
+        int fd = pollfd.fd;
+        entries[i].mask = pollfd.events;
+
+        if (fd < 0 || fd >= FOPEN_MAX) {
+            continue;
+        }
+
+        struct file *file = process->files[fd].file;
+        if (file) {
+            entries[i].file = file;
+            atomic_fetch_add(&file->ref_count, 1);
+        }
+    }
+    mutex_unlock(&process->lock);
+
+    int ret = fs_do_sys_poll(entries, nfds, user_timeout);
+    if (ret < 0) {
+        return ret;
+    }
+
+    for (nfds_t i = 0; i < nfds; i++) {
+        fds[i].revents = entries[i].events;
+    }
+    return ret;
+}
+
+#define POLLIN_SET  (POLLRDNORM | POLLRDBAND | POLLIN | POLLHUP | POLLERR)
+#define POLLOUT_SET (POLLWRBAND | POLLWRNORM | POLLOUT | POLLERR)
+#define POLLEX_SET  (POLLPRI)
+
+int fs_select(int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds, const struct timespec *user_timeout) {
+    if (nfds < 0 || nfds > FOPEN_MAX) {
+        return -EINVAL;
+    }
+
+    struct poll_entry entries[FOPEN_MAX] = { 0 };
+    int count = 0;
+    struct process *process = get_current_process();
+    bool bad = false;
+
+    mutex_lock(&process->lock);
+    for (int i = 0; i < nfds; i++) {
+        bool rdset = readfds && !!(readfds[i / CHAR_BIT] & (1U << (i % CHAR_BIT)));
+        bool wrset = writefds && !!(writefds[i / CHAR_BIT] & (1U << (i % CHAR_BIT)));
+        bool exset = exceptfds && !!(exceptfds[i / CHAR_BIT] & (1U << (i % CHAR_BIT)));
+
+        if (rdset || wrset || exset) {
+            struct poll_entry *entry = &entries[count++];
+            entry->fd = i;
+            entry->mask = (rdset ? POLLIN_SET : 0) | (wrset ? POLLOUT_SET : 0) | (exset ? POLLEX_SET : 0);
+            entry->rdset = rdset;
+            entry->wrset = wrset;
+            entry->exset = exset;
+            entry->file = process->files[i].file;
+            if (!entry->file) {
+                bad = true;
+                break;
+            }
+            atomic_fetch_add(&entry->file->ref_count, 1);
+        }
+    }
+    mutex_unlock(&process->lock);
+
+    int ret = fs_do_sys_poll(entries, count, user_timeout);
+    if (bad) {
+        return -EBADF;
+    }
+    if (ret < 0) {
+        return ret;
+    }
+
+    for (int i = 0; i < count; i++) {
+        struct poll_entry *entry = &entries[i];
+        int fd = entry->fd;
+        if (entry->rdset) {
+            bool res = !!(entry->events & POLLIN_SET);
+            if (!res) {
+                readfds[fd / CHAR_BIT] &= ~(1U << (fd % CHAR_BIT));
+            }
+        }
+        if (entry->wrset) {
+            bool res = !!(entry->events & POLLOUT_SET);
+            if (!res) {
+                writefds[fd / CHAR_BIT] &= ~(1U << (fd % CHAR_BIT));
+            }
+        }
+        if (entry->exset) {
+            bool res = !!(entry->events & POLLEX_SET);
+            if (!res) {
+                exceptfds[fd / CHAR_BIT] &= ~(1U << (fd % CHAR_BIT));
+            }
+        }
+    }
+    return ret;
+}
+
 // NOTE: we don't have to write out to disk, because we only loose info
 //       stored on the inode after rebooting, and at that point, the binding
 //       task will no longer exist.

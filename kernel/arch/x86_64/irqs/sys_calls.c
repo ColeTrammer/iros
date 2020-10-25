@@ -1332,21 +1332,14 @@ SYS_CALL(pselect) {
     SYS_PARAM6_VALIDATE(const sigset_t *, sigmask, validate_read_or_null, sizeof(sigset_t));
 
     struct task *current = get_current_task();
-
     if (sigmask) {
         memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
         memcpy(&current->sig_mask, sigmask, sizeof(sigset_t));
         current->in_sigsuspend = true;
     }
 
-    int count = -ENOSYS;
+    int count = fs_select(nfds, readfds, writefds, exceptfds, timeout);
 
-    if (nfds > FOPEN_MAX) {
-        count = -EINVAL;
-        goto pselect_return;
-    }
-
-pselect_return:
     if (current->in_sigsuspend) {
         SYS_RETURN_RESTORE_SIGMASK(count);
     }
@@ -1917,13 +1910,8 @@ SYS_CALL(ppoll) {
         current->in_sigsuspend = true;
     }
 
-    int count = -ENOSYS;
-    if (nfds > FOPEN_MAX) {
-        count = -EINVAL;
-        goto ppoll_return;
-    }
+    int count = fs_poll(user_fds, nfds, timeout);
 
-ppoll_return:
     if (current->in_sigsuspend) {
         SYS_RETURN_RESTORE_SIGMASK(count);
     }
