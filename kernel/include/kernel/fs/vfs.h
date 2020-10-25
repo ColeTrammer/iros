@@ -156,6 +156,10 @@ static inline int fs_do_poll(struct wait_queue_entry *entry, int mask, struct fi
     return 0;
 }
 
+static inline void fs_do_poll_finish(struct wait_queue_entry *entry, struct file_state *state) {
+    wait_queue_dequeue_entry(&state->queue, entry, __func__);
+}
+
 #define fs_for_each_file_system(name) list_for_each_entry(fs_file_system_list(), name, struct file_system, list)
 
 #endif /* _KERNEL_FS_VFS_H */

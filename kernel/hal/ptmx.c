@@ -92,7 +92,7 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
             if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
                 time_t timeout_ms = data->config.c_cc[VTIME] * 100;
                 struct timespec timeout = { .tv_sec = timeout_ms / 1000, .tv_nsec = (timeout_ms % 1000) * 1000000 };
-                int ret = dev_poll_wait(data->device, POLL_OUT, &timeout);
+                int ret = dev_poll_wait(data->device, POLLOUT, &timeout);
                 if (ret) {
                     return ret;
                 }
@@ -103,7 +103,7 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
                 }
                 break;
             } else {
-                int ret = dev_poll_wait(data->device, POLL_OUT, NULL);
+                int ret = dev_poll_wait(data->device, POLLOUT, NULL);
                 if (ret) {
                     return ret;
                 }
@@ -137,7 +137,7 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Setting readable flag on slave to false: [ %d ]\n", data->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-            fs_detrigger_state(&device->file_state, POLL_IN);
+            fs_detrigger_state(&device->file_state, POLLIN);
         }
     }
 
@@ -185,9 +185,9 @@ slave_write_again:
         mdata->messages = message;
     } else {
         if (message->max < message->len + len) {
-            fs_detrigger_state(&mdata->device->file_state, POLL_OUT);
+            fs_detrigger_state(&mdata->device->file_state, POLLOUT);
             while (mdata->messages != NULL) {
-                int ret = dev_poll_wait(mdata->device, POLL_OUT, NULL);
+                int ret = dev_poll_wait(mdata->device, POLLOUT, NULL);
                 if (ret) {
                     return ret;
                 }
@@ -212,7 +212,7 @@ slave_write_again:
 #ifdef PTMX_BLOCKING_DEBUG
     debug_log("Setting master to readable: [ %d ]\n", mdata->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-    fs_trigger_state(&mdata->device->file_state, POLL_IN);
+    fs_trigger_state(&mdata->device->file_state, POLLIN);
 
     mutex_unlock(&mdata->device->lock);
     return (ssize_t) save_len;
@@ -476,8 +476,8 @@ static ssize_t master_read(struct fs_device *device, off_t offset, void *buf, si
 #ifdef PTMX_BLOCKING_DEBUG
             debug_log("Resetting master flags: [ %d ]\n", data->index);
 #endif /* PTMX_BLOCKING_DEBUG */
-            fs_trigger_state(&device->file_state, POLL_OUT);
-            fs_detrigger_state(&device->file_state, POLL_IN);
+            fs_trigger_state(&device->file_state, POLLOUT);
+            fs_detrigger_state(&device->file_state, POLLIN);
         }
     }
 
@@ -575,7 +575,7 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
 #endif /* PTMX_BLOCKING_DEBUG */
 
             // The slave is readable now that we wrote to it.
-            fs_trigger_state(&sdata->device->file_state, POLL_IN);
+            fs_trigger_state(&sdata->device->file_state, POLLIN);
 
             mutex_unlock(&sdata->device->lock);
             continue;
@@ -617,7 +617,7 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
 #endif /* PTMX_BLOCKING_DEBUG */
 
             // The slave is readable now that we wrote to it.
-            fs_trigger_state(&sdata->device->file_state, POLL_IN);
+            fs_trigger_state(&sdata->device->file_state, POLLIN);
 
             mutex_unlock(&sdata->device->lock);
             continue;

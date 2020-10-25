@@ -477,7 +477,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
 
         size_t amount_readable = ring_buffer_size(&tcb->recv_buffer);
         if (!amount_readable) {
-            fs_detrigger_state(&socket->file_state, POLL_IN);
+            fs_detrigger_state(&socket->file_state, POLLIN);
             if (tcb->state == TCP_CLOSE_WAIT) {
                 break;
             }
@@ -504,7 +504,7 @@ static ssize_t net_tcp_recvfrom(struct socket *socket, void *buffer, size_t len,
         if (tcp_update_recv_window(socket)) {
             net_send_tcp_from_socket(socket, tcb->send_next, tcb->send_next, false, false);
         }
-        fs_set_state_bit(&socket->file_state, POLL_IN, !ring_buffer_empty(&tcb->send_buffer));
+        fs_set_state_bit(&socket->file_state, POLLIN, !ring_buffer_empty(&tcb->send_buffer));
 
         if (flags & MSG_WAITALL) {
             continue;
@@ -561,7 +561,7 @@ static ssize_t net_tcp_sendto(struct socket *socket, const void *buffer, size_t 
         size_t amount_to_write = MIN(space_available, len - buffer_index);
         ring_buffer_user_write(&tcb->send_buffer, buffer + buffer_index, amount_to_write);
         buffer_index += amount_to_write;
-        fs_set_state_bit(&socket->file_state, POLL_OUT, !ring_buffer_full(&tcb->send_buffer));
+        fs_set_state_bit(&socket->file_state, POLLOUT, !ring_buffer_full(&tcb->send_buffer));
 
         // Only send the data once the ESTABLISHED state is reached.
         if (tcb->state != TCP_SYN_RECIEVED && tcb->state != TCP_SYN_SENT) {

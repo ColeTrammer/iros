@@ -373,7 +373,7 @@ static void tcp_advance_ack_number(struct socket *socket, uint32_t ack_number) {
         time_reset_kernel_callback(tcb->rto_timer, &tcb->rto);
     }
 
-    fs_trigger_state(&socket->file_state, POLL_OUT);
+    fs_trigger_state(&socket->file_state, POLLOUT);
 }
 
 static void tcp_process_segment(struct socket *socket, struct network_interface *interface, const struct ip_v4_packet *ip_packet,
@@ -417,7 +417,7 @@ static void tcp_process_segment(struct socket *socket, struct network_interface 
                 }
 
                 ring_buffer_write(&tcb->recv_buffer, tcp_data_start(packet) + offset, segment_length);
-                fs_trigger_state(&socket->file_state, POLL_IN);
+                fs_trigger_state(&socket->file_state, POLLIN);
             }
 
             tcb->recv_window -= segment_length;
@@ -519,7 +519,7 @@ static void tcp_recv_in_listen(struct socket *socket, struct network_interface *
         connection->addrlen = sizeof(struct sockaddr_in);
         connection->connect_tcb = tcb;
         socket->pending[socket->num_pending++] = connection;
-        fs_trigger_state(&socket->file_state, POLL_IN);
+        fs_trigger_state(&socket->file_state, POLLIN);
 
         // Update the TCB
         tcb->state = TCP_SYN_RECIEVED;
@@ -556,7 +556,7 @@ static void tcp_recv_in_syn_sent(struct socket *socket, struct network_interface
     }
 
     // Valid SYN was sent.
-    fs_trigger_state(&socket->file_state, POLL_IN);
+    fs_trigger_state(&socket->file_state, POLLIN);
     if (packet->flags.ack) {
         tcp_advance_ack_number(socket, htonl(packet->ack_number));
         tcp_process_segment(socket, interface, ip_packet, packet);

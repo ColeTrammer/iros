@@ -128,7 +128,7 @@ static int net_unix_close(struct socket *socket) {
         struct socket *connected_to = socket->private_data;
         if (connected_to) {
             // We terminated the connection
-            fs_trigger_state(&connected_to->file_state, POLL_IN);
+            fs_trigger_state(&connected_to->file_state, POLLIN);
             connected_to->state = CLOSED;
             net_drop_socket(connected_to);
         }
@@ -185,7 +185,7 @@ static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, 
     connection->connect_to = socket;
 
     connect_to->pending[connect_to->num_pending++] = connection;
-    fs_trigger_state(&connect_to->file_state, POLL_IN);
+    fs_trigger_state(&connect_to->file_state, POLLIN);
 
     mutex_lock(&socket->lock);
     mutex_unlock(&connect_to->lock);
@@ -196,7 +196,7 @@ static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, 
             break;
         }
 
-        int ret = net_poll_wait(socket, POLL_IN, NULL);
+        int ret = net_poll_wait(socket, POLLIN, NULL);
         if (ret) {
             return ret;
         }
