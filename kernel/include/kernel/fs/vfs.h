@@ -1,6 +1,7 @@
 #ifndef _KERNEL_FS_VFS_H
 #define _KERNEL_FS_VFS_H 1
 
+#include <poll.h>
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -97,6 +98,8 @@ struct file_descriptor fs_dup_accross_fork(struct file_descriptor desc);
 ssize_t fs_do_read(char *buf, off_t offset, size_t n, const char *source, size_t source_max);
 
 int fs_poll_wait(struct file_state *state, mutex_t *lock, int mask, struct timespec *timeout);
+int fs_poll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout);
+int fs_select(int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds, const struct timespec *timeout);
 
 int fs_bind_socket_to_inode(struct inode *inode, struct socket *socket);
 
