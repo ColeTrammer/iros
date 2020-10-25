@@ -94,7 +94,7 @@ void net_post_umessage(struct queued_umessage *umessage) {
 void net_post_umessage_to(struct umessage_queue *queue, struct queued_umessage *umessage) {
     spin_lock(&queue->recv_queue_lock);
     if (!ring_buffer_full(&queue->recv_queue)) {
-        fs_trigger_state(&queue->socket->file_state, POLL_IN);
+        fs_trigger_state(&queue->socket->file_state, POLLIN);
         net_bump_umessage(umessage);
         ring_buffer_write(&queue->recv_queue, &umessage, sizeof(umessage));
     }
@@ -126,7 +126,7 @@ static ssize_t umessage_recvfrom(struct socket *socket, void *buffer, size_t len
             ring_buffer_read(&queue->recv_queue, &umessage, sizeof(umessage));
         }
         if (ring_buffer_empty(&queue->recv_queue)) {
-            fs_detrigger_state(&socket->file_state, POLL_IN);
+            fs_detrigger_state(&socket->file_state, POLLIN);
         }
         spin_unlock(&queue->recv_queue_lock);
 

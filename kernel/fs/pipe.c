@@ -71,14 +71,14 @@ struct file *pipe_open(struct inode *inode, int flags, int *error) {
         }
 
         if (data->write_count++ == 0) {
-            fs_set_state_bit(&inode->file_state, POLL_IN, !ring_buffer_empty(&data->buffer));
+            fs_set_state_bit(&inode->file_state, POLLIN, !ring_buffer_empty(&data->buffer));
             wake_up_all(&data->writers_queue);
         }
     }
 
     if (file->abilities & FS_FILE_CAN_READ) {
         if (data->read_count++ == 0) {
-            fs_set_state_bit(&inode->file_state, POLL_OUT, !ring_buffer_full(&data->buffer));
+            fs_set_state_bit(&inode->file_state, POLLOUT, !ring_buffer_full(&data->buffer));
             wake_up_all(&data->readers_queue);
         }
     }
@@ -136,7 +136,7 @@ again:;
             return -EAGAIN;
         }
 
-        int ret = inode_poll_wait(inode, POLL_IN, NULL);
+        int ret = inode_poll_wait(inode, POLLIN, NULL);
         if (ret) {
             return ret;
         }
@@ -146,8 +146,8 @@ again:;
     if (len != 0) {
         ring_buffer_user_read(&data->buffer, buffer, len);
 
-        fs_trigger_state(&inode->file_state, POLL_OUT);
-        fs_set_state_bit(&inode->file_state, POLL_IN, !ring_buffer_empty(&data->buffer));
+        fs_trigger_state(&inode->file_state, POLLOUT);
+        fs_set_state_bit(&inode->file_state, POLLIN, !ring_buffer_empty(&data->buffer));
     }
 
     mutex_unlock(&inode->lock);
@@ -182,7 +182,7 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
                 mutex_unlock(&inode->lock);
                 return buffer_index == 0 ? -EAGAIN : (ssize_t) buffer_index;
             }
-            int ret = inode_poll_wait(inode, POLL_OUT, NULL);
+            int ret = inode_poll_wait(inode, POLLOUT, NULL);
             if (ret) {
                 return ret;
             }
@@ -192,8 +192,8 @@ ssize_t pipe_write(struct file *file, off_t offset, const void *buffer, size_t l
         size_t amount_to_write = MIN(space_available, len - buffer_index);
         ring_buffer_user_write(&data->buffer, buffer + buffer_index, amount_to_write);
         buffer_index += amount_to_write;
-        fs_trigger_state(&inode->file_state, POLL_IN);
-        fs_set_state_bit(&inode->file_state, POLL_OUT, !ring_buffer_full(&data->buffer));
+        fs_trigger_state(&inode->file_state, POLLIN);
+        fs_set_state_bit(&inode->file_state, POLLOUT, !ring_buffer_full(&data->buffer));
         inode->modify_time = time_read_clock(CLOCK_REALTIME);
     }
 
@@ -231,13 +231,13 @@ int pipe_close(struct file *file) {
     if (file->abilities & FS_FILE_CAN_WRITE) {
         if (data->write_count-- == 1) {
             // The writer disconnected, wake up anyone waiting to read from this pipe.
-            fs_trigger_state(&inode->file_state, POLL_IN);
+            fs_trigger_state(&inode->file_state, POLLIN);
         }
     }
     if (file->abilities & FS_FILE_CAN_READ) {
         if (data->read_count-- == 1) {
             // The reader disconnected, wake up anyone waiting to write to this pipe.
-            fs_trigger_state(&inode->file_state, POLL_OUT);
+            fs_trigger_state(&inode->file_state, POLLOUT);
         }
     }
     mutex_unlock(&inode->lock);

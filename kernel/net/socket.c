@@ -89,7 +89,7 @@ void net_drop_socket(struct socket *socket) {
 int net_block_until_socket_is_readable(struct socket *socket) {
     if (socket->recv_timeout.tv_sec != 0 || socket->recv_timeout.tv_usec != 0) {
         struct timespec timeout = time_from_timeval(socket->recv_timeout);
-        int ret = net_poll_wait(socket, POLL_IN | POLL_ERR, &timeout);
+        int ret = net_poll_wait(socket, POLLIN | POLLERR, &timeout);
         if (ret) {
             return ret;
         }
@@ -102,13 +102,13 @@ int net_block_until_socket_is_readable(struct socket *socket) {
         return 0;
     }
 
-    return net_poll_wait(socket, POLL_IN | POLL_ERR, NULL);
+    return net_poll_wait(socket, POLLIN | POLLERR, NULL);
 }
 
 int net_block_until_socket_is_writable(struct socket *socket) {
     if (socket->send_timeout.tv_sec != 0 || socket->send_timeout.tv_usec != 0) {
         struct timespec timeout = time_from_timeval(socket->send_timeout);
-        int ret = net_poll_wait(socket, POLL_OUT, &timeout);
+        int ret = net_poll_wait(socket, POLLOUT, &timeout);
         if (ret) {
             return ret;
         }
@@ -121,7 +121,7 @@ int net_block_until_socket_is_writable(struct socket *socket) {
         return 0;
     }
 
-    return net_poll_wait(socket, POLL_OUT, NULL);
+    return net_poll_wait(socket, POLLOUT, NULL);
 }
 
 struct socket_data *net_get_next_message(struct socket *socket, int *error) {
@@ -170,7 +170,7 @@ struct socket_data *net_get_next_message(struct socket *socket, int *error) {
     remque(data);
     if (socket->data_head == NULL) {
         socket->data_tail = NULL;
-        fs_detrigger_state(&socket->file_state, POLL_IN);
+        fs_detrigger_state(&socket->file_state, POLLIN);
     }
 
     mutex_unlock(&socket->lock);
@@ -371,7 +371,7 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             socket->pending[--socket->num_pending] = NULL;
 
             if (socket->num_pending == 0) {
-                fs_detrigger_state(&socket->file_state, POLL_IN);
+                fs_detrigger_state(&socket->file_state, POLLIN);
             }
 
             mutex_unlock(&socket->lock);
@@ -401,7 +401,7 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
         to_send->data_tail = socket_data;
     }
 
-    fs_trigger_state(&to_send->file_state, POLL_IN);
+    fs_trigger_state(&to_send->file_state, POLLIN);
 
 #ifdef SOCKET_DEBUG
     debug_log("Sent message to: [ %lu ]\n", to_send->id);
@@ -414,7 +414,7 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
 
 void net_socket_set_error(struct socket *socket, int error) {
     socket->error = error;
-    fs_trigger_state(&socket->file_state, POLL_ERR);
+    fs_trigger_state(&socket->file_state, POLLERR);
 }
 
 void net_set_host_address(struct socket *socket, const void *addr, socklen_t addrlen) {

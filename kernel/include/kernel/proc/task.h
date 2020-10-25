@@ -199,7 +199,6 @@ static inline int __wait_do(uint64_t *interrupts_save) {
                 }                                                                            \
                 if (cond) {                                                                  \
                     __wait_cancel(_task, &__save);                                           \
-                    begin_wait;                                                              \
                     break;                                                                   \
                 }                                                                            \
                 if (__queue_task && lock_wq) {                                               \

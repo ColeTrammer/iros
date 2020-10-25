@@ -179,7 +179,7 @@ struct inode *fs_create_inode(struct super_block *sb, ino_t id, uid_t uid, gid_t
                               struct inode_operations *ops, void *private) {
     struct inode *inode = fs_create_inode_without_sb(sb->fsid, id, uid, gid, mode, size, ops, private);
     inode->super_block = sb;
-    inode->file_state.poll_flags &= ~(!!(sb->flags & ST_RDONLY) ? POLL_OUT : 0);
+    inode->file_state.poll_flags &= ~(!!(sb->flags & ST_RDONLY) ? POLLOUT : 0);
     return inode;
 }
 
@@ -2125,7 +2125,75 @@ struct poll_entry {
     bool exset : 1;
 };
 
-static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct timespec *user_timeout) {}
+static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct timespec *user_timeout) {
+    struct timespec timeout_storage;
+    struct timespec *timeout = NULL;
+    if (user_timeout) {
+        timeout_storage = *user_timeout;
+        timeout = &timeout_storage;
+    }
+
+    struct task *current = get_current_task();
+    int ret = 0;
+    bool wq_queue = false;
+    for (;;) {
+        uint64_t save;
+        ret = __wait_prepare(current, &save, true);
+        if (ret) {
+            break;
+        }
+
+        for (int i = 0; i < count; i++) {
+            struct poll_entry *entry = &entries[i];
+            struct file *file = entry->file;
+            int events = POLLERR & entry->mask;
+            if (file && file->f_op->poll) {
+                struct wait_queue_entry *wq_entry = wq_queue ? &entry->wq_entry : NULL;
+                events = file->f_op->poll(file, wq_entry, entry->mask);
+                if (!events && !!wq_entry) {
+                    entry->wq_valid = true;
+                }
+            }
+
+            if (events) {
+                ret++;
+                wq_queue = false;
+                entry->events = events;
+            }
+        }
+
+        if (ret > 0) {
+            __wait_cancel(current, &save);
+            break;
+        }
+
+        wq_queue = false;
+        if (timeout) {
+            ret = time_wakeup_after(CLOCK_MONOTONIC, timeout);
+            if (!ret && timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
+                break;
+            }
+        } else {
+            ret = wait_do(current, &save);
+        }
+
+        if (ret) {
+            break;
+        }
+    }
+
+    for (int i = 0; i < count; i++) {
+        struct poll_entry *entry = &entries[i];
+        struct file *file = entry->file;
+        if (entry->wq_valid) {
+            file->f_op->poll_finish(file, &entry->wq_entry);
+        }
+        if (file) {
+            fs_close(file);
+        }
+    }
+    return ret;
+}
 
 int fs_poll(struct pollfd *fds, nfds_t nfds, const struct timespec *user_timeout) {
     if (nfds > FOPEN_MAX) {
@@ -2140,6 +2208,7 @@ int fs_poll(struct pollfd *fds, nfds_t nfds, const struct timespec *user_timeout
         struct pollfd pollfd = fds[i];
         int fd = pollfd.fd;
         entries[i].mask = pollfd.events;
+        entries[i].wq_entry.task = get_current_task();
 
         if (fd < 0 || fd >= FOPEN_MAX) {
             continue;
@@ -2187,6 +2256,7 @@ int fs_select(int nfds, uint8_t *readfds, uint8_t *writefds, uint8_t *exceptfds,
         if (rdset || wrset || exset) {
             struct poll_entry *entry = &entries[count++];
             entry->fd = i;
+            entry->wq_entry.task = get_current_task();
             entry->mask = (rdset ? POLLIN_SET : 0) | (wrset ? POLLOUT_SET : 0) | (exset ? POLLEX_SET : 0);
             entry->rdset = rdset;
             entry->wrset = wrset;
