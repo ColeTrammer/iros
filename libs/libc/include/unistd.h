@@ -1,6 +1,7 @@
 #ifndef _UNISTD_H
 #define _UNISTD_H 1
 
+#include <bits/getopt.h>
 #include <bits/gid_t.h>
 #include <bits/null.h>
 #include <bits/off_t.h>
@@ -567,11 +568,6 @@ int ttyname_r(int fd, char *buf, size_t buflen);
 
 char *getlogin(void);
 int getlogin_r(char *buf, size_t bufsize);
-
-int getopt(int argc, char *const argv[], const char *optstring);
-
-extern char *optarg;
-extern int optind, opterr, optopt;
 
 #ifdef __cplusplus
 }

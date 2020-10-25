@@ -9,4 +9,4 @@ else()
     target_link_libraries(libclipboard PRIVATE X11 pthread)
 endif()
 
-target_link_libraries(libclipboard PUBLIC libliim)
+target_link_libraries(libclipboard PUBLIC libipc)
