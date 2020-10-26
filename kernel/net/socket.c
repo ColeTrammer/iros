@@ -383,7 +383,7 @@ int net_get_next_connection(struct socket *socket, struct socket_connection *con
             return -EAGAIN;
         }
 
-        int ret = net_block_until_socket_is_readable(socket);
+        int ret = net_poll_wait(socket, POLLIN, NULL);
         if (ret) {
             return ret;
         }
@@ -404,7 +404,7 @@ ssize_t net_send_to_socket(struct socket *to_send, struct socket_data *socket_da
     fs_trigger_state(&to_send->file_state, POLLIN);
 
 #ifdef SOCKET_DEBUG
-    debug_log("Sent message to: [ %lu ]\n", to_send->id);
+    debug_log("Sent message to: [ %p ]\n", to_send);
 #endif /* SOCKET_DEBUG */
 
     ssize_t ret = socket_data->len;

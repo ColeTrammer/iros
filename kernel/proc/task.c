@@ -472,6 +472,10 @@ void free_task(struct task *task, bool free_paging_structure) {
 }
 
 bool task_unblock(struct task *task, int result) {
+#ifdef TASK_DEBUG
+    debug_log("unblocking task: [ %d:%d ]\n", task->tid, task->process->pid);
+#endif /* TASK_DEBUG */
+
     bool ret = false;
     spin_lock(&task->unblock_lock);
     if (task->sched_state == WAITING) {

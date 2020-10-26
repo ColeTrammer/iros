@@ -76,6 +76,7 @@ static int net_unix_accept(struct socket *socket, struct sockaddr *addr, socklen
     connect_to->private_data = net_bump_socket(new_socket);
     net_set_peer_address(new_socket, &socket->host_address, sizeof(struct sockaddr_un));
     connect_to->state = CONNECTED;
+    fs_trigger_state(&connect_to->file_state, POLLOUT);
     mutex_unlock(&connect_to->lock);
 
     new_socket->state = CONNECTED;
@@ -196,7 +197,7 @@ static int net_unix_connect(struct socket *socket, const struct sockaddr *addr, 
             break;
         }
 
-        int ret = net_poll_wait(socket, POLLIN, NULL);
+        int ret = net_poll_wait(socket, POLLOUT, NULL);
         if (ret) {
             return ret;
         }
