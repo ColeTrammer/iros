@@ -49,9 +49,9 @@ void __wait_queue_dequeue_entry(struct wait_queue *queue, struct wait_queue_entr
 }
 
 void wait_queue_dequeue_entry(struct wait_queue *queue, struct wait_queue_entry *wait_queue_entry, const char *func) {
-    spin_lock(&queue->lock);
+    spin_lock_internal(&queue->lock, func, true);
     __wait_queue_dequeue_entry(queue, wait_queue_entry, func);
-    spin_unlock(&queue->lock);
+    spin_unlock_internal(&queue->lock, func, true);
 }
 
 void wake_up_internal(struct wait_queue *queue, const char *func) {

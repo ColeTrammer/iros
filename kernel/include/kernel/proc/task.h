@@ -220,7 +220,11 @@ static inline int __wait_do(uint64_t *interrupts_save) {
                 end_wait;                                                                    \
             }                                                                                \
             if (!__queue_task) {                                                             \
-                wait_queue_dequeue_entry(wq, &__entry, __func__);                            \
+                if (lock_wq) {                                                               \
+                    wait_queue_dequeue_entry(wq, &__entry, __func__);                        \
+                } else {                                                                     \
+                    __wait_queue_dequeue_entry(wq, &__entry, __func__);                      \
+                }                                                                            \
             }                                                                                \
         }                                                                                    \
         __ret;                                                                               \

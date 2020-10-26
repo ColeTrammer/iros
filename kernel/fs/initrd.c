@@ -53,9 +53,14 @@ static struct inode_operations initrd_dir_i_op = {
 
 static struct file_operations initrd_f_op = {
     .read = &initrd_read,
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
 };
 
-static struct file_operations initrd_dir_f_op = {};
+static struct file_operations initrd_dir_f_op = {
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
+};
 
 struct inode *initrd_lookup(struct inode *inode, const char *name) {
     if (!inode || !name) {

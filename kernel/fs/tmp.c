@@ -72,9 +72,14 @@ static struct inode_operations tmp_dir_i_op = {
 static struct file_operations tmp_f_op = {
     .read = &tmp_read,
     .write = &tmp_write,
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
 };
 
-static struct file_operations tmp_dir_f_op;
+static struct file_operations tmp_dir_f_op = {
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
+};
 
 ino_t tmp_get_next_index(void) {
     spin_lock(&inode_count_lock);

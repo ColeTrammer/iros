@@ -14,8 +14,16 @@
 static int socket_file_close(struct file *file);
 static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len);
 static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len);
+static int net_poll(struct file *file, struct wait_queue_entry *entry, int mask);
+static void net_poll_finish(struct file *file, struct wait_queue_entry *entry);
 
-static struct file_operations socket_file_ops = { .close = socket_file_close, .read = net_read, .write = net_write };
+static struct file_operations socket_file_ops = {
+    .close = socket_file_close,
+    .read = net_read,
+    .write = net_write,
+    .poll = net_poll,
+    .poll_finish = net_poll_finish,
+};
 
 static struct socket *socket_from_file(struct file *file) {
     return file->private_data;
@@ -45,6 +53,16 @@ static ssize_t net_read(struct file *file, off_t offset, void *buf, size_t len) 
 static ssize_t net_write(struct file *file, off_t offset, const void *buf, size_t len) {
     assert(offset == 0);
     return net_sendto(file, buf, len, 0, NULL, 0);
+}
+
+static int net_poll(struct file *file, struct wait_queue_entry *entry, int mask) {
+    struct socket *socket = socket_from_file(file);
+    return fs_do_poll(entry, mask, &socket->file_state);
+}
+
+static void net_poll_finish(struct file *file, struct wait_queue_entry *entry) {
+    struct socket *socket = socket_from_file(file);
+    fs_do_poll_finish(entry, &socket->file_state);
 }
 
 struct socket *net_create_socket_fd(int domain, int type, int protocol, struct socket_ops *op, int *fd, void *private_data) {

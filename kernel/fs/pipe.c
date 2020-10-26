@@ -24,9 +24,15 @@
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
-static struct inode_operations pipe_i_op = { .open = &pipe_open };
+static struct inode_operations pipe_i_op = { .open = &pipe_open ,};
 
-static struct file_operations pipe_f_op = { .close = &pipe_close, .read = &pipe_read, .write = &pipe_write };
+static struct file_operations pipe_f_op = {
+    .close = &pipe_close,
+    .read = &pipe_read,
+    .write = &pipe_write,
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
+};
 
 bool is_pipe_read_end_open(struct pipe_data *data) {
     return data->read_count > 0;

@@ -85,7 +85,25 @@ struct fs_device *dev_get_device(dev_t device_number) {
     return device;
 }
 
-static struct file_operations dev_f_op = { .close = &dev_close, .read = &dev_read, .write = &dev_write };
+static int dev_poll(struct file *file, struct wait_queue_entry *entry, int mask) {
+    struct fs_device *device = file->private_data;
+    assert(device);
+    return fs_do_poll(entry, mask, &device->file_state);
+}
+
+static void dev_poll_finish(struct file *file, struct wait_queue_entry *entry) {
+    struct fs_device *device = file->private_data;
+    assert(device);
+    fs_do_poll_finish(entry, &device->file_state);
+}
+
+static struct file_operations dev_f_op = {
+    .close = &dev_close,
+    .read = &dev_read,
+    .write = &dev_write,
+    .poll = &dev_poll,
+    .poll_finish = &dev_poll_finish,
+};
 
 struct inode *dev_lookup(struct inode *inode, const char *name) {
     if (!inode || !name) {

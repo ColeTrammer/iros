@@ -41,6 +41,9 @@ struct fs_root_desc {
 
 struct inode *bump_inode_reference(struct inode *inode);
 void drop_inode_reference(struct inode *inode);
+int inode_poll(struct file *file, struct wait_queue_entry *entry, int mask);
+void inode_poll_finish(struct file *file, struct wait_queue_entry *entry);
+
 int iname(const char *path, int flags, struct tnode **result);
 int iname_with_base(struct tnode *base, const char *_path, int flags, struct tnode **result);
 

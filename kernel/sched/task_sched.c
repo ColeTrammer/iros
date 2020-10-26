@@ -175,7 +175,7 @@ try_again:;
 
 #ifdef SCHED_DEBUG
     if (to_run->process->pid) {
-        debug_log("Running task: [ %d, %d:%d ]\n", processor->id, to_run->tid, to_run->process->pid);
+        debug_log("~Running task: [ %d, %d:%d ]\n", processor->id, to_run->tid, to_run->process->pid);
     }
 #endif /* SCHED_DEBUG */
 
