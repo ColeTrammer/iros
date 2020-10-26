@@ -182,52 +182,53 @@ static inline int __wait_do(uint64_t *interrupts_save) {
 #define wait_prepare_interruptible(task, save) __wait_prepare(task, save, true)
 #define wait_do(task, save)                    __wait_do(save)
 
-#define __wait_for(task, cond, wq, begin_wait, end_wait, interruptible, lock_wq) \
-    ___wait_for(task, cond, wq, begin_wait, end_wait, kernel_yield(), interruptible, lock_wq)
-#define ___wait_for(_task, cond, wq, begin_wait, end_wait, do_block, interruptible, lock_wq) \
-    ({                                                                                       \
-        int __ret = 0;                                                                       \
-        uint64_t __save;                                                                     \
-        bool __queue_task = true;                                                            \
-        struct wait_queue_entry __entry = { .task = (_task) };                               \
-        if (!(cond)) {                                                                       \
-            for (;;) {                                                                       \
-                __ret = __wait_prepare(_task, &__save, interruptible);                       \
-                if (__ret) {                                                                 \
-                    begin_wait;                                                              \
-                    break;                                                                   \
-                }                                                                            \
-                if (cond) {                                                                  \
-                    __wait_cancel(_task, &__save);                                           \
-                    break;                                                                   \
-                }                                                                            \
-                if (__queue_task && lock_wq) {                                               \
-                    spin_lock(&(wq)->lock);                                                  \
-                }                                                                            \
-                if (__queue_task) {                                                          \
-                    __wait_queue_enqueue_entry(wq, &__entry, __func__);                      \
-                }                                                                            \
-                begin_wait;                                                                  \
-                if (__queue_task && lock_wq) {                                               \
-                    spin_unlock_no_irq_restore(&(wq)->lock);                                 \
-                }                                                                            \
-                __queue_task = false;                                                        \
-                __ret = do_block;                                                            \
-                interrupts_restore(__save);                                                  \
-                if (__ret) {                                                                 \
-                    break;                                                                   \
-                }                                                                            \
-                end_wait;                                                                    \
-            }                                                                                \
-            if (!__queue_task) {                                                             \
-                if (lock_wq) {                                                               \
-                    wait_queue_dequeue_entry(wq, &__entry, __func__);                        \
-                } else {                                                                     \
-                    __wait_queue_dequeue_entry(wq, &__entry, __func__);                      \
-                }                                                                            \
-            }                                                                                \
-        }                                                                                    \
-        __ret;                                                                               \
+#define __wait_for(_task, cond, wq, begin_wait, end_wait, interruptible, lock_wq)                                   \
+    ({                                                                                                              \
+        struct wait_queue_entry __entry = { .task = (_task) };                                                      \
+        ___wait_for(_task, &__entry, cond, wq, begin_wait, end_wait, kernel_yield(), interruptible, lock_wq, true); \
+    })
+
+#define ___wait_for(_task, __entry, cond, wq, begin_wait, end_wait, do_block, interruptible, lock_wq, queue_task) \
+    ({                                                                                                            \
+        int __ret = 0;                                                                                            \
+        uint64_t __save;                                                                                          \
+        bool __queue_task = queue_task;                                                                           \
+        for (;;) {                                                                                                \
+            __ret = __wait_prepare(_task, &__save, interruptible);                                                \
+            if (__ret) {                                                                                          \
+                begin_wait;                                                                                       \
+                break;                                                                                            \
+            }                                                                                                     \
+            if (cond) {                                                                                           \
+                __wait_cancel(_task, &__save);                                                                    \
+                break;                                                                                            \
+            }                                                                                                     \
+            if (__queue_task && lock_wq) {                                                                        \
+                spin_lock(&(wq)->lock);                                                                           \
+            }                                                                                                     \
+            if (__queue_task) {                                                                                   \
+                __wait_queue_enqueue_entry(wq, __entry, __func__);                                                \
+            }                                                                                                     \
+            begin_wait;                                                                                           \
+            if (__queue_task && lock_wq) {                                                                        \
+                spin_unlock_no_irq_restore(&(wq)->lock);                                                          \
+            }                                                                                                     \
+            __queue_task = false;                                                                                 \
+            __ret = do_block;                                                                                     \
+            interrupts_restore(__save);                                                                           \
+            if (__ret) {                                                                                          \
+                break;                                                                                            \
+            }                                                                                                     \
+            end_wait;                                                                                             \
+        }                                                                                                         \
+        if (!__queue_task) {                                                                                      \
+            if (lock_wq) {                                                                                        \
+                wait_queue_dequeue_entry(wq, __entry, __func__);                                                  \
+            } else {                                                                                              \
+                __wait_queue_dequeue_entry(wq, __entry, __func__);                                                \
+            }                                                                                                     \
+        }                                                                                                         \
+        __ret;                                                                                                    \
     })
 
 #define wait_for(task, cond, wq, begin_wait, end_wait)               __wait_for(task, cond, wq, begin_wait, end_wait, false, true)
