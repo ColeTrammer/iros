@@ -52,7 +52,7 @@ struct file_operations {
     ssize_t (*read)(struct file *file, off_t offset, void *buffer, size_t len);
     ssize_t (*write)(struct file *file, off_t offset, const void *buffer, size_t len);
     int (*poll)(struct file *file, struct wait_queue_entry *entry, int mask);
-    int (*poll_finish)(struct file *file, struct wait_queue_entry *entry);
+    void (*poll_finish)(struct file *file, struct wait_queue_entry *entry);
 };
 
 struct file {

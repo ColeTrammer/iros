@@ -92,9 +92,14 @@ static struct inode_operations ext2_dir_i_op = {
 static struct file_operations ext2_f_op = {
     .read = &ext2_read,
     .write = &ext2_write,
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
 };
 
-static struct file_operations ext2_dir_f_op = {};
+static struct file_operations ext2_dir_f_op = {
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
+};
 
 HASH_DEFINE_FUNCTIONS(block_group, struct ext2_block_group, size_t, index)
 

@@ -37,7 +37,7 @@ void spin_lock_internal(spinlock_t *lock, const char *func __attribute__((unused
         }
 
 #ifdef SPINLOCK_DEBUG
-        __spinlock_log("~faild to aquire lock: [ %p, %s ]\n", lock, func);
+        __spinlock_log("faild to aquire lock: [ %p, %s ]\n", lock, func);
 #endif /* SPINLOCK_DEBUG */
 
         while (lock->counter) {

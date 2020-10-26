@@ -84,9 +84,14 @@ static struct inode_operations procfs_dir_i_op = {
 
 static struct file_operations procfs_f_op = {
     .read = &procfs_read,
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
 };
 
-static struct file_operations procfs_dir_f_op;
+static struct file_operations procfs_dir_f_op = {
+    .poll = inode_poll,
+    .poll_finish = inode_poll_finish,
+};
 
 static struct inode *procfs_create_inode(mode_t mode, uid_t uid, gid_t gid, struct process *process, void *function) {
     struct inode *inode = calloc(1, sizeof(struct inode) + sizeof(struct procfs_data));

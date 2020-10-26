@@ -76,6 +76,18 @@ void drop_inode_reference(struct inode *inode) {
     }
 }
 
+int inode_poll(struct file *file, struct wait_queue_entry *entry, int mask) {
+    struct inode *inode = fs_file_inode(file);
+    assert(inode);
+    return fs_do_poll(entry, mask, &inode->file_state);
+}
+
+void inode_poll_finish(struct file *file, struct wait_queue_entry *entry) {
+    struct inode *inode = fs_file_inode(file);
+    assert(inode);
+    fs_do_poll_finish(entry, &inode->file_state);
+}
+
 int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer) {
     if (!inode->i_op->read_all) {
         return -EINVAL;
