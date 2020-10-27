@@ -92,7 +92,7 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
             if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
                 time_t timeout_ms = data->config.c_cc[VTIME] * 100;
                 struct timespec timeout = { .tv_sec = timeout_ms / 1000, .tv_nsec = (timeout_ms % 1000) * 1000000 };
-                int ret = dev_poll_wait(data->device, POLLOUT, &timeout);
+                int ret = dev_poll_wait(data->device, POLLIN, &timeout);
                 if (ret) {
                     return ret;
                 }
@@ -103,7 +103,7 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
                 }
                 break;
             } else {
-                int ret = dev_poll_wait(data->device, POLLOUT, NULL);
+                int ret = dev_poll_wait(data->device, POLLIN, NULL);
                 if (ret) {
                     return ret;
                 }

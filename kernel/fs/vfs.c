@@ -2148,7 +2148,7 @@ static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct ti
 
     struct task *current = get_current_task();
     int ret = 0;
-    bool wq_queue = false;
+    bool wq_queue = true;
     for (;;) {
         uint64_t save;
         ret = __wait_prepare(current, &save, true);
