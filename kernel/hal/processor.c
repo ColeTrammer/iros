@@ -4,6 +4,7 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
+#include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
 // #define SCHED_DEBUG
@@ -27,6 +28,7 @@ struct processor *create_processor() {
     processor->ipi_messages_head = processor->ipi_messages_tail = NULL;
     init_spinlock(&processor->ipi_messages_lock);
     processor->current_task = processor->sched_list_start = processor->sched_list_end = NULL;
+    init_spinlock(&processor->sched_lock);
     processor->idle_task = NULL;
     processor->kernel_stack = NULL;
     processor->id = num_processors++;
@@ -147,8 +149,9 @@ void schedule_task_on_processor(struct task *task, struct processor *processor) 
     debug_log("Scheduling task on processor: [ %d:%d, %d ]\n", task->tid, task->process->pid, processor->id);
 #endif /* SCHED_DEBUG */
 
+    task->active_processor = processor;
     if (processor == get_current_processor()) {
-        local_sched_add_task(task);
+        local_sched_add_task(processor, task);
         return;
     }
 

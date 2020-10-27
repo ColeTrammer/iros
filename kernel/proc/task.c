@@ -23,6 +23,7 @@
 #include <kernel/proc/pid.h>
 #include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
+#include <kernel/proc/task_finalizer.h>
 #include <kernel/proc/user_mutex.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
@@ -650,6 +651,13 @@ void task_do_sigs_if_needed(struct task *task) {
     }
 }
 
+void task_exit(struct task *task) {
+    // It may be wise to send an IPI to the processor instead.
+    local_sched_remove_task(task->active_processor, task);
+    task->sched_state = EXITING;
+    proc_schedule_task_for_destruction(task);
+}
+
 void task_set_state_to_exiting(struct task *task) {
     if (task->sched_state == EXITING) {
         return;
@@ -665,7 +673,7 @@ void task_set_state_to_exiting(struct task *task) {
     if (task->in_kernel) {
         task->should_exit = true;
     } else {
-        task->sched_state = EXITING;
+        task_exit(task);
     }
 }
 

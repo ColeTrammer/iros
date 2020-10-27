@@ -204,8 +204,9 @@ void task_yield_if_state_changed(struct task *task) {
 #ifdef TASK_SCHED_STATE_DEBUG
         debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
 #endif /* TASK_SCHED_STATE_DEBUG */
-        task->sched_state = EXITING;
-        kernel_yield();
+        task_exit(task);
+        disable_interrupts();
+        sched_run_next();
     }
 
     if (task->sched_state == STOPPED) {

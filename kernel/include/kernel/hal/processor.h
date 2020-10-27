@@ -46,6 +46,7 @@ struct processor {
     struct task *current_task;
     struct task *sched_list_start;
     struct task *sched_list_end;
+    spinlock_t sched_lock;
 
     int id;
     bool enabled;

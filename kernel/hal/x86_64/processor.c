@@ -28,7 +28,7 @@ void init_bsp(struct processor *processor) {
     arch_init_processor(processor);
 
     processor->current_task = &initial_kernel_task;
-    local_sched_add_task(&initial_kernel_task);
+    local_sched_add_task(processor, &initial_kernel_task);
     initial_kernel_task.kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
 
     processor->enabled = true;
@@ -68,7 +68,7 @@ void handle_processor_messages(void) {
                 debug_log("Scheduling task message: [ %d, %d:%d ]\n", processor->id, message->schedule_task.task->process->pid,
                           message->schedule_task.task->tid);
 #endif /* PROCESSOR_IPI_DEBUG */
-                local_sched_add_task(message->schedule_task.task);
+                local_sched_add_task(processor, message->schedule_task.task);
                 break;
             default:
                 debug_log("Unkown message type: [ %d ]\n", message->type);

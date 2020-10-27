@@ -69,6 +69,10 @@ struct task {
     // Inline list pointer used by process finializer
     struct task *finialize_queue_next;
 
+    // Pointer to the processor this task will run on. Currently, this will stay the same
+    // throughout the task's lifetime.
+    struct processor *active_processor;
+
     struct vm_region *kernel_stack;
 
     enum sched_state sched_state;
@@ -113,6 +117,7 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry);
 void run_task(struct task *task);
 void arch_run_task(struct task *task);
 
+void task_exit(struct task *task);
 void free_task(struct task *task, bool free_paging_structure);
 void arch_free_task(struct task *task, bool free_paging_structure);
 

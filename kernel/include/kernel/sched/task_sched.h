@@ -6,6 +6,7 @@
 #include ARCH_SPECIFIC(sched/arch_task_sched.h)
 // clang-format on
 
+struct processor;
 struct process;
 
 void init_task_sched(void);
@@ -15,8 +16,8 @@ struct task *find_by_tid(int tgid, int tid);
 
 void sched_add_task(struct task *task);
 
-void local_sched_add_task(struct task *task);
-void local_sched_remove_task(struct task *task);
+void local_sched_add_task(struct processor *processor, struct task *task);
+void local_sched_remove_task(struct processor *processor, struct task *task);
 void sched_run_next(void);
 void __kernel_yield(void);
 int kernel_yield(void);
