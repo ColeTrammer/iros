@@ -60,8 +60,7 @@ struct task {
     struct arch_task arch_task;
 
     // Inline circular doubly-linked list used by the scheduler
-    struct task *sched_next;
-    struct task *sched_prev;
+    struct list_node sched_list;
 
     // Inline doublely-linked list connecting all tasks in a process
     struct list_node process_list;

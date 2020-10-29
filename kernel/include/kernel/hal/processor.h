@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <kernel/hal/arch.h>
+#include <kernel/util/list.h>
 #include <kernel/util/spinlock.h>
 
 #include HAL_ARCH_SPECIFIC(processor.h)
@@ -44,8 +45,7 @@ struct processor {
     spinlock_t ipi_messages_lock;
 
     struct task *current_task;
-    struct task *sched_list_start;
-    struct task *sched_list_end;
+    struct list_node sched_list;
     spinlock_t sched_lock;
 
     int id;

@@ -61,88 +61,33 @@ void sched_add_task(struct task *task) {
 
 void local_sched_add_task(struct processor *processor, struct task *task) {
     spin_lock_internal(&processor->sched_lock, __func__, false);
-
-    if (processor->sched_list_start == NULL) {
-        processor->sched_list_start = processor->sched_list_end = task;
-        task->sched_prev = task->sched_next = task;
-        goto done;
-    }
-
-    task->sched_prev = processor->sched_list_end;
-    task->sched_next = processor->sched_list_start;
-
-    processor->sched_list_end->sched_next = task;
-    processor->sched_list_start->sched_prev = task;
-    processor->sched_list_end = task;
-
-done:
+    list_prepend(&processor->sched_list, &task->sched_list);
     spin_unlock(&processor->sched_lock);
 }
 
 void local_sched_remove_task(struct processor *processor, struct task *task) {
     spin_lock_internal(&processor->sched_lock, __func__, false);
-    if (processor->sched_list_start == NULL) {
-        goto done;
-    }
-
-    if (task->sched_next == task) {
-        processor->sched_list_start = processor->sched_list_end = NULL;
-        goto done;
-    }
-
-    struct task *current = processor->sched_list_start;
-    while (current->sched_next != task) {
-        current = current->sched_next;
-    }
-
-    if (task == processor->sched_list_end) {
-        processor->sched_list_end = task->sched_prev;
-    }
-
-    if (task == processor->sched_list_start) {
-        processor->sched_list_start = task->sched_next;
-    }
-
-    current->sched_next = current->sched_next->sched_next;
-    current->sched_next->sched_prev = current;
-
-done:
+    list_remove(&task->sched_list);
     spin_unlock(&processor->sched_lock);
 }
 
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct processor *processor = get_current_processor();
-try_again:
+try_again:;
+    struct task *to_run = NULL;
     spin_lock_internal(&processor->sched_lock, __func__, false);
-    struct task *current = processor->current_task;
-
-    if (current == processor->idle_task) {
-        current = processor->sched_list_start;
-    }
-
-    // No tasks in queue
-    if (current == NULL) {
-        run_task(processor->idle_task);
-    }
-
-    struct task *to_run = current->sched_next;
-    struct task *start = to_run;
-    while (to_run->sched_state != RUNNING_INTERRUPTIBLE && to_run->sched_state != RUNNING_UNINTERRUPTIBLE) {
-        struct task *next = to_run->sched_next;
-
-        // Skip taskes that are sleeping
-        to_run = next;
-
-        // There were no other tasks to run
-        if (to_run == start) {
-            // This means we need to run the idle task
-            if (to_run->sched_state != RUNNING_UNINTERRUPTIBLE && to_run->sched_state != RUNNING_INTERRUPTIBLE) {
-                to_run = processor->idle_task;
-            }
-
+    list_for_each_entry(&processor->sched_list, t, struct task, sched_list) {
+        if (t->sched_state == RUNNING_INTERRUPTIBLE || t->sched_state == RUNNING_UNINTERRUPTIBLE) {
+            to_run = t;
             break;
         }
+    }
+    if (to_run) {
+        list_remove(&to_run->sched_list);
+        list_append(&processor->sched_list, &to_run->sched_list);
+    } else {
+        to_run = processor->idle_task;
     }
     spin_unlock(&processor->sched_lock);
 
