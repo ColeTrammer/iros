@@ -524,6 +524,7 @@ void task_do_sig_cont(struct task *task, int signum) {
         task_unset_sig_pending(task, SIGTTOU);
         task_unset_sig_pending(task, SIGTTIN);
 
+        task->should_stop = false;
         task_set_state_to_running(task->active_processor, task, !task->in_kernel);
         proc_set_process_state(task->process, PS_CONTINUED, 0, false);
     }
@@ -651,16 +652,16 @@ void task_do_sigs_if_needed(struct task *task) {
     }
 }
 
+void task_stop(struct task *task) {
+    local_sched_remove_task(task->active_processor, task);
+    task->sched_state = STOPPED;
+}
+
 void task_exit(struct task *task) {
     // It may be wise to send an IPI to the processor instead.
     local_sched_remove_task(task->active_processor, task);
     task->sched_state = EXITING;
     proc_schedule_task_for_destruction(task);
-}
-
-void task_set_state_to_stopped(struct task *task) {
-    local_sched_remove_task(task->active_processor, task);
-    task->sched_state = STOPPED;
 }
 
 void task_set_state_to_waiting(struct task *task) {
@@ -671,6 +672,25 @@ void task_set_state_to_waiting(struct task *task) {
 void task_set_state_to_running(struct processor *processor, struct task *task, bool interruptible) {
     task->sched_state = interruptible ? RUNNING_INTERRUPTIBLE : RUNNING_UNINTERRUPTIBLE;
     local_sched_add_task(processor, task);
+}
+
+void task_set_state_to_stopped(struct task *task) {
+    if (task->sched_state == STOPPED) {
+        return;
+    }
+
+    if (task->sched_state == WAITING && task->wait_interruptible) {
+        // Defer exit state change until after the blocking code has a chance
+        // to clean up
+        task_unblock(task, -EINTR);
+        return;
+    }
+
+    if (task->in_kernel) {
+        task->should_stop = true;
+    } else {
+        task_stop(task);
+    }
 }
 
 void task_set_state_to_exiting(struct task *task) {

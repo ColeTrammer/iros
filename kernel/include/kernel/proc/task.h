@@ -95,6 +95,7 @@ struct task {
     int unblock_result;
     spinlock_t unblock_lock;
     bool should_exit : 1;
+    bool should_stop : 1;
     bool wait_interruptible : 1;
 
     struct clock *task_clock;
@@ -117,6 +118,7 @@ void run_task(struct task *task);
 void arch_run_task(struct task *task);
 
 void task_exit(struct task *task);
+void task_stop(struct task *task);
 void free_task(struct task *task, bool free_paging_structure);
 void arch_free_task(struct task *task, bool free_paging_structure);
 

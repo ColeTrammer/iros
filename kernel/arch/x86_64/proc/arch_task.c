@@ -209,10 +209,11 @@ void task_yield_if_state_changed(struct task *task) {
         sched_run_next();
     }
 
-    if (task->sched_state == STOPPED) {
+    if (task->should_stop) {
         // Restart the system call so that when the task is resumed, it will begin gracefully.
         task->arch_task.user_task_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
         task->arch_task.user_task_state->cpu_state.rax = task->last_system_call;
+        task_stop(task);
         kernel_yield();
     }
 }
