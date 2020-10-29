@@ -13,7 +13,11 @@
 struct task;
 struct vm_region;
 
-enum processor_ipi_message_type { PROCESSOR_IPI_FREED, PROCESSOR_IPI_FLUSH_TLB, PROCESSOR_IPI_SCHEDULE_TASK };
+enum processor_ipi_message_type {
+    PROCESSOR_IPI_FREED,
+    PROCESSOR_IPI_FLUSH_TLB,
+    PROCESSOR_IPI_SCHEDULE_TASK,
+};
 
 struct processor_ipi_message {
     int ref_count;
@@ -47,6 +51,7 @@ struct processor {
     struct task *current_task;
     struct list_node sched_list;
     spinlock_t sched_lock;
+    bool sched_idle;
 
     int id;
     bool enabled;

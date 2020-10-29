@@ -482,7 +482,7 @@ bool task_unblock(struct task *task, int result) {
     if (task->sched_state == WAITING) {
         task->unblock_result = result;
         task->wait_interruptible = false;
-        task->sched_state = RUNNING_UNINTERRUPTIBLE;
+        task_set_state_to_running(task->active_processor, task, false);
         ret = false;
     }
     spin_unlock(&task->unblock_lock);
@@ -524,7 +524,7 @@ void task_do_sig_cont(struct task *task, int signum) {
         task_unset_sig_pending(task, SIGTTOU);
         task_unset_sig_pending(task, SIGTTIN);
 
-        task->sched_state = task->in_kernel ? RUNNING_UNINTERRUPTIBLE : RUNNING_INTERRUPTIBLE;
+        task_set_state_to_running(task->active_processor, task, !task->in_kernel);
         proc_set_process_state(task->process, PS_CONTINUED, 0, false);
     }
 }
@@ -658,6 +658,21 @@ void task_exit(struct task *task) {
     proc_schedule_task_for_destruction(task);
 }
 
+void task_set_state_to_stopped(struct task *task) {
+    local_sched_remove_task(task->active_processor, task);
+    task->sched_state = STOPPED;
+}
+
+void task_set_state_to_waiting(struct task *task) {
+    local_sched_remove_task(task->active_processor, task);
+    task->sched_state = WAITING;
+}
+
+void task_set_state_to_running(struct processor *processor, struct task *task, bool interruptible) {
+    task->sched_state = interruptible ? RUNNING_INTERRUPTIBLE : RUNNING_UNINTERRUPTIBLE;
+    local_sched_add_task(processor, task);
+}
+
 void task_set_state_to_exiting(struct task *task) {
     if (task->sched_state == EXITING) {
         return;
@@ -718,7 +733,7 @@ void task_do_sig(struct task *task, int signum) {
             if (task->sched_state == STOPPED) {
                 break;
             }
-            task->sched_state = STOPPED;
+            task_set_state_to_stopped(task);
             proc_set_process_state(task->process, PS_STOPPED, signum, false);
             break;
         case IGNORE:

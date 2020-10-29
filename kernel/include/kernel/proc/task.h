@@ -152,6 +152,9 @@ void task_do_sigs_if_needed(struct task *task);
 
 bool task_unblock(struct task *task, int ret);
 void task_set_state_to_exiting(struct task *task);
+void task_set_state_to_stopped(struct task *task);
+void task_set_state_to_waiting(struct task *task);
+void task_set_state_to_running(struct processor *processor, struct task *task, bool interruptible);
 
 const char *task_state_to_string(enum sched_state state);
 bool task_in_kernel(struct task *task);
@@ -160,14 +163,14 @@ extern struct task initial_kernel_task;
 
 static inline void __wait_cancel(struct task *task, uint64_t *interrupts_save) {
     task->wait_interruptible = false;
-    task->sched_state = RUNNING_UNINTERRUPTIBLE;
+    task_set_state_to_running(task->active_processor, task, false);
     interrupts_restore(*interrupts_save);
 }
 
 static inline int __wait_prepare(struct task *task, uint64_t *interrupts_save, bool interruptible) {
     *interrupts_save = disable_interrupts_save();
     task->wait_interruptible = interruptible;
-    task->sched_state = WAITING;
+    task_set_state_to_waiting(task);
 
     if (interruptible && task_get_next_sig(task) != -1) {
         __wait_cancel(task, interrupts_save);

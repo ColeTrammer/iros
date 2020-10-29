@@ -11,7 +11,7 @@
 #include <kernel/util/mutex.h>
 
 struct umessage_queue_list {
-    mutex_t lock;
+    spinlock_t lock;
     struct list_node list;
     struct umessage_category *descriptor;
 };
@@ -48,15 +48,15 @@ static void free_umessage_queue(struct umessage_queue *queue) {
 }
 
 static void register_umessage_queue(struct umessage_queue *queue) {
-    mutex_lock(&category_queues[queue->category].lock);
+    spin_lock(&category_queues[queue->category].lock);
     list_append(&category_queues[queue->category].list, &queue->list);
-    mutex_unlock(&category_queues[queue->category].lock);
+    spin_unlock(&category_queues[queue->category].lock);
 }
 
 static void unregister_umessage_queue(struct umessage_queue *queue) {
-    mutex_lock(&category_queues[queue->category].lock);
+    spin_lock(&category_queues[queue->category].lock);
     list_remove(&category_queues[queue->category].list);
-    mutex_unlock(&category_queues[queue->category].lock);
+    spin_unlock(&category_queues[queue->category].lock);
 }
 
 struct queued_umessage *net_create_umessage(uint16_t category, uint16_t type, int flags, uint32_t length, const void *data) {
@@ -84,11 +84,11 @@ void net_drop_umessage(struct queued_umessage *umessage) {
 }
 
 void net_post_umessage(struct queued_umessage *umessage) {
-    mutex_lock(&category_queues[umessage->message.category].lock);
+    spin_lock(&category_queues[umessage->message.category].lock);
     list_for_each_entry(&category_queues[umessage->message.category].list, queue, struct umessage_queue, list) {
         net_post_umessage_to(queue, umessage);
     }
-    mutex_unlock(&category_queues[umessage->message.category].lock);
+    spin_unlock(&category_queues[umessage->message.category].lock);
 }
 
 void net_post_umessage_to(struct umessage_queue *queue, struct queued_umessage *umessage) {
@@ -195,7 +195,7 @@ static int umessage_socket(int domain, int type, int protocol) {
 
 void net_register_umessage_category(struct umessage_category *category) {
     category_queues[category->category].descriptor = category;
-    init_mutex(&category_queues[category->category].lock);
+    init_spinlock(&category_queues[category->category].lock);
     init_list(&category_queues[category->category].list);
 
     struct socket_protocol *protcol = category->protocol = calloc(1, sizeof(struct socket_protocol));

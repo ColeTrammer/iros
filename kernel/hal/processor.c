@@ -30,6 +30,7 @@ struct processor *create_processor() {
     processor->current_task = NULL;
     init_list(&processor->sched_list);
     init_spinlock(&processor->sched_lock);
+    processor->sched_idle = false;
     processor->idle_task = NULL;
     processor->kernel_stack = NULL;
     processor->id = num_processors++;

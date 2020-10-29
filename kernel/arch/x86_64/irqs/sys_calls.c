@@ -1190,7 +1190,7 @@ SYS_CALL(os_mutex) {
 
             disable_interrupts();
             add_to_user_mutex_queue(um, current);
-            current->sched_state = WAITING;
+            task_set_state_to_waiting(current);
             current->wait_interruptible = 1;
             if (to_unlock) {
                 unlock_user_mutex(to_unlock);

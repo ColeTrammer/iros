@@ -61,7 +61,11 @@ void sched_add_task(struct task *task) {
 
 void local_sched_add_task(struct processor *processor, struct task *task) {
     spin_lock_internal(&processor->sched_lock, __func__, false);
-    list_prepend(&processor->sched_list, &task->sched_list);
+    if (task == processor->current_task) {
+        list_append(&processor->sched_list, &task->sched_list);
+    } else {
+        list_prepend(&processor->sched_list, &task->sched_list);
+    }
     spin_unlock(&processor->sched_lock);
 }
 
@@ -74,20 +78,16 @@ void local_sched_remove_task(struct processor *processor, struct task *task) {
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct processor *processor = get_current_processor();
-try_again:;
-    struct task *to_run = NULL;
+try_again:
     spin_lock_internal(&processor->sched_lock, __func__, false);
-    list_for_each_entry(&processor->sched_list, t, struct task, sched_list) {
-        if (t->sched_state == RUNNING_INTERRUPTIBLE || t->sched_state == RUNNING_UNINTERRUPTIBLE) {
-            to_run = t;
-            break;
-        }
-    }
+    struct task *to_run = list_first_entry(&processor->sched_list, struct task, sched_list);
     if (to_run) {
         list_remove(&to_run->sched_list);
         list_append(&processor->sched_list, &to_run->sched_list);
+        processor->sched_idle = false;
     } else {
         to_run = processor->idle_task;
+        processor->sched_idle = true;
     }
     spin_unlock(&processor->sched_lock);
 
