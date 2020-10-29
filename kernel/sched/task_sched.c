@@ -66,6 +66,10 @@ void local_sched_add_task(struct processor *processor, struct task *task) {
     } else {
         list_prepend(&processor->sched_list, &task->sched_list);
     }
+
+    if (get_current_processor() != processor && processor->sched_idle) {
+        arch_send_ipi(processor);
+    }
     spin_unlock(&processor->sched_lock);
 }
 
