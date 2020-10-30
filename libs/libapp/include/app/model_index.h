@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/traits.h>
+
 namespace App {
 
 class ModelIndex {
@@ -19,6 +21,16 @@ public:
 private:
     int m_row { -1 };
     int m_col { -1 };
+};
+
+}
+
+namespace LIIM {
+
+template<>
+struct Traits<App::ModelIndex> {
+    static constexpr bool is_simple() { return true; }
+    static unsigned int hash(const App::ModelIndex& obj) { return Traits<int>::hash(obj.row()) + Traits<int>::hash(obj.col()); };
 };
 
 }
