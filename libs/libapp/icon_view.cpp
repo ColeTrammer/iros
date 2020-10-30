@@ -25,6 +25,9 @@ void IconView::render() {
         if (hovered_index() == ModelIndex { r, m_name_column }) {
             renderer.draw_rect(item.rect, ColorValue::White);
         }
+        if (is_selected(ModelIndex { r, m_name_column })) {
+            renderer.draw_rect(item.rect, ColorValue::LightGray);
+        }
     }
 
     if (m_in_selection) {
