@@ -88,6 +88,15 @@ public:
         }
     }
 
+    void toggle(const T& val) {
+        if (get(val)) {
+            remove(val);
+            return;
+        }
+
+        put(val);
+    }
+
     template<Hashable U>
     T* get(const U& key) {
         if (m_buckets.size() == 0) {
