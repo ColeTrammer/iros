@@ -28,6 +28,13 @@ public:
         assert(m_size <= max_elements);
     }
 
+    constexpr T* begin() { return &m_array[0]; }
+    constexpr T* end() { return &m_array[m_size]; }
+    constexpr const T* begin() const { return &m_array[0]; }
+    constexpr const T* end() const { return &m_array[m_size]; }
+    constexpr const T* cbegin() const { return &m_array[0]; }
+    constexpr const T* cend() const { return &m_array[m_size]; }
+
 private:
     size_t m_size { 0 };
     T m_array[max_elements];
