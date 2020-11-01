@@ -50,6 +50,8 @@ public:
     void toggle_selection(const ModelIndex& index) { m_selection.toggle(index); }
     void remove_from_selection(const ModelIndex& index) { m_selection.remove(index); }
     bool is_selected(const ModelIndex& index) const { return m_selection.present(index); }
+    void clear_selection() { m_selection.clear(); }
+    bool has_selection() const { return !m_selection.empty(); }
 
 protected:
     virtual ModelIndex index_at_position(int wx, int wy) = 0;

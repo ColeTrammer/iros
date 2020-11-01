@@ -50,7 +50,17 @@ void IconView::on_mouse_event(MouseEvent& event) {
         }
     } else if (event.mouse_event_type() == MouseEventType::Move) {
         if (m_in_selection) {
+            clear_selection();
+
             m_selection_end = { event.x(), event.y() };
+            Rect selection_rect = { m_selection_start, m_selection_end };
+            for (auto r = 0; r < m_items.size(); r++) {
+                auto& item = m_items[r];
+                if (item.rect.intersects(selection_rect)) {
+                    add_to_selection({ r, m_name_column });
+                }
+            }
+
             invalidate();
             return;
         }
