@@ -45,8 +45,7 @@ void IconView::on_mouse_event(MouseEvent& event) {
     if (event.mouse_event_type() == MouseEventType::Down) {
         if (event.left() == MOUSE_DOWN) {
             m_in_selection = true;
-            m_selection_start = { event.x(), event.y() };
-            return;
+            m_selection_start = m_selection_end = { event.x(), event.y() };
         }
     } else if (event.mouse_event_type() == MouseEventType::Move) {
         if (m_in_selection) {
@@ -62,13 +61,11 @@ void IconView::on_mouse_event(MouseEvent& event) {
             }
 
             invalidate();
-            return;
         }
     } else if (event.mouse_event_type() == MouseEventType::Up) {
         if (m_in_selection) {
             m_in_selection = false;
             invalidate();
-            return;
         }
     }
 
