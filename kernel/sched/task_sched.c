@@ -79,6 +79,14 @@ void local_sched_remove_task(struct processor *processor, struct task *task) {
     spin_unlock(&processor->sched_lock);
 }
 
+void sched_maybe_yield(void) {
+    struct processor *processor = get_current_processor();
+    struct task *current_task = get_current_task();
+    if (current_task->sched_ticks_remaining == 0 && processor->preemption_disabled_count == 0) {
+        sched_run_next();
+    }
+}
+
 /* Must be called from unpremptable context */
 void sched_run_next() {
     struct processor *processor = get_current_processor();
@@ -100,6 +108,8 @@ try_again:
         debug_log("~Running task: [ %d, %d:%d ]\n", processor->id, to_run->tid, to_run->process->pid);
     }
 #endif /* SCHED_DEBUG */
+
+    to_run->sched_ticks_remaining = 5;
 
     assert(to_run->sched_state != WAITING && to_run->sched_state != STOPPED && to_run->sched_state != EXITING);
     int sig;

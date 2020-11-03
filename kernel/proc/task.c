@@ -240,6 +240,7 @@ void init_kernel_process(void) {
     initial_kernel_task.sched_state = RUNNING_UNINTERRUPTIBLE;
     initial_kernel_task.process->tty = -1;
     initial_kernel_task.tid = 1;
+    initial_kernel_task.sched_ticks_remaining = 5;
 
     arch_load_kernel_task(&initial_kernel_task, 0);
 }

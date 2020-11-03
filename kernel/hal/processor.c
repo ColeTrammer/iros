@@ -35,6 +35,7 @@ struct processor *create_processor() {
     processor->kernel_stack = NULL;
     processor->id = num_processors++;
     processor->enabled = false;
+    processor->preemption_disabled_count = 0;
     return processor;
 }
 

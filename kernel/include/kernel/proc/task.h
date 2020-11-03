@@ -84,6 +84,7 @@ struct task {
     spinlock_t sig_lock;
 
     int tid;
+    int sched_ticks_remaining;
 
     // Used to restart interrupted signals.
     int last_system_call;

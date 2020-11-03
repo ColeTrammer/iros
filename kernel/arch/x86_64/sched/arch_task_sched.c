@@ -6,8 +6,20 @@
 #include <kernel/hal/timer.h>
 #include <kernel/sched/task_sched.h>
 
+static void sched_tick(struct task_state *task_state) {
+    struct task *current_task = get_current_task();
+    memcpy(&current_task->arch_task.task_state, task_state, sizeof(struct task_state));
+    if (!current_task->kernel_task) {
+        fxsave(current_task->fpu.aligned_state);
+    }
+    if (current_task->sched_ticks_remaining) {
+        current_task->sched_ticks_remaining--;
+    }
+    sched_maybe_yield();
+}
+
 void arch_init_task_sched() {
-    set_sched_callback(&arch_sched_run_next, 5);
+    set_sched_callback(&sched_tick, 1);
 }
 
 /* Must be called from unpremptable context */

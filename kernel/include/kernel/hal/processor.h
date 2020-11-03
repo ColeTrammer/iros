@@ -53,6 +53,8 @@ struct processor {
     spinlock_t sched_lock;
     bool sched_idle;
 
+    int preemption_disabled_count;
+
     int id;
     bool enabled;
 };
@@ -84,6 +86,8 @@ void drop_processor_ipi_message(struct processor_ipi_message *message);
 void enqueue_processor_ipi_message(struct processor *processor, struct processor_ipi_message *message);
 void handle_processor_messages(void);
 
+void sched_maybe_yield(void);
+
 static inline struct task *get_idle_task(void) {
     return get_current_processor()->idle_task;
 }
@@ -96,6 +100,17 @@ static inline void set_current_task(struct task *task) {
     // FIXME: assert interrupts are disabled.
     get_current_processor()->current_task = task;
     assert(get_current_task() == task);
+}
+
+static inline void disable_preemption(void) {
+    struct processor *processor = get_current_processor();
+    processor->preemption_disabled_count++;
+}
+
+static inline void enable_preemption(void) {
+    struct processor *processor = get_current_processor();
+    processor->preemption_disabled_count--;
+    sched_maybe_yield();
 }
 
 #endif /* _KERNEL_HAL_HAL_H */
