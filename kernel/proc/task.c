@@ -481,6 +481,7 @@ bool task_unblock(struct task *task, int result) {
     bool ret = false;
     spin_lock(&task->unblock_lock);
     if (task->sched_state == WAITING) {
+        task->sched_ticks_remaining = 5;
         task->unblock_result = result;
         task->wait_interruptible = false;
         task_set_state_to_running(task->active_processor, task, false);

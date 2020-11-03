@@ -286,7 +286,7 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
     pml4[MAX_PML4_ENTRIES - 1] = old_pml4[MAX_PML4_ENTRIES - 1];
 
     uint64_t old_cr3 = get_cr3();
-    uint64_t flags = disable_interrupts_save();
+    disable_preemption();
 
     load_cr3(pml4_addr);
 
@@ -299,7 +299,7 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
     }
 
     load_cr3(old_cr3);
-    interrupts_restore(flags);
+    enable_preemption();
     return pml4_addr;
 }
 
@@ -379,10 +379,10 @@ void mark_region_as_cow(struct vm_region *region) {
 }
 
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
-    // Disable interrupts since we have to change the value of CR3. This could potentially be avoided by
+    // Disable preemption since we have to change the value of CR3. This could potentially be avoided by
     // freeing the memory in old CR3 by traversing the physical addresses directly instead of using a
     // recursive page mapping.
-    uint64_t interrupts_save = disable_interrupts_save();
+    disable_preemption();
 
     uint64_t old_cr3 = get_cr3();
     if (old_cr3 == phys_addr) {
@@ -396,7 +396,7 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     load_cr3(old_cr3);
     free_phys_page(phys_addr, NULL);
 
-    interrupts_restore(interrupts_save);
+    enable_preemption();
 }
 
 void map_vm_region_flags(struct vm_region *region, struct process *process) {

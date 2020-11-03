@@ -353,10 +353,11 @@ int time_wakeup_after(int clockid, struct timespec *delta) {
 
     uint64_t save = disable_interrupts_save();
     time_add_timer_to_clock(timer.clock, &timer);
-    uint64_t __save;
-    int ret = wait_prepare_interruptible(timer.task, &__save);
+    int ret = wait_prepare_interruptible(timer.task);
     if (!ret) {
-        ret = wait_do(timer.task, &__save);
+        ret = wait_do(timer.task);
+    } else {
+        __wait_cancel(timer.task);
     }
 
     if (time_is_timer_armed(&timer)) {

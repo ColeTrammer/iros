@@ -1066,12 +1066,11 @@ SYS_CALL(sigsuspend) {
     memcpy(&current->saved_sig_mask, &current->sig_mask, sizeof(sigset_t));
     memcpy(&current->sig_mask, mask, sizeof(sigset_t));
 
-    uint64_t save;
-    int ret = wait_prepare_interruptible(current, &save);
+    int ret = wait_prepare_interruptible(current);
     if (ret) {
         SYS_RETURN_RESTORE_SIGMASK(ret);
     }
-    SYS_RETURN_RESTORE_SIGMASK(wait_do(current, &save));
+    SYS_RETURN_RESTORE_SIGMASK(wait_do(current));
 }
 
 SYS_CALL(times) {

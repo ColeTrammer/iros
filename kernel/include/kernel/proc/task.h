@@ -10,6 +10,7 @@
 #include <sys/types.h>
 
 #include <kernel/fs/file.h>
+#include <kernel/hal/processor.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/proc/process.h>
 #include <kernel/sched/task_sched.h>
@@ -164,33 +165,32 @@ bool task_in_kernel(struct task *task);
 
 extern struct task initial_kernel_task;
 
-static inline void __wait_cancel(struct task *task, uint64_t *interrupts_save) {
+static inline void __wait_cancel(struct task *task) {
     task->wait_interruptible = false;
     task_set_state_to_running(task->active_processor, task, false);
-    interrupts_restore(*interrupts_save);
+    enable_preemption();
 }
 
-static inline int __wait_prepare(struct task *task, uint64_t *interrupts_save, bool interruptible) {
-    *interrupts_save = disable_interrupts_save();
+static inline int __wait_prepare(struct task *task, bool interruptible) {
     task->wait_interruptible = interruptible;
     task_set_state_to_waiting(task);
 
     if (interruptible && task_get_next_sig(task) != -1) {
-        __wait_cancel(task, interrupts_save);
+        __wait_cancel(task);
         return -EINTR;
     }
     return 0;
 }
 
-static inline int __wait_do(uint64_t *interrupts_save) {
+static inline int __wait_do() {
     int ret = kernel_yield();
-    interrupts_restore(*interrupts_save);
+    enable_preemption();
     return ret;
 }
 
-#define wait_prepare(task, save)               __wait_prepare(task, save, false)
-#define wait_prepare_interruptible(task, save) __wait_prepare(task, save, true)
-#define wait_do(task, save)                    __wait_do(save)
+#define wait_prepare(task)               __wait_prepare(task, false)
+#define wait_prepare_interruptible(task) __wait_prepare(task, true)
+#define wait_do(task)                    __wait_do()
 
 #define __wait_for(_task, cond, wq, begin_wait, end_wait, interruptible, lock_wq)                                   \
     ({                                                                                                              \
@@ -201,16 +201,15 @@ static inline int __wait_do(uint64_t *interrupts_save) {
 #define ___wait_for(_task, __entry, cond, wq, begin_wait, end_wait, do_block, interruptible, lock_wq, queue_task) \
     ({                                                                                                            \
         int __ret = 0;                                                                                            \
-        uint64_t __save;                                                                                          \
         bool __queue_task = queue_task;                                                                           \
         for (;;) {                                                                                                \
-            __ret = __wait_prepare(_task, &__save, interruptible);                                                \
+            __ret = __wait_prepare(_task, interruptible);                                                         \
             if (__ret) {                                                                                          \
                 begin_wait;                                                                                       \
                 break;                                                                                            \
             }                                                                                                     \
             if (cond) {                                                                                           \
-                __wait_cancel(_task, &__save);                                                                    \
+                __wait_cancel(_task);                                                                             \
                 break;                                                                                            \
             }                                                                                                     \
             if (__queue_task && lock_wq) {                                                                        \
@@ -225,7 +224,7 @@ static inline int __wait_do(uint64_t *interrupts_save) {
             }                                                                                                     \
             __queue_task = false;                                                                                 \
             __ret = do_block;                                                                                     \
-            interrupts_restore(__save);                                                                           \
+            enable_preemption();                                                                                  \
             if (__ret) {                                                                                          \
                 break;                                                                                            \
             }                                                                                                     \
@@ -254,13 +253,12 @@ static inline int __wait_do(uint64_t *interrupts_save) {
 
 #define wait_simple(_task, wq)                               \
     ({                                                       \
-        uint64_t __save;                                     \
-        wait_prepare(_task, &__save);                        \
+        wait_prepare(_task);                                 \
         spin_lock(&(wq)->lock);                              \
         struct wait_queue_entry __entry = { .task = _task }; \
         __wait_queue_enqueue_entry(wq, &__entry, __func__);  \
         spin_unlock_no_irq_restore(&(wq)->lock);             \
-        int __ret = wait_do(_task, &__save);                 \
+        int __ret = wait_do(_task);                          \
         wait_queue_dequeue_entry(wq, &__entry, __func__);    \
         __ret;                                               \
     })

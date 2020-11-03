@@ -2150,8 +2150,7 @@ static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct ti
     int ret = 0;
     bool wq_queue = true;
     for (;;) {
-        uint64_t save;
-        ret = __wait_prepare(current, &save, true);
+        ret = __wait_prepare(current, true);
         if (ret) {
             break;
         }
@@ -2176,19 +2175,19 @@ static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct ti
         }
 
         if (ret > 0) {
-            __wait_cancel(current, &save);
+            __wait_cancel(current);
             break;
         }
 
         wq_queue = false;
         if (timeout) {
             ret = time_wakeup_after(CLOCK_MONOTONIC, timeout);
-            interrupts_restore(save);
+            enable_preemption();
             if (!ret && timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
                 break;
             }
         } else {
-            ret = wait_do(current, &save);
+            ret = wait_do(current);
         }
 
         if (ret) {
