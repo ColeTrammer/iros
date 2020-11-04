@@ -34,3 +34,11 @@ My second attempt to create an OS
 * configuration/startup files
 * pthreads like library (conditions, barriers, cancellation, rdwrlock, scheduling)
 * try to write in C++ instead of C
+* USB subsystem
+* improved SMP handling
+* more advanced scheduler
+* PATA channels
+* AHCI SATA
+* Hardware agnostic timers
+* Sound subsystem
+* IP v6 networking support
