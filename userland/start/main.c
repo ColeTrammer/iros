@@ -138,8 +138,7 @@ int main(int argc, char **argv) {
     }
 
     for (;;) {
-        sleep(100);
-        waitpid(-1, NULL, WNOHANG);
+        waitpid(-1, NULL, 0);
     }
 
     assert(false);
