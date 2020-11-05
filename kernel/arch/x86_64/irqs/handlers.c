@@ -32,7 +32,9 @@ static void handle_divide_by_zero(struct irq_context *context) {
 
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
-        task_do_sig(current, SIGFPE); // You can't block this so we don't check
+        spin_lock(&current->sig_lock);
+        task_do_sig(current, SIGFPE);
+        spin_unlock(&current->sig_lock);
 
         // If we get here, the task that faulted was just sent a terminating signal
         arch_sched_run_next(&current->arch_task.task_state);
@@ -52,7 +54,9 @@ static void handle_stack_fault(struct irq_context *context) {
 
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
-        task_do_sig(current, SIGSEGV); // You can't block this so we don't check
+        spin_lock(&current->sig_lock);
+        task_do_sig(current, SIGSEGV);
+        spin_unlock(&current->sig_lock);
 
         // If we get here, the task that faulted was just sent a terminating signal
         arch_sched_run_next(&current->arch_task.task_state);
@@ -76,7 +80,9 @@ static void handle_general_protection_fault(struct irq_context *context) {
               current->process->pid, current->tid, task_state->stack_state.rip, task_state->stack_state.rsp);
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
-        task_do_sig(current, SIGSEGV); // You can't block this so we don't check
+        spin_lock(&current->sig_lock);
+        task_do_sig(current, SIGSEGV);
+        spin_unlock(&current->sig_lock);
 
         // If we get here, the task that faulted was just sent a terminating signal
         arch_sched_run_next(&current->arch_task.task_state);
@@ -127,7 +133,9 @@ static void handle_page_fault(struct irq_context *context) {
         current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, error_code);
     if (!is_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
-        task_do_sig(current, SIGSEGV); // You can't block this so we don't check
+        spin_lock(&current->sig_lock);
+        task_do_sig(current, SIGSEGV);
+        spin_unlock(&current->sig_lock);
 
         // If we get here, the task that faulted was just sent a terminating signal
         arch_sched_run_next(&current->arch_task.task_state);
@@ -223,7 +231,9 @@ static void handle_simd_exception(struct irq_context *context __attribute__((unu
 
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
-        task_do_sig(current, SIGFPE); // You can't block this so we don't check
+        spin_lock(&current->sig_lock);
+        task_do_sig(current, SIGFPE);
+        spin_unlock(&current->sig_lock);
 
         // If we get here, the task that faulted was just sent a terminating signal
         arch_sched_run_next(&current->arch_task.task_state);

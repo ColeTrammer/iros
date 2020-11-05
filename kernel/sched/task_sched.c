@@ -113,10 +113,12 @@ try_again:
 
     assert(to_run->sched_state != WAITING && to_run->sched_state != STOPPED && to_run->sched_state != EXITING);
     int sig;
+    spin_lock(&to_run->sig_lock);
     while (to_run->sched_state == RUNNING_INTERRUPTIBLE && (sig = task_get_next_sig(to_run)) != -1) {
         processor->current_task = to_run;
         task_do_sig(to_run, sig);
     }
+    spin_unlock(&to_run->sig_lock);
 
     if (to_run->sched_state != RUNNING_INTERRUPTIBLE && to_run->sched_state != RUNNING_UNINTERRUPTIBLE) {
         goto try_again;
@@ -166,7 +168,9 @@ int signal_process_group(pid_t pgid, int signum) {
     if (cls.signalled_self) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
+        spin_lock(&current->sig_lock);
         task_do_sig(current, signum);
+        spin_unlock(&current->sig_lock);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             kernel_yield();
         }
@@ -227,7 +231,9 @@ int signal_task(int tgid, int tid, int signum) {
     if (signalled_self) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
+        spin_lock(&current->sig_lock);
         task_do_sig(current, signum);
+        spin_unlock(&current->sig_lock);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             kernel_yield();
         }
@@ -267,7 +273,9 @@ int signal_process(pid_t pid, int signum) {
     if (signalled_self) {
         unsigned long save = disable_interrupts_save();
         struct task *current = get_current_task();
+        spin_lock(&current->sig_lock);
         task_do_sig(current, signum);
+        spin_unlock(&current->sig_lock);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             kernel_yield();
         }
@@ -307,7 +315,9 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
     if (signalled_self) {
         struct task *current = get_current_task();
         unsigned long save = disable_interrupts_save();
+        spin_lock(&current->sig_lock);
         task_do_sig(current, signum);
+        spin_unlock(&current->sig_lock);
         if (current->sched_state == EXITING || current->sched_state == STOPPED) {
             kernel_yield();
         }

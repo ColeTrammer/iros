@@ -175,9 +175,14 @@ static inline int __wait_prepare(struct task *task, bool interruptible) {
     task->wait_interruptible = interruptible;
     task_set_state_to_waiting(task);
 
-    if (interruptible && task_get_next_sig(task) != -1) {
-        __wait_cancel(task);
-        return -EINTR;
+    if (interruptible) {
+        spin_lock(&task->sig_lock);
+        int sig = task_get_next_sig(task);
+        spin_unlock(&task->sig_lock);
+        if (sig != -1) {
+            __wait_cancel(task);
+            return -EINTR;
+        }
     }
     return 0;
 }

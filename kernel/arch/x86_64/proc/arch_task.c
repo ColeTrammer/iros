@@ -328,6 +328,7 @@ void task_do_sig_handler(struct task *task, int signum) {
     debug_log("Running pid: [ %p, %#.16lX, %d ]\n", save_state, task->arch_task.task_state.stack_state.rip, signum);
 #endif /* SIGNAL_DEBUG */
 
+    spin_unlock(&task->sig_lock);
     struct task *current = get_current_task();
     assert(current == task);
     current->sched_state = RUNNING_INTERRUPTIBLE;

@@ -532,9 +532,7 @@ void task_do_sig_cont(struct task *task, int signum) {
     }
 }
 
-void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add) {
-    unsigned long save = disable_interrupts_save();
-
+static void __task_enqueue_signal_object(struct task *task, struct queued_signal *to_add) {
     int signum = to_add->info.si_signo;
     task_do_sig_cont(task, signum);
 
@@ -556,12 +554,16 @@ void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add)
 
 finish:
     task_set_sig_pending(task, signum);
-    interrupts_restore(save);
+}
+
+void task_enqueue_signal_object(struct task *task, struct queued_signal *to_add) {
+    spin_lock(&task->sig_lock);
+    __task_enqueue_signal_object(task, to_add);
+    spin_unlock(&task->sig_lock);
 }
 
 void task_enqueue_signal(struct task *task, int signum, void *val, bool is_sigqueue) {
-    unsigned long save = disable_interrupts_save();
-
+    spin_lock(&task->sig_lock);
     task_do_sig_cont(task, signum);
 
     enum sig_default_behavior behavior = signum >= SIGRTMIN ? TERMINATE : sig_defaults[signum];
@@ -591,10 +593,10 @@ void task_enqueue_signal(struct task *task, int signum, void *val, bool is_sigqu
     to_add->info.si_value.sival_ptr = val;
     to_add->flags = 0;
 
-    task_enqueue_signal_object(task, to_add);
+    __task_enqueue_signal_object(task, to_add);
 
 task_enqueue_signal_end:
-    interrupts_restore(save);
+    spin_unlock(&task->sig_lock);
 }
 
 void task_free_queued_signal(struct queued_signal *queued_signal) {
@@ -648,10 +650,12 @@ void task_do_sigs_if_needed(struct task *task) {
         return;
     }
 
+    spin_lock(&task->sig_lock);
     int sig = task_get_next_sig(task);
     if (sig != -1) {
         task_do_sig(task, sig);
     }
+    spin_unlock(&task->sig_lock);
 }
 
 void task_stop(struct task *task) {
