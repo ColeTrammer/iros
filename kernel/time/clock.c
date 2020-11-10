@@ -2,9 +2,12 @@
 #include <search.h>
 #include <stdlib.h>
 
+#include <kernel/hal/hw_timer.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
-#include <kernel/hal/timer.h>
+#include <kernel/irqs/handlers.h>
+#include <kernel/proc/profile.h>
+#include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/time/timer.h>
 #include <kernel/util/hash_map.h>
@@ -54,7 +57,7 @@ struct clock *time_create_clock(clockid_t id) {
             clockid_t real_id = allocate_clockid();
             clock = malloc(sizeof(struct clock));
             clock->id = real_id;
-            clock->resolution = get_time_resolution();
+            clock->resolution = hw_primary_timer()->resolution;
             clock->time = (struct timespec) { 0 };
             init_list(&clock->timer_list);
             init_spinlock(&clock->lock);
@@ -125,11 +128,55 @@ static void __inc_global_clocks() {
     time_inc_clock(&global_realtime_clock, 1000000, false);
 }
 
+extern uint64_t idle_ticks;
+extern uint64_t user_ticks;
+extern uint64_t kernel_ticks;
+
+static void on_hw_tick(struct hw_timer *timer, struct irq_context *context) {
+    struct task *current = get_current_task();
+    if (current == get_idle_task()) {
+        idle_ticks++;
+    } else if (current->in_kernel) {
+        current->process->rusage_self.ru_stime =
+            time_add_timeval(current->process->rusage_self.ru_stime, timeval_from_time(timer->resolution));
+        kernel_ticks++;
+    } else {
+        current->process->rusage_self.ru_utime =
+            time_add_timeval(current->process->rusage_self.ru_utime, timeval_from_time(timer->resolution));
+        user_ticks++;
+    }
+    // Check for NULL b/c kernel tasks don't have a clock
+    if (current->task_clock) {
+        time_inc_clock(current->task_clock, 1000000L, current->in_kernel);
+        time_inc_clock(current->process->process_clock, 1000000L, current->in_kernel);
+    }
+
+    if (atomic_load(&current->process->should_profile)) {
+        // To seriously support profiling multiple threads, the buffer and lock should be per-thread and not per-process.
+        spin_lock(&current->process->profile_buffer_lock);
+        // Make sure not to write into a stale buffer.
+        if (current->process->profile_buffer) {
+            proc_record_profile_stack(context->task_state);
+        }
+        spin_unlock(&current->process->profile_buffer_lock);
+    }
+
+    if (get_current_processor()->id == 0) {
+        __inc_global_clocks();
+    }
+
+    sched_tick(context->task_state);
+}
+
 static void init_clocks() {
     clock_map = hash_create_hash_map(clock_hash, clock_equals, clock_key);
-    global_monotonic_clock.resolution = get_time_resolution();
-    global_realtime_clock.resolution = get_time_resolution();
 
-    register_callback(__inc_global_clocks, 1);
+    struct hw_timer *timer = hw_primary_timer();
+    assert(timer);
+
+    global_monotonic_clock.resolution = timer->resolution;
+    global_realtime_clock.resolution = timer->resolution;
+
+    timer->ops->setup_interval_timer(timer, on_hw_tick);
 }
 INIT_FUNCTION(init_clocks, time);

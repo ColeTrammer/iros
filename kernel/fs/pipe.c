@@ -14,7 +14,7 @@
 #include <kernel/fs/pipe.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/processor.h>
-#include <kernel/hal/timer.h>
+#include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
@@ -24,7 +24,9 @@
 static spinlock_t pipe_index_lock = SPINLOCK_INITIALIZER;
 static ino_t pipe_index = 1;
 
-static struct inode_operations pipe_i_op = { .open = &pipe_open ,};
+static struct inode_operations pipe_i_op = {
+    .open = &pipe_open,
+};
 
 static struct file_operations pipe_f_op = {
     .close = &pipe_close,

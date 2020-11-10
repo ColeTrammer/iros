@@ -19,7 +19,6 @@
 #include <kernel/hal/hw_device.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
-#include <kernel/hal/timer.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
@@ -298,18 +297,20 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_signal(struct procfs_
     char *buffer = need_buffer ? malloc(2 * PAGE_SIZE) : NULL;
     size_t length = 0;
     for (int i = 1; i < _NSIG; i++) {
-        length += snprintf(
-            buffer + length, need_buffer ? 2 * PAGE_SIZE - length : 0,
-            "SIGNAL: %d (%s)\n"
-            "STATE: %s\n"
-            "FLAGS: %c%c%c%c%c%c%c\n"
-            "MASK: %#.16lX\n",
-            i, strsignal(i),
-            process->sig_state[i].sa_handler == SIG_IGN ? "ignored" : process->sig_state[i].sa_handler == SIG_DFL ? "default" : "handled",
-            process->sig_state[i].sa_flags & SA_NOCLDSTOP ? 'C' : ' ', process->sig_state[i].sa_flags & SA_ONSTACK ? 'S' : ' ',
-            process->sig_state[i].sa_flags & SA_RESETHAND ? 'X' : ' ', process->sig_state[i].sa_flags & SA_RESTART ? 'R' : ' ',
-            process->sig_state[i].sa_flags & SA_SIGINFO ? 'I' : ' ', process->sig_state[i].sa_flags & SA_NOCLDWAIT ? 'W' : ' ',
-            process->sig_state[i].sa_flags & SA_NODEFER ? 'D' : ' ', process->sig_state[i].sa_mask);
+        length +=
+            snprintf(buffer + length, need_buffer ? 2 * PAGE_SIZE - length : 0,
+                     "SIGNAL: %d (%s)\n"
+                     "STATE: %s\n"
+                     "FLAGS: %c%c%c%c%c%c%c\n"
+                     "MASK: %#.16lX\n",
+                     i, strsignal(i),
+                     process->sig_state[i].sa_handler == SIG_IGN   ? "ignored"
+                     : process->sig_state[i].sa_handler == SIG_DFL ? "default"
+                                                                   : "handled",
+                     process->sig_state[i].sa_flags & SA_NOCLDSTOP ? 'C' : ' ', process->sig_state[i].sa_flags & SA_ONSTACK ? 'S' : ' ',
+                     process->sig_state[i].sa_flags & SA_RESETHAND ? 'X' : ' ', process->sig_state[i].sa_flags & SA_RESTART ? 'R' : ' ',
+                     process->sig_state[i].sa_flags & SA_SIGINFO ? 'I' : ' ', process->sig_state[i].sa_flags & SA_NOCLDWAIT ? 'W' : ' ',
+                     process->sig_state[i].sa_flags & SA_NODEFER ? 'D' : ' ', process->sig_state[i].sa_mask);
     }
     return (struct procfs_buffer) { buffer, length };
 }

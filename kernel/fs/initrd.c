@@ -16,7 +16,7 @@
 #include <kernel/fs/super_block.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
-#include <kernel/hal/timer.h>
+#include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/mem/vm_region.h>
 #include <kernel/time/clock.h>

@@ -21,7 +21,6 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
-#include <kernel/hal/timer.h>
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/phys_page.h>

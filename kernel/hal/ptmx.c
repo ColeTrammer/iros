@@ -17,7 +17,6 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/hal/ptmx.h>
-#include <kernel/hal/timer.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>

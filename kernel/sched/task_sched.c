@@ -6,7 +6,6 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
-#include <kernel/hal/timer.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
@@ -24,8 +23,6 @@ void init_task_sched() {
     // This only becomes needed after scheduling is enabled
     init_processes();
     init_user_mutexes();
-
-    arch_init_task_sched();
 }
 
 static unsigned int next_cpu_id;

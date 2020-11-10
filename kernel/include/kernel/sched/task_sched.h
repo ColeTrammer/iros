@@ -1,24 +1,22 @@
 #ifndef _KERNEL_task_SCHED_H
 #define _KERNEL_task_SCHED_H
 
-// clang-format off
-#include <kernel/arch/arch.h>
-#include ARCH_SPECIFIC(sched/arch_task_sched.h)
-// clang-format on
-
 struct processor;
 struct process;
+struct task_state;
 
 void init_task_sched(void);
-void arch_init_task_sched(void);
 
 struct task *find_by_tid(int tgid, int tid);
 
 void sched_add_task(struct task *task);
 
+void sched_tick(struct task_state *task_state);
+
 void local_sched_add_task(struct processor *processor, struct task *task);
 void local_sched_remove_task(struct processor *processor, struct task *task);
 void sched_run_next(void);
+void arch_sched_run_next(struct task_state *task_state);
 void __kernel_yield(void);
 int kernel_yield(void);
 

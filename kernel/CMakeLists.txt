@@ -19,6 +19,7 @@ if (NOT ${NATIVE_BUILD})
         hal/devices.c
         hal/gpt.c
         hal/hw_device.c
+        hal/hw_timer.c
         hal/input.c
         hal/isa_driver.c
         hal/mbr.c

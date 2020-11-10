@@ -1,8 +1,6 @@
 #ifndef _KERNEL_HAL_X86_64_DRIVERS_PIT_H
 #define _KERNEL_HAL_X86_64_DRIVERS_PIT_H 1
 
-#include <sys/time.h>
-
 #include <kernel/arch/x86_64/asm_utils.h>
 
 #define PIT_IRQ_LINE 0
@@ -31,11 +29,5 @@
 
 #define PIT_BASE_RATE       (1.193182 * 1000.0) // Hz
 #define PIT_GET_DIVISOR(ms) ((int) (((ms) *PIT_BASE_RATE) + 0.5))
-
-struct task_state;
-
-void pit_set_rate(unsigned int rate);
-void pit_set_sched_callback(void (*callback)(struct task_state *), unsigned int ms);
-void pit_register_callback(void (*callback)(), unsigned int ms);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PIT_H */

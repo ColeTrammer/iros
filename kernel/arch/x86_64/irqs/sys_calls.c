@@ -27,7 +27,6 @@
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
-#include <kernel/hal/timer.h>
 #include <kernel/hal/x86_64/gdt.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/anon_vm_object.h>
