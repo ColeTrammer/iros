@@ -171,6 +171,7 @@ static void on_hw_tick(struct hw_timer *timer, struct irq_context *context) {
 static void init_clocks() {
     clock_map = hash_create_hash_map(clock_hash, clock_equals, clock_key);
 
+    select_hw_timers();
     struct hw_timer *timer = hw_primary_timer();
     assert(timer);
 

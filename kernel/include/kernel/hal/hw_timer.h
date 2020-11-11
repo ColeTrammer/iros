@@ -27,6 +27,7 @@ struct hw_timer {
 
 struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, struct hw_timer_ops *ops);
 void register_hw_timer(struct hw_timer *timer, struct timespec resoltuion);
+void select_hw_timers(void);
 
 struct hw_timer *hw_primary_timer(void);
 struct list_node *hw_timers(void);

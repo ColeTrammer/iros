@@ -53,9 +53,9 @@ static inline struct rtc_time read_rtc_time() {
     return current;
 }
 
-static void detect_rtc(struct hw_device *parent) {
-    (void) parent;
+static struct hw_timer_ops rtc_ops = {};
 
+static void detect_rtc(struct hw_device *parent) {
     struct rtc_time time = read_rtc_time();
 
     debug_log("RTC Seconds: [ %u ]\n", time.second);
@@ -106,6 +106,10 @@ static void detect_rtc(struct hw_device *parent) {
     global_realtime_clock.time.tv_sec = seconds_since_epoch;
     // FIXME: seed a better RNG with this data
     srand(seconds_since_epoch);
+
+    struct hw_timer *device = create_hw_timer("RTC", parent, hw_device_id_isa(), HW_TIMER_INTERVAL, &rtc_ops);
+    device->hw_device.status = HW_STATUS_ACTIVE;
+    register_hw_timer(device, (struct timespec) { .tv_sec = 1, .tv_nsec = 1000000 });
 }
 
 static struct isa_driver rtc_driver = {
