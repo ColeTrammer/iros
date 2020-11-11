@@ -24,7 +24,6 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/drivers/local_apic.c
     ${KERNEL_HALDIR}/drivers/ata.c
     ${KERNEL_HALDIR}/drivers/bga.c
-    ${KERNEL_HALDIR}/drivers/cmos.c
     ${KERNEL_HALDIR}/drivers/e1000.c
     ${KERNEL_HALDIR}/drivers/io_apic.c
     ${KERNEL_HALDIR}/drivers/keyboard.c
@@ -33,6 +32,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/drivers/pic.c
     ${KERNEL_HALDIR}/drivers/pit.c
     ${KERNEL_HALDIR}/drivers/ps2.c
+    ${KERNEL_HALDIR}/drivers/rtc.c
     ${KERNEL_HALDIR}/drivers/serial.c
     ${KERNEL_HALDIR}/drivers/vga.c
     ${KERNEL_HALDIR}/drivers/vmware_back_door.c

@@ -2,37 +2,40 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include <kernel/hal/hw_device.h>
+#include <kernel/hal/hw_timer.h>
+#include <kernel/hal/isa_driver.h>
 #include <kernel/hal/output.h>
-#include <kernel/hal/x86_64/drivers/cmos.h>
-#include <kernel/hal/x86_64/drivers/pit.h>
+#include <kernel/hal/x86_64/drivers/rtc.h>
 #include <kernel/time/clock.h>
+#include <kernel/util/init.h>
 
 static inline uint8_t convert_from_bcd(uint8_t x) {
     return (x & 0xF) + ((x / 16) * 10);
 }
 
 static inline struct rtc_time read_rtc_time() {
-    while (cmos_get(CMOS_STATUS_A) & CMOS_UPDATE_IN_PROGRESS)
+    while (rtc_get(RTC_STATUS_A) & RTC_UPDATE_IN_PROGRESS)
         ;
 
-    struct rtc_time current = { cmos_get(CMOS_SECONDS), cmos_get(CMOS_MINUTES), cmos_get(CMOS_HOURS),  cmos_get(CMOS_DAY_OF_MONTH),
-                                cmos_get(CMOS_MONTH),   cmos_get(CMOS_YEAR),    cmos_get(CMOS_CENTURY) };
+    struct rtc_time current = { rtc_get(RTC_SECONDS), rtc_get(RTC_MINUTES), rtc_get(RTC_HOURS),  rtc_get(RTC_DAY_OF_MONTH),
+                                rtc_get(RTC_MONTH),   rtc_get(RTC_YEAR),    rtc_get(RTC_CENTURY) };
 
     // Check for consistency if it really matters
-#ifdef NDEBUG
+#ifdef RTC_CHECK
     struct rtc_time last;
     do {
         memcpy(&last, &current, sizeof(struct rtc_time));
 
-        current = (struct rtc_time) { cmos_get(CMOS_SECONDS), cmos_get(CMOS_MINUTES), cmos_get(CMOS_HOURS),  cmos_get(CMOS_DAY_OF_MONTH),
-                                      cmos_get(CMOS_MONTH),   cmos_get(CMOS_YEAR),    cmos_get(CMOS_CENTURY) };
+        current = (struct rtc_time) { rtc_get(RTC_SECONDS), rtc_get(RTC_MINUTES), rtc_get(RTC_HOURS),  rtc_get(RTC_DAY_OF_MONTH),
+                                      rtc_get(RTC_MONTH),   rtc_get(RTC_YEAR),    rtc_get(RTC_CENTURY) };
     } while (!memcmp(&current, &last, sizeof(struct rtc_time)));
-#endif /* NDEBUG */
+#endif /* RTC_CHECK */
 
-    uint8_t status = cmos_get(CMOS_STATUS_B);
+    uint8_t status = rtc_get(RTC_STATUS_B);
 
     // convert if the format is bcd
-    if (!(status & CMOS_NOT_BCD)) {
+    if (!(status & RTC_NOT_BCD)) {
         current.second = convert_from_bcd(current.second);
         current.minute = convert_from_bcd(current.minute);
         current.hour = convert_from_bcd(current.hour);
@@ -43,24 +46,25 @@ static inline struct rtc_time read_rtc_time() {
     }
 
     // handle 12 hour mode
-    if (!(status & CMOS_NOT_12_HOUR) && (current.hour & 0x80)) {
+    if (!(status & RTC_NOT_12_HOUR) && (current.hour & 0x80)) {
         current.hour = ((current.hour & 0x7F) + 12) & 24;
     }
 
     return current;
 }
 
-// Read cmos time values
-void init_cmos() {
+static void detect_rtc(struct hw_device *parent) {
+    (void) parent;
+
     struct rtc_time time = read_rtc_time();
 
-    debug_log("CMOS Seconds: [ %u ]\n", time.second);
-    debug_log("CMOS Minutes: [ %u ]\n", time.minute);
-    debug_log("CMOS Hours: [ %u ]\n", time.hour);
-    debug_log("CMOS Day of Month: [ %u ]\n", time.day);
-    debug_log("CMOS Month: [ %u ]\n", time.month);
-    debug_log("CMOS Year: [ %u ]\n", time.year + time.century * 100U);
-    debug_log("CMOS Century: [ %u ]\n", time.century);
+    debug_log("RTC Seconds: [ %u ]\n", time.second);
+    debug_log("RTC Minutes: [ %u ]\n", time.minute);
+    debug_log("RTC Hours: [ %u ]\n", time.hour);
+    debug_log("RTC Day of Month: [ %u ]\n", time.day);
+    debug_log("RTC Month: [ %u ]\n", time.month);
+    debug_log("RTC Year: [ %u ]\n", time.year + time.century * 100U);
+    debug_log("RTC Century: [ %u ]\n", time.century);
 
     time_t seconds_since_epoch = time.second + 60L * time.minute + 3600L * time.hour + (time.day - 1) * 86400L;
 
@@ -103,3 +107,13 @@ void init_cmos() {
     // FIXME: seed a better RNG with this data
     srand(seconds_since_epoch);
 }
+
+static struct isa_driver rtc_driver = {
+    .name = "x86 RTC",
+    .detect_devices = &detect_rtc,
+};
+
+static void init_rtc(void) {
+    register_isa_driver(&rtc_driver);
+}
+INIT_FUNCTION(init_rtc, driver);
