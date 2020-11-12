@@ -5,6 +5,8 @@
 
 #include <kernel/arch/x86_64/asm_utils.h>
 
+#define RTC_IRQ_LINE 8
+
 #define RTC_REGISTER_SELECT 0x70
 #define RTC_DATA            0x71
 
@@ -19,21 +21,22 @@
 
 #define RTC_STATUS_A 0x0A
 #define RTC_STATUS_B 0x0B
+#define RTC_STATUS_C 0x0C
 
 #define RTC_UPDATE_IN_PROGRESS 0x80
 
 #define RTC_NOT_BCD     0x04
 #define RTC_NOT_12_HOUR 0x02
 
-#define RTC_DISABLE_NMI 0
+#define RTC_DISABLE_NMI 0x80
 
 static inline uint8_t rtc_get(uint8_t reg) {
-    outb(RTC_REGISTER_SELECT, (RTC_DISABLE_NMI << 7) | (reg & 0x7F));
+    outb(RTC_REGISTER_SELECT, RTC_DISABLE_NMI | (reg & 0x7F));
     return inb(RTC_DATA);
 }
 
 static inline void rtc_set(uint8_t reg, uint8_t val) {
-    outb(RTC_REGISTER_SELECT, (RTC_DISABLE_NMI << 7) | (reg & 0x7F));
+    outb(RTC_REGISTER_SELECT, RTC_DISABLE_NMI | (reg & 0x7F));
     outb(RTC_DATA, val);
 }
 

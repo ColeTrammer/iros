@@ -7,6 +7,7 @@
 #include <kernel/hal/isa_driver.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/x86_64/drivers/rtc.h>
+#include <kernel/irqs/handlers.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/init.h>
 
@@ -53,7 +54,44 @@ static inline struct rtc_time read_rtc_time() {
     return current;
 }
 
-static struct hw_timer_ops rtc_ops = {};
+static void handle_rtc_interrupt(struct irq_context *context) {
+    outb(RTC_REGISTER_SELECT, RTC_STATUS_C);
+    inb(RTC_DATA);
+
+    context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
+
+    struct hw_timer *self = context->closure;
+    if (self->callback) {
+        self->callback(self, context);
+    }
+}
+
+static struct irq_handler rtc_handler = {
+    .handler = &handle_rtc_interrupt,
+    .flags = IRQ_HANDLER_EXTERNAL,
+};
+
+static void rtc_setup_interval_timer(struct hw_timer *self, hw_timer_callback_t callback) {
+    self->callback = callback;
+    rtc_handler.closure = self;
+    register_irq_handler(&rtc_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
+
+    uint8_t rate = 6; // 1024 Hz
+    uint64_t save = disable_interrupts_save();
+
+    uint8_t prev_a = rtc_get(RTC_STATUS_A);
+    rtc_set(RTC_STATUS_A, (prev_a & 0xF0) | rate);
+
+    uint8_t prev_b = rtc_get(RTC_STATUS_B);
+    rtc_set(RTC_STATUS_B, prev_b | 0x40);
+
+    outb(RTC_REGISTER_SELECT, 0);
+    interrupts_restore(save);
+}
+
+static struct hw_timer_ops rtc_ops = {
+    .setup_interval_timer = rtc_setup_interval_timer,
+};
 
 static void detect_rtc(struct hw_device *parent) {
     struct rtc_time time = read_rtc_time();
@@ -109,7 +147,7 @@ static void detect_rtc(struct hw_device *parent) {
 
     struct hw_timer *device = create_hw_timer("RTC", parent, hw_device_id_isa(), HW_TIMER_INTERVAL, &rtc_ops);
     device->hw_device.status = HW_STATUS_ACTIVE;
-    register_hw_timer(device, (struct timespec) { .tv_sec = 1, .tv_nsec = 1000000 });
+    register_hw_timer(device, (struct timespec) { .tv_nsec = 976563 });
 }
 
 static struct isa_driver rtc_driver = {

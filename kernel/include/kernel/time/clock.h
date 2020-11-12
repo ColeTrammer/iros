@@ -25,23 +25,11 @@ void time_destroy_clock(struct clock *clock);
 struct clock *time_get_clock(clockid_t id);
 struct timespec time_read_clock(clockid_t id);
 
-void time_inc_clock_timers(struct list_node *timer_list, long nanoseconds, bool kernel_time);
+void time_inc_clock_timers(struct list_node *timer_list, struct timespec amt, bool kernel_time);
 void __time_add_timer_to_clock(struct clock *clock, struct timer *timer);
 void time_add_timer_to_clock(struct clock *clock, struct timer *timer);
 void __time_remove_timer_from_clock(struct clock *clock, struct timer *timer);
 void time_remove_timer_from_clock(struct clock *clock, struct timer *timer);
-
-static inline __attribute__((always_inline)) void time_inc_clock(struct clock *clock, long nanoseconds, bool kernel_time) {
-    spin_lock(&clock->lock);
-    clock->time.tv_nsec += nanoseconds;
-    if (clock->time.tv_nsec >= 1000000000L) {
-        clock->time.tv_nsec %= 1000000000L;
-        clock->time.tv_sec++;
-    }
-
-    time_inc_clock_timers(&clock->timer_list, nanoseconds, kernel_time);
-    spin_unlock(&clock->lock);
-}
 
 static inline __attribute__((always_inline)) long time_compare(struct timespec t1, struct timespec t2) {
     if (t1.tv_sec == t2.tv_sec) {
@@ -82,6 +70,13 @@ static inline __attribute__((always_inline)) struct timespec time_sub(struct tim
     }
 
     return t1;
+}
+
+static inline __attribute__((always_inline)) void time_inc_clock(struct clock *clock, struct timespec amt, bool kernel_time) {
+    spin_lock(&clock->lock);
+    clock->time = time_add(clock->time, amt);
+    time_inc_clock_timers(&clock->timer_list, amt, kernel_time);
+    spin_unlock(&clock->lock);
 }
 
 static inline __attribute__((always_inline)) struct timespec time_from_timeval(struct timeval v) {

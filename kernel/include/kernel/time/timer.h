@@ -57,6 +57,6 @@ void time_reset_kernel_callback(struct timer *timer, struct timespec *new_delay)
 void time_cancel_kernel_callback(struct timer *timer);
 
 void time_fire_timer(struct timer *timer);
-void time_tick_timer(struct timer *timer, long nanoseconds, bool kernel_time);
+void time_tick_timer(struct timer *timer, struct timespec amt, bool kernel_time);
 
 #endif /* _KERNEL_TIME_TIMER_H */

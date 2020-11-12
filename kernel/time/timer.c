@@ -219,12 +219,11 @@ void time_fire_timer(struct timer *timer) {
     }
 }
 
-void time_tick_timer(struct timer *timer, long nanoseconds, bool kernel_time) {
+void time_tick_timer(struct timer *timer, struct timespec to_sub, bool kernel_time) {
     if (timer->ignore_kernel_ticks && kernel_time) {
         return;
     }
 
-    struct timespec to_sub = { .tv_sec = nanoseconds / INT64_C(1000000000), .tv_nsec = nanoseconds % INT64_C(1000000000) };
     timer->spec.it_value = time_sub(timer->spec.it_value, to_sub);
 
     // This means timer expired

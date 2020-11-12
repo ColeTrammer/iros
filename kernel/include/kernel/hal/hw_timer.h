@@ -29,7 +29,8 @@ struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, str
 void register_hw_timer(struct hw_timer *timer, struct timespec resoltuion);
 void select_hw_timers(void);
 
-struct hw_timer *hw_primary_timer(void);
+struct hw_timer *hw_sched_timer(void);
+struct hw_timer *hw_clock_timer(void);
 struct list_node *hw_timers(void);
 
 #endif /* _KERNEL_HAL_HW_TIMER_H */
