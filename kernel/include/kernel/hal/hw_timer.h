@@ -4,30 +4,47 @@
 #include <sys/time.h>
 
 #include <kernel/hal/hw_device.h>
+#include <kernel/irqs/handlers.h>
 
+struct hw_timer_channel;
 struct hw_timer;
-struct irq_context;
 
-typedef void (*hw_timer_callback_t)(struct hw_timer *timer, struct irq_context *context);
+typedef void (*hw_timer_callback_t)(struct hw_timer_channel *timer, struct irq_context *context);
 
 struct hw_timer_ops {
-    void (*setup_interval_timer)(struct hw_timer *self, hw_timer_callback_t callback);
+    void (*setup_interval_timer)(struct hw_timer *self, int channel_index, hw_timer_callback_t callback);
+};
+
+struct hw_timer_channel {
+    struct irq_handler irq_handler;
+    struct timespec interval;
+    hw_timer_callback_t callback;
+    struct hw_timer *timer;
+    int type : 31;
+    int valid : 1;
 };
 
 struct hw_timer {
     struct hw_device hw_device;
 #define HW_TIMER_SINGLE_SHOT 1
 #define HW_TIMER_INTERVAL    2
+#define HW_TIMER_PER_CPU     4
+#define HW_TIMER_HAS_COUNTER 8
     int flags;
     struct hw_timer_ops *ops;
-    struct timespec resolution;
+    struct timespec max_resolution;
     struct list_node list;
-    hw_timer_callback_t callback;
+    size_t num_channels;
+    struct hw_timer_channel channels[0];
 };
 
-struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, struct hw_timer_ops *ops);
-void register_hw_timer(struct hw_timer *timer, struct timespec resoltuion);
+struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags,
+                                 struct timespec max_resolution, struct hw_timer_ops *ops, size_t num_channels);
+void register_hw_timer(struct hw_timer *timer);
 void select_hw_timers(void);
+
+void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_function, int irq_flags, struct hw_timer *timer, int type,
+                           struct timespec interval, hw_timer_callback_t callback);
 
 struct hw_timer *hw_sched_timer(void);
 struct hw_timer *hw_clock_timer(void);

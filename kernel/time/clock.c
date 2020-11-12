@@ -57,7 +57,7 @@ struct clock *time_create_clock(clockid_t id) {
             clockid_t real_id = allocate_clockid();
             clock = malloc(sizeof(struct clock));
             clock->id = real_id;
-            clock->resolution = hw_clock_timer()->resolution;
+            clock->resolution = hw_clock_timer()->max_resolution;
             clock->time = (struct timespec) { 0 };
             init_list(&clock->timer_list);
             init_spinlock(&clock->lock);
@@ -123,32 +123,32 @@ void time_remove_timer_from_clock(struct clock *clock, struct timer *timer) {
     spin_unlock(&clock->lock);
 }
 
-static void __inc_global_clocks(struct hw_timer *timer) {
-    time_inc_clock(&global_monotonic_clock, timer->resolution, false);
-    time_inc_clock(&global_realtime_clock, timer->resolution, false);
+static void __inc_global_clocks(struct hw_timer_channel *channel) {
+    time_inc_clock(&global_monotonic_clock, channel->interval, false);
+    time_inc_clock(&global_realtime_clock, channel->interval, false);
 }
 
 extern uint64_t idle_ticks;
 extern uint64_t user_ticks;
 extern uint64_t kernel_ticks;
 
-static void on_hw_sched_tick(struct hw_timer *timer, struct irq_context *context) {
+static void on_hw_sched_tick(struct hw_timer_channel *channel, struct irq_context *context) {
     struct task *current = get_current_task();
     if (current == get_idle_task()) {
         idle_ticks++;
     } else if (current->in_kernel) {
         current->process->rusage_self.ru_stime =
-            time_add_timeval(current->process->rusage_self.ru_stime, timeval_from_time(timer->resolution));
+            time_add_timeval(current->process->rusage_self.ru_stime, timeval_from_time(channel->interval));
         kernel_ticks++;
     } else {
         current->process->rusage_self.ru_utime =
-            time_add_timeval(current->process->rusage_self.ru_utime, timeval_from_time(timer->resolution));
+            time_add_timeval(current->process->rusage_self.ru_utime, timeval_from_time(channel->interval));
         user_ticks++;
     }
     // Check for NULL b/c kernel tasks don't have a clock
     if (current->task_clock) {
-        time_inc_clock(current->task_clock, timer->resolution, current->in_kernel);
-        time_inc_clock(current->process->process_clock, timer->resolution, current->in_kernel);
+        time_inc_clock(current->task_clock, channel->interval, current->in_kernel);
+        time_inc_clock(current->process->process_clock, channel->interval, current->in_kernel);
     }
 
     if (atomic_load(&current->process->should_profile)) {
@@ -164,9 +164,9 @@ static void on_hw_sched_tick(struct hw_timer *timer, struct irq_context *context
     sched_tick(context->task_state);
 }
 
-static void on_hw_clock_tick(struct hw_timer *timer, struct irq_context *context) {
+static void on_hw_clock_tick(struct hw_timer_channel *channel, struct irq_context *context) {
     (void) context;
-    __inc_global_clocks(timer);
+    __inc_global_clocks(channel);
 }
 
 static void init_clocks() {
@@ -176,14 +176,14 @@ static void init_clocks() {
     struct hw_timer *clock_timer = hw_clock_timer();
     assert(clock_timer);
 
-    global_monotonic_clock.resolution = clock_timer->resolution;
-    global_realtime_clock.resolution = clock_timer->resolution;
+    clock_timer->ops->setup_interval_timer(clock_timer, 0, on_hw_clock_tick);
 
-    clock_timer->ops->setup_interval_timer(clock_timer, on_hw_clock_tick);
+    global_monotonic_clock.resolution = clock_timer->channels[0].interval;
+    global_realtime_clock.resolution = clock_timer->channels[0].interval;
 
     struct hw_timer *sched_timer = hw_sched_timer();
     assert(sched_timer);
 
-    sched_timer->ops->setup_interval_timer(sched_timer, on_hw_sched_tick);
+    sched_timer->ops->setup_interval_timer(sched_timer, 0, on_hw_sched_tick);
 }
 INIT_FUNCTION(init_clocks, time);

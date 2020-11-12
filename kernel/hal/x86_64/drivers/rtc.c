@@ -60,21 +60,17 @@ static void handle_rtc_interrupt(struct irq_context *context) {
 
     context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
 
-    struct hw_timer *self = context->closure;
-    if (self->callback) {
-        self->callback(self, context);
+    struct hw_timer_channel *channel = context->closure;
+    if (channel->callback) {
+        channel->callback(channel, context);
     }
 }
 
-static struct irq_handler rtc_handler = {
-    .handler = &handle_rtc_interrupt,
-    .flags = IRQ_HANDLER_EXTERNAL,
-};
-
-static void rtc_setup_interval_timer(struct hw_timer *self, hw_timer_callback_t callback) {
-    self->callback = callback;
-    rtc_handler.closure = self;
-    register_irq_handler(&rtc_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
+static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {
+    struct hw_timer_channel *channel = &self->channels[channel_index];
+    init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL, self, HW_TIMER_INTERVAL,
+                          (struct timespec) { .tv_nsec = 976563 }, callback);
+    register_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     uint8_t rate = 6; // 1024 Hz
     uint64_t save = disable_interrupts_save();
@@ -145,9 +141,10 @@ static void detect_rtc(struct hw_device *parent) {
     // FIXME: seed a better RNG with this data
     srand(seconds_since_epoch);
 
-    struct hw_timer *device = create_hw_timer("RTC", parent, hw_device_id_isa(), HW_TIMER_INTERVAL, &rtc_ops);
+    struct hw_timer *device =
+        create_hw_timer("RTC", parent, hw_device_id_isa(), HW_TIMER_INTERVAL, (struct timespec) { .tv_nsec = 976563 }, &rtc_ops, 1);
     device->hw_device.status = HW_STATUS_ACTIVE;
-    register_hw_timer(device, (struct timespec) { .tv_nsec = 976563 });
+    register_hw_timer(device);
 }
 
 static struct isa_driver rtc_driver = {

@@ -6,17 +6,32 @@ static struct list_node s_hw_timers = INIT_LIST(s_hw_timers);
 static struct hw_timer *s_hw_sched_timer;
 static struct hw_timer *s_hw_clock_timer;
 
-struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, struct hw_timer_ops *ops) {
-    struct hw_timer *hw_timer = calloc(1, sizeof(struct hw_timer));
+struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags,
+                                 struct timespec max_resolution, struct hw_timer_ops *ops, size_t num_channels) {
+    struct hw_timer *hw_timer = calloc(1, sizeof(struct hw_timer) + num_channels * sizeof(struct hw_timer_channel));
     hw_timer->flags = flags;
     hw_timer->ops = ops;
+    hw_timer->num_channels = num_channels;
+    hw_timer->max_resolution = max_resolution;
     init_hw_device(&hw_timer->hw_device, name, parent, id, NULL, NULL);
     return hw_timer;
 }
 
-void register_hw_timer(struct hw_timer *timer, struct timespec resoltuion) {
-    timer->resolution = resoltuion;
+void register_hw_timer(struct hw_timer *timer) {
     list_append(&s_hw_timers, &timer->list);
+}
+
+void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_function, int irq_flags, struct hw_timer *timer, int type,
+                           struct timespec interval, hw_timer_callback_t callback) {
+    channel->irq_handler.closure = channel;
+    channel->irq_handler.flags = irq_flags;
+    channel->irq_handler.handler = irq_function;
+
+    channel->callback = callback;
+    channel->interval = interval;
+    channel->timer = timer;
+    channel->type = type;
+    channel->valid = 1;
 }
 
 void select_hw_timers(void) {
