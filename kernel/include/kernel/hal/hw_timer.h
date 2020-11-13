@@ -42,6 +42,7 @@ struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, str
                                  struct timespec max_resolution, struct hw_timer_ops *ops, size_t num_channels);
 void register_hw_timer(struct hw_timer *timer);
 void select_hw_timers(void);
+int show_hw_timer_channel(struct hw_timer_channel *channel, char *buffer, size_t buffer_length);
 int show_hw_timer(struct hw_timer *timer, char *buffer, size_t buffer_length);
 
 void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_function, int irq_flags, struct hw_timer *timer, int type,

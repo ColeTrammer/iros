@@ -17,8 +17,41 @@ struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, str
     return hw_timer;
 }
 
-int show_hw_timer(struct hw_timer *timer, char *buffer, size_t buffer_length) {
-    return snprintf(buffer, buffer_length, "%s\n", timer->hw_device.name);
+int show_hw_timer_channel(struct hw_timer_channel *channel, char *buffer, size_t _buffer_length) {
+    int position = 0;
+    int buffer_length = _buffer_length;
+
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    VALID: %d\n", !!channel->valid);
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    TYPE: %s\n",
+                         channel->type == HW_TIMER_INTERVAL ? "interval" : "single_shot");
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    INTERVAL_S: %ld\n", channel->interval.tv_sec);
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    INTERVAL_NS: %ld\n", channel->interval.tv_nsec);
+
+    return position;
+}
+
+int show_hw_timer(struct hw_timer *timer, char *buffer, size_t _buffer_length) {
+    int position = 0;
+    int buffer_length = _buffer_length;
+    char aux_buffer[512];
+
+    show_hw_device(&timer->hw_device, aux_buffer, sizeof(aux_buffer));
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "%s\n", aux_buffer);
+
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  SCHED_TIMER: %d\n", timer == hw_sched_timer());
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  CLOCK_TIMER: %d\n", timer == hw_clock_timer());
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  MAX_PRECISION_NS: %ld\n", timer->max_resolution.tv_nsec);
+    position +=
+        snprintf(buffer + position, MAX(buffer_length - position, 0), "  FLAGS: single_shot=%d interval=%d per_cpu=%d has_counter=%d\n",
+                 !!(timer->flags & HW_TIMER_SINGLE_SHOT), !!(timer->flags & HW_TIMER_INTERVAL), !!(timer->flags & HW_TIMER_PER_CPU),
+                 !!(timer->flags & HW_TIMER_HAS_COUNTER));
+
+    for (size_t i = 0; i < timer->num_channels; i++) {
+        show_hw_timer_channel(&timer->channels[i], aux_buffer, sizeof(aux_buffer));
+        position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  CHANNEL: %lu\n%s", i, aux_buffer);
+    }
+
+    return position;
 }
 
 void register_hw_timer(struct hw_timer *timer) {
