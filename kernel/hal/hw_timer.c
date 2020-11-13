@@ -17,6 +17,10 @@ struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, str
     return hw_timer;
 }
 
+int show_hw_timer(struct hw_timer *timer, char *buffer, size_t buffer_length) {
+    return snprintf(buffer, buffer_length, "%s\n", timer->hw_device.name);
+}
+
 void register_hw_timer(struct hw_timer *timer) {
     list_append(&s_hw_timers, &timer->list);
 }

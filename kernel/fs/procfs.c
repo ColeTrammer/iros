@@ -17,6 +17,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/block.h>
 #include <kernel/hal/hw_device.h>
+#include <kernel/hal/hw_timer.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/mem/page_frame_allocator.h>
@@ -516,6 +517,18 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_devtree(struct procfs
     return buffer;
 }
 
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_hwtimers(struct procfs_data *data __attribute__((unused)),
+                                                                    struct process *process __attribute__((unused)), bool need_buffer) {
+    struct procfs_buffer buffer = { .buffer = need_buffer ? malloc(PAGE_SIZE) : NULL, .size = 0 };
+    char aux_buffer[512];
+    list_for_each_entry(hw_timers(), hw_timer, struct hw_timer, list) {
+        show_hw_timer(hw_timer, aux_buffer, sizeof(aux_buffer));
+        buffer.size +=
+            snprintf(buffer.buffer ? buffer.buffer + buffer.size : NULL, buffer.buffer ? PAGE_SIZE - buffer.size : 0, "%s\n", aux_buffer);
+    }
+    return buffer;
+}
+
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_blockdev(struct procfs_data *data __attribute__((unused)),
                                                                     struct process *process __attribute__((unused)), bool need_buffer) {
     struct procfs_buffer buffer = { .buffer = need_buffer ? malloc(PAGE_SIZE) : NULL, .size = 0 };
@@ -699,6 +712,10 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         data = blockdev_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *hwtimers_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_hwtimers);
+        data = hwtimers_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
         struct inode *filesystems_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_filesystems);
         data = filesystems_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
@@ -727,6 +744,7 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         fs_put_dirent_cache(parent->dirent_cache, cpus_inode, "cpus", strlen("cpus"));
         fs_put_dirent_cache(parent->dirent_cache, devtree_inode, "devtree", strlen("devtree"));
         fs_put_dirent_cache(parent->dirent_cache, filesystems_inode, "filesystems", strlen("filesystems"));
+        fs_put_dirent_cache(parent->dirent_cache, hwtimers_inode, "hwtimers", strlen("hwtimers"));
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));
         fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
         fs_put_dirent_cache(parent->dirent_cache, kheap_inode, "kheap", strlen("kheap"));
