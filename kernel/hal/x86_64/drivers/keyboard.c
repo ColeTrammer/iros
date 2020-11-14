@@ -429,16 +429,16 @@ static struct key_code_entry shift_map[KEYBOARD_RELEASED_OFFSET] = {
     { KEY_NULL, '\0' },
 };
 
-static void handle_keyboard_interrupt(struct irq_context *context) {
+static bool handle_keyboard_interrupt(struct irq_context *context) {
     struct kbd_data *data = context->closure;
 
     uint8_t scan_code;
     if (data->controller->read_byte(&scan_code)) {
-        return;
+        return true;
     }
 
     if (scan_code == PS2_ACK) {
-        return;
+        return true;
     } else if (scan_code == KEYBOARD_EXTENDED) {
         data->extended_key_code = true;
     } else if (scan_code < KEYBOARD_RELEASED_OFFSET) {
@@ -504,6 +504,8 @@ static void handle_keyboard_interrupt(struct irq_context *context) {
 
         add_keyboard_event(data, &data->event);
     }
+
+    return true;
 }
 
 static void kbd_create(struct ps2_controller *controller, struct ps2_port *port) {

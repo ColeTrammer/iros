@@ -36,12 +36,12 @@ static void add_mouse_event(struct mouse_data *data, struct mouse_event *event) 
     net_drop_umessage(umessage);
 }
 
-void on_interrupt(struct irq_context *context) {
+bool on_interrupt(struct irq_context *context) {
     struct mouse_data *data = context->closure;
 
     uint8_t mouse_data;
     if (data->controller->read_byte(&mouse_data)) {
-        return;
+        return true;
     }
 
     if (vmmouse_is_enabled()) {
@@ -49,20 +49,20 @@ void on_interrupt(struct irq_context *context) {
         if (event) {
             add_mouse_event(data, event);
         }
-        return;
+        return true;
     }
 
     switch (data->index) {
         case 0:
             if (!(mouse_data & (1 << 3))) {
-                return;
+                return true;
             }
             // Fall through
         case 1:
         case 2:
             data->buffer[data->index++] = mouse_data;
             if (data->has_scroll_wheel) {
-                return;
+                return true;
             }
             break;
         case 3:
@@ -122,6 +122,7 @@ void on_interrupt(struct irq_context *context) {
     data->event.scale_mode = SCALE_NONE;
     add_mouse_event(data, &data->event);
     data->index = 0;
+    return true;
 }
 
 static void mouse_create(struct ps2_controller *controller, struct ps2_port *port) {

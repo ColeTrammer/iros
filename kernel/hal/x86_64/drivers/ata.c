@@ -422,7 +422,7 @@ static struct block_device_ops ata_dma_ops = {
     .sync_page = ata_sync_page_dma,
 };
 
-static void ata_handle_irq(struct irq_context *context) {
+static bool ata_handle_irq(struct irq_context *context) {
     struct ata_device_data *data = context->closure;
 
     uint8_t status = inb(data->port_info->io_base + ATA_STATUS_OFFSET);
@@ -431,6 +431,7 @@ static void ata_handle_irq(struct irq_context *context) {
     }
 
     wake_up_all(&data->wait_queue);
+    return true;
 }
 
 static void ata_init_device(struct hw_device *parent, struct ata_port_info *info, uint16_t *identity, size_t i) {

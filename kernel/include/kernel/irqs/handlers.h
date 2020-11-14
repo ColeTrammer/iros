@@ -6,6 +6,9 @@
 
 #define IRQ_HANDLER_EXTERNAL 1
 #define IRQ_HANDLER_ALL_CPUS 2
+#define IRQ_HANDLER_SHARED   4
+
+#include <kernel/util/list.h>
 
 // clang-format off
 #include <kernel/arch/arch.h>
@@ -39,16 +42,16 @@ struct irq_context {
     void *closure;
 };
 
-typedef void (*irq_function_t)(struct irq_context *context);
+typedef bool (*irq_function_t)(struct irq_context *context);
 
 struct irq_handler {
     irq_function_t handler;
     int flags;
     void *closure;
-    struct irq_handler *next;
+    struct list_node list;
 };
 
-void arch_system_call_entry(struct irq_context *irq_context);
+bool arch_system_call_entry(struct irq_context *irq_context);
 
 struct irq_controller *create_irq_controller(int irq_start, int irq_end, struct irq_controller_ops *ops, void *private);
 void register_irq_controller(struct irq_controller *controller);

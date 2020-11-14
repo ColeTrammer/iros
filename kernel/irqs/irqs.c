@@ -6,7 +6,7 @@
 
 // #define GENERIC_IRQ_DEBUG
 
-static struct irq_handler *irq_handlers[255];
+struct list_node irq_handlers[255];
 static struct irq_controller *controllers;
 
 static struct irq_controller *find_irq_controller(int irq) {
@@ -57,7 +57,6 @@ struct irq_handler *create_irq_handler(irq_function_t function, int flags, void 
     h->handler = function;
     h->flags = flags;
     h->closure = closure;
-    h->next = NULL;
     return h;
 }
 
@@ -68,8 +67,14 @@ void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
     debug_log("Registering IRQ handler: [ %d, %#.8X ]\n", irq_num, irq_handler_object->flags);
 #endif /* GENERIC_IRQ_DEBUG */
 
-    irq_handler_object->next = irq_handlers[irq_num];
-    irq_handlers[irq_num] = irq_handler_object;
+    struct list_node *handlers = &irq_handlers[irq_num];
+    if (!list_is_empty(handlers)) {
+        assert(irq_handler_object->flags & IRQ_HANDLER_SHARED);
+        list_append(handlers, &irq_handler_object->list);
+        return;
+    }
+
+    list_append(handlers, &irq_handler_object->list);
 
     struct irq_controller *controller = find_irq_controller(irq_num);
     if (irq_handler_object->flags & IRQ_HANDLER_EXTERNAL) {
@@ -82,9 +87,6 @@ void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
         assert(!irq_is_external(irq_num));
         assert(!controller);
     }
-
-    // FIXME: support potentially overlapping irq mappings
-    assert(irq_handler_object->next == NULL);
 }
 
 void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t error_code) {
@@ -95,32 +97,43 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
     debug_log("Got IRQ: [ %u, %d ]\n", get_current_processor()->id, irq_number);
 #endif /* GENERIC_IRQ_DEBUG */
 
-    struct irq_handler *handler = irq_handlers[irq_number];
-    if (!handler) {
+    struct list_node *handlers = &irq_handlers[irq_number];
+    if (list_is_empty(handlers)) {
         debug_log("No IRQ handler registered: [ %d ]\n", irq_number);
         return;
     }
 
-    struct irq_context context = {
-        .closure = handler->closure, .error_code = error_code, .irq_num = irq_number, .task_state = task_state, .irq_controller = NULL
-    };
+    list_for_each_entry(handlers, handler, struct irq_handler, list) {
+        struct irq_context context = {
+            .closure = handler->closure,
+            .error_code = error_code,
+            .irq_num = irq_number,
+            .task_state = task_state,
+            .irq_controller = NULL,
+        };
 
-    if (handler->flags & IRQ_HANDLER_EXTERNAL) {
-        struct irq_controller *controller = find_irq_controller(irq_number);
-        if (!controller) {
-            debug_log("External IRQ has no controller: [ %d ]\n", irq_number);
+        if (handler->flags & IRQ_HANDLER_EXTERNAL) {
+            struct irq_controller *controller = find_irq_controller(irq_number);
+            if (!controller) {
+                debug_log("External IRQ has no controller: [ %d ]\n", irq_number);
+                return;
+            }
+
+            if (!controller->ops->is_valid_irq(controller, irq_number)) {
+                debug_log("External IRQ was invalid: [ %d ]\n", irq_number);
+                return;
+            }
+
+            context.irq_controller = controller;
+            if (handler->handler(&context)) {
+                controller->ops->send_eoi(controller, irq_number);
+                return;
+            }
+        } else {
+            handler->handler(&context);
             return;
         }
-
-        if (!controller->ops->is_valid_irq(controller, irq_number)) {
-            debug_log("External IRQ was invalid: [ %d ]\n", irq_number);
-            return;
-        }
-
-        context.irq_controller = controller;
-        handler->handler(&context);
-        controller->ops->send_eoi(controller, irq_number);
-    } else {
-        handler->handler(&context);
     }
+
+    debug_log("No IRQ handler wanted to handle: [ %d ]\n", irq_number);
 }

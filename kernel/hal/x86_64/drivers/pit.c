@@ -14,13 +14,14 @@
 #include <kernel/time/clock.h>
 #include <kernel/util/init.h>
 
-void handle_pit_interrupt(struct irq_context *context) {
+bool handle_pit_interrupt(struct irq_context *context) {
     context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
 
     struct hw_timer_channel *channel = context->closure;
     if (channel->callback) {
         channel->callback(channel, context);
     }
+    return true;
 }
 
 static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {

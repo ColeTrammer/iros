@@ -54,7 +54,7 @@ static inline struct rtc_time read_rtc_time() {
     return current;
 }
 
-static void handle_rtc_interrupt(struct irq_context *context) {
+static bool handle_rtc_interrupt(struct irq_context *context) {
     outb(RTC_REGISTER_SELECT, RTC_STATUS_C);
     inb(RTC_DATA);
 
@@ -64,6 +64,8 @@ static void handle_rtc_interrupt(struct irq_context *context) {
     if (channel->callback) {
         channel->callback(channel, context);
     }
+
+    return true;
 }
 
 static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {

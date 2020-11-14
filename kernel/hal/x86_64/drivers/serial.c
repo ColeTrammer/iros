@@ -18,8 +18,9 @@
 #include <kernel/irqs/handlers.h>
 #include <kernel/util/init.h>
 
-static void handle_serial_interrupt(struct irq_context *context __attribute__((unused))) {
+static bool handle_serial_interrupt(struct irq_context *context __attribute__((unused))) {
     debug_log("Recieved Serial Port Interrupt: Status [ %#.2X ]\n", inb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_STATUS_OFFSET)));
+    return true;
 }
 
 static void serial_write_character(char c) {
@@ -71,9 +72,14 @@ static ssize_t serial_write(struct fs_device *device, off_t offset, const void *
     return (ssize_t) len;
 }
 
-static struct fs_device_ops serial_ops = { .write = &serial_write };
+static struct fs_device_ops serial_ops = {
+    .write = &serial_write,
+};
 
-static struct irq_handler serial_handler = { .handler = &handle_serial_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
+static struct irq_handler serial_handler = {
+    .handler = &handle_serial_interrupt,
+    .flags = IRQ_HANDLER_EXTERNAL,
+};
 
 static void init_serial_port_device(struct hw_device *parent, dev_t port, size_t i) {
     /* Could be anything */

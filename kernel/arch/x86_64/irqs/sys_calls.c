@@ -2065,7 +2065,8 @@ void do_syscall(struct task_state *task_state) {
     return;
 }
 
-void arch_system_call_entry(struct irq_context *context) {
+bool arch_system_call_entry(struct irq_context *context) {
     struct task_state *task_state = context->task_state;
     do_syscall(task_state);
+    return true;
 }

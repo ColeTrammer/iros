@@ -153,22 +153,29 @@ void init_local_apic(void) {
     local_apic->spurious_interrupt_vector_register = 0x1FF;
 }
 
-static void handle_ipi(struct irq_context *context) {
+static bool handle_ipi(struct irq_context *context) {
     (void) context;
 
     handle_processor_messages();
+    return true;
 }
 
-static void handle_panic(struct irq_context *context) {
+static bool handle_panic(struct irq_context *context) {
     context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
 
     disable_interrupts();
-    for (;;) {
-    }
+    for (;;) {}
+    return true;
 }
 
-static struct irq_handler ipi_handler = { .handler = handle_ipi, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
-static struct irq_handler panic_handler = { .handler = handle_panic, .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS };
+static struct irq_handler ipi_handler = {
+    .handler = handle_ipi,
+    .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS,
+};
+static struct irq_handler panic_handler = {
+    .handler = handle_panic,
+    .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS,
+};
 
 static bool lapic_is_valid_irq(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused))) {
     return true;

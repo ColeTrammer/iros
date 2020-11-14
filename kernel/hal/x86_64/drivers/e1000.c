@@ -139,7 +139,7 @@ static void e1000_recieve() {
     }
 }
 
-static void handle_interrupt(struct irq_context *context __attribute__((unused))) {
+static bool handle_interrupt(struct irq_context *context __attribute__((unused))) {
     struct e1000_data *data = interface->private_data;
 
     write_command(data, E1000_CTRL_IMASK, 1);
@@ -154,6 +154,8 @@ static void handle_interrupt(struct irq_context *context __attribute__((unused))
     } else if (status & 0x80) {
         e1000_recieve();
     }
+
+    return true;
 }
 
 static struct link_layer_address e1000_get_link_layer_address(struct e1000_data *data) {
@@ -179,7 +181,10 @@ static struct network_interface_ops e1000_ops = {
     .get_link_layer_broadcast_address = net_ethernet_interface_get_link_layer_broadcast_address,
 };
 
-static struct irq_handler e1000_handler = { .handler = &handle_interrupt, .flags = IRQ_HANDLER_EXTERNAL };
+static struct irq_handler e1000_handler = {
+    .handler = &handle_interrupt,
+    .flags = IRQ_HANDLER_EXTERNAL,
+};
 
 void init_intel_e1000(struct pci_configuration *config) {
     debug_log("Found intel e1000 netword card: [ %u ]\n", config->interrupt_line);
