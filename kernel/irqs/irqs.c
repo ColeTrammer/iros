@@ -126,7 +126,9 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
 
             context.irq_controller = controller;
             if (handler->handler(&context)) {
-                controller->ops->send_eoi(controller, irq_number);
+                if (!(handler->flags & IRQ_HANDLER_NO_EOI)) {
+                    controller->ops->send_eoi(controller, irq_number);
+                }
                 return;
             }
         } else {

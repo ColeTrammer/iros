@@ -7,6 +7,7 @@
 #define IRQ_HANDLER_EXTERNAL 1
 #define IRQ_HANDLER_ALL_CPUS 2
 #define IRQ_HANDLER_SHARED   4
+#define IRQ_HANDLER_NO_EOI   8
 
 #include <kernel/util/list.h>
 

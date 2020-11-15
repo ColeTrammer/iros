@@ -70,7 +70,7 @@ static bool handle_rtc_interrupt(struct irq_context *context) {
 
 static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {
     struct hw_timer_channel *channel = &self->channels[channel_index];
-    init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL, self, HW_TIMER_INTERVAL,
+    init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL|IRQ_HANDLER_NO_EOI, self, HW_TIMER_INTERVAL,
                           (struct timespec) { .tv_nsec = 976563 }, callback);
     register_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 

@@ -28,7 +28,7 @@ static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, h
     struct hw_timer_channel *channel = &self->channels[channel_index];
     assert(!channel->valid);
 
-    init_hw_timer_channel(channel, handle_pit_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS, self, HW_TIMER_INTERVAL,
+    init_hw_timer_channel(channel, handle_pit_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS|IRQ_HANDLER_NO_EOI, self, HW_TIMER_INTERVAL,
                           (struct timespec) { .tv_nsec = 1000000 }, callback);
     register_irq_handler(&channel->irq_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 

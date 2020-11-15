@@ -174,7 +174,7 @@ static struct irq_handler ipi_handler = {
 };
 static struct irq_handler panic_handler = {
     .handler = handle_panic,
-    .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS,
+    .flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS | IRQ_HANDLER_NO_EOI,
 };
 
 static bool lapic_is_valid_irq(struct irq_controller *self __attribute__((unused)), int irq_num __attribute__((unused))) {
