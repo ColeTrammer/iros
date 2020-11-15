@@ -13,7 +13,7 @@ parted -s -- os_2.img \
     mklabel gpt \
     mkpart P1 ext2 1Mib -34s
 
-LOOP_DEV=$(losetup -o 1048576 -f os_2.img --show)
+LOOP_DEV=$(losetup -o 1048576 --sizelimit=$((199 * 1048576 - 34 * 512)) -f os_2.img --show)
 mke2fs "$LOOP_DEV"
 
 cleanup() {
