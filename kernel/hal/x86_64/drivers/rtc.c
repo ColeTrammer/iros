@@ -69,16 +69,17 @@ static bool handle_rtc_interrupt(struct irq_context *context) {
 }
 
 static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {
+    uint8_t divisor = RTC_GET_DIVISOR(1000);
+
     struct hw_timer_channel *channel = &self->channels[channel_index];
     init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI, self, HW_TIMER_INTERVAL,
-                          (struct timespec) { .tv_nsec = 976563 }, callback);
+                          RTC_GET_FREQUENCY(divisor), callback);
     register_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
-    uint8_t rate = 6; // 1024 Hz
     uint64_t save = disable_interrupts_save();
 
     uint8_t prev_a = rtc_get(RTC_STATUS_A);
-    rtc_set(RTC_STATUS_A, (prev_a & 0xF0) | rate);
+    rtc_set(RTC_STATUS_A, (prev_a & 0xF0) | divisor);
 
     uint8_t prev_b = rtc_get(RTC_STATUS_B);
     rtc_set(RTC_STATUS_B, prev_b | 0x40);

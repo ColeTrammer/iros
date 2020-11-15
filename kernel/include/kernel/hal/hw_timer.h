@@ -18,6 +18,7 @@ struct hw_timer_ops {
 struct hw_timer_channel {
     struct irq_handler irq_handler;
     struct timespec interval;
+    long frequency;
     hw_timer_callback_t callback;
     struct hw_timer *timer;
     int type : 31;
@@ -47,7 +48,7 @@ int show_hw_timer_channel(struct hw_timer_channel *channel, char *buffer, size_t
 int show_hw_timer(struct hw_timer *timer, char *buffer, size_t buffer_length);
 
 void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_function, int irq_flags, struct hw_timer *timer, int type,
-                           struct timespec interval, hw_timer_callback_t callback);
+                           long frequency, hw_timer_callback_t callback);
 
 struct hw_timer *hw_sched_timer(void);
 struct hw_timer *hw_clock_timer(void);

@@ -2,6 +2,7 @@
 #define _KERNEL_ARCH_X86_64_ASM_UTILS_H 1
 
 #include <assert.h>
+#include <limits.h>
 #include <stdatomic.h>
 #include <stdint.h>
 
@@ -199,6 +200,10 @@ static inline void set_msr(uint32_t msr, uint64_t value) {
                  :
                  : "r"(msr), "r"((uint32_t)(value & 0xFFFFFFFFU)), "r"((uint32_t)(value >> 32))
                  : "rax", "rcx", "rdx", "memory");
+}
+
+static inline uint32_t ilog2(uint32_t x) {
+    return sizeof(x) * CHAR_BIT - __builtin_clz(x) - 1;
 }
 
 #endif /* _KERNEL_ARCH_X86_64_ASM_UTILS_H */

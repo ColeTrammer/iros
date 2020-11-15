@@ -30,7 +30,9 @@
 
 #define RTC_DISABLE_NMI 0x80
 
-#define RTC_BASE_RATE 32768
+#define RTC_BASE_RATE              32768
+#define RTC_GET_DIVISOR(frequency) (1 + ilog2(RTC_BASE_RATE / (frequency)))
+#define RTC_GET_FREQUENCY(divisor) (RTC_BASE_RATE >> ((divisor) -1))
 
 static inline uint8_t rtc_get(uint8_t reg) {
     outb(RTC_REGISTER_SELECT, RTC_DISABLE_NMI | (reg & 0x7F));

@@ -25,15 +25,16 @@ bool handle_pit_interrupt(struct irq_context *context) {
 }
 
 static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {
+    uint16_t divisor = PIT_GET_DIVISOR(1000);
+
     struct hw_timer_channel *channel = &self->channels[channel_index];
     assert(!channel->valid);
 
     init_hw_timer_channel(channel, handle_pit_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS | IRQ_HANDLER_NO_EOI, self,
-                          HW_TIMER_INTERVAL, (struct timespec) { .tv_nsec = 1000000 }, callback);
+                          HW_TIMER_INTERVAL, PIT_GET_FREQUENCY(divisor), callback);
     register_irq_handler(&channel->irq_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     PIT_SET_MODE(0, PIT_ACCESS_LOHI, PIT_MODE_SQUARE_WAVE);
-    uint16_t divisor = PIT_BASE_RATE / 1000;
     outb(PIT_CHANNEL_0, divisor & 0xFF);
     outb(PIT_CHANNEL_0, divisor >> 8);
 }

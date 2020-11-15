@@ -25,6 +25,7 @@ int show_hw_timer_channel(struct hw_timer_channel *channel, char *buffer, size_t
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    VALID: %d\n", !!channel->valid);
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    TYPE: %s\n",
                          channel->type == HW_TIMER_INTERVAL ? "interval" : "single_shot");
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    FREQUENCY: %ld\n", channel->frequency);
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    INTERVAL_S: %ld\n", channel->interval.tv_sec);
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    INTERVAL_NS: %ld\n", channel->interval.tv_nsec);
 
@@ -61,13 +62,14 @@ void register_hw_timer(struct hw_timer *timer) {
 }
 
 void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_function, int irq_flags, struct hw_timer *timer, int type,
-                           struct timespec interval, hw_timer_callback_t callback) {
+                           long frequency, hw_timer_callback_t callback) {
     channel->irq_handler.closure = channel;
     channel->irq_handler.flags = irq_flags;
     channel->irq_handler.handler = irq_function;
 
     channel->callback = callback;
-    channel->interval = interval;
+    channel->frequency = frequency;
+    channel->interval = (struct timespec) { .tv_nsec = 1000000000 / frequency };
     channel->timer = timer;
     channel->type = type;
     channel->valid = 1;
