@@ -159,7 +159,7 @@ void task_align_fpu(struct task *task) {
 void arch_init_idle_task(struct task *idle_task, struct processor *processor) {
     idle_task->arch_task.task_state.stack_state.rip = (uint64_t) &kernel_idle;
     idle_task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
-    idle_task->arch_task.task_state.stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
+    idle_task->arch_task.task_state.stack_state.rflags = get_rflags() & ~INTERRUPTS_ENABLED_FLAG;
     idle_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
     idle_task->arch_task.task_state.stack_state.rsp = processor->kernel_stack->end;
 

@@ -100,7 +100,7 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
     struct list_node *handlers = &irq_handlers[irq_number];
     if (list_is_empty(handlers)) {
         debug_log("No IRQ handler registered: [ %d ]\n", irq_number);
-        return;
+        goto irq_done;
     }
 
     list_for_each_entry(handlers, handler, struct irq_handler, list) {
@@ -116,12 +116,12 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
             struct irq_controller *controller = find_irq_controller(irq_number);
             if (!controller) {
                 debug_log("External IRQ has no controller: [ %d ]\n", irq_number);
-                return;
+                goto irq_done;
             }
 
             if (!controller->ops->is_valid_irq(controller, irq_number)) {
                 debug_log("External IRQ was invalid: [ %d ]\n", irq_number);
-                return;
+                goto irq_done;
             }
 
             context.irq_controller = controller;
@@ -129,13 +129,15 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
                 if (!(handler->flags & IRQ_HANDLER_NO_EOI)) {
                     controller->ops->send_eoi(controller, irq_number);
                 }
-                return;
+                goto irq_done;
             }
         } else {
             handler->handler(&context);
-            return;
+            goto irq_done;
         }
     }
 
     debug_log("No IRQ handler wanted to handle: [ %d ]\n", irq_number);
+
+irq_done:;
 }
