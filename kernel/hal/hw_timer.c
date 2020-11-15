@@ -6,13 +6,14 @@ static struct list_node s_hw_timers = INIT_LIST(s_hw_timers);
 static struct hw_timer *s_hw_sched_timer;
 static struct hw_timer *s_hw_clock_timer;
 
-struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags,
-                                 struct timespec max_resolution, struct hw_timer_ops *ops, size_t num_channels) {
+struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, long base_frequency,
+                                 struct hw_timer_ops *ops, size_t num_channels) {
     struct hw_timer *hw_timer = calloc(1, sizeof(struct hw_timer) + num_channels * sizeof(struct hw_timer_channel));
     hw_timer->flags = flags;
     hw_timer->ops = ops;
     hw_timer->num_channels = num_channels;
-    hw_timer->max_resolution = max_resolution;
+    hw_timer->base_frequency = base_frequency;
+    hw_timer->max_resolution = (struct timespec) { .tv_nsec = 1000000000 / base_frequency };
     init_hw_device(&hw_timer->hw_device, name, parent, id, NULL, NULL);
     return hw_timer;
 }
@@ -40,6 +41,7 @@ int show_hw_timer(struct hw_timer *timer, char *buffer, size_t _buffer_length) {
 
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  SCHED_TIMER: %d\n", timer == hw_sched_timer());
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  CLOCK_TIMER: %d\n", timer == hw_clock_timer());
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  BASE_FREQUENCY: %ld\n", timer->base_frequency);
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  MAX_PRECISION_NS: %ld\n", timer->max_resolution.tv_nsec);
     position +=
         snprintf(buffer + position, MAX(buffer_length - position, 0), "  FLAGS: single_shot=%d interval=%d per_cpu=%d has_counter=%d\n",

@@ -28,13 +28,14 @@ static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, h
     struct hw_timer_channel *channel = &self->channels[channel_index];
     assert(!channel->valid);
 
-    init_hw_timer_channel(channel, handle_pit_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS|IRQ_HANDLER_NO_EOI, self, HW_TIMER_INTERVAL,
-                          (struct timespec) { .tv_nsec = 1000000 }, callback);
+    init_hw_timer_channel(channel, handle_pit_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS | IRQ_HANDLER_NO_EOI, self,
+                          HW_TIMER_INTERVAL, (struct timespec) { .tv_nsec = 1000000 }, callback);
     register_irq_handler(&channel->irq_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     PIT_SET_MODE(0, PIT_ACCESS_LOHI, PIT_MODE_SQUARE_WAVE);
-    outb(PIT_CHANNEL_0, PIT_GET_DIVISOR(1) & 0xFF);
-    outb(PIT_CHANNEL_0, PIT_GET_DIVISOR(1) >> 8);
+    uint16_t divisor = PIT_BASE_RATE / 1000;
+    outb(PIT_CHANNEL_0, divisor & 0xFF);
+    outb(PIT_CHANNEL_0, divisor >> 8);
 }
 
 static struct hw_timer_ops pit_ops = {
@@ -42,8 +43,8 @@ static struct hw_timer_ops pit_ops = {
 };
 
 static void detect_pit(struct hw_device *parent) {
-    struct hw_timer *device = create_hw_timer("PIT", parent, hw_device_id_isa(), HW_TIMER_INTERVAL | HW_TIMER_SINGLE_SHOT,
-                                              (struct timespec) { .tv_nsec = 100000 }, &pit_ops, 1);
+    struct hw_timer *device =
+        create_hw_timer("PIT", parent, hw_device_id_isa(), HW_TIMER_INTERVAL | HW_TIMER_SINGLE_SHOT, PIT_BASE_RATE, &pit_ops, 1);
     device->hw_device.status = HW_STATUS_ACTIVE;
     register_hw_timer(device);
 }

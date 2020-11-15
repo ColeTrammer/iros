@@ -30,6 +30,8 @@
 
 #define RTC_DISABLE_NMI 0x80
 
+#define RTC_BASE_RATE 32768
+
 static inline uint8_t rtc_get(uint8_t reg) {
     outb(RTC_REGISTER_SELECT, RTC_DISABLE_NMI | (reg & 0x7F));
     return inb(RTC_DATA);

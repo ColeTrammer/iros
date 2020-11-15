@@ -27,7 +27,6 @@
 
 #define PIT_SET_MODE(ch, ac, m) outb(PIT_COMMAND, PIT_CHANNEL(ch) | PIT_ACCESS(ac) | PIT_MODE(m))
 
-#define PIT_BASE_RATE       (1.193182 * 1000.0) // Hz
-#define PIT_GET_DIVISOR(ms) ((int) (((ms) *PIT_BASE_RATE) + 0.5))
+#define PIT_BASE_RATE 1193182
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_PIT_H */

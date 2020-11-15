@@ -32,14 +32,15 @@ struct hw_timer {
 #define HW_TIMER_HAS_COUNTER 8
     int flags;
     struct hw_timer_ops *ops;
+    long base_frequency;
     struct timespec max_resolution;
     struct list_node list;
     size_t num_channels;
     struct hw_timer_channel channels[0];
 };
 
-struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags,
-                                 struct timespec max_resolution, struct hw_timer_ops *ops, size_t num_channels);
+struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, long base_frequency,
+                                 struct hw_timer_ops *ops, size_t num_channels);
 void register_hw_timer(struct hw_timer *timer);
 void select_hw_timers(void);
 int show_hw_timer_channel(struct hw_timer_channel *channel, char *buffer, size_t buffer_length);

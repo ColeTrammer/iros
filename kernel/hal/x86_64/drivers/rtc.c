@@ -70,7 +70,7 @@ static bool handle_rtc_interrupt(struct irq_context *context) {
 
 static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {
     struct hw_timer_channel *channel = &self->channels[channel_index];
-    init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL|IRQ_HANDLER_NO_EOI, self, HW_TIMER_INTERVAL,
+    init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI, self, HW_TIMER_INTERVAL,
                           (struct timespec) { .tv_nsec = 976563 }, callback);
     register_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
@@ -143,8 +143,7 @@ static void detect_rtc(struct hw_device *parent) {
     // FIXME: seed a better RNG with this data
     srand(seconds_since_epoch);
 
-    struct hw_timer *device =
-        create_hw_timer("RTC", parent, hw_device_id_isa(), HW_TIMER_INTERVAL, (struct timespec) { .tv_nsec = 976563 }, &rtc_ops, 1);
+    struct hw_timer *device = create_hw_timer("RTC", parent, hw_device_id_isa(), HW_TIMER_INTERVAL, RTC_BASE_RATE, &rtc_ops, 1);
     device->hw_device.status = HW_STATUS_ACTIVE;
     register_hw_timer(device);
 }
