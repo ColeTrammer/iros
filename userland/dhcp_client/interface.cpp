@@ -211,6 +211,11 @@ void Interface::handle_dhcp_response(const dhcp_packet& packet) {
 
     switch (dhcp_message_type) {
         case DHCP_MESSAGE_TYPE_OFFER:
+            if (!m_state.set_default_gateway) {
+                m_state.set_default_gateway = true;
+                m_state.default_gateway = server_ip;
+            }
+
             if (!send_dhcp(DHCP_MESSAGE_TYPE_REQUEST, server_ip.s_addr)) {
                 syslog(LOG_WARNING, "Failed to send DHCP request packet");
             }
