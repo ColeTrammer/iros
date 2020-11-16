@@ -214,7 +214,7 @@ void init_intel_e1000(struct pci_configuration *config) {
     init_transmit_descriptors(data);
 
     write_command(data, E1000_CTRL_IMASK, 0x1F6DC);
-    write_command(data, E1000_CTRL_IMASK, 0xFF & ~4);
+    write_command(data, E1000_CTRL_IMASK, (1 << 2) | (1 << 7));
     read_command(data, 0xC0);
 
     register_irq_handler(&e1000_handler, config->interrupt_line + EXTERNAL_IRQ_OFFSET);
