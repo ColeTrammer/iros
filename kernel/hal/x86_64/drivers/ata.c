@@ -393,15 +393,15 @@ static bool ata_device_exists(struct ata_port_info *info, uint16_t *buf) {
     ata_select_device(info);
     ata_wait(info);
 
+    if (!ata_indentify(info, buf)) {
+        return false;
+    }
+
     uint8_t cl = inb(info->io_base + ATA_CYLINDER_LOW_OFFSET);
     uint8_t ch = inb(info->io_base + ATA_CYLINDER_HIGH_OFFSET);
 
     /* Otherwise it is a different device */
     if (cl != 0 || ch != 0) {
-        return false;
-    }
-
-    if (!ata_indentify(info, buf)) {
         return false;
     }
 
