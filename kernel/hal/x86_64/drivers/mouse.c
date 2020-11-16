@@ -59,6 +59,8 @@ bool on_interrupt(struct irq_context *context) {
             }
             // Fall through
         case 1:
+            data->buffer[data->index++] = mouse_data;
+            return true;
         case 2:
             data->buffer[data->index++] = mouse_data;
             if (data->has_scroll_wheel) {
@@ -73,10 +75,12 @@ bool on_interrupt(struct irq_context *context) {
             assert(false);
     }
 
-    if (data->buffer[3] == 0x1) {
-        data->event.scroll_state = SCROLL_DOWN;
-    } else if (data->buffer[3] == 0xFF) {
-        data->event.scroll_state = SCROLL_UP;
+    if (data->has_scroll_wheel) {
+        if (data->buffer[3] == 0x1) {
+            data->event.scroll_state = SCROLL_DOWN;
+        } else if (data->buffer[3] == 0xFF) {
+            data->event.scroll_state = SCROLL_UP;
+        }
     }
 
     if (data->buffer[0] & 0x1) {
