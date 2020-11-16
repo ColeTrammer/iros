@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,6 +61,9 @@ void Connection::read_from_server() {
     uint8_t buffer[0x4000];
     ssize_t ret = read(m_fd, buffer, sizeof(buffer));
     if (ret < 0) {
+        if (errno == EAGAIN) {
+            return;
+        }
         perror("read");
         assert(false);
     }
