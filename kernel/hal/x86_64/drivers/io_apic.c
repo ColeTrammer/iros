@@ -101,8 +101,8 @@ void create_io_apic(uint8_t acpi_id, uintptr_t base_phys_addr, uint32_t irq_base
     io_apic->id = acpi_id;
 
     uint32_t id_register = read_io_apic_register(io_apic, IO_APIC_REGISTER_ID);
-    uint8_t id = (id_register & 0x00F00000U) >> 24U;
-    if (id_register != id) {
+    uint8_t id = (id_register & 0x00F000000U) >> 24U;
+    if (acpi_id != id) {
         debug_log("IO APIC ids don't match: [ %u, %u ]\n", acpi_id, id);
         free(io_apic);
         return;
