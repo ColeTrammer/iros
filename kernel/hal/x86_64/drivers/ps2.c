@@ -10,7 +10,7 @@
 #include <kernel/util/init.h>
 
 static int ps2_read(uint8_t *byte) {
-    int us_timeout = 300;
+    int us_timeout = 1000;
     for (int i = 0; i < us_timeout; i++) {
         if (inb(PS2_IO_STATUS) & PS2_STATUS_OUTPUT_FULL) {
             *byte = inb(PS2_IO_DATA);
@@ -22,7 +22,7 @@ static int ps2_read(uint8_t *byte) {
 }
 
 static int ps2_out(uint16_t port, uint8_t byte) {
-    int us_timeout = 300;
+    int us_timeout = 1000;
     for (int i = 0; i < us_timeout; i++) {
         if (!(inb(PS2_IO_STATUS) & PS2_STATUS_INPUT_FULL)) {
             outb(port, byte);
@@ -80,7 +80,7 @@ static struct ps2_driver *ps2_find_driver(struct ps2_controller *controller, int
     }
 
     ps2_read(&port->id.byte0);
-    ps2_read(&port->id.byte0);
+    ps2_read(&port->id.byte1);
 
     list_for_each_entry(&ps2_drivers, driver, struct ps2_driver, list) {
         for (size_t i = 0; i < driver->device_id_count; i++) {
