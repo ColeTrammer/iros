@@ -13,6 +13,7 @@ initrd/files
 *.log
 *.img
 *.pcap
+*.lock
 test
 
 # GDB
