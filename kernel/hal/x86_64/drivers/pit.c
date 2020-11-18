@@ -39,8 +39,23 @@ static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, h
     outb(PIT_CHANNEL_0, divisor >> 8);
 }
 
+static void pit_disable_channel(struct hw_timer *self, int channel_index) {
+    struct hw_timer_channel *channel = &self->channels[channel_index];
+
+    uint64_t save = disable_interrupts_save();
+    unregister_irq_handler(&channel->irq_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
+
+    PIT_SET_MODE(0, PIT_ACCESS_LOHI, PIT_MODE_INTERRUPT);
+    outb(PIT_CHANNEL_0, 0);
+    outb(PIT_CHANNEL_0, 0);
+
+    interrupts_restore(save);
+    destroy_hw_timer_channel(channel);
+}
+
 static struct hw_timer_ops pit_ops = {
     .setup_interval_timer = &pit_setup_interval_timer,
+    .disable_channel = &pit_disable_channel,
 };
 
 static void detect_pit(struct hw_device *parent) {

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <kernel/hal/hw_timer.h>
 
@@ -75,6 +76,10 @@ void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_
     channel->timer = timer;
     channel->type = type;
     channel->valid = 1;
+}
+
+void destroy_hw_timer_channel(struct hw_timer_channel *channel) {
+    memset(channel, 0, sizeof(struct hw_timer_channel));
 }
 
 void select_hw_timers(void) {

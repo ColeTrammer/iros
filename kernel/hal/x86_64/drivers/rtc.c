@@ -88,8 +88,24 @@ static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, h
     interrupts_restore(save);
 }
 
+static void rtc_disable_channel(struct hw_timer *self, int channel_index) {
+    struct hw_timer_channel *channel = &self->channels[channel_index];
+
+    uint64_t save = disable_interrupts_save();
+
+    unregister_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
+
+    uint8_t prev_b = rtc_get(RTC_STATUS_B);
+    rtc_set(RTC_STATUS_B, prev_b & ~0x40);
+
+    outb(RTC_REGISTER_SELECT, 0);
+    interrupts_restore(save);
+    destroy_hw_timer_channel(channel);
+}
+
 static struct hw_timer_ops rtc_ops = {
     .setup_interval_timer = rtc_setup_interval_timer,
+    .disable_channel = rtc_disable_channel,
 };
 
 static void detect_rtc(struct hw_device *parent) {

@@ -13,6 +13,7 @@ typedef void (*hw_timer_callback_t)(struct hw_timer_channel *timer, struct irq_c
 
 struct hw_timer_ops {
     void (*setup_interval_timer)(struct hw_timer *self, int channel_index, hw_timer_callback_t callback);
+    void (*disable_channel)(struct hw_timer *self, int channel_index);
     void (*calibrate)(struct hw_timer *self, struct hw_timer *reference);
 };
 
@@ -51,6 +52,7 @@ int show_hw_timer(struct hw_timer *timer, char *buffer, size_t buffer_length);
 
 void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_function, int irq_flags, struct hw_timer *timer, int type,
                            long frequency, hw_timer_callback_t callback);
+void destroy_hw_timer_channel(struct hw_timer_channel *channel);
 
 struct hw_timer *hw_sched_timer(void);
 struct hw_timer *hw_clock_timer(void);

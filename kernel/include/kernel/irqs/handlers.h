@@ -59,6 +59,7 @@ void register_irq_controller(struct irq_controller *controller);
 
 struct irq_handler *create_irq_handler(irq_function_t function, int flags, void *closure);
 void register_irq_handler(struct irq_handler *handler, int irq_num);
+void unregister_irq_handler(struct irq_handler *handler, int irq_num);
 
 void init_irq_handlers(void);
 

@@ -89,6 +89,16 @@ void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
     }
 }
 
+void unregister_irq_handler(struct irq_handler *handler, int irq_num) {
+    list_remove(&handler->list);
+
+    struct list_node *handlers = &irq_handlers[irq_num];
+    struct irq_controller *controller = find_irq_controller(irq_num);
+    if (list_is_empty(handlers) && controller) {
+        controller->ops->set_irq_enabled(controller, irq_num, false);
+    }
+}
+
 void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t error_code) {
     (void) task_state;
     (void) error_code;
