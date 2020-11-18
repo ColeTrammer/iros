@@ -13,6 +13,7 @@ typedef void (*hw_timer_callback_t)(struct hw_timer_channel *timer, struct irq_c
 
 struct hw_timer_ops {
     void (*setup_interval_timer)(struct hw_timer *self, int channel_index, hw_timer_callback_t callback);
+    void (*calibrate)(struct hw_timer *self, struct hw_timer *reference);
 };
 
 struct hw_timer_channel {
@@ -27,10 +28,11 @@ struct hw_timer_channel {
 
 struct hw_timer {
     struct hw_device hw_device;
-#define HW_TIMER_SINGLE_SHOT 1
-#define HW_TIMER_INTERVAL    2
-#define HW_TIMER_PER_CPU     4
-#define HW_TIMER_HAS_COUNTER 8
+#define HW_TIMER_SINGLE_SHOT       1
+#define HW_TIMER_INTERVAL          2
+#define HW_TIMER_PER_CPU           4
+#define HW_TIMER_HAS_COUNTER       8
+#define HW_TIMER_NEEDS_CALIBRATION 16
     int flags;
     struct hw_timer_ops *ops;
     long base_frequency;

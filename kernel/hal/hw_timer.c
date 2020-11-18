@@ -13,7 +13,9 @@ struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, str
     hw_timer->ops = ops;
     hw_timer->num_channels = num_channels;
     hw_timer->base_frequency = base_frequency;
-    hw_timer->max_resolution = (struct timespec) { .tv_nsec = 1000000000 / base_frequency };
+    if (base_frequency != 0) {
+        hw_timer->max_resolution = (struct timespec) { .tv_nsec = 1000000000 / base_frequency };
+    }
     init_hw_device(&hw_timer->hw_device, name, parent, id, NULL, NULL);
     return hw_timer;
 }

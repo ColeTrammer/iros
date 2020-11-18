@@ -1,6 +1,7 @@
 #include <stdatomic.h>
 #include <string.h>
 
+#include <kernel/hal/hw_timer.h>
 #include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/acpi.h>
 #include <kernel/hal/x86_64/drivers/local_apic.h>
@@ -145,12 +146,23 @@ void local_apic_start_aps(void) {
     }
 }
 
+static struct hw_timer *lapic_timer;
+
+static struct hw_timer_ops lapic_timer_ops = {};
+
 void init_local_apic(void) {
     struct acpi_info *info = acpi_get_info();
     set_msr(MSR_LOCAL_APIC_BASE, info->local_apic_address | APIC_MSR_ENABLE_LOCAL);
 
     volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
     local_apic->spurious_interrupt_vector_register = 0x1FF;
+
+    if (!lapic_timer) {
+        lapic_timer = create_hw_timer("APIC Timer", root_hw_device(), hw_device_id_isa(),
+                                      HW_TIMER_SINGLE_SHOT | HW_TIMER_INTERVAL | HW_TIMER_PER_CPU | HW_TIMER_NEEDS_CALIBRATION, 0,
+                                      &lapic_timer_ops, processor_count());
+        register_hw_timer(lapic_timer);
+    }
 }
 
 static bool handle_ipi(struct irq_context *context) {
