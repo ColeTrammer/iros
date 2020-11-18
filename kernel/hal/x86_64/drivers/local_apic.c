@@ -161,7 +161,7 @@ void init_local_apic(void) {
         lapic_timer = create_hw_timer("APIC Timer", root_hw_device(), hw_device_id_isa(),
                                       HW_TIMER_SINGLE_SHOT | HW_TIMER_INTERVAL | HW_TIMER_PER_CPU | HW_TIMER_NEEDS_CALIBRATION, 0,
                                       &lapic_timer_ops, processor_count());
-        register_hw_timer(lapic_timer);
+        // register_hw_timer(lapic_timer);
     }
 }
 
@@ -204,12 +204,17 @@ static void lapic_map_irq(struct irq_controller *self __attribute__((unused)), i
                           int flags __attribute__((unused))) {}
 
 static struct irq_controller_ops local_apic_controller_ops = {
-    .is_valid_irq = &lapic_is_valid_irq, .send_eoi = &lapic_send_eoi, .set_irq_enabled = &lapic_set_irq_enabled, .map_irq = &lapic_map_irq
+    .is_valid_irq = &lapic_is_valid_irq,
+    .send_eoi = &lapic_send_eoi,
+    .set_irq_enabled = &lapic_set_irq_enabled,
+    .map_irq = &lapic_map_irq,
 };
 
-static struct irq_controller local_apic_controller = { .irq_start = LOCAL_APIC_IRQ_OFFSET,
-                                                       .irq_end = LOCAL_APIC_IRQ_END,
-                                                       .ops = &local_apic_controller_ops };
+static struct irq_controller local_apic_controller = {
+    .irq_start = LOCAL_APIC_IRQ_OFFSET,
+    .irq_end = LOCAL_APIC_IRQ_END,
+    .ops = &local_apic_controller_ops,
+};
 
 void init_local_apic_irq_handlers(void) {
     register_irq_controller(&local_apic_controller);

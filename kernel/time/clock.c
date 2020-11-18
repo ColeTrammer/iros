@@ -176,7 +176,7 @@ static void init_clocks() {
     struct hw_timer *clock_timer = hw_clock_timer();
     assert(clock_timer);
 
-    clock_timer->ops->setup_interval_timer(clock_timer, 0, on_hw_clock_tick);
+    clock_timer->ops->setup_interval_timer(clock_timer, 0, 1000, on_hw_clock_tick, false);
 
     global_monotonic_clock.resolution = clock_timer->channels[0].interval;
     global_realtime_clock.resolution = clock_timer->channels[0].interval;
@@ -184,6 +184,6 @@ static void init_clocks() {
     struct hw_timer *sched_timer = hw_sched_timer();
     assert(sched_timer);
 
-    sched_timer->ops->setup_interval_timer(sched_timer, 0, on_hw_sched_tick);
+    sched_timer->ops->setup_interval_timer(sched_timer, 0, 1000, on_hw_sched_tick, true);
 }
 INIT_FUNCTION(init_clocks, time);

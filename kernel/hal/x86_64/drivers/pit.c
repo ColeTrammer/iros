@@ -24,14 +24,16 @@ bool handle_pit_interrupt(struct irq_context *context) {
     return true;
 }
 
-static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, hw_timer_callback_t callback) {
-    uint16_t divisor = PIT_GET_DIVISOR(1000);
+static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, long frequency, hw_timer_callback_t callback,
+                                     bool broadcast_irqs) {
+    uint16_t divisor = PIT_GET_DIVISOR(frequency);
 
     struct hw_timer_channel *channel = &self->channels[channel_index];
     assert(!channel->valid);
 
-    init_hw_timer_channel(channel, handle_pit_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_ALL_CPUS | IRQ_HANDLER_NO_EOI, self,
-                          HW_TIMER_INTERVAL, PIT_GET_FREQUENCY(divisor), callback);
+    init_hw_timer_channel(channel, handle_pit_interrupt,
+                          IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI | (broadcast_irqs ? IRQ_HANDLER_ALL_CPUS : 0), self, HW_TIMER_INTERVAL,
+                          PIT_GET_FREQUENCY(divisor), callback);
     register_irq_handler(&channel->irq_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     PIT_SET_MODE(0, PIT_ACCESS_LOHI, PIT_MODE_SQUARE_WAVE);
