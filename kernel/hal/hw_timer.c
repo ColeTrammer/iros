@@ -72,7 +72,9 @@ void init_hw_timer_channel(struct hw_timer_channel *channel, irq_function_t irq_
 
     channel->callback = callback;
     channel->frequency = frequency;
-    channel->interval = (struct timespec) { .tv_nsec = 1000000000 / frequency };
+    if (frequency != 0) {
+        channel->interval = (struct timespec) { .tv_nsec = 1000000000 / frequency };
+    }
     channel->timer = timer;
     channel->type = type;
     channel->valid = 1;

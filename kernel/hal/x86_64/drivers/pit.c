@@ -41,6 +41,22 @@ static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, l
     outb(PIT_CHANNEL_0, divisor >> 8);
 }
 
+static void pit_setup_one_shot_timer(struct hw_timer *self, int channel_index, struct timespec delay, hw_timer_callback_t callback) {
+    unsigned long ticks = time_divide(delay, PIT_BASE_RATE);
+    assert(ticks <= UINT16_MAX);
+
+    struct hw_timer_channel *channel = &self->channels[channel_index];
+    assert(!channel->valid);
+
+    init_hw_timer_channel(channel, handle_pit_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI, self, HW_TIMER_SINGLE_SHOT, 0,
+                          callback);
+    register_irq_handler(&channel->irq_handler, PIT_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
+
+    PIT_SET_MODE(0, PIT_ACCESS_LOHI, PIT_MODE_INTERRUPT);
+    outb(PIT_CHANNEL_0, ticks & 0xFF);
+    outb(PIT_CHANNEL_0, (ticks >> 8) & 0xFF);
+}
+
 static void pit_disable_channel(struct hw_timer *self, int channel_index) {
     struct hw_timer_channel *channel = &self->channels[channel_index];
 
@@ -57,6 +73,7 @@ static void pit_disable_channel(struct hw_timer *self, int channel_index) {
 
 static struct hw_timer_ops pit_ops = {
     .setup_interval_timer = &pit_setup_interval_timer,
+    .setup_one_shot_timer = &pit_setup_one_shot_timer,
     .disable_channel = &pit_disable_channel,
 };
 
