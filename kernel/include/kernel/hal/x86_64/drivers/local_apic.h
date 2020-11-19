@@ -47,11 +47,29 @@ union local_apic_icr {
 
 _Static_assert(sizeof(union local_apic_icr) == sizeof(uint64_t));
 
+struct local_apic_timer_lvt {
+    uint32_t vector : 8;
+    uint32_t reserved0 : 4;
+    uint32_t delivery_status : 1;
+    uint32_t reserved1 : 3;
+    uint32_t mask : 1;
+#define LOCAL_APIC_TIMER_MODE_ONE_SHOT
+#define LOCAL_APIC_TIMER_MODE_PERIODIC
+#define LOCAL_APIC_TIMER_MODE_TSC_DEADLINE
+    uint32_t mode : 2;
+};
+
 struct local_apic {
 #define APIC_LOCAL_STRUCT_ENTRY(name) \
     union {                           \
         uint32_t name;                \
         uint8_t __padding_##name[16]; \
+    }
+
+#define APIC_LOCAL_STRUCT_ENTRY_TYPE(name, t) \
+    union {                                   \
+        t name;                               \
+        uint8_t __padding_##name[16];         \
     }
 
     APIC_LOCAL_STRUCT_ENTRY(reserved) reserved0[2];
@@ -73,7 +91,7 @@ struct local_apic {
     APIC_LOCAL_STRUCT_ENTRY(reserved) reserved2[6];
     APIC_LOCAL_STRUCT_ENTRY(lvt_corrected_machine_check_interrupt_register);
     APIC_LOCAL_STRUCT_ENTRY(value) interrupt_command_register[2];
-    APIC_LOCAL_STRUCT_ENTRY(lvt_timer_register);
+    APIC_LOCAL_STRUCT_ENTRY_TYPE(lvt_timer_register, struct local_apic_timer_lvt);
     APIC_LOCAL_STRUCT_ENTRY(lvt_thermal_sensor_register);
     APIC_LOCAL_STRUCT_ENTRY(lvt_performance_monitoring_counters_register);
     APIC_LOCAL_STRUCT_ENTRY(value) lvt_lint_register[2];
@@ -85,6 +103,7 @@ struct local_apic {
     APIC_LOCAL_STRUCT_ENTRY(reserved) reserved4[1];
 
 #undef APIC_LOCAL_STRUCT_ENTRY
+#undef APIC_LOCAL_STRUCT_ENTRY_TYPE
 } __attribute__((packed));
 
 _Static_assert(sizeof(struct local_apic) == 0x400);

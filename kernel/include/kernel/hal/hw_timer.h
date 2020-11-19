@@ -45,6 +45,10 @@ struct hw_timer {
     struct hw_timer_channel channels[0];
 };
 
+static inline int hw_timer_channel_index(struct hw_timer_channel *channel) {
+    return ((uintptr_t)(channel - channel->timer->channels) / sizeof(*channel));
+}
+
 struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, long base_frequency,
                                  struct hw_timer_ops *ops, size_t num_channels);
 void register_hw_timer(struct hw_timer *timer);

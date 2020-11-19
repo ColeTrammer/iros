@@ -147,8 +147,36 @@ void local_apic_start_aps(void) {
 }
 
 static struct hw_timer *lapic_timer;
+static struct wait_queue lapic_timer_wq = WAIT_QUEUE_INITIALIZER(lapic_timer_wq);
 
-static struct hw_timer_ops lapic_timer_ops = {};
+static void lapic_do_wakeup(struct hw_timer_channel *channel, struct irq_context *context) {
+    (void) context;
+
+    channel->timer->ops->disable_channel(channel->timer, hw_timer_channel_index(channel));
+    wake_up_all(&lapic_timer_wq);
+}
+
+static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *reference) {
+    struct acpi_info *info = acpi_get_info();
+    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+
+    local_apic->divide_configuration_register = 0b0011;
+
+    reference->ops->setup_one_shot_timer(reference, 0, (struct timespec) { .tv_nsec = 10 * 1000000 }, lapic_do_wakeup);
+
+    local_apic->initial_count_register = 0xFFFFFFFFU;
+    wait_simple(get_current_task(), &lapic_timer_wq);
+
+    local_apic->lvt_timer_register.mask = 1;
+    uint32_t elapsed_ticks = 0xFFFFFFFFU - local_apic->current_count_register;
+
+    debug_log("Ticks Elapsed: [ %u ]\n", elapsed_ticks);
+    (void) self;
+}
+
+static struct hw_timer_ops lapic_timer_ops = {
+    .calibrate = lapic_timer_calibrate,
+};
 
 void init_local_apic(void) {
     struct acpi_info *info = acpi_get_info();
