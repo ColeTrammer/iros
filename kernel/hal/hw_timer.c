@@ -97,7 +97,6 @@ void select_hw_timers(void) {
     list_for_each_entry_safe(&s_hw_timers, timer, struct hw_timer, list) {
         if (timer->flags & HW_TIMER_NEEDS_CALIBRATION) {
             timer->ops->calibrate(timer, s_hw_reference_timer);
-            list_remove(&timer->list);
         }
     }
 

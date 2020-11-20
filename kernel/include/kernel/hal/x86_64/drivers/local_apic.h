@@ -6,6 +6,7 @@
 #define LOCAL_APIC_IRQ_OFFSET 48
 #define LOCAL_APIC_IPI_IRQ    48
 #define LOCAL_APIC_PANIC_IRQ  49
+#define LOCAL_APIC_TIMER_IRQ  50
 #define LOCAL_APIC_IRQ_END    63
 
 union local_apic_icr {
@@ -53,9 +54,9 @@ struct local_apic_timer_lvt {
     uint32_t delivery_status : 1;
     uint32_t reserved1 : 3;
     uint32_t mask : 1;
-#define LOCAL_APIC_TIMER_MODE_ONE_SHOT
-#define LOCAL_APIC_TIMER_MODE_PERIODIC
-#define LOCAL_APIC_TIMER_MODE_TSC_DEADLINE
+#define LOCAL_APIC_TIMER_MODE_ONE_SHOT     0b00
+#define LOCAL_APIC_TIMER_MODE_PERIODIC     0b01
+#define LOCAL_APIC_TIMER_MODE_TSC_DEADLINE 0b10
     uint32_t mode : 2;
 };
 

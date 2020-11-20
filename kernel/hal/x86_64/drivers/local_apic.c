@@ -14,6 +14,7 @@
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 
 void local_apic_send_eoi(void) {
     struct acpi_info *info = acpi_get_info();
@@ -156,6 +157,79 @@ static void lapic_do_wakeup(struct hw_timer_channel *channel, struct irq_context
     wake_up_all(&lapic_timer_wq);
 }
 
+bool handle_lapic_timer_interrupt(struct irq_context *context) {
+    context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
+
+    struct hw_timer_channel *channel = context->closure;
+    if (channel->callback) {
+        channel->callback(channel, context);
+    }
+    return true;
+}
+
+static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_index, long frequency, hw_timer_callback_t callback,
+                                             bool broadcast_irqs) {
+    struct timespec interval = (struct timespec) { .tv_nsec = 1000000000 / frequency };
+    unsigned long ticks = time_divide(interval, self->base_frequency);
+    assert(ticks <= UINT32_MAX);
+
+    struct hw_timer_channel *channel = &self->channels[channel_index];
+    assert(!channel->valid);
+
+    init_hw_timer_channel(channel, handle_lapic_timer_interrupt,
+                          IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI | (broadcast_irqs ? IRQ_HANDLER_ALL_CPUS : 0), self, HW_TIMER_INTERVAL,
+                          frequency, callback);
+    register_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
+
+    struct acpi_info *info = acpi_get_info();
+    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+
+    local_apic->lvt_timer_register = (struct local_apic_timer_lvt) {
+        .mode = LOCAL_APIC_TIMER_MODE_ONE_SHOT,
+        .vector = LOCAL_APIC_TIMER_IRQ,
+    };
+    local_apic->divide_configuration_register = 0b0011;
+    local_apic->initial_count_register = ticks;
+}
+
+static void lapic_timer_setup_one_shot_timer(struct hw_timer *self, int channel_index, struct timespec delay,
+                                             hw_timer_callback_t callback) {
+    unsigned long ticks = time_divide(delay, self->base_frequency);
+    assert(ticks <= UINT32_MAX);
+
+    struct hw_timer_channel *channel = &self->channels[channel_index];
+    assert(!channel->valid);
+
+    init_hw_timer_channel(channel, handle_lapic_timer_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI, self, HW_TIMER_SINGLE_SHOT, 0,
+                          callback);
+    register_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
+
+    struct acpi_info *info = acpi_get_info();
+    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+
+    local_apic->lvt_timer_register = (struct local_apic_timer_lvt) {
+        .mode = LOCAL_APIC_TIMER_MODE_ONE_SHOT,
+        .vector = LOCAL_APIC_TIMER_IRQ,
+    };
+    local_apic->divide_configuration_register = 0b0011;
+    local_apic->initial_count_register = ticks;
+}
+
+static void lapic_timer_disable_channel(struct hw_timer *self, int channel_index) {
+    struct hw_timer_channel *channel = &self->channels[channel_index];
+
+    struct acpi_info *info = acpi_get_info();
+    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+
+    uint64_t save = disable_interrupts_save();
+    unregister_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
+
+    local_apic->lvt_timer_register.mask = 1;
+
+    interrupts_restore(save);
+    destroy_hw_timer_channel(channel);
+}
+
 static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *reference) {
     struct acpi_info *info = acpi_get_info();
     volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
@@ -170,11 +244,15 @@ static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *refere
     local_apic->lvt_timer_register.mask = 1;
     uint32_t elapsed_ticks = 0xFFFFFFFFU - local_apic->current_count_register;
 
-    debug_log("Ticks Elapsed: [ %u ]\n", elapsed_ticks);
-    (void) self;
+    long frequency = 100 * elapsed_ticks;
+    self->base_frequency = frequency;
+    self->max_resolution = (struct timespec) { .tv_nsec = 1000000000 / frequency };
 }
 
 static struct hw_timer_ops lapic_timer_ops = {
+    .setup_interval_timer = lapic_timer_setup_interval_timer,
+    .setup_one_shot_timer = lapic_timer_setup_one_shot_timer,
+    .disable_channel = lapic_timer_disable_channel,
     .calibrate = lapic_timer_calibrate,
 };
 
@@ -189,6 +267,7 @@ void init_local_apic(void) {
         lapic_timer = create_hw_timer("APIC Timer", root_hw_device(), hw_device_id_isa(),
                                       HW_TIMER_SINGLE_SHOT | HW_TIMER_INTERVAL | HW_TIMER_PER_CPU | HW_TIMER_NEEDS_CALIBRATION, 0,
                                       &lapic_timer_ops, processor_count());
+        lapic_timer->hw_device.status = HW_STATUS_ACTIVE;
         register_hw_timer(lapic_timer);
     }
 }
