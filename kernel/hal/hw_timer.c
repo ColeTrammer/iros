@@ -4,6 +4,7 @@
 #include <kernel/hal/hw_timer.h>
 
 static struct list_node s_hw_timers = INIT_LIST(s_hw_timers);
+static struct hw_timer *s_hw_reference_timer;
 static struct hw_timer *s_hw_sched_timer;
 static struct hw_timer *s_hw_clock_timer;
 
@@ -85,6 +86,21 @@ void destroy_hw_timer_channel(struct hw_timer_channel *channel) {
 }
 
 void select_hw_timers(void) {
+    list_for_each_entry(&s_hw_timers, timer, struct hw_timer, list) {
+        if (!(timer->flags & HW_TIMER_NEEDS_CALIBRATION) && !!(timer->flags & HW_TIMER_SINGLE_SHOT)) {
+            debug_log("Selected reference timer: [ %s ]\n", timer->hw_device.name);
+            s_hw_reference_timer = timer;
+            break;
+        }
+    }
+
+    list_for_each_entry_safe(&s_hw_timers, timer, struct hw_timer, list) {
+        if (timer->flags & HW_TIMER_NEEDS_CALIBRATION) {
+            timer->ops->calibrate(timer, s_hw_reference_timer);
+            list_remove(&timer->list);
+        }
+    }
+
     list_for_each_entry(&s_hw_timers, timer, struct hw_timer, list) {
         if (timer->flags & HW_TIMER_SINGLE_SHOT) {
             debug_log("Selected scheduler timer: [ %s ]\n", timer->hw_device.name);

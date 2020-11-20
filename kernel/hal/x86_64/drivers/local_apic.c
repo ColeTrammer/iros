@@ -189,7 +189,7 @@ void init_local_apic(void) {
         lapic_timer = create_hw_timer("APIC Timer", root_hw_device(), hw_device_id_isa(),
                                       HW_TIMER_SINGLE_SHOT | HW_TIMER_INTERVAL | HW_TIMER_PER_CPU | HW_TIMER_NEEDS_CALIBRATION, 0,
                                       &lapic_timer_ops, processor_count());
-        // register_hw_timer(lapic_timer);
+        register_hw_timer(lapic_timer);
     }
 }
 
