@@ -4,14 +4,17 @@
 #include <stddef.h>
 #include <string.h>
 
+#include <kernel/hal/hw_timer.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/vm_allocator.h>
+#include <kernel/proc/profile.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/task_finalizer.h>
 #include <kernel/proc/user_mutex.h>
 #include <kernel/sched/task_sched.h>
+#include <kernel/time/clock.h>
 #include <kernel/util/spinlock.h>
 #include <kernel/util/validators.h>
 
@@ -23,6 +26,49 @@ void init_task_sched() {
     // This only becomes needed after scheduling is enabled
     init_processes();
     init_user_mutexes();
+}
+
+extern uint64_t idle_ticks;
+extern uint64_t user_ticks;
+extern uint64_t kernel_ticks;
+
+static void on_hw_sched_tick(struct hw_timer_channel *channel, struct irq_context *context) {
+    struct task *current = get_current_task();
+    if (current == get_idle_task()) {
+        idle_ticks++;
+    } else if (current->in_kernel) {
+        current->process->rusage_self.ru_stime =
+            time_add_timeval(current->process->rusage_self.ru_stime, timeval_from_time(channel->interval));
+        kernel_ticks++;
+    } else {
+        current->process->rusage_self.ru_utime =
+            time_add_timeval(current->process->rusage_self.ru_utime, timeval_from_time(channel->interval));
+        user_ticks++;
+    }
+    // Check for NULL b/c kernel tasks don't have a clock
+    if (current->task_clock) {
+        time_inc_clock(current->task_clock, channel->interval, current->in_kernel);
+        time_inc_clock(current->process->process_clock, channel->interval, current->in_kernel);
+    }
+
+    if (atomic_load(&current->process->should_profile)) {
+        // To seriously support profiling multiple threads, the buffer and lock should be per-thread and not per-process.
+        spin_lock(&current->process->profile_buffer_lock);
+        // Make sure not to write into a stale buffer.
+        if (current->process->profile_buffer) {
+            proc_record_profile_stack(context->task_state);
+        }
+        spin_unlock(&current->process->profile_buffer_lock);
+    }
+
+    sched_tick(context->task_state);
+}
+
+void init_local_sched(struct processor *processor) {
+    struct hw_timer *sched_timer = hw_sched_timer();
+    assert(sched_timer);
+
+    sched_timer->ops->setup_interval_timer(sched_timer, processor->id, 1000, on_hw_sched_tick);
 }
 
 static unsigned int next_cpu_id;

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <kernel/hal/hw_timer.h>
+#include <kernel/hal/processor.h>
 
 static struct list_node s_hw_timers = INIT_LIST(s_hw_timers);
 static struct hw_timer *s_hw_reference_timer;
@@ -106,6 +107,11 @@ void select_hw_timers(void) {
             s_hw_sched_timer = timer;
             break;
         }
+    }
+
+    int count = processor_count();
+    if (count > 1) {
+        assert(s_hw_sched_timer->flags & HW_TIMER_PER_CPU);
     }
 
     list_for_each_entry(&s_hw_timers, timer, struct hw_timer, list) {

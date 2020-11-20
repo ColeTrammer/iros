@@ -55,6 +55,8 @@ void init_cpus(void) {
 
     // Parse the acpi tables now that dynamic memory allocation is available.
     init_acpi();
+
+    init_bsp(get_bsp());
 }
 
 void init_smp(void) {

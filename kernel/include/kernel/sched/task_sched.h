@@ -6,6 +6,7 @@ struct process;
 struct task_state;
 
 void init_task_sched(void);
+void init_local_sched(struct processor *processor);
 
 struct task *find_by_tid(int tgid, int tid);
 

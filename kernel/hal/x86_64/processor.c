@@ -21,6 +21,9 @@ void arch_init_processor(struct processor *processor) {
     init_local_apic();
     init_gdt(processor);
     init_idle_task(processor);
+    if (processor->id != 0) {
+        init_local_sched(processor);
+    }
 }
 
 void init_bsp(struct processor *processor) {

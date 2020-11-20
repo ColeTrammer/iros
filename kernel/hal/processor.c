@@ -10,6 +10,7 @@
 // #define SCHED_DEBUG
 
 static struct processor *processor_list;
+static struct processor *bsp;
 static int num_processors;
 static bool s_smp_enabled;
 
@@ -19,6 +20,10 @@ void set_smp_enabled() {
 
 bool smp_enabled(void) {
     return s_smp_enabled;
+}
+
+struct processor *get_bsp(void) {
+    return bsp;
 }
 
 struct processor *create_processor() {
@@ -51,7 +56,7 @@ void add_processor(struct processor *processor) {
     debug_log("Processor detected: [ %p, %u ]\n", processor, processor->id);
 
     if (processor->id == 0) {
-        init_bsp(processor);
+        bsp = processor;
     }
 }
 
@@ -170,14 +175,14 @@ void schedule_task_on_processor(struct task *task, struct processor *processor) 
 }
 
 void broadcast_flush_tlb(uintptr_t base, size_t pages) {
-    if (processor_count() <= 1) {
+    if (processor_count() <= 1 || !smp_enabled()) {
         return;
     }
 
     uint64_t save = disable_interrupts_save();
 
     struct processor *current = get_current_processor();
-    if (!current || !smp_enabled()) {
+    if (!current) {
         return;
     }
 

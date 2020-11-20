@@ -12,8 +12,7 @@ struct hw_timer;
 typedef void (*hw_timer_callback_t)(struct hw_timer_channel *timer, struct irq_context *context);
 
 struct hw_timer_ops {
-    void (*setup_interval_timer)(struct hw_timer *self, int channel_index, long frequency, hw_timer_callback_t callback,
-                                 bool broadcast_irqs);
+    void (*setup_interval_timer)(struct hw_timer *self, int channel_index, long frequency, hw_timer_callback_t callback);
     void (*setup_one_shot_timer)(struct hw_timer *self, int channel_index, struct timespec delay, hw_timer_callback_t callback);
     void (*disable_channel)(struct hw_timer *self, int channel_index);
     void (*calibrate)(struct hw_timer *self, struct hw_timer *reference);
@@ -46,7 +45,9 @@ struct hw_timer {
 };
 
 static inline int hw_timer_channel_index(struct hw_timer_channel *channel) {
-    return ((uintptr_t)(channel - channel->timer->channels) / sizeof(*channel));
+    int ret = channel - channel->timer->channels;
+    assert(ret >= 0 && ret < (int) channel->timer->num_channels);
+    return ret;
 }
 
 struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, long base_frequency,
