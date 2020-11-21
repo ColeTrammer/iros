@@ -4,10 +4,11 @@
 #include <sys/param.h>
 
 #include <kernel/fs/inode.h>
+#include <kernel/hal/hw_timer.h>
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
-#include <kernel/proc/process.h>
 #include <kernel/proc/profile.h>
+#include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
 // Must be called with process->profile_lock held.
@@ -39,6 +40,37 @@ void proc_record_memory_map(struct process *process) {
     spin_unlock(&process->profile_buffer_lock);
 }
 
+static int num_profiling;
+
+static void on_hw_profile_tick(struct hw_timer_channel *channel, struct irq_context *context) {
+    (void) channel;
+
+    struct task *current = get_current_task();
+    if (atomic_load(&current->process->should_profile)) {
+        // To seriously support profiling multiple threads, the buffer and lock should be per-thread and not per-process.
+        spin_lock(&current->process->profile_buffer_lock);
+        // Make sure not to write into a stale buffer.
+        if (current->process->profile_buffer) {
+            proc_record_profile_stack(context->task_state);
+        }
+        spin_unlock(&current->process->profile_buffer_lock);
+    }
+}
+
+void proc_maybe_start_profile_timer(void) {
+    if (atomic_fetch_add(&num_profiling, 1) == 0) {
+        struct hw_timer *timer = hw_profile_timer();
+        timer->ops->setup_interval_timer(timer, 0, 1000, on_hw_profile_tick);
+    }
+}
+
+void proc_maybe_stop_profile_timer(void) {
+    if (atomic_fetch_sub(&num_profiling, 1) == 1) {
+        struct hw_timer *timer = hw_profile_timer();
+        timer->ops->disable_channel(timer, 0);
+    }
+}
+
 int proc_enable_profiling(pid_t pid) {
     struct process *process = find_by_pid(pid);
     if (!process) {
@@ -61,6 +93,8 @@ int proc_enable_profiling(pid_t pid) {
         process->profile_buffer = profile_buffer;
         atomic_store(&process->should_profile, 1);
         proc_record_memory_map(process);
+
+        proc_maybe_start_profile_timer();
     }
     mutex_unlock(&process->lock);
 
@@ -113,6 +147,8 @@ int proc_disable_profiling(pid_t pid) {
         process->profile_buffer_size = 0;
         atomic_store(&process->should_profile, 0);
         spin_unlock(&process->profile_buffer_lock);
+
+        proc_maybe_stop_profile_timer();
     }
     mutex_unlock(&process->lock);
 

@@ -63,6 +63,8 @@ void destroy_hw_timer_channel(struct hw_timer_channel *channel);
 
 struct hw_timer *hw_sched_timer(void);
 struct hw_timer *hw_clock_timer(void);
+struct hw_timer *hw_profile_timer(void);
+struct hw_timer *hw_reference_timer(void);
 struct list_node *hw_timers(void);
 
 #endif /* _KERNEL_HAL_HW_TIMER_H */

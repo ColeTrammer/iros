@@ -51,16 +51,6 @@ static void on_hw_sched_tick(struct hw_timer_channel *channel, struct irq_contex
         time_inc_clock(current->process->process_clock, channel->interval, current->in_kernel);
     }
 
-    if (atomic_load(&current->process->should_profile)) {
-        // To seriously support profiling multiple threads, the buffer and lock should be per-thread and not per-process.
-        spin_lock(&current->process->profile_buffer_lock);
-        // Make sure not to write into a stale buffer.
-        if (current->process->profile_buffer) {
-            proc_record_profile_stack(context->task_state);
-        }
-        spin_unlock(&current->process->profile_buffer_lock);
-    }
-
     sched_tick(context->task_state);
 }
 

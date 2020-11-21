@@ -8,6 +8,7 @@ static struct list_node s_hw_timers = INIT_LIST(s_hw_timers);
 static struct hw_timer *s_hw_reference_timer;
 static struct hw_timer *s_hw_sched_timer;
 static struct hw_timer *s_hw_clock_timer;
+static struct hw_timer *s_hw_profile_timer;
 
 struct hw_timer *create_hw_timer(const char *name, struct hw_device *parent, struct hw_device_id id, int flags, long base_frequency,
                                  struct hw_timer_ops *ops, size_t num_channels) {
@@ -45,6 +46,8 @@ int show_hw_timer(struct hw_timer *timer, char *buffer, size_t _buffer_length) {
     show_hw_device(&timer->hw_device, aux_buffer, sizeof(aux_buffer));
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "%s\n", aux_buffer);
 
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  REFERENCE_TIMER: %d\n", timer == hw_reference_timer());
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  PROFILE_TIMER: %d\n", timer == hw_profile_timer());
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  SCHED_TIMER: %d\n", timer == hw_sched_timer());
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  CLOCK_TIMER: %d\n", timer == hw_clock_timer());
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "  BASE_FREQUENCY: %ld\n", timer->base_frequency);
@@ -121,6 +124,14 @@ void select_hw_timers(void) {
             break;
         }
     }
+
+    list_for_each_entry(&s_hw_timers, timer, struct hw_timer, list) {
+        if (timer != s_hw_clock_timer && timer != s_hw_sched_timer && !!(timer->flags & HW_TIMER_INTERVAL)) {
+            debug_log("Selected profile timer: [ %s ]\n", timer->hw_device.name);
+            s_hw_profile_timer = timer;
+            break;
+        }
+    }
 }
 
 struct hw_timer *hw_sched_timer(void) {
@@ -129,6 +140,14 @@ struct hw_timer *hw_sched_timer(void) {
 
 struct hw_timer *hw_clock_timer(void) {
     return s_hw_clock_timer;
+}
+
+struct hw_timer *hw_profile_timer(void) {
+    return s_hw_profile_timer;
+}
+
+struct hw_timer *hw_reference_timer(void) {
+    return s_hw_reference_timer;
 }
 
 struct list_node *hw_timers(void) {
