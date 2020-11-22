@@ -140,7 +140,7 @@ static void init_clocks() {
     struct hw_timer *clock_timer = hw_clock_timer();
     assert(clock_timer);
 
-    clock_timer->ops->setup_interval_timer(clock_timer, 0, 1000, on_hw_clock_tick);
+    clock_timer->ops->setup_interval_timer(clock_timer, 0, 1000, 0, on_hw_clock_tick);
 
     global_monotonic_clock.resolution = clock_timer->channels[0].interval;
     global_realtime_clock.resolution = clock_timer->channels[0].interval;

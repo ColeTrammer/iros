@@ -171,7 +171,8 @@ bool handle_lapic_timer_interrupt(struct irq_context *context) {
     return true;
 }
 
-static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_index, long frequency, hw_timer_callback_t callback) {
+static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_index, long frequency, int irq_flags,
+                                             hw_timer_callback_t callback) {
     struct timespec interval = (struct timespec) { .tv_nsec = 1000000000 / frequency };
     unsigned long ticks = time_divide(interval, self->base_frequency);
     assert(ticks <= UINT32_MAX);
@@ -179,17 +180,19 @@ static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_
     struct hw_timer_channel *channel = &self->channels[channel_index];
     assert(!channel->valid);
 
-    init_hw_timer_channel(channel, handle_lapic_timer_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI | IRQ_HANDLER_SHARED, self,
-                          HW_TIMER_INTERVAL, frequency, callback);
+    init_hw_timer_channel(channel, handle_lapic_timer_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI | IRQ_HANDLER_SHARED | irq_flags,
+                          self, HW_TIMER_INTERVAL, frequency, callback);
     register_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
 
     struct acpi_info *info = acpi_get_info();
     volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
 
-    local_apic->lvt_timer_register = (struct local_apic_timer_lvt) {
-        .mode = LOCAL_APIC_TIMER_MODE_ONE_SHOT,
-        .vector = LOCAL_APIC_TIMER_IRQ,
-    };
+    local_apic->lvt_timer_register.raw_value =
+        (struct local_apic_timer_lvt) {
+            .mode = LOCAL_APIC_TIMER_MODE_ONE_SHOT,
+            .vector = LOCAL_APIC_TIMER_IRQ,
+        }
+            .raw_value;
     local_apic->divide_configuration_register = 0b1011;
     local_apic->initial_count_register = ticks;
 }
@@ -209,10 +212,12 @@ static void lapic_timer_setup_one_shot_timer(struct hw_timer *self, int channel_
     struct acpi_info *info = acpi_get_info();
     volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
 
-    local_apic->lvt_timer_register = (struct local_apic_timer_lvt) {
-        .mode = LOCAL_APIC_TIMER_MODE_ONE_SHOT,
-        .vector = LOCAL_APIC_TIMER_IRQ,
-    };
+    local_apic->lvt_timer_register.raw_value =
+        (struct local_apic_timer_lvt) {
+            .mode = LOCAL_APIC_TIMER_MODE_ONE_SHOT,
+            .vector = LOCAL_APIC_TIMER_IRQ,
+        }
+            .raw_value;
     local_apic->divide_configuration_register = 0b1011;
     local_apic->initial_count_register = ticks;
 }
@@ -226,7 +231,7 @@ static void lapic_timer_disable_channel(struct hw_timer *self, int channel_index
     uint64_t save = disable_interrupts_save();
     unregister_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
 
-    local_apic->lvt_timer_register.mask = 1;
+    local_apic->lvt_timer_register.raw_value = (struct local_apic_timer_lvt) { .mask = 1 }.raw_value;
 
     interrupts_restore(save);
     destroy_hw_timer_channel(channel);
@@ -238,17 +243,20 @@ static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *refere
 
     local_apic->divide_configuration_register = 0b1011;
 
+    uint64_t save = disable_interrupts_save();
     reference->ops->setup_one_shot_timer(reference, 0, (struct timespec) { .tv_nsec = 10 * 1000000 }, lapic_do_wakeup);
 
     local_apic->initial_count_register = 0xFFFFFFFFU;
     wait_simple(get_current_task(), &lapic_timer_wq);
 
-    local_apic->lvt_timer_register.mask = 1;
+    local_apic->lvt_timer_register.raw_value = (struct local_apic_timer_lvt) { .mask = 1 }.raw_value;
     uint32_t elapsed_ticks = 0xFFFFFFFFU - local_apic->current_count_register;
 
     long frequency = 100 * elapsed_ticks;
     self->base_frequency = frequency;
     self->max_resolution = (struct timespec) { .tv_nsec = 1000000000 / frequency };
+
+    interrupts_restore(save);
 }
 
 static struct hw_timer_ops lapic_timer_ops = {
@@ -266,7 +274,6 @@ void init_local_apic(void) {
     local_apic->spurious_interrupt_vector_register = 0x1FF;
 
     if (!lapic_timer) {
-        debug_log("!!\n");
         lapic_timer = create_hw_timer("APIC Timer", root_hw_device(), hw_device_id_isa(),
                                       HW_TIMER_SINGLE_SHOT | HW_TIMER_INTERVAL | HW_TIMER_PER_CPU | HW_TIMER_NEEDS_CALIBRATION, 0,
                                       &lapic_timer_ops, processor_count());

@@ -48,19 +48,20 @@ static void on_hw_profile_tick(struct hw_timer_channel *channel, struct irq_cont
     struct task *current = get_current_task();
     if (atomic_load(&current->process->should_profile)) {
         // To seriously support profiling multiple threads, the buffer and lock should be per-thread and not per-process.
-        spin_lock(&current->process->profile_buffer_lock);
-        // Make sure not to write into a stale buffer.
-        if (current->process->profile_buffer) {
-            proc_record_profile_stack(context->task_state);
+        if (spin_trylock(&current->process->profile_buffer_lock)) {
+            // Make sure not to write into a stale buffer.
+            if (current->process->profile_buffer) {
+                proc_record_profile_stack(context->task_state);
+            }
+            spin_unlock(&current->process->profile_buffer_lock);
         }
-        spin_unlock(&current->process->profile_buffer_lock);
     }
 }
 
 void proc_maybe_start_profile_timer(void) {
     if (atomic_fetch_add(&num_profiling, 1) == 0) {
         struct hw_timer *timer = hw_profile_timer();
-        timer->ops->setup_interval_timer(timer, 0, 1000, on_hw_profile_tick);
+        timer->ops->setup_interval_timer(timer, 0, 1000, IRQ_HANDLER_ALL_CPUS | IRQ_HANDLER_REQUEST_NMI, on_hw_profile_tick);
     }
 }
 

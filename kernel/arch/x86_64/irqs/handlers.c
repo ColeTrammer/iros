@@ -185,10 +185,8 @@ static bool handle_debug(struct irq_context *context __attribute__((unused))) {
 }
 
 static bool handle_non_maskable_interrupt(struct irq_context *context __attribute__((unused))) {
-    dump_registers_to_screen();
-    debug_log("\n\033[31m%s\033[0m\n", "Non-maskable Interrupt");
-    abort();
-    return true;
+    // FIXME: determine if there was a hw problems that caused the NMI.
+    return false;
 }
 
 static bool handle_breakpoint(struct irq_context *context __attribute__((unused))) {

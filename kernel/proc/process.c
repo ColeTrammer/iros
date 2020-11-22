@@ -204,6 +204,7 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
 
         if (process->profile_buffer) {
             vm_free_kernel_region(process->profile_buffer);
+            proc_maybe_stop_profile_timer();
         }
         process->profile_buffer = NULL;
 

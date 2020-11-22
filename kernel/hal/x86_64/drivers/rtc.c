@@ -56,9 +56,13 @@ static inline struct rtc_time read_rtc_time() {
 
 static bool handle_rtc_interrupt(struct irq_context *context) {
     outb(RTC_REGISTER_SELECT, RTC_STATUS_C);
-    inb(RTC_DATA);
+    if (!(inb(RTC_DATA) & (1U << 7U))) {
+        return false;
+    }
 
-    context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
+    if (context->irq_controller) {
+        context->irq_controller->ops->send_eoi(context->irq_controller, context->irq_num);
+    }
 
     struct hw_timer_channel *channel = context->closure;
     if (channel->callback) {
@@ -68,12 +72,13 @@ static bool handle_rtc_interrupt(struct irq_context *context) {
     return true;
 }
 
-static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, long frequency, hw_timer_callback_t callback) {
+static void rtc_setup_interval_timer(struct hw_timer *self, int channel_index, long frequency, int irq_flags,
+                                     hw_timer_callback_t callback) {
     uint8_t divisor = RTC_GET_DIVISOR(frequency);
 
     struct hw_timer_channel *channel = &self->channels[channel_index];
-    init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI, self, HW_TIMER_INTERVAL,
-                          RTC_GET_FREQUENCY(divisor), callback);
+    init_hw_timer_channel(channel, handle_rtc_interrupt, IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_NO_EOI | IRQ_HANDLER_SHARED | irq_flags, self,
+                          HW_TIMER_INTERVAL, RTC_GET_FREQUENCY(divisor), callback);
     register_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     uint64_t save = disable_interrupts_save();

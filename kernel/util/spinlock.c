@@ -49,6 +49,17 @@ void spin_lock_internal(spinlock_t *lock, const char *func __attribute__((unused
     }
 }
 
+bool spin_trylock(spinlock_t *lock) {
+    unsigned long interrupts = disable_interrupts_save();
+    if (!xchg_32(&lock->counter, 1)) {
+        lock->interrupts = interrupts;
+        return true;
+    }
+
+    interrupts_restore(interrupts);
+    return false;
+}
+
 void spin_unlock_internal(spinlock_t *lock, const char *func __attribute__((unused)), bool no_irq_restore) {
 #ifdef SPINLOCK_DEBUG
     __spinlock_log("~unlocking spinlock: [ %p, %s ]\n", lock, func);

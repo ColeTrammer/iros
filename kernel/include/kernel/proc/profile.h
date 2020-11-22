@@ -12,6 +12,9 @@ void proc_record_profile_stack(struct task_state *task_state);
 void proc_record_memory_map(struct process *process);
 void proc_write_profile_buffer(struct process *process, const void *buffer, size_t size);
 
+void proc_maybe_start_profile_timer(void);
+void proc_maybe_stop_profile_timer(void);
+
 int proc_enable_profiling(pid_t pid);
 ssize_t proc_read_profile(pid_t pid, void *buffer, size_t size);
 int proc_disable_profiling(pid_t pid);

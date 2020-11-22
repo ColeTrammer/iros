@@ -67,8 +67,9 @@ void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
     debug_log("Registering IRQ handler: [ %d, %#.8X ]\n", irq_num, irq_handler_object->flags);
 #endif /* GENERIC_IRQ_DEBUG */
 
-    struct list_node *handlers = &irq_handlers[irq_num];
-    if (!list_is_empty(handlers)) {
+    bool nmi = !!(irq_handler_object->flags & IRQ_HANDLER_REQUEST_NMI);
+    struct list_node *handlers = &irq_handlers[nmi ? NMI_IRQ : irq_num];
+    if (!nmi && !list_is_empty(handlers)) {
         assert(irq_handler_object->flags & IRQ_HANDLER_SHARED);
         list_append(handlers, &irq_handler_object->list);
         return;
@@ -86,6 +87,10 @@ void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
     } else {
         assert(!irq_is_external(irq_num));
         assert(!controller);
+    }
+
+    if (nmi) {
+        irq_handler_object->flags &= ~IRQ_HANDLER_EXTERNAL;
     }
 }
 
@@ -141,13 +146,14 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
                 }
                 goto irq_done;
             }
-        } else {
-            handler->handler(&context);
+        } else if (handler->handler(&context)) {
             goto irq_done;
         }
     }
 
-    debug_log("No IRQ handler wanted to handle: [ %d ]\n", irq_number);
+    if (irq_number != NMI_IRQ) {
+        debug_log("No IRQ handler wanted to handle: [ %d ]\n", irq_number);
+    }
 
 irq_done:;
 }

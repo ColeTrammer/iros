@@ -13,6 +13,7 @@ typedef struct {
 } spinlock_t;
 
 void spin_lock_internal(spinlock_t *lock, const char *func, bool handle_messages);
+bool spin_trylock(spinlock_t *lock);
 void spin_unlock_internal(spinlock_t *lock, const char *func, bool irq_resore);
 
 #define SPINLOCK_INITIALIZER \

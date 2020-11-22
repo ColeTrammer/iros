@@ -53,6 +53,10 @@ static void io_apic_set_irq_enabled(struct irq_controller *controller, int irq_n
     for (int i = 0; i < num_irqs; i++) {
         union io_apic_entry entry = read_io_apic_entry(io_apic, i);
         if (entry.value.generated_irq == irq_num) {
+            if (!enabled) {
+                entry.raw_value = 0;
+                entry.value.generated_irq = 0xFF;
+            }
             entry.value.mask_bit = !enabled;
             write_io_apic_entry(io_apic, i, entry);
             return;
@@ -62,9 +66,10 @@ static void io_apic_set_irq_enabled(struct irq_controller *controller, int irq_n
     debug_log("IO APIC does not have an entry for IRQ: [ %d ]\n", irq_num);
 }
 
-static void io_apic_apply_interrupt_source_override(struct io_apic *io_apic, uint8_t mapped_irq, uint32_t irq_source, uint16_t flags,
-                                                    uint8_t destination) {
+static void io_apic_apply_interrupt_source_override(struct io_apic *io_apic, uint8_t mode, uint8_t mapped_irq, uint32_t irq_source,
+                                                    uint16_t flags, uint8_t destination) {
     union io_apic_entry entry = read_io_apic_entry(io_apic, irq_source);
+    entry.value.delivery_mode = mode;
     entry.value.generated_irq = mapped_irq + IO_APIC_IRQ_OFFSET;
     entry.value.pin_polarity = !!(flags & 0b0010);
     entry.value.trigger_mode = !!(flags & 0b1000);
@@ -74,12 +79,13 @@ static void io_apic_apply_interrupt_source_override(struct io_apic *io_apic, uin
 
 static void io_apic_map_irq(struct irq_controller *controller, int irq_num, int flags) {
     struct io_apic *io_apic = controller->private;
+    uint8_t mode = (flags & IRQ_HANDLER_REQUEST_NMI) ? LOCAL_APIC_ICR_MESSAGE_TYPE_NMI : LOCAL_APIC_ICR_MESSAGE_TYPE_FIXED;
 
     struct acpi_info *info = acpi_get_info();
     for (size_t i = 0; i < info->interrupt_source_overrides_length; i++) {
         // FIXME: does the interrupt source override `bus' field matter at all?
         if ((int) info->interrupt_source_override[i].irq_source == irq_num - IO_APIC_IRQ_OFFSET) {
-            io_apic_apply_interrupt_source_override(io_apic, info->interrupt_source_override[i].irq_source,
+            io_apic_apply_interrupt_source_override(io_apic, mode, info->interrupt_source_override[i].irq_source,
                                                     info->interrupt_source_override[i].global_system_interrupt,
                                                     info->interrupt_source_override[i].flags, flags & IRQ_HANDLER_ALL_CPUS ? 0xFF : 0);
             return;
@@ -87,7 +93,8 @@ static void io_apic_map_irq(struct irq_controller *controller, int irq_num, int 
     }
 
     // Default mapping is 1 to 1, no flags set
-    io_apic_apply_interrupt_source_override(io_apic, irq_num - IO_APIC_IRQ_OFFSET, irq_num - IO_APIC_IRQ_OFFSET, 0, 0);
+    io_apic_apply_interrupt_source_override(io_apic, mode, irq_num - IO_APIC_IRQ_OFFSET, irq_num - IO_APIC_IRQ_OFFSET, 0,
+                                            flags & IRQ_HANDLER_ALL_CPUS ? 0xFF : 0);
 }
 
 static struct irq_controller_ops io_apic_ops = { .is_valid_irq = &io_apic_is_valid_irq,

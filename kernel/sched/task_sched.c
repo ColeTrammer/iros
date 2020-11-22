@@ -58,7 +58,7 @@ void init_local_sched(struct processor *processor) {
     struct hw_timer *sched_timer = hw_sched_timer();
     assert(sched_timer);
 
-    sched_timer->ops->setup_interval_timer(sched_timer, processor->id, 1000, on_hw_sched_tick);
+    sched_timer->ops->setup_interval_timer(sched_timer, processor->id, 1000, 0, on_hw_sched_tick);
 }
 
 static unsigned int next_cpu_id;
