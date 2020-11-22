@@ -98,10 +98,13 @@ static void rtc_disable_channel(struct hw_timer *self, int channel_index) {
 
     uint64_t save = disable_interrupts_save();
 
-    unregister_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
-
     uint8_t prev_b = rtc_get(RTC_STATUS_B);
     rtc_set(RTC_STATUS_B, prev_b & ~0x40);
+
+    uint8_t prev_a = rtc_get(RTC_STATUS_A);
+    rtc_set(RTC_STATUS_A, prev_a & 0xF0);
+
+    unregister_irq_handler(&channel->irq_handler, RTC_IRQ_LINE + EXTERNAL_IRQ_OFFSET);
 
     outb(RTC_REGISTER_SELECT, 0);
     interrupts_restore(save);

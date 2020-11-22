@@ -61,7 +61,7 @@ static void on_hw_profile_tick(struct hw_timer_channel *channel, struct irq_cont
 void proc_maybe_start_profile_timer(void) {
     if (atomic_fetch_add(&num_profiling, 1) == 0) {
         struct hw_timer *timer = hw_profile_timer();
-        timer->ops->setup_interval_timer(timer, 0, 1000, IRQ_HANDLER_ALL_CPUS | IRQ_HANDLER_REQUEST_NMI, on_hw_profile_tick);
+        timer->ops->setup_interval_timer(timer, 0, 1000, IRQ_HANDLER_ALL_CPUS, on_hw_profile_tick);
     }
 }
 

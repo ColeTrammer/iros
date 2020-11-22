@@ -296,10 +296,10 @@ static struct irq_handler handle_virtualization_exception_irq = { .handler = &ha
 static struct irq_handler handle_security_exception_irq = { .handler = &handle_security_exception };
 static struct irq_handler sys_call_irq = { .handler = &arch_system_call_entry };
 
-extern struct list_node irq_handlers[255];
+extern struct list_node irq_handlers[256];
 
 void init_irq_handlers() {
-    for (size_t i = 0; i < 255; i++) {
+    for (size_t i = 0; i < 256; i++) {
         init_list(&irq_handlers[i]);
     }
 

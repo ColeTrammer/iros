@@ -6,7 +6,7 @@
 
 // #define GENERIC_IRQ_DEBUG
 
-struct list_node irq_handlers[255];
+struct list_node irq_handlers[256];
 static struct irq_controller *controllers;
 
 static struct irq_controller *find_irq_controller(int irq) {
@@ -72,7 +72,6 @@ void register_irq_handler(struct irq_handler *irq_handler_object, int irq_num) {
     if (!nmi && !list_is_empty(handlers)) {
         assert(irq_handler_object->flags & IRQ_HANDLER_SHARED);
         list_append(handlers, &irq_handler_object->list);
-        return;
     }
 
     list_append(handlers, &irq_handler_object->list);
@@ -112,9 +111,12 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
     debug_log("Got IRQ: [ %u, %d ]\n", get_current_processor()->id, irq_number);
 #endif /* GENERIC_IRQ_DEBUG */
 
+    struct irq_controller *controller = find_irq_controller(irq_number);
+
     struct list_node *handlers = &irq_handlers[irq_number];
     if (list_is_empty(handlers)) {
         debug_log("No IRQ handler registered: [ %d ]\n", irq_number);
+        controller->ops->send_eoi(controller, irq_number);
         goto irq_done;
     }
 
@@ -128,7 +130,6 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
         };
 
         if (handler->flags & IRQ_HANDLER_EXTERNAL) {
-            struct irq_controller *controller = find_irq_controller(irq_number);
             if (!controller) {
                 debug_log("External IRQ has no controller: [ %d ]\n", irq_number);
                 goto irq_done;
