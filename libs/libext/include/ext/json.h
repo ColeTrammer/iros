@@ -43,6 +43,13 @@ namespace Json {
         template<typename T>
         T get_or(const String& name, T alt) const;
 
+        template<typename Callback>
+        void for_each(Callback&& c) const {
+            m_map.for_each_key([&](auto& key) {
+                c(key, **m_map.get(key));
+            });
+        }
+
     private:
         LIIM::HashMap<String, UniquePtr<Value>> m_map;
     };
@@ -71,6 +78,53 @@ namespace Json {
             return move(alt);
         }
         return *result;
+    }
+
+    LIIM::String stringify(const Null&);
+    LIIM::String stringify(const Boolean& b);
+    LIIM::String stringify(const Number& n);
+    LIIM::String stringify(const String& s);
+    LIIM::String stringify(const Array& a);
+    LIIM::String stringify(const Object& o);
+    LIIM::String stringify(const Value& value);
+
+    LIIM::String stringify(const Null&) { return "null"; }
+    LIIM::String stringify(const Boolean& b) { return b ? "true" : "false"; }
+    LIIM::String stringify(const Number& n) { return LIIM::String::format("%f", n); }
+    LIIM::String stringify(const String& s) { return LIIM::String::format("\"%s\"", s.string()); }
+    LIIM::String stringify(const Array& a) {
+        LIIM::String result = "[";
+        for (int i = 0; i < a.size(); i++) {
+            if (i != 0) {
+                result += ",";
+            }
+            result += stringify(a[i]);
+        }
+        result += "]";
+        return result;
+    }
+    LIIM::String stringify(const Object& o) {
+        LIIM::String result = "{";
+        bool first = true;
+        o.for_each([&](auto& key, auto& value) {
+            if (!first) {
+                result += ",";
+            }
+            first = false;
+
+            result += stringify(key);
+            result += ":";
+            result += stringify(value);
+        });
+        result += "}";
+        return result;
+    }
+    LIIM::String stringify(const Value& value) {
+        return LIIM::visit(
+            [](auto&& x) {
+                return stringify(x);
+            },
+            value);
     }
 }
 }
