@@ -1,6 +1,7 @@
 #pragma once
 
 #include <eventloop/object.h>
+#include <graphics/color.h>
 #include <graphics/font.h>
 #include <graphics/rect.h>
 
@@ -61,6 +62,12 @@ public:
 
     void set_context_menu(SharedPtr<ContextMenu> menu);
 
+    const Color& background_color() const { return m_background_color; }
+    void set_background_color(Color c) { m_background_color = move(c); }
+
+    const Color& text_color() const { return m_text_color; }
+    void set_text_color(Color c) { m_text_color = move(c); }
+
 protected:
     Widget();
 
@@ -69,6 +76,8 @@ private:
 
     Rect m_rect;
     Font m_font { Font::default_font() };
+    Color m_background_color { ColorValue::Black };
+    Color m_text_color { ColorValue::White };
     Size m_preferred_size { Size::Auto, Size::Auto };
     UniquePtr<Layout> m_layout;
     SharedPtr<ContextMenu> m_context_menu;

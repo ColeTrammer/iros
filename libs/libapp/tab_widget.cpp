@@ -49,7 +49,7 @@ void TabWidget::render() {
     for (auto& tab : m_tabs) {
         Rect absolute_rect = { rect().x() + tab.rect.x(), rect().y() + tab.rect.y(), tab.rect.width(), tab.rect.height() };
         renderer.draw_rect(absolute_rect, ColorValue::White);
-        renderer.render_text(tab.name, absolute_rect.adjusted(-tab_padding), ColorValue::White);
+        renderer.render_text(tab.name, absolute_rect.adjusted(-tab_padding), text_color());
     }
 
     Widget::render();

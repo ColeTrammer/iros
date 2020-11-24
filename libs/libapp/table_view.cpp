@@ -29,7 +29,7 @@ void TableView::render_data(Renderer& renderer, int rx, int ry, int width, Funct
     } else if (data.is<String>()) {
         auto& string = data.as<String>();
         auto text_align = getter(Model::Role::TextAlignment);
-        renderer.render_text(string, cell_rect, ColorValue::White, text_align.get_or<TextAlign>(TextAlign::CenterLeft));
+        renderer.render_text(string, cell_rect, text_color(), text_align.get_or<TextAlign>(TextAlign::CenterLeft));
     } else if (data.is<SharedPtr<Bitmap>>()) {
         auto& bitmap = *data.as<SharedPtr<Bitmap>>();
         int dw = cell_rect.width() - bitmap.width();
@@ -44,7 +44,7 @@ void TableView::render() {
     }
 
     Renderer renderer(*window()->pixels());
-    renderer.fill_rect(rect(), ColorValue::Black);
+    renderer.fill_rect(rect(), background_color());
     renderer.draw_rect(rect(), ColorValue::White);
 
     auto row_count = model()->row_count();

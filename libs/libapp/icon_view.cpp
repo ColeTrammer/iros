@@ -8,7 +8,7 @@ namespace App {
 
 void IconView::render() {
     Renderer renderer(*window()->pixels());
-    renderer.clear_rect(rect(), ColorValue::Black);
+    renderer.clear_rect(rect(), background_color());
 
     for (int r = 0; r < m_items.size(); r++) {
         auto& item = m_items[r];
@@ -20,7 +20,7 @@ void IconView::render() {
         if (!item.name.is_empty()) {
             Rect text_rect = { rect().x() + item.rect.x(), rect().y() + item.rect.y() + m_icon_height + 2 * m_icon_padding_y,
                                item.rect.width(), item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
-            renderer.render_text(item.name, text_rect, ColorValue::White, TextAlign::Center, font());
+            renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, font());
         }
         if (hovered_index() == ModelIndex { r, m_name_column }) {
             renderer.draw_rect(item.rect, ColorValue::White);
