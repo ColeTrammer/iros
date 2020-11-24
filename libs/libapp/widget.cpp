@@ -18,7 +18,7 @@ Widget::~Widget() {}
 void Widget::render() {
 #ifdef WIDGET_DEBUG
     Renderer renderer(*window()->pixels());
-    renderer.draw_rect(m_rect);
+    renderer.draw_rect(m_rect, outline_color());
 #endif /* WIDGET_DEBUG */
 
     for (auto& child : children()) {

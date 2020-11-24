@@ -46,9 +46,10 @@ void TabWidget::on_resize() {
 
 void TabWidget::render() {
     Renderer renderer(*window()->pixels());
+    renderer.clear_rect({ rect().x(), rect().y(), rect().width(), tab_bar_height }, background_color());
     for (auto& tab : m_tabs) {
         Rect absolute_rect = { rect().x() + tab.rect.x(), rect().y() + tab.rect.y(), tab.rect.width(), tab.rect.height() };
-        renderer.draw_rect(absolute_rect, ColorValue::White);
+        renderer.draw_rect(absolute_rect, outline_color());
         renderer.render_text(tab.name, absolute_rect.adjusted(-tab_padding), text_color());
     }
 

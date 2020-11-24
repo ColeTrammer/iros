@@ -68,6 +68,9 @@ public:
     const Color& text_color() const { return m_text_color; }
     void set_text_color(Color c) { m_text_color = move(c); }
 
+    const Color& outline_color() const { return m_outline_color; }
+    void set_outline_color(Color c) { m_outline_color = move(c); }
+
 protected:
     Widget();
 
@@ -78,6 +81,7 @@ private:
     Font m_font { Font::default_font() };
     Color m_background_color { ColorValue::Black };
     Color m_text_color { ColorValue::White };
+    Color m_outline_color { ColorValue::White };
     Size m_preferred_size { Size::Auto, Size::Auto };
     UniquePtr<Layout> m_layout;
     SharedPtr<ContextMenu> m_context_menu;
