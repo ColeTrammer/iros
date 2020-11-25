@@ -1,8 +1,10 @@
 #pragma once
 
+#include <ctype.h>
 #include <liim/hash_map.h>
 #include <liim/string.h>
 #include <liim/variant.h>
+#include <stdlib.h>
 
 namespace Ext {
 namespace Json {
@@ -50,6 +52,9 @@ namespace Json {
             });
         }
 
+        bool operator==(const Object& other) const { return this->m_map == other.m_map; }
+        bool operator!=(const Object& other) const { return this->m_map != other.m_map; }
+
     private:
         LIIM::HashMap<String, UniquePtr<Value>> m_map;
     };
@@ -80,6 +85,55 @@ namespace Json {
         return *result;
     }
 
+    bool is_white_space(char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }
+
+    class InputStream {
+    public:
+        InputStream(const StringView& view) : m_input(view) {}
+
+        bool at_end() const { return m_index == m_input.size(); }
+
+        void skip_white_space() {
+            while (!at_end()) {
+                if (!is_white_space(m_input[m_index])) {
+                    return;
+                }
+                m_index++;
+            }
+        }
+
+        bool starts_with(const StringView& view) const {
+            if (m_input.size() - m_index < view.size()) {
+                return false;
+            }
+            for (size_t i = 0; i < view.size(); i++) {
+                if (m_input[m_index + i] != view[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        void skip(size_t n) { m_index += n; }
+        Maybe<char> peek(size_t i = 0) const {
+            if (m_index + i >= m_input.size()) {
+                return {};
+            }
+            return m_input[m_index + i];
+        }
+        bool consume(const StringView& view) {
+            if (!starts_with(view)) {
+                return false;
+            }
+            skip(view.size());
+            return true;
+        }
+
+        // private:
+        StringView m_input;
+        size_t m_index { 0 };
+    };
+
     LIIM::String stringify(const Null&);
     LIIM::String stringify(const Boolean& b);
     LIIM::String stringify(const Number& n);
@@ -88,10 +142,22 @@ namespace Json {
     LIIM::String stringify(const Object& o);
     LIIM::String stringify(const Value& value);
 
+    Maybe<Null> parse_null(InputStream& stream);
+    Maybe<Boolean> parse_boolean(InputStream& stream);
+    Maybe<Number> parse_number(InputStream& stream);
+    Maybe<String> parse_string(InputStream& stream);
+    Maybe<Array> parse_array(InputStream& stream);
+    Maybe<Object> parse_object(InputStream& stream);
+    Maybe<Value> parse_value(InputStream& stream);
+    Maybe<Object> parse(const StringView& view);
+
     LIIM::String stringify(const Null&) { return "null"; }
     LIIM::String stringify(const Boolean& b) { return b ? "true" : "false"; }
     LIIM::String stringify(const Number& n) { return LIIM::String::format("%f", n); }
-    LIIM::String stringify(const String& s) { return LIIM::String::format("\"%s\"", s.string()); }
+    LIIM::String stringify(const String& s) {
+        // FIXME: Escape characters if needed
+        return LIIM::String::format("\"%s\"", s.string());
+    }
     LIIM::String stringify(const Array& a) {
         LIIM::String result = "[";
         for (int i = 0; i < a.size(); i++) {
@@ -125,6 +191,178 @@ namespace Json {
                 return stringify(x);
             },
             value);
+    }
+
+    Maybe<Null> parse_null(InputStream& stream) {
+        if (!stream.starts_with("null")) {
+            return {};
+        }
+        return Null();
+    }
+    Maybe<Boolean> parse_boolean(InputStream& stream) {
+        if (stream.starts_with("false")) {
+            return false;
+        } else if (stream.starts_with("true")) {
+            return true;
+        }
+        return {};
+    }
+    Maybe<Number> parse_number(InputStream& stream) {
+        String acc;
+        if (stream.consume("-")) {
+            acc += "-";
+        }
+
+        if (stream.consume("0")) {
+            acc += "0";
+        } else {
+            bool atleast_one = false;
+            for (auto c = stream.peek(); c.has_value() && isdigit(c.value()); c = stream.peek()) {
+                atleast_one = true;
+                acc += String(c.value());
+                stream.skip(1);
+            }
+            if (!atleast_one) {
+                return {};
+            }
+        }
+
+        if (stream.consume(".")) {
+            acc += ".";
+
+            bool atleast_one = false;
+            for (auto c = stream.peek(); c.has_value() && isdigit(c.value()); c = stream.peek()) {
+                atleast_one = true;
+                acc += String(c.value());
+                stream.skip(1);
+            }
+            if (!atleast_one) {
+                return {};
+            }
+        }
+
+        if (stream.consume("e") || stream.consume("E")) {
+            acc += String(stream.peek(-1).value());
+
+            if (stream.consume("-") || stream.consume("+")) {
+                acc += String(stream.peek(-1).value());
+            }
+
+            bool atleast_one = false;
+            for (auto c = stream.peek(); c.has_value() && isdigit(c.value()); c = stream.peek()) {
+                atleast_one = true;
+                acc += String(c.value());
+                stream.skip(1);
+            }
+            if (!atleast_one) {
+                return {};
+            }
+        }
+
+        return strtod(acc.string(), nullptr);
+    }
+    Maybe<String> parse_string(InputStream& stream) {
+        if (!stream.consume("\"")) {
+            return {};
+        }
+
+        // FIXME: handle escape sequences
+        String acc;
+        while (!stream.consume("\"")) {
+            auto c = stream.peek();
+            if (!c.has_value()) {
+                return {};
+            }
+            acc += String(c.value());
+            stream.skip(1);
+        }
+        return acc;
+    }
+    Maybe<Array> parse_array(InputStream& stream) {
+        if (!stream.consume("[")) {
+            return {};
+        }
+        auto array = Array();
+        bool first = true;
+        for (stream.skip_white_space(); !stream.consume("]"); stream.skip_white_space()) {
+            if (!first) {
+                if (!stream.consume(",")) {
+                    return {};
+                }
+                stream.skip_white_space();
+            }
+            first = false;
+
+            auto value = parse_value(stream);
+            if (!value.has_value()) {
+                return {};
+            }
+            array.add(move(value.value()));
+        }
+        return array;
+    }
+    Maybe<Object> parse_object(InputStream& stream) {
+        if (!stream.consume("{")) {
+            return {};
+        }
+        auto object = Object();
+        bool first = true;
+        for (stream.skip_white_space(); !stream.consume("}"); stream.skip_white_space()) {
+            if (!first) {
+                if (!stream.consume(",")) {
+                    return {};
+                }
+                stream.skip_white_space();
+            }
+            first = false;
+
+            auto key = parse_string(stream);
+            if (!key.has_value()) {
+                return {};
+            }
+            stream.skip_white_space();
+            if (!stream.consume(":")) {
+                return {};
+            }
+            stream.skip_white_space();
+            auto value = parse_value(stream);
+            if (!value.has_value()) {
+                return {};
+            }
+            object.put<Value>(key.value(), move(value.value()));
+        }
+        return object;
+    }
+    Maybe<Value> parse_value(InputStream& stream) {
+        auto first = stream.peek();
+        if (!first.has_value()) {
+            return {};
+        }
+        switch (first.value()) {
+            case '{':
+                return parse_object(stream);
+            case '[':
+                return parse_array(stream);
+            case '"':
+                return parse_string(stream);
+            case 'n':
+                return parse_null(stream);
+            case 'f':
+            case 't':
+                return parse_boolean(stream);
+            default:
+                return parse_number(stream);
+        }
+    }
+    Maybe<Object> parse(const StringView& view) {
+        auto stream = InputStream(view);
+        stream.skip_white_space();
+        auto result = parse_object(stream);
+        stream.skip_white_space();
+        if (!stream.at_end()) {
+            return {};
+        }
+        return result;
     }
 }
 }

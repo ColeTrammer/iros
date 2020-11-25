@@ -26,5 +26,9 @@ int main() {
     auto s = stringify(x);
     printf("%s\n", s.string());
 
+    auto xx = parse(s.view());
+    assert(xx.has_value());
+    printf("%s\n", stringify(xx.value()).string());
+
     return 0;
 }

@@ -10,7 +10,8 @@ class Maybe {
 public:
     Maybe() {}
     Maybe(const T& value) : m_has_value(true) { new (&m_value[0]) T(value); }
-    Maybe(const Maybe<T>& other) : m_has_value(other.has_value()) {
+    Maybe(T&& value) : m_has_value(true) { new (&m_value[0]) T(move(value)); }
+    Maybe(const Maybe& other) : m_has_value(other.has_value()) {
         if (other.has_value()) {
             new (&m_value[0]) T(other.value());
         }
@@ -22,6 +23,23 @@ public:
             other.m_has_value = false;
         }
     }
+    template<typename U>
+    Maybe(const Maybe<U>& other) : m_has_value(other.has_value()) {
+        if (other.has_value()) {
+            new (&m_value[0]) T(other.value());
+        }
+    }
+    template<typename U>
+    Maybe(Maybe<U>&& other) : m_has_value(other.has_value()) {
+        if (m_has_value) {
+            new (&m_value[0]) T(LIIM::move(other.value()));
+            other.value().~U();
+            other.m_has_value = false;
+        }
+    }
+
+    template<typename U>
+    friend class Maybe;
 
     ~Maybe() {
         if (has_value()) {

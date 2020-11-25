@@ -451,7 +451,10 @@ inline constexpr decltype(auto) visit(Visitor&& vis, Variants&&... vs) {
     return (*func_ptr)(forward<Visitor>(vis), forward<Variants>(vs)...);
 }
 
-struct Monostate {};
+struct Monostate {
+    bool operator==(const Monostate&) const { return true; }
+    bool operator!=(const Monostate&) const { return false; }
+};
 
 }
 
