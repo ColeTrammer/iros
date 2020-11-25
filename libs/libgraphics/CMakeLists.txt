@@ -1,7 +1,8 @@
 set(SOURCES
+    bitmap.cpp
     color.cpp
     font.cpp
-    bitmap.cpp
+    palette.cpp
     png.cpp
     rect_set.cpp
     renderer.cpp

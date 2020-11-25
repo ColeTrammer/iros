@@ -1,4 +1,28 @@
+#include <ctype.h>
 #include <graphics/color.h>
+
+Maybe<Color> Color::parse(const StringView& view) {
+    if (view.size() != 7) {
+        return {};
+    }
+
+    if (view[0] != '#' || !isxdigit(view[1]) || !isxdigit(view[2]) || !isxdigit(view[3]) || !isxdigit(view[4]) || !isxdigit(view[5]) ||
+        !isxdigit(view[6])) {
+        return {};
+    }
+
+    auto v = [](char c) -> uint8_t {
+        if (isdigit(c)) {
+            return c - '0';
+        }
+        return 10 + _tolower(c) - 'a';
+    };
+
+    uint8_t r = 16 * v(view[1]) + v(view[2]);
+    uint8_t g = 16 * v(view[3]) + v(view[4]);
+    uint8_t b = 16 * v(view[5]) + v(view[6]);
+    return Color(r, g, b);
+}
 
 Color::Color(enum vga_color color) {
     switch (color) {

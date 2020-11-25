@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/maybe.h>
+#include <liim/string_view.h>
 #include <stdint.h>
 
 #include <kernel/hal/x86_64/drivers/vga.h>
@@ -15,6 +16,8 @@ enum class ColorValue {
 
 class Color {
 public:
+    static Maybe<Color> parse(const StringView& view);
+
     constexpr Color() : Color(0xFF, 0xFF, 0xFF) {}
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF) { set(r, g, b, a); }
     constexpr Color(uint32_t value) : m_color(value) {}
