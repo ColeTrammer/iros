@@ -141,7 +141,7 @@ public:
     int size() const { return m_size; }
     bool empty() const { return size() == 0; };
 
-    bool operator==(const HashSet<T>& other) const {
+    bool operator==(const HashSet& other) const {
         if (this->size() != other.size()) {
             return false;
         }
@@ -154,6 +154,7 @@ public:
         });
         return equal;
     }
+    bool operator!=(const HashSet& other) const { return !(*this == other); }
 
     void resize(int new_capacity) {
         HashSet<T> temp(new_capacity);

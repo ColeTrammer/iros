@@ -84,6 +84,7 @@ public:
     bool empty() const { return m_set.empty(); };
 
     bool operator==(const HashMap<K, V>& other) const { return m_set == other.m_set; }
+    bool operator!=(const HashMap<K, V>& other) const { return m_set != other.m_set; }
 
     void resize(int new_capacity) { m_set.resize(new_capacity); }
 
