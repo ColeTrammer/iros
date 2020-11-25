@@ -54,6 +54,9 @@ namespace Json {
             });
         }
 
+        bool empty() const { return m_map.empty(); }
+        int size() const { return m_map.size(); }
+
         bool operator==(const Object& other) const { return this->m_map == other.m_map; }
         bool operator!=(const Object& other) const { return this->m_map != other.m_map; }
 
@@ -87,7 +90,19 @@ namespace Json {
         return *result;
     }
 
-    bool is_white_space(char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }
+    static inline bool is_white_space(char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }
+
+    static inline void do_newline(String& s, int step) {
+        if (step != 0) {
+            s += "\n";
+        }
+    }
+
+    static inline void do_indent(String& s, int indent) {
+        for (int i = 0; i < indent; i++) {
+            s += " ";
+        }
+    }
 
     class InputStream {
     public:
@@ -136,42 +151,49 @@ namespace Json {
         size_t m_index { 0 };
     };
 
-    LIIM::String stringify(const Null&);
-    LIIM::String stringify(const Boolean& b);
-    LIIM::String stringify(const Number& n);
-    LIIM::String stringify(const String& s);
-    LIIM::String stringify(const Array& a);
-    LIIM::String stringify(const Object& o);
-    LIIM::String stringify(const Value& value);
+    static inline LIIM::String stringify(const Null&, int step = 4, int indent = 0);
+    static inline LIIM::String stringify(const Boolean& b, int step = 4, int indent = 0);
+    static inline LIIM::String stringify(const Number& n, int step = 4, int indent = 0);
+    static inline LIIM::String stringify(const String& s, int step = 4, int indent = 0);
+    static inline LIIM::String stringify(const Array& a, int step = 4, int indent = 0);
+    static inline LIIM::String stringify(const Object& o, int step = 4, int indent = 0);
+    static inline LIIM::String stringify(const Value& value, int step = 4, int indent = 0);
 
-    Maybe<Null> parse_null(InputStream& stream);
-    Maybe<Boolean> parse_boolean(InputStream& stream);
-    Maybe<Number> parse_number(InputStream& stream);
-    Maybe<String> parse_string(InputStream& stream);
-    Maybe<Array> parse_array(InputStream& stream);
-    Maybe<Object> parse_object(InputStream& stream);
-    Maybe<Value> parse_value(InputStream& stream);
-    Maybe<Object> parse(const StringView& view);
+    static inline Maybe<Null> parse_null(InputStream& stream);
+    static inline Maybe<Boolean> parse_boolean(InputStream& stream);
+    static inline Maybe<Number> parse_number(InputStream& stream);
+    static inline Maybe<String> parse_string(InputStream& stream);
+    static inline Maybe<Array> parse_array(InputStream& stream);
+    static inline Maybe<Object> parse_object(InputStream& stream);
+    static inline Maybe<Value> parse_value(InputStream& stream);
+    static inline Maybe<Object> parse(const StringView& view);
 
-    LIIM::String stringify(const Null&) { return "null"; }
-    LIIM::String stringify(const Boolean& b) { return b ? "true" : "false"; }
-    LIIM::String stringify(const Number& n) { return LIIM::String::format("%f", n); }
-    LIIM::String stringify(const String& s) {
+    static inline LIIM::String stringify(const Null&, int, int) { return "null"; }
+    static inline LIIM::String stringify(const Boolean& b, int, int) { return b ? "true" : "false"; }
+    static inline LIIM::String stringify(const Number& n, int, int) { return LIIM::String::format("%f", n); }
+    static inline LIIM::String stringify(const String& s, int, int) {
         // FIXME: Escape characters if needed
         return LIIM::String::format("\"%s\"", s.string());
     }
-    LIIM::String stringify(const Array& a) {
+    static inline LIIM::String stringify(const Array& a, int step, int indent) {
         LIIM::String result = "[";
         for (int i = 0; i < a.size(); i++) {
             if (i != 0) {
                 result += ",";
             }
-            result += stringify(a[i]);
+            do_newline(result, step);
+            do_indent(result, indent + step);
+            result += stringify(a[i], step, indent + step);
+        }
+
+        if (!a.empty()) {
+            do_newline(result, step);
+            do_indent(result, indent);
         }
         result += "]";
         return result;
     }
-    LIIM::String stringify(const Object& o) {
+    static inline LIIM::String stringify(const Object& o, int step, int indent) {
         LIIM::String result = "{";
         bool first = true;
         o.for_each([&](auto& key, auto& value) {
@@ -180,28 +202,39 @@ namespace Json {
             }
             first = false;
 
+            do_newline(result, step);
+            do_indent(result, indent + step);
+
             result += stringify(key);
             result += ":";
-            result += stringify(value);
+            if (step != 0) {
+                result += " ";
+            }
+            result += stringify(value, step, indent + step);
         });
+
+        if (!o.empty()) {
+            do_newline(result, step);
+            do_indent(result, indent);
+        }
         result += "}";
         return result;
     }
-    LIIM::String stringify(const Value& value) {
+    static inline LIIM::String stringify(const Value& value, int step, int indent) {
         return LIIM::visit(
-            [](auto&& x) {
-                return stringify(x);
+            [&](auto&& x) {
+                return stringify(x, step, indent);
             },
             value);
     }
 
-    Maybe<Null> parse_null(InputStream& stream) {
+    static inline Maybe<Null> parse_null(InputStream& stream) {
         if (!stream.starts_with("null")) {
             return {};
         }
         return Null();
     }
-    Maybe<Boolean> parse_boolean(InputStream& stream) {
+    static inline Maybe<Boolean> parse_boolean(InputStream& stream) {
         if (stream.starts_with("false")) {
             return false;
         } else if (stream.starts_with("true")) {
@@ -209,7 +242,7 @@ namespace Json {
         }
         return {};
     }
-    Maybe<Number> parse_number(InputStream& stream) {
+    static inline Maybe<Number> parse_number(InputStream& stream) {
         String acc;
         if (stream.consume("-")) {
             acc += "-";
@@ -263,7 +296,7 @@ namespace Json {
 
         return strtod(acc.string(), nullptr);
     }
-    Maybe<String> parse_string(InputStream& stream) {
+    static inline Maybe<String> parse_string(InputStream& stream) {
         if (!stream.consume("\"")) {
             return {};
         }
@@ -280,7 +313,7 @@ namespace Json {
         }
         return acc;
     }
-    Maybe<Array> parse_array(InputStream& stream) {
+    static inline Maybe<Array> parse_array(InputStream& stream) {
         if (!stream.consume("[")) {
             return {};
         }
@@ -303,7 +336,7 @@ namespace Json {
         }
         return array;
     }
-    Maybe<Object> parse_object(InputStream& stream) {
+    static inline Maybe<Object> parse_object(InputStream& stream) {
         if (!stream.consume("{")) {
             return {};
         }
@@ -335,7 +368,7 @@ namespace Json {
         }
         return object;
     }
-    Maybe<Value> parse_value(InputStream& stream) {
+    static inline Maybe<Value> parse_value(InputStream& stream) {
         auto first = stream.peek();
         if (!first.has_value()) {
             return {};
@@ -356,7 +389,7 @@ namespace Json {
                 return parse_number(stream);
         }
     }
-    Maybe<Object> parse(const StringView& view) {
+    static inline Maybe<Object> parse(const StringView& view) {
         auto stream = InputStream(view);
         stream.skip_white_space();
         auto result = parse_object(stream);
@@ -367,7 +400,7 @@ namespace Json {
         return result;
     }
 
-    Maybe<Object> parse_file(const String& path) {
+    static inline Maybe<Object> parse_file(const String& path) {
         auto file = MappedFile::create(path, PROT_READ, MAP_SHARED);
         if (!file) {
             return {};
@@ -377,7 +410,7 @@ namespace Json {
         return parse(view);
     }
 
-    bool write_file(const Object& object, const String& path) {
+    static inline bool write_file(const Object& object, const String& path) {
         FILE* f = fopen(path.string(), "w+");
         if (!f) {
             return false;
