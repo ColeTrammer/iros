@@ -1,10 +1,12 @@
 #pragma once
 
 #include <ctype.h>
+#include <ext/mapped_file.h>
 #include <liim/hash_map.h>
 #include <liim/string.h>
 #include <liim/variant.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
 namespace Ext {
 namespace Json {
@@ -363,6 +365,34 @@ namespace Json {
             return {};
         }
         return result;
+    }
+
+    Maybe<Object> parse_file(const String& path) {
+        auto file = MappedFile::create(path, PROT_READ, MAP_SHARED);
+        if (!file) {
+            return {};
+        }
+
+        auto view = StringView((char*) file->data(), (char*) file->data() + file->size() - 1);
+        return parse(view);
+    }
+
+    bool write_file(const Object& object, const String& path) {
+        FILE* f = fopen(path.string(), "w+");
+        if (!f) {
+            return false;
+        }
+
+        bool ret = true;
+        auto s = stringify(object);
+        if (fputs(s.string(), f) == EOF) {
+            ret = false;
+        }
+
+        if (fclose(f) == EOF) {
+            ret = false;
+        }
+        return ret;
     }
 }
 }
