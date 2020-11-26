@@ -1,3 +1,4 @@
+#include <app/app.h>
 #include <app/context_menu.h>
 #include <app/layout.h>
 #include <app/widget.h>
@@ -11,7 +12,7 @@
 
 namespace App {
 
-Widget::Widget() {}
+Widget::Widget() : m_palette(App::the().palette()) {}
 
 Widget::~Widget() {}
 

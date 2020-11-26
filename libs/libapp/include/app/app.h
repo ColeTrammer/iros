@@ -2,6 +2,7 @@
 
 #include <app/mouse_press_tracker.h>
 #include <eventloop/event_loop.h>
+#include <graphics/palette.h>
 #include <window_server/connection.h>
 
 namespace App {
@@ -16,6 +17,8 @@ public:
     void enter() { return m_loop.enter(); }
     EventLoop& main_event_loop() { return m_loop; }
 
+    SharedPtr<Palette> palette() const { return m_palette; }
+
 private:
     void setup_ws_connection_notifier();
     void process_ws_message(UniquePtr<WindowServer::Message> message);
@@ -23,6 +26,6 @@ private:
     EventLoop m_loop;
     WindowServer::Connection m_connection;
     MousePressTracker m_mouse_tracker;
+    SharedPtr<Palette> m_palette;
 };
-
 }

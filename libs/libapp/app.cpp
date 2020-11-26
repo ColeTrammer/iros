@@ -74,6 +74,7 @@ void App::process_ws_message(UniquePtr<WindowServer::Message> message) {
 App::App() {
     assert(!s_app);
     s_app = this;
+    m_palette = Palette::create_from_json("/usr/share/themes/default.json");
     setup_ws_connection_notifier();
 }
 

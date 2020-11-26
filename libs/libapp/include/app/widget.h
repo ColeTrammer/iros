@@ -3,6 +3,7 @@
 #include <eventloop/object.h>
 #include <graphics/color.h>
 #include <graphics/font.h>
+#include <graphics/palette.h>
 #include <graphics/rect.h>
 
 namespace App {
@@ -62,14 +63,11 @@ public:
 
     void set_context_menu(SharedPtr<ContextMenu> menu);
 
-    const Color& background_color() const { return m_background_color; }
-    void set_background_color(Color c) { m_background_color = move(c); }
+    Color background_color() const { return m_palette->color(Palette::Background); }
+    Color text_color() const { return m_palette->color(Palette::Text); }
+    Color outline_color() const { return m_palette->color(Palette::Outline); }
 
-    const Color& text_color() const { return m_text_color; }
-    void set_text_color(Color c) { m_text_color = move(c); }
-
-    const Color& outline_color() const { return m_outline_color; }
-    void set_outline_color(Color c) { m_outline_color = move(c); }
+    SharedPtr<Palette> palette() const { return m_palette; }
 
 protected:
     Widget();
@@ -79,9 +77,7 @@ private:
 
     Rect m_rect;
     Font m_font { Font::default_font() };
-    Color m_background_color { ColorValue::Black };
-    Color m_text_color { ColorValue::White };
-    Color m_outline_color { ColorValue::White };
+    SharedPtr<Palette> m_palette;
     Size m_preferred_size { Size::Auto, Size::Auto };
     UniquePtr<Layout> m_layout;
     SharedPtr<ContextMenu> m_context_menu;
