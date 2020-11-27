@@ -34,6 +34,8 @@ WindowManager& WindowManager::the() {
 WindowManager::WindowManager(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer)
     : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer), m_taskbar(back_buffer->width(), back_buffer->height()) {
     s_the = this;
+
+    m_palette = Palette::create_from_json("/usr/share/themes/default.json");
 }
 
 WindowManager::~WindowManager() {}
@@ -141,12 +143,13 @@ void WindowManager::draw() {
 
         if (window->type() == WindowServer::WindowType::Application) {
             auto title_bar_rect = Rect { window->rect().x() + 1, window->rect().y() + 1, window->rect().width() - 1, 20 };
-            renderer.fill_rect(title_bar_rect, ColorValue::Black);
-            renderer.render_text(window->title(), title_bar_rect.adjusted(-4, 0), ColorValue::White);
+            renderer.fill_rect(title_bar_rect, palette()->color(Palette::Background));
+            renderer.render_text(window->title(), title_bar_rect.adjusted(-4, 0), palette()->color(Palette::Text));
 
-            renderer.draw_rect(window->rect(), ColorValue::White);
+            renderer.draw_rect(window->rect(), palette()->color(Palette::Outline));
             renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },
-                               { window->rect().x() + window->rect().width() - 1, window->rect().y() + 21 }, ColorValue::White);
+                               { window->rect().x() + window->rect().width() - 1, window->rect().y() + 21 },
+                               palette()->color(Palette::Outline));
             renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
 
             invalidate_rect({ window->rect().x(), window->rect().y(), window->rect().width(), 22 });

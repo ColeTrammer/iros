@@ -1,5 +1,6 @@
 #pragma once
 
+#include <graphics/palette.h>
 #include <graphics/rect_set.h>
 #include <liim/function.h>
 #include <liim/hash_map.h>
@@ -65,6 +66,8 @@ public:
 
     Rect screen_rect() const { return { 0, 0, m_front_buffer->width(), m_front_buffer->height() }; }
 
+    SharedPtr<Palette> palette() const { return m_palette; }
+
     Function<void(SharedPtr<Window>)> on_window_close_button_pressed;
     Function<void(SharedPtr<Window>)> on_window_resize_start;
     Function<void(SharedPtr<Window>, bool active)> on_window_state_change;
@@ -82,6 +85,7 @@ private:
     RectSet m_dirty_rects;
     SharedPtr<Bitmap> m_front_buffer;
     SharedPtr<Bitmap> m_back_buffer;
+    SharedPtr<Palette> m_palette;
     Vector<SharedPtr<Window>> m_window_stack;
     HashMap<wid_t, SharedPtr<Window>> m_window_map;
     Taskbar m_taskbar;
