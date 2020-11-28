@@ -18,12 +18,15 @@ public:
     };
 
     static SharedPtr<Palette> create_from_json(const String& path);
+    static SharedPtr<Palette> create_from_shared_memory(const String& path, int prot);
 
     Color color(ColorType type) const { return m_color_data[type]; }
 
     Palette(Vector<uint32_t> data) : m_colors(data.vector()), m_color_data(move(data)) {}
+    Palette(UniquePtr<Ext::MappedFile> file) : m_colors((uint32_t*) file->data()), m_raw_file(move(file)) {}
 
 private:
     uint32_t* m_colors { nullptr };
     Vector<uint32_t> m_color_data;
+    UniquePtr<Ext::MappedFile> m_raw_file;
 };

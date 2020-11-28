@@ -10,6 +10,7 @@ namespace Ext {
 class MappedFile {
 public:
     static UniquePtr<MappedFile> create(const String& path, int prot, int type);
+    static UniquePtr<MappedFile> create_with_shared_memory(const String& path, int prot);
 
     MappedFile(uint8_t* data, size_t size) : m_data(data), m_size(size) {}
     MappedFile(const MappedFile& other) = delete;
@@ -24,5 +25,4 @@ private:
     uint8_t* m_data { nullptr };
     size_t m_size { 0 };
 };
-
 }
