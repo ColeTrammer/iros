@@ -1,0 +1,65 @@
+#include <dirent.h>
+#include <sys/stat.h>
+
+#include "theme_model.h"
+
+ThemeModel::ThemeModel() {
+    load_data();
+}
+
+App::ModelData ThemeModel::data(const App::ModelIndex& index, int role) const {
+    int row = index.row();
+    if (row < 0 || row >= m_themes.size()) {
+        return {};
+    }
+
+    auto& theme = m_themes[row];
+    if (role == Role::Display) {
+        switch (index.col()) {
+            case Column::Name:
+                return theme.name;
+            default:
+                return {};
+        }
+    }
+
+    if (role == Role::TextAlignment) {
+        switch (index.col()) {
+            case Column::Name:
+                return TextAlign::CenterLeft;
+            default:
+                return {};
+        }
+    }
+
+    return {};
+}
+
+App::ModelData ThemeModel::header_data(int col, int role) const {
+    if (role == Role::Display) {
+        switch (col) {
+            case Column::Name:
+                return "Name";
+            default:
+                return {};
+        }
+    }
+    return {};
+}
+
+void ThemeModel::load_data() {
+    m_themes.clear();
+
+    dirent** dirents;
+    int dirent_count;
+    if ((dirent_count = scandir("/usr/share/themes", &dirents, nullptr, nullptr)) == -1) {
+        return;
+    }
+
+    for (int i = 0; i < dirent_count; i++) {
+        auto* dirent = dirents[i];
+        m_themes.add({ dirent->d_name });
+        free(dirent);
+    }
+    free(dirents);
+}

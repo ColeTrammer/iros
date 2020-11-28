@@ -8,6 +8,7 @@ if (NOT ${NATIVE_BUILD})
         stat
         system_monitor
         terminal
+        theme_editor
         top
     )
 endif()
