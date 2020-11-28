@@ -30,8 +30,12 @@ SharedPtr<Palette> Palette::create_from_json(const String& path) {
 
 SharedPtr<Palette> Palette::create_from_shared_memory(const String& path, int prot) {
     auto file = Ext::MappedFile::create_with_shared_memory(path, prot);
-    if (file->size() != sizeof(uint32_t) * ColorType::Count) {
+    if (!file || file->size() != byte_size()) {
         return nullptr;
     }
     return make_shared<Palette>(move(file));
+}
+
+void Palette::copy_from(const Palette& other) {
+    memcpy(this->m_colors, other.m_colors, byte_size());
 }

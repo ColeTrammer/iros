@@ -35,7 +35,14 @@ WindowManager::WindowManager(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<B
     : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer), m_taskbar(back_buffer->width(), back_buffer->height()) {
     s_the = this;
 
-    m_palette = Palette::create_from_json("/usr/share/themes/default.json");
+    int shared_palette_fd = shm_open("/.shared_theme", O_RDWR | O_CREAT, 0644);
+    assert(shared_palette_fd != -1);
+    assert(ftruncate(shared_palette_fd, Palette::byte_size()) == 0);
+    close(shared_palette_fd);
+
+    m_palette = Palette::create_from_shared_memory("/.shared_theme", PROT_READ | PROT_WRITE);
+    auto palette = Palette::create_from_json("/usr/share/themes/default.json");
+    m_palette->copy_from(*palette);
 }
 
 WindowManager::~WindowManager() {}
