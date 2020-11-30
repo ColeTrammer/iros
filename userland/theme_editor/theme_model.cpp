@@ -58,6 +58,10 @@ void ThemeModel::load_data() {
 
     for (int i = 0; i < dirent_count; i++) {
         auto* dirent = dirents[i];
+        if (StringView(dirent->d_name) == StringView(".") || StringView(dirent->d_name) == StringView("..")) {
+            continue;
+        }
+
         m_themes.add({ dirent->d_name });
         free(dirent);
     }
