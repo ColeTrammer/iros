@@ -17,7 +17,7 @@ App::ModelData ThemeModel::data(const App::ModelIndex& index, int role) const {
     if (role == Role::Display) {
         switch (index.col()) {
             case Column::Name:
-                return theme.name;
+                return theme.palette->name();
             default:
                 return {};
         }
@@ -62,7 +62,12 @@ void ThemeModel::load_data() {
             continue;
         }
 
-        m_themes.add({ dirent->d_name });
+        auto path = String::format("/usr/share/themes/%s", dirent->d_name);
+        auto theme = Palette::create_from_json(path);
+        if (theme) {
+            m_themes.add(Theme { move(theme) });
+        }
+
         free(dirent);
     }
     free(dirents);

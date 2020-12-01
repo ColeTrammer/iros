@@ -1,11 +1,12 @@
 #pragma once
 
 #include <app/model.h>
+#include <graphics/palette.h>
 #include <liim/vector.h>
 #include <sys/types.h>
 
 struct Theme {
-    String name;
+    SharedPtr<Palette> palette;
 };
 
 class ThemeModel final : public App::Model {
