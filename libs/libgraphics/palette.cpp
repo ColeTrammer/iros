@@ -10,22 +10,29 @@ SharedPtr<Palette> Palette::create_from_json(const String& path) {
     Vector<uint32_t> colors(ColorType::Count);
 
     auto& object = maybe_object.value();
-#define __ENUMERATE_COLOR_TYPE(t, l, d)                   \
-    {                                                     \
-        auto s = object.get_as<Ext::Json::String>("" #l); \
-        Color color = d;                                  \
-        if (s) {                                          \
-            auto maybe_color = Color::parse(s->view());   \
-            if (maybe_color.has_value()) {                \
-                color = maybe_color.value();              \
-            }                                             \
-        }                                                 \
-        colors.add(color.color());                        \
+    auto name = object.get_or<String>("name", path);
+
+    auto maybe_palette = object.get_as<Ext::Json::Object>("palette");
+    if (!maybe_palette) {
+        return {};
+    }
+
+#define __ENUMERATE_COLOR_TYPE(t, l, d)                           \
+    {                                                             \
+        auto s = maybe_palette->get_as<Ext::Json::String>("" #l); \
+        Color color = d;                                          \
+        if (s) {                                                  \
+            auto maybe_color = Color::parse(s->view());           \
+            if (maybe_color.has_value()) {                        \
+                color = maybe_color.value();                      \
+            }                                                     \
+        }                                                         \
+        colors.add(color.color());                                \
     }
     ENUMERATE_COLOR_TYPES
 #undef __ENUMERATE_COLOR_TYPE
 
-    return make_shared<Palette>(move(colors));
+    return make_shared<Palette>(move(colors), move(name));
 }
 
 SharedPtr<Palette> Palette::create_from_shared_memory(const String& path, int prot) {
@@ -38,4 +45,5 @@ SharedPtr<Palette> Palette::create_from_shared_memory(const String& path, int pr
 
 void Palette::copy_from(const Palette& other) {
     memcpy(this->m_colors, other.m_colors, byte_size());
+    m_name = other.m_name;
 }

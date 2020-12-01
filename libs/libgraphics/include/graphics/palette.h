@@ -24,13 +24,16 @@ public:
 
     Color color(ColorType type) const { return m_colors[type]; }
 
+    const String& name() const { return m_name; }
+
     void copy_from(const Palette& other);
 
-    Palette(Vector<uint32_t> data) : m_colors(data.vector()), m_color_data(move(data)) {}
+    Palette(Vector<uint32_t> data, String name) : m_colors(data.vector()), m_color_data(move(data)), m_name(name) {}
     Palette(UniquePtr<Ext::MappedFile> file) : m_colors((uint32_t*) file->data()), m_raw_file(move(file)) {}
 
 private:
     uint32_t* m_colors { nullptr };
     Vector<uint32_t> m_color_data;
     UniquePtr<Ext::MappedFile> m_raw_file;
+    String m_name;
 };

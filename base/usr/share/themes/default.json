@@ -1,5 +1,8 @@
 {
-    "background": "#000000",
-    "text": "#FFFFFF",
-    "outline": "#FFFFFF"
+    "name": "Default",
+    "palette": {
+        "background": "#000000",
+        "text": "#FFFFFF",
+        "outline": "#FFFFFF"
+    }
 }
