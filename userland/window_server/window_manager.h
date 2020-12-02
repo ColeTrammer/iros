@@ -36,7 +36,7 @@ public:
     void set_window_visibility(SharedPtr<Window> window, bool visible);
 
     void remove_window(SharedPtr<Window> window);
-    void remove_windows_of_client(int client_id);
+    void remove_windows_of_client(SharedPtr<IPC::Endpoint> client);
 
     void draw();
 

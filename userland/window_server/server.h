@@ -5,6 +5,7 @@
 #include <eventloop/timer.h>
 #include <eventloop/unix_socket.h>
 #include <eventloop/unix_socket_server.h>
+#include <ipc/server.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 #include <window_server/message.h>
@@ -12,32 +13,34 @@
 class Bitmap;
 class WindowManager;
 
-class Server final : public App::Object {
-    APP_OBJECT(Server)
+namespace WindowServer {
+class ServerImpl final : public Client::MessageDispatcher {
+    APP_OBJECT(ServerImpl)
 
 public:
-    Server(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer);
-    ~Server();
+    ServerImpl(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer);
+    ~ServerImpl();
 
     virtual void initialize() override;
 
     void start();
 
 private:
-    void kill_client(int client_id);
-
     void update_draw_timer();
+    void kill_client(IPC::Endpoint& client);
 
-    void handle_create_window_request(const WindowServer::Message& message, int client_id);
-    void handle_remove_window_request(const WindowServer::Message& message, int client_id);
-    void handle_change_window_visibility_request(const WindowServer::Message& message, int client_id);
-    void handle_swap_buffer_request(const WindowServer::Message& message, int client_id);
-    void handle_window_ready_to_resize_message(const WindowServer::Message& message, int client_id);
-    void handle_window_rename_request(const WindowServer::Message& request, int client_id);
+    virtual void handle_error(IPC::Endpoint& client) override { kill_client(client); }
+
+    virtual void handle(IPC::Endpoint& client, const Client::CreateWindowRequest& data) override;
+    virtual void handle(IPC::Endpoint& client, const Client::RemoveWindowRequest& data) override;
+    virtual void handle(IPC::Endpoint& client, const Client::ChangeWindowVisibilityRequest& data) override;
+    virtual void handle(IPC::Endpoint& client, const Client::SwapBufferRequest& data) override;
+    virtual void handle(IPC::Endpoint& client, const Client::WindowReadyToResizeMessage& data) override;
+    virtual void handle(IPC::Endpoint& client, const Client::WindowRenameRequest& data) override;
 
     UniquePtr<WindowManager> m_manager;
-    SharedPtr<App::UnixSocketServer> m_socket_server;
+    SharedPtr<IPC::Server> m_server;
     SharedPtr<App::FdWrapper> m_input_socket;
     SharedPtr<App::Timer> m_draw_timer;
-    Vector<SharedPtr<App::UnixSocket>> m_clients;
 };
+}

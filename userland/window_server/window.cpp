@@ -39,8 +39,8 @@ void Window::set_parent(SharedPtr<Window> child, SharedPtr<Window> parent) {
     parent->m_children.add(move(child));
 }
 
-Window::Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type, bool has_alpha)
-    : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client_id(client_id), m_type(type), m_has_alpha(has_alpha) {
+Window::Window(const Rect& rect, String title, IPC::Endpoint& client, WindowServer::WindowType type, bool has_alpha)
+    : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client(client.shared_from_this()), m_type(type), m_has_alpha(has_alpha) {
     m_shm_path = String::format("/window_server_%lu", m_id);
     update_rect_from_content();
     map_buffers();

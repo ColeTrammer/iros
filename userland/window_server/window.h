@@ -17,7 +17,7 @@ public:
     static SharedPtr<Window> find_window_intersecting_rect(SharedPtr<Window> window, const Rect& r);
     static void set_parent(SharedPtr<Window> child, SharedPtr<Window> parent);
 
-    Window(const Rect& rect, String title, int client_id, WindowServer::WindowType type, bool has_alpha);
+    Window(const Rect& rect, String title, IPC::Endpoint& client, WindowServer::WindowType type, bool has_alpha);
     ~Window();
 
     Window(const Window& other) = delete;
@@ -33,7 +33,7 @@ public:
     int close_button_radius() const { return 6; }
 
     wid_t id() const { return m_id; }
-    int client_id() const { return m_client_id; }
+    IPC::Endpoint& client() { return *m_client; }
 
     const String& shm_path() const { return m_shm_path; }
 
@@ -89,7 +89,7 @@ private:
     Rect m_content_rect;
     const wid_t m_id;
     String m_title;
-    const int m_client_id;
+    SharedPtr<IPC::Endpoint> m_client;
     WindowServer::WindowType m_type;
     bool m_visible { true };
     bool m_in_resize { false };

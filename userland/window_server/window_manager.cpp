@@ -121,10 +121,10 @@ Point WindowManager::mouse_position_relative_to_window(const Window& window) con
     return { m_mouse_x - window.content_rect().x(), m_mouse_y - window.content_rect().y() };
 }
 
-void WindowManager::remove_windows_of_client(int client_id) {
+void WindowManager::remove_windows_of_client(SharedPtr<IPC::Endpoint> client) {
     Vector<SharedPtr<Window>> windows_to_remove;
     m_window_map.for_each([&](auto& window) {
-        if (window->client_id() == client_id) {
+        if (&window->client() == client.get()) {
             windows_to_remove.add(window);
         }
     });
