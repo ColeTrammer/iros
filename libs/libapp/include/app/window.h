@@ -1,9 +1,11 @@
 #pragma once
 
 #include <eventloop/object.h>
+#include <graphics/bitmap.h>
 #include <liim/maybe.h>
 #include <liim/string.h>
-#include <window_server/window.h>
+#include <sys/mman.h>
+#include <window_server/message.h>
 
 namespace App {
 
@@ -18,9 +20,9 @@ public:
 
     virtual ~Window();
 
-    SharedPtr<Bitmap>& pixels() { return m_ws_window->pixels(); }
+    SharedPtr<Bitmap>& pixels() { return m_back_buffer; }
 
-    wid_t wid() const { return m_ws_window->wid(); }
+    wid_t wid() const { return m_wid; }
 
     void set_focused_widget(Widget* widget);
     SharedPtr<Widget> focused_widget();
@@ -47,6 +49,7 @@ public:
     void show(int x, int y);
     bool visible() const { return m_visible; }
     bool active() const { return m_active; }
+    bool has_alpha() const { return m_has_alpha; }
 
 protected:
     Window(int x, int y, int width, int height, String name, bool has_alpha = false,
@@ -63,10 +66,18 @@ private:
     void draw();
     void hide_current_context_menu();
 
+    void do_resize(int new_width, int new_height);
+    void do_set_visibility(int x, int y, bool visible);
+
     static void register_window(Window& window);
     static void unregister_window(wid_t wid);
 
-    SharedPtr<WindowServer::Window> m_ws_window;
+    SharedPtr<Bitmap> m_front_buffer;
+    SharedPtr<Bitmap> m_back_buffer;
+    void* m_raw_pixels { MAP_FAILED };
+    size_t m_raw_pixels_size { 0 };
+    wid_t m_wid { 0 };
+    String m_shm_path;
     WeakPtr<Widget> m_focused_widget;
     WeakPtr<ContextMenu> m_current_context_menu;
     SharedPtr<Widget> m_main_widget;
@@ -76,6 +87,7 @@ private:
     bool m_right_down { false };
     bool m_visible { true };
     bool m_active { false };
+    bool m_has_alpha { false };
+    bool m_removed { false };
 };
-
 }

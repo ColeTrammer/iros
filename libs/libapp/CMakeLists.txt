@@ -17,4 +17,4 @@ set(SOURCES
 
 add_os_library(libapp app TRUE)
 
-target_link_libraries(libapp PUBLIC libeventloop libgraphics libws)
+target_link_libraries(libapp PUBLIC libeventloop libgraphics window_server_headers)

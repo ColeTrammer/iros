@@ -23,7 +23,6 @@ set(TARGETS
     libsh
     libsharedtest
     libsharedtest2
-    libws
 )
 
 add_all_targets()

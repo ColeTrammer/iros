@@ -5,8 +5,6 @@
 #include <app/window.h>
 #include <eventloop/event.h>
 #include <graphics/renderer.h>
-#include <window_server/connection.h>
-#include <window_server/window.h>
 
 // #define WIDGET_DEBUG
 
