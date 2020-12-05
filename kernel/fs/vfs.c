@@ -1920,9 +1920,17 @@ int fs_fcntl(struct file_descriptor *desc, int command, int arg) {
         case F_GETFL:
             return desc->file->open_flags;
         case F_SETFL:
-            debug_log("fcntl: f_setfl: [ %#.8X ]\n", (unsigned int) arg);
             // FIXME: this should do validity checks and update the files capabilites
             desc->file->open_flags = arg;
+
+            if (!!(desc->file->flags & FS_SOCKET) && !desc->file->inode) {
+                struct socket *socket = desc->file->private_data;
+                if (arg & O_NONBLOCK) {
+                    socket->type |= SOCK_NONBLOCK;
+                } else {
+                    socket->type &= ~SOCK_NONBLOCK;
+                }
+            }
             return 0;
         default:
             return -EINVAL;
