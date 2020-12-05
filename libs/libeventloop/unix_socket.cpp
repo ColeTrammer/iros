@@ -47,7 +47,11 @@ void UnixSocket::set_nonblocking(bool b) {
     m_nonblocking = b;
     int flags = fcntl(fd(), F_GETFL);
     if (flags != -1) {
-        flags ^= O_NONBLOCK;
+        if (b) {
+            flags |= O_NONBLOCK;
+        } else {
+            flags &= ~O_NONBLOCK;
+        }
         fcntl(fd(), F_SETFL, flags);
     }
 }
