@@ -65,6 +65,10 @@ syscall_sysret_entry:
 
     # Restore user space rsp 
     mov 24(%rsp), %rsp
+
+    # Re-enable IRQs for userspace
+    sti
+
     sysretq
 
 use_iret:
