@@ -44,6 +44,14 @@ public:
         return { move(val) };
     }
 
+    template<ConcreteMessage S, ConcreteMessage R>
+    Maybe<R> send_then_wait(const S& message) {
+        if (!send(message)) {
+            return {};
+        }
+        return wait_for_response<R>();
+    }
+
 private:
     void handle_messages();
     void read_from_socket();

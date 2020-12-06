@@ -41,17 +41,17 @@ Window::~Window() {
 
 Window::Window(int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type, wid_t parent_id)
     : m_has_alpha(has_alpha) {
-    App::the().ws().server().send<WindowServer::Client::CreateWindowRequest>({
-        .x = x,
-        .y = y,
-        .width = width,
-        .height = height,
-        .name = move(name),
-        .type = type,
-        .parent_id = parent_id,
-        .has_alpha = has_alpha,
-    });
-    auto response = App::the().ws().server().wait_for_response<WindowServer::Server::CreateWindowResponse>();
+    auto response =
+        App::the().ws().server().send_then_wait<WindowServer::Client::CreateWindowRequest, WindowServer::Server::CreateWindowResponse>({
+            .x = x,
+            .y = y,
+            .width = width,
+            .height = height,
+            .name = move(name),
+            .type = type,
+            .parent_id = parent_id,
+            .has_alpha = has_alpha,
+        });
     assert(response.has_value());
 
     m_shm_path = response.value().path;
@@ -103,8 +103,11 @@ void Window::on_event(Event& event) {
                 return;
             }
             if (window_event.window_event_type() == WindowEvent::Type::DidResize) {
-                App::the().ws().server().send<WindowServer::Client::WindowReadyToResizeMessage>({ .wid = m_wid });
-                auto response = App::the().ws().server().wait_for_response<WindowServer::Server::WindowReadyToResizeResponse>();
+                auto response = App::the()
+                                    .ws()
+                                    .server()
+                                    .send_then_wait<WindowServer::Client::WindowReadyToResizeMessage,
+                                                    WindowServer::Server::WindowReadyToResizeResponse>({ .wid = m_wid });
                 assert(response.has_value());
                 auto& data = response.value();
                 assert(data.wid == wid());
@@ -234,13 +237,15 @@ void Window::set_current_context_menu(ContextMenu* menu) {
 }
 
 void Window::do_set_visibility(int x, int y, bool visible) {
-    App::the().ws().server().send<WindowServer::Client::ChangeWindowVisibilityRequest>({
-        .wid = m_wid,
-        .x = x,
-        .y = y,
-        .visible = visible,
-    });
-    App::the().ws().server().wait_for_response<WindowServer::Server::ChangeWindowVisibilityResponse>();
+    App::the()
+        .ws()
+        .server()
+        .send_then_wait<WindowServer::Client::ChangeWindowVisibilityRequest, WindowServer::Server::ChangeWindowVisibilityResponse>({
+            .wid = m_wid,
+            .x = x,
+            .y = y,
+            .visible = visible,
+        });
 }
 
 void Window::do_resize(int new_width, int new_height) {

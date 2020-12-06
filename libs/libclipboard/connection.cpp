@@ -26,20 +26,16 @@ bool Connection::set_clipboard_contents_to_text(const String& text) {
         raw_data.add(c);
     }
 
-    if (!endpoint().send<ClipboardServer::Client::SetContentsRequest>({ .type = "text/plain", .data = move(raw_data) })) {
-        return false;
-    }
-
-    auto response = endpoint().wait_for_response<ClipboardServer::Server::SetContentsResponse>();
+    auto response = endpoint().send_then_wait<ClipboardServer::Client::SetContentsRequest, ClipboardServer::Server::SetContentsResponse>({
+        .type = "text/plain",
+        .data = move(raw_data),
+    });
     return response.has_value() && response.value().success;
 }
 
 Maybe<String> Connection::get_clipboard_contents_as_text() {
-    if (!endpoint().send<ClipboardServer::Client::GetContentsRequest>({ .type = "text/plain" })) {
-        return {};
-    }
-
-    auto response = endpoint().wait_for_response<ClipboardServer::Server::GetContentsResponse>();
+    auto response = endpoint().send_then_wait<ClipboardServer::Client::GetContentsRequest, ClipboardServer::Server::GetContentsResponse>(
+        { .type = "text/plain" });
     if (!response.has_value()) {
         return {};
     }
