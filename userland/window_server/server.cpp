@@ -124,13 +124,13 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::CreateWindowRequest
         Window::set_parent(window, parent);
     }
 
-    m_manager->add_window(window);
-
     send<Server::CreateWindowResponse>(client, {
                                                    .wid = window->id(),
                                                    .size = (size_t) window->buffer()->size_in_bytes(),
                                                    .path = window->shm_path(),
                                                });
+
+    m_manager->add_window(window);
 }
 
 void ServerImpl::handle(IPC::Endpoint& client, const Client::RemoveWindowRequest& data) {
