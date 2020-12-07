@@ -209,6 +209,18 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::WindowRenameRequest
     window->set_title(String(data.name));
 }
 
+void ServerImpl::handle(IPC::Endpoint& client, const Client::ChangeThemeRequest& data) {
+    auto theme = Palette::create_from_json(data.path);
+    if (!theme) {
+        send<Server::ChangeThemeResponse>(client, { .success = false });
+        return;
+    }
+
+    send<Server::ChangeThemeResponse>(client, { .success = true });
+
+    broadcast<Server::ThemeChangeMessage>(*m_server, {});
+}
+
 void ServerImpl::start() {
     char* synchronize = getenv("__SYNCHRONIZE");
     if (synchronize) {

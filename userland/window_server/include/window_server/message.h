@@ -77,6 +77,9 @@ IPC_MESSAGES(Client,
         (wid_t, wid),
         (String, name),
     ),
+    (ChangeThemeRequest,
+        (String, path),
+    ),
 )
 
 IPC_MESSAGES(Server,
@@ -119,6 +122,10 @@ IPC_MESSAGES(Server,
         (wid_t, wid),
         (bool, active),
     ),
+    (ChangeThemeResponse,
+        (bool, success),
+    ),
+    (ThemeChangeMessage),
 )
 // clang-format on
 }

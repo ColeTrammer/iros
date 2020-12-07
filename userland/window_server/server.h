@@ -37,6 +37,7 @@ private:
     virtual void handle(IPC::Endpoint& client, const Client::SwapBufferRequest& data) override;
     virtual void handle(IPC::Endpoint& client, const Client::WindowReadyToResizeMessage& data) override;
     virtual void handle(IPC::Endpoint& client, const Client::WindowRenameRequest& data) override;
+    virtual void handle(IPC::Endpoint& client, const Client::ChangeThemeRequest& data) override;
 
     UniquePtr<WindowManager> m_manager;
     SharedPtr<IPC::Server> m_server;
