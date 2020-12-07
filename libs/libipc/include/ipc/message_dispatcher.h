@@ -2,6 +2,7 @@
 
 #include <eventloop/object.h>
 #include <ipc/endpoint.h>
+#include <ipc/server.h>
 
 namespace IPC {
 
@@ -20,6 +21,12 @@ public:
             handle_send_error(endpoint);
         }
     }
-};
 
+    template<ConcreteMessage T>
+    void broadcast(Server& server, const T& message) {
+        server.for_each_client([&](auto& client) {
+            send<T>(client, message);
+        });
+    }
+};
 }

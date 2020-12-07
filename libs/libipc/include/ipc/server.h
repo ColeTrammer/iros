@@ -5,6 +5,8 @@
 
 namespace IPC {
 
+class MessageDispatcher;
+
 class Server : public App::Object {
     APP_OBJECT(Server)
 
@@ -14,6 +16,13 @@ public:
     virtual ~Server() override;
 
     void kill_client(Endpoint& client);
+
+    template<typename C>
+    void for_each_client(C f) {
+        m_clients.for_each_reverse([&](auto& client) {
+            f(const_cast<Endpoint&>(*client));
+        });
+    }
 
 private:
     String m_path;
