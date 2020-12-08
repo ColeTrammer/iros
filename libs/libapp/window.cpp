@@ -3,11 +3,14 @@
 #include <app/widget.h>
 #include <app/window.h>
 #include <eventloop/event.h>
-#include <liim/hash_map.h>
 
 namespace App {
 
 static HashMap<wid_t, Window*> s_windows;
+
+const HashMap<wid_t, Window*>& Window::windows() {
+    return s_windows;
+}
 
 void Window::register_window(Window& window) {
     s_windows.put(window.wid(), &window);
@@ -181,6 +184,9 @@ void Window::on_event(Event& event) {
             }
             return;
         }
+        case Event::Type::ThemeChange:
+            invalidate_rect(rect());
+            return;
         default:
             break;
     }

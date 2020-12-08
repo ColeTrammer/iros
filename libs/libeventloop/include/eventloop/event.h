@@ -16,6 +16,7 @@ public:
         WindowState,
         Callback,
         Timer,
+        ThemeChange,
     };
 
     Event(Type type) : m_type(type) {};
@@ -143,6 +144,11 @@ public:
 
 private:
     int m_times_expired;
+};
+
+class ThemeChangeEvent final : public Event {
+public:
+    ThemeChangeEvent() : Event(Event::Type::ThemeChange) {}
 };
 
 }

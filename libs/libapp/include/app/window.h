@@ -2,6 +2,7 @@
 
 #include <eventloop/object.h>
 #include <graphics/bitmap.h>
+#include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/string.h>
 #include <sys/mman.h>
@@ -17,6 +18,7 @@ class Window : public Object {
 
 public:
     static Maybe<SharedPtr<Window>> find_by_wid(wid_t wid);
+    static const HashMap<wid_t, Window*>& windows();
 
     virtual ~Window();
 

@@ -51,6 +51,12 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Wind
     EventLoop::queue_event(maybe_window.value(), make_unique<WindowStateEvent>(message.active));
 }
 
+void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::ThemeChangeMessage&) {
+    Window::windows().for_each([&](auto& window) {
+        EventLoop::queue_event(window->weak_from_this(), make_unique<ThemeChangeEvent>());
+    });
+}
+
 App::App() {
     assert(!s_app);
     s_app = this;
