@@ -36,6 +36,15 @@ void Widget::on_resize() {
     }
 }
 
+void Widget::on_theme_change_event(ThemeChangeEvent& event) {
+    for (auto& child : children()) {
+        if (child->is_widget()) {
+            auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));
+            widget.on_theme_change_event(event);
+        }
+    }
+}
+
 void Widget::set_rect(const Rect& rect) {
     int old_width = m_rect.width();
     int old_height = m_rect.height();

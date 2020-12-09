@@ -12,6 +12,7 @@ class ContextMenu;
 class Layout;
 class KeyEvent;
 class MouseEvent;
+class ThemeChangeEvent;
 class Window;
 
 struct Size {
@@ -30,6 +31,7 @@ public:
     virtual void render();
     virtual void on_mouse_event(MouseEvent&);
     virtual void on_key_event(KeyEvent&) {}
+    virtual void on_theme_change_event(ThemeChangeEvent&);
     virtual void on_resize();
     virtual void on_focused() {}
     virtual void on_leave() {}

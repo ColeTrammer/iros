@@ -186,6 +186,8 @@ void Window::on_event(Event& event) {
         }
         case Event::Type::ThemeChange:
             invalidate_rect(rect());
+
+            m_main_widget->on_theme_change_event(static_cast<ThemeChangeEvent&>(event));
             return;
         default:
             break;
