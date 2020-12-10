@@ -1,0 +1,8 @@
+{
+    "name": "Light",
+    "palette": {
+        "background": "#F0F0F0",
+        "text": "#000000",
+        "outline": "#444444"
+    }
+}
