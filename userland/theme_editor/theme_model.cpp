@@ -65,7 +65,7 @@ void ThemeModel::load_data() {
         auto path = String::format("/usr/share/themes/%s", dirent->d_name);
         auto theme = Palette::create_from_json(path);
         if (theme) {
-            m_themes.add(Theme { move(theme) });
+            m_themes.add(Theme { move(path), move(theme) });
         }
 
         free(dirent);

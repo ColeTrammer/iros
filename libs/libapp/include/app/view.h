@@ -19,6 +19,14 @@ public:
     void clear() { m_indexes.clear(); }
     bool empty() const { return m_indexes.size() == 0; }
 
+    const ModelIndex& first() const {
+        ModelIndex* ret = nullptr;
+        m_indexes.for_each([&](auto& i) {
+            ret = &i;
+        });
+        return *ret;
+    }
+
 private:
     HashSet<ModelIndex> m_indexes;
 };
