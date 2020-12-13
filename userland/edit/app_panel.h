@@ -68,6 +68,11 @@ public:
     virtual void on_mouse_event(App::MouseEvent& event) override;
     virtual void on_resize() override;
     virtual void on_focused() override;
+    virtual void on_theme_change_event(App::ThemeChangeEvent&) override {
+        for (auto& c : m_cells) {
+            c.dirty = true;
+        }
+    }
 
     Function<void()> on_quit;
 

@@ -47,6 +47,8 @@ public:
     const Vector<Row>& rows() const { return m_rows; }
     const Row& row_at_scroll_relative_offset(int offset) const;
 
+    void invalidate_all();
+
 private:
     void save_pos() {
         m_saved_cursor_row = m_cursor_row;
@@ -63,8 +65,6 @@ private:
     void clear_row(int row, char ch = ' ');
     void clear_row_until(int row, int end_col, char ch = ' ');
     void clear_row_to_end(int row, int start_col, char ch = ' ');
-
-    void invalidate_all();
 
     void reset_bg() { m_bg = ColorValue::Black; }
     void reset_fg() { m_fg = ColorValue::LightGray; }

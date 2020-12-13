@@ -16,8 +16,9 @@ public:
 
     virtual void render() override;
     virtual void on_resize() override;
-    virtual void on_key_event(App::KeyEvent& event);
-    virtual void on_mouse_event(App::MouseEvent& event);
+    virtual void on_key_event(App::KeyEvent& event) override;
+    virtual void on_mouse_event(App::MouseEvent& event) override;
+    virtual void on_theme_change_event(App::ThemeChangeEvent&) override { m_tty.invalidate_all(); }
 
 private:
     void clear_selection();
