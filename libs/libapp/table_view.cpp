@@ -78,6 +78,10 @@ void TableView::render() {
             renderer.fill_rect({ rect().x(), rect().y() + ry, rect().width(), 21 }, ColorValue::LightGray);
         }
 
+        if (is_selected({ r, 0 })) {
+            renderer.fill_rect({ rect().x(), rect().y() + ry, rect().width(), 21 }, ColorValue::DarkGray);
+        }
+
         for (auto c = 0; c < col_count; c++) {
             render_data(renderer, rx, ry, col_widths[c], [&](auto role) {
                 return model()->data({ r, c }, role);
@@ -114,14 +118,14 @@ ModelIndex TableView::index_at_position(int wx, int wy) {
     int col = -1;
     int x = 0;
     for (int i = 0; i < col_count; i++) {
+        x += col_widths[i] + 1;
         if (wx <= x) {
             col = i;
         }
-        x += col_widths[i] + 1;
     }
 
     int row = (wy - 21) / 21;
-    if (row < 0 || row >= row_count) {
+    if (row < 0 || row >= row_count || col == -1) {
         return {};
     }
 
