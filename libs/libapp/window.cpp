@@ -120,7 +120,7 @@ void Window::on_event(Event& event) {
                 }
 
                 do_resize(data.new_width, data.new_height);
-                pixels()->clear();
+                pixels()->clear(App::the().palette()->color(Palette::Background));
                 invalidate_rect(rect());
                 return;
             }
@@ -185,6 +185,7 @@ void Window::on_event(Event& event) {
             return;
         }
         case Event::Type::ThemeChange:
+            m_back_buffer->clear(App::the().palette()->color(Palette::Background));
             invalidate_rect(rect());
 
             m_main_widget->on_theme_change_event(static_cast<ThemeChangeEvent&>(event));

@@ -44,8 +44,7 @@ Window::Window(const Rect& rect, String title, IPC::Endpoint& client, WindowServ
     m_shm_path = String::format("/window_server_%lu", m_id);
     update_rect_from_content();
     map_buffers();
-    m_front_buffer->clear();
-    m_back_buffer->clear();
+    m_front_buffer->clear(WindowManager::the().palette()->color(Palette::Background));
 }
 
 Window::~Window() {
@@ -159,7 +158,7 @@ void Window::relative_resize(int delta_x, int delta_y) {
     if (delta_x > 0) {
         m_front_buffer->adjust_for_size_change(old_width, old_height);
     } else if (delta_y > 0) {
-        m_front_buffer->clear_after_y(old_height);
+        m_front_buffer->clear_after_y(old_height, WindowManager::the().palette()->color(Palette::Background));
     }
 }
 
