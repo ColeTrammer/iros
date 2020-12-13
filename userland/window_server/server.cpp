@@ -216,9 +216,13 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::ChangeThemeRequest&
         return;
     }
 
+    m_manager->palette()->copy_from(*theme);
+
     send<Server::ChangeThemeResponse>(client, { .success = true });
 
     broadcast<Server::ThemeChangeMessage>(*m_server, {});
+
+    m_manager->invalidate_rect(m_manager->screen_rect());
 }
 
 void ServerImpl::start() {
